@@ -154,6 +154,7 @@ subroutine exact_toystar2D(time,gamma,polyk,H0,A0,C0,sigma,norder,iplot)
      if (iplot.gt.0 .and. iplot.le.5) then
         call pgline(npts+1,xplot,yplot)
      elseif (iplot.eq.0) then
+        call pgsfs(2)
         call pgcirc(0.0,0.0,radstar)
      endif
 !

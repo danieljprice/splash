@@ -793,7 +793,11 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                     call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(i)))
                  endif
               endif
-
+              !
+              !--plot exact solution if relevant (before going interactive)
+              !
+              if (iexact.ne.0) call exact_solution(iplotx,iploty,iexact,ndim,ndimV, &
+                               time(i),xmin,xmax,0.0,gamma(i))
               !
               !--enter interactive mode
               !             
@@ -892,6 +896,21 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            !
            if (iplotav) call plot_average(xplot(1:npartoftype(1,i)), &
                 yplot(1:npartoftype(1,i)),npartoftype(1,i),nbins)
+           !
+           !--plot exact solution if relevant
+           !
+           if (iexact.eq.5 .and.(iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then 
+              ymean = SUM(yplot(1:npartoftype(1,i)))/REAL(npartoftype(1,i)) 
+           else
+              ymean = 0.
+           endif
+           
+           if (iexact.ne.0) call exact_solution(iplotx,iploty,iexact,ndim,ndimV, &
+                            time(i),xmin,xmax,ymean,gamma(i))
+           !--h = (1/rho)^(1/ndim)
+           if ((iploty.eq.ih).and.(iplotx.eq.irho)) then
+              call exact_rhoh(hfact,ndim,dat(1:ntot(i),ipmass,i),ntot(i),xmin,xmax)
+           endif
            !
            !--enter interactive mode
            !
@@ -1006,24 +1025,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
 
         endif   ! ploty = whatever
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ! plot exact solution on top of the plot already on the page
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        if (iexact.eq.5 .and.(iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then 
-           ymean = SUM(yplot(1:npartoftype(1,i)))/REAL(npartoftype(1,i)) 
-        else
-           ymean = 0.
-        endif
-        
-        if (iexact.ne.0) call exact_solution(iplotx,iploty,iexact,ndim,ndimV, &
-                              time(i),xmin,xmax,ymean,gamma(i))
-        !
-        !--plot h = (1/rho)^(1/ndim)
-        !
-        if ((iploty.eq.ih).and.(iplotx.eq.irho)) then
-           call exact_rhoh(hfact,ndim,dat(1:ntot(i),ipmass,i),ntot(i),xmin,xmax)
-        endif
 
      enddo over_plots ! over plots per timestep (nyplot)
 !
