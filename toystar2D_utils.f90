@@ -15,7 +15,7 @@ contains
 !
 !  rad = r/r_star
 !  j = radial (axisymmetric) mode
-!  m = theta mode
+!  m = theta mode 
 !
 !  solution is for delta(rho**(gamma-1))
 !  ie. rho**(gamma-1) = rho_0**(gamma-1) + etar
@@ -47,7 +47,7 @@ real function etar(j,m,rad,gamma)
 
   etar = 0.
   akprev = 1.0  ! this is a_0 which is the amplitude
-  print*,'mode = ',j,' nu^2 = ',freqsq,' a_0 = ',akprev
+  !!print*,'mode = ',j,' nu^2 = ',freqsq,' a_0 = ',akprev
 !
 !--the co-efficients for the terms above a_0 are calculated using
 !  the recurrence relation between the a_k's
@@ -56,7 +56,7 @@ real function etar(j,m,rad,gamma)
      kprev = k-2
      denom = real((kprev + 2 + m)**2 - m**2)
      ak = akprev*(kprev**2 + 2.*kprev*m + 2.*(kprev+m)/gamm1 - freqsq)/denom
-     print*,'coeff ',k,' = ',ak,k**2,2.*k/gamm1
+     !!print*,'coeff ',k,' = ',ak,k**2,2.*k/gamm1
      etar = etar + ak*rad**k
      akprev = ak
   enddo
@@ -103,14 +103,14 @@ real function detadr(j,m,rad,gamma)
      kprev = k-2
      denom = real((kprev + 2 + m)**2 - m**2)
      ak = akprev*(kprev**2 + 2.*kprev*m + 2.*(kprev+m)/gamm1 - freqsq)/denom
-!     print*,'coeff ',k,' = ',ak,k**2,2.*k/gamm1
+     !!print*,'coeff ',k,' = ',ak,k*ak,rad,(k-1)
      term1 = term1 + ak*rad**k
      term2 = term2 + k*ak*rad**(k-1)
      akprev = ak
   enddo
   
   if (m.eq.0) then
-     detadr = rad**m*term2  
+     detadr = term2
   else
      detadr = m*rad**(m-1)*term1 + rad**m*term2
   endif

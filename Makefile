@@ -38,11 +38,13 @@ GADGETSPH = read_data_gadget.f90
 
 # put modules separately as these must be compiled before the others
 MODULES= globaldata.f90 transform.f90 prompting.f90 \
-         geometry.f90 exact.f90 colours.f90 limits.f90 rotate.f90 \
+         geometry.f90 colours.f90 limits.f90 rotate.f90 \
          interactive.f90 allocate.f90 \
-         defaults.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
-         powerspectrums.f90 $(SYSTEMFILE)
+         powerspectrums.f90 \
+         toystar2D_utils.f90 exact_toystar2D.f90 \
+         exact.f90 defaults.f90 \
+         $(SYSTEMFILE)
 
 # these are the normal `external' subroutines
 SOURCES= supersphplot.f90 mainloop.f90 \
@@ -50,7 +52,7 @@ SOURCES= supersphplot.f90 mainloop.f90 \
 	 danpgsch.f danpgtile.f danpgwedg.f \
 	 exact_fromfile.f90 exact_rhoh.f90 \
 	 exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
-	 exact_toystar.f90 toystar2D_utils.f90 exact_toystar2D.f90 \
+	 exact_toystar.f90 \
 	 exact_toystar_ACplane.f exact_mhdshock.f90 \
 	 exact_polytrope.f \
 	 get_data.f90 integratedkernel.f90 \
@@ -100,6 +102,7 @@ gadget: $(OBJGADGETSPH)
 ## sort out dependencies on modules
 defaults.o: exact.o
 
+exact.o: toystar2D_utils.o exact_toystar2D.o
 ## other crap
 
 tar:
