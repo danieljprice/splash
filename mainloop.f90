@@ -718,16 +718,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                  ivecy = iamvec(ivectorplot) + iploty - 1
                  
                  print*,'plotting vector field ',label(iamvec(ivectorplot))
-                 !if (ivectorplot.eq.1 .and. ivx.ne.0) then
-                 !  ivecx = ivx + iplotx - 1 ! 
-                 !   ivecy = ivx + iploty - 1
-                 !   print*,'plotting velocity field'        
-                 !elseif (ivectorplot.eq.2 .and. iBfirst.ne.0) then
-                 !   ivecx = iBfirst + iplotx - 1 ! 
-                 !   ivecy = iBfirst + iploty - 1
-                 !   print*,'plotting magnetic field'
-                 !endif
-                 !!--check for errors
                  if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
                       .or.(ivecy.le.ndim).or.(ivecy.gt.ndataplots)) then
                     print*,'error finding location of vector plot in array'
@@ -788,6 +778,9 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               if (nyplot.eq.1 .and. i.le.nacross) then
                  call legend(time(i),hposlegend,vposlegend)
               endif
+              !
+              !--print title if appropriate
+              !
               if (i.le.ntitles) then
                  if (titlelist(i)(1:1).ne.' ') then
                     call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(i)))
@@ -975,13 +968,13 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                       dat(1:ninterp,ih,i),dat(1:ninterp,ipowerspecy,i), & 
                       ninterp,xmin,datpix1D,ngrid,dxgrid)
                  !!--plot interpolated 1D data to check it
-                 print*,'plotting interpolated data...'
-                 call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
-                 call pgbox('BCNST',0.0,0,'1BVCNST',0.0,0)      
-                 call pglabel('x',label(ipowerspecy),'1D interpolation')
-                 call pgline(ngrid,xgrid,datpix1D)
-                 read*
-                 call pgpage! change page
+                 !print*,'plotting interpolated data...'
+                 !call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
+                 !call pgbox('BCNST',0.0,0,'1BVCNST',0.0,0)      
+                 !call pglabel('x',label(ipowerspecy),'1D interpolation')
+                 !call pgline(ngrid,xgrid,datpix1D)
+                 !read*
+                 !call pgpage! change page
 
                  !!--call power spectrum calculation on the even grid
                  call plot_powerspectrum(ngrid,nfreqspec,wavelengthmax, &
