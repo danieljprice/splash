@@ -269,7 +269,7 @@ subroutine plotstep
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(:,:), allocatable :: datpix,vecpixx,vecpixy
   real, dimension(:,:,:), allocatable :: datpix3D
-  real, dimension(ndim) :: xcoords
+  real, dimension(ndim) :: xcoords,vecnew
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
   real :: angleradx, anglerady, angleradz
   real :: xsecmin,xsecmax
@@ -325,8 +325,9 @@ subroutine plotstep
            angletempy = angley
            angletempz = anglez
         endif
-
+        !
         !--change coordinate system if relevant
+        !
         if (icoordsnew.ne.icoords) then
            !--do this if one is a coord but not if rendering
            if ((iplotx.le.ndim .or. iploty.le.ndim) &
@@ -338,6 +339,24 @@ subroutine plotstep
                                       xcoords(1:ndim),ndim,icoordsnew)
                  if (iplotx.le.ndim) xplot(j) = xcoords(iplotx)
                  if (iploty.le.ndim) yplot(j) = xcoords(iploty)
+              enddo
+           endif
+           if (iamvec(iplotx).gt.0) then
+              print*,'changing vec component to new coord system',icoords,icoordsnew
+              do j=1,ntot(i)
+                 call vector_transform(dat(j,ix(1:ndim),i), &
+                      dat(j,iamvec(iplotx):iamvec(iplotx)+ndim-1,i), &
+                      ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
+                 xplot(j) = vecnew(iplotx-iamvec(iplotx)+1)
+              enddo
+           endif
+           if (iamvec(iploty).gt.0) then
+              print*,'changing vec component to new coord system',icoords,icoordsnew        
+              do j=1,ntot(i)
+                 call vector_transform(dat(j,ix(1:ndim),i), &
+                      dat(j,iamvec(iploty):iamvec(iploty)+ndim-1,i), &
+                      ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
+                 yplot(j) = vecnew(iploty-iamvec(iploty)+1)
               enddo
            endif
         endif

@@ -183,7 +183,7 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
   integer :: i
   real, dimension(3,3) :: dxdx
   real :: sinphi, cosphi
-  real :: rr,rr1,term
+  real :: rr,rr1
 !
 !--check for errors in input
 !
@@ -287,9 +287,8 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         dxdx(1,1) = xin(1)*rr1  ! dr/dx
         if (ndimin.ge.2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
         if (ndimout.ge.2) then
-           term = xin(1)*(1. + (xin(2)/xin(1))**2)
-           dxdx(2,1) = -xin(2)/(xin(1)*term) ! dphi/dx
-           dxdx(2,2) = 1./term               ! dphi/dy
+           dxdx(2,1) = -xin(2)*rr1**2 ! dphi/dx
+           dxdx(2,2) = xin(1)*rr1**2  ! dphi/dy
            if (ndimout.eq.3) dxdx(3,3) = 1.  ! dz/dz 
         endif
      case default
