@@ -289,6 +289,7 @@ subroutine plotstep(istep,irender,ivecplot, &
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
+  character(len=5) :: string
   
 34   format (25(' -'))
 
@@ -452,10 +453,10 @@ subroutine plotstep(istep,irender,ivecplot, &
 
         !--adjust plot limits if adaptive plot limits set
         if (ipagechange .and. iadapt .and. iadvance.ne.0) then
-           xmin = 1.e12
-           xmax = -1.e12
-           ymin = 1.e12
-           ymax = -1.e12
+           xmin = huge(xmin)
+           xmax = -huge(xmax)
+           ymin = huge(ymin)
+           ymax = -huge(ymax)
            !--find maximum over all particle types being plotted
            index1 = 1
            print*,'adapting plot limits'
@@ -767,7 +768,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                        !!--if adaptive limits, find limits of rendered array
                        rendermin = minval(datpix)
                        rendermax = maxval(datpix)
-                       print*,'adapting limits'
+                       print*,'adapting render limits'
                     else
                        !!--or apply transformations to fixed limits
                        rendermin = lim(irenderplot,1)
@@ -775,17 +776,25 @@ subroutine plotstep(istep,irender,ivecplot, &
                        call transform_limits(rendermin,rendermax,itrans(irenderplot))
                     endif
                  endif
-                 !!--print plot limits to screen
-                 print*,trim(labelrender),' min, max = ',rendermin,rendermax
                  
                  !!--if log, then set zero values to minimum
-                 !!  (don't count this in limit setting though)
-                 if (itrans(irenderplot).eq.1) then
-                    print*,'setting zero values to ',rendermin,' on log array'
-                    where (datpix.eq.0.)
+                 !!  (must be done after minimum is known)
+                 !!
+                 write(string,*) itrans(irenderplot)
+                 if (index(string,'1').ne.0) then
+                    !!print*,'setting zero values to ',rendermin,' on log array'
+                    where (abs(datpix).lt.tiny(datpix))
                        datpix = rendermin
                     end where
+                    !!  also do not let max=0 as this is suspiciously wrong
+                    if (iadapt .and. abs(rendermax).lt.tiny(datpix)) then
+                       !!print*,'max=0 on log plot, fixing'
+                       rendermax = maxval(datpix)
+                    endif
                  endif
+
+                 !!--print plot limits to screen
+                 print*,trim(labelrender),' min, max = ',rendermin,rendermax
                       
                  !!--call subroutine to actually render the image       
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
