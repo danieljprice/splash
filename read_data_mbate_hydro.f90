@@ -121,7 +121,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !--read the number of particles in the first step,
         !  allocate memory and rewind
         !
-        read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint 
+        read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint
         if (.not.allocated(dat) .or. nprint.gt.npart_max) then
            npart_max = max(npart_max,INT(1.1*nprint))
            call alloc(npart_max,nstep_max,ncolstep+ncalc)
@@ -181,7 +181,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              nptmass, (listpm(i), i=1,nptmass)
         
         if (ierr /= 0) then
-           print "(a)",'*** INCOMPLETE DATA ON LAST TIMESTEP ***'
+           print "(a)",'*** INCOMPLETE DATA (CHECK PRECISION) ***'
            nstepsread = nstepsread + 1
            exit over_steps_in_file
         else
