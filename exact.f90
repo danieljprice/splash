@@ -126,6 +126,7 @@ contains
     case(4)
        print*,' toy star: '
        call read_exactparams(iexact,ierr)
+       call prompt('enter polytropic k ',polyk)
        call prompt('enter parameter a (v = ax) ',atstar)
        call prompt('enter parameter h (rho = h - cx^2)',htstar)
        call prompt('enter parameter c (rho = h - cx^2)',ctstar,0.0)
@@ -272,7 +273,7 @@ contains
        endif
 
     case(3)! polytrope
-       if (iploty.eq.irho .and. iplotx.eq.irad) call exact_polytrope(gamma)
+       if (iploty.eq.irho .and. iplotx.eq.irad) call exact_polytrope(gamma,polyk)
 
     case(4)! toy star
        if (iBfirst.ne.0) then
@@ -311,23 +312,25 @@ contains
           !
           if ((iplotx.eq.ix(1) .and. iploty.eq.ivx) &
                .or. (iplotx.eq.ix(2) .and. iploty.eq.ivx+1)) then
-             call exact_toystar2D(time,gamma, &
+             call exact_toystar2D(time,gamma,polyk, &
                   htstar,atstar,ctstar,sigma,norder,4)
           endif
           if (iplotx.eq.irad) then
              if (iploty.eq.irho) then
-                call exact_toystar2D(time,gamma,htstar,atstar,ctstar,sigma,norder,1)
+                call exact_toystar2D(time,gamma,polyk,htstar,atstar,ctstar,sigma,norder,1)
              elseif (iploty.eq.ipr) then
-                call exact_toystar2D(time,gamma,htstar,atstar,ctstar,sigma,norder,2)
+                call exact_toystar2D(time,gamma,polyk,htstar,atstar,ctstar,sigma,norder,2)
              elseif (iploty.eq.iutherm) then
-                call exact_toystar2D(time,gamma,htstar,atstar,ctstar,sigma,norder,3)
+                call exact_toystar2D(time,gamma,polyk,htstar,atstar,ctstar,sigma,norder,3)
              elseif (iploty.eq.ivx .or. iploty.eq.ivx+1) then
-                call exact_toystar2D(time,gamma, &
+                call exact_toystar2D(time,gamma,polyk, &
                      htstar,atstar,ctstar,sigma,norder,4)
              elseif (iploty.eq.ike) then
-                call exact_toystar2D(time,gamma, &
+                call exact_toystar2D(time,gamma,polyk, &
                      htstar,atstar,ctstar,sigma,norder,4)
              endif
+          elseif (iplotx.le.ndim .and. iploty.le.ndim) then
+             call exact_toystar2D(time,gamma,polyk,htstar,atstar,ctstar,sigma,norder,0)
           endif
        endif
 

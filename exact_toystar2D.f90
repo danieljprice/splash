@@ -8,7 +8,7 @@
 ! For details see Monaghan and Price (2004), in prep.
 !------------------------------------------------------------
 
-subroutine exact_toystar2D(time,gamma,H0,A0,C0,sigma,norder,iplot)
+subroutine exact_toystar2D(time,gamma,polyk,H0,A0,C0,sigma,norder,iplot)
   implicit none
   integer, parameter :: npts = 100
   integer, intent(in) :: iplot,norder
@@ -16,30 +16,45 @@ subroutine exact_toystar2D(time,gamma,H0,A0,C0,sigma,norder,iplot)
   integer :: jmode,smode
   real, parameter :: pi = 3.1415926536
   real, dimension(0:npts) :: xplot,yplot
-  real, intent(in) :: time,gamma,sigma
+  real, intent(in) :: time,gamma,polyk,sigma
   real, intent(in) :: H0, C0, A0        ! parameters for toy star
   real :: Aprev, A,H,C, term,const
   real :: radstar,dx
   real :: rhoplot,deltarho
-  real :: gamp1,gamm1,gam1,constK,omega
+  real :: gamp1,gamm1,gam1,constK,omega,omega2
   real :: drhor
   logical linear
 
-  if (norder.ge.0) linear = .true.
+  linear = (norder.ge.0)
   gamp1 = gamma + 1.
   gamm1 = gamma - 1.
+  if (abs(gamm1).lt.1.e-3) then
+     print*,'Error: no toy star solution for isothermal yet'
+     return
+  endif
   gam1 = 1./gamm1
-  constK = 0.25   ! this is K from P = K*rho**gamma
-
+  if (polyK.le.0.) then
+     print*,'Error: polytropic K <= 0 on input: using 0.25 by default'
+     constK = 0.25
+  else
+     constK = polyK  !!0.25   ! this is K from P = K*rho**gamma
+  endif
+  
   if (linear) then
 !---------------------------------------------------------------------------
 !  linear solution
 
+     print*,' Plotting 2D toy star: linear solution '
      jmode = norder   ! radial mode
      smode = 0        ! non-axisymmetric modes (theta)
      ! omega is the frequency of oscillation
-     omega = sqrt((jmode + smode)*(jmode+smode + 2./gamm1) - smode**2)
-     print*,' Plotting toy star linear solution '
+     omega2 = (jmode + smode)*(jmode+smode + 2./gamm1) - smode**2
+     if (omega2.le.0.) then
+        print*,'Error: sqrt < 0 in linear toy star  ',omega2
+        return
+     else
+        omega = sqrt(omega2)
+     endif
      print*,' Amplitude = ',A0,' period = ',2*pi/omega,' H,C = ',H0,C0
      read*
      if (C0.le.0.) then 
@@ -83,6 +98,7 @@ subroutine exact_toystar2D(time,gamma,H0,A0,C0,sigma,norder,iplot)
 !
   else
 
+     print*,'Plotting 2D toy star: non-linear'
      !  solve for H, C and A given initial conditions on v, rho and the time.
      !
      H = H0
@@ -93,8 +109,8 @@ subroutine exact_toystar2D(time,gamma,H0,A0,C0,sigma,norder,iplot)
      const = 4.*omega**2 + 4.*A0**2 
      term = 1.-4.*omega**2/const
      if (term.le.0.) then
-        print*,'error: const or omega wrong, sqrt < 0'
-        return
+        if (abs(A0).gt.1.e-3) print*,'warning: const or omega wrong, sqrt < 0 : assuming static solution'
+        A = 0.
      else
         term = sqrt(term)
         !
@@ -135,7 +151,11 @@ subroutine exact_toystar2D(time,gamma,H0,A0,C0,sigma,norder,iplot)
 
      enddo
 
-     call PGLINE(npts+1,xplot,yplot)
+     if (iplot.gt.0 .and. iplot.le.5) then
+        call pgline(npts+1,xplot,yplot)
+     elseif (iplot.eq.0) then
+        call pgcirc(0.0,0.0,radstar)
+     endif
 !
 !------------------------------------------------------------------------
 !      
