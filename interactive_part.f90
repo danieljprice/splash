@@ -1,13 +1,25 @@
 !
 !--interactive tools on particle plots
-!  (experimental at this stage)
+!  allows user to change settings interactively
 !
-subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,iadvance)
-  use limits
+!  Arguments:
+!
+!   npart   : number of particles plotted
+!   iplotx  : quantity plotted as x axis
+!   iploty  : quantity plotted as y axis 
+!   irender : quantity rendered
+!   xcoords(npart) : x coordinates of particles
+!   ycoords(npart) : y coordinates of particles
+!   xmin, xmax, ymin, ymax : current plot limits
+!   iadvance : integer telling the loop how to advance the timestep
+!
+subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
+  xmin,xmax,ymin,ymax,iadvance)
   implicit none
   integer, intent(in) :: npart,iplotx,iploty,irender
   integer, intent(out) :: iadvance
   real, dimension(npart), intent(in) :: xcoords, ycoords
+  real, intent(inout) :: xmin,xmax,ymin,ymax
   integer :: i,iclosest,nc,ipts,iadvance,int_from_string
   real :: xpt,ypt,xpt2,ypt2,rmin,rr,gradient,yint,xlength
   real :: xlength, ylength
@@ -81,12 +93,13 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,iadvance
         print*,'-------------- interactive mode commands --------------'
 	print*,' next timestep/plot   : space, left click'
 	print*,' previous timestep    : right click'
-	print*,' jump by n timesteps  : 1,2,3..9 then left or right click'
+	print*,' jump by n timesteps  : 0,1,2,3..9 then left or right click'
 	print*,' (r)eplot current plot        : r'
         print*,' label closest (p)article     : p'
 	print*,' plot a line and find its g)radient : l, L'
 	print*,' plot (c)ircle of interaction : c, C'
 	print*,' (h)elp                       : h'
+	print*,' (s)ave current limits for all steps : s'
         print*,' (q)uit plotting              : q, Q'     	
         print*,'-------------------------------------------------------'
      case('A') ! left click
@@ -97,35 +110,35 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,iadvance
 	call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
 	print*,xpt,ypt,xpt2,ypt2,char2
 	if (char2.eq.'A') then   ! zoom if another left click
-	   lim(iplotx,1) = min(xpt,xpt2)
-	   lim(iplotx,2) = max(xpt,xpt2)
-	   lim(iploty,1) = min(ypt,ypt2)
-	   lim(iploty,2) = max(ypt,ypt2)
+	   xmin = min(xpt,xpt2)
+	   xmax = max(xpt,xpt2)
+	   ymin = min(ypt,ypt2)
+	   ymax = max(ypt,ypt2)
 	   iadvance = 0
 	   iexit = .true.
 	endif
      case('-') ! zoom out by 10%
 	print*,'zooming out'
-	xlength = lim(iplotx,2)-lim(iplotx,1)
-	ylength = lim(iploty,2)-lim(iploty,1)
+	xlength = xmax - xmin
+	ylength = ymax - ymin
 	xlength = 1.1*xlength
 	ylength = 1.1*ylength
-	lim(iplotx,1) = xpt - 0.5*xlength
-	lim(iplotx,2) = xpt + 0.5*xlength
-	lim(iploty,1) = ypt - 0.5*ylength
-	lim(iploty,2) = ypt + 0.5*ylength
+	xmin = xpt - 0.5*xlength
+	xmax = xpt + 0.5*xlength
+	ymin = ypt - 0.5*ylength
+	ymax = ypt + 0.5*ylength
 	iadvance = 0
 	iexit = .true.
      case('+') ! zoom in by 10%
 	print*,'zooming in'
-	xlength = lim(iplotx,2)-lim(iplotx,1)
-	ylength = lim(iploty,2)-lim(iploty,1)
+	xlength = xmax - xmin
+	ylength = ymax - ymin
 	xlength = 0.9*xlength
 	ylength = 0.9*ylength
-	lim(iplotx,1) = xpt - 0.5*xlength
-	lim(iplotx,2) = xpt + 0.5*xlength
-	lim(iploty,1) = ypt - 0.5*ylength
-	lim(iploty,2) = ypt + 0.5*ylength
+	xmin = xpt - 0.5*xlength
+	xmax = xpt + 0.5*xlength
+	ymin = ypt - 0.5*ylength
+	ymax = ypt + 0.5*ylength
 	iadvance = 0
 	iexit = .true.
      case('q','Q')
@@ -140,7 +153,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,iadvance
 	iexit = .true.
      case(' ') ! space
         iexit = .true.
-     case('1','2','3','4','5','6','7','8','9')
+     case('0','1','2','3','4','5','6','7','8','9')
         iadvance = int_from_string(char)
 	print*,' setting timestep jump = ',iadvance
      end select

@@ -226,8 +226,9 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   !                      interactive mode)
   !------------------------------------------------------------------------            
   i = nstart
+  iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
+
   over_timesteps: do while (i.le.n_end)
-     iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
      npart1 = npart(i) + 1
      irenderprev = 0
      istepprev = 0  
@@ -254,10 +255,12 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            yplot = dat(iploty,:,i)
            labelx = label(iplotx)
            labely = label(iploty)
-           xmin = lim(iplotx,1)
-           xmax = lim(iplotx,2)
-           ymin = lim(iploty,1)
-           ymax = lim(iploty,2)
+           if (iadvance.ne.0) then
+	      xmin = lim(iplotx,1)
+              xmax = lim(iplotx,2)
+              ymin = lim(iploty,1)
+              ymax = lim(iploty,2)
+	   endif
            
            !--change coordinate system if relevant
            if (icoordsnew.ne.icoords) then
@@ -291,7 +294,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            !         if (nacross.le.2.and.ndown.le.2) call pgiden
 
            !--adjust plot limits if adaptive plot limits set
-           if (ipagechange .and. iadapt) then
+           if (ipagechange .and. iadapt .and. iadvance.ne.0) then
               xmin = minval(xplot(1:ntotplot(i)))
               xmax = maxval(xplot(1:ntotplot(i)))*scalemax
               ymin = minval(yplot(1:ntotplot(i)))
@@ -299,7 +302,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	   endif
 
            !!-reset co-ordinate plot limits if particle tracking           
-	   if (itrackpart.gt.0) then
+	   if (itrackpart.gt.0 .and. iadvance.ne.0) then
               if (iplotx.le.ndim) then
                  xmin = xplot(itrackpart) - xminoffset_track(iplotx)
                  xmax = xplot(itrackpart) + xmaxoffset_track(iplotx)
@@ -372,7 +375,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               !--interpolate from particles to fixed grid using sph summation
               !		
               !!--use the un-transformed co-ordinates
-	      if (itrackpart.le.0) then ! do not reset limits if particle tracking
+	      if (itrackpart.le.0 .and. iadvance.ne.0) then ! do not reset limits if particle tracking
 	         xmin = lim(iplotx,1)
                  xmax = lim(iplotx,2)
                  ymin = lim(iploty,1)
@@ -507,9 +510,11 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  !!--interpolate from 2D data to 1D line
                  !!  line is specified by giving two points, (x1,y1) and (x2,y2)
                  !--set up 1D grid and allocate memory for datpix1D
-                 xmin = 0.   ! distance (r) along cross section
-                 xmax = SQRT((xseclineY2-xseclineY1)**2 + (xseclineX2-xseclineX1)**2)
-                 dxgrid = (xmax-xmin)/REAL(npixx)
+                 if (iadvance.ne.0) then
+		    xmin = 0.   ! distance (r) along cross section
+                    xmax = SQRT((xseclineY2-xseclineY1)**2 + (xseclineX2-xseclineX1)**2)
+                 endif
+		 dxgrid = (xmax-xmin)/REAL(npixx)
                  call set_grid1D(xmin,dxgrid,npixx)
 
                  call interpolate2D_xsec( &
@@ -527,14 +532,16 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  labely = transform_label(label(irenderplot),itrans(irenderplot))
                  labelx = 'cross section'
                  !!--if adaptive limits, find limits of datpix
-                 if (iadapt) then
-                    ymin = minval(datpix1D)
-                    ymax = maxval(datpix1D)
-                    !!--or apply transformations to fixed limits
-                 else
-                    call transform_limits(lim(irenderplot,1),lim(irenderplot,2), &
-                         ymin,ymax,itrans(irenderplot))
-                 endif
+		 if (iadvance.ne.0) then               
+		    if (iadapt) then
+                       ymin = minval(datpix1D)
+                       ymax = maxval(datpix1D)
+                       !!--or apply transformations to fixed limits
+                    else
+                       call transform_limits(lim(irenderplot,1),lim(irenderplot,2), &
+                            ymin,ymax,itrans(irenderplot))
+                    endif
+		 endif
 
               endif ! 2 or 3D and rendering
               !-----end of preliminary muff for 2D/3D cross sections/renderings ------------------
@@ -860,10 +867,12 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 
               !
 	      !--enter interactive mode
-	      !
+	      !	     
              if (interactive) then
+	        iadvance = nfreq
 		call interactive_part(ntotplot(i),iplotx,iploty,irenderplot, &
-		     xplot(1:ntotplot(i)),yplot(1:ntotplot(i)),iadvance) 
+		     xplot(1:ntotplot(i)),yplot(1:ntotplot(i)), &
+		     xmin,xmax,ymin,ymax,iadvance) 
              endif
 
 
@@ -996,9 +1005,10 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            !
            !--enter interactive mode
            !
+	   iadvance = nfreq
            if (interactive) then
 	      call interactive_part(npart(i),iplotx,iploty,0,xplot(1:npart(i)), &
-	                            yplot(1:npart(i)),iadvance)
+	                            yplot(1:npart(i)),xmin,xmax,ymin,ymax,iadvance)
            endif
 	   
         elseif (iploty.le.numplot) then! ie iploty = extra
