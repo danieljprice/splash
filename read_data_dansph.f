@@ -139,7 +139,8 @@ c	 PRINT*,'data columns = ',nplot
       label(ipmass) = 'particle mass'      
       
       label(ndim + ndimV+6) = '\ga'
-      IF (magfield) THEN
+      IF (ncolumns.gt.ndim+ndimV+6) THEN
+         magfield = .true.
 	 iBfirst = ndim + ndimV+6+1	! location of Bx
 	 iBlast = ndim + ndimV+6+ndimV	! location of Bz      
          DO i=1,ndimV

@@ -20,7 +20,7 @@ SUBROUTINE exact_rhoh(hfact,ndim)
    yplot(i) = hfact/(xplot(i))**(1./FLOAT(ndim))
 !  print*,i,' x,y = ',xplot(i),yplot(i)
  ENDDO	      
- PRINT*,' plotting h = ',hfact,'/rho**ndim'
+ PRINT*,' plotting h = ',hfact,'/rho**(1/ndim)'
       
  CALL PGLINE(npts+1,xplot,yplot)    
       
