@@ -1,8 +1,14 @@
 \documentclass[a4paper,12pt]{article}
 \usepackage{natbib,epsfig,rotating,longtable,url,amsmath}
+\usepackage{varioref}
+%% font
+%%\usepackage{mathptmx}
 
+\begin{titlepage}
 \title{Visualisation of SPH data using SUPERSPHPLOT - v1.0}
 \author{Daniel Price}
+\end{titlepage}
+
 
 \begin{document}
 \maketitle
@@ -10,36 +16,6 @@
 
 \newpage
 \section{Introduction}
-SUPERSPHPLOT is a utility for visualisation of output from (astrophysical) simulations using the
-Smoothed Particle Hydrodynamics (SPH) method in one, two and three dimensions. It is written entirely in Fortran 90 and
-utilises PGPLOT subroutines to do the actual plotting. In particular the following
-features are included:
-\begin{itemize}
-\item Rendering of particle data to an array of pixels using the SPH kernel
-\item Cross-sections through 2D and 3D data (as both particle plots and rendered
-images).
-\item Fast projections through 3D data (ie. column density plots, or integration of
-other quantities along the line of sight)
-\item Vector plots of the velocity (and other vector quantities), including vector
-plots in a cross section slice in 3D.
-\item Rotation and fly-throughs (multiple cross-section slices) of 3D data.
-\item Automatic stepping through timesteps, making animations simple to produce.
-\item Interactive mode for detailed examination of timestep data (e.g. plotting
-particle labels, working out the gradient of a line, stepping forwards/backwards
-through timesteps)
-\item Multiple plots on page, including option to automatically tile plots if $y-$ and $x-$ limits
-are the same.
-\item Plot limits can be fixed, adaptive or particle tracking. Also simple to change
-axes to log, invert, square root or absolute of a quantity.
-\item Exact solutions for common SPH test problems (e.g. hydrodynamic shock tubes,
-polytropes).
-\item Calculation of quantities not dumped (e.g. pressure)
-\item Transformation to different co-ordinate systems (for both co-ordinates and
-vector components).
-\item Straightforward production of GIF and Postscript images.
-\end{itemize}
-
-\subsection{Why should I use it?}
  Whilst many wonderful commercial software packages exist for visualising scientific
 data (such as the widely used Interactive Data Language), I found that such packages
 could be somewhat cumbersome for the manipulation and visualisation of my SPH data. The
@@ -60,7 +36,59 @@ visualisation tools has enabled me to pick up on effects present in my
 simulation results that I would not otherwise have noticed (in particular the
 difference between a raw particle plot and a rendered image can be substantial).
 
+\subsection{What it does}
+SUPERSPHPLOT is a utility for visualisation of output from (astrophysical) simulations using the
+Smoothed Particle Hydrodynamics (SPH) method in one, two and three dimensions.
+It is written in FORTRAN 90 and
+utilises PGPLOT subroutines to do the actual plotting. In particular the following
+features are included:
+\begin{itemize}
+\item Rendering of particle data to an array of pixels using the SPH kernel
+\item Cross-sections through 2D and 3D data (as both particle plots and rendered
+images).
+\item Fast projections through 3D data (ie. column density plots, or integration of
+other quantities along the line of sight)
+\item Vector plots of the velocity (and other vector quantities), including vector
+plots in a cross section slice in 3D.
+\item Rotation and fly-throughs (multiple cross-section slices) of 3D data.
+\item Automatic stepping through timesteps, making animations simple to produce.
+\item Interactive mode for detailed examination of timestep data (e.g. zooming,
+rotating, plotting particle labels, working out the gradient of a line, stepping forwards/backwards
+through timesteps)
+\item Multiple plots on page, including option to automatically tile plots if $y-$ and $x-$ limits
+are the same.
+\item Plot limits can be fixed, adaptive or particle tracking. Also simple to change
+axes to log, invert, square root or absolute of a quantity.
+\item Exact solutions for common SPH test problems (e.g. hydrodynamic shock tubes,
+polytropes).
+\item Calculation of quantities not dumped (e.g. pressure)
+\item Transformation to different co-ordinate systems (for both co-ordinates and
+vector components).
+\item Straightforward production of GIF and Postscript images which can then be
+converted into animations.
+\end{itemize}
+
+\subsection{What it doesn't do}
+At the moment SUPERSPHPLOT is designed specifically for gas dynamics
+simulations with SPH and has basically grown out of my visualisation needs.
+However as other applications arise other features may be needed which have not
+yet been included. In particular the following have not been addressed
+specifically:
+\begin{itemize}
+\item Incompressible flows.   One of the most obvious extensions is to the visualisation
+of incompressible SPH data (e.g. water), although many of the interpolation routines should work just the same. 
+\item Full 3D plotting. Visualisation in 3D is achieved by taking cross-sections
+and projections through the SPH data. Similarly 2D data is plotted by means of
+rendered images. At present there are no capabilities for surface plots or cubes
+with faces showing cross sections and the like. However
+particle plots can be plotted in a three dimensional manner using the rotation
+feature (in this case 3D rotated axes/boxes are plotted appropriately).
+\item It also doesn't make cappucinos.
+\end{itemize}
+
 \subsection{Version History}
+
+\paragraph{Version 1.0}
  This is the pre-public-release (Guinea-pig) version.
 
 \section{Gallery}
@@ -89,7 +117,7 @@ used by SUPERSPHPLOT, we refer the reader to the PGPLOT userguide:
 \url{http://www.astro.caltech.edu/~tjp/pgplot/contents.html}
 \end{quote}
 
-\subsection{Compiling the code: Makefile options} 
+\subsection{Compiling the code: Makefile options}
  In the Makefile, you will need to set the FORTRAN compiler and flags to your local version, e.g..
 \begin{verbatim}
 F90C = f95
@@ -138,17 +166,52 @@ variables which can be set, refer to the PGPLOT user guide.
 \subsection{System dependent routines}
 The only system dependent subroutine is the call to \verb+getarg+ in
 \verb+supersphplot.f90+ which
-reads the run name(s) from the command line. A standardised format for performing this
+reads the run name(s) from the command line (see \S\vref{sec:commandline}). A standardised format for performing this
 task is included in the standards for the next release of Fortran (Fortran 2003),
 however in the meantime this call may require some adjustment depending on the
 particular system you are compiling the code on. The program is still fully
 functional without this call working, but it does make things convenient.
 
 \section{Reading data}
+ The most important part is getting SUPERSPHPLOT to read your data format. I
+have supplied subroutines for reading output from the publically available
+GADGET code (\verb+read_data_gadget.f90+) and also for Matthew Bate's SPH code
+(\verb+read_data_mbate.f90+) which is widely used in the UK. An example of a
+data read from ascii formatted files is given in \verb+read_data_dansph.f90+.
+The example data sets are supplied in the format I use to output my SPH data,
+given in \verb+read_data_dansph.f90+. Since the specifics of the data read can
+vary between codes, I recommend examining these subroutines before writing your
+own version.
 
-\subsection{Using the subroutines provided}
- The data format is specified in the subroutine read\_data.  
-The filename is input on the command line, ie.
+\subsection{Buffering of input}
+ An important point in writing your own subroutine is the manner in which
+SUPERSPHPLOT buffers the data (ie. how many timesteps are read in one go).
+SUPERSPHPLOT stores the data in a global array \verb+dat(maxpart,maxcol,maxsteps)+ (contained in
+the module \verb+particle_data+ in the \verb+globaldata.f90+ file), where
+\verb+npart+ is the maximum number of particles, \verb+maxcol+ is the maximum
+number of columns of data and \verb+maxsteps+ is the maximum number of steps
+which can be stored. Thus for low resolution calculations it is possible to
+simply read the entire data set into memory at program startup, with the
+advantage that the plot limits can be calculated from the whole data set. For
+calculations in 3D this quickly becomes impractical due to the memory
+constraints. Thus SUPERSPHPLOT `buffers' an appropriate number of timesteps depending on the
+particle number in the first step. Once the plotting loop reaches the end of
+this buffer (either by a straightforward loop or from interactively stepping
+forwards or backwards through the timesteps), the next (or previous)
+\verb+nbuffer+ steps are read. The exact implementation of the buffering depends
+on the data format. For example in the GADGET data read only one step is
+buffered (ie. we assume large data sets). In \verb+read_data_mbate+ each output
+file contains a number of dumps and this is the number of steps which is
+buffered. The plot limits are set according to the maximum and minimum of the
+various quantities in the initial data read (ie. the first \verb+nbuffer+ steps,
+read at startup). These settings can be overridden using the menu
+(\S\vref{sec:optionslimits}) or by editing
+the \verb+.limits+ file (c.f. \S\ref{sec:optionslimits}).
+
+\subsection{Using the command line}
+\label{sec:commandline}
+ Using one of the subroutines provided, invoke SUPERSPHPLOT with the name of the data
+file on the command line, e.g.
 \begin{verbatim}
 supersphplot myrun
 \end{verbatim}
@@ -162,6 +225,7 @@ supersphplot myrun*
 \end{verbatim}
 files will be read consecutively in the order that they are given.
 
+
 \subsection{Writing your own subroutine}
 The first \verb+ndim+ columns in the main data array \emph{must} contain the particle co-ordinates.
 After these columns the ordering of data is not important, although vector quantities should
@@ -173,103 +237,14 @@ numbers of dimensions (specified by \verb+ndim+ and \verb+ndimV+) since this can
 Most important is that, for the rendering routines to work, the density, particle
 masses and smoothing lengths for \emph{all} of the (gas) particles \emph{must} be read in from
 the data file and their locations in the main data array labelled using the global
-parameters $irho, ipmass$ and $ih$. Labelling of the location of other particle
-quantities (e.g. $iutherm$ for the thermal energy) is used in
+parameters \verb+irho+, \verb+ipmass+ and \verb+ih+. Labelling of the location of other particle
+quantities (e.g. \verb+iutherm+ for the thermal energy) is used in
 order to plot the exact solutions on the appropriate graphs and also for calculating
-additional quantities (e.g. calculation of the pressure uses $iutherm$ and $irho$).
+additional quantities (e.g. calculation of the pressure uses \verb+iutherm+ and
+\verb+irho+).
 
-\section{Program structure}
 
-defaults\_read
-
-get\_data
-
-set\_kerneltables
-
-calc\_quantities
-
-limits\_set
-
-menu
-
-main plotting loop
-
-options
-
-\subsection{Modules}
-
-\subsection{Subroutines}
-The program consists of the following subroutines (in alphabetical order):
-\begin{longtable}{|lcp{0.7\textwidth}|}
-\hline
-Subroutine &  & Description \\
-\hline \endhead
-\multicolumn{3}{|r|}{\emph{continued on next page}} \\
-\hline \endfoot
-\hline \endlastfoot
-allocate           & : & allocates memory for main arrays \\
-calc\_quantities    & : & calculates additional quantities from particle data\\
-colour\_demo        & : & demonstration of colour schemes for rendering\\
-colour\_set	 & : & sets up pgplot colour table for rendering\\
-coord\_transform    & : & transforms between various coord systems\\
-danpgsch           & : & sets character height independent of page size\\
-danpgtile          & : & my utility for tiling plots on the pgplot page\\
-danpgwedg          & : & my very minor modification of pgwedg\\
-defaults\_read	 & : & read default plot options from file\\
-defaults\_set	 & : & sets default plot options if not read from file\\
-defaults\_write	 & : & write default plot options to file\\
-exact\_fromfile     & : & reads an exact solution tabulated in a file\\
-exact\_mhdshock     & : & some tabulated solutions for mhd shocks \\
-exact\_polytrope    & : & exact solution for a polytrope\\
-exact\_rhoh	 & : & plots exact relation between density and smoothing length\\
-exact\_sedov        & : & exact solution for sedov blast wave\\
-exact\_shock        & : & exact solution for hydrodynamic shocks\\
-exact\_swave        & : & exact solution for a linear sound wave\\
-exact\_toystar      & : & exact solution for the toy star problem\\
-get\_data           & : & wrapper for main data read\\
-interactive\_part   & : & interactive utilities for particle plots\\
-interpolate1D	 & : & interpolation of 1D sph data to 1D grid using sph kernel\\
-interpolate2D	 & : & interpolation of 2D sph data to 2D grid using sph kernel  \\   
-interpolate2D\_xsec & : & oblique 1D cross section through 2D sph data using kernel\\
-interpolate3D	 & : & interpolation of 3D sph data to 3D grid using sph kernel\\
-interpolate3D\_fastxsec   & : & fast cross section through 3D data using sph kernel\\
-interpolate3D\_projection & : & fast projection of 3D data to 2D grid using integrated sph kernel\\
-interpolate3D\_xsec\_vec   & : & fast cross section of vector quantity in 3D data using kernel\\
-legend		       & : & plots legend on plot (time)\\
-limits\_read              & : & reads plot limits from file\\
-limits\_save              & : & saves plot limits to file\\
-limits\_set               & : & calculates plot limits\\
-main               & : & main plotting loop\\
-menu               & : & main menu\\
-modules		 & : & contains all shared (global) variables\\
-options\_data       & : & sets options relating to current data\\
-options\_exact	 & : & sets options and params for exact solution calculation/plotting\\
-options\_limits     & : & sets options relating to plot limits\\
-options\_page       & : & sets options relating to page setup\\
-options\_particleplots & : & sets options relating to particle plots\\
-options\_powerspec  & : & sets options for power spectrum plotting\\
-options\_render	 & : & sets options for render plots\\
-options\_vector	 & : & sets options for vector plots\\
-plot\_average	 & : & bins particles along x-axis and plots average line\\
-plot\_kernel\_gr     & : & plots the kernel shape in non-cartesian co-ordinates\\
-plot\_powerspectrum & : & calls powerspectrum and plots it\\
-powerspectrum\_fourier & : & calculates power spectrum of 1D data on ordered pts\\
-powerspectrum\_lomb & : & calculates power spectrum of 1D data on disordered pts\\
-read\_data\_dansph   & : & reads data from my format of data files\\
-read\_data\_mrbsph   & : & reads data from matthew bate's format of data files\\
-render	 	 & : & takes array of pixels and plots render map/contours etc\\
-riemannsolver      & : & Riemann solver (called by exact\_shock)\\
-setpage            & : & sets up the PGPLOT page (replaces call to PGENV/PGLAB)\\
-supersphplot	 & : & main program, drives menu loop\\
-titles\_read        & : & reads a list of titles to be used to label each timestep\\
-transform	 	 & : & applies various transformations to data (log10, 1/x, etc)\\
-vectorplot         & : & produces a vector plot from particle data
-\end{longtable}
-
-\subsection{Variables}
-\label{sec:variables}
-
-\section{Options}
+\section{Menu options}
  The program options may be changed in a series of submenus. The defaults for all of
 these options are initially set in the subroutine defaults\_set. The options set using
 the submenus can be saved using the (s)ave option from the menu. This saves all of
@@ -279,7 +254,16 @@ the namelist formatting option provided by Fortran 90. An alternative way of set
 options is to edit this file directly prior to invoking the program, referring to the
 variable list given in \S\ref{sec:variables} of this user guide. 
 
-\subsection{(m)ultiplot}
+\subsection{set (m)ultiplot}
+ The multiplot option enables plotting of several different plots on the same
+physical page. Plots with the same $x-$ and $y-$ axes are tiled if the tiling
+option from the (p)age options menu (\S\vref{sec:optionspage}) is set. Each plot
+can have independent $x-$ and $y-$ axes as well as a different rendering (cross
+section or projection) and/or vector plot. For rendered plots plotting of
+contours can be turned on/off between plots and for cross sections the position of
+the cross section can also be changed between plots. An alternative method for
+specifying a multiplot is to edit the \verb+defaults+ file directly prior to
+starting SUPERSPHPLOT.
 
 \subsection{(d)ata options}
 These options relate to the data read and are as follows:
@@ -295,18 +279,22 @@ interactive mode.
  The menu option turns on/off interactive mode. With this option turned on and
 an appropriate device selected (ie. the X-window, not /gif or /ps), after
 each plot the program waits for specific commands from the user. With the cursor
-positioned anywhere in the plot window, commands can be invoked using the
+positioned anywhere in the plot window (but not outside it!), commands can be invoked using the
 following keystrokes:
 
 \begin{tabular}{rcp{0.75\textwidth}}
  h & : & display/hide help text \\
+ left click & : & select area to zoom in on \\
+ + & : & zoom in by 10\% with plot centred on current cursor position \\
+ - & : & zoom out by 10\% with plot centred on current cursor position \\ 
+ s & : & save the current plot limits for all timesteps \\
  p & : & label the particle closest to the cursor position \\
  l & : & draw a connecting line between the closest particle and a second
  particle (to be selected) and calculate the slope of this line. \\
  r & : & replot the current plot. \\
- left click & : & advance to next timestep \\
+ space & : & advance to next timestep \\
  right click & : & go back to previous timestep \\
-  1,2,3..9 & : & on click, jump forward/backwards by $n$ timesteps \\
+  1,2,3..9 & : & on space/right click, jump forward/backwards by $n$ timesteps \\
   q & : & quit plotting 
 \end{tabular}
 
@@ -315,6 +303,7 @@ take effect on the last plot per timestep. Many more commands could be added to
 the interactive mode, limited only by your imagination. Please send me your suggestions!
 
 \subsection{(p)age options}
+\label{sec:optionspage}
  This submenu contains options relating to the PGPLOT page setup. The options are as follows:
 \begin{enumerate}
 \item \textbf{toggle page change}. (default=on) When turned off, no new page is
@@ -341,9 +330,12 @@ physical page.
 \item \textbf{toggle plot tiling}. When set, plots with more than one plot on
 the page and the same $y-$ and $x-$ axes are automatically tiled together.
 \item \textbf{adjust title position}. Adjusts the position of the title on
-each plot.
+each plot. To turn off plot titling, set the position outside the viewport (ie.
+enter some large numbers). For details of plot titling see \S\vref{sec:title}
 \item \textbf{adjust legend position}. Adjusts the position of the legend on
-each plot.
+each plot. Again, to turn off the legend, set the position outside of the
+viewport (ie. enter some large numbers). To customise the legend see
+\S\vref{sec:legend}
 \item \textbf{toggle animate}. When set, this turns off the prompting given
 before the page is changed. Does not apply in interactive mode, where the page
 changing can be controlled using the mouse. 
@@ -405,6 +397,7 @@ provided do).
 
 
 \subsection{plot (l)imits}
+\label{sec:optionslimits}
  The options for plot limits are as follows:
 \begin{enumerate}
 \item \textbf{toggle fixed/adaptive limits}. With limits set to adaptive, plot
@@ -485,22 +478,128 @@ supersphplot. The (h)elp option simply expands the text for the options menus (I
 may add to this soon). (q)uit, unsurprisingly, quits. Typing a number greater than the number of
 data columns also exits the program (e.g. I often simply type 99 to exit).
 
-\section{The guts}
+\section{Other features}
 
-\subsection{Rendering/contour plots}
+\subsection{Plot titles}
+\label{sec:title}
+ Plots may be titled individually by creating a file called \verb+titlelist+ in
+the current directory, with the title on each line corresponding to the position
+of the plot on the page. Thus the title is the same between timesteps unless the
+steps are plotted together on the same physical page. Leave blank lines for
+plots without titles. For example, creating a file called \verb+titlelist+ in
+the current directory, containing the text:
+\begin{verbatim}
+plot one
+plot two
+plot three
+lucky me
+
+oops
+\end{verbatim}
+and positioning the title using the default options, produces the titles shown
+on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the physical page).
+
+\begin{figure}
+\centering
+
+\caption{Example use of plot titles}
+\label{fig:titleexample}
+\end{figure}
+
+\subsection{Plot legends}
+\label{sec:legend}
+ Legends are a tricky business.
+
+
+\subsection{Rotation}
+ Rotation is achieved by tranforming to spherical co-ordinates, incrementing the
+azimuthal and tilt angles appropriately and transforming back to cartesians.
+An example of rotation of two dimensional data is shown in
+Figure~\ref{fig:examplerot2D} 
+\begin{figure}
+\centering
+
+\caption{Example of plot rotation in 2D}
+\label{fig:examplerot2D}
+\end{figure}
+
+An example of the rotation of 3D data to give a 3D particle plot is shown in
+Figure \ref{fig:examplepartrot3D}. Note the axes which have been rotated and
+plotted accordingly. 
+\begin{figure}
+\centering
+
+\caption{Example of particle plot rotation in 3D}
+\label{fig:examplepartrot3D}
+\end{figure}
+
+\subsection{Flythru}
+
+\subsection{Co-ordinate transformations}
+
+
+\subsection{Power spectrums (1D only)}
+ In one dimension an extra plot item appears
+in the data menu which takes a power spectrum (in space) of a particular
+variable defined on the particles. Upon selection the user is prompted for
+various settings before plotting the power spectrum. For data defined on
+irregularly distributed particles, there are two methods for taking the power
+spectrum: Either to interpolate to an even grid and use a Fourier
+transform or to use a method for calculating a periodogram of
+irregularly sampled data which can have significant advantages over
+interpolation. Algorithms for both of these methods have been
+implemented. For the first, the SPH data is interpolated to a one dimensional
+grid using the kernel via the \verb+interpolate1D+ subroutine before calculating the (slow!) fourier
+transform in \verb+powerspectrum_fourier+. For the second, an algorithm due to
+Lomb and \citet{scargle81} described in \citet{numericalrecipes} is
+used\footnote{Note that the subroutines given in \citet{numericalrecipes} have
+\emph{not} been used as they are not free software.},
+located in the subroutine \verb+powerspectrum_lomb+. The actual plotting is done
+in the subroutine \verb+plot_powerspectrum+. An example of this feature is shown
+in Figure~\ref{fig:powerspectrum_lomb}, where a power spectrum of a given
+spectral index has been defined on the particles as an initial condition. The
+plot shows the velocity variable given the initial power spectrum and the power
+spectrum calculated via the Lomb periodogram.
+\begin{figure}
+\centering
+
+\caption{Example of one dimensional power spectrum using the Lomb periodogram}
+\label{fig:powerspectrum_lomb}
+\end{figure}
+
+ It should be stressed, however, that \emph{neither} of the subroutines for
+calculating the power spectrum is particularly fast and have \emph{only} been included as a preliminary feature
+since I have used them once or twice in one dimensional simulations where speed
+is not an issue. The algorithms are fairly simple to extend to multidimensional
+data, although faster implementations would be needed (such as a Fast
+Fourier Transform routine).
+
+
+\section{Interpolation routines}
+
+\subsection{Two dimensional interpolation}
+\subsubsection{Rendering of 2D data}
  For a contour or rendered plot of a scalar quantity $\phi$ we
 interpolate from the particles to an array of pixels using the SPH summation
-interpolant.
-
-In two dimensions the interpolant is simply
+interpolant. In two dimensions the interpolant is simply
 \begin{equation}
 \phi(x,y) = \sum_b m_b \frac{\phi_b}{\rho_b} W(x - x_b, y-y_b, h_b)
 \end{equation}
-where $W$ is the usual cubic spline kernel and the summation is over
-contributing particles.
+where the summation is over contributing particles and $W$ is the standard cubic spline kernel, given by
+\begin{equation}
+W(q) = \frac{\sigma}{h^\nu}\left\{ \begin{array}{ll}
+1 - \frac{3}{2}q^2 + \frac{3}{4}q^3, & 0 \le q < 1; \\
+\frac{1}{4}(2-q)^3, & 1 \le q < 2; \\
+0 & q \ge 2 \end{array} \right.
+\end{equation}
+where $q = \vert {\bf r}_a - {\bf r}_b \vert / h$, $\nu$ is the number of spatial
+dimensions and the normalisation constant $\sigma$ is given by $2/3$, $10/(7\pi)$ and $1/\pi$ in
+1, 2 and 3 dimensions respectively.
 
 In three dimensions, we must either take a cross section or a projection
 through the data.
+
+\subsection{Projections through 3D data}
 
 \subsection{Cross sections}
 
@@ -515,6 +614,14 @@ sections can be taken by rotating the particles first.
  A routine is also provided to do cross sections of two dimensional data (ie. take one dimensional
 cross sections) (interpolate2D\_xsec). In this case the cross-section line can be arbitrarily
 specified. I will hopefully write an interactive version of this one day.
+\begin{figure}
+\begin{center}
+\epsfig{file=xsec3D.eps,width=0.5\textwidth}
+\caption{Computation of a two dimensional cross section through 3D data}
+\label{fig:xsec3D}
+\end{center}
+\end{figure}
+
 
 \subsubsection{Cross sections of 2D data}
 The cross-sectioning algorithm for 2D data (giving a 1D line) is slightly
@@ -550,7 +657,8 @@ the contribution using the SPH summation interpolant
 
 \begin{figure}
 \begin{center}
-%%\begin{turn}{270}\epsfig{file=xsec2D.ps,height=\textwidth}\end{turn}
+\epsfig{file=xsec2D.eps,width=0.5\textwidth}
+\caption{Computation of a one dimensional cross section through 2D data}
 \label{fig:xsec2D}
 \end{center}
 \end{figure}
@@ -569,25 +677,28 @@ through 3D data. In this case we would need to find the intersection
 between the smoothing sphere and the cross section plane. However
 in 3D it is simpler just to rotate the particles first and then take
 a straight cross section as described above.
+
 \subsection{Projections}
 
 
 \subsection{Vector plots}
-
-\subsection{Rotation}
-
-
-\subsection{Co-ordinate transformations}
-
+ 
 
 
 \section{FAQS: How do I...}
 
 \subsection{Read/process my data into images without having to answer prompts?}
 
-\subsection{Calculate additional quantities?}
 
-\subsection{Title the plots?}
+\subsection{Calculate additional quantities?}
+ Additional quantities are calculated in the subroutine \verb+calc_quantities+,
+in which it should be a simple matter to add your own.
+If the calculated quantity is to be used elsewhere (for example in an exact
+solution), an indicator should be created for its position in the data array
+(e.g. the integer variable \verb+ih+ refers to the position of the smoothing
+length in the data array). It is also preferable to indicate those quantities
+from which the new quantity is calculated, so that no error will occur if they
+are not present.
 
 \subsection{Use special characters in the plot labels?}
  Several of the examples shown in this manual use special characters (such as
@@ -665,6 +776,84 @@ which is used throughout the program.
 \newpage
 \appendix
 
+
+\section{Source code overview}
+ insert flowchart here
+
+\subsection{Modules}
+
+\subsection{Subroutines}
+The program consists of the following subroutines (in alphabetical order):
+\begin{longtable}{|lcp{0.7\textwidth}|}
+\hline
+Subroutine &  & Description \\
+\hline \endhead
+\multicolumn{3}{|r|}{\emph{continued on next page}} \\
+\hline \endfoot
+\hline \endlastfoot
+allocate           & : & allocates memory for main arrays \\
+calc\_quantities    & : & calculates additional quantities from particle data\\
+colour\_demo        & : & demonstration of colour schemes for rendering\\
+colour\_set	 & : & sets up pgplot colour table for rendering\\
+coord\_transform    & : & transforms between various coord systems\\
+danpgsch           & : & sets character height independent of page size\\
+danpgtile          & : & my utility for tiling plots on the pgplot page\\
+danpgwedg          & : & my very minor modification of pgwedg\\
+defaults\_read	 & : & read default plot options from file\\
+defaults\_set	 & : & sets default plot options if not read from file\\
+defaults\_write	 & : & write default plot options to file\\
+exact\_fromfile     & : & reads an exact solution tabulated in a file\\
+exact\_mhdshock     & : & some tabulated solutions for mhd shocks \\
+exact\_polytrope    & : & exact solution for a polytrope\\
+exact\_rhoh	 & : & plots exact relation between density and smoothing length\\
+exact\_sedov        & : & exact solution for sedov blast wave\\
+exact\_shock        & : & exact solution for hydrodynamic shocks\\
+exact\_swave        & : & exact solution for a linear sound wave\\
+exact\_toystar      & : & exact solution for the toy star problem\\
+get\_data           & : & wrapper for main data read\\
+interactive\_part   & : & interactive utilities for particle plots\\
+interpolate1D	 & : & interpolation of 1D sph data to 1D grid using sph kernel\\
+interpolate2D	 & : & interpolation of 2D sph data to 2D grid using sph kernel  \\   
+interpolate2D\_xsec & : & oblique 1D cross section through 2D sph data using kernel\\
+interpolate3D	 & : & interpolation of 3D sph data to 3D grid using sph kernel\\
+interpolate3D\_fastxsec   & : & fast cross section through 3D data using sph kernel\\
+interpolate3D\_projection & : & fast projection of 3D data to 2D grid using integrated sph kernel\\
+interpolate3D\_xsec\_vec   & : & fast cross section of vector quantity in 3D data using kernel\\
+legend		       & : & plots legend on plot (time)\\
+limits\_read              & : & reads plot limits from file\\
+limits\_save              & : & saves plot limits to file\\
+limits\_set               & : & calculates plot limits\\
+main               & : & main plotting loop\\
+menu               & : & main menu\\
+modules		 & : & contains all shared (global) variables\\
+options\_data       & : & sets options relating to current data\\
+options\_exact	 & : & sets options and params for exact solution calculation/plotting\\
+options\_limits     & : & sets options relating to plot limits\\
+options\_page       & : & sets options relating to page setup\\
+options\_particleplots & : & sets options relating to particle plots\\
+options\_powerspec  & : & sets options for power spectrum plotting\\
+options\_render	 & : & sets options for render plots\\
+options\_vector	 & : & sets options for vector plots\\
+plot\_average	 & : & bins particles along x-axis and plots average line\\
+plot\_kernel\_gr     & : & plots the kernel shape in non-cartesian co-ordinates\\
+plot\_powerspectrum & : & calls powerspectrum and plots it\\
+powerspectrum\_fourier & : & calculates power spectrum of 1D data on ordered pts\\
+powerspectrum\_lomb & : & calculates power spectrum of 1D data on disordered pts\\
+read\_data\_dansph   & : & reads data from my format of data files\\
+read\_data\_mrbsph   & : & reads data from matthew bate's format of data files\\
+render	 	 & : & takes array of pixels and plots render map/contours etc\\
+riemannsolver      & : & Riemann solver (called by exact\_shock)\\
+setpage            & : & sets up the PGPLOT page (replaces call to PGENV/PGLAB)\\
+supersphplot	 & : & main program, drives menu loop\\
+titles\_read        & : & reads a list of titles to be used to label each timestep\\
+transform	 	 & : & applies various transformations to data (log10, 1/x, etc)\\
+vectorplot         & : & produces a vector plot from particle data
+\end{longtable}
+
+\subsection{Variables}
+\label{sec:variables}
+
+
 \section{Exact solutions}
 \label{sec:exact}
 \subsection{Shock tubes (Riemann problem)}
@@ -721,13 +910,13 @@ P = K \rho^\gamma,
  The exact solutions provided assume the equations are scaled such that
 $\Omega^2 = 1$.
  
-\subsection{Static structure}
+\subsubsection{Static structure}
 The static structure is given by
 \begin{equation}
 \bar \rho = 1- x^2,
 \end{equation}
 
-\subsection{Linear solutions}
+\subsubsection{Linear solutions}
 The linear solution for the velocity is given by
 \begin{equation}
 v = 0.05 C_s G_n(x) \cos{\omega t} )
