@@ -29,6 +29,7 @@ program supersphplot
 !     interpolate3D	 : interpolation of 3D sph data to 3D grid using sph kernel
 !     interpolate3D_fastxsec   : fast cross section through 3D data using sph kernel
 !     interpolate3D_projection : fast projection of 3D data to 2D grid using integrated sph kernel
+!     interpolate3D_xsec_vec   : fast cross section of vector quantity in 3D data using kernel
 !     legend		       : plots legend on plot (time)
 !     limits                   : calculates plot limits
 !     main               : main plotting loop
@@ -60,7 +61,9 @@ program supersphplot
 !          email: dprice@ast.cam.ac.uk
 !
 !     this version for both ndspmhd and matthew bate's code 2003-2004
-!     changes log (for a full changelog see the CVS log - or use cvs2cl):
+!     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
+!
+!      31/05/04 - particle tracking limits, reads from Matthew's code       
 !      17/05/04 - reads multiple files consecutively, error catches in interpolate 
 !                 also tiling of plots using danpgtile
 !      21/04/04 - page setup moved out of main -> setpage, danpgtile added

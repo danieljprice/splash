@@ -22,9 +22,9 @@ subroutine options_limits
  endif
 10 format(' 0) exit ',/, 		&
         ' 1) toggle adaptive/fixed limits  ( ',L1,' )   ',/,  &
-        ' 2) set manual limits ',/, &
-	' 3) xy limits track particle      ( ',i8,' )   ',/,  &    	              &
-        ' 4) zoom in/out                   ( ',f4.2,' ) ',/,  &
+        ' 2) set manual limits ',/,     &
+	' 3) xy limits track particle      ( ',i8,' )   ',/,   &
+        ' 4) zoom in/out                   ( ',f4.2,' ) ',/,   &
         ' 5) apply transformations (log10,1/x) ')
  call prompt('enter option ',iaction,0,5)
 !
@@ -53,10 +53,14 @@ subroutine options_limits
  case(3)
     call prompt('Enter particle to track: ',itrackpart,0)
     print*,'tracking particle ',itrackpart
-    do i=1,ndim
-       call prompt('Enter offset for '//label(ix(i))//'min :',xminoffset_track(i)
-       call prompt('Enter offset for '//label(ix(i))//'max :',xmaxoffset_track(i)
-    enddo
+    if (itrackpart.gt.0) then
+       do i=1,ndim
+          call prompt('Enter offset for '//trim(label(ix(i)))//'min:', &
+                      xminoffset_track(i))
+          call prompt('Enter offset for '//trim(label(ix(i)))//'max :', &
+                      xmaxoffset_track(i))
+       enddo
+    endif
 !------------------------------------------------------------------------
  case(4)
     if (.not.iadapt) then

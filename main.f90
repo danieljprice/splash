@@ -319,10 +319,14 @@ subroutine main(ipicky,ipickx,irender)
               !--interpolate from particles to fixed grid using sph summation
               !		
               !--do not apply any transformations to the co-ordinates
-              xmin = lim(iplotx,1)
-              xmax = lim(iplotx,2)
-              ymin = lim(iploty,1)
-              ymax = lim(iploty,2)
+              !  (leave limits as is for particle tracking)
+	      if (itrackpart.le.0) then
+	         xmin = lim(iplotx,1)
+                 xmax = lim(iplotx,2)
+                 ymin = lim(iploty,1)
+                 ymax = lim(iploty,2)
+	      endif
+	      
               !!--determine number of pixels in rendered image (npix = pixels in x direction)
               pixwidth = (xmax-xmin)/real(npix)
               npixx = int((xmax-xmin)/pixwidth) + 1
