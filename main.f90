@@ -28,11 +28,12 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   integer :: ngrid
   integer :: just, ntitles
   integer :: iplots,iplotsonpage
+  integer :: index1,index2,itype
 
   character(len=8) :: string     ! used in pgplot calls
   real, parameter :: pi = 3.1415926536
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
-  real, dimension(maxpart) :: xplot,yplot
+  real, dimension(maxpart) :: xplot,yplot,zplot
   real, dimension(:), allocatable :: datpix1D, xgrid
   real, dimension(:,:), allocatable :: datpix,vecpixx,vecpixy
   real, dimension(:,:,:), allocatable :: datpix3D
@@ -45,7 +46,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   real :: dxgrid, anglerottemp, angletilttemp
   real, dimension(2) :: angles
 
-  logical :: iplotcont,x_sec,isamexaxis,isameyaxis
+  logical :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
   logical :: log, inewpage, tile_plots, debug, isave
 
   character(len=60) :: title,titlex
@@ -208,9 +209,10 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   !
   !--if plotting ghost particles, set ntotplot = ntot, else ntot=npart
   !
-  ntotplot(:) = npart(:)
-  if (iplotghost) ntotplot = npart(:) + nghost(:)
-  if (iplotsink) ntotplot = ntot(:)
+  ntotplot(:) = npartoftype(1,:)
+  if (labeltype(2)(1:5).eq.'ghost' .and. iplotpartoftype(2)) then
+     ntotplot = npartoftype(1,i) + npartoftype(2,i)
+  endif
   !
   !--set fill style for circle plots
   !      
@@ -298,10 +300,18 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 
            !--adjust plot limits if adaptive plot limits set
            if (ipagechange .and. iadapt .and. iadvance.ne.0) then
-              xmin = minval(xplot(1:ntotplot(i)))
-              xmax = maxval(xplot(1:ntotplot(i)))*scalemax
-              ymin = minval(yplot(1:ntotplot(i)))
-              ymax = maxval(yplot(1:ntotplot(i)))*scalemax
+              !--find maximum over all particle types being plotted
+	      index1 = 1
+	      do itype=1,maxparttypes
+	         index2 = index1 + npartoftype(itype,i) - 1
+	         if (iplotpartoftype(itype).and.npartoftype(itype,i).gt.0) then
+	            xmin = min(xmin,minval(xplot(index1:index2)))
+                    xmax = max(xmax,maxval(xplot(index1:index2))*scalemax)
+                    ymin = min(ymin,minval(yplot(index1:index2)))
+                    ymax = max(ymax,maxval(yplot(index1:index2))*scalemax)
+	         endif
+		 index1 = index2 + 1
+	      enddo
 	   endif
 
            !!-reset co-ordinate plot limits if particle tracking           
@@ -662,110 +672,16 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  !-----------------------
                  ! particle plots
                  !-----------------------
-                 !
-                 !--if particle cross section, plot particles only in a defined coordinate range
-                 !
-                 if (ndim.gt.2 .and. x_sec.and.iplotpart) then
-                    do j=1,npart(i)
-                       if ((dat(j,ixsec,i).lt.xsecmax) &
-                            .and.(dat(j,ixsec,i).gt.xsecmin)) then
-                          call pgpt(1,xplot(j),yplot(j),imark)
-                          !!--plot circles of interaction
-                          if (plotcirc) then
-                             call pgcirc(xplot(j),yplot(j),2.*dat(j,ih,i))
-                          endif
-                          if (ilabelpart) then
-                             !!--plot particle labels
-                             call pgnumb(j,0,1,string,nc)
-                             call pgsch(0.5*charheight)
-                             call pgtext(xplot(j),yplot(j),string(1:nc))
-                             call pgsch(charheight)
-                          endif! ilabelpart
-                       endif
-                    enddo
-                    !!--plot ghosts using different marker
-                    do j=npart1,ntotplot(i)
-                       if ((dat(j,ixsec,i).lt.xsecmax) &
-                            .and.(dat(j,ixsec,i).gt.xsecmin)) then
-                          call pgpt(1,xplot(j),yplot(j),imarkg)
-                          if (ilabelpart) then
-                             !!--plot ghost labels
-                             call pgnumb(j,0,1,string,nc)
-                             call pgsch(0.5*charheight)
-                             call pgtext(xplot(j),yplot(j),string(1:nc))
-                             call pgsch(charheight)
-                          endif! ilabelpart
-                       endif
-                    enddo
-
-                 else          
-                    !
-                    !--or simply plot all particles
-                    !
-                    !!--plot particle positions
-                    if (iplotpart) then
-		       if (debug) print*,'plotting particles'
-                       call pgpt(npart(i),xplot(1:npart(i)),yplot(1:npart(i)),imark)
-                    endif
-                    !!--plot ghost particles with different marker
-                    if (iplotpart .and. iplotghost .and. nghost(i).gt.0) then
-		       if (debug) print*,'plotting ',nghost(i),'ghosts'
-                       nghoststart = npart(i) + 1
-                       nghostend = npart(i) + nghost(i)
-                       call pgpt(nghost(i),xplot(nghoststart:nghostend), &
-                            yplot(nghoststart:nghostend),imarkg)         
-                    endif
-                    !!--plot circles of interaction (circles of radius 2h around each particle)
-                    if (plotcirc) then  
-                       if (plotcircall) then
-                          print*,'plotting circles of interaction',npart(i) 
-                          do j=1,npart(i)
-                             call pgcirc(xplot(j),yplot(j),2.*dat(j,ih,i))
-                          enddo
-                       else
-                          print*,'plotting circles of interaction',ncircpart
-                          do n = 1,ncircpart   
-                             if (icoords.gt.1) then   
-                                call plot_kernel_gr(icoords,xplot(icircpart(n)),  &
-                                     yplot(icircpart(n)),2*dat(icircpart(n),ih,i))
-                             else
-                                call pgcirc(xplot(icircpart(n)),  &
-                                     yplot(icircpart(n)),2*dat(icircpart(n),ih,i))
-                             endif
-                          enddo
-                       endif
-                    endif
-                    if (ilabelpart) then
-                       !!--plot particle labels
-                       print*,'plotting particle labels ',ntotplot(i)
-                       do j=1,ntotplot(i)
-                          call pgnumb(j,0,1,string,nc)
-                          call pgsch(0.5*charheight)
-                          call pgtext(xplot(j),yplot(j),string(1:nc))
-                          call pgsch(charheight)
-                       enddo
-                    endif! ilabelpart
-
-                 endif! if x_sec else    
-              endif! if irender
-              !-----------------------------------------------------------------------------
-              ! sink particles (want these to appear on both particle plots and renderings)
-              !-----------------------------------------------------------------------------
-
-              !--plot sink particles with different marker again
-
-              nsink = ntot(i) - nghost(i) - npart(i)
-              if (debug) print*,'nsink = ',nsink
-	      if (iplotsink .and. nsink.gt.0) then
-                 nsinkstart = npart(i) + nghost(i) + 1
-                 nsinkend = ntot(i)
-                 print*,' plotting ',nsink,' sink particles...'
-                 call pgsci(2)
-                 call pgsch(2.*charheight)
-                 call pgpt(nsink,xplot(nsinkstart:nsinkend), &
-                      yplot(nsinkstart:nsinkend),imarksink) 
-                 call pgsch(charheight)
-                 call pgsci(1)
+		 if (iplotpart) then		 
+		    if (ixsec.ne.0) then
+		       zplot(1:ntot(i)) = dat(1:ntot(i),ixsec,i)
+		    else
+		       zplot = 0.
+		    endif
+		    call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
+		      zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
+		      npartoftype(:,i),x_sec,xsecmin,xsecmax)
+		 endif
               endif
 
               !--------------------------------------------------------------
@@ -800,7 +716,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                     
                     !!--plot arrows in either background or foreground colour
                     if (UseBackgndColorVecplot) call pgsci(0)
-                    
+                    !!--allocate memory for interpolated vector components
 		    if (allocated(vecpixx)) deallocate(vecpixx)
 		    if (allocated(vecpixy)) deallocate(vecpixy)
 		    allocate(vecpixx(npixvec,npixyvec),stat=ierr)
@@ -821,10 +737,10 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 		          !
 			  !--or interpolate (via averaging) to coarser grid
 			  !
-                          call interpolate_vec(xplot(1:ntotplot(i)),yplot(1:ntotplot(i)), &
-                            dat(1:ntotplot(i),ivecx,i),dat(1:ntotplot(i),ivecy,i), &
+                          call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
+                            dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
 			    xmin,ymin,pixwidth,vecpixx,vecpixy, &
-                            ntotplot(i),npixvec,npixyvec)		       
+                            ninterp,npixvec,npixyvec)		       
 		       endif
 		       !
 		       !--plot rendered vector map
@@ -918,67 +834,27 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            !--------------------------------
            ! now plot particles
            !--------------------------------
+           
+	   !--plot time on plot
+           if (nyplot.eq.1) call legend(time(i),hposlegend,vposlegend)
+ 
+	   if (ixsec.ne.0) then
+	      zplot(1:ntot(i)) = dat(1:ntot(i),ixsec,i)
+	   else
+	      zplot = 0.
+	   endif
+	   call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
+		zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
+		npartoftype(:,i),.false.,xsecmin,xsecmax)
 
            if ((i.eq.nstart).and.iplotlinein) then! plot initial conditions as dotted line
               call pgsls(linestylein)
-           else
-              !--plot time on plot
-              if (nyplot.eq.1) call legend(time(i),hposlegend,vposlegend)
-              !--plot particles
-              call pgsls(1)
-              call pgsch(1.0)! reset character height before plotting particles
-              call pgpt(npart(i),xplot(1:npart(i)),yplot(1:npart(i)),imark)
-           endif
+	   endif
+
            !--plot line joining the particles
            if (iplotline.or.(iplotlinein.and.(i.eq.nstart))) then
               call pgline(npart(i),xplot(1:npart(i)),yplot(1:npart(i)))     
            endif
-           !--plot ghost particles with different marker
-           if (iplotghost.and.nghost(i).gt.0) then
-              nghoststart = npart(i) + 1
-              nghostend = npart(i) + nghost(i)
-              call pgpt(nghost(i),xplot(nghoststart:nghostend), &
-                   yplot(nghoststart:nghostend),imarkg)
-           endif
-           !--plot sink particles with different marker again
-           nsink = ntot(i) - npart(i) - nghost(i)
-           nsinkstart = npart(i) + nghost(i) + 1
-           nsinkend = ntot(i)
-           if (iplotsink .and. nsink.gt.0) then
-              print*,'plotting ',nsink,' sinks...'
-              call pgpt(nsink,xplot(nsinkstart:nsinkend), &
-                   yplot(nsinkstart:nsinkend),imarksink) 
-           endif
-           !--plot circles of interaction (error bar of length 2h on co-ordinate axis)
-           if (plotcirc) then
-              !!--on all particles      
-              if (plotcircall) then
-                 if (iplotx.le.ndim) then
-                    print*,'plotting error bars x axis',npart(i) 
-                    call pgerrb(5,npart(i),xplot(1:npart(i)), &
-                         yplot(1:npart(i)),2.*dat(1:npart(i),ih,i),1.0)
-                 elseif (iploty.le.ndim) then
-                    print*,'plotting error bars y axis',npart(i) 
-                    call pgerrb(6,npart(i),xplot(1:npart(i)), &
-                         yplot(1:npart(i)),2.*dat(1:npart(i),ih,i),1.0)
-                 endif
-              else 
-                 !!--only on specified particles
-                 do n=1,ncircpart
-                    if (iplotx.le.ndim) then
-                       print*,'plotting error bar x axis',icircpart(n)
-                       call pgerrb(5,1,xplot(icircpart(n)), &
-		            yplot(icircpart(n)), &
-			    (2.*dat(icircpart(n):icircpart(n),ih,i)),1.0)
-                    elseif (iploty.le.ndim) then
-                       print*,'plotting error bar y axis',icircpart(n)
-                       call pgerrb(6,1,xplot(icircpart(n)),yplot(icircpart(n)), &
-                            (2.*dat(icircpart(n):icircpart(n),ih,i)),1.0)      
-                    endif
-                 enddo
-              endif
-           endif
-
            call pgsls(1)! reset 
            call pgsch(charheight)
            !
@@ -986,18 +862,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            !
            if (iplotav) call plot_average(xplot(1:npart(i)), &
                 yplot(1:npart(i)),npart(i),nbins)
-           !
-           !--plot particle labels
-           !
-           if (ilabelpart) then
-              print*,'plotting particle labels ',ntotplot(i)
-              do j=1,ntotplot(i)
-                 call pgnumb(j,0,1,string,nc)
-                 call pgsch(0.5*charheight)
-                 call pgtext(xplot(j),yplot(j),string(1:nc))
-                 call pgsch(charheight)
-              enddo
-           endif! ilabelpart
            !
            !--enter interactive mode
            !

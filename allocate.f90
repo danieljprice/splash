@@ -16,7 +16,7 @@ subroutine alloc(npartin,nstep,ncolumns)
   logical :: reallocate
   integer, dimension(:), allocatable :: nparttemp,ntottemp,nghosttemp
   integer, dimension(:), allocatable :: ntotplottemp
-  integer, dimension(:,:), allocatable :: iamtemp
+  integer, dimension(:,:), allocatable :: iamtemp, npartoftypetemp
   real, dimension(:), allocatable :: timetemp, gammatemp
   real, dimension(:,:,:), allocatable :: dattemp
 !
@@ -52,12 +52,13 @@ subroutine alloc(npartin,nstep,ncolumns)
      deallocate(dat,iam)
 
      allocate(nparttemp(maxstep),ntottemp(maxstep),nghosttemp(maxstep))
-     allocate(ntotplottemp(maxstep))
+     allocate(ntotplottemp(maxstep),npartoftypetemp(maxparttypes,maxstep))
      nparttemp = npart
      ntottemp = ntot
      nghosttemp = nghost
      ntotplottemp = ntotplot
-     deallocate(npart,ntot,nghost,ntotplot)
+     npartoftypetemp = npartoftype
+     deallocate(npart,ntot,nghost,ntotplot,npartoftype)
 
      allocate(timetemp(maxstep),gammatemp(maxstep))
      timetemp = time
@@ -96,7 +97,7 @@ subroutine alloc(npartin,nstep,ncolumns)
 !--other arrays
 !
   allocate(npart(maxstep),ntot(maxstep),nghost(maxstep),stat=ierr)
-  allocate(ntotplot(maxstep),stat=ierr)
+  allocate(ntotplot(maxstep),npartoftype(maxparttypes,maxstep),stat=ierr)
   allocate(time(maxstep),gamma(maxstep),stat=ierr)
   if (ierr.ne.0) stop 'error allocating memory for header arrays'
   if (reallocate) then
@@ -104,9 +105,10 @@ subroutine alloc(npartin,nstep,ncolumns)
      ntot(1:maxstepold) = ntottemp(1:maxstepold)
      nghost(1:maxstepold) = nghosttemp(1:maxstepold)
      ntotplot(1:maxstepold) = ntotplottemp(1:maxstepold)
+     npartoftype(:,1:maxstepold) = npartoftypetemp(:,1:maxstepold)
      time(1:maxstepold) = timetemp(1:maxstepold)
      gamma(1:maxstepold) = gammatemp(1:maxstepold)
-     deallocate(nparttemp,ntottemp,nghosttemp,ntotplottemp)
+     deallocate(nparttemp,ntottemp,nghosttemp,ntotplottemp,npartoftypetemp)
      deallocate(timetemp,gammatemp)
   endif
 

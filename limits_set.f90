@@ -11,7 +11,7 @@ subroutine set_limits
 
   print*,'setting plot limits...'
   ntotplot(nstart:n_end) = npart(nstart:n_end)
-  if (iplotghost) ntotplot(nstart:n_end) = ntot(nstart:n_end)
+  if (any(iplotpartoftype(2:ntypes))) ntotplot(nstart:n_end) = ntot(nstart:n_end)
   zoom = 1.0
   !!--find limits of particle properties	  
   lim(:,1) = 1.e6

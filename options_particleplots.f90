@@ -1,26 +1,27 @@
 !!
 !! sub-menu with utilities relating to particle plots
 !!
-subroutine options_particleplots   
+subroutine options_particleplots
+  use labels
   use settings
   use particle_data
   use prompting
   implicit none
-  integer :: iaction,n
+  integer :: iaction,n,itype
   character(LEN=1) :: ans
 
   iaction = 0      
   print 10, iplotline,iplotlinein,iplotav,ilabelpart,plotcirc, &
-        iplotghost,iplotsink,imark,imarkg,icoordsnew,iexact
+        iplotpartoftype,imarktype,icoordsnew,iexact
 10  format(' 0) exit ',/, 		&
-         ' 1) toggle plot line                ( ',L1,',',1x,L1,' ) ',/, &
-         ' 2) toggle plot average line        ( ',L1,' ) ',/,           &
-         ' 3) toggle label particles          ( ',L1,' ) ',/,           &
-         ' 4) toggle circles of interaction   ( ',L1,' ) ',/,           &
-         ' 5) toggle plot ghosts/sinks        ( ',L1,',',1x,L1,' )',/,  &
-         ' 6) change graph markers            ( ',i2,',',1x,i2,' )',/,  &
-         ' 7) change coordinate systems       ( ',i2,' ) ',/,           &
-	 ' 8) toggle exact solution           ( ',i2,' ) ')
+         ' 1) toggle plot line                   ( ',L1,',',1x,L1,' ) ',/, &
+         ' 2) toggle plot average line           ( ',L1,' ) ',/,           &
+         ' 3) toggle label particles             ( ',L1,' ) ',/,           &
+         ' 4) toggle circles of interaction      ( ',L1,' ) ',/,           &
+         ' 5) toggle plot particles by type      ( ',6(L1,',',1x)' )',/,  &
+         ' 6) change graph markers for each type ( ',6(i2,',',1x)' )',/,  &
+         ' 7) change coordinate systems          ( ',i2,' ) ',/,           &
+	 ' 8) toggle exact solution              ( ',i2,' ) ')
     call prompt('enter option',iaction,0,8)
 !
   select case(iaction)
@@ -70,19 +71,18 @@ subroutine options_particleplots
      return 	  
 !------------------------------------------------------------------------
   case(5)
-     !	  plot ghost particles?
-     call prompt('Plot ghost particles? ',iplotghost)
-     call prompt('Plot sink particles? ',iplotsink)
-     print*,' plot ghost particles = ',iplotghost
-     print*,' plot sink particles = ',iplotsink
-     if (iplotghost) ntotplot(:) = npart(:) + nghost(:)
+     !	  plot particles by type?
+     do itype=1,ntypes
+        call prompt('Plot '//trim(labeltype(itype))//' particles?',iplotpartoftype(itype))
+     enddo
      return 	  
 !------------------------------------------------------------------------
   case(6)
      print*,'(0: Square 1: . 2: + 3: * 4: o 5: x 17: bold circle)'
-     call prompt(' Enter PGPLOT marker # (particles):',imark)
-     call prompt(' Enter PGPLOT marker # (ghosts)   :',imarkg)
-     call prompt(' Enter PGPLOT marker # (sinks)    :',imarksink)
+     do itype=1,ntypes
+        call prompt(' Enter PGPLOT marker for '//trim(labeltype(itype)) &
+	     //' particles:',imarktype(itype))
+     enddo
      return
 !------------------------------------------------------------------------
   case(7)

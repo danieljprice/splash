@@ -19,7 +19,7 @@ module particle_data
  implicit none
  integer :: maxpart,maxstep,maxcol ! dimensions of dat array
  integer, allocatable, dimension(:) :: npart,ntot,nghost,ntotplot
- integer, allocatable, dimension(:,:) :: iam
+ integer, allocatable, dimension(:,:) :: iam,npartoftype
  real, allocatable, dimension(:) :: time, gamma
  real, allocatable, dimension(:,:,:) :: dat
  real :: hfact 
@@ -41,6 +41,7 @@ module labels
  implicit none
  character(len=20), dimension(maxplot+2) :: label
  character(len=7), dimension(3,3) :: labelcoord
+ character(len=20), dimension(maxparttypes) :: labeltype
  integer, dimension(3) :: ix
  integer :: ivx,ivlast,irho,iutherm,ipr,ih,irad,ibfirst,iblast
  integer :: ipmass
@@ -68,27 +69,32 @@ module settings
  integer :: numplot,ncalc,ncolumns,nextra
  integer :: ndataplots
  integer :: ndim, ndimv 
- integer :: imark, imarkg, imarksink
- integer :: ixsec,nxsec, nbins,nc
- integer :: linestylein, iexact
- integer :: ncolours,nstart,n_end,nfreq
  integer :: icoords,icoordsnew
- integer :: ncircpart, itrackpart
- integer, dimension(10) :: icircpart
- integer :: icolours
+ logical :: ishowopts, imulti
 !
 !--limits
 ! 
+ integer :: itrackpart
  real :: scalemax,zoom
  real, dimension(3) :: xminoffset_track, xmaxoffset_track
-
-!--plot options
- logical :: iadapt,ihavereadfilename
- logical :: plotcirc,plotcircall,flythru,imulti
- logical :: iplotline,iplotlinein,iplotav,ilabelpart
- logical :: iplotpart,iplotghost,iplotsink
- !!logical, dimension(maxparttypes) :: iplotparttype
- logical :: ishowopts, ivegotdata
+ logical :: iadapt
+!
+!--data options
+!
+ integer :: nstart,n_end,nfreq
+ logical :: ihavereadfilename, ivegotdata
+!
+!--particle plot options
+!
+ integer :: ntypes
+ integer, dimension(maxparttypes) :: imarktype
+ integer :: ncircpart
+ integer, dimension(10) :: icircpart
+ integer :: nbins,nc
+ integer :: linestylein, iexact
+ logical, dimension(maxparttypes) :: iplotpartoftype
+ logical :: plotcirc,plotcircall
+ logical :: iplotline,iplotlinein,iplotav,ilabelpart 
 !
 !--page options
 !
@@ -99,7 +105,7 @@ module settings
 !
 !--rendering options
 !
- integer :: ncontours,npix
+ integer :: ncontours,npix,icolours,ncolours
  logical :: iplotcont_nomulti
  logical :: iPlotColourBar
 !
@@ -110,7 +116,8 @@ module settings
 !
 !--cross section/rotation options
 !
- logical :: xsec_nomulti, irotate
+ integer :: ixsec,nxsec
+ logical :: xsec_nomulti, irotate, flythru
  real :: anglerot, angletilt
  real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
  real, dimension(3) :: xorigin
@@ -126,9 +133,9 @@ module settings
  namelist /plotopts/ &
    iadapt,xsec_nomulti,flythru, &
    plotcirc,iplotline,iplotlinein,linestylein,          &
-   imark, imarkg, imarksink,                            &
+   imarktype,iplotpartoftype,                            &
    iexact,iplotav,nbins,                                &
-   icolours,iplotghost,iplotsink,                       &
+   icolours,                      &
    ipowerspecy,idisordered,wavelengthmax,nfreqspec,icoordsnew, &
    ncircpart,icircpart
 
@@ -198,7 +205,7 @@ module exact_params
 end module exact_params
 !
 !--tabulated column density through the kernel 
-!  (used in interpolate3d_projection)
+!  (used in interpolate3D_projection)
 !
 module column
  implicit none

@@ -63,9 +63,6 @@ subroutine defaults_set
   plotcircall = .false.	!  " " around all particle
   icircpart = 1		!  " " around a specific particle
   ncircpart = 1
-  imark = 1	! PGPLOT marker for particles
-  imarkg = 4	! PGPLOT marker for ghost particles
-  imarksink = 17	! PGPLOT marker for sink particles 
   iplotline = .false.	! plot line joining the particles
   iplotlinein = .false.	! " " but on first step only
   linestylein = 4		! PGPLOT line style for above
@@ -73,10 +70,20 @@ subroutine defaults_set
   iplotav = .false.		! plot average line through particles
   nbins = 24		! number of bins for this
   ilabelpart = .false.	! plot particle numbers
-  iplotpart = .true.	! flag whether or not to plot actual SPH particles
   iplotpartvec = .true.	! whether to plot particles on vector plot
-  iplotghost = .true.	! plot ghost particles
-  iplotsink = .true.	! plot sink particles
+  
+  iplotpartoftype(1) = .true. ! whether or not to plot particles of certain types
+  iplotpartoftype(2:maxparttypes) = .false.
+  imarktype = 1	      ! PGPLOT marker for all particles
+  imarktype(2) = 4    ! PGPLOT marker for ghost/dark matter particles
+  imarktype(3) = 17   ! PGPLOT marker for sink particles 
+  labeltype(1) = 'gas'
+  labeltype(2) = 'type 2'
+  labeltype(3) = 'type 3'
+  labeltype(4) = 'type 4'
+  labeltype(5) = 'type 5'
+  labeltype(6) = 'type 6'
+  
 !
 !--render options
 !

@@ -41,7 +41,7 @@ subroutine read_data(rootname,istart,nfilesteps)
   character(LEN=*), intent(IN) :: rootname
   character(LEN=LEN(rootname)+10) :: datfile
   character(LEN=2) :: fileno
-  integer*4, dimension(6) :: Npartoftype
+  integer*4, dimension(6) :: Npartoftypetemp
   integer, dimension(:), allocatable :: iamtemp
   integer :: i,j,itype,icol,ifile,idashpos,ioftype
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
@@ -112,11 +112,11 @@ subroutine read_data(rootname,istart,nfilesteps)
      !
      !--read header for this timestep
      !
-     read(11,ERR=70,end=80) Npartoftype,Massoftype,timetemp 
-     print*,'Npartoftype =',Npartoftype
+     read(11,ERR=70,end=80) Npartoftype(:,i),Massoftype,timetemp 
+     print*,'Npartoftype =',Npartoftype(:,i)
      ntot(i) = int(sum(Npartoftype))
-     npart(i) = int(Npartoftype(1))
-     print*,'Npartoftype =',Npartoftype
+     npart(i) = int(Npartoftype(1,i))
+     print*,'Npartoftype =',Npartoftype(:,i)
      print*,'Massoftype = ',Massoftype
      time(i) = real(timetemp)
      print*,'t = ',time(i),' npart, ntot = ',npart(i),ntot(i)
@@ -176,7 +176,7 @@ subroutine read_data(rootname,istart,nfilesteps)
 	Nmassesdumped = 0
 	do itype = 1,6
 	   if (abs(Massoftype(itype).lt.1.e-8)) then
-	      Nmassesdumped = Nmassesdumped + Npartoftype(itype)
+	      Nmassesdumped = Nmassesdumped + Npartoftype(itype,i)
 	   endif
 	enddo
 	print*,'particle masses ',Nmassesdumped
@@ -190,11 +190,11 @@ subroutine read_data(rootname,istart,nfilesteps)
 	index1 = 1
 	
 	do itype=1,6
-	   if (Npartoftype(itype).ne.0) then
-	      index2 = index1 + Npartoftype(itype) -1
+	   if (Npartoftype(itype,i).ne.0) then
+	      index2 = index1 + Npartoftype(itype,i) -1
 	      if (abs(Massoftype(itype)).lt.1.e-8) then ! masses dumped
-	         indexend = indexstart + Npartoftype(itype) - 1
-	         print*,'read ',Npartoftype(itype),' masses for type ', &
+	         indexend = indexstart + Npartoftype(itype,i) - 1
+	         print*,'read ',Npartoftype(itype,i),' masses for type ', &
 		        itype,index1,'->',index2,indexstart,'->',indexend
 	         dat(index1:index2,7,i) = dattemp1(indexstart:indexend)
 	      else  ! masses not dumped
@@ -302,6 +302,13 @@ subroutine read_data(rootname,istart,nfilesteps)
   label(11) = 'N\dH'
   label(ih) = 'h'
   label(ipmass) = 'particle mass'
+  
+  !--set number of particle types
+  !
+  ntypes = maxparttypes
+  labeltype(1) = 'gas'
+  labeltype(2) = 'dark matter'
+  labeltype(5) = 'star'
 
 !-----------------------------------------------------------
 
@@ -311,7 +318,7 @@ subroutine read_data(rootname,istart,nfilesteps)
 !
 70 continue
   print*,' *** Error encountered while reading timestep header ***'
-  print*,' Npartoftype = ',Npartoftype
+  print*,' Npartoftype = ',Npartoftype(:,i)
   print*,' Massoftype = ',Massoftype
   return
 
