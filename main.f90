@@ -24,6 +24,7 @@ subroutine main(ipicky,ipickx,irender)
   integer :: nsink,nsinkstart,nsinkend,nghoststart,nghostend
   integer :: ishk,int_from_string
   integer :: igrid, ngrid
+  integer :: just, axis
 
   character(len=8) :: string     ! used in pgplot calls
   real, dimension(2,maxpart) :: vecplot
@@ -40,10 +41,9 @@ subroutine main(ipicky,ipickx,irender)
   real :: xpt1,ypt1,xpt2,ypt2
 
   logical :: iplotcont,iplotpartvec,x_sec
-  logical :: log,use_backgnd_color_vecplot
+  logical :: log,use_backgnd_color_vecplot, inewpage
 
   character(len=60) :: title,titlex
-  character(len=1) :: logx,logy
   character(len=20) :: labelx,labely,labelrender
   character(len=25) :: transform_label
 
@@ -165,7 +165,7 @@ subroutine main(ipicky,ipickx,irender)
   ! general initialisations
 
   !!--set paper size
-  if (nacross.eq.2 .and. ndown.eq.1) then
+  if (nacross.eq.2 .and. ndown.eq.1 .and. ipapersize.eq.0) then
      call pgpaper(11.7,0.5/sqrt(2.))
   elseif (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
      call pgpaper(papersizex,aspectratio)
@@ -231,11 +231,6 @@ subroutine main(ipicky,ipickx,irender)
                 xmin,xmax,itrans(iplotx))
            call transform_limits(lim(iploty,1),lim(iploty,2),  &
                 ymin,ymax,itrans(iploty))
-           !--work out whether to use log axes - this is for the call to pgbox
-           logx = ' '
-           logy = ' '
-           !if (itrans(iplotx).eq.1) logx = 'l'
-           !if (itrans(iploty).eq.1) logy = 'l'
 
            !--write username, date on plot
            !         if (nacross.le.2.and.ndown.le.2) call pgiden
@@ -478,76 +473,39 @@ subroutine main(ipicky,ipickx,irender)
 
               endif ! 2 or 3D and rendering
               !-----end of preliminary muff for 2D/3D cross sections/renderings ------------------
-
-              !-----------------------
-              ! set up pgplot page
-              !-----------------------
-              if ((ipagechange).or.((.not.ipagechange).and.(i.eq.nstart))) then
-                 !	       call pgenv(lim(iplotx,1),lim(iplotx,2), &
-                 !                     lim(iploty,1),lim(iploty,2),1,1)	! 0 for no axes
-                 call pgpage
-                 if (nacross*ndown.gt.1) then
-                    !	         if (imulti) then
-                    if (axes) then
-                       call pgsvp(0.2,0.8,0.2,0.98)
-                    else    ! if no axes use full viewport
-                       call pgsvp(0.02,0.98,0.02,0.98)
-                    endif
-                    !		  else
-                    !		     call pgsvp(0.0,1.0,0.0,1.0)
-                    !		  endif
-                 else
-                    if (axes) then
-                       call pgsvp(0.1,0.9,0.1,0.9)
-                    else      ! if no axes use full viewport
-                       call pgsvp(0.02,0.98,0.02,0.98)
-                    endif
-                 endif
-                 if (ndim.eq.2 .and. x_sec) then
-                    call pgswin(xmin,xmax,ymin,ymax)
-                 else
-                    call pgwnad(xmin,xmax,ymin,ymax)   !  pgwnad does equal aspect ratios
-                 endif
-                 !!--plot axes (log if appropriate)
-                 if (axes) then
-                    call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)
-                 elseif (ivecplot.ne.0) then
-                    call pgbox('bc',0.0,0,'bc',0.0,0)  ! draw box only for vector plots
-                 endif
-              elseif (nyplot.eq.1) then
-                 call pgpanl(1,1)
-              else
-                 call pgpage
-              endif
-
-              !---------------------------------
-              ! set plot limits and label plot
-              !---------------------------------
-
-              !--print plot limits to screen
+              
+	      !---------------------------------
+	      ! output some muff to the screen
+	      !---------------------------------
               print 34, time(i),i
               print*,trim(labely),'min,max = ',ymin,ymax
               print*,trim(labelx),'min,max = ',xmin,xmax
 34            format (5('-'),' t = ',f8.4,', dump #',i3,1x,10('-'))
               if (x_sec.and.iplotpart) print 35,label(ixsec),xsecmin,label(ixsec),xsecmax
 35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
+	      
+	      !-----------------------
+              ! page setup options
+	      !-----------------------
+	      inewpage = ipagechange .or. ((.not.ipagechange).and.(i.eq.nstart))
+	      just = 1
+	      if (ndim.eq.2 .and. x_sec) just = 0
+	      if (axes) then
+	         axis = 0
+	      elseif (ivecplot.ne.0) then   ! draw box only for vector plots
+	         axis = -1
+	      else
+	         axis = -2
+	      endif
 
-              if (ndim.eq.2 .and. x_sec) then
-                 call pgswin(xmin,xmax,ymin,ymax)
-              else
-                 call pgwnad(xmin,xmax,ymin,ymax)   !  pgwnad does equal aspect ratios
-              endif
-
-              !--label plot
-              if (axes) then
-                 if (((nyplots-nyplot).lt.nacross).or.(.not.isamexaxis)) then
-                    call pgmtxt('l',3.0,0.5,1.0,labely)
-                    call pglabel(labelx,' ',trim(titlex))
-                 else
-                    call pgmtxt('l',3.0,0.5,1.0,labely)
-                    !	     call pglabel(' ',labely,trim(titlex))
-                 endif
-              else
+              !--------------------------------------------------------------
+              ! set up pgplot page (this is my version of PGENV and PGLABEL)
+              !--------------------------------------------------------------
+	     
+	      call setpage(nyplot,nacross,ndown,xmin,xmax,ymin,ymax, &
+	           labelx,labely,titlex,just,axis,isamexaxis,inewpage)
+	      
+	      if (.not.axes) then
                  !--if multiple plots showing contours only, label with a,b,c etc
                  if ((nacross*ndown.gt.1).and.(irenderplot.gt.ndim) &
                       .and.(icolours.eq.0).and.imulti) then
@@ -794,62 +752,33 @@ subroutine main(ipicky,ipickx,irender)
            ! not both coordinates
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-           !-----------------------
-           ! set up pgplot page
-           !-----------------------
         elseif ((iploty.gt.ndim .or. iplotx.gt.ndim)  &
              .and.(iploty.le.ndataplots .and. iplotx.le.ndataplots)) then
 
-           if ((ipagechange).or.((.not.ipagechange).and.(i.eq.nstart))) then
-              ! call pgenv(limx(iplotx,1),limx(iplotx,2), &
-              !            lim(iploty,1),lim(iploty,2),0,0)! 0 for no axes
-              call pgpage
-              if ((nacross*ndown).gt.1) then
-                 if (axes) then
-                    call pgsvp(0.2,0.99,0.2,0.98)
-                 else! if no axes use full viewport
-                    call pgsvp(0.02,0.98,0.02,0.98)
-                 endif
-              else
-                 if (axes) then
-                    call pgsvp(0.1,0.9,0.1,0.9)       
-                 else
-                    call pgsvp(0.02,0.98,0.02,0.98)
-                 endif
-              endif
-              call pgswin(xmin,xmax,ymin,ymax)
-              if (axes) call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)              
-           elseif (nyplot.eq.1) then
-              call pgpanl(1,1)
-           else
-              call pgpage
-           endif
-
-           !---------------------------------
-           ! set plot limits and label plot
-           !---------------------------------
-
-
-           !--print plot limits to screen
+	   !---------------------------------
+	   ! output some muff to the screen
+	   !---------------------------------
            print 34, time(i),i
            print*,trim(labely),'min,max = ',ymin,ymax
            print*,trim(labelx),'min,max = ',xmin,xmax
-           !
-           !--set plot limits
-           !    
-           call pgswin(xmin,xmax,ymin,ymax)
+	      
+	   !-----------------------
+           ! page setup options
+	   !-----------------------
+	   inewpage = ipagechange .or. ((.not.ipagechange).and.(i.eq.nstart))
+	   just = 0
+	   if (axes) then
+	      axis = 0
+	   else
+	      axis = -2
+	   endif
 
-           if (axes) then
-              if (((nyplots-nyplot).lt.nacross).or.(.not.isamexaxis)) then
-                 !--print x and y labels
-                 call pgmtxt('l',3.0,0.5,1.0,labely)
-                 call pglab(labelx,' ',' ' )   !!trim(title)) 
-              else
-                 !--print y labels only    
-                 call pgmtxt('l',3.0,0.5,1.0,labely)
-                 !      call pglab(' ',labely,trim(title))
-              endif
-           endif
+           !--------------------------------------------------------------
+           ! set up pgplot page (this is my version of PGENV and PGLABEL)
+           !--------------------------------------------------------------
+	     
+	   call setpage(nyplot,nacross,ndown,xmin,xmax,ymin,ymax, &
+	        labelx,labely,titlex,just,axis,isamexaxis,inewpage)
 
            !--------------------------------
            ! now plot particles
