@@ -1,6 +1,6 @@
 program supersphplot
 !---------------------------------------------------------------------------------
-!     plotting utility for sph data in 1, 2 and 3 dimensions.
+!     plotting utility for SPH data in 1, 2 and 3 dimensions.
 !
 !     uses PGPLOT routines to plot graphs and utilises the rendering
 !     tools to plot density renderings and vector plots of 2D and 3D data.
@@ -11,7 +11,7 @@ program supersphplot
 !     calc_quantities    : calculates additional quantities from particle data
 !     colour_demo        : demonstration of colour schemes for rendering
 !     colour_set	 : sets up pgplot colour table for rendering
-!     coord_transform    : (from main code) transforms betw. various coord systems
+!     coord_transform    : transforms between various coord systems
 !     danpgsch           : sets character height independent of page size
 !     danpgtile          : my utility for tiling plots on the pgplot page
 !     danpgwedg          : my very minor modification of pgwedg
@@ -19,11 +19,11 @@ program supersphplot
 !     defaults_set	 : sets default plot options if not read from file
 !     defaults_write	 : write default plot options to file
 !     exact_fromfile     : reads an exact solution tabulated in a file
-!     exact_mhdshock     : some "exact" solutions for mhd shocks 
+!     exact_mhdshock     : some tabulated solutions for mhd shocks 
 !     exact_polytrope    : exact solution for a polytrope
 !     exact_rhoh	 : plots exact relation between density and smoothing length
 !     exact_sedov        : exact solution for sedov blast wave
-!     exact_shock        : exact solution for the 1D Riemann (shock tube) problem
+!     exact_shock        : exact solution for hydrodynamic shocks
 !     exact_swave        : exact solution for a linear sound wave
 !     exact_toystar      : exact solution for the toy star problem
 !     get_data           : wrapper for main data read

@@ -16,7 +16,7 @@
       nschemes = 10
 
       CALL PGBEGIN(0,'/xw',1,1)
-      CALL PGPAPER(11.7,0.25/SQRT(2.))
+      CALL PGPAPER(5.0,0.25/SQRT(2.))
       
       xmin = 0.0
       xmax = 1.0

@@ -53,8 +53,8 @@ subroutine colour_set(icolours)
   case(3)	! blue
      scheme = 'ice blue'
      rgb = .false.
-     hue=300
-     light=0.
+     hue=330
+     light=0.0
      sat=1.0
      dlight = 1.0/FLOAT(ncolours)
      dsat = 0.0
@@ -80,12 +80,12 @@ subroutine colour_set(icolours)
   case(6)
      scheme = 'some other crap'
      rgb = .false.
-     hue=120
-     light=0.0
-     sat= 0.    
-     dlight = 1.0/FLOAT(ncolours)
+     hue=100
+     light=0.5
+     sat= 1.    
+     dlight = 0.  !!!1.0/FLOAT(ncolours)
      dsat = 0.	!1.0/FLOAT(ncolours)
-     dhue = 80.0/FLOAT(ncolours)	 
+     dhue = 500.0/FLOAT(ncolours)	 
   case(10)	! rgb attempts
      scheme = 'really useless'
      rgb = .true.
