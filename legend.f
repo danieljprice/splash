@@ -14,7 +14,7 @@
       
       
       !hpos=0.5	! either 0.1 or 0.75 for 1D shocks
-      hpos= 0.1
+      hpos= 0.75
 !      vspace=1.2
       !vpos=0.5	    
       vpos=-2.0  ! in units of the character height
