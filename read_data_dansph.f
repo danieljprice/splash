@@ -83,10 +83,9 @@
 !
 !--allocate memory for main data array here
 !     
-	 PRINT*,'data columns = ',ncolumns
+!!	 PRINT*,'data columns = ',ncolumns
 	 IF (ntot(i).GT.maxpart) STOP 'ntot greater than array limits!!'      
          IF (ntot(i).GT.0) THEN
-            print*,'reading'
 !            do j=1,ntot(i)
  !              print*,j
 !               READ (11,*,END=66,ERR=77) (dat1(1:ncolumns,j,i))
@@ -95,14 +94,12 @@
 	    READ (11,*, END=66,ERR=77) 
      &           (dat1(1:ncolumns,j,i),j=1,ntot(i))
             
-            print*,'read'
          ELSE
 	    ntot(i) = 1
 	    npart(i) = 1
 	    nghost(i) = 0
 	    dat1(:,:,i) = 0.
 	 ENDIF
-         print*,' read step'
          iam(:) = 0
       ENDDO 
       
