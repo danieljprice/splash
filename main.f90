@@ -969,7 +969,7 @@ subroutine main(ipicky,ipickx,irender)
                 call pgline(ipolyc,rad(1:ipolyc),den(1:ipolyc))
 
         case(2)! soundwave
-           if ((iploty.eq.irho).and.(iplotx.eq.1).and.(i.ne.1)) then
+           if ((iploty.eq.irho).and.(iplotx.eq.1)) then
               call exact_swave(time(i),delta,lambda,gamma(i), &
                    xplot(1:npart(i)),yplot(1:npart(i)), &
                    dat(iutherm,1:npart(i),i),npart(i))
@@ -1053,7 +1053,7 @@ subroutine main(ipicky,ipickx,irender)
            if (iplotx.eq.1) then
               !       print*,'rootname = ',rootname,rootname(5:5)
               !--if not already set, try to determine solution to plot from filename
-              if (ishk.eq.0) ishk = int_from_string(rootname(5:5))
+              if (ishk.eq.0) ishk = int_from_string(rootname(1)(5:5))
               !--otherwise prompt for shock type       
               if (ishk.eq.0) then ! prompt
                  call prompt('enter shock solution to plot',ishk,0,6)

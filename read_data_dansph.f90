@@ -27,12 +27,13 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,nfilesteps)
+subroutine read_data(rootname,istart,nfilesteps)
   use particle_data
   use params
   use labels
   use settings
   implicit none
+  integer, intent(IN) :: istart
   integer, intent(OUT) :: nfilesteps
   character(LEN=20) :: datfile
   character(LEN=2) :: fileno
@@ -53,33 +54,17 @@ subroutine read_data(rootname,nfilesteps)
         datfile = trim(rootname)  
      endif
      ifile = 1
-     print*,'rootname = ',rootname
+     !print*,'rootname = ',rootname
   else
      print*,' **** no data read **** ' 
      return
   endif
 
-  print *,' opening ',datfile
+  write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
   k=1      
 
 50 continue
   ivegotdata = .false.
-  !
-  !--set everything to zero initially
-  !
-  dat = 0.
-  time = 0.
-  gamma = 0.
-  hfact = 0.
-  iam = 0
-  npart = 0
-  ntot = 0
-  nghost = 0
-  ndim = 0
-  ndimV = 0
-  ncolumns = 0
-  ncalc = 0
-  nfilesteps = 0
   !
   !--open data file and read data
   !
@@ -113,7 +98,7 @@ subroutine read_data(rootname,nfilesteps)
 !
   rewind(11)
 
-  do i=1,nfilesteps
+  do i=istart,nfilesteps
      reallocate = .false.
      !
      !--read header line for this timestep

@@ -12,8 +12,8 @@
 ## IoA compiler (Sun fortran)
 FC = f90
 F90C = f90
-FFLAGS = -O4 
-F90FLAGS = -O4
+FFLAGS = -O4 -C
+F90FLAGS = -O4 -C
 LDFLAGS = -lpgplot -lX11 -lF77
 ## ------------------------------------------------------------------ ##
 ## Monash compiler (Lahey-Fujitsu f95)

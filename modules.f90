@@ -31,8 +31,9 @@ end module particle_data
 !
 module filenames
  implicit none
- integer :: ifile,nfilesteps
- character(len=20) :: rootname
+ integer, parameter :: maxfile = 10
+ integer :: ifile,nfilesteps,nfiles
+ character(len=20), dimension(maxfile) :: rootname
 end module filenames
 !
 !--labels for all plots and the locations of certain useful variables
@@ -45,7 +46,7 @@ module labels
  integer, dimension(3) :: ix
  integer :: ivx,ivlast,irho,iutherm,ipr,ih,irad,ibfirst,iblast
  integer :: ipmass
- integer :: ientrop,ipmag,ibeta,itotpr,ike,idivb,idivberr
+ integer :: ientrop,ipmag,ibeta,itotpr,ike,idivb,idivberr,iJfirst
  integer :: iacplane,itimestep,ipowerspec
  integer :: irad2,ivpar,ivperp,iBpar,iBperp
 end module labels

@@ -10,7 +10,7 @@ subroutine options(ipicky)
   use prompting
   implicit none
   integer, intent(IN) :: ipicky
-  integer :: i,j,k,n,iaction,ipick
+  integer :: i,j,k,n,iaction,ipick,istep
   character(LEN=30) :: filename
   character(LEN=1) :: ans
   logical :: ians, iansx, iansy, ichange
@@ -91,14 +91,36 @@ subroutine options(ipicky)
 !------------------------------------------------------------------------
   case(3)
      if (.not.ihavereadfilename) then
-        call prompt('Enter filename to read',rootname)
+        call prompt('Enter filename to read',rootname(1))
      endif
      ihavereadfilename = .false.
      nfilesteps = maxstep
      !
+     !--set everything to zero initially
+     !
+     dat = 0.
+     time = 0.
+     gamma = 0.
+     hfact = 0.
+     iam = 0
+     npart = 0
+     ntot = 0
+     nghost = 0
+     ndim = 0
+     ndimV = 0
+     ncolumns = 0
+     ncalc = 0
+     nfilesteps = 0
+     n_end = 0
+     istep = 1
+     !
      !--read the data from the file
      !
-     call read_data(rootname,nfilesteps)
+     do i=1,nfiles
+        nfilesteps = maxstep
+        call read_data(rootname(i),istep,nfilesteps)
+        istep = nfilesteps + 1 ! current location of istep in data array
+     enddo
 
      nstart = 1
      n_end = nfilesteps
@@ -114,7 +136,7 @@ subroutine options(ipicky)
      !--read toy star file for toy star solution
      !
      if (iexact.eq.4) then
-        filename = trim(rootname)//'.tstar'
+        filename = trim(rootname(1))//'.tstar'
         open(UNIT=20,ERR=8801,FILE=filename,STATUS='old')
         read(20,*,ERR=8801) Htstar,Ctstar,Atstar
         read(20,*,ERR=8801) sigma0

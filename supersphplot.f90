@@ -60,7 +60,8 @@ program supersphplot
 !          email: dprice@ast.cam.ac.uk
 !
 !     this version for both ndspmhd and matthew bate's code 2003-2004
-!     changes log:
+!     changes log (for a full changelog see the CVS log - or use cvs2cl):
+!      17/05/04 - reads multiple files consecutively, error catches in interpolate 
 !      21/04/04 - page setup moved out of main -> setpage, danpgtile added
 !      26/03/04 - options split into submenus
 !      04/03/04 - allocatable arrays 
@@ -124,7 +125,7 @@ program supersphplot
   use params ! for menuitems
   use settings
   implicit none
-  integer :: ipicky,ipickx,irender
+  integer :: ipicky,ipickx,irender,i,iprev
   !
   !--print header
   !
@@ -147,10 +148,27 @@ program supersphplot
   call defaults_read
 
   ! ---------------------------------------------------
-  ! get rootname from command line/file and read file
+  ! get filenames from command line/file and read file
   
-  call getarg(1, rootname)
-  if (rootname(1:1).ne.' ') then
+  iprev = 1
+  i = 1
+  do while (rootname(iprev)(1:1).ne.' ' .and. i.le.maxfile)
+     call getarg(i,rootname(i))
+     !print*,i,rootname(i)
+     iprev = i
+     i = i + 1
+     if (i.gt.maxfile .and. rootname(iprev)(1:1).ne.' ') then
+        print*,'WARNING: number of files >= array size: setting nfiles = ',maxfile
+     endif
+  enddo
+  if (i.gt.maxfile .and. rootname(maxfile)(1:1).ne.' ') then
+     nfiles = maxfile
+  else
+     nfiles = iprev - 1
+  endif
+  print*,'number of files = ',nfiles
+
+  if (rootname(1)(1:1).ne.' ') then
      ihavereadfilename = .true.
      call options(numplot+3)
   endif
