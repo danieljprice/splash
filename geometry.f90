@@ -54,7 +54,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
      print*,'Error: coord transform: ndimout must be <= ndimin'
      return
   elseif (abs(xin(1)).lt.1e-8 .and. ndimout.ge.2 .and. &
-       (itypeout.eq.2 .or. itypeout.eq.3)) then
+       (itypein.eq.2 .or. itypein.eq.3)) then
      print*,'Warning: coord transform: r=0 on input: cannot return angle'
      xout(1:ndimout) = xin(1:ndimout)
      return
