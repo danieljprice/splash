@@ -31,7 +31,7 @@ contains
 !   isave    : integer telling the loop to save the settings
 !
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, &
-  zcoords,hi,icolourpart,xmin,xmax,ymin,ymax,zmin,zmax,rendermin,rendermax, &
+  zcoords,hi,icolourpart,xmin,xmax,ymin,ymax,zpos,dz,rendermin,rendermax, &
   anglex,angley,anglez,ndim,iadvance,isave)
   implicit none
   integer, intent(in) :: npart,irender,ndim,iplotz
@@ -39,7 +39,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
   real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
-  real, intent(inout) :: xmin,xmax,ymin,ymax,zmin,zmax,rendermin,rendermax
+  real, intent(inout) :: xmin,xmax,ymin,ymax,zpos,dz,rendermin,rendermax
   real, intent(inout) :: anglex,angley,anglez
   logical, intent(out) :: isave
   real, parameter :: pi=3.141592653589
@@ -48,7 +48,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
   integer, dimension(npart) :: icircpart
   real :: xpt,ypt,xpt2,ypt2
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
-  real :: rmin,rr,gradient,yint,dx,dy,dr
+  real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
   real :: xlength, ylength, drender
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
@@ -78,8 +78,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
   if (iplotx.le.ndim .and. iploty.le.ndim .and. ndim.ge.2) rotation = .true.
   
   if (iplotz.gt.0) then
-     zptmin = zmin
-     zptmax = zmax
+     zptmin = zpos - 0.5*dz
+     zptmax = zpos + 0.5*dz
   else
   !--if not using z range, make it encompass all the particles
      zptmin = -huge(zptmin)
@@ -199,6 +199,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
               print*,' rotate about y axis by +(-) 15 degrees : l (;)'
               print*,' rotate about y axis by +(-) 30 degrees : L (:)'
               print*,' x) take cross section '
+              if (iplotz.gt.0) then
+                 print*,' u) move cross section position up (towards observer)'
+                 print*,' U) move cross section position up more'
+                 print*,' d) move cross section position down (away from observer)'
+                 print*,' D) move cross section position down more'
+              endif
            endif
         endif
         print*,' next timestep/plot   : space, n'
@@ -215,6 +221,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
         if (ncircpart.gt.0) call save_circles(ncircpart,icircpart)
         if (rotation) call save_rotation(ndim,anglex,angley,anglez)
+        if (iplotz.gt.0) call save_xsecpos(zpos)
         print*,'> plot settings saved <'
      !
      !--actions on left click
@@ -469,26 +476,55 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
               !--plot the cross section line
               call pgline(2,xline(1:2),yline(1:2))
               !--work out angle with the x axis
+              !  and offset of line from origin
               dx = xline(2) - xline(1)
               dy = yline(2) - yline(1)
+              anglerad = ATAN2(dy,dx)
               select case(ixsec)
               case(1)
-                 anglex = 180.*ATAN2(dy,dx)/pi + anglex
+                 anglex = 180.*anglerad/pi + anglex
                  print*,'setting angle x = ',anglex
               case(2)
-                 angley = 180.*ATAN2(dy,dx)/pi + angley
+                 angley = 180.*anglerad/pi + angley
                  print*,'setting angle y = ',angley
               case(3)
-                 anglez = 180.*ATAN2(dy,dx)/pi + anglez
+                 anglez = 180.*anglerad/pi + anglez
                  print*,'setting angle z = ',anglez
               end select
               iploty = ixsec
-              print*,'iploty = ',ixsec
+              !--work out offset of cross section line
+              ! y intercept
+              yint = yline(2) - (dy/dx)*xline(2)
+              zpos = yint/COS(anglerad)
+              print*,'iploty = ',ixsec, ' xsecpos = ',zpos
               iadvance = 0
               iexit = .true.
            case default
               print*,' action cancelled'
            end select
+        endif
+     !
+     !--cross sections
+     !
+     case('u') ! move cross section up by dxsec
+        if (iplotz.gt.0 .and. ndim.eq.3) then
+           print*,'shifting cross section position up by ',dz
+           zpos = zpos + dz
+        endif
+     case('U') ! move cross section up by 2*dxsec
+        if (iplotz.gt.0 .and. ndim.eq.3) then
+           print*,'shifting cross section position up by ',2.*dz
+           zpos = zpos + 2.*dz
+        endif
+     case('d') ! move cross section down by dxsec
+        if (iplotz.gt.0 .and. ndim.eq.3) then
+           print*,'shifting cross section position down by ',dz
+           zpos = zpos + dz
+        endif     
+     case('D') ! move cross section down by 2*dxsec
+        if (iplotz.gt.0 .and. ndim.eq.3) then
+           print*,'shifting cross section position down by ',2.*dz
+           zpos = zpos - 2.*dz
         endif
      !
      !--general plot stuff
@@ -785,6 +821,18 @@ subroutine save_rotation(ndim,anglexi,angleyi,anglezi)
  return
 end subroutine save_rotation
 
+!
+!--saves cross section position
+!
+subroutine save_xsecpos(xsecpos)
+ use settings_xsecrot, only:xsecpos_nomulti
+ implicit none
+ real, intent(in) :: xsecpos
+ 
+ xsecpos_nomulti = xsecpos
+ 
+ return
+end subroutine save_xsecpos
 !
 !--saves circles of interaction
 !
