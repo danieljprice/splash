@@ -26,8 +26,8 @@ subroutine main(ipicky,ipickx)
   integer :: igrid, ngrid
 
   character(len=8) :: string     ! used in pgplot calls
-  real, dimension(2,max) :: vecplot
-  real, dimension(max) :: xplot,yplot
+  real, dimension(2,maxpart) :: vecplot
+  real, dimension(maxpart) :: xplot,yplot
   real, dimension(:), allocatable :: datpix1D, xgrid
   real, dimension(:,:), allocatable :: datpix
   real, dimension(:,:,:), allocatable :: datpix3D
@@ -217,16 +217,16 @@ subroutine main(ipicky,ipickx)
         !  apply transformations (log, 1/x, etc) if appropriate
         !--------------------------------------------------------------
         if (iploty.le.numplot-nextra .and. iplotx.le.numplot-nextra) then
-           call transform(dat(iplotx,:,i),xplot,itrans(iplotx),max)
-           call transform(dat(iploty,:,i),yplot,itrans(iploty),max)
+           call transform(dat(iplotx,:,i),xplot,itrans(iplotx),maxpart)
+           call transform(dat(iploty,:,i),yplot,itrans(iploty),maxpart)
            !--set axis labels, applying transformation if appropriate
            labelx = transform_label(label(iplotx),itrans(iplotx))
            labely = transform_label(label(iploty),itrans(iploty))
            !--set x,y plot limits, applying transformation if appropriate
-           call transform(lim(iplotx,1),xmin,itrans(iplotx),1)
-           call transform(lim(iplotx,2),xmax,itrans(iplotx),1)
-           call transform(lim(iploty,1),ymin,itrans(iploty),1)
-           call transform(lim(iploty,2),ymax,itrans(iploty),1)
+           call transform_limits(lim(iplotx,1),lim(iplotx,2),  &
+                xmin,xmax,itrans(iplotx))
+           call transform_limits(lim(iploty,1),lim(iploty,2),  &
+                ymin,ymax,itrans(iplotx))
            !--work out whether to use log axes - this is for the call to pgbox
            logx = ' '
            logy = ' '
@@ -471,8 +471,8 @@ subroutine main(ipicky,ipickx)
                     ymax = maxval(datpix1D)
                     !!--or apply transformations to fixed limits
                  else
-                    call transform(lim(irenderplot,1),ymin,itrans(irenderplot),1)
-                    call transform(lim(irenderplot,2),ymax,itrans(irenderplot),1)
+                    call transform_limits(lim(irenderplot,1),lim(irenderplot,2), &
+                         ymin,ymax,itrans(irenderplot))
                  endif
 
               endif ! 2 or 3D and rendering
@@ -597,8 +597,8 @@ subroutine main(ipicky,ipickx)
                     rendermax = maxval(datpix)
                     !!--or apply transformations to fixed limits
                  else
-                    call transform(lim(irenderplot,1),rendermin,itrans(irenderplot),1)
-                    call transform(lim(irenderplot,2),rendermax,itrans(irenderplot),1)
+                    call transform_limits(lim(irenderplot,1),lim(irenderplot,2), &
+                         rendermin,rendermax,itrans(irenderplot))
                  endif
                  !!--print plot limits to screen
                  print*,trim(labelrender),' min, max = ',rendermin,rendermax       
