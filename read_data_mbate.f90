@@ -103,17 +103,24 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      !--open the (unformatted) binary file and read the number of particles
      !
-     open(unit=15,file=dumpfile,status='old',form='unformatted')
-     !
-     !--read the number of particles in the first step,
-     !  allocate memory and rewind
-     !
-     read(15,end=55) udisti,umassi,utimei,umagfdi,nprint 
-     if (.not.allocated(dat) .or. nprint.gt.npart_max) then
-        npart_max = max(npart_max,INT(1.1*nprint))
-        call alloc(npart_max,nstep_max,ncolumns)
+     open(unit=15,iostat=ierr,file=dumpfile,status='old',form='unformatted')
+     if (ierr /= 0) then
+        print*,'*** ERROR OPENING ',trim(dumpfile),' ***'
+     else
+        !
+        !--read the number of particles in the first step,
+        !  allocate memory and rewind
+        !
+        read(15,end=55,iostat=ierr) udisti,umassi,utimei,umagfdi,nprint 
+        if (.not.allocated(dat) .or. nprint.gt.npart_max) then
+           npart_max = max(npart_max,INT(1.1*nprint))
+           call alloc(npart_max,nstep_max,ncolumns)
+        endif
+        rewind(15)
      endif
-     rewind(15)
+     if (ierr /= 0) then
+        print*,'*** ERROR READING TIMESTEP HEADER ***'
+     else
 !
 !--loop over the timesteps in this file
 !     
@@ -187,6 +194,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
         j = j + 1
 
      enddo over_steps_in_file
+     
+     endif
 
 55 continue
   !
