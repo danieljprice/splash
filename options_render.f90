@@ -8,7 +8,6 @@ subroutine options_render
   use settings_render
   implicit none
   integer :: ians,i
-  character(len=120) :: schemesprompt
 !
 !--rendering options
 !
