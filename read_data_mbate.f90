@@ -31,16 +31,16 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,istart,ifinish)
+subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
   use settings
   implicit none
-  integer, intent(IN) :: istart
-  integer, intent(OUT) :: ifinish
+  integer, intent(IN) :: indexstart
+  integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
   integer, parameter :: maxptmass = 100
-  integer :: i,j,k,ifile
+  integer :: i,j,k,ifile,ierr
   integer :: ncol_max,nstep_max
   integer :: ntotin
   logical :: iexist
@@ -61,6 +61,7 @@ subroutine read_data(rootname,istart,ifinish)
   real(kind=8) :: escap,tkin,tgrav,tterm,tmag
   real(kind=8) :: dtmax
 
+  nstepsread = 0
   !
   !--for rootnames without the '00', read all files starting at #1
   !
@@ -105,9 +106,10 @@ subroutine read_data(rootname,istart,ifinish)
   !--allocate memory initially
   !
   ncol_max = max(ncolumns,ncol_max)
-  nstep_max = max(nstep_max,istart,11)
+  nstep_max = max(nstep_max,indexstart,11)
 
-  j = istart
+  j = indexstart
+  nstepsread = 0
   
   do while (iexist)
      write(*,"(23('-'),1x,a,1x,23('-'))") trim(dumpfile)
@@ -153,7 +155,7 @@ subroutine read_data(rootname,istart,ifinish)
 !
 !--now read the timestep data in the dumpfile
 !
-        read(15,end=55,err=56) udisti, umassi, utimei, umagfdi,  &
+        read(15,end=55,iostat=ierr) udisti, umassi, utimei, umagfdi,  &
              nprint, nghosti, n1, n2, timei, gammai, rhozero, RK2, &
              (dattemp(i,7), i=1, nprint), (dattemp(i,8), i=1,nprint), &
              escap, tkin, tgrav, tterm, tmag, &
@@ -168,6 +170,13 @@ subroutine read_data(rootname,istart,ifinish)
              (dattemp(i,19), i=1, nprint), (dummy(i),i=1,nprint), &
              dtmax, (isteps(i), i=1,nprint), (iphase(i),i=1,nprint), &
              nptmass, (listpm(i), i=1,nptmass)
+        
+        if (ierr /= 0) then
+           print "(a)",'*** ERROR READING TIMESTEP ***'
+           cycle over_steps_in_file
+        else
+           nstepsread = nstepsread + 1
+        endif
 !
 !--convert to single precision
 !
@@ -195,12 +204,9 @@ subroutine read_data(rootname,istart,ifinish)
      enddo over_steps_in_file
 
 55 continue
-     !
-     !--reached end of file
-     !
-  ifinish = j-1
-  print*,'ifinish = ',ifinish
-
+  !
+  !--reached end of file
+  !
   close(15)
 
   print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nghost=',ntot(j-1)-npart(j-1)
@@ -224,12 +230,6 @@ subroutine read_data(rootname,istart,ifinish)
 enddo
    
 ivegotdata = .true.
-return
-!
-!--error conditions
-!
-56 continue
-print*,'error reading timestep'
 return
                     
 end subroutine read_data

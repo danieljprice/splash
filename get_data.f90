@@ -20,8 +20,11 @@ subroutine get_data(ireadfile)
   integer :: i,istart,ifinish,ierr
 
   if (.not.ihavereadfilename) then
-     call prompt('Enter filename to read',rootname(1))
-     nfiles = 1
+     if (nfiles.le.0 .or. nfiles.gt.maxfile) nfiles = 1
+     call prompt(' Enter number of files to read ',nfiles,1,maxfile)
+     do i=1,nfiles
+        call prompt(' Enter filename to read',rootname(i))
+     enddo
   endif
   ihavereadfilename = .false.
   ifinish = maxstep
@@ -40,17 +43,16 @@ subroutine get_data(ireadfile)
      !--read all steps from the data file
      !
      nstepsinfile(1:nfiles) = 0
+     print*,'reading from all dumpfiles...'
      do i=1,nfiles
-        ifinish = maxstep
-        call read_data(rootname(i),istart,ifinish)
-        nstepsinfile(i) = ifinish - istart + 1
-	print*,'nsteps in file = ',nstepsinfile(i)
-        istart = ifinish + 1 ! number of next step in data array
+        call read_data(rootname(i),istart,nstepsinfile(i))
+        istart = istart + nstepsinfile(i) ! number of next step in data array
      enddo
      nstart = 1
-     n_end = ifinish
+     n_end = istart - 1
      nstepstotal = n_end
      numplot = ncolumns
+     print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nstepstotal,' ncolumns = ',numplot
      !
      !--read plot limits from file, otherwise set plot limits
      !
@@ -62,10 +64,8 @@ subroutine get_data(ireadfile)
      !--read from a single file only
      !
      nstepsinfile(ireadfile) = 0
-     print*,'reading single step'
-     ifinish = maxstep
-     call read_data(rootname(ireadfile),istart,ifinish)
-     nstepsinfile(ireadfile) = ifinish - istart + 1
+     print*,'reading single dumpfile'
+     call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
      print*,'nsteps in file = ',nstepsinfile(ireadfile)
      !
      !--assume there are the same number of steps in the other files
@@ -73,8 +73,8 @@ subroutine get_data(ireadfile)
      !
      do i=1,nfiles
         if (nstepsinfile(i).eq.0) then
-	   nstepsinfile(i) = nstepsinfile(ireadfile)
-	endif
+           nstepsinfile(i) = nstepsinfile(ireadfile)
+        endif
      enddo
      nstart = 1
      n_end = sum(nstepsinfile(1:nfiles))
