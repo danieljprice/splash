@@ -112,7 +112,7 @@
       integer :: ntotmin
       integer :: nyplot,nyplots      
       integer :: npart1
-      integer :: npixy,npixz,ipixxsec
+      integer :: npixx,npixy,npixz,ipixxsec
       integer :: ivecplot,npix,npixvec,ncontours
       integer :: irenderprev, istepprev
       integer :: isizex,isizey	! for sending datpix to transform
@@ -239,13 +239,13 @@ c get rootname from command line/file and read file
       if (ientrop.ne.0) label(ientrop) = 'entropy'
       if (irad.ne.0) label(irad) = 'radius '
       if (irad2.ne.0) label(irad2) = 'r_parallel'
-      if (ike.ne.0) label(ike) = 'specific ke'
-      if (ipr.ne.0) label(ipr) = 'p'	!'p_gas '
-      if (ipmag.ne.0) label(ipmag) = 'p_mag'
-      if (itotpr.ne.0) label(itotpr) = 'p_gas + p_mag'
+      if (ike.ne.0) label(ike) = 'specific KE'
+      if (ipr.ne.0) label(ipr) = 'P'	!'p_gas '
+      if (ipmag.ne.0) label(ipmag) = 'P_mag'
+      if (itotpr.ne.0) label(itotpr) = 'P_gas + P_mag'
       if (ibeta.ne.0) label(ibeta) = 'plasma \gb'
-      if (idivberr.ne.0) label(idivberr) = 'h |div b| / |b|'
-      if (itimestep.ne.0) label(itimestep) = 'h sqrt(\gr) / |b|'
+      if (idivberr.ne.0) label(idivberr) = 'h |div B| / |B|'
+      if (itimestep.ne.0) label(itimestep) = 'h sqrt(\gr) / |B|'
       
 !----------------------------------------------------------------------
 !  print menu
@@ -322,30 +322,31 @@ c get rootname from command line/file and read file
 
 !!--work out coordinate that is not being plotted	 
 	 do j=1,ndim
-            if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j	 
+            if ((j.ne.ipickx).and.(j.ne.ipicky)) ixsec = j	 
          enddo	 	       
          if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D
 
 !!--if series of cross sections (flythru), set position of first one      
          if (x_sec.and.flythru) then
-            print*,'enter number of cross-section slices:'
+	    print 32,label(ixsec)
+32          format('enter # of ',a1,' cross-section slices')
 	    read*,nxsec
+!!--dxsec is the distance between slices	    
 	    dxsec = (lim(ixsec,2)-lim(ixsec,1))/float(nxsec)
-	    xsecmin = lim(ixsec,1)-dxsec
-	    xsecmax = lim(ixsec,1)
-	    xsecpos = xsecmin
+	    xsecpos = lim(ixsec,1)
 	    xsecpos_nomulti = xsecpos
 
-!!--if particle cross-section, read coordinate range to plot particles in
+!!--if single cross-section, read position of cross-section slice
 
          elseif (x_sec.and.iplotpart.and.irender.le.ndim) then
             print 33,label(ixsec)
-33          format(' enter ',a1,' min, max for cross section slice:')
-            read*,xsecmin,xsecmax
-	    if (xsecmax.gt.lim(ixsec,2)
-     &	    	.or.xsecmin.lt.lim(ixsec,1)) then
+33          format(' enter ',a1,' position for cross section slice:')
+            read*,xsecpos
+	    if (xsecpos.gt.lim(ixsec,2)
+     &	    	.or.xsecpos.lt.lim(ixsec,1)) then
 	        print*,'warning: cross section outside data limits' 
 	    endif
+	    xsecpos_nomulti = xsecpos
          endif
 	 
 !!--set title of plot
@@ -514,17 +515,12 @@ c get rootname from command line/file and read file
 
 !!--work out coordinate that is not being plotted	 
 	    do j=1,ndim
-               if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j	 
+               if ((j.ne.ipickx).and.(j.ne.ipicky)) ixsec = j	 
             enddo	 	       	   
             if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D	   
 !!--set limits for rendering area
-            xminrender = lim(ix(1),1)
-	    xmaxrender = lim(ix(1),2)
-	    do j=1,ndim
-	       if (xminrender.gt.lim(ix(j),1)) xminrender = lim(ix(j),1)
-	       if (xmaxrender.lt.lim(ix(j),2)) xmaxrender = lim(ix(j),2)
-	    enddo
-	    
+	    xminrender = MINVAL(lim(ix(1:ndim),1))
+	    xmaxrender = MAXVAL(lim(ix(1:ndim),2))	    
 	    
 !------------------------------------------------------------------
 !  rendering setup and interpolation (this is the rendering done
@@ -535,26 +531,26 @@ c get rootname from command line/file and read file
 !--interpolate from particles to fixed grid using sph summation
 !		
 !--do not apply any transformations to the co-ordinates
-		xmin = lim(ix(1),1)
-		xmax = lim(ix(1),2)
-		xminrender = xmin
-		xmaxrender = xmax
+		xmin = lim(iplotx,1)
+		xmax = lim(iplotx,2)
+		
 !!--determine number of pixels in rendered image (npix = pixels in x direction)
-		pixwidth = (xmax-xmin)/real(npix)
-                print*,'npix = ',npix
+		pixwidth = (lim(ix(1),2)-lim(ix(1),1))/real(npix)
+                npixx = int((xmax-xmin)/pixwidth) + 1
+		print*,'npixx = ',npixx
 		if (ndim.ge.2) then
-		   ymin = lim(ix(2),1)
-		   ymax = lim(ix(2),2)
-		   xminrender = min(xmin,ymin)
-		   if (ymax.gt.xmaxrender) xmaxrender = ymax
+		   ymin = lim(iploty,1)
+		   ymax = lim(iplotx,2)
+!		   xminrender = min(xmin,ymin)
+!		   if (ymax.gt.xmaxrender) xmaxrender = ymax
 		   npixy = int((ymax-ymin)/pixwidth) + 1
 		   print*,'npixy = ',npixy
 !!--only need z pixels if working with interpolation to 3D grid
 		   if ((ndim.ge.3).and.(x_sec.and.nxsec.gt.2)) then
-		      zmin = lim(ix(3),1)
-		      zmax = lim(ix(3),2)
-		      xminrender = min(xminrender,zmin)
-		      if (zmax.gt.xmaxrender) xmaxrender = zmax
+		      zmin = lim(ixsec,1)
+		      zmax = lim(ixsec,2)
+!		      xminrender = min(xminrender,zmin)
+!		      if (zmax.gt.xmaxrender) xmaxrender = zmax
 		      npixz = int((zmax-zmin)/pixwidth) + 1		 
 		      print*,'npixz = ',npixz
 		   endif
@@ -579,22 +575,22 @@ c get rootname from command line/file and read file
      &		      dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i),
      &                dat(ih,1:ntot(i),i),
      &		      dat(irenderplot,1:ntot(i),i),
-     &                ntot(i),xminrender,ymin,
-     &	              datpix,npix,npixy,pixwidth)
+     &                ntot(i),xmin,ymin,
+     &	              datpix,npixx,npixy,pixwidth)
 		  case(3)
 !!--interpolation to 3D grid - then take multiple cross sections/projections		  
 !!  do this if taking more than 2 cross sections, otherwise use fast xsec
 		      if (x_sec.and.nxsec.gt.2) then  
 !!--allocate memory for 3D rendering array		 
-		         allocate ( datpix3D(npix,npixy,npixz) )
+		         allocate ( datpix3D(npixx,npixy,npixz) )
 !!--interpolate from particles to 3D grid
 		         call interpolate3D(
-     &		         dat(ix(1),1:ntot(i),i),dat(ix(2),1:ntot(i),i),
-     &		         dat(ix(3),1:ntot(i),i),dat(ipmass,1:ntot(i),i),
+     &		         dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i),
+     &		         dat(ixsec,1:ntot(i),i),dat(ipmass,1:ntot(i),i),
      &                   dat(irho,1:ntot(i),i),dat(ih,1:ntot(i),i),
      &		         dat(irenderplot,1:ntot(i),i),
-     &                   ntot(i),xminrender,ymin,zmin,
-     &	                 datpix3D,npix,npixy,npixz,pixwidth)
+     &                   ntot(i),xmin,ymin,zmin,
+     &	                 datpix3D,npixx,npixy,npixz,pixwidth)
 		      endif
 		  end select                 
 		endif
@@ -646,33 +642,32 @@ c get rootname from command line/file and read file
 ! or projections through this grid
 !------------------------------------------------------------------------
 	       if (allocated(datpix)) deallocate(datpix)
+               ipixxsec = int((xsecpos-lim(ixsec,1))/pixwidth) + 1                 
 	       select case(ixsec)	! which direction to slice in
-                 case(1)
+		 case(1)
 !!--allocate memory for rendering array
                      isizex = npixy
 		     isizey = npixz
 		     allocate ( datpix(npixy,npixz) )
 		     if (x_sec) then	! take cross section
-                        ipixxsec = int((xsecpos - xmin)/pixwidth) + 1
-			if (ipixxsec.gt.npix) ipixxsec = npix
+			if (ipixxsec.gt.npixx) ipixxsec = npixx
                         print*,'x = ',xsecpos,
      &			       ' cross section, pixel ',ipixxsec
                         datpix = datpix3D(ipixxsec,:,:)
 		     else  		! take column density 
 		        print*,'taking projection through x data...'		     
 		        datpix = 0.
-		        do ipix=1,npix
+		        do ipix=1,npixx
 		           datpix(:,:) = datpix(:,:) 
      &			   + datpix3D(ipix,:,:)*pixwidth
 		        enddo
 		     endif
                  case(2)
 !!--allocate memory for rendering array
-                     isizex = npix
+                     isizex = npixx
 		     isizey = npixz
-		     allocate ( datpix(npix,npixz) )
+		     allocate ( datpix(npixx,npixz) )
 		     if (x_sec) then
-                        ipixxsec = int((xsecpos - ymin)/pixwidth) + 1
 			if (ipixxsec.gt.npixy) ipixxsec = npixy
                         print*,'y = ',xsecpos,
      &			       ' cross section, pixel ',ipixxsec
@@ -687,11 +682,10 @@ c get rootname from command line/file and read file
 		     endif		     	
                  case(3)
 !!--allocate memory for rendering array
-                     isizex = npix
+                     isizex = npixx
 		     isizey = npixy
-		     allocate ( datpix(npix,npixy) )	
+		     allocate ( datpix(npixx,npixy) )	
                      if (x_sec) then
-		        ipixxsec = int((xsecpos - zmin)/pixwidth) + 1
 			if (ipixxsec.gt.npixz) ipixxsec = npixz
                         print*,'z = ',xsecpos,
      &			       ' cross section, pixel ',ipixxsec
@@ -712,23 +706,24 @@ c get rootname from command line/file and read file
 !-------------------------------------------------------------------
 
 !!--determine limits of rendering plot
-		 xminrender = lim(ix(iplotx),1)
-		 xmaxrender = lim(ix(iplotx),2)
+		 xmin = lim(ix(iplotx),1)
+		 xmax = lim(ix(iplotx),2)
 		 ymin = lim(ix(iploty),1)
 		 ymax = lim(ix(iploty),2)		 
 !!--determine number of pixels in rendered image (npix = pixels in x direction)
-		 pixwidth = (xmaxrender-xminrender)/real(npix)
+		 pixwidth = (xmax-xmin)/real(npix)
+		 npixx = int((xmax-xmin)/pixwidth) + 1
 		 npixy = int((ymax-ymin)/pixwidth) + 1
-                 print*,'npix,npixy = ',npix,npixy
-                 isizex = npix
+                 print*,'npix,npixy = ',npixx,npixy
+                 isizex = npixx
 		 isizey = npixy
 !!--allocate memory for the 2D array		 
 		 if (allocated(datpix)) deallocate(datpix)
-                 allocate ( datpix(npix,npixy) )
+                 allocate ( datpix(npixx,npixy) )
 !!--do fast cross-section
 		 if (x_sec) then
                     print*,trim(label(ix(ixsec))),' = ',xsecpos,
-     &			       ' : fast cross section'
+     &			       ' : fast cross section', xmin,ymin,xsecpos
 
 		    call interpolate3D_fastxsec(
      &		         dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i),
@@ -736,8 +731,8 @@ c get rootname from command line/file and read file
      &		         dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i),
      &                   dat(ih,1:ntot(i),i),
      &		         dat(irenderplot,1:ntot(i),i),
-     &                   ntot(i),xminrender,ymin,xsecpos,
-     &	                 datpix,npix,npixy,pixwidth)			 
+     &                   ntot(i),xmin,ymin,xsecpos,
+     &	                 datpix,npixx,npixy,pixwidth)			 
 		 else
 !!--do fast projection		 
 		    call interpolate3D_projection(
@@ -745,8 +740,8 @@ c get rootname from command line/file and read file
      &		         dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i),
      &                   dat(ih,1:ntot(i),i),
      &		         dat(irenderplot,1:ntot(i),i),
-     &                   ntot(i),xminrender,ymin,
-     &	                 datpix,npix,npixy,pixwidth)
+     &                   ntot(i),xmin,ymin,
+     &	                 datpix,npixx,npixy,pixwidth)
                  endif	      
 	      
 	      endif ! whether 3D grid or fast renderings
@@ -843,7 +838,7 @@ c               print*,' size = ',size(datpix(:,1)),size(datpix(1,:))
 	       print*,trim(labelrender),' min, max = ',rendermin,rendermax	       
 !!--call subroutine to actually render the image	       
 	       call render(datpix,rendermin,rendermax,trim(labelrender),
-     &	               npix,npixy,xmin,ymin,pixwidth,
+     &	               npixx,npixy,xmin,ymin,pixwidth,
      &                 icolours,iplotcont,ncontours,log)
 	       
 	    else
