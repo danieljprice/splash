@@ -159,6 +159,7 @@ subroutine get_nextstep(i,ifile)
     else ! if non-interactive, exit timestepping loop
        ifile = nfiles
        i = -666
+       return
     endif
  elseif (ifile.lt.1) then
     print*,'*** get_nextstep: error: request for file < 1'
@@ -174,6 +175,8 @@ subroutine get_nextstep(i,ifile)
     endif
     !!print*,'getting file ',ifile,' step ',i
  endif
+ 
+ return
 
  return
 end subroutine get_nextstep     

@@ -23,29 +23,34 @@ contains
 ! iplot = 1->5 gives rho, pr, u, vx, vy vs r
 !------------------------------------------------------------
 
-subroutine exact_toystar2D(time,gamma,polyk,totmass, &
-                           H0,A0,C0,Brhofac,jorder,morder,iplot)
+subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
+                           ampl,denscentre,C0,Brhofac,jorder,morder, &
+                           xplot,yplot,ierr)
   implicit none
   integer, intent(in) :: iplot,jorder,morder
+  integer, intent(out) :: ierr
   real, intent(in) :: time,gamma,polyk,totmass,Brhofac
-  real, intent(in) :: H0, C0, A0        ! parameters for toy star
-  real :: B0
-  integer, parameter :: npts = 100
+  real, intent(in) :: C0, ampl, denscentre     ! parameters for toy star
+  real, dimension(:), intent(inout) :: xplot
+  real, dimension(:), intent(out) :: yplot  
+  
   real, parameter :: pi = 3.141592653589
-  integer :: i
+  integer :: i,npts
   integer :: jmode,smode
-  real, dimension(0:npts) :: xplot,yplot
-  real :: Aprev, A,H,C, term,const,omega,omegasq
-  real :: radstar,dx,nu2
+  real :: Aprev, A,H,C,B0, term,const,omega,omegasq
+  real :: radstar,dx,nu2,scalefac
   real :: rhoplot,deltarho,vplot,deltav
-  real :: gamp1,gamm1,gam1,constK,sigma
+  real :: gamm1,gam1,constK,sigma
   logical linear
 
-  linear = (jorder.ge.0 .or. morder.ge.0)
-  gamp1 = gamma + 1.
+  ierr = 1
+  npts = size(xplot)
+  
+  linear = (jorder.ge.0 .and. morder.ge.0)
   gamm1 = gamma - 1.
   if (gamm1.lt.1.e-3) then
      print*,'Error: no toy star solution for isothermal yet'
+     ierr = 1
      return
   endif
   gam1 = 1./gamm1
@@ -63,7 +68,7 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
 !---------------------------------------------------------------------------
 !  linear solution
 
-     print*,' Plotting 2D toy star: linear solution '
+     print*,' Plotting 2D toy star: linear solution r mode = ',jorder,' phi mode = ',morder
      jmode = jorder   ! radial mode
      smode = morder        ! non-axisymmetric modes (theta)
      
@@ -72,31 +77,29 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
      if (nu2.le.0.) then
         print*,'Error: nu^2 < 0 in linear toy star  ',nu2
         print*,' radial mode = ',jmode,' theta mode = ',smode
+        ierr = 2
         return
      else
         sigma = sqrt(0.5*omegasq*gamm1*nu2)
      endif
-     print*,' Amplitude = ',A0,' period = ',2*pi/sigma,' H,C = ',H0,C0
+     print*,' Amplitude = ',ampl,' period = ',2*pi/sigma,' H,C = ',denscentre,C0
 
-     if (C0.le.0.) then 
-        radstar = 0.5
-        print*,'*** C = 0 = illegal'
-        return
-     else         
-        radstar = sqrt(H0/C0)
-     endif
-     xplot(0) = -radstar
-     dx = (radstar-xplot(0))/float(npts)
+     scalefac = polyk*gamma/(sigma*gamm1)
+     radstar = sqrt((2.*polyk*gamma*denscentre**gamm1)/gamm1)
 
-     do i=0,npts
-        xplot(i) = xplot(0)+dx*i
+     xplot(1) = 0.
+     dx = (radstar-xplot(1))/float(npts-1)
+
+     do i=1,npts
+        xplot(i) = xplot(1)+dx*(i-1)
         !         print*,i,' x,y = ',xplot(i),yplot(i)
-        rhoplot = (H0 - C0*xplot(i)**2)
+        rhoplot = (denscentre - C0*xplot(i)**2)
         if (rhoplot.le.0.) rhoplot = 0.
         deltarho = etar(jmode,smode,xplot(i)/radstar,gamma)  ! functional form of rho(r)
-        print*,'deltarho = ',rhoplot,deltarho,xplot(i)
-        rhoplot = (rhoplot + deltarho*A0*SIN(sigma*time))**gam1
+        !!print*,'deltarho = ',rhoplot,deltarho,xplot(i)
+        rhoplot = (rhoplot + deltarho*ampl*SIN(sigma*time))**gam1
         
+        deltav = ampl*detadr(jmode,smode,xplot(i)/radstar,gamma)
         vplot = deltav*COS(sigma*time)
 
         select case(iplot)
@@ -106,16 +109,14 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
            yplot(i) = constK*rhoplot**gamma
         case(3)                 ! plot solution for utherm
            yplot(i) = constK*(rhoplot**gamm1)/gamm1
-        case(4)                 ! plot solution for vx,vy
+        case(4)                 ! plot solution for v_r
            yplot(i) = vplot
         case(5)                 ! plot solution for By
            yplot(i) = Brhofac*rhoplot
         end select
 
      enddo
-
-     call PGLINE(npts+1,xplot,yplot)
-
+     
 !---------------------------------------------------------------------------
 !  non-linear solution
 !
@@ -124,9 +125,9 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
      print*,'Plotting 2D toy star: non-linear'
      !  solve for H, C and A given initial conditions on v, rho and the time.
      !
-     H = H0
+     H = denscentre
      C = C0
-     Aprev = A0
+     Aprev = ampl
      B0 = 0.
 !
 !--this is the static solution, determined from the total mass, polyk, gamma and omega
@@ -142,6 +143,7 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
      sigma = 4.*(B0**2 + C*polyk*gamma**2/gamm1)
      if (sigma.le.1.e-5) then
         print*,'ERROR: sqrt < 0 in sigma'
+        ierr = 1
         return
      else
         sigma = sqrt(sigma)
@@ -150,10 +152,10 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
 !
 !--solve for alpha(t)
 !    
-     const = 4.*sigma**2 + 4.*A0**2 
+     const = 4.*sigma**2 + 4.*ampl**2 
      term = 1.-4.*sigma**2/const
      if (term.le.0.) then
-        if (abs(A0).gt.1.e-3) print*,'warning: const or omega wrong, sqrt < 0 : assuming static solution'
+        if (abs(ampl).gt.1.e-3) print*,'warning: const or omega wrong, sqrt < 0 : assuming static solution'
         A = 0.
      else
         term = sqrt(term)
@@ -165,18 +167,18 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
 
      print*,' Plotting toy star: time, A = ',time,A
 
-     !if (C.le.0.) then 
-     !   radstar = 0.5
-     !   stop '*** C = 0 = illegal'
-     !elseif (A.le.1.e-5) then
-     !else
-     !   radstar = sqrt(H/C)
-     !endif
-     xplot(0) = -radstar
-     dx = (radstar-xplot(0))/float(npts)
+     if (C.le.0.) then 
+        radstar = 0.5
+        stop '*** C = 0 = illegal'
+     !!elseif (A.le.1.e-5) then
+     else
+        radstar = sqrt(H/C)
+     endif
+     xplot(1) = 0.
+     dx = (radstar-xplot(1))/float(npts-1)
 
-     do i=0,npts
-        xplot(i) = xplot(0)+dx*i
+     do i=1,npts
+        xplot(i) = xplot(1)+dx*(i-1)
         !         print*,i,' x,y = ',xplot(i),yplot(i)
         rhoplot = (H - C*xplot(i)**2)
         if (rhoplot.le.0.) rhoplot = 0.
@@ -188,23 +190,24 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
            yplot(i) = constK*rhoplot**gamma
         case(3)                 ! plot solution for utherm
            yplot(i) = constK*(rhoplot**gamm1)/gamm1
-        case(4)                 ! plot solution for vx,vy
+        case(4)                 ! plot solution for v_r
            yplot(i) = A*xplot(i)
         case(5)                 ! plot solution for By
            yplot(i) = sigma*rhoplot
         end select
 
      enddo
-
-     if (iplot.gt.0 .and. iplot.le.5) then
-        call pgline(npts+1,xplot,yplot)
-     elseif (iplot.eq.0) then
-        call pgsfs(2)
-        call pgcirc(0.0,0.0,radstar)
-     endif
 !
 !------------------------------------------------------------------------
 !      
+  endif
+
+  if (iplot.gt.0 .and. iplot.le.5) then
+     ierr = 0
+  elseif (iplot.eq.0) then
+     call pgsfs(2)
+     call pgcirc(0.0,0.0,radstar)
+     ierr = 3
   endif
 
   return

@@ -58,7 +58,7 @@ contains
     atstar = 1.
     ctstar = 1.
     norder = -1
-    morder = -1
+    morder = 0
     sigma0 = 0.
     rhosedov = 1.0  ! sedov blast wave
     esedov = 1.0    ! blast wave energy
@@ -84,6 +84,7 @@ contains
   subroutine submenu_exact(iexact)
     use settings_data, only:ndim
     use prompting
+    use filenames, only:rootname
     implicit none
     integer, intent(inout) :: iexact
     integer :: ierr
@@ -109,7 +110,7 @@ contains
        !
        !--read shock parameters from the .shk file
        !
-       call read_exactparams(iexact,ierr)
+       call read_exactparams(iexact,trim(rootname(1)),ierr)
        if (ierr.ne.0) then
           call prompt('enter density to left of shock   ',rho_L,0.0)
           call prompt('enter density to right of shock  ',rho_R,0.0)   
@@ -125,21 +126,23 @@ contains
        call prompt('enter polytropic k ',polyk) 
     case(4)
        print*,' toy star: '
-       call read_exactparams(iexact,ierr)
+       call read_exactparams(iexact,trim(rootname(1)),ierr)
        call prompt('enter polytropic k ',polyk)
-       call prompt('enter parameter a (v = ax) ',atstar)
-       call prompt('enter parameter h (rho = h - cx^2)',htstar)
-       call prompt('enter parameter c (rho = h - cx^2)',ctstar,0.0)
+       call prompt('enter velocity amplitude a (v = a*r) ',atstar)
+       call prompt('enter central density rho_0 (rho = rho_0 - cx^2)',htstar)
+       call prompt('enter parameter c (rho = rho_0 - cx^2)',ctstar,0.0)
        sigma = 0.
        call prompt('enter parameter sigma (By = sigma*rho)',sigma0)
        sigma = sigma0
        ians = .false.
        call prompt('do you want oscillations?',ians)
-       norder = -1
-       morder = -1
-       if (ians) call prompt('enter order of radial mode',norder,0)
-       if (ians .and. ndim.ge.2)  &
-          call prompt('enter order of angular mode',morder,0)
+       if (ians) then
+          call prompt('enter order of radial mode',norder,0)
+          if (ndim.ge.2) call prompt('enter order of angular mode',morder,0)
+       else
+          norder = -1
+          morder = 0
+       endif
     case(5)
        call prompt('enter y-plot to place sine wave on',iwaveploty,1)
        call prompt('enter x-plot to place sine wave on',iwaveplotx,1)
@@ -167,23 +170,25 @@ contains
   !
   ! called after main data read and if exact solution chosen from menu
   !-----------------------------------------------------------------------
-  subroutine read_exactparams(iexact,ierr)
-    use filenames
+  subroutine read_exactparams(iexact,rootname,ierr)
+    use settings_data, only:ndim
     implicit none
     integer, intent(in) :: iexact
+    character(len=*), intent(in) :: rootname
     integer, intent(out) :: ierr
+    
     integer :: ios,idash
-    character(LEN=LEN(rootname(1))+6) :: filename
+    character(len=len_trim(rootname)+8) :: filename
 
-    idash = index(rootname(1),'_')
-    if (idash.eq.0) idash = len_trim(rootname(1))+1
+    idash = index(rootname,'_')
+    if (idash.eq.0) idash = len_trim(rootname)+1
 
     select case(iexact)
     case(1)
        !
        !--shock tube parameters from .shk file
        !
-       filename = trim(rootname(1)(1:idash-1))//'.shk'
+       filename = trim(rootname(1:idash-1))//'.shk'
        open(UNIT=19,ERR=7701,FILE=filename,STATUS='old')
        read(19,*,ERR=7777) rho_L, rho_R
        read(19,*,ERR=7777) pr_L, pr_R
@@ -206,29 +211,50 @@ contains
        !
        !--read toy star file for toy star solution
        !
-       filename = trim(rootname(1)(1:idash-1))//'.tstar'
-       open(unit=20,ERR=8801,FILE=filename,STATUS='old')
-       read(20,*,ERR=8888) Htstar,Ctstar,Atstar
-       read(20,*,ERR=8888) sigma0
-       read(20,*,ERR=8888) norder
-       close(UNIT=20)
-       print*,' >> read ',filename
-       print*,' H,C,A,sigma,n = ',Htstar,Ctstar,Atstar,sigma0,norder
-       return
-8801   continue
-       print*,'no file ',filename
-       ierr = 1
-       return
-8888   print*,'error reading ',filename
-       close(UNIT=20)
-       ierr = 2
-       return
-
+       select case(ndim)
+       case(1)
+          filename = trim(rootname(1:idash-1))//'.tstar'
+          open(unit=20,ERR=8801,FILE=filename,STATUS='old')
+          read(20,*,ERR=8888) Htstar,Ctstar,Atstar
+          read(20,*,ERR=8888) sigma0
+          read(20,*,ERR=8888) norder
+          close(UNIT=20)
+          print*,' >> read ',filename
+          print*,' H,C,A,sigma,n = ',Htstar,Ctstar,Atstar,sigma0,norder
+          return
+8801      continue
+          print*,'no file ',filename
+          ierr = 1
+          return
+8888      print*,'error reading ',filename
+          close(UNIT=20)
+          ierr = 2
+          return
+       case(2)
+          filename = trim(rootname(1:idash-1))//'.tstar2D'
+          open(unit=20,ERR=9901,FILE=filename,STATUS='old')
+          read(20,*,ERR=9902) Htstar,Ctstar,Atstar
+          read(20,*,ERR=9902) sigma0
+          read(20,*,ERR=9902) norder,morder
+          close(UNIT=20)
+          print*,' >> read ',filename
+          print*,' H,C,A,sigma = ',Htstar,Ctstar,Atstar,sigma0
+          print*,' j,m = ',norder,morder
+          return
+9901      continue
+          print*,'no file ',filename
+          ierr = 1
+          return
+9902      print*,'error reading ',filename
+          close(UNIT=20)
+          ierr = 2
+          return
+       end select
     case(6)
        !
        !--attempt to guess which MHD shock tube has been done from filename
        !
-       read(rootname(1)(5:5),*,iostat=ios) ishk
+       read(rootname(5:5),*,iostat=ios) ishk
        if (ios.ne.0) ishk = 1
        return
 
@@ -400,35 +426,43 @@ contains
           endif
        else
           !
-          !--2D and 3D toy star solutions
+          !--2D toy star solutions
+          !  these routines change xexact
           !
           totmass = SUM(pmass(1:npart))
           print*,'summing masses of ',npart,' particles, mass = ',totmass
-          if ((iplotx.eq.ix(1) .and. iploty.eq.ivx) &
-               .or. (iplotx.eq.ix(2) .and. iploty.eq.ivx+1)) then
-             call exact_toystar2D(time,gamma,polyk,totmass, &
-                  htstar,atstar,ctstar,sigma,norder,morder,4)
+          if (igeom.eq.1 .and.((iplotx.eq.ix(1) .and. iploty.eq.ivx) &
+               .or. (iplotx.eq.ix(2) .and. iploty.eq.ivx+1))) then
+             call exact_toystar2D(4,time,gamma,polyk,totmass, &
+                  atstar,htstar,ctstar,sigma,norder,morder, &
+                  xexact,yexact,ierr)
           endif
-          if (iplotx.eq.irad) then
+          if (iplotx.eq.irad .or. (igeom.eq.2 .and. iplotx.eq.ix(1))) then
              if (iploty.eq.irho) then
-                call exact_toystar2D(time,gamma,polyk,totmass, &
-                     htstar,atstar,ctstar,sigma,norder,morder,1)
+                call exact_toystar2D(1,time,gamma,polyk,totmass, &
+                     atstar,htstar,ctstar,sigma,norder,morder, &
+                     xexact,yexact,ierr)
              elseif (iploty.eq.ipr) then
-                call exact_toystar2D(time,gamma,polyk,totmass, &
-                     htstar,atstar,ctstar,sigma,norder,morder,2)
+                call exact_toystar2D(2,time,gamma,polyk,totmass, &
+                     atstar,htstar,ctstar,sigma,norder,morder, &
+                     xexact,yexact,ierr)
              elseif (iploty.eq.iutherm) then
-                call exact_toystar2D(time,gamma,polyk,totmass, &
-                     htstar,atstar,ctstar,sigma,norder,morder,3)
-             elseif (iploty.eq.ivx .or. iploty.eq.ivx+1) then
-                call exact_toystar2D(time,gamma,polyk,totmass, &
-                     htstar,atstar,ctstar,sigma,norder,morder,4)
+                call exact_toystar2D(3,time,gamma,polyk,totmass, &
+                     atstar,htstar,ctstar,sigma,norder,morder, &
+                     xexact,yexact,ierr)
+             elseif (igeom.eq.2 .and. iploty.eq.ivx) then
+                call exact_toystar2D(4,time,gamma,polyk,totmass, &
+                     atstar,htstar,ctstar,sigma,norder,morder, &
+                     xexact,yexact,ierr)
              elseif (iploty.eq.ike) then
-                call exact_toystar2D(time,gamma,polyk,totmass, &
-                     htstar,atstar,ctstar,sigma,norder,morder,4)
+                call exact_toystar2D(5,time,gamma,polyk,totmass, &
+                     atstar,htstar,ctstar,sigma,norder,morder, &
+                     xexact,yexact,ierr)
              endif
-          elseif (iplotx.le.ndim .and. iploty.le.ndim) then
-             call exact_toystar2D(time,gamma,polyk,totmass, &
-                  htstar,atstar,ctstar,sigma,norder,morder,0)
+          elseif (iplotx.le.ndim .and. iploty.le.ndim .and. igeom.eq.1) then
+             call exact_toystar2D(0,time,gamma,polyk,totmass, &
+                  atstar,htstar,ctstar,sigma,norder,morder, &
+                  xexact,yexact,ierr)
           endif
        endif
 

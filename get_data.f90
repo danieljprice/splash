@@ -149,7 +149,13 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   !
   !--read exact solution parameters from files if present
   !
-  if (iexact.ne.0) call read_exactparams(iexact,ierr)
+  if (iexact.ne.0) then
+     if (ireadfile.lt.0) then
+        call read_exactparams(iexact,rootname(1),ierr)
+     else
+        call read_exactparams(iexact,rootname(ireadfile),ierr)
+     endif
+  endif
   
   return
 end subroutine get_data
