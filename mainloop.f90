@@ -453,7 +453,9 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
 
               !!--if rendering array is the same as the previous plot, reuse the array                
               if (irenderplot.eq.irenderprev .and. i.eq.istepprev) then
-                 print*,'same rendering, using previous array...'
+                 if (.not.x_sec .or. (x_sec.and.ndim.eq.3.and.nxsec.gt.2)) then
+                    print*,'same rendering, using previous array...'
+                 endif
               else
                  if (allocated(datpix)) deallocate(datpix)
                  if (allocated(datpix3D)) deallocate(datpix3D)
@@ -1152,8 +1154,8 @@ contains
       ifile = ifile+iskipfiles
       if (ifile.le.nfiles) then
          call get_data(ifile,.true.)
-         print*,'jumping to step ',MOD(i,nstepsinfile(ifile)) + 1,i
-         i = MOD(i,nstepsinfile(ifile)) + 1
+         print*,'starting at step ',MOD(i-1,nstepsinfile(ifile))+1
+         i = MOD(i-1,nstepsinfile(ifile)) + 1
       else
          i=-666
       endif
