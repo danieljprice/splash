@@ -458,20 +458,20 @@ subroutine plotstep
             !--convert angles to radians
             !
             angleradz = angletempz*pi/180.
-            print*,'rotating particles about z by ',angletempz
-            if (ndim.eq.3) then
                anglerady = angletempy*pi/180.
                angleradx = angletempx*pi/180.
+            print*,'rotating particles about z by ',angletempz
+            if (ndim.eq.3) then
                print*,'rotating particles about y by ',angletempy
                print*,'rotating particles about x by ',angletempx
             endif
             do j=1,ntot(i)
                xcoords(1:ndim) = dat(j,ix(1:ndim),i) - xorigin(1:ndim)
-               if (ndim.eq.2) then
-                  call rotate2D(xcoords(:),angleradz)
-               elseif (ndim.eq.3) then
+!               if (ndim.eq.2) then
+!                  call rotate2D(xcoords(:),angleradz,anglerady)
+!               elseif (ndim.eq.3) then
                   call rotate3D(xcoords(:),angleradx,anglerady,angleradz)
-               endif
+!               endif
                xplot(j) = xcoords(iplotx) + xorigin(iplotx)
                yplot(j) = xcoords(iploty) + xorigin(iploty)
                if (ixsec.gt.0) then
@@ -867,25 +867,27 @@ subroutine plotstep
            !
            lastplot = (i.eq.n_end .and. nyplot.eq.nyplots .and. k.eq.nxsec)
 
-           if (interactive .and. (nacross*ndown.eq.1)) then
-              iadvance = nfreq
-              call interactive_part(ninterp,iplotx,iploty,ixsec,irenderplot, &
-                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                   dat(1:ninterp,ih,i),icolourme(1:ninterp), &
-                   xmin,xmax,ymin,ymax,xsecmin,xsecmax,rendermin,rendermax, &
-                   angletempx,angletempy,angletempz,ndim,iadvance,isave)
-              !--turn rotation on if necessary
-              if (abs(angletempx-anglex).gt.tol) irotate = .true.
-              if (abs(angletempy-angley).gt.tol) irotate = .true.
-              if (abs(angletempz-anglez).gt.tol) irotate = .true.
-              if (iadvance.eq.-666) return
-           elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
-              !
-              !--timestep control only if multiple plots on page
-              !
-              iadvance = nfreq
-              call interactive_step(iadvance,xmin,xmax,ymin,ymax)
-              if (iadvance.eq.-666) return
+           if (interactive) then
+              if (nacross*ndown.eq.1) then
+                 iadvance = nfreq
+                 call interactive_part(ninterp,iplotx,iploty,ixsec,irenderplot, &
+                      xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                      dat(1:ninterp,ih,i),icolourme(1:ninterp), &
+                      xmin,xmax,ymin,ymax,xsecmin,xsecmax,rendermin,rendermax, &
+                      angletempx,angletempy,angletempz,ndim,iadvance,isave)
+                 !--turn rotation on if necessary
+                 if (abs(angletempx-anglex).gt.tol) irotate = .true.
+                 if (abs(angletempy-angley).gt.tol) irotate = .true.
+                 if (abs(angletempz-anglez).gt.tol) irotate = .true.
+                 if (iadvance.eq.-666) return
+              elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
+                 !
+                 !--timestep control only if multiple plots on page
+                 !
+                 iadvance = nfreq
+                 call interactive_step(iadvance,xmin,xmax,ymin,ymax)
+                 if (iadvance.eq.-666) return
+              endif
            endif
 
            !
@@ -973,21 +975,23 @@ subroutine plotstep
         !
         lastplot = (i.eq.n_end .and. nyplot.eq.nyplots)
 
-        if (interactive .and. (nacross*ndown.eq.1)) then
-           iadvance = nfreq
-           call interactive_part(ntot(i),iplotx,iploty,0,irenderplot, &
-                xplot(1:ntot(i)),yplot(1:ntot(i)),zplot(1:ntot(i)), &
-                dat(1:ntot(i),ih,i),icolourme(1:ntot(i)), &
-                xmin,xmax,ymin,ymax,dummymin,dummymax,dummymin,dummymax, &
-                angletempx,angletempy,angletempz,ndim,iadvance,isave)
-           if (iadvance.eq.-666) return
-        elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
-           !
-           !--timestep control only if multiple plots on page
-           !
-           iadvance = nfreq
-           call interactive_step(iadvance,xmin,xmax,ymin,ymax)
-           if (iadvance.eq.-666) return
+        if (interactive) then
+           if (nacross*ndown.eq.1) then
+              iadvance = nfreq
+              call interactive_part(ntot(i),iplotx,iploty,0,irenderplot, &
+                   xplot(1:ntot(i)),yplot(1:ntot(i)),zplot(1:ntot(i)), &
+                   dat(1:ntot(i),ih,i),icolourme(1:ntot(i)), &
+                   xmin,xmax,ymin,ymax,dummymin,dummymax,dummymin,dummymax, &
+                   angletempx,angletempy,angletempz,ndim,iadvance,isave)
+              if (iadvance.eq.-666) return
+           elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
+              !
+              !--timestep control only if multiple plots on page
+              !
+              iadvance = nfreq
+              call interactive_step(iadvance,xmin,xmax,ymin,ymax)
+              if (iadvance.eq.-666) return
+           endif
         endif
 
      elseif (iploty.le.numplot) then! ie iploty = extra
