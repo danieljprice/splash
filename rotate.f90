@@ -9,22 +9,25 @@ module rotation
 !
 contains
 
-subroutine rotate2D(xcoords,anglez)
+subroutine rotate2D(xcoords,anglez,angley)
   implicit none
   real, intent(inout) :: xcoords(2)
-  real, intent(in) :: anglez
+  real, intent(in) :: anglez,angley
   real :: x, y, r, phi
   
   x = xcoords(1)
   y = xcoords(2)
 !
 !--rotate about z
-!  
+! 
   r = sqrt(x**2 + y**2)
   phi = ATAN2(y,x)
   phi = phi - anglez
-  xcoords(1) = r*COS(phi)
-  xcoords(2) = r*SIN(phi)
+  x = r*COS(phi)
+  y = r*SIN(phi)
+
+  xcoords(1) = x
+  xcoords(2) = y*tan(angley)
   
   return 
 end subroutine rotate2D
@@ -52,22 +55,22 @@ subroutine rotate3D(xcoords,anglex,angley,anglez)
 !
 !--rotate about y
 !
-  r = sqrt(x**2 + z**2)
-  phi = ATAN2(x,z)
-  phi = phi - angley  
-  z = r*COS(phi)
-  x = r*SIN(phi)
+!  r = sqrt(x**2 + z**2)
+!  phi = ATAN2(x,z)
+!  phi = phi - angley  
+!  z = r*COS(phi)
+!  x = r*SIN(phi)
 !
 !--rotate about x
 !
-  r = sqrt(y**2 + z**2)
-  phi = ATAN2(y,z)
-  phi = phi - anglex  
-  z = r*COS(phi)
-  y = r*SIN(phi)
+!  r = sqrt(y**2 + z**2)
+!  phi = ATAN2(y,z)
+!  phi = phi - anglex  
+!  z = r*COS(phi)
+!  y = r*SIN(phi)
   
-  xcoords(1) = x
-  xcoords(2) = y
+  xcoords(1) = x*tan(angley)
+  xcoords(2) = y*tan(anglex)
   xcoords(3) = z
   
   return
@@ -100,7 +103,7 @@ subroutine rotate_axes2D(ioption,xmin,xmax,anglez)
 !--now rotate each of these coordinates
 !
   do i=1,4
-     call rotate2D(xpt(:,i),anglez)
+     call rotate2D(xpt(:,i),anglez,0.0)
   enddo
 !
 !--now plot box appropriately using points

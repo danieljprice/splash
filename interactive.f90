@@ -386,28 +386,28 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
            iexit = .true.
         endif
      case('l')
-        if (rotation .and. ndim.ge.3) then
+        if (rotation .and. ndim.ge.2) then
            print*,'changing y rotation angle by -15 degrees...'
            angley = angley - 15.
            iadvance = 0
            iexit = .true.
         endif
      case('L')
-        if (rotation .and. ndim.ge.3) then
+        if (rotation .and. ndim.ge.2) then
            print*,'changing y rotation angle by -30 degrees...'
            angley = angley - 30.
            iadvance = 0
            iexit = .true.
         endif
      case(';')
-        if (rotation .and. ndim.ge.3) then
+        if (rotation .and. ndim.ge.2) then
            print*,'changing y rotation angle by 15 degrees...'
            angley = angley + 15.
            iadvance = 0
            iexit = .true.
         endif
      case(':')
-        if (rotation .and. ndim.ge.3) then
+        if (rotation .and. ndim.ge.2) then
            print*,'changing y rotation angle by 30 degrees...'
            angley = angley + 30.
            iadvance = 0
