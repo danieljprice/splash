@@ -2,7 +2,7 @@ program supersphplot
 !---------------------------------------------------------------------------------
 !     plotting utility for sph data in 1, 2 and 3 dimensions.
 !
-!     uses pgplot routines to plot graphs and utilises the rendering
+!     uses PGPLOT routines to plot graphs and utilises the rendering
 !     tools to plot density renderings and vector plots of 2D and 3D data.
 !
 !     subroutines as follows (in alphabetical order):
@@ -12,6 +12,7 @@ program supersphplot
 !     colour_demo        : demonstration of colour schemes for rendering
 !     colour_set	 : sets up pgplot colour table for rendering
 !     coord_transform    : (from main code) transforms betw. various coord systems
+!     danpgsch           : sets character height independent of page size
 !     danpgtile          : my utility for tiling plots on the pgplot page
 !     danpgwedg          : my very minor modification of pgwedg
 !     defaults_read	 : read default plot options from file

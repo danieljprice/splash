@@ -73,8 +73,12 @@ subroutine defaults_set
   ncolours=10		! number of colours in colour table
   itrans(:) = 0		! no transformations (log10 etc)
   backgnd_vec_nomulti = .false. ! plot vector plot using black/white
-  hposlegend = 0.75
-  vposlegend = 2.0
+
+  hposlegend = 0.75     ! horizontal legend position as fraction of viewport
+  vposlegend = 2.0      ! vertical legend position in character heights
+  hpostitle = 0.5     ! horizontal title position as fraction of viewport
+  vpostitle = 1.0      ! vertical title position in character heights
+  fjusttitle = 0.5      ! justification factor for title
 
   irenderplot = 0		! this is just so it is set to something
 !

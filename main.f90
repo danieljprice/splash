@@ -37,7 +37,7 @@ subroutine main(ipicky,ipickx,irender)
   real :: vecmax,rendermin,rendermax
   real :: xsecmin,xsecmax,dxsec,xsecpos
   real :: pixwidth
-  real :: charheight
+  real :: charheight, charheightmm
   real :: dxgrid
   real :: xpt1,ypt1,xpt2,ypt2
 
@@ -212,12 +212,12 @@ subroutine main(ipicky,ipickx,irender)
   !      
   if (plotcirc) call pgsfs(2)
   !
-  !--increase character size depending on the number of graphs on the page
+  !--set character height in mm
   !
   !      print*,' enter character height '
   !      read*,charheight
-  charheight = 1.0
-  if ((ndown*nacross).gt.1 .and..not. tile_plots) charheight = 2.0
+  charheightmm = 4.0
+  !!if ((ndown*nacross).gt.1 .and..not. tile_plots) charheight = 2.0
   !      charheight = 0.5*(nacross+ndown)
 
   !------------------------------------------------------------------------      
@@ -236,7 +236,8 @@ subroutine main(ipicky,ipickx,irender)
      !-------------------------------------
      over_plots: do nyplot=1,nyplots
         !--make sure character height is set correctly
-        call pgsch(charheight)
+        call danpgsch(charheightmm,2) ! set in mm
+	call pgqch(charheight) ! in PGPLOT scaled units
         !--for consecutive plots (ie. if not multi but nyplots > 1 plots consecutive numbers)	     
         iploty = ipicky + nyplot - 1
         !--set current x, y plot from multiplot array
@@ -802,8 +803,7 @@ subroutine main(ipicky,ipickx,irender)
 	      endif
 	      if (i.le.ntitles) then
 	         if (titlelist(i)(1:1).ne.' ') then
-	            call pglabel(' ',' ',trim(titlelist(i)))
-		    !!call pgmtxt('T',1.5,0.5,0.5,'text')
+		    call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(i)))
 	         endif
 	      endif
 

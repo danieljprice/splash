@@ -12,16 +12,17 @@ subroutine options_page
  iaction = 0
  papersizey = papersizex*aspectratio
  print 10,ipagechange,iaxis,papersizex,papersizey,nacross,ndown,tile, &
-          hposlegend,vposlegend,animate
+          hpostitle,vpostitle,hposlegend,vposlegend,animate
 10 format(' 0) exit ',/, 		&
         ' 1) toggle page change     (',L1,')',/, &
         ' 2) toggle axes            (',i2,')',/, &
         ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
         ' 4) change plots per page  (',i2,1x,i2,')',/, &
 	' 5) toggle plot tiling     (',L1,')',/, & 
-	' 6) adjust legend position (',f5.2,1x,f4.1,')',/, &
-	' 7) toggle animate         (',L1,')')	
- call prompt('enter option ',iaction,0,7)
+	' 6) adjust title position  (',f5.2,1x,f4.1,')',/, &
+	' 7) adjust legend position (',f5.2,1x,f4.1,')',/, &
+	' 8) toggle animate         (',L1,')')	
+ call prompt('enter option ',iaction,0,8)
 
  select case(iaction)
 !------------------------------------------------------------------------
@@ -102,11 +103,18 @@ subroutine options_page
 !------------------------------------------------------------------------
   case(6)
      call prompt('Enter horizontal position as fraction of viewport', &
+          hpostitle,0.0,1.0)
+     call prompt('Enter vertical position in character heights above top',vpostitle)
+     call prompt('Enter justification factor (0.0=left 1.0=right)',fjusttitle,0.0,1.0)
+     return
+!------------------------------------------------------------------------
+  case(7)
+     call prompt('Enter horizontal position as fraction of viewport', &
           hposlegend,0.0,1.0)
      call prompt('Enter vertical position in character heights from top',vposlegend)
      return
 !------------------------------------------------------------------------
-  case(7)
+  case(8)
      animate = .not.animate
      print*,'animate = ',animate
  	  
