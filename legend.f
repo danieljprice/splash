@@ -8,7 +8,7 @@
       REAL hpos,vpos,t
       CHARACTER string*15
       
-      hpos=0.75	! either 0.1 or 0.75 for 1D shocks
+      hpos=0.1	! either 0.1 or 0.75 for 1D shocks
 !      vspace=1.2
       vpos=-2.5	    
       ndecimal = 2	! number of decimal places to display

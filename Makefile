@@ -35,8 +35,8 @@ SOURCES= modules.f90 prompting.f90 \
 	 exact_toystar_ACplane.f exact_mhdshock.f90 \
 	 integratedkernel.f90 \
 	 interpolate1D.f \
-         interpolate2D.f interpolate3D.f \
-	 interpolate3D_fastxsec.f \
+         interpolate2D.f interpolate2D_xsec.f \
+	 interpolate3D.f interpolate3D_fastxsec.f \
 	 interpolate3D_projection.f \
 	 int_from_string.f90 \
 	 legend.f \
