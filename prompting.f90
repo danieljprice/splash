@@ -52,7 +52,10 @@
 ! e-mail: ullrich@ceres1.physi.uni-heidelberg.de
 ! Last mod: 18 Aug 94
 !
-
+! Bug fixes by D.Price, University of Exeter, dprice@astro.ex.ac.uk:
+! 19/10/04 : problem with if (present(min) .and. min < newvalue)
+!            on some compilers
+!
 module prompting
 
    private                     
@@ -100,7 +103,6 @@ contains
       write(string,*) value                
       if (present(min)) write(chmin,"(g10.0)") min
       if (present(max)) write(chmax,"(g10.0)") max     
-      
       !
       !  Write prompt string to terminal
       !
@@ -130,13 +132,17 @@ contains
          print "(a)", "Error, not an integer number"
          error = .true.
       else
-         if (present(min) .and. newvalue < min) then
-            print "(a)", "Error, value out of range"
-            error = .true.
+         if (present(min)) then
+            if (newvalue < min) then
+               print "(a)", "Error, value out of range"
+               error = .true.
+            endif
          endif
-         if (present(max) .and. newvalue > max) then
-            print "(a)", "Error, value out of range"
-            error = .true.
+         if (present(max)) then
+            if (newvalue > max) then
+               print "(a)", "Error, value out of range"
+               error = .true.
+            endif
          endif
       endif
        
@@ -208,13 +214,17 @@ contains
          print "(a)", "Error, not a real number"
          error = .true.
       else
-         if (present(min) .and. newvalue < min) then
-            print "(a)", "Error, value out of range"
-            error = .true.
+         if (present(min)) then
+            if (newvalue < min) then
+               print "(a)", "Error, value out of range"
+               error = .true.
+            endif
          endif
-         if (present(max) .and. newvalue > max) then
-            print "(a)", "Error, value out of range"
-            error = .true.
+         if (present(max)) then
+            if (newvalue > max) then
+               print "(a)", "Error, value out of range"
+               error = .true.
+            endif
          endif
       endif
        
@@ -287,13 +297,17 @@ contains
          print "(a)", "Error, not a real number"
          error = .true.
       else
-         if (present(min) .and. newvalue < min) then
-            print "(a)", "Error, value out of range"
-            error = .true.
+         if (present(min)) then
+            if (newvalue < min) then
+               print "(a)", "Error, value out of range"
+               error = .true.
+            endif
          endif
-         if (present(max) .and. newvalue > max) then
-            print "(a)", "Error, value out of range"
-            error = .true.
+         if (present(max)) then
+            if (newvalue > max) then
+               print "(a)", "Error, value out of range"
+               error = .true.
+            endif
          endif
       endif
        
@@ -438,5 +452,3 @@ contains
    end subroutine string_prompt
    
 end module prompting
-
-
