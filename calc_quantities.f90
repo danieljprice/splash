@@ -14,7 +14,7 @@ subroutine calc_quantities
   print*,'calculating ',ncalc,' additional quantities...'
   numplot = ncolumns + ncalc
   do i=nstart,n_end
-     do j=1,npart(i)
+     do j=1,ntot(i)
         !!--pressure if not in data array
         if ((ipr.gt.ncolumns)                            &
              .and.(irho.ne.0).and.(iutherm.ne.0))         &
@@ -107,7 +107,7 @@ subroutine calc_quantities
   if (ibeta.ne.0) label(ibeta) = 'plasma \gb'
   if (idivberr.ne.0) label(idivberr) = 'h |div B| / |B|'
   if (itimestep.ne.0) label(itimestep) = 'h sqrt(\gr) / |B|'
-  if (ivpar.ne.0) label(ivpar) = 'v_parellel'
+  if (ivpar.ne.0) label(ivpar) = 'v_parallel'
   if (ivperp.ne.0) label(ivperp) = 'v_perp'
   if (iBpar.ne.0) label(iBpar) = 'B_parallel'
   if (iBperp.ne.0) label(iBperp) = 'B_perp'
