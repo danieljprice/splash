@@ -45,9 +45,9 @@ real function etar(j,m,rad,gamma)
 !  
   freqsq = (j+m)*(j+m + 2./gamm1) - m**2
 
-  etar = 0.
   akprev = 1.0  ! this is a_0 which is the amplitude
-  !!print*,'mode = ',j,' nu^2 = ',freqsq,' a_0 = ',akprev
+  etar = akprev
+  !!print*,'mode = ',j,m,' nu^2 = ',freqsq,' a_0 = ',akprev
 !
 !--the co-efficients for the terms above a_0 are calculated using
 !  the recurrence relation between the a_k's
@@ -91,10 +91,10 @@ real function detadr(j,m,rad,gamma)
   freqsq = (j+m)*(j+m + 2./gamm1) - m**2
 
   detadr = 0.
-  term1 = 0.
-  term2 = 0.
   akprev = 1.0  ! this is a_0 which is the amplitude
-!  print*,'mode = ',j,' nu^2 = ',freqsq,' a_0 = ',akprev
+  term1 = akprev
+  term2 = 0.
+!  print*,'mode = ',j,m,' nu^2 = ',freqsq,' a_0 = ',akprev
 !
 !--the co-efficients for the terms above a_0 are calculated using
 !  the recurrence relation between the a_k's
