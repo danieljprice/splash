@@ -1,13 +1,35 @@
 !------------------------------------------------------------------------
 !
-! module containing global parameter for transform subroutines
-! this is the maximum number of transformations you can do in a row      
+! module containing subroutines for applying transformations to data
+! prior to plotting.
+!
+! the transformations are:
+!
+!  1) log10(x)
+!  2) |x|
+!  3) 1/x
+!  4) sqrt(x)     
+!  5) x^2
+!
+! * combinations of transformations are done when the 
+!   input number is > 10 (e.g. 321 means 1/x, then abs, then log10)
+!
+! subroutines contained within this module are the following:
+!
+!   transform        : applies transformation to a one dimensional array
+!   transform2       : applies the transformation to a two dimensional array
+!   transform_limits : transforms the plot limits appropriately
+!   transform_label  : changes the plot label appropriately
+!
+! Written for use in supersphplot by
+! Daniel Price, Institute of Astronomy, Cambridge, UK
+! dprice@ast.cam.ac.uk
 !
 !------------------------------------------------------------------------
-module transform_params
-  integer, parameter :: nmax = 10
-end module transform_params
-
+module transforms
+ integer, parameter, private :: nmax = 10  ! this is the maximum number of 
+                                  ! transformations you can do in a row      
+contains
 !------------------------------------------------------------------------
 !
 !  subroutine returns log, 1/x of a given array
@@ -18,7 +40,6 @@ end module transform_params
 !
 !------------------------------------------------------------------------
 subroutine transform(array,arrayout,itrans,isize)
-  use transform_params
   implicit none
   integer :: i,ndigits,itransmulti
   integer, intent(IN) :: isize,itrans
@@ -29,12 +50,12 @@ subroutine transform(array,arrayout,itrans,isize)
   !
   !--extract the digits from the input number 
   !            
-  if (itrans.gt.0) then      
-     call get_digits(itrans,digit,ndigits,nmax)         
+  if (itrans.gt.0) then
+     call get_digits(itrans,digit,ndigits)
      !
-     !--do a transformation for each digit     
+     !--do a transformation for each digit
      !
-     arraytemp = arrays
+     arraytemp = array
 
      do i=1,ndigits
         itransmulti = digit(i)
@@ -77,12 +98,80 @@ end subroutine transform
 
 !------------------------------------------------------------------------
 !
+!  same as transform but for a two dimensional array
+!  applies the transformation to the same array as was input
+!
+!------------------------------------------------------------------------
+subroutine transform2(array,itrans,isizex,isizey)
+  implicit none
+  integer :: i,ndigits,itransmulti
+  integer, intent(IN) :: itrans,isizex,isizey
+  real, dimension(isizex,isizey), intent(INOUT) :: array
+!!  real, dimension(isizex,isizey), intent(OUT) :: arrayout
+  real, dimension(isizex,isizey) :: arraytemp
+  integer, dimension(nmax) :: digit     
+  !
+  !--extract the digits from the input number 
+  !            
+  if (itrans.gt.0) then      
+     call get_digits(itrans,digit,ndigits)    
+     !
+     !--do a transformation for each digit     
+     !
+     arraytemp = array
+
+     do i=1,ndigits
+        itransmulti = digit(i)
+        !
+        !--perform transformation appropriate to this digit     
+        !
+        select case(itransmulti)
+        case(1)
+           where (arraytemp > 0)
+              arraytemp = log10(arraytemp)
+           elsewhere
+              arraytemp = 0.
+           end where
+        case(2)
+           arraytemp = abs(arraytemp)    
+        case(3)
+           where (arraytemp .ne. 0)
+              arraytemp = 1./arraytemp
+           elsewhere
+              arraytemp = 0.
+           end where
+        case(4) 
+           where (arraytemp .gt. 0)
+              arraytemp = sqrt(arraytemp)
+           elsewhere
+              arraytemp = 0.
+           end where
+        case(5)
+           arraytemp = arraytemp**2	 
+        end select
+     enddo
+
+     array = arraytemp
+
+!  else
+!     do i = 1,isizex
+!        do j = 1,isizey
+!           print*,i,j
+!           print*,array(i,j)
+!        enddo
+!     enddo
+!     arrayout = array    
+  endif
+
+end subroutine transform2
+
+!------------------------------------------------------------------------
+!
 !  same as transform but for the plot limits
 !  (min can become max and vice versa)
 !
 !------------------------------------------------------------------------
 subroutine transform_limits(xminin,xmaxin,xminout,xmaxout,itrans)
-  use transform_params
   implicit none
   integer :: i,ndigits,itransmulti
   integer, intent(in) :: itrans
@@ -94,7 +183,7 @@ subroutine transform_limits(xminin,xmaxin,xminout,xmaxout,itrans)
   !--extract the digits from the input number 
   !            
   if (itrans.gt.0) then      
-     call get_digits(itrans,digit,ndigits,nmax)         
+     call get_digits(itrans,digit,ndigits)         
      !
      !--do a transformation for each digit     
      !
@@ -175,77 +264,6 @@ end subroutine transform_limits
 
 !------------------------------------------------------------------------
 !
-!  same as transform but for a two dimensional array
-!  applies the transformation to the same array as was input
-!
-!------------------------------------------------------------------------
-subroutine transform2(array,itrans,isizex,isizey)
-  use transform_params
-  implicit none
-  integer :: i,ndigits,itransmulti
-  integer, intent(IN) :: itrans,isizex,isizey
-  real, dimension(isizex,isizey), intent(INOUT) :: array
-!!  real, dimension(isizex,isizey), intent(OUT) :: arrayout
-  real, dimension(isizex,isizey) :: arraytemp
-  integer, dimension(nmax) :: digit     
-  !
-  !--extract the digits from the input number 
-  !            
-  if (itrans.gt.0) then      
-     call get_digits(itrans,digit,ndigits,nmax)         
-     !
-     !--do a transformation for each digit     
-     !
-     arraytemp = array
-
-     do i=1,ndigits
-        itransmulti = digit(i)
-        !
-        !--perform transformation appropriate to this digit     
-        !
-        select case(itransmulti)
-        case(1)
-           where (arraytemp > 0)
-              arraytemp = log10(arraytemp)
-           elsewhere
-              arraytemp = 0.
-           end where
-        case(2)
-           arraytemp = abs(arraytemp)    
-        case(3)
-           where (arraytemp .ne. 0)
-              arraytemp = 1./arraytemp
-           elsewhere
-              arraytemp = 0.
-           end where
-        case(4) 
-           where (arraytemp .gt. 0)
-              arraytemp = sqrt(arraytemp)
-           elsewhere
-              arraytemp = 0.
-           end where
-        case(5)
-           arraytemp = arraytemp**2	 
-        end select
-     enddo
-
-     array = arraytemp
-
-!  else
-!     do i = 1,isizex
-!        do j = 1,isizey
-!           print*,i,j
-!           print*,array(i,j)
-!        enddo
-!     enddo
-!     arrayout = array    
-  endif
-
-end subroutine transform2
-
-
-!------------------------------------------------------------------------
-!
 !  function to adjust the label of a plot if log, 1/x etc
 !
 !  Note: *cannot* put print or write statements into this function
@@ -253,17 +271,17 @@ end subroutine transform2
 !      
 !------------------------------------------------------------------------
 function transform_label(label,itrans)
-  use transform_params
   implicit none
   integer :: itrans,itransmulti,i,itransprev,ndigits
   integer, dimension(nmax) :: digit
-  character(LEN=*) :: label, transform_label
-  character(LEN=120) :: temp_label      
+  character(LEN=*) :: label
+  character(LEN=40) :: transform_label
+  character(LEN=40) :: temp_label      
   !
   !--extract the digits from the input number 
   !            
   if (itrans.gt.0) then      
-     call get_digits(itrans,digit,ndigits,nmax)         
+     call get_digits(itrans,digit,ndigits)         
      temp_label = label      
      !
      !--do a transformation for each digit     
@@ -306,9 +324,9 @@ end function transform_label
 !     ndigits      : number of digits in i
 !------------------------------------------------------------------------
 
-subroutine get_digits(i,digits,ndigits,nmax)
+subroutine get_digits(i,digits,ndigits)
   implicit none
-  integer, intent(IN) :: i,nmax
+  integer, intent(IN) :: i
   integer, intent(OUT) :: ndigits
   integer, intent(OUT), dimension(nmax) :: digits
   integer :: j,isubtract,idigit
@@ -326,3 +344,5 @@ subroutine get_digits(i,digits,ndigits,nmax)
   enddo
 
 end subroutine get_digits
+
+end module transforms

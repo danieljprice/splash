@@ -7,12 +7,12 @@ subroutine options_limits
  use prompting
  use limits
  use labels
+ use transforms
  implicit none
  integer :: iaction,ipick,i,ierr
  real :: diff, mid, temp
  logical :: ians
  character(len=1) :: ans
- character(len=25) :: transform_label
  
  iaction = 0
  if (iadapt) then

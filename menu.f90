@@ -7,13 +7,13 @@ subroutine menu(quit)
   use settings
   use multiplot
   use prompting
+  use transforms
   implicit none
   logical, intent(out) :: quit
   integer :: i,ihalf,iadjust,iaction,istep,ierr
   integer :: ipicky,ipickx,irender,ivecplot,int_from_string
   character(LEN=2) :: ioption
   character(LEN=30) :: filename
-  character(LEN=25) :: transform_label      
   logical :: iansx, iansy, ichange
 
   quit = .false.

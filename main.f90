@@ -10,7 +10,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   use multiplot
   use particle_data
   use prompting
-  use settings   
+  use settings 
+  use transforms
   implicit none
   integer, intent(in) :: ipicky, ipickx, irender, ivecplot
 
@@ -46,7 +47,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 
   character(len=60) :: title,titlex
   character(len=20) :: labelx,labely,labelrender
-  character(len=25) :: transform_label
   character(len=60), dimension(maxtitles) :: titlelist
 
   debug = .false.
