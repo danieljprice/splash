@@ -22,7 +22,7 @@ subroutine defaults_set
   use settings_limits
   use options_data, only:defaults_set_data
   use settings_data, only:ndim,icoords
-  use settings_part, only:defaults_set_part,icoordsnew
+  use settings_part, only:defaults_set_part
   use settings_page, only:defaults_set_page
   use settings_render, only:defaults_set_render
   use settings_vecplot, only:defaults_set_vecplot
@@ -31,8 +31,6 @@ subroutine defaults_set
   use particle_data, only:maxpart,maxstep,maxcol
   implicit none
   integer :: i
-
-  icoordsnew = icoords ! co-ordinate system to plot in
 !
 !--set defaults for submenu options
 !
@@ -151,7 +149,7 @@ end subroutine defaults_write
 ! these are specified in the modules
 !-----------------------------------------------
 subroutine defaults_read
- use filenames, only:rootname,maxfile,nfiles
+ use filenames, only:rootname,maxfile
  use multiplot
  use settings_data, only:dataopts
  use settings_part, only:plotopts
