@@ -37,9 +37,12 @@ subroutine defaults_read
     goto 19
 18  print*,'error reading multiplot options from defaults'
 19  continue
- close(unit=1)
- print*,'read default options from file '
- return
+    close(unit=1)
+    print*,'read default options from file '
+    return
+ else
+    print*,'defaults file not found: using program settings'
+    return
  endif
 77 continue
  print*,'**** warning: end of file in defaults ****'

@@ -9,6 +9,7 @@
 module params
  implicit none
  integer, parameter :: maxplot=40   ! maximum number of plots (for multiplot arrays)
+ integer, parameter :: maxparttypes = 6  ! max # of different particle types
 end module params
 !
 !--particle data
@@ -16,7 +17,7 @@ end module params
 module particle_data
  use params
  implicit none
- integer :: maxpart,maxstep,maxcol  ! dimensions of dat array
+ integer :: maxpart,maxstep,maxcol ! dimensions of dat array
  integer, allocatable, dimension(:) :: npart,ntot,nghost,ntotplot
  integer, allocatable, dimension(:,:) :: iam
  real, allocatable, dimension(:) :: time, gamma
@@ -88,6 +89,7 @@ module settings
  logical :: plotcirc,plotcircall,flythru,imulti
  logical :: iplotline,iplotlinein,iplotav,ilabelpart
  logical :: iplotpart,iplotghost,iplotsink
+ !!logical, dimension(maxparttypes) :: iplotparttype
  logical :: ishowopts, ivegotdata
 !
 !--page options

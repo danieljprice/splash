@@ -18,7 +18,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   integer :: i,j,k,n
   integer :: iplotx,iploty,irenderplot,ivectorplot,ivecx,ivecy
   integer :: nyplot,nyplots      
-  integer :: npart1,npartdim
+  integer :: ninterp,npart1,npartdim
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec
   integer :: irenderprev, istepprev, iadvance
@@ -42,17 +42,18 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   real :: xpt1,ypt1,xpt2,ypt2
 
   logical :: iplotcont,x_sec,isamexaxis,isameyaxis
-  logical :: log, inewpage, tile_plots
+  logical :: log, inewpage, tile_plots, debug
 
   character(len=60) :: title,titlex
   character(len=20) :: labelx,labely,labelrender
   character(len=25) :: transform_label
   character(len=60), dimension(maxtitles) :: titlelist
 
+  debug = .false.
+
   !------------------------------------------------------------------------
   ! initialisations
   !------------------------------------------------------------------------
-
 
   x_sec = xsec_nomulti
   iplotcont = iplotcont_nomulti
@@ -219,7 +220,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   !------------------------------------------------------------------------            
   i = nstart
   over_timesteps: do while (i.le.n_end)
-
+     print*,'tstep = ',i
      iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
      npart1 = npart(i) + 1
      irenderprev = 0
@@ -332,8 +333,12 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
            enddo
            !!           if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D	   
-
-           !------------------------------------------------------------------
+           !
+           !--set number of particles to use in the interpolation routines
+           !  (ie. including only gas particles and ghosts)
+	   ninterp = npart(i) + nghost(i)	
+           
+	   !------------------------------------------------------------------
            !  rendering setup and interpolation (this is the rendering done
            !  *before* the cross sections are taken, e.g. to 3D grid)
            !------------------------------------------------------------------
@@ -372,17 +377,18 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               else
                  if (allocated(datpix)) deallocate(datpix)
                  if (allocated(datpix3D)) deallocate(datpix3D)
-                 select case(ndim)
+	 
+		 select case(ndim)
                  case(2)
                     !!--interpolate to 2D grid
                     !!  allocate memory for rendering array
                     if (.not. x_sec) then
                        allocate ( datpix(npixx,npixy) )
                        call interpolate2D( &
-                            dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i), &
-                            dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i), &
-                            dat(ih,1:ntot(i),i),dat(irenderplot,1:ntot(i),i), &
-                            ntot(i),xmin,ymin,datpix,npixx,npixy,pixwidth)
+                            dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
+                            dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i), &
+                            dat(ih,1:ninterp,i),dat(irenderplot,1:ninterp,i), &
+                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
                     endif
                  case(3)
                     !!--interpolation to 3D grid - then take multiple cross sections/projections
@@ -392,11 +398,11 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                        allocate ( datpix3D(npixx,npixy,npixz) )
                        !!--interpolate from particles to 3D grid
                        call interpolate3D( &
-                            dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i), &
-                            dat(ixsec,1:ntot(i),i),dat(ipmass,1:ntot(i),i),  &
-                            dat(irho,1:ntot(i),i),dat(ih,1:ntot(i),i), &
-                            dat(irenderplot,1:ntot(i),i), &
-                            ntot(i),xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dxsec)
+                            dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
+                            dat(ixsec,1:ninterp,i),dat(ipmass,1:ninterp,i),  &
+                            dat(irho,1:ninterp,i),dat(ih,1:ninterp,i), &
+                            dat(irenderplot,1:ninterp,i), &
+                            ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dxsec)
                     endif
                  end select
               endif
@@ -464,18 +470,18 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                        print*,trim(label(ix(ixsec))),' = ',xsecpos,  &
                             ' : fast cross section', xmin,ymin
                        call interpolate3D_fastxsec( &
-                            dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i), &
-                            dat(ixsec,1:ntot(i),i), &
-                            dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i),    &
-                            dat(ih,1:ntot(i),i),dat(irenderplot,1:ntot(i),i), &
-                            ntot(i),xmin,ymin,xsecpos,datpix,npixx,npixy,pixwidth)
+                            dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
+                            dat(ixsec,1:ninterp,i), &
+                            dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i),    &
+                            dat(ih,1:ninterp,i),dat(irenderplot,1:ninterp,i), &
+                            ninterp,xmin,ymin,xsecpos,datpix,npixx,npixy,pixwidth)
                     else
                        !!--do fast projection
                        call interpolate3D_projection( &
-                            dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i), &
-                            dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i),   &
-                            dat(ih,1:ntot(i),i), dat(irenderplot,1:ntot(i),i), &
-                            ntot(i),xmin,ymin,datpix,npixx,npixy,pixwidth)
+                            dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
+                            dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i),   &
+                            dat(ih,1:ninterp,i), dat(irenderplot,1:ninterp,i), &
+                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
                     endif
 
                  endif ! whether 3D grid or fast renderings
@@ -499,10 +505,10 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  call set_grid1D(xmin,dxgrid,npixx)
 
                  call interpolate2D_xsec( &
-                      dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i), &
-                      dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i),    &
-                      dat(ih,1:ntot(i),i),dat(irenderplot,1:ntot(i),i), &
-                      ntot(i),xpt1,ypt1,xpt2,ypt2,datpix1D,npixx)
+                      dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
+                      dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i),    &
+                      dat(ih,1:ninterp,i),dat(irenderplot,1:ninterp,i), &
+                      ninterp,xpt1,ypt1,xpt2,ypt2,datpix1D,npixx)
                  !
                  !--find limits of datpix1D for plotting
                  !  do transformations on rendered array where appropriate
@@ -660,10 +666,12 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                     !
                     !!--plot particle positions
                     if (iplotpart) then
+		       if (debug) print*,'plotting particles'
                        call pgpt(npart(i),xplot(1:npart(i)),yplot(1:npart(i)),imark)
                     endif
                     !!--plot ghost particles with different marker
                     if (iplotpart .and. iplotghost .and. nghost(i).gt.0) then
+		       if (debug) print*,'plotting ',nghost(i),'ghosts'
                        nghoststart = npart(i) + 1
                        nghostend = npart(i) + nghost(i)
                        call pgpt(nghost(i),xplot(nghoststart:nghostend), &
@@ -716,7 +724,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               !--plot sink particles with different marker again
 
               nsink = ntot(i) - nghost(i) - npart(i)
-              if (iplotsink .and. nsink.gt.0) then
+              if (debug) print*,'nsink = ',nsink
+	      if (iplotsink .and. nsink.gt.0) then
                  nsinkstart = npart(i) + nghost(i) + 1
                  nsinkend = ntot(i)
                  print*,' plotting ',nsink,' sink particles...'

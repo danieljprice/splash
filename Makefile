@@ -43,8 +43,9 @@ LDFLAGS = -lpgplot -lX11 -lF77
 %.o : %.f90
 	$(F90C) -c $(F90FLAGS) $(FPPFLAGS) $< -o $@
 
-DANSPH = read_data_dansph.f 
-MRBSPH = read_data_mbate.f 
+DANSPH = read_data_dansph.f90 
+MRBSPH = read_data_mbate.f90
+GADGETSPH = read_data_gadget.f90
 
 SOURCES= modules.f90 prompting.f90 \
 	 supersphplot.f90 main.f90 \
@@ -83,14 +84,18 @@ SOURCES= modules.f90 prompting.f90 \
 
 SOURCESALL = $(SOURCES:.f90=.o)
 
-OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f=.o) coord_transform.o
-OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f=.o) coord_transform.o
+OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f90=.o) coord_transform.o
+OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f90=.o) coord_transform.o
+OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o) coord_transform.o
 
 dansph: $(OBJDANSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o ../supersphplot $(OBJDANSPH)
 
 mrbsph: $(OBJMRBSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_mrb $(OBJMRBSPH)
+
+gadget: $(OBJGADGETSPH)
+	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_gadget $(OBJGADGETSPH)
 
 ## files from the main code
 
