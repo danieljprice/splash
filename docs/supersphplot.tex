@@ -95,7 +95,8 @@ feature (in this case 3D rotated axes/boxes are plotted appropriately).
  This is the pre-public-release (Guinea-pig) version.
 
 \subsection{Licence}
- SUPERSPHPLOT is released under the terms of the GNU General Public License (GPL). 
+ SUPERSPHPLOT is released under the terms of the GNU General Public License (GPL). You should have received
+ a copy with this distribution, other
 
 \section{Gallery}
 
@@ -133,20 +134,16 @@ downloadable from:
 \begin{quote}
 \url{http://g95.sourceforge.net/}
 \end{quote}
-
- The code has been tested and compiled successfully on the following compilers
-(please send me yours if it is not listed):
-\begin{itemize}
-\item NAG f95 compiler
-\item Intel Fortran Compiler (ifc)
-\item Lahey-Fujitsu f95
-\end{itemize}
+although there is another, apparently unrelated project at
+\begin{quote}
+\url{www.gfortran.org}
+\end{quote}
 
 \subsubsection{Makefile options}
 
  In the Makefile, you will need to set the FORTRAN compiler and flags to your local version, e.g..
 \begin{verbatim}
-F90C = f95
+F90C = g95
 F90FLAGS = -O
 \end{verbatim}
  Secondly the compiler must be able to link to the PGPLOT and X11 libraries on
@@ -230,7 +227,7 @@ supersphplot myrun*
 \end{verbatim}
 files will be read consecutively in the order that they are given.
 
-\section{Plotting examples}
+\section{A brief tour...}
 After a successful data read, the menu should appear as something like the
 following:
 \begin{verbatim}
@@ -277,6 +274,12 @@ screen, producing the graph shown in Figure \ref{fig:swave1D}.
 \caption{Commonly used graphics devices available in PGPLOT}
 \label{tab:devices}
 \end{table}
+
+\begin{figure}
+\centering
+\caption{example plot}
+\end{figure}
+ Plot settings are controlled via the menu options and are described below. 
 
 
 \section{Menu options}
@@ -843,6 +846,12 @@ dprice@ast.cam.ac.uk
 \end{verbatim}
 although check that this email address is current because I am still a postdoc!
 
+\subsection{Known limitations / issues}
+Here is a partial to do list or things which currently conflict:
+\begin{itemize}
+\item rotation settings override limits transformations on co-ordinate plots
+\item Does not yet handle non-cartesian input data
+\end{itemize}
 
 \section*{Acknowledgements}
  Several of the routines were developed from ideas used by Matthew Bate. The
