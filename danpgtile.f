@@ -54,10 +54,10 @@ c
 c
 c set margin size in units of viewport dimensions
 c
-      vmarginleft = 0.06
+      vmarginleft = 0.14
       vmarginright = 0.001
       vmargintop = 0.001
-      vmarginbottom = 0.08
+      vmarginbottom = 0.1
 c
 c adjust effective viewport size if just=1 and graphs are not square
 c      
@@ -80,22 +80,23 @@ c effective viewport size = size - margins
 c
       vptsizeeffx = 1.0 - vmarginright - vmarginleft
       vptsizeeffy = 1.0 - vmargintop - vmarginbottom
-      vptsizeeffx = aspectratio*vptsizeeffy   !!/devaspectratio
+c     reduce x size if just=1 to get right aspect ratio
+      IF (aspectratio.lt.1.0) vptsizeeffx = aspectratio*vptsizeeffy   !!/devaspectratio
       panelsizex = vptsizeeffx/nx
       panelsizey = vptsizeeffy/ny 
       ix = iplot - ((iplot-1)/nx)*nx
       iy = (iplot-1)/nx + 1
-!!      print*,i,ix,iy
-!!      print*,panelsizex,panelsizey,vptsizeeffx,vptsizeeffy
+c      print*,i,ix,iy
+c      print*,panelsizex,panelsizey,vptsizeeffx,vptsizeeffy
       
       vptxmin = vmarginleft + (ix-1)*panelsizex
       vptxmax = vptxmin + panelsizex
       vptymin = vmarginbottom + (ny-iy)*panelsizey
       vptymax = vptymin + panelsizey
-!!      print*,vptxmin,vptxmax,vptymin,vptymax
+c      print*,vptxmin,vptxmax,vptymin,vptymax
       CALL PGSVP(vptxmin,vptxmax,vptymin,vptymax)
 c
-c--set axes
+c set axes
 c
       IF (just.EQ.1) THEN
          CALL PGWNAD(xmin,xmax,ymin,ymax)
@@ -107,13 +108,13 @@ c set options for call to pgbox (draws axes) and label axes where appropriate
 c
       IF (ix.EQ.1) THEN
          optsy = '1bvcnst'
-	 call pgmtxt('L',2.5,0.5,0.5,labely)
+	 call PGMTXT('L',3.2,0.5,0.5,labely)
       ELSE
          optsy = 'bcst'
       ENDIF  
       IF (iy.EQ.ny) THEN
          optsx = 'bcnsta' 
-	 call pgmtxt('B',3.0,0.5,0.5,labelx)
+	 call PGMTXT('B',3.0,0.5,0.5,labelx)
       ELSE
          optsx = 'bcsta'
       ENDIF
@@ -121,7 +122,7 @@ c
 c
 c plot the title inside the plot boundaries
 c      
-      call pgmtxt('T',-1.5,0.96,1.0,title)
+      call PGMTXT('T',-1.5,0.96,1.0,title)
       
       RETURN      
       END SUBROUTINE
