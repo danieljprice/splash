@@ -711,7 +711,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                     endif
                     call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
                       zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
-                      npartoftype(:,i),x_sec,xsecmin,xsecmax)
+                      icolourme(1:ntot(i)),npartoftype(:,i),x_sec,xsecmin,xsecmax)
                  endif
               endif
 
@@ -804,8 +804,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
              if (interactive) then
                 iadvance = nfreq                
                 call interactive_part(ninterp,iplotx,iploty,irenderplot, &
-                     xplot(1:ninterp),yplot(1:ninterp), &
-                     xmin,xmax,ymin,ymax,angletempx,angletempy,angletempz,iadvance,isave)                
+                     xplot(1:ninterp),yplot(1:ninterp),icolourme(1:ninterp), &
+                     xmin,xmax,ymin,ymax,angletempx,angletempy,angletempz,ndim,iadvance,isave)                
                 !--turn rotation on if necessary
                 if (abs(angletempx-anglex).gt.tol) irotate = .true.
                 if (abs(angletempy-angley).gt.tol) irotate = .true.
@@ -878,7 +878,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            !endif
            call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
                 zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
-                npartoftype(:,i),.false.,xsecmin,xsecmax)
+                icolourme(1:ntot(i)),npartoftype(:,i),.false.,xsecmin,xsecmax)
 
            if ((i.eq.nstart).and.iplotlinein) then! plot initial conditions as dotted line
               call pgsls(linestylein)
@@ -917,8 +917,9 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            iadvance = nfreq
            if (interactive) then
               call interactive_part(ntot(i),iplotx,iploty,0,xplot(1:ntot(i)), &
-                                    yplot(1:ntot(i)),xmin,xmax,ymin,ymax, &
-                                    angletempx,angletempy,angletempz,iadvance,isave)
+                                    yplot(1:ntot(i)),icolourme(1:ntot(i)), &
+                                    xmin,xmax,ymin,ymax, &
+                                    angletempx,angletempy,angletempz,ndim,iadvance,isave)
               if (isave) then
                  !--save settings from interactive mode
                  lim(iplotx,1) = xmin

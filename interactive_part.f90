@@ -14,21 +14,24 @@
 !   iadvance : integer telling the loop how to advance the timestep
 !
 subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
-  xmin,xmax,ymin,ymax,anglex,angley,anglez,iadvance,isave)
+  icolourpart,xmin,xmax,ymin,ymax,anglex,angley,anglez,ndim,iadvance,isave)
   implicit none
-  integer, intent(in) :: npart,iplotx,iploty,irender
+  integer, intent(in) :: npart,iplotx,iploty,irender,ndim
   integer, intent(out) :: iadvance
+  integer, dimension(npart), intent(inout) :: icolourpart
   real, dimension(npart), intent(in) :: xcoords, ycoords
   real, intent(inout) :: xmin,xmax,ymin,ymax
   real, intent(inout) :: anglex,angley,anglez
   logical, intent(out) :: isave
   integer :: i,iclosest,nc,ipts,int_from_string
-  real :: xpt,ypt,xpt2,ypt2,rmin,rr,gradient,yint
+  integer :: nmarked
+  real :: xpt,ypt,xpt2,ypt2,xptmin,xptmax,yptmin,yptmax
+  real :: rmin,rr,gradient,yint
   real :: xlength, ylength
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
   character(len=20) :: string
-  logical :: iexit
+  logical :: iexit, rotation
 
   print*,'entering interactive mode...press h in plot window for help'
   char = 'A'
@@ -39,6 +42,8 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
   ypt = 0.
   iexit = .false.
   isave = .false.
+  rotation = .false.
+  if (iplotx.le.ndim .and. iploty.le.ndim .and. ndim.ge.2) rotation = .true.
   
   do while (.not.iexit)
      call pgcurs(xpt,ypt,char)
@@ -97,16 +102,25 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
      case('h')
         print*,'-------------- interactive mode commands --------------'
         print*,' select area and zoom : left click (or A)'
+        print*,' zoom in by 10%       : +'
+        print*,' zoom out by 10(20)%      : - (_)'
+        print*,' (a)djust/reset plot limits to fit '
         print*,' (r)eplot current plot        : r'
         print*,' label closest (p)article     : p'
         print*,' plot a line and find its g)radient : g'
-        print*,' rotate about z axis by +(-) 15 degrees : , (.)'
-        print*,' rotate about x axis by +(-) 15 degrees : / ('')' 
-        print*,' rotate about z axis by +(-) 30 degrees : < (>)'
-        print*,' rotate about z axis by +(-) 30 degrees : ? (")'        
+        if (rotation) then
+           print*,' rotate about z axis by +(-) 15 degrees : , (.)'
+           print*,' rotate about z axis by +(-) 30 degrees : < (>)'
+           if (ndim.ge.3) then
+              print*,' rotate about x axis by +(-) 15 degrees : / ('')'
+              print*,' rotate about x axis by +(-) 30 degrees : ? (")'
+              print*,' rotate about y axis by +(-) 15 degrees : l (;)'
+              print*,' rotate about y axis by +(-) 30 degrees : L (:)'
+           endif
+        endif
         print*,' next timestep/plot   : space, n'
         print*,' previous timestep    : right click (or X), b'
-        print*,' jump by n timesteps  : 0,1,2,3..9 then left or right click'
+        print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then left (right) click'
         print*,' (h)elp                       : h'
         print*,' (s)ave current settings for all steps : s'
         print*,' (q)uit plotting              : q, Q'             
@@ -121,23 +135,54 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
         !
         !--draw rectangle from the point and reset the limits
         !
-        print*,'please select area to zoom in on'
+        print*,'select area: '
+        print*,'left click : zoom'
+        if (irender.le.0) then
+           print*,'1-9 = mark selected particles with colours 1-9'
+        endif
         call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
         print*,xpt,ypt,xpt2,ypt2,char2
-        if (char2.eq.'A') then   ! zoom if another left click
+        select case (char2)
+        case('A')   ! zoom if another left click
+           call pgrect(xpt,xpt2,ypt,ypt2)
            xmin = min(xpt,xpt2)
            xmax = max(xpt,xpt2)
            ymin = min(ypt,ypt2)
            ymax = max(ypt,ypt2)
            iadvance = 0
            iexit = .true.
-        endif     
-     case('-') ! zoom out by 10%
+        case('1','2','3','4','5','6','7','8','9')
+           if (irender.le.0) then
+              xptmin = min(xpt,xpt2)
+              xptmax = max(xpt,xpt2)
+              yptmin = min(ypt,ypt2)
+              yptmax = max(ypt,ypt2)
+           
+              nmarked = 0
+              do i=1,npart
+                 if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
+                 .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax)) then
+                     icolourpart(i) = int_from_string(char2)
+                     nmarked = nmarked + 1
+                 endif
+              enddo
+              print*,'marked ',nmarked,' particles in selected region'
+              iadvance = 0
+              iexit = .true.
+           endif
+        end select    
+     case('-','_') ! zoom out by 10 or 20%
         print*,'zooming out'
         xlength = xmax - xmin
         ylength = ymax - ymin
-        xlength = 1.1*xlength
-        ylength = 1.1*ylength
+        select case(char)
+        case('-')
+           xlength = 1.1*xlength
+           ylength = 1.1*ylength
+        case('_')
+           xlength = 1.2*xlength
+           ylength = 1.2*ylength
+        end select
         xmin = xpt - 0.5*xlength
         xmax = xpt + 0.5*xlength
         ymin = ypt - 0.5*ylength
@@ -156,69 +201,99 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
         ymax = ypt + 0.5*ylength
         iadvance = 0
         iexit = .true.
+     case('a') ! reset plot limits
+        print*,'resetting plot limits...'
+        xmin = minval(xcoords)
+        xmax = maxval(xcoords)
+        ymin = minval(ycoords)
+        ymax = maxval(ycoords)
      !
      !--rotation
      !
      case(',')
-        print*,'changing z rotation angle by -15 degrees...'
-        anglez = anglez - 15.
-        iadvance = 0
-        iexit = .true.
+        if (rotation) then
+           print*,'changing z rotation angle by -15 degrees...'
+           anglez = anglez - 15.
+           iadvance = 0
+           iexit = .true.
+        endif
      case('<')
-        print*,'changing z rotation angle by -30 degrees...'
-        anglez = anglez - 30.
-        iadvance = 0
-        iexit = .true.
+        if (rotation) then
+           print*,'changing z rotation angle by -30 degrees...'
+           anglez = anglez - 30.
+           iadvance = 0
+           iexit = .true.
+        endif
      case('.')
-        print*,'changing z rotation angle by 15 degrees...'
-        anglez = anglez + 15.
-        iadvance = 0
-        iexit = .true.
+        if (rotation) then
+           print*,'changing z rotation angle by 15 degrees...'
+           anglez = anglez + 15.
+           iadvance = 0
+           iexit = .true.
+        endif
      case('>')
-        print*,'changing z rotation angle by 30 degrees...'
-        anglez = anglez + 30.
-        iadvance = 0
-        iexit = .true.
+        if (rotation) then
+           print*,'changing z rotation angle by 30 degrees...'
+           anglez = anglez + 30.
+           iadvance = 0
+           iexit = .true.
+        endif
      case('l')
-        print*,'changing y rotation angle by -15 degrees...'
-        angley = angley - 15.
-        iadvance = 0
-        iexit = .true.
+        if (rotation .and. ndim.ge.3) then
+           print*,'changing y rotation angle by -15 degrees...'
+           angley = angley - 15.
+           iadvance = 0
+           iexit = .true.
+        endif
      case('L')
-        print*,'changing y rotation angle by -30 degrees...'
-        angley = angley - 30.
-        iadvance = 0
-        iexit = .true.
+        if (rotation .and. ndim.ge.3) then
+           print*,'changing y rotation angle by -30 degrees...'
+           angley = angley - 30.
+           iadvance = 0
+           iexit = .true.
+        endif
      case(';')
-        print*,'changing y rotation angle by 15 degrees...'
-        angley = angley + 15.
-        iadvance = 0
-        iexit = .true.
+        if (rotation .and. ndim.ge.3) then
+           print*,'changing y rotation angle by 15 degrees...'
+           angley = angley + 15.
+           iadvance = 0
+           iexit = .true.
+        endif
      case(':')
-        print*,'changing y rotation angle by 30 degrees...'
-        angley = angley + 30.
-        iadvance = 0
-        iexit = .true.
+        if (rotation .and. ndim.ge.3) then
+           print*,'changing y rotation angle by 30 degrees...'
+           angley = angley + 30.
+           iadvance = 0
+           iexit = .true.
+        endif
      case('''')
-        print*,'changing x rotation angle by -15 degrees...'
-        anglex = anglex - 15.
-        iadvance = 0
-        iexit = .true.
+        if (rotation .and. ndim.ge.3) then
+           print*,'changing x rotation angle by -15 degrees...'
+           anglex = anglex - 15.
+           iadvance = 0
+           iexit = .true.
+        endif
      case('"')
-        print*,'changing x rotation angle by -30 degrees...'
-        anglex = anglex - 30.
-        iadvance = 0
-        iexit = .true.
+        if (rotation .and. ndim.ge.3) then
+           print*,'changing x rotation angle by -30 degrees...'
+           anglex = anglex - 30.
+           iadvance = 0
+           iexit = .true.
+        endif
      case('/')
-        print*,'changing x rotation angle by 15 degrees...'
-        anglex = anglex + 15.
-        iadvance = 0
-        iexit = .true.
+        if (rotation .and. ndim.ge.3) then
+           print*,'changing x rotation angle by 15 degrees...'
+           anglex = anglex + 15.
+           iadvance = 0
+           iexit = .true.
+        endif
      case('?')
-        print*,'changing x rotation angle by 30 degrees...'
-        anglex = anglex + 30.
-        iadvance = 0
-        iexit = .true.
+        if (rotation .and. ndim.ge.3) then
+           print*,'changing x rotation angle by 30 degrees...'
+           anglex = anglex + 30.
+           iadvance = 0
+           iexit = .true.
+        endif
      !
      !--timestepping
      !

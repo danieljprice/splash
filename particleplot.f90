@@ -5,12 +5,14 @@
 !  Arguments:
 !
 !
-subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec,xsecmin,xsecmax)
+subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
+                        icolourpart,npartoftype,x_sec,xsecmin,xsecmax)
   use labels
   use settings_data ! ndim and icoords
   use settings_part
   implicit none
   integer, intent(in) :: ntot, iplotx, iploty
+  integer, intent(in), dimension(ntot) :: icolourpart
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(ntot), intent(in) :: xplot, yplot, zplot, h
   real, dimension(ntot) :: xerrb, yerrb, herr
@@ -39,6 +41,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
                 ' z = ',xsecmin,' -> ',xsecmax
            do j=index1,index2
               if (zplot(j).lt.xsecmax .and. zplot(j).gt.xsecmin) then
+                 call pgsci(icolourpart(j))
                  call pgpt(1,xplot(j),yplot(j),imarktype(itype))
                  !--plot circle of interaction if gas particle
                  if (itype.eq.1 .and. ncircpart.gt.0 .and. ANY(icircpart(1:ncircpart).eq.j)) then
@@ -57,8 +60,19 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
            !
            !--otherwise plot all particle of this type using appropriate marker and colour
            !
+           call pgqci(icolourindex)
            print "(a,i8,1x,a)",' plotting ',npartoftype(itype),trim(labeltype(itype))//' particles'
-           call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+           if (all(icolourpart(index1:index2).eq.icolourpart(index1))) then
+              call pgsci(icolourpart(index1))
+              call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+           else
+              do j=index1,index2
+                 call pgsci(icolourpart(j))
+                 call pgpt(1,xplot(j),yplot(j),imarktype(itype))
+              enddo
+           endif
+           call pgsci(icolourindex)
+
            if (ilabelpart) then
               !!--plot particle labels
               print*,'plotting particle labels ',index1,':',index2

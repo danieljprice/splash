@@ -14,7 +14,7 @@ subroutine alloc(npartin,nstep,ncolumns)
   integer :: maxpartold,maxstepold,maxcolold
   integer :: ierr
   logical :: reallocate
-  integer, dimension(:), allocatable :: ntottemp
+  integer, dimension(:), allocatable :: ntottemp, icolourmetemp
   integer, dimension(:,:), allocatable :: iamtemp, npartoftypetemp
   real, dimension(:), allocatable :: timetemp, gammatemp
   real, dimension(:,:,:), allocatable :: dattemp
@@ -44,13 +44,16 @@ subroutine alloc(npartin,nstep,ncolumns)
      print 10,'> reallocating memory: ',npartin,nstep,ncolumns
 10   format (a,' ntot = ',i10,' nstep = ',i6,' ncol = ',i4)
      allocate(dattemp(maxpart,maxcol,maxstep), stat=ierr)
-     if (ierr /= 0) stop 'error allocating memory'
+     if (ierr /= 0) stop 'error allocating memory (dattemp)'
      allocate(iamtemp(maxpart,maxstep),stat=ierr)
-     if (ierr /= 0) stop 'error allocating memory'
+     if (ierr /= 0) stop 'error allocating memory (iamtemp)'
+     allocate(icolourmetemp(maxpart),stat=ierr)
+     if (ierr /= 0) stop 'error allocating memory (icolourmetemp)'
 
      dattemp = dat
      iamtemp = iam
-     deallocate(dat,iam)
+     icolourmetemp = icolourme
+     deallocate(dat,iam,icolourme)
 
      allocate(ntottemp(maxstep),npartoftypetemp(maxparttypes,maxstep),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory'
@@ -92,9 +95,16 @@ subroutine alloc(npartin,nstep,ncolumns)
 
   allocate(iam(maxpart,maxstep), stat=ierr)
   if (ierr /= 0) stop 'error allocating memory for iam array'
+  iam = 0
+  
+  allocate(icolourme(maxpart),stat=ierr)
+  if (ierr /= 0) stop 'error allocating memory for icolourme array'
+  icolourme = 1
+  
   if (reallocate) then
      dat(1:maxpartold,1:maxcolold,1:maxstepold) = dattemp(1:maxpartold,1:maxcolold,1:maxstepold)
      iam(1:maxpartold,1:maxstepold) = iamtemp(1:maxpartold,1:maxstepold)
+     icolourme(1:maxpartold) = icolourmetemp(1:maxpartold)
   endif
 !
 !--other arrays
