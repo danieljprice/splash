@@ -327,7 +327,7 @@ contains
 
     select case(iexact)
     case(1)! shock tube
-       if (iplotx.eq.ix(1)) then
+       if (iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irho) then
              call exact_shock(1,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
@@ -437,7 +437,7 @@ contains
 
     case(6) ! mhd shock tubes
        ! this subroutine modifies xexact
-       if (iplotx.eq.ix(1)) then
+       if (iplotx.eq.ix(1) .and. igeom.le.1) then
           !--prompt for shock type if not set  
           if (ishk.eq.0) then ! prompt
              call prompt('enter shock solution to plot',ishk,0,6)
@@ -491,6 +491,11 @@ contains
     case(8) ! exact solution read from file
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
           call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
+          !--plot this untransformed (as may already be in log space)
+          if (ierr.le.0) then
+             call pgline(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
+          endif
+          ierr = 1
        endif
     end select
     
