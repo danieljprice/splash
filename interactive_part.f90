@@ -159,6 +159,6 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
      end select
 
   enddo
-
+  print*,'exiting interactive mode'
   return
 end subroutine interactive_part
