@@ -309,7 +309,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
      !--timestepping
      !
      case('q','Q')
-        iadvance = 666666666
+        iadvance = -666
         print*,'quitting...'
         iexit = .true.
      case('X','b','B') ! right click -> go back
@@ -331,6 +331,78 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
   enddo
   return
 end subroutine interactive_part
+
+!
+! cut down version of interactive mode -> controls timestepping only
+! used in powerspectrum / extra plots
+!
+subroutine interactive_step(iadvance)
+ implicit none
+ integer, intent(inout) :: iadvance
+ integer :: int_from_string,nc
+ real :: xpt,ypt
+ character(len=1) :: char
+ character(len=5) :: string
+ logical :: iexit
+ 
+  call pgqinf('CURSOR',string,nc)
+  if (string(1:nc).eq.'YES') then
+     print*,'entering interactive mode...press h in plot window for help'
+  else
+     print*,'cannot enter interactive mode: device has no cursor'
+     return
+  endif
+  char = 'A'
+  xpt = 0.
+  ypt = 0.
+  iexit = .false.
+  
+  do while (.not.iexit)
+     call pgcurs(xpt,ypt,char)
+     !
+     !--exit if the device is not interactive
+     !
+     if (char.eq.achar(0)) return
+  
+     !print*,'location: x, y = ',xpt,ypt,' function = ',char
+     
+     select case(char)
+     case('h')
+        print*,'-------------- interactive mode commands --------------'
+        print*,' (r)eplot current plot        : r'
+        print*,' next timestep/plot   : space, n'
+        print*,' previous timestep    : right click (or X), b'
+        print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then left (right) click'
+        print*,' (h)elp                       : h'
+        print*,' (q)uit plotting              : q, Q'             
+        print*,'-------------------------------------------------------'
+
+     !
+     !--timestepping
+     !
+     case('q','Q')
+        iadvance = -666
+        print*,'quitting...'
+        iexit = .true.
+     case('X','b','B') ! right click -> go back
+        iadvance = -abs(iadvance)
+        iexit = .true.
+     case('r','R') ! replot
+        iadvance = 0
+        iexit = .true.
+     case(' ','n','N') ! space
+        iexit = .true.
+     case('0','1','2','3','4','5','6','7','8','9')
+        iadvance = int_from_string(char)
+        print*,' setting timestep jump = ',iadvance
+     case(')')
+        iadvance = 10
+        print*,' setting timestep jump = ',iadvance
+     end select
+
+  enddo
+  return
+end subroutine interactive_step
 
 subroutine mvlegend(hpos,vpos)
  use settings_page, only:hposlegend,vposlegend
