@@ -9,7 +9,7 @@
 
 ## Compiler options
 F90C =  g95
-F90FLAGS =  -O -C -Wall
+F90FLAGS =  -O -C -Wall -fbounds-check
 #LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
 #         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
 #         -lpng

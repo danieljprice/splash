@@ -309,8 +309,8 @@ subroutine plotstep
      !  also set labels and plot limits
      !--------------------------------------------------------------
      if (iploty.le.ndataplots .and. iplotx.le.ndataplots) then
-        xplot = dat(:,iplotx,i)
-        yplot = dat(:,iploty,i)
+        xplot(1:ntot(i)) = dat(1:ntot(i),iplotx,i)
+        yplot(1:ntot(i)) = dat(1:ntot(i),iploty,i)
         zplot = 0. !--reset later if x-sec
         xsecmin = 0. !-- " " 
         xsecmax = 0.
