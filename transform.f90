@@ -164,15 +164,16 @@ end subroutine transform_limits
 !------------------------------------------------------------------------
 !
 !  same as transform but for a two dimensional array
+!  applies the transformation to the same array as was input
 !
 !------------------------------------------------------------------------
-subroutine transform2(array,arrayout,itrans,isizex,isizey)
+subroutine transform2(array,itrans,isizex,isizey)
   use transform_params
   implicit none
   integer :: i,ndigits,itransmulti
   integer, intent(IN) :: itrans,isizex,isizey
-  real, dimension(isizex,isizey), intent(IN) :: array
-  real, dimension(isizex,isizey), intent(OUT) :: arrayout
+  real, dimension(isizex,isizey), intent(INOUT) :: array
+!!  real, dimension(isizex,isizey), intent(OUT) :: arrayout
   real, dimension(isizex,isizey) :: arraytemp
   integer, dimension(nmax) :: digit     
   !
@@ -216,10 +217,16 @@ subroutine transform2(array,arrayout,itrans,isizex,isizey)
         end select
      enddo
 
-     arrayout = arraytemp
+     array = arraytemp
 
   else
-     arrayout = array      
+!     do i = 1,isizex
+!        do j = 1,isizey
+!           print*,i,j
+!           print*,array(i,j)
+!        enddo
+!     enddo
+!     arrayout = array    
   endif
 
 end subroutine transform2

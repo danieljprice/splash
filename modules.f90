@@ -8,7 +8,7 @@
 !
 module params
  implicit none
- integer, parameter :: max=10000
+ integer, parameter :: maxpart=10000
  integer, parameter :: maxstep=10
  integer, parameter :: ndimmax = 3
  integer, parameter :: maxplot=24+2*ndimmax + 1   ! maximum number of plots 
@@ -21,9 +21,9 @@ module particle_data
  implicit none
  integer :: icrap
  integer, dimension(maxstep) :: npart,ntot,nghost,ntotplot
- integer, dimension(max) :: iam
+ integer, dimension(maxpart) :: iam
  real, dimension(maxstep) :: time, gamma
- real, dimension(maxplot,max,maxstep) :: dat
+ real, dimension(maxplot,maxpart,maxstep) :: dat
  real, dimension(maxplot,2) :: lim
  real :: hfact 
  real :: bmin,bmax
@@ -70,7 +70,7 @@ module settings
  integer, dimension(10) :: icircpart
  
  integer :: ncontours_nomulti,npix_nomulti,npixvec_nomulti
- integer :: ivecplot_nomulti,irender,icolours
+ integer :: ivecplot_nomulti,icolours
  integer :: ipapersize,menuitems
  
  real :: scalemax,zoom
@@ -101,7 +101,7 @@ module settings
    imark, imarkg, imarksink,                            &
    nacross,ndown,                                       &
    iexact,iplotav,nbins,                                &
-   irender,ivecplot_nomulti,iplotpartvec_nomulti,       &
+   ivecplot_nomulti,iplotpartvec_nomulti,       &
    npix_nomulti,npixvec_nomulti,                        &
    iplotcont_nomulti,ncontours_nomulti,                 &
    icolours,iplotghost,iplotsink,                       &

@@ -9,11 +9,12 @@
       USE params
       USE labels
       IMPLICIT NONE
-      INTEGER, INTENT(OUT) :: ncolumns,ncalc,nfilesteps
+      INTEGER, INTENT(OUT) :: ncalc,nfilesteps
+      INTEGER, INTENT(OUT) :: ncolumns
       INTEGER, INTENT(OUT) :: ndim,ndimV
-      INTEGER, INTENT(OUT), DIMENSION(max) :: iam
+      INTEGER, INTENT(OUT), DIMENSION(maxpart) :: iam
       INTEGER, INTENT(OUT), DIMENSION(maxstep) :: npart,ntot,nghost
-      REAL, INTENT(OUT), DIMENSION(maxplot,max,maxstep) :: dat1
+      REAL, INTENT(OUT), DIMENSION(maxplot,maxpart,maxstep) :: dat1
       REAL, INTENT(OUT), DIMENSION(maxstep) :: time, gamma
       REAL, INTENT(OUT) :: hfact
       CHARACTER*20 imagefile,filename(maxstep),datfile
@@ -51,13 +52,16 @@
 !--open data file and read data
 !
       ivegotdata = .false.
+      dat1 = 0.  ! initialise main array to zero everywhere
 
       OPEN(unit=11,ERR=81,file=datfile,status='old',form='formatted')
 !      READ(11,*,ERR=79,END=80) npart(1),gamma,hfact
       
-      nfilesteps = maxstep-1
+      nfilesteps = maxstep
       ncol_max = 0
-      
+      ndim_max = 1
+      ndimV_max = 1
+
       DO i=1,nfilesteps
 !
 !--read header line for this timestep
@@ -72,22 +76,24 @@
             PRINT*,'ncolumns = ',ncolumns,ncol_max
 	 ENDIF
 	 IF (ndim.GT.ndim_max) ndim_max = ndim
-	 IF (ndimV.GT.ndimV_max) ndimV_max = ndimV   
+	 IF (ndim_max.GT.ndimmax) STOP 'error: ndim in file> 3'
+	 IF (ndimV.GT.ndimV_max) ndimV_max = ndimV  
+	 IF (ndimV_max.GT.ndimmax) STOP 'error: ndimV in file> 3' 
 	 nghost(i) = ntot(i) - npart(i)
 !
 !--allocate memory for main data array here
 !     
 	 PRINT*,'data columns = ',ncolumns
-	 IF (ntot(i).GT.max) STOP 'ntot greater than array limits!!'      
+	 IF (ntot(i).GT.maxpart) STOP 'ntot greater than array limits!!'      
          IF (ntot(i).GT.0) THEN
             print*,'reading'
-            do j=1,ntot(i)
+!            do j=1,ntot(i)
  !              print*,j
-               READ (11,*, END=66,ERR=77) (dat1(1:ncolumns,j,i))
+!               READ (11,*,END=66,ERR=77) (dat1(1:ncolumns,j,i))
  
-            enddo
-!	    READ (11,*, END=66,ERR=77) 
-!     &           (dat1(1:ncolumns,j,i),j=1,ntot(i))
+!            enddo
+	    READ (11,*, END=66,ERR=77) 
+     &           (dat1(1:ncolumns,j,i),j=1,ntot(i))
             
             print*,'read'
          ELSE
@@ -101,6 +107,11 @@
       ENDDO 
       
       PRINT*,' REACHED ARRAY LIMITS IN READFILE'
+
+      nfilesteps = i-1		! this is if reached array limits
+      ntot(i-1) = j-1
+      nghost(i-1) = ntot(i-1) - npart(i-1)
+      GOTO 68
 
 66    CONTINUE
       nfilesteps = i		! timestep there but data incomplete
@@ -180,11 +191,20 @@
       ncalc = 7	! specify number to calculate
       ientrop = ncolumns + 1      
       irad = ncolumns + 2
-      ipmag = ncolumns + 3
-      ibeta = ncolumns + 4
-      itotpr = ncolumns + 5      
-      ike = ncolumns + 6
-      idivBerr = ncolumns + 7
+      if (iBfirst.ne.0) then
+         ipmag = ncolumns + 3
+         ibeta = ncolumns + 4
+         itotpr = ncolumns + 5      
+         ike = ncolumns + 6
+         idivBerr = ncolumns + 7
+      else
+         ncalc = 2
+         ipmag = 0
+         ibeta = 0
+         itotpr = 0
+         ike = 0
+         idivBerr = 0
+      endif
       itimestep = 0
       if (ndim.eq.2 .and. iBfirst.ne.0 .and. ivx.ne.0) then
          ncalc = ncalc + 5
@@ -193,6 +213,12 @@
 	 ivperp = ncolumns + 10
 	 iBpar = ncolumns + 11
 	 iBperp = ncolumns + 12
+      else
+      	 irad2 = 0
+	 ivpar = 0
+	 ivperp = 0
+	 iBpar = 0
+	 iBperp = 0	 
       endif
 
 !-----------------------------------------------------------
@@ -204,24 +230,34 @@
 77    CONTINUE
       PRINT*,' *** Error encountered while reading file ***'
       PRINT*,' -> Check that magnetic field is toggled correctly'
-      RETURN      
+      GOTO 999    
       
 78    CONTINUE
       PRINT*,' *** Error encountered while reading timestep ***'
       PRINT*,' -> number of columns in data file not equal to'
       PRINT*,'    that set as a parameter - edit and recompile'
-      RETURN
+      GOTO 999
 
 79    CONTINUE
       PRINT*,' *** Error reading data file header: check format ***'
-      RETURN
+      GOTO 999
 
 80    CONTINUE
       PRINT*,' *** data file empty, no steps read ***'
-      RETURN
+      GOTO 999
 
 81    CONTINUE
       PRINT*,' *** Error: can''t open data file ***'
+      GOTO 999
+
+ 999  CONTINUE
+      ncalc = 0
+      nfilesteps = 0
+      npart = 0
+      nghost = 0
+      ntot = 0
+      ndim = 0
       RETURN
+      
                     
       END SUBROUTINE read_data

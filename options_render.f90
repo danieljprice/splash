@@ -2,23 +2,24 @@
 ! options for rendering / vector plots
 !-----------------------------------------------------------------------------
 
-subroutine options_render(irender,npix,icolours,iplotcont, 		&
+subroutine options_render(npix,icolours,iplotcont, 		&
  			  ncontours,ivecplot,npixvec,iplotpartvec,	&
 			  x_sec,xsecpos,backgnd_vec,ndim,numplot)
  use prompting
  implicit none
  integer, intent(in) :: ndim, numplot
- integer, intent(out) :: irender,npix,icolours,ivecplot,npixvec
- integer, intent(out) :: ncontours
- logical, intent(out) :: iplotcont,iplotpartvec,x_sec,backgnd_vec
- real, intent(out) :: xsecpos
+ integer, intent(inout) :: npix,icolours,ivecplot,npixvec
+ integer, intent(inout) :: ncontours
+ logical, intent(inout) :: iplotcont,iplotpartvec,x_sec,backgnd_vec
+ real, intent(inout) :: xsecpos
  character(len=1) :: ans 
 !
 !--rendering options
 !
- call prompt(' enter field (from menu) for rendering (0=none)',irender,0,numplot)
+! irender = 0
+! call prompt(' enter field (from menu) for rendering (0=none)',irender,0,numplot)
 
- if ((irender.gt.ndim).and.(irender.le.numplot)) then  
+! if ((irender.gt.ndim).and.(irender.le.numplot)) then  
     call prompt('enter number of pixels along x axis',npix,1,1000)
  
 100 continue
@@ -50,9 +51,9 @@ subroutine options_render(irender,npix,icolours,iplotcont, 		&
     if (iplotcont) then
        call prompt(' enter number of contours between min,max',ncontours,1,100)
     endif
- else
-    irender = 0   
- endif
+! else
+!    irender = 0   
+! endif
 !
 !--vector plot options
 !	  
@@ -60,9 +61,9 @@ subroutine options_render(irender,npix,icolours,iplotcont, 		&
  if (ivecplot.gt.0) then	
     call prompt('enter number of pixels',npixvec,1,1000)
     iplotpartvec = .false.
-    if (irender.eq.0) then
-       call prompt(' plot particles?',iplotpartvec)
-    endif
+!    if (irender.eq.0) then
+       call prompt(' plot particles if no renderings?',iplotpartvec)
+!    endif
     backgnd_vec = .false.
     call prompt('use background color for vector plot?',backgnd_vec)
  endif

@@ -22,6 +22,7 @@ program supersphplot
 !     exact_toystar      : exact solution for the toy star problem
 !     interpolate1D	 : interpolation of 1D sph data to 1D grid using sph kernel
 !     interpolate2D	 : interpolation of 2D sph data to 2D grid using sph kernel     
+!     interpolate2D_xsec : oblique 1D cross section through 2D sph data using kernel
 !     interpolate3D	 : interpolation of 3D sph data to 3D grid using sph kernel
 !     interpolate3D_fastxsec   : fast cross section through 3D data using sph kernel
 !     interpolate3D_projection : fast projection of 3D data to 2D grid using integrated sph kernel
@@ -51,6 +52,7 @@ program supersphplot
 !
 !     this version for both ndspmhd and matthew bate's code 2003
 !     changes log:
+!      23/2/04 - lots of compiler bugs fixed. 2D->1D cross section
 !      19/12/03 - separate subroutine main
 !      17/12/03 - 1D interpolation and crap power spectrum
 !		- some options moved to separate subroutines
@@ -107,9 +109,10 @@ program supersphplot
 !----------------------------------------------------------------------------------
   use filenames
   use labels
+  use params ! for menuitems
   use settings
   implicit none
-  integer :: ipicky,ipickx
+  integer :: ipicky,ipickx,irender
   !
   !--print header
   !
@@ -146,7 +149,11 @@ program supersphplot
   ! ----------------------------------------------------------------
   ! menu - loop back to here once finished plotting/setting options
   !
-  ipicky = 1
+  ipicky = 2    ! these are set on first call to print_menu
+  ipickx = 1
+  irender = 0
+  menuitems = 0
+
   menuloop: do while (ipicky.gt.0 .and. ipicky.le.numplot+menuitems)
      !
      !--numplot is the total number of data columns (read + calculated)
@@ -175,12 +182,13 @@ program supersphplot
      else
         numplot = 0
         ndataplots = 0
+        ncalc = 0
      endif
      
      !----------------------------------------------------------------------
      !  print menu
      !     
-     call print_menu(ipicky,ipickx)
+     call print_menu(ipicky,ipickx,irender)
      
      !-----------------------------------------------------------------------
      ! set plot options from menu
@@ -206,7 +214,7 @@ program supersphplot
         !------------------------------------------------------
         !     or else plot data
         !-------------------------------------------------------
-        call main(ipicky,ipickx)
+        call main(ipicky,ipickx,irender)
      endif      ! if plot or not
      
   enddo menuloop

@@ -36,7 +36,7 @@ subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
 
   datsmooth = 0.
   term = 0.
-  print*,'interpolating from particles to pixels...'
+  print*,'interpolating from particles to 2D grid...'
   !
   !--loop over particles
   !      
@@ -59,9 +59,13 @@ subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
      jpixmax = int((y(i) + radkern - ymin)/pixwidth)
 
      if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
+     if (ipixmax.lt.1) ipixmax = 1
      if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
+     if (jpixmax.lt.1) jpixmax = 1
      if (ipixmax.gt.npixx) ipixmax = npixx
+     if (ipixmin.gt.npixx) ipixmin = npixx
      if (jpixmax.gt.npixy) jpixmax = npixy
+     if (jpixmin.gt.npixy) jpixmin = npixy
      !
      !--loop over pixels, adding the contribution from this particle
      !
@@ -87,7 +91,7 @@ subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
            !
            !--calculate data value at this pixel using the summation interpolant
            !		  
-           datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab		          
+           datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
 
         enddo
      enddo

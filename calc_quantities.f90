@@ -54,44 +54,48 @@ subroutine calc_quantities
         !!--specific KE
         if ((ike.ne.0).and.(ivx.ne.0)) &
              dat(ike,j,i) = 0.5*dot_product(dat(ivx:ivlast,j,i),dat(ivx:ivlast,j,i))
-        !!--magnetic pressure
-        if ((ipmag.ne.0).and.(iBfirst.ne.0))   &
-             dat(ipmag,j,i) = 0.5*dot_product(dat(iBfirst:iBlast,j,i), &
-             dat(iBfirst:iBlast,j,i))
-        !!--plasma beta
-        if ((ibeta.ne.0).and.(ipmag.ne.0)) then
-           if (abs(dat(ipmag,j,i)).gt.1e-10) then
-              dat(ibeta,j,i) = dat(ipr,j,i)/dat(ipmag,j,i)
-           else  
-              dat(ibeta,j,i) = 0.
+!
+!--magnetic quantities
+!
+        if (iBfirst.ne.0) then
+           !!--magnetic pressure
+           if (ipmag.ne.0) then
+              dat(ipmag,j,i) = 0.5*dot_product(dat(iBfirst:iBlast,j,i), &
+                   dat(iBfirst:iBlast,j,i))
+              !!--plasma beta
+              if (ibeta.ne.0) then
+                 if (abs(dat(ipmag,j,i)).gt.1e-10) then
+                    dat(ibeta,j,i) = dat(ipr,j,i)/dat(ipmag,j,i)
+                 else  
+                    dat(ibeta,j,i) = 0.
+                 endif
+              endif
+           endif
+           
+           !!--total pressure (gas + magnetic)     
+           if ((itotpr.ne.0).and.(ipr.ne.0).and.(ipmag.ne.0)) then
+              dat(itotpr,j,i) = dat(ipr,j,i) + dat(ipmag,j,i)
+           endif
+           !!--div B error	(h*divB / abs(B))	
+           if ((idivBerr.ne.0).and.(idivB.ne.0).and.(ih.ne.0)) then
+              Bmag = sqrt(dot_product(dat(iBfirst:iBlast,j,i),dat(iBfirst:iBlast,j,i)))
+              if (Bmag.gt.0.) then
+                 dat(idivBerr,j,i) = abs(dat(idivB,j,i))*dat(ih,j,i)/Bmag
+              else
+                 dat(idivBerr,j,i) = 0.
+              endif
+           endif
+           !!--h*SQRT(rho)/abs(B)	(timestep)
+           if ((itimestep.ne.0).and.(ih.ne.0).and.(irho.ne.0)) then
+              Bmag = sqrt(dot_product(dat(iBfirst:iBlast,j,i),  &
+                   dat(iBfirst:iBlast,j,i)))
+              if (Bmag.ne.0.) then
+                 dat(itimestep,j,i) = dat(ih,j,i)*sqrt(dat(irho,j,i))/Bmag
+              else
+                 dat(itimestep,j,i) = 0.
+              endif
            endif
         endif
-        !!--total pressure (gas + magnetic)     
-        if ((itotpr.ne.0).and.(ipr.ne.0).and.(ipmag.ne.0)) then
-           dat(itotpr,j,i) = dat(ipr,j,i) + dat(ipmag,j,i)
-        endif
-        !!--div B error	(h*divB / abs(B))	
-        if ((idivBerr.ne.0).and.    &
-             (idivB.ne.0).and.(ih.ne.0).and.(iBfirst.ne.0)) then
-           Bmag = sqrt(dot_product(dat(iBfirst:iBlast,j,i),dat(iBfirst:iBlast,j,i)))
-           if (Bmag.gt.0.) then
-              dat(idivBerr,j,i) = abs(dat(idivB,j,i))*dat(ih,j,i)/Bmag
-           else
-              dat(idivBerr,j,i) = 0.
-           endif
-        endif
-        !!--h*SQRT(rho)/abs(B)	(timestep)
-        if ((itimestep.ne.0).and.   &
-             (ih.ne.0).and.(irho.ne.0).and.(iBfirst.ne.0)) then
-           Bmag = sqrt(dot_product(dat(iBfirst:iBlast,j,i),  &
-                dat(iBfirst:iBlast,j,i)))
-           if (Bmag.ne.0.) then
-              dat(itimestep,j,i) = dat(ih,j,i)*sqrt(dat(irho,j,i))/Bmag
-           else
-              dat(itimestep,j,i) = 0.
-           endif
-        endif
-        
      enddo
   enddo
   !

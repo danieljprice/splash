@@ -1,7 +1,7 @@
 !
 ! This subroutine drives the main plotting loop
 !
-subroutine main(ipicky,ipickx)
+subroutine main(ipicky,ipickx,irender)
   use params
   use exact_params
   use filenames
@@ -11,7 +11,7 @@ subroutine main(ipicky,ipickx)
   use prompting
   use settings   
   implicit none
-  integer, intent(in) :: ipicky, ipickx
+  integer, intent(in) :: ipicky, ipickx, irender
 
   integer :: i,j,k,n
   integer :: iplotx,iploty
@@ -91,6 +91,7 @@ subroutine main(ipicky,ipickx)
   if (ipicky.le.ndim .and. ipickx.le.ndim) then
 
      !!--work out coordinate that is not being plotted	 
+     ixsec = 0
      do j=1,ndim
         if ((j.ne.ipickx).and.(j.ne.ipicky)) ixsec = j
      enddo
@@ -334,7 +335,7 @@ subroutine main(ipicky,ipickx)
                        isizey = npixy
                        allocate ( datpix(npixx,npixy) )
                        call interpolate2D( &
-                            dat(ix(1),1:ntot(i),i),dat(ix(2),1:ntot(i),i), &
+                            dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i), &
                             dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i), &
                             dat(ih,1:ntot(i),i),dat(irenderplot,1:ntot(i),i), &
                             ntot(i),xmin,ymin,datpix,npixx,npixy,pixwidth)
@@ -580,8 +581,8 @@ subroutine main(ipicky,ipickx)
               !---------------------------------------------------------------
               if (irenderplot.gt.ndim .and.    &
                    ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) ) then
-                 !!--do transformations on rendered array       
-                 call transform2(datpix,datpix,itrans(irenderplot),isizex,isizey)
+                 !!--do transformations on rendered array  
+                 call transform2(datpix,itrans(irenderplot),isizex,isizey)
                  labelrender = label(irenderplot)
                  !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
                  if (ndim.eq.3 .and..not. x_sec) then         
@@ -589,6 +590,7 @@ subroutine main(ipicky,ipickx)
                  endif
                  labelrender = transform_label(labelrender,itrans(irenderplot))
                  !!--set log axes for call to render
+                 log = .false.
                  if (itrans(irenderplot).eq.1) log = .true.
 
                  !!--if adaptive limits, find limits of rendered array

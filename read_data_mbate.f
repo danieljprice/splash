@@ -11,9 +11,9 @@
       IMPLICIT NONE
       INTEGER, INTENT(OUT) :: ncolumns,ncalc,nfilesteps
       INTEGER, INTENT(OUT) :: ndim,ndimV
-      INTEGER, INTENT(OUT), DIMENSION(max) :: iam
+      INTEGER, INTENT(OUT), DIMENSION(maxpart) :: iam
       INTEGER, INTENT(OUT), DIMENSION(maxstep) :: npart,ntot,nghost
-      REAL, INTENT(OUT), DIMENSION(maxplot,max,maxstep) :: dat1
+      REAL, INTENT(OUT), DIMENSION(maxplot,maxpart,maxstep) :: dat1
       REAL, INTENT(OUT), DIMENSION(maxstep) :: time,gamma
       REAL, INTENT(OUT) :: hfact
       REAL, DIMENSION(maxstep) :: timeff

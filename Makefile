@@ -7,15 +7,29 @@
 
 .KEEP_STATE:
 
-FORTRAN = f90  
-FC = ifort
-F90C = ifort
-
-FFLAGS = -O -CB -std90 -check all
-F90FLAGS = -O -CB -std90 -check all
-
+## Compiler options (uncomment ONE set)
+## ------------------------------------------------------------------ ##
+## IoA compiler (Sun fortran)
+#FC = f90
+#F90C = f90
+#FFLAGS = -O4
+#F90FLAGS = -O4
 #LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11
-LDFLAGS =  -lg2c -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11
+## ------------------------------------------------------------------ ##
+## Monash compiler (Lahey-Fujitsu f95)
+FC = lf95
+F90C = lf95
+FFLAGS = -O --chk aesux --chkglobal  --warn
+F90FLAGS = -O --chk aesux --chkglobal --warn
+LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11
+## ------------------------------------------------------------------ ##
+## Swinburne compiler (Intel fortran)
+#FC = ifort
+#F90C = ifort
+#FFLAGS = -O -CB -std90 -check all
+#F90FLAGS = -O -CB -std90 -check all
+#LDFLAGS =  -lg2c -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11
+## ------------------------------------------------------------------ ##
 
 # define the implicit rule to make a .o file from a .f90 file
 
@@ -42,7 +56,7 @@ SOURCES= modules.f90 prompting.f90 \
 	 interpolate3D_projection.f90 \
 	 int_from_string.f90 \
 	 legend.f \
-	 options.f options_exact.f90 \
+	 options.f90 options_exact.f90 \
 	 options_powerspec.f90 options_render.f90 \
 	 plot_average.f plot_kernel_gr.f90 \
 	 plot_powerspectrum.f90 \
@@ -51,7 +65,7 @@ SOURCES= modules.f90 prompting.f90 \
 	 print_header.f90\
 	 print_menu.f \
          render_coarse.f render.f90 \
-	 transform.f
+	 transform.f90
 
 SOURCESALL = $(SOURCES:.f90=.o)
 

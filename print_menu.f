@@ -2,14 +2,14 @@
 !!  Prints supersphplot menu, returns ipicky,ipickx
 !!
 !!
-      SUBROUTINE print_menu(ipicky,ipickx)
+      SUBROUTINE print_menu(ipicky,ipickx,irender)
       USE labels
       USE multiplot
       USE settings
       USE prompting
       IMPLICIT NONE
       INTEGER :: i,ihalf,iadjust
-      INTEGER, INTENT(OUT) :: ipickx,ipicky
+      INTEGER, INTENT(INOUT) :: ipickx,ipicky,irender
       CHARACTER(LEN=25) :: transform_label      
 !
 !--print labels of data columns
@@ -121,7 +121,14 @@
 !
       IF ((ipicky.le.(numplot-nextra)).and.(ipicky.gt.0)) THEN
          CALL prompt(' (x axis) ',ipickx)
-	 IF (ipickx.GT.numplot .OR. ipickx.LE.0) GOTO 9901
+	 IF (ipickx.GT.numplot .OR. ipickx.LE.0) THEN
+            GOTO 9901
+         ELSEIF (ipicky.le.ndim .AND. ipickx.le.ndim) then
+            call prompt('(render) (0=none)',irender,0,numplot)
+         else
+            irender = 0
+         endif
+            
       ELSEIF (ipicky.GT.numplot+menuitems .OR. ipicky.LE.0) THEN
          STOP
       ENDIF   
