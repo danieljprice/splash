@@ -166,8 +166,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
              nptmass, (listpm(i), i=1,nptmass)
         
         if (ierr /= 0) then
-           print "(a)",'|*** ERROR READING TIMESTEP ***'
-           cycle over_steps_in_file
+           print "(a)",'|*** INCOMPLETE DATA ON LAST TIMESTEP ***'
+           exit over_steps_in_file
         else
            nstepsread = nstepsread + 1
         endif
