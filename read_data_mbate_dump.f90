@@ -151,6 +151,9 @@ subroutine read_data(rootname,istart,nfilesteps)
 	  ntot(j) = nprint
 	  nghost(j) = nghosti
 	  npart(j) = ntot(j) - nghost(j)
+	  npartoftype(1,j) = npart(j)
+	  npartoftype(2,j) = nghost(j)
+	  
 	  gamma(j) = real(gammai)
 	  time(j) = real(timei)
           if (ntotin.eq.30000) ntotin = nprint
@@ -235,7 +238,36 @@ subroutine read_data(rootname,istart,nfilesteps)
   ike = ncolumns + 7
   idivBerr = ncolumns + 8
   itimestep = ncolumns + 9
-  if (ipr.NE.0) label(ipr) = 'P      '
+  if (ipr.NE.0) label(ipr) = 'P'
+
+  !
+  !--set labels for vector quantities
+  !
+  iamvec(ivx:ivx+ndimV-1) = ivx
+  labelvec(ivx:ivx+ndimV-1) = 'v'
+  do i=1,ndimV
+     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
+  enddo
+  !--mag field
+  iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
+  labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
+  do i=1,ndimV
+     label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
+  enddo
+  !--current density
+  iamvec(13:13+ndimV-1) = 13
+  labelvec(13:13+ndimV-1) = 'J'
+  do i=1,ndimV
+     label(13+i-1) = trim(labelvec(13))//'\d'//labelcoord(i,1)
+  enddo
+  
+  !
+  !--set labels for each particle type
+  !
+  ntypes = maxparttypes
+  labeltype(1) = 'gas'
+  labeltype(2) = 'ghost'
+  labeltype(3) = 'sink'
   
   !-----------------------------------------------------------
   
