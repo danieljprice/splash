@@ -123,7 +123,7 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
   !
-  iprintprogress = (npart .ge. 100000) .and. (npixx*npixy .gt.11000)
+  iprintprogress = (npart .ge. 100000) .or. (npixx*npixy .gt.100000)
   !
   !--loop over particles
   !
