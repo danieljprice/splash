@@ -105,7 +105,8 @@ end module settings_part
 module settings_page
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage
- logical :: iColourEachStep,tile,interactive,iadapt,ipagechange
+ logical :: iColourEachStep,tile,interactive,ipagechange
+ logical :: iadapt, iadaptcoords
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
  character(len=20) :: colour_fore, colour_back

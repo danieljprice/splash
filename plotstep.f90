@@ -737,7 +737,8 @@ subroutine plotstep(istep,irender,ivecplot, &
                        !!--if adaptive limits, find limits of rendered array
                        rendermin = minval(datpix)
                        rendermax = maxval(datpix)
-                    else                  
+                       print*,'adapting limits'
+                    else
                        !!--or apply transformations to fixed limits
                        rendermin = lim(irenderplot,1)
                        rendermax = lim(irenderplot,2)

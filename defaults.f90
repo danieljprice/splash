@@ -58,6 +58,7 @@ subroutine defaults_set
 !--limits options
 !
   iadapt = .true.      ! adaptive plot limits
+  iadaptcoords = .false.
   scalemax = 1.0       ! for rescaling adaptive limits
   zoom = 1.0           ! for rescaling fixed limits
   itrans(:) = 0        ! no transformations (log10 etc)

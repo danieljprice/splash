@@ -4,7 +4,7 @@
 subroutine options_limits
  use settings_data
  use settings_limits
- use settings_page, only:iadapt,nstepsperpage
+ use settings_page, only:iadapt,iadaptcoords,nstepsperpage
  use multiplot, only:itrans
  use prompting
  use limits
@@ -23,12 +23,12 @@ subroutine options_limits
 
  iaction = 0
  if (iadapt) then
-    print 10,iadapt,itrackpart,scalemax
+    print 10,iadapt,iadaptcoords,itrackpart,scalemax
  else
-    print 10,iadapt,itrackpart,zoom
+    print 10,iadapt,iadaptcoords,itrackpart,zoom
  endif
 10 format(' 0) exit ',/,                 &
-        ' 1) toggle adaptive/fixed limits  ( ',L1,' )   ',/,  &
+        ' 1) set adaptive/fixed limits  ( ',L1,L1,' )   ',/,  &
         ' 2) set manual limits ',/,     &
         ' 3) xy limits track particle      ( ',i8,' )   ',/,   &
         ' 4) zoom in/out                   ( ',f4.2,' ) ',/,   &
@@ -43,9 +43,10 @@ subroutine options_limits
  select case(iaction)
 !------------------------------------------------------------------------
  case(1)
-    iadapt = .not.iadapt
-    print*,'adaptive plot limits = ',iadapt
-    if (nstepsperpage.gt.1 .and. iadapt) then
+    call prompt('Use adaptive plot limits?',iadapt)
+    call prompt('Use adaptive plot limits on coordinate axes?',iadaptcoords)
+    print*,'adaptive plot limits = ',iadapt,' on coords = ',iadaptcoords
+    if (nstepsperpage.gt.1 .and. (iadapt .or. iadaptcoords)) then
        print*,'WARNING: adaptive limits and multiple steps per page don''t mix'
     endif
 !------------------------------------------------------------------------

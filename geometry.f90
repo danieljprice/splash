@@ -249,8 +249,8 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         !        
         ! output is cartesian (default)
         !
-	sinphi = SIN(xin(2))
-	cosphi = COS(xin(2))
+        sinphi = SIN(xin(2))
+        cosphi = COS(xin(2))
         dxdx(1,1) = cosphi            ! dx/dr
         dxdx(1,2) = -xin(1)*sinphi    ! dx/dphi
         dxdx(2,1) = sinphi            ! dy/dr
@@ -267,11 +267,11 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         ! output is spherical
         !
         rr = sqrt(dot_product(xin,xin))
-	if (rr.ne.0.) then
-	   rr1 = 1./rr
+        if (rr.ne.0.) then
+           rr1 = 1./rr
         else
-	   rr1 = 0.
-	endif
+           rr1 = 0.
+        endif
            dxdx(1,1) = xin(1)*rr1  ! dr/dx
            if (ndimin.ge.2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
            if (ndimin.eq.3) dxdx(1,3) = 1.          ! dr/dz 
@@ -289,11 +289,11 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         !--output is cylindrical
         !
         rr = sqrt(dot_product(xin(1:max(ndimin,2)),xin(1:max(ndimin,2))))
-	if (rr.ne.0.) then
-	   rr1 = 1./rr
+        if (rr.ne.0.) then
+           rr1 = 1./rr
         else
-	   rr1 = 0.
-	endif        
+           rr1 = 0.
+        endif        
         dxdx(1,1) = xin(1)*rr1  ! dr/dx
         if (ndimin.ge.2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
         if (ndimout.ge.2) then
