@@ -124,7 +124,7 @@ subroutine menu(quit)
 !------------------------------------------------------------------------
 !  if input is a string, use menu options
 !------------------------------------------------------------------------
-     select case(ioption(1:1))
+     select case(adjustl(ioption))
 !------------------------------------------------------------------------
      case('m','M')
         call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
