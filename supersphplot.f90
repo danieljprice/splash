@@ -21,6 +21,7 @@ program supersphplot
 !     exact_sedov        : exact solution for sedov blast wave
 !     exact_swave        : exact solution for a linear sound wave
 !     exact_toystar      : exact solution for the toy star problem
+!     interactive_part   : interactive utilities for particle plots
 !     interpolate1D	 : interpolation of 1D sph data to 1D grid using sph kernel
 !     interpolate2D	 : interpolation of 2D sph data to 2D grid using sph kernel     
 !     interpolate2D_xsec : oblique 1D cross section through 2D sph data using kernel
@@ -38,23 +39,24 @@ program supersphplot
 !     options_powerspec  : sets options for power spectrum plotting
 !     options_render	 : sets options for render plots
 !     plot_average	 : bins particles along x-axis and plots average line
+!     plot_kernel_gr     : plots the kernel shape in non-cartesian co-ordinates
 !     plot_powerspectrum : calls powerspectrum and plots it
 !     powerspectrum_fourier : calculates power spectrum of 1D data on ordered pts
 !     powerspectrum_lomb : calculates power spectrum of 1D data on disordered pts
 !     print_menu	 : prints menu
 !     read_data_dansph   : reads data from my format of data files
 !     read_data_mrbsph   : reads data from matthew bate's format of data files
-!     render_coarse	 : interpolates to grid by averaging from particles (used for vector plots)
 !     render	 	 : takes array of pixels and plots render map/contours etc
 !     supersphplot	 : main program, drives menu loop
 !     transform	 	 : applies various transformations to data (log10, 1/x, etc)
+!     vectorplot         : produces a vector plot from particle data
 !
 !     file format is specified in the subroutine read_data   
 !
-!     written by: daniel price, institute of astronomy, cambridge uk
+!     written by: Daniel Price, Institute of Astronomy, Cambridge UK
 !          email: dprice@ast.cam.ac.uk
 !
-!     this version for both ndspmhd and matthew bate's code 2003
+!     this version for both ndspmhd and matthew bate's code 2003-2004
 !     changes log:
 !      26/03/04 - options split into submenus
 !      04/03/04 - allocatable arrays 
@@ -182,7 +184,7 @@ program supersphplot
         numplot = ncolumns + ncalc + nextra
         if (numplot.gt.maxplot) then
            print*,numplot,ncolumns,ncalc,nextra
-           stop ' numplot > array limits, see modules for array limits'
+           stop ' numplot > multiplot array limits: reset this in module params'
         endif
         ndataplots = ncolumns + ncalc
      else
