@@ -32,18 +32,19 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
   use column
   implicit none
   real, parameter :: pi = 3.1415926536      
-  integer, intent(IN) :: npart,npixx,npixy
-  real, intent(IN), dimension(npart) :: x,y,pmass,rho,hh,dat
-  real, intent(IN) :: xmin,ymin,pixwidth
-  real, intent(OUT), dimension(npixx,npixy) :: datsmooth
+  integer, intent(in) :: npart,npixx,npixy
+  real, intent(in), dimension(npart) :: x,y,pmass,rho,hh,dat
+  real, intent(in) :: xmin,ymin,pixwidth
+  real, intent(out), dimension(npixx,npixy) :: datsmooth
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   integer :: index, index1
-  integer :: iprintnext, iprogress
-  real :: hi,hi1,h2,radkern,qq,wab,rab,const
+  integer :: iprintnext, iprogress, itmin
+  real :: hi,hi1,radkern,qq,wab,rab,const
   real :: term,dx,dy,xpix,ypix
   real :: dxx,dwdx
   real :: dmaxcoltable
+  real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress
 
   datsmooth = 0.
@@ -63,6 +64,10 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
   !--loop over particles
   !
   iprintnext = 25
+!
+!--get starting CPU time
+!
+  call cpu_time(t_start)
   
   over_particles: do i=1,npart
      !
@@ -84,7 +89,6 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
         return
      endif
      hi1 = 1./hi
-     h2 = hi*hi
      radkern = 2.*hi  !radius of the smoothing kernel
      !         const = 10./(7.*pi*h2)  ! normalisation constant
      const = hi1*hi1
@@ -136,7 +140,19 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
      enddo
 
   enddo over_particles
-
+!
+!--get ending CPU time
+!
+  call cpu_time(t_end)
+  t_used = t_end - t_start
+  if (t_used.gt.60) then
+     itmin = int(t_used/60)
+     tsec = t_used - (itmin*60)
+     print*,'completed in ',itmin,', min ',tsec,'s'
+  else
+     print*,'completed in ',t_used,'s'
+  endif
+  
   return
 
 end subroutine interpolate3D_projection
