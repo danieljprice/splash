@@ -10,7 +10,7 @@ subroutine options(ipicky)
   use prompting
   implicit none
   integer, intent(IN) :: ipicky
-  integer :: i,iaction,istep
+  integer :: i,iaction,istep,ierr
   character(LEN=30) :: filename
   logical :: iansx, iansy, ichange
 
@@ -122,9 +122,10 @@ subroutine options(ipicky)
      !     
      call calc_quantities	  
      !
-     !--set plot limits
+     !--read plot limits from file, otherwise set plot limits
      !
-     call limits
+     call read_limits(ierr)
+     if (ierr.gt.0) call set_limits
      !
      !--read toy star file for toy star solution
      !

@@ -16,15 +16,12 @@ end module params
 module particle_data
  use params
  implicit none
- integer :: icrap
  integer :: maxpart,maxstep,maxcol  ! dimensions of dat array
  integer, allocatable, dimension(:) :: npart,ntot,nghost,ntotplot
  integer, allocatable, dimension(:,:) :: iam
  real, allocatable, dimension(:) :: time, gamma
  real, allocatable, dimension(:,:,:) :: dat
- real, dimension(maxplot,2) :: lim
  real :: hfact 
- real :: bmin,bmax
 end module particle_data
 !
 !--filename
@@ -50,6 +47,15 @@ module labels
  integer :: iacplane,itimestep,ipowerspec
  integer :: irad2,ivpar,ivperp,iBpar,iBperp
 end module labels
+!
+!--plot limits
+!
+module limits
+ use params
+ implicit none
+ real, dimension(maxplot,2) :: lim
+ real :: bmin,bmax 
+end module limits
 !
 !--module containing plot settings
 !

@@ -3,9 +3,9 @@
 !----------------------------------------------------------------------
 subroutine options_limits
  use settings
- use multiplot
+ use multiplot ! for itrans
  use prompting
- use particle_data
+ use limits
  use labels
  implicit none
  integer :: iaction,ipick,i
@@ -25,8 +25,9 @@ subroutine options_limits
         ' 2) set manual limits ',/,     &
 	' 3) xy limits track particle      ( ',i8,' )   ',/,   &
         ' 4) zoom in/out                   ( ',f4.2,' ) ',/,   &
-        ' 5) apply transformations (log10,1/x) ')
- call prompt('enter option ',iaction,0,5)
+        ' 5) apply transformations (log10,1/x) ',/, &
+	' 6) save current limits to file ')
+ call prompt('enter option ',iaction,0,6)
 !
 !--limits
 !
@@ -96,7 +97,8 @@ subroutine options_limits
         endif
      enddo
      return
-     
+  case(6)
+     call save_limits     
   end select
  
  return

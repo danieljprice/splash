@@ -63,7 +63,8 @@ SOURCES= modules.f90 prompting.f90 \
 	 interpolate3D.f90 interpolate3D_fastxsec.f90 \
 	 interpolate3D_projection.f90 \
 	 int_from_string.f90 \
-	 legend.f limits.f90 \
+	 legend.f \
+	 limits_read.f90 limits_save.f90 limits_set.f90 \
 	 options.f90 options_exact.f90 options_limits.f90 \
 	 options_page.f90 options_particleplots.f90 \
 	 options_powerspec.f90 options_render.f90 \

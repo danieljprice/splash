@@ -6,6 +6,7 @@ subroutine main(ipicky,ipickx,irender)
   use exact_params
   use filenames
   use labels
+  use limits
   use multiplot
   use particle_data
   use prompting

@@ -11,6 +11,7 @@ program supersphplot
 !     calc_quantities    : calculates additional quantities from particle data
 !     colour_demo        : demonstration of colour schemes for rendering
 !     colour_set	 : sets up pgplot colour table for rendering
+!     coord_transform    : (from main code) transforms betw. various coord systems
 !     danpgtile          : my utility for tiling plots on the pgplot page
 !     danpgwedg          : my very minor modification of pgwedg
 !     defaults_read	 : read default plot options from file
@@ -31,7 +32,9 @@ program supersphplot
 !     interpolate3D_projection : fast projection of 3D data to 2D grid using integrated sph kernel
 !     interpolate3D_xsec_vec   : fast cross section of vector quantity in 3D data using kernel
 !     legend		       : plots legend on plot (time)
-!     limits                   : calculates plot limits
+!     limits_read              : reads plot limits from file
+!     limits_save              : saves plot limits to file
+!     limits_set               : calculates plot limits
 !     main               : main plotting loop
 !     modules		 : contains all shared (global) variables
 !     options 	         : sets plot options given in menu
@@ -63,6 +66,7 @@ program supersphplot
 !     this version for both ndspmhd and matthew bate's code 2003-2004
 !     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
 !
+!      01/06/04 - saves/reads limits to/from limits file
 !      31/05/04 - particle tracking limits, reads from Matthew's code       
 !      17/05/04 - reads multiple files consecutively, error catches in interpolate 
 !                 also tiling of plots using danpgtile
@@ -158,7 +162,7 @@ program supersphplot
   i = 1
   do while (rootname(iprev)(1:1).ne.' ' .and. i.le.maxfile)
      call getarg(i,rootname(i))
-     print*,i,rootname(i)
+     !!print*,i,rootname(i)
      iprev = i
      i = i + 1
      if (i.gt.maxfile .and. rootname(iprev)(1:1).ne.' ') then
