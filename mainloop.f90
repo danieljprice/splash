@@ -855,11 +855,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            call pgsls(1)! reset 
            call pgsch(charheight)
            !
-           !--plot average line
-           !
-           if (iplotav) call plot_average(xplot(1:npartoftype(1,i)), &
-                yplot(1:npartoftype(1,i)),npartoftype(1,i),nbins)
-           !
            !--plot exact solution if relevant
            !
            if (iexact.eq.5 .and.(iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then 

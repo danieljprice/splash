@@ -75,8 +75,6 @@ subroutine defaults_set
   iplotlinein = .false.   ! " " but on first step only
   linestylein = 4         ! PGPLOT line style for above
   iexact = 0              ! exact solution to plot
-  iplotav = .false.       ! plot average line through particles
-  nbins = 24              ! number of bins for this
   ilabelpart = .false.    ! plot particle numbers
   iplotpartvec = .true.   ! whether to plot particles on vector plot
   

@@ -63,7 +63,7 @@ SOURCES= supersphplot.f90 mainloop.f90 \
 	 options_powerspec.f90 options_render.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 \
 	 particleplot.f90 \
-	 plot_average.f plot_kernel_gr.f90 \
+	 plot_kernel_gr.f90 \
 	 plot_powerspectrum.f90 \
 	 powerspectrum_fourier1D.f90 \
 	 powerspectrum_lomb1D.f90 \
