@@ -38,7 +38,19 @@ subroutine calc_quantities
            runit(1) = cos(anglexy)
            if (ndim.ge.2) runit(2) = sin(anglexy)
            dat(irad2,j,i) = dot_product(dat(ix(1:ndim),j,i),runit(1:ndim))
-        endif
+           if (ivpar.ne.0) then
+              dat(ivpar,j,i) = dat(ivx+1,j,i)*SIN(anglexy) + dat(ivx,j,i)*COS(anglexy)
+           endif
+           if (ivperp.ne.0) then
+              dat(ivperp,j,i) = dat(ivx+1,j,i)*COS(anglexy) - dat(ivx,j,i)*SIN(anglexy)           
+           endif
+           if (iBpar.ne.0) then
+              dat(iBpar,j,i) = dat(iBfirst+1,j,i)*SIN(anglexy) + dat(iBfirst,j,i)*COS(anglexy)
+           endif
+           if (iBperp.ne.0) then
+              dat(iBperp,j,i) = dat(iBfirst+1,j,i)*COS(anglexy) - dat(iBfirst,j,i)*SIN(anglexy)           
+           endif
+	endif
         !!--specific KE
         if ((ike.ne.0).and.(ivx.ne.0)) &
              dat(ike,j,i) = 0.5*dot_product(dat(ivx:ivlast,j,i),dat(ivx:ivlast,j,i))
@@ -95,6 +107,10 @@ subroutine calc_quantities
   if (ibeta.ne.0) label(ibeta) = 'plasma \gb'
   if (idivberr.ne.0) label(idivberr) = 'h |div B| / |B|'
   if (itimestep.ne.0) label(itimestep) = 'h sqrt(\gr) / |B|'
+  if (ivpar.ne.0) label(ivpar) = 'v_parellel'
+  if (ivperp.ne.0) label(ivperp) = 'v_perp'
+  if (iBpar.ne.0) label(iBpar) = 'B_parallel'
+  if (iBperp.ne.0) label(iBperp) = 'B_perp'
   
   return
 end subroutine calc_quantities

@@ -64,7 +64,6 @@ subroutine main(ipicky,ipickx)
   ncontours = ncontours_nomulti
   iplotcont = iplotcont_nomulti
   use_backgnd_color_vecplot = backgnd_vec_nomulti
-  charheight = 1.0
  
   if (ndim.ne.3) x_sec = .false.
   

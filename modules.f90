@@ -47,8 +47,9 @@ module labels
  integer, dimension(3) :: ix
  integer :: ivx,ivlast,irho,iutherm,ipr,ih,irad,ibfirst,iblast
  integer :: ipmass
- integer :: ientrop,irad2,ipmag,ibeta,itotpr,ike,idivb,idivberr
+ integer :: ientrop,ipmag,ibeta,itotpr,ike,idivb,idivberr
  integer :: iacplane,itimestep,ipowerspec
+ integer :: irad2,ivpar,ivperp,iBpar,iBperp
 end module labels
 !
 !--module containing plot settings

@@ -208,6 +208,5 @@ program supersphplot
      endif 	! if plot or not
      
   enddo menuloop
-
-999 continue                 
+                
 end program supersphplot

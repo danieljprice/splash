@@ -154,23 +154,33 @@ c	 PRINT*,'data columns = ',nplot
          iBfirst = 0
 	 iBlast = 0
       ENDIF
-      label(ndim + 3*ndimV+8) = 'v_parallel'
-      label(ndim + 3*ndimV+9) = 'v_perp'
-      label(ndim + 3*ndimV+10) = 'B_parallel'
-      label(ndim + 3*ndimV+11) = 'B_perp'
+!--these are here for backwards compatibility -- could be removed
+      if (ncolumns.gt.ndim+3*ndimV+7) then
+         label(ndim + 3*ndimV+8) = 'v_parallel'
+         label(ndim + 3*ndimV+9) = 'v_perp'
+         label(ndim + 3*ndimV+10) = 'B_parallel'
+         label(ndim + 3*ndimV+11) = 'B_perp'
+      endif
 !
 !--specify which of the possible quantities you would like to calculate
 !  (0 = not calculated)
-      ncalc = 8	! specify number to calculate
+      ncalc = 7	! specify number to calculate
       ientrop = ncolumns + 1      
       irad = ncolumns + 2
-      irad2 = ncolumns + 3
-      ipmag = ncolumns + 4
-      ibeta = ncolumns + 5
-      itotpr = ncolumns + 6      
-      ike = ncolumns + 7
-      idivBerr = ncolumns + 8
+      ipmag = ncolumns + 3
+      ibeta = ncolumns + 4
+      itotpr = ncolumns + 5      
+      ike = ncolumns + 6
+      idivBerr = ncolumns + 7
       itimestep = 0
+      if (ndim.eq.2 .and. iBfirst.ne.0 .and. ivx.ne.0) then
+         ncalc = ncalc + 5
+         irad2 = ncolumns + 8
+         ivpar = ncolumns + 9
+	 ivperp = ncolumns + 10
+	 iBpar = ncolumns + 11
+	 iBperp = ncolumns + 12
+      endif
 
 !-----------------------------------------------------------
 
