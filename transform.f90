@@ -99,11 +99,11 @@ end subroutine transform
 !  applies the transformation to the same array as was input
 !
 !------------------------------------------------------------------------
-subroutine transform2(array,itrans,isizex,isizey)
+subroutine transform2(array,itrans)
   implicit none
-  integer, intent(in) :: itrans,isizex,isizey
-  real, dimension(isizex,isizey), intent(inout) :: array
-  real, dimension(isizex,isizey) :: arraytemp
+  integer, intent(in) :: itrans
+  real, dimension(:,:), intent(inout) :: array
+  real, dimension(size(array(:,1)),size(array(1,:))) :: arraytemp
   character(len=20) :: string
   integer :: i
   !

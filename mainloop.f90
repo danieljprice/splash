@@ -735,7 +735,7 @@ subroutine plotstep
               ! scalar quantity which has been rendered to a 2D pixel array (datpix)
               !---------------------------------------------------------------
               !!--do transformations on rendered array  
-              call transform2(datpix,itrans(irenderplot),npixx,npixy)
+              call transform2(datpix,itrans(irenderplot))
               labelrender = label(irenderplot)
               !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
               if (ndim.eq.3 .and..not. x_sec) then
