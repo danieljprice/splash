@@ -22,6 +22,7 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_part
+  use settings_data, only:icoords
   implicit none
 
   ncircpart = 0
@@ -30,6 +31,7 @@ subroutine defaults_set_part
   linestylein = 4         ! PGPLOT line style for above
   iexact = 0              ! exact solution to plot
   ilabelpart = .false.    ! plot particle numbers
+  icoordsnew = icoords
   
   iplotpartoftype(1) = .true. ! whether or not to plot particles of certain types
   iplotpartoftype(2:maxparttypes) = .false.

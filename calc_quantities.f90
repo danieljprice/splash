@@ -55,11 +55,11 @@ subroutine calc_quantities(ifromstep,itostep)
      ncalc = ncalc + 1
      ipr = nstartfromcolumn + 1
   endif
-  if (ih.ne.0 .and. irho.ne.0) then
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 1
-     idhdrho = nstartfromcolumn + 1
-  endif
+  !if (ih.ne.0 .and. irho.ne.0) then
+  !  nstartfromcolumn = ncolumns + ncalc
+  !   ncalc = ncalc + 1
+  !   idhdrho = nstartfromcolumn + 1
+  !endif
   !
   !--specify MHD quantities
   !

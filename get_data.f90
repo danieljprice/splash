@@ -139,6 +139,13 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
 !--reset coordinate and vector labels depending on coordinate system)
 !
   if (icoords.ne.0 .or. icoordsnew.ne.0) then
+     if (icoordsnew.le.0) then
+        if (icoords.gt.0) then
+           icoordsnew = icoords
+        else
+           icoordsnew = 1
+        endif
+     endif
      label(1:ndim) = labelcoord(1:ndim,icoordsnew)
      do i=1,numplot
         if (iamvec(i).ne.0) then
