@@ -5,7 +5,7 @@ subroutine options_xsecrotate
  use labels
  use limits, only:lim
  use prompting
- use settings_data ! for ndim
+ use settings_data, only:ndim
  use settings_xsecrot
  implicit none
  integer :: ians,i
@@ -97,7 +97,8 @@ subroutine options_xsecrotate
     print*,'0 : do not plot rotated axes'
     print*,'1 : plot rotated axes'
     print*,'2 : plot rotated box'
-    call prompt('enter type of axes to plot',irotateaxes,0,2)
+    print*,'3 : plot gridded x-y plane'
+    call prompt('enter type of axes to plot',irotateaxes,0,3)
  end select
 
  return

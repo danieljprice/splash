@@ -676,11 +676,11 @@ subroutine plotstep
 
            if (irotate .and. irotateaxes.gt.0) then
               if (ndim.eq.3) then
-                 call rotate_axes3D(irotateaxes,lim(ix(:),1),lim(ix(:),2), &
-                                    anglez,angley,anglex)
+                 call rotate_axes3D(irotateaxes,iplotx,iploty, &
+                      lim(ix(:),1),lim(ix(:),2),angleradx,anglerady,angleradz)
               elseif (ndim.eq.2) then
                  call rotate_axes2D(irotateaxes,lim(ix(1:ndim),1), &
-                                   lim(ix(1:ndim),2),anglez)
+                                   lim(ix(1:ndim),2),angleradz)
               endif
            endif
 
