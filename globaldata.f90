@@ -94,7 +94,7 @@ module settings_part
  logical :: iplotline,iplotlinein,ilabelpart
 
  namelist /plotopts/ iplotline,iplotlinein,linestylein,  &
-   imarktype,iplotpartoftype,iexact
+   imarktype,iplotpartoftype,iexact,icoordsnew
 
 end module settings_part
 !
