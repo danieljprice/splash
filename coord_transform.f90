@@ -104,18 +104,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
            xout(1) = abs(xin(1))   ! cylindrical r
         else
            xout(1) = SQRT(DOT_PRODUCT(xin(1:2),xin(1:2)))
-           !
-           ! phi = ATAN(y/x)
-           !
-           if (ndimout.ge.2) xout(2) = ATAN(abs(xin(2)/xin(1)))
-           !--sort out which quadrant
-           if (xin(1).lt.0. .and. xin(2).lt.0.) then ! 3rd quadrant
-              xout(2) = xout(2) + pi
-           elseif (xin(1).lt.0.) then ! 2nd quadrant
-              xout(2) = pi - xout(2)
-           elseif (xin(2).lt.0.) then
-              xout(2) = -xout(2)   
-           endif
+           if (ndimout.ge.2) xout(2) = ATAN2(xin(2),xin(1)) ! phi
            if (ndimout.eq.3) xout(3) = xin(3) ! z
         endif
      case(3)
@@ -123,33 +112,20 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         ! output is spherical
         !
         xout(1) = SQRT(DOT_PRODUCT(xin,xin))! r  
-        if (ndimout.ge.2) then              ! 2D spherical returns r,phi
-           !
-           ! phi = ATAN(y/x)
-           !
-           xout(2) = ATAN(abs(xin(2)/xin(1)))
-           !--sort out which quadrant for phi
-           if (xin(1).lt.0. .and. xin(2).lt.0.) then ! 3rd quadrant
-              xout(2) = xout(2) + pi
-           elseif (xin(1).lt.0.) then ! 2nd quadrant
-              xout(2) = pi - xout(2)
-           elseif (xin(2).lt.0.) then
-              xout(2) = -xout(2)   
-           endif
-        endif
+        if (ndimout.ge.2) xout(2) = ATAN2(xin(2),xin(1)) ! phi
         if (ndimout.ge.3) then
            !
            ! theta = ACOS(z/r)
            !
-           xout(3) = ACOS(abs(xin(3)/xout(1)))
+           xout(3) = ACOS(xin(3)/xout(1))
            !--sort out which quadrant for theta
-           if (xin(3).lt.0. .and. xin(1).lt.0.) then
-              xout(3) = xout(3) + pi
-           elseif (xin(3).lt.0.) then
-              xout(3) = pi - xout(3)
-           elseif (xin(2).lt.0.) then
-              xout(3) = -xout(3)
-           endif    
+           !if (xin(3).lt.0. .and. xin(1).lt.0.) then
+           !  xout(3) = xout(3) + pi
+           !lseif (xin(3).lt.0.) then
+           !!   xout(3) = pi - xout(3)
+           !elseif (xin(1).lt.0.) then
+           !   xout(3) = -xout(3)
+           !endif    
         endif
      case default
         !
