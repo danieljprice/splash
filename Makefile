@@ -37,7 +37,9 @@ GADGETSPH = read_data_gadget.f90
 
 # put modules separately as these must be compiled before the others
 MODULES= globaldata.f90 transform.f90 prompting.f90 \
-         exact.f90 colours.f90 limits.f90 rotate.f90 $(SYSTEMFILE)
+         exact.f90 colours.f90 limits.f90 rotate.f90 \
+         interactive_part.f90 \
+         $(SYSTEMFILE)
 
 # these are the normal `external' subroutines
 SOURCES= supersphplot.f90 mainloop.f90 \
@@ -51,7 +53,6 @@ SOURCES= supersphplot.f90 mainloop.f90 \
 	 exact_toystar_ACplane.f exact_mhdshock.f90 \
 	 exact_polytrope.f \
 	 get_data.f90 integratedkernel.f90 \
-	 interactive_part.f90 \
 	 interpolate1D.f90 interpolate_vec.f90 \
          interpolate2D.f90 interpolate2D_xsec.f90 \
 	 interpolate3D.f90 interpolate3D_fastxsec.f90 \

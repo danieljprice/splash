@@ -1,3 +1,6 @@
+module interactive_routines
+ implicit none
+contains
 !
 !--interactive tools on particle plots
 !  allows user to change settings interactively
@@ -13,13 +16,13 @@
 !   xmin, xmax, ymin, ymax : current plot limits
 !   iadvance : integer telling the loop how to advance the timestep
 !
-subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
+subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
   icolourpart,xmin,xmax,ymin,ymax,anglex,angley,anglez,ndim,iadvance,isave)
   implicit none
   integer, intent(in) :: npart,iplotx,iploty,irender,ndim
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
-  real, dimension(npart), intent(in) :: xcoords, ycoords
+  real, dimension(npart), intent(in) :: xcoords, ycoords, hi
   real, intent(inout) :: xmin,xmax,ymin,ymax
   real, intent(inout) :: anglex,angley,anglez
   logical, intent(out) :: isave
@@ -79,7 +82,9 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
         call pgtext(xcoords(iclosest),ycoords(iclosest),string(1:nc))
         call pgsch(1.0)
      case('c','C')
-        print*,'plotting circle of interaction (not implemented)'
+        print*,'plotting circle of interaction on particle ',iclosest
+        call pgsfs(2)
+        call pgcirc(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
      case('g','G')   ! draw a line between two points
         ipts = ipts + 1
         xline(2) = xline(3)
@@ -326,3 +331,16 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
   enddo
   return
 end subroutine interactive_part
+
+subroutine mvlegend(hpos,vpos)
+ use settings_page, only:hposlegend,vposlegend
+ implicit none
+ real, intent(in) :: hpos,vpos
+ 
+ hposlegend = hpos
+ vposlegend = vpos
+ 
+ return
+end subroutine mvlegend
+
+end module interactive_routines

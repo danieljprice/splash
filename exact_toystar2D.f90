@@ -14,12 +14,13 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
   integer, intent(in) :: iplot,norder
   real, intent(in) :: time,gamma,polyk,totmass,sigma
   real, intent(in) :: H0, C0, A0        ! parameters for toy star
+  real :: B0
   integer, parameter :: npts = 100
   real, parameter :: pi = 3.141592653589
   integer :: i
   integer :: jmode,smode
   real, dimension(0:npts) :: xplot,yplot
-  real :: Aprev, A,H,C, term,const
+  real :: Aprev, A,H,C, term,const,omeg
   real :: radstar,dx
   real :: rhoplot,deltarho
   real :: gamp1,gamm1,gam1,constK,omega,omega2
@@ -29,7 +30,7 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
   linear = (norder.ge.0)
   gamp1 = gamma + 1.
   gamm1 = gamma - 1.
-  if (abs(gamm1).lt.1.e-3) then
+  if (gamm1.lt.1.e-3) then
      print*,'Error: no toy star solution for isothermal yet'
      return
   endif
@@ -105,8 +106,28 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
      H = H0
      C = C0
      Aprev = A0
-
-     omega = 1.0
+     B0 = 0.
+!
+!--this is the static solution, determined from the total mass, polyk, gamma and omega
+!
+     omeg = 1.0  ! this is omega from the main code (ie. from potential)
+     radstar = sqrt(gamma*totmass/(pi*gamm1))
+     H = omeg**2*gamm1*radstar**2/(2.*polyk*gamma)
+     C = 0.5*gamm1*omeg**2/(gamma*polyk)
+!
+!--work out period of oscillation
+!
+     omega = 4.*(B0**2 + C*polyk*gamma**2/gamm1)
+     if (omega.le.1.e-5) then
+        print*,'ERROR: sqrt < 0 in omega'
+        return
+     else
+        omega = sqrt(omega)
+     endif
+     print*,'period = ',2.*pi/omega
+!
+!--solve for alpha(t)
+!    
      const = 4.*omega**2 + 4.*A0**2 
      term = 1.-4.*omega**2/const
      if (term.le.0.) then
@@ -117,24 +138,18 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
         !
         !--this is the solution to the 2nd order ODE for alpha
         !
-        A = COS(2.*omega*time)*term/(1. + SIN(2.*omega*time)*term)
+        A = omega*COS(2.*omega*time)*term/(1. + SIN(2.*omega*time)*term)
      endif
 
      print*,' Plotting toy star: time, A = ',time,A
 
-     if (C.le.0.) then 
-        radstar = 0.5
-        stop '*** C = 0 = illegal'
-     elseif (A.le.1.e-5) then
-!
-!--this is the static solution, determined from the total mass, polyk, gamma and omega
-!
-        radstar = sqrt(gamma*totmass/(pi*gamm1))
-        H = omega**2*gamm1*radstar**2/(2.*polyk*gamma)
-        C = 0.5*gamm1*omega**2/(gamma*polyk)
-     else
-        radstar = sqrt(H/C)
-     endif
+     !if (C.le.0.) then 
+     !   radstar = 0.5
+     !   stop '*** C = 0 = illegal'
+     !elseif (A.le.1.e-5) then
+     !else
+     !   radstar = sqrt(H/C)
+     !endif
      xplot(0) = -radstar
      dx = (radstar-xplot(0))/float(npts)
 

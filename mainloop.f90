@@ -21,6 +21,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use settings_xsecrot
   use settings_powerspec
   use transforms
+  use interactive_routines
   implicit none
   integer, intent(in) :: ipicky, ipickx, irender, ivecplot
 
@@ -755,7 +756,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               !
               !--print legend if this is the first plot on the page
               !    
-              if (nyplot.eq.1 .and. i.le.nacross) then
+              if (nyplot.eq.1) then
                  call legend(time(i),hposlegend,vposlegend)
               endif
               !
@@ -778,7 +779,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
              if (interactive) then
                 iadvance = nfreq                
                 call interactive_part(ninterp,iplotx,iploty,irenderplot, &
-                     xplot(1:ninterp),yplot(1:ninterp),icolourme(1:ninterp), &
+                     xplot(1:ninterp),yplot(1:ninterp),dat(1:ninterp,ih,i),icolourme(1:ninterp), &
                      xmin,xmax,ymin,ymax,angletempx,angletempy,angletempz,ndim,iadvance,isave)                
                 !--turn rotation on if necessary
                 if (abs(angletempx-anglex).gt.tol) irotate = .true.
@@ -886,7 +887,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            iadvance = nfreq
            if (interactive) then
               call interactive_part(ntot(i),iplotx,iploty,0,xplot(1:ntot(i)), &
-                                    yplot(1:ntot(i)),icolourme(1:ntot(i)), &
+                                    yplot(1:ntot(i)),dat(1:ninterp,ih,i),icolourme(1:ntot(i)), &
                                     xmin,xmax,ymin,ymax, &
                                     angletempx,angletempy,angletempz,ndim,iadvance,isave)
               if (isave) then
