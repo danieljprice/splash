@@ -41,11 +41,12 @@ subroutine plot_powerspectrum(npart,x,dat)
 !
 !--plot power spectrum
 !
- call PGLINE(nfreq,freq,power)
+! call PGLINE(nfreq,freq,power)			! as line
+ call PGBIN(nfreq,freq,power,.true.)		! as histogram
 !
 !--plot theoretical power spectrum
 ! 
- print*,'plotting theoretical power ',theoretical_power(freqmax)
+ print*,'plotting theoretical power ',theoretical_power(freqmin)
  call PGSLS(2)	! dashed line
  call PGFUNX(theoretical_power,10000,freqmin,freqmax,1)
  call PGSLS(1)
