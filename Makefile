@@ -8,12 +8,14 @@
 .KEEP_STATE:
 
 FORTRAN = f90  
-FC = lf95
-F90C = lf95
+FC = ifort
+F90C = ifort
 
 FFLAGS = -O
 F90FLAGS = -O
-LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11
+
+#LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11
+LDFLAGS = -L/usr/local/intel/lib -L/usr/lib/gcc-lib/i486-suse-linux/3.3/ -lg2c -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11
 
 # define the implicit rule to make a .o file from a .f90 file
 
@@ -66,7 +68,7 @@ mrbsph: $(OBJMRBSPH)
 
 pgxtal: $(OBJPGXTAL)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o superpgxtal $(OBJPGXTAL)
-	
+
 tar:
 	tar cf supersphplot.tar Makefile $(SOURCES) read_data*.f
 

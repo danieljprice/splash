@@ -85,6 +85,7 @@ c	 PRINT*,'data columns = ',nplot
 	    nghost(i) = 0
 	    dat1(:,:,i) = 0.
 	 ENDIF
+         iam(:) = 0
       ENDDO 
       
       PRINT*,' REACHED ARRAY LIMITS IN READFILE'
