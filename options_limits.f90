@@ -27,8 +27,9 @@ subroutine options_limits
         ' 4) zoom in/out                   ( ',f4.2,' ) ',/,   &
         ' 5) apply transformations (log10,1/x) ',/, &
 	' 6) save current limits to file ',/, &
-	' 7) re-read limits file         ')
- call prompt('enter option ',iaction,0,7)
+	' 7) re-read limits file         ',/, &
+	' 8) reset limits for all plots  ')
+ call prompt('enter option ',iaction,0,8)
 !
 !--limits
 !
@@ -101,7 +102,9 @@ subroutine options_limits
   case(6)
      call save_limits 
   case(7)
-     call read_limits(ierr)    
+     call read_limits(ierr)
+  case(8)
+     call set_limits 
   end select
  
  return

@@ -55,7 +55,6 @@ module limits
  use params
  implicit none
  real, dimension(maxplot,2) :: lim
- real :: bmin,bmax 
 end module limits
 !
 !--module containing plot settings

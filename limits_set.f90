@@ -23,29 +23,15 @@ subroutine set_limits
            lim(j,2) = max(lim(j,2),dat(j,k,i)*scalemax)
         enddo
      enddo
+  enddo
+  !
+  !--warn if limits are the same
+  ! 
+  do j=1,numplot
      if (lim(j,2).eq.lim(j,1)) then
         print*,label(j),' min = max = ',lim(j,1)
-     endif
+     endif  
   enddo
-  !!--limits of magnetic field (in all dimensions) for vector plot
-  if (iBfirst.ne.0) then
-     if (iadapt) then
-        Bmin = 0.0
-        Bmax = maxval(dat(iBfirst:iBlast,1:ntotplot(1),1))*scalemax
-     else
-        Bmax = 0.0
-        Bmin = 0.0
-        do j=iBfirst,iBlast
-           !Bmin = min(Bmin,lim(j,1))
-           if (lim(j,2).gt.Bmax) then
-              Bmax=lim(j,2)
-              print*,' Bmax = ',label(j),lim(j,2)
-           endif
-        enddo
-     endif
-     print*,'Bmin,Bmax = ',Bmin,Bmax
-  endif
   print*,'plot limits set'
-  !
 
 end subroutine set_limits

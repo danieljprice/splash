@@ -783,7 +783,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                     ivecx = iBfirst + iplotx - 1 ! 
                     ivecy = iBfirst + iploty - 1
                     print*,'plotting magnetic field'
-                    vecmax = Bmax
                  endif
                  !!--check for errors
                  if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
