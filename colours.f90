@@ -28,7 +28,6 @@ subroutine colour_set(icolourscheme)
   real :: red,green,blue,hue,light,sat
   real :: dhue,dlight,dsat,dred,dgreen,dblue
   logical :: rgb
-  character(len=30) :: scheme
       
   red = 0.0
   green = 0.0
@@ -57,7 +56,7 @@ subroutine colour_set(icolourscheme)
 !      
   select case(icolourscheme)
   case(2)  
-     scheme = 'red'
+!    red
      rgb = .false.
      hue=100
      light=0.0
@@ -66,7 +65,7 @@ subroutine colour_set(icolourscheme)
      dsat = 0.0
      dhue = 80.0/FLOAT(ncolours)         
   case(3)        ! blue
-     scheme = 'ice blue'
+!    ice blue
      rgb = .false.
      hue=330
      light=0.0
@@ -75,7 +74,7 @@ subroutine colour_set(icolourscheme)
      dsat = 0.0
      dhue = 40.0/FLOAT(ncolours)
   case(4) 
-     scheme = 'rainbow'
+!    rainbow
      rgb = .false.         
      hue=100
      light=0.5
@@ -84,7 +83,7 @@ subroutine colour_set(icolourscheme)
      dsat = 0.0
      dhue = 320.0/FLOAT(ncolours)
   case(5)        ! green
-     scheme = 'frog monster'
+!    frog monster
      rgb = .false.         
      hue=200
      light=0.0
@@ -93,7 +92,7 @@ subroutine colour_set(icolourscheme)
      dsat = 0.0
      dhue = 80.0/FLOAT(ncolours)
   case(6)
-     scheme = 'some other crap'
+!    some other crap
      rgb = .false.
      hue=100
      light=0.5
@@ -102,7 +101,7 @@ subroutine colour_set(icolourscheme)
      dsat = 0.        !1.0/FLOAT(ncolours)
      dhue = 500.0/FLOAT(ncolours)         
   case(7)        ! rgb attempts
-     scheme = 'really useless'
+!    useless
      rgb = .true.
      red = 0.3333
      green = 0.0
@@ -111,7 +110,7 @@ subroutine colour_set(icolourscheme)
      dblue = 0.3333/FLOAT(ncolours)
      dgreen = 0.0        !0.333/FLOAT(ncolours)         
   case default
-     scheme = 'greyscale'
+!    default is greyscale
      return
   end select
 !
@@ -199,6 +198,6 @@ subroutine colour_demo
   call pgsch(1.0)
   call pgend 
 
-  end subroutine colour_demo
+end subroutine colour_demo
 
 end module colours
