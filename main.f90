@@ -17,7 +17,7 @@ subroutine main(ipicky,ipickx,irender)
   integer :: i,j,k,n
   integer :: iplotx,iploty,ivecx,ivecy
   integer :: nyplot,nyplots      
-  integer :: npart1
+  integer :: npart1,npartdim
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: ivecplot,npix,npixvec,npixyvec,ncontours
   integer :: irenderprev, istepprev, iadvance
@@ -119,16 +119,16 @@ subroutine main(ipicky,ipickx,irender)
         xsecpos = lim(ixsec,1) - 0.5*dxsec
         xsecpos_nomulti = xsecpos
 
-        !!--if single cross-section, read position of cross-section slice
-
+     !!--if single cross-section, read position of cross-section slice
      elseif (x_sec.and.iplotpart.and.irender.le.ndim) then
-        print 33,label(ixsec)
-33      format(' enter ',a1,' position for cross section slice:')
-        read*,xsecpos
-        if (xsecpos.gt.lim(ixsec,2).or.xsecpos.lt.lim(ixsec,1)) then
-           print*,'warning: cross section outside data limits' 
-        endif
-        xsecpos_nomulti = xsecpos
+	call prompt(' enter '//trim(label(ixsec))//' position for cross-section slice:', &
+	             xsecpos_nomulti,lim(ixsec,1),lim(ixsec,2))
+        !!--default thickness is half of the average particle spacing
+	npartdim = int(maxval(npart(nstart:n_end))**(1./real(ndim)))
+	print*,'average # of particles in each dimension = ',npartdim
+	dxsec = (lim(ixsec,2)-lim(ixsec,1))/float(npartdim)
+	call prompt(' enter thickness of cross section slice:', &
+	             dxsec,0.0,lim(ixsec,2)-lim(ixsec,1))  
      endif
 
      !!--set title of plot
@@ -398,13 +398,10 @@ subroutine main(ipicky,ipickx,irender)
            !
            over_cross_sections: do k=1,nxsec
 
-              !------------------------------------------------------------
-              ! for multislice cross section (flythru)
-              ! increment the position of the current cross section slice
-              !-------------------------------------------------------------
-
-              if (x_sec.and.flythru) then
-                 xsecpos = xsecpos + dxsec
+              if (x_sec) then
+                 !!--for multislice cross section (flythru)
+                 !!  increment the position of the current cross section slice          
+		 if (flythru) xsecpos = xsecpos + dxsec
                  !!--for cross sections of particle plots, need range of co-ordinates in which
                  !!  particles may lie
                  if (iplotpart) then
