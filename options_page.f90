@@ -13,15 +13,15 @@ subroutine options_page
  papersizey = papersizex*aspectratio
  print 10,ipagechange,iaxis,papersizex,papersizey,nacross,ndown,tile, &
           hpostitle,vpostitle,hposlegend,vposlegend,animate
-10 format(' 0) exit ',/, 		&
+10 format(' 0) exit ',/,                   &
         ' 1) toggle page change     (',L1,')',/, &
         ' 2) toggle axes            (',i2,')',/, &
         ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
         ' 4) change plots per page  (',i2,1x,i2,')',/, &
-	' 5) toggle plot tiling     (',L1,')',/, & 
-	' 6) adjust title position  (',f5.2,1x,f4.1,')',/, &
-	' 7) adjust legend position (',f5.2,1x,f4.1,')',/, &
-	' 8) toggle animate         (',L1,')')	
+         ' 5) toggle plot tiling     (',L1,')',/, & 
+         ' 6) adjust title position  (',f5.2,1x,f4.1,')',/, &
+         ' 7) adjust legend position (',f5.2,1x,f4.1,')',/, &
+         ' 8) toggle animate         (',L1,')')         
  call prompt('enter option ',iaction,0,8)
 
  select case(iaction)
@@ -29,7 +29,7 @@ subroutine options_page
   case(1)
      ipagechange=.not.ipagechange
      print*,' Page changing = ',ipagechange
-     return 	
+     return          
 !------------------------------------------------------------------------
   case(2)
      print*,'-3 : same as AXIS=-1, but also draw tick marks;'
@@ -72,10 +72,10 @@ subroutine options_page
         aspectratio = 1./sqrt(2.)
      case(5)
         papersizex = 11.7
-        aspectratio = 0.5/sqrt(2.)	
+        aspectratio = 0.5/sqrt(2.)         
      case(6)
         papersizex = 11.7
-	papersizey = 6.0
+         papersizey = 6.0
         aspectratio = papersizey/papersizex
      case(7)
         call prompt(' x size (inches) ',papersizex,0.0,12.0)
@@ -87,10 +87,10 @@ subroutine options_page
            aspectratio = papersizey/papersizex
         endif
      case DEFAULT
-        papersizex = 0.0	! no call to PGPAP if they are zero
-        aspectratio = 0.0	
+        papersizex = 0.0         ! no call to PGPAP if they are zero
+        aspectratio = 0.0         
      end select
-     return 	  
+     return            
 !------------------------------------------------------------------------
   case(4)
      call prompt('Enter number of plots across:',nacross,1,numplot)
@@ -116,8 +116,7 @@ subroutine options_page
 !------------------------------------------------------------------------
   case(8)
      animate = .not.animate
-     print*,'animate = ',animate
- 	  
+     print*,'animate = ',animate  
   end select
  
  return

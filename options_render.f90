@@ -13,7 +13,7 @@ subroutine options_render
   ians = 0
   print 10,npix,icolours,iplotcont_nomulti,ncontours, &
         iPlotColourBar
-10 format(' 0) exit ',/, 		     &
+10 format(' 0) exit ',/,                      &
            ' 1) change number of pixels          (',i5,' )',/, &
            ' 2) change colour scheme             (',i2,' )',/,    &
            ' 3) toggle plot contours             ( ',L1,' )',/, &

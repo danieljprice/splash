@@ -23,7 +23,7 @@
 !            scalar data to smooth : dat   (npart)
 !            cross section location: zslice
 !
-!     Output: smoothed data 	   : datsmooth (npixx,npixy)
+!     Output: smoothed data            : datsmooth (npixx,npixy)
 !
 !     Daniel Price, Institute of Astronomy, Cambridge, 23/9/03
 !--------------------------------------------------------------------------
@@ -59,7 +59,7 @@ subroutine interpolate3D_fastxsec(x,y,z,pmass,rho,hh,dat,npart,&
      hi = hh(i)
      if (hi.le.0.) then
         print*,'interpolate3D_xsec: error: h <= 0 ',i,hi
-	return
+        return
      endif
      hi1 = 1./hi
      h3 = hi*hi*hi

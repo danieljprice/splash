@@ -36,8 +36,7 @@ subroutine interpolate_vec(x,y,vecx,vecy, &
      return
   endif
   !
-  !--interpolation is to a coarser grid, so just average      
-  !
+  !--interpolation is to a coarser grid, so just average
   !  bin particles into cells using a link list 
   !     
   ihoc(:,:) = -1   ! head of chain
@@ -47,7 +46,7 @@ subroutine interpolate_vec(x,y,vecx,vecy, &
      iy = int((y(i)-ymin)/dx)+1
      if ((ix.ge.1).and.(ix.le.npixx).and.(iy.ge.1).and.(iy.le.npixy)) then
         ll(i)=ihoc(ix,iy)   ! set link list of this particle to old head of list
-        ihoc(ix,iy) = i	    ! set head of chain to this particle
+        ihoc(ix,iy) = i            ! set head of chain to this particle
      endif
   enddo
   !

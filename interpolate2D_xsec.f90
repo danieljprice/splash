@@ -25,7 +25,7 @@
 !            smoothing lengths     : hh    (npart) - could be computed from density
 !            scalar data to smooth : dat   (npart)
 !
-!     Output: smoothed data 	   : datsmooth (npixx)
+!     Output: smoothed data            : datsmooth (npixx)
 !
 !     Daniel Price, Institute of Astronomy, Cambridge, Feb 2004
 !--------------------------------------------------------------------------
@@ -96,7 +96,7 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
      hi = hh(i)
      if (hi.le.0.) then
         print*,'interpolate2D_xsec: error: h <= 0 ',i,hi
-	return
+        return
      endif
      hi1 = 1./hi
      h2 = hi*hi
@@ -144,7 +144,7 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
         if (ipixmax.lt.1) ipixmax = 1
         if (ipixmax.gt.npixx) ipixmax = npixx
         if (ipixmin.gt.npixx) ipixmax = npixx
-       	!
+               !
         !--loop over pixels, adding the contribution from this particle
         !
         !if (debug) print*,' particle ',i,': ',ipixmin,ipixmax,xstart,x(i),xend 

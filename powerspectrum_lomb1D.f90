@@ -11,12 +11,12 @@ subroutine powerspectrum_lomb(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
  implicit none
  real, parameter :: pi = 3.1415926536
  integer, intent(in) :: npts
- integer, intent(in) :: nfreq	! number of frequencies to calculate
+ integer, intent(in) :: nfreq         ! number of frequencies to calculate
  integer :: i,ifreq
  real, intent(in) :: freqmin, freqmax
  real, intent(in), dimension(npts) :: x, dat 
  real, intent(out), dimension(nfreq) :: freq, power
- real :: datmean, datvar	! mean, variance
+ real :: datmean, datvar         ! mean, variance
  real :: ddat
  real :: tau, tau_numerator, tau_denominator
  real :: term1_numerator, term1_denominator
@@ -85,7 +85,7 @@ subroutine powerspectrum_lomb(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
 !--calculate the power at this frequency
 !    
     power(ifreq) = 1./(2.*datvar)*(term1_numerator**2/term1_denominator + &
-    				 term2_numerator**2/term2_denominator)
+                                   term2_numerator**2/term2_denominator)
 
 !    print*,ifreq,' freq = ',freq(ifreq),omega,' power = ', power(ifreq)
 

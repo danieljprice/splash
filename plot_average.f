@@ -18,8 +18,8 @@
       
       DO ibin=1,nbins
          ihoc(ibin) = -1
-	 ymean(ibin) = 0.0
-	 num(ibin) = 0
+         ymean(ibin) = 0.0
+         num(ibin) = 0
       ENDDO
 
       DO i=1,npart
@@ -27,24 +27,24 @@ c
 cc----bin particles in x to plot average density
 c      
          ibin = INT((xdata(i)-xmin)/dxbin) + 1
-	 ll(i) = ihoc(ibin)
-	 ihoc(ibin) = i
-	 num(ibin) = num(ibin) + 1
+         ll(i) = ihoc(ibin)
+         ihoc(ibin) = i
+         num(ibin) = num(ibin) + 1
       ENDDO
 
       DO ibin=1,nbins
          PRINT*,'num(',ibin,') = ',num(ibin)
          j = ihoc(ibin)
-	 DO i=1,num(ibin)
+         DO i=1,num(ibin)
             ymean(ibin) = ymean(ibin) + ydata(j)
-	    j = ll(j)
+            j = ll(j)
          ENDDO
-	 IF (num(ibin).ne.0) THEN
-	    ymean(ibin) = ymean(ibin)/float(num(ibin))
-	 ELSE
-	    ymean(ibin) = 0.0
-	 ENDIF
-	 PRINT*,'ymean = ',ymean(ibin)
+         IF (num(ibin).ne.0) THEN
+            ymean(ibin) = ymean(ibin)/float(num(ibin))
+         ELSE
+            ymean(ibin) = 0.0
+         ENDIF
+         PRINT*,'ymean = ',ymean(ibin)
       ENDDO
 
       DO i=1,nbins

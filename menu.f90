@@ -63,8 +63,8 @@ subroutine menu
      label(1:ndim) = labelcoord(1:ndim,icoordsnew)
      do i=1,numplot
         if (iamvec(i).ne.0) then
-	   label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
-	endif
+           label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
+        endif
      enddo
   endif
 !--set contents of the vector plotting prompt
@@ -73,15 +73,15 @@ subroutine menu
   iamvecprev = 0
   do icol=1,numplot
      if (iamvec(icol).ne.0 .and. iamvec(icol).ne.iamvecprev) then
-	iamvecprev = iamvec(icol)
-	if (iamvec(icol).ge.10) then
-	   write(vecprompt(index:),"(',',1x,i2,'=',a)") &
-	         iamvec(icol),trim(labelvec(icol))
-	else
-	   write(vecprompt(index:),"(',',1x,i1,'=',a)") &	
-	         iamvec(icol),trim(labelvec(icol))
-	endif
-	index = len_trim(vecprompt) + 1
+        iamvecprev = iamvec(icol)
+        if (iamvec(icol).ge.10) then
+           write(vecprompt(index:),"(',',1x,i2,'=',a)") &
+                 iamvec(icol),trim(labelvec(icol))
+        else
+           write(vecprompt(index:),"(',',1x,i1,'=',a)") &        
+                 iamvec(icol),trim(labelvec(icol))
+        endif
+        index = len_trim(vecprompt) + 1
      endif
   enddo 
 
@@ -93,7 +93,7 @@ subroutine menu
 !
   print*,' You may choose from a delectable sample of plots '
   print 12
-  ihalf = numplot/2		! print in two columns
+  ihalf = numplot/2                ! print in two columns
   iadjust = mod(numplot,2)
   print 11, (i,transform_label(label(i),itrans(i)), &
        ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
@@ -153,33 +153,33 @@ subroutine menu
         print*,' no data '
         ihavereadfilename = .false.
         call get_data(-1)
-     else	
+     else        
         !
         !--if needed prompt for x axis selection
         !
         if (ipicky.le.(numplot-nextra)) then
-	   if (ipickx.eq.0) ipickx = 1 ! do not allow zero as default
+           if (ipickx.eq.0) ipickx = 1 ! do not allow zero as default
            call prompt(' (x axis) ',ipickx)
            if (ipickx.gt.numplot .or. ipickx.le.0) then
               goto 9901
            elseif (ipicky.le.ndim .and. ipickx.le.ndim) then
               call prompt('(render) (0=none)',irender,0,numplot)
-	      ivecplottemp = -1
-	      do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
-	         ivecplottemp = ivecplot
-	         call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
-		 if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
-		    print "(a)",'Error, value not in list' 
-		 endif
-	      enddo
-	      ivecplot = ivecplottemp
+              ivecplottemp = -1
+              do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
+                 ivecplottemp = ivecplot
+                 call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
+                 if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
+                    print "(a)",'Error, value not in list' 
+                 endif
+              enddo
+              ivecplot = ivecplottemp
            else
               irender = 0
-	      ivecplot = 0
+              ivecplot = 0
            endif
-	endif
-	!
-	!--call main plotting routine
+        endif
+        !
+        !--call main plotting routine
         !
         call mainloop(ipicky,ipickx,irender,ivecplot)
      endif
@@ -204,7 +204,7 @@ subroutine menu
         call prompt('Same x axis for all?',iansx)
         if (iansx) then
            call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
-           multiplotx(2:nyplotmulti) = multiplotx(1)	     
+           multiplotx(2:nyplotmulti) = multiplotx(1)             
         endif
         iansy = .false.
         if (ndim.ge.2) call prompt('Same y axis for all?',iansy)
@@ -223,17 +223,17 @@ subroutine menu
            endif
            if ((multiplotx(i).le.ndim).and.(multiploty(i).le.ndim)) then
               call prompt('(render) (0=none)',irendermulti(i),0,numplot)
-	      if (irendermulti(i).ne.0) then
+              if (irendermulti(i).ne.0) then
                  ichange = .false.
-		 call prompt(' change rendering options for this plot? ',ichange)
+                 call prompt(' change rendering options for this plot? ',ichange)
                  if (ichange) then
-	            call prompt('plot contours? ',iplotcontmulti(i))
-	            if (ndim.ge.2) then
-		       call prompt(' cross section (no=projection)? ',x_secmulti(i))
-		       if (x_secmulti(i)) then
-		          call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
-		       endif
-	            endif
+                    call prompt('plot contours? ',iplotcontmulti(i))
+                    if (ndim.ge.2) then
+                       call prompt(' cross section (no=projection)? ',x_secmulti(i))
+                       if (x_secmulti(i)) then
+                          call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
+                       endif
+                    endif
                  elseif (i.eq.1) then
                     print*,'copying options from rendering settings'
                     iplotcontmulti(i) = iplotcont_nomulti
@@ -244,18 +244,18 @@ subroutine menu
                     iplotcontmulti(i) = iplotcontmulti(1)
                     x_secmulti(i) = x_secmulti(1)
                     xsecposmulti(i) = xsecposmulti(1)
-		 endif
- 	      endif
+                 endif
+               endif
               call prompt('(render) (0=none)',irender,0,numplot)
-	      ivecplottemp = -1
-	      do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
-	         ivecplottemp = ivecplot
-	         call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
-		 if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
-		    print "(a)",'Error, value not in list' 
-		 endif
-	      enddo
-	      ivecplotmulti(i) = ivecplottemp
+              ivecplottemp = -1
+              do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
+                 ivecplottemp = ivecplot
+                 call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
+                 if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
+                    print "(a)",'Error, value not in list' 
+                 endif
+              enddo
+              ivecplotmulti(i) = ivecplottemp
            endif
         enddo
 !------------------------------------------------------------------------

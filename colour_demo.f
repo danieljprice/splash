@@ -46,7 +46,7 @@
       
       DO i=2,nschemes
          CALL PGSCH(1.0)      
-         CALL PGENV(xmin,xmax,ymin,ymax,1,-1)   	 
+         CALL PGENV(xmin,xmax,ymin,ymax,1,-1) 
          CALL PGSCH(3.0)
          CALL PGNUMB(i,0,0,STRING,NC)
          CALL PGMTXT('T',1.0,0.5,0.5,STRING(1:nc))     

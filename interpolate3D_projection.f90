@@ -21,7 +21,7 @@
 !            smoothing lengths     : hh    (npart) - could be computed from density
 !            scalar data to smooth : dat   (npart)
 !
-!     Output: smoothed data 	   : datsmooth (npixx,npixy)
+!     Output: smoothed data            : datsmooth (npixx,npixy)
 !
 !     Written by Daniel Price September 2003
 !--------------------------------------------------------------------------
@@ -66,14 +66,14 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
      if (iprogress.ge.iprintnext) then
         write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
         iprintnext = iprintnext + 10
-     endif	
+     endif        
      !
      !--set kernel related quantities
      !
      hi = hh(i)
      if (hi.le.0.) then
         print*,'interpolate3D_proj: error: h <= 0 ',i,hi
-	return
+        return
      endif
      hi1 = 1./hi
      h2 = hi*hi
@@ -108,21 +108,21 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
            !
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
-           !		     
+           !                     
            !!--find nearest index in table
            index = int(0.5*qq*maxcoltable) + 1
            if (index.lt.maxcoltable) then
               index1 = index + 1
               !--find increment along from this index
               dxx = qq - index*maxcoltable
-              !--find gradient		  
+              !--find gradient                  
               dwdx = (coltable(index1) - coltable(index))*dmaxcoltable
               !--compute value of integrated kernel
               wab = coltable(index) + dwdx*dxx
               !
               !--calculate data value at this pixel using the summation interpolant
-              !		  
-              datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab		          
+              !                  
+              datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab          
            endif
 
         enddo

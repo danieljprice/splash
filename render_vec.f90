@@ -3,8 +3,8 @@
 !  and plots an arrow map of it
 !--------------------------------------------------------------------------
  
-subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,	&
-	          xmin,ymin,dx,log)  
+subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
+                  xmin,ymin,dx,log)  
  implicit none
  integer, intent(in) :: npixx,npixy
  real, intent(in) :: xmin,ymin,vecmax,dx
@@ -16,8 +16,8 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,	&
  
 !set up grid for rendering 
 
- trans(1) = xmin !- 0.5*dx		! this is for the pgimag call
- trans(2) = dx			! see help for pgimag/pggray/pgcont
+ trans(1) = xmin !- 0.5*dx                ! this is for the pgimag call
+ trans(2) = dx                        ! see help for pgimag/pggray/pgcont
  trans(3) = 0.0
  trans(4) = ymin !- 0.5*dx
  trans(5) = 0.0
@@ -27,7 +27,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,	&
  print*,'max(x component) = ',maxval(vecpixx),'max(y component) = ',maxval(vecpixy)
 
  call pgsah(2,45.0,0.7)   ! arrow style
- call pgsch(0.3)	  ! size of arrow head
+ call pgsch(0.3)          ! size of arrow head
  if (vecmax.le.0.0) then  ! adaptive limits
     scale = 0.0
     vmax = max(maxval(vecpixx(:,:)),maxval(vecpixy(:,:)))

@@ -63,7 +63,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
      hi = hh(i)
      if (hi.le.0.) then
         print*,'interpolate3D_xsec_vec: error: h <= 0 ',i,hi
-	return
+        return
      endif
      hi1 = 1./hi
      h3 = hi*hi*hi
@@ -80,15 +80,15 @@ subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
      if (abs(dz) .lt. radkern) then
 
         const = 1./(pi*h3)  ! normalisation constant (3D)
-	if (rho(i).ne.0.) then
-	   rho1i = 1./rho(i)
-	else
-	   rho1i = 0.
-	endif
-	
-	termx = const*pmass(i)*vecx(i)*rho1i
-	termy = const*pmass(i)*vecy(i)*rho1i
-	!
+        if (rho(i).ne.0.) then
+           rho1i = 1./rho(i)
+        else
+           rho1i = 0.
+        endif
+        
+        termx = const*pmass(i)*vecx(i)*rho1i
+        termy = const*pmass(i)*vecy(i)*rho1i
+        !
         !--for each particle work out which pixels it contributes to
         !               
         ipixmin = int((x(i) - radkern - xmin)/pixwidth)

@@ -15,11 +15,11 @@ subroutine options_xsecrotate
  ians = 0
  interact = .true.
  print 10,xsec_nomulti,xsecpos_nomulti,irotate
-10  format(' 0) exit ',/, 		&
+10  format(' 0) exit ',/,                 &
            ' 1) toggle cross section/projection           (',L1,' )',/, &
            ' 2) set cross section position                (',f5.2,' )',/, &
-	   ' 3) toggle rotation                           (',L1,' )',/, &
-	   ' 4) change rotation options')
+           ' 3) toggle rotation                           (',L1,' )',/, &
+           ' 4) change rotation options')
  call prompt('enter option',ians,0,4)
 !
 !--options
@@ -58,13 +58,13 @@ subroutine options_xsecrotate
        !--set position manually
        !
           if (abs(xseclineX2-xseclineX1).lt.1.e-5 .and. &
-	      abs(xseclineY2-xseclineY1).lt.1.e-5) then
+              abs(xseclineY2-xseclineY1).lt.1.e-5) then
           !--if not already set (ie. if all = 0.0)
           !  then set default line to diagonal across the domain
-	     xseclineX1 = lim(1,1)
-	     xseclineX2 = lim(1,2)
-	     xseclineY1 = lim(2,1)
-	     xseclineY2 = lim(2,2)
+             xseclineX1 = lim(1,1)
+             xseclineX2 = lim(1,2)
+             xseclineY1 = lim(2,1)
+             xseclineY2 = lim(2,2)
           endif
           print*,'please set position of cross section through 2D data:'
           call prompt('enter xmin of cross section line',xseclineX1)

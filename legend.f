@@ -14,10 +14,11 @@
       CHARACTER string*15
       
       !!CALL PGQVP(0,x1,x2,y1,y2)
-      CALL PGQCS(0,xch,ych) ! get character height in normalised device coords
+      ! get character height in normalised device coords
+      CALL PGQCS(0,xch,ych) 
       
 !      vspace=1.2
-      ndecimal = 2	! number of decimal places to display
+      ndecimal = 2        ! number of decimal places to display
       ndec = 10**ndecimal
       IF (t.eq.0.0) THEN
          tplot = 1E-6

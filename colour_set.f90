@@ -49,8 +49,8 @@ subroutine colour_set(icolours)
      sat=1.0      
      dlight = 1.0/FLOAT(ncolours)
      dsat = 0.0
-     dhue = 80.0/FLOAT(ncolours)	 
-  case(3)	! blue
+     dhue = 80.0/FLOAT(ncolours)         
+  case(3)        ! blue
      scheme = 'ice blue'
      rgb = .false.
      hue=330
@@ -65,10 +65,10 @@ subroutine colour_set(icolours)
      hue=100
      light=0.5
      sat=1.0
-     dlight = 0.0	!/FLOAT(ncolours)
+     dlight = 0.0        !/FLOAT(ncolours)
      dsat = 0.0
      dhue = 320.0/FLOAT(ncolours)
-  case(5)	! green
+  case(5)        ! green
      scheme = 'frog monster'
      rgb = .false.         
      hue=200
@@ -84,17 +84,17 @@ subroutine colour_set(icolours)
      light=0.5
      sat= 1.    
      dlight = 0.  !!!1.0/FLOAT(ncolours)
-     dsat = 0.	!1.0/FLOAT(ncolours)
-     dhue = 500.0/FLOAT(ncolours)	 
-  case(10)	! rgb attempts
+     dsat = 0.        !1.0/FLOAT(ncolours)
+     dhue = 500.0/FLOAT(ncolours)         
+  case(10)        ! rgb attempts
      scheme = 'really useless'
      rgb = .true.
      red = 0.3333
      green = 0.0
      blue = 0.0      
-     dred = 0.0	!0.333/FLOAT(ncolours)
+     dred = 0.0        !0.333/FLOAT(ncolours)
      dblue = 0.3333/FLOAT(ncolours)
-     dgreen = 0.0	!0.333/FLOAT(ncolours)	 
+     dgreen = 0.0        !0.333/FLOAT(ncolours)         
   case default
      scheme = 'none'
      return
@@ -108,7 +108,7 @@ subroutine colour_set(icolours)
         red = red + dred
         blue = blue + dblue
         green = green + dgreen
-        call PGSCR(i,red,green,blue)	 
+        call PGSCR(i,red,green,blue)
      else   
         hue = hue + dhue
         sat = sat + dsat

@@ -39,7 +39,7 @@
        radv = r(i-1)
        print *,' rad v ',r(i-1),v(i-1)
        
-       sigma = radv/2.	! divide by two as a kernel
+       sigma = radv/2.        ! divide by two as a kernel
        print *,' sigma ',sigma
        
        !--------------------------------------
@@ -72,9 +72,9 @@
        do j = 2,(i-1)
          if(r(j).gt.0.0)then
            realden = rhocentre*den(j)
-	   realrad = r(j)/sigma
-	   denplot(j-1) = realden
-	   rplot(j-1) = realrad
+           realrad = r(j)/sigma
+           denplot(j-1) = realden
+           rplot(j-1) = realrad
          endif
        enddo
        !---------------------------------------

@@ -15,7 +15,7 @@
 !            smoothing lengths     : hh    (npart) - could be computed from density
 !            scalar data to smooth : dat   (npart)
 !
-!     Output: smoothed data 	   : datsmooth (npixx)
+!     Output: smoothed data            : datsmooth (npixx)
 !
 !     Daniel Price, Institute of Astronomy, Cambridge, Dec 2003
 !--------------------------------------------------------------------------
@@ -51,7 +51,7 @@ subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
      hi = hh(i)
      if (hi.le.0.) then
         print*,'interpolate1D: error: h <= 0 ',i,hi
-	return
+        return
      endif
      hi1 = 1./hi
      radkern = 2.*hi   ! radius of the smoothing kernel

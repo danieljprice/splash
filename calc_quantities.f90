@@ -13,7 +13,7 @@ subroutine calc_quantities
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
-  ncalc = 8	! specify number to calculate
+  ncalc = 8        ! specify number to calculate
   ientrop = ncolumns + 1      
   irad = ncolumns + 2
   ike = ncolumns + 3
@@ -47,7 +47,7 @@ subroutine calc_quantities
 !     ivpar = 0
 !     ivperp = 0
 !     iBpar = 0
-!     iBperp = 0	 
+!     iBperp = 0         
   endif
   
   print*,'calculating ',ncalc,' additional quantities...',nstart,n_end
@@ -67,7 +67,7 @@ subroutine calc_quantities
            dat(1:ntot(i),ientrop,i) = 0.
         endwhere
      endif
-     !!--radius	 
+     !!--radius         
      if (irad.ne.0) then   
         do j=1,ntot(i)
            dat(j,irad,i) = sqrt(dot_product(dat(j,ix(1:ndim),i),   &
@@ -127,7 +127,7 @@ subroutine calc_quantities
         if ((itotpr.ne.0).and.(ipr.ne.0).and.(ipmag.ne.0)) then
            dat(1:ntot(i),itotpr,i) = dat(1:ntot(i),ipr,i) + dat(1:ntot(i),ipmag,i)
         endif
-        !!--div B error	(h*divB / abs(B))	
+        !!--div B error        (h*divB / abs(B))
         if ((idivBerr.ne.0).and.(idivB.ne.0).and.(ih.ne.0)) then
            do j=1,ntot(i)
               Bmag = sqrt(dot_product(dat(j,iBfirst:iBlast,i),dat(j,iBfirst:iBlast,i)))
@@ -143,7 +143,7 @@ subroutine calc_quantities
               Jmag = sqrt(dot_product(dat(j,iJfirst:iJfirst+ndimV,i), &
                    dat(j,iJfirst:iJfirst+ndimV,i)))
               if (dat(j,irho,i).ne.0) then
-                 dat(j,icurr,i) = Jmag     !!/sqrt(dat(irho,j,i))
+                 dat(j,icurr,i) = Jmag !!/sqrt(dat(irho,j,i))
               endif
            enddo
         endif

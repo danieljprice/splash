@@ -4,7 +4,7 @@
 !---------------------------------------------------
 subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
  implicit none
- integer, parameter :: ioversamplingfactor = 4	! oversample by 4
+ integer, parameter :: ioversamplingfactor = 4        ! oversample by 4
  integer, intent(in) :: npts,nfreq,itrans
  integer :: ierr, ifreq
  real, dimension(npts), intent(in) :: x, dat
@@ -24,7 +24,7 @@ subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
 !
 !--set frequency interval between evaluations of power
 ! 
-! nfreq = 32*iabovenyquist	!128	!ioversamplingfactor*iabovenyquist*npts
+! nfreq = 32*iabovenyquist        !128        !ioversamplingfactor*iabovenyquist*npts
  if (nfreq.lt.1) then
     print*,'error: nfreq = ',nfreq
     return
@@ -37,10 +37,10 @@ subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
     return 
  endif
  wavelengthmax = xlength
- wavelengthmin = wavelengthmax/(REAL(nfreq))	! nyquist frequency
+ wavelengthmin = wavelengthmax/(REAL(nfreq))        ! nyquist frequency
  
  freqmin = 1./wavelengthmax
- freqmax = nfreq*freqmin   !1./wavelengthmin	! to some multiple of nyquist
+ freqmax = nfreq*freqmin   !1./wavelengthmin        ! to some multiple of nyquist
  print*,'wavelengths from lambda = ',wavelengthmin,' to ',wavelengthmax
  print*,'frequencies range f = ',freqmin,' to ',freqmax
 
@@ -89,7 +89,7 @@ subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
     end where
     powermin = MINVAL(power(1:nfreq))
     powermax = MAXVAL(power(1:nfreq))   
- else	
+ else        
     freqminplot = freqmin
     freqmaxplot = freqmax
     freqplot = freq    
@@ -109,19 +109,19 @@ subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
 !
 !--plot power spectrum
 !
- call PGLINE(nfreq,freqplot,power)			! as line
-! call PGBIN(nfreq,freq,power,.true.)		! as histogram
+ call PGLINE(nfreq,freqplot,power)                        ! as line
+! call PGBIN(nfreq,freq,power,.true.)                ! as histogram
 !
 !--plot theoretical power spectrum
 ! 
  print*,'plotting theoretical power '
- call PGSLS(2)	! dashed line
+ call PGSLS(2)        ! dashed line
  power = 0.
  do ifreq = 1,nfreq
     if (freq(ifreq).gt.zero) then   ! in case there has been an error in powerspec
        if (itrans.eq.1) then
           if (theoretical_power(freq(ifreq)).gt.zero) then
-	     !!print*,theoretical_power(freq(ifreq))
+             !!print*,theoretical_power(freq(ifreq))
              power(ifreq) = log10(theoretical_power(freq(ifreq)))
           endif  
        else

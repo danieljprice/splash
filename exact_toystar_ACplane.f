@@ -27,17 +27,17 @@
       Cnew = 0.25
       
       DO WHILE (abs(C-Cnew).GT.1.e-5)
-      	 
-	 C = Cnew
+               
+         C = Cnew
 
-	 funct = k*C**(2./gamp1) - 2.*fact*C*gam1 - 1.
-	 fderiv = 2.*k/gamp1*C**(-gamm1/gamp1) - 2.*fact*gam1
-	 
-	 Cnew = C - funct/fderiv
-	 
-	 IF (Cnew.LT.0.) PRINT*,'eek C < 0'
-	 	 
-      ENDDO	 
+         funct = k*C**(2./gamp1) - 2.*fact*C*gam1 - 1.
+         fderiv = 2.*k/gamp1*C**(-gamm1/gamp1) - 2.*fact*gam1
+         
+         Cnew = C - funct/fderiv
+         
+         IF (Cnew.LT.0.) PRINT*,'eek C < 0'
+                  
+      ENDDO         
       
       xstart = Cnew
       
@@ -48,12 +48,12 @@
       
          C = Cnew
       
-	 funct = k*C**(2./gamp1) - 2.*fact*C*gam1 - 1.
-	 fderiv = 2.*k/gamp1*C**(-gamm1/gamp1) - 2.*fact*gam1        
-	 
-	 Cnew = C - funct/fderiv
-	 
-      ENDDO	       
+         funct = k*C**(2./gamp1) - 2.*fact*C*gam1 - 1.
+         fderiv = 2.*k/gamp1*C**(-gamm1/gamp1) - 2.*fact*gam1        
+         
+         Cnew = C - funct/fderiv
+         
+      ENDDO               
       
       xend = Cnew
      
@@ -89,9 +89,9 @@
       IF (term.LE.0.) THEN
 !         PRINT*,' warning: func < 0 ',term
          func = 0.
-      ELSE	 
+      ELSE         
          func = SQRT(term)
-      ENDIF	 
+      ENDIF         
       
       END 
       
@@ -106,6 +106,6 @@
          func2 = 0.
       ELSE
          func2 = -SQRT(term)
-      ENDIF	 
+      ENDIF 
       
       END 

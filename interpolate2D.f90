@@ -15,7 +15,7 @@
 !            smoothing lengths     : hh    (npart) - could be computed from density
 !            scalar data to smooth : dat   (npart)
 !
-!     Output: smoothed data 	   : datsmooth (npixx,npixy)
+!     Output: smoothed data            : datsmooth (npixx,npixy)
 !
 !     Daniel Price, Institute of Astronomy, Cambridge, July 2003
 !--------------------------------------------------------------------------
@@ -51,7 +51,7 @@ subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
      hi = hh(i)
      if (hi.le.0.) then
         print*,'interpolate2D: error: h <= 0 ',i,hi
-	return
+        return
      endif
      hi1 = 1./hi
      h2 = hi*hi
@@ -88,7 +88,7 @@ subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
            qq = rab*hi1
            !
            !--SPH kernel - standard cubic spline
-           !		     
+           !                     
            if (qq.lt.1.0) then
               wab = const*(1.-1.5*qq**2 + 0.75*qq**3)
            elseif (qq.lt.2.0) then
@@ -98,7 +98,7 @@ subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
            endif
            !
            !--calculate data value at this pixel using the summation interpolant
-           !		  
+           !  
            datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
 
         enddo

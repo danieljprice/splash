@@ -15,8 +15,8 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
   integer i,j,its,nsteps
   real, dimension(0:npts) :: xplot,yplot
   real, intent(in) :: time,gamma,sigma
-  real, intent(in) :: H0, C0, A0	! parameters for toy star
-  real const	! parameter for toy star
+  real, intent(in) :: H0, C0, A0    ! parameters for toy star
+  real const ! parameter for toy star
   real Hprev, Cprev, Aprev, A2, Htemp, Ctemp, Atemp, H, C, A
   real radstar,dx,dt,tnow
   real func, fderiv,rhoplot,deltarho
@@ -45,7 +45,7 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
      if (C0.le.0.) then 
         print*,'*** C = 0 = illegal in input'
         return
-     else	 
+     else         
         radstar = sqrt(H0/C0)
      endif
      xplot(0) = -radstar
@@ -53,7 +53,7 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
 
      do i=0,npts
         xplot(i) = xplot(0)+dx*i
-        !	 print*,i,' x,y = ',xplot(i),yplot(i)
+        !         print*,i,' x,y = ',xplot(i),yplot(i)
         rhoplot = (H0 - C0*xplot(i)**2)
         if (rhoplot.le.0.) rhoplot = 0.
         deltarho = Pm(xplot(i),norder+1)*sin(omega*time)
@@ -73,7 +73,7 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
 
      enddo
 
-     if (iplot.eq.6) then	! plot By \propto rho
+     if (iplot.eq.6) then        ! plot By \propto rho
         dx = (H0**gam1)/float(npts) ! ie (rhomax - 0)/npts
         xplot(0) = 0.
         yplot(0) = sigma*xplot(0)
@@ -83,9 +83,9 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
         enddo
      endif
 
-     if (iplot.eq.7) then	! plot current point on A-C plane
+     if (iplot.eq.7) then        ! plot current point on A-C plane
         call PGPT(1,C0,A0*cos(omega*time),4)
-     else			! plot normal exact solution line
+     else                        ! plot normal exact solution line
         call PGLINE(npts+1,xplot,yplot)
      endif
 
@@ -120,7 +120,7 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
         fprevC = -Cprev*Aprev*gamp1
         fprevA = fact*Cprev -1.-Aprev**2
         fprevH = -Aprev*Hprev*gamm1
-        ! predictor	 
+        ! predictor         
         Ctemp = Cprev + dt*(-Cprev*Aprev*gamp1)
         Atemp = Aprev + dt*(fact*Cprev-1.-Aprev**2)
         Htemp = Hprev + dt*(-Aprev*Hprev*gamm1)
@@ -128,7 +128,7 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
         ftempC = -Ctemp*Atemp*gamp1
         ftempA = fact*Ctemp -1. -Aprev**2
         ftempH = -Atemp*Htemp*gamm1
-        ! corrector	 
+        ! corrector         
         C = Cprev + 0.5*dt*(fprevC + ftempC)
         A = Aprev + 0.5*dt*(fprevA + ftempA)
         H = Hprev + 0.5*dt*(fprevH + ftempH)
@@ -137,11 +137,11 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
         Aprev = A
         Hprev = H
 
-        !	 print*,' time = ',tnow
-        !	 IF ((abs(C-C0).LT.5.e-3).AND. &
-        !     	     (abs(A-A0).LT.5.e-3).AND.(tnow.GT.5e-3)) THEN
-        !	     PRINT*,'*** period, t = ',tnow,' err = ',abs(C-C0)+abs(A-A0)
-        !	 ENDIF
+        !         print*,' time = ',tnow
+        !         IF ((abs(C-C0).LT.5.e-3).AND. &
+        !                  (abs(A-A0).LT.5.e-3).AND.(tnow.GT.5e-3)) THEN
+        !             PRINT*,'*** period, t = ',tnow,' err = ',abs(C-C0)+abs(A-A0)
+        !         ENDIF
 
      enddo
 
@@ -152,7 +152,7 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
      if (C.le.0.) then 
         radstar = 0.5
         stop '*** C = 0 = illegal'
-     else	 
+     else         
         radstar = sqrt(H/C)
      endif
      xplot(0) = -radstar
@@ -160,7 +160,7 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
 
      do i=0,npts
         xplot(i) = xplot(0)+dx*i
-        !	 print*,i,' x,y = ',xplot(i),yplot(i)
+        !         print*,i,' x,y = ',xplot(i),yplot(i)
         rhoplot = (H - C*xplot(i)**2)
         if (rhoplot.le.0.) rhoplot = 0.
         rhoplot = rhoplot**gam1
@@ -179,7 +179,7 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
 
      enddo
 
-     if (iplot.eq.6) then	! plot By \propto rho
+     if (iplot.eq.6) then        ! plot By \propto rho
         dx = (H**gam1)/float(npts) ! ie (rhomax - 0)/npts
         xplot(0) = 0.
         yplot(0) = sigma*xplot(0)
@@ -189,9 +189,9 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
         enddo
      endif
 
-     if (iplot.eq.7) then	! plot current point on A-C plane
+     if (iplot.eq.7) then        ! plot current point on A-C plane
         call PGPT(1,C,A,4)
-     else			! plot normal exact solution line
+     else                        ! plot normal exact solution line
         call PGLINE(npts+1,xplot,yplot)
      endif
 !
@@ -259,7 +259,7 @@ function Pm(x,m)
      Pm = 1.
   case (1)
      Pm = x
-  case (2:)	! use recurrence relation to calculate the rest
+  case (2:)        ! use recurrence relation to calculate the rest
      do i=2,m
         Pm = ((2.*(i-1.)+1.)*x*Pmminus1 - (i-1.)*Pmminus2)/real(i)
         Pmminus2 = Pmminus1

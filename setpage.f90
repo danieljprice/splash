@@ -30,7 +30,7 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
            call pgsvp(0.02,0.98,0.02,0.98) ! if no axes use full viewport
         else
            !call pgsvp(0.25,0.98,0.15,0.95)
-	   call pgsvp(0.25,0.98,0.17,0.93)
+           call pgsvp(0.25,0.98,0.17,0.93)
         endif
      else
         if (axis.lt.0) then
@@ -108,7 +108,7 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
      !--always label y axis
      !
      call pgmtxt('l',3.0,0.5,1.0,labely)
-     !!	     call pglabel(' ',labely,trim(titlex))     
+     !!             call pglabel(' ',labely,trim(titlex))     
   endif
   
   return

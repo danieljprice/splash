@@ -19,7 +19,7 @@
 !            smoothing lengths     : hh    (npart) - could be computed from density
 !            scalar data to smooth : dat   (npart)
 !
-!     Output: smoothed data 	   : datsmooth (npixx,npixy,npixz)
+!     Output: smoothed data            : datsmooth (npixx,npixy,npixz)
 !
 !     Daniel Price, Institute of Astronomy, Cambridge 16/7/03
 !--------------------------------------------------------------------------
@@ -56,7 +56,7 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
      hi = hh(i)
      if (hi.le.0.) then
         print*,'interpolate3D: error: h <= 0 ',i,hi
-	return
+        return
      endif
      hi1 = 1./hi
      h3 = hi*hi*hi
@@ -74,12 +74,12 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
      jpixmax = int((y(i) + radkern - ymin)/pixwidth)
      kpixmax = int((z(i) + radkern - zmin)/zpixwidth)
 
-     !	 PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
-     !	 PRINT*,'z slices = ',kpixmin,zmin + kpixmin*zpixwidth, !- 0.5*zpixwidth,
-     !     &                 kpixmax,zmin + kpixmax*zpixwidth		!- 0.5*zpixwidth
-     !        PRINT*,'should cover z = ',z(i)-radkern,' to ',z(i)+radkern	 
-     !	 PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
-     !	 PRINT*,'xmin,ymin = ',xmin,ymin,zmin
+     !         PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
+     !         PRINT*,'z slices = ',kpixmin,zmin + kpixmin*zpixwidth, !- 0.5*zpixwidth,
+     !     &                 kpixmax,zmin + kpixmax*zpixwidth                !- 0.5*zpixwidth
+     !        PRINT*,'should cover z = ',z(i)-radkern,' to ',z(i)+radkern         
+     !         PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
+     !         PRINT*,'xmin,ymin = ',xmin,ymin,zmin
 
      if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
      if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
@@ -103,7 +103,7 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
               qq = rab*hi1
               !
               !--SPH kernel - standard cubic spline
-              !		     
+              !                     
               if (qq.lt.1.0) then
                  wab = const*(1.-1.5*qq**2 + 0.75*qq**3)
               elseif (qq.lt.2.0) then
@@ -113,7 +113,7 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
               endif
               !
               !--calculate data value at this pixel using the summation interpolant
-              !		  
+              !  
               datsmooth(ipix,jpix,kpix) = datsmooth(ipix,jpix,kpix) + term*wab          
 
            enddo

@@ -20,15 +20,15 @@ subroutine options_limits
  else
     print 10,iadapt,itrackpart,zoom
  endif
-10 format(' 0) exit ',/, 		&
+10 format(' 0) exit ',/,                 &
         ' 1) toggle adaptive/fixed limits  ( ',L1,' )   ',/,  &
         ' 2) set manual limits ',/,     &
-	' 3) xy limits track particle      ( ',i8,' )   ',/,   &
+        ' 3) xy limits track particle      ( ',i8,' )   ',/,   &
         ' 4) zoom in/out                   ( ',f4.2,' ) ',/,   &
         ' 5) apply transformations (log10,1/x) ',/, &
-	' 6) save current limits to file ',/, &
-	' 7) re-read limits file         ',/, &
-	' 8) reset limits for all plots  ')
+        ' 6) save current limits to file ',/, &
+        ' 7) re-read limits file         ',/, &
+        ' 8) reset limits for all plots  ')
  call prompt('enter option ',iaction,0,8)
 !
 !--limits
@@ -46,8 +46,8 @@ subroutine options_limits
        ipick = 0
        call prompt('Enter plot number to set limits (0=finish)',ipick,0,numplot)
        if (ipick.gt.0) then
-	  call prompt('min ',lim(ipick,1))
-	  call prompt('max ',lim(ipick,2))
+          call prompt('min ',lim(ipick,1))
+          call prompt('max ',lim(ipick,2))
           print*,'>> limits set (min,max) = ',lim(ipick,1),lim(ipick,2)
        endif
     enddo
@@ -86,7 +86,7 @@ subroutine options_limits
         call prompt('(0 = finish, -1 = set all) ',ipick)
         if (ipick.le.numplot .and. ipick.ne.0) then
            write(*,300) (i,trim(transform_label('x',i)), i=1,5)
-300        format(1x,i1,') ',a)		
+300        format(1x,i1,') ',a)
            print*,'Enter transformation to apply (or a combination e.g. 321)'
            if (ipick.lt.0) then
               ipick = 0

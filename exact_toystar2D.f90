@@ -17,7 +17,7 @@ subroutine exact_toystar2D(time,gamma,H0,A0,C0,sigma,norder,iplot)
   real, parameter :: pi = 3.1415926536
   real, dimension(0:npts) :: xplot,yplot
   real, intent(in) :: time,gamma,sigma
-  real, intent(in) :: H0, C0, A0	! parameters for toy star
+  real, intent(in) :: H0, C0, A0        ! parameters for toy star
   real :: Aprev, A,H,C, term,const
   real :: radstar,dx,dt,tnow
   real :: func, fderiv,rhoplot,deltarho
@@ -46,7 +46,7 @@ subroutine exact_toystar2D(time,gamma,H0,A0,C0,sigma,norder,iplot)
         radstar = 0.5
         print*,'*** C = 0 = illegal'
         return
-     else	 
+     else         
         radstar = sqrt(H0/C0)
      endif
      xplot(0) = -radstar
@@ -54,7 +54,7 @@ subroutine exact_toystar2D(time,gamma,H0,A0,C0,sigma,norder,iplot)
 
      do i=0,npts
         xplot(i) = xplot(0)+dx*i
-        !	 print*,i,' x,y = ',xplot(i),yplot(i)
+        !         print*,i,' x,y = ',xplot(i),yplot(i)
         rhoplot = (H0 - C0*xplot(i)**2)
         if (rhoplot.le.0.) rhoplot = 0.
         deltarho = drhor(jmode,smode,xplot(i),gamma)  ! functional form of rho(r)
@@ -108,7 +108,7 @@ subroutine exact_toystar2D(time,gamma,H0,A0,C0,sigma,norder,iplot)
      if (C.le.0.) then 
         radstar = 0.5
         stop '*** C = 0 = illegal'
-     else	 
+     else         
         radstar = sqrt(H/C)
      endif
      xplot(0) = -radstar
@@ -116,7 +116,7 @@ subroutine exact_toystar2D(time,gamma,H0,A0,C0,sigma,norder,iplot)
 
      do i=0,npts
         xplot(i) = xplot(0)+dx*i
-        !	 print*,i,' x,y = ',xplot(i),yplot(i)
+        !         print*,i,' x,y = ',xplot(i),yplot(i)
         rhoplot = (H - C*xplot(i)**2)
         if (rhoplot.le.0.) rhoplot = 0.
         rhoplot = rhoplot**gam1
