@@ -50,13 +50,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
   
-  real, dimension(:,:), allocatable :: dattemp
-  real, dimension(:), allocatable :: dummy
+  real(doub_prec), dimension(:,:), allocatable :: dattemp
+  real(doub_prec), dimension(:), allocatable :: dummy
   real(doub_prec) :: udisti,umassi,utimei
-  real :: timei, gammai
-  real :: rhozero, RK2, tcomp
-  real :: escap,tkin,tgrav,tterm
-  real :: dtmax
+  real(doub_prec) :: timei, gammai
+  real(doub_prec) :: rhozero, RK2
+  real(doub_prec) :: escap,tkin,tgrav,tterm
+  real(doub_prec) :: dtmax
 
   nstepsread = 0
   nstep_max = 0
