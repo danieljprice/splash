@@ -6,7 +6,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use colours, only:colour_set
   use exact
   use labels
-  use limits
+  use limits, only:lim
   use multiplot
   use particle_data
   use prompting

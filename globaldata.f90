@@ -50,14 +50,6 @@ module labels
  integer :: idivb,iJfirst
  integer :: iacplane,ipowerspec
 end module labels
-!
-!--plot limits
-!
-module limits
- use params
- implicit none
- real, dimension(maxplot,2) :: lim
-end module limits
 
 !------------------------------------
 ! modules containing plot settings

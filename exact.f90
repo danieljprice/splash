@@ -239,7 +239,6 @@ contains
 
   subroutine exact_solution(iplotx,iploty,iexact,ndim,ndimV,time,xmin,xmax,ymean,gamma)
     use labels
-    use limits
     use prompting
     implicit none
     integer, intent(in) :: iplotx,iploty,iexact,ndim,ndimV
@@ -262,13 +261,13 @@ contains
     case(2)! sedov blast wave
        if (iplotx.eq.irad) then
           if (iploty.eq.irho) then
-             call exact_sedov(time,gamma,rhosedov,esedov,lim(irad,2),1)
+             call exact_sedov(time,gamma,rhosedov,esedov,xmax,1)
           elseif (iploty.eq.ipr) then
-             call exact_sedov(time,gamma,rhosedov,esedov,lim(irad,2),2)                 
+             call exact_sedov(time,gamma,rhosedov,esedov,xmax,2)                 
           elseif (iploty.eq.iutherm) then
-             call exact_sedov(time,gamma,rhosedov,esedov,lim(irad,2),3)                
+             call exact_sedov(time,gamma,rhosedov,esedov,xmax,3)                
           elseif (iploty.eq.ike) then
-             call exact_sedov(time,gamma,rhosedov,esedov,lim(irad,2),4)                 
+             call exact_sedov(time,gamma,rhosedov,esedov,xmax,4)                 
           endif
        endif
 

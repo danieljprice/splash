@@ -8,17 +8,17 @@
 .KEEP_STATE:
 
 ## Compiler options
-F90C =  g95
+F90C =  f95
 F90FLAGS =  -O -C
-#LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
-#          -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
-#         -lpng
+LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
+          -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
+         -lpng
 
-LDFLAGS =  -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation -L/sw/lib/pgplot95 -lpgplot
+#LDFLAGS =  -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation -L/sw/lib/pgplot95 -lpgplot
 #           -lcc_dynamic -Wl,-framework -Wl,Foundation \
 #           -L/sw/lib/pgplot -lpgplot -lg2c
 #LDFLAGS = -laquaterm -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -L/sw/lib/pgplot -lpgplot -lg2c
-SYSTEMFILE = system_unix.f90
+SYSTEMFILE = system_unix_NAG.f90
 
 # Fortran flags same as F90
 FC = $(F90C)
@@ -35,8 +35,8 @@ SCWSPH = read_data_scw.f90
 GADGETSPH = read_data_gadget.f90
 
 # put modules separately as these must be compiled before the others
-MODULES= globaldata.f90 transform.f90 prompting.f90 exact.f90 \
-         colours.f90 $(SYSTEMFILE)
+MODULES= globaldata.f90 transform.f90 prompting.f90 \
+         exact.f90 colours.f90 limits.f90 $(SYSTEMFILE)
 
 # these are the normal `external' subroutines
 SOURCES= supersphplot.f90 mainloop.f90 \
@@ -57,7 +57,6 @@ SOURCES= supersphplot.f90 mainloop.f90 \
 	 interpolate3D_projection.f90 interpolate3D_xsec_vec.f90 \
 	 int_from_string.f90 \
 	 legend.f \
-	 limits_read.f90 limits_save.f90 limits_set.f90 \
 	 menu.f90 options_data.f90 \
 	 options_limits.f90 \
 	 options_page.f90 options_particleplots.f90 \

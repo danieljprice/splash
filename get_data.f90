@@ -10,8 +10,9 @@
 !               if = 0, no data read, just call labelling and exact_params
 !
 subroutine get_data(ireadfile,gotfilenames)
-  use exact
+  use exact, only:read_exactparams
   use filenames
+  use limits, only:set_limits,read_limits
   use settings_data
   use settings_part, only:iexact
   use particle_data

@@ -3,7 +3,7 @@
 !----------------------------------------------------------------------
 subroutine options_xsecrotate
  use labels
- use limits
+ use limits, only:lim
  use prompting
  use settings_data ! for ndim
  use settings_xsecrot

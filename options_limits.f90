@@ -4,8 +4,8 @@
 subroutine options_limits
  use settings_data
  use settings_limits
- use settings_page ! for iadapt
- use multiplot ! for itrans
+ use settings_page, only:iadapt
+ use multiplot, only:itrans
  use prompting
  use limits
  use labels
