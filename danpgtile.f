@@ -47,7 +47,7 @@ c new page if iplot > number of plots on page
 c
       IF (iplotin.GT.nx*ny) THEN
          IF (MOD(iplotin,nx*ny).EQ.1) CALL PGPAGE
-	 iplot = iplotin - (nx*ny)*((iplotin-1)/(nx*ny))
+         iplot = iplotin - (nx*ny)*((iplotin-1)/(nx*ny))
       ELSEIF (iplotin.LE.0) THEN
          RETURN
       ELSE
@@ -62,17 +62,17 @@ c adjust effective viewport size if just=1 and graphs are not square
 c      
       IF (just.eq.1) THEN
          IF (ymax.EQ.ymin) THEN
-	    PRINT*,'DANPGTILE: Error: ymax=ymin'
-	    RETURN
-	 ENDIF
+            PRINT*,'DANPGTILE: Error: ymax=ymin'
+            RETURN
+         ENDIF
 c
 c query the current aspect ratio of the device and set aspect ratio appropriately
 c
          CALL PGQVSZ(3,x1,x2,y1,y2)
-	 devaspectratio = (x2-x1)/(y2-y1)
+         devaspectratio = (x2-x1)/(y2-y1)
          aspectratio = ((xmax-xmin)*nx)/((ymax-ymin)*ny)/devaspectratio
       ELSE
-	 aspectratio = 1.0
+         aspectratio = 1.0
       ENDIF
 c
 c set positions of x and y labels in units of character height from edge
@@ -162,7 +162,7 @@ c decide whether to number and label the y axis
 c      
       IF (ix.EQ.1 .AND. axis.GE.0) THEN
          yopts = '1VN'//yopts
-	 CALL PGMTXT('L',ylabeloffset,0.5,0.5,labely)
+         CALL PGMTXT('L',ylabeloffset,0.5,0.5,labely)
       ELSEIF (axis.GE.0) THEN
          yopts = yopts//'N'
       ENDIF  
@@ -171,7 +171,7 @@ c decide whether to number and label the x axis
 c      
       IF (iy.EQ.ny .AND. axis.GE.0) THEN
          xopts = 'N'//xopts
-	 CALL PGMTXT('B',xlabeloffset,0.5,0.5,labelx)
+         CALL PGMTXT('B',xlabeloffset,0.5,0.5,labelx)
       ENDIF
       
       CALL PGBOX(xopts,0.0,0,yopts,0.0,0)
