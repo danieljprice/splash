@@ -1,34 +1,18 @@
-!
-! This subroutine drives the main plotting loop
-!
-subroutine mainloop(ipicky,ipickx,irender,ivecplot)
-  use params
-  use colours, only:colour_set
-  use labels
-  use limits, only:lim
-  use multiplot
-  use particle_data, only:npartoftype,time
-  use prompting
-  use settings_data, only:ndim,nstart,n_end,nfreq,numplot,buffer_data,imulti
-  use settings_page
-  use settings_render, only:icolours,iplotcont_nomulti
-  use settings_vecplot, only:iplotpartvec
-  use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec
+module timestep_plotting
   implicit none
-  integer, intent(in) :: ipicky, ipickx, irender, ivecplot
 
   integer, parameter :: maxtitles = 50
-  integer :: i,j,ierr,ifile
+  integer :: ninterp
   integer :: iplotx,iploty,iplotz,irenderplot,ivectorplot,ivecx,ivecy
   integer :: nyplots,npartdim      
-  integer :: irenderprev, istepprev, iadvance
+  integer :: irenderprev
   integer :: ngrid
   integer :: just, ntitles
   integer :: iplots,iplotsonpage
   integer :: index1,index2,itype
 
   real, dimension(:), allocatable :: datpix1D, xgrid
-  real :: xmin,xmax,ymin,ymax,zmin,zmax,ymean
+  real :: xmin,xmax,ymin,ymax,zmin,ymean
   real :: vecmax,rendermin,rendermax,dummymin,dummymax
   real :: dxsec,xsecpos
   real :: pixwidth
@@ -39,9 +23,33 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   logical :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
   logical :: log, inewpage, tile_plots, isave, lastplot
   logical :: initialise_xsec
+  logical :: imulti
 
   character(len=60), dimension(maxtitles) :: titlelist
 
+contains
+
+!
+! initialise plotting options
+! called once for all steps
+!
+subroutine initialise_plotting(ipicky,ipickx,irender)
+  use params
+  use colours, only:colour_set
+  use labels, only:label,ix,ipowerspec
+  use limits, only:lim
+  use multiplot
+  use prompting
+  use settings_data, only:ndim,numplot
+  use settings_page
+  use settings_render, only:icolours,iplotcont_nomulti
+  use settings_vecplot, only:iplotpartvec
+  use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec
+  use particle_data, only:npartoftype
+  implicit none
+  integer, intent(in) :: ipicky,ipickx,irender
+  integer :: i,j
+  
   !------------------------------------------------------------------------
   ! initialisations
   !------------------------------------------------------------------------
@@ -58,7 +66,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   iplotcont = iplotcont_nomulti
   lastplot = .false.
   iplotpart = .true.
-  if (ivecplot.ne.0) iplotpart = iplotpartvec
   xmin = 0.
   xmax = 0.
   ymin = 0.
@@ -126,13 +133,17 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
         xsecpos_nomulti = xsecpos
 
      !!--if single cross-section, read position of cross-section slice
-     elseif (x_sec.and.iplotpart.and.irender.le.ndim .and. iplotz.gt.0) then
+     elseif (x_sec.and.iplotpart .and. iplotz.gt.0) then
         call prompt(' enter '//trim(label(iplotz))//' position for cross-section slice:', &
                      xsecpos_nomulti,lim(iplotz,1),lim(iplotz,2))
         !!--default thickness is half of the average particle spacing
-        npartdim = int(maxval(npartoftype(1,nstart:n_end))**(1./real(ndim)))
+        npartdim = maxval(npartoftype(:,1))**(1./real(ndim))
         print*,'average # of particles in each dimension = ',npartdim
-        dxsec = (lim(iplotz,2)-lim(iplotz,1))/float(npartdim)
+        if (npartdim.gt.0) then
+           dxsec = (lim(iplotz,2)-lim(iplotz,1))/float(npartdim)
+        else
+           dxsec = 0.
+        endif
         call prompt(' enter thickness of cross section slice:', &
                      dxsec,0.0,lim(iplotz,2)-lim(iplotz,1))  
      endif
@@ -177,79 +188,31 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   !!if ((ndown*nacross).gt.1 .and..not. tile_plots) charheight = 2.0
   !      charheight = 0.5*(nacross+ndown)
 
+end subroutine initialise_plotting
 
-  !------------------------------------------------------------------------      
-  ! loop over timesteps (flexible to allow going forwards/backwards in
-  !                      interactive mode)
-  !------------------------------------------------------------------------            
-  i = nstart
-  iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
-  ifile = 1
-
-  over_timesteps: do while (i.le.n_end)
-
-     if (.not.buffer_data) then    
-        !
-        !--make sure we have data for this timestep
-        !
-        call get_nextstep(i,ifile)
-        if (i.eq.-666) exit over_timesteps
-     endif
-     !
-     !--check timestepping
-     !
-     if (i.lt.1) then
-        print*,'reached first step: can''t go back'
-        i = 1
-     endif
-     if (i.lt.nstart) then
-        print*,'warning: i < nstart'
-     endif        
-
-     print 33, time(i),i
-33   format (5('-'),' t = ',f9.4,', dump #',i5,1x,18('-'))
-     irenderprev = 0
-     istepprev = 0  
-
-     call plotstep
-!
-!--increment timestep
-!
-     if (iadvance.eq.-666) exit over_timesteps
-     i = i + iadvance
-     if (interactive .and. i.gt.n_end) i = n_end
-
-  enddo over_timesteps
-
-  if (.not.interactive) then
-     !!call pgebuf
-     print*,'press return to finish'
-     read*
-  endif
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-  call pgend
-
-  return
-
-contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine plotstep
+subroutine plotstep(istep,irender,ivecplot, &
+                    npartoftype,dat,timei,gammai,iadvance)
+  use params
   use exact, only:exact_solution, &
              atstar,ctstar,htstar,sigma,iwaveplotx,iwaveploty
-  use particle_data
+  use labels
+  use limits
+  use multiplot
+  use particle_data, only:maxpart,icolourme, time
   use rotation
   use settings_data
   use settings_limits
   use settings_part
   use settings_page
   use settings_render
-  use settings_vecplot
+  use settings_vecplot, only:npixvec, iplotpartvec
   use settings_xsecrot
   use settings_powerspec
-
+!
+!--subroutines called from this routine
+!
   use colourparts
   use transforms
   use interactive_routines
@@ -260,24 +223,42 @@ subroutine plotstep
   use powerspectrums
 
   implicit none
-  integer :: j,k
+  integer, intent(in) :: istep, irender, ivecplot
+  integer, dimension(maxparttypes), intent(in) :: npartoftype
+  real, dimension(:,:), intent(in) :: dat
+  real, intent(in) :: timei,gammai
+  integer, intent(inout) :: iadvance
+  integer :: ntoti
+  integer :: j,k,istepprev
   integer :: nyplot
-  integer :: ninterp,irenderpart
+  integer :: irenderpart
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec
 
   real, parameter :: pi = 3.1415926536
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
-  real, dimension(:,:), allocatable :: datpix,vecpixx,vecpixy
+  real, dimension(:,:), allocatable :: datpix
   real, dimension(:,:,:), allocatable :: datpix3D
   real, dimension(ndim) :: xcoords,vecnew,xmintemp,xmaxtemp
-  real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
+  real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot,renderplot
   real :: angleradx, anglerady, angleradz
   real :: xsecmin,xsecmax
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
+  save istepprev
 
 34   format (25(' -'))
+
+  !
+  !--set number of particles to use in the interpolation routines
+  !  (ie. including only gas particles and ghosts)
+  !--if plotting ghost particles, set ntotplot = ntot, else ntot=npart
+  !
+  ntoti = sum(npartoftype)
+  ninterp = npartoftype(1)
+  if (labeltype(2)(1:5).eq.'ghost' .and. iplotpartoftype(2)) then
+     ninterp = ninterp + npartoftype(2)
+  endif
 
   !-------------------------------------
   ! loop over plots per timestep
@@ -293,7 +274,13 @@ subroutine plotstep
      if (imulti) then
         iploty = multiploty(nyplot)
         iplotx = multiplotx(nyplot)
-        irenderplot = irendermulti(nyplot)   
+        if (icolour_particles) then
+           irenderplot = 0
+           irenderpart = irendermulti(nyplot)
+        else
+           irenderpart = 0
+           irenderplot = irendermulti(nyplot)
+        endif
         ivectorplot = ivecplotmulti(nyplot)
         iplotcont = iplotcontmulti(nyplot)
         x_sec = x_secmulti(nyplot)
@@ -303,6 +290,7 @@ subroutine plotstep
            irenderplot = 0
            irenderpart = irender
         else
+           irenderpart = 0
            irenderplot = irender
         endif
         ivectorplot = ivecplot
@@ -310,13 +298,15 @@ subroutine plotstep
         x_sec = xsec_nomulti
         xsecpos = xsecpos_nomulti        
      endif
+     if (ivectorplot.gt.0) iplotpart = iplotpartvec
+
      !--------------------------------------------------------------
      !  copy from main dat array into xplot, yplot 
      !  also set labels and plot limits
      !--------------------------------------------------------------
      if (iploty.le.ndataplots .and. iplotx.le.ndataplots) then
-        xplot(1:ntot(i)) = dat(1:ntot(i),iplotx,i)
-        yplot(1:ntot(i)) = dat(1:ntot(i),iploty,i)
+        xplot(1:ntoti) = dat(1:ntoti,iplotx)
+        yplot(1:ntoti) = dat(1:ntoti,iploty)
         zplot = 0. !--reset later if x-sec
         xsecmin = 0. !-- " " 
         xsecmax = 0.
@@ -341,8 +331,8 @@ subroutine plotstep
                 .and.irenderplot.gt.ndim)) then
               print*,'changing coords from ',trim(labelcoordsys(icoords)), &
                      ' to ',trim(labelcoordsys(icoordsnew))
-              do j=1,ntot(i)
-                 call coord_transform(dat(j,ix(1:ndim),i),ndim,icoords, &
+              do j=1,ntoti
+                 call coord_transform(dat(j,ix(1:ndim)),ndim,icoords, &
                                       xcoords(1:ndim),ndim,icoordsnew)
                  if (iplotx.le.ndim) xplot(j) = xcoords(iplotx)
                  if (iploty.le.ndim) yplot(j) = xcoords(iploty)
@@ -366,9 +356,9 @@ subroutine plotstep
               if (iplotx-iamvec(iplotx)+1 .le. ndim) then
                  print*,'changing vector component from ', &
                   trim(labelcoordsys(icoords)),' to ',trim(labelcoordsys(icoordsnew))
-                 do j=1,ntot(i)
-                    call vector_transform(dat(j,ix(1:ndim),i), &
-                         dat(j,iamvec(iplotx):iamvec(iplotx)+ndim-1,i), &
+                 do j=1,ntoti
+                    call vector_transform(dat(j,ix(1:ndim)), &
+                         dat(j,iamvec(iplotx):iamvec(iplotx)+ndim-1), &
                          ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
                     xplot(j) = vecnew(iplotx-iamvec(iplotx)+1)
                  enddo
@@ -380,9 +370,9 @@ subroutine plotstep
               if (iploty-iamvec(iploty)+1 .le.ndim) then
                  print*,'changing vector component from ', &
                   trim(labelcoordsys(icoords)),' to ',trim(labelcoordsys(icoordsnew))
-                 do j=1,ntot(i)
-                    call vector_transform(dat(j,ix(1:ndim),i), &
-                         dat(j,iamvec(iploty):iamvec(iploty)+ndim-1,i), &
+                 do j=1,ntoti
+                    call vector_transform(dat(j,ix(1:ndim)), &
+                         dat(j,iamvec(iploty):iamvec(iploty)+ndim-1), &
                          ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
                     yplot(j) = vecnew(iploty-iamvec(iploty)+1)
                  enddo
@@ -418,8 +408,8 @@ subroutine plotstep
            !--find maximum over all particle types being plotted
            index1 = 1
            do itype=1,maxparttypes
-              index2 = index1 + npartoftype(itype,i) - 1
-              if (iplotpartoftype(itype).and.npartoftype(itype,i).gt.0) then
+              index2 = index1 + npartoftype(itype) - 1
+              if (iplotpartoftype(itype).and.npartoftype(itype).gt.0) then
                  xmin = min(xmin,minval(xplot(index1:index2)))
                  xmax = max(xmax,maxval(xplot(index1:index2))*scalemax)
                  ymin = min(ymin,minval(yplot(index1:index2)))
@@ -457,18 +447,10 @@ subroutine plotstep
         enddo
 
         if (iplotz.ne.0) then
-           zplot(:) = dat(:,iplotz,i)
+           zplot(:) = dat(:,iplotz)
            labelz = label(iplotz)
         endif
-        !
-        !--set number of particles to use in the interpolation routines
-        !  (ie. including only gas particles and ghosts)
-        !--if plotting ghost particles, set ntotplot = ntot, else ntot=npart
-        !
-        ninterp = npartoftype(1,i)
-        if (labeltype(2)(1:5).eq.'ghost' .and. iplotpartoftype(2)) then
-           ninterp = ninterp + npartoftype(2,i)
-        endif
+
         !
         !--rotate the particles about the z (and y) axes
         !  only applies to particle plots at the moment
@@ -485,8 +467,8 @@ subroutine plotstep
                print*,'rotating particles about y by ',angletempy
                print*,'rotating particles about x by ',angletempx
             endif
-            do j=1,ntot(i)
-               xcoords(1:ndim) = dat(j,ix(1:ndim),i) - xorigin(1:ndim)
+            do j=1,ntoti
+               xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
 !               if (ndim.eq.2) then
 !                  call rotate2D(xcoords(:),angleradz,anglerady)
 !               elseif (ndim.eq.3) then
@@ -525,15 +507,13 @@ subroutine plotstep
            !!--only need z pixels if working with interpolation to 3D grid
            if ((ndim.ge.3).and.(x_sec.and.nxsec.gt.2)) then
               zmin = lim(iplotz,1)
-              zmax = lim(iplotz,2)
-              !                   npixz = int((zmax-zmin)/pixwidth) + 1                 
               !!--number of z pixels is equal to number of cross sections
               npixz = nxsec
               !!print*,'npixz = ',npixz
            endif
 
            !!--if rendering array is the same as the previous plot, reuse the array                
-           if (irenderplot.eq.irenderprev .and. i.eq.istepprev) then
+           if (irenderplot.eq.irenderprev .and. istep.eq.istepprev) then
               if (.not.x_sec .or. (x_sec.and.ndim.eq.3.and.nxsec.gt.2)) then
                  print*,'same rendering, using previous array...'
               endif
@@ -549,8 +529,8 @@ subroutine plotstep
                     allocate ( datpix(npixx,npixy) )
                     call interpolate2D( &
                          xplot(1:ninterp),yplot(1:ninterp), &
-                         dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i), &
-                         dat(1:ninterp,ih,i),dat(1:ninterp,irenderplot,i), &
+                         dat(1:ninterp,ipmass),dat(1:ninterp,irho), &
+                         dat(1:ninterp,ih),dat(1:ninterp,irenderplot), &
                          ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
                  endif
               case(3)
@@ -562,16 +542,16 @@ subroutine plotstep
                     !!--interpolate from particles to 3D grid
                     call interpolate3D( &
                          xplot(1:ninterp),yplot(1:ninterp), &
-                         zplot(1:ninterp),dat(1:ninterp,ipmass,i),  &
-                         dat(1:ninterp,irho,i),dat(1:ninterp,ih,i), &
-                         dat(1:ninterp,irenderplot,i), &
+                         zplot(1:ninterp),dat(1:ninterp,ipmass),  &
+                         dat(1:ninterp,irho),dat(1:ninterp,ih), &
+                         dat(1:ninterp,irenderplot), &
                          ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dxsec)
                  endif
               end select
            endif
 
            irenderprev = irenderplot
-           istepprev = i
+           istepprev = istep
         endif
         !
         !--if vector plot determine whether or not to plot the particles as well
@@ -627,15 +607,15 @@ subroutine plotstep
                     call interpolate3D_fastxsec( &
                          xplot(1:ninterp),yplot(1:ninterp), &
                          zplot(1:ninterp), &
-                         dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),    &
-                         dat(1:ninterp,ih,i),dat(1:ninterp,irenderplot,i), &
+                         dat(1:ninterp,ipmass),dat(1:ninterp,irho),    &
+                         dat(1:ninterp,ih),dat(1:ninterp,irenderplot), &
                          ninterp,xmin,ymin,xsecpos,datpix,npixx,npixy,pixwidth)
                  else
                     !!--do fast projection
                     call interpolate3D_projection( &
                          xplot(1:ninterp),yplot(1:ninterp), &
-                         dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),   &
-                         dat(1:ninterp,ih,i), dat(1:ninterp,irenderplot,i), &
+                         dat(1:ninterp,ipmass),dat(1:ninterp,irho),   &
+                         dat(1:ninterp,ih), dat(1:ninterp,irenderplot), &
                          ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
                  endif
 
@@ -657,9 +637,9 @@ subroutine plotstep
               call set_grid1D(xmin,dxgrid,npixx)
 
               call interpolate2D_xsec( &
-                   dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
-                   dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),    &
-                   dat(1:ninterp,ih,i),dat(1:ninterp,irenderplot,i), &
+                   dat(1:ninterp,iplotx),dat(1:ninterp,iploty), &
+                   dat(1:ninterp,ipmass),dat(1:ninterp,irho),    &
+                   dat(1:ninterp,ih),dat(1:ninterp,irenderplot), &
                    ninterp,xseclineX1,xseclineY1,xseclineX2,xseclineY2, &
                    datpix1D,npixx)
               !
@@ -786,14 +766,37 @@ subroutine plotstep
               ! particle plots
               !-----------------------
               if (iplotpart) then
+                 !
+                 !--sort out particle colouring
+                 !
                  if (irenderpart.gt.0 .and. irenderpart.le.numplot) then
-                    call colour_particles(dat(1:ntot(i),irenderpart,i), &
-                         lim(irenderpart,1),lim(irenderpart,2), &
-                         icolourme(1:ntot(i)),ntot(i))
+                    renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
+                    call transform(renderplot(1:ntoti),itrans(irenderpart))
+                    
+                    !!--limits for rendered quantity
+                    if (iadapt .and. iadvance.ne.0) then
+                       !!--if adaptive limits, find limits of rendered array
+                       rendermin = minval(renderplot(1:ntoti))
+                       rendermax = maxval(renderplot(1:ntoti))
+                    elseif (iadvance.ne.0) then                   
+                       !!--or apply transformations to fixed limits
+                       rendermin = lim(irenderpart,1)
+                       rendermax = lim(irenderpart,2)
+                       call transform_limits(rendermin,rendermax,itrans(irenderpart))
+                    endif
+                    !!--print plot limits to screen
+                    print*,trim(labelrender),' min, max = ',rendermin,rendermax       
+
+                    call colour_particles(renderplot(1:ntoti), &
+                         rendermin,rendermax, &
+                         icolourme(1:ntoti),ntoti)
                  endif
-                 call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
-                   zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
-                   icolourme(1:ntot(i)),npartoftype(:,i), &
+                 !
+                 !--do particle plot
+                 !
+                 call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
+                   zplot(1:ntoti),dat(1:ntoti,ih),ntoti,iplotx,iploty, &
+                   icolourme(1:ntoti),npartoftype(:), &
                    x_sec,xsecmin,xsecmax,labelz)
               endif
            endif
@@ -803,103 +806,49 @@ subroutine plotstep
            !--------------------------------------------------------------
            if (ivectorplot.ne.0 .and. ndim.ge.2) then
              if (iamvec(ivectorplot).ne.0) then
-              !!--choose quantity to be plotted
-              ivecx = iamvec(ivectorplot) + iplotx - 1
-              ivecy = iamvec(ivectorplot) + iploty - 1
+                !!--choose quantity to be plotted
+                ivecx = iamvec(ivectorplot) + iplotx - 1
+                ivecy = iamvec(ivectorplot) + iploty - 1
 
-              labelvecplot = trim(labelvec(ivectorplot))
-              print*,'plotting vector field ',trim(labelvecplot)
-              if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
-                   .or.(ivecy.le.ndim).or.(ivecy.gt.ndataplots)) then
-                 print*,'error finding location of vector plot in array'
-              else
-                 !!--determine number of pixels in rendered image (npix = pixels in x direction)
-                 pixwidth = (xmax-xmin)/real(npixvec)
-                 npixyvec = int((ymax-ymin)/pixwidth) + 1
+                labelvecplot = trim(labelvec(ivectorplot))
+                pixwidth = (xmax-xmin)/real(npixvec)
+                npixyvec = int((ymax-ymin)/pixwidth) + 1
 
-                 if (iadapt) then
-                    vecmax = -1.0  ! plot limits then set in vectorplot
-                 else                    
-                    vecmax = max(lim(ivecx,2),lim(ivecy,2))
-                 endif
-
-                 !!--plot arrows in either background or foreground colour
-                 if (UseBackgndColorVecplot) call pgsci(0)
-                 !!--allocate memory for interpolated vector components
-                 if (allocated(vecpixx)) deallocate(vecpixx)
-                 if (allocated(vecpixy)) deallocate(vecpixy)
-                 allocate(vecpixx(npixvec,npixyvec),stat=ierr)
-                 allocate(vecpixy(npixvec,npixyvec),stat=ierr)
-                 if (ierr.ne.0) then
-                    print*,'error allocating memory for vector cross section'
-                 else
-                    if (x_sec .and. ndim.eq.3) then ! take vector plot in cross section
-                       !
-                       !--interpolate vector from particles to cross section
-                       !
-                       call interpolate3D_xsec_vec(xplot(1:ninterp), &
-                         yplot(1:ninterp),zplot(1:ninterp), &
-                         dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),  &
-                         dat(1:ninterp,ih,i),dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
-                         ninterp,xmin,ymin,xsecpos, &
-                         vecpixx,vecpixy,npixvec,npixyvec,pixwidth)
-                    else
-                       !
-                       !--or interpolate (via averaging) to coarser grid
-                       !
-                       !call fieldlines2D(ninterp,xplot(1:ninterp),yplot(1:ninterp), &
-                       !     dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
-                       !     dat(1:ninterp,ih,i),dat(1:ninterp,ipmass,i), &
-                       !     dat(1:ninterp,irho,i),xmin,xmax,ymin,ymax)
-
-                       call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
-                         dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
-                         xmin,ymin,pixwidth,vecpixx,vecpixy, &
-                         ninterp,npixvec,npixyvec)                       
-                    endif
-                    !
-                    !--plot it
-                    !
-                    call render_vec(vecpixx,vecpixy,vecmax, &
-                         npixvec,npixyvec,xmin,ymin,pixwidth,labelvecplot)
-                    deallocate(vecpixx,vecpixy)
-                 endif
-                 if (UseBackgndColorVecplot) call pgsci(1)
-                endif
-              endif
+                call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidth,labelvecplot)
+             endif
            endif
            !
            !--print legend if this is the first plot on the page
            !    
            if (nyplot.eq.1) then
-              call legend(time(i),hposlegend,vposlegend)
+              call legend(timei,hposlegend,vposlegend)
            endif
            !
            !--print title if appropriate
            !
-           if (i.le.ntitles) then
-              if (titlelist(i)(1:1).ne.' ') then
-                 call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(i)))
+           if (istep.le.ntitles) then
+              if (titlelist(istep)(1:1).ne.' ') then
+                 call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(istep)))
               endif
            endif
            !
            !--plot exact solution if relevant (before going interactive)
            !
            if (iexact.ne.0) call exact_solution(iplotx,iploty,iexact,ndim,ndimV, &
-                            time(i),xmin,xmax,0.0,gamma(i), &
-                            dat(1:npartoftype(1,i),ipmass,i), &
-                            npartoftype(1,i))
+                            timei,xmin,xmax,0.0,gammai, &
+                            dat(1:npartoftype(1),ipmass), &
+                            npartoftype(1))
            !
            !--enter interactive mode
            !
-           lastplot = (i.eq.n_end .and. nyplot.eq.nyplots .and. k.eq.nxsec)
+           lastplot = (istep.eq.n_end .and. nyplot.eq.nyplots .and. k.eq.nxsec)
 
            if (interactive) then
               if (nacross*ndown.eq.1) then
                  iadvance = nfreq
                  call interactive_part(ninterp,iplotx,iploty,iplotz,irenderplot, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                      dat(1:ninterp,ih,i),icolourme(1:ninterp), &
+                      dat(1:ninterp,ih),icolourme(1:ninterp), &
                       xmin,xmax,ymin,ymax,xsecmin,xsecmax,rendermin,rendermax, &
                       angletempx,angletempy,angletempz,ndim,iadvance,isave)
                  !--turn rotation on if necessary
@@ -965,20 +914,45 @@ subroutine plotstep
         !--------------------------------
 
         !--plot time on plot
-        if (nyplot.eq.1) call legend(time(i),hposlegend,vposlegend)
+        if (nyplot.eq.1) call legend(timei,hposlegend,vposlegend)
+        !
+        !--sort out particle colouring
+        !
+        if (irenderpart.gt.0 .and. irenderpart.le.numplot) then
+           renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
+           call transform(renderplot(1:ntoti),itrans(irenderpart))
 
-        call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
-             zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
-             icolourme(1:ntot(i)),npartoftype(:,i),.false.,0.0,0.0,' ')
+           !!--limits for rendered quantity
+           if (iadapt .and. iadvance.ne.0) then
+              !!--if adaptive limits, find limits of rendered array
+              rendermin = minval(renderplot(1:ntoti))
+              rendermax = maxval(renderplot(1:ntoti))
+           elseif (iadvance.ne.0) then                   
+              !!--or apply transformations to fixed limits
+              rendermin = lim(irenderpart,1)
+              rendermax = lim(irenderpart,2)
+              call transform_limits(rendermin,rendermax,itrans(irenderpart))
+           endif
+           !!--print plot limits to screen
+           print*,trim(labelrender),' min, max = ',rendermin,rendermax       
 
-        if ((i.eq.nstart).and.iplotlinein) then! plot initial conditions as dotted line
+           call colour_particles(renderplot(1:ntoti), &
+                rendermin,rendermax, &
+                icolourme(1:ntoti),ntoti)
+        endif
+
+        call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
+             zplot(1:ntoti),dat(1:ntoti,ih),ntoti,iplotx,iploty, &
+             icolourme(1:ntoti),npartoftype(:),.false.,0.0,0.0,' ')
+
+        if ((istep.eq.nstart).and.iplotlinein) then! plot initial conditions as dotted line
            call pgsls(linestylein)
         endif
 
         !--plot line joining the particles
-        if (iplotline.or.(iplotlinein.and.(i.eq.nstart))) then
-           call pgline(npartoftype(1,i),xplot(1:npartoftype(1,i)), &
-                       yplot(1:npartoftype(1,i)))     
+        if (iplotline.or.(iplotlinein.and.(istep.eq.nstart))) then
+           call pgline(npartoftype(1),xplot(1:npartoftype(1)), &
+                       yplot(1:npartoftype(1)))     
         endif
         call pgsls(1)! reset 
         call pgsch(charheight)
@@ -986,7 +960,7 @@ subroutine plotstep
         !--plot exact solution if relevant
         !
         if (iexact.eq.5 .and.(iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then 
-           ymean = SUM(yplot(1:npartoftype(1,i)))/REAL(npartoftype(1,i)) 
+           ymean = SUM(yplot(1:npartoftype(1)))/REAL(npartoftype(1)) 
         else
            ymean = 0.
         endif
@@ -994,21 +968,21 @@ subroutine plotstep
         if (iexact.ne.0 .or. (iploty.eq.irho .and. iplotx.eq.ih) .or. &
            (iplotx.eq.irho .and. iploty.eq.ih)) then
            call exact_solution(iplotx,iploty,iexact,ndim,ndimV,  &
-                               time(i),xmin,xmax,ymean,gamma(i), &
-                               dat(1:npartoftype(1,i),ipmass,i), &
-                               npartoftype(1,i))
+                               timei,xmin,xmax,ymean,gammai, &
+                               dat(1:npartoftype(1),ipmass), &
+                               npartoftype(1))
         endif
         !
         !--enter interactive mode
         !
-        lastplot = (i.eq.n_end .and. nyplot.eq.nyplots)
+        lastplot = (istep.eq.n_end .and. nyplot.eq.nyplots)
 
         if (interactive) then
            if (nacross*ndown.eq.1) then
               iadvance = nfreq
-              call interactive_part(ntot(i),iplotx,iploty,0,irenderplot, &
-                   xplot(1:ntot(i)),yplot(1:ntot(i)),zplot(1:ntot(i)), &
-                   dat(1:ntot(i),ih,i),icolourme(1:ntot(i)), &
+              call interactive_part(ntoti,iplotx,iploty,0,irenderplot, &
+                   xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
+                   dat(1:ntoti,ih),icolourme(1:ntoti), &
                    xmin,xmax,ymin,ymax,dummymin,dummymax,dummymin,dummymax, &
                    angletempx,angletempy,angletempz,ndim,iadvance,isave)
               if (iadvance.eq.-666) return
@@ -1038,7 +1012,7 @@ subroutine plotstep
         !--A vs C for exact toystar solution
         !
         if (iexact.eq.4) then
-           call exact_toystar_acplane(atstar,ctstar,sigma,gamma(i))
+           call exact_toystar_acplane(atstar,ctstar,sigma,gammai)
         endif
         !
         !--power spectrum plots (uses x and data as yet unspecified)
@@ -1053,18 +1027,18 @@ subroutine plotstep
 
            if (.not.idisordered .and. iadvance.ne.0) then! interpolate first
               !!--allocate memory for 1D grid (size = 2*npart)
-              ngrid = 2*npartoftype(1,i)
+              ngrid = 2*npartoftype(1)
               !!--set up 1D grid
               xmingrid = lim(ix(1),1)
               xmaxgrid = lim(ix(1),2)
               dxgrid = (xmaxgrid-xmingrid)/ngrid
               call set_grid1D(xmingrid,dxgrid,ngrid)
 
-              ninterp = ntot(i)
+              ninterp = ntoti
               !!--interpolate to 1D grid  
-              call interpolate1D(dat(1:ninterp,ix(1),i), & 
-                   dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i), &
-                   dat(1:ninterp,ih,i),dat(1:ninterp,ipowerspecy,i), & 
+              call interpolate1D(dat(1:ninterp,ix(1)), & 
+                   dat(1:ninterp,ipmass),dat(1:ninterp,irho), &
+                   dat(1:ninterp,ih),dat(1:ninterp,ipowerspecy), & 
                    ninterp,xmingrid,datpix1D,ngrid,dxgrid)
               !!--plot interpolated 1D data to check it
               !!print*,minval(datpix1D),maxval(datpix1D)
@@ -1086,8 +1060,8 @@ subroutine plotstep
               if (allocated(datpix1D)) deallocate(datpix1D)              
            elseif (iadvance.ne.0) then
               !!--or else call power spectrum calculation on the particles themselves    
-              call powerspectrum_lomb(ntot(i),dat(1:ntot(i),ix(1),i), &
-                   dat(1:ntot(i),ipowerspecy,i),nfreqspec, &
+              call powerspectrum_lomb(ntoti,dat(1:ntoti,ix(1)), &
+                   dat(1:ntoti,ipowerspecy),nfreqspec, &
                    xplot(1:nfreqspec),xmin,xmax,yplot(1:nfreqspec))
            endif
 
@@ -1154,9 +1128,9 @@ subroutine plotstep
         !
         !--if this is the first plot on the page, print legend
         !
-        if (iplotsonpage.eq.1) call legend(time(i),hposlegend,vposlegend)
+        if (iplotsonpage.eq.1) call legend(timei,hposlegend,vposlegend)
 
-        lastplot = (i.eq.n_end)
+        lastplot = (istep.eq.n_end)
 
         if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
            iadvance = nfreq
@@ -1174,7 +1148,7 @@ subroutine plotstep
 
   enddo over_plots ! over plots per timestep (nyplot)
   
-end subroutine plotstep
+contains
 
 !--------------------------------------------
 ! sets up a one dimensional grid of pixels
@@ -1196,57 +1170,70 @@ end subroutine plotstep
     enddo
 
   end subroutine set_grid1D
-  
+
 !-------------------------------------------------------------------
-! works out whether or not we need to read another dump into memory
+! interface to vector plotting routines
 !-------------------------------------------------------------------
-  subroutine get_nextstep(i,ifile)
-   use filenames
+  subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidth,label)
+   use settings_vecplot
    implicit none
-   integer, intent(inout) :: i,ifile
-   integer :: iskipfiles
-   
-   !
-   !--if data is not stored in memory, read next step from file
-   !  skip files if necessary. At the moment assumes number of steps in
-   !  each file are the same
-   !
-   if (i.gt.nstepsinfile(ifile)) then
-      if (nstepsinfile(i).ge.1) then
-         iskipfiles = (i-nstepsinfile(ifile))/nstepsinfile(ifile)
+   integer, intent(in) :: ivecx,ivecy,numpixx,numpixy
+   real, intent(in) :: pixwidth
+   character(len=*), intent(in) :: label
+   real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
+   real :: vecmax
+
+   print*,'plotting vector field ',trim(label)
+   if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
+        .or.(ivecy.le.ndim).or.(ivecy.gt.ndataplots)) then
+      print*,'error finding location of vector plot in array'
+   else
+      if (iadapt) then
+         vecmax = -1.0  ! plot limits then set in vectorplot
+      else                    
+         vecmax = max(lim(ivecx,2),lim(ivecy,2))
+      endif
+
+      !!--plot arrows in either background or foreground colour
+      if (UseBackgndColorVecplot) call pgsci(0)
+
+      if (x_sec .and. ndim.eq.3) then ! take vector plot in cross section
+         !
+         !--interpolate vector from particles to cross section
+         !
+         call interpolate3D_xsec_vec(xplot(1:ninterp), &
+           yplot(1:ninterp),zplot(1:ninterp), &
+           dat(1:ninterp,ipmass),dat(1:ninterp,irho),  &
+           dat(1:ninterp,ih),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+           ninterp,xmin,ymin,xsecpos, &
+           vecpixx,vecpixy,numpixx,numpixy,pixwidth)
       else
-         print*,'*** error in timestepping: file contains zero timesteps'
-         iskipfiles = 1
+         !
+         !--or interpolate (via averaging) to coarser grid
+         !
+         !call fieldlines2D(ninterp,xplot(1:ninterp),yplot(1:ninterp), &
+         !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+         !     dat(1:ninterp,ih),dat(1:ninterp,ipmass), &
+         !     dat(1:ninterp,irho),xmin,xmax,ymin,ymax)
+
+         call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
+           dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+           xmin,ymin,pixwidth,vecpixx,vecpixy, &
+           ninterp,numpixx,numpixy)
       endif
-      if (iskipfiles.gt.1) then
-         print*,'skipping ',iskipfiles,' files '
-      elseif (iskipfiles.le.0) then
-         print*,'error with iskipfiles = ',iskipfiles
-         iskipfiles = 1
-      endif
-      ifile = ifile+iskipfiles
-      if (ifile.le.nfiles) then
-         call get_data(ifile,.true.)
-         print*,'starting at step ',MOD(i-1,nstepsinfile(ifile))+1
-         i = MOD(i-1,nstepsinfile(ifile)) + 1
-      else
-         i=-666
-      endif
-   elseif (i.lt.1) then
-      ifile = ifile-1
-      if (ifile.ge.1) then
-         iskipfiles = (i-1)/nstepsinfile(ifile)
-         if (abs(iskipfiles).gt.0) print*,'skipping back ',abs(iskipfiles),' files'
-         ifile = ifile + iskipfiles + 1
-         if (ifile.lt.1) ifile = 1
-         call get_data(ifile,.true.)
-      else
-         ifile = 1
-      endif
-      i = 1
+      !
+      !--plot it
+      !
+      call render_vec(vecpixx,vecpixy,vecmax, &
+           numpixx,numpixy,xmin,ymin,pixwidth,trim(label))
+
+      if (UseBackgndColorVecplot) call pgsci(1)
+
    endif
   
-   return
-  end subroutine get_nextstep     
-        
-end subroutine mainloop
+  end subroutine vector_plot
+
+end subroutine plotstep
+  
+
+end module timestep_plotting

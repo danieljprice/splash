@@ -64,7 +64,6 @@ module settings_data
  integer :: icoords, iformat, ntypes
  integer :: nstart,n_end,nfreq
  logical :: ivegotdata, buffer_data
- logical :: imulti
 
  namelist /dataopts/ buffer_data
 

@@ -13,6 +13,7 @@ subroutine menu
   use transforms
   use defaults, only:defaults_write
   use geometry, only:labelcoord
+  use timestepping
   implicit none
   integer :: i,icol,ihalf,iadjust,index,ierr
   integer :: ipicky,ipickx,irender,ivecplot
@@ -64,7 +65,6 @@ subroutine menu
      ndataplots = 0
      ncalc = 0
   endif
-  imulti = .false.
      
 !--set coordinate and vector labels (depends on coordinate system)
   if (icoords.ne.0 .or. icoordsnew.ne.0) then
@@ -195,7 +195,7 @@ subroutine menu
         !
         !--call main plotting routine
         !
-        call mainloop(ipicky,ipickx,irender,ivecplot)
+        call timestep_loop(ipicky,ipickx,irender,ivecplot)
      endif
 !------------------------------------------------------------------------
 !  if input is an integer > numplot+1, quit
