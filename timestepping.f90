@@ -116,6 +116,7 @@ subroutine get_nextstep(i,ifile)
  !  appropriate number of files to get to timestep requested
  !
  ifileprev = ifile
+ print*,'request ',i,' from ',ifile
  
  if (i.gt.nstepsinfile(ifile)) then
     if (nstepsinfile(ifile).ge.1) then
@@ -124,7 +125,7 @@ subroutine get_nextstep(i,ifile)
        print*,'*** error in timestepping: file contains zero timesteps'
        iskipfiles = 0
     endif
-    if (iskipfiles.gt.1) then
+    if (iskipfiles.ge.1) then
        print*,'skipping ',iskipfiles,' files '
     elseif (iskipfiles.lt.0) then
        print*,'error with iskipfiles = ',iskipfiles
@@ -166,6 +167,7 @@ subroutine get_nextstep(i,ifile)
     if (i.ne.1) then
        print*,'starting at step ',i
     endif
+    print*,'getting file ',ifile,' step ',i
  endif
 
  return
