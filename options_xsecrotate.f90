@@ -85,7 +85,7 @@ subroutine options_xsecrotate
        call prompt('enter rotation angle about z axis (deg)',anglez,0.,360.)
        if (ndim.eq.3) then
           call prompt('enter rotation angle about y axis (deg)',angley,0.,360.)
-          call prompt('enter rotation angle about z axis (deg)',anglex,0.,360.)
+          call prompt('enter rotation angle about x axis (deg)',anglex,0.,360.)
        endif
        !xorigin(1:ndim) = 0.5*(lim(1:ndim,1) + lim(1:ndim,2))
        do i=1,ndim

@@ -83,7 +83,7 @@ subroutine read_data(rootname,istart,nstepsread)
   !--read header for this timestep
   !
   read(11,ERR=70,end=80) npartoftypei,Massoftype,timetemp 
-  ntoti = int(sum(Npartoftype))
+  ntoti = int(sum(npartoftypei))
   print*,'time             : ',timetemp
   print*,'Npart (by type)  : ',npartoftypei
   print*,'Mass  (by type)  : ',Massoftype
@@ -99,7 +99,7 @@ subroutine read_data(rootname,istart,nstepsread)
   !
   reallocate = .false.
   npart_max = maxpart
-  nstep_max = maxstep
+  nstep_max = max(maxstep,1)
 
   if (ntoti.gt.maxpart) then
      reallocate = .true.
