@@ -30,66 +30,47 @@ subroutine print_menu(ipicky,ipickx,irender)
   !
   !--supersphplot options 
   !     
-  menuitems = 23	! this is the number of options in the menu (set here)
+  menuitems = 17	! this is the number of options in the menu (set here)
 
   if (ishowopts) then
 
      print 12
      print 13,numplot+2,'read dat'
      print 14,numplot+3, &
-          'Change number of timesteps read  ',(n_end-nstart+1)/nfreq 
+          'change number of timesteps read  ',(n_end-nstart+1)/nfreq 
      print 15,numplot+4, &
           'toggle interactive mode          ',interactive
      print 15,numplot+5, &
-          'toggle axes                      ',axes
+          'toggle animate                   ',animate
      print 15,numplot+6, &
-          'toggle adaptive/fixed limits     ',iadapt
-     print 15,numplot+7, &
-          'toggle cross section/projection  ',xsec_nomulti
-     print 15,numplot+8, &
-          'toggle circles of interaction    ',plotcirc
-     print 16,numplot+9, &
-          'Change graph markers             ',imark,imarkg
-     print 16,numplot+10, &
-          'Change plots per page            ',nacross,ndown
-     print 14,numplot+11, &
-          'Set multiplot                    ',nyplotmulti
-     print 15,numplot+12, &
           'toggle page change               ',ipagechange
-     print 21,numplot+13, &
+     print 15,numplot+7, &
+          'toggle axes                      ',axes
+     print 21,numplot+8, &
           'change paper size                ',papersizex,aspectratio
-     print 19,numplot+14, &
-          'toggle plot line (all, init)     ',iplotline,iplotlinein 
-     print 14,numplot+15, &
+     print 16,numplot+9, &
+          'change plots per page            ',nacross,ndown
+     print 15,numplot+10, &
+          'toggle cross section/projection  ',xsec_nomulti
+     print 14,numplot+11, &
+          'set multiplot                    ',nyplotmulti
+     print 14,numplot+12, &
           'toggle exact solution            ',iexact
-     print 20,numplot+16, &
-          'toggle plot average line         ',iplotav,nbins
-     print 15,numplot+17, &
-          'toggle label particles           ',ilabelpart
-     print 19,numplot+18, &
-          'toggle plot ghosts/sinks         ',iplotghost,iplotsink
-     print 14,numplot+19, &
+     print 13,numplot+13,'particle plot options'
+     print 14,numplot+14, &
           'rendering/vector plot options    ',ivecplot_nomulti
-     print 13,numplot+20, &
-          'apply transformations (log10,1/x)'
-     if (iadapt) then
-        print 17,numplot+21, &
-             'Zoom out/in                      ',scalemax      
-     else
-        print 17,numplot+21, &
-             'Zoom out/in/set manual limits    ',zoom
-     endif
+     print 13,numplot+15,'plot limits'
 
   endif	! show/hide opts
 
   print 12
   if (ishowopts) then
-     print 13,numplot+22,'hide options'      
+     print 13,numplot+16,'hide options'      
   else
-     print 13,numplot+22,'supersphplot options'
+     print 13,numplot+16,'supersphplot options'
   endif
-  print 13,numplot+23,'Save defaults'
-  print 13,numplot+24,'Exit supersphplot'
+  print 13,numplot+17,'Save defaults'
+  print 13,numplot+18,'Exit supersphplot'
   print 12
 
 11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a)

@@ -75,7 +75,7 @@ module settings
  real :: xsecpos_nomulti
  real :: papersizex,aspectratio
 !--plot options
- logical :: axes, interactive
+ logical :: axes, animate, interactive
  logical :: iadapt,ihavereadfilename
  logical :: plotcirc,plotcircall,flythru,imulti,ipagechange
  logical :: iplotline,iplotlinein,iplotav,ilabelpart
@@ -95,7 +95,7 @@ module settings
 !--sort these into a namelist for input/output
 !
  namelist /plotopts/ axes, &
-   interactive,iadapt,xsec_nomulti,flythru, &
+   animate,iadapt,xsec_nomulti,flythru, &
    plotcirc,iplotline,iplotlinein,linestylein,          &
    imark, imarkg, imarksink,                            &
    nacross,ndown,                                       &

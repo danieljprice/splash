@@ -32,6 +32,7 @@ subroutine defaults_set
   icircpart = 1		!  " " around a specific particle
   ncircpart = 1
   interactive = .false.
+  animate = .false.
 
   xsec_nomulti = .false.		! take cross section of data / particles
   flythru = .false.		! take series of cross sections through data

@@ -33,6 +33,8 @@ program supersphplot
 !     modules		 : contains all shared (global) variables
 !     options 	         : sets plot options given in menu
 !     options_exact	 : sets options and params for exact solution calculation/plotting
+!     options_limits     : sets options relating to plot limits
+!     options_particleplots : sets options relating to particle plots
 !     options_powerspec  : sets options for power spectrum plotting
 !     options_render	 : sets options for render plots
 !     plot_average	 : bins particles along x-axis and plots average line
@@ -54,6 +56,7 @@ program supersphplot
 !
 !     this version for both ndspmhd and matthew bate's code 2003
 !     changes log:
+!      26/03/04 - options split into submenus
 !      04/03/04 - allocatable arrays 
 !                 (last non-allocatable version tagged as noalloc_04_03_04)
 !      23/02/04 - lots of compiler bugs fixed. 2D->1D cross section

@@ -4,7 +4,6 @@
 subroutine options(ipicky)      
   use exact_params
   use filenames
-  use labels
   use settings
   use multiplot
   use particle_data
@@ -15,7 +14,6 @@ subroutine options(ipicky)
   real :: diff, mid, temp
   real :: papersizey
   character(LEN=30) :: filename
-  character(LEN=25) :: transform_label,crap
   character(LEN=1) :: ans
   logical :: ians, ichange
 
@@ -80,16 +78,62 @@ subroutine options(ipicky)
      return
 !------------------------------------------------------------------------
   case(5)
-     axes=.not.axes
-     print *,' Axes = ',axes
-     return	  
-!------------------------------------------------------------------------
-  case(6)
-     iadapt=.not.iadapt
-     print *,' Adaptive plot limits = ',iadapt
+     animate = .not.animate
+     print*,' Animate = ',animate
      return
 !------------------------------------------------------------------------
+  case(6)
+     ipagechange=.not.ipagechange
+     print*,' Page changing = ',ipagechange
+     return 	
+!------------------------------------------------------------------------
   case(7)
+     axes=.not.axes
+     print *,' Axes = ',axes
+     return
+!------------------------------------------------------------------------
+  case(8)
+     print*,' 0) PGPLOT default'
+     print*,' 1) small square movie '
+     print*,' 2) large/multiple movie'
+     print*,' 3) single small graph'
+     print*,' 4) duo small graph '
+     print*,' 5) Custom size ' 
+     call prompt(' Enter option for paper size ',ipapersize,0,5)
+     select case(ipapersize)
+     case(1) 
+        papersizex = 0.25*11.7
+        aspectratio = 1.0
+     case(2)
+        papersizex = 0.5*11.7
+        aspectratio = 1.0
+     case(3) 
+        papersizex = 0.5*11.7 
+        aspectratio = 1./sqrt(2.)
+     case(4)
+        papersizex = 11.7
+        aspectratio = 0.5/sqrt(2.)	
+     case(5)
+        call prompt(' x size (inches) ',papersizex,0.0,12.0)
+        call prompt(' y size (inches) or aspect ratio (-ve)', &
+             papersizey,-12.0,12.0)
+        if (papersizey.lt.0.0) then
+           aspectratio = abs(papersizey)
+        else
+           aspectratio = papersizey/papersizex
+        endif
+     case DEFAULT
+        papersizex = 0.0	! no call to PGPAP if they are zero
+        aspectratio = 0.0	
+     end select
+     return 	  
+!------------------------------------------------------------------------
+  case(9)
+     call prompt('Enter number of plots across:',nacross,1,numplot)
+     call prompt('Enter number of plots down  :',ndown,1,numplot)
+     return	 
+!------------------------------------------------------------------------
+  case(10)
      xsec_nomulti =.not.xsec_nomulti
      print *,' Cross section = ',xsec_nomulti
      flythru = .false.
@@ -99,34 +143,6 @@ subroutine options(ipicky)
         !	     IF (ans.eq.'y'.or.ans.eq.'Y') flythru=.true.
      endif
      return
-!------------------------------------------------------------------------
-  case(8)
-     plotcirc=.not.plotcirc
-     print*,' Plot circles of interaction = ',plotcirc
-     if (plotcirc) then	     
-        call prompt('Plot all circles?',plotcircall)	     
-        if (.not.plotcircall) then
-           call prompt('Enter number of circles to draw',ncircpart, &
-                1,size(icircpart))
-           do n=1,ncircpart
-              call prompt('Enter particle number to plot circle around', &
-                   icircpart(n),1,maxval(ntot))
-           enddo
-        endif
-     endif
-     return 	  
-!------------------------------------------------------------------------
-  case(9)
-     print*,'(0: Square 1: . 2: + 3: * 4: o 5: x 17: bold circle)'
-     call prompt(' Enter PGPLOT marker # (particles):',imark)
-     call prompt(' Enter PGPLOT marker # (ghosts)   :',imarkg)
-     call prompt(' Enter PGPLOT marker # (sinks)    :',imarksink)
-     return
-!------------------------------------------------------------------------
-  case(10)
-     call prompt('Enter number of plots across:',nacross,1,numplot)
-     call prompt('Enter number of plots down  :',ndown,1,numplot)
-     return	    	  
 !------------------------------------------------------------------------
   case(11)
      call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
@@ -174,90 +190,17 @@ subroutine options(ipicky)
            endif
         endif
      enddo
-     return	    	  
+     return	    	  	  
 !------------------------------------------------------------------------
   case(12)
-     ipagechange=.not.ipagechange
-     print*,' Page changing = ',ipagechange
-     return 	  
+     call options_exact(iexact)
+     return
 !------------------------------------------------------------------------
   case(13)
-     print*,' 0) PGPLOT default'
-     print*,' 1) small square movie '
-     print*,' 2) large/multiple movie'
-     print*,' 3) single small graph'
-     print*,' 4) duo small graph '
-     print*,' 5) Custom size ' 
-     call prompt(' Enter option for paper size ',ipapersize,0,5)
-     select case(ipapersize)
-     case(1) 
-        papersizex = 0.25*11.7
-        aspectratio = 1.0
-     case(2)
-        papersizex = 0.5*11.7
-        aspectratio = 1.0
-     case(3) 
-        papersizex = 0.5*11.7 
-        aspectratio = 1./sqrt(2.)
-     case(4)
-        papersizex = 11.7
-        aspectratio = 0.5/sqrt(2.)	
-     case(5)
-        call prompt(' x size (inches) ',papersizex,0.0,12.0)
-        call prompt(' y size (inches) or aspect ratio (-ve)', &
-             papersizey,-12.0,12.0)
-        if (papersizey.lt.0.0) then
-           aspectratio = abs(papersizey)
-        else
-           aspectratio = papersizey/papersizex
-        endif
-     case DEFAULT
-        papersizex = 0.0	! no call to PGPAP if they are zero
-        aspectratio = 0.0	
-     end select
-     return 	  
-
+     call options_particleplots
+     return
 !------------------------------------------------------------------------
   case(14)
-     print*,' Plot initial only(i), all(a), both(b) or not (n)?'
-     read*,ans
-     iplotline = .false.
-     iplotlinein = .false.
-     if (ans.eq.'i'.or.ans.eq.'b') iplotlinein = .true.
-     if (ans.eq.'a'.or.ans.eq.'b') iplotline = .true.
-     if (iplotlinein) then
-        call prompt('Enter PGPLOT line style',linestylein,0,5)
-     endif
-     print*,' Plot line = ',iplotline,iplotlinein
-     return 	  
-!------------------------------------------------------------------------
-  case(15)
-     call options_exact(iexact)
-!------------------------------------------------------------------------
-  case(16)
-     iplotav=.not.iplotav
-     if (iplotav) then
-        call prompt('Enter no. of bins for averaging ',nbins,1,1000)
-     endif
-     print*,' Plot average, nbins = ',iplotav,nbins
-     return 		  	    	  	  
-!-----------------------------------------------------------------------
-  case(17)
-     !	  label particles with particle numbers
-     ilabelpart=.not.ilabelpart
-     print*,' label particles = ',ilabelpart
-     return 	  
-!------------------------------------------------------------------------
-  case(18)
-     !	  plot ghost particles?
-     call prompt('Plot ghost particles? ',iplotghost)
-     call prompt('Plot sink particles? ',iplotsink)
-     print*,' plot ghost particles = ',iplotghost
-     print*,' plot sink particles = ',iplotsink
-     if (iplotghost) ntotplot(:) = npart(:) + nghost(:)
-     return 	  
-!------------------------------------------------------------------------
-  case(19)
      call options_render(npix_nomulti,icolours, &
           iplotcont_nomulti,ncontours_nomulti,     &
           ivecplot_nomulti,npixvec_nomulti,iplotpartvec_nomulti, &
@@ -265,67 +208,16 @@ subroutine options(ipicky)
           ndim,numplot)
      return
 !------------------------------------------------------------------------
-  case(20)
-     ipick = 1
-     do while (ipick.gt.0 .and. ipick.le.numplot)
-        ipick = 0
-        print*,'Enter plot number to apply transformation '
-        call prompt('(0 = finish, -1 = set all) ',ipick)
-        if (ipick.le.numplot .and. ipick.ne.0) then
-           write(*,300) (i,trim(transform_label('x',i)), i=1,5)
-300        format(1x,i1,') ',a)		
-           print*,'Enter transformation to apply (or a combination e.g. 321)'
-           if (ipick.lt.0) then
-              ipick = 0
-              call prompt(' ',ipick,0)
-              itrans(:) = ipick
-              ipick = -99
-           else
-              call prompt(' ',itrans(ipick),0)
-           endif
-        endif
-     enddo
+  case(15)
+     call options_limits
      return
 !------------------------------------------------------------------------
-  case(21)
-     if (.not.iadapt) then
-        ians = .false.
-        call prompt('Do you want to manually enter limits?',ians)
-        if (ians) then
-301        print*,'Enter plot number to set limits (0 to finish)'
-           read*,ipick
-           if ((ipick.le.numplot).and.(ipick.gt.0)) then
-              print*,' Current limits   (min,max):', &
-                   lim(ipick,1),lim(ipick,2)
-              print*,' Enter new limits (min,max):'
-              read*,lim(ipick,1),lim(ipick,2)
-              print*,' >> limits set    (min,max):', &
-                   lim(ipick,1),lim(ipick,2)
-           else
-              print*,'Finished, returning'
-              return
-           endif
-           goto 301
-        else
-           call prompt('Enter zoom factor for fixed limits',zoom,0.0)
-           do i=1,numplot
-              diff = lim(i,2)- lim(i,1)
-              mid = 0.5*(lim(i,1) + lim(i,2))
-              lim(i,1) = mid - 0.5*zoom*diff
-              lim(i,2) = mid + 0.5*zoom*diff
-           enddo
-        endif
-     else
-        call prompt('Enter scale factor (adaptive limits)',scalemax,0.0)
-     endif
-     return
-!------------------------------------------------------------------------
-  case(22)
+  case(16)
      !	  show/hide plot options
      ishowopts = .not.ishowopts
      return 	  
 !------------------------------------------------------------------------
-  case(23)
+  case(17)
      call defaults_write
      return
   case DEFAULT

@@ -171,9 +171,10 @@ subroutine main(ipicky,ipickx,irender)
      call pgpaper(papersizex,aspectratio)
   endif
   !!--turn off page prompting
-  if (.not.interactive .or.(interactive.and.iplotpart.and.(irender.le.0))) then
-     call pgask(.false.)
-  endif
+!  if (.not.interactive .or.(interactive.and.iplotpart.and.(irender.le.0))) then
+!     call pgask(.false.)
+!  endif
+  if (animate .or. interactive) call pgask(.false.)
 
   !
   !--if plotting ghost particles, set ntotplot = ntot, else ntot=npart
