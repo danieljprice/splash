@@ -8,10 +8,10 @@
 !
 module params
  implicit none
- integer, parameter :: max=32000
- integer, parameter :: maxstep=20
+ integer, parameter :: max=10000
+ integer, parameter :: maxstep=10
  integer, parameter :: ndimmax = 3
- integer, parameter :: maxplot=24+2*ndimmax + 1	! maximum number of plots 
+ integer, parameter :: maxplot=24+2*ndimmax + 1   ! maximum number of plots 
 end module params
 !
 !--particle data
@@ -97,16 +97,16 @@ module settings
 !
  namelist /plotopts/ axes, &
    animate,magfield,iadapt,xsec_nomulti,flythru, &
-   plotcirc,iplotline,iplotlinein,linestylein, 		&
-   imark, imarkg, imarksink,				&
-   nacross,ndown,					&
-   iexact,iplotav,nbins, 				&
-   irender,ivecplot_nomulti,iplotpartvec_nomulti, 	&
-   npix_nomulti,npixvec_nomulti,			&
-   iplotcont_nomulti,ncontours_nomulti,			&
-   icolours,iplotghost,iplotsink,			&
-   ipapersize,papersizex,aspectratio,			&
-   ipowerspecy,idisordered,icoords, 			&
+   plotcirc,iplotline,iplotlinein,linestylein,          &
+   imark, imarkg, imarksink,                            &
+   nacross,ndown,                                       &
+   iexact,iplotav,nbins,                                &
+   irender,ivecplot_nomulti,iplotpartvec_nomulti,       &
+   npix_nomulti,npixvec_nomulti,                        &
+   iplotcont_nomulti,ncontours_nomulti,                 &
+   icolours,iplotghost,iplotsink,                       &
+   ipapersize,papersizex,aspectratio,                   &
+   ipowerspecy,idisordered,icoords,                     &
    ncircpart,icircpart
      
 end module settings
@@ -127,9 +127,9 @@ module multiplot
 !
 !--sort these into a namelist for input/output
 !
- namelist /multi/ nyplotmulti,					&
-    itrans,multiplotx,multiploty,irendermulti, 			&
-    iplotcontmulti,ncontoursmulti,ivecplotmulti,npixmulti,	&
+ namelist /multi/ nyplotmulti,                                  &
+    itrans,multiplotx,multiploty,irendermulti,                  &
+    iplotcontmulti,ncontoursmulti,ivecplotmulti,npixmulti,      &
     npixvecmulti,iplotpartvecmulti,x_secmulti,xsecposmulti
  
 end module multiplot

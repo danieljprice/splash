@@ -108,7 +108,7 @@ program supersphplot
   use filenames
   use labels
   use settings
-  implicit none	
+  implicit none
   integer :: ipicky,ipickx
   !
   !--print header
@@ -155,11 +155,11 @@ program supersphplot
      !
      nextra = 0
      if (ndim.eq.1) then
-        nextra = 1	! one extra plot = power spectrum
+        nextra = 1      ! one extra plot = power spectrum
         ipowerspec = ncolumns + ncalc + 1
         label(ipowerspec) = '1D power spectrum'
      endif
-     if (iexact.eq.4) then	! toy star plot a-c plane
+     if (iexact.eq.4) then       ! toy star plot a-c plane
         nextra = nextra + 1
         iacplane = ncolumns + ncalc + nextra
         label(iacplane) = 'a-c plane'
@@ -186,7 +186,7 @@ program supersphplot
      ! set plot options from menu
      !      
      imulti = .false.
-     isamexaxis = .true.	! used to determine whether to plot labels
+     isamexaxis = .true.      ! used to determine whether to plot labels
      
      if ((ipicky.gt.numplot+1).and.(ipicky.le.numplot+menuitems)) then
         !-------------------------------------------------------
@@ -194,20 +194,20 @@ program supersphplot
         !-------------------------------------------------------
         
         call options(ipicky)
-     elseif (.not.ivegotdata) then 	! do plot 
+     elseif (.not.ivegotdata) then     ! do plot 
         !-------------------------------------------------------
         !     prompt for data if there is none
-	!-------------------------------------------------------
+        !-------------------------------------------------------
         print*,' no data '
         ihavereadfilename = .false.
         ipicky = numplot+2
         call options(ipicky)
-     else	
+     else
         !------------------------------------------------------
         !     or else plot data
         !-------------------------------------------------------
         call main(ipicky,ipickx)
-     endif 	! if plot or not
+     endif      ! if plot or not
      
   enddo menuloop
                 

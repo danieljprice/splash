@@ -9,7 +9,7 @@ subroutine calc_quantities
   integer :: i,j
   real :: Bmag
   real, parameter :: pi = 3.1415926536
-  real :: angledeg,anglexy,runit(ndimmax)	! to plot r at some angle
+  real :: angledeg,anglexy,runit(ndimmax)  ! to plot r at some angle
   
   print*,'calculating ',ncalc,' additional quantities...'
   numplot = ncolumns + ncalc
@@ -50,7 +50,7 @@ subroutine calc_quantities
            if (iBperp.ne.0) then
               dat(iBperp,j,i) = dat(iBfirst+1,j,i)*COS(anglexy) - dat(iBfirst,j,i)*SIN(anglexy)           
            endif
-	endif
+        endif
         !!--specific KE
         if ((ike.ne.0).and.(ivx.ne.0)) &
              dat(ike,j,i) = 0.5*dot_product(dat(ivx:ivlast,j,i),dat(ivx:ivlast,j,i))
@@ -101,7 +101,7 @@ subroutine calc_quantities
   if (irad.ne.0) label(irad) = 'radius '
   if (irad2.ne.0) label(irad2) = 'r_parallel'
   if (ike.ne.0) label(ike) = 'specific KE'
-  if (ipr.ne.0) label(ipr) = 'P'	!'p_gas '
+  if (ipr.ne.0) label(ipr) = 'P'   !'p_gas '
   if (ipmag.ne.0) label(ipmag) = 'P_mag'
   if (itotpr.ne.0) label(itotpr) = 'P_gas + P_mag'
   if (ibeta.ne.0) label(ibeta) = 'plasma \gb'
