@@ -69,9 +69,10 @@ program supersphplot
 !     written by: Daniel Price, School of Physics, University of Exeter, UK
 !          email: dprice@astro.ex.ac.uk
 !
-!     this version for both ndspmhd and matthew bate's code 2003-2004
+!     this version for both ndspmhd and Matthew Bate's code 2003-2004
 !     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
 !
+!      18/11/04 - particle marking implemented
 !      20/10/04 - version given to Stuart Whitehouse     
 !      14/09/04 - working on buffering of data read
 !      20/08/04 - vectorplot replaced by interpolate_vec
@@ -128,19 +129,19 @@ program supersphplot
 !
 !
 !      plots can be of two types: co-ordinate plots or not
-!      1) co-ordinate plots have co-ordinates as x and y axis
+!      1) Co-ordinate plots have co-ordinates as x and y axis
 !         these plots can be rendered with any scalar or vector array.
 !         
-!         the rendering routines interpolate from the particles to either
-!         a 2D or 3D grid. in 3D you can either render to a 3D grid and take
+!         The rendering routines interpolate from the particles to either
+!         a 2D or 3D grid. In 3D you can either render to a 3D grid and take
 !         cross sections, or render to a 2D grid using a table of the integrated
-!         sph kernel. this 2D rendering results in a map of the quantity
+!         SPH kernel. This 2D rendering results in a map of the quantity
 !         integrated through the third co-ordinate. 
-!         rendering to a 3D grid can be quite slow - it is only efficient
+!         Rendering to a full 3D grid can be quite slow - it is used only
 !         if many cross sections are taken all at once from the same data.
 !
 !      2) other plots have a variety of options, with lines joining the particles
-!         and various exact solutions. plot limits can be fixed or adaptive.
+!         and various exact solutions. Plot limits can be fixed or adaptive.
 !
 !      multiplot enables you to set up multiple plots per page, mixing from any type.
 !
@@ -170,7 +171,7 @@ program supersphplot
   call defaults_read
 
   !
-  ! get filenames from command line if possibleq
+  ! get filenames from command line if possible
   !
   call get_number_arguments(nfiles)
   if (nfiles.gt.0) then

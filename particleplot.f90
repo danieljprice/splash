@@ -26,18 +26,28 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   !--query current character height
   call pgqch(charheight)
   print "(a,i8)",' entering particle plot, total particles = ',ntot
+  
+  if (ntot.ne.sum(npartoftype(1:maxparttypes))) then
+     print "(a)",' WARNING: particleplot: total not equal to sum of types on input'
+  endif
   !
   !--loop over all particle types
   !
   index1 = 1
   over_types: do itype=1,ntypes
      index2 = index1 + npartoftype(itype) - 1
+     if (index2.gt.ntot) then 
+        index2 = ntot
+        print "(a)",' WARNING: incomplete data'
+     endif
+     if (index2.lt.index1) exit over_types
+
      if (iplotpartoftype(itype) .and. npartoftype(itype).gt.0) then
         if (x_sec .and. ndim.eq.3) then
            !
            !--if particle cross section, plot particles only in a defined (z) coordinate range
            !
-           print "(a,i8,a,f7.2,a,f7.2)",' plotting ',npartoftype(itype),trim(labeltype(itype))//' particles in range '// &
+           print "(a,i8,a,f7.2,a,f7.2)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles in range '// &
                 ' z = ',xsecmin,' -> ',xsecmax
            do j=index1,index2
               if (zplot(j).lt.xsecmax .and. zplot(j).gt.xsecmin) then
@@ -61,7 +71,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            !--otherwise plot all particles of this type using appropriate marker and colour
            !
            call pgqci(icolourindex)
-           print "(a,i8,1x,a)",' plotting ',npartoftype(itype),trim(labeltype(itype))//' particles'
+           print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
            if (all(icolourpart(index1:index2).eq.icolourpart(index1))) then
               call pgsci(icolourpart(index1))
               call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
