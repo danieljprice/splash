@@ -106,7 +106,16 @@ feature (in this case 3D rotated axes/boxes are plotted appropriately).
 \end{figure}
 
 \section{Getting started}
- First of all, make sure that PGPLOT is installed on your system. The PGPLOT
+\subsection{Compiling the code}
+ To compile SUPERSPHPLOT on your system you will need the following on your
+system:
+\begin{itemize}
+\item The PGPLOT graphics subroutine library
+\item A Fortran 95 compiler
+\end{itemize}
+
+\subsubsection{PGPLOT}
+ The PGPLOT
 graphics subroutine library is freely downloadable from
 \begin{quote}
 \url{http://www.astro.caltech.edu/~tjp/pgplot/}
@@ -117,12 +126,11 @@ or by ftp from
 \end{quote}
 however check to see if it is already installed on your system (if so, the libraries are
 usually located in /usr/local/pgplot). For details of the actual plotting subroutines
-used by SUPERSPHPLOT, we refer the reader to the PGPLOT userguide:
+used by the SUPERSPHPLOT source code, you may want to refer to the PGPLOT userguide:
 \begin{quote}
 \url{http://www.astro.caltech.edu/~tjp/pgplot/contents.html}
 \end{quote}
 
-\subsection{Compiling the code}
 
 \subsubsection{Fortran 90/95 compilers}
  By now, many Fortran 90/95 compilers exist. Amongst the most popular commercially

@@ -1,0 +1,99 @@
+To compile SUPERSPHPLOT you will need the following on your system, both of whic
+are freely available:
+- The PGPLOT graphics subroutine library
+- A Fortran 95 compiler
+
+Details on obtaining these are given below.
+
+------------------- PGPLOT -----------------------------------------
+The PGPLOT graphics subroutine library is freely downloadable from
+
+http://www.astro.caltech.edu/~tjp/pgplot/}
+
+or by ftp from
+
+ftp://ftp.astro.caltech.edu/pub/pgplot/pgplot5.2.tar.gz}
+
+however check to see if it is already installed on your system (if so, the libraries are
+usually located in /usr/local/pgplot).
+
+----------------- Fortran 95 compilers ---------------------------
+
+ By now, many Fortran 9x compilers exist. Amongst the most popular commercially
+available ones are perhaps the NAG Fortran compiler and the Intel Fortran
+Compiler (ifc, which has a copy freely available for non-commercial use).
+However, the g95 project has produced a free compiler, which is downloadable from:
+
+http://www.g95.org
+
+and which successfully compiles both SUPERSPHPLOT and, if necessary, the PGPLOT
+libraries. 
+
+Another, apparently unrelated project is located at
+
+http://www.gfortran.org
+
+however this compiler is not fully implemented and therefore does not as yet compile SUPERSPHPLOT.
+
+
+------------------- Compiling SUPERSPHPLOT --------------------------------
+ In the Makefile, you will need to set the FORTRAN compiler and flags to your local version, e.g..
+
+F90C = g95
+F90FLAGS = -O
+
+ Secondly the compiler must be able to link to the PGPLOT and X11 libraries on
+your system. As a first attempt try using:
+
+LDFLAGS = -lpgplot -lX11
+
+If that works at a first attempt, take a moment to think several happy thoughts about your system
+administrator. If these libraries are not found, you will need to enter the
+library paths by hand. On most systems this is something like:
+
+LDFLAGS = -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11
+
+(assuming the PGPLOT libraries are in the /usr/local/pgplot directory and the
+X11 libraries are in /usr/X11R6/lib). If this does not work, try using the
+"locate" command to find the libraries on your system:
+
+crap>locate libpgplot
+
+crap>locate libX11
+
+ If, having found the PGPLOT and X11
+libraries, the program still won't compile, it is usually
+because the PGPLOT on your system has been compiled with a different compiler to
+the one you are using. A first attempt is to try using the g2c libraries
+
+LDFLAGS = -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11 -lg2c
+
+If the PNG drivers are incorporated into the PGPLOT installation, the -lpng libraries must also be added.
+Failing that, ask your system administrator(!) or simply download your own copy of
+the PGPLOT libraries and make sure it is compiled with the same compiler as you
+are using to compile the SUPERSPHPLOT source code (e.g. g95).
+
+ Secondly, you will need to modify the system-dependent routines for your
+compiler. These are located in the file system_unix.f90 which works for most
+unix-based compilers (including g95). A file system_unix_NAG
+is included for the NAG f95 compiler.
+
+At present the only calls to these routines are made from supersphplot.f90 which
+reads the run name(s) from the command line. A standardised format for performing this
+task is included in the standards for the next release of Fortran (Fortran 2003),
+however in the meantime the calls in the system module may require some adjustment depending on the
+particular system you are compiling the code on. The program is still fully
+functional without this call working, but it does make things convenient (in particular it means that
+SUPERSPHPLOT can be invoked using wildcards (*,?) in filenames).
+
+ - then -
+
+ - type - 
+ 
+ - make -
+
+crap> make
+
+ - and -
+ 
+ - pray -
