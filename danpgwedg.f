@@ -62,7 +62,7 @@ C                          Char separation between numbers and LABEL.
       PARAMETER (TXTSEP=2.2)
 C                          Array to draw wedge in.
       INTEGER WDGPIX
-      PARAMETER (WDGPIX=100)
+      PARAMETER (WDGPIX=400)
       REAL WDGARR(WDGPIX)
 C                          Define the coordinate-mapping function.
       REAL TR(6)
