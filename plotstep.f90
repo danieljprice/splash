@@ -20,7 +20,7 @@ module timestep_plotting
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
   logical, private :: log, inewpage, tile_plots, isave, lastplot
   logical, private :: initialise_xsec
-  logical, private :: imulti
+  logical, private :: imulti,iChangeRenderLimits
 
   character(len=60), dimension(maxtitles), private :: titlelist
 
@@ -64,6 +64,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   iplotcont = iplotcont_nomulti
   lastplot = .false.
   iplotpart = .true.
+  iChangeRenderLimits = .false.
   xmin = 0.
   xmax = 0.
   ymin = 0.
@@ -207,7 +208,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                     npartoftype,dat,timei,gammai,iadvance)
   use params
   use exact, only:exact_solution, &
-             atstar,ctstar,htstar,sigma,iwaveplotx,iwaveploty
+             atstar,ctstar,sigma,iwaveplotx,iwaveploty
   use toystar1D, only:exact_toystar_ACplane
   use labels
   use limits
@@ -259,12 +260,13 @@ subroutine plotstep(istep,irender,ivecplot, &
   real, dimension(ndim) :: xcoords,vecnew,xmintemp,xmaxtemp
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot,renderplot
   real :: angleradx, anglerady, angleradz
+  real :: rendermintemp,rendermaxtemp
   real :: xsecmin,xsecmax,dummymin,dummymax
   real :: pixwidth
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
-
+  
 34   format (25(' -'))
 
   !--set labels to blank (just in case)
@@ -581,6 +583,12 @@ subroutine plotstep(istep,irender,ivecplot, &
         iplotpart = .true.
         if (ivectorplot.gt.0) iplotpart = iplotpartvec
         if (irenderplot.gt.0) iplotpart = .false.
+        !
+        !--this is a flag to say whether or not rendered limits have been changed
+        !  interactively. False by default, but must retain value whilst
+        !  iadvance = 0
+        !
+        if (iadvance.ne.0) iChangeRenderLimits = .false.
 
         !
         !%%%%%%%%%%%%%%% loop over cross-section slices %%%%%%%%%%%%%%%%%%%%%%%
@@ -730,7 +738,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                     labelrender = transform_label(labelrender,itrans(irenderplot))
                  !endif
                  !!--limits for rendered quantity
-                 if (iadvance.ne.0) then
+                 if (iadvance.ne.0 .or. .not.iChangeRenderLimits) then
                     if (iadapt) then
                        !!--if adaptive limits, find limits of rendered array
                        rendermin = minval(datpix)
@@ -781,15 +789,17 @@ subroutine plotstep(istep,irender,ivecplot, &
                     labelrender = transform_label(labelrender,itrans(irenderpart))
                     
                     !!--limits for rendered quantity
-                    if (iadapt .and. iadvance.ne.0) then
-                       !!--if adaptive limits, find limits of rendered array
-                       rendermin = minval(renderplot(1:ntoti))
-                       rendermax = maxval(renderplot(1:ntoti))
-                    elseif (iadvance.ne.0) then                   
-                       !!--or apply transformations to fixed limits
-                       rendermin = lim(irenderpart,1)
-                       rendermax = lim(irenderpart,2)
-                       call transform_limits(rendermin,rendermax,itrans(irenderpart))
+                    if (iadvance.ne.0 .or. .not.iChangeRenderLimits) then
+                       if (iadapt) then
+                          !!--if adaptive limits, find limits of rendered array
+                          rendermin = minval(renderplot(1:ntoti))
+                          rendermax = maxval(renderplot(1:ntoti))
+                       else
+                          !!--or apply transformations to fixed limits
+                          rendermin = lim(irenderpart,1)
+                          rendermax = lim(irenderpart,2)
+                          call transform_limits(rendermin,rendermax,itrans(irenderpart))
+                       endif
                     endif
                     !!--print plot limits to screen
                     print*,trim(labelrender),' min, max = ',rendermin,rendermax       
@@ -871,6 +881,8 @@ subroutine plotstep(istep,irender,ivecplot, &
            if (interactive) then
               if (nacross*ndown.eq.1) then
                  iadvance = nfreq
+                 rendermintemp = rendermin
+                 rendermaxtemp = rendermax
                  call interactive_part(ninterp,iplotx,iploty,iplotz,irenderplot, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       dat(1:ninterp,ih),icolourme(1:ninterp), &
@@ -880,6 +892,8 @@ subroutine plotstep(istep,irender,ivecplot, &
                  if (abs(angletempx-anglex).gt.tol) irotate = .true.
                  if (abs(angletempy-angley).gt.tol) irotate = .true.
                  if (abs(angletempz-anglez).gt.tol) irotate = .true.
+                 if (abs(rendermintemp-rendermin).gt.tol) iChangeRenderLimits = .true.
+                 if (abs(rendermaxtemp-rendermax).gt.tol) iChangeRenderLimits = .true.
                  if (iadvance.eq.-666) return
               elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
                  !
