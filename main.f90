@@ -332,8 +332,14 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            do j=1,ndim
               if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
            enddo
-           !!           if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D	   
            !
+	   !--rotate the particles about the z and y axes
+	   !
+	   !if (irotate) then
+	   !   call rotate(angley,anglez)
+	   !endif 
+	   
+	   !
            !--set number of particles to use in the interpolation routines
            !  (ie. including only gas particles and ghosts)
 	   ninterp = npart(i) + nghost(i)	
@@ -347,8 +353,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               !
               !--interpolate from particles to fixed grid using sph summation
               !		
-              !--do not apply any transformations to the co-ordinates
-              !
+              !!--use the un-transformed co-ordinates
 	      if (itrackpart.le.0) then ! do not reset limits if particle tracking
 	         xmin = lim(iplotx,1)
                  xmax = lim(iplotx,2)
@@ -493,7 +498,11 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  !-------------------------------------------------------------------
                  !!--interpolate from 2D data to 1D line
                  !!  line is specified by giving two points, (x1,y1) and (x2,y2)
-                 call prompt('enter xmin of cross section line',xpt1,xmin,xmax)
+		 xpt1 = xmin
+		 xpt2 = xmax
+		 ypt1 = ymin + 0.5*(ymax-ymin)
+                 ypt2 = ypt1
+		 call prompt('enter xmin of cross section line',xpt1,xmin,xmax)
                  call prompt('enter xmax of cross section line',xpt2,xmin,xmax)
                  call prompt('enter ymin of cross section line',ypt1,ymin,ymax)
                  call prompt('enter ymax of cross section line',ypt2,ymin,ymax)
@@ -579,12 +588,11 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               !------------------------------
               ! now actually plot the data
               !------------------------------
-              !---------------------------------------------------------------
-              ! density/scalar field rendering
-              ! having got our 2D array of gridded data (datpix), we plot it
-              !---------------------------------------------------------------
               if (irenderplot.gt.ndim .and.    &
                    ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) ) then
+                 !---------------------------------------------------------------
+                 ! scalar quantity which has been rendered to a 2D pixel array (datpix)
+                 !---------------------------------------------------------------
                  !!--do transformations on rendered array  
                  call transform2(datpix,itrans(irenderplot),npixx,npixy)
                  labelrender = label(irenderplot)
@@ -592,17 +600,21 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  if (ndim.eq.3 .and..not. x_sec) then         
                     labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(ixsec)))
                  endif
-                 labelrender = transform_label(labelrender,itrans(irenderplot))
-                 !!--set log axes for call to render
+                 !!--apply transformations to the label for the rendered quantity 
+		 !!  but don't do this for log as we use a logarithmic axis instead
                  log = .false.
-                 if (itrans(irenderplot).eq.1) log = .true.
-
-                 !!--if adaptive limits, find limits of rendered array
+                 if (itrans(irenderplot).eq.1) then
+		    log = .true.
+		 else 
+                    labelrender = transform_label(labelrender,itrans(irenderplot))
+		 endif
+		 !!--limits for rendered quantity
                  if (iadapt) then
+                    !!--if adaptive limits, find limits of rendered array
                     rendermin = minval(datpix)
                     rendermax = maxval(datpix)
-                    !!--or apply transformations to fixed limits
                  else
+                    !!--or apply transformations to fixed limits
                     call transform_limits(lim(irenderplot,1),lim(irenderplot,2), &
                          rendermin,rendermax,itrans(irenderplot))
                  endif
@@ -615,10 +627,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 
               elseif (irenderplot.gt.ndim .and. ndim.eq.2 .and. x_sec) then
                  !---------------------------------------------------------------
-                 ! plot 1D cross section through 2D data    
-                 !---------------------------------------------------------------
-
-                 !!--plot 1D cross section (contents of datpix)       
+                 ! plot 1D cross section through 2D data (contents of datpix) 
+                 !---------------------------------------------------------------  
                  call pgline(npixx,xgrid,datpix1D) 
               else
                  !-----------------------

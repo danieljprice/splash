@@ -1,7 +1,15 @@
 !--------------------------------------------------------------------------
-!     program to interpolate from particle data to even grid of pixels
+!     subroutine to interpolate from particle data to even grid of pixels
+!     
 !     this version takes any 1D cross section through a 2D data set
 !     the 1D line is specified by two points, (x1,y1) and (x2,y2)
+!     (ie. this is for arbitrary oblique cross sections)
+!
+!     NB: A similar version could be used for 2D oblique cross sections
+!         of 3D data. In this case we would need to find the intersection
+!         between the smoothing sphere and the cross section plane. However
+!         in 3D it is simpler just to rotate the particles first and then take
+!         a straight cross section.
 !
 !     The data is smoothed using the SPH summation interpolant,
 !     that is, we compute the smoothed array according to
@@ -27,10 +35,10 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
 
   implicit none
   real, parameter :: pi = 3.1415926536      
-  integer, intent(IN) :: npart,npixx
-  real, intent(IN), dimension(npart) :: x,y,pmass,rho,hh,dat
-  real, intent(IN) :: x1,y1,x2,y2
-  real, intent(OUT), dimension(npixx) :: datsmooth
+  integer, intent(in) :: npart,npixx
+  real, intent(in), dimension(npart) :: x,y,pmass,rho,hh,dat
+  real, intent(in) :: x1,y1,x2,y2
+  real, intent(out), dimension(npixx) :: datsmooth
 
   integer :: i,ipix,ipixmin,ipixmax
   real :: hi,hi1,h2,radkern,qq,wab,rab,const
@@ -46,15 +54,11 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
   ysame = (abs(y2 - y1).lt.tol)
   xsame = (abs(x2 - x1).lt.tol)
   if (xsame.and.ysame) then
-     print*,'error: interpolate: zero length cross section'
+     print*,'error: interpolate2D_xsec: zero length cross section'
      return
   endif
   if (npixx.eq.0) then
-     print*,'error: interpolate: npix = 0 '
-     return
-  endif
-  if (pixwidth.le.0.) then
-     print*,'interpolate2D_xsec: error: pixel width <= 0'
+     print*,'error: interpolate2D_xsec: npix = 0 '
      return
   endif
   print*,'oblique 1D cross section through 2D data: npix =',npixx
@@ -71,9 +75,10 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
   xlength = sqrt((x2-x1)**2 + (y2-y1)**2)
   pixwidth = xlength/real(npixx)
   xpixwidth = (x2 - x1)/real(npixx)
-  !      print*,' line length, pixwidth, xincrement = ', &
-  !           xlength,pixwidth,xpixwidth
 
+  !
+  !--now interpolate to the line of pixels
+  !
   datsmooth = 0.
   term = 0.
   !
@@ -96,9 +101,9 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
      !
      !--for each particle work out which pixels it contributes to
      !  to do this we need to work out the two points at which the line
-     !  intersects the particle's smoothing sphere (circle).
-     !  given by the equation (x-xi)^2 + (y-yi)^2 = (2h)^2             
-     !  the x co-ordinates of the points are the solutions to a
+     !  intersects the particles smoothing circle
+     !  given by the equation (x-xi)^2 + (y-yi)^2 = (2h)^2.             
+     !  The x co-ordinates of these points are the solutions to a
      !  quadratic with co-efficients:
 
      aa = 1. + gradient**2
@@ -121,9 +126,6 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
         if (xend.lt.x1) xend = x1
         ystart = gradient*xstart + yintercept
         yend = gradient*xend + yintercept
-        !    print*,' particle ',i,': xstart, end = ',xstart,xend
-        !    print*,'               : ystart, end = ',ystart,yend
-
         !
         !--work out position in terms of distance (no. of pixels) along the line
         !
@@ -137,8 +139,6 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
         if (ipixmax.lt.1) ipixmax = 1
         if (ipixmax.gt.npixx) ipixmax = npixx
         if (ipixmin.gt.npixx) ipixmax = npixx
-
-        !            print*,' ipixmin,ipixmax = ',ipixmin,ipixmax
         !
         !--loop over pixels, adding the contribution from this particle
         !
