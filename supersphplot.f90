@@ -244,8 +244,11 @@ subroutine print_header
 30 format(/,    &
    ' * SUPERSPHPLOT comes with ABSOLUTELY NO WARRANTY.',/, &
    '   This is free software; and you are welcome to redistribute it ',/, &
-   '   under certain conditions (see LICENSE file for details).',/, &
-   '   Comments, bugs and queries to: dprice@astro.ex.ac.uk *',/)
+   '   under certain conditions (see LICENSE file for details). *',/,/, &
+   ' Comments, bugs, suggestions and queries to: dprice@astro.ex.ac.uk ',/, &
+   ' Check for updates at: www.astro.ex.ac.uk/people/dprice/supersphplot ',/, &
+   ' Credits are always nice (but not essential) - However, if you plot ',/, &
+   ' something *really* nice, please send me a copy. ',/)
       
 end subroutine print_header
              
