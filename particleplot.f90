@@ -21,8 +21,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
   
   !--query current character height
   call pgqch(charheight)
-  print*,'entering particle plot, total particles = ',ntot
-  print*,'particles of each type = ',npartoftype
+  print "(a,i8)",' entering particle plot, total particles = ',ntot
   !
   !--loop over all particle types
   !
@@ -34,7 +33,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
            !
            !--if particle cross section, plot particles only in a defined (z) coordinate range
            !
-           print*,'plotting ',npartoftype(itype),trim(labeltype(itype))//' particles in range '// &
+           print "(a,i8,a,f7.2,a,f7.2)",' plotting ',npartoftype(itype),trim(labeltype(itype))//' particles in range '// &
                 ' z = ',xsecmin,' -> ',xsecmax
            do j=index1,index2
               if (zplot(j).lt.xsecmax .and. zplot(j).gt.xsecmin) then
@@ -56,7 +55,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
            !
            !--otherwise plot all particle of this type using appropriate marker and colour
            !
-           print*,'plotting ',npartoftype(itype),trim(labeltype(itype))//' particles'
+           print "(a,i8,1x,a)",' plotting ',npartoftype(itype),trim(labeltype(itype))//' particles'
            call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
            if (ilabelpart) then
               !!--plot particle labels
