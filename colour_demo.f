@@ -49,7 +49,7 @@
 	 CALL PGSCH(3.0)
          CALL PGNUMB(i,0,0,STRING,NC)
          CALL PGMTXT('T',1.0,0.5,0.5,STRING(1:nc))     
-	 CALL setcolours(i)
+	 CALL colour_set(i)
          CALL PGIMAG(sample,npixx,npixy,1,npixx,1,npixy,
      &               MINVAL(sample),MAXVAL(sample),trans)
       ENDDO

@@ -26,7 +26,10 @@ PGXTAL = read_data_dansph.f
 
 SOURCES= modules.f90 prompting.f90 \
 	 supersphplot.f90 main.f90 \
-         calc_quantities.f90 colour_demo.f danpgwedg.f \
+         calc_quantities.f90 \
+	 colour_demo.f colour_set.f  \
+	 danpgwedg.f \
+	 defaults_read.f90 defaults_set.f defaults_write.f90 \
 	 exact_rhoh.f90 \
 	 exact_sedov.f exact_swave.f exact_toystar.f \
 	 exact_toystar_ACplane.f exact_mhdshock.f90 \
@@ -37,17 +40,15 @@ SOURCES= modules.f90 prompting.f90 \
 	 interpolate3D_projection.f \
 	 int_from_string.f90 \
 	 legend.f \
-	 menu_actions.f \
-	 options_exact.f90 options_powerspec.f90 \
-	 options_render.f90 \
+	 options.f options_exact.f90 \
+	 options_powerspec.f90 options_render.f90 \
 	 plot_average.f plot_powerspectrum.f90 \
 	 powerspectrum_fourier1D.f90 \
 	 powerspectrum_lomb1D.f90 \
 	 print_header.f90\
-	 print_menu.f read_defaults.f90 \
+	 print_menu.f \
          render_coarse.f render.f90 \
-	 setcolours.f set_defaults.f \
-	 transform.f write_defaults.f90
+	 transform.f
 
 SOURCESALL = $(SOURCES:.f90=.o)
 

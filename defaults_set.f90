@@ -2,7 +2,7 @@
 !!     set initial default options
 !!      these are used if no defaults file is found
 !!
-      SUBROUTINE set_defaults
+      SUBROUTINE defaults_set
       USE exact_params
       USE labels
       USE multiplot
@@ -93,4 +93,4 @@
       ipowerspecy = ndim+1
       
       RETURN    
-      END SUBROUTINE set_defaults
+      END SUBROUTINE defaults_set

@@ -1,7 +1,7 @@
 !
 ! reads default options from file
 !
-subroutine read_defaults
+subroutine defaults_read
  use multiplot
  use settings
  use exact_params
@@ -28,4 +28,4 @@ subroutine read_defaults
 9 continue
 
  return
-end subroutine read_defaults
+end subroutine defaults_read

@@ -1,7 +1,7 @@
 !
-!     writes default options to file (should match read_defaults)
+!     writes default options to file (should match defaults_read)
 !
-subroutine write_defaults
+subroutine defaults_write
  use exact_params
  use settings
  use multiplot
@@ -15,4 +15,4 @@ subroutine write_defaults
  print*,'default options saved to file'
     
  return              
-end subroutine write_defaults
+end subroutine defaults_write

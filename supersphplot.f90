@@ -9,14 +9,17 @@ program supersphplot
 !
 !     calc_quantities    : calculates additional quantities from particle data
 !     colour_demo        : demonstration of colour schemes for rendering
+!     colour_set	 : sets up pgplot colour table for rendering
 !     danpgwedg          : my very minor modification of pgwedg
+!     defaults_read	 : read default plot options from file
+!     defaults_set	 : sets default plot options if not read from file
+!     defaults_write	 : write default plot options to file
 !     exact_mhdshock     : some "exact" solutions for mhd shocks 
 !     exact_polytrope    : exact solution for a polytrope
 !     exact_rhoh	 : plots exact relation between density and smoothing length
 !     exact_sedov        : exact solution for sedov blast wave
 !     exact_swave        : exact solution for a linear sound wave
 !     exact_toystar      : exact solution for the toy star problem
-!     get_render_options : prompts user for options for render plots
 !     interpolate1D	 : interpolation of 1D sph data to 1D grid using sph kernel
 !     interpolate2D	 : interpolation of 2D sph data to 2D grid using sph kernel     
 !     interpolate3D	 : interpolation of 3D sph data to 3D grid using sph kernel
@@ -24,8 +27,11 @@ program supersphplot
 !     interpolate3D_projection : fast projection of 3D data to 2D grid using integrated sph kernel
 !     legend		       : plots legend on plot (time)
 !     main               : main plotting loop
-!     menu_actions	 : plot options in menu format
 !     modules		 : contains all shared (global) variables
+!     options 	         : sets plot options given in menu
+!     options_exact	 : sets options and params for exact solution calculation/plotting
+!     options_powerspec  : sets options for power spectrum plotting
+!     options_render	 : sets options for render plots
 !     plot_average	 : bins particles along x-axis and plots average line
 !     plot_powerspectrum : calls powerspectrum and plots it
 !     powerspectrum_fourier : calculates power spectrum of 1D data on ordered pts
@@ -33,14 +39,10 @@ program supersphplot
 !     print_menu	 : prints menu
 !     read_data_dansph   : reads data from my format of data files
 !     read_data_mrbsph   : reads data from matthew bate's format of data files
-!     read_defaults	 : reads default plot options from file
 !     render_coarse	 : interpolates to grid by averaging from particles (used for vector plots)
-!     render_smooth	 : calls interpolate and plots render maps
-!     set_defaults	 : sets default plot options if not read from file
-!     setcolours	 : sets up pgplot colour table for rendering
+!     render	 	 : takes array of pixels and plots render map/contours etc
 !     supersphplot	 : main program, drives menu loop
 !     transform	 	 : applies various transformations to data (log10, 1/x, etc)
-!     write_defaults	 : writes default plot options to file
 !
 !     file format is specified in the subroutine read_data   
 !
@@ -111,13 +113,12 @@ program supersphplot
   !
   !--print header
   !
-  print*,' hello world'
   call print_header
   print*,'( version 4.2 )'
   !
   !--set default options
   !
-  call set_defaults
+  call defaults_set
   !
   !--initialise variables
   !      
@@ -128,7 +129,7 @@ program supersphplot
   ! ---------------------------------------------
   ! read default options from file if it exists
   !
-  call read_defaults
+  call defaults_read
 
   ! ---------------------------------------------------
   ! get rootname from command line/file and read file
@@ -136,7 +137,7 @@ program supersphplot
   call getarg(1, rootname)
   if (rootname(1:1).ne.' ') then
      ihavereadfilename = .true.
-     call menu_actions(numplot+2)
+     call options(numplot+2)
   endif
   !------------------------------------------------------------
   ! setup kernel table for fast column density plots in 3D
@@ -192,7 +193,7 @@ program supersphplot
         !     adjust plot settings via menu options
         !-------------------------------------------------------
         
-        call menu_actions(ipicky)
+        call options(ipicky)
      elseif (.not.ivegotdata) then 	! do plot 
         !-------------------------------------------------------
         !     prompt for data if there is none
@@ -200,7 +201,7 @@ program supersphplot
         print*,' no data '
         ihavereadfilename = .false.
         ipicky = numplot+2
-        call menu_actions(ipicky)
+        call options(ipicky)
      else	
         !------------------------------------------------------
         !     or else plot data

@@ -2,7 +2,7 @@
 !      defines colour schemes for rendering
 !      ** add your own here **
 ! ------------------------------------------------------------------------     
-      SUBROUTINE setcolours(icolours)
+      SUBROUTINE colour_set(icolours)
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: icolours
       INTEGER i,icolourmin,icolmin,icolmax,ncolmax

@@ -1,7 +1,7 @@
 !!
 !!    implements menu options
 !!
-      SUBROUTINE menu_actions(ipicky)      
+      SUBROUTINE options(ipicky)      
       USE exact_params
       USE filenames
       USE labels
@@ -353,7 +353,7 @@ c	  plot ghost particles?
 	  RETURN 	  
 !------------------------------------------------------------------------
        CASE(24)
-          CALL write_defaults
+          CALL defaults_write
 	  RETURN
        CASE DEFAULT
           STOP ' Error: menu action not defined'  
@@ -361,4 +361,4 @@ c	  plot ghost particles?
       END SELECT
       
       RETURN      
-      END SUBROUTINE menu_actions
+      END SUBROUTINE options
