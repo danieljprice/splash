@@ -966,7 +966,7 @@ subroutine main(ipicky,ipickx)
            else
               sigma = 0.
            endif
-           if (iplotx.eq.1) then	! if x axis is x coordinate
+           if (iplotx.eq.1 .or. iplotx.eq.irad) then	! if x axis is x coordinate
               if (iploty.eq.irho) then
                  call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,1)
               elseif (iploty.eq.ipr) then
