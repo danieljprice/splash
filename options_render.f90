@@ -16,44 +16,40 @@ subroutine options_render(npix,icolours,iplotcont, 		&
 !
 !--rendering options
 !
-! irender = 0
-! call prompt(' enter field (from menu) for rendering (0=none)',irender,0,numplot)
-
-! if ((irender.gt.ndim).and.(irender.le.numplot)) then  
-    call prompt('enter number of pixels along x axis',npix,1,1000)
+ call prompt('enter number of pixels along x axis',npix,1,1000)
  
 100 continue
-    print*,'(-ve = demo, 0 = contours only)'
-    call prompt('enter colour scheme for rendering ',icolours,max=5)
-    if (icolours.lt.0) then
-       call colour_demo
-       goto 100
-    endif   
+ print*,'(-ve = demo, 0 = contours only)'
+ call prompt('enter colour scheme for rendering ',icolours,max=5)
+ if (icolours.lt.0) then
+    call colour_demo
+    goto 100
+ endif   
     
-    if (ndim.eq.3) then
-       print*,' take cross section (c) or projection (p) through 3d data?'
-       read*,ans
-       x_sec = .false.
-       if (ans.eq.'c') x_sec = .true.
-       print*,' cross section = ',x_sec
-       xsecpos = 0.0
-       if (x_sec) then
-          call prompt('enter co-ordinate location of cross section slice',xsecpos)
-       endif   
-    endif
+ if (ndim.eq.3) then
+    print*,' take cross section (c) or projection (p) through 3d data?'
+    read*,ans
+    x_sec = .false.
+    if (ans.eq.'c') x_sec = .true.
+    print*,' cross section = ',x_sec
+    xsecpos = 0.0
+    if (x_sec) then
+       !call prompt('Do you want a fly-through',flythru)
+       !if (.not.flythru) then
+       call prompt('enter co-ordinate location of cross section slice',xsecpos)
+       !endif
+    endif   
+ endif
 	 
-    if (icolours.ne.0) then
-       call prompt(' plot contours?',iplotcont)
-    else
-       iplotcont = .true.
-    endif
+ if (icolours.ne.0) then
+    call prompt(' plot contours?',iplotcont)
+ else
+    iplotcont = .true.
+ endif
  
-    if (iplotcont) then
-       call prompt(' enter number of contours between min,max',ncontours,1,100)
-    endif
-! else
-!    irender = 0   
-! endif
+ if (iplotcont) then
+    call prompt(' enter number of contours between min,max',ncontours,1,100)
+ endif
 !
 !--vector plot options
 !	  
@@ -61,9 +57,7 @@ subroutine options_render(npix,icolours,iplotcont, 		&
  if (ivecplot.gt.0) then	
     call prompt('enter number of pixels',npixvec,1,1000)
     iplotpartvec = .false.
-!    if (irender.eq.0) then
-       call prompt(' plot particles if no renderings?',iplotpartvec)
-!    endif
+    call prompt(' plot particles if no renderings?',iplotpartvec)
     backgnd_vec = .false.
     call prompt('use background color for vector plot?',backgnd_vec)
  endif

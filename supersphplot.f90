@@ -152,7 +152,7 @@ program supersphplot
   call getarg(1, rootname)
   if (rootname(1:1).ne.' ') then
      ihavereadfilename = .true.
-     call options(numplot+2)
+     call options(numplot+3)
   endif
   !------------------------------------------------------------
   ! setup kernel table for fast column density plots in 3D
@@ -220,7 +220,7 @@ program supersphplot
         !-------------------------------------------------------
         print*,' no data '
         ihavereadfilename = .false.
-        ipicky = numplot+2
+        ipicky = numplot+3
         call options(ipicky)
      else
         !------------------------------------------------------

@@ -25,46 +25,46 @@ subroutine print_menu(ipicky,ipickx,irender)
      print 13, ihalf + iadjust,transform_label(label(ihalf + iadjust), &
           itrans(ihalf+iadjust))
   endif
+!
+!--multiplot
+!  
   print 12
-  print 18,numplot+1,'multiplot ',multiploty(1:nyplotmulti)
+  print 18,numplot+1,'multiplot ',nyplotmulti,numplot+2,'set multiplot '
+18 format(1x,i2,')',1x,a,'[ ',i2,' ]',5x,i2,') ',a)
   !
   !--supersphplot options 
   !     
-  menuitems = 14	! this is the number of options in the menu (set here)
+  menuitems = 12	! this is the number of options in the menu (set here)
 
   if (ishowopts) then
 
+!     print 14,numplot+2, &
+!          'set multiplot                    ',nyplotmulti
      print 12
-     print 13,numplot+2,'read dat'
-     print 14,numplot+3, &
+     print 13,numplot+3,'read dat'
+     print 14,numplot+4, &
           'change number of timesteps read  ',(n_end-nstart+1)/nfreq 
-     print 15,numplot+4, &
-          'toggle interactive mode          ',interactive
      print 15,numplot+5, &
+          'toggle interactive mode          ',interactive
+     print 15,numplot+6, &
           'toggle animate                   ',animate
-     print 14,numplot+6, &
-          'set multiplot                    ',nyplotmulti
-     print 15,numplot+7, &
-          'toggle cross section/projection  ',xsec_nomulti 
-     print 14,numplot+8, &
-          'toggle exact solution            ',iexact
-     print 13,numplot+9, &
+     print 13,numplot+7, &
           'page options'
-     print 13,numplot+10,'particle plot options'
-     print 14,numplot+11, &
+     print 13,numplot+8,'particle plot options'
+     print 14,numplot+9, &
           'rendering/vector plot options    ',ivecplot_nomulti
-     print 13,numplot+12,'plot limits'
+     print 13,numplot+10,'change plot limits'
 
   endif	! show/hide opts
 
   print 12
   if (ishowopts) then
-     print 13,numplot+13,'hide options'      
+     print 13,numplot+11,'hide options'      
   else
-     print 13,numplot+13,'supersphplot options'
+     print 13,numplot+11,'supersphplot options'
   endif
-  print 13,numplot+14,'Save defaults'
-  print 13,numplot+15,'Exit supersphplot'
+  print 13,numplot+12,'Save defaults'
+  print 13,numplot+13,'Exit supersphplot'
   print 12
 
 11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a)
@@ -72,14 +72,13 @@ subroutine print_menu(ipicky,ipickx,irender)
 13 format(1x,i2,')',1x,a)
 14 format(1x,i2,')',1x,a,'( ',i2, ' )')
 15 format(1x,i2,')',1x,a,'( ',L1,' )')
-18 format(1x,i2,')',1x,a,'( ',10(i2,1x),' )')
   !
   !--prompt for selection
   !
 
 9901 continue
-  print*,'Please enter your selection now (y axis or option): '
-  read (*,*,ERR=9901) ipicky
+  if (ipicky.eq.0) ipicky = ndim+1
+  call prompt('Please enter your selection now (y axis or option): ',ipicky)
   !
   !--if needed prompt for x axis selection
   !

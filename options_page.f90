@@ -10,11 +10,12 @@ subroutine options_page
  logical :: ians
  
  iaction = 0
- print 10,ipagechange,axes,papersizex,aspectratio,nacross,ndown
+ papersizey = papersizex*aspectratio
+ print 10,ipagechange,axes,papersizex,papersizey,nacross,ndown
 10 format(' 0) exit ',/, 		&
         ' 1) toggle page change     (',L1,')',/, &
         ' 2) toggle axes            (',L1,')',/, &
-        ' 3) change paper size      (',f5.3,1x,f5.3,')',/, &
+        ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
         ' 4) change plots per page  (',i2,1x,i2,')')
  call prompt('enter option ',iaction,0,4)
 
