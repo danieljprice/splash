@@ -34,6 +34,7 @@ end subroutine defaults_set_limits
 ! submenu with options relating to plot limits
 !----------------------------------------------------------------------
 subroutine submenu_limits
+ use filenames, only:rootname
  use settings_data, only:nstart,n_end,ndataplots,numplot,ndim,ivegotdata
  !!use settings_page, only:nstepsperpage
  use multiplot, only:itrans
@@ -45,6 +46,7 @@ subroutine submenu_limits
  integer :: iaction,ipick,i,ierr,index
  real :: diff, mid
  character(len=120) :: transprompt
+ character(len=len(rootname)+7) :: limitsfile
  
  index = 1
  do i=1,ntrans
@@ -143,9 +145,17 @@ subroutine submenu_limits
      enddo
      return
   case(6)
-     call save_limits 
+     limitsfile = trim(rootname(1))//'.limits'
+     call prompt('Enter name of limits file to write ',limitsfile)
+     !--append .limits if necessary
+     !!!if (index(limitsfile,'.limits').eq.0) limitsfile = trim(limitsfile)//'.limits'
+     call write_limits(limitsfile)
   case(7)
-     call read_limits(ierr)
+     limitsfile = trim(rootname(1))//'.limits'
+     call prompt('Enter name of limits file to read ',limitsfile)
+     !--append .limits if necessary
+     !!!if (index(limitsfile,'.limits').eq.0) limitsfile = trim(limitsfile)//'.limits'
+     call read_limits(limitsfile,ierr)
   case(8)
      if (ivegotdata) then
         call set_limits(nstart,n_end,1,ndataplots)

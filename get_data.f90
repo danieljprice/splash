@@ -33,6 +33,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   logical, intent(in), optional :: firsttime
   logical :: setlimits
   integer :: i,istart,ierr
+  character(len=len(rootname)+7) :: limitsfile
 
   if (.not.gotfilenames) then
      if (nfiles.le.0 .or. nfiles.gt.maxfile) nfiles = 1
@@ -82,7 +83,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--read plot limits from file, otherwise set plot limits
      !
-     call read_limits(ierr)
+     limitsfile = trim(rootname(1))//'.limits'
+     call read_limits(limitsfile,ierr)
      if (ierr.gt.0 .and. ivegotdata .and. nstepsinfile(1).ge.1) then
         call set_limits(nstart,n_end,1,numplot)
      endif

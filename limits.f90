@@ -47,20 +47,13 @@ end subroutine set_limits
 !
 !--save plot limits for all columns to a file
 !
-subroutine save_limits
-  use filenames, only:rootname
+subroutine write_limits(limitsfile)
   use settings_data, only:numplot
   use prompting
   implicit none
+  character(len=*), intent(in) :: limitsfile
   integer :: i
-  character(len=len(rootname)+7) :: limitsfile
 
-  limitsfile = trim(rootname(1))//'.limits'
-  call prompt('Enter name of limits file to write ',limitsfile)
-!
-!--append .limits if necessary
-!
-  if (index(limitsfile,'.limits').eq.0) limitsfile = trim(limitsfile)//'.limits'
   print*,'saving plot limits to file ',trim(limitsfile)
 
   open(unit=55,file=limitsfile,status='replace',form='formatted',ERR=998)
@@ -79,26 +72,20 @@ subroutine save_limits
   close(unit=55)
   return
 
-end subroutine save_limits
+end subroutine write_limits
 !
 !--read plot limits for all columns from a file
 !
-subroutine read_limits(ierr)
-  use filenames, only:rootname
+subroutine read_limits(limitsfile,ierr)
   use labels, only:label
   use settings_data, only:numplot
   use prompting
   implicit none
-  integer :: i,ierr
-  character(len=len(rootname)+7) :: limitsfile
+  character(len=*), intent(in) :: limitsfile
+  integer, intent(out) :: ierr
+  integer :: i
 
   ierr = 0
-  limitsfile = trim(rootname(1))//'.limits'
-  call prompt('Enter name of limits file to read ',limitsfile)
-!
-!--append .limits if necessary
-!
-  if (index(limitsfile,'.limits').eq.0) limitsfile = trim(limitsfile)//'.limits'
 
   open(unit=54,file=limitsfile,status='old',form='formatted',err=997)
   print*,'reading plot limits from file ',trim(limitsfile)
