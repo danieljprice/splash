@@ -12,8 +12,9 @@ subroutine menu(quit)
   logical, intent(out) :: quit
   integer :: i,icol,ihalf,iadjust,iaction,istep,ierr,index
   integer :: ipicky,ipickx,irender,ivecplot,int_from_string
+  integer :: iamvecprev, ivecplottemp
   character(LEN=2) :: ioption
-  character(LEN=30) :: filename,veclist
+  character(LEN=30) :: filename,vecprompt
   logical :: iansx, iansy, ichange
 
   quit = .false.
@@ -22,10 +23,27 @@ subroutine menu(quit)
      label(1:ndim) = labelcoord(1:ndim,icoordsnew)
      do i=1,numplot
         if (iamvec(i).ne.0) then
-	   label(i) = trim(labelvec(iamvec(i)))//'/d'//labelcoord(i-iamvec(i)+1,icoordsnew)
+	   label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
 	endif
      enddo
   endif
+!--set contents of the vector plotting prompt
+  vecprompt(1:6) = '0=none'
+  index = 7
+  iamvecprev = 0
+  do icol=1,numplot
+     if (iamvec(icol).ne.0 .and. iamvec(icol).ne.iamvecprev) then
+	iamvecprev = iamvec(icol)
+	if (iamvec(icol).ge.10) then
+	   write(vecprompt(index:),"(',',1x,i2,'=',a)") &
+	         iamvec(icol),trim(labelvec(icol))
+	else
+	   write(vecprompt(index:),"(',',1x,i1,'=',a)") &	
+	         iamvec(icol),trim(labelvec(icol))
+	endif
+	index = len_trim(vecprompt) + 1
+     endif
+  enddo 
 
 !---------------------------------------------------------------------------
 !  print menu
@@ -109,16 +127,15 @@ subroutine menu(quit)
               goto 9901
            elseif (ipicky.le.ndim .and. ipickx.le.ndim) then
               call prompt('(render) (0=none)',irender,0,numplot)
-	      veclist(1:6) = '0=none'
-	      index = 7
-	      do icol=1,numplot
-	         if (iamvec(icol).ne.0) then
-	            write(veclist(index:index+3),"(i2,',')") iamvec(icol)
-		    index = index + 4
-	         endif
-	      enddo 
-	      call prompt('(vector plot) ('//trim(veclist)//')',ivecplotmulti(i),0,maxval(iamvec))
-	      !!call prompt('(vector plot) (0=none 1=v 2=B)',ivecplot,0,2)
+	      ivecplottemp = -1
+	      do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
+	         ivecplottemp = ivecplot
+	         call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
+		 if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
+		    print "(a)",'Error, value not in list' 
+		 endif
+	      enddo
+	      ivecplot = ivecplottemp
            else
               irender = 0
 	      ivecplot = 0
@@ -192,15 +209,16 @@ subroutine menu(quit)
                     xsecposmulti(i) = xsecposmulti(1)
 		 endif
  	      endif
-	      veclist(1:6) = '0=none'
-	      index = 7
-	      do icol=1,numplot
-	         if (iamvec(icol).ne.0) then
-	            write(veclist(index:index+3),"(i2,',')") iamvec(icol)
-		    index = index + 4
-	         endif
-	      enddo 
-	      call prompt('(vector plot) ('//trim(veclist)//')',ivecplotmulti(i),0,maxval(iamvec))
+              call prompt('(render) (0=none)',irender,0,numplot)
+	      ivecplottemp = -1
+	      do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
+	         ivecplottemp = ivecplot
+	         call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
+		 if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
+		    print "(a)",'Error, value not in list' 
+		 endif
+	      enddo
+	      ivecplotmulti(i) = ivecplottemp
            endif
         enddo
         return	    	  	  
