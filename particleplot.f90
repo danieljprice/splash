@@ -40,13 +40,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
               if (zplot(j).lt.xsecmax .and. zplot(j).gt.xsecmin) then
                  call pgpt(1,xplot(j),yplot(j),imarktype(itype))
                  !--plot circle of interaction if gas particle
-                 if (itype.eq.1 .and. plotcirc) then
+                 if (itype.eq.1 .and. ncircpart.gt.0 .and. ANY(icircpart(1:ncircpart).eq.j)) then
                     call pgcirc(xplot(j),yplot(j),2*h(j))
                  endif
                  !!--plot particle label
                  if (ilabelpart) then
                     call pgnumb(j,0,1,string,lenstring)
-                    call pgsch(0.5*charheight)
+                    call danpgsch(4.0,2)
                     call pgtext(xplot(j),yplot(j),string(1:lenstring))
                     call pgsch(charheight)
                  endif
@@ -63,7 +63,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
               print*,'plotting particle labels ',index1,':',index2
               do j=index1,index2
                  call pgnumb(j,0,1,string,lenstring)
-                 call pgsch(0.5*charheight)
+                 call danpgsch(4.0,2)
                  call pgtext(xplot(j),yplot(j),string(1:lenstring))
                  call pgsch(charheight)
               enddo
@@ -78,16 +78,18 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
   !  around all or selected particles. For plots with only one coordinate axis, 
   !  these are plotted as error bars in the coordinate direction.
   !
-  if (plotcirc) then
+  if (ncircpart.gt.0) then
+     !
+     !--set fill area style
+     !
+     call pgsfs(2)
+     
      if (iplotx.le.ndim .and. iploty.le.ndim) then
-        if (plotcircall) then
-           print*,'plotting circles of interaction'
-           do j=1,ntot
-              call pgcirc(xplot(j),yplot(j),2*h(j))
-           enddo
-        else
-           print*,'plotting circles of interaction',ncircpart
-           do n = 1,ncircpart   
+        print*,'plotting circles of interaction',ncircpart
+        do n = 1,ncircpart
+           if (icircpart(n).gt.ntot) then 
+              print*,'error: particle index > number of particles'
+           else
               if (icoords.gt.1) then   
                  call plot_kernel_gr(icoords,xplot(icircpart(n)),  &
                       yplot(icircpart(n)),2*h(icircpart(n)))
@@ -95,37 +97,31 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
                  call pgcirc(xplot(icircpart(n)),  &
                       yplot(icircpart(n)),2*h(icircpart(n)))
               endif
-           enddo
-        endif
+           endif        
+        enddo
 
      else
-        if (plotcircall) then
-           !!--on all particles
-           if (iplotx.le.ndim) then
-              print*,'plotting error bars x axis',ntot
-              call pgerrb(5,ntot,xplot(1:ntot), &
-                   yplot(1:ntot),2.*h(1:ntot),1.0)
-           elseif (iploty.le.ndim) then
-              print*,'plotting error bars y axis',ntot 
-              call pgerrb(6,ntot,xplot(1:ntot), &
-                   yplot(1:ntot),2.*h(1:ntot),1.0)
-           endif
-        else 
-           !!--only on specified particles
-           do n=1,ncircpart
+        !!--only on specified particles
+        do n=1,ncircpart
+           if (icircpart(n).gt.ntot) then
+              print*,'error: particle index > number of particles'
+              xerrb(n) = 0.
+              yerrb(n) = 0.
+              herr(n) = 0.
+           else
               xerrb(n) = xplot(icircpart(n))
               yerrb(n) = yplot(icircpart(n))
               herr(n) = 2.*h(icircpart(n))
-           enddo         
-           if (iplotx.le.ndim) then
-              print*,'plotting ',ncircpart,' error bars x axis '
-              call pgerrb(5,ncircpart,xerrb(1:ncircpart), &
-                   yerrb(1:ncircpart),herr(1:ncircpart),1.0)
-           elseif (iploty.le.ndim) then
-              print*,'plotting ',ncircpart,' error bars y axis'
-              call pgerrb(6,ncircpart,xerrb(icircpart), &
-                   yplot(1:ncircpart),herr(1:ncircpart),1.0)      
            endif
+        enddo         
+        if (iplotx.le.ndim) then
+           print*,'plotting ',ncircpart,' error bars x axis '
+           call pgerrb(5,ncircpart,xerrb(1:ncircpart), &
+                yerrb(1:ncircpart),herr(1:ncircpart),1.0)
+        elseif (iploty.le.ndim) then
+           print*,'plotting ',ncircpart,' error bars y axis'
+           call pgerrb(6,ncircpart,xerrb(icircpart), &
+                yplot(1:ncircpart),herr(1:ncircpart),1.0)      
         endif
      endif
   endif

@@ -62,10 +62,8 @@ subroutine defaults_set
 !
 !--particle plot options
 !
-  plotcirc = .false.      ! plot circle of radius 2h around particles
-  plotcircall = .false.   !  " " around all particle
   icircpart = 1           !  " " around a specific particle
-  ncircpart = 1
+  ncircpart = 0
   iplotline = .false.     ! plot line joining the particles
   iplotlinein = .false.   ! " " but on first step only
   linestylein = 4         ! PGPLOT line style for above

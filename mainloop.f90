@@ -188,11 +188,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   !!--set title of plot
   ntitles = 0
   call read_titles(titlelist,ntitles,maxtitles)
-
-  !
-  !--set fill style for circle plots
-  !      
-  if (plotcirc) call pgsfs(2)
   !
   !--set character height in mm
   !

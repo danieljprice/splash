@@ -12,13 +12,13 @@ subroutine options_particleplots
   character(LEN=1) :: ans
 
   iaction = 0      
-  print 10, iplotline,iplotlinein,iplotav,ilabelpart,plotcirc, &
+  print 10, iplotline,iplotlinein,iplotav,ilabelpart,ncircpart, &
         iplotpartoftype,imarktype,icoordsnew,iexact
 10  format(' 0) exit ',/,                 &
          ' 1) toggle plot line                   ( ',L1,',',1x,L1,' ) ',/, &
          ' 2) toggle plot average line           ( ',L1,' ) ',/,           &
          ' 3) toggle label particles             ( ',L1,' ) ',/,           &
-         ' 4) toggle circles of interaction      ( ',L1,' ) ',/,           &
+         ' 4) plot circles of interaction        ( ',i3,' ) ',/,           &
          ' 5) toggle plot particles by type      ( ',6(L1,',',1x),' )',/,  &
          ' 6) change graph markers for each type ( ',6(i2,',',1x),' )',/,  &
          ' 7) change coordinate systems          ( ',i2,' ) ',/,           &
@@ -56,18 +56,12 @@ subroutine options_particleplots
      return           
 !------------------------------------------------------------------------
   case(4)
-     plotcirc=.not.plotcirc
-     print*,' Plot circles of interaction = ',plotcirc
-     if (plotcirc) then             
-        call prompt('Plot all circles?',plotcircall)             
-        if (.not.plotcircall) then
-           call prompt('Enter number of circles to draw',ncircpart, &
-                1,size(icircpart))
-           do n=1,ncircpart
-              call prompt('Enter particle number to plot circle around', &
-                   icircpart(n),1,maxval(ntot))
-           enddo
-        endif
+     call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))
+     if (ncircpart.gt.0) then
+        do n=1,ncircpart
+           call prompt('Enter particle number to plot circle around', &
+                    icircpart(n),1,maxval(ntot))
+        enddo
      endif
      return           
 !------------------------------------------------------------------------

@@ -95,7 +95,6 @@ module settings
  integer :: nbins,nc
  integer :: linestylein, iexact
  logical, dimension(maxparttypes) :: iplotpartoftype
- logical :: plotcirc,plotcircall
  logical :: iplotline,iplotlinein,iplotav,ilabelpart 
 !
 !--page options
@@ -134,7 +133,7 @@ module settings
 !
  namelist /plotopts/ &
    iadapt,xsec_nomulti,flythru, &
-   plotcirc,iplotline,iplotlinein,linestylein,          &
+   iplotline,iplotlinein,linestylein,          &
    imarktype,iplotpartoftype,                            &
    iexact,iplotav,nbins,                                &
    icolours,                      &
