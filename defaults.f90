@@ -65,9 +65,11 @@ subroutine defaults_set
   xminoffset_track = 0.5 ! offset of limits from tracked particle
   xmaxoffset_track = 0.5 !
 !
-!--limits
+!--limits (could set them to anything but min & max must be different
+!          to enable them to be reset interactively if not set elsewhere)
 !
-  lim(:,:) = 0.
+  lim(:,1) = 0.
+  lim(:,2) = 1.
   itrans(:) = 0
 !
 !--page options

@@ -106,6 +106,7 @@ end subroutine timestep_loop
 subroutine get_nextstep(i,ifile)
  use filenames
  use settings_page, only:interactive
+ use getdata, only:get_data
  implicit none
  integer, intent(inout) :: i,ifile
  integer :: iskipfiles,ifileprev

@@ -9,7 +9,15 @@
 !               if > 0, reads only from the filename rootname(ireadfile)
 !               if = 0, no data read, just call labelling and exact_params
 !
-subroutine get_data(ireadfile,gotfilenames)
+module getdata
+ implicit none
+ public :: get_data
+
+ private
+
+contains
+
+subroutine get_data(ireadfile,gotfilenames,firsttime)
   use exact, only:read_exactparams
   use filenames
   use limits, only:set_limits,read_limits
@@ -22,6 +30,8 @@ subroutine get_data(ireadfile,gotfilenames)
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
+  logical, intent(in), optional :: firsttime
+  logical :: setlimits
   integer :: i,istart,ierr
 
   if (.not.gotfilenames) then
@@ -111,7 +121,17 @@ subroutine get_data(ireadfile,gotfilenames)
         call calc_quantities(1,nstepsinfile(ireadfile))
      endif
      
-     if (ireadfile.eq.1 .and. ivegotdata .and. nstepsinfile(1).ge.1) then
+     !
+     !--only set limits if reading the first file for the first time
+     !  
+     setlimits = (ireadfile.eq.1 .and. ivegotdata .and. nstepsinfile(1).ge.1)     
+     if (.not.present(firsttime)) then
+        setlimits = .false.
+     elseif (.not.firsttime) then
+        setlimits = .false.
+     endif
+       
+     if (setlimits) then
         call set_limits(1,nstepsinfile(ireadfile),1,numplot)
      endif
   endif
@@ -133,3 +153,5 @@ subroutine get_data(ireadfile,gotfilenames)
   
   return
 end subroutine get_data
+
+end module getdata

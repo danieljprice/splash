@@ -13,6 +13,7 @@ subroutine menu
   use transforms
   use defaults, only:defaults_write
   use geometry, only:labelcoord
+  use getdata, only:get_data
   use timestepping
   implicit none
   integer :: i,icol,ihalf,iadjust,index,ierr
@@ -163,7 +164,11 @@ subroutine menu
      
      if (.not.ivegotdata) then
         print*,' no data '
-        call get_data(-1,.false.)
+        if (buffer_data) then
+           call get_data(-1,.false.)
+        else
+           call get_data(1,.false.,firsttime=.true.)
+        endif
      else        
         !
         !--if needed prompt for x axis selection

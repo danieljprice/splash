@@ -148,6 +148,7 @@ program supersphplot
 !----------------------------------------------------------------------------------
   use filenames
   use labels
+  use getdata, only:get_data
   use defaults, only:defaults_set,defaults_read
   use mem_allocation, only:deallocate_all
   use settings_data, only:buffer_data
@@ -198,7 +199,7 @@ program supersphplot
   if (buffer_data) then
      call get_data(-1,ihavereadfilenames)
   else
-     call get_data(1,ihavereadfilenames)
+     call get_data(1,ihavereadfilenames,firsttime=.true.)
   endif
 
   !

@@ -6,6 +6,7 @@ subroutine options_data
  use filenames, only:nstepstotal
  use prompting
  use settings_data
+ use getdata, only:get_data
  implicit none
  integer :: ians, i
  character(len=30) :: fmtstring
@@ -31,7 +32,7 @@ subroutine options_data
     if (buffer_data) then
        call get_data(-1,.false.)
     else
-       call get_data(1,.false.)
+       call get_data(1,.false.,firsttime=.true.)
     endif
  case(2)
     iUseStepList = .false.
