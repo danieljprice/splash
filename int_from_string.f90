@@ -5,9 +5,9 @@
 !  Daniel Price, Institute of Astronomy, Cambridge, Oct 2003
 !---------------------------------------------------------------------
 
-FUNCTION int_from_string(string)
+INTEGER FUNCTION int_from_string(string)
  IMPLICIT NONE
- INTEGER :: int_from_string,idigit,i,izero,ipower,maxdigits
+ INTEGER :: idigit,i,izero,ipower,maxdigits
  CHARACTER(LEN=*) :: string
  
  ipower = -1

@@ -155,7 +155,7 @@ program supersphplot
   i = 1
   do while (rootname(iprev)(1:1).ne.' ' .and. i.le.maxfile)
      call getarg(i,rootname(i))
-     !print*,i,rootname(i)
+     print*,i,rootname(i)
      iprev = i
      i = i + 1
      if (i.gt.maxfile .and. rootname(iprev)(1:1).ne.' ') then
@@ -171,6 +171,8 @@ program supersphplot
 
   if (rootname(1)(1:1).ne.' ') then
      ihavereadfilename = .true.
+     call options(numplot+3)
+  else
      call options(numplot+3)
   endif
   !------------------------------------------------------------

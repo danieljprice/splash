@@ -10,11 +10,18 @@
 ## Compiler options (uncomment ONE set)
 ## ------------------------------------------------------------------ ##
 ## IoA compiler (Sun fortran)
-FC = f90
-F90C = f90
+#FC = f90
+#F90C = f90
+#FFLAGS = -O4
+#F90FLAGS = -O4
+#LDFLAGS = -lpgplot -lX11 -lF77
+## ------------------------------------------------------------------ ##
+## NAGware f95 compiler
+FC = f95
+F90C = f95
 FFLAGS = -O4
 F90FLAGS = -O4
-LDFLAGS = -lpgplot -lX11 -lF77
+LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11 -lg2c -lpng
 ## ------------------------------------------------------------------ ##
 ## Monash compiler (Lahey-Fujitsu f95)
 #FC = lf95
@@ -23,12 +30,12 @@ LDFLAGS = -lpgplot -lX11 -lF77
 #F90FLAGS = -O ##--chk aesux --chkglobal --warn
 #LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11
 ## ------------------------------------------------------------------ ##
-## Swinburne compiler (Intel fortran)
-#FC = ifort
-#F90C = ifort
-#FFLAGS = -O -CB -std90 -check all
-#F90FLAGS = -O -CB -std90 -check all
-#LDFLAGS =  -lg2c -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11
+## Intel fortran compiler
+#FC = ifc
+#F90C = ifc
+#FFLAGS = -O -C
+#F90FLAGS = -O -C
+#LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11 -lg2c -lpng -Vaxlib
 ## ------------------------------------------------------------------ ##
 
 # define the implicit rule to make a .o file from a .f90 file
@@ -38,12 +45,11 @@ LDFLAGS = -lpgplot -lX11 -lF77
 
 DANSPH = read_data_dansph.f 
 MRBSPH = read_data_mbate.f 
-PGXTAL = read_data_dansph.f
 
 SOURCES= modules.f90 prompting.f90 \
 	 supersphplot.f90 main.f90 \
          allocate.f90 calc_quantities.f90 \
-	 colour_demo.f colour_set.f90 ../src/coord_transform.f90 \
+	 colour_demo.f colour_set.f90 \
 	 danpgtile.f danpgwedg.f \
 	 defaults_read.f90 defaults_set.f90 defaults_write.f90 \
 	 exact_rhoh.f90 \
@@ -72,10 +78,8 @@ SOURCES= modules.f90 prompting.f90 \
 
 SOURCESALL = $(SOURCES:.f90=.o)
 
-OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f=.o)
-OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f=.o)
-OBJPGXTAL = /data/cass30c/dprice/pgxtal/src/pgxtal.o \
-	    $(SOURCESALL:.f=.o) $(PGXTAL:.f=.o)
+OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f=.o) coord_transform.o
+OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f=.o) coord_transform.o
 
 dansph: $(OBJDANSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o ../supersphplot $(OBJDANSPH)
@@ -83,8 +87,12 @@ dansph: $(OBJDANSPH)
 mrbsph: $(OBJMRBSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_mrb $(OBJMRBSPH)
 
-pgxtal: $(OBJPGXTAL)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o superpgxtal $(OBJPGXTAL)
+## files from the main code
+
+coord_transform.o:
+	$(FC) -c $(FFLAGS) $(LDFLAGS) ../src/coord_transform.f90 -o $@
+
+## other crap
 
 tar:
 	tar cf supersphplot.tar Makefile $(SOURCES) read_data*.f

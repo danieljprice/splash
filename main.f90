@@ -27,7 +27,6 @@ subroutine main(ipicky,ipickx,irender)
   integer :: just
 
   character(len=8) :: string     ! used in pgplot calls
-  real, dimension(2,maxpart) :: vecplot
   real, dimension(maxpart) :: xplot,yplot
   real, dimension(:), allocatable :: datpix1D, xgrid
   real, dimension(:,:), allocatable :: datpix
@@ -729,11 +728,7 @@ subroutine main(ipicky,ipickx,irender)
                     !!--determine number of pixels in rendered image (npix = pixels in x direction)
                     pixwidth = (xmax-xmin)/real(npixvec)
                     npixyvec = int((ymax-ymin)/pixwidth) + 1
-                    !--copy appropriate velocity data to a 2D array
-                    !do j=1,ntotplot(i)
-                    !   vecplot(1,j) = dat(ivecx,j,i)
-                    !   vecplot(2,j) = dat(ivecy,j,i)
-                    !enddo
+
                     if (iadapt) then
                        vecmax = -1.0  ! plot limits then set in vectorplot
                     else                    
@@ -753,8 +748,8 @@ subroutine main(ipicky,ipickx,irender)
                     !call pgsch(0.35)! character height (size of arrow head)
                     !do j=1,ntotplot(i)
                     !   call pgarro(yplot(i),xplot(i), &
-                    !   yplot(i)+vecplot(2,i)*scale,   &
-                    !   xplot(i)+vecplot(1,i)*scale)
+                    !   yplot(i)+dat(ivecy,j,i)*scale,   &
+                    !   xplot(i)+dat(ivecx,j,i)*scale)
                     !enddo
                     !       call pgsch(1.0)    ! reset character height
                  endif
@@ -856,12 +851,13 @@ subroutine main(ipicky,ipickx,irender)
                  do n=1,ncircpart
                     if (iplotx.le.ndim) then
                        print*,'plotting error bar x axis',icircpart(n)
-                       call pgerrb(5,1,xplot(icircpart(n)),yplot(icircpart(n)), &
-                            2.*dat(ih,icircpart(n),i),1.0)
+                       call pgerrb(5,1,xplot(icircpart(n)), &
+		            yplot(icircpart(n)), &
+			    (2.*dat(ih,icircpart(n):icircpart(n),i)),1.0)
                     elseif (iploty.le.ndim) then
                        print*,'plotting error bar y axis',icircpart(n)
                        call pgerrb(6,1,xplot(icircpart(n)),yplot(icircpart(n)), &
-                            2.*dat(ih,icircpart(n),i),1.0)      
+                            (2.*dat(ih,icircpart(n):icircpart(n),i)),1.0)      
                     endif
                  enddo
               endif

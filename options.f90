@@ -10,10 +10,9 @@ subroutine options(ipicky)
   use prompting
   implicit none
   integer, intent(IN) :: ipicky
-  integer :: i,j,k,n,iaction,ipick,istep
+  integer :: i,iaction,istep
   character(LEN=30) :: filename
-  character(LEN=1) :: ans
-  logical :: ians, iansx, iansy, ichange
+  logical :: iansx, iansy, ichange
 
   iaction = ipicky - numplot      
 
@@ -92,20 +91,14 @@ subroutine options(ipicky)
   case(3)
      if (.not.ihavereadfilename) then
         call prompt('Enter filename to read',rootname(1))
+	nfiles = 1
      endif
      ihavereadfilename = .false.
      nfilesteps = maxstep
      !
      !--set everything to zero initially
      !
-     dat = 0.
-     time = 0.
-     gamma = 0.
      hfact = 0.
-     iam = 0
-     npart = 0
-     ntot = 0
-     nghost = 0
      ndim = 0
      ndimV = 0
      ncolumns = 0

@@ -34,6 +34,8 @@ subroutine alloc(npartin,nstep,ncolumns)
      print*,'allocate: error in input, ncolumns = ',ncolumns
      return
   endif
+
+  reallocate = .false.
 !
 !--if re-allocating, copy arrays to temporary versions
 !

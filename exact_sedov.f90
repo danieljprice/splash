@@ -11,12 +11,12 @@ subroutine exact_sedov(time,gam,rhozero,energy,rmax,iplot)
   integer, intent(in) :: iplot
   real, intent(in) :: time, gam, rhozero, energy
   real, dimension(0:npts) :: rplot, yplot
-  real :: rmax, rshock, rhomin, rhomax, rhozero, dr
+  real :: rmax, rshock, dr
   real :: rhoshock, ushock, prshock
-  real :: eta_0, energy, power
+  real :: eta_0, power
   real :: etau,rhou,pru
   real :: eta0,ubar,ubarzero,dubar
-  integer :: i,j,ishock
+  integer :: i,ishock
 
   print*,' Plotting 3D Sedov similarity solution at t = ',time
   print*,' rhozero = ',rhozero,' energy = ',energy, ' rmax = ',rmax    
