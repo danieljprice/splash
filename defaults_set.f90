@@ -4,6 +4,7 @@
 !!
 subroutine defaults_set
   use exact
+  use filenames
   use labels
   use multiplot
   use settings
@@ -174,6 +175,10 @@ subroutine defaults_set
   ipowerspecy = ndim+1
   wavelengthmax = 1.0
   nfreqspec = 32
+  !
+  !--filenames
+  !
+  rootname = ' '
 
   return    
 end subroutine defaults_set

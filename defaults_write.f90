@@ -3,10 +3,11 @@
 !
 subroutine defaults_write
  use exact
+ use filenames
  use settings
  use multiplot
  implicit none
- integer :: ierr
+ integer :: ierr, i
        
  open(unit=1,file='defaults',status='replace',form='formatted')
     write(1,NML=plotopts)
@@ -15,6 +16,9 @@ subroutine defaults_write
     write(1,NML=vectoropts)
     call defaults_write_exact(1,ierr)
     write(1,NML=multi)
+    do i=1,nfiles
+       write(1,"(a)") trim(rootname(i))
+    enddo
  close(unit=1)
  print*,'default options saved to file'
     
