@@ -147,31 +147,31 @@ program supersphplot
 !----------------------------------------------------------------------------------
   use filenames
   use labels
-  use settings_data
+  use settings_data, only:buffer_data
   use system_commands
   implicit none
   integer :: i
+  logical :: ihavereadfilenames
+
   !
-  !--print header
+  ! print header
   !
   call print_header
   print*,'( version 1.0 )'
+
   !
-  !--set default options
+  ! set default options
   !
   call defaults_set
-  !
-  !--initialise variables
-  !      
-  ivegotdata = .false.
   
-  ! ---------------------------------------------
+  !
   ! read default options from file if it exists
   !
   call defaults_read
 
-  ! ---------------------------------------------------
-  ! get filenames from command line/file and read file
+  !
+  ! get filenames from command line if possibleq
+  !
   call get_number_arguments(nfiles)
   if (nfiles.gt.0) then
      if (nfiles.gt.maxfile) then
@@ -182,26 +182,30 @@ program supersphplot
         call get_command_argument(i,rootname(i))
      enddo
   endif   
-  
   if (nfiles.ge.1 .and. rootname(1)(1:1).ne.' ') then
-     ihavereadfilename = .true.
+     ihavereadfilenames = .true.
   else
-     ihavereadfilename = .false.
+     ihavereadfilenames = .false.
      print "(a)",' no filenames read from command line'
   endif
+
+  !
+  ! read data from file
+  !
   if (buffer_data) then
-     call get_data(-1)
+     call get_data(-1,ihavereadfilenames)
   else
-     call get_data(1)
+     call get_data(1,ihavereadfilenames)
   endif
 
-  ! -----------------------------------------------------------
+  !
   ! setup kernel table for fast column density plots in 3D
+  !
   call setup_integratedkernel
   
-  ! ----------------------------------------------------------------
+  !
   ! enter main menu
   !
   call menu
-                
+             
 end program supersphplot

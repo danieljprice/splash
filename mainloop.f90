@@ -4,7 +4,6 @@
 subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use params
   use exact
-  use filenames
   use labels
   use limits
   use multiplot
@@ -30,7 +29,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec
   integer :: irenderprev, istepprev, iadvance
-  integer :: ngrid, iskipfiles
+  integer :: ngrid
   integer :: just, ntitles
   integer :: iplots,iplotsonpage
   integer :: index1,index2,itype
@@ -192,7 +191,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   if (animate .or. interactive) call pgask(.false.)
   !!if (animate .and. .not. interactive) call pgbbuf !! start buffering output
 
-  !!--set title of plot
+  !!--set plot titles
   ntitles = 0
   call read_titles(titlelist,ntitles,maxtitles)
   !
@@ -211,61 +210,24 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   ifile = 1
 
   over_timesteps: do while (i.le.n_end)
-  
-     if (.not.buffer_data) then
+
+     if (.not.buffer_data) then    
         !
-        !--if data is not stored in memory, read next step from file
-        !  skip files if necessary. At the moment assumes number of steps in
-        !  each file are the same
+        !--make sure we have data for this timestep
         !
-        if (i.gt.nstepsinfile(ifile)) then
-           ihavereadfilename = .true.
-           if (nstepsinfile(i).ge.1) then
-              iskipfiles = (i-nstepsinfile(ifile))/nstepsinfile(ifile)
-           else
-              print*,'*** error in timestepping: file contains zero timesteps'
-              iskipfiles = 1
-           endif
-           if (iskipfiles.gt.1) then
-              print*,'skipping ',iskipfiles,' files '
-           elseif (iskipfiles.le.0) then
-              print*,'error with iskipfiles = ',iskipfiles
-              iskipfiles = 1
-           endif
-           ifile = ifile+iskipfiles
-           if (ifile.le.nfiles) then
-              call get_data(ifile)
-              print*,'jumping to step ',MOD(i,nstepsinfile(ifile)) + 1,i
-              i = MOD(i,nstepsinfile(ifile)) + 1
-           else
-              exit over_timesteps
-           endif
-        elseif (i.lt.1) then
-           ihavereadfilename = .true.
-           ifile = ifile-1
-           if (ifile.ge.1) then
-              iskipfiles = (i-1)/nstepsinfile(ifile)
-              if (abs(iskipfiles).gt.0) print*,'skipping back ',abs(iskipfiles),' files'
-              ifile = ifile + iskipfiles + 1
-              if (ifile.lt.1) ifile = 1
-              call get_data(ifile)
-           else
-              ifile = 1
-           endif
-           i = 1
-        endif
-     else
-        !
-        !--only data is that which is already in memory
-        !
-        if (i.lt.1) then
-           print*,'reached first step: can''t go back'
-           i = 1
-        endif
-        if (i.lt.nstart) then
-           print*,'warning: i < nstart'
-        endif        
+        call get_nextstep(i,ifile)
+        if (i.eq.-666) exit over_timesteps
      endif
+     !
+     !--check timestepping
+     !
+     if (i.lt.1) then
+        print*,'reached first step: can''t go back'
+        i = 1
+     endif
+     if (i.lt.nstart) then
+        print*,'warning: i < nstart'
+     endif        
 
      print 33, time(i),i
 33   format (5('-'),' t = ',f9.4,', dump #',i5,1x,18('-'))
@@ -1070,5 +1032,57 @@ contains
     enddo
 
   end subroutine set_grid1D
-
+  
+!-------------------------------------------------------------------
+! works out whether or not we need to read another dump into memory
+!-------------------------------------------------------------------
+  subroutine get_nextstep(i,ifile)
+   use filenames
+   implicit none
+   integer, intent(inout) :: i,ifile
+   integer :: iskipfiles
+   
+   !
+   !--if data is not stored in memory, read next step from file
+   !  skip files if necessary. At the moment assumes number of steps in
+   !  each file are the same
+   !
+   if (i.gt.nstepsinfile(ifile)) then
+      if (nstepsinfile(i).ge.1) then
+         iskipfiles = (i-nstepsinfile(ifile))/nstepsinfile(ifile)
+      else
+         print*,'*** error in timestepping: file contains zero timesteps'
+         iskipfiles = 1
+      endif
+      if (iskipfiles.gt.1) then
+         print*,'skipping ',iskipfiles,' files '
+      elseif (iskipfiles.le.0) then
+         print*,'error with iskipfiles = ',iskipfiles
+         iskipfiles = 1
+      endif
+      ifile = ifile+iskipfiles
+      if (ifile.le.nfiles) then
+         call get_data(ifile,.true.)
+         print*,'jumping to step ',MOD(i,nstepsinfile(ifile)) + 1,i
+         i = MOD(i,nstepsinfile(ifile)) + 1
+      else
+         i=-666
+      endif
+   elseif (i.lt.1) then
+      ifile = ifile-1
+      if (ifile.ge.1) then
+         iskipfiles = (i-1)/nstepsinfile(ifile)
+         if (abs(iskipfiles).gt.0) print*,'skipping back ',abs(iskipfiles),' files'
+         ifile = ifile + iskipfiles + 1
+         if (ifile.lt.1) ifile = 1
+         call get_data(ifile,.true.)
+      else
+         ifile = 1
+      endif
+      i = 1
+   endif
+  
+   return
+  end subroutine get_nextstep     
+        
 end subroutine mainloop

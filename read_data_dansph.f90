@@ -11,8 +11,6 @@
 ! ncolumns    : number of data columns
 ! ndim, ndimV : number of spatial, velocity dimensions
 ! nstepsread  : number of steps read from this file
-! hfact       : constant relating smoothing length to particle spacing
-! ivegotdata  : flag which indicates successful data read
 !
 ! maxplot,maxpart,maxstep      : dimensions of main data array
 ! dat(maxplot,maxpart,maxstep) : main data array
@@ -29,7 +27,7 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use exact
+  use exact, only:hfact
   use particle_data
   use params
   use labels
@@ -47,6 +45,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real(doub_prec), dimension(:), allocatable :: dattemp
   real(doub_prec), dimension(:,:), allocatable :: dattempvec
 
+  ndim_max = 1
+  ndimV_max = 1
   nstepsread = 0
   if (rootname(1:1).ne.' ') then
      !
@@ -67,7 +67,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
   k=1      
 
-  ivegotdata = .false.
   !
   !--open data file and read data
   !
@@ -120,7 +119,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
      reallocate = .false.
      npart_max = maxpart
      nstep_max = maxstep
-     ncol_max = maxcol
      !
      !--read header line for this timestep
      !
@@ -148,6 +146,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (ndim.gt.3 .or. ndimV.gt.3) then
         print*,'*** error in header: ndim or ndimV in file> 3'
         nstepsread = nstepsread - 1
+        ndim = ndim_max
+        ndimV = ndimV_max
         close(11)
         return
      endif
@@ -158,8 +158,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
         print*,'*** Warning number of columns not equal for timesteps'
         ncolumns = ncolstep
         print*,'ncolumns = ',ncolumns,ncol_max
+        if (ncolumns.gt.ncol_max) ncol_max = ncolumns
      endif
-     if (ncolstep.gt.ncol_max) then
+     if (ncolstep.gt.maxcol) then
         reallocate = .true.
         ncolumns = ncolstep
         ncol_max = ncolumns
@@ -302,7 +303,6 @@ goto 68
   !                    
 close(unit=11)
 
-ivegotdata = .true.
 ncolumns = ncol_max
 ndim = ndim_max
 ndimV = ndimV_max

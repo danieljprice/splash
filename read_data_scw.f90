@@ -76,7 +76,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--check if first data file exists
   !
-  ivegotdata = .false.
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
      print "(a)",' *** error: ',trim(dumpfile),' file not found ***'    
@@ -216,7 +215,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   endif
 enddo
    
-ivegotdata = .true.
 return
                     
 end subroutine read_data

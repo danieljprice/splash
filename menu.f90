@@ -158,8 +158,7 @@ subroutine menu
      
      if (.not.ivegotdata) then
         print*,' no data '
-        ihavereadfilename = .false.
-        call get_data(-1)
+        call get_data(-1,.false.)
      else        
         !
         !--if needed prompt for x axis selection

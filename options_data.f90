@@ -3,7 +3,7 @@
 ! (read new data or change timesteps plotted)
 !----------------------------------------------------------------------
 subroutine options_data
- use filenames
+ use filenames, only:nstepstotal
  use prompting
  use settings_data
  implicit none
@@ -13,7 +13,7 @@ subroutine options_data
  print 10, (n_end-nstart+1)/nfreq,buffer_data
 10  format(' 0) exit ',/,               &
            ' 1) read new data ',/,      &
-           ' 2) change number of timesteps read ( ',i2, ' )',/, &
+           ' 2) change number of timesteps read ( ',i5, ' )',/, &
            ' 3) toggle buffering of data        (  ',L1, ' )')
  call prompt('enter option',ians,0,3)
 !
@@ -22,9 +22,9 @@ subroutine options_data
  select case(ians)
  case(1)
     if (buffer_data) then
-       call get_data(-1)
+       call get_data(-1,.false.)
     else
-       call get_data(1)
+       call get_data(1,.false.)
     endif
  case(2)
     call prompt('Start at timestep ',nstart,1,nstepstotal)

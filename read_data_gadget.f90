@@ -10,9 +10,7 @@
 !
 ! ncolumns    : number of data columns
 ! ndim, ndimV : number of spatial, velocity dimensions
-! ifinish  : number of steps read from this file
-! hfact       : constant relating smoothing length to particle spacing
-! ivegotdata  : flag which indicates successful data read
+! nstepsread  : number of steps read from this file
 !
 ! maxplot,maxpart,maxstep      : dimensions of main data array
 ! dat(maxpart,maxplot,maxstep) : main data array
@@ -74,7 +72,6 @@ subroutine read_data(rootname,istart,nstepsread)
 !
 !--check if first data file exists
 !
-  ivegotdata = .false.  
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
      print "(a)",' *** error: ',trim(datfile),' file not found ***'    
@@ -286,7 +283,6 @@ subroutine read_data(rootname,istart,nstepsread)
   !                    
   close(unit=11)
 
-  ivegotdata = .true.
   ncolumns = ncol_max
   print*,'ncolumns = ',ncolumns
 

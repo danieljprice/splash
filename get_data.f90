@@ -9,25 +9,26 @@
 !               if > 0, reads only from the filename rootname(ireadfile)
 !               if = 0, no data read, just call labelling and exact_params
 !
-subroutine get_data(ireadfile)
+subroutine get_data(ireadfile,gotfilenames)
   use exact
   use filenames
   use settings_data
-  use settings_part ! only for iexact
+  use settings_part, only:iexact
   use particle_data
   use prompting
   implicit none
   integer, intent(in) :: ireadfile
+  logical, intent(in) :: gotfilenames
   integer :: i,istart,ierr
 
-  if (.not.ihavereadfilename) then
+  if (.not.gotfilenames) then
      if (nfiles.le.0 .or. nfiles.gt.maxfile) nfiles = 1
      call prompt(' Enter number of files to read ',nfiles,1,maxfile)
      do i=1,nfiles
         call prompt(' Enter filename to read',rootname(i))
      enddo
   endif
-  ihavereadfilename = .false.
+!!  ihavereadfilename = .false.
   !
   !--set everything to zero initially
   !
@@ -35,6 +36,7 @@ subroutine get_data(ireadfile)
   ncalc = 0
   n_end = 0
   istart = 1
+  ivegotdata = .false.
 
   if (ireadfile.le.0) then
      !
@@ -50,6 +52,7 @@ subroutine get_data(ireadfile)
      n_end = istart - 1
      nstepstotal = n_end
      numplot = ncolumns
+     if (nstepstotal.gt.0) ivegotdata = .true.
      print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nstepstotal,' ncolumns = ',numplot
 
      !
@@ -79,6 +82,7 @@ subroutine get_data(ireadfile)
      print*,'reading single dumpfile'
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
      print*,'nsteps in file = ',nstepsinfile(ireadfile)
+     if (ANY(nstepsinfile(1:ireadfile).gt.0)) ivegotdata = .true.
      !
      !--assume there are the same number of steps in the other files
      !  which have not been read

@@ -72,7 +72,7 @@ module settings_data
  integer :: ndim, ndimv 
  integer :: icoords, ntypes
  integer :: nstart,n_end,nfreq
- logical :: ihavereadfilename, ivegotdata, buffer_data
+ logical :: ivegotdata, buffer_data
  logical :: imulti
 
  namelist /dataopts/ buffer_data
