@@ -9,11 +9,18 @@ subroutine options_limits
  use prompting
  use limits
  use labels
- use transforms
+ use transforms, only:ntrans,transform_label
  implicit none
- integer :: iaction,ipick,i,ierr
+ integer :: iaction,ipick,i,ierr,index
  real :: diff, mid
+ character(len=120) :: transprompt
  
+ index = 1
+ do i=1,ntrans
+    write(transprompt(index:),"(1x,i1,'=',a,',')") i,trim(transform_label('x',i))
+    index = len_trim(transprompt) + 1
+ enddo
+
  iaction = 0
  if (iadapt) then
     print 10,iadapt,itrackpart,scalemax
@@ -44,11 +51,14 @@ subroutine options_limits
     iadapt = .false.
     do while (ipick.gt.0)
        ipick = 0
-       call prompt('Enter plot number to set limits (0=finish)',ipick,0,numplot)
+       !write(*,*)
+       call prompt('Enter plot number to set limits (0=quit)',ipick,0,numplot)
        if (ipick.gt.0) then
-          call prompt('min ',lim(ipick,1))
-          call prompt('max ',lim(ipick,2))
-          print*,'>> limits set (min,max) = ',lim(ipick,1),lim(ipick,2)
+          call prompt(trim(label(ipick))//' min ',lim(ipick,1))
+          call prompt(trim(label(ipick))//' max ',lim(ipick,2))
+          print*,'>> '//trim(label(ipick))//' limits set (min,max) = ',lim(ipick,1),lim(ipick,2)
+          !print "(a)", trim(transprompt)
+          !call prompt('Which transform? (21 for 2 then 1)',itrans(ipick),0)
        endif
     enddo
     return
@@ -82,19 +92,17 @@ subroutine options_limits
      ipick = 1
      do while (ipick.gt.0 .and. ipick.le.numplot)
         ipick = 0
-        print*,'Enter plot number to apply transformation '
-        call prompt('(0 = finish, -1 = set all) ',ipick)
+        !!print*,'Enter plot number to apply transformation '
+        call prompt('Enter column to apply transform (0=quit,-1=all) ',ipick)
         if (ipick.le.numplot .and. ipick.ne.0) then
-           write(*,300) (i,trim(transform_label('x',i)), i=1,5)
-300        format(1x,i1,') ',a)
-           print*,'Enter transformation to apply (or a combination e.g. 321)'
+           print "(a)", trim(transprompt)
            if (ipick.lt.0) then
               ipick = 0
-              call prompt(' ',ipick,0)
+              call prompt('Which transform (or multiple e.g. 321)?',ipick,0)
               itrans(:) = ipick
               ipick = -99
            else
-              call prompt(' ',itrans(ipick),0)
+              call prompt('Which transform (or multiple e.g. 321)?',itrans(ipick),0)
            endif
         endif
      enddo
