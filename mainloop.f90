@@ -3,6 +3,7 @@
 !
 subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use params
+  use colours, only:colour_set
   use exact
   use labels
   use limits

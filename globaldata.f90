@@ -127,7 +127,7 @@ end module settings_page
 !
 module settings_render
  implicit none
- integer :: ncontours,npix,icolours,ncolours
+ integer :: ncontours,npix,icolours
  logical :: iplotcont_nomulti
  logical :: iPlotColourBar
 

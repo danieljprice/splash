@@ -3,10 +3,12 @@
 !-----------------------------------------------------------------------------
 
 subroutine options_render
+  use colours
   use prompting
   use settings_render
   implicit none
-  integer :: ians
+  integer :: ians,i
+  character(len=120) :: schemesprompt
 !
 !--rendering options
 !
@@ -30,8 +32,10 @@ subroutine options_render
 !------------------------------------------------------------------------
     case(2)
        promptloop: do
+          if (icolours.lt.0) icolours = 1
+          write(*,"(6(5(i2,a),/))") (i,'='//trim(schemename(i)),i=1,ncolourschemes)
           print *,'(-ve = demo, 0 = contours only)'
-          call prompt('enter colour scheme for rendering ',icolours,max=5)
+          call prompt('enter colour scheme for rendering ',icolours,max=ncolourschemes)
           if (icolours.lt.0) then
              call colour_demo
              cycle promptloop

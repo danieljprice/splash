@@ -96,7 +96,6 @@ subroutine defaults_set
 !--render options
 !
   icolours = 1               ! colour scheme to use
-  ncolours=10                ! number of colours in colour table
   npix = 100                 ! pixels in x direction for rendering
   iPlotColourBar = .true.! whether or not to plot the colour bar
   iplotcont_nomulti = .false. ! plot contours

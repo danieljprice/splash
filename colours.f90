@@ -7,8 +7,13 @@ module colours
  integer, parameter :: ncolourmax = 256
  integer, parameter :: ncolourschemes = 7
  character(LEN=30), dimension(ncolourschemes), parameter :: schemename = &
-    (/'greyscale','red      ','ice blue','rainbow','frog monster', &
-      'some other crap','really useless'/)
+    (/'greyscale   ', &
+      'red         ', &
+      'ice blue    ', &
+      'rainbow     ', &
+      'frog monster', &
+      'other crap  ', &
+      'useless     '/)
 
 contains
 
@@ -151,7 +156,7 @@ subroutine colour_demo
   character(len=10) :: string
 
   call pgbegin(0,'/xw',1,1)
-  call pgpaper(5.0,0.25/sqrt(2.))
+  call pgpaper(6.0,0.25/sqrt(2.))
 
   xmin = 0.0
   xmax = 1.0
@@ -173,18 +178,19 @@ subroutine colour_demo
   enddo
 
   call pgenv(xmin,xmax,ymin,ymax,1,-1)
-  call pgsch(3.0)
+  call pgsch(1.0)
   call pggray(sample,npixx,npixy,1,npixx,1,npixy, &
               minval(sample),maxval(sample),trans)
   call pgnumb(1,0,0,string,nc)
-  call pgmtxt('t',1.0,0.5,0.5,string(1:nc))     
+  call pgsch(7.0)
+  call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(1)))
 
   do i=2,ncolourschemes
      call pgsch(1.0)      
      call pgenv(xmin,xmax,ymin,ymax,1,-1) 
-     call pgsch(3.0)
+     call pgsch(7.0)
      call pgnumb(i,0,0,string,nc)
-     call pgmtxt('t',1.0,0.5,0.5,string(1:nc)//': '//trim(schemename(i)))     
+     call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(i)))     
      call colour_set(i)
      call pgimag(sample,npixx,npixy,1,npixx,1,npixy, &
                  minval(sample),maxval(sample),trans)
