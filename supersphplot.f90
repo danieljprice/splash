@@ -66,6 +66,7 @@ program supersphplot
 !     this version for both ndspmhd and matthew bate's code 2003-2004
 !     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
 !
+!      02/06/04 - interactive plotting steps forward/backwards, replots etc
 !      01/06/04 - saves/reads limits to/from limits file
 !                 also revamped menu - uses characters for options
 !      31/05/04 - particle tracking limits, reads from Matthew's code       

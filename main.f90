@@ -20,7 +20,7 @@ subroutine main(ipicky,ipickx,irender)
   integer :: npart1
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: ivecplot,npix,npixvec,npixyvec,ncontours
-  integer :: irenderprev, istepprev
+  integer :: irenderprev, istepprev, iadvance
   integer :: nsink,nsinkstart,nsinkend,nghoststart,nghostend
   integer :: ishk,int_from_string
   integer :: ngrid
@@ -216,10 +216,13 @@ subroutine main(ipicky,ipickx,irender)
   !      charheight = 0.5*(nacross+ndown)
 
   !------------------------------------------------------------------------      
-  ! loop over timesteps 
+  ! loop over timesteps (flexible to allow going forwards/backwards in
+  !                      interactive mode)
   !------------------------------------------------------------------------            
-  over_timesteps: do i=nstart,n_end,nfreq
+  i = nstart
+  over_timesteps: do while (i.le.n_end)
 
+     iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
      npart1 = npart(i) + 1
      irenderprev = 0
      istepprev = 0  
@@ -681,9 +684,13 @@ subroutine main(ipicky,ipickx,irender)
                           call pgsch(charheight)
                        enddo
                     endif! ilabelpart
-
-                    if (iplotpart.and.interactive) call interactive_part(ntotplot(i),xplot(1:ntotplot(i)),yplot(1:ntotplot(i))) 
-
+                    !
+		    !--enter interactive mode
+		    !
+                    if (iplotpart.and.interactive) then
+		       call interactive_part(ntotplot(i),xplot(1:ntotplot(i)), &
+		                             yplot(1:ntotplot(i)),iadvance) 
+                    endif
 
                  endif! if x_sec else    
               endif! if irender
@@ -813,7 +820,6 @@ subroutine main(ipicky,ipickx,irender)
               call pgsls(1)
               call pgsch(1.0)! reset character height before plotting particles
               call pgpt(npart(i),xplot(1:npart(i)),yplot(1:npart(i)),imark)
-              if (interactive) call interactive_part(npart(i),xplot(1:npart(i)),yplot(1:npart(i)))
            endif
            !--plot line joining the particles
            if (iplotline.or.(iplotlinein.and.(i.eq.nstart))) then
@@ -884,7 +890,14 @@ subroutine main(ipicky,ipickx,irender)
                  call pgsch(charheight)
               enddo
            endif! ilabelpart
-
+           !
+           !--enter interactive mode
+           !
+           if (interactive) then
+	      call interactive_part(npart(i),xplot(1:npart(i)), &
+	                            yplot(1:npart(i)),iadvance)
+           endif
+	   
         elseif (iploty.le.numplot) then! ie iploty = extra
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! additional plots (not plots of particle data - e.g where some additional 
@@ -1098,6 +1111,16 @@ subroutine main(ipicky,ipickx,irender)
         endif
 
      enddo over_plots ! over plots per timestep (nyplot)
+!
+!--increment timestep
+!
+     i = i + iadvance
+     if (i.lt.1) then
+        print*,'reached first step: can''t go back'
+	i = 1
+     elseif (i.lt.nstart) then
+        print*,'warning: i < nstart'
+     endif
 
   enddo over_timesteps
 

@@ -2,27 +2,32 @@
 !--interactive tools on particle plots
 !  (experimental at this stage)
 !
-subroutine interactive_part(npart,xcoords,ycoords)
+subroutine interactive_part(npart,xcoords,ycoords,iadvance)
   implicit none
   integer, intent(in) :: npart
+  integer, intent(out) :: iadvance
   real, dimension(npart), intent(in) :: xcoords, ycoords
-  integer :: i,iclosest,nc,ipts
-  real :: xpt,ypt,rmin,rr,gradient,yint
+  integer :: i,iclosest,nc,ipts,iadvance
+  real :: xpt,ypt,rmin,rr,gradient,yint,xlength
   real, dimension(4) :: xline,yline
   character(len=1) :: char
   character(len=20) :: string
+  logical :: iexit
 
   print*,'entering interactive mode...press h for help'
   char = 'A'
   ipts = 0
   xline = 0.
   yline = 0.
+  iexit = .false.
 
-  do while (char.ne.'q' .and. char.ne.'Q' .and. char.ne.' ' .and. char.ne.'X')
+  do while (.not.iexit)
      call pgcurs(xpt,ypt,char)
      
      print*,'location: x, y = ',xpt,ypt,' function = ',char
-     
+     !
+     !--find closest particle
+     !  
      rmin = 1.e6
      do i=1,npart
         rr = (xcoords(i)-xpt)**2 + (ycoords(i)-ypt)**2
@@ -32,9 +37,9 @@ subroutine interactive_part(npart,xcoords,ycoords)
         endif
      enddo
      
-     print*,' closest particle = ',iclosest,'x = ',xcoords(iclosest),' y =',ycoords(iclosest)
      select case(char)
-     case('A')
+     case('p')
+        print*,' closest particle = ',iclosest,'x = ',xcoords(iclosest),' y =',ycoords(iclosest)
         call pgnumb(iclosest,0,1,string,nc)
         call pgsch(2.0)
         call pgtext(xcoords(iclosest),ycoords(iclosest),string(1:nc))
@@ -51,7 +56,8 @@ subroutine interactive_part(npart,xcoords,ycoords)
 	if (ipts.gt.1) then
 	   gradient = (yline(3)-yline(2))/(xline(3)-xline(2))
 	   yint = yline(3) - gradient*xline(3)
-	   print*,' gradient = ',gradient,' y intercept = ',yint
+	   xlength = sqrt((xline(3)-xline(2))**2 + (yline(3)-yline(2))**2) 
+	   print*,' gradient = ',gradient,' y intercept = ',yint, 'length = ',xlength
 	   if (xline(2).lt.xline(3)) then 
 	      xline(1) = minval(xcoords)
 	      xline(4) = maxval(xcoords)
@@ -67,12 +73,27 @@ subroutine interactive_part(npart,xcoords,ycoords)
 	endif
      case('h')
         print*,'-------------- interactive mode commands --------------'
-        print*,' label particle             : left click, A'
-	print*,' plot connecting line       : l, L'
-	print*,' plot circle of interaction : c, C'
-	print*,' help                       : h'
-        print*,' quit                       : q, space or right click'     	
+	print*,' advance forward   : space, left click'
+	print*,' go backwards      : right click'
+	print*,' (r)eplot current plot        : r'
+        print*,' label closest (p)article     : p'
+	print*,' plot connecting (l)ine       : l, L'
+	print*,' plot (c)ircle of interaction : c, C'
+	print*,' (h)elp                       : h'
+        print*,' (q)uit plotting              : q, Q'     	
         print*,'-------------------------------------------------------'
+     case('q','Q')
+        iadvance = 666666666
+	print*,'quitting...'
+	iexit = .true.
+     case('X') ! right click -> go back
+        iadvance = -abs(iadvance)
+	iexit = .true.
+     case('r','R') ! replot
+        iadvance = 0
+	iexit = .true.
+     case(' ','A') ! space, left click
+        iexit = .true.
      end select
 
   enddo
