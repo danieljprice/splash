@@ -8,6 +8,7 @@ subroutine defaults_set
   use multiplot
   use settings
   implicit none
+  integer :: i
   !
   !--set default options
   !
@@ -75,10 +76,18 @@ subroutine defaults_set
 
   lambda = 1.0	! sound wave exact solution : wavelength
   delta = 0.005	! sound wave exact solution : amplitude
+  htstar = 0.   ! toy star crap
+  atstar = 0.
+  ctstar = 0.
+  norder = 0
+  sigma0 = 0.
 
-  nyplotmulti = 1		! number of plots in multiplot
-  multiploty(1) = ndim+1 	! first plot : y axis
-  multiplotx(1) = 1		! first plot : x axis
+  nyplotmulti = 4		! number of plots in multiplot
+  multiploty(:) = 0
+  do i=1,4
+     multiploty(i) = ndim+i 	! first plot : y axis
+  enddo
+  multiplotx(:) = 1		! first plot : x axis
   irendermulti(:) = 0	! rendering
   ivecplotmulti(:) = 0	! vector plot
   x_secmulti(:) = .false.	! take cross section?
