@@ -954,7 +954,8 @@ subroutine plotstep
            (iplotx.eq.irho .and. iploty.eq.ih)) then
            call exact_solution(iplotx,iploty,iexact,ndim,ndimV,  &
                                time(i),xmin,xmax,ymean,gamma(i), &
-                               dat(1:ntot(i),ipmass,i),ntot(i))
+                               dat(1:npartoftype(1,i),ipmass,i), &
+                               npartoftype(1,i))
         endif
         !
         !--enter interactive mode

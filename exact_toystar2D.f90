@@ -111,9 +111,11 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
 !--this is the static solution, determined from the total mass, polyk, gamma and omega
 !
      omeg = 1.0  ! this is omega from the main code (ie. from potential)
+     
      radstar = sqrt(gamma*totmass/(pi*gamm1))
      H = omeg**2*gamm1*radstar**2/(2.*polyk*gamma)
      C = 0.5*gamm1*omeg**2/(gamma*polyk)
+     print*,'r_star = ',radstar,' rho = (',H,'-',C,'^2)**',gamm1
 !
 !--work out period of oscillation
 !
