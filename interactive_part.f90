@@ -31,17 +31,19 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
   icolourpart,xmin,xmax,ymin,ymax,rendermin,rendermax, &
   anglex,angley,anglez,ndim,iadvance,isave)
   implicit none
-  integer, intent(in) :: npart,iplotx,iploty,irender,ndim
+  integer, intent(in) :: npart,irender,ndim
+  integer, intent(inout) :: iplotx,iploty
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
   real, dimension(npart), intent(in) :: xcoords, ycoords, hi
   real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax
   real, intent(inout) :: anglex,angley,anglez
   logical, intent(out) :: isave
-  integer :: i,iclosest,nc,ierr
+  real, parameter :: pi=3.141592653589
+  integer :: i,iclosest,nc,ierr,ixsec
   integer :: nmarked
   real :: xpt,ypt,xpt2,ypt2,xptmin,xptmax,yptmin,yptmax
-  real :: rmin,rr,gradient,yint
+  real :: rmin,rr,gradient,yint,dx,dy
   real :: xlength, ylength, drender
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
@@ -169,6 +171,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
               print*,' rotate about x axis by +(-) 30 degrees : ? (")'
               print*,' rotate about y axis by +(-) 15 degrees : l (;)'
               print*,' rotate about y axis by +(-) 30 degrees : L (:)'
+              print*,' x) take cross section '
            endif
         endif
         print*,' next timestep/plot   : space, n'
@@ -379,6 +382,43 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
            iexit = .true.
         endif
      !
+     !--set cross section position
+     !
+     case('x')
+        if (rotation .and. ndim.ge.3) then
+           xline(1) = xpt
+           yline(1) = ypt
+           !--work out which is the third dimension
+           do i=1,3
+              if (i.ne.iplotx .and. i.ne.iploty) ixsec = i
+           enddo
+           print*,' select cross section position (using left click or x)'
+           call pgband(1,1,xline(1),yline(1),xline(2),yline(2),char2)
+           !--work out cross section if left click or x again
+           select case(char2)
+           case('A','x')
+              !--plot the cross section line
+              call pgline(2,xline(1:2),yline(1:2))
+              !--work out angle with the x axis
+              dx = xline(2) - xline(1)
+              dy = yline(2) - yline(1)
+              select case(ixsec)
+              case(1)
+                 anglex = 180.*ATAN2(dy,dx)/pi
+                 print*,'setting angle x = ',anglex
+              case(2)
+                 angley = 180.*ATAN2(dy,dx)/pi
+                 print*,'setting angle y = ',angley
+              case(3)
+                 anglez = 180.*ATAN2(dy,dx)/pi
+                 print*,'setting angle z = ',anglez
+              end select
+              iploty = ixsec
+              iadvance = 0
+              iexit = .true.
+           end select
+        endif
+     !
      !--general plot stuff
      !
      case('G') ! move legend here
@@ -560,8 +600,12 @@ subroutine interactive_step(iadvance,xmin,xmax,ymin,ymax)
   return
 end subroutine interactive_step
 
+!-----------------------------------------------------------
+! These subroutines interface to the actual plot settings
+!-----------------------------------------------------------
+
 !
-!--this subroutine moves the legend to the current position
+!--move the legend to the current position
 !
 subroutine mvlegend(xi,yi,xmin,xmax,ymax)
  use settings_page, only:hposlegend,vposlegend
@@ -579,7 +623,7 @@ subroutine mvlegend(xi,yi,xmin,xmax,ymax)
 end subroutine mvlegend
 
 !
-!--this subroutine moves the title to the current position
+!--move the title to the current position
 !
 subroutine mvtitle(xi,yi,xmin,xmax,ymax)
  use settings_page, only:hpostitle,vpostitle
@@ -597,7 +641,7 @@ subroutine mvtitle(xi,yi,xmin,xmax,ymax)
 end subroutine mvtitle
 
 !
-!--subroutines to save current plot limits
+!--saves current plot limits
 !
 subroutine save_limits(iplot,xmin,xmax)
  use limits, only:lim
@@ -623,7 +667,7 @@ subroutine save_limits(iplot,xmin,xmax)
 end subroutine save_limits
 
 !
-!--subroutines to save current plot limits
+!--saves rotation options
 !
 subroutine save_rotation(ndim,anglexi,angleyi,anglezi)
  use settings_xsecrot, only:anglex,angley,anglez
