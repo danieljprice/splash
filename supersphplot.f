@@ -3,7 +3,7 @@
 !     plotting utility for sph data in 1, 2 and 3 dimensions.
 !
 !     uses pgplot routines to plot graphs and utilises the rendering
-!     tools to plot density renderings and vector plots of 2d and 3d data.
+!     tools to plot density renderings and vector plots of 2D and 3D data.
 !
 !     subroutines as follows (in alphabetical order):
 !
@@ -17,12 +17,12 @@
 !     exact_swave        : exact solution for a linear sound wave
 !     exact_toystar      : exact solution for the toy star problem
 !     get_render_options : prompts user for options for render plots
-!     interpolate2d	 : interpolation of 2d sph data to 2d grid using sph kernel     
-!     interpolate3d	 : interpolation of 3d sph data to 3d grid using sph kernel
-!     interpolate3d_fastxsec   : fast cross section through 3d data using sph kernel
-!     interpolate3d_projection : fast projection of 3d data to 2d grid using integrated sph kernel
+!     interpolate2D	 : interpolation of 2D sph data to 2D grid using sph kernel     
+!     interpolate3D	 : interpolation of 3D sph data to 3D grid using sph kernel
+!     interpolate3D_fastxsec   : fast cross section through 3D data using sph kernel
+!     interpolate3D_projection : fast projection of 3D data to 2D grid using integrated sph kernel
 !     legend		       : plots legend on plot (time)
-!     lomb_powerspectrum1d     : calculates power spectrum of data on particles
+!     lomb_powerspectrum1D     : calculates power spectrum of data on particles
 !     menu_actions	 : plot options in menu format
 !     modules		 : contains all shared (global) variables
 !     plot_average	 : bins particles along x-axis and plots average line
@@ -47,7 +47,7 @@
 !     this version for both ndspmhd and matthew bate's code 2003
 !     changes log:
 !      15/12/03 - namelist input/output, freeform source in modules
-!      09/12/03 - power spectrum plotting in 1d
+!      09/12/03 - power spectrum plotting in 1D
 !      24/11/03 - calc_quantities in separate subroutine, rhoh moved
 !      28/10/03 - bug fix when no data 
 !      14/10/03 - new colour schemes
@@ -58,10 +58,10 @@
 !      12/09/03 - fast column density plots, several bug fixes
 !      11/09/03 - bug in vector plots (xminrender,xmaxrender)
 !      11/08/03 - prompting, bug fix in resetting options after multiplot
-!      30/07/03 - 3d cross sections/projections
+!      30/07/03 - 3D cross sections/projections
 !      29/07/03 - split into more subroutines (menu etc)
 !      18/07/03 - transformations (log, 1/x etc)
-!      15/07/03 - interpolate2d,3d - much simpler than smooth_pixels
+!      15/07/03 - interpolate2D,3D - much simpler than smooth_pixels
 !      25/06/03 - clever makefile - makes for dansph or m. bate sph
 !               - subroutines in different files
 !      20/06/03 - rendering can handle zero density, prints if min=max
@@ -81,11 +81,11 @@
 !         these plots can be rendered with any scalar or vector array.
 !         
 !         the rendering routines interpolate from the particles to either
-!         a 2d or 3d grid. in 3d you can either render to a 3d grid and take
-!         cross sections, or render to a 2d grid using a table of the integrated
-!         sph kernel. this 2d rendering results in a map of the quantity
+!         a 2D or 3D grid. in 3D you can either render to a 3D grid and take
+!         cross sections, or render to a 2D grid using a table of the integrated
+!         sph kernel. this 2D rendering results in a map of the quantity
 !         integrated through the third co-ordinate. 
-!         rendering to a 3d grid can be quite slow - it is only efficient
+!         rendering to a 3D grid can be quite slow - it is only efficient
 !         if many cross sections are taken all at once from the same data.
 !
 !      2) other plots have a variety of options, with lines joining the particles
@@ -122,7 +122,7 @@
       real, dimension(2,max) :: vecplot
       real, dimension(max) :: xplot,yplot,renderplot
       real, dimension(:,:), allocatable :: datpix
-      real, dimension(:,:,:), allocatable :: datpix3d
+      real, dimension(:,:,:), allocatable :: datpix3D
       real :: xmin,xmax,ymin,ymax,zmin,zmax,xminrender,xmaxrender
       real :: vmin,vmax,rendermin,rendermax
       real :: scale,rhomax,rhomin,binsize
@@ -188,7 +188,7 @@ c get rootname from command line/file and read file
          call menu_actions(numplot+2)
       endif	 
 !------------------------------------------------------------
-! setup kernel table for fast column density plots in 3d
+! setup kernel table for fast column density plots in 3D
       call setup_integratedkernel
       
 ! ----------------------------------------------------------------
@@ -208,7 +208,7 @@ c get rootname from command line/file and read file
       if (ndim.eq.1) then
          nextra = 1	! one extra plot = power spectrum
          ipowerspec = ncolumns + ncalc + 1
-         label(ipowerspec) = '1d power spectrum'
+         label(ipowerspec) = '1D power spectrum'
       endif
       if (iexact.eq.4) then	! toy star plot a-c plane
          nextra = nextra + 1
@@ -323,7 +323,7 @@ c get rootname from command line/file and read file
 	 do j=1,ndim
             if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j	 
          enddo	 	       
-         if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3d
+         if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D
 
 !!--if series of cross sections (flythru), set position of first one      
          if (x_sec.and.flythru) then
@@ -515,7 +515,7 @@ c get rootname from command line/file and read file
 	    do j=1,ndim
                if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j	 
             enddo	 	       	   
-            if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3d	   
+            if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D	   
 !!--set limits for rendering area
             xminrender = lim(ix(1),1)
 	    xmaxrender = lim(ix(1),2)
@@ -527,7 +527,7 @@ c get rootname from command line/file and read file
 	    
 !------------------------------------------------------------------
 !  rendering setup and interpolation (this is the rendering done
-!  *before* the cross sections are taken, e.g. to 3d grid)
+!  *before* the cross sections are taken, e.g. to 3D grid)
 !------------------------------------------------------------------
              if ((irenderplot.gt.ndim).and.(ndim.ge.2)) then
 !
@@ -548,7 +548,7 @@ c get rootname from command line/file and read file
 		   if (ymax.gt.xmaxrender) xmaxrender = ymax
 		   npixy = int((ymax-ymin)/pixwidth) + 1
 		   print*,'npixy = ',npixy
-!!--only need z pixels if working with interpolation to 3d grid
+!!--only need z pixels if working with interpolation to 3D grid
 		   if ((ndim.ge.3).and.(x_sec.and.nxsec.gt.2)) then
 		      zmin = lim(ix(3),1)
 		      zmax = lim(ix(3),2)
@@ -566,14 +566,14 @@ c get rootname from command line/file and read file
 		   print*,'same rendering, using previous array...'		
 		else   
 	         if (allocated(datpix)) deallocate(datpix)		
- 	         if (allocated(datpix3d)) deallocate(datpix3d) 
+ 	         if (allocated(datpix3D)) deallocate(datpix3D) 
 		 select case(ndim)
 		  case(2)
 !!--allocate memory for rendering array
                       isizex = npix
 		      isizey = npixy
 		      allocate ( datpix(npix,npixy) )
-		      call interpolate2d(
+		      call interpolate2D(
      &		      dat(ix(1),1:ntot(i),i),dat(ix(2),1:ntot(i),i),
      &		      dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i),
      &                dat(ih,1:ntot(i),i),
@@ -581,19 +581,19 @@ c get rootname from command line/file and read file
      &                ntot(i),xminrender,ymin,
      &	              datpix,npix,npixy,pixwidth)
 		  case(3)
-!!--interpolation to 3d grid - then take multiple cross sections/projections		  
+!!--interpolation to 3D grid - then take multiple cross sections/projections		  
 !!  do this if taking more than 2 cross sections, otherwise use fast xsec
 		      if (x_sec.and.nxsec.gt.2) then  
-!!--allocate memory for 3d rendering array		 
-		         allocate ( datpix3d(npix,npixy,npixz) )
-!!--interpolate from particles to 3d grid
-		         call interpolate3d(
+!!--allocate memory for 3D rendering array		 
+		         allocate ( datpix3D(npix,npixy,npixz) )
+!!--interpolate from particles to 3D grid
+		         call interpolate3D(
      &		         dat(ix(1),1:ntot(i),i),dat(ix(2),1:ntot(i),i),
      &		         dat(ix(3),1:ntot(i),i),dat(ipmass,1:ntot(i),i),
      &                   dat(irho,1:ntot(i),i),dat(ih,1:ntot(i),i),
      &		         dat(irenderplot,1:ntot(i),i),
      &                   ntot(i),xminrender,ymin,zmin,
-     &	                 datpix3d,npix,npixy,npixz,pixwidth)
+     &	                 datpix3D,npix,npixy,npixz,pixwidth)
 		      endif
 		  end select                 
 		endif
@@ -631,19 +631,19 @@ c get rootname from command line/file and read file
             endif
 
 !------------------------------------------------------------------------
-! preliminary muff for 3d renderings
+! preliminary muff for 3D renderings
 !------------------------------------------------------------------------
 	    if (irenderplot.gt.ndim .and. ndim.eq.3) then	    
 
-!!--the line below is the condition for doing a full interpolation to a 3d grid
+!!--the line below is the condition for doing a full interpolation to a 3D grid
 !!  - need to make sure it is the same everywhere
 !!  - could be a bit more clever about when we do this
 !!    (at the moment all the projections are done via the fast projection,
-!!     although the ability to do projections from the 3d grid is there)
+!!     although the ability to do projections from the 3D grid is there)
 !!
              if (x_sec .and. nxsec.gt.2) then
 !------------------------------------------------------------------------
-! if we have rendered to a 3d grid, take cross sections 
+! if we have rendered to a 3D grid, take cross sections 
 ! or projections through this grid
 !------------------------------------------------------------------------
 	       if (allocated(datpix)) deallocate(datpix)
@@ -658,13 +658,13 @@ c get rootname from command line/file and read file
 			if (ipixxsec.gt.npix) ipixxsec = npix
                         print*,'x = ',xsecpos,
      &			       ' cross section, pixel ',ipixxsec
-                        datpix = datpix3d(ipixxsec,:,:)
+                        datpix = datpix3D(ipixxsec,:,:)
 		     else  		! take column density 
 		        print*,'taking projection through x data...'		     
 		        datpix = 0.
 		        do ipix=1,npix
 		           datpix(:,:) = datpix(:,:) 
-     &			   + datpix3d(ipix,:,:)*pixwidth
+     &			   + datpix3D(ipix,:,:)*pixwidth
 		        enddo
 		     endif
                  case(2)
@@ -677,13 +677,13 @@ c get rootname from command line/file and read file
 			if (ipixxsec.gt.npixy) ipixxsec = npixy
                         print*,'y = ',xsecpos,
      &			       ' cross section, pixel ',ipixxsec
-                        datpix = datpix3d(:,ipixxsec,:)
+                        datpix = datpix3D(:,ipixxsec,:)
 		     else
 		        print*,'taking projection through y data...'		     
 		        datpix = 0.
 			do ipix=1,npixy
 			   datpix(:,:) = datpix(:,:) 
-     &			   + datpix3d(:,ipix,:)*pixwidth
+     &			   + datpix3D(:,ipix,:)*pixwidth
 			enddo
 		     endif		     	
                  case(3)
@@ -696,20 +696,20 @@ c get rootname from command line/file and read file
 			if (ipixxsec.gt.npixz) ipixxsec = npixz
                         print*,'z = ',xsecpos,
      &			       ' cross section, pixel ',ipixxsec
-                        datpix = datpix3d(:,:,ipixxsec)
+                        datpix = datpix3D(:,:,ipixxsec)
 		     else
 		        print*,'taking projection through z data...'
 		        datpix = 0.
 			do ipix=1,npixz			
 			   datpix(:,:) = datpix(:,:) 
-     &			   + datpix3d(:,:,ipix)*pixwidth
+     &			   + datpix3D(:,:,ipix)*pixwidth
 			enddo
 		     endif  
                  end select	       		  	       	     
 
 	      else
 !-------------------------------------------------------------------
-!  or do a fast projection/cross section of 3d data to 2d array
+!  or do a fast projection/cross section of 3D data to 2D array
 !-------------------------------------------------------------------
 
 !!--determine limits of rendering plot
@@ -723,7 +723,7 @@ c get rootname from command line/file and read file
                  print*,'npix,npixy = ',npix,npixy
                  isizex = npix
 		 isizey = npixy
-!!--allocate memory for the 2d array		 
+!!--allocate memory for the 2D array		 
 		 if (allocated(datpix)) deallocate(datpix)
                  allocate ( datpix(npix,npixy) )
 !!--do fast cross-section
@@ -731,7 +731,7 @@ c get rootname from command line/file and read file
                     print*,trim(label(ix(ixsec))),' = ',xsecpos,
      &			       ' : fast cross section'
 
-		    call interpolate3d_fastxsec(
+		    call interpolate3D_fastxsec(
      &		         dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i),
      &                   dat(ixsec,1:ntot(i),i),
      &		         dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i),
@@ -741,7 +741,7 @@ c get rootname from command line/file and read file
      &	                 datpix,npix,npixy,pixwidth)			 
 		 else
 !!--do fast projection		 
-		    call interpolate3d_projection(
+		    call interpolate3D_projection(
      &		         dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i),
      &		         dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i),
      &                   dat(ih,1:ntot(i),i),
@@ -750,10 +750,10 @@ c get rootname from command line/file and read file
      &	                 datpix,npix,npixy,pixwidth)
                  endif	      
 	      
-	      endif ! whether 3d grid or fast renderings
+	      endif ! whether 3D grid or fast renderings
 	      	 
 	    endif 
-!--------------end of preliminary muff for 3d renderings ------------------
+!--------------end of preliminary muff for 3D renderings ------------------
 	    	    
 !-----------------------
 ! set up pgplot page
@@ -810,7 +810,7 @@ c get rootname from command line/file and read file
 !------------------------------
 !---------------------------------------------------------------
 ! density/scalar field rendering
-! having got our 2d array of gridded data (datpix), we plot it	    
+! having got our 2D array of gridded data (datpix), we plot it	    
 !---------------------------------------------------------------
 	    if (irenderplot.gt.ndim) then	    
 !!--do transformations on rendered array
@@ -935,7 +935,7 @@ cc--plot particle labels
 cc--velocity vector map
 	    if (ivecplot.eq.1 .and. ivx.ne.0) then
 	       print*,'plotting velocity field'
-cc--copy appropriate velocity data to a 2d array
+cc--copy appropriate velocity data to a 2D array
 	       do j=1,ntotplot(i)
 	          vecplot(1,j) = dat(iplotx+ivx-1,j,i)
 		  vecplot(2,j) = dat(iploty+ivx-1,j,i)
