@@ -28,8 +28,8 @@ subroutine options_vecplot
 !------------------------------------------------------------------------
  case(3)
     call prompt('plot vector legend?',iVecplotLegend)
-    print*,'note that the following settings can also be changed interactively'
     if (iVecplotLegend) then
+       print*,'note that the following settings can also be changed interactively'
        call prompt('Enter horizontal position as fraction of viewport', &
                    hposlegendvec,-0.1,1.1)
        call prompt('Enter vertical position in character heights from top', &
