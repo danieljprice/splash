@@ -9,7 +9,7 @@ subroutine calc_quantities(ifromstep,itostep)
   implicit none
   integer, intent(in) :: ifromstep, itostep
   integer :: i,j,nstartfromcolumn
-  integer :: ientrop
+  integer :: ientrop,idhdrho
   integer :: ipmag,ibeta,itotpr,idivBerr,icurr,icrosshel
   integer :: irad2,ivpar,ivperp,iBpar,iBperp
   real :: Bmag, Jmag
@@ -20,6 +20,7 @@ subroutine calc_quantities(ifromstep,itostep)
   !
   ientrop = 0
   ike = 0
+  idhdrho = 0
   ipmag = 0
   ibeta = 0
   itotpr = 0
@@ -53,6 +54,11 @@ subroutine calc_quantities(ifromstep,itostep)
      nstartfromcolumn = ncolumns + ncalc
      ncalc = ncalc + 1
      ipr = nstartfromcolumn + 1
+  endif
+  if (ih.ne.0 .and. irho.ne.0) then
+     nstartfromcolumn = ncolumns + ncalc
+     ncalc = ncalc + 1
+     idhdrho = nstartfromcolumn + 1
   endif
   !
   !--specify MHD quantities
@@ -109,6 +115,15 @@ subroutine calc_quantities(ifromstep,itostep)
            dat(1:ntot(i),ientrop,i) = dat(1:ntot(i),ipr,i)/dat(1:ntot(i),irho,i)**gamma(i)
         elsewhere
            dat(1:ntot(i),ientrop,i) = 0.
+        endwhere
+     endif
+     !!--dh/drho
+     if (idhdrho.ne.0) then
+        where (dat(1:ntot(i),irho,i).gt.1.e-10) 
+           dat(1:ntot(i),idhdrho,i) = &
+              -dat(1:ntot(i),ih,i)/(ndim*(dat(1:ntot(i),irho,i)))
+        elsewhere
+           dat(1:ntot(i),idhdrho,i) = 0.
         endwhere
      endif
      !!--radius         
@@ -209,6 +224,7 @@ subroutine calc_quantities(ifromstep,itostep)
   !--set labels for calculated quantities
   !
   if (ientrop.ne.0) label(ientrop) = 'entropy'
+  if (idhdrho.ne.0) label(idhdrho) = 'dh/d\gr'
   if (irad.ne.0) label(irad) = 'radius '
   if (irad2.ne.0) label(irad2) = 'r\d\(0737)'    !!!parallel'
   if (ike.ne.0) label(ike) = 'specific KE'
