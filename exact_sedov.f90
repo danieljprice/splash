@@ -1,31 +1,41 @@
 !---------------------------------------------------------------------------
 ! compute exact solution for Sedov-type point-like energy injection
+! the solution is correct for 3D, I have attempted to fix it in 1D, 2D but
+! not working yet.
 !---------------------------------------------------------------------------
 
 subroutine exact_sedov(time,gam,rhozero,energy,rmax,iplot)
   implicit none
-  integer, parameter :: npts=1000
+  integer, parameter :: npts=1000, ndim = 3
   real, parameter :: pi = 3.1415926536
   integer, intent(in) :: iplot
   real, intent(in) :: time, gam, rhozero, energy
   real, dimension(0:npts) :: rplot, yplot
   real :: rmax, rshock, rhomin, rhomax, rhozero, dr
   real :: rhoshock, ushock, prshock
-  real :: eta_0, energy
+  real :: eta_0, energy, power
   real :: etau,rhou,pru
   real :: eta0,ubar,ubarzero,dubar
   integer :: i,j,ishock
 
-  print*,' Plotting Sedov similarity solution at t = ',time
+  print*,' Plotting 3D Sedov similarity solution at t = ',time
   print*,' rhozero = ',rhozero,' energy = ',energy, ' rmax = ',rmax    
-
-  eta_0  = eta0(gam)
+  if (abs(time).lt.1.e-9) then
+     print*,'nothing at t=0, returning'
+     return
+  endif
+  
+  eta_0  = eta0(gam,ndim)
   print*,' eta0 = ',eta_0
 
+  power = 1./(ndim+2)
   dr = rmax/float(npts-1)
-  rshock = eta_0*(energy*time**2./rhozero)**(0.2)  ! radius of shock
-  ushock = 0.4*eta_0*(rhozero**4/(energy**4*time**3))**(0.2)   ! velocity of shock (r dot)
-  print*,' rshock = ',rshock
+!
+!--calculate radius and velocity of shock from dimensional analysis
+!
+  rshock = eta_0*(energy*time**2./rhozero)**power
+  ushock = 2.*power*eta_0*((energy*time**2./rhozero)**(power-1.))*energy*time/rhozero
+  print*,' rshock = ',rshock, ' ushock = ',ushock
 !
 !--jump conditions to find states behind shock
 !
@@ -58,7 +68,7 @@ subroutine exact_sedov(time,gam,rhozero,energy,rmax,iplot)
      do i=1,ishock
         
         ubar = ubarzero + i*dubar
-        rplot(i) = etau(ubar,gam)*rshock
+        rplot(i) = etau(ubar,gam,ndim)*rshock
 
         select case(iplot)           
         case(1)  ! rho
@@ -99,8 +109,9 @@ end subroutine exact_sedov
 !
 !--eta (dimensionless radius) as a function of u_bar (dimensionless velocity)
 !
-real function etau(u,gamma)
+real function etau(u,gamma,ndim)
   implicit none
+  integer :: ndim
   real :: u,gamma
   real :: gam1,term1,term2,power1,power2
   gam1 = gamma-1.
@@ -109,7 +120,7 @@ real function etau(u,gamma)
   term1 = ((5.+5.*gamma+2.*u-6.*gamma*u)/(7.-gamma))**power1
   term2 = ((2.*gamma*u-gamma-1.)/gam1)**power2
 
-  etau = u**(-0.4)*term1*term2
+  etau = u**(-2./5.)*term1*term2
 end function etau
 
 !
@@ -159,14 +170,14 @@ end function dudlneta
 !
 !--eta_0 as a function of gamma
 !
-real function eta0(gamma)
+real function eta0(gamma,ndim)
   implicit none
   integer, parameter :: ipts = 50000
   real, parameter :: pi = 3.1415926536
-  integer :: i
+  integer :: i, ndim
   real :: gamma
   real :: u0, u, du
-  real :: sum, term, weight
+  real :: sum, term, weight, factor
   real :: pru,rhou,etau,dudlneta
 
 !  if (abs(gamma-5./3.).lt.1.e-3) then
@@ -191,10 +202,18 @@ real function eta0(gamma)
      endif
      if ((i.eq.1).or.(i.eq.ipts)) weight = 1./3.
      u = u0 + i*du
-     term = (pru(u,gamma) + rhou(u,gamma)*u**2)*(etau(u,gamma)**5)/dudlneta(u,gamma)
+     term = (pru(u,gamma) + rhou(u,gamma)*u**2)*(etau(u,gamma,ndim)**(ndim+2))/dudlneta(u,gamma)
      sum = sum + weight*du*term
   enddo
 
-  eta0 = (32.*pi*sum/(25.*(gamma**2 - 1.)))**(-0.2)
+  if (ndim.eq.3) then
+     factor = 4.*pi
+  elseif (ndim.eq.2) then 
+     factor = 2.*pi
+  else
+     factor = 1.
+  endif
+  
+  eta0 = (factor*8.*sum/(25.*(gamma**2 - 1.)))**(-1./REAL(ndim+2))
 
 end function eta0
