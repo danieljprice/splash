@@ -514,6 +514,17 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         print*,' setting timestep jump = ',iadvance
      end select
 
+     if (rotation) then
+        if (anglez.gt.360) anglez = anglez - 360.
+        if (anglez.lt.0) anglez = anglez + 360.
+        if (ndim.gt.2) then
+           if (angley.gt.360) anglez = anglez - 360.
+           if (angley.lt.0) anglez = anglez + 360.
+           if (anglex.gt.360) anglez = anglez - 360.
+           if (anglex.lt.0) anglez = anglez + 360.        
+        endif
+     endif
+
   enddo
   return
 end subroutine interactive_part
