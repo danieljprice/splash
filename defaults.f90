@@ -20,51 +20,31 @@ subroutine defaults_set
   use limits
   use multiplot
   use settings_limits
-  use settings_data
-  use settings_part
-  use settings_page
-  use settings_render
-  use settings_vecplot
-  use settings_xsecrot
-  use settings_powerspec
+  use options_data, only:defaults_set_data
+  use settings_data, only:ndim,icoords
+  use settings_part, only:defaults_set_part,icoordsnew
+  use settings_page, only:defaults_set_page
+  use settings_render, only:defaults_set_render
+  use settings_vecplot, only:defaults_set_vecplot
+  use settings_xsecrot, only:defaults_set_xsecrotate
+  use settings_powerspec, only:defaults_set_powerspec
   use particle_data, only:maxpart,maxstep,maxcol
   implicit none
   integer :: i
-!
-!--data options (most should be set upon call to read_data)
-!
-  numplot=maxplot   ! reset if read from file
-  ncalc = 0         ! number of columns to calculate(e.g. radius)
-  nextra = 0        ! extra plots aside from particle data
-  ipowerspec = 0    ! label position of power spectrum plot
-  ncolumns=maxplot-ncalc        ! number of columns in data file
-  ndim = 3          ! number of coordinate dimensions
-  ndimV = ndim      ! default velocity same dim as coords
-  nstart = 1        ! timestep to start from
-  n_end = 1000      ! timestep to finish on
-  nfreq = 1         ! frequency of timesteps to read
-  icoords = 1       ! co-ordinate system of simulation
+
   icoordsnew = icoords ! co-ordinate system to plot in
-  buffer_data = .false.
-  iUseStepList = .false.
-  do i=1,size(isteplist)
-     isteplist(i) = i
-  enddo
 !
-!--default for interactive mode
+!--set defaults for submenu options
 !
-  interactive = .true.
-!
-!--limits options
-!
-  iadapt = .true.      ! adaptive plot limits
-  iadaptcoords = .false.
-  scalemax = 1.0       ! for rescaling adaptive limits
-  zoom = 1.0           ! for rescaling fixed limits
-  itrans(:) = 0        ! no transformations (log10 etc)
-  itrackpart = 0       ! particle to track (none)
-  xminoffset_track = 0.5 ! offset of limits from tracked particle
-  xmaxoffset_track = 0.5 !
+  call defaults_set_data
+  call defaults_set_limits
+  call defaults_set_page
+  call defaults_set_part
+  call defaults_set_render
+  call defaults_set_xsecrotate
+  call defaults_set_vecplot
+  call defaults_set_exact
+  call defaults_set_powerspec 
 !
 !--limits (could set them to anything but min & max must be different
 !          to enable them to be reset interactively if not set elsewhere)
@@ -72,93 +52,6 @@ subroutine defaults_set
   lim(:,1) = 0.
   lim(:,2) = 1.
   itrans(:) = 0
-!
-!--page options
-!
-  iaxis = 0                ! turns axes off/on
-  nstepsperpage = 1
-  ipagechange = .true.     ! if false plots graphs on top of each other
-  tile = .false.
-  nacross = 1           ! number of plots across page
-  ndown = 1             ! number of plots down page
-  ipapersize = 0        ! paper size option
-  papersizex = 0.0      ! size of x paper (no call to PGPAP if zero)
-  aspectratio = 0.0     ! aspect ratio of paper (no call to PGPAP if zero)
-  hposlegend = 0.75     ! horizontal legend position as fraction of viewport
-  vposlegend = 2.0      ! vertical legend position in character heights
-  hpostitle = 0.5       ! horizontal title position as fraction of viewport
-  vpostitle = 1.0       ! vertical title position in character heights
-  fjusttitle = 0.5      ! justification factor for title
-  colour_fore = ' '
-  colour_back = ' '
-!
-!--particle plot options
-!
-  ncircpart = 0
-  iplotline = .false.     ! plot line joining the particles
-  iplotlinein = .false.   ! " " but on first step only
-  linestylein = 4         ! PGPLOT line style for above
-  iexact = 0              ! exact solution to plot
-  maxexactpts = 1001      ! points in exact solution plot
-  iExactLineColour = 1    ! foreground
-  iExactLineStyle = 1     ! solid
-  ilabelpart = .false.    ! plot particle numbers
-  iplotpartvec = .true.   ! whether to plot particles on vector plot
-  
-  iplotpartoftype(1) = .true. ! whether or not to plot particles of certain types
-  iplotpartoftype(2:maxparttypes) = .false.
-  imarktype = 1              ! PGPLOT marker for all particles
-  imarktype(2) = 4           ! PGPLOT marker for ghost/dark matter particles
-  imarktype(3) = 17          ! PGPLOT marker for sink particles 
-  labeltype(1) = 'gas'
-  labeltype(2) = 'type 2'
-  labeltype(3) = 'type 3'
-  labeltype(4) = 'type 4'
-  labeltype(5) = 'type 5'
-  labeltype(6) = 'type 6'
-  
-!
-!--render options
-!
-  icolours = 2               ! colour scheme to use
-  npix = 100                 ! pixels in x direction for rendering
-  iPlotColourBar = .true.! whether or not to plot the colour bar
-  iplotcont_nomulti = .false. ! plot contours
-  ncontours = 30             ! number of contours to plot
-  ColourBarDisp = 0.5
-  ColourBarWidth = 4.5
-!
-!--cross section/rotation options
-!  
-  xsec_nomulti = .false.    ! take cross section of data / particles
-  xsecpos_nomulti = 0.      ! position of cross section
-  flythru = .false.         ! take series of cross sections through data
-  xseclineX1 = 0.0
-  xseclineX2 = 0.0
-  xseclineY1 = 0.0
-  xseclineY2 = 0.0
-  irotate = .false.
-  irotateaxes = 0
-  anglex = 0.
-  angley = 0.
-  anglez = 0.
-  xorigin = 0.
-  xminrotaxes = 0.
-  xmaxrotaxes = 0.
-!
-!--vector plot options
-!
-  npixvec = 40        ! pixels in x direction on vector plots
-  UseBackgndColorVecplot = .false. ! plot vector plot using black/white
-  iamvec(:) = 0
-  labelvec = ' '
-  iVecplotLegend = .true.
-  hposlegendvec = 0.1
-  vposlegendvec = -1.0
-!
-!--exact solution parameters
-!
-  call defaults_set_exact
 !
 !--multiplot
 !
@@ -188,13 +81,7 @@ subroutine defaults_set
   ipmass = 0   ! particle mass
   ipr = 0      ! pressure
   irad = 0     ! radius
-  !
-  !--power spectrum options
-  !      
-  idisordered = .false.
-  ipowerspecy = ndim+1
-  wavelengthmax = 1.0
-  nfreqspec = 32
+  ipowerspec = 0 ! power spectrum
   !
   !--filenames
   !
@@ -211,6 +98,14 @@ subroutine defaults_set
   do i=1,maxplot
      write(label(i),"(a,i3)") 'column ',i
   enddo
+  labeltype(1) = 'gas'
+  labeltype(2) = 'type 2'
+  labeltype(3) = 'type 3'
+  labeltype(4) = 'type 4'
+  labeltype(5) = 'type 5'
+  labeltype(6) = 'type 6'
+  iamvec(:) = 0
+  labelvec = ' '
   
   return    
 end subroutine defaults_set
@@ -218,7 +113,7 @@ end subroutine defaults_set
 !     writes default options to file (should match defaults_read)
 !
 subroutine defaults_write
- use exact, only:exactparams
+ use exact, only:exactopts,exactparams
  use filenames, only:rootname,nfiles
  use settings_data, only:dataopts
  use settings_part, only:plotopts
@@ -239,6 +134,7 @@ subroutine defaults_write
     write(1,NML=vectoropts)
     write(1,NML=xsecrotopts)
     write(1,NML=powerspecopts)
+    write(1,NML=exactopts)
     write(1,NML=exactparams)
     write(1,NML=multi)
     do i=1,nfiles
@@ -264,7 +160,7 @@ subroutine defaults_read
  use settings_vecplot, only:vectoropts
  use settings_xsecrot, only:xsecrotopts
  use settings_powerspec, only:powerspecopts
- use exact, only:exactparams
+ use exact, only:exactopts,exactparams
  implicit none
  logical :: iexist
  integer :: ierr,i
@@ -300,6 +196,10 @@ subroutine defaults_read
     ierr = 0
     read(1,NML=powerspecopts,end=77,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading power spectrum options from defaults'
+
+    ierr = 0
+    read(1,NML=exactopts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading exact solution options from defaults'    
 
     ierr = 0
     read(1,NML=exactparams,end=77,iostat=ierr)

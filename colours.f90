@@ -184,7 +184,7 @@ subroutine colour_demo
   integer, parameter :: npixx = ncolourmax
   integer, parameter :: npixy = npixx/10
   real, dimension(npixx,npixy) :: sample
-  real :: xmin,xmax,ymin,ymax,dx,dy,trans(6)
+  real :: xmin,xmax,ymin,ymax,dx,trans(6)
   character(len=10) :: string
 
   call pgbegin(0,'/xw',1,1)
@@ -195,7 +195,6 @@ subroutine colour_demo
   ymin = 0.0
   ymax = 0.1
   dx = (xmax-xmin)/float(npixx)
-  dy = (ymax-ymin)/float(npixy)
   trans(1) = xmin
   trans(2) = dx
   trans(3) = 0.0

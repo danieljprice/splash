@@ -1,9 +1,40 @@
+!-------------------------------------------------------------------------
+! Module containing settings and options relating to vector plots
+! includes default values of these options and submenu for changing them
+!-------------------------------------------------------------------------
+module settings_vecplot
+ implicit none
+ integer :: npixvec
+ logical :: UseBackgndColorVecplot, iplotpartvec
+ logical :: iVecplotLegend
+ real :: hposlegendvec,vposlegendvec
+
+ namelist /vectoropts/ npixvec, UseBackgndColorVecplot,iplotpartvec,&
+          iVecplotLegend,hposlegendvec,vposlegendvec
+
+contains
+
+!---------------------------------------------
+! set default values for these options
+!---------------------------------------------
+subroutine defaults_set_vecplot
+  implicit none
+
+  npixvec = 40        ! pixels in x direction on vector plots
+  UseBackgndColorVecplot = .false. ! plot vector plot using black/white
+  iplotpartvec = .true.   ! whether to plot particles on vector plot
+  iVecplotLegend = .true.
+  hposlegendvec = 0.1
+  vposlegendvec = -1.0
+
+  return
+end subroutine defaults_set_vecplot
+
 !----------------------------------------------------------------------
 ! sets options relating to vector plots
 !----------------------------------------------------------------------
-subroutine options_vecplot
+subroutine submenu_vecplot
  use prompting
- use settings_vecplot
  implicit none
  integer :: ians
   
@@ -38,4 +69,6 @@ subroutine options_vecplot
  end select
 
  return
-end subroutine options_vecplot
+end subroutine submenu_vecplot
+
+end module settings_vecplot

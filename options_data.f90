@@ -1,12 +1,62 @@
+!-------------------------------------------------------------------------
+! Module containing settings and options related to the data read
+! includes default values of these options and submenu for changing them
+!-------------------------------------------------------------------------
+module options_data
+ implicit none
+! integer :: numplot,ncalc,ncolumns,nextra
+! integer :: ndataplots
+! integer :: ndim, ndimv 
+! integer :: icoords, iformat, ntypes
+! integer :: nstart,n_end,nfreq
+! integer, dimension(10) :: isteplist
+! logical :: ivegotdata, buffer_data, iUseStepList!
+!
+! !namelist /dataopts/ buffer_data
+ !
+! public :: submenu_data,defaults_set_data
+! private
+
+contains
+
+!---------------------------------------------
+! set default values for these options
+! (most should be set upon call to read_data)
+!---------------------------------------------
+subroutine defaults_set_data
+  use settings_data
+  use params, only:maxplot
+  implicit none
+  integer :: i
+
+  numplot=maxplot   ! reset if read from file
+  ncalc = 0         ! number of columns to calculate(e.g. radius)
+  nextra = 0        ! extra plots aside from particle data
+  ncolumns=maxplot-ncalc        ! number of columns in data file
+  ndim = 3          ! number of coordinate dimensions
+  ndimV = ndim      ! default velocity same dim as coords
+  nstart = 1        ! timestep to start from
+  n_end = 1000      ! timestep to finish on
+  nfreq = 1         ! frequency of timesteps to read
+  icoords = 1       ! co-ordinate system of simulation
+  buffer_data = .false.
+  iUseStepList = .false.
+  do i=1,size(isteplist)
+     isteplist(i) = i
+  enddo
+  
+  return
+end subroutine defaults_set_data
+
 !----------------------------------------------------------------------
 ! sets options relating to current data
 ! (read new data or change timesteps plotted)
 !----------------------------------------------------------------------
-subroutine options_data
+subroutine submenu_data
  use filenames, only:nstepstotal
  use prompting
- use settings_data
  use getdata, only:get_data
+ use settings_data
  implicit none
  integer :: ians, i
  character(len=30) :: fmtstring
@@ -58,4 +108,6 @@ subroutine options_data
  end select
 
  return
-end subroutine options_data
+end subroutine submenu_data
+
+end module options_data

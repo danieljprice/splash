@@ -10,6 +10,10 @@
 module exact
   implicit none
   !
+  !--options used to plot the exact solution line
+  !
+  integer :: maxexactpts, iExactLineColour, iExactLineStyle
+  !
   !--declare all of the parameters required for the various exact solutions
   !
   !--toy star
@@ -36,10 +40,12 @@ module exact
   !
   !--sort these into a namelist for input/output
   !
+  namelist /exactopts/ iexactplotx,iexactploty,filename_exact,maxexactpts, &
+       iExactLineColour,iExactLineStyle
+
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,polyk,sigma0,norder,morder,rhosedov,esedov, &
-       rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact, &
-       iexactplotx,iexactploty,filename_exact
+       rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact
 
 contains
   !----------------------------------------------------------------------
@@ -74,6 +80,10 @@ contains
     ishk = 0
     hfact = 1.2
     filename_exact = ' '
+
+    maxexactpts = 1001      ! points in exact solution plot
+    iExactLineColour = 1    ! foreground
+    iExactLineStyle = 1     ! solid
     
     return
   end subroutine defaults_set_exact
@@ -163,6 +173,20 @@ contains
 
     return
   end subroutine submenu_exact
+  
+  !---------------------------------------------------
+  ! sets options relating to exact solution plotting
+  !---------------------------------------------------
+  subroutine options_exact
+    use prompting
+    implicit none
+    
+    call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
+    call prompt('enter PGPLOT line colour ',iExactLineColour,1,16)
+    call prompt('enter PGPLOT line style  ',iExactLineStyle,1,5)
+  
+    return
+  end subroutine options_exact
 
   !-----------------------------------------------------------------------
   ! read exact solution parameters from files
@@ -293,7 +317,6 @@ contains
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             ndim,ndimV,time,xmin,xmax,ymean,gamma,pmass,npart)
     use labels
-    use settings_part, only:maxexactpts,iExactLineColour,iExactLineStyle
     use prompting
     use exactfromfile, only:exact_fromfile
     use mhdshock, only:exact_mhdshock

@@ -1,10 +1,41 @@
+!-------------------------------------------------------------------------
+! Module containing settings and options related to the plot limits
+! includes default values of these options and submenu for changing them
+!-------------------------------------------------------------------------
+module settings_limits
+ implicit none
+ integer :: itrackpart
+ logical :: iadapt, iadaptcoords
+ real :: scalemax,zoom
+ real, dimension(3) :: xminoffset_track, xmaxoffset_track
+ 
+contains
+
+!---------------------------------------------
+! set default values for these options
+!---------------------------------------------
+subroutine defaults_set_limits
+  use multiplot, only:itrans
+  implicit none
+
+  iadapt = .true.      ! adaptive plot limits
+  iadaptcoords = .false.
+  scalemax = 1.0       ! for rescaling adaptive limits
+  zoom = 1.0           ! for rescaling fixed limits
+  itrans(:) = 0        ! no transformations (log10 etc)
+  itrackpart = 0       ! particle to track (none)
+  xminoffset_track = 0.5 ! offset of limits from tracked particle
+  xmaxoffset_track = 0.5 !
+ 
+  return
+end subroutine defaults_set_limits
+
 !----------------------------------------------------------------------
 ! submenu with options relating to plot limits
 !----------------------------------------------------------------------
-subroutine options_limits
- use settings_data
- use settings_limits
- use settings_page, only:iadapt,iadaptcoords,nstepsperpage
+subroutine submenu_limits
+ use settings_data, only:nstart,n_end,ndataplots,numplot,ndim,ivegotdata
+ !!use settings_page, only:nstepsperpage
  use multiplot, only:itrans
  use prompting
  use limits
@@ -46,9 +77,9 @@ subroutine options_limits
     call prompt('Use adaptive plot limits?',iadapt)
     call prompt('Use adaptive plot limits on coordinate axes?',iadaptcoords)
     print*,'adaptive plot limits = ',iadapt,' on coords = ',iadaptcoords
-    if (nstepsperpage.gt.1 .and. (iadapt .or. iadaptcoords)) then
-       print*,'WARNING: adaptive limits and multiple steps per page don''t mix'
-    endif
+    !if (nstepsperpage.gt.1 .and. (iadapt .or. iadaptcoords)) then
+    !   print*,'WARNING: adaptive limits and multiple steps per page don''t mix'
+    !endif
 !------------------------------------------------------------------------
  case(2)
     ipick = 1
@@ -124,4 +155,6 @@ subroutine options_limits
   end select
  
  return
-end subroutine options_limits
+end subroutine submenu_limits
+
+end module settings_limits

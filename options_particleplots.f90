@@ -1,11 +1,52 @@
-!!
-!! sub-menu with utilities relating to particle plots
-!!
-subroutine options_particleplots
-  use exact, only:submenu_exact
+!-------------------------------------------------------------------------
+! Module containing settings and options relating to particle plots
+! includes default values of these options and submenu for changing them
+!-------------------------------------------------------------------------
+module settings_part
+ use params
+ implicit none
+ integer, dimension(maxparttypes) :: imarktype
+ integer :: ncircpart, icoordsnew
+ integer, dimension(:), allocatable :: icircpart
+ integer :: nc
+ integer :: linestylein, iexact
+ logical, dimension(maxparttypes) :: iplotpartoftype
+ logical :: iplotline,iplotlinein,ilabelpart
+
+ namelist /plotopts/ iplotline,iplotlinein,linestylein,  &
+   imarktype,iplotpartoftype,iexact,icoordsnew
+
+contains
+
+!---------------------------------------------
+! set default values for these options
+!---------------------------------------------
+subroutine defaults_set_part
+  implicit none
+
+  ncircpart = 0
+  iplotline = .false.     ! plot line joining the particles
+  iplotlinein = .false.   ! " " but on first step only
+  linestylein = 4         ! PGPLOT line style for above
+  iexact = 0              ! exact solution to plot
+  ilabelpart = .false.    ! plot particle numbers
+  
+  iplotpartoftype(1) = .true. ! whether or not to plot particles of certain types
+  iplotpartoftype(2:maxparttypes) = .false.
+  imarktype = 1              ! PGPLOT marker for all particles
+  imarktype(2) = 4           ! PGPLOT marker for ghost/dark matter particles
+  imarktype(3) = 17          ! PGPLOT marker for sink particles 
+
+  return
+end subroutine defaults_set_part
+
+!----------------------------------------------------------------------
+! submenu with options relating to particle plots
+!----------------------------------------------------------------------
+subroutine submenu_particleplots
+  use exact, only:options_exact,submenu_exact
   use labels
   use settings_data, only:icoords,ntypes
-  use settings_part
   use particle_data, only:npartoftype
   use prompting
   use geometry, only:maxcoordsys,labelcoordsys
@@ -92,9 +133,7 @@ subroutine options_particleplots
      return
 !------------------------------------------------------------------------
   case(8)
-     call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
-     call prompt('enter PGPLOT line colour ',iExactLineColour,1,16)
-     call prompt('enter PGPLOT line style  ',iExactLineStyle,1,5)
+     call options_exact
      return     
 !------------------------------------------------------------------------
   case default
@@ -103,4 +142,6 @@ subroutine options_particleplots
   end select
 
   return      
-end subroutine options_particleplots
+end subroutine submenu_particleplots
+
+end module settings_part

@@ -1,9 +1,37 @@
+!-------------------------------------------------------------------------
+! Module containing settings and options relating to power spectrum plots
+! includes default values of these options and submenu for changing them
+!-------------------------------------------------------------------------
+module settings_powerspec
+ implicit none
+ integer :: ipowerspecy, nfreqspec
+ logical :: idisordered
+ real :: wavelengthmax
+ 
+ namelist /powerspecopts/ ipowerspecy,idisordered,wavelengthmax,nfreqspec
+
+contains
+
+!---------------------------------------------
+! set default values for these options
+!---------------------------------------------
+subroutine defaults_set_powerspec
+  use settings_data, only:ndim
+  implicit none
+
+  idisordered = .false.
+  ipowerspecy = ndim+1
+  wavelengthmax = 1.0
+  nfreqspec = 32
+
+  return
+end subroutine defaults_set_powerspec
+
 !----------------------------------------------------------------------
 ! sets options and parameters for power spectrum calculation/plotting
 !----------------------------------------------------------------------
 subroutine options_powerspec
  use settings_data ! for ndim, numplot
- use settings_powerspec
  use prompting
  implicit none
 
@@ -17,3 +45,5 @@ subroutine options_powerspec
 
  return
 end subroutine options_powerspec
+
+end module settings_powerspec

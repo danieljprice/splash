@@ -1,11 +1,43 @@
+!-------------------------------------------------------------------------
+! Module containing settings and options relating to renderings
+! includes default values of these options and submenu for changing them
+!-------------------------------------------------------------------------
+module settings_render
+ implicit none
+ integer :: ncontours,npix,icolours
+ logical :: iplotcont_nomulti
+ logical :: iPlotColourBar,icolour_particles
+ real :: ColourBarDisp,ColourBarWidth
+
+ namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
+   iPlotColourBar,icolour_particles,ColourBarDisp,ColourBarWidth
+
+contains
+
+!---------------------------------------------
+! set default values for these options
+!---------------------------------------------
+subroutine defaults_set_render
+  implicit none
+
+  icolours = 2               ! colour scheme to use
+  npix = 100                 ! pixels in x direction for rendering
+  iPlotColourBar = .true.! whether or not to plot the colour bar
+  iplotcont_nomulti = .false. ! plot contours
+  icolour_particles = .false. ! colour particles instead of using pixels
+  ncontours = 30             ! number of contours to plot
+  ColourBarDisp = 0.5
+  ColourBarWidth = 4.5
+
+  return
+end subroutine defaults_set_render
+
 !-----------------------------------------------------------------------------
 ! options for rendering / vector plots
 !-----------------------------------------------------------------------------
-
-subroutine options_render
+subroutine submenu_render
   use colours
   use prompting
-  use settings_render
   implicit none
   integer :: ians,i
 !
@@ -76,4 +108,6 @@ subroutine options_render
   end select
     
  return
-end subroutine options_render
+end subroutine submenu_render
+
+end module settings_render

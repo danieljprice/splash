@@ -1,9 +1,53 @@
+!-------------------------------------------------------------------------
+! Module containing page settings and options
+! includes default values of these options and submenu for changing them
+!-------------------------------------------------------------------------
+module settings_page
+ use settings_limits, only:iadapt,iadaptcoords
+ implicit none
+ integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage
+ logical :: iColourEachStep,tile,interactive,ipagechange
+ real :: papersizex,aspectratio
+ real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
+ character(len=20) :: colour_fore, colour_back
+
+ namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt, &
+   nstepsperpage,iColourEachStep,tile,ipapersize,papersizex,aspectratio, &
+   hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle  
+
+contains
+
+!---------------------------------------------
+! set default values for these options
+!---------------------------------------------
+subroutine defaults_set_page
+  implicit none
+
+  interactive = .true.     ! default for interactive mode
+  iaxis = 0                ! turns axes off/on
+  nstepsperpage = 1
+  tile = .false.
+  nacross = 1           ! number of plots across page
+  ndown = 1             ! number of plots down page
+  ipapersize = 0        ! paper size option
+  papersizex = 0.0      ! size of x paper (no call to PGPAP if zero)
+  aspectratio = 0.0     ! aspect ratio of paper (no call to PGPAP if zero)
+  hposlegend = 0.75     ! horizontal legend position as fraction of viewport
+  vposlegend = 2.0      ! vertical legend position in character heights
+  hpostitle = 0.5       ! horizontal title position as fraction of viewport
+  vpostitle = 1.0       ! vertical title position in character heights
+  fjusttitle = 0.5      ! justification factor for title
+  colour_fore = ' '
+  colour_back = ' '
+
+  return
+end subroutine defaults_set_page
+
 !----------------------------------------------------------------------
 ! submenu with options relating to page setup
 !----------------------------------------------------------------------
-subroutine options_page
+subroutine submenu_page
  use settings_data, only:numplot
- use settings_page
  use prompting
  implicit none
  integer :: iaction,ierr,ntries
@@ -147,4 +191,6 @@ subroutine options_page
   end select
  
  return
-end subroutine options_page
+end subroutine submenu_page
+
+end module settings_page

@@ -42,6 +42,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use settings_render, only:icolours,iplotcont_nomulti
   use settings_vecplot, only:iplotpartvec
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec
+  use settings_powerspec, only:options_powerspec
   use particle_data, only:npartoftype
   implicit none
   integer, intent(in) :: ipicky,ipickx,irender

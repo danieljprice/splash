@@ -24,7 +24,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
   real, dimension(:), intent(inout) :: xplot
   real, dimension(size(xplot)), intent(out) :: yplot
 
-  integer :: i,its,nsteps
+  integer :: i,nsteps
   real :: const ! parameter for toy star
   real :: Hprev, Cprev, Aprev, Htemp, Ctemp, Atemp, H, C, A
   real :: radstar,dx,dt,tnow
@@ -110,7 +110,6 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
      !  solve for H, C and A given initial conditions on v, rho and the time.
      !
      nsteps = 1000*(int(time) + 1)
-     its = 10
 
      Hprev = H0
      Cprev = C0

@@ -15,7 +15,7 @@ subroutine exact_wave(time,ampl,period,lambda,x0,ymean,xplot,yplot,ierr)
   real, intent(in), dimension(:) :: xplot
   real, intent(out), dimension(size(xplot)) :: yplot
   integer, intent(out) :: ierr
-  real :: omega, dx
+  real :: omega
 
   print*,'plotting sine wave... mean = ',ymean
   print*,' lambda = ',lambda,' ampl = ',ampl,' period = ',period

@@ -4,10 +4,15 @@
 subroutine menu
   use filenames
   use labels
-  use settings_data
-  use settings_part, only:iexact,icoordsnew
-  use settings_page, only:interactive
-  use settings_vecplot, only:iplotpartvec
+  use options_data, only:submenu_data
+  use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
+                     icoords,buffer_data,ncolumns
+  use settings_limits, only:submenu_limits
+  use settings_part, only:submenu_particleplots,iexact,icoordsnew
+  use settings_page, only:submenu_page,interactive
+  use settings_render, only:submenu_render
+  use settings_vecplot, only:submenu_vecplot,iplotpartvec
+  use settings_xsecrot, only:submenu_xsecrotate
   use multiplot
   use prompting
   use transforms
@@ -25,6 +30,7 @@ subroutine menu
 
   irender = 0
   ivecplot = 0
+  ipowerspec = 0
   ipickx = 1
   ipicky = 1
   ishowopts = .false.
@@ -217,29 +223,29 @@ subroutine menu
         call options_multiplot
 !------------------------------------------------------------------------
      case('d','D')
-        call options_data
+        call submenu_data
 !------------------------------------------------------------------------
      case('i','I')
         interactive = .not.interactive
         print*,' Interactive mode = ',interactive
 !------------------------------------------------------------------------
      case('p','P')
-        call options_page
+        call submenu_page
 !------------------------------------------------------------------------
      case('o','O')
-        call options_particleplots
+        call submenu_particleplots
 !------------------------------------------------------------------------
      case('r','R')
-        call options_render
+        call submenu_render
 !------------------------------------------------------------------------
      case('v','V')
-        call options_vecplot
+        call submenu_vecplot
 !------------------------------------------------------------------------
      case('x','X')
-        call options_xsecrotate
+        call submenu_xsecrotate
 !------------------------------------------------------------------------
      case('l','L')
-        call options_limits
+        call submenu_limits
 !------------------------------------------------------------------------
      case('s','S')
         call defaults_write

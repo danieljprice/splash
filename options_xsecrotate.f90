@@ -1,12 +1,55 @@
+!-------------------------------------------------------------------------
+! Module containing settings and options relating to vector plots
+! includes default values of these options and submenu for changing them
+!-------------------------------------------------------------------------
+module settings_xsecrot
+ implicit none
+ integer :: nxsec,irotateaxes
+ logical :: xsec_nomulti, irotate, flythru
+ real :: anglex, angley, anglez
+ real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
+ real, dimension(3) :: xorigin,xminrotaxes,xmaxrotaxes
+
+ namelist /xsecrotopts/ xsec_nomulti,xsecpos_nomulti,flythru, &
+          xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
+          irotate,irotateaxes,anglex, angley, anglez, &
+          xminrotaxes,xmaxrotaxes
+
+contains
+
+!---------------------------------------------
+! set default values for these options
+!---------------------------------------------
+subroutine defaults_set_xsecrotate
+  implicit none
+
+  xsec_nomulti = .false.    ! take cross section of data / particles
+  xsecpos_nomulti = 0.      ! position of cross section
+  flythru = .false.         ! take series of cross sections through data
+  xseclineX1 = 0.0
+  xseclineX2 = 0.0
+  xseclineY1 = 0.0
+  xseclineY2 = 0.0
+  irotate = .false.
+  irotateaxes = 0
+  anglex = 0.
+  angley = 0.
+  anglez = 0.
+  xorigin = 0.
+  xminrotaxes = 0.
+  xmaxrotaxes = 0.
+
+  return
+end subroutine defaults_set_xsecrotate
+
 !----------------------------------------------------------------------
 ! sets options relating to cross sectioning / rotation
 !----------------------------------------------------------------------
-subroutine options_xsecrotate
+subroutine submenu_xsecrotate
  use labels
  use limits, only:lim
  use prompting
  use settings_data, only:ndim
- use settings_xsecrot
  implicit none
  integer :: ians,i
  character(len=1) :: char
@@ -113,4 +156,6 @@ subroutine options_xsecrotate
  end select
 
  return
-end subroutine options_xsecrotate
+end subroutine submenu_xsecrotate
+
+end module settings_xsecrot

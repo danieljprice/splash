@@ -49,7 +49,7 @@ end subroutine set_limits
 !
 subroutine save_limits
   use filenames
-  use settings_data
+  use settings_data, only:numplot
   implicit none
   integer :: i
   character(len=26) :: limitsfile
@@ -80,7 +80,7 @@ end subroutine save_limits
 subroutine read_limits(ierr)
   use filenames
   use labels
-  use settings_data
+  use settings_data, only:numplot
   implicit none
   integer :: i,ierr
   character(len=26) :: limitsfile
