@@ -23,7 +23,8 @@ subroutine defaults_set
   nstart = 1	! timestep to start from
   n_end = 1000	! timestep to finish on
   nfreq = 1		! frequency of timesteps to read
-  icoords = 0	! co-ordinate system of simulation
+  icoords = 1	! co-ordinate system of simulation
+  icoordsnew = icoords ! co-ordinate system to plot in
 
   iaxis = 0	! turns axes off/on
   iadapt = .true.	! adaptive plot limits
@@ -74,9 +75,19 @@ subroutine defaults_set
   backgnd_vec_nomulti = .false. ! plot vector plot using black/white
 
   irenderplot = 0		! this is just so it is set to something
-  labelcoord(1) = 'x'
-  labelcoord(2) = 'y'
-  labelcoord(3) = 'z'
+!
+!--set coordinate labels for all coordinate systems
+!
+  labelcoord(1,1) = 'x'
+  labelcoord(2,1) = 'y'
+  labelcoord(3,1) = 'z'
+  labelcoord(1,2) = 'r'
+  labelcoord(2,2) = '\gphi'
+  labelcoord(3,2) = 'z'
+  labelcoord(1,3) = 'r'
+  labelcoord(2,3) = '\gtheta'
+  labelcoord(3,3) = '\gphi'
+  
 !
 !--exact solution parameters
 !

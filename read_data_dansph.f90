@@ -198,9 +198,9 @@ subroutine read_data(rootname,istart,nfilesteps)
   ih = ndim + ndimV + 4		!  smoothing length
   ipmass = ndim + ndimV + 5	!  particle mass      
 
-  label(ix(1:ndim)) = labelcoord(1:ndim)
+  label(ix(1:ndim)) = labelcoord(1:ndim,1)
   do i=1,ndimV
-     label(ivx+i-1) = 'v\d'//labelcoord(i)
+     label(ivx+i-1) = 'v\d'//labelcoord(i,1)
   enddo
   label(irho) = '\gr'
   label(ipr) = 'P      '
@@ -215,12 +215,12 @@ subroutine read_data(rootname,istart,nfilesteps)
      iBfirst = ndim + ndimV+8+1	! location of Bx
      iBlast = ndim + ndimV+8+ndimV	! location of Bz      
      do i=1,ndimV
-        label(ndim + ndimV+8+i) = 'B\d'//labelcoord(i) !' (x10\u-3\d)'	!//'/rho'
+        label(ndim + ndimV+8+i) = 'B\d'//labelcoord(i,1) !' (x10\u-3\d)'	!//'/rho'
      enddo
      idivB = ndim+ndimV+ndimV+9	 
      label(idivB) = 'div B'
      do i=1,ndimV
-        label(ndim + ndimV+ndimV+9 + i) = 'J'//labelcoord(i)
+        label(ndim + ndimV+ndimV+9 + i) = 'J'//labelcoord(i,1)
      enddo
      iJfirst = ndim+ndimV+ndimV+9+1
   else	 

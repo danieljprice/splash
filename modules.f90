@@ -39,7 +39,7 @@ module labels
  use params
  implicit none
  character(len=20), dimension(maxplot+2) :: label
- character(len=1), dimension(3) :: labelcoord
+ character(len=7), dimension(3,3) :: labelcoord
  integer, dimension(3) :: ix
  integer :: ivx,ivlast,irho,iutherm,ipr,ih,irad,ibfirst,iblast
  integer :: ipmass
@@ -70,7 +70,7 @@ module settings
  integer :: linestylein, iexact
  integer :: irenderplot
  integer :: ncolours,nstart,n_end,nfreq
- integer :: icoords,iaxis
+ integer :: icoords,icoordsnew,iaxis
  integer :: ncircpart, itrackpart
  integer, dimension(10) :: icircpart
  
@@ -113,7 +113,7 @@ module settings
    iplotcont_nomulti,ncontours_nomulti,                 &
    icolours,iplotghost,iplotsink,                       &
    ipapersize,papersizex,aspectratio,                   &
-   ipowerspecy,idisordered,wavelengthmax,nfreqspec,icoords, &
+   ipowerspecy,idisordered,wavelengthmax,nfreqspec,icoordsnew, &
    ncircpart,icircpart
      
 end module settings

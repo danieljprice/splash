@@ -31,6 +31,7 @@ subroutine main(ipicky,ipickx,irender)
   real, dimension(:), allocatable :: datpix1D, xgrid
   real, dimension(:,:), allocatable :: datpix,vecpixx,vecpixy
   real, dimension(:,:,:), allocatable :: datpix3D
+  real, dimension(ndim) :: xcoords
   real :: xmin,xmax,ymin,ymax,zmin,zmax,ymean
   real :: vecmax,rendermin,rendermax
   real :: xsecmin,xsecmax,dxsec,xsecpos
@@ -241,19 +242,46 @@ subroutine main(ipicky,ipickx,irender)
         endif
         !--------------------------------------------------------------
         !  copy from main dat array into xplot, yplot 
-        !  apply transformations (log, 1/x, etc) if appropriate
-	!  also set plot limits
+	!  also set labels and plot limits
         !--------------------------------------------------------------
         if (iploty.le.ndataplots .and. iplotx.le.ndataplots) then
-           call transform(dat(iplotx,:,i),xplot,itrans(iplotx),maxpart)
-           call transform(dat(iploty,:,i),yplot,itrans(iploty),maxpart)
-           !--set axis labels, applying transformation if appropriate
-           labelx = transform_label(label(iplotx),itrans(iplotx))
-           labely = transform_label(label(iploty),itrans(iploty))
-           !--set x,y plot limits, applying transformation if appropriate
-           call transform_limits(lim(iplotx,1),lim(iplotx,2),xmin,xmax,itrans(iplotx))
-           call transform_limits(lim(iploty,1),lim(iploty,2),ymin,ymax,itrans(iploty))
-
+           xplot = dat(iplotx,:,i)
+           yplot = dat(iploty,:,i)
+           labelx = label(iplotx)
+           labely = label(iploty)
+           xmin = lim(iplotx,1)
+           xmax = lim(iplotx,2)
+           ymin = lim(iploty,1)
+           ymax = lim(iploty,2)
+           
+           !--change coordinate system if relevant
+           if (icoordsnew.ne.icoords) then
+              !--do this if one is a coord but not if rendering
+              if ((iplotx.le.ndim .or. iploty.le.ndim) &
+                   .and..not.(iplotx.le.ndim.and.iploty.le.ndim &
+                   .and.irenderplot.gt.ndim)) then
+                 print*,'changing to new coordinate system',icoords,icoordsnew
+                 do j=1,ntotplot(i)
+                    call coord_transform(dat(ix(:),j,i),ndim,icoords, &
+                                         xcoords(:),ndim,icoordsnew)
+                    if (iplotx.le.ndim) xplot(j) = xcoords(iplotx)
+                    if (iploty.le.ndim) yplot(j) = xcoords(iploty)
+                 enddo
+              endif
+           endif
+           !--apply transformations (log, 1/x etc) if appropriate
+           !  also change labels and limits appropriately
+           if (itrans(iplotx).ne.0) then
+              call transform(xplot,xplot,itrans(iplotx),maxpart)
+              labelx = transform_label(labelx,itrans(iplotx))
+              call transform_limits(xmin,xmax,xmin,xmax,itrans(iplotx))
+           endif
+           if (itrans(iploty).ne.0) then
+              call transform(yplot,yplot,itrans(iploty),maxpart)
+              labely = transform_label(labely,itrans(iploty))
+              call transform_limits(ymin,ymax,ymin,ymax,itrans(iploty))
+           endif
+           
            !--write username, date on plot
            !         if (nacross.le.2.and.ndown.le.2) call pgiden
 
@@ -266,14 +294,16 @@ subroutine main(ipicky,ipickx,irender)
 	   endif
 
            !!-reset co-ordinate plot limits if particle tracking           
-	   if (itrackpart.gt.0 .and. iplotx.le.ndim) then
-	      xmin = xplot(itrackpart) - xminoffset_track(iplotx)
-	      xmax = xplot(itrackpart) + xmaxoffset_track(iplotx)	   
-	   endif
-	   if (itrackpart.gt.0 .and. iploty.le.ndim) then
-	      ymin = yplot(itrackpart) - xminoffset_track(iploty)
-	      ymax = yplot(itrackpart) + xmaxoffset_track(iploty)	   
-	   endif
+	   if (itrackpart.gt.0) then
+              if (iplotx.le.ndim) then
+                 xmin = xplot(itrackpart) - xminoffset_track(iplotx)
+                 xmax = xplot(itrackpart) + xmaxoffset_track(iplotx)
+              endif
+              if (iploty.le.ndim) then
+                 ymin = yplot(itrackpart) - xminoffset_track(iploty)
+                 ymax = yplot(itrackpart) + xmaxoffset_track(iploty)	   
+              endif
+           endif
 
         endif
 

@@ -69,7 +69,8 @@ program supersphplot
 !     this version for both ndspmhd and matthew bate's code 2003-2004
 !     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
 !
-!      10/06/06 - exact solution for shock tubes, also from file + added read_exactparams
+!      19/06/04 - can transform particle coords to new coordinate systems
+!      10/06/04 - exact solution for shock tubes, also from file + added read_exactparams
 !      02/06/04 - interactive plotting steps forward/backwards, replots etc
 !      01/06/04 - saves/reads limits to/from limits file
 !                 also revamped menu - uses characters for options

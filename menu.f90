@@ -17,6 +17,10 @@ subroutine menu(quit)
   logical :: iansx, iansy, ichange
 
   quit = .false.
+!--set coordinate and vector labels (depends on coordinate system)
+  if (icoords.ne.0) then
+     label(1:ndim) = labelcoord(1:ndim,icoordsnew)
+  endif
 
 !---------------------------------------------------------------------------
 !  print menu
