@@ -172,15 +172,18 @@ contains
     implicit none
     integer, intent(in) :: iexact
     integer, intent(out) :: ierr
-    integer :: ios
+    integer :: ios,idash
     character(LEN=LEN(rootname(1))+6) :: filename
+
+    idash = index(rootname(1),'_')
+    if (idash.eq.0) idash = len_trim(rootname(1))+1
 
     select case(iexact)
     case(1)
        !
        !--shock tube parameters from .shk file
        !
-       filename = trim(rootname(1))//'.shk'
+       filename = trim(rootname(1)(1:idash-1))//'.shk'
        open(UNIT=19,ERR=7701,FILE=filename,STATUS='old')
        read(19,*,ERR=7777) rho_L, rho_R
        read(19,*,ERR=7777) pr_L, pr_R
@@ -203,7 +206,7 @@ contains
        !
        !--read toy star file for toy star solution
        !
-       filename = trim(rootname(1))//'.tstar'
+       filename = trim(rootname(1)(1:idash-1))//'.tstar'
        open(unit=20,ERR=8801,FILE=filename,STATUS='old')
        read(20,*,ERR=8888) Htstar,Ctstar,Atstar
        read(20,*,ERR=8888) sigma0
