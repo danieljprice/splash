@@ -9,11 +9,11 @@
 !     where _b is the quantity at the neighbouring particle b and
 !     W is the smoothing kernel, for which we use the usual cubic spline
 !
-!     this program is *pretty slow* for any reasonable number 
-!     of particles/pixels - only efficient if you want *lots* of 
-!     cross sections through the same data
+!     this version is written for slices through a rectangular volume, ie.
+!     assumes a uniform pixel size in x,y, whilst the number of pixels
+!     in the z direction can be set to the number of cross-section slices.
 !
-!     Input: particle coordinates  : x,y   (npart)
+!     Input: particle coordinates  : x,y,z (npart)
 !            particle masses       : pmass (npart)
 !            density on particles  : rho   (npart) - must be computed separately
 !            smoothing lengths     : hh    (npart) - could be computed from density
@@ -25,13 +25,14 @@
 !--------------------------------------------------------------------------
 
       SUBROUTINE interpolate3D(x,y,z,pmass,rho,hh,dat,npart,
-     &    xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidth)
+     &    xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,
+     &    pixwidth,zpixwidth)
       
       IMPLICIT NONE
       REAL, PARAMETER :: pi = 3.1415926536      
       INTEGER, INTENT(IN) :: npart,npixx,npixy,npixz
       REAL, INTENT(IN), DIMENSION(npart) :: x,y,z,pmass,rho,hh,dat
-      REAL, INTENT(IN) :: xmin,ymin,zmin,pixwidth
+      REAL, INTENT(IN) :: xmin,ymin,zmin,pixwidth,zpixwidth
       REAL, INTENT(OUT), DIMENSION(npixx,npixy,npixz) :: datsmooth
 
       INTEGER :: i,j,ipix,jpix,kpix
@@ -61,14 +62,17 @@
 !               
 	 ipixmin = INT((x(i) - radkern - xmin)/pixwidth)
 	 jpixmin = INT((y(i) - radkern - ymin)/pixwidth)
-	 kpixmin = INT((z(i) - radkern - zmin)/pixwidth)
+	 kpixmin = INT((z(i) - radkern - zmin)/zpixwidth)
 	 ipixmax = INT((x(i) + radkern - xmin)/pixwidth)
 	 jpixmax = INT((y(i) + radkern - ymin)/pixwidth)
-	 kpixmax = INT((z(i) + radkern - zmin)/pixwidth)
+	 kpixmax = INT((z(i) + radkern - zmin)/zpixwidth)
 	 
-!	 PRINT*,'particle ',i,' x, y = ',x(i),y(i),dat(i),rho(i),hi
-!	 PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
-!	 PRINT*,'xmin,ymin = ',xmin,ymin
+!	 PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
+!	 PRINT*,'z slices = ',kpixmin,zmin + kpixmin*zpixwidth, !- 0.5*zpixwidth,
+!     &                 kpixmax,zmin + kpixmax*zpixwidth		!- 0.5*zpixwidth
+!        PRINT*,'should cover z = ',z(i)-radkern,' to ',z(i)+radkern	 
+!	 PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
+!	 PRINT*,'xmin,ymin = ',xmin,ymin,zmin
 
          IF (ipixmin.LT.1) ipixmin = 1	! make sure they only contribute
 	 IF (jpixmin.LT.1) jpixmin = 1  ! to pixels in the image
@@ -80,14 +84,13 @@
 !--loop over pixels, adding the contribution from this particle
 !
          DO kpix = kpixmin,kpixmax
+            zpix = zmin + (kpix)*zpixwidth 	!- 0.5*zpixwidth
+ 	    dz = zpix - z(i)
 	    DO jpix = jpixmin,jpixmax
+	       ypix = ymin + (jpix)*pixwidth 	!- 0.5*pixwidth
+	       dy = ypix - y(i)  
 	       DO ipix = ipixmin,ipixmax
-      
-                  zpix = zmin + (kpix)*pixwidth - 0.5*pixwidth
-		  ypix = ymin + (jpix)*pixwidth - 0.5*pixwidth
-		  xpix = xmin + (ipix)*pixwidth - 0.5*pixwidth
- 		  dz = zpix - z(i)
-		  dy = ypix - y(i)
+		  xpix = xmin + (ipix)*pixwidth 	!- 0.5*pixwidth
 		  dx = xpix - x(i)
 		  rab = SQRT(dx**2 + dy**2 + dz**2)
 		  qq = rab*hi1
