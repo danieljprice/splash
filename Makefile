@@ -41,14 +41,17 @@ LDFLAGS = -lpgplot -lX11 -lF77
 # define the implicit rule to make a .o file from a .f90 file
 
 %.o : %.f90
-	$(F90C) -c $(F90FLAGS) $(FPPFLAGS) $< -o $@
+	$(F90C) $(F90FLAGS) -c $< -o $@
 
 DANSPH = read_data_dansph.f90 
 MRBSPH = read_data_mbate_dump.f90 ## read_data_mbate.f90
 GADGETSPH = read_data_gadget.f90
 
-SOURCES= modules.f90 transform.f90 prompting.f90 \
-	 supersphplot.f90 main.f90 \
+# put modules separately as these must be compiled before the others
+MODULES= modules.f90 transform.f90 prompting.f90
+
+# these are the normal `external' subroutines
+SOURCES= supersphplot.f90 main.f90 \
          allocate.f90 calc_quantities.f90 \
 	 colour_demo.f colour_set.f90 \
 	 danpgsch.f danpgtile.f danpgwedg.f \
@@ -82,7 +85,7 @@ SOURCES= modules.f90 transform.f90 prompting.f90 \
 	 titles_read.f90 \
 	 vectorplot.f90 \
 
-SOURCESALL = $(SOURCES:.f90=.o)
+SOURCESALL = $(MODULES:.f90=.o) $(SOURCES:.f90=.o)
 
 OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f90=.o) coord_transform.o
 OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f90=.o) coord_transform.o
@@ -105,10 +108,10 @@ coord_transform.o:
 ## other crap
 
 tar:
-	tar cf supersphplot.tar Makefile $(SOURCES) read_data*.f
+	tar cf supersphplot.tar Makefile $(MODULES) $(SOURCES) read_data*.f90
 
 targz:
-	tar cf supersphplot.tar Makefile $(SOURCES) read_data*.f
+	tar cf supersphplot.tar Makefile $(MODULES) $(SOURCES) read_data*.f90
 	gzip supersphplot.tar
 
 clean:
