@@ -2,6 +2,9 @@
 !
 !  memory allocation/reallocation for main data arrays
 !
+!  the global parameters maxpart, maxstep and maxcol are set to 
+!  the dimensions allocated
+!
 !----------------------------------------------------------------------------
 
 subroutine alloc(npartin,nstep,ncolumns)
@@ -66,6 +69,9 @@ subroutine alloc(npartin,nstep,ncolumns)
 !
 !--save array sizes
 !
+  if (npartin.lt.maxpart) print*,' WARNING: # particles < previous in allocate'
+  if (nstep.lt.maxstep) print*,' WARNING: # steps < previous in allocate'
+  if (ncolumns.lt.maxcol) print*,' WARNING: # columns < previous in allocate'
   maxpartold = min(maxpart,npartin)
   maxstepold = min(maxstep,nstep)
   maxcolold = min(maxcol,ncolumns)

@@ -100,6 +100,9 @@ subroutine read_data(rootname,istart,nfilesteps)
 
   do i=istart,nfilesteps
      reallocate = .false.
+     npart_max = maxpart
+     nstep_max = maxstep
+     ncol_max = maxcol
      !
      !--read header line for this timestep
      !
@@ -126,7 +129,7 @@ subroutine read_data(rootname,istart,nfilesteps)
         reallocate = .true.
 	npart_max = ntot(i) + 10
      endif
-     if (i.eq.nstep_max) then
+     if (i.eq.maxstep) then
         nstep_max = i + max(10,INT(0.1*nstep_max))
         reallocate = .true.
      endif
