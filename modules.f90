@@ -114,6 +114,7 @@ module settings
  logical :: xsec_nomulti, irotate
  real :: anglerot, angletilt
  real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
+ real, dimension(3) :: xorigin
 !
 !--power spectrum options
 !

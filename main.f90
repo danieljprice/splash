@@ -355,7 +355,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	       angles(2) = angletilt*pi/180.
                print*,'rotating particles',irotate,angles
                do j=1,ntotplot(i)
-                  call rotate(angles(1:ndim-1),dat(ix(1:ndim),j,i),xcoords(:),ndim)
+                  call rotate(angles(1:ndim-1),dat(ix(1:ndim),j,i), &
+		              xcoords(:),xorigin(1:ndim),ndim)
                   xplot(j) = xcoords(iplotx)
                   yplot(j) = xcoords(iploty)
                enddo

@@ -86,7 +86,9 @@ subroutine defaults_set
   iPlotColourBar = .true.! whether or not to plot the colour bar
   iplotcont_nomulti = .true. ! plot contours
   ncontours = 30             ! number of contours to plot
-  
+!
+!--cross section/rotation options
+!  
   xsec_nomulti = .false. ! take cross section of data / particles
   xsecpos_nomulti = 0.   ! position of cross section
   flythru = .false.	 ! take series of cross sections through data
@@ -94,6 +96,10 @@ subroutine defaults_set
   xseclineX2 = 0.0
   xseclineY1 = 0.0
   xseclineY2 = 0.0
+  irotate = .false.
+  anglerot = 45.
+  angletilt = 30.
+  xorigin = 0.
 !
 !--vector plot options
 !

@@ -2,21 +2,24 @@
 ! sets options relating to cross sectioning / rotation
 !----------------------------------------------------------------------
 subroutine options_xsecrotate
+ use labels
  use limits
  use prompting
  use settings
  implicit none
- integer :: ians
+ integer :: ians,i
  character(len=1) :: char
  
  if (ndim.eq.1) print*,' WARNING: none of these options have any effect in 1D'
+ ians = 0
  print 10,xsec_nomulti,xsecpos_nomulti,irotate
 10  format(' 0) exit ',/, 		&
            ' 1) toggle cross section/projection           (',L1,' )',/, &
            ' 2) manually set cross section position       (',f5.2,' )',/, &
 	   ' 3) interactively set cross section position  ( 2D only )',/, &
-	   ' 4) toggle rotation                           (',L1,' )')
- call prompt('enter option',ians,0,4)
+	   ' 4) toggle rotation                           (',L1,' )',/, &
+	   ' 5) change rotation options')
+ call prompt('enter option',ians,0,5)
 !
 !--options
 !
@@ -72,12 +75,16 @@ subroutine options_xsecrotate
        print*,'ERROR: this option applies to 2D only'
     endif
 !------------------------------------------------------------------------
- case(4)
-    irotate = .not.irotate
+ case(4,5)
+    if (ians.eq.4) irotate = .not.irotate
     print*,'rotate = ',irotate
-    if (irotate) then
+    if (irotate .or. ians.eq.5) then
        call prompt('enter rotation angle about z axis in degrees',anglerot,0.,360.)
        if (ndim.eq.3) call prompt('enter tilt angle ',angletilt,-90.,90.)
+       !xorigin(1:ndim) = 0.5*(lim(1:ndim,1) + lim(1:ndim,2))
+       do i=1,ndim
+          call prompt('enter location of origin '//trim(label(ix(i))),xorigin(i))
+       enddo
     endif
  end select
 
