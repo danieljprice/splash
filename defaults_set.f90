@@ -76,9 +76,9 @@ subroutine defaults_set
 
   lambda = 1.0	! sound wave exact solution : wavelength
   delta = 0.005	! sound wave exact solution : amplitude
-  htstar = 0.   ! toy star crap
-  atstar = 0.
-  ctstar = 0.
+  htstar = 1.   ! toy star crap
+  atstar = 1.
+  ctstar = 1.
   norder = 0
   sigma0 = 0.
 

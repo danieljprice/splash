@@ -133,8 +133,8 @@ subroutine main(ipicky,ipickx,irender)
         !           titlex = trim(titlex)//' - '//trim(label(irender))//' rendering'
         !        endif
         titlex = ' '
-        if (ivecplot.eq.1) titlex = ' velocity map: '//titlex
-        if (ivecplot.eq.2) titlex = ' magnetic field map: '//titlex
+        if (ivecplot.eq.1) titlex = trim(' velocity map: '//titlex)
+        if (ivecplot.eq.2) titlex = trim(' magnetic field map: '//titlex)
      else
         titlex = ' '
      endif
@@ -539,10 +539,10 @@ subroutine main(ipicky,ipickx,irender)
               if (axes) then
                  if (((nyplots-nyplot).lt.nacross).or.(.not.isamexaxis)) then
                     call pgmtxt('l',3.0,0.5,1.0,labely)
-                    call pglabel(labelx,' ',titlex)
+                    call pglabel(labelx,' ',trim(titlex))
                  else
                     call pgmtxt('l',3.0,0.5,1.0,labely)
-                    !	     call pglabel(' ',labely,titlex)
+                    !	     call pglabel(' ',labely,trim(titlex))
                  endif
               else
                  !--if multiple plots showing contours only, label with a,b,c etc
@@ -837,11 +837,11 @@ subroutine main(ipicky,ipickx,irender)
               if (((nyplots-nyplot).lt.nacross).or.(.not.isamexaxis)) then
                  !--print x and y labels
                  call pgmtxt('l',3.0,0.5,1.0,labely)
-                 call pglab(labelx,' ',title)    
+                 call pglab(labelx,' ',' ' )   !!trim(title)) 
               else
                  !--print y labels only    
                  call pgmtxt('l',3.0,0.5,1.0,labely)
-                 !      call pglab(' ',labely,title)
+                 !      call pglab(' ',labely,trim(title))
               endif
            endif
 
@@ -1050,26 +1050,55 @@ subroutine main(ipicky,ipickx,irender)
            else
               sigma = 0.
            endif
-           if (iplotx.eq.1 .or. iplotx.eq.irad) then! if x axis is x or r
-              if (iploty.eq.irho) then
-                 call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,1)
-              elseif (iploty.eq.ipr) then
-                 call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,2)       
-              elseif (iploty.eq.iutherm) then
-                 call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,3)       
-              elseif (iploty.eq.ivx) then
-                 call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,4)       
-              elseif (iploty.eq.ibfirst+1) then
-                 call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,5)
+           if (ndim.eq.1) then
+              !
+              !--1D toy star solutions
+              !
+              if (iplotx.eq.1 .or. iplotx.eq.irad) then! if x axis is x or r
+                 if (iploty.eq.irho) then
+                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,1)
+                 elseif (iploty.eq.ipr) then
+                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,2)       
+                 elseif (iploty.eq.iutherm) then
+                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,3)       
+                 elseif (iploty.eq.ivx) then
+                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,4)       
+                 elseif (iploty.eq.ibfirst+1) then
+                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,5)
+                 endif
+              elseif (iplotx.eq.irho) then
+                 if (iploty.eq.ibfirst+1) then
+                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,6)       
+                 endif
               endif
-           elseif (iplotx.eq.irho) then
-              if (iploty.eq.ibfirst+1) then
-                 call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,6)       
-              endif
-           endif
 
-           if (iploty.eq.iacplane) then! plot point on a-c plane
-              call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,7)
+              if (iploty.eq.iacplane) then! plot point on a-c plane
+                 call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,7)
+              endif
+           else
+              !
+              !--2D and 3D toy star solutions
+              !
+              if ((iplotx.eq.1 .and. iploty.eq.ivx) &
+                   .or. (iplotx.eq.2 .and. iploty.eq.ivx+1)) then
+                 call exact_toystar2D(time(i),gamma(i), &
+                      htstar,atstar,ctstar,sigma,norder,4)
+              endif
+              if (iplotx.eq.irad) then
+                 if (iploty.eq.irho) then
+                    call exact_toystar2D(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,1)
+                 elseif (iploty.eq.ipr) then
+                    call exact_toystar2D(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,2)
+                 elseif (iploty.eq.iutherm) then
+                    call exact_toystar2D(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,3)
+                 elseif (iploty.eq.ivx .or. iploty.eq.ivx+1) then
+                    call exact_toystar2D(time(i),gamma(i), &
+                         htstar,atstar,ctstar,sigma,norder,4)
+                 elseif (iploty.eq.ike) then
+                    call exact_toystar2D(time(i),gamma(i), &
+                         htstar,atstar,ctstar,sigma,norder,4)
+                 endif
+              endif
            endif
 
         case(5) ! mhd shock tubes
