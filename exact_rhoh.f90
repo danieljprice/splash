@@ -1,28 +1,38 @@
 !------------------------------------
-! plot h \propto (1/rho)^(1/ndim)
+! plot h \propto (pmass/rho)^(1/ndim)
 !------------------------------------
-SUBROUTINE exact_rhoh(hfact,ndim)
- IMPLICIT NONE
- INTEGER, PARAMETER :: npts = 100
- INTEGER, INTENT(IN) :: ndim
- INTEGER i
- REAL, DIMENSION(0:npts) :: xplot,yplot
- REAL, INTENT(IN) :: hfact
- REAL xmax,dx
+subroutine exact_rhoh(hfact,ndim,pmass,npart,xmin,xmax)
+ implicit none
+ integer, parameter :: npts = 200
+ integer, intent(in) :: ndim,npart
+ integer i,j
+ real, dimension(0:npts) :: xplot,yplot
+ real, intent(in) :: hfact,xmin,xmax
+ real, intent(in), dimension(npart) :: pmass
+ real dx,pmassprev
       
-! hfact = 1.5*massp
- xmax = 3.0
- dx = (xmax-xplot(0))/float(npts)
- xplot(0) = 0.01
-      
- DO i=1,npts
-   xplot(i) = xplot(0)+dx*i
-   yplot(i) = hfact/(xplot(i))**(1./FLOAT(ndim))
-!  print*,i,' x,y = ',xplot(i),yplot(i)
- ENDDO	      
- PRINT*,' plotting h = ',hfact,'/rho**(1/ndim)'
-      
- CALL PGLINE(npts+1,xplot,yplot)    
-      
- RETURN
-END SUBROUTINE exact_rhoh
+ ! hfact = 1.5*massp
+ dx = (xmax-xmin)/float(npts)
+ xplot(0) = xmin
+
+!
+!--plot one line for each different mass value
+!
+ pmassprev = 0.
+ do j=1,npart
+    if (abs(pmass(j)-pmassprev).gt.1.e-9) then
+       do i=1,npts
+          xplot(i) = xplot(0)+dx*(i-1)
+          yplot(i) = hfact*(pmass(j)/xplot(i))**(1./FLOAT(ndim))
+          !  print*,i,' x,y = ',xplot(i),yplot(i)
+       enddo
+       print*,' plotting h = ',hfact,'*(',pmass(j),'/rho)^(1/ndim)'
+       call pgline(npts+1,xplot,yplot)
+    endif
+    pmassprev = pmass(j)
+ enddo
+ 
+    
+ 
+ return
+end subroutine exact_rhoh

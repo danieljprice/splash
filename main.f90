@@ -1081,7 +1081,7 @@ subroutine main(ipicky,ipickx,irender)
         !--plot h = (1/rho)^(1/ndim)
         !
         if ((iploty.eq.ih).and.(iplotx.eq.irho)) then
-           call exact_rhoh(hfact,ndim)
+           call exact_rhoh(hfact,ndim,dat(ipmass,1:npart(i),i),npart(i),xmin,xmax)
         endif
 
      enddo over_plots ! over plots per timestep (nyplot)
