@@ -84,7 +84,7 @@ subroutine transform(array,arrayout,itrans,isize)
               arraytemp = 0.
            end where
         case(5)
-           arraytemp = arraytemp**2	     
+           arraytemp = arraytemp**2             
         end select
      enddo
 
@@ -147,7 +147,7 @@ subroutine transform2(array,itrans,isizex,isizey)
               arraytemp = 0.
            end where
         case(5)
-           arraytemp = arraytemp**2	 
+           arraytemp = arraytemp**2         
         end select
      enddo
 
@@ -210,21 +210,21 @@ subroutine transform_limits(xminin,xmaxin,xminout,xmaxout,itrans)
               xmaxtemp = -12.
            endif
         case(2)
-	   if ((xmintemp.lt.0. .and. xmaxtemp.gt.0.) &
-	   .or.(xmaxtemp.lt.0. .and. xmintemp.gt.0.)) then
-	   !
-	   !--minimum is zero if limits have opposite signs
-	   !
-	      xmaxtemp = max(abs(xmintemp),abs(xmaxtemp))
-	      xmintemp = 0.
-	   else
-	   !
-	   !--or just take magnitude
-	   !
+           if ((xmintemp.lt.0. .and. xmaxtemp.gt.0.) &
+           .or.(xmaxtemp.lt.0. .and. xmintemp.gt.0.)) then
+           !
+           !--minimum is zero if limits have opposite signs
+           !
+              xmaxtemp = max(abs(xmintemp),abs(xmaxtemp))
+              xmintemp = 0.
+           else
+           !
+           !--or just take magnitude
+           !
               xmintemp = abs(xmintemp)
               xmaxtemp = abs(xmaxtemp)
            endif
-	case(3)
+        case(3)
            if (xmintemp .ne. 0) then
               xmintemp = 1./xmintemp
            else
@@ -319,7 +319,7 @@ end function transform_label
 !     and a list of these
 !
 !     i            : integer to split into digits
-!     nmax	   : dimensions of digits array
+!     nmax           : dimensions of digits array
 !     digits(nmax) : array of digits
 !     ndigits      : number of digits in i
 !------------------------------------------------------------------------
