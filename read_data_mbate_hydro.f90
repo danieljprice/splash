@@ -196,6 +196,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
         print "(a)",'| converting to single precision... '
         dat(1:nprint,1:ncolstep,j) = real(dattemp(1:nprint,1:ncolstep))
 
+!
+!--convert to physical units
+!
+        dat(1:nprint,11,j) = dat(1:nprint,11,j)*real(umassi/udisti**3)
         iam(1:nprint,j) = iphase(1:nprint)
         if (allocated(dattemp)) deallocate(dattemp)
         if (allocated(dummy)) deallocate(dummy)
@@ -280,7 +284,7 @@ subroutine set_labels
   do i=1,ndimV
      label(ivx+i-1) = 'v\d'//labelcoord(i,1)
   enddo
-  label(irho) = '\gr'
+  label(irho) = 'density (g/cm\u3\d)'
   label(iutherm) = 'u'
   label(ih) = 'h       '
   label(ipmass) = 'particle mass'     
