@@ -210,7 +210,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !
         if (allocated(dattemp)) deallocate(dattemp)
         allocate(dattemp(ntot(i)))
-        do j = 1,5
+        do j = 1,6
            read (11,end=66,ERR=67) dattemp(1:ntot(i))
            dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
            icol = icol + 1
@@ -219,7 +219,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !
         !--non-MHD output
         !
-        if (ncolumns.le.ndim+7+ndimV) then
+        if (ncolumns.le.ndim+8+ndimV) then
         !
         !--read alpha, alphau
         !
@@ -348,7 +348,7 @@ subroutine set_labels
  ipr = ndim + ndimV + 2       !  pressure 
  iutherm = ndim + ndimV + 3   !  thermal energy
  ih = ndim + ndimV + 4        !  smoothing length
- ipmass = ndim + ndimV + 5    !  particle mass      
+ ipmass = ndim + ndimV + 5    !  particle mass     
 
  label(ix(1:ndim)) = labelcoord(1:ndim,1)
  
@@ -366,41 +366,42 @@ subroutine set_labels
  label(iutherm) = 'u'
  label(ih) = 'h       '
  label(ipmass) = 'particle mass'
- label(ndim + ndimV+6) = '\ga'
- label(ndim + ndimV+7) = '\ga\du'
- if (ncolumns.gt.ndim+ndimV+7) then
+ label(ndim + ndimV+6) = 'div v'
+ label(ndim + ndimV+7) = '\ga'
+ label(ndim + ndimV+8) = '\ga\du'
+ if (ncolumns.gt.ndim+ndimV+8) then
     !
     !--mag field (vector)
     !
-    label(ndim + ndimV+8) = '\ga\dB'
-    iBfirst = ndim + ndimV+8+1        ! location of Bx
+    label(ndim + ndimV+9) = '\ga\dB'
+    iBfirst = ndim + ndimV+9+1        ! location of Bx
     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
     do i=1,ndimV
-       label(ndim + ndimV+8+i) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1) !' (x10\u-3\d)' !//'/rho'
+       label(ndim + ndimV+9+i) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1) !' (x10\u-3\d)' !//'/rho'
     enddo
     !
     !--current density (vector)
     !
-    iJfirst = ndim+2*ndimV+8+1
+    iJfirst = ndim+2*ndimV+9+1
     iamvec(iJfirst:iJfirst+ndimV-1) = iJfirst
     labelvec(iJfirst:iJfirst+ndimV-1) = 'J'
     do i=1,ndimV
-       label(ndim + ndimV+ndimV+8 + i) = labelvec(iJfirst)//labelcoord(i,1)
+       label(ndim + ndimV+ndimV+9 + i) = labelvec(iJfirst)//labelcoord(i,1)
     enddo
-    idivB = ndim+3*ndimV+9 
+    idivB = ndim+3*ndimV+10
     label(idivB) = 'div B'
  else
     iBfirst = 0
  endif
- if (ncolumns.gt.ndim+3*ndimV+9) then
-    label(ndim+3*ndimV+10) = 'psi'
- endif
  if (ncolumns.gt.ndim+3*ndimV+10) then
-    label(ndim+3*ndimV+11) = 'f_visc_x'
-    label(ndim+3*ndimV+12) = 'f_visc_y'
-    label(ndim+3*ndimV+13) = 'f_x'
-    label(ndim+3*ndimV+14) = 'f_y'
+    label(ndim+3*ndimV+11) = 'psi'
+ endif
+ if (ncolumns.gt.ndim+3*ndimV+11) then
+    label(ndim+3*ndimV+12) = 'f_visc_x'
+    label(ndim+3*ndimV+13) = 'f_visc_y'
+    label(ndim+3*ndimV+14) = 'f_x'
+    label(ndim+3*ndimV+15) = 'f_y'
  endif
 ! 
 !--these are here for backwards compatibility -- could be removed
