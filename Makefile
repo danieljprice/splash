@@ -47,7 +47,7 @@ DANSPH = read_data_dansph.f90
 MRBSPH = read_data_mbate_dump.f90 ## read_data_mbate.f90
 GADGETSPH = read_data_gadget.f90
 
-SOURCES= modules.f90 prompting.f90 \
+SOURCES= modules.f90 transform.f90 prompting.f90 \
 	 supersphplot.f90 main.f90 \
          allocate.f90 calc_quantities.f90 \
 	 colour_demo.f colour_set.f90 \
@@ -80,7 +80,7 @@ SOURCES= modules.f90 prompting.f90 \
          read_exactparams.f90 riemannsolver.f90 \
          render.f90 render_vec.f90 setpage.f90 \
 	 titles_read.f90 \
-	 transform.f90 vectorplot.f90 \
+	 vectorplot.f90 \
 
 SOURCESALL = $(SOURCES:.f90=.o)
 

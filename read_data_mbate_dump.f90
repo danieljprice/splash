@@ -48,8 +48,8 @@ subroutine read_data(rootname,istart,nfilesteps)
   logical :: iexist
   real :: gammain,timeff
     
-  character(LEN=20), dimension(1000) :: filename,sinkfile
-  character(LEN=20) :: dumpfile
+  character(LEN=LEN(rootname)+10), dimension(1000) :: filename,sinkfile
+  character(LEN=LEN(rootname)+10) :: dumpfile
   integer :: nsinkcolumns, int_from_string
   integer :: nprint, nghosti, n1, n2, rhozero, RK2
   logical :: magfield

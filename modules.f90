@@ -31,7 +31,7 @@ module filenames
  implicit none
  integer, parameter :: maxfile = 10
  integer :: ifile,nfilesteps,nfiles
- character(len=20), dimension(maxfile) :: rootname
+ character(len=120), dimension(maxfile) :: rootname
 end module filenames
 !
 !--labels for all plots and the locations of certain useful variables

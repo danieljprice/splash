@@ -38,9 +38,9 @@ subroutine read_data(rootname,istart,nfilesteps)
   implicit none
   integer, intent(IN) :: istart
   integer, intent(OUT) :: nfilesteps
-  character(LEN=20) :: datfile
-  character(LEN=2) :: fileno
   character(LEN=*), intent(IN) :: rootname
+  character(LEN=LEN(rootname)+10) :: datfile
+  character(LEN=2) :: fileno
   integer*4, dimension(6) :: Npartoftype
   integer, dimension(:), allocatable :: iamtemp
   integer :: i,j,itype,icol,ifile,ioftype,index1,index2

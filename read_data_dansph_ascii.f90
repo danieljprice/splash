@@ -35,9 +35,9 @@ subroutine read_data(rootname,istart,nfilesteps)
   implicit none
   integer, intent(IN) :: istart
   integer, intent(OUT) :: nfilesteps
-  character(LEN=20) :: datfile
-  character(LEN=2) :: fileno
   character(LEN=*), intent(IN) :: rootname
+  character(LEN=LEN(filename)+10) :: datfile
+  character(LEN=2) :: fileno
   integer :: i,j,k,ifile
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin

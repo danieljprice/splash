@@ -10,7 +10,6 @@ subroutine get_data
   use prompting
   implicit none
   integer :: i,istep,ierr
-  character(LEN=30) :: filename
 
   if (.not.ihavereadfilename) then
      call prompt('Enter filename to read',rootname(1))
