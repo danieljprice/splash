@@ -813,11 +813,11 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                 if (abs(angletempz-anglez).gt.tol) irotate = .true.                
                 if (isave) then
                    !--change to fixed plot limits if limits have changed
-                   if (iadapt) then
-                      if (abs(xmintemp-xmin).gt.tol .or. abs(xmaxtemp-xmax).gt.tol) iadapt = .false.
-                      if (abs(ymintemp-ymin).gt.tol .or. abs(ymaxtemp-ymax).gt.tol) iadapt = .false.
-                      print*,'adaptive plot limits = ',iadapt
-                   endif
+                   !if (iadapt) then
+                   !   if (abs(xmintemp-xmin).gt.tol .or. abs(xmaxtemp-xmax).gt.tol) iadapt = .false.
+                   !   if (abs(ymintemp-ymin).gt.tol .or. abs(ymaxtemp-ymax).gt.tol) iadapt = .false.
+                   !   print*,'adaptive plot limits = ',iadapt
+                   !endif
                 endif
                 if (iadvance.eq.-666) exit over_timesteps
              endif
@@ -918,15 +918,14 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                                     yplot(1:ntot(i)),dat(1:ninterp,ih,i),icolourme(1:ntot(i)), &
                                     xmin,xmax,ymin,ymax,dummymin,dummymax, &
                                     angletempx,angletempy,angletempz,ndim,iadvance,isave)
-              print*,'xmin,xmax = ',xmin,xmax
               if (isave) then
                  !--change to fixed plot limits if limits have changed
-                 if (iadapt) then
-                    if (abs(xmintemp-xmin).gt.tol .or. abs(xmaxtemp-xmax).gt.tol) iadapt = .false.
-                    if (abs(ymintemp-ymin).gt.tol .or. abs(ymaxtemp-ymax).gt.tol) iadapt = .false.
-                    print*,xmintemp,xmin,xmaxtemp,xmax
-                    print*,'adaptive plot limits = ',iadapt
-                 endif
+                 !if (iadapt) then
+                    !if (abs(xmintemp-xmin).gt.tol .or. abs(xmaxtemp-xmax).gt.tol) iadapt = .false.
+                    !if (abs(ymintemp-ymin).gt.tol .or. abs(ymaxtemp-ymax).gt.tol) iadapt = .false.
+                    !print*,xmintemp,xmin,xmaxtemp,xmax
+                    !print*,'adaptive plot limits = ',iadapt
+                 !endif
               endif
               if (iadvance.eq.-666) exit over_timesteps
            endif

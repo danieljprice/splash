@@ -18,9 +18,11 @@ contains
 !   xcoords(npart) : x coordinates of particles
 !   ycoords(npart) : y coordinates of particles
 !   hi(npart)      : smoothing lengths of particles
+!
 ! CHANGEABLE:
 !   icolourpart(npart) : flag indicating colour of particles
 !   xmin, xmax, ymin, ymax : current plot limits
+!
 ! OUTPUT:
 !   iadvance : integer telling the loop how to advance the timestep
 !   isave    : integer telling the loop to save the settings
@@ -588,13 +590,25 @@ end subroutine mvtitle
 !
 subroutine save_limits(iplot,xmin,xmax)
  use limits, only:lim
+ use multiplot, only:itrans
+ use transforms, only:transform_limits_inverse
  implicit none
  integer, intent(in) :: iplot
  real, intent(in) :: xmin,xmax
+ real :: xmintemp,xmaxtemp
  
- lim(iplot,1) = xmin
- lim(iplot,2) = xmax
+ if (itrans(iplot).ne.0) then
+    xmintemp = xmin
+    xmaxtemp = xmax
+    call transform_limits_inverse(xmintemp,xmaxtemp,itrans(iplot))
+    lim(iplot,1) = xmintemp
+    lim(iplot,2) = xmaxtemp
+ else
+    lim(iplot,1) = xmin
+    lim(iplot,2) = xmax
+ endif
  
+ return
 end subroutine save_limits
 
 !
@@ -612,6 +626,7 @@ subroutine save_rotation(ndim,anglexi,angleyi,anglezi)
     angley = angleyi
  endif
  
+ return
 end subroutine save_rotation
 
 end module interactive_routines

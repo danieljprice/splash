@@ -248,6 +248,85 @@ end subroutine transform_limits
 
 !------------------------------------------------------------------------
 !
+!  inverse transform for the plot limits
+!  (so that we can change the transformed limits and set the
+!   untransformed limits accordingly)
+!
+!------------------------------------------------------------------------
+subroutine transform_limits_inverse(xmin,xmax,itrans)
+  implicit none
+  integer, intent(in) :: itrans
+  real, intent(inout) :: xmin,xmax
+  real :: xmintemp,xmaxtemp,xtemp
+  character(len=20) :: string
+  integer :: i
+  !
+  !--extract the digits from the input number
+  !
+  if (itrans.gt.0) then      
+
+     write(string,*) itrans
+     !
+     !--do a transformation for each digit     
+     !
+     xmintemp = xmin
+     xmaxtemp = xmax
+
+     do i=len_trim(string),1,-1  ! do digits in reverse
+        !
+        !--perform transformation appropriate to this digit     
+        !
+        select case(string(i:i))
+        case('1')
+           xmintemp = 10**xmintemp
+           xmaxtemp = 10**xmaxtemp
+        case('2')
+           !
+           !--if minimum is zero give limits opposite signs
+           !  (but same magnitude), otherwise do nothing
+           !
+           if (xmintemp.eq.0.) then
+              xtemp = max(abs(xmintemp),abs(xmaxtemp))
+              xmintemp = -xtemp
+              xmaxtemp = xtemp
+           endif
+        case('3')
+           if (xmintemp .ne. 0) then
+              xmintemp = 1./xmintemp
+           else
+              xmintemp = 0.
+           endif
+           if (xmaxtemp .ne. 0) then
+              xmaxtemp = 1./xmaxtemp
+           else
+              xmaxtemp = 0.             
+           endif
+        case('4') 
+           xmintemp = xmintemp**2
+           xmaxtemp = xmaxtemp**2
+        case('5')
+           if (xmintemp.gt.0) then
+              xmintemp = sqrt(xmintemp)
+           else
+              xmintemp = 0.
+           endif
+           if (xmaxtemp.gt.0) then
+              xmaxtemp = sqrt(xmaxtemp)
+           else
+              xmaxtemp = 0.
+           endif
+        end select
+     enddo
+
+     xmin = min(xmintemp,xmaxtemp)
+     xmax = max(xmintemp,xmaxtemp)
+
+  endif
+
+end subroutine transform_limits_inverse
+
+!------------------------------------------------------------------------
+!
 !  function to adjust the label of a plot if log, 1/x etc
 !
 !  Note: *cannot* put print or write statements into this function
