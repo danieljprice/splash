@@ -37,7 +37,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
   character(LEN=LEN(rootname)+4) :: datfile
-  integer :: i,j,k,ifile,icol,ipos,ierr
+  integer :: i,j,k,icol,ipos,ierr
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin,ncolstep,nparti,ntoti
   logical :: reallocate
@@ -49,15 +49,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   ndimV_max = 1
   nstepsread = 0
   if (rootname(1:1).ne.' ') then
-     !
-     !--if rootname does not contain .dat, make it end in .dat
-     !
-     if (index(rootname,'.dat').eq.0) then
-        datfile = trim(rootname)//'.dat'
-     else
-        datfile = trim(rootname)  
-     endif
-     ifile = 1
+     datfile = trim(rootname)
      !print*,'rootname = ',rootname
   else
      print*,' **** no data read **** '
@@ -210,7 +202,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !
         if (allocated(dattemp)) deallocate(dattemp)
         allocate(dattemp(ntot(i)))
-        do j = 1,6
+        do j = 1,4
            read (11,end=66,ERR=67) dattemp(1:ntot(i))
            dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
            icol = icol + 1
@@ -228,6 +220,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
               dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
            enddo
            icol = icol + 2
+        !
+        !--pr, div v
+        !
+           do j = 1,2
+              read (11,end=66,ERR=67) dattemp(1:ntot(i))
+              dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
+              icol = icol + 1
+           enddo
         
         else
         !
@@ -251,25 +251,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
            enddo
            icol = icol + ndimV
         !
+        !--psi, pr, div v, div B
+        !
+           do j = 1,4
+              read (11,end=66,ERR=67) dattemp(1:ntot(i))
+              dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
+              icol = icol + 1
+           enddo
+        !
         !--curl B
         !
            read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
            do ipos = icol, icol+ndimV-1
               dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
            enddo
-           icol = icol + ndimV
-        !
-        !--div B
-        !
-           read (11,end=66,ERR=67) dattemp(1:ntot(i))
-           dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
-           icol = icol + 1
-        !
-        !--psi
-        !
-           read (11,end=66,ERR=67) dattemp(1:ntot(i))
-           dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
-           icol = icol + 1        
+           icol = icol + ndimV      
         endif
         !!print*,'columns read = ',icol,' should be = ',ncolumns
 
@@ -344,14 +340,12 @@ subroutine set_labels
     ix(i) = i
  enddo
  ivx = ndim + 1
- irho = ndim + ndimV + 1      ! location of rho in data array
- ipr = ndim + ndimV + 2       !  pressure 
+ ih = ndim + ndimV + 1        !  smoothing length
+ irho = ndim + ndimV + 2      ! location of rho in data array
  iutherm = ndim + ndimV + 3   !  thermal energy
- ih = ndim + ndimV + 4        !  smoothing length
- ipmass = ndim + ndimV + 5    !  particle mass     
+ ipmass = ndim + ndimV + 4    !  particle mass     
 
  label(ix(1:ndim)) = labelcoord(1:ndim,1)
- 
  !
  !--label vector quantities (e.g. velocity) appropriately
  !
@@ -362,24 +356,32 @@ subroutine set_labels
  enddo
  
  label(irho) = '\gr'
- label(ipr) = 'P      '
  label(iutherm) = 'u'
  label(ih) = 'h       '
  label(ipmass) = 'particle mass'
- label(ndim + ndimV+6) = 'div v'
- label(ndim + ndimV+7) = '\ga'
- label(ndim + ndimV+8) = '\ga\du'
+ label(ndim + ndimV+5) = '\ga'
+ label(ndim + ndimV+6) = '\ga\du'
  if (ncolumns.gt.ndim+ndimV+8) then
+
     !
     !--mag field (vector)
     !
-    label(ndim + ndimV+9) = '\ga\dB'
-    iBfirst = ndim + ndimV+9+1        ! location of Bx
+    label(ndim + ndimV+7) = '\ga\dB'
+    iBfirst = ndim + ndimV+7+1        ! location of Bx
     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
     do i=1,ndimV
-       label(ndim + ndimV+9+i) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1) !' (x10\u-3\d)' !//'/rho'
+       label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1) !' (x10\u-3\d)' !//'/rho'
     enddo
+    !
+    !--more scalars
+    !
+    ipr = ndim + 2*ndimV + 7 !  pressure
+    label(ipr) = 'P'
+    label(ndim+2*ndimV+8) = 'div v'
+
+    idivB = ndim+2*ndimV+9
+    label(idivB) = 'div B'
     !
     !--current density (vector)
     !
@@ -387,11 +389,12 @@ subroutine set_labels
     iamvec(iJfirst:iJfirst+ndimV-1) = iJfirst
     labelvec(iJfirst:iJfirst+ndimV-1) = 'J'
     do i=1,ndimV
-       label(ndim + ndimV+ndimV+9 + i) = labelvec(iJfirst)//labelcoord(i,1)
+       label(iJfirst+i-1) = labelvec(iJfirst)//labelcoord(i,1)
     enddo
-    idivB = ndim+3*ndimV+10
-    label(idivB) = 'div B'
  else
+    ipr = ndim + ndimV + 7 !  pressure
+    label(ipr) = 'P'
+    label(ndim+ndimV+8) = 'div v'
     iBfirst = 0
  endif
  if (ncolumns.gt.ndim+3*ndimV+10) then
