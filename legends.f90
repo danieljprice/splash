@@ -47,15 +47,20 @@ end subroutine legend
 !        vpos : vertical position in character heights from top
 !-----------------------------------------------------------------
 
-subroutine legend_vec(scale,label)
+subroutine legend_vec(vecmax,scale,label,charheight)
  use settings_vecplot, only: hposlegendvec, vposlegendvec
  implicit none
- real, intent(in) :: scale
+ real, intent(in) :: vecmax,scale,charheight
  character(len=*), intent(in) :: label
+ integer, parameter :: npixx=1, npixy=5
+ integer :: j
+ real, dimension(npixx,npixy) :: vecx,vecy
  real :: xmin,xmax,ymin,ymax
- real :: xch,ych
+ real :: xch,ych,dx
  real :: xpos,ypos,xpos2,ypos2,rarrow
  character(len=len(label)+10) :: string
+ real :: trans(6)
+ 
 !
 !--convert hpos and vpos to x, y to plot arrow
 !
@@ -63,19 +68,39 @@ subroutine legend_vec(scale,label)
  print*,'lims = ',xmin,xmax,ymin,ymax
  xpos = xmin + hposlegendvec*(xmax-xmin)
  call pgqcs(0,xch,ych) 
- ypos = ymax - vposlegendvec*ych
-!
-!--plot arrow diagonally
-! 
- rarrow = scale
- xpos2 = xpos + sqrt(0.5)*rarrow
- ypos2 = ypos + sqrt(0.5)*rarrow
- 
- write(string,"(a,'=',f6.2)") trim(label),scale
- 
+ ypos = ymin - vposlegendvec*ych
+
  print*,'legendvec: xpos, ypos = ',xpos,ypos
- call pgarro(xpos,ypos,xpos2,ypos2)
- call pgmtext('t',-vposlegendvec,hposlegendvec+0.02,0.0,trim(string))
+ 
+ dx = ych
+ 
+ do j=1,npixy
+    vecx(npixx,j) = (npixy-j)*vecmax
+    vecy(npixx,j) = vecx(npixx,j)
+ enddo
+
+!set up grid for rendering 
+
+ trans(1) = xpos - 0.5*dx                ! this is for the pgvect call
+ trans(2) = dx
+ trans(3) = 0.0
+ trans(4) = ypos - 0.5*dx
+ trans(5) = 0.0
+ trans(6) = dx
+!
+!--this should match the call in render_vec
+!
+ call pgvect(vecx(:,:),vecy(:,:),npixx,npixy,1,npixx,1,npixy, &
+      scale,0,trans,-1000.0)
+!
+!--plot a box around the legend
+! 
+!! call pgbox(xpos,ypos,xpos2,ypos2)
+!! write(string,"(a,'=',f6.2)") trim(label),scale
+ 
+
+! call pgarro(xpos,ypos,xpos2,ypos2)
+! call pgmtext('t',-vposlegendvec,hposlegendvec+0.02,0.0,trim(string))
 
  return
 end subroutine legend_vec

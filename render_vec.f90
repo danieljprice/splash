@@ -6,6 +6,7 @@
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
                   xmin,ymin,dx,label) 
  use legends, only:legend_vec
+ use settings_vecplot, only:iVecplotLegend
  implicit none
  integer, intent(in) :: npixx,npixy
  real, intent(in) :: xmin,ymin,vecmax,dx
@@ -32,17 +33,19 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  if (vecmax.le.0.0) then  ! adaptive limits
     scale = 0.0
     vmax = max(maxval(vecpixx(:,:)),maxval(vecpixy(:,:)))
-    if (vmax.gt.0.) scale = 0.1/vmax
+    if (vmax.gt.0.) scale = 1.0/vmax
  else
-    scale=0.1/vecmax
+    scale=1./vecmax
  endif
  print*,' scale = ',scale
  
  call pgvect(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
       1,npixx,1,npixy,scale,0,trans,-1000.0)
 
+ if (iVecplotLegend) then
+    call legend_vec(vmax,scale,label,charheight)
+ endif
  call pgsch(charheight)
- call legend_vec(scale,label)
  
  return
  
