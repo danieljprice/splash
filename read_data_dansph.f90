@@ -382,7 +382,7 @@ subroutine set_labels
  label(ipmass) = 'particle mass'
  label(ndim + ndimV+5) = '\ga'
  label(ndim + ndimV+6) = '\ga\du'
- if (ncolumns.gt.ndim+ndimV+8 .and. icoords.eq.0) then
+ if (ncolumns.gt.ndim+ndimV+8 .and. icoords.le.1) then
 
     !
     !--mag field (vector)
@@ -397,20 +397,22 @@ subroutine set_labels
     !
     !--more scalars
     !
-    ipr = ndim + 2*ndimV + 7 !  pressure
+    label(ndim+2*ndimV+8) = 'psi'
+    
+    ipr = ndim + 2*ndimV + 9 !  pressure
     label(ipr) = 'P'
-    label(ndim+2*ndimV+8) = 'div v'
+    label(ndim+2*ndimV+10) = 'div v'
 
-    idivB = ndim+2*ndimV+9
+    idivB = ndim+2*ndimV+11
     label(idivB) = 'div B'
     !
     !--current density (vector)
     !
-    iJfirst = ndim+2*ndimV+9+1
+    iJfirst = ndim+2*ndimV+11+1
     iamvec(iJfirst:iJfirst+ndimV-1) = iJfirst
     labelvec(iJfirst:iJfirst+ndimV-1) = 'J'
     do i=1,ndimV
-       label(iJfirst+i-1) = labelvec(iJfirst)//labelcoord(i,1)
+       label(iJfirst+i-1) = trim(labelvec(iJfirst))//labelcoord(i,1)
     enddo
  else
     ipr = ndim + ndimV + 7 !  pressure
@@ -428,9 +430,7 @@ subroutine set_labels
     endif
     iBfirst = 0
  endif
- if (ncolumns.gt.ndim+3*ndimV+10) then
-    label(ndim+3*ndimV+11) = 'psi'
- endif
+ 
  if (ncolumns.gt.ndim+3*ndimV+11) then
     label(ndim+3*ndimV+12) = 'f_visc_x'
     label(ndim+3*ndimV+13) = 'f_visc_y'
