@@ -106,6 +106,7 @@ module settings_page
  logical :: iColourEachStep,tile,interactive,iadapt,ipagechange
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
+ character(len=20) :: colour_fore, colour_back
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt, &
    nstepsperpage,iColourEachStep,tile,ipapersize,papersizex,aspectratio, &

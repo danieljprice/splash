@@ -6,7 +6,7 @@ subroutine options_page
  use settings_page
  use prompting
  implicit none
- integer :: iaction
+ integer :: iaction,ierr,ntries
  real :: papersizey
 
  iaction = 0
@@ -15,13 +15,14 @@ subroutine options_page
           hpostitle,vpostitle,hposlegend,vposlegend
 10 format(' 0) exit ',/,                   &
         ' 1) change steps per page  (',i2,')',/, &
-        ' 2) toggle axes            (',i2,')',/, &
+        ' 2) axes options           (',i2,')',/, &
         ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
         ' 4) change plots per page  (',i2,1x,i2,')',/, &
          ' 5) toggle plot tiling     (',L1,')',/, & 
          ' 6) adjust title position  (',f5.2,1x,f4.1,')',/, &
-         ' 7) adjust legend position (',f5.2,1x,f4.1,')')         
- call prompt('enter option ',iaction,0,7)
+         ' 7) adjust legend position (',f5.2,1x,f4.1,')',/, &
+         ' 8) set foreground/background colours ')         
+ call prompt('enter option ',iaction,0,8)
 
  select case(iaction)
 !------------------------------------------------------------------------
@@ -123,6 +124,25 @@ subroutine options_page
      call prompt('Enter horizontal position as fraction of viewport', &
           hposlegend,0.0,1.0)
      call prompt('Enter vertical position in character heights from top',vposlegend)
+     return
+!------------------------------------------------------------------------
+  case(8)
+     ierr = 1
+     ntries = 1
+     do while (ierr /= 0 .and. ntries.le.3)
+        call prompt('Enter background colour (by name) ',colour_back)
+        call pgscrn(0,colour_back,ierr)
+        if (ierr /= 0) print*,' try again'
+        ntries = ntries + 1
+     enddo
+     ierr = 1
+     ntries = 1
+     do while (ierr /= 0 .and. ntries.le.3)
+        call prompt('Enter foreground colour (by name) ',colour_fore)
+        call pgscrn(1,colour_fore,ierr)
+        if (ierr /= 0) print*,' try again'
+        ntries = ntries + 1
+     enddo
      return
   end select
  

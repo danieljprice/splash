@@ -82,6 +82,8 @@ subroutine defaults_set
   hpostitle = 0.5       ! horizontal title position as fraction of viewport
   vpostitle = 1.0       ! vertical title position in character heights
   fjusttitle = 0.5      ! justification factor for title
+  colour_fore = ' '
+  colour_back = ' '
 !
 !--particle plot options
 !

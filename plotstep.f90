@@ -46,7 +46,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use particle_data, only:npartoftype
   implicit none
   integer, intent(in) :: ipicky,ipickx,irender
-  integer :: i,j
+  integer :: i,j,ierr
   
   !------------------------------------------------------------------------
   ! initialisations
@@ -176,6 +176,13 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   !!--turn off page prompting
   call pgask(.false.)
   !!if (.not. interactive) call pgbbuf !! start buffering output
+  
+  !!--set background/foreground colours
+  if (colour_back(1:1).ne.' ') call pgscrn(0,colour_back,ierr)
+  if (ierr /= 0) print 10,'background',trim(colour_back)
+  if (colour_fore(1:1).ne.' ') call pgscrn(1,colour_fore,ierr)
+  if (ierr /= 0) print 10,'foreground',trim(colour_fore)
+10 format(' error: ',a,' colour "',a,'" not found in table')
   
   !!--set colour table
   if (((irender.gt.ndim).or.any(irendermulti(1:nyplots).gt.ndim)) &
