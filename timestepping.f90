@@ -121,7 +121,7 @@ subroutine get_nextstep(i,ifile)
  !  appropriate number of files to get to timestep requested
  !
  ifileprev = ifile
- print*,'request step ',i,' from file #',ifile,' nstepsinfile= ',nstepsinfile(ifile)
+ !!print*,'request step ',i,' from file #',ifile,' nstepsinfile= ',nstepsinfile(ifile)
  
  if (i.gt.nstepsinfile(ifile)) then
     if (nstepsinfile(ifile).ge.1) then
@@ -172,7 +172,7 @@ subroutine get_nextstep(i,ifile)
     if (i.ne.1) then
        print*,'starting at step ',i
     endif
-    print*,'getting file ',ifile,' step ',i
+    !!print*,'getting file ',ifile,' step ',i
  endif
 
  return
