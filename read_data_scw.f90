@@ -101,7 +101,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      !--open the (unformatted) binary file and read the number of particles
      !
-     open(unit=15,file=dumpfile,form='unformatted')
+     open(unit=15,file=dumpfile,status='old',form='unformatted')
      !
      !--read the number of particles in the first step,
      !  allocate memory and rewind
@@ -231,6 +231,15 @@ subroutine set_labels
   use settings
   implicit none
   integer :: i
+
+  if (ndim.le.0 .or. ndim.gt.3) then
+     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+     return
+  endif
+  if (ndimV.le.0 .or. ndimV.gt.3) then
+     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+     return
+  endif
   
   do i=1,ndim
      ix(i) = i

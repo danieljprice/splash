@@ -39,30 +39,25 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
   integer, parameter :: maxptmass = 100
-  integer :: i,j,k,ifile,ierr
-  integer :: ncol_max,nstep_max
-  integer :: ntotin
+  integer :: i,j,ifile,ierr
+  integer :: npart_max,nstep_max
   logical :: iexist
-  real :: gammain,timeff
     
   character(LEN=3) :: fileno
-  character(LEN=LEN(rootname)+10), dimension(1000) :: filename,sinkfile
   character(LEN=LEN(rootname)+10) :: dumpfile
-  integer :: int_from_string
   integer :: nprint, nghosti, n1, n2, rhozero, RK2, nptmass
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
   
-  logical :: magfield  
-  real(kind=8), dimension(:,:), allocatable :: dattemp
-  real(kind=8), dimension(:), allocatable :: dummy
-  real(kind=8) :: udisti,umassi,utimei, umagfdi, timei, gammai
-  real(kind=8) :: escap,tkin,tgrav,tterm,tmag
-  real(kind=8) :: dtmax
+  real(doub_prec), dimension(:,:), allocatable :: dattemp
+  real(doub_prec), dimension(:), allocatable :: dummy
+  real(doub_prec) :: udisti,umassi,utimei, umagfdi, timei, gammai
+  real(doub_prec) :: escap,tkin,tgrav,tterm,tmag
+  real(doub_prec) :: dtmax
 
   nstepsread = 0
   nstep_max = 0
-  ncol_max = 0
+  npart_max = maxpart
   !
   !--for rootnames without the '00', read all files starting at #1
   !
@@ -88,32 +83,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
      return
   endif
   !
-  !--assume MHD if filename starts with m
-  !
-  magfield = .false.
-  if (rootname(1:1).EQ.'m') magfield = .true.
-  !
   !--fix number of spatial dimensions
   !
   ndim = 3
   ndimV = 3
-  if (magfield) then
-     ncolumns = 19  ! number of columns in file
-  else 
-     ncolumns = 11
-  endif
-  
+  ncolumns = 19  ! number of columns in file  
   !
   !--allocate memory initially
   !
-  ncol_max = max(ncolumns,ncol_max)
   nstep_max = max(nstep_max,indexstart,11)
 
   j = indexstart
   nstepsread = 0
   
   do while (iexist)
-     write(*,"(23('-'),1x,a,1x,23('-'))") trim(dumpfile)
+     write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
      !
      !--open the (unformatted) binary file and read the number of particles
      !
@@ -123,16 +107,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !  allocate memory and rewind
      !
      read(15,end=55) udisti,umassi,utimei,umagfdi,nprint 
-     if (.not.allocated(dat) .or. nprint.gt.ntotin) then
-        ntotin = max(ntotin,INT(1.1*nprint))
-        call alloc(ntotin,nstep_max,ncol_max)
+     if (.not.allocated(dat) .or. nprint.gt.npart_max) then
+        npart_max = max(npart_max,INT(1.1*nprint))
+        call alloc(npart_max,nstep_max,ncolumns)
      endif
      rewind(15)
 !
 !--loop over the timesteps in this file
 !     
      over_steps_in_file: do     
-        ntotin = max(ntotin,nprint)
+        npart_max = max(npart_max,nprint)
 !
 !--allocate/reallocate memory if j > maxstep
 !
@@ -143,16 +127,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--allocate a temporary array for double precision variables
 !
         if (allocated(dattemp)) deallocate(dattemp)
-        allocate(dattemp(ntotin,ncol_max))
+        allocate(dattemp(npart_max,ncolumns))
 !
 !--allocate a dummy arrays for data I want to throw away
 !
         if (allocated(dummy)) deallocate(dummy)
-        allocate(dummy(ntotin))
+        allocate(dummy(npart_max))
         if (allocated(isteps)) deallocate(isteps)
-        allocate(isteps(ntotin))
+        allocate(isteps(npart_max))
         if (allocated(iphase)) deallocate(iphase)
-        allocate(iphase(ntotin))
+        allocate(iphase(npart_max))
 !
 !--now read the timestep data in the dumpfile
 !
@@ -173,7 +157,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              nptmass, (listpm(i), i=1,nptmass)
         
         if (ierr /= 0) then
-           print "(a)",'*** ERROR READING TIMESTEP ***'
+           print "(a)",'|*** ERROR READING TIMESTEP ***'
            cycle over_steps_in_file
         else
            nstepsread = nstepsread + 1
@@ -181,9 +165,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--convert to single precision
 !
-        print *,'step ',j,': ntotal = ',nprint
-        print "(a)",' converting to single precision... '
-        dat(1:nprint,1:ncol_max,j) = real(dattemp(1:nprint,1:ncol_max))
+        print "(a,i5,a,i8)",'| step ',j,': ntotal = ',nprint
+        print "(a)",'| converting to single precision... '
+        dat(1:nprint,1:ncolumns,j) = real(dattemp(1:nprint,1:ncolumns))
 
         iam(1:nprint,j) = iphase(1:nprint)
         deallocate(dattemp)
@@ -197,7 +181,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
         gamma(j) = real(gammai)
         time(j) = real(timei)
-        if (ntotin.eq.130000) ntotin = nprint
+        if (npart_max.eq.130000) npart_max = nprint
         j = j + 1
 
      enddo over_steps_in_file
@@ -243,6 +227,15 @@ subroutine set_labels
   use settings
   implicit none
   integer :: i
+  
+  if (ndim.le.0 .or. ndim.gt.3) then
+     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+     return
+  endif
+  if (ndimV.le.0 .or. ndimV.gt.3) then
+     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+     return
+  endif
     
   do i=1,ndim
      ix(i) = i
@@ -290,11 +283,13 @@ subroutine set_labels
      label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
   enddo
   !--mag field
-  iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
-  labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-  do i=1,ndimV
-     label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
-  enddo
+  if (iBfirst.gt.0) then
+     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
+     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
+     do i=1,ndimV
+        label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
+     enddo
+  endif
   !--current density
   iamvec(13:13+ndimV-1) = 13
   labelvec(13:13+ndimV-1) = 'J'

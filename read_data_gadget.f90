@@ -335,6 +335,15 @@ subroutine set_labels
   implicit none
   integer :: i
 
+  if (ndim.le.0 .or. ndim.gt.3) then
+     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+     return
+  endif
+  if (ndimV.le.0 .or. ndimV.gt.3) then
+     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+     return
+  endif
+
   do i=1,ndim
      ix(i) = i
   enddo

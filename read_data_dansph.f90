@@ -128,8 +128,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
           hfactin,ndim,ndimV,ncolstep
      if (ierr /= 0) then
         print*,'*** error reading timestep header ***'
-        close(11)
+        close(11)     
         return
+     elseif ()   
      else ! count this as a successfully read timestep, even if data is partial
         nstepsread = nstepsread + 1
      endif
@@ -330,6 +331,15 @@ subroutine set_labels
  use settings
  implicit none
  integer :: i
+
+ if (ndim.le.0 .or. ndim.gt.3) then
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    return
+ endif
+ if (ndimV.le.0 .or. ndimV.gt.3) then
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    return
+ endif
 
  do i=1,ndim
     ix(i) = i
