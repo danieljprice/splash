@@ -357,13 +357,13 @@ function transform_label(label,itrans)
         !
         select case(itransmulti)
         case(1)
-           temp_label = 'log\d10\u'//trim(temp_label)
+           temp_label = 'log '//trim(temp_label)
         case(2)
            temp_label = '|'//trim(temp_label)//'|'
         case(3)
            temp_label = '1/'//trim(temp_label)
         case(4)
-           temp_label = 'SQRT('//trim(temp_label)//')'
+           temp_label = 'sqrt('//trim(temp_label)//')'
         case(5)
            temp_label = trim(temp_label)//'\u2\d'
         case default
