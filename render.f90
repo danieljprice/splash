@@ -58,7 +58,8 @@ subroutine render(datpix,datmin,datmax,label,npixx,npixy,	&
 !
  if (iplotcont) then
     print*,'plotting ',nc,' contours...'
-    call pgcont(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
+!--use pgcont if pgcons causes trouble
+    call pgcons(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
  endif
  
  return
