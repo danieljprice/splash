@@ -11,6 +11,7 @@ program supersphplot
 !     calc_quantities    : calculates additional quantities from particle data
 !     colour_demo        : demonstration of colour schemes for rendering
 !     colour_set	 : sets up pgplot colour table for rendering
+!     danpgtile          : my utility for tiling plots on the pgplot page
 !     danpgwedg          : my very minor modification of pgwedg
 !     defaults_read	 : read default plot options from file
 !     defaults_set	 : sets default plot options if not read from file
@@ -48,6 +49,7 @@ program supersphplot
 !     read_data_dansph   : reads data from my format of data files
 !     read_data_mrbsph   : reads data from matthew bate's format of data files
 !     render	 	 : takes array of pixels and plots render map/contours etc
+!     setpage            : sets up the PGPLOT page (replaces call to PGENV/PGLAB)
 !     supersphplot	 : main program, drives menu loop
 !     transform	 	 : applies various transformations to data (log10, 1/x, etc)
 !     vectorplot         : produces a vector plot from particle data
@@ -59,6 +61,7 @@ program supersphplot
 !
 !     this version for both ndspmhd and matthew bate's code 2003-2004
 !     changes log:
+!      21/04/04 - page setup moved out of main -> setpage, danpgtile added
 !      26/03/04 - options split into submenus
 !      04/03/04 - allocatable arrays 
 !                 (last non-allocatable version tagged as noalloc_04_03_04)
