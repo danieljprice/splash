@@ -25,12 +25,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   logical, intent(in) :: use_zrange
   character(len=*), intent(in) :: labelz
   integer :: j,n,itype,linewidth,icolourindex,nplotted
-  integer :: lenstring,index1,index2,ntotplot
+  integer :: lenstring,index1,index2,ntotplot,icolourstart
   real :: charheight
   character(len=20) :: string
   
-  !--query current character height
+  !--query current character height and colour
   call pgqch(charheight)
+  call pgqci(icolourstart)
   !!print "(a,i8)",' entering particle plot, total particles = ',ntot
   !
   !--check for errors in input
@@ -182,6 +183,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
      call pgsci(icolourindex)
      
   endif
+
+!
+!--reset colour
+!
+  call pgsci(icolourstart)
 
   return
      
