@@ -2,29 +2,67 @@
 ! Subroutine calls the power spectrum calculation
 ! and plots the results
 !---------------------------------------------------
-subroutine plot_powerspectrum(npart,x,dat)
+subroutine plot_powerspectrum(npts,x,dat,idisordered)
  implicit none
- integer, parameter :: maxfreq = 100
- integer, intent(in) :: npart
- integer :: nfreq
- real, dimension(npart), intent(in) :: x, dat
- real, dimension(maxfreq) :: freq,power
+ integer, parameter :: ioversamplingfactor = 4	! oversample by 4
+ integer, parameter :: iabovenyquist = 2	! up to multiple of nyquist frequency
+ integer, intent(in) :: npts
+ integer :: nfreq, ierr
+ real, dimension(npts), intent(in) :: x, dat
+ real, dimension(:), allocatable :: freq,power
+ real :: xmin,xmax
  real :: freqmin,freqmax,powermin,powermax
+ real :: wavelengthmin,wavelengthmax
  real, external :: theoretical_power
+ logical, intent(in) :: idisordered
 !
-!--call subroutine to evaluate the power spectrum
-!  of the data (dat) on a set of disordered points
-!  (the particles), with co-ordinates x
-!  returns an array of nfreq frequencies (freq) 
-!  between freqmin and freqmax, together
-!  with the power at each frequency (power) 
+!--get max/min of data
+! 
+ xmin = MINVAL(x)
+ xmax = MAXVAL(x)
 !
- call lomb_powerspectrum(npart,x,dat,nfreq,freq,power,maxfreq)
+!--set frequency interval between evaluations of power
+! 
+ nfreq = 32	!128	!ioversamplingfactor*iabovenyquist*npts
+!
+!--allocate arrays for frequency and power accordingly
+! 
+ allocate(freq(nfreq),power(nfreq),STAT=ierr)
+ if (ierr.ne.0) then
+    print*,'error allocating memory for frequency arrays, returning'
+    return
+ endif
+!
+!--work out range of frequencies to compute
+!
+ wavelengthmax = 2.*(xmax-xmin)
+ wavelengthmin = wavelengthmax/(REAL(nfreq))	! nyquist frequency
+ 
+ freqmin = 1./wavelengthmax
+ freqmax = iabovenyquist/wavelengthmin	! to some multiple of nyquist
+ print*,'frequencies range f = ',freqmin,' to ',freqmax
+
+ if (.not.idisordered) then
+!
+!--if data points are evenly distributed in x
+!  (e.g. after interpolation), then take the fourier series
+!
+!  call to power spectrum returns an array of nfreq frequencies (freq) 
+!  between freqmin and freqmax, together with the power at each frequency (power) 
+!
+    call powerspectrum_fourier(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
+!
+!  or evaluate the power spectrum (periodogram) on a set of disordered points
+!  via the Lomb algorithm
+!
+ else
+    call powerspectrum_lomb(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
+ endif
 !
 !--work out plot limits
 ! 
- freqmin = MINVAL(freq(1:nfreq))
- freqmax = MAXVAL(freq(1:nfreq))
+! freqmin = MINVAL(freq(1:nfreq))
+! freqmax = MAXVAL(freq(1:nfreq))
  powermin = MINVAL(power(1:nfreq))
  powermax = MAXVAL(power(1:nfreq))
 !
@@ -37,7 +75,7 @@ subroutine plot_powerspectrum(npart,x,dat)
  print*,'plotting power spectrum...'
  call PGSWIN(freqmin,freqmax,0.0,1.0,0,1)
  call PGBOX('BCNST',0.0,0,'1BVCNST',0.0,0)      
- call PGLABEL ('f','Power',' 1D Lomb periodogram ')
+ call PGLABEL ('frequency','Power',' 1D Power Spectrum ')
 !
 !--plot power spectrum
 !

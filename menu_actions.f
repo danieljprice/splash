@@ -16,7 +16,7 @@
       REAL :: papersizey
       CHARACTER(LEN=30) :: filename
       CHARACTER(LEN=25) :: transform_label,crap
-      CHARACTER(LEN=1) :: ans,dummy
+      CHARACTER(LEN=1) :: ans
       LOGICAL :: ians
       
       iaction = ipicky - numplot      
@@ -186,7 +186,7 @@
 	     ENDIF
 	     IF ((multiplotx(i).LE.ndim)
      &	         .AND.(multiploty(i).LE.ndim)) THEN
-                CALL get_render_options(irendermulti(i),
+                CALL options_render(irendermulti(i),
      &		     npixmulti(i),icolours,iplotcontmulti(i),
      &	             ncontoursmulti(i),ivecplotmulti(i),npixvecmulti(i),
      &               iplotpartvecmulti(i),x_secmulti(i),
@@ -251,69 +251,7 @@
 	  RETURN 	  
 !------------------------------------------------------------------------
        CASE(15)
-	  IF (iexact.NE.0) THEN
-	     iexact = 0
-	  ELSE   
-40           WRITE (*,41)
-41           FORMAT(' 0) none ',/,
-     &              ' 1) polytrope ',/,
-     &              ' 2) soundwave ',/,     
-     &              ' 3) sedov blast wave',/,     
-     &              ' 4) toy star ',/,
-     &              ' 5) MHD shock tubes ')
-             CALL prompt('Enter exact solution to plot',iexact,0,5)
-	     PRINT*,' plotting exact solution number ',iexact
-!
-!--enter parameters for soundwave solution
-!
-	     IF (iexact.EQ.4) THEN
-	        PRINT*,' Toy star: '
-		CALL prompt('Enter parameter A (v = Ax) ',Atstar)
-                CALL prompt('Enter parameter H (rho = H - Cx^2)',Htstar)
-		CALL prompt('Enter parameter C (rho = H - Cx^2)',
-     &                       Ctstar,0.0)		
-		sigma = 0.
-		IF (magfield) THEN
-		   CALL prompt('Enter parameter sigma (By = sigma rho)',
-     &                         sigma0)
-		   sigma = sigma0
-		ENDIF
-		ians = .false.
-		CALL prompt('Do you want oscillations?',ians)
-		norder = -1
-		IF (ians) THEN
-		   CALL prompt('Enter order',norder,0)
-		ENDIF
-	     ELSEIF (iexact.EQ.2) THEN
-	        CALL prompt('Enter wavelength of sound wave lambda ',
-     &                      lambda,0.0)		
-                CALL prompt('Enter amplitude ',delta,0.0)
-	     ELSEIF (iexact.EQ.1) THEN
-!
-!--read exact solution for a polytrope
-!
-                ipolyc = ipolycmax
-		INQUIRE (exist = iexist, file='polycalc.dat')
-		IF (.not.iexist) THEN
-                   PRINT*,' file polycalc.dat does not exist'
-                ENDIF
-                OPEN(unit=14,file='polycalc.dat',	
-     &		     status='old',form='formatted')
-                READ(14,10) dummy
-10              FORMAT(a)      
-                READ(14,*) maxrho,mtot
-                READ(14,*) akfac
-                READ(14,*, END=100) (den(i),rad(i),i=1,ipolyc) 
-                CLOSE(14)
-                GOTO 101
-100             CONTINUE
-                PRINT*,'End of polycalc.dat, i=',i-1
-                ipolyc = i-1
-                CLOSE(14)
-101             CONTINUE	     
-	     ENDIF
-	  ENDIF
-	  RETURN 	  
+          call options_exact(iexact)
 !------------------------------------------------------------------------
        CASE(16)
 	  iplotav=.not.iplotav
@@ -339,7 +277,7 @@ c	  plot ghost particles?
 	  RETURN 	  
 !------------------------------------------------------------------------
        CASE(19)
-          CALL get_render_options(irender,npix_nomulti,icolours,
+          CALL options_render(irender,npix_nomulti,icolours,
      &	       iplotcont_nomulti,ncontours_nomulti,
      &	       ivecplot_nomulti,npixvec_nomulti,iplotpartvec_nomulti,
      &         xsec_nomulti,xsecpos_nomulti,backgnd_vec_nomulti,

@@ -81,6 +81,11 @@ module settings
  
  logical :: backgnd_vec_nomulti
  logical :: iplotcont_nomulti,xsec_nomulti,iplotpartvec_nomulti
+!
+!--power spectrum options
+!
+ integer :: ipowerspecy
+ logical :: idisordered
 
 !
 !--sort these into a namelist for input/output
@@ -94,7 +99,8 @@ module settings
    npix_nomulti,npixvec_nomulti,			&
    iplotcont_nomulti,ncontours_nomulti,			&
    icolours,iplotghost,iplotsink,			&
-   ipapersize,papersizex,aspectratio
+   ipapersize,papersizex,aspectratio,			&
+   ipowerspecy,idisordered
      
 end module settings
 !

@@ -17,16 +17,18 @@
 !     exact_swave        : exact solution for a linear sound wave
 !     exact_toystar      : exact solution for the toy star problem
 !     get_render_options : prompts user for options for render plots
+!     interpolate1D	 : interpolation of 1D sph data to 1D grid using sph kernel
 !     interpolate2D	 : interpolation of 2D sph data to 2D grid using sph kernel     
 !     interpolate3D	 : interpolation of 3D sph data to 3D grid using sph kernel
 !     interpolate3D_fastxsec   : fast cross section through 3D data using sph kernel
 !     interpolate3D_projection : fast projection of 3D data to 2D grid using integrated sph kernel
 !     legend		       : plots legend on plot (time)
-!     lomb_powerspectrum1D     : calculates power spectrum of data on particles
 !     menu_actions	 : plot options in menu format
 !     modules		 : contains all shared (global) variables
 !     plot_average	 : bins particles along x-axis and plots average line
 !     plot_powerspectrum : calls powerspectrum and plots it
+!     powerspectrum_fourier : calculates power spectrum of 1D data on ordered pts
+!     powerspectrum_lomb : calculates power spectrum of 1D data on disordered pts
 !     print_menu	 : prints menu
 !     read_data_dansph   : reads data from my format of data files
 !     read_data_mrbsph   : reads data from matthew bate's format of data files
@@ -46,6 +48,8 @@
 !
 !     this version for both ndspmhd and matthew bate's code 2003
 !     changes log:
+!      17/12/03 - 1D interpolation and crap power spectrum
+!		- some options moved to separate subroutines
 !      16/12/03 - labels on particle cross sections
 !      15/12/03 - namelist input/output, freeform source in modules
 ! 		- bug fix in read_data (nghosts) and interpolation routines
@@ -104,7 +108,7 @@
       use labels
       use multiplot
       use particle_data
-      use prompting	! for shock type only
+      use prompting             ! for shock type only
       use settings      
       implicit none      
       integer :: nstep,i,j,k,ipix,len
@@ -118,11 +122,13 @@
       integer :: irenderprev, istepprev
       integer :: isizex,isizey	! for sending datpix to transform
       integer :: nsink,nsinkstart,nsinkend,nghoststart,nghostend
-      integer :: ishk,int_from_string,ichoosey
+      integer :: ishk,int_from_string
+      integer :: igrid, ngrid
 
       character(len=8) :: string	! used in pgplot calls
       real, dimension(2,max) :: vecplot
       real, dimension(max) :: xplot,yplot,renderplot
+      real, dimension(:), allocatable :: datpix1D, xgrid
       real, dimension(:,:), allocatable :: datpix
       real, dimension(:,:,:), allocatable :: datpix3D
       real :: xmin,xmax,ymin,ymax,zmin,zmax,xminrender,xmaxrender
@@ -131,9 +137,10 @@
       real :: xsecmin,xsecmax,dxsec,xsecpos
       real :: pixwidth
       real :: charheight
+      real :: dxgrid
 
       logical :: iplotcont,iplotpartvec,x_sec
-      logical :: log,use_backgnd_color_vecplot      
+      logical :: log,use_backgnd_color_vecplot
       
       character(len=20) :: filename
       character(len=60) :: title,titlex,datfile
@@ -144,7 +151,7 @@
 !-----------------------------------------------------------------------------
 !
       call print_header
-      print*,'( version 4.1 )'
+      print*,'( version 4.2 )'
 !
 !--set default options
 !
@@ -385,12 +392,12 @@ c get rootname from command line/file and read file
 ! non- co-ordinate plot initialisations
 !
       else
+	!!--prompt for options if plotting power spectrum      
+	if (ipicky.eq.ipowerspec) call options_powerspec
+	!!--no title if more than one plot on the page
+        if ((nacross.gt.1).or.(ndown.gt.1)) title = '          '
 
-        if ((nacross.gt.1).or.(ndown.gt.1)) then
-           title = '          '
-        endif
-
-        call pgbegin(0,'?',nacross,ndown)
+        call pgbegin(0,'?',nacross,ndown)	!  initialise PGPLOT
 
       endif
 !!------------------------------------------------------------------------
@@ -1096,14 +1103,47 @@ cc--plot vector map of magnetic field
 !--power spectrum plots (uses x and data as yet unspecified)
 !
 	    if (iploty.eq.ipowerspec) then 
-	    !
-            ! prompt for data to take power spectrum of 
-	    ! 
-	       call prompt('enter data to take power spectrum of',
-     &	                   ichoosey,ndim+1,numplot-nextra)
-               call plot_powerspectrum(npart(i),dat(ix(1),1:npart(i),i),
-     &                                 dat(ichoosey,1:npart(i),i))
-            endif
+
+	       if (.not.idisordered) then	! interpolate first
+!!--allocate memory for 1D grid (size = 2*npart)
+                  ngrid = 2*npart(i)
+	          if (allocated(datpix1D)) deallocate(datpix1D)
+		  if (allocated(xgrid)) deallocate(xgrid)
+		  allocate (datpix1D(ngrid))
+		  allocate (xgrid(ngrid))
+!!--set up 1D grid
+		  xmin = lim(ix(1),1)
+		  xmax = lim(ix(1),2)
+	          dxgrid = (xmax-xmin)/ngrid
+		  do igrid = 1,ngrid
+		     xgrid(igrid) = xmin + igrid*dxgrid - 0.5*dxgrid
+		  enddo
+!!--interpolate to 1D grid		  
+		  call interpolate1D(dat(ix(1),1:npart(i),i), 
+     &		      dat(ipmass,1:npart(i),i),dat(irho,1:npart(i),i),
+     &	              dat(ih,1:npart(i),i),dat(ipowerspecy,1:npart(i),i), 
+     &		      npart(i),xmin,datpix1D,ngrid,dxgrid)
+!!--plot interpolated 1D data to check it
+!                  print*,'plotting interpolated data...'
+!                  call pgswin(xmin,xmax,
+!     &		       minval(datpix1D),maxval(datpix1D),0,1)
+!                  call pgbox('BCNST',0.0,0,'1BVCNST',0.0,0)      
+!                  call pglabel('x',label(ipowerspecy),
+!     &		        '1D interpolation')
+!		  call pgline(ngrid,xgrid,datpix1D)
+!		  read*
+!		  call pgpage	! change page
+
+!!--call power spectrum calculation on the even grid
+                  call plot_powerspectrum(ngrid,xgrid,datpix1D,
+     &		       idisordered)              
+	       else
+!!--or else call power spectrum calculation on the particles themselves    
+                  call plot_powerspectrum(npart(i),
+     &	               dat(ix(1),1:npart(i),i),
+     &                 dat(ipowerspecy,1:npart(i),i),idisordered)
+               endif
+	    endif
 !
 !--if this is the first plot on the page, print legend
 !

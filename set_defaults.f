@@ -73,6 +73,11 @@
       ivecplotmulti(1) = 0	! first plot : vector plot
       x_secmulti(1) = .true.	! first plot : take cross section
       xsecposmulti(1) = 0.0	! first plot : position of cross section
+!
+!--power spectrum options
+!      
+      idisordered = .false.
+      ipowerspecy = ndim+1
       
       RETURN    
       END SUBROUTINE set_defaults
