@@ -2,44 +2,44 @@
 ! Subroutine calls the power spectrum calculation
 ! and plots the results
 !---------------------------------------------------
-subroutine plot_powerspectrum(npts,x,dat,idisordered)
+subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
  implicit none
  integer, parameter :: ioversamplingfactor = 4	! oversample by 4
- integer, parameter :: iabovenyquist = 2	! up to multiple of nyquist frequency
- integer, intent(in) :: npts
- integer :: nfreq, ierr
+ integer, intent(in) :: npts,nfreq,itrans
+ integer :: ierr, ifreq
  real, dimension(npts), intent(in) :: x, dat
- real, dimension(:), allocatable :: freq,power
- real :: xmin,xmax
- real :: freqmin,freqmax,powermin,powermax
+ real, dimension(nfreq) :: freq,freqplot,power
+ real :: xlength
+ real :: freqmin,freqmax,freqminplot,freqmaxplot,powermin,powermax
  real :: wavelengthmin,wavelengthmax
  real, external :: theoretical_power
  logical, intent(in) :: idisordered
 !
 !--get max/min of data
 ! 
- xmin = MINVAL(x)
- xmax = MAXVAL(x)
+! xmin = MINVAL(x)
+! xmax = MAXVAL(x)
 !
 !--set frequency interval between evaluations of power
 ! 
- nfreq = 32	!128	!ioversamplingfactor*iabovenyquist*npts
-!
-!--allocate arrays for frequency and power accordingly
-! 
- allocate(freq(nfreq),power(nfreq),STAT=ierr)
- if (ierr.ne.0) then
-    print*,'error allocating memory for frequency arrays, returning'
+! nfreq = 32*iabovenyquist	!128	!ioversamplingfactor*iabovenyquist*npts
+ if (nfreq.lt.1) then
+    print*,'error: nfreq = ',nfreq
     return
  endif
 !
 !--work out range of frequencies to compute
 !
- wavelengthmax = 2.*(xmax-xmin)
+ if (xlength.le.0.) then
+    print*,'error: max wavelength = ',xlength
+    return 
+ endif
+ wavelengthmax = xlength
  wavelengthmin = wavelengthmax/(REAL(nfreq))	! nyquist frequency
  
  freqmin = 1./wavelengthmax
- freqmax = iabovenyquist/wavelengthmin	! to some multiple of nyquist
+ freqmax = nfreq*freqmin   !1./wavelengthmin	! to some multiple of nyquist
+ print*,'wavelengths from lambda = ',wavelengthmin,' to ',wavelengthmax
  print*,'frequencies range f = ',freqmin,' to ',freqmax
 
  if (.not.idisordered) then
@@ -70,23 +70,64 @@ subroutine plot_powerspectrum(npts,x,dat,idisordered)
 !
  power = power/powermax
 !
+!--take logarithms if appropriate
+!
+ if (itrans.eq.1) then
+    freqminplot = LOG10(freqmin)
+    freqmaxplot = LOG10(freqmax)
+    where (freq > 0.)
+       freqplot = LOG10(freq)
+    end where
+    where (power > 0.)
+       power = LOG10(power)
+    end where
+    powermin = MINVAL(power(1:nfreq))
+    powermax = MAXVAL(power(1:nfreq))   
+ else	
+    freqminplot = freqmin
+    freqmaxplot = freqmax
+    freqplot = freq    
+ endif
+
+!
 !--set up plotting page
 !
  print*,'plotting power spectrum...'
- call PGSWIN(freqmin,freqmax,0.0,1.0,0,1)
- call PGBOX('BCNST',0.0,0,'1BVCNST',0.0,0)      
+ call PGSWIN(freqminplot,freqmaxplot,min(powermin,0.0),powermax,0,1)
+ if (itrans.eq.1) then
+    call PGBOX('BCNSTL',0.0,0,'1BVCNSTL',0.0,0)      
+ else
+    call PGBOX('BCNST',0.0,0,'1BVCNST',0.0,0)      
+ endif
  call PGLABEL ('frequency','Power',' 1D Power Spectrum ')
 !
 !--plot power spectrum
 !
-! call PGLINE(nfreq,freq,power)			! as line
- call PGBIN(nfreq,freq,power,.true.)		! as histogram
+ call PGLINE(nfreq,freqplot,power)			! as line
+! call PGBIN(nfreq,freq,power,.true.)		! as histogram
 !
 !--plot theoretical power spectrum
 ! 
- print*,'plotting theoretical power ',theoretical_power(freqmin)
+ print*,'plotting theoretical power '
  call PGSLS(2)	! dashed line
- call PGFUNX(theoretical_power,10000,freqmin,freqmax,1)
+ power = 0.
+ do ifreq = 1,nfreq
+    if (itrans.eq.1) then
+       if (theoretical_power(freq(ifreq)).gt.0.) then
+          power(ifreq) = log10(theoretical_power(freq(ifreq)))
+       endif  
+    else
+       power(ifreq) = theoretical_power(freq(ifreq))
+    endif
+ enddo
+! power = power/power(1)
+ call PGLINE(nfreq,freqplot,power)
+    
+! if (itrans.eq.1) then
+!    call PGFUNX(theoretical_power,10000,freqmin,freqmax,1) 
+! else
+!    call PGFUNX(theoretical_power,10000,freqmin,freqmax,1)
+! endif
  call PGSLS(1)
  
  return

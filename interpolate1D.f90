@@ -36,7 +36,7 @@ subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
 
   datsmooth = 0.
   term = 0.
-  print*,'interpolating from particles to 1D grid...'
+  print*,'interpolating from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
   !
   !--loop over particles
   !      

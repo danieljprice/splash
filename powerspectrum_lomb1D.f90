@@ -30,6 +30,8 @@ subroutine powerspectrum_lomb(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
 !--calculate the mean and variance of the data
 !
  call mean_variance(dat,npts,datmean,datvar)
+ print*,'data mean = ',datmean,' std. dev = ',sqrt(datvar)
+ 
 !
 !--work out range of angular frequencies (wavenumbers)
 ! 
@@ -37,6 +39,7 @@ subroutine powerspectrum_lomb(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
  omegamax = 2.*pi*freqmax
  domega = (omegamax-omegamin)/nfreq
  d2pi = 1./(2.*pi)
+ print*,'omega min = ',omegamin,' max = ',omegamax
 !
 !--loop over frequencies
 !
@@ -46,8 +49,8 @@ subroutine powerspectrum_lomb(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
 !
 !--save frequency (wavenumber) to array
 !
+    omega = (ifreq)*omegamin
     freq(ifreq) = omega*d2pi
-    print*,'freq(',ifreq,') = ',omega
 !
 !--calculate tau for this frequency
 !
@@ -80,6 +83,9 @@ subroutine powerspectrum_lomb(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
 !    
     power(ifreq) = 1./(2.*datvar)*(term1_numerator**2/term1_denominator + &
     				 term2_numerator**2/term2_denominator)
+
+!    print*,ifreq,' freq = ',freq(ifreq),omega,' power = ', power(ifreq)
+
 !
 !--next frequency
 !
@@ -111,7 +117,7 @@ subroutine mean_variance(x,npts,xmean,xvariance)
  do i=1,npts
     xmean = xmean + x(i)
  enddo
- xmean = xmean/npts
+ xmean = xmean/real(npts)
 !
 !--calculate variance using the corrected two-pass formula
 !
@@ -128,7 +134,7 @@ subroutine mean_variance(x,npts,xmean,xvariance)
     roundoff = roundoff + delta
     xvariance = xvariance + delta*delta
  enddo
- xvariance = (xvariance - roundoff**2/npts)/(npts-1)
+ xvariance = (xvariance - roundoff**2/npts)/real(npts-1)
  
  return
 end subroutine mean_variance

@@ -990,20 +990,22 @@ subroutine main(ipicky,ipickx,irender)
                       dat(ih,1:npart(i),i),dat(ipowerspecy,1:npart(i),i), & 
                       npart(i),xmin,datpix1D,ngrid,dxgrid)
                  !!--plot interpolated 1D data to check it
-                 !print*,'plotting interpolated data...'
-                 !call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
-                 !call pgbox('BCNST',0.0,0,'1BVCNST',0.0,0)      
-                 !call pglabel('x',label(ipowerspecy),'1D interpolation')
-                 !call pgline(ngrid,xgrid,datpix1D)
-                 !read*
-                 !call pgpage! change page
+                 print*,'plotting interpolated data...'
+                 call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
+                 call pgbox('BCNST',0.0,0,'1BVCNST',0.0,0)      
+                 call pglabel('x',label(ipowerspecy),'1D interpolation')
+                 call pgline(ngrid,xgrid,datpix1D)
+                 read*
+                 call pgpage! change page
 
                  !!--call power spectrum calculation on the even grid
-                 call plot_powerspectrum(ngrid,xgrid,datpix1D,idisordered)              
+                 call plot_powerspectrum(ngrid,nfreqspec,wavelengthmax, &
+		      xgrid,datpix1D,idisordered,itrans(iploty))              
               else
                  !!--or else call power spectrum calculation on the particles themselves    
-                 call plot_powerspectrum(npart(i), dat(ix(1),1:npart(i),i), &
-                      dat(ipowerspecy,1:npart(i),i),idisordered)
+                 call plot_powerspectrum(npart(i),nfreqspec,wavelengthmax, &
+		      dat(ix(1),1:npart(i),i), &
+                      dat(ipowerspecy,1:npart(i),i),idisordered,itrans(iploty))
               endif
            endif
            !

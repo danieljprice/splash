@@ -87,7 +87,8 @@ module settings
 !
 !--power spectrum options
 !
- integer :: ipowerspecy
+ integer :: ipowerspecy, nfreqspec
+ real :: wavelengthmax
  logical :: idisordered
 
 !
@@ -104,7 +105,7 @@ module settings
    iplotcont_nomulti,ncontours_nomulti,                 &
    icolours,iplotghost,iplotsink,                       &
    ipapersize,papersizex,aspectratio,                   &
-   ipowerspecy,idisordered,icoords,                     &
+   ipowerspecy,idisordered,wavelengthmax,nfreqspec,icoords, &
    ncircpart,icircpart
      
 end module settings

@@ -11,6 +11,7 @@ subroutine powerspectrum_fourier(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
  real, intent(in), dimension(npts) :: x, dat
  real, intent(out), dimension(nfreq) :: freq, power
  real, intent(in) :: freqmin, freqmax
+ real :: sum1,sum2
  real :: omega, domega, omegamin, omegamax, d2pi
 
  print*,' evaluating fourier transform'
@@ -26,12 +27,20 @@ subroutine powerspectrum_fourier(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
 !--now compute (slow!) fourier transform
 ! 
  do ifreq=1,nfreq
-    omega = omega + domega
+    omega = ifreq*omegamin  ! + domega
     freq(ifreq) = omega*d2pi
+    power(ifreq) = 0.
+    sum1 = 0.
+    sum2 = 0.
     do i=1,npts
-       power(ifreq) = power(ifreq) + dat(i)*SIN(omega*x(i)) 
+       sum1 = sum1 + dat(i)*COS(-omega*x(i)) 
+       sum2 = sum2 + dat(i)*SIN(-omega*x(i)) 
     enddo
+    power(ifreq) = power(ifreq) + sqrt(sum1**2 + sum2**2)/REAL(npts)
+!    print*,ifreq,': freq = ',freq(ifreq),' power = ',power(ifreq)
  enddo
+ 
+ 
  
  print*,'done'
  

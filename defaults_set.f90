@@ -131,6 +131,8 @@ subroutine defaults_set
   !      
   idisordered = .false.
   ipowerspecy = ndim+1
+  wavelengthmax = 1.0
+  nfreqspec = 32
 
   return    
 end subroutine defaults_set
