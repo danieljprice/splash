@@ -54,7 +54,7 @@ subroutine read_data(rootname,istart,nfilesteps)
   integer :: nprint, nghosti, n1, n2, rhozero, RK2
   logical :: magfield
   real*8, dimension(:,:), allocatable :: dattemp
-  real*8 :: udisti,umassi,utimei, umagfdi, gt, gammai
+  real*8 :: udisti,umassi,utimei, umagfdi, timei, gammai
   real*8 :: escap,tkin,tgrav,tterm,tmag
 
   print*,'entering read_data'
@@ -118,10 +118,6 @@ subroutine read_data(rootname,istart,nfilesteps)
 	if (ntotin.gt.maxpart) then
 	   call alloc(ntotin,nstep_max,ncol_max)
 	endif
-	ntot(j) = nprint
-	nghost(j) = nghosti
-	npart(j) = ntot(j) - nghost(j)
-	gamma(j) = gammai
 !
 !--allocate a temporary array for double precision variables
 !
@@ -132,7 +128,7 @@ subroutine read_data(rootname,istart,nfilesteps)
 !
 
         read(15,end=55) udisti, umassi, utimei, umagfdi,  &
-          nprint, nghosti, n1, n2, gt, gammai, rhozero, RK2, &
+          nprint, nghosti, n1, n2, timei, gammai, rhozero, RK2, &
 	  (dattemp(7,i), i=1, nprint), (dattemp(8,i), i=1,nprint), &
           escap, tkin, tgrav, tterm, tmag, &
           (dattemp(1,i), i=1, nprint), (dattemp(2,i), i=1, nprint), &
@@ -147,10 +143,16 @@ subroutine read_data(rootname,istart,nfilesteps)
 !
 !--convert to single precision
 !     
-          print*,'converting to single precision'
+          print*,'converting to single precision ',ncol_max
 	  print*,'x,y(1) = ',dattemp(1,1),dattemp(2,1)
           dat(1:ncol_max,1:nprint,j) = real(dattemp(1:ncol_max,1:nprint))
           deallocate(dattemp)
+
+	  ntot(j) = nprint
+	  nghost(j) = nghosti
+	  npart(j) = ntot(j) - nghost(j)
+	  gamma(j) = real(gammai)
+	  time(j) = real(timei)
           if (ntotin.eq.30000) ntotin = nprint
      enddo
 
