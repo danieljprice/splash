@@ -310,7 +310,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
      !       vs = SQRT(gamma*pr(1)/rho(1))
      !
      !      in this case we know the positions at all times
-     !      because of the Mach no's
+     !      because of the Mach #
      !
      xplot(1) = xmin
      xplot(2:3) = -0.35!-machno*vs*time
@@ -338,6 +338,54 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
      Bz(1:2) = 1.0*const
      Bz(3:4) = 3.988*const
      Bz(5:6) = 1.0*const
+
+  CASE(7)
+     !
+     !--Problem 1A in Ryu and Jones (1995)
+     !
+     npts = 12
+     xplot(1) = xmin
+     xplot(2:3) = -0.386
+     xplot(4:5) = -0.01
+     xplot(6:7) = 0.0505
+     xplot(8:9) = 0.12
+     xplot(10:11) = 0.37
+     xplot(12) = xmax
+     
+     rho(1:2) = 1.0
+     rho(3:4) = 2.6797
+     rho(5:6) = 2.6713
+     rho(7:8) = 3.8508
+     rho(9:10) = 3.7481
+     rho(11:12) = 1.0
+     
+     pr(1:2) = 20.0
+     pr(3:4) = 150.98
+     pr(5:8) = 150.19
+     pr(9:10) = 143.57
+     pr(11:12) = 1.0
+
+     vx(1:2) = 10.0
+     vx(3:4) = 0.72113
+     vx(5:8) = 0.72376
+     vx(9:10) = 0.70505
+     vx(11:12) = -10.0
+
+     vy(1:2) = 0.0
+     vy(3:4) = 0.23139
+     vy(5:8) = 0.35684
+     vy(9:10) = -0.38804
+     vy(11:12) = 0.0
+
+     vz(1:12) = 0.0
+
+     By(1:2) = 1.4105
+     By(3:4) = 3.8389
+     By(5:8) = 4.0380
+     By(9:10) = 5.4272
+     By(11:12) = 1.4105
+
+     Bz(1:12) = 0.0
 
   END SELECT
   !
