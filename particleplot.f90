@@ -173,7 +173,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                 yerrb(1:ncircpart),herr(1:ncircpart),1.0)
         elseif (iploty.le.ndim) then
            print*,'plotting ',ncircpart,' error bars y axis'
-           call pgerrb(6,ncircpart,xerrb(icircpart), &
+           call pgerrb(6,ncircpart,xerrb(1:ncircpart), &
                 yplot(1:ncircpart),herr(1:ncircpart),1.0)      
         endif
      endif
