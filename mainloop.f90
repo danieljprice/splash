@@ -10,7 +10,14 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use multiplot
   use particle_data
   use prompting
-  use settings 
+  use settings_data
+  use settings_limits
+  use settings_part
+  use settings_page
+  use settings_render
+  use settings_vecplot
+  use settings_xsecrot
+  use settings_powerspec
   use transforms
   implicit none
   integer, intent(in) :: ipicky, ipickx, irender, ivecplot
@@ -1009,7 +1016,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            ymean = 0.
         endif
         
-        if (iexact.ne.0) call exact_solution(iplotx,iploty,iexact,ndim, &
+        if (iexact.ne.0) call exact_solution(iplotx,iploty,iexact,ndim,ndimV, &
                               time(i),xmin,xmax,ymean,gamma(i))
         !
         !--plot h = (1/rho)^(1/ndim)

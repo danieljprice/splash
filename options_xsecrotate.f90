@@ -5,7 +5,8 @@ subroutine options_xsecrotate
  use labels
  use limits
  use prompting
- use settings
+ use settings_data ! for ndim
+ use settings_xsecrot
  implicit none
  integer :: ians,i
  character(len=1) :: char

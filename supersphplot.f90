@@ -147,7 +147,7 @@ program supersphplot
 !----------------------------------------------------------------------------------
   use filenames
   use labels
-  use settings
+  use settings_data
   use system_commands
   implicit none
   integer :: i
@@ -163,7 +163,6 @@ program supersphplot
   !
   !--initialise variables
   !      
-  ishowopts = .false.  ! do/don't initially display menu options
   ivegotdata = .false.
   
   ! ---------------------------------------------

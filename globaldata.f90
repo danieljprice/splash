@@ -45,11 +45,10 @@ module labels
  character(len=20), dimension(maxparttypes) :: labeltype
  integer, dimension(3) :: ix
  integer, dimension(maxplot) :: iamvec
- integer :: ivx,ivlast,irho,iutherm,ipr,ih,irad,ibfirst,iblast
- integer :: ipmass
- integer :: ientrop,ipmag,ibeta,itotpr,ike,idivb,idivberr,iJfirst
- integer :: iacplane,itimestep,ipowerspec
- integer :: irad2,ivpar,ivperp,iBpar,iBperp
+ integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst
+ integer :: ipmass,ike
+ integer :: idivb,iJfirst
+ integer :: iacplane,ipowerspec
 end module labels
 !
 !--plot limits
@@ -59,99 +58,123 @@ module limits
  implicit none
  real, dimension(maxplot,2) :: lim
 end module limits
+
+!------------------------------------
+! modules containing plot settings
+!------------------------------------
 !
-!--module containing plot settings
+!--data
 !
-module settings
- use params
+module settings_data
  implicit none
-!
-!--global settings
-!
  integer :: numplot,ncalc,ncolumns,nextra
  integer :: ndataplots
  integer :: ndim, ndimv 
- integer :: icoords,icoordsnew
- logical :: ishowopts, imulti
+ integer :: icoords, ntypes
+ integer :: nstart,n_end,nfreq
+ logical :: ihavereadfilename, ivegotdata, buffer_data
+ logical :: imulti
+
+ namelist /dataopts/ buffer_data
+
+end module settings_data
+
 !
 !--limits
 ! 
+module settings_limits
+ implicit none
  integer :: itrackpart
  real :: scalemax,zoom
  real, dimension(3) :: xminoffset_track, xmaxoffset_track
- logical :: iadapt
-!
-!--data options
-!
- integer :: nstart,n_end,nfreq
- logical :: ihavereadfilename, ivegotdata, buffer_data
+end module settings_limits
 !
 !--particle plot options
 !
- integer :: ntypes
+module settings_part
+ use params
+ implicit none
  integer, dimension(maxparttypes) :: imarktype
- integer :: ncircpart
+ integer :: ncircpart, icoordsnew
  integer, dimension(10) :: icircpart
  integer :: nbins,nc
  integer :: linestylein, iexact
  logical, dimension(maxparttypes) :: iplotpartoftype
- logical :: iplotline,iplotlinein,iplotav,ilabelpart 
+ logical :: iplotline,iplotlinein,iplotav,ilabelpart
+
+ namelist /plotopts/ iplotline,iplotlinein,linestylein,  &
+   imarktype,iplotpartoftype,iexact,iplotav,nbins, &
+   ncircpart,icircpart
+
+end module settings_part
 !
 !--page options
 !
+module settings_page
+ implicit none
  integer :: iaxis,nacross,ndown,ipapersize
- logical :: ipagechange,tile,animate,interactive
+ logical :: ipagechange,tile,animate,interactive,iadapt
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
+
+ namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt, &
+   ipagechange,tile,animate,ipapersize,papersizex,aspectratio, &
+   hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle  
+
+end module settings_page
 !
 !--rendering options
 !
+module settings_render
+ implicit none
  integer :: ncontours,npix,icolours,ncolours
  logical :: iplotcont_nomulti
  logical :: iPlotColourBar
+
+ namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
+   iPlotColourBar
+
+end module settings_render
 !
 !--vector plot options
 !
+module settings_vecplot
+ implicit none
  integer :: npixvec
  logical :: UseBackgndColorVecplot, iplotpartvec
+
+ namelist /vectoropts/ npixvec, UseBackgndColorVecplot, iplotpartvec
+
+end module settings_vecplot
 !
 !--cross section/rotation options
 !
+module settings_xsecrot
+ implicit none
  integer :: ixsec,nxsec
  logical :: xsec_nomulti, irotate, flythru
  real :: anglex, angley, anglez
  real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
  real, dimension(3) :: xorigin
+
+ namelist /xsecrotopts/ xsec_nomulti,xsecpos_nomulti,flythru, &
+          xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
+          irotate, anglex, angley, anglez
+
+end module settings_xsecrot
 !
 !--power spectrum options
 !
+module settings_powerspec
+ implicit none
  integer :: ipowerspecy, nfreqspec
- real :: wavelengthmax
  logical :: idisordered
-!
-!--sort these into namelists for input/output
-!
- namelist /plotopts/ &
-   iadapt,xsec_nomulti,flythru, &
-   iplotline,iplotlinein,linestylein,          &
-   imarktype,iplotpartoftype,                            &
-   iexact,iplotav,nbins,                                &
-   icolours,                      &
-   ipowerspecy,idisordered,wavelengthmax,nfreqspec,icoordsnew, &
-   ncircpart,icircpart,buffer_data
-
- namelist /pageopts/ iaxis,nacross,ndown,interactive, &
-   ipagechange,tile,animate,ipapersize,papersizex,aspectratio, &
-   hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle  
-
- namelist /renderopts/ npix, ncontours,iplotcont_nomulti, &
-   xsec_nomulti,iPlotColourBar,xsecpos_nomulti, &
-   xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
-   irotate, anglex, angley, anglez
+ real :: wavelengthmax
  
- namelist /vectoropts/ npixvec, UseBackgndColorVecplot, iplotpartvec
-     
-end module settings
+ namelist /powerspecopts/ ipowerspecy,idisordered,wavelengthmax,nfreqspec
+ 
+end module settings_powerspec
+
 !
 !--multiplot settings
 !

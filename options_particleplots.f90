@@ -4,7 +4,8 @@
 subroutine options_particleplots
   use exact
   use labels
-  use settings
+  use settings_data ! for icoords
+  use settings_part
   use particle_data
   use prompting
   implicit none

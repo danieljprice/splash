@@ -5,7 +5,7 @@
 subroutine options_data
  use filenames
  use prompting
- use settings
+ use settings_data
  implicit none
  integer :: ians
  

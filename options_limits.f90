@@ -2,7 +2,9 @@
 ! submenu with options relating to plot limits
 !----------------------------------------------------------------------
 subroutine options_limits
- use settings
+ use settings_data
+ use settings_limits
+ use settings_page ! for iadapt
  use multiplot ! for itrans
  use prompting
  use limits

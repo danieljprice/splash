@@ -8,7 +8,14 @@ subroutine defaults_set
   use labels
   use limits
   use multiplot
-  use settings
+  use settings_limits
+  use settings_data
+  use settings_part
+  use settings_page
+  use settings_render
+  use settings_vecplot
+  use settings_xsecrot
+  use settings_powerspec
   use particle_data
   implicit none
   integer :: i
@@ -161,17 +168,6 @@ subroutine defaults_set
   ipmass = 0   ! particle mass
   ipr = 0      ! pressure
   irad = 0     ! radius
-  ipmag = 0    ! magnetic pressure
-  ibeta = 0    ! plasma beta
-  itotpr = 0   ! total pressure
-  ike = 0      ! specific kinetic energy
-  idivBerr = 0 ! div B error
-  iBfirst = 0  ! Bx
-  irad2 = 0    ! r_parallel
-  ivpar = 0    ! v_parallel
-  ivperp = 0   ! v_perp
-  iBpar = 0    ! B_parallel
-  iBperp = 0   ! B_perp
   !
   !--power spectrum options
   !      

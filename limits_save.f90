@@ -4,7 +4,7 @@
 subroutine save_limits
   use filenames
   use limits
-  use settings
+  use settings_data
   implicit none
   integer :: i
   character(len=26) :: limitsfile

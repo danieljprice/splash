@@ -237,12 +237,12 @@ contains
   ! parameters which have been set
   !-----------------------------------------------------------------------
 
-  subroutine exact_solution(iplotx,iploty,iexact,ndim,time,xmin,xmax,ymean,gamma)
+  subroutine exact_solution(iplotx,iploty,iexact,ndim,ndimV,time,xmin,xmax,ymean,gamma)
     use labels
     use limits
     use prompting
     implicit none
-    integer, intent(in) :: iplotx,iploty,iexact,ndim
+    integer, intent(in) :: iplotx,iploty,iexact,ndim,ndimV
     real, intent(in) :: time,xmin,xmax,ymean,gamma
 
     select case(iexact)
@@ -351,13 +351,13 @@ contains
              call exact_mhdshock(2,ishk,time,gamma,xmin,xmax)
           elseif (iploty.eq.ivx) then
              call exact_mhdshock(3,ishk,time,gamma,xmin,xmax)
-          elseif (iploty.eq.ivx+1) then
+          elseif (iploty.eq.ivx+1 .and. ndimV.gt.1) then
              call exact_mhdshock(4,ishk,time,gamma,xmin,xmax)
-          elseif (iploty.eq.ivlast) then
+          elseif (iploty.eq.ivx+ndimV-1 .and. ndimV.gt.2) then
              call exact_mhdshock(5,ishk,time,gamma,xmin,xmax)
-          elseif (iploty.eq.ibfirst+1) then
+          elseif (iploty.eq.ibfirst+1 .and. ndimV.gt.1) then
              call exact_mhdshock(6,ishk,time,gamma,xmin,xmax)
-          elseif (iploty.eq.iblast) then
+          elseif (iploty.eq.ibfirst+ndimV-1 .and. ndimV.gt.2) then
              call exact_mhdshock(7,ishk,time,gamma,xmin,xmax)
           elseif (iploty.eq.iutherm) then
              call exact_mhdshock(8,ishk,time,gamma,xmin,xmax)

@@ -6,7 +6,13 @@
 subroutine defaults_read
  use filenames
  use multiplot
- use settings
+ use settings_data
+ use settings_part
+ use settings_page
+ use settings_render
+ use settings_vecplot
+ use settings_xsecrot
+ use settings_powerspec
  use exact
  implicit none
  logical :: iexist
@@ -15,6 +21,10 @@ subroutine defaults_read
  inquire (exist=iexist, file='defaults')
  if (iexist) then
     open(unit=1,file='defaults',status='old',form='formatted')
+    
+    ierr = 0
+    read(1,NML=dataopts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading data options from defaults'    
     
     ierr = 0
     read(1,NML=plotopts,end=77,iostat=ierr)
@@ -31,9 +41,15 @@ subroutine defaults_read
     ierr = 0
     read(1,NML=vectoropts,end=77,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading vector plot options from defaults'
-!
-!--exact solutions
-!
+
+    ierr = 0
+    read(1,NML=xsecrotopts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading xsec/rotation options from defaults'
+
+    ierr = 0
+    read(1,NML=powerspecopts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading power spectrum options from defaults'
+
     ierr = 0
     read(1,NML=exactparams,end=77,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading exact solution parameters from defaults'    

@@ -33,7 +33,7 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings
+  use settings_data
   implicit none
   integer, intent(IN) :: indexstart
   integer, intent(OUT) :: nstepsread
@@ -224,7 +224,7 @@ end subroutine read_data
 subroutine set_labels
   use labels
   use params
-  use settings
+  use settings_data
   implicit none
   integer :: i
   
@@ -241,7 +241,6 @@ subroutine set_labels
      ix(i) = i
   enddo
   ivx = 4
-  ivlast = 6
   irho = 18     ! location of rho in data array
   iutherm = 16  !  thermal energy
   ih = 7        !  smoothing length
@@ -261,7 +260,6 @@ subroutine set_labels
   label(ndim + ndimV+5) = '\ga'
   if (ncolumns.gt.11) then
      iBfirst = 9    ! location of Bx
-     iBlast = 11    ! location of Bz      
      do i=1,ndimV
         label(iBfirst + i-1) = 'B\d'//labelcoord(i,1) !' (x10\u-3\d)'	!//'/rho'
      enddo
@@ -272,7 +270,6 @@ subroutine set_labels
      enddo
   else
      iBfirst = 0
-     iBlast = 0
   endif
   !
   !--set labels for vector quantities

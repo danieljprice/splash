@@ -2,7 +2,8 @@
 ! submenu with options relating to page setup
 !----------------------------------------------------------------------
 subroutine options_page
- use settings
+ use settings_data ! for numplot
+ use settings_page
  use prompting
  implicit none
  integer :: iaction

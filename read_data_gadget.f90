@@ -33,7 +33,7 @@ subroutine read_data(rootname,istart,nstepsread)
   use particle_data
   use params
   use labels
-  use settings
+  use settings_data
   implicit none
   integer, intent(IN) :: istart
   integer, intent(OUT) :: nstepsread
@@ -331,7 +331,7 @@ end subroutine read_data
 subroutine set_labels
   use labels
   use params
-  use settings
+  use settings_data
   implicit none
   integer :: i
 
@@ -348,7 +348,6 @@ subroutine set_labels
      ix(i) = i
   enddo
   ivx = 4
-  ivlast = 6
   ipmass = 7
   irho = 9        ! location of rho in data array
   ipr = 0

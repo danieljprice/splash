@@ -4,7 +4,9 @@
 subroutine menu
   use filenames
   use labels
-  use settings
+  use settings_data
+  use settings_part  ! only for iexact
+  use settings_page  ! only for interactive
   use multiplot
   use prompting
   use transforms
@@ -14,12 +16,13 @@ subroutine menu
   integer :: iamvecprev, ivecplottemp
   character(LEN=2) :: ioption
   character(LEN=30) :: vecprompt
-  logical :: iansx, iansy, ichange
+  logical :: ishowopts
 
   irender = 0
   ivecplot = 0
   ipickx = 1
   ipicky = 1
+  ishowopts = .false.
 
   menuloop: do
 !---------------------------------------------------------------------------
@@ -50,7 +53,7 @@ subroutine menu
         numplot = ncolumns + ncalc + nextra
         if (numplot.gt.maxplot) then
            print*,numplot,ncolumns,ncalc,nextra
-           stop ' numplot > multiplot array limits: reset this in module params'
+           stop 'ERROR: numplot > multiplot array limits: reset this in module params'
         endif
         ndataplots = ncolumns + ncalc
      else
@@ -104,6 +107,11 @@ subroutine menu
      print 13, ihalf + iadjust,transform_label(label(ihalf + iadjust), &
           itrans(ihalf+iadjust))
   endif
+  
+11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a)
+12 format(1x,55('-'))
+13 format(1x,i2,')',1x,a)
+
 !
 !  multiplot
 !  
@@ -127,15 +135,12 @@ subroutine menu
      print 14,'s','save defaults'
      print 14,'q','exit supersphplot'
   else
-     print*,' d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)'
-     print*,' r(ender) v(ector) x(sec/rotate) s(ave) q(uit)'
+     print "(a)",' d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)'
+     print "(a)",' r(ender) v(ector) x(sec/rotate) s(ave) q(uit)'
   endif
  
   print 12
 
-11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a)
-12 format(1x,55('-'))
-13 format(1x,i2,')',1x,a)
 14 format(1x,a2,')',1x,a)
 16 format(1x,a2,')',1x,a,'( ',L1,' )')
 !
@@ -197,69 +202,7 @@ subroutine menu
      select case(adjustl(ioption))
 !------------------------------------------------------------------------
      case('m','M')
-        call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
-        nacross = nyplotmulti/2
-        if (nacross.eq.0) nacross = 1
-        ndown = nyplotmulti/nacross
-        print*,'setting nacross,ndown = ',nacross,ndown 
-        iansx = .true.
-        call prompt('Same x axis for all?',iansx)
-        if (iansx) then
-           call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
-           multiplotx(2:nyplotmulti) = multiplotx(1)             
-        endif
-        iansy = .false.
-        if (ndim.ge.2) call prompt('Same y axis for all?',iansy)
-        if (iansy) then
-           call prompt('Enter y axis for all plots',multiploty(1),1,numplot)
-           multiploty(2:nyplotmulti) = multiploty(1)
-        endif
-        
-        do i=1,nyplotmulti
-           print*,'Plot number ',i,':'
-           if (.not.iansy .or. multiploty(i).gt.ndataplots .or. multiploty(i).le.0) then
-              call prompt(' y axis ',multiploty(i),1,numplot)
-           endif
-           if (.not.iansx.and.multiploty(i).le.ndataplots) then
-              call prompt(' x axis ',multiplotx(i),1,numplot)
-           endif
-           if ((multiplotx(i).le.ndim).and.(multiploty(i).le.ndim)) then
-              call prompt('(render) (0=none)',irendermulti(i),0,numplot)
-              if (irendermulti(i).ne.0) then
-                 ichange = .false.
-                 call prompt(' change rendering options for this plot? ',ichange)
-                 if (ichange) then
-                    call prompt('plot contours? ',iplotcontmulti(i))
-                    if (ndim.ge.2) then
-                       call prompt(' cross section (no=projection)? ',x_secmulti(i))
-                       if (x_secmulti(i)) then
-                          call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
-                       endif
-                    endif
-                 elseif (i.eq.1) then
-                    print*,'copying options from rendering settings'
-                    iplotcontmulti(i) = iplotcont_nomulti
-                    x_secmulti(i) = xsec_nomulti
-                    xsecposmulti(i) = xsecpos_nomulti
-                 else  
-                    print*,'using same rendering options as plot 1'       
-                    iplotcontmulti(i) = iplotcontmulti(1)
-                    x_secmulti(i) = x_secmulti(1)
-                    xsecposmulti(i) = xsecposmulti(1)
-                 endif
-               endif
-              call prompt('(render) (0=none)',irender,0,numplot)
-              ivecplottemp = -1
-              do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
-                 ivecplottemp = ivecplot
-                 call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
-                 if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
-                    print "(a)",'Error, value not in list' 
-                 endif
-              enddo
-              ivecplotmulti(i) = ivecplottemp
-           endif
-        enddo
+        call options_multiplot
 !------------------------------------------------------------------------
      case('d','D')
         call options_data
@@ -303,5 +246,86 @@ subroutine menu
 
   enddo menuloop
   
-  return      
+  return
+  
+ contains
+
+!----------------------------------------------------
+! multiplot setup
+!----------------------------------------------------
+  subroutine options_multiplot
+   !use multiplot
+   use settings_page !! nacross, ndown
+   use settings_render !! only for iplotcont_nomulti
+   use settings_xsecrot
+   !use prompting
+   implicit none
+   logical :: iansx, iansy, ichange
+   
+   call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
+   nacross = nyplotmulti/2
+   if (nacross.eq.0) nacross = 1
+   ndown = nyplotmulti/nacross
+   print*,'setting nacross,ndown = ',nacross,ndown 
+   iansx = .true.
+   call prompt('Same x axis for all?',iansx)
+   if (iansx) then
+      call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
+      multiplotx(2:nyplotmulti) = multiplotx(1)        
+   endif
+   iansy = .false.
+   if (ndim.ge.2) call prompt('Same y axis for all?',iansy)
+   if (iansy) then
+      call prompt('Enter y axis for all plots',multiploty(1),1,numplot)
+      multiploty(2:nyplotmulti) = multiploty(1)
+   endif
+
+   do i=1,nyplotmulti
+      print*,'Plot number ',i,':'
+      if (.not.iansy .or. multiploty(i).gt.ndataplots .or. multiploty(i).le.0) then
+         call prompt(' y axis ',multiploty(i),1,numplot)
+      endif
+      if (.not.iansx.and.multiploty(i).le.ndataplots) then
+         call prompt(' x axis ',multiplotx(i),1,numplot)
+      endif
+      if ((multiplotx(i).le.ndim).and.(multiploty(i).le.ndim)) then
+         call prompt('(render) (0=none)',irendermulti(i),0,numplot)
+         if (irendermulti(i).ne.0) then
+            ichange = .false.
+            call prompt(' change rendering options for this plot? ',ichange)
+            if (ichange) then
+               call prompt('plot contours? ',iplotcontmulti(i))
+               if (ndim.ge.2) then
+                  call prompt(' cross section (no=projection)? ',x_secmulti(i))
+                  if (x_secmulti(i)) then
+                     call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
+                  endif
+               endif
+            elseif (i.eq.1) then
+               print*,'copying options from rendering settings'
+               iplotcontmulti(i) = iplotcont_nomulti
+               x_secmulti(i) = xsec_nomulti
+               xsecposmulti(i) = xsecpos_nomulti
+            else  
+               print*,'using same rendering options as plot 1'       
+               iplotcontmulti(i) = iplotcontmulti(1)
+               x_secmulti(i) = x_secmulti(1)
+               xsecposmulti(i) = xsecposmulti(1)
+            endif
+         endif
+         call prompt('(render) (0=none)',irender,0,numplot)
+         ivecplottemp = -1
+         do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
+            ivecplottemp = ivecplot
+            call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
+            if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
+               print "(a)",'Error, value not in list' 
+            endif
+         enddo
+         ivecplotmulti(i) = ivecplottemp
+      endif
+   enddo
+   
+   return
+   end subroutine options_multiplot
 end subroutine menu

@@ -33,7 +33,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
   use labels
-  use settings
+  use settings_data
   implicit none
   integer, intent(IN) :: indexstart
   integer, intent(OUT) :: nstepsread
@@ -327,7 +327,7 @@ end subroutine read_data
 subroutine set_labels
  use labels
  use params
- use settings
+ use settings_data
  implicit none
  integer :: i
 
@@ -344,7 +344,6 @@ subroutine set_labels
     ix(i) = i
  enddo
  ivx = ndim + 1
- ivlast = ndim + ndimV
  irho = ndim + ndimV + 1      ! location of rho in data array
  ipr = ndim + ndimV + 2       !  pressure 
  iutherm = ndim + ndimV + 3   !  thermal energy
@@ -375,9 +374,8 @@ subroutine set_labels
     !
     label(ndim + ndimV+8) = '\ga\dB'
     iBfirst = ndim + ndimV+8+1        ! location of Bx
-    iBlast = ndim + ndimV+8+ndimV        ! location of Bz
-    iamvec(iBfirst:iBlast) = iBfirst
-    labelvec(iBfirst:iBlast) = 'B'
+    iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
+    labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
     do i=1,ndimV
        label(ndim + ndimV+8+i) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1) !' (x10\u-3\d)' !//'/rho'
     enddo
@@ -394,7 +392,6 @@ subroutine set_labels
     label(idivB) = 'div B'
  else
     iBfirst = 0
-    iBlast = 0
  endif
  if (ncolumns.gt.ndim+3*ndimV+9) then
     label(ndim+3*ndimV+10) = 'psi'

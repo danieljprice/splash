@@ -5,7 +5,7 @@ subroutine read_limits(ierr)
   use filenames
   use labels
   use limits
-  use settings
+  use settings_data
   implicit none
   integer :: i,ierr
   character(len=26) :: limitsfile

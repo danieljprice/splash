@@ -12,7 +12,8 @@
 subroutine get_data(ireadfile)
   use exact
   use filenames
-  use settings
+  use settings_data
+  use settings_part ! only for iexact
   use particle_data
   use prompting
   implicit none

@@ -2,7 +2,8 @@
 ! sets options and parameters for power spectrum calculation/plotting
 !----------------------------------------------------------------------
 subroutine options_powerspec
- use settings
+ use settings_data ! for ndim, numplot
+ use settings_powerspec
  use prompting
  implicit none
 

@@ -7,7 +7,8 @@
 !
 subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec,xsecmin,xsecmax)
   use labels
-  use settings
+  use settings_data ! ndim and icoords
+  use settings_part
   implicit none
   integer, intent(in) :: ntot, iplotx, iploty
   integer, dimension(maxparttypes), intent(in) :: npartoftype

@@ -4,7 +4,7 @@
 
 subroutine options_render
   use prompting
-  use settings
+  use settings_render
   implicit none
   integer :: ians
 !

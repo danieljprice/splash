@@ -3,7 +3,7 @@
 !----------------------------------------------------------------------
 subroutine options_vecplot
  use prompting
- use settings
+ use settings_vecplot
  implicit none
  integer :: ians
   

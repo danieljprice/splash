@@ -31,7 +31,7 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings
+  use settings_data
   implicit none
   integer, intent(IN) :: indexstart
   integer, intent(OUT) :: nstepsread
@@ -228,7 +228,7 @@ end subroutine read_data
 subroutine set_labels
   use labels
   use params
-  use settings
+  use settings_data
   implicit none
   integer :: i
 
@@ -245,7 +245,6 @@ subroutine set_labels
      ix(i) = i
   enddo
   ivx = 4
-  ivlast = 6
 
   ih = 7        !  smoothing length
   label(ih) = 'h'
