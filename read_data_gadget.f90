@@ -202,14 +202,14 @@ subroutine read_data(rootname,istart,nstepsread)
      !--read other quantities for rest of particles
      !
      print*,'gas properties ',npartoftype(1,i)
-     do icol=8,12
+     do icol=8,15
         !!print*,icol
         read (11, end=66,ERR=78) dat(1:npartoftype(1,i),icol,i)
         !
         !--for some reason the smoothing length output by GADGET is
         !  twice the usual SPH smoothing length
         !
-        if (icol.eq.12) then
+        if (icol.eq.15) then
            dat(1:npartoftype(1,i),icol,i) = 0.5*dat(1:npartoftype(1,i),icol,i)
         endif
      enddo
@@ -305,15 +305,18 @@ subroutine set_labels
   irho = 9        ! location of rho in data array
   ipr = 0
   iutherm = 8     !  thermal energy
-  ih = 12         !  smoothing length
+  ih = 15         !  smoothing length
   !
   !--set labels of the quantities read in
   !
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(irho) = '\gr'
   label(iutherm) = 'u'
-  label(10) = 'Ne'
-  label(11) = 'N\dH'
+  label(10) = 'NHp'
+  label(11) = 'NHep'
+  label(12) = 'NHepp'
+  label(13) = 'NH0'
+  label(14) = 'NHe0'
   label(ih) = 'h'
   label(ipmass) = 'particle mass'
   !
