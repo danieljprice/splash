@@ -111,7 +111,7 @@ subroutine read_data(rootname,istart,nfilesteps)
      !
      !--read header line for this timestep
      !
-     read(11,ERR=78,end=67) timein,npart(i),ntot(i),gammain, &
+     read(11,ERR=67,end=67) timein,npart(i),ntot(i),gammain, &
           hfactin,ndim,ndimV,ncolumns	 
      time(i) = real(timein)
      gamma(i) = real(gammain)
@@ -156,13 +156,13 @@ subroutine read_data(rootname,istart,nfilesteps)
 	icol = 1
 	if (allocated(dattempvec)) deallocate(dattempvec)
 	allocate(dattempvec(3,ntot(i)))
-	read (11,end=66,ERR=77) dattempvec(1:ndim,1:ntot(i))
+	read (11,end=66,ERR=67) dattempvec(1:ndim,1:ntot(i))
 	dat(1:ndim,1:ntot(i),i) = real(dattempvec(1:ndim,1:ntot(i)))
 	icol = icol + ndim
 	!
         !--read velocity vector
         !
-	read (11,end=66) dattempvec(1:ndimV,1:ntot(i))
+	read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
 	dat(icol:icol+ndimV-1,1:ntot(i),i) = real(dattempvec(1:ndimV,1:ntot(i)))
 	icol = icol + ndimV
 	!
@@ -171,44 +171,44 @@ subroutine read_data(rootname,istart,nfilesteps)
 	if (allocated(dattemp)) deallocate(dattemp)
         allocate(dattemp(ntot(i)))
 	do j = 1,5
-           read (11,end=66,ERR=77) dattemp(1:ntot(i))
+           read (11,end=66,ERR=67) dattemp(1:ntot(i))
 	   dat(icol,1:ntot(i),i) = real(dattemp(1:ntot(i)))
 	   icol = icol + 1
 	enddo
 	!
         !--read alpha
         !
-	read (11,end=66,ERR=77) dattempvec(1:3,1:ntot(i))
+	read (11,end=66,ERR=67) dattempvec(1:3,1:ntot(i))
 	dat(icol:icol+2,1:ntot(i),i) = real(dattempvec(1:3,1:ntot(i)))
 	icol = icol + 3
 	!
         !--Bfield
         !
-	read (11,end=66,ERR=77) dattempvec(1:ndimV,1:ntot(i))
+	read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
 	dat(icol:icol+ndimV-1,1:ntot(i),i) = real(dattempvec(1:ndimV,1:ntot(i)))
 	icol = icol + ndimV
 	!
 	!--curl B
 	!
-        read (11,end=66,ERR=77) dattempvec(1:ndimV,1:ntot(i))
+        read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
 	dat(icol:icol+ndimV-1,1:ntot(i),i) = real(dattempvec(1:ndimV,1:ntot(i)))
         icol = icol + ndimV
 	!
         !--div B
 	!
-        read (11,end=66,ERR=77) dattemp(1:ntot(i))
+        read (11,end=66,ERR=67) dattemp(1:ntot(i))
 	dat(icol,1:ntot(i),i) = real(dattemp(1:ntot(i)))
         icol = icol + 1
 	!
         !--psi
 	!
-        read (11,end=66,ERR=77) dattemp(1:ntot(i))
+        read (11,end=66,ERR=67) dattemp(1:ntot(i))
 	dat(icol,1:ntot(i),i) = real(dattemp(1:ntot(i)))
         icol = icol + 1	
 	!
 	!--force
 	!
-        read (11,end=66,ERR=77) dattempvec(1:ndimV,1:ntot(i))
+        read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
 	dat(icol:icol+ndimV-1,1:ntot(i),i) = real(dattempvec(1:ndimV,1:ntot(i)))
 	icol = icol+ndimV-1
 	!!print*,'columns read = ',icol,' should be = ',ncolumns
