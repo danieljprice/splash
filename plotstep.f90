@@ -817,10 +817,11 @@ subroutine plotstep(istep,irender,ivecplot, &
            if (irotate .and. irotateaxes.gt.0) then
               if (ndim.eq.3) then
                  call rotate_axes3D(irotateaxes,iplotx,iploty, &
-                      xminrotaxes(1:ndim),xmaxrotaxes(1:ndim),angleradx,anglerady,angleradz)
+                      xminrotaxes(1:ndim),xmaxrotaxes(1:ndim),xorigin(1:ndim), &
+                      angleradx,anglerady,angleradz)
               elseif (ndim.eq.2) then
                  call rotate_axes2D(irotateaxes,xminrotaxes(1:ndim), &
-                                   xmaxrotaxes(1:ndim),angleradz)
+                                   xmaxrotaxes(1:ndim),xorigin(1:ndim),angleradz)
               endif
            endif
            !

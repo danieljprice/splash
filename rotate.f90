@@ -79,12 +79,13 @@ end subroutine rotate3D
 !
 !--plots rotated plot axes
 !
-subroutine rotate_axes2D(ioption,xmin,xmax,anglez)
+subroutine rotate_axes2D(ioption,xmin,xmax,xorigin,anglez)
   implicit none
   integer, intent(in) :: ioption
-  real, intent(in), dimension(2) :: xmin,xmax
+  real, intent(in), dimension(2) :: xmin,xmax,xorigin
   real, intent(in) :: anglez
   integer :: i
+  real, dimension(2) :: xpttemp
   real, dimension(2,4) :: xpt
   print*,'plotting rotated (2D) axes...'
 
@@ -103,7 +104,9 @@ subroutine rotate_axes2D(ioption,xmin,xmax,anglez)
 !--now rotate each of these coordinates
 !
   do i=1,4
-     call rotate2D(xpt(:,i),anglez,0.0)
+     xpttemp(:) = xpt(:,i) - xorigin(:)
+     call rotate2D(xpttemp(:),anglez,0.0)
+     xpt(:,i) = xpttemp(:) + xorigin(:)
   enddo
 !
 !--now plot box appropriately using points
@@ -114,14 +117,16 @@ subroutine rotate_axes2D(ioption,xmin,xmax,anglez)
   return
 end subroutine rotate_axes2D
 
-subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,anglex,angley,anglez)
+subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
+                         anglex,angley,anglez)
   implicit none
   integer, intent(in) :: ioption,iplotx,iploty
-  real, intent(in), dimension(3) :: xmin,xmax
+  real, intent(in), dimension(3) :: xmin,xmax,xorigin
   real, intent(in) :: anglex, angley, anglez
   integer :: i,idim,iline
   integer, parameter :: nlines = 10
   real, dimension(3,8) :: xpt
+  real, dimension(3) :: xpttemp
   real, dimension(2) :: xline,yline
   real :: dx
 
@@ -141,7 +146,9 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,anglex,angley,anglez)
         xpt(:,2) = 0.
         xpt(idim,2) = xmax(idim)
         do i=1,2
-           call rotate3D(xpt(:,i),anglex,angley,anglez)
+           xpttemp(:) = xpt(:,i) - xorigin(:)
+           call rotate3D(xpttemp(:),anglex,angley,anglez)
+           xpt(:,i) = xpttemp(:) + xorigin(:)
         enddo
         !--plot each axis as an arrow
         call pgarro(xpt(iplotx,1),xpt(iploty,1),xpt(iplotx,2),xpt(iploty,2))
@@ -174,7 +181,9 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,anglex,angley,anglez)
      !--now rotate each of these coordinates
      !
      do i=1,8
-        call rotate3D(xpt(:,i),anglex,angley,anglez)
+        xpttemp(:) = xpt(:,i) - xorigin(:)
+        call rotate3D(xpttemp(:),anglex,angley,anglez)
+        xpt(:,i) = xpttemp(:) + xorigin(:)
      enddo
      !
      !--now draw lines appropriately through points
@@ -190,7 +199,6 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,anglex,angley,anglez)
         yline(1) = xpt(iploty,i)
         xline(2) = xpt(iplotx,i+4)
         yline(2) = xpt(iploty,i+4)
-        print*,xline,yline
         call pgline(2,xline,yline)
      enddo
 
@@ -210,7 +218,9 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,anglex,angley,anglez)
         xpt(2,1) = xmin(2)
         xpt(2,2) = xmax(2)
         do i=1,2
-           call rotate3D(xpt(:,i),anglex,angley,anglez)
+           xpttemp(:) = xpt(:,i) - xorigin(:)
+           call rotate3D(xpttemp(:),anglex,angley,anglez)
+           xpt(:,i) = xpttemp(:) + xorigin(:)
         enddo
         call pgline(2,xpt(iplotx,1:2),xpt(iploty,1:2))
      enddo
@@ -226,7 +236,9 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,anglex,angley,anglez)
         xpt(1,1) = xmin(1)
         xpt(1,2) = xmax(1)
         do i=1,2
-           call rotate3D(xpt(:,i),anglex,angley,anglez)
+           xpttemp(:) = xpt(:,i) - xorigin(:)
+           call rotate3D(xpttemp(:),anglex,angley,anglez)
+           xpt(:,i) = xpttemp(:) + xorigin(:)
         enddo
         call pgline(2,xpt(iplotx,1:2),xpt(iploty,1:2))
      enddo     
