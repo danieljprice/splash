@@ -33,9 +33,9 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  if (vecmax.le.0.0) then  ! adaptive limits
     scale = 0.0
     vmax = max(maxval(vecpixx(:,:)),maxval(vecpixy(:,:)))
-    if (vmax.gt.0.) scale = 1.0/vmax
+    if (vmax.gt.0.) scale = 0.1/vmax
  else
-    scale=1./vecmax
+    scale=0.1/vecmax
  endif
  print*,' scale = ',scale
  

@@ -24,6 +24,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use interactive_routines
   use geometry
   use legends, only:legend
+  use fieldlines
   use powerspectrums
   implicit none
   integer, intent(in) :: ipicky, ipickx, irender, ivecplot
@@ -752,16 +753,21 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                           !
                           !--or interpolate (via averaging) to coarser grid
                           !
-                          call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
-                            dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
-                            xmin,ymin,pixwidth,vecpixx,vecpixy, &
-                            ninterp,npixvec,npixyvec)                       
+                          call fieldlines2D(ninterp,xplot(1:ninterp),yplot(1:ninterp), &
+                               dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
+                               dat(1:ninterp,ih,i),dat(1:ninterp,ipmass,i), &
+                               dat(1:ninterp,irho,i),xmin,xmax,ymin,ymax)
+                               
+                          !call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
+                          !  dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
+                          !  xmin,ymin,pixwidth,vecpixx,vecpixy, &
+                          !  ninterp,npixvec,npixyvec)                       
                        endif
                        !
                        !--plot it
                        !
-                       call render_vec(vecpixx,vecpixy,vecmax, &
-                           npixvec,npixyvec,xmin,ymin,pixwidth,labelvecplot)
+                       !call render_vec(vecpixx,vecpixy,vecmax, &
+                       !    npixvec,npixyvec,xmin,ymin,pixwidth,labelvecplot)
                        deallocate(vecpixx,vecpixy)
                     endif
                     if (UseBackgndColorVecplot) call pgsci(1)
