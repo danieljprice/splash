@@ -108,6 +108,7 @@ subroutine get_nextstep(i,ifile)
     endif
     ifile = ifile+iskipfiles
  elseif (i.lt.1) then
+    print*,' stepping back'
     ifile = ifile-1
     if (ifile.ge.1) then
        iskipfiles = (i-1)/nstepsinfile(ifile)
