@@ -19,6 +19,7 @@ end module params
 module particle_data
  use params
  implicit none
+ integer :: icrap
  integer, dimension(maxstep) :: npart,ntot,nghost,ntotplot
  integer, dimension(max) :: iam
  real, dimension(maxstep) :: time, gamma
@@ -26,7 +27,6 @@ module particle_data
  real, dimension(maxplot,2) :: lim
  real :: hfact 
  real :: bmin,bmax
- 
 end module particle_data
 !
 !--filename
@@ -138,15 +138,15 @@ end module multiplot
 !
 module exact_params
  implicit none
+ integer :: norder ! for toy star
  integer, parameter :: ipolycmax=1000
-!--toy star
- integer :: norder
  real :: htstar,atstar,ctstar,totmass,sigma,sigma0 ! toy star parameters
 !--sound wave
  real delta,lambda
 !--polytrope
  integer :: ipolyc
- real mtot,maxrho,akfac,den(ipolycmax),rad(ipolycmax) 
+ real :: mtot,maxrho,akfac
+ real, dimension(ipolycmax) :: den,rad 
 !
 !--sort these into a namelist for input/output
 !

@@ -13,10 +13,8 @@ subroutine main(ipicky,ipickx)
   implicit none
   integer, intent(in) :: ipicky, ipickx
 
-  integer :: nstep,i,j,k,n,ipix
+  integer :: i,j,k,n
   integer :: iplotx,iploty
-  integer :: ilist,ihoc,ibin,listsize
-  integer :: ntotmin
   integer :: nyplot,nyplots      
   integer :: npart1
   integer :: npixx,npixy,npixz,ipixxsec
@@ -29,13 +27,12 @@ subroutine main(ipicky,ipickx)
 
   character(len=8) :: string     ! used in pgplot calls
   real, dimension(2,max) :: vecplot
-  real, dimension(max) :: xplot,yplot,renderplot
+  real, dimension(max) :: xplot,yplot
   real, dimension(:), allocatable :: datpix1D, xgrid
   real, dimension(:,:), allocatable :: datpix
   real, dimension(:,:,:), allocatable :: datpix3D
   real :: xmin,xmax,ymin,ymax,zmin,zmax,xminrender,xmaxrender
   real :: vmin,vmax,rendermin,rendermax
-  real :: scale,rhomax,rhomin,binsize
   real :: xsecmin,xsecmax,dxsec,xsecpos
   real :: pixwidth
   real :: charheight
@@ -45,10 +42,9 @@ subroutine main(ipicky,ipickx)
   logical :: iplotcont,iplotpartvec,x_sec
   logical :: log,use_backgnd_color_vecplot
 
-  character(len=20) :: filename
-  character(len=60) :: title,titlex,datfile
-  character(len=1) :: ans,dummy,logx,logy
-  character(len=20) :: labelx,labely,labelz,labelrender
+  character(len=60) :: title,titlex
+  character(len=1) :: logx,logy
+  character(len=20) :: labelx,labely,labelrender
   character(len=25) :: transform_label
 
   !------------------------------------------------------------------------
