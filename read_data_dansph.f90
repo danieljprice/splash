@@ -75,7 +75,7 @@ subroutine read_data(rootname,istart,nfilesteps)
 !--read first header line
 !
   read(11,*,ERR=78,end=80) timein,npartin,ntotin,gammain, &
-       hfact,ndim,ndimV,ncol_max	 
+       hfact,ndim_max,ndimV_max,ncol_max	 
 !  print*,'reading time = ',timein,npartin,ntotin,gammain, &
 !       ndim_max,ndimV_max,ncol_max     
 !

@@ -26,7 +26,7 @@ subroutine exact_rhoh(hfact,ndim,pmass,npart,xmin,xmax)
           yplot(i) = hfact*(pmass(j)/xplot(i))**(1./FLOAT(ndim))
           !  print*,i,' x,y = ',xplot(i),yplot(i)
        enddo
-       print*,' plotting h = ',hfact,'*(',pmass(j),'/rho)^(1/ndim)'
+       !!print*,' plotting h = ',hfact,'*(',pmass(j),'/rho)^(1/ndim)'
        call pgline(npts+1,xplot,yplot)
     endif
     pmassprev = pmass(j)

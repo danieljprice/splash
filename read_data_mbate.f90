@@ -2,6 +2,8 @@
 ! this subroutine reads from the data file(s)
 ! change this to change the format of data input
 !
+! THIS VERSION IS FOR READING FORMATTED OUTPUT FROM MATTHEW BATE'S CODE
+!
 ! the data is stored in the global array dat
 !
 ! >> this subroutine must return values for the following: <<
@@ -88,12 +90,12 @@ subroutine read_data(rootname,istart,nfilesteps)
   
 50 continue
   i = k
-  open(unit=15,file=imagefile,status='old',form='formatted')
+  open(unit=15,file=imagefile,status='old',form='formatted',ERR=81)
      read(15,*,end=55) gammain
   !      print*,'Number of particles = ',ntot
      print*,'gamma = ',gammain
      do i=k,100000
-	read(15,*, end=55,ERR=79) time(i),timeff,ntot(i),nghost(i),filename(i)
+	read(15,*, end=55,ERR=79) timeff,time(i),ntot(i),nghost(i),filename(i)
 	!!         filename(i) = '../'//filename(i)
 	print*,filename(i)
 	gamma(i) = gammain
@@ -261,7 +263,7 @@ print*,'    that set as a parameter - edit and recompile'
 return
 
 79 continue
-print*,' *** Error reading data file header: check format ***'
+print*,' *** Error reading IP file: check format ***'
 return
 
 80 continue
@@ -269,7 +271,7 @@ print*,' *** data file empty, no steps read ***'
 return
 
 81 continue
-print*,' *** Error: can''t open data file ***'
+print*,' *** Error: can''t open IP file ***'
 return
                     
 end subroutine read_data
