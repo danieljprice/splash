@@ -31,7 +31,7 @@ subroutine main(ipicky,ipickx,irender)
   real, dimension(:), allocatable :: datpix1D, xgrid
   real, dimension(:,:), allocatable :: datpix
   real, dimension(:,:,:), allocatable :: datpix3D
-  real :: xmin,xmax,ymin,ymax,zmin,zmax,xminrender,xmaxrender
+  real :: xmin,xmax,ymin,ymax,zmin,zmax
   real :: vecmax,rendermin,rendermax
   real :: xsecmin,xsecmax,dxsec,xsecpos
   real :: pixwidth
@@ -285,9 +285,6 @@ subroutine main(ipicky,ipickx,irender)
               if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
            enddo
            !!           if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D	   
-           !!--set limits for rendering area
-           xminrender = MINVAL(lim(ix(1:ndim),1))
-           xmaxrender = MAXVAL(lim(ix(1:ndim),2))
 
            !------------------------------------------------------------------
            !  rendering setup and interpolation (this is the rendering done
@@ -933,10 +930,10 @@ subroutine main(ipicky,ipickx,irender)
 
         elseif (iploty.le.numplot) then! ie iploty = extra
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-           ! additional plots (not plots of particle data - e.g where some additional 
-           ! information is read from a file and plotted on the same page as the 
-           ! particle plots, or where some additional plot is calculated
-           ! from the particle data)
+! additional plots (not plots of particle data - e.g where some additional 
+! information is read from a file and plotted on the same page as the 
+! particle plots, or where some additional plot is calculated
+! from the particle data, such as errors etc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
            !
