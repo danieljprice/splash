@@ -89,8 +89,8 @@ c
       vmarginright = 0.001
       vmargintop = 0.001
       IF (axis.GE.0) THEN
-         vmarginleft = xlabeloffset*ych
-         vmarginbottom = ylabeloffset*ych
+         vmarginleft = (ylabeloffset+1.0)*xch
+         vmarginbottom = (xlabeloffset+1.0)*ych
       ELSE
          vmarginleft = 0.001
          vmarginbottom = 0.001
@@ -159,7 +159,7 @@ c decide whether to number and label the y axis
 c      
       IF (ix.EQ.1 .AND. axis.GE.0) THEN
          yopts = '1VN'//yopts
-	 call PGMTXT('L',ylabeloffset,0.5,0.5,labely)
+	 CALL PGMTXT('L',ylabeloffset,0.5,0.5,labely)
       ELSEIF (axis.GE.0) THEN
          yopts = yopts//'N'
       ENDIF  
@@ -168,14 +168,14 @@ c decide whether to number and label the x axis
 c      
       IF (iy.EQ.ny .AND. axis.GE.0) THEN
          xopts = 'N'//xopts
-	 call PGMTXT('B',xlabeloffset,0.5,0.5,labelx)
+	 CALL PGMTXT('B',xlabeloffset,0.5,0.5,labelx)
       ENDIF
       
       CALL PGBOX(xopts,0.0,0,yopts,0.0,0)
 c
 c plot the title inside the plot boundaries
-c      
-      call PGMTXT('T',-1.5,0.96,1.0,title)
+c
+      CALL PGMTXT('T',-1.5,0.96,1.0,title)
       
       RETURN      
       END SUBROUTINE
