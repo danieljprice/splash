@@ -7,7 +7,7 @@ subroutine defaults_write
  use settings
  use multiplot
  implicit none
- integer :: ierr, i
+ integer :: i
        
  open(unit=1,file='defaults',status='replace',form='formatted')
     write(1,NML=plotopts)
