@@ -26,6 +26,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   integer :: int_from_string
   integer :: ngrid
   integer :: just, ntitles
+  integer :: iplotsonpage
 
   character(len=8) :: string     ! used in pgplot calls
   real, dimension(maxpart) :: xplot,yplot
@@ -61,6 +62,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   isamexaxis = .true.  ! same x axis on all plots? (only relevant for >1 plots per page)
   isameyaxis = .true.  ! same y axis on all plots?
   tile_plots = .false.
+  iplotsonpage = 0  ! counter for how many plots on page
 
   if (ndim.ne.3) x_sec = .false.
 
@@ -219,7 +221,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   !------------------------------------------------------------------------            
   i = nstart
   over_timesteps: do while (i.le.n_end)
-     print*,'tstep = ',i
      iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
      npart1 = npart(i) + 1
      irenderprev = 0
@@ -523,12 +524,16 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	      !---------------------------------
 	      ! output some muff to the screen
 	      !---------------------------------
+	      iplotsonpage = iplotsonpage + 1
+	      if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
+	      
               print 34, time(i),i
               print*,trim(labely),'min,max = ',ymin,ymax
               print*,trim(labelx),'min,max = ',xmin,xmax
-34            format (5('-'),' t = ',f8.4,', dump #',i3,1x,10('-'))
+34            format (5('-'),' t = ',f8.4,', dump #',i4,1x,10('-'))
               if (x_sec.and.iplotpart) print 35,label(ixsec),xsecmin,label(ixsec),xsecmax
 35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
+	      print*,'plot on page = ',iplotsonpage
 	      
 	      !-----------------------
               ! page setup options
@@ -536,8 +541,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	      
 	      !--change the page if pagechange set
 	      !  or, if turned off, between plots on first page only
-	      inewpage = ipagechange .or. ((i.eq.nstart) &
-	              .and..not.(nyplot.gt.1 .and. nacross*ndown.eq.1))
+	      inewpage = ipagechange .or. (iplotsonpage.lt.nacross*ndown)
 	      just = 1
 	      if (ndim.eq.2 .and. x_sec) just = 0
 
@@ -546,7 +550,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               !--------------------------------------------------------------
 	     
 	      if (nyplots.eq.1 .and. nacross*ndown.gt.1) then
-	         call setpage(MOD(i-1,nacross*ndown)+1,nacross,ndown,xmin,xmax,ymin,ymax, &
+	         call setpage(MOD(iplotsonpage-1,nacross*ndown)+1,nacross,ndown,xmin,xmax,ymin,ymax, &
 	           labelx,labely,titlex,just,iaxis, &
 		   isamexaxis,isameyaxis,inewpage,tile_plots)	      
 	      else
@@ -862,6 +866,9 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	   !---------------------------------
 	   ! output some muff to the screen
 	   !---------------------------------
+	   iplotsonpage = iplotsonpage + 1
+	   if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
+
            print 34, time(i),i
            print*,trim(labely),'min,max = ',ymin,ymax
            print*,trim(labelx),'min,max = ',xmin,xmax
@@ -872,8 +879,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 
 	   !--change the page if pagechange set
 	   !  or, if turned off, between plots on first page only
-	   inewpage = ipagechange .or. ((i.eq.nstart) &
-	           .and..not.(nyplot.gt.1 .and. nacross*ndown.eq.1))
+	   inewpage = ipagechange .or. (iplotsonpage.lt.nacross*ndown)
 	   just = 0
 
            !--------------------------------------------------------------
@@ -881,7 +887,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            !--------------------------------------------------------------
 
 	   if (nyplots.eq.1 .and. nacross*ndown.gt.1) then
-	      call setpage(MOD(i-1,nacross*ndown)+1,nacross,ndown,xmin,xmax,ymin,ymax, &
+	      call setpage(MOD(iplotsonpage-1,nacross*ndown)+1,nacross,ndown,xmin,xmax,ymin,ymax, &
 	        labelx,labely,title,just,iaxis, &
 		isamexaxis,isameyaxis,inewpage,tile_plots)	      
 	   else
