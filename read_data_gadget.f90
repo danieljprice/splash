@@ -239,7 +239,7 @@ subroutine read_data(rootname,istart,nfilesteps)
      endif
   enddo
 
-  nfilesteps = ifile-1		! this is if reached array limits
+  nfilesteps = i-1		! this is if reached array limits
   !!ntot(i-1) = j-1
 !
 !--now memory has been allocated, set arrays which are constant for all time
@@ -268,7 +268,7 @@ subroutine read_data(rootname,istart,nfilesteps)
   ncolumns = ncol_max
   print*,'ncolumns = ',ncolumns
 
-  print*,'>> READ all steps =',nfilesteps,'last step ntot = ',ntot(nfilesteps)
+  print*,'>> Finished reading: steps =',nfilesteps,'last step ntot = ',ntot(nfilesteps)
 
   !!------------------------------------------------------------
   !! set locations of particular items of data used in the plotting program
