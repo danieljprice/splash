@@ -36,9 +36,9 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
 
   if (.not.gotfilenames) then
      if (nfiles.le.0 .or. nfiles.gt.maxfile) nfiles = 1
-     call prompt(' Enter number of files to read ',nfiles,1,maxfile)
+     call prompt('Enter number of files to read ',nfiles,1,maxfile)
      do i=1,nfiles
-        call prompt(' Enter filename to read',rootname(i))
+        call prompt('Enter filename to read',rootname(i))
      enddo
   endif
   !
@@ -56,7 +56,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--read all steps from the data file
      !
      nstepsinfile(1:nfiles) = 0
-     print*,'reading from all dumpfiles...'
+     print "(/a)",'reading from all dumpfiles...'
      do i=1,nfiles
         call read_data(rootname(i),istart,nstepsinfile(i))
         istart = istart + nstepsinfile(i) ! number of next step in data array
@@ -71,7 +71,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--set labels for each column of data
      !
-     print*,'setting plot labels...'
+     print "(/a)",'setting plot labels...'
      call set_labels
      !
      !--calculate various additional quantities
@@ -92,7 +92,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--read from a single file only
      !
      nstepsinfile(ireadfile) = 0
-     print*,'reading single dumpfile'
+     print "(/a)",'reading single dumpfile'
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
      !!print*,'nsteps in file = ',nstepsinfile(ireadfile)
      if (ANY(nstepsinfile(1:ireadfile).gt.0)) ivegotdata = .true.
@@ -112,7 +112,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--set labels for each column of data
      !
-     !!print*,'setting plot labels...'
+     !!print "(/a)",'setting plot labels...'
      call set_labels
      !
      !--calculate various additional quantities

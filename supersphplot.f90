@@ -146,8 +146,8 @@ program supersphplot
 !      multiplot enables you to set up multiple plots per page, mixing from any type.
 !
 !----------------------------------------------------------------------------------
-  use filenames
-  use labels
+  use filenames, only:rootname,nfiles,maxfile
+  use labels, only:label
   use getdata, only:get_data
   use defaults, only:defaults_set,defaults_read
   use mem_allocation, only:deallocate_all
@@ -178,7 +178,7 @@ program supersphplot
   call get_number_arguments(nfiles)
   if (nfiles.gt.0) then
      if (nfiles.gt.maxfile) then
-        print*,'WARNING: number of files >= array size: setting nfiles = ',maxfile     
+        print*,' WARNING: number of files >= array size: setting nfiles = ',maxfile     
         nfiles = maxfile
      endif
      do i=1,nfiles
@@ -189,7 +189,7 @@ program supersphplot
      ihavereadfilenames = .true.
   else
      ihavereadfilenames = .false.
-     print "(a)",' no filenames read from command line'
+     print "(a/)",' no filenames read from command line'
   endif
 
   !

@@ -103,33 +103,41 @@ subroutine menu
 !---------------------------------------------------------------------------
 !  print menu
 !---------------------------------------------------------------------------
+
+  if (numplot.gt.0) then
 !
-!  data columns
+!--data columns
 !
-  print*,' You may choose from a delectable sample of plots '
-  print 12
-  ihalf = numplot/2                ! print in two columns
-  iadjust = mod(numplot,2)
-  print 11, (i,transform_label(label(i),itrans(i)), &
-       ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
-       itrans(ihalf+i+iadjust)),i=1,ihalf)
-  if (iadjust.ne.0) then
-     print 13, ihalf + iadjust,transform_label(label(ihalf + iadjust), &
-          itrans(ihalf+iadjust))
+     print "(/a)",' You may choose from a delectable sample of plots '
+     print 12
+     ihalf = numplot/2                ! print in two columns
+     iadjust = mod(numplot,2)
+     print 11, (i,transform_label(label(i),itrans(i)), &
+          ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
+          itrans(ihalf+i+iadjust)),i=1,ihalf)
+     if (iadjust.ne.0) then
+        print 13, ihalf + iadjust,transform_label(label(ihalf + iadjust), &
+             itrans(ihalf+iadjust))
+     endif  
+!
+!--multiplot
+!  
+     print 12
+     print 18,numplot+1,'multiplot ',nyplotmulti,'m','set multiplot '
+  else
+!
+!--if no data
+!
+     print "(/a)",' No data: You may choose from the options below '
   endif
   
 11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a)
-12 format(1x,55('-'))
+12 format(55('-'))
 13 format(1x,i2,')',1x,a)
+18 format(1x,i2,')',1x,a,'[ ',i2,' ]',5x,a2,') ',a)
 
 !
-!  multiplot
-!  
-  print 12
-  print 18,numplot+1,'multiplot ',nyplotmulti,'m','set multiplot '
-18 format(1x,i2,')',1x,a,'[ ',i2,' ]',5x,a2,') ',a)
-!
-!  options 
+!--options 
 ! 
   print 12
   if (ishowopts) then
@@ -249,6 +257,12 @@ subroutine menu
 !------------------------------------------------------------------------
      case('s','S')
         call defaults_write
+     case('?s','?S')
+        print "(/a,/,a,/,a/)",' The (s)ave option saves the default options to a ', &
+                    ' file called `defaults'' in the current directory which', &
+                    ' is read automatically upon the next invocation of supersphplot.'
+        print "(a)",' (press any key to return to the main menu)'
+        read*
 !------------------------------------------------------------------------
      case('h','H')
         ishowopts = .not.ishowopts
