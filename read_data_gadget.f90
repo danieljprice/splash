@@ -214,7 +214,15 @@ subroutine read_data(rootname,istart,nfilesteps)
         do icol=8,12
 	   !!print*,icol
 	   read (11, end=66,ERR=78) dat(1:npart(i),icol,i)
+	   !
+	   !--for some reason the smoothing length output by GADGET is
+	   !  twice the usual SPH smoothing length
+	   !
+	   if (icol.eq.12) then
+	      dat(1:npart(i),icol,i) = 0.5*dat(1:npart(i),icol,i)
+	   endif
 	enddo
+	
 	
      else
         ntot(i) = 1
