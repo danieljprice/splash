@@ -57,6 +57,7 @@ SOURCES= supersphplot.f90 mainloop.f90 \
 	 interpolate1D.f90 interpolate_vec.f90 \
          interpolate2D.f90 interpolate2D_xsec.f90 \
 	 interpolate3D.f90 interpolate3D_fastxsec.f90 \
+         interpolate3D_proj_vec.f90 \
 	 interpolate3D_projection.f90 interpolate3D_xsec_vec.f90 \
 	 menu.f90 options_data.f90 \
 	 options_limits.f90 \
