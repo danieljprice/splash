@@ -155,7 +155,7 @@ subroutine calc_quantities
   !
   if (ientrop.ne.0) label(ientrop) = 'entropy'
   if (irad.ne.0) label(irad) = 'radius '
-  if (irad2.ne.0) label(irad2) = 'r_parallel'
+  if (irad2.ne.0) label(irad2) = 'r\d\(0737)'    !!!parallel'
   if (ike.ne.0) label(ike) = 'specific KE'
   if (ipr.ne.0) label(ipr) = 'P'   !'p_gas '
   if (ipmag.ne.0) label(ipmag) = 'P_mag'
@@ -176,10 +176,10 @@ subroutine calc_quantities
      if (iBpar.ne.0) label(iBpar) = 'B_r'
      if (iBperp.ne.0) label(iBperp) = 'B_phi'  
   case default
-     if (ivpar.ne.0) label(ivpar) = 'v_parallel'
-     if (ivperp.ne.0) label(ivperp) = 'v_perp'
-     if (iBpar.ne.0) label(iBpar) = 'B_parallel'
-     if (iBperp.ne.0) label(iBperp) = 'B_perp'
+     if (ivpar.ne.0) label(ivpar) = 'v\d\(0737)'  !!!_parallel'
+     if (ivperp.ne.0) label(ivperp) = 'v\d\(0738)' !!_perp'
+     if (iBpar.ne.0) label(iBpar) = 'B\d\(0737)'  !!_parallel'
+     if (iBperp.ne.0) label(iBperp) = 'B\d\(0738)' !!_perp'
   end select
   
   return
