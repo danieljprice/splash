@@ -239,6 +239,12 @@ subroutine read_data(rootname,nfilesteps)
   if (ncolumns.gt.ndim+3*ndimV+7) then
      label(ndim+3*ndimV+8) = 'psi'
   endif
+   if (ncolumns.gt.ndim+3*ndimV+8) then
+     label(ndim+3*ndimV+9) = 'f_visc_x'
+     label(ndim+3*ndimV+10) = 'f_visc_y'
+     label(ndim+3*ndimV+11) = 'f_x'
+     label(ndim+3*ndimV+12) = 'f_y'
+  endif 
   
   !--these are here for backwards compatibility -- could be removed
 !  if (ncolumns.gt.ndim+3*ndimV+7) then
