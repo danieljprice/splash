@@ -423,7 +423,7 @@ subroutine set_labels
     label(ipr) = 'P'
     label(ndim+ndimV+8) = 'div v'
     if (icoords.gt.1) then
-       irho = ndim+ndimV+9
+       !!!irho = ndim+ndimV+9
        label(ndim+ndimV+9) = 'rho*'
        label(ndim+ndimV+10) = 'sqrt g'
        iamvec(ndim+ndimV+11:ndim+ndimV+10+ndimV) = ndim+ndimV+11

@@ -148,6 +148,7 @@ program supersphplot
 !----------------------------------------------------------------------------------
   use filenames
   use labels
+  use defaults, only:defaults_set,defaults_read
   use mem_allocation, only:deallocate_all
   use settings_data, only:buffer_data
   use system_commands

@@ -1,6 +1,17 @@
+!-------------------------------------------------
+!
+! Module containing subroutines relating to 
+! setting/saving default options
+!
+!-------------------------------------------------
+module defaults
+ implicit none
+ 
+contains
+
 !!
-!!     set initial default options
-!!      these are used if no defaults file is found
+!! set initial default options
+!! these are used if no defaults file is found
 !!
 subroutine defaults_set
   use exact, only:defaults_set_exact
@@ -16,7 +27,7 @@ subroutine defaults_set
   use settings_vecplot
   use settings_xsecrot
   use settings_powerspec
-  use particle_data
+  use particle_data, only:maxpart,maxstep,maxcol
   implicit none
   integer :: i
 !
@@ -49,6 +60,11 @@ subroutine defaults_set
   itrackpart = 0       ! particle to track (none)
   xminoffset_track = 0.5 ! offset of limits from tracked particle
   xmaxoffset_track = 0.5 !
+!
+!--limits
+!
+  lim(:,:) = 0.
+  itrans(:) = 0
 !
 !--page options
 !
@@ -180,11 +196,6 @@ subroutine defaults_set
   !
   rootname = ' '
   !
-  !--limits
-  !
-  lim(:,:) = 0.
-  itrans(:) = 0
-  !
   !--data array sizes
   !
   maxpart = 0
@@ -192,3 +203,119 @@ subroutine defaults_set
   maxstep = 0
   return    
 end subroutine defaults_set
+!
+!     writes default options to file (should match defaults_read)
+!
+subroutine defaults_write
+ use exact, only:exactparams
+ use filenames, only:rootname,nfiles
+ use settings_data, only:dataopts
+ use settings_part, only:plotopts
+ use settings_page, only:pageopts
+ use settings_render, only:renderopts
+ use settings_vecplot, only:vectoropts
+ use settings_xsecrot, only:xsecrotopts
+ use settings_powerspec, only:powerspecopts
+ use multiplot, only:multi
+ implicit none
+ integer :: i
+       
+ open(unit=1,file='defaults',status='replace',form='formatted')
+    write(1,NML=dataopts)
+    write(1,NML=plotopts)
+    write(1,NML=pageopts)
+    write(1,NML=renderopts)
+    write(1,NML=vectoropts)
+    write(1,NML=xsecrotopts)
+    write(1,NML=powerspecopts)
+    write(1,NML=exactparams)
+    write(1,NML=multi)
+    do i=1,nfiles
+       write(1,"(a)") trim(rootname(i))
+    enddo
+ close(unit=1)
+ print*,'default options saved to file'
+    
+ return              
+end subroutine defaults_write
+!-----------------------------------------------
+! reads default options from file
+! uses namelist input to group the options
+! these are specified in the modules
+!-----------------------------------------------
+subroutine defaults_read
+ use filenames, only:rootname,maxfile,nfiles
+ use multiplot
+ use settings_data, only:dataopts
+ use settings_part, only:plotopts
+ use settings_page, only:pageopts
+ use settings_render, only:renderopts
+ use settings_vecplot, only:vectoropts
+ use settings_xsecrot, only:xsecrotopts
+ use settings_powerspec, only:powerspecopts
+ use exact, only:exactparams
+ implicit none
+ logical :: iexist
+ integer :: ierr,i
+ 
+ inquire (exist=iexist, file='defaults')
+ if (iexist) then
+    open(unit=1,file='defaults',status='old',form='formatted')
+    
+    ierr = 0
+    read(1,NML=dataopts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading data options from defaults'    
+    
+    ierr = 0
+    read(1,NML=plotopts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading plot options from defaults'
+
+    ierr = 0
+    read(1,NML=pageopts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading page options from defaults'
+
+    ierr = 0
+    read(1,NML=renderopts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading render options from defaults'
+
+    ierr = 0
+    read(1,NML=vectoropts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading vector plot options from defaults'
+
+    ierr = 0
+    read(1,NML=xsecrotopts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading xsec/rotation options from defaults'
+
+    ierr = 0
+    read(1,NML=powerspecopts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading power spectrum options from defaults'
+
+    ierr = 0
+    read(1,NML=exactparams,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading exact solution parameters from defaults'    
+  
+    ierr = 0
+    read(1,NML=multi,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading multiplot options from defaults'
+
+    do i=1,maxfile
+       read(1,*,end=66,iostat=ierr) rootname(i)
+    enddo
+66  continue
+
+    close(unit=1)
+    print*,'read default options from file '
+    return
+ else
+    print*,'defaults file not found: using program settings'
+    return
+ endif
+ 
+77 continue
+ print*,'**** warning: end of file in defaults ****'
+ close(unit=1)
+
+ return
+end subroutine defaults_read
+
+end module defaults

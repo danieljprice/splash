@@ -11,6 +11,7 @@ subroutine menu
   use multiplot
   use prompting
   use transforms
+  use defaults, only:defaults_write
   implicit none
   integer :: i,icol,ihalf,iadjust,index,ierr
   integer :: ipicky,ipickx,irender,ivecplot

@@ -39,7 +39,8 @@ GADGETSPH = read_data_gadget.f90
 # put modules separately as these must be compiled before the others
 MODULES= globaldata.f90 transform.f90 prompting.f90 \
          exact.f90 colours.f90 limits.f90 rotate.f90 \
-         interactive_part.f90 allocate.f90 geometry.f90 \
+         interactive_part.f90 allocate.f90 \
+         defaults.f90 geometry.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
          powerspectrums.f90 $(SYSTEMFILE)
 
@@ -47,7 +48,6 @@ MODULES= globaldata.f90 transform.f90 prompting.f90 \
 SOURCES= supersphplot.f90 mainloop.f90 \
          calc_quantities.f90 \
 	 danpgsch.f danpgtile.f danpgwedg.f \
-	 defaults_read.f90 defaults_set.f90 defaults_write.f90 \
 	 exact_fromfile.f90 exact_rhoh.f90 \
 	 exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
 	 exact_toystar.f90 exact_toystar2D.f90 \
