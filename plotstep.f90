@@ -230,7 +230,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   real, dimension(:,:), intent(in) :: dat
   real, intent(in) :: timei,gammai
   integer, intent(inout) :: iadvance
-  integer :: ntoti
+  integer :: ntoti,iz
   integer :: j,k,istepprev
   integer :: nyplot
   integer :: irenderpart
@@ -444,13 +444,16 @@ subroutine plotstep(istep,irender,ivecplot, &
         npixx = npix
 
         !!--work out coordinate that is not being plotted         
-        iplotz = 0
-        if (x_sec) then
+        iz = 0
+        if (ndim.ge.3) then
            do j=1,ndim
               if ((iplotx.ne.iploty).and. &
-                  (j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
+                  (j.ne.iplotx).and.(j.ne.iploty)) iz = j
            enddo
         endif
+        
+        iplotz = 0
+        if (x_sec) iplotz = iz ! this is used in cross section
 
         if (iplotz.ne.0) then
            zplot(1:ntoti) = dat(1:ntoti,iplotz)
@@ -734,7 +737,7 @@ subroutine plotstep(istep,irender,ivecplot, &
               labelrender = label(irenderplot)
               !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
               if (ndim.eq.3 .and..not. x_sec) then
-                 labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iplotz)))
+                 labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
               endif
               !!--apply transformations to the label for the rendered quantity 
               !!  but don't do this for log as we use a logarithmic axis instead

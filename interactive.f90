@@ -48,7 +48,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
   integer, dimension(npart) :: icircpart
   real :: xpt,ypt,xpt2,ypt2
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
-  real :: rmin,rr,gradient,yint,dx,dy
+  real :: rmin,rr,gradient,yint,dx,dy,dr
   real :: xlength, ylength, drender
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
@@ -85,7 +85,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      zptmax = huge(zptmax)
   endif
   
-  do while (.not.iexit)
+  interactiveloop: do while (.not.iexit)
      call pgcurs(xpt,ypt,char)
      !
      !--exit if the device is not interactive
@@ -157,7 +157,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
               ylength = yline(3)-yline(2)
               gradient = ylength/xlength
               yint = yline(3) - gradient*xline(3)
-              print*,' dx = ',xlength,' dy = ',ylength
+              dr = sqrt(xlength**2 + ylength**2)
+              print*,' dr = ',dr,' dx = ',xlength,' dy = ',ylength
               print*,' gradient = ',gradient,' y intercept = ',yint
               yline(1) = gradient*xline(1) + yint
               yline(4) = gradient*xline(4) + yint
@@ -529,17 +530,17 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      end select
 
      if (rotation) then
-        if (anglez.gt.360) anglez = anglez - 360.
-        if (anglez.lt.0) anglez = anglez + 360.
+        if (anglez.gt.360.) anglez = anglez - 360.
+        if (anglez.lt.0.) anglez = anglez + 360.
         if (ndim.gt.2) then
-           if (angley.gt.360) anglez = anglez - 360.
-           if (angley.lt.0) anglez = anglez + 360.
-           if (anglex.gt.360) anglez = anglez - 360.
-           if (anglex.lt.0) anglez = anglez + 360.        
+           if (angley.gt.360.) angley = angley - 360.
+           if (angley.lt.0.) angley = angley + 360.
+           if (anglex.gt.360.) anglex = anglex - 360.
+           if (anglex.lt.0.) anglex = anglex + 360.        
         endif
      endif
 
-  enddo
+  enddo interactiveloop
   return
 end subroutine interactive_part
 
