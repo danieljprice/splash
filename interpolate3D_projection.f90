@@ -64,7 +64,7 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
   !
   iprintnext = 25
   
-  do i=1,npart
+  over_particles: do i=1,npart
      !
      !--report on progress
      !
@@ -105,11 +105,10 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
      !--loop over pixels, adding the contribution from this particle
      !
      do jpix = jpixmin,jpixmax
+        ypix = ymin + (jpix)*pixwidth - 0.5*pixwidth
+        dy = ypix - y(i)
         do ipix = ipixmin,ipixmax
-
-           ypix = ymin + (jpix)*pixwidth - 0.5*pixwidth
            xpix = xmin + (ipix)*pixwidth - 0.5*pixwidth
-           dy = ypix - y(i)
            dx = xpix - x(i)
            rab = sqrt(dx**2 + dy**2)
            qq = rab*hi1
@@ -136,7 +135,7 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
         enddo
      enddo
 
-  enddo
+  enddo over_particles
 
   return
 
