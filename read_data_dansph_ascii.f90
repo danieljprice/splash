@@ -4,8 +4,6 @@
 !
 ! the data is stored in the global array dat
 !
-! THIS VERSION FOR DAN'S SPMHD CODE (BINARY DUMPS)
-!
 ! >> this subroutine must return values for the following: <<
 !
 ! ncolumns    : number of data columns
@@ -40,13 +38,11 @@ subroutine read_data(rootname,istart,nfilesteps)
   character(LEN=20) :: datfile
   character(LEN=2) :: fileno
   character(LEN=*), intent(IN) :: rootname
-  integer :: i,j,k,ifile,icol
+  integer :: i,j,k,ifile
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin
   logical :: iexist,reallocate
-  real*8 :: timein,gammain,hfactin
-  real*8, dimension(:), allocatable :: dattemp
-  real*8, dimension(:,:), allocatable :: dattempvec
+  real :: timein,gammain
 
   if (rootname(1:1).ne.' ') then
      !
@@ -72,14 +68,14 @@ subroutine read_data(rootname,istart,nfilesteps)
   !
   !--open data file and read data
   !
-  open(unit=11,ERR=81,file=datfile,status='old',form='unformatted')
+  open(unit=11,ERR=81,file=datfile,status='old',form='formatted')
 
   nfilesteps = 100000
 !
 !--read first header line
 !
-  read(11,ERR=78,end=80) timein,npartin,ntotin,gammain, &
-       hfactin,ndim_max,ndimV_max,ncol_max	 
+  read(11,*,ERR=78,end=80) timein,npartin,ntotin,gammain, &
+       hfact,ndim_max,ndimV_max,ncol_max	 
 !  print*,'reading time = ',timein,npartin,ntotin,gammain, &
 !       ndim_max,ndimV_max,ncol_max     
 !
@@ -103,7 +99,6 @@ subroutine read_data(rootname,istart,nfilesteps)
   rewind(11)
 
   do i=istart,nfilesteps
-     !!print*,' reading step ',i
      reallocate = .false.
      npart_max = maxpart
      nstep_max = maxstep
@@ -111,13 +106,10 @@ subroutine read_data(rootname,istart,nfilesteps)
      !
      !--read header line for this timestep
      !
-     read(11,ERR=78,end=67) timein,npart(i),ntot(i),gammain, &
-          hfactin,ndim,ndimV,ncolumns	 
-     time(i) = real(timein)
-     gamma(i) = real(gammain)
-     hfact = real(hfactin)
+     read(11,*,ERR=78,end=67) time(i),npart(i),ntot(i),gamma(i), &
+          hfact,ndim,ndimV,ncolumns	 
      print*,'reading time = ',time(i),npart(i),ntot(i),gamma(i), &
-          hfact,ndim,ndimV,ncolumns     
+          ndim,ndimV,ncolumns     
      if (ncolumns.ne.ncol_max) then
         print*,'*** Warning number of columns not equal for timesteps'
         print*,'ncolumns = ',ncolumns,ncol_max
@@ -150,70 +142,9 @@ subroutine read_data(rootname,istart,nfilesteps)
 
   
      if (ntot(i).gt.0) then
-        !
-	!--read position vector
-        !
-	icol = 1
-	if (allocated(dattempvec)) deallocate(dattempvec)
-	allocate(dattempvec(3,ntot(i)))
-	read (11,end=66,ERR=77) dattempvec(1:ndim,1:ntot(i))
-	dat(1:ndim,1:ntot(i),i) = real(dattempvec(1:ndim,1:ntot(i)))
-	icol = icol + ndim
-	!
-        !--read velocity vector
-        !
-	read (11,end=66) dattempvec(1:ndimV,1:ntot(i))
-	dat(icol:icol+ndimV-1,1:ntot(i),i) = real(dattempvec(1:ndimV,1:ntot(i)))
-	icol = icol + ndimV
-	!
-        !--read scalar variables
-        !
-	if (allocated(dattemp)) deallocate(dattemp)
-        allocate(dattemp(ntot(i)))
-	do j = 1,5
-           read (11,end=66,ERR=77) dattemp(1:ntot(i))
-	   dat(icol,1:ntot(i),i) = real(dattemp(1:ntot(i)))
-	   icol = icol + 1
-	enddo
-	!
-        !--read alpha
-        !
-	read (11,end=66,ERR=77) dattempvec(1:3,1:ntot(i))
-	dat(icol:icol+2,1:ntot(i),i) = real(dattempvec(1:3,1:ntot(i)))
-	icol = icol + 3
-	!
-        !--Bfield
-        !
-	read (11,end=66,ERR=77) dattempvec(1:ndimV,1:ntot(i))
-	dat(icol:icol+ndimV-1,1:ntot(i),i) = real(dattempvec(1:ndimV,1:ntot(i)))
-	icol = icol + ndimV
-	!
-	!--curl B
-	!
-        read (11,end=66,ERR=77) dattempvec(1:ndimV,1:ntot(i))
-	dat(icol:icol+ndimV-1,1:ntot(i),i) = real(dattempvec(1:ndimV,1:ntot(i)))
-        icol = icol + ndimV
-	!
-        !--div B
-	!
-        read (11,end=66,ERR=77) dattemp(1:ntot(i))
-	dat(icol,1:ntot(i),i) = real(dattemp(1:ntot(i)))
-        icol = icol + 1
-	!
-        !--psi
-	!
-        read (11,end=66,ERR=77) dattemp(1:ntot(i))
-	dat(icol,1:ntot(i),i) = real(dattemp(1:ntot(i)))
-        icol = icol + 1	
-	!
-	!--force
-	!
-        read (11,end=66,ERR=77) dattempvec(1:ndimV,1:ntot(i))
-	dat(icol:icol+ndimV-1,1:ntot(i),i) = real(dattempvec(1:ndimV,1:ntot(i)))
-	icol = icol+ndimV-1
-	!!print*,'columns read = ',icol,' should be = ',ncolumns
 
-	deallocate(dattemp,dattempvec)
+        read (11,*, end=66,ERR=77) (dat(1:ncolumns,j,i),j=1,ntot(i))
+
      else
         ntot(i) = 1
         npart(i) = 1

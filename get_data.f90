@@ -40,15 +40,18 @@ subroutine get_data
 
   nstart = 1
   n_end = nfilesteps
-  !
-  !--calculate various additional quantities
-  !     
-  call calc_quantities	  
-  !
-  !--read plot limits from file, otherwise set plot limits
-  !
-  call read_limits(ierr)
-  if (ierr.gt.0) call set_limits
+
+  if (ivegotdata) then
+     !
+     !--calculate various additional quantities
+     !     
+     call calc_quantities	  
+     !
+     !--read plot limits from file, otherwise set plot limits
+     !
+     call read_limits(ierr)
+     if (ierr.gt.0) call set_limits
+  endif
   !
   !--read exact solution parameters from files if present
   !
