@@ -1,0 +1,28 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\citeauthoryear{{Dai} and {Woodward}}{1994}]{dw94}
+{Dai}, W. and P.~R. {Woodward}: 1994, `{Extension of the Piecewise Parabolic
+  Method to Multidimensional Ideal Magnetohydrodynamics}'.
+\newblock {\em J. Comp. Phys.} {\bf 115}, 485--514.
+
+\bibitem[\protect\citeauthoryear{{Monaghan} and {Price}}{2004}]{mp04}
+{Monaghan}, J.~J. and D.~J. {Price}: 2004, `{Toy stars in one dimension}'.
+\newblock {\em MNRAS} {\bf 350}, 1449--1456.
+
+\bibitem[\protect\citeauthoryear{{Press} et~al.}{1992}]{numericalrecipes}
+{Press}, W.~H., S.~A. {Teukolsky}, W.~T. {Vetterling}, and B.~P. {Flannery}:
+  1992, {\em {Numerical recipes in FORTRAN. The art of scientific computing}}.
+\newblock Cambridge: University Press, |c1992, 2nd ed.
+
+\bibitem[\protect\citeauthoryear{{Ryu} and {Jones}}{1995}]{rj95}
+{Ryu}, D. and T.~W. {Jones}: 1995, `{Numerical magetohydrodynamics in
+  astrophysics: Algorithm and tests for one-dimensional flow`}'.
+\newblock {\em ApJ} {\bf 442}, 228--258.
+
+\bibitem[\protect\citeauthoryear{{Toro}}{1992}]{toro92}
+{Toro}, E.~F.: 1992, `{The Weighted Average Flux Method Applied to the Euler
+  Equations}'.
+\newblock {\em Philosophical Transactions: Physical Sciences and Engineering}
+  {\bf 341}, 499--530.
+
+\end{thebibliography}
