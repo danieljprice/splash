@@ -113,10 +113,11 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
      enddo
   endif
   
+  iplotz = 0
   if (initialise_xsec) then
      !!--work out coordinate that is not being plotted 
      iplotz = 0
-     if (ndim.ge.3) then
+     if (ndim.ge.3 .and. x_sec) then
         do j=1,ndim
            if ((iplotx.ne.iploty).and. &
                (j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
@@ -443,10 +444,13 @@ subroutine plotstep(istep,irender,ivecplot, &
         npixx = npix
 
         !!--work out coordinate that is not being plotted         
-        do j=1,ndim
-           if ((iplotx.ne.iploty).and. &
-               (j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
-        enddo
+        iplotz = 0
+        if (x_sec) then
+           do j=1,ndim
+              if ((iplotx.ne.iploty).and. &
+                  (j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
+           enddo
+        endif
 
         if (iplotz.ne.0) then
            zplot(1:ntoti) = dat(1:ntoti,iplotz)

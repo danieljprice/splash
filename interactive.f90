@@ -251,6 +251,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
            yptmax = max(ypt,ypt2)
            print*,'xrange = ',xptmin,'->',xptmax
            print*,'yrange = ',yptmin,'->',yptmax
+           if (iplotz.ne.0) then
+              print*,'(zrange = ',zptmin,'->',zptmax,')'
+           endif
            select case (char2)
            case('A')   ! zoom if another left click
               call pgsfs(2)

@@ -31,6 +31,7 @@ FFLAGS = $(F90FLAGS)
 
 DANSPH = read_data_dansph.f90 
 MRBSPH = read_data_mbate.f90
+MRBHSPH = read_data_mbate_hydro.f90
 SCWSPH = read_data_scw.f90
 SROSPH = read_data_sro.f90
 JJMSPH = read_data_jjm.f90
@@ -77,6 +78,7 @@ SOURCESALL = $(MODULES:.f90=.o) $(SOURCES:.f90=.o)
 OBJJJMSPH = $(SOURCESALL:.f=.o) $(JJMSPH:.f90=.o)
 OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f90=.o)
 OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f90=.o)
+OBJMRBHSPH = $(SOURCESALL:.f=.o) $(MRBHSPH:.f90=.o)
 OBJSCWSPH = $(SOURCESALL:.f=.o) $(SCWSPH:.f90=.o)
 OBJSROSPH = $(SOURCESALL:.f=.o) $(SROSPH:.f90=.o)
 OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o)
@@ -88,7 +90,10 @@ jjmsph: $(OBJJJMSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o jsupersphplot $(OBJJJMSPH)
 
 mrbsph: $(OBJMRBSPH)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_mrb $(OBJMRBSPH)
+	$(FC) $(FFLAGS) $(LDFLAGS) -o msupersphplot $(OBJMRBSPH)
+
+mrbhsph: $(OBJMRBHSPH)
+	$(FC) $(FFLAGS) $(LDFLAGS) -o hsupersphplot $(OBJMRBHSPH)
 
 scwsph: $(OBJSCWSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_scw $(OBJSCWSPH)
