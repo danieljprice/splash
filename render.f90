@@ -30,7 +30,7 @@ subroutine render(datpix,datmin,datmax,label,npixx,npixy,	&
  clog = ' '
  if (log) clog = 'l'
 
- print*,'rendering...',npixx,'x',npixy,',array size=',size(datpix)
+ print*,'rendering...',npixx,'x',npixy,',array size=',size(datpix),minval(datpix)
 !
 !--set contour levels
 ! 
