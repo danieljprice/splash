@@ -4,18 +4,31 @@
 subroutine calc_quantities(ifromstep,itostep)
   use labels
   use particle_data
-  use settings
+  use settings_data
   implicit none
   integer, intent(in) :: ifromstep, itostep
-  integer :: i,j,icurr,icrosshel,nstartfromcolumn
+  integer :: i,j,nstartfromcolumn
+  integer :: ientrop
+  integer :: ipmag,ibeta,itotpr,idivBerr,icurr,icrosshel
+  integer :: irad2,ivpar,ivperp,iBpar,iBperp
   real :: Bmag, Jmag
   real, parameter :: pi = 3.1415926536
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
   !
   !--initialise extra quantities to zero
   !
+  ientrop = 0
+  ipmag = 0
+  ibeta = 0
+  itotpr = 0
+  idivBerr = 0
   icurr = 0
   icrosshel = 0
+  irad2 = 0
+  ivpar = 0
+  ivperp = 0
+  iBpar = 0
+  iBperp = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -54,7 +67,6 @@ subroutine calc_quantities(ifromstep,itostep)
      itotpr = 0
      idivBerr = 0
   endif
-  itimestep = 0
 
   if (ndim.eq.2 .and. iBfirst.ne.0 .and. ivx.ne.0) then
      nstartfromcolumn = ncolumns + ncalc
@@ -99,7 +111,8 @@ subroutine calc_quantities(ifromstep,itostep)
      !!--specific KE
      if ((ike.ne.0).and.(ivx.ne.0)) then
         do j=1,ntot(i)
-           dat(j,ike,i) = 0.5*dot_product(dat(j,ivx:ivlast,i),dat(j,ivx:ivlast,i))
+           dat(j,ike,i) = 0.5*dot_product(dat(j,ivx:ivx+ndimV-1,i), &
+                                          dat(j,ivx:ivx+ndimV-1,i))
         enddo
      endif
 
@@ -132,8 +145,8 @@ subroutine calc_quantities(ifromstep,itostep)
         !!--magnetic pressure
         if (ipmag.ne.0) then
            do j=1,ntot(i)
-              dat(j,ipmag,i) = 0.5*dot_product(dat(j,iBfirst:iBlast,i), &
-                   dat(j,iBfirst:iBlast,i))
+              dat(j,ipmag,i) = 0.5*dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i), &
+                                               dat(j,iBfirst:iBfirst+ndimV-1,i))
            enddo
            !!--plasma beta
            if (ibeta.ne.0 .and. ipr.ne.0) then
@@ -152,7 +165,8 @@ subroutine calc_quantities(ifromstep,itostep)
         !!--div B error        (h*divB / abs(B))
         if ((idivBerr.ne.0).and.(idivB.ne.0).and.(ih.ne.0)) then
            do j=1,ntot(i)
-              Bmag = sqrt(dot_product(dat(j,iBfirst:iBlast,i),dat(j,iBfirst:iBlast,i)))
+              Bmag = sqrt(dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i), &
+                                      dat(j,iBfirst:iBfirst+ndimV-1,i)))
               if (Bmag.gt.0.) then
                  dat(j,idivBerr,i) = abs(dat(j,idivB,i))*dat(j,ih,i)/Bmag
               else
@@ -162,8 +176,8 @@ subroutine calc_quantities(ifromstep,itostep)
         endif
         if ((icurr.ne.0).and.(iJfirst.ne.0).and.irho.ne.0) then
            do j=1,ntot(i)
-              Jmag = sqrt(dot_product(dat(j,iJfirst:iJfirst+ndimV,i), &
-                   dat(j,iJfirst:iJfirst+ndimV,i)))
+              Jmag = sqrt(dot_product(dat(j,iJfirst:iJfirst+ndimV-1,i), &
+                   dat(j,iJfirst:iJfirst+ndimV-1,i)))
               if (dat(j,irho,i).ne.0) then
                  dat(j,icurr,i) = Jmag !!/sqrt(dat(irho,j,i))
               endif
@@ -171,8 +185,8 @@ subroutine calc_quantities(ifromstep,itostep)
         endif
         if ((icrosshel.ne.0).and.(iBfirst.ne.0).and.ivx.ne.0) then
            do j=1,ntot(i)
-              dat(j,icrosshel,i) = dot_product(dat(j,iBfirst:iBlast,i),  &
-                   dat(j,ivx:ivlast,i))
+              dat(j,icrosshel,i) = dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i),  &
+                   dat(j,ivx:ivx+ndimV-1,i))
            enddo
         endif
      endif
@@ -189,7 +203,6 @@ subroutine calc_quantities(ifromstep,itostep)
   if (itotpr.ne.0) label(itotpr) = 'P_gas + P_mag'
   if (ibeta.ne.0) label(ibeta) = 'plasma \gb'
   if (idivberr.ne.0) label(idivberr) = 'h |div B| / |B|'
-  if (itimestep.ne.0) label(itimestep) = 'h sqrt(\gr) / |B|'
   if (icurr.ne.0) label(icurr) = '|J|'
   if (icrosshel.ne.0) label(icrosshel) = 'B dot v'
   
