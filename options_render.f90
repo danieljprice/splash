@@ -10,15 +10,16 @@ subroutine options_render
 !
 !--rendering options
 !
- print 10,npix,icolours,iplotcont_nomulti,ncontours, &
-      iPlotColourBar
-10  format(' 0) exit ',/, 		     &
+  ians = 0
+  print 10,npix,icolours,iplotcont_nomulti,ncontours, &
+        iPlotColourBar
+10 format(' 0) exit ',/, 		     &
            ' 1) change number of pixels          (',i5,' )',/, &
            ' 2) change colour scheme             (',i2,' )',/,    &
            ' 3) toggle plot contours             ( ',L1,' )',/, &
            ' 4) change number of contours        (',i3,' )',/, &
            ' 5) toggle colour bar                ( ',L1,' )')
- call prompt('enter option',ians,0,5)
+  call prompt('enter option',ians,0,5)
 !
 !--options
 !
