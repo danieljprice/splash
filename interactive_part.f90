@@ -70,6 +70,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
   xpt2 = 0.
   ypt2 = 0.
   nc = 0
+  ncircpart = 0
   iexit = .false.
   isave = .false.
   rotation = .false.
@@ -208,7 +209,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         call save_limits(iplotx,xmin,xmax)
         call save_limits(iploty,ymin,ymax)
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
-        if (irender.le.0) call save_circles(ncircpart,icircpart)
+        if (irender.le.0 .and. ncircpart.gt.0) call save_circles(ncircpart,icircpart)
         if (rotation) call save_rotation(ndim,anglex,angley,anglez)
         print*,'> plot settings saved <'
      !
