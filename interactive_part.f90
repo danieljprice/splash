@@ -26,7 +26,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
   real, intent(inout) :: xmin,xmax,ymin,ymax
   real, intent(inout) :: anglex,angley,anglez
   logical, intent(out) :: isave
-  integer :: i,iclosest,nc,ipts,int_from_string
+  integer :: i,iclosest,nc,ipts,ierr
   integer :: nmarked
   real :: xpt,ypt,xpt2,ypt2,xptmin,xptmax,yptmin,yptmax
   real :: rmin,rr,gradient,yint
@@ -49,6 +49,9 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
   yline = 0.
   xpt = 0.
   ypt = 0.
+  xpt2 = 0.
+  ypt2 = 0.
+  nc = 0
   iexit = .false.
   isave = .false.
   rotation = .false.
@@ -173,7 +176,11 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
               do i=1,npart
                  if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
                  .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax)) then
-                     icolourpart(i) = int_from_string(char2)
+                     read(char2,*,iostat=ierr) icolourpart(i)
+                     if (ierr /=0) then
+                        print*,'*** error marking particle' 
+                        icolourpart(i) = 1
+                     endif
                      nmarked = nmarked + 1
                  endif
               enddo
@@ -321,7 +328,11 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
      case(' ','n','N') ! space
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
-        iadvance = int_from_string(char)
+        read(char,*,iostat=ierr) iadvance
+        if (ierr /=0) then
+           print*,'*** error setting timestep jump' 
+           iadvance = 1
+        endif
         print*,' setting timestep jump = ',iadvance
      case(')')
         iadvance = 10
@@ -339,7 +350,7 @@ end subroutine interactive_part
 subroutine interactive_step(iadvance)
  implicit none
  integer, intent(inout) :: iadvance
- integer :: int_from_string,nc
+ integer :: nc,ierr
  real :: xpt,ypt
  character(len=1) :: char
  character(len=5) :: string
@@ -393,7 +404,11 @@ subroutine interactive_step(iadvance)
      case(' ','n','N') ! space
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
-        iadvance = int_from_string(char)
+        read(char,*,iostat=ierr) iadvance
+        if (ierr /=0) then
+           print*,'*** error setting timestep jump' 
+           iadvance = 1
+        endif
         print*,' setting timestep jump = ',iadvance
      case(')')
         iadvance = 10

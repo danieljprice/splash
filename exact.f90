@@ -168,7 +168,7 @@ contains
     implicit none
     integer, intent(in) :: iexact
     integer, intent(out) :: ierr
-    integer :: int_from_string
+    integer :: ios
     character(LEN=LEN(rootname(1))+6) :: filename
 
     select case(iexact)
@@ -221,7 +221,8 @@ contains
        !
        !--attempt to guess which MHD shock tube has been done from filename
        !
-       ishk = int_from_string(rootname(1)(5:5))
+       read(rootname(1)(5:5),*,iostat=ios) ishk
+       if (ios.ne.0) ishk = 1
        return
 
     end select

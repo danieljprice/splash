@@ -9,7 +9,7 @@
 
 ## Compiler options
 F90C =  g95
-F90FLAGS =  -O -C
+F90FLAGS =  -O -C -Wall
 #LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
 #         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
 #         -lpng
@@ -56,7 +56,6 @@ SOURCES= supersphplot.f90 mainloop.f90 \
          interpolate2D.f90 interpolate2D_xsec.f90 \
 	 interpolate3D.f90 interpolate3D_fastxsec.f90 \
 	 interpolate3D_projection.f90 interpolate3D_xsec_vec.f90 \
-	 int_from_string.f90 \
 	 legend.f \
 	 menu.f90 options_data.f90 \
 	 options_limits.f90 \
@@ -65,7 +64,6 @@ SOURCES= supersphplot.f90 mainloop.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 \
 	 particleplot.f90 \
 	 plot_kernel_gr.f90 \
-	 plot_powerspectrum.f90 \
 	 powerspectrum_fourier1D.f90 \
 	 powerspectrum_lomb1D.f90 \
 	 print_header.f90\

@@ -41,7 +41,7 @@ subroutine read_data(rootname,istart,nstepsread)
   integer, dimension(:), allocatable :: iamtemp
   integer :: i,itype,icol,ifile,idashpos,ierr
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
-  integer :: ncol_max,npart_max,nstep_max,int_from_string
+  integer :: ncol_max,npart_max,nstep_max
   logical :: iexist,reallocate
   real(doub_prec) :: timetemp
   real(doub_prec), dimension(6) :: Massoftype
@@ -63,7 +63,7 @@ subroutine read_data(rootname,istart,nstepsread)
         !
         !--otherwise just read this dump
         !
-        ifile = int_from_string(rootname(idashpos+1:idashpos+3))
+        read(rootname(idashpos+1:idashpos+3),*) ifile
         datfile = trim(rootname)
      endif
   else

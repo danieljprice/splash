@@ -11,8 +11,8 @@ subroutine menu
   use prompting
   use transforms
   implicit none
-  integer :: i,icol,ihalf,iadjust,index
-  integer :: ipicky,ipickx,irender,ivecplot,int_from_string
+  integer :: i,icol,ihalf,iadjust,index,ierr
+  integer :: ipicky,ipickx,irender,ivecplot
   integer :: iamvecprev, ivecplottemp
   character(LEN=2) :: ioption
   character(LEN=30) :: vecprompt
@@ -153,7 +153,9 @@ subroutine menu
 !------------------------------------------------------------
 !  if input is an integer and within range, plot data
 !------------------------------------------------------------
-  ipicky = int_from_string(ioption)
+  read(ioption,*,iostat=ierr) ipicky
+  if (ierr /= 0) ipicky = -1
+
   if (ipicky.gt.0 .and. ipicky.le.numplot+1) then
      
      if (.not.ivegotdata) then
