@@ -318,7 +318,6 @@ subroutine menu
                xsecposmulti(i) = xsecposmulti(1)
             endif
          endif
-         call prompt('(render) (0=none)',irender,0,numplot)
          ivecplottemp = -1
          do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
             ivecplottemp = ivecplot
