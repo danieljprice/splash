@@ -218,7 +218,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !--non-MHD output
         !
         if (iformat.ne.2) then
-            print*,'non-mhd file'
+            !!print*,'non-mhd file'
         !
         !--read alpha, alphau
         !
@@ -318,7 +318,7 @@ ntot(i) = j-1
 goto 68
 
 67 continue
-   print "(a)",' > end of file <'
+   !!!print "(a)",' > end of file <'
 68 continue
   !
   !--close data file and return
@@ -329,7 +329,7 @@ ncolumns = ncol_max
 ndim = ndim_max
 ndimV = ndimV_max
 
-print*,'>> READ steps ',indexstart,'->',indexstart + nstepsread - 1, &
+print*,'> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
        ' last step ntot = ',ntot(indexstart+nstepsread-1)
 return    
 !

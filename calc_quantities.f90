@@ -94,7 +94,7 @@ subroutine calc_quantities(ifromstep,itostep)
 !     iBperp = 0         
   endif
   
-  print*,'calculating ',ncalc,' additional quantities...',ifromstep,itostep
+  print*,'calculating ',ncalc,' additional quantities...'
   numplot = ncolumns + ncalc
   if (numplot.gt.maxcol) call alloc(maxpart,maxstep,numplot) 
 

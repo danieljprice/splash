@@ -103,12 +103,12 @@ end module settings_part
 module settings_page
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize
- logical :: ipagechange,tile,animate,interactive,iadapt
+ logical :: ipagechange,tile,interactive,iadapt
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt, &
-   ipagechange,tile,animate,ipapersize,papersizex,aspectratio, &
+   ipagechange,tile,ipapersize,papersizex,aspectratio, &
    hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle  
 
 end module settings_page

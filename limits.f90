@@ -19,9 +19,8 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   integer, intent(in) :: ifromstep,itostep,ifromcol,itocol
   integer :: i,j,k
 
-  print*,'setting plot limits... '
-  print*,'  step ',ifromstep,'->',itostep
-  print*,'column ',ifromcol,'->',itocol
+  print 100,ifromstep,itostep,ifromcol,itocol
+100 format(' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
   !!--find limits of particle properties	  
   lim(:,1) = 1.e6
   lim(:,2) = -1.e6
@@ -38,10 +37,10 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   ! 
   do j=ifromcol,itocol
      if (lim(j,2).eq.lim(j,1)) then
-        print*,j,label(j),' min = max = ',lim(j,1)
+        print "(a,a20,a,1pe9.2)",'  warning: ',label(j),' min = max = ',lim(j,1)
      endif  
   enddo
-  print*,'plot limits set'
+  print "(a)",' plot limits set'
 
 end subroutine set_limits
 !

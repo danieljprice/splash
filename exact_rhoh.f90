@@ -33,7 +33,6 @@ subroutine exact_rhoh(hfact,ndim,pmass,npart,xmin,xmax)
     if (abs(pmassmin-pmassmax).gt.1.e-10 .and. pmassmin.gt.1.e-10) then
        do i=1,npts
          yplot(i) = hfact*(pmassmin/xplot(i))**(1./FLOAT(ndim))
-         print*,xplot(i),yplot(i)
        enddo
        write(*,"(a,f5.2,a,1pe8.2,a,i1,a)") ' plotting h = ',hfact, &
                                '*(',pmassmin,'/rho)**(1/',ndim,')'

@@ -217,6 +217,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
 !
      if (iadvance.eq.-666) exit over_timesteps
      i = i + iadvance
+     if (interactive .and. i.gt.n_end) i = n_end
 
   enddo over_timesteps
 
@@ -514,7 +515,7 @@ subroutine plotstep
            pixwidth = (xmax-xmin)/real(npix)
            npixx = int((xmax-xmin)/pixwidth) + 1
            npixy = int((ymax-ymin)/pixwidth) + 1
-           print*,'npixx, npixy = ',npixx,npixy
+           !!print*,'npixx, npixy = ',npixx,npixy
            !!--only need z pixels if working with interpolation to 3D grid
            if ((ndim.ge.3).and.(x_sec.and.nxsec.gt.2)) then
               zmin = lim(iplotz,1)
@@ -522,7 +523,7 @@ subroutine plotstep
               !                   npixz = int((zmax-zmin)/pixwidth) + 1                 
               !!--number of z pixels is equal to number of cross sections
               npixz = nxsec
-              print*,'npixz = ',npixz
+              !!print*,'npixz = ',npixz
            endif
 
            !!--if rendering array is the same as the previous plot, reuse the array                
@@ -683,8 +684,10 @@ subroutine plotstep
            ! output some muff to the screen
            !---------------------------------
 
-           print*,trim(labely),'min,max = ',ymin,ymax
-           print*,trim(labelx),'min,max = ',xmin,xmax
+           if (interactive) then
+              print*,trim(labely),'min,max = ',ymin,ymax
+              print*,trim(labelx),'min,max = ',xmin,xmax
+           endif
            if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),xsecmin,label(iplotz),xsecmax
 35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
 
@@ -918,9 +921,10 @@ subroutine plotstep
         !---------------------------------
         ! output some muff to the screen
         !---------------------------------
-
-        print*,trim(labely),' min,max = ',ymin,ymax
-        print*,trim(labelx),' min,max = ',xmin,xmax
+        if (interactive) then
+           print*,trim(labely),' min,max = ',ymin,ymax
+           print*,trim(labelx),' min,max = ',xmin,xmax
+        endif
 
         !--------------------------------------------------------------
         ! set up pgplot page (this is my version of PGENV and PGLABEL)
@@ -1106,8 +1110,10 @@ subroutine plotstep
            ! output some muff to the screen
            !--------------------------------------------------------------
 
-           print*,trim(labelx),'min,max = ',xmin,xmax
-           print*,trim(labely),'min,max = ',ymin,ymax
+           if (interactive) then
+              print*,trim(labelx),'min,max = ',xmin,xmax
+              print*,trim(labely),'min,max = ',ymin,ymax
+           endif
 
            !--------------------------------------------------------------
            ! set up pgplot page

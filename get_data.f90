@@ -83,7 +83,7 @@ subroutine get_data(ireadfile,gotfilenames)
      nstepsinfile(ireadfile) = 0
      print*,'reading single dumpfile'
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
-     print*,'nsteps in file = ',nstepsinfile(ireadfile)
+     !!print*,'nsteps in file = ',nstepsinfile(ireadfile)
      if (ANY(nstepsinfile(1:ireadfile).gt.0)) ivegotdata = .true.
      !
      !--assume there are the same number of steps in the other files
@@ -97,12 +97,11 @@ subroutine get_data(ireadfile,gotfilenames)
      nstart = 1
      n_end = sum(nstepsinfile(1:nfiles))
      nstepstotal = n_end
-     print*,'nend = ',n_end
      numplot = ncolumns
      !
      !--set labels for each column of data
      !
-     print*,'setting plot labels...'
+     !!print*,'setting plot labels...'
      call set_labels
      !
      !--calculate various additional quantities

@@ -31,7 +31,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   
   !--query current character height
   call pgqch(charheight)
-  print "(a,i8)",' entering particle plot, total particles = ',ntot
+  !!print "(a,i8)",' entering particle plot, total particles = ',ntot
   !
   !--check for errors in input
   !

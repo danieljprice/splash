@@ -70,7 +70,6 @@ subroutine defaults_set
 !
   iaxis = 0                ! turns axes off/on
   ipagechange = .true.     ! if false plots graphs on top of each other
-  animate = .false.
   tile = .false.
   nacross = 1           ! number of plots across page
   ndown = 1             ! number of plots down page
@@ -189,6 +188,13 @@ subroutine defaults_set
   maxpart = 0
   maxcol = 0
   maxstep = 0
+  !
+  !--labels
+  !
+  do i=1,maxplot
+     write(label(i),"(a,i3)") 'column ',i
+  enddo
+  
   return    
 end subroutine defaults_set
 !
