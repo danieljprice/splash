@@ -51,7 +51,7 @@ subroutine options_page
      print*,' 4) duo small graph      : 11.70 x 4.13'
      print*,' 5) duo graph            : 11.70 x 6.00'
      print*,' 6) Custom size '
-     call prompt(' Enter option for paper size ',ipapersize,0,5)
+     call prompt(' Enter option for paper size ',ipapersize,0,6)
      select case(ipapersize)
      case(1) 
         papersizex = 0.25*11.7
