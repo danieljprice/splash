@@ -88,11 +88,12 @@ module settings
  namelist /plotopts/ animate,magfield,iadapt,xsec_nomulti,flythru, &
    plotcirc,iplotline,iplotlinein,linestylein, 		&
    imark, imarkg, imarksink,				&
+   nacross,ndown,					&
    iexact,iplotav,nbins, 				&
    irender,ivecplot_nomulti,iplotpartvec_nomulti, 	&
    npix_nomulti,npixvec_nomulti,			&
    iplotcont_nomulti,ncontours_nomulti,			&
-   icolours,iplotpart,iplotghost,iplotsink,		&
+   icolours,iplotghost,iplotsink,			&
    ipapersize,papersizex,aspectratio
      
 end module settings
@@ -102,18 +103,19 @@ end module settings
 module multiplot
  use params
  implicit none
+ integer :: nyplotmulti 
  integer, dimension(maxplot) :: multiplotx,multiploty
  integer, dimension(maxplot) :: irendermulti,ivecplotmulti
  integer, dimension(maxplot) :: npixmulti,npixvecmulti 
  integer, dimension(maxplot) :: ncontoursmulti,itrans
- integer :: nyplotmulti
  logical, dimension(maxplot) :: iplotcontmulti, iplotpartvecmulti     
  logical, dimension(maxplot) :: x_secmulti,backgnd_vec_multi
  real, dimension(maxplot) :: xsecposmulti
 !
 !--sort these into a namelist for input/output
 !
- namelist /multi/ itrans,multiplotx,multiploty,irendermulti, 	&
+ namelist /multi/ nyplotmulti,					&
+    itrans,multiplotx,multiploty,irendermulti, 			&
     iplotcontmulti,ncontoursmulti,ivecplotmulti,npixmulti,	&
     npixvecmulti,iplotpartvecmulti,x_secmulti,xsecposmulti
  
