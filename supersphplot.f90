@@ -161,7 +161,6 @@ program supersphplot
   ! print header
   !
   call print_header
-  print*,'( version 1.0 )'
 
   !
   ! set default options
@@ -239,6 +238,14 @@ subroutine print_header
    '   / \ / \   / \ / \ / \ / \ / \ / \   / \ / \ / \ / \ / \ ',/, &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/, &
    '   \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ ',/)      
+
+ print "(a)",' ( version 0.666 [not officially released], Copyright (C) 2005)'
+ print 30 
+30 format(/,    &
+   ' * SUPERSPHPLOT comes with ABSOLUTELY NO WARRANTY.',/, &
+   '   This is free software; and you are welcome to redistribute it ',/, &
+   '   under certain conditions (see LICENSE file for details).',/, &
+   '   Comments, bugs and queries to: dprice@astro.ex.ac.uk *',/)
       
 end subroutine print_header
              
