@@ -176,13 +176,16 @@ subroutine menu
            call prompt(' (x axis) ',ipickx)
            if (ipickx.gt.numplot .or. ipickx.le.0) then
               goto 9901 ! (apologies for the gratuitous use of goto)
+                        ! (I learnt BASIC as a kid)
            !
            !--prompt for render and vector plots 
-           ! (only allow if in "natural" coord system, otherwise h's would be wrong)
+           ! -> only allow if in "natural" coord system, otherwise h's would be wrong)
            ! (a future feature might be to interpolate in icoord then translate the pixels
            !  to icoordsnew, or alternatively plot non-cartesian pixel shapes)
+           ! -> also do not allow if transformations are applied
            !
-           elseif (ipicky.le.ndim .and. ipickx.le.ndim .and. icoordsnew.eq.icoords) then
+           elseif (ipicky.le.ndim .and. ipickx.le.ndim .and. icoordsnew.eq.icoords &
+             .and. itrans(ipickx).eq.0 .and. itrans(ipicky).eq.0) then
               call prompt('(render) (0=none)',irender,0,numplot)
               ivecplottemp = -1
               do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
@@ -343,7 +346,8 @@ subroutine menu
       if (.not.iansx.and.multiploty(i).le.ndataplots) then
          call prompt(' x axis ',multiplotx(i),1,numplot)
       endif
-      if ((multiplotx(i).le.ndim).and.(multiploty(i).le.ndim)) then
+      if ((multiplotx(i).le.ndim).and.(multiploty(i).le.ndim) .and.icoordsnew.eq.icoords &
+          .and. itrans(multiplotx(i)).eq.0 .and. itrans(multiploty(i)).eq.0) then
          call prompt('(render) (0=none)',irendermulti(i),0,numplot)
          if (irendermulti(i).ne.0) then
             ichange = .false.
@@ -380,6 +384,9 @@ subroutine menu
          if (ivecplotmulti(i).gt.0 .and. irendermulti(i).eq.0) then
             call prompt('plot particles?',iplotpartvec)
          endif
+      else
+         irendermulti(i) = 0
+         ivecplotmulti(i) = 0
       endif
    enddo
    
