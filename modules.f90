@@ -145,23 +145,31 @@ end module multiplot
 !
 module exact_params
  implicit none
- integer :: iwaveplot ! linear wave
+!--toy star
  integer :: norder ! for toy star
- integer, parameter :: ipolycmax=1000
- real :: htstar,atstar,ctstar,totmass,sigma,sigma0 ! toy star parameters
+ real :: htstar,atstar,ctstar,totmass,sigma,sigma0
 !--sound wave
+ integer :: iwaveplot ! linear wave
  real :: ampl,lambda,period
 !--sedov blast wave
  real :: rhosedov,esedov
 !--polytrope
- integer :: ipolyc
- real :: mtot,maxrho,akfac
- real, dimension(ipolycmax) :: den,rad 
+ real :: polyk
+!--mhd shock solutions
+ integer :: ishk
+!--from file
+ integer, parameter :: maxexactpts = 1001
+ integer :: iexactpts, iexactplotx, iexactploty
+ real, dimension(maxexactpts) :: xexact,yexact
+!--shock tube
+ real :: rho_L, rho_R, pr_L, pr_R, v_L, v_R
 !
 !--sort these into a namelist for input/output
 !
- namelist /exactparams/ ampl,lambda,period,iwaveplot,htstar,atstar,ctstar,sigma0,norder,rhosedov,esedov
-     
+ namelist /exactparams/ ampl,lambda,period,iwaveplot, &
+          htstar,atstar,ctstar,sigma0,norder,rhosedov,esedov, &
+	  rho_L, rho_R, pr_L, pr_R, v_L, v_R, &
+	  iexactplotx,iexactploty 
 
 end module exact_params
 !

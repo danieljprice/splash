@@ -22,7 +22,7 @@ subroutine main(ipicky,ipickx,irender)
   integer :: ivecplot,npix,npixvec,npixyvec,ncontours
   integer :: irenderprev, istepprev, iadvance
   integer :: nsink,nsinkstart,nsinkend,nghoststart,nghostend
-  integer :: ishk,int_from_string
+  integer :: int_from_string
   integer :: ngrid
   integer :: just
 
@@ -988,17 +988,20 @@ subroutine main(ipicky,ipickx,irender)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         select case(iexact)
-        case(1)! polytrope
-           if ((iploty.eq.irho).and.(iplotx.eq.irad)) &
-                call pgline(ipolyc,rad(1:ipolyc),den(1:ipolyc))
-
-        case(2)! soundwave
-           if ((iploty.eq.iwaveplot).and.(any(ix(:).eq.iplotx))) then 
-	      ymean = SUM(yplot(1:npart(i)))/REAL(npart(i)) 
-              call exact_wave(time(i),ampl,period,lambda,xmin,xmax,ymean)
+        case(1)! shock tube
+           if (iplotx.eq.ix(1)) then
+              if (iploty.eq.irho) then
+                 call exact_shock(1,time(i),gamma(i),rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
+              elseif (iploty.eq.ipr) then
+                 call exact_shock(2,time(i),gamma(i),rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
+              elseif (iploty.eq.ivx) then
+                 call exact_shock(3,time(i),gamma(i),rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
+              elseif (iploty.eq.iutherm) then
+                 call exact_shock(4,time(i),gamma(i),rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
+              endif
            endif
 
-        case(3)! sedov blast wave
+        case(2)! sedov blast wave
            if (iplotx.eq.irad) then
               if (iploty.eq.irho) then
                  call exact_sedov(time(i),gamma(i),rhosedov,esedov,lim(irad,2),1)
@@ -1011,11 +1014,10 @@ subroutine main(ipicky,ipickx,irender)
               endif
            endif
 
+        case(3)! polytrope
+           if (iploty.eq.irho .and. iplotx.eq.irad) call exact_polytrope(gamma(i))
+
         case(4)! toy star
-           !    totmass = sum(dat(ipmass,1:npart(i),i))
-           !    htstar = (0.75*totmass)**(2./3.)*ctstar**(1./3.)
-           !    htstar = 1.0    
-           !    print*,' totmass,h,a,c in = ',totmass,htstar,atstar,ctstar
            if (iBfirst.ne.0) then
               sigma = sigma0
            else
@@ -1025,7 +1027,7 @@ subroutine main(ipicky,ipickx,irender)
               !
               !--1D toy star solutions
               !
-              if (iplotx.eq.1 .or. iplotx.eq.irad) then! if x axis is x or r
+              if (iplotx.eq.ix(1) .or. iplotx.eq.irad) then! if x axis is x or r
                  if (iploty.eq.irho) then
                     call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,1)
                  elseif (iploty.eq.ipr) then
@@ -1050,8 +1052,8 @@ subroutine main(ipicky,ipickx,irender)
               !
               !--2D and 3D toy star solutions
               !
-              if ((iplotx.eq.1 .and. iploty.eq.ivx) &
-                   .or. (iplotx.eq.2 .and. iploty.eq.ivx+1)) then
+              if ((iplotx.eq.ix(1) .and. iploty.eq.ivx) &
+                   .or. (iplotx.eq.ix(2) .and. iploty.eq.ivx+1)) then
                  call exact_toystar2D(time(i),gamma(i), &
                       htstar,atstar,ctstar,sigma,norder,4)
               endif
@@ -1072,12 +1074,15 @@ subroutine main(ipicky,ipickx,irender)
               endif
            endif
 
-        case(5) ! mhd shock tubes
-           if (iplotx.eq.1) then
-              !       print*,'rootname = ',rootname,rootname(5:5)
-              !--if not already set, try to determine solution to plot from filename
-              if (ishk.eq.0) ishk = int_from_string(rootname(1)(5:5))
-              !--otherwise prompt for shock type       
+        case(5)! linear wave
+           if ((iploty.eq.iwaveplot).and.(any(ix(:).eq.iplotx))) then 
+	      ymean = SUM(yplot(1:npart(i)))/REAL(npart(i)) 
+              call exact_wave(time(i),ampl,period,lambda,xmin,xmax,ymean)
+           endif
+
+        case(6) ! mhd shock tubes
+           if (iplotx.eq.ix(1)) then
+              !--prompt for shock type if not set  
               if (ishk.eq.0) then ! prompt
                  call prompt('enter shock solution to plot',ishk,0,6)
               endif
@@ -1099,6 +1104,11 @@ subroutine main(ipicky,ipickx,irender)
                  call exact_mhdshock(8,ishk,time(i),gamma(i),xmin,xmax)
               endif
            endif
+	
+	case(7) ! exact solution read from file
+	   if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
+	      call pgline(iexactpts,xexact,yexact)
+	   endif
         end select
         !
         !--plot h = (1/rho)^(1/ndim)

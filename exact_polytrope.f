@@ -5,7 +5,9 @@
  ! then the radius is scaled to unity and the central
  ! density is calculated to get unit mass.
  ! Finally the polytropic K is calculated
- !---------------------------------------
+ !
+ ! This subroutine came from Joe Monaghan
+ !-----------------------------------------
 
        subroutine exact_polytrope(gamma)
        implicit none
@@ -14,9 +16,10 @@
        real, intent(in) :: gamma
        real, dimension(1000) :: v,r,den,rplot,denplot
        real :: dr,an,rhs,radv,sigma,totmassf,totmass,akf
+       real :: realden, realrad, rhocentre
               
        dr=0.005
-       an = 1./(gam-1.)
+       an = 1./(gamma-1.)
        v(1) = 0.0
        v(2) = dr*(1.0 - dr*dr/6. )
        
@@ -72,8 +75,8 @@
 	   realrad = r(j)/sigma
 	   denplot(j-1) = realden
 	   rplot(j-1) = realrad
-         endif.
-       
+         endif
+       enddo
        !---------------------------------------
        ! plot results using PGPLOT       
        !---------------------------------------

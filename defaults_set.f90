@@ -33,7 +33,7 @@ subroutine defaults_set
   ncircpart = 1
   interactive = .false.
   animate = .false.
-  tile = .true.
+  tile = .false.
   itrackpart = 0
   xminoffset_track = 0.5
   xmaxoffset_track = 0.5
@@ -91,6 +91,17 @@ subroutine defaults_set
   sigma0 = 0.
   rhosedov = 1.0  ! sedov blast wave
   esedov = 1.0    ! blast wave energy
+  polyk = 1.0     ! polytropic k
+  rho_L = 1.0     ! shock tube (default is sod problem)
+  rho_R = 0.125
+  pr_L = 1.0
+  pr_R = 0.1
+  v_L = 0.0
+  v_R = 0.0
+  iexactpts = maxexactpts
+  iexactplotx = 0
+  iexactploty = 0
+  ishk = 0
 !
 !--multiplot
 !

@@ -17,10 +17,12 @@ program supersphplot
 !     defaults_read	 : read default plot options from file
 !     defaults_set	 : sets default plot options if not read from file
 !     defaults_write	 : write default plot options to file
+!     exact_fromfile     : reads an exact solution tabulated in a file
 !     exact_mhdshock     : some "exact" solutions for mhd shocks 
 !     exact_polytrope    : exact solution for a polytrope
 !     exact_rhoh	 : plots exact relation between density and smoothing length
 !     exact_sedov        : exact solution for sedov blast wave
+!     exact_shock        : exact solution for the 1D Riemann (shock tube) problem
 !     exact_swave        : exact solution for a linear sound wave
 !     exact_toystar      : exact solution for the toy star problem
 !     get_data           : wrapper for main data read
@@ -53,6 +55,7 @@ program supersphplot
 !     read_data_dansph   : reads data from my format of data files
 !     read_data_mrbsph   : reads data from matthew bate's format of data files
 !     render	 	 : takes array of pixels and plots render map/contours etc
+!     riemannsolver      : Riemann solver (called by exact_shock)
 !     setpage            : sets up the PGPLOT page (replaces call to PGENV/PGLAB)
 !     supersphplot	 : main program, drives menu loop
 !     transform	 	 : applies various transformations to data (log10, 1/x, etc)
@@ -66,6 +69,7 @@ program supersphplot
 !     this version for both ndspmhd and matthew bate's code 2003-2004
 !     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
 !
+!      10/06/06 - exact solution for shock tubes, also from file + added read_exactparams
 !      02/06/04 - interactive plotting steps forward/backwards, replots etc
 !      01/06/04 - saves/reads limits to/from limits file
 !                 also revamped menu - uses characters for options

@@ -50,21 +50,9 @@ subroutine get_data
   call read_limits(ierr)
   if (ierr.gt.0) call set_limits
   !
-  !--read toy star file for toy star solution
+  !--read exact solution parameters from files if present
   !
-  if (iexact.eq.4) then
-     filename = trim(rootname(1))//'.tstar'
-     open(UNIT=20,ERR=8801,FILE=filename,STATUS='old')
-     read(20,*,ERR=8801) Htstar,Ctstar,Atstar
-     read(20,*,ERR=8801) sigma0
-     read(20,*,ERR=8801) norder
-     close(UNIT=20)
-     print*,' >> read ',filename
-     print*,' H,C,A,sigma,n = ',Htstar,Ctstar,Atstar,sigma0,norder
-     return
-8801 continue
-     print*,'Cannot open/ error reading ',filename	     
-  endif
+  if (iexact.ne.0) call read_exactparams(iexact,ierr)
   
   return
 end subroutine get_data

@@ -6,18 +6,21 @@ subroutine options_exact(iexact)
  use prompting
  implicit none
  integer, intent(inout) :: iexact
- integer :: i
+ integer :: i, ierr
  logical :: ians, iexist
  character(len=1) :: ans,dummy
+ character(len=30) :: filename
  
  print 10
 10  format(' 0) none ',/, 		&
-           ' 1) polytrope ',/,		&
-           ' 2) linear wave ',/,     	&
-           ' 3) sedov blast wave',/,     &
+           ' 1) shock tube ',/,     	&
+           ' 2) sedov blast wave ',/,   &
+           ' 3) polytrope ',/,		&
            ' 4) toy star ',/,		&
-           ' 5) mhd shock tubes ')
- call prompt('enter exact solution to plot',iexact,0,5)
+	   ' 5) linear wave ',/,        &
+           ' 6) mhd shock tubes (tabulated) ',/,    &
+	   ' 7) read from file ')
+ call prompt('enter exact solution to plot',iexact,0,7)
  print*,' plotting exact solution number ',iexact
 !
 !--enter parameters for various exact solutions
@@ -25,37 +28,25 @@ subroutine options_exact(iexact)
  select case(iexact)
  case(1)
 !
-!--read exact solution for a polytrope
+!--read shock parameters from the .shk file
 !
-    ipolyc = ipolycmax
-    inquire (exist = iexist, file='polycalc.dat')
-    if (.not.iexist) then
-       print*,'ERROR: file polycalc.dat does not exist'
-       return
+    call read_exactparams(iexact,ierr)
+    if (ierr.ne.0) then
+       call prompt('enter density to left of shock   ',rho_L,0.0)
+       call prompt('enter density to right of shock  ',rho_L,0.0)   
+       call prompt('enter pressure to left of shock  ',pr_L,0.0)
+       call prompt('enter pressure to right of shock ',pr_R,0.0)
+       call prompt('enter velocity to left of shock  ',v_L)
+       call prompt('enter velocity to right of shock ',v_R)
     endif
-    open(unit=14,file='polycalc.dat',status='old',form='formatted')
-       read(14,20) dummy
-20     format(a)      
-       read(14,*) maxrho,mtot
-       read(14,*) akfac
-       read(14,*, end=100) (den(i),rad(i),i=1,ipolyc) 
-    close(14)
-    goto 101
-100 continue
-    print*,'end of polycalc.dat, i=',i-1
-    ipolyc = i-1
-    close(14)
-101 continue         
  case(2)
-    call prompt('enter plot to place exact solution on',iwaveplot,1)
-    call prompt('enter wavelength lambda ',lambda,0.0)		
-    call prompt('enter amplitude ',ampl,0.0)
-    call prompt('enter period ',period)
- case(3)
     call prompt('enter density of ambient medium ',rhosedov,0.0)
     call prompt('enter blast wave energy E ',esedov,0.0)
+ case(3)
+    call prompt('enter polytropic k ',polyk) 
  case(4)
     print*,' toy star: '
+    call read_exactparams(iexact,ierr)
     call prompt('enter parameter a (v = ax) ',atstar)
     call prompt('enter parameter h (\rho = h - cx^2)',htstar)
     call prompt('enter parameter c (\rho = h - cx^2)',ctstar,0.0)		
@@ -66,6 +57,23 @@ subroutine options_exact(iexact)
     call prompt('do you want oscillations?',ians)
     norder = -1
     if (ians) call prompt('enter order',norder,0)
+ case(5)
+    call prompt('enter plot to place exact solution on',iwaveplot,1)
+    call prompt('enter wavelength lambda ',lambda,0.0)		
+    call prompt('enter amplitude ',ampl,0.0)
+    call prompt('enter period ',period)
+ case(6)
+    print*,' MHD shock tube tables: '
+    call prompt('enter solution to plot ',ishk,0,7)
+ case(7)
+    call prompt('enter filename: ',filename)
+    call exact_fromfile(filename,ierr)
+    if (ierr.gt.0) then
+       iexact = 0
+    else
+       call prompt('enter x axis of exact solution: ',iexactplotx,1)
+       call prompt('enter x axis of exact solution: ',iexactploty,1)
+    endif   
  end select
 
  return
