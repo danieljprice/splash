@@ -41,7 +41,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: i,j,icol,ipos,ierr
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin,ncolstep,nparti,ntoti
-  integer :: iformat
   integer, dimension(3) :: ibound
   logical :: reallocate
   real(doub_prec) :: timein,gammain,hfactin
@@ -218,7 +217,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !
         !--non-MHD output
         !
-        if (ncolumns.le.ndim+8+ndimV .or. icoords.gt.1) then
+        if (iformat.ne.2) then
+            print*,'non-mhd file'
         !
         !--read alpha, alphau
         !
@@ -236,7 +236,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
               icol = icol + 1
            enddo
            
-           if (icoords.gt.1) then
+           if (icoords.gt.1 .and. iformat.eq.3) then
         !
         !--rho, sqrt g
         !
@@ -348,7 +348,7 @@ end subroutine read_data
 subroutine set_labels
  use labels
  use params
- use settings_data
+ use settings_data, only:ndim,ndimV,ncolumns,iformat,ntypes
  implicit none
  integer :: i
 
@@ -386,7 +386,7 @@ subroutine set_labels
  label(ipmass) = 'particle mass'
  label(ndim + ndimV+5) = '\ga'
  label(ndim + ndimV+6) = '\ga\du'
- if (ncolumns.gt.ndim+ndimV+8 .and. icoords.le.1) then
+ if (iformat.eq.2) then
 
     !
     !--mag field (vector)
@@ -422,7 +422,7 @@ subroutine set_labels
     ipr = ndim + ndimV + 7 !  pressure
     label(ipr) = 'P'
     label(ndim+ndimV+8) = 'div v'
-    if (icoords.gt.1) then
+    if (iformat.eq.3) then
        !!!irho = ndim+ndimV+9
        label(ndim+ndimV+9) = 'rho*'
        label(ndim+ndimV+10) = 'sqrt g'
