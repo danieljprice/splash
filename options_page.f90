@@ -11,14 +11,15 @@ subroutine options_page
  
  iaction = 0
  papersizey = papersizex*aspectratio
- print 10,ipagechange,iaxis,papersizex,papersizey,nacross,ndown,tile
+ print 10,ipagechange,iaxis,papersizex,papersizey,nacross,ndown,tile,animate
 10 format(' 0) exit ',/, 		&
         ' 1) toggle page change     (',L1,')',/, &
         ' 2) toggle axes            (',i2,')',/, &
         ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
         ' 4) change plots per page  (',i2,1x,i2,')',/, &
-	' 5) toggle plot tiling     (',L1,')') 	
- call prompt('enter option ',iaction,0,5)
+	' 5) toggle plot tiling     (',L1,')',/, & 
+	' 6) toggle animate         (',L1,')')	
+ call prompt('enter option ',iaction,0,6)
 
  select case(iaction)
 !------------------------------------------------------------------------
@@ -95,7 +96,12 @@ subroutine options_page
 !------------------------------------------------------------------------
   case(5)
      tile = .not.tile
-     print*,'tile plots = ',tile	  
+     print*,'tile plots = ',tile
+!------------------------------------------------------------------------
+  case(6)
+     animate = .not.animate
+     print*,'animate = ',animate
+ 	  
   end select
  
  return
