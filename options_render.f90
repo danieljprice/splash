@@ -13,14 +13,14 @@ subroutine options_render
 !
   ians = 0
   print 10,npix,icolours,iplotcont_nomulti,ncontours, &
-        iPlotColourBar
+        iPlotColourBar,icolour_particles
 10 format(' 0) exit ',/,                      &
-           ' 1) change number of pixels          (',i5,' )',/, &
-           ' 2) change colour scheme             (',i2,' )',/,    &
-           ' 3) toggle plot contours             ( ',L1,' )',/, &
-           ' 4) change number of contours        (',i3,' )',/, &
-           ' 5) toggle colour bar                ( ',L1,' )',/, &
-           ' 6) toggle pixels or particles       ( ',L1,' )' )
+           ' 1) change number of pixels           (',i5,' )',/, &
+           ' 2) change colour scheme              (',i2,' )',/,    &
+           ' 3) toggle plot contours              ( ',L1,' )',/, &
+           ' 4) change number of contours         (',i3,' )',/, &
+           ' 5) toggle colour bar                 ( ',L1,' )',/, &
+           ' 6) use particle colours not pixels   ( ',L1,' )' )
   call prompt('enter option',ians,0,6)
 !
 !--options
