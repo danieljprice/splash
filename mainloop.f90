@@ -38,6 +38,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
 
   logical :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
   logical :: log, inewpage, tile_plots, isave, lastplot
+  logical :: initialise_xsec
 
   character(len=60), dimension(maxtitles) :: titlelist
 
@@ -66,15 +67,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   if (ndim.eq.1) x_sec = .false. ! can't have xsec in 1D
   nxsec = 1
 
-  imulti = .false.
-  if (ipicky.eq.numplot+1) imulti = .true.
-
-  if (imulti) then   ! multiplot
-     !
-     !--for a multiplot, set current plot to first in multiplot array
-     !
-     iplotx = multiplotx(1)
-     iploty = multiploty(1)
+  if (ipicky.eq.numplot+1) then   ! multiplot
+     imulti = .true.
      nyplots = nyplotmulti
      !
      !--if doing multiplot can only take a single cross section slice      
@@ -84,16 +78,13 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
      !
      !--work out whether to tile plots and make labelling decisions
      !
-     if (any(multiplotx(1:nyplotmulti).ne.multiplotx(1))) then
-        isamexaxis = .false.
-     endif
-     if (any(multiploty(1:nyplotmulti).ne.multiploty(1))) then
-        isameyaxis = .false.
-     endif
+     if (any(multiplotx(1:nyplotmulti).ne.multiplotx(1))) isamexaxis = .false.
+     if (any(multiploty(1:nyplotmulti).ne.multiploty(1))) isameyaxis = .false.
   else
      !
      !--or else set number of plots = 1 and use ipicky and ipickx
      !
+     imulti = .false.
      nyplots = 1 
      iploty = ipicky
      iplotx = ipickx
@@ -106,7 +97,16 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   !------------------------------------------------------------------------
   ! initialise options to be set before plotting
 
-  if (iploty.le.ndim .and. iplotx.le.ndim) then
+  initialise_xsec = iploty.le.ndim .and. iplotx.le.ndim
+  if (imulti) then
+     do i=1,nyplotmulti
+        if (multiplotx(i).le.ndim .and. multiploty(i).le.ndim) then
+           initialise_xsec = .true.
+        endif
+     enddo
+  endif
+  
+  if (initialise_xsec) then
      !!--work out coordinate that is not being plotted 
      ixsec = 0
      if (x_sec) then
@@ -791,21 +791,21 @@ subroutine plotstep
                        !
                        !--or interpolate (via averaging) to coarser grid
                        !
-                       call fieldlines2D(ninterp,xplot(1:ninterp),yplot(1:ninterp), &
-                            dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
-                            dat(1:ninterp,ih,i),dat(1:ninterp,ipmass,i), &
-                            dat(1:ninterp,irho,i),xmin,xmax,ymin,ymax)
+                       !call fieldlines2D(ninterp,xplot(1:ninterp),yplot(1:ninterp), &
+                       !     dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
+                       !     dat(1:ninterp,ih,i),dat(1:ninterp,ipmass,i), &
+                       !     dat(1:ninterp,irho,i),xmin,xmax,ymin,ymax)
 
-                       !call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
-                       !  dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
-                       !  xmin,ymin,pixwidth,vecpixx,vecpixy, &
-                       !  ninterp,npixvec,npixyvec)                       
+                       call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
+                         dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
+                         xmin,ymin,pixwidth,vecpixx,vecpixy, &
+                         ninterp,npixvec,npixyvec)                       
                     endif
                     !
                     !--plot it
                     !
-                    !call render_vec(vecpixx,vecpixy,vecmax, &
-                    !    npixvec,npixyvec,xmin,ymin,pixwidth,labelvecplot)
+                    call render_vec(vecpixx,vecpixy,vecmax, &
+                         npixvec,npixyvec,xmin,ymin,pixwidth,labelvecplot)
                     deallocate(vecpixx,vecpixy)
                  endif
                  if (UseBackgndColorVecplot) call pgsci(1)
