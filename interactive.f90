@@ -92,7 +92,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      !
      if (char.eq.achar(0)) return
   
-     print*,' x, y = ',xpt,ypt,' function = ',char
      !
      !--find closest particle
      !  
@@ -164,7 +163,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
               yline(4) = gradient*xline(4) + yint
            endif
            !--plot line joining the two points
-           call pgline(4,xline,yline)           
+           call pgline(4,xline,yline)
+        case default
+           print*,' action cancelled'       
         end select
      !
      !--help
@@ -311,6 +312,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
                  enddo
                  print*,'set ',ncircpart,' circles of interaction in selected region'
               endif
+           case default
+              print*,' action cancelled'
            end select 
         endif   
      !
@@ -477,6 +480,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
               print*,'iploty = ',ixsec
               iadvance = 0
               iexit = .true.
+           case default
+              print*,' action cancelled'
            end select
         endif
      !
@@ -513,6 +518,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      case(')')
         iadvance = 10
         print*,' setting timestep jump = ',iadvance
+     !
+     !--unknown
+     !
+     case default
+        print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '"'
      end select
 
      if (rotation) then
@@ -601,6 +611,8 @@ subroutine interactive_step(iadvance,xmin,xmax,ymin,ymax)
            ymax = max(ypt,ypt2)
            iadvance = 0
            iexit = .true.
+        case default
+           print*,' action cancelled'
         end select    
      case('-','_') ! zoom out by 10 or 20%
         print*,'zooming out'
