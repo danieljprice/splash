@@ -8,10 +8,7 @@
 !
 module params
  implicit none
- integer, parameter :: maxpart=1100
- integer, parameter :: maxstep=251
- integer, parameter :: ndimmax = 3
- integer, parameter :: maxplot=24+2*ndimmax + 1   ! maximum number of plots 
+ integer, parameter :: maxplot=31   ! maximum number of plots 
 end module params
 !
 !--particle data
@@ -20,10 +17,11 @@ module particle_data
  use params
  implicit none
  integer :: icrap
- integer, dimension(maxstep) :: npart,ntot,nghost,ntotplot
- integer, dimension(maxpart) :: iam
- real, dimension(maxstep) :: time, gamma
- real, dimension(maxplot,maxpart,maxstep) :: dat
+ integer :: maxpart,maxstep,maxcol  ! dimensions of dat array
+ integer, allocatable, dimension(:) :: npart,ntot,nghost,ntotplot
+ integer, allocatable, dimension(:,:) :: iam
+ real, allocatable, dimension(:) :: time, gamma
+ real, allocatable, dimension(:,:,:) :: dat
  real, dimension(maxplot,2) :: lim
  real :: hfact 
  real :: bmin,bmax
@@ -78,7 +76,7 @@ module settings
  real :: papersizex,aspectratio
 !--plot options
  logical :: axes
- logical :: animate,iadapt,iexist,ihavereadfilename
+ logical :: animate,iadapt,ihavereadfilename
  logical :: plotcirc,plotcircall,flythru,imulti,ipagechange
  logical :: iplotline,iplotlinein,iplotav,ilabelpart
  logical :: iplotpart,iplotghost,iplotsink

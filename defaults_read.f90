@@ -6,6 +6,7 @@ subroutine defaults_read
  use settings
  use exact_params
  implicit none
+ logical :: iexist
  
  inquire (exist=iexist, file='defaults')
  if (iexist) then

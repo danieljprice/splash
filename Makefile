@@ -12,8 +12,8 @@
 ## IoA compiler (Sun fortran)
 FC = f90
 F90C = f90
-FFLAGS = -O4
-F90FLAGS = -O4 
+FFLAGS = -O4 -C
+F90FLAGS = -O4 -C
 LDFLAGS = -lpgplot -lX11 -lF77
 ## ------------------------------------------------------------------ ##
 ## Monash compiler (Lahey-Fujitsu f95)
@@ -42,7 +42,7 @@ PGXTAL = read_data_dansph.f
 
 SOURCES= modules.f90 prompting.f90 \
 	 supersphplot.f90 main.f90 \
-         calc_quantities.f90 \
+         allocate.f90 calc_quantities.f90 \
 	 colour_demo.f colour_set.f90 ../src/coord_transform.f90 \
 	 danpgwedg.f \
 	 defaults_read.f90 defaults_set.f90 defaults_write.f90 \
@@ -56,7 +56,7 @@ SOURCES= modules.f90 prompting.f90 \
 	 interpolate3D.f90 interpolate3D_fastxsec.f90 \
 	 interpolate3D_projection.f90 \
 	 int_from_string.f90 \
-	 legend.f \
+	 legend.f limits.f90 \
 	 options.f90 options_exact.f90 \
 	 options_powerspec.f90 options_render.f90 \
 	 plot_average.f plot_kernel_gr.f90 \

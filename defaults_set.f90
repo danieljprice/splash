@@ -18,10 +18,10 @@ subroutine defaults_set
   iACplane = 0	! label position of toy star AC plane plot
   ipowerspec = 0	! label position of power spectrum plot
   ncolumns=maxplot-ncalc	! number of columns in data file
-  ndim = ndimmax		! number of coordinate dimensions
+  ndim = 3		! number of coordinate dimensions
   ndimV = ndim	! default velocity same dim as coords
   nstart = 1	! timestep to start from
-  n_end = maxstep	! timestep to finish on
+  n_end = 1000	! timestep to finish on
   nfreq = 1		! frequency of timesteps to read
   icoords = 0	! co-ordinate system of simulation
 

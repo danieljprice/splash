@@ -7,6 +7,7 @@ program supersphplot
 !
 !     subroutines as follows (in alphabetical order):
 !
+!     allocate           : allocates memory for main arrays
 !     calc_quantities    : calculates additional quantities from particle data
 !     colour_demo        : demonstration of colour schemes for rendering
 !     colour_set	 : sets up pgplot colour table for rendering
@@ -27,6 +28,7 @@ program supersphplot
 !     interpolate3D_fastxsec   : fast cross section through 3D data using sph kernel
 !     interpolate3D_projection : fast projection of 3D data to 2D grid using integrated sph kernel
 !     legend		       : plots legend on plot (time)
+!     limits                   : calculates plot limits
 !     main               : main plotting loop
 !     modules		 : contains all shared (global) variables
 !     options 	         : sets plot options given in menu
@@ -52,7 +54,9 @@ program supersphplot
 !
 !     this version for both ndspmhd and matthew bate's code 2003
 !     changes log:
-!      23/2/04 - lots of compiler bugs fixed. 2D->1D cross section
+!      04/03/04 - allocatable arrays 
+!                 (last non-allocatable version tagged as noalloc_04_03_04)
+!      23/02/04 - lots of compiler bugs fixed. 2D->1D cross section
 !      19/12/03 - separate subroutine main
 !      17/12/03 - 1D interpolation and crap power spectrum
 !		- some options moved to separate subroutines
@@ -105,7 +109,6 @@ program supersphplot
 !
 !      multiplot enables you to set up multiple plots per page, mixing from any type.
 !
-!      improvements wishlist: allocatable arrays
 !----------------------------------------------------------------------------------
   use filenames
   use labels
@@ -117,7 +120,7 @@ program supersphplot
   !--print header
   !
   call print_header
-  print*,'( version 4.2 )'
+  print*,'( version 5.0 )'
   !
   !--set default options
   !

@@ -9,10 +9,47 @@ subroutine calc_quantities
   integer :: i,j
   real :: Bmag
   real, parameter :: pi = 3.1415926536
-  real :: angledeg,anglexy,runit(ndimmax)  ! to plot r at some angle
+  real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
+  !
+  !--specify which of the possible quantities you would like to calculate
+  !  (0 = not calculated)
+  ncalc = 7	! specify number to calculate
+  ientrop = ncolumns + 1      
+  irad = ncolumns + 2
+  if (iBfirst.ne.0) then
+     ipmag = ncolumns + 3
+     ibeta = ncolumns + 4
+     itotpr = ncolumns + 5      
+     ike = ncolumns + 6
+     idivBerr = ncolumns + 7
+  else
+     ncalc = 2
+     ipmag = 0
+     ibeta = 0
+     itotpr = 0
+     ike = 0
+     idivBerr = 0
+  endif
+  itimestep = 0
+  if (ndim.eq.2 .and. iBfirst.ne.0 .and. ivx.ne.0) then
+     ncalc = ncalc + 5
+     irad2 = ncolumns + 8
+     ivpar = ncolumns + 9
+     ivperp = ncolumns + 10
+     iBpar = ncolumns + 11
+     iBperp = ncolumns + 12
+  else
+     irad2 = 0
+     ivpar = 0
+     ivperp = 0
+     iBpar = 0
+     iBperp = 0	 
+  endif
   
   print*,'calculating ',ncalc,' additional quantities...'
   numplot = ncolumns + ncalc
+  if (numplot.gt.maxcol) call alloc(maxpart,maxstep,numplot) 
+
   do i=nstart,n_end
      do j=1,ntot(i)
         !!--pressure if not in data array
