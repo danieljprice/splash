@@ -29,12 +29,23 @@ subroutine options_render
        call prompt('enter number of pixels along x axis',npix,1,10000)
 !------------------------------------------------------------------------
     case(2)
-100    continue
-       print *,'(-ve = demo, 0 = contours only)'
-       call prompt('enter colour scheme for rendering ',icolours,max=5)
-       if (icolours.lt.0) then
-          call colour_demo
-          goto 100
+       promptloop: do
+          print *,'(-ve = demo, 0 = contours only)'
+          call prompt('enter colour scheme for rendering ',icolours,max=5)
+          if (icolours.lt.0) then
+             call colour_demo
+             cycle promptloop
+          else
+             exit promptloop
+          endif
+       enddo promptloop
+       !
+       ! by default, plot contours if no colour scheme and don't if a colour scheme chosen
+       !
+       if (icolours.eq.0) then
+          iplotcont_nomulti = .true.
+       else
+          iplotcont_nomulti = .false.
        endif
 !------------------------------------------------------------------------
     case(3)
