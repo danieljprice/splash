@@ -209,31 +209,32 @@ subroutine read_data(rootname,istart,nfilesteps)
   label(ipmass) = 'particle mass'      
 
   label(ndim + ndimV+6) = '\ga'
-  if (ncolumns.gt.ndim+ndimV+6) then
-     label(ndim + ndimV+7) = '\ga\dB'
-     iBfirst = ndim + ndimV+7+1	! location of Bx
-     iBlast = ndim + ndimV+7+ndimV	! location of Bz      
+  label(ndim + ndimV+7) = '\ga\du'
+  if (ncolumns.gt.ndim+ndimV+7) then
+     label(ndim + ndimV+8) = '\ga\dB'
+     iBfirst = ndim + ndimV+8+1	! location of Bx
+     iBlast = ndim + ndimV+8+ndimV	! location of Bz      
      do i=1,ndimV
-        label(ndim + ndimV+7+i) = 'B\d'//labelcoord(i) !' (x10\u-3\d)'	!//'/rho'
+        label(ndim + ndimV+8+i) = 'B\d'//labelcoord(i) !' (x10\u-3\d)'	!//'/rho'
      enddo
-     idivB = ndim+ndimV+ndimV+8	 
+     idivB = ndim+ndimV+ndimV+9	 
      label(idivB) = 'div B'
      do i=1,ndimV
-        label(ndim + ndimV+ndimV+8 + i) = 'J'//labelcoord(i)
+        label(ndim + ndimV+ndimV+9 + i) = 'J'//labelcoord(i)
      enddo
-     iJfirst = ndim+ndimV+ndimV+8+1
+     iJfirst = ndim+ndimV+ndimV+9+1
   else	 
      iBfirst = 0
      iBlast = 0
   endif
-  if (ncolumns.gt.ndim+3*ndimV+8) then
-     label(ndim+3*ndimV+9) = 'psi'
+  if (ncolumns.gt.ndim+3*ndimV+9) then
+     label(ndim+3*ndimV+10) = 'psi'
   endif
-   if (ncolumns.gt.ndim+3*ndimV+9) then
-     label(ndim+3*ndimV+10) = 'f_visc_x'
-     label(ndim+3*ndimV+11) = 'f_visc_y'
-     label(ndim+3*ndimV+12) = 'f_x'
-     label(ndim+3*ndimV+13) = 'f_y'
+   if (ncolumns.gt.ndim+3*ndimV+10) then
+     label(ndim+3*ndimV+11) = 'f_visc_x'
+     label(ndim+3*ndimV+12) = 'f_visc_y'
+     label(ndim+3*ndimV+13) = 'f_x'
+     label(ndim+3*ndimV+14) = 'f_y'
   endif 
   
   !--these are here for backwards compatibility -- could be removed
