@@ -79,6 +79,7 @@ end subroutine timestep_loop
 !-------------------------------------------------------------------
 subroutine get_nextstep(i,ifile)
  use filenames
+ use settings_page, only:interactive
  implicit none
  integer, intent(inout) :: i,ifile
  integer :: iskipfiles
@@ -87,6 +88,10 @@ subroutine get_nextstep(i,ifile)
  !--if data is not stored in memory, read next step from file
  !  skip files if necessary. At the moment assumes number of steps in
  !  each file are the same
+ !
+ !  request is for timestep i from file ifile
+ !  if i > number of steps in this file, tries to skip
+ !  appropriate number of files to get to timestep requested
  !
  if (i.gt.nstepsinfile(ifile)) then
     if (nstepsinfile(i).ge.1) then
@@ -102,13 +107,6 @@ subroutine get_nextstep(i,ifile)
        iskipfiles = 1
     endif
     ifile = ifile+iskipfiles
-    if (ifile.le.nfiles) then
-       call get_data(ifile,.true.)
-       print*,'starting at step ',MOD(i-1,nstepsinfile(ifile))+1
-       i = MOD(i-1,nstepsinfile(ifile)) + 1
-    else
-       i=-666
-    endif
  elseif (i.lt.1) then
     ifile = ifile-1
     if (ifile.ge.1) then
@@ -116,11 +114,28 @@ subroutine get_nextstep(i,ifile)
        if (abs(iskipfiles).gt.0) print*,'skipping back ',abs(iskipfiles),' files'
        ifile = ifile + iskipfiles + 1
        if (ifile.lt.1) ifile = 1
-       call get_data(ifile,.true.)
     else
        ifile = 1
     endif
     i = 1
+ endif
+
+ if (ifile.gt.nfiles) then
+    if (interactive) then  ! freeze on last step
+       ifile = nfiles
+       i = nstepsinfile(ifile)
+    else ! exit timestepping loop
+       ifile = nfiles
+       i = -666
+    endif
+ elseif (ifile.lt.1) then
+    print*,'*** get_nextstep: error: request for file < 1'
+ elseif (ifile.ne.ifileopen) then
+    call get_data(ifile,.true.)
+    i = MOD(i-1,nstepsinfile(ifile)) + 1
+    if (i.ne.1) then
+       print*,'starting at step ',i
+    endif
  endif
 
  return

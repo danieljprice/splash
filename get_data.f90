@@ -39,6 +39,7 @@ subroutine get_data(ireadfile,gotfilenames)
   n_end = 0
   istart = 1
   ivegotdata = .false.
+  ifileopen = ireadfile
 
   if (ireadfile.le.0) then
      !
