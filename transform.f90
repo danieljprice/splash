@@ -200,14 +200,14 @@ subroutine transform_limits(xminin,xmaxin,xminout,xmaxout,itrans)
            if (xmintemp > 0) then
               xmintemp = log10(xmintemp)
            elseif (xmintemp.eq.0) then
-              print*,' log10(xmin = 0): min set to 10-5'
-              xmintemp = -5.
+              print*,' log10(xmin = 0): min set to 10-12'
+              xmintemp = -12.
            endif
            if (xmaxtemp > 0) then
               xmaxtemp = log10(xmaxtemp)
            elseif (xmaxtemp.eq.0) then
-              print*,' log10(xmax = 0): max set to 10-5'
-              xmaxtemp = -5.
+              print*,' log10(xmax = 0): max set to 10-12'
+              xmaxtemp = -12.
            endif
         case(2)
 	   if ((xmintemp.lt.0. .and. xmaxtemp.gt.0.) &
