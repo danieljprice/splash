@@ -658,7 +658,10 @@ subroutine main(ipicky,ipickx,irender)
                     !--or simply plot all particles
                     !
                     !!--plot particle positions
-                    if (iplotpart) call pgpt(npart(i),xplot(1:npart(i)),yplot(1:npart(i)),imark)
+                    if (iplotpart) then
+                       call pgpt(npart(i),xplot(1:npart(i)),yplot(1:npart(i)),imark)
+                       if (interactive) call interactive_part(npart(i),xplot(1:npart(i)),yplot(1:npart(i))) 
+                    endif
                     !!--plot ghost particles with different marker
                     if (iplotpart .and. iplotghost .and. nghost(i).gt.0) then
                        nghoststart = npart(i) + 1
@@ -858,6 +861,7 @@ subroutine main(ipicky,ipickx,irender)
               call pgsls(1)
               call pgsch(1.0)! reset character height before plotting particles
               call pgpt(npart(i),xplot(1:npart(i)),yplot(1:npart(i)),imark)
+              if (interactive) call interactive_part(npart(i),xplot(1:npart(i)),yplot(1:npart(i)))
            endif
            !--plot line joining the particles
            if (iplotline.or.(iplotlinein.and.(i.eq.nstart))) then

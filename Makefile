@@ -12,8 +12,8 @@
 ## IoA compiler (Sun fortran)
 FC = f90
 F90C = f90
-FFLAGS = -O4 -C
-F90FLAGS = -O4 -C
+FFLAGS = -O4 
+F90FLAGS = -O4
 LDFLAGS = -lpgplot -lX11 -lF77
 ## ------------------------------------------------------------------ ##
 ## Monash compiler (Lahey-Fujitsu f95)
@@ -51,6 +51,7 @@ SOURCES= modules.f90 prompting.f90 \
 	 exact_toystar.f90 exact_toystar2D.f90 \
 	 exact_toystar_ACplane.f exact_mhdshock.f90 \
 	 integratedkernel.f90 \
+	 interactive_part.f90 \
 	 interpolate1D.f90 \
          interpolate2D.f90 interpolate2D_xsec.f90 \
 	 interpolate3D.f90 interpolate3D_fastxsec.f90 \
