@@ -37,11 +37,19 @@ subroutine calc_quantities(ifromstep,itostep)
   !
   !--specify hydro quantities
   !
-  ncalc = 3
-  ientrop = ncolumns + 1      
-  irad = ncolumns + 2
-  ike = ncolumns + 3
-  if (ipr.eq.0 .or. ipr.gt.ncolumns) then
+  ncalc = 1
+  irad = ncolumns + 1
+  if (irho.ne.0 .and. iutherm.ne.0) then
+     nstartfromcolumn = ncolumns + ncalc
+     ncalc = ncalc + 1
+     ientrop = nstartfromcolumn + 1
+  endif
+  if (ivx.ne.0) then
+     nstartfromcolumn = ncolumns + ncalc
+     ncalc = ncalc + 1
+     ike = nstartfromcolumn + 1
+  endif
+  if ((ipr.eq.0 .or. ipr.gt.ncolumns) .and. iutherm.ne.0.and.irho.ne.0) then
      nstartfromcolumn = ncolumns + ncalc
      ncalc = ncalc + 1
      ipr = nstartfromcolumn + 1
@@ -60,14 +68,14 @@ subroutine calc_quantities(ifromstep,itostep)
      !!icurr = ncolumns + 8
      icurr = 0
   else
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + ndimV
-     ivpar = nstartfromcolumn + 1
-     ivperp= nstartfromcolumn + 2
-     ipmag = 0
-     ibeta = 0
-     itotpr = 0
-     idivBerr = 0
+!     nstartfromcolumn = ncolumns + ncalc
+!     ncalc = ncalc + ndimV
+!     ivpar = nstartfromcolumn + 1
+!     ivperp= nstartfromcolumn + 2
+!     ipmag = 0
+!     ibeta = 0
+!     itotpr = 0
+!     idivBerr = 0
   endif
 
   if (ndim.eq.2 .and. iBfirst.ne.0 .and. ivx.ne.0) then

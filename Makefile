@@ -33,6 +33,7 @@ DANSPH = read_data_dansph.f90
 MRBSPH = read_data_mbate.f90
 SCWSPH = read_data_scw.f90
 SROSPH = read_data_sro.f90
+JJMSPH = read_data_jjm.f90
 GADGETSPH = read_data_gadget.f90
 
 # put modules separately as these must be compiled before the others
@@ -71,11 +72,15 @@ SOURCES= supersphplot.f90 mainloop.f90 \
 
 SOURCESALL = $(MODULES:.f90=.o) $(SOURCES:.f90=.o)
 
-OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f90=.o) ##/sw/lib/pgplot/libpgplot.a
-OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f90=.o) #/sw/lib/pgplot/libpgplot.a
-OBJSCWSPH = $(SOURCESALL:.f=.o) $(SCWSPH:.f90=.o) #/h/neil/software/pgplot95/libpgplot.a
-OBJSROSPH = $(SOURCESALL:.f=.o) $(SROSPH:.f90=.o) #/h/neil/software/pgplot95/libpgplot.a
-OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o) #/h/neil/software/pgplot95/libpgplot.a
+OBJJJMSPH = $(SOURCESALL:.f=.o) $(JJMSPH:.f90=.o)
+OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f90=.o)
+OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f90=.o)
+OBJSCWSPH = $(SOURCESALL:.f=.o) $(SCWSPH:.f90=.o)
+OBJSROSPH = $(SOURCESALL:.f=.o) $(SROSPH:.f90=.o)
+OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o)
+
+jjmsph: $(OBJJJMSPH)
+	$(FC) $(FFLAGS) $(LDFLAGS) -o jsupersphplot $(OBJJJMSPH)
 
 dansph: $(OBJDANSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o ../supersphplot $(OBJDANSPH)
