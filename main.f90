@@ -490,6 +490,29 @@ subroutine main(ipicky,ipickx)
                     call pgmtxt('l',3.0,0.5,1.0,labely)
                     !	      call pglabel(' ',labely,titlex)
               	 endif
+	      else
+	      !--if multiple plots showing contours only, label with a,b,c etc
+	         if ((nacross*ndown.gt.1).and.(irenderplot.gt.ndim) &
+		     .and.(icolours.eq.0).and.imulti) then
+		    select case(nyplot)
+		    case(1)
+                       call pgmtext('T',-1.5,0.05,0.0,'a)')		       
+		    case(2)
+		       call pgmtext('T',-1.5,0.05,0.0,'b)')		       
+		    case(3)
+		       call pgmtext('T',-1.5,0.05,0.0,'c)')
+		    case(4)
+		       call pgmtext('T',-1.5,0.05,0.0,'d)')
+		    case(5)
+		       call pgmtext('T',-1.5,0.05,0.0,'e)')
+		    case(6)
+		       call pgmtext('T',-1.5,0.05,0.0,'f)')
+		    case(7)
+		       call pgmtext('T',-1.5,0.05,0.0,'g)')
+		    case(8)
+		       call pgmtext('T',-1.5,0.05,0.0,'h)')
+		    end select
+		 endif
 	      endif
               
               !------------------------------
