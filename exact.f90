@@ -53,12 +53,12 @@ contains
   subroutine defaults_set_exact
     implicit none
 
-    lambda = 1.0	! sound wave exact solution : wavelength
-    ampl = 0.005	! sound wave exact solution : amplitude
+    lambda = 1.0    ! sound wave exact solution : wavelength
+    ampl = 0.005    ! sound wave exact solution : amplitude
     period = 1.0
     iwaveploty = 7
     iwaveplotx = 1
-    htstar = 1.   ! toy star crap
+    htstar = 1.     ! toy star crap
     atstar = 1.
     ctstar = 1.
     norder = 0
@@ -119,13 +119,13 @@ contains
     character(len=30) :: filename
 
     print 10
-10  format(' 0) none ',/, 		&
-         ' 1) shock tube ',/,     	&
-         ' 2) sedov blast wave ',/,   &
-         ' 3) polytrope ',/,		&
-         ' 4) toy star ',/,		&
-         ' 5) linear wave ',/,        &
-         ' 6) mhd shock tubes (tabulated) ',/,    &
+10  format(' 0) none ',/,               &
+         ' 1) shock tube ',/,           &
+         ' 2) sedov blast wave ',/,     &
+         ' 3) polytrope ',/,            &
+         ' 4) toy star ',/,             &
+         ' 5) linear wave ',/,          &
+         ' 6) mhd shock tubes (tabulated) ',/,  &
          ' 7) read from file ')
     call prompt('enter exact solution to plot',iexact,0,7)
     print*,' plotting exact solution number ',iexact
@@ -155,10 +155,10 @@ contains
        print*,' toy star: '
        call read_exactparams(iexact,ierr)
        call prompt('enter parameter a (v = ax) ',atstar)
-       call prompt('enter parameter h (\rho = h - cx^2)',htstar)
-       call prompt('enter parameter c (\rho = h - cx^2)',ctstar,0.0)		
+       call prompt('enter parameter h (rho = h - cx^2)',htstar)
+       call prompt('enter parameter c (rho = h - cx^2)',ctstar,0.0)
        sigma = 0.
-       call prompt('enter parameter sigma (By = sigma \rho)',sigma0)
+       call prompt('enter parameter sigma (By = sigma*rho)',sigma0)
        sigma = sigma0
        ians = .false.
        call prompt('do you want oscillations?',ians)
@@ -167,7 +167,7 @@ contains
     case(5)
        call prompt('enter y-plot to place sine wave on',iwaveploty,1)
        call prompt('enter x-plot to place sine wave on',iwaveplotx,1)
-       call prompt('enter wavelength lambda ',lambda,0.0)		
+       call prompt('enter wavelength lambda ',lambda,0.0)
        call prompt('enter amplitude ',ampl,0.0)
        call prompt('enter period ',period)
     case(6)

@@ -37,9 +37,9 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xmin,xmax)
   elseif (p_L .le.0. .or. p_R .le.0.) then
      print*,'error: pr <= 0 on input ',p_L, p_R
      return
-  elseif (gamma.lt.1.0001) then
-     print*,'error: isothermal solver not implemented'
-     return
+!  elseif (gamma.lt.1.0001) then
+!     print*,'error: isothermal solver not implemented'
+!     return
   endif
 !
 ! set up grid for exact solution
@@ -65,7 +65,12 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xmin,xmax)
 !  although this can be calculated from ppost)
 !------------------------------------------------------------
 
-  call get_pstar(gamma,p_L,p_R,v_L,v_R,cs_L,cs_R,ppost,vpost)
+  if (gamma.gt.1.0001) then
+     call get_pstar(gamma,p_L,p_R,v_L,v_R,cs_L,cs_R,ppost,vpost)
+  else
+     print*,'using isothermal solver...',p_L/rho_L, p_R/rho_R
+     call get_pstar_isothermal(p_L/rho_L,v_L,v_R,rho_L,rho_R,ppost,vpost)
+  endif
 
 !------------------------------------------------------------
 !  using this, calculate various speeds needed in order to 
@@ -148,7 +153,11 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xmin,xmax)
   case(3)
      yplot = vel
   case(4)
-     yplot = pr/((gamma-1.)*dens)
+     if (gamma.gt.1.0001) then
+        yplot = pr/((gamma-1.)*dens)
+     else
+        yplot = pr/dens
+     endif
   end select
 !----------------------------------------------------------
 !  plot this as a line on the current graph using PGPLOT
@@ -248,3 +257,29 @@ subroutine f_and_df(prstar,pr,cs,gam,fp,dfdp)
   endif
   
 end subroutine f_and_df
+
+!-------------------------------------------------------------
+! Non-iterative isothermal Riemann solver 
+! from Balsara (1994), ApJ 420, 197-212
+!
+! See also Cha & Whitworth (2003), MNRAS 340, 73-90
+!-------------------------------------------------------------
+subroutine get_pstar_isothermal(cs2,v_L,v_R,rho_L,rho_R,pstar,vstar)
+  implicit none
+  real, intent(in) :: cs2,v_L,v_R,rho_L,rho_R
+  real, intent(out) :: pstar,vstar
+  real :: sqrtrho_L, sqrtrho_R, X, vdiff, determinant, vstar2
+
+  sqrtrho_L = sqrt(rho_L)
+  sqrtrho_R = sqrt(rho_R)
+  
+  X = sqrtrho_L*sqrtrho_R/(sqrtrho_L + sqrtrho_R)
+  vdiff = v_L - v_R
+  determinant = (X*vdiff)**2 + 4.*cs2*X*(sqrtrho_L + sqrtrho_R)
+  
+  pstar = 0.25*(X*vdiff + sqrt(determinant))**2  
+  vstar = v_L - (pstar - cs2*rho_L)/(sqrt(pstar*rho_L))
+  vstar2 = v_R + (pstar - cs2*rho_R)/(sqrt(pstar*rho_R))
+  print*,' pstar = ',pstar,' vstar = ',vstar,vstar2
+  
+end subroutine get_pstar_isothermal
