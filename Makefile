@@ -63,7 +63,7 @@ SOURCES= supersphplot.f90 main.f90 \
 	 exact_polytrope.f \
 	 get_data.f90 integratedkernel.f90 \
 	 interactive_part.f90 \
-	 interpolate1D.f90 \
+	 interpolate1D.f90 interpolate_vec.f90 \
          interpolate2D.f90 interpolate2D_xsec.f90 \
 	 interpolate3D.f90 interpolate3D_fastxsec.f90 \
 	 interpolate3D_projection.f90 interpolate3D_xsec_vec.f90 \
@@ -84,7 +84,6 @@ SOURCES= supersphplot.f90 main.f90 \
          render.f90 render_vec.f90 rotate.f90 \
 	 setpage.f90 \
 	 titles_read.f90 \
-	 vectorplot.f90 \
 
 SOURCESALL = $(MODULES:.f90=.o) $(SOURCES:.f90=.o)
 

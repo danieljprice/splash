@@ -773,7 +773,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               ! vector maps (can be on top of particle plots and renderings)
               !--------------------------------------------------------------
 
-              if (ivectorplot.ne.0) then
+              if (ivectorplot.ne.0 .and. ndim.ge.2) then
 	         !!--choose quantity to be plotted
                  if (ivectorplot.eq.1 .and. ivx.ne.0) then
                     ivecx = ivx + iplotx - 1 ! 
@@ -802,17 +802,14 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                     !!--plot arrows in either background or foreground colour
                     if (UseBackgndColorVecplot) call pgsci(0)
                     
-		    !
-		    ! Vector map in cross section
-		    !
-		    if (x_sec .and. ndim.eq.3) then ! take vector plot in cross section
-		       if (allocated(vecpixx)) deallocate(vecpixx)
-		       if (allocated(vecpixy)) deallocate(vecpixy)
-		       allocate(vecpixx(npixvec,npixyvec),stat=ierr)
-		       allocate(vecpixy(npixvec,npixyvec),stat=ierr)
-		       if (ierr.ne.0) then
-		          print*,'error allocating memory for vector cross section'
-		       else
+		    if (allocated(vecpixx)) deallocate(vecpixx)
+		    if (allocated(vecpixy)) deallocate(vecpixy)
+		    allocate(vecpixx(npixvec,npixyvec),stat=ierr)
+		    allocate(vecpixy(npixvec,npixyvec),stat=ierr)
+		    if (ierr.ne.0) then
+		       print*,'error allocating memory for vector cross section'
+		    else
+		       if (x_sec .and. ndim.eq.3) then ! take vector plot in cross section
 		          !
 			  !--interpolate vector from particles to cross section
 			  !
@@ -821,35 +818,24 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                             dat(1:ninterp,ih,i),dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
 			    ninterp,xmin,ymin,xsecpos, &
 			    vecpixx,vecpixy,npixvec,npixyvec,pixwidth)
+		       else
 		          !
-			  !--plot rendered vector map
+			  !--or interpolate (via averaging) to coarser grid
 			  !
-			  log = .false.
-			  call render_vec(vecpixx,vecpixy,vecmax, &
-			    npixvec,npixyvec,xmin,ymin,pixwidth,log)
-			  deallocate(vecpixx,vecpixy)
-		       endif
-		    else
-		    !
-		    ! Vector map in projection using averaging
-		    !
-		       !!--call routine to do vector plot off particles      
-                       call vectorplot(xplot(1:ntotplot(i)),yplot(1:ntotplot(i)),  &
-                            xmin,ymin,pixwidth, &
+                          call interpolate_vec(xplot(1:ntotplot(i)),yplot(1:ntotplot(i)), &
                             dat(1:ntotplot(i),ivecx,i),dat(1:ntotplot(i),ivecy,i), &
-                            vecmax,ntotplot(i),npixvec,npixyvec)
-                       !!--old stuff here is to plot arrows on the particles themselves
-                       !scale = 0.08*(lim(iploty,2)-lim(iploty,1))
-                       !call pgsch(0.35)! character height (size of arrow head)
-                       !do j=1,ntotplot(i)
-                       !   call pgarro(yplot(i),xplot(i), &
-                       !   yplot(i)+dat(j,ivecy,i)*scale,   &
-                       !   xplot(i)+dat(j,ivecx,i)*scale)
-                       !enddo
-                       !       call pgsch(1.0)    ! reset character height
+			    xmin,ymin,pixwidth,vecpixx,vecpixy, &
+                            ntotplot(i),npixvec,npixyvec)		       
+		       endif
+		       !
+		       !--plot rendered vector map
+		       !
+		       log = .false.
+		       call render_vec(vecpixx,vecpixy,vecmax, &
+			   npixvec,npixyvec,xmin,ymin,pixwidth,log)
+		       deallocate(vecpixx,vecpixy)
                     endif
                     if (UseBackgndColorVecplot) call pgsci(1)
-
 		 endif
               endif
               !

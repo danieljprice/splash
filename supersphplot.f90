@@ -29,6 +29,7 @@ program supersphplot
 !     get_data           : wrapper for main data read
 !     interactive_part   : interactive utilities for particle plots
 !     interpolate1D	 : interpolation of 1D sph data to 1D grid using sph kernel
+!     interpolate_vec    : interpolation of vector data to 2D grid by simple averaging
 !     interpolate2D	 : interpolation of 2D sph data to 2D grid using sph kernel     
 !     interpolate2D_xsec : oblique 1D cross section through 2D sph data using kernel
 !     interpolate3D	 : interpolation of 3D sph data to 3D grid using sph kernel
@@ -58,12 +59,10 @@ program supersphplot
 !     read_data_dansph   : reads data from my format of data files
 !     read_data_mrbsph   : reads data from matthew bate's format of data files
 !     render	 	 : takes array of pixels and plots render map/contours etc
-!     riemannsolver      : Riemann solver (called by exact_shock)
 !     setpage            : sets up the PGPLOT page (replaces call to PGENV/PGLAB)
 !     supersphplot	 : main program, drives menu loop
 !     titles_read        : reads a list of titles to be used to label each timestep
 !     transform	 	 : applies various transformations to data (log10, 1/x, etc)
-!     vectorplot         : produces a vector plot from particle data
 !
 !     file format is specified in the subroutine read_data   
 !
@@ -73,6 +72,9 @@ program supersphplot
 !     this version for both ndspmhd and matthew bate's code 2003-2004
 !     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
 !
+!      20/08/04 - vectorplot replaced by interpolate_vec
+!      19/08/04 - azimuthal rotation works, interactive limits not permanent,
+!                 dat restructured, various clean ups.
 !      27/07/04 - 2D cross sections work, options_xsecrotate added
 !      14/07/04 - major revamp of render/vector options + defaults save
 !      19/06/04 - can transform particle coords to new coordinate systems
