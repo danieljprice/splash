@@ -68,7 +68,7 @@ subroutine print_menu(ipicky,ipickx,irender)
   print 12
 
 11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a)
-12 format(1x,45('-'))
+12 format(1x,50('-'))
 13 format(1x,i2,')',1x,a)
 14 format(1x,i2,')',1x,a,'( ',i2, ' )')
 15 format(1x,i2,')',1x,a,'( ',L1,' )')
@@ -78,7 +78,9 @@ subroutine print_menu(ipicky,ipickx,irender)
 
 9901 continue
   if (ipicky.eq.0) ipicky = ndim+1
-  call prompt('Please enter your selection now (y axis or option): ',ipicky)
+  write(*,"(a)",ADVANCE='NO') 'Please enter your selection now (y axis or option):'
+  read(*,*,ERR=9901) ipicky
+  !call prompt('Please enter your selection now (y axis or option): ',ipicky)
   !
   !--if needed prompt for x axis selection
   !
