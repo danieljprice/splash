@@ -313,7 +313,7 @@ subroutine get_digits(i,digits,ndigits)
   implicit none
   integer, intent(in) :: i
   integer, intent(out) :: ndigits
-  integer, intent(out), dimension(*) :: digits
+  integer, intent(out), dimension(:) :: digits
   integer :: j,isubtract,idigit
 
   ndigits = 0
