@@ -10,7 +10,9 @@
 ## Compiler options
 F90C =  f95
 F90FLAGS =  -O -C
-LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c -lpng
+LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
+          -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
+          -lpng
 ##LDFLAGS = -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -L/sw/lib/pgplot95 -lpgplot
 SYSTEMFILE = system_unix_NAG.f90
 
@@ -30,6 +32,7 @@ GADGETSPH = read_data_gadget.f90
 
 # put modules separately as these must be compiled before the others
 MODULES= globaldata.f90 transform.f90 prompting.f90 exact.f90 \
+         $(SYSTEMFILE)
 
 # these are the normal `external' subroutines
 SOURCES= supersphplot.f90 mainloop.f90 \
@@ -66,7 +69,6 @@ SOURCES= supersphplot.f90 mainloop.f90 \
 	 rotate.f90 rotate_axes.f90 \
 	 setpage.f90 \
 	 titles_read.f90 \
-         $(SYSTEMFILE)
 
 SOURCESALL = $(MODULES:.f90=.o) $(SOURCES:.f90=.o)
 

@@ -35,6 +35,8 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
   ipts = 0
   xline = 0.
   yline = 0.
+  xpt = 0.
+  ypt = 0.
   iexit = .false.
   isave = .false.
   

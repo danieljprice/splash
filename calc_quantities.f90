@@ -18,6 +18,7 @@ subroutine calc_quantities(ifromstep,itostep)
   !--initialise extra quantities to zero
   !
   ientrop = 0
+  ike = 0
   ipmag = 0
   ibeta = 0
   itotpr = 0
