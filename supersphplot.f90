@@ -146,9 +146,6 @@ program supersphplot
   !
   ipicky = 1
   menuloop: do while (ipicky.gt.0 .and. ipicky.le.numplot+menuitems)
-     
-100  continue
-     
      !
      !--numplot is the total number of data columns (read + calculated)
      !   not including the particle co-ordinates
