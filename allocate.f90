@@ -42,8 +42,8 @@ subroutine alloc(npartin,nstep,ncolumns)
   ierr = 0
   if (allocated(dat)) then
      reallocate = .true.
-     print*,'> reallocating memory: ntot = ', &
-          npartin,' nstep = ',nstep,' ncol = ',ncolumns
+     print 10,'> reallocating memory: ',npartin,nstep,ncolumns
+10   format (a,' ntot = ',i10,' nstep = ',i6,' ncol = ',i4)
      allocate(dattemp(maxpart,maxcol,maxstep), stat=ierr)
      allocate(iamtemp(maxpart,maxstep))
      if (ierr.ne.0) print*,'error allocating memory'
@@ -66,15 +66,14 @@ subroutine alloc(npartin,nstep,ncolumns)
      deallocate(time,gamma)
 
   else
-     print*,'> allocating memory: ntot = ', &
-          npartin,' nstep = ',nstep,' ncol = ',ncolumns
+     print 10,'> allocating memory: ',npartin,nstep,ncolumns
   endif
 !
 !--save array sizes
 !
-  if (npartin.lt.maxpart) print*,' WARNING: # particles < previous in allocate'
-  if (nstep.lt.maxstep) print*,' WARNING: # steps < previous in allocate'
-  if (ncolumns.lt.maxcol) print*,' WARNING: # columns < previous in allocate'
+  if (npartin.lt.maxpart) print "(a)",' WARNING: # particles < previous in allocate'
+  if (nstep.lt.maxstep) print "(a)",' WARNING: # steps < previous in allocate'
+  if (ncolumns.lt.maxcol) print "(a)",' WARNING: # columns < previous in allocate'
   maxpartold = min(maxpart,npartin)
   maxstepold = min(maxstep,nstep)
   maxcolold = min(maxcol,ncolumns)
