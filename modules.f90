@@ -84,7 +84,6 @@ module settings
  real, dimension(3) :: xminoffset_track, xmaxoffset_track
 
 !--plot options
- logical :: interactive
  logical :: iadapt,ihavereadfilename
  logical :: plotcirc,plotcircall,flythru,imulti
  logical :: iplotline,iplotlinein,iplotav,ilabelpart
@@ -95,7 +94,7 @@ module settings
 !--page options
 !
  integer :: iaxis,nacross,ndown,ipapersize
- logical :: ipagechange,tile,animate
+ logical :: ipagechange,tile,animate,interactive
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
 !
@@ -132,7 +131,7 @@ module settings
    ipowerspecy,idisordered,wavelengthmax,nfreqspec,icoordsnew, &
    ncircpart,icircpart
 
- namelist /pageopts/ iaxis,nacross,ndown, &
+ namelist /pageopts/ iaxis,nacross,ndown,interactive, &
    ipagechange,tile,animate,ipapersize,papersizex,aspectratio, &
    hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle  
 
