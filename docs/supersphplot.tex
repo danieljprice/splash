@@ -3,6 +3,7 @@
 \usepackage{varioref}
 %% font
 %%\usepackage{mathptmx}
+\graphicspath{{figs/}}
 
 \begin{titlepage}
 \title{Visualisation of SPH data using SUPERSPHPLOT - v1.0}
@@ -135,7 +136,13 @@ library paths by hand. On most systems this is something like:
 LDFLAGS = -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11
 \end{verbatim}
 (assuming the PGPLOT libraries are in the /usr/local/pgplot directory and the
-X11 libraries are in /usr/X11R6/lib). If, having found the PGPLOT and X11
+X11 libraries are in /usr/X11R6/lib). If this does not work, try using the
+\verb+locate+ command to find the libraries on your system:
+\begin{verbatim}
+locate libpgplot
+locate libX11
+\end{verbatim}
+ If, having found the PGPLOT and X11
 libraries, the program still won't compile, it is usually
 because the PGPLOT on your system has been compiled with a different compiler to
 the one you are using. A first attempt is to try using the g2c libraries
@@ -146,7 +153,9 @@ On some systems I have also had to use
 \begin{verbatim}
 LDFLAGS = -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11 -lg2c -lpng
 \end{verbatim}
-Failing that, ask your system administrator!!
+Failing that, ask your system administrator(!) or simply download your own copy of
+the PGPLOT libraries and make sure it is compiled with the same compiler as you
+are using to compile the SUPERSPHPLOT source code.
 
 \subsection{Environment variables}
  Several useful environment variables can be set for PGPLOT and several of them
@@ -1020,7 +1029,7 @@ masses, a different curve is plotted for each different mass value.
 
 \newpage
 
-\bibliographystyle{klunamed}
+\bibliographystyle{bibstyle}
 \bibliography{/home/dprice/bibtex/sph,/home/dprice/bibtex/mhd}
 
 \end{document}
