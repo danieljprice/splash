@@ -5,7 +5,6 @@ module timestep_plotting
   integer, private :: ninterp
   integer, private :: iplotx,iploty,iplotz,irenderplot,ivectorplot,ivecx,ivecy
   integer, private :: nyplots,npartdim      
-  integer, private :: irenderprev
   integer, private :: ngrid
   integer, private :: just, ntitles
   integer, private :: iplots,iplotsonpage
@@ -241,7 +240,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   real, intent(in) :: timei,gammai
   integer, intent(inout) :: iadvance
   integer :: ntoti,iz
-  integer :: j,k,istepprev
+  integer :: j,k
   integer :: nyplot
   integer :: irenderpart
   integer :: npixx,npixy,npixz,ipixxsec
@@ -260,7 +259,6 @@ subroutine plotstep(istep,irender,ivecplot, &
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
-  save istepprev
 
 34   format (25(' -'))
 
@@ -511,7 +509,7 @@ subroutine plotstep(istep,irender,ivecplot, &
         if ((irenderplot.gt.ndim).and. &
              ((ndim.eq.3).or.(ndim.eq.2.and..not.x_sec))) then
            !
-           !--interpolate from particles to fixed grid using sph summation
+           !--interpolate from particles to fixed grid using SPH summation
            !                
            !!--use the un-transformed co-ordinates
            if (itrackpart.le.0 .and. iadvance.ne.0) then ! do not reset limits if particle tracking
@@ -534,46 +532,37 @@ subroutine plotstep(istep,irender,ivecplot, &
               !!print*,'npixz = ',npixz
            endif
 
-           !!--if rendering array is the same as the previous plot, reuse the array                
-           if (irenderplot.eq.irenderprev .and. istep.eq.istepprev) then
-              if (.not.x_sec .or. (x_sec.and.ndim.eq.3.and.nxsec.gt.2)) then
-                 print*,'same rendering, using previous array...'
+           if (allocated(datpix)) deallocate(datpix)
+           if (allocated(datpix3D)) deallocate(datpix3D)
+
+           select case(ndim)
+           case(2)
+              !!--interpolate to 2D grid
+              !!  allocate memory for rendering array
+              if (.not. x_sec) then
+                 allocate ( datpix(npixx,npixy) )
+                 call interpolate2D( &
+                      xplot(1:ninterp),yplot(1:ninterp), &
+                      dat(1:ninterp,ipmass),dat(1:ninterp,irho), &
+                      dat(1:ninterp,ih),dat(1:ninterp,irenderplot), &
+                      ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
               endif
-           else
-              if (allocated(datpix)) deallocate(datpix)
-              if (allocated(datpix3D)) deallocate(datpix3D)
+           case(3)
+              !!--interpolation to 3D grid - then take multiple cross sections/projections
+              !!  do this if taking more than 2 cross sections, otherwise use fast xsec
+              if (x_sec.and.nxsec.gt.2) then
+                 !!--allocate memory for 3D rendering array
+                 allocate ( datpix3D(npixx,npixy,npixz) )
+                 !!--interpolate from particles to 3D grid
+                 call interpolate3D( &
+                      xplot(1:ninterp),yplot(1:ninterp), &
+                      zplot(1:ninterp),dat(1:ninterp,ipmass),  &
+                      dat(1:ninterp,irho),dat(1:ninterp,ih), &
+                      dat(1:ninterp,irenderplot), &
+                      ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dxsec)
+              endif
+           end select
 
-              select case(ndim)
-              case(2)
-                 !!--interpolate to 2D grid
-                 !!  allocate memory for rendering array
-                 if (.not. x_sec) then
-                    allocate ( datpix(npixx,npixy) )
-                    call interpolate2D( &
-                         xplot(1:ninterp),yplot(1:ninterp), &
-                         dat(1:ninterp,ipmass),dat(1:ninterp,irho), &
-                         dat(1:ninterp,ih),dat(1:ninterp,irenderplot), &
-                         ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
-                 endif
-              case(3)
-                 !!--interpolation to 3D grid - then take multiple cross sections/projections
-                 !!  do this if taking more than 2 cross sections, otherwise use fast xsec
-                 if (x_sec.and.nxsec.gt.2) then
-                    !!--allocate memory for 3D rendering array
-                    allocate ( datpix3D(npixx,npixy,npixz) )
-                    !!--interpolate from particles to 3D grid
-                    call interpolate3D( &
-                         xplot(1:ninterp),yplot(1:ninterp), &
-                         zplot(1:ninterp),dat(1:ninterp,ipmass),  &
-                         dat(1:ninterp,irho),dat(1:ninterp,ih), &
-                         dat(1:ninterp,irenderplot), &
-                         ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dxsec)
-                 endif
-              end select
-           endif
-
-           irenderprev = irenderplot
-           istepprev = istep
         endif
         !
         !--if vector plot determine whether or not to plot the particles as well
@@ -722,49 +711,52 @@ subroutine plotstep(istep,irender,ivecplot, &
            !------------------------------
            ! now actually plot the data
            !------------------------------
-           if (irenderplot.gt.ndim .and.    &
-                ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) ) then
-              !---------------------------------------------------------------
-              ! scalar quantity which has been rendered to a 2D pixel array (datpix)
-              !---------------------------------------------------------------
-              !!--do transformations on rendered array  
-              call transform2(datpix,itrans(irenderplot))
-              labelrender = label(irenderplot)
-              !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
-              if (ndim.eq.3 .and..not. x_sec) then
-                 labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
-              endif
-              !!--apply transformations to the label for the rendered quantity 
-              !!  but don't do this for log as we use a logarithmic axis instead
-              log = .false.
-              if (itrans(irenderplot).eq.1) then
-                 log = .true.
-              else 
-                 labelrender = transform_label(labelrender,itrans(irenderplot))
-              endif
-              !!--limits for rendered quantity
-              if (iadapt .and. iadvance.ne.0) then
-                 !!--if adaptive limits, find limits of rendered array
-                 rendermin = minval(datpix)
-                 rendermax = maxval(datpix)
-              elseif (iadvance.ne.0) then                   
-                 !!--or apply transformations to fixed limits
-                 rendermin = lim(irenderplot,1)
-                 rendermax = lim(irenderplot,2)
-                 call transform_limits(rendermin,rendermax,itrans(irenderplot))
-              endif
-              !!--print plot limits to screen
-              print*,trim(labelrender),' min, max = ',rendermin,rendermax       
-              !!--call subroutine to actually render the image       
-              call render(datpix,rendermin,rendermax,trim(labelrender),  &
-                   npixx,npixy,xmin,ymin,pixwidth,    &
-                   icolours,iplotcont,iPlotColourBar,ncontours,log)
+           if (irenderplot.gt.ndim) then
+              if ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) then
+                 !---------------------------------------------------------------
+                 ! scalar quantity which has been rendered to a 2D pixel array (datpix)
+                 !---------------------------------------------------------------
+                 !!--do transformations on rendered array  
+                 call transform2(datpix,itrans(irenderplot))
+                 labelrender = label(irenderplot)
+                 !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
+                 if (ndim.eq.3 .and..not. x_sec) then
+                    labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
+                 endif
+                 !!--apply transformations to the label for the rendered quantity 
+                 !!  but don't do this for log as we use a logarithmic axis instead
+                 log = .false.
+                 !if (itrans(irenderplot).eq.1) then
+                 !   log = .true.
+                 !else 
+                    labelrender = transform_label(labelrender,itrans(irenderplot))
+                 !endif
+                 !!--limits for rendered quantity
+                 if (iadvance.ne.0) then
+                    if (iadapt) then
+                       !!--if adaptive limits, find limits of rendered array
+                       rendermin = minval(datpix)
+                       rendermax = maxval(datpix)
+                    else                  
+                       !!--or apply transformations to fixed limits
+                       rendermin = lim(irenderplot,1)
+                       rendermax = lim(irenderplot,2)
+                       call transform_limits(rendermin,rendermax,itrans(irenderplot))
+                    endif
+                 endif
+                 !!--print plot limits to screen
+                 print*,trim(labelrender),' min, max = ',rendermin,rendermax       
+                 !!--call subroutine to actually render the image       
+                 call render(datpix,rendermin,rendermax,trim(labelrender),  &
+                      npixx,npixy,xmin,ymin,pixwidth,    &
+                      icolours,iplotcont,iPlotColourBar,ncontours,log)
 
-           elseif (irenderplot.gt.ndim .and. ndim.eq.2 .and. x_sec) then
-              !---------------------------------------------------------------
-              ! plot 1D cross section through 2D data (contents of datpix) 
-              !---------------------------------------------------------------  
-              call pgline(npixx,xgrid,datpix1D) 
+              elseif (ndim.eq.2 .and. x_sec) then
+                 !---------------------------------------------------------------
+                 ! plot 1D cross section through 2D data (contents of datpix) 
+                 !---------------------------------------------------------------  
+                 call pgline(npixx,xgrid,datpix1D)
+              endif
            else
               !-----------------------
               ! particle plots
