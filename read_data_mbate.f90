@@ -39,6 +39,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
   integer, parameter :: maxptmass = 1000
+  real, parameter :: pi=3.141592653589
   integer :: i,j,ifile,ierr
   integer :: npart_max,nstep_max
   logical :: iexist
@@ -53,7 +54,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real, dimension(:), allocatable :: dummy
   real(doub_prec) :: udisti,umassi,utimei, umagfdi
   real :: timei, gammai
-  real :: rhozero, RK2
+  real :: rhozero, RK2, tcomp
   real :: escap,tkin,tgrav,tterm,tmag
   real :: dtmax
 
@@ -189,7 +190,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
         npartoftype(2,j) = nghosti
 
         gamma(j) = real(gammai)
-        time(j) = real(timei)
+        tcomp = sqrt((3.*pi)/(32*rhozero))
+        time(j) = real(timei)/tcomp
         j = j + 1
 
      enddo over_steps_in_file
