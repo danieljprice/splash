@@ -797,32 +797,25 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               !
               lastplot = (i.eq.n_end .and. nyplot.eq.nyplots .and. k.eq.nxsec)
               
-             if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
-                if (iadvance.ne.0) then
-                   xmintemp = xmin
-                   xmaxtemp = xmax
-                   ymintemp = ymin
-                   ymaxtemp = ymax
-                endif
-                iadvance = nfreq
-                call interactive_part(ninterp,iplotx,iploty,irenderplot, &
-                     xplot(1:ninterp),yplot(1:ninterp),dat(1:ninterp,ih,i),icolourme(1:ninterp), &
-                     xmin,xmax,ymin,ymax,rendermin,rendermax, &
-                     angletempx,angletempy,angletempz,ndim,iadvance,isave)
-                !--turn rotation on if necessary
-                if (abs(angletempx-anglex).gt.tol) irotate = .true.
-                if (abs(angletempy-angley).gt.tol) irotate = .true.
-                if (abs(angletempz-anglez).gt.tol) irotate = .true.                
-                if (isave) then
-                   !--change to fixed plot limits if limits have changed
-                   !if (iadapt) then
-                   !   if (abs(xmintemp-xmin).gt.tol .or. abs(xmaxtemp-xmax).gt.tol) iadapt = .false.
-                   !   if (abs(ymintemp-ymin).gt.tol .or. abs(ymaxtemp-ymax).gt.tol) iadapt = .false.
-                   !   print*,'adaptive plot limits = ',iadapt
-                   !endif
-                endif
-                if (iadvance.eq.-666) exit over_timesteps
-             endif
+              if (interactive .and. (nacross*ndown.eq.1)) then
+                 iadvance = nfreq
+                 call interactive_part(ninterp,iplotx,iploty,irenderplot, &
+                      xplot(1:ninterp),yplot(1:ninterp),dat(1:ninterp,ih,i),icolourme(1:ninterp), &
+                      xmin,xmax,ymin,ymax,rendermin,rendermax, &
+                      angletempx,angletempy,angletempz,ndim,iadvance,isave)
+                 !--turn rotation on if necessary
+                 if (abs(angletempx-anglex).gt.tol) irotate = .true.
+                 if (abs(angletempy-angley).gt.tol) irotate = .true.
+                 if (abs(angletempz-anglez).gt.tol) irotate = .true.
+                 if (iadvance.eq.-666) exit over_timesteps
+              elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
+                 !
+                 !--timestep control only if multiple plots on page
+                 !
+                 iadvance = nfreq
+                 call interactive_step(iadvance,xmin,xmax,ymin,ymax)
+                 if (iadvance.eq.-666) exit over_timesteps
+              endif
 
               !
               !--%%%%%%%%%%%%% end loop over cross-section slices %%%%%%%%%%%%%%%%%%%%%%%
@@ -908,27 +901,19 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            !
            lastplot = (i.eq.n_end .and. nyplot.eq.nyplots)
 
-           if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
-              if (iadvance.ne.0) then
-                 xmintemp = xmin
-                 xmaxtemp = xmax
-                 ymintemp = ymin
-                 ymaxtemp = ymax
-              endif
+           if (interactive .and. (nacross*ndown.eq.1)) then
               iadvance = nfreq
-              call interactive_part(ntot(i),iplotx,iploty,0,xplot(1:ntot(i)), &
-                                    yplot(1:ntot(i)),dat(1:ninterp,ih,i),icolourme(1:ntot(i)), &
-                                    xmin,xmax,ymin,ymax,dummymin,dummymax, &
-                                    angletempx,angletempy,angletempz,ndim,iadvance,isave)
-              if (isave) then
-                 !--change to fixed plot limits if limits have changed
-                 !if (iadapt) then
-                    !if (abs(xmintemp-xmin).gt.tol .or. abs(xmaxtemp-xmax).gt.tol) iadapt = .false.
-                    !if (abs(ymintemp-ymin).gt.tol .or. abs(ymaxtemp-ymax).gt.tol) iadapt = .false.
-                    !print*,xmintemp,xmin,xmaxtemp,xmax
-                    !print*,'adaptive plot limits = ',iadapt
-                 !endif
-              endif
+              call interactive_part(ninterp,iplotx,iploty,irenderplot, &
+                   xplot(1:ninterp),yplot(1:ninterp),dat(1:ninterp,ih,i),icolourme(1:ninterp), &
+                   xmin,xmax,ymin,ymax,dummymin,dummymax, &
+                   angletempx,angletempy,angletempz,ndim,iadvance,isave)
+              if (iadvance.eq.-666) exit over_timesteps
+           elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
+              !
+              !--timestep control only if multiple plots on page
+              !
+              iadvance = nfreq
+              call interactive_step(iadvance,xmin,xmax,ymin,ymax)
               if (iadvance.eq.-666) exit over_timesteps
            endif
            
