@@ -8,8 +8,8 @@ contains
 ! This subroutine drives the main plotting loop
 !
 subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
-  use particle_data, only:ntot,npartoftype,time,gamma,dat
-  use settings_data, only:nstart,n_end,nfreq,numplot,buffer_data
+  use particle_data, only:npartoftype,time,gamma,dat
+  use settings_data, only:nstart,n_end,nfreq,buffer_data
   use settings_page, only:interactive
   use timestep_plotting, only:initialise_plotting,plotstep
   implicit none
@@ -94,38 +94,39 @@ subroutine get_nextstep(i,ifile)
  !  appropriate number of files to get to timestep requested
  !
  if (i.gt.nstepsinfile(ifile)) then
-    if (nstepsinfile(i).ge.1) then
+    if (nstepsinfile(ifile).ge.1) then
        iskipfiles = (i-nstepsinfile(ifile))/nstepsinfile(ifile)
     else
        print*,'*** error in timestepping: file contains zero timesteps'
-       iskipfiles = 1
+       iskipfiles = 0
     endif
     if (iskipfiles.gt.1) then
        print*,'skipping ',iskipfiles,' files '
-    elseif (iskipfiles.le.0) then
+    elseif (iskipfiles.lt.0) then
        print*,'error with iskipfiles = ',iskipfiles
-       iskipfiles = 1
+       iskipfiles = 0
     endif
-    ifile = ifile+iskipfiles
+    ifile = ifile+iskipfiles+1
  elseif (i.lt.1) then
-    print*,' stepping back'
     ifile = ifile-1
     if (ifile.ge.1) then
        iskipfiles = (i-1)/nstepsinfile(ifile)
        if (abs(iskipfiles).gt.0) print*,'skipping back ',abs(iskipfiles),' files'
-       ifile = ifile + iskipfiles + 1
-       if (ifile.lt.1) ifile = 1
+       ifile = ifile + iskipfiles
+       if (ifile.lt.1) then
+          ifile = 1
+          print*,'can''t skip back that far, starting at file ',ifile
+       endif
     else
        ifile = 1
     endif
-    i = 1
  endif
 
  if (ifile.gt.nfiles) then
     if (interactive) then  ! freeze on last step
        ifile = nfiles
        i = nstepsinfile(ifile)
-    else ! exit timestepping loop
+    else ! if non-interactive, exit timestepping loop
        ifile = nfiles
        i = -666
     endif
@@ -133,7 +134,14 @@ subroutine get_nextstep(i,ifile)
     print*,'*** get_nextstep: error: request for file < 1'
  elseif (ifile.ne.ifileopen) then
     call get_data(ifile,.true.)
-    i = MOD(i-1,nstepsinfile(ifile)) + 1
+    if (i.gt.nstepsinfile(ifile)) then
+       i = MOD(i-1,nstepsinfile(ifile)) + 1
+    elseif (i.lt.1) then
+       i = nstepsinfile(ifile) + MOD(i-1,nstepsinfile(ifile)) + 1
+    else
+       print*,'*** get_nextstep: error: should''nt need to read a new file'
+       i = 1
+    endif
     if (i.ne.1) then
        print*,'starting at step ',i
     endif
