@@ -180,7 +180,7 @@ subroutine calc_quantities(ifromstep,itostep)
            enddo
            !!--plasma beta
            if (ibeta.ne.0 .and. ipr.ne.0) then
-              where(abs(dat(1:ntoti,ipmag,i)).gt.1.e-10)
+              where(abs(dat(1:ntoti,ipmag,i)).gt.tiny(dat))
                  dat(1:ntoti,ibeta,i) = dat(1:ntoti,ipr,i)/dat(1:ntoti,ipmag,i)
               elsewhere  
                  dat(1:ntoti,ibeta,i) = 0.
