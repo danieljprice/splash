@@ -62,61 +62,76 @@ end module limits
 module settings
  use params
  implicit none
- integer :: numplot,ncalc,ncolumns,nextra,nacross,ndown
+!
+!--global settings
+!
+ integer :: numplot,ncalc,ncolumns,nextra
  integer :: ndataplots
  integer :: ndim, ndimv 
  integer :: imark, imarkg, imarksink
  integer :: ixsec,nxsec, nbins,nc
  integer :: linestylein, iexact
- integer :: irenderplot
  integer :: ncolours,nstart,n_end,nfreq
- integer :: icoords,icoordsnew,iaxis
+ integer :: icoords,icoordsnew
  integer :: ncircpart, itrackpart
  integer, dimension(10) :: icircpart
- 
- integer :: ncontours_nomulti,npix_nomulti,npixvec_nomulti
- integer :: ivecplot_nomulti,icolours
- integer :: ipapersize
- 
+ integer :: icolours
+!
+!--limits
+! 
  real :: scalemax,zoom
- real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
  real, dimension(3) :: xminoffset_track, xmaxoffset_track
  real :: xsecpos_nomulti
- real :: papersizex,aspectratio
 !--plot options
- logical :: animate, interactive
+ logical :: interactive
  logical :: iadapt,ihavereadfilename
- logical :: plotcirc,plotcircall,flythru,imulti,ipagechange
+ logical :: plotcirc,plotcircall,flythru,imulti
  logical :: iplotline,iplotlinein,iplotav,ilabelpart
  logical :: iplotpart,iplotghost,iplotsink
- logical :: ishowopts, ivegotdata, tile
- 
- logical :: backgnd_vec_nomulti
- logical :: iplotcont_nomulti,xsec_nomulti,iplotpartvec_nomulti
+ logical :: ishowopts, ivegotdata
+!
+!--page options
+!
+ integer :: iaxis,nacross,ndown,ipapersize
+ logical :: ipagechange,tile,animate
+ real :: papersizex,aspectratio
+ real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
+!
+!--rendering options
+!
+ integer :: ncontours,npix
+ logical :: iPlotColourBar
+!
+!--vector plot options
+!
+ integer :: npixvec
+ logical :: UseBackgndColorVecplot, iplotpartvec
+ logical :: iplotcont_nomulti,xsec_nomulti
 !
 !--power spectrum options
 !
  integer :: ipowerspecy, nfreqspec
  real :: wavelengthmax
  logical :: idisordered
-
 !
-!--sort these into a namelist for input/output
+!--sort these into namelists for input/output
 !
- namelist /plotopts/ iaxis,tile, &
-   animate,iadapt,xsec_nomulti,flythru, &
+ namelist /plotopts/ &
+   iadapt,xsec_nomulti,flythru, &
    plotcirc,iplotline,iplotlinein,linestylein,          &
    imark, imarkg, imarksink,                            &
-   nacross,ndown,                                       &
    iexact,iplotav,nbins,                                &
-   ivecplot_nomulti,iplotpartvec_nomulti,       &
-   npix_nomulti,npixvec_nomulti,                        &
-   iplotcont_nomulti,ncontours_nomulti,                 &
    icolours,iplotghost,iplotsink,                       &
-   ipapersize,papersizex,aspectratio,                   &
    ipowerspecy,idisordered,wavelengthmax,nfreqspec,icoordsnew, &
-   ncircpart,icircpart,hposlegend,vposlegend, &
-   hpostitle,vpostitle,fjusttitle
+   ncircpart,icircpart
+
+ namelist /pageopts/ iaxis,nacross,ndown, &
+   ipagechange,tile,animate,ipapersize,papersizex,aspectratio, &
+   hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle  
+
+ namelist /renderopts/ npix, ncontours,iplotcont_nomulti,iPlotColourBar
+ 
+ namelist /vectoropts/ npixvec, UseBackgndColorVecplot, iplotpartvec
      
 end module settings
 !
@@ -128,18 +143,15 @@ module multiplot
  integer :: nyplotmulti 
  integer, dimension(maxplot) :: multiplotx,multiploty
  integer, dimension(maxplot) :: irendermulti,ivecplotmulti
- integer, dimension(maxplot) :: npixmulti,npixvecmulti 
- integer, dimension(maxplot) :: ncontoursmulti,itrans
- logical, dimension(maxplot) :: iplotcontmulti, iplotpartvecmulti     
- logical, dimension(maxplot) :: x_secmulti,backgnd_vec_multi
+ integer, dimension(maxplot) :: itrans
+ logical, dimension(maxplot) :: iplotcontmulti, x_secmulti
  real, dimension(maxplot) :: xsecposmulti
 !
 !--sort these into a namelist for input/output
 !
  namelist /multi/ nyplotmulti,                                  &
     itrans,multiplotx,multiploty,irendermulti,                  &
-    iplotcontmulti,ncontoursmulti,ivecplotmulti,npixmulti,      &
-    npixvecmulti,iplotpartvecmulti,x_secmulti,xsecposmulti
+    ivecplotmulti,iplotcontmulti,x_secmulti,xsecposmulti
  
 end module multiplot
 !

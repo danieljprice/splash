@@ -42,12 +42,14 @@ program supersphplot
 !     main               : main plotting loop
 !     menu               : main menu
 !     modules		 : contains all shared (global) variables
+!     options_data       : sets options relating to current data
 !     options_exact	 : sets options and params for exact solution calculation/plotting
 !     options_limits     : sets options relating to plot limits
 !     options_page       : sets options relating to page setup
 !     options_particleplots : sets options relating to particle plots
 !     options_powerspec  : sets options for power spectrum plotting
 !     options_render	 : sets options for render plots
+!     options_vector	 : sets options for vector plots
 !     plot_average	 : bins particles along x-axis and plots average line
 !     plot_kernel_gr     : plots the kernel shape in non-cartesian co-ordinates
 !     plot_powerspectrum : calls powerspectrum and plots it
@@ -71,6 +73,7 @@ program supersphplot
 !     this version for both ndspmhd and matthew bate's code 2003-2004
 !     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
 !
+!      14/07/04 - major revamp of render/vector options + defaults save
 !      19/06/04 - can transform particle coords to new coordinate systems
 !      10/06/04 - exact solution for shock tubes, also from file + added read_exactparams
 !      02/06/04 - interactive plotting steps forward/backwards, replots etc

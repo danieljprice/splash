@@ -60,27 +60,25 @@ subroutine defaults_set
   nbins = 24		! number of bins for this
   ilabelpart = .false.	! plot particle numbers
   iplotpart = .true.	! flag whether or not to plot actual SPH particles
-  iplotpartvec_nomulti = .true.	! whether to plot particles on vector plot
+  iplotpartvec = .true.	! whether to plot particles on vector plot
   iplotghost = .true.	! plot ghost particles
   iplotsink = .true.	! plot sink particles
-  npix_nomulti = 100		! pixels in x direction for rendering
-  npixvec_nomulti = 20	! pixels in x direction on vector plots
-  ivecplot_nomulti = 0	! choice of vector plot
+  npix = 100		! pixels in x direction for rendering
+  npixvec = 40	! pixels in x direction on vector plots
   iplotcont_nomulti = .true.	! plot contours
   xsecpos_nomulti = 0.   ! position of cross section
-  ncontours_nomulti = 30		! number of contours to plot
+  ncontours = 30		! number of contours to plot
   icolours = 0		! colour scheme to use
   ncolours=10		! number of colours in colour table
   itrans(:) = 0		! no transformations (log10 etc)
-  backgnd_vec_nomulti = .false. ! plot vector plot using black/white
+  UseBackgndColorVecplot = .false. ! plot vector plot using black/white
+  iPlotColourBar = .true.
 
   hposlegend = 0.75     ! horizontal legend position as fraction of viewport
   vposlegend = 2.0      ! vertical legend position in character heights
   hpostitle = 0.5     ! horizontal title position as fraction of viewport
   vpostitle = 1.0      ! vertical title position in character heights
   fjusttitle = 0.5      ! justification factor for title
-
-  irenderplot = 0		! this is just so it is set to something
 !
 !--set coordinate labels for all coordinate systems
 !
@@ -132,11 +130,7 @@ subroutine defaults_set
   ivecplotmulti(:) = 0	! vector plot
   x_secmulti(:) = .false.	! take cross section?
   xsecposmulti(:) = 0.0	! position of cross section
-  npixmulti(:) = 400	! number of pixels in render plots
-  npixvecmulti(:) = 40	! number of pixels in vector plots
-  ncontoursmulti(:) = 30	! number of contours to use
   iplotcontmulti(:) = .false.
-  iplotpartvecmulti(:) = .false.
   !
   !--array positions of specific quantities
   !

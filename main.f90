@@ -1,7 +1,7 @@
 !
 ! This subroutine drives the main plotting loop
 !
-subroutine main(ipicky,ipickx,irender)
+subroutine main(ipicky,ipickx,irender,ivecplot)
   use params
   use exact_params
   use filenames
@@ -12,15 +12,15 @@ subroutine main(ipicky,ipickx,irender)
   use prompting
   use settings   
   implicit none
-  integer, intent(in) :: ipicky, ipickx, irender
+  integer, intent(in) :: ipicky, ipickx, irender, ivecplot
 
   integer, parameter :: maxtitles = 50
   integer :: i,j,k,n
-  integer :: iplotx,iploty,ivecx,ivecy
+  integer :: iplotx,iploty,irenderplot,ivectorplot,ivecx,ivecy
   integer :: nyplot,nyplots      
   integer :: npart1,npartdim
   integer :: npixx,npixy,npixz,ipixxsec
-  integer :: ivecplot,npix,npixvec,npixyvec,ncontours
+  integer :: npixyvec
   integer :: irenderprev, istepprev, iadvance
   integer :: nsink,nsinkstart,nsinkend,nghoststart,nghostend
   integer :: int_from_string
@@ -41,8 +41,8 @@ subroutine main(ipicky,ipickx,irender)
   real :: dxgrid
   real :: xpt1,ypt1,xpt2,ypt2
 
-  logical :: iplotcont,iplotpartvec,x_sec,isamexaxis,isameyaxis
-  logical :: log,use_backgnd_color_vecplot, inewpage, tile_plots
+  logical :: iplotcont,x_sec,isamexaxis,isameyaxis
+  logical :: log, inewpage, tile_plots
 
   character(len=60) :: title,titlex
   character(len=20) :: labelx,labely,labelrender
@@ -55,14 +55,7 @@ subroutine main(ipicky,ipickx,irender)
 
 
   x_sec = xsec_nomulti
-  ivecplot = ivecplot_nomulti
   iplotcont = iplotcont_nomulti
-  iplotpartvec = iplotpartvec_nomulti
-  npix = npix_nomulti
-  npixvec = npixvec_nomulti
-  ncontours = ncontours_nomulti
-  iplotcont = iplotcont_nomulti
-  use_backgnd_color_vecplot = backgnd_vec_nomulti
   title = ' '
   titlex = ' '
   isamexaxis = .true.  ! same x axis on all plots? (only relevant for >1 plots per page)
@@ -321,24 +314,14 @@ subroutine main(ipicky,ipickx,irender)
            !!--set rendering options equal to settings in multiplot	 
            if (imulti) then
               irenderplot = irendermulti(nyplot)      
+              ivectorplot = ivecplotmulti(nyplot)
               iplotcont = iplotcontmulti(nyplot)
-              ncontours = ncontoursmulti(nyplot)
-              ivecplot = ivecplotmulti(nyplot)
-              npix = npixmulti(nyplot)
-              npixvec = npixvecmulti(nyplot)
-              iplotpartvec = iplotpartvecmulti(nyplot)
               x_sec = x_secmulti(nyplot)
               xsecpos = xsecposmulti(nyplot)
-              use_backgnd_color_vecplot = backgnd_vec_multi(nyplot)
            else
               irenderplot = irender
+              ivectorplot = ivecplot
               iplotcont = iplotcont_nomulti
-              ncontours = ncontours_nomulti
-              ivecplot = ivecplot_nomulti
-              npix = npix_nomulti
-              npixvec = npixvec_nomulti
-              iplotpartvec = iplotpartvec_nomulti
-              use_backgnd_color_vecplot = backgnd_vec_nomulti
               x_sec = xsec_nomulti
               xsecpos = xsecpos_nomulti
            endif
@@ -425,7 +408,7 @@ subroutine main(ipicky,ipickx,irender)
            !--if vector plot determine whether or not to plot the particles as well
            !
            iplotpart = .true.
-           if (ivecplot.gt.0) iplotpart = iplotpartvec
+           if (ivectorplot.gt.0) iplotpart = iplotpartvec
            if (irenderplot.gt.0) iplotpart = .false.
 
            !
@@ -622,7 +605,7 @@ subroutine main(ipicky,ipickx,irender)
                  !!--call subroutine to actually render the image       
                  call render(datpix,rendermin,rendermax,trim(labelrender),  &
                       npixx,npixy,xmin,ymin,pixwidth,    &
-                      icolours,iplotcont,ncontours,log)
+                      icolours,iplotcont,iPlotColourBar,ncontours,log)
 
               elseif (irenderplot.gt.ndim .and. ndim.eq.2 .and. x_sec) then
                  !---------------------------------------------------------------
@@ -750,12 +733,12 @@ subroutine main(ipicky,ipickx,irender)
               !--------------------------------------------------------------
 
               !!--velocity vector map
-              if (ivecplot.ne.0) then
-                 if (ivecplot.eq.1 .and. ivx.ne.0) then
+              if (ivectorplot.ne.0) then
+                 if (ivectorplot.eq.1 .and. ivx.ne.0) then
                     ivecx = ivx + iplotx - 1 ! 
                     ivecy = ivx + iploty - 1
                     print*,'plotting velocity field'        
-                 elseif (ivecplot.eq.2 .and. iBfirst.ne.0) then
+                 elseif (ivectorplot.eq.2 .and. iBfirst.ne.0) then
                     ivecx = iBfirst + iplotx - 1 ! 
                     ivecy = iBfirst + iploty - 1
                     print*,'plotting magnetic field'
@@ -777,13 +760,13 @@ subroutine main(ipicky,ipickx,irender)
                     endif
                     
                     !!--plot arrows in either background or foreground colour
-                    if (use_backgnd_color_vecplot) call pgsci(0)
+                    if (UseBackgndColorVecplot) call pgsci(0)
                     !!--call routine to do vector plot off particles      
                     call vectorplot(xplot(1:ntotplot(i)),yplot(1:ntotplot(i)),  &
                          xmin,ymin,pixwidth, &
                          dat(ivecx,1:ntotplot(i),i),dat(ivecy,1:ntotplot(i),i), &
                          vecmax,ntotplot(i),npixvec,npixyvec)
-                    if (use_backgnd_color_vecplot) call pgsci(1)
+                    if (UseBackgndColorVecplot) call pgsci(1)
                     !!--old stuff here is to plot arrows on the particles themselves
                     !scale = 0.08*(lim(iploty,2)-lim(iploty,1))
                     !call pgsch(0.35)! character height (size of arrow head)

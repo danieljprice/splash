@@ -10,7 +10,7 @@ subroutine menu(quit)
   implicit none
   logical, intent(out) :: quit
   integer :: i,ihalf,iadjust,iaction,istep,ierr
-  integer :: ipicky,ipickx,irender,int_from_string
+  integer :: ipicky,ipickx,irender,ivecplot,int_from_string
   character(LEN=2) :: ioption
   character(LEN=30) :: filename
   character(LEN=25) :: transform_label      
@@ -50,19 +50,20 @@ subroutine menu(quit)
 ! 
   print 12
   if (ishowopts) then
-     print 14,'d','read new data'
-     print 15,'t','change number of timesteps read  ',(n_end-nstart+1)/nfreq 
+     print 14,'d','data options'
+!!     print 15,'t','change number of timesteps read  ',(n_end-nstart+1)/nfreq 
      print 16,'i','toggle interactive mode          ',interactive
      print 14,'p','page options'
      print 14,'o','particle plot options'
-     print 15,'r','rendering/vector plot options    ',ivecplot_nomulti
      print 14,'l','change plot limits'
+     print 14,'r','rendering options'
+     print 14,'v','vector plot options'
      print 14,'h','hide options'
      print 14,'s','save defaults'
      print 14,'q','exit supersphplot'
   else
-     print*,' d(ata) t(imesteps) i(nteractive) p(age) o(pts)'
-     print*,' r(endering) l(imits) s(ave) h(elp) q(uit)'
+     print*,' d(ata) i(nteractive) p(age) o(pts) l(imits)'
+     print*,' r(endering) v(ector) s(ave) h(elp) q(uit)'
   endif
  
   print 12
@@ -102,14 +103,16 @@ subroutine menu(quit)
               goto 9901
            elseif (ipicky.le.ndim .and. ipickx.le.ndim) then
               call prompt('(render) (0=none)',irender,0,numplot)
+	      call prompt('(vector plot) (0=none 1=v 2=B)',ivecplot,0,2)
            else
               irender = 0
+	      ivecplot = 0
            endif
 	endif
 	!
 	!--call main plotting routine
         !
-        call main(ipicky,ipickx,irender)
+        call main(ipicky,ipickx,irender,ivecplot)
      endif
 !------------------------------------------------------------------------
 !  if input is an integer > numplot+1, quit
@@ -150,52 +153,37 @@ subroutine menu(quit)
               call prompt(' x axis ',multiplotx(i),1,numplot)
            endif
            if ((multiplotx(i).le.ndim).and.(multiploty(i).le.ndim)) then
-              call prompt(' enter field (from menu) for rendering (0=none)', &
-                   irendermulti(i),0,numplot)
-              if (irendermulti(i).ne.0) then
+              call prompt('(render) (0=none)',irendermulti(i),0,numplot)
+	      if (irendermulti(i).ne.0) then
                  ichange = .false.
-                 call prompt(' change rendering options for this plot? ',ichange)
+		 call prompt(' change rendering options for this plot? ',ichange)
                  if (ichange) then
-                    call options_render( &
-                         npixmulti(i),icolours,iplotcontmulti(i), &
-                         ncontoursmulti(i),ivecplotmulti(i),npixvecmulti(i), &
-                         iplotpartvecmulti(i),x_secmulti(i), &
-                         xsecposmulti(i),backgnd_vec_multi(i),ndim,numplot)
+	            call prompt('plot contours? ',iplotcontmulti(i))
+	            if (ndim.eq.3) then
+		       call prompt(' cross section (no=projection)? ',x_secmulti(i))
+		       if (x_secmulti(i)) then
+		          call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
+		       endif
+	            endif
                  elseif (i.eq.1) then
                     print*,'copying options from rendering settings'
-                    npixmulti(i) = npix_nomulti	      
                     iplotcontmulti(i) = iplotcont_nomulti
-                    ncontoursmulti(i) = ncontours_nomulti
-                    ivecplotmulti(i) = ivecplot_nomulti
-                    iplotpartvecmulti(i) = iplotpartvec_nomulti
                     x_secmulti(i) = xsec_nomulti
                     xsecposmulti(i) = xsecpos_nomulti
-                    backgnd_vec_multi(i) = backgnd_vec_nomulti              
                  else  
                     print*,'using same rendering options as plot 1'       
-                    npixmulti(i) = npixmulti(1)
                     iplotcontmulti(i) = iplotcontmulti(1)
-                    ncontoursmulti(i) = ncontoursmulti(1)
-                    ivecplotmulti(i) = ivecplotmulti(1)
-                    iplotpartvecmulti(i) = iplotpartvecmulti(1)
                     x_secmulti(i) = x_secmulti(1)
                     xsecposmulti(i) = xsecposmulti(1)
-                    backgnd_vec_multi(i) = backgnd_vec_multi(1)              
-                 endif
-              endif
+		 endif
+ 	      endif
+	      call prompt('(vector plot) (0=none 1=v 2=B)',ivecplotmulti(i),0,2)
            endif
         enddo
         return	    	  	  
 !------------------------------------------------------------------------
      case('d','D')
-        call get_data
-!------------------------------------------------------------------------	  
-     case('t','T')
-        call prompt('Start at timestep ',nstart,1,nfilesteps)
-        call prompt('End at timestep   ',n_end,nstart,nfilesteps)
-        call prompt(' Frequency of steps to read',nfreq,1,nfilesteps)
-        print *,' Steps = ',(n_end-nstart+1)/nfreq
-        return
+        call options_data
 !------------------------------------------------------------------------
      case('i','I')
         interactive = .not.interactive
@@ -210,11 +198,11 @@ subroutine menu(quit)
         return
 !------------------------------------------------------------------------
      case('r','R')
-        call options_render(npix_nomulti,icolours, &
-             iplotcont_nomulti,ncontours_nomulti,     &
-             ivecplot_nomulti,npixvec_nomulti,iplotpartvec_nomulti, &
-             xsec_nomulti,xsecpos_nomulti,backgnd_vec_nomulti,      &
-             ndim,numplot)
+        call options_render
+        return
+!------------------------------------------------------------------------
+     case('v','V')
+        call options_vecplot
         return
 !------------------------------------------------------------------------
      case('l','L')

@@ -9,6 +9,9 @@ subroutine defaults_write
        
  open(unit=1,file='defaults',status='replace',form='formatted')
     write(1,NML=plotopts)
+    write(1,NML=pageopts)
+    write(1,NML=renderopts)
+    write(1,NML=vectoropts)
     write(1,NML=exactparams)
     write(1,NML=multi)
  close(unit=1)

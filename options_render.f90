@@ -2,65 +2,63 @@
 ! options for rendering / vector plots
 !-----------------------------------------------------------------------------
 
-subroutine options_render(npix,icolours,iplotcont, 		&
- 			  ncontours,ivecplot,npixvec,iplotpartvec,	&
-			  x_sec,xsecpos,backgnd_vec,ndim,numplot)
- use prompting
- implicit none
- integer, intent(in) :: ndim, numplot
- integer, intent(inout) :: npix,icolours,ivecplot,npixvec
- integer, intent(inout) :: ncontours
- logical, intent(inout) :: iplotcont,iplotpartvec,x_sec,backgnd_vec
- real, intent(inout) :: xsecpos
- character(len=1) :: ans 
+subroutine options_render
+  use prompting
+  use settings
+  implicit none
+  integer :: ians
 !
 !--rendering options
 !
- call prompt('enter number of pixels along x axis',npix,1,1000)
- 
-100 continue
- print*,'(-ve = demo, 0 = contours only)'
- call prompt('enter colour scheme for rendering ',icolours,max=5)
- if (icolours.lt.0) then
-    call colour_demo
-    goto 100
- endif   
-    
- if (ndim.eq.3) then
-    print*,' take cross section (c) or projection (p) through 3d data?'
-    read*,ans
-    x_sec = .false.
-    if (ans.eq.'c') x_sec = .true.
-    print*,' cross section = ',x_sec
-    xsecpos = 0.0
-    if (x_sec) then
-       !call prompt('Do you want a fly-through',flythru)
-       !if (.not.flythru) then
-       call prompt('enter co-ordinate location of cross section slice',xsecpos)
-       !endif
-    endif   
- endif
-	 
- if (icolours.ne.0) then
-    call prompt(' plot contours?',iplotcont)
- else
-    iplotcont = .true.
- endif
- 
- if (iplotcont) then
-    call prompt(' enter number of contours between min,max',ncontours,1,100)
- endif
+ print 10,npix,icolours,xsec_nomulti,iplotcont_nomulti,ncontours, &
+      iPlotColourBar
+10  format(' 0) exit ',/, 		     &
+           ' 1) change number of pixels          (',i5,' )',/, &
+           ' 2) change colour scheme             (',i2,' )',/,    &
+	   ' 3) toggle cross section/projection  ( ',L1,' )',/, &
+           ' 4) toggle plot contours             ( ',L1,' )',/, &
+           ' 5) change number of contours        (',i3,' )',/, &
+           ' 6) toggle colour bar                ( ',L1,' )')
+ call prompt('enter option',ians,0,6)
 !
-!--vector plot options
-!	  
- call prompt('vector plot: velocity (1), magnetic field (2) or none(0)?',ivecplot,0,2)
- if (ivecplot.gt.0) then	
-    call prompt('enter number of pixels',npixvec,1,1000)
-    iplotpartvec = .false.
-    call prompt(' plot particles if no renderings?',iplotpartvec)
-    backgnd_vec = .false.
-    call prompt('use background color for vector plot?',backgnd_vec)
- endif
+!--options
+!
+ select case(ians)
+!------------------------------------------------------------------------
+    case(1)
+       call prompt('enter number of pixels along x axis',npix,1,10000)
+!------------------------------------------------------------------------
+    case(2)
+100    continue
+       print *,'(-ve = demo, 0 = contours only)'
+       call prompt('enter colour scheme for rendering ',icolours,max=5)
+       if (icolours.lt.0) then
+          call colour_demo
+          goto 100
+       endif
+!------------------------------------------------------------------------
+    case(3)
+       xsec_nomulti = .not.xsec_nomulti
+       xsecpos_nomulti = 0.0
+       if (xsec_nomulti) then
+          !call prompt('Do you want a fly-through',flythru)
+          !if (.not.flythru) then
+          call prompt('enter co-ordinate location of cross section slice', &
+               xsecpos_nomulti)
+          !endif
+       endif
+!------------------------------------------------------------------------
+    case(4)
+       iplotcont_nomulti = .not.iplotcont_nomulti
+       print*,'plot contours = ',iplotcont_nomulti
+!------------------------------------------------------------------------
+    case(5)
+       call prompt(' enter number of contours between min,max',ncontours,1,500)
+!------------------------------------------------------------------------
+    case(6)
+       iPlotColourBar = .not.iPlotColourBar
+       print*,'plot colour bar = ',iPlotColourBar
+  end select
     
  return
 end subroutine options_render
