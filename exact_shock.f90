@@ -8,7 +8,7 @@
 ! Computes shock profile at time t
 !
 ! Calls a separate subroutine to calculate the post-shock pressure
-! and velocity
+! and velocity (this is the difficult bit).
 !
 ! Daniel Price, Institute of Astronomy, Cambridge, 2004
 ! dprice@ast.cam.ac.uk
@@ -38,7 +38,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xmin,xmax)
      print*,'error: pr <= 0 on input ',p_L, p_R
      return
   elseif (gamma.lt.1.0001) then
-     print*,'isothermal solver not implemented'
+     print*,'error: isothermal solver not implemented'
      return
   endif
 !
@@ -110,12 +110,12 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xmin,xmax)
 ! reconstruct the shock profile for all x
 !--------------------------------------------------------------
   
-  where(xplot < xleft)  
+  where(xplot <= xleft)  ! <= otherwise problems at t=0
 !    undisturbed medium to the left
      pr = p_L
      dens = rho_L
      vel = v_L
-  elsewhere(xplot <= xfan)
+  elsewhere(xplot < xfan)
 !    inside expansion fan
      dens = rho_L*(gamfac*(xzero-xplot)/(cs_L*time) + (1.-gamfac))**(2./(gamma-1.))
      pr = p_L*(dens/rho_L)**gamma
