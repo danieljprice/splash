@@ -135,7 +135,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   !------------------------------------------------------------------------
   ! co-ordinate plot initialisation
 
-  if (ipicky.le.ndim .and. ipickx.le.ndim) then
+  if (iploty.le.ndim .and. iplotx.le.ndim) then
 
      !!--work out coordinate that is not being plotted 
      ixsec = 0
