@@ -1161,7 +1161,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            endif
 
         case(5)! linear wave
-           if ((iploty.eq.iwaveplot).and.(any(ix(:).eq.iplotx))) then 
+           if ((iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then 
 	      ymean = SUM(yplot(1:npart(i)))/REAL(npart(i)) 
               call exact_wave(time(i),ampl,period,lambda,xmin,xmax,ymean)
            endif

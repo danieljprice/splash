@@ -117,7 +117,8 @@ subroutine defaults_set
   lambda = 1.0	! sound wave exact solution : wavelength
   ampl = 0.005	! sound wave exact solution : amplitude
   period = 1.0
-  iwaveplot = 5
+  iwaveploty = 7
+  iwaveplotx = 1
   htstar = 1.   ! toy star crap
   atstar = 1.
   ctstar = 1.

@@ -172,7 +172,7 @@ module exact_params
  integer :: norder ! for toy star
  real :: htstar,atstar,ctstar,totmass,sigma,sigma0
 !--sound wave
- integer :: iwaveplot ! linear wave
+ integer :: iwaveploty,iwaveplotx ! linear wave
  real :: ampl,lambda,period
 !--sedov blast wave
  real :: rhosedov,esedov
@@ -189,7 +189,7 @@ module exact_params
 !
 !--sort these into a namelist for input/output
 !
- namelist /exactparams/ ampl,lambda,period,iwaveplot, &
+ namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx, &
           htstar,atstar,ctstar,sigma0,norder,rhosedov,esedov, &
 	  rho_L, rho_R, pr_L, pr_R, v_L, v_R, &
 	  iexactplotx,iexactploty 
