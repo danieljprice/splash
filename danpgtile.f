@@ -29,10 +29,11 @@ c   axis   : axes options (same as in PGENV)
 c
 c  Daniel Price, Institute of Astronomy, Cambridge, 2004.
 c
-      SUBROUTINE DANPGTILE(iplot,nx,ny,xmin,xmax,ymin,ymax, 
+      SUBROUTINE DANPGTILE(iplotin,nx,ny,xmin,xmax,ymin,ymax, 
      &                      labelx,labely,title,just,axis)
       IMPLICIT NONE
-      INTEGER iplot,nx,ny,ix,iy,just,axis
+      INTEGER iplotin,nx,ny,just,axis
+      INTEGER iplot,ix,iy
       REAL xmin,xmax,ymin,ymax
       REAL vptsizeeffx,vptsizeeffy,panelsizex,panelsizey
       REAL vmargintop,vmarginbottom,vmarginleft,vmarginright
@@ -44,11 +45,13 @@ c
 c
 c new page if iplot > number of plots on page
 c
-      IF (iplot.GT.nx*ny) THEN
-         IF (MOD(iplot,nx*ny).EQ.1) CALL PGPAGE
-	 iplot = iplot - (nx*ny)*((iplot-1)/(nx*ny))
-      ELSEIF (iplot.LE.0) THEN
+      IF (iplotin.GT.nx*ny) THEN
+         IF (MOD(iplotin,nx*ny).EQ.1) CALL PGPAGE
+	 iplot = iplotin - (nx*ny)*((iplotin-1)/(nx*ny))
+      ELSEIF (iplotin.LE.0) THEN
          RETURN
+      ELSE
+         iplot = iplotin
       ENDIF
 c
 c check for errors in input
