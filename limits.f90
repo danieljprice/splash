@@ -13,8 +13,8 @@ contains
 !  NB: does not differentiate between particle types at the moment
 !
 subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
-  use labels
-  use particle_data
+  use labels, only:label
+  use particle_data, only:npartoftype,dat
   implicit none
   integer, intent(in) :: ifromstep,itostep,ifromcol,itocol
   integer :: i,j,k,ntoti
@@ -48,13 +48,19 @@ end subroutine set_limits
 !--save plot limits for all columns to a file
 !
 subroutine save_limits
-  use filenames
+  use filenames, only:rootname
   use settings_data, only:numplot
+  use prompting
   implicit none
   integer :: i
-  character(len=26) :: limitsfile
+  character(len=len(rootname)+7) :: limitsfile
 
   limitsfile = trim(rootname(1))//'.limits'
+  call prompt('Enter name of limits file to write ',limitsfile)
+!
+!--append .limits if necessary
+!
+  if (index(limitsfile,'.limits').eq.0) limitsfile = trim(limitsfile)//'.limits'
   print*,'saving plot limits to file ',trim(limitsfile)
 
   open(unit=55,file=limitsfile,status='replace',form='formatted',ERR=998)
@@ -78,17 +84,23 @@ end subroutine save_limits
 !--read plot limits for all columns from a file
 !
 subroutine read_limits(ierr)
-  use filenames
-  use labels
+  use filenames, only:rootname
+  use labels, only:label
   use settings_data, only:numplot
+  use prompting
   implicit none
   integer :: i,ierr
-  character(len=26) :: limitsfile
+  character(len=len(rootname)+7) :: limitsfile
 
   ierr = 0
   limitsfile = trim(rootname(1))//'.limits'
+  call prompt('Enter name of limits file to read ',limitsfile)
+!
+!--append .limits if necessary
+!
+  if (index(limitsfile,'.limits').eq.0) limitsfile = trim(limitsfile)//'.limits'
 
-  open(unit=54,file=limitsfile,status='old',form='formatted',ERR=997)
+  open(unit=54,file=limitsfile,status='old',form='formatted',err=997)
   print*,'reading plot limits from file ',trim(limitsfile)
   do i=1,numplot
      read(54,*,err=998,end=999) lim(i,1),lim(i,2)

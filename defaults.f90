@@ -21,7 +21,7 @@ subroutine defaults_set
   use multiplot
   use settings_limits
   use options_data, only:defaults_set_data
-  use settings_data, only:ndim,icoords
+  use settings_data, only:ndim
   use settings_part, only:defaults_set_part
   use settings_page, only:defaults_set_page
   use settings_render, only:defaults_set_render
