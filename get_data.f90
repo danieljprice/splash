@@ -106,7 +106,7 @@ subroutine get_data(ireadfile)
      endif
      
      if (ireadfile.eq.1 .and. ivegotdata .and. nstepsinfile(1).ge.1) then
-        call set_limits(1,1,1,numplot)
+        call set_limits(1,nstepsinfile(ireadfile),1,numplot)
      endif
   endif
   !
