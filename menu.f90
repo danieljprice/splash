@@ -26,14 +26,12 @@ subroutine menu
   integer :: iamvecprev, ivecplottemp
   character(len=2) :: ioption
   character(len=50) :: vecprompt
-  logical :: ishowopts
 
   irender = 0
   ivecplot = 0
   ipowerspec = 0
   ipickx = 1
   ipicky = 1
-  ishowopts = .false.
 
   menuloop: do
 !---------------------------------------------------------------------------
@@ -140,27 +138,10 @@ subroutine menu
 !--options 
 ! 
   print 12
-  if (ishowopts) then
-     print 14,'d','data options'
-     print 16,'i','toggle interactive mode          ',interactive
-     print 14,'p','page options'
-     print 14,'o','particle plot options'
-     print 14,'l','change plot limits'
-     print 14,'r','rendering options'
-     print 14,'v','vector plot options'
-     print 14,'x','cross sectioning / rotation options'
-     print 14,'h','hide options'
-     print 14,'s','save defaults'
-     print 14,'q','exit supersphplot'
-  else
-     print "(a)",' d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)'
-     print "(a)",' r(ender) v(ector) x(sec/rotate) s(ave) q(uit)'
-  endif
- 
+  print "(a)",' d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)'
+  print "(a)",' r(ender) v(ector) x(sec/rotate) s(ave) q(uit)' 
   print 12
 
-14 format(1x,a2,')',1x,a)
-16 format(1x,a2,')',1x,a,'( ',L1,' )')
 !
 !--prompt user for selection
 !
@@ -238,46 +219,77 @@ subroutine menu
 !------------------------------------------------------------------------
      case('m','M')
         call options_multiplot
+     case('?m','?M')
+        print "(/a)",' Sets up plotting of (m)ultiple quantities per timestep'
 !------------------------------------------------------------------------
      case('d','D')
         call submenu_data
+     case('?d','?D')
+        print "(/a)",' This submenu sets options relating to the (d)ata read'
 !------------------------------------------------------------------------
      case('i','I')
         interactive = .not.interactive
         print*,' Interactive mode = ',interactive
+     case('?i','?I')
+        print "(/a)",' This option turns (i)nteractive mode on/off'
 !------------------------------------------------------------------------
      case('p','P')
         call submenu_page
+     case('?p','?P')
+        print "(/a)",' This submenu sets (p)age setup options'
 !------------------------------------------------------------------------
      case('o','O')
         call submenu_particleplots
+     case('?o','?O')
+        print "(/a)",' This submenu sets particle plot (o)ptions'
 !------------------------------------------------------------------------
      case('r','R')
         call submenu_render
+     case('?r','?R')
+        print "(/a)",' This submenu sets (r)endering options'
 !------------------------------------------------------------------------
      case('v','V')
         call submenu_vecplot
+     case('?v','?V')
+        print "(/a)",' This submenu sets (v)ector plotting options'
 !------------------------------------------------------------------------
      case('x','X')
         call submenu_xsecrotate
+     case('?x','?X')
+        print "(/a)",' This submenu sets cross section and rotation options'
 !------------------------------------------------------------------------
      case('l','L')
         call submenu_limits
+     case('?l','?L')
+        print "(/a)",' This submenu sets options relating to the plot limits'
+        call submenu_limits(help=.true.)
 !------------------------------------------------------------------------
      case('s','S')
         call defaults_write
      case('?s','?S')
-        print "(/a,/,a,/,a/)",' The (s)ave option saves the default options to a ', &
+        print "(6(/a))",' The (s)ave option saves the default options to a ', &
                     ' file called `defaults'' in the current directory which', &
-                    ' is read automatically upon the next invocation of supersphplot.'
-        print "(a)",' (press any key to return to the main menu)'
-        read*
+                    ' is read automatically upon the next invocation of supersphplot.',&
+                    ' This file uses namelist formatting and may be edited ', &
+                    ' manually prior to startup if so desired. This is quite',&
+                    ' useful for setting multiplots with many plots per page'
 !------------------------------------------------------------------------
      case('h','H')
-        ishowopts = .not.ishowopts
+        print "(4(/a))",' For help on any menu item type a question mark ',&
+                 ' preceding the appropriate letter.',&
+                 ' ie. ?d gives help on the data submenu',&
+                 '     ?x gives help on cross section/rotation', &
+                 '     ...you get the idea'
+     case('?h','?H')
+        print "(2(/a))",' You mean to tell me you need help on help???',&
+                      ' You need help.'
 !------------------------------------------------------------------------
      case('q','Q')
         return
+     case('?q','?Q')
+        print "(3(/a))",' (q)uit, unsurprisingly, quits. Typing a number greater',&
+                    ' than the number of data columns also exits the program',&
+                    ' (e.g. I often simply type 99 to exit).'
 !------------------------------------------------------------------------
      case DEFAULT
         print "(a)",'unknown option '//trim(ioption) 
@@ -286,6 +298,8 @@ subroutine menu
   endif
 
   enddo menuloop
+
+100 format(1x,'(press any key to return to the main menu)',/)
   
   return
   
