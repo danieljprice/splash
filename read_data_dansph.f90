@@ -38,11 +38,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
   character(LEN=LEN(rootname)+4) :: datfile
-  integer :: i,j,k,icol,ipos,ierr
+  integer :: i,j,icol,ipos,ierr
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin,ncolstep,nparti,ntoti
+  integer :: iformat
+  integer, dimension(3) :: ibound
   logical :: reallocate
   real(doub_prec) :: timein,gammain,hfactin
+  real(doub_prec), dimension(3) :: xmin, xmax
   real(doub_prec), dimension(:), allocatable :: dattemp
   real(doub_prec), dimension(:,:), allocatable :: dattempvec
 
@@ -58,8 +61,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   endif
 
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
-  k=1      
-
   !
   !--open data file and read data
   !
@@ -116,7 +117,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !--read header line for this timestep
      !
      read(11,iostat=ierr,end=67) timein,nparti,ntoti,gammain, &
-          hfactin,ndim,ndimV,ncolstep,icoords
+          hfactin,ndim,ndimV,ncolstep,icoords,iformat,ibound(1:ndim), &
+          xmin(1:ndim),xmax(1:ndim)
      if (ierr /= 0) then
         print*,'*** error reading timestep header ***'
         close(11)     
@@ -132,8 +134,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
      npartoftype(2,i) = ntoti - nparti
      ntot(i) = ntoti
      print*,'reading time = ',time(i),nparti,ntoti,gamma(i), &
-          hfact,ndim,ndimV,ncolstep
+          hfact,ndim,ndimV,ncolstep,icoords
      if (icoords.gt.1) print*,':: geometry = ',icoords
+     if (any(ibound.ne.0)) then
+        print*,' boundaries : xmin = ',xmin(1:ndim),' xmax = ',xmax(1:ndim)
+     endif
      !
      !--check for errors in timestep header
      !
