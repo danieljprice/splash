@@ -18,7 +18,7 @@ DANSPH = read_data_dansph.f render_smooth.f
 MRBSPH = read_data_mbate.f render_smooth.f
 PGXTAL = read_data_dansph.f render_smooth_pgxtal.f
 
-SOURCES= modules.f prompting.f90  supersphplot.f \
+SOURCES= modules.f90 prompting.f90  supersphplot.f \
          calc_quantities.f90 colour_demo.f danpgwedg.f \
 	 exact_rhoh.f90 \
 	 exact_sedov.f exact_swave.f exact_toystar.f \
@@ -34,10 +34,10 @@ SOURCES= modules.f prompting.f90  supersphplot.f \
 	 menu_actions.f \
 	 plot_average.f plot_powerspectrum.f90 \
 	 print_header.f90\
-	 print_menu.f read_defaults.f \
+	 print_menu.f read_defaults.f90 \
          render_coarse.f render.f \
 	 setcolours.f set_defaults.f \
-	 transform.f write_defaults.f
+	 transform.f write_defaults.f90
 
 SOURCESALL = $(SOURCES:.f90=.o)
 

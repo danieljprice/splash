@@ -46,6 +46,7 @@
 !
 !     This version for both NDSPMHD and Matthew Bate's code 2003
 !     Changes log:
+!      15/12/03 - namelist input/output, freeform source in modules
 !      09/12/03 - power spectrum plotting in 1D
 !      24/11/03 - calc_quantities in separate subroutine, rhoh moved
 !      28/10/03 - bug fix when no data 
