@@ -111,6 +111,7 @@ program supersphplot
   !
   !--print header
   !
+  print*,' hello world'
   call print_header
   print*,'( version 4.2 )'
   !

@@ -43,9 +43,11 @@
       REAL :: hi,hi1,h2,radkern,qq,wab,rab,const
       REAL :: term,dx,dy,xpix,ypix
       REAL :: dxx,dwdx
+      REAL :: dmaxcoltable
 
       datsmooth = 0.
       term = 0.
+      dmaxcoltable = 1./REAL(maxcoltable)
       PRINT*,'projecting from particles to pixels...'
 !
 !--loop over particles

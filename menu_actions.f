@@ -261,7 +261,7 @@
        CASE(17)
 	  iplotav=.not.iplotav
           IF (iplotav) THEN
-	     CALL prompt('Enter number of bins for averaging ',nbins,1,1000)
+	     CALL prompt('Enter no. of bins for averaging ',nbins,1,1000)
           ENDIF
 	  PRINT*,' Plot average, nbins = ',iplotav,nbins
 	  RETURN 		  	    	  	  
@@ -342,7 +342,8 @@ c	  plot ghost particles?
 	        ENDDO
 	     ENDIF	
 	  ELSE
-	     CALL prompt('Enter scale factor (adaptive limits)',scalemax,0.0)
+	     CALL prompt('Enter scale factor (adaptive limits)',
+     &	     		  scalemax,0.0)
 	  ENDIF
 	  RETURN
 !------------------------------------------------------------------------

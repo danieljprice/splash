@@ -22,7 +22,7 @@ subroutine powerspectrum_lomb(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
  real :: term1_numerator, term1_denominator
  real :: term2_numerator, term2_denominator
  real :: omega, omega_dx, cos_term, sin_term
- real :: freqmin,freqmax,omegamin,omegamax,domega
+ real :: omegamin,omegamax,domega
  real :: d2pi
 
  print*,'evaluating lomb periodogram...'

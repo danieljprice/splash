@@ -1,7 +1,7 @@
       SUBROUTINE exact_toystar_ACplane(Astart,Cstart,sigma,gamma)
       IMPLICIT NONE
       REAL, INTENT(IN) :: Astart,Cstart,sigma,gamma
-      REAL :: func,func2,k,constK,gam1,gamm1,gamp1,fact
+      REAL :: func,func2,constK,gam1,gamm1,gamp1,fact
       REAL xstart,xend,xcentre,C,Cnew,k,kmin,kmax
       REAL funct,fderiv,ymin,ymax,extra
       INTEGER i
