@@ -88,10 +88,10 @@ subroutine read_data(rootname,istart,nfilesteps)
   else 
      nstep_max = 5
   endif
-  npart_max = ntotin
+  npart_max = max(ntotin,maxpart)
   if (.not.allocated(dat) .or. ntotin.gt.maxpart  &
        .or. nstep_max.gt.maxstep .or. ncol_max.gt.maxcol) then
-     call alloc(ntotin,nstep_max,ncol_max)
+     call alloc(npart_max,nstep_max,ncol_max)
   endif
 !
 !--rewind file
