@@ -411,7 +411,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                angles(2) = angletilttemp*pi/180.
                print*,'rotating particles about z by ',anglerottemp
                if (ndim.eq.3) then
-                  print*,'rotating particles about x by ',angletilttemp
+                  print*,'rotating particles about xy plane by ',angletilttemp
                endif
                do j=1,ntot(i)
                   call rotate(angles(1:ndim-1),dat(j,ix(1:ndim),i), &
