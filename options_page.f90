@@ -6,7 +6,7 @@ module settings_page
  use settings_limits, only:iadapt,iadaptcoords
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage
- logical :: iColourEachStep,tile,interactive,ipagechange
+ logical :: iColourEachStep,tile,interactive
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
  character(len=20) :: colour_fore, colour_back

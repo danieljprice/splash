@@ -205,7 +205,7 @@ end subroutine initialise_plotting
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine plotstep(istep,irender,ivecplot, &
-                    npartoftype,dat,timei,gammai,iadvance)
+                    npartoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
   use exact, only:exact_solution, &
              atstar,ctstar,sigma,iwaveplotx,iwaveploty
@@ -219,7 +219,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotlinein,linestylein, &
                      iplotline,iplotpartoftype
-  use settings_page, only:nacross,ndown,ipagechange,iadapt,interactive,iaxis, &
+  use settings_page, only:nacross,ndown,iadapt,interactive,iaxis, &
                      hpostitle,vpostitle,fjusttitle
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
                        iPlotColourBar,icolour_particles
@@ -244,7 +244,9 @@ subroutine plotstep(istep,irender,ivecplot, &
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(:,:), intent(in) :: dat
   real, intent(in) :: timei,gammai
+  logical, intent(in) :: ipagechange
   integer, intent(inout) :: iadvance
+  
   integer :: ntoti,iz
   integer :: j,k
   integer :: nyplot

@@ -10,11 +10,12 @@ contains
 subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   use particle_data, only:npartoftype,time,gamma,dat
   use settings_data, only:nstart,n_end,nfreq,buffer_data,iUsesteplist,isteplist
-  use settings_page, only:interactive,ipagechange,nstepsperpage,iColourEachStep
+  use settings_page, only:interactive,nstepsperpage,iColourEachStep
   use timestep_plotting, only:initialise_plotting,plotstep
   implicit none
   integer, intent(in) :: ipicky,ipickx,irender,ivecplot
   integer :: i, istep, ifile, iadvance, istepsonpage
+  logical :: ipagechange
   
   call initialise_plotting(ipicky,ipickx,irender)
 
@@ -73,7 +74,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
      endif
 
      call plotstep(istep,irender,ivecplot,npartoftype(:,istep), &
-                   dat(:,:,istep),time(istep),gamma(istep),iadvance)
+                   dat(:,:,istep),time(istep),gamma(istep),ipagechange,iadvance)
 !
 !--increment timestep
 !
