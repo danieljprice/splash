@@ -28,9 +28,8 @@
 !
 !------------------------------------------------------------------------
 module transforms
- integer, parameter, public :: ntrans = 5  ! this is the number of types
- integer, parameter, private :: nmax = 10  ! this is the maximum number of 
-                                  ! transformations you can do in a row      
+ integer, parameter, public :: ntrans = 5  ! this is the number of different transformations
+
 contains
 !------------------------------------------------------------------------
 !
@@ -41,59 +40,55 @@ contains
 !    input number is > 10 (e.g. 321 means 1/x, then abs, then log10)
 !
 !------------------------------------------------------------------------
-subroutine transform(array,arrayout,itrans,isize)
+subroutine transform(array,itrans)
   implicit none
-  integer :: i,ndigits,itransmulti
-  integer, intent(IN) :: isize,itrans
-  real, dimension(isize), intent(IN) :: array
-  real, dimension(isize), intent(OUT) :: arrayout
-  real, dimension(isize) :: arraytemp
-  integer, dimension(nmax) :: digit     
+  integer, intent(in) :: itrans
+  real, dimension(:), intent(inout) :: array
+  real, dimension(size(array)) :: arraytemp
+  character(len=20) :: string
+  integer :: i
   !
   !--extract the digits from the input number 
-  !            
-  if (itrans.gt.0) then
-     call get_digits(itrans,digit,ndigits)
+  !
+  if (itrans.gt.0) then      
+
+     write(string,*) itrans
      !
      !--do a transformation for each digit
      !
      arraytemp = array
 
-     do i=1,ndigits
-        itransmulti = digit(i)
+     do i=1,len_trim(string)
         !
         !--perform transformation appropriate to this digit     
         !
-        select case(itransmulti)
-        case(1)
+        select case(string(i:i))
+        case('1')
            where (arraytemp > 0)
               arraytemp = log10(arraytemp)
            elsewhere
               arraytemp = 0.
            end where
-        case(2)
+        case('2')
            arraytemp = abs(arraytemp)    
-        case(3)
+        case('3')
            where (arraytemp .ne. 0)
               arraytemp = 1./arraytemp
            elsewhere
               arraytemp = 0.
            end where
-        case(4) 
+        case('4') 
            where (arraytemp .gt. 0)
               arraytemp = sqrt(arraytemp)
            elsewhere
               arraytemp = 0.
            end where
-        case(5)
+        case('5')
            arraytemp = arraytemp**2             
         end select
      enddo
 
-     arrayout = arraytemp
-
-  else
-     arrayout = array
+     array = arraytemp
   endif
 
 end subroutine transform
@@ -106,63 +101,54 @@ end subroutine transform
 !------------------------------------------------------------------------
 subroutine transform2(array,itrans,isizex,isizey)
   implicit none
-  integer :: i,ndigits,itransmulti
-  integer, intent(IN) :: itrans,isizex,isizey
-  real, dimension(isizex,isizey), intent(INOUT) :: array
-!!  real, dimension(isizex,isizey), intent(OUT) :: arrayout
+  integer, intent(in) :: itrans,isizex,isizey
+  real, dimension(isizex,isizey), intent(inout) :: array
   real, dimension(isizex,isizey) :: arraytemp
-  integer, dimension(nmax) :: digit     
+  character(len=20) :: string
+  integer :: i
   !
   !--extract the digits from the input number 
-  !            
+  !
   if (itrans.gt.0) then      
-     call get_digits(itrans,digit,ndigits)    
+
+     write(string,*) itrans
      !
      !--do a transformation for each digit     
      !
      arraytemp = array
 
-     do i=1,ndigits
-        itransmulti = digit(i)
+     do i=1,len_trim(string)
         !
         !--perform transformation appropriate to this digit     
         !
-        select case(itransmulti)
-        case(1)
+        select case(string(i:i))
+        case('1')
            where (arraytemp > 0)
               arraytemp = log10(arraytemp)
            elsewhere
               arraytemp = 0.
            end where
-        case(2)
+        case('2')
            arraytemp = abs(arraytemp)    
-        case(3)
+        case('3')
            where (arraytemp .ne. 0)
               arraytemp = 1./arraytemp
            elsewhere
               arraytemp = 0.
            end where
-        case(4) 
+        case('4') 
            where (arraytemp .gt. 0)
               arraytemp = sqrt(arraytemp)
            elsewhere
               arraytemp = 0.
            end where
-        case(5)
+        case('5')
            arraytemp = arraytemp**2         
         end select
      enddo
 
      array = arraytemp
-
-!  else
-!     do i = 1,isizex
-!        do j = 1,isizey
-!           print*,i,j
-!           print*,array(i,j)
-!        enddo
-!     enddo
-!     arrayout = array    
+ 
   endif
 
 end subroutine transform2
@@ -173,32 +159,31 @@ end subroutine transform2
 !  (min can become max and vice versa)
 !
 !------------------------------------------------------------------------
-subroutine transform_limits(xminin,xmaxin,xminout,xmaxout,itrans)
+subroutine transform_limits(xmin,xmax,itrans)
   implicit none
-  integer :: i,ndigits,itransmulti
   integer, intent(in) :: itrans
-  real, intent(in) :: xminin,xmaxin
-  real, intent(out) :: xminout,xmaxout
+  real, intent(inout) :: xmin,xmax
   real :: xmintemp,xmaxtemp
-  integer, dimension(nmax) :: digit     
+  character(len=20) :: string
+  integer :: i
   !
   !--extract the digits from the input number 
-  !            
+  !
   if (itrans.gt.0) then      
-     call get_digits(itrans,digit,ndigits)         
+
+     write(string,*) itrans
      !
      !--do a transformation for each digit     
      !
-     xmintemp = xminin
-     xmaxtemp = xmaxin
+     xmintemp = xmin
+     xmaxtemp = xmax
 
-     do i=1,ndigits
-        itransmulti = digit(i)
+     do i=1,len_trim(string)
         !
         !--perform transformation appropriate to this digit     
         !
-        select case(itransmulti)
-        case(1)
+        select case(string(i:i))
+        case('1')
            if (xmintemp > 0) then
               xmintemp = log10(xmintemp)
            elseif (xmintemp.eq.0) then
@@ -211,7 +196,7 @@ subroutine transform_limits(xminin,xmaxin,xminout,xmaxout,itrans)
               print*,' log10(xmax = 0): max set to 10-12'
               xmaxtemp = -12.
            endif
-        case(2)
+        case('2')
            if ((xmintemp.lt.0. .and. xmaxtemp.gt.0.) &
            .or.(xmaxtemp.lt.0. .and. xmintemp.gt.0.)) then
            !
@@ -226,7 +211,7 @@ subroutine transform_limits(xminin,xmaxin,xminout,xmaxout,itrans)
               xmintemp = abs(xmintemp)
               xmaxtemp = abs(xmaxtemp)
            endif
-        case(3)
+        case('3')
            if (xmintemp .ne. 0) then
               xmintemp = 1./xmintemp
            else
@@ -237,7 +222,7 @@ subroutine transform_limits(xminin,xmaxin,xminout,xmaxout,itrans)
            else
               xmaxtemp = 0.             
            endif
-        case(4) 
+        case('4') 
            if (xmintemp .ge. 0) then
               xmintemp = sqrt(xmintemp)
            else
@@ -248,18 +233,15 @@ subroutine transform_limits(xminin,xmaxin,xminout,xmaxout,itrans)
            else
               xmaxtemp = 0.             
            endif
-        case(5)
+        case('5')
            xmintemp = xmintemp**2
            xmaxtemp = xmaxtemp**2
         end select
      enddo
 
-     xminout = min(xmintemp,xmaxtemp)
-     xmaxout = max(xmintemp,xmaxtemp)
+     xmin = min(xmintemp,xmaxtemp)
+     xmax = max(xmintemp,xmaxtemp)
 
-  else
-     xminout = xminin
-     xmaxout = xmaxin
   endif
 
 end subroutine transform_limits
@@ -270,15 +252,16 @@ end subroutine transform_limits
 !
 !  Note: *cannot* put print or write statements into this function
 !        as it is used in the middle of write or print statements
+!        this means that finding the digits is a bit trickier
 !      
 !------------------------------------------------------------------------
 function transform_label(label,itrans)
   implicit none
   integer :: itrans,itransmulti,i,ndigits
-  integer, dimension(nmax) :: digit
-  character(LEN=*) :: label
-  character(LEN=LEN(label)+20) :: transform_label
-  character(LEN=LEN(label)+20) :: temp_label      
+  integer, dimension(20) :: digit
+  character(len=*) :: label
+  character(len=len(label)+20) :: transform_label
+  character(len=len(label)+20) :: temp_label      
   !
   !--extract the digits from the input number 
   !            
@@ -304,7 +287,7 @@ function transform_label(label,itrans)
            temp_label = 'SQRT('//trim(temp_label)//')'
         case(5)
            temp_label = trim(temp_label)//'\u2\d'
-        case DEFAULT
+        case default
            temp_label = trim(temp_label)
         end select
      enddo
@@ -318,7 +301,7 @@ end function transform_label
 
 !------------------------------------------------------------------------
 !     get_digits: for an integer i returns number of digits it contains
-!     and a list of these
+!     and a list of these *without* using write statements
 !
 !     i            : integer to split into digits
 !     nmax           : dimensions of digits array
@@ -328,15 +311,16 @@ end function transform_label
 
 subroutine get_digits(i,digits,ndigits)
   implicit none
-  integer, intent(IN) :: i
-  integer, intent(OUT) :: ndigits
-  integer, intent(OUT), dimension(nmax) :: digits
+  integer, intent(in) :: i
+  integer, intent(out) :: ndigits
+  integer, intent(out), dimension(*) :: digits
   integer :: j,isubtract,idigit
 
   ndigits = 0
+  
   isubtract = 0      
 
-  do j=nmax,0,-1
+  do j=size(digits),0,-1
      if (i.ge.10**j) then 
         ndigits = ndigits + 1
         idigit = (i - isubtract)/10**j

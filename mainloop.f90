@@ -313,14 +313,14 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            !  also change labels and limits appropriately
            if (.not.(iplotx.le.ndim .and. iploty.le.ndim)) then
               if (itrans(iplotx).ne.0) then
-                 call transform(xplot,xplot,itrans(iplotx),maxpart)
+                 call transform(xplot,itrans(iplotx))
                  labelx = transform_label(labelx,itrans(iplotx))
-                 call transform_limits(xmin,xmax,xmin,xmax,itrans(iplotx))
+                 call transform_limits(xmin,xmax,itrans(iplotx))
               endif
               if (itrans(iploty).ne.0) then
-                 call transform(yplot,yplot,itrans(iploty),maxpart)
+                 call transform(yplot,itrans(iploty))
                  labely = transform_label(labely,itrans(iploty))
-                 call transform_limits(ymin,ymax,ymin,ymax,itrans(iploty))
+                 call transform_limits(ymin,ymax,itrans(iploty))
               endif
            endif
            
@@ -575,7 +575,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                  !  do transformations on rendered array where appropriate
                  !  set these as ymin,ymax and set labels of plot
                  !
-                 call transform(datpix1D,datpix1D,itrans(irenderplot),npixx)
+                 call transform(datpix1D,itrans(irenderplot))
                  labely = transform_label(label(irenderplot),itrans(irenderplot))
                  labelx = 'cross section'
                  !!--if adaptive limits, find limits of datpix
@@ -583,10 +583,11 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                     if (iadapt) then
                        ymin = minval(datpix1D)
                        ymax = maxval(datpix1D)
-                       !!--or apply transformations to fixed limits
                     else
-                       call transform_limits(lim(irenderplot,1),lim(irenderplot,2), &
-                            ymin,ymax,itrans(irenderplot))
+                       !!--or apply transformations to fixed limits
+                       ymin = lim(irenderplot,1)
+                       ymax = lim(irenderplot,2)
+                       call transform_limits(ymin,ymax,itrans(irenderplot))
                     endif
                  endif
 
@@ -666,10 +667,11 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                     !!--if adaptive limits, find limits of rendered array
                     rendermin = minval(datpix)
                     rendermax = maxval(datpix)
-                 else
+                 else                    
                     !!--or apply transformations to fixed limits
-                    call transform_limits(lim(irenderplot,1),lim(irenderplot,2), &
-                         rendermin,rendermax,itrans(irenderplot))
+                    rendermin = lim(irenderplot,1)
+                    rendermax = lim(irenderplot,2)
+                    call transform_limits(rendermin,rendermax,itrans(irenderplot))
                  endif
                  !!--print plot limits to screen
                  print*,trim(labelrender),' min, max = ',rendermin,rendermax       
@@ -1013,13 +1015,13 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               labelx = 'wavelength'
 
               if (itrans(iploty).ne.0) then
-                 call transform(xplot,xplot,itrans(iploty),maxpart)
+                 call transform(xplot,itrans(iploty))
                  labelx = transform_label(labelx,itrans(iploty))
-                 call transform_limits(xmin,xmax,xmin,xmax,itrans(iploty))
+                 call transform_limits(xmin,xmax,itrans(iploty))
 
-                 call transform(yplot,yplot,itrans(iploty),maxpart)
+                 call transform(yplot,itrans(iploty))
                  labely = transform_label(labely,itrans(iploty))
-                 call transform_limits(ymin,ymax,ymin,ymax,itrans(iploty))
+                 call transform_limits(ymin,ymax,itrans(iploty))
               endif
               
               !--------------------------------------------------------------
