@@ -14,9 +14,11 @@ subroutine get_data(ireadfile,gotfilenames)
   use filenames
   use limits, only:set_limits,read_limits
   use settings_data
-  use settings_part, only:iexact
+  use settings_part, only:iexact,icoordsnew
   use particle_data
   use prompting
+  use labels, only:label,labelvec,iamvec
+  use geometry, only:labelcoord
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
@@ -112,6 +114,17 @@ subroutine get_data(ireadfile,gotfilenames)
      if (ireadfile.eq.1 .and. ivegotdata .and. nstepsinfile(1).ge.1) then
         call set_limits(1,nstepsinfile(ireadfile),1,numplot)
      endif
+  endif
+!
+!--reset coordinate and vector labels depending on coordinate system)
+!
+  if (icoords.ne.0 .or. icoordsnew.ne.0) then
+     label(1:ndim) = labelcoord(1:ndim,icoordsnew)
+     do i=1,numplot
+        if (iamvec(i).ne.0) then
+           label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
+        endif
+     enddo
   endif
   !
   !--read exact solution parameters from files if present

@@ -35,46 +35,37 @@ subroutine menu
 !--make sure the number of columns is set appropriately
 !  (nextra can change depending on what options are set)
 !
-     !
-     !--numplot is the total number of data columns (read + calculated)
-     !   not including the particle co-ordinates
-     !  nextra are extra graphs to plot (e.g. convergence plots, power spectrum)
-     !
-     nextra = 0
-     if (ndim.eq.1) then
-        nextra = 1      ! one extra plot = power spectrum
-        ipowerspec = ncolumns + ncalc + 1
-        label(ipowerspec) = '1D power spectrum'
-     endif
-     if (iexact.eq.4) then       ! toy star plot a-c plane
-        nextra = nextra + 1
-        iacplane = ncolumns + ncalc + nextra
-        label(iacplane) = 'a-c plane'
-     endif
-     
-     if (ivegotdata) then
-        numplot = ncolumns + ncalc + nextra
-        if (numplot.gt.maxplot) then
-           print*,numplot,ncolumns,ncalc,nextra
-           stop 'ERROR: numplot > multiplot array limits: reset this in module params'
-        endif
-        ndataplots = ncolumns + ncalc
-     else
-        numplot = 0
-        ndataplots = 0
-        ncalc = 0
-     endif
-     imulti = .false.
-     
-!--set coordinate and vector labels (depends on coordinate system)
-  if (icoords.ne.0 .or. icoordsnew.ne.0) then
-     label(1:ndim) = labelcoord(1:ndim,icoordsnew)
-     do i=1,numplot
-        if (iamvec(i).ne.0) then
-           label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
-        endif
-     enddo
+  !
+  !--numplot is the total number of data columns (read + calculated)
+  !   not including the particle co-ordinates
+  !  nextra are extra graphs to plot (e.g. convergence plots, power spectrum)
+  !
+  nextra = 0
+  if (ndim.eq.1) then
+     nextra = 1      ! one extra plot = power spectrum
+     ipowerspec = ncolumns + ncalc + 1
+     label(ipowerspec) = '1D power spectrum'
   endif
+  if (iexact.eq.4) then       ! toy star plot a-c plane
+     nextra = nextra + 1
+     iacplane = ncolumns + ncalc + nextra
+     label(iacplane) = 'a-c plane'
+  endif
+
+  if (ivegotdata) then
+     numplot = ncolumns + ncalc + nextra
+     if (numplot.gt.maxplot) then
+        print*,numplot,ncolumns,ncalc,nextra
+        stop 'ERROR: numplot > multiplot array limits: reset this in module params'
+     endif
+     ndataplots = ncolumns + ncalc
+  else
+     numplot = 0
+     ndataplots = 0
+     ncalc = 0
+  endif
+  imulti = .false.
+
 !--set contents of the vector plotting prompt
   vecprompt(1:6) = '0=none'
   index = 7
