@@ -7,7 +7,7 @@ subroutine interactive_part(npart,xcoords,ycoords,iadvance)
   integer, intent(in) :: npart
   integer, intent(out) :: iadvance
   real, dimension(npart), intent(in) :: xcoords, ycoords
-  integer :: i,iclosest,nc,ipts,iadvance
+  integer :: i,iclosest,nc,ipts,iadvance,int_from_string
   real :: xpt,ypt,rmin,rr,gradient,yint,xlength
   real, dimension(4) :: xline,yline
   character(len=1) :: char
@@ -20,10 +20,14 @@ subroutine interactive_part(npart,xcoords,ycoords,iadvance)
   xline = 0.
   yline = 0.
   iexit = .false.
-
+  
   do while (.not.iexit)
      call pgcurs(xpt,ypt,char)
-     
+     !
+     !--exit if the device is not interactive
+     !
+     if (char.eq.achar(0)) return
+  
      print*,'location: x, y = ',xpt,ypt,' function = ',char
      !
      !--find closest particle
@@ -73,8 +77,9 @@ subroutine interactive_part(npart,xcoords,ycoords,iadvance)
 	endif
      case('h')
         print*,'-------------- interactive mode commands --------------'
-	print*,' advance forward   : space, left click'
-	print*,' go backwards      : right click'
+	print*,' next timestep/plot   : space, left click'
+	print*,' previous timestep    : right click'
+	print*,' jump by n timesteps  : 1,2,3..9 then left or right click'
 	print*,' (r)eplot current plot        : r'
         print*,' label closest (p)article     : p'
 	print*,' plot connecting (l)ine       : l, L'
@@ -94,6 +99,9 @@ subroutine interactive_part(npart,xcoords,ycoords,iadvance)
 	iexit = .true.
      case(' ','A') ! space, left click
         iexit = .true.
+     case('1','2','3','4','5','6','7','8','9')
+        iadvance = int_from_string(char)
+	print*,' setting timestep jump = ',iadvance
      end select
 
   enddo
