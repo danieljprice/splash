@@ -47,6 +47,7 @@
 !     this version for both ndspmhd and matthew bate's code 2003
 !     changes log:
 !      15/12/03 - namelist input/output, freeform source in modules
+! 		- bug fix in read_data (nghosts)
 !      09/12/03 - power spectrum plotting in 1D
 !      24/11/03 - calc_quantities in separate subroutine, rhoh moved
 !      28/10/03 - bug fix when no data 
@@ -619,14 +620,12 @@ c get rootname from command line/file and read file
 !-------------------------------------------------------------
 
    	    if (x_sec.and.flythru) then
+	       xsecpos = xsecpos + dxsec	       
 !!--for cross sections of particle plots, need range of co-ordinates in which
 !!  particles may lie
 	       if (iplotpart) then
-		  xsecmin = xsecmin+dxsec
-	          xsecmax = xsecmax+dxsec
-	       else
-!!--for cross sections through rendered data, need only co-ordinate of slice	       
-		  xsecpos = xsecpos + dxsec
+		  xsecmin = xsecpos-0.5*dxsec
+	          xsecmax = xsecpos+0.5*dxsec
 	       endif		   
             endif
 
@@ -772,6 +771,7 @@ c get rootname from command line/file and read file
 	          call pgsvp(0.1,0.9,0.1,0.9)
 	       endif	  
 	       call pgwnad(xmin,xmax,ymin,ymax)	!  pgwnad does equal aspect ratios
+!	       call pgswin(xmin,xmax,ymin,ymax)	!  not equal	
 !!--plot axes (log if appropriate)
 	       call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)	       
             elseif (nyplot.eq.1) then
