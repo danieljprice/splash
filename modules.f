@@ -8,8 +8,8 @@
 !
       MODULE params
        IMPLICIT NONE
-       INTEGER, PARAMETER :: max=15000
-       INTEGER, PARAMETER :: maxstep=350
+       INTEGER, PARAMETER :: max=55000
+       INTEGER, PARAMETER :: maxstep=30
        INTEGER, PARAMETER :: ndimmax = 3
        INTEGER, PARAMETER :: maxplot=24+2*ndimmax + 1	! maximum number of plots       
       END MODULE params
