@@ -86,11 +86,11 @@ subroutine read_data(rootname,istart,nfilesteps)
 !--allocate memory for data arrays (initially for 11 timesteps)
 !
   if (ntotin.lt.5500) then
-     nstep_max = 111
+     nstep_max = max(111,maxstep)
   elseif (ntotin.lt.111111) then
-     nstep_max = 11
+     nstep_max = max(11,maxstep)
   else 
-     nstep_max = 5
+     nstep_max = max(5,maxstep)
   endif
   npart_max = max(ntotin,maxpart)
   if (.not.allocated(dat) .or. ntotin.gt.maxpart  &
