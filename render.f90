@@ -16,13 +16,12 @@ contains
 !------------------------------------------------------------------------
  
 subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
-                  xmin,ymin,dx,icolours,iplotcont,nc,log)
- use settings_render, only:iPlotColourBar
+                  xmin,ymin,dx,icolours,iplotcont,iPlotColourBar,nc,log)
  implicit none
  integer, intent(in) :: npixx,npixy,nc,icolours
  real, intent(in) :: xmin,ymin,datmin,datmax,dx
  real, dimension(npixx,npixy), intent(in) :: datpix
- logical, intent(in) :: iplotcont,log
+ logical, intent(in) :: iplotcont,iPlotColourBar,log
  character(len=*), intent(in) :: label  
  
  integer :: i

@@ -47,6 +47,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   implicit none
   integer, intent(in) :: ipicky,ipickx,irender
   integer :: i,j,ierr
+  logical :: iadapting
   
   !------------------------------------------------------------------------
   ! initialisations
@@ -95,10 +96,6 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
      iploty = ipicky
      iplotx = ipickx
   endif
-  !
-  !--work out whether or not to tile plots on the page
-  !
-  tile_plots = tile .and. isamexaxis.and.isameyaxis.and. .not. iadapt
 
   !------------------------------------------------------------------------
   ! initialise options to be set before plotting
@@ -111,6 +108,18 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
         endif
      enddo
   endif
+
+  !
+  !--work out whether or not to tile plots on the page
+  !  if plots are coord plots, make tiling decisions based on iadaptcoords
+  !  otherwise use iadapt
+  !
+  if (initialise_xsec) then
+     iadapting = iadaptcoords
+  else
+     iadapting = iadapt
+  endif
+  tile_plots = tile .and. isamexaxis.and.isameyaxis.and..not. iadapting
   
   iplotz = 0
   if (initialise_xsec) then
@@ -269,7 +278,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   integer, intent(inout) :: iadvance
   
   integer :: ntoti,iz
-  integer :: j,k
+  integer :: j,k,irow,icolumn
   integer :: nyplot
   integer :: irenderpart,irendered
   integer :: npixx,npixy,npixz,ipixxsec
@@ -290,6 +299,8 @@ subroutine plotstep(istep,irender,ivecplot, &
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
   character(len=20) :: string
+  
+  logical :: iColourBar
   
 34   format (25(' -'))
 
@@ -803,11 +814,15 @@ subroutine plotstep(istep,irender,ivecplot, &
 
                  !!--print plot limits to screen
                  print*,trim(labelrender),' min, max = ',rendermin,rendermax
+                 
+                 !!--plot colour bar, but only if last in row
+                 iColourBar = iPlotColourBar
+                 if (tile_plots .and. icolumn.ne.nacross) iColourBar = .false.
                       
                  !!--call subroutine to actually render the image       
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                       npixx,npixy,xmin,ymin,pixwidth,    &
-                      icolours,iplotcont,ncontours,log)
+                      icolours,iplotcont,iColourBar,ncontours,log)
 
               elseif (ndim.eq.2 .and. x_sec) then
                  !---------------------------------------------------------------
@@ -848,9 +863,12 @@ subroutine plotstep(istep,irender,ivecplot, &
                     call colour_particles(renderplot(1:ntoti), &
                          rendermin,rendermax, &
                          icolourme(1:ntoti),ntoti)
-                    !!--plot colour bar
-                    if (iPlotColourBar) call colourbar(icolours,rendermin,rendermax, &
-                                                       trim(labelrender),.false.)
+
+                    !!--plot colour bar, but only if last in row
+                    iColourBar = iPlotColourBar
+                    if (tile_plots .and. icolumn.ne.nacross) iColourBar = .false.
+                    if (iColourBar) call colourbar(icolours,rendermin,rendermax, &
+                                                   trim(labelrender),.false.)
                  endif
                  !
                  !--do particle plot
@@ -1207,6 +1225,9 @@ contains
     iplots = iplots + 1
     iplotsonpage = iplotsonpage + 1
     if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
+    !--set counter for where we are in row, col
+    icolumn = iplotsonpage - ((iplotsonpage-1)/nacross)*nacross
+    irow = (iplotsonpage-1)/nacross + 1
 
     !--------------------------------------------------------------
     ! set up pgplot page
