@@ -83,15 +83,16 @@ module settings
  logical :: iplotcont_nomulti,xsec_nomulti,iplotpartvec_nomulti
 
 !
-!--sort these into namelists for input/output
+!--sort these into a namelist for input/output
 !
  namelist /plotopts/ animate,magfield,iadapt,xsec_nomulti,flythru, &
    plotcirc,iplotline,iplotlinein,linestylein, 		&
+   imark, imarkg, imarksink,				&
    iexact,iplotav,nbins, 				&
    irender,ivecplot_nomulti,iplotpartvec_nomulti, 	&
    npix_nomulti,npixvec_nomulti,			&
    iplotcont_nomulti,ncontours_nomulti,			&
-   icolours,iplotghost,iplotsink,			&
+   icolours,iplotpart,iplotghost,iplotsink,		&
    ipapersize,papersizex,aspectratio
      
 end module settings
