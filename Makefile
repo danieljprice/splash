@@ -43,7 +43,7 @@ LDFLAGS = -lpgplot -lX11 -lF77
 %.o : %.f90
 	$(F90C) -c $(F90FLAGS) $(FPPFLAGS) $< -o $@
 
-DANSPH = read_data_dansph.f90 
+DANSPH = read_data_dansph_ascii.f90 ##read_data_dansph.f90
 MRBSPH = read_data_mbate_dump.f90 ## read_data_mbate.f90
 GADGETSPH = read_data_gadget.f90
 
