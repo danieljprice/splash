@@ -50,7 +50,7 @@ subroutine calc_quantities
 !     iBperp = 0	 
   endif
   
-  print*,'calculating ',ncalc,' additional quantities...'
+  print*,'calculating ',ncalc,' additional quantities...',nstart,n_end
   numplot = ncolumns + ncalc
   if (numplot.gt.maxcol) call alloc(maxpart,maxstep,numplot) 
 
@@ -114,7 +114,7 @@ subroutine calc_quantities
                    dat(j,iBfirst:iBlast,i))
            enddo
            !!--plasma beta
-           if (ibeta.ne.0) then
+           if (ibeta.ne.0 .and. ipr.ne.0) then
               where(abs(dat(1:ntot(i),ipmag,i)).gt.1.e-10)
                  dat(1:ntot(i),ibeta,i) = dat(1:ntot(i),ipr,i)/dat(1:ntot(i),ipmag,i)
               elsewhere  

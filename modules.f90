@@ -29,7 +29,7 @@ end module particle_data
 !
 module filenames
  implicit none
- integer, parameter :: maxfile = 10
+ integer, parameter :: maxfile = 501
  integer :: ifile,nfilesteps,nfiles
  character(len=120), dimension(maxfile) :: rootname
 end module filenames

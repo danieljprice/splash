@@ -38,7 +38,12 @@ subroutine get_data
      call read_data(rootname(i),istep,nfilesteps)
      istep = nfilesteps + 1 ! current location of istep in data array
   enddo
-
+  !
+  !--set labels for each column of data
+  !
+  print*,'setting plot labels...'
+  call set_labels
+  
   numplot = ncolumns
   nstart = 1
   n_end = nfilesteps
@@ -47,7 +52,7 @@ subroutine get_data
      !
      !--calculate various additional quantities
      !     
-     !call calc_quantities	  
+     call calc_quantities	  
      !
      !--read plot limits from file, otherwise set plot limits
      !
