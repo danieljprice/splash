@@ -11,7 +11,7 @@ module timestep_plotting
 
   real, dimension(:), allocatable, private :: datpix1D, xgrid
   real, private :: xmin,xmax,ymin,ymax,zmin,ymean
-  real, private :: vecmax,rendermin,rendermax
+  real, private :: rendermin,rendermax
   real, private :: dxsec,xsecpos
   real, private :: charheight, charheightmm
   real, private :: dxgrid,xmingrid,xmaxgrid
@@ -211,13 +211,16 @@ subroutine plotstep(istep,irender,ivecplot, &
   use labels
   use limits
   use multiplot
-  use particle_data, only:maxpart,icolourme, time
+  use particle_data, only:maxpart,icolourme
   use rotation
-  use settings_data
+  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimv,nstart,n_end,nfreq
   use settings_limits
-  use settings_part
-  use settings_page
-  use settings_render
+  use settings_part, only:icoordsnew,iexact,iplotlinein,linestylein, &
+                     iplotline,iplotpartoftype
+  use settings_page, only:nacross,ndown,ipagechange,iadapt,interactive,iaxis, &
+                     hpostitle,vpostitle,fjusttitle
+  use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
+                       iPlotColourBar,icolour_particles
   use settings_vecplot, only:npixvec, iplotpartvec
   use settings_xsecrot
   use settings_powerspec
@@ -229,9 +232,9 @@ subroutine plotstep(istep,irender,ivecplot, &
   use interactive_routines
   use geometry
   use legends, only:legend
-  use fieldlines
   use particleplots
   use powerspectrums
+  use render, only:render_pix,colourbar
 
   implicit none
   integer, intent(in) :: istep, irender, ivecplot
@@ -262,6 +265,12 @@ subroutine plotstep(istep,irender,ivecplot, &
 
 34   format (25(' -'))
 
+  !--set labels to blank (just in case)
+  labelx = ' '
+  labely = ' '
+  labelz = ' '
+  labelrender = ' '
+  labelvecplot = ' '
   !
   !--set number of particles to use in the interpolation routines
   !  (ie. including only gas particles and ghosts)
@@ -480,12 +489,12 @@ subroutine plotstep(istep,irender,ivecplot, &
             !--convert angles to radians
             !
             angleradz = angletempz*pi/180.
-               anglerady = angletempy*pi/180.
-               angleradx = angletempx*pi/180.
-            print*,'rotating particles about z by ',angletempz
+            anglerady = angletempy*pi/180.
+            angleradx = angletempx*pi/180.
+            print "(a,f6.2)",'rotating particles about z by ',angletempz
             if (ndim.eq.3) then
-               print*,'rotating particles about y by ',angletempy
-               print*,'rotating particles about x by ',angletempx
+               print "(a,f6.2)",'rotating particles about y by ',angletempy
+               print "(a,f6.2)",'rotating particles about x by ',angletempx
             endif
             do j=1,ntoti
                xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
@@ -745,7 +754,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                  endif
                       
                  !!--call subroutine to actually render the image       
-                 call render(datpix,rendermin,rendermax,trim(labelrender),  &
+                 call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                       npixx,npixy,xmin,ymin,pixwidth,    &
                       icolours,iplotcont,ncontours,log)
 
@@ -766,6 +775,8 @@ subroutine plotstep(istep,irender,ivecplot, &
                  if (irenderpart.gt.0 .and. irenderpart.le.numplot) then
                     renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
                     call transform(renderplot(1:ntoti),itrans(irenderpart))
+                    labelrender = label(irenderpart)
+                    labelrender = transform_label(labelrender,itrans(irenderpart))
                     
                     !!--limits for rendered quantity
                     if (iadapt .and. iadvance.ne.0) then
@@ -784,6 +795,9 @@ subroutine plotstep(istep,irender,ivecplot, &
                     call colour_particles(renderplot(1:ntoti), &
                          rendermin,rendermax, &
                          icolourme(1:ntoti),ntoti)
+                    !!--plot colour bar
+                    if (iPlotColourBar) call colourbar(icolours,rendermin,rendermax, &
+                                                       trim(labelrender),.false.)
                  endif
                  !
                  !--do particle plot
@@ -828,7 +842,7 @@ subroutine plotstep(istep,irender,ivecplot, &
            !--print legend if this is the first plot on the page
            !    
            if (nyplot.eq.1) then
-              call legend(timei,hposlegend,vposlegend)
+              call legend(timei)
            endif
            !
            !--print title if appropriate
@@ -899,7 +913,7 @@ subroutine plotstep(istep,irender,ivecplot, &
         !--------------------------------
 
         !--plot time on plot
-        if (nyplot.eq.1) call legend(timei,hposlegend,vposlegend)
+        if (nyplot.eq.1) call legend(timei)
         !
         !--sort out particle colouring
         !
@@ -1085,7 +1099,7 @@ subroutine plotstep(istep,irender,ivecplot, &
         !
         !--if this is the first plot on the page, print legend
         !
-        if (iplotsonpage.eq.1) call legend(timei,hposlegend,vposlegend)
+        if (iplotsonpage.eq.1) call legend(timei)
 
         lastplot = (istep.eq.n_end)
 
@@ -1178,7 +1192,9 @@ contains
 ! so that pixel arrays are allocated appropriately
 !-------------------------------------------------------------------
   subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidth,label)
+   use fieldlines
    use settings_vecplot
+   use render, only:render_vec
    implicit none
    integer, intent(in) :: ivecx,ivecy,numpixx,numpixy
    real, intent(in) :: pixwidth

@@ -8,15 +8,15 @@
 .KEEP_STATE:
 
 ## Compiler options
-F90C =  g95
+F90C =  f95
 F90FLAGS =  -O -C ##-fbounds-check
-#LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
-#         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
-#         -lpng
+LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
+         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
+         -lpng
 
-LDFLAGS =  -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation -L/sw/lib/pgplot95 -lpgplot
-#LDFLAGS = -laquaterm -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -L/sw/lib/pgplot -lpgplot -lg2c
-SYSTEMFILE = system_unix.f90
+#LDFLAGS =  -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation -L/sw/lib/pgplot95 -lpgplot
+#SYSTEMFILE = system_unix.f90
+SYSTEMFILE = system_unix_NAG.f90
 
 # Fortran flags same as F90
 FC = $(F90C)
@@ -41,7 +41,7 @@ MODULES= globaldata.f90 transform.f90 prompting.f90 \
          geometry.f90 colours.f90 colourparts.f90 limits.f90 rotate.f90 \
          interactive.f90 allocate.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
-         powerspectrums.f90 \
+         powerspectrums.f90 render.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \
          exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
@@ -65,9 +65,7 @@ SOURCES= supersphplot.f90 \
 	 options_powerspec.f90 options_render.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 \
 	 plot_kernel_gr.f90 \
-         render.f90 render_vec.f90 \
-	 setpage.f90 \
-	 titles_read.f90 \
+	 setpage.f90 titles_read.f90 \
 
 SOURCESALL = $(MODULES:.f90=.o) $(SOURCES:.f90=.o)
 

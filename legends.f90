@@ -18,10 +18,12 @@ contains
 !        vpos : vertical position in character heights from top
 !-----------------------------------------------------------------
 
-subroutine legend(t,hpos,vpos)
- implicit none    
- integer mm,pp,nc,ndecimal,ndec
- real hpos,vpos,t,tplot
+subroutine legend(t)
+ use settings_page, only:hposlegend, vposlegend
+ implicit none
+ real, intent(in) :: t    
+ integer :: mm,pp,nc,ndecimal,ndec
+ real :: tplot
  character string*15
 
  ndecimal = 2        ! number of decimal places to display
@@ -34,7 +36,7 @@ subroutine legend(t,hpos,vpos)
  mm=nint(tplot*ndec)
  pp=nint(log10(tplot)-log10(tplot*ndec))
  call pgnumb(mm,pp,1,string,nc)
- call pgmtext('t',-vpos,hpos,0.0,'t='//string(1:nc))
+ call pgmtext('t',-vposlegend,hposlegend,0.0,'t='//string(1:nc))
 
  return
 end subroutine legend
