@@ -104,11 +104,15 @@ subroutine calc_quantities(ifromstep,itostep)
         endwhere
      endif
      !!--radius         
-     if (irad.ne.0) then   
-        do j=1,ntot(i)
-           dat(j,irad,i) = sqrt(dot_product(dat(j,ix(1:ndim),i),   &
+     if (irad.ne.0) then
+        if (icoords.gt.1) then  
+           dat(1:ntot(i),irad,i) = dat(1:ntot(i),ix(1),i)
+        else
+           do j=1,ntot(i)
+              dat(j,irad,i) = sqrt(dot_product(dat(j,ix(1:ndim),i),   &
                 dat(j,ix(1:ndim),i)))
-        enddo
+           enddo        
+        endif
      endif
      !!--specific KE
      if ((ike.ne.0).and.(ivx.ne.0)) then

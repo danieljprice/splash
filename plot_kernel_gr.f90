@@ -10,6 +10,7 @@
 ! PGPLOT page must already be set up - this just draws the "circle"
 !
 subroutine plot_kernel_gr(igeom,x,y,h)
+  use geometry
   implicit none
   integer, parameter :: npts = 100 ! big enough to give a smooth circle
   real, parameter :: pi = 3.1415926536

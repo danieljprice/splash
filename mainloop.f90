@@ -22,6 +22,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use settings_powerspec
   use transforms
   use interactive_routines
+  use geometry
   implicit none
   integer, intent(in) :: ipicky, ipickx, irender, ivecplot
 
@@ -281,8 +282,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                    .and.irenderplot.gt.ndim)) then
                  print*,'changing to new coordinate system',icoords,icoordsnew
                  do j=1,ntot(i)
-                    call coord_transform(dat(j,ix(:),i),ndim,icoords, &
-                                         xcoords(:),ndim,icoordsnew)
+                    call coord_transform(dat(j,ix(1:ndim),i),ndim,icoords, &
+                                         xcoords(1:ndim),ndim,icoordsnew)
                     if (iplotx.le.ndim) xplot(j) = xcoords(iplotx)
                     if (iploty.le.ndim) yplot(j) = xcoords(iploty)
                  enddo
@@ -604,8 +605,11 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
               
               just = 1  ! x and y axis have same scale
-              ! unless 1D xsec through 2D data
-              if (irenderplot.gt.ndim .and. ndim.eq.2 .and. x_sec) just = 0 
+              ! unless 1D xsec through 2D data or non-cartesian
+              if ((irenderplot.gt.ndim .and. ndim.eq.2 .and. x_sec) &
+                  .or.(icoordsnew.ne.1)) then
+                 just = 0 
+              endif
               
               if (tile_plots) then
                  if (iplotsonpage.eq.1 .and. ipagechange) call pgpage

@@ -72,7 +72,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--read first header line
 !
   read(11,iostat=ierr,end=80) timein,npartin,ntotin,gammain, &
-       hfactin,ndim_max,ndimV_max,ncol_max
+       hfactin,ndim_max,ndimV_max,ncol_max,icoords
   if (ierr /= 0) then
      print "(a,/,a,/,a,/,a)",'*** Error reading first header ***', &
            '*** This is possibly because the dump is in single precision', &
@@ -116,7 +116,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !--read header line for this timestep
      !
      read(11,iostat=ierr,end=67) timein,nparti,ntoti,gammain, &
-          hfactin,ndim,ndimV,ncolstep
+          hfactin,ndim,ndimV,ncolstep,icoords
      if (ierr /= 0) then
         print*,'*** error reading timestep header ***'
         close(11)     
@@ -133,6 +133,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      ntot(i) = ntoti
      print*,'reading time = ',time(i),nparti,ntoti,gamma(i), &
           hfact,ndim,ndimV,ncolstep
+     if (icoords.gt.1) print*,':: geometry = ',icoords
      !
      !--check for errors in timestep header
      !
@@ -212,7 +213,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !
         !--non-MHD output
         !
-        if (ncolumns.le.ndim+8+ndimV) then
+        if (ncolumns.le.ndim+8+ndimV .or. icoords.gt.1) then
         !
         !--read alpha, alphau
         !
@@ -229,6 +230,25 @@ subroutine read_data(rootname,indexstart,nstepsread)
               dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
               icol = icol + 1
            enddo
+           
+           if (icoords.gt.1) then
+        !
+        !--rho, sqrt g
+        !
+           do j = 1,2
+              read (11,end=66,ERR=67) dattemp(1:ntot(i))
+              dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
+              icol = icol + 1
+           enddo
+        !
+        !--pmom
+        !
+           read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
+           do ipos = icol, icol+ndimV-1
+              dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
+           enddo
+           icol = icol + ndimV                     
+           endif
         
         else
         !
@@ -362,7 +382,7 @@ subroutine set_labels
  label(ipmass) = 'particle mass'
  label(ndim + ndimV+5) = '\ga'
  label(ndim + ndimV+6) = '\ga\du'
- if (ncolumns.gt.ndim+ndimV+8) then
+ if (ncolumns.gt.ndim+ndimV+8 .and. icoords.eq.0) then
 
     !
     !--mag field (vector)
@@ -396,6 +416,16 @@ subroutine set_labels
     ipr = ndim + ndimV + 7 !  pressure
     label(ipr) = 'P'
     label(ndim+ndimV+8) = 'div v'
+    if (icoords.gt.1) then
+       irho = ndim+ndimV+9
+       label(ndim+ndimV+9) = 'rho*'
+       label(ndim+ndimV+10) = 'sqrt g'
+       iamvec(ndim+ndimV+11:ndim+ndimV+10+ndimV) = ndim+ndimV+11
+       labelvec(ndim+ndimV+11:ndim+ndimV+10+ndimV) = 'pmom'
+       do i=1,ndimV
+          label(ndim+ndimV+10+i) = labelvec(ndim+ndimV+11)//labelcoord(i,1)
+       enddo
+    endif
     iBfirst = 0
  endif
  if (ncolumns.gt.ndim+3*ndimV+10) then
