@@ -32,13 +32,12 @@
 !--if rootname does not contain .dat, make it end in .dat
 !
 	 IF (INDEX(rootname,'.dat').EQ.0) THEN
-           datfile = rootname(1:LEN_TRIM(rootname))//'.dat'
+           datfile = TRIM(rootname)//'.dat'
 	 ELSE
-	   datfile = rootname(1:LEN_TRIM(rootname))  
-         ENDIF
-         IF (rootname(1:1).EQ.'m') magfield = .true.	 
+	   datfile = TRIM(rootname)  
+         ENDIF	 
          ifile = 1
-         PRINT*,'rootname = ',rootname, ' mhd = ',magfield
+         PRINT*,'rootname = ',rootname
       ELSE
          PRINT*,' **** no data read **** ' 
 	 RETURN
