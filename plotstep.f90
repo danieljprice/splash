@@ -451,25 +451,43 @@ subroutine plotstep(istep,irender,ivecplot, &
         !--write username, date on plot
         !         if (nacross.le.2.and.ndown.le.2) call pgiden
 
+        !
         !--adjust plot limits if adaptive plot limits set
-        if (ipagechange .and. iadapt .and. iadvance.ne.0) then
-           xmin = huge(xmin)
-           xmax = -huge(xmax)
-           ymin = huge(ymin)
-           ymax = -huge(ymax)
-           !--find maximum over all particle types being plotted
-           index1 = 1
-           print*,'adapting plot limits'
-           do itype=1,maxparttypes
-              index2 = index1 + npartoftype(itype) - 1
-              if (iplotpartoftype(itype).and.npartoftype(itype).gt.0) then
-                 xmin = min(xmin,minval(xplot(index1:index2)))
-                 xmax = max(xmax,maxval(xplot(index1:index2))*scalemax)
-                 ymin = min(ymin,minval(yplot(index1:index2)))
-                 ymax = max(ymax,maxval(yplot(index1:index2))*scalemax)
-              endif
-              index1 = index2 + 1
-           enddo
+        !  (find minimum/maximum only on particle types actually plotted)
+        !
+        if (ipagechange .and. iadvance.ne.0) then
+           !--x axis
+           if ((iplotx.le.ndim .and. iadaptcoords) &
+           .or.(iplotx.gt.ndim .and. iadapt)) then
+              xmin = huge(xmin)
+              xmax = -huge(xmax)
+              index1 = 1
+              print*,'adapting x limits'
+              do itype=1,maxparttypes
+                 index2 = index1 + npartoftype(itype) - 1
+                 if (iplotpartoftype(itype).and.npartoftype(itype).gt.0) then
+                    xmin = min(xmin,minval(xplot(index1:index2)))
+                    xmax = max(xmax,maxval(xplot(index1:index2))*scalemax)
+                 endif
+                 index1 = index2 + 1
+              enddo
+           endif
+           !--y axis
+           if ((iploty.le.ndim .and. iadaptcoords) &
+           .or.(iploty.gt.ndim .and. iadapt)) then
+              ymin = huge(ymin)
+              ymax = -huge(ymax)
+              index1 = 1
+              print*,'adapting y limits'
+              do itype=1,maxparttypes
+                 index2 = index1 + npartoftype(itype) - 1
+                 if (iplotpartoftype(itype).and.npartoftype(itype).gt.0) then
+                    ymin = min(ymin,minval(yplot(index1:index2)))
+                    ymax = max(ymax,maxval(yplot(index1:index2))*scalemax)
+                 endif
+                 index1 = index2 + 1
+              enddo
+           endif           
         endif
 
         !!-reset co-ordinate plot limits if particle tracking           
@@ -547,17 +565,7 @@ subroutine plotstep(istep,irender,ivecplot, &
         !------------------------------------------------------------------
         if ((irenderplot.gt.ndim).and. &
              ((ndim.eq.3).or.(ndim.eq.2.and..not.x_sec))) then
-           !
-           !--interpolate from particles to fixed grid using SPH summation
-           !                
-           !!--use the un-transformed co-ordinates
-           if (itrackpart.le.0 .and. iadvance.ne.0) then ! do not reset limits if particle tracking
-              xmin = lim(iplotx,1)
-              xmax = lim(iplotx,2)
-              ymin = lim(iploty,1)
-              ymax = lim(iploty,2)
-           endif
-
+           
            !!--determine number of pixels in rendered image (npix = pixels in x direction)
            pixwidth = (xmax-xmin)/real(npix)
            npixx = int((xmax-xmin)/pixwidth) + 1
