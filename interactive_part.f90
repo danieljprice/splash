@@ -14,10 +14,13 @@ contains
 !   npart   : number of particles plotted
 !   iplotx  : quantity plotted as x axis
 !   iploty  : quantity plotted as y axis 
+!   iplotz  : quantity to use in selecting particles
 !   irender : quantity rendered
 !   xcoords(npart) : x coordinates of particles
 !   ycoords(npart) : y coordinates of particles
+!   zcoords(npart) : z coordinates (or third quantity) of particles
 !   hi(npart)      : smoothing lengths of particles
+!   zmin, zmax     : range of z within which to plot particles
 !
 ! CHANGEABLE:
 !   icolourpart(npart) : flag indicating colour of particles
