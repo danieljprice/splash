@@ -14,6 +14,7 @@ subroutine main(ipicky,ipickx,irender)
   implicit none
   integer, intent(in) :: ipicky, ipickx, irender
 
+  integer, parameter :: maxtitles = 50
   integer :: i,j,k,n
   integer :: iplotx,iploty,ivecx,ivecy
   integer :: nyplot,nyplots      
@@ -24,7 +25,7 @@ subroutine main(ipicky,ipickx,irender)
   integer :: nsink,nsinkstart,nsinkend,nghoststart,nghostend
   integer :: int_from_string
   integer :: ngrid
-  integer :: just
+  integer :: just, ntitles
 
   character(len=8) :: string     ! used in pgplot calls
   real, dimension(maxpart) :: xplot,yplot
@@ -46,6 +47,7 @@ subroutine main(ipicky,ipickx,irender)
   character(len=60) :: title,titlex
   character(len=20) :: labelx,labely,labelrender
   character(len=25) :: transform_label
+  character(len=60), dimension(maxtitles) :: titlelist
 
   !------------------------------------------------------------------------
   ! initialisations
@@ -151,6 +153,7 @@ subroutine main(ipicky,ipickx,irender)
      else
         titlex = ' '
      endif
+     call read_titles(titlelist,ntitles,maxtitles)
 
      !!--initialise pgplot
      if (tile_plots) then
@@ -196,6 +199,7 @@ subroutine main(ipicky,ipickx,irender)
 !     call pgask(.false.)
 !  endif
   if (animate .or. interactive) call pgask(.false.)
+  !!if (animate .and. .not. interactive) call pgbbuf !! start buffering output
 
   !
   !--if plotting ghost particles, set ntotplot = ntot, else ntot=npart
@@ -355,8 +359,8 @@ subroutine main(ipicky,ipickx,irender)
               !--interpolate from particles to fixed grid using sph summation
               !		
               !--do not apply any transformations to the co-ordinates
-              !  (leave limits as is if particle tracking)
-	      if (itrackpart.le.0) then
+              !
+	      if (itrackpart.le.0) then ! do not reset limits if particle tracking
 	         xmin = lim(iplotx,1)
                  xmax = lim(iplotx,2)
                  ymin = lim(iploty,1)
@@ -439,6 +443,16 @@ subroutine main(ipicky,ipickx,irender)
                     xsecmax = xsecpos+0.5*dxsec
                  endif
               endif
+
+	      !---------------------------------
+	      ! output some muff to the screen
+	      !---------------------------------
+              print 34, time(i),i
+              print*,trim(labely),'min,max = ',ymin,ymax
+              print*,trim(labelx),'min,max = ',xmin,xmax
+34            format (5('-'),' t = ',f8.4,', dump #',i3,1x,10('-'))
+              if (x_sec.and.iplotpart) print 35,label(ixsec),xsecmin,label(ixsec),xsecmax
+35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
 
               !------------take projections/cross sections through 3D data-----------------!
               if (irenderplot.gt.ndim .and. ndim.eq.3) then
@@ -525,16 +539,6 @@ subroutine main(ipicky,ipickx,irender)
 
               endif ! 2 or 3D and rendering
               !-----end of preliminary muff for 2D/3D cross sections/renderings ------------------
-              
-	      !---------------------------------
-	      ! output some muff to the screen
-	      !---------------------------------
-              print 34, time(i),i
-              print*,trim(labely),'min,max = ',ymin,ymax
-              print*,trim(labelx),'min,max = ',xmin,xmax
-34            format (5('-'),' t = ',f8.4,', dump #',i3,1x,10('-'))
-              if (x_sec.and.iplotpart) print 35,label(ixsec),xsecmin,label(ixsec),xsecmax
-35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
 	      
 	      !-----------------------
               ! page setup options
@@ -714,10 +718,10 @@ subroutine main(ipicky,ipickx,irender)
                     !
 		    !--enter interactive mode
 		    !
-                    if (iplotpart.and.interactive) then
-		       call interactive_part(ntotplot(i),xplot(1:ntotplot(i)), &
-		                             yplot(1:ntotplot(i)),iadvance) 
-                    endif
+                    !if (iplotpart.and.interactive) then
+		    !   call interactive_part(ntotplot(i),xplot(1:ntotplot(i)), &
+		    !                         yplot(1:ntotplot(i)),iadvance) 
+                    !endif
 
                  endif! if x_sec else    
               endif! if irender
@@ -740,9 +744,9 @@ subroutine main(ipicky,ipickx,irender)
                  call pgsci(1)
               endif
 
-              !----------------------------
-              ! vector maps
-              !----------------------------    
+              !--------------------------------------------------------------
+              ! vector maps (can be on top of particle plots and renderings)
+              !--------------------------------------------------------------
 
               !!--velocity vector map
               if (ivecplot.ne.0) then
@@ -796,6 +800,21 @@ subroutine main(ipicky,ipickx,irender)
               if (nyplot.eq.1 .and. i.le.nacross) then
 	         call legend(time(i),hposlegend,vposlegend)
 	      endif
+	      if (i.le.ntitles) then
+	         if (titlelist(i)(1:1).ne.' ') then
+	            call pglabel(' ',' ',trim(titlelist(i)))
+		    !!call pgmtxt('T',1.5,0.5,0.5,'text')
+	         endif
+	      endif
+
+              !
+	      !--enter interactive mode
+	      !
+             if (interactive) then
+		call interactive_part(ntotplot(i),xplot(1:ntotplot(i)), &
+		                      yplot(1:ntotplot(i)),iadvance) 
+             endif
+
 
               !
               !--%%%%%%%%%%%%% end loop over cross-section slices %%%%%%%%%%%%%%%%%%%%%%%
@@ -1164,6 +1183,7 @@ subroutine main(ipicky,ipickx,irender)
   enddo over_timesteps
 
   if (.not.interactive) then
+     !!if (animate) call pgebuf
      print*,'press return to finish'
      read*
   endif

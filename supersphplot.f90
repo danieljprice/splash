@@ -58,6 +58,7 @@ program supersphplot
 !     riemannsolver      : Riemann solver (called by exact_shock)
 !     setpage            : sets up the PGPLOT page (replaces call to PGENV/PGLAB)
 !     supersphplot	 : main program, drives menu loop
+!     titles_read        : reads a list of titles to be used to label each timestep
 !     transform	 	 : applies various transformations to data (log10, 1/x, etc)
 !     vectorplot         : produces a vector plot from particle data
 !
