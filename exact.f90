@@ -3,12 +3,9 @@
 ! plotting and calls the appropriate routines to change these settings and
 ! plot the actual solutions.
 !
-! The only things to do with exact solutions which are not entirely handled
-! by this module are the h vs rho relation (because it takes all of the
-! particle masses as input) and the toy star AC plane solution (because
+! The only thing to do with exact solutions that is not entirely handled
+! by this module is the toy star AC plane solution (because
 ! it is called under different circumstances to the other solutions).
-! Hence nearly all the parameters are private to the module, but some are
-! declared public for these reasons.
 !
 module exact
   implicit none
@@ -172,7 +169,7 @@ contains
     integer, intent(in) :: iexact
     integer, intent(out) :: ierr
     integer :: int_from_string
-    character(LEN=30) :: filename
+    character(LEN=LEN(rootname(1))+6) :: filename
 
     select case(iexact)
     case(1)
@@ -235,14 +232,20 @@ contains
   !-----------------------------------------------------------------------
   ! this subroutine drives the exact solution plotting using the
   ! parameters which have been set
+  !
+  ! acts as an interface between the main plotting loop and the
+  ! exact solution calculation subroutines
   !-----------------------------------------------------------------------
 
-  subroutine exact_solution(iplotx,iploty,iexact,ndim,ndimV,time,xmin,xmax,ymean,gamma)
+  subroutine exact_solution(iplotx,iploty,iexact,ndim,ndimV,time, &
+                            xmin,xmax,ymean,gamma,pmass,npart)
     use labels
     use prompting
     implicit none
-    integer, intent(in) :: iplotx,iploty,iexact,ndim,ndimV
+    integer, intent(in) :: iplotx,iploty,iexact,ndim,ndimV,npart
     real, intent(in) :: time,xmin,xmax,ymean,gamma
+    real, intent(in), dimension(npart) :: pmass
+    real :: totmass
 
     select case(iexact)
     case(1)! shock tube
@@ -309,27 +312,32 @@ contains
           !
           !--2D and 3D toy star solutions
           !
+          totmass = SUM(pmass(1:npart))
           if ((iplotx.eq.ix(1) .and. iploty.eq.ivx) &
                .or. (iplotx.eq.ix(2) .and. iploty.eq.ivx+1)) then
-             call exact_toystar2D(time,gamma,polyk, &
+             call exact_toystar2D(time,gamma,polyk,totmass, &
                   htstar,atstar,ctstar,sigma,norder,4)
           endif
           if (iplotx.eq.irad) then
              if (iploty.eq.irho) then
-                call exact_toystar2D(time,gamma,polyk,htstar,atstar,ctstar,sigma,norder,1)
+                call exact_toystar2D(time,gamma,polyk,totmass, &
+                     htstar,atstar,ctstar,sigma,norder,1)
              elseif (iploty.eq.ipr) then
-                call exact_toystar2D(time,gamma,polyk,htstar,atstar,ctstar,sigma,norder,2)
+                call exact_toystar2D(time,gamma,polyk,totmass, &
+                     htstar,atstar,ctstar,sigma,norder,2)
              elseif (iploty.eq.iutherm) then
-                call exact_toystar2D(time,gamma,polyk,htstar,atstar,ctstar,sigma,norder,3)
+                call exact_toystar2D(time,gamma,polyk,totmass, &
+                     htstar,atstar,ctstar,sigma,norder,3)
              elseif (iploty.eq.ivx .or. iploty.eq.ivx+1) then
-                call exact_toystar2D(time,gamma,polyk, &
+                call exact_toystar2D(time,gamma,polyk,totmass, &
                      htstar,atstar,ctstar,sigma,norder,4)
              elseif (iploty.eq.ike) then
-                call exact_toystar2D(time,gamma,polyk, &
+                call exact_toystar2D(time,gamma,polyk,totmass, &
                      htstar,atstar,ctstar,sigma,norder,4)
              endif
           elseif (iplotx.le.ndim .and. iploty.le.ndim) then
-             call exact_toystar2D(time,gamma,polyk,htstar,atstar,ctstar,sigma,norder,0)
+             call exact_toystar2D(time,gamma,polyk,totmass, &
+                  htstar,atstar,ctstar,sigma,norder,0)
           endif
        endif
 
@@ -368,7 +376,12 @@ contains
           call pgline(iexactpts,xexact,yexact)
        endif
     end select
-
+    
+    !--h = (1/rho)^(1/ndim)
+    if ((iploty.eq.ih).and.(iplotx.eq.irho)) then
+       call exact_rhoh(hfact,ndim,pmass,npart,xmin,xmax)
+    endif
+    
     return
 
   end subroutine exact_solution

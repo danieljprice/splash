@@ -37,12 +37,12 @@ as efficiently as possible from the raw data with a minimum amount of effort
 from the user. I have found in the process that the development of powerful
 visualisation tools has enabled me to pick up on effects present in my
 simulation results that I would not otherwise have noticed (in particular the
-difference between a raw particle plot and a rendered image can be substantial).
+difference between a raw particle plot and a rendered image can be substantial). Part of the goal of SUPERSPHPLOT is to eliminate the over use of particle plots as a means of representing SPH data!
 
 \subsection{What it does}
 SUPERSPHPLOT is a utility for visualisation of output from (astrophysical) simulations using the
 Smoothed Particle Hydrodynamics (SPH) method in one, two and three dimensions.
-It is written in FORTRAN 90 and
+It is written in FORTRAN 90/95 and
 utilises PGPLOT subroutines to do the actual plotting. In particular the following
 features are included:
 \begin{itemize}
@@ -78,8 +78,6 @@ However as other applications arise other features may be needed which have not
 yet been included. In particular the following have not been addressed
 specifically:
 \begin{itemize}
-\item Incompressible flows.   One of the most obvious extensions is to the visualisation
-of incompressible SPH data (e.g. water), although many of the interpolation routines should work just the same. 
 \item Full 3D plotting. Visualisation in 3D is achieved by taking cross-sections
 and projections through the SPH data. Similarly 2D data is plotted by means of
 rendered images. At present there are no capabilities for surface plots or cubes
@@ -95,14 +93,14 @@ feature (in this case 3D rotated axes/boxes are plotted appropriately).
  This is the pre-public-release (Guinea-pig) version.
 
 \subsection{Licence}
- SUPERSPHPLOT is released under the terms of the GNU General Public License (GPL). You should have received
- a copy with this distribution, other
+ SUPERSPHPLOT is FREE and open source software released under the terms of the GNU General Public License (GPL). You should have received a copy of the GPL with this distribution. If not a copy may be downloaded from \url{www.gnu.org}. \c 2004 Daniel Price.
 
 \section{Gallery}
 
 \begin{figure}
 \begin{center}
 \begin{turn}{270}\epsfig{file=hyperbolic.ps,height=\textwidth}\end{turn}
+\caption{A wave equation solved on SPH particles. This simulation actually resulted from some experiments for cleaning the divergence of the magnetic field in my MHD simulations. The figures show the divergence of the magnetic field in a periodic, two dimensional SPMHD simulation using a hyperbolic divergence cleaning.}
 \label{fig:hyperbolic}
 \end{center}
 \end{figure}
@@ -129,15 +127,15 @@ used by SUPERSPHPLOT, we refer the reader to the PGPLOT userguide:
 \subsubsection{Fortran 90/95 compilers}
  By now, many Fortran 90/95 compilers exist. Amongst the most popular commercially
 available ones are perhaps the NAG Fortran compiler and the Intel Fortran Compiler (ifc). However, the
-g95 project (successor to g77) is also largely up and running and is freely
-downloadable from:
+g95 project has produced a free compiler, which is downloadable from:
 \begin{quote}
 \url{http://g95.sourceforge.net/}
 \end{quote}
-although there is another, apparently unrelated project at
+and which successfully compiles SUPERSPHPLOT. Another, apparently unrelated project is located at
 \begin{quote}
 \url{www.gfortran.org}
 \end{quote}
+however this compiler is not fully implemented and therefore does not as yet compile SUPERSPHPLOT.
 
 \subsubsection{Makefile options}
 
@@ -1009,8 +1007,7 @@ with
 
 \subsubsection{Riemann solver}
  The algorithm for determining the post-shock velocity and pressure is taken
-from \citet{vanleer79} (reprinted as \citealt{vanleer99}).
-
+from \citet{toro92}.
 
 \subsection{Polytrope}
  The subroutine \verb+exact_poly+ computes the exact solution for a static polytrope with

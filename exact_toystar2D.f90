@@ -5,19 +5,20 @@
 !
 ! the solutions are all plots against radius
 !
-! For details see Monaghan and Price (2004), in prep.
+! For details see Monaghan and Price (2005), in prep.
 !------------------------------------------------------------
 
-subroutine exact_toystar2D(time,gamma,polyk,H0,A0,C0,sigma,norder,iplot)
+subroutine exact_toystar2D(time,gamma,polyk,totmass, &
+                           H0,A0,C0,sigma,norder,iplot)
   implicit none
-  integer, parameter :: npts = 100
   integer, intent(in) :: iplot,norder
+  real, intent(in) :: time,gamma,polyk,totmass,sigma
+  real, intent(in) :: H0, C0, A0        ! parameters for toy star
+  integer, parameter :: npts = 100
+  real, parameter :: pi = 3.141592653589
   integer :: i
   integer :: jmode,smode
-  real, parameter :: pi = 3.1415926536
   real, dimension(0:npts) :: xplot,yplot
-  real, intent(in) :: time,gamma,polyk,sigma
-  real, intent(in) :: H0, C0, A0        ! parameters for toy star
   real :: Aprev, A,H,C, term,const
   real :: radstar,dx
   real :: rhoplot,deltarho
@@ -124,7 +125,14 @@ subroutine exact_toystar2D(time,gamma,polyk,H0,A0,C0,sigma,norder,iplot)
      if (C.le.0.) then 
         radstar = 0.5
         stop '*** C = 0 = illegal'
-     else         
+     elseif (A.le.1.e-5) then
+!
+!--this is the static solution, determined from the total mass, polyk, gamma and omega
+!
+        radstar = sqrt(gamma*totmass/(pi*gamm1))
+        H = omega**2*gamm1*radstar**2/(2.*polyk*gamma)
+        C = 0.5*gamm1*omega**2/(gamma*polyk)
+     else
         radstar = sqrt(H/C)
      endif
      xplot(0) = -radstar

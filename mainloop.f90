@@ -4,7 +4,8 @@
 subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use params
   use colours, only:colour_set
-  use exact
+  use exact, only:exact_solution, &
+             atstar,ctstar,htstar,sigma,iwaveplotx,iwaveploty
   use labels
   use limits, only:lim
   use multiplot
@@ -769,7 +770,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               !--plot exact solution if relevant (before going interactive)
               !
               if (iexact.ne.0) call exact_solution(iplotx,iploty,iexact,ndim,ndimV, &
-                               time(i),xmin,xmax,0.0,gamma(i))
+                               time(i),xmin,xmax,0.0,gamma(i),dat(1:ntot(i),ipmass,i), &
+                               ntot(i))
               !
               !--enter interactive mode
               !             
@@ -872,11 +874,11 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               ymean = 0.
            endif
            
-           if (iexact.ne.0) call exact_solution(iplotx,iploty,iexact,ndim,ndimV, &
-                            time(i),xmin,xmax,ymean,gamma(i))
-           !--h = (1/rho)^(1/ndim)
-           if ((iploty.eq.ih).and.(iplotx.eq.irho)) then
-              call exact_rhoh(hfact,ndim,dat(1:ntot(i),ipmass,i),ntot(i),xmin,xmax)
+           if (iexact.ne.0 .or. (iploty.eq.irho .and. iplotx.eq.ih) .or. &
+              (iplotx.eq.irho .and. iploty.eq.ih)) then
+              call exact_solution(iplotx,iploty,iexact,ndim,ndimV,  &
+                                  time(i),xmin,xmax,ymean,gamma(i), &
+                                  dat(1:ntot(i),ipmass,i),ntot(i))
            endif
            !
            !--enter interactive mode

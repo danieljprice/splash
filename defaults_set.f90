@@ -3,7 +3,7 @@
 !!      these are used if no defaults file is found
 !!
 subroutine defaults_set
-  use exact
+  use exact, only:defaults_set_exact
   use filenames
   use labels
   use limits
