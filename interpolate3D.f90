@@ -34,7 +34,7 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
   real, intent(IN) :: xmin,ymin,zmin,pixwidth,zpixwidth
   real, intent(OUT), dimension(npixx,npixy,npixz) :: datsmooth
 
-  integer :: i,j,ipix,jpix,kpix
+  integer :: i,ipix,jpix,kpix
   integer :: ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
   real :: hi,hi1,h3,radkern,qq,wab,rab,const
   real :: term,dx,dy,dz,xpix,ypix,zpix

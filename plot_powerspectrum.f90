@@ -6,7 +6,7 @@ subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
  implicit none
  integer, parameter :: ioversamplingfactor = 4        ! oversample by 4
  integer, intent(in) :: npts,nfreq,itrans
- integer :: ierr, ifreq
+ integer :: ifreq
  real, dimension(npts), intent(in) :: x, dat
  real, dimension(nfreq) :: freq,freqplot,power
  real :: xlength

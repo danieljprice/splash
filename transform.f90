@@ -272,7 +272,7 @@ end subroutine transform_limits
 !------------------------------------------------------------------------
 function transform_label(label,itrans)
   implicit none
-  integer :: itrans,itransmulti,i,itransprev,ndigits
+  integer :: itrans,itransmulti,i,ndigits
   integer, dimension(nmax) :: digit
   character(LEN=*) :: label
   character(LEN=40) :: transform_label

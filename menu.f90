@@ -9,11 +9,11 @@ subroutine menu
   use prompting
   use transforms
   implicit none
-  integer :: i,icol,ihalf,iadjust,iaction,istep,ierr,index
+  integer :: i,icol,ihalf,iadjust,index
   integer :: ipicky,ipickx,irender,ivecplot,int_from_string
   integer :: iamvecprev, ivecplottemp
   character(LEN=2) :: ioption
-  character(LEN=30) :: filename,vecprompt
+  character(LEN=30) :: vecprompt
   logical :: iansx, iansy, ichange
 
   irender = 0

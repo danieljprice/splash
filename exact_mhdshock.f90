@@ -17,9 +17,8 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
   !! REAL, INTENT(in) :: rho_L,rho_R,pr_L,pr_R,vx_L,vx_R
   REAL, DIMENSION(maxpts) :: xplot,yplot
   REAL, DIMENSION(maxpts) :: rho,pr,vx,vy,vz,By,Bz
-  REAL :: dx,const
-  REAL :: machno,vs
-  INTEGER :: i,j,npts
+  REAL :: const
+  INTEGER :: npts
 
   PRINT*,' Plotting exact mhd shock #',ishk,' at t = ',time
   !

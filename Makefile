@@ -8,9 +8,9 @@
 .KEEP_STATE:
 
 ## Compiler options
-F90C =  ifc
-F90FLAGS =  -O -WB ##-C
-LDFLAGS = -Vaxlib -lpgplot -L/usr/X11R6/lib -lX11 -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c -lpng
+F90C =  f95
+F90FLAGS =  -O ##-WB ##-C
+LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11 -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c -lpng
 
 # Fortran flags same as F90
 FC = $(F90C)
@@ -79,7 +79,7 @@ mrbsph: $(OBJMRBSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_mrb $(OBJMRBSPH)
 
 scwsph: $(OBJSCWSPH)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_mrb $(OBJSCWSPH)
+	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_scw $(OBJSCWSPH)
 
 gadget: $(OBJGADGETSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_gadget $(OBJGADGETSPH)

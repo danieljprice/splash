@@ -21,7 +21,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xmin,xmax)
   real, intent(in) :: time,gamma,xmin,xmax
   real, intent(in) :: rho_L,rho_R,p_L,p_R,v_L,v_R
   
-  integer :: i,j
+  integer :: i
   real, dimension(npts) :: xplot, yplot, dens, pr, vel
   real :: dx,cs_L,cs_R, gamfac
   real :: ppost, vpost, vfan, vshock

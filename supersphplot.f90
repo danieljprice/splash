@@ -149,7 +149,7 @@ program supersphplot
   use settings
   use system_commands
   implicit none
-  integer :: i,iprev,iargc
+  integer :: i
   !
   !--print header
   !

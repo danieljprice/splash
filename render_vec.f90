@@ -10,8 +10,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  real, intent(in) :: xmin,ymin,vecmax,dx
  real, dimension(npixx,npixy), intent(in) :: vecpixx,vecpixy
  logical, intent(in) :: log
- 
- integer i,j,k
+
  real :: trans(6),vmax,scale
  
 !set up grid for rendering 

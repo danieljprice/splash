@@ -112,7 +112,7 @@ subroutine mean_variance(x,npts,xmean,xvariance)
  real, intent(in), dimension(npts) :: x
  real, intent(out) :: xmean, xvariance
  real :: roundoff, delta
- integer :: i,j
+ integer :: i
 !
 !--calculate average
 !

@@ -38,7 +38,7 @@ subroutine interpolate3D_fastxsec(x,y,z,pmass,rho,hh,dat,npart,&
   real, intent(IN) :: xmin,ymin,pixwidth,zslice
   real, intent(OUT), dimension(npixx,npixy) :: datsmooth
 
-  integer :: i,j,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   real :: hi,hi1,h3,radkern,qq,wab,rab,const
   real :: term,dx,dy,dz,dz2,xpix,ypix
 

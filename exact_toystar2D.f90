@@ -12,16 +12,16 @@ subroutine exact_toystar2D(time,gamma,H0,A0,C0,sigma,norder,iplot)
   implicit none
   integer, parameter :: npts = 100
   integer, intent(in) :: iplot,norder
-  integer :: i,j,k,its
+  integer :: i
   integer :: jmode,smode
   real, parameter :: pi = 3.1415926536
   real, dimension(0:npts) :: xplot,yplot
   real, intent(in) :: time,gamma,sigma
   real, intent(in) :: H0, C0, A0        ! parameters for toy star
   real :: Aprev, A,H,C, term,const
-  real :: radstar,dx,dt,tnow
-  real :: func, fderiv,rhoplot,deltarho
-  real :: gamp1,gamm1,gam1,fact,constK,omega
+  real :: radstar,dx
+  real :: rhoplot,deltarho
+  real :: gamp1,gamm1,gam1,constK,omega
   real :: drhor
   logical linear
 

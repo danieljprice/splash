@@ -40,7 +40,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
   real, intent(IN) :: xmin,ymin,pixwidth,zslice
   real, intent(OUT), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
 
-  integer :: i,j,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   real :: hi,hi1,h3,radkern,qq,wab,rab,const
   real :: rho1i,termx,termy,dx,dy,dz,dz2,xpix,ypix
 

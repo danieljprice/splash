@@ -12,14 +12,14 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
   implicit none
   integer, parameter :: npts = 100
   integer, intent(in) :: iplot,norder
-  integer i,j,its,nsteps
+  integer i,its,nsteps
   real, dimension(0:npts) :: xplot,yplot
   real, intent(in) :: time,gamma,sigma
   real, intent(in) :: H0, C0, A0    ! parameters for toy star
   real const ! parameter for toy star
-  real Hprev, Cprev, Aprev, A2, Htemp, Ctemp, Atemp, H, C, A
+  real Hprev, Cprev, Aprev, Htemp, Ctemp, Atemp, H, C, A
   real radstar,dx,dt,tnow
-  real func, fderiv,rhoplot,deltarho
+  real rhoplot,deltarho
   real fprevC,fprevA,fprevH,ftempC,ftempA,ftempH
   real gamp1,gamm1,gam1,fact,constK,omega
   real Gn,Pm,fnorm

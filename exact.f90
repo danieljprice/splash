@@ -19,7 +19,7 @@ module exact
   integer, public :: iACplane ! label position of toy star AC plane plot
   integer, private :: norder ! for toy star
   real, public :: htstar,atstar,ctstar,sigma
-  real, private :: totmass, sigma0
+  real, private :: sigma0
   !--sound wave
   integer, public :: iwaveploty,iwaveplotx ! linear wave
   real, private :: ampl,lambda,period
@@ -113,9 +113,8 @@ contains
     use prompting
     implicit none
     integer, intent(inout) :: iexact
-    integer :: i, ierr
-    logical :: ians, iexist
-    character(len=1) :: ans,dummy
+    integer :: ierr
+    logical :: ians
     character(len=30) :: filename
 
     print 10

@@ -16,21 +16,18 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   integer, intent(in) :: ipicky, ipickx, irender, ivecplot
 
   integer, parameter :: maxtitles = 50
-  integer :: i,j,k,n,ierr,ifile
+  integer :: i,j,k,ierr,ifile
   integer :: iplotx,iploty,irenderplot,ivectorplot,ivecx,ivecy
   integer :: nyplot,nyplots      
   integer :: ninterp,npartdim
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec
   integer :: irenderprev, istepprev, iadvance
-  integer :: nsink,nsinkstart,nsinkend,nghoststart,nghostend
-  integer :: int_from_string
   integer :: ngrid
   integer :: just, ntitles
   integer :: iplots,iplotsonpage
   integer :: index1,index2,itype
 
-  character(len=8) :: string     ! used in pgplot calls
   real, parameter :: pi = 3.1415926536
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(maxpart) :: xplot,yplot,zplot

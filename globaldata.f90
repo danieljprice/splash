@@ -8,6 +8,7 @@
 !
 module params
  implicit none
+ integer, parameter :: doub_prec = selected_real_kind(P=10,R=30)
  integer, parameter :: maxplot=40   ! maximum number of plots (for multiplot arrays)
  integer, parameter :: maxparttypes = 6  ! max # of different particle types
 end module params

@@ -39,14 +39,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
   character(LEN=LEN(rootname)+4) :: datfile
-  character(LEN=2) :: fileno
   integer :: i,j,k,ifile,icol,ipos,ierr
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin,ncolstep,nparti,ntoti
-  logical :: iexist,reallocate
-  real(kind=8) :: timein,gammain,hfactin
-  real(kind=8), dimension(:), allocatable :: dattemp
-  real(kind=8), dimension(:,:), allocatable :: dattempvec
+  logical :: reallocate
+  real(doub_prec) :: timein,gammain,hfactin
+  real(doub_prec), dimension(:), allocatable :: dattemp
+  real(doub_prec), dimension(:,:), allocatable :: dattempvec
 
   nstepsread = 0
   if (rootname(1:1).ne.' ') then

@@ -13,7 +13,7 @@ subroutine render(datpix,datmin,datmax,label,npixx,npixy,        &
  logical, intent(in) :: iplotcont,iPlotColourBar,log
  character(len=*), intent(in) :: label  
  
- integer i,j,k
+ integer :: i
  real :: trans(6),levels(nc),dcont
  character(len=1) :: clog
  

@@ -30,7 +30,7 @@ subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
   real, intent(IN) :: xmin,pixwidth
   real, intent(OUT), dimension(npixx) :: datsmooth
 
-  integer :: i,j,ipix,ipixmin,ipixmax
+  integer :: i,ipix,ipixmin,ipixmax
   real :: hi,hi1,radkern,qq,wab,rab,const
   real :: term,dx,xpix
 

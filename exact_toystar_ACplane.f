@@ -2,9 +2,8 @@
       IMPLICIT NONE
       REAL, INTENT(IN) :: Astart,Cstart,sigma,gamma
       REAL :: func,func2,constK,gam1,gamm1,gamp1,fact
-      REAL xstart,xend,xcentre,C,Cnew,k,kmin,kmax
-      REAL funct,fderiv,ymin,ymax,extra
-      INTEGER i
+      REAL :: xstart,xend,xcentre,C,Cnew,k
+      REAL :: funct,fderiv,ymin,ymax,extra
       EXTERNAL func,func2
       COMMON /kconst/ k,fact,gam1,gamp1
       

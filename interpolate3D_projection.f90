@@ -37,7 +37,7 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
   real, intent(IN) :: xmin,ymin,pixwidth
   real, intent(OUT), dimension(npixx,npixy) :: datsmooth
 
-  integer :: i,j,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   integer :: index, index1
   integer :: iprintnext, iprogress
   real :: hi,hi1,h2,radkern,qq,wab,rab,const

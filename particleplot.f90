@@ -12,9 +12,10 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
   integer, intent(in) :: ntot, iplotx, iploty
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(ntot), intent(in) :: xplot, yplot, zplot, h
+  real, dimension(ntot) :: xerrb, yerrb, herr
   real, intent(in) :: xsecmin,xsecmax
   logical, intent(in) :: x_sec
-  integer :: i,j,n,itype
+  integer :: j,n,itype
   integer :: lenstring,index1,index2
   real :: charheight
   character(len=20) :: string
@@ -112,17 +113,19 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
         else 
            !!--only on specified particles
            do n=1,ncircpart
-              if (iplotx.le.ndim) then
-                 print*,'plotting error bar x axis',icircpart(n)
-                 call pgerrb(5,1,xplot(icircpart(n)), &
-                      yplot(icircpart(n)), &
-                      2.*h(icircpart(n)),1.0)
-              elseif (iploty.le.ndim) then
-                 print*,'plotting error bar y axis',icircpart(n)
-                 call pgerrb(6,1,xplot(icircpart(n)),yplot(icircpart(n)), &
-                      2.*h(icircpart(n)),1.0)      
-              endif
-           enddo
+              xerrb(n) = xplot(icircpart(n))
+              yerrb(n) = yplot(icircpart(n))
+              herr(n) = 2.*h(icircpart(n))
+           enddo         
+           if (iplotx.le.ndim) then
+              print*,'plotting ',ncircpart,' error bars x axis '
+              call pgerrb(5,ncircpart,xerrb(1:ncircpart), &
+                   yerrb(1:ncircpart),herr(1:ncircpart),1.0)
+           elseif (iploty.le.ndim) then
+              print*,'plotting ',ncircpart,' error bars y axis'
+              call pgerrb(6,ncircpart,xerrb(icircpart), &
+                   yplot(1:ncircpart),herr(1:ncircpart),1.0)      
+           endif
         endif
      endif
   endif

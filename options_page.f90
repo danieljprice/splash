@@ -5,10 +5,9 @@ subroutine options_page
  use settings
  use prompting
  implicit none
- integer :: iaction,i
+ integer :: iaction
  real :: papersizey
- logical :: ians
- 
+
  iaction = 0
  papersizey = papersizex*aspectratio
  print 10,ipagechange,iaxis,papersizex,papersizey,nacross,ndown,tile, &

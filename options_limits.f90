@@ -10,9 +10,7 @@ subroutine options_limits
  use transforms
  implicit none
  integer :: iaction,ipick,i,ierr
- real :: diff, mid, temp
- logical :: ians
- character(len=1) :: ans
+ real :: diff, mid
  
  iaction = 0
  if (iadapt) then
