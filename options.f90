@@ -15,7 +15,7 @@ subroutine options(ipicky)
   real :: papersizey
   character(LEN=30) :: filename
   character(LEN=1) :: ans
-  logical :: ians, ichange
+  logical :: ians, iansx, iansy, ichange
 
   iaction = ipicky - numplot      
 
@@ -155,16 +155,25 @@ subroutine options(ipicky)
      if (nacross.eq.0) nacross = 1
      ndown = nyplotmulti/nacross
      print*,'setting nacross,ndown = ',nacross,ndown 
-     ians = .true.
-     call prompt('Same x axis for all?',ians)
-     if (ians) then
+     iansx = .true.
+     call prompt('Same x axis for all?',iansx)
+     if (iansx) then
         call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
         multiplotx(2:nyplotmulti) = multiplotx(1)	     
      endif
+     iansy = .false.
+     if (ndim.ge.2) call prompt('Same y axis for all?',iansy)
+     if (iansy) then
+        call prompt('Enter y axis for all plots',multiploty(1),1,numplot)
+        multiploty(2:nyplotmulti) = multiploty(1)
+     endif
+     
      do i=1,nyplotmulti
         print*,'Plot number ',i,':'
-        call prompt(' y axis ',multiploty(i),1,numplot)
-        if (.not.ians.and.multiploty(i).le.ndataplots) then
+        if (.not.iansy .or. multiploty(i).gt.ndataplots .or. multiploty(i).le.0) then
+	   call prompt(' y axis ',multiploty(i),1,numplot)
+	endif
+        if (.not.iansx.and.multiploty(i).le.ndataplots) then
            call prompt(' x axis ',multiplotx(i),1,numplot)
         endif
         if ((multiplotx(i).le.ndim).and.(multiploty(i).le.ndim)) then
@@ -173,12 +182,23 @@ subroutine options(ipicky)
            ichange = .false.
            call prompt(' change options for this plot? ',ichange)
            if (ichange) then
-              call options_render(irendermulti(i),  &
+              call options_render( &
                    npixmulti(i),icolours,iplotcontmulti(i), &
                    ncontoursmulti(i),ivecplotmulti(i),npixvecmulti(i), &
                    iplotpartvecmulti(i),x_secmulti(i), &
                    xsecposmulti(i),backgnd_vec_multi(i),ndim,numplot)
-           elseif (i.gt.1) then          
+           elseif (i.eq.1) then
+	      print*,'copying options from rendering settings'
+	      npixmulti(i) = npix_nomulti	      
+              iplotcontmulti(i) = iplotcont_nomulti
+              ncontoursmulti(i) = ncontours_nomulti
+              ivecplotmulti(i) = ivecplot_nomulti
+              iplotpartvecmulti(i) = iplotpartvec_nomulti
+              x_secmulti(i) = xsec_nomulti
+              xsecposmulti(i) = xsecpos_nomulti
+              backgnd_vec_multi(i) = backgnd_vec_nomulti              
+	   else  
+	      print*,'using same rendering options as plot 1'       
               npixmulti(i) = npixmulti(1)
               iplotcontmulti(i) = iplotcontmulti(1)
               ncontoursmulti(i) = ncontoursmulti(1)
