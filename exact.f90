@@ -14,7 +14,7 @@ module exact
   !
   !--toy star
   integer :: iACplane ! label position of toy star AC plane plot
-  integer :: norder ! for toy star
+  integer :: norder,morder ! for toy star
   real :: htstar,atstar,ctstar,sigma
   real :: sigma0
   !--sound wave
@@ -38,7 +38,7 @@ module exact
   !--sort these into a namelist for input/output
   !
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx, &
-       htstar,atstar,ctstar,polyk,sigma0,norder,rhosedov,esedov, &
+       htstar,atstar,ctstar,polyk,sigma0,norder,morder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact, &
        iexactplotx,iexactploty
 
@@ -58,6 +58,7 @@ contains
     atstar = 1.
     ctstar = 1.
     norder = 0
+    morder = 0
     sigma0 = 0.
     rhosedov = 1.0  ! sedov blast wave
     esedov = 1.0    ! blast wave energy
@@ -80,6 +81,7 @@ contains
   ! sets options and parameters for exact solution calculation/plotting
   !----------------------------------------------------------------------
   subroutine submenu_exact(iexact)
+    use settings_data, only:ndim
     use prompting
     implicit none
     integer, intent(inout) :: iexact
@@ -134,6 +136,7 @@ contains
        call prompt('do you want oscillations?',ians)
        norder = -1
        if (ians) call prompt('enter order',norder,0)
+       if (ians .and. ndim.ge.2) call prompt('enter s order',morder,0)
     case(5)
        call prompt('enter y-plot to place sine wave on',iwaveploty,1)
        call prompt('enter x-plot to place sine wave on',iwaveplotx,1)
@@ -242,6 +245,7 @@ contains
                             xmin,xmax,ymean,gamma,pmass,npart)
     use labels
     use prompting
+    use toystar2D, only:exact_toystar2D
     implicit none
     integer, intent(in) :: iplotx,iploty,iexact,ndim,ndimV,npart
     real, intent(in) :: time,xmin,xmax,ymean,gamma
@@ -317,28 +321,28 @@ contains
           if ((iplotx.eq.ix(1) .and. iploty.eq.ivx) &
                .or. (iplotx.eq.ix(2) .and. iploty.eq.ivx+1)) then
              call exact_toystar2D(time,gamma,polyk,totmass, &
-                  htstar,atstar,ctstar,sigma,norder,4)
+                  htstar,atstar,ctstar,sigma,norder,morder,4)
           endif
           if (iplotx.eq.irad) then
              if (iploty.eq.irho) then
                 call exact_toystar2D(time,gamma,polyk,totmass, &
-                     htstar,atstar,ctstar,sigma,norder,1)
+                     htstar,atstar,ctstar,sigma,norder,morder,1)
              elseif (iploty.eq.ipr) then
                 call exact_toystar2D(time,gamma,polyk,totmass, &
-                     htstar,atstar,ctstar,sigma,norder,2)
+                     htstar,atstar,ctstar,sigma,norder,morder,2)
              elseif (iploty.eq.iutherm) then
                 call exact_toystar2D(time,gamma,polyk,totmass, &
-                     htstar,atstar,ctstar,sigma,norder,3)
+                     htstar,atstar,ctstar,sigma,norder,morder,3)
              elseif (iploty.eq.ivx .or. iploty.eq.ivx+1) then
                 call exact_toystar2D(time,gamma,polyk,totmass, &
-                     htstar,atstar,ctstar,sigma,norder,4)
+                     htstar,atstar,ctstar,sigma,norder,morder,4)
              elseif (iploty.eq.ike) then
                 call exact_toystar2D(time,gamma,polyk,totmass, &
-                     htstar,atstar,ctstar,sigma,norder,4)
+                     htstar,atstar,ctstar,sigma,norder,morder,4)
              endif
           elseif (iplotx.le.ndim .and. iploty.le.ndim) then
              call exact_toystar2D(time,gamma,polyk,totmass, &
-                  htstar,atstar,ctstar,sigma,norder,0)
+                  htstar,atstar,ctstar,sigma,norder,morder,0)
           endif
        endif
 
