@@ -2,6 +2,8 @@
 !  wrapper for the main data read
 !  ensures that same procedure occurs on initial read as from menu option
 !
+!  drives reading of all files listed on command line
+!
 subroutine get_data   
   use exact_params
   use filenames

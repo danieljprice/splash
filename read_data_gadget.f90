@@ -2,7 +2,7 @@
 ! this subroutine reads from the data file(s)
 ! change this to change the format of data input
 !
-! THIS VERSION IS FOR OUTPUT FROM THE GADGET CODE
+! THIS VERSION IS FOR OUTPUT FROM THE GADGET CODE (VERSION 2.0)
 !
 ! the data is stored in the global array dat
 !
@@ -43,8 +43,9 @@ subroutine read_data(rootname,istart,nfilesteps)
   character(LEN=2) :: fileno
   integer*4, dimension(6) :: Npartoftype
   integer, dimension(:), allocatable :: iamtemp
-  integer :: i,j,itype,icol,ifile,ioftype,index1,index2
-  integer :: ncol_max,npart_max,nstep_max
+  integer :: i,j,itype,icol,ifile,idashpos,ioftype
+  integer :: index1,index2,indexstart,indexend,Nmassesdumped
+  integer :: ncol_max,npart_max,nstep_max,int_from_string
   logical :: iexist,reallocate
   real*8 :: timetemp
   real*8, dimension(6) :: Massoftype
@@ -52,9 +53,21 @@ subroutine read_data(rootname,istart,nfilesteps)
   real*4, dimension(:,:), allocatable :: dattemp
 
   if (rootname(1:1).ne.' ') then
-     ifile = 1
-     !--work out the first filename
-     write(datfile,"(a,'_','00',i1)") trim(rootname),ifile
+     idashpos = index(rootname,'_') ! position of '_' in string
+     if (idashpos.eq.0) then
+        !
+        !--for rootnames without the '_000', read all files starting at #1
+        !
+	ifile = 1
+        !--work out the first filename
+        write(datfile,"(a,'_','00',i1)") trim(rootname),ifile
+     else
+        !
+	!--otherwise just read this dump
+	!
+        ifile = int_from_string(rootname(idashpos+1:idashpos+3))
+	datfile = trim(rootname)
+     endif
   else
      print*,' **** no data read **** ' 
      return
@@ -77,7 +90,7 @@ subroutine read_data(rootname,istart,nfilesteps)
 !
 !--read data from snapshots
 !  
-  i = 1
+  i = istart
   !
   !--allocate memory for data arrays (initially for 11 timesteps)
   !
@@ -100,9 +113,10 @@ subroutine read_data(rootname,istart,nfilesteps)
      !--read header for this timestep
      !
      read(11,ERR=70,end=80) Npartoftype,Massoftype,timetemp 
+     print*,'Npartoftype =',Npartoftype
      ntot(i) = int(sum(Npartoftype))
      npart(i) = int(Npartoftype(1))
-     print*,'Npartoftype = ',Npartoftype
+     print*,'Npartoftype =',Npartoftype
      print*,'Massoftype = ',Massoftype
      time(i) = real(timetemp)
      print*,'t = ',time(i),' npart, ntot = ',npart(i),ntot(i)
@@ -152,26 +166,45 @@ subroutine read_data(rootname,istart,nfilesteps)
         !
         !--read particle masses
         !
-	print*,'particle masses'
-	index1 = 1	
+        !--work out total number of masses dumped 
+	Nmassesdumped = 0
 	do itype = 1,6
+	   if (abs(Massoftype(itype).lt.1.e-8)) then
+	      Nmassesdumped = Nmassesdumped + Npartoftype(itype)
+	   endif
+	enddo
+	print*,'particle masses ',Nmassesdumped
+
+	!--read this number of entries
+        if (allocated(dattemp1)) deallocate(dattemp1)
+        allocate(dattemp1(Nmassesdumped))
+	read(11,end=66,err=74) dattemp1(1:Nmassesdumped)
+	!--now copy to the appropriate sections of the .dat array
+	indexstart = 1
+	index1 = 1
+	
+	do itype=1,6
 	   if (Npartoftype(itype).ne.0) then
-	      index2 = index1 + Npartoftype(itype)
+	      index2 = index1 + Npartoftype(itype) -1
 	      if (abs(Massoftype(itype)).lt.1.e-8) then ! masses dumped
-	         print*,'reading masses for type ',itype,index1,index2,Npartoftype(itype)
-	         read (11, end=66,ERR=74) dat(7,index1:index2,i)
+	         indexend = indexstart + Npartoftype(itype) - 1
+	         print*,'read ',Npartoftype(itype),' masses for type ', &
+		        itype,index1,'->',index2,indexstart,'->',indexend
+	         dat(7,index1:index2,i) = dattemp1(indexstart:indexend)
 	      else  ! masses not dumped
 	         print*,'setting masses for type ',itype,' = ', &
-		        real(Massoftype(itype)),index1,index2
+		        real(Massoftype(itype)),index1,'->',index2
 	         dat(7,index1:index2,i) = real(Massoftype(itype))
 	      endif
 	      index1 = index2 + 1
+	      indexstart = indexend + 1
 	   endif
 	enddo
+	deallocate(dattemp1)
 	!
         !--read other quantities for rest of particles
         !
-	print*,'gas properties'
+	print*,'gas properties ',npart(i)
         do icol=8,12
 	   !!print*,icol
 	   read (11, end=66,ERR=78) dat(icol,1:npart(i),i)
@@ -184,22 +217,26 @@ subroutine read_data(rootname,istart,nfilesteps)
      endif
      iam(:,i) = 0
      !
-     !--set next filename and see if it exists
+     !--if just the rootname has been input, 
+     !  set next filename and see if it exists
      !
-     i = i + 1
      ifile = ifile + 1
-     if (ifile.lt.10) then
-        write(datfile,"(a,'_','00',i1)") trim(rootname),ifile
-     elseif (ifile.lt.100) then
-        write(datfile,"(a,'_','0',i2)") trim(rootname),ifile     
-     elseif (ifile.lt.1000) then
-        write(datfile,"(a,'_',i3)") trim(rootname),ifile
+     i = i + 1
+     if (idashpos.eq.0) then
+        if (ifile.lt.10) then
+           write(datfile,"(a,'_','00',i1)") trim(rootname),ifile
+        elseif (ifile.lt.100) then
+           write(datfile,"(a,'_','0',i2)") trim(rootname),ifile     
+        elseif (ifile.lt.1000) then
+           write(datfile,"(a,'_',i3)") trim(rootname),ifile
+        else
+           print*,'error: ifile > 1000 in filename'
+	   return
+        endif
+        inquire(file=datfile,exist=iexist)
      else
-        print*,'error: ifile > 1000 in filename'
-	return
+        iexist = .false. ! exit loop
      endif
-     inquire(file=datfile,exist=iexist)
-     !!iexist = .false.
   enddo
 
   nfilesteps = ifile-1		! this is if reached array limits
@@ -242,9 +279,9 @@ subroutine read_data(rootname,istart,nfilesteps)
   ivx = 4
   ivlast = 6
   ipmass = 7
-  irho = 8	! location of rho in data array
+  irho = 9	! location of rho in data array
   ipr = 0
-  iutherm = 9	        !  thermal energy
+  iutherm = 8	        !  thermal energy
   ih = 12		!  smoothing length
   !
   !--set labels of the quantities read in
