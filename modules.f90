@@ -9,7 +9,7 @@
 module params
  implicit none
  integer, parameter :: maxpart=10000
- integer, parameter :: maxstep=10
+ integer, parameter :: maxstep=101
  integer, parameter :: ndimmax = 3
  integer, parameter :: maxplot=24+2*ndimmax + 1   ! maximum number of plots 
 end module params

@@ -23,7 +23,23 @@
       INTEGER i,j,k,ifile
       INTEGER ncol_max,ndim_max,ndimV_max
       LOGICAL :: iexist,ivegotdata,magfield
-      
+
+!
+!--set everything to zero initially
+!
+      dat1 = 0.
+      time = 0.
+      gamma = 0.
+      hfact = 0.
+      iam = 0
+      npart = 0
+      ntot = 0
+      nghost = 0
+      ndim = 0
+      ndimV = 0
+      ncolumns = 0
+      ncalc = 0
+      nfilesteps = 0
 !
 !--assume MHD if filename starts with m
 !
@@ -227,33 +243,24 @@
 77    CONTINUE
       PRINT*,' *** Error encountered while reading file ***'
       PRINT*,' -> Check that magnetic field is toggled correctly'
-      GOTO 999    
+      RETURN
       
 78    CONTINUE
       PRINT*,' *** Error encountered while reading timestep ***'
       PRINT*,' -> number of columns in data file not equal to'
       PRINT*,'    that set as a parameter - edit and recompile'
-      GOTO 999
+      RETURN
 
 79    CONTINUE
       PRINT*,' *** Error reading data file header: check format ***'
-      GOTO 999
+      RETURN
 
 80    CONTINUE
       PRINT*,' *** data file empty, no steps read ***'
-      GOTO 999
+      RETURN
 
 81    CONTINUE
       PRINT*,' *** Error: can''t open data file ***'
-      GOTO 999
-
- 999  CONTINUE
-      ncalc = 0
-      nfilesteps = 0
-      npart = 0
-      nghost = 0
-      ntot = 0
-      ndim = 0
       RETURN
       
                     

@@ -37,6 +37,9 @@ subroutine options(ipicky)
           dat(:,:,:),iam(:), &
           ncolumns,ncalc,nfilesteps,ntot(:),npart(:), &
           nghost(:),ndim,ndimV,hfact,ivegotdata)
+
+     nstart = 1
+     n_end = nfilesteps
      !
      !--calculate various additional quantities
      !     
@@ -45,9 +48,8 @@ subroutine options(ipicky)
      !--set plot limits
      !
      print*,'Setting plot limits...'
-     n_end = nfilesteps
-     ntotplot(:) = npart(:)
-     if (iplotghost) ntotplot(:) = ntot(:)
+     ntotplot(nstart:n_end) = npart(nstart:n_end)
+     if (iplotghost) ntotplot(nstart:n_end) = ntot(nstart:n_end)
      zoom = 1.0
      !!--find limits of particle properties	  
      lim(:,1) = 1.e6
