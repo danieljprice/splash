@@ -1,7 +1,7 @@
 !--------------------
 !    MAIN MENU
 !--------------------
-recursive subroutine menu(quit)
+recursive subroutine menu
   use filenames
   use labels
   use settings
@@ -9,7 +9,6 @@ recursive subroutine menu(quit)
   use prompting
   use transforms
   implicit none
-  logical, intent(out) :: quit
   integer :: i,icol,ihalf,iadjust,iaction,istep,ierr,index
   integer :: ipicky,ipickx,irender,ivecplot,int_from_string
   integer :: iamvecprev, ivecplottemp
@@ -17,7 +16,6 @@ recursive subroutine menu(quit)
   character(LEN=30) :: filename,vecprompt
   logical :: iansx, iansy, ichange
 
-  quit = .false.
 !---------------------------------------------------------------------------
 !  preliminaries
 !---------------------------------------------------------------------------
@@ -187,11 +185,12 @@ recursive subroutine menu(quit)
         !
         call main(ipicky,ipickx,irender,ivecplot)
      endif
+     call menu
 !------------------------------------------------------------------------
 !  if input is an integer > numplot+1, quit
 !------------------------------------------------------------------------
   elseif (ipicky.gt.numplot+1) then
-     quit = .true.
+     return
   else
 !------------------------------------------------------------------------
 !  if input is a string, use menu options
@@ -262,49 +261,50 @@ recursive subroutine menu(quit)
 	      ivecplotmulti(i) = ivecplottemp
            endif
         enddo
-        return	    	  	  
+        call menu
 !------------------------------------------------------------------------
      case('d','D')
         call options_data
+	call menu
 !------------------------------------------------------------------------
      case('i','I')
         interactive = .not.interactive
         print*,' Interactive mode = ',interactive
-        return
+        call menu
 !------------------------------------------------------------------------
      case('p','P')
-        call options_page	 
+        call options_page
+	call menu 
 !------------------------------------------------------------------------
      case('o','O')
         call options_particleplots
-        return
+        call menu
 !------------------------------------------------------------------------
      case('r','R')
         call options_render
-        return
+        call menu
 !------------------------------------------------------------------------
      case('v','V')
         call options_vecplot
-        return
+        call menu
 !------------------------------------------------------------------------
      case('x','X')
         call options_xsecrotate
-        return	
+        call menu
 !------------------------------------------------------------------------
      case('l','L')
         call options_limits
-        return	  
+        call menu 
 !------------------------------------------------------------------------
      case('s','S')
         call defaults_write
-        return
+        call menu
 !------------------------------------------------------------------------
      case('h','H')
         ishowopts = .not.ishowopts
-        return
+        call menu
 !------------------------------------------------------------------------
      case('q','Q')
-        quit = .true.
         return
 !------------------------------------------------------------------------
      case DEFAULT

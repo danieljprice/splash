@@ -147,13 +147,12 @@ program supersphplot
   use labels
   use settings
   implicit none
-  logical :: iquit
   integer :: i,iprev
   !
   !--print header
   !
   call print_header
-  print*,'( version 5.0 )'
+  print*,'( version 1.0 )'
   !
   !--set default options
   !
@@ -197,20 +196,17 @@ program supersphplot
   else
      call get_data
   endif
-  !------------------------------------------------------------
+  ! -----------------------------------------------------------
   ! setup kernel table for fast column density plots in 3D
   call setup_integratedkernel
   
   ! ----------------------------------------------------------------
-  ! menu - loop back to here once finished plotting/setting options
+  ! enter main menu
   !
-  menuloop: do while (.not.iquit)
-     
-     !----------------------------------------------------------------------
-     !  print menu
-     !
-     call menu(iquit)
-     
-  enddo menuloop
+  call menu
+  
+  ! ------------------------------
+  ! print a random exit message
+  print*,' ta ta for now...'
                 
 end program supersphplot
