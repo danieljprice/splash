@@ -17,20 +17,21 @@ contains
 !   iadvance : integer telling the loop how to advance the timestep
 !
 subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
-  icolourpart,xmin,xmax,ymin,ymax,anglex,angley,anglez,ndim,iadvance,isave)
+  icolourpart,xmin,xmax,ymin,ymax,rendermin,rendermax, &
+  anglex,angley,anglez,ndim,iadvance,isave)
   implicit none
   integer, intent(in) :: npart,iplotx,iploty,irender,ndim
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
   real, dimension(npart), intent(in) :: xcoords, ycoords, hi
-  real, intent(inout) :: xmin,xmax,ymin,ymax
+  real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax
   real, intent(inout) :: anglex,angley,anglez
   logical, intent(out) :: isave
   integer :: i,iclosest,nc,ipts,ierr
   integer :: nmarked
   real :: xpt,ypt,xpt2,ypt2,xptmin,xptmax,yptmin,yptmax
   real :: rmin,rr,gradient,yint
-  real :: xlength, ylength
+  real :: xlength, ylength, drender
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
   character(len=20) :: string
@@ -78,6 +79,9 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
      enddo
      
      select case(char)
+     !
+     !--particle plot stuff
+     !
      case('p')
         print*,' closest particle = ',iclosest,'x = ',xcoords(iclosest),' y =',ycoords(iclosest)
         call pgnumb(iclosest,0,1,string,nc)
@@ -88,7 +92,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         print*,'plotting circle of interaction on particle ',iclosest
         call pgsfs(2)
         call pgcirc(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
-     case('g','G')   ! draw a line between two points
+     case('g')   ! draw a line between two points
         ipts = ipts + 1
         xline(2) = xline(3)
         yline(2) = yline(3)     
@@ -113,15 +117,26 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         else
            print*,' select another point and press l again'
         endif
+     !
+     !--help
+     !
      case('h')
         print*,'-------------- interactive mode commands --------------'
-        print*,' select area and zoom : left click (or A)'
+        print*,' select region : left click (or A)'
+        print*,': left click again to zoom on selection'
+        if (irender.ne.0) then
+           print*,': or select colour bar to change rendering limits'
+        else
+           print*,': or press 1-9 to mark selected particles with colour 1-9'
+        endif
         print*,' zoom in by 10%       : +'
         print*,' zoom out by 10(20)%      : - (_)'
         print*,' (a)djust/reset plot limits to fit '
         print*,' (r)eplot current plot        : r'
         print*,' label closest (p)article     : p'
         print*,' plot a line and find its g)radient : g'
+        print*,' G : move legend to current position'
+        print*,' T : move title to current position'
         if (rotation) then
            print*,' rotate about z axis by +(-) 15 degrees : , (.)'
            print*,' rotate about z axis by +(-) 30 degrees : < (>)'
@@ -153,16 +168,26 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         print*,'left click : zoom'
         if (irender.le.0) then
            print*,'1-9 = mark selected particles with colours 1-9'
+        else
+           print*,'select colour bar to change rendering limits'
         endif
         call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
         print*,xpt,ypt,xpt2,ypt2,char2
         select case (char2)
-        case('A')   ! zoom if another left click
+        case('A')   ! zoom if another left click and not around colour bar
            call pgrect(xpt,xpt2,ypt,ypt2)
-           xmin = min(xpt,xpt2)
-           xmax = max(xpt,xpt2)
-           ymin = min(ypt,ypt2)
-           ymax = max(ypt,ypt2)
+           if (xpt.gt.xmax .and. xpt2.gt.xmax .and. irender.gt.0) then
+              drender = (rendermax-rendermin)/(ymax-ymin)
+              rendermax = rendermin + (max(ypt,ypt2)-ymin)*drender
+              rendermin = rendermin + (min(ypt,ypt2)-ymin)*drender
+              print*,'setting render min = ',rendermin
+              print*,'setting render max = ',rendermax
+           else
+              xmin = min(xpt,xpt2)
+              xmax = max(xpt,xpt2)
+              ymin = min(ypt,ypt2)
+              ymax = max(ypt,ypt2)
+           endif
            iadvance = 0
            iexit = .true.
         case('1','2','3','4','5','6','7','8','9')
@@ -313,6 +338,15 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
            iexit = .true.
         endif
      !
+     !--general plot stuff
+     !
+     case('G') ! move legend here
+        print*,'setting legend position to current location...'
+        call mvlegend(xpt,ypt,xmin,xmax,ymax)
+     case('T') ! move title here
+        print*,'setting title position to current location...'
+        call mvtitle(xpt,ypt,xmin,xmax,ymax)
+     !
      !--timestepping
      !
      case('q','Q')
@@ -389,6 +423,8 @@ subroutine interactive_step(iadvance,xmin,xmax,ymin,ymax)
         print*,' next timestep/plot   : space, n'
         print*,' previous timestep    : right click (or X), b'
         print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then left (right) click'
+        print*,' G : move legend to current position'
+        print*,' T : move title to current position'
         print*,' (h)elp                       : h'
         print*,' (q)uit plotting              : q, Q'             
         print*,'-------------------------------------------------------'
@@ -444,6 +480,15 @@ subroutine interactive_step(iadvance,xmin,xmax,ymin,ymax)
         iadvance = 0
         iexit = .true.
      !
+     !--general plot stuff
+     !
+     case('G') ! move legend here
+        print*,'setting legend position to current location...'
+        call mvlegend(xpt,ypt,xmin,xmax,ymax)
+     case('T') ! move title here
+        print*,'setting title position to current location...'
+        call mvtitle(xpt,ypt,xmin,xmax,ymax)
+     !
      !--timestepping
      !
      case('q','Q')
@@ -474,15 +519,40 @@ subroutine interactive_step(iadvance,xmin,xmax,ymin,ymax)
   return
 end subroutine interactive_step
 
-subroutine mvlegend(hpos,vpos)
+!
+!--this subroutine moves the legend to the current position
+!
+subroutine mvlegend(xi,yi,xmin,xmax,ymax)
  use settings_page, only:hposlegend,vposlegend
  implicit none
- real, intent(in) :: hpos,vpos
+ real, intent(in) :: xi,yi,xmin,xmax,ymax
+ real :: xch,ych
  
- hposlegend = hpos
- vposlegend = vpos
+ hposlegend = (xi - xmin)/(xmax-xmin)
+ !--query character height in world coordinates
+ call pgqcs(4,xch,ych)
+ vposlegend = (ymax - yi)/ych
+ print*,'hpos = ',hposlegend,' vpos = ',vposlegend
  
  return
 end subroutine mvlegend
+
+!
+!--this subroutine moves the title to the current position
+!
+subroutine mvtitle(xi,yi,xmin,xmax,ymax)
+ use settings_page, only:hpostitle,vpostitle
+ implicit none
+ real, intent(in) :: xi,yi,xmin,xmax,ymax
+ real :: xch,ych
+ 
+ hpostitle = (xi - xmin)/(xmax-xmin)
+ !--query character height in world coordinates
+ call pgqcs(4,xch,ych)
+ vpostitle = (yi - ymax)/ych
+ print*,'hpos = ',hpostitle,' vpos = ',vpostitle
+ 
+ return
+end subroutine mvtitle
 
 end module interactive_routines

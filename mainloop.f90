@@ -49,7 +49,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   real, dimension(ndim) :: xcoords
   real :: xmin,xmax,ymin,ymax,zmin,zmax,ymean
   real :: xmintemp,xmaxtemp,ymintemp,ymaxtemp
-  real :: vecmax,rendermin,rendermax
+  real :: vecmax,rendermin,rendermax,dummymin,dummymax
   real :: xsecmin,xsecmax,dxsec,xsecpos
   real :: pixwidth
   real :: charheight, charheightmm
@@ -663,11 +663,11 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                     labelrender = transform_label(labelrender,itrans(irenderplot))
                  endif
                  !!--limits for rendered quantity
-                 if (iadapt) then
+                 if (iadapt .and. iadvance.ne.0) then
                     !!--if adaptive limits, find limits of rendered array
                     rendermin = minval(datpix)
                     rendermax = maxval(datpix)
-                 else                    
+                 elseif (iadvance.ne.0) then                   
                     !!--or apply transformations to fixed limits
                     rendermin = lim(irenderplot,1)
                     rendermax = lim(irenderplot,2)
@@ -800,7 +800,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                 iadvance = nfreq
                 call interactive_part(ninterp,iplotx,iploty,irenderplot, &
                      xplot(1:ninterp),yplot(1:ninterp),dat(1:ninterp,ih,i),icolourme(1:ninterp), &
-                     xmin,xmax,ymin,ymax,angletempx,angletempy,angletempz,ndim,iadvance,isave)
+                     xmin,xmax,ymin,ymax,rendermin,rendermax, &
+                     angletempx,angletempy,angletempz,ndim,iadvance,isave)
                 !--turn rotation on if necessary
                 if (abs(angletempx-anglex).gt.tol) irotate = .true.
                 if (abs(angletempy-angley).gt.tol) irotate = .true.
@@ -811,6 +812,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                    lim(iplotx,2) = xmax
                    lim(iploty,1) = ymin
                    lim(iploty,2) = ymax
+                   lim(irender,1) = rendermin
+                   lim(irender,2) = rendermax
                    anglex = angletempx
                    angley = angletempy
                    anglez = angletempz
@@ -923,7 +926,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               iadvance = nfreq
               call interactive_part(ntot(i),iplotx,iploty,0,xplot(1:ntot(i)), &
                                     yplot(1:ntot(i)),dat(1:ninterp,ih,i),icolourme(1:ntot(i)), &
-                                    xmin,xmax,ymin,ymax, &
+                                    xmin,xmax,ymin,ymax,dummymin,dummymax, &
                                     angletempx,angletempy,angletempz,ndim,iadvance,isave)
               print*,'xmin,xmax = ',xmin,xmax
               if (isave) then
