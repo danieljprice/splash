@@ -11,7 +11,7 @@ subroutine options_particleplots
 
   iaction = 0      
   print 10, iplotline,iplotlinein,iplotav,ilabelpart,plotcirc, &
-        iplotghost,iplotsink,imark,imarkg,xsec_nomulti,icoordsnew,iexact
+        iplotghost,iplotsink,imark,imarkg,icoordsnew,iexact
 10  format(' 0) exit ',/, 		&
          ' 1) toggle plot line                ( ',L1,',',1x,L1,' ) ',/, &
          ' 2) toggle plot average line        ( ',L1,' ) ',/,           &
@@ -19,10 +19,9 @@ subroutine options_particleplots
          ' 4) toggle circles of interaction   ( ',L1,' ) ',/,           &
          ' 5) toggle plot ghosts/sinks        ( ',L1,',',1x,L1,' )',/,  &
          ' 6) change graph markers            ( ',i2,',',1x,i2,' )',/,  &
-         ' 7) toggle cross section/projection ( ',L1,' ) ',/,           &
-         ' 8) change coordinate systems       ( ',i2,' ) ',/,           &
-	 ' 9) toggle exact solution           ( ',i2,' ) ')
-    call prompt('enter option',iaction,0,9)
+         ' 7) change coordinate systems       ( ',i2,' ) ',/,           &
+	 ' 8) toggle exact solution           ( ',i2,' ) ')
+    call prompt('enter option',iaction,0,8)
 !
   select case(iaction)
 
@@ -87,15 +86,6 @@ subroutine options_particleplots
      return
 !------------------------------------------------------------------------
   case(7)
-     xsec_nomulti =.not.xsec_nomulti
-     print *,' Cross section = ',xsec_nomulti
-     flythru = .false.
-     if (xsec_nomulti) then
-        call prompt('Do you want a fly-through',flythru)
-     endif
-     return
-!------------------------------------------------------------------------
-  case(8)
      print 20,icoords
 20   format(' 0) reset (=',i2,')',/, &
 	    ' 1) cartesian ',/,            &
@@ -105,7 +95,7 @@ subroutine options_particleplots
      if (icoordsnew.eq.0) icoordsnew = icoords
      return
 !------------------------------------------------------------------------
-  case(9)
+  case(8)
      call options_exact(iexact)
      return
 !------------------------------------------------------------------------

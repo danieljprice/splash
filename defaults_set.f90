@@ -9,9 +9,9 @@ subroutine defaults_set
   use settings
   implicit none
   integer :: i
-  !
-  !--set default options
-  !
+!
+!--data options (most should be set upon call to read_data)
+!
   numplot=maxplot 	! reset if read from file
   ncalc = 0		! number of columns to calculate(e.g. radius)
   nextra = 0	! extra plots aside from particle data
@@ -25,33 +25,47 @@ subroutine defaults_set
   nfreq = 1		! frequency of timesteps to read
   icoords = 1	! co-ordinate system of simulation
   icoordsnew = icoords ! co-ordinate system to plot in
-
-  iaxis = 0	! turns axes off/on
-  iadapt = .true.	! adaptive plot limits
-  plotcirc = .false.	! plot circle of radius 2h around particles
-  plotcircall = .false.	!  " " around all particle
-  icircpart = 1		!  " " around a specific particle
-  ncircpart = 1
+!
+!--default for interactive mode
+!
   interactive = .true.
+!
+!--limits options
+!
+  iadapt = .true.	! adaptive plot limits
+  scalemax = 1.0	! for rescaling adaptive limits
+  zoom = 1.0            ! for rescaling fixed limits
+  itrans(:) = 0		! no transformations (log10 etc)
+  itrackpart = 0        ! particle to track (none)
+  xminoffset_track = 0.5 ! offset of limits from tracked particle
+  xmaxoffset_track = 0.5 !
+!
+!--page options
+!
+  iaxis = 0	! turns axes off/on
+  ipagechange = .true.	! if false plots graphs on top of each other
   animate = .false.
   tile = .false.
-  itrackpart = 0
-  xminoffset_track = 0.5
-  xmaxoffset_track = 0.5
-
-  xsec_nomulti = .false.		! take cross section of data / particles
-  flythru = .false.		! take series of cross sections through data
-  ipagechange = .true.	! if false plots graphs on top of each other
-  scalemax = 1.0	! for rescaling adaptive limits
-  zoom = 1.0	! for rescaling fixed limits
-  imark = 1	! PGPLOT marker for particles
-  imarkg = 4	! PGPLOT marker for ghost particles
-  imarksink = 17	! PGPLOT marker for sink particles 
   nacross = 1	! number of plots across page
   ndown = 1		! number of plots down page
   ipapersize = 0	! paper size option
   papersizex = 0.0	! size of x paper (no call to PGPAP if zero)
   aspectratio = 0.0	! aspect ratio of paper (no call to PGPAP if zero)
+  hposlegend = 0.75     ! horizontal legend position as fraction of viewport
+  vposlegend = 2.0      ! vertical legend position in character heights
+  hpostitle = 0.5     ! horizontal title position as fraction of viewport
+  vpostitle = 1.0      ! vertical title position in character heights
+  fjusttitle = 0.5      ! justification factor for title
+!
+!--particle plot options
+!
+  plotcirc = .false.	! plot circle of radius 2h around particles
+  plotcircall = .false.	!  " " around all particle
+  icircpart = 1		!  " " around a specific particle
+  ncircpart = 1
+  imark = 1	! PGPLOT marker for particles
+  imarkg = 4	! PGPLOT marker for ghost particles
+  imarksink = 17	! PGPLOT marker for sink particles 
   iplotline = .false.	! plot line joining the particles
   iplotlinein = .false.	! " " but on first step only
   linestylein = 4		! PGPLOT line style for above
@@ -63,22 +77,28 @@ subroutine defaults_set
   iplotpartvec = .true.	! whether to plot particles on vector plot
   iplotghost = .true.	! plot ghost particles
   iplotsink = .true.	! plot sink particles
-  npix = 100		! pixels in x direction for rendering
-  npixvec = 40	! pixels in x direction on vector plots
-  iplotcont_nomulti = .true.	! plot contours
+!
+!--render options
+!
+  icolours = 0		 ! colour scheme to use
+  ncolours=10		 ! number of colours in colour table
+  npix = 100		 ! pixels in x direction for rendering
+  iPlotColourBar = .true.! whether or not to plot the colour bar
+  iplotcont_nomulti = .true. ! plot contours
+  ncontours = 30             ! number of contours to plot
+  
+  xsec_nomulti = .false. ! take cross section of data / particles
   xsecpos_nomulti = 0.   ! position of cross section
-  ncontours = 30		! number of contours to plot
-  icolours = 0		! colour scheme to use
-  ncolours=10		! number of colours in colour table
-  itrans(:) = 0		! no transformations (log10 etc)
+  flythru = .false.	 ! take series of cross sections through data
+  xseclineX1 = 0.0
+  xseclineX2 = 0.0
+  xseclineY1 = 0.0
+  xseclineY2 = 0.0
+!
+!--vector plot options
+!
+  npixvec = 40	! pixels in x direction on vector plots
   UseBackgndColorVecplot = .false. ! plot vector plot using black/white
-  iPlotColourBar = .true.
-
-  hposlegend = 0.75     ! horizontal legend position as fraction of viewport
-  vposlegend = 2.0      ! vertical legend position in character heights
-  hpostitle = 0.5     ! horizontal title position as fraction of viewport
-  vpostitle = 1.0      ! vertical title position in character heights
-  fjusttitle = 0.5      ! justification factor for title
 !
 !--set coordinate labels for all coordinate systems
 !
@@ -91,7 +111,6 @@ subroutine defaults_set
   labelcoord(1,3) = 'r'
   labelcoord(2,3) = '\gtheta'
   labelcoord(3,3) = '\gphi'
-  
 !
 !--exact solution parameters
 !

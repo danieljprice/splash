@@ -58,18 +58,19 @@ subroutine menu(quit)
      print 14,'l','change plot limits'
      print 14,'r','rendering options'
      print 14,'v','vector plot options'
+     print 14,'x','cross sectioning / rotation options'
      print 14,'h','hide options'
      print 14,'s','save defaults'
      print 14,'q','exit supersphplot'
   else
-     print*,' d(ata) i(nteractive) p(age) o(pts) l(imits)'
-     print*,' r(endering) v(ector) s(ave) h(elp) q(uit)'
+     print*,' d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)'
+     print*,' r(ender) v(ector) x(sec/rotate) s(ave) q(uit)'
   endif
  
   print 12
 
 11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a)
-12 format(1x,50('-'))
+12 format(1x,55('-'))
 13 format(1x,i2,')',1x,a)
 14 format(1x,a2,')',1x,a)
 15 format(1x,a2,')',1x,a,'( ',i2, ' )')
@@ -159,7 +160,7 @@ subroutine menu(quit)
 		 call prompt(' change rendering options for this plot? ',ichange)
                  if (ichange) then
 	            call prompt('plot contours? ',iplotcontmulti(i))
-	            if (ndim.eq.3) then
+	            if (ndim.ge.2) then
 		       call prompt(' cross section (no=projection)? ',x_secmulti(i))
 		       if (x_secmulti(i)) then
 		          call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
@@ -204,6 +205,10 @@ subroutine menu(quit)
      case('v','V')
         call options_vecplot
         return
+!------------------------------------------------------------------------
+     case('x','X')
+        call options_xsecrotate
+        return	
 !------------------------------------------------------------------------
      case('l','L')
         call options_limits

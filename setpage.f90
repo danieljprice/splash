@@ -89,7 +89,7 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,titlex,  &
 
   elseif (iplot.eq.1) then
      call pgpanl(1,1)
-  else
+  elseif (nx*ny.gt.1) then
      call pgpage
   endif
   

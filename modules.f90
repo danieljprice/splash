@@ -82,7 +82,7 @@ module settings
 ! 
  real :: scalemax,zoom
  real, dimension(3) :: xminoffset_track, xmaxoffset_track
- real :: xsecpos_nomulti
+
 !--plot options
  logical :: interactive
  logical :: iadapt,ihavereadfilename
@@ -102,13 +102,18 @@ module settings
 !--rendering options
 !
  integer :: ncontours,npix
+ logical :: iplotcont_nomulti
  logical :: iPlotColourBar
 !
 !--vector plot options
 !
  integer :: npixvec
  logical :: UseBackgndColorVecplot, iplotpartvec
- logical :: iplotcont_nomulti,xsec_nomulti
+!
+!--cross section/rotation options
+!
+ logical :: xsec_nomulti, irotate
+ real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
 !
 !--power spectrum options
 !
@@ -131,7 +136,9 @@ module settings
    ipagechange,tile,animate,ipapersize,papersizex,aspectratio, &
    hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle  
 
- namelist /renderopts/ npix, ncontours,iplotcont_nomulti,iPlotColourBar
+ namelist /renderopts/ npix, ncontours,iplotcont_nomulti, &
+   xsec_nomulti,iPlotColourBar,xsecpos_nomulti, &
+   xseclineX1,xseclineX2,xseclineY1,xseclineY2
  
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot, iplotpartvec
      

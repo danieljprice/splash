@@ -10,16 +10,15 @@ subroutine options_render
 !
 !--rendering options
 !
- print 10,npix,icolours,xsec_nomulti,iplotcont_nomulti,ncontours, &
+ print 10,npix,icolours,iplotcont_nomulti,ncontours, &
       iPlotColourBar
 10  format(' 0) exit ',/, 		     &
            ' 1) change number of pixels          (',i5,' )',/, &
            ' 2) change colour scheme             (',i2,' )',/,    &
-	   ' 3) toggle cross section/projection  ( ',L1,' )',/, &
-           ' 4) toggle plot contours             ( ',L1,' )',/, &
-           ' 5) change number of contours        (',i3,' )',/, &
-           ' 6) toggle colour bar                ( ',L1,' )')
- call prompt('enter option',ians,0,6)
+           ' 3) toggle plot contours             ( ',L1,' )',/, &
+           ' 4) change number of contours        (',i3,' )',/, &
+           ' 5) toggle colour bar                ( ',L1,' )')
+ call prompt('enter option',ians,0,5)
 !
 !--options
 !
@@ -38,24 +37,13 @@ subroutine options_render
        endif
 !------------------------------------------------------------------------
     case(3)
-       xsec_nomulti = .not.xsec_nomulti
-       xsecpos_nomulti = 0.0
-       if (xsec_nomulti) then
-          !call prompt('Do you want a fly-through',flythru)
-          !if (.not.flythru) then
-          call prompt('enter co-ordinate location of cross section slice', &
-               xsecpos_nomulti)
-          !endif
-       endif
-!------------------------------------------------------------------------
-    case(4)
        iplotcont_nomulti = .not.iplotcont_nomulti
        print*,'plot contours = ',iplotcont_nomulti
 !------------------------------------------------------------------------
-    case(5)
+    case(4)
        call prompt(' enter number of contours between min,max',ncontours,1,500)
 !------------------------------------------------------------------------
-    case(6)
+    case(5)
        iPlotColourBar = .not.iPlotColourBar
        print*,'plot colour bar = ',iPlotColourBar
   end select

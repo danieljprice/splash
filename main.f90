@@ -39,7 +39,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   real :: pixwidth
   real :: charheight, charheightmm
   real :: dxgrid
-  real :: xpt1,ypt1,xpt2,ypt2
 
   logical :: iplotcont,x_sec,isamexaxis,isameyaxis
   logical :: log, inewpage, tile_plots, debug
@@ -439,16 +438,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  endif
               endif
 
-	      !---------------------------------
-	      ! output some muff to the screen
-	      !---------------------------------
-              print 34, time(i),i
-              print*,trim(labely),'min,max = ',ymin,ymax
-              print*,trim(labelx),'min,max = ',xmin,xmax
-34            format (5('-'),' t = ',f8.4,', dump #',i3,1x,10('-'))
-              if (x_sec.and.iplotpart) print 35,label(ixsec),xsecmin,label(ixsec),xsecmax
-35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
-
               !------------take projections/cross sections through 3D data-----------------!
               if (irenderplot.gt.ndim .and. ndim.eq.3) then
 
@@ -498,18 +487,9 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  !-------------------------------------------------------------------
                  !!--interpolate from 2D data to 1D line
                  !!  line is specified by giving two points, (x1,y1) and (x2,y2)
-		 xpt1 = xmin
-		 xpt2 = xmax
-		 ypt1 = ymin + 0.5*(ymax-ymin)
-                 ypt2 = ypt1
-		 call prompt('enter xmin of cross section line',xpt1,xmin,xmax)
-                 call prompt('enter xmax of cross section line',xpt2,xmin,xmax)
-                 call prompt('enter ymin of cross section line',ypt1,ymin,ymax)
-                 call prompt('enter ymax of cross section line',ypt2,ymin,ymax)
-
                  !--set up 1D grid and allocate memory for datpix1D
                  xmin = 0.   ! distance (r) along cross section
-                 xmax = SQRT((ypt2-ypt1)**2 + (xpt2-xpt1)**2)
+                 xmax = SQRT((xseclineY2-xseclineY1)**2 + (xseclineX2-xseclineX1)**2)
                  dxgrid = (xmax-xmin)/REAL(npixx)
                  call set_grid1D(xmin,dxgrid,npixx)
 
@@ -517,7 +497,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                       dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
                       dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i),    &
                       dat(ih,1:ninterp,i),dat(irenderplot,1:ninterp,i), &
-                      ninterp,xpt1,ypt1,xpt2,ypt2,datpix1D,npixx)
+                      ninterp,xseclineX1,xseclineY1,xseclineX2,xseclineY2, &
+		      datpix1D,npixx)
                  !
                  !--find limits of datpix1D for plotting
                  !  do transformations on rendered array where appropriate
@@ -538,11 +519,22 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 
               endif ! 2 or 3D and rendering
               !-----end of preliminary muff for 2D/3D cross sections/renderings ------------------
+
+	      !---------------------------------
+	      ! output some muff to the screen
+	      !---------------------------------
+              print 34, time(i),i
+              print*,trim(labely),'min,max = ',ymin,ymax
+              print*,trim(labelx),'min,max = ',xmin,xmax
+34            format (5('-'),' t = ',f8.4,', dump #',i3,1x,10('-'))
+              if (x_sec.and.iplotpart) print 35,label(ixsec),xsecmin,label(ixsec),xsecmax
+35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
 	      
 	      !-----------------------
               ! page setup options
 	      !-----------------------
-	      inewpage = ipagechange .or. ((.not.ipagechange).and.(i.eq.nstart))
+	      inewpage = ipagechange .or. &
+	                 ((.not.ipagechange).and.(i.eq.nstart).and.(nyplot.eq.1))
 	      just = 1
 	      if (ndim.eq.2 .and. x_sec) just = 0
 
@@ -874,7 +866,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	   !-----------------------
            ! page setup options
 	   !-----------------------
-	   inewpage = ipagechange .or. ((.not.ipagechange).and.(i.eq.nstart))
+	   inewpage = ipagechange .or. &
+	              ((.not.ipagechange).and.(i.eq.nstart).and.(nyplot.eq.1))
 	   just = 0
 
            !--------------------------------------------------------------

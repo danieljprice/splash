@@ -73,6 +73,7 @@ program supersphplot
 !     this version for both ndspmhd and matthew bate's code 2003-2004
 !     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
 !
+!      27/07/04 - 2D cross sections work, options_xsecrotate added
 !      14/07/04 - major revamp of render/vector options + defaults save
 !      19/06/04 - can transform particle coords to new coordinate systems
 !      10/06/04 - exact solution for shock tubes, also from file + added read_exactparams

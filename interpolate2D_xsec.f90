@@ -66,9 +66,9 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
   !--work out the equation of the line y = mx + c from the two points input
   !
   gradient = 0.
-  if (.not.xsame) gradient = y2-y1/(x2-x1)
+  if (.not.xsame) gradient = (y2-y1)/(x2-x1)
   yintercept = y2 - gradient*x2
-  print*,'line equation: y = ',gradient,'x + ',yintercept
+  print*,'cross section line: y = ',gradient,'x + ',yintercept
   !
   !--work out length of line and divide into pixels
   !
@@ -139,7 +139,7 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
         if (ipixmax.lt.1) ipixmax = 1
         if (ipixmax.gt.npixx) ipixmax = npixx
         if (ipixmin.gt.npixx) ipixmax = npixx
-        !
+       	!
         !--loop over pixels, adding the contribution from this particle
         !
         do ipix = ipixmin,ipixmax
