@@ -11,11 +11,11 @@ FORTRAN = f90
 FC = ifort
 F90C = ifort
 
-FFLAGS = -O
-F90FLAGS = -O
+FFLAGS = -O -CB -std90 -check all
+F90FLAGS = -O -CB -std90 -check all
 
 #LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11
-LDFLAGS = -L/usr/local/intel/lib -L/usr/lib/gcc-lib/i486-suse-linux/3.3/ -lg2c -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11
+LDFLAGS =  -lg2c -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11
 
 # define the implicit rule to make a .o file from a .f90 file
 
@@ -36,10 +36,10 @@ SOURCES= modules.f90 prompting.f90 \
 	 exact_sedov.f exact_swave.f exact_toystar.f \
 	 exact_toystar_ACplane.f exact_mhdshock.f90 \
 	 integratedkernel.f90 \
-	 interpolate1D.f \
-         interpolate2D.f interpolate2D_xsec.f \
-	 interpolate3D.f interpolate3D_fastxsec.f \
-	 interpolate3D_projection.f \
+	 interpolate1D.f90 \
+         interpolate2D.f90 interpolate2D_xsec.f90 \
+	 interpolate3D.f90 interpolate3D_fastxsec.f90 \
+	 interpolate3D_projection.f90 \
 	 int_from_string.f90 \
 	 legend.f \
 	 options.f options_exact.f90 \
