@@ -44,7 +44,7 @@ LDFLAGS = -lpgplot -lX11 -lF77
 	$(F90C) -c $(F90FLAGS) $(FPPFLAGS) $< -o $@
 
 DANSPH = read_data_dansph.f90 
-MRBSPH = read_data_mbate.f90
+MRBSPH = read_data_mbate_dump.f90 ## read_data_mbate.f90
 GADGETSPH = read_data_gadget.f90
 
 SOURCES= modules.f90 prompting.f90 \
