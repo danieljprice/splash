@@ -286,12 +286,12 @@ subroutine read_data(rootname,istart,nfilesteps)
      do i=1,ndimV
         label(ndim + ndimV+8+i) = 'B\d'//labelcoord(i,1) !' (x10\u-3\d)'	!//'/rho'
      enddo
-     idivB = ndim+ndimV+ndimV+9	 
-     label(idivB) = 'div B'
      do i=1,ndimV
-        label(ndim + ndimV+ndimV+9 + i) = 'J'//labelcoord(i,1)
+        label(ndim + ndimV+ndimV+8 + i) = 'J'//labelcoord(i,1)
      enddo
-     iJfirst = ndim+ndimV+ndimV+9+1
+     iJfirst = ndim+2*ndimV+8+1
+     idivB = ndim+3*ndimV+9 
+     label(idivB) = 'div B'
   else	 
      iBfirst = 0
      iBlast = 0
