@@ -43,6 +43,7 @@
 !
 !     This version for both NDSPMHD and Matthew Bate's code 2003
 !     Changes log:
+!      28/10/03 - bug fix when no data 
 !      14/10/03 - new colour schemes
 !      09/10/03 - gamma different betw. timesteps, paper size, menuitems
 !      23/09/03 - plot error bars, fast cross-section, multi-transform
@@ -189,6 +190,9 @@ c get rootname from command line/file and read file
 !
       ipicky = 1
       menuloop: DO WHILE (ipicky.GT.0 .AND. ipicky.LE.numplot+menuitems)
+
+100   CONTINUE
+
 !
 !--numplot is the total number of data columns (read + calculated)
 !   not including the particle co-ordinates
@@ -207,13 +211,17 @@ c get rootname from command line/file and read file
          nextra = 0	 
       ENDIF	 
 
-      numplot = ncolumns + ncalc + nextra
-      IF (numplot.GT.maxplot) THEN
-         PRINT*,numplot,ncolumns,ncalc,nextra
-         STOP ' numplot > array limits, see modules.f'
-      ENDIF	 
-      ndataplots = ncolumns + ncalc
-      
+      IF (ivegotdata) THEN
+         numplot = ncolumns + ncalc + nextra
+         IF (numplot.GT.maxplot) THEN
+            PRINT*,numplot,ncolumns,ncalc,nextra
+            STOP ' numplot > array limits, see modules.f'
+         ENDIF	 
+         ndataplots = ncolumns + ncalc
+      ELSE
+         numplot = 0
+	 ndataplots = 0
+      ENDIF
 !
 !--these are the quantities calculated by the program
 !      
@@ -241,20 +249,25 @@ c get rootname from command line/file and read file
       
       IF ((ipicky.GT.numplot+1).AND.
      &    (ipicky.LE.numplot+menuitems)) THEN
+!-------------------------------------------------------
+!     adjust plot settings via menu options
+!-------------------------------------------------------
+
          CALL menu_actions(ipicky)
       ELSE 	! do plot 
 
 !------------------------------------------------------
-!     PLOT DATA
+!     or else plot data
 !-------------------------------------------------------
 
 !!--if data has not been read from a file, prompt for file
-      IF (.not.ivegotdata) THEN
-         PRINT*,' No data '
-	 ihavereadfilename = .false.
-	 ipicky = numplot+2
-	 CALL menu_actions(ipicky)
-      ENDIF
+       IF (.not.ivegotdata) THEN
+          PRINT*,' No data '
+	  ihavereadfilename = .false.
+	  ipicky = numplot+2
+	  CALL menu_actions(ipicky)
+	  GOTO 100	! return to menu
+       ENDIF
 
 !------------------------------------------------------------------------
 ! initialisations
