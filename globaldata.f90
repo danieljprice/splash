@@ -88,15 +88,14 @@ module settings_part
  implicit none
  integer, dimension(maxparttypes) :: imarktype
  integer :: ncircpart, icoordsnew
- integer, dimension(10) :: icircpart
+ integer, dimension(:), allocatable :: icircpart
  integer :: nc
  integer :: linestylein, iexact
  logical, dimension(maxparttypes) :: iplotpartoftype
  logical :: iplotline,iplotlinein,ilabelpart
 
  namelist /plotopts/ iplotline,iplotlinein,linestylein,  &
-   imarktype,iplotpartoftype,iexact, &
-   ncircpart,icircpart
+   imarktype,iplotpartoftype,iexact
 
 end module settings_part
 !

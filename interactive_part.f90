@@ -41,7 +41,8 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
   logical, intent(out) :: isave
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,nc,ierr,ixsec
-  integer :: nmarked
+  integer :: nmarked,ncircpart
+  integer, dimension(npart) :: icircpart
   real :: xpt,ypt,xpt2,ypt2,xptmin,xptmax,yptmin,yptmax
   real :: rmin,rr,gradient,yint,dx,dy
   real :: xlength, ylength, drender
@@ -102,6 +103,14 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         call pgsch(1.0)
      case('c','C')
         print*,'plotting circle of interaction on particle ',iclosest
+        !--save settings for these
+        ncircpart = ncircpart + 1
+        if (ncircpart.gt.npart) then
+           print*,'WARNING: ncircles > array limits, cannot save'
+           ncircpart = npart
+        else
+           icircpart(ncircpart) = iclosest
+        endif
         call pgsfs(2)
         call pgcirc(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
      case('g')   ! draw a line between two points
@@ -186,6 +195,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         call save_limits(iplotx,xmin,xmax)
         call save_limits(iploty,ymin,ymax)
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
+        if (irender.le.0) call save_circles(ncircpart,icircpart)
         if (rotation) call save_rotation(ndim,anglex,angley,anglez)
         print*,'> plot settings saved <'
      !
@@ -215,6 +225,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         else
            if (irender.le.0) then
               print*,'1-9 = mark selected particles with colours 1-9'
+              print*,'c = plot circles of interaction on selected parts'
            endif
            call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
            print*,xpt,ypt,xpt2,ypt2,char2
@@ -228,7 +239,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
               ymax = max(ypt,ypt2)
               iadvance = 0
               iexit = .true.
-           case('1','2','3','4','5','6','7','8','9')
+           case('1','2','3','4','5','6','7','8','9') ! mark particles
               if (irender.le.0) then
                  xptmin = min(xpt,xpt2)
                  xptmax = max(xpt,xpt2)
@@ -251,6 +262,25 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
               endif
               iadvance = 0
               iexit = .true.
+           case('c') ! set circles of interaction in marked region
+              if (irender.le.0) then
+                 xptmin = min(xpt,xpt2)
+                 xptmax = max(xpt,xpt2)
+                 yptmin = min(ypt,ypt2)
+                 yptmax = max(ypt,ypt2)
+
+                 ncircpart = 0
+                 do i=1,npart
+                    if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
+                    .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax)) then
+                        ncircpart = ncircpart + 1
+                        icircpart(ncircpart) = i
+                        call pgsfs(2)
+                        call pgcirc(xcoords(i),ycoords(i),2.*hi(i))
+                    endif
+                 enddo
+                 print*,'set ',ncircpart,' circles of interaction in selected region'
+              endif
            end select 
         endif   
      !
@@ -404,16 +434,17 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
               dy = yline(2) - yline(1)
               select case(ixsec)
               case(1)
-                 anglex = 180.*ATAN2(dy,dx)/pi
+                 anglex = 180.*ATAN2(dy,dx)/pi + anglex
                  print*,'setting angle x = ',anglex
               case(2)
-                 angley = 180.*ATAN2(dy,dx)/pi
+                 angley = 180.*ATAN2(dy,dx)/pi + angley
                  print*,'setting angle y = ',angley
               case(3)
-                 anglez = 180.*ATAN2(dy,dx)/pi
+                 anglez = 180.*ATAN2(dy,dx)/pi + anglez
                  print*,'setting angle z = ',anglez
               end select
               iploty = ixsec
+              print*,'iploty = ',ixsec
               iadvance = 0
               iexit = .true.
            end select
@@ -683,5 +714,22 @@ subroutine save_rotation(ndim,anglexi,angleyi,anglezi)
  
  return
 end subroutine save_rotation
+
+!
+!--saves circles of interaction
+!
+subroutine save_circles(ncircpartset,icircpartset)
+ use settings_part, only:ncircpart,icircpart
+ implicit none
+ integer, intent(in) :: ncircpartset
+ integer, intent(in), dimension(:) :: icircpartset
+ integer :: imax
+ 
+ imax = min(size(icircpartset),size(icircpart),ncircpartset)
+ ncircpart = imax
+ icircpart(1:imax) = icircpartset(1:imax)
+ print*,'saving ',imax,' circles of interaction'
+ 
+end subroutine save_circles
 
 end module interactive_routines

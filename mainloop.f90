@@ -49,7 +49,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   real, dimension(:,:,:), allocatable :: datpix3D
   real, dimension(ndim) :: xcoords
   real :: xmin,xmax,ymin,ymax,zmin,zmax,ymean
-  real :: xmintemp,xmaxtemp,ymintemp,ymaxtemp
   real :: vecmax,rendermin,rendermax,dummymin,dummymax
   real :: xsecmin,xsecmax,dxsec,xsecpos
   real :: pixwidth
@@ -59,13 +58,11 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   real :: angleradx, anglerady, angleradz
 
   logical :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
-  logical :: log, inewpage, tile_plots, debug, isave, lastplot
+  logical :: log, inewpage, tile_plots, isave, lastplot
 
   character(len=60) :: title,titlex
   character(len=len(label(1))+20) :: labelx,labely,labelrender,labelvecplot
   character(len=60), dimension(maxtitles) :: titlelist
-
-  debug = .false.
 
   !------------------------------------------------------------------------
   ! initialisations
@@ -259,8 +256,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
         !--make sure character height is set correctly
         call danpgsch(charheightmm,2) ! set in mm
         call pgqch(charheight) ! in PGPLOT scaled units
-        !--for consecutive plots (ie. if not multi but nyplots > 1 plots consecutive numbers)             
-        iploty = ipicky + nyplot - 1
+
         !--set current x, y, render and vector plot from multiplot array
         if (imulti) then
            iploty = multiploty(nyplot)

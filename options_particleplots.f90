@@ -48,6 +48,7 @@ subroutine options_particleplots
      return           
 !------------------------------------------------------------------------
   case(3)
+     print*,'Note that circles of interaction can also be set interactively'
      call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))
      if (ncircpart.gt.0) then
         do n=1,ncircpart

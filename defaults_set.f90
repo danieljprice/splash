@@ -69,7 +69,6 @@ subroutine defaults_set
 !
 !--particle plot options
 !
-  icircpart = 1           !  " " around a specific particle
   ncircpart = 0
   iplotline = .false.     ! plot line joining the particles
   iplotlinein = .false.   ! " " but on first step only
