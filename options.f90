@@ -117,7 +117,7 @@ subroutine options(ipicky)
            call prompt(' enter field (from menu) for rendering (0=none)', &
                 irendermulti(i),0,numplot)
            ichange = .false.
-           call prompt(' change options for this plot? ',ichange)
+           call prompt(' change rendering options for this plot? ',ichange)
            if (ichange) then
               call options_render( &
                    npixmulti(i),icolours,iplotcontmulti(i), &
