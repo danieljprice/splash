@@ -332,7 +332,8 @@ subroutine plotstep
            if ((iplotx.le.ndim .or. iploty.le.ndim) &
                 .and..not.(iplotx.le.ndim.and.iploty.le.ndim &
                 .and.irenderplot.gt.ndim)) then
-              print*,'changing to new coordinate system',icoords,icoordsnew
+              print*,'changing coords from ',trim(labelcoordsys(icoords)), &
+                     ' to ',trim(labelcoordsys(icoordsnew))
               do j=1,ntot(i)
                  call coord_transform(dat(j,ix(1:ndim),i),ndim,icoords, &
                                       xcoords(1:ndim),ndim,icoordsnew)
@@ -355,22 +356,32 @@ subroutine plotstep
               endif
            endif
            if (iamvec(iplotx).gt.0) then
-              print*,'changing vec component to new coord system',icoords,icoordsnew
-              do j=1,ntot(i)
-                 call vector_transform(dat(j,ix(1:ndim),i), &
-                      dat(j,iamvec(iplotx):iamvec(iplotx)+ndim-1,i), &
-                      ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
-                 xplot(j) = vecnew(iplotx-iamvec(iplotx)+1)
-              enddo
+              if (iplotx-iamvec(iplotx)+1 .le. ndim) then
+                 print*,'changing vector component from ', &
+                  trim(labelcoordsys(icoords)),' to ',trim(labelcoordsys(icoordsnew))
+                 do j=1,ntot(i)
+                    call vector_transform(dat(j,ix(1:ndim),i), &
+                         dat(j,iamvec(iplotx):iamvec(iplotx)+ndim-1,i), &
+                         ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
+                    xplot(j) = vecnew(iplotx-iamvec(iplotx)+1)
+                 enddo
+              else
+                 print*,'error: can''t convert vector components with ndimV > ndim'
+              endif
            endif
            if (iamvec(iploty).gt.0) then
-              print*,'changing vec component to new coord system',icoords,icoordsnew        
-              do j=1,ntot(i)
-                 call vector_transform(dat(j,ix(1:ndim),i), &
-                      dat(j,iamvec(iploty):iamvec(iploty)+ndim-1,i), &
-                      ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
-                 yplot(j) = vecnew(iploty-iamvec(iploty)+1)
-              enddo
+              if (iploty-iamvec(iploty)+1 .le.ndim) then
+                 print*,'changing vector component from ', &
+                  trim(labelcoordsys(icoords)),' to ',trim(labelcoordsys(icoordsnew))
+                 do j=1,ntot(i)
+                    call vector_transform(dat(j,ix(1:ndim),i), &
+                         dat(j,iamvec(iploty):iamvec(iploty)+ndim-1,i), &
+                         ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
+                    yplot(j) = vecnew(iploty-iamvec(iploty)+1)
+                 enddo
+              else
+                 print*,'error: can''t convert vector components with ndimV > ndim'
+              endif
            endif
         endif
         !--apply transformations (log, 1/x etc) if appropriate
