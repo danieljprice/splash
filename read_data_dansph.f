@@ -72,6 +72,7 @@
 	 ENDIF
 	 IF (ndim.GT.ndim_max) ndim_max = ndim
 	 IF (ndimV.GT.ndimV_max) ndimV_max = ndimV   
+	 nghost(i) = ntot(i) - npart(i)
 !
 !--allocate memory for main data array here
 !     
