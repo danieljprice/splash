@@ -87,7 +87,7 @@ c      PRINT*,'Number of particles = ',ntot
       CLOSE(15)
             
       DO i=1,nfilesteps
-         IF (ntot(i).gt.max) PRINT*,'ntot greater than array limits!!'      
+         IF (ntot(i).gt.maxpart) PRINT*,'ntot > array limits!!'      
 !         READ (11,*,END=66) time(i)
 	 PRINT*,'t = ',time(i), '  file = ',filename(i)
 !
@@ -95,7 +95,7 @@ c      PRINT*,'Number of particles = ',ntot
 !
          OPEN(unit=11,file=filename(i),status='old',form='formatted')
          READ (11,*, END=66, ERR=77)
-     &	      (dat1(1:ncolumns,j,i),iam(j),j=1,max)
+     &	      (dat1(1:ncolumns,j,i),iam(j),j=1,maxpart)
 66       CONTINUE
 
 	 ntot(i) = j-1
@@ -116,7 +116,7 @@ c      PRINT*,'Number of particles = ',ntot
             PRINT*,'reading sink file ',sinkfile(i)
 	    OPEN(unit=12,file=sinkfile(i),status='old',form='formatted')
 	    READ(12,*,END=68,ERR=67)
-     &           (dat1(1:nsinkcolumns,j,i),j=ntot(i)+1,max)
+     &           (dat1(1:nsinkcolumns,j,i),j=ntot(i)+1,maxpart)
 67          CONTINUE
             PRINT*,' Error reading sinkfile - no sinks read'	    
 68          CONTINUE	    

@@ -10,18 +10,18 @@
 ## Compiler options (uncomment ONE set)
 ## ------------------------------------------------------------------ ##
 ## IoA compiler (Sun fortran)
-#FC = f90
-#F90C = f90
-#FFLAGS = -O4
-#F90FLAGS = -O4
-#LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11
+FC = f90
+F90C = f90
+FFLAGS = -O4
+F90FLAGS = -O4 
+LDFLAGS = -lpgplot -lX11 -lF77
 ## ------------------------------------------------------------------ ##
 ## Monash compiler (Lahey-Fujitsu f95)
-FC = lf95
-F90C = lf95
-FFLAGS = -O ##--chk aesux --chkglobal  --warn
-F90FLAGS = -O ##--chk aesux --chkglobal --warn
-LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11
+#FC = lf95
+#F90C = lf95
+#FFLAGS = -O ##--chk aesux --chkglobal  --warn
+#F90FLAGS = -O ##--chk aesux --chkglobal --warn
+#LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11
 ## ------------------------------------------------------------------ ##
 ## Swinburne compiler (Intel fortran)
 #FC = ifort

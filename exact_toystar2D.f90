@@ -150,7 +150,7 @@ end subroutine exact_toystar2D
 !
 real function drhor(j,m,rad,gamma)
   implicit none
-  integer :: j,m,k   ! j is the radial mode, m is the theta mode
+  integer :: j,m,k,kprev   ! j is the radial mode, m is the theta mode
   real :: rad,gamma
   real :: ak,akprev,gamm1,freqsq
 !
@@ -177,7 +177,7 @@ real function drhor(j,m,rad,gamma)
 !  the recurrence relation between the a_k's
 !
   do k = 2,j,2
-     kprev = 
+     kprev = k-2
      ak = akprev*(kprev**2 + 2.*kprev/gamm1 - freqsq)/REAL(k**2)
      print*,'coeff ',k,' = ',ak,k**2,2.*k/gamm1
      drhor = drhor + ak*rad**k
