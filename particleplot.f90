@@ -1,3 +1,7 @@
+module particleplots
+ implicit none
+
+contains
 !
 !  Drives raw particle plots
 !  Handles different particle types, particle cross-sections, particle labelling
@@ -6,7 +10,8 @@
 !
 !
 subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
-                        icolourpart,npartoftype,x_sec,xsecmin,xsecmax)
+                        icolourpart,npartoftype, &
+                        use_zrange,zmin,zmax,labelz)
   use labels
   use settings_data, only:ndim,icoords,ntypes
   use settings_part
@@ -16,9 +21,10 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(ntot), intent(in) :: xplot, yplot, zplot, h
   real, dimension(ntot) :: xerrb, yerrb, herr
-  real, intent(in) :: xsecmin,xsecmax
-  logical, intent(in) :: x_sec
-  integer :: j,n,itype,linewidth,icolourindex
+  real, intent(in) :: zmin,zmax
+  logical, intent(in) :: use_zrange
+  character(len=*), intent(in) :: labelz
+  integer :: j,n,itype,linewidth,icolourindex,nplotted
   integer :: lenstring,index1,index2,ntotplot
   real :: charheight
   character(len=20) :: string
@@ -51,16 +57,18 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
      if (index2.lt.index1) exit over_types
 
      if (iplotpartoftype(itype) .and. npartoftype(itype).gt.0) then
-        if (x_sec .and. ndim.eq.3) then
+        if (use_zrange) then
            !
            !--if particle cross section, plot particles only in a defined (z) coordinate range
            !
-           print "(a,i8,a,f7.2,a,f7.2)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles in range '// &
-                ' z = ',xsecmin,' -> ',xsecmax
+           nplotted = 0
            do j=index1,index2
-              if (zplot(j).lt.xsecmax .and. zplot(j).gt.xsecmin) then
-                 call pgsci(icolourpart(j))
-                 call pgpt(1,xplot(j),yplot(j),imarktype(itype))
+              if (zplot(j).lt.zmax .and. zplot(j).gt.zmin) then
+                 if (icolourpart(j).gt.0) then
+                    nplotted = nplotted + 1
+                    call pgsci(icolourpart(j))
+                    call pgpt(1,xplot(j),yplot(j),imarktype(itype))
+                 endif
                  !--plot circle of interaction if gas particle
                  if (itype.eq.1 .and. ncircpart.gt.0 .and. ANY(icircpart(1:ncircpart).eq.j)) then
                     call pgcirc(xplot(j),yplot(j),2*h(j))
@@ -74,20 +82,28 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  endif
               endif
            enddo
+           print*,' plotted ',nplotted,' of ', &
+             index2-index1+1,trim(labeltype(itype))//' particles in range ', &
+             trim(labelz),' = ',zmin,' -> ',zmax
         else
            !
            !--otherwise plot all particles of this type using appropriate marker and colour
            !
            call pgqci(icolourindex)
-           print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
            if (all(icolourpart(index1:index2).eq.icolourpart(index1))) then
+              print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
               call pgsci(icolourpart(index1))
               call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
            else
+              nplotted = 0
               do j=index1,index2
-                 call pgsci(icolourpart(j))
-                 call pgpt(1,xplot(j),yplot(j),imarktype(itype))
+                 if (icolourpart(j).gt.0) then
+                    nplotted = nplotted + 1
+                    call pgsci(icolourpart(j))
+                    call pgpt(1,xplot(j),yplot(j),imarktype(itype))
+                 endif
               enddo
+              print*,' plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
            endif
            call pgsci(icolourindex)
 
@@ -170,3 +186,5 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   return
      
 end subroutine particleplot
+
+end module particleplots

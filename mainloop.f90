@@ -253,6 +253,7 @@ subroutine plotstep
   use geometry
   use legends, only:legend
   use fieldlines
+  use particleplots
   use powerspectrums
 
   implicit none
@@ -271,7 +272,7 @@ subroutine plotstep
   real :: angleradx, anglerady, angleradz
   real :: xsecmin,xsecmax
 
-  character(len=len(label(1))+20) :: labelx,labely,labelrender,labelvecplot
+  character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
 
 34   format (25(' -'))
 
@@ -401,7 +402,8 @@ subroutine plotstep
            if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
         enddo
         if (ixsec.ne.0) then
-           zplot(:) = dat(:,ixsec,i) 
+           zplot(:) = dat(:,ixsec,i)
+           labelz = label(ixsec)
         endif
         !
         !--set number of particles to use in the interpolation routines
@@ -729,7 +731,8 @@ subroutine plotstep
               if (iplotpart) then
                  call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
                    zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
-                   icolourme(1:ntot(i)),npartoftype(:,i),x_sec,xsecmin,xsecmax)
+                   icolourme(1:ntot(i)),npartoftype(:,i), &
+                   x_sec,xsecmin,xsecmax,labelz)
               endif
            endif
 
@@ -899,7 +902,7 @@ subroutine plotstep
 
         call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
              zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
-             icolourme(1:ntot(i)),npartoftype(:,i),.false.,xsecmin,xsecmax)
+             icolourme(1:ntot(i)),npartoftype(:,i),.false.,0.0,0.0,' ')
 
         if ((i.eq.nstart).and.iplotlinein) then! plot initial conditions as dotted line
            call pgsls(linestylein)
@@ -934,8 +937,9 @@ subroutine plotstep
 
         if (interactive .and. (nacross*ndown.eq.1)) then
            iadvance = nfreq
-           call interactive_part(ninterp,iplotx,iploty,irenderplot, &
-                xplot(1:ninterp),yplot(1:ninterp),dat(1:ninterp,ih,i),icolourme(1:ninterp), &
+           call interactive_part(ntot(i),iplotx,iploty,irenderplot, &
+                xplot(1:ntot(i)),yplot(1:ntot(i)),dat(1:ntot(i),ih,i), &
+                icolourme(1:ntot(i)), &
                 xmin,xmax,ymin,ymax,dummymin,dummymax, &
                 angletempx,angletempy,angletempz,ndim,iadvance,isave)
            if (iadvance.eq.-666) return

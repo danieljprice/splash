@@ -40,7 +40,8 @@ GADGETSPH = read_data_gadget.f90
 MODULES= globaldata.f90 transform.f90 prompting.f90 \
          exact.f90 colours.f90 limits.f90 rotate.f90 \
          interactive_part.f90 allocate.f90 geometry.f90 \
-         fieldlines.f90 legends.f90 powerspectrums.f90 $(SYSTEMFILE)
+         fieldlines.f90 legends.f90 particleplot.f90 \
+         powerspectrums.f90 $(SYSTEMFILE)
 
 # these are the normal `external' subroutines
 SOURCES= supersphplot.f90 mainloop.f90 \
@@ -62,7 +63,6 @@ SOURCES= supersphplot.f90 mainloop.f90 \
 	 options_page.f90 options_particleplots.f90 \
 	 options_powerspec.f90 options_render.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 \
-	 particleplot.f90 \
 	 plot_kernel_gr.f90 \
 	 print_header.f90\
          render.f90 render_vec.f90 \

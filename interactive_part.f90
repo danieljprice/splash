@@ -225,27 +225,29 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         else
            if (irender.le.0) then
               print*,'1-9 = mark selected particles with colours 1-9'
+              print*,'0 = hide selected particles'
+              print*,'p = plot selected particles only'
               print*,'c = plot circles of interaction on selected parts'
            endif
            call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
-           print*,xpt,ypt,xpt2,ypt2,char2
+           xptmin = min(xpt,xpt2)
+           xptmax = max(xpt,xpt2)
+           yptmin = min(ypt,ypt2)
+           yptmax = max(ypt,ypt2)
+           print*,'xrange = ',xptmin,'->',xptmax
+           print*,'yrange = ',yptmin,'->',yptmax
            select case (char2)
            case('A')   ! zoom if another left click
               call pgsfs(2)
               call pgrect(xpt,xpt2,ypt,ypt2)
-              xmin = min(xpt,xpt2)
-              xmax = max(xpt,xpt2)
-              ymin = min(ypt,ypt2)
-              ymax = max(ypt,ypt2)
+              xmin = xptmin
+              xmax = xptmax
+              ymin = yptmin
+              ymax = yptmax
               iadvance = 0
               iexit = .true.
-           case('1','2','3','4','5','6','7','8','9') ! mark particles
+           case('0','1','2','3','4','5','6','7','8','9') ! mark particles
               if (irender.le.0) then
-                 xptmin = min(xpt,xpt2)
-                 xptmax = max(xpt,xpt2)
-                 yptmin = min(ypt,ypt2)
-                 yptmax = max(ypt,ypt2)
-
                  nmarked = 0
                  do i=1,npart
                     if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
@@ -262,13 +264,24 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
               endif
               iadvance = 0
               iexit = .true.
+           case('p') ! plot selected particles only
+              if (irender.le.0) then
+                 nmarked = 0
+                 do i=1,npart
+                    if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
+                    .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax)) then
+                       nmarked = nmarked + 1
+                       if (icolourpart(i).le.0) icolourpart(i) = 1
+                    else
+                       icolourpart(i) = 0
+                    endif
+                 enddo
+                 print*,'plotting selected ',nmarked,' particles only'
+              endif
+              iadvance = 0
+              iexit = .true.           
            case('c') ! set circles of interaction in marked region
               if (irender.le.0) then
-                 xptmin = min(xpt,xpt2)
-                 xptmax = max(xpt,xpt2)
-                 yptmin = min(ypt,ypt2)
-                 yptmax = max(ypt,ypt2)
-
                  ncircpart = 0
                  do i=1,npart
                     if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
