@@ -49,12 +49,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
   
-  real(doub_prec), dimension(:,:), allocatable :: dattemp
-  real(doub_prec), dimension(:), allocatable :: dummy
-  real(doub_prec) :: udisti,umassi,utimei, umagfdi, timei, gammai
-  real(doub_prec) :: rhozero, RK2
-  real(doub_prec) :: escap,tkin,tgrav,tterm,tmag
-  real(doub_prec) :: dtmax
+  real, dimension(:,:), allocatable :: dattemp
+  real, dimension(:), allocatable :: dummy
+  real(doub_prec) :: udisti,umassi,utimei, umagfdi
+  real :: timei, gammai
+  real :: rhozero, RK2
+  real :: escap,tkin,tgrav,tterm,tmag
+  real :: dtmax
 
   nstepsread = 0
   nstep_max = 0
@@ -189,7 +190,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
         gamma(j) = real(gammai)
         time(j) = real(timei)
-        if (npart_max.eq.130000) npart_max = nprint
         j = j + 1
 
      enddo over_steps_in_file
