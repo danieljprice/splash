@@ -26,7 +26,7 @@ MRBSPH = read_data_mbate.f90
 GADGETSPH = read_data_gadget.f90
 
 # put modules separately as these must be compiled before the others
-MODULES= modules.f90 transform.f90 prompting.f90 exact.f90 system_unix.f90
+MODULES= globaldata.f90 transform.f90 prompting.f90 exact.f90 system_unix.f90
 
 # these are the normal `external' subroutines
 SOURCES= supersphplot.f90 mainloop.f90 \
