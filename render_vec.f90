@@ -4,13 +4,13 @@
 !--------------------------------------------------------------------------
  
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
-                  xmin,ymin,dx,log) 
+                  xmin,ymin,dx,label) 
  use legends, only:legend_vec
  implicit none
  integer, intent(in) :: npixx,npixy
  real, intent(in) :: xmin,ymin,vecmax,dx
  real, dimension(npixx,npixy), intent(in) :: vecpixx,vecpixy
- logical, intent(in) :: log
+ character(len=*), intent(in) :: label
  real :: trans(6),vmax,scale
  real :: charheight
  
@@ -23,7 +23,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  trans(5) = 0.0
  trans(6) = dx
 
- print*,'rendering vector plot..',npixx,'x',npixy,',array size=',size(vecpixx)
+ print*,trim(label),' vector plot..',npixx,'x',npixy,',array size=',size(vecpixx)
  print*,'max(x component) = ',maxval(vecpixx),'max(y component) = ',maxval(vecpixy)
 
  call pgsah(2,45.0,0.7)   ! arrow style
@@ -36,13 +36,13 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  else
     scale=0.1/vecmax
  endif
- print*,'vector map: pixels = ',npixx,npixy,' scale = ',scale
+ print*,' scale = ',scale
  
  call pgvect(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
       1,npixx,1,npixy,scale,0,trans,-1000.0)
 
  call pgsch(charheight)
- call legend_vec(scale)
+ call legend_vec(scale,label)
  
  return
  

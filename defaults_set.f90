@@ -122,7 +122,7 @@ subroutine defaults_set
   labelvec = ' '
   iVecplotLegend = .true.
   hposlegendvec = 0.1
-  vposlegendvec = 3.0
+  vposlegendvec = -1.0
 !
 !--set coordinate labels for all coordinate systems
 !

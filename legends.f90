@@ -47,14 +47,15 @@ end subroutine legend
 !        vpos : vertical position in character heights from top
 !-----------------------------------------------------------------
 
-subroutine legend_vec(scale)
+subroutine legend_vec(scale,label)
  use settings_vecplot, only: hposlegendvec, vposlegendvec
  implicit none
  real, intent(in) :: scale
+ character(len=*), intent(in) :: label
  real :: xmin,xmax,ymin,ymax
  real :: xch,ych
  real :: xpos,ypos,xpos2,ypos2,rarrow
- character string*15
+ character(len=len(label)+10) :: string
 !
 !--convert hpos and vpos to x, y to plot arrow
 !
@@ -70,11 +71,11 @@ subroutine legend_vec(scale)
  xpos2 = xpos + sqrt(0.5)*rarrow
  ypos2 = ypos + sqrt(0.5)*rarrow
  
- write(string,"(f6.2)") scale
+ write(string,"(a,'=',f6.2)") trim(label),scale
  
  print*,'legendvec: xpos, ypos = ',xpos,ypos
  call pgarro(xpos,ypos,xpos2,ypos2)
- call pgmtext('t',-vposlegendvec,hposlegendvec+0.02,0.0,'='//trim(string))
+ call pgmtext('t',-vposlegendvec,hposlegendvec+0.02,0.0,trim(string))
 
  return
 end subroutine legend_vec

@@ -181,11 +181,11 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         print*,'-------------------------------------------------------'
      case('s','S')
         isave = .not.isave
-        print*,'saving plot settings...',isave
         call save_limits(iplotx,xmin,xmax)
         call save_limits(iploty,ymin,ymax)
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
         if (rotation) call save_rotation(ndim,anglex,angley,anglez)
+        print*,'> plot settings saved <'
      !
      !--zoom
      !

@@ -62,7 +62,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   logical :: log, inewpage, tile_plots, debug, isave, lastplot
 
   character(len=60) :: title,titlex
-  character(len=20) :: labelx,labely,labelrender
+  character(len=len(label(1))+20) :: labelx,labely,labelrender,labelvecplot
   character(len=60), dimension(maxtitles) :: titlelist
 
   debug = .false.
@@ -714,7 +714,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                  ivecx = iamvec(ivectorplot) + iplotx - 1
                  ivecy = iamvec(ivectorplot) + iploty - 1
                  
-                 print*,'plotting vector field ',label(iamvec(ivectorplot))
+                 labelvecplot = trim(labelvec(ivectorplot))
+                 print*,'plotting vector field ',trim(labelvecplot)
                  if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
                       .or.(ivecy.le.ndim).or.(ivecy.gt.ndataplots)) then
                     print*,'error finding location of vector plot in array'
@@ -759,11 +760,10 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                             ninterp,npixvec,npixyvec)                       
                        endif
                        !
-                       !--plot rendered vector map
+                       !--plot it
                        !
-                       log = .false.
                        call render_vec(vecpixx,vecpixy,vecmax, &
-                           npixvec,npixyvec,xmin,ymin,pixwidth,log)
+                           npixvec,npixyvec,xmin,ymin,pixwidth,labelvecplot)
                        deallocate(vecpixx,vecpixy)
                     endif
                     if (UseBackgndColorVecplot) call pgsci(1)
