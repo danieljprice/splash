@@ -18,7 +18,7 @@
 ! maxplot,maxpart,maxstep      : dimensions of main data array
 ! dat(maxplot,maxpart,maxstep) : main data array
 !
-! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
+! npartoftype(1:maxparttypes,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
 ! gamma(maxstep)      : gamma at each step 
@@ -98,7 +98,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  ncolstep = 11  ! number of columns in file
+  ncolstep = 12  ! number of columns in file
   ncolumns = ncolstep
   !
   !--allocate memory initially
@@ -176,7 +176,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
              (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
              (dattemp(i,9), i=1, nprint), (dattemp(i,10), i=1, nprint), &
-             (dattemp(i,11), i=1, nprint), (dummy(i),i=1,nprint), &
+             (dattemp(i,11), i=1, nprint), (dattemp(i,12),i=1,nprint), &
              dtmax, (isteps(i), i=1,nprint), (iphase(i),i=1,nprint), &
              nptmass, (listpm(i), i=1,nptmass)
         
@@ -276,6 +276,9 @@ subroutine set_labels
   iutherm = 9  !  thermal energy
   ipmass = 10   !  particle mass      
   irho = 11     ! location of rho in data array
+  if (ncolumns.gt.11) then
+     label(12) = 'dgrav'
+  endif
   
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   do i=1,ndimV

@@ -44,7 +44,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
     
   character(len=3) :: fileno
   character(len=len(rootname)+10) :: dumpfile
-  integer :: nprint, nghosti, n1, n2, nptmass
+  integer :: nprint, n1, n2, nptmass
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
   
@@ -98,7 +98,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  ncolstep = 10  ! number of columns in file
+  ncolstep = 11  ! number of columns in file
   ncolumns = ncolstep
   !
   !--allocate memory initially
@@ -175,7 +175,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
              (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
              (dattemp(i,8), i=1, nprint), (dattemp(i,9), i=1, nprint), &
-             (dattemp(i,10), i=1, nprint), (dummy(i),i=1,nprint), &
+             (dattemp(i,10), i=1, nprint), (dattemp(i,11),i=1,nprint), &
              dtmax, (isteps(i), i=1,nprint), (iphase(i),i=1,nprint), &
              nptmass, (listpm(i), i=1,nptmass)
         
@@ -187,12 +187,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
            nstepsread = nstepsread + 1
         endif
 !
+!--spit out time
+!
+        tcomp = sqrt((3.*pi)/(32*rhozero))
+        print "(2(a,f8.3),a,i8)",'t = ',timei,' t_ff = ',timei/tcomp,' ntotal = ',nprint
+        if (nptmass.gt.0) then
+           print *,'WARNING: nptmasses = ',nptmass,' but ptmasses not yet implemented'
+        endif
+!
 !--convert to single precision
 !
-        print *,'t = ',timei,' ntotal = ',nprint
-        if (nptmass.gt.0) then
-           print *,'WARNING: nptmasses = ',nptmass,' but nothing done in read_data'
-        endif
         print "(a)",'| converting to single precision... '
         dat(1:nprint,1:ncolstep,j) = real(dattemp(1:nprint,1:ncolstep))
 
@@ -205,11 +209,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
         if (allocated(isteps)) deallocate(isteps)
         if (allocated(iphase)) deallocate(iphase)
 
-        npartoftype(1,j) = nprint-nghosti
-        npartoftype(2,j) = nghosti
+        npartoftype(1,j) = nprint
+        npartoftype(2,j) = 0
 
         gamma(j) = real(gammai)
-        tcomp = sqrt((3.*pi)/(32*rhozero))
         time(j) = real(timei)/tcomp
         j = j + 1
 
@@ -277,6 +280,9 @@ subroutine set_labels
   iutherm = 8  !  thermal energy
   ipmass = 9   !  particle mass      
   irho = 10     ! location of rho in data array
+  if (ncolumns.gt.10) then
+     label(11) = 'dgrav'
+  endif
   
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   do i=1,ndimV
