@@ -11,9 +11,11 @@ subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
  real, dimension(nfreq) :: freq,freqplot,power
  real :: xlength
  real :: freqmin,freqmax,freqminplot,freqmaxplot,powermin,powermax
- real :: wavelengthmin,wavelengthmax
+ real :: wavelengthmin,wavelengthmax,zero
  real, external :: theoretical_power
  logical, intent(in) :: idisordered
+
+ zero = 1.e-10
 !
 !--get max/min of data
 ! 
@@ -68,7 +70,11 @@ subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
 !
 !--normalise power spectrum to 1
 !
- power = power/powermax
+ if (powermax.gt.zero) then
+    power = power/powermax
+ else
+    powermax = 0.  ! avoid numerical problems
+ endif
 !
 !--take logarithms if appropriate
 !
@@ -92,7 +98,7 @@ subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
 !
 !--set up plotting page
 !
- print*,'plotting power spectrum...'
+ print*,'plotting power spectrum...',freqminplot,freqmaxplot,powermin,powermax
  call PGSWIN(freqminplot,freqmaxplot,min(powermin,0.0),powermax,0,1)
  if (itrans.eq.1) then
     call PGBOX('BCNSTL',0.0,0,'1BVCNSTL',0.0,0)      
@@ -112,14 +118,17 @@ subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
  call PGSLS(2)	! dashed line
  power = 0.
  do ifreq = 1,nfreq
-    if (itrans.eq.1) then
-       if (theoretical_power(freq(ifreq)).gt.0.) then
-          power(ifreq) = log10(theoretical_power(freq(ifreq)))
-       endif  
-    else
-       power(ifreq) = theoretical_power(freq(ifreq))
+    if (freq(ifreq).gt.zero) then   ! in case there has been an error in powerspec
+       if (itrans.eq.1) then
+          if (theoretical_power(freq(ifreq)).gt.zero) then
+             power(ifreq) = log10(theoretical_power(freq(ifreq)))
+          endif  
+       else
+          power(ifreq) = theoretical_power(freq(ifreq))
+       endif
     endif
  enddo
+
 ! power = power/power(1)
  call PGLINE(nfreq,freqplot,power)
     

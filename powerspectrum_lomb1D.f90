@@ -31,7 +31,10 @@ subroutine powerspectrum_lomb(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
 !
  call mean_variance(dat,npts,datmean,datvar)
  print*,'data mean = ',datmean,' std. dev = ',sqrt(datvar)
- 
+ if (datvar.le.0.) then 
+    print*,'error: variance = 0'
+    return
+ endif 
 !
 !--work out range of angular frequencies (wavenumbers)
 ! 
