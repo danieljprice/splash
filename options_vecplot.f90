@@ -7,11 +7,12 @@ subroutine options_vecplot
  implicit none
  integer :: ians
   
+ ians = 0
  print 10,npixvec,iplotpartvec,UseBackgndColorVecplot
-10  format(' 0) exit ',/, 		&
+10  format(' 0) exit ',/, &
            ' 1) change number of pixels                   (',i4,' )',/, &
            ' 2) toggle particle plotting if no rendering  (',L1,' )',/, &
-	   ' 3) toggle background/foreground colour       (',L1,' )')
+           ' 3) toggle background/foreground colour       (',L1,' )')
  call prompt('enter option',ians,0,3)
 !
 !--options
