@@ -152,6 +152,7 @@ subroutine set_labels
   use labels
   use params
   use settings_data
+  use geometry, only:labelcoord
   implicit none
   integer :: i
   

@@ -12,12 +12,13 @@ subroutine menu
   use prompting
   use transforms
   use defaults, only:defaults_write
+  use geometry, only:labelcoord
   implicit none
   integer :: i,icol,ihalf,iadjust,index,ierr
   integer :: ipicky,ipickx,irender,ivecplot
   integer :: iamvecprev, ivecplottemp
-  character(LEN=2) :: ioption
-  character(LEN=50) :: vecprompt
+  character(len=2) :: ioption
+  character(len=50) :: vecprompt
   logical :: ishowopts
 
   irender = 0
@@ -66,7 +67,7 @@ subroutine menu
      imulti = .false.
      
 !--set coordinate and vector labels (depends on coordinate system)
-  if (icoords.ne.0) then
+  if (icoords.ne.0 .or. icoordsnew.ne.0) then
      label(1:ndim) = labelcoord(1:ndim,icoordsnew)
      do i=1,numplot
         if (iamvec(i).ne.0) then

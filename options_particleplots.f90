@@ -4,12 +4,13 @@
 subroutine options_particleplots
   use exact
   use labels
-  use settings_data ! for icoords
+  use settings_data, only:icoords,ntypes
   use settings_part
   use particle_data
   use prompting
+  use geometry, only:maxcoordsys,labelcoordsys
   implicit none
-  integer :: iaction,n,itype
+  integer :: i,iaction,n,itype
   character(LEN=1) :: ans
 
   iaction = 0      
@@ -75,11 +76,13 @@ subroutine options_particleplots
 !------------------------------------------------------------------------
   case(6)
      print 20,icoords
-20   format(' 0) reset (=',i2,')',/, &
-            ' 1) cartesian ',/,            &
-            ' 2) cylindrical polars ',/,   &
-            ' 3) spherical polars ')
-     call prompt(' Enter coordinate system to plot in:',icoordsnew,0,3)
+     do i=1,maxcoordsys
+        print 30,i,labelcoordsys(i)
+     enddo
+20   format(' 0) reset (=',i2,')')
+30   format(1x,i1,')',1x,a)
+     call prompt(' Enter coordinate system to plot in:', &
+                 icoordsnew,0,maxcoordsys)
      if (icoordsnew.eq.0) icoordsnew = icoords
      return
 !------------------------------------------------------------------------

@@ -28,6 +28,7 @@ subroutine defaults_set
   use settings_xsecrot
   use settings_powerspec
   use particle_data, only:maxpart,maxstep,maxcol
+  use geometry, only:labelcoord
   implicit none
   integer :: i
 !

@@ -17,7 +17,16 @@
 !-----------------------------------------------------------------
 module geometry
  implicit none
+ integer, parameter :: maxcoordsys = 3
  real, parameter, private :: pi = 3.1415926536
+ character(len=20), dimension(maxcoordsys), parameter :: labelcoordsys = &
+    (/'cartesian         ', &
+      'cylindrical polars', &
+      'spherical polars  '/)
+ character(len=10), dimension(3,maxcoordsys) :: labelcoord
+!    (/'x    ','y    ','z    ', &
+!     'r    ','phi  ','z    ', &
+!     'r    ','theta','phi  '/)
  
 contains
 !-----------------------------------------------------------------

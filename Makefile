@@ -9,7 +9,7 @@
 
 ## Compiler options
 F90C =  g95
-F90FLAGS =  -O -C -Wall -fbounds-check
+F90FLAGS =  -O -Wall -fbounds-check
 #LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
 #         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
 #         -lpng
@@ -38,9 +38,9 @@ GADGETSPH = read_data_gadget.f90
 
 # put modules separately as these must be compiled before the others
 MODULES= globaldata.f90 transform.f90 prompting.f90 \
-         exact.f90 colours.f90 limits.f90 rotate.f90 \
+         geometry.f90 exact.f90 colours.f90 limits.f90 rotate.f90 \
          interactive.f90 allocate.f90 \
-         defaults.f90 geometry.f90 \
+         defaults.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
          powerspectrums.f90 $(SYSTEMFILE)
 
@@ -50,7 +50,7 @@ SOURCES= supersphplot.f90 mainloop.f90 \
 	 danpgsch.f danpgtile.f danpgwedg.f \
 	 exact_fromfile.f90 exact_rhoh.f90 \
 	 exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
-	 exact_toystar.f90 exact_toystar2D.f90 \
+	 exact_toystar.f90 toystar2D_utils.f90 exact_toystar2D.f90 \
 	 exact_toystar_ACplane.f exact_mhdshock.f90 \
 	 exact_polytrope.f \
 	 get_data.f90 integratedkernel.f90 \

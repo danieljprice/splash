@@ -349,6 +349,7 @@ subroutine set_labels
  use labels
  use params
  use settings_data, only:ndim,ndimV,ncolumns,iformat,ntypes
+ use geometry, only:labelcoord
  implicit none
  integer :: i
 
