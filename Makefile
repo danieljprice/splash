@@ -67,7 +67,6 @@ SOURCES= supersphplot.f90 \
 	 options_powerspec.f90 options_render.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 \
 	 plot_kernel_gr.f90 \
-	 print_header.f90\
          render.f90 render_vec.f90 \
 	 setpage.f90 \
 	 titles_read.f90 \
@@ -106,7 +105,6 @@ gadget: $(OBJGADGETSPH)
 ## sort out dependencies on modules
 defaults.o: exact.o
 
-exact.o: toystar2D_utils.o exact_toystar2D.o
 ## other crap
 
 tar:
