@@ -183,10 +183,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   !!------------------------------------------------------------------------
   ! general initialisations
 
-  !!--set paper size
-  if (nacross.eq.2 .and. ndown.eq.1 .and. ipapersize.eq.0) then
-     call pgpaper(11.7,0.5/sqrt(2.))
-  elseif (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
+  !!--set paper size if necessary
+  if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
      call pgpaper(papersizex,aspectratio)
   endif
   !!--turn off page prompting
