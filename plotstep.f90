@@ -123,30 +123,47 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
         enddo
      endif
      
-     !!--if series of cross sections (flythru), set position of first one      
-     if (x_sec.and.flythru .and. iplotz.gt.0) then
-        print 32,label(iplotz)
-32      format('enter number of ',a1,' cross-section slices')
-        read*,nxsec
-        !!--dxsec is the distance between slices            
-        dxsec = (lim(iplotz,2)-lim(iplotz,1))/float(nxsec)
-        xsecpos = lim(iplotz,1) - 0.5*dxsec
-        xsecpos_nomulti = xsecpos
-
-     !!--if single cross-section, read position of cross-section slice
-     elseif (x_sec.and.iplotpart .and. iplotz.gt.0) then
-        call prompt(' enter '//trim(label(iplotz))//' position for cross-section slice:', &
-                     xsecpos_nomulti,lim(iplotz,1),lim(iplotz,2))
-        !!--default thickness is half of the average particle spacing
-        npartdim = int(maxval(npartoftype(:,1))**(1./real(ndim)))
-        print*,'average # of particles in each dimension = ',npartdim
-        if (npartdim.gt.0) then
-           dxsec = (lim(iplotz,2)-lim(iplotz,1))/float(npartdim)
+     if (x_sec .and. iplotz.gt.0) then
+!
+!--if series of cross sections (flythru), set position of first one
+!
+        if (flythru) then
+           print 32,label(iplotz)
+32         format('enter number of ',a1,' cross-section slices')
+           read*,nxsec
+           !!--dxsec is the distance between slices            
+           dxsec = (lim(iplotz,2)-lim(iplotz,1))/float(nxsec)
+           xsecpos = lim(iplotz,1) - 0.5*dxsec
+           xsecpos_nomulti = xsecpos
         else
-           dxsec = 0.
-        endif
-        call prompt(' enter thickness of cross section slice:', &
-                     dxsec,0.0,lim(iplotz,2)-lim(iplotz,1))  
+!
+!--if single cross-section, read position of cross-section slice
+!
+           call prompt(' enter '//trim(label(iplotz))// &
+                       ' position for cross-section slice:', &
+                       xsecpos_nomulti,lim(iplotz,1),lim(iplotz,2))
+!
+!--set thickness if plotting particles
+!  (default thickness is half of the average particle spacing)
+!
+           if (irender.le.0 .or. irender.gt.numplot) then
+              npartdim = int(maxval(npartoftype(:,1))**(1./real(ndim)))
+              print*,'average # of particles in each dimension = ',npartdim
+              if (npartdim.gt.0) then
+                 dxsec = (lim(iplotz,2)-lim(iplotz,1))/float(npartdim)
+              else
+                 dxsec = 0.
+              endif
+              call prompt(' enter thickness of cross section slice:', &
+                           dxsec,0.0,lim(iplotz,2)-lim(iplotz,1))
+           elseif (ndim.eq.3) then
+!
+!--for rendered cross sections in 3D, set thickness to 10%
+!  this is the distance slices are moved up and down in interactive mode
+!           
+              dxsec = 0.1*(lim(iplotz,2)-lim(iplotz,1))
+           endif
+        endif ! flythru or single
      endif
   endif
 
@@ -236,7 +253,11 @@ subroutine plotstep(istep,irender,ivecplot, &
   use legends, only:legend
   use particleplots
   use powerspectrums
+  use interpolations1D, only:interpolate1D
+  use interpolations2D, only:interpolate2D, interpolate2D_xsec
   use projections3D, only:interpolate3D_projection
+  use xsections3D, only:interpolate3D, interpolate3D_fastxsec, &
+                        interpolate3D_xsec_vec
   use render, only:render_pix,colourbar
 
   implicit none
@@ -263,7 +284,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot,renderplot
   real :: angleradx, anglerady, angleradz
   real :: rendermintemp,rendermaxtemp
-  real :: xsecmin,xsecmax,dummymin,dummymax
+  real :: xsecmin,xsecmax,dummy
   real :: pixwidth
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
@@ -279,6 +300,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   labelvecplot = ' '
   xplot = 0.
   yplot = 0.
+  dummy = 0.
   !
   !--set number of particles to use in the interpolation routines
   !  (ie. including only gas particles and ghosts)
@@ -325,7 +347,7 @@ subroutine plotstep(istep,irender,ivecplot, &
         ivectorplot = ivecplot
         iplotcont = iplotcont_nomulti
         x_sec = xsec_nomulti
-        xsecpos = xsecpos_nomulti        
+        if (iadvance.ne.0) xsecpos = xsecpos_nomulti        
      endif
      if (ivectorplot.gt.0) iplotpart = iplotpartvec
 
@@ -481,9 +503,8 @@ subroutine plotstep(istep,irender,ivecplot, &
         endif
         
         iplotz = 0
-        if (x_sec) iplotz = iz ! this is used in cross section
-
-        if (iplotz.ne.0) then
+        if (x_sec) iplotz = iz ! this is used as cross sectioned quantity
+        if (iplotz.gt.0 .and. iplotz.le.ndataplots) then
            zplot(1:ntoti) = dat(1:ntoti,iplotz)
            labelz = label(iplotz)
         endif
@@ -540,13 +561,12 @@ subroutine plotstep(istep,irender,ivecplot, &
            pixwidth = (xmax-xmin)/real(npix)
            npixx = int((xmax-xmin)/pixwidth) + 1
            npixy = int((ymax-ymin)/pixwidth) + 1
-           !!print*,'npixx, npixy = ',npixx,npixy
+
            !!--only need z pixels if working with interpolation to 3D grid
+           !  (then number of z pixels is equal to number of cross sections)
            if ((ndim.ge.3).and.(x_sec.and.nxsec.gt.2)) then
               zmin = lim(iplotz,1)
-              !!--number of z pixels is equal to number of cross sections
               npixz = nxsec
-              !!print*,'npixz = ',npixz
            endif
 
            if (allocated(datpix)) deallocate(datpix)
@@ -890,7 +910,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                  call interactive_part(ninterp,iplotx,iploty,iplotz,irenderplot, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       dat(1:ninterp,ih),icolourme(1:ninterp), &
-                      xmin,xmax,ymin,ymax,xsecmin,xsecmax,rendermin,rendermax, &
+                      xmin,xmax,ymin,ymax,xsecpos,dxsec,rendermin,rendermax, &
                       angletempx,angletempy,angletempz,ndim,iadvance,isave)
                  !--turn rotation on if necessary
                  if (abs(angletempx-anglex).gt.tol) irotate = .true.
@@ -1001,7 +1021,7 @@ subroutine plotstep(istep,irender,ivecplot, &
               call interactive_part(ntoti,iplotx,iploty,0,irenderplot, &
                    xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
                    dat(1:ntoti,ih),icolourme(1:ntoti), &
-                   xmin,xmax,ymin,ymax,dummymin,dummymax,dummymin,dummymax, &
+                   xmin,xmax,ymin,ymax,dummy,dummy,rendermin,rendermax, &
                    angletempx,angletempy,angletempz,ndim,iadvance,isave)
               if (iadvance.eq.-666) return
            elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
@@ -1214,6 +1234,8 @@ contains
   subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidth,label)
    use fieldlines
    use settings_vecplot
+   use interpolations2D, only:interpolate2D_vec
+   use projections3D, only:interpolate3D_proj_vec
    use render, only:render_vec
    implicit none
    integer, intent(in) :: ivecx,ivecy,numpixx,numpixy
@@ -1236,17 +1258,27 @@ contains
       !!--plot arrows in either background or foreground colour
       if (UseBackgndColorVecplot) call pgsci(0)
 
-      if (x_sec .and. ndim.eq.3) then ! take vector plot in cross section
-         !
-         !--interpolate vector from particles to cross section
-         !
-         call interpolate3D_xsec_vec(xplot(1:ninterp), &
-           yplot(1:ninterp),zplot(1:ninterp), &
-           dat(1:ninterp,ipmass),dat(1:ninterp,irho),  &
-           dat(1:ninterp,ih),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-           ninterp,xmin,ymin,xsecpos, &
-           vecpixx,vecpixy,numpixx,numpixy,pixwidth)
-      else
+      !
+      !--interpolate using appropriate routine for number of dimensions
+      !
+      select case(ndim)
+      case(3)
+         if (x_sec) then ! take vector plot in cross section
+            call interpolate3D_xsec_vec(xplot(1:ninterp), &
+              yplot(1:ninterp),zplot(1:ninterp), &
+              dat(1:ninterp,ipmass),dat(1:ninterp,irho),  &
+              dat(1:ninterp,ih),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+              ninterp,xmin,ymin,xsecpos, &
+              vecpixx,vecpixy,numpixx,numpixy,pixwidth)
+         else
+            call interpolate3D_proj_vec(xplot(1:ninterp), &
+              yplot(1:ninterp),dat(1:ninterp,ipmass), &
+              dat(1:ninterp,irho),dat(1:ninterp,ih), &
+              dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+              ninterp,xmin,ymin, &
+              vecpixx,vecpixy,numpixx,numpixy,pixwidth)
+         endif
+      case(2)
          !
          !--or interpolate (via averaging) to coarser grid
          !
@@ -1254,12 +1286,21 @@ contains
          !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
          !     dat(1:ninterp,ih),dat(1:ninterp,ipmass), &
          !     dat(1:ninterp,irho),xmin,xmax,ymin,ymax)
-
-         call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
-           dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-           xmin,ymin,pixwidth,vecpixx,vecpixy, &
-           ninterp,numpixx,numpixy)
-      endif
+         !call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
+         !  dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+         !  xmin,ymin,pixwidth,vecpixx,vecpixy, &
+         !  ninterp,numpixx,numpixy)
+         
+         call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
+              dat(1:ninterp,ipmass),dat(1:ninterp,irho), &
+              dat(1:ninterp,ih),dat(1:ninterp,ivecx), &
+              dat(1:ninterp,ivecy),ninterp,xmin,ymin, &
+              vecpixx,vecpixy,numpixx,numpixy,pixwidth)
+      
+      case default
+         print "(a,i1,a)",'ERROR: Cannot do vector plotting in ',ndim,' dimensions'
+         return
+      end select
       !
       !--plot it
       !

@@ -1,5 +1,18 @@
+!----------------------------------------------------------------------
+!
+!  Module containing all of the routines required for 1D interpolation
+!
+!----------------------------------------------------------------------
+
+module interpolations1D
+ implicit none
+ real, parameter, private :: pi = 3.1415926536      
+ public :: interpolate1D
+ 
+contains
+
 !--------------------------------------------------------------------------
-!     program to interpolate from particle data to even 1D grid of pixels
+!     subroutine to interpolate from particle data to even 1D grid of pixels
 !
 !     The data is smoothed using the SPH summation interpolant,
 !     that is, we compute the smoothed array according to
@@ -24,11 +37,10 @@ subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
      xmin,datsmooth,npixx,pixwidth)
 
   implicit none
-  real, parameter :: pi = 3.1415926536      
-  integer, intent(IN) :: npart,npixx
-  real, intent(IN), dimension(npart) :: x,pmass,rho,hh,dat
-  real, intent(IN) :: xmin,pixwidth
-  real, intent(OUT), dimension(npixx) :: datsmooth
+  integer, intent(in) :: npart,npixx
+  real, intent(in), dimension(npart) :: x,pmass,rho,hh,dat
+  real, intent(in) :: xmin,pixwidth
+  real, intent(out), dimension(npixx) :: datsmooth
 
   integer :: i,ipix,ipixmin,ipixmax
   real :: hi,hi1,radkern,qq,wab,rab,const
@@ -94,3 +106,5 @@ subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
   return
 
 end subroutine interpolate1D
+
+end module interpolations1D

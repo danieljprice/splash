@@ -103,9 +103,9 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   integer :: index, index1
-  integer :: iprintnext, iprogress, itmin
+  integer :: iprintinterval, iprintnext, iprogress, itmin
   real :: hi,hi1,radkern,qq,wab,rab,const
-  real :: term,dx,dy,xpix,ypix
+  real :: term,rho1i,dx,dy,xpix,ypix
   real :: dxx,dwdx
   real :: dmaxcoltable
   real :: t_start,t_end,t_used,tsec
@@ -127,7 +127,9 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
   !
   !--loop over particles
   !
-  iprintnext = 25
+  iprintinterval = 25
+  if (npart.ge.1e6) iprintinterval = 10
+  iprintnext = iprintinterval
 !
 !--get starting CPU time
 !
@@ -141,7 +143,7 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
         iprogress = 100*i/npart
         if (iprogress.ge.iprintnext) then
            write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
-           iprintnext = iprintnext + 25
+           iprintnext = iprintnext + iprintinterval
         endif
      endif
      !
@@ -156,7 +158,12 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
      radkern = 2.*hi  !radius of the smoothing kernel
      !         const = 10./(7.*pi*h2)  ! normalisation constant
      const = hi1*hi1
-     if (rho(i).ne.0.) term = const*pmass(i)*dat(i)/rho(i) 
+     if (rho(i).gt.0.) then
+        rho1i = 1./rho(i)
+     else
+        rho1i = 0.
+     endif
+     term = const*pmass(i)*dat(i)*rho1i
      !
      !--for each particle work out which pixels it contributes to
      !               
