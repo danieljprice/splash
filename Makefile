@@ -63,7 +63,7 @@ SOURCES= modules.f90 prompting.f90 \
 	 interpolate1D.f90 \
          interpolate2D.f90 interpolate2D_xsec.f90 \
 	 interpolate3D.f90 interpolate3D_fastxsec.f90 \
-	 interpolate3D_projection.f90 \
+	 interpolate3D_projection.f90 interpolate3D_xsec_vec.f90 \
 	 int_from_string.f90 \
 	 legend.f \
 	 limits_read.f90 limits_save.f90 limits_set.f90 \
@@ -78,7 +78,7 @@ SOURCES= modules.f90 prompting.f90 \
 	 powerspectrum_lomb1D.f90 \
 	 print_header.f90\
          read_exactparams.f90 riemannsolver.f90 \
-         render.f90 setpage.f90 \
+         render.f90 render_vec.f90 setpage.f90 \
 	 titles_read.f90 \
 	 transform.f90 vectorplot.f90 \
 

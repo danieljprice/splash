@@ -42,10 +42,12 @@ subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
 
   integer :: i,j,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   real :: hi,hi1,h3,radkern,qq,wab,rab,const
-  real :: term,dx,dy,dz,dz2,xpix,ypix
+  real :: rho1i,termx,termy,dx,dy,dz,dz2,xpix,ypix
 
-  datsmooth = 0.
-  term = 0.
+  vecsmoothx = 0.
+  vecsmoothy = 0.
+  termx = 0.
+  termy = 0.
   print*,'taking fast cross section...',zslice
   if (pixwidth.le.0.) then
      print*,'interpolate3D_xsec_vec: error: pixel width <= 0'

@@ -15,7 +15,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   integer, intent(in) :: ipicky, ipickx, irender, ivecplot
 
   integer, parameter :: maxtitles = 50
-  integer :: i,j,k,n
+  integer :: i,j,k,n,ierr
   integer :: iplotx,iploty,irenderplot,ivectorplot,ivecx,ivecy
   integer :: nyplot,nyplots      
   integer :: ninterp,npart1,npartdim
@@ -741,8 +741,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               ! vector maps (can be on top of particle plots and renderings)
               !--------------------------------------------------------------
 
-              !!--velocity vector map
               if (ivectorplot.ne.0) then
+	         !!--choose quantity to be plotted
                  if (ivectorplot.eq.1 .and. ivx.ne.0) then
                     ivecx = ivx + iplotx - 1 ! 
                     ivecy = ivx + iploty - 1
@@ -770,22 +770,57 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                     
                     !!--plot arrows in either background or foreground colour
                     if (UseBackgndColorVecplot) call pgsci(0)
-                    !!--call routine to do vector plot off particles      
-                    call vectorplot(xplot(1:ntotplot(i)),yplot(1:ntotplot(i)),  &
-                         xmin,ymin,pixwidth, &
-                         dat(ivecx,1:ntotplot(i),i),dat(ivecy,1:ntotplot(i),i), &
-                         vecmax,ntotplot(i),npixvec,npixyvec)
+                    
+		    !
+		    ! Vector map in cross section
+		    !
+		    if (x_sec .and. ndim.eq.3) then ! take vector plot in cross section
+		       if (allocated(vecpixx)) deallocate(vecpixx)
+		       if (allocated(vecpixy)) deallocate(vecpixy)
+		       allocate(vecpixx(npixvec,npixyvec),stat=ierr)
+		       allocate(vecpixy(npixvec,npixyvec),stat=ierr)
+		       if (ierr.ne.0) then
+		          print*,'error allocating memory for vector cross section'
+		       else
+		          !
+			  !--interpolate vector from particles to cross section
+			  !
+			  call interpolate3D_xsec_vec(dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
+                            dat(ixsec,1:ninterp,i), &
+                            dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i),    &
+                            dat(ih,1:ninterp,i),dat(ivecx,1:ninterp,i), &
+			    dat(ivecy,1:ninterp,i),&
+                            ninterp,xmin,ymin,xsecpos,vecpixx,vecpixy,npixx,npixy,pixwidth)
+		          !
+			  !--plot rendered vector map
+			  !
+			  log = .false.
+			  call render_vec(vecpixx,vecpixy,vecmax, &
+			    npixvec,npixyvec,xmin,ymin,pixwidth,log)
+			  deallocate(vecpixx,vecpixy)
+		       endif
+		    else
+		    !
+		    ! Vector map in projection using averaging
+		    !
+		       !!--call routine to do vector plot off particles      
+                       call vectorplot(xplot(1:ntotplot(i)),yplot(1:ntotplot(i)),  &
+                            xmin,ymin,pixwidth, &
+                            dat(ivecx,1:ntotplot(i),i),dat(ivecy,1:ntotplot(i),i), &
+                            vecmax,ntotplot(i),npixvec,npixyvec)
+                       !!--old stuff here is to plot arrows on the particles themselves
+                       !scale = 0.08*(lim(iploty,2)-lim(iploty,1))
+                       !call pgsch(0.35)! character height (size of arrow head)
+                       !do j=1,ntotplot(i)
+                       !   call pgarro(yplot(i),xplot(i), &
+                       !   yplot(i)+dat(ivecy,j,i)*scale,   &
+                       !   xplot(i)+dat(ivecx,j,i)*scale)
+                       !enddo
+                       !       call pgsch(1.0)    ! reset character height
+                    endif
                     if (UseBackgndColorVecplot) call pgsci(1)
-                    !!--old stuff here is to plot arrows on the particles themselves
-                    !scale = 0.08*(lim(iploty,2)-lim(iploty,1))
-                    !call pgsch(0.35)! character height (size of arrow head)
-                    !do j=1,ntotplot(i)
-                    !   call pgarro(yplot(i),xplot(i), &
-                    !   yplot(i)+dat(ivecy,j,i)*scale,   &
-                    !   xplot(i)+dat(ivecx,j,i)*scale)
-                    !enddo
-                    !       call pgsch(1.0)    ! reset character height
-                 endif
+
+		 endif
               endif
               !
               !--print legend if this is the first plot on the page
