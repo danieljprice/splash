@@ -38,7 +38,7 @@ subroutine read_data(rootname,nfilesteps)
   character(LEN=2) :: fileno
   character(LEN=*), intent(IN) :: rootname
   integer :: i,j,k,ifile
-  integer :: ncol_max,ndim_max,ndimV_max,nstep_max
+  integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin
   logical :: iexist,reallocate
   real :: timein,gammain
@@ -103,6 +103,7 @@ subroutine read_data(rootname,nfilesteps)
   else 
      nstep_max = 5
   endif
+  npart_max = ntotin
   if (.not.allocated(dat) .or. ntotin.gt.maxpart  &
        .or. nstep_max.gt.maxstep .or. ncol_max.gt.maxcol) then
      call alloc(ntotin,nstep_max,ncol_max)
@@ -138,6 +139,7 @@ subroutine read_data(rootname,nfilesteps)
      if (ntot(i).gt.maxpart) then
         !print*, 'ntot greater than array limits!!'    
         reallocate = .true.
+	npart_max = ntot(i)
      endif
      if (i.eq.nstep_max) then
         nstep_max = i + 10
@@ -147,7 +149,7 @@ subroutine read_data(rootname,nfilesteps)
      !--reallocate memory for main data array
      !
      if (reallocate) then
-        call alloc(ntot(i),nstep_max,ncol_max)
+        call alloc(npart_max,nstep_max,ncol_max)
      endif
 
   
