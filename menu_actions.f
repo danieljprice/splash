@@ -111,21 +111,26 @@
 	  RETURN
 !------------------------------------------------------------------------
        CASE(4)
+          axes=.not.axes
+          PRINT *,' Axes = ',axes
+	  RETURN	  
+!------------------------------------------------------------------------
+       CASE(5)
           animate=.not.animate
           PRINT *,' Animation = ',animate
 	  RETURN
 !------------------------------------------------------------------------
-       CASE(5)
+       CASE(6)
           iadapt=.not.iadapt
           PRINT *,' Adaptive plot limits = ',iadapt
 	  RETURN
 !------------------------------------------------------------------------
-       CASE(6)
+       CASE(7)
           magfield=.not.magfield
           PRINT *,' Mag field = ',magfield
 	  RETURN
 !------------------------------------------------------------------------
-       CASE(7)
+       CASE(8)
           xsec_nomulti =.not.xsec_nomulti
 	  PRINT *,' Cross section = ',xsec_nomulti
 	  flythru = .false.
@@ -136,7 +141,7 @@
 	  ENDIF
 	  RETURN
 !------------------------------------------------------------------------
-       CASE(8)
+       CASE(9)
 	  plotcirc=.not.plotcirc
           PRINT*,' Plot circles of interaction = ',plotcirc
 	  IF (plotcirc) THEN	     
@@ -148,19 +153,19 @@
 	  ENDIF
 	  RETURN 	  
 !------------------------------------------------------------------------
-       CASE(9)
+       CASE(10)
           PRINT*,'(0: Square 1: . 2: + 3: * 4: o 5: x 17: bold circle)'
 	  CALL prompt(' Enter PGPLOT marker # (particles):',imark)
 	  CALL prompt(' Enter PGPLOT marker # (ghosts)   :',imarkg)
 	  CALL prompt(' Enter PGPLOT marker # (sinks)    :',imarksink)
 	  RETURN
 !------------------------------------------------------------------------
-       CASE(10)
+       CASE(11)
           CALL prompt('Enter number of plots across:',nacross,1,numplot)
 	  CALL prompt('Enter number of plots down  :',ndown,1,numplot)
 	  RETURN	    	  
 !------------------------------------------------------------------------
-       CASE(11)
+       CASE(12)
 	  CALL prompt('Enter number of plots per timestep:',
      & 	              nyplotmulti,1,numplot)
 !	  READ*,nyplotmulti
@@ -195,12 +200,12 @@
 	  ENDDO
 	  RETURN	    	  
 !------------------------------------------------------------------------
-       CASE(12)
+       CASE(13)
 	  ipagechange=.not.ipagechange
           PRINT*,' Page changing = ',ipagechange
 	  RETURN 	  
 !------------------------------------------------------------------------
-       CASE(13)
+       CASE(14)
 	  PRINT*,' 0) PGPLOT default'
 	  PRINT*,' 1) small square movie '
 	  PRINT*,' 2) large/multiple movie'
@@ -237,7 +242,7 @@
 	  RETURN 	  
 	  
 !------------------------------------------------------------------------
-       CASE(14)
+       CASE(15)
 	  PRINT*,' Plot initial only(i), all(a), both(b) or not (n)?'
 	  READ*,ans
 	  iplotline = .false.
@@ -250,24 +255,24 @@
           PRINT*,' Plot line = ',iplotline,iplotlinein
 	  RETURN 	  
 !------------------------------------------------------------------------
-       CASE(15)
+       CASE(16)
           call options_exact(iexact)
 !------------------------------------------------------------------------
-       CASE(16)
+       CASE(17)
 	  iplotav=.not.iplotav
           IF (iplotav) THEN
 	     CALL prompt('Enter number of bins for averaging ',nbins,1,1000)
           ENDIF
 	  PRINT*,' Plot average, nbins = ',iplotav,nbins
 	  RETURN 		  	    	  	  
-!------------------------------------------------------------------------
-       CASE(17)
+!-----------------------------------------------------------------------
+       CASE(18)
 c	  label particles with particle numbers
 	  ilabelpart=.not.ilabelpart
           PRINT*,' label particles = ',ilabelpart
 	  RETURN 	  
 !------------------------------------------------------------------------
-       CASE(18)
+       CASE(19)
 c	  plot ghost particles?
 	  CALL prompt('Plot ghost particles? ',iplotghost)
 	  CALL prompt('Plot sink particles? ',iplotsink)
@@ -276,7 +281,7 @@ c	  plot ghost particles?
 	  IF (iplotghost) ntotplot(:) = npart(:) + nghost(:)
 	  RETURN 	  
 !------------------------------------------------------------------------
-       CASE(19)
+       CASE(20)
           CALL options_render(irender,npix_nomulti,icolours,
      &	       iplotcont_nomulti,ncontours_nomulti,
      &	       ivecplot_nomulti,npixvec_nomulti,iplotpartvec_nomulti,
@@ -284,7 +289,7 @@ c	  plot ghost particles?
      &         ndim,numplot)
           RETURN
 !------------------------------------------------------------------------
-       CASE(20)
+       CASE(21)
 299       CONTINUE
           ipick = 0
 	  PRINT*,'Enter plot number to apply transformation '
@@ -308,7 +313,7 @@ c	  plot ghost particles?
 	     RETURN
 	  ENDIF
 !------------------------------------------------------------------------
-       CASE(21)
+       CASE(22)
 	  IF (.not.iadapt) THEN
 	     ians = .false.
 	     CALL prompt('Do you want to manually enter limits?',ians)
@@ -341,12 +346,12 @@ c	  plot ghost particles?
 	  ENDIF
 	  RETURN
 !------------------------------------------------------------------------
-       CASE(22)
+       CASE(23)
 !	  show/hide plot options
 	  ishowopts = .not.ishowopts
 	  RETURN 	  
 !------------------------------------------------------------------------
-       CASE(23)
+       CASE(24)
           CALL write_defaults
 	  RETURN
        CASE DEFAULT

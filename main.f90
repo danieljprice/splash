@@ -232,8 +232,8 @@ subroutine main(ipicky,ipickx)
            !--work out whether to use log axes - this is for the call to pgbox
            logx = ' '
            logy = ' '
-           if (itrans(iplotx).eq.1) logx = 'l'
-           if (itrans(iploty).eq.1) logy = 'l'
+           !if (itrans(iplotx).eq.1) logx = 'l'
+           !if (itrans(iploty).eq.1) logy = 'l'
            
            !--write username, date on plot
            !         if (nacross.le.2.and.ndown.le.2) call pgiden
@@ -282,7 +282,7 @@ subroutine main(ipicky,ipickx)
            
            !!--work out coordinate that is not being plotted	 
            do j=1,ndim
-              if ((j.ne.ipickx).and.(j.ne.ipicky)) ixsec = j	 
+              if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j	 
            enddo
            if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D	   
            !!--set limits for rendering area
@@ -445,9 +445,8 @@ subroutine main(ipicky,ipickx)
                     call pgsvp(0.1,0.9,0.1,0.9)
                  endif
                  call pgwnad(xmin,xmax,ymin,ymax)	!  pgwnad does equal aspect ratios
-                 !	       call pgswin(xmin,xmax,ymin,ymax)	!  not equal	
                  !!--plot axes (log if appropriate)
-                 call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)	       
+                 if (axes) call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)	       
               elseif (nyplot.eq.1) then
                  call pgpanl(1,1)
               else
@@ -468,14 +467,18 @@ subroutine main(ipicky,ipickx)
               
               !--set plot limits	    
               call pgwnad(xmin,xmax,ymin,ymax)	! pgwnad does equal aspect ratios
+              !	       call pgswin(xmin,xmax,ymin,ymax)	!  not equal	
+		 
               !--label plot
-              if (((nyplots-nyplot).lt.nacross).or.(.not.isamexaxis)) then
-                 call pgmtxt('l',3.0,0.5,1.0,labely)
-                 call pglabel(labelx,' ',titlex)	    
-              else
-                 call pgmtxt('l',3.0,0.5,1.0,labely)
-                 !	      call pglabel(' ',labely,titlex)
-              endif
+              if (axes) then
+	      	 if (((nyplots-nyplot).lt.nacross).or.(.not.isamexaxis)) then
+                    call pgmtxt('l',3.0,0.5,1.0,labely)
+                    call pglabel(labelx,' ',titlex)	    
+              	 else
+                    call pgmtxt('l',3.0,0.5,1.0,labely)
+                    !	      call pglabel(' ',labely,titlex)
+              	 endif
+	      endif
               
               !------------------------------
               ! now actually plot the data
@@ -688,7 +691,7 @@ subroutine main(ipicky,ipickx)
                  call pgsvp(0.1,0.9,0.1,0.9)	       
               endif
               call pgswin(xmin,xmax,ymin,ymax)
-              call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)	       	       
+              if (axes) call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)	       	       
            elseif (nyplot.eq.1) then
               call pgpanl(1,1)
            else
@@ -709,15 +712,17 @@ subroutine main(ipicky,ipickx)
            !	    
            call pgswin(xmin,xmax,ymin,ymax)
            
-           if (((nyplots-nyplot).lt.nacross).or.(.not.isamexaxis)) then
-              !--print x and y labels
-              call pgmtxt('l',3.0,0.5,1.0,labely)
-              call pglab(labelx,' ',title)	    
-           else
-              !--print y labels only	    
-              call pgmtxt('l',3.0,0.5,1.0,labely)
-              !	      call pglab(' ',labely,title)
-           endif
+           if (axes) then
+	      if (((nyplots-nyplot).lt.nacross).or.(.not.isamexaxis)) then
+                 !--print x and y labels
+                 call pgmtxt('l',3.0,0.5,1.0,labely)
+                 call pglab(labelx,' ',title)	    
+              else
+                 !--print y labels only	    
+                 call pgmtxt('l',3.0,0.5,1.0,labely)
+                 !	      call pglab(' ',labely,title)
+              endif
+	   endif
            
            !--------------------------------
            ! now plot particles

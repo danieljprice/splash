@@ -33,7 +33,7 @@
 !
 !--supersphplot options 
 !     
-      menuitems = 23	! this is the number of options in the menu (set here)
+      menuitems = 24	! this is the number of options in the menu (set here)
 
       IF (ishowopts) THEN
      
@@ -42,45 +42,47 @@
       PRINT 14,numplot+3,
      &        'Change number of timesteps read  ',(n_end-nstart+1)/nfreq 
       PRINT 15,numplot+4,
-     &        'toggle animate                   ',animate
+     &        'toggle axes                      ',axes
       PRINT 15,numplot+5,
-     &        'toggle adaptive/fixed limits     ',iadapt
+     &        'toggle animate                   ',animate
       PRINT 15,numplot+6,
-     &        'toggle mag field                 ',magfield
+     &        'toggle adaptive/fixed limits     ',iadapt
       PRINT 15,numplot+7,
-     &        'toggle cross section/projection  ',xsec_nomulti
+     &        'toggle mag field                 ',magfield
       PRINT 15,numplot+8,
+     &        'toggle cross section/projection  ',xsec_nomulti
+      PRINT 15,numplot+9,
      &        'toggle circles of interaction    ',plotcirc
-      PRINT 16,numplot+9,
-     &        'Change graph markers             ',imark,imarkg
       PRINT 16,numplot+10,
+     &        'Change graph markers             ',imark,imarkg
+      PRINT 16,numplot+11,
      &        'Change plots per page            ',nacross,ndown
-      PRINT 14,numplot+11,
+      PRINT 14,numplot+12,
      &        'Set multiplot                    ',nyplotmulti
-      PRINT 15,numplot+12,
+      PRINT 15,numplot+13,
      &        'toggle page change               ',ipagechange
-      PRINT 21,numplot+13,
+      PRINT 21,numplot+14,
      &        'change paper size                ',papersizex,aspectratio
-      PRINT 19,numplot+14,
+      PRINT 19,numplot+15,
      &        'toggle plot line (all, init)     ',iplotline,iplotlinein 
-      PRINT 14,numplot+15,
+      PRINT 14,numplot+16,
      &        'toggle exact solution            ',iexact
-      PRINT 20,numplot+16,
+      PRINT 20,numplot+17,
      &        'toggle plot average line         ',iplotav,nbins
-      PRINT 15,numplot+17,
+      PRINT 15,numplot+18,
      &        'toggle label particles           ',ilabelpart
-      PRINT 19,numplot+18,
+      PRINT 19,numplot+19,
      &        'toggle plot ghosts/sinks         ',iplotghost,iplotsink
-      PRINT 16,numplot+19,
+      PRINT 16,numplot+20,
      &        'set rendering/vector plots       ',
      &         irender,ivecplot_nomulti
-      PRINT 13,numplot+20,
+      PRINT 13,numplot+21,
      &        'apply transformations (log10,1/x)'
       IF (iadapt) THEN
-         PRINT 17,numplot+21,
+         PRINT 17,numplot+22,
      &        'Zoom out/in                      ',scalemax      
       ELSE
-         PRINT 17,numplot+21,
+         PRINT 17,numplot+22,
      &        'Zoom out/in/set manual limits    ',zoom
       ENDIF
       
@@ -88,12 +90,12 @@
       
       PRINT 12
       IF (ishowopts) THEN
-         PRINT 13,numplot+22,'hide options'      
+         PRINT 13,numplot+23,'hide options'      
       ELSE
-         PRINT 13,numplot+22,'supersphplot options'
+         PRINT 13,numplot+23,'supersphplot options'
       ENDIF
-      PRINT 13,numplot+23,'Save defaults'
-      PRINT 13,numplot+24,'Exit supersphplot'
+      PRINT 13,numplot+24,'Save defaults'
+      PRINT 13,numplot+25,'Exit supersphplot'
       PRINT 12
      
 11    FORMAT(1x,i2,')',1x,a20,1x,i2,')',1x,a)
