@@ -29,7 +29,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
   use labels
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iformat
   use mem_allocation
   implicit none
   integer, intent(IN) :: indexstart
