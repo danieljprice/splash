@@ -14,7 +14,6 @@
 ! ncolumns    : number of data columns
 ! ndim, ndimV : number of spatial, velocity dimensions
 ! nstepsread  : number of steps read from this file
-! ivegotdata  : flag which indicates successful data read
 !
 ! maxplot,maxpart,maxstep      : dimensions of main data array
 ! dat(maxplot,maxpart,maxstep) : main data array
@@ -39,8 +38,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(LEN=*), intent(IN) :: rootname
   integer, parameter :: maxptmass = 100
   integer :: i,j,ifile,ierr
-  integer :: ncol_max,nstep_max
-  integer :: ntotin
+  integer :: npart_max, nstep_max
   logical :: iexist
     
   character(LEN=3) :: fileno
@@ -49,18 +47,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
   
-  logical :: magfield  
   real(doub_prec), dimension(:,:), allocatable :: dattemp
   real(doub_prec), dimension(:), allocatable :: dummy
-  real*8 :: udisti,umassi,utimei, timei, gammai
+  real(doub_prec) :: udisti,umassi,utimei, timei, gammai
   real(doub_prec) :: escap,tkin,tgrav,tterm,trad
   real(doub_prec) :: dtmax
 
   nstepsread = 0
   ierr = 0
   nstep_max = 0
-  ncol_max = 0
-  ntotin = 0
+  npart_max = 0
+  ifile = 0
   !
   !--for rootnames without the '00', read all files starting at #1
   !
@@ -86,11 +83,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
      return
   endif
   !
-  !--assume MHD if filename starts with m
-  !
-  magfield = .false.
-  if (rootname(1:1).EQ.'m') magfield = .true.
-  !
   !--fix number of spatial dimensions
   !
   ndim = 3
@@ -99,7 +91,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--allocate memory initially
   !
-  ncol_max = max(ncolumns,ncol_max)
   nstep_max = max(nstep_max,indexstart,1)
 
   j = indexstart
@@ -122,16 +113,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
         return
      endif
      print*,'nprint = ',nprint
-     if (.not.allocated(dat) .or. nprint.gt.ntotin) then
-        ntotin = max(ntotin,INT(1.1*nprint))
-        call alloc(ntotin,nstep_max,ncol_max)
+     if (.not.allocated(dat) .or. nprint.gt.npart_max) then
+        npart_max = max(npart_max,INT(1.1*nprint))
+        call alloc(npart_max,nstep_max,ncolumns)
      endif
      rewind(15)
 !
 !--loop over the timesteps in this file
 !     
      over_steps_in_file: do     
-        ntotin = max(ntotin,nprint)
+        npart_max = max(npart_max,nprint)
 !
 !--allocate/reallocate memory if j > maxstep
 !
@@ -142,16 +133,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--allocate a temporary array for double precision variables
 !
         if (allocated(dattemp)) deallocate(dattemp)
-        allocate(dattemp(ntotin,ncol_max))
+        allocate(dattemp(npart_max,ncolumns))
 !
 !--allocate a dummy arrays for data I want to throw away
 !
         if (allocated(dummy)) deallocate(dummy)
-        allocate(dummy(ntotin))
+        allocate(dummy(npart_max))
         if (allocated(isteps)) deallocate(isteps)
-        allocate(isteps(ntotin))
+        allocate(isteps(npart_max))
         if (allocated(iphase)) deallocate(iphase)
-        allocate(iphase(ntotin))
+        allocate(iphase(npart_max))
 !
 !--now read the timestep data in the dumpfile
 !
@@ -181,7 +172,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
         print *,'step ',j,': ntotal = ',nprint
         print "(a)",' converting to single precision... '
-        dat(1:nprint,1:ncol_max,j) = real(dattemp(1:nprint,1:ncol_max))
+        dat(1:nprint,1:ncolumns,j) = real(dattemp(1:nprint,1:ncolumns))
 
         iam(1:nprint,j) = iphase(1:nprint)
         deallocate(dattemp)
@@ -240,7 +231,7 @@ subroutine set_labels
   use settings
   implicit none
   integer :: i
-    
+  
   do i=1,ndim
      ix(i) = i
   enddo
@@ -261,7 +252,7 @@ subroutine set_labels
   label(12) = 'cv'
 
   irho = 13     ! location of rho in data array
-  label(irho) = 'rho'
+  label(irho) = '\gr'
   
   label(14) = 'rlambda'
   label(15) = 'eddington factor'
@@ -269,8 +260,7 @@ subroutine set_labels
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   do i=1,ndimV
      label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-  enddo
-  label(irho) = '\gr'      
+  enddo     
   !
   !--set labels for vector quantities
   !

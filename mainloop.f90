@@ -60,6 +60,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   iplotcont = iplotcont_nomulti
   title = ' '
   titlex = ' '
+  titlelist = ' '
   isamexaxis = .true.  ! same x axis on all plots? (only relevant for >1 plots per page)
   isameyaxis = .true.  ! same y axis on all plots?
   tile_plots = .false.
@@ -141,27 +142,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                      dxsec,0.0,lim(ixsec,2)-lim(ixsec,1))  
      endif
 
-     !!--set title of plot
-
-     if ((.not.imulti).and.(nacross*ndown.eq.1)) then
-        !        if (x_sec) then
-        !           titlex = 'cross-section'
-        !        else
-        !           titlex = 'projection'   
-        !        endif        
-        !        titlex = trim(label(ipickx))//trim(label(ipicky))//' '//titlex                  
-        !        
-        !        if (irender.gt.ndim) then
-        !           titlex = trim(titlex)//' - '//trim(label(irender))//' rendering'
-        !        endif
-        titlex = ' '
-        if (ivecplot.eq.1) titlex = trim(' velocity map: '//titlex)
-        if (ivecplot.eq.2) titlex = trim(' magnetic field map: '//titlex)
-     else
-        titlex = ' '
-     endif
-     call read_titles(titlelist,ntitles,maxtitles)
-
      !!--initialise pgplot
      if (tile_plots) then
         call pgbegin(0,'?',1,1)
@@ -202,6 +182,10 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   !!--turn off page prompting
   if (animate .or. interactive) call pgask(.false.)
   !!if (animate .and. .not. interactive) call pgbbuf !! start buffering output
+
+  !!--set title of plot
+  ntitles = 0
+  call read_titles(titlelist,ntitles,maxtitles)
 
   !
   !--set fill style for circle plots
@@ -253,7 +237,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
         !
         if (i.lt.1) then
            print*,'reached first step: can''t go back'
-                i = 1
+           i = 1
         endif
         if (i.lt.nstart) then
            print*,'warning: i < nstart'
@@ -623,13 +607,13 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               if (tile_plots) then
                  if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
                  call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                                labelx,labely,titlex,just,iaxis)
+                                labelx,labely,trim(titlex),just,iaxis)
               else
                  !--change the page if pagechange set
                  !  or, if turned off, between plots on first page only
                  inewpage = ipagechange .or. (iplots.le.nacross*ndown)
                  call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                   labelx,labely,titlex,just,iaxis, &
+                   labelx,labely,trim(titlex),just,iaxis, &
                    isamexaxis,isameyaxis,inewpage)
               endif
               
@@ -649,7 +633,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                  call transform2(datpix,itrans(irenderplot),npixx,npixy)
                  labelrender = label(irenderplot)
                  !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
-                 if (ndim.eq.3 .and..not. x_sec) then         
+                 if (ndim.eq.3 .and..not. x_sec) then  
                     labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(ixsec)))
                  endif
                  !!--apply transformations to the label for the rendered quantity 
@@ -839,13 +823,13 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            if (tile_plots) then
               if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
               call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                             labelx,labely,title,just,iaxis)
+                             labelx,labely,trim(title),just,iaxis)
            else
                !--change the page if pagechange set
               !  or, if turned off, between plots on first page only
               inewpage = ipagechange .or. (iplots.le.nacross*ndown)
               call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                labelx,labely,title,just,iaxis, &
+                labelx,labely,trim(title),just,iaxis, &
                 isamexaxis,isameyaxis,inewpage)
            endif
 

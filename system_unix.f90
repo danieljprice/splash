@@ -13,7 +13,7 @@ contains
  
  subroutine get_number_arguments(nargs)
     integer, intent(out) :: nargs
-    !!integer :: iargc
+    integer :: iargc
     
     nargs = iargc()
         

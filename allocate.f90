@@ -66,6 +66,9 @@ subroutine alloc(npartin,nstep,ncolumns)
 
   else
      print 10,'> allocating memory: ',npartin,nstep,ncolumns
+     maxpart = npartin
+     maxstep = nstep
+     maxcol = ncolumns
   endif
 !
 !--save array sizes

@@ -44,6 +44,7 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
   real :: term,dx,dy,xpix,ypix
   real :: dxx,dwdx
   real :: dmaxcoltable
+  logical :: iprintprogress
 
   datsmooth = 0.
   term = 0.
@@ -53,6 +54,8 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
      print*,'interpolate3D_proj: error: pixel width <= 0'
      return
   endif
+  
+  iprintprogress = npart .gt. 100000
   !
   !--loop over particles
   !
@@ -62,11 +65,13 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
      !
      !--report on progress
      !
-     iprogress = 100*i/npart
-     if (iprogress.ge.iprintnext) then
-        write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
-        iprintnext = iprintnext + 10
-     endif        
+     if (iprintprogress) then
+        iprogress = 100*i/npart
+        if (iprogress.ge.iprintnext) then
+           write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
+           iprintnext = iprintnext + 10
+        endif
+     endif
      !
      !--set kernel related quantities
      !

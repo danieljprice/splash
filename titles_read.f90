@@ -11,6 +11,7 @@ subroutine read_titles(titlelist,ntitles,maxtitles)
   character(len=50) :: titlefile
 
   titlefile = 'titlelist'  !!trim(rootname(1))//'.titles'
+  ntitles = 0
 
   open(unit=56,file=titlefile,status='old',form='formatted',ERR=997)
   print*,'reading plot titles from file ',trim(titlefile)

@@ -186,6 +186,7 @@ program supersphplot
   if (nfiles.ge.1 .and. rootname(1)(1:1).ne.' ') then
      ihavereadfilename = .true.
   else
+     ihavereadfilename = .false.
      print "(a)",' no filenames read from command line'
   endif
   if (buffer_data) then

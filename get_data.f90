@@ -17,7 +17,7 @@ subroutine get_data(ireadfile)
   use prompting
   implicit none
   integer, intent(in) :: ireadfile
-  integer :: i,istart,ifinish,ierr
+  integer :: i,istart,ierr
 
   if (.not.ihavereadfilename) then
      if (nfiles.le.0 .or. nfiles.gt.maxfile) nfiles = 1
@@ -27,12 +27,9 @@ subroutine get_data(ireadfile)
      enddo
   endif
   ihavereadfilename = .false.
-  ifinish = maxstep
   !
   !--set everything to zero initially
   !
-  ndim = 0
-  ndimV = 0
   ncolumns = 0
   ncalc = 0
   n_end = 0
@@ -53,12 +50,20 @@ subroutine get_data(ireadfile)
      nstepstotal = n_end
      numplot = ncolumns
      print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nstepstotal,' ncolumns = ',numplot
+
+     !
+     !--set labels for each column of data
+     !
+     print*,'setting plot labels...'
+     call set_labels
      !
      !--read plot limits from file, otherwise set plot limits
      !
      call read_limits(ierr)
-     if (ierr.gt.0 .and. ivegotdata .and. nstepsinfile(1).ge.1) call set_limits
-
+     if (ierr.gt.0 .and. ivegotdata .and. nstepsinfile(1).ge.1) then
+        call set_limits(nstart,n_end,1,numplot)
+     endif
+     
   elseif (ireadfile.gt.0) then
      !
      !--read from a single file only
@@ -80,14 +85,18 @@ subroutine get_data(ireadfile)
      n_end = sum(nstepsinfile(1:nfiles))
      nstepstotal = n_end
      print*,'nend = ',n_end
+     numplot = ncolumns
+
+     !
+     !--set labels for each column of data
+     !
+     print*,'setting plot labels...'
+     call set_labels
+
+     if (ireadfile.eq.1 .and. ivegotdata .and. nstepsinfile(1).ge.1) then
+        call set_limits(1,1,1,numplot)
+     endif
   endif
-  !
-  !--set labels for each column of data
-  !
-  print*,'setting plot labels...'
-  call set_labels
-  
-  numplot = ncolumns
 
   if (ivegotdata) then
      !

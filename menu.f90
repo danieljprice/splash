@@ -18,6 +18,8 @@ subroutine menu
 
   irender = 0
   ivecplot = 0
+  ipickx = 1
+  ipicky = 1
 
   menuloop: do
 !---------------------------------------------------------------------------

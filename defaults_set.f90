@@ -6,6 +6,7 @@ subroutine defaults_set
   use exact
   use filenames
   use labels
+  use limits
   use multiplot
   use settings
   implicit none
@@ -13,17 +14,17 @@ subroutine defaults_set
 !
 !--data options (most should be set upon call to read_data)
 !
-  numplot=maxplot 	! reset if read from file
-  ncalc = 0		! number of columns to calculate(e.g. radius)
-  nextra = 0	! extra plots aside from particle data
-  ipowerspec = 0	! label position of power spectrum plot
-  ncolumns=maxplot-ncalc	! number of columns in data file
-  ndim = 3		! number of coordinate dimensions
-  ndimV = ndim	! default velocity same dim as coords
-  nstart = 1	! timestep to start from
-  n_end = 1000	! timestep to finish on
-  nfreq = 1		! frequency of timesteps to read
-  icoords = 1	! co-ordinate system of simulation
+  numplot=maxplot   ! reset if read from file
+  ncalc = 0         ! number of columns to calculate(e.g. radius)
+  nextra = 0        ! extra plots aside from particle data
+  ipowerspec = 0    ! label position of power spectrum plot
+  ncolumns=maxplot-ncalc        ! number of columns in data file
+  ndim = 3          ! number of coordinate dimensions
+  ndimV = ndim      ! default velocity same dim as coords
+  nstart = 1        ! timestep to start from
+  n_end = 1000      ! timestep to finish on
+  nfreq = 1         ! frequency of timesteps to read
+  icoords = 1       ! co-ordinate system of simulation
   icoordsnew = icoords ! co-ordinate system to plot in
   buffer_data = .true.
 !
@@ -33,51 +34,51 @@ subroutine defaults_set
 !
 !--limits options
 !
-  iadapt = .true.	! adaptive plot limits
-  scalemax = 1.0	! for rescaling adaptive limits
-  zoom = 1.0            ! for rescaling fixed limits
-  itrans(:) = 0		! no transformations (log10 etc)
-  itrackpart = 0        ! particle to track (none)
+  iadapt = .true.      ! adaptive plot limits
+  scalemax = 1.0       ! for rescaling adaptive limits
+  zoom = 1.0           ! for rescaling fixed limits
+  itrans(:) = 0        ! no transformations (log10 etc)
+  itrackpart = 0       ! particle to track (none)
   xminoffset_track = 0.5 ! offset of limits from tracked particle
   xmaxoffset_track = 0.5 !
 !
 !--page options
 !
-  iaxis = 0	! turns axes off/on
-  ipagechange = .true.	! if false plots graphs on top of each other
+  iaxis = 0                ! turns axes off/on
+  ipagechange = .true.     ! if false plots graphs on top of each other
   animate = .false.
   tile = .false.
-  nacross = 1	! number of plots across page
-  ndown = 1		! number of plots down page
-  ipapersize = 0	! paper size option
-  papersizex = 0.0	! size of x paper (no call to PGPAP if zero)
-  aspectratio = 0.0	! aspect ratio of paper (no call to PGPAP if zero)
+  nacross = 1           ! number of plots across page
+  ndown = 1             ! number of plots down page
+  ipapersize = 0        ! paper size option
+  papersizex = 0.0      ! size of x paper (no call to PGPAP if zero)
+  aspectratio = 0.0     ! aspect ratio of paper (no call to PGPAP if zero)
   hposlegend = 0.75     ! horizontal legend position as fraction of viewport
   vposlegend = 2.0      ! vertical legend position in character heights
-  hpostitle = 0.5     ! horizontal title position as fraction of viewport
-  vpostitle = 1.0      ! vertical title position in character heights
+  hpostitle = 0.5       ! horizontal title position as fraction of viewport
+  vpostitle = 1.0       ! vertical title position in character heights
   fjusttitle = 0.5      ! justification factor for title
 !
 !--particle plot options
 !
-  plotcirc = .false.	! plot circle of radius 2h around particles
-  plotcircall = .false.	!  " " around all particle
-  icircpart = 1		!  " " around a specific particle
+  plotcirc = .false.      ! plot circle of radius 2h around particles
+  plotcircall = .false.   !  " " around all particle
+  icircpart = 1           !  " " around a specific particle
   ncircpart = 1
-  iplotline = .false.	! plot line joining the particles
-  iplotlinein = .false.	! " " but on first step only
-  linestylein = 4		! PGPLOT line style for above
-  iexact = 0		! exact solution to plot
-  iplotav = .false.		! plot average line through particles
-  nbins = 24		! number of bins for this
-  ilabelpart = .false.	! plot particle numbers
-  iplotpartvec = .true.	! whether to plot particles on vector plot
+  iplotline = .false.     ! plot line joining the particles
+  iplotlinein = .false.   ! " " but on first step only
+  linestylein = 4         ! PGPLOT line style for above
+  iexact = 0              ! exact solution to plot
+  iplotav = .false.       ! plot average line through particles
+  nbins = 24              ! number of bins for this
+  ilabelpart = .false.    ! plot particle numbers
+  iplotpartvec = .true.   ! whether to plot particles on vector plot
   
   iplotpartoftype(1) = .true. ! whether or not to plot particles of certain types
   iplotpartoftype(2:maxparttypes) = .false.
-  imarktype = 1	      ! PGPLOT marker for all particles
-  imarktype(2) = 4    ! PGPLOT marker for ghost/dark matter particles
-  imarktype(3) = 17   ! PGPLOT marker for sink particles 
+  imarktype = 1              ! PGPLOT marker for all particles
+  imarktype(2) = 4           ! PGPLOT marker for ghost/dark matter particles
+  imarktype(3) = 17          ! PGPLOT marker for sink particles 
   labeltype(1) = 'gas'
   labeltype(2) = 'type 2'
   labeltype(3) = 'type 3'
@@ -88,18 +89,18 @@ subroutine defaults_set
 !
 !--render options
 !
-  icolours = 0		 ! colour scheme to use
-  ncolours=10		 ! number of colours in colour table
-  npix = 100		 ! pixels in x direction for rendering
+  icolours = 0               ! colour scheme to use
+  ncolours=10                ! number of colours in colour table
+  npix = 100                 ! pixels in x direction for rendering
   iPlotColourBar = .true.! whether or not to plot the colour bar
   iplotcont_nomulti = .true. ! plot contours
   ncontours = 30             ! number of contours to plot
 !
 !--cross section/rotation options
 !  
-  xsec_nomulti = .false. ! take cross section of data / particles
-  xsecpos_nomulti = 0.   ! position of cross section
-  flythru = .false.	 ! take series of cross sections through data
+  xsec_nomulti = .false.    ! take cross section of data / particles
+  xsecpos_nomulti = 0.      ! position of cross section
+  flythru = .false.         ! take series of cross sections through data
   xseclineX1 = 0.0
   xseclineX2 = 0.0
   xseclineY1 = 0.0
@@ -111,7 +112,7 @@ subroutine defaults_set
 !
 !--vector plot options
 !
-  npixvec = 40	! pixels in x direction on vector plots
+  npixvec = 40        ! pixels in x direction on vector plots
   UseBackgndColorVecplot = .false. ! plot vector plot using black/white
   iamvec(:) = 0
   labelvec = ' '
@@ -134,21 +135,24 @@ subroutine defaults_set
 !
 !--multiplot
 !
-  nyplotmulti = 4		! number of plots in multiplot
+  nyplotmulti = 4           ! number of plots in multiplot
   multiploty(:) = 0
   do i=1,4
-     multiploty(i) = ndim+i 	! first plot : y axis
+     multiploty(i) = ndim+i  ! first plot : y axis
   enddo
-  multiplotx(:) = 1		! first plot : x axis
-  irendermulti(:) = 0	! rendering
-  ivecplotmulti(:) = 0	! vector plot
-  x_secmulti(:) = .false.	! take cross section?
-  xsecposmulti(:) = 0.0	! position of cross section
+  multiplotx(:) = 1          ! first plot : x axis
+  irendermulti(:) = 0        ! rendering
+  ivecplotmulti(:) = 0       ! vector plot
+  x_secmulti(:) = .false.    ! take cross section?
+  xsecposmulti(:) = 0.0      ! position of cross section
   iplotcontmulti(:) = .false.
   !
   !--array positions of specific quantities
   !
-  ix = 0       ! coords
+  ix = 0
+  !do i=1,ndim
+  !   ix(i) = i       ! coords
+  !enddo
   ivx = 0      ! vx
   irho = 0     ! density
   ipr = 0      ! pressure
@@ -179,6 +183,11 @@ subroutine defaults_set
   !--filenames
   !
   rootname = ' '
+  !
+  !--limits
+  !
+  lim(:,:) = 0.
+  itrans(:) = 0
 
   return    
 end subroutine defaults_set
