@@ -19,7 +19,7 @@ subroutine options_render
            ' 2) change colour scheme              (',i2,' )',/,    &
            ' 3) toggle plot contours              ( ',L1,' )',/, &
            ' 4) change number of contours         (',i3,' )',/, &
-           ' 5) toggle colour bar                 ( ',L1,' )',/, &
+           ' 5) colour bar options                ( ',L1,' )',/, &
            ' 6) use particle colours not pixels   ( ',L1,' )' )
   call prompt('enter option',ians,0,6)
 !
@@ -60,8 +60,14 @@ subroutine options_render
        call prompt(' enter number of contours between min,max',ncontours,1,500)
 !------------------------------------------------------------------------
     case(5)
-       iPlotColourBar = .not.iPlotColourBar
+       call prompt(' plot colour bar? ',iPlotColourBar)
        print*,'plot colour bar = ',iPlotColourBar
+       if (iPlotColourBar) then
+          call prompt(' enter displacement from edge (character heights) ', &
+                      ColourBarDisp)
+          call prompt(' enter total width (bar+label) (character heights) ', &
+                      ColourBarWidth,0.0)
+       endif
 !------------------------------------------------------------------------
     case(6)
        icolour_particles = .not.icolour_particles

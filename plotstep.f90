@@ -695,19 +695,6 @@ subroutine plotstep(istep,irender,ivecplot, &
            if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),xsecmin,label(iplotz),xsecmax
 35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
 
-           !---------------------------------
-           ! plot rotated axes
-           !---------------------------------
-           if (irotate .and. irotateaxes.gt.0) then
-              if (ndim.eq.3) then
-                 call rotate_axes3D(irotateaxes,iplotx,iploty, &
-                      lim(ix(:),1),lim(ix(:),2),angleradx,anglerady,angleradz)
-              elseif (ndim.eq.2) then
-                 call rotate_axes2D(irotateaxes,lim(ix(1:ndim),1), &
-                                   lim(ix(1:ndim),2),angleradz)
-              endif
-           endif
-
            !------------------------------
            ! now actually plot the data
            !------------------------------
@@ -746,11 +733,21 @@ subroutine plotstep(istep,irender,ivecplot, &
                     endif
                  endif
                  !!--print plot limits to screen
-                 print*,trim(labelrender),' min, max = ',rendermin,rendermax       
+                 print*,trim(labelrender),' min, max = ',rendermin,rendermax
+                 
+                 !!--if log, then set zero values to minimum
+                 !!  (don't count this in limit setting though)
+                 if (itrans(irenderplot).eq.1) then
+                    print*,'setting zero values to ',rendermin,' on log array'
+                    where (datpix.eq.0.)
+                       datpix = rendermin
+                    end where
+                 endif
+                      
                  !!--call subroutine to actually render the image       
                  call render(datpix,rendermin,rendermax,trim(labelrender),  &
                       npixx,npixy,xmin,ymin,pixwidth,    &
-                      icolours,iplotcont,iPlotColourBar,ncontours,log)
+                      icolours,iplotcont,ncontours,log)
 
               elseif (ndim.eq.2 .and. x_sec) then
                  !---------------------------------------------------------------
@@ -813,6 +810,18 @@ subroutine plotstep(istep,irender,ivecplot, &
 
                 call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidth,labelvecplot)
              endif
+           endif
+           !---------------------------------
+           ! plot rotated axes
+           !---------------------------------
+           if (irotate .and. irotateaxes.gt.0) then
+              if (ndim.eq.3) then
+                 call rotate_axes3D(irotateaxes,iplotx,iploty, &
+                      xminrotaxes(1:ndim),xmaxrotaxes(1:ndim),angleradx,anglerady,angleradz)
+              elseif (ndim.eq.2) then
+                 call rotate_axes2D(irotateaxes,xminrotaxes(1:ndim), &
+                                   xmaxrotaxes(1:ndim),angleradz)
+              endif
            endif
            !
            !--print legend if this is the first plot on the page

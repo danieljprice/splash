@@ -125,6 +125,8 @@ subroutine defaults_set
   iPlotColourBar = .true.! whether or not to plot the colour bar
   iplotcont_nomulti = .false. ! plot contours
   ncontours = 30             ! number of contours to plot
+  ColourBarDisp = 0.5
+  ColourBarWidth = 4.5
 !
 !--cross section/rotation options
 !  
@@ -141,6 +143,8 @@ subroutine defaults_set
   angley = 0.
   anglez = 0.
   xorigin = 0.
+  xminrotaxes = 0.
+  xmaxrotaxes = 0.
 !
 !--vector plot options
 !

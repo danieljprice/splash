@@ -124,9 +124,10 @@ module settings_render
  integer :: ncontours,npix,icolours
  logical :: iplotcont_nomulti
  logical :: iPlotColourBar,icolour_particles
+ real :: ColourBarDisp,ColourBarWidth
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
-   iPlotColourBar,icolour_particles
+   iPlotColourBar,icolour_particles,ColourBarDisp,ColourBarWidth
 
 end module settings_render
 !
@@ -152,11 +153,12 @@ module settings_xsecrot
  logical :: xsec_nomulti, irotate, flythru
  real :: anglex, angley, anglez
  real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
- real, dimension(3) :: xorigin
+ real, dimension(3) :: xorigin,xminrotaxes,xmaxrotaxes
 
  namelist /xsecrotopts/ xsec_nomulti,xsecpos_nomulti,flythru, &
           xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
-          irotate,irotateaxes,anglex, angley, anglez
+          irotate,irotateaxes,anglex, angley, anglez, &
+          xminrotaxes,xmaxrotaxes
 
 end module settings_xsecrot
 !

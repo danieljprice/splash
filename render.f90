@@ -5,12 +5,13 @@
 !------------------------------------------------------------------------
  
 subroutine render(datpix,datmin,datmax,label,npixx,npixy,        &
-                  xmin,ymin,dx,icolours,iplotcont,iPlotColourBar,nc,log)  
+                  xmin,ymin,dx,icolours,iplotcont,nc,log)
+ use settings_render, only:iPlotColourBar,ColourBarDisp,ColourBarWidth  
  implicit none
  integer, intent(in) :: npixx,npixy,nc,icolours
  real, intent(in) :: xmin,ymin,datmin,datmax,dx
  real, dimension(npixx,npixy), intent(in) :: datpix
- logical, intent(in) :: iplotcont,iPlotColourBar,log
+ logical, intent(in) :: iplotcont,log
  character(len=*), intent(in) :: label  
  
  integer :: i
@@ -42,13 +43,13 @@ subroutine render(datpix,datmin,datmax,label,npixx,npixy,        &
 !--nb: plots use my modification of pgwedg which plots vertical numbers on axes
 !         
  if (icolours.eq.1) then        ! greyscale
-    if (iPlotColourBar) call danpgwedg('rgv'//clog,0.5,4.5,datmin,datmax, &
-                                       trim(label))
+    if (iPlotColourBar) call danpgwedg('rgv'//clog,ColourBarDisp, &
+                        ColourBarWidth,datmin,datmax,trim(label))
     call pggray(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
 
  elseif (icolours.gt.1) then        ! colour
-    if (iPlotColourBar) call danpgwedg('riv'//clog,0.5,4.5,datmin,datmax, &
-                                       trim(label))
+    if (iPlotColourBar) call danpgwedg('riv'//clog,ColourBarDisp, &
+                        ColourBarWidth,datmin,datmax,trim(label))
 !    call pgwedg('ri',2.0,4.0,datmin,datmax,' ')
 !    call pgpixl(datpix,npixx,npixx,1,npixx,1,npixx,xmin,xmax,ymin,ymax)
     call pgimag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)

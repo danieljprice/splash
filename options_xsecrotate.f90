@@ -99,6 +99,17 @@ subroutine options_xsecrotate
     print*,'2 : plot rotated box'
     print*,'3 : plot gridded x-y plane'
     call prompt('enter type of axes to plot',irotateaxes,0,3)
+    if (irotateaxes.gt.0) then
+       !--if not previously set, use current plot limits
+       if (all(abs(xminrotaxes).le.tiny(xminrotaxes))) then
+          xminrotaxes(:) = lim(ix(:),1)
+          xmaxrotaxes(:) = lim(ix(:),2)
+       endif
+       do i=1,ndim
+          call prompt('enter '//trim(label(ix(i)))//'min:',xminrotaxes(i))
+          call prompt('enter '//trim(label(ix(i)))//'max:',xmaxrotaxes(i))
+       enddo
+    endif
  end select
 
  return

@@ -27,7 +27,7 @@ subroutine rotate2D(xcoords,anglez,angley)
   y = r*SIN(phi)
 
   xcoords(1) = x
-  xcoords(2) = y*tan(angley)
+  xcoords(2) = y
   
   return 
 end subroutine rotate2D
