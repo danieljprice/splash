@@ -919,17 +919,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            ymin = 0.0
            ymax = 1.0
            
-           if (tile_plots) then
-              if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
-              call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                             ' ',' ',' ',just,-2)
-           else
-               !--change the page if pagechange set
-              !  or, if turned off, between plots on first page only
-              inewpage = ipagechange .or. (iplots.le.nacross*ndown)
-              call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                ' ',' ',' ',just,-2,isamexaxis,isameyaxis,inewpage)
-           endif           
 
            !--------------------------------------------------------------
            !  then call subroutine to plot the additional plot
@@ -962,17 +951,34 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                       dat(1:ninterp,ih,i),dat(1:ninterp,ipowerspecy,i), & 
                       ninterp,xmin,datpix1D,ngrid,dxgrid)
                  !!--plot interpolated 1D data to check it
-                 !print*,'plotting interpolated data...'
+                 print*,'plotting interpolated data...'
+                 print*,minval(datpix1D),maxval(datpix1D)
+                 ymin = minval(datpix1D)
+                 ymax = 2.0
+
+           if (tile_plots) then
+              if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
+              call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+                             ' ',' ',' ',just,0)
+           else
+               !--change the page if pagechange set
+              !  or, if turned off, between plots on first page only
+              inewpage = ipagechange .or. (iplots.le.nacross*ndown)
+              call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+                'x',label(ipowerspecy),'1D interpolation', &
+                just,0,isamexaxis,isameyaxis,inewpage)
+           endif           
+
                  !call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
                  !call pgbox('BCNST',0.0,0,'1BVCNST',0.0,0)      
                  !call pglabel('x',label(ipowerspecy),'1D interpolation')
-                 !call pgline(ngrid,xgrid,datpix1D)
-                 !read*
+                 call pgline(ngrid,xgrid,datpix1D)
+                 read*
                  !call pgpage! change page
 
                  !!--call power spectrum calculation on the even grid
-                 call plot_powerspectrum(ngrid,nfreqspec,wavelengthmax, &
-                      xgrid,datpix1D,idisordered,itrans(iploty))              
+                 !call plot_powerspectrum(ngrid,nfreqspec,wavelengthmax, &
+                 !     xgrid,datpix1D,idisordered,itrans(iploty))              
               else
                  !!--or else call power spectrum calculation on the particles themselves    
                  call plot_powerspectrum(ntot(i),nfreqspec,wavelengthmax, &
