@@ -678,12 +678,10 @@ subroutine main(ipicky,ipickx,irender)
                           do j=1,npart(i)
                              call pgcirc(xplot(j),yplot(j),2.*dat(ih,j,i))
                           enddo
-                       else 
-                          icoords = 2
+                       else
                           print*,'plotting circles of interaction',ncircpart
                           do n = 1,ncircpart   
-                             if (icoords.gt.1) then
-                                print*,'coordinate system = ',icoords     
+                             if (icoords.gt.1) then   
                                 call plot_kernel_gr(icoords,xplot(icircpart(n)),  &
                                      yplot(icircpart(n)),2*dat(ih,icircpart(n),i))
                              else
