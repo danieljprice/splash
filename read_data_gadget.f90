@@ -293,17 +293,22 @@ subroutine read_data(rootname,istart,nfilesteps)
   !--set labels of the quantities read in
   !
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  do i=1,ndimV
-     label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-  enddo
   label(irho) = '\gr'
   label(iutherm) = 'u'
   label(10) = 'Ne'
   label(11) = 'N\dH'
   label(ih) = 'h'
   label(ipmass) = 'particle mass'
+  !
+  !--set labels for vector quantities
+  !
+  iamvec(ivx:ivx+ndimV-1) = ivx
+  labelvec(ivx:ivx+ndimV-1) = 'v'
+  do i=1,ndimV
+     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
+  enddo
   
-  !--set number of particle types
+  !--set labels for each particle type
   !
   ntypes = maxparttypes
   labeltype(1) = 'gas'

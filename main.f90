@@ -691,18 +691,22 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               !--------------------------------------------------------------
               ! vector maps (can be on top of particle plots and renderings)
               !--------------------------------------------------------------
-
-              if (ivectorplot.ne.0 .and. ndim.ge.2) then
+              print*,'ivectorplot = ',ivectorplot,iamvec(ivectorplot),ivecplot
+              if (iamvec(ivectorplot).ne.0 .and. ndim.ge.2) then
 	         !!--choose quantity to be plotted
-                 if (ivectorplot.eq.1 .and. ivx.ne.0) then
-                    ivecx = ivx + iplotx - 1 ! 
-                    ivecy = ivx + iploty - 1
-                    print*,'plotting velocity field'        
-                 elseif (ivectorplot.eq.2 .and. iBfirst.ne.0) then
-                    ivecx = iBfirst + iplotx - 1 ! 
-                    ivecy = iBfirst + iploty - 1
-                    print*,'plotting magnetic field'
-                 endif
+                 ivecx = iamvec(ivectorplot) + iplotx - 1
+		 ivecy = iamvec(ivectorplot) + iploty - 1
+		 
+		 print*,'plotting vector field ',label(iamvec(ivectorplot))
+		 !if (ivectorplot.eq.1 .and. ivx.ne.0) then
+                 !  ivecx = ivx + iplotx - 1 ! 
+                 !   ivecy = ivx + iploty - 1
+                 !   print*,'plotting velocity field'        
+                 !elseif (ivectorplot.eq.2 .and. iBfirst.ne.0) then
+                 !   ivecx = iBfirst + iplotx - 1 ! 
+                 !   ivecy = iBfirst + iploty - 1
+                 !   print*,'plotting magnetic field'
+                 !endif
                  !!--check for errors
                  if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
                       .or.(ivecy.le.ndim).or.(ivecy.gt.ndataplots)) then

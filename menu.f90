@@ -10,16 +10,21 @@ subroutine menu(quit)
   use transforms
   implicit none
   logical, intent(out) :: quit
-  integer :: i,ihalf,iadjust,iaction,istep,ierr
+  integer :: i,icol,ihalf,iadjust,iaction,istep,ierr,index
   integer :: ipicky,ipickx,irender,ivecplot,int_from_string
   character(LEN=2) :: ioption
-  character(LEN=30) :: filename
+  character(LEN=30) :: filename,veclist
   logical :: iansx, iansy, ichange
 
   quit = .false.
 !--set coordinate and vector labels (depends on coordinate system)
   if (icoords.ne.0) then
      label(1:ndim) = labelcoord(1:ndim,icoordsnew)
+     do i=1,numplot
+        if (iamvec(i).ne.0) then
+	   label(i) = trim(labelvec(iamvec(i)))//'/d'//labelcoord(i-iamvec(i)+1,icoordsnew)
+	endif
+     enddo
   endif
 
 !---------------------------------------------------------------------------
@@ -104,7 +109,16 @@ subroutine menu(quit)
               goto 9901
            elseif (ipicky.le.ndim .and. ipickx.le.ndim) then
               call prompt('(render) (0=none)',irender,0,numplot)
-	      call prompt('(vector plot) (0=none 1=v 2=B)',ivecplot,0,2)
+	      veclist(1:6) = '0=none'
+	      index = 7
+	      do icol=1,numplot
+	         if (iamvec(icol).ne.0) then
+	            write(veclist(index:index+3),"(i2,',')") iamvec(icol)
+		    index = index + 4
+	         endif
+	      enddo 
+	      call prompt('(vector plot) ('//trim(veclist)//')',ivecplotmulti(i),0,maxval(iamvec))
+	      !!call prompt('(vector plot) (0=none 1=v 2=B)',ivecplot,0,2)
            else
               irender = 0
 	      ivecplot = 0
@@ -178,7 +192,15 @@ subroutine menu(quit)
                     xsecposmulti(i) = xsecposmulti(1)
 		 endif
  	      endif
-	      call prompt('(vector plot) (0=none 1=v 2=B)',ivecplotmulti(i),0,2)
+	      veclist(1:6) = '0=none'
+	      index = 7
+	      do icol=1,numplot
+	         if (iamvec(icol).ne.0) then
+	            write(veclist(index:index+3),"(i2,',')") iamvec(icol)
+		    index = index + 4
+	         endif
+	      enddo 
+	      call prompt('(vector plot) ('//trim(veclist)//')',ivecplotmulti(i),0,maxval(iamvec))
            endif
         enddo
         return	    	  	  

@@ -9,9 +9,11 @@ subroutine options_xsecrotate
  implicit none
  integer :: ians,i
  character(len=1) :: char
+ logical :: interact
  
  if (ndim.eq.1) print*,' WARNING: none of these options have any effect in 1D'
  ians = 0
+ interact = .true.
  print 10,xsec_nomulti,xsecpos_nomulti,irotate
 10  format(' 0) exit ',/, 		&
            ' 1) toggle cross section/projection           (',L1,' )',/, &

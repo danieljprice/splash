@@ -112,6 +112,8 @@ subroutine defaults_set
 !
   npixvec = 40	! pixels in x direction on vector plots
   UseBackgndColorVecplot = .false. ! plot vector plot using black/white
+  iamvec(:) = 0
+  labelvec = ' '
 !
 !--set coordinate labels for all coordinate systems
 !

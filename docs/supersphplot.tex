@@ -243,6 +243,53 @@ order to plot the exact solutions on the appropriate graphs and also for calcula
 additional quantities (e.g. calculation of the pressure uses \verb+iutherm+ and
 \verb+irho+).
 
+\section{Plotting examples}
+After a successful data read, the menu should appear as something like the
+following:
+\begin{verbatim}
+ You may choose from a delectable sample of plots
+ -------------------------------------------------------
+  1) x                     7) particle mass
+  2) y                     8) u
+  3) z                     9) \gr
+  4) v\dx                 10) Ne
+  5) v\dy                 11) N\dH
+  6) v\dz                 12) h
+ -------------------------------------------------------
+ 13) multiplot [  4 ]      m) set multiplot
+ -------------------------------------------------------
+  d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)
+  r(ender) v(ector) x(sec/rotate) s(ave) q(uit)
+ -------------------------------------------------------
+Please enter your selection now (y axis or option):
+\end{verbatim}
+The simplest plot is of two quantities where only one is a coordinate, for
+example
+\begin{verbatim}
+Please enter your selection now (y axis or option): 9
+(x axis) (<cr>=1): 1
+ Graphics device/type (? to see list, default /xwin): /xw
+\end{verbatim}
+ A full list of available graphics devices is given in the PGPLOT user guide.
+Some of the most useful devices are given in table \ref{tab:devices}. In the
+above we have selected the x-window which means that the output is sent to the
+screen, producing the graph shown in Figure \ref{fig:swave1D}.
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\verb+/xw+, \verb+/xwin+ & X-Window (interactive) \\
+\verb+/ps+ & Postscript (landscape) \\
+\verb+/vps+ & Postscript (portrait) \\
+\verb+/cps+ & Colour Postscript \\
+\verb+/gif+ & GIF \\
+\verb+/null+ & null device (no output) \\
+\hline
+\end{tabular}
+\caption{Commonly used graphics devices available in PGPLOT}
+\label{tab:devices}
+\end{table}
+
 
 \section{Menu options}
  The program options may be changed in a series of submenus. The defaults for all of

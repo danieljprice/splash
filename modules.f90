@@ -39,10 +39,11 @@ end module filenames
 module labels
  use params
  implicit none
- character(len=20), dimension(maxplot+2) :: label
+ character(len=20), dimension(maxplot+2) :: label,labelvec
  character(len=7), dimension(3,3) :: labelcoord
  character(len=20), dimension(maxparttypes) :: labeltype
  integer, dimension(3) :: ix
+ integer, dimension(maxplot) :: iamvec
  integer :: ivx,ivlast,irho,iutherm,ipr,ih,irad,ibfirst,iblast
  integer :: ipmass
  integer :: ientrop,ipmag,ibeta,itotpr,ike,idivb,idivberr,iJfirst
