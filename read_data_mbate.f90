@@ -38,7 +38,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(IN) :: indexstart
   integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
-  integer, parameter :: maxptmass = 100
+  integer, parameter :: maxptmass = 1000
   integer :: i,j,ifile,ierr
   integer :: npart_max,nstep_max
   logical :: iexist
