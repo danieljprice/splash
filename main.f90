@@ -691,8 +691,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               !--------------------------------------------------------------
               ! vector maps (can be on top of particle plots and renderings)
               !--------------------------------------------------------------
-              print*,'ivectorplot = ',ivectorplot,iamvec(ivectorplot),ivecplot
-              if (iamvec(ivectorplot).ne.0 .and. ndim.ge.2) then
+              if (ivectorplot.ne.0 .and. ndim.ge.2) then
+	        if (iamvec(ivectorplot).ne.0) then
 	         !!--choose quantity to be plotted
                  ivecx = iamvec(ivectorplot) + iplotx - 1
 		 ivecy = iamvec(ivectorplot) + iploty - 1
@@ -759,6 +759,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 		       deallocate(vecpixx,vecpixy)
                     endif
                     if (UseBackgndColorVecplot) call pgsci(1)
+		   endif
 		 endif
               endif
               !
