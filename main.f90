@@ -437,13 +437,21 @@ subroutine main(ipicky,ipickx)
                  call pgpage
                  if (nacross*ndown.gt.1) then
                     !	          if (imulti) then
-                    call pgsvp(0.2,0.8,0.2,0.98)
-                    !		  else
+                    if (axes) then
+		       call pgsvp(0.2,0.8,0.2,0.98)
+                    else	! if no axes use full viewport
+		       call pgsvp(0.02,0.98,0.02,0.98)
+		    endif
+		    !		  else
                     !		     call pgsvp(0.0,1.0,0.0,1.0)
                     !		  endif   
                  else
-                    call pgsvp(0.1,0.9,0.1,0.9)
-                 endif
+		    if (axes) then
+		       call pgsvp(0.1,0.9,0.1,0.9)
+                    else	! if no axes use full viewport
+		       call pgsvp(0.02,0.98,0.02,0.98)
+		    endif
+		 endif
                  call pgwnad(xmin,xmax,ymin,ymax)	!  pgwnad does equal aspect ratios
                  !!--plot axes (log if appropriate)
                  if (axes) call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)	       
@@ -682,14 +690,18 @@ subroutine main(ipicky,ipickx)
               !            lim(iploty,1),lim(iploty,2),0,0)	! 0 for no axes
               call pgpage
               if ((nacross*ndown).gt.1) then
-                 if (imulti) then
+                 if (axes) then
                     call pgsvp(0.2,0.99,0.2,0.98)
-                 else
-                    call pgsvp(0.2,0.99,0.2,0.98)
+                 else	! if no axes use full viewport
+                    call pgsvp(0.02,0.98,0.02,0.98)
                  endif
               else
-                 call pgsvp(0.1,0.9,0.1,0.9)	       
-              endif
+                 if (axes) then
+		    call pgsvp(0.1,0.9,0.1,0.9)	       
+                 else
+		    call pgsvp(0.02,0.98,0.02,0.98)
+		 endif
+	      endif
               call pgswin(xmin,xmax,ymin,ymax)
               if (axes) call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)	       	       
            elseif (nyplot.eq.1) then
