@@ -175,12 +175,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      !
      case('h')
         print*,'-------------- interactive mode commands --------------'
-        print*,' select region : left click (or A)'
-        print*,': left click again to zoom on selection'
+        print*,' left click (or A) : select region'
+        print*,'  left click again to zoom on selection'
         if (irender.ne.0) then
-           print*,': or select colour bar to change rendering limits'
+           print*,'  select colour bar to change rendering limits'
+           print*,'  o) in colour bar to log / unlog rendering limits'
         else
-           print*,': or press 1-9 to mark selected particles with colour 1-9'
+           print*,'  or press 1-9 to mark selected particles with colour 1-9'
         endif
         print*,' zoom in by 10%       : +'
         print*,' zoom out by 10(20)%      : - (_)'
@@ -363,13 +364,26 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         iadvance = 0
         iexit = .true.
      case('a') ! reset plot limits
-        print*,'resetting plot limits...'
+        print*,'resetting xy plot limits...'
         xmin = minval(xcoords)
         xmax = maxval(xcoords)
         ymin = minval(ycoords)
         ymax = maxval(ycoords)
         iadvance = 0
         iexit = .true.
+     !
+     !--set/unset log axes
+     !
+     case('o')
+        !
+        !--change colour bar itrans between log / not logged
+        !
+        if (xpt.gt.xmax .and. irender.gt.0) then
+           call change_itrans(irender)
+           iadvance = 0
+           iexit = .true.
+        endif
+
      !
      !--rotation
      !
@@ -523,7 +537,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      case('d') ! move cross section down by dxsec
         if (iplotz.gt.0 .and. ndim.eq.3) then
            print*,'shifting cross section position down by ',dz
-           zpos = zpos + dz
+           zpos = zpos - dz
            iadvance = 0
            iexit = .true.
         endif     
@@ -811,6 +825,23 @@ subroutine save_limits(iplot,xmin,xmax)
  return
 end subroutine save_limits
 
+subroutine change_itrans(iplot)
+ use multiplot, only:itrans
+ use settings_data, only:numplot
+ implicit none
+ integer, intent(in) :: iplot
+ character(len=10) :: string
+ 
+ if (iplot.le.numplot) then
+    write(string,*) itrans(iplot)
+    if (index(string(1:len_trim(string)),'1').ne.0) then
+       itrans(iplot) = 0
+    else
+       itrans(iplot) = 1
+    endif
+ endif
+ 
+end subroutine change_itrans
 !
 !--saves rotation options
 !
