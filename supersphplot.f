@@ -924,6 +924,7 @@ cc--plot particle labels
 	    	    
 cc--velocity vector map
 	    IF (ivecplot.EQ.1 .AND. ivx.NE.0) THEN
+	       PRINT*,'plotting velocity field'
 cc--copy appropriate velocity data to a 2D array
 	       DO j=1,ntotplot(i)
 	          vecplot(1,j) = dat(iplotx+ivx-1,j,i)
@@ -1269,8 +1270,6 @@ cc--plot vector map of magnetic field
       ENDIF 	! if plot or not
       
       ENDDO menuloop
-      
-!      GOTO 200
 
 999   CONTINUE                 
       END
