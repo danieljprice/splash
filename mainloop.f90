@@ -849,8 +849,9 @@ subroutine plotstep
            !--plot exact solution if relevant (before going interactive)
            !
            if (iexact.ne.0) call exact_solution(iplotx,iploty,iexact,ndim,ndimV, &
-                            time(i),xmin,xmax,0.0,gamma(i),dat(1:ntot(i),ipmass,i), &
-                            ntot(i))
+                            time(i),xmin,xmax,0.0,gamma(i), &
+                            dat(1:npartoftype(1,i),ipmass,i), &
+                            npartoftype(1,i))
            !
            !--enter interactive mode
            !
