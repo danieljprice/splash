@@ -118,7 +118,27 @@ used by SUPERSPHPLOT, we refer the reader to the PGPLOT userguide:
 \url{http://www.astro.caltech.edu/~tjp/pgplot/contents.html}
 \end{quote}
 
-\subsection{Compiling the code: Makefile options}
+\subsection{Compiling the code}
+
+\subsubsection{Fortran 90/95 compilers}
+ By now, many Fortran 90/95 compilers exist. Amongst the most popular commercially
+available ones are perhaps the NAG Fortran compiler and the Intel Fortran Compiler (ifc). However, the
+g95 project (successor to g77) is also largely up and running and is freely
+downloadable from:
+\begin{quote}
+\url{http://www.sourceforge.net/g95}
+\end{quote}
+
+ The code has been tested and compiled successfully on the following compilers
+(please send me yours if it is not listed):
+\begin{itemize}
+\item NAG f95 compiler
+\item Intel Fortran Compiler (ifc)
+\item Lahey-Fujitsu f95
+\end{itemize}
+
+\subsubsection{Makefile options}
+
  In the Makefile, you will need to set the FORTRAN compiler and flags to your local version, e.g..
 \begin{verbatim}
 F90C = f95
@@ -913,7 +933,7 @@ vectorplot         & : & produces a vector plot from particle data
 \section{Exact solutions}
 \label{sec:exact}
 \subsection{Shock tubes (Riemann problem)}
- This subroutine plots the exact solution for a one-dimensional shock tube
+ The subroutine \verb+exact_shock+ plots the exact solution for a one-dimensional shock tube
 (Riemann problem). The difficult bit of the problem is to determine the jump in
 pressure and velocity across the shock front given the initial left and right
 states. This is performed in a separate subroutine (riemannsolver) as there are 
@@ -943,17 +963,18 @@ from \citet{vanleer79} (reprinted as \citealt{vanleer99}).
 
 
 \subsection{Polytrope}
- This subroutines computes the exact solution for a static polytrope with
+ The subroutine \verb+exact_poly+ computes the exact solution for a static polytrope with
 arbitrary $\gamma$.
 
 \subsection{Linear wave}
- This subroutine simply plots a sine function on a given graph.
+ The subroutine \verb+exact_wave+ simply plots a sine function on a given graph.
 
 \subsection{Sedov blast wave}
- This subroutine computes the self-similar Sedov solution for a blast wave.
+ The subroutine \verb+exact_sedov+ computes the self-similar Sedov solution for a blast wave.
 
 \subsection{Toy stars}
- See \citet{mp04}. The system is one dimensional with velocity $v$, density $\rho$, and pressure
+ The subroutine \verb+exact_toystar1D+ computes the exact solutions for the `Toy
+Stars' described in \citet{mp04}. The system is one dimensional with velocity $v$, density $\rho$, and pressure
 $P$. The acceleration equation is 
 \begin{equation}
 \frac{dv}{dt} = - \frac{1}{\rho} \frac{\partial P}{\partial x}  - \Omega^2 x,
