@@ -37,16 +37,13 @@ subroutine options_limits
  case(2)
     ipick = 1
     iadapt = .false.
-    do while (ipick.gt.0 .and. ipick.le.numplot)
-       print*,'Enter plot number to set limits (0 to finish)'
-       read*,ipick
-       if ((ipick.le.numplot).and.(ipick.gt.0)) then
-          print*,' Current limits   (min,max):', &
-               lim(ipick,1),lim(ipick,2)
-          print*,' Enter new limits (min,max):'
-          read*,lim(ipick,1),lim(ipick,2)
-          print*,' >> limits set    (min,max):', &
-               lim(ipick,1),lim(ipick,2)
+    do while (ipick.gt.0)
+       ipick = 0
+       call prompt('Enter plot number to set limits (0=finish)',ipick,0,numplot)
+       if (ipick.gt.0) then
+	  call prompt('min ',lim(ipick,1))
+	  call prompt('max ',lim(ipick,2))
+          print*,'>> limits set (min,max) = ',lim(ipick,1),lim(ipick,2)
        endif
     enddo
     return
