@@ -16,6 +16,9 @@ subroutine menu
   character(LEN=30) :: filename,vecprompt
   logical :: iansx, iansy, ichange
 
+  irender = 0
+  ivecplot = 0
+
   menuloop: do
 !---------------------------------------------------------------------------
 !  preliminaries
@@ -81,9 +84,6 @@ subroutine menu
 	index = len_trim(vecprompt) + 1
      endif
   enddo 
-  
-  irender = 0
-  ivecplot = 0
 
 !---------------------------------------------------------------------------
 !  print menu
@@ -114,7 +114,6 @@ subroutine menu
   print 12
   if (ishowopts) then
      print 14,'d','data options'
-!!     print 15,'t','change number of timesteps read  ',(n_end-nstart+1)/nfreq 
      print 16,'i','toggle interactive mode          ',interactive
      print 14,'p','page options'
      print 14,'o','particle plot options'
@@ -136,9 +135,7 @@ subroutine menu
 12 format(1x,55('-'))
 13 format(1x,i2,')',1x,a)
 14 format(1x,a2,')',1x,a)
-15 format(1x,a2,')',1x,a,'( ',i2, ' )')
 16 format(1x,a2,')',1x,a,'( ',L1,' )')
-17 format(1x,a2,')',1x,a20,1x,a2,')',1x,a)
 !
 !--prompt user for selection
 !
@@ -297,7 +294,7 @@ subroutine menu
         return
 !------------------------------------------------------------------------
      case DEFAULT
-        goto 9901 
+        print "(a)",'unknown option '//trim(ioption) 
      end select
      
   endif
