@@ -210,7 +210,8 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
      return
   elseif (abs(xin(1)).lt.1e-8 .and. &
        (itypein.eq.2 .or. itypein.eq.3)) then
-     print*,'Error: vec transform: r=0 on input'
+     print*,'Warning: vec transform: r=0 on input, setting vec = 0 at origin'
+     vecout = 0.
      return
   endif
 !
