@@ -28,18 +28,18 @@ subroutine rotate3D(xcoords,anglex,angley,anglez)
 !--rotate about y
 !
   r = sqrt(x**2 + z**2)
-  phi = ATAN2(z,x)
+  phi = ATAN2(x,z)
   phi = phi - angley  
-  x = r*COS(phi)
-  z = r*SIN(phi)
+  z = r*COS(phi)
+  x = r*SIN(phi)
 !
 !--rotate about x
 !
   r = sqrt(y**2 + z**2)
-  phi = ATAN2(z,y)
+  phi = ATAN2(y,z)
   phi = phi - anglex  
-  y = r*COS(phi)
-  z = r*SIN(phi)
+  z = r*COS(phi)
+  y = r*SIN(phi)
   
   xcoords(1) = x
   xcoords(2) = y
