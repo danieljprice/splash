@@ -33,7 +33,13 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
   character(len=20) :: string
   logical :: iexit, rotation
 
-  print*,'entering interactive mode...press h in plot window for help'
+  call pgqinf('CURSOR',string,nc)
+  if (string(1:nc).eq.'YES') then
+     print*,'entering interactive mode...press h in plot window for help'
+  else
+     print*,'cannot enter interactive mode: device has no cursor'
+     return
+  endif
   char = 'A'
   ipts = 0
   xline = 0.
