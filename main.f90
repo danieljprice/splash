@@ -454,8 +454,12 @@ subroutine main(ipicky,ipickx)
 		 endif
                  call pgwnad(xmin,xmax,ymin,ymax)	!  pgwnad does equal aspect ratios
                  !!--plot axes (log if appropriate)
-                 if (axes) call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)	       
-              elseif (nyplot.eq.1) then
+                 if (axes) then
+		    call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)	       
+                 elseif (ivecplot.ne.0) then
+		    call pgbox('bc',0.0,0,'bc',0.0,0)	! draw box only for vector plots
+		 endif
+	      elseif (nyplot.eq.1) then
                  call pgpanl(1,1)
               else
                  call pgpage
