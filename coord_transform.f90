@@ -141,11 +141,15 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
            !
            ! theta = ACOS(z/r)
            !
-           xout(3) = ACOS(xin(3)/xout(1))
-           !--sort out which half for theta
-           !if (xin(3).lt.0.) then
-           !   xout(3) = xout(3) + pi
-           !endif    
+           xout(3) = ACOS(abs(xin(3)/xout(1)))
+           !--sort out which quadrant for theta
+           if (xin(3).lt.0. .and. xin(1).lt.0.) then
+              xout(3) = xout(3) + pi
+           elseif (xin(3).lt.0.) then
+              xout(3) = pi - xout(3)
+           elseif (xin(2).lt.0.) then
+              xout(3) = -xout(3)
+           endif    
         endif
      case default
         !
