@@ -16,7 +16,7 @@ subroutine menu
   integer :: ipicky,ipickx,irender,ivecplot
   integer :: iamvecprev, ivecplottemp
   character(LEN=2) :: ioption
-  character(LEN=30) :: vecprompt
+  character(LEN=50) :: vecprompt
   logical :: ishowopts
 
   irender = 0
