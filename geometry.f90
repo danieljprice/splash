@@ -23,10 +23,10 @@ module geometry
     (/'cartesian         ', &
       'cylindrical polars', &
       'spherical polars  '/)
- character(len=10), dimension(3,maxcoordsys) :: labelcoord
-!    (/'x    ','y    ','z    ', &
-!     'r    ','phi  ','z    ', &
-!     'r    ','theta','phi  '/)
+ character(len=*), dimension(3,maxcoordsys), parameter :: labelcoord = &
+    reshape((/'x    ','y    ','z    ', &
+              'r    ','phi  ','z    ', &
+              'r    ','theta','phi  '/),shape=(/3,maxcoordsys/))
  
 contains
 !-----------------------------------------------------------------

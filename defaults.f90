@@ -28,7 +28,6 @@ subroutine defaults_set
   use settings_xsecrot
   use settings_powerspec
   use particle_data, only:maxpart,maxstep,maxcol
-  use geometry, only:labelcoord
   implicit none
   integer :: i
 !
@@ -140,18 +139,6 @@ subroutine defaults_set
   iVecplotLegend = .true.
   hposlegendvec = 0.1
   vposlegendvec = -1.0
-!
-!--set coordinate labels for all coordinate systems
-!
-  labelcoord(1,1) = 'x'
-  labelcoord(2,1) = 'y'
-  labelcoord(3,1) = 'z'
-  labelcoord(1,2) = 'r'
-  labelcoord(2,2) = '\gphi'
-  labelcoord(3,2) = 'z'
-  labelcoord(1,3) = 'r'
-  labelcoord(2,3) = '\gtheta'
-  labelcoord(3,3) = '\gphi'
 !
 !--exact solution parameters
 !
