@@ -177,6 +177,9 @@ subroutine menu
   if (ipicky.gt.0 .and. ipicky.le.numplot+1) then
      
      if (.not.ivegotdata) then
+        !
+        !--do not allow plotting if no data - instead try to read data
+        !
         print*,' no data '
         if (buffer_data) then
            call get_data(-1,.false.)
@@ -191,8 +194,14 @@ subroutine menu
            if (ipickx.eq.0) ipickx = 1 ! do not allow zero as default
            call prompt(' (x axis) ',ipickx)
            if (ipickx.gt.numplot .or. ipickx.le.0) then
-              goto 9901
-           elseif (ipicky.le.ndim .and. ipickx.le.ndim) then
+              goto 9901 ! (apologies for the gratuitous use of goto)
+           !
+           !--prompt for render and vector plots 
+           ! (only allow if in "natural" coord system, otherwise h's would be wrong)
+           ! (a future feature might be to interpolate in icoord then translate the pixels
+           !  to icoordsnew, or alternatively plot non-cartesian pixel shapes)
+           !
+           elseif (ipicky.le.ndim .and. ipickx.le.ndim .and. icoordsnew.eq.icoords) then
               call prompt('(render) (0=none)',irender,0,numplot)
               ivecplottemp = -1
               do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
