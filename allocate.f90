@@ -42,7 +42,7 @@ subroutine alloc(npartin,nstep,ncolumns)
   ierr = 0
   if (allocated(dat)) then
      reallocate = .true.
-     print*,' reallocating memory: ntot = ', &
+     print*,'> reallocating memory: ntot = ', &
           npartin,' nstep = ',nstep,' ncol = ',ncolumns
      allocate(dattemp(maxpart,maxcol,maxstep), stat=ierr)
      allocate(iamtemp(maxpart,maxstep))
@@ -66,7 +66,7 @@ subroutine alloc(npartin,nstep,ncolumns)
      deallocate(time,gamma)
 
   else
-     print*,' allocating memory: ntot = ', &
+     print*,'> allocating memory: ntot = ', &
           npartin,' nstep = ',nstep,' ncol = ',ncolumns
   endif
 !
@@ -90,7 +90,7 @@ subroutine alloc(npartin,nstep,ncolumns)
   allocate(iam(maxpart,maxstep))
   if (ierr.ne.0) stop 'error allocating memory for dat array'
   if (reallocate) then
-     dat(1:maxcolold,1:maxpartold,1:maxstepold) = dattemp(1:maxcolold,1:maxpartold,1:maxstepold)
+     dat(1:maxpartold,1:maxcolold,1:maxstepold) = dattemp(1:maxpartold,1:maxcolold,1:maxstepold)
      iam(1:maxpartold,1:maxstepold) = iamtemp(1:maxpartold,1:maxstepold)
   endif
 !
