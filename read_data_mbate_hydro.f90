@@ -41,7 +41,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, parameter :: maxptmass = 1000
   real, parameter :: pi=3.141592653589
   integer :: i,j,ifile,ierr
-  integer :: npart_max,nstep_max
+  integer :: npart_max,nstep_max,ncolstep
   logical :: iexist
     
   character(len=3) :: fileno
@@ -52,10 +52,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
   
   real, dimension(:,:), allocatable :: dattemp
   real, dimension(:), allocatable :: dummy
-  real(doub_prec) :: udisti,umassi,utimei, umagfdi
+  real(doub_prec) :: udisti,umassi,utimei
   real :: timei, gammai
   real :: rhozero, RK2, tcomp
-  real :: escap,tkin,tgrav,tterm,tmag
+  real :: escap,tkin,tgrav,tterm
   real :: dtmax
 
   nstepsread = 0
@@ -90,7 +90,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  ncolumns = max(19,maxcol)  ! number of columns in file  
+  ncolstep = 11  ! number of columns in file
+  ncolumns = ncolstep
   !
   !--allocate memory initially
   !
@@ -112,10 +113,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !--read the number of particles in the first step,
         !  allocate memory and rewind
         !
-        read(15,end=55,iostat=ierr) udisti,umassi,utimei,umagfdi,nprint 
+        read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint 
         if (.not.allocated(dat) .or. nprint.gt.npart_max) then
            npart_max = max(npart_max,INT(1.1*nprint))
-           call alloc(npart_max,nstep_max,ncolumns)
+           call alloc(npart_max,nstep_max,ncolstep+ncalc)
         endif
         rewind(15)
      endif
@@ -131,13 +132,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--allocate/reallocate memory if j > maxstep
 !
         if (j.gt.maxstep) then
-           call alloc(maxpart,j+1,maxcol)
+           call alloc(maxpart,j+2*nstepsread,maxcol)
         endif
 !
 !--allocate a temporary array for double precision variables
 !
         if (allocated(dattemp)) deallocate(dattemp)
-        allocate(dattemp(npart_max,ncolumns),stat=ierr)
+        allocate(dattemp(npart_max,ncolstep),stat=ierr)
         if (ierr /= 0) print*,'not enough memory in read_data'
 !
 !--allocate a dummy arrays for data I want to throw away
@@ -159,19 +160,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
         write(*,"(a,i5,a)",advance="no") '| step ',j,': '
 
-        read(15,end=55,iostat=ierr) udisti, umassi, utimei, umagfdi,  &
+        read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
              nprint, nghosti, n1, n2, timei, gammai, rhozero, RK2, &
              (dattemp(i,7), i=1, nprint), (dattemp(i,8), i=1,nprint), &
-             escap, tkin, tgrav, tterm, tmag, &
+             escap, tkin, tgrav, tterm, &
              (dattemp(i,1), i=1, nprint), (dattemp(i,2), i=1, nprint), &
              (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
              (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
              (dattemp(i,9), i=1, nprint), (dattemp(i,10), i=1, nprint), &
-             (dattemp(i,11), i=1, nprint), (dattemp(i,12), i=1, nprint), &  
-             (dattemp(i,13), i=1, nprint), (dattemp(i,14), i=1, nprint), &
-             (dattemp(i,15), i=1, nprint), (dattemp(i,16), i=1, nprint), &
-             (dattemp(i,17), i=1, nprint), (dattemp(i,18), i=1, nprint), &
-             (dattemp(i,19), i=1, nprint), (dummy(i),i=1,nprint), &
+             (dattemp(i,11), i=1, nprint), (dummy(i),i=1,nprint), &
              dtmax, (isteps(i), i=1,nprint), (iphase(i),i=1,nprint), &
              nptmass, (listpm(i), i=1,nptmass)
         
@@ -184,9 +181,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--convert to single precision
 !
-        print "(a,i8)",'ntotal = ',nprint
+        print *,'t = ',timei,' ntotal = ',nprint
         print "(a)",'| converting to single precision... '
-        dat(1:nprint,1:ncolumns,j) = real(dattemp(1:nprint,1:ncolumns))
+        dat(1:nprint,1:ncolstep,j) = real(dattemp(1:nprint,1:ncolstep))
 
         iam(1:nprint,j) = iphase(1:nprint)
         if (allocated(dattemp)) deallocate(dattemp)
@@ -199,8 +196,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
         npartoftype(2,j) = nghosti
 
         gamma(j) = real(gammai)
-        tcomp = sqrt((3.*pi)/(32*rhozero))
-        time(j) = real(timei)/tcomp
+        !!tcomp = sqrt((3.*pi)/(32*rhozero))
+        time(j) = real(timei) !!/tcomp
         j = j + 1
 
      enddo over_steps_in_file
@@ -262,37 +259,22 @@ subroutine set_labels
      ix(i) = i
   enddo
   ivx = 4
-  irho = 18     ! location of rho in data array
-  iutherm = 16  !  thermal energy
   ih = 7        !  smoothing length
-  ipmass = 17   !  particle mass      
+  label(8) = 'alpha'
+  iutherm = 9  !  thermal energy
+  ipmass = 10   !  particle mass      
+  irho = 11     ! location of rho in data array
   
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   do i=1,ndimV
      label(ivx+i-1) = 'v\d'//labelcoord(i,1)
   enddo
-  label(irho) = '\gr'      
+  label(irho) = '\gr'
   label(iutherm) = 'u'
   label(ih) = 'h       '
   label(ipmass) = 'particle mass'     
-  label(8) = 'alpha'
-  label(19) = 'psi' 
-  
-  label(ndim + ndimV+5) = '\ga'
-  if (ncolumns.gt.11) then
-     iBfirst = 9    ! location of Bx
-     do i=1,ndimV
-        label(iBfirst + i-1) = 'B\d'//labelcoord(i,1) !' (x10\u-3\d)'	!//'/rho'
-     enddo
-     idivB = 12
-     label(idivB) = 'div B'
-     do i=1,ndimV
-        label(13 + i-1) = 'J'//labelcoord(i,1)
-     enddo
-  else
-     iBfirst = 0
-  endif
-  !
+
+    !
   !--set labels for vector quantities
   !
   iamvec(ivx:ivx+ndimV-1) = ivx
@@ -300,21 +282,6 @@ subroutine set_labels
   do i=1,ndimV
      label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
   enddo
-  !--mag field
-  if (iBfirst.gt.0) then
-     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
-     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-     do i=1,ndimV
-        label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
-     enddo
-  endif
-  !--current density
-  iamvec(13:13+ndimV-1) = 13
-  labelvec(13:13+ndimV-1) = 'J'
-  do i=1,ndimV
-     label(13+i-1) = trim(labelvec(13))//'\d'//labelcoord(i,1)
-  enddo
-  
   !
   !--set labels for each particle type
   !
