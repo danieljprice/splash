@@ -53,7 +53,7 @@ MODULES= modules.f90 transform.f90 prompting.f90
 # these are the normal `external' subroutines
 SOURCES= supersphplot.f90 main.f90 \
          allocate.f90 calc_quantities.f90 \
-	 colour_demo.f colour_set.f90 \
+	 colour_demo.f colour_set.f90 coord_transform.f90 \
 	 danpgsch.f danpgtile.f danpgwedg.f \
 	 defaults_read.f90 defaults_set.f90 defaults_write.f90 \
 	 exact_fromfile.f90 exact_rhoh.f90 \
@@ -88,9 +88,9 @@ SOURCES= supersphplot.f90 main.f90 \
 
 SOURCESALL = $(MODULES:.f90=.o) $(SOURCES:.f90=.o)
 
-OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f90=.o) coord_transform.o
-OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f90=.o) coord_transform.o
-OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o) coord_transform.o
+OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f90=.o)
+OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f90=.o)
+OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o)
 
 dansph: $(OBJDANSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o ../supersphplot $(OBJDANSPH)
@@ -100,11 +100,6 @@ mrbsph: $(OBJMRBSPH)
 
 gadget: $(OBJGADGETSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_gadget $(OBJGADGETSPH)
-
-## files from the main code
-
-coord_transform.o:
-	$(FC) -c $(FFLAGS) $(LDFLAGS) ../src/coord_transform.f90 -o $@
 
 ## other crap
 
