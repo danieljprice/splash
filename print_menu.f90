@@ -30,7 +30,7 @@ subroutine print_menu(ipicky,ipickx,irender)
   !
   !--supersphplot options 
   !     
-  menuitems = 17	! this is the number of options in the menu (set here)
+  menuitems = 14	! this is the number of options in the menu (set here)
 
   if (ishowopts) then
 
@@ -42,35 +42,29 @@ subroutine print_menu(ipicky,ipickx,irender)
           'toggle interactive mode          ',interactive
      print 15,numplot+5, &
           'toggle animate                   ',animate
-     print 15,numplot+6, &
-          'toggle page change               ',ipagechange
-     print 15,numplot+7, &
-          'toggle axes                      ',axes
-     print 21,numplot+8, &
-          'change paper size                ',papersizex,aspectratio
-     print 16,numplot+9, &
-          'change plots per page            ',nacross,ndown
-     print 15,numplot+10, &
-          'toggle cross section/projection  ',xsec_nomulti
-     print 14,numplot+11, &
+     print 14,numplot+6, &
           'set multiplot                    ',nyplotmulti
-     print 14,numplot+12, &
+     print 15,numplot+7, &
+          'toggle cross section/projection  ',xsec_nomulti 
+     print 14,numplot+8, &
           'toggle exact solution            ',iexact
-     print 13,numplot+13,'particle plot options'
-     print 14,numplot+14, &
+     print 13,numplot+9, &
+          'page options'
+     print 13,numplot+10,'particle plot options'
+     print 14,numplot+11, &
           'rendering/vector plot options    ',ivecplot_nomulti
-     print 13,numplot+15,'plot limits'
+     print 13,numplot+12,'plot limits'
 
   endif	! show/hide opts
 
   print 12
   if (ishowopts) then
-     print 13,numplot+16,'hide options'      
+     print 13,numplot+13,'hide options'      
   else
-     print 13,numplot+16,'supersphplot options'
+     print 13,numplot+13,'supersphplot options'
   endif
-  print 13,numplot+17,'Save defaults'
-  print 13,numplot+18,'Exit supersphplot'
+  print 13,numplot+14,'Save defaults'
+  print 13,numplot+15,'Exit supersphplot'
   print 12
 
 11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a)
@@ -78,12 +72,7 @@ subroutine print_menu(ipicky,ipickx,irender)
 13 format(1x,i2,')',1x,a)
 14 format(1x,i2,')',1x,a,'( ',i2, ' )')
 15 format(1x,i2,')',1x,a,'( ',L1,' )')
-16 format(1x,i2,')',1x,a,'( ',i2,',',i2,' )')
-17 format(1x,i2,')',1x,a,'( ',f4.2,' )')
 18 format(1x,i2,')',1x,a,'( ',10(i2,1x),' )')
-19 format(1x,i2,')',1x,a,'( ',L1,',',1x,L1,' )')
-20 format(1x,i2,')',1x,a,'( ',L1,',',i2,' )')
-21 format(1x,i2,')',1x,a,'( ',f5.2,',',1x,f5.2,' )')
   !
   !--prompt for selection
   !

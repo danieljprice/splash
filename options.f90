@@ -12,7 +12,6 @@ subroutine options(ipicky)
   integer, intent(IN) :: ipicky
   integer :: i,j,k,n,iaction,ipick
   real :: diff, mid, temp
-  real :: papersizey
   character(LEN=30) :: filename
   character(LEN=1) :: ans
   logical :: ians, iansx, iansy, ichange
@@ -83,68 +82,6 @@ subroutine options(ipicky)
      return
 !------------------------------------------------------------------------
   case(6)
-     ipagechange=.not.ipagechange
-     print*,' Page changing = ',ipagechange
-     return 	
-!------------------------------------------------------------------------
-  case(7)
-     axes=.not.axes
-     print *,' Axes = ',axes
-     return
-!------------------------------------------------------------------------
-  case(8)
-     print*,' 0) PGPLOT default'
-     print*,' 1) small square movie '
-     print*,' 2) large/multiple movie'
-     print*,' 3) single small graph'
-     print*,' 4) duo small graph '
-     print*,' 5) Custom size ' 
-     call prompt(' Enter option for paper size ',ipapersize,0,5)
-     select case(ipapersize)
-     case(1) 
-        papersizex = 0.25*11.7
-        aspectratio = 1.0
-     case(2)
-        papersizex = 0.5*11.7
-        aspectratio = 1.0
-     case(3) 
-        papersizex = 0.5*11.7 
-        aspectratio = 1./sqrt(2.)
-     case(4)
-        papersizex = 11.7
-        aspectratio = 0.5/sqrt(2.)	
-     case(5)
-        call prompt(' x size (inches) ',papersizex,0.0,12.0)
-        call prompt(' y size (inches) or aspect ratio (-ve)', &
-             papersizey,-12.0,12.0)
-        if (papersizey.lt.0.0) then
-           aspectratio = abs(papersizey)
-        else
-           aspectratio = papersizey/papersizex
-        endif
-     case DEFAULT
-        papersizex = 0.0	! no call to PGPAP if they are zero
-        aspectratio = 0.0	
-     end select
-     return 	  
-!------------------------------------------------------------------------
-  case(9)
-     call prompt('Enter number of plots across:',nacross,1,numplot)
-     call prompt('Enter number of plots down  :',ndown,1,numplot)
-     return	 
-!------------------------------------------------------------------------
-  case(10)
-     xsec_nomulti =.not.xsec_nomulti
-     print *,' Cross section = ',xsec_nomulti
-     flythru = .false.
-     if (xsec_nomulti) then
-        call prompt('Do you want a fly-through',flythru)
-        !	     READ*,ans
-        !	     IF (ans.eq.'y'.or.ans.eq.'Y') flythru=.true.
-     endif
-     return
-!------------------------------------------------------------------------
-  case(11)
      call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
      !	  READ*,nyplotmulti
      !          IF (nyplotmulti.GT.numplot) THEN 
@@ -212,15 +149,29 @@ subroutine options(ipicky)
      enddo
      return	    	  	  
 !------------------------------------------------------------------------
-  case(12)
+  case(7)
+     xsec_nomulti =.not.xsec_nomulti
+     print *,' Cross section = ',xsec_nomulti
+     flythru = .false.
+     if (xsec_nomulti) then
+        call prompt('Do you want a fly-through',flythru)
+        !	     READ*,ans
+        !	     IF (ans.eq.'y'.or.ans.eq.'Y') flythru=.true.
+     endif
+     return
+!------------------------------------------------------------------------
+  case(8)
      call options_exact(iexact)
      return
 !------------------------------------------------------------------------
-  case(13)
+  case(9)
+     call options_page	 
+!------------------------------------------------------------------------
+  case(10)
      call options_particleplots
      return
 !------------------------------------------------------------------------
-  case(14)
+  case(11)
      call options_render(npix_nomulti,icolours, &
           iplotcont_nomulti,ncontours_nomulti,     &
           ivecplot_nomulti,npixvec_nomulti,iplotpartvec_nomulti, &
@@ -228,16 +179,16 @@ subroutine options(ipicky)
           ndim,numplot)
      return
 !------------------------------------------------------------------------
-  case(15)
+  case(12)
      call options_limits
      return
 !------------------------------------------------------------------------
-  case(16)
+  case(13)
      !	  show/hide plot options
      ishowopts = .not.ishowopts
      return 	  
 !------------------------------------------------------------------------
-  case(17)
+  case(14)
      call defaults_write
      return
   case DEFAULT

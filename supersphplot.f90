@@ -35,6 +35,7 @@ program supersphplot
 !     options 	         : sets plot options given in menu
 !     options_exact	 : sets options and params for exact solution calculation/plotting
 !     options_limits     : sets options relating to plot limits
+!     options_page       : sets options relating to page setup
 !     options_particleplots : sets options relating to particle plots
 !     options_powerspec  : sets options for power spectrum plotting
 !     options_render	 : sets options for render plots
@@ -134,7 +135,7 @@ program supersphplot
   !--initialise variables
   !      
   rootname = 'blank'
-  ishowopts = .false.  ! don't initially display menu options
+  ishowopts = .true.  ! do/don't initially display menu options
   ivegotdata = .false.
   
   ! ---------------------------------------------
