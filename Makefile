@@ -7,36 +7,14 @@
 
 .KEEP_STATE:
 
-## Compiler options (uncomment ONE set)
-## ------------------------------------------------------------------ ##
-## IoA compiler (Sun fortran)
-FC = f90
-F90C = f90
-FFLAGS = -O4
-F90FLAGS = -C -O4
-LDFLAGS = -lpgplot -lX11 -lF77
-## ------------------------------------------------------------------ ##
-## NAGware f95 compiler
-#FC = f95
-#F90C = f95
-#FFLAGS = -O4
-#F90FLAGS = -O4
-#LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11 -lg2c -lpng
-## ------------------------------------------------------------------ ##
-## Monash compiler (Lahey-Fujitsu f95)
-#FC = lf95
-#F90C = lf95
-#FFLAGS = -O ##--chk aesux --chkglobal  --warn
-#F90FLAGS = -O ##--chk aesux --chkglobal --warn
-#LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11
-## ------------------------------------------------------------------ ##
-## Intel fortran compiler
-#FC = ifc
-#F90C = ifc
-#FFLAGS = -O -C
-#F90FLAGS = -O -C
-#LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11 -lg2c -lpng -Vaxlib
-## ------------------------------------------------------------------ ##
+## Compiler options
+F90C =  ifc
+F90FLAGS =  -O -C
+LDFLAGS =  -lpgplot -L/usr/X11R6/lib -lX11 -lg2c -lpng -Vaxlib
+
+# Fortran flags same as F90
+FC = $(F90C)
+FFLAGS = $(F90FLAGS)
 
 # define the implicit rule to make a .o file from a .f90 file
 
