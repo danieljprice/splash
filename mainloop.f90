@@ -344,10 +344,14 @@ subroutine plotstep
                  xmaxtemp = lim(ix(1:ndim),2)
                  call coord_transform_limits(xmintemp,xmaxtemp, &
                                              icoords,icoordsnew,ndim)
-                 xmin = xmintemp(iplotx)
-                 xmax = xmaxtemp(iplotx)
-                 ymin = xmintemp(iploty)
-                 ymax = xmaxtemp(iploty)
+                 if (iplotx.le.ndim) then
+                    xmin = xmintemp(iplotx)
+                    xmax = xmaxtemp(iplotx)
+                 endif
+                 if (iploty.le.ndim) then
+                    ymin = xmintemp(iploty)
+                    ymax = xmaxtemp(iploty)
+                 endif
               endif
            endif
            if (iamvec(iplotx).gt.0) then
