@@ -93,7 +93,7 @@ subroutine get_data(ireadfile)
      !
      !--calculate various additional quantities
      !     
-     call calc_quantities
+     !!call calc_quantities
   endif
   !
   !--read exact solution parameters from files if present

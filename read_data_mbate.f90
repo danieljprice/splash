@@ -61,6 +61,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real(kind=8) :: dtmax
 
   nstepsread = 0
+  nstep_max = 0
+  ncol_max = 0
   !
   !--for rootnames without the '00', read all files starting at #1
   !

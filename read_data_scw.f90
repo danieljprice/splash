@@ -38,29 +38,29 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
   integer, parameter :: maxptmass = 100
-  integer :: i,j,k,ifile,ierr
+  integer :: i,j,ifile,ierr
   integer :: ncol_max,nstep_max
   integer :: ntotin
   logical :: iexist
-  real :: gammain,timeff
     
   character(LEN=3) :: fileno
-  character(LEN=LEN(rootname)+10), dimension(1000) :: filename,sinkfile
   character(LEN=LEN(rootname)+10) :: dumpfile
-  integer :: int_from_string
-  integer :: nprint, nghosti, n1, n2, rhozero, RK2, nptmass
+  integer :: nprint, n1, n2, rhozero, RK2, nptmass
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
   
   logical :: magfield  
   real(doub_prec), dimension(:,:), allocatable :: dattemp
   real(doub_prec), dimension(:), allocatable :: dummy
-  real(doub_prec) :: udisti,umassi,utimei, umagfdi, timei, gammai
+  real*8 :: udisti,umassi,utimei, timei, gammai
   real(doub_prec) :: escap,tkin,tgrav,tterm,trad
   real(doub_prec) :: dtmax
 
   nstepsread = 0
   ierr = 0
+  nstep_max = 0
+  ncol_max = 0
+  ntotin = 0
   !
   !--for rootnames without the '00', read all files starting at #1
   !
@@ -95,12 +95,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  ncolumns = 16
+  ncolumns = 15
   !
   !--allocate memory initially
   !
   ncol_max = max(ncolumns,ncol_max)
-  nstep_max = max(nstep_max,indexstart,11)
+  nstep_max = max(nstep_max,indexstart,1)
 
   j = indexstart
   nstepsread = 0
@@ -115,12 +115,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !--read the number of particles in the first step,
      !  allocate memory and rewind
      !
-     read(15,end=55) udisti    !!!,umassi,utimei
+     read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint
      if (ierr /= 0) then
         print "(a)",'*** ERROR reading timestep header ***'
         close(15)
         return
-     endif 
+     endif
+     print*,'nprint = ',nprint
      if (.not.allocated(dat) .or. nprint.gt.ntotin) then
         ntotin = max(ntotin,INT(1.1*nprint))
         call alloc(ntotin,nstep_max,ncol_max)
@@ -165,7 +166,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              (dattemp(i,10), i=1, nprint), (dattemp(i,11), i=1, nprint), &  
              (dattemp(i,12), i=1, nprint), (dattemp(i,13), i=1, nprint), &
              (dattemp(i,14), i=1, nprint), (dattemp(i,15), i=1, nprint), &
-             (dattemp(i,16), i=1, nprint), (dummy(i),i=1,nprint), &
+             (dummy(i),i=1,nprint), &
              dtmax, (isteps(i), i=1,nprint), (iphase(i),i=1,nprint), &
              nptmass, (listpm(i), i=1,nptmass)
         
@@ -190,11 +191,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
         ntot(j) = nprint
         npartoftype(1,j) = nprint
-        npartoftype(:,j) = 0
+        npartoftype(2:maxparttypes,j) = 0
 
         gamma(j) = real(gammai)
         time(j) = real(timei)
-        if (ntotin.eq.130000) ntotin = nprint
         j = j + 1
 
      enddo over_steps_in_file

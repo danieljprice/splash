@@ -39,17 +39,15 @@ subroutine read_data(rootname,istart,nstepsread)
   integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
   character(LEN=LEN(rootname)+10) :: datfile
-  character(LEN=2) :: fileno
-  integer(kind=4), dimension(6) :: Npartoftypetemp
   integer, dimension(:), allocatable :: iamtemp
-  integer :: i,j,itype,icol,ifile,idashpos,ioftype,ierr
+  integer :: i,itype,icol,ifile,idashpos,ierr
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
   integer :: ncol_max,npart_max,nstep_max,int_from_string
   logical :: iexist,reallocate
-  real(kind=8) :: timetemp
-  real(kind=8), dimension(6) :: Massoftype
-  real(kind=4), dimension(:), allocatable :: dattemp1
-  real(kind=4), dimension(:,:), allocatable :: dattemp
+  real(doub_prec) :: timetemp
+  real(doub_prec), dimension(6) :: Massoftype
+  real, dimension(:), allocatable :: dattemp1
+  real, dimension(:,:), allocatable :: dattemp
 
   nstepsread = 0
   
@@ -280,7 +278,6 @@ subroutine read_data(rootname,istart,nstepsread)
 66 continue
   print*,'*** end of file reached in ',trim(datfile),' ***'
   ! timestep there but data incomplete
-  ntot(i) = j-1
   goto 68
 
 68 continue

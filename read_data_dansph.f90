@@ -289,13 +289,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   goto 68
 
 66 continue
-   print*,'*** WARNING: incomplete data on last timestep'
+   print "(a)",'*** WARNING: incomplete data on last timestep'
 nstepsread = i - indexstart + 1                ! timestep there but data incomplete
 ntot(i) = j-1
 goto 68
 
 67 continue
-   print*,'error reading data'
+   print "(a)",' > end of file <'
 68 continue
   !
   !--close data file and return

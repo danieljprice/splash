@@ -9,8 +9,8 @@
 
 ## Compiler options
 F90C =  f95
-F90FLAGS =  -O ##-WB ##-C
-LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11 -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c -lpng
+F90FLAGS =  -O -C ##-WB ##-C
+LDFLAGS = -L/usr/X11R6/lib -lX11 ##-L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c -lpng
 
 # Fortran flags same as F90
 FC = $(F90C)
@@ -67,10 +67,10 @@ SOURCES= supersphplot.f90 mainloop.f90 \
 
 SOURCESALL = $(MODULES:.f90=.o) $(SOURCES:.f90=.o)
 
-OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f90=.o)
-OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f90=.o)
-OBJSCWSPH = $(SOURCESALL:.f=.o) $(SCWSPH:.f90=.o)
-OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o)
+OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f90=.o) /h/neil/software/pgplot95/libpgplot.a
+OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f90=.o) /h/neil/software/pgplot95/libpgplot.a
+OBJSCWSPH = $(SOURCESALL:.f=.o) $(SCWSPH:.f90=.o) /h/neil/software/pgplot95/libpgplot.a
+OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o) /h/neil/software/pgplot95/libpgplot.a
 
 dansph: $(OBJDANSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o ../supersphplot $(OBJDANSPH)
