@@ -15,9 +15,8 @@
 ! maxplot,maxpart,maxstep      : dimensions of main data array
 ! dat(maxplot,maxpart,maxstep) : main data array
 !
-! npart(maxstep)      : number of particles in each timestep
+! npartoftype(maxstep): number of particles of each type in each timestep
 ! ntot(maxstep)       : total number of particles in each timestep
-! nghost(maxstep)     : number of ghost particles in each timestep
 ! iam(maxpart,maxstep): integer identification of particle type
 !
 ! time(maxstep)       : time at each step
@@ -147,8 +146,7 @@ subroutine read_data(rootname,istart,ifinish)
 
      else
         ntot(i) = 1
-        npart(i) = 1
-        nghost(i) = 0
+        npartoftype(1,i) = 1
         dat(:,:,i) = 0.
      endif
      iam(:,i) = 0
@@ -156,15 +154,14 @@ subroutine read_data(rootname,istart,ifinish)
 
   print*,' REACHED ARRAY LIMITS IN READFILE'
 
-  ifinish = i-1		! this is if reached array limits
+  nstepsread = i-1		! this is if reached array limits
   ntot(i-1) = j-1
-  nghost(i-1) = ntot(i-1) - npart(i-1)
   goto 68
 
 66 continue
   ifinish = i		! timestep there but data incomplete
   ntot(i) = j-1
-  nghost(i) = ntot(i) - npart(i)
+  npartoftype(2,i) = ntot(i) - npartoftype(1,i)
   goto 68
 
 67 continue

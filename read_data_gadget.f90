@@ -17,9 +17,8 @@
 ! maxplot,maxpart,maxstep      : dimensions of main data array
 ! dat(maxpart,maxplot,maxstep) : main data array
 !
-! npart(maxstep)      : number of particles in each timestep
+! npartoftype(maxstep): number of particles of each type in each timestep
 ! ntot(maxstep)       : total number of particles in each timestep
-! nghost(maxstep)     : number of ghost particles in each timestep
 ! iam(maxpart,maxstep): integer identification of particle type
 !
 ! time(maxstep)       : time at each step
@@ -114,14 +113,13 @@ subroutine read_data(rootname,istart,nstepsread)
      !
      !--read header for this timestep
      !
-     read(11,ERR=70,end=80) Npartoftype(:,i),Massoftype,timetemp 
-     print*,'Npartoftype =',Npartoftype(:,i)
+     read(11,ERR=70,end=80) npartoftype(:,i),Massoftype,timetemp 
+     print*,'Npartoftype =',npartoftype(:,i)
      ntot(i) = int(sum(Npartoftype))
-     npart(i) = int(Npartoftype(1,i))
-     print*,'Npartoftype =',Npartoftype(:,i)
+     print*,'Npartoftype =',npartoftype(:,i)
      print*,'Massoftype = ',Massoftype
      time(i) = real(timetemp)
-     print*,'t = ',time(i),' npart, ntot = ',npart(i),ntot(i)
+     print*,'t = ',time(i),' npart, ntot = ',npartoftype(1,i),ntot(i)
 
      !
      !--if successfully read header, increment the nstepsread counter
@@ -229,23 +227,23 @@ subroutine read_data(rootname,istart,nstepsread)
         !
         !--read other quantities for rest of particles
         !
-        print*,'gas properties ',npart(i)
+        print*,'gas properties ',npartoftype(1,i)
         do icol=8,12
            !!print*,icol
-           read (11, end=66,ERR=78) dat(1:npart(i),icol,i)
+           read (11, end=66,ERR=78) dat(1:npartoftype(1,i),icol,i)
            !
            !--for some reason the smoothing length output by GADGET is
            !  twice the usual SPH smoothing length
            !
            if (icol.eq.12) then
-              dat(1:npart(i),icol,i) = 0.5*dat(1:npart(i),icol,i)
+              dat(1:npartoftype(1,i),icol,i) = 0.5*dat(1:npartoftype(1,i),icol,i)
            endif
         enddo
         
         
      else
         ntot(i) = 1
-        npart(i) = 1
+        npartoftype(1,i) = 1
         dat(:,:,i) = 0.
      endif
      iam(:,i) = 0
@@ -276,7 +274,6 @@ subroutine read_data(rootname,istart,nstepsread)
 !
 !--now memory has been allocated, set arrays which are constant for all time
 !
-  nghost = 0
   gamma = 5./3.
   goto 68
 
@@ -284,7 +281,6 @@ subroutine read_data(rootname,istart,nstepsread)
   print*,'*** end of file reached in ',trim(datfile),' ***'
   ! timestep there but data incomplete
   ntot(i) = j-1
-  nghost(i) = 0.
   goto 68
 
 68 continue

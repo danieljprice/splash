@@ -13,15 +13,14 @@
 !
 ! ncolumns    : number of data columns
 ! ndim, ndimV : number of spatial, velocity dimensions
-! ifinish  : number of steps read from this file
+! nstepsread  : number of steps read from this file
 ! ivegotdata  : flag which indicates successful data read
 !
 ! maxplot,maxpart,maxstep      : dimensions of main data array
 ! dat(maxplot,maxpart,maxstep) : main data array
 !
-! npart(maxstep)      : number of particles in each timestep
+! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 ! ntot(maxstep)       : total number of particles in each timestep
-! nghost(maxstep)     : number of ghost particles in each timestep
 ! iam(maxpart,maxstep): integer identification of particle type
 !
 ! time(maxstep)       : time at each step
@@ -191,10 +190,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
         deallocate(iphase)
 
         ntot(j) = nprint
-        nghost(j) = nghosti
-        npart(j) = ntot(j) - nghost(j)
-        npartoftype(1,j) = npart(j)
-        npartoftype(2,j) = nghost(j)
+        npartoftype(1,j) = nprint-nghosti
+        npartoftype(2,j) = nghosti
 
         gamma(j) = real(gammai)
         time(j) = real(timei)
@@ -209,7 +206,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   close(15)
 
-  print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nghost=',ntot(j-1)-npart(j-1)
+  print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nghost=',npartoftype(2,j-1)
 
      !
      !--if just the rootname has been input, 

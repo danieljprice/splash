@@ -18,7 +18,7 @@ module particle_data
  use params
  implicit none
  integer :: maxpart,maxstep,maxcol ! dimensions of dat array
- integer, allocatable, dimension(:) :: npart,ntot,nghost,ntotplot
+ integer, allocatable, dimension(:) :: ntot
  integer, allocatable, dimension(:,:) :: iam,npartoftype
  real, allocatable, dimension(:) :: time, gamma
  real, allocatable, dimension(:,:,:) :: dat

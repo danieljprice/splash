@@ -19,7 +19,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   integer :: i,j,k,n,ierr,ifile
   integer :: iplotx,iploty,irenderplot,ivectorplot,ivecx,ivecy
   integer :: nyplot,nyplots      
-  integer :: ninterp,npart1,npartdim
+  integer :: ninterp,npartdim
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec
   integer :: irenderprev, istepprev, iadvance
@@ -137,7 +137,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
         call prompt(' enter '//trim(label(ixsec))//' position for cross-section slice:', &
                      xsecpos_nomulti,lim(ixsec,1),lim(ixsec,2))
         !!--default thickness is half of the average particle spacing
-        npartdim = int(maxval(npart(nstart:n_end))**(1./real(ndim)))
+        npartdim = int(maxval(npartoftype(1,nstart:n_end))**(1./real(ndim)))
         print*,'average # of particles in each dimension = ',npartdim
         dxsec = (lim(ixsec,2)-lim(ixsec,1))/float(npartdim)
         call prompt(' enter thickness of cross section slice:', &
@@ -207,13 +207,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   !!if (animate .and. .not. interactive) call pgbbuf !! start buffering output
 
   !
-  !--if plotting ghost particles, set ntotplot = ntot, else ntot=npart
-  !
-  ntotplot(:) = npartoftype(1,:)
-  if (labeltype(2)(1:5).eq.'ghost' .and. iplotpartoftype(2)) then
-     ntotplot = npartoftype(1,i) + npartoftype(2,i)
-  endif
-  !
   !--set fill style for circle plots
   !      
   if (plotcirc) call pgsfs(2)
@@ -270,7 +263,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
         endif        
      endif
      
-     npart1 = npart(i) + 1
      irenderprev = 0
      istepprev = 0  
      !-------------------------------------
@@ -312,7 +304,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                    .and..not.(iplotx.le.ndim.and.iploty.le.ndim &
                    .and.irenderplot.gt.ndim)) then
                  print*,'changing to new coordinate system',icoords,icoordsnew
-                 do j=1,ntotplot(i)
+                 do j=1,ntot(i)
                     call coord_transform(dat(j,ix(:),i),ndim,icoords, &
                                          xcoords(:),ndim,icoordsnew)
                     if (iplotx.le.ndim) xplot(j) = xcoords(iplotx)
@@ -399,8 +391,12 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            !
            !--set number of particles to use in the interpolation routines
            !  (ie. including only gas particles and ghosts)
-           ninterp = npart(i) + nghost(i)        
-
+           !--if plotting ghost particles, set ntotplot = ntot, else ntot=npart
+           !
+           ninterp = npartoftype(1,i)
+           if (labeltype(2)(1:5).eq.'ghost' .and. iplotpartoftype(2)) then
+              ninterp = ninterp + npartoftype(2,i)
+           endif
            !
            !--rotate the particles about the z (and y) axes
            !  only applies to particle plots at the moment
@@ -415,7 +411,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                if (ndim.eq.3) then
                   print*,'rotating particles about x by ',angletilttemp
                endif
-               do j=1,ntotplot(i)
+               do j=1,ntot(i)
                   call rotate(angles(1:ndim-1),dat(j,ix(1:ndim),i), &
                          xcoords(:),xorigin(1:ndim),ndim)
                   xplot(j) = xcoords(iplotx)
@@ -796,8 +792,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               !             
              if (interactive) then
                 iadvance = nfreq                
-                call interactive_part(ntotplot(i),iplotx,iploty,irenderplot, &
-                     xplot(1:ntotplot(i)),yplot(1:ntotplot(i)), &
+                call interactive_part(ninterp,iplotx,iploty,irenderplot, &
+                     xplot(1:ninterp),yplot(1:ninterp), &
                      xmin,xmax,ymin,ymax,anglerottemp,angletilttemp,iadvance,isave)                
                 !--turn rotation on if necessary
                 if (abs(anglerottemp-anglerot).gt.tol) irotate = .true.
@@ -878,22 +874,23 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
 
            !--plot line joining the particles
            if (iplotline.or.(iplotlinein.and.(i.eq.nstart))) then
-              call pgline(npart(i),xplot(1:npart(i)),yplot(1:npart(i)))     
+              call pgline(npartoftype(1,i),xplot(1:npartoftype(1,i)), &
+                          yplot(1:npartoftype(1,i)))     
            endif
            call pgsls(1)! reset 
            call pgsch(charheight)
            !
            !--plot average line
            !
-           if (iplotav) call plot_average(xplot(1:npart(i)), &
-                yplot(1:npart(i)),npart(i),nbins)
+           if (iplotav) call plot_average(xplot(1:npartoftype(1,i)), &
+                yplot(1:npartoftype(1,i)),npartoftype(1,i),nbins)
            !
            !--enter interactive mode
            !
            iadvance = nfreq
            if (interactive) then
-              call interactive_part(npart(i),iplotx,iploty,0,xplot(1:npart(i)), &
-                                    yplot(1:npart(i)),xmin,xmax,ymin,ymax, &
+              call interactive_part(ntot(i),iplotx,iploty,0,xplot(1:ntot(i)), &
+                                    yplot(1:ntot(i)),xmin,xmax,ymin,ymax, &
                                     anglerottemp,angletilttemp,iadvance,isave)
               if (isave) then
                  !--save settings from interactive mode
@@ -956,18 +953,19 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
 
               if (.not.idisordered) then! interpolate first
                  !!--allocate memory for 1D grid (size = 2*npart)
-                 ngrid = 2*npart(i)
+                 ngrid = 2*npartoftype(1,i)
                  !!--set up 1D grid
                  xmin = lim(ix(1),1)
                  xmax = lim(ix(1),2)
                  dxgrid = (xmax-xmin)/ngrid
                  call set_grid1D(xmin,dxgrid,ngrid)
-
+                
+                 ninterp = ntot(i)
                  !!--interpolate to 1D grid  
-                 call interpolate1D(dat(1:npart(i),ix(1),i), & 
-                      dat(1:npart(i),ipmass,i),dat(1:npart(i),irho,i), &
-                      dat(1:npart(i),ih,i),dat(1:npart(i),ipowerspecy,i), & 
-                      npart(i),xmin,datpix1D,ngrid,dxgrid)
+                 call interpolate1D(dat(1:ninterp,ix(1),i), & 
+                      dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i), &
+                      dat(1:ninterp,ih,i),dat(1:ninterp,ipowerspecy,i), & 
+                      ninterp,xmin,datpix1D,ngrid,dxgrid)
                  !!--plot interpolated 1D data to check it
                  print*,'plotting interpolated data...'
                  call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
@@ -982,9 +980,9 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                       xgrid,datpix1D,idisordered,itrans(iploty))              
               else
                  !!--or else call power spectrum calculation on the particles themselves    
-                 call plot_powerspectrum(npart(i),nfreqspec,wavelengthmax, &
-                      dat(1:npart(i),ix(1),i), &
-                      dat(1:npart(i),ipowerspecy,i),idisordered,itrans(iploty))
+                 call plot_powerspectrum(ntot(i),nfreqspec,wavelengthmax, &
+                      dat(1:ntot(i),ix(1),i), &
+                      dat(1:ntot(i),ipowerspecy,i),idisordered,itrans(iploty))
               endif
            endif
            !
@@ -1005,7 +1003,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         if (iexact.eq.5 .and.(iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then 
-           ymean = SUM(yplot(1:npart(i)))/REAL(npart(i)) 
+           ymean = SUM(yplot(1:npartoftype(1,i)))/REAL(npartoftype(1,i)) 
         else
            ymean = 0.
         endif
@@ -1016,7 +1014,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
         !--plot h = (1/rho)^(1/ndim)
         !
         if ((iploty.eq.ih).and.(iplotx.eq.irho)) then
-           call exact_rhoh(hfact,ndim,dat(1:npart(i),ipmass,i),npart(i),xmin,xmax)
+           call exact_rhoh(hfact,ndim,dat(1:ntot(i),ipmass,i),ntot(i),xmin,xmax)
         endif
 
      enddo over_plots ! over plots per timestep (nyplot)

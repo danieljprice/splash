@@ -17,9 +17,8 @@
 ! maxplot,maxpart,maxstep      : dimensions of main data array
 ! dat(maxplot,maxpart,maxstep) : main data array
 !
-! npart(maxstep)      : number of particles in each timestep
+! npartoftype(maxstep) : number of particles of each type in each timestep
 ! ntot(maxstep)       : total number of particles in each timestep
-! nghost(maxstep)     : number of ghost particles in each timestep
 ! iam(maxpart,maxstep): integer identification of particle type
 !
 ! time(maxstep)       : time at each step
@@ -43,7 +42,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(LEN=2) :: fileno
   integer :: i,j,k,ifile,icol,ipos,ierr
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
-  integer :: npartin,ntotin,ncolstep
+  integer :: npartin,ntotin,ncolstep,nparti,ntoti
   logical :: iexist,reallocate
   real(kind=8) :: timein,gammain,hfactin
   real(kind=8), dimension(:), allocatable :: dattemp
@@ -126,7 +125,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      !--read header line for this timestep
      !
-     read(11,iostat=ierr,end=67) timein,npart(i),ntot(i),gammain, &
+     read(11,iostat=ierr,end=67) timein,nparti,ntoti,gammain, &
           hfactin,ndim,ndimV,ncolstep
      if (ierr /= 0) then
         print*,'*** error reading timestep header ***'
@@ -135,14 +134,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
      else ! count this as a successfully read timestep, even if data is partial
         nstepsread = nstepsread + 1
      endif
-     
-     
+          
      time(i) = real(timein)
      gamma(i) = real(gammain)
      hfact = real(hfactin)
-     npartoftype(1,i) = npart(i)
-     npartoftype(2,i) = ntot(i)-npart(i)
-     print*,'reading time = ',time(i),npart(i),ntot(i),gamma(i), &
+     npartoftype(1,i) = nparti
+     npartoftype(2,i) = ntoti - nparti
+     ntot(i) = ntoti
+     print*,'reading time = ',time(i),nparti,ntoti,gamma(i), &
           hfact,ndim,ndimV,ncolstep
      !
      !--check for errors in timestep header
@@ -169,8 +168,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
         ncolumns = ncolstep
      endif
 
-     
-     nghost(i) = ntot(i) - npart(i)
      if (ntot(i).gt.maxpart) then
         !print*, 'ntot greater than array limits!!'    
         reallocate = .true.
@@ -279,8 +276,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
         deallocate(dattemp,dattempvec)
      else
         ntot(i) = 1
-        npart(i) = 1
-        nghost(i) = 0
+        npartoftype(1,i) = 1
+        npartoftype(2,i) = 0
         dat(:,:,i) = 0.
      endif
      iam(:,i) = 0
@@ -290,14 +287,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   ! this is if reached array limits
   ntot(i-1) = j-1
-  nghost(i-1) = ntot(i-1) - npart(i-1)
   goto 68
 
 66 continue
    print*,'*** WARNING: incomplete data on last timestep'
 nstepsread = i - indexstart + 1                ! timestep there but data incomplete
 ntot(i) = j-1
-nghost(i) = ntot(i) - npart(i)
 goto 68
 
 67 continue

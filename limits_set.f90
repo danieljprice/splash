@@ -1,6 +1,8 @@
 !
 !--set plot limits for all columns
 !
+!  NB: does not differentiate between particle types at the moment
+!
 subroutine set_limits
   use labels
   use limits
@@ -10,15 +12,13 @@ subroutine set_limits
   integer :: i,j,k
 
   print*,'setting plot limits...'
-  ntotplot(nstart:n_end) = npart(nstart:n_end)
-  if (any(iplotpartoftype(2:ntypes))) ntotplot(nstart:n_end) = ntot(nstart:n_end)
   zoom = 1.0
   !!--find limits of particle properties	  
   lim(:,1) = 1.e6
   lim(:,2) = -1.e6
   do i=nstart,n_end
      do j=1,numplot
-        do k=1,ntotplot(i)
+        do k=1,ntot(i)
            lim(j,1) = min(lim(j,1),dat(k,j,i))
            lim(j,2) = max(lim(j,2),dat(k,j,i)*scalemax)
         enddo
