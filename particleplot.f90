@@ -16,7 +16,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
   real, dimension(ntot) :: xerrb, yerrb, herr
   real, intent(in) :: xsecmin,xsecmax
   logical, intent(in) :: x_sec
-  integer :: j,n,itype
+  integer :: j,n,itype,linewidth,icolourindex
   integer :: lenstring,index1,index2
   real :: charheight
   character(len=20) :: string
@@ -81,9 +81,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
   !
   if (ncircpart.gt.0) then
      !
-     !--set fill area style
+     !--set fill area style and line width
      !
      call pgsfs(2)
+     call pgqlw(linewidth)
+     call pgslw(2)
+     call pgqci(icolourindex)
+     call pgsci(2)
      
      if (iplotx.le.ndim .and. iploty.le.ndim) then
         print*,'plotting circles of interaction',ncircpart
@@ -125,6 +129,10 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,npartoftype,x_sec
                 yplot(1:ncircpart),herr(1:ncircpart),1.0)      
         endif
      endif
+     
+     call pgslw(linewidth)
+     call pgsci(icolourindex)
+     
   endif
 
   return
