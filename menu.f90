@@ -65,7 +65,16 @@ subroutine menu
      ncalc = 0
   endif
   imulti = .false.
-
+     
+!--set coordinate and vector labels (depends on coordinate system)
+  if (icoords.ne.0 .or. icoordsnew.ne.0) then
+     label(1:ndim) = labelcoord(1:ndim,icoordsnew)
+     do i=1,numplot
+        if (iamvec(i).ne.0) then
+           label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
+        endif
+     enddo
+  endif
 !--set contents of the vector plotting prompt
   vecprompt(1:6) = '0=none'
   index = 7
