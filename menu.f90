@@ -184,7 +184,7 @@ subroutine menu
 	!
 	!--call main plotting routine
         !
-        call main(ipicky,ipickx,irender,ivecplot)
+        call mainloop(ipicky,ipickx,irender,ivecplot)
      endif
 !------------------------------------------------------------------------
 !  if input is an integer > numplot+1, quit

@@ -10,7 +10,7 @@
 ## Compiler options
 F90C =  ifc
 F90FLAGS =  -O -WB ##-C
-LDFLAGS =  -lpgplot -L/usr/X11R6/lib -lX11 -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c -lpng -Vaxlib
+LDFLAGS = -Vaxlib -lpgplot -L/usr/X11R6/lib -lX11 -L/usr/lib/gcc-lib/i386-redhat-linux7/2.96/ -lg2c -lpng
 
 # Fortran flags same as F90
 FC = $(F90C)
@@ -29,7 +29,7 @@ GADGETSPH = read_data_gadget.f90
 MODULES= modules.f90 transform.f90 prompting.f90 exact.f90
 
 # these are the normal `external' subroutines
-SOURCES= supersphplot.f90 main.f90 \
+SOURCES= supersphplot.f90 mainloop.f90 \
          allocate.f90 calc_quantities.f90 \
 	 colour_demo.f colour_set.f90 coord_transform.f90 \
 	 danpgsch.f danpgtile.f danpgwedg.f \

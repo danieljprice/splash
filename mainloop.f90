@@ -1,7 +1,7 @@
 !
 ! This subroutine drives the main plotting loop
 !
-subroutine main(ipicky,ipickx,irender,ivecplot)
+subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use params
   use exact
   use filenames
@@ -1061,4 +1061,4 @@ contains
 
   end subroutine set_grid1D
 
-end subroutine main
+end subroutine mainloop

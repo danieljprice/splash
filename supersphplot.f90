@@ -41,7 +41,7 @@ program supersphplot
 !     limits_read              : reads plot limits from file
 !     limits_save              : saves plot limits to file
 !     limits_set               : calculates plot limits
-!     main               : main plotting loop
+!     mainloop           : main plotting loop
 !     menu               : main menu
 !     modules		 : contains all shared (global) variables
 !     options_data       : sets options relating to current data
@@ -173,6 +173,8 @@ program supersphplot
   ! ---------------------------------------------------
   ! get filenames from command line/file and read file
   
+  call getarg(1,rootname(1))
+  print*,'argument 1 = ',rootname(1)
   iprev = 1
   i = 1
   do while (rootname(iprev)(1:1).ne.' ' .and. i.le.maxfile)
@@ -189,8 +191,10 @@ program supersphplot
   else
      nfiles = iprev - 1
   endif
-  print*,'number of files = ',nfiles
-
+  if (nfiles.gt.0) then
+     print "(a)",'number of files = ',nfiles
+  endif
+  
   if (rootname(1)(1:1).ne.' ') then
      ihavereadfilename = .true.
      if (buffer_data) then

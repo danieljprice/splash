@@ -2,7 +2,7 @@ SUBROUTINE print_header
  IMPLICIT NONE
       
  PRINT 10
-10 FORMAT(	&
+10 FORMAT(/,	&
    "                                     _           _       _   ",/, &
    " ___ _   _ _ __   ___ _ __ ___ _ __ | |__  _ __ | | ___ | |_ ",/, &
    "/ __| | | | '_ \ / _ \ '__/ __| '_ \| '_ \| '_ \| |/ _ \| __|",/, &
@@ -10,11 +10,10 @@ SUBROUTINE print_header
    "|___/\__,_| .__/ \___|_|  |___/ .__/|_| |_| .__/|_|\___/ \__|",/, &
    "          |_|                 |_|         |_|                ")
  PRINT 20
-20    FORMAT(	&
+20 FORMAT(	&
    '    _   _     _   _   _   _   _   _     _   _   _   _   _  ',/, &
    '   / \ / \   / \ / \ / \ / \ / \ / \   / \ / \ / \ / \ / \ ',/, &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/, &
    '   \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ ',/)      
       
-      
-      END SUBROUTINE print_header
+END SUBROUTINE print_header
