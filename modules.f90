@@ -76,7 +76,7 @@ module settings
  
  integer :: ncontours_nomulti,npix_nomulti,npixvec_nomulti
  integer :: ivecplot_nomulti,icolours
- integer :: ipapersize,menuitems
+ integer :: ipapersize
  
  real :: scalemax,zoom
  real, dimension(3) :: xminoffset_track, xmaxoffset_track

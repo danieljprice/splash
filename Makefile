@@ -56,7 +56,7 @@ SOURCES= modules.f90 prompting.f90 \
 	 exact_sedov.f90 exact_wave.f90 \
 	 exact_toystar.f90 exact_toystar2D.f90 \
 	 exact_toystar_ACplane.f exact_mhdshock.f90 \
-	 integratedkernel.f90 \
+	 get_data.f90 integratedkernel.f90 \
 	 interactive_part.f90 \
 	 interpolate1D.f90 \
          interpolate2D.f90 interpolate2D_xsec.f90 \
@@ -65,7 +65,7 @@ SOURCES= modules.f90 prompting.f90 \
 	 int_from_string.f90 \
 	 legend.f \
 	 limits_read.f90 limits_save.f90 limits_set.f90 \
-	 options.f90 options_exact.f90 options_limits.f90 \
+	 menu.f90 options_exact.f90 options_limits.f90 \
 	 options_page.f90 options_particleplots.f90 \
 	 options_powerspec.f90 options_render.f90 \
 	 plot_average.f plot_kernel_gr.f90 \
@@ -73,7 +73,6 @@ SOURCES= modules.f90 prompting.f90 \
 	 powerspectrum_fourier1D.f90 \
 	 powerspectrum_lomb1D.f90 \
 	 print_header.f90\
-	 print_menu.f90 \
          render.f90 setpage.f90 \
 	 transform.f90 vectorplot.f90 \
 

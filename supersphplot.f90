@@ -23,6 +23,7 @@ program supersphplot
 !     exact_sedov        : exact solution for sedov blast wave
 !     exact_swave        : exact solution for a linear sound wave
 !     exact_toystar      : exact solution for the toy star problem
+!     get_data           : wrapper for main data read
 !     interactive_part   : interactive utilities for particle plots
 !     interpolate1D	 : interpolation of 1D sph data to 1D grid using sph kernel
 !     interpolate2D	 : interpolation of 2D sph data to 2D grid using sph kernel     
@@ -36,8 +37,8 @@ program supersphplot
 !     limits_save              : saves plot limits to file
 !     limits_set               : calculates plot limits
 !     main               : main plotting loop
+!     menu               : main menu
 !     modules		 : contains all shared (global) variables
-!     options 	         : sets plot options given in menu
 !     options_exact	 : sets options and params for exact solution calculation/plotting
 !     options_limits     : sets options relating to plot limits
 !     options_page       : sets options relating to page setup
@@ -49,7 +50,6 @@ program supersphplot
 !     plot_powerspectrum : calls powerspectrum and plots it
 !     powerspectrum_fourier : calculates power spectrum of 1D data on ordered pts
 !     powerspectrum_lomb : calculates power spectrum of 1D data on disordered pts
-!     print_menu	 : prints menu
 !     read_data_dansph   : reads data from my format of data files
 !     read_data_mrbsph   : reads data from matthew bate's format of data files
 !     render	 	 : takes array of pixels and plots render map/contours etc
@@ -67,6 +67,7 @@ program supersphplot
 !     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
 !
 !      01/06/04 - saves/reads limits to/from limits file
+!                 also revamped menu - uses characters for options
 !      31/05/04 - particle tracking limits, reads from Matthew's code       
 !      17/05/04 - reads multiple files consecutively, error catches in interpolate 
 !                 also tiling of plots using danpgtile
@@ -130,10 +131,10 @@ program supersphplot
 !----------------------------------------------------------------------------------
   use filenames
   use labels
-  use params ! for menuitems
   use settings
   implicit none
-  integer :: ipicky,ipickx,irender,i,iprev
+  logical :: iquit
+  integer :: i,iprev
   !
   !--print header
   !
@@ -147,7 +148,7 @@ program supersphplot
   !--initialise variables
   !      
   rootname = 'blank'
-  ishowopts = .true.  ! do/don't initially display menu options
+  ishowopts = .false.  ! do/don't initially display menu options
   ivegotdata = .false.
   
   ! ---------------------------------------------
@@ -178,9 +179,9 @@ program supersphplot
 
   if (rootname(1)(1:1).ne.' ') then
      ihavereadfilename = .true.
-     call options(numplot+3)
+     call get_data
   else
-     call options(numplot+3)
+     call get_data
   endif
   !------------------------------------------------------------
   ! setup kernel table for fast column density plots in 3D
@@ -189,12 +190,7 @@ program supersphplot
   ! ----------------------------------------------------------------
   ! menu - loop back to here once finished plotting/setting options
   !
-  ipicky = 2    ! these are set on first call to print_menu
-  ipickx = 1
-  irender = 0
-  menuitems = 0
-
-  menuloop: do while (ipicky.gt.0 .and. ipicky.le.numplot+menuitems)
+  menuloop: do while (.not.iquit)
      !
      !--numplot is the total number of data columns (read + calculated)
      !   not including the particle co-ordinates
@@ -224,37 +220,12 @@ program supersphplot
         ndataplots = 0
         ncalc = 0
      endif
+     imulti = .false.
      
      !----------------------------------------------------------------------
      !  print menu
-     !     
-     call print_menu(ipicky,ipickx,irender)
-     
-     !-----------------------------------------------------------------------
-     ! set plot options from menu
-     !      
-     imulti = .false.
-     
-     if ((ipicky.gt.numplot+1).and.(ipicky.le.numplot+menuitems)) then
-        !-------------------------------------------------------
-        !     adjust plot settings via menu options
-        !-------------------------------------------------------
-        
-        call options(ipicky)
-     elseif (.not.ivegotdata) then     ! do plot 
-        !-------------------------------------------------------
-        !     prompt for data if there is none
-        !-------------------------------------------------------
-        print*,' no data '
-        ihavereadfilename = .false.
-        ipicky = numplot+3
-        call options(ipicky)
-     else
-        !------------------------------------------------------
-        !     or else plot data
-        !-------------------------------------------------------
-        call main(ipicky,ipickx,irender)
-     endif      ! if plot or not
+     !
+     call menu(iquit)
      
   enddo menuloop
                 
