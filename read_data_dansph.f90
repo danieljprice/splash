@@ -43,7 +43,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(LEN=2) :: fileno
   integer :: i,j,k,ifile,icol,ipos,ierr
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
-  integer :: npartin,ntotin
+  integer :: npartin,ntotin,ncolstep
   logical :: iexist,reallocate
   real(kind=8) :: timein,gammain,hfactin
   real(kind=8), dimension(:), allocatable :: dattemp
@@ -127,7 +127,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !--read header line for this timestep
      !
      read(11,iostat=ierr,end=67) timein,npart(i),ntot(i),gammain, &
-          hfactin,ndim,ndimV,ncolumns
+          hfactin,ndim,ndimV,ncolstep
      if (ierr /= 0) then
         print*,'*** error reading timestep header ***'
         close(11)
@@ -143,20 +143,33 @@ subroutine read_data(rootname,indexstart,nstepsread)
      npartoftype(1,i) = npart(i)
      npartoftype(2,i) = ntot(i)-npart(i)
      print*,'reading time = ',time(i),npart(i),ntot(i),gamma(i), &
-          hfact,ndim,ndimV,ncolumns
-     if (ncolumns.ne.ncol_max) then
+          hfact,ndim,ndimV,ncolstep
+     !
+     !--check for errors in timestep header
+     !
+     if (ndim.gt.3 .or. ndimV.gt.3) then
+        print*,'*** error in header: ndim or ndimV in file> 3'
+        nstepsread = nstepsread - 1
+        close(11)
+        return
+     endif
+     if (ndim.gt.ndim_max) ndim_max = ndim
+     if (ndimV.gt.ndimV_max) ndimV_max = ndimV
+
+     if (ncolstep.ne.ncol_max) then
         print*,'*** Warning number of columns not equal for timesteps'
+        ncolumns = ncolstep
         print*,'ncolumns = ',ncolumns,ncol_max
      endif
-     if (ncolumns.gt.ncol_max) then
+     if (ncolstep.gt.ncol_max) then
         reallocate = .true.
+        ncolumns = ncolstep
         ncol_max = ncolumns
+     else
+        ncolumns = ncolstep
      endif
 
-     if (ndim.gt.ndim_max) ndim_max = ndim
-     if (ndim_max.gt.3) stop 'error: ndim in file> 3'
-     if (ndimV.gt.ndimV_max) ndimV_max = ndimV  
-     if (ndimV_max.gt.3) stop 'error: ndimV in file> 3' 
+     
      nghost(i) = ntot(i) - npart(i)
      if (ntot(i).gt.maxpart) then
         !print*, 'ntot greater than array limits!!'    
@@ -281,7 +294,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   goto 68
 
 66 continue
-nstepsread = i - indexstart                ! timestep there but data incomplete
+   print*,'*** WARNING: incomplete data on last timestep'
+nstepsread = i - indexstart + 1                ! timestep there but data incomplete
 ntot(i) = j-1
 nghost(i) = ntot(i) - npart(i)
 goto 68
