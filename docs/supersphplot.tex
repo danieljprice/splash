@@ -758,6 +758,19 @@ length in the data array). It is also preferable to indicate those quantities
 from which the new quantity is calculated, so that no error will occur if they
 are not present.
 
+\subsection{What about boundaries? How does the rendering work near a boundary?}
+ Usual practise in SPH simulations near boundaries is
+to introduce ghost particles which mirror the real particles. SUPERSPHPLOT does not
+explicitly setup any ghost particles but will use any that are present in the data
+(specified using \verb+labeltype = 'ghost'+ in the \verb+read_data+ subroutine and
+then specifying the number of particles of this type). Ghost particles contribute
+to the rendering calculations but not to the determination of the plot limits. Note,
+however, that SUPERSPHPLOT does \emph{not} set up ghost particles itself, as this may depend
+on the type and location of the boundary. Thus if your simulation uses ghost particle
+boundaries, the ghost particles should be dumped alongside the gas particles in the
+output file so that their positions, masses, densities and smoothing lengths can be
+read into SUPERSPHPLOT and used to render the image appropriately.
+
 \subsection{Use special characters in the plot labels?}
  Several of the examples shown in this manual use special characters (such as
 the $\int$ character) in the plot labels. The PGPLOT user guide explains how to do
@@ -850,6 +863,7 @@ although check that this email address is current because I am still a postdoc!
 Here is a partial to do list or things which currently conflict:
 \begin{itemize}
 \item rotation settings override limits transformations on co-ordinate plots
+\item exact solutions cannot be transformed yet
 \item Does not yet handle non-cartesian input data
 \end{itemize}
 

@@ -1,11 +1,36 @@
 !
-!--rotates the particles around the z (and y) axes in 2 (and 3) dimensions
+! This module contains all the routines for rotating the particles
+! and plotting the rotated axes
 !
-!  arguments:
-!       angles(ndim-1) : azimuthal and (in 3D) tilt angle in radians
-!       xin(ndim)      : input co-ordinates
-!       xout(ndim)     : output (rotated) co-ordinates
-!       xorigin(ndim)  : input co-ordinates of the origin
+module rotation
+ implicit none
+!
+!--2D rotation (about z axis)
+!
+contains
+
+subroutine rotate2D(xcoords,anglez)
+  implicit none
+  real, intent(inout) :: xcoords(2)
+  real, intent(in) :: anglez
+  real :: x, y, r, phi
+  
+  x = xcoords(1)
+  y = xcoords(2)
+!
+!--rotate about z
+!  
+  r = sqrt(x**2 + y**2)
+  phi = ATAN2(y,x)
+  phi = phi - anglez
+  xcoords(1) = r*COS(phi)
+  xcoords(2) = r*SIN(phi)
+  
+  return 
+end subroutine rotate2D
+
+!
+!--3D rotation (about x, y and z axes)
 !
 subroutine rotate3D(xcoords,anglex,angley,anglez)
   implicit none
@@ -48,38 +73,77 @@ subroutine rotate3D(xcoords,anglex,angley,anglez)
   return
 end subroutine rotate3D
 
-subroutine rotate(angles,xin,xout,xorigin,ndim)
+!
+!--plots rotated plot axes
+!
+subroutine rotate_axes2D(xmin,xmax,anglez,ioption)
   implicit none
-  integer, intent(in) :: ndim
-  real, intent(in), dimension(ndim-1) :: angles
-  real, intent(in), dimension(ndim) :: xin,xorigin
-  real, intent(out), dimension(ndim) :: xout
-  real, dimension(ndim) :: xintemp,xtemp,xouttemp
+  integer, intent(in) :: ioption
+  real, intent(in), dimension(2) :: xmin,xmax
+  real, intent(in) :: anglez
+  integer :: i
+  real, dimension(2,4) :: xpt
+  print*,'plotting rotated axes...'
 
-  if (ndim.lt.2 .or. ndim.gt.3) then
-     print*,'error: rotate: ndim < 2 or > 3'
-     return
-  endif
-  !
-  !--adjust x-y positions according to location of rotation axis
-  !
-  xintemp(:) = xin(:) - xorigin(:)
-  !
-  !--convert to cylindrical polar co-ordinates
-  !
-  call coord_transform(xintemp,ndim,1,xtemp,ndim,2)
-  !
-  !--increase rotation and tilt angles appropriately
-  !
-  xtemp(2) = xtemp(2) - angles(1)
-  !
-  !--now convert back to cartesians
-  !
-  call coord_transform(xtemp,ndim,2,xout,ndim,1)
-  !
-  !--adjust positions back from origin
-  !
-  xout(:) = xout(:) + xorigin(:)
+!--front face (pts 1->4)
+  xpt(:,1) = xmin(:)  ! xmin, ymin
 
+  xpt(1,2) = xmin(1)  ! xmin
+  xpt(2,2) = xmax(2)  ! ymax
+
+  xpt(1,3) = xmax(1)  ! xmax
+  xpt(2,3) = xmax(2)  ! ymax
+
+  xpt(1,4) = xmax(1)  ! xmax
+  xpt(2,4) = xmin(2)  ! ymin
+!
+!--now rotate each of these coordinates
+!
+  do i=1,4
+     call rotate2D(xpt(:,i),anglez)
+  enddo
+!
+!--now plot boxes appropriately using points
+!
+  call pgsfs(2)
+  call pgpoly(4,xpt(1,1:4),xpt(2,1:4))
+  
   return
-end subroutine rotate
+end subroutine rotate_axes2D
+
+subroutine rotate_axes3D(xmin,xmax,anglez,angley,anglex,ioption)
+  implicit none
+  integer, intent(in) :: ioption
+  real, intent(in), dimension(3) :: xmin,xmax
+  real, intent(in) :: anglez, angley, anglex
+  integer :: i
+  real, dimension(3,8) :: xpt
+  print*,'plotting rotated axes...'
+
+!--front face (pts 1->4)
+  xpt(:,1) = xmin(:)  ! xmin, ymin
+
+  xpt(1,2) = xmin(1)  ! xmin
+  xpt(2,2) = xmax(2)  ! ymax
+
+  xpt(1,3) = xmax(1)  ! xmax
+  xpt(2,3) = xmax(2)  ! ymax
+
+  xpt(1,4) = xmax(1)  ! xmax
+  xpt(2,4) = xmin(2)  ! ymin
+!
+!--now rotate each of these coordinates
+!
+  do i=1,4
+     call rotate2D(xpt(:,i),anglez)
+  enddo
+!
+!--now plot boxes appropriately using points
+!
+  call pgsfs(2)
+  call pgpoly(4,xpt(1,1:4),xpt(2,1:4))
+  
+  return
+end subroutine rotate_axes3D
+
+end module rotation

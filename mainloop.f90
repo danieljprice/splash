@@ -10,6 +10,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use multiplot
   use particle_data
   use prompting
+  use rotation
   use settings_data
   use settings_limits
   use settings_part
@@ -381,16 +382,20 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                !--convert angles to radians
                !
                angleradz = angletempz*pi/180.
-               anglerady = angletempy*pi/180.
-               angleradx = angletempx*pi/180.
                print*,'rotating particles about z by ',angletempz
                if (ndim.eq.3) then
+                  anglerady = angletempy*pi/180.
+                  angleradx = angletempx*pi/180.
                   print*,'rotating particles about y by ',angletempy
                   print*,'rotating particles about x by ',angletempx
                endif
                do j=1,ntot(i)
-                  xcoords(:) = dat(j,ix(1:ndim),i) - xorigin(1:ndim)
-                  call rotate3D(xcoords(:),angleradx,anglerady,angleradz)
+                  xcoords(1:ndim) = dat(j,ix(1:ndim),i) - xorigin(1:ndim)
+                  if (ndim.eq.2) then
+                     call rotate2D(xcoords(:),angleradz)
+                  elseif (ndim.eq.3) then
+                     call rotate3D(xcoords(:),angleradx,anglerady,angleradz)
+                  endif
                   xplot(j) = xcoords(iplotx) + xorigin(iplotx)
                   yplot(j) = xcoords(iploty) + xorigin(iploty)
                enddo
@@ -614,7 +619,11 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               endif
               
               if (irotate) then
-                 call rotate_axes(angles,lim(ix(:),1),lim(ix(:),2),xorigin,ndim)
+                 if (ndim.eq.3) then
+                    call rotate_axes3D(lim(ix(:),1),lim(ix(:),2),anglez,angley,anglex,1)
+                 elseif (ndim.eq.2) then
+                    call rotate_axes2D(lim(ix(1:ndim),1),lim(ix(1:ndim),2),anglez,1)
+                 endif
               endif
 
               !------------------------------
