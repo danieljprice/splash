@@ -10,7 +10,7 @@
 ## Compiler options
 F90C =  ifc
 F90FLAGS =  -O -WB ##-C
-LDFLAGS =  -lpgplot -L/usr/X11R6/lib -lX11 -lg2c -lpng -Vaxlib
+LDFLAGS =  -lpgplot -L/usr/X11R6/lib -lX11 -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c -lpng -Vaxlib
 
 # Fortran flags same as F90
 FC = $(F90C)

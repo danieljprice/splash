@@ -63,7 +63,7 @@ subroutine read_data(rootname,istart,ifinish)
      if (len_trim(rootname).eq.4) then
         write(fileno,"(i1,i1,i1)") ifile/100,mod(ifile,100)/10,mod(ifile,10)
         dumpfile = rootname(1:4)//fileno 
-     elseif (len_trim(rootname).eq.5) then
+	elseif (len_trim(rootname).eq.5) then
         write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
         dumpfile = rootname(1:5)//trim(fileno)     
      endif
@@ -115,7 +115,7 @@ subroutine read_data(rootname,istart,ifinish)
      !
      read(15,end=55) udisti,umassi,utimei,umagfdi,nprint 
      if (.not.allocated(dat) .or. nprint.gt.ntotin) then
-        ntotin = max(ntotin,1.1*nprint)
+        ntotin = max(ntotin,INT(1.1*nprint))
         call alloc(ntotin,nstep_max,ncol_max)
      endif
      rewind(15)
@@ -139,76 +139,76 @@ subroutine read_data(rootname,istart,ifinish)
 !--now read the timestep data in the dumpfile
 !
         read(15,end=55,err=56) udisti, umassi, utimei, umagfdi,  &
-          nprint, nghosti, n1, n2, timei, gammai, rhozero, RK2, &
-	  (dattemp(i,7), i=1, nprint), (dattemp(i,8), i=1,nprint), &
-          escap, tkin, tgrav, tterm, tmag, &
-          (dattemp(i,1), i=1, nprint), (dattemp(i,2), i=1, nprint), &
-          (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
-          (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
-          (dattemp(i,9), i=1, nprint), (dattemp(i,10), i=1, nprint), &
-          (dattemp(i,11), i=1, nprint), (dattemp(i,12), i=1, nprint), &  
-          (dattemp(i,13), i=1, nprint), (dattemp(i,14), i=1, nprint), &
-          (dattemp(i,15), i=1, nprint), (dattemp(i,16), i=1, nprint), &
-          (dattemp(i,17), i=1, nprint), (dattemp(i,18), i=1, nprint), &
-          (dattemp(i,19), i=1, nprint)
+	     nprint, nghosti, n1, n2, timei, gammai, rhozero, RK2, &
+	     (dattemp(i,7), i=1, nprint), (dattemp(i,8), i=1,nprint), &
+	     escap, tkin, tgrav, tterm, tmag, &
+	     (dattemp(i,1), i=1, nprint), (dattemp(i,2), i=1, nprint), &
+	     (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
+	     (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
+	     (dattemp(i,9), i=1, nprint), (dattemp(i,10), i=1, nprint), &
+	     (dattemp(i,11), i=1, nprint), (dattemp(i,12), i=1, nprint), &  
+	     (dattemp(i,13), i=1, nprint), (dattemp(i,14), i=1, nprint), &
+	     (dattemp(i,15), i=1, nprint), (dattemp(i,16), i=1, nprint), &
+	     (dattemp(i,17), i=1, nprint), (dattemp(i,18), i=1, nprint), &
+	     (dattemp(i,19), i=1, nprint)
 !
 !--convert to single precision
 !     
-          print *,'step ',j,': ntotal = ',nprint
-	  print "(a)",' converting to single precision... '
-          dat(1:nprint,1:ncol_max,j) = real(dattemp(1:nprint,1:ncol_max))
-          deallocate(dattemp)
+	print *,'step ',j,': ntotal = ',nprint
+	print "(a)",' converting to single precision... '
+	dat(1:nprint,1:ncol_max,j) = real(dattemp(1:nprint,1:ncol_max))
+	deallocate(dattemp)
 
-	  ntot(j) = nprint
-	  nghost(j) = nghosti
-	  npart(j) = ntot(j) - nghost(j)
-	  npartoftype(1,j) = npart(j)
-	  npartoftype(2,j) = nghost(j)
+	ntot(j) = nprint
+	nghost(j) = nghosti
+	npart(j) = ntot(j) - nghost(j)
+	npartoftype(1,j) = npart(j)
+	npartoftype(2,j) = nghost(j)
 	  
-	  gamma(j) = real(gammai)
-	  time(j) = real(timei)
-          if (ntotin.eq.130000) ntotin = nprint
-          j = j + 1
+	gamma(j) = real(gammai)
+	time(j) = real(timei)
+	if (ntotin.eq.130000) ntotin = nprint
+	j = j + 1
 
      enddo over_steps_in_file
 
-55   continue
+55 continue
      !
      !--reached end of file
      !
-     ifinish = j-1
-     print*,'ifinish = ',ifinish
+  ifinish = j-1
+  print*,'ifinish = ',ifinish
 
-     close(15)
+  close(15)
 
-     print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nghost=',ntot(j-1)-npart(j-1)
+  print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nghost=',ntot(j-1)-npart(j-1)
 
      !
      !--if just the rootname has been input, 
      !  set next filename and see if it exists
      !
-     ifile = ifile + 1
-     if (len_trim(rootname).eq.4) then
-        write(fileno,"(i1,i1,i1)") ifile/100,mod(ifile,100)/10,mod(ifile,10)
-        dumpfile = rootname(1:4)//fileno 
-        inquire(file=dumpfile,exist=iexist)
+  ifile = ifile + 1
+  if (len_trim(rootname).eq.4) then
+     write(fileno,"(i1,i1,i1)") ifile/100,mod(ifile,100)/10,mod(ifile,10)
+     dumpfile = rootname(1:4)//fileno 
+     inquire(file=dumpfile,exist=iexist)
      elseif (len_trim(rootname).eq.5) then
-        write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
-        dumpfile = rootname(1:5)//trim(fileno)     
-        inquire(file=dumpfile,exist=iexist)
-     else
-        iexist = .false. ! exit loop
-     endif     
-  enddo
+     write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
+     dumpfile = rootname(1:5)//trim(fileno)     
+     inquire(file=dumpfile,exist=iexist)
+  else
+     iexist = .false. ! exit loop
+  endif
+enddo
    
-  ivegotdata = .true.
-  return
+ivegotdata = .true.
+return
 !
 !--error conditions
 !
 56 continue
-  print*,'error reading timestep'
-  return
+print*,'error reading timestep'
+return
                     
 end subroutine read_data
 
