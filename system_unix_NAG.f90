@@ -6,13 +6,13 @@
 ! and in here the actual call to the system is performed
 !
 module system_commands
+ use f90_unix  ! uncomment this for NAG f95 compiler
  implicit none
 
 contains
  
  subroutine get_number_arguments(nargs)
     integer, intent(out) :: nargs
-    integer :: iargc
     
     nargs = iargc()
         
