@@ -107,9 +107,9 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,titlex,  &
   if (axis.ge.0) then
      if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis)) then
         call pgmtxt('l',3.0,0.5,1.0,labely)
-        call pglabel(labelx,' ',trim(titlex))
+        call pglabel(trim(labelx),' ',trim(titlex))
      else
-        call pgmtxt('l',3.0,0.5,1.0,labely)
+        call pgmtxt('l',3.0,0.5,1.0,trim(labely))
         !	     call pglabel(' ',labely,trim(titlex))
      endif
   endif

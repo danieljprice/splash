@@ -121,6 +121,7 @@ subroutine plot_powerspectrum(npts,nfreq,xlength,x,dat,idisordered,itrans)
     if (freq(ifreq).gt.zero) then   ! in case there has been an error in powerspec
        if (itrans.eq.1) then
           if (theoretical_power(freq(ifreq)).gt.zero) then
+	     !!print*,theoretical_power(freq(ifreq))
              power(ifreq) = log10(theoretical_power(freq(ifreq)))
           endif  
        else
