@@ -94,7 +94,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--allocate memory initially
   !
-  nstep_max = max(nstep_max,indexstart,2)
+  nstep_max = max(nstep_max,indexstart,4)
 
   j = indexstart
   nstepsread = 0
@@ -137,16 +137,25 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--allocate a temporary array for double precision variables
 !
         if (allocated(dattemp)) deallocate(dattemp)
-        allocate(dattemp(npart_max,ncolumns))
+        allocate(dattemp(npart_max,ncolumns),stat=ierr)
+        if (ierr /= 0) print*,'not enough memory in read_data'
 !
 !--allocate a dummy arrays for data I want to throw away
 !
         if (allocated(dummy)) deallocate(dummy)
-        allocate(dummy(npart_max))
+        print*,'here1',npart_max,ierr
+        allocate(dummy(npart_max),stat=ierr)
+        print*,'herea',ierr
+        if (ierr /= 0) print*,'not enough memory in read_data'
+
         if (allocated(isteps)) deallocate(isteps)
-        allocate(isteps(npart_max))
+        allocate(isteps(npart_max),stat=ierr)
+        if (ierr /= 0) print*,'not enough memory in read_data'
+
         if (allocated(iphase)) deallocate(iphase)
-        allocate(iphase(npart_max))
+        allocate(iphase(npart_max),stat=ierr)
+        if (ierr /= 0) print*,'not enough memory in read_data'
+
 !
 !--now read the timestep data in the dumpfile
 !
@@ -180,10 +189,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
         dat(1:nprint,1:ncolumns,j) = real(dattemp(1:nprint,1:ncolumns))
 
         iam(1:nprint,j) = iphase(1:nprint)
-        deallocate(dattemp)
-        deallocate(dummy)
-        deallocate(isteps)
-        deallocate(iphase)
+        if (allocated(dattemp)) deallocate(dattemp)
+        if (allocated(dummy)) deallocate(dummy)
+        if (allocated(isteps)) deallocate(isteps)
+        if (allocated(iphase)) deallocate(iphase)
 
         ntot(j) = nprint
         npartoftype(1,j) = nprint-nghosti
