@@ -122,30 +122,30 @@ subroutine read_data(rootname,istart,nfilesteps)
 !--allocate a temporary array for double precision variables
 !
         if (allocated(dattemp)) deallocate(dattemp)
-	allocate(dattemp(ncol_max,ntotin))
+	allocate(dattemp(ntotin,ncol_max))
 !
 !--now read the timestep data in the dumpfile
 !
 
         read(15,end=55) udisti, umassi, utimei, umagfdi,  &
           nprint, nghosti, n1, n2, timei, gammai, rhozero, RK2, &
-	  (dattemp(7,i), i=1, nprint), (dattemp(8,i), i=1,nprint), &
+	  (dattemp(i,7), i=1, nprint), (dattemp(i,8), i=1,nprint), &
           escap, tkin, tgrav, tterm, tmag, &
-          (dattemp(1,i), i=1, nprint), (dattemp(2,i), i=1, nprint), &
-          (dattemp(3,i), i=1, nprint), (dattemp(4,i), i=1, nprint), &
-          (dattemp(5,i), i=1, nprint), (dattemp(6,i), i=1, nprint), &
-          (dattemp(9,i), i=1, nprint), (dattemp(10,i), i=1, nprint), &
-          (dattemp(11,i), i=1, nprint), (dattemp(12,i), i=1, nprint), &  
-          (dattemp(13,i), i=1, nprint), (dattemp(14,i), i=1, nprint), &
-          (dattemp(15,i), i=1, nprint), (dattemp(16,i), i=1, nprint), &
-          (dattemp(17,i), i=1, nprint), (dattemp(18,i), i=1, nprint), &
-          (dattemp(19,i), i=1, nprint)
+          (dattemp(i,1), i=1, nprint), (dattemp(i,2), i=1, nprint), &
+          (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
+          (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
+          (dattemp(i,9), i=1, nprint), (dattemp(i,10), i=1, nprint), &
+          (dattemp(i,11), i=1, nprint), (dattemp(i,12), i=1, nprint), &  
+          (dattemp(i,13), i=1, nprint), (dattemp(i,14), i=1, nprint), &
+          (dattemp(i,15), i=1, nprint), (dattemp(i,16), i=1, nprint), &
+          (dattemp(i,17), i=1, nprint), (dattemp(i,18), i=1, nprint), &
+          (dattemp(i,19), i=1, nprint)
 !
 !--convert to single precision
 !     
           print*,'converting to single precision ',ncol_max
-	  print*,'x,y(1) = ',dattemp(1,1),dattemp(2,1)
-          dat(1:ncol_max,1:nprint,j) = real(dattemp(1:ncol_max,1:nprint))
+	  print*,'x,y(1) = ',dattemp(1,1),dattemp(1,2)
+          dat(1:nprint,1:ncol_max,j) = real(dattemp(1:nprint,1:ncol_max))
           deallocate(dattemp)
 
 	  ntot(j) = nprint

@@ -143,7 +143,7 @@ subroutine read_data(rootname,istart,nfilesteps)
   
      if (ntot(i).gt.0) then
 
-        read (11,*, end=66,ERR=77) (dat(1:ncolumns,j,i),j=1,ntot(i))
+        read (11,*, end=66,ERR=77) (dat(j,1:ncolumns,i),j=1,ntot(i))
 
      else
         ntot(i) = 1

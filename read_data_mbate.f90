@@ -146,7 +146,7 @@ subroutine read_data(rootname,istart,nfilesteps)
      !--read data from QG file (gas particles)
      !
      open(unit=11,file=trim(filename(i)),status='old',form='formatted')
-        read (11,*, end=66, ERR=77) (dat(1:ncolumns,j,i),iam(j,i),j=1,maxpart)
+        read (11,*, end=66, ERR=77) (dat(j,1:ncolumns,i),iam(j,i),j=1,maxpart)
 66      continue
   
         ntot(i) = j-1
@@ -167,7 +167,7 @@ subroutine read_data(rootname,istart,nfilesteps)
      if (iexist) then
 	print*,'reading sink file ',sinkfile(i)
 	open(unit=12,file=sinkfile(i),status='old',form='formatted')
-	read(12,*,end=68,ERR=67) (dat(1:nsinkcolumns,j,i),j=ntot(i)+1,maxpart)
+	read(12,*,end=68,ERR=67) (dat(j,1:nsinkcolumns,i),j=ntot(i)+1,maxpart)
 67      continue
         print*,' Error reading sinkfile - no sinks read'	    
 68      continue	    
