@@ -34,6 +34,9 @@ subroutine defaults_set
   interactive = .false.
   animate = .false.
   tile = .true.
+  itrackpart = 0
+  xminoffset_track = 0.5
+  xmaxoffset_track = 0.5
 
   xsec_nomulti = .false.		! take cross section of data / particles
   flythru = .false.		! take series of cross sections through data

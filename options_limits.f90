@@ -6,6 +6,7 @@ subroutine options_limits
  use multiplot
  use prompting
  use particle_data
+ use labels
  implicit none
  integer :: iaction,ipick,i
  real :: diff, mid, temp
@@ -15,16 +16,17 @@ subroutine options_limits
  
  iaction = 0
  if (iadapt) then
-    print 10,iadapt,scalemax
+    print 10,iadapt,itrackpart,scalemax
  else
-    print 10,iadapt,zoom
+    print 10,iadapt,itrackpart,zoom
  endif
 10 format(' 0) exit ',/, 		&
         ' 1) toggle adaptive/fixed limits  ( ',L1,' )   ',/,  &
-        ' 2) set manual limits ',/,     	              &
-        ' 3) zoom in/out                   ( ',f4.2,' ) ',/,  &
-        ' 4) apply transformations (log10,1/x) ')
- call prompt('enter option ',iaction,0,4)
+        ' 2) set manual limits ',/, &
+	' 3) xy limits track particle      ( ',i8,' )   ',/,  &    	              &
+        ' 4) zoom in/out                   ( ',f4.2,' ) ',/,  &
+        ' 5) apply transformations (log10,1/x) ')
+ call prompt('enter option ',iaction,0,5)
 !
 !--limits
 !
@@ -49,6 +51,14 @@ subroutine options_limits
     return
 !------------------------------------------------------------------------
  case(3)
+    call prompt('Enter particle to track: ',itrackpart,0)
+    print*,'tracking particle ',itrackpart
+    do i=1,ndim
+       call prompt('Enter offset for '//label(ix(i))//'min :',xminoffset_track(i)
+       call prompt('Enter offset for '//label(ix(i))//'max :',xmaxoffset_track(i)
+    enddo
+!------------------------------------------------------------------------
+ case(4)
     if (.not.iadapt) then
        call prompt('Enter zoom factor for fixed limits',zoom,0.0)
        do i=1,numplot
@@ -61,7 +71,7 @@ subroutine options_limits
        call prompt('Enter scale factor (adaptive limits)',scalemax,0.0)
     endif
 !------------------------------------------------------------------------
-  case(4)
+  case(5)
      ipick = 1
      do while (ipick.gt.0 .and. ipick.le.numplot)
         ipick = 0

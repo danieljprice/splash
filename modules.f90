@@ -65,7 +65,7 @@ module settings
  integer :: irenderplot
  integer :: ncolours,nstart,n_end,nfreq
  integer :: icoords,iaxis
- integer :: ncircpart
+ integer :: ncircpart, itrackpart
  integer, dimension(10) :: icircpart
  
  integer :: ncontours_nomulti,npix_nomulti,npixvec_nomulti
@@ -73,6 +73,7 @@ module settings
  integer :: ipapersize,menuitems
  
  real :: scalemax,zoom
+ real, dimension(3) :: xminoffset_track, xmaxoffset_track
  real :: xsecpos_nomulti
  real :: papersizex,aspectratio
 !--plot options

@@ -29,7 +29,7 @@ subroutine main(ipicky,ipickx,irender)
   character(len=8) :: string     ! used in pgplot calls
   real, dimension(maxpart) :: xplot,yplot
   real, dimension(:), allocatable :: datpix1D, xgrid
-  real, dimension(:,:), allocatable :: datpix
+  real, dimension(:,:), allocatable :: datpix,vecpixx,vecpixy
   real, dimension(:,:,:), allocatable :: datpix3D
   real :: xmin,xmax,ymin,ymax,zmin,zmax,ymean
   real :: vecmax,rendermin,rendermax
@@ -239,30 +239,28 @@ subroutine main(ipicky,ipickx,irender)
         !--------------------------------------------------------------
         !  copy from main dat array into xplot, yplot 
         !  apply transformations (log, 1/x, etc) if appropriate
+	!  also set plot limits
         !--------------------------------------------------------------
-        if (iploty.le.numplot-nextra .and. iplotx.le.numplot-nextra) then
+        if (iploty.le.ndataplots .and. iplotx.le.ndataplots) then
            call transform(dat(iplotx,:,i),xplot,itrans(iplotx),maxpart)
            call transform(dat(iploty,:,i),yplot,itrans(iploty),maxpart)
            !--set axis labels, applying transformation if appropriate
            labelx = transform_label(label(iplotx),itrans(iplotx))
            labely = transform_label(label(iploty),itrans(iploty))
            !--set x,y plot limits, applying transformation if appropriate
-           call transform_limits(lim(iplotx,1),lim(iplotx,2),  &
-                xmin,xmax,itrans(iplotx))
-           call transform_limits(lim(iploty,1),lim(iploty,2),  &
-                ymin,ymax,itrans(iploty))
+           call transform_limits(lim(iplotx,1),lim(iplotx,2),xmin,xmax,itrans(iplotx))
+           call transform_limits(lim(iploty,1),lim(iploty,2),ymin,ymax,itrans(iploty))
 
            !--write username, date on plot
            !         if (nacross.le.2.and.ndown.le.2) call pgiden
 
            !--adjust plot limits if adaptive plot limits set
-           if ((ipagechange.and.iadapt).and.(iplotx.le.ndataplots) &
-                .and.(iploty.le.ndataplots)) then
+           if (ipagechange .and. iadapt) then
               xmin = minval(xplot(1:ntotplot(i)))
               xmax = maxval(xplot(1:ntotplot(i)))*scalemax
               ymin = minval(yplot(1:ntotplot(i)))
               ymax = maxval(yplot(1:ntotplot(i)))*scalemax
-           endif
+	   endif
 
         endif
 
@@ -272,6 +270,13 @@ subroutine main(ipicky,ipickx,irender)
 
         if ((iploty.le.ndim).and.(iplotx.le.ndim)) then
 
+           !!-reset plot limits for particle tracking
+           if (itrackpart.gt.0 .and. itrackpart.le.ntotplot(i)) then
+	      xmin = xplot(itrackpart) - xminoffset_track(iplotx)
+	      xmax = xplot(itrackpart) + xmaxoffset_track(iplotx)
+	      ymin = yplot(itrackpart) - xminoffset_track(iploty)
+	      ymax = yplot(itrackpart) + xmaxoffset_track(iploty)
+	   endif
            !!--set rendering options equal to settings in multiplot	 
            if (imulti) then
               irenderplot = irendermulti(nyplot)      
