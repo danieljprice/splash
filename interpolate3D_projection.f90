@@ -39,6 +39,7 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
 
   integer :: i,j,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   integer :: index, index1
+  integer :: iprintnext, iprogress
   real :: hi,hi1,h2,radkern,qq,wab,rab,const
   real :: term,dx,dy,xpix,ypix
   real :: dxx,dwdx
@@ -54,8 +55,18 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
   endif
   !
   !--loop over particles
-  !      
+  !
+  iprintnext = 10
+  
   do i=1,npart
+     !
+     !--report on progress
+     !
+     iprogress = 100*i/npart
+     if (iprogress.ge.iprintnext) then
+        write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
+        iprintnext = iprintnext + 10
+     endif	
      !
      !--set kernel related quantities
      !
@@ -80,8 +91,8 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
 
      if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
      if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-     if (ipixmax.gt.npixx) ipixmax = npixx
-     if (jpixmax.gt.npixy) jpixmax = npixy
+     if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
+     if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
      !
      !--loop over pixels, adding the contribution from this particle
      !
