@@ -14,9 +14,9 @@ FFLAGS = -C -O4
 F90FLAGS = -C -O4
 LDFLAGS = -lpgplot -lX11 -lF77
 
-DANSPH = read_data_dansph.f render_smooth.f
-MRBSPH = read_data_mbate.f render_smooth.f
-PGXTAL = read_data_dansph.f render_smooth_pgxtal.f
+DANSPH = read_data_dansph.f 
+MRBSPH = read_data_mbate.f 
+PGXTAL = read_data_dansph.f
 
 SOURCES= modules.f90 prompting.f90  supersphplot.f \
          calc_quantities.f90 colour_demo.f danpgwedg.f \
@@ -35,7 +35,7 @@ SOURCES= modules.f90 prompting.f90  supersphplot.f \
 	 plot_average.f plot_powerspectrum.f90 \
 	 print_header.f90\
 	 print_menu.f read_defaults.f90 \
-         render_coarse.f render.f \
+         render_coarse.f render.f90 \
 	 setcolours.f set_defaults.f \
 	 transform.f write_defaults.f90
 
