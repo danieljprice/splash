@@ -97,6 +97,9 @@ srosph: $(OBJSROSPH)
 gadget: $(OBJGADGETSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_gadget $(OBJGADGETSPH)
 
+## sort out dependencies on modules
+defaults.o: exact.o
+
 ## other crap
 
 tar:

@@ -38,7 +38,7 @@ module exact
   !--sort these into a namelist for input/output
   !
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx, &
-       htstar,atstar,ctstar,sigma0,norder,rhosedov,esedov, &
+       htstar,atstar,ctstar,polyk,sigma0,norder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact, &
        iexactplotx,iexactploty
 
