@@ -63,6 +63,12 @@
       itrans(:) = 0		! no transformations (log10 etc)
       backgnd_vec_nomulti = .false. ! plot vector plot using black/white
       
+      isamexaxis = .true.	! these are overwritten later in program
+      irenderplot = 0		! this is just so it is set to something
+      labelcoord(1) = 'x'
+      labelcoord(2) = 'y'
+      labelcoord(3) = 'z'
+      
       lambda = 1.0	! sound wave exact solution : wavelenght
       delta = 0.005	! sound wave exact solution : amplitude
 

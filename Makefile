@@ -18,7 +18,8 @@ DANSPH = read_data_dansph.f
 MRBSPH = read_data_mbate.f 
 PGXTAL = read_data_dansph.f
 
-SOURCES= modules.f90 prompting.f90  supersphplot.f \
+SOURCES= modules.f90 prompting.f90 \
+	 supersphplot.f90 main.f90 \
          calc_quantities.f90 colour_demo.f danpgwedg.f \
 	 exact_rhoh.f90 \
 	 exact_sedov.f exact_swave.f exact_toystar.f \
