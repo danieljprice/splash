@@ -40,6 +40,9 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
         !--make sure we have data for this timestep
         !
         call get_nextstep(istep,ifile)
+        if (.not.iUseStepList) then
+           i = istep
+        endif
         if (istep.eq.-666) exit over_timesteps
      endif
      !
@@ -48,6 +51,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
      if (istep.lt.1) then
         print*,'reached first step: can''t go back'
         istep = 1
+        i = 1
      endif
      if (istep.lt.nstart) then
         print*,'warning: i < nstart'
@@ -116,11 +120,11 @@ subroutine get_nextstep(i,ifile)
  !  appropriate number of files to get to timestep requested
  !
  ifileprev = ifile
- print*,'request ',i,' from ',ifile
+ print*,'request step ',i,' from file #',ifile,' nstepsinfile= ',nstepsinfile(ifile)
  
  if (i.gt.nstepsinfile(ifile)) then
     if (nstepsinfile(ifile).ge.1) then
-       iskipfiles = (i-nstepsinfile(ifile))/nstepsinfile(ifile)
+       iskipfiles = (i-nstepsinfile(ifile)-1)/nstepsinfile(ifile)
     else
        print*,'*** error in timestepping: file contains zero timesteps'
        iskipfiles = 0
@@ -135,7 +139,7 @@ subroutine get_nextstep(i,ifile)
  elseif (i.lt.1) then
     ifile = ifile-1
     if (ifile.ge.1) then
-       iskipfiles = (i-1)/nstepsinfile(ifile)
+       iskipfiles = (i)/nstepsinfile(ifile)
        if (abs(iskipfiles).gt.0) print*,'skipping back ',abs(iskipfiles),' files'
        ifile = ifile + iskipfiles
        if (ifile.lt.1) then
@@ -160,9 +164,9 @@ subroutine get_nextstep(i,ifile)
  elseif (ifile.ne.ifileopen) then
     call get_data(ifile,.true.)
     if (i.gt.nstepsinfile(ifileprev)) then
-       i = MOD(i-nstepsinfile(ifileprev),nstepsinfile(ifileprev))
+       i = MOD(i-nstepsinfile(ifileprev)-1,nstepsinfile(ifileprev)) + 1
     elseif (i.lt.1) then
-       i = nstepsinfile(ifile) + MOD(i-1,nstepsinfile(ifileprev)) + 1
+       i = nstepsinfile(ifile) + MOD(i,nstepsinfile(ifileprev))
     endif
     if (i.ne.1) then
        print*,'starting at step ',i
