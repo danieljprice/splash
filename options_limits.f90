@@ -113,7 +113,7 @@ subroutine options_limits
      call read_limits(ierr)
   case(8)
      if (ivegotdata) then
-        call set_limits(nstart,n_end,1,numplot)
+        call set_limits(nstart,n_end,1,ndataplots)
      else
         print*,'no data with which to set limits!!'
      endif
