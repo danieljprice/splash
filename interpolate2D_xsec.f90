@@ -46,7 +46,9 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
   real :: gradient,yintercept,aa,bb,cc,determinant,det
   real :: xstart,xend,ystart,yend,rstart,rend
   real :: tol
-  logical :: xsame, ysame
+  logical :: xsame, ysame, debug
+  
+  debug = .false.
   !
   !--check for errors in input
   !
@@ -75,7 +77,10 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
   xlength = sqrt((x2-x1)**2 + (y2-y1)**2)
   pixwidth = xlength/real(npixx)
   xpixwidth = (x2 - x1)/real(npixx)
-
+  if (debug) then
+     print*,'length of line = ',xlength
+     print*,'pixel width = ',pixwidth, ' in x direction = ',xpixwidth
+  endif
   !
   !--now interpolate to the line of pixels
   !
@@ -108,14 +113,14 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
 
      aa = 1. + gradient**2
      bb = 2.*gradient*(yintercept - y(i)) - 2.*x(i)
-     cc = x(i)**2 + y(i)**2 - 2.*yintercept*y(i) * yintercept**2 &
+     cc = x(i)**2 + y(i)**2 - 2.*yintercept*y(i) + yintercept**2 &
           - radkern**2
      !
      !--work out whether there are any real solutions and find them
      !
      determinant = bb**2 - 4.*aa*cc
      if (determinant < 0) then
-        !    print*,' particle ',i,': does not contribute ',x(i),y(i) 
+        !!print*,' particle ',i,': does not contribute ',x(i),y(i) 
      else
         det = sqrt(determinant)
         xstart = (-bb - det)/(2.*aa)
@@ -142,6 +147,7 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
        	!
         !--loop over pixels, adding the contribution from this particle
         !
+        !if (debug) print*,' particle ',i,': ',ipixmin,ipixmax,xstart,x(i),xend 
         do ipix = ipixmin,ipixmax
 
            xpix = x1 + (ipix)*xpixwidth - 0.5*xpixwidth

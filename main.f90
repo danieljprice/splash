@@ -545,8 +545,9 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	      if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
 	      
 	      just = 1  ! x and y axis have same scale
-	      if (ndim.eq.2 .and. x_sec) just = 0 ! unless 1D xsec through 2D data
-	     
+	      ! unless 1D xsec through 2D data
+	      if (irenderplot.gt.ndim .and. ndim.eq.2 .and. x_sec) just = 0 
+	      
 	      if (tile_plots) then
 	         if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
                  call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
@@ -637,7 +638,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  !
                  !--if particle cross section, plot particles only in a defined coordinate range
                  !
-                 if (x_sec.and.iplotpart) then
+                 if (ndim.gt.2 .and. x_sec.and.iplotpart) then
                     do j=1,npart(i)
                        if ((dat(ixsec,j,i).lt.xsecmax) &
                             .and.(dat(ixsec,j,i).gt.xsecmin)) then
@@ -858,7 +859,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            enddo over_cross_sections
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-           ! not both coordinates
+           ! not both coordinates - these are just particle plots
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         elseif ((iploty.gt.ndim .or. iplotx.gt.ndim)  &
@@ -1262,7 +1263,7 @@ contains
     allocate (xgrid(ngridpts))
 
     do igrid = 1,ngridpts
-       xgrid(igrid) = xmin1D + igrid*dxgrid - 0.5*dxgrid
+       xgrid(igrid) = xmin1D + igrid*dxgrid1D - 0.5*dxgrid1D
     enddo
 
   end subroutine set_grid1D
