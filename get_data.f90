@@ -43,13 +43,14 @@ subroutine get_data(ireadfile)
      do i=1,nfiles
         ifinish = maxstep
         call read_data(rootname(i),istart,ifinish)
-        istart = ifinish + 1 ! number of next step in data array
         nstepsinfile(i) = ifinish - istart + 1
 	print*,'nsteps in file = ',nstepsinfile(i)
+        istart = ifinish + 1 ! number of next step in data array
      enddo
      nstart = 1
      n_end = ifinish
      nstepstotal = n_end
+     numplot = ncolumns
      !
      !--read plot limits from file, otherwise set plot limits
      !

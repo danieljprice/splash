@@ -235,6 +235,9 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   over_timesteps: do while (i.le.n_end)
   
      if (.not.buffer_data) then
+        !
+	!--if data is not stored in memory, read next step from file
+	!
         if (i.gt.nstepsinfile(ifile)) then
 	   ihavereadfilename = .true.
            ifile = ifile+1
@@ -255,17 +258,16 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	   i = 1
 	endif
      else
-        if (i.gt.nstepsinfile(ifile)) then
-	   exit
-	endif
+        !
+	!--only data is that which is already in memory
+	!
         if (i.lt.1) then
            print*,'reached first step: can''t go back'
      	   i = 1
         endif
 	if (i.lt.nstart) then
            print*,'warning: i < nstart'
-        endif
-	
+        endif	
      endif
      
      npart1 = npart(i) + 1
