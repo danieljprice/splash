@@ -61,6 +61,8 @@ subroutine main(ipicky,ipickx,irender)
   ncontours = ncontours_nomulti
   iplotcont = iplotcont_nomulti
   use_backgnd_color_vecplot = backgnd_vec_nomulti
+  title = ' '
+  titlex = ' '
 
   if (ndim.ne.3) x_sec = .false.
 
@@ -778,7 +780,7 @@ subroutine main(ipicky,ipickx,irender)
            !--------------------------------------------------------------
 	     
 	   call setpage(nyplot,nacross,ndown,xmin,xmax,ymin,ymax, &
-	        labelx,labely,titlex,just,axis,isamexaxis,inewpage)
+	        labelx,labely,title,just,axis,isamexaxis,inewpage)
 
            !--------------------------------
            ! now plot particles
