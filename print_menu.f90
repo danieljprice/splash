@@ -39,9 +39,9 @@ subroutine print_menu(ipicky,ipickx,irender)
      print 14,numplot+3, &
           'Change number of timesteps read  ',(n_end-nstart+1)/nfreq 
      print 15,numplot+4, &
-          'toggle axes                      ',axes
+          'toggle interactive mode          ',interactive
      print 15,numplot+5, &
-          'toggle animate                   ',animate
+          'toggle axes                      ',axes
      print 15,numplot+6, &
           'toggle adaptive/fixed limits     ',iadapt
      print 15,numplot+7, &

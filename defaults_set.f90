@@ -26,13 +26,12 @@ subroutine defaults_set
   icoords = 0	! co-ordinate system of simulation
 
   axes = .true.	! turns axes off/on
-  animate = .true.	! turns off/on prompt between page changes
   iadapt = .true.	! adaptive plot limits
   plotcirc = .false.	! plot circle of radius 2h around particles
   plotcircall = .false.	!  " " around all particle
   icircpart = 1		!  " " around a specific particle
   ncircpart = 1
-  interactive = .true.
+  interactive = .false.
 
   xsec_nomulti = .false.		! take cross section of data / particles
   flythru = .false.		! take series of cross sections through data

@@ -75,14 +75,14 @@ subroutine options(ipicky)
      return
 !------------------------------------------------------------------------
   case(4)
+     interactive = .not.interactive
+     print*,' Interactive mode = ',interactive
+     return
+!------------------------------------------------------------------------
+  case(5)
      axes=.not.axes
      print *,' Axes = ',axes
      return	  
-!------------------------------------------------------------------------
-  case(5)
-     animate=.not.animate
-     print *,' Animation = ',animate
-     return
 !------------------------------------------------------------------------
   case(6)
      iadapt=.not.iadapt

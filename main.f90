@@ -170,8 +170,10 @@ subroutine main(ipicky,ipickx,irender)
   elseif (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
      call pgpaper(papersizex,aspectratio)
   endif
-  !!--turn on/off page prompting
-  if (animate) call pgask(.false.)
+  !!--turn off page prompting
+  if (.not.interactive .or.(interactive.and.iplotpart.and.(irender.le.0))) then
+     call pgask(.false.)
+  endif
 
   !
   !--if plotting ghost particles, set ntotplot = ntot, else ntot=npart
@@ -660,7 +662,6 @@ subroutine main(ipicky,ipickx,irender)
                     !!--plot particle positions
                     if (iplotpart) then
                        call pgpt(npart(i),xplot(1:npart(i)),yplot(1:npart(i)),imark)
-                       if (interactive) call interactive_part(npart(i),xplot(1:npart(i)),yplot(1:npart(i))) 
                     endif
                     !!--plot ghost particles with different marker
                     if (iplotpart .and. iplotghost .and. nghost(i).gt.0) then
@@ -701,6 +702,9 @@ subroutine main(ipicky,ipickx,irender)
                           call pgsch(charheight)
                        enddo
                     endif! ilabelpart
+
+                    if (iplotpart.and.interactive) call interactive_part(ntotplot(i),xplot(1:ntotplot(i)),yplot(1:ntotplot(i))) 
+
 
                  endif! if x_sec else    
               endif! if irender
@@ -1154,7 +1158,7 @@ subroutine main(ipicky,ipickx,irender)
 
   enddo over_timesteps
 
-  if (animate) then
+  if (.not.interactive) then
      print*,'press return to finish'
      read*
   endif

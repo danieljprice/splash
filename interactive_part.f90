@@ -11,10 +11,10 @@ subroutine interactive_part(npart,xcoords,ycoords)
   character(len=1) :: char
   character(len=20) :: string
 
-  print*,'entering interactive mode... type q to quit'
+  print*,'entering interactive mode... type q, space or right mouse click to exit'
   char = 'A'
 
-  do while (char.ne.'q' .and. char.ne.'Q' .and. char.ne.' ')
+  do while (char.ne.'q' .and. char.ne.'Q' .and. char.ne.' ' .and. char.ne.'X')
      call pgcurs(xpt,ypt,char)
      
      print*,'location: x, y = ',xpt,ypt,' function = ',char
