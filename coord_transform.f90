@@ -106,14 +106,14 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
            xout(1) = SQRT(DOT_PRODUCT(xin(1:2),xin(1:2)))
            if (ndimout.ge.2) xout(2) = ATAN(abs(xin(2)/xin(1))) ! phi
            !--sort out which quadrant
-	   if (xin(1).lt.0. .and. xin(2).lt.0.) then ! 3rd quadrant
-	      xout(2) = xout(2) + pi
-	   elseif (xin(1).lt.0.) then ! 2nd quadrant
-	      xout(2) = pi - xout(2)
-	   elseif (xin(2).lt.0.) then
-	      xout(2) = -xout(2)   
-	   endif
-	   if (ndimout.eq.3) xout(3) = xin(3)              ! z
+           if (xin(1).lt.0. .and. xin(2).lt.0.) then ! 3rd quadrant
+              xout(2) = xout(2) + pi
+           elseif (xin(1).lt.0.) then ! 2nd quadrant
+              xout(2) = pi - xout(2)
+           elseif (xin(2).lt.0.) then
+              xout(2) = -xout(2)   
+           endif
+           if (ndimout.eq.3) xout(3) = xin(3) ! z
         endif
      case(3)
         !
@@ -130,7 +130,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         !
         ! just copy
         !
-	xout(1:ndimout) = xin(1:ndimout)
+        xout(1:ndimout) = xin(1:ndimout)
      end select
   end select
 
