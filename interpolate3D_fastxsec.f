@@ -45,7 +45,7 @@
 
       datsmooth = 0.
       term = 0.
-      PRINT*,'taking fast cross section...'
+      PRINT*,'taking fast cross section...',zslice
 !
 !--loop over particles
 !      
@@ -66,7 +66,7 @@
 !--if this is < 2h then add the particle's contribution to the pixels
 !  otherwise skip all this and start on the next particle
 !
-	 IF (abs(dz)*hi1 .LT. radkern) THEN
+	 IF (abs(dz) .LT. radkern) THEN
 
             const = 1./(pi*h3)	! normalisation constant (3D)
 	    term = 0.
@@ -78,6 +78,9 @@
 	    jpixmin = INT((y(i) - radkern - ymin)/pixwidth)
 	    ipixmax = INT((x(i) + radkern - xmin)/pixwidth)
 	    jpixmax = INT((y(i) + radkern - ymin)/pixwidth)
+
+!	 PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
+!	 PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
 	 
             IF (ipixmin.LT.1) ipixmin = 1  ! make sure they only contribute
 	    IF (jpixmin.LT.1) jpixmin = 1  ! to pixels in the image
@@ -87,11 +90,10 @@
 !--loop over pixels, adding the contribution from this particle
 !
 	    DO jpix = jpixmin,jpixmax
+	       ypix = ymin + (jpix)*pixwidth - 0.5*pixwidth
+	       dy = ypix - y(i)
 	       DO ipix = ipixmin,ipixmax
-
-		  ypix = ymin + (jpix)*pixwidth - 0.5*pixwidth
 		  xpix = xmin + (ipix)*pixwidth - 0.5*pixwidth
-		  dy = ypix - y(i)
 		  dx = xpix - x(i)
 		  rab = SQRT(dx**2 + dy**2 + dz2)
 		  qq = rab*hi1
@@ -113,7 +115,7 @@
       
                ENDDO
 	    ENDDO
-	    
+	      
          ENDIF	! if particle within 2h of slice
       ENDDO ! over particles
       
