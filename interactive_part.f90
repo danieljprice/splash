@@ -38,7 +38,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
   real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax
   real, intent(inout) :: anglex,angley,anglez
   logical, intent(out) :: isave
-  integer :: i,iclosest,nc,ipts,ierr
+  integer :: i,iclosest,nc,ierr
   integer :: nmarked
   real :: xpt,ypt,xpt2,ypt2,xptmin,xptmax,yptmin,yptmax
   real :: rmin,rr,gradient,yint
@@ -56,7 +56,6 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
      return
   endif
   char = 'A'
-  ipts = 0
   xline = 0.
   yline = 0.
   xpt = 0.
@@ -187,63 +186,73 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         if (rotation) call save_rotation(ndim,anglex,angley,anglez)
         print*,'> plot settings saved <'
      !
-     !--zoom
+     !--actions on left click
      !
      case('A') ! left click
-        !
-        !--draw rectangle from the point and reset the limits
-        !
         print*,'select area: '
         print*,'left click : zoom'
-        if (irender.le.0) then
-           print*,'1-9 = mark selected particles with colours 1-9'
-        else
-           print*,'select colour bar to change rendering limits'
-        endif
-        call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
-        print*,xpt,ypt,xpt2,ypt2,char2
-        select case (char2)
-        case('A')   ! zoom if another left click and not around colour bar
-           call pgsfs(2)
-           call pgrect(xpt,xpt2,ypt,ypt2)
-           if (xpt.gt.xmax .and. xpt2.gt.xmax .and. irender.gt.0) then
+        !
+        !--change colour bar limits
+        !
+        if (xpt.gt.xmax .and. irender.gt.0) then
+           print*,'click to set rendering limits'
+           call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
+           if (char2 == 'A') then
               drender = (rendermax-rendermin)/(ymax-ymin)
               rendermax = rendermin + (max(ypt,ypt2)-ymin)*drender
               rendermin = rendermin + (min(ypt,ypt2)-ymin)*drender
               print*,'setting render min = ',rendermin
-              print*,'setting render max = ',rendermax
-           else
+              print*,'setting render max = ',rendermax              
+              iadvance = 0
+              iexit = .true.
+           endif
+        !
+        !--zoom or mark particles
+        !
+        else
+           if (irender.le.0) then
+              print*,'1-9 = mark selected particles with colours 1-9'
+           endif
+           call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
+           print*,xpt,ypt,xpt2,ypt2,char2
+           select case (char2)
+           case('A')   ! zoom if another left click
+              call pgsfs(2)
+              call pgrect(xpt,xpt2,ypt,ypt2)
               xmin = min(xpt,xpt2)
               xmax = max(xpt,xpt2)
               ymin = min(ypt,ypt2)
               ymax = max(ypt,ypt2)
-           endif
-           iadvance = 0
-           iexit = .true.
-        case('1','2','3','4','5','6','7','8','9')
-           if (irender.le.0) then
-              xptmin = min(xpt,xpt2)
-              xptmax = max(xpt,xpt2)
-              yptmin = min(ypt,ypt2)
-              yptmax = max(ypt,ypt2)
-           
-              nmarked = 0
-              do i=1,npart
-                 if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
-                 .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax)) then
-                     read(char2,*,iostat=ierr) icolourpart(i)
-                     if (ierr /=0) then
-                        print*,'*** error marking particle' 
-                        icolourpart(i) = 1
-                     endif
-                     nmarked = nmarked + 1
-                 endif
-              enddo
-              print*,'marked ',nmarked,' particles in selected region'
               iadvance = 0
               iexit = .true.
-           endif
-        end select    
+           case('1','2','3','4','5','6','7','8','9')
+              if (irender.le.0) then
+                 xptmin = min(xpt,xpt2)
+                 xptmax = max(xpt,xpt2)
+                 yptmin = min(ypt,ypt2)
+                 yptmax = max(ypt,ypt2)
+
+                 nmarked = 0
+                 do i=1,npart
+                    if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
+                    .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax)) then
+                        read(char2,*,iostat=ierr) icolourpart(i)
+                        if (ierr /=0) then
+                           print*,'*** error marking particle' 
+                           icolourpart(i) = 1
+                        endif
+                        nmarked = nmarked + 1
+                    endif
+                 enddo
+                 print*,'marked ',nmarked,' particles in selected region'
+              endif
+              iadvance = 0
+              iexit = .true.
+           end select 
+        endif   
+     !
+     !--zooming
+     !
      case('-','_') ! zoom out by 10 or 20%
         print*,'zooming out'
         xlength = xmax - xmin
@@ -280,6 +289,8 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         xmax = maxval(xcoords)
         ymin = minval(ycoords)
         ymax = maxval(ycoords)
+        iadvance = 0
+        iexit = .true.
      !
      !--rotation
      !
