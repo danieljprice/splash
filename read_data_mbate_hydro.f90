@@ -66,7 +66,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real :: timei, gammai
   real :: rhozero, RK2
   real :: escap,tkin,tgrav,tterm
-  real :: dtmax
+  real :: dtmax,tcomp
 
   nstepsread = 0
   nstep_max = 0
@@ -207,8 +207,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
         npartoftype(2,j) = nghosti
 
         gamma(j) = real(gammai)
-        !!tcomp = sqrt((3.*pi)/(32*rhozero))
-        time(j) = real(timei) !!/tcomp
+        tcomp = sqrt((3.*pi)/(32*rhozero))
+        time(j) = real(timei)/tcomp
         j = j + 1
 
      enddo over_steps_in_file
