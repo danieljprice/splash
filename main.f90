@@ -20,10 +20,9 @@ subroutine main(ipicky,ipickx,irender)
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: ivecplot,npix,npixvec,npixyvec,ncontours
   integer :: irenderprev, istepprev
-  integer :: isizex,isizey      ! for sending datpix to transform
   integer :: nsink,nsinkstart,nsinkend,nghoststart,nghostend
   integer :: ishk,int_from_string
-  integer :: igrid, ngrid
+  integer :: ngrid
   integer :: just
 
   character(len=8) :: string     ! used in pgplot calls
@@ -73,10 +72,10 @@ subroutine main(ipicky,ipickx,irender)
   if (ipicky.eq.numplot+1) then   ! multiplot
      imulti=.true.
      if (any(multiplotx(1:nyplotmulti).ne.multiplotx(1))) then
-        isamexaxis = .false.
+        isamexaxis = .false.  ! this is for labelling
      endif
      if (any(multiploty(1:nyplotmulti).ne.multiploty(1))) then
-        isameyaxis = .false.
+        isameyaxis = .false.  ! this is for labelling
      endif
      iplotx = multiplotx(1)
      iploty = multiploty(1)
@@ -262,6 +261,16 @@ subroutine main(ipicky,ipickx,irender)
               ymax = maxval(yplot(1:ntotplot(i)))*scalemax
 	   endif
 
+           !!-reset co-ordinate plot limits if particle tracking           
+	   if (itrackpart.gt.0 .and. iplotx.le.ndim) then
+	      xmin = xplot(itrackpart) - xminoffset_track(iplotx)
+	      xmax = xplot(itrackpart) + xmaxoffset_track(iplotx)	   
+	   endif
+	   if (itrackpart.gt.0 .and. iploty.le.ndim) then
+	      ymin = yplot(itrackpart) - xminoffset_track(iploty)
+	      ymax = yplot(itrackpart) + xmaxoffset_track(iploty)	   
+	   endif
+
         endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -270,13 +279,6 @@ subroutine main(ipicky,ipickx,irender)
 
         if ((iploty.le.ndim).and.(iplotx.le.ndim)) then
 
-           !!-reset plot limits for particle tracking
-           if (itrackpart.gt.0 .and. itrackpart.le.ntotplot(i)) then
-	      xmin = xplot(itrackpart) - xminoffset_track(iplotx)
-	      xmax = xplot(itrackpart) + xmaxoffset_track(iplotx)
-	      ymin = yplot(itrackpart) - xminoffset_track(iploty)
-	      ymax = yplot(itrackpart) + xmaxoffset_track(iploty)
-	   endif
            !!--set rendering options equal to settings in multiplot	 
            if (imulti) then
               irenderplot = irendermulti(nyplot)      
@@ -319,7 +321,7 @@ subroutine main(ipicky,ipickx,irender)
               !--interpolate from particles to fixed grid using sph summation
               !		
               !--do not apply any transformations to the co-ordinates
-              !  (leave limits as is for particle tracking)
+              !  (leave limits as is if particle tracking)
 	      if (itrackpart.le.0) then
 	         xmin = lim(iplotx,1)
                  xmax = lim(iplotx,2)
@@ -331,8 +333,6 @@ subroutine main(ipicky,ipickx,irender)
               pixwidth = (xmax-xmin)/real(npix)
               npixx = int((xmax-xmin)/pixwidth) + 1
               npixy = int((ymax-ymin)/pixwidth) + 1
-              isizex = npixx
-              isizey = npixy
               print*,'npixx, npixy = ',npixx,npixy
               !!--only need z pixels if working with interpolation to 3D grid
               if ((ndim.ge.3).and.(x_sec.and.nxsec.gt.2)) then
@@ -355,8 +355,6 @@ subroutine main(ipicky,ipickx,irender)
                     !!--interpolate to 2D grid
                     !!  allocate memory for rendering array
                     if (.not. x_sec) then
-                       isizex = npixx
-                       isizey = npixy
                        allocate ( datpix(npixx,npixy) )
                        call interpolate2D( &
                             dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i), &
@@ -464,19 +462,13 @@ subroutine main(ipicky,ipickx,irender)
                  call prompt('enter xmax of cross section line',xpt2,xmin,xmax)
                  call prompt('enter ymin of cross section line',ypt1,ymin,ymax)
                  call prompt('enter ymax of cross section line',ypt2,ymin,ymax)
-                 isizex = npixx
-                 !!--set up 1D grid
-                 if (allocated(xgrid)) deallocate(xgrid)
-                 allocate ( xgrid(npixx) )
+
+                 !--set up 1D grid and allocate memory for datpix1D
                  xmin = 0.   ! distance (r) along cross section
                  xmax = SQRT((ypt2-ypt1)**2 + (xpt2-xpt1)**2)
                  dxgrid = (xmax-xmin)/REAL(npixx)
-                 do igrid = 1,npixx
-                    xgrid(igrid) = xmin + igrid*dxgrid - 0.5*dxgrid
-                 enddo
-                 !!--interpolate to 1D cross section
-                 if (allocated(datpix1D)) deallocate(datpix1D)
-                 allocate ( datpix1D(npixx) )
+                 call set_grid1D(xmin,dxgrid,npixx)
+
                  call interpolate2D_xsec( &
                       dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i), &
                       dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i),    &
@@ -569,7 +561,7 @@ subroutine main(ipicky,ipickx,irender)
               if (irenderplot.gt.ndim .and.    &
                    ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) ) then
                  !!--do transformations on rendered array  
-                 call transform2(datpix,itrans(irenderplot),isizex,isizey)
+                 call transform2(datpix,itrans(irenderplot),npixx,npixy)
                  labelrender = label(irenderplot)
                  !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
                  if (ndim.eq.3 .and..not. x_sec) then         
@@ -718,7 +710,7 @@ subroutine main(ipicky,ipickx,irender)
               !----------------------------    
 
               !!--velocity vector map
-              if  (ivecplot.ne.0) then
+              if (ivecplot.ne.0) then
                  if (ivecplot.eq.1 .and. ivx.ne.0) then
                     ivecx = ivx + iplotx - 1 ! 
                     ivecy = ivx + iploty - 1
@@ -937,17 +929,12 @@ subroutine main(ipicky,ipickx,irender)
               if (.not.idisordered) then! interpolate first
                  !!--allocate memory for 1D grid (size = 2*npart)
                  ngrid = 2*npart(i)
-                 if (allocated(datpix1D)) deallocate(datpix1D)
-                 if (allocated(xgrid)) deallocate(xgrid)
-                 allocate (datpix1D(ngrid))
-                 allocate (xgrid(ngrid))
                  !!--set up 1D grid
                  xmin = lim(ix(1),1)
                  xmax = lim(ix(1),2)
                  dxgrid = (xmax-xmin)/ngrid
-                 do igrid = 1,ngrid
-                    xgrid(igrid) = xmin + igrid*dxgrid - 0.5*dxgrid
-                 enddo
+                 call set_grid1D(xmin,dxgrid,ngrid)
+
                  !!--interpolate to 1D grid  
                  call interpolate1D(dat(ix(1),1:npart(i),i), & 
                       dat(ipmass,1:npart(i),i),dat(irho,1:npart(i),i), &
@@ -1124,4 +1111,29 @@ subroutine main(ipicky,ipickx,irender)
   call pgend
 
   return
+
+contains
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!--------------------------------------------
+! sets up a one dimensional grid of pixels
+! and allocates memory for datpix1D
+!--------------------------------------------
+  subroutine set_grid1D(xmin1D,dxgrid1D,ngridpts)
+    implicit none
+    integer, intent(in) :: ngridpts
+    real, intent(in) :: xmin1D, dxgrid1D
+    integer :: igrid
+
+    if (allocated(datpix1D)) deallocate(datpix1D)
+    if (allocated(xgrid)) deallocate(xgrid)
+    allocate (datpix1D(ngridpts))
+    allocate (xgrid(ngridpts))
+
+    do igrid = 1,ngridpts
+       xgrid(igrid) = xmin1D + igrid*dxgrid - 0.5*dxgrid
+    enddo
+
+  end subroutine set_grid1D
+
 end subroutine main
