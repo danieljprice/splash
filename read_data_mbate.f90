@@ -2,7 +2,10 @@
 ! this subroutine reads from the data file(s)
 ! change this to change the format of data input
 !
-! THIS VERSION IS FOR READING FORMATTED OUTPUT FROM MATTHEW BATE'S CODE
+! THIS VERSION IS FOR READING UNFORMATTED OUTPUT FROM MATTHEW BATE'S CODE
+! (ie. STRAIGHT FROM THE DATA DUMP)
+!
+! *** CONVERTS TO SINGLE PRECISION ***
 !
 ! the data is stored in the global array dat
 !
@@ -31,8 +34,8 @@
 
 subroutine read_data(rootname,istart,nfilesteps)
   use particle_data
+  use timestep_header
   use params
-  use labels
   use settings
   implicit none
   integer, intent(IN) :: istart
@@ -44,13 +47,16 @@ subroutine read_data(rootname,istart,nfilesteps)
   integer :: ntotin
   logical :: iexist
   real :: gammain,timeff
-  
+    
   character(LEN=LEN(rootname)+10), dimension(1000) :: filename,sinkfile
-  character(LEN=LEN(rootname)+10) :: imagefile
-  integer :: nsinkcolumns, int_from_string
+  character(LEN=LEN(rootname)+10) :: dumpfile
+  integer :: int_from_string
+  integer :: nprint, nghosti, n1, n2, rhozero, RK2
   logical :: magfield
+  real*8, dimension(:,:), allocatable :: dattemp
+  real*8 :: udisti,umassi,utimei, umagfdi, timei, gammai
+  real*8 :: escap,tkin,tgrav,tterm,tmag
 
-  print*,'entering read_data'
 !
 !--assume MHD if filename starts with m
 !
@@ -62,143 +68,131 @@ subroutine read_data(rootname,istart,nfilesteps)
   ndim = 3
   ndimV = 3
   if (magfield) then
-     ncolumns = 18	! number of columns in file
-     nsinkcolumns = 10
+     ncolumns = 19	! number of columns in file
   else 
      ncolumns = 11
-     nsinkcolumns = 10
   endif
   ivegotdata = .false.
   iexist = .false.
-  
-  print*,'rootname'
-  ifile = int_from_string(rootname(6:7))
-  print*,' image file starting at number ',ifile
-  
-  write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
-  !!  fileno = achar(48+ifile/10)//achar(48+mod(ifile,10))
-  imagefile = 'IP'//rootname(1:5)//fileno
-  print *,' opening ',imagefile
-  k=1
+!
+!--handle filenames of type dumps00 or dump000
+!
+  if (rootname(5:5).ge.'0' .and. rootname(5:5).le.'9') then
+     ifile = int_from_string(rootname(5:7))  
+     write(fileno,"(i1,i1,i1)") ifile/100,ifile/10,mod(ifile,10)
+     dumpfile = rootname(1:5)//fileno
+  else
+     ifile = int_from_string(rootname(6:7))  
+     write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
+     dumpfile = rootname(1:5)//fileno
+  endif  
+  write(*,"(23('-'),1x,a,1x,23('-'))") trim(dumpfile)
   !
   !--allocate memory initially
   !
-  ncol_max = 1
-  ntotin = 1
-  nstep_max = 100
-  call alloc(ntotin,nstep_max,ncol_max)
-  
-50 continue
-  i = k
-  open(unit=15,file=imagefile,status='old',form='formatted',ERR=81)
-     read(15,*,end=55) gammain
-  !      print*,'Number of particles = ',ntot
-     print*,'gamma = ',gammain
-     do i=k,100000
-	read(15,*, end=55,ERR=79) timeff,time(i),ntot(i),nghost(i),filename(i)
-	!!         filename(i) = '../'//filename(i)
-	print*,filename(i)
-	gamma(i) = gammain
-	!
-	!--reallocate if exceeded max timesteps
-	!
-	if (i.eq.maxstep) then
-	   nstep_max = maxstep + 10
-	   call alloc(ntotin,nstep_max,ncol_max)
-	endif
-     enddo
-55   continue
-     print*,'end of image file, nsteps=',i-1
-     ifile = ifile + 1
-     write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
-     !!fileno = achar(48+ifile/10)//achar(48+mod(ifile,10))
-     imagefile = 'IP'//rootname(1:5)//fileno
-     inquire (file=imagefile, exist=iexist)
-     print*,imagefile,' exist = ',iexist
-     k = i
-     if (iexist) then
-	print*,' opening ',imagefile
-	goto 50
-     endif
-      
-     nfilesteps = k-1
-56   continue
-  close(15)
-
-  ntotin = maxval(ntot)
-  nstep_max = nfilesteps
-  ncol_max = ncolumns
-  !
-  !--allocate memory for main data array before reading data
-  !
-  if (.not.allocated(dat) .or. ntotin.gt.maxpart  &
-       .or. nstep_max.gt.maxstep .or. ncol_max.gt.maxcol) then
+  ncol_max = max(ncolumns,ncol_max)
+  nstep_max = max(nstep_max,istart,10)
+ !
+ !--open the (unformatted) binary file and read the number of particles
+ !
+  open(unit=15,file=dumpfile,status='old',form='unformatted')
+!
+!--read the number of particles in the first step,
+!  allocate memory and rewind
+!
+  read(15,end=55) udisti,umassi,utimei,umagfdi,nprint 
+  print*,'nprint = ',nprint
+  if (.not.allocated(dat) .or. nprint.gt.ntotin) then
+     ntotin = max(ntotin,1.1*nprint)
      call alloc(ntotin,nstep_max,ncol_max)
   endif
-  !
-  !--now read data
-  !
-  do i=1,nfilesteps
-     if (ntot(i).gt.maxpart) print*,'ntot > array limits!!'      
-     !         READ (11,*,END=66) time(i)
-     print*,'t = ',time(i), '  file = ',trim(filename(i))
-     !
-     !--read data from QG file (gas particles)
-     !
-     open(unit=11,file=trim(filename(i)),status='old',form='formatted')
-        read (11,*, end=66, ERR=77) (dat(j,1:ncolumns,i),iam(j,i),j=1,maxpart)
-66      continue
-  
-        ntot(i) = j-1
-	if (ntot(i)-nghost(i).gt.0) then
-	   npart(i) = ntot(i) - nghost(i)	! assumes always more ghosts
-	else					! than particles
-	   npart(i) = ntot(i)
+  rewind(15)
+!
+!--loop over the timesteps in this file
+!     
+     do j=istart,100000
+     
+        ntotin = max(ntotin,nprint)
+!
+!--allocate/reallocate memory if j > maxstep
+!
+	if (j.gt.maxstep) then
+	   call alloc(maxpart,j,maxcol)
 	endif
-	print*,'Number of particles,ghosts = ', &
-	     npart(i),nghost(i),':',ntot(i)-npart(i),' ghosts output'
-     close(unit=11)
-     !
-     !--read data from QS file (sink particles)
-     !
-     sinkfile(i) = filename(i)(1:1)//'S'//filename(i)(3:)
-     inquire (file=sinkfile(i), exist=iexist)
+!
+!--allocate a temporary array for double precision variables
+!
+        if (allocated(dattemp)) deallocate(dattemp)
+	allocate(dattemp(ntotin,ncol_max))
+!
+!--now read the timestep data in the dumpfile
+!
 
-     if (iexist) then
-	print*,'reading sink file ',sinkfile(i)
-	open(unit=12,file=sinkfile(i),status='old',form='formatted')
-	read(12,*,end=68,ERR=67) (dat(j,1:nsinkcolumns,i),j=ntot(i)+1,maxpart)
-67      continue
-        print*,' Error reading sinkfile - no sinks read'	    
-68      continue	    
-        print*,' sinks = ',j-1 - ntot(i)
-        do k = ntot(i),j-1
-           iam(k,i) = 1
-        enddo
-        ntot(i) = j-1
-        print*,'ntotal = ',ntot(i) 
-     else
-	print*,'sink file not found'                
-     endif
+        read(15,end=55) udisti, umassi, utimei, umagfdi,  &
+          nprint, nghosti, n1, n2, timei, gammai, rhozero, RK2, &
+	  (dattemp(i,7), i=1, nprint), (dattemp(i,8), i=1,nprint), &
+          escap, tkin, tgrav, tterm, tmag, &
+          (dattemp(i,1), i=1, nprint), (dattemp(i,2), i=1, nprint), &
+          (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
+          (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
+          (dattemp(i,9), i=1, nprint), (dattemp(i,10), i=1, nprint), &
+          (dattemp(i,11), i=1, nprint), (dattemp(i,12), i=1, nprint), &  
+          (dattemp(i,13), i=1, nprint), (dattemp(i,14), i=1, nprint), &
+          (dattemp(i,15), i=1, nprint), (dattemp(i,16), i=1, nprint), &
+          (dattemp(i,17), i=1, nprint), (dattemp(i,18), i=1, nprint), &
+          (dattemp(i,19), i=1, nprint)
+!
+!--convert to single precision
+!     
+          print *,'step ',j,': ntotal = ',nprint
+	  print "(a)",' converting to single precision... '
+          dat(1:nprint,1:ncol_max,j) = real(dattemp(1:nprint,1:ncol_max))
+          deallocate(dattemp)
 
-  enddo      
+	  ntot(j) = nprint
+	  nghost(j) = nghosti
+	  npart(j) = ntot(j) - nghost(j)
+	  npartoftype(1,j) = npart(j)
+	  npartoftype(2,j) = nghost(j)
+	  
+	  gamma(j) = real(gammai)
+	  time(j) = real(timei)
+          if (ntotin.eq.130000) ntotin = nprint
+     enddo
 
-  print*,'>> READ all steps =',i-1,'ntot = ',ntot(i-1),'nghost=',ntot(i-1)-npart(i-1)
+55   continue
+     nfilesteps = j-1
+     print*,'nfilesteps = ',nfilesteps
+
+  close(15)
+
+  print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nghost=',ntot(j-1)-npart(j-1)
       
   ivegotdata = .true.
-  
-  !!------------------------------------------------------------
-  !! set labels for each column of data
-  
+  return
+                    
+end subroutine read_data
+
+!!------------------------------------------------------------
+!! set labels for each column of data
+!!------------------------------------------------------------
+
+subroutine set_labels
+  use labels
+  use params
+  use settings
+  implicit none
+  integer :: i
+    
   do i=1,ndim
      ix(i) = i
   enddo
-  ivx = ndim + 1
-  ivlast = ndim + ndimV
-  irho = ndim + ndimV + 1		! location of rho in data array
-  iutherm = ndim + ndimV + 2	!  thermal energy
-  ih = ndim + ndimV + 3		!  smoothing length
-  ipmass = ndim + ndimV + 4	!  particle mass      
+  ivx = 4
+  ivlast = 6
+  irho = 18		! location of rho in data array
+  iutherm = 16	!  thermal energy
+  ih = 7		!  smoothing length
+  ipmass = 17	!  particle mass      
   
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   do i=1,ndimV
@@ -207,71 +201,56 @@ subroutine read_data(rootname,istart,nfilesteps)
   label(irho) = '\gr'      
   label(iutherm) = 'u'
   label(ih) = 'h       '
-  label(ipmass) = 'particle mass'      
+  label(ipmass) = 'particle mass'     
+  label(8) = 'alpha'
+  label(19) = 'psi' 
   
   label(ndim + ndimV+5) = '\ga'
-  if (magfield) then
-     iBfirst = ndim + ndimV+5+1	! location of Bx
-     iBlast = ndim + ndimV+5+ndimV	! location of Bz      
+  if (ncolumns.gt.11) then
+     iBfirst = 9	! location of Bx
+     iBlast = 11	! location of Bz      
      do i=1,ndimV
-	label(ndim + ndimV+5+i) = 'B\d'//labelcoord(i,1) !' (x10\u-3\d)'	!//'/rho'
+	label(iBfirst + i-1) = 'B\d'//labelcoord(i,1) !' (x10\u-3\d)'	!//'/rho'
      enddo
-     idivB = ndim + ndimV+ndimV+6
-     label(ndim + ndimV+ndimV+6) = 'div B'
+     idivB = 12
+     label(idivB) = 'div B'
      do i=1,ndimV
-	label(ndim + ndimV+ndimV+6 + i) = 'J'//labelcoord(i,1)
+	label(13 + i-1) = 'J'//labelcoord(i,1)
      enddo
   else	 
      iBfirst = 0
      iBlast = 0
   endif
-  !      label(ndim + ndimV+2*ndimV+8) = 'v_parallel'
-  !      label(ndim + ndimV+2*ndimV+9) = 'v_perp'
-  !      label(ndim + ndimV+2*ndimV+10) = 'B_parallel'
-  !      label(ndim + ndimV+2*ndimV+11) = 'B_perp'
   !
-  !--specify which of the possible quantities you would like to calculate
-  !  (0 = not calculated)
-  ncalc = 9	! specify number to calculate
-  ipr = ncolumns + 1
-  ientrop = ncolumns + 2      
-  irad = ncolumns + 3
-  irad2 = 0
-  ipmag = ncolumns + 4
-  ibeta = ncolumns + 5
-  itotpr = ncolumns + 6      
-  ike = ncolumns + 7
-  idivBerr = ncolumns + 8
-  itimestep = ncolumns + 9
-  if (ipr.NE.0) label(ipr) = 'P      '
+  !--set labels for vector quantities
+  !
+  iamvec(ivx:ivx+ndimV-1) = ivx
+  labelvec(ivx:ivx+ndimV-1) = 'v'
+  do i=1,ndimV
+     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
+  enddo
+  !--mag field
+  iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
+  labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
+  do i=1,ndimV
+     label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
+  enddo
+  !--current density
+  iamvec(13:13+ndimV-1) = 13
+  labelvec(13:13+ndimV-1) = 'J'
+  do i=1,ndimV
+     label(13+i-1) = trim(labelvec(13))//'\d'//labelcoord(i,1)
+  enddo
   
-  !-----------------------------------------------------------
-  
-  return    
-!
-!--errors
-!
-77 continue
-print*,' *** Error encountered while reading file ***'
-print*,' -> Check that magnetic field is toggled correctly'
-return      
-      
-78 continue
-print*,' *** Error encountered while reading timestep ***'
-print*,' -> number of columns in data file not equal to'
-print*,'    that set as a parameter - edit and recompile'
-return
+  !
+  !--set labels for each particle type
+  !
+  ntypes = 3  !!maxparttypes
+  labeltype(1) = 'gas'
+  labeltype(2) = 'ghost'
+  labeltype(3) = 'sink'
+ 
+!-----------------------------------------------------------
 
-79 continue
-print*,' *** Error reading IP file: check format ***'
-return
-
-80 continue
-print*,' *** data file empty, no steps read ***'
-return
-
-81 continue
-print*,' *** Error: can''t open IP file ***'
-return
-                    
-end subroutine read_data
+  return 
+end subroutine set_labels

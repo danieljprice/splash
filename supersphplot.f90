@@ -18,6 +18,7 @@ program supersphplot
 !     defaults_read	 : read default plot options from file
 !     defaults_set	 : sets default plot options if not read from file
 !     defaults_write	 : write default plot options to file
+!     exact              : module handling exact solution settings
 !     exact_fromfile     : reads an exact solution tabulated in a file
 !     exact_mhdshock     : some tabulated solutions for mhd shocks 
 !     exact_polytrope    : exact solution for a polytrope
@@ -44,7 +45,6 @@ program supersphplot
 !     menu               : main menu
 !     modules		 : contains all shared (global) variables
 !     options_data       : sets options relating to current data
-!     options_exact	 : sets options and params for exact solution calculation/plotting
 !     options_limits     : sets options relating to plot limits
 !     options_page       : sets options relating to page setup
 !     options_particleplots : sets options relating to particle plots
@@ -57,7 +57,7 @@ program supersphplot
 !     powerspectrum_fourier : calculates power spectrum of 1D data on ordered pts
 !     powerspectrum_lomb : calculates power spectrum of 1D data on disordered pts
 !     read_data_dansph   : reads data from my format of data files
-!     read_data_mrbsph   : reads data from matthew bate's format of data files
+!     read_data_mbate    : reads data from matthew bate's format of data files
 !     render	 	 : takes array of pixels and plots render map/contours etc
 !     setpage            : sets up the PGPLOT page (replaces call to PGENV/PGLAB)
 !     supersphplot	 : main program, drives menu loop
