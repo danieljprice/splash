@@ -271,7 +271,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   integer :: ntoti,iz
   integer :: j,k
   integer :: nyplot
-  integer :: irenderpart
+  integer :: irenderpart,irendered
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec
   integer :: index1,index2,itype
@@ -326,8 +326,8 @@ subroutine plotstep(istep,irender,ivecplot, &
         iploty = multiploty(nyplot)
         iplotx = multiplotx(nyplot)
         if (icolour_particles) then
-           irenderplot = 0
            irenderpart = irendermulti(nyplot)
+           irenderplot = 0
         else
            irenderpart = 0
            irenderplot = irendermulti(nyplot)
@@ -338,8 +338,8 @@ subroutine plotstep(istep,irender,ivecplot, &
         xsecpos = xsecposmulti(nyplot)
      else
         if (icolour_particles) then
-           irenderplot = 0
            irenderpart = irender
+           irenderplot = 0
         else
            irenderpart = 0
            irenderplot = irender
@@ -907,7 +907,12 @@ subroutine plotstep(istep,irender,ivecplot, &
                  iadvance = nfreq
                  rendermintemp = rendermin
                  rendermaxtemp = rendermax
-                 call interactive_part(ninterp,iplotx,iploty,iplotz,irenderplot, &
+                 if (icolour_particles) then
+                    irendered = irenderpart
+                 else
+                    irendered = irenderplot
+                 endif
+                 call interactive_part(ninterp,iplotx,iploty,iplotz,irendered, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       dat(1:ninterp,ih),icolourme(1:ninterp), &
                       xmin,xmax,ymin,ymax,xsecpos,dxsec,rendermin,rendermax, &
@@ -1018,7 +1023,7 @@ subroutine plotstep(istep,irender,ivecplot, &
         if (interactive) then
            if (nacross*ndown.eq.1) then
               iadvance = nfreq
-              call interactive_part(ntoti,iplotx,iploty,0,irenderplot, &
+              call interactive_part(ntoti,iplotx,iploty,0,irenderpart, &
                    xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
                    dat(1:ntoti,ih),icolourme(1:ntoti), &
                    xmin,xmax,ymin,ymax,dummy,dummy,rendermin,rendermax, &

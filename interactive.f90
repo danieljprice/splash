@@ -510,21 +510,29 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         if (iplotz.gt.0 .and. ndim.eq.3) then
            print*,'shifting cross section position up by ',dz
            zpos = zpos + dz
+           iadvance = 0
+           iexit = .true.
         endif
      case('U') ! move cross section up by 2*dxsec
         if (iplotz.gt.0 .and. ndim.eq.3) then
            print*,'shifting cross section position up by ',2.*dz
            zpos = zpos + 2.*dz
+           iadvance = 0
+           iexit = .true.
         endif
      case('d') ! move cross section down by dxsec
         if (iplotz.gt.0 .and. ndim.eq.3) then
            print*,'shifting cross section position down by ',dz
            zpos = zpos + dz
+           iadvance = 0
+           iexit = .true.
         endif     
      case('D') ! move cross section down by 2*dxsec
         if (iplotz.gt.0 .and. ndim.eq.3) then
            print*,'shifting cross section position down by ',2.*dz
            zpos = zpos - 2.*dz
+           iadvance = 0
+           iexit = .true.
         endif
      !
      !--general plot stuff
