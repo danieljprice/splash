@@ -54,12 +54,15 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
      print*,'interpolate3D_proj: error: pixel width <= 0'
      return
   endif
-  
-  iprintprogress = npart .gt. 100000
+  !
+  !--print a progress report if it is going to take a long time
+  !  (a "long time" is, however, somewhat system dependent)
+  !
+  iprintprogress = (npart .ge. 100000) .and. (npixx*npixy .gt.11000)
   !
   !--loop over particles
   !
-  iprintnext = 10
+  iprintnext = 25
   
   do i=1,npart
      !
@@ -69,7 +72,7 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
         iprogress = 100*i/npart
         if (iprogress.ge.iprintnext) then
            write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
-           iprintnext = iprintnext + 10
+           iprintnext = iprintnext + 25
         endif
      endif
      !
