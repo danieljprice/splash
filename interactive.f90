@@ -116,7 +116,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         call pgtext(xcoords(iclosest),ycoords(iclosest),string(1:nc))
         call pgsch(1.0)
      case('c','C')
-        print*,'plotting circle of interaction on particle ',iclosest
+        print*,'plotting circle of interaction on particle ',iclosest, &
+               ' h = ',hi(iclosest)
         !--save settings for these
         ncircpart = ncircpart + 1
         if (ncircpart.gt.npart) then
@@ -212,7 +213,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         call save_limits(iplotx,xmin,xmax)
         call save_limits(iploty,ymin,ymax)
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
-        if (irender.le.0 .and. ncircpart.gt.0) call save_circles(ncircpart,icircpart)
+        if (ncircpart.gt.0) call save_circles(ncircpart,icircpart)
         if (rotation) call save_rotation(ndim,anglex,angley,anglez)
         print*,'> plot settings saved <'
      !
@@ -531,12 +532,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      end select
 
      if (rotation) then
-        if (anglez.gt.360.) anglez = anglez - 360.
+        if (anglez.ge.360.) anglez = anglez - 360.
         if (anglez.lt.0.) anglez = anglez + 360.
         if (ndim.gt.2) then
-           if (angley.gt.360.) angley = angley - 360.
+           if (angley.ge.360.) angley = angley - 360.
            if (angley.lt.0.) angley = angley + 360.
-           if (anglex.gt.360.) anglex = anglex - 360.
+           if (anglex.ge.360.) anglex = anglex - 360.
            if (anglex.lt.0.) anglex = anglex + 360.        
         endif
      endif
