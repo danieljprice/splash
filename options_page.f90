@@ -173,10 +173,11 @@ subroutine submenu_page
   case(8)
      ierr = 1
      ntries = 1
+     !--open null device so that colours can be recognised
+     call pgopen('/null')
      do while (ierr /= 0 .and. ntries.le.3)
         call prompt('Enter background colour (by name) ',colour_back)
         call pgscrn(0,colour_back,ierr)
-        if (ierr /= 0) print*,' try again'
         ntries = ntries + 1
      enddo
      ierr = 1
@@ -184,9 +185,10 @@ subroutine submenu_page
      do while (ierr /= 0 .and. ntries.le.3)
         call prompt('Enter foreground colour (by name) ',colour_fore)
         call pgscrn(1,colour_fore,ierr)
-        if (ierr /= 0) print*,' try again'
         ntries = ntries + 1
      enddo
+     call pgclos
+    
      return
   end select
  
