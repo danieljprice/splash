@@ -5,8 +5,9 @@ subroutine menu
   use filenames
   use labels
   use settings_data
-  use settings_part  ! only for iexact
-  use settings_page  ! only for interactive
+  use settings_part, only:iexact,icoordsnew
+  use settings_page, only:interactive
+  use settings_vecplot, only:iplotpartvec
   use multiplot
   use prompting
   use transforms
@@ -181,6 +182,9 @@ subroutine menu
                  endif
               enddo
               ivecplot = ivecplottemp
+              if (ivecplot.gt.0 .and. irender.eq.0) then
+                 call prompt('plot particles?',iplotpartvec)
+              endif
            else
               irender = 0
               ivecplot = 0
@@ -256,8 +260,8 @@ subroutine menu
 !----------------------------------------------------
   subroutine options_multiplot
    !use multiplot
-   use settings_page !! nacross, ndown
-   use settings_render !! only for iplotcont_nomulti
+   use settings_page, only: nacross, ndown
+   use settings_render, only: iplotcont_nomulti
    use settings_xsecrot
    !use prompting
    implicit none
@@ -324,6 +328,9 @@ subroutine menu
             endif
          enddo
          ivecplotmulti(i) = ivecplottemp
+         if (ivecplotmulti(i).gt.0 .and. irendermulti(i).eq.0) then
+            call prompt('plot particles?',iplotpartvec)
+         endif
       endif
    enddo
    

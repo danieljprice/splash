@@ -84,6 +84,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   iplotcont = iplotcont_nomulti
   lastplot = .false.
   iplotpart = .true.
+  if (ivecplot.ne.0) iplotpart = iplotpartvec
   xmin = 0.
   xmax = 0.
   ymin = 0.
@@ -282,6 +283,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
         if (iploty.le.ndataplots .and. iplotx.le.ndataplots) then
            xplot = dat(:,iplotx,i)
            yplot = dat(:,iploty,i)
+           zplot = 0. !--reset later if x-sec
            labelx = label(iplotx)
            labely = label(iploty)
            if (iadvance.ne.0) then
@@ -373,6 +375,9 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            do j=1,ndim
               if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
            enddo
+           if (ixsec.ne.0) then
+              zplot(:) = dat(:,ixsec,i) 
+           endif
            !
            !--set number of particles to use in the interpolation routines
            !  (ie. including only gas particles and ghosts)
@@ -407,6 +412,9 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                   endif
                   xplot(j) = xcoords(iplotx) + xorigin(iplotx)
                   yplot(j) = xcoords(iploty) + xorigin(iploty)
+                  if (ixsec.gt.0) then
+                     zplot(j) = xcoords(ixsec) + xorigin(ixsec)
+                  endif
                enddo
             endif 
 
@@ -456,7 +464,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                     if (.not. x_sec) then
                        allocate ( datpix(npixx,npixy) )
                        call interpolate2D( &
-                            dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
+                            xplot(1:ninterp),yplot(1:ninterp), &
                             dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i), &
                             dat(1:ninterp,ih,i),dat(1:ninterp,irenderplot,i), &
                             ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
@@ -469,8 +477,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                        allocate ( datpix3D(npixx,npixy,npixz) )
                        !!--interpolate from particles to 3D grid
                        call interpolate3D( &
-                            dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
-                            dat(1:ninterp,ixsec,i),dat(1:ninterp,ipmass,i),  &
+                            xplot(1:ninterp),yplot(1:ninterp), &
+                            zplot(1:ninterp),dat(1:ninterp,ipmass,i),  &
                             dat(1:ninterp,irho,i),dat(1:ninterp,ih,i), &
                             dat(1:ninterp,irenderplot,i), &
                             ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dxsec)
@@ -533,8 +541,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                        print*,trim(label(ix(ixsec))),' = ',xsecpos,  &
                             ' : fast cross section', xmin,ymin
                        call interpolate3D_fastxsec( &
-                            dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
-                            dat(1:ninterp,ixsec,i), &
+                            xplot(1:ninterp),yplot(1:ninterp), &
+                            zplot(1:ninterp), &
                             dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),    &
                             dat(1:ninterp,ih,i),dat(1:ninterp,irenderplot,i), &
                             ninterp,xmin,ymin,xsecpos,datpix,npixx,npixy,pixwidth)
@@ -689,12 +697,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                  !-----------------------
                  ! particle plots
                  !-----------------------
-                 if (iplotpart) then                 
-                    if (ixsec.ne.0) then
-                       zplot(1:ntot(i)) = dat(1:ntot(i),ixsec,i)
-                    else
-                       zplot = 0.
-                    endif
+                 if (iplotpart) then
                     call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
                       zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
                       icolourme(1:ntot(i)),npartoftype(:,i),x_sec,xsecmin,xsecmax)
@@ -739,8 +742,9 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                           !
                           !--interpolate vector from particles to cross section
                           !
-                          call interpolate3D_xsec_vec(dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
-                            dat(1:ninterp,ixsec,i),dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),  &
+                          call interpolate3D_xsec_vec(xplot(1:ninterp), &
+                            yplot(1:ninterp),zplot(1:ninterp), &
+                            dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),  &
                             dat(1:ninterp,ih,i),dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
                             ninterp,xmin,ymin,xsecpos, &
                             vecpixx,vecpixy,npixvec,npixyvec,pixwidth)
@@ -866,11 +870,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            !--plot time on plot
            if (nyplot.eq.1) call legend(time(i),hposlegend,vposlegend)
  
-           !if (ixsec.ne.0) then
-           !   zplot(1:ntot(i)) = dat(1:ntot(i),ixsec,i)
-           !else
-              zplot = 0.
-           !endif
            call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
                 zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
                 icolourme(1:ntot(i)),npartoftype(:,i),.false.,xsecmin,xsecmax)
