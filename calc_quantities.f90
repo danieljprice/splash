@@ -237,21 +237,10 @@ subroutine calc_quantities(ifromstep,itostep)
   if (icurr.ne.0) label(icurr) = '|J|'
   if (icrosshel.ne.0) label(icrosshel) = 'B dot v'
   
-  !
-  !--calculate the vector quantities in the new co-ordinate basis
-  !
-  select case(icoords)
-  case(2)
-     if (ivpar.ne.0) label(ivpar) = 'v_r'
-     if (ivperp.ne.0) label(ivperp) = 'v_phi'
-     if (iBpar.ne.0) label(iBpar) = 'B_r'
-     if (iBperp.ne.0) label(iBperp) = 'B_phi'  
-  case default
-     if (ivpar.ne.0) label(ivpar) = 'v\d\(0737)'  !!!_parallel'
-     if (ivperp.ne.0) label(ivperp) = 'v\d\(0738)' !!_perp'
-     if (iBpar.ne.0) label(iBpar) = 'B\d\(0737)'  !!_parallel'
-     if (iBperp.ne.0) label(iBperp) = 'B\d\(0738)' !!_perp'
-  end select
+  if (ivpar.ne.0) label(ivpar) = 'v\d\(0737)'  !!!_parallel'
+  if (ivperp.ne.0) label(ivperp) = 'v\d\(0738)' !!_perp'
+  if (iBpar.ne.0) label(iBpar) = 'B\d\(0737)'  !!_parallel'
+  if (iBperp.ne.0) label(iBperp) = 'B\d\(0738)' !!_perp'
   
   return
 end subroutine calc_quantities
