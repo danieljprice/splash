@@ -7,10 +7,10 @@ module settings_render
  integer :: ncontours,npix,icolours
  logical :: iplotcont_nomulti
  logical :: iPlotColourBar,icolour_particles
- real :: ColourBarDisp,ColourBarWidth
+ real :: ColourBarDisp
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
-   iPlotColourBar,icolour_particles,ColourBarDisp,ColourBarWidth
+   iPlotColourBar,icolour_particles,ColourBarDisp
 
 contains
 
@@ -26,8 +26,7 @@ subroutine defaults_set_render
   iplotcont_nomulti = .false. ! plot contours
   icolour_particles = .false. ! colour particles instead of using pixels
   ncontours = 30             ! number of contours to plot
-  ColourBarDisp = 0.5
-  ColourBarWidth = 4.5
+  ColourBarDisp = 3.2
 
   return
 end subroutine defaults_set_render
@@ -95,10 +94,8 @@ subroutine submenu_render
        call prompt(' plot colour bar? ',iPlotColourBar)
        print*,'plot colour bar = ',iPlotColourBar
        if (iPlotColourBar) then
-          call prompt(' enter displacement from edge (character heights) ', &
+          call prompt(' enter displacement of text from edge (character heights) ', &
                       ColourBarDisp)
-          call prompt(' enter total width (bar+label) (character heights) ', &
-                      ColourBarWidth,0.0)
        endif
 !------------------------------------------------------------------------
     case(6)

@@ -72,14 +72,27 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  
 end subroutine render_pix
 
+!-------------------------------------------------------
+! this subroutine interfaces to my version of PGWEDG
+! which plots the colour bar (differences are that
+! text is written vertically, txtsep is a
+! changeable parameter and the character height
+! is not changed)
+!-------------------------------------------------------
 subroutine colourbar(icolours,datmin,datmax,label,log) 
- use settings_render, only:ColourBarDisp,ColourBarWidth
+ use settings_render, only:ColourBarDisp
  implicit none
  integer, intent(in) :: icolours
  real, intent(in) :: datmin,datmax
  character(len=*), intent(in) :: label
  logical, intent(in) :: log
  character(len=1) :: clog
+ real :: disp, width
+!
+!--set colour bar displacement and width in character heights
+!
+ disp = 0.5
+ width = 6.5
 !
 !--set character to send to pgwedg call if log (danpgwedg only) 
 !
@@ -89,11 +102,9 @@ subroutine colourbar(icolours,datmin,datmax,label,log)
 !--Note that plots use my modification of pgwedg which plots vertical numbers on axes
 !          
  if (icolours.eq.1) then        ! greyscale
-    call danpgwedg('rgv'//clog,ColourBarDisp, &
-                    ColourBarWidth,datmin,datmax,trim(label))
+    call danpgwedg('rgv'//clog,disp,width,datmin,datmax,trim(label),ColourBarDisp)
  elseif (icolours.gt.1) then        ! colour
-    call danpgwedg('riv'//clog,ColourBarDisp, &
-                   ColourBarWidth,datmin,datmax,trim(label))
+    call danpgwedg('riv'//clog,disp,width,datmin,datmax,trim(label),ColourBarDisp)
  endif
 
  return

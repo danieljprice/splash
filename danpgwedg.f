@@ -2,9 +2,9 @@ C*PGWEDG -- annotate an image plot with a wedge
 C%void cpgwedg(const char *side, float disp, float width, \
 C% float fg, float bg, const char *label);
 C+
-      SUBROUTINE DANPGWEDG(SIDE, DISP, WIDTH, FG, BG, LABEL)
+      SUBROUTINE DANPGWEDG(SIDE, DISP, WIDTH, FG, BG, LABEL, TXTSEP)
       CHARACTER *(*) SIDE,LABEL
-      REAL DISP, WIDTH, FG, BG
+      REAL DISP, WIDTH, FG, BG, TXTSEP
 C
 C Plot an annotated grey-scale or color wedge parallel to a given axis
 C of the the current viewport. This routine is designed to provide a
@@ -32,6 +32,7 @@ C  BG     (input)  : the value which is to appear with shade
 C                    0 ("background").
 C  LABEL  (input)  : Optional units label. If no label is required
 C                    use ' '.
+C  TXTSEP (input)  : separation of text from side of viewport
 C--
 C  15-Oct-1992: New routine (MCS)
 C   2-Aug-1995: no longer needs common (TJP).
@@ -58,8 +59,11 @@ C                          Set the fraction of WIDTH used for anotation.
       REAL TXTFRC
       PARAMETER (TXTFRC=0.6)
 C                          Char separation between numbers and LABEL.
-      REAL TXTSEP
-      PARAMETER (TXTSEP=2.2)
+C      REAL TXTSEP
+C      PARAMETER (TXTSEP=2.2)
+C--DJP: for vertical text increase the separation
+C      PARAMETER(TXTSEP=3.2)
+      
 C                          Array to draw wedge in.
       INTEGER WDGPIX
       PARAMETER (WDGPIX=400)
@@ -112,7 +116,7 @@ C
 C
 C Determine the unit character height in NDC coords.
 C
-      CALL PGSCH(1.0)
+c      CALL PGSCH(1.0)
       CALL PGQCS(0, XCH, YCH)
       IF(HORIZ) THEN
         NDCSIZ = YCH
@@ -134,7 +138,7 @@ C Determine and set the character height required to fit the wedge
 C anotation text within the area allowed for it.
 C
       NEWCH = TXTFRC*VWIDTH / (LABWID*NDCSIZ)
-      CALL PGSCH(NEWCH)
+c      CALL PGSCH(NEWCH)
 C
 C Determine the width of the wedge part of the plot minus the anotation.
 C (NDC units).
