@@ -45,7 +45,7 @@ subroutine get_data
      !
      !--calculate various additional quantities
      !     
-     !!call calc_quantities	  
+     call calc_quantities	  
      !
      !--read plot limits from file, otherwise set plot limits
      !

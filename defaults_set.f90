@@ -32,7 +32,7 @@ subroutine defaults_set
   plotcircall = .false.	!  " " around all particle
   icircpart = 1		!  " " around a specific particle
   ncircpart = 1
-  interactive = .false.
+  interactive = .true.
   animate = .false.
   tile = .false.
   itrackpart = 0
