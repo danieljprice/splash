@@ -267,6 +267,7 @@ contains
     use settings_part, only:maxexactpts,iExactLineColour,iExactLineStyle
     use prompting
     use exactfromfile, only:exact_fromfile
+    use mhdshock, only:exact_mhdshock
     use polytrope, only:exact_polytrope
     use rhoh, only:exact_rhoh
     use sedov, only:exact_sedov
@@ -435,27 +436,36 @@ contains
        endif
 
     case(6) ! mhd shock tubes
+       ! this subroutine modifies xexact
        if (iplotx.eq.ix(1)) then
           !--prompt for shock type if not set  
           if (ishk.eq.0) then ! prompt
              call prompt('enter shock solution to plot',ishk,0,6)
           endif
           if (iploty.eq.irho) then
-             call exact_mhdshock(1,ishk,time,gamma,xmin,xmax)
+             call exact_mhdshock(1,ishk,time,gamma,xmin,xmax, &
+                                 xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_mhdshock(2,ishk,time,gamma,xmin,xmax)
+             call exact_mhdshock(2,ishk,time,gamma,xmin,xmax, &
+                                 xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.ivx) then
-             call exact_mhdshock(3,ishk,time,gamma,xmin,xmax)
+             call exact_mhdshock(3,ishk,time,gamma,xmin,xmax, &
+                                 xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.ivx+1 .and. ndimV.gt.1) then
-             call exact_mhdshock(4,ishk,time,gamma,xmin,xmax)
+             call exact_mhdshock(4,ishk,time,gamma,xmin,xmax, &
+                                 xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.ivx+ndimV-1 .and. ndimV.gt.2) then
-             call exact_mhdshock(5,ishk,time,gamma,xmin,xmax)
+             call exact_mhdshock(5,ishk,time,gamma,xmin,xmax, &
+                                 xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.ibfirst+1 .and. ndimV.gt.1) then
-             call exact_mhdshock(6,ishk,time,gamma,xmin,xmax)
+             call exact_mhdshock(6,ishk,time,gamma,xmin,xmax, &
+                                 xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.ibfirst+ndimV-1 .and. ndimV.gt.2) then
-             call exact_mhdshock(7,ishk,time,gamma,xmin,xmax)
+             call exact_mhdshock(7,ishk,time,gamma,xmin,xmax, &
+                                 xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.iutherm) then
-             call exact_mhdshock(8,ishk,time,gamma,xmin,xmax)
+             call exact_mhdshock(8,ishk,time,gamma,xmin,xmax, &
+                                 xexact,yexact,iexactpts,ierr)
           endif
        endif
     case(7) 
@@ -488,8 +498,8 @@ contains
     !  plot this as a line on the current graph using PGPLOT
     !----------------------------------------------------------
     if (ierr.le.0) then
-       if (itransx.gt.0) call transform(xexact,itransx)
-       if (itransy.gt.0) call transform(yexact,itransy)
+       if (itransx.gt.0) call transform(xexact(1:iexactpts),itransx)
+       if (itransy.gt.0) call transform(yexact(1:iexactpts),itransy)
        call pgline(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
     endif
     !

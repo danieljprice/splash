@@ -2,48 +2,53 @@
 ! Plot exact solution for a magnetohydrodynamic shock
 ! (ie. one dimensional MHD Riemann problem)
 !
-! At the moment these are just taken from the tables in 
+! For want of a better solution these are just taken from the tables in 
 ! Ryu & Jones (1995), ApJ 442, 228 or from ruler and pencil
 ! on the results in Balsara (1998)
 !
 ! ----------------------------------------------------------------------
+module mhdshock
+ implicit none
+ public :: exact_mhdshock
+ 
+contains
 
-SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
-  !!     &           rho_L,rho_R,pr_L,pr_R,vx_L,vx_R,xmin,xmax)
-  IMPLICIT NONE
-  INTEGER, PARAMETER :: maxpts=16
-  INTEGER, INTENT(IN) :: iplot,ishk
-  REAL, INTENT(in) :: time,gamma,xmin,xmax
-  !! REAL, INTENT(in) :: rho_L,rho_R,pr_L,pr_R,vx_L,vx_R
-  REAL, DIMENSION(maxpts) :: xplot,yplot
-  REAL, DIMENSION(maxpts) :: rho,pr,vx,vy,vz,By,Bz
-  REAL :: const
-  INTEGER :: npts
+subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
+  implicit none
+  integer, intent(in) :: iplot,ishk
+  integer, intent(out) :: npts,ierr
+  real, intent(in) :: time,gamma,xmin,xmax
+  real, dimension(:), intent(inout) :: xpts
+  real, dimension(size(xpts)), intent(out) :: ypts
+  
+  real, dimension(16) :: rho,pr,vx,vy,vz,By,Bz
+  real :: const
 
-  PRINT*,' Plotting exact mhd shock #',ishk,' at t = ',time
+  print*,' Plotting exact mhd shock #',ishk,' at t = ',time
   !
   !--set up grid for exact solution
   !          
   const = 1./SQRT(4.*3.1415926536)
+  ierr = 0
 
-  SELECT CASE(ishk)   ! which solution to plot
-  CASE(1)
+  select case(ishk)   ! which solution to plot
+  case(1)
      !
      !--Brio & Wu problem with gamma = 2
      !
      vz = 0.
      Bz = 0.
      npts = 14
-     xplot(1) = xmin
-     xplot(2) = -0.18
-     xplot(3) = -0.08
-     xplot(4:6) = -0.03
-     xplot(7) = -0.005
-     xplot(8:9) = 0.06
-     xplot(10:11) = 0.147
-     xplot(12) = 0.33
-     xplot(13) = 0.36
-     xplot(14) = xmax
+     xpts(1) = xmin
+     xpts(2) = -0.18
+     xpts(3) = -0.08
+     xpts(4:6) = -0.03
+     xpts(7) = -0.005
+     xpts(8:9) = 0.06
+     xpts(10:11) = 0.147
+     xpts(12) = 0.33
+     xpts(13) = 0.36
+     xpts(14) = xmax
 
      rho(1:2) = 1.0
      rho(3:4) = 0.675
@@ -86,22 +91,22 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
      By(11:12) = -3.25*const
      By(13:14) = -1.0
 
-  CASE(2)
+  case(2)
      !
      !--fast/slow shock from RJ95
      !    
      vz = 0.
      Bz = 0.
      npts = 12
-     xplot(1) = xmin
-     xplot(2) = -0.27
-     xplot(3) = -0.09
-     xplot(4) = -0.03
-     xplot(5) = -0.01
-     xplot(6:7) = 0.135
-     xplot(8:9) = 0.25
-     xplot(10:11) = 0.35
-     xplot(12) = xmax
+     xpts(1) = xmin
+     xpts(2) = -0.27
+     xpts(3) = -0.09
+     xpts(4) = -0.03
+     xpts(5) = -0.01
+     xpts(6:7) = 0.135
+     xpts(8:9) = 0.25
+     xpts(10:11) = 0.35
+     xpts(12) = xmax
 
      rho(1:2) = 1.0
      rho(3:4) = 0.5955
@@ -134,20 +139,20 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
      By(9:10) = 0.43086
      By(11:12) = 0.0
 
-  CASE(3)
+  case(3)
      !
      !--problem with 7 discontinuities from RJ95
      !    
      npts = 16
-     xplot(1) = xmin
-     xplot(2:3) = -0.19
-     xplot(4:5) = 0.03
-     xplot(6:7) = 0.051
-     xplot(8:9) = 0.12     ! contact discontinuity
-     xplot(10:11) = 0.18 
-     xplot(12:13) = 0.205 
-     xplot(14:15) = 0.45
-     xplot(16) = xmax
+     xpts(1) = xmin
+     xpts(2:3) = -0.19
+     xpts(4:5) = 0.03
+     xpts(6:7) = 0.051
+     xpts(8:9) = 0.12     ! contact discontinuity
+     xpts(10:11) = 0.18 
+     xpts(12:13) = 0.205 
+     xpts(14:15) = 0.45
+     xpts(16) = xmax
 
      rho(1:2) = 1.08
      rho(3:4) = 1.4903
@@ -201,19 +206,19 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
      Bz(13:14) = 0.75392
      Bz(15:16) = 0.56419
 
-  CASE(4)
+  case(4)
      !
      !--isothermal MHD problem from Balsara (1998)
      !    
      npts = 14
-     xplot(1) = xmin
-     xplot(2:3) = -0.15
-     xplot(4:5) = 0.035
-     xplot(6:7) = 0.07
-     xplot(8:9) = 0.17 
-     xplot(10:11) = 0.2 
-     xplot(12:13) = 0.41
-     xplot(14) = xmax
+     xpts(1) = xmin
+     xpts(2:3) = -0.15
+     xpts(4:5) = 0.035
+     xpts(6:7) = 0.07
+     xpts(8:9) = 0.17 
+     xpts(10:11) = 0.2 
+     xpts(12:13) = 0.41
+     xpts(14) = xmax
 
      rho(1:2) = 1.08
      rho(3:6) = 1.515
@@ -261,7 +266,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
 
      pr = rho
 
-  CASE(5)
+  case(5)
      !
      !--rarefaction from RJ95
      !
@@ -269,12 +274,12 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
      vy = 0.
      vz = 0.
      Bz = 0.
-     xplot(1) = xmin
-     xplot(2) = -0.27
-     xplot(3) = -0.12
-     xplot(4) = 0.12
-     xplot(5) = 0.27
-     xplot(6) = xmax
+     xpts(1) = xmin
+     xpts(2) = -0.27
+     xpts(3) = -0.12
+     xpts(4) = 0.12
+     xpts(5) = 0.27
+     xpts(6) = xmax
 
      rho(1:2) = 1.0
      rho(3:4) = 0.49653
@@ -292,7 +297,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
      By(3:4) = 0.49638
      By(5:6) = 1.0
 
-  CASE(6)
+  case(6)
      !
      !--mach 25 shocks from Dai and Woodward (1994)
      !
@@ -311,10 +316,10 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
      !      in this case we know the positions at all times
      !      because of the Mach #
      !
-     xplot(1) = xmin
-     xplot(2:3) = -0.35!-machno*vs*time
-     xplot(4:5) = 0.35!machno*vs*time
-     xplot(6) = xmax
+     xpts(1) = xmin
+     xpts(2:3) = -0.35!-machno*vs*time
+     xpts(4:5) = 0.35!machno*vs*time
+     xpts(6) = xmax
 
      !       PRINT*,'speed, pos = ',vs*machno,vs,machno*vs*time,0.33/time
 
@@ -338,18 +343,18 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
      Bz(3:4) = 3.988*const
      Bz(5:6) = 1.0*const
 
-  CASE(7)
+  case(7)
      !
      !--Problem 1A in Ryu and Jones (1995)
      !
      npts = 12
-     xplot(1) = xmin
-     xplot(2:3) = -0.386
-     xplot(4:5) = -0.01
-     xplot(6:7) = 0.0505
-     xplot(8:9) = 0.12
-     xplot(10:11) = 0.37
-     xplot(12) = xmax
+     xpts(1) = xmin
+     xpts(2:3) = -0.386
+     xpts(4:5) = -0.01
+     xpts(6:7) = 0.0505
+     xpts(8:9) = 0.12
+     xpts(10:11) = 0.37
+     xpts(12) = xmax
      
      rho(1:2) = 1.0
      rho(3:4) = 2.6797
@@ -386,40 +391,41 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
 
      Bz(1:12) = 0.0
 
-  END SELECT
+  case default
+     ierr = 1
+
+  end select
   !
   !--determine which parameter to plot
   !
-  SELECT CASE(iplot)
-  CASE(1)
-     yplot = rho
-  CASE(2)
-     yplot = pr
-  CASE(3)
-     yplot = vx
-  CASE(4)
-     yplot = vy
-  CASE(5)
-     yplot = vz
-  CASE(6)
-     yplot = By
-  CASE(7)
-     yplot = Bz
-  CASE(8)
-     PRINT*,'gamma = ',gamma
-     IF (abs(gamma-1.).GT.1.e-5) THEN
-        WHERE (abs(rho) > 0.)
-           yplot = pr / ((gamma-1.)*rho)
-        END WHERE
-     ELSE
-        PRINT*,' ***isothermal: utherm solution not valid'
-        yplot = 0.  
-     ENDIF
-  END SELECT
-  !
-  !--plot exact line using PGPLOT
-  !
-  CALL PGLINE(npts,xplot(1:npts),yplot(1:npts))
+  select case(iplot)
+  case(1)
+     ypts(1:npts) = rho(1:npts)
+  case(2)
+     ypts(1:npts) = pr(1:npts)
+  case(3)
+     ypts(1:npts) = vx(1:npts)
+  case(4)
+     ypts(1:npts) = vy(1:npts)
+  case(5)
+     ypts(1:npts) = vz(1:npts)
+  case(6)
+     ypts(1:npts) = By(1:npts)
+  case(7)
+     ypts(1:npts) = Bz(1:npts)
+  case(8)
+     print*,'gamma = ',gamma
+     if (abs(gamma-1.).gt.1.e-5) then
+        where (abs(rho(1:npts)) > 0.)
+           ypts(1:npts) = pr(1:npts) / ((gamma-1.)*rho(1:npts))
+        end where
+     else
+        print*,' ***isothermal: utherm solution not valid'
+        ypts(1:npts) = 0.  
+     endif
+  end select
+  
+  return
+end subroutine exact_mhdshock
 
-  RETURN
-END SUBROUTINE exact_mhdshock
+end module mhdshock
