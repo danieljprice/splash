@@ -10,7 +10,7 @@
 !
 ! ncolumns    : number of data columns
 ! ndim, ndimV : number of spatial, velocity dimensions
-! nfilesteps  : number of steps read from this file
+! ifinish  : number of steps read from this file
 ! hfact       : constant relating smoothing length to particle spacing
 ! ivegotdata  : flag which indicates successful data read
 !
@@ -30,14 +30,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,istart,nfilesteps)
+subroutine read_data(rootname,istart,ifinish)
   use particle_data
   use params
   use labels
   use settings
   implicit none
   integer, intent(IN) :: istart
-  integer, intent(OUT) :: nfilesteps
+  integer, intent(OUT) :: ifinish
   character(LEN=*), intent(IN) :: rootname
   character(LEN=LEN(rootname)+10) :: datfile
   character(LEN=2) :: fileno
@@ -78,7 +78,7 @@ subroutine read_data(rootname,istart,nfilesteps)
   ivegotdata = .false.  
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
-     print*,' *** error: ',trim(datfile),' file not found ***'    
+     print "(a)",' *** error: ',trim(datfile),' file not found ***'    
      return
   endif
 !
@@ -148,18 +148,27 @@ subroutine read_data(rootname,istart,nfilesteps)
         !--read positions of all particles
         !
 	print*,'positions ',ntot(i)
-        read (11, end=66) dattemp(1:3,1:ntot(i))	
-	do icol=1,3
-	   dat(1:ntot(i),icol,i) = dattemp(icol,1:ntot(i))
-	enddo
+        read (11, iostat=ierr) dattemp(1:3,1:ntot(i))	
+	if (ierr /= 0) then
+	   print *,'error encountered whilst reading positions ', ierr
+	   return
+	else
+	   do icol=1,3
+	      dat(1:ntot(i),icol,i) = dattemp(icol,1:ntot(i))
+	   enddo
+	endif
 	!
         !--same for velocities
         !
 	print*,'velocities ',ntot(i)
-        read (11, end=66,ERR=72) dattemp(1:3,1:ntot(i))		
-	do icol=4,6
-	   dat(1:ntot(i),icol,i) = dattemp(icol-3,1:ntot(i))
-	enddo
+        read (11, iostat=ierr) dattemp(1:3,1:ntot(i))
+	if (ierr /= 0) then
+	   print "(a)",'error encountered whilst reading velocities'
+	else	
+	   do icol=4,6
+	      dat(1:ntot(i),icol,i) = dattemp(icol-3,1:ntot(i))
+	   enddo
+	endif
 	!
         !--read particle ID
 	!
@@ -253,7 +262,7 @@ subroutine read_data(rootname,istart,nfilesteps)
      endif
   enddo
 
-  nfilesteps = i-1		! this is if reached array limits
+  ifinish = i-1		! this is if reached array limits
   !!ntot(i-1) = j-1
 !
 !--now memory has been allocated, set arrays which are constant for all time
@@ -264,13 +273,13 @@ subroutine read_data(rootname,istart,nfilesteps)
 
 66 continue
   print*,'*** end of file reached in ',trim(datfile),' ***'
-  nfilesteps = i		! timestep there but data incomplete
+  ifinish = i		! timestep there but data incomplete
   ntot(i) = j-1
   nghost(i) = 0.
   goto 68
 
 67 continue
-  nfilesteps = i-1		! no timestep there at all
+  ifinish = i-1		! no timestep there at all
 
 68 continue
   !
@@ -282,7 +291,7 @@ subroutine read_data(rootname,istart,nfilesteps)
   ncolumns = ncol_max
   print*,'ncolumns = ',ncolumns
 
-  print*,'>> Finished reading: steps =',nfilesteps,'last step ntot = ',ntot(nfilesteps)
+  print*,'>> Finished reading: steps =',ifinish,'last step ntot = ',ntot(ifinish)
   return    
 !
 !--errors

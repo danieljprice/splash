@@ -44,7 +44,7 @@ LDFLAGS = -lpgplot -lX11 -lF77
 	$(F90C) $(F90FLAGS) -c $< -o $@
 
 DANSPH = read_data_dansph.f90 
-MRBSPH = read_data_mbate_dump.f90 ## read_data_mbate.f90
+MRBSPH = read_data_mbate.f90
 GADGETSPH = read_data_gadget.f90
 
 # put modules separately as these must be compiled before the others

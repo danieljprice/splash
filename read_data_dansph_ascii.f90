@@ -8,7 +8,7 @@
 !
 ! ncolumns    : number of data columns
 ! ndim, ndimV : number of spatial, velocity dimensions
-! nfilesteps  : number of steps read from this file
+! ifinish  : number of steps read from this file
 ! hfact       : constant relating smoothing length to particle spacing
 ! ivegotdata  : flag which indicates successful data read
 !
@@ -27,14 +27,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,istart,nfilesteps)
+subroutine read_data(rootname,istart,ifinish)
   use particle_data
   use params
   use labels
   use settings
   implicit none
   integer, intent(IN) :: istart
-  integer, intent(OUT) :: nfilesteps
+  integer, intent(OUT) :: ifinish
   character(LEN=*), intent(IN) :: rootname
   character(LEN=LEN(filename)+10) :: datfile
   character(LEN=2) :: fileno
@@ -70,7 +70,7 @@ subroutine read_data(rootname,istart,nfilesteps)
   !
   open(unit=11,ERR=81,file=datfile,status='old',form='formatted')
 
-  nfilesteps = 100000
+  ifinish = 100000
 !
 !--read first header line
 !
@@ -98,7 +98,7 @@ subroutine read_data(rootname,istart,nfilesteps)
 !
   rewind(11)
 
-  do i=istart,nfilesteps
+  do i=istart,ifinish
      reallocate = .false.
      npart_max = maxpart
      nstep_max = maxstep
@@ -156,19 +156,19 @@ subroutine read_data(rootname,istart,nfilesteps)
 
   print*,' REACHED ARRAY LIMITS IN READFILE'
 
-  nfilesteps = i-1		! this is if reached array limits
+  ifinish = i-1		! this is if reached array limits
   ntot(i-1) = j-1
   nghost(i-1) = ntot(i-1) - npart(i-1)
   goto 68
 
 66 continue
-  nfilesteps = i		! timestep there but data incomplete
+  ifinish = i		! timestep there but data incomplete
   ntot(i) = j-1
   nghost(i) = ntot(i) - npart(i)
   goto 68
 
 67 continue
-  nfilesteps = i-1		! no timestep there at all
+  ifinish = i-1		! no timestep there at all
 
 68 continue
   !
@@ -182,7 +182,7 @@ subroutine read_data(rootname,istart,nfilesteps)
   ndimV = ndimV_max
   print*,'ncolumns = ',ncolumns
 
-  print*,'>> READ all steps =',nfilesteps,'last step ntot = ',ntot(nfilesteps)
+  print*,'>> READ all steps =',ifinish,'last step ntot = ',ntot(ifinish)
 
   !!------------------------------------------------------------
   !! set labels for each column of data

@@ -72,6 +72,7 @@ program supersphplot
 !     this version for both ndspmhd and matthew bate's code 2003-2004
 !     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
 !
+!      14/09/04 - working on buffering of data read
 !      20/08/04 - vectorplot replaced by interpolate_vec
 !      19/08/04 - azimuthal rotation works, interactive limits not permanent,
 !                 dat restructured, various clean ups.
@@ -192,9 +193,17 @@ program supersphplot
 
   if (rootname(1)(1:1).ne.' ') then
      ihavereadfilename = .true.
-     call get_data
+     if (buffer_data) then
+        call get_data(-1)
+     else
+        call get_data(1)
+     endif
   else
-     call get_data
+     if (buffer_data) then
+        call get_data(-1)
+     else
+        call get_data(1)
+     endif
   endif
   ! -----------------------------------------------------------
   ! setup kernel table for fast column density plots in 3D
@@ -204,9 +213,5 @@ program supersphplot
   ! enter main menu
   !
   call menu
-  
-  ! ------------------------------
-  ! print a random exit message
-  print*,' ta ta for now...'
                 
 end program supersphplot

@@ -16,7 +16,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   integer, intent(in) :: ipicky, ipickx, irender, ivecplot
 
   integer, parameter :: maxtitles = 50
-  integer :: i,j,k,n,ierr
+  integer :: i,j,k,n,ierr,ifile
   integer :: iplotx,iploty,irenderplot,ivectorplot,ivecx,ivecy
   integer :: nyplot,nyplots      
   integer :: ninterp,npart1,npartdim
@@ -230,8 +230,44 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   !------------------------------------------------------------------------            
   i = nstart
   iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
+  ifile = 1
 
   over_timesteps: do while (i.le.n_end)
+  
+     if (.not.buffer_data) then
+        if (i.gt.nstepsinfile(ifile)) then
+	   ihavereadfilename = .true.
+           ifile = ifile+1
+	   if (ifile.le.nfiles) then
+	      call get_data(ifile)
+	      i = 1
+	   else
+	      exit over_timesteps
+	   endif
+        elseif (i.lt.1) then
+	   ihavereadfilename = .true.
+           ifile = ifile-1
+	   if (ifile.ge.1) then
+	      call get_data(ifile)
+	   else
+	      ifile = 1
+	   endif
+	   i = 1
+	endif
+     else
+        if (i.gt.nstepsinfile(ifile)) then
+	   exit
+	endif
+        if (i.lt.1) then
+           print*,'reached first step: can''t go back'
+     	   i = 1
+        endif
+	if (i.lt.nstart) then
+           print*,'warning: i < nstart'
+        endif
+	
+     endif
+     
      npart1 = npart(i) + 1
      irenderprev = 0
      istepprev = 0  
@@ -983,12 +1019,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 !--increment timestep
 !
      i = i + iadvance
-     if (i.lt.1) then
-        print*,'reached first step: can''t go back'
-	i = 1
-     elseif (i.lt.nstart) then
-        print*,'warning: i < nstart'
-     endif
 
   enddo over_timesteps
 

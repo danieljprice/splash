@@ -24,6 +24,7 @@ subroutine defaults_set
   nfreq = 1		! frequency of timesteps to read
   icoords = 1	! co-ordinate system of simulation
   icoordsnew = icoords ! co-ordinate system to plot in
+  buffer_data = .true.
 !
 !--default for interactive mode
 !

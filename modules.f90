@@ -29,8 +29,9 @@ end module particle_data
 module filenames
  implicit none
  integer, parameter :: maxfile = 501
- integer :: ifile,nfilesteps,nfiles
+ integer :: nfiles,nstepstotal
  character(len=120), dimension(maxfile) :: rootname
+ integer, dimension(maxfile) :: nstepsinfile
 end module filenames
 !
 !--labels for all plots and the locations of certain useful variables
@@ -82,7 +83,7 @@ module settings
 !--data options
 !
  integer :: nstart,n_end,nfreq
- logical :: ihavereadfilename, ivegotdata
+ logical :: ihavereadfilename, ivegotdata, buffer_data
 !
 !--particle plot options
 !
@@ -137,7 +138,7 @@ module settings
    iexact,iplotav,nbins,                                &
    icolours,                      &
    ipowerspecy,idisordered,wavelengthmax,nfreqspec,icoordsnew, &
-   ncircpart,icircpart
+   ncircpart,icircpart,buffer_data
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive, &
    ipagechange,tile,animate,ipapersize,papersizex,aspectratio, &

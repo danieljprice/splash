@@ -13,8 +13,7 @@
 !
 ! ncolumns    : number of data columns
 ! ndim, ndimV : number of spatial, velocity dimensions
-! nfilesteps  : number of steps read from this file
-! hfact       : constant relating smoothing length to particle spacing
+! ifinish  : number of steps read from this file
 ! ivegotdata  : flag which indicates successful data read
 !
 ! maxplot,maxpart,maxstep      : dimensions of main data array
@@ -32,15 +31,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,istart,nfilesteps)
+subroutine read_data(rootname,istart,ifinish)
   use particle_data
-  use timestep_header
   use params
   use settings
   implicit none
   integer, intent(IN) :: istart
-  integer, intent(OUT) :: nfilesteps
-  character(LEN=2) :: fileno
+  integer, intent(OUT) :: ifinish
+  character(LEN=3) :: fileno
   character(LEN=*), intent(IN) :: rootname
   integer :: i,j,k,ifile
   integer :: ncol_max,nstep_max
@@ -57,14 +55,38 @@ subroutine read_data(rootname,istart,nfilesteps)
   real*8 :: udisti,umassi,utimei, umagfdi, timei, gammai
   real*8 :: escap,tkin,tgrav,tterm,tmag
 
-!
-!--assume MHD if filename starts with m
-!
+  !
+  !--for rootnames without the '00', read all files starting at #1
+  !
+  if (len_trim(rootname).lt.7) then
+     ifile = 1
+     if (len_trim(rootname).eq.4) then
+        write(fileno,"(i1,i1,i1)") ifile/100,mod(ifile,100)/10,mod(ifile,10)
+        dumpfile = rootname(1:4)//fileno 
+     elseif (len_trim(rootname).eq.5) then
+        write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
+        dumpfile = rootname(1:5)//trim(fileno)     
+     endif
+  else
+     dumpfile = trim(rootname)   
+  endif
+  !
+  !--check if first data file exists
+  !
+  ivegotdata = .false.
+  inquire(file=dumpfile,exist=iexist)
+  if (.not.iexist) then
+     print "(a)",' *** error: ',trim(dumpfile),' file not found ***'    
+     return
+  endif
+  !
+  !--assume MHD if filename starts with m
+  !
   magfield = .false.
   if (rootname(1:1).EQ.'m') magfield = .true.
-!
-!--fix number of spatial dimensions
-!
+  !
+  !--fix number of spatial dimensions
+  !
   ndim = 3
   ndimV = 3
   if (magfield) then
@@ -72,52 +94,41 @@ subroutine read_data(rootname,istart,nfilesteps)
   else 
      ncolumns = 11
   endif
-  ivegotdata = .false.
-  iexist = .false.
-!
-!--handle filenames of type dumps00 or dump000
-!
-  if (rootname(5:5).ge.'0' .and. rootname(5:5).le.'9') then
-     ifile = int_from_string(rootname(5:7))  
-     write(fileno,"(i1,i1,i1)") ifile/100,ifile/10,mod(ifile,10)
-     dumpfile = rootname(1:5)//fileno
-  else
-     ifile = int_from_string(rootname(6:7))  
-     write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
-     dumpfile = rootname(1:5)//fileno
-  endif  
-  write(*,"(23('-'),1x,a,1x,23('-'))") trim(dumpfile)
+  
   !
   !--allocate memory initially
   !
   ncol_max = max(ncolumns,ncol_max)
-  nstep_max = max(nstep_max,istart,10)
- !
- !--open the (unformatted) binary file and read the number of particles
- !
-  open(unit=15,file=dumpfile,status='old',form='unformatted')
-!
-!--read the number of particles in the first step,
-!  allocate memory and rewind
-!
-  read(15,end=55) udisti,umassi,utimei,umagfdi,nprint 
-  print*,'nprint = ',nprint
-  if (.not.allocated(dat) .or. nprint.gt.ntotin) then
-     ntotin = max(ntotin,1.1*nprint)
-     call alloc(ntotin,nstep_max,ncol_max)
-  endif
-  rewind(15)
+  nstep_max = max(nstep_max,istart,11)
+
+  j = istart
+  
+  do while (iexist)
+     write(*,"(23('-'),1x,a,1x,23('-'))") trim(dumpfile)
+     !
+     !--open the (unformatted) binary file and read the number of particles
+     !
+     open(unit=15,file=dumpfile,status='old',form='unformatted')
+     !
+     !--read the number of particles in the first step,
+     !  allocate memory and rewind
+     !
+     read(15,end=55) udisti,umassi,utimei,umagfdi,nprint 
+     if (.not.allocated(dat) .or. nprint.gt.ntotin) then
+        ntotin = max(ntotin,1.1*nprint)
+        call alloc(ntotin,nstep_max,ncol_max)
+     endif
+     rewind(15)
 !
 !--loop over the timesteps in this file
 !     
-     do j=istart,100000
-     
+     over_steps_in_file: do     
         ntotin = max(ntotin,nprint)
 !
 !--allocate/reallocate memory if j > maxstep
 !
 	if (j.gt.maxstep) then
-	   call alloc(maxpart,j,maxcol)
+	   call alloc(maxpart,j+10,maxcol)
 	endif
 !
 !--allocate a temporary array for double precision variables
@@ -127,8 +138,7 @@ subroutine read_data(rootname,istart,nfilesteps)
 !
 !--now read the timestep data in the dumpfile
 !
-
-        read(15,end=55) udisti, umassi, utimei, umagfdi,  &
+        read(15,end=55,err=56) udisti, umassi, utimei, umagfdi,  &
           nprint, nghosti, n1, n2, timei, gammai, rhozero, RK2, &
 	  (dattemp(i,7), i=1, nprint), (dattemp(i,8), i=1,nprint), &
           escap, tkin, tgrav, tterm, tmag, &
@@ -158,17 +168,46 @@ subroutine read_data(rootname,istart,nfilesteps)
 	  gamma(j) = real(gammai)
 	  time(j) = real(timei)
           if (ntotin.eq.130000) ntotin = nprint
-     enddo
+          j = j + 1
+
+     enddo over_steps_in_file
 
 55   continue
-     nfilesteps = j-1
-     print*,'nfilesteps = ',nfilesteps
+     !
+     !--reached end of file
+     !
+     ifinish = j-1
+     print*,'ifinish = ',ifinish
 
-  close(15)
+     close(15)
 
-  print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nghost=',ntot(j-1)-npart(j-1)
-      
+     print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nghost=',ntot(j-1)-npart(j-1)
+
+     !
+     !--if just the rootname has been input, 
+     !  set next filename and see if it exists
+     !
+     ifile = ifile + 1
+     if (len_trim(rootname).eq.4) then
+        write(fileno,"(i1,i1,i1)") ifile/100,mod(ifile,100)/10,mod(ifile,10)
+        dumpfile = rootname(1:4)//fileno 
+        inquire(file=dumpfile,exist=iexist)
+     elseif (len_trim(rootname).eq.5) then
+        write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
+        dumpfile = rootname(1:5)//trim(fileno)     
+        inquire(file=dumpfile,exist=iexist)
+     else
+        iexist = .false. ! exit loop
+     endif     
+  enddo
+   
   ivegotdata = .true.
+  return
+!
+!--error conditions
+!
+56 continue
+  print*,'error reading timestep'
   return
                     
 end subroutine read_data

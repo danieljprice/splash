@@ -1,7 +1,7 @@
 !--------------------
 !    MAIN MENU
 !--------------------
-recursive subroutine menu
+subroutine menu
   use filenames
   use labels
   use settings
@@ -16,6 +16,7 @@ recursive subroutine menu
   character(LEN=30) :: filename,vecprompt
   logical :: iansx, iansy, ichange
 
+  menuloop: do
 !---------------------------------------------------------------------------
 !  preliminaries
 !---------------------------------------------------------------------------
@@ -154,7 +155,7 @@ recursive subroutine menu
      if (.not.ivegotdata) then
         print*,' no data '
         ihavereadfilename = .false.
-        call get_data
+        call get_data(-1)
      else	
         !
         !--if needed prompt for x axis selection
@@ -185,7 +186,6 @@ recursive subroutine menu
         !
         call main(ipicky,ipickx,irender,ivecplot)
      endif
-     call menu
 !------------------------------------------------------------------------
 !  if input is an integer > numplot+1, quit
 !------------------------------------------------------------------------
@@ -261,48 +261,37 @@ recursive subroutine menu
 	      ivecplotmulti(i) = ivecplottemp
            endif
         enddo
-        call menu
 !------------------------------------------------------------------------
      case('d','D')
         call options_data
-	call menu
 !------------------------------------------------------------------------
      case('i','I')
         interactive = .not.interactive
         print*,' Interactive mode = ',interactive
-        call menu
 !------------------------------------------------------------------------
      case('p','P')
         call options_page
-	call menu 
 !------------------------------------------------------------------------
      case('o','O')
         call options_particleplots
-        call menu
 !------------------------------------------------------------------------
      case('r','R')
         call options_render
-        call menu
 !------------------------------------------------------------------------
      case('v','V')
         call options_vecplot
-        call menu
 !------------------------------------------------------------------------
      case('x','X')
         call options_xsecrotate
-        call menu
 !------------------------------------------------------------------------
      case('l','L')
         call options_limits
-        call menu 
 !------------------------------------------------------------------------
      case('s','S')
         call defaults_write
-        call menu
 !------------------------------------------------------------------------
      case('h','H')
         ishowopts = .not.ishowopts
-        call menu
 !------------------------------------------------------------------------
      case('q','Q')
         return
@@ -312,6 +301,8 @@ recursive subroutine menu
      end select
      
   endif
+
+  enddo menuloop
   
   return      
 end subroutine menu
