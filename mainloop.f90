@@ -56,7 +56,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   real :: dxgrid,xmingrid,xmaxgrid
   real :: angletempx, angletempy, angletempz
   real :: angleradx, anglerady, angleradz
-  real, dimension(2) :: angles
 
   logical :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
   logical :: log, inewpage, tile_plots, debug, isave, lastplot
@@ -84,6 +83,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   x_sec = xsec_nomulti
   iplotcont = iplotcont_nomulti
   lastplot = .false.
+  iplotpart = .true.
   xmin = 0.
   xmax = 0.
   ymin = 0.
@@ -791,14 +791,16 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               lastplot = (i.eq.n_end .and. nyplot.eq.nyplots .and. k.eq.nxsec)
               
              if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
+                if (iadvance.ne.0) then
+                   xmintemp = xmin
+                   xmaxtemp = xmax
+                   ymintemp = ymin
+                   ymaxtemp = ymax
+                endif
                 iadvance = nfreq
-                xmintemp = xmin
-                xmaxtemp = xmax
-                ymintemp = ymin
-                ymaxtemp = ymax            
                 call interactive_part(ninterp,iplotx,iploty,irenderplot, &
                      xplot(1:ninterp),yplot(1:ninterp),dat(1:ninterp,ih,i),icolourme(1:ninterp), &
-                     xmin,xmax,ymin,ymax,angletempx,angletempy,angletempz,ndim,iadvance,isave)                
+                     xmin,xmax,ymin,ymax,angletempx,angletempy,angletempz,ndim,iadvance,isave)
                 !--turn rotation on if necessary
                 if (abs(angletempx-anglex).gt.tol) irotate = .true.
                 if (abs(angletempy-angley).gt.tol) irotate = .true.
@@ -909,14 +911,16 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            !
            !--enter interactive mode
            !
-           iadvance = nfreq
            lastplot = (i.eq.n_end .and. nyplot.eq.nyplots)
 
            if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
-              xmintemp = xmin
-              xmaxtemp = xmax
-              ymintemp = ymin
-              ymaxtemp = ymax
+              if (iadvance.ne.0) then
+                 xmintemp = xmin
+                 xmaxtemp = xmax
+                 ymintemp = ymin
+                 ymaxtemp = ymax
+              endif
+              iadvance = nfreq
               call interactive_part(ntot(i),iplotx,iploty,0,xplot(1:ntot(i)), &
                                     yplot(1:ntot(i)),dat(1:ninterp,ih,i),icolourme(1:ntot(i)), &
                                     xmin,xmax,ymin,ymax, &
