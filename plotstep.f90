@@ -118,7 +118,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
      iplotz = 0
      if (ndim.ge.3) then
         do j=1,ndim
-           if ((j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
+           if ((iplotx.ne.iploty).and. &
+               (j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
         enddo
      endif
      
@@ -443,11 +444,12 @@ subroutine plotstep(istep,irender,ivecplot, &
 
         !!--work out coordinate that is not being plotted         
         do j=1,ndim
-           if ((j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
+           if ((iplotx.ne.iploty).and. &
+               (j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
         enddo
 
         if (iplotz.ne.0) then
-           zplot(:) = dat(:,iplotz)
+           zplot(1:ntoti) = dat(1:ntoti,iplotz)
            labelz = label(iplotz)
         endif
 
