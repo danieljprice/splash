@@ -108,6 +108,7 @@ subroutine defaults_set
   xseclineY1 = 0.0
   xseclineY2 = 0.0
   irotate = .false.
+  irotateaxes = 0
   anglex = 0.
   angley = 0.
   anglez = 0.

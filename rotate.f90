@@ -76,7 +76,7 @@ end subroutine rotate3D
 !
 !--plots rotated plot axes
 !
-subroutine rotate_axes2D(xmin,xmax,anglez,ioption)
+subroutine rotate_axes2D(ioption,xmin,xmax,anglez)
   implicit none
   integer, intent(in) :: ioption
   real, intent(in), dimension(2) :: xmin,xmax
@@ -111,7 +111,7 @@ subroutine rotate_axes2D(xmin,xmax,anglez,ioption)
   return
 end subroutine rotate_axes2D
 
-subroutine rotate_axes3D(xmin,xmax,anglez,angley,anglex,ioption)
+subroutine rotate_axes3D(ioption,xmin,xmax,anglez,angley,anglex)
   implicit none
   integer, intent(in) :: ioption
   real, intent(in), dimension(3) :: xmin,xmax

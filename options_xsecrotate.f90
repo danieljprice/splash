@@ -15,13 +15,14 @@ subroutine options_xsecrotate
  if (ndim.eq.1) print*,' WARNING: none of these options have any effect in 1D'
  ians = 0
  interact = .true.
- print 10,xsec_nomulti,xsecpos_nomulti,irotate
+ print 10,xsec_nomulti,xsecpos_nomulti,irotate,irotateaxes
 10  format(' 0) exit ',/,                 &
            ' 1) toggle cross section/projection           (',L1,' )',/, &
            ' 2) set cross section position                (',f5.2,' )',/, &
            ' 3) toggle rotation                           (',L1,' )',/, &
-           ' 4) change rotation options')
- call prompt('enter option',ians,0,4)
+           ' 4) change rotation options',/, &
+           ' 5) set axes for rotated plots                (',i2,' )')
+ call prompt('enter option',ians,0,5)
 !
 !--options
 !
@@ -91,6 +92,12 @@ subroutine options_xsecrotate
           call prompt('enter location of origin '//trim(label(ix(i))),xorigin(i))
        enddo
     endif
+!------------------------------------------------------------------------
+ case(5)
+    print*,'0 : do not plot rotated axes'
+    print*,'1 : plot rotated axes'
+    print*,'2 : plot rotated box'
+    call prompt('enter type of axes to plot',irotateaxes,0,2)
  end select
 
  return
