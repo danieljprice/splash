@@ -53,7 +53,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   real :: xsecmin,xsecmax,dxsec,xsecpos
   real :: pixwidth
   real :: charheight, charheightmm
-  real :: dxgrid
+  real :: dxgrid,xmingrid,xmaxgrid
   real :: angletempx, angletempy, angletempz
   real :: angleradx, anglerady, angleradz
   real, dimension(2) :: angles
@@ -963,24 +963,26 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            if (iploty.eq.ipowerspec) then 
               labelx = 'frequency'
               labely = 'power'
-              xmin = 1./wavelengthmax  ! freq min
-              xmax = nfreqspec*xmin
+              if (iadvance.ne.0) then
+                 xmin = 1./wavelengthmax  ! freq min
+                 xmax = nfreqspec*xmin
+              endif
               
-              if (.not.idisordered) then! interpolate first
+              if (.not.idisordered .and. iadvance.ne.0) then! interpolate first
                  !!--allocate memory for 1D grid (size = 2*npart)
                  ngrid = 2*npartoftype(1,i)
                  !!--set up 1D grid
-                 xmin = lim(ix(1),1)
-                 xmax = lim(ix(1),2)
-                 dxgrid = (xmax-xmin)/ngrid
-                 call set_grid1D(xmin,dxgrid,ngrid)
+                 xmingrid = lim(ix(1),1)
+                 xmaxgrid = lim(ix(1),2)
+                 dxgrid = (xmaxgrid-xmingrid)/ngrid
+                 call set_grid1D(xmingrid,dxgrid,ngrid)
                 
                  ninterp = ntot(i)
                  !!--interpolate to 1D grid  
                  call interpolate1D(dat(1:ninterp,ix(1),i), & 
                       dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i), &
                       dat(1:ninterp,ih,i),dat(1:ninterp,ipowerspecy,i), & 
-                      ninterp,xmin,datpix1D,ngrid,dxgrid)
+                      ninterp,xmingrid,datpix1D,ngrid,dxgrid)
                  !!--plot interpolated 1D data to check it
                  !!print*,minval(datpix1D),maxval(datpix1D)
 
@@ -991,37 +993,45 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                  !read*
                  !call pgpage! change page
 
-                 xmin = 1./wavelengthmax  ! freq min
-                 xmax = nfreqspec*xmin
+                 if (iadvance.ne.0) then
+                    xmin = 1./wavelengthmax  ! freq min
+                    xmax = nfreqspec*xmin
+                 endif
                  !!--call power spectrum calculation on the even grid
                  call powerspectrum_fourier(ngrid,xgrid,datpix1D,nfreqspec, &
                       xplot(1:nfreqspec),xmin,xmax,yplot(1:nfreqspec))
                  if (allocated(datpix1D)) deallocate(datpix1D)              
-              else
+              elseif (iadvance.ne.0) then
                  !!--or else call power spectrum calculation on the particles themselves    
                  call powerspectrum_lomb(ntot(i),dat(1:ntot(i),ix(1),i), &
                       dat(1:ntot(i),ipowerspecy,i),nfreqspec, &
                       xplot(1:nfreqspec),xmin,xmax,yplot(1:nfreqspec))
               endif
               
-              ymin = minval(yplot(1:nfreqspec))
-              ymax = maxval(yplot(1:nfreqspec))
+              if (iadvance.ne.0) then
+                 ymin = minval(yplot(1:nfreqspec))
+                 ymax = maxval(yplot(1:nfreqspec))
+              endif
               
               !!--uncomment next few lines to plot wavelengths instead
-              zplot(1:nfreqspec) = 1./xplot(1:nfreqspec)
-              xplot(1:nfreqspec) = zplot(1:nfreqspec)
-              xmin = minval(xplot(1:nfreqspec))
-              xmax = maxval(xplot(1:nfreqspec))
               labelx = 'wavelength'
+              if (iadvance.ne.0) then
+                 zplot(1:nfreqspec) = 1./xplot(1:nfreqspec)
+                 xplot(1:nfreqspec) = zplot(1:nfreqspec)
+                 xmin = minval(xplot(1:nfreqspec))
+                 xmax = maxval(xplot(1:nfreqspec))
+              endif
 
               if (itrans(iploty).ne.0) then
                  call transform(xplot,itrans(iploty))
                  labelx = transform_label(labelx,itrans(iploty))
-                 call transform_limits(xmin,xmax,itrans(iploty))
 
                  call transform(yplot,itrans(iploty))
                  labely = transform_label(labely,itrans(iploty))
-                 call transform_limits(ymin,ymax,itrans(iploty))
+                 if (iadvance.ne.0) then
+                    call transform_limits(xmin,xmax,itrans(iploty))
+                    call transform_limits(ymin,ymax,itrans(iploty))
+                 endif
               endif
               
               !--------------------------------------------------------------
@@ -1065,7 +1075,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               
            if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
               iadvance = nfreq
-              call interactive_step(iadvance)
+              call interactive_step(iadvance,xmin,xmax,ymin,ymax)
               if (iadvance.eq.-666) exit over_timesteps
            endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

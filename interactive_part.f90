@@ -64,7 +64,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
      !
      if (char.eq.achar(0)) return
   
-     print*,'location: x, y = ',xpt,ypt,' function = ',char
+     print*,' x, y = ',xpt,ypt,' function = ',char
      !
      !--find closest particle
      !  
@@ -347,12 +347,14 @@ end subroutine interactive_part
 ! cut down version of interactive mode -> controls timestepping only
 ! used in powerspectrum / extra plots
 !
-subroutine interactive_step(iadvance)
+subroutine interactive_step(iadvance,xmin,xmax,ymin,ymax)
  implicit none
  integer, intent(inout) :: iadvance
+ real, intent(inout) :: xmin,xmax,ymin,ymax
  integer :: nc,ierr
- real :: xpt,ypt
- character(len=1) :: char
+ real :: xpt,ypt,xpt2,ypt2
+ real :: xlength, ylength
+ character(len=1) :: char,char2
  character(len=5) :: string
  logical :: iexit
  
@@ -375,11 +377,14 @@ subroutine interactive_step(iadvance)
      !
      if (char.eq.achar(0)) return
   
-     !print*,'location: x, y = ',xpt,ypt,' function = ',char
+     print*,'x, y = ',xpt,ypt,' function = ',char
      
      select case(char)
      case('h')
         print*,'-------------- interactive mode commands --------------'
+        print*,' select area and zoom : left click (or A)'
+        print*,' zoom in by 10%       : +'
+        print*,' zoom out by 10(20)%      : - (_)'
         print*,' (r)eplot current plot        : r'
         print*,' next timestep/plot   : space, n'
         print*,' previous timestep    : right click (or X), b'
@@ -387,7 +392,57 @@ subroutine interactive_step(iadvance)
         print*,' (h)elp                       : h'
         print*,' (q)uit plotting              : q, Q'             
         print*,'-------------------------------------------------------'
-
+     !
+     !--zoom
+     !
+     case('A') ! left click
+        !
+        !--draw rectangle from the point and reset the limits
+        !
+        print*,'select area: '
+        print*,'left click : zoom'
+        call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
+        print*,xpt,ypt,xpt2,ypt2,char2
+        select case (char2)
+        case('A')   ! zoom if another left click
+           call pgrect(xpt,xpt2,ypt,ypt2)
+           xmin = min(xpt,xpt2)
+           xmax = max(xpt,xpt2)
+           ymin = min(ypt,ypt2)
+           ymax = max(ypt,ypt2)
+           iadvance = 0
+           iexit = .true.
+        end select    
+     case('-','_') ! zoom out by 10 or 20%
+        print*,'zooming out'
+        xlength = xmax - xmin
+        ylength = ymax - ymin
+        select case(char)
+        case('-')
+           xlength = 1.1*xlength
+           ylength = 1.1*ylength
+        case('_')
+           xlength = 1.2*xlength
+           ylength = 1.2*ylength
+        end select
+        xmin = xpt - 0.5*xlength
+        xmax = xpt + 0.5*xlength
+        ymin = ypt - 0.5*ylength
+        ymax = ypt + 0.5*ylength
+        iadvance = 0
+        iexit = .true.
+     case('+') ! zoom in by 10%
+        print*,'zooming in'
+        xlength = xmax - xmin
+        ylength = ymax - ymin
+        xlength = 0.9*xlength
+        ylength = 0.9*ylength
+        xmin = xpt - 0.5*xlength
+        xmax = xpt + 0.5*xlength
+        ymin = ypt - 0.5*ylength
+        ymax = ypt + 0.5*ylength
+        iadvance = 0
+        iexit = .true.
      !
      !--timestepping
      !
