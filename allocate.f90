@@ -1,3 +1,7 @@
+module mem_allocation
+ implicit none
+ 
+contains
 !----------------------------------------------------------------------------
 !
 !  memory allocation/reallocation for main data arrays
@@ -6,7 +10,6 @@
 !  the dimensions allocated
 !
 !----------------------------------------------------------------------------
-
 subroutine alloc(npartin,nstep,ncolumns)
   use particle_data
   implicit none
@@ -125,8 +128,14 @@ subroutine alloc(npartin,nstep,ncolumns)
      gamma(1:maxstepold) = gammatemp(1:maxstepold)
      deallocate(ntottemp,npartoftypetemp)
      deallocate(timetemp,gammatemp)
+  else
+     ntot = 0
+     npartoftype = 0
+     time = 0.0
+     gamma = 0.0
   endif
 
   return 
 end subroutine alloc
 
+end module mem_allocation

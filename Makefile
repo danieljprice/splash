@@ -38,12 +38,12 @@ GADGETSPH = read_data_gadget.f90
 # put modules separately as these must be compiled before the others
 MODULES= globaldata.f90 transform.f90 prompting.f90 \
          exact.f90 colours.f90 limits.f90 rotate.f90 \
-         interactive_part.f90 \
+         interactive_part.f90 allocate.f90\
          $(SYSTEMFILE)
 
 # these are the normal `external' subroutines
 SOURCES= supersphplot.f90 mainloop.f90 \
-         allocate.f90 calc_quantities.f90 \
+         calc_quantities.f90 \
 	 coord_transform.f90 \
 	 danpgsch.f danpgtile.f danpgwedg.f \
 	 defaults_read.f90 defaults_set.f90 defaults_write.f90 \

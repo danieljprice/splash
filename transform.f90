@@ -22,11 +22,13 @@
 !   transform_label  : changes the plot label appropriately
 !
 ! Written for use in supersphplot by
-! Daniel Price, Institute of Astronomy, Cambridge, UK
-! dprice@ast.cam.ac.uk
+! Daniel Price, Institute of Astronomy, Cambridge, UK 2002-2004
+!               University of Exeter, UK              2004-
+! dprice@astro.ex.ac.uk
 !
 !------------------------------------------------------------------------
 module transforms
+ integer, parameter, public :: ntrans = 5  ! this is the number of types
  integer, parameter, private :: nmax = 10  ! this is the maximum number of 
                                   ! transformations you can do in a row      
 contains

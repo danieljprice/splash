@@ -32,6 +32,7 @@ subroutine read_data(rootname,istart,nstepsread)
   use params
   use labels
   use settings_data
+  use mem_allocation
   implicit none
   integer, intent(IN) :: istart
   integer, intent(OUT) :: nstepsread

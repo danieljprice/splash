@@ -5,6 +5,7 @@ subroutine calc_quantities(ifromstep,itostep)
   use labels
   use particle_data
   use settings_data
+  use mem_allocation
   implicit none
   integer, intent(in) :: ifromstep, itostep
   integer :: i,j,nstartfromcolumn
