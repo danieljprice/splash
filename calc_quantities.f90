@@ -12,6 +12,11 @@ subroutine calc_quantities(ifromstep,itostep)
   real, parameter :: pi = 3.1415926536
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
   !
+  !--initialise extra quantities to zero
+  !
+  icurr = 0
+  icrosshel = 0
+  !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
   !

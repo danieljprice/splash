@@ -352,9 +352,16 @@ subroutine set_labels
  ipmass = ndim + ndimV + 5    !  particle mass      
 
  label(ix(1:ndim)) = labelcoord(1:ndim,1)
+ 
+ !
+ !--label vector quantities (e.g. velocity) appropriately
+ !
+ iamvec(ivx:ivx+ndimV-1) = ivx
+ labelvec(ivx:ivx+ndimV-1) = 'v'
  do i=1,ndimV
-    label(ivx+i-1) = 'v\d'//labelcoord(i,1)
+    label(ivx+i-1) = trim(labelvec(ivx+i-1))//'\d'//labelcoord(i,1)
  enddo
+ 
  label(irho) = '\gr'
  label(ipr) = 'P      '
  label(iutherm) = 'u'
@@ -363,16 +370,26 @@ subroutine set_labels
  label(ndim + ndimV+6) = '\ga'
  label(ndim + ndimV+7) = '\ga\du'
  if (ncolumns.gt.ndim+ndimV+7) then
+    !
+    !--mag field (vector)
+    !
     label(ndim + ndimV+8) = '\ga\dB'
     iBfirst = ndim + ndimV+8+1        ! location of Bx
-    iBlast = ndim + ndimV+8+ndimV        ! location of Bz      
+    iBlast = ndim + ndimV+8+ndimV        ! location of Bz
+    iamvec(iBfirst:iBlast) = iBfirst
+    labelvec(iBfirst:iBlast) = 'B'
     do i=1,ndimV
-       label(ndim + ndimV+8+i) = 'B\d'//labelcoord(i,1) !' (x10\u-3\d)' !//'/rho'
+       label(ndim + ndimV+8+i) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1) !' (x10\u-3\d)' !//'/rho'
     enddo
-    do i=1,ndimV
-       label(ndim + ndimV+ndimV+8 + i) = 'J'//labelcoord(i,1)
-    enddo
+    !
+    !--current density (vector)
+    !
     iJfirst = ndim+2*ndimV+8+1
+    iamvec(iJfirst:iJfirst+ndimV-1) = iJfirst
+    labelvec(iJfirst:iJfirst+ndimV-1) = 'J'
+    do i=1,ndimV
+       label(ndim + ndimV+ndimV+8 + i) = labelvec(iJfirst)//labelcoord(i,1)
+    enddo
     idivB = ndim+3*ndimV+9 
     label(idivB) = 'div B'
  else
