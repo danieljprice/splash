@@ -20,43 +20,25 @@ subroutine rotate(angles,xin,xout,xorigin,ndim)
      return
   endif
   !
-  !--rotation about z axis (where location of axis is an x,y point)
-  !
   !--adjust x-y positions according to location of rotation axis
-  xintemp(1:2) = xin(1:2) - xorigin(1:2)
-  if (ndim.eq.3) xintemp(ndim) = xin(ndim)
-  !--convert to cylindrical co-ordinates
-
-  call coord_transform(xintemp,ndim,1,xtemp,ndim,2)
-
-  !--increase rotation angle appropriately
-  xtemp(2) = xtemp(2) - angles(1)  ! minus by the way the angle is defined
-
+  !
+  xintemp(:) = xin(:) - xorigin(:)
+  !
+  !--convert to spherical polar co-ordinates
+  !
+  call coord_transform(xintemp,ndim,1,xtemp,ndim,3)
+  !
+  !--increase rotation and tilt angles appropriately
+  !
+  xtemp(2:ndim) = xtemp(2:ndim) - angles(1:2)
+  !
   !--now convert back to cartesians
-  call coord_transform(xtemp,ndim,2,xout,ndim,1)
-
-  xout(1:2) = xout(1:2) + xorigin(1:2)
-
   !
-  !--rotation about x axis (tilt) (where location of axis is a y,z point)
+  call coord_transform(xtemp,ndim,3,xout,ndim,1)
   !
-  if (ndim.eq.3) then
-     !--adjust y-z positions according to location of rotation axis
-     xintemp(1:2) = xout(2:ndim) - xorigin(2:ndim)
-     xintemp(ndim) = xout(1)
-     !--convert to cylindrical co-ordinates, where r is distance from x axis
-     call coord_transform(xintemp,ndim,1,xtemp,ndim,2)
-
-     !--increase rotation angle appropriately
-     xtemp(2) = xtemp(2) + angles(2)
-
-     !--now convert back to cartesians
-     call coord_transform(xtemp,ndim,2,xouttemp,ndim,1)
-
-     !--map back to original x,y,z
-     xout(2:ndim) = xouttemp(1:2) + xorigin(2:ndim)
-     xout(1) = xouttemp(ndim)
-  endif
+  !--adjust positions back from origin
+  !
+  xout(:) = xout(:) + xorigin(:)
 
   return
 end subroutine rotate

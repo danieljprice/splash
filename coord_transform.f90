@@ -85,10 +85,10 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
            case(2) ! r,phi -> x,y
               xout(1) = xin(1)*COS(xin(2))
               xout(2) = xin(1)*SIN(xin(2))
-           case(3) ! r,theta,phi -> x,y,z
-              xout(1) = xin(1)*SIN(xin(2))*COS(xin(3))
+           case(3) ! r,phi,theta -> x,y,z
+              xout(1) = xin(1)*COS(xin(2))*SIN(xin(3))
               xout(2) = xin(1)*SIN(xin(2))*SIN(xin(3))
-              xout(3) = xin(1)*COS(xin(2))
+              xout(3) = xin(1)*COS(xin(3))
         end select
      end select
 !
@@ -104,7 +104,10 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
            xout(1) = abs(xin(1))   ! cylindrical r
         else
            xout(1) = SQRT(DOT_PRODUCT(xin(1:2),xin(1:2)))
-           if (ndimout.ge.2) xout(2) = ATAN(abs(xin(2)/xin(1))) ! phi
+           !
+           ! phi = ATAN(y/x)
+           !
+           if (ndimout.ge.2) xout(2) = ATAN(abs(xin(2)/xin(1)))
            !--sort out which quadrant
            if (xin(1).lt.0. .and. xin(2).lt.0.) then ! 3rd quadrant
               xout(2) = xout(2) + pi
@@ -120,11 +123,29 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         ! output is spherical
         !
         xout(1) = SQRT(DOT_PRODUCT(xin,xin))! r  
-        if (ndimout.eq.2) then              ! 2D spherical returns r,phi
-           xout(2) = ATAN(xin(2)/xin(1))    ! phi = ATAN(y/x)
-        elseif (ndimout.eq.3) then
-           xout(2) = ACOS(xin(3)/xout(1))   ! theta = ACOS(z/r)
-           xout(3) = ATAN(xin(2)/xin(1))    ! phi = ATAN(y/x)
+        if (ndimout.ge.2) then              ! 2D spherical returns r,phi
+           !
+           ! phi = ATAN(y/x)
+           !
+           xout(2) = ATAN(abs(xin(2)/xin(1)))
+           !--sort out which quadrant for phi
+           if (xin(1).lt.0. .and. xin(2).lt.0.) then ! 3rd quadrant
+              xout(2) = xout(2) + pi
+           elseif (xin(1).lt.0.) then ! 2nd quadrant
+              xout(2) = pi - xout(2)
+           elseif (xin(2).lt.0.) then
+              xout(2) = -xout(2)   
+           endif
+        endif
+        if (ndimout.ge.3) then
+           !
+           ! theta = ACOS(z/r)
+           !
+           xout(2) = ACOS(abs(xin(3)/xout(1)))
+           !--sort out which half for theta
+           if (xin(3).lt.0.) then
+              xout(2) = xout(2) + pi
+           endif    
         endif
      case default
         !
