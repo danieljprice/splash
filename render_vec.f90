@@ -4,14 +4,15 @@
 !--------------------------------------------------------------------------
  
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
-                  xmin,ymin,dx,log)  
+                  xmin,ymin,dx,log) 
+ use legends, only:legend_vec
  implicit none
  integer, intent(in) :: npixx,npixy
  real, intent(in) :: xmin,ymin,vecmax,dx
  real, dimension(npixx,npixy), intent(in) :: vecpixx,vecpixy
  logical, intent(in) :: log
-
  real :: trans(6),vmax,scale
+ real :: charheight
  
 !set up grid for rendering 
 
@@ -26,6 +27,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  print*,'max(x component) = ',maxval(vecpixx),'max(y component) = ',maxval(vecpixy)
 
  call pgsah(2,45.0,0.7)   ! arrow style
+ call pgqch(charheight)
  call pgsch(0.3)          ! size of arrow head
  if (vecmax.le.0.0) then  ! adaptive limits
     scale = 0.0
@@ -38,6 +40,9 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  
  call pgvect(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
       1,npixx,1,npixy,scale,0,trans,-1000.0)
+
+ call pgsch(charheight)
+ call legend_vec(scale)
  
  return
  

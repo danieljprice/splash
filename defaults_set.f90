@@ -120,6 +120,9 @@ subroutine defaults_set
   UseBackgndColorVecplot = .false. ! plot vector plot using black/white
   iamvec(:) = 0
   labelvec = ' '
+  iVecplotLegend = .true.
+  hposlegendvec = 0.1
+  vposlegendvec = 3.0
 !
 !--set coordinate labels for all coordinate systems
 !
