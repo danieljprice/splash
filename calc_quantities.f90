@@ -1,47 +1,64 @@
 !!
 !!   calculates various additional quantities from the input data
 !!
-subroutine calc_quantities
+subroutine calc_quantities(ifromstep,itostep)
   use labels
   use particle_data
   use settings
   implicit none
-  integer :: i,j,icurr,icrosshel
+  integer, intent(in) :: ifromstep, itostep
+  integer :: i,j,icurr,icrosshel,nstartfromcolumn
   real :: Bmag, Jmag
   real, parameter :: pi = 3.1415926536
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
-  ncalc = 8        ! specify number to calculate
+  !
+  !--specify hydro quantities
+  !
+  ncalc = 2
   ientrop = ncolumns + 1      
   irad = ncolumns + 2
-  ike = ncolumns + 3
+  !!  ike = ncolumns + 3
+  if (ipr.eq.0 .or. ipr.gt.ncolumns) then
+     nstartfromcolumn = ncolumns + ncalc
+     ncalc = ncalc + 1
+     ipr = nstartfromcolumn + 1
+  endif
+  !
+  !--specify MHD quantities
+  !
   if (iBfirst.ne.0) then
-     ipmag = ncolumns + 4
-     ibeta = ncolumns + 5
-     itotpr = ncolumns + 6      
-     idivBerr = ncolumns + 7
-     icrosshel = ncolumns + 8
+     nstartfromcolumn = ncolumns + ncalc
+     ncalc = ncalc + 5
+     ipmag = nstartfromcolumn + 1
+     ibeta = nstartfromcolumn + 2
+     itotpr = nstartfromcolumn + 3      
+     idivBerr = nstartfromcolumn + 4
+     icrosshel = nstartfromcolumn + 5
      !!icurr = ncolumns + 8
      icurr = 0
   else
-     ncalc = 3 + ndimV
-     ivpar = ncolumns + 4
-     ivperp= ncolumns + 5
+     nstartfromcolumn = ncolumns + ncalc
+     ncalc = ncalc + ndimV
+     ivpar = nstartfromcolumn + 1
+     ivperp= nstartfromcolumn + 2
      ipmag = 0
      ibeta = 0
      itotpr = 0
      idivBerr = 0
   endif
   itimestep = 0
+
   if (ndim.eq.2 .and. iBfirst.ne.0 .and. ivx.ne.0) then
+     nstartfromcolumn = ncolumns + ncalc
      ncalc = ncalc + 5
-     irad2 = ncolumns + 9
-     ivpar = ncolumns + 10
-     ivperp = ncolumns + 11
-     iBpar = ncolumns + 12
-     iBperp = ncolumns + 13
+     irad2 = nstartfromcolumn + 1
+     ivpar = nstartfromcolumn + 2
+     ivperp = nstartfromcolumn + 3
+     iBpar = nstartfromcolumn + 4
+     iBperp = nstartfromcolumn + 5
 !  else
 !     irad2 = 0
 !     ivpar = 0
@@ -50,11 +67,11 @@ subroutine calc_quantities
 !     iBperp = 0         
   endif
   
-  print*,'calculating ',ncalc,' additional quantities...',nstart,n_end
+  print*,'calculating ',ncalc,' additional quantities...',ifromstep,itostep
   numplot = ncolumns + ncalc
   if (numplot.gt.maxcol) call alloc(maxpart,maxstep,numplot) 
 
-  do i=nstart,n_end
+  do i=ifromstep,itostep
      !!--pressure if not in data array
      if ((ipr.gt.ncolumns).and.(irho.ne.0).and.(iutherm.ne.0)) then
         dat(1:ntot(i),ipr,i) = dat(1:ntot(i),irho,i)*dat(1:ntot(i),iutherm,i)*(gamma(i)-1.)
@@ -162,7 +179,7 @@ subroutine calc_quantities
   if (irad.ne.0) label(irad) = 'radius '
   if (irad2.ne.0) label(irad2) = 'r\d\(0737)'    !!!parallel'
   if (ike.ne.0) label(ike) = 'specific KE'
-  if (ipr.ne.0) label(ipr) = 'P'   !'p_gas '
+  if (ipr.gt.ncolumns) label(ipr) = 'P_gas'
   if (ipmag.ne.0) label(ipmag) = 'P_mag'
   if (itotpr.ne.0) label(itotpr) = 'P_gas + P_mag'
   if (ibeta.ne.0) label(ibeta) = 'plasma \gb'

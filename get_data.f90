@@ -57,6 +57,12 @@ subroutine get_data(ireadfile)
      print*,'setting plot labels...'
      call set_labels
      !
+     !--calculate various additional quantities
+     !
+     if (n_end.ge.nstart) then
+        call calc_quantities(nstart,n_end)
+     endif
+     !
      !--read plot limits from file, otherwise set plot limits
      !
      call read_limits(ierr)
@@ -86,23 +92,21 @@ subroutine get_data(ireadfile)
      nstepstotal = n_end
      print*,'nend = ',n_end
      numplot = ncolumns
-
      !
      !--set labels for each column of data
      !
      print*,'setting plot labels...'
      call set_labels
-
+     !
+     !--calculate various additional quantities
+     !
+     if (nstepsinfile(ireadfile).gt.0) then
+        call calc_quantities(1,nstepsinfile(ireadfile))
+     endif
+     
      if (ireadfile.eq.1 .and. ivegotdata .and. nstepsinfile(1).ge.1) then
         call set_limits(1,1,1,numplot)
      endif
-  endif
-
-  if (ivegotdata) then
-     !
-     !--calculate various additional quantities
-     !     
-     !!call calc_quantities
   endif
   !
   !--read exact solution parameters from files if present
