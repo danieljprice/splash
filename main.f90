@@ -40,6 +40,7 @@ subroutine main(ipicky,ipickx)
   real :: pixwidth
   real :: charheight
   real :: dxgrid
+  real :: xpt1,ypt1,xpt2,ypt2
   
   logical :: iplotcont,iplotpartvec,x_sec
   logical :: log,use_backgnd_color_vecplot
@@ -279,12 +280,13 @@ subroutine main(ipicky,ipickx)
               x_sec = xsec_nomulti
               xsecpos = xsecpos_nomulti
            endif
-           
+           npixx = npix
+	   
            !!--work out coordinate that is not being plotted	 
            do j=1,ndim
               if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j	 
            enddo
-           if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D	   
+!!           if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D	   
            !!--set limits for rendering area
            xminrender = MINVAL(lim(ix(1:ndim),1))
            xmaxrender = MAXVAL(lim(ix(1:ndim),2))	    
@@ -293,7 +295,8 @@ subroutine main(ipicky,ipickx)
            !  rendering setup and interpolation (this is the rendering done
            !  *before* the cross sections are taken, e.g. to 3D grid)
            !------------------------------------------------------------------
-           if ((irenderplot.gt.ndim).and.(ndim.ge.2)) then
+           if ((irenderplot.gt.ndim).and. &
+	       ((ndim.eq.3).or.(ndim.eq.2.and..not.x_sec))) then
               !
               !--interpolate from particles to fixed grid using sph summation
               !		
@@ -327,16 +330,19 @@ subroutine main(ipicky,ipickx)
                  if (allocated(datpix3D)) deallocate(datpix3D) 
                  select case(ndim)
                  case(2)
-                    !!--allocate memory for rendering array
-                    isizex = npixx
-                    isizey = npixy
-                    allocate ( datpix(npixx,npixy) )
-                    call interpolate2D( &
-                         dat(ix(1),1:ntot(i),i),dat(ix(2),1:ntot(i),i), &
-                         dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i), &
-                         dat(ih,1:ntot(i),i),dat(irenderplot,1:ntot(i),i), &
-                         ntot(i),xmin,ymin,datpix,npixx,npixy,pixwidth)
-                 case(3)
+                    !!--interpolate to 2D grid
+		    !!  allocate memory for rendering array
+		    if (.not. x_sec) then
+                     isizex = npixx
+                     isizey = npixy
+                     allocate ( datpix(npixx,npixy) )
+                     call interpolate2D( &
+                          dat(ix(1),1:ntot(i),i),dat(ix(2),1:ntot(i),i), &
+                          dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i), &
+                          dat(ih,1:ntot(i),i),dat(irenderplot,1:ntot(i),i), &
+                          ntot(i),xmin,ymin,datpix,npixx,npixy,pixwidth)
+                    endif
+		 case(3)
                     !!--interpolation to 3D grid - then take multiple cross sections/projections	 
                     !!  do this if taking more than 2 cross sections, otherwise use fast xsec
                     if (x_sec.and.nxsec.gt.2) then  
@@ -383,7 +389,7 @@ subroutine main(ipicky,ipickx)
                  endif
               endif
               
-              !---------------preliminary muff for 3D renderings-----------------------!
+              !------------take projections/cross sections through 3D data-----------------!
               if (irenderplot.gt.ndim .and. ndim.eq.3) then	    
                  
                  !!--allocate memory for 2D rendered array
@@ -422,11 +428,58 @@ subroutine main(ipicky,ipickx)
                             dat(ih,1:ntot(i),i), dat(irenderplot,1:ntot(i),i), &
                             ntot(i),xmin,ymin,datpix,npixx,npixy,pixwidth)
                     endif
-                    
-                 endif ! whether 3D grid or fast renderings
                  
-              endif ! 3D and rendering
-              !--------------end of preliminary muff for 3D renderings ------------------
+                 endif ! whether 3D grid or fast renderings
+              
+	      !-------------take cross sections through 2D data------------------!	      
+	      elseif (irenderplot.gt.ndim .and. ndim.eq.2 .and. x_sec) then
+                 !-------------------------------------------------------------------
+                 !  or do a fast cross section through 2D data to 1D array
+                 !-------------------------------------------------------------------
+		 !!--interpolate from 2D data to 1D line
+		 !!  line is specified by giving two points, (x1,y1) and (x2,y2)
+		 call prompt('enter xmin of cross section line',xpt1,xmin,xmax)
+		 call prompt('enter xmax of cross section line',xpt2,xmin,xmax)		 
+		 call prompt('enter ymin of cross section line',ypt1,ymin,ymax)
+		 call prompt('enter ymax of cross section line',ypt2,ymin,ymax)
+		  isizex = npixx		
+		  !!--set up 1D grid     
+		  if (allocated(xgrid)) deallocate(xgrid)
+		  allocate ( xgrid(npixx) )
+                  xmin = 0. 	! distance (r) along cross section
+                  xmax = SQRT((ypt2-ypt1)**2 + (xpt2-xpt1)**2)
+                  dxgrid = (xmax-xmin)/REAL(npixx)
+                  do igrid = 1,npixx
+                     xgrid(igrid) = xmin + igrid*dxgrid - 0.5*dxgrid
+                  enddo		     
+		  !!--interpolate to 1D cross section
+		  if (allocated(datpix1D)) deallocate(datpix1D)
+		  allocate ( datpix1D(npixx) )
+		  call interpolate2D_xsec( &
+                         dat(iplotx,1:ntot(i),i),dat(iploty,1:ntot(i),i), &
+                         dat(ipmass,1:ntot(i),i),dat(irho,1:ntot(i),i),    &
+                         dat(ih,1:ntot(i),i),dat(irenderplot,1:ntot(i),i), &
+                         ntot(i),xpt1,ypt1,xpt2,ypt2,datpix1D,npixx)		 
+		  !
+		  !--find limits of datpix1D for plotting
+                  !  do transformations on rendered array where appropriate 
+		  !  set these as ymin,ymax and set labels of plot
+		  !
+                  call transform(datpix1D,datpix1D,itrans(irenderplot),npixx)
+                  labely = transform_label(label(irenderplot),itrans(irenderplot))
+		  labelx = 'cross section'
+                  !!--if adaptive limits, find limits of datpix		
+                  if (iadapt) then
+                     ymin = minval(datpix1D)
+                     ymax = maxval(datpix1D)	
+                     !!--or apply transformations to fixed limits
+                  else
+                     call transform(lim(irenderplot,1),ymin,itrans(irenderplot),1)
+                     call transform(lim(irenderplot,2),ymax,itrans(irenderplot),1)
+                  endif			  		  
+                   
+              endif ! 2 or 3D and rendering
+              !-----end of preliminary muff for 2D/3D cross sections/renderings ------------------
               
               !-----------------------
               ! set up pgplot page
@@ -452,8 +505,12 @@ subroutine main(ipicky,ipickx)
 		       call pgsvp(0.02,0.98,0.02,0.98)
 		    endif
 		 endif
-                 call pgwnad(xmin,xmax,ymin,ymax)	!  pgwnad does equal aspect ratios
-                 !!--plot axes (log if appropriate)
+		 if (ndim.eq.2 .and. x_sec) then
+		    call pgswin(xmin,xmax,ymin,ymax)
+		 else
+                    call pgwnad(xmin,xmax,ymin,ymax)	!  pgwnad does equal aspect ratios
+                 endif
+		 !!--plot axes (log if appropriate)
                  if (axes) then
 		    call pgbox('bcnst'//logx,0.0,0,'1bvcnst'//logy,0.0,0)	       
                  elseif (ivecplot.ne.0) then
@@ -477,9 +534,11 @@ subroutine main(ipicky,ipickx)
               if (x_sec.and.iplotpart) print 35,label(ixsec),xsecmin,label(ixsec),xsecmax
 35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
               
-              !--set plot limits	    
-              call pgwnad(xmin,xmax,ymin,ymax)	! pgwnad does equal aspect ratios
-              !	       call pgswin(xmin,xmax,ymin,ymax)	!  not equal	
+	      if (ndim.eq.2 .and. x_sec) then
+	         call pgswin(xmin,xmax,ymin,ymax)
+	      else
+                 call pgwnad(xmin,xmax,ymin,ymax)	!  pgwnad does equal aspect ratios
+              endif
 		 
               !--label plot
               if (axes) then
@@ -522,7 +581,8 @@ subroutine main(ipicky,ipickx)
               ! density/scalar field rendering
               ! having got our 2D array of gridded data (datpix), we plot it	    
               !---------------------------------------------------------------
-              if (irenderplot.gt.ndim) then	    
+              if (irenderplot.gt.ndim .and.    		&
+	         ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) ) then	    
                  !!--do transformations on rendered array	       
                  call transform2(datpix,datpix,itrans(irenderplot),isizex,isizey)
                  labelrender = label(irenderplot)
@@ -549,7 +609,14 @@ subroutine main(ipicky,ipickx)
                  call render(datpix,rendermin,rendermax,trim(labelrender),  &
                       npixx,npixy,xmin,ymin,pixwidth,    &
                       icolours,iplotcont,ncontours,log)
-                 
+              
+	      elseif (irenderplot.gt.ndim .and. ndim.eq.2 .and. x_sec) then
+              !---------------------------------------------------------------
+              ! plot 1D cross section through 2D data    
+              !---------------------------------------------------------------
+       
+                 !!--plot 1D cross section (contents of datpix)	       
+                 call pgline(npixx,xgrid,datpix1D) 
               else
                  !-----------------------
                  ! particle plots
@@ -961,12 +1028,12 @@ subroutine main(ipicky,ipickx)
            !	    htstar = (0.75*totmass)**(2./3.)*ctstar**(1./3.)
            !	    htstar = 1.0    
            !	    print*,' totmass,h,a,c in = ',totmass,htstar,atstar,ctstar
-           if (magfield) then
+           if (iBfirst.ne.0) then
               sigma = sigma0
            else
               sigma = 0.
            endif
-           if (iplotx.eq.1 .or. iplotx.eq.irad) then	! if x axis is x coordinate
+           if (iplotx.eq.1 .or. iplotx.eq.irad) then	! if x axis is x or r
               if (iploty.eq.irho) then
                  call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,1)
               elseif (iploty.eq.ipr) then

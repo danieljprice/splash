@@ -54,7 +54,7 @@
       iplotpartvec_nomulti = .true.	! whether to plot particles on vector plot
       iplotghost = .true.	! plot ghost particles
       iplotsink = .true.	! plot sink particles
-      npix_nomulti = 20		! pixels in x direction for rendering
+      npix_nomulti = 100		! pixels in x direction for rendering
       npixvec_nomulti = 20	! pixels in x direction on vector plots
       ivecplot_nomulti = 0	! choice of vector plot
       irender = 0	! choice of rendering plot
