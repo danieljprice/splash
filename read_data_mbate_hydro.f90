@@ -50,13 +50,23 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
   
-  real(doub_prec), dimension(:,:), allocatable :: dattemp
-  real(doub_prec), dimension(:), allocatable :: dummy
+  !--use these lines if dump is double precision
+  !real(doub_prec), dimension(:,:), allocatable :: dattemp
+  !real(doub_prec), dimension(:), allocatable :: dummy
+  !real(doub_prec) :: udisti,umassi,utimei
+  !real(doub_prec) :: timei, gammai
+  !real(doub_prec) :: rhozero, RK2
+  !real(doub_prec) :: escap,tkin,tgrav,tterm
+  !real(doub_prec) :: dtmax
+
+  !--use these lines for single precision
+  real, dimension(:,:), allocatable :: dattemp
+  real, dimension(:), allocatable :: dummy
   real(doub_prec) :: udisti,umassi,utimei
-  real(doub_prec) :: timei, gammai
-  real(doub_prec) :: rhozero, RK2
-  real(doub_prec) :: escap,tkin,tgrav,tterm
-  real(doub_prec) :: dtmax
+  real :: timei, gammai
+  real :: rhozero, RK2
+  real :: escap,tkin,tgrav,tterm
+  real :: dtmax
 
   nstepsread = 0
   nstep_max = 0
@@ -174,6 +184,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         
         if (ierr /= 0) then
            print "(a)",'*** INCOMPLETE DATA ON LAST TIMESTEP ***'
+           nstepsread = nstepsread + 1
            exit over_steps_in_file
         else
            nstepsread = nstepsread + 1
@@ -209,9 +220,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !--reached end of file
   !
   close(15)
-
-  print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nghost=',npartoftype(2,j-1)
-
+  if (j-1 .gt. 0) then
+     print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nghost=',npartoftype(2,j-1)
+  endif
      !
      !--if just the rootname has been input, 
      !  set next filename and see if it exists
