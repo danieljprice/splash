@@ -807,16 +807,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                 if (abs(angletempy-angley).gt.tol) irotate = .true.
                 if (abs(angletempz-anglez).gt.tol) irotate = .true.                
                 if (isave) then
-                   !--save settings from interactive mode
-                   lim(iplotx,1) = xmin
-                   lim(iplotx,2) = xmax
-                   lim(iploty,1) = ymin
-                   lim(iploty,2) = ymax
-                   lim(irender,1) = rendermin
-                   lim(irender,2) = rendermax
-                   anglex = angletempx
-                   angley = angletempy
-                   anglez = angletempz
                    !--change to fixed plot limits if limits have changed
                    if (iadapt) then
                       if (abs(xmintemp-xmin).gt.tol .or. abs(xmaxtemp-xmax).gt.tol) iadapt = .false.
@@ -930,11 +920,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                                     angletempx,angletempy,angletempz,ndim,iadvance,isave)
               print*,'xmin,xmax = ',xmin,xmax
               if (isave) then
-                 !--save settings from interactive mode
-                 lim(iplotx,1) = xmin
-                 lim(iplotx,2) = xmax
-                 lim(iploty,1) = ymin
-                 lim(iploty,2) = ymax
                  !--change to fixed plot limits if limits have changed
                  if (iadapt) then
                     if (abs(xmintemp-xmin).gt.tol .or. abs(xmaxtemp-xmax).gt.tol) iadapt = .false.

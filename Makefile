@@ -79,11 +79,11 @@ OBJSCWSPH = $(SOURCESALL:.f=.o) $(SCWSPH:.f90=.o)
 OBJSROSPH = $(SOURCESALL:.f=.o) $(SROSPH:.f90=.o)
 OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o)
 
-jjmsph: $(OBJJJMSPH)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o jsupersphplot $(OBJJJMSPH)
-
 dansph: $(OBJDANSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o ../supersphplot $(OBJDANSPH)
+
+jjmsph: $(OBJJJMSPH)
+	$(FC) $(FFLAGS) $(LDFLAGS) -o jsupersphplot $(OBJJJMSPH)
 
 mrbsph: $(OBJMRBSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_mrb $(OBJMRBSPH)

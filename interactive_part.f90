@@ -1,5 +1,8 @@
 module interactive_routines
  implicit none
+ public :: interactive_part,interactive_step
+ private :: mvlegend,mvtitle,save_limits,save_rotation
+ 
 contains
 !
 !--interactive tools on particle plots
@@ -7,14 +10,20 @@ contains
 !
 !  Arguments:
 !
+!  INPUT:
 !   npart   : number of particles plotted
 !   iplotx  : quantity plotted as x axis
 !   iploty  : quantity plotted as y axis 
 !   irender : quantity rendered
 !   xcoords(npart) : x coordinates of particles
 !   ycoords(npart) : y coordinates of particles
+!   hi(npart)      : smoothing lengths of particles
+! CHANGEABLE:
+!   icolourpart(npart) : flag indicating colour of particles
 !   xmin, xmax, ymin, ymax : current plot limits
+! OUTPUT:
 !   iadvance : integer telling the loop how to advance the timestep
+!   isave    : integer telling the loop to save the settings
 !
 subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
   icolourpart,xmin,xmax,ymin,ymax,rendermin,rendermax, &
@@ -93,30 +102,44 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         call pgsfs(2)
         call pgcirc(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
      case('g')   ! draw a line between two points
-        ipts = ipts + 1
-        xline(2) = xline(3)
-        yline(2) = yline(3)     
-        xline(3) = xcoords(iclosest)
-        yline(3) = ycoords(iclosest)
-        call pgpt(1,xline(3),yline(3),4)
-        if (ipts.gt.1) then
-           gradient = (yline(3)-yline(2))/(xline(3)-xline(2))
-           yint = yline(3) - gradient*xline(3)
-           xlength = sqrt((xline(3)-xline(2))**2 + (yline(3)-yline(2))**2) 
-           print*,' gradient = ',gradient,' y intercept = ',yint, 'length = ',xlength
-           if (xline(2).lt.xline(3)) then 
-              xline(1) = minval(xcoords)
-              xline(4) = maxval(xcoords)
+        xline(2) = xpt
+        yline(2) = ypt
+        !--mark first point
+        call pgpt1(xpt,ypt,4)
+        !--select second point
+        print*,' select another point (using left click or g) to plot line '
+        call pgband(1,1,xline(2),yline(2),xline(3),yline(3),char2)
+        !--draw line if left click or g
+        select case(char2)
+        case('A','g')
+           !--mark second point
+           call pgpt1(xline(3),yline(3),4)
+           xlength = xline(3)-xline(2)
+           if (abs(xlength).lt.tiny(xlength)) then
+              xline(1) = xline(2)
+              xline(4) = xline(2)
+              yline(1) = ymin
+              yline(4) = ymax
+              print*,' error: gradient = infinite'
+           elseif (xline(2).lt.xline(3)) then 
+              xline(1) = xmin
+              xline(4) = xmax
            else
-              xline(1) = maxval(xcoords)
-              xline(4) = minval(xcoords)
+              xline(1) = xmax
+              xline(4) = xmin
+           endif           
+           if (abs(xlength).gt.tiny(xlength)) then
+              ylength = yline(3)-yline(2)
+              gradient = ylength/xlength
+              yint = yline(3) - gradient*xline(3)
+              print*,' dx = ',xlength,' dy = ',ylength
+              print*,' gradient = ',gradient,' y intercept = ',yint
+              yline(1) = gradient*xline(1) + yint
+              yline(4) = gradient*xline(4) + yint
            endif
-           yline(1) = gradient*xline(1) + yint
-           yline(4) = gradient*xline(4) + yint
-           call pgline(4,xline,yline) 
-        else
-           print*,' select another point and press l again'
-        endif
+           !--plot line joining the two points
+           call pgline(4,xline,yline)           
+        end select
      !
      !--help
      !
@@ -156,7 +179,11 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         print*,'-------------------------------------------------------'
      case('s','S')
         isave = .not.isave
-        print*,'save settings on exit = ',isave
+        print*,'saving plot settings...',isave
+        call save_limits(iplotx,xmin,xmax)
+        call save_limits(iploty,ymin,ymax)
+        if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
+        if (rotation) call save_rotation(ndim,anglex,angley,anglez)
      !
      !--zoom
      !
@@ -175,6 +202,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
         print*,xpt,ypt,xpt2,ypt2,char2
         select case (char2)
         case('A')   ! zoom if another left click and not around colour bar
+           call pgsfs(2)
            call pgrect(xpt,xpt2,ypt,ypt2)
            if (xpt.gt.xmax .and. xpt2.gt.xmax .and. irender.gt.0) then
               drender = (rendermax-rendermin)/(ymax-ymin)
@@ -554,5 +582,36 @@ subroutine mvtitle(xi,yi,xmin,xmax,ymax)
  
  return
 end subroutine mvtitle
+
+!
+!--subroutines to save current plot limits
+!
+subroutine save_limits(iplot,xmin,xmax)
+ use limits, only:lim
+ implicit none
+ integer, intent(in) :: iplot
+ real, intent(in) :: xmin,xmax
+ 
+ lim(iplot,1) = xmin
+ lim(iplot,2) = xmax
+ 
+end subroutine save_limits
+
+!
+!--subroutines to save current plot limits
+!
+subroutine save_rotation(ndim,anglexi,angleyi,anglezi)
+ use settings_xsecrot, only:anglex,angley,anglez
+ implicit none
+ integer, intent(in) :: ndim
+ real, intent(in) :: anglexi,angleyi,anglezi
+ 
+ anglez = anglezi
+ if (ndim.ge.3) then
+    anglex = anglexi
+    angley = angleyi
+ endif
+ 
+end subroutine save_rotation
 
 end module interactive_routines
