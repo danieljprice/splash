@@ -116,8 +116,10 @@ subroutine read_data(rootname,istart,nfilesteps)
      time(i) = real(timein)
      gamma(i) = real(gammain)
      hfact = real(hfactin)
+     npartoftype(1,i) = npart(i)
+     npartoftype(2,i) = ntot(i)-npart(i)
      print*,'reading time = ',time(i),npart(i),ntot(i),gamma(i), &
-          hfact,ndim,ndimV,ncolumns     
+          hfact,ndim,ndimV,ncolumns
      if (ncolumns.ne.ncol_max) then
         print*,'*** Warning number of columns not equal for timesteps'
         print*,'ncolumns = ',ncolumns,ncol_max
@@ -326,6 +328,11 @@ subroutine read_data(rootname,istart,nfilesteps)
 !     label(ndim + 3*ndimV+11) = 'B_perp'
 !  endif
 
+ !
+ !--set labels for each type of particles
+ !
+ labeltype(1) = 'gas'
+ labeltype(2) = 'ghost'
 
 !-----------------------------------------------------------
 
