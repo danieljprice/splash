@@ -80,8 +80,8 @@ subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
      do jpix = jpixmin,jpixmax
         do ipix = ipixmin,ipixmax
 
-           ypix = ymin + (jpix)*pixwidth - 0.5*pixwidth
-           xpix = xmin + (ipix)*pixwidth - 0.5*pixwidth
+           ypix = ymin + (jpix)*pixwidth !- 0.5*pixwidth
+           xpix = xmin + (ipix)*pixwidth !- 0.5*pixwidth
            dy = ypix - y(i)
            dx = xpix - x(i)
            rab = sqrt(dx**2 + dy**2)
