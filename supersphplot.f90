@@ -147,8 +147,9 @@ program supersphplot
   use filenames
   use labels
   use settings
+  use system_commands
   implicit none
-  integer :: i,iprev
+  integer :: i,iprev,iargc
   !
   !--print header
   !
@@ -161,7 +162,6 @@ program supersphplot
   !
   !--initialise variables
   !      
-  rootname = 'blank'
   ishowopts = .false.  ! do/don't initially display menu options
   ivegotdata = .false.
   
@@ -172,43 +172,28 @@ program supersphplot
 
   ! ---------------------------------------------------
   ! get filenames from command line/file and read file
-  
-  call getarg(1,rootname(1))
-  print*,'argument 1 = ',rootname(1)
-  iprev = 1
-  i = 1
-  do while (rootname(iprev)(1:1).ne.' ' .and. i.le.maxfile)
-     call getarg(i,rootname(i))
-     !!print*,i,rootname(i)
-     iprev = i
-     i = i + 1
-     if (i.gt.maxfile .and. rootname(iprev)(1:1).ne.' ') then
-        print*,'WARNING: number of files >= array size: setting nfiles = ',maxfile
-     endif
-  enddo
-  if (i.gt.maxfile .and. rootname(maxfile)(1:1).ne.' ') then
-     nfiles = maxfile
-  else
-     nfiles = iprev - 1
-  endif
+  call get_number_arguments(nfiles)
   if (nfiles.gt.0) then
-     print "(a)",'number of files = ',nfiles
-  endif
+     if (nfiles.gt.maxfile) then
+        print*,'WARNING: number of files >= array size: setting nfiles = ',maxfile     
+        nfiles = maxfile
+     endif
+     do i=1,nfiles
+        call get_command_argument(i,rootname(i))
+     enddo
+  endif   
   
-  if (rootname(1)(1:1).ne.' ') then
+  if (nfiles.ge.1 .and. rootname(1)(1:1).ne.' ') then
      ihavereadfilename = .true.
-     if (buffer_data) then
-        call get_data(-1)
-     else
-        call get_data(1)
-     endif
   else
-     if (buffer_data) then
-        call get_data(-1)
-     else
-        call get_data(1)
-     endif
+     print "(a)",' no filenames read from command line'
   endif
+  if (buffer_data) then
+     call get_data(-1)
+  else
+     call get_data(1)
+  endif
+
   ! -----------------------------------------------------------
   ! setup kernel table for fast column density plots in 3D
   call setup_integratedkernel
