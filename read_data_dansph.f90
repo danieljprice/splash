@@ -139,10 +139,10 @@ subroutine read_data(rootname,nfilesteps)
      if (ntot(i).gt.maxpart) then
         !print*, 'ntot greater than array limits!!'    
         reallocate = .true.
-	npart_max = ntot(i)
+	npart_max = ntot(i) + 10
      endif
      if (i.eq.nstep_max) then
-        nstep_max = i + 10
+        nstep_max = i + max(10,INT(0.1*nstep_max))
         reallocate = .true.
      endif
      !

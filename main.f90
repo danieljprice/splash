@@ -227,7 +227,7 @@ subroutine main(ipicky,ipickx,irender)
            call transform_limits(lim(iplotx,1),lim(iplotx,2),  &
                 xmin,xmax,itrans(iplotx))
            call transform_limits(lim(iploty,1),lim(iploty,2),  &
-                ymin,ymax,itrans(iplotx))
+                ymin,ymax,itrans(iploty))
            !--work out whether to use log axes - this is for the call to pgbox
            logx = ' '
            logy = ' '
