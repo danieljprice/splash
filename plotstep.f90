@@ -1,31 +1,29 @@
 module timestep_plotting
   implicit none
 
-  integer, parameter :: maxtitles = 50
-  integer :: ninterp
-  integer :: iplotx,iploty,iplotz,irenderplot,ivectorplot,ivecx,ivecy
-  integer :: nyplots,npartdim      
-  integer :: irenderprev
-  integer :: ngrid
-  integer :: just, ntitles
-  integer :: iplots,iplotsonpage
-  integer :: index1,index2,itype
+  integer, parameter, private :: maxtitles = 50
+  integer, private :: ninterp
+  integer, private :: iplotx,iploty,iplotz,irenderplot,ivectorplot,ivecx,ivecy
+  integer, private :: nyplots,npartdim      
+  integer, private :: irenderprev
+  integer, private :: ngrid
+  integer, private :: just, ntitles
+  integer, private :: iplots,iplotsonpage
 
-  real, dimension(:), allocatable :: datpix1D, xgrid
-  real :: xmin,xmax,ymin,ymax,zmin,ymean
-  real :: vecmax,rendermin,rendermax,dummymin,dummymax
-  real :: dxsec,xsecpos
-  real :: pixwidth
-  real :: charheight, charheightmm
-  real :: dxgrid,xmingrid,xmaxgrid
-  real :: angletempx, angletempy, angletempz
+  real, dimension(:), allocatable, private :: datpix1D, xgrid
+  real, private :: xmin,xmax,ymin,ymax,zmin,ymean
+  real, private :: vecmax,rendermin,rendermax
+  real, private :: dxsec,xsecpos
+  real, private :: charheight, charheightmm
+  real, private :: dxgrid,xmingrid,xmaxgrid
+  real, private :: angletempx, angletempy, angletempz
 
-  logical :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
-  logical :: log, inewpage, tile_plots, isave, lastplot
-  logical :: initialise_xsec
-  logical :: imulti
+  logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
+  logical, private :: log, inewpage, tile_plots, isave, lastplot
+  logical, private :: initialise_xsec
+  logical, private :: imulti
 
-  character(len=60), dimension(maxtitles) :: titlelist
+  character(len=60), dimension(maxtitles), private :: titlelist
 
 contains
 
@@ -139,7 +137,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
         call prompt(' enter '//trim(label(iplotz))//' position for cross-section slice:', &
                      xsecpos_nomulti,lim(iplotz,1),lim(iplotz,2))
         !!--default thickness is half of the average particle spacing
-        npartdim = maxval(npartoftype(:,1))**(1./real(ndim))
+        npartdim = int(maxval(npartoftype(:,1))**(1./real(ndim)))
         print*,'average # of particles in each dimension = ',npartdim
         if (npartdim.gt.0) then
            dxsec = (lim(iplotz,2)-lim(iplotz,1))/float(npartdim)
@@ -189,6 +187,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   charheightmm = 4.0
   !!if ((ndown*nacross).gt.1 .and..not. tile_plots) charheight = 2.0
   !      charheight = 0.5*(nacross+ndown)
+  
+  !!--set line width to something visible
+  call pgslw(3)
 
 end subroutine initialise_plotting
 
@@ -236,6 +237,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   integer :: irenderpart
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec
+  integer :: index1,index2,itype
 
   real, parameter :: pi = 3.1415926536
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
@@ -244,9 +246,11 @@ subroutine plotstep(istep,irender,ivecplot, &
   real, dimension(ndim) :: xcoords,vecnew,xmintemp,xmaxtemp
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot,renderplot
   real :: angleradx, anglerady, angleradz
-  real :: xsecmin,xsecmax
+  real :: xsecmin,xsecmax,dummymin,dummymax
+  real :: pixwidth
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
+  character(len=120) :: title
   save istepprev
 
 34   format (25(' -'))
@@ -389,12 +393,12 @@ subroutine plotstep(istep,irender,ivecplot, &
            if (itrans(iplotx).ne.0) then
               call transform(xplot,itrans(iplotx))
               labelx = transform_label(labelx,itrans(iplotx))
-              call transform_limits(xmin,xmax,itrans(iplotx))
+              if (iadvance.ne.0) call transform_limits(xmin,xmax,itrans(iplotx))
            endif
            if (itrans(iploty).ne.0) then
               call transform(yplot,itrans(iploty))
               labely = transform_label(labely,itrans(iploty))
-              call transform_limits(ymin,ymax,itrans(iploty))
+              if (iadvance.ne.0) call transform_limits(ymin,ymax,itrans(iploty))
            endif
         endif
 
@@ -676,23 +680,8 @@ subroutine plotstep(istep,irender,ivecplot, &
            !-----end of preliminary muff for 2D/3D cross sections/renderings ------------------
 
            !---------------------------------
-           ! output some muff to the screen
+           ! setup page
            !---------------------------------
-
-           if (interactive) then
-              print*,trim(labely),'min,max = ',ymin,ymax
-              print*,trim(labelx),'min,max = ',xmin,xmax
-           endif
-           if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),xsecmin,label(iplotz),xsecmax
-35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
-
-           !--------------------------------------------------------------
-           ! set up pgplot page (this is my version of PGENV and PGLABEL)
-           !--------------------------------------------------------------
-
-           iplots = iplots + 1
-           iplotsonpage = iplotsonpage + 1
-           if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
 
            just = 1  ! x and y axis have same scale
            ! unless 1D xsec through 2D data or non-cartesian
@@ -700,20 +689,17 @@ subroutine plotstep(istep,irender,ivecplot, &
                .or.(icoordsnew.ne.1)) then
               just = 0 
            endif
+           title = ' '
 
-           if (tile_plots) then
-              if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
-              call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                             trim(labelx),trim(labely),' ',just,iaxis)
-           else
-              !--change the page if pagechange set
-              !  or, if turned off, between plots on first page only
-              inewpage = ipagechange .or. (iplots.le.nacross*ndown)
-              call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                trim(labelx),trim(labely),' ',just,iaxis, &
-                isamexaxis,isameyaxis,inewpage)
-           endif
+           call page_setup
 
+           !--add to log
+           if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),xsecmin,label(iplotz),xsecmax
+35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
+
+           !---------------------------------
+           ! plot rotated axes
+           !---------------------------------
            if (irotate .and. irotateaxes.gt.0) then
               if (ndim.eq.3) then
                  call rotate_axes3D(irotateaxes,iplotx,iploty, &
@@ -887,36 +873,12 @@ subroutine plotstep(istep,irender,ivecplot, &
      elseif ((iploty.gt.ndim .or. iplotx.gt.ndim)  &
           .and.(iploty.le.ndataplots .and. iplotx.le.ndataplots)) then
 
-        !---------------------------------
-        ! output some muff to the screen
-        !---------------------------------
-        if (interactive) then
-           print*,trim(labely),' min,max = ',ymin,ymax
-           print*,trim(labelx),' min,max = ',xmin,xmax
-        endif
-
-        !--------------------------------------------------------------
-        ! set up pgplot page (this is my version of PGENV and PGLABEL)
-        !--------------------------------------------------------------
-
-        iplots = iplots + 1
-        iplotsonpage = iplotsonpage + 1
-        if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
-
-        just = 0  ! x and y axis have different scales
-
-        if (tile_plots) then
-           if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
-           call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                          trim(labelx),trim(labely),' ',just,iaxis)
-        else
-            !--change the page if pagechange set
-           !  or, if turned off, between plots on first page only
-           inewpage = ipagechange .or. (iplots.le.nacross*ndown)
-           call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-             trim(labelx),trim(labely),' ',just,iaxis, &
-             isamexaxis,isameyaxis,inewpage)
-        endif
+        !--------------------------------
+        ! setup page
+        !--------------------------------
+        just = 0
+        title = ' '
+        call page_setup
 
         !--------------------------------
         ! now plot particles
@@ -1099,37 +1061,10 @@ subroutine plotstep(istep,irender,ivecplot, &
                  call transform_limits(ymin,ymax,itrans(iploty))
               endif
            endif
-
-           !--------------------------------------------------------------
-           ! output some muff to the screen
-           !--------------------------------------------------------------
-
-           if (interactive) then
-              print*,trim(labelx),'min,max = ',xmin,xmax
-              print*,trim(labely),'min,max = ',ymin,ymax
-           endif
-
-           !--------------------------------------------------------------
-           ! set up pgplot page
-           !--------------------------------------------------------------
-
-           iplots = iplots + 1
-           iplotsonpage = iplotsonpage + 1
-           if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
+           
            just = 0
-
-           if (tile_plots) then
-              if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
-              call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                             trim(labelx),trim(labely),'Power spectrum',just,iaxis)
-           else
-               !--change the page if pagechange set
-              !  or, if turned off, between plots on first page only
-              inewpage = ipagechange .or. (iplots.le.nacross*ndown)
-              call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                trim(labelx),trim(labely),'Power spectrum', &
-                just,iaxis,isamexaxis,isameyaxis,inewpage)
-           endif 
+           title = 'Power Spectrum'
+           call page_setup
 
            call pgline(nfreqspec,xplot,yplot)
 
@@ -1158,6 +1093,51 @@ subroutine plotstep(istep,irender,ivecplot, &
   enddo over_plots ! over plots per timestep (nyplot)
   
 contains
+
+!----------------------------------------------
+! interfaces to the page setup routines
+! this is called just before a plot is
+! actually plotted
+!----------------------------------------------
+  subroutine page_setup
+    implicit none
+    
+    !--------------------------------------------------------------
+    ! output some muff to the screen
+    !--------------------------------------------------------------
+
+    if (interactive) then
+       print*,trim(labelx),'min,max = ',xmin,xmax
+       print*,trim(labely),'min,max = ',ymin,ymax
+    endif
+
+    !---------------------
+    ! increment counters
+    !---------------------
+
+    iplots = iplots + 1
+    iplotsonpage = iplotsonpage + 1
+    if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
+
+    !--------------------------------------------------------------
+    ! set up pgplot page
+    !--------------------------------------------------------------
+
+    if (tile_plots) then
+       if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
+       call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+                      trim(labelx),trim(labely),trim(title),just,iaxis)
+    else
+        !--change the page if pagechange set
+       !  or, if turned off, between plots on first page only
+       inewpage = ipagechange .or. (iplots.le.nacross*ndown)
+       call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+         trim(labelx),trim(labely),trim(title), &
+         just,iaxis,isamexaxis,isameyaxis,inewpage)
+    endif 
+
+    return
+  end subroutine page_setup
 
 !--------------------------------------------
 ! sets up a one dimensional grid of pixels

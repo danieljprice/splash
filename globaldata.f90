@@ -63,7 +63,8 @@ module settings_data
  integer :: ndim, ndimv 
  integer :: icoords, iformat, ntypes
  integer :: nstart,n_end,nfreq
- logical :: ivegotdata, buffer_data
+ integer, dimension(10) :: isteplist
+ logical :: ivegotdata, buffer_data, iUseStepList
 
  namelist /dataopts/ buffer_data
 
@@ -101,13 +102,13 @@ end module settings_part
 !
 module settings_page
  implicit none
- integer :: iaxis,nacross,ndown,ipapersize
- logical :: ipagechange,tile,interactive,iadapt
+ integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage
+ logical :: iColourEachStep,tile,interactive,iadapt,ipagechange
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt, &
-   ipagechange,tile,ipapersize,papersizex,aspectratio, &
+   nstepsperpage,iColourEachStep,tile,ipapersize,papersizex,aspectratio, &
    hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle  
 
 end module settings_page

@@ -11,10 +11,10 @@ subroutine options_page
 
  iaction = 0
  papersizey = papersizex*aspectratio
- print 10,ipagechange,iaxis,papersizex,papersizey,nacross,ndown,tile, &
+ print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,tile, &
           hpostitle,vpostitle,hposlegend,vposlegend
 10 format(' 0) exit ',/,                   &
-        ' 1) toggle page change     (',L1,')',/, &
+        ' 1) change steps per page  (',i2,')',/, &
         ' 2) toggle axes            (',i2,')',/, &
         ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
         ' 4) change plots per page  (',i2,1x,i2,')',/, &
@@ -26,8 +26,20 @@ subroutine options_page
  select case(iaction)
 !------------------------------------------------------------------------
   case(1)
-     ipagechange=.not.ipagechange
-     print*,' Page changing = ',ipagechange
+     call prompt('Enter number of timesteps per page',nstepsperpage,1)
+     print*,'Plotting up to ',nstepsperpage,' timesteps per page'
+     if (nstepsperpage.gt.1) then
+        if (iadapt) then
+           print*,'(note that adaptive plot limits are now off)'
+           iadapt = .false.
+        endif
+        if (nstepsperpage.le.14) then
+           call prompt('Use different colours for each step?',iColourEachStep)
+        else
+           iColourEachStep = .false.
+           print*,'(and that there are too many steps per page to change colours)'
+        endif
+     endif
      return          
 !------------------------------------------------------------------------
   case(2)

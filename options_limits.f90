@@ -4,7 +4,7 @@
 subroutine options_limits
  use settings_data
  use settings_limits
- use settings_page, only:iadapt
+ use settings_page, only:iadapt,nstepsperpage
  use multiplot, only:itrans
  use prompting
  use limits
@@ -45,6 +45,9 @@ subroutine options_limits
  case(1)
     iadapt = .not.iadapt
     print*,'adaptive plot limits = ',iadapt
+    if (nstepsperpage.gt.1 .and. iadapt) then
+       print*,'WARNING: adaptive limits and multiple steps per page don''t mix'
+    endif
 !------------------------------------------------------------------------
  case(2)
     ipick = 1

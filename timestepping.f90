@@ -9,12 +9,12 @@ contains
 !
 subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   use particle_data, only:npartoftype,time,gamma,dat
-  use settings_data, only:nstart,n_end,nfreq,buffer_data
-  use settings_page, only:interactive
+  use settings_data, only:nstart,n_end,nfreq,buffer_data,iUsesteplist,isteplist
+  use settings_page, only:interactive,ipagechange,nstepsperpage,iColourEachStep
   use timestep_plotting, only:initialise_plotting,plotstep
   implicit none
   integer, intent(in) :: ipicky,ipickx,irender,ivecplot
-  integer :: i, ifile, iadvance
+  integer :: i, istep, ifile, iadvance, istepsonpage
   
   call initialise_plotting(ipicky,ipickx,irender)
 
@@ -25,38 +25,60 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   i = nstart
   iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
   ifile = 1
+  istepsonpage = 0
 
   over_timesteps: do while (i.le.n_end)
+
+     if (iUseStepList) then
+        istep = isteplist(i)
+     else
+        istep = i
+     endif
 
      if (.not.buffer_data) then    
         !
         !--make sure we have data for this timestep
         !
-        call get_nextstep(i,ifile)
-        if (i.eq.-666) exit over_timesteps
+        call get_nextstep(istep,ifile)
+        if (istep.eq.-666) exit over_timesteps
      endif
      !
      !--check timestepping
      !
-     if (i.lt.1) then
+     if (istep.lt.1) then
         print*,'reached first step: can''t go back'
-        i = 1
+        istep = 1
      endif
-     if (i.lt.nstart) then
+     if (istep.lt.nstart) then
         print*,'warning: i < nstart'
      endif
 
-     print 33, time(i),i
+     print 33, time(istep),istep
 33   format (5('-'),' t = ',f9.4,', dump #',i5,1x,18('-'))
 
-     call plotstep(i,irender,ivecplot,npartoftype(:,i), &
-                   dat(:,:,i),time(i),gamma(i),iadvance)
+     istepsonpage = istepsonpage + 1
+     if (istepsonpage.le.nstepsperpage) then
+        ipagechange = .false.
+     else
+        istepsonpage = 1
+        ipagechange = .true.
+     endif
+     !--colour the timestep if appropriate
+     if (nstepsperpage.gt.1 .and. iColourEachStep) then
+        call colour_timestep(istepsonpage)
+     endif
+
+     call plotstep(istep,irender,ivecplot,npartoftype(:,istep), &
+                   dat(:,:,istep),time(istep),gamma(istep),iadvance)
 !
 !--increment timestep
 !
      if (iadvance.eq.-666) exit over_timesteps
      i = i + iadvance
-     if (interactive .and. i.gt.n_end) i = n_end
+     if (interactive .and. i.gt.n_end) then
+        i = n_end
+        iadvance = 0
+     endif
 
   enddo over_timesteps
 
@@ -82,7 +104,7 @@ subroutine get_nextstep(i,ifile)
  use settings_page, only:interactive
  implicit none
  integer, intent(inout) :: i,ifile
- integer :: iskipfiles
+ integer :: iskipfiles,ifileprev
 
  !
  !--if data is not stored in memory, read next step from file
@@ -93,6 +115,8 @@ subroutine get_nextstep(i,ifile)
  !  if i > number of steps in this file, tries to skip
  !  appropriate number of files to get to timestep requested
  !
+ ifileprev = ifile
+ 
  if (i.gt.nstepsinfile(ifile)) then
     if (nstepsinfile(ifile).ge.1) then
        iskipfiles = (i-nstepsinfile(ifile))/nstepsinfile(ifile)
@@ -134,10 +158,10 @@ subroutine get_nextstep(i,ifile)
     print*,'*** get_nextstep: error: request for file < 1'
  elseif (ifile.ne.ifileopen) then
     call get_data(ifile,.true.)
-    if (i.gt.nstepsinfile(ifile)) then
-       i = MOD(i-1,nstepsinfile(ifile)) + 1
+    if (i.gt.nstepsinfile(ifileprev)) then
+       i = MOD(i-nstepsinfile(ifileprev),nstepsinfile(ifileprev))
     elseif (i.lt.1) then
-       i = nstepsinfile(ifile) + MOD(i-1,nstepsinfile(ifile)) + 1
+       i = nstepsinfile(ifile) + MOD(i-1,nstepsinfile(ifileprev)) + 1
     endif
     if (i.ne.1) then
        print*,'starting at step ',i
@@ -146,5 +170,26 @@ subroutine get_nextstep(i,ifile)
 
  return
 end subroutine get_nextstep     
+
+!-------------------------------------------------------------
+! colours all the particles a given colour for this timestep
+!-------------------------------------------------------------
+subroutine colour_timestep(istep)
+  use particle_data, only:icolourme
+  implicit none
+  integer, intent(in) :: istep
+  integer :: icolour
+  
+  if (allocated(icolourme)) then
+     icolour = istep + 2
+     if (icolour.gt.16) print*,'warning: step colour > 16: unknown colour'
+     icolourme = icolour
+  !!call legend_multiplestepsperpage(time(i),icolour)
+  else
+     print*,'***error: array not allocated in colour_timestep***'
+  endif
+
+  return
+end subroutine colour_timestep
 
 end module timestepping

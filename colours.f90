@@ -48,9 +48,9 @@ subroutine colour_set(icolourscheme)
 !  adjust ncolours if necessary
 !      
   call PGQCOL(icolmin,icolmax)
-  print*,' from device = ',icolmin,icolmax
+  !!print*,' from device = ',icolmin,icolmax
   call PGQCIR(icolmin,icolmax)
-  print*,' other = ',icolmin,icolmax
+  !!print*,' other = ',icolmin,icolmax
   if (icolourmin.lt.icolmin) icolourmin = icolmin
   ncolmax = icolmax - icolourmin
   if (ncolours.gt.ncolmax) then  

@@ -60,6 +60,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      print*,'entering interactive mode...press h in plot window for help'
   else
      print*,'cannot enter interactive mode: device has no cursor'
+     iadvance = -666
      return
   endif
   char = 'A'

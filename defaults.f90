@@ -69,6 +69,7 @@ subroutine defaults_set
 !--page options
 !
   iaxis = 0                ! turns axes off/on
+  nstepsperpage = 1
   ipagechange = .true.     ! if false plots graphs on top of each other
   tile = .false.
   nacross = 1           ! number of plots across page
@@ -107,7 +108,7 @@ subroutine defaults_set
 !
 !--render options
 !
-  icolours = 1               ! colour scheme to use
+  icolours = 2               ! colour scheme to use
   npix = 100                 ! pixels in x direction for rendering
   iPlotColourBar = .true.! whether or not to plot the colour bar
   iplotcont_nomulti = .false. ! plot contours
