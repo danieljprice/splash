@@ -31,12 +31,13 @@ subroutine options_page
      return
 !------------------------------------------------------------------------
   case(3)
-     print*,' 0) PGPLOT default'
-     print*,' 1) small square movie '
-     print*,' 2) large/multiple movie'
-     print*,' 3) single small graph'
-     print*,' 4) duo small graph '
-     print*,' 5) Custom size ' 
+     print*,' 0) PGPLOT default '
+     print*,' 1) small square movie   :  2.92 x 2.92 inches'
+     print*,' 2) large/multiple movie :  5.85 x 5.85'
+     print*,' 3) single small graph   :  5.85 x 4.13'
+     print*,' 4) duo small graph      : 11.70 x 4.13'
+     print*,' 5) duo graph            : 11.70 x 6.00'
+     print*,' 6) Custom size '
      call prompt(' Enter option for paper size ',ipapersize,0,5)
      select case(ipapersize)
      case(1) 
@@ -52,6 +53,10 @@ subroutine options_page
         papersizex = 11.7
         aspectratio = 0.5/sqrt(2.)	
      case(5)
+        papersizex = 11.7
+	papersizey = 6.0
+        aspectratio = papersizey/papersizex	
+     case(6)
         call prompt(' x size (inches) ',papersizex,0.0,12.0)
         call prompt(' y size (inches) or aspect ratio (-ve)', &
              papersizey,-12.0,12.0)
