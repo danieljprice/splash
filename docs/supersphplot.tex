@@ -1010,11 +1010,65 @@ with
 from \citet{toro92}.
 
 \subsection{Polytrope}
- The subroutine \verb+exact_poly+ computes the exact solution for a static polytrope with
-arbitrary $\gamma$.
+ The subroutine \verb+exact_polytrope+ computes the exact solution for a static polytrope with
+arbitrary $\gamma$. From Poisson's equation
+\begin{equation}
+\nabla^2 \phi = 4\pi G \rho,
+\end{equation}
+assuming only radial dependence this is given by
+\begin{equation}
+\frac{1}{r^{2}} \frac{d}{dr} \left(r^{2} \frac{d\phi}{dr} \right) = 4\pi G \rho(r).
+\label{eq:poissonsph}
+\end{equation}
+  
+  The momentum equation assuming an equilibrium state (${\bf v} = 0$) and a
+polytropic equation of state $P = K\rho^{\gamma}$ gives
+\begin{equation}
+\frac{d\phi}{dr} = - \frac{\gamma K}{\gamma-1}\frac{d}{dr} \left[\rho^{(\gamma -1)} \right]
+\label{eq:polyk}
+\end{equation}
+Combining (\ref{eq:poissonsph}) and (\ref{eq:polyk}) we obtain an equation for the density profile
+\begin{equation}
+\frac{\gamma K}{4\pi G (\gamma - 1)} \frac{1}{r^{2}} \frac{d}{dr} \left[r^{2}
+\frac{d}{dr}\left( \rho^{\gamma-1} \right) \right] + \rho(r) = 0.
+\label{eq:dens}
+\end{equation}
+This equation can be rearranged to give
+\begin{equation}
+\frac{\gamma K}{4\pi G (\gamma - 1)} \frac{d^2}{dr^2}
+\left[r\rho^{\gamma-1}\right] + r\rho = 0.
+\end{equation}
+ The program solves this equation numerically by defining a variable
+\begin{equation}
+\mathcal{E} = r \rho^{\gamma-1}
+\end{equation}
+and finite differencing the equation according to
+\begin{equation}
+\frac{\mathcal{E}^{i+1} - \mathcal{E}^i + \mathcal{E}^{i-1}}{(\Delta r)^2} =
+\frac{4\pi G (\gamma - 1)}{\gamma K} r
+\left(\frac{\mathcal{E}}{r}\right)^{1/(\gamma-1)}.
+\end{equation}
 
 \subsection{Linear wave}
  The subroutine \verb+exact_wave+ simply plots a sine function on a given graph.
+ The function is of the form
+\begin{equation}
+y = \sin{(k x - \omega t)}
+\end{equation}
+where $k$ is the wavenumber and $\omega$ is the angular frequency. These
+parameters are set via the input values of wavelength $\lambda = 2\pi/k$ and
+wave period $P = 2\pi/\omega$.
+
+\begin{table}
+\centering
+\begin{tabular}{|l|l|}
+\hline
+$\lambda$ & wavelength \\
+$P$ & period \\
+\hline
+\end{tabular}
+\caption{Input parameters for the linear wave exact solution}
+\end{table}
 
 \subsection{Sedov blast wave}
  The subroutine \verb+exact_sedov+ computes the self-similar Sedov solution for a blast wave.
