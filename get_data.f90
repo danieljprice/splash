@@ -28,7 +28,6 @@ subroutine get_data(ireadfile,gotfilenames)
         call prompt(' Enter filename to read',rootname(i))
      enddo
   endif
-!!  ihavereadfilename = .false.
   !
   !--set everything to zero initially
   !

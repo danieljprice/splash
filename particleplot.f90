@@ -58,7 +58,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            enddo
         else
            !
-           !--otherwise plot all particle of this type using appropriate marker and colour
+           !--otherwise plot all particles of this type using appropriate marker and colour
            !
            call pgqci(icolourindex)
            print "(a,i8,1x,a)",' plotting ',npartoftype(itype),trim(labeltype(itype))//' particles'
