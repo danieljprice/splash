@@ -146,7 +146,7 @@ c decide whether to number and label the y axis
 c      
       IF (ix.EQ.1 .AND. axis.GE.0) THEN
          yopts = '1VN'//yopts
-	 call PGMTXT('L',3.2,0.5,0.5,labely)
+	 call PGMTXT('L',3.5,0.5,0.5,labely)
       ELSEIF (axis.GE.0) THEN
          yopts = yopts//'N'
       ENDIF  
