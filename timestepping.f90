@@ -138,9 +138,6 @@ subroutine get_nextstep(i,ifile)
        i = MOD(i-1,nstepsinfile(ifile)) + 1
     elseif (i.lt.1) then
        i = nstepsinfile(ifile) + MOD(i-1,nstepsinfile(ifile)) + 1
-    else
-       print*,'*** get_nextstep: error: should''nt need to read a new file'
-       i = 1
     endif
     if (i.ne.1) then
        print*,'starting at step ',i
