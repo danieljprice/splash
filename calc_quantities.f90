@@ -9,7 +9,7 @@ subroutine calc_quantities(ifromstep,itostep)
   implicit none
   integer, intent(in) :: ifromstep, itostep
   integer :: i,j,nstartfromcolumn
-  integer :: ientrop,idhdrho
+  integer :: ientrop,idhdrho,ivalfven
   integer :: ipmag,ibeta,itotpr,idivBerr,icurr,icrosshel
   integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
   real :: Bmag, Jmag
@@ -32,6 +32,7 @@ subroutine calc_quantities(ifromstep,itostep)
   ivperp = 0
   iBpar = 0
   iBperp = 0
+  ivalfven = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -65,12 +66,13 @@ subroutine calc_quantities(ifromstep,itostep)
   !
   if (iBfirst.ne.0) then
      nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 5
+     ncalc = ncalc + 6
      ipmag = nstartfromcolumn + 1
      ibeta = nstartfromcolumn + 2
      itotpr = nstartfromcolumn + 3      
      idivBerr = nstartfromcolumn + 4
      icrosshel = nstartfromcolumn + 5
+     ivalfven = nstartfromcolumn + 6
      !!icurr = ncolumns + 8
      icurr = 0
   else
@@ -219,6 +221,13 @@ subroutine calc_quantities(ifromstep,itostep)
                    dat(j,ivx:ivx+ndimV-1,i))
            enddo
         endif
+        if ((ivalfven.ne.0) .and.(ipmag.ne.0).and.(irho.ne.0)) then
+           where (dat(:,irho,i).gt.tiny(dat))
+              dat(:,ivalfven,i) = sqrt(dat(:,ipmag,i)/dat(:,irho,i))
+           elsewhere
+              dat(:,ivalfven,i) = 0.
+           end where
+        endif
      endif
   enddo
   !
@@ -236,6 +245,7 @@ subroutine calc_quantities(ifromstep,itostep)
   if (idivberr.ne.0) label(idivberr) = 'h |div B| / |B|'
   if (icurr.ne.0) label(icurr) = '|J|'
   if (icrosshel.ne.0) label(icrosshel) = 'B dot v'
+  if (ivalfven.ne.0) label(ivalfven) = 'v\dalfven'
   
   if (ivpar.ne.0) label(ivpar) = 'v\d\(0737)'  !!!_parallel'
   if (ivperp.ne.0) label(ivperp) = 'v\d\(0738)' !!_perp'
