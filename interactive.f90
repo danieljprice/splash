@@ -737,6 +737,8 @@ end subroutine mvtitle
 subroutine save_limits(iplot,xmin,xmax)
  use limits, only:lim
  use multiplot, only:itrans
+ use settings_data, only:ndim
+ use settings_limits, only:iadapt,iadaptcoords
  use transforms, only:transform_limits_inverse
  implicit none
  integer, intent(in) :: iplot
@@ -752,6 +754,14 @@ subroutine save_limits(iplot,xmin,xmax)
  else
     lim(iplot,1) = xmin
     lim(iplot,2) = xmax
+ endif
+ !
+ !--change appropriate plot limits to fixed (not adaptive)
+ !
+ if (iplot.le.ndim) then
+    iadaptcoords = .false.
+ else
+    iadapt = .false.
  endif
  
  return
