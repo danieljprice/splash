@@ -202,8 +202,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
      call pgpaper(papersizex,aspectratio)
   endif
   !!--turn off page prompting
-  if (animate .or. interactive) call pgask(.false.)
-  !!if (animate .and. .not. interactive) call pgbbuf !! start buffering output
+  call pgask(.false.)
+  !!if (.not. interactive) call pgbbuf !! start buffering output
 
   !!--set plot titles
   ntitles = 0
@@ -989,6 +989,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                  !read*
                  !call pgpage! change page
 
+                 xmin = 1./wavelengthmax  ! freq min
+                 xmax = nfreqspec*xmin
                  !!--call power spectrum calculation on the even grid
                  call powerspectrum_fourier(ngrid,xgrid,datpix1D,nfreqspec, &
                       xplot(1:nfreqspec),xmin,xmax,yplot(1:nfreqspec))
@@ -1002,7 +1004,24 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               
               ymin = minval(yplot(1:nfreqspec))
               ymax = maxval(yplot(1:nfreqspec))
+              
+              !!--uncomment next few lines to plot wavelengths instead
+              zplot(1:nfreqspec) = 1./xplot(1:nfreqspec)
+              xplot(1:nfreqspec) = zplot(1:nfreqspec)
+              xmin = minval(xplot(1:nfreqspec))
+              xmax = maxval(xplot(1:nfreqspec))
+              labelx = 'wavelength'
 
+              if (itrans(iploty).ne.0) then
+                 call transform(xplot,xplot,itrans(iploty),maxpart)
+                 labelx = transform_label(labelx,itrans(iploty))
+                 call transform_limits(xmin,xmax,xmin,xmax,itrans(iploty))
+
+                 call transform(yplot,yplot,itrans(iploty),maxpart)
+                 labely = transform_label(labely,itrans(iploty))
+                 call transform_limits(ymin,ymax,ymin,ymax,itrans(iploty))
+              endif
+              
               !--------------------------------------------------------------
               ! output some muff to the screen
               !--------------------------------------------------------------
@@ -1065,7 +1084,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   enddo over_timesteps
 
   if (.not.interactive) then
-     !!if (animate) call pgebuf
+     !!call pgebuf
      print*,'press return to finish'
      read*
   endif
