@@ -78,7 +78,9 @@ subroutine defaults_set
 !--exact solution parameters
 !
   lambda = 1.0	! sound wave exact solution : wavelength
-  delta = 0.005	! sound wave exact solution : amplitude
+  ampl = 0.005	! sound wave exact solution : amplitude
+  period = 1.0
+  iwaveplot = 5
   htstar = 1.   ! toy star crap
   atstar = 1.
   ctstar = 1.

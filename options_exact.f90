@@ -13,7 +13,7 @@ subroutine options_exact(iexact)
  print 10
 10  format(' 0) none ',/, 		&
            ' 1) polytrope ',/,		&
-           ' 2) soundwave ',/,     	&
+           ' 2) linear wave ',/,     	&
            ' 3) sedov blast wave',/,     &
            ' 4) toy star ',/,		&
            ' 5) mhd shock tubes ')
@@ -47,8 +47,10 @@ subroutine options_exact(iexact)
     close(14)
 101 continue         
  case(2)
-    call prompt('enter wavelength of sound wave lambda ',lambda,0.0)		
-    call prompt('enter amplitude ',delta,0.0)  
+    call prompt('enter plot to place exact solution on',iwaveplot,1)
+    call prompt('enter wavelength lambda ',lambda,0.0)		
+    call prompt('enter amplitude ',ampl,0.0)
+    call prompt('enter period ',period)
  case(3)
     call prompt('enter density of ambient medium ',rhosedov,0.0)
     call prompt('enter blast wave energy E ',esedov,0.0)

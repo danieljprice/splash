@@ -138,11 +138,12 @@ end module multiplot
 !
 module exact_params
  implicit none
+ integer :: iwaveplot ! linear wave
  integer :: norder ! for toy star
  integer, parameter :: ipolycmax=1000
  real :: htstar,atstar,ctstar,totmass,sigma,sigma0 ! toy star parameters
 !--sound wave
- real :: delta,lambda
+ real :: ampl,lambda,period
 !--sedov blast wave
  real :: rhosedov,esedov
 !--polytrope
@@ -152,7 +153,7 @@ module exact_params
 !
 !--sort these into a namelist for input/output
 !
- namelist /exactparams/ delta,lambda,htstar,atstar,ctstar,sigma0,norder,rhosedov,esedov
+ namelist /exactparams/ ampl,lambda,period,iwaveplot,htstar,atstar,ctstar,sigma0,norder,rhosedov,esedov
      
 
 end module exact_params

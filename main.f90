@@ -32,7 +32,7 @@ subroutine main(ipicky,ipickx,irender)
   real, dimension(:), allocatable :: datpix1D, xgrid
   real, dimension(:,:), allocatable :: datpix
   real, dimension(:,:,:), allocatable :: datpix3D
-  real :: xmin,xmax,ymin,ymax,zmin,zmax
+  real :: xmin,xmax,ymin,ymax,zmin,zmax,ymean
   real :: vecmax,rendermin,rendermax
   real :: xsecmin,xsecmax,dxsec,xsecpos
   real :: pixwidth
@@ -990,10 +990,9 @@ subroutine main(ipicky,ipickx,irender)
                 call pgline(ipolyc,rad(1:ipolyc),den(1:ipolyc))
 
         case(2)! soundwave
-           if ((iploty.eq.irho).and.(iplotx.eq.1)) then
-              call exact_swave(time(i),delta,lambda,gamma(i), &
-                   xplot(1:npart(i)),yplot(1:npart(i)), &
-                   dat(iutherm,1:npart(i),i),npart(i))
+           if ((iploty.eq.iwaveplot).and.(any(ix(:).eq.iplotx))) then 
+	      ymean = SUM(yplot(1:npart(i)))/REAL(npart(i)) 
+              call exact_wave(time(i),ampl,period,lambda,xmin,xmax,ymean)
            endif
 
         case(3)! sedov blast wave
