@@ -218,7 +218,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            ihavereadfilename = .true.
            if (nstepsinfile(i).ge.1) then
               iskipfiles = (i-nstepsinfile(ifile))/nstepsinfile(ifile)
-              print*,'iskipfiles = ',iskipfiles,i
            else
               print*,'*** error in timestepping: file contains zero timesteps'
               iskipfiles = 1
@@ -241,12 +240,9 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            ihavereadfilename = .true.
            ifile = ifile-1
            if (ifile.ge.1) then
-              print*,'ifile = ',ifile
-              print*,'going back: i = ',i,' nstepsinfile = ',nstepsinfile(ifile)
-              iskipfiles = (i-nstepsinfile(ifile))/nstepsinfile(ifile)
-              print*,'iskipfiles = ',i
-              ifile = ifile + iskipfiles
-              print*,'ifile =', ifile
+              iskipfiles = (i-1)/nstepsinfile(ifile)
+              if (abs(iskipfiles).gt.0) print*,'skipping back ',abs(iskipfiles),' files'
+              ifile = ifile + iskipfiles + 1
               if (ifile.lt.1) ifile = 1
               call get_data(ifile)
            else
