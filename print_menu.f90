@@ -34,9 +34,9 @@ subroutine print_menu(ipicky,ipickx,irender)
   !
   !--supersphplot options 
   !     
-  menuitems = 12	! this is the number of options in the menu (set here)
+  menuitems = 10	! this is the number of options in the menu (set here)
 
-  if (ishowopts) then
+!  if (ishowopts) then
 
 !     print 14,numplot+2, &
 !          'set multiplot                    ',nyplotmulti
@@ -46,25 +46,22 @@ subroutine print_menu(ipicky,ipickx,irender)
           'change number of timesteps read  ',(n_end-nstart+1)/nfreq 
      print 15,numplot+5, &
           'toggle interactive mode          ',interactive
-     print 15,numplot+6, &
-          'toggle animate                   ',animate
-     print 13,numplot+7, &
+     print 13,numplot+6, &
           'page options'
-     print 13,numplot+8,'particle plot options'
-     print 14,numplot+9, &
+     print 13,numplot+7,'particle plot options'
+     print 14,numplot+8, &
           'rendering/vector plot options    ',ivecplot_nomulti
-     print 13,numplot+10,'change plot limits'
+     print 13,numplot+9,'change plot limits'
 
-  endif	! show/hide opts
+!  endif	! show/hide opts
 
   print 12
-  if (ishowopts) then
-     print 13,numplot+11,'hide options'      
-  else
-     print 13,numplot+11,'supersphplot options'
-  endif
-  print 13,numplot+12,'Save defaults'
-  print 13,numplot+13,'Exit supersphplot'
+!  if (ishowopts) then
+!     print 13,numplot+10,'hide options'      
+!  else
+!     print 13,numplot+10,'supersphplot options'
+!  endif
+  print 11,numplot+10,'save defaults       ',numplot+11,'exit supersphplot'
   print 12
 
 11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a)
