@@ -26,11 +26,12 @@ subroutine defaults_set
 
   axes = .true.	! turns axes off/on
   animate = .true.	! turns off/on prompt between page changes
-  magfield = .true.	! historical - can be used to set whether MHD or not
   iadapt = .true.	! adaptive plot limits
   plotcirc = .false.	! plot circle of radius 2h around particles
   plotcircall = .false.	!  " " around all particle
   icircpart = 1		!  " " around a specific particle
+  ncircpart = 1
+
   xsec_nomulti = .false.		! take cross section of data / particles
   flythru = .false.		! take series of cross sections through data
   ipagechange = .true.	! if false plots graphs on top of each other

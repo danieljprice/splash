@@ -127,11 +127,6 @@ subroutine options(ipicky)
      return
 !------------------------------------------------------------------------
   case(7)
-     magfield=.not.magfield
-     print *,' Mag field = ',magfield
-     return
-!------------------------------------------------------------------------
-  case(8)
      xsec_nomulti =.not.xsec_nomulti
      print *,' Cross section = ',xsec_nomulti
      flythru = .false.
@@ -142,7 +137,7 @@ subroutine options(ipicky)
      endif
      return
 !------------------------------------------------------------------------
-  case(9)
+  case(8)
      plotcirc=.not.plotcirc
      print*,' Plot circles of interaction = ',plotcirc
      if (plotcirc) then	     
@@ -158,19 +153,19 @@ subroutine options(ipicky)
      endif
      return 	  
 !------------------------------------------------------------------------
-  case(10)
+  case(9)
      print*,'(0: Square 1: . 2: + 3: * 4: o 5: x 17: bold circle)'
      call prompt(' Enter PGPLOT marker # (particles):',imark)
      call prompt(' Enter PGPLOT marker # (ghosts)   :',imarkg)
      call prompt(' Enter PGPLOT marker # (sinks)    :',imarksink)
      return
 !------------------------------------------------------------------------
-  case(11)
+  case(10)
      call prompt('Enter number of plots across:',nacross,1,numplot)
      call prompt('Enter number of plots down  :',ndown,1,numplot)
      return	    	  
 !------------------------------------------------------------------------
-  case(12)
+  case(11)
      call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
      !	  READ*,nyplotmulti
      !          IF (nyplotmulti.GT.numplot) THEN 
@@ -218,12 +213,12 @@ subroutine options(ipicky)
      enddo
      return	    	  
 !------------------------------------------------------------------------
-  case(13)
+  case(12)
      ipagechange=.not.ipagechange
      print*,' Page changing = ',ipagechange
      return 	  
 !------------------------------------------------------------------------
-  case(14)
+  case(13)
      print*,' 0) PGPLOT default'
      print*,' 1) small square movie '
      print*,' 2) large/multiple movie'
@@ -260,7 +255,7 @@ subroutine options(ipicky)
      return 	  
 
 !------------------------------------------------------------------------
-  case(15)
+  case(14)
      print*,' Plot initial only(i), all(a), both(b) or not (n)?'
      read*,ans
      iplotline = .false.
@@ -273,10 +268,10 @@ subroutine options(ipicky)
      print*,' Plot line = ',iplotline,iplotlinein
      return 	  
 !------------------------------------------------------------------------
-  case(16)
+  case(15)
      call options_exact(iexact)
 !------------------------------------------------------------------------
-  case(17)
+  case(16)
      iplotav=.not.iplotav
      if (iplotav) then
         call prompt('Enter no. of bins for averaging ',nbins,1,1000)
@@ -284,13 +279,13 @@ subroutine options(ipicky)
      print*,' Plot average, nbins = ',iplotav,nbins
      return 		  	    	  	  
 !-----------------------------------------------------------------------
-  case(18)
+  case(17)
      !	  label particles with particle numbers
      ilabelpart=.not.ilabelpart
      print*,' label particles = ',ilabelpart
      return 	  
 !------------------------------------------------------------------------
-  case(19)
+  case(18)
      !	  plot ghost particles?
      call prompt('Plot ghost particles? ',iplotghost)
      call prompt('Plot sink particles? ',iplotsink)
@@ -299,7 +294,7 @@ subroutine options(ipicky)
      if (iplotghost) ntotplot(:) = npart(:) + nghost(:)
      return 	  
 !------------------------------------------------------------------------
-  case(20)
+  case(19)
      call options_render(npix_nomulti,icolours, &
           iplotcont_nomulti,ncontours_nomulti,     &
           ivecplot_nomulti,npixvec_nomulti,iplotpartvec_nomulti, &
@@ -307,7 +302,7 @@ subroutine options(ipicky)
           ndim,numplot)
      return
 !------------------------------------------------------------------------
-  case(21)
+  case(20)
      ipick = 1
      do while (ipick.gt.0 .and. ipick.le.numplot)
         ipick = 0
@@ -329,7 +324,7 @@ subroutine options(ipicky)
      enddo
      return
 !------------------------------------------------------------------------
-  case(22)
+  case(21)
      if (.not.iadapt) then
         ians = .false.
         call prompt('Do you want to manually enter limits?',ians)
@@ -362,12 +357,12 @@ subroutine options(ipicky)
      endif
      return
 !------------------------------------------------------------------------
-  case(23)
+  case(22)
      !	  show/hide plot options
      ishowopts = .not.ishowopts
      return 	  
 !------------------------------------------------------------------------
-  case(24)
+  case(23)
      call defaults_write
      return
   case DEFAULT
