@@ -78,7 +78,7 @@ c
 c set positions of x and y labels in units of character height from edge
 c
       xlabeloffset = 3.0
-      ylabeloffset = 3.5
+      ylabeloffset = 4.5
 c
 c query the character height as fraction of viewport
 c
