@@ -314,15 +314,17 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            endif
            !--apply transformations (log, 1/x etc) if appropriate
            !  also change labels and limits appropriately
-           if (itrans(iplotx).ne.0) then
-              call transform(xplot,xplot,itrans(iplotx),maxpart)
-              labelx = transform_label(labelx,itrans(iplotx))
-              call transform_limits(xmin,xmax,xmin,xmax,itrans(iplotx))
-           endif
-           if (itrans(iploty).ne.0) then
-              call transform(yplot,yplot,itrans(iploty),maxpart)
-              labely = transform_label(labely,itrans(iploty))
-              call transform_limits(ymin,ymax,ymin,ymax,itrans(iploty))
+           if (.not.(iplotx.le.ndim .and. iploty.le.ndim)) then
+              if (itrans(iplotx).ne.0) then
+                 call transform(xplot,xplot,itrans(iplotx),maxpart)
+                 labelx = transform_label(labelx,itrans(iplotx))
+                 call transform_limits(xmin,xmax,xmin,xmax,itrans(iplotx))
+              endif
+              if (itrans(iploty).ne.0) then
+                 call transform(yplot,yplot,itrans(iploty),maxpart)
+                 labely = transform_label(labely,itrans(iploty))
+                 call transform_limits(ymin,ymax,ymin,ymax,itrans(iploty))
+              endif
            endif
            
            !--write username, date on plot
@@ -548,7 +550,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                     else
                        !!--do fast projection
                        call interpolate3D_projection( &
-                            dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
+                            xplot(1:ninterp),yplot(1:ninterp), &
                             dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),   &
                             dat(1:ninterp,ih,i), dat(1:ninterp,irenderplot,i), &
                             ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
