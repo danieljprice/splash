@@ -6,44 +6,46 @@ subroutine calc_quantities
   use particle_data
   use settings
   implicit none
-  integer :: i,j
-  real :: Bmag
+  integer :: i,j,icurr
+  real :: Bmag, Jmag
   real, parameter :: pi = 3.1415926536
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
-  ncalc = 7	! specify number to calculate
+  ncalc = 8	! specify number to calculate
   ientrop = ncolumns + 1      
   irad = ncolumns + 2
+  ike = ncolumns + 3
   if (iBfirst.ne.0) then
-     ipmag = ncolumns + 3
-     ibeta = ncolumns + 4
-     itotpr = ncolumns + 5      
-     ike = ncolumns + 6
+     ipmag = ncolumns + 4
+     ibeta = ncolumns + 5
+     itotpr = ncolumns + 6      
      idivBerr = ncolumns + 7
+     icurr = ncolumns + 8
   else
-     ncalc = 2
+     ncalc = 3 + ndimV
+     ivpar = ncolumns + 4
+     ivperp= ncolumns + 5
      ipmag = 0
      ibeta = 0
      itotpr = 0
-     ike = 0
      idivBerr = 0
   endif
   itimestep = 0
   if (ndim.eq.2 .and. iBfirst.ne.0 .and. ivx.ne.0) then
      ncalc = ncalc + 5
-     irad2 = ncolumns + 8
-     ivpar = ncolumns + 9
-     ivperp = ncolumns + 10
-     iBpar = ncolumns + 11
-     iBperp = ncolumns + 12
-  else
-     irad2 = 0
-     ivpar = 0
-     ivperp = 0
-     iBpar = 0
-     iBperp = 0	 
+     irad2 = ncolumns + 9
+     ivpar = ncolumns + 10
+     ivperp = ncolumns + 11
+     iBpar = ncolumns + 12
+     iBperp = ncolumns + 13
+!  else
+!     irad2 = 0
+!     ivpar = 0
+!     ivperp = 0
+!     iBpar = 0
+!     iBperp = 0	 
   endif
   
   print*,'calculating ',ncalc,' additional quantities...'
@@ -132,7 +134,14 @@ subroutine calc_quantities
                  dat(itimestep,j,i) = 0.
               endif
            endif
-        endif
+	   if ((icurr.ne.0).and.(iJfirst.ne.0).and.irho.ne.0) then
+	      Jmag = sqrt(dot_product(dat(iJfirst:iJfirst+ndimV,j,i), &
+	                              dat(iJfirst:iJfirst+ndimV,j,i)))
+	      if (dat(irho,j,i).ne.0) then
+	         dat(icurr,j,i) = Jmag     !!/sqrt(dat(irho,j,i))
+              endif
+	   endif
+	endif
      enddo
   enddo
   !
@@ -148,10 +157,23 @@ subroutine calc_quantities
   if (ibeta.ne.0) label(ibeta) = 'plasma \gb'
   if (idivberr.ne.0) label(idivberr) = 'h |div B| / |B|'
   if (itimestep.ne.0) label(itimestep) = 'h sqrt(\gr) / |B|'
-  if (ivpar.ne.0) label(ivpar) = 'v_parallel'
-  if (ivperp.ne.0) label(ivperp) = 'v_perp'
-  if (iBpar.ne.0) label(iBpar) = 'B_parallel'
-  if (iBperp.ne.0) label(iBperp) = 'B_perp'
+  if (icurr.ne.0) label(icurr) = '|J|'
+  
+  !
+  !--calculate the vector quantities in the new co-ordinate basis
+  !
+  select case(icoords)
+  case(2)
+     if (ivpar.ne.0) label(ivpar) = 'v_r'
+     if (ivperp.ne.0) label(ivperp) = 'v_phi'
+     if (iBpar.ne.0) label(iBpar) = 'B_r'
+     if (iBperp.ne.0) label(iBperp) = 'B_phi'  
+  case default
+     if (ivpar.ne.0) label(ivpar) = 'v_parallel'
+     if (ivperp.ne.0) label(ivperp) = 'v_perp'
+     if (iBpar.ne.0) label(iBpar) = 'B_parallel'
+     if (iBperp.ne.0) label(iBperp) = 'B_perp'
+  end select
   
   return
 end subroutine calc_quantities
