@@ -39,9 +39,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, parameter :: maxptmass = 10
   integer :: i,j,ifile,ierr
   integer :: nprint,nptmass,npart_max,nstep_max
-  logical :: iexist,magfield   
+  integer :: n1,n2
+  logical :: iexist,magfield,minidump
   character(LEN=LEN(rootname)) :: dumpfile
-  real :: timei
+  real :: timei,tkin,tgrav,tterm,escap,rstar,mstar
 
   nstepsread = 0
   nstep_max = 0
@@ -59,12 +60,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
      return
   endif
   !
+  !--use minidump format if minidump
+  !
+  minidump = .false.
+  if (dumpfile(1:8).eq.'minidump') minidump = .true.
+  !
   !--fix number of spatial dimensions
   !
   ndim = 3
   ndimV = 3
   if (magfield) then
-     ncolumns = 11
+     if (minidump) then
+        ncolumns = 11
+     else
+        ncolumns = 24
+     endif
   else
      ncolumns = 7  ! number of columns in file  
   endif
@@ -88,9 +98,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !--read the number of particles in the first step,
         !  allocate memory and rewind
         !
-        read(15,end=55,iostat=ierr) timei,nprint,nptmass
+        if (minidump) then
+           read(15,end=55,iostat=ierr) timei,nprint,nptmass
+        else
+           read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
+                   nptmass,timei
+        endif
         print*,'first time = ',timei,nprint,nptmass
-        if (.not.allocated(dat) .or. (nprint+nptmass).gt.npart_max) then
+ 
+       if (.not.allocated(dat) .or. (nprint+nptmass).gt.npart_max) then
            npart_max = max(npart_max,INT(1.1*(nprint+nptmass)))
            call alloc(npart_max,nstep_max,ncolumns)
         endif
@@ -113,16 +129,56 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--now read the timestep data in the dumpfile
 !
         if (magfield) then
-           read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
-             (dat(i,1,j),i=1,nprint),(dat(i,2,j),i=1,nprint),  &
-             (dat(i,3,j),i=1,nprint),(dat(i,4,j),i=1,nprint),  &
-             (dat(i,5,j),i=1,nprint),(dat(i,6,j),i=1, nprint), &
-             (dat(i,8,j),i=1,nprint),(dat(i,9,j),i=1,nprint),  &
-             (dat(i,10,j),i=1,nprint),(dat(i,11,j),i=1,nprint),&             
-             (dat(i,7,j), i=nprint+1, nprint+nptmass), &
-             (dat(i,1,j), i=nprint+1, nprint+nptmass), &
-             (dat(i,2,j), i=nprint+1, nprint+nptmass), &
-             (dat(i,3,j), i=nprint+1, nprint+nptmass)        
+           if (minidump) then
+
+              dat(:,:,j) = 0.
+              read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
+                   (dat(i,1,j),i=1,nprint),(dat(i,2,j),i=1,nprint),  &
+                   (dat(i,3,j),i=1,nprint),(dat(i,4,j),i=1,nprint),  &
+                   (dat(i,5,j),i=1,nprint),(dat(i,6,j),i=1, nprint), &
+                   (dat(i,8,j),i=1,nprint),(dat(i,9,j),i=1,nprint),  &
+                   (dat(i,10,j),i=1,nprint),(dat(i,11,j),i=1,nprint),&
+                   (dat(i,7,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,1,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,2,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,3,j), i=nprint+1, nprint+nptmass)
+              
+              dat(1:nprint,7,j) = 1.4/real(nprint)
+              print "(a,1pe10.4)", &
+                   'WARNING: hardwiring particle masses on minidump to ', &
+                   1.4/real(nprint)
+           else
+
+              dat(:,:,j) = 0. ! because ptmasses don't have all quantities
+           !
+           !--read full dump
+           !              
+              read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
+                   nptmass,time(j),(dat(i,7,j),i=1,nprint), &
+                   escap,tkin,tgrav,tterm, &
+                   (dat(i,1,j),i=1,nprint),(dat(i,2,j),i=1,nprint),  &
+                   (dat(i,3,j),i=1,nprint),(dat(i,4,j),i=1,nprint),  &
+                   (dat(i,5,j),i=1,nprint),(dat(i,6,j),i=1, nprint), &
+                   (dat(i,8,j),i=1,nprint),(dat(i,9,j),i=1,nprint),  &
+                   (dat(i,10,j),i=1,nprint),(dat(i,11,j),i=1,nprint),&
+                   (dat(i,12,j),i=1,nprint),(dat(i,13,j),i=1,nprint),&
+                   (dat(i,14,j),i=1,nprint),(dat(i,15,j),i=1,nprint),&
+                   (dat(i,16,j),i=1,nprint),(dat(i,17,j),i=1,nprint),&
+                   (dat(i,18,j),i=1,nprint),(dat(i,19,j),i=1,nprint),&
+                   (dat(i,20,j),i=1,nprint),(dat(i,21,j),i=1,nprint),&
+                   (dat(i,22,j),i=1,nprint),(dat(i,23,j),i=1,nprint),&
+                   (dat(i,24,j),i=1,nprint),&
+                   (dat(i,9,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,1,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,2,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,3,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,4,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,5,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,6,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,21,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,22,j), i=nprint+1, nprint+nptmass), &
+                   (dat(i,23,j), i=nprint+1, nprint+nptmass)   
+           endif
         else
            read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
              (dat(i,1,j), i=1, nprint), (dat(i,2,j), i=1,nprint), &
@@ -132,9 +188,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
              (dat(i,1,j), i=nprint+1, nprint+nptmass), &
              (dat(i,2,j), i=nprint+1, nprint+nptmass), &
              (dat(i,3,j), i=nprint+1, nprint+nptmass)
+
+           dat(1:nprint,7,j) = 1.4/real(nprint)
+           print "(a,1pe10.4)", &
+                'WARNING: hardwiring particle masses on minidump to ', &
+                1.4/real(nprint)
         endif
              
-        dat(1:nprint,7,j) = 1.4/real(2971627)
              
         if (ierr /= 0) then
            print "(a)",'|*** ERROR READING TIMESTEP ***'
@@ -170,12 +230,16 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
+  use filenames, only:rootname
   use labels
-  use params
-  use settings_data
+  use settings_data, only:ndim,ndimV,ncolumns,ntypes
   use geometry, only:labelcoord
   implicit none
   integer :: i
+  logical :: minidump
+
+  minidump = .false.
+  if (rootname(1)(1:8).eq.'minidump') minidump = .true.
   
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -189,20 +253,58 @@ subroutine set_labels
   do i=1,ndim
      ix(i) = i
   enddo
-  ivx = 0
-  ih = 4        !  smoothing length
-  irho = 5     ! location of rho in data array
-  iutherm = 6  !  thermal energy
-  ipmass = 7  !  particle mass
-  if (ncolumns.gt.7) then
-     iBfirst = 8
-     idivB = 11 
+  if (minidump) then
+     ivx = 0
+     ih = 4        !  smoothing length
+     irho = 5     ! location of rho in data array
+     iutherm = 6  !  thermal energy
+     ipmass = 7  !  particle mass
+     if (ncolumns.gt.7) then
+        iBfirst = 8
+        idivB = 11 
+     endif
+  else !--full dump
+     ivx = ndim+1
+     ih = 7
+     irho = 10
+     iutherm = 8 
+     ipmass = 9
+
+     label(11) = 'temperature [ MeV ]'
+     label(12) = 'electron fraction (y\de\u)'
+     iBfirst = 13
+     label(16) = 'psi'
+     idivB = 17
+     label(24) = 'dgrav'
+
+     iamvec(18:20) = 18
+     labelvec(18:20) = 'J'
+     do i=1,ndimV
+        label(18+i-1) = labelvec(18)//'\d'//labelcoord(i,1)
+     enddo
+     
+     iamvec(21:23) = 21
+     labelvec(21:23) = 'force'
+     do i=1,ndimV
+        label(21+i-1) = labelvec(21)//'\d'//labelcoord(i,1)
+     enddo
+  endif
+
+  if (ivx.ne.0) then
+     iamvec(ivx:ivx+ndimV-1) = ivx
+     labelvec(ivx:ivx+ndimV-1) = 'v'
+     do i=1,ndimV
+        label(iBfirst+i-1) = labelvec(iBfirst)//'\d'//labelcoord(i,1)
+     enddo
+  endif
+
+  if (iBfirst.ne.0) then
      iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
      labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
      do i=1,ndimV
         label(iBfirst+i-1) = labelvec(iBfirst)//'\d'//labelcoord(i,1)
      enddo
-     label(11) = 'div B'
+     label(idivB) = 'div B'
   endif
   
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
