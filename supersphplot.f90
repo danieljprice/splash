@@ -62,6 +62,7 @@ program supersphplot
 !     this version for both ndspmhd and matthew bate's code 2003-2004
 !     changes log (for a full changelog see the CVS log - or use cvs2cl):
 !      17/05/04 - reads multiple files consecutively, error catches in interpolate 
+!                 also tiling of plots using danpgtile
 !      21/04/04 - page setup moved out of main -> setpage, danpgtile added
 !      26/03/04 - options split into submenus
 !      04/03/04 - allocatable arrays 
@@ -224,7 +225,6 @@ program supersphplot
      ! set plot options from menu
      !      
      imulti = .false.
-     isamexaxis = .true.      ! used to determine whether to plot labels
      
      if ((ipicky.gt.numplot+1).and.(ipicky.le.numplot+menuitems)) then
         !-------------------------------------------------------

@@ -25,7 +25,7 @@ subroutine defaults_set
   nfreq = 1		! frequency of timesteps to read
   icoords = 0	! co-ordinate system of simulation
 
-  axes = .true.	! turns axes off/on
+  iaxis = 0	! turns axes off/on
   iadapt = .true.	! adaptive plot limits
   plotcirc = .false.	! plot circle of radius 2h around particles
   plotcircall = .false.	!  " " around all particle
@@ -33,6 +33,7 @@ subroutine defaults_set
   ncircpart = 1
   interactive = .false.
   animate = .false.
+  tile = .true.
 
   xsec_nomulti = .false.		! take cross section of data / particles
   flythru = .false.		! take series of cross sections through data
@@ -69,7 +70,6 @@ subroutine defaults_set
   itrans(:) = 0		! no transformations (log10 etc)
   backgnd_vec_nomulti = .false. ! plot vector plot using black/white
 
-  isamexaxis = .true.	! these are overwritten later in program
   irenderplot = 0		! this is just so it is set to something
   labelcoord(1) = 'x'
   labelcoord(2) = 'y'

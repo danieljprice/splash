@@ -24,7 +24,7 @@ subroutine main(ipicky,ipickx,irender)
   integer :: nsink,nsinkstart,nsinkend,nghoststart,nghostend
   integer :: ishk,int_from_string
   integer :: igrid, ngrid
-  integer :: just, axis
+  integer :: just
 
   character(len=8) :: string     ! used in pgplot calls
   real, dimension(2,maxpart) :: vecplot
@@ -40,8 +40,8 @@ subroutine main(ipicky,ipickx,irender)
   real :: dxgrid
   real :: xpt1,ypt1,xpt2,ypt2
 
-  logical :: iplotcont,iplotpartvec,x_sec
-  logical :: log,use_backgnd_color_vecplot, inewpage
+  logical :: iplotcont,iplotpartvec,x_sec,isamexaxis,isameyaxis
+  logical :: log,use_backgnd_color_vecplot, inewpage, tile_plots
 
   character(len=60) :: title,titlex
   character(len=20) :: labelx,labely,labelrender
@@ -63,6 +63,9 @@ subroutine main(ipicky,ipickx,irender)
   use_backgnd_color_vecplot = backgnd_vec_nomulti
   title = ' '
   titlex = ' '
+  isamexaxis = .true.  ! same x axis on all plots? (only relevant for >1 plots per page)
+  isameyaxis = .true.  ! same y axis on all plots?
+  tile_plots = .false.
 
   if (ndim.ne.3) x_sec = .false.
 
@@ -73,10 +76,16 @@ subroutine main(ipicky,ipickx,irender)
      if (any(multiplotx(1:nyplotmulti).ne.multiplotx(1))) then
         isamexaxis = .false.
      endif
+     if (any(multiploty(1:nyplotmulti).ne.multiploty(1))) then
+        isameyaxis = .false.
+     endif
      iplotx = multiplotx(1)
      iploty = multiploty(1)
      nyplots = nyplotmulti
   else
+     if (((n_end-nstart)/nfreq).lt.nacross) then
+        isamexaxis = .false.
+     endif
      nyplots = 1 
      iploty = ipicky
      iplotx = ipickx
@@ -86,6 +95,8 @@ subroutine main(ipicky,ipickx,irender)
      flythru = .false.
      nxsec = 1
   endif
+  !!--work out whether or not to tile plots on the page
+  tile_plots = tile .and. isamexaxis.and.isameyaxis.and. .not. iadapt
 
   !------------------------------------------------------------------------
   ! co-ordinate plot initialisation
@@ -141,8 +152,12 @@ subroutine main(ipicky,ipickx,irender)
         titlex = ' '
      endif
 
-     !!--initialise pgplot     
-     call pgbegin(0,'?',nacross,ndown)
+     !!--initialise pgplot
+     if (tile_plots) then
+        call pgbegin(0,'?',1,1)
+     else
+        call pgbegin(0,'?',nacross,ndown)
+     endif
      !
      !--set colour table
      !
@@ -160,7 +175,11 @@ subroutine main(ipicky,ipickx,irender)
      !!--no title if more than one plot on the page
      if ((nacross.gt.1).or.(ndown.gt.1)) title = '          '
 
-     call pgbegin(0,'?',nacross,ndown)    !  initialise PGPLOT
+     if (tile_plots) then
+        call pgbegin(0,'?',1,1)
+     else
+        call pgbegin(0,'?',nacross,ndown)
+     endif
 
   endif
   !!------------------------------------------------------------------------
@@ -194,7 +213,7 @@ subroutine main(ipicky,ipickx,irender)
   !      print*,' enter character height '
   !      read*,charheight
   charheight = 1.0
-  if ((ndown*nacross).gt.1) charheight = 2.0
+  if ((ndown*nacross).gt.1 .and..not. tile_plots) charheight = 2.0
   !      charheight = 0.5*(nacross+ndown)
 
   !------------------------------------------------------------------------      
@@ -492,22 +511,22 @@ subroutine main(ipicky,ipickx,irender)
 	      inewpage = ipagechange .or. ((.not.ipagechange).and.(i.eq.nstart))
 	      just = 1
 	      if (ndim.eq.2 .and. x_sec) just = 0
-	      if (axes) then
-	         axis = 0
-	      elseif (ivecplot.ne.0) then   ! draw box only for vector plots
-	         axis = -1
-	      else
-	         axis = -2
-	      endif
 
               !--------------------------------------------------------------
               ! set up pgplot page (this is my version of PGENV and PGLABEL)
               !--------------------------------------------------------------
 	     
-	      call setpage(nyplot,nacross,ndown,xmin,xmax,ymin,ymax, &
-	           labelx,labely,titlex,just,axis,isamexaxis,inewpage)
+	      if (nyplots.eq.1 .and. nacross*ndown.gt.1) then
+	         call setpage(MOD(i-1,nacross*ndown)+1,nacross,ndown,xmin,xmax,ymin,ymax, &
+	           labelx,labely,titlex,just,iaxis, &
+		   isamexaxis,isameyaxis,inewpage,tile_plots)	      
+	      else
+	         call setpage(nyplot,nacross,ndown,xmin,xmax,ymin,ymax, &
+	           labelx,labely,titlex,just,iaxis, &
+		   isamexaxis,isameyaxis,inewpage,tile_plots)
+	      endif
 	      
-	      if (.not.axes) then
+	      if (iaxis.lt.0) then
                  !--if multiple plots showing contours only, label with a,b,c etc
                  if ((nacross*ndown.gt.1).and.(irenderplot.gt.ndim) &
                       .and.(icolours.eq.0).and.imulti) then
@@ -743,7 +762,7 @@ subroutine main(ipicky,ipickx,irender)
               !
               !--print legend if this is the first plot on the page
               !    
-              if (nyplot.eq.1) call legend(time(i))    
+              if (nyplot.eq.1 .and. i.le.nacross) call legend(time(i))    
 
               !
               !--%%%%%%%%%%%%% end loop over cross-section slices %%%%%%%%%%%%%%%%%%%%%%%
@@ -769,18 +788,20 @@ subroutine main(ipicky,ipickx,irender)
 	   !-----------------------
 	   inewpage = ipagechange .or. ((.not.ipagechange).and.(i.eq.nstart))
 	   just = 0
-	   if (axes) then
-	      axis = 0
-	   else
-	      axis = -2
-	   endif
 
            !--------------------------------------------------------------
            ! set up pgplot page (this is my version of PGENV and PGLABEL)
            !--------------------------------------------------------------
-	     
-	   call setpage(nyplot,nacross,ndown,xmin,xmax,ymin,ymax, &
-	        labelx,labely,title,just,axis,isamexaxis,inewpage)
+
+	   if (nyplots.eq.1 .and. nacross*ndown.gt.1) then
+	      call setpage(MOD(i-1,nacross*ndown)+1,nacross,ndown,xmin,xmax,ymin,ymax, &
+	        labelx,labely,title,just,iaxis, &
+		isamexaxis,isameyaxis,inewpage,tile_plots)	      
+	   else
+	      call setpage(nyplot,nacross,ndown,xmin,xmax,ymin,ymax, &
+	        labelx,labely,title,just,iaxis, &
+		isamexaxis,isameyaxis,inewpage,tile_plots)
+	   endif
 
            !--------------------------------
            ! now plot particles

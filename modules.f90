@@ -64,7 +64,7 @@ module settings
  integer :: linestylein, iexact
  integer :: irenderplot
  integer :: ncolours,nstart,n_end,nfreq
- integer :: icoords
+ integer :: icoords,iaxis
  integer :: ncircpart
  integer, dimension(10) :: icircpart
  
@@ -76,12 +76,12 @@ module settings
  real :: xsecpos_nomulti
  real :: papersizex,aspectratio
 !--plot options
- logical :: axes, animate, interactive
+ logical :: animate, interactive
  logical :: iadapt,ihavereadfilename
  logical :: plotcirc,plotcircall,flythru,imulti,ipagechange
  logical :: iplotline,iplotlinein,iplotav,ilabelpart
  logical :: iplotpart,iplotghost,iplotsink
- logical :: ishowopts, ivegotdata,isamexaxis
+ logical :: ishowopts, ivegotdata, tile
  
  logical :: backgnd_vec_nomulti
  logical :: iplotcont_nomulti,xsec_nomulti,iplotpartvec_nomulti
@@ -95,7 +95,7 @@ module settings
 !
 !--sort these into a namelist for input/output
 !
- namelist /plotopts/ axes, &
+ namelist /plotopts/ iaxis,tile, &
    animate,iadapt,xsec_nomulti,flythru, &
    plotcirc,iplotline,iplotlinein,linestylein,          &
    imark, imarkg, imarksink,                            &
