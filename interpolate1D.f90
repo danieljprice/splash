@@ -37,6 +37,10 @@ subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
   datsmooth = 0.
   term = 0.
   print*,'interpolating from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+  if (pixwidth.le.0.) then
+     print*,'interpolate2D: error: pixel width <= 0'
+     return
+  endif
   !
   !--loop over particles
   !      
@@ -45,6 +49,10 @@ subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
      !--set kernel related quantities
      !
      hi = hh(i)
+     if (hi.le.0.) then
+        print*,'interpolate1D: error: h <= 0 ',i,hi
+	return
+     endif
      hi1 = 1./hi
      radkern = 2.*hi   ! radius of the smoothing kernel
      const = 2./(3.*hi)   ! normalisation constant

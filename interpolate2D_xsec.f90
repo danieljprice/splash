@@ -53,6 +53,10 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
      print*,'error: interpolate: npix = 0 '
      return
   endif
+  if (pixwidth.le.0.) then
+     print*,'interpolate2D_xsec: error: pixel width <= 0'
+     return
+  endif
   print*,'oblique 1D cross section through 2D data: npix =',npixx
   !
   !--work out the equation of the line y = mx + c from the two points input
@@ -80,6 +84,10 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
      !--set kernel related quantities
      !
      hi = hh(i)
+     if (hi.le.0.) then
+        print*,'interpolate2D_xsec: error: h <= 0 ',i,hi
+	return
+     endif
      hi1 = 1./hi
      h2 = hi*hi
      radkern = 2.*hi    ! radius of the smoothing kernel

@@ -42,6 +42,10 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
   datsmooth = 0.
   term = 0.
   print*,'interpolating from particles to 3D grid...'
+   if (pixwidth.le.0.) then
+     print*,'interpolate3D: error: pixel width <= 0'
+     return
+  endif
   !
   !--loop over particles
   !      
@@ -50,6 +54,10 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
      !--set kernel related quantities
      !
      hi = hh(i)
+     if (hi.le.0.) then
+        print*,'interpolate3D: error: h <= 0 ',i,hi
+	return
+     endif
      hi1 = 1./hi
      h3 = hi*hi*hi
      radkern = 2.*hi   ! radius of the smoothing kernel
