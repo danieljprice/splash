@@ -7,10 +7,12 @@
 !
 !     Subroutines as follows (in alphabetical order):
 !
+!     calc_quantities    : calculates additional quantities from particle data
 !     colour_demo        : demonstration of colour schemes for rendering
 !     danpgwedg          : my very minor modification of pgwedg
 !     exact_mhdshock     : some "exact" solutions for MHD shocks 
 !     exact_polytrope    : exact solution for a polytrope
+!     exact_rhoh	 : plots exact relation between density and smoothing length
 !     exact_sedov        : exact solution for sedov blast wave
 !     exact_swave        : exact solution for a linear sound wave
 !     exact_toystar      : exact solution for the toy star problem
@@ -23,7 +25,6 @@
 !     menu_actions	 : plot options in menu format
 !     modules		 : contains all shared (global) variables
 !     plot_average	 : bins particles along x-axis and plots average line
-!     plot_rhoh		 : plots exact relation between density and smoothing length
 !     print_menu	 : prints menu
 !     read_data_dansph   : reads data from my format of data files
 !     read_data_mrbsph   : reads data from Matthew Bate's format of data files
@@ -43,6 +44,7 @@
 !
 !     This version for both NDSPMHD and Matthew Bate's code 2003
 !     Changes log:
+!      24/11/03 - calc_quantities in separate subroutine, rhoh moved
 !      28/10/03 - bug fix when no data 
 !      14/10/03 - new colour schemes
 !      09/10/03 - gamma different betw. timesteps, paper size, menuitems
@@ -1244,10 +1246,10 @@ cc--plot vector map of magnetic field
 	    ENDIF   
 	 END SELECT
 !
-!--plot h = 1/rho
+!--plot h = (1/rho)^(1/ndim)
 !
 	 IF ((iploty.EQ.ih).AND.(iplotx.EQ.irho)) THEN
-	    CALL plot_rhoh(hfact,ndim)
+	    CALL exact_rhoh(hfact,ndim)
 	 ENDIF
 	
          ENDDO over_plots	! over plots per timestep (nyplot)

@@ -19,7 +19,8 @@ MRBSPH = read_data_mbate.f render_smooth.f
 PGXTAL = read_data_dansph.f render_smooth_pgxtal.f
 
 SOURCES= modules.f prompting.f90  supersphplot.f \
-         colour_demo.f danpgwedg.f \
+         calc_quantities.f90 colour_demo.f danpgwedg.f \
+	 exact_rhoh.f90 \
 	 exact_sedov.f exact_swave.f exact_toystar.f \
 	 exact_toystar_ACplane.f exact_mhdshock.f90 \
 	 get_render_options.f \
@@ -29,7 +30,7 @@ SOURCES= modules.f prompting.f90  supersphplot.f \
 	 interpolate3D_projection.f \
 	 int_from_string.f90 \
 	 legend.f menu_actions.f \
-	 plot_average.f plot_rhoh.f print_header.f90\
+	 plot_average.f print_header.f90\
 	 print_menu.f read_defaults.f \
          render_coarse.f render.f \
 	 setcolours.f set_defaults.f \
