@@ -8,7 +8,7 @@ subroutine options_limits
  use limits
  use labels
  implicit none
- integer :: iaction,ipick,i
+ integer :: iaction,ipick,i,ierr
  real :: diff, mid, temp
  logical :: ians
  character(len=1) :: ans
@@ -26,8 +26,9 @@ subroutine options_limits
 	' 3) xy limits track particle      ( ',i8,' )   ',/,   &
         ' 4) zoom in/out                   ( ',f4.2,' ) ',/,   &
         ' 5) apply transformations (log10,1/x) ',/, &
-	' 6) save current limits to file ')
- call prompt('enter option ',iaction,0,6)
+	' 6) save current limits to file ',/, &
+	' 7) re-read limits file         ')
+ call prompt('enter option ',iaction,0,7)
 !
 !--limits
 !
@@ -98,7 +99,9 @@ subroutine options_limits
      enddo
      return
   case(6)
-     call save_limits     
+     call save_limits 
+  case(7)
+     call read_limits(ierr)    
   end select
  
  return
