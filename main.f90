@@ -803,8 +803,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	      !--enter interactive mode
 	      !
              if (interactive) then
-		call interactive_part(ntotplot(i),xplot(1:ntotplot(i)), &
-		                      yplot(1:ntotplot(i)),iadvance) 
+		call interactive_part(ntotplot(i),iplotx,iploty,irenderplot, &
+		     xplot(1:ntotplot(i)),yplot(1:ntotplot(i)),iadvance) 
              endif
 
 
@@ -934,7 +934,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            !--enter interactive mode
            !
            if (interactive) then
-	      call interactive_part(npart(i),xplot(1:npart(i)), &
+	      call interactive_part(npart(i),iplotx,iploty,0,xplot(1:npart(i)), &
 	                            yplot(1:npart(i)),iadvance)
            endif
 	   

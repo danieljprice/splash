@@ -2,15 +2,17 @@
 !--interactive tools on particle plots
 !  (experimental at this stage)
 !
-subroutine interactive_part(npart,xcoords,ycoords,iadvance)
+subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,iadvance)
+  use limits
   implicit none
-  integer, intent(in) :: npart
+  integer, intent(in) :: npart,iplotx,iploty,irender
   integer, intent(out) :: iadvance
   real, dimension(npart), intent(in) :: xcoords, ycoords
   integer :: i,iclosest,nc,ipts,iadvance,int_from_string
-  real :: xpt,ypt,rmin,rr,gradient,yint,xlength
+  real :: xpt,ypt,xpt2,ypt2,rmin,rr,gradient,yint,xlength
+  real :: xlength, ylength
   real, dimension(4) :: xline,yline
-  character(len=1) :: char
+  character(len=1) :: char,char2
   character(len=20) :: string
   logical :: iexit
 
@@ -50,7 +52,7 @@ subroutine interactive_part(npart,xcoords,ycoords,iadvance)
         call pgsch(1.0)
      case('c','C')
         print*,'plotting circle of interaction (not implemented)'
-     case('l','L')   ! draw a line between two points
+     case('g','G')   ! draw a line between two points
         ipts = ipts + 1
         xline(2) = xline(3)
 	yline(2) = yline(3)     
@@ -82,11 +84,50 @@ subroutine interactive_part(npart,xcoords,ycoords,iadvance)
 	print*,' jump by n timesteps  : 1,2,3..9 then left or right click'
 	print*,' (r)eplot current plot        : r'
         print*,' label closest (p)article     : p'
-	print*,' plot connecting (l)ine       : l, L'
+	print*,' plot a line and find its g)radient : l, L'
 	print*,' plot (c)ircle of interaction : c, C'
 	print*,' (h)elp                       : h'
         print*,' (q)uit plotting              : q, Q'     	
         print*,'-------------------------------------------------------'
+     case('A') ! left click
+        !
+	!--draw rectangle from the point and reset the limits
+	!
+	print*,'please select area to zoom in on'
+	call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
+	print*,xpt,ypt,xpt2,ypt2,char2
+	if (char2.eq.'A') then   ! zoom if another left click
+	   lim(iplotx,1) = min(xpt,xpt2)
+	   lim(iplotx,2) = max(xpt,xpt2)
+	   lim(iploty,1) = min(ypt,ypt2)
+	   lim(iploty,2) = max(ypt,ypt2)
+	   iadvance = 0
+	   iexit = .true.
+	endif
+     case('-') ! zoom out by 10%
+	print*,'zooming out'
+	xlength = lim(iplotx,2)-lim(iplotx,1)
+	ylength = lim(iploty,2)-lim(iploty,1)
+	xlength = 1.1*xlength
+	ylength = 1.1*ylength
+	lim(iplotx,1) = xpt - 0.5*xlength
+	lim(iplotx,2) = xpt + 0.5*xlength
+	lim(iploty,1) = ypt - 0.5*ylength
+	lim(iploty,2) = ypt + 0.5*ylength
+	iadvance = 0
+	iexit = .true.
+     case('+') ! zoom in by 10%
+	print*,'zooming in'
+	xlength = lim(iplotx,2)-lim(iplotx,1)
+	ylength = lim(iploty,2)-lim(iploty,1)
+	xlength = 0.9*xlength
+	ylength = 0.9*ylength
+	lim(iplotx,1) = xpt - 0.5*xlength
+	lim(iplotx,2) = xpt + 0.5*xlength
+	lim(iploty,1) = ypt - 0.5*ylength
+	lim(iploty,2) = ypt + 0.5*ylength
+	iadvance = 0
+	iexit = .true.
      case('q','Q')
         iadvance = 666666666
 	print*,'quitting...'
@@ -97,7 +138,7 @@ subroutine interactive_part(npart,xcoords,ycoords,iadvance)
      case('r','R') ! replot
         iadvance = 0
 	iexit = .true.
-     case(' ','A') ! space, left click
+     case(' ') ! space
         iexit = .true.
      case('1','2','3','4','5','6','7','8','9')
         iadvance = int_from_string(char)
