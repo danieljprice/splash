@@ -186,6 +186,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         print*,' zoom in by 10%       : +'
         print*,' zoom out by 10(20)%      : - (_)'
         print*,' (a)djust/reset plot limits to fit '
+        if (irender.ne.0) then
+           print*,'  (applies to colour bar if mouse is over colour bar)'
+        endif
         print*,' (r)eplot current plot        : r'
         print*,' label closest (p)article     : p'
         print*,' plot a line and find its g)radient : g'
@@ -195,8 +198,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
            print*,' rotate about z axis by +(-) 15 degrees : , (.)'
            print*,' rotate about z axis by +(-) 30 degrees : < (>)'
            if (ndim.ge.3) then
-              print*,' rotate about x axis by +(-) 15 degrees : / ('')'
-              print*,' rotate about x axis by +(-) 30 degrees : ? (")'
+              print*,' rotate about x axis by +(-) 15 degrees : [ (])'
+              print*,' rotate about x axis by +(-) 30 degrees : { (})'
               print*,' rotate about y axis by +(-) 15 degrees : l (;)'
               print*,' rotate about y axis by +(-) 30 degrees : L (:)'
               print*,' x) take cross section '
@@ -364,13 +367,19 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         iadvance = 0
         iexit = .true.
      case('a') ! reset plot limits
-        print*,'resetting xy plot limits...'
-        xmin = minval(xcoords)
-        xmax = maxval(xcoords)
-        ymin = minval(ycoords)
-        ymax = maxval(ycoords)
-        iadvance = 0
-        iexit = .true.
+        if (xpt.gt.xmax .and. irender.gt.0) then
+           call useadaptive
+           iadvance = 0
+           iexit = .true.
+        else
+           print*,'resetting xy plot limits...'
+           xmin = minval(xcoords)
+           xmax = maxval(xcoords)
+           ymin = minval(ycoords)
+           ymax = maxval(ycoords)
+           iadvance = 0
+           iexit = .true.
+        endif
      !
      !--set/unset log axes
      !
@@ -443,28 +452,28 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
            iadvance = 0
            iexit = .true.
         endif
-     case('''')
+     case('[')
         if (rotation .and. ndim.ge.3) then
            print*,'changing x rotation angle by -15 degrees...'
            anglex = anglex - 15.
            iadvance = 0
            iexit = .true.
         endif
-     case('"')
+     case('{')
         if (rotation .and. ndim.ge.3) then
            print*,'changing x rotation angle by -30 degrees...'
            anglex = anglex - 30.
            iadvance = 0
            iexit = .true.
         endif
-     case('/')
+     case(']')
         if (rotation .and. ndim.ge.3) then
            print*,'changing x rotation angle by 15 degrees...'
            anglex = anglex + 15.
            iadvance = 0
            iexit = .true.
         endif
-     case('?')
+     case('}')
         if (rotation .and. ndim.ge.3) then
            print*,'changing x rotation angle by 30 degrees...'
            anglex = anglex + 30.
@@ -842,6 +851,14 @@ subroutine change_itrans(iplot)
  endif
  
 end subroutine change_itrans
+
+subroutine useadaptive
+ use settings_limits, only:iadapt
+ implicit none
+ 
+ iadapt = .true.
+ 
+end subroutine useadaptive
 !
 !--saves rotation options
 !
