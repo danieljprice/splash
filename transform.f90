@@ -275,8 +275,8 @@ function transform_label(label,itrans)
   integer :: itrans,itransmulti,i,ndigits
   integer, dimension(nmax) :: digit
   character(LEN=*) :: label
-  character(LEN=40) :: transform_label
-  character(LEN=40) :: temp_label      
+  character(LEN=LEN(label)+20) :: transform_label
+  character(LEN=LEN(label)+20) :: temp_label      
   !
   !--extract the digits from the input number 
   !            
