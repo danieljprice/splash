@@ -34,7 +34,7 @@ subroutine transform(array,arrayout,itrans,isize)
      !
      !--do a transformation for each digit     
      !
-     arraytemp = array
+     arraytemp = arrays
 
      do i=1,ndigits
         itransmulti = digit(i)
@@ -121,9 +121,21 @@ subroutine transform_limits(xminin,xmaxin,xminout,xmaxout,itrans)
               xmaxtemp = -5.
            endif
         case(2)
-           xmintemp = abs(xmintemp)
-           xmaxtemp = abs(xmaxtemp)
-        case(3)
+	   if ((xmintemp.lt.0. .and. xmaxtemp.gt.0.) &
+	   .or.(xmaxtemp.lt.0. .and. xmintemp.gt.0.)) then
+	   !
+	   !--minimum is zero if limits have opposite signs
+	   !
+	      xmaxtemp = max(abs(xmintemp),abs(xmaxtemp))
+	      xmintemp = 0.
+	   else
+	   !
+	   !--or just take magnitude
+	   !
+              xmintemp = abs(xmintemp)
+              xmaxtemp = abs(xmaxtemp)
+           endif
+	case(3)
            if (xmintemp .ne. 0) then
               xmintemp = 1./xmintemp
            else
@@ -219,7 +231,7 @@ subroutine transform2(array,itrans,isizex,isizey)
 
      array = arraytemp
 
-  else
+!  else
 !     do i = 1,isizex
 !        do j = 1,isizey
 !           print*,i,j
