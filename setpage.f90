@@ -12,23 +12,15 @@
 !         just   : just=1 gives equal aspect ratios (same as in PGENV)
 !         axis   : axes options (same as in PGENV)
 !         pagechange : change the physical page between plots
-
-!         tile   : tile plots on page         
 !
-subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,titlex,  &
-     just,axis,isamexaxis,isameyaxis,ipagechange,tile)
+subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
+     just,axis,isamexaxis,isameyaxis,ipagechange)
   implicit none
   integer, intent(in) :: iplot, nx, ny, just, axis
   real, intent(in) :: xmin, xmax, ymin, ymax
-  character(len=*), intent(in) :: labelx, labely, titlex
+  character(len=*), intent(in) :: labelx, labely, title
   character(len=10) :: xopts, yopts
-  logical, intent(in) :: ipagechange, isamexaxis, isameyaxis, tile
-
-  if (isamexaxis .and. isameyaxis .and. tile) then
-     call danpgtile(iplot,nx,ny,xmin,xmax,ymin,ymax, &
-          labelx,labely,titlex,just,axis)
-     return
-  endif
+  logical, intent(in) :: ipagechange, isamexaxis, isameyaxis
 
   if (ipagechange) then
 
@@ -105,13 +97,18 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,titlex,  &
   
   !--label plot
   if (axis.ge.0) then
+     !
+     !--label x axis only if on last row
+     !  or if x axis quantities are different
+     !
      if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis)) then
-        call pgmtxt('l',3.0,0.5,1.0,labely)
-        call pglabel(trim(labelx),' ',trim(titlex))
-     else
-        call pgmtxt('l',3.0,0.5,1.0,trim(labely))
-        !	     call pglabel(' ',labely,trim(titlex))
+        call pglabel(trim(labelx),' ',trim(title))
      endif
+     !
+     !--always label y axis
+     !
+     call pgmtxt('l',3.0,0.5,1.0,labely)
+     !!	     call pglabel(' ',labely,trim(titlex))     
   endif
   
   return

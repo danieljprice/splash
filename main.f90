@@ -27,7 +27,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   integer :: int_from_string
   integer :: ngrid
   integer :: just, ntitles
-  integer :: iplotsonpage
+  integer :: iplots,iplotsonpage
 
   character(len=8) :: string     ! used in pgplot calls
   real, dimension(maxpart) :: xplot,yplot
@@ -62,37 +62,48 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   isamexaxis = .true.  ! same x axis on all plots? (only relevant for >1 plots per page)
   isameyaxis = .true.  ! same y axis on all plots?
   tile_plots = .false.
+  iplots = 0 ! counter for how many plots have been plotted in total
   iplotsonpage = 0  ! counter for how many plots on page
 
-  if (ndim.ne.3) x_sec = .false.
-
-  !!--set current plot to first in multiplot array if doing multiplot
+  if (ndim.eq.1) x_sec = .false. ! can't have xsec in 1D
   nxsec = 1
-  if (ipicky.eq.numplot+1) then   ! multiplot
+
+  imulti = .false.
+  if (ipicky.eq.numplot+1) imulti = .true.
+
+  if (imulti) then   ! multiplot
+     !
+     !--for a multiplot, set current plot to first in multiplot array
+     !
      imulti=.true.
-     if (any(multiplotx(1:nyplotmulti).ne.multiplotx(1))) then
-        isamexaxis = .false.  ! this is for labelling
-     endif
-     if (any(multiploty(1:nyplotmulti).ne.multiploty(1))) then
-        isameyaxis = .false.  ! this is for labelling
-     endif
      iplotx = multiplotx(1)
      iploty = multiploty(1)
      nyplots = nyplotmulti
-  else
-     if (((n_end-nstart)/nfreq).lt.nacross) then
+     !
+     !--if doing multiplot can only take a single cross section slice      
+     !
+     flythru = .false.
+     nxsec = 1
+     !
+     !--work out whether to tile plots and make labelling decisions
+     !
+     if (any(multiplotx(1:nyplotmulti).ne.multiplotx(1))) then
         isamexaxis = .false.
      endif
+     if (any(multiploty(1:nyplotmulti).ne.multiploty(1))) then
+        isameyaxis = .false.
+     endif
+  else
+     !
+     !--or else set number of plots = 1 and use ipicky and ipickx
+     !
      nyplots = 1 
      iploty = ipicky
      iplotx = ipickx
   endif
-  !!--if doing multiplot can only take a single cross section slice      
-  if (imulti) then
-     flythru = .false.
-     nxsec = 1
-  endif
-  !!--work out whether or not to tile plots on the page
+  !
+  !--work out whether or not to tile plots on the page
+  !
   tile_plots = tile .and. isamexaxis.and.isameyaxis.and. .not. iadapt
 
   !------------------------------------------------------------------------
@@ -171,7 +182,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
      !!--prompt for options if plotting power spectrum      
      if (ipicky.eq.ipowerspec) call options_powerspec
      !!--no title if more than one plot on the page
-     if ((nacross.gt.1).or.(ndown.gt.1)) title = '          '
+     if ((nacross.gt.1).or.(ndown.gt.1)) title = ' '
 
      if (tile_plots) then
         call pgbegin(0,'?',1,1)
@@ -188,9 +199,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
      call pgpaper(papersizex,aspectratio)
   endif
   !!--turn off page prompting
-!  if (.not.interactive .or.(interactive.and.iplotpart.and.(irender.le.0))) then
-!     call pgask(.false.)
-!  endif
   if (animate .or. interactive) call pgask(.false.)
   !!if (animate .and. .not. interactive) call pgbbuf !! start buffering output
 
@@ -207,8 +215,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   !
   !--set character height in mm
   !
-  !      print*,' enter character height '
-  !      read*,charheight
   charheightmm = 4.0
   !!if ((ndown*nacross).gt.1 .and..not. tile_plots) charheight = 2.0
   !      charheight = 0.5*(nacross+ndown)
@@ -522,8 +528,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	      !---------------------------------
 	      ! output some muff to the screen
 	      !---------------------------------
-	      iplotsonpage = iplotsonpage + 1
-	      if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
 	      
               print 34, time(i),i
               print*,trim(labely),'min,max = ',ymin,ymax
@@ -531,30 +535,29 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 34            format (5('-'),' t = ',f8.4,', dump #',i4,1x,10('-'))
               if (x_sec.and.iplotpart) print 35,label(ixsec),xsecmin,label(ixsec),xsecmax
 35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
-	      print*,'plot on page = ',iplotsonpage
 	      
-	      !-----------------------
-              ! page setup options
-	      !-----------------------
-	      
-	      !--change the page if pagechange set
-	      !  or, if turned off, between plots on first page only
-	      inewpage = ipagechange .or. (iplotsonpage.lt.nacross*ndown)
-	      just = 1
-	      if (ndim.eq.2 .and. x_sec) just = 0
-
               !--------------------------------------------------------------
               ! set up pgplot page (this is my version of PGENV and PGLABEL)
               !--------------------------------------------------------------
+
+	      iplots = iplots + 1
+	      iplotsonpage = iplotsonpage + 1
+	      if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
+	      
+	      just = 1  ! x and y axis have same scale
+	      if (ndim.eq.2 .and. x_sec) just = 0 ! unless 1D xsec through 2D data
 	     
-	      if (nyplots.eq.1 .and. nacross*ndown.gt.1) then
-	         call setpage(MOD(iplotsonpage-1,nacross*ndown)+1,nacross,ndown,xmin,xmax,ymin,ymax, &
-	           labelx,labely,titlex,just,iaxis, &
-		   isamexaxis,isameyaxis,inewpage,tile_plots)	      
+	      if (tile_plots) then
+	         if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
+                 call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+                                labelx,labely,titlex,just,iaxis)
 	      else
-	         call setpage(nyplot,nacross,ndown,xmin,xmax,ymin,ymax, &
+	         !--change the page if pagechange set
+	         !  or, if turned off, between plots on first page only
+	         inewpage = ipagechange .or. (iplots.le.nacross*ndown)
+	         call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
 	           labelx,labely,titlex,just,iaxis, &
-		   isamexaxis,isameyaxis,inewpage,tile_plots)
+		   isamexaxis,isameyaxis,inewpage)
 	      endif
 	      
 	      if (iaxis.lt.0) then
@@ -864,34 +867,32 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	   !---------------------------------
 	   ! output some muff to the screen
 	   !---------------------------------
-	   iplotsonpage = iplotsonpage + 1
-	   if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
-
+	   
            print 34, time(i),i
            print*,trim(labely),'min,max = ',ymin,ymax
            print*,trim(labelx),'min,max = ',xmin,xmax
 	      
-	   !-----------------------
-           ! page setup options
-	   !-----------------------
-
-	   !--change the page if pagechange set
-	   !  or, if turned off, between plots on first page only
-	   inewpage = ipagechange .or. (iplotsonpage.lt.nacross*ndown)
-	   just = 0
-
            !--------------------------------------------------------------
            ! set up pgplot page (this is my version of PGENV and PGLABEL)
            !--------------------------------------------------------------
 
-	   if (nyplots.eq.1 .and. nacross*ndown.gt.1) then
-	      call setpage(MOD(iplotsonpage-1,nacross*ndown)+1,nacross,ndown,xmin,xmax,ymin,ymax, &
-	        labelx,labely,title,just,iaxis, &
-		isamexaxis,isameyaxis,inewpage,tile_plots)	      
+	   iplots = iplots + 1
+	   iplotsonpage = iplotsonpage + 1
+	   if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
+
+           just = 0  ! x and y axis have different scales
+	   
+	   if (tile_plots) then
+	      if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
+              call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+                             labelx,labely,title,just,iaxis)
 	   else
-	      call setpage(nyplot,nacross,ndown,xmin,xmax,ymin,ymax, &
+ 	      !--change the page if pagechange set
+	      !  or, if turned off, between plots on first page only
+	      inewpage = ipagechange .or. (iplots.le.nacross*ndown)
+	      call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
 	        labelx,labely,title,just,iaxis, &
-		isamexaxis,isameyaxis,inewpage,tile_plots)
+		isamexaxis,isameyaxis,inewpage)
 	   endif
 
            !--------------------------------
@@ -992,34 +993,42 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 ! particle plots, or where some additional plot is calculated
 ! from the particle data, such as errors etc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	   
+           !--------------------------------------------------------------
+           ! set up pgplot page, but do not plot axes or
+	   ! labels
+           !--------------------------------------------------------------
 
-           !
-           !--setup plotting page as normal
-           !
-           if ((ipagechange).or.((.not.ipagechange).and.(i.eq.nstart))) then
-              call pgpage
-              if ((nacross*ndown).gt.1) then
-                 if (imulti) then
-                    call pgsvp(0.2,0.99,0.2,0.98)
-                 else
-                    call pgsvp(0.2,0.99,0.2,0.98)
-                 endif
-              else
-                 call pgsvp(0.1,0.9,0.1,0.9)       
-              endif
-              ! call pgswin(lim(iplotx,1),lim(iplotx,2), &
-              !             lim(iploty,1),lim(iploty,2))
-              ! call pgbox('bcnst',0.0,0,'1bvcnst',0.0,0)              
-           elseif (nyplot.eq.1) then
-              call pgpanl(1,1)
-           else
-              call pgpage
-           endif
-           !
-           !--then call subroutine to plot the additional plot
-           !
+	   iplots = iplots + 1
+	   iplotsonpage = iplotsonpage + 1
+	   if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
+
+           just = 0  ! this is irrelevant since axes are not plotted
+	   xmin = 0.0 ! these are also irrelevant
+	   xmax = 1.0
+	   ymin = 0.0
+	   ymax = 1.0
+	   
+	   if (tile_plots) then
+	      if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
+              call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+                             ' ',' ',' ',just,-2)
+	   else
+ 	      !--change the page if pagechange set
+	      !  or, if turned off, between plots on first page only
+	      inewpage = ipagechange .or. (iplots.le.nacross*ndown)
+	      call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+	        ' ',' ',' ',just,-2,isamexaxis,isameyaxis,inewpage)
+	   endif	   
+
+           !--------------------------------------------------------------
+           !  then call subroutine to plot the additional plot
            ! e.g. call routine to do convergence plot here
-           if (iexact.eq.4) then
+           !--------------------------------------------------------------
+           !
+	   !--A vs C for exact toystar solution
+	   !
+	   if (iexact.eq.4) then
               call exact_toystar_acplane(atstar,ctstar,sigma,gamma(i))
            endif
            !
@@ -1063,7 +1072,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            !
            !--if this is the first plot on the page, print legend
            !
-           if (nyplot.eq.1) call legend(time(i),hposlegend,vposlegend)
+           if (iplotsonpage.eq.1) call legend(time(i),hposlegend,vposlegend)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
            ! if plot not in correct range
