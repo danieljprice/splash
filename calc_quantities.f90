@@ -6,7 +6,7 @@ subroutine calc_quantities
   use particle_data
   use settings
   implicit none
-  integer :: i,j,icurr
+  integer :: i,j,icurr,icrosshel
   real :: Bmag, Jmag
   real, parameter :: pi = 3.1415926536
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
@@ -22,7 +22,9 @@ subroutine calc_quantities
      ibeta = ncolumns + 5
      itotpr = ncolumns + 6      
      idivBerr = ncolumns + 7
-     icurr = ncolumns + 8
+     icrosshel = ncolumns + 8
+     !!icurr = ncolumns + 8
+     icurr = 0
   else
      ncalc = 3 + ndimV
      ivpar = ncolumns + 4
@@ -141,6 +143,10 @@ subroutine calc_quantities
 	         dat(icurr,j,i) = Jmag     !!/sqrt(dat(irho,j,i))
               endif
 	   endif
+	   if ((icrosshel.ne.0).and.(iBfirst.ne.0).and.ivx.ne.0) then
+	      dat(icrosshel,j,i) = dot_product(dat(iBfirst:iBlast,j,i),  &
+                   dat(ivx:ivlast,j,i))
+	   endif
 	endif
      enddo
   enddo
@@ -158,6 +164,7 @@ subroutine calc_quantities
   if (idivberr.ne.0) label(idivberr) = 'h |div B| / |B|'
   if (itimestep.ne.0) label(itimestep) = 'h sqrt(\gr) / |B|'
   if (icurr.ne.0) label(icurr) = '|J|'
+  if (icrosshel.ne.0) label(icrosshel) = 'B dot v'
   
   !
   !--calculate the vector quantities in the new co-ordinate basis
