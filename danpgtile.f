@@ -38,6 +38,7 @@ c
       REAL vmargintop,vmarginbottom,vmarginleft,vmarginright
       REAL vptxmin,vptxmax,vptymin,vptymax
       REAL aspectratio,devaspectratio,x1,x2,y1,y2
+      REAL xch,ych,xlabeloffset,ylabeloffset
       CHARACTER xopts*10, yopts*10
       CHARACTER*(*) labelx,labely,title
 c
@@ -54,18 +55,6 @@ c check for errors in input
 c      
       IF (nx.LE.0 .OR. ny.LE.0) RETURN
 c
-c set margin size in units of viewport dimensions
-c
-      vmarginright = 0.001
-      vmargintop = 0.001
-      IF (axis.GE.0) THEN
-         vmarginleft = 0.14
-         vmarginbottom = 0.1
-      ELSE
-         vmarginleft = 0.001
-         vmarginbottom = 0.001     
-      ENDIF
-c
 c adjust effective viewport size if just=1 and graphs are not square
 c      
       IF (just.eq.1) THEN
@@ -81,6 +70,30 @@ c
          aspectratio = ((xmax-xmin)*nx)/((ymax-ymin)*ny)/devaspectratio
       ELSE
 	 aspectratio = 1.0
+      ENDIF
+c
+c set positions of x and y labels in units of character height from edge
+c
+      xlabeloffset = 3.0
+      ylabeloffset = 3.5
+c
+c query the character height as fraction of viewport
+c
+      CALL PGQCS(0,xch,ych)
+c
+c set margin size in units of viewport dimensions
+c allow enough room for the plot labels if they are drawn
+c NB: PGPLOT sets the character height as some fraction of the smallest
+c     dimension
+c
+      vmarginright = 0.001
+      vmargintop = 0.001
+      IF (axis.GE.0) THEN
+         vmarginleft = xlabeloffset*ych
+         vmarginbottom = ylabeloffset*ych
+      ELSE
+         vmarginleft = 0.001
+         vmarginbottom = 0.001
       ENDIF
 c
 c effective viewport size = size - margins
@@ -146,7 +159,7 @@ c decide whether to number and label the y axis
 c      
       IF (ix.EQ.1 .AND. axis.GE.0) THEN
          yopts = '1VN'//yopts
-	 call PGMTXT('L',3.5,0.5,0.5,labely)
+	 call PGMTXT('L',ylabeloffset,0.5,0.5,labely)
       ELSEIF (axis.GE.0) THEN
          yopts = yopts//'N'
       ENDIF  
@@ -155,7 +168,7 @@ c decide whether to number and label the x axis
 c      
       IF (iy.EQ.ny .AND. axis.GE.0) THEN
          xopts = 'N'//xopts
-	 call PGMTXT('B',3.0,0.5,0.5,labelx)
+	 call PGMTXT('B',xlabeloffset,0.5,0.5,labelx)
       ENDIF
       
       CALL PGBOX(xopts,0.0,0,yopts,0.0,0)
