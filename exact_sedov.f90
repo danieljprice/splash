@@ -20,7 +20,7 @@ subroutine exact_sedov(time,gam,rhozero,energy,rmax,iplot)
 
   print*,' Plotting 3D Sedov similarity solution at t = ',time
   print*,' rhozero = ',rhozero,' energy = ',energy, ' rmax = ',rmax    
-  if (abs(time).lt.1.e-9) then
+  if (abs(time).lt.1.e-6) then
      print*,'nothing at t=0, returning'
      return
   endif
@@ -34,7 +34,8 @@ subroutine exact_sedov(time,gam,rhozero,energy,rmax,iplot)
 !--calculate radius and velocity of shock from dimensional analysis
 !
   rshock = eta_0*(energy*time**2./rhozero)**power
-  ushock = 2.*power*eta_0*((energy*time**2./rhozero)**(power-1.))*energy*time/rhozero
+!!  ushock = 2.*power*eta_0*((energy*time**2./rhozero)**(power-1.))*energy*time/rhozero
+  ushock = 2.*power*rshock/time
   print*,' rshock = ',rshock, ' ushock = ',ushock
 !
 !--jump conditions to find states behind shock
@@ -120,7 +121,7 @@ real function etau(u,gamma,ndim)
   term1 = ((5.+5.*gamma+2.*u-6.*gamma*u)/(7.-gamma))**power1
   term2 = ((2.*gamma*u-gamma-1.)/gam1)**power2
 
-  etau = u**(-2./5.)*term1*term2
+  etau = u**(-2./(ndim+2.))*term1*term2
 end function etau
 
 !
