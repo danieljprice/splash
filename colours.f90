@@ -6,7 +6,7 @@ module colours
  implicit none
  integer, parameter :: ncolourmax = 256
  integer, parameter :: ncolourschemes = 7
- character(LEN=30), dimension(ncolourschemes), parameter :: schemename = &
+ character(LEN=12), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale   ', &
       'red         ', &
       'ice blue    ', &
