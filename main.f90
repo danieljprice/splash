@@ -31,6 +31,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 
   character(len=8) :: string     ! used in pgplot calls
   real, parameter :: pi = 3.1415926536
+  real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(maxpart) :: xplot,yplot
   real, dimension(:), allocatable :: datpix1D, xgrid
   real, dimension(:,:), allocatable :: datpix,vecpixx,vecpixy
@@ -41,11 +42,11 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   real :: xsecmin,xsecmax,dxsec,xsecpos
   real :: pixwidth
   real :: charheight, charheightmm
-  real :: dxgrid
+  real :: dxgrid, anglerottemp, angletilttemp
   real, dimension(2) :: angles
 
   logical :: iplotcont,x_sec,isamexaxis,isameyaxis
-  logical :: log, inewpage, tile_plots, debug
+  logical :: log, inewpage, tile_plots, debug, isave
 
   character(len=60) :: title,titlex
   character(len=20) :: labelx,labely,labelrender
@@ -260,6 +261,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               xmax = lim(iplotx,2)
               ymin = lim(iploty,1)
               ymax = lim(iploty,2)
+	      anglerottemp = anglerot
+	      angletilttemp = angletilt
 	   endif
            
            !--change coordinate system if relevant
@@ -354,9 +357,12 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	       !
 	       !--convert angles to radians
 	       !
-	       angles(1) = anglerot*pi/180.
-	       angles(2) = angletilt*pi/180.
-               print*,'rotating particles',irotate,angles
+	       angles(1) = anglerottemp*pi/180.
+	       angles(2) = angletilttemp*pi/180.
+	       print*,'rotating particles about z by ',anglerottemp
+               if (ndim.eq.3) then
+	          print*,'rotating particles about x by ',angletilttemp
+	       endif
                do j=1,ntotplot(i)
                   call rotate(angles(1:ndim-1),dat(j,ix(1:ndim),i), &
 		              xcoords(:),xorigin(1:ndim),ndim)
@@ -739,13 +745,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                           call pgsch(charheight)
                        enddo
                     endif! ilabelpart
-                    !
-		    !--enter interactive mode
-		    !
-                    !if (iplotpart.and.interactive) then
-		    !   call interactive_part(ntotplot(i),xplot(1:ntotplot(i)), &
-		    !                         yplot(1:ntotplot(i)),iadvance) 
-                    !endif
 
                  endif! if x_sec else    
               endif! if irender
@@ -854,10 +853,22 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	      !--enter interactive mode
 	      !	     
              if (interactive) then
-	        iadvance = nfreq
+	        iadvance = nfreq		
 		call interactive_part(ntotplot(i),iplotx,iploty,irenderplot, &
 		     xplot(1:ntotplot(i)),yplot(1:ntotplot(i)), &
-		     xmin,xmax,ymin,ymax,iadvance) 
+		     xmin,xmax,ymin,ymax,anglerottemp,angletilttemp,iadvance,isave)		
+		!--turn rotation on if necessary
+		if (abs(anglerottemp-anglerot).gt.tol) irotate = .true.
+                if (abs(angletilttemp-angletilt).gt.tol) irotate = .true.
+		if (isave) then
+		   !--save settings from interactive mode
+		   lim(iplotx,1) = xmin
+		   lim(iplotx,2) = xmax
+		   lim(iploty,1) = ymin
+		   lim(iploty,2) = ymax
+		   anglerot = anglerottemp
+		   angletilt = angletilttemp
+		endif 
              endif
 
 
@@ -993,7 +1004,15 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	   iadvance = nfreq
            if (interactive) then
 	      call interactive_part(npart(i),iplotx,iploty,0,xplot(1:npart(i)), &
-	                            yplot(1:npart(i)),xmin,xmax,ymin,ymax,iadvance)
+	                            yplot(1:npart(i)),xmin,xmax,ymin,ymax, &
+				    anglerottemp,angletilttemp,iadvance,isave)
+	      if (isave) then
+		 !--save settings from interactive mode
+		 lim(iplotx,1) = xmin
+		 lim(iplotx,2) = xmax
+		 lim(iploty,1) = ymin
+		 lim(iploty,2) = ymax
+	      endif
            endif
 	   
         elseif (iploty.le.numplot) then! ie iploty = extra

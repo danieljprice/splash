@@ -14,12 +14,14 @@
 !   iadvance : integer telling the loop how to advance the timestep
 !
 subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
-  xmin,xmax,ymin,ymax,iadvance)
+  xmin,xmax,ymin,ymax,anglerot,angletilt,iadvance,isave)
   implicit none
   integer, intent(in) :: npart,iplotx,iploty,irender
   integer, intent(out) :: iadvance
   real, dimension(npart), intent(in) :: xcoords, ycoords
   real, intent(inout) :: xmin,xmax,ymin,ymax
+  real, intent(inout) :: anglerot,angletilt
+  logical, intent(out) :: isave
   integer :: i,iclosest,nc,ipts,iadvance,int_from_string
   real :: xpt,ypt,xpt2,ypt2,rmin,rr,gradient,yint,xlength
   real :: xlength, ylength
@@ -34,6 +36,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
   xline = 0.
   yline = 0.
   iexit = .false.
+  isave = .false.
   
   do while (.not.iexit)
      call pgcurs(xpt,ypt,char)
@@ -91,17 +94,27 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
 	endif
      case('h')
         print*,'-------------- interactive mode commands --------------'
-	print*,' next timestep/plot   : space, left click'
-	print*,' previous timestep    : right click'
-	print*,' jump by n timesteps  : 0,1,2,3..9 then left or right click'
+	print*,' select area and zoom : left click'
 	print*,' (r)eplot current plot        : r'
         print*,' label closest (p)article     : p'
-	print*,' plot a line and find its g)radient : l, L'
-	print*,' plot (c)ircle of interaction : c, C'
+	print*,' plot a line and find its g)radient : g, G'
+	print*,' rotate about z axis by +(-) 15 degrees : , (.)'
+	print*,' rotate about x axis by +(-) 15 degrees : / ('')' 
+	print*,' rotate about z axis by +(-) 30 degrees : < (>)'
+	print*,' rotate about z axis by +(-) 30 degrees : ? (")'	
+	print*,' next timestep/plot   : space '
+	print*,' previous timestep    : right click'
+	print*,' jump by n timesteps  : 0,1,2,3..9 then left or right click'
 	print*,' (h)elp                       : h'
-	print*,' (s)ave current limits for all steps : s'
+	print*,' (s)ave current settings for all steps : s'
         print*,' (q)uit plotting              : q, Q'     	
         print*,'-------------------------------------------------------'
+     case('s','S')
+        isave = .not.isave
+	print*,'save settings on exit = ',isave
+     !
+     !--zoom
+     !
      case('A') ! left click
         !
 	!--draw rectangle from the point and reset the limits
@@ -116,7 +129,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
 	   ymax = max(ypt,ypt2)
 	   iadvance = 0
 	   iexit = .true.
-	endif
+	endif     
      case('-') ! zoom out by 10%
 	print*,'zooming out'
 	xlength = xmax - xmin
@@ -141,6 +154,52 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
 	ymax = ypt + 0.5*ylength
 	iadvance = 0
 	iexit = .true.
+     !
+     !--rotation
+     !
+     case(',') ! rotate left by 15 degrees
+        print*,'rotating about z by -15 degrees...'
+        anglerot = anglerot - 15.
+	iadvance = 0
+	iexit = .true.
+     case('<') ! rotate left by 30 degrees
+        print*,'rotating about z by -30 degrees...'
+        anglerot = anglerot - 30.
+	iadvance = 0
+	iexit = .true.
+     case('.') ! rotate right by 15 degrees
+        print*,'rotating about z by 15 degrees...'
+        anglerot = anglerot + 15.
+	iadvance = 0
+	iexit = .true.
+     case('>') ! rotate left by 30 degrees
+        print*,'rotating about z by 30 degrees...'
+        anglerot = anglerot + 30.
+	iadvance = 0
+	iexit = .true.
+     case('''') ! rotate up by 15 degrees
+        print*,'rotating up (about x) by 15 degrees...'
+        angletilt = angletilt - 15.
+	iadvance = 0
+	iexit = .true.
+     case('"') ! rotate up by 30 degrees
+        print*,'rotating up (about x) by 30 degrees...'
+        angletilt = angletilt - 30.
+	iadvance = 0
+	iexit = .true.
+     case('/') ! rotate down by 15 degrees
+        print*,'rotating down (about x) by 15 degrees...'
+        angletilt = angletilt + 15.
+	iadvance = 0
+	iexit = .true.
+     case('?') ! rotate down by 30 degrees
+        print*,'rotating down (about x) by 30 degrees...'
+        angletilt = angletilt + 30.
+	iadvance = 0
+	iexit = .true.
+     !
+     !--timestepping
+     !
      case('q','Q')
         iadvance = 666666666
 	print*,'quitting...'
@@ -159,6 +218,5 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
      end select
 
   enddo
-  print*,'exiting interactive mode'
   return
 end subroutine interactive_part
