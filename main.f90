@@ -786,11 +786,10 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 			  !--interpolate vector from particles to cross section
 			  !
 			  call interpolate3D_xsec_vec(dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
-                            dat(ixsec,1:ninterp,i), &
-                            dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i),    &
-                            dat(ih,1:ninterp,i),dat(ivecx,1:ninterp,i), &
-			    dat(ivecy,1:ninterp,i),&
-                            ninterp,xmin,ymin,xsecpos,vecpixx,vecpixy,npixx,npixy,pixwidth)
+                            dat(ixsec,1:ninterp,i),dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i),  &
+                            dat(ih,1:ninterp,i),dat(ivecx,1:ninterp,i),dat(ivecy,1:ninterp,i), &
+			    ninterp,xmin,ymin,xsecpos, &
+			    vecpixx,vecpixy,npixvec,npixyvec,pixwidth)
 		          !
 			  !--plot rendered vector map
 			  !
