@@ -8,17 +8,17 @@
 .KEEP_STATE:
 
 ## Compiler options
-F90C =  g95
+F90C =  f95
 F90FLAGS =  -O -C
-#LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
-#          -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
-#         -lpng
+LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
+          -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
+         -lpng
 
-LDFLAGS =  -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation -L/sw/lib/pgplot95 -lpgplot
+#LDFLAGS =  -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation -L/sw/lib/pgplot95 -lpgplot
 #           -lcc_dynamic -Wl,-framework -Wl,Foundation \
 #           -L/sw/lib/pgplot -lpgplot -lg2c
 #LDFLAGS = -laquaterm -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -L/sw/lib/pgplot -lpgplot -lg2c
-SYSTEMFILE = system_unix.f90
+SYSTEMFILE = system_unix_NAG.f90
 
 # Fortran flags same as F90
 FC = $(F90C)
@@ -32,6 +32,7 @@ FFLAGS = $(F90FLAGS)
 DANSPH = read_data_dansph.f90 
 MRBSPH = read_data_mbate.f90
 SCWSPH = read_data_scw.f90
+SROSPH = read_data_sro.f90
 GADGETSPH = read_data_gadget.f90
 
 # put modules separately as these must be compiled before the others
@@ -77,6 +78,7 @@ SOURCESALL = $(MODULES:.f90=.o) $(SOURCES:.f90=.o)
 OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f90=.o) ##/sw/lib/pgplot/libpgplot.a
 OBJMRBSPH = $(SOURCESALL:.f=.o) $(MRBSPH:.f90=.o) #/sw/lib/pgplot/libpgplot.a
 OBJSCWSPH = $(SOURCESALL:.f=.o) $(SCWSPH:.f90=.o) #/h/neil/software/pgplot95/libpgplot.a
+OBJSROSPH = $(SOURCESALL:.f=.o) $(SROSPH:.f90=.o) #/h/neil/software/pgplot95/libpgplot.a
 OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o) #/h/neil/software/pgplot95/libpgplot.a
 
 dansph: $(OBJDANSPH)
@@ -87,6 +89,9 @@ mrbsph: $(OBJMRBSPH)
 
 scwsph: $(OBJSCWSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_scw $(OBJSCWSPH)
+
+srosph: $(OBJSROSPH)
+	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_sro $(OBJSROSPH)
 
 gadget: $(OBJGADGETSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_gadget $(OBJGADGETSPH)
