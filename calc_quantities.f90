@@ -55,100 +55,105 @@ subroutine calc_quantities
   if (numplot.gt.maxcol) call alloc(maxpart,maxstep,numplot) 
 
   do i=nstart,n_end
-     do j=1,ntot(i)
-        !!--pressure if not in data array
-        if ((ipr.gt.ncolumns)                            &
-             .and.(irho.ne.0).and.(iutherm.ne.0))         &
-             dat(ipr,j,i) = dat(irho,j,i)*dat(iutherm,j,i)*(gamma(i)-1.)
-        !!--entropy
-        if (ientrop.ne.0) then
-           if (dat(irho,j,i).gt.1.e-10) then
-              dat(ientrop,j,i) = dat(ipr,j,i)/dat(irho,j,i)**gamma(i)
-           else  
-              dat(ientrop,j,i) = 0.
+     !!--pressure if not in data array
+     if ((ipr.gt.ncolumns).and.(irho.ne.0).and.(iutherm.ne.0)) then
+        dat(1:ntot(i),ipr,i) = dat(1:ntot(i),irho,i)*dat(1:ntot(i),iutherm,i)*(gamma(i)-1.)
+     endif
+     !!--entropy
+     if (ientrop.ne.0 .and. ipr.ne.0) then
+        where (dat(1:ntot(i),irho,i).gt.1.e-10) 
+           dat(1:ntot(i),ientrop,i) = dat(1:ntot(i),ipr,i)/dat(1:ntot(i),irho,i)**gamma(i)
+        elsewhere
+           dat(1:ntot(i),ientrop,i) = 0.
+        endwhere
+     endif
+     !!--radius	 
+     if (irad.ne.0) then   
+        do j=1,ntot(i)
+           dat(j,irad,i) = sqrt(dot_product(dat(j,ix(1:ndim),i),   &
+                dat(j,ix(1:ndim),i)))
+        enddo
+     endif
+     !!--specific KE
+     if ((ike.ne.0).and.(ivx.ne.0)) then
+        do j=1,ntot(i)
+           dat(j,ike,i) = 0.5*dot_product(dat(j,ivx:ivlast,i),dat(j,ivx:ivlast,i))
+        enddo
+     endif
+
+     !!--distance along the line with angle 30deg w.r.t. x axis
+     if (irad2.ne.0) then
+        angledeg = 30.
+        anglexy = angledeg*pi/180.
+        runit(1) = cos(anglexy)
+        if (ndim.ge.2) runit(2) = sin(anglexy)
+        do j=1,ntot(i)
+           dat(j,irad2,i) = dot_product(dat(j,ix(1:ndim),i),runit(1:ndim))
+        enddo
+        if (ivpar.ne.0) then
+           dat(1:ntot(i),ivpar,i) = dat(1:ntot(i),ivx+1,i)*SIN(anglexy) + dat(1:ntot(i),ivx,i)*COS(anglexy)
+        endif
+        if (ivperp.ne.0) then
+           dat(1:ntot(i),ivperp,i) = dat(1:ntot(i),ivx+1,i)*COS(anglexy) - dat(1:ntot(i),ivx,i)*SIN(anglexy)           
+        endif
+        if (iBpar.ne.0) then
+           dat(1:ntot(i),iBpar,i) = dat(1:ntot(i),iBfirst+1,i)*SIN(anglexy) + dat(1:ntot(i),iBfirst,i)*COS(anglexy)
+        endif
+        if (iBperp.ne.0) then
+           dat(1:ntot(i),iBperp,i) = dat(1:ntot(i),iBfirst+1,i)*COS(anglexy) - dat(1:ntot(i),iBfirst,i)*SIN(anglexy)
+        endif
+     endif
+     !
+     !--magnetic quantities
+     !
+     if (iBfirst.ne.0) then
+        !!--magnetic pressure
+        if (ipmag.ne.0) then
+           do j=1,ntot(i)
+              dat(j,ipmag,i) = 0.5*dot_product(dat(j,iBfirst:iBlast,i), &
+                   dat(j,iBfirst:iBlast,i))
+           enddo
+           !!--plasma beta
+           if (ibeta.ne.0) then
+              where(abs(dat(1:ntot(i),ipmag,i)).gt.1.e-10)
+                 dat(1:ntot(i),ibeta,i) = dat(1:ntot(i),ipr,i)/dat(1:ntot(i),ipmag,i)
+              elsewhere  
+                 dat(1:ntot(i),ibeta,i) = 0.
+              endwhere
            endif
         endif
-        !!--radius	 
-        if (irad.ne.0) &    
-             dat(irad,j,i) = sqrt(dot_product(dat(ix(1:ndim),j,i),   &
-             dat(ix(1:ndim),j,i)))
-        !!--distance along the line with angle 30deg w.r.t. x axis
-        if (irad2.ne.0) then
-           angledeg = 30.
-           anglexy = angledeg*pi/180.
-           runit(1) = cos(anglexy)
-           if (ndim.ge.2) runit(2) = sin(anglexy)
-           dat(irad2,j,i) = dot_product(dat(ix(1:ndim),j,i),runit(1:ndim))
-           if (ivpar.ne.0) then
-              dat(ivpar,j,i) = dat(ivx+1,j,i)*SIN(anglexy) + dat(ivx,j,i)*COS(anglexy)
-           endif
-           if (ivperp.ne.0) then
-              dat(ivperp,j,i) = dat(ivx+1,j,i)*COS(anglexy) - dat(ivx,j,i)*SIN(anglexy)           
-           endif
-           if (iBpar.ne.0) then
-              dat(iBpar,j,i) = dat(iBfirst+1,j,i)*SIN(anglexy) + dat(iBfirst,j,i)*COS(anglexy)
-           endif
-           if (iBperp.ne.0) then
-              dat(iBperp,j,i) = dat(iBfirst+1,j,i)*COS(anglexy) - dat(iBfirst,j,i)*SIN(anglexy)           
-           endif
-        endif
-        !!--specific KE
-        if ((ike.ne.0).and.(ivx.ne.0)) &
-             dat(ike,j,i) = 0.5*dot_product(dat(ivx:ivlast,j,i),dat(ivx:ivlast,j,i))
-!
-!--magnetic quantities
-!
-        if (iBfirst.ne.0) then
-           !!--magnetic pressure
-           if (ipmag.ne.0) then
-              dat(ipmag,j,i) = 0.5*dot_product(dat(iBfirst:iBlast,j,i), &
-                   dat(iBfirst:iBlast,j,i))
-              !!--plasma beta
-              if (ibeta.ne.0) then
-                 if (abs(dat(ipmag,j,i)).gt.1e-10) then
-                    dat(ibeta,j,i) = dat(ipr,j,i)/dat(ipmag,j,i)
-                 else  
-                    dat(ibeta,j,i) = 0.
-                 endif
-              endif
-           endif
            
-           !!--total pressure (gas + magnetic)     
-           if ((itotpr.ne.0).and.(ipr.ne.0).and.(ipmag.ne.0)) then
-              dat(itotpr,j,i) = dat(ipr,j,i) + dat(ipmag,j,i)
-           endif
-           !!--div B error	(h*divB / abs(B))	
-           if ((idivBerr.ne.0).and.(idivB.ne.0).and.(ih.ne.0)) then
-              Bmag = sqrt(dot_product(dat(iBfirst:iBlast,j,i),dat(iBfirst:iBlast,j,i)))
+        !!--total pressure (gas + magnetic)     
+        if ((itotpr.ne.0).and.(ipr.ne.0).and.(ipmag.ne.0)) then
+           dat(1:ntot(i),itotpr,i) = dat(1:ntot(i),ipr,i) + dat(1:ntot(i),ipmag,i)
+        endif
+        !!--div B error	(h*divB / abs(B))	
+        if ((idivBerr.ne.0).and.(idivB.ne.0).and.(ih.ne.0)) then
+           do j=1,ntot(i)
+              Bmag = sqrt(dot_product(dat(j,iBfirst:iBlast,i),dat(j,iBfirst:iBlast,i)))
               if (Bmag.gt.0.) then
-                 dat(idivBerr,j,i) = abs(dat(idivB,j,i))*dat(ih,j,i)/Bmag
+                 dat(j,idivBerr,i) = abs(dat(j,idivB,i))*dat(j,ih,i)/Bmag
               else
-                 dat(idivBerr,j,i) = 0.
+                 dat(j,idivBerr,i) = 0.
               endif
-           endif
-           !!--h*SQRT(rho)/abs(B)	(timestep)
-           if ((itimestep.ne.0).and.(ih.ne.0).and.(irho.ne.0)) then
-              Bmag = sqrt(dot_product(dat(iBfirst:iBlast,j,i),  &
-                   dat(iBfirst:iBlast,j,i)))
-              if (Bmag.ne.0.) then
-                 dat(itimestep,j,i) = dat(ih,j,i)*sqrt(dat(irho,j,i))/Bmag
-              else
-                 dat(itimestep,j,i) = 0.
+           enddo
+        endif
+        if ((icurr.ne.0).and.(iJfirst.ne.0).and.irho.ne.0) then
+           do j=1,ntot(i)
+              Jmag = sqrt(dot_product(dat(j,iJfirst:iJfirst+ndimV,i), &
+                   dat(j,iJfirst:iJfirst+ndimV,i)))
+              if (dat(j,irho,i).ne.0) then
+                 dat(j,icurr,i) = Jmag     !!/sqrt(dat(irho,j,i))
               endif
-           endif
-	   if ((icurr.ne.0).and.(iJfirst.ne.0).and.irho.ne.0) then
-	      Jmag = sqrt(dot_product(dat(iJfirst:iJfirst+ndimV,j,i), &
-	                              dat(iJfirst:iJfirst+ndimV,j,i)))
-	      if (dat(irho,j,i).ne.0) then
-	         dat(icurr,j,i) = Jmag     !!/sqrt(dat(irho,j,i))
-              endif
-	   endif
-	   if ((icrosshel.ne.0).and.(iBfirst.ne.0).and.ivx.ne.0) then
-	      dat(icrosshel,j,i) = dot_product(dat(iBfirst:iBlast,j,i),  &
-                   dat(ivx:ivlast,j,i))
-	   endif
-	endif
-     enddo
+           enddo
+        endif
+        if ((icrosshel.ne.0).and.(iBfirst.ne.0).and.ivx.ne.0) then
+           do j=1,ntot(i)
+              dat(j,icrosshel,i) = dot_product(dat(j,iBfirst:iBlast,i),  &
+                   dat(j,ivx:ivlast,i))
+           enddo
+        endif
+     endif
   enddo
   !
   !--set labels for calculated quantities

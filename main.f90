@@ -251,8 +251,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	!  also set labels and plot limits
         !--------------------------------------------------------------
         if (iploty.le.ndataplots .and. iplotx.le.ndataplots) then
-           xplot = dat(iplotx,:,i)
-           yplot = dat(iploty,:,i)
+           xplot = dat(:,iplotx,i)
+           yplot = dat(:,iploty,i)
            labelx = label(iplotx)
            labely = label(iploty)
            if (iadvance.ne.0) then
@@ -270,7 +270,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                    .and.irenderplot.gt.ndim)) then
                  print*,'changing to new coordinate system',icoords,icoordsnew
                  do j=1,ntotplot(i)
-                    call coord_transform(dat(ix(:),j,i),ndim,icoords, &
+                    call coord_transform(dat(j,ix(:),i),ndim,icoords, &
                                          xcoords(:),ndim,icoordsnew)
                     if (iplotx.le.ndim) xplot(j) = xcoords(iplotx)
                     if (iploty.le.ndim) yplot(j) = xcoords(iploty)
@@ -358,7 +358,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	       angles(2) = angletilt*pi/180.
                print*,'rotating particles',irotate,angles
                do j=1,ntotplot(i)
-                  call rotate(angles(1:ndim-1),dat(ix(1:ndim),j,i), &
+                  call rotate(angles(1:ndim-1),dat(j,ix(1:ndim),i), &
 		              xcoords(:),xorigin(1:ndim),ndim)
                   xplot(j) = xcoords(iplotx)
                   yplot(j) = xcoords(iploty)
@@ -411,9 +411,9 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                     if (.not. x_sec) then
                        allocate ( datpix(npixx,npixy) )
                        call interpolate2D( &
-                            dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
-                            dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i), &
-                            dat(ih,1:ninterp,i),dat(irenderplot,1:ninterp,i), &
+                            dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
+                            dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i), &
+                            dat(1:ninterp,ih,i),dat(1:ninterp,irenderplot,i), &
                             ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
                     endif
                  case(3)
@@ -424,10 +424,10 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                        allocate ( datpix3D(npixx,npixy,npixz) )
                        !!--interpolate from particles to 3D grid
                        call interpolate3D( &
-                            dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
-                            dat(ixsec,1:ninterp,i),dat(ipmass,1:ninterp,i),  &
-                            dat(irho,1:ninterp,i),dat(ih,1:ninterp,i), &
-                            dat(irenderplot,1:ninterp,i), &
+                            dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
+                            dat(1:ninterp,ixsec,i),dat(1:ninterp,ipmass,i),  &
+                            dat(1:ninterp,irho,i),dat(1:ninterp,ih,i), &
+                            dat(1:ninterp,irenderplot,i), &
                             ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dxsec)
                     endif
                  end select
@@ -486,17 +486,17 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                        print*,trim(label(ix(ixsec))),' = ',xsecpos,  &
                             ' : fast cross section', xmin,ymin
                        call interpolate3D_fastxsec( &
-                            dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
-                            dat(ixsec,1:ninterp,i), &
-                            dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i),    &
-                            dat(ih,1:ninterp,i),dat(irenderplot,1:ninterp,i), &
+                            dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
+                            dat(1:ninterp,ixsec,i), &
+                            dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),    &
+                            dat(1:ninterp,ih,i),dat(1:ninterp,irenderplot,i), &
                             ninterp,xmin,ymin,xsecpos,datpix,npixx,npixy,pixwidth)
                     else
                        !!--do fast projection
                        call interpolate3D_projection( &
-                            dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
-                            dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i),   &
-                            dat(ih,1:ninterp,i), dat(irenderplot,1:ninterp,i), &
+                            dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
+                            dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),   &
+                            dat(1:ninterp,ih,i), dat(1:ninterp,irenderplot,i), &
                             ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
                     endif
 
@@ -518,9 +518,9 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  call set_grid1D(xmin,dxgrid,npixx)
 
                  call interpolate2D_xsec( &
-                      dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
-                      dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i),    &
-                      dat(ih,1:ninterp,i),dat(irenderplot,1:ninterp,i), &
+                      dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
+                      dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),    &
+                      dat(1:ninterp,ih,i),dat(1:ninterp,irenderplot,i), &
                       ninterp,xseclineX1,xseclineY1,xseclineX2,xseclineY2, &
 		      datpix1D,npixx)
                  !
@@ -661,12 +661,12 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  !
                  if (ndim.gt.2 .and. x_sec.and.iplotpart) then
                     do j=1,npart(i)
-                       if ((dat(ixsec,j,i).lt.xsecmax) &
-                            .and.(dat(ixsec,j,i).gt.xsecmin)) then
+                       if ((dat(j,ixsec,i).lt.xsecmax) &
+                            .and.(dat(j,ixsec,i).gt.xsecmin)) then
                           call pgpt(1,xplot(j),yplot(j),imark)
                           !!--plot circles of interaction
                           if (plotcirc) then
-                             call pgcirc(xplot(j),yplot(j),2.*dat(ih,j,i))
+                             call pgcirc(xplot(j),yplot(j),2.*dat(j,ih,i))
                           endif
                           if (ilabelpart) then
                              !!--plot particle labels
@@ -679,8 +679,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                     enddo
                     !!--plot ghosts using different marker
                     do j=npart1,ntotplot(i)
-                       if ((dat(ixsec,j,i).lt.xsecmax) &
-                            .and.(dat(ixsec,j,i).gt.xsecmin)) then
+                       if ((dat(j,ixsec,i).lt.xsecmax) &
+                            .and.(dat(j,ixsec,i).gt.xsecmin)) then
                           call pgpt(1,xplot(j),yplot(j),imarkg)
                           if (ilabelpart) then
                              !!--plot ghost labels
@@ -714,17 +714,17 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                        if (plotcircall) then
                           print*,'plotting circles of interaction',npart(i) 
                           do j=1,npart(i)
-                             call pgcirc(xplot(j),yplot(j),2.*dat(ih,j,i))
+                             call pgcirc(xplot(j),yplot(j),2.*dat(j,ih,i))
                           enddo
                        else
                           print*,'plotting circles of interaction',ncircpart
                           do n = 1,ncircpart   
                              if (icoords.gt.1) then   
                                 call plot_kernel_gr(icoords,xplot(icircpart(n)),  &
-                                     yplot(icircpart(n)),2*dat(ih,icircpart(n),i))
+                                     yplot(icircpart(n)),2*dat(icircpart(n),ih,i))
                              else
                                 call pgcirc(xplot(icircpart(n)),  &
-                                     yplot(icircpart(n)),2*dat(ih,icircpart(n),i))
+                                     yplot(icircpart(n)),2*dat(icircpart(n),ih,i))
                              endif
                           enddo
                        endif
@@ -816,9 +816,9 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 		          !
 			  !--interpolate vector from particles to cross section
 			  !
-			  call interpolate3D_xsec_vec(dat(iplotx,1:ninterp,i),dat(iploty,1:ninterp,i), &
-                            dat(ixsec,1:ninterp,i),dat(ipmass,1:ninterp,i),dat(irho,1:ninterp,i),  &
-                            dat(ih,1:ninterp,i),dat(ivecx,1:ninterp,i),dat(ivecy,1:ninterp,i), &
+			  call interpolate3D_xsec_vec(dat(1:ninterp,iplotx,i),dat(1:ninterp,iploty,i), &
+                            dat(1:ninterp,ixsec,i),dat(1:ninterp,ipmass,i),dat(1:ninterp,irho,i),  &
+                            dat(1:ninterp,ih,i),dat(1:ninterp,ivecx,i),dat(1:ninterp,ivecy,i), &
 			    ninterp,xmin,ymin,xsecpos, &
 			    vecpixx,vecpixy,npixvec,npixyvec,pixwidth)
 		          !
@@ -836,15 +836,15 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 		       !!--call routine to do vector plot off particles      
                        call vectorplot(xplot(1:ntotplot(i)),yplot(1:ntotplot(i)),  &
                             xmin,ymin,pixwidth, &
-                            dat(ivecx,1:ntotplot(i),i),dat(ivecy,1:ntotplot(i),i), &
+                            dat(1:ntotplot(i),ivecx,i),dat(1:ntotplot(i),ivecy,i), &
                             vecmax,ntotplot(i),npixvec,npixyvec)
                        !!--old stuff here is to plot arrows on the particles themselves
                        !scale = 0.08*(lim(iploty,2)-lim(iploty,1))
                        !call pgsch(0.35)! character height (size of arrow head)
                        !do j=1,ntotplot(i)
                        !   call pgarro(yplot(i),xplot(i), &
-                       !   yplot(i)+dat(ivecy,j,i)*scale,   &
-                       !   xplot(i)+dat(ivecx,j,i)*scale)
+                       !   yplot(i)+dat(j,ivecy,i)*scale,   &
+                       !   xplot(i)+dat(j,ivecx,i)*scale)
                        !enddo
                        !       call pgsch(1.0)    ! reset character height
                     endif
@@ -959,11 +959,11 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  if (iplotx.le.ndim) then
                     print*,'plotting error bars x axis',npart(i) 
                     call pgerrb(5,npart(i),xplot(1:npart(i)), &
-                         yplot(1:npart(i)),2.*dat(ih,1:npart(i),i),1.0)
+                         yplot(1:npart(i)),2.*dat(1:npart(i),ih,i),1.0)
                  elseif (iploty.le.ndim) then
                     print*,'plotting error bars y axis',npart(i) 
                     call pgerrb(6,npart(i),xplot(1:npart(i)), &
-                         yplot(1:npart(i)),2.*dat(ih,1:npart(i),i),1.0)
+                         yplot(1:npart(i)),2.*dat(1:npart(i),ih,i),1.0)
                  endif
               else 
                  !!--only on specified particles
@@ -972,11 +972,11 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                        print*,'plotting error bar x axis',icircpart(n)
                        call pgerrb(5,1,xplot(icircpart(n)), &
 		            yplot(icircpart(n)), &
-			    (2.*dat(ih,icircpart(n):icircpart(n),i)),1.0)
+			    (2.*dat(icircpart(n):icircpart(n),ih,i)),1.0)
                     elseif (iploty.le.ndim) then
                        print*,'plotting error bar y axis',icircpart(n)
                        call pgerrb(6,1,xplot(icircpart(n)),yplot(icircpart(n)), &
-                            (2.*dat(ih,icircpart(n):icircpart(n),i)),1.0)      
+                            (2.*dat(icircpart(n):icircpart(n),ih,i)),1.0)      
                     endif
                  enddo
               endif
@@ -1070,9 +1070,9 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
                  call set_grid1D(xmin,dxgrid,ngrid)
 
                  !!--interpolate to 1D grid  
-                 call interpolate1D(dat(ix(1),1:npart(i),i), & 
-                      dat(ipmass,1:npart(i),i),dat(irho,1:npart(i),i), &
-                      dat(ih,1:npart(i),i),dat(ipowerspecy,1:npart(i),i), & 
+                 call interpolate1D(dat(1:npart(i),ix(1),i), & 
+                      dat(1:npart(i),ipmass,i),dat(1:npart(i),irho,i), &
+                      dat(1:npart(i),ih,i),dat(1:npart(i),ipowerspecy,i), & 
                       npart(i),xmin,datpix1D,ngrid,dxgrid)
                  !!--plot interpolated 1D data to check it
                  print*,'plotting interpolated data...'
@@ -1089,8 +1089,8 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
               else
                  !!--or else call power spectrum calculation on the particles themselves    
                  call plot_powerspectrum(npart(i),nfreqspec,wavelengthmax, &
-		      dat(ix(1),1:npart(i),i), &
-                      dat(ipowerspecy,1:npart(i),i),idisordered,itrans(iploty))
+		      dat(1:npart(i),ix(1),i), &
+                      dat(1:npart(i),ipowerspecy,i),idisordered,itrans(iploty))
               endif
            endif
            !
@@ -1237,7 +1237,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
         !--plot h = (1/rho)^(1/ndim)
         !
         if ((iploty.eq.ih).and.(iplotx.eq.irho)) then
-           call exact_rhoh(hfact,ndim,dat(ipmass,1:npart(i),i),npart(i),xmin,xmax)
+           call exact_rhoh(hfact,ndim,dat(1:npart(i),ipmass,i),npart(i),xmin,xmax)
         endif
 
      enddo over_plots ! over plots per timestep (nyplot)

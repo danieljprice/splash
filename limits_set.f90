@@ -16,11 +16,11 @@ subroutine set_limits
   !!--find limits of particle properties	  
   lim(:,1) = 1.e6
   lim(:,2) = -1.e6
-  do j=1,numplot
-     do i=nstart,n_end
+  do i=nstart,n_end
+     do j=1,numplot
         do k=1,ntotplot(i)
-           lim(j,1) = min(lim(j,1),dat(j,k,i))
-           lim(j,2) = max(lim(j,2),dat(j,k,i)*scalemax)
+           lim(j,1) = min(lim(j,1),dat(k,j,i))
+           lim(j,2) = max(lim(j,2),dat(k,j,i)*scalemax)
         enddo
      enddo
   enddo

@@ -15,7 +15,7 @@
 ! ivegotdata  : flag which indicates successful data read
 !
 ! maxplot,maxpart,maxstep      : dimensions of main data array
-! dat(maxplot,maxpart,maxstep) : main data array
+! dat(maxpart,maxplot,maxstep) : main data array
 !
 ! npart(maxstep)      : number of particles in each timestep
 ! ntot(maxstep)       : total number of particles in each timestep
@@ -148,12 +148,18 @@ subroutine read_data(rootname,istart,nfilesteps)
         !--read positions of all particles
         !
 	print*,'positions ',ntot(i)
-        read (11, end=66) dat(1:3,1:ntot(i),i)
+        read (11, end=66) dattemp(1:3,1:ntot(i))	
+	do icol=1,3
+	   dat(1:ntot(i),icol,i) = dattemp(icol,1:ntot(i))
+	enddo
 	!
         !--same for velocities
         !
 	print*,'velocities ',ntot(i)
-        read (11, end=66,ERR=72) dat(4:6,1:ntot(i),i)
+        read (11, end=66,ERR=72) dattemp(1:3,1:ntot(i))		
+	do icol=4,6
+	   dat(1:ntot(i),icol,i) = dattemp(icol-3,1:ntot(i))
+	enddo
 	!
         !--read particle ID
 	!
@@ -190,11 +196,11 @@ subroutine read_data(rootname,istart,nfilesteps)
 	         indexend = indexstart + Npartoftype(itype) - 1
 	         print*,'read ',Npartoftype(itype),' masses for type ', &
 		        itype,index1,'->',index2,indexstart,'->',indexend
-	         dat(7,index1:index2,i) = dattemp1(indexstart:indexend)
+	         dat(index1:index2,7,i) = dattemp1(indexstart:indexend)
 	      else  ! masses not dumped
 	         print*,'setting masses for type ',itype,' = ', &
 		        real(Massoftype(itype)),index1,'->',index2
-	         dat(7,index1:index2,i) = real(Massoftype(itype))
+	         dat(index1:index2,7,i) = real(Massoftype(itype))
 	      endif
 	      index1 = index2 + 1
 	      indexstart = indexend + 1
@@ -207,7 +213,7 @@ subroutine read_data(rootname,istart,nfilesteps)
 	print*,'gas properties ',npart(i)
         do icol=8,12
 	   !!print*,icol
-	   read (11, end=66,ERR=78) dat(icol,1:npart(i),i)
+	   read (11, end=66,ERR=78) dat(1:npart(i),icol,i)
 	enddo
 	
      else
