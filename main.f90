@@ -598,6 +598,10 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 		   isamexaxis,isameyaxis,inewpage)
 	      endif
 	      
+	      if (irotate) then
+		 call rotate_axes(angles,lim(ix(:),1),lim(ix(:),2),xorigin,ndim)
+	      endif
+	      
 	      if (iaxis.lt.0) then
                  !--if multiple plots showing contours only, label with a,b,c etc
                  if ((nacross*ndown.gt.1).and.(irenderplot.gt.ndim) &
@@ -838,11 +842,11 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	   !--plot time on plot
            if (nyplot.eq.1) call legend(time(i),hposlegend,vposlegend)
  
-	   if (ixsec.ne.0) then
-	      zplot(1:ntot(i)) = dat(1:ntot(i),ixsec,i)
-	   else
+	   !if (ixsec.ne.0) then
+	   !   zplot(1:ntot(i)) = dat(1:ntot(i),ixsec,i)
+	   !else
 	      zplot = 0.
-	   endif
+	   !endif
 	   call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
 		zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
 		npartoftype(:,i),.false.,xsecmin,xsecmax)
