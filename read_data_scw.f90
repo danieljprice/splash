@@ -43,7 +43,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
     
   character(LEN=3) :: fileno
   character(LEN=LEN(rootname)+10) :: dumpfile
-  integer :: nprint, n1, n2, rhozero, RK2, nptmass
+  integer :: nprint, n1, n2, nptmass
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
   
@@ -51,7 +51,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real(doub_prec), dimension(:), allocatable :: dummy
   real(doub_prec) :: udisti,umassi,utimei, timei, gammai
   real(doub_prec) :: escap,tkin,tgrav,tterm,trad
-  real(doub_prec) :: dtmax
+  real(doub_prec) :: dtmax, rhozero, RK2
 
   nstepsread = 0
   ierr = 0

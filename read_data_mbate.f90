@@ -45,19 +45,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
     
   character(LEN=3) :: fileno
   character(LEN=LEN(rootname)+10) :: dumpfile
-  integer :: nprint, nghosti, n1, n2, rhozero, RK2, nptmass
+  integer :: nprint, nghosti, n1, n2, nptmass
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
   
   real(doub_prec), dimension(:,:), allocatable :: dattemp
   real(doub_prec), dimension(:), allocatable :: dummy
   real(doub_prec) :: udisti,umassi,utimei, umagfdi, timei, gammai
+  real(doub_prec) :: rhozero, RK2
   real(doub_prec) :: escap,tkin,tgrav,tterm,tmag
   real(doub_prec) :: dtmax
 
   nstepsread = 0
   nstep_max = 0
   npart_max = maxpart
+  ifile = 1
   !
   !--for rootnames without the '00', read all files starting at #1
   !
