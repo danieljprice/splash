@@ -283,48 +283,6 @@ subroutine read_data(rootname,istart,nfilesteps)
   print*,'ncolumns = ',ncolumns
 
   print*,'>> Finished reading: steps =',nfilesteps,'last step ntot = ',ntot(nfilesteps)
-
-  !!------------------------------------------------------------
-  !! set locations of particular items of data used in the plotting program
-
-  do i=1,ndim
-     ix(i) = i
-  enddo
-  ivx = 4
-  ivlast = 6
-  ipmass = 7
-  irho = 9	! location of rho in data array
-  ipr = 0
-  iutherm = 8	        !  thermal energy
-  ih = 12		!  smoothing length
-  !
-  !--set labels of the quantities read in
-  !
-  label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  label(irho) = '\gr'
-  label(iutherm) = 'u'
-  label(10) = 'Ne'
-  label(11) = 'N\dH'
-  label(ih) = 'h'
-  label(ipmass) = 'particle mass'
-  !
-  !--set labels for vector quantities
-  !
-  iamvec(ivx:ivx+ndimV-1) = ivx
-  labelvec(ivx:ivx+ndimV-1) = 'v'
-  do i=1,ndimV
-     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-  enddo
-  
-  !--set labels for each particle type
-  !
-  ntypes = maxparttypes
-  labeltype(1) = 'gas'
-  labeltype(2) = 'dark matter'
-  labeltype(5) = 'star'
-
-!-----------------------------------------------------------
-
   return    
 !
 !--errors
@@ -368,3 +326,54 @@ subroutine read_data(rootname,istart,nfilesteps)
   return
 
 end subroutine read_data
+
+!!------------------------------------------------------------
+!! set labels for each column of data
+!!------------------------------------------------------------
+
+subroutine set_labels
+  use labels
+  use params
+  use settings
+  implicit none
+  integer :: i
+
+  do i=1,ndim
+     ix(i) = i
+  enddo
+  ivx = 4
+  ivlast = 6
+  ipmass = 7
+  irho = 9	! location of rho in data array
+  ipr = 0
+  iutherm = 8	        !  thermal energy
+  ih = 12		!  smoothing length
+  !
+  !--set labels of the quantities read in
+  !
+  label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  label(irho) = '\gr'
+  label(iutherm) = 'u'
+  label(10) = 'Ne'
+  label(11) = 'N\dH'
+  label(ih) = 'h'
+  label(ipmass) = 'particle mass'
+  !
+  !--set labels for vector quantities
+  !
+  iamvec(ivx:ivx+ndimV-1) = ivx
+  labelvec(ivx:ivx+ndimV-1) = 'v'
+  do i=1,ndimV
+     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
+  enddo
+  
+  !--set labels for each particle type
+  !
+  ntypes = 5
+  labeltype(1) = 'gas'
+  labeltype(2) = 'dark matter'
+  labeltype(5) = 'star'
+
+!-----------------------------------------------------------
+  return
+end subroutine set_labels

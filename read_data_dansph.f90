@@ -266,9 +266,45 @@ subroutine read_data(rootname,istart,nfilesteps)
   print*,'ncolumns = ',ncolumns
 
   print*,'>> READ all steps =',nfilesteps,'last step ntot = ',ntot(nfilesteps)
+  return    
+!
+!--errors
+!
+77 continue
+  print*,' *** Error encountered while reading file ***'
+  print*,' -> Check that magnetic field is toggled correctly'
+  return
 
-  !!------------------------------------------------------------
-  !! set labels for each column of data
+78 continue
+  print*,' *** Error encountered while reading timestep ***'
+  print*,' -> number of columns in data file not equal to'
+  print*,'    that set as a parameter - edit and recompile'
+  return
+
+79 continue
+  print*,' *** Error reading data file header: check format ***'
+  return
+
+80 continue
+  print*,' *** data file empty, no steps read ***'
+  return
+
+81 continue
+  print*,' *** Error: can''t open data file ***'
+  return
+
+end subroutine read_data
+
+!!------------------------------------------------------------
+!! set labels for each column of data
+!!------------------------------------------------------------
+
+subroutine set_labels
+  use labels
+  use params
+  use settings
+  implicit none
+  integer :: i
 
   do i=1,ndim
      ix(i) = i
@@ -331,36 +367,11 @@ subroutine read_data(rootname,istart,nfilesteps)
  !
  !--set labels for each type of particles
  !
+ ntypes = 2
  labeltype(1) = 'gas'
  labeltype(2) = 'ghost'
 
 !-----------------------------------------------------------
 
-  return    
-!
-!--errors
-!
-77 continue
-  print*,' *** Error encountered while reading file ***'
-  print*,' -> Check that magnetic field is toggled correctly'
-  return
-
-78 continue
-  print*,' *** Error encountered while reading timestep ***'
-  print*,' -> number of columns in data file not equal to'
-  print*,'    that set as a parameter - edit and recompile'
-  return
-
-79 continue
-  print*,' *** Error reading data file header: check format ***'
-  return
-
-80 continue
-  print*,' *** data file empty, no steps read ***'
-  return
-
-81 continue
-  print*,' *** Error: can''t open data file ***'
-  return
-
-end subroutine read_data
+  return 
+end subroutine set_labels

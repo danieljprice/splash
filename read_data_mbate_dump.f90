@@ -246,9 +246,12 @@ subroutine set_labels
   !
   !--set labels for each particle type
   !
-  ntypes = maxparttypes
+  ntypes = 3  !!maxparttypes
   labeltype(1) = 'gas'
   labeltype(2) = 'ghost'
   labeltype(3) = 'sink'
-  
+ 
+!-----------------------------------------------------------
+
+  return 
 end subroutine set_labels
