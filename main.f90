@@ -1036,9 +1036,17 @@ subroutine main(ipicky,ipickx,irender)
            endif
 
         case(3)! sedov blast wave
-           if ((iploty.eq.irho).and.(iplotx.eq.irad)) &
-                call exact_sedov(time(i),gamma(i),xplot(1:npart(i)), &
-                yplot(1:npart(i)),npart(i))
+           if (iplotx.eq.irad) then
+              if (iploty.eq.irho) then
+                 call exact_sedov(time(i),gamma(i),rhosedov,esedov,lim(irad,2),1)
+              elseif (iploty.eq.ipr) then
+                 call exact_sedov(time(i),gamma(i),rhosedov,esedov,lim(irad,2),2)                 
+              elseif (iploty.eq.iutherm) then
+                 call exact_sedov(time(i),gamma(i),rhosedov,esedov,lim(irad,2),3)                
+              elseif (iploty.eq.ike) then
+                 call exact_sedov(time(i),gamma(i),rhosedov,esedov,lim(irad,2),4)                 
+              endif
+           endif
 
         case(4)! toy star
            !    totmass = sum(dat(ipmass,1:npart(i),i))

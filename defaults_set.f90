@@ -73,7 +73,9 @@ subroutine defaults_set
   labelcoord(1) = 'x'
   labelcoord(2) = 'y'
   labelcoord(3) = 'z'
-
+!
+!--exact solution parameters
+!
   lambda = 1.0	! sound wave exact solution : wavelength
   delta = 0.005	! sound wave exact solution : amplitude
   htstar = 1.   ! toy star crap
@@ -81,7 +83,11 @@ subroutine defaults_set
   ctstar = 1.
   norder = 0
   sigma0 = 0.
-
+  rhosedov = 1.0  ! sedov blast wave
+  esedov = 1.0    ! blast wave energy
+!
+!--multiplot
+!
   nyplotmulti = 4		! number of plots in multiplot
   multiploty(:) = 0
   do i=1,4

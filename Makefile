@@ -47,7 +47,7 @@ SOURCES= modules.f90 prompting.f90 \
 	 danpgwedg.f \
 	 defaults_read.f90 defaults_set.f90 defaults_write.f90 \
 	 exact_rhoh.f90 \
-	 exact_sedov.f exact_swave.f \
+	 exact_sedov.f90 exact_swave.f \
 	 exact_toystar.f90 exact_toystar2D.f90 \
 	 exact_toystar_ACplane.f exact_mhdshock.f90 \
 	 integratedkernel.f90 \

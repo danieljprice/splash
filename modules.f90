@@ -140,7 +140,9 @@ module exact_params
  integer, parameter :: ipolycmax=1000
  real :: htstar,atstar,ctstar,totmass,sigma,sigma0 ! toy star parameters
 !--sound wave
- real delta,lambda
+ real :: delta,lambda
+!--sedov blast wave
+ real :: rhosedov,esedov
 !--polytrope
  integer :: ipolyc
  real :: mtot,maxrho,akfac
@@ -148,7 +150,7 @@ module exact_params
 !
 !--sort these into a namelist for input/output
 !
- namelist /exactparams/ delta,lambda,htstar,atstar,ctstar,sigma0,norder
+ namelist /exactparams/ delta,lambda,htstar,atstar,ctstar,sigma0,norder,rhosedov,esedov
      
 
 end module exact_params
