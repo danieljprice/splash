@@ -36,7 +36,7 @@ subroutine exact_wave(time,ampl,period,lambda,x0,ymean,xplot,yplot,ierr)
   endif
 
   do i=1,size(xplot)
-     yplot(i) = ymean + ampl*sin(2.*pi/lambda*(xplot(i)-x0) - omega*time)
+     yplot(i) = ymean*(1. + ampl*sin(2.*pi/lambda*(xplot(i)-x0) - omega*time))
   enddo
     
   return
