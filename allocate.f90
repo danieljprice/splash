@@ -10,13 +10,13 @@ contains
 !  the dimensions allocated
 !
 !----------------------------------------------------------------------------
-subroutine alloc(npartin,nstep,ncolumns)
+subroutine alloc(npartin,nstep,ncolumnsin)
   use particle_data
   use settings_part, only:icircpart
   implicit none
-  integer, intent(in) :: npartin,nstep,ncolumns
+  integer, intent(in) :: npartin,nstep,ncolumnsin
   integer :: maxpartold,maxstepold,maxcolold
-  integer :: ierr
+  integer :: ierr,ncolumns
   logical :: reallocate,reallocate_part,reallocate_step
   integer, dimension(:), allocatable :: ntottemp,icolourmetemp,icircparttemp
   integer, dimension(:,:), allocatable :: iamtemp, npartoftypetemp
@@ -33,8 +33,8 @@ subroutine alloc(npartin,nstep,ncolumns)
      print*,'allocate: error in input, nstep = ',nstep
      return
   endif
-  if (ncolumns.le.0) then
-     print*,'allocate: error in input, ncolumns = ',ncolumns
+  if (ncolumnsin.le.0) then
+     print*,'allocate: error in input, ncolumns = ',ncolumnsin
      return
   endif
 !
@@ -42,7 +42,14 @@ subroutine alloc(npartin,nstep,ncolumns)
 !
   if (npartin.lt.maxpart) print "(a)",' WARNING: # particles < previous in allocate'
   if (nstep.lt.maxstep) print "(a)",' WARNING: # steps < previous in allocate'
-  if (ncolumns.lt.maxcol) print "(a)",' WARNING: # columns < previous in allocate'
+!--at the moment ncolumns cannot be decreased (due to calc_quantities)
+  if (ncolumnsin.lt.maxcol) then
+     ncolumns = maxcol
+     !!print "(a)",' WARNING: # columns < previous in allocate'
+  else
+     ncolumns = ncolumnsin
+  endif
+
   maxpartold = min(maxpart,npartin)
   maxstepold = min(maxstep,nstep)
   maxcolold = min(maxcol,ncolumns)
@@ -56,20 +63,20 @@ subroutine alloc(npartin,nstep,ncolumns)
   ierr = 0
   if (allocated(dat)) then
      reallocate = .true.
-     if (maxpartold.ne.maxpart) reallocate_part = .true.
-     if (maxstepold.ne.maxstep) reallocate_step = .true.
+     if (maxpart.ne.npartin) reallocate_part = .true.
+     if (maxstep.ne.nstep) reallocate_step = .true.
      
      print 10,'> reallocating memory: ',npartin,nstep,ncolumns
 10   format (a,' ntot = ',i10,' nstep = ',i6,' ncol = ',i4)
-     allocate(dattemp(maxpart,maxcol,maxstep), stat=ierr)
+     allocate(dattemp(maxpartold,maxcolold,maxstepold), stat=ierr)
      if (ierr /= 0) stop 'error allocating memory (dattemp)'
-     allocate(iamtemp(maxpart,maxstep),stat=ierr)
+     allocate(iamtemp(maxpartold,maxstepold),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory (iamtemp)'
      
      if (reallocate_part) then
-        allocate(icolourmetemp(maxpart),stat=ierr)
+        allocate(icolourmetemp(maxpartold),stat=ierr)
         if (ierr /= 0) stop 'error allocating memory (icolourmetemp)'
-        allocate(icircparttemp(maxpart),stat=ierr)
+        allocate(icircparttemp(maxpartold),stat=ierr)
         if (ierr /= 0) stop 'error allocating memory (icircparttemp)'
      endif
 
@@ -78,8 +85,8 @@ subroutine alloc(npartin,nstep,ncolumns)
      deallocate(dat,iam)
 
      if (reallocate_part) then
-        icolourmetemp = icolourme
-        icircparttemp = icircpart
+        icolourmetemp(1:maxpartold) = icolourme(1:maxpartold)
+        icircparttemp(1:maxpartold) = icircpart(1:maxpartold)
         deallocate(icolourme,icircpart)
      endif
 
@@ -138,6 +145,7 @@ subroutine alloc(npartin,nstep,ncolumns)
      if (reallocate_part) then
         icolourme(1:maxpartold) = icolourmetemp(1:maxpartold)
         icircpart(1:maxpartold) = icircparttemp(1:maxpartold)
+        deallocate(icolourmetemp,icircparttemp)
      endif
   endif
 !

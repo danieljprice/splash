@@ -35,17 +35,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use settings_data
   use mem_allocation
   implicit none
-  integer, intent(IN) :: indexstart
-  integer, intent(OUT) :: nstepsread
-  character(LEN=*), intent(IN) :: rootname
+  integer, intent(in) :: indexstart
+  integer, intent(out) :: nstepsread
+  character(len=*), intent(in) :: rootname
   integer, parameter :: maxptmass = 1000
   real, parameter :: pi=3.141592653589
   integer :: i,j,ifile,ierr
   integer :: npart_max,nstep_max
   logical :: iexist
     
-  character(LEN=3) :: fileno
-  character(LEN=LEN(rootname)+10) :: dumpfile
+  character(len=3) :: fileno
+  character(len=len(rootname)+10) :: dumpfile
   integer :: nprint, nghosti, n1, n2, nptmass
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
@@ -90,7 +90,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  ncolumns = 19  ! number of columns in file  
+  ncolumns = max(19,maxcol)  ! number of columns in file  
   !
   !--allocate memory initially
   !

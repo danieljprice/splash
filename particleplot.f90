@@ -143,7 +143,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            if (icircpart(n).gt.ntot) then 
               print*,'error: particle index > number of particles'
            else
-              if (icoords.gt.1) then   
+              if (icoordsnew.ne.icoords) then   
                  call plot_kernel_gr(icoords,xplot(icircpart(n)),  &
                       yplot(icircpart(n)),2*h(icircpart(n)))
               else

@@ -97,7 +97,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   npart_max = max(ntotin,maxpart)
   if (.not.allocated(dat) .or. ntotin.gt.maxpart  &
        .or. nstep_max.gt.maxstep .or. ncol_max.gt.maxcol) then
-     call alloc(npart_max,nstep_max,ncol_max)
+     call alloc(npart_max,nstep_max,ncol_max+ncalc)
   endif
 !
 !--rewind file
@@ -136,8 +136,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
      print*,'reading time = ',time(i),nparti,ntoti,gamma(i), &
           hfact,ndim,ndimV,ncolstep,icoords
      if (icoords.gt.1) print*,':: geometry = ',icoords
-     if (any(ibound.ne.0)) then
-        print*,' boundaries : xmin = ',xmin(1:ndim),' xmax = ',xmax(1:ndim)
+     if (any(ibound(1:ndim).ne.0)) then
+        print*,':: boundaries xmin = ',xmin(1:ndim),' xmax = ',xmax(1:ndim)
      endif
      !
      !--check for errors in timestep header
@@ -180,7 +180,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !--reallocate memory for main data array
      !
      if (reallocate) then
-        call alloc(npart_max,nstep_max,ncol_max)
+        call alloc(npart_max,nstep_max,ncol_max+ncalc)
      endif
 
   
@@ -328,7 +328,6 @@ close(unit=11)
 ncolumns = ncol_max
 ndim = ndim_max
 ndimV = ndimV_max
-print*,'ncolumns = ',ncolumns
 
 print*,'>> READ steps ',indexstart,'->',indexstart + nstepsread - 1, &
        ' last step ntot = ',ntot(indexstart+nstepsread-1)
