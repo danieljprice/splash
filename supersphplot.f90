@@ -205,36 +205,6 @@ program supersphplot
   ! menu - loop back to here once finished plotting/setting options
   !
   menuloop: do while (.not.iquit)
-     !
-     !--numplot is the total number of data columns (read + calculated)
-     !   not including the particle co-ordinates
-     !  nextra are extra graphs to plot (e.g. convergence plots, power spectrum)
-     !
-     nextra = 0
-     if (ndim.eq.1) then
-        nextra = 1      ! one extra plot = power spectrum
-        ipowerspec = ncolumns + ncalc + 1
-        label(ipowerspec) = '1D power spectrum'
-     endif
-     if (iexact.eq.4) then       ! toy star plot a-c plane
-        nextra = nextra + 1
-        iacplane = ncolumns + ncalc + nextra
-        label(iacplane) = 'a-c plane'
-     endif
-     
-     if (ivegotdata) then
-        numplot = ncolumns + ncalc + nextra
-        if (numplot.gt.maxplot) then
-           print*,numplot,ncolumns,ncalc,nextra
-           stop ' numplot > multiplot array limits: reset this in module params'
-        endif
-        ndataplots = ncolumns + ncalc
-     else
-        numplot = 0
-        ndataplots = 0
-        ncalc = 0
-     endif
-     imulti = .false.
      
      !----------------------------------------------------------------------
      !  print menu
