@@ -19,8 +19,8 @@
 ## Monash compiler (Lahey-Fujitsu f95)
 FC = lf95
 F90C = lf95
-FFLAGS = -O --chk aesux --chkglobal  --warn
-F90FLAGS = -O --chk aesux --chkglobal --warn
+FFLAGS = -O ##--chk aesux --chkglobal  --warn
+F90FLAGS = -O ##--chk aesux --chkglobal --warn
 LDFLAGS = -lpgplot -L/usr/X11R6/lib -lX11
 ## ------------------------------------------------------------------ ##
 ## Swinburne compiler (Intel fortran)
@@ -47,7 +47,7 @@ SOURCES= modules.f90 prompting.f90 \
 	 danpgwedg.f \
 	 defaults_read.f90 defaults_set.f90 defaults_write.f90 \
 	 exact_rhoh.f90 \
-	 exact_sedov.f exact_swave.f exact_toystar.f \
+	 exact_sedov.f exact_swave.f exact_toystar.f90 \
 	 exact_toystar_ACplane.f exact_mhdshock.f90 \
 	 integratedkernel.f90 \
 	 interpolate1D.f90 \
