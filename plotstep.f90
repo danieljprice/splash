@@ -235,6 +235,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   use legends, only:legend
   use particleplots
   use powerspectrums
+  use projections3D, only:interpolate3D_projection
   use render, only:render_pix,colourbar
 
   implicit none

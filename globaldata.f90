@@ -89,13 +89,3 @@ module multiplot
     ivecplotmulti,iplotcontmulti,x_secmulti,xsecposmulti
  
 end module multiplot
-
-!
-!--tabulated column density through the kernel 
-!  (used in interpolate3D_projection)
-!
-module column
- implicit none
- integer, parameter :: maxcoltable = 1000
- real, dimension(maxcoltable) :: coltable
-end module column

@@ -50,7 +50,7 @@ MODULES= globaldata.f90 transform.f90 prompting.f90 \
          get_data.f90 options_data.f90\
 	 options_powerspec.f90 options_render.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 \
-         rotate.f90 \
+         rotate.f90 interpolate3D_projection.f90\
          interactive.f90 allocate.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
          powerspectrums.f90 render.f90 \
@@ -62,12 +62,10 @@ MODULES= globaldata.f90 transform.f90 prompting.f90 \
 SOURCES= supersphplot.f90 \
          calc_quantities.f90 \
 	 danpgsch.f danpgtile.f danpgwedg.f \
-	 integratedkernel.f90 \
 	 interpolate1D.f90 interpolate_vec.f90 \
          interpolate2D.f90 interpolate2D_xsec.f90 \
 	 interpolate3D.f90 interpolate3D_fastxsec.f90 \
-         interpolate3D_proj_vec.f90 \
-	 interpolate3D_projection.f90 interpolate3D_xsec_vec.f90 \
+	 interpolate3D_xsec_vec.f90 \
 	 menu.f90 plot_kernel_gr.f90 \
 	 setpage.f90 titles_read.f90 \
 
