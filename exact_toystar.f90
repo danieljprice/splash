@@ -90,10 +90,10 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
      endif
 
 !---------------------------------------------------------------------------
-!  non-linear solution
+!  non-linear solution for the fundamental (n=1) mode
 !
   else
-
+     !
      !  solve for H, C and A given initial conditions on v, rho and the time.
      !
      nsteps = 1000*(int(time) + 1)
