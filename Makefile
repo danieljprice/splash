@@ -40,7 +40,7 @@ GADGETSPH = read_data_gadget.f90
 MODULES= globaldata.f90 transform.f90 prompting.f90 \
          exact.f90 colours.f90 limits.f90 rotate.f90 \
          interactive_part.f90 allocate.f90 geometry.f90 \
-         powerspectrums.f90 $(SYSTEMFILE)
+         legends.f90 powerspectrums.f90 $(SYSTEMFILE)
 
 # these are the normal `external' subroutines
 SOURCES= supersphplot.f90 mainloop.f90 \
@@ -57,7 +57,6 @@ SOURCES= supersphplot.f90 mainloop.f90 \
          interpolate2D.f90 interpolate2D_xsec.f90 \
 	 interpolate3D.f90 interpolate3D_fastxsec.f90 \
 	 interpolate3D_projection.f90 interpolate3D_xsec_vec.f90 \
-	 legend.f \
 	 menu.f90 options_data.f90 \
 	 options_limits.f90 \
 	 options_page.f90 options_particleplots.f90 \

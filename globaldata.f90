@@ -134,8 +134,11 @@ module settings_vecplot
  implicit none
  integer :: npixvec
  logical :: UseBackgndColorVecplot, iplotpartvec
+ logical :: iVecplotLegend
+ real :: hposlegendvec,vposlegendvec
 
- namelist /vectoropts/ npixvec, UseBackgndColorVecplot, iplotpartvec
+ namelist /vectoropts/ npixvec, UseBackgndColorVecplot,iplotpartvec,&
+          iVecplotLegend,hposlegendvec,vposlegendvec
 
 end module settings_vecplot
 !

@@ -8,11 +8,11 @@ subroutine options_vecplot
  integer :: ians
   
  ians = 0
- print 10,npixvec,iplotpartvec,UseBackgndColorVecplot
+ print 10,npixvec,UseBackgndColorVecplot,iVecplotLegend
 10  format(' 0) exit ',/, &
            ' 1) change number of pixels                   (',i4,' )',/, &
-           ' 2) toggle particle plotting if no rendering  (',L1,' )',/, &
-           ' 3) toggle background/foreground colour       (',L1,' )')
+           ' 2) toggle background/foreground colour       (',L1,' )',/, &
+           ' 3) vector plot legend settings               (',L1,' )')
  call prompt('enter option',ians,0,3)
 !
 !--options
@@ -23,12 +23,18 @@ subroutine options_vecplot
     call prompt('enter number of pixels',npixvec,1,1000) 
 !------------------------------------------------------------------------
  case(2)
-    iplotpartvec = .not.iplotpartvec
-    print*,'particle plotting = ',iplotpartvec,' if no renderings'
-!------------------------------------------------------------------------
- case(3)
     UseBackgndColorVecplot = .not.UseBackgndColorVecplot
     print*,'use background colour on vector plots = ',UseBackgndColorVecplot
+!------------------------------------------------------------------------
+ case(3)
+    call prompt('plot vector legend?',iVecplotLegend)
+    print*,'note that the following settings can also be changed interactively'
+    if (iVecplotLegend) then
+       call prompt('Enter horizontal position as fraction of viewport', &
+                   hposlegendvec,-0.1,1.1)
+       call prompt('Enter vertical position in character heights from top', &
+                    vposlegendvec)
+    endif
  end select
 
  return
