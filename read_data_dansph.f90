@@ -228,9 +228,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
            enddo
            icol = icol + 2
         !
-        !--pr, div v
+        !--pr, div v, gradh
         !
-           do j = 1,2
+           do j = 1,3
               read (11,end=66,ERR=67) dattemp(1:ntot(i))
               dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
               icol = icol + 1
@@ -423,6 +423,7 @@ subroutine set_labels
     ipr = ndim + ndimV + 7 !  pressure
     label(ipr) = 'P'
     label(ndim+ndimV+8) = 'div v'
+    label(ndim+ndimV+9) = 'grad h'
     if (iformat.eq.3) then
        !!!irho = ndim+ndimV+9
        label(ndim+ndimV+9) = 'rho*'
