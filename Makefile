@@ -64,8 +64,8 @@ SOURCES= modules.f90 prompting.f90 \
 	 powerspectrum_lomb1D.f90 \
 	 print_header.f90\
 	 print_menu.f90 \
-         render_coarse.f render.f90 \
-	 transform.f90
+         render.f90 \
+	 transform.f90 vectorplot.f90 \
 
 SOURCESALL = $(SOURCES:.f90=.o)
 

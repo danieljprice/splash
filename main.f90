@@ -14,11 +14,11 @@ subroutine main(ipicky,ipickx,irender)
   integer, intent(in) :: ipicky, ipickx, irender
 
   integer :: i,j,k,n
-  integer :: iplotx,iploty
+  integer :: iplotx,iploty,ivecx,ivecy
   integer :: nyplot,nyplots      
   integer :: npart1
   integer :: npixx,npixy,npixz,ipixxsec
-  integer :: ivecplot,npix,npixvec,ncontours
+  integer :: ivecplot,npix,npixvec,npixyvec,ncontours
   integer :: irenderprev, istepprev
   integer :: isizex,isizey      ! for sending datpix to transform
   integer :: nsink,nsinkstart,nsinkend,nghoststart,nghostend
@@ -32,7 +32,7 @@ subroutine main(ipicky,ipickx,irender)
   real, dimension(:,:), allocatable :: datpix
   real, dimension(:,:,:), allocatable :: datpix3D
   real :: xmin,xmax,ymin,ymax,zmin,zmax,xminrender,xmaxrender
-  real :: vmin,vmax,rendermin,rendermax
+  real :: vecmax,rendermin,rendermax
   real :: xsecmin,xsecmax,dxsec,xsecpos
   real :: pixwidth
   real :: charheight
@@ -728,45 +728,54 @@ subroutine main(ipicky,ipickx,irender)
               !----------------------------    
 
               !!--velocity vector map
-              if (ivecplot.eq.1 .and. ivx.ne.0) then
-                 print*,'plotting velocity field'
-                 !!--copy appropriate velocity data to a 2D array
-                 do j=1,ntotplot(i)
-                    vecplot(1,j) = dat(iplotx+ivx-1,j,i)
-                    vecplot(2,j) = dat(iploty+ivx-1,j,i)
-                 enddo
-                 vmax = lim(iplotx+ivx-1,2)
-                 if (lim(iploty+ivx-1,2).gt.vmax) vmax = lim(iploty+ivx-1,2)
-                 vmin = min(lim(iplotx+ivx-1,1),lim(iploty+ivx-1,1))
-                 !!--plot arrows in either background or foreground colour
-                 if (use_backgnd_color_vecplot) call pgsci(0)
-                 !!--render to a grid by binning particles and taking average vx, vy in each cell      
-                 call coarse_render(xplot(1:ntotplot(i)),yplot(1:ntotplot(i)),  &
-                      xminrender,xmaxrender,vecplot(:,1:ntotplot(i)), &
-                      vmin,vmax,ntotplot(i),npixvec,2,icolours,iplotcont)
-                 if (use_backgnd_color_vecplot) call pgsci(1)
-                 !!--old stuff here is to plot arrows on the particles themselves
-                 !scale = 0.08*(lim(iploty,2)-lim(iploty,1))
-                 !call pgsch(0.35)! character height (size of arrow head)
-                 !do j=1,ntotplot(i)
-                 !   call pgarro(yplot(i),xplot(i), &
-                 !   yplot(i)+vecplot(2,i)*scale,   &
-                 !   xplot(i)+vecplot(1,i)*scale)
-                 !enddo
-                 !       call pgsch(1.0)    ! reset character height
-              elseif ((ivecplot.eq.2).and.(ibfirst.ne.0)) then
-                 !!--plot vector map of magnetic field
-                 print*,'plotting magnetic field: ', &
-                      label(ibfirst+iplotx-1),label(ibfirst+iploty-1)
-                 do j=1,ntotplot(i)
-                    vecplot(1,j) = dat(ibfirst+iplotx-1,j,i)
-                    vecplot(2,j) = dat(ibfirst+iploty-1,j,i)
-                 enddo
-                 if (use_backgnd_color_vecplot) call pgsci(0)
-                 call coarse_render(xplot(1:ntotplot(i)),yplot(1:ntotplot(i)), &
-                      xminrender,xmaxrender,vecplot(1:2,1:ntotplot(i)), &
-                      bmin,bmax,ntotplot(i),npixvec,2,icolours,iplotcont)    
-                 if (use_backgnd_color_vecplot) call pgsci(1)
+              if  (ivecplot.ne.0) then
+                 if (ivecplot.eq.1 .and. ivx.ne.0) then
+                    ivecx = ivx + iplotx - 1 ! 
+                    ivecy = ivx + iploty - 1
+                    print*,'plotting velocity field'        
+                 elseif (ivecplot.eq.2 .and. iBfirst.ne.0) then
+                    ivecx = iBfirst + iplotx - 1 ! 
+                    ivecy = iBfirst + iploty - 1
+                    print*,'plotting magnetic field'
+                    vecmax = Bmax
+                 endif
+                 !!--check for errors
+                 if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
+                      .or.(ivecy.le.ndim).or.(ivecy.gt.ndataplots)) then
+                    print*,'error finding location of vector plot in array'
+                 else
+                    !!--determine number of pixels in rendered image (npix = pixels in x direction)
+                    pixwidth = (xmax-xmin)/real(npixvec)
+                    npixyvec = int((ymax-ymin)/pixwidth) + 1
+                    !--copy appropriate velocity data to a 2D array
+                    !do j=1,ntotplot(i)
+                    !   vecplot(1,j) = dat(ivecx,j,i)
+                    !   vecplot(2,j) = dat(ivecy,j,i)
+                    !enddo
+                    if (iadapt) then
+                       vecmax = -1.0  ! plot limits then set in vectorplot
+                    else                    
+                       vecmax = max(lim(ivecx,2),lim(ivecy,2))
+                    endif
+                    
+                    !!--plot arrows in either background or foreground colour
+                    if (use_backgnd_color_vecplot) call pgsci(0)
+                    !!--call routine to do vector plot off particles      
+                    call vectorplot(xplot(1:ntotplot(i)),yplot(1:ntotplot(i)),  &
+                         xmin,ymin,pixwidth, &
+                         dat(ivecx,1:ntotplot(i),i),dat(ivecy,1:ntotplot(i),i), &
+                         vecmax,ntotplot(i),npixvec,npixyvec)
+                    if (use_backgnd_color_vecplot) call pgsci(1)
+                    !!--old stuff here is to plot arrows on the particles themselves
+                    !scale = 0.08*(lim(iploty,2)-lim(iploty,1))
+                    !call pgsch(0.35)! character height (size of arrow head)
+                    !do j=1,ntotplot(i)
+                    !   call pgarro(yplot(i),xplot(i), &
+                    !   yplot(i)+vecplot(2,i)*scale,   &
+                    !   xplot(i)+vecplot(1,i)*scale)
+                    !enddo
+                    !       call pgsch(1.0)    ! reset character height
+                 endif
               endif
               !
               !--print legend if this is the first plot on the page
