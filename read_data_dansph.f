@@ -56,6 +56,7 @@
 !      READ(11,*,ERR=79,END=80) npart(1),gamma,hfact
       
       nfilesteps = maxstep-1
+      ncol_max = 0
       
       DO i=1,nfilesteps
 !
@@ -68,6 +69,7 @@
          IF (ncolumns.GT.ncol_max) ncol_max = ncolumns
 	 IF (ncolumns.NE.ncol_max) THEN
 	    PRINT*,'*** Warning number of columns not equal for timesteps'
+            PRINT*,'ncolumns = ',ncolumns,ncol_max
 	 ENDIF
 	 IF (ndim.GT.ndim_max) ndim_max = ndim
 	 IF (ndimV.GT.ndimV_max) ndimV_max = ndimV   
@@ -75,16 +77,26 @@
 !
 !--allocate memory for main data array here
 !     
-c	 PRINT*,'data columns = ',nplot
+	 PRINT*,'data columns = ',ncolumns
 	 IF (ntot(i).GT.max) STOP 'ntot greater than array limits!!'      
          IF (ntot(i).GT.0) THEN
-	    READ (11,*, END=66,ERR=77) (dat1(1:ncolumns,j,i),j=1,ntot(i))
+            print*,'reading'
+            do j=1,ntot(i)
+ !              print*,j
+               READ (11,*, END=66,ERR=77) (dat1(1:ncolumns,j,i))
+ 
+            enddo
+!	    READ (11,*, END=66,ERR=77) 
+!     &           (dat1(1:ncolumns,j,i),j=1,ntot(i))
+            
+            print*,'read'
          ELSE
 	    ntot(i) = 1
 	    npart(i) = 1
 	    nghost(i) = 0
 	    dat1(:,:,i) = 0.
 	 ENDIF
+         print*,' read step'
          iam(:) = 0
       ENDDO 
       
