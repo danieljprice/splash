@@ -36,10 +36,10 @@ subroutine calc_quantities(ifromstep,itostep)
   !
   !--specify hydro quantities
   !
-  ncalc = 2
+  ncalc = 3
   ientrop = ncolumns + 1      
   irad = ncolumns + 2
-  !!  ike = ncolumns + 3
+  ike = ncolumns + 3
   if (ipr.eq.0 .or. ipr.gt.ncolumns) then
      nstartfromcolumn = ncolumns + ncalc
      ncalc = ncalc + 1
