@@ -9,7 +9,7 @@
 
 ## Compiler options
 F90C = f95
-F90FLAGS =  -O ##-C ##-WB ##-C
+F90FLAGS =  -O -C##-C ##-WB ##-C
 LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c -lpng
 
 # Fortran flags same as F90

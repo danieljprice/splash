@@ -66,12 +66,13 @@ program supersphplot
 !
 !     file format is specified in the subroutine read_data   
 !
-!     written by: Daniel Price, Institute of Astronomy, Cambridge UK
-!          email: dprice@ast.cam.ac.uk
+!     written by: Daniel Price, School of Physics, University of Exeter, UK
+!          email: dprice@astro.ex.ac.uk
 !
 !     this version for both ndspmhd and matthew bate's code 2003-2004
 !     summary of major changes: (for a full changelog see the CVS log - or use cvs2cl)
 !
+!      20/10/04 - version given to Stuart Whitehouse     
 !      14/09/04 - working on buffering of data read
 !      20/08/04 - vectorplot replaced by interpolate_vec
 !      19/08/04 - azimuthal rotation works, interactive limits not permanent,

@@ -23,7 +23,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec
   integer :: irenderprev, istepprev, iadvance
-  integer :: ngrid
+  integer :: ngrid, iskipfiles
   integer :: just, ntitles
   integer :: iplots,iplotsonpage
   integer :: index1,index2,itype
@@ -211,13 +211,29 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
      if (.not.buffer_data) then
         !
         !--if data is not stored in memory, read next step from file
+        !  skip files if necessary. At the moment assumes number of steps in
+        !  each file are the same
         !
         if (i.gt.nstepsinfile(ifile)) then
            ihavereadfilename = .true.
-           ifile = ifile+1
+           if (nstepsinfile(i).ge.1) then
+              iskipfiles = (i-nstepsinfile(ifile))/nstepsinfile(ifile)
+              print*,'iskipfiles = ',iskipfiles,i
+           else
+              print*,'*** error in timestepping: file contains zero timesteps'
+              iskipfiles = 1
+           endif
+           if (iskipfiles.gt.1) then
+              print*,'skipping ',iskipfiles,' files '
+           elseif (iskipfiles.le.0) then
+              print*,'error with iskipfiles = ',iskipfiles
+              iskipfiles = 1
+           endif
+           ifile = ifile+iskipfiles
            if (ifile.le.nfiles) then
               call get_data(ifile)
-              i = 1
+              print*,'jumping to step ',MOD(i,nstepsinfile(ifile)) + 1,i
+              i = MOD(i,nstepsinfile(ifile)) + 1
            else
               exit over_timesteps
            endif
@@ -225,6 +241,13 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            ihavereadfilename = .true.
            ifile = ifile-1
            if (ifile.ge.1) then
+              print*,'ifile = ',ifile
+              print*,'going back: i = ',i,' nstepsinfile = ',nstepsinfile(ifile)
+              iskipfiles = (i-nstepsinfile(ifile))/nstepsinfile(ifile)
+              print*,'iskipfiles = ',i
+              ifile = ifile + iskipfiles
+              print*,'ifile =', ifile
+              if (ifile.lt.1) ifile = 1
               call get_data(ifile)
            else
               ifile = 1

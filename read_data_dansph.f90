@@ -130,7 +130,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
         print*,'*** error reading timestep header ***'
         close(11)     
         return
-     elseif ()   
      else ! count this as a successfully read timestep, even if data is partial
         nstepsread = nstepsread + 1
      endif

@@ -23,13 +23,15 @@ could be somewhat cumbersome for the manipulation and visualisation of my SPH da
 main problem was that much of what I wanted to do was fairly specific to SPH (such as
 interpolation to an array of pixels using the kernel) and whilst generic routines exist
 for such tasks, I could not explain how they worked, nor were they
-particularly fast and nor could I incorporate into them my existing programs for doing
-other things (such as the calculation of exact solutions). In fact, the major
+particularly fast and whilst interactive gizmos are handy, it can prove more difficult to perform the
+same tasks non-interactively, as required for the production of animations. 
+In fact I have found that the major
 work in the visualisation of SPH data is not the image production itself but the
 manipulation of data prior to plotting. Much of this manipulation makes sense
 within an SPH framework (for example the interpolation provided by the kernel
-and rotation of the particles for perspective) and this is what this program is
-designed to do - to use SPH tools to analyse SPH data and to make this a
+and rotation of the particles for perspective).
+
+ SUPERSPHPLOT is designed for this specific task - to use SPH tools to analyse SPH data and to make this a
 straightforward task such that publishable images and animations can be obtained
 as efficiently as possible from the raw data with a minimum amount of effort
 from the user. I have found in the process that the development of powerful
@@ -62,11 +64,11 @@ are the same.
 axes to log, invert, square root or absolute of a quantity.
 \item Exact solutions for common SPH test problems (e.g. hydrodynamic shock tubes,
 polytropes).
-\item Calculation of quantities not dumped (e.g. pressure)
+\item Calculation of quantities not dumped (e.g. pressure, entropy)
 \item Transformation to different co-ordinate systems (for both co-ordinates and
 vector components).
 \item Straightforward production of GIF and Postscript images which can then be
-converted into animations.
+converted into animations or inserted into \LaTeX documents.
 \end{itemize}
 
 \subsection{What it doesn't do}
@@ -91,6 +93,9 @@ feature (in this case 3D rotated axes/boxes are plotted appropriately).
 
 \paragraph{Version 1.0}
  This is the pre-public-release (Guinea-pig) version.
+
+\subsection{Licence}
+ SUPERSPHPLOT is released under the terms of the GNU General Public License (GPL). 
 
 \section{Gallery}
 
@@ -193,24 +198,25 @@ them in your .tcshrc or bash/sh equivalent file). For other environment
 variables which can be set, refer to the PGPLOT user guide.
 
 \subsection{System dependent routines}
-The only system dependent subroutine is the call to \verb+getarg+ in
-\verb+supersphplot.f90+ which
+ System dependent subroutines are interfaced in a separate \verb+system+ module in the file \verb+system_unix.f90+.
+At present the only calls to these routines are made from \verb+supersphplot.f90+ which
 reads the run name(s) from the command line (see \S\vref{sec:commandline}). A standardised format for performing this
 task is included in the standards for the next release of Fortran (Fortran 2003),
-however in the meantime this call may require some adjustment depending on the
+however in the meantime the calls in the \verb+system+ module may require some adjustment depending on the
 particular system you are compiling the code on. The program is still fully
-functional without this call working, but it does make things convenient.
+functional without this call working, but it does make things convenient (in particular it means that
+SUPERSPHPLOT can be invoked using wildcards ($*,?$) in filenames).
 
 \section{Reading data}
  The most important part is getting SUPERSPHPLOT to read your data format. I
 have supplied subroutines for reading output from the publically available
 GADGET code (\verb+read_data_gadget.f90+) and also for Matthew Bate's SPH code
-(\verb+read_data_mbate.f90+) which is widely used in the UK. An example of a
-data read from ascii formatted files is given in \verb+read_data_dansph.f90+.
-The example data sets are supplied in the format I use to output my SPH data,
-given in \verb+read_data_dansph.f90+. Since the specifics of the data read can
+(\verb+read_data_mbate.f90+) which is widely used in the UK. Another example of a
+data read which I use is given in \verb+read_data_dansph.f90+.
+ Since the specifics of the data read can
 vary between codes, I recommend examining these subroutines before writing your
-own version.
+own version. Further details on writing your own subroutine are given in
+appendix~\ref{chap:writeyourown}
 
 \subsection{Buffering of input}
  An important point in writing your own subroutine is the manner in which
@@ -805,7 +811,25 @@ the appendix to the PGPLOT user guide.
 \subsection{Customise the legend?}
 
 \subsection{Make movies?}
- Although the 
+ At the PGPLOT device prompt
+\begin{verbatim}
+Graphics device/type (? to see list, default /xwin):
+\end{verbatim}
+choose \verb+/gif+ or \verb+/vgif+ (some installations of PGPLOT may also have \verb+/png+
+installed). The images will then be written as \verb+.gif+ files which can then be easily compiled
+together to form an animation. Under unix the \verb+gifmerge+ command (if installed) is a simple way
+of making a single animated gif file out of a series of gif images. Animated gifs are robust but
+require large amounts of memory to run at any reasonable speed. However many software packages exist
+for converting animated gifs into other, more compressed formats (such as the windows .avi format or
+under unix the .fli format\footnote{Note that MPEG is a particularly poor choice for simulation data}). One such package is the
+\verb+convert+ command included as part of the GIMP (Gnu Image Manipulation Package) toolkit.
+For presentations the windows .avi format is a good choice, although codecs for conversion are a
+little harder to come by. Under windows the commercially available \verb+videomach+ program is one
+such tool as well as several Microsoft products.
+
+ Another tool under unix is the \verb+fbm2fli+ package, which will take a series of .gif or .png files and
+convert them into a .fli animation (which can be played, for example by the \verb+xanim+ tool). This
+format is great for animations of simulations but as yet does not import into powerpoint and the like.
 
 \section{User contributions / Wishlist for future improvements}
  Please contribute!! Any user contributions and/or suggestions would be greatly
@@ -1052,6 +1076,9 @@ masses, a different curve is plotted for each different mass value.
 \section{PGPLOT graph markers \& line styles}
 
 \newpage
+
+
+\section{Writing your own read\_data subroutine}
 
 \bibliographystyle{bibstyle}
 \bibliography{/home/dprice/bibtex/sph,/home/dprice/bibtex/mhd}

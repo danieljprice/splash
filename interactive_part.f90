@@ -30,7 +30,7 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
   character(len=20) :: string
   logical :: iexit
 
-  print*,'entering interactive mode...press h for help'
+  print*,'entering interactive mode...press h in plot window for help'
   char = 'A'
   ipts = 0
   xline = 0.
@@ -94,16 +94,16 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
         endif
      case('h')
         print*,'-------------- interactive mode commands --------------'
-        print*,' select area and zoom : left click'
+        print*,' select area and zoom : left click (or A)'
         print*,' (r)eplot current plot        : r'
         print*,' label closest (p)article     : p'
-        print*,' plot a line and find its g)radient : g, G'
+        print*,' plot a line and find its g)radient : g'
         print*,' rotate about z axis by +(-) 15 degrees : , (.)'
         print*,' rotate about x axis by +(-) 15 degrees : / ('')' 
         print*,' rotate about z axis by +(-) 30 degrees : < (>)'
         print*,' rotate about z axis by +(-) 30 degrees : ? (")'        
-        print*,' next timestep/plot   : space '
-        print*,' previous timestep    : right click'
+        print*,' next timestep/plot   : space, n'
+        print*,' previous timestep    : right click (or X), b'
         print*,' jump by n timesteps  : 0,1,2,3..9 then left or right click'
         print*,' (h)elp                       : h'
         print*,' (s)ave current settings for all steps : s'
@@ -204,13 +204,13 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
         iadvance = 666666666
         print*,'quitting...'
         iexit = .true.
-     case('X') ! right click -> go back
+     case('X','b','B') ! right click -> go back
         iadvance = -abs(iadvance)
         iexit = .true.
      case('r','R') ! replot
         iadvance = 0
         iexit = .true.
-     case(' ') ! space
+     case(' ','n','N') ! space
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
         iadvance = int_from_string(char)

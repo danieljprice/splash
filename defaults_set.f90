@@ -9,6 +9,7 @@ subroutine defaults_set
   use limits
   use multiplot
   use settings
+  use particle_data
   implicit none
   integer :: i
 !
@@ -89,11 +90,11 @@ subroutine defaults_set
 !
 !--render options
 !
-  icolours = 0               ! colour scheme to use
+  icolours = 1               ! colour scheme to use
   ncolours=10                ! number of colours in colour table
   npix = 100                 ! pixels in x direction for rendering
   iPlotColourBar = .true.! whether or not to plot the colour bar
-  iplotcont_nomulti = .true. ! plot contours
+  iplotcont_nomulti = .false. ! plot contours
   ncontours = 30             ! number of contours to plot
 !
 !--cross section/rotation options
@@ -188,6 +189,11 @@ subroutine defaults_set
   !
   lim(:,:) = 0.
   itrans(:) = 0
-
+  !
+  !--data array sizes
+  !
+  maxpart = 0
+  maxcol = 0
+  maxstep = 0
   return    
 end subroutine defaults_set
