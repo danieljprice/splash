@@ -140,7 +140,7 @@ contains
        call read_exactparams(iexact,ierr)
        if (ierr.ne.0) then
           call prompt('enter density to left of shock   ',rho_L,0.0)
-          call prompt('enter density to right of shock  ',rho_L,0.0)   
+          call prompt('enter density to right of shock  ',rho_R,0.0)   
           call prompt('enter pressure to left of shock  ',pr_L,0.0)
           call prompt('enter pressure to right of shock ',pr_R,0.0)
           call prompt('enter velocity to left of shock  ',v_L)
