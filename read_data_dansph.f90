@@ -16,8 +16,6 @@
 ! dat(maxplot,maxpart,maxstep) : main data array
 !
 ! npartoftype(maxstep) : number of particles of each type in each timestep
-! ntot(maxstep)       : total number of particles in each timestep
-! iam(maxpart,maxstep): integer identification of particle type
 !
 ! time(maxstep)       : time at each step
 ! gamma(maxstep)      : gamma at each step 
@@ -31,7 +29,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
   use labels
-  use settings_data
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc
   use mem_allocation
   implicit none
   integer, intent(IN) :: indexstart
@@ -131,7 +129,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
      hfact = real(hfactin)
      npartoftype(1,i) = nparti
      npartoftype(2,i) = ntoti - nparti
-     ntot(i) = ntoti
      print*,'reading time = ',time(i),nparti,ntoti,gamma(i), &
           hfact,ndim,ndimV,ncolstep,icoords
      if (icoords.gt.1) print*,':: geometry = ',icoords
@@ -166,10 +163,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
         ncolumns = ncolstep
      endif
 
-     if (ntot(i).gt.maxpart) then
+     if (ntoti.gt.maxpart) then
         !print*, 'ntot greater than array limits!!'    
         reallocate = .true.
-        npart_max = int(1.5*ntot(i))
+        npart_max = int(1.5*ntoti)
      endif
      if (i.eq.maxstep) then
         nstep_max = i + max(10,INT(0.1*nstep_max))
@@ -183,34 +180,34 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
 
   
-     if (ntot(i).gt.0) then
+     if (ntoti.gt.0) then
         !
         !--read position vector
         !
         icol = 1
         if (allocated(dattempvec)) deallocate(dattempvec)
-        allocate(dattempvec(3,ntot(i)))
-        read (11,end=66,ERR=67) dattempvec(1:ndim,1:ntot(i))
+        allocate(dattempvec(3,ntoti))
+        read (11,end=66,ERR=67) dattempvec(1:ndim,1:ntoti)
         do ipos = 1,ndim
-           dat(1:ntot(i),ipos,i) = real(dattempvec(ipos,1:ntot(i)))
+           dat(1:ntoti,ipos,i) = real(dattempvec(ipos,1:ntoti))
         enddo
         icol = icol + ndim
         !
         !--read velocity vector
         !
-        read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))        
+        read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntoti)        
         do ipos = icol,icol+ndimV-1
-           dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
+           dat(1:ntoti,ipos,i) = real(dattempvec(ipos-icol+1,1:ntoti))
         enddo
         icol = icol + ndimV
         !
         !--read scalar variables
         !
         if (allocated(dattemp)) deallocate(dattemp)
-        allocate(dattemp(ntot(i)))
+        allocate(dattemp(ntoti))
         do j = 1,4
-           read (11,end=66,ERR=67) dattemp(1:ntot(i))
-           dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
+           read (11,end=66,ERR=67) dattemp(1:ntoti)
+           dat(1:ntoti,icol,i) = real(dattemp(1:ntoti))
            icol = icol + 1
         enddo
         
@@ -222,17 +219,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !
         !--read alpha, alphau
         !
-           read (11,end=66,ERR=67) dattempvec(1:2,1:ntot(i))
+           read (11,end=66,ERR=67) dattempvec(1:2,1:ntoti)
            do ipos = icol,icol+1
-              dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
+              dat(1:ntoti,ipos,i) = real(dattempvec(ipos-icol+1,1:ntoti))
            enddo
            icol = icol + 2
         !
         !--pr, div v, gradh
         !
            do j = 1,3
-              read (11,end=66,ERR=67) dattemp(1:ntot(i))
-              dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
+              read (11,end=66,ERR=67) dattemp(1:ntoti)
+              dat(1:ntoti,icol,i) = real(dattemp(1:ntoti))
               icol = icol + 1
            enddo
            
@@ -241,16 +238,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !--rho, sqrt g
         !
            do j = 1,2
-              read (11,end=66,ERR=67) dattemp(1:ntot(i))
-              dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
+              read (11,end=66,ERR=67) dattemp(1:ntoti)
+              dat(1:ntoti,icol,i) = real(dattemp(1:ntoti))
               icol = icol + 1
            enddo
         !
         !--pmom
         !
-           read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
+           read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntoti)
            do ipos = icol, icol+ndimV-1
-              dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
+              dat(1:ntoti,ipos,i) = real(dattempvec(ipos-icol+1,1:ntoti))
            enddo
            icol = icol + ndimV                     
            endif
@@ -263,33 +260,33 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !
         !--read alpha, alphau, alphaB
         !
-           read (11,end=66,ERR=67) dattempvec(1:3,1:ntot(i))
+           read (11,end=66,ERR=67) dattempvec(1:3,1:ntoti)
            do ipos = icol,icol+2
-              dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
+              dat(1:ntoti,ipos,i) = real(dattempvec(ipos-icol+1,1:ntoti))
            enddo
            icol = icol + 3
         !
         !--Bfield
         !
-           read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
+           read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntoti)
            do ipos = icol, icol+ndimV-1
-              dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
+              dat(1:ntoti,ipos,i) = real(dattempvec(ipos-icol+1,1:ntoti))
            enddo
            icol = icol + ndimV
         !
         !--psi, pr, div v, div B
         !
            do j = 1,4
-              read (11,end=66,ERR=67) dattemp(1:ntot(i))
-              dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
+              read (11,end=66,ERR=67) dattemp(1:ntoti)
+              dat(1:ntoti,icol,i) = real(dattemp(1:ntoti))
               icol = icol + 1
            enddo
         !
         !--curl B
         !
-           read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
+           read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntoti)
            do ipos = icol, icol+ndimV-1
-              dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
+              dat(1:ntoti,ipos,i) = real(dattempvec(ipos-icol+1,1:ntoti))
            enddo
            icol = icol + ndimV      
         endif
@@ -297,24 +294,22 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
         deallocate(dattemp,dattempvec)
      else
-        ntot(i) = 1
         npartoftype(1,i) = 1
         npartoftype(2,i) = 0
         dat(:,:,i) = 0.
      endif
-     iam(:,i) = 0
   enddo
 
   print*,' REACHED ARRAY LIMITS IN READFILE'
 
   ! this is if reached array limits
-  ntot(i-1) = j-1
   goto 68
 
 66 continue
    print "(a)",'*** WARNING: incomplete data on last timestep'
 nstepsread = i - indexstart + 1                ! timestep there but data incomplete
-ntot(i) = j-1
+ntoti = j-1
+
 goto 68
 
 67 continue
@@ -330,7 +325,7 @@ ndim = ndim_max
 ndimV = ndimV_max
 
 print*,'> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
-       ' last step ntot = ',ntot(indexstart+nstepsread-1)
+       ' last step ntot = ',sum(npartoftype(:,indexstart+nstepsread-1))
 return    
 !
 !--errors

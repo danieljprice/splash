@@ -18,8 +18,8 @@ subroutine alloc(npartin,nstep,ncolumnsin)
   integer :: maxpartold,maxstepold,maxcolold
   integer :: ierr,ncolumns
   logical :: reallocate,reallocate_part,reallocate_step
-  integer, dimension(:), allocatable :: ntottemp,icolourmetemp,icircparttemp
-  integer, dimension(:,:), allocatable :: iamtemp, npartoftypetemp
+  integer, dimension(:), allocatable :: icolourmetemp,icircparttemp
+  integer, dimension(:,:), allocatable :: npartoftypetemp
   real, dimension(:), allocatable :: timetemp, gammatemp
   real, dimension(:,:,:), allocatable :: dattemp
 !
@@ -70,8 +70,6 @@ subroutine alloc(npartin,nstep,ncolumnsin)
 10   format (a,' parts = ',i10,' steps = ',i6,' cols = ',i4)
      allocate(dattemp(maxpartold,maxcolold,maxstepold), stat=ierr)
      if (ierr /= 0) stop 'error allocating memory (dattemp)'
-     allocate(iamtemp(maxpartold,maxstepold),stat=ierr)
-     if (ierr /= 0) stop 'error allocating memory (iamtemp)'
      
      if (reallocate_part) then
         allocate(icolourmetemp(maxpartold),stat=ierr)
@@ -81,8 +79,7 @@ subroutine alloc(npartin,nstep,ncolumnsin)
      endif
 
      dattemp = dat
-     iamtemp = iam
-     deallocate(dat,iam)
+     deallocate(dat)
 
      if (reallocate_part) then
         icolourmetemp(1:maxpartold) = icolourme(1:maxpartold)
@@ -91,11 +88,10 @@ subroutine alloc(npartin,nstep,ncolumnsin)
      endif
 
      if (reallocate_step) then
-        allocate(ntottemp(maxstep),npartoftypetemp(maxparttypes,maxstep),stat=ierr)
-        if (ierr /= 0) stop 'error allocating memory (ntottemp)'
-        ntottemp = ntot
+        allocate(npartoftypetemp(maxparttypes,maxstep),stat=ierr)
+        if (ierr /= 0) stop 'error allocating memory (npartoftypetemp)'
         npartoftypetemp = npartoftype
-        deallocate(ntot,npartoftype)
+        deallocate(npartoftype)
 
         allocate(timetemp(maxstep),gammatemp(maxstep),stat=ierr)
         if (ierr /= 0) stop 'error allocating memory (timetemp,gammatemp)'
@@ -121,14 +117,9 @@ subroutine alloc(npartin,nstep,ncolumnsin)
 !
   allocate(dat(maxpart,maxcol,maxstep), stat=ierr)
   if (ierr /= 0) stop 'error allocating memory for dat array'
-
-  allocate(iam(maxpart,maxstep), stat=ierr)
-  if (ierr /= 0) stop 'error allocating memory for iam array'
-  iam = 0
     
   if (reallocate) then
      dat(1:maxpartold,1:maxcolold,1:maxstepold) = dattemp(1:maxpartold,1:maxcolold,1:maxstepold)
-     iam(1:maxpartold,1:maxstepold) = iamtemp(1:maxpartold,1:maxstepold)
   endif
 !
 !--particle arrays
@@ -152,26 +143,21 @@ subroutine alloc(npartin,nstep,ncolumnsin)
 !--other arrays
 !
   if (.not.allocated(npartoftype)) then
-     allocate(ntot(maxstep),stat=ierr)
-     if (ierr /= 0) stop 'error allocating memory for header arrays'
-
      allocate(npartoftype(maxparttypes,maxstep),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory for header arrays'
 
      allocate(time(maxstep),gamma(maxstep),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory for header arrays'
 
-     ntot = 0
      npartoftype = 0
      time = 0.
      gamma = 0.
 
      if (reallocate_step) then
-        ntot(1:maxstepold) = ntottemp(1:maxstepold)
         npartoftype(:,1:maxstepold) = npartoftypetemp(:,1:maxstepold)
         time(1:maxstepold) = timetemp(1:maxstepold)
         gamma(1:maxstepold) = gammatemp(1:maxstepold)
-        deallocate(ntottemp,npartoftypetemp)
+        deallocate(npartoftypetemp)
         deallocate(timetemp,gammatemp)
      endif
   endif
@@ -192,10 +178,8 @@ subroutine deallocate_all
  implicit none
  
  if (allocated(dat)) deallocate(dat)
- if (allocated(iam)) deallocate(iam)
  if (allocated(icolourme)) deallocate(icolourme)
  if (allocated(icircpart)) deallocate(icircpart)
- if (allocated(ntot)) deallocate(ntot)
  if (allocated(npartoftype)) deallocate(npartoftype)
  if (allocated(time)) deallocate(time)
  if (allocated(gamma)) deallocate(gamma)

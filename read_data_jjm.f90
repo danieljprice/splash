@@ -29,7 +29,7 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings_data  
+  use settings_data, only:ndim,ndimV,ncolumns  
   use mem_allocation
   implicit none
   integer, intent(IN) :: indexstart
@@ -120,7 +120,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
               nstepsread = nstepsread + 1
            endif
 
-           ntot(j) = nprint
            npartoftype(:,j) = 0
            npartoftype(1,j) = nprint
 

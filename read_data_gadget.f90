@@ -16,8 +16,6 @@
 ! dat(maxpart,maxplot,maxstep) : main data array
 !
 ! npartoftype(maxstep): number of particles of each type in each timestep
-! ntot(maxstep)       : total number of particles in each timestep
-! iam(maxpart,maxstep): integer identification of particle type
 !
 ! time(maxstep)       : time at each step
 ! gamma(maxstep)      : gamma at each step 
@@ -31,17 +29,18 @@ subroutine read_data(rootname,istart,nstepsread)
   use particle_data
   use params
   use labels
-  use settings_data
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc
   use mem_allocation
   implicit none
   integer, intent(IN) :: istart
   integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
   character(LEN=LEN(rootname)+10) :: datfile
+  integer, dimension(maxparttypes) :: npartoftypei
   integer, dimension(:), allocatable :: iamtemp
   integer :: i,itype,icol,ifile,idashpos,ierr
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
-  integer :: ncol_max,npart_max,nstep_max
+  integer :: ncol_max,npart_max,nstep_max,ntoti
   logical :: iexist,reallocate
   real(doub_prec) :: timetemp
   real(doub_prec), dimension(6) :: Massoftype
@@ -50,22 +49,8 @@ subroutine read_data(rootname,istart,nstepsread)
 
   nstepsread = 0
   
-  if (rootname(1:1).ne.' ') then
-     idashpos = index(rootname,'_') ! position of '_' in string
-     if (idashpos.eq.0) then
-        !
-        !--for rootnames without the '_000', read all files starting at #1
-        !
-        ifile = 1
-        !--work out the first filename
-        write(datfile,"(a,'_','00',i1)") trim(rootname),ifile
-     else
-        !
-        !--otherwise just read this dump
-        !
-        read(rootname(idashpos+1:idashpos+3),*) ifile
-        datfile = trim(rootname)
-     endif
+  if (len_trim(rootname).gt.0) then
+     datfile = trim(rootname)
   else
      print*,' **** no data read **** ' 
      return
@@ -83,188 +68,158 @@ subroutine read_data(rootname,istart,nstepsread)
 !
   ndim = 3
   ndimV = 3
-  ncol_max = 12 ! 3 x pos, 3 x vel, utherm, rho, Ne, h, pmass
+  ncol_max = 15 ! 3 x pos, 3 x vel, utherm, rho, Ne, h, pmass
 !
 !--read data from snapshots
 !  
   i = istart
+
+  write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
   !
-  !--allocate memory for data arrays (initially for 11 timesteps)
+  !--open data file and read data
   !
-  if (i.eq.1) then  ! on first step, allocate for several timesteps
-     npart_max = 1
-     nstep_max = 1
-     ncol_max = 12
-     if (.not.allocated(dat)) then
-        call alloc(npart_max,nstep_max,ncol_max)
-     endif
+  open(11,ERR=81,file=datfile,status='old',form='unformatted')
+  !
+  !--read header for this timestep
+  !
+  read(11,ERR=70,end=80) npartoftypei,Massoftype,timetemp 
+  ntoti = int(sum(Npartoftype))
+  print*,'time             : ',timetemp
+  print*,'Npart (by type)  : ',npartoftypei
+  print*,'Mass  (by type)  : ',Massoftype
+  print*,'N_gas            : ',npartoftypei(1)
+  print*,'N_total          : ',ntoti
+
+  !
+  !--if successfully read header, increment the nstepsread counter
+  !
+  nstepsread = nstepsread + 1
+  !
+  !--now read data
+  !
+  reallocate = .false.
+  npart_max = maxpart
+  nstep_max = maxstep
+
+  if (ntoti.gt.maxpart) then
+     reallocate = .true.
+     npart_max = int(1.1*ntoti)
   endif
-
-  do while (iexist)
-     write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
-     !
-     !--open data file and read data
-     !
-     open(11,ERR=81,file=datfile,status='old',form='unformatted')
-     !
-     !--read header for this timestep
-     !
-     read(11,ERR=70,end=80) npartoftype(:,i),Massoftype,timetemp 
-     print*,'Npartoftype =',npartoftype(:,i)
-     ntot(i) = int(sum(Npartoftype))
-     print*,'Npartoftype =',npartoftype(:,i)
-     print*,'Massoftype = ',Massoftype
-     time(i) = real(timetemp)
-     print*,'t = ',time(i),' npart, ntot = ',npartoftype(1,i),ntot(i)
-
-     !
-     !--if successfully read header, increment the nstepsread counter
-     !
-     nstepsread = nstepsread + 1
-     
-     !
-     !--now read data
-     !
-     reallocate = .false.
-     npart_max = maxpart
-     nstep_max = maxstep
-     ncol_max = maxcol
-
-     if (ntot(i).gt.maxpart) then
-        reallocate = .true.
-        npart_max = int(1.1*ntot(i))
-     endif
-     if (i.eq.maxstep) then
-        nstep_max = i + max(10,INT(0.1*nstep_max))
-        reallocate = .true.
-     endif
-     !
-     !--reallocate memory for main data array
-     !
-     if (reallocate) then
-        call alloc(npart_max,nstep_max,ncol_max)
-     endif
+  if (i.ge.maxstep .and. i.ne.1) then
+     nstep_max = i + max(10,INT(0.1*nstep_max))
+     reallocate = .true.
+  endif
+  !
+  !--reallocate memory for main data array
+  !
+  if (reallocate .or. .not.(allocated(dat))) then
+     call alloc(npart_max,nstep_max,max(ncol_max+ncalc,maxcol))
+  endif
+  !
+  !--copy header into header arrays
+  !
+  npartoftype(:,i) = npartoftypei
+  time(i) = real(timetemp)
   
-     if (ntot(i).gt.0) then
-        if (allocated(dattemp)) deallocate(dattemp)
-        allocate(dattemp(3,ntot(i)))
-        !
-        !--read positions of all particles
-        !
-        print*,'positions ',ntot(i)
-        read (11, iostat=ierr) dattemp(1:3,1:ntot(i))        
-        if (ierr /= 0) then
-           print "(a)",'error encountered whilst reading positions '
-           return
-        else
-           do icol=1,3
-              dat(1:ntot(i),icol,i) = dattemp(icol,1:ntot(i))
-           enddo
-        endif
-        !
-        !--same for velocities
-        !
-        print*,'velocities ',ntot(i)
-        read (11, iostat=ierr) dattemp(1:3,1:ntot(i))
-        if (ierr /= 0) then
-           print "(a)",'error encountered whilst reading velocities'
-        else        
-           do icol=4,6
-              dat(1:ntot(i),icol,i) = dattemp(icol-3,1:ntot(i))
-           enddo
-        endif
-        !
-        !--read particle ID
-        !
-        print*,'particle ID ',ntot(i)
-        if (allocated(iamtemp)) deallocate(iamtemp)
-        allocate(iamtemp(npart_max))
-        read (11, end=66,ERR=73) iamtemp(1:ntot(i))
-        iam(1:ntot(i),i) = int(iamtemp(1:ntot(i)))
-        deallocate(iamtemp)
-        !
-        !--read particle masses
-        !
-        !--work out total number of masses dumped 
-        Nmassesdumped = 0
-        do itype = 1,6
-           if (abs(Massoftype(itype)).lt.1.e-8) then
-              Nmassesdumped = Nmassesdumped + Npartoftype(itype,i)
-           endif
-        enddo
-        print*,'particle masses ',Nmassesdumped
 
-        !--read this number of entries
-        if (allocated(dattemp1)) deallocate(dattemp1)
-        allocate(dattemp1(Nmassesdumped))
-        read(11,end=66,err=74) dattemp1(1:Nmassesdumped)
-        !--now copy to the appropriate sections of the .dat array
-        indexstart = 1
-        index1 = 1
-        
-        do itype=1,6
-           if (Npartoftype(itype,i).ne.0) then
-              index2 = index1 + Npartoftype(itype,i) -1
-              if (abs(Massoftype(itype)).lt.1.e-8) then ! masses dumped
-                 indexend = indexstart + Npartoftype(itype,i) - 1
-                 print*,'read ',Npartoftype(itype,i),' masses for type ', &
-                        itype,index1,'->',index2,indexstart,'->',indexend
-                 dat(index1:index2,7,i) = dattemp1(indexstart:indexend)
-              else  ! masses not dumped
-                 print*,'setting masses for type ',itype,' = ', &
-                        real(Massoftype(itype)),index1,'->',index2
-                 dat(index1:index2,7,i) = real(Massoftype(itype))
-              endif
-              index1 = index2 + 1
-              indexstart = indexend + 1
-           endif
-        enddo
-        deallocate(dattemp1)
-        !
-        !--read other quantities for rest of particles
-        !
-        print*,'gas properties ',npartoftype(1,i)
-        do icol=8,12
-           !!print*,icol
-           read (11, end=66,ERR=78) dat(1:npartoftype(1,i),icol,i)
-           !
-           !--for some reason the smoothing length output by GADGET is
-           !  twice the usual SPH smoothing length
-           !
-           if (icol.eq.12) then
-              dat(1:npartoftype(1,i),icol,i) = 0.5*dat(1:npartoftype(1,i),icol,i)
-           endif
-        enddo
-        
-        
+  if (ntoti.gt.0) then
+     if (allocated(dattemp)) deallocate(dattemp)
+     allocate(dattemp(3,ntoti))
+     !
+     !--read positions of all particles
+     !
+     print*,'positions ',ntoti
+     read (11, iostat=ierr) dattemp(1:3,1:ntoti)        
+     if (ierr /= 0) then
+        print "(a)",'error encountered whilst reading positions '
+        return
      else
-        ntot(i) = 1
-        npartoftype(1,i) = 1
-        dat(:,:,i) = 0.
+        do icol=1,3
+           dat(1:ntoti,icol,i) = dattemp(icol,1:ntoti)
+        enddo
      endif
-     iam(:,i) = 0
      !
-     !--if just the rootname has been input, 
-     !  set next filename and see if it exists
+     !--same for velocities
      !
-     ifile = ifile + 1
-     i = i + 1
-     if (idashpos.eq.0) then
-        if (ifile.lt.10) then
-           write(datfile,"(a,'_','00',i1)") trim(rootname),ifile
-        elseif (ifile.lt.100) then
-           write(datfile,"(a,'_','0',i2)") trim(rootname),ifile     
-        elseif (ifile.lt.1000) then
-           write(datfile,"(a,'_',i3)") trim(rootname),ifile
-        else
-           print*,'error: ifile > 1000 in filename'
-           return
+     print*,'velocities ',ntoti
+     read (11, iostat=ierr) dattemp(1:3,1:ntoti)
+     if (ierr /= 0) then
+        print "(a)",'error encountered whilst reading velocities'
+     else        
+        do icol=4,6
+           dat(1:ntoti,icol,i) = dattemp(icol-3,1:ntoti)
+        enddo
+     endif
+     !
+     !--read particle ID
+     !
+     print*,'particle ID ',ntoti
+     if (allocated(iamtemp)) deallocate(iamtemp)
+     allocate(iamtemp(npart_max))
+     read (11, end=66,ERR=73) iamtemp(1:ntoti)
+     deallocate(iamtemp)
+     !
+     !--read particle masses
+     !
+     !--work out total number of masses dumped 
+     Nmassesdumped = 0
+     do itype = 1,6
+        if (abs(Massoftype(itype)).lt.1.e-8) then
+           Nmassesdumped = Nmassesdumped + Npartoftype(itype,i)
         endif
-        inquire(file=datfile,exist=iexist)
-     else
-        iexist = .false. ! exit loop
+     enddo
+     print*,'particle masses ',Nmassesdumped
+
+     !--read this number of entries
+     if (allocated(dattemp1)) deallocate(dattemp1)
+     allocate(dattemp1(Nmassesdumped))
+     if (Nmassesdumped.gt.0) then
+        read(11,end=66,err=74) dattemp1(1:Nmassesdumped)
      endif
-  enddo
+     !--now copy to the appropriate sections of the .dat array
+     indexstart = 1
+     index1 = 1
+
+     do itype=1,6
+        if (Npartoftype(itype,i).ne.0) then
+           index2 = index1 + Npartoftype(itype,i) -1
+           if (abs(Massoftype(itype)).lt.1.e-8) then ! masses dumped
+              indexend = indexstart + Npartoftype(itype,i) - 1
+              print*,'read ',Npartoftype(itype,i),' masses for type ', &
+                     itype,index1,'->',index2,indexstart,'->',indexend
+              dat(index1:index2,7,i) = dattemp1(indexstart:indexend)
+           else  ! masses not dumped
+              print*,'setting masses for type ',itype,' = ', &
+                     real(Massoftype(itype)),index1,'->',index2
+              dat(index1:index2,7,i) = real(Massoftype(itype))
+           endif
+           index1 = index2 + 1
+           indexstart = indexend + 1
+        endif
+     enddo
+     deallocate(dattemp1)
+     !
+     !--read other quantities for rest of particles
+     !
+     print*,'gas properties ',npartoftype(1,i)
+     do icol=8,12
+        !!print*,icol
+        read (11, end=66,ERR=78) dat(1:npartoftype(1,i),icol,i)
+        !
+        !--for some reason the smoothing length output by GADGET is
+        !  twice the usual SPH smoothing length
+        !
+        if (icol.eq.12) then
+           dat(1:npartoftype(1,i),icol,i) = 0.5*dat(1:npartoftype(1,i),icol,i)
+        endif
+     enddo
+
+
+  else
+     ntoti = 1
+     npartoftype(1,i) = 1
+     dat(:,:,i) = 0.
+  endif
 
   !!ntot(i-1) = j-1
 !
@@ -288,7 +243,7 @@ subroutine read_data(rootname,istart,nstepsread)
   print*,'ncolumns = ',ncolumns
 
   print*,'>> Finished reading: steps =',nstepsread-istart+1, &
-         'last step ntot =',ntot(istart+nstepsread - 1)
+         'last step ntot =',sum(npartoftype(:,istart+nstepsread-1))
   return    
 !
 !--errors

@@ -19,8 +19,6 @@
 ! dat(maxplot,maxpart,maxstep) : main data array
 !
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
-! ntot(maxstep)       : total number of particles in each timestep
-! iam(maxpart,maxstep): integer identification of particle type
 !
 ! time(maxstep)       : time at each step
 ! gamma(maxstep)      : gamma at each step 
@@ -32,7 +30,7 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings_data  
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc
   use mem_allocation
   implicit none
   integer, intent(IN) :: indexstart
@@ -145,7 +143,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
            nstepsread = nstepsread + 1
         endif
 
-        ntot(j) = nprint+nptmass
         npartoftype(1,j) = nprint
         npartoftype(2,j) = nptmass
 
@@ -161,7 +158,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   close(15)
 
-  print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nptmass=',npartoftype(2,j-1)
+  print*,'>> end of dump file: nsteps =',j-1,'ntot = ', &
+        sum(npartoftype(:,j-1)),'nptmass=',npartoftype(2,j-1)
    
 return
                     

@@ -19,8 +19,6 @@
 ! dat(maxplot,maxpart,maxstep) : main data array
 !
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
-! ntot(maxstep)       : total number of particles in each timestep
-! iam(maxpart,maxstep): integer identification of particle type
 !
 ! time(maxstep)       : time at each step
 ! gamma(maxstep)      : gamma at each step 
@@ -32,7 +30,7 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings_data
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc
   use mem_allocation
   implicit none
   integer, intent(in) :: indexstart
@@ -202,13 +200,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--convert to physical units
 !
         dat(1:nprint,10,j) = dat(1:nprint,10,j)*real(umassi/udisti**3)
-        iam(1:nprint,j) = iphase(1:nprint)
         if (allocated(dattemp)) deallocate(dattemp)
         if (allocated(dummy)) deallocate(dummy)
         if (allocated(isteps)) deallocate(isteps)
         if (allocated(iphase)) deallocate(iphase)
 
-        ntot(j) = nprint
         npartoftype(1,j) = nprint-nghosti
         npartoftype(2,j) = nghosti
 
@@ -227,7 +223,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   close(15)
   if (j-1 .gt. 0) then
-     print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1),'nghost=',npartoftype(2,j-1)
+     print*,'>> end of dump file: nsteps =',j-1,'ntot = ', &
+           sum(npartoftype(:,j-1)),'nghost=',npartoftype(2,j-1)
   endif
      !
      !--if just the rootname has been input, 

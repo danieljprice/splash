@@ -3,15 +3,15 @@
 !!
 subroutine calc_quantities(ifromstep,itostep)
   use labels
-  use particle_data
-  use settings_data
+  use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,numplot,icoords
   use mem_allocation
   implicit none
   integer, intent(in) :: ifromstep, itostep
   integer :: i,j,nstartfromcolumn
   integer :: ientrop,idhdrho
   integer :: ipmag,ibeta,itotpr,idivBerr,icurr,icrosshel
-  integer :: irad2,ivpar,ivperp,iBpar,iBperp
+  integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
   real :: Bmag, Jmag
   real, parameter :: pi = 3.1415926536
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
@@ -105,33 +105,34 @@ subroutine calc_quantities(ifromstep,itostep)
   if (numplot.gt.maxcol) call alloc(maxpart,maxstep,numplot) 
 
   do i=ifromstep,itostep
+     ntoti = SUM(npartoftype(:,i))
      !!--pressure if not in data array
      if ((ipr.gt.ncolumns).and.(irho.ne.0).and.(iutherm.ne.0)) then
-        dat(1:ntot(i),ipr,i) = dat(1:ntot(i),irho,i)*dat(1:ntot(i),iutherm,i)*(gamma(i)-1.)
+        dat(1:ntoti,ipr,i) = dat(1:ntoti,irho,i)*dat(1:ntoti,iutherm,i)*(gamma(i)-1.)
      endif
      !!--entropy
      if (ientrop.ne.0 .and. ipr.ne.0) then
-        where (dat(1:ntot(i),irho,i).gt.1.e-10) 
-           dat(1:ntot(i),ientrop,i) = dat(1:ntot(i),ipr,i)/dat(1:ntot(i),irho,i)**gamma(i)
+        where (dat(1:ntoti,irho,i).gt.1.e-10) 
+           dat(1:ntoti,ientrop,i) = dat(1:ntoti,ipr,i)/dat(1:ntoti,irho,i)**gamma(i)
         elsewhere
-           dat(1:ntot(i),ientrop,i) = 0.
+           dat(1:ntoti,ientrop,i) = 0.
         endwhere
      endif
      !!--dh/drho
      if (idhdrho.ne.0) then
-        where (dat(1:ntot(i),irho,i).gt.1.e-10) 
-           dat(1:ntot(i),idhdrho,i) = &
-              -dat(1:ntot(i),ih,i)/(ndim*(dat(1:ntot(i),irho,i)))
+        where (dat(1:ntoti,irho,i).gt.1.e-10) 
+           dat(1:ntoti,idhdrho,i) = &
+              -dat(1:ntoti,ih,i)/(ndim*(dat(1:ntoti,irho,i)))
         elsewhere
-           dat(1:ntot(i),idhdrho,i) = 0.
+           dat(1:ntoti,idhdrho,i) = 0.
         endwhere
      endif
      !!--radius         
      if (irad.ne.0) then
         if (icoords.gt.1) then  
-           dat(1:ntot(i),irad,i) = dat(1:ntot(i),ix(1),i)
+           dat(1:ntoti,irad,i) = dat(1:ntoti,ix(1),i)
         else
-           do j=1,ntot(i)
+           do j=1,ntoti
               dat(j,irad,i) = sqrt(dot_product(dat(j,ix(1:ndim),i),   &
                 dat(j,ix(1:ndim),i)))
            enddo        
@@ -139,7 +140,7 @@ subroutine calc_quantities(ifromstep,itostep)
      endif
      !!--specific KE
      if ((ike.ne.0).and.(ivx.ne.0)) then
-        do j=1,ntot(i)
+        do j=1,ntoti
            dat(j,ike,i) = 0.5*dot_product(dat(j,ivx:ivx+ndimV-1,i), &
                                           dat(j,ivx:ivx+ndimV-1,i))
         enddo
@@ -151,20 +152,20 @@ subroutine calc_quantities(ifromstep,itostep)
         anglexy = angledeg*pi/180.
         runit(1) = cos(anglexy)
         if (ndim.ge.2) runit(2) = sin(anglexy)
-        do j=1,ntot(i)
+        do j=1,ntoti
            dat(j,irad2,i) = dot_product(dat(j,ix(1:ndim),i),runit(1:ndim))
         enddo
         if (ivpar.ne.0) then
-           dat(1:ntot(i),ivpar,i) = dat(1:ntot(i),ivx+1,i)*SIN(anglexy) + dat(1:ntot(i),ivx,i)*COS(anglexy)
+           dat(1:ntoti,ivpar,i) = dat(1:ntoti,ivx+1,i)*SIN(anglexy) + dat(1:ntoti,ivx,i)*COS(anglexy)
         endif
         if (ivperp.ne.0) then
-           dat(1:ntot(i),ivperp,i) = dat(1:ntot(i),ivx+1,i)*COS(anglexy) - dat(1:ntot(i),ivx,i)*SIN(anglexy)           
+           dat(1:ntoti,ivperp,i) = dat(1:ntoti,ivx+1,i)*COS(anglexy) - dat(1:ntoti,ivx,i)*SIN(anglexy)           
         endif
         if (iBpar.ne.0) then
-           dat(1:ntot(i),iBpar,i) = dat(1:ntot(i),iBfirst+1,i)*SIN(anglexy) + dat(1:ntot(i),iBfirst,i)*COS(anglexy)
+           dat(1:ntoti,iBpar,i) = dat(1:ntoti,iBfirst+1,i)*SIN(anglexy) + dat(1:ntoti,iBfirst,i)*COS(anglexy)
         endif
         if (iBperp.ne.0) then
-           dat(1:ntot(i),iBperp,i) = dat(1:ntot(i),iBfirst+1,i)*COS(anglexy) - dat(1:ntot(i),iBfirst,i)*SIN(anglexy)
+           dat(1:ntoti,iBperp,i) = dat(1:ntoti,iBfirst+1,i)*COS(anglexy) - dat(1:ntoti,iBfirst,i)*SIN(anglexy)
         endif
      endif
      !
@@ -173,27 +174,27 @@ subroutine calc_quantities(ifromstep,itostep)
      if (iBfirst.ne.0) then
         !!--magnetic pressure
         if (ipmag.ne.0) then
-           do j=1,ntot(i)
+           do j=1,ntoti
               dat(j,ipmag,i) = 0.5*dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i), &
                                                dat(j,iBfirst:iBfirst+ndimV-1,i))
            enddo
            !!--plasma beta
            if (ibeta.ne.0 .and. ipr.ne.0) then
-              where(abs(dat(1:ntot(i),ipmag,i)).gt.1.e-10)
-                 dat(1:ntot(i),ibeta,i) = dat(1:ntot(i),ipr,i)/dat(1:ntot(i),ipmag,i)
+              where(abs(dat(1:ntoti,ipmag,i)).gt.1.e-10)
+                 dat(1:ntoti,ibeta,i) = dat(1:ntoti,ipr,i)/dat(1:ntoti,ipmag,i)
               elsewhere  
-                 dat(1:ntot(i),ibeta,i) = 0.
+                 dat(1:ntoti,ibeta,i) = 0.
               endwhere
            endif
         endif
            
         !!--total pressure (gas + magnetic)     
         if ((itotpr.ne.0).and.(ipr.ne.0).and.(ipmag.ne.0)) then
-           dat(1:ntot(i),itotpr,i) = dat(1:ntot(i),ipr,i) + dat(1:ntot(i),ipmag,i)
+           dat(1:ntoti,itotpr,i) = dat(1:ntoti,ipr,i) + dat(1:ntoti,ipmag,i)
         endif
         !!--div B error        (h*divB / abs(B))
         if ((idivBerr.ne.0).and.(idivB.ne.0).and.(ih.ne.0)) then
-           do j=1,ntot(i)
+           do j=1,ntoti
               Bmag = sqrt(dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i), &
                                       dat(j,iBfirst:iBfirst+ndimV-1,i)))
               if (Bmag.gt.0.) then
@@ -204,7 +205,7 @@ subroutine calc_quantities(ifromstep,itostep)
            enddo
         endif
         if ((icurr.ne.0).and.(iJfirst.ne.0).and.irho.ne.0) then
-           do j=1,ntot(i)
+           do j=1,ntoti
               Jmag = sqrt(dot_product(dat(j,iJfirst:iJfirst+ndimV-1,i), &
                    dat(j,iJfirst:iJfirst+ndimV-1,i)))
               if (dat(j,irho,i).ne.0) then
@@ -213,7 +214,7 @@ subroutine calc_quantities(ifromstep,itostep)
            enddo
         endif
         if ((icrosshel.ne.0).and.(iBfirst.ne.0).and.ivx.ne.0) then
-           do j=1,ntot(i)
+           do j=1,ntoti
               dat(j,icrosshel,i) = dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i),  &
                    dat(j,ivx:ivx+ndimV-1,i))
            enddo

@@ -18,9 +18,6 @@
 ! maxplot,maxpart,maxstep      : dimensions of main data array
 ! dat(maxplot,maxpart,maxstep) : main data array
 !
-! npartoftype(1:6,maxstep)     : number of particles of each type in each timestep
-! iam(maxpart,maxstep): particle ID (NB: as yet I don't do anything with this)
-!
 ! time(maxstep)       : time at each step
 ! gamma(maxstep)      : gamma at each step 
 !
@@ -31,7 +28,7 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings_data
+  use settings_data, only:ndim,ndimV,ncolumns
   use mem_allocation
   implicit none
   integer, intent(IN) :: indexstart
@@ -174,13 +171,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
         print "(a)",' converting to single precision... '
         dat(1:nprint,1:ncolumns,j) = real(dattemp(1:nprint,1:ncolumns))
 
-        iam(1:nprint,j) = iphase(1:nprint)
         deallocate(dattemp)
         deallocate(dummy)
         deallocate(isteps)
         deallocate(iphase)
 
-        ntot(j) = nprint
         npartoftype(1,j) = nprint
         npartoftype(2:maxparttypes,j) = 0
 
@@ -196,7 +191,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   close(15)
 
-  print*,'>> end of dump file: nsteps =',j-1,'ntot = ',ntot(j-1)
+  print*,'>> end of dump file: nsteps =',j-1,'ntot = ',sum(npartoftype(:,j-1))
 
      !
      !--if just the rootname has been input, 

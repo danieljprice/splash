@@ -17,7 +17,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   use particle_data
   implicit none
   integer, intent(in) :: ifromstep,itostep,ifromcol,itocol
-  integer :: i,j,k
+  integer :: i,j,k,ntoti
 
   print 100,ifromstep,itostep,ifromcol,itocol
 100 format(' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
@@ -25,8 +25,9 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   lim(:,1) = 1.e6
   lim(:,2) = -1.e6
   do i=ifromstep,itostep
+     ntoti = sum(npartoftype(:,i))
      do j=ifromcol,itocol
-        do k=1,ntot(i)
+        do k=1,ntoti
            lim(j,1) = min(lim(j,1),dat(k,j,i))
            lim(j,2) = max(lim(j,2),dat(k,j,i))
         enddo

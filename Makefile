@@ -8,17 +8,15 @@
 .KEEP_STATE:
 
 ## Compiler options
-F90C =  f95
+F90C =  g95
 F90FLAGS =  -O -C ##-fbounds-check
-LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
-         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
-         -lpng
+#LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
+#         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
+#         -lpng
 
-#LDFLAGS =  -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation -L/sw/lib/pgplot95 -lpgplot
-#           -lcc_dynamic -Wl,-framework -Wl,Foundation \
-#           -L/sw/lib/pgplot -lpgplot -lg2c
+LDFLAGS =  -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation -L/sw/lib/pgplot95 -lpgplot
 #LDFLAGS = -laquaterm -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -L/sw/lib/pgplot -lpgplot -lg2c
-SYSTEMFILE = system_unix_NAG.f90
+SYSTEMFILE = system_unix.f90
 
 # Fortran flags same as F90
 FC = $(F90C)

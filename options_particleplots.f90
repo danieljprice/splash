@@ -2,11 +2,11 @@
 !! sub-menu with utilities relating to particle plots
 !!
 subroutine options_particleplots
-  use exact
+  use exact, only:submenu_exact
   use labels
   use settings_data, only:icoords,ntypes
   use settings_part
-  use particle_data
+  use particle_data, only:npartoftype
   use prompting
   use geometry, only:maxcoordsys,labelcoordsys
   implicit none
@@ -55,7 +55,7 @@ subroutine options_particleplots
      if (ncircpart.gt.0) then
         do n=1,ncircpart
            call prompt('Enter particle number to plot circle around', &
-                    icircpart(n),1,maxval(ntot))
+                    icircpart(n),1,maxval(npartoftype(1,:)))
         enddo
      endif
      return           
