@@ -20,10 +20,10 @@
       
 !     set up grid for rendering      
 
-      trans(1) = xmin-0.5*dx		! this is for the PGIMAG call
+      trans(1) = xmin - 0.5*dx		! this is for the PGIMAG call
       trans(2) = dx			! see help for PGIMAG/PGGRAY/PGCONT
       trans(3) = 0.0
-      trans(4) = xmin-0.5*dx
+      trans(4) = ymin - 0.5*dx
       trans(5) = 0.0
       trans(6) = dx
 
@@ -31,7 +31,7 @@
       clog = ' '
       IF (log) clog = 'L'
      
-      PRINT*,'rendering...',npixx,npixy,nc,SIZE(datpix)
+      PRINT*,'rendering...',npixx,'x',npixy,',array size=',SIZE(datpix)
 !
 !--set contour levels
 !      
@@ -60,9 +60,11 @@
 !
 !--plot contours
 !
-      IF (iplotcont)
-     &	 CALL PGCONT(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
-     
+      IF (iplotcont) THEN
+         PRINT*,'plotting ',nc,' contours...'
+     	 CALL PGCONT(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
+      ENDIF
+      
       RETURN
            
       END
