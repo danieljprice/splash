@@ -88,12 +88,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
   if (ntotin.lt.5500) then
      nstep_max = max(111,maxstep)
-     elseif (ntotin.lt.111111) then
+  elseif (ntotin.lt.111111) then
      nstep_max = max(11,maxstep)
   else 
      nstep_max = max(5,maxstep)
   endif
-  npart_max = max(ntotin,maxpart)
+  npart_max = max(int(1.5*ntotin),maxpart)
   if (.not.allocated(dat) .or. ntotin.gt.maxpart  &
        .or. nstep_max.gt.maxstep .or. ncol_max.gt.maxcol) then
      call alloc(npart_max,nstep_max,ncol_max+ncalc)
@@ -169,7 +169,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (ntot(i).gt.maxpart) then
         !print*, 'ntot greater than array limits!!'    
         reallocate = .true.
-        npart_max = int(1.1*ntot(i))
+        npart_max = int(1.5*ntot(i))
      endif
      if (i.eq.maxstep) then
         nstep_max = i + max(10,INT(0.1*nstep_max))
