@@ -22,6 +22,7 @@
       nstart = 1	! timestep to start from
       n_end = maxstep	! timestep to finish on
       nfreq = 1		! frequency of timesteps to read
+      icoords = 0	! co-ordinate system of simulation
       
       axes = .true.	! turns axes off/on
       animate = .true.	! turns off/on prompt between page changes

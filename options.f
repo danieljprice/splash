@@ -11,7 +11,7 @@
       USE prompting
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: ipicky
-      INTEGER :: i,j,iaction,ipick
+      INTEGER :: i,j,n,iaction,ipick
       REAL :: diff, mid, temp
       REAL :: papersizey
       CHARACTER(LEN=30) :: filename
@@ -145,10 +145,15 @@
 	  plotcirc=.not.plotcirc
           PRINT*,' Plot circles of interaction = ',plotcirc
 	  IF (plotcirc) THEN	     
-	     CALL prompt('Plot all circles?',plotcircall)
+	     CALL prompt('Plot all circles?',plotcircall)	     
 	     IF (.NOT.plotcircall) THEN
-	        CALL prompt('Enter particle number to plot circle around',
-     &		            icircpart,1,MAXVAL(ntot))
+	        CALL prompt('Enter number of circles to draw',ncircpart,
+     &		            1,SIZE(icircpart))
+     		DO n=1,ncircpart
+	           CALL prompt( 
+     &		     'Enter particle number to plot circle around',
+     &		     icircpart(n),1,MAXVAL(ntot))
+     	        ENDDO
 	     ENDIF
 	  ENDIF
 	  RETURN 	  

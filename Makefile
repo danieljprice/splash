@@ -27,7 +27,7 @@ PGXTAL = read_data_dansph.f
 SOURCES= modules.f90 prompting.f90 \
 	 supersphplot.f90 main.f90 \
          calc_quantities.f90 \
-	 colour_demo.f colour_set.f90  \
+	 colour_demo.f colour_set.f90 ../src/coord_transform.f90 \
 	 danpgwedg.f \
 	 defaults_read.f90 defaults_set.f defaults_write.f90 \
 	 exact_rhoh.f90 \
@@ -42,7 +42,8 @@ SOURCES= modules.f90 prompting.f90 \
 	 legend.f \
 	 options.f options_exact.f90 \
 	 options_powerspec.f90 options_render.f90 \
-	 plot_average.f plot_powerspectrum.f90 \
+	 plot_average.f plot_kernel_gr.f90 \
+	 plot_powerspectrum.f90 \
 	 powerspectrum_fourier1D.f90 \
 	 powerspectrum_lomb1D.f90 \
 	 print_header.f90\

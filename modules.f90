@@ -8,8 +8,8 @@
 !
 module params
  implicit none
- integer, parameter :: max=5000
- integer, parameter :: maxstep=100
+ integer, parameter :: max=32000
+ integer, parameter :: maxstep=20
  integer, parameter :: ndimmax = 3
  integer, parameter :: maxplot=24+2*ndimmax + 1	! maximum number of plots 
 end module params
@@ -61,10 +61,13 @@ module settings
  integer :: ndataplots
  integer :: ndim, ndimv 
  integer :: imark, imarkg, imarksink
- integer :: ixsec,nxsec, nbins,nc,icircpart
+ integer :: ixsec,nxsec, nbins,nc
  integer :: linestylein, iexact
  integer :: irenderplot
  integer :: ncolours,nstart,n_end,nfreq
+ integer :: icoords
+ integer :: ncircpart
+ integer, dimension(10) :: icircpart
  
  integer :: ncontours_nomulti,npix_nomulti,npixvec_nomulti
  integer :: ivecplot_nomulti,irender,icolours
@@ -103,7 +106,8 @@ module settings
    iplotcont_nomulti,ncontours_nomulti,			&
    icolours,iplotghost,iplotsink,			&
    ipapersize,papersizex,aspectratio,			&
-   ipowerspecy,idisordered
+   ipowerspecy,idisordered,icoords, 			&
+   ncircpart,icircpart
      
 end module settings
 !

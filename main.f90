@@ -13,7 +13,7 @@ subroutine main(ipicky,ipickx)
   implicit none
   integer, intent(in) :: ipicky, ipickx
 
-  integer :: nstep,i,j,k,ipix
+  integer :: nstep,i,j,k,n,ipix
   integer :: iplotx,iploty
   integer :: ilist,ihoc,ibin,listsize
   integer :: ntotmin
@@ -125,16 +125,17 @@ subroutine main(ipicky,ipickx)
      !!--set title of plot
      
      if ((.not.imulti).and.(nacross*ndown.eq.1)) then
-        if (x_sec) then
-           titlex = 'cross-section'
-        else
-           titlex = 'projection'   
-        endif
-        titlex = trim(label(ipickx))//trim(label(ipicky))//' '//titlex	          
-        
-        if (irender.gt.ndim) then
-           titlex = trim(titlex)//' - '//trim(label(irender))//' rendering'
-        endif
+!        if (x_sec) then
+!           titlex = 'cross-section'
+!        else
+!           titlex = 'projection'   
+!        endif	
+!        titlex = trim(label(ipickx))//trim(label(ipicky))//' '//titlex	          
+!        
+!        if (irender.gt.ndim) then
+!           titlex = trim(titlex)//' - '//trim(label(irender))//' rendering'
+!        endif
+	titlex = ' '
         if (ivecplot.eq.1) titlex = ' velocity map: '//titlex
         if (ivecplot.eq.2) titlex = ' magnetic field map: '//titlex
      else
@@ -678,9 +679,19 @@ subroutine main(ipicky,ipickx)
                              call pgcirc(xplot(j),yplot(j),2.*dat(ih,j,i))
                           enddo
                        else 
-                          print*,'plotting circle of interaction',icircpart
-                          call pgcirc(xplot(icircpart),yplot(icircpart),2*dat(ih,icircpart,i))
-                       endif
+		          icoords = 2
+                          print*,'plotting circles of interaction',ncircpart
+			  do n = 1,ncircpart			   
+                           if (icoords.gt.1) then
+			      print*,'coordinate system = ',icoords			     
+			       call plot_kernel_gr(icoords,xplot(icircpart(n)),  &
+			      		 yplot(icircpart(n)),2*dat(ih,icircpart(n),i))
+			   else
+			      call pgcirc(xplot(icircpart(n)),  &
+			           yplot(icircpart(n)),2*dat(ih,icircpart(n),i))
+                           endif
+			  enddo
+		       endif
                     endif
                     if (ilabelpart) then
                        !!--plot particle labels
@@ -878,16 +889,18 @@ subroutine main(ipicky,ipickx)
                          yplot(1:npart(i)),2.*dat(ih,1:npart(i),i),1.0)
                  endif
               else 
-                 !!--only on a specified particle
-                 if (iplotx.le.ndim) then
-                    print*,'plotting error bar x axis',npart(i) 
-                    call pgerrb(5,1,xplot(icircpart),yplot(icircpart), &
-                         2.*dat(ih,icircpart,i),1.0)
-                 elseif (iploty.le.ndim) then
-                    print*,'plotting error bar y axis',icircpart
-                    call pgerrb(6,1,xplot(icircpart),yplot(icircpart), &
-                         2.*dat(ih,icircpart,i),1.0)		      
-                 endif
+                 !!--only on specified particles
+		 do n=1,ncircpart
+                  if (iplotx.le.ndim) then
+                     print*,'plotting error bar x axis',icircpart(n)
+                     call pgerrb(5,1,xplot(icircpart(n)),yplot(icircpart(n)), &
+                          2.*dat(ih,icircpart(n),i),1.0)
+                  elseif (iploty.le.ndim) then
+                     print*,'plotting error bar y axis',icircpart(n)
+                     call pgerrb(6,1,xplot(icircpart(n)),yplot(icircpart(n)), &
+                          2.*dat(ih,icircpart(n),i),1.0)		      
+                  endif
+		 enddo
               endif
            endif
            
