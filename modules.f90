@@ -78,7 +78,7 @@ module settings
  integer :: ivecplot_nomulti,icolours
  integer :: ipapersize
  
- real :: scalemax,zoom
+ real :: scalemax,zoom,hposlegend,vposlegend
  real, dimension(3) :: xminoffset_track, xmaxoffset_track
  real :: xsecpos_nomulti
  real :: papersizex,aspectratio
@@ -114,7 +114,7 @@ module settings
    icolours,iplotghost,iplotsink,                       &
    ipapersize,papersizex,aspectratio,                   &
    ipowerspecy,idisordered,wavelengthmax,nfreqspec,icoordsnew, &
-   ncircpart,icircpart
+   ncircpart,icircpart,hposlegend,vposlegend
      
 end module settings
 !

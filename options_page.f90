@@ -11,15 +11,17 @@ subroutine options_page
  
  iaction = 0
  papersizey = papersizex*aspectratio
- print 10,ipagechange,iaxis,papersizex,papersizey,nacross,ndown,tile,animate
+ print 10,ipagechange,iaxis,papersizex,papersizey,nacross,ndown,tile, &
+          hposlegend,vposlegend,animate
 10 format(' 0) exit ',/, 		&
         ' 1) toggle page change     (',L1,')',/, &
         ' 2) toggle axes            (',i2,')',/, &
         ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
         ' 4) change plots per page  (',i2,1x,i2,')',/, &
 	' 5) toggle plot tiling     (',L1,')',/, & 
-	' 6) toggle animate         (',L1,')')	
- call prompt('enter option ',iaction,0,6)
+	' 6) adjust legend position (',f5.2,1x,f4.1,')',/, &
+	' 7) toggle animate         (',L1,')')	
+ call prompt('enter option ',iaction,0,7)
 
  select case(iaction)
 !------------------------------------------------------------------------
@@ -99,6 +101,12 @@ subroutine options_page
      print*,'tile plots = ',tile
 !------------------------------------------------------------------------
   case(6)
+     call prompt('Enter horizontal position as fraction of viewport', &
+          hposlegend,0.0,1.0)
+     call prompt('Enter vertical position in character heights from top',vposlegend)
+     return
+!------------------------------------------------------------------------
+  case(7)
      animate = .not.animate
      print*,'animate = ',animate
  	  

@@ -1,8 +1,12 @@
-!---------------------------------------------------
+!-----------------------------------------------------------------
 !     plots time on plot
-!---------------------------------------------------
+!     arguments:
+!           t : current time
+!        hpos : horizontal position as fraction of viewport
+!        vpos : vertical position in character heights from top
+!-----------------------------------------------------------------
 
-      SUBROUTINE legend(t)
+      SUBROUTINE legend(t,hpos,vpos)
       IMPLICIT NONE    
       INTEGER MM,PP,NC,ndecimal,ndec
       REAL hpos,vpos,t,tplot
@@ -12,12 +16,7 @@
       !!CALL PGQVP(0,x1,x2,y1,y2)
       CALL PGQCS(0,xch,ych) ! get character height in normalised device coords
       
-      
-      !hpos=0.5	! either 0.1 or 0.75 for 1D shocks
-      hpos= 0.75
 !      vspace=1.2
-      !vpos=0.5	    
-      vpos=-2.0  ! in units of the character height
       ndecimal = 2	! number of decimal places to display
       ndec = 10**ndecimal
       IF (t.eq.0.0) THEN
@@ -28,7 +27,7 @@
       MM=nint(tplot*ndec)
       PP=nint(log10(tplot)-log10(tplot*ndec))
       CALL PGNUMB(MM,PP,1,STRING,NC)
-      CALL PGMTEXT('T',vpos,hpos,0.0,'t='//STRING(1:NC))
+      CALL PGMTEXT('T',-vpos,hpos,0.0,'t='//STRING(1:NC))
    !!   CALL PGMTEXT('T',vpos,hpos,0.5,
    !!  &             STRING(1:NC)//' Rotational periods')
 

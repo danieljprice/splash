@@ -73,6 +73,8 @@ subroutine defaults_set
   ncolours=10		! number of colours in colour table
   itrans(:) = 0		! no transformations (log10 etc)
   backgnd_vec_nomulti = .false. ! plot vector plot using black/white
+  hposlegend = 0.75
+  vposlegend = 2.0
 
   irenderplot = 0		! this is just so it is set to something
 !

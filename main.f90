@@ -793,7 +793,9 @@ subroutine main(ipicky,ipickx,irender)
               !
               !--print legend if this is the first plot on the page
               !    
-              if (nyplot.eq.1 .and. i.le.nacross) call legend(time(i))    
+              if (nyplot.eq.1 .and. i.le.nacross) then
+	         call legend(time(i),hposlegend,vposlegend)
+	      endif
 
               !
               !--%%%%%%%%%%%%% end loop over cross-section slices %%%%%%%%%%%%%%%%%%%%%%%
@@ -842,7 +844,7 @@ subroutine main(ipicky,ipickx,irender)
               call pgsls(linestylein)
            else
               !--plot time on plot
-              if (nyplot.eq.1) call legend(time(i))
+              if (nyplot.eq.1) call legend(time(i),hposlegend,vposlegend)
               !--plot particles
               call pgsls(1)
               call pgsch(1.0)! reset character height before plotting particles
@@ -1003,7 +1005,7 @@ subroutine main(ipicky,ipickx,irender)
            !
            !--if this is the first plot on the page, print legend
            !
-           if (nyplot.eq.1) call legend(time(i))
+           if (nyplot.eq.1) call legend(time(i),hposlegend,vposlegend)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
            ! if plot not in correct range
