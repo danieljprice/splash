@@ -17,6 +17,7 @@
 !-----------------------------------------------------------------
 module geometry
  implicit none
+ real, parameter, private :: pi = 3.1415926536
  
 contains
 !-----------------------------------------------------------------
@@ -37,7 +38,6 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
   integer, intent(in) :: ndimin,ndimout,itypein,itypeout
   real, intent(in), dimension(ndimin) :: xin
   real, intent(out), dimension(ndimout) :: xout
-  real, parameter :: pi = 3.1415926536
 !
 !--check for errors in input
 !
@@ -306,5 +306,96 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
 
   return
 end subroutine vector_transform
+
+!------------------------------------------------------------------
+! this subroutine attempts to switch plot limits / boundaries 
+! between various co-ordinate systems.
+!------------------------------------------------------------------
+subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
+ implicit none
+ integer, intent(in) :: itypein,itypeout,ndim
+ real, dimension(ndim), intent(inout) :: xmin,xmax
+ real, dimension(ndim) :: xmaxtemp,xmintemp
+!
+!--check for errors in input
+!
+ if (ndim.lt.1 .or. ndim.gt.3) then
+    print*,'Error: limits coord transform: ndim invalid on input'
+    return
+ endif 
+!
+!--by default do nothing
+!
+ xmintemp(1:ndim) = xmin(1:ndim)
+ xmaxtemp(1:ndim) = xmax(1:ndim)
+
+ select case(itypein)
+!
+!--input is spherical
+!
+ case(3)
+    select case(itypeout)
+    case default
+    !
+    !--cartesian output
+    !
+    xmintemp(1:ndim) = -xmax(1)
+    xmaxtemp(1:ndim) = xmax(1)
+
+    end select
+!
+!--input is cylindrical
+!
+ case(2)
+    select case(itypeout)
+    case default
+    !
+    !--cartesian output
+    !
+    xmintemp(1:max(ndim,2)) = -xmax(1)
+    xmaxtemp(1:max(ndim,2)) = xmax(1)
+        
+    end select
+!
+!--input is cartesian
+!
+ case default
+    select case(itypeout)
+    !
+    !--output is spherical
+    !
+    case(3)
+       !--rmin, rmax
+       xmintemp(1) = 0.
+       xmaxtemp(1) = max(maxval(abs(xmin(1:ndim))), &
+                         maxval(abs(xmax(1:ndim))))
+       if (ndim.ge.2) then
+          xmintemp(2) = -pi
+          xmaxtemp(2) = pi
+          if (ndim.ge.3) then
+             xmintemp(3) = -0.5*pi
+             xmaxtemp(3) = 0.5*pi
+          endif
+       endif
+    !
+    !--output is cylindrical
+    !
+    case(2)
+       !--rmin, rmax
+       xmintemp(1) = 0.
+       xmaxtemp(1) = max(maxval(abs(xmin(1:max(2,ndim)))), &
+                         maxval(abs(xmax(1:max(2,ndim)))))
+       if (ndim.ge.2) then
+          xmintemp(2) = -pi
+          xmaxtemp(2) = pi
+       endif
+    end select
+ end select
+
+ xmin(:) = min(xmintemp(:),xmaxtemp(:))
+ xmax(:) = max(xmintemp(:),xmaxtemp(:))
+ 
+ return
+end subroutine coord_transform_limits
 
 end module geometry

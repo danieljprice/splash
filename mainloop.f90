@@ -269,7 +269,7 @@ subroutine plotstep
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(:,:), allocatable :: datpix,vecpixx,vecpixy
   real, dimension(:,:,:), allocatable :: datpix3D
-  real, dimension(ndim) :: xcoords,vecnew
+  real, dimension(ndim) :: xcoords,vecnew,xmintemp,xmaxtemp
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
   real :: angleradx, anglerady, angleradz
   real :: xsecmin,xsecmax
@@ -340,6 +340,16 @@ subroutine plotstep
                  if (iplotx.le.ndim) xplot(j) = xcoords(iplotx)
                  if (iploty.le.ndim) yplot(j) = xcoords(iploty)
               enddo
+              if (iadvance.ne.0) then
+                 xmintemp = lim(ix(1:ndim),1)
+                 xmaxtemp = lim(ix(1:ndim),2)
+                 call coord_transform_limits(xmintemp,xmaxtemp, &
+                                             icoords,icoordsnew,ndim)
+                 xmin = xmintemp(iplotx)
+                 xmax = xmaxtemp(iplotx)
+                 ymin = xmintemp(iploty)
+                 ymax = xmaxtemp(iploty)
+              endif
            endif
            if (iamvec(iplotx).gt.0) then
               print*,'changing vec component to new coord system',icoords,icoordsnew
