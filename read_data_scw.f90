@@ -53,13 +53,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(maxptmass) :: listpm
   
   logical :: magfield  
-  real(kind=8), dimension(:,:), allocatable :: dattemp
-  real(kind=8), dimension(:), allocatable :: dummy
-  real(kind=8) :: udisti,umassi,utimei, umagfdi, timei, gammai
-  real(kind=8) :: escap,tkin,tgrav,tterm,trad
-  real(kind=8) :: dtmax
+  real(doub_prec), dimension(:,:), allocatable :: dattemp
+  real(doub_prec), dimension(:), allocatable :: dummy
+  real(doub_prec) :: udisti,umassi,utimei, umagfdi, timei, gammai
+  real(doub_prec) :: escap,tkin,tgrav,tterm,trad
+  real(doub_prec) :: dtmax
 
   nstepsread = 0
+  ierr = 0
   !
   !--for rootnames without the '00', read all files starting at #1
   !
@@ -109,12 +110,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      !--open the (unformatted) binary file and read the number of particles
      !
-     open(unit=15,file=dumpfile,status='old',form='unformatted')
+     open(unit=15,file=dumpfile,form='unformatted')
      !
      !--read the number of particles in the first step,
      !  allocate memory and rewind
      !
-     read(15,end=55) udisti,umassi,utimei,nprint 
+     read(15,end=55) udisti    !!!,umassi,utimei
+     if (ierr /= 0) then
+        print "(a)",'*** ERROR reading timestep header ***'
+        close(15)
+        return
+     endif 
      if (.not.allocated(dat) .or. nprint.gt.ntotin) then
         ntotin = max(ntotin,INT(1.1*nprint))
         call alloc(ntotin,nstep_max,ncol_max)
