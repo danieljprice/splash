@@ -27,23 +27,24 @@ contains
 !   iadvance : integer telling the loop how to advance the timestep
 !   isave    : integer telling the loop to save the settings
 !
-subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
-  icolourpart,xmin,xmax,ymin,ymax,rendermin,rendermax, &
+subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, &
+  zcoords,hi,icolourpart,xmin,xmax,ymin,ymax,zmin,zmax,rendermin,rendermax, &
   anglex,angley,anglez,ndim,iadvance,isave)
   implicit none
-  integer, intent(in) :: npart,irender,ndim
+  integer, intent(in) :: npart,irender,ndim,iplotz
   integer, intent(inout) :: iplotx,iploty
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
-  real, dimension(npart), intent(in) :: xcoords, ycoords, hi
-  real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax
+  real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
+  real, intent(inout) :: xmin,xmax,ymin,ymax,zmin,zmax,rendermin,rendermax
   real, intent(inout) :: anglex,angley,anglez
   logical, intent(out) :: isave
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,nc,ierr,ixsec
   integer :: nmarked,ncircpart
   integer, dimension(npart) :: icircpart
-  real :: xpt,ypt,xpt2,ypt2,xptmin,xptmax,yptmin,yptmax
+  real :: xpt,ypt,xpt2,ypt2
+  real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
   real :: rmin,rr,gradient,yint,dx,dy
   real :: xlength, ylength, drender
   real, dimension(4) :: xline,yline
@@ -70,6 +71,15 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
   isave = .false.
   rotation = .false.
   if (iplotx.le.ndim .and. iploty.le.ndim .and. ndim.ge.2) rotation = .true.
+  
+  if (iplotz.gt.0) then
+     zptmin = zmin
+     zptmax = zmax
+  else
+  !--if not using z range, make it encompass all the particles
+     zptmin = -huge(zptmin)
+     zptmax = huge(zptmax)
+  endif
   
   do while (.not.iexit)
      call pgcurs(xpt,ypt,char)
@@ -251,7 +261,8 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
                  nmarked = 0
                  do i=1,npart
                     if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
-                    .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax)) then
+                    .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax) &
+                    .and.(zcoords(i).ge.zptmin .and. zcoords(i).le.zptmax)) then
                         read(char2,*,iostat=ierr) icolourpart(i)
                         if (ierr /=0) then
                            print*,'*** error marking particle' 
@@ -269,7 +280,8 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
                  nmarked = 0
                  do i=1,npart
                     if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
-                    .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax)) then
+                    .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax) &
+                    .and.(zcoords(i).ge.zptmin .and. zcoords(i).le.zptmax)) then
                        nmarked = nmarked + 1
                        if (icolourpart(i).le.0) icolourpart(i) = 1
                     else
@@ -285,7 +297,8 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords,hi, &
                  ncircpart = 0
                  do i=1,npart
                     if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
-                    .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax)) then
+                    .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax) &
+                    .and.(zcoords(i).ge.zptmin .and. zcoords(i).le.zptmax)) then
                         ncircpart = ncircpart + 1
                         icircpart(ncircpart) = i
                         call pgsfs(2)

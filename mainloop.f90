@@ -109,9 +109,11 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   if (iploty.le.ndim .and. iplotx.le.ndim) then
      !!--work out coordinate that is not being plotted 
      ixsec = 0
-     do j=1,ndim
-        if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
-     enddo
+     if (x_sec) then
+        do j=1,ndim
+           if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
+        enddo
+     endif
      if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D
 
      !!--if series of cross sections (flythru), set position of first one      
@@ -310,6 +312,8 @@ subroutine plotstep
         xplot = dat(:,iplotx,i)
         yplot = dat(:,iploty,i)
         zplot = 0. !--reset later if x-sec
+        xsecmin = 0. !-- " " 
+        xsecmax = 0.
         labelx = label(iplotx)
         labely = label(iploty)
         if (iadvance.ne.0) then
@@ -398,9 +402,11 @@ subroutine plotstep
         npixx = npix
 
         !!--work out coordinate that is not being plotted         
-        do j=1,ndim
-           if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
-        enddo
+        if (x_sec) then
+           do j=1,ndim
+              if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
+           enddo
+        endif
         if (ixsec.ne.0) then
            zplot(:) = dat(:,ixsec,i)
            labelz = label(ixsec)
@@ -833,9 +839,10 @@ subroutine plotstep
 
            if (interactive .and. (nacross*ndown.eq.1)) then
               iadvance = nfreq
-              call interactive_part(ninterp,iplotx,iploty,irenderplot, &
-                   xplot(1:ninterp),yplot(1:ninterp),dat(1:ninterp,ih,i),icolourme(1:ninterp), &
-                   xmin,xmax,ymin,ymax,rendermin,rendermax, &
+              call interactive_part(ninterp,iplotx,iploty,ixsec,irenderplot, &
+                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                   dat(1:ninterp,ih,i),icolourme(1:ninterp), &
+                   xmin,xmax,ymin,ymax,xsecmin,xsecmax,rendermin,rendermax, &
                    angletempx,angletempy,angletempz,ndim,iadvance,isave)
               !--turn rotation on if necessary
               if (abs(angletempx-anglex).gt.tol) irotate = .true.
@@ -937,10 +944,10 @@ subroutine plotstep
 
         if (interactive .and. (nacross*ndown.eq.1)) then
            iadvance = nfreq
-           call interactive_part(ntot(i),iplotx,iploty,irenderplot, &
-                xplot(1:ntot(i)),yplot(1:ntot(i)),dat(1:ntot(i),ih,i), &
-                icolourme(1:ntot(i)), &
-                xmin,xmax,ymin,ymax,dummymin,dummymax, &
+           call interactive_part(ntot(i),iplotx,iploty,0,irenderplot, &
+                xplot(1:ntot(i)),yplot(1:ntot(i)),zplot(1:ntot(i)), &
+                dat(1:ntot(i),ih,i),icolourme(1:ntot(i)), &
+                xmin,xmax,ymin,ymax,dummymin,dummymax,dummymin,dummymax, &
                 angletempx,angletempy,angletempz,ndim,iadvance,isave)
            if (iadvance.eq.-666) return
         elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
