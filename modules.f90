@@ -8,7 +8,7 @@
 !
 module params
  implicit none
- integer, parameter :: maxplot=31   ! maximum number of plots 
+ integer, parameter :: maxplot=40   ! maximum number of plots (for multiplot arrays)
 end module params
 !
 !--particle data
