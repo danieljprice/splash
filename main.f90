@@ -533,8 +533,11 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	      !-----------------------
               ! page setup options
 	      !-----------------------
-	      inewpage = ipagechange .or. &
-	                 ((.not.ipagechange).and.(i.eq.nstart).and.(nyplot.eq.1))
+	      
+	      !--change the page if pagechange set
+	      !  or, if turned off, between plots on first page only
+	      inewpage = ipagechange .or. ((i.eq.nstart) &
+	              .and..not.(nyplot.gt.1 .and. nacross*ndown.eq.1))
 	      just = 1
 	      if (ndim.eq.2 .and. x_sec) just = 0
 
@@ -866,8 +869,11 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	   !-----------------------
            ! page setup options
 	   !-----------------------
-	   inewpage = ipagechange .or. &
-	              ((.not.ipagechange).and.(i.eq.nstart).and.(nyplot.eq.1))
+
+	   !--change the page if pagechange set
+	   !  or, if turned off, between plots on first page only
+	   inewpage = ipagechange .or. ((i.eq.nstart) &
+	           .and..not.(nyplot.gt.1 .and. nacross*ndown.eq.1))
 	   just = 0
 
            !--------------------------------------------------------------

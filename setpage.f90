@@ -87,9 +87,9 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,titlex,  &
 
      call pgbox(xopts,0.0,0,yopts,0.0,0)
 
-  elseif (iplot.eq.1) then
-     call pgpanl(1,1)
-  elseif (nx*ny.gt.1) then
+  elseif (iplot.eq.1) then ! if would be changing page, instead go back to
+     call pgpanl(1,1)      !                                   first panel
+  elseif (nx*ny.gt.1) then ! change to next panel, regardless of ipagechange
      call pgpage
   endif
   
