@@ -121,7 +121,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--allocate/reallocate memory if j > maxstep
 !
         if (j.gt.maxstep) then
-           call alloc(maxpart,j+10,maxcol)
+           call alloc(maxpart,j+1,maxcol)
         endif
 !
 !--allocate a temporary array for double precision variables
