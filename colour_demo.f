@@ -4,7 +4,11 @@
       SUBROUTINE colour_demo
       IMPLICIT NONE
       INTEGER i,j,nschemes,nc
-      INTEGER, PARAMETER :: npixy = 10, npixx = 30
+!
+!--npixx should be >= ncolours in setcolours.f
+!      
+      INTEGER, PARAMETER :: npixx = 256
+      INTEGER, PARAMETER :: npixy = npixx/10
       REAL, DIMENSION(npixx,npixy) :: sample
       REAL :: xmin,xmax,ymin,ymax,dx,dy,trans(6)
       CHARACTER(len=10) :: STRING
