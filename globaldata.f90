@@ -145,7 +145,7 @@ end module settings_vecplot
 !
 module settings_xsecrot
  implicit none
- integer :: ixsec,nxsec,irotateaxes
+ integer :: nxsec,irotateaxes
  logical :: xsec_nomulti, irotate, flythru
  real :: anglex, angley, anglez
  real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2

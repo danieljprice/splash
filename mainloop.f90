@@ -13,13 +13,13 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use settings_page
   use settings_render, only:icolours,iplotcont_nomulti
   use settings_vecplot, only:iplotpartvec
-  use settings_xsecrot, only:ixsec,xsec_nomulti,xsecpos_nomulti,flythru,nxsec
+  use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec
   implicit none
   integer, intent(in) :: ipicky, ipickx, irender, ivecplot
 
   integer, parameter :: maxtitles = 50
   integer :: i,j,ierr,ifile
-  integer :: iplotx,iploty,irenderplot,ivectorplot,ivecx,ivecy
+  integer :: iplotx,iploty,iplotz,irenderplot,ivectorplot,ivecx,ivecy
   integer :: nyplots,npartdim      
   integer :: irenderprev, istepprev, iadvance
   integer :: ngrid
@@ -108,34 +108,33 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   
   if (initialise_xsec) then
      !!--work out coordinate that is not being plotted 
-     ixsec = 0
-     if (x_sec) then
+     iplotz = 0
+     if (ndim.ge.3) then
         do j=1,ndim
-           if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
+           if ((j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
         enddo
      endif
-     if (ixsec.eq.0) x_sec = .false.   ! ie can only have x_sec in 3D
-
+     
      !!--if series of cross sections (flythru), set position of first one      
-     if (x_sec.and.flythru) then
-        print 32,label(ixsec)
+     if (x_sec.and.flythru .and. iplotz.gt.0) then
+        print 32,label(iplotz)
 32      format('enter number of ',a1,' cross-section slices')
         read*,nxsec
         !!--dxsec is the distance between slices            
-        dxsec = (lim(ixsec,2)-lim(ixsec,1))/float(nxsec)
-        xsecpos = lim(ixsec,1) - 0.5*dxsec
+        dxsec = (lim(iplotz,2)-lim(iplotz,1))/float(nxsec)
+        xsecpos = lim(iplotz,1) - 0.5*dxsec
         xsecpos_nomulti = xsecpos
 
      !!--if single cross-section, read position of cross-section slice
-     elseif (x_sec.and.iplotpart.and.irender.le.ndim) then
-        call prompt(' enter '//trim(label(ixsec))//' position for cross-section slice:', &
-                     xsecpos_nomulti,lim(ixsec,1),lim(ixsec,2))
+     elseif (x_sec.and.iplotpart.and.irender.le.ndim .and. iplotz.gt.0) then
+        call prompt(' enter '//trim(label(iplotz))//' position for cross-section slice:', &
+                     xsecpos_nomulti,lim(iplotz,1),lim(iplotz,2))
         !!--default thickness is half of the average particle spacing
         npartdim = int(maxval(npartoftype(1,nstart:n_end))**(1./real(ndim)))
         print*,'average # of particles in each dimension = ',npartdim
-        dxsec = (lim(ixsec,2)-lim(ixsec,1))/float(npartdim)
+        dxsec = (lim(iplotz,2)-lim(iplotz,1))/float(npartdim)
         call prompt(' enter thickness of cross section slice:', &
-                     dxsec,0.0,lim(ixsec,2)-lim(ixsec,1))  
+                     dxsec,0.0,lim(iplotz,2)-lim(iplotz,1))  
      endif
   endif
 
@@ -431,14 +430,13 @@ subroutine plotstep
         npixx = npix
 
         !!--work out coordinate that is not being plotted         
-        if (x_sec) then
-           do j=1,ndim
-              if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
-           enddo
-        endif
-        if (ixsec.ne.0) then
-           zplot(:) = dat(:,ixsec,i)
-           labelz = label(ixsec)
+        do j=1,ndim
+           if ((j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
+        enddo
+
+        if (iplotz.ne.0) then
+           zplot(:) = dat(:,iplotz,i)
+           labelz = label(iplotz)
         endif
         !
         !--set number of particles to use in the interpolation routines
@@ -474,8 +472,8 @@ subroutine plotstep
 !               endif
                xplot(j) = xcoords(iplotx) + xorigin(iplotx)
                yplot(j) = xcoords(iploty) + xorigin(iploty)
-               if (ixsec.gt.0) then
-                  zplot(j) = xcoords(ixsec) + xorigin(ixsec)
+               if (iplotz.gt.0) then
+                  zplot(j) = xcoords(iplotz) + xorigin(iplotz)
                endif
             enddo
          endif 
@@ -504,8 +502,8 @@ subroutine plotstep
            print*,'npixx, npixy = ',npixx,npixy
            !!--only need z pixels if working with interpolation to 3D grid
            if ((ndim.ge.3).and.(x_sec.and.nxsec.gt.2)) then
-              zmin = lim(ixsec,1)
-              zmax = lim(ixsec,2)
+              zmin = lim(iplotz,1)
+              zmax = lim(iplotz,2)
               !                   npixz = int((zmax-zmin)/pixwidth) + 1                 
               !!--number of z pixels is equal to number of cross sections
               npixz = nxsec
@@ -592,7 +590,7 @@ subroutine plotstep
               if (x_sec .and. nxsec.gt.2) then
                  ipixxsec = int((xsecpos-zmin)/dxsec) + 1
                  if (ipixxsec.gt.npixz) ipixxsec = npixz
-                 print*,TRIM(label(ixsec)),' = ',xsecpos, &
+                 print*,TRIM(label(iplotz)),' = ',xsecpos, &
                       ' cross section, pixel ',ipixxsec
                  datpix = datpix3D(:,:,ipixxsec)    ! slices are in 3rd dimension
 
@@ -602,7 +600,7 @@ subroutine plotstep
                  !-------------------------------------------------------------------
                  if (x_sec) then
                     !!--do fast cross-section
-                    print*,trim(label(ix(ixsec))),' = ',xsecpos,  &
+                    print*,trim(label(ix(iplotz))),' = ',xsecpos,  &
                          ' : fast cross section', xmin,ymin
                     call interpolate3D_fastxsec( &
                          xplot(1:ninterp),yplot(1:ninterp), &
@@ -672,7 +670,7 @@ subroutine plotstep
 
            print*,trim(labely),'min,max = ',ymin,ymax
            print*,trim(labelx),'min,max = ',xmin,xmax
-           if (x_sec.and.iplotpart) print 35,label(ixsec),xsecmin,label(ixsec),xsecmax
+           if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),xsecmin,label(iplotz),xsecmax
 35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
 
            !--------------------------------------------------------------
@@ -725,8 +723,8 @@ subroutine plotstep
               call transform2(datpix,itrans(irenderplot),npixx,npixy)
               labelrender = label(irenderplot)
               !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
-              if (ndim.eq.3 .and..not. x_sec) then  
-                 labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(ixsec)))
+              if (ndim.eq.3 .and..not. x_sec) then
+                 labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iplotz)))
               endif
               !!--apply transformations to the label for the rendered quantity 
               !!  but don't do this for log as we use a logarithmic axis instead
@@ -870,7 +868,7 @@ subroutine plotstep
            if (interactive) then
               if (nacross*ndown.eq.1) then
                  iadvance = nfreq
-                 call interactive_part(ninterp,iplotx,iploty,ixsec,irenderplot, &
+                 call interactive_part(ninterp,iplotx,iploty,iplotz,irenderplot, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       dat(1:ninterp,ih,i),icolourme(1:ninterp), &
                       xmin,xmax,ymin,ymax,xsecmin,xsecmax,rendermin,rendermax, &
