@@ -90,11 +90,13 @@ module settings_part
  integer, dimension(:), allocatable :: icircpart
  integer :: nc
  integer :: linestylein, iexact
+ integer :: maxexactpts, iExactLineColour, iExactLineStyle
  logical, dimension(maxparttypes) :: iplotpartoftype
  logical :: iplotline,iplotlinein,ilabelpart
 
  namelist /plotopts/ iplotline,iplotlinein,linestylein,  &
-   imarktype,iplotpartoftype,iexact,icoordsnew
+   imarktype,iplotpartoftype,iexact,icoordsnew,maxexactpts, &
+   iExactLineColour,iExactLineStyle
 
 end module settings_part
 !

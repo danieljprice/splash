@@ -23,8 +23,9 @@ subroutine options_particleplots
          ' 4) toggle plot particles by type      ( ',6(L1,',',1x),' )',/,  &
          ' 5) change graph markers for each type ( ',6(i2,',',1x),' )',/,  &
          ' 6) change coordinate systems          ( ',i2,' ) ',/,           &
-         ' 7) toggle exact solution              ( ',i2,' ) ')
-    call prompt('enter option',iaction,0,7)
+         ' 7) plot exact solution                ( ',i2,' ) ',/, &
+         ' 8) exact solution options')
+    call prompt('enter option',iaction,0,8)
 !
   select case(iaction)
 
@@ -89,6 +90,12 @@ subroutine options_particleplots
   case(7)
      call submenu_exact(iexact)
      return
+!------------------------------------------------------------------------
+  case(8)
+     call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
+     call prompt('enter PGPLOT line colour ',iExactLineColour,1,16)
+     call prompt('enter PGPLOT line style  ',iExactLineStyle,1,5)
+     return     
 !------------------------------------------------------------------------
   case default
      return

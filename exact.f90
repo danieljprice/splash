@@ -19,7 +19,7 @@ module exact
   real :: sigma0
   !--sound wave
   integer :: iwaveploty,iwaveplotx ! linear wave
-  real :: ampl,lambda,period
+  real :: ampl,lambda,period,xzero
   !--sedov blast wave
   real :: rhosedov,esedov
   !--polytrope
@@ -27,20 +27,19 @@ module exact
   !--mhd shock solutions
   integer :: ishk
   !--from file
-  integer, parameter :: maxexactpts = 1001
-  integer :: iexactpts, iexactplotx, iexactploty
-  real, dimension(maxexactpts) :: xexact,yexact
+  integer :: iexactplotx, iexactploty
   !--shock tube
   real :: rho_L, rho_R, pr_L, pr_R, v_L, v_R
   !--rho vs h
   real :: hfact
+  character(len=120) :: filename_exact
   !
   !--sort these into a namelist for input/output
   !
-  namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx, &
+  namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,polyk,sigma0,norder,morder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact, &
-       iexactplotx,iexactploty
+       iexactplotx,iexactploty,filename_exact
 
 contains
   !----------------------------------------------------------------------
@@ -54,11 +53,12 @@ contains
     period = 1.0
     iwaveploty = 7
     iwaveplotx = 1
+    xzero = 0.
     htstar = 1.     ! toy star crap
     atstar = 1.
     ctstar = 1.
-    norder = 0
-    morder = 0
+    norder = -1
+    morder = -1
     sigma0 = 0.
     rhosedov = 1.0  ! sedov blast wave
     esedov = 1.0    ! blast wave energy
@@ -69,16 +69,17 @@ contains
     pr_R = 0.1
     v_L = 0.0
     v_R = 0.0
-    iexactpts = maxexactpts
     iexactplotx = 0
     iexactploty = 0
     ishk = 0
+    hfact = 1.2
+    filename_exact = ' '
     
     return
   end subroutine defaults_set_exact
 
   !----------------------------------------------------------------------
-  ! sets options and parameters for exact solution calculation/plotting
+  ! sets which exact solution to calculate + parameters for this
   !----------------------------------------------------------------------
   subroutine submenu_exact(iexact)
     use settings_data, only:ndim
@@ -87,7 +88,6 @@ contains
     integer, intent(inout) :: iexact
     integer :: ierr
     logical :: ians
-    character(len=30) :: filename
 
     print 10
 10  format(' 0) none ',/,               &
@@ -97,8 +97,9 @@ contains
          ' 4) toy star ',/,             &
          ' 5) linear wave ',/,          &
          ' 6) mhd shock tubes (tabulated) ',/,  &
-         ' 7) read from file ')
-    call prompt('enter exact solution to plot',iexact,0,7)
+         ' 7) h vs rho ',/, &
+         ' 8) read from file ')
+    call prompt('enter exact solution to plot',iexact,0,8)
     print*,' plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
@@ -135,11 +136,14 @@ contains
        ians = .false.
        call prompt('do you want oscillations?',ians)
        norder = -1
-       if (ians) call prompt('enter order',norder,0)
-       if (ians .and. ndim.ge.2) call prompt('enter s order',morder,0)
+       morder = -1
+       if (ians) call prompt('enter order of radial mode',norder,0)
+       if (ians .and. ndim.ge.2)  &
+          call prompt('enter order of angular mode',morder,0)
     case(5)
        call prompt('enter y-plot to place sine wave on',iwaveploty,1)
        call prompt('enter x-plot to place sine wave on',iwaveplotx,1)
+       call prompt('enter starting x position',xzero)
        call prompt('enter wavelength lambda ',lambda,0.0)
        call prompt('enter amplitude ',ampl,0.0)
        call prompt('enter period ',period)
@@ -147,14 +151,11 @@ contains
        print*,' MHD shock tube tables: '
        call prompt('enter solution to plot ',ishk,0,7)
     case(7)
-       call prompt('enter filename: ',filename)
-       call exact_fromfile(filename,xexact,yexact,maxexactpts,iexactpts,ierr)
-       if (ierr.gt.0) then
-          iexact = 0
-       else
-          call prompt('enter x axis of exact solution: ',iexactplotx,1)
-          call prompt('enter x axis of exact solution: ',iexactploty,1)
-       endif
+       call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
+    case(8)
+       call prompt('enter filename ',filename_exact)
+       call prompt('enter x axis of exact solution ',iexactplotx,1)
+       call prompt('enter x axis of exact solution ',iexactploty,1)
     end select
 
     return
@@ -239,48 +240,122 @@ contains
   !
   ! acts as an interface between the main plotting loop and the
   ! exact solution calculation subroutines
+  !
+  ! The exact solution is returned from the calculation via the arrays
+  ! xexact and yexact. This means that the appropriate transformations
+  ! can be applied (e.g. if the graph is logarithmic) and also ensures
+  ! that the line style and colour settings are applied properly.
+  !
+  ! Note that we attempt to space the solution evenly in the transformed
+  ! space (ie. in the current plot window), but this can be overwritten
+  ! in the subroutines (for example if an uneven sampling is desired or
+  ! the plotting is via some similarity variable as in the Sedov solution).
+  ! In these cases the resulting arrays are then transformed, possibly leading
+  ! to poor sampling in some regions (e.g. an evenly spaced array will become
+  ! highly uneven in logarithmic space).
+  !
+  ! Note that any subroutine could in principle do its own plotting, 
+  ! provided that it returns ierr > 0 which means that the generic line 
+  ! is not plotted. Obviously transformations could not be applied in
+  ! this case.
+  !
   !-----------------------------------------------------------------------
 
-  subroutine exact_solution(iplotx,iploty,iexact,ndim,ndimV,time, &
-                            xmin,xmax,ymean,gamma,pmass,npart)
+  subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
+                            ndim,ndimV,time,xmin,xmax,ymean,gamma,pmass,npart)
     use labels
+    use settings_part, only:maxexactpts,iExactLineColour,iExactLineStyle
     use prompting
+    use exactfromfile, only:exact_fromfile
+    use polytrope, only:exact_polytrope
+    use rhoh, only:exact_rhoh
+    use sedov, only:exact_sedov
+    use shock, only:exact_shock
+    use toystar1D, only:exact_toystar1D, exact_toystar_ACplane
     use toystar2D, only:exact_toystar2D
+    use wave, only:exact_wave
+    use transforms
     implicit none
-    integer, intent(in) :: iplotx,iploty,iexact,ndim,ndimV,npart
+    integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
+    integer, intent(in) :: ndim,ndimV,npart
     real, intent(in) :: time,xmin,xmax,ymean,gamma
     real, intent(in), dimension(npart) :: pmass
-    real :: totmass
+    
+    real, parameter :: zero = 1.e-10
+    integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle
+    real, dimension(maxexactpts) :: xexact,yexact,xtemp
+    real :: totmass,pmassmin,pmassmax,dx
+
+    !
+    !--change line style and colour settings, but save old ones
+    !
+    call pgqci(iCurrentColour)
+    call pgqls(iCurrentLineStyle)
+    call pgsci(iExactLineColour)
+    call pgsls(iExactLineStyle)
+
+    !
+    !--set x axis (can be overwritten)
+    !  Need to space x in transformed space (e.g. in log space)
+    !  but send the values of x in *real* space to the calculation routines
+    !  then need to plot x in transformed space
+    !
+    !  Best solution is to set x grid initially, and inverse transform to get x values.
+    !  These values can then be overwritten, if required in the exact subroutines
+    !  We then re-transform the x array to plot it, which means that if spacing is
+    !  overwritten the resulting array can still be transformed into log space
+    !  but spacing will not be even
+    !
+    
+    !--note that xmin and xmax will already have been transformed prior to input
+    !  as these were the limits used for plotting the particles
+    !
+    print*,'exact solution: xmin = ',xmin,' xmax = ',xmax
+    dx = (xmax - xmin)/real(maxexactpts)
+    do i=1,maxexactpts
+       xexact(i) = xmin + (i-1)*dx
+    enddo
+    if (itransx.gt.0) call transform_inverse(xexact,itransx)
+    
+    iexactpts = maxexactpts
+    !
+    !--exact solution plots must return a zero or negative value of ierr to be plotted
+    !  (-ve ierr indicates a partial solution)
+    !
+    ierr = 666
 
     select case(iexact)
     case(1)! shock tube
        if (iplotx.eq.ix(1)) then
           if (iploty.eq.irho) then
-             call exact_shock(1,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
+             call exact_shock(1,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_shock(2,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
+             call exact_shock(2,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.ivx) then
-             call exact_shock(3,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
+             call exact_shock(3,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm) then
-             call exact_shock(4,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
+             call exact_shock(4,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           endif
        endif
 
     case(2)! sedov blast wave
-       if (iplotx.eq.irad) then
+       ! this subroutine does change xexact
+       if (iplotx.eq.irad .or. (igeom.eq.2 .and. iplotx.eq.ix(1))) then
           if (iploty.eq.irho) then
-             call exact_sedov(time,gamma,rhosedov,esedov,xmax,1)
+             call exact_sedov(1,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_sedov(time,gamma,rhosedov,esedov,xmax,2)                 
+             call exact_sedov(2,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm) then
-             call exact_sedov(time,gamma,rhosedov,esedov,xmax,3)                
+             call exact_sedov(3,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           elseif (iploty.eq.ike) then
-             call exact_sedov(time,gamma,rhosedov,esedov,xmax,4)                 
+             call exact_sedov(4,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           endif
        endif
 
     case(3)! polytrope
-       if (iploty.eq.irho .and. iplotx.eq.irad) call exact_polytrope(gamma,polyk)
+       if (iploty.eq.irho .and. iplotx.eq.irad) then
+          call exact_polytrope(gamma,polyk,xexact,yexact,iexactpts,ierr)
+       endif
 
     case(4)! toy star
        if (iBfirst.ne.0) then
@@ -294,30 +369,38 @@ contains
           !
           if (iplotx.eq.ix(1) .or. iplotx.eq.irad) then! if x axis is x or r
              if (iploty.eq.irho) then
-                call exact_toystar(time,gamma,htstar,atstar,ctstar,sigma,norder,1)
+                call exact_toystar1D(1,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                                   xexact,yexact,iexactpts,ierr)
              elseif (iploty.eq.ipr) then
-                call exact_toystar(time,gamma,htstar,atstar,ctstar,sigma,norder,2)       
+                call exact_toystar1D(2,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                                   xexact,yexact,iexactpts,ierr)       
              elseif (iploty.eq.iutherm) then
-                call exact_toystar(time,gamma,htstar,atstar,ctstar,sigma,norder,3)       
+                call exact_toystar1D(3,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                                   xexact,yexact,iexactpts,ierr)       
              elseif (iploty.eq.ivx) then
-                call exact_toystar(time,gamma,htstar,atstar,ctstar,sigma,norder,4)       
-             elseif (iploty.eq.ibfirst+1) then
-                call exact_toystar(time,gamma,htstar,atstar,ctstar,sigma,norder,5)
+                call exact_toystar1D(4,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                                   xexact,yexact,iexactpts,ierr)       
+             elseif (iploty.eq.iBfirst+1) then
+                call exact_toystar1D(5,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                                   xexact,yexact,iexactpts,ierr)
              endif
           elseif (iplotx.eq.irho) then
-             if (iploty.eq.ibfirst+1) then
-                call exact_toystar(time,gamma,htstar,atstar,ctstar,sigma,norder,6)       
+             if (iploty.eq.iBfirst+1) then
+                call exact_toystar1D(6,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                                   xexact,yexact,iexactpts,ierr)       
              endif
           endif
 
           if (iploty.eq.iacplane) then! plot point on a-c plane
-             call exact_toystar(time,gamma,htstar,atstar,ctstar,sigma,norder,7)
+             call exact_toystar1D(7,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                                xexact,yexact,iexactpts,ierr)
           endif
        else
           !
           !--2D and 3D toy star solutions
           !
           totmass = SUM(pmass(1:npart))
+          print*,'summing masses of ',npart,' particles, mass = ',totmass
           if ((iplotx.eq.ix(1) .and. iploty.eq.ivx) &
                .or. (iplotx.eq.ix(2) .and. iploty.eq.ivx+1)) then
              call exact_toystar2D(time,gamma,polyk,totmass, &
@@ -348,7 +431,7 @@ contains
 
     case(5)! linear wave
        if ((iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then
-          call exact_wave(time,ampl,period,lambda,xmin,xmax,ymean)
+          call exact_wave(time,ampl,period,lambda,xzero,ymean,xexact,yexact,ierr)
        endif
 
     case(6) ! mhd shock tubes
@@ -375,18 +458,46 @@ contains
              call exact_mhdshock(8,ishk,time,gamma,xmin,xmax)
           endif
        endif
+    case(7) 
+       !--h = (1/rho)^(1/ndim)
+       if ((iploty.eq.ih).and.(iplotx.eq.irho)) then
+          !--if variable particle masses, plot one for each pmass value
+          pmassmin = minval(pmass)
+          pmassmax = maxval(pmass)
+          call exact_rhoh(ndim,hfact,pmassmin,xexact,yexact,ierr)
 
-    case(7) ! exact solution read from file
+          if (abs(pmassmin-pmassmax).gt.zero .and. pmassmin.gt.zero) then
+             !--plot first line
+             if (ierr.le.0) then
+                xtemp = xexact ! must not transform xexact as this is done again below
+                if (itransx.gt.0) call transform(xtemp,itransx)
+                if (itransy.gt.0) call transform(yexact,itransy)
+                call pgline(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
+             endif
+             !--leave this one to be plotted below  
+             call exact_rhoh(ndim,hfact,pmassmax,xexact,yexact,ierr)
+          endif
+       endif
+    case(8) ! exact solution read from file
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
-          call pgline(iexactpts,xexact,yexact)
+          call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
        endif
     end select
     
-    !--h = (1/rho)^(1/ndim)
-    if ((iploty.eq.ih).and.(iplotx.eq.irho)) then
-       call exact_rhoh(hfact,ndim,pmass,npart,xmin,xmax)
+    !----------------------------------------------------------
+    !  plot this as a line on the current graph using PGPLOT
+    !----------------------------------------------------------
+    if (ierr.le.0) then
+       if (itransx.gt.0) call transform(xexact,itransx)
+       if (itransy.gt.0) call transform(yexact,itransy)
+       call pgline(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
     endif
-    
+    !
+    !--reset line and colour settings
+    !   
+    call pgsci(iCurrentColour)
+    call pgsls(iCurrentLineStyle)
+
     return
 
   end subroutine exact_solution

@@ -46,6 +46,10 @@ subroutine defaults_set
   icoords = 1       ! co-ordinate system of simulation
   icoordsnew = icoords ! co-ordinate system to plot in
   buffer_data = .false.
+  iUseStepList = .false.
+  do i=1,size(isteplist)
+     isteplist(i) = i
+  enddo
 !
 !--default for interactive mode
 !
@@ -92,6 +96,9 @@ subroutine defaults_set
   iplotlinein = .false.   ! " " but on first step only
   linestylein = 4         ! PGPLOT line style for above
   iexact = 0              ! exact solution to plot
+  maxexactpts = 1001      ! points in exact solution plot
+  iExactLineColour = 1    ! foreground
+  iExactLineStyle = 1     ! solid
   ilabelpart = .false.    ! plot particle numbers
   iplotpartvec = .true.   ! whether to plot particles on vector plot
   

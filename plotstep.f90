@@ -178,9 +178,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   !!if (.not. interactive) call pgbbuf !! start buffering output
   
   !!--set background/foreground colours
-  if (colour_back(1:1).ne.' ') call pgscrn(0,colour_back,ierr)
+  ierr = 0
+  if (len_trim(colour_back).gt.0) call pgscrn(0,colour_back,ierr)
   if (ierr /= 0) print 10,'background',trim(colour_back)
-  if (colour_fore(1:1).ne.' ') call pgscrn(1,colour_fore,ierr)
+  if (len_trim(colour_fore).gt.0) call pgscrn(1,colour_fore,ierr)
   if (ierr /= 0) print 10,'foreground',trim(colour_fore)
 10 format(' error: ',a,' colour "',a,'" not found in table')
   
@@ -207,6 +208,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   use params
   use exact, only:exact_solution, &
              atstar,ctstar,htstar,sigma,iwaveplotx,iwaveploty
+  use toystar1D, only:exact_toystar_ACplane
   use labels
   use limits
   use multiplot
@@ -836,10 +838,12 @@ subroutine plotstep(istep,irender,ivecplot, &
            !
            !--plot exact solution if relevant (before going interactive)
            !
-           if (iexact.ne.0) call exact_solution(iplotx,iploty,iexact,ndim,ndimV, &
-                            timei,xmin,xmax,0.0,gammai, &
-                            dat(1:npartoftype(1),ipmass), &
-                            npartoftype(1))
+           if (iexact.ne.0) then
+               call exact_solution(iexact,iplotx,iploty, &
+                    itrans(iplotx),itrans(iploty),icoordsnew, &
+                    ndim,ndimV,timei,xmin,xmax,0.0,gammai, &
+                    dat(1:npartoftype(1),ipmass),npartoftype(1))
+           endif
            !
            !--enter interactive mode
            !
@@ -945,10 +949,9 @@ subroutine plotstep(istep,irender,ivecplot, &
 
         if (iexact.ne.0 .or. (iploty.eq.irho .and. iplotx.eq.ih) .or. &
            (iplotx.eq.irho .and. iploty.eq.ih)) then
-           call exact_solution(iplotx,iploty,iexact,ndim,ndimV,  &
-                               timei,xmin,xmax,ymean,gammai, &
-                               dat(1:npartoftype(1),ipmass), &
-                               npartoftype(1))
+           call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
+                icoordsnew,ndim,ndimV,timei,xmin,xmax,ymean,gammai, &
+                dat(1:npartoftype(1),ipmass),npartoftype(1))
         endif
         !
         !--enter interactive mode
@@ -1169,6 +1172,7 @@ contains
 
 !-------------------------------------------------------------------
 ! interface to vector plotting routines
+! so that pixel arrays are allocated appropriately
 !-------------------------------------------------------------------
   subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidth,label)
    use settings_vecplot

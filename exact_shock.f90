@@ -13,17 +13,24 @@
 ! Daniel Price, Institute of Astronomy, Cambridge, 2004
 ! dprice@ast.cam.ac.uk
 !-----------------------------------------------------------------------
+module shock
+ implicit none
+ public :: exact_shock
+ private :: get_pstar, get_pstar_isothermal, f_and_df
+ 
+contains
 
-subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xmin,xmax)
+subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,ierr)
   implicit none
-  integer, parameter :: npts=2000
   integer, intent(in) :: iplot
-  real, intent(in) :: time,gamma,xmin,xmax
+  integer, intent(out) :: ierr
+  real, intent(in) :: time,gamma
   real, intent(in) :: rho_L,rho_R,p_L,p_R,v_L,v_R
+  real, dimension(:), intent(in) :: xplot
+  real, dimension(size(xplot)), intent(out) :: yplot
   
-  integer :: i
-  real, dimension(npts) :: xplot, yplot, dens, pr, vel
-  real :: dx,cs_L,cs_R, gamfac
+  real, dimension(size(xplot)) :: dens, pr, vel
+  real :: cs_L,cs_R, gamfac
   real :: ppost, vpost, vfan, vshock
   real :: xzero,xleft,xfan,xcontact,xshock
 
@@ -31,23 +38,19 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xmin,xmax)
 !
 ! check for errors in input
 !
+  ierr = 0
   if (rho_L.le.0. .or. rho_R.le.0.) then
      print*,'error: rho <= 0 on input : ',rho_L,rho_R
+     ierr = 1
      return
   elseif (p_L .le.0. .or. p_R .le.0.) then
      print*,'error: pr <= 0 on input ',p_L, p_R
+     ierr = 2
      return
 !  elseif (gamma.lt.1.0001) then
 !     print*,'error: isothermal solver not implemented'
 !     return
-  endif
-!
-! set up grid for exact solution
-!          
-  dx = (xmax-xmin)/real(npts)
-  do i=1,npts
-     xplot(i) = xmin + (i-1)*dx
-  enddo
+  endif  
 !
 !  xzero is the position of the shock at t=0
 !
@@ -159,10 +162,6 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xmin,xmax)
         yplot = pr/dens
      endif
   end select
-!----------------------------------------------------------
-!  plot this as a line on the current graph using PGPLOT
-!----------------------------------------------------------
-  call pgline(npts,xplot,yplot)
 
   return
 end subroutine exact_shock
@@ -283,3 +282,5 @@ subroutine get_pstar_isothermal(cs2,v_L,v_R,rho_L,rho_R,pstar,vstar)
   print*,' pstar = ',pstar,' vstar = ',vstar,vstar2
   
 end subroutine get_pstar_isothermal
+
+end module shock

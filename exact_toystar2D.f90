@@ -1,26 +1,30 @@
 !------------------------------------------------------------
-! plot exact solution for toystar in two dimensions
+! Exact solutions for toystar in two dimensions
+!
+! For details see Monaghan and Price (2005), in prep.
+!
+!------------------------------------------------------------
+module toystar2D
+ implicit none
+ public :: exact_toystar2D
+ public :: etar, detadr  ! public because they are used in setup
+
+contains
+
+!------------------------------------------------------------
+! calculate exact solution for toystar in two dimensions
 !
 ! non-linear solution solves ODEs, assumes linear velocity
 !
 ! the solutions are all plots against radius
-!
-! For details see Monaghan and Price (2005), in prep.
-!
 !
 ! iplot = 0 gives x vs y
 !
 ! iplot = 1->5 gives rho, pr, u, vx, vy vs r
 !------------------------------------------------------------
 
-module toystar2D
- implicit none
-
-contains
-
 subroutine exact_toystar2D(time,gamma,polyk,totmass, &
                            H0,A0,C0,Brhofac,jorder,morder,iplot)
-  use toystar2D_utils
   implicit none
   integer, intent(in) :: iplot,jorder,morder
   real, intent(in) :: time,gamma,polyk,totmass,Brhofac
@@ -205,5 +209,113 @@ subroutine exact_toystar2D(time,gamma,polyk,totmass, &
 
   return
 end subroutine exact_toystar2D
+
+!
+!--function that evaluates the polynomial for rho(r/re) for a given radial mode
+!  (from the power series solution to the 2nd order ODE)
+!
+!  rad = r/r_star
+!  j = radial (axisymmetric) mode
+!  m = theta mode 
+!
+!  solution is for delta(rho**(gamma-1))
+!  ie. rho**(gamma-1) = rho_0**(gamma-1) + etar
+!
+!  and takes the form
+!
+!  etar = rad**m sum_k a_k rad**k
+!
+real function etar(j,m,rad,gamma)
+  implicit none 
+  integer :: j,m,k,kprev   ! j is the radial mode, m is the theta mode
+  real :: rad,gamma,denom
+  real :: ak,akprev,gamm1,freqsq
+!
+!--this solution is for arbitrary gamma
+!
+  gamm1 = gamma - 1.
+  if (gamm1.lt.1.e-3) then
+     print*,'error gamma -1 <= 0'
+     etar = 0.
+     return
+  endif
+!
+!--the solution is of the form
+!  drhor = a_0 + a_2 (r/re)**2 + a_4 (r/re)**4 + ...
+!  where for j = k, coefficients >= a_k+2 are zero
+!  
+  freqsq = (j+m)*(j+m + 2./gamm1) - m**2
+
+  akprev = 1.0  ! this is a_0 which is the amplitude
+  etar = akprev
+  !!print*,'mode = ',j,m,' nu^2 = ',freqsq,' a_0 = ',akprev
+!
+!--the co-efficients for the terms above a_0 are calculated using
+!  the recurrence relation between the a_k's
+!
+  do k = 2,j,2
+     kprev = k-2
+     denom = real((kprev + 2 + m)**2 - m**2)
+     ak = akprev*(kprev**2 + 2.*kprev*m + 2.*(kprev+m)/gamm1 - freqsq)/denom
+     !!print*,'coeff ',k,' = ',ak,k**2,2.*k/gamm1
+     etar = etar + ak*rad**k
+     akprev = ak
+  enddo
+  
+  etar = etar * rad**m
+
+end function etar
+
+!
+!--function that evaluates the polynomial for v(r/re) for a given radial mode
+!  (from the power series solution to the 2nd order ODE)
+!
+real function detadr(j,m,rad,gamma)
+  implicit none
+  integer :: j,m,k,kprev   ! j is the radial mode, m is the theta mode
+  real :: rad,gamma,denom,term1,term2
+  real :: ak,akprev,gamm1,freqsq
+!
+!--this solution is for arbitrary gamma
+!
+  gamm1 = gamma - 1.
+  if (gamm1.lt.1.e-3) then
+     print*,'error gamma -1 <= 0'
+     detadr = 0.
+     return
+  endif
+!
+!--the solution is of the form
+!  drhor = a_0 + a_2 (r/re)**2 + a_4 (r/re)**4 + ...
+!  where for j = k, coefficients >= a_k+2 are zero
+!  
+  freqsq = (j+m)*(j+m + 2./gamm1) - m**2
+
+  detadr = 0.
+  akprev = 1.0  ! this is a_0 which is the amplitude
+  term1 = akprev
+  term2 = 0.
+!  print*,'mode = ',j,m,' nu^2 = ',freqsq,' a_0 = ',akprev
+!
+!--the co-efficients for the terms above a_0 are calculated using
+!  the recurrence relation between the a_k's
+!
+  do k = 2,j,2
+     kprev = k-2
+     denom = real((kprev + 2 + m)**2 - m**2)
+     ak = akprev*(kprev**2 + 2.*kprev*m + 2.*(kprev+m)/gamm1 - freqsq)/denom
+     !!print*,'coeff ',k,' = ',ak,k*ak,rad,(k-1)
+     term1 = term1 + ak*rad**k
+     term2 = term2 + k*ak*rad**(k-1)
+     akprev = ak
+  enddo
+  
+  if (m.eq.0) then
+     detadr = term2
+  else
+     detadr = m*rad**(m-1)*term1 + rad**m*term2
+  endif
+  
+end function detadr
 
 end module toystar2D

@@ -1,30 +1,42 @@
 !---------------------------------------------------------------------------
 ! compute exact solution for Sedov-type point-like energy injection
-! the solution is correct for 3D, I have attempted to fix it in 1D, 2D but
+! the solution is correct for 3D, I have attempted to fix it in 1D & 2D but
 ! not working yet.
 !---------------------------------------------------------------------------
-
-subroutine exact_sedov(time,gam,rhozero,energy,rmax,iplot)
+module sedov
   implicit none
-  integer, parameter :: npts=1000, ndim = 3
-  real, parameter :: pi = 3.1415926536
+  public :: exact_sedov
+  private :: etau,rhou,pru,dudlneta,eta0
+  
+contains
+
+subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
+  implicit none
   integer, intent(in) :: iplot
+  integer, intent(out) :: ierr
   real, intent(in) :: time, gam, rhozero, energy
-  real, dimension(0:npts) :: rplot, yplot
+  real, dimension(:), intent(inout) :: rplot
+  real, dimension(size(rplot)), intent(out) :: yplot
+
+  integer, parameter :: ndim = 3
+  integer :: npts
+  real, parameter :: pi = 3.1415926536
   real :: rmax, rshock, dr
   real :: rhoshock, ushock, prshock
   real :: eta_0, power
-  real :: etau,rhou,pru
-  real :: eta0,ubar,ubarzero,dubar
+  real :: ubar,ubarzero,dubar
   integer :: i,ishock
 
+  ierr = 0
   print*,' Plotting 3D Sedov similarity solution at t = ',time
   print*,' rhozero = ',rhozero,' energy = ',energy, ' rmax = ',rmax    
-  if (abs(time).lt.1.e-6) then
+  if (abs(time).lt.1.e-10) then
      print*,'nothing at t=0, returning'
+     ierr = 1
      return
   endif
   
+  npts = size(rplot)
   eta_0  = eta0(gam,ndim)
   print*,' eta0 = ',eta_0
 
@@ -43,15 +55,15 @@ subroutine exact_sedov(time,gam,rhozero,energy,rmax,iplot)
   rhoshock = rhozero*(gam+1.)/(gam-1.)
   prshock = 2./(gam+1.)*rhoshock*ushock**2
 
-  rplot(0) = 0.0
+  rplot(1) = 0.0
   select case(iplot)
   case(2)
-     yplot(0) = 0.0 ! shouldn't be zero for pressure
+     yplot(1) = 0.0 ! shouldn't be zero for pressure
   case default
-     yplot(0) = 0.0
+     yplot(1) = 0.0
   end select
  
-  ishock = INT((rshock - rplot(0))/dr)
+  ishock = INT((rshock - rplot(1))/dr)
 
   if (ishock.gt.0) then
      ishock = min(ishock,npts)
@@ -61,14 +73,14 @@ subroutine exact_sedov(time,gam,rhozero,energy,rmax,iplot)
 !  (eta is the dimensionless radius eta = r/rshock, so eta=1 is the shock position)
 !
      ubarzero = 0.5*(gam+1.)/gam
-     dubar = (1.0 - ubarzero)/REAL(ishock)
+     dubar = (1.0 - ubarzero)/REAL(ishock-1)  ! need to check the denominator
 !
 !--solution behind shock front (similarity solution)
 !  (I really want to start from ubar = ubarzero, but am having problems)
 !
-     do i=1,ishock
+     do i=2,ishock
         
-        ubar = ubarzero + i*dubar
+        ubar = ubarzero + (i-1)*dubar ! again need to check this
         rplot(i) = etau(ubar,gam,ndim)*rshock
 
         select case(iplot)           
@@ -101,8 +113,6 @@ subroutine exact_sedov(time,gam,rhozero,energy,rmax,iplot)
         end select
      enddo
   endif
-
-  call PGLINE(npts+1,rplot,yplot)
 
   return
 end subroutine exact_sedov
@@ -148,7 +158,7 @@ end function rhou
 !
 real function pru(u,gamma)
   implicit none
-  real :: u,gamma,rhou
+  real :: u,gamma
 
   pru = (gamma+1. - 2.*u)/(2.*gamma*u - gamma - 1.)*u**2*rhou(u,gamma)
 
@@ -179,7 +189,6 @@ real function eta0(gamma,ndim)
   real :: gamma
   real :: u0, u, du
   real :: sum, term, weight, factor
-  real :: pru,rhou,etau,dudlneta
 
 !  if (abs(gamma-5./3.).lt.1.e-3) then
 !     eta0 = 1.1517
@@ -218,3 +227,5 @@ real function eta0(gamma,ndim)
   eta0 = (factor*8.*sum/(25.*(gamma**2 - 1.)))**(-1./REAL(ndim+2))
 
 end function eta0
+
+end module sedov
