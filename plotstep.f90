@@ -275,6 +275,8 @@ subroutine plotstep(istep,irender,ivecplot, &
   labelz = ' '
   labelrender = ' '
   labelvecplot = ' '
+  xplot = 0.
+  yplot = 0.
   !
   !--set number of particles to use in the interpolation routines
   !  (ie. including only gas particles and ghosts)
@@ -285,7 +287,6 @@ subroutine plotstep(istep,irender,ivecplot, &
   if (labeltype(2)(1:5).eq.'ghost' .and. iplotpartoftype(2)) then
      ninterp = ninterp + npartoftype(2)
   endif
-
   !-------------------------------------
   ! loop over plots per timestep
   !-------------------------------------
@@ -411,12 +412,12 @@ subroutine plotstep(istep,irender,ivecplot, &
         !  also change labels and limits appropriately
         if (.not.(iplotx.le.ndim .and. iploty.le.ndim)) then
            if (itrans(iplotx).ne.0) then
-              call transform(xplot,itrans(iplotx))
+              call transform(xplot(1:ntoti),itrans(iplotx))
               labelx = transform_label(labelx,itrans(iplotx))
               if (iadvance.ne.0) call transform_limits(xmin,xmax,itrans(iplotx))
            endif
            if (itrans(iploty).ne.0) then
-              call transform(yplot,itrans(iploty))
+              call transform(yplot(1:ntoti),itrans(iploty))
               labely = transform_label(labely,itrans(iploty))
               if (iadvance.ne.0) call transform_limits(ymin,ymax,itrans(iploty))
            endif
@@ -433,6 +434,7 @@ subroutine plotstep(istep,irender,ivecplot, &
            ymax = -1.e12
            !--find maximum over all particle types being plotted
            index1 = 1
+           print*,'adapting plot limits'
            do itype=1,maxparttypes
               index2 = index1 + npartoftype(itype) - 1
               if (iplotpartoftype(itype).and.npartoftype(itype).gt.0) then
@@ -1094,10 +1096,10 @@ subroutine plotstep(istep,irender,ivecplot, &
            endif
 
            if (itrans(iploty).ne.0) then
-              call transform(xplot,itrans(iploty))
+              call transform(xplot(1:nfreqspec),itrans(iploty))
               labelx = transform_label(labelx,itrans(iploty))
 
-              call transform(yplot,itrans(iploty))
+              call transform(yplot(1:nfreqspec),itrans(iploty))
               labely = transform_label(labely,itrans(iploty))
               if (iadvance.ne.0) then
                  call transform_limits(xmin,xmax,itrans(iploty))
@@ -1109,7 +1111,7 @@ subroutine plotstep(istep,irender,ivecplot, &
            title = 'Power Spectrum'
            call page_setup
 
-           call pgline(nfreqspec,xplot,yplot)
+           call pgline(nfreqspec,xplot(1:nfreqspec),yplot(1:nfreqspec))
 
         endif
         !
