@@ -7,29 +7,40 @@
 !
 ! For details see Monaghan and Price (2004) MNRAS
 !------------------------------------------------------------
+module toystar1D
+ implicit none
+ public :: exact_toystar1D, exact_toystar_ACplane
+ private :: Pm, Gn
 
-subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
+contains
+
+subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
+                           sigma,norder,xplot,yplot,npts,ierr)
   implicit none
-  integer, parameter :: npts = 100
-  integer, intent(in) :: iplot,norder
-  integer i,its,nsteps
-  real, dimension(0:npts) :: xplot,yplot
+  integer, intent(in) :: iplot,norder,npts
+  integer, intent(out) :: ierr
   real, intent(in) :: time,gamma,sigma
   real, intent(in) :: H0, C0, A0    ! parameters for toy star
-  real const ! parameter for toy star
-  real Hprev, Cprev, Aprev, Htemp, Ctemp, Atemp, H, C, A
-  real radstar,dx,dt,tnow
-  real rhoplot,deltarho
-  real fprevC,fprevA,fprevH,ftempC,ftempA,ftempH
-  real gamp1,gamm1,gam1,fact,constK,omega
-  real Gn,Pm,fnorm
-  logical linear
+  real, dimension(:), intent(inout) :: xplot
+  real, dimension(size(xplot)), intent(out) :: yplot
+
+  integer :: i,its,nsteps
+  real :: const ! parameter for toy star
+  real :: Hprev, Cprev, Aprev, Htemp, Ctemp, Atemp, H, C, A
+  real :: radstar,dx,dt,tnow
+  real :: rhoplot,deltarho
+  real :: fprevC,fprevA,fprevH,ftempC,ftempA,ftempH
+  real :: gamp1,gamm1,gam1,fact,constK,omega
+  real :: fnorm
+  logical :: linear
 
   if (norder.ge.0) linear = .true.
   gamp1 = gamma + 1.
   gamm1 = gamma - 1.
   gam1 = 1./gamm1
   constK = 0.25
+
+  ierr = 0
 
   if (linear) then
 !---------------------------------------------------------------------------
@@ -44,15 +55,16 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
 
      if (C0.le.0.) then 
         print*,'*** C = 0 = illegal in input'
+        ierr = 1
         return
      else         
         radstar = sqrt(H0/C0)
      endif
-     xplot(0) = -radstar
-     dx = (radstar-xplot(0))/float(npts)
+     xplot(1) = -radstar
+     dx = (radstar-xplot(1))/float(npts-1)
 
-     do i=0,npts
-        xplot(i) = xplot(0)+dx*i
+     do i=2,npts
+        xplot(i) = xplot(1)+dx*(i-1)
         !         print*,i,' x,y = ',xplot(i),yplot(i)
         rhoplot = (H0 - C0*xplot(i)**2)
         if (rhoplot.le.0.) rhoplot = 0.
@@ -74,19 +86,20 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
      enddo
 
      if (iplot.eq.6) then        ! plot By \propto rho
-        dx = (H0**gam1)/float(npts) ! ie (rhomax - 0)/npts
-        xplot(0) = 0.
-        yplot(0) = sigma*xplot(0)
-        do i=1,npts
-           xplot(i) = xplot(0) + dx*i
+        dx = (H0**gam1)/float(npts-1) ! ie (rhomax - 0)/npts
+        xplot(1) = 0.
+        yplot(1) = sigma*xplot(1)
+        do i=2,npts
+           xplot(i) = xplot(1) + dx*(i-1)
            yplot(i) = sigma*(xplot(i))
         enddo
      endif
 
      if (iplot.eq.7) then        ! plot current point on A-C plane
         call PGPT(1,C0,A0*cos(omega*time),4)
+        ierr = 2 ! do not plot again
      else                        ! plot normal exact solution line
-        call PGLINE(npts+1,xplot,yplot)
+        ierr = 0
      endif
 
 !---------------------------------------------------------------------------
@@ -151,15 +164,17 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
 
      if (C.le.0.) then 
         radstar = 0.5
-        stop '*** C = 0 = illegal'
+        print*,'*** C = 0 = illegal'
+        ierr = 1
+        return
      else         
         radstar = sqrt(H/C)
      endif
-     xplot(0) = -radstar
-     dx = (radstar-xplot(0))/float(npts)
+     xplot(1) = -radstar
+     dx = (radstar-xplot(1))/float(npts-1)
 
-     do i=0,npts
-        xplot(i) = xplot(0)+dx*i
+     do i=2,npts
+        xplot(i) = xplot(1)+dx*(i-1)
         !         print*,i,' x,y = ',xplot(i),yplot(i)
         rhoplot = (H - C*xplot(i)**2)
         if (rhoplot.le.0.) rhoplot = 0.
@@ -180,19 +195,20 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
      enddo
 
      if (iplot.eq.6) then        ! plot By \propto rho
-        dx = (H**gam1)/float(npts) ! ie (rhomax - 0)/npts
-        xplot(0) = 0.
-        yplot(0) = sigma*xplot(0)
-        do i=1,npts
-           xplot(i) = xplot(0) + dx*i
+        dx = (H**gam1)/float(npts-1) ! ie (rhomax - 0)/npts
+        xplot(1) = 0.
+        yplot(1) = sigma*xplot(1)
+        do i=2,npts
+           xplot(i) = xplot(1) + dx*(i-1)
            yplot(i) = sigma*(xplot(i))
         enddo
      endif
 
      if (iplot.eq.7) then        ! plot current point on A-C plane
         call PGPT(1,C,A,4)
+        ierr = 2 ! do not plot again
      else                        ! plot normal exact solution line
-        call PGLINE(npts+1,xplot,yplot)
+        ierr = 0
      endif
 !
 !------------------------------------------------------------------------
@@ -200,16 +216,16 @@ subroutine exact_toystar(time,gamma,H0,A0,C0,sigma,norder,iplot)
   endif
 
   return
-end subroutine exact_toystar
+end subroutine exact_toystar1D
 !
 !--function to evaluate the Gegenbauer polynomial of index n given x
 !
-function Gn(x,n)
+real function Gn(x,n)
   implicit none
   integer, intent(in) :: n
   real, intent(in) :: x
   integer :: i
-  real :: Gn,Gnminus1,Gnminus2
+  real :: Gnminus1,Gnminus2
   real :: fnorm
 
   fnorm = 2.*(n+1)*(n+2)/real(2.*n + 3.)
@@ -242,12 +258,12 @@ end function Gn
 !
 !--function to calculate a Legendre Polynomial of order m
 !
-function Pm(x,m)
+real function Pm(x,m)
   implicit none
   integer, intent(in) :: m
   real, intent(in) :: x
   integer :: i      
-  real :: Pmminus1,Pmminus2,Pm
+  real :: Pmminus1,Pmminus2
   !
   !--specify first two Legendre polynomials
   !
@@ -268,3 +284,127 @@ function Pm(x,m)
   end select
 
 end function Pm
+
+
+!----------------------------------------------------------------------
+!
+! this subroutine plots the A-C relation in the 1D Toy star solution
+!
+!----------------------------------------------------------------------
+subroutine exact_toystar_ACplane(astart,cstart,sigma,gamma)
+  implicit none
+  real, intent(in) :: astart,cstart,sigma,gamma
+  real :: constk,gam1,gamm1,gamp1,fact
+  real :: xstart,xend,xcentre,c,cnew,k
+  real :: func,func2,funct,fderiv,ymin,ymax,extra
+  external func,func2
+  common /kconst/ k,fact,gam1,gamp1
+
+  print*,' plotting a-c plane...'
+
+  gamp1 = gamma + 1.
+  gamm1 = gamma - 1.
+  gam1 = 1./gamm1
+  constk = 0.25
+  !      print*,' k, kdash = ',constk,constk + 0.5*sigma**2
+  fact = 2.*(constk + 0.5*sigma**2)*gamma*gam1
+
+  k = (astart**2 + 1. + 2.*fact*cstart*gam1)*cstart**(-2./gamp1)
+
+  !      print*,' k,fact = ',k,fact
+  !
+  !--find limits of plot (ie. where a = 0)
+  !
+  c = 1.e6
+  cnew = 0.25
+
+  do while (abs(c-cnew).gt.1.e-5)
+
+     c = cnew
+
+     funct = k*c**(2./gamp1) - 2.*fact*c*gam1 - 1.
+     fderiv = 2.*k/gamp1*c**(-gamm1/gamp1) - 2.*fact*gam1
+
+     cnew = c - funct/fderiv
+
+     if (cnew.lt.0.) print*,'eek c < 0'
+
+  enddo         
+
+  xstart = cnew
+
+  c = 1.e6
+  cnew = 6.37935
+
+  do while (abs(c-cnew).gt.1.e-5)
+
+     c = cnew
+
+     funct = k*c**(2./gamp1) - 2.*fact*c*gam1 - 1.
+     fderiv = 2.*k/gamp1*c**(-gamm1/gamp1) - 2.*fact*gam1        
+
+     cnew = c - funct/fderiv
+
+  enddo               
+
+  xend = cnew
+
+  !      print*,'plotting k = ',k,' cstart = ',cstart,' astart = ',astart
+  !      print*,'min c = ',xstart,' max c = ',xend
+
+  xstart = xstart + 0.000001
+  xend = xend - 0.000001
+
+  extra = 0.1*(xend-xstart)
+  xcentre = 0.5*(xstart + xend)
+  ymax = 1.5*func(xcentre)
+  ymin = 1.5*func2(xcentre)
+
+  call pgswin(xstart-extra,xend+extra,ymin,ymax,0,1)
+  call pgbox('bcnst',0.0,0,'1bvcnst',0.0,0)      
+  call pgfunx(func,10000,xstart,xend,1)
+  call pgfunx(func2,10000,xstart,xend,1)
+
+  call pglabel ('c','a',' ')
+  return
+
+end subroutine exact_toystar_ACplane
+
+end module toystar1D
+
+!------------------------------------
+!
+! these functions must be external
+!
+!------------------------------------
+real function func(x)
+  real :: x,k,term,fact,gam1,gamp1
+  common /kconst/ k,fact,gam1,gamp1
+
+  !      print*,'k = ',k
+
+  term = -1 -2.*fact*x*gam1 + k*x**(2./gamp1)
+  if (term.le.0.) then
+  !         print*,' warning: func < 0 ',term
+     func = 0.
+  else         
+     func = sqrt(term)
+  endif         
+
+end function func
+
+real function func2(x)
+  implicit none
+  real x,k,term,fact,gam1,gamp1
+  common /kconst/ k,fact,gam1,gamp1
+
+  !      print*,' k = ',k
+
+  term = -1 -2.*fact*x*gam1 + k*x**(2./gamp1)
+  if (term.le.0.) then
+     func2 = 0.
+  else
+     func2 = -sqrt(term)
+  endif 
+
+end function func2

@@ -311,7 +311,6 @@ contains
     !--note that xmin and xmax will already have been transformed prior to input
     !  as these were the limits used for plotting the particles
     !
-    print*,'exact solution: xmin = ',xmin,' xmax = ',xmax
     dx = (xmax - xmin)/real(maxexactpts)
     do i=1,maxexactpts
        xexact(i) = xmin + (i-1)*dx
