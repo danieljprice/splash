@@ -222,28 +222,30 @@ subroutine read_data(rootname,nfilesteps)
 
   label(ndim + ndimV+6) = '\ga'
   if (ncolumns.gt.ndim+ndimV+6) then
-     iBfirst = ndim + ndimV+6+1	! location of Bx
-     iBlast = ndim + ndimV+6+ndimV	! location of Bz      
+     label(ndim + ndimV+7) = '\ga\dB'
+     iBfirst = ndim + ndimV+7+1	! location of Bx
+     iBlast = ndim + ndimV+7+ndimV	! location of Bz      
      do i=1,ndimV
-        label(ndim + ndimV+6+i) = 'B\d'//labelcoord(i) !' (x10\u-3\d)'	!//'/rho'
+        label(ndim + ndimV+7+i) = 'B\d'//labelcoord(i) !' (x10\u-3\d)'	!//'/rho'
      enddo
-     idivB = ndim+ndimV+ndimV+7	 
+     idivB = ndim+ndimV+ndimV+8	 
      label(idivB) = 'div B'
      do i=1,ndimV
-        label(ndim + ndimV+ndimV+7 + i) = 'J'//labelcoord(i)
+        label(ndim + ndimV+ndimV+8 + i) = 'J'//labelcoord(i)
      enddo
+     iJfirst = ndim+ndimV+ndimV+8+1
   else	 
      iBfirst = 0
      iBlast = 0
   endif
-  if (ncolumns.gt.ndim+3*ndimV+7) then
-     label(ndim+3*ndimV+8) = 'psi'
+  if (ncolumns.gt.ndim+3*ndimV+8) then
+     label(ndim+3*ndimV+9) = 'psi'
   endif
-   if (ncolumns.gt.ndim+3*ndimV+8) then
-     label(ndim+3*ndimV+9) = 'f_visc_x'
-     label(ndim+3*ndimV+10) = 'f_visc_y'
-     label(ndim+3*ndimV+11) = 'f_x'
-     label(ndim+3*ndimV+12) = 'f_y'
+   if (ncolumns.gt.ndim+3*ndimV+9) then
+     label(ndim+3*ndimV+10) = 'f_visc_x'
+     label(ndim+3*ndimV+11) = 'f_visc_y'
+     label(ndim+3*ndimV+12) = 'f_x'
+     label(ndim+3*ndimV+13) = 'f_y'
   endif 
   
   !--these are here for backwards compatibility -- could be removed
