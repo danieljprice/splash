@@ -34,7 +34,8 @@ subroutine defaults_read
 !
 !--exact solutions
 !
-    call defaults_read_exact(1,ierr)
+    ierr = 0
+    read(1,NML=exactparams,end=77,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading exact solution parameters from defaults'    
   
     ierr = 0

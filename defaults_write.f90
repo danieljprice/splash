@@ -14,7 +14,7 @@ subroutine defaults_write
     write(1,NML=pageopts)
     write(1,NML=renderopts)
     write(1,NML=vectoropts)
-    call defaults_write_exact(1,ierr)
+    write(1,NML=exactparams)
     write(1,NML=multi)
     do i=1,nfiles
        write(1,"(a)") trim(rootname(i))

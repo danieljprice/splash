@@ -16,27 +16,27 @@ module exact
   !--declare all of the parameters required for the various exact solutions
   !
   !--toy star
-  integer, public :: iACplane ! label position of toy star AC plane plot
-  integer, private :: norder ! for toy star
-  real, public :: htstar,atstar,ctstar,sigma
-  real, private :: sigma0
+  integer :: iACplane ! label position of toy star AC plane plot
+  integer :: norder ! for toy star
+  real :: htstar,atstar,ctstar,sigma
+  real :: sigma0
   !--sound wave
-  integer, public :: iwaveploty,iwaveplotx ! linear wave
-  real, private :: ampl,lambda,period
+  integer :: iwaveploty,iwaveplotx ! linear wave
+  real :: ampl,lambda,period
   !--sedov blast wave
-  real, private :: rhosedov,esedov
+  real :: rhosedov,esedov
   !--polytrope
-  real, private :: polyk
+  real :: polyk
   !--mhd shock solutions
-  integer, private :: ishk
+  integer :: ishk
   !--from file
-  integer, private, parameter :: maxexactpts = 1001
-  integer, private :: iexactpts, iexactplotx, iexactploty
-  real, private, dimension(maxexactpts) :: xexact,yexact
+  integer, parameter :: maxexactpts = 1001
+  integer :: iexactpts, iexactplotx, iexactploty
+  real, dimension(maxexactpts) :: xexact,yexact
   !--shock tube
-  real, private :: rho_L, rho_R, pr_L, pr_R, v_L, v_R
+  real :: rho_L, rho_R, pr_L, pr_R, v_L, v_R
   !--rho vs h
-  real, public :: hfact
+  real :: hfact
   !
   !--sort these into a namelist for input/output
   !
@@ -44,7 +44,6 @@ module exact
        htstar,atstar,ctstar,sigma0,norder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact, &
        iexactplotx,iexactploty
-  private :: exactparams
 
 contains
   !----------------------------------------------------------------------
@@ -79,32 +78,6 @@ contains
     
     return
   end subroutine defaults_set_exact
-
-  !----------------------------------------------------------------------
-  ! reads values of the exact solution parameters from the defaults file
-  !----------------------------------------------------------------------
-  subroutine defaults_read_exact(iunit,ierr)
-    implicit none
-    integer, intent(in) :: iunit
-    integer, intent(out) :: ierr
-    
-    read(iunit,NML=exactparams,iostat=ierr)
-
-    return
-  end subroutine defaults_read_exact
-  
-  !----------------------------------------------------------------------
-  ! writes values of the exact solution parameters to the defaults file
-  !----------------------------------------------------------------------
-  subroutine defaults_write_exact(iunit,ierr)
-    implicit none
-    integer, intent(in) :: iunit
-    integer, intent(out) :: ierr
-    
-    write(iunit,NML=exactparams,iostat=ierr)
-
-    return
-  end subroutine defaults_write_exact
 
   !----------------------------------------------------------------------
   ! sets options and parameters for exact solution calculation/plotting
