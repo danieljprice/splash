@@ -7,6 +7,47 @@
 !       xout(ndim)     : output (rotated) co-ordinates
 !       xorigin(ndim)  : input co-ordinates of the origin
 !
+subroutine rotate3D(xcoords,anglex,angley,anglez)
+  implicit none
+  real, intent(inout) :: xcoords(3)
+  real, intent(in) :: anglex, angley, anglez
+  real :: x, y, z, r, phi
+  
+  x = xcoords(1)
+  y = xcoords(2)
+  z = xcoords(3)
+!
+!--rotate about z
+!  
+  r = sqrt(x**2 + y**2)
+  phi = ATAN2(y,x)
+  phi = phi - anglez
+  x = r*COS(phi)
+  y = r*SIN(phi)
+!
+!--rotate about y
+!
+  r = sqrt(x**2 + z**2)
+  phi = ATAN2(z,x)
+  phi = phi - angley  
+  x = r*COS(phi)
+  z = r*SIN(phi)
+!
+!--rotate about x
+!
+  r = sqrt(y**2 + z**2)
+  phi = ATAN2(z,y)
+  phi = phi - anglex  
+  y = r*COS(phi)
+  z = r*SIN(phi)
+  
+  xcoords(1) = x
+  xcoords(2) = y
+  xcoords(3) = z
+  
+  return
+end subroutine rotate3D
+
 subroutine rotate(angles,xin,xout,xorigin,ndim)
   implicit none
   integer, intent(in) :: ndim
@@ -24,17 +65,17 @@ subroutine rotate(angles,xin,xout,xorigin,ndim)
   !
   xintemp(:) = xin(:) - xorigin(:)
   !
-  !--convert to spherical polar co-ordinates
+  !--convert to cylindrical polar co-ordinates
   !
-  call coord_transform(xintemp,ndim,1,xtemp,ndim,3)
+  call coord_transform(xintemp,ndim,1,xtemp,ndim,2)
   !
   !--increase rotation and tilt angles appropriately
   !
-  xtemp(2:ndim) = xtemp(2:ndim) - angles(1:2)
+  xtemp(2) = xtemp(2) - angles(1)
   !
   !--now convert back to cartesians
   !
-  call coord_transform(xtemp,ndim,3,xout,ndim,1)
+  call coord_transform(xtemp,ndim,2,xout,ndim,1)
   !
   !--adjust positions back from origin
   !

@@ -40,7 +40,9 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   real :: xsecmin,xsecmax,dxsec,xsecpos
   real :: pixwidth
   real :: charheight, charheightmm
-  real :: dxgrid, anglerottemp, angletilttemp
+  real :: dxgrid
+  real :: angletempx, angletempy, angletempz
+  real :: angleradx, anglerady, angleradz
   real, dimension(2) :: angles
 
   logical :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
@@ -262,13 +264,18 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            print*,'warning: i < nstart'
         endif        
      endif
-     
+
+     print 33, time(i),i
+33   format (5('-'),' t = ',f9.4,', dump #',i5,1x,18('-'))
+34   format (25(' -'))
      irenderprev = 0
      istepprev = 0  
      !-------------------------------------
      ! loop over plots per timestep
      !-------------------------------------
      over_plots: do nyplot=1,nyplots
+     
+        if (nyplot.gt.1) print 34 
         !--make sure character height is set correctly
         call danpgsch(charheightmm,2) ! set in mm
         call pgqch(charheight) ! in PGPLOT scaled units
@@ -293,8 +300,9 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               xmax = lim(iplotx,2)
               ymin = lim(iploty,1)
               ymax = lim(iploty,2)
-              anglerottemp = anglerot
-              angletilttemp = angletilt
+              angletempx = anglex
+              angletempy = angley
+              angletempz = anglez
            endif
            
            !--change coordinate system if relevant
@@ -407,17 +415,19 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                !
                !--convert angles to radians
                !
-               angles(1) = anglerottemp*pi/180.
-               angles(2) = angletilttemp*pi/180.
-               print*,'rotating particles about z by ',anglerottemp
+               angleradz = angletempz*pi/180.
+               anglerady = angletempy*pi/180.
+               angleradx = angletempx*pi/180.
+               print*,'rotating particles about z by ',angletempz
                if (ndim.eq.3) then
-                  print*,'rotating particles about xy plane by ',angletilttemp
+                  print*,'rotating particles about y by ',angletempy
+                  print*,'rotating particles about x by ',angletempx
                endif
                do j=1,ntot(i)
-                  call rotate(angles(1:ndim-1),dat(j,ix(1:ndim),i), &
-                         xcoords(:),xorigin(1:ndim),ndim)
-                  xplot(j) = xcoords(iplotx)
-                  yplot(j) = xcoords(iploty)
+                  xcoords(:) = dat(j,ix(1:ndim),i) - xorigin(1:ndim)
+                  call rotate3D(xcoords(:),angleradx,anglerady,angleradz)
+                  xplot(j) = xcoords(iplotx) + xorigin(iplotx)
+                  yplot(j) = xcoords(iploty) + xorigin(iploty)
                enddo
             endif 
 
@@ -503,6 +513,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            !%%%%%%%%%%%%%%% loop over cross-section slices %%%%%%%%%%%%%%%%%%%%%%%
            !
            over_cross_sections: do k=1,nxsec
+
+              if (k.gt.1) print 34 
 
               if (x_sec) then
                  !!--for multislice cross section (flythru)
@@ -606,10 +618,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
               ! output some muff to the screen
               !---------------------------------
               
-              print 34, time(i),i
               print*,trim(labely),'min,max = ',ymin,ymax
               print*,trim(labelx),'min,max = ',xmin,xmax
-34            format (5('-'),' t = ',f8.4,', dump #',i4,1x,10('-'))
               if (x_sec.and.iplotpart) print 35,label(ixsec),xsecmin,label(ixsec),xsecmax
 35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
               
@@ -796,18 +806,20 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                 iadvance = nfreq                
                 call interactive_part(ninterp,iplotx,iploty,irenderplot, &
                      xplot(1:ninterp),yplot(1:ninterp), &
-                     xmin,xmax,ymin,ymax,anglerottemp,angletilttemp,iadvance,isave)                
+                     xmin,xmax,ymin,ymax,angletempx,angletempy,angletempz,iadvance,isave)                
                 !--turn rotation on if necessary
-                if (abs(anglerottemp-anglerot).gt.tol) irotate = .true.
-                if (abs(angletilttemp-angletilt).gt.tol) irotate = .true.
+                if (abs(angletempx-anglex).gt.tol) irotate = .true.
+                if (abs(angletempy-angley).gt.tol) irotate = .true.
+                if (abs(angletempz-anglez).gt.tol) irotate = .true.                
                 if (isave) then
                    !--save settings from interactive mode
                    lim(iplotx,1) = xmin
                    lim(iplotx,2) = xmax
                    lim(iploty,1) = ymin
                    lim(iploty,2) = ymax
-                   anglerot = anglerottemp
-                   angletilt = angletilttemp
+                   anglex = angletempx
+                   angley = angletempy
+                   anglez = angletempz
                 endif 
              endif
 
@@ -827,7 +839,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            ! output some muff to the screen
            !---------------------------------
            
-           print 34, time(i),i
            print*,trim(labely),'min,max = ',ymin,ymax
            print*,trim(labelx),'min,max = ',xmin,xmax
               
@@ -893,7 +904,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            if (interactive) then
               call interactive_part(ntot(i),iplotx,iploty,0,xplot(1:ntot(i)), &
                                     yplot(1:ntot(i)),xmin,xmax,ymin,ymax, &
-                                    anglerottemp,angletilttemp,iadvance,isave)
+                                    angletempx,angletempy,angletempz,iadvance,isave)
               if (isave) then
                  !--save settings from interactive mode
                  lim(iplotx,1) = xmin

@@ -27,7 +27,7 @@ subroutine defaults_set
   nfreq = 1         ! frequency of timesteps to read
   icoords = 1       ! co-ordinate system of simulation
   icoordsnew = icoords ! co-ordinate system to plot in
-  buffer_data = .true.
+  buffer_data = .false.
 !
 !--default for interactive mode
 !
@@ -107,8 +107,9 @@ subroutine defaults_set
   xseclineY1 = 0.0
   xseclineY2 = 0.0
   irotate = .false.
-  anglerot = 45.
-  angletilt = 30.
+  anglex = 0.
+  angley = 0.
+  anglez = 0.
   xorigin = 0.
 !
 !--vector plot options

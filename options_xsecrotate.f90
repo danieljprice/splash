@@ -80,8 +80,11 @@ subroutine options_xsecrotate
     if (ians.eq.3) irotate = .not.irotate
     print*,'rotate = ',irotate
     if (irotate .or. ians.eq.4) then
-       call prompt('enter rotation angle about z axis in degrees',anglerot,0.,360.)
-       if (ndim.eq.3) call prompt('enter tilt angle ',angletilt,-90.,90.)
+       call prompt('enter rotation angle about z axis (deg)',anglez,0.,360.)
+       if (ndim.eq.3) then
+          call prompt('enter rotation angle about y axis (deg)',angley,0.,360.)
+          call prompt('enter rotation angle about z axis (deg)',anglex,0.,360.)
+       endif
        !xorigin(1:ndim) = 0.5*(lim(1:ndim,1) + lim(1:ndim,2))
        do i=1,ndim
           call prompt('enter location of origin '//trim(label(ix(i))),xorigin(i))

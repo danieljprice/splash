@@ -14,13 +14,13 @@
 !   iadvance : integer telling the loop how to advance the timestep
 !
 subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
-  xmin,xmax,ymin,ymax,anglerot,angletilt,iadvance,isave)
+  xmin,xmax,ymin,ymax,anglex,angley,anglez,iadvance,isave)
   implicit none
   integer, intent(in) :: npart,iplotx,iploty,irender
   integer, intent(out) :: iadvance
   real, dimension(npart), intent(in) :: xcoords, ycoords
   real, intent(inout) :: xmin,xmax,ymin,ymax
-  real, intent(inout) :: anglerot,angletilt
+  real, intent(inout) :: anglex,angley,anglez
   logical, intent(out) :: isave
   integer :: i,iclosest,nc,ipts,int_from_string
   real :: xpt,ypt,xpt2,ypt2,rmin,rr,gradient,yint
@@ -157,44 +157,64 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
      !
      !--rotation
      !
-     case(',') ! rotate left by 15 degrees
-        print*,'rotating about z by -15 degrees...'
-        anglerot = anglerot - 15.
+     case(',')
+        print*,'changing z rotation angle by -15 degrees...'
+        anglez = anglez - 15.
         iadvance = 0
         iexit = .true.
-     case('<') ! rotate left by 30 degrees
-        print*,'rotating about z by -30 degrees...'
-        anglerot = anglerot - 30.
+     case('<')
+        print*,'changing z rotation angle by -30 degrees...'
+        anglez = anglez - 30.
         iadvance = 0
         iexit = .true.
-     case('.') ! rotate right by 15 degrees
-        print*,'rotating about z by 15 degrees...'
-        anglerot = anglerot + 15.
+     case('.')
+        print*,'changing z rotation angle by 15 degrees...'
+        anglez = anglez + 15.
         iadvance = 0
         iexit = .true.
-     case('>') ! rotate left by 30 degrees
-        print*,'rotating about z by 30 degrees...'
-        anglerot = anglerot + 30.
+     case('>')
+        print*,'changing z rotation angle by 30 degrees...'
+        anglez = anglez + 30.
         iadvance = 0
         iexit = .true.
-     case('''') ! rotate up by 15 degrees
-        print*,'rotating up (about x) by 15 degrees...'
-        angletilt = angletilt - 15.
+     case('l')
+        print*,'changing y rotation angle by -15 degrees...'
+        angley = angley - 15.
         iadvance = 0
         iexit = .true.
-     case('"') ! rotate up by 30 degrees
-        print*,'rotating up (about x) by 30 degrees...'
-        angletilt = angletilt - 30.
+     case('L')
+        print*,'changing y rotation angle by -30 degrees...'
+        angley = angley - 30.
         iadvance = 0
         iexit = .true.
-     case('/') ! rotate down by 15 degrees
-        print*,'rotating down (about x) by 15 degrees...'
-        angletilt = angletilt + 15.
+     case(';')
+        print*,'changing y rotation angle by 15 degrees...'
+        angley = angley + 15.
         iadvance = 0
         iexit = .true.
-     case('?') ! rotate down by 30 degrees
-        print*,'rotating down (about x) by 30 degrees...'
-        angletilt = angletilt + 30.
+     case(':')
+        print*,'changing y rotation angle by 30 degrees...'
+        angley = angley + 30.
+        iadvance = 0
+        iexit = .true.
+     case('''')
+        print*,'changing x rotation angle by -15 degrees...'
+        anglex = anglex - 15.
+        iadvance = 0
+        iexit = .true.
+     case('"')
+        print*,'changing x rotation angle by -30 degrees...'
+        anglex = anglex - 30.
+        iadvance = 0
+        iexit = .true.
+     case('/')
+        print*,'changing x rotation angle by 15 degrees...'
+        anglex = anglex + 15.
+        iadvance = 0
+        iexit = .true.
+     case('?')
+        print*,'changing x rotation angle by 30 degrees...'
+        anglex = anglex + 30.
         iadvance = 0
         iexit = .true.
      !
@@ -214,6 +234,9 @@ subroutine interactive_part(npart,iplotx,iploty,irender,xcoords,ycoords, &
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
         iadvance = int_from_string(char)
+        print*,' setting timestep jump = ',iadvance
+     case(')')
+        iadvance = 10
         print*,' setting timestep jump = ',iadvance
      end select
 

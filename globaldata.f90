@@ -120,7 +120,7 @@ module settings
 !
  integer :: ixsec,nxsec
  logical :: xsec_nomulti, irotate, flythru
- real :: anglerot, angletilt
+ real :: anglex, angley, anglez
  real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
  real, dimension(3) :: xorigin
 !
@@ -148,7 +148,7 @@ module settings
  namelist /renderopts/ npix, ncontours,iplotcont_nomulti, &
    xsec_nomulti,iPlotColourBar,xsecpos_nomulti, &
    xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
-   irotate, anglerot, angletilt
+   irotate, anglex, angley, anglez
  
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot, iplotpartvec
      
