@@ -3,35 +3,43 @@
 !------------------------------------
 subroutine exact_rhoh(hfact,ndim,pmass,npart,xmin,xmax)
  implicit none
- integer, parameter :: npts = 200
  integer, intent(in) :: ndim,npart
- integer i,j
- real, dimension(0:npts) :: xplot,yplot
  real, intent(in) :: hfact,xmin,xmax
  real, intent(in), dimension(npart) :: pmass
- real dx,pmassprev
+ integer, parameter :: npts = 200
+ integer :: i
+ real, dimension(0:npts) :: xplot,yplot
+ real :: dx,pmassmin,pmassmax
       
  ! hfact = 1.5*massp
  if (hfact.gt.0.01) then
-    write(*,"(a,f5.2,a,i1,a)") 'plotting relation h = ',hfact,'*(m/rho)**(1/',ndim,')'
-    dx = (xmax-xmin)/float(npts)
-    xplot(0) = xmin
+    xplot(0) = max(xmin,1.e-3)
+    dx = (xmax-xplot(0))/float(npts)
 !
-!--plot one line for each different mass value
+!--plot a line for minimum and maximum masses
 !
-    pmassprev = 0.
-    do j=1,npart
-       if (abs(pmass(j)-pmassprev).gt.1.e-9) then
-          do i=1,npts
-             xplot(i) = xplot(0)+dx*(i-1)
-             yplot(i) = hfact*(pmass(j)/xplot(i))**(1./FLOAT(ndim))
-             !  print*,i,' x,y = ',xplot(i),yplot(i)
-          enddo
-          !!print*,' plotting h = ',hfact,'*(',pmass(j),'/rho)^(1/ndim)'
-          call pgline(npts+1,xplot,yplot)
-       endif
-       pmassprev = pmass(j)
+    pmassmin = minval(pmass)
+    pmassmax = maxval(pmass)
+
+    do i=1,npts
+      xplot(i) = xplot(0)+dx*(i-1)
+      yplot(i) = hfact*(pmassmax/xplot(i))**(1./FLOAT(ndim))
     enddo
+    write(*,"(a,f5.2,a,1pe8.2,a,i1,a)") ' plotting h = ',hfact, &
+                               '*(',pmassmax,'/rho)**(1/',ndim,')'
+    call pgline(npts,xplot(1:npts),yplot(1:npts))
+    yplot = 0.
+    
+    if (abs(pmassmin-pmassmax).gt.1.e-10 .and. pmassmin.gt.1.e-10) then
+       do i=1,npts
+         yplot(i) = hfact*(pmassmin/xplot(i))**(1./FLOAT(ndim))
+         print*,xplot(i),yplot(i)
+       enddo
+       write(*,"(a,f5.2,a,1pe8.2,a,i1,a)") ' plotting h = ',hfact, &
+                               '*(',pmassmin,'/rho)**(1/',ndim,')'
+       call pgline(npts,xplot(1:npts),yplot(1:npts))    
+    endif
+
  endif  
  
  return
