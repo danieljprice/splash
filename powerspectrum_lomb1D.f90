@@ -33,6 +33,7 @@ subroutine powerspectrum_lomb(npts,x,dat,nfreq,freq,freqmin,freqmax,power)
  print*,'data mean = ',datmean,' std. dev = ',sqrt(datvar)
  if (datvar.le.0.) then 
     print*,'error: variance = 0'
+    power = 0.
     return
  endif 
 !

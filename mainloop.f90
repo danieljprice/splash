@@ -41,12 +41,13 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
 
   real, parameter :: pi = 3.1415926536
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
-  real, dimension(maxpart) :: xplot,yplot,zplot
+  real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
   real, dimension(:), allocatable :: datpix1D, xgrid
   real, dimension(:,:), allocatable :: datpix,vecpixx,vecpixy
   real, dimension(:,:,:), allocatable :: datpix3D
   real, dimension(ndim) :: xcoords
   real :: xmin,xmax,ymin,ymax,zmin,zmax,ymean
+  real :: xmintemp,xmaxtemp,ymintemp,ymaxtemp
   real :: vecmax,rendermin,rendermax
   real :: xsecmin,xsecmax,dxsec,xsecpos
   real :: pixwidth
@@ -57,7 +58,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   real, dimension(2) :: angles
 
   logical :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
-  logical :: log, inewpage, tile_plots, debug, isave
+  logical :: log, inewpage, tile_plots, debug, isave, lastplot
 
   character(len=60) :: title,titlex
   character(len=20) :: labelx,labely,labelrender
@@ -69,8 +70,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   ! initialisations
   !------------------------------------------------------------------------
 
-  x_sec = xsec_nomulti
-  iplotcont = iplotcont_nomulti
   title = ' '
   titlex = ' '
   titlelist = ' '
@@ -79,6 +78,15 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   tile_plots = .false.
   iplots = 0 ! counter for how many plots have been plotted in total
   iplotsonpage = 0  ! counter for how many plots on page
+  irenderplot = 0
+  ivectorplot = 0
+  x_sec = xsec_nomulti
+  iplotcont = iplotcont_nomulti
+  lastplot = .false.
+  xmin = 0.
+  xmax = 0.
+  ymin = 0.
+  ymax = 0.
 
   if (ndim.eq.1) x_sec = .false. ! can't have xsec in 1D
   nxsec = 1
@@ -250,10 +258,21 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
         call pgqch(charheight) ! in PGPLOT scaled units
         !--for consecutive plots (ie. if not multi but nyplots > 1 plots consecutive numbers)             
         iploty = ipicky + nyplot - 1
-        !--set current x, y plot from multiplot array
+        !--set current x, y, render and vector plot from multiplot array
         if (imulti) then
            iploty = multiploty(nyplot)
            iplotx = multiplotx(nyplot)
+           irenderplot = irendermulti(nyplot)   
+           ivectorplot = ivecplotmulti(nyplot)
+           iplotcont = iplotcontmulti(nyplot)
+           x_sec = x_secmulti(nyplot)
+           xsecpos = xsecposmulti(nyplot)
+        else
+           irenderplot = irender
+           ivectorplot = ivecplot
+           iplotcont = iplotcont_nomulti
+           x_sec = xsec_nomulti
+           xsecpos = xsecpos_nomulti        
         endif
         !--------------------------------------------------------------
         !  copy from main dat array into xplot, yplot 
@@ -347,20 +366,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
 
         if ((iploty.le.ndim).and.(iplotx.le.ndim)) then
 
-           !!--set rendering options equal to settings in multiplot         
-           if (imulti) then
-              irenderplot = irendermulti(nyplot)      
-              ivectorplot = ivecplotmulti(nyplot)
-              iplotcont = iplotcontmulti(nyplot)
-              x_sec = x_secmulti(nyplot)
-              xsecpos = xsecposmulti(nyplot)
-           else
-              irenderplot = irender
-              ivectorplot = ivecplot
-              iplotcont = iplotcont_nomulti
-              x_sec = xsec_nomulti
-              xsecpos = xsecpos_nomulti
-           endif
            npixx = npix
 
            !!--work out coordinate that is not being plotted         
@@ -779,9 +784,15 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                                ntot(i))
               !
               !--enter interactive mode
-              !             
-             if (interactive) then
-                iadvance = nfreq                
+              !
+              lastplot = (i.eq.n_end .and. nyplot.eq.nyplots .and. k.eq.nxsec)
+              
+             if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
+                iadvance = nfreq
+                xmintemp = xmin
+                xmaxtemp = xmax
+                ymintemp = ymin
+                ymaxtemp = ymax            
                 call interactive_part(ninterp,iplotx,iploty,irenderplot, &
                      xplot(1:ninterp),yplot(1:ninterp),dat(1:ninterp,ih,i),icolourme(1:ninterp), &
                      xmin,xmax,ymin,ymax,angletempx,angletempy,angletempz,ndim,iadvance,isave)                
@@ -798,7 +809,14 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                    anglex = angletempx
                    angley = angletempy
                    anglez = angletempz
-                endif 
+                   !--change to fixed plot limits if limits have changed
+                   if (iadapt) then
+                      if (abs(xmintemp-xmin).gt.tol .or. abs(xmaxtemp-xmax).gt.tol) iadapt = .false.
+                      if (abs(ymintemp-ymin).gt.tol .or. abs(ymaxtemp-ymax).gt.tol) iadapt = .false.
+                      print*,'adaptive plot limits = ',iadapt
+                   endif
+                endif
+                if (iadvance.eq.-666) exit over_timesteps
              endif
 
               !
@@ -817,8 +835,8 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            ! output some muff to the screen
            !---------------------------------
            
-           print*,trim(labely),'min,max = ',ymin,ymax
-           print*,trim(labelx),'min,max = ',xmin,xmax
+           print*,trim(labely),' min,max = ',ymin,ymax
+           print*,trim(labelx),' min,max = ',xmin,xmax
               
            !--------------------------------------------------------------
            ! set up pgplot page (this is my version of PGENV and PGLABEL)
@@ -889,18 +907,33 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            !--enter interactive mode
            !
            iadvance = nfreq
-           if (interactive) then
+           lastplot = (i.eq.n_end .and. nyplot.eq.nyplots)
+
+           if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
+              xmintemp = xmin
+              xmaxtemp = xmax
+              ymintemp = ymin
+              ymaxtemp = ymax
               call interactive_part(ntot(i),iplotx,iploty,0,xplot(1:ntot(i)), &
                                     yplot(1:ntot(i)),dat(1:ninterp,ih,i),icolourme(1:ntot(i)), &
                                     xmin,xmax,ymin,ymax, &
                                     angletempx,angletempy,angletempz,ndim,iadvance,isave)
+              print*,'xmin,xmax = ',xmin,xmax
               if (isave) then
                  !--save settings from interactive mode
                  lim(iplotx,1) = xmin
                  lim(iplotx,2) = xmax
                  lim(iploty,1) = ymin
                  lim(iploty,2) = ymax
+                 !--change to fixed plot limits if limits have changed
+                 if (iadapt) then
+                    if (abs(xmintemp-xmin).gt.tol .or. abs(xmaxtemp-xmax).gt.tol) iadapt = .false.
+                    if (abs(ymintemp-ymin).gt.tol .or. abs(ymaxtemp-ymax).gt.tol) iadapt = .false.
+                    print*,xmintemp,xmin,xmaxtemp,xmax
+                    print*,'adaptive plot limits = ',iadapt
+                 endif
               endif
+              if (iadvance.eq.-666) exit over_timesteps
            endif
            
         elseif (iploty.le.numplot) then! ie iploty = extra
@@ -911,22 +944,6 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
 ! from the particle data, such as errors etc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
            
-           !--------------------------------------------------------------
-           ! set up pgplot page, but do not plot axes or
-           ! labels
-           !--------------------------------------------------------------
-
-           iplots = iplots + 1
-           iplotsonpage = iplotsonpage + 1
-           if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
-
-           just = 0  ! this is irrelevant since axes are not plotted
-           xmin = 0.0 ! these are also irrelevant
-           xmax = 1.0
-           ymin = 0.0
-           ymax = 1.0
-           
-
            !--------------------------------------------------------------
            !  then call subroutine to plot the additional plot
            ! e.g. call routine to do convergence plot here
@@ -941,7 +958,11 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
            !--power spectrum plots (uses x and data as yet unspecified)
            !
            if (iploty.eq.ipowerspec) then 
-
+              labelx = 'frequency'
+              labely = 'power'
+              xmin = 1./wavelengthmax  ! freq min
+              xmax = nfreqspec*xmin
+              
               if (.not.idisordered) then! interpolate first
                  !!--allocate memory for 1D grid (size = 2*npart)
                  ngrid = 2*npartoftype(1,i)
@@ -958,46 +979,73 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
                       dat(1:ninterp,ih,i),dat(1:ninterp,ipowerspecy,i), & 
                       ninterp,xmin,datpix1D,ngrid,dxgrid)
                  !!--plot interpolated 1D data to check it
-                 print*,'plotting interpolated data...'
-                 print*,minval(datpix1D),maxval(datpix1D)
-                 ymin = minval(datpix1D)
-                 ymax = 2.0
-
-           if (tile_plots) then
-              if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
-              call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                             ' ',' ',' ',just,0)
-           else
-               !--change the page if pagechange set
-              !  or, if turned off, between plots on first page only
-              inewpage = ipagechange .or. (iplots.le.nacross*ndown)
-              call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
-                'x',label(ipowerspecy),'1D interpolation', &
-                just,0,isamexaxis,isameyaxis,inewpage)
-           endif           
+                 !!print*,minval(datpix1D),maxval(datpix1D)
 
                  !call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
                  !call pgbox('BCNST',0.0,0,'1BVCNST',0.0,0)      
                  !call pglabel('x',label(ipowerspecy),'1D interpolation')
-                 call pgline(ngrid,xgrid,datpix1D)
-                 read*
+                 !call pgline(ngrid,xgrid,datpix1D)
+                 !read*
                  !call pgpage! change page
 
                  !!--call power spectrum calculation on the even grid
-                 !call plot_powerspectrum(ngrid,nfreqspec,wavelengthmax, &
-                 !     xgrid,datpix1D,idisordered,itrans(iploty))              
+                 call powerspectrum_fourier(ngrid,xgrid,datpix1D,nfreqspec, &
+                      xplot(1:nfreqspec),xmin,xmax,yplot(1:nfreqspec))
+                 if (allocated(datpix1D)) deallocate(datpix1D)              
               else
                  !!--or else call power spectrum calculation on the particles themselves    
-                 call plot_powerspectrum(ntot(i),nfreqspec,wavelengthmax, &
-                      dat(1:ntot(i),ix(1),i), &
-                      dat(1:ntot(i),ipowerspecy,i),idisordered,itrans(iploty))
+                 call powerspectrum_lomb(ntot(i),dat(1:ntot(i),ix(1),i), &
+                      dat(1:ntot(i),ipowerspecy,i),nfreqspec, &
+                      xplot(1:nfreqspec),xmin,xmax,yplot(1:nfreqspec))
               endif
+              
+              ymin = minval(yplot(1:nfreqspec))
+              ymax = maxval(yplot(1:nfreqspec))
+
+              !--------------------------------------------------------------
+              ! output some muff to the screen
+              !--------------------------------------------------------------
+              
+              print*,trim(labelx),'min,max = ',xmin,xmax
+              print*,trim(labely),'min,max = ',ymin,ymax
+
+              !--------------------------------------------------------------
+              ! set up pgplot page
+              !--------------------------------------------------------------
+
+              iplots = iplots + 1
+              iplotsonpage = iplotsonpage + 1
+              if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
+              just = 0
+
+              if (tile_plots) then
+                 if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
+                 call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+                                trim(labelx),trim(labely),'Power spectrum',just,iaxis)
+              else
+                  !--change the page if pagechange set
+                 !  or, if turned off, between plots on first page only
+                 inewpage = ipagechange .or. (iplots.le.nacross*ndown)
+                 call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+                   trim(labelx),trim(labely),'Power spectrum', &
+                   just,iaxis,isamexaxis,isameyaxis,inewpage)
+              endif 
+              
+              call pgline(nfreqspec,xplot,yplot)
+
            endif
            !
            !--if this is the first plot on the page, print legend
            !
            if (iplotsonpage.eq.1) call legend(time(i),hposlegend,vposlegend)
-
+           
+           lastplot = (i.eq.n_end)
+              
+           if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
+              iadvance = nfreq
+              call interactive_step(iadvance)
+              if (iadvance.eq.-666) exit over_timesteps
+           endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
            ! if plot not in correct range
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
