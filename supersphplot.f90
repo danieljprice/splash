@@ -148,6 +148,7 @@ program supersphplot
 !----------------------------------------------------------------------------------
   use filenames
   use labels
+  use mem_allocation, only:deallocate_all
   use settings_data, only:buffer_data
   use system_commands
   implicit none
@@ -208,5 +209,10 @@ program supersphplot
   ! enter main menu
   !
   call menu
+  
+  !
+  ! deallocate all memory (not strictly necessary)
+  !
+  call deallocate_all
              
 end program supersphplot

@@ -171,4 +171,28 @@ subroutine alloc(npartin,nstep,ncolumns)
   return 
 end subroutine alloc
 
+
+!-----------------------------------------
+!
+!  deallocation of remaining memory
+!  (for tidiness - not strictly necessary)
+!
+!-----------------------------------------
+subroutine deallocate_all
+ use particle_data
+ use settings_part, only:icircpart
+ implicit none
+ 
+ if (allocated(dat)) deallocate(dat)
+ if (allocated(iam)) deallocate(iam)
+ if (allocated(icolourme)) deallocate(icolourme)
+ if (allocated(icircpart)) deallocate(icircpart)
+ if (allocated(ntot)) deallocate(ntot)
+ if (allocated(npartoftype)) deallocate(npartoftype)
+ if (allocated(time)) deallocate(time)
+ if (allocated(gamma)) deallocate(gamma)
+ 
+ return
+end subroutine deallocate_all
+
 end module mem_allocation
