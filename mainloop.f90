@@ -23,6 +23,7 @@ subroutine mainloop(ipicky,ipickx,irender,ivecplot)
   use transforms
   use interactive_routines
   use geometry
+  use powerspectrums
   implicit none
   integer, intent(in) :: ipicky, ipickx, irender, ivecplot
 
