@@ -250,6 +250,7 @@ subroutine plotstep
   use settings_xsecrot
   use settings_powerspec
 
+  use colourparts
   use transforms
   use interactive_routines
   use geometry
@@ -261,7 +262,7 @@ subroutine plotstep
   implicit none
   integer :: j,k
   integer :: nyplot
-  integer :: ninterp
+  integer :: ninterp,irenderpart
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec
 
@@ -298,7 +299,12 @@ subroutine plotstep
         x_sec = x_secmulti(nyplot)
         xsecpos = xsecposmulti(nyplot)
      else
-        irenderplot = irender
+        if (icolour_particles) then
+           irenderplot = 0
+           irenderpart = irender
+        else
+           irenderplot = irender
+        endif
         ivectorplot = ivecplot
         iplotcont = iplotcont_nomulti
         x_sec = xsec_nomulti
@@ -780,6 +786,11 @@ subroutine plotstep
               ! particle plots
               !-----------------------
               if (iplotpart) then
+                 if (irenderpart.gt.0 .and. irenderpart.le.numplot) then
+                    call colour_particles(dat(1:ntot(i),irenderpart,i), &
+                         lim(irenderpart,1),lim(irenderpart,2), &
+                         icolourme(1:ntot(i)),ntot(i))
+                 endif
                  call particleplot(xplot(1:ntot(i)),yplot(1:ntot(i)), &
                    zplot(1:ntot(i)),dat(1:ntot(i),ih,i),ntot(i),iplotx,iploty, &
                    icolourme(1:ntot(i)),npartoftype(:,i), &

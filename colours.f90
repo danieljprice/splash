@@ -5,7 +5,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 7
+ integer, parameter :: ncolourschemes = 8
  character(LEN=12), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale   ', &
       'red         ', &
@@ -13,7 +13,8 @@ module colours
       'rainbow     ', &
       'frog monster', &
       'other crap  ', &
-      'useless     '/)
+      'blood red   ', &
+      'spectrum    '/)
 
 contains
 
@@ -24,9 +25,10 @@ contains
 subroutine colour_set(icolourscheme)
   implicit none
   integer, intent(in) :: icolourscheme
-  integer :: i,icolourmin,icolmin,icolmax,ncolmax,ncolours
-  real :: red,green,blue,hue,light,sat
+  integer :: i,icolourmin,icolmin,icolmax,ncolmax,ncolours,nset
+  real :: hue,light,sat,brightness
   real :: dhue,dlight,dsat,dred,dgreen,dblue
+  real, dimension(5) :: lum,red,green,blue
   logical :: rgb
       
   red = 0.0
@@ -34,6 +36,7 @@ subroutine colour_set(icolourscheme)
   blue = 0.0
   rgb = .false.
   ncolours = ncolourmax
+  nset = 5
 !
 !--set first colour index (warning: colours 1-16 have presets, so
 !  overwriting these means that line graphs that use colour will come
@@ -45,12 +48,20 @@ subroutine colour_set(icolourscheme)
 !  adjust ncolours if necessary
 !      
   call PGQCOL(icolmin,icolmax)
+  print*,' from device = ',icolmin,icolmax
+  call PGQCIR(icolmin,icolmax)
+  print*,' other = ',icolmin,icolmax
   if (icolourmin.lt.icolmin) icolourmin = icolmin
   ncolmax = icolmax - icolourmin
   if (ncolours.gt.ncolmax) then  
      ncolours = ncolmax
      print*,'Warning: Device allows only ',ncolours+1,' colours'
   endif
+  !
+  !--set this as the range of colour indices to use
+  !
+  call PGSCIR(icolourmin,icolourmin+ncolours)  
+
 !
 !--starting values
 !      
@@ -103,37 +114,59 @@ subroutine colour_set(icolourscheme)
   case(7)        ! rgb attempts
 !    useless
      rgb = .true.
-     red = 0.3333
-     green = 0.0
-     blue = 0.0      
      dred = 0.0        !0.333/FLOAT(ncolours)
      dblue = 0.3333/FLOAT(ncolours)
      dgreen = 0.0        !0.333/FLOAT(ncolours)         
-  case default
+!  case default
 !    default is greyscale
-     return
+!!     return
   end select
 !
 !--set colour indexes from icolourmin-> icolourmin+ncolours
 !  increment values in steps
 !
-  do i=icolourmin,icolourmin+ncolours
-     if (rgb) then
-        red = red + dred
-        blue = blue + dblue
-        green = green + dgreen
-        call PGSCR(i,red,green,blue)
-     else   
-        hue = hue + dhue
-        sat = sat + dsat
-        light = light + dlight
-        call PGSHLS(i,hue,light,sat)
-     endif
-  enddo
-  !
-  !--set this as the range of colour indices to use
-  !
-  call PGSCIR(icolourmin,icolourmin+ncolours)  
+  if (icolourscheme .le. 5) then
+     do i=icolourmin,icolourmin+ncolours
+        if (rgb) then
+           red = red + dred
+           blue = blue + dblue
+           green = green + dgreen
+           call PGSCR(i,red,green,blue)
+        else   
+           hue = hue + dhue
+           sat = sat + dsat
+           light = light + dlight
+           call PGSHLS(i,hue,light,sat)
+        endif
+     enddo
+  else
+     brightness = 0.5
+     select case(icolourscheme)
+     case(6)
+     lum = (/0.0,0.25,0.5,0.75,1.0/)
+     red = (/0.0,1.0,1.0,1.0,0.0/)
+     blue = (/1.0,1.0,0.0,0.0,0.0/)
+     green = (/0.0,0.0,0.0,1.0,1.0/)
+     nset = 5
+     case(7)
+     lum(1:2) = (/0.0,1.0/)
+     red(1:2) = (/0.0,1.0/)
+     blue = 0.
+     green = 0.
+     nset = 2
+     case(8)
+     lum = (/0.0,0.25,0.5,0.75,1.0/)
+     red = (/1.0,0.0,0.0,1.0,1.0/)
+     blue = (/0.5,0.75,1.0,0.0,0.0/)
+     green = (/0.0,0.0,0.0,1.0,0.0/)
+     nset = 5
+     end select
+
+     call PGCTAB(lum(1:nset),red(1:nset),green(1:nset),blue(1:nset), &
+                 nset,1.0,brightness)
+
+  endif  
+  
   print*,'using colour scheme ',trim(schemename(icolourscheme))
   return
   

@@ -19,8 +19,9 @@ subroutine options_render
            ' 2) change colour scheme             (',i2,' )',/,    &
            ' 3) toggle plot contours             ( ',L1,' )',/, &
            ' 4) change number of contours        (',i3,' )',/, &
-           ' 5) toggle colour bar                ( ',L1,' )')
-  call prompt('enter option',ians,0,5)
+           ' 5) toggle colour bar                ( ',L1,' )',/, &
+           ' 6) toggle pixels or particles       ( ',L1,' )' )
+  call prompt('enter option',ians,0,6)
 !
 !--options
 !
@@ -61,6 +62,11 @@ subroutine options_render
     case(5)
        iPlotColourBar = .not.iPlotColourBar
        print*,'plot colour bar = ',iPlotColourBar
+!------------------------------------------------------------------------
+    case(6)
+       icolour_particles = .not.icolour_particles
+       print*,'particles colouring = ',icolour_particles
+
   end select
     
  return

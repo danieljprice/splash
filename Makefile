@@ -38,7 +38,7 @@ GADGETSPH = read_data_gadget.f90
 
 # put modules separately as these must be compiled before the others
 MODULES= globaldata.f90 transform.f90 prompting.f90 \
-         geometry.f90 colours.f90 limits.f90 rotate.f90 \
+         geometry.f90 colours.f90 colourparts.f90 limits.f90 rotate.f90 \
          interactive.f90 allocate.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
          powerspectrums.f90 \

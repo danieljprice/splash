@@ -119,10 +119,10 @@ module settings_render
  implicit none
  integer :: ncontours,npix,icolours
  logical :: iplotcont_nomulti
- logical :: iPlotColourBar
+ logical :: iPlotColourBar,icolour_particles
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
-   iPlotColourBar
+   iPlotColourBar,icolour_particles
 
 end module settings_render
 !
