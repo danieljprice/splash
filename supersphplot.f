@@ -21,10 +21,12 @@
 !     interpolate3D	 : interpolation of 3D SPH data to 3D grid using SPH kernel
 !     interpolate3D_fastxsec   : fast cross section through 3D data using SPH kernel
 !     interpolate3D_projection : fast projection of 3D data to 2D grid using integrated SPH kernel
-!     legend		 : plots legend on plot (time)
+!     legend		       : plots legend on plot (time)
+!     lomb_powerspectrum1D     : calculates power spectrum of data on particles
 !     menu_actions	 : plot options in menu format
 !     modules		 : contains all shared (global) variables
 !     plot_average	 : bins particles along x-axis and plots average line
+!     plot_powerspectrum : calls powerspectrum and plots it
 !     print_menu	 : prints menu
 !     read_data_dansph   : reads data from my format of data files
 !     read_data_mrbsph   : reads data from Matthew Bate's format of data files
@@ -44,6 +46,7 @@
 !
 !     This version for both NDSPMHD and Matthew Bate's code 2003
 !     Changes log:
+!      09/12/03 - power spectrum plotting in 1D
 !      24/11/03 - calc_quantities in separate subroutine, rhoh moved
 !      28/10/03 - bug fix when no data 
 !      14/10/03 - new colour schemes
@@ -112,7 +115,7 @@
       INTEGER :: irenderprev, istepprev
       INTEGER :: isizex,isizey	! for sending datpix to transform
       INTEGER :: nsink,nsinkstart,nsinkend,nghoststart,nghostend
-      INTEGER :: ishk,int_from_string
+      INTEGER :: ishk,int_from_string,ichoosey
 
       CHARACTER(LEN=8) :: string	! used in PGPLOT calls
       REAL, DIMENSION(2,max) :: vecplot
@@ -198,19 +201,23 @@ c get rootname from command line/file and read file
 !
 !--numplot is the total number of data columns (read + calculated)
 !   not including the particle co-ordinates
-!  nextra are extra graphs to plot (e.g. convergence plots)
+!  nextra are extra graphs to plot (e.g. convergence plots, power spectrum)
 !
+      nextra = 0
+      IF (ndim.EQ.1) THEN
+         nextra = 1	! one extra plot = power spectrum
+         ipowerspec = ncolumns + ncalc + 1
+         label(ipowerspec) = '1D Power spectrum'
+      ENDIF
       IF (iexact.EQ.4) THEN	! toy star plot A-C plane
-         nextra = 1
-	 iextra = ncolumns + ncalc + 1
-	 label(iextra) = 'A-C plane'
+         nextra = nextra + 1
+	 iACplane = ncolumns + ncalc + nextra
+	 label(iACplane) = 'A-C plane'
 	 IF (magfield) THEN
 	    sigma = sigma0
 	 ELSE
 	    sigma = 0.
 	 ENDIF
-      ELSE		! otherwise no extra plots
-         nextra = 0	 
       ENDIF	 
 
       IF (ivegotdata) THEN
@@ -442,33 +449,35 @@ c get rootname from command line/file and read file
 !  copy from main dat array into xplot, yplot 
 !  apply transformations (log, 1/x, etc) if appropriate
 !--------------------------------------------------------------
-             CALL transform(dat(iplotx,:,i),xplot,itrans(iplotx),max)
-	     CALL transform(dat(iploty,:,i),yplot,itrans(iploty),max)
-	     labelx = transform_label(label(iplotx),itrans(iplotx))
-	     labely = transform_label(label(iploty),itrans(iploty))
-	     CALL transform(lim(iplotx,1),xmin,itrans(iplotx),1)
-	     CALL transform(lim(iplotx,2),xmax,itrans(iplotx),1)
-	     CALL transform(lim(iploty,1),ymin,itrans(iploty),1)
-	     CALL transform(lim(iploty,2),ymax,itrans(iploty),1)
+             IF (iploty.LE.numplot-nextra 
+     &     .AND. iplotx.LE.numplot-nextra) THEN
+	        CALL transform(dat(iplotx,:,i),xplot,itrans(iplotx),max)
+	        CALL transform(dat(iploty,:,i),yplot,itrans(iploty),max)
+	        labelx = transform_label(label(iplotx),itrans(iplotx))
+	        labely = transform_label(label(iploty),itrans(iploty))
+	        CALL transform(lim(iplotx,1),xmin,itrans(iplotx),1)
+	        CALL transform(lim(iplotx,2),xmax,itrans(iplotx),1)
+	        CALL transform(lim(iploty,1),ymin,itrans(iploty),1)
+	        CALL transform(lim(iploty,2),ymax,itrans(iploty),1)
 !--work out whether to use log axes - this is for the call to PGBOX
-             logx = ' '
-             logy = ' '
-             IF (itrans(iplotx).EQ.1) logx = 'L'
-	     IF (itrans(iploty).EQ.1) logy = 'L'
-
+                logx = ' '
+                logy = ' '
+                IF (itrans(iplotx).EQ.1) logx = 'L'
+	        IF (itrans(iploty).EQ.1) logy = 'L'
 
 !--write username, date on plot
 !         IF (nacross.le.2.and.ndown.le.2) CALL PGIDEN
 
 !--adjust plot limits if adaptive plot limits set
-	    IF ((ipagechange.AND.iadapt).AND.(iplotx.LE.ndataplots)
-     &         .AND.(iploty.LE.ndataplots)) THEN
-	       xmin = minval(xplot(1:ntotplot(i)))
-	       xmax = maxval(xplot(1:ntotplot(i)))*scalemax
-	       ymin = minval(yplot(1:ntotplot(i)))
-	       ymax = maxval(yplot(1:ntotplot(i)))*scalemax
-	    ENDIF
+	       IF ((ipagechange.AND.iadapt).AND.(iplotx.LE.ndataplots)
+     &            .AND.(iploty.LE.ndataplots)) THEN
+	          xmin = minval(xplot(1:ntotplot(i)))
+	          xmax = maxval(xplot(1:ntotplot(i)))*scalemax
+	          ymin = minval(yplot(1:ntotplot(i)))
+	          ymax = maxval(yplot(1:ntotplot(i)))*scalemax
+	       ENDIF
 
+            ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! plots with co-ordinates as x and y axis
@@ -1114,7 +1123,7 @@ cc--plot vector map of magnetic field
 	       ENDDO
 	    ENDIF	! ilabelpart
 
-         ELSEIF (iploty.LE.numplot) THEN
+         ELSEIF (iploty.LE.numplot) THEN	! ie iploty = extra
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! additional plots (not plots of particle data - e.g where some additional 
 ! information is read from a file and plotted on the same page as the 
@@ -1149,7 +1158,19 @@ cc--plot vector map of magnetic field
             ! e.g. call routine to do convergence plot here
 	    IF (iexact.EQ.4) THEN
 	       CALL exact_toystar_ACplane(Atstar,Ctstar,sigma,gamma(i))
-	    ENDIF 
+	    ENDIF
+!
+!--power spectrum plots (uses x and data as yet unspecified)
+!
+	    IF (iploty.EQ.ipowerspec) THEN 
+	    !
+            ! prompt for data to take power spectrum of 
+	    ! 
+	       CALL prompt('Enter data to take power spectrum of',
+     &	                   ichoosey,ndim+1,numplot-nextra)
+               CALL plot_powerspectrum(npart(i),dat(ix(1),1:npart(i),i),
+     &                                 dat(ichoosey,1:npart(i),i))
+            ENDIF
 !
 !--if this is the first plot on the page, print legend
 !
@@ -1164,7 +1185,7 @@ cc--plot vector map of magnetic field
 	 ENDIF   ! ploty = whatever
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! plot exact solution
+! plot exact solution on top of the plot already on the page
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
          SELECT CASE(iexact)
@@ -1213,7 +1234,7 @@ cc--plot vector map of magnetic field
 	       ENDIF   
 	    ENDIF
 	    
-	    IF (iploty.EQ.iextra) THEN	! plot point on A-C plane
+	    IF (iploty.EQ.iACplane) THEN	! plot point on A-C plane
 	       CALL exact_toystar(time(i),gamma(i),
      &	                Htstar,Atstar,Ctstar,sigma,norder,7)
 	    ENDIF

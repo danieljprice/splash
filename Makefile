@@ -29,8 +29,11 @@ SOURCES= modules.f prompting.f90  supersphplot.f \
 	 interpolate3D_fastxsec.f \
 	 interpolate3D_projection.f \
 	 int_from_string.f90 \
-	 legend.f menu_actions.f \
-	 plot_average.f print_header.f90\
+	 legend.f \
+	 lomb_powerspectrum1D.f90 \
+	 menu_actions.f \
+	 plot_average.f plot_powerspectrum.f90 \
+	 print_header.f90\
 	 print_menu.f read_defaults.f \
          render_coarse.f render.f \
 	 setcolours.f set_defaults.f \

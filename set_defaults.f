@@ -14,7 +14,8 @@
       numplot=maxplot 	! reset if read from file
       ncalc = 0		! number of columns to calculate(e.g. radius)
       nextra = 0	! extra plots aside from particle data
-      iextra = 0	! label position of extra plot
+      iACplane = 0	! label position of toy star AC plane plot
+      ipowerspec = 0	! label position of power spectrum plot
       ncolumns=maxplot-ncalc	! number of columns in data file
       ndim = ndimmax		! number of coordinate dimensions
       ndimV = ndim	! default velocity same dim as coords

@@ -9,7 +9,7 @@
       MODULE params
        IMPLICIT NONE
        INTEGER, PARAMETER :: max=55000
-       INTEGER, PARAMETER :: maxstep=30
+       INTEGER, PARAMETER :: maxstep=100
        INTEGER, PARAMETER :: ndimmax = 3
        INTEGER, PARAMETER :: maxplot=24+2*ndimmax + 1	! maximum number of plots       
       END MODULE params
@@ -48,7 +48,7 @@
        INTEGER :: ivx,ivlast,irho,iutherm,ipr,ih,irad,iBfirst,iBlast
        INTEGER :: ipmass
        INTEGER :: ientrop,irad2,ipmag,ibeta,itotpr,ike,idivB,idivBerr
-       INTEGER :: iextra,itimestep
+       INTEGER :: iACplane,itimestep,ipowerspec
       END MODULE labels
 !
 !--module containing plot settings
