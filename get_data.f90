@@ -55,7 +55,7 @@ subroutine get_data(ireadfile)
      !--read plot limits from file, otherwise set plot limits
      !
      call read_limits(ierr)
-     if (ierr.gt.0) call set_limits
+     if (ierr.gt.0 .and. ivegotdata .and. nstepsinfile(i).ge.1) call set_limits
 
   elseif (ireadfile.gt.0) then
      !

@@ -104,7 +104,11 @@ subroutine options_limits
   case(7)
      call read_limits(ierr)
   case(8)
-     call set_limits 
+     if (ivegotdata) then
+        call set_limits 
+     else
+        print*,'no data with which to set limits!!'
+     endif
   end select
  
  return

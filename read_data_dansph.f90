@@ -41,7 +41,7 @@ subroutine read_data(rootname,istart,ifinish)
   character(LEN=*), intent(IN) :: rootname
   character(LEN=LEN(rootname)+4) :: datfile
   character(LEN=2) :: fileno
-  integer :: i,j,k,ifile,icol,ipos
+  integer :: i,j,k,ifile,icol,ipos,ierr
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin
   logical :: iexist,reallocate
@@ -68,19 +68,30 @@ subroutine read_data(rootname,istart,ifinish)
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
   k=1      
 
-50 continue
   ivegotdata = .false.
   !
   !--open data file and read data
   !
-  open(unit=11,ERR=81,file=datfile,status='old',form='unformatted')
-
+  open(unit=11,iostat=ierr,file=datfile,status='old',form='unformatted')
+  if (ierr /= 0) then
+     print*,'*** Error opening '//trim(datfile)//' ***'
+     return
+  endif
   ifinish = 100000
 !
 !--read first header line
 !
-  read(11,ERR=78,end=80) timein,npartin,ntotin,gammain, &
-       hfactin,ndim_max,ndimV_max,ncol_max	 
+  read(11,iostat=ierr,end=80) timein,npartin,ntotin,gammain, &
+       hfactin,ndim_max,ndimV_max,ncol_max
+  if (ierr /= 0) then
+     print "(a,/,a,/,a,/,a)",'*** Error reading first header ***', &
+	   '*** This is possibly because the dump is in single precision', &
+	   '*** whilst this subroutine assumes double precision. ', &
+	   '*** Edit read_data subroutine and recompile '
+     ifinish = istart
+     close(11)
+     return
+  endif
 !  print*,'reading time = ',timein,npartin,ntotin,gammain, &
 !       ndim_max,ndimV_max,ncol_max     
 !
@@ -88,7 +99,7 @@ subroutine read_data(rootname,istart,ifinish)
 !
   if (ntotin.lt.5500) then
      nstep_max = max(111,maxstep)
-  elseif (ntotin.lt.111111) then
+     elseif (ntotin.lt.111111) then
      nstep_max = max(11,maxstep)
   else 
      nstep_max = max(5,maxstep)
@@ -112,22 +123,28 @@ subroutine read_data(rootname,istart,ifinish)
      !
      !--read header line for this timestep
      !
-     read(11,ERR=67,end=67) timein,npart(i),ntot(i),gammain, &
-          hfactin,ndim,ndimV,ncolumns	 
+     read(11,iostat=ierr,end=67) timein,npart(i),ntot(i),gammain, &
+	  hfactin,ndim,ndimV,ncolumns
+     if (ierr /= 0) then
+	print*,'*** error reading timestep header ***'
+	ifinish = i-1
+	close(11)
+	return
+     endif
      time(i) = real(timein)
      gamma(i) = real(gammain)
      hfact = real(hfactin)
      npartoftype(1,i) = npart(i)
      npartoftype(2,i) = ntot(i)-npart(i)
      print*,'reading time = ',time(i),npart(i),ntot(i),gamma(i), &
-          hfact,ndim,ndimV,ncolumns
+	  hfact,ndim,ndimV,ncolumns
      if (ncolumns.ne.ncol_max) then
-        print*,'*** Warning number of columns not equal for timesteps'
-        print*,'ncolumns = ',ncolumns,ncol_max
+	print*,'*** Warning number of columns not equal for timesteps'
+	print*,'ncolumns = ',ncolumns,ncol_max
      endif
      if (ncolumns.gt.ncol_max) then
-        reallocate = .true.
-        ncol_max = ncolumns
+	reallocate = .true.
+	ncol_max = ncolumns
      endif
 
      if (ndim.gt.ndim_max) ndim_max = ndim
@@ -137,18 +154,18 @@ subroutine read_data(rootname,istart,ifinish)
      nghost(i) = ntot(i) - npart(i)
      if (ntot(i).gt.maxpart) then
         !print*, 'ntot greater than array limits!!'    
-        reallocate = .true.
+	reallocate = .true.
 	npart_max = int(1.1*ntot(i))
      endif
      if (i.eq.maxstep) then
-        nstep_max = i + max(10,INT(0.1*nstep_max))
-        reallocate = .true.
+	nstep_max = i + max(10,INT(0.1*nstep_max))
+	reallocate = .true.
      endif
      !
      !--reallocate memory for main data array
      !
      if (reallocate) then
-        call alloc(npart_max,nstep_max,ncol_max)
+	call alloc(npart_max,nstep_max,ncol_max)
      endif
 
   
@@ -176,64 +193,76 @@ subroutine read_data(rootname,istart,ifinish)
         !--read scalar variables
         !
 	if (allocated(dattemp)) deallocate(dattemp)
-        allocate(dattemp(ntot(i)))
+	allocate(dattemp(ntot(i)))
 	do j = 1,5
-           read (11,end=66,ERR=67) dattemp(1:ntot(i))
+	   read (11,end=66,ERR=67) dattemp(1:ntot(i))
 	   dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
 	   icol = icol + 1
 	enddo
+	
 	!
-        !--read alpha
+	!--non-MHD output
+	!
+	if (ncolumns.le.ndim+7+ndimV) then
+	!
+        !--read alpha, alphau
         !
-	read (11,end=66,ERR=67) dattempvec(1:3,1:ntot(i))
-	do ipos = icol,icol+2
-	   dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
-	enddo
-	icol = icol + 3
+	   read (11,end=66,ERR=67) dattempvec(1:2,1:ntot(i))
+	   do ipos = icol,icol+1
+	      dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
+	   enddo
+	   icol = icol + 2
+	
+	else
+	!
+	!--MHD output
+	!
+	
+	!
+        !--read alpha, alphau, alphaB
+        !
+	   read (11,end=66,ERR=67) dattempvec(1:3,1:ntot(i))
+	   do ipos = icol,icol+2
+	      dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
+	   enddo
+	   icol = icol + 3
 	!
         !--Bfield
         !
-	read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
-	do ipos = icol, icol+ndimV-1
-	   dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
-	enddo
-	icol = icol + ndimV
+	   read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
+	   do ipos = icol, icol+ndimV-1
+	      dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
+	   enddo
+	   icol = icol + ndimV
 	!
 	!--curl B
 	!
-        read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
-	do ipos = icol, icol+ndimV-1
-	   dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
-        enddo
-	icol = icol + ndimV
+	   read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
+	   do ipos = icol, icol+ndimV-1
+	      dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
+	   enddo
+	   icol = icol + ndimV
 	!
         !--div B
 	!
-        read (11,end=66,ERR=67) dattemp(1:ntot(i))
-	dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
-        icol = icol + 1
+	   read (11,end=66,ERR=67) dattemp(1:ntot(i))
+	   dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
+	   icol = icol + 1
 	!
         !--psi
 	!
-        read (11,end=66,ERR=67) dattemp(1:ntot(i))
-	dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
-        icol = icol + 1	
-	!
-	!--force
-	!
-        read (11,end=66,ERR=67) dattempvec(1:ndimV,1:ntot(i))
-	do ipos = icol, icol+ndimV-1
-	   dat(1:ntot(i),ipos,i) = real(dattempvec(ipos-icol+1,1:ntot(i)))
-	enddo
-	icol = icol+ndimV-1
+	   read (11,end=66,ERR=67) dattemp(1:ntot(i))
+	   dat(1:ntot(i),icol,i) = real(dattemp(1:ntot(i)))
+	   icol = icol + 1	
+	endif
 	!!print*,'columns read = ',icol,' should be = ',ncolumns
 
 	deallocate(dattemp,dattempvec)
      else
-        ntot(i) = 1
-        npart(i) = 1
-        nghost(i) = 0
-        dat(:,:,i) = 0.
+	ntot(i) = 1
+	npart(i) = 1
+	nghost(i) = 0
+	dat(:,:,i) = 0.
      endif
      iam(:,i) = 0
   enddo
@@ -246,53 +275,49 @@ subroutine read_data(rootname,istart,ifinish)
   goto 68
 
 66 continue
-  ifinish = i		! timestep there but data incomplete
-  ntot(i) = j-1
-  nghost(i) = ntot(i) - npart(i)
-  goto 68
+ifinish = i		! timestep there but data incomplete
+ntot(i) = j-1
+nghost(i) = ntot(i) - npart(i)
+goto 68
 
 67 continue
-  ifinish = i-1		! no timestep there at all
+ifinish = i-1		! no timestep there at all
 
 68 continue
   !
   !--close data file and return
   !      	      
-  close(unit=11)
+close(unit=11)
 
-  ivegotdata = .true.
-  ncolumns = ncol_max
-  ndim = ndim_max
-  ndimV = ndimV_max
-  print*,'ncolumns = ',ncolumns
+ivegotdata = .true.
+ncolumns = ncol_max
+ndim = ndim_max
+ndimV = ndimV_max
+print*,'ncolumns = ',ncolumns
 
-  print*,'>> READ all steps =',ifinish,'last step ntot = ',ntot(ifinish)
-  return    
+print*,'>> READ all steps =',ifinish,'last step ntot = ',ntot(ifinish)
+return    
 !
 !--errors
 !
 77 continue
-  print*,' *** Error encountered while reading file ***'
-  print*,' -> Check that magnetic field is toggled correctly'
-  return
+print*,' *** Error encountered while reading file ***'
+print*,' -> Check that magnetic field is toggled correctly'
+return
 
 78 continue
-  print*,' *** Error encountered while reading timestep ***'
-  print*,' -> number of columns in data file not equal to'
-  print*,'    that set as a parameter - edit and recompile'
-  return
-
-79 continue
-  print*,' *** Error reading data file header: check format ***'
-  return
+print*,' *** Error encountered while reading timestep ***'
+print*,' -> number of columns in data file not equal to'
+print*,'    that set as a parameter - edit and recompile'
+return
 
 80 continue
-  print*,' *** data file empty, no steps read ***'
-  return
+print*,' *** data file empty, no steps read ***'
+return
 
 81 continue
-  print*,' *** Error: can''t open data file ***'
-  return
+print*,' *** Error: can''t open data file ***'
+return
 
 end subroutine read_data
 
@@ -301,63 +326,63 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels
-  use params
-  use settings
-  implicit none
-  integer :: i
+use labels
+use params
+use settings
+implicit none
+integer :: i
 
-  do i=1,ndim
-     ix(i) = i
-  enddo
-  ivx = ndim + 1
-  ivlast = ndim + ndimV
-  irho = ndim + ndimV + 1		! location of rho in data array
-  ipr = ndim + ndimV + 2		!  pressure 
-  iutherm = ndim + ndimV + 3	!  thermal energy
-  ih = ndim + ndimV + 4		!  smoothing length
-  ipmass = ndim + ndimV + 5	!  particle mass      
+do i=1,ndim
+   ix(i) = i
+enddo
+ivx = ndim + 1
+ivlast = ndim + ndimV
+irho = ndim + ndimV + 1      ! location of rho in data array
+ipr = ndim + ndimV + 2       !  pressure 
+iutherm = ndim + ndimV + 3   !  thermal energy
+ih = ndim + ndimV + 4        !  smoothing length
+ipmass = ndim + ndimV + 5    !  particle mass      
 
-  label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  do i=1,ndimV
-     label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-  enddo
-  label(irho) = '\gr'
-  label(ipr) = 'P      '
-  label(iutherm) = 'u'
-  label(ih) = 'h       '
-  label(ipmass) = 'particle mass'      
+label(ix(1:ndim)) = labelcoord(1:ndim,1)
+do i=1,ndimV
+   label(ivx+i-1) = 'v\d'//labelcoord(i,1)
+enddo
+label(irho) = '\gr'
+label(ipr) = 'P      '
+label(iutherm) = 'u'
+label(ih) = 'h       '
+label(ipmass) = 'particle mass'      
 
-  label(ndim + ndimV+6) = '\ga'
-  label(ndim + ndimV+7) = '\ga\du'
-  if (ncolumns.gt.ndim+ndimV+7) then
-     label(ndim + ndimV+8) = '\ga\dB'
-     iBfirst = ndim + ndimV+8+1	! location of Bx
-     iBlast = ndim + ndimV+8+ndimV	! location of Bz      
-     do i=1,ndimV
-        label(ndim + ndimV+8+i) = 'B\d'//labelcoord(i,1) !' (x10\u-3\d)'	!//'/rho'
-     enddo
-     do i=1,ndimV
-        label(ndim + ndimV+ndimV+8 + i) = 'J'//labelcoord(i,1)
-     enddo
-     iJfirst = ndim+2*ndimV+8+1
-     idivB = ndim+3*ndimV+9 
-     label(idivB) = 'div B'
-  else	 
-     iBfirst = 0
-     iBlast = 0
-  endif
-  if (ncolumns.gt.ndim+3*ndimV+9) then
-     label(ndim+3*ndimV+10) = 'psi'
-  endif
-   if (ncolumns.gt.ndim+3*ndimV+10) then
-     label(ndim+3*ndimV+11) = 'f_visc_x'
-     label(ndim+3*ndimV+12) = 'f_visc_y'
-     label(ndim+3*ndimV+13) = 'f_x'
-     label(ndim+3*ndimV+14) = 'f_y'
-  endif 
-  
-  !--these are here for backwards compatibility -- could be removed
+label(ndim + ndimV+6) = '\ga'
+label(ndim + ndimV+7) = '\ga\du'
+if (ncolumns.gt.ndim+ndimV+7) then
+   label(ndim + ndimV+8) = '\ga\dB'
+   iBfirst = ndim + ndimV+8+1	! location of Bx
+   iBlast = ndim + ndimV+8+ndimV	! location of Bz      
+   do i=1,ndimV
+      label(ndim + ndimV+8+i) = 'B\d'//labelcoord(i,1) !' (x10\u-3\d)'	!//'/rho'
+   enddo
+   do i=1,ndimV
+      label(ndim + ndimV+ndimV+8 + i) = 'J'//labelcoord(i,1)
+   enddo
+   iJfirst = ndim+2*ndimV+8+1
+   idivB = ndim+3*ndimV+9 
+   label(idivB) = 'div B'
+else
+   iBfirst = 0
+   iBlast = 0
+endif
+if (ncolumns.gt.ndim+3*ndimV+9) then
+   label(ndim+3*ndimV+10) = 'psi'
+endif
+if (ncolumns.gt.ndim+3*ndimV+10) then
+   label(ndim+3*ndimV+11) = 'f_visc_x'
+   label(ndim+3*ndimV+12) = 'f_visc_y'
+   label(ndim+3*ndimV+13) = 'f_x'
+   label(ndim+3*ndimV+14) = 'f_y'
+endif
+
+!--these are here for backwards compatibility -- could be removed
 !  if (ncolumns.gt.ndim+3*ndimV+7) then
 !     label(ndim + 3*ndimV+8) = 'v_parallel'
 !     label(ndim + 3*ndimV+9) = 'v_perp'
@@ -365,14 +390,14 @@ subroutine set_labels
 !     label(ndim + 3*ndimV+11) = 'B_perp'
 !  endif
 
- !
- !--set labels for each type of particles
- !
- ntypes = 2
- labeltype(1) = 'gas'
- labeltype(2) = 'ghost'
+!
+!--set labels for each type of particles
+!
+ntypes = 2
+labeltype(1) = 'gas'
+labeltype(2) = 'ghost'
 
 !-----------------------------------------------------------
 
-  return 
+return 
 end subroutine set_labels
