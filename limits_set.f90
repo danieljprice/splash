@@ -29,7 +29,7 @@ subroutine set_limits
   ! 
   do j=1,numplot
      if (lim(j,2).eq.lim(j,1)) then
-        print*,label(j),' min = max = ',lim(j,1)
+        print*,j,label(j),' min = max = ',lim(j,1)
      endif  
   enddo
   print*,'plot limits set'

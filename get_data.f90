@@ -39,6 +39,7 @@ subroutine get_data
      istep = nfilesteps + 1 ! current location of istep in data array
   enddo
 
+  numplot = ncolumns
   nstart = 1
   n_end = nfilesteps
 
