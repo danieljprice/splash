@@ -29,6 +29,7 @@
 !------------------------------------------------------------------------
 module transforms
  integer, parameter, public :: ntrans = 5  ! this is the number of different transformations
+ real, parameter :: zerolog = 1.e-12 ! this is minimum set if xmin = 0 and log
 
 contains
 !------------------------------------------------------------------------
@@ -92,6 +93,58 @@ subroutine transform(array,itrans)
   endif
 
 end subroutine transform
+
+!------------------------------------------------------------------------
+!
+!  inverse transform
+!
+!------------------------------------------------------------------------
+subroutine transform_inverse(array,itrans)
+  implicit none
+  integer, intent(in) :: itrans
+  real, dimension(:), intent(inout) :: array
+  real, dimension(size(array)) :: arraytemp
+  character(len=20) :: string
+  integer :: i
+  !
+  !--extract the digits from the input number 
+  !
+  if (itrans.gt.0) then      
+
+     write(string,*) itrans
+     !
+     !--do a transformation for each digit
+     !
+     arraytemp = array
+
+     do i=len_trim(string),1,-1
+        !
+        !--perform transformation appropriate to this digit     
+        !
+        select case(string(i:i))
+        case('1')
+           arraytemp = 10**arraytemp
+        case('3')
+           where (arraytemp .ne. 0)
+              arraytemp = 1./arraytemp
+           elsewhere
+              arraytemp = 0.
+           end where
+        case('4') 
+           arraytemp = arraytemp**2
+        case('5')
+           where (arraytemp .gt. 0)
+              arraytemp = sqrt(arraytemp)
+           elsewhere
+              arraytemp = 0.
+           end where
+        end select
+     enddo
+
+     array = arraytemp
+  endif
+
+end subroutine transform_inverse
 
 !------------------------------------------------------------------------
 !
@@ -187,14 +240,14 @@ subroutine transform_limits(xmin,xmax,itrans)
            if (xmintemp > 0) then
               xmintemp = log10(xmintemp)
            elseif (xmintemp.eq.0) then
-              print*,' log10(xmin = 0): min set to 10-12'
-              xmintemp = -12.
+              print*,' log10(xmin = 0): min set to ',zerolog
+              xmintemp = log10(zerolog)
            endif
            if (xmaxtemp > 0) then
               xmaxtemp = log10(xmaxtemp)
            elseif (xmaxtemp.eq.0) then
-              print*,' log10(xmax = 0): max set to 10-12'
-              xmaxtemp = -12.
+              print*,' log10(xmax = 0): max set to ',zerolog
+              xmaxtemp = log10(zerolog)
            endif
         case('2')
            if ((xmintemp.lt.0. .and. xmaxtemp.gt.0.) &
