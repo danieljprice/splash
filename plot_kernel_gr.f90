@@ -2,7 +2,7 @@
 ! subroutine to plot the interaction region for a given particle
 ! in general coordinate systems (e.g. cylindrical coordinates)
 !
-! input:  igeom : coordinate system (0=cartesian, 1=cylindrical, 2=spherical)
+! input:  igeom : coordinate system (0,1=cartesian, 2=cylindrical, 3=spherical)
 !         x,y   : particle location in cartesian space
 !         h     : size of smoothing sphere 
 !                 (assumed isotropic in coordinate space)
@@ -20,6 +20,18 @@ subroutine plot_kernel_gr(igeom,x,y,h)
   real, dimension(2,npts) :: xpts
   real :: angle, dangle  
 
+  select case(igeom)
+  case(2)
+    print 10,'cylindrical'
+  case(3)
+    print 10,'spherical'  
+  case(4)
+    print 10,'log spherical'
+  case default
+    print 10,'cartesian'  
+  end select
+10 format('coordinate system = ',a)
+  
   xin(1) = x
   xin(2) = y
 !
