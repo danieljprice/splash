@@ -77,10 +77,15 @@
       nyplotmulti = 1		! number of plots in multiplot
       multiploty(1) = ndim+1 	! first plot : y axis
       multiplotx(1) = 1		! first plot : x axis
-      irendermulti(1) = 0	! first plot : rendering
-      ivecplotmulti(1) = 0	! first plot : vector plot
-      x_secmulti(1) = .true.	! first plot : take cross section
-      xsecposmulti(1) = 0.0	! first plot : position of cross section
+      irendermulti(:) = 0	! rendering
+      ivecplotmulti(:) = 0	! vector plot
+      x_secmulti(:) = .false.	! take cross section?
+      xsecposmulti(:) = 0.0	! position of cross section
+      npixmulti(:) = 400	! number of pixels in render plots
+      npixvecmulti(:) = 40	! number of pixels in vector plots
+      ncontoursmulti(:) = 30	! number of contours to use
+      iplotcontmulti(:) = .false.
+      iplotpartvecmulti(:) = .false.
 !
 !--power spectrum options
 !      
