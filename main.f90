@@ -30,6 +30,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   integer :: iplots,iplotsonpage
 
   character(len=8) :: string     ! used in pgplot calls
+  real, parameter :: pi = 3.1415926536
   real, dimension(maxpart) :: xplot,yplot
   real, dimension(:), allocatable :: datpix1D, xgrid
   real, dimension(:,:), allocatable :: datpix,vecpixx,vecpixy
@@ -41,6 +42,7 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
   real :: pixwidth
   real :: charheight, charheightmm
   real :: dxgrid
+  real, dimension(2) :: angles
 
   logical :: iplotcont,x_sec,isamexaxis,isameyaxis
   logical :: log, inewpage, tile_plots, debug
@@ -336,17 +338,28 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
            do j=1,ndim
               if ((j.ne.iplotx).and.(j.ne.iploty)) ixsec = j
            enddo
-           !
-	   !--rotate the particles about the z and y axes
-	   !
-	   !if (irotate) then
-	   !   call rotate(angley,anglez)
-	   !endif 
-	   
 	   !
            !--set number of particles to use in the interpolation routines
            !  (ie. including only gas particles and ghosts)
 	   ninterp = npart(i) + nghost(i)	
+
+           !
+	   !--rotate the particles about the z (and y) axes
+	   !  only applies to particle plots at the moment
+	   !
+	   if (ndim.ge.2 .and. irotate) then
+	       !
+	       !--convert angles to radians
+	       !
+	       angles(1) = anglerot*pi/180.
+	       angles(2) = angletilt*pi/180.
+               print*,'rotating particles',irotate,angles
+               do j=1,ntotplot(i)
+                  call rotate(angles(1:ndim-1),dat(ix(1:ndim),j,i),xcoords(:),ndim)
+                  xplot(j) = xcoords(iplotx)
+                  yplot(j) = xcoords(iploty)
+               enddo
+	   endif 
            
 	   !------------------------------------------------------------------
            !  rendering setup and interpolation (this is the rendering done

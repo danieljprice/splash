@@ -15,7 +15,7 @@ subroutine options_xsecrotate
            ' 1) toggle cross section/projection           (',L1,' )',/, &
            ' 2) manually set cross section position       (',f5.2,' )',/, &
 	   ' 3) interactively set cross section position  ( 2D only )',/, &
-	   ' 4) toggle rotation (coming soon)             (',L1,' )')
+	   ' 4) toggle rotation                           (',L1,' )')
  call prompt('enter option',ians,0,4)
 !
 !--options
@@ -74,7 +74,11 @@ subroutine options_xsecrotate
 !------------------------------------------------------------------------
  case(4)
     irotate = .not.irotate
-    print*,'rotate = ',irotate,' but not yet implemented'
+    print*,'rotate = ',irotate
+    if (irotate) then
+       call prompt('enter rotation angle about z axis in degrees',anglerot,0.,360.)
+       if (ndim.eq.3) call prompt('enter tilt angle ',angletilt,-90.,90.)
+    endif
  end select
 
  return

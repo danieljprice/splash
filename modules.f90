@@ -112,6 +112,7 @@ module settings
 !--cross section/rotation options
 !
  logical :: xsec_nomulti, irotate
+ real :: anglerot, angletilt
  real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
 !
 !--power spectrum options
@@ -137,7 +138,8 @@ module settings
 
  namelist /renderopts/ npix, ncontours,iplotcont_nomulti, &
    xsec_nomulti,iPlotColourBar,xsecpos_nomulti, &
-   xseclineX1,xseclineX2,xseclineY1,xseclineY2
+   xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
+   irotate, anglerot, angletilt
  
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot, iplotpartvec
      

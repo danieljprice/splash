@@ -81,7 +81,8 @@ SOURCES= supersphplot.f90 main.f90 \
 	 powerspectrum_lomb1D.f90 \
 	 print_header.f90\
          read_exactparams.f90 riemannsolver.f90 \
-         render.f90 render_vec.f90 setpage.f90 \
+         render.f90 render_vec.f90 rotate.f90 \
+	 setpage.f90 \
 	 titles_read.f90 \
 	 vectorplot.f90 \
 
