@@ -289,7 +289,7 @@ subroutine plotstep(istep,irender,ivecplot, &
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
-  character(len=5) :: string
+  character(len=20) :: string
   
 34   format (25(' -'))
 
@@ -780,8 +780,8 @@ subroutine plotstep(istep,irender,ivecplot, &
                  !!--if log, then set zero values to minimum
                  !!  (must be done after minimum is known)
                  !!
-                 write(string,*) itrans(irenderplot)
-                 if (index(string,'1').ne.0) then
+                 write(string,"(i8)") itrans(irenderplot)
+                 if (index(string(1:len_trim(string)),'1').ne.0) then
                     !!print*,'setting zero values to ',rendermin,' on log array'
                     where (abs(datpix).lt.tiny(datpix))
                        datpix = rendermin

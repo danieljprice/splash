@@ -830,10 +830,10 @@ subroutine change_itrans(iplot)
  use settings_data, only:numplot
  implicit none
  integer, intent(in) :: iplot
- character(len=10) :: string
+ character(len=20) :: string
  
  if (iplot.le.numplot) then
-    write(string,*) itrans(iplot)
+    write(string,"(i8)") itrans(iplot)
     if (index(string(1:len_trim(string)),'1').ne.0) then
        itrans(iplot) = 0
     else
