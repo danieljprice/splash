@@ -8,12 +8,13 @@ subroutine options_data
  use settings
  implicit none
  integer :: ians
-  
+ 
+ ians = 0
  print 10, (n_end-nstart+1)/nfreq,buffer_data
-10  format(' 0) exit ',/, 		&
-           ' 1) read new data ',/,     	&
+10  format(' 0) exit ',/,               &
+           ' 1) read new data ',/,      &
            ' 2) change number of timesteps read ( ',i2, ' )',/, &
-	   ' 3) toggle buffering of data        (  ',L1, ' )')
+           ' 3) toggle buffering of data        (  ',L1, ' )')
  call prompt('enter option',ians,0,3)
 !
 !--options
