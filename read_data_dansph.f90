@@ -236,13 +236,17 @@ subroutine read_data(rootname,nfilesteps)
      iBfirst = 0
      iBlast = 0
   endif
-  !--these are here for backwards compatibility -- could be removed
   if (ncolumns.gt.ndim+3*ndimV+7) then
-     label(ndim + 3*ndimV+8) = 'v_parallel'
-     label(ndim + 3*ndimV+9) = 'v_perp'
-     label(ndim + 3*ndimV+10) = 'B_parallel'
-     label(ndim + 3*ndimV+11) = 'B_perp'
+     label(ndim+3*ndimV+8) = 'psi'
   endif
+  
+  !--these are here for backwards compatibility -- could be removed
+!  if (ncolumns.gt.ndim+3*ndimV+7) then
+!     label(ndim + 3*ndimV+8) = 'v_parallel'
+!     label(ndim + 3*ndimV+9) = 'v_perp'
+!     label(ndim + 3*ndimV+10) = 'B_parallel'
+!     label(ndim + 3*ndimV+11) = 'B_perp'
+!  endif
 
 
 !-----------------------------------------------------------
