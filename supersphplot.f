@@ -46,6 +46,7 @@
 !
 !     this version for both ndspmhd and matthew bate's code 2003
 !     changes log:
+!      16/12/03 - labels on particle cross sections
 !      15/12/03 - namelist input/output, freeform source in modules
 ! 		- bug fix in read_data (nghosts) and interpolation routines
 !      09/12/03 - power spectrum plotting in 1D
@@ -776,6 +777,13 @@ c get rootname from command line/file and read file
 		      if (plotcirc) then
 		         call pgcirc(xplot(j),yplot(j),2.*dat(ih,j,i))
 		      endif
+	              if (ilabelpart) then
+!!--plot particle labels
+                         call pgnumb(j,0,1,string,nc)
+		         call pgsch(0.5*charheight)
+		         call pgtext(xplot(j),yplot(j),string(1:nc))
+		         call pgsch(charheight)
+	              endif	! ilabelpart
 		  endif
 	       enddo
 !!--plot ghosts using different marker
@@ -783,7 +791,14 @@ c get rootname from command line/file and read file
 	          if ((dat(ixsec,j,i).lt.xsecmax)
      &		  .and.(dat(ixsec,j,i).gt.xsecmin)) then
      		      call pgpt(1,xplot(j),yplot(j),imarkg)
-		  endif	       
+	              if (ilabelpart) then
+!!--plot ghost labels
+                         call pgnumb(j,0,1,string,nc)
+		         call pgsch(0.5*charheight)
+		         call pgtext(xplot(j),yplot(j),string(1:nc))
+		         call pgsch(charheight)
+	              endif	! ilabelpart
+		  endif	
 	       enddo
 
 	    else	     	     
