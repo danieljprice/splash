@@ -48,7 +48,7 @@ MRBSPH = read_data_mbate_dump.f90 ## read_data_mbate.f90
 GADGETSPH = read_data_gadget.f90
 
 # put modules separately as these must be compiled before the others
-MODULES= modules.f90 transform.f90 prompting.f90
+MODULES= modules.f90 transform.f90 prompting.f90 exact.f90
 
 # these are the normal `external' subroutines
 SOURCES= supersphplot.f90 main.f90 \
@@ -71,7 +71,7 @@ SOURCES= supersphplot.f90 main.f90 \
 	 legend.f \
 	 limits_read.f90 limits_save.f90 limits_set.f90 \
 	 menu.f90 options_data.f90 \
-	 options_exact.f90 options_limits.f90 \
+	 options_limits.f90 \
 	 options_page.f90 options_particleplots.f90 \
 	 options_powerspec.f90 options_render.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 \
@@ -81,7 +81,6 @@ SOURCES= supersphplot.f90 main.f90 \
 	 powerspectrum_fourier1D.f90 \
 	 powerspectrum_lomb1D.f90 \
 	 print_header.f90\
-         read_exactparams.f90 \
          render.f90 render_vec.f90 \
 	 rotate.f90 rotate_axes.f90 \
 	 setpage.f90 \

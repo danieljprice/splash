@@ -2,6 +2,7 @@
 !! sub-menu with utilities relating to particle plots
 !!
 subroutine options_particleplots
+  use exact
   use labels
   use settings
   use particle_data
@@ -96,7 +97,7 @@ subroutine options_particleplots
      return
 !------------------------------------------------------------------------
   case(8)
-     call options_exact(iexact)
+     call submenu_exact(iexact)
      return
 !------------------------------------------------------------------------
   case default

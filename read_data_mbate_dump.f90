@@ -34,6 +34,7 @@
 
 subroutine read_data(rootname,istart,nfilesteps)
   use particle_data
+  use timestep_header
   use params
   use settings
   implicit none
@@ -91,8 +92,6 @@ subroutine read_data(rootname,istart,nfilesteps)
   !
   ncol_max = max(ncolumns,ncol_max)
   nstep_max = max(nstep_max,istart,10)
-!  nprint = 1
-!  call alloc(ntotin,nstep_max,ncol_max)
  !
  !--open the (unformatted) binary file and read the number of particles
  !

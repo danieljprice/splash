@@ -22,7 +22,6 @@ module particle_data
  integer, allocatable, dimension(:,:) :: iam,npartoftype
  real, allocatable, dimension(:) :: time, gamma
  real, allocatable, dimension(:,:,:) :: dat
- real :: hfact 
 end module particle_data
 !
 !--filename
@@ -172,38 +171,7 @@ module multiplot
     ivecplotmulti,iplotcontmulti,x_secmulti,xsecposmulti
  
 end module multiplot
-!
-!--exact solution parameters
-!
-module exact_params
- implicit none
-!--toy star
- integer :: norder ! for toy star
- real :: htstar,atstar,ctstar,totmass,sigma,sigma0
-!--sound wave
- integer :: iwaveploty,iwaveplotx ! linear wave
- real :: ampl,lambda,period
-!--sedov blast wave
- real :: rhosedov,esedov
-!--polytrope
- real :: polyk
-!--mhd shock solutions
- integer :: ishk
-!--from file
- integer, parameter :: maxexactpts = 1001
- integer :: iexactpts, iexactplotx, iexactploty
- real, dimension(maxexactpts) :: xexact,yexact
-!--shock tube
- real :: rho_L, rho_R, pr_L, pr_R, v_L, v_R
-!
-!--sort these into a namelist for input/output
-!
- namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx, &
-          htstar,atstar,ctstar,sigma0,norder,rhosedov,esedov, &
-	  rho_L, rho_R, pr_L, pr_R, v_L, v_R, &
-	  iexactplotx,iexactploty 
 
-end module exact_params
 !
 !--tabulated column density through the kernel 
 !  (used in interpolate3D_projection)

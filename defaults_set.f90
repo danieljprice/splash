@@ -3,7 +3,7 @@
 !!      these are used if no defaults file is found
 !!
 subroutine defaults_set
-  use exact_params
+  use exact
   use labels
   use multiplot
   use settings
@@ -15,7 +15,6 @@ subroutine defaults_set
   numplot=maxplot 	! reset if read from file
   ncalc = 0		! number of columns to calculate(e.g. radius)
   nextra = 0	! extra plots aside from particle data
-  iACplane = 0	! label position of toy star AC plane plot
   ipowerspec = 0	! label position of power spectrum plot
   ncolumns=maxplot-ncalc	! number of columns in data file
   ndim = 3		! number of coordinate dimensions
@@ -129,29 +128,7 @@ subroutine defaults_set
 !
 !--exact solution parameters
 !
-  lambda = 1.0	! sound wave exact solution : wavelength
-  ampl = 0.005	! sound wave exact solution : amplitude
-  period = 1.0
-  iwaveploty = 7
-  iwaveplotx = 1
-  htstar = 1.   ! toy star crap
-  atstar = 1.
-  ctstar = 1.
-  norder = 0
-  sigma0 = 0.
-  rhosedov = 1.0  ! sedov blast wave
-  esedov = 1.0    ! blast wave energy
-  polyk = 1.0     ! polytropic k
-  rho_L = 1.0     ! shock tube (default is sod problem)
-  rho_R = 0.125
-  pr_L = 1.0
-  pr_R = 0.1
-  v_L = 0.0
-  v_R = 0.0
-  iexactpts = maxexactpts
-  iexactplotx = 0
-  iexactploty = 0
-  ishk = 0
+  call defaults_set_exact
 !
 !--multiplot
 !

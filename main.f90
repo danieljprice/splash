@@ -3,7 +3,7 @@
 !
 subroutine main(ipicky,ipickx,irender,ivecplot)
   use params
-  use exact_params
+  use exact
   use filenames
   use labels
   use limits
@@ -601,31 +601,6 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
 	      if (irotate) then
 		 call rotate_axes(angles,lim(ix(:),1),lim(ix(:),2),xorigin,ndim)
 	      endif
-	      
-	      if (iaxis.lt.0) then
-                 !--if multiple plots showing contours only, label with a,b,c etc
-                 if ((nacross*ndown.gt.1).and.(irenderplot.gt.ndim) &
-                      .and.(icolours.eq.0).and.imulti) then
-                    select case(nyplot)
-                    case(1)
-                       call pgmtext('T',-1.5,0.05,0.0,'a)') 
-                    case(2)
-                       call pgmtext('T',-1.5,0.05,0.0,'b)')
-                    case(3)
-                       call pgmtext('T',-1.5,0.05,0.0,'c)')
-                    case(4)
-                       call pgmtext('T',-1.5,0.05,0.0,'d)')
-                    case(5)
-                       call pgmtext('T',-1.5,0.05,0.0,'e)')
-                    case(6)
-                       call pgmtext('T',-1.5,0.05,0.0,'f)')
-                    case(7)
-                       call pgmtext('T',-1.5,0.05,0.0,'g)')
-                    case(8)
-                       call pgmtext('T',-1.5,0.05,0.0,'h)')
-                    end select
-                 endif
-              endif
 
               !------------------------------
               ! now actually plot the data
@@ -988,129 +963,14 @@ subroutine main(ipicky,ipickx,irender,ivecplot)
         ! plot exact solution on top of the plot already on the page
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        select case(iexact)
-        case(1)! shock tube
-           if (iplotx.eq.ix(1)) then
-              if (iploty.eq.irho) then
-                 call exact_shock(1,time(i),gamma(i),rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
-              elseif (iploty.eq.ipr) then
-                 call exact_shock(2,time(i),gamma(i),rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
-              elseif (iploty.eq.ivx) then
-                 call exact_shock(3,time(i),gamma(i),rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
-              elseif (iploty.eq.iutherm) then
-                 call exact_shock(4,time(i),gamma(i),rho_L,rho_R,pr_L,pr_R,v_L,v_R,xmin,xmax)
-              endif
-           endif
-
-        case(2)! sedov blast wave
-           if (iplotx.eq.irad) then
-              if (iploty.eq.irho) then
-                 call exact_sedov(time(i),gamma(i),rhosedov,esedov,lim(irad,2),1)
-              elseif (iploty.eq.ipr) then
-                 call exact_sedov(time(i),gamma(i),rhosedov,esedov,lim(irad,2),2)                 
-              elseif (iploty.eq.iutherm) then
-                 call exact_sedov(time(i),gamma(i),rhosedov,esedov,lim(irad,2),3)                
-              elseif (iploty.eq.ike) then
-                 call exact_sedov(time(i),gamma(i),rhosedov,esedov,lim(irad,2),4)                 
-              endif
-           endif
-
-        case(3)! polytrope
-           if (iploty.eq.irho .and. iplotx.eq.irad) call exact_polytrope(gamma(i))
-
-        case(4)! toy star
-           if (iBfirst.ne.0) then
-              sigma = sigma0
-           else
-              sigma = 0.
-           endif
-           if (ndim.eq.1) then
-              !
-              !--1D toy star solutions
-              !
-              if (iplotx.eq.ix(1) .or. iplotx.eq.irad) then! if x axis is x or r
-                 if (iploty.eq.irho) then
-                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,1)
-                 elseif (iploty.eq.ipr) then
-                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,2)       
-                 elseif (iploty.eq.iutherm) then
-                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,3)       
-                 elseif (iploty.eq.ivx) then
-                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,4)       
-                 elseif (iploty.eq.ibfirst+1) then
-                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,5)
-                 endif
-              elseif (iplotx.eq.irho) then
-                 if (iploty.eq.ibfirst+1) then
-                    call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,6)       
-                 endif
-              endif
-
-              if (iploty.eq.iacplane) then! plot point on a-c plane
-                 call exact_toystar(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,7)
-              endif
-           else
-              !
-              !--2D and 3D toy star solutions
-              !
-              if ((iplotx.eq.ix(1) .and. iploty.eq.ivx) &
-                   .or. (iplotx.eq.ix(2) .and. iploty.eq.ivx+1)) then
-                 call exact_toystar2D(time(i),gamma(i), &
-                      htstar,atstar,ctstar,sigma,norder,4)
-              endif
-              if (iplotx.eq.irad) then
-                 if (iploty.eq.irho) then
-                    call exact_toystar2D(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,1)
-                 elseif (iploty.eq.ipr) then
-                    call exact_toystar2D(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,2)
-                 elseif (iploty.eq.iutherm) then
-                    call exact_toystar2D(time(i),gamma(i),htstar,atstar,ctstar,sigma,norder,3)
-                 elseif (iploty.eq.ivx .or. iploty.eq.ivx+1) then
-                    call exact_toystar2D(time(i),gamma(i), &
-                         htstar,atstar,ctstar,sigma,norder,4)
-                 elseif (iploty.eq.ike) then
-                    call exact_toystar2D(time(i),gamma(i), &
-                         htstar,atstar,ctstar,sigma,norder,4)
-                 endif
-              endif
-           endif
-
-        case(5)! linear wave
-           if ((iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then 
-	      ymean = SUM(yplot(1:npart(i)))/REAL(npart(i)) 
-              call exact_wave(time(i),ampl,period,lambda,xmin,xmax,ymean)
-           endif
-
-        case(6) ! mhd shock tubes
-           if (iplotx.eq.ix(1)) then
-              !--prompt for shock type if not set  
-              if (ishk.eq.0) then ! prompt
-                 call prompt('enter shock solution to plot',ishk,0,6)
-              endif
-              if (iploty.eq.irho) then
-                 call exact_mhdshock(1,ishk,time(i),gamma(i),xmin,xmax)
-              elseif (iploty.eq.ipr) then
-                 call exact_mhdshock(2,ishk,time(i),gamma(i),xmin,xmax)
-              elseif (iploty.eq.ivx) then
-                 call exact_mhdshock(3,ishk,time(i),gamma(i),xmin,xmax)
-              elseif (iploty.eq.ivx+1) then
-                 call exact_mhdshock(4,ishk,time(i),gamma(i),xmin,xmax)
-              elseif (iploty.eq.ivlast) then
-                 call exact_mhdshock(5,ishk,time(i),gamma(i),xmin,xmax)
-              elseif (iploty.eq.ibfirst+1) then
-                 call exact_mhdshock(6,ishk,time(i),gamma(i),xmin,xmax)
-              elseif (iploty.eq.iblast) then
-                 call exact_mhdshock(7,ishk,time(i),gamma(i),xmin,xmax)
-              elseif (iploty.eq.iutherm) then
-                 call exact_mhdshock(8,ishk,time(i),gamma(i),xmin,xmax)
-              endif
-           endif
+        if (iexact.eq.5 .and.(iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then 
+	   ymean = SUM(yplot(1:npart(i)))/REAL(npart(i)) 
+        else
+	   ymean = 0.
+	endif
 	
-	case(7) ! exact solution read from file
-	   if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
-	      call pgline(iexactpts,xexact,yexact)
-	   endif
-        end select
+        if (iexact.ne.0) call exact_solution(iplotx,iploty,iexact,ndim, &
+	                      time(i),xmin,xmax,ymean,gamma(i))
         !
         !--plot h = (1/rho)^(1/ndim)
         !

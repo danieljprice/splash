@@ -6,9 +6,10 @@
 subroutine defaults_read
  use multiplot
  use settings
- use exact_params
+ use exact
  implicit none
  logical :: iexist
+ integer :: ierr
  
  inquire (exist=iexist, file='defaults')
  if (iexist) then
@@ -29,10 +30,12 @@ subroutine defaults_read
     goto 15
 14  print*,'error reading vector plot options from defaults'
 15  continue
-    read(1,NML=exactparams,end=77,err=16)
-    goto 17
-16  print*,'error reading exact solution parameters from defaults'    
-17  continue    
+!
+!--exact solutions
+!
+    call defaults_read_exact(1,ierr)
+    if (ierr /= 0) print "(a)",'error reading exact solution parameters from defaults'    
+  
     read(1,NML=multi,end=77,err=18)
     goto 19
 18  print*,'error reading multiplot options from defaults'

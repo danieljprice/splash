@@ -6,11 +6,12 @@
 !
 ! this is plotted as a line on the chosen graph
 !------------------------------------------------
-subroutine exact_fromfile(filename,ierr)
-  use exact_params
+subroutine exact_fromfile(filename,xexact,yexact,maxexactpts,iexactpts,ierr)
   implicit none
   character(len=*), intent(in) :: filename
-  integer, intent(out) :: ierr
+  integer, intent(in) :: maxexactpts
+  real, intent(out), dimension(maxexactpts) :: xexact, yexact
+  integer, intent(out) :: iexactpts, ierr
   integer :: i
 
   open(unit=33,file=filename,err=20,status='old',form='formatted')

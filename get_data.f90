@@ -4,8 +4,8 @@
 !
 !  drives reading of all files listed on command line
 !
-subroutine get_data   
-  use exact_params
+subroutine get_data
+  use exact
   use filenames
   use settings
   use particle_data
@@ -22,7 +22,6 @@ subroutine get_data
   !
   !--set everything to zero initially
   !
-  hfact = 0.
   ndim = 0
   ndimV = 0
   ncolumns = 0

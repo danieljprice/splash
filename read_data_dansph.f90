@@ -30,6 +30,7 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,istart,nfilesteps)
+  use exact
   use particle_data
   use params
   use labels
