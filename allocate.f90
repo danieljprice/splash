@@ -121,6 +121,11 @@ subroutine alloc(npartin,nstep,ncolumns)
   allocate(time(maxstep),gamma(maxstep),stat=ierr)
   if (ierr /= 0) stop 'error allocating memory for header arrays'
 
+  ntot = 0
+  npartoftype = 0
+  time = 0.
+  gamma = 0.
+  
   if (reallocate) then
      ntot(1:maxstepold) = ntottemp(1:maxstepold)
      npartoftype(:,1:maxstepold) = npartoftypetemp(:,1:maxstepold)
@@ -128,11 +133,6 @@ subroutine alloc(npartin,nstep,ncolumns)
      gamma(1:maxstepold) = gammatemp(1:maxstepold)
      deallocate(ntottemp,npartoftypetemp)
      deallocate(timetemp,gammatemp)
-  else
-     ntot = 0
-     npartoftype = 0
-     time = 0.0
-     gamma = 0.0
   endif
 
   return 

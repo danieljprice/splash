@@ -8,7 +8,7 @@
 subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                         icolourpart,npartoftype,x_sec,xsecmin,xsecmax)
   use labels
-  use settings_data ! ndim and icoords
+  use settings_data, only:ndim,icoords,ntypes
   use settings_part
   implicit none
   integer, intent(in) :: ntot, iplotx, iploty
@@ -19,16 +19,24 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   real, intent(in) :: xsecmin,xsecmax
   logical, intent(in) :: x_sec
   integer :: j,n,itype,linewidth,icolourindex
-  integer :: lenstring,index1,index2
+  integer :: lenstring,index1,index2,ntotplot
   real :: charheight
   character(len=20) :: string
   
   !--query current character height
   call pgqch(charheight)
   print "(a,i8)",' entering particle plot, total particles = ',ntot
-  
-  if (ntot.ne.sum(npartoftype(1:maxparttypes))) then
+  !
+  !--check for errors in input
+  !
+  ntotplot = sum(npartoftype(1:ntypes))
+  if (ntot.lt.ntotplot) then
+     print "(a)",' ERROR: number of particles input < number of each type '
+     print*,ntot,npartoftype(1:ntypes)
+     return
+  elseif (ntot.ne.ntotplot) then
      print "(a)",' WARNING: particleplot: total not equal to sum of types on input'
+     print*,' ntotal = ',ntot,' sum of types = ',ntotplot
   endif
   !
   !--loop over all particle types
