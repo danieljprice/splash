@@ -9,11 +9,11 @@ module settings_page
  logical :: iColourEachStep,tile,interactive
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
- character(len=20) :: colour_fore, colour_back
+ character(len=20) :: colour_fore, colour_back, legendtext
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt, &
    nstepsperpage,iColourEachStep,tile,ipapersize,papersizex,aspectratio, &
-   hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle  
+   hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle,legendtext
 
 contains
 
@@ -34,6 +34,7 @@ subroutine defaults_set_page
   aspectratio = 0.0     ! aspect ratio of paper (no call to PGPAP if zero)
   hposlegend = 0.75     ! horizontal legend position as fraction of viewport
   vposlegend = 2.0      ! vertical legend position in character heights
+  legendtext = 't='
   hpostitle = 0.5       ! horizontal title position as fraction of viewport
   vpostitle = 1.0       ! vertical title position in character heights
   fjusttitle = 0.5      ! justification factor for title
@@ -63,8 +64,8 @@ subroutine submenu_page
         ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
         ' 4) change plots per page  (',i2,1x,i2,')',/, &
          ' 5) toggle plot tiling     (',L1,')',/, & 
-         ' 6) adjust title position  (',f5.2,1x,f4.1,')',/, &
-         ' 7) adjust legend position (',f5.2,1x,f4.1,')',/, &
+         ' 6) title options          (',f5.2,1x,f4.1,')',/, &
+         ' 7) legend options         (',f5.2,1x,f4.1,')',/, &
          ' 8) set foreground/background colours ')         
  call prompt('enter option ',iaction,0,8)
 
@@ -168,6 +169,7 @@ subroutine submenu_page
      call prompt('Enter horizontal position as fraction of viewport', &
           hposlegend,0.0,1.0)
      call prompt('Enter vertical position in character heights from top',vposlegend)
+     call prompt('Enter legend text ',legendtext)
      return
 !------------------------------------------------------------------------
   case(8)

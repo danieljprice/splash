@@ -19,7 +19,7 @@ contains
 !-----------------------------------------------------------------
 
 subroutine legend(t)
- use settings_page, only:hposlegend, vposlegend
+ use settings_page, only:hposlegend, vposlegend, legendtext
  implicit none
  real, intent(in) :: t    
  integer :: mm,pp,nc,ndecimal,ndec
@@ -36,7 +36,7 @@ subroutine legend(t)
  mm=nint(tplot*ndec)
  pp=nint(log10(tplot)-log10(tplot*ndec))
  call pgnumb(mm,pp,1,string,nc)
- call pgmtext('t',-vposlegend,hposlegend,0.0,'t='//string(1:nc))
+ call pgmtext('t',-vposlegend,hposlegend,0.0,trim(legendtext)//string(1:nc))
 
  return
 end subroutine legend
