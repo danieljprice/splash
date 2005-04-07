@@ -40,11 +40,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin,ncolstep,nparti,ntoti
   integer, dimension(3) :: ibound
-  logical :: reallocate
-  real(doub_prec) :: timein,gammain,hfactin
-  real(doub_prec), dimension(3) :: xmin, xmax
-  real(doub_prec), dimension(:), allocatable :: dattemp
-  real(doub_prec), dimension(:,:), allocatable :: dattempvec
+  logical :: reallocate, singleprecision
+  real :: timeins, gammains, hfactins
+  real :: timein,gammain,hfactin
+  real, dimension(3) :: xmin, xmax
+  real, dimension(3) :: xmins, xmaxs
+  real, dimension(:), allocatable :: dattemps
+  real, dimension(:), allocatable :: dattemp
+  real, dimension(:), allocatable :: dattempvecs
+  real, dimension(:,:), allocatable :: dattempvec
 
   ndim_max = 1
   ndimV_max = 1
@@ -69,9 +73,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--read first header line
 !
+  singleprecision = .false.
   read(11,iostat=ierr,end=80) timein,npartin,ntotin,gammain, &
        hfactin,ndim_max,ndimV_max,ncol_max,icoords
-  if (ierr /= 0) then
+  print*,'time = ',timein,' hfact = ',hfactin,' ndim=',ndim_max,'ncol=',ncol_max
+  print*,'tiny = ',tiny(timein), 'npart=',npartin
+  if (ierr /= 0 .or. ndim_max.le.0 .or. ncol_max.le.0 .or. ncol_max.gt.100) then
+     !
+     !--try single precision
+     !
+     print*,'TRYING SINGLE PRECISION'
+     read(11,iostat=ierr,end=80) timeins,npartin,ntotin,gammains, &
+         hfactins,ndim_max,ndimV_max,ncol_max,icoords
+     singleprecision = .true.
+     
      print "(a,/,a,/,a,/,a)",'*** Error reading first header ***', &
            '*** This is possibly because the dump is in single precision', &
            '*** whilst this subroutine assumes double precision. ', &

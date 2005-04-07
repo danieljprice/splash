@@ -36,6 +36,7 @@ SCWSPH = read_data_scw.f90
 SROSPH = read_data_sro.f90
 JJMSPH = read_data_jjm.f90
 GADGETSPH = read_data_gadget.f90
+VINESPH = read_data_VINE.f90
 
 # put modules separately as these must be compiled before the others
 MODULES= globaldata.f90 transform.f90 prompting.f90 \
@@ -77,6 +78,7 @@ OBJSINKSPH = $(SOURCESALL:.f=.o) $(SINKSPH:.f90=.o)
 OBJSCWSPH = $(SOURCESALL:.f=.o) $(SCWSPH:.f90=.o)
 OBJSROSPH = $(SOURCESALL:.f=.o) $(SROSPH:.f90=.o)
 OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o)
+OBJVINESPH = $(SOURCESALL:.f=.o) $(VINESPH:.f90=.o)
 
 dansph: $(OBJDANSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o ../supersphplot $(OBJDANSPH)
@@ -101,6 +103,10 @@ srosph: $(OBJSROSPH)
 
 gadget: $(OBJGADGETSPH)
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_gadget $(OBJGADGETSPH)
+
+vine: $(OBJVINESPH)
+	$(FC) $(FFLAGS) $(LDFLAGS) -o vsupersphplot $(OBJVINESPH)
+
 
 ## sort out dependencies on modules
 defaults.o: exact.o

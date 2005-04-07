@@ -67,12 +67,12 @@ subroutine legend_vec(vecmax,scale,label,charheight)
 !--convert hpos and vpos to x, y to plot arrow
 !
  call pgqwin(xmin,xmax,ymin,ymax)
- print*,'lims = ',xmin,xmax,ymin,ymax
+!! print*,'lims = ',xmin,xmax,ymin,ymax
  xpos = xmin + hposlegendvec*(xmax-xmin)
  call pgqcs(0,xch,ych) 
  ypos = ymin - vposlegendvec*ych
 
- print*,'legendvec: xpos, ypos = ',xpos,ypos
+!! print*,'legendvec: xpos, ypos = ',xpos,ypos
  
  dx = ych
  
@@ -92,8 +92,8 @@ subroutine legend_vec(vecmax,scale,label,charheight)
 !
 !--this should match the call in render_vec
 !
- call pgvect(vecx(:,:),vecy(:,:),npixx,npixy,1,npixx,1,npixy, &
-      scale,0,trans,-1000.0)
+! call pgvect(vecx(:,:),vecy(:,:),npixx,npixy,1,npixx,1,npixy, &
+!      scale,0,trans,-1000.0)
 !
 !--plot a box around the legend
 ! 
