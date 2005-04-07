@@ -2,7 +2,7 @@
 ! this subroutine reads from the data file(s)
 ! change this to change the format of data input
 !
-! THIS VERSION IS FOR READING UNFORMATTED OUTPUT FROM MATTHEW BATE'S CODE
+! THIS VERSION IS FOR READING UNFORMATTED OUTPUT FROM THE VINE CODE
 ! (ie. STRAIGHT FROM THE DATA DUMP)
 !
 ! *** CONVERTS TO SINGLE PRECISION ***
@@ -91,7 +91,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
      read(15,end=55,iostat=ierr) (iheader(i),i=1,iheadlength)
      !
      !--get number of particles from header and allocate memory
-     !  (this could change if ID's of things change but they shouldn't)
      !
      ntoti = iheader(2)
      nparti = iheader(3)
@@ -100,10 +99,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
         npart_max = max(npart_max,INT(1.1*ntoti))
         call alloc(npart_max,nstep_max,ncolstep+ncalc)
      endif
+     !
+     !--rewind file
+     !
      rewind(15)
   endif
   if (ierr /= 0) then
-     print*,'*** ERROR READING TIMESTEP HEADER ***'
+     print "(a)",'*** ERROR READING TIMESTEP HEADER ***'
   else
 
        npart_max = max(npart_max,ntoti)
@@ -139,7 +141,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
        write(*,"(a,i5,a)",advance="no") '| step ',j,': '
 
-       read(15,end=55,iostat=ierr), &
+       read(15,iostat=ierr), &
             (iheader(i),i=1,iheadlength), &
             (dheader(i),i=1,iheadlength), &
             (dattempvec(1:4,i),i=1,ntoti), &
@@ -151,9 +153,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
             (dattemp(i,12), i=1,ntoti), &
             (ipindx(i), i=1,ntoti)
 
-       if (ierr /= 0) then
-          print "(a)",'*** INCOMPLETE DATA (CHECK PRECISION) ***'
-          nstepsread = nstepsread + 1
+       if (ierr < 0) then
+          print "(a)",'*** END OF FILE IN READ DATA (CHECK PRECISION) ***'
+          close(15)
+          return
+       elseif (ierr /= 0) then
+          print "(a)",'*** ERROR READING DATA ***'
+          close(15)
           return
        else
           nstepsread = nstepsread + 1
@@ -189,7 +195,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   endif
 
-55 continue
  !
  !--reached end of file
  !
