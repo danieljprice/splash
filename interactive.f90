@@ -179,7 +179,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         print*,'  left click again to zoom on selection'
         if (irender.ne.0) then
            print*,'  select colour bar to change rendering limits'
-           print*,'  o) in colour bar to log / unlog rendering limits'
         else
            print*,'  or press 1-9 to mark selected particles with colour 1-9'
         endif
@@ -189,6 +188,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         if (irender.ne.0) then
            print*,'  (applies to colour bar if mouse is over colour bar)'
         endif
+        print*,'  o) l(o)g / unlog axis (with cursor over axis to change)'  
+        if (irender.ne.0) then
+           print*,'  (applies to colour bar if mouse is over colour bar)'
+        endif
+
         print*,' (r)eplot current plot        : r'
         print*,' label closest (p)article     : p'
         print*,' plot a line and find its g)radient : g'
@@ -385,12 +389,28 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      !
      case('o')
         !
-        !--change colour bar itrans between log / not logged
+        !--change colour bar, y and x itrans between log / not logged
         !
         if (xpt.gt.xmax .and. irender.gt.0) then
-           call change_itrans(irender)
+           call change_itrans(irender,rendermin,rendermax)
            iadvance = 0
            iexit = .true.
+        elseif (xpt.lt.xmin) then
+           if (iploty.le.ndim .and. irender.gt.0) then
+              print "(a)",'error: cannot log coordinate axes with rendering'
+           else
+              call change_itrans(iploty,ymin,ymax)
+              iadvance = 0
+              iexit = .true.
+           endif
+        elseif (ypt.lt.ymin) then
+           if (iplotx.le.ndim .and. irender.gt.0) then
+              print "(a)",'error: cannot log coordinate axes with rendering'
+           else
+              call change_itrans(iplotx,xmin,xmax)
+              iadvance = 0
+              iexit = .true.
+           endif
         endif
 
      !
@@ -834,19 +854,27 @@ subroutine save_limits(iplot,xmin,xmax)
  return
 end subroutine save_limits
 
-subroutine change_itrans(iplot)
+!
+!--toggles log/unlog
+!  note this only changes a pure log transform: will not change combinations
+!
+subroutine change_itrans(iplot,xmin,xmax)
  use multiplot, only:itrans
  use settings_data, only:numplot
+ use transforms, only:transform_limits,transform_limits_inverse
  implicit none
  integer, intent(in) :: iplot
- character(len=20) :: string
+ real, intent(inout) :: xmin, xmax
  
  if (iplot.le.numplot) then
-    write(string,"(i8)") itrans(iplot)
-    if (index(string(1:len_trim(string)),'1').ne.0) then
+    if (itrans(iplot).eq.1) then
        itrans(iplot) = 0
+       !!--untransform the plot limits
+       call transform_limits_inverse(xmin,xmax,1)
     else
        itrans(iplot) = 1
+       !!--transform the plot limits
+       call transform_limits(xmin,xmax,itrans(iplot))
     endif
  endif
  
