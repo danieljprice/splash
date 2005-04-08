@@ -1,3 +1,10 @@
+module pagesetup
+ implicit none
+ public :: setpage
+ 
+ private
+
+contains
 !
 !--this subroutine determines the setup of the PGPLOT page
 !  sorts out labelling of axes, positioning of windows etc
@@ -107,9 +114,11 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
      !
      !--always label y axis
      !
-     call pgmtxt('l',3.0,0.5,1.0,labely)
+     call pgmtxt('l',3.0,0.5,0.5,labely)
      !!             call pglabel(' ',labely,trim(titlex))     
   endif
   
   return
 end subroutine setpage
+
+end module pagesetup
