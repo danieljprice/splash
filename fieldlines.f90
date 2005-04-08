@@ -1,5 +1,6 @@
 !
 ! module for field line / flux tube plotting in 2 and 3 dimensions
+! THIS IS *VERY* EXPERIMENTAL AND UNDOCUMENTED
 !
 module fieldlines
  implicit none
@@ -98,6 +99,7 @@ end subroutine trace2D
 
 !
 !--interpolate from particles to single point
+!  would be nice to know neighbours
 !
 subroutine interpolate_pt(xpt,ypt,vxpt,vypt,x,y,vecx,vecy,h,pmass,rho,npart)
  implicit none
