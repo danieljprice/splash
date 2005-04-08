@@ -42,7 +42,7 @@ difference between a raw particle plot and a rendered image can be substantial).
 \subsection{What it does}
 SUPERSPHPLOT is a utility for visualisation of output from (astrophysical) simulations using the
 Smoothed Particle Hydrodynamics (SPH) method in one, two and three dimensions.
-It is written in FORTRAN 90/95 and
+It is written in Fortran 90/95 and
 utilises PGPLOT subroutines to do the actual plotting. In particular the following
 features are included:
 \begin{itemize}
@@ -133,17 +133,13 @@ used by the SUPERSPHPLOT source code, you may want to refer to the PGPLOT usergu
 
 
 \subsubsection{Fortran 90/95 compilers}
- By now, many Fortran 90/95 compilers exist. Amongst the most popular commercially
-available ones are perhaps the NAG Fortran compiler and the Intel Fortran Compiler (ifc). However, the
-g95 project has produced a free compiler, which is downloadable from:
+ By now, many Fortran 90/95 compilers exist. In terms of free ones, the Intel compiler has a
+ non-commercial version available for linux and the
+g95 compiler, downloadable from:
 \begin{quote}
 \url{http://www.g95.org}
 \end{quote}
-and which successfully compiles SUPERSPHPLOT. Another, apparently unrelated project is located at
-\begin{quote}
-\url{http://gcc.gnu.org/fortran}
-\end{quote}
-however this compiler is not fully implemented and therefore does not as yet compile SUPERSPHPLOT.
+successfully compiles SUPERSPHPLOT on most platforms.
 
 \subsubsection{Makefile options}
 

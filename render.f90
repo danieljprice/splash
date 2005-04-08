@@ -78,7 +78,7 @@ end subroutine render_pix
 ! changeable parameter and the character height
 ! is not changed)
 !-------------------------------------------------------
-subroutine colourbar(icolours,datmin,datmax,label,log) 
+subroutine colourbar(icolours,datmin,datmax,label,log)
  use settings_render, only:ColourBarDisp
  implicit none
  integer, intent(in) :: icolours
