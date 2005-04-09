@@ -1,9 +1,17 @@
 !--------------------
 !    MAIN MENU
 !--------------------
+module mainmenu
+ implicit none
+ public :: menu
+ 
+ private
+
+contains
+
 subroutine menu
   use filenames
-  use labels
+  use labels, only: label,labelvec,iamvec,iacplane,ipowerspec
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
                      icoords,buffer_data,ncolumns
@@ -302,8 +310,6 @@ subroutine menu
 
   enddo menuloop
 
-100 format(1x,'(press any key to return to the main menu)',/)
-  
   return
   
  contains
@@ -393,3 +399,5 @@ subroutine menu
    return
    end subroutine options_multiplot
 end subroutine menu
+
+end module mainmenu

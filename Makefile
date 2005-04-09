@@ -24,23 +24,16 @@ FC = $(F90C)
 FFLAGS = $(F90FLAGS)
 
 # define the implicit rule to make a .o file from a .f90 file
+# (some Make versions don't know this)
 
 %.o : %.f90
 	$(F90C) $(F90FLAGS) -c $< -o $@
 
-DANSPH = read_data_dansph.f90
-MBATESPH = read_data_mbate.f90
-SPMHD = read_data_mbate_mhd.f90
-SINKSPH = read_data_mbate_hydro.f90
-SCWSPH = read_data_scw.f90
-SROSPH = read_data_sro.f90
-JJMSPH = read_data_jjm.f90
-GADGETSPH = read_data_gadget.f90
-VINESPH = read_data_VINE.f90
+# modules must be compiled in the correct order to check interfaces
 
-# put modules separately as these must be compiled before the others
-MODULES= globaldata.f90 transform.f90 prompting.f90 \
-         geometry.f90 colours.f90 colourparts.f90 \
+SOURCESF90= globaldata.f90 transform.f90 \
+         prompting.f90 geometry.f90 \
+         colours.f90 colourparts.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \
          exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
@@ -48,68 +41,58 @@ MODULES= globaldata.f90 transform.f90 prompting.f90 \
          limits.f90 options_limits.f90 \
          exact.f90 options_page.f90 \
          options_particleplots.f90 \
-         get_data.f90 options_data.f90\
+         allocate.f90 \
+         calc_quantities.f90 get_data.f90\
+         options_data.f90 \
 	 options_powerspec.f90 options_render.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 \
          rotate.f90 interpolate1D.f90 \
          interpolate2D.f90 interpolate3D_xsec.f90 \
          interpolate3D_projection.f90\
-         interactive.f90 allocate.f90 \
+         interactive.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
-         powerspectrums.f90 render.f90 \
+         powerspectrums.f90 render.f90 setpage.f90 \
+	 titles.f90 \
          plotstep.f90 timestepping.f90 \
-         defaults.f90 \
-         $(SYSTEMFILE)
+         defaults.f90 menu.f90 \
+         $(SYSTEMFILE) supersphplot.f90
 
-# these are the normal `external' subroutines
-SOURCES= supersphplot.f90 \
-         calc_quantities.f90 \
-	 danpgsch.f danpgtile.f danpgwedg.f \
-	 menu.f90 plot_kernel_gr.f90 \
-	 setpage.f90 titles_read.f90
+# these are `external' f77 subroutines
+SOURCESF= danpgsch.f danpgtile.f danpgwedg.f
 
-SOURCESALL = $(MODULES:.f90=.o) $(SOURCES:.f90=.o)
+OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o) 
 
-OBJJJMSPH = $(SOURCESALL:.f=.o) $(JJMSPH:.f90=.o)
-OBJDANSPH = $(SOURCESALL:.f=.o) $(DANSPH:.f90=.o)
-OBJMBATESPH = $(SOURCESALL:.f=.o) $(MBATESPH:.f90=.o)
-OBJSPMHD = $(SOURCESALL:.f=.o) $(SPMHD:.f90=.o)
-OBJSINKSPH = $(SOURCESALL:.f=.o) $(SINKSPH:.f90=.o)
-OBJSCWSPH = $(SOURCESALL:.f=.o) $(SCWSPH:.f90=.o)
-OBJSROSPH = $(SOURCESALL:.f=.o) $(SROSPH:.f90=.o)
-OBJGADGETSPH = $(SOURCESALL:.f=.o) $(GADGETSPH:.f90=.o)
-OBJVINESPH = $(SOURCESALL:.f=.o) $(VINESPH:.f90=.o)
+#
+# Now compile with the appropriate data read file
+# (move yours to the top so that you can simply type "make")
+#
 
-dansph: $(OBJDANSPH)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o ../supersphplot $(OBJDANSPH)
+dansph: $(OBJECTS) read_data_dansph.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_dansph.o
 
-jjmsph: $(OBJJJMSPH)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o jsupersphplot $(OBJJJMSPH)
+jjmsph: $(OBJECTS) read_data_jjmsph.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o jsupersphplot $(OBJECTS) read_data_jjmsph.o
 
-mbatesph: $(OBJMBATESPH)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o hsupersphplot $(OBJMBATESPH)
+mbatesph: $(OBJECTS) read_data_mbate.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o hsupersphplot $(OBJECTS) read_data_mbate.o
 
-spmhd: $(OBJSPMHD)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o msupersphplot $(OBJSPMHD)
+spmhd: $(OBJECTS) read_data_mbate_mhd.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o msupersphplot $(OBJECTS) read_data_mbate_mhd.o
 
-sinksph: $(OBJSINKSPH)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o hdsupersphplot $(OBJSINKSPH)
+sinksph: $(OBJECTS) read_data_mbate_hydro.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o hdsupersphplot $(OBJECTS) read_data_mbate_hydro.o
 
-scwsph: $(OBJSCWSPH)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_scw $(OBJSCWSPH)
+scwsph: $(OBJECTS) read_data_scw.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o wsupersphplot $(OBJECTS) read_data_scw.o
 
-srosph: $(OBJSROSPH)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_sro $(OBJSROSPH)
+srosph: $(OBJECTS) read_data_sro.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o rsupersphplot $(OBJECTS) read_data_sro.o
 
-gadget: $(OBJGADGETSPH)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot_gadget $(OBJGADGETSPH)
+gadget: $(OBJECTS) read_data_gadget.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o gsupersphplot $(OBJECTS) read_data_gadget.o
 
-vine: $(OBJVINESPH)
-	$(FC) $(FFLAGS) $(LDFLAGS) -o vsupersphplot $(OBJVINESPH)
-
-
-## sort out dependencies on modules
-defaults.o: exact.o
+vine: $(OBJECTS) read_data_VINE.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o vsupersphplot $(OBJECTS) read_data_vine.o
 
 ## other crap
 

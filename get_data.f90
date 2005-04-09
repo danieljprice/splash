@@ -27,6 +27,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use prompting
   use labels, only:label,labelvec,iamvec
   use geometry, only:labelcoord
+  use calcquantities, only:calc_quantities
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames

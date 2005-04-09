@@ -62,7 +62,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
 33   format (5('-'),' t = ',f9.4,', dump #',i5,1x,18('-'))
 
      istepsonpage = istepsonpage + 1
-     if (istepsonpage.le.nstepsperpage) then
+     if (nstepsperpage.gt.1 .and. istepsonpage.le.nstepsperpage) then
         ipagechange = .false.
      else
         istepsonpage = 1

@@ -1,6 +1,8 @@
 module particleplots
  implicit none
-
+ public :: particleplot
+ private :: plot_kernel_gr
+ 
 contains
 !
 !  Drives raw particle plots
@@ -145,7 +147,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
               print*,'error: particle index > number of particles'
            else
               if (icoordsnew.ne.icoords) then   
-                 call plot_kernel_gr(icoords,xplot(icircpart(n)),  &
+                 call plot_kernel_gr(icoordsnew,icoords,xplot(icircpart(n)),  &
                       yplot(icircpart(n)),2*h(icircpart(n)))
               else
                  call pgcirc(xplot(icircpart(n)),  &
@@ -192,5 +194,58 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   return
      
 end subroutine particleplot
+
+!
+! subroutine to plot the circle of interaction for a given particle
+! in general coordinate systems (e.g. cylindrical coordinates)
+!
+! input:  igeom : coordinate system (0,1=cartesian, 2=cylindrical, 3=spherical)
+!         x,y   : particle location in cartesian space
+!         h     : size of smoothing sphere 
+!                 (assumed isotropic in coordinate space)
+!
+! PGPLOT page must already be set up - this just draws the "circle"
+!
+subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
+  use geometry
+  implicit none
+  integer, intent(in) :: igeom, igeomold
+  real, intent(in) :: x,y,h
+  
+  integer, parameter :: npts = 100 ! big enough to give a smooth circle
+  real, parameter :: pi = 3.1415926536
+  integer :: i
+  real, dimension(2) :: xtemp
+  real, dimension(2,npts) :: xpts
+  real :: angle, dangle  
+
+  if (igeom.gt.1 .and. igeom.le.maxcoordsys) then
+     print 10,labelcoordsys(igeom) 
+  else
+     print 10,labelcoordsys(1)
+  endif
+10 format('coordinate system = ',a)
+  
+!
+!--step around a circle in co-ordinate space of radius h and store the 
+!  location of the points in cartesian space in the 2D array xpts
+!
+  dangle = 2.*pi/REAL(npts-1)
+  do i=1,npts
+     angle = (i-1)*dangle
+     xtemp(1) = x + h*COS(angle) 
+     xtemp(2) = y + h*SIN(angle)
+!
+!--translate back to actual coordinate system plotted
+!
+     call coord_transform(xtemp,2,igeomold,xpts(:,i),2,igeom)
+  enddo
+!
+!--now plot the circle using pgline
+!
+  call pgline(npts,xpts(1,:),xpts(2,:))
+
+  return
+end subroutine plot_kernel_gr
 
 end module particleplots

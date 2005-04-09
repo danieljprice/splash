@@ -1,3 +1,10 @@
+module calcquantities
+ implicit none
+ public :: calc_quantities
+ private
+ 
+contains
+
 !!
 !!   calculates various additional quantities from the input data
 !!
@@ -254,3 +261,5 @@ subroutine calc_quantities(ifromstep,itostep)
   
   return
 end subroutine calc_quantities
+
+end module calcquantities

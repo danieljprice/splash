@@ -1,7 +1,6 @@
 module timestep_plotting
   implicit none
 
-  integer, parameter, private :: maxtitles = 50
   integer, private :: ninterp
   integer, private :: iplotx,iploty,iplotz,irenderplot,ivectorplot,ivecx,ivecy
   integer, private :: nyplots,npartdim      
@@ -22,8 +21,6 @@ module timestep_plotting
   logical, private :: initialise_xsec
   logical, private :: imulti,iChangeRenderLimits
 
-  character(len=60), dimension(maxtitles), private :: titlelist
-
 contains
 
 !
@@ -37,6 +34,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use limits, only:lim
   use multiplot
   use prompting
+  use titles, only:read_titles
   use settings_data, only:ndim,numplot
   use settings_page
   use settings_render, only:icolours,iplotcont_nomulti
@@ -53,7 +51,6 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   ! initialisations
   !------------------------------------------------------------------------
 
-  titlelist = ' '
   isamexaxis = .true.  ! same x axis on all plots? (only relevant for >1 plots per page)
   isameyaxis = .true.  ! same y axis on all plots?
   tile_plots = .false.
@@ -184,7 +181,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
 
   !!--set plot titles
   ntitles = 0
-  call read_titles(titlelist,ntitles,maxtitles)
+  call read_titles(ntitles)
 
   !!------------------------------------------------------------------------
   ! initialise PGPLOT
@@ -267,6 +264,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   use projections3D, only:interpolate3D_projection
   use xsections3D, only:interpolate3D, interpolate3D_fastxsec, &
                         interpolate3D_xsec_vec
+  use titles, only:titlelist
   use render, only:render_pix,colourbar
 
   implicit none
@@ -300,7 +298,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   character(len=120) :: title
   character(len=20) :: string
   
-  logical :: iColourBar
+  logical :: iColourBar, rendering
   
 34   format (25(' -'))
 
@@ -385,13 +383,18 @@ subroutine plotstep(istep,irender,ivecplot, &
            angletempz = anglez
         endif
         !
-        !--change coordinate system if relevant
+        !--flag for whether or not we have raw particle plot or not
+        !  (not allowed to use transformations on coords otherwise)
         !
+        rendering = (iplotx.le.ndim .and. iploty.le.ndim .and. &
+                     (irenderplot.gt.ndim .or. ivectorplot.gt.0))
+
+        !
+        !--change coordinate system if relevant
+        !        
         if (icoordsnew.ne.icoords) then
            !--do this if one is a coord but not if rendering
-           if ((iplotx.le.ndim .or. iploty.le.ndim) &
-                .and..not.(iplotx.le.ndim.and.iploty.le.ndim &
-                .and.irenderplot.gt.ndim)) then
+           if ((iplotx.le.ndim .or. iploty.le.ndim).and..not.rendering) then
               print*,'changing coords from ',trim(labelcoordsys(icoords)), &
                      ' to ',trim(labelcoordsys(icoordsnew))
               do j=1,ntoti
@@ -446,7 +449,7 @@ subroutine plotstep(istep,irender,ivecplot, &
         endif
         !--apply transformations (log, 1/x etc) if appropriate
         !  also change labels and limits appropriately
-        if (.not.(iplotx.le.ndim .and. iploty.le.ndim)) then
+        if (.not.(rendering)) then
            if (itrans(iplotx).ne.0) then
               call transform(xplot(1:ntoti),itrans(iplotx))
               labelx = transform_label(labelx,itrans(iplotx))
@@ -1207,6 +1210,7 @@ contains
 ! actually plotted
 !----------------------------------------------
   subroutine page_setup
+    use pagesetup
     implicit none
     
     !--------------------------------------------------------------
