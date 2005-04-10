@@ -72,7 +72,7 @@ subroutine submenu_data
            ' 1) read new data ',/,      &
            ' 2) change number of timesteps used ( ',i5, ' )',/, &
            ' 3) plot selected steps only        (  ',L1,' )',/, &
-           ' 4) toggle buffering of data        (  ',L1, ' )')
+           ' 4) buffering of data on/off        (  ',L1, ' )')
  call prompt('enter option',ians,0,4)
 !
 !--options

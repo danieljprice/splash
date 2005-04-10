@@ -62,7 +62,7 @@ subroutine submenu_xsecrotate
 10  format(' 0) exit ',/,                 &
            ' 1) toggle cross section/projection           (',L1,' )',/, &
            ' 2) set cross section position                (',f5.2,' )',/, &
-           ' 3) toggle rotation                           (',L1,' )',/, &
+           ' 3) rotation on/off                           (',L1,' )',/, &
            ' 4) change rotation options',/, &
            ' 5) set axes for rotated plots                (',i2,' )')
  call prompt('enter option',ians,0,5)

@@ -66,7 +66,6 @@ program supersphplot
 !     options_vector	 : sets options for vector plots
 !     options_xsecrotate : sets options for cross sections and rotation
 !     particleplot       : subroutines for particle plotting
-!     plot_kernel_gr     : plots the kernel shape in non-cartesian co-ordinates
 !     plot_powerspectrum : calls powerspectrum and plots it
 !     plotstep           : main subroutines which drive plotting of a single timestep
 !     powerspectrums     : calculates power spectrum of 1D data (2 methods)

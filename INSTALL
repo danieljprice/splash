@@ -3,9 +3,23 @@ are freely available:
 - The PGPLOT graphics subroutine library
 - A Fortran 95 compiler
 
-Details on obtaining these are given below.
+The basic steps for installation are:
+1) make sure you have a Fortran 95 compiler (such as g95)
+2) make sure you have the PGPLOT libraries installed
+3) write a read_data subroutine so that SUPERSPHPLOT can read your data format
+4) compile SUPERSPHPLOT with your read_data subroutine and link with PGPLOT
 
-------------------- PGPLOT -----------------------------------------
+1) ---------------- Fortran 95 compilers ---------------------------
+
+ By now, many Fortran 90/95 compilers exist. In terms of free ones, the Intel compiler has a
+non-commercial version available for linux and the g95 compiler, downloadable from:
+\begin{quote}
+\url{http://www.g95.org}
+\end{quote}
+successfully compiles SUPERSPHPLOT and if necessary the PGPLOT
+libraries. 
+
+2) ------------------- PGPLOT -----------------------------------------
 The PGPLOT graphics subroutine library is freely downloadable from
 
 http://www.astro.caltech.edu/~tjp/pgplot/}
@@ -17,27 +31,16 @@ ftp://ftp.astro.caltech.edu/pub/pgplot/pgplot5.2.tar.gz}
 however check to see if it is already installed on your system (if so, the libraries are
 usually located in /usr/local/pgplot).
 
------------------ Fortran 95 compilers ---------------------------
+3) -------------- writing your data_read subroutine -------------------
+If you are using a publically available code, it is reasonably likely that I
+have already written a read data subroutine which will read your dumps.
+If not it is best to look at some of the other examples and change the 
+necessary parts to suit your data files. Note that reading directly from
+unformatted data files is *much* faster than reading from formatted (ascii)
+output.
 
- By now, many Fortran 9x compilers exist. Amongst the most popular commercially
-available ones are perhaps the NAG Fortran compiler and the Intel Fortran
-Compiler (ifc, which has a copy freely available for non-commercial use).
-However, the g95 project has produced a free compiler, which is downloadable from:
-
-http://www.g95.org
-
-and which successfully compiles both SUPERSPHPLOT and, if necessary, the PGPLOT
-libraries. 
-
-Another, apparently unrelated project is located at
-
-http://www.gfortran.org
-
-however this compiler is not fully implemented and therefore does not as yet compile SUPERSPHPLOT.
-
-
-------------------- Compiling SUPERSPHPLOT --------------------------------
- In the Makefile, you will need to set the FORTRAN compiler and flags to your local version, e.g..
+4) ------------------- Compiling and linking with PGPLOT --------------------------------
+ In the Makefile, you will need to set the Fortran compiler and flags to your local version, e.g..
 
 F90C = g95
 F90FLAGS = -O
@@ -86,14 +89,3 @@ particular system you are compiling the code on. The program is still fully
 functional without this call working, but it does make things convenient (in particular it means that
 SUPERSPHPLOT can be invoked using wildcards (*,?) in filenames).
 
- - then -
-
- - type - 
- 
- - make -
-
-crap> make
-
- - and -
- 
- - pray -
