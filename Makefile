@@ -94,6 +94,10 @@ gadget: $(OBJECTS) read_data_gadget.o
 vine: $(OBJECTS) read_data_VINE.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o vsupersphplot $(OBJECTS) read_data_vine.o
 
+spyros: $(OBJECTS) read_data_spyros.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o gsupersphplot $(OBJECTS) read_data_spyros.o
+
+
 ## other crap
 
 tar:

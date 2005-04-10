@@ -158,17 +158,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
      hfact = hfactin
      npartoftype(1,i) = nparti
      npartoftype(2,i) = ntoti - nparti
-     print "(/a14,':',f8.4)",' time',time(i)
-     print "(a14,':',i8)",' npart',nparti
-     print "(a14,':',i8)",' ntotal',ntoti
-     print "(a14,':',i8)",' ncolumns',ncolstep
-     print "(a14,':',f8.4)",' gamma',gamma(i)
-     print "(a14,':',f8.4)",' hfact',hfact
-     print "(a14,':',3x,i1,3x,i1)",' ndim, ndimV',ndim,ndimV
+     print "(/a14,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
+     print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolstep,'gamma',gamma(i),'hfact',hfact
+     print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
      if (icoords.gt.1) print "(a14,':',2x,a)",' geometry',labelcoordsys(icoords)
      if (any(ibound(1:ndim).ne.0)) then
-        print *,'   boundaries:  xmin = ',xmin(1:ndim)
-        print *,'                xmax = ',xmax(1:ndim)
+        print "(a14,':',a15,' =',3(f8.4))",'boundaries','xmin',xmin(1:ndim)
+        print "(15x,a15,' =',3(f8.4))",'xmax',xmax(1:ndim)
      endif
      !
      !--check for errors in timestep header
