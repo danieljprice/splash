@@ -37,7 +37,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
 
-  integer :: i,j,ierr,nparti,ntoti,irec
+  integer :: j,ierr,ntoti,irec
   integer :: npart_max,nstep_max,ncolstep
   logical :: iexist
     
@@ -96,7 +96,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !--get number of particles from header and allocate memory
      !
      ntoti = int(variable1)
-     nparti = ntoti
      ncolstep = int(variable2)
      ncolumns = ncolstep
     
