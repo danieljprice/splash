@@ -51,7 +51,8 @@ SOURCESF90= globaldata.f90 transform.f90 \
          interpolate3D_projection.f90\
          interactive.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
-         powerspectrums.f90 render.f90 titles.f90 setpage.f90 \
+         powerspectrums.f90 render.f90 setpage.f90 \
+	 titles.f90 \
          plotstep.f90 timestepping.f90 \
          defaults.f90 menu.f90 \
          $(SYSTEMFILE) supersphplot.f90
