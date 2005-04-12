@@ -39,7 +39,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, parameter :: maxptmass = 1000
   real, parameter :: pi=3.141592653589
   integer :: i,j,ifile,ierr
-  integer :: npart_max,nstep_max
+  integer :: npart_max,nstep_max,ncolstep
   logical :: iexist
     
   character(len=3) :: fileno
@@ -48,13 +48,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
   
-  real(doub_prec), dimension(:,:), allocatable :: dattemp
-  real(doub_prec), dimension(:), allocatable :: dummy
+!  real(doub_prec), dimension(:,:), allocatable :: dattemp
+!  real(doub_prec), dimension(:), allocatable :: dummy
+!  real(doub_prec) :: udisti,umassi,utimei, umagfdi
+!  real(doub_prec) :: timei, gammai
+!  real(doub_prec) :: rhozero, RK2, tcomp
+!  real(doub_prec) :: escap,tkin,tgrav,tterm,tmag
+!  real(doub_prec) :: dtmax
+
+  real, dimension(:,:), allocatable :: dattemp
+  real, dimension(:), allocatable :: dummy
   real(doub_prec) :: udisti,umassi,utimei, umagfdi
-  real(doub_prec) :: timei, gammai
-  real(doub_prec) :: rhozero, RK2, tcomp
-  real(doub_prec) :: escap,tkin,tgrav,tterm,tmag
-  real(doub_prec) :: dtmax
+  real :: timei, gammai
+  real :: rhozero, RK2, tcomp
+  real :: escap,tkin,tgrav,tterm,tmag
+  real :: dtmax
 
   nstepsread = 0
   nstep_max = 0
@@ -88,7 +96,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  ncolumns = max(19,maxcol)  ! number of columns in file  
+  ncolstep = 19
+  ncolumns = ncolstep !!max(19,maxcol)  ! number of columns in file  
   !
   !--allocate memory initially
   !
@@ -113,7 +122,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         read(15,end=55,iostat=ierr) udisti,umassi,utimei,umagfdi,nprint 
         if (.not.allocated(dat) .or. nprint.gt.npart_max) then
            npart_max = max(npart_max,INT(1.1*nprint))
-           call alloc(npart_max,nstep_max,ncolumns)
+           call alloc(npart_max,nstep_max,ncolstep+ncalc)
         endif
         rewind(15)
      endif
@@ -209,9 +218,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   close(15)
 
-  print*,'>> end of dump file: nsteps =',j-1,'ntot = ', &
-         sum(npartoftype(:,j-1)),'nghost=',npartoftype(2,j-1)
-
+  print*,'>> end of dump file: nsteps =',j-1
+  if (j-1.gt.0) then
+     print*,'ntot = ',sum(npartoftype(:,j-1)),'nghost=',npartoftype(2,j-1)
+  endif
      !
      !--if just the rootname has been input, 
      !  set next filename and see if it exists
