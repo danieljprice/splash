@@ -174,7 +174,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   endif
 
   !!--prompt for options if plotting power spectrum      
-  if (iploty.eq.ipowerspec &
+  if (iploty.eq.ipowerspec .and. .not. imulti &
      .or. (imulti.and.any(multiploty(1:nyplotmulti).eq.ipowerspec))) then
      call options_powerspec
   endif
