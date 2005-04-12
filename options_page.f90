@@ -13,7 +13,8 @@ module settings_page
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt, &
    nstepsperpage,iColourEachStep,tile,ipapersize,papersizex,aspectratio, &
-   hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle,legendtext
+   hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle,legendtext, &
+   colour_fore, colour_back
 
 contains
 
