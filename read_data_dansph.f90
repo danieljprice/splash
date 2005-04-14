@@ -275,12 +275,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !
         !--pmom
         !
-           call readvec(dat(1:ntoti,icol:icol+ndimV-1,i),ntoti,ndimV,singleprecision,ierr)
-           if (ierr /= 0) then
-              print "(a)",'*** error reading pmom ***'
-              exit overstepsinfile
-           endif
-           icol = icol + ndimV                  
+        !   call readvec(dat(1:ntoti,icol:icol+ndimV-1,i),ntoti,ndimV,singleprecision,ierr)
+        !   if (ierr /= 0) then
+        !      print "(a)",'*** error reading pmom ***'
+        !      exit overstepsinfile
+        !   endif
+        !   icol = icol + ndimV                  
            
           endif
         

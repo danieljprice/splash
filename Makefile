@@ -16,7 +16,10 @@ F90FLAGS =  -O -Wall  -fbounds-check
 #         -lpng
 
 LDFLAGS =  -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation -L/sw/lib/pgplot95 -lpgplot
-SYSTEMFILE = system_unix.f90
+
+# system file (top one uses Fortran 2003 system calls, as in g95)
+SYSTEMFILE = system_f2003.f90 # this is for Fortran 2003 compatible compilers
+#SYSTEMFILE = system_unix.f90
 #SYSTEMFILE = system_unix_NAG.f90
 
 # Fortran flags same as F90

@@ -139,7 +139,7 @@ program supersphplot
         nfiles = maxfile
      endif
      do i=1,nfiles
-        call get_command_argument(i,rootname(i))
+        call get_argument(i,rootname(i))
      enddo
   endif   
   if (nfiles.ge.1 .and. rootname(1)(1:1).ne.' ') then
