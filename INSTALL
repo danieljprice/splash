@@ -32,12 +32,16 @@ however check to see if it is already installed on your system (if so, the libra
 usually located in /usr/local/pgplot).
 
 3) -------------- writing your data_read subroutine -------------------
-If you are using a publically available code, it is reasonably likely that I
+If you are using a publically available code (e.g. GADGET), it is reasonably likely that I
 have already written a read data subroutine which will read your dumps.
 If not it is best to look at some of the other examples and change the 
 necessary parts to suit your data files. Note that reading directly from
 unformatted data files is *much* faster than reading from formatted (ascii)
-output.
+output. Just to get started you can use the read_data_ascii.f90 which reads
+from ascii files, but this will not enable the full rendering capabilities
+until you specify the location of the density, h and particle mass in the
+arrays (via the parameters ih, irho and ipmass in the set_labels subroutine
+which is part of the read_data file). 
 
 4) ------------------- Compiling and linking with PGPLOT --------------------------------
  In the Makefile, you will need to set the Fortran compiler and flags to your local version, e.g..

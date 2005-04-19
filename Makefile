@@ -15,7 +15,8 @@ F90FLAGS =  -O -Wall  -fbounds-check
 #         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
 #         -lpng
 
-LDFLAGS =  -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation -L/sw/lib/pgplot95 -lpgplot
+LDFLAGS = -L/usr/X11R6/lib -lX11 -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
+          -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
 
 # system file (top one uses Fortran 2003 system calls, as in g95)
 SYSTEMFILE = system_f2003.f90 # this is for Fortran 2003 compatible compilers
@@ -73,8 +74,8 @@ OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o)
 dansph: $(OBJECTS) read_data_dansph.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_dansph.o
 
-jjmsph: $(OBJECTS) read_data_jjmsph.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o jsupersphplot $(OBJECTS) read_data_jjmsph.o
+ascii: $(OBJECTS) read_data_ascii.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o asupersphplot $(OBJECTS) read_data_ascii.o
 
 mbatesph: $(OBJECTS) read_data_mbate.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o hsupersphplot $(OBJECTS) read_data_mbate.o

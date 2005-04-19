@@ -49,22 +49,22 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(maxptmass) :: listpm
   
   !--use these lines if dump is double precision
-  !real(doub_prec), dimension(:,:), allocatable :: dattemp
-  !real(doub_prec), dimension(:), allocatable :: dummy
-  !real(doub_prec) :: udisti,umassi,utimei
-  !real(doub_prec) :: timei, gammai
-  !real(doub_prec) :: rhozero, RK2
-  !real(doub_prec) :: escap,tkin,tgrav,tterm
-  !real(doub_prec) :: dtmax, tcomp
+  real(doub_prec), dimension(:,:), allocatable :: dattemp
+  real(doub_prec), dimension(:), allocatable :: dummy
+  real(doub_prec) :: udisti,umassi,utimei
+  real(doub_prec) :: timei, gammai
+  real(doub_prec) :: rhozero, RK2
+  real(doub_prec) :: escap,tkin,tgrav,tterm
+  real(doub_prec) :: dtmax, tcomp
 
   !--use these lines for single precision
-  real, dimension(:,:), allocatable :: dattemp
-  real, dimension(:), allocatable :: dummy
-  real(doub_prec) :: udisti,umassi,utimei
-  real :: timei, gammai
-  real :: rhozero, RK2
-  real :: escap,tkin,tgrav,tterm
-  real :: dtmax,tcomp
+  !real, dimension(:,:), allocatable :: dattemp
+  !real, dimension(:), allocatable :: dummy
+  !real(doub_prec) :: udisti,umassi,utimei
+  !real :: timei, gammai
+  !real :: rhozero, RK2
+  !real :: escap,tkin,tgrav,tterm
+  !real :: dtmax,tcomp
 
   nstepsread = 0
   nstep_max = 0
@@ -203,7 +203,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--convert to physical units
 !
-        dat(1:nprint,10,j) = dat(1:nprint,10,j)*real(umassi/udisti**3)
+        dat(1:nprint,10,j) = dat(1:nprint,10,j) !!!*real(umassi/udisti**3)
         if (allocated(dattemp)) deallocate(dattemp)
         if (allocated(dummy)) deallocate(dummy)
         if (allocated(isteps)) deallocate(isteps)
