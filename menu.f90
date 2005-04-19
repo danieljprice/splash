@@ -11,7 +11,7 @@ contains
 
 subroutine menu
   use filenames
-  use labels, only: label,labelvec,iamvec,iacplane,ipowerspec
+  use labels, only: label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
                      icoords,buffer_data,ncolumns
@@ -34,6 +34,7 @@ subroutine menu
   integer :: iamvecprev, ivecplottemp
   character(len=2) :: ioption
   character(len=50) :: vecprompt
+  logical :: iAllowRendering
 
   irender = 0
   ivecplot = 0
@@ -182,9 +183,19 @@ subroutine menu
         if (ipicky.le.(numplot-nextra)) then
            if (ipickx.eq.0) ipickx = 1 ! do not allow zero as default
            call prompt(' (x axis) ',ipickx)
+           
+           !
+           !--work out whether rendering is allowed based on presence of rho, h & m in data read
+           !  also must be in base coordinate system and no transformations applied
+           !
+           iAllowRendering = (ih.gt.0 .and. ih.le.ndataplots) &
+                        .and.(irho.gt.0 .and. irho.le.ndataplots) &
+                        .and.(ipmass.gt.0 .and. ipmass.le.ndataplots)  &
+                        .and.(icoords.eq.icoordsnew) &
+                        .and.(itrans(ipickx).eq.0 .and. itrans(ipicky).eq.0)
+
            if (ipickx.gt.numplot .or. ipickx.le.0) then
-              goto 9901 ! (apologies for the gratuitous use of goto)
-                        ! (I learnt BASIC as a kid)
+              goto 9901 ! (apologies for the gratuitous use of goto - I learnt BASIC as a kid)
            !
            !--prompt for render and vector plots 
            ! -> only allow if in "natural" coord system, otherwise h's would be wrong)
@@ -192,8 +203,7 @@ subroutine menu
            !  to icoordsnew, or alternatively plot non-cartesian pixel shapes)
            ! -> also do not allow if transformations are applied
            !
-           elseif (ipicky.le.ndim .and. ipickx.le.ndim .and. icoordsnew.eq.icoords &
-             .and. itrans(ipickx).eq.0 .and. itrans(ipicky).eq.0) then
+           elseif (ipicky.le.ndim .and. ipickx.le.ndim .and. iAllowRendering) then
               call prompt('(render) (0=none)',irender,0,numplot)
               ivecplottemp = -1
               do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
@@ -352,8 +362,17 @@ subroutine menu
       if (.not.iansx.and.multiploty(i).le.ndataplots) then
          call prompt(' x axis ',multiplotx(i),1,numplot)
       endif
-      if ((multiplotx(i).le.ndim).and.(multiploty(i).le.ndim) .and.icoordsnew.eq.icoords &
-          .and. itrans(multiplotx(i)).eq.0 .and. itrans(multiploty(i)).eq.0) then
+      !
+      !--work out whether rendering is allowed based on presence of rho, h & m in data read
+      !  also must be in base coordinate system and no transformations applied
+      !
+      iAllowRendering = (ih.gt.0 .and. ih.le.ndataplots) &
+                   .and.(irho.gt.0 .and. irho.le.ndataplots) &
+                   .and.(ipmass.gt.0 .and. ipmass.le.ndataplots)  &
+                   .and.(icoords.eq.icoordsnew) &
+                   .and.(itrans(multiplotx(i)).eq.0 .and. itrans(multiploty(i)).eq.0)
+      
+      if ((multiplotx(i).le.ndim).and.(multiploty(i).le.ndim) .and.iAllowRendering) then
          call prompt('(render) (0=none)',irendermulti(i),0,numplot)
          if (irendermulti(i).ne.0) then
             ichange = .false.
