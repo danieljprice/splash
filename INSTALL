@@ -83,7 +83,8 @@ are using to compile the SUPERSPHPLOT source code (e.g. g95).
  Secondly, you will need to modify the system-dependent routines for your
 compiler. These are located in the file system_unix.f90 which works for most
 unix-based compilers (including g95). A file system_unix_NAG
-is included for the NAG f95 compiler.
+is included for the NAG f95 compiler. A version for Fortran 2003 compatible
+compilers (such as g95) is also given (system_f2003.f90).
 
 At present the only calls to these routines are made from supersphplot.f90 which
 reads the run name(s) from the command line. A standardised format for performing this
