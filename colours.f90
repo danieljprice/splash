@@ -6,15 +6,15 @@ module colours
  implicit none
  integer, parameter :: ncolourmax = 256
  integer, parameter :: ncolourschemes = 8
- character(LEN=12), dimension(ncolourschemes), parameter :: schemename = &
-    (/'greyscale   ', &
-      'red         ', &
-      'ice blue    ', &
-      'rainbow     ', &
-      'frog monster', &
-      'other crap  ', &
-      'blood red   ', &
-      'spectrum    '/)
+ character(len=15), dimension(ncolourschemes), parameter :: schemename = &
+    (/'greyscale      ', &
+      'red            ', &
+      'ice blue       ', &
+      'rainbow        ', &
+      'frog monster   ', &
+      'rainbow 2      ', &
+      'red-blue-green ', &
+      'spectrum       '/)
 
 contains
 
@@ -28,7 +28,7 @@ subroutine colour_set(icolourscheme)
   integer :: i,icolourmin,icolmin,icolmax,ncolmax,ncolours,nset
   real :: hue,light,sat,brightness
   real :: dhue,dlight,dsat,dred,dgreen,dblue
-  real, dimension(5) :: lum,red,green,blue
+  real, dimension(6) :: lum,red,green,blue
   logical :: rgb
       
   red = 0.0
@@ -103,7 +103,7 @@ subroutine colour_set(icolourscheme)
      dsat = 0.0
      dhue = 80.0/FLOAT(ncolours)
   case(6)
-!    some other crap
+!    red-blue-green
      rgb = .false.
      hue=100
      light=0.5
@@ -143,23 +143,25 @@ subroutine colour_set(icolourscheme)
      brightness = 0.5
      select case(icolourscheme)
      case(6)
-     lum = (/0.0,0.25,0.5,0.75,1.0/)
-     red = (/0.0,1.0,1.0,1.0,0.0/)
-     blue = (/1.0,1.0,0.0,0.0,0.0/)
-     green = (/0.0,0.0,0.0,1.0,1.0/)
      nset = 5
+     lum(1:nset) = (/0.0,0.25,0.5,0.75,1.0/)
+     red(1:nset) = (/0.0,1.0,1.0,1.0,0.0/)
+     blue(1:nset) = (/1.0,1.0,0.0,0.0,0.0/)
+     green(1:nset) = (/0.0,0.0,0.0,1.0,1.0/)
      case(7)
-     lum(1:2) = (/0.0,1.0/)
-     red(1:2) = (/0.0,1.0/)
-     blue = 0.
-     green = 0.
-     nset = 2
+     nset = 6
+     !--red-blue-green
+     lum(1:nset) = (/0.0,0.2,0.4,0.6,0.8,1.0/)
+     red(1:nset) = (/0.0,0.9,0.5,0.0,0.25,1.0/)
+     blue(1:nset) = (/0.0,0.0,0.25,0.9,0.25,0.0/)
+     green(1:nset) = (/0.0,0.0,0.0,0.0,0.25,1.0/)
      case(8)
-     lum = (/0.0,0.25,0.5,0.75,1.0/)
-     red = (/1.0,0.0,0.0,1.0,1.0/)
-     blue = (/0.5,0.75,1.0,0.0,0.0/)
-     green = (/0.0,0.0,0.0,1.0,0.0/)
+     !--spectrum
      nset = 5
+     lum(1:nset) = (/0.0,0.25,0.5,0.75,1.0/)
+     red(1:nset) = (/1.0,0.0,0.0,1.0,1.0/)
+     blue(1:nset) = (/0.5,0.75,1.0,0.0,0.0/)
+     green(1:nset) = (/0.0,0.0,0.0,1.0,0.0/)
      end select
 
      call PGCTAB(lum(1:nset),red(1:nset),green(1:nset),blue(1:nset), &
