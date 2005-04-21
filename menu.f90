@@ -183,7 +183,9 @@ subroutine menu
         if (ipicky.le.(numplot-nextra)) then
            if (ipickx.eq.0) ipickx = 1 ! do not allow zero as default
            call prompt(' (x axis) ',ipickx)
-           
+           !--go back to y prompt if out of range
+           ! (apologies for the gratuitous use of goto - I learnt BASIC as a kid)
+           if (ipickx.gt.numplot .or. ipickx.le.0) goto 9901
            !
            !--work out whether rendering is allowed based on presence of rho, h & m in data read
            !  also must be in base coordinate system and no transformations applied
@@ -193,9 +195,6 @@ subroutine menu
                         .and.(ipmass.gt.0 .and. ipmass.le.ndataplots)  &
                         .and.(icoords.eq.icoordsnew) &
                         .and.(itrans(ipickx).eq.0 .and. itrans(ipicky).eq.0)
-
-           if (ipickx.gt.numplot .or. ipickx.le.0) then
-              goto 9901 ! (apologies for the gratuitous use of goto - I learnt BASIC as a kid)
            !
            !--prompt for render and vector plots 
            ! -> only allow if in "natural" coord system, otherwise h's would be wrong)
@@ -203,7 +202,7 @@ subroutine menu
            !  to icoordsnew, or alternatively plot non-cartesian pixel shapes)
            ! -> also do not allow if transformations are applied
            !
-           elseif (ipicky.le.ndim .and. ipickx.le.ndim .and. iAllowRendering) then
+           if (ipicky.le.ndim .and. ipickx.le.ndim .and. iAllowRendering) then
               call prompt('(render) (0=none)',irender,0,numplot)
               ivecplottemp = -1
               do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
