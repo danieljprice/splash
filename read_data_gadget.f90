@@ -2,7 +2,10 @@
 ! this subroutine reads from the data file(s)
 ! change this to change the format of data input
 !
-! THIS VERSION IS FOR OUTPUT FROM THE GADGET CODE (VERSION 2.0)
+! THIS VERSION IS FOR OUTPUT FROM THE GADGET CODE
+!
+! NOTE THAT THIS ONLY "OFFICIALLY" WORKS WITH THE PARALLEL CODE AS WE
+! REQUIRE KNOWLEDGE OF THE PARTICLE SMOOTHING LENGTHS
 !
 ! the data is stored in the global array dat
 !
@@ -12,7 +15,6 @@
 ! ndim, ndimV : number of spatial, velocity dimensions
 ! nstepsread  : number of steps read from this file
 !
-! maxplot,maxpart,maxstep      : dimensions of main data array
 ! dat(maxpart,maxplot,maxstep) : main data array
 !
 ! npartoftype(maxstep): number of particles of each type in each timestep
@@ -25,29 +27,35 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,istart,nstepsread)
+subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data
   use params
   use labels
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat
   use mem_allocation
   implicit none
-  integer, intent(IN) :: istart
-  integer, intent(OUT) :: nstepsread
-  character(LEN=*), intent(IN) :: rootname
-  character(LEN=LEN(rootname)+10) :: datfile
-  integer, dimension(maxparttypes) :: npartoftypei
+  integer, intent(in) :: istepstart
+  integer, intent(out) :: nstepsread
+  character(len=*), intent(in) :: rootname
+  character(len=len(rootname)+10) :: datfile
+  integer, dimension(maxparttypes) :: npartoftypei,Nall
   integer, dimension(:), allocatable :: iamtemp
-  integer :: i,itype,icol,ifile,idashpos,ierr
+  integer :: i,itype,icol,ierr
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
-  integer :: ncol_max,npart_max,nstep_max,ntoti
+  integer :: ncolstep,npart_max,nstep_max,ntoti
+  integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
   logical :: iexist,reallocate
-  real(doub_prec) :: timetemp
+  real(doub_prec) :: timetemp,ztemp
   real(doub_prec), dimension(6) :: Massoftype
   real, dimension(:), allocatable :: dattemp1
   real, dimension(:,:), allocatable :: dattemp
 
   nstepsread = 0
+  if (maxparttypes.lt.6) then
+     print*,' *** ERROR: not enough particle types for GADGET data read ***'
+     print*,' *** you need to edit supersphplot parameters and recompile ***'
+     stop
+  endif
   
   if (len_trim(rootname).gt.0) then
      datfile = trim(rootname)
@@ -68,28 +76,54 @@ subroutine read_data(rootname,istart,nstepsread)
 !
   ndim = 3
   ndimV = 3
-  ncol_max = 15 ! 3 x pos, 3 x vel, utherm, rho, Ne, h, pmass
 !
 !--read data from snapshots
 !  
-  i = istart
+  i = istepstart
 
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
   !
   !--open data file and read data
   !
-  open(11,ERR=81,file=datfile,status='old',form='unformatted')
+  open(11,iostat=ierr,file=datfile,status='old',form='unformatted')
+  if (ierr /= 0) then
+     print "(a)", '*** ERROR OPENING FILE ***'
+     return
+  endif
   !
   !--read header for this timestep
   !
-  read(11,ERR=70,end=80) npartoftypei,Massoftype,timetemp 
-  ntoti = int(sum(npartoftypei))
+  read(11,iostat=ierr) npartoftypei(1:6),Massoftype,timetemp,ztemp, &
+      iFlagSfr,iFlagFeedback,Nall(1:6),iFlagCool,nfiles
+  if (ierr /= 0) then
+     print "(a)", '*** ERROR READING TIMESTEP HEADER ***'
+     return
+  endif
+
+  iformat = 0
+  if (iFlagCool.gt.0) then
+     iformat = 1
+     ncolstep = 12 ! 3 x pos, 3 x vel, pmass, utherm, rho, Ne, Nh, h
+     ncolumns = ncolstep
+  else
+     iformat = 0
+     ncolstep = 10 ! 3 x pos, 3 x vel, pmass, utherm, rho, h
+     ncolumns = ncolstep  
+  endif
+  
+  ntoti = int(sum(npartoftypei(1:6)))
   print*,'time             : ',timetemp
   print*,'Npart (by type)  : ',npartoftypei
   print*,'Mass  (by type)  : ',Massoftype
   print*,'N_gas            : ',npartoftypei(1)
   print*,'N_total          : ',ntoti
+  print*,'N data columns   : ',ncolstep
 
+  if (nfiles.gt.1) then
+     print*,' nfiles = ',nfiles
+     print*,'*** ERROR: read from > 1 files not implemented'
+     return
+  endif
   !
   !--if successfully read header, increment the nstepsread counter
   !
@@ -113,15 +147,19 @@ subroutine read_data(rootname,istart,nstepsread)
   !--reallocate memory for main data array
   !
   if (reallocate .or. .not.(allocated(dat))) then
-     call alloc(npart_max,nstep_max,max(ncol_max+ncalc,maxcol))
+     call alloc(npart_max,nstep_max,max(ncolstep+ncalc,maxcol))
   endif
   !
   !--copy header into header arrays
   !
   npartoftype(:,i) = npartoftypei
-  time(i) = real(timetemp)
+!  time(i) = real(timetemp)
+!--use this line for redshift
+  time(i) = real(ztemp)
   
-
+  !
+  !--read particle data
+  !
   if (ntoti.gt.0) then
      if (allocated(dattemp)) deallocate(dattemp)
      allocate(dattemp(3,ntoti))
@@ -156,8 +194,11 @@ subroutine read_data(rootname,istart,nstepsread)
      print*,'particle ID ',ntoti
      if (allocated(iamtemp)) deallocate(iamtemp)
      allocate(iamtemp(npart_max))
-     read (11, end=66,ERR=73) iamtemp(1:ntoti)
+     read (11,iostat=ierr) iamtemp(1:ntoti)
      deallocate(iamtemp)
+     if (ierr /= 0) then
+        print "(a)",'error encountered whilst reading particle ID'
+     endif
      !
      !--read particle masses
      !
@@ -174,7 +215,10 @@ subroutine read_data(rootname,istart,nstepsread)
      if (allocated(dattemp1)) deallocate(dattemp1)
      allocate(dattemp1(Nmassesdumped))
      if (Nmassesdumped.gt.0) then
-        read(11,end=66,err=74) dattemp1(1:Nmassesdumped)
+        read(11,iostat=ierr) dattemp1(1:Nmassesdumped)
+     endif
+     if (ierr /= 0) then
+        print "(a)",'error reading particle masses'
      endif
      !--now copy to the appropriate sections of the .dat array
      indexstart = 1
@@ -202,14 +246,17 @@ subroutine read_data(rootname,istart,nstepsread)
      !--read other quantities for rest of particles
      !
      print*,'gas properties ',npartoftype(1,i)
-     do icol=8,15
+     do icol=8,ncolstep
         !!print*,icol
-        read (11, end=66,ERR=78) dat(1:npartoftype(1,i),icol,i)
+        read (11,iostat=ierr) dat(1:npartoftype(1,i),icol,i)
+        if (ierr /= 0) then
+           print "(a,i3)",'error reading particle data from column ',icol
+        endif
         !
         !--for some reason the smoothing length output by GADGET is
         !  twice the usual SPH smoothing length
         !
-        if (icol.eq.15) then
+        if (icol.eq.ncolstep) then
            dat(1:npartoftype(1,i),icol,i) = 0.5*dat(1:npartoftype(1,i),icol,i)
         endif
      enddo
@@ -220,58 +267,18 @@ subroutine read_data(rootname,istart,nstepsread)
      npartoftype(1,i) = 1
      dat(:,:,i) = 0.
   endif
-
-  !!ntot(i-1) = j-1
 !
 !--now memory has been allocated, set arrays which are constant for all time
 !
   gamma = 5./3.
-  goto 68
-
-66 continue
-  print*,'*** end of file reached in ',trim(datfile),' ***'
-  ! timestep there but data incomplete
-  goto 68
-
-68 continue
-  !
-  !--close data file and return
-  !                    
+!
+!--close data file and return
+!                    
   close(unit=11)
 
-  ncolumns = ncol_max
-  print*,'ncolumns = ',ncolumns
-
-  print*,'>> Finished reading: steps =',nstepsread-istart+1, &
-         'last step ntot =',sum(npartoftype(:,istart+nstepsread-1))
-  return    
-!
-!--errors
-!
-70 continue
-  print*,' *** Error encountered while reading timestep header ***'
-  print*,' Npartoftype = ',Npartoftype(:,i)
-  print*,' Massoftype = ',Massoftype
-  return
-
-73 continue
-  print*,' *** Error encountered while reading particle ID ***'
-  return
-
-74 continue
-  print*,' *** Error encountered while reading particle masses ***'
-  return
-
-78 continue
-  print*,' *** Error encountered while reading gas particle properties ***'
-  return
-
-80 continue
-  print*,' *** data file empty, no steps read ***'
-  return
-
-81 continue
-  print*,' *** Error: can''t open data file ***'
+  if (nstepsread.gt.0) then
+     print*,'>> last step ntot =',sum(npartoftype(:,istepstart+nstepsread-1))
+  endif
   return
 
 end subroutine read_data
@@ -305,20 +312,22 @@ subroutine set_labels
   irho = 9        ! location of rho in data array
   ipr = 0
   iutherm = 8     !  thermal energy
-  ih = 15         !  smoothing length
   !
   !--set labels of the quantities read in
   !
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(irho) = '\gr'
   label(iutherm) = 'u'
-  label(10) = 'NHp'
-  label(11) = 'NHep'
-  label(12) = 'NHepp'
-  label(13) = 'NH0'
-  label(14) = 'NHe0'
-  label(ih) = 'h'
   label(ipmass) = 'particle mass'
+  
+  if (ncolumns.gt.10) then
+     label(10) = 'Ne'
+     label(11) = 'Nh'
+     ih = 12        !  smoothing length
+  else
+     ih = 10
+  endif
+  label(ih) = 'h'
   !
   !--set labels for vector quantities
   !
