@@ -13,20 +13,20 @@ The basic steps for installation are:
 
  By now, many Fortran 90/95 compilers exist. In terms of free ones, the Intel compiler has a
 non-commercial version available for linux and the g95 compiler, downloadable from:
-\begin{quote}
-\url{http://www.g95.org}
-\end{quote}
+
+http://www.g95.org
+
 successfully compiles SUPERSPHPLOT and if necessary the PGPLOT
 libraries. 
 
 2) ------------------- PGPLOT -----------------------------------------
 The PGPLOT graphics subroutine library is freely downloadable from
 
-http://www.astro.caltech.edu/~tjp/pgplot/}
+http://www.astro.caltech.edu/~tjp/pgplot/
 
 or by ftp from
 
-ftp://ftp.astro.caltech.edu/pub/pgplot/pgplot5.2.tar.gz}
+ftp://ftp.astro.caltech.edu/pub/pgplot/pgplot5.2.tar.gz
 
 however check to see if it is already installed on your system (if so, the libraries are
 usually located in /usr/local/pgplot).
