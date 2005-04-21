@@ -10,7 +10,7 @@
 ## Compiler options
 F90C =  g95
 #F90C = f95
-F90FLAGS =  -O -Wall  -fbounds-check
+F90FLAGS =  -O ##-Wall  -fbounds-check
 #LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
 #         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
 #         -lpng
@@ -70,12 +70,14 @@ OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o)
 # Now compile with the appropriate data read file
 # (move yours to the top so that you can simply type "make")
 #
-
-dansph: $(OBJECTS) read_data_dansph.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_dansph.o
+gadget: $(OBJECTS) read_data_gadget.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o gsupersphplot $(OBJECTS) read_data_gadget.o
 
 ascii: $(OBJECTS) read_data_ascii.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o asupersphplot $(OBJECTS) read_data_ascii.o
+
+dansph: $(OBJECTS) read_data_dansph.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_dansph.o
 
 mbatesph: $(OBJECTS) read_data_mbate.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o hsupersphplot $(OBJECTS) read_data_mbate.o
@@ -91,9 +93,6 @@ scwsph: $(OBJECTS) read_data_scw.o
 
 srosph: $(OBJECTS) read_data_sro.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o rsupersphplot $(OBJECTS) read_data_sro.o
-
-gadget: $(OBJECTS) read_data_gadget.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o gsupersphplot $(OBJECTS) read_data_gadget.o
 
 vine: $(OBJECTS) read_data_VINE.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o vsupersphplot $(OBJECTS) read_data_vine.o
