@@ -8,20 +8,17 @@
 .KEEP_STATE:
 
 ## Compiler options
-F90C =  g95
-#F90C = f95
-F90FLAGS =  -O ##-Wall  -fbounds-check
-#LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
-#         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
-#         -lpng
+F90C = f95
+F90FLAGS =  -O -C ##-Wall -fbounds-check
+LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
+         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
+         -lpng
 
-LDFLAGS = -L/usr/X11R6/lib -lX11 -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
-          -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
-
+#LDFLAGS =  -L/usr/X11R6/lib -lX11 -L/sw/lib -lpng -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation -L/sw/lib/pgplot95 -lpgplot
 # system file (top one uses Fortran 2003 system calls, as in g95)
-SYSTEMFILE = system_f2003.f90 # this is for Fortran 2003 compatible compilers
+#SYSTEMFILE = system_f2003.f90 # this is for Fortran 2003 compatible compilers
 #SYSTEMFILE = system_unix.f90
-#SYSTEMFILE = system_unix_NAG.f90
+SYSTEMFILE = system_unix_NAG.f90
 
 # Fortran flags same as F90
 FC = $(F90C)
@@ -70,6 +67,9 @@ OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o)
 # Now compile with the appropriate data read file
 # (move yours to the top so that you can simply type "make")
 #
+mbatesph: $(OBJECTS) read_data_mbate.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o hsupersphplot $(OBJECTS) read_data_mbate.o
+
 gadget: $(OBJECTS) read_data_gadget.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o gsupersphplot $(OBJECTS) read_data_gadget.o
 
@@ -78,9 +78,6 @@ ascii: $(OBJECTS) read_data_ascii.o
 
 dansph: $(OBJECTS) read_data_dansph.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_dansph.o
-
-mbatesph: $(OBJECTS) read_data_mbate.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o hsupersphplot $(OBJECTS) read_data_mbate.o
 
 spmhd: $(OBJECTS) read_data_mbate_mhd.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o msupersphplot $(OBJECTS) read_data_mbate_mhd.o
