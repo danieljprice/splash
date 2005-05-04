@@ -52,12 +52,16 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   !
   index1 = 1
   over_types: do itype=1,ntypes
+     call pgbbuf
      index2 = index1 + npartoftype(itype) - 1
      if (index2.gt.ntot) then 
         index2 = ntot
         print "(a)",' WARNING: incomplete data'
      endif
-     if (index2.lt.index1) exit over_types
+     if (index2.lt.index1) then
+        call pgebuf
+        exit over_types
+     endif
 
      if (iplotpartoftype(itype) .and. npartoftype(itype).gt.0) then
         if (use_zrange) then
@@ -123,6 +127,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
         endif
      endif
      index1 = index2 + 1
+     call pgebuf
   enddo over_types
 
   !
