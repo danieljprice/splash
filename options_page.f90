@@ -11,7 +11,7 @@ module settings_page
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
  character(len=20) :: colour_fore, colour_back, legendtext
 
- namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt, &
+ namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,tile,ipapersize,papersizex,aspectratio, &
    hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle,legendtext, &
    colour_fore, colour_back
@@ -35,7 +35,7 @@ subroutine defaults_set_page
   aspectratio = 0.0     ! aspect ratio of paper (no call to PGPAP if zero)
   hposlegend = 0.75     ! horizontal legend position as fraction of viewport
   vposlegend = 2.0      ! vertical legend position in character heights
-  legendtext = 't='
+  legendtext = 't'
   hpostitle = 0.5       ! horizontal title position as fraction of viewport
   vpostitle = 1.0       ! vertical title position in character heights
   fjusttitle = 0.5      ! justification factor for title
