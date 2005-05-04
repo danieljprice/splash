@@ -116,7 +116,7 @@ C
 C
 C Determine the unit character height in NDC coords.
 C
-c      CALL PGSCH(1.0)
+      CALL PGSCH(1.0)
       CALL PGQCS(0, XCH, YCH)
       IF(HORIZ) THEN
         NDCSIZ = YCH
@@ -139,6 +139,7 @@ C anotation text within the area allowed for it.
 C
       NEWCH = TXTFRC*VWIDTH / (LABWID*NDCSIZ)
 c      CALL PGSCH(NEWCH)
+      CALL PGSCH(OLDCH)
 C
 C Determine the width of the wedge part of the plot minus the anotation.
 C (NDC units).
