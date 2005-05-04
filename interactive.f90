@@ -46,7 +46,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
   integer :: i,iclosest,nc,ierr,ixsec
   integer :: nmarked,ncircpart
   integer, dimension(npart) :: icircpart
-  real :: xpt,ypt,xpt2,ypt2
+  real :: xpt,ypt,xpt2,ypt2,charheight
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
   real :: xlength, ylength, drender
@@ -112,9 +112,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      case('p')
         print*,' closest particle = ',iclosest,'x = ',xcoords(iclosest),' y =',ycoords(iclosest)
         call pgnumb(iclosest,0,1,string,nc)
+        call pgqch(charheight)
         call pgsch(2.0)
         call pgtext(xcoords(iclosest),ycoords(iclosest),string(1:nc))
-        call pgsch(1.0)
+        call pgsch(charheight)
      case('c','C')
         print*,'plotting circle of interaction on particle ',iclosest, &
                ' h = ',hi(iclosest)
