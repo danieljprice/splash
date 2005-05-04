@@ -30,7 +30,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
   use labels
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iformat
+  use filenames, only:nfiles
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iformat, &
+                          buffer_data
   use mem_allocation
   use geometry, only:labelcoordsys
   implicit none
@@ -91,23 +93,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
      read(iunit,iostat=ierr,end=80) timein,npartin,ntotin,gammain, &
          hfactin,ndim_max,ndimV_max,ncol_max,icoords
      singleprecision = .true.
-     !!print*,' time = ',timein,' hfact = ',hfactin,' ndim=',ndim_max,'ncol=',ncol_max
      
      if (ierr /= 0) then
         print "(a)",'*** Error reading first header ***'
+        print*,' time = ',timein,' hfact = ',hfactin,' ndim=',ndim_max,'ncol=',ncol_max
         close(iunit)
         return
      endif
   endif
 !
-!--allocate memory for data arrays (initially for 11 timesteps)
+!--allocate memory for data arrays
 !
-  if (ntotin.lt.5500) then
-     nstep_max = max(111,maxstep)
-  elseif (ntotin.lt.111111) then
-     nstep_max = max(11,maxstep)
-  else 
-     nstep_max = max(5,maxstep)
+  if (buffer_data) then
+     nstep_max = max(nfiles,maxstep,indexstart)
+  else
+     nstep_max = max(1,maxstep,indexstart)
   endif
   npart_max = max(int(1.5*ntotin),maxpart)
   if (.not.allocated(dat) .or. ntotin.gt.maxpart  &
@@ -199,7 +199,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         reallocate = .true.
         npart_max = int(1.5*ntoti)
      endif
-     if (i.eq.maxstep) then
+     if (i.gt.maxstep) then
         nstep_max = i + max(10,INT(0.1*nstep_max))
         reallocate = .true.
      endif
@@ -370,7 +370,7 @@ contains
    real, dimension(ndims,ntotal) :: datvec
    real(doub_prec), dimension(ndims,ntotal) :: datvecd
 !
-!--read a vector quantity
+!--read a vector quantity and restructure into columns
 !
    if (singleprec) then
       read (iunit,iostat=ierr) datvec(1:ndims,1:ntotal)
