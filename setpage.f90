@@ -1,6 +1,7 @@
 module pagesetup
  implicit none
  public :: setpage
+ real, parameter, private :: xlabeloffset = 3.0, ylabeloffset = 3.0, titleoffset = 3.0
  
  private
 
@@ -18,34 +19,47 @@ contains
 !         labelx, labely, title  : axes labels, plot title
 !         just   : just=1 gives equal aspect ratios (same as in PGENV)
 !         axis   : axes options (same as in PGENV)
+!         colourbarwidth : colour bar width in character heights
 !         pagechange : change the physical page between plots
 !
 subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
-     just,axis,isamexaxis,isameyaxis,ipagechange)
+     just,axis,colourbarwidth,isamexaxis,isameyaxis,ipagechange)
   implicit none
   integer, intent(in) :: iplot, nx, ny, just, axis
-  real, intent(in) :: xmin, xmax, ymin, ymax
+  real, intent(in) :: xmin, xmax, ymin, ymax, colourbarwidth
   character(len=*), intent(in) :: labelx, labely, title
   character(len=10) :: xopts, yopts
   logical, intent(in) :: ipagechange, isamexaxis, isameyaxis
+  real :: vptxmin,vptxmax,vptymin,vptymax,xch,ych
 
   if (ipagechange) then
 
      call pgpage
-     if (nx*ny.gt.1) then
-        if (axis.lt.0) then
-           call pgsvp(0.02,0.98,0.02,0.98) ! if no axes use full viewport
-        else
-           !call pgsvp(0.25,0.98,0.15,0.95)
-           call pgsvp(0.25,0.98,0.17,0.93)
-        endif
-     else
-        if (axis.lt.0) then
-           call pgsvp(0.01,0.99,0.04,0.96) ! if no axes use full viewport
-        else
-           call pgsvp(0.1,0.9,0.1,0.9)
-        endif
+     !
+     !--query the character height as fraction of viewport
+     !
+     call pgqcs(0,xch,ych)
+     !
+     !--default is to use whole viewport
+     !
+     vptxmin = 0.01
+     vptxmax = 0.99
+     vptymin = 0.01
+     vptymax = 0.99
+     !
+     !--leave room for axes labels if necessary
+     !
+     if (axis.GE.0) then
+        vptxmin = (ylabeloffset+1.0)*xch
+        vptymin = (xlabeloffset+1.0)*ych
+        vptymax = vptymax - (titleoffset+1.0)*ych
      endif
+     !--also leave room for colour bar if necessary
+     if (colourbarwidth.GT.0.) then
+        vptxmax = vptxmax - (colourbarwidth + 0.25)*ych
+     endif
+
+     call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
 
      if (just.eq.1) then
         call pgwnad(xmin,xmax,ymin,ymax) ! pgwnad does equal aspect ratios
@@ -109,13 +123,13 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
      !  or if x axis quantities are different
      !
      if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis)) then
-        call pglabel(trim(labelx),' ',trim(title))
+        call pgmtxt('B',xlabeloffset,0.5,0.5,labelx)
+        call pgmtxt('T',-titleoffset,0.5,0.5,title)
      endif
      !
      !--always label y axis
      !
-     call pgmtxt('l',3.0,0.5,0.5,labely)
-     !!             call pglabel(' ',labely,trim(titlex))     
+     call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
   endif
   
   return

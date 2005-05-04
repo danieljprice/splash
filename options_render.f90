@@ -8,6 +8,9 @@ module settings_render
  logical :: iplotcont_nomulti
  logical :: iPlotColourBar,icolour_particles
  real :: ColourBarDisp
+ !--colour bar width is set here as it must be known for page setup
+ !  in principle it could be user-changeable but this adds pointless options
+ real, parameter :: ColourBarWidth = 5.5
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
    iPlotColourBar,icolour_particles,ColourBarDisp

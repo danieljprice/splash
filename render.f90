@@ -79,7 +79,7 @@ end subroutine render_pix
 ! is not changed)
 !-------------------------------------------------------
 subroutine colourbar(icolours,datmin,datmax,label,log)
- use settings_render, only:ColourBarDisp
+ use settings_render, only:ColourBarDisp, ColourBarWidth
  implicit none
  integer, intent(in) :: icolours
  real, intent(in) :: datmin,datmax
@@ -91,11 +91,7 @@ subroutine colourbar(icolours,datmin,datmax,label,log)
 !--set colour bar displacement and width in character heights
 !
  disp = 0.5
-!--want actual width to be independent of character height
- widthmm = 20.0
-!--translate this to character heights
- call pgqcs(2,xch,ych)
- width = widthmm/ych
+ width = ColourBarWidth
 !
 !--set character to send to pgwedg call if log (danpgwedg only) 
 !

@@ -754,8 +754,13 @@ subroutine plotstep(istep,irender,ivecplot, &
               just = 0 
            endif
            title = ' '
+           !--work out if colour bar is going to be plotted
+           iColourBar = .false.
+           if (irender.gt.ndim) iColourBar = iPlotColourBar
 
            call page_setup
+           !!--on tiled plots, only plot colour bar if last in row
+           if (tile_plots .and. icolumn.ne.nacross) iColourBar = .false.
 
            !--add to log
            if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),xsecmin,label(iplotz),xsecmax
@@ -817,11 +822,7 @@ subroutine plotstep(istep,irender,ivecplot, &
 
                  !!--print plot limits to screen
                  print*,trim(labelrender),' min, max = ',rendermin,rendermax
-                 
-                 !!--plot colour bar, but only if last in row
-                 iColourBar = iPlotColourBar
-                 if (tile_plots .and. icolumn.ne.nacross) iColourBar = .false.
-                      
+                                       
                  !!--call subroutine to actually render the image       
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                       npixx,npixy,xmin,ymin,pixwidth,    &
@@ -868,8 +869,8 @@ subroutine plotstep(istep,irender,ivecplot, &
                          icolourme(1:ntoti),ntoti)
 
                     !!--plot colour bar, but only if last in row
-                    iColourBar = iPlotColourBar
-                    if (tile_plots .and. icolumn.ne.nacross) iColourBar = .false.
+                    !!iColourBar = iPlotColourBar
+                    !!if (tile_plots .and. icolumn.ne.nacross) iColourBar = .false.
                     if (iColourBar) call colourbar(icolours,rendermin,rendermax, &
                                                    trim(labelrender),.false.)
                  endif
@@ -1211,8 +1212,10 @@ contains
 !----------------------------------------------
   subroutine page_setup
     use pagesetup
+    use settings_render, only:ColourBarWidth
     implicit none
-    
+    real :: barwidth
+        
     !--------------------------------------------------------------
     ! output some muff to the screen
     !--------------------------------------------------------------
@@ -1237,6 +1240,12 @@ contains
     ! set up pgplot page
     !--------------------------------------------------------------
 
+    if (iColourBar) then
+       barwidth = ColourBarWidth
+    else
+       barwidth = 0.
+    endif
+
     if (tile_plots) then
        if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
        call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
@@ -1247,7 +1256,7 @@ contains
        inewpage = ipagechange .or. (iplots.le.nacross*ndown)
        call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
          trim(labelx),trim(labely),trim(title), &
-         just,iaxis,isamexaxis,isameyaxis,inewpage)
+         just,iaxis,barwidth,isamexaxis,isameyaxis,inewpage)
     endif 
 
     return
