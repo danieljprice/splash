@@ -330,6 +330,7 @@ subroutine plotstep(istep,irender,ivecplot, &
      !--make sure character height is set correctly
      call danpgsch(charheightmm,2) ! set in mm
      call pgqch(charheight) ! in PGPLOT scaled units
+     iColourBar = .false.   ! should be false by default until set to true
 
      !--set current x, y, render and vector plot from multiplot array
      if (imulti) then
@@ -920,14 +921,6 @@ subroutine plotstep(istep,irender,ivecplot, &
               call legend(timei)
            endif
            !
-           !--print title if appropriate
-           !
-           if (istep.le.ntitles) then
-              if (titlelist(istep)(1:1).ne.' ') then
-                 call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(istep)))
-              endif
-           endif
-           !
            !--plot exact solution if relevant (before going interactive)
            !
            if (iexact.ne.0) then
@@ -1258,6 +1251,14 @@ contains
          trim(labelx),trim(labely),trim(title), &
          just,iaxis,barwidth,isamexaxis,isameyaxis,inewpage)
     endif 
+    !
+    !--print title if appropriate
+    !
+    if (iplotsonpage.le.ntitles) then
+       if (len_trim(titlelist(iplotsonpage)).gt.0) then
+          call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(iplotsonpage)))
+       endif
+    endif
 
     return
   end subroutine page_setup

@@ -1,7 +1,7 @@
 module pagesetup
  implicit none
  public :: setpage
- real, parameter, private :: xlabeloffset = 3.0, ylabeloffset = 3.0, titleoffset = 3.0
+ real, parameter, private :: xlabeloffset = 3.0, ylabeloffset = 3.0, titleoffset = 1.0
  
  private
 
@@ -50,8 +50,8 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
      !--leave room for axes labels if necessary
      !
      if (axis.GE.0) then
-        vptxmin = (ylabeloffset+1.0)*xch
-        vptymin = (xlabeloffset+1.0)*ych
+        vptxmin = (ylabeloffset+2.0)*xch
+        vptymin = (xlabeloffset+2.0)*ych
         vptymax = vptymax - (titleoffset+1.0)*ych
      endif
      !--also leave room for colour bar if necessary
