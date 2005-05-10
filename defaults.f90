@@ -124,7 +124,8 @@ subroutine defaults_write
  implicit none
  integer :: i
        
- open(unit=1,file='defaults',status='replace',form='formatted')
+ open(unit=1,file='defaults',status='replace',form='formatted', &
+      delim='apostrophe') ! without delim namelists may not be readable
     write(1,NML=dataopts)
     write(1,NML=plotopts)
     write(1,NML=pageopts)

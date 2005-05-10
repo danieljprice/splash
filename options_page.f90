@@ -35,7 +35,7 @@ subroutine defaults_set_page
   aspectratio = 0.0     ! aspect ratio of paper (no call to PGPAP if zero)
   hposlegend = 0.75     ! horizontal legend position as fraction of viewport
   vposlegend = 2.0      ! vertical legend position in character heights
-  legendtext = 't'
+  legendtext = 't='
   hpostitle = 0.5       ! horizontal title position as fraction of viewport
   vpostitle = 1.0       ! vertical title position in character heights
   fjusttitle = 0.5      ! justification factor for title

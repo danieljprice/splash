@@ -24,7 +24,7 @@ subroutine legend(t)
  real, intent(in) :: t    
  integer :: mm,pp,nc,ndecimal,ndec
  real :: tplot
- character string*15
+ character(len=30) :: string
 
  ndecimal = 2        ! number of decimal places to display
  ndec = 10**ndecimal
@@ -36,7 +36,7 @@ subroutine legend(t)
  mm=nint(tplot*ndec)
  pp=nint(log10(tplot)-log10(tplot*ndec))
  call pgnumb(mm,pp,1,string,nc)
- call pgmtext('t',-vposlegend,hposlegend,0.0,trim(legendtext)//'='//string(1:nc))
+ call pgmtext('T',-vposlegend,hposlegend,0.0,trim(legendtext)//string(1:nc))
 
  return
 end subroutine legend
