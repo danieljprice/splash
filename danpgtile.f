@@ -89,14 +89,14 @@ c allow enough room for the plot labels if they are drawn
 c NB: PGPLOT sets the character height as some fraction of the smallest
 c     dimension
 c
-      vmarginright = 0.001
-      vmargintop = 0.001
+      vmarginright = 0.00001
+      vmargintop = 0.00001
       IF (axis.GE.0) THEN
          vmarginleft = (ylabeloffset+1.0)*xch
          vmarginbottom = (xlabeloffset+1.0)*ych
       ELSE
-         vmarginleft = 0.001
-         vmarginbottom = 0.001
+         vmarginleft = 0.00001
+         vmarginbottom = 0.00001
       ENDIF
 c
 c effective viewport size = size - margins

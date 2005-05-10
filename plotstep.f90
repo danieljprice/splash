@@ -221,7 +221,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   !      charheight = 0.5*(nacross+ndown)
   
   !!--set line width to something visible
-  call pgslw(3)
+  call pgslw(2)
 
 end subroutine initialise_plotting
 

@@ -65,6 +65,8 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !--plot contours (use pgcont if pgcons causes trouble)
 !
     call pgcons(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
+    call pgmtxt('T',-2.0,0.05,0.0,trim(label))
+
  endif
  
  return

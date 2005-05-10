@@ -79,7 +79,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--calculate various additional quantities
      !
      if (n_end.ge.nstart) then
-        call calc_quantities(nstart,n_end)
+     !!   call calc_quantities(nstart,n_end)
      endif
      !
      !--read plot limits from file, otherwise set plot limits
@@ -121,7 +121,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--calculate various additional quantities
      !
      if (nstepsinfile(ireadfile).gt.0) then
-        call calc_quantities(1,nstepsinfile(ireadfile))
+     !!   call calc_quantities(1,nstepsinfile(ireadfile))
      endif
      
      !

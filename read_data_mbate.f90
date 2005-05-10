@@ -42,7 +42,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: npart_max,nstep_max,ncolstep
   logical :: iexist
     
-  character(len=3) :: fileno
   character(len=len(rootname)+10) :: dumpfile
   integer :: nprint, n1, n2, nptmass
   integer, dimension(:), allocatable :: isteps, iphase
@@ -70,23 +69,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstep_max = 0
   npart_max = maxpart
   ifile = 1
+
+  dumpfile = trim(rootname)   
   !
-  !--for rootnames without the '00', read all files starting at #1
-  !
-  if (len_trim(rootname).lt.7) then
-     ifile = 1
-     if (len_trim(rootname).eq.4) then
-        write(fileno,"(i1,i1,i1)") ifile/100,mod(ifile,100)/10,mod(ifile,10)
-        dumpfile = rootname(1:4)//fileno 
-     elseif (len_trim(rootname).eq.5) then
-        write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
-        dumpfile = rootname(1:5)//trim(fileno)     
-     endif
-  else
-     dumpfile = trim(rootname)   
-  endif
-  !
-  !--check if first data file exists
+  !--check if data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
@@ -103,149 +89,131 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--allocate memory initially
   !
-  nstep_max = max(nstep_max,indexstart,4)
+  nstep_max = max(nstep_max,indexstart,1)
 
   j = indexstart
   nstepsread = 0
   
-  do while (iexist)
-     write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
-     !
-     !--open the (unformatted) binary file and read the number of particles
-     !
-     open(unit=15,iostat=ierr,file=dumpfile,status='old',form='unformatted')
-     if (ierr /= 0) then
-        print*,'*** ERROR OPENING ',trim(dumpfile),' ***'
-     else
-        !
-        !--read the number of particles in the first step,
-        !  allocate memory and rewind
-        !
-        read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint 
-        if (.not.allocated(dat) .or. nprint.gt.npart_max) then
-           npart_max = max(npart_max,INT(1.1*nprint))
-           call alloc(npart_max,nstep_max,ncolstep+ncalc)
-        endif
-        rewind(15)
-     endif
-     if (ierr /= 0) then
-        print*,'*** ERROR READING TIMESTEP HEADER ***'
-     else
+  write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
+   !
+   !--open the (unformatted) binary file and read the number of particles
+   !
+   open(unit=15,iostat=ierr,file=dumpfile,status='old',form='unformatted')
+   if (ierr /= 0) then
+      print*,'*** ERROR OPENING ',trim(dumpfile),' ***'
+   else
+      !
+      !--read the number of particles in the first step,
+      !  allocate memory and rewind
+      !
+      read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint 
+      if (.not.allocated(dat) .or. nprint.gt.npart_max) then
+         npart_max = max(npart_max,INT(1.1*nprint))
+         call alloc(npart_max,nstep_max,ncolstep+ncalc)
+      endif
+      rewind(15)
+   endif
+   if (ierr /= 0) then
+      print*,'*** ERROR READING TIMESTEP HEADER ***'
+   else
 !
 !--loop over the timesteps in this file
 !     
-     over_steps_in_file: do     
-        npart_max = max(npart_max,nprint)
+   over_steps_in_file: do     
+     npart_max = max(npart_max,nprint)
 !
 !--allocate/reallocate memory if j > maxstep
 !
-        if (j.gt.maxstep) then
-           call alloc(maxpart,j+2*nstepsread,maxcol)
-        endif
+     if (j.gt.maxstep) then
+        call alloc(maxpart,j+2*nstepsread,maxcol)
+     endif
 !
 !--allocate a temporary array for double precision variables
 !
-        if (allocated(dattemp)) deallocate(dattemp)
-        allocate(dattemp(npart_max,ncolstep),stat=ierr)
-        if (ierr /= 0) print*,'not enough memory in read_data'
+     if (allocated(dattemp)) deallocate(dattemp)
+     allocate(dattemp(npart_max,ncolstep),stat=ierr)
+     if (ierr /= 0) print*,'not enough memory in read_data'
 !
 !--allocate a dummy arrays for data I want to throw away
 !
-        if (allocated(dummy)) deallocate(dummy)
-        allocate(dummy(npart_max),stat=ierr)
-        if (ierr /= 0) print*,'not enough memory in read_data'
+     if (allocated(dummy)) deallocate(dummy)
+     allocate(dummy(npart_max),stat=ierr)
+     if (ierr /= 0) print*,'not enough memory in read_data'
 
-        if (allocated(isteps)) deallocate(isteps)
-        allocate(isteps(npart_max),stat=ierr)
-        if (ierr /= 0) print*,'not enough memory in read_data'
+     if (allocated(isteps)) deallocate(isteps)
+     allocate(isteps(npart_max),stat=ierr)
+     if (ierr /= 0) print*,'not enough memory in read_data'
 
-        if (allocated(iphase)) deallocate(iphase)
-        allocate(iphase(npart_max),stat=ierr)
-        if (ierr /= 0) print*,'not enough memory in read_data'
+     if (allocated(iphase)) deallocate(iphase)
+     allocate(iphase(npart_max),stat=ierr)
+     if (ierr /= 0) print*,'not enough memory in read_data'
 
 !
 !--now read the timestep data in the dumpfile
 !
-        write(*,"(a,i5,a)",advance="no") '| step ',j,': '
+     write(*,"(a,i5,a)",advance="no") '| step ',j,': '
 
-        read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
-             nprint, n1, n2, timei, gammai, rhozero, RK2, &
-             (dattemp(i,7), i=1, nprint),escap, tkin, tgrav, tterm, &
-             (dattemp(i,1), i=1, nprint), (dattemp(i,2), i=1, nprint), &
-             (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
-             (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
-             (dattemp(i,8), i=1, nprint), (dattemp(i,9), i=1, nprint), &
-             (dattemp(i,10), i=1, nprint), (dattemp(i,11),i=1,nprint), &
-             dtmax, (isteps(i), i=1,nprint), (iphase(i),i=1,nprint), &
-             nptmass, (listpm(i), i=1,nptmass)
-        
-        if (ierr /= 0) then
-           print "(a)",'*** INCOMPLETE DATA (CHECK PRECISION) ***'
-           nstepsread = nstepsread + 1
-           exit over_steps_in_file
-        else
-           nstepsread = nstepsread + 1
-        endif
+     read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
+          nprint, n1, n2, timei, gammai, rhozero, RK2, &
+          (dattemp(i,7), i=1, nprint),escap, tkin, tgrav, tterm, &
+          (dattemp(i,1), i=1, nprint), (dattemp(i,2), i=1, nprint), &
+          (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
+          (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
+          (dattemp(i,8), i=1, nprint), (dattemp(i,9), i=1, nprint), &
+          (dattemp(i,10), i=1, nprint), (dattemp(i,11),i=1,nprint), &
+          dtmax, (isteps(i), i=1,nprint), (iphase(i),i=1,nprint), &
+          nptmass, (listpm(i), i=1,nptmass)
+
+     if (ierr /= 0) then
+        print "(a)",'*** INCOMPLETE DATA (CHECK PRECISION) ***'
+        nstepsread = nstepsread + 1
+        exit over_steps_in_file
+     else
+        nstepsread = nstepsread + 1
+     endif
 !
 !--spit out time
 !
-        tcomp = sqrt((3.*pi)/(32*rhozero))
-        print "(2(a,f8.3),a,i8)",'t = ',timei,' t_ff = ',timei/tcomp,' ntotal = ',nprint
-        if (nptmass.gt.0) then
-           print *,'WARNING: nptmasses = ',nptmass,' but ptmasses not yet implemented'
-        endif
+     tcomp = sqrt((3.*pi)/(32*rhozero))
+     print "(2(a,f8.3),a,i8)",'t = ',timei,' t_ff = ',timei/tcomp,' ntotal = ',nprint
+     if (nptmass.gt.0) then
+        print *,'WARNING: nptmasses = ',nptmass,' but ptmasses not yet implemented'
+     endif
 !
 !--convert to single precision
 !
-        print "(a)",'| converting to single precision... '
-        dat(1:nprint,1:ncolstep,j) = real(dattemp(1:nprint,1:ncolstep))
+     print "(a)",'| converting to single precision... '
+     dat(1:nprint,1:ncolstep,j) = real(dattemp(1:nprint,1:ncolstep))
 
 !
 !--convert to physical units
 !
-        dat(1:nprint,10,j) = dat(1:nprint,10,j) !!!*real(umassi/udisti**3)
-        if (allocated(dattemp)) deallocate(dattemp)
-        if (allocated(dummy)) deallocate(dummy)
-        if (allocated(isteps)) deallocate(isteps)
-        if (allocated(iphase)) deallocate(iphase)
+     dat(1:nprint,10,j) = dat(1:nprint,10,j) !!!*real(umassi/udisti**3)
+     if (allocated(dattemp)) deallocate(dattemp)
+     if (allocated(dummy)) deallocate(dummy)
+     if (allocated(isteps)) deallocate(isteps)
+     if (allocated(iphase)) deallocate(iphase)
 
-        npartoftype(1,j) = nprint
-        npartoftype(2,j) = 0
+     npartoftype(1,j) = nprint
+     npartoftype(2,j) = 0
 
-        gamma(j) = real(gammai)
-        time(j) = real(timei)/tcomp
-        j = j + 1
+     gamma(j) = real(gammai)
+     time(j) = real(timei)/tcomp
+     j = j + 1
 
-     enddo over_steps_in_file
-     
-     endif
+   enddo over_steps_in_file
+
+endif
 
 55 continue
-  !
-  !--reached end of file
-  !
-  close(15)
-  if (j-1 .gt. 0) then
-     print*,'>> end of dump file: nsteps =',j-1,'ntot = ', &
-           sum(npartoftype(:,j-1)),'nghost=',npartoftype(2,j-1)
-  endif
-     !
-     !--if just the rootname has been input, 
-     !  set next filename and see if it exists
-     !
-  ifile = ifile + 1
-  if (len_trim(rootname).eq.4) then
-     write(fileno,"(i1,i1,i1)") ifile/100,mod(ifile,100)/10,mod(ifile,10)
-     dumpfile = rootname(1:4)//fileno 
-     inquire(file=dumpfile,exist=iexist)
-     elseif (len_trim(rootname).eq.5) then
-     write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
-     dumpfile = rootname(1:5)//trim(fileno)     
-     inquire(file=dumpfile,exist=iexist)
-  else
-     iexist = .false. ! exit loop
-  endif
-enddo
+!
+!--reached end of file
+!
+close(15)
+if (j-1 .gt. 0) then
+   print*,'>> end of dump file: nsteps =',j-1,'ntot = ', &
+         sum(npartoftype(:,j-1)),'nghost=',npartoftype(2,j-1)
+endif
    
 return
                     

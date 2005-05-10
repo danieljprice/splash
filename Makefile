@@ -79,6 +79,9 @@ mbatesph: $(OBJECTS) read_data_mbate.o
 gadget: $(OBJECTS) read_data_gadget.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o gsupersphplot $(OBJECTS) read_data_gadget.o
 
+nina: $(OBJECTS) read_data_nina.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o nsupersphplot $(OBJECTS) read_data_nina.o
+
 ascii: $(OBJECTS) read_data_ascii.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o asupersphplot $(OBJECTS) read_data_ascii.o
 

@@ -16,10 +16,10 @@ subroutine calc_quantities(ifromstep,itostep)
   implicit none
   integer, intent(in) :: ifromstep, itostep
   integer :: i,j,nstartfromcolumn
-  integer :: ientrop,idhdrho,ivalfven
+  integer :: ientrop,idhdrho,ivalfven,imach
   integer :: ipmag,ibeta,itotpr,idivBerr,icurr,icrosshel
   integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
-  real :: Bmag, Jmag
+  real :: Bmag, Jmag, veltemp, spsound
   real, parameter :: pi = 3.1415926536
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
   !
@@ -40,6 +40,7 @@ subroutine calc_quantities(ifromstep,itostep)
   iBpar = 0
   iBperp = 0
   ivalfven = 0
+  imach = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -53,15 +54,15 @@ subroutine calc_quantities(ifromstep,itostep)
      ncalc = ncalc + 1
      ientrop = nstartfromcolumn + 1
   endif
-  if (ivx.ne.0) then
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 1
-     ike = nstartfromcolumn + 1
-  endif
   if ((ipr.eq.0 .or. ipr.gt.ncolumns) .and. iutherm.ne.0.and.irho.ne.0) then
      nstartfromcolumn = ncolumns + ncalc
      ncalc = ncalc + 1
      ipr = nstartfromcolumn + 1
+  endif
+  if (ivx.ne.0 .and. ipr.ne.0 .and. irho.ne.0) then
+     nstartfromcolumn = ncolumns + ncalc
+     ncalc = ncalc + 1
+     imach = nstartfromcolumn + 1
   endif
   !if (ih.ne.0 .and. irho.ne.0) then
   !  nstartfromcolumn = ncolumns + ncalc
@@ -121,15 +122,28 @@ subroutine calc_quantities(ifromstep,itostep)
      endif
      !!--entropy
      if (ientrop.ne.0 .and. ipr.ne.0) then
-        where (dat(1:ntoti,irho,i).gt.1.e-10) 
+        where (dat(1:ntoti,irho,i).gt.tiny(dat)) 
            dat(1:ntoti,ientrop,i) = dat(1:ntoti,ipr,i)/dat(1:ntoti,irho,i)**gamma(i)
         elsewhere
            dat(1:ntoti,ientrop,i) = 0.
         endwhere
      endif
+     !!--mach number
+     if (imach.ne.0) then
+        do j=1,ntoti
+           veltemp = dot_product(dat(j,ivx:ivx+ndimV-1,i), &
+                                 dat(j,ivx:ivx+ndimV-1,i))
+           if (dat(j,irho,i).gt.tiny(dat)) then
+              spsound = gamma(i)*dat(j,ipr,i)/dat(j,irho,i)
+              dat(j,imach,i) = sqrt(veltemp/spsound)
+           else
+              dat(j,imach,i) = 0.
+           endif
+        enddo
+     endif
      !!--dh/drho
      if (idhdrho.ne.0) then
-        where (dat(1:ntoti,irho,i).gt.1.e-10) 
+        where (dat(1:ntoti,irho,i).gt.tiny(dat)) 
            dat(1:ntoti,idhdrho,i) = &
               -dat(1:ntoti,ih,i)/(ndim*(dat(1:ntoti,irho,i)))
         elsewhere
@@ -244,9 +258,11 @@ subroutine calc_quantities(ifromstep,itostep)
   if (idhdrho.ne.0) label(idhdrho) = 'dh/d\gr'
   if (irad.ne.0) label(irad) = 'radius '
   if (irad2.ne.0) label(irad2) = 'r\d\(0737)'    !!!parallel'
-  if (ike.ne.0) label(ike) = 'specific KE'
+  if (ike.ne.0) label(ike) = 'v\u2\d/2'
   if (ipr.gt.ncolumns) label(ipr) = 'P_gas'
-  if (ipmag.ne.0) label(ipmag) = 'P_mag'
+  if (imach.ne.0) label(imach) = '|v|/c\ds'
+  
+  if (ipmag.ne.0) label(ipmag) = 'B\u2\d/2'
   if (itotpr.ne.0) label(itotpr) = 'P_gas + P_mag'
   if (ibeta.ne.0) label(ibeta) = 'plasma \gb'
   if (idivberr.ne.0) label(idivberr) = 'h |div B| / |B|'
