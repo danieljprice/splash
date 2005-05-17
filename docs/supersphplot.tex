@@ -6,16 +6,15 @@
 \graphicspath{{figs/}}
 
 \begin{titlepage}
-\title{Visualisation of SPH data using SUPERSPHPLOT - v1.0.1}
+\title{Visualisation of SPH data using SUPERSPHPLOT - v\input{version}}
 \author{Daniel Price}
 \end{titlepage}
-
 
 \begin{document}
 \maketitle
 \tableofcontents
-
 \newpage
+
 \section{Introduction}
  Whilst many wonderful commercial software packages exist for visualising scientific
 data (such as the widely used Interactive Data Language), I found that such packages
@@ -37,7 +36,8 @@ as efficiently as possible from the raw data with a minimum amount of effort
 from the user. I have found in the process that the development of powerful
 visualisation tools has enabled me to pick up on effects present in my
 simulation results that I would not otherwise have noticed (in particular the
-difference between a raw particle plot and a rendered image can be substantial). Part of the goal of SUPERSPHPLOT is to eliminate the over use of particle plots as a means of representing SPH data!
+difference between a raw particle plot and a rendered image can be substantial). Part of the goal of
+SUPERSPHPLOT is to eliminate the use of crap-looking particle plots as a means of representing SPH data!
 
 \subsection{What it does}
 SUPERSPHPLOT is a utility for visualisation of output from (astrophysical) simulations using the
@@ -86,10 +86,11 @@ with faces showing cross sections and the like (although I regularly think about
 
 \subsection{Version History}
 
-\paragraph{Version 0.667}
- This version has been released to a limited number of people who have specifically requested a copy.
-\paragraph{Version 0.666}
- This version was released to one or two people and had some bugs still buried.
+\begin{tabular}{|l|p{0.85\textwidth}|}
+\hline
+\input{version_history_tex}
+\hline
+\end{tabular}
 
 \subsection{Licence}
 SUPERSPHPLOT - a visualisation tool for SPH data \copyright 2005 Daniel Price.
