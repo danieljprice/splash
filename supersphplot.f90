@@ -87,7 +87,7 @@ program supersphplot
 !
 !     File format is specified in the subroutine read_data   
 !
-!     See the CVS logs for a ChangeLog
+!     See the CVS logs for a full ChangeLog
 !
 !      Plots can be of two types: co-ordinate plots or not
 !

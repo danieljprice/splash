@@ -9,14 +9,13 @@
 
 ## Compiler options
 F90C =  g95
-#F90C = f95
-F90FLAGS =  -O -Wall  -fbounds-check
-#LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
-#         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
-#         -lpng
+F90FLAGS =  -O
 
 LDFLAGS = -L/usr/X11R6/lib -lX11 -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
+#LDFLAGS = -L/usr/X11R6/lib -lX11 -lpgplot \
+#         -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ -lg2c \
+#         -lpng
 
 # system file (top one uses Fortran 2003 system calls, as in g95)
 SYSTEMFILE = system_f2003.f90 # this is for Fortran 2003 compatible compilers
@@ -70,20 +69,23 @@ OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o)
 # Now compile with the appropriate data read file
 # (move yours to the top so that you can simply type "make")
 #
-dansph: $(OBJECTS) read_data_dansph.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_dansph.o
+ascii: $(OBJECTS) read_data_ascii.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_ascii.o
 
 mbatesph: $(OBJECTS) read_data_mbate.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o hsupersphplot $(OBJECTS) read_data_mbate.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o bsupersphplot $(OBJECTS) read_data_mbate.o
 
 gadget: $(OBJECTS) read_data_gadget.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o gsupersphplot $(OBJECTS) read_data_gadget.o
 
+vine: $(OBJECTS) read_data_VINE.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o vsupersphplot $(OBJECTS) read_data_vine.o
+
+dansph: $(OBJECTS) read_data_dansph.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o dsupersphplot $(OBJECTS) read_data_dansph.o
+
 nina: $(OBJECTS) read_data_nina.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o nsupersphplot $(OBJECTS) read_data_nina.o
-
-ascii: $(OBJECTS) read_data_ascii.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o asupersphplot $(OBJECTS) read_data_ascii.o
 
 spmhd: $(OBJECTS) read_data_mbate_mhd.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o msupersphplot $(OBJECTS) read_data_mbate_mhd.o
@@ -97,11 +99,8 @@ scwsph: $(OBJECTS) read_data_scw.o
 srosph: $(OBJECTS) read_data_sro.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o rsupersphplot $(OBJECTS) read_data_sro.o
 
-vine: $(OBJECTS) read_data_VINE.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o vsupersphplot $(OBJECTS) read_data_vine.o
-
 spyros: $(OBJECTS) read_data_spyros.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o gsupersphplot $(OBJECTS) read_data_spyros.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o ssupersphplot $(OBJECTS) read_data_spyros.o
 
 
 ## other crap
