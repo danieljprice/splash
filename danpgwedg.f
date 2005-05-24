@@ -43,7 +43,7 @@ C                                        Temporary window coord storage.
 C                                        Viewport coords of wedge.
       REAL VXA,VXB,VYA,VYB
 C                          Original and anotation character heights.
-      REAL OLDCH, NEWCH
+      REAL OLDCH    !!!, NEWCH
 C                          Size of unit character height (NDC units).
       REAL NDCSIZ
 C                          True if wedge plotted horizontally.
@@ -137,7 +137,7 @@ C
 C Determine and set the character height required to fit the wedge
 C anotation text within the area allowed for it.
 C
-      NEWCH = TXTFRC*VWIDTH / (LABWID*NDCSIZ)
+CCC      NEWCH = TXTFRC*VWIDTH / (LABWID*NDCSIZ)
 c      CALL PGSCH(NEWCH)
       CALL PGSCH(OLDCH)
 C

@@ -88,7 +88,7 @@ subroutine colourbar(icolours,datmin,datmax,label,log)
  character(len=*), intent(in) :: label
  logical, intent(in) :: log
  character(len=1) :: clog
- real :: disp, widthmm, width, xch,ych
+ real :: disp, width
 !
 !--set colour bar displacement and width in character heights
 !
