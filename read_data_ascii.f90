@@ -49,14 +49,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: ',trim(dumpfile),' file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
      return
   endif
   !
-  !--fix number of spatial dimensions (assume 3)
+  !--fix number of spatial dimensions (0 means no particle coords)
   !
-  ndim = 3
-  ndimV = 3
+  ndim = 0
+  ndimV = 0
 
   j = indexstart
   nstepsread = 0
@@ -67,13 +67,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   open(unit=iunit,iostat=ierr,file=dumpfile,status='old',form='formatted')
   if (ierr /= 0) then
-     print*,'*** ERROR OPENING ',trim(dumpfile),' ***'
+     print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
   else
      call get_ncolumns(iunit,ncolstep)
+     if (ncolstep.le.0) return
      !
      !--allocate memory initially
      !
-     nprint = 10001
+     nprint = 101
      nstep_max = max(nstep_max,indexstart,1)
      if (.not.allocated(dat) .or. (nprint.gt.npart_max)) then
         npart_max = max(npart_max,INT(1.1*(nprint)))
@@ -157,13 +158,10 @@ subroutine get_ncolumns(lunit,ncolumns)
  dummyreal = -666.0
  
  ierr = 0
- read(line,*,iostat=ierr,end=10) (dummyreal(i),i=1,size(dummyreal))
- if (ierr /= 0) then
-    print*,'*** ERROR: file does not contain real numbers'
-    ncolumns = 0
-    return
+ read(line,*,iostat=ierr) (dummyreal(i),i=1,size(dummyreal))
+ if (ierr .gt. 0) then
+    print "(a)",' WARNING: not all columns contain real numbers '
  endif
-10 continue 
 
  i = 1
  ncolumns = 0
@@ -171,11 +169,15 @@ subroutine get_ncolumns(lunit,ncolumns)
     ncolumns = ncolumns + 1
     i = i + 1
     if (i.gt.size(dummyreal)) then
-       print*,'*** ERROR: too many columns in file'
+       print "(a)",'*** ERROR: too many columns in file'
        return
     endif
  enddo
-
+ if (ncolumns.eq.0) then
+    print "(a)",' ERROR: no columns of real numbers found'
+ else
+    print "(a,i3)",' number of data columns = ',ncolumns
+ endif
 end subroutine get_ncolumns
                    
 end subroutine read_data
@@ -194,22 +196,33 @@ subroutine set_labels
   use settings_data
   use geometry, only:labelcoord
   implicit none
-  integer :: i
-  
-  if (ndim.le.0 .or. ndim.gt.3) then
-     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
-     return
-  endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
-     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
-     return
-  endif
-    
-  do i=1,ndim
-     ix(i) = i
-  enddo
-  label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  integer :: i,ierr
 
+  ix(:) = 0
+!  do i=1,ndim
+!     ix(i) = i
+!  enddo
+!  label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  
+!
+!--read column labels from the columns file if it exists
+!  
+  open(unit=51,file='columns',status='old',iostat=ierr)
+  if (ierr /=0) then
+     print "(a)",' columns file not found: using default labels'
+  else
+     overcols: do i=1,ncolumns
+        read(51,"(a)",iostat=ierr) label(i)
+        if (ierr < 0) then
+           print "(a,i3)",' ERROR: end of file in columns file: read to column ',i-1
+           exit overcols
+        elseif (ierr > 0) then
+           print "(a)",' *** error reading from columns file ***'
+           exit overcols
+        endif
+     enddo overcols
+     close(unit=51)
+  endif
   print "(3(/,a),/)",'WARNING: Rendering capabilities cannot be enabled', &
                  '         until positions of rho, h, pmass etc are', &
                  '         known (see read_data_ascii.f90 for details)'
