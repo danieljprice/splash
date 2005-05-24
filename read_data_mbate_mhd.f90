@@ -88,7 +88,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: ',trim(dumpfile),' file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
      return
   endif
   !
@@ -113,7 +113,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      open(unit=15,iostat=ierr,file=dumpfile,status='old',form='unformatted')
      if (ierr /= 0) then
-        print*,'*** ERROR OPENING ',trim(dumpfile),' ***'
+        print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
      else
         !
         !--read the number of particles in the first step,
@@ -127,7 +127,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         rewind(15)
      endif
      if (ierr /= 0) then
-        print*,'*** ERROR READING TIMESTEP HEADER ***'
+        print "(a)",'*** ERROR READING TIMESTEP HEADER ***'
      else
 !
 !--loop over the timesteps in this file

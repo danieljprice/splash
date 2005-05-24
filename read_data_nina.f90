@@ -50,7 +50,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: ',trim(dumpfile),' file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
      return
   endif
   !
@@ -68,7 +68,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   open(unit=iunit,iostat=ierr,file=dumpfile,status='old',form='formatted')
   if (ierr /= 0) then
-     print*,'*** ERROR OPENING ',trim(dumpfile),' ***'
+     print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
   else
      ncolstep = 7
      !!!call get_ncolumns(iunit,ncolstep,1)

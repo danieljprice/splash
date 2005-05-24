@@ -68,7 +68,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: ',trim(datfile),' file not found ***'    
+     print "(a)",' *** error: '//trim(datfile)//': file not found ***'    
      return
   endif
 !
