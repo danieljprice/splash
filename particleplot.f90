@@ -12,11 +12,12 @@ contains
 !
 !
 subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
-                        icolourpart,npartoftype, &
+                        icolourpart,npartoftype,iplotpartoftype, &
                         use_zrange,zmin,zmax,labelz)
   use labels
   use settings_data, only:ndim,icoords,ntypes
-  use settings_part
+  use settings_part, only:imarktype,ncircpart,icoordsnew,icircpart, &
+                          ilabelpart
   implicit none
   integer, intent(in) :: ntot, iplotx, iploty
   integer, intent(in), dimension(ntot) :: icolourpart
@@ -25,6 +26,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   real, dimension(ntot) :: xerrb, yerrb, herr
   real, intent(in) :: zmin,zmax
   logical, intent(in) :: use_zrange
+  logical, dimension(maxparttypes), intent(in) :: iplotpartoftype
   character(len=*), intent(in) :: labelz
   integer :: j,n,itype,linewidth,icolourindex,nplotted
   integer :: lenstring,index1,index2,ntotplot,icolourstart

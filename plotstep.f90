@@ -241,7 +241,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   use settings_data, only:numplot,ndataplots,icoords,ndim,ndimv,nstart,n_end,nfreq
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotlinein,linestylein, &
-                     iplotline,iplotpartoftype
+                     iplotline,iplotpartoftype,PlotOnRenderings
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis, &
                      hpostitle,vpostitle,fjusttitle
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
@@ -276,7 +276,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   integer, intent(inout) :: iadvance
   
   integer :: ntoti,iz
-  integer :: j,k,irow,icolumn
+  integer :: j,k,icolumn !!,irow
   integer :: nyplot
   integer :: irenderpart,irendered
   integer :: npixx,npixy,npixz,ipixxsec
@@ -837,6 +837,12 @@ subroutine plotstep(istep,irender,ivecplot, &
                       npixx,npixy,xmin,ymin,pixwidth,    &
                       icolours,iplotcont,iColourBar,ncontours,log)
 
+                 !!--plot other particle types (e.g. sink particles) on top
+                 call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
+                   zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
+                   icolourme(1:ntoti),npartoftype(:),PlotOnRenderings(:), &
+                   x_sec,xsecmin,xsecmax,labelz)
+
               elseif (ndim.eq.2 .and. x_sec) then
                  !---------------------------------------------------------------
                  ! plot 1D cross section through 2D data (contents of datpix) 
@@ -888,8 +894,15 @@ subroutine plotstep(istep,irender,ivecplot, &
                  !
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-                   icolourme(1:ntoti),npartoftype(:), &
+                   icolourme(1:ntoti),npartoftype(:),iplotpartoftype(:), &
                    x_sec,xsecmin,xsecmax,labelz)
+              else
+                 !!--plot other particle types on top of vector plots (e.g. sinks)
+                 call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
+                   zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
+                   icolourme(1:ntoti),npartoftype(:),PlotOnRenderings(:), &
+                   x_sec,xsecmin,xsecmax,labelz)
+                   
               endif
            endif
 
@@ -1024,11 +1037,17 @@ subroutine plotstep(istep,irender,ivecplot, &
                 rendermin,rendermax, &
                 icolourme(1:ntoti),ntoti)
         endif
+        !
+        !--do the particle plot
+        !
 
         call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
              zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-             icolourme(1:ntoti),npartoftype(:),.false.,0.0,0.0,' ')
+             icolourme(1:ntoti),npartoftype(:),iplotpartoftype,.false.,0.0,0.0,' ')
 
+        !
+        !--plot lines joining particles if relevant
+        !
         if ((istep.eq.nstart).and.iplotlinein) then! plot initial conditions as dotted line
            call pgsls(linestylein)
         endif
@@ -1245,7 +1264,7 @@ contains
     if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
     !--set counter for where we are in row, col
     icolumn = iplotsonpage - ((iplotsonpage-1)/nacross)*nacross
-    irow = (iplotsonpage-1)/nacross + 1
+    !!irow = (iplotsonpage-1)/nacross + 1 ! not used yet
 
     !--------------------------------------------------------------
     ! set up pgplot page

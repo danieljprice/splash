@@ -8,13 +8,12 @@ module settings_part
  integer, dimension(maxparttypes) :: imarktype
  integer :: ncircpart, icoordsnew
  integer, dimension(:), allocatable :: icircpart
- integer :: nc
  integer :: linestylein, iexact
- logical, dimension(maxparttypes) :: iplotpartoftype
+ logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings
  logical :: iplotline,iplotlinein,ilabelpart
 
  namelist /plotopts/ iplotline,iplotlinein,linestylein,  &
-   imarktype,iplotpartoftype,iexact,icoordsnew
+   imarktype,iplotpartoftype,PlotOnRenderings,iexact,icoordsnew
 
 contains
 
@@ -35,6 +34,7 @@ subroutine defaults_set_part
   
   iplotpartoftype(1) = .true. ! whether or not to plot particles of certain types
   iplotpartoftype(2:maxparttypes) = .false.
+  PlotOnRenderings = .false.
   imarktype = 1              ! PGPLOT marker for all particles
   imarktype(2) = 4           ! PGPLOT marker for ghost/dark matter particles
   imarktype(3) = 17          ! PGPLOT marker for sink particles 
@@ -56,7 +56,7 @@ subroutine submenu_particleplots
   integer :: i,iaction,n,itype
   character(LEN=1) :: ans
 
-  iaction = 0      
+  iaction = 0
   print 10, iplotline,iplotlinein,ilabelpart,ncircpart, &
         iplotpartoftype,imarktype,icoordsnew,iexact
 10  format(' 0) exit ',/,                 &
@@ -107,16 +107,19 @@ subroutine submenu_particleplots
      !          plot particles by type?
      do itype=1,ntypes
         call prompt('Plot '//trim(labeltype(itype))//' particles?',iplotpartoftype(itype))
+        if (itype.gt.1) then
+           call prompt('Plot on top of rendered plots?',PlotOnRenderings(itype))
+        endif
      enddo
      return           
 !------------------------------------------------------------------------
   case(5)
-     print*,'(0: Square 1: . 2: + 3: * 4: o 5: x 17: bold circle)'
+     print*,'(0 Square) (1 .) (2 +) (3 *) (4 o) (5 x) (17 bold circle) (-8 bigger bold circle)'
      do itype=1,ntypes
         call prompt(' Enter PGPLOT marker for '//trim(labeltype(itype)) &
-             //' particles:',imarktype(itype))
+             //' particles:',imarktype(itype),-8,31)
      enddo
-     return
+     return   
 !------------------------------------------------------------------------
   case(6)
      print 20,icoords
