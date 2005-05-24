@@ -393,11 +393,13 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
     case(2)
        !--rmin, rmax
        xmintemp(1) = 0.
-       xmaxtemp(1) = max(maxval(abs(xmin(1:max(2,ndim)))), &
-                         maxval(abs(xmax(1:max(2,ndim)))))
        if (ndim.ge.2) then
+          xmaxtemp(1) = max(maxval(abs(xmin(1:max(2,ndim)))), &
+                         maxval(abs(xmax(1:max(2,ndim)))))
           xmintemp(2) = -pi
           xmaxtemp(2) = pi
+       else
+          xmaxtemp(1) = max(abs(xmin(1)),abs(xmax(1)))
        endif
     end select
  end select
