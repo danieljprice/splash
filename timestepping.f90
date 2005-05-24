@@ -41,7 +41,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
         !--make sure we have data for this timestep
         !
         call get_nextstep(istep,ifile)
-        if (.not.iUseStepList) then
+        if (.not.iUseStepList) then ! istep can be reset to last in file
            i = istep
         endif
         if (istep.eq.-666) exit over_timesteps
@@ -73,7 +73,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
         call colour_timestep(istepsonpage)
      endif
 
-     call plotstep(istep,irender,ivecplot,npartoftype(:,istep), &
+     call plotstep(istep,i,irender,ivecplot,npartoftype(:,istep), &
                    dat(:,:,istep),time(istep),gamma(istep),ipagechange,iadvance)
 !
 !--increment timestep
@@ -187,14 +187,20 @@ end subroutine get_nextstep
 !-------------------------------------------------------------
 subroutine colour_timestep(istep)
   use particle_data, only:icolourme
+  use settings_part, only:linecolourthisstep,linestylethisstep,iChangeLineStyleNotColour
   implicit none
   integer, intent(in) :: istep
   integer :: icolour
   
   if (allocated(icolourme)) then
-     icolour = istep + 2
+     icolour = istep + 1
      if (icolour.gt.16) print*,'warning: step colour > 16: unknown colour'
      icolourme = icolour
+     if (iChangeLineStyleNotColour) then
+        linestylethisstep = mod(istep-1,5) + 1
+     else
+        linecolourthisstep = icolour
+     endif
   !!call legend_multiplestepsperpage(time(i),icolour)
   else
      print*,'***error: array not allocated in colour_timestep***'

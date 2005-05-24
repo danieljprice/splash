@@ -376,9 +376,17 @@ viewport (ie. enter some large numbers). To customise the legend see
 \subsection{particle plot (o)ptions}
  These options relate to pure `particle plots'. The options are as follows:
 \begin{enumerate}
-\item \textbf{toggle plot line}. When set, this option plots a line connecting the particles
-in the order that they appear in the data array. Useful mainly in one dimension, although can give an indication of the
-relative closeness of the particles in memory and in physical space in higher dimensions.
+\item \textbf{plot line joining particles}. When set, this option plots a line connecting the (gas only) particles
+in the order that they appear in the data array. Useful mainly in one dimension or when plotting ascii data, although can give an indication of the
+relative closeness of the particles in memory and in physical space in higher dimensions. The line colours and
+styles can be changed.
+
+ To plot the line only with no particles, use the option 4) from this menu to turn off
+plotting of gas particles.
+
+ When multiple timesteps are plotted on the same physical page, the line style can be
+changed instead of the colour (this occurs when the change colour option is chosen for multiple steps per page
+-- see the ``change plots per page" option in the p)age options submenu [\S\vref{sec:optionspage}]).
 \item \textbf{toggle label particles}. This option prints the number of each particle
 next to its position on the plot (for all particles). Primarily useful for debugging neighbour finding
 routines. An alternative is to use the `p' option in interactive mode.

@@ -108,9 +108,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nprint = i - 1
   nstepsread = nstepsread + 1
   if (ierr < 0) then
-     print*,' end of file: npart = ',nprint
+     print*,' end of file: npts = ',nprint
   elseif (ierr > 0) then
-     print*,' *** error reading file, npart = ',nprint,' ***'
+     print*,' *** error reading file, npts = ',nprint,' ***'
   endif
 
 

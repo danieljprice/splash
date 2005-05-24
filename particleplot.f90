@@ -14,10 +14,10 @@ contains
 subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                         icolourpart,npartoftype,iplotpartoftype, &
                         use_zrange,zmin,zmax,labelz)
-  use labels
+  use labels, only:labeltype, maxparttypes
   use settings_data, only:ndim,icoords,ntypes
   use settings_part, only:imarktype,ncircpart,icoordsnew,icircpart, &
-                          ilabelpart
+                          ilabelpart,iplotline,linestylethisstep,linecolourthisstep
   implicit none
   integer, intent(in) :: ntot, iplotx, iploty
   integer, intent(in), dimension(ntot) :: icolourpart
@@ -28,7 +28,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   logical, intent(in) :: use_zrange
   logical, dimension(maxparttypes), intent(in) :: iplotpartoftype
   character(len=*), intent(in) :: labelz
-  integer :: j,n,itype,linewidth,icolourindex,nplotted
+  integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle
   integer :: lenstring,index1,index2,ntotplot,icolourstart
   real :: charheight
   character(len=20) :: string
@@ -132,6 +132,21 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
      call pgebuf
   enddo over_types
 
+  !
+  !--plot lines joining particles if relevant
+  !
+  if (iplotline .and. .not.use_zrange) then
+     call pgqls(oldlinestyle)
+     call pgqci(icolourindex)
+     call pgsls(linestylethisstep)
+     call pgsci(linecolourthisstep)
+
+     call pgline(npartoftype(1),xplot(1:npartoftype(1)), &
+                 yplot(1:npartoftype(1)))
+
+     call pgsls(oldlinestyle)! reset 
+     call pgsci(icolourindex)
+  endif
   !
   !--plot circles of interaction (ie a circle of radius 2h)
   !  around all or selected particles. For plots with only one coordinate axis, 

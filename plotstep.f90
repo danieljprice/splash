@@ -37,6 +37,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use titles, only:read_titles
   use settings_data, only:ndim,numplot
   use settings_page
+  use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle
   use settings_render, only:icolours,iplotcont_nomulti
   use settings_vecplot, only:iplotpartvec
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec
@@ -222,12 +223,15 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   
   !!--set line width to something visible
   call pgslw(2)
+  
+  linecolourthisstep = linecolour
+  linestylethisstep = linestyle
 
 end subroutine initialise_plotting
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine plotstep(istep,irender,ivecplot, &
+subroutine plotstep(istep,idump,irender,ivecplot, &
                     npartoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
   use exact, only:exact_solution, &
@@ -240,8 +244,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   use rotation
   use settings_data, only:numplot,ndataplots,icoords,ndim,ndimv,nstart,n_end,nfreq
   use settings_limits
-  use settings_part, only:icoordsnew,iexact,iplotlinein,linestylein, &
-                     iplotline,iplotpartoftype,PlotOnRenderings
+  use settings_part, only:icoordsnew,iexact,iplotpartoftype,PlotOnRenderings
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis, &
                      hpostitle,vpostitle,fjusttitle
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
@@ -268,7 +271,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   use render, only:render_pix,colourbar
 
   implicit none
-  integer, intent(in) :: istep, irender, ivecplot
+  integer, intent(in) :: istep, idump, irender, ivecplot
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(:,:), intent(in) :: dat
   real, intent(in) :: timei,gammai
@@ -1045,20 +1048,6 @@ subroutine plotstep(istep,irender,ivecplot, &
              zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
              icolourme(1:ntoti),npartoftype(:),iplotpartoftype,.false.,0.0,0.0,' ')
 
-        !
-        !--plot lines joining particles if relevant
-        !
-        if ((istep.eq.nstart).and.iplotlinein) then! plot initial conditions as dotted line
-           call pgsls(linestylein)
-        endif
-
-        !--plot line joining the particles
-        if (iplotline.or.(iplotlinein.and.(istep.eq.nstart))) then
-           call pgline(npartoftype(1),xplot(1:npartoftype(1)), &
-                       yplot(1:npartoftype(1)))     
-        endif
-        call pgsls(1)! reset 
-        call pgsch(charheight)
         !
         !--plot exact solution if relevant
         !

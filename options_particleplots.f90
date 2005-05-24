@@ -8,12 +8,13 @@ module settings_part
  integer, dimension(maxparttypes) :: imarktype
  integer :: ncircpart, icoordsnew
  integer, dimension(:), allocatable :: icircpart
- integer :: linestylein, iexact
+ integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
  logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings
- logical :: iplotline,iplotlinein,ilabelpart
+ logical :: iplotline,ilabelpart,iChangeLineStyleNotColour
 
- namelist /plotopts/ iplotline,iplotlinein,linestylein,  &
-   imarktype,iplotpartoftype,PlotOnRenderings,iexact,icoordsnew
+ namelist /plotopts/ iplotline,linestyle,linecolour, &
+   iChangeLineStyleNotColour,imarktype,iplotpartoftype, &
+   PlotOnRenderings,iexact,icoordsnew
 
 contains
 
@@ -26,8 +27,11 @@ subroutine defaults_set_part
 
   ncircpart = 0
   iplotline = .false.     ! plot line joining the particles
-  iplotlinein = .false.   ! " " but on first step only
-  linestylein = 4         ! PGPLOT line style for above
+  linestyle = 1           ! PGPLOT line style for above
+  linecolour = 1
+  linestylethisstep = 1
+  linecolourthisstep = 1
+  iChangeLineStyleNotColour = .false.
   iexact = 0              ! exact solution to plot
   ilabelpart = .false.    ! plot particle numbers
   icoordsnew = icoords
@@ -49,18 +53,18 @@ subroutine submenu_particleplots
   use exact, only:options_exact,submenu_exact
   use labels
   use settings_data, only:icoords,ntypes
+  use settings_page, only:nstepsperpage
   use particle_data, only:npartoftype
   use prompting
   use geometry, only:maxcoordsys,labelcoordsys
   implicit none
   integer :: i,iaction,n,itype
-  character(LEN=1) :: ans
 
   iaction = 0
-  print 10, iplotline,iplotlinein,ilabelpart,ncircpart, &
+  print 10, iplotline,ilabelpart,ncircpart, &
         iplotpartoftype,imarktype,icoordsnew,iexact
 10  format(' 0) exit ',/,                 &
-         ' 1) toggle plot line                   ( ',L1,',',1x,L1,' ) ',/, &
+         ' 1) plot line joining particles        ( ',L1,' ) ',/, &
          ' 2) toggle label particles             ( ',L1,' ) ',/,           &
          ' 3) plot circles of interaction        ( ',i3,' ) ',/,           &
          ' 4) toggle plot particles by type      ( ',6(L1,',',1x),' )',/,  &
@@ -74,16 +78,16 @@ subroutine submenu_particleplots
 
 !------------------------------------------------------------------------
   case(1)
-     print*,' Plot initial only(i), all(a), both(b) or not (n)?'
-     read*,ans
-     iplotline = .false.
-     iplotlinein = .false.
-     if (ans.eq.'i'.or.ans.eq.'b') iplotlinein = .true.
-     if (ans.eq.'a'.or.ans.eq.'b') iplotline = .true.
-     if (iplotlinein) then
-        call prompt('Enter PGPLOT line style',linestylein,0,5)
+     call prompt('plot line joining particles?',iplotline)
+
+     if (iplotline) then     
+        call prompt('Enter PGPLOT line style to use ',linestyle,0,5)
+        call prompt('Enter PGPLOT colour for line ',linecolour,0,15)
+        if (nstepsperpage.gt.1) then
+           call prompt('Change line style instead of colour for multiple steps on same page?',iChangeLineStyleNotColour)
+        endif
      endif
-     print*,' Plot line = ',iplotline,iplotlinein
+
      return 
 !-----------------------------------------------------------------------
   case(2)
