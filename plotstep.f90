@@ -288,7 +288,8 @@ subroutine plotstep(istep,irender,ivecplot, &
   real, dimension(:,:), allocatable :: datpix
   real, dimension(:,:,:), allocatable :: datpix3D
   real, dimension(ndim) :: xcoords,vecnew,xmintemp,xmaxtemp
-  real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot,renderplot
+  real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
+  real, dimension(maxpart) :: renderplot,hh,pmass,rho
   real :: angleradx, anglerady, angleradz
   real :: rendermintemp,rendermaxtemp
   real :: xsecmin,xsecmax,dummy
@@ -311,6 +312,13 @@ subroutine plotstep(istep,irender,ivecplot, &
   xplot = 0.
   yplot = 0.
   dummy = 0.
+  hh = 0.
+  rho = 0.
+  pmass = 0.
+  !--set the arrays needed for rendering if they are present
+  if (ih.gt.0 .and. ih.lt.ndataplots) hh(:) = dat(:,ih)
+  if (irho.gt.0 .and. irho.lt.ndataplots) rho(:) = dat(:,irho)
+  if (ipmass.gt.0 .and. ipmass.lt.ndataplots) pmass(:) = dat(:,ipmass)
   !
   !--set number of particles to use in the interpolation routines
   !  (ie. including only gas particles and ghosts)
@@ -604,8 +612,8 @@ subroutine plotstep(istep,irender,ivecplot, &
                  allocate ( datpix(npixx,npixy) )
                  call interpolate2D( &
                       xplot(1:ninterp),yplot(1:ninterp), &
-                      dat(1:ninterp,ipmass),dat(1:ninterp,irho), &
-                      dat(1:ninterp,ih),dat(1:ninterp,irenderplot), &
+                      pmass(1:ninterp),rho(1:ninterp), &
+                      hh(1:ninterp),dat(1:ninterp,irenderplot), &
                       ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
               endif
            case(3)
@@ -617,8 +625,8 @@ subroutine plotstep(istep,irender,ivecplot, &
                  !!--interpolate from particles to 3D grid
                  call interpolate3D( &
                       xplot(1:ninterp),yplot(1:ninterp), &
-                      zplot(1:ninterp),dat(1:ninterp,ipmass),  &
-                      dat(1:ninterp,irho),dat(1:ninterp,ih), &
+                      zplot(1:ninterp),pmass(1:ninterp),  &
+                      rho(1:ninterp),hh(1:ninterp), &
                       dat(1:ninterp,irenderplot), &
                       ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dxsec)
               endif
@@ -685,15 +693,15 @@ subroutine plotstep(istep,irender,ivecplot, &
                     call interpolate3D_fastxsec( &
                          xplot(1:ninterp),yplot(1:ninterp), &
                          zplot(1:ninterp), &
-                         dat(1:ninterp,ipmass),dat(1:ninterp,irho),    &
-                         dat(1:ninterp,ih),dat(1:ninterp,irenderplot), &
+                         pmass(1:ninterp),rho(1:ninterp),    &
+                         hh(1:ninterp),dat(1:ninterp,irenderplot), &
                          ninterp,xmin,ymin,xsecpos,datpix,npixx,npixy,pixwidth)
                  else
                     !!--do fast projection
                     call interpolate3D_projection( &
                          xplot(1:ninterp),yplot(1:ninterp), &
-                         dat(1:ninterp,ipmass),dat(1:ninterp,irho),   &
-                         dat(1:ninterp,ih), dat(1:ninterp,irenderplot), &
+                         pmass(1:ninterp),rho(1:ninterp),   &
+                         hh(1:ninterp), dat(1:ninterp,irenderplot), &
                          ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
                  endif
 
@@ -716,8 +724,8 @@ subroutine plotstep(istep,irender,ivecplot, &
 
               call interpolate2D_xsec( &
                    dat(1:ninterp,iplotx),dat(1:ninterp,iploty), &
-                   dat(1:ninterp,ipmass),dat(1:ninterp,irho),    &
-                   dat(1:ninterp,ih),dat(1:ninterp,irenderplot), &
+                   pmass(1:ninterp),rho(1:ninterp),    &
+                   hh(1:ninterp),dat(1:ninterp,irenderplot), &
                    ninterp,xseclineX1,xseclineY1,xseclineX2,xseclineY2, &
                    datpix1D,npixx)
               !
@@ -879,7 +887,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                  !--do particle plot
                  !
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-                   zplot(1:ntoti),dat(1:ntoti,ih),ntoti,iplotx,iploty, &
+                   zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),npartoftype(:), &
                    x_sec,xsecmin,xsecmax,labelz)
               endif
@@ -927,7 +935,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                call exact_solution(iexact,iplotx,iploty, &
                     itrans(iplotx),itrans(iploty),icoordsnew, &
                     ndim,ndimV,timei,xmin,xmax,0.0,gammai, &
-                    dat(1:npartoftype(1),ipmass),npartoftype(1))
+                    pmass(1:npartoftype(1)),npartoftype(1))
            endif
            !
            !--enter interactive mode
@@ -946,7 +954,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                  endif
                  call interactive_part(ninterp,iplotx,iploty,iplotz,irendered, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                      dat(1:ninterp,ih),icolourme(1:ninterp), &
+                      hh(1:ninterp),icolourme(1:ninterp), &
                       xmin,xmax,ymin,ymax,xsecpos,dxsec,rendermin,rendermax, &
                       angletempx,angletempy,angletempz,ndim,iadvance,isave)
                  !--turn rotation on if necessary
@@ -1018,7 +1026,7 @@ subroutine plotstep(istep,irender,ivecplot, &
         endif
 
         call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-             zplot(1:ntoti),dat(1:ntoti,ih),ntoti,iplotx,iploty, &
+             zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
              icolourme(1:ntoti),npartoftype(:),.false.,0.0,0.0,' ')
 
         if ((istep.eq.nstart).and.iplotlinein) then! plot initial conditions as dotted line
@@ -1041,11 +1049,10 @@ subroutine plotstep(istep,irender,ivecplot, &
            ymean = 0.
         endif
 
-        if (iexact.ne.0 .or. (iploty.eq.irho .and. iplotx.eq.ih) .or. &
-           (iplotx.eq.irho .and. iploty.eq.ih)) then
+        if (iexact.ne.0) then
            call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,ymean,gammai, &
-                dat(1:npartoftype(1),ipmass),npartoftype(1))
+                pmass(1:npartoftype(1)),npartoftype(1))
         endif
         !
         !--enter interactive mode
@@ -1057,7 +1064,7 @@ subroutine plotstep(istep,irender,ivecplot, &
               iadvance = nfreq
               call interactive_part(ntoti,iplotx,iploty,0,irenderpart, &
                    xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
-                   dat(1:ntoti,ih),icolourme(1:ntoti), &
+                   hh(1:ntoti),icolourme(1:ntoti), &
                    xmin,xmax,ymin,ymax,dummy,dummy,rendermin,rendermax, &
                    angletempx,angletempy,angletempz,ndim,iadvance,isave)
               if (iadvance.eq.-666) return
@@ -1086,7 +1093,7 @@ subroutine plotstep(istep,irender,ivecplot, &
         !
         !--A vs C for exact toystar solution
         !
-        if (iexact.eq.4) then
+        if (iexact.eq.4 .and. iploty.eq.iacplane) then
            call exact_toystar_acplane(atstar,ctstar,sigma,gammai)
         endif
         !
@@ -1100,20 +1107,20 @@ subroutine plotstep(istep,irender,ivecplot, &
               xmax = nfreqspec*xmin
            endif
 
-           if (.not.idisordered .and. iadvance.ne.0) then! interpolate first
+           if (.not.idisordered) then! interpolate first
               !!--allocate memory for 1D grid (size = 2*npart)
               ngrid = 2*npartoftype(1)
               !!--set up 1D grid
-              xmingrid = lim(ix(1),1)
-              xmaxgrid = lim(ix(1),2)
+              xmingrid = lim(ipowerspecx,1)
+              xmaxgrid = lim(ipowerspecx,2)
               dxgrid = (xmaxgrid-xmingrid)/ngrid
               call set_grid1D(xmingrid,dxgrid,ngrid)
 
               ninterp = ntoti
               !!--interpolate to 1D grid  
-              call interpolate1D(dat(1:ninterp,ix(1)), & 
-                   dat(1:ninterp,ipmass),dat(1:ninterp,irho), &
-                   dat(1:ninterp,ih),dat(1:ninterp,ipowerspecy), & 
+              call interpolate1D(dat(1:ninterp,ipowerspecx), & 
+                   pmass(1:ninterp),rho(1:ninterp), &
+                   hh(1:ninterp),dat(1:ninterp,ipowerspecy), & 
                    ninterp,xmingrid,datpix1D,ngrid,dxgrid)
               !!--plot interpolated 1D data to check it
               !!print*,minval(datpix1D),maxval(datpix1D)
@@ -1133,9 +1140,9 @@ subroutine plotstep(istep,irender,ivecplot, &
               call powerspectrum_fourier(ngrid,xgrid,datpix1D,nfreqspec, &
                    xplot(1:nfreqspec),xmin,xmax,yplot(1:nfreqspec))
               if (allocated(datpix1D)) deallocate(datpix1D)              
-           elseif (iadvance.ne.0) then
+           else
               !!--or else call power spectrum calculation on the particles themselves    
-              call powerspectrum_lomb(ntoti,dat(1:ntoti,ix(1)), &
+              call powerspectrum_lomb(ntoti,dat(1:ntoti,ipowerspecx), &
                    dat(1:ntoti,ipowerspecy),nfreqspec, &
                    xplot(1:nfreqspec),xmin,xmax,yplot(1:nfreqspec))
            endif
@@ -1147,9 +1154,9 @@ subroutine plotstep(istep,irender,ivecplot, &
 
            !!--uncomment next few lines to plot wavelengths instead
            labelx = 'wavelength'
+           zplot(1:nfreqspec) = 1./xplot(1:nfreqspec)
+           xplot(1:nfreqspec) = zplot(1:nfreqspec)
            if (iadvance.ne.0) then
-              zplot(1:nfreqspec) = 1./xplot(1:nfreqspec)
-              xplot(1:nfreqspec) = zplot(1:nfreqspec)
               xmin = minval(xplot(1:nfreqspec))
               xmax = maxval(xplot(1:nfreqspec))
            endif
@@ -1160,10 +1167,10 @@ subroutine plotstep(istep,irender,ivecplot, &
 
               call transform(yplot(1:nfreqspec),itrans(iploty))
               labely = transform_label(labely,itrans(iploty))
-              if (iadvance.ne.0) then
+              !if (iadvance.ne.0) then
                  call transform_limits(xmin,xmax,itrans(iploty))
                  call transform_limits(ymin,ymax,itrans(iploty))
-              endif
+              !endif
            endif
            
            just = 0
@@ -1171,6 +1178,10 @@ subroutine plotstep(istep,irender,ivecplot, &
            call page_setup
 
            call pgline(nfreqspec,xplot(1:nfreqspec),yplot(1:nfreqspec))
+           print*,' maximum power at '//trim(labelx)//' = ',xplot(maxloc(yplot(1:nfreqspec)))
+           do j=1,nfreqspec
+              if (yplot(j).gt.1) print*,trim(labelx),' =',xplot(j),', power = ',yplot(j)
+           enddo
 
         endif
         !
@@ -1183,6 +1194,13 @@ subroutine plotstep(istep,irender,ivecplot, &
         if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
            iadvance = nfreq
            call interactive_step(iadvance,xmin,xmax,ymin,ymax)
+           !--for zoom on power spectrums, need to inverse transform limits
+           if (iploty.eq.ipowerspec) then
+              if (itrans(ipowerspec).gt.0) then
+                 call transform_limits_inverse(ymin,ymax,itrans(ipowerspec))
+                 call transform_limits_inverse(xmin,xmax,itrans(ipowerspec))
+              endif
+           endif
            if (iadvance.eq.-666) return
         endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1323,14 +1341,14 @@ contains
          if (x_sec) then ! take vector plot in cross section
             call interpolate3D_xsec_vec(xplot(1:ninterp), &
               yplot(1:ninterp),zplot(1:ninterp), &
-              dat(1:ninterp,ipmass),dat(1:ninterp,irho),  &
-              dat(1:ninterp,ih),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+              pmass(1:ninterp),rho(1:ninterp),  &
+              hh(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
               ninterp,xmin,ymin,xsecpos, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidth)
          else
             call interpolate3D_proj_vec(xplot(1:ninterp), &
-              yplot(1:ninterp),dat(1:ninterp,ipmass), &
-              dat(1:ninterp,irho),dat(1:ninterp,ih), &
+              yplot(1:ninterp),pmass(1:ninterp), &
+              rho(1:ninterp),hh(1:ninterp), &
               dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
               ninterp,xmin,ymin, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidth)
@@ -1341,16 +1359,16 @@ contains
          !
          !call fieldlines2D(ninterp,xplot(1:ninterp),yplot(1:ninterp), &
          !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-         !     dat(1:ninterp,ih),dat(1:ninterp,ipmass), &
-         !     dat(1:ninterp,irho),xmin,xmax,ymin,ymax)
+         !     hh(1:ninterp),pmass(1:ninterp), &
+         !     rho(1:ninterp),xmin,xmax,ymin,ymax)
          !call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
          !  dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
          !  xmin,ymin,pixwidth,vecpixx,vecpixy, &
          !  ninterp,numpixx,numpixy)
          
          call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
-              dat(1:ninterp,ipmass),dat(1:ninterp,irho), &
-              dat(1:ninterp,ih),dat(1:ninterp,ivecx), &
+              pmass(1:ninterp),rho(1:ninterp), &
+              hh(1:ninterp),dat(1:ninterp,ivecx), &
               dat(1:ninterp,ivecy),ninterp,xmin,ymin, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidth)
       
