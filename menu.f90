@@ -56,7 +56,7 @@ subroutine menu
   !  nextra are extra graphs to plot (e.g. convergence plots, power spectrum)
   !
   nextra = 0
-  if (ndim.eq.1) then
+  if (ndim.le.1) then ! if 1D or no coord data (then prompts for which x)
      nextra = 1      ! one extra plot = power spectrum
      ipowerspec = ncolumns + ncalc + 1
      label(ipowerspec) = '1D power spectrum'
