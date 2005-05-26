@@ -261,7 +261,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
   use geometry
   use legends, only:legend
   use particleplots
-  use powerspectrums
+  use powerspectrums, only:powerspectrum
   use interpolations1D, only:interpolate1D
   use interpolations2D, only:interpolate2D, interpolate2D_xsec
   use projections3D, only:interpolate3D_projection
@@ -279,11 +279,11 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
   integer, intent(inout) :: iadvance
   
   integer :: ntoti,iz
-  integer :: j,k,icolumn !!,irow
+  integer :: i,j,k,icolumn !!,irow
   integer :: nyplot
   integer :: irenderpart,irendered
   integer :: npixx,npixy,npixz,ipixxsec
-  integer :: npixyvec
+  integer :: npixyvec,nfreqpts
   integer :: index1,index2,itype
 
   real, parameter :: pi = 3.1415926536
@@ -296,7 +296,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
   real :: angleradx, anglerady, angleradz
   real :: rendermintemp,rendermaxtemp
   real :: xsecmin,xsecmax,dummy
-  real :: pixwidth
+  real :: pixwidth,dxfreq
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
@@ -373,11 +373,13 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
      endif
      if (ivectorplot.gt.0) iplotpart = iplotpartvec
 
-     !--------------------------------------------------------------
-     !  copy from main dat array into xplot, yplot 
-     !  also set labels and plot limits
-     !--------------------------------------------------------------
-     if (iploty.le.ndataplots .and. iplotx.le.ndataplots) then
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     ! initialisation for plots of particle data
+     ! copy from main dat array into xplot, yplot 
+     ! also set labels and plot limits
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+     initdataplots: if (iploty.le.ndataplots .and. iplotx.le.ndataplots) then
         xplot(1:ntoti) = dat(1:ntoti,iplotx)
         yplot(1:ntoti) = dat(1:ntoti,iploty)
         zplot = 0. !--reset later if x-sec
@@ -530,7 +532,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
            endif
         endif
 
-     endif
+     endif initdataplots
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      ! plots with co-ordinates as x and y axis
@@ -561,31 +563,31 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
         !  only applies to particle plots at the moment
         !
         if (ndim.ge.2 .and. irotate) then
-            !
-            !--convert angles to radians
-            !
-            angleradz = angletempz*pi/180.
-            anglerady = angletempy*pi/180.
-            angleradx = angletempx*pi/180.
-            print "(a,f6.2)",'rotating particles about z by ',angletempz
-            if (ndim.eq.3) then
-               print "(a,f6.2)",'rotating particles about y by ',angletempy
-               print "(a,f6.2)",'rotating particles about x by ',angletempx
-            endif
-            do j=1,ntoti
-               xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
+           !
+           !--convert angles to radians
+           !
+           angleradz = angletempz*pi/180.
+           anglerady = angletempy*pi/180.
+           angleradx = angletempx*pi/180.
+           print "(a,f6.2)",'rotating particles about z by ',angletempz
+           if (ndim.eq.3) then
+              print "(a,f6.2)",'rotating particles about y by ',angletempy
+              print "(a,f6.2)",'rotating particles about x by ',angletempx
+           endif
+           do j=1,ntoti
+              xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
 !               if (ndim.eq.2) then
 !                  call rotate2D(xcoords(:),angleradz,anglerady)
 !               elseif (ndim.eq.3) then
-                  call rotate3D(xcoords(:),angleradx,anglerady,angleradz)
+                 call rotate3D(xcoords(:),angleradx,anglerady,angleradz)
 !               endif
-               xplot(j) = xcoords(iplotx) + xorigin(iplotx)
-               yplot(j) = xcoords(iploty) + xorigin(iploty)
-               if (iplotz.gt.0) then
-                  zplot(j) = xcoords(iplotz) + xorigin(iplotz)
-               endif
-            enddo
-         endif 
+              xplot(j) = xcoords(iplotx) + xorigin(iplotx)
+              yplot(j) = xcoords(iploty) + xorigin(iploty)
+              if (iplotz.gt.0) then
+                 zplot(j) = xcoords(iplotz) + xorigin(iplotz)
+              endif
+           enddo
+        endif 
 
         !------------------------------------------------------------------
         !  rendering setup and interpolation (this is the rendering done
@@ -1116,6 +1118,28 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
               xmin = 1./wavelengthmax  ! freq min
               xmax = nfreqspec*xmin
            endif
+           if (iadvance.ne.0 .and. itrans(iploty).gt.0) then
+              call transform_limits(xmin,xmax,itrans(iploty))
+           endif       
+           !
+           !--setup frequency grid (evenly spaced in transformed grid)
+           !
+           nfreqpts = int(nfreqspec*oversamplefactor)
+           if (nfreqpts.ge.size(xplot)) then
+              nfreqpts = size(xplot)
+              print*,' WARNING: nfreqpts > array size, restricting to ',nfreqpts
+           else
+              print "(a,i6)",' number of frequency points = ',nfreqpts
+           endif
+           dxfreq = (xmax - xmin)/real(nfreqpts)
+           do i=1,nfreqpts
+              xplot(i) = xmin + (i-1)*dxfreq
+           enddo
+           !
+           !--transform back to frequency space
+           !
+           if (itrans(iploty).gt.0) &
+              call transform_inverse(xplot(1:nfreqpts),itrans(iploty))
 
            if (.not.idisordered) then! interpolate first
               !!--allocate memory for 1D grid (size = 2*npart)
@@ -1134,7 +1158,6 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
                    ninterp,xmingrid,datpix1D,ngrid,dxgrid)
               !!--plot interpolated 1D data to check it
               !!print*,minval(datpix1D),maxval(datpix1D)
-
               !call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
               !call pgbox('BCNST',0.0,0,'1BVCNST',0.0,0)      
               !call pglabel('x',label(ipowerspecy),'1D interpolation')
@@ -1142,19 +1165,16 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
               !read*
               !call pgpage! change page
 
-              if (iadvance.ne.0) then
-                 xmin = 1./wavelengthmax  ! freq min
-                 xmax = nfreqspec*xmin
-              endif
               !!--call power spectrum calculation on the even grid
-              call powerspectrum_fourier(ngrid,xgrid,datpix1D,nfreqspec, &
-                   xplot(1:nfreqspec),xmin,xmax,yplot(1:nfreqspec))
-              if (allocated(datpix1D)) deallocate(datpix1D)              
+              call powerspectrum(ngrid,xgrid,datpix1D,nfreqpts,xplot(1:nfreqpts), &
+                                 yplot(1:nfreqpts),idisordered)
+              if (allocated(datpix1D)) deallocate(datpix1D)
+              if (allocated(xgrid)) deallocate(xgrid)             
            else
               !!--or else call power spectrum calculation on the particles themselves    
-              call powerspectrum_lomb(ntoti,dat(1:ntoti,ipowerspecx), &
-                   dat(1:ntoti,ipowerspecy),nfreqspec, &
-                   xplot(1:nfreqspec),xmin,xmax,yplot(1:nfreqspec))
+              call powerspectrum(ntoti,dat(1:ntoti,ipowerspecx), &
+                   dat(1:ntoti,ipowerspecy),nfreqpts, &
+                   xplot(1:nfreqpts),yplot(1:nfreqpts),idisordered)
            endif
 
            if (iadvance.ne.0) then
@@ -1163,32 +1183,32 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
            endif
 
            !!--uncomment next few lines to plot wavelengths instead
-           labelx = 'wavelength'
-           zplot(1:nfreqspec) = 1./xplot(1:nfreqspec)
-           xplot(1:nfreqspec) = zplot(1:nfreqspec)
-           if (iadvance.ne.0) then
-              xmin = minval(xplot(1:nfreqspec))
-              xmax = maxval(xplot(1:nfreqspec))
-           endif
+           !labelx = 'wavelength'
+           !zplot(1:nfreqspec) = 1./xplot(1:nfreqspec)
+           !xplot(1:nfreqspec) = zplot(1:nfreqspec)
+           !if (iadvance.ne.0) then
+           !   xmin = minval(xplot(1:nfreqspec))
+           !   xmax = maxval(xplot(1:nfreqspec))
+           !endif
 
            if (itrans(iploty).ne.0) then
-              call transform(xplot(1:nfreqspec),itrans(iploty))
+              call transform(xplot(1:nfreqpts),itrans(iploty))
               labelx = transform_label(labelx,itrans(iploty))
 
-              call transform(yplot(1:nfreqspec),itrans(iploty))
+              call transform(yplot(1:nfreqpts),itrans(iploty))
               labely = transform_label(labely,itrans(iploty))
-              !if (iadvance.ne.0) then
+              if (iadvance.ne.0) then
                  call transform_limits(xmin,xmax,itrans(iploty))
                  call transform_limits(ymin,ymax,itrans(iploty))
-              !endif
+              endif
            endif
            
            just = 0
            title = 'Power Spectrum'
            call page_setup
 
-           call pgline(nfreqspec,xplot(1:nfreqspec),yplot(1:nfreqspec))
-           print*,' maximum power at '//trim(labelx)//' = ',xplot(maxloc(yplot(1:nfreqspec)))
+           call pgline(nfreqpts,xplot(1:nfreqpts),yplot(1:nfreqpts))
+           print*,' maximum power at '//trim(labelx)//' = ',xplot(maxloc(yplot(1:nfreqpts)))
            do j=1,nfreqspec
               if (yplot(j).gt.1) print*,trim(labelx),' =',xplot(j),', power = ',yplot(j)
            enddo
@@ -1204,13 +1224,6 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
         if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
            iadvance = nfreq
            call interactive_step(iadvance,xmin,xmax,ymin,ymax)
-           !--for zoom on power spectrums, need to inverse transform limits
-           if (iploty.eq.ipowerspec) then
-              if (itrans(ipowerspec).gt.0) then
-                 call transform_limits_inverse(ymin,ymax,itrans(ipowerspec))
-                 call transform_limits_inverse(xmin,xmax,itrans(ipowerspec))
-              endif
-           endif
            if (iadvance.eq.-666) return
         endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1219,7 +1232,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
      else
         call pgpage! just skip to next plot
 
-     endif   ! ploty = whatever
+     endif ! ploty = whatever
 
 
   enddo over_plots ! over plots per timestep (nyplot)

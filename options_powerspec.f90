@@ -6,9 +6,10 @@ module settings_powerspec
  implicit none
  integer :: ipowerspecy, ipowerspecx, nfreqspec
  logical :: idisordered
- real :: wavelengthmax
+ real :: wavelengthmax, oversamplefactor
  
- namelist /powerspecopts/ ipowerspecy,idisordered,wavelengthmax,nfreqspec
+ namelist /powerspecopts/ ipowerspecy,idisordered,wavelengthmax,nfreqspec, &
+                          oversamplefactor
 
 contains
 
@@ -19,11 +20,12 @@ subroutine defaults_set_powerspec
   use settings_data, only:ndim
   implicit none
 
-  idisordered = .false.
+  idisordered = .true.
   ipowerspecy = ndim+1
   ipowerspecx = ndim
   wavelengthmax = 1.0 ! reset later
   nfreqspec = 32
+  oversamplefactor = 2.0
 
   return
 end subroutine defaults_set_powerspec
@@ -53,8 +55,10 @@ subroutine options_powerspec
  call prompt('enter box size (max wavelength)',wavelengthmax,0.0)
  
  call prompt('enter number of frequencies to sample ',nfreqspec,1)
+ 
+ call prompt('enter oversampling factor ',oversamplefactor,1.0)
 
- call prompt('use Lomb periodogram? (no=interpolate and fourier) ',idisordered)
+!! call prompt('use Lomb periodogram? (no=interpolate and fourier) ',idisordered)
 
  return
 end subroutine options_powerspec
