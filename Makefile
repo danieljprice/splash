@@ -9,7 +9,7 @@
 
 ## Compiler options
 F90C =  g95
-F90FLAGS =  -O
+F90FLAGS =  -O -Wall -fbounds-check
 
 LDFLAGS = -L/usr/X11R6/lib -lX11 -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
@@ -70,7 +70,7 @@ OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o)
 # (move yours to the top so that you can simply type "make")
 #
 ascii: $(OBJECTS) read_data_ascii.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_ascii.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o asupersphplot $(OBJECTS) read_data_ascii.o
 
 mbatesph: $(OBJECTS) read_data_mbate.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o bsupersphplot $(OBJECTS) read_data_mbate.o
@@ -82,7 +82,7 @@ vine: $(OBJECTS) read_data_VINE.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o vsupersphplot $(OBJECTS) read_data_vine.o
 
 dansph: $(OBJECTS) read_data_dansph.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o dsupersphplot $(OBJECTS) read_data_dansph.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_dansph.o
 
 nina: $(OBJECTS) read_data_nina.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o nsupersphplot $(OBJECTS) read_data_nina.o
@@ -103,7 +103,10 @@ spyros: $(OBJECTS) read_data_spyros.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o ssupersphplot $(OBJECTS) read_data_spyros.o
 
 
-## other crap
+## other stuff
+
+doc:
+	cd docs; latex supersphplot; latex supersphplot; dvips supersphplot -o supersphplot.ps; ps2pdf13 supersphplot.ps
 
 tar:
 	tar cf supersphplot.tar Makefile $(MODULES) $(SOURCES) read_data*.f90
