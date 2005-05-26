@@ -244,7 +244,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
   use rotation
   use settings_data, only:numplot,ndataplots,icoords,ndim,ndimv,nstart,n_end,nfreq
   use settings_limits
-  use settings_part, only:icoordsnew,iexact,iplotpartoftype,PlotOnRenderings
+  use settings_part, only:icoordsnew,iexact,iplotpartoftype,PlotOnRenderings,iplotline
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis, &
                      hpostitle,vpostitle,fjusttitle
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
@@ -491,7 +491,8 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
               print*,'adapting x limits'
               do itype=1,maxparttypes
                  index2 = index1 + npartoftype(itype) - 1
-                 if (iplotpartoftype(itype).and.npartoftype(itype).gt.0) then
+                 if (iplotpartoftype(itype).and.npartoftype(itype).gt.0 &
+                    .or. (iplotline.and.itype.eq.1)) then
                     xmin = min(xmin,minval(xplot(index1:index2)))
                     xmax = max(xmax,maxval(xplot(index1:index2))*scalemax)
                  endif
@@ -507,7 +508,8 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
               print*,'adapting y limits'
               do itype=1,maxparttypes
                  index2 = index1 + npartoftype(itype) - 1
-                 if (iplotpartoftype(itype).and.npartoftype(itype).gt.0) then
+                 if (iplotpartoftype(itype).and.npartoftype(itype).gt.0 &
+                    .or. (iplotline.and.itype.eq.1)) then
                     ymin = min(ymin,minval(yplot(index1:index2)))
                     ymax = max(ymax,maxval(yplot(index1:index2))*scalemax)
                  endif
