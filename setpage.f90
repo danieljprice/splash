@@ -23,13 +23,13 @@ contains
 !         pagechange : change the physical page between plots
 !
 subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
-     just,axis,colourbarwidth,isamexaxis,isameyaxis,ipagechange)
+     just,axis,colourbarwidth,isamexaxis,ipagechange)
   implicit none
   integer, intent(in) :: iplot, nx, ny, just, axis
   real, intent(in) :: xmin, xmax, ymin, ymax, colourbarwidth
   character(len=*), intent(in) :: labelx, labely, title
   character(len=10) :: xopts, yopts
-  logical, intent(in) :: ipagechange, isamexaxis, isameyaxis
+  logical, intent(in) :: ipagechange, isamexaxis
   real :: vptxmin,vptxmax,vptymin,vptymax,xch,ych
 
   if (ipagechange) then

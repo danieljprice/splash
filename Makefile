@@ -68,7 +68,7 @@ SOURCESF90= globaldata.f90 transform.f90 \
 # these are `external' f77 subroutines
 SOURCESF= danpgsch.f danpgtile.f danpgwedg.f
 
-OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o) $(SOURCESF95:.f95=.o) 
+OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF95:.f95=.o) $(SOURCESF90:.f90=.o) 
 
 #
 # Now compile with the appropriate data read file

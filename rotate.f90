@@ -9,10 +9,10 @@ module rotation
 !
 contains
 
-subroutine rotate2D(xcoords,anglez,angley)
+subroutine rotate2D(xcoords,anglez)
   implicit none
   real, intent(inout) :: xcoords(2)
-  real, intent(in) :: anglez,angley
+  real, intent(in) :: anglez
   real :: x, y, r, phi
   
   x = xcoords(1)
@@ -84,35 +84,60 @@ subroutine rotate_axes2D(ioption,xmin,xmax,xorigin,anglez)
   integer, intent(in) :: ioption
   real, intent(in), dimension(2) :: xmin,xmax,xorigin
   real, intent(in) :: anglez
-  integer :: i
+  integer :: i,idim
   real, dimension(2) :: xpttemp
   real, dimension(2,4) :: xpt
-  print*,'plotting rotated (2D) axes...'
 
-!--front face (pts 1->4)
-  xpt(:,1) = xmin(:)  ! xmin, ymin
+  !
+  ! plot various options for the 3D axes
+  !
+  select case(ioption)
+  case(1)
+  !--rotated axes
+     print*,'plotting rotated (2D) axes...'
 
-  xpt(1,2) = xmin(1)  ! xmin
-  xpt(2,2) = xmax(2)  ! ymax
+     do idim=1,2
+        !--plot to max of each axis
+        xpt(:,2) = 0.
+        xpt(idim,2) = xmax(idim)
+        do i=1,2
+           xpttemp(:) = xpt(:,i) - xorigin(:)
+           call rotate2D(xpttemp(:),anglez)
+           xpt(:,i) = xpttemp(:) + xorigin(:)
+        enddo
+        !--plot each axis as an arrow
+        call pgarro(xpt(1,1),xpt(2,1),xpt(1,2),xpt(2,2))
+     enddo
 
-  xpt(1,3) = xmax(1)  ! xmax
-  xpt(2,3) = xmax(2)  ! ymax
+  case default
 
-  xpt(1,4) = xmax(1)  ! xmax
-  xpt(2,4) = xmin(2)  ! ymin
-!
-!--now rotate each of these coordinates
-!
-  do i=1,4
-     xpttemp(:) = xpt(:,i) - xorigin(:)
-     call rotate2D(xpttemp(:),anglez,0.0)
-     xpt(:,i) = xpttemp(:) + xorigin(:)
-  enddo
-!
-!--now plot box appropriately using points
-!
-  call pgsfs(2)
-  call pgpoly(4,xpt(1,1:4),xpt(2,1:4))
+     print*,'plotting rotated (2D) box...'
+  
+     !--front face (pts 1->4)
+     xpt(:,1) = xmin(:)  ! xmin, ymin
+
+     xpt(1,2) = xmin(1)  ! xmin
+     xpt(2,2) = xmax(2)  ! ymax
+
+     xpt(1,3) = xmax(1)  ! xmax
+     xpt(2,3) = xmax(2)  ! ymax
+
+     xpt(1,4) = xmax(1)  ! xmax
+     xpt(2,4) = xmin(2)  ! ymin
+   !
+   !--now rotate each of these coordinates
+   !
+     do i=1,4
+        xpttemp(:) = xpt(:,i) - xorigin(:)
+        call rotate2D(xpttemp(:),anglez)
+        xpt(:,i) = xpttemp(:) + xorigin(:)
+     enddo
+   !
+   !--now plot box appropriately using points
+   !
+     call pgsfs(2)
+     call pgpoly(4,xpt(1,1:4),xpt(2,1:4))
+  end select
   
   return
 end subroutine rotate_axes2D

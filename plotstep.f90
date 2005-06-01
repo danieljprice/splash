@@ -576,11 +576,11 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
            endif
            do j=1,ntoti
               xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
-!               if (ndim.eq.2) then
-!                  call rotate2D(xcoords(:),angleradz,anglerady)
-!               elseif (ndim.eq.3) then
-                 call rotate3D(xcoords(:),angleradx,anglerady,angleradz)
-!               endif
+               if (ndim.eq.2) then
+                  call rotate2D(xcoords(:),angleradz)
+               elseif (ndim.eq.3) then
+                  call rotate3D(xcoords(:),angleradx,anglerady,angleradz)
+               endif
               xplot(j) = xcoords(iplotx) + xorigin(iplotx)
               yplot(j) = xcoords(iploty) + xorigin(iploty)
               if (iplotz.gt.0) then
@@ -1290,7 +1290,7 @@ contains
        inewpage = ipagechange .or. (iplots.le.nacross*ndown)
        call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
          trim(labelx),trim(labely),trim(title), &
-         just,iaxis,barwidth,isamexaxis,isameyaxis,inewpage)
+         just,iaxis,barwidth,isamexaxis,inewpage)
     endif 
     !
     !--print title if appropriate

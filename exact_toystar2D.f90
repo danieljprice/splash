@@ -37,8 +37,8 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
   real, parameter :: pi = 3.141592653589
   integer :: i,npts
   integer :: jmode,smode
-  real :: Aprev, A,H,C,B0, term,const,omega,omegasq
-  real :: radstar,dx,nu2,scalefac
+  real :: A,H,C,B0, term,const,omega,omegasq
+  real :: radstar,dx,nu2 !!,scalefac
   real :: rhoplot,deltarho,vplot,deltav
   real :: gamm1,gam1,constK,sigma
   logical linear
@@ -84,7 +84,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
      endif
      print*,' Amplitude = ',ampl,' period = ',2*pi/sigma,' H,C = ',denscentre,C0
 
-     scalefac = polyk*gamma/(sigma*gamm1)
+     !!scalefac = polyk*gamma/(sigma*gamm1)
      radstar = sqrt((2.*polyk*gamma*denscentre**gamm1)/gamm1)
 
      xplot(1) = 0.
@@ -127,7 +127,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
      !
      H = denscentre
      C = C0
-     Aprev = ampl
+     !!Aprev = ampl
      B0 = 0.
 !
 !--this is the static solution, determined from the total mass, polyk, gamma and omega
