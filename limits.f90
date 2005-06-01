@@ -22,8 +22,8 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   print 100,ifromstep,itostep,ifromcol,itocol
 100 format(' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
   !!--find limits of particle properties	  
-  lim(:,1) = huge(lim)
-  lim(:,2) = -huge(lim)
+  lim(ifromcol:itocol,1) = huge(lim)
+  lim(ifromcol:itocol,2) = -huge(lim)
   do i=ifromstep,itostep
      ntoti = sum(npartoftype(:,i))
      do j=ifromcol,itocol
