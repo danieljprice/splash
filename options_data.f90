@@ -44,6 +44,8 @@ subroutine defaults_set_data
   do i=1,size(isteplist)
      isteplist(i) = i
   enddo
+  iCalcQuantities = .true.
+  DataIsBuffered = .false.
   
   return
 end subroutine defaults_set_data
@@ -53,27 +55,31 @@ end subroutine defaults_set_data
 ! (read new data or change timesteps plotted)
 !----------------------------------------------------------------------
 subroutine submenu_data
- use filenames, only:nstepstotal
+ use filenames, only:nstepstotal,nstepsinfile,ifileopen
  use prompting
  use getdata, only:get_data
  use settings_data
+ use calcquantities, only:calc_quantities
+ use limits, only:set_limits
  implicit none
  integer :: ians, i
  character(len=30) :: fmtstring
+ logical :: ireadnow
  
  ians = 0
  if (iUseStepList) then
-    print 10, n_end,iUseStepList,buffer_data
+    print 10, n_end,iUseStepList,buffer_data,iCalcQuantities
  else
-    print 10, (n_end-nstart+1)/nfreq,iUseStepList,buffer_data
+    print 10, (n_end-nstart+1)/nfreq,iUseStepList,buffer_data,iCalcQuantities
  endif
  
 10  format(' 0) exit ',/,               &
            ' 1) read new data ',/,      &
-           ' 2) change number of timesteps used ( ',i5, ' )',/, &
-           ' 3) plot selected steps only        (  ',L1,' )',/, &
-           ' 4) buffering of data on/off        (  ',L1, ' )')
- call prompt('enter option',ians,0,4)
+           ' 2) change number of timesteps used        ( ',i5, ' )',/, &
+           ' 3) plot selected steps only               (  ',L1,' )',/, &
+           ' 4) buffering of data on/off               (  ',L1, ' )',/, &
+           ' 5) turn calculate extra quantities on/off (  ',L1, ' )')
+ call prompt('enter option',ians,0,5)
 !
 !--options
 !
@@ -104,7 +110,26 @@ subroutine submenu_data
     enddo
  case(4)
     buffer_data = .not.buffer_data
-    print*,'buffering of data = ',buffer_data
+    print "(/a,L1)",' Buffering of data = ',buffer_data
+    if (buffer_data) then
+       call prompt('Do you want to read all data into memory now?',ireadnow)
+       if (ireadnow) then
+          call get_data(-1,.false.)
+       endif
+    endif
+ case(5)
+    iCalcQuantities = .not.iCalcQuantities
+    if (iCalcQuantities) then
+       if (DataIsBuffered) then
+          call calc_quantities(nstart,n_end)
+          call set_limits(nstart,n_end,numplot-ncalc+1,numplot)
+       else
+          call calc_quantities(1,nstepsinfile(ifileopen))
+          call set_limits(1,nstepsinfile(ifileopen),numplot-ncalc+1,numplot)
+       endif
+    else
+       print "(/a,L1)",' Calculation of extra quantities = ',iCalcQuantities    
+    endif
  end select
 
  return

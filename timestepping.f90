@@ -8,8 +8,8 @@ contains
 ! This subroutine drives the main plotting loop
 !
 subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
-  use particle_data, only:npartoftype,time,gamma,dat
-  use settings_data, only:nstart,n_end,nfreq,buffer_data,iUsesteplist,isteplist
+  use particle_data, only:npartoftype,time,gamma,dat,maxstep
+  use settings_data, only:nstart,n_end,nfreq,DataIsBuffered,iUsesteplist,isteplist
   use settings_page, only:interactive,nstepsperpage,iColourEachStep
   use timestep_plotting, only:initialise_plotting,plotstep
   implicit none
@@ -36,7 +36,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
         istep = i
      endif
 
-     if (.not.buffer_data) then    
+     if (.not.DataIsBuffered) then    
         !
         !--make sure we have data for this timestep
         !

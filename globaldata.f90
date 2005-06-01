@@ -64,9 +64,10 @@ module settings_data
  integer :: icoords, iformat, ntypes
  integer :: nstart,n_end,nfreq
  integer, dimension(10) :: isteplist
- logical :: ivegotdata, buffer_data, iUseStepList
+ logical :: ivegotdata, DataIsBuffered
+ logical :: buffer_data,iUseStepList, iCalcQuantities
 
- namelist /dataopts/ buffer_data!!
+ namelist /dataopts/ buffer_data, iCalcQuantities!!
 
 end module settings_data
 !

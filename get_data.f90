@@ -52,6 +52,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   istart = 1
   ivegotdata = .false.
   ifileopen = ireadfile
+  DataIsBuffered = .false.
 
   if (ireadfile.le.0) then
      !
@@ -67,7 +68,10 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      n_end = istart - 1
      nstepstotal = n_end
      numplot = ncolumns
-     if (nstepstotal.gt.0) ivegotdata = .true.
+     if (nstepstotal.gt.0) then
+        ivegotdata = .true.
+        DataIsBuffered = .true.
+     endif
      print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nstepstotal,' ncolumns = ',numplot
 
      !
@@ -78,8 +82,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--calculate various additional quantities
      !
-     if (n_end.ge.nstart) then
-     !!   call calc_quantities(nstart,n_end)
+     if (n_end.ge.nstart .and. iCalcQuantities) then
+        call calc_quantities(nstart,n_end)
      endif
      !
      !--read plot limits from file, otherwise set plot limits
@@ -120,8 +124,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--calculate various additional quantities
      !
-     if (nstepsinfile(ireadfile).gt.0) then
-     !!   call calc_quantities(1,nstepsinfile(ireadfile))
+     if (nstepsinfile(ireadfile).gt.0 .and. iCalcQuantities) then
+        call calc_quantities(1,nstepsinfile(ireadfile))
      endif
      
      !
