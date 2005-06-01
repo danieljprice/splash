@@ -23,6 +23,8 @@ program supersphplot
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.0.2 : much improved ascii data read; better line plotting; zoom on
+!             powerspectrum plots + various bug fixes
 !     1.0.1 : bug fixes relating to colour bars on multiplots
 !     1.0   : first "official" release: version given to many people at IPAM
 !             meeting and put on web.
@@ -201,7 +203,7 @@ subroutine print_header
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/, &
    '   \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ ',/)      
 
- print "(a)",' ( version 1.0.1, Copyright (C) 2005)'
+ print "(a)",' ( version 1.0.2 [01/06/05] Copyright (C) 2005)'
  print 30 
 30 format(/,    &
    ' * SUPERSPHPLOT comes with ABSOLUTELY NO WARRANTY.',/, &

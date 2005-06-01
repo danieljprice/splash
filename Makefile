@@ -9,7 +9,7 @@
 
 ## Compiler options
 F95C =  g95
-F95FLAGS =  -O -Wall -fbounds-check
+F95FLAGS =  -O ##-Wall -fbounds-check
 
 LDFLAGS = -L/usr/X11R6/lib -lX11 -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation

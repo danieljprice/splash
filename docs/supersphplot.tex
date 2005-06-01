@@ -12,6 +12,7 @@
 
 \begin{document}
 \maketitle
+\date
 \tableofcontents
 \newpage
 
@@ -86,7 +87,7 @@ with faces showing cross sections and the like (although I regularly think about
 
 \subsection{Version History}
 
-\begin{tabular}{|l|p{0.85\textwidth}|}
+\begin{tabular}{|l|l|p{0.85\textwidth}|}
 \hline
 \input{version_history_tex}
 \hline
@@ -315,6 +316,8 @@ few timesteps.
 Buffering on means that all the timesteps are read into memory (good for small
 data sets). Buffering off means that only one data file at a time is read into
 memory. Default is off.
+\item \textbf{turn calculate extra quantities on/off}. Turns on/off the calculation
+of additional data columns (e.g. pressure, entropy, radius) from the main data.
 \end{enumerate}
 
 \subsection{(i)nteractive mode}
