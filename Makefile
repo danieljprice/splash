@@ -8,8 +8,8 @@
 .KEEP_STATE:
 
 ## Compiler options
-F90C =  g95
-F90FLAGS =  -O -Wall -fbounds-check
+F95C =  g95
+F95FLAGS =  -O -Wall -fbounds-check
 
 LDFLAGS = -L/usr/X11R6/lib -lX11 -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
@@ -23,23 +23,28 @@ SYSTEMFILE = system_f2003.f90 # this is for Fortran 2003 compatible compilers
 #SYSTEMFILE = system_unix_NAG.f90
 
 # Fortran flags same as F90
-FC = $(F90C)
-FFLAGS = $(F90FLAGS)
+FC = $(F95C)
+FFLAGS = $(F95FLAGS)
 
-# define the implicit rule to make a .o file from a .f90 file
+# define the implicit rule to make a .o file from a .f90/.f95 file
 # (some Make versions don't know this)
 
 %.o : %.f90
-	$(F90C) $(F90FLAGS) -c $< -o $@
+	$(F95C) $(F95FLAGS) -c $< -o $@
+%.o : %.f95
+	$(F95C) $(F95FLAGS) -c $< -o $@
 
 # modules must be compiled in the correct order to check interfaces
 
+# these need to be f95 compatible
+SOURCESF95= exact_shock.f95
+# most are just f90 
 SOURCESF90= globaldata.f90 transform.f90 \
          prompting.f90 geometry.f90 \
          colours.f90 colourparts.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \
-         exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
+         exact_sedov.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 \
          limits.f90 options_limits.f90 \
          exact.f90 options_page.f90 \
@@ -63,7 +68,7 @@ SOURCESF90= globaldata.f90 transform.f90 \
 # these are `external' f77 subroutines
 SOURCESF= danpgsch.f danpgtile.f danpgwedg.f
 
-OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o) 
+OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o) $(SOURCESF95:.f95=.o) 
 
 #
 # Now compile with the appropriate data read file
