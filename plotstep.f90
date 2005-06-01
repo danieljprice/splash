@@ -1230,6 +1230,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
         ! if plot not in correct range
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      else
+        print*,' error in plotting : iplotx = ',iplotx,' iploty =',iploty, 'numplot =',numplot
         call pgpage! just skip to next plot
 
      endif ! ploty = whatever

@@ -21,7 +21,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use exact, only:read_exactparams
   use filenames
   use limits, only:set_limits,read_limits
-  use settings_data
+  use settings_data, only:ncolumns,nstart,n_end,ncalc,ivegotdata, &
+                     DataisBuffered,iCalcQuantities,ndim,icoords
   use settings_part, only:iexact,icoordsnew
   use particle_data
   use prompting
@@ -67,12 +68,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      nstart = 1
      n_end = istart - 1
      nstepstotal = n_end
-     numplot = ncolumns
      if (nstepstotal.gt.0) then
         ivegotdata = .true.
         DataIsBuffered = .true.
      endif
-     print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nstepstotal,' ncolumns = ',numplot
+     print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nstepstotal,' ncolumns = ',ncolumns
 
      !
      !--set labels for each column of data
@@ -91,7 +91,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      limitsfile = trim(rootname(1))//'.limits'
      call read_limits(limitsfile,ierr)
      if (ierr.gt.0 .and. ivegotdata .and. nstepsinfile(1).ge.1) then
-        call set_limits(nstart,n_end,1,numplot)
+        call set_limits(nstart,n_end,1,ncolumns+ncalc)
      endif
      
   elseif (ireadfile.gt.0) then
@@ -115,7 +115,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      nstart = 1
      n_end = sum(nstepsinfile(1:nfiles))
      nstepstotal = n_end
-     numplot = ncolumns
      !
      !--set labels for each column of data
      !
@@ -127,7 +126,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      if (nstepsinfile(ireadfile).gt.0 .and. iCalcQuantities) then
         call calc_quantities(1,nstepsinfile(ireadfile))
      endif
-     
      !
      !--only set limits if reading the first file for the first time
      !  
@@ -139,7 +137,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      endif
        
      if (setlimits) then
-        call set_limits(1,nstepsinfile(ireadfile),1,numplot)
+        call set_limits(1,nstepsinfile(ireadfile),1,ncolumns+ncalc)
      endif
   endif
 !
@@ -154,7 +152,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         endif
      endif
      label(1:ndim) = labelcoord(1:ndim,icoordsnew)
-     do i=1,numplot
+     do i=1,ncolumns+ncalc
         if (iamvec(i).ne.0) then
            label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
         endif
