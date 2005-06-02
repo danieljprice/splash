@@ -11,11 +11,11 @@ contains
 subroutine calc_quantities(ifromstep,itostep)
   use labels
   use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,numplot,icoords
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords
   use mem_allocation
   implicit none
   integer, intent(in) :: ifromstep, itostep
-  integer :: i,j,nstartfromcolumn
+  integer :: i,j,nstartfromcolumn,ncolsnew
   integer :: ientrop,idhdrho,ivalfven,imach
   integer :: ipmag,ibeta,itotpr,idivBerr,icurr,icrosshel
   integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
@@ -111,8 +111,8 @@ subroutine calc_quantities(ifromstep,itostep)
   endif
   
   print*,'calculating ',ncalc,' additional quantities...'
-  numplot = ncolumns + ncalc
-  if (numplot.gt.maxcol) call alloc(maxpart,maxstep,numplot) 
+  ncolsnew = ncolumns + ncalc
+  if (ncolsnew.gt.maxcol) call alloc(maxpart,maxstep,ncolsnew) 
 
   do i=ifromstep,itostep
      ntoti = SUM(npartoftype(:,i))
