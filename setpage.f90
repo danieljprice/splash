@@ -50,8 +50,23 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
      !--leave room for axes labels if necessary
      !
      if (axis.GE.0) then
-        vptxmin = (ylabeloffset+1.0)*xch
-        vptymin = (xlabeloffset+1.0)*ych
+        !
+        !--PGPLOT seems to leave a (small) buffer around all plots
+        !  so if only one plot label per page, can leave less space
+        !  for the axes labels since they can go into the buffer region
+        !
+        if (nx.gt.1) then
+           vptxmin = (ylabeloffset+2.0)*xch
+        else
+           vptxmin = (ylabeloffset+1.0)*xch
+        endif
+        if (ny.gt.1 .and. .not.isamexaxis) then
+           vptymin = (xlabeloffset+2.0)*ych
+        elseif (ny.gt.1) then
+           vptymin = (xlabeloffset+0.25)*ych
+        else
+           vptymin = (xlabeloffset+1.0)*ych
+        endif
         vptymax = vptymax - titleoffset*ych
      endif
      !--also leave room for colour bar if necessary
@@ -124,12 +139,16 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
      !
      if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis)) then
         call pgmtxt('B',xlabeloffset,0.5,0.5,labelx)
-        call pgmtxt('T',-titleoffset,0.5,0.5,title)
      endif
      !
      !--always label y axis
      !
      call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
+     !
+     !--always plot title
+     !
+     call pgmtxt('T',-titleoffset,0.5,0.5,title)
+
   endif
   
   return
