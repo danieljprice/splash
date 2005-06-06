@@ -44,7 +44,7 @@ subroutine defaults_set_data
   do i=1,size(isteplist)
      isteplist(i) = i
   enddo
-  iCalcQuantities = .true.
+  iCalcQuantities = .false.
   DataIsBuffered = .false.
   
   return
