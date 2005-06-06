@@ -337,11 +337,21 @@ subroutine menu
    use settings_xsecrot
    !use prompting
    implicit none
+   integer :: ifac
    logical :: iansx, iansy, ichange
    
    call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
-   nacross = nyplotmulti/2
-   if (nacross.eq.0) nacross = 1
+   !--guess nacross,ndown based on largest factor
+   ifac = nyplotmulti/2
+   do while (mod(nyplotmulti,ifac).ne.0 .and. ifac.gt.1)
+      ifac = ifac - 1
+   end do
+   if (ifac.le.1) then
+      nacross = nyplotmulti/2
+   else
+      nacross = ifac
+   endif
+   if (nacross.le.0) nacross = 1
    ndown = nyplotmulti/nacross
    print*,'setting nacross,ndown = ',nacross,ndown 
    iansx = .true.
