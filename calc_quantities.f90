@@ -47,23 +47,32 @@ subroutine calc_quantities(ifromstep,itostep)
   !
   !--specify hydro quantities
   !
-  ncalc = 1
-  irad = ncolumns + 1
+  ncalc = 0
+  !--radius
+  if (ndim.gt.0) then
+     nstartfromcolumn = ncolumns + ncalc
+     ncalc = ncalc + 1
+     irad = nstartfromcolumn + 1
+  endif
+  !--entropy
   if (irho.ne.0 .and. iutherm.ne.0) then
      nstartfromcolumn = ncolumns + ncalc
      ncalc = ncalc + 1
      ientrop = nstartfromcolumn + 1
   endif
+  !--pressure
   if ((ipr.eq.0 .or. ipr.gt.ncolumns) .and. iutherm.ne.0.and.irho.ne.0) then
      nstartfromcolumn = ncolumns + ncalc
      ncalc = ncalc + 1
      ipr = nstartfromcolumn + 1
   endif
+  !--mach number
   if (ivx.ne.0 .and. ipr.ne.0 .and. irho.ne.0) then
      nstartfromcolumn = ncolumns + ncalc
      ncalc = ncalc + 1
      imach = nstartfromcolumn + 1
   endif
+  !--dh/drho
   !if (ih.ne.0 .and. irho.ne.0) then
   !  nstartfromcolumn = ncolumns + ncalc
   !   ncalc = ncalc + 1
