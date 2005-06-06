@@ -242,7 +242,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
   use multiplot
   use particle_data, only:maxpart,icolourme
   use rotation
-  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimv,nstart,n_end,nfreq
+  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimv,n_end,nfreq
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,PlotOnRenderings,iplotline
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis, &
@@ -1116,7 +1116,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
            labely = 'power'
            if (iadvance.ne.0) then
               xmin = 1./wavelengthmax  ! freq min
-              xmax = nfreqspec*xmin
+              xmax = 1./wavelengthmin  ! freq max
            endif
            if (iadvance.ne.0 .and. itrans(iploty).gt.0) then
               call transform_limits(xmin,xmax,itrans(iploty))
@@ -1124,7 +1124,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
            !
            !--setup frequency grid (evenly spaced in transformed grid)
            !
-           nfreqpts = int(nfreqspec*oversamplefactor)
+           nfreqpts = nfreqspec
            if (nfreqpts.ge.size(xplot)) then
               nfreqpts = size(xplot)
               print*,' WARNING: nfreqpts > array size, restricting to ',nfreqpts
@@ -1209,9 +1209,6 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
 
            call pgline(nfreqpts,xplot(1:nfreqpts),yplot(1:nfreqpts))
            print*,' maximum power at '//trim(labelx)//' = ',xplot(maxloc(yplot(1:nfreqpts)))
-           do j=1,nfreqspec
-              if (yplot(j).gt.1) print*,trim(labelx),' =',xplot(j),', power = ',yplot(j)
-           enddo
 
         endif
         !
