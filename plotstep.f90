@@ -12,7 +12,7 @@ module timestep_plotting
   real, private :: xmin,xmax,ymin,ymax,zmin,ymean
   real, private :: rendermin,rendermax
   real, private :: dxsec,xsecpos
-  real, private :: charheight, charheightmm
+  real, private :: charheight
   real, private :: dxgrid,xmingrid,xmaxgrid
   real, private :: angletempx, angletempy, angletempz
 
@@ -30,7 +30,7 @@ contains
 subroutine initialise_plotting(ipicky,ipickx,irender)
   use params
   use colours, only:colour_set
-  use labels, only:label,ix,ipowerspec
+  use labels, only:label,ipowerspec
   use limits, only:lim
   use multiplot
   use prompting
@@ -39,7 +39,6 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use settings_page
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle
   use settings_render, only:icolours,iplotcont_nomulti
-  use settings_vecplot, only:iplotpartvec
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec
   use settings_powerspec, only:options_powerspec
   use particle_data, only:npartoftype
@@ -215,12 +214,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
        .and.(icolours.gt.0)) then
      call colour_set(icolours)
   endif
-  
-  !!--set character height in mm
-  charheightmm = 4.0
-  !!if ((ndown*nacross).gt.1 .and..not. tile_plots) charheight = 2.0
-  !      charheight = 0.5*(nacross+ndown)
-  
+    
   !!--set line width to something visible
   call pgslw(2)
   
@@ -245,8 +239,8 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
   use settings_data, only:numplot,ndataplots,icoords,ndim,ndimv,n_end,nfreq
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,PlotOnRenderings,iplotline
-  use settings_page, only:nacross,ndown,iadapt,interactive,iaxis, &
-                     hpostitle,vpostitle,fjusttitle
+  use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend, &
+                     charheightmm
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
                        iPlotColourBar,icolour_particles
   use settings_vecplot, only:npixvec, iplotpartvec
@@ -945,7 +939,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
            !
            !--print legend if this is the first plot on the page
            !    
-           if (nyplot.eq.1) then
+           if (iPlotLegend .and. nyplot.eq.1) then
               call legend(timei)
            endif
            !
@@ -1018,7 +1012,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
         !--------------------------------
 
         !--plot time on plot
-        if (nyplot.eq.1) call legend(timei)
+        if (iPlotLegend .and. nyplot.eq.1) call legend(timei)
         !
         !--sort out particle colouring
         !
@@ -1214,7 +1208,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
         !
         !--if this is the first plot on the page, print legend
         !
-        if (iplotsonpage.eq.1) call legend(timei)
+        if (iPlotLegend .and. iplotsonpage.eq.1) call legend(timei)
 
         lastplot = (istep.eq.n_end)
 
@@ -1245,8 +1239,9 @@ contains
   subroutine page_setup
     use pagesetup
     use settings_render, only:ColourBarWidth
+    use settings_page, only:iPlotTitles,vpostitle,hpostitle,fjusttitle
     implicit none
-    real :: barwidth
+    real :: barwidth, TitleOffset
         
     !--------------------------------------------------------------
     ! output some muff to the screen
@@ -1286,14 +1281,19 @@ contains
         !--change the page if pagechange set
        !  or, if turned off, between plots on first page only
        inewpage = ipagechange .or. (iplots.le.nacross*ndown)
+       
+       !--work out whether or not to leave space above plots for titles
+       TitleOffset = 0.
+       if (iPlotTitles .and. vpostitle.gt.0.) TitleOffset = vpostitle + 1.0
+       
        call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
          trim(labelx),trim(labely),trim(title), &
-         just,iaxis,barwidth,isamexaxis,inewpage)
+         just,iaxis,barwidth,TitleOffset,isamexaxis,inewpage)
     endif 
     !
     !--print title if appropriate
     !
-    if (iplotsonpage.le.ntitles) then
+    if (iPlotTitles .and. iplotsonpage.le.ntitles) then
        if (len_trim(titlelist(iplotsonpage)).gt.0) then
           call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(iplotsonpage)))
        endif

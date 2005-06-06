@@ -7,14 +7,16 @@ module settings_page
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage
  logical :: iColourEachStep,tile,interactive
+ logical :: iPlotLegend,iPlotTitles
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
+ real :: charheightmm
  character(len=20) :: colour_fore, colour_back, legendtext
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,tile,ipapersize,papersizex,aspectratio, &
-   hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle,legendtext, &
-   colour_fore, colour_back
+   iPlotLegend,hposlegend,vposlegend,iPlotTitles,hpostitle,vpostitle,fjusttitle,legendtext, &
+   colour_fore, colour_back, charheightmm
 
 contains
 
@@ -33,14 +35,19 @@ subroutine defaults_set_page
   ipapersize = 0        ! paper size option
   papersizex = 0.0      ! size of x paper (no call to PGPAP if zero)
   aspectratio = 0.0     ! aspect ratio of paper (no call to PGPAP if zero)
+  
+  iPlotLegend = .true.  ! whether or not to plot legend
   hposlegend = 0.75     ! horizontal legend position as fraction of viewport
   vposlegend = 2.0      ! vertical legend position in character heights
   legendtext = 't='
+  
+  iPlotTitles = .true.  ! whether or not to plot titles
   hpostitle = 0.5       ! horizontal title position as fraction of viewport
   vpostitle = 1.0       ! vertical title position in character heights
   fjusttitle = 0.5      ! justification factor for title
   colour_fore = ' '
   colour_back = ' '
+  charheightmm = 4.0    ! character height in mm
 
   return
 end subroutine defaults_set_page
@@ -58,17 +65,19 @@ subroutine submenu_page
  iaction = 0
  papersizey = papersizex*aspectratio
  print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,tile, &
-          hpostitle,vpostitle,hposlegend,vposlegend
+          iPlotTitles,hpostitle,vpostitle,iPlotLegend,hposlegend,vposlegend, &
+          charheightmm
 10 format(' 0) exit ',/,                   &
         ' 1) change steps per page  (',i2,')',/, &
         ' 2) axes options           (',i2,')',/, &
         ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
         ' 4) change plots per page  (',i2,1x,i2,')',/, &
          ' 5) toggle plot tiling     (',L1,')',/, & 
-         ' 6) title options          (',f5.2,1x,f4.1,')',/, &
-         ' 7) legend options         (',f5.2,1x,f4.1,')',/, &
-         ' 8) set foreground/background colours ')         
- call prompt('enter option ',iaction,0,8)
+         ' 6) title options          (',L1,1x,f5.2,1x,f4.1,')',/, &
+         ' 7) legend options         (',L1,1x,f5.2,1x,f4.1,')',/, &
+         ' 8) set character height   (',f4.1,')',/,&
+         ' 9) set foreground/background colours ')
+ call prompt('enter option ',iaction,0,9)
 
  select case(iaction)
 !------------------------------------------------------------------------
@@ -160,20 +169,30 @@ subroutine submenu_page
      print*,'tile plots = ',tile
 !------------------------------------------------------------------------
   case(6)
-     call prompt('Enter horizontal position as fraction of viewport', &
-          hpostitle,0.0,1.0)
-     call prompt('Enter vertical position in character heights above top',vpostitle)
-     call prompt('Enter justification factor (0.0=left 1.0=right)',fjusttitle,0.0,1.0)
+     call prompt('Plot titles?',iPlotTitles)
+     if (iPlotTitles) then
+        call prompt('Enter horizontal position as fraction of viewport', &
+             hpostitle,0.0,1.0)
+        call prompt('Enter vertical position in character heights above top',vpostitle)
+        call prompt('Enter justification factor (0.0=left 1.0=right)',fjusttitle,0.0,1.0)
+     endif
      return
 !------------------------------------------------------------------------
   case(7)
-     call prompt('Enter horizontal position as fraction of viewport', &
-          hposlegend,0.0,1.0)
-     call prompt('Enter vertical position in character heights from top',vposlegend)
-     call prompt('Enter legend text ',legendtext)
+     call prompt('Plot time legend?',iPlotLegend)
+     if (iPlotLegend) then
+        call prompt('Enter horizontal position as fraction of viewport', &
+             hposlegend,0.0,1.0)
+        call prompt('Enter vertical position in character heights from top',vposlegend)
+        call prompt('Enter legend text ',legendtext)
+     endif
      return
 !------------------------------------------------------------------------
   case(8)
+     call prompt('Enter page character height in mm ',charheightmm,1.,50.)
+     return
+!------------------------------------------------------------------------
+  case(9)
      ierr = 1
      ntries = 1
      !--open null device so that colours can be recognised
