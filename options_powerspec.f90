@@ -56,10 +56,10 @@ subroutine options_powerspec
  if (abs(wavelengthmax-1.0).lt.tiny(wavelengthmax)) then
     boxsize = abs(lim(1,2) - lim(1,1))
     if (boxsize.gt.tiny(boxsize)) wavelengthmax = boxsize
-    wavelengthmin = wavelengthmax/512.
  endif
  call prompt('enter box size (max wavelength)',wavelengthmax,0.0)
  call prompt('enter number of wavelengths to sample ',nwavelengths,1)
+ wavelengthmin = wavelengthmax/nwavelengths
  
  if (ipowerspec.le.ndataplots .or. ipowerspec.gt.numplot) then
     !--this should never happen

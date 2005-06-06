@@ -8,7 +8,7 @@ contains
 ! This subroutine drives the main plotting loop
 !
 subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
-  use particle_data, only:npartoftype,time,gamma,dat,maxstep
+  use particle_data, only:npartoftype,time,gamma,dat
   use settings_data, only:nstart,n_end,nfreq,DataIsBuffered,iUsesteplist,isteplist
   use settings_page, only:interactive,nstepsperpage,iColourEachStep
   use timestep_plotting, only:initialise_plotting,plotstep
@@ -73,7 +73,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
         call colour_timestep(istepsonpage)
      endif
 
-     call plotstep(istep,i,irender,ivecplot,npartoftype(:,istep), &
+     call plotstep(istep,irender,ivecplot,npartoftype(:,istep), &
                    dat(:,:,istep),time(istep),gamma(istep),ipagechange,iadvance)
 !
 !--increment timestep

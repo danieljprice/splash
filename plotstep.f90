@@ -225,7 +225,7 @@ end subroutine initialise_plotting
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine plotstep(istep,idump,irender,ivecplot, &
+subroutine plotstep(istep,irender,ivecplot, &
                     npartoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
   use exact, only:exact_solution, &
@@ -240,7 +240,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,PlotOnRenderings,iplotline
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend, &
-                     charheightmm
+                     charheightmm, iPlotTitles
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
                        iPlotColourBar,icolour_particles
   use settings_vecplot, only:npixvec, iplotpartvec
@@ -265,7 +265,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
   use render, only:render_pix,colourbar
 
   implicit none
-  integer, intent(in) :: istep, idump, irender, ivecplot
+  integer, intent(in) :: istep, irender, ivecplot
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(:,:), intent(in) :: dat
   real, intent(in) :: timei,gammai
@@ -1198,7 +1198,7 @@ subroutine plotstep(istep,idump,irender,ivecplot, &
            endif
            
            just = 0
-           title = 'Power Spectrum'
+           if (iPlotTitles) title = 'Power Spectrum'
            call page_setup
 
            call pgline(nfreqpts,xplot(1:nfreqpts),yplot(1:nfreqpts))

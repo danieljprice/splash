@@ -117,8 +117,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   npartoftype(:,j) = 0
   npartoftype(1,j) = nprint
 
-  time(j) = real(j)
-  print*,' setting "time" = dump number = ',time(j)
+  time(j) = 0. !!real(j)
+  !!print*,' setting "time" = dump number = ',time(j)
   gamma(j) = 1.666666666667
 
   close(iunit)
