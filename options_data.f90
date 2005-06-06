@@ -33,7 +33,7 @@ subroutine defaults_set_data
   ncalc = 0         ! number of columns to calculate(e.g. radius)
   nextra = 0        ! extra plots aside from particle data
   ncolumns=maxplot-ncalc        ! number of columns in data file
-  ndim = 3          ! number of coordinate dimensions
+  ndim = 0          ! number of coordinate dimensions
   ndimV = ndim      ! default velocity same dim as coords
   nstart = 1        ! timestep to start from
   n_end = 1000      ! timestep to finish on
