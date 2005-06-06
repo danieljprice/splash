@@ -1,7 +1,7 @@
 module pagesetup
  implicit none
  public :: setpage
- real, parameter, private :: xlabeloffset = 3.0, ylabeloffset = 3.0, titleoffset = 1.0
+ real, parameter, private :: xlabeloffset = 3.0, ylabeloffset = 3.0
  
  private
 
@@ -23,10 +23,10 @@ contains
 !         pagechange : change the physical page between plots
 !
 subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
-     just,axis,colourbarwidth,isamexaxis,ipagechange)
+     just,axis,colourbarwidth,titleoffset,isamexaxis,ipagechange)
   implicit none
   integer, intent(in) :: iplot, nx, ny, just, axis
-  real, intent(in) :: xmin, xmax, ymin, ymax, colourbarwidth
+  real, intent(in) :: xmin, xmax, ymin, ymax, colourbarwidth, titleoffset
   character(len=*), intent(in) :: labelx, labely, title
   character(len=10) :: xopts, yopts
   logical, intent(in) :: ipagechange, isamexaxis
@@ -42,17 +42,17 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
      !
      !--default is to use whole viewport
      !
-     vptxmin = 0.01
-     vptxmax = 0.99
-     vptymin = 0.01
-     vptymax = 0.99
+     vptxmin = 0.001
+     vptxmax = 0.999
+     vptymin = 0.001
+     vptymax = 0.999
      !
      !--leave room for axes labels if necessary
      !
      if (axis.GE.0) then
-        vptxmin = (ylabeloffset+2.0)*xch
-        vptymin = (xlabeloffset+2.0)*ych
-        vptymax = vptymax - (titleoffset+1.0)*ych
+        vptxmin = (ylabeloffset+1.0)*xch
+        vptymin = (xlabeloffset+1.0)*ych
+        vptymax = vptymax - titleoffset*ych
      endif
      !--also leave room for colour bar if necessary
      if (colourbarwidth.GT.0.) then
