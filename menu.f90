@@ -55,6 +55,10 @@ subroutine menu
   !   not including the particle co-ordinates
   !  nextra are extra graphs to plot (e.g. convergence plots, power spectrum)
   !
+  !  note that numplot and ndataplots should *only* be set here
+  !  this means that even if ncolumns changes during data reads while plotting
+  !  we don't start plotting new quantities
+  !
   nextra = 0
   if (ndim.le.1) then ! if 1D or no coord data (then prompts for which x)
      nextra = 1      ! one extra plot = power spectrum
