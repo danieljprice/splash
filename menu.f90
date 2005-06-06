@@ -348,7 +348,7 @@ subroutine menu
    call prompt('Same x axis for all?',iansx)
    if (iansx) then
       call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
-      multiplotx(2:nyplotmulti) = multiplotx(1)        
+      multiplotx(2:nyplotmulti) = multiplotx(1)
    endif
    iansy = .false.
    if (ndim.ge.2) call prompt('Same y axis for all?',iansy)
@@ -362,8 +362,12 @@ subroutine menu
       if (.not.iansy .or. multiploty(i).gt.ndataplots .or. multiploty(i).le.0) then
          call prompt(' y axis ',multiploty(i),1,numplot)
       endif
-      if (.not.iansx.and.multiploty(i).le.ndataplots) then
-         call prompt(' x axis ',multiplotx(i),1,numplot)
+      if (.not.iansx) then
+         if (multiploty(i).le.ndataplots) then
+            call prompt(' x axis ',multiplotx(i),1,ndataplots)
+         else
+            multiplotx(i) = multiploty(i)
+         endif
       endif
       !
       !--work out whether rendering is allowed based on presence of rho, h & m in data read
