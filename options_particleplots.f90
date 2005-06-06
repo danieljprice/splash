@@ -111,7 +111,7 @@ subroutine submenu_particleplots
      !          plot particles by type?
      do itype=1,ntypes
         call prompt('Plot '//trim(labeltype(itype))//' particles?',iplotpartoftype(itype))
-        if (itype.gt.1) then
+        if (iplotpartoftype(itype) .and. itype.gt.1) then
            call prompt('Plot on top of rendered plots?',PlotOnRenderings(itype))
         endif
      enddo
