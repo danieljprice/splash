@@ -240,7 +240,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,PlotOnRenderings,iplotline
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend, &
-                     charheightmm, iPlotTitles
+                     charheightmm
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
                        iPlotColourBar,icolour_particles
   use settings_vecplot, only:npixvec, iplotpartvec
@@ -312,6 +312,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   hh = 0.
   rho = 0.
   pmass = 0.
+  
   !--set the arrays needed for rendering if they are present
   if (ih.gt.0 .and. ih.lt.ndataplots) hh(:) = dat(:,ih)
   if (irho.gt.0 .and. irho.lt.ndataplots) rho(:) = dat(:,irho)
@@ -1198,7 +1199,7 @@ subroutine plotstep(istep,irender,ivecplot, &
            endif
            
            just = 0
-           if (iPlotTitles) title = 'Power Spectrum'
+           title = ' '
            call page_setup
 
            call pgline(nfreqpts,xplot(1:nfreqpts),yplot(1:nfreqpts))
