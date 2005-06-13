@@ -93,15 +93,16 @@ subroutine defaults_set
   !
   !--labels
   !
+  !  column labels
   do i=1,maxplot
      write(label(i),"(a,i3)") 'column ',i
   enddo
+  !  particle types
   labeltype(1) = 'gas'
-  labeltype(2) = 'type 2'
-  labeltype(3) = 'type 3'
-  labeltype(4) = 'type 4'
-  labeltype(5) = 'type 5'
-  labeltype(6) = 'type 6'
+  do i=2,maxparttypes
+     write(labeltype(i),"(a,i1)") 'type ',i
+  enddo
+  !  vector labels
   iamvec(:) = 0
   labelvec = ' '
   
