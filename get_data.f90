@@ -22,7 +22,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use filenames
   use limits, only:set_limits,read_limits
   use settings_data, only:ncolumns,nstart,n_end,ncalc,ivegotdata, &
-                     DataisBuffered,iCalcQuantities,ndim,icoords
+                     DataisBuffered,iCalcQuantities,ndim,icoords, &
+                     units,unitslabel
   use settings_part, only:iexact,icoordsnew
   use particle_data
   use prompting
@@ -80,6 +81,18 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      print "(/a)",'setting plot labels...'
      call set_labels
      !
+     !--change units if necessary
+     !
+     if (any(abs(units(:)-1.0).gt.tiny(units))) then
+        write(*,"(/a)") ' rescaling data...'
+        do i=1,ncolumns
+           if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
+              dat(:,i,nstart:n_end) = dat(:,i,nstart:n_end)/units(i)
+              label(i) = trim(label(i))//trim(unitslabel(i))
+           endif
+        enddo
+     endif
+     !
      !--calculate various additional quantities
      !
      if (n_end.ge.nstart .and. iCalcQuantities) then
@@ -120,6 +133,18 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !!print "(/a)",'setting plot labels...'
      call set_labels
+     !
+     !--change units if necessary
+     !
+     if (any(abs(units(:)-1.0).gt.tiny(units))) then
+        write(*,"(/a)") ' rescaling data...'
+        do i=1,ncolumns
+           if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
+              dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))/units(i)
+              label(i) = trim(label(i))//trim(unitslabel(i))
+           endif
+        enddo
+     endif
      !
      !--calculate various additional quantities
      !

@@ -40,7 +40,7 @@ end module filenames
 module labels
  use params
  implicit none
- character(len=20), dimension(maxplot+2) :: label,labelvec
+ character(len=40), dimension(maxplot+2) :: label,labelvec
  character(len=20), dimension(maxparttypes) :: labeltype
  integer, dimension(3) :: ix
  integer, dimension(maxplot) :: iamvec
@@ -57,6 +57,7 @@ end module labels
 !--data
 !
 module settings_data
+ use params
  implicit none
  integer :: numplot,ncalc,ncolumns,nextra
  integer :: ndataplots
@@ -66,8 +67,10 @@ module settings_data
  integer, dimension(10) :: isteplist
  logical :: ivegotdata, DataIsBuffered
  logical :: buffer_data,iUseStepList, iCalcQuantities
+ real, dimension(maxplot) :: units
+ character(len=20), dimension(maxplot) :: unitslabel
 
- namelist /dataopts/ buffer_data, iCalcQuantities!!
+ namelist /dataopts/ buffer_data, iCalcQuantities,units,unitslabel
 
 end module settings_data
 !
