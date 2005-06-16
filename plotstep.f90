@@ -231,6 +231,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   use exact, only:exact_solution, &
              atstar,ctstar,sigma,iwaveplotx,iwaveploty
   use toystar1D, only:exact_toystar_ACplane
+  use toystar2D, only:exact_toystar_ACplane2D
   use labels
   use limits
   use multiplot
@@ -240,7 +241,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,PlotOnRenderings,iplotline
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend, &
-                     charheightmm
+                     charheightmm,iPlotTitles,vpostitle,hpostitle,fjusttitle
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
                        iPlotColourBar,icolour_particles
   use settings_vecplot, only:npixvec, iplotpartvec
@@ -937,12 +938,16 @@ subroutine plotstep(istep,irender,ivecplot, &
                                    xmaxrotaxes(1:ndim),xorigin(1:ndim),angleradz)
               endif
            endif
-           !
-           !--print legend if this is the first plot on the page
-           !    
-           if (iPlotLegend .and. nyplot.eq.1) then
-              call legend(timei)
-           endif
+           
+           !--print legend if this is the first plot on the page    
+           if (iPlotLegend .and. nyplot.eq.1) call legend(timei)
+           
+           !--print title if appropriate
+           if (iPlotTitles .and. iplotsonpage.le.ntitles) then
+              if (len_trim(titlelist(iplotsonpage)).gt.0) then
+                 call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(iplotsonpage)))
+              endif
+           endif           
            !
            !--plot exact solution if relevant (before going interactive)
            !
@@ -1014,6 +1019,13 @@ subroutine plotstep(istep,irender,ivecplot, &
 
         !--plot time on plot
         if (iPlotLegend .and. nyplot.eq.1) call legend(timei)
+    
+        !--print title if appropriate
+        if (iPlotTitles .and. iplotsonpage.le.ntitles) then
+           if (len_trim(titlelist(iplotsonpage)).gt.0) then
+              call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(iplotsonpage)))
+           endif
+        endif
         !
         !--sort out particle colouring
         !
@@ -1101,7 +1113,15 @@ subroutine plotstep(istep,irender,ivecplot, &
         !--A vs C for exact toystar solution
         !
         if (iexact.eq.4 .and. iploty.eq.iacplane) then
-           call exact_toystar_acplane(atstar,ctstar,sigma,gammai)
+           if (ndim.eq.1) then
+              call exact_toystar_acplane(atstar,ctstar,sigma,gammai)
+           elseif (ndim.eq.2) then
+              call exact_toystar_acplane2D(atstar,ctstar,sigma,gammai)           
+           endif
+           !--increment page counter as setpage is not called
+           iplots = iplots + 1
+           iplotsonpage = iplotsonpage + 1
+           if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
         endif
         !
         !--power spectrum plots (uses x and data as yet unspecified)
@@ -1210,6 +1230,14 @@ subroutine plotstep(istep,irender,ivecplot, &
         !--if this is the first plot on the page, print legend
         !
         if (iPlotLegend .and. iplotsonpage.eq.1) call legend(timei)
+        !
+        !--print title if appropriate
+        !
+        if (iPlotTitles .and. iplotsonpage.le.ntitles) then
+           if (len_trim(titlelist(iplotsonpage)).gt.0) then
+              call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(iplotsonpage)))
+           endif
+        endif
 
         lastplot = (istep.eq.n_end)
 
@@ -1240,7 +1268,6 @@ contains
   subroutine page_setup
     use pagesetup
     use settings_render, only:ColourBarWidth
-    use settings_page, only:iPlotTitles,vpostitle,hpostitle,fjusttitle
     implicit none
     real :: barwidth, TitleOffset
         
@@ -1291,14 +1318,6 @@ contains
          trim(labelx),trim(labely),trim(title), &
          just,iaxis,barwidth,TitleOffset,isamexaxis,inewpage)
     endif 
-    !
-    !--print title if appropriate
-    !
-    if (iPlotTitles .and. iplotsonpage.le.ntitles) then
-       if (len_trim(titlelist(iplotsonpage)).gt.0) then
-          call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(iplotsonpage)))
-       endif
-    endif
 
     return
   end subroutine page_setup
