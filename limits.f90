@@ -14,13 +14,18 @@ contains
 !
 subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   use labels, only:label
-  use particle_data, only:npartoftype,dat
+  use particle_data, only:npartoftype,dat,maxcol
   implicit none
   integer, intent(in) :: ifromstep,itostep,ifromcol,itocol
   integer :: i,j,k,ntoti
 
   print 100,ifromstep,itostep,ifromcol,itocol
 100 format(' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
+  if (ifromcol.gt.maxcol .or. itocol.gt.maxcol) then
+     print "(a)",' *** internal error: set_limits: column > array size ***'
+     return
+  endif
+
   !!--find limits of particle properties	  
   lim(ifromcol:itocol,1) = huge(lim)
   lim(ifromcol:itocol,2) = -huge(lim)
