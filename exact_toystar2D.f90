@@ -191,7 +191,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
         case(3)                 ! plot solution for utherm
            yplot(i) = constK*(rhoplot**gamm1)/gamm1
         case(4)                 ! plot solution for v_r
-           yplot(i) = A*xplot(i)
+           yplot(i) = ampl*xplot(i)
         case(5)                 ! plot solution for By
            yplot(i) = sigma*rhoplot
         end select
@@ -321,4 +321,71 @@ real function detadr(j,m,rad,gamma)
   
 end function detadr
 
+!----------------------------------------------------------------------
+!
+! this subroutine plots the alpha-beta relation in the 2D Toy star solution
+!
+!----------------------------------------------------------------------
+subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
+  implicit none
+  real, intent(in) :: astart,bstart,sigmain,gamma
+  integer, parameter :: npts = 2000
+  integer :: i
+  real :: gamm1,gam1,sigma
+  real :: polyk,Omega2,constk
+  real :: xstart,xend,ymin,ymax,xi,term,extra
+  real, dimension(npts) :: xplot, yplot
+
+  print*,' plotting alpha-beta plane...'
+
+  gamm1 = gamma - 1.
+  gam1 = 1./gamm1
+  polyk = 0.25
+  Omega2 = 1.0
+  sigma = 1.0
+  print*,' alpha = ',astart,' beta = ',bstart
+  !
+  !--find integration constant from starting values of alpha and beta
+  !
+  constk = (astart**2 + bstart**2 + Omega2 &
+            + 2.*polyk*gamma*(sigma*bstart**gamma)*gam1**2)/bstart
+  
+  print*,' integration constant = ',constk
+  
+  !
+  !--find limits of plot (ie. where alpha = 0)
+  !
+  xstart = 0.25
+  xend = 2.0
+
+  !      print*,'plotting k = ',k,' cstart = ',cstart,' astart = ',astart
+  !      print*,'min c = ',xstart,' max c = ',xend
+
+  xstart = xstart + 0.000001
+  xend = xend - 0.000001
+
+  extra = 0.1*(xend-xstart)
+  !!xcentre = 0.5*(xstart + xend)
+  ymax = 2.0
+  ymin = -2.0
+
+  call pgswin(xstart-extra,xend+extra,ymin,ymax,0,1)
+  call pgbox('bcnst',0.0,0,'1bvcnst',0.0,0)      
+  call pglabel ('beta','alpha',' ')
+  
+  do i=1,npts
+     xi = xstart + (i-1)*npts
+     xplot(i) = xi
+     term = -(xi**2 + Omega2 + 2.*polyk*gamma*(sigma*xi**gamma)*gam1**2 + constk*xi)
+     if (term.le.0) then
+        yplot(i) = 0.
+     else
+        yplot(i) = sqrt(term)
+     endif 
+  enddo
+  call pgline(npts,xplot,yplot)
+  
+  return
+
+end subroutine exact_toystar_ACplane2D
 end module toystar2D
