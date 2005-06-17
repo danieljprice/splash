@@ -12,11 +12,12 @@ subroutine calc_quantities(ifromstep,itostep)
   use labels
   use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords
+  use settings_part, only:iexact
   use mem_allocation
   implicit none
   integer, intent(in) :: ifromstep, itostep
   integer :: i,j,nstartfromcolumn,ncolsnew
-  integer :: ientrop,idhdrho,ivalfven,imach
+  integer :: ientrop,idhdrho,ivalfven,imach,ideltarho
   integer :: ipmag,ibeta,itotpr,idivBerr,icurr,icrosshel
   integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
   real :: Bmag, Jmag, veltemp, spsound
@@ -41,6 +42,7 @@ subroutine calc_quantities(ifromstep,itostep)
   iBperp = 0
   ivalfven = 0
   imach = 0
+  ideltarho = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -71,6 +73,12 @@ subroutine calc_quantities(ifromstep,itostep)
      nstartfromcolumn = ncolumns + ncalc
      ncalc = ncalc + 1
      imach = nstartfromcolumn + 1
+  endif
+  !--deltarho for toy star
+  if (irho.ne.0 .and. irad.ne.0 .and. iexact.eq.4) then
+     nstartfromcolumn = ncolumns + ncalc
+     ncalc = ncalc + 1
+     ideltarho = nstartfromcolumn + 1
   endif
   !--dh/drho
   !if (ih.ne.0 .and. irho.ne.0) then
@@ -177,7 +185,12 @@ subroutine calc_quantities(ifromstep,itostep)
                                           dat(j,ivx:ivx+ndimV-1,i))
         enddo
      endif
-
+     !!--delta rho for toy star
+     if ((ideltarho.ne.0).and.(irho.ne.0).and.(irad.ne.0)) then
+        do j=1,ntoti
+           dat(j,ideltarho,i) = dat(j,irho,i) - (1.-dat(j,irad,i)**2)
+        enddo
+     endif
      !!--distance along the line with angle 30deg w.r.t. x axis
      if (irad2.ne.0) then
         angledeg = 30.
@@ -270,6 +283,7 @@ subroutine calc_quantities(ifromstep,itostep)
   if (ike.ne.0) label(ike) = 'v\u2\d/2'
   if (ipr.gt.ncolumns) label(ipr) = 'P_gas'
   if (imach.ne.0) label(imach) = '|v|/c\ds'
+  if (ideltarho.ne.0) label(ideltarho) = '\gd \gr'
   
   if (ipmag.ne.0) label(ipmag) = 'B\u2\d/2'
   if (itotpr.ne.0) label(itotpr) = 'P_gas + P_mag'
