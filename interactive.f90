@@ -32,19 +32,19 @@ contains
 !
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, &
   zcoords,hi,icolourpart,xmin,xmax,ymin,ymax,zpos,dz,rendermin,rendermax, &
-  anglex,angley,anglez,ndim,iadvance,isave)
+  anglex,angley,anglez,ndim,itrackpart,iadvance,isave)
   implicit none
   integer, intent(in) :: npart,irender,ndim,iplotz
-  integer, intent(inout) :: iplotx,iploty
+  integer, intent(inout) :: iplotx,iploty,itrackpart
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
   real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
   real, intent(inout) :: xmin,xmax,ymin,ymax,zpos,dz,rendermin,rendermax
   real, intent(inout) :: anglex,angley,anglez
-  logical, intent(out) :: isave
+  logical, intent(out) :: isave  
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,nc,ierr,ixsec
-  integer :: nmarked,ncircpart
+  integer :: nmarked,ncircpart,itrackparttemp
   integer, dimension(npart) :: icircpart
   real :: xpt,ypt,xpt2,ypt2,charheight
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
@@ -72,6 +72,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
   ypt2 = 0.
   nc = 0
   ncircpart = 0
+  itrackparttemp = itrackpart
   iexit = .false.
   isave = .false.
   rotation = .false.
@@ -129,6 +130,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         endif
         call pgsfs(2)
         call pgcirc(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
+     case('t')
+     !--track closest particle (must save to activate)
+        if (iplotx.le.ndim .and. iploty.le.ndim) then
+           itrackparttemp = iclosest
+           print*,' limits set to track particle ',itrackparttemp
+           print*,' save settings to activate '
+        endif
      case('g')   ! draw a line between two points
         xline(2) = xpt
         yline(2) = ypt
@@ -183,50 +191,60 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         else
            print*,'  or press 1-9 to mark selected particles with colour 1-9'
         endif
-        print*,' zoom in by 10%       : +'
-        print*,' zoom out by 10(20)%      : - (_)'
-        print*,' (a)djust/reset plot limits to fit '
+        print*,' +   : zoom in by 10%'
+        print*,' -(_): zoom out by 10(20)%'
+        print*,' a   : (a)djust/reset plot limits to fit '
         if (irender.ne.0) then
            print*,'  (applies to colour bar if mouse is over colour bar)'
         endif
-        print*,'  o) l(o)g / unlog axis (with cursor over axis to change)'  
+        print*,' l: (l)og / unlog axis (with cursor over the axis to change)'  
         if (irender.ne.0) then
            print*,'  (applies to colour bar if mouse is over colour bar)'
         endif
 
-        print*,' (r)eplot current plot        : r'
-        print*,' label closest (p)article     : p'
-        print*,' plot a line and find its g)radient : g'
-        print*,' G : move legend to current position'
-        print*,' T : move title to current position'
+        print*,' r: (r)eplot current plot'
+        print*,' p: label closest (p)article'
+        if (iplotx.le.ndim .and. iploty.le.ndim) then
+           print*,' t: t)rack closest particle'
+        endif
+        print*,' c: plot (c)ircle of interaction for closest particle'        
+        print*,' g: plot a line and find its g)radient'
+        print*,' G: move le(G)end to current position'
+        print*,' T: move (T)itle to current position'
         if (rotation) then
-           print*,' rotate about z axis by +(-) 15 degrees : , (.)'
-           print*,' rotate about z axis by +(-) 30 degrees : < (>)'
+           print*,' , .: rotate about z axis by +(-) 15 degrees'
+           print*,' < >: rotate about z axis by +(-) 30 degrees'
            if (ndim.ge.3) then
-              print*,' rotate about x axis by +(-) 15 degrees : [ (])'
-              print*,' rotate about x axis by +(-) 30 degrees : { (})'
-              print*,' rotate about y axis by +(-) 15 degrees : l (;)'
-              print*,' rotate about y axis by +(-) 30 degrees : L (:)'
-              print*,' x) take cross section '
+              print*,'[ ]: rotate about x axis by +/- 15 degrees '
+              print*,'{ }: rotate about x axis by +/- 30 degrees '
+              print*,'/ \: rotate about y axis by +/- 15 degrees '
+              print*,'? |: rotate about y axis by +/- 30 degrees '
+              print*,' x: take cross section '
               if (iplotz.gt.0) then
-                 print*,' u) move cross section position up (towards observer)'
-                 print*,' U) move cross section position up more'
-                 print*,' d) move cross section position down (away from observer)'
-                 print*,' D) move cross section position down more'
+                 print*,' u: move cross section position up (towards observer)'
+                 print*,' U: move cross section position up more'
+                 print*,' d: move cross section position down (away from observer)'
+                 print*,' D: move cross section position down more'
               endif
            endif
         endif
         print*,' next timestep/plot   : space, n'
         print*,' previous timestep    : right click (or X), b'
         print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then left (right) click'
-        print*,' (h)elp                       : h'
-        print*,' (s)ave current settings for all steps : s'
-        print*,' (q)uit plotting              : q, Q'             
+        print*,' h: (h)elp'
+        print*,' s: (s)ave current settings for all steps'
+        print*,' q,Q: (q)uit plotting'             
         print*,'-------------------------------------------------------'
      case('s','S')
         isave = .not.isave
-        call save_limits(iplotx,xmin,xmax)
-        call save_limits(iploty,ymin,ymax)
+        if (iplotx.le.ndim .and. iploty.le.ndim) itrackpart = itrackparttemp
+        if (itrackpart.eq.0) then
+           call save_limits(iplotx,xmin,xmax)
+           call save_limits(iploty,ymin,ymax)
+        else
+           call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
+           call save_limits_track(iploty,ymin,ymax,ycoords(itrackpart))
+        endif
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
         if (ncircpart.gt.0) call save_circles(ncircpart,icircpart)
         if (rotation) call save_rotation(ndim,anglex,angley,anglez)
@@ -388,7 +406,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      !
      !--set/unset log axes
      !
-     case('o')
+     case('l','o')
         !
         !--change colour bar, y and x itrans between log / not logged
         !
@@ -413,7 +431,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
               iexit = .true.
            endif
         endif
-
      !
      !--rotation
      !
@@ -445,28 +462,28 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
            iadvance = 0
            iexit = .true.
         endif
-     case('l')
+     case('/')
         if (rotation .and. ndim.ge.2) then
            print*,'changing y rotation angle by -15 degrees...'
            angley = angley - 15.
            iadvance = 0
            iexit = .true.
         endif
-     case('L')
+     case('?')
         if (rotation .and. ndim.ge.2) then
            print*,'changing y rotation angle by -30 degrees...'
            angley = angley - 30.
            iadvance = 0
            iexit = .true.
         endif
-     case(';')
+     case('\')
         if (rotation .and. ndim.ge.2) then
            print*,'changing y rotation angle by 15 degrees...'
            angley = angley + 15.
            iadvance = 0
            iexit = .true.
         endif
-     case(':')
+     case('|')
         if (rotation .and. ndim.ge.2) then
            print*,'changing y rotation angle by 30 degrees...'
            angley = angley + 30.
@@ -854,7 +871,35 @@ subroutine save_limits(iplot,xmin,xmax)
  
  return
 end subroutine save_limits
-
+!
+!--saves current plot limits for particle tracking
+!
+subroutine save_limits_track(iplot,xmin,xmax,xi)
+ use multiplot, only:itrans
+ use settings_data, only:ndim
+ use settings_limits, only:xminoffset_track,xmaxoffset_track
+ use transforms, only:transform_limits_inverse
+ implicit none
+ integer, intent(in) :: iplot
+ real, intent(in) :: xmin,xmax,xi
+ real :: xmintemp,xmaxtemp
+ 
+ if (iplot.gt.ndim) then
+    print*,'ERROR in save_limits_track: iplot>ndim'
+    return
+ elseif (itrans(iplot).ne.0) then
+    xmintemp = xmin
+    xmaxtemp = xmax
+    call transform_limits_inverse(xmintemp,xmaxtemp,itrans(iplot))
+    xminoffset_track(iplot) = abs(xi - xmintemp)
+    xminoffset_track(iplot) = abs(xmaxtemp - xi)
+ else
+    xminoffset_track(iplot) = abs(xi - xmin)
+    xmaxoffset_track(iplot) = abs(xmax - xi)
+ endif
+ 
+ return
+end subroutine save_limits_track
 !
 !--toggles log/unlog
 !  note this only changes a pure log transform: will not change combinations

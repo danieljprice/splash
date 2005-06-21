@@ -976,7 +976,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       hh(1:ninterp),icolourme(1:ninterp), &
                       xmin,xmax,ymin,ymax,xsecpos,dxsec,rendermin,rendermax, &
-                      angletempx,angletempy,angletempz,ndim,iadvance,isave)
+                      angletempx,angletempy,angletempz,ndim,itrackpart,iadvance,isave)
                  !--turn rotation on if necessary
                  if (abs(angletempx-anglex).gt.tol) irotate = .true.
                  if (abs(angletempy-angley).gt.tol) irotate = .true.
@@ -1085,7 +1085,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                    xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
                    hh(1:ntoti),icolourme(1:ntoti), &
                    xmin,xmax,ymin,ymax,dummy,dummy,rendermin,rendermax, &
-                   angletempx,angletempy,angletempz,ndim,iadvance,isave)
+                   angletempx,angletempy,angletempz,ndim,itrackpart,iadvance,isave)
               if (iadvance.eq.-666) return
            elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
               !
