@@ -142,9 +142,9 @@ subroutine menu
      print "(/a)",' No data: You may choose from the options below '
   endif
   
-11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a)
+11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a20)
 12 format(55('-'))
-13 format(1x,i2,')',1x,a)
+13 format(1x,i2,')',1x,a20)
 18 format(1x,i2,')',1x,a,'[ ',i2,' ]',5x,a2,') ',a)
 
 !
