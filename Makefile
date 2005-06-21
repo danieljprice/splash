@@ -30,9 +30,9 @@ FFLAGS = $(F90FLAGS)
 # (some Make versions don't know this)
 
 %.o : %.f90
-	$(F95C) $(F95FLAGS) -c $< -o $@
+	$(F90C) $(F90FLAGS) -c $< -o $@
 %.o : %.f95
-	$(F95C) $(F95FLAGS) -c $< -o $@
+	$(F90C) $(F90FLAGS) -c $< -o $@
 
 # modules must be compiled in the correct order to check interfaces
 
