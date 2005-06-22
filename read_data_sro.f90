@@ -40,9 +40,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: i,j,ifile,ierr
   integer :: nprint,nptmass,npart_max,nstep_max
   integer :: n1,n2
-  logical :: iexist,magfield,minidump
+  logical :: iexist,magfield,minidump,doubleprec
   character(LEN=LEN(rootname)) :: dumpfile
   real :: timei,tkin,tgrav,tterm,escap,rstar,mstar
+  real(doub_prec) :: timedb
+  real(doub_prec), dimension(:,:), allocatable :: datdb
 
   nstepsread = 0
   nstep_max = 0
@@ -98,8 +100,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !--read the number of particles in the first step,
         !  allocate memory and rewind
         !
+        doubleprec = .true.
         if (minidump) then
-           read(15,end=55,iostat=ierr) timei,nprint,nptmass
+           !--try double precision first
+           read(15,end=55,iostat=ierr) timedb,nprint,nptmass
+           !--change to single precision if stupid answers
+           if (nprint.le.0.or.nprint.gt.1e8 &
+               .or.nptmass.lt.0.or.nptmass.gt.1e6) then
+              doubleprec = .false.
+              read(15,end=55,iostat=ierr) timei,nprint,nptmass
+              print "(a)",'single precision dump'
+           else
+              print "(a)",'double precision dump'
+              timei = real(timedb)
+           endif
         else
            read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
                    nptmass,timei
@@ -130,9 +144,36 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
         if (magfield) then
            if (minidump) then
-
               dat(:,:,j) = 0.
-              read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
+
+              if (doubleprec) then
+                 allocate(datdb(maxpart,11),stat=ierr)
+                 if (ierr /= 0) then
+                    print*,"(a)",'*** error allocating memory for double conversion ***'
+                    return
+                 else
+                    datdb = 0.
+                 endif
+                 read(15,end=55,iostat=ierr) timedb,nprint,nptmass, &
+                   (datdb(i,1),i=1,nprint),(datdb(i,2),i=1,nprint),  &
+                   (datdb(i,3),i=1,nprint),(datdb(i,4),i=1,nprint),  &
+                   (datdb(i,5),i=1,nprint),(datdb(i,6),i=1, nprint), &
+                   (datdb(i,8),i=1,nprint),(datdb(i,9),i=1,nprint),  &
+                   (datdb(i,10),i=1,nprint),(datdb(i,11),i=1,nprint),&
+                   (datdb(i,7), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,1), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,2), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,3), i=nprint+1, nprint+nptmass)   
+                if (ierr /= 0) then
+                   print "(a)",'|*** ERROR READING (DOUBLE PRECISION) TIMESTEP ***'
+                   if (allocated(datdb)) deallocate(datdb)
+                   return
+                else
+                   dat(:,1:11,j) = real(datdb(:,1:11))
+                endif
+                            
+              else
+                 read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
                    (dat(i,1,j),i=1,nprint),(dat(i,2,j),i=1,nprint),  &
                    (dat(i,3,j),i=1,nprint),(dat(i,4,j),i=1,nprint),  &
                    (dat(i,5,j),i=1,nprint),(dat(i,6,j),i=1, nprint), &
@@ -142,7 +183,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    (dat(i,1,j), i=nprint+1, nprint+nptmass), &
                    (dat(i,2,j), i=nprint+1, nprint+nptmass), &
                    (dat(i,3,j), i=nprint+1, nprint+nptmass)
-              
+              endif
               dat(1:nprint,7,j) = 1.4/real(nprint)
               print "(a,1pe10.4)", &
                    'WARNING: hardwiring particle masses on minidump to ', &
