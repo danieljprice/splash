@@ -43,7 +43,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   logical :: iexist,magfield,minidump,doubleprec
   character(LEN=LEN(rootname)) :: dumpfile
   real :: timei,tkin,tgrav,tterm,escap,rstar,mstar
-  real(doub_prec) :: timedb
+  real(doub_prec) :: timedb,tkindb,tgravdb,ttermdb
+  real(doub_prec) :: escapdb,rstardb,mstardb
   real(doub_prec), dimension(:,:), allocatable :: datdb
 
   nstepsread = 0
@@ -105,7 +106,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            !--try double precision first
            read(15,end=55,iostat=ierr) timedb,nprint,nptmass
            !--change to single precision if stupid answers
-           if (nprint.le.0.or.nprint.gt.1e8 &
+           if (nprint.le.0.or.nprint.gt.1e10 &
                .or.nptmass.lt.0.or.nptmass.gt.1e6) then
               doubleprec = .false.
               read(15,end=55,iostat=ierr) timei,nprint,nptmass
@@ -115,8 +116,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
               timei = real(timedb)
            endif
         else
-           read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
+           !--try double precision first
+           read(15,end=55,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
+                   nptmass,timedb
+           !--change to single precision if stupid answers
+           if (n1.lt.0.or.n1.gt.1e10.or.n2.lt.0.or.n2.gt.1e10 &
+              .or.nptmass.lt.0.or.nptmass.gt.1.e6) then
+              doubleprec = .false.
+              read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
                    nptmass,timei
+              print "(a)",'single precision dump'
+           else
+              print "(a)",'double precision dump'
+              timei = real(timedb)           
+           endif
         endif
         print*,'first time = ',timei,nprint,nptmass
  
@@ -170,6 +183,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    return
                 else
                    dat(:,1:11,j) = real(datdb(:,1:11))
+                   time(j) = real(timedb)
                 endif
                             
               else
@@ -194,7 +208,49 @@ subroutine read_data(rootname,indexstart,nstepsread)
            !
            !--read full dump
            !              
-              read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
+              if (doubleprec) then
+                 allocate(datdb(maxpart,24),stat=ierr)
+                 if (ierr /= 0) then
+                    print*,"(a)",'*** error allocating memory for double conversion ***'
+                    return
+                 else
+                    datdb = 0.
+                 endif
+                 read(15,end=55,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
+                   nptmass,timedb,(datdb(i,7),i=1,nprint), &
+                   escapdb,tkindb,tgravdb,ttermdb, &
+                   (datdb(i,1),i=1,nprint),(datdb(i,2),i=1,nprint),  &
+                   (datdb(i,3),i=1,nprint),(datdb(i,4),i=1,nprint),  &
+                   (datdb(i,5),i=1,nprint),(datdb(i,6),i=1, nprint), &
+                   (datdb(i,8),i=1,nprint),(datdb(i,9),i=1,nprint),  &
+                   (datdb(i,10),i=1,nprint),(datdb(i,11),i=1,nprint),&
+                   (datdb(i,12),i=1,nprint),(datdb(i,13),i=1,nprint),&
+                   (datdb(i,14),i=1,nprint),(datdb(i,15),i=1,nprint),&
+                   (datdb(i,16),i=1,nprint),(datdb(i,17),i=1,nprint),&
+                   (datdb(i,18),i=1,nprint),(datdb(i,19),i=1,nprint),&
+                   (datdb(i,20),i=1,nprint),(datdb(i,21),i=1,nprint),&
+                   (datdb(i,22),i=1,nprint),(datdb(i,23),i=1,nprint),&
+                   (datdb(i,24),i=1,nprint),&
+                   (datdb(i,9), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,1), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,2), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,3), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,4), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,5), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,6), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,21), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,22), i=nprint+1, nprint+nptmass), &
+                   (datdb(i,23), i=nprint+1, nprint+nptmass) 
+                 if (ierr /= 0) then
+                    print "(a)",'|*** ERROR READING (DOUBLE PRECISION) TIMESTEP ***'
+                    if (allocated(datdb)) deallocate(datdb)
+                    return
+                 else
+                    dat(:,1:24,j) = real(datdb(:,1:24))
+                    time(j) = real(timedb)
+                 endif                
+              else
+                 read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
                    nptmass,time(j),(dat(i,7,j),i=1,nprint), &
                    escap,tkin,tgrav,tterm, &
                    (dat(i,1,j),i=1,nprint),(dat(i,2,j),i=1,nprint),  &
@@ -218,17 +274,47 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    (dat(i,6,j), i=nprint+1, nprint+nptmass), &
                    (dat(i,21,j), i=nprint+1, nprint+nptmass), &
                    (dat(i,22,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,23,j), i=nprint+1, nprint+nptmass)   
+                   (dat(i,23,j), i=nprint+1, nprint+nptmass) 
+              endif  
            endif
         else
-           read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
-             (dat(i,1,j), i=1, nprint), (dat(i,2,j), i=1,nprint), &
-             (dat(i,3,j), i=1, nprint), (dat(i,4,j), i=1,nprint), &
-             (dat(i,5,j), i=1, nprint), (dat(i,6,j), i=1, nprint), &
-             (dat(i,7,j), i=nprint+1, nprint+nptmass), &
-             (dat(i,1,j), i=nprint+1, nprint+nptmass), &
-             (dat(i,2,j), i=nprint+1, nprint+nptmass), &
-             (dat(i,3,j), i=nprint+1, nprint+nptmass)
+        !
+        !--for hydro can only do minidumps at present
+        !
+           if (doubleprec) then
+              allocate(datdb(maxpart,7),stat=ierr)
+              if (ierr /= 0) then
+                 print*,"(a)",'*** error allocating memory for double conversion ***'
+                 return
+              else
+                 datdb = 0.
+              endif
+              read(15,end=55,iostat=ierr) timedb,nprint,nptmass, &
+              (datdb(i,1), i=1, nprint), (datdb(i,2), i=1,nprint), &
+              (datdb(i,3), i=1, nprint), (datdb(i,4), i=1,nprint), &
+              (datdb(i,5), i=1, nprint), (datdb(i,6), i=1, nprint), &
+              (datdb(i,7), i=nprint+1, nprint+nptmass), &
+              (datdb(i,1), i=nprint+1, nprint+nptmass), &
+              (datdb(i,2), i=nprint+1, nprint+nptmass), &
+              (datdb(i,3), i=nprint+1, nprint+nptmass)
+              if (ierr /= 0) then
+                 print "(a)",'|*** ERROR READING (DOUBLE PRECISION) TIMESTEP ***'
+                 if (allocated(datdb)) deallocate(datdb)
+                 return
+              else
+                 dat(:,1:7,j) = real(datdb(:,1:7))
+                 time(j) = real(timedb)
+              endif
+           else
+              read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
+              (dat(i,1,j), i=1, nprint), (dat(i,2,j), i=1,nprint), &
+              (dat(i,3,j), i=1, nprint), (dat(i,4,j), i=1,nprint), &
+              (dat(i,5,j), i=1, nprint), (dat(i,6,j), i=1, nprint), &
+              (dat(i,7,j), i=nprint+1, nprint+nptmass), &
+              (dat(i,1,j), i=nprint+1, nprint+nptmass), &
+              (dat(i,2,j), i=nprint+1, nprint+nptmass), &
+              (dat(i,3,j), i=nprint+1, nprint+nptmass)
+           endif
 
            dat(1:nprint,7,j) = 1.4/real(nprint)
            print "(a,1pe10.4)", &
@@ -236,6 +322,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                 1.4/real(nprint)
         endif
              
+        if (allocated(datdb)) deallocate(datdb)
              
         if (ierr /= 0) then
            print "(a)",'|*** ERROR READING TIMESTEP ***'
