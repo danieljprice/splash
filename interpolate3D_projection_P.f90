@@ -137,34 +137,34 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
   call cpu_time(t_start)
 
 !$OMP PARALLEL default(none)
-!$OMP& shared(hh,x,pmass,dat,rho,datsmooth,npart)
-!$OMP& shared(xmin,xmax,ymin,ymax)
-!$OMP& shared(npixx,npixy,pixwidth)
-!$OMP& shared(coltable,maxcoltable)
-!$OMP& private(hi,hi1,h2,radkern,const,term)
-!$OMP& private(ipixmin,ipixmax,jpixmin,jpixmax)
-!$OMP& private(dx,dy,rab,qq,index,index1,dxx,wab,dwdx)
-!$OMP& private(i,ipix,jpix)
-!$OMP DO SCHEDULE (runtime)    
+!$OMP& SHARED(hh,x,pmass,dat,rho,datsmooth,npart)
+!$OMP& SHARED(xmin,xmax,ymin,ymax)
+!$OMP& SHARED(npixx,npixy,pixwidth)
+!$OMP& SHARED(coltable,maxcoltable)
+!$OMP& PRIVATE(hi,hi1,h2,radkern,const,term)
+!$OMP& PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax)
+!$OMP& PRIVATE(dx,dy,rab,qq,index,index1,dxx,wab,dwdx)
+!$OMP& PRIVATE(i,ipix,jpix)
+!$OMP DO SCHEDULE (runtime)
   over_particles: do i=1,npart
      !
      !--report on progress
      !
-     if (iprintprogress) then
-        iprogress = 100*i/npart
-        if (iprogress.ge.iprintnext) then
-           write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
-           iprintnext = iprintnext + iprintinterval
-        endif
-     endif
+!     if (iprintprogress) then
+!        iprogress = 100*i/npart
+!        if (iprogress.ge.iprintnext) then
+!           write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
+!           iprintnext = iprintnext + iprintinterval
+!        endif
+!     endif
      !
      !--set kernel related quantities
      !
      hi = hh(i)
-     if (hi.le.0.) then
-        print*,'interpolate3D_proj: error: h <= 0 ',i,hi
-        return
-     endif
+!     if (hi.le.0.) then
+!        print*,'interpolate3D_proj: error: h <= 0 ',i,hi
+!        return
+!     endif
      hi1 = 1./hi
      radkern = 2.*hi  !radius of the smoothing kernel
      !         const = 10./(7.*pi*h2)  ! normalisation constant
