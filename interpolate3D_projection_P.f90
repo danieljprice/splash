@@ -28,7 +28,7 @@ subroutine setup_integratedkernel
  real :: r, dist, step, ypos, v, v2, val
  real :: coldens, v2m
 
- print "(a)",'setting up integrated kernel table...'
+ print "(a)",' setting up integrated kernel table...'
 
  do i=1,maxcoltable
     r=(i-1)/500.
@@ -103,7 +103,7 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
   real, intent(out), dimension(npixx,npixy) :: datsmooth
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  integer :: index, index1
+  integer :: index, index1,imaxcoltable
   integer :: iprintinterval, iprintnext, iprogress, itmin
   real :: hi,hi1,radkern,qq,wab,rab,const
   real :: term,rho1i,dx,dy,xpix,ypix
@@ -136,15 +136,15 @@ subroutine interpolate3D_projection(x,y,pmass,rho,hh,dat,npart, &
 !
   call cpu_time(t_start)
 
-!$OMP PARALLEL default(none)
-!$OMP& SHARED(hh,x,pmass,dat,rho,datsmooth,npart)
-!$OMP& SHARED(xmin,xmax,ymin,ymax)
-!$OMP& SHARED(npixx,npixy,pixwidth)
-!$OMP& SHARED(coltable,maxcoltable)
-!$OMP& PRIVATE(hi,hi1,h2,radkern,const,term)
-!$OMP& PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax)
-!$OMP& PRIVATE(dx,dy,rab,qq,index,index1,dxx,wab,dwdx)
-!$OMP& PRIVATE(i,ipix,jpix)
+!$OMP PARALLEL default(none) &
+!$OMP SHARED(hh,x,y,pmass,dat,rho,datsmooth,npart) &
+!$OMP SHARED(xmin,ymin) &
+!$OMP SHARED(npixx,npixy,pixwidth) &
+!$OMP SHARED(coltable,dmaxcoltable) &
+!$OMP PRIVATE(hi,hi1,rho1i,radkern,const,term) &
+!$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
+!$OMP PRIVATE(dx,dy,rab,qq,index,index1,dxx,wab,dwdx) &
+!$OMP PRIVATE(i,ipix,jpix,xpix,ypix)
 !$OMP DO SCHEDULE (runtime)
   over_particles: do i=1,npart
      !
