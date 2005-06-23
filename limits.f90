@@ -20,7 +20,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   integer :: i,j,k,ntoti
 
   print 100,ifromstep,itostep,ifromcol,itocol
-100 format(' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
+100 format(/' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
   if (ifromcol.gt.maxcol .or. itocol.gt.maxcol) then
      print "(a)",' *** internal error: set_limits: column > array size ***'
      return
@@ -46,7 +46,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
         print "(a,a20,a,1pe9.2)",'  warning: ',label(j),' min = max = ',lim(j,1)
      endif  
   enddo
-  print "(a)",' plot limits set'
+  print "(a/)",' plot limits set'
 
 end subroutine set_limits
 !

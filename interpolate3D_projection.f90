@@ -28,7 +28,7 @@ subroutine setup_integratedkernel
  real :: r, dist, step, ypos, v, v2, val
  real :: coldens, v2m
 
- print "(a)",'setting up integrated kernel table...'
+ print "(a)",' setting up integrated kernel table...'
 
  do i=1,maxcoltable
     r=(i-1)/500.
