@@ -33,15 +33,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use settings_data, only:ndim,ndimV,ncolumns,ncalc
   use mem_allocation
   implicit none
-  integer, intent(IN) :: indexstart
-  integer, intent(OUT) :: nstepsread
-  character(LEN=*), intent(IN) :: rootname
+  integer, intent(in) :: indexstart
+  integer, intent(out) :: nstepsread
+  character(len=*), intent(in) :: rootname
   integer, parameter :: maxptmass = 10
   integer :: i,j,ifile,ierr
   integer :: nprint,nptmass,npart_max,nstep_max
   integer :: n1,n2
   logical :: iexist,magfield,minidump,doubleprec
-  character(LEN=LEN(rootname)) :: dumpfile
+  character(len=len(rootname)) :: dumpfile
   real :: timei,tkin,tgrav,tterm,escap,rstar,mstar
   real(doub_prec) :: timedb,tkindb,tgravdb,ttermdb
   real(doub_prec) :: escapdb,rstardb,mstardb
@@ -109,10 +109,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
            if (nprint.le.0.or.nprint.gt.1e10 &
                .or.nptmass.lt.0.or.nptmass.gt.1e6) then
               doubleprec = .false.
+              rewind(15)
               read(15,end=55,iostat=ierr) timei,nprint,nptmass
-              print "(a)",'single precision dump'
+              print "(a)",' single precision dump'
            else
-              print "(a)",'double precision dump'
+              print "(a)",' double precision dump'
               timei = real(timedb)
            endif
         else
@@ -123,15 +124,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
            if (n1.lt.0.or.n1.gt.1e10.or.n2.lt.0.or.n2.gt.1e10 &
               .or.nptmass.lt.0.or.nptmass.gt.1.e6) then
               doubleprec = .false.
+              rewind(15)
               read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
                    nptmass,timei
-              print "(a)",'single precision dump'
+              print "(a)",' single precision dump'
            else
-              print "(a)",'double precision dump'
+              print "(a)",' double precision dump'
               timei = real(timedb)           
            endif
         endif
-        print*,'first time = ',timei,nprint,nptmass
+        print "(a,f10.2,a,i9,a,i6)",' time: ',timei,' npart: ',nprint,' nptmass: ',nptmass
  
        if (.not.allocated(dat) .or. (nprint+nptmass).gt.npart_max) then
            npart_max = max(npart_max,INT(1.1*(nprint+nptmass)))
@@ -200,7 +202,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
               endif
               dat(1:nprint,7,j) = 1.4/real(nprint)
               print "(a,1pe10.4)", &
-                   'WARNING: hardwiring particle masses on minidump to ', &
+                   ' WARNING: hardwiring particle masses on minidump to ', &
                    1.4/real(nprint)
            else
 
@@ -318,7 +320,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
            dat(1:nprint,7,j) = 1.4/real(nprint)
            print "(a,1pe10.4)", &
-                'WARNING: hardwiring particle masses on minidump to ', &
+                ' WARNING: hardwiring particle masses on minidump to ', &
                 1.4/real(nprint)
         endif
              
@@ -334,7 +336,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         npartoftype(1,j) = nprint
         npartoftype(2,j) = nptmass
 
-        print*,j,' time = ',time(j)
+!!        print*,j,' time = ',time(j)
         gamma(j) = 1.666666666667
         j = j + 1
      
