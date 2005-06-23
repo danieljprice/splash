@@ -194,6 +194,28 @@ Failing that, ask your system administrator(!) or simply download your own copy 
 the PGPLOT libraries and make sure it is compiled with the same compiler as you
 are using to compile the SUPERSPHPLOT source code.
 
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|l|p{0.3\textwidth}|}
+\hline
+compiler & flags & notes \\
+\hline
+g95 & F90C = g95 & \\
+    & F90FLAGS = -O3 & \\ 
+    & SYSTEMFILE = system\_f2003.f90 & g95 accepts Fortran 2003 system commands\\
+\hline
+ifc & F90C = ifc & \\
+    & F90FLAGS = -03 -Vaxlib -nbs & -nbs treats backslashes as normal characters\\
+    & SYSTEMFILE = system\_unix.f90 & \\
+\hline
+NAG f95 & F90C = f95 & \\
+        & F90FLAGS = -0  & \\
+        & SYSTEMFILE = system\_unix\_NAG.f90 & \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Makefile flags to use for specific compilers}
+\end{table}
 \subsection{Environment variables}
  Several useful environment variables can be set for PGPLOT and several of them
 are very useful for SUPERSPHPLOT. In a tcsh shell type:
