@@ -13,6 +13,7 @@ module exact
   !--options used to plot the exact solution line
   !
   integer :: maxexactpts, iExactLineColour, iExactLineStyle
+  logical :: iApplyTransExactFile
   !
   !--declare all of the parameters required for the various exact solutions
   !
@@ -41,7 +42,7 @@ module exact
   !--sort these into a namelist for input/output
   !
   namelist /exactopts/ iexactplotx,iexactploty,filename_exact,maxexactpts, &
-       iExactLineColour,iExactLineStyle
+       iExactLineColour,iExactLineStyle,iApplyTransExactFile
 
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,polyk,sigma0,norder,morder,rhosedov,esedov, &
@@ -84,6 +85,7 @@ contains
     maxexactpts = 1001      ! points in exact solution plot
     iExactLineColour = 1    ! foreground
     iExactLineStyle = 1     ! solid
+    iApplyTransExactFile = .true. ! false if exact from file is already logged
     
     return
   end subroutine defaults_set_exact
@@ -168,7 +170,9 @@ contains
     case(8)
        call prompt('enter filename ',filename_exact)
        call prompt('enter x axis of exact solution ',iexactplotx,1)
-       call prompt('enter x axis of exact solution ',iexactploty,1)
+       call prompt('enter y axis of exact solution ',iexactploty,1)
+       print "(a)",'apply column transformations to exact solution?'
+       call prompt(' (no if file contains e.g. log y vs log x)',iApplyTransExactFile)
     end select
 
     return
@@ -551,10 +555,10 @@ contains
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
           call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
-          if (ierr.le.0) then
+          if (ierr.le.0 .and. .not.iApplyTransExactFile) then
              call pgline(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
+             ierr = 1
           endif
-          ierr = 1
        endif
     end select
     

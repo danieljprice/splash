@@ -25,17 +25,22 @@ subroutine exact_fromfile(filename,xexact,yexact,iexactpts,ierr)
      print*,'error opening ',filename
      return
   endif
-  read(33,*,end=10,err=20) (xexact(i), yexact(i), i=1,size(xexact))
+  do i=1,size(xexact)
+     read(33,*,end=10,err=20) xexact(i),yexact(i)
+  enddo
   print*,'WARNING: reached array limits in ',trim(filename),': partial solution read'
   ierr = -1
+  close(33)
   return
 10 continue
   iexactpts = i-1
   print*,'finished reading ',trim(filename),' : ',iexactpts,' read'
+  close(33)
   return
 20 print*,'error reading ',trim(filename),': partial solution read'
   iexactpts = i - 1
   ierr = -2
+  close(33)
   return
 
 end subroutine exact_fromfile
