@@ -1,9 +1,14 @@
-\documentclass[a4paper,12pt]{article}
+\documentclass[a4paper,11pt]{article}
 \usepackage{natbib,epsfig,rotating,longtable,url,amsmath}
 \usepackage{varioref}
 %% font
-%%\usepackage{mathptmx}
+\usepackage{mathptmx}
 \graphicspath{{figs/}}
+\setlength{\topmargin}{-1.5cm}
+\setlength{\textheight}{22.5cm}
+\setlength{\oddsidemargin}{0.3cm}
+\setlength{\evensidemargin}{0.3cm}
+\setlength{\textwidth}{16cm}
 
 \begin{titlepage}
 \title{Visualisation of SPH data using SUPERSPHPLOT - v\input{version}}
@@ -11,6 +16,11 @@
 \end{titlepage}
 
 \begin{document}
+\begin{figure}
+\begin{center}
+\begin{turn}{270}\epsfig{file=hyperbolic.ps,height=\textwidth}\end{turn}
+\end{center}
+\end{figure}
 \maketitle
 \tableofcontents
 \newpage
@@ -95,14 +105,6 @@ with faces showing cross sections and the like (although I regularly think about
 \subsection{Licence}
 SUPERSPHPLOT - a visualisation tool for SPH data \copyright 2005 Daniel Price.
  This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-
-\begin{figure}
-\begin{center}
-\begin{turn}{270}\epsfig{file=hyperbolic.ps,height=\textwidth}\end{turn}
-\caption{A wave equation solved on SPH particles. This simulation actually resulted from some experiments for cleaning the divergence of the magnetic field in my MHD simulations. The figures show the divergence of the magnetic field in a periodic, two dimensional SPMHD simulation using a hyperbolic divergence cleaning.}
-\label{fig:hyperbolic}
-\end{center}
-\end{figure}
 
 \section{Getting started}
 \subsection{Compiling the code}
@@ -214,7 +216,6 @@ NAG f95 & F90C = f95 & \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Makefile flags to use for specific compilers}
 \end{table}
 \subsection{Environment variables}
  Several useful environment variables can be set for PGPLOT and several of them
@@ -339,6 +340,12 @@ data sets). Buffering off means that only one data file at a time is read into
 memory. Default is off.
 \item \textbf{turn calculate extra quantities on/off}. Turns on/off the calculation
 of additional data columns (e.g. pressure, entropy, radius) from the main data.
+\item \textbf{rescale data (change units)}. Enables rescaling of columns. This
+is useful for changing units but also for changing the axis labels. For
+example, where the $y-$axis looks crowded because the numeric axis labels read something
+like $1\times 10^{-4}$, the rescaling option can be used to rescale the data so
+that the numeric label reads $1$ whilst the label string is amended to read $y
+[\times 10^{-4}]$.
 \end{enumerate}
 
 \subsection{(i)nteractive mode}
@@ -348,18 +355,18 @@ each plot the program waits for specific commands from the user. With the cursor
 positioned anywhere in the plot window (but not outside it!), many different
 commands can be invoked. Some functions you may find useful are: Move through timesteps by pressing the space bar (press
  `b' to go back); zoom in by selecting an area with the mouse; rotate the
-particles by using the $<$, $>$,[, ] and l, ; keys; log the axes by holding the cursor
-over the appropriate axis and pressing the `o' key. Press `q' in the plot window
+particles by using the $<$, $>$,[, ] and $\backslash$, / keys; log the axes by holding the cursor
+over the appropriate axis and pressing the `l' key. Press `q' in the plot window
 to quit interactive mode.
 
  A full list of these commands is obtained by holding
 the cursor in the plot window and pressing the `h' key (h for help). Note that changes made in interactive mode will only be saved by pressing the
 `s' (for save) key. Otherwise pressing the space bar (to advance to the next
 timestep) erases the changes made whilst in interactive mode. A somewhat limited
-interactive mode applies when there is more than one plot per page. 
+interactive mode applies when there is more than one plot per page. If the multiplot option has been used, the timestep changing commands only
+take effect on the last plot per timestep.
 
- NB: If the multiplot option has been used, the timestep changing commands only
-take effect on the last plot per timestep. Many more commands could be added to
+ Many more commands could be added to
 the interactive mode, limited only by your imagination. Please send me your suggestions!
 
 \subsection{(p)age options}
@@ -813,7 +820,8 @@ superscript). All of the escape sequences for special characters are listed in
 the appendix to the PGPLOT user guide.
 \begin{quote}
  WARNING: Note that the use of escape characters can be compiler dependent and
- may not therefore work on all compilers.
+ may not therefore work on all compilers (for example the intel compiler needs
+ the -nbs flag).
 \end{quote}
 
 \subsection{Make movies?}
@@ -931,7 +939,6 @@ Filename & Description \\
      options\_vector.f90	 & sets options for vector plots\\
      options\_xsecrotate.f90 & sets options for cross sections and rotation\\
      particleplot.f90       & subroutines for particle plotting\\
-     plot\_powerspectrum.f90 & calls powerspectrum and plots it\\
      plotstep.f90           & main subroutines which drive plotting of a single timestep\\
      powerspectrums.f90     & calculates power spectrum of 1D data (2 methods)\\
      read\_data\_dansph.f90   & reads data from my format of data files\\
