@@ -23,6 +23,9 @@ program supersphplot
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.0.3 (5/7/05)
+!           : rescale data option; better page setup; improved zooming;
+!             interactive particle tracking + various minor changes and bug fixes
 !     1.0.2 : much improved ascii data read; better line plotting; zoom on
 !             powerspectrum plots + various bug fixes
 !     1.0.1 : bug fixes relating to colour bars on multiplots
