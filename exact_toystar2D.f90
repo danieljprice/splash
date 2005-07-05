@@ -24,23 +24,27 @@ contains
 !------------------------------------------------------------
 
 subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
-                           ampl,denscentre,C0,Brhofac,jorder,morder, &
-                           xplot,yplot,ierr)
+                           ampl,denscentre,C0,jorder,morder, &
+                           V11,V22,V12,V21,xplot,yplot,ierr)
   implicit none
   integer, intent(in) :: iplot,jorder,morder
   integer, intent(out) :: ierr
-  real, intent(in) :: time,gamma,polyk,totmass,Brhofac
+  real, intent(in) :: time,gamma,polyk,totmass
   real, intent(in) :: C0, ampl, denscentre     ! parameters for toy star
+  real, intent(in) :: V11,V22,V12,V21
   real, dimension(:), intent(inout) :: xplot
   real, dimension(:), intent(out) :: yplot  
   
   real, parameter :: pi = 3.141592653589
-  integer :: i,npts
+  integer :: i,npts,nsteps
   integer :: jmode,smode
-  real :: A,H,C,B0, term,const,omega,omegasq
+  real :: H,C,D,B,omega,omegasq
   real :: radstar,dx,nu2 !!,scalefac
   real :: rhoplot,deltarho,vplot,deltav
-  real :: gamm1,gam1,constK,sigma
+  real :: gamm1,gam1,constK,sigma,period
+  real, dimension(8) :: params, paramsp,dparams
+  real :: fac,dt,t,phi,dphi,cosphi,sinphi,denom
+  real :: massbefore,massafter
   logical linear
 
   ierr = 1
@@ -63,7 +67,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
 
   omega = 1.0  ! this is omega from the main code (ie. from potential)
   omegasq = omega**2
-  
+
   if (linear) then
 !---------------------------------------------------------------------------
 !  linear solution
@@ -111,8 +115,8 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
            yplot(i) = constK*(rhoplot**gamm1)/gamm1
         case(4)                 ! plot solution for v_r
            yplot(i) = vplot
-        case(5)                 ! plot solution for By
-           yplot(i) = Brhofac*rhoplot
+        case(5)
+           yplot(i) = vplot**2
         end select
 
      enddo
@@ -122,50 +126,79 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
 !
   else
 
+     if (jorder.lt.0 .and. smode.lt.0) then
+        smode = 2
+        jmode = 0
+     else
+        smode = 0
+        jmode = 2
+     endif
      print*,'Plotting 2D toy star: non-linear'
      !  solve for H, C and A given initial conditions on v, rho and the time.
      !
      H = denscentre
-     C = C0
-     !!Aprev = ampl
-     B0 = 0.
 !
 !--this is the static solution, determined from the total mass, polyk, gamma and omega
-!
-     
+!     
      radstar = sqrt(gamma*totmass/(pi*gamm1))
      H = omegasq*gamm1*radstar**2/(2.*polyk*gamma)
      C = 0.5*gamm1*omegasq/(gamma*polyk)
-     print*,'r_star = ',radstar,' rho = (',H,'-',C,'^2)**',gamm1
+     print*,' r_star = ',radstar,' rho = (',H,'-',C,'^2)**',gamm1
+     D = C
+     B = 0.
 !
-!--work out period of oscillation
+!--now solve the ODEs for V11,V22,V12,V21,H,C,D & B
+!  (we use a simple modified euler method)
 !
-     sigma = 4.*(B0**2 + C*polyk*gamma**2/gamm1)
-     if (sigma.le.1.e-5) then
-        print*,'ERROR: sqrt < 0 in sigma'
-        ierr = 1
+     params(1)= V11
+     params(2)= V22
+     params(3)= V12
+     params(4)= V21
+     params(5)= H
+     params(6)= C
+     params(7)= D
+     params(8)= B
+     fac= 2.*gamma*polyk*gam1
+     
+     massbefore = pi*gamm1/gamma*H**(gamma*gam1)/(sqrt(C*D - B**2))
+!
+!--get frequency to determine timestep
+!
+     nu2 = (jmode + smode)*(jmode+smode + 2./gamm1) - smode**2
+     if (nu2.le.0.) then
+        print*,'Error: nu^2 < 0 in exact toy star  ',nu2
+        print*,' radial mode = ',jmode,' theta mode = ',smode
+        ierr = 2
         return
      else
-        sigma = sqrt(sigma)
+        sigma = sqrt(0.5*omegasq*gamm1*nu2)
      endif
-     print*,'period = ',2.*pi/sigma
 !
-!--solve for alpha(t)
-!    
-     const = 4.*sigma**2 + 4.*ampl**2 
-     term = 1.-4.*sigma**2/const
-     if (term.le.0.) then
-        if (abs(ampl).gt.1.e-3) print*,'warning: const or omega wrong, sqrt < 0 : assuming static solution'
-        A = 0.
-     else
-        term = sqrt(term)
-        !
-        !--this is the solution to the 2nd order ODE for alpha
-        !
-        A = omega*COS(2.*sigma*time)*term/(1. + SIN(2.*sigma*time)*term)
-     endif
+!--solve ODE's
+!     
+     period = 2.*pi/sigma
+     dt = 0.001*period
+     nsteps = int(time/dt)
+     dt = time/real(nsteps)
+     t = 0.
+     do i=1,nsteps
+        t = t + dt
+        call param_derivs(params,dparams,fac,gamm1,omegasq)
+        paramsp(:)= params(:) + 0.5*dt*dparams(:) 
+        call param_derivs(paramsp,dparams,fac,gamm1,omegasq)
+        params(:)= params(:) + dt*dparams(:)
+     enddo
+!
+!--have now got solution at current time
+!     
+     H= params(5)
+     C= params(6)
+     D= params(7)
+     B= params(8)
 
-     print*,' Plotting toy star: time, A = ',time,A
+     print*,' solved ODEs to time = ',t,' in ',nsteps,' nsteps '
+     massafter = pi*gamm1/gamma*H**(gamma*gam1)/(sqrt(C*D - B**2))
+     print*,' conserved mass before = ',massbefore,' after =',massafter
 
      if (C.le.0.) then 
         radstar = 0.5
@@ -192,10 +225,9 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
            yplot(i) = constK*(rhoplot**gamm1)/gamm1
         case(4)                 ! plot solution for v_r
            yplot(i) = ampl*xplot(i)
-        case(5)                 ! plot solution for By
-           yplot(i) = sigma*rhoplot
+        case(5)
+           yplot(i) = (ampl*xplot(i))**2
         end select
-
      enddo
 !
 !------------------------------------------------------------------------
@@ -205,9 +237,25 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
   if (iplot.gt.0 .and. iplot.le.5) then
      ierr = 0
   elseif (iplot.eq.0) then
-     call pgsfs(2)
-     call pgcirc(0.0,0.0,radstar)
-     ierr = 3
+     print*,' plotting non-axisymmetric boundary'
+!
+!--for x-y plots we plot the rho=0 curve (ie. toy star boundary)
+!
+     dphi = 2.*pi/real(npts-1)
+     phi = 0.
+     do i=1,npts
+        phi = (i-1)*dphi
+        cosphi = cos(phi)
+        sinphi = sin(phi)
+        denom = C*cosphi**2 + 2.*B*cosphi*sinphi + D*sinphi**2
+        radstar = SQRT(H/denom)
+        xplot(i) = radstar*cosphi
+        yplot(i) = radstar*sinphi
+     enddo
+     ierr = 0
+!     call pgsfs(2)
+!     call pgcirc(0.0,0.0,radstar)
+!     ierr = 3  
   endif
 
   return
@@ -321,6 +369,27 @@ real function detadr(j,m,rad,gamma)
   
 end function detadr
 
+subroutine param_derivs(func,dfunc,fac,gamm1,omegasq)
+  implicit none
+  real, intent(in), dimension(8) :: func
+  real, intent(out), dimension(8) :: dfunc
+  real, intent(in) :: fac, gamm1,omegasq
+  real :: term, gamma
+
+  term = func(1) + func(2)
+  gamma = gamm1 + 1.
+  dfunc(1)= fac*func(6) - func(1)*func(1) - func(3)*func(4) - omegasq
+  dfunc(2)= fac*func(7) - func(2)*func(2) - func(3)*func(4) - omegasq
+  dfunc(3)= fac*func(8) - func(3)*term
+  dfunc(4)= fac*func(8) - func(4)*term
+  dfunc(5)= -gamm1*term*func(5)
+  dfunc(6)= -2.*func(6)*func(1) - gamm1*func(6)*term - 2.*func(8)*func(4)
+  dfunc(7)= -2.*func(7)*func(2) - gamm1*func(7)*term - 2.*func(8)*func(3)
+  dfunc(8)= -func(6)*func(3) - func(7)*func(4) - gamma*func(8)*term
+
+  return
+end subroutine param_derivs
+
 !----------------------------------------------------------------------
 !
 ! this subroutine plots the alpha-beta relation in the 2D Toy star solution
@@ -343,7 +412,7 @@ subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
   polyk = 0.25
   Omega2 = 1.0
   sigma = 1.0
-  print*,' alpha = ',astart,' beta = ',bstart
+  print*,' alpha = ',astart,' beta = ',bstart, 'sigma = ',sigma,sigmain
   !
   !--find integration constant from starting values of alpha and beta
   !

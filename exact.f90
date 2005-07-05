@@ -20,7 +20,7 @@ module exact
   !--toy star
   integer :: iACplane ! label position of toy star AC plane plot
   integer :: norder,morder ! for toy star
-  real :: htstar,atstar,ctstar,sigma
+  real :: htstar,atstar,ctstar,sigma,alphatstar,betatstar,ctstar1,ctstar2
   real :: sigma0
   !--sound wave
   integer :: iwaveploty,iwaveplotx ! linear wave
@@ -45,7 +45,8 @@ module exact
        iExactLineColour,iExactLineStyle,iApplyTransExactFile
 
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
-       htstar,atstar,ctstar,polyk,sigma0,norder,morder,rhosedov,esedov, &
+       htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
+       polyk,sigma0,norder,morder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact
 
 contains
@@ -64,6 +65,10 @@ contains
     htstar = 1.     ! toy star crap
     atstar = 1.
     ctstar = 1.
+    alphatstar = 0.
+    betatstar = 0.
+    ctstar1 = 0.
+    ctstar2 = 0.
     norder = -1
     morder = 0
     sigma0 = 0.
@@ -137,23 +142,38 @@ contains
     case(3)
        call prompt('enter polytropic k ',polyk) 
     case(4)
-       print*,' toy star: '
+       print "(a)",' toy star: '
        call read_exactparams(iexact,trim(rootname(1)),ierr)
        call prompt('enter polytropic k ',polyk)
-       call prompt('enter velocity amplitude a (v = a*r) ',atstar)
-       call prompt('enter central density rho_0 (rho = rho_0 - cx^2)',htstar)
-       call prompt('enter parameter c (rho = rho_0 - cx^2)',ctstar,0.0)
+       call prompt('enter central density rho_0 (rho = rho_0 - cr^2)',htstar)
+       call prompt('enter parameter c (rho = rho_0 - cr^2)',ctstar,0.0)
        sigma = 0.
        call prompt('enter parameter sigma (By = sigma*rho)',sigma0)
        sigma = sigma0
        ians = .false.
-       call prompt('do you want oscillations?',ians)
+       call prompt('linear oscillations?',ians)
        if (ians) then
           call prompt('enter order of radial mode',norder,0)
           if (ndim.ge.2) call prompt('enter order of angular mode',morder,0)
+          call prompt('enter velocity amplitude a (v = a*r) ',atstar)
        else
-          norder = -1
-          morder = 0
+          print "(a)",'using exact non-linear solution:'
+          ians = .true.
+          if (norder.lt.0 .and. morder.lt.0) ians = .false.
+          if (ndim.ge.2) call prompt('axisymmetric?',ians)
+          if (ians .or. ndim.eq.1) then
+             norder = -1
+             morder = 0
+             call prompt('enter v_r amplitude ',alphatstar)
+             if (ndim.ge.2) call prompt('enter v_phi amplitude ',betatstar)
+          else
+             norder = -1
+             morder = -1
+             call prompt('enter vxx amplitude ',alphatstar)
+             call prompt('enter vyy amplitude ',betatstar)
+             call prompt('enter vxy amplitude ',ctstar1)
+             call prompt('enter vyx amplitude ',ctstar2)
+          endif
        endif
     case(5)
        call prompt('enter y-plot to place sine wave on',iwaveploty,1)
@@ -262,12 +282,18 @@ contains
           filename = trim(rootname(1:idash-1))//'.tstar2D'
           open(unit=20,ERR=9901,FILE=filename,STATUS='old')
           read(20,*,ERR=9902) Htstar,Ctstar,Atstar
-          read(20,*,ERR=9902) sigma0
+          read(20,*,ERR=9902) alphatstar,betatstar,ctstar1,ctstar2
           read(20,*,ERR=9902) norder,morder
           close(UNIT=20)
           print*,' >> read ',filename
-          print*,' H,C,A,sigma = ',Htstar,Ctstar,Atstar,sigma0
           print*,' j,m = ',norder,morder
+          print*,' rho_0 = ',Htstar,' - ',Ctstar,' r^2' 
+          if (norder.ge.0 .and. morder.ge.0) then
+             print*,' v = ',Atstar,' r'
+          else
+             print*,' vx = ',alphatstar,'x +',ctstar1,'y'
+             print*,' vy = ',ctstar2,'x +',betatstar,'y'
+          endif
           return
 9901      continue
           print*,'no file ',filename
@@ -461,35 +487,35 @@ contains
           if (igeom.eq.1 .and.((iplotx.eq.ix(1) .and. iploty.eq.ivx) &
                .or. (iplotx.eq.ix(2) .and. iploty.eq.ivx+1))) then
              call exact_toystar2D(4,time,gamma,polyk,totmass, &
-                  atstar,htstar,ctstar,sigma,norder,morder, &
-                  xexact,yexact,ierr)
+                  atstar,htstar,ctstar,norder,morder, &
+                  alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
           endif
           if (iplotx.eq.irad .or. (igeom.eq.2 .and. iplotx.eq.ix(1))) then
              if (iploty.eq.irho) then
                 call exact_toystar2D(1,time,gamma,polyk,totmass, &
-                     atstar,htstar,ctstar,sigma,norder,morder, &
-                     xexact,yexact,ierr)
+                     atstar,htstar,ctstar,norder,morder, &
+                     alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
              elseif (iploty.eq.ipr) then
                 call exact_toystar2D(2,time,gamma,polyk,totmass, &
-                     atstar,htstar,ctstar,sigma,norder,morder, &
-                     xexact,yexact,ierr)
+                     atstar,htstar,ctstar,norder,morder, &
+                     alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
              elseif (iploty.eq.iutherm) then
                 call exact_toystar2D(3,time,gamma,polyk,totmass, &
-                     atstar,htstar,ctstar,sigma,norder,morder, &
-                     xexact,yexact,ierr)
+                     atstar,htstar,ctstar,norder,morder, &
+                     alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
              elseif (igeom.eq.2 .and. iploty.eq.ivx) then
                 call exact_toystar2D(4,time,gamma,polyk,totmass, &
-                     atstar,htstar,ctstar,sigma,norder,morder, &
-                     xexact,yexact,ierr)
+                     atstar,htstar,ctstar,norder,morder, &
+                     alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
              elseif (iploty.eq.ike) then
                 call exact_toystar2D(5,time,gamma,polyk,totmass, &
-                     atstar,htstar,ctstar,sigma,norder,morder, &
-                     xexact,yexact,ierr)
+                     atstar,htstar,ctstar,norder,morder, &
+                     alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
              endif
           elseif (iplotx.le.ndim .and. iploty.le.ndim .and. igeom.eq.1) then
              call exact_toystar2D(0,time,gamma,polyk,totmass, &
-                  atstar,htstar,ctstar,sigma,norder,morder, &
-                  xexact,yexact,ierr)
+                  atstar,htstar,ctstar,norder,morder, &
+                  alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
           endif
        endif
 
