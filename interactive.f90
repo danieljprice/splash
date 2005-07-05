@@ -2,6 +2,8 @@ module interactive_routines
  implicit none
  public :: interactive_part,interactive_step
  private :: mvlegend,mvtitle,save_limits,save_rotation
+ real, private :: xpt
+ real, private :: ypt
  
 contains
 !
@@ -46,10 +48,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
   integer :: i,iclosest,nc,ierr,ixsec
   integer :: nmarked,ncircpart,itrackparttemp
   integer, dimension(npart) :: icircpart
-  real :: xpt,ypt,xpt2,ypt2,charheight
+ !! real :: xpt,ypt
+  real :: xpt2,ypt2,charheight
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
-  real :: xlength, ylength, drender
+  real :: xlength,ylength,renderlength,renderpt,drender
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
   character(len=20) :: string
@@ -66,8 +69,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
   char = 'A'
   xline = 0.
   yline = 0.
-  xpt = 0.
-  ypt = 0.
+!  xpt = 0.
+!  ypt = 0.
   xpt2 = 0.
   ypt2 = 0.
   nc = 0
@@ -133,9 +136,15 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      case('t')
      !--track closest particle (must save to activate)
         if (iplotx.le.ndim .and. iploty.le.ndim) then
-           itrackparttemp = iclosest
-           print*,' limits set to track particle ',itrackparttemp
-           print*,' save settings to activate '
+           if (itrackpart.ne.0 .and. itrackparttemp.eq.itrackpart) then
+              itrackpart = 0
+              itrackparttemp = 0
+              print*,' particle tracking limits OFF'
+           else
+              itrackparttemp = iclosest
+              print*,' limits set to track particle ',itrackparttemp
+              print*,' save settings to activate '
+           endif
         endif
      case('g')   ! draw a line between two points
         xline(2) = xpt
@@ -194,18 +203,20 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         print*,' +   : zoom in by 10%'
         print*,' -(_): zoom out by 10(20)%'
         print*,' a   : (a)djust/reset plot limits to fit '
+        print*,'      NB for these options cursor inside the plot changes both x and y,'
+        print*,'       whereas cursor over a specific axis zooms on that axis only'
         if (irender.ne.0) then
-           print*,'  (applies to colour bar if mouse is over colour bar)'
+           print*,'     (applies to colour bar if mouse is over colour bar)'
         endif
         print*,' l: (l)og / unlog axis (with cursor over the axis to change)'  
         if (irender.ne.0) then
            print*,'  (applies to colour bar if mouse is over colour bar)'
         endif
-
+        print*,' o: re-centre plot on (o)rigin'
         print*,' r: (r)eplot current plot'
         print*,' p: label closest (p)article'
         if (iplotx.le.ndim .and. iploty.le.ndim) then
-           print*,' t: t)rack closest particle'
+           print*,' t: t)rack closest particle/turn tracking off'
         endif
         print*,' c: plot (c)ircle of interaction for closest particle'        
         print*,' g: plot a line and find its g)radient'
@@ -359,54 +370,74 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      !
      !--zooming
      !
-     case('-','_') ! zoom out by 10 or 20%
-        print*,'zooming out'
+     case('-','_','+','o') ! zoom out by 10 or 20%
         xlength = xmax - xmin
         ylength = ymax - ymin
+        renderlength = rendermax - rendermin
         select case(char)
         case('-')
            xlength = 1.1*xlength
            ylength = 1.1*ylength
+           renderlength = 1.1*renderlength
         case('_')
            xlength = 1.2*xlength
            ylength = 1.2*ylength
+           renderlength = 1.2*renderlength
+        case('+')
+           xlength = 0.9*xlength
+           ylength = 0.9*ylength
+           renderlength = 0.9*renderlength
+        case('o') !--reset cursor to origin
+           xpt = 0.
+           ypt = 0.
         end select
-        xmin = xpt - 0.5*xlength
-        xmax = xpt + 0.5*xlength
-        ymin = ypt - 0.5*ylength
-        ymax = ypt + 0.5*ylength
-        iadvance = 0
-        iexit = .true.
-     case('+') ! zoom in by 10%
-        print*,'zooming in'
-        xlength = xmax - xmin
-        ylength = ymax - ymin
-        xlength = 0.9*xlength
-        ylength = 0.9*ylength
-        xmin = xpt - 0.5*xlength
-        xmax = xpt + 0.5*xlength
-        ymin = ypt - 0.5*ylength
-        ymax = ypt + 0.5*ylength
-        iadvance = 0
-        iexit = .true.
+        if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymax) then
+           print*,'zooming on x axis'
+           xmin = xpt - 0.5*xlength
+           xmax = xpt + 0.5*xlength
+           iadvance = 0
+           iexit = .true.
+        endif
+        if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmax) then
+           print*,'zooming on y axis'
+           ymin = ypt - 0.5*ylength
+           ymax = ypt + 0.5*ylength
+           iadvance = 0
+           iexit = .true.
+        endif
+        if (xpt.gt.xmax .and. irender.gt.0) then
+           !--rendering zoom does not allow pan - renderpt is always centre of axis
+           renderpt = 0.5*(rendermin + rendermax)
+           rendermin = renderpt - 0.5*renderlength
+           rendermax = renderpt + 0.5*renderlength
+           iadvance = 0
+           iexit = .true.
+        endif
      case('a') ! reset plot limits
         if (xpt.gt.xmax .and. irender.gt.0) then
            call useadaptive
            iadvance = 0
            iexit = .true.
         else
-           print*,'resetting xy plot limits...'
-           xmin = minval(xcoords)
-           xmax = maxval(xcoords)
-           ymin = minval(ycoords)
-           ymax = maxval(ycoords)
-           iadvance = 0
-           iexit = .true.
+           if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymax) then
+              print*,'resetting x limits'
+              xmin = minval(xcoords)
+              xmax = maxval(xcoords)
+              iadvance = 0
+              iexit = .true.
+           endif
+           if (ypt.ge.xmin .and. ypt.le.xmax .and. xpt.le.xmax) then
+              print*,'resetting y limits'
+              ymin = minval(ycoords)
+              ymax = maxval(ycoords)
+              iadvance = 0
+              iexit = .true.
+           endif
         endif
      !
      !--set/unset log axes
      !
-     case('l','o')
+     case('l')
         !
         !--change colour bar, y and x itrans between log / not logged
         !
