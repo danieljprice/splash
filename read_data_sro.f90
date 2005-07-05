@@ -66,7 +66,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !--use minidump format if minidump
   !
   minidump = .false.
-  if (dumpfile(1:8).eq.'minidump') minidump = .true.
+  if (index(dumpfile,'minidump').ne.0) minidump = .true.
   !
   !--fix number of spatial dimensions
   !
@@ -84,7 +84,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--allocate memory initially
   !
-  nstep_max = max(nstep_max,indexstart,2)
+  nstep_max = max(nstep_max,indexstart,1)
 
   j = indexstart
   nstepsread = 0
@@ -111,9 +111,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
               doubleprec = .false.
               rewind(15)
               read(15,end=55,iostat=ierr) timei,nprint,nptmass
-              print "(a)",' single precision dump'
+              print "(a)",' single precision minidump'
            else
-              print "(a)",' double precision dump'
+              print "(a)",' double precision minidump'
               timei = real(timedb)
            endif
         else
@@ -127,9 +127,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
               rewind(15)
               read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
                    nptmass,timei
-              print "(a)",' single precision dump'
+              print "(a)",' single precision full dump'
            else
-              print "(a)",' double precision dump'
+              print "(a)",' double precision full dump'
               timei = real(timedb)           
            endif
         endif
@@ -162,7 +162,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
               dat(:,:,j) = 0.
 
               if (doubleprec) then
-                 allocate(datdb(maxpart,11),stat=ierr)
+                 allocate(datdb(maxpart,ncolumns),stat=ierr)
                  if (ierr /= 0) then
                     print*,"(a)",'*** error allocating memory for double conversion ***'
                     return
@@ -178,13 +178,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    (datdb(i,7), i=nprint+1, nprint+nptmass), &
                    (datdb(i,1), i=nprint+1, nprint+nptmass), &
                    (datdb(i,2), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,3), i=nprint+1, nprint+nptmass)   
+                   (datdb(i,3), i=nprint+1, nprint+nptmass)
                 if (ierr /= 0) then
                    print "(a)",'|*** ERROR READING (DOUBLE PRECISION) TIMESTEP ***'
                    if (allocated(datdb)) deallocate(datdb)
                    return
                 else
-                   dat(:,1:11,j) = real(datdb(:,1:11))
+                   dat(:,1:ncolumns,j) = real(datdb(:,1:ncolumns))
                    time(j) = real(timedb)
                 endif
                             
@@ -393,6 +393,11 @@ subroutine set_labels
         iBfirst = 8
         idivB = 11 
      endif
+     if (ncolumns.gt.11) then
+        label(12) = 'grad h'
+        label(13) = 'grad soft'
+        label(14) = 'dsoft'
+     endif
   else !--full dump
      ivx = ndim+1
      ih = 7
@@ -405,7 +410,7 @@ subroutine set_labels
      iBfirst = 13
      label(16) = 'psi'
      idivB = 17
-     label(24) = 'dgrav'
+     label(24) = 'grad h'
 
      iamvec(18:20) = 18
      labelvec(18:20) = 'J'
