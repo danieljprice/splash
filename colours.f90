@@ -11,10 +11,10 @@ module colours
       'red            ', &
       'ice blue       ', &
       'rainbow        ', &
-      'astro          ', &
+      'universe       ', &
       'shade of pale  ', &
       'red-blue-green ', &
-      'spectrum       '/)
+      'heat           '/)
 
 contains
 
@@ -94,7 +94,7 @@ subroutine colour_set(icolourscheme)
      dsat = 0.0
      dhue = 320.0/FLOAT(ncolours)
   case(5)        ! green
-!    astro
+!    universe
      rgb = .true.         
      red=0.
      green=0.
@@ -156,12 +156,12 @@ subroutine colour_set(icolourscheme)
      bluearr(1:nset) = (/0.0,0.0,0.25,0.9,0.25,0.0/)
      greenarr(1:nset) = (/0.0,0.0,0.0,0.0,0.25,1.0/)
      case(8)
-     !--spectrum
+     !--heat
      nset = 5
-     lumarr(1:nset) = (/0.0,0.25,0.5,0.75,1.0/)
-     redarr(1:nset) = (/1.0,0.0,0.0,1.0,1.0/)
-     bluearr(1:nset) = (/0.5,0.75,1.0,0.0,0.0/)
-     greenarr(1:nset) = (/0.0,0.0,0.0,1.0,0.0/)
+     lumarr(1:nset) =  (/0.,0.25,0.5,0.75,1.0/)
+     redarr(1:nset) =  (/0.0,0.0,0.0,1.0,1.0/)
+     bluearr(1:nset) = (/1.0,1.0,0.0,0.0,0.0/)
+     greenarr(1:nset)= (/0.0,1.0,1.0,1.0,0.0/)
      end select
 
      call PGCTAB(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &

@@ -34,10 +34,10 @@ contains
 !
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, &
   zcoords,hi,icolourpart,xmin,xmax,ymin,ymax,zpos,dz,rendermin,rendermax, &
-  anglex,angley,anglez,ndim,itrackpart,iadvance,isave)
+  anglex,angley,anglez,ndim,itrackpart,icolourscheme,iadvance,isave)
   implicit none
   integer, intent(in) :: npart,irender,ndim,iplotz
-  integer, intent(inout) :: iplotx,iploty,itrackpart
+  integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
   real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
@@ -222,6 +222,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         print*,' g: plot a line and find its g)radient'
         print*,' G: move le(G)end to current position'
         print*,' T: move (T)itle to current position'
+        if (irender.ge.0) then
+           print*,' m: change colour m)ap to next'
+           print*,' M: change colour M)ap to previous'
+        endif
         if (rotation) then
            print*,' , .: rotate about z axis by +(-) 15 degrees'
            print*,' < >: rotate about z axis by +(-) 30 degrees'
@@ -635,6 +639,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      case('T') ! move title here
         print*,'setting title position to current location...'
         call mvtitle(xpt,ypt,xmin,xmax,ymax)
+     case('m') ! change colour map (next scheme)
+        call change_colourmap(icolourscheme,1)
+     case('M') ! change colour map (previous scheme)
+        call change_colourmap(icolourscheme,-1)
      !
      !--timestepping
      !
@@ -1010,5 +1018,20 @@ subroutine save_circles(ncircpartset,icircpartset)
  print*,'saving ',imax,' circles of interaction'
  
 end subroutine save_circles
+!
+!--change colour map
+!
+subroutine change_colourmap(imap,istep)
+ use colours, only:colour_set,ncolourschemes
+ implicit none
+ integer, intent(inout) :: imap
+ integer, intent(in) :: istep
+ 
+ imap = imap + istep
+ if (imap.gt.ncolourschemes) imap = 1
+ if (imap.lt.1) imap = ncolourschemes
+ call colour_set(imap)
+ 
+end subroutine change_colourmap
 
 end module interactive_routines
