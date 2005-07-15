@@ -11,8 +11,8 @@ module colours
       'red            ', &
       'ice blue       ', &
       'rainbow        ', &
-      'frog monster   ', &
-      'rainbow 2      ', &
+      'astro          ', &
+      'shade of pale  ', &
       'red-blue-green ', &
       'spectrum       '/)
 
@@ -26,9 +26,9 @@ subroutine colour_set(icolourscheme)
   implicit none
   integer, intent(in) :: icolourscheme
   integer :: i,icolourmin,icolmin,icolmax,ncolmax,ncolours,nset
-  real :: hue,light,sat,brightness
+  real :: hue,light,sat,brightness,red,green,blue
   real :: dhue,dlight,dsat,dred,dgreen,dblue
-  real, dimension(6) :: lum,red,green,blue
+  real, dimension(6) :: lumarr,redarr,greenarr,bluearr
   logical :: rgb
       
   red = 0.0
@@ -94,29 +94,23 @@ subroutine colour_set(icolourscheme)
      dsat = 0.0
      dhue = 320.0/FLOAT(ncolours)
   case(5)        ! green
-!    frog monster
-     rgb = .false.         
-     hue=200
-     light=0.0
-     sat=1.0
-     dlight = 1.0/FLOAT(ncolours)
-     dsat = 0.0
-     dhue = 80.0/FLOAT(ncolours)
-  case(6)
-!    red-blue-green
-     rgb = .false.
-     hue=100
-     light=0.5
-     sat= 1.    
-     dlight = 0.  !!!1.0/FLOAT(ncolours)
-     dsat = 0.        !1.0/FLOAT(ncolours)
-     dhue = 500.0/FLOAT(ncolours)         
-  case(7)        ! rgb attempts
-!    useless
+!    astro
+     rgb = .true.         
+     red=0.
+     green=0.
+     blue=1./6.
+     dred =1.0/FLOAT(ncolours)
+     dgreen = 1.0/FLOAT(ncolours)
+     dblue = (1./6.)/FLOAT(ncolours)       
+  case(6)        ! rgb attempts
+!    shade of pale
      rgb = .true.
-     dred = 0.0        !0.333/FLOAT(ncolours)
-     dblue = 0.3333/FLOAT(ncolours)
-     dgreen = 0.0        !0.333/FLOAT(ncolours)         
+     red = 0.09
+     green = -1.
+     blue = -2.
+     dred = 1./FLOAT(ncolours)
+     dblue = 1./FLOAT(ncolours)
+     dgreen = 1./FLOAT(ncolours)         
 !  case default
 !    default is greyscale
 !!     return
@@ -125,12 +119,18 @@ subroutine colour_set(icolourscheme)
 !--set colour indexes from icolourmin-> icolourmin+ncolours
 !  increment values in steps
 !
-  if (icolourscheme .le. 5) then
+  if (icolourscheme .le. 6) then
      do i=icolourmin,icolourmin+ncolours
         if (rgb) then
            red = red + dred
            blue = blue + dblue
            green = green + dgreen
+           red = min(red,1.0)
+           blue = min(blue,1.0)
+           green = min(green,1.0)
+           red = max(red,0.)
+           blue = max(blue,0.)
+           green = max(green,0.)
            call PGSCR(i,red,green,blue)
         else   
            hue = hue + dhue
@@ -144,27 +144,27 @@ subroutine colour_set(icolourscheme)
      select case(icolourscheme)
      case(6)
      nset = 5
-     lum(1:nset) = (/0.0,0.25,0.5,0.75,1.0/)
-     red(1:nset) = (/0.0,1.0,1.0,1.0,0.0/)
-     blue(1:nset) = (/1.0,1.0,0.0,0.0,0.0/)
-     green(1:nset) = (/0.0,0.0,0.0,1.0,1.0/)
+     lumarr(1:nset) = (/0.0,0.25,0.5,0.75,1.0/)
+     redarr(1:nset) = (/0.0,1.0,1.0,1.0,0.0/)
+     bluearr(1:nset) = (/1.0,1.0,0.0,0.0,0.0/)
+     greenarr(1:nset) = (/0.0,0.0,0.0,1.0,1.0/)
      case(7)
      nset = 6
      !--red-blue-green
-     lum(1:nset) = (/0.0,0.2,0.4,0.6,0.8,1.0/)
-     red(1:nset) = (/0.0,0.9,0.5,0.0,0.25,1.0/)
-     blue(1:nset) = (/0.0,0.0,0.25,0.9,0.25,0.0/)
-     green(1:nset) = (/0.0,0.0,0.0,0.0,0.25,1.0/)
+     lumarr(1:nset) = (/0.0,0.2,0.4,0.6,0.8,1.0/)
+     redarr(1:nset) = (/0.0,0.9,0.5,0.0,0.25,1.0/)
+     bluearr(1:nset) = (/0.0,0.0,0.25,0.9,0.25,0.0/)
+     greenarr(1:nset) = (/0.0,0.0,0.0,0.0,0.25,1.0/)
      case(8)
      !--spectrum
      nset = 5
-     lum(1:nset) = (/0.0,0.25,0.5,0.75,1.0/)
-     red(1:nset) = (/1.0,0.0,0.0,1.0,1.0/)
-     blue(1:nset) = (/0.5,0.75,1.0,0.0,0.0/)
-     green(1:nset) = (/0.0,0.0,0.0,1.0,0.0/)
+     lumarr(1:nset) = (/0.0,0.25,0.5,0.75,1.0/)
+     redarr(1:nset) = (/1.0,0.0,0.0,1.0,1.0/)
+     bluearr(1:nset) = (/0.5,0.75,1.0,0.0,0.0/)
+     greenarr(1:nset) = (/0.0,0.0,0.0,1.0,0.0/)
      end select
 
-     call PGCTAB(lum(1:nset),red(1:nset),green(1:nset),blue(1:nset), &
+     call PGCTAB(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &
                  nset,1.0,brightness)
 
   endif  
