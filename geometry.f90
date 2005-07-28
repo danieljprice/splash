@@ -130,23 +130,13 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         endif
      case(3)
         !
-        ! output is spherical
+        !--output is spherical
         !
         xout(1) = SQRT(DOT_PRODUCT(xin,xin))! r  
         if (ndimout.ge.2) xout(2) = ATAN2(xin(2),xin(1)) ! phi
         if (ndimout.ge.3) then
-           !
            ! theta = ACOS(z/r)
-           !
-           xout(3) = ACOS(xin(3)/xout(1))
-           !--sort out which quadrant for theta
-           !if (xin(3).lt.0. .and. xin(1).lt.0.) then
-           !  xout(3) = xout(3) + pi
-           !lseif (xin(3).lt.0.) then
-           !!   xout(3) = pi - xout(3)
-           !elseif (xin(1).lt.0.) then
-           !   xout(3) = -xout(3)
-           !endif    
+           xout(3) = ACOS(xin(3)/xout(1))   
         endif
      case default
         !
