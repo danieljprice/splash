@@ -430,7 +430,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
               iadvance = 0
               iexit = .true.
            endif
-           if (ypt.ge.xmin .and. ypt.le.xmax .and. xpt.le.xmax) then
+           if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmax) then
               print*,'resetting y limits'
               ymin = minval(ycoords)
               ymax = maxval(ycoords)
