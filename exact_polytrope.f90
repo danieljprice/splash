@@ -29,6 +29,7 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
   real :: realden, realrad, rhocentre
 
   dr=0.005
+  print *,' gamma = ',gamma
   an = 1./(gamma-1.)
   v(1) = 0.0
   v(2) = dr*(1.0 - dr*dr/6. )
@@ -49,7 +50,7 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
   radv = r(i-1)
   print *,' rad v ',r(i-1),v(i-1)
 
-  sigma = radv/2.        ! divide by two as a kernel
+  sigma = radv
   print *,' sigma ',sigma
 
   !--------------------------------------
@@ -76,9 +77,8 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
   print *,' rhocentre totmass ',rhocentre,totmass
 
   akf = 4.*pi*rhocentre**(1.-1./an)/((an+1)*sigma**2)
-  print *,' akf ',akf
+  print *,' polytropic K required for unit radius = ',akf
 
-  print *,'   den   r'
   do j = 2,(i-1)
     if(r(j).gt.0.0)then
       realden = rhocentre*den(j)
@@ -87,13 +87,7 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
       rplot(j-1) = realrad
     endif
   enddo
-  !---------------------------------------
-  ! plot results using PGPLOT       
-  !---------------------------------------
 
-  print*,' plotting results ',j-2,rplot(j-2),denplot(j-2)
-  print*,rplot(1),denplot(1)
-  
   npts = j-2
   ierr = 0
 
