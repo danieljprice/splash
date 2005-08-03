@@ -6,7 +6,7 @@ module settings_limits
  implicit none
  integer :: itrackpart
  logical :: iadapt, iadaptcoords
- real :: scalemax,zoom
+ real :: scalemax
  real, dimension(3) :: xminoffset_track, xmaxoffset_track
  
 contains
@@ -21,7 +21,6 @@ subroutine defaults_set_limits
   iadapt = .true.      ! adaptive plot limits
   iadaptcoords = .false.
   scalemax = 1.0       ! for rescaling adaptive limits
-  zoom = 1.0           ! for rescaling fixed limits
   itrans(:) = 0        ! no transformations (log10 etc)
   itrackpart = 0       ! particle to track (none)
   xminoffset_track = 0.5 ! offset of limits from tracked particle
@@ -45,13 +44,14 @@ subroutine submenu_limits(help)
  implicit none
  logical, intent(in), optional :: help
  integer :: iaction,ipick,i,ierr,index
- real :: diff, mid
+ real :: diff, mid, zoom
  character(len=120) :: transprompt
  character(len=len(rootname)+7) :: limitsfile
  logical :: helpmode
  
  helpmode = .false.
  if (present(help)) helpmode=help
+ zoom = 1.0
  
  index = 1
  do i=1,ntrans
