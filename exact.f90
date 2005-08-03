@@ -346,7 +346,7 @@ contains
 
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             ndim,ndimV,time,xmin,xmax,ymean,gamma,pmass,npart)
-    use labels
+    use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr
     use prompting
     use exactfromfile, only:exact_fromfile
     use mhdshock, only:exact_mhdshock

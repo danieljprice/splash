@@ -15,11 +15,11 @@ contains
 !!
 subroutine defaults_set
   use exact, only:defaults_set_exact
-  use filenames
+  use filenames, only:rootname
   use labels
-  use limits
+  use limits, only:lim
   use multiplot
-  use settings_limits
+  use settings_limits, only:defaults_set_limits
   use options_data, only:defaults_set_data
   use settings_data, only:ndim
   use settings_part, only:defaults_set_part
@@ -80,6 +80,11 @@ subroutine defaults_set
   ipr = 0      ! pressure
   irad = 0     ! radius
   ipowerspec = 0 ! power spectrum
+  iBfirst = 0
+  iacplane = 0
+  ike = 0
+  idivB = 0
+  iJfirst = 0
   !
   !--filenames
   !
@@ -152,7 +157,7 @@ end subroutine defaults_write
 !-----------------------------------------------
 subroutine defaults_read
  use filenames, only:rootname,maxfile
- use multiplot
+ use multiplot, only:multi
  use settings_data, only:dataopts
  use settings_part, only:plotopts
  use settings_page, only:pageopts

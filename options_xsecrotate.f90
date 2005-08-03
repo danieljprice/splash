@@ -46,7 +46,7 @@ end subroutine defaults_set_xsecrotate
 ! sets options relating to cross sectioning / rotation
 !----------------------------------------------------------------------
 subroutine submenu_xsecrotate
- use labels
+ use labels, only:label,ix
  use limits, only:lim
  use prompting
  use settings_data, only:ndim

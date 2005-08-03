@@ -51,7 +51,7 @@ end subroutine defaults_set_part
 !----------------------------------------------------------------------
 subroutine submenu_particleplots
   use exact, only:options_exact,submenu_exact
-  use labels
+  use labels, only:labeltype
   use settings_data, only:icoords,ntypes
   use settings_page, only:nstepsperpage
   use particle_data, only:npartoftype

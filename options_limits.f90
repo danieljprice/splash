@@ -40,7 +40,7 @@ subroutine submenu_limits(help)
  use multiplot, only:itrans
  use prompting
  use limits
- use labels
+ use labels, only:label,ix
  use transforms, only:ntrans,transform_label
  implicit none
  logical, intent(in), optional :: help

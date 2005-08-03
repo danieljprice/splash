@@ -10,7 +10,6 @@ module mainmenu
 contains
 
 subroutine menu
-  use filenames
   use labels, only: label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
@@ -331,11 +330,9 @@ subroutine menu
 ! multiplot setup
 !----------------------------------------------------
   subroutine options_multiplot
-   !use multiplot
    use settings_page, only: nacross, ndown
    use settings_render, only: iplotcont_nomulti
-   use settings_xsecrot
-   !use prompting
+   use settings_xsecrot, only: xsec_nomulti, xsecpos_nomulti
    implicit none
    integer :: ifac
    logical :: iansx, iansy, ichange

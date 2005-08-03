@@ -25,7 +25,7 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data
+  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc
   use mem_allocation
@@ -191,9 +191,9 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels
+  use labels, only:label,labeltype,ix
   use params
-  use settings_data
+  use settings_data, only:ncolumns,ntypes
   use geometry, only:labelcoord
   implicit none
   integer :: i,ierr
