@@ -41,7 +41,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: i,j,ifile,ierr,iunit,int1,int2,int3,i1,iarr
   integer :: npart_max,nstep_max,ncolstep,icolumn
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
-  integer :: nskip,nprint,itype,ntypes
+  integer :: nskip,nprint,npart,itype,ntypes
   logical :: iexist, doubleprec
     
   character(len=len(rootname)+10) :: dumpfile
@@ -77,7 +77,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   j = indexstart
   nstepsread = 0
-  call alloc(max(1,maxpart),max(ncolumns,1),max(indexstart,maxstep))
+ !!! call alloc(max(1,maxpart),max(ncolumns,1),max(indexstart,maxstep))
   
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
 !
@@ -154,10 +154,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
       else
          read(iunit,end=55,iostat=ierr) dummyreal(1:nreals)
       endif
-!--extract required information
-      time(j) = dummyreal(1)
-      gamma(j) = dummyreal(3)
-      print "(a,1pe12.4,a,0pf8.4)",' time = ',time(j),' gamma = ',gamma(j)
    endif
 !--real*4, real*8
    read(iunit,end=55,iostat=ierr) nreal4s
@@ -186,7 +182,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    do iarr=1,narrsizes
       read(iunit,end=55,iostat=ierr) isize(iarr),nint(iarr),nint1(iarr),nint2(iarr), &
                  nint4(iarr),nint8(iarr),nreal(iarr),nreal4(iarr),nreal8(iarr)
-      if (iarr.eq.1) npartoftype(1,j) = isize(iarr)
+      if (iarr.eq.1) npart = isize(iarr)
       print *,'size ',iarr,' dim = ',isize(iarr),'nint=',nint(iarr),nint1(iarr), &
             nint2(iarr),nint4(iarr),nint8(iarr),'nreal =',nreal(iarr),nreal4(iarr),nreal8(iarr)
 !--we are going to read all real arrays but need to convert them all to default real
@@ -199,7 +195,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--allocate memory for all columns
 !
-   call alloc(npart_max,j,ncolstep)
+   if (npart_max.gt.maxpart .or. j.gt.maxstep .or. (ncolstep+ncalc).gt.maxcol) then
+      call alloc(npart_max,j,ncolstep+ncalc)
+   endif
+!--extract required information
+   time(j) = dummyreal(1)
+   gamma(j) = dummyreal(3)
+   npartoftype(1,j) = npart
+   print "(a,1pe12.4,a,0pf8.4)",' time = ',time(j),' gamma = ',gamma(j)
    nstepsread = nstepsread + 1
    ncolumns = ncolstep + ncalc
    icolumn = 0
