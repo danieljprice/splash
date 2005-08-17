@@ -10,11 +10,10 @@ module settings_part
  integer, dimension(:), allocatable :: icircpart
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
  logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings
- logical :: iplotline,ilabelpart,iChangeLineStyleNotColour
+ logical :: iplotline,ilabelpart
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
-   iChangeLineStyleNotColour,imarktype,iplotpartoftype, &
-   PlotOnRenderings,iexact,icoordsnew
+   imarktype,iplotpartoftype,PlotOnRenderings,iexact,icoordsnew
 
 contains
 
@@ -31,7 +30,6 @@ subroutine defaults_set_part
   linecolour = 1
   linestylethisstep = 1
   linecolourthisstep = 1
-  iChangeLineStyleNotColour = .false.
   iexact = 0              ! exact solution to plot
   ilabelpart = .false.    ! plot particle numbers
   icoordsnew = icoords
@@ -53,7 +51,6 @@ subroutine submenu_particleplots
   use exact, only:options_exact,submenu_exact
   use labels, only:labeltype
   use settings_data, only:icoords,ntypes
-  use settings_page, only:nstepsperpage
   use particle_data, only:npartoftype
   use prompting
   use geometry, only:maxcoordsys,labelcoordsys
@@ -79,15 +76,10 @@ subroutine submenu_particleplots
 !------------------------------------------------------------------------
   case(1)
      call prompt('plot line joining particles?',iplotline)
-
      if (iplotline) then     
         call prompt('Enter PGPLOT line style to use ',linestyle,0,5)
         call prompt('Enter PGPLOT colour for line ',linecolour,0,15)
-        if (nstepsperpage.gt.1) then
-           call prompt('Change line style instead of colour for multiple steps on same page?',iChangeLineStyleNotColour)
-        endif
      endif
-
      return 
 !-----------------------------------------------------------------------
   case(2)

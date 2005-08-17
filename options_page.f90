@@ -6,7 +6,7 @@ module settings_page
  use settings_limits, only:iadapt,iadaptcoords
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage
- logical :: iColourEachStep,tile,interactive
+ logical :: iColourEachStep,iChangeStyles,tile,interactive
  logical :: iPlotLegend,iPlotTitles
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
@@ -14,7 +14,7 @@ module settings_page
  character(len=20) :: colour_fore, colour_back, legendtext
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
-   nstepsperpage,iColourEachStep,tile,ipapersize,papersizex,aspectratio, &
+   nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &
    iPlotLegend,hposlegend,vposlegend,iPlotTitles,hpostitle,vpostitle,fjusttitle,legendtext, &
    colour_fore, colour_back, charheightmm
 
@@ -29,6 +29,8 @@ subroutine defaults_set_page
   interactive = .true.     ! default for interactive mode
   iaxis = 0                ! turns axes off/on
   nstepsperpage = 1
+  iColourEachStep = .true. ! change colours if nstepsperpage > 1
+  iChangeStyles = .false.  ! change marker/ line styles if nstepsperpage > 1
   tile = .false.
   nacross = 1           ! number of plots across page
   ndown = 1             ! number of plots down page
@@ -86,15 +88,15 @@ subroutine submenu_page
      print*,'Plotting up to ',nstepsperpage,' timesteps per page'
      if (nstepsperpage.gt.1) then
         if (iadapt) then
-           print*,'(note that adaptive plot limits are now off)'
+           print "(a)",'(note that adaptive plot limits are now off)'
            iadapt = .false.
         endif
-        if (nstepsperpage.le.14) then
-           call prompt('Use different colours for each step?',iColourEachStep)
-        else
-           iColourEachStep = .false.
-           print*,'(and that there are too many steps per page to change colours)'
+        if (nstepsperpage.gt.14) then
+           print "(a)",'(and that steps per page > number of colours, ie. colours will repeat)'
         endif
+        call prompt('Use different colours for each step?',iColourEachStep)
+!!        if (.not.iColourEachStep) icolourthisstep = 1
+        call prompt('Use different markers/line style for each? ',iChangeStyles)
      endif
      return          
 !------------------------------------------------------------------------

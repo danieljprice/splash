@@ -10,7 +10,7 @@ contains
 subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   use particle_data, only:npartoftype,time,gamma,dat
   use settings_data, only:nstart,n_end,nfreq,DataIsBuffered,iUsesteplist,isteplist
-  use settings_page, only:interactive,nstepsperpage,iColourEachStep
+  use settings_page, only:interactive,nstepsperpage,iColourEachStep,iChangeStyles
   use timestep_plotting, only:initialise_plotting,plotstep
   implicit none
   integer, intent(in) :: ipicky,ipickx,irender,ivecplot
@@ -69,8 +69,8 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
         ipagechange = .true.
      endif
      !--colour the timestep if appropriate
-     if (nstepsperpage.gt.1 .and. iColourEachStep) then
-        call colour_timestep(istepsonpage)
+     if (nstepsperpage.gt.1 .and. (iColourEachStep .or. iChangeStyles)) then
+        call colour_timestep(istepsonpage,iColourEachStep,iChangeStyles)
      endif
 
      call plotstep(istep,irender,ivecplot,npartoftype(:,istep), &
@@ -105,7 +105,7 @@ end subroutine timestep_loop
 ! works out whether or not we need to read another dump into memory
 !-------------------------------------------------------------------
 subroutine get_nextstep(i,ifile)
- use filenames
+ use filenames, only:nstepsinfile,nfiles,ifileopen
  use settings_page, only:interactive
  use getdata, only:get_data
  implicit none
@@ -185,26 +185,29 @@ end subroutine get_nextstep
 !-------------------------------------------------------------
 ! colours all the particles a given colour for this timestep
 !-------------------------------------------------------------
-subroutine colour_timestep(istep)
+subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
   use particle_data, only:icolourme
-  use settings_part, only:linecolourthisstep,linestylethisstep,iChangeLineStyleNotColour
+  use settings_part, only:linecolourthisstep,linestylethisstep,imarktype
   implicit none
   integer, intent(in) :: istep
+  logical, intent(in) :: iChangeColours, iChangeStyles
   integer :: icolour
   
-  if (allocated(icolourme)) then
-     icolour = istep + 1
-     if (icolour.gt.16) print*,'warning: step colour > 16: unknown colour'
-     icolourme = icolour
-     if (iChangeLineStyleNotColour) then
-        linestylethisstep = mod(istep-1,5) + 1
-     else
+  if (iChangeColours) then
+     if (allocated(icolourme)) then
+        icolour = istep + 1
+        if (icolour.gt.16) print*,'warning: step colour > 16: unknown colour'
+        icolourme = icolour
         linecolourthisstep = icolour
+     else
+        print*,'***error: array not allocated in colour_timestep***'
      endif
-  !!call legend_multiplestepsperpage(time(i),icolour)
-  else
-     print*,'***error: array not allocated in colour_timestep***'
   endif
+  if (iChangeStyles) then
+     linestylethisstep = mod(istep-1,5) + 1
+     imarktype(1) = istep + 1
+  endif
+     !!call legend_multiplestepsperpage(istep,icolour)
 
   return
 end subroutine colour_timestep
