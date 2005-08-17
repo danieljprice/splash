@@ -23,6 +23,9 @@ program supersphplot
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.0.4 (17/8/05) 
+!           : better colour schemes; interactive colour scheme changing; 
+!             various minor changes and bug fixes
 !     1.0.3 (5/7/05)
 !           : rescale data option; better page setup; improved zooming;
 !             interactive particle tracking + various minor changes and bug fixes
