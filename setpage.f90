@@ -67,8 +67,10 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
         else
            vptymin = (xlabeloffset+1.0)*ych
         endif
-        vptymax = vptymax - titleoffset*ych
      endif
+     !--also leave room for title if necessary
+     vptymax = vptymax - titleoffset*ych
+     
      !--also leave room for colour bar if necessary
      if (colourbarwidth.GT.0.) then
         vptxmax = vptxmax - (colourbarwidth + 0.25)*ych
