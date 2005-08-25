@@ -105,7 +105,6 @@ subroutine submenu_limits(help)
        print "(/a)",' Manually sets the plot limits for each column of data'
     else
        ipick = 1
-       iadapt = .false.
        do while (ipick.gt.0)
           ipick = 0
           !write(*,*)
@@ -114,8 +113,11 @@ subroutine submenu_limits(help)
              call prompt(trim(label(ipick))//' min ',lim(ipick,1))
              call prompt(trim(label(ipick))//' max ',lim(ipick,2))
              print*,'>> '//trim(label(ipick))//' limits set (min,max) = ',lim(ipick,1),lim(ipick,2)
-             !print "(a)", trim(transprompt)
-             !call prompt('Which transform? (21 for 2 then 1)',itrans(ipick),0)
+             if (ipick.le.ndim) then
+                iadaptcoords = .false.
+             elseif (ipick.le.numplot) then
+                iadapt = .false.
+             endif
           endif
        enddo
        return
