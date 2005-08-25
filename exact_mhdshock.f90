@@ -22,7 +22,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
   real, dimension(size(xpts)), intent(out) :: ypts
   
   real, dimension(16) :: rho,pr,vx,vy,vz,By,Bz
-  real :: const
+  real :: const, Bxzero
 
   print*,' Plotting exact mhd shock #',ishk,' at t = ',time
   !
@@ -38,6 +38,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      !
      vz = 0.
      Bz = 0.
+     Bxzero = 0.75
      npts = 14
      xpts(1) = xmin
      xpts(2) = -0.18
@@ -97,6 +98,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      !    
      vz = 0.
      Bz = 0.
+     Bxzero = 1.0
      npts = 12
      xpts(1) = xmin
      xpts(2) = -0.27
@@ -143,6 +145,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      !
      !--problem with 7 discontinuities from RJ95
      !    
+     Bxzero = 2.*const
      npts = 16
      xpts(1) = xmin
      xpts(2:3) = -0.19
@@ -210,6 +213,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      !
      !--isothermal MHD problem from Balsara (1998)
      !    
+     Bxzero = 2.*const
      npts = 14
      xpts(1) = xmin
      xpts(2:3) = -0.15
@@ -274,6 +278,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      vy = 0.
      vz = 0.
      Bz = 0.
+     Bxzero = 0.
      xpts(1) = xmin
      xpts(2) = -0.27
      xpts(3) = -0.12
@@ -301,6 +306,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      !
      !--mach 25 shocks from Dai and Woodward (1994)
      !
+     Bxzero = 4.*const
      npts = 6
      rho(1:2) = 1.0
      rho(3:4) = 3.982
@@ -347,6 +353,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      !
      !--Problem 1A in Ryu and Jones (1995)
      !
+     Bxzero = 5.*const
      npts = 12
      xpts(1) = xmin
      xpts(2:3) = -0.386
@@ -423,6 +430,8 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
         print*,' ***isothermal: utherm solution not valid'
         ypts(1:npts) = 0.  
      endif
+  case(9)
+     ypts(1:npts) = Bxzero
   end select
   
   return

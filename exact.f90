@@ -546,14 +546,17 @@ contains
           elseif (iploty.eq.ivx+ndimV-1 .and. ndimV.gt.2) then
              call exact_mhdshock(5,ishk,time,gamma,xmin,xmax, &
                                  xexact,yexact,iexactpts,ierr)
-          elseif (iploty.eq.ibfirst+1 .and. ndimV.gt.1) then
+          elseif (iploty.eq.iBfirst+1 .and. ndimV.gt.1) then
              call exact_mhdshock(6,ishk,time,gamma,xmin,xmax, &
                                  xexact,yexact,iexactpts,ierr)
-          elseif (iploty.eq.ibfirst+ndimV-1 .and. ndimV.gt.2) then
+          elseif (iploty.eq.iBfirst+ndimV-1 .and. ndimV.gt.2) then
              call exact_mhdshock(7,ishk,time,gamma,xmin,xmax, &
                                  xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.iutherm) then
              call exact_mhdshock(8,ishk,time,gamma,xmin,xmax, &
+                                 xexact,yexact,iexactpts,ierr)
+          elseif (iploty.eq.iBfirst) then
+             call exact_mhdshock(9,ishk,time,gamma,xmin,xmax, &
                                  xexact,yexact,iexactpts,ierr)
           endif
        endif
