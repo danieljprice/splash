@@ -7,7 +7,7 @@ module settings_page
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage
  logical :: iColourEachStep,iChangeStyles,tile,interactive
- logical :: iPlotLegend,iPlotTitles
+ logical :: iPlotLegend,iPlotStepLegend,iPlotTitles
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
  real :: charheightmm
@@ -15,8 +15,8 @@ module settings_page
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &
-   iPlotLegend,hposlegend,vposlegend,iPlotTitles,hpostitle,vpostitle,fjusttitle,legendtext, &
-   colour_fore, colour_back, charheightmm
+   iPlotLegend,iPlotStepLegend,hposlegend,vposlegend,iPlotTitles,hpostitle, &
+   vpostitle,fjusttitle,legendtext,colour_fore, colour_back, charheightmm
 
 contains
 
@@ -39,6 +39,7 @@ subroutine defaults_set_page
   aspectratio = 0.0     ! aspect ratio of paper (no call to PGPAP if zero)
   
   iPlotLegend = .true.  ! whether or not to plot legend
+  iPlotStepLegend = .false. ! timestep legend
   hposlegend = 0.75     ! horizontal legend position as fraction of viewport
   vposlegend = 2.0      ! vertical legend position in character heights
   legendtext = 't='
@@ -67,8 +68,8 @@ subroutine submenu_page
  iaction = 0
  papersizey = papersizex*aspectratio
  print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,tile, &
-          iPlotTitles,hpostitle,vpostitle,iPlotLegend,hposlegend,vposlegend, &
-          charheightmm
+          iPlotTitles,hpostitle,vpostitle,iPlotLegend,iPlotStepLegend, &
+          hposlegend,vposlegend,charheightmm
 10 format(' 0) exit ',/,                   &
         ' 1) change steps per page  (',i2,')',/, &
         ' 2) axes options           (',i2,')',/, &
@@ -76,7 +77,7 @@ subroutine submenu_page
         ' 4) change plots per page  (',i2,1x,i2,')',/, &
          ' 5) toggle plot tiling     (',L1,')',/, & 
          ' 6) title options          (',L1,1x,f5.2,1x,f4.1,')',/, &
-         ' 7) legend options         (',L1,1x,f5.2,1x,f4.1,')',/, &
+         ' 7) legend options         (',L1,1x,L1,1x,f5.2,1x,f4.1,')',/, &
          ' 8) set character height   (',f4.1,')',/,&
          ' 9) set foreground/background colours ')
  call prompt('enter option ',iaction,0,9)
@@ -97,6 +98,9 @@ subroutine submenu_page
         call prompt('Use different colours for each step?',iColourEachStep)
 !!        if (.not.iColourEachStep) icolourthisstep = 1
         call prompt('Use different markers/line style for each? ',iChangeStyles)
+        if (iColourEachStep .or. iChangeStyles) then
+           call prompt('Plot legend of marker styles/colours?',iPlotStepLegend)
+        endif
      endif
      return          
 !------------------------------------------------------------------------
@@ -182,11 +186,13 @@ subroutine submenu_page
 !------------------------------------------------------------------------
   case(7)
      call prompt('Plot time legend?',iPlotLegend)
-     if (iPlotLegend) then
+     if (iPlotLegend) call prompt('Enter legend text ',legendtext)
+     call prompt('Plot legend of marker styles/colours for each step?',iPlotStepLegend)
+     if (iPlotLegend .or. iPlotStepLegend) then
         call prompt('Enter horizontal position as fraction of viewport', &
              hposlegend,0.0,1.0)
         call prompt('Enter vertical position in character heights from top',vposlegend)
-        call prompt('Enter legend text ',legendtext)
+
      endif
      return
 !------------------------------------------------------------------------

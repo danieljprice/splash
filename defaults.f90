@@ -29,6 +29,7 @@ subroutine defaults_set
   use settings_xsecrot, only:defaults_set_xsecrotate
   use settings_powerspec, only:defaults_set_powerspec
   use particle_data, only:maxpart,maxstep,maxcol
+  use titles, only:pagetitles,steptitles
   implicit none
   integer :: i
 !
@@ -110,6 +111,11 @@ subroutine defaults_set
   !  vector labels
   iamvec(:) = 0
   labelvec = ' '
+  !
+  !--titles
+  !
+  pagetitles = ' '
+  steptitles = ' '
   
   return    
 end subroutine defaults_set

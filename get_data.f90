@@ -25,11 +25,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
                      DataisBuffered,iCalcQuantities,ndim,icoords, &
                      units,unitslabel
   use settings_part, only:iexact,icoordsnew
-  use particle_data
+  use particle_data, only:dat
   use prompting
   use labels, only:label,labelvec,iamvec
   use geometry, only:labelcoord
   use calcquantities, only:calc_quantities
+  use titles, only:steptitles
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
@@ -193,7 +194,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         call read_exactparams(iexact,rootname(ireadfile),ierr)
      endif
   endif
-  
+  !
+  !--set step title if not already set
+  !
+  do i=1,min(nfiles,size(steptitles))
+     if (len_trim(steptitles(i)).eq.0) steptitles(i) = trim(rootname(i))
+  enddo
   return
 end subroutine get_data
 
