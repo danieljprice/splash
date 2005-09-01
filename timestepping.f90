@@ -14,7 +14,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   use timestep_plotting, only:initialise_plotting,plotstep
   implicit none
   integer, intent(in) :: ipicky,ipickx,irender,ivecplot
-  integer :: i, istep, ifile, iadvance, istepsonpage
+  integer :: i, icount, istep, ifile, iadvance, istepsonpage
   logical :: ipagechange
   
   call initialise_plotting(ipicky,ipickx,irender)
@@ -27,11 +27,13 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
   ifile = 1
   istepsonpage = 0
+  icount = nstart
 
   over_timesteps: do while (i.le.n_end)
 
      if (iUseStepList) then
         istep = isteplist(i)
+        icount = isteplist(i)
      else
         istep = i
      endif
@@ -53,12 +55,13 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
         print*,'reached first step: can''t go back'
         istep = 1
         i = 1
+        icount = 1
      endif
      if (istep.lt.nstart) then
         print*,'warning: i < nstart'
      endif
 
-     print 33, time(istep),istep
+     print 33, time(istep),icount
 33   format (5('-'),' t = ',f9.4,', dump #',i5,1x,18('-'))
 
      istepsonpage = istepsonpage + 1
@@ -73,16 +76,17 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
         call colour_timestep(istepsonpage,iColourEachStep,iChangeStyles)
      endif
 
-     call plotstep(istep,irender,ivecplot,npartoftype(:,istep), &
+     call plotstep(icount,istepsonpage,irender,ivecplot,npartoftype(:,istep), &
                    dat(:,:,istep),time(istep),gamma(istep),ipagechange,iadvance)
 !
 !--increment timestep
 !
      if (iadvance.eq.-666) exit over_timesteps
      i = i + iadvance
-     if (interactive .and. i.gt.n_end) then
-        i = n_end
-        iadvance = 0
+     icount = icount + iadvance
+     if (interactive .and. icount.ge.n_end) then
+        if (i.gt.n_end) i = n_end
+        icount = n_end
      endif
 
   enddo over_timesteps
@@ -184,6 +188,7 @@ end subroutine get_nextstep
 
 !-------------------------------------------------------------
 ! colours all the particles a given colour for this timestep
+! and/or changes the marker type for type 1 particles
 !-------------------------------------------------------------
 subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
   use particle_data, only:icolourme
@@ -191,7 +196,7 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
   implicit none
   integer, intent(in) :: istep
   logical, intent(in) :: iChangeColours, iChangeStyles
-  integer :: icolour
+  integer :: icolour,imarkernumber
   
   if (iChangeColours) then
      if (allocated(icolourme)) then
@@ -205,9 +210,22 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
   endif
   if (iChangeStyles) then
      linestylethisstep = mod(istep-1,5) + 1
-     imarktype(1) = istep + 1
+     imarkernumber = istep
+     select case(imarkernumber)
+     case(1)
+        imarktype(1) = 4
+     case(2)
+        imarktype(1) = 17
+     case(3)
+        imarktype(1) = 2
+     case(4)
+        imarktype(1) = 3
+     case(5:16)
+        imarktype(1) = imarkernumber
+     case(17:)
+        imarktype(1) = imarkernumber + 1
+     end select
   endif
-     !!call legend_multiplestepsperpage(istep,icolour)
 
   return
 end subroutine colour_timestep
