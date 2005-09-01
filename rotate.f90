@@ -35,23 +35,23 @@ end subroutine rotate2D
 !
 !--3D rotation (about x, y and z axes)
 !
-subroutine rotate3D(xcoords,anglex,angley,anglez)
+subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
   implicit none
   real, intent(inout) :: xcoords(3)
-  real, intent(in) :: anglex, angley, anglez
-  real :: x, y, z, r, phi
+  real, intent(in) :: anglex, angley, anglez, zobs, dz1
+  real :: x, y, z, r, phi, zfrac
   
   x = xcoords(1)
   y = xcoords(2)
   z = xcoords(3)
 !
-!--rotate about z
-!  
-  r = sqrt(x**2 + y**2)
-  phi = ATAN2(y,x)
-  phi = phi - anglez
-  x = r*COS(phi)
-  y = r*SIN(phi)
+!--rotate about x
+!
+  r = sqrt(y**2 + z**2)
+  phi = ATAN2(z,y)
+  phi = phi - anglex  
+  y = r*COS(phi)
+  z = r*SIN(phi)
 !
 !--rotate about y
 !
@@ -61,16 +61,21 @@ subroutine rotate3D(xcoords,anglex,angley,anglez)
   z = r*COS(phi)
   x = r*SIN(phi)
 !
-!--rotate about x
+!--rotate about z
+!  
+  r = sqrt(x**2 + y**2)
+  phi = ATAN2(y,x)
+  phi = phi - anglez
+  x = r*COS(phi)
+  y = r*SIN(phi)
 !
-  r = sqrt(y**2 + z**2)
-  phi = ATAN2(z,y)
-  phi = phi - anglex  
-  y = r*COS(phi)
-  z = r*SIN(phi)
-  
-  xcoords(1) = x !! *tan(angley)
-  xcoords(2) = y !!*tan(anglex)
+!--change perspective according to z depth
+!  (for straight rotation == parallel projections use dz1 = 0 on input)
+!  zobs is the z position of the observer.
+!
+  zfrac = (zobs - z)*dz1
+  xcoords(1) = x*(1. - zfrac)
+  xcoords(2) = y*(1. - zfrac)
   xcoords(3) = z
   
   return
@@ -143,11 +148,11 @@ subroutine rotate_axes2D(ioption,xmin,xmax,xorigin,anglez)
 end subroutine rotate_axes2D
 
 subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
-                         anglex,angley,anglez)
+                         anglex,angley,anglez,zobs,dz1)
   implicit none
   integer, intent(in) :: ioption,iplotx,iploty
   real, intent(in), dimension(3) :: xmin,xmax,xorigin
-  real, intent(in) :: anglex, angley, anglez
+  real, intent(in) :: anglex, angley, anglez, zobs, dz1
   integer :: i,idim,iline
   integer, parameter :: nlines = 10
   real, dimension(3,8) :: xpt
@@ -172,7 +177,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
         xpt(idim,2) = xmax(idim)
         do i=1,2
            xpttemp(:) = xpt(:,i) - xorigin(:)
-           call rotate3D(xpttemp(:),anglex,angley,anglez)
+           call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1)
            xpt(:,i) = xpttemp(:) + xorigin(:)
         enddo
         !--plot each axis as an arrow
@@ -207,7 +212,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
      !
      do i=1,8
         xpttemp(:) = xpt(:,i) - xorigin(:)
-        call rotate3D(xpttemp(:),anglex,angley,anglez)
+        call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1)
         xpt(:,i) = xpttemp(:) + xorigin(:)
      enddo
      !
@@ -244,7 +249,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
         xpt(2,2) = xmax(2)
         do i=1,2
            xpttemp(:) = xpt(:,i) - xorigin(:)
-           call rotate3D(xpttemp(:),anglex,angley,anglez)
+           call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1)
            xpt(:,i) = xpttemp(:) + xorigin(:)
         enddo
         call pgline(2,xpt(iplotx,1:2),xpt(iploty,1:2))
@@ -262,7 +267,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
         xpt(1,2) = xmax(1)
         do i=1,2
            xpttemp(:) = xpt(:,i) - xorigin(:)
-           call rotate3D(xpttemp(:),anglex,angley,anglez)
+           call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1)
            xpt(:,i) = xpttemp(:) + xorigin(:)
         enddo
         call pgline(2,xpt(iplotx,1:2),xpt(iploty,1:2))
