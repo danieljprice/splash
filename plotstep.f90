@@ -6,10 +6,10 @@ module timestep_plotting
   integer, private :: nyplots,npartdim      
   integer, private :: ngrid
   integer, private :: just, ntitles
-  integer, private :: iplots,iplotsonpage
+  integer, private :: iplots,ipanel
 
   real, dimension(:), allocatable, private :: datpix1D, xgrid
-  real, private :: xmin,xmax,ymin,ymax,zmin,ymean
+  real, private :: xmin,xmax,ymin,ymax,zmin,zmax,ymean
   real, private :: rendermin,rendermax
   real, private :: dxsec,xsecpos
   real, private :: charheight
@@ -34,7 +34,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use limits, only:lim
   use multiplot
   use prompting
-  use titles, only:read_titles
+  use titles, only:read_titles,read_steptitles
   use settings_data, only:ndim,numplot
   use settings_page
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle
@@ -55,7 +55,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   isameyaxis = .true.  ! same y axis on all plots?
   tile_plots = .false.
   iplots = 0 ! counter for how many plots have been plotted in total
-  iplotsonpage = 0  ! counter for how many plots on page
+  ipanel = 0  ! counter for which panel we are in on plotting page
   irenderplot = 0
   ivectorplot = 0
   x_sec = xsec_nomulti
@@ -179,7 +179,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
      call options_powerspec
   endif
 
-  !!--set plot titles
+  !!--read step titles (don't need to store ntitles for this)
+  ntitles = 0
+  call read_steptitles(ntitles)
+  !!--read plot titles
   ntitles = 0
   call read_titles(ntitles)
 
@@ -225,23 +228,25 @@ end subroutine initialise_plotting
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine plotstep(istep,irender,ivecplot, &
+subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                     npartoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
   use exact, only:exact_solution, &
              atstar,ctstar,sigma,iwaveplotx,iwaveploty
   use toystar1D, only:exact_toystar_ACplane
   use toystar2D, only:exact_toystar_ACplane2D
-  use labels
+  use labels, only:label,labeltype,labelvec,iamvec, &
+              ih,irho,ipmass,ix,iacplane,ipowerspec
   use limits
   use multiplot
   use particle_data, only:maxpart,icolourme
   use rotation
-  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimv,n_end,nfreq
+  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,n_end,nfreq
   use settings_limits
-  use settings_part, only:icoordsnew,iexact,iplotpartoftype,PlotOnRenderings,iplotline
-  use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend, &
-                     charheightmm,iPlotTitles,vpostitle,hpostitle,fjusttitle
+  use settings_part, only:icoordsnew,iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
+                     iplotline,linecolourthisstep,linestylethisstep
+  use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend,iPlotStepLegend, &
+                     charheightmm,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
                        iPlotColourBar,icolour_particles
   use settings_vecplot, only:npixvec, iplotpartvec
@@ -254,7 +259,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   use transforms
   use interactive_routines
   use geometry
-  use legends, only:legend
+  use legends, only:legend,legend_markers
   use particleplots
   use powerspectrums, only:powerspectrum
   use interpolations1D, only:interpolate1D
@@ -262,11 +267,11 @@ subroutine plotstep(istep,irender,ivecplot, &
   use projections3D, only:interpolate3D_projection
   use xsections3D, only:interpolate3D, interpolate3D_fastxsec, &
                         interpolate3D_xsec_vec
-  use titles, only:titlelist
+  use titles, only:pagetitles,steptitles
   use render, only:render_pix,colourbar
 
   implicit none
-  integer, intent(in) :: istep, irender, ivecplot
+  integer, intent(in) :: istep, istepsonpage, irender, ivecplot
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(:,:), intent(in) :: dat
   real, intent(in) :: timei,gammai
@@ -279,7 +284,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   integer :: irenderpart,irendered
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec,nfreqpts
-  integer :: index1,index2,itype
+  integer :: index1,index2,itype,icolourprev,linestyleprev
 
   real, parameter :: pi = 3.1415926536
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
@@ -292,6 +297,7 @@ subroutine plotstep(istep,irender,ivecplot, &
   real :: rendermintemp,rendermaxtemp
   real :: xsecmin,xsecmax,dummy
   real :: pixwidth,dxfreq
+  real :: dz1,zobs
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
@@ -570,12 +576,20 @@ subroutine plotstep(istep,irender,ivecplot, &
               print "(a,f6.2)",'rotating particles about y by ',angletempy
               print "(a,f6.2)",'rotating particles about x by ',angletempx
            endif
+           if (ndim.eq.3) then
+              zmax = 2.*lim(iz,2)
+              zmin = 2.*lim(iz,1)
+              dz1 = 1./(zmax - zmin)
+              zobs = zmax
+              print*,'dz = ',1./dz1,' zobs = ',zobs
+              print*,'percent warp at z=0 : ',100.*zobs*dz1
+           endif
            do j=1,ntoti
               xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
                if (ndim.eq.2) then
                   call rotate2D(xcoords(:),angleradz)
                elseif (ndim.eq.3) then
-                  call rotate3D(xcoords(:),angleradx,anglerady,angleradz)
+                  call rotate3D(xcoords(:),angleradx,anglerady,angleradz,zobs,dz1)
                endif
               xplot(j) = xcoords(iplotx) + xorigin(iplotx)
               yplot(j) = xcoords(iploty) + xorigin(iploty)
@@ -932,7 +946,7 @@ subroutine plotstep(istep,irender,ivecplot, &
               if (ndim.eq.3) then
                  call rotate_axes3D(irotateaxes,iplotx,iploty, &
                       xminrotaxes(1:ndim),xmaxrotaxes(1:ndim),xorigin(1:ndim), &
-                      angleradx,anglerady,angleradz)
+                      angleradx,anglerady,angleradz,zobs,dz1)
               elseif (ndim.eq.2) then
                  call rotate_axes2D(irotateaxes,xminrotaxes(1:ndim), &
                                    xmaxrotaxes(1:ndim),xorigin(1:ndim),angleradz)
@@ -941,11 +955,15 @@ subroutine plotstep(istep,irender,ivecplot, &
            
            !--print legend if this is the first plot on the page    
            if (iPlotLegend .and. nyplot.eq.1) call legend(timei)
-           
+           !--line/marker style/colour legend for multiple timesteps on same page
+           if (iPlotStepLegend .and. nyplot.eq.1 .and. istepsonpage.gt.0) then
+              call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
+                                  iplotpartoftype(1),iplotline,trim(steptitles(istepsonpage)))
+           endif
            !--print title if appropriate
-           if (iPlotTitles .and. iplotsonpage.le.ntitles) then
-              if (len_trim(titlelist(iplotsonpage)).gt.0) then
-                 call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(iplotsonpage)))
+           if (iPlotTitles .and. ipanel.le.ntitles) then
+              if (len_trim(pagetitles(ipanel)).gt.0) then
+                 call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
               endif
            endif           
            !
@@ -984,7 +1002,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                  if (abs(rendermintemp-rendermin).gt.tol) iChangeRenderLimits = .true.
                  if (abs(rendermaxtemp-rendermax).gt.tol) iChangeRenderLimits = .true.
                  if (iadvance.eq.-666) return
-              elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
+              elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
                  !
                  !--timestep control only if multiple plots on page
                  !
@@ -1019,11 +1037,15 @@ subroutine plotstep(istep,irender,ivecplot, &
 
         !--plot time on plot
         if (iPlotLegend .and. nyplot.eq.1) call legend(timei)
-    
+        !--line/marker style/colour legend for multiple timesteps on same page
+        if (iPlotStepLegend .and. nyplot.eq.1 .and. istep.gt.0) then
+           call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
+                               iplotpartoftype(1),iplotline,trim(steptitles(istep)))
+        endif
         !--print title if appropriate
-        if (iPlotTitles .and. iplotsonpage.le.ntitles) then
-           if (len_trim(titlelist(iplotsonpage)).gt.0) then
-              call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(iplotsonpage)))
+        if (iPlotTitles .and. nstepsperpage.eq.1 .and. ipanel.le.ntitles) then
+           if (len_trim(pagetitles(ipanel)).gt.0) then
+              call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
            endif
         endif
         !
@@ -1087,7 +1109,7 @@ subroutine plotstep(istep,irender,ivecplot, &
                    xmin,xmax,ymin,ymax,dummy,dummy,rendermin,rendermax, &
                    angletempx,angletempy,angletempz,ndim,itrackpart,icolours,iadvance,isave)
               if (iadvance.eq.-666) return
-           elseif (iplotsonpage.eq.nacross*ndown .or. lastplot) then
+           elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
               !
               !--timestep control only if multiple plots on page
               !
@@ -1120,8 +1142,8 @@ subroutine plotstep(istep,irender,ivecplot, &
            endif
            !--increment page counter as setpage is not called
            iplots = iplots + 1
-           iplotsonpage = iplotsonpage + 1
-           if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
+           ipanel = ipanel + 1
+           if (ipanel.gt.nacross*ndown) ipanel = 1
         endif
         !
         !--power spectrum plots (uses x and data as yet unspecified)
@@ -1222,26 +1244,40 @@ subroutine plotstep(istep,irender,ivecplot, &
            title = ' '
            call page_setup
 
+           call pgqci(icolourprev)    ! query line style and colour
+           call pgqls(linestyleprev)
+           if (nstepsperpage.gt.1) then
+              call pgsci(linecolourthisstep) ! set appropriate colour and style if multiple steps per page
+              call pgsls(linestylethisstep)
+           endif
+           
            call pgline(nfreqpts,xplot(1:nfreqpts),yplot(1:nfreqpts))
            print*,' maximum power at '//trim(labelx)//' = ',xplot(maxloc(yplot(1:nfreqpts)))
+
+           call pgsci(icolourprev)
+           call pgsls(linestyleprev)
 
         endif
         !
         !--if this is the first plot on the page, print legend
         !
-        if (iPlotLegend .and. iplotsonpage.eq.1) call legend(timei)
-        !
+        if (iPlotLegend .and. ipanel.eq.1) call legend(timei)
+        !--line/marker style/colour legend for multiple timesteps on same page
+        if (iPlotStepLegend .and. nyplot.eq.1) then
+           call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
+                               .true.,.false.,trim(steptitles(istepsonpage)))
+        endif
         !--print title if appropriate
-        !
-        if (iPlotTitles .and. iplotsonpage.le.ntitles) then
-           if (len_trim(titlelist(iplotsonpage)).gt.0) then
-              call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(titlelist(iplotsonpage)))
+        if (iPlotTitles .and. nstepsperpage.eq.1 .and. ipanel.le.ntitles) then
+           if (len_trim(pagetitles(ipanel)).gt.0) then
+              call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
            endif
         endif
 
         lastplot = (istep.eq.n_end)
 
-        if (interactive .and. (iplotsonpage.eq.nacross*ndown .or. lastplot)) then
+        if (interactive .and.((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) &
+           .or. lastplot)) then
            iadvance = nfreq
            call interactive_step(iadvance,xmin,xmax,ymin,ymax)
            if (iadvance.eq.-666) return
@@ -1270,6 +1306,7 @@ contains
     use settings_render, only:ColourBarWidth
     implicit none
     real :: barwidth, TitleOffset
+    logical :: ipanelchange
         
     !--------------------------------------------------------------
     ! output some muff to the screen
@@ -1283,13 +1320,16 @@ contains
     !---------------------
     ! increment counters
     !---------------------
-
     iplots = iplots + 1
-    iplotsonpage = iplotsonpage + 1
-    if (iplotsonpage.gt.nacross*ndown) iplotsonpage = 1
+    
+    ipanelchange = .true.
+    if (iplots.gt.1 .and. nyplots.eq.1 .and. nacross*ndown.gt.1.and..not.ipagechange) ipanelchange = .false.
+    if (ipanelchange) ipanel = ipanel + 1
+    if (ipanel.gt.nacross*ndown) ipanel = 1
     !--set counter for where we are in row, col
-    icolumn = iplotsonpage - ((iplotsonpage-1)/nacross)*nacross
-    !!irow = (iplotsonpage-1)/nacross + 1 ! not used yet
+    icolumn = ipanel - ((ipanel-1)/nacross)*nacross
+    !!irow = (ipanel-1)/nacross + 1 ! not used yet
+    print*,'ipanel = ',ipanel, 'pagechange = ',ipagechange
 
     !--------------------------------------------------------------
     ! set up pgplot page
@@ -1302,22 +1342,23 @@ contains
     endif
 
     if (tile_plots) then
-       if (iplotsonpage.eq.1 .and. ipagechange) call pgpage
-       call danpgtile(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+       inewpage = ipanel.eq.1 .and. ipanelchange .and. ipagechange
+       if (inewpage) call pgpage
+       call danpgtile(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
                       trim(labelx),trim(labely),trim(title),just,iaxis)
     else
         !--change the page if pagechange set
        !  or, if turned off, between plots on first page only
-       inewpage = ipagechange .or. (iplots.le.nacross*ndown)
+       inewpage = ipagechange .or. (iplots.le.nacross*ndown .and. ipanelchange)
        
        !--work out whether or not to leave space above plots for titles
        TitleOffset = 0.
-       if (iPlotTitles .and. vpostitle.gt.0.) TitleOffset = vpostitle + 1.0
+       if (iPlotTitles .and. nstepsperpage.eq.1 .and. vpostitle.gt.0.) TitleOffset = vpostitle + 1.5
        
-       call setpage(iplotsonpage,nacross,ndown,xmin,xmax,ymin,ymax, &
+       call setpage(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
          trim(labelx),trim(labely),trim(title), &
          just,iaxis,barwidth,TitleOffset,isamexaxis,inewpage)
-    endif 
+    endif
 
     return
   end subroutine page_setup
