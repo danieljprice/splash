@@ -182,7 +182,7 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
   integer :: i
   real, dimension(3,3) :: dxdx
   real :: sinphi, cosphi
-  real :: rr,rr1
+  real :: rr,rr1,rcyl,rcyl2,rcyl1
 !
 !--check for errors in input
 !
@@ -257,22 +257,30 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         ! output is spherical
         !
         rr = sqrt(dot_product(xin,xin))
-        if (rr.ne.0.) then
+        if (rr.gt.tiny(rr)) then
            rr1 = 1./rr
         else
            rr1 = 0.
         endif
            dxdx(1,1) = xin(1)*rr1  ! dr/dx
            if (ndimin.ge.2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
-           if (ndimin.eq.3) dxdx(1,3) = 1.          ! dr/dz 
-           if (ndimout.ge.2) then
-              ! FILL THESE IN
-              dxdx(2,1) = 0. ! dtheta/dx
-              dxdx(2,2) = 0. ! dtheta/dy
-              dxdx(2,3) = 0. ! dtheta/dz
-              dxdx(3,1) = 0. ! dphi/dx
-              dxdx(3,2) = 0. ! dphi/dy
-              dxdx(3,3) = 0. ! dphi/dz
+           if (ndimin.eq.3) dxdx(1,3) = xin(3)*rr1  ! dr/dz 
+           if (ndimin.ge.2) then
+              dxdx(2,1) = -xin(2)*rr1**2 ! dtheta/dx
+              dxdx(2,2) = xin(1)*rr1**2 ! dtheta/dy
+              dxdx(2,3) = 0.
+              if (ndimin.ge.3) then
+                 rcyl2 = dot_product(xin(1:2),xin(1:2))
+                 rcyl = sqrt(rcyl2)
+                 if (rcyl.gt.tiny(rcyl)) then
+                    rcyl1 = 1./rcyl
+                 else
+                    rcyl1 = 0.
+                 endif
+                 dxdx(3,1) = xin(1)*xin(3)*rr1*rr1*rcyl1 ! dphi/dx
+                 dxdx(3,2) = xin(2)*xin(3)*rr1*rr1*rcyl1 ! dphi/dy
+                 dxdx(3,3) = -rcyl2*rr1*rr1*rcyl1 ! dphi/dz
+              endif
            endif
      case(2)
         !
