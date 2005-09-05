@@ -26,7 +26,7 @@ module geometry
  character(len=*), dimension(3,maxcoordsys), parameter :: labelcoord = &
     reshape((/'x    ','y    ','z    ', &
               'r    ','phi  ','z    ', &
-              'r    ','theta','phi  '/),shape=(/3,maxcoordsys/))
+              'r    ','phi  ','theta'/),shape=(/3,maxcoordsys/))
  
 contains
 !-----------------------------------------------------------------
@@ -381,8 +381,8 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
           xmintemp(2) = -pi
           xmaxtemp(2) = pi
           if (ndim.ge.3) then
-             xmintemp(3) = -0.5*pi
-             xmaxtemp(3) = 0.5*pi
+             xmintemp(3) = 0.
+             xmaxtemp(3) = pi
           endif
        endif
     !
