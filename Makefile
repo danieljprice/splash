@@ -43,10 +43,11 @@ SOURCESF90= globaldata.f90 transform.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \
          exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 \
+         exact_densityprofiles.f90 \
          limits.f90 options_limits.f90 \
          exact.f90 options_page.f90 \
          options_particleplots.f90 \
-         allocate.f90 \
+         allocate.f90 titles.f90 \
          calc_quantities.f90 get_data.f90\
          options_data.f90 \
 	 options_powerspec.f90 options_render.f90 \
@@ -57,7 +58,6 @@ SOURCESF90= globaldata.f90 transform.f90 \
          interactive.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
          powerspectrums.f90 render.f90 setpage.f90 \
-	 titles.f90 \
          plotstep.f90 timestepping.f90 \
          defaults.f90 menu.f90 \
          $(SYSTEMFILE) supersphplot.f90

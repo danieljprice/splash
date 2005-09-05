@@ -31,6 +31,9 @@ module exact
   real :: polyk
   !--mhd shock solutions
   integer :: ishk
+  !--density profiles
+  integer :: iprofile
+  real :: Msphere,rsoft
   !--from file
   integer :: iexactplotx, iexactploty
   !--shock tube
@@ -47,7 +50,8 @@ module exact
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
        polyk,sigma0,norder,morder,rhosedov,esedov, &
-       rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact
+       rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact, &
+       iprofile,Msphere,rsoft
 
 contains
   !----------------------------------------------------------------------
@@ -86,6 +90,10 @@ contains
     ishk = 0
     hfact = 1.2
     filename_exact = ' '
+!   density profile parameters
+    iprofile = 1
+    rsoft = 1.0
+    Msphere = 1.0    
 
     maxexactpts = 1001      ! points in exact solution plot
     iExactLineColour = 1    ! foreground
@@ -116,8 +124,9 @@ contains
          ' 5) linear wave ',/,          &
          ' 6) mhd shock tubes (tabulated) ',/,  &
          ' 7) h vs rho ',/, &
-         ' 8) read from file ')
-    call prompt('enter exact solution to plot',iexact,0,8)
+         ' 8) radial density profiles ',/, &
+         ' 9) read from file ')
+    call prompt('enter exact solution to plot',iexact,0,9)
     print*,' plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
@@ -183,11 +192,18 @@ contains
        call prompt('enter amplitude ',ampl,0.0)
        call prompt('enter period ',period)
     case(6)
-       print*,' MHD shock tube tables: '
+       print "(a)",' MHD shock tube tables: '
        call prompt('enter solution to plot ',ishk,0,7)
     case(7)
        call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
     case(8)
+       print 20
+20     format(' 1) Plummer sphere  [ rho = 3M r_s**2 /(4 pi (r**2 + r_s**2)**5/2) ]',/, &
+              ' 2) Hernquist model [ rho =     M r_s /(2 pi r (r_s + r)**3        ]')
+       call prompt('enter density profile to plot',iprofile,1,2)
+       call prompt('enter total mass of sphere M',Msphere,0.)
+       call prompt('enter softening length length r_s,',rsoft,0.)
+    case(9)
        call prompt('enter filename ',filename_exact)
        call prompt('enter x axis of exact solution ',iexactplotx,1)
        call prompt('enter y axis of exact solution ',iexactploty,1)
@@ -357,6 +373,7 @@ contains
     use toystar1D, only:exact_toystar1D, exact_toystar_ACplane
     use toystar2D, only:exact_toystar2D
     use wave, only:exact_wave
+    use densityprofiles, only:exact_densityprofiles
     use transforms
     implicit none
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
@@ -422,7 +439,7 @@ contains
 
     case(2)! sedov blast wave
        ! this subroutine does change xexact
-       if (iplotx.eq.irad .or. (igeom.eq.2 .and. iplotx.eq.ix(1))) then
+       if (iplotx.eq.irad .or. (igeom.eq.3 .and. iplotx.eq.ix(1))) then
           if (iploty.eq.irho) then
              call exact_sedov(1,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
@@ -435,7 +452,7 @@ contains
        endif
 
     case(3)! polytrope
-       if (iploty.eq.irho .and. iplotx.eq.irad) then
+       if (iploty.eq.irho .and. (iplotx.eq.irad .or.(igeom.eq.3 .and. iplotx.eq.ix(1)))) then
           call exact_polytrope(gamma,polyk,xexact,yexact,iexactpts,ierr)
        endif
 
@@ -580,7 +597,11 @@ contains
              call exact_rhoh(ndim,hfact,pmassmax,xexact,yexact,ierr)
           endif
        endif
-    case(8) ! exact solution read from file
+    case(8) ! density profiles
+       if (iploty.eq.irho .and. (iplotx.eq.irad .or.(igeom.eq.3 .and. iplotx.eq.ix(1)))) then
+          call exact_densityprofiles(iprofile,Msphere,rsoft,xexact,yexact,ierr)
+       endif
+    case(9) ! exact solution read from file
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
           call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
