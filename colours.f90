@@ -5,16 +5,18 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 8
- character(len=15), dimension(ncolourschemes), parameter :: schemename = &
-    (/'greyscale      ', &
-      'red            ', &
-      'ice blue       ', &
-      'rainbow        ', &
-      'universe       ', &
-      'shade of pale  ', &
-      'red-blue-green ', &
-      'heat           '/)
+ integer, parameter :: ncolourschemes = 10
+ character(len=17), dimension(ncolourschemes), parameter :: schemename = &
+    (/'greyscale        ', &
+      'red              ', &
+      'ice blue         ', &
+      'rainbow          ', &
+      'universe         ', &
+      'shade of pale    ', &
+      'red-blue-yellow  ', &
+      'heat             ', &
+      'blue-yellow-red  ', &
+      'purple-blue-green'/)
 
 contains
 
@@ -28,7 +30,7 @@ subroutine colour_set(icolourscheme)
   integer :: i,icolourmin,icolmin,icolmax,ncolmax,ncolours,nset
   real :: hue,light,sat,brightness,red,green,blue
   real :: dhue,dlight,dsat,dred,dgreen,dblue
-  real, dimension(6) :: lumarr,redarr,greenarr,bluearr
+  real, dimension(7) :: lumarr,redarr,greenarr,bluearr
   logical :: rgb
       
   red = 0.0
@@ -149,12 +151,12 @@ subroutine colour_set(icolourscheme)
      bluearr(1:nset) = (/1.0,1.0,0.0,0.0,0.0/)
      greenarr(1:nset) = (/0.0,0.0,0.0,1.0,1.0/)
      case(7)
-     nset = 6
-     !--red-blue-green
-     lumarr(1:nset) = (/0.0,0.2,0.4,0.6,0.8,1.0/)
-     redarr(1:nset) = (/0.0,0.9,0.5,0.0,0.25,1.0/)
-     bluearr(1:nset) = (/0.0,0.0,0.25,0.9,0.25,0.0/)
-     greenarr(1:nset) = (/0.0,0.0,0.0,0.0,0.25,1.0/)
+     nset = 7
+     !--red-blue-yellow
+     lumarr(1:nset) =   (/0.0,0.2,0.35,0.4, 0.7, 0.9,1.0/)
+     redarr(1:nset) =   (/0.0,0.9,0.01,0.25,0.5,0.75,1.0/)
+     bluearr(1:nset) =  (/0.0,0.2,0.48,0.50,1.0,0.05,1.0/)
+     greenarr(1:nset) = (/0.0,0.1,0.24,0.25,0.5,0.75,1.0/)
      case(8)
      !--heat
      nset = 5
@@ -162,6 +164,20 @@ subroutine colour_set(icolourscheme)
      redarr(1:nset) =  (/0.0,0.0,0.0,1.0,1.0/)
      bluearr(1:nset) = (/1.0,1.0,0.0,0.0,0.0/)
      greenarr(1:nset)= (/0.0,1.0,1.0,1.0,0.0/)
+     case(9)
+     !--blue-yellow-red
+     nset = 6
+     lumarr(1:nset) =  (/0.0,0.2,0.4,0.6,0.8,1.0/)
+     redarr(1:nset) =  (/0.0,0.0,0.5,1.0,1.0,0.5/)
+     bluearr(1:nset) = (/1.0,1.0,0.5,0.0,0.0,0.0/)
+     greenarr(1:nset)= (/0.0,1.0,0.5,1.0,0.0,0.0/)
+     case(10)
+     !--purple-blue-green
+     nset = 6
+     lumarr(1:nset) =  (/0.0,0.1,0.2,0.5,0.8,1.0/)
+     redarr(1:nset) =  (/0.0,0.1,0.5,0.02,0.0,0.0/)
+     bluearr(1:nset) = (/0.0,0.2,0.5,0.98,0.0,0.0/)
+     greenarr(1:nset)= (/0.0,0.0,0.0,0.0,0.62,0.98/)
      end select
 
      call PGCTAB(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &
