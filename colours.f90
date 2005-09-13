@@ -202,31 +202,32 @@ subroutine colour_demo
   integer, parameter :: npixx = ncolourmax
   integer, parameter :: npixy = npixx/10
   real, dimension(npixx,npixy) :: sample
-  real :: xmin,xmax,ymin,ymax,dx,trans(6)
+  real :: xmin,xmax,ymin,ymax,dx,dy,trans(6)
   character(len=10) :: string
 
-  call pgbegin(0,'/xw',1,1)
-  call pgpaper(6.0,0.25/sqrt(2.))
+  call pgbegin(0,'/xw',1,ncolourschemes)
+!!  call pgpaper(6.0,8.0) !!!0.25/sqrt(2.))
 
   xmin = 0.0
   xmax = 1.0
   ymin = 0.0
   ymax = 0.1
   dx = (xmax-xmin)/float(npixx)
-  trans(1) = xmin
+  dy = (ymax-ymin)/float(npixy)
+  trans(1) = xmin - 0.5*dx
   trans(2) = dx
   trans(3) = 0.0
-  trans(4) = xmin
+  trans(4) = ymin - 0.5*dy
   trans(5) = 0.0
-  trans(6) = dx
+  trans(6) = dy
 
   do j=1,npixy
      do i=1,npixx
         sample(i,j) = (i-1)*dx
      enddo
   enddo
-
-  call pgenv(xmin,xmax,ymin,ymax,1,-1)
+  call pgsch(2.0)
+  call pgenv(xmin,xmax,ymin,ymax,0,-1)
   call pgsch(1.0)
   call pggray(sample,npixx,npixy,1,npixx,1,npixy, &
               minval(sample),maxval(sample),trans)
@@ -235,8 +236,8 @@ subroutine colour_demo
   call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(1)))
 
   do i=2,ncolourschemes
-     call pgsch(1.0)      
-     call pgenv(xmin,xmax,ymin,ymax,1,-1) 
+     call pgsch(2.0)      
+     call pgenv(xmin,xmax,ymin,ymax,0,-1) 
      call pgsch(7.0)
      call pgnumb(i,0,0,string,nc)
      call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(i)))     
