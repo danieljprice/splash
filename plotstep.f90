@@ -231,8 +231,7 @@ end subroutine initialise_plotting
 subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                     npartoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
-  use exact, only:exact_solution, &
-             atstar,ctstar,sigma,iwaveplotx,iwaveploty
+  use exact, only:exact_solution,atstar,ctstar,sigma
   use toystar1D, only:exact_toystar_ACplane
   use toystar2D, only:exact_toystar_ACplane2D
   use labels, only:label,labeltype,labelvec,iamvec, &
@@ -972,7 +971,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
            if (iexact.ne.0) then
                call exact_solution(iexact,iplotx,iploty, &
                     itrans(iplotx),itrans(iploty),icoordsnew, &
-                    ndim,ndimV,timei,xmin,xmax,0.0,gammai, &
+                    ndim,ndimV,timei,xmin,xmax,gammai, &
+                    xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
                     pmass(1:npartoftype(1)),npartoftype(1))
            endif
            !
@@ -1081,18 +1081,10 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
              zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
              icolourme(1:ntoti),npartoftype(:),iplotpartoftype,.false.,0.0,0.0,' ')
 
-        !
-        !--plot exact solution if relevant
-        !
-        if (iexact.eq.5 .and.(iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then 
-           ymean = SUM(yplot(1:npartoftype(1)))/REAL(npartoftype(1)) 
-        else
-           ymean = 0.
-        endif
-
         if (iexact.ne.0) then
            call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
-                icoordsnew,ndim,ndimV,timei,xmin,xmax,ymean,gammai, &
+                icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
+                xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
                 pmass(1:npartoftype(1)),npartoftype(1))
         endif
         !
@@ -1131,10 +1123,11 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
         !  then call subroutine to plot the additional plot
         ! e.g. call routine to do convergence plot here
         !--------------------------------------------------------------
+
+        if (iexact.eq.4 .and. iploty.eq.iacplane) then
         !
         !--A vs C for exact toystar solution
         !
-        if (iexact.eq.4 .and. iploty.eq.iacplane) then
            if (ndim.eq.1) then
               call exact_toystar_acplane(atstar,ctstar,sigma,gammai)
            elseif (ndim.eq.2) then
@@ -1144,11 +1137,10 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
            iplots = iplots + 1
            ipanel = ipanel + 1
            if (ipanel.gt.nacross*ndown) ipanel = 1
-        endif
+        elseif (iploty.eq.ipowerspec) then 
         !
         !--power spectrum plots (uses x and data as yet unspecified)
         !
-        if (iploty.eq.ipowerspec) then 
            labelx = 'frequency'
            labely = 'power'
            if (iadvance.ne.0) then
@@ -1329,7 +1321,6 @@ contains
     !--set counter for where we are in row, col
     icolumn = ipanel - ((ipanel-1)/nacross)*nacross
     !!irow = (ipanel-1)/nacross + 1 ! not used yet
-    print*,'ipanel = ',ipanel, 'pagechange = ',ipagechange
 
     !--------------------------------------------------------------
     ! set up pgplot page

@@ -13,15 +13,16 @@ module exact
   !--options used to plot the exact solution line
   !
   integer :: maxexactpts, iExactLineColour, iExactLineStyle
-  logical :: iApplyTransExactFile
+  logical :: iApplyTransExactFile,iCalculateExactErrors,iPlotResiduals
   !
   !--declare all of the parameters required for the various exact solutions
   !
   !--toy star
   integer :: iACplane ! label position of toy star AC plane plot
   integer :: norder,morder ! for toy star
-  real :: htstar,atstar,ctstar,sigma,alphatstar,betatstar,ctstar1,ctstar2
-  real :: sigma0
+  real, public :: atstar,ctstar,sigma
+  real :: htstar,alphatstar,betatstar,ctstar1,ctstar2
+  real :: sigma0,totmass
   !--sound wave
   integer :: iwaveploty,iwaveplotx ! linear wave
   real :: ampl,lambda,period,xzero
@@ -32,7 +33,7 @@ module exact
   !--mhd shock solutions
   integer :: ishk
   !--density profiles
-  integer :: iprofile
+  integer :: iprofile,icolpoten,icolfgrav
   real :: Msphere,rsoft
   !--from file
   integer :: iexactplotx, iexactploty
@@ -45,13 +46,18 @@ module exact
   !--sort these into a namelist for input/output
   !
   namelist /exactopts/ iexactplotx,iexactploty,filename_exact,maxexactpts, &
-       iExactLineColour,iExactLineStyle,iApplyTransExactFile
+       iExactLineColour,iExactLineStyle,iApplyTransExactFile,iCalculateExactErrors, &
+       iPlotResiduals
 
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
        polyk,sigma0,norder,morder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact, &
-       iprofile,Msphere,rsoft
+       iprofile,Msphere,rsoft,icolpoten,icolfgrav
+       
+  public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
+  public :: exact_solution
+  public :: exactopts,exactparams
 
 contains
   !----------------------------------------------------------------------
@@ -73,13 +79,15 @@ contains
     betatstar = 0.
     ctstar1 = 0.
     ctstar2 = 0.
+    totmass = 1.
     norder = -1
     morder = 0
     sigma0 = 0.
     rhosedov = 1.0  ! sedov blast wave
     esedov = 1.0    ! blast wave energy
     polyk = 1.0     ! polytropic k
-    rho_L = 1.0     ! shock tube (default is sod problem)
+!   shock tube (default is sod problem)
+    rho_L = 1.0
     rho_R = 0.125
     pr_L = 1.0
     pr_R = 0.1
@@ -93,12 +101,16 @@ contains
 !   density profile parameters
     iprofile = 1
     rsoft = 1.0
-    Msphere = 1.0    
+    Msphere = 1.0
+    icolpoten = 0
+    icolfgrav = 0
 
     maxexactpts = 1001      ! points in exact solution plot
     iExactLineColour = 1    ! foreground
     iExactLineStyle = 1     ! solid
     iApplyTransExactFile = .true. ! false if exact from file is already logged
+    iCalculateExactErrors = .false.
+    iPlotResiduals = .false.
     
     return
   end subroutine defaults_set_exact
@@ -154,6 +166,7 @@ contains
        print "(a)",' toy star: '
        call read_exactparams(iexact,trim(rootname(1)),ierr)
        call prompt('enter polytropic k ',polyk)
+       call prompt('enter total mass   ',totmass)
        call prompt('enter central density rho_0 (rho = rho_0 - cr^2)',htstar)
        call prompt('enter parameter c (rho = rho_0 - cr^2)',ctstar,0.0)
        sigma = 0.
@@ -203,6 +216,13 @@ contains
        call prompt('enter density profile to plot',iprofile,1,2)
        call prompt('enter total mass of sphere M',Msphere,0.)
        call prompt('enter softening length length r_s,',rsoft,0.)
+       ians = .false.
+       if (icolpoten.gt.0) ians = .true.
+       call prompt('Are the gravitational potential and/or force dumped?',ians)
+       if (ians) then
+          call prompt('enter column containing grav. potential',icolpoten,0)
+          call prompt('enter column containing grav. force',icolfgrav,0)
+       endif
     case(9)
        call prompt('enter filename ',filename_exact)
        call prompt('enter x axis of exact solution ',iexactplotx,1)
@@ -224,6 +244,9 @@ contains
     call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
     call prompt('enter PGPLOT line colour ',iExactLineColour,1,16)
     call prompt('enter PGPLOT line style  ',iExactLineStyle,1,5)
+    call prompt('calculate error norms? ',iCalculateExactErrors)
+    if (iCalculateExactErrors) &
+       call prompt('plot residuals (as inset in main plot)?',iPlotResiduals)
   
     return
   end subroutine options_exact
@@ -361,7 +384,7 @@ contains
   !-----------------------------------------------------------------------
 
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
-                            ndim,ndimV,time,xmin,xmax,ymean,gamma,pmass,npart)
+                            ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot,pmass,npart)
     use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr
     use prompting
     use exactfromfile, only:exact_fromfile
@@ -378,13 +401,14 @@ contains
     implicit none
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
     integer, intent(in) :: ndim,ndimV,npart
-    real, intent(in) :: time,xmin,xmax,ymean,gamma
-    real, intent(in), dimension(npart) :: pmass
+    real, intent(in) :: time,xmin,xmax,gamma
+    real, intent(in), dimension(npart) :: xplot,yplot,pmass
+    real, dimension(npart) :: residuals
     
     real, parameter :: zero = 1.e-10
     integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle
     real, dimension(maxexactpts) :: xexact,yexact,xtemp
-    real :: totmass,pmassmin,pmassmax,dx
+    real :: pmassmin,pmassmax,dx,ymean,errL1,errL2,errLinf
 
     !
     !--change line style and colour settings, but save old ones
@@ -499,8 +523,6 @@ contains
           !--2D toy star solutions
           !  these routines change xexact
           !
-          totmass = SUM(pmass(1:npart))
-          print*,'summing masses of ',npart,' particles, mass = ',totmass
           if (igeom.eq.1 .and.((iplotx.eq.ix(1) .and. iploty.eq.ivx) &
                .or. (iplotx.eq.ix(2) .and. iploty.eq.ivx+1))) then
              call exact_toystar2D(4,time,gamma,polyk,totmass, &
@@ -538,6 +560,7 @@ contains
 
     case(5)! linear wave
        if ((iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then
+          ymean = SUM(yplot(1:npart))/REAL(npart)
           call exact_wave(time,ampl,period,lambda,xzero,ymean,xexact,yexact,ierr)
        endif
 
@@ -598,8 +621,14 @@ contains
           endif
        endif
     case(8) ! density profiles
-       if (iploty.eq.irho .and. (iplotx.eq.irad .or.(igeom.eq.3 .and. iplotx.eq.ix(1)))) then
-          call exact_densityprofiles(iprofile,Msphere,rsoft,xexact,yexact,ierr)
+       if (iplotx.eq.irad .or.(igeom.eq.3 .and. iplotx.eq.ix(1))) then
+          if (iploty.eq.irho) then
+             call exact_densityprofiles(1,iprofile,Msphere,rsoft,xexact,yexact,ierr)
+          elseif (iploty.eq.icolpoten) then
+             call exact_densityprofiles(2,iprofile,Msphere,rsoft,xexact,yexact,ierr)
+          elseif (iploty.eq.icolfgrav) then
+             call exact_densityprofiles(3,iprofile,Msphere,rsoft,xexact,yexact,ierr)          
+          endif
        endif
     case(9) ! exact solution read from file
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
@@ -619,6 +648,14 @@ contains
        if (itransx.gt.0) call transform(xexact(1:iexactpts),itransx)
        if (itransy.gt.0) call transform(yexact(1:iexactpts),itransy)
        call pgline(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
+       if (iCalculateExactErrors) then
+          call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts), &
+                                xplot(1:npart),yplot(1:npart),residuals(1:npart), &
+                                errL1,errL2,errLinf)
+          print "(3(a,1pe10.3,1x))",' L1 error = ',errL1,' L2 error = ',errL2, &
+                                   ' L(infinity) error = ',errLinf
+          if (iPlotResiduals) call plot_residuals(xplot,residuals)
+       endif
     endif
     !
     !--reset line and colour settings
@@ -629,5 +666,104 @@ contains
     return
 
   end subroutine exact_solution
+
+  subroutine calculate_errors(xexact,yexact,xpts,ypts,residual,errL1,errL2,errLinf)
+   implicit none
+   real, dimension(:), intent(in) :: xexact,yexact,xpts,ypts
+   real, dimension(size(xexact)), intent(out) :: residual
+   real, intent(out) :: errL1,errL2,errLinf
+   integer :: i,j,npart,iused
+   real :: xi,dy,dx,yexacti,err1,ymax
+
+   errL1 = 0.
+   errL2 = 0.
+   errLinf = 0.
+   residual = 0.
+   npart = size(xpts)
+   iused = 0
+   ymax = -huge(ymax)
+   
+   do i=1,npart
+      xi = xpts(i)
+      yexacti = 0.
+      !
+      !--find nearest point in exact solution table
+      !
+      do j=1,size(xexact)-1
+         if (xexact(j).lt.xi .and. xexact(j+1).gt.xi) then
+            if (abs(residual(i)).gt.tiny(residual)) print*,'already used ',i
+            !--linear interpolation from tabulated exact solution
+            dy = yexact(j+1) - yexact(j)
+            dx = xexact(j+1) - xexact(j)
+            if (dx.gt.0.) then
+               yexacti = yexact(j) + dy/dx*(xi - xexact(j))
+               residual(i) = ypts(i) - yexacti
+            elseif (dy.gt.0.) then
+               yexacti = yexact(j)
+               residual(i) = ypts(i) - yexacti
+            else
+               print "(a)",'error in residual calculation'
+               residual(i) = 0.
+            endif
+            iused = iused + 1
+            ymax = max(ymax,abs(yexacti))
+         endif
+      enddo
+      err1 = abs(residual(i))
+      errL1 = errL1 + err1
+      errL2 = errL2 + err1**2
+      errLinf = max(errLinf,err1)
+   enddo
+   !
+   !--normalise errors (use maximum y value)
+   !
+   if (ymax.gt.tiny(ymax)) then
+      errL1 = errL1/(npart*ymax)
+      errL2 = sqrt(errL2/(npart*ymax**2))
+      errLinf = errLinf/ymax
+   else
+      print "(a)",'error normalising errors'
+      errL1 = 0.
+      errL2 = 0.
+      errLinf = 0.
+   endif
+   
+   if (iused.ne.npart) print*,'errors calculated using ',iused,' of ',npart, 'particles'
+   
+   return
+  end subroutine calculate_errors
+  
+  subroutine plot_residuals(xpts,residuals)
+   implicit none
+   real, dimension(:), intent(in) :: xpts,residuals
+   real :: vptxminold,vptxmaxold,vptyminold,vptymaxold
+   real :: vptxmin,vptxmax,vptymin,vptymax
+   real :: xminold,xmaxold,yminold,ymaxold,ymin,ymax
+
+   !--query old viewport and window size
+   call pgqvp(0,vptxminold,vptxmaxold,vptyminold,vptymaxold)
+   call pgqwin(xminold,xmaxold,yminold,ymaxold)
+
+   !--use bottom 15% of viewport
+   vptxmin = vptxminold
+   vptxmax = vptxmaxold
+   vptymin = vptyminold
+   vptymax = vptyminold + 0.15*(vptymaxold - vptyminold)
+   call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
+   
+   !--set window and draw axes
+   ymax = maxval(abs(residuals))
+   ymin = -ymax
+   call pgswin(xminold,xmaxold,ymin,ymax)
+   call pgbox('ABCNST',0.0,0,'ABCNST',0.0,0)
+   
+   !--plot residuals
+   call pgpt(size(xpts),xpts,residuals,1)
+   
+   !--restore old viewport and window
+   call pgsvp(vptxminold,vptxmaxold,vptyminold,vptymaxold)
+   call pgswin(xminold,xmaxold,yminold,ymaxold)
+   
+  end subroutine plot_residuals
 
 end module exact
