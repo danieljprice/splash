@@ -101,7 +101,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--allocate memory initially
   !
-  nstep_max = max(nstep_max,indexstart,4)
+  nstep_max = max(nstep_max,indexstart,1)
 
   j = indexstart
   nstepsread = 0
