@@ -805,6 +805,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
                  if (ndim.eq.3 .and..not. x_sec) then
                     labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
+                    if (irenderplot.eq.irho) labelrender = 'column density'
                  endif
                  !!--apply transformations to the label for the rendered quantity 
                  !!  but don't do this for log as we use a logarithmic axis instead
