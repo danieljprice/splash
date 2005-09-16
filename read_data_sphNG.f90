@@ -30,7 +30,7 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,units,unitslabel
   use mem_allocation
   implicit none
   integer, intent(in) :: indexstart
@@ -41,7 +41,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: i,j,ifile,ierr,iunit,int1,int2,int3,i1,iarr
   integer :: npart_max,nstep_max,ncolstep,icolumn
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
-  integer :: nskip,nprint,npart,itype,ntypes
+  integer :: nskip,nprint,npart,itype,ntypes,npower
   logical :: iexist, doubleprec
     
   character(len=len(rootname)+10) :: dumpfile
@@ -166,7 +166,23 @@ subroutine read_data(rootname,indexstart,nstepsread)
    if (ierr /= 0) then
       print "(a)",'*** error reading units'
    endif
-
+!   npower = int(log10(udist))
+!   udist = udist/10.**npower
+   units(1:3) = 1./udist
+   unitslabel(1:3) = ' [cm]'
+!   do i=1,3
+!      write(unitslabel(i),"('[ 10\u',i2,'\d cm]')") npower
+!   enddo
+   units(4) = 1./umass
+   unitslabel(4) = ' [g]'
+   units(5) = 1./udist
+   unitslabel(5) = ' [cm]'
+   units(6:8) = utime/udist
+   unitslabel(6:8) = ' [cm/s]'
+   units(9) = utime**2/udist**2
+   unitslabel(9) = ' [erg/g]'
+   units(10) = udist**3/umass
+   unitslabel(10) = ' [g/cm\u3\d]'
 !
 !--Array headers
 !
@@ -292,19 +308,30 @@ subroutine set_labels
   iutherm = 9  !  thermal energy
   irho = 10     ! location of rho in data array
   if (ncolumns.gt.10) then
-     label(11) = 'dgrav'
+     label(11) = 'grad h'
+     label(12) = 'grad soft'
+     if (ncolumns.ge.19) then
+        iBfirst = 13
+        iamvec(13:15) = 13
+        labelvec(13:15) = 'B'
+        idivB = 16
+        label(idivB) = 'div B'
+        iJfirst = 17
+        iamvec(17:19) = 17
+        labelvec(17:19) = 'J'
+     endif
   endif
   
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   do i=1,ndimV
      label(ivx+i-1) = 'v\d'//labelcoord(i,1)
   enddo
-  label(irho) = 'density (g/cm\u3\d)'
+  label(irho) = 'density'
   label(iutherm) = 'u'
   label(ih) = 'h       '
   label(ipmass) = 'particle mass'     
 
-    !
+  !
   !--set labels for vector quantities
   !
   iamvec(ivx:ivx+ndimV-1) = ivx
