@@ -13,7 +13,7 @@ subroutine menu
   use labels, only: label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
-                     icoords,buffer_data,ncolumns
+                     icoords,buffer_data,ncolumns,units,unitslabel
   use settings_limits, only:submenu_limits
   use settings_part, only:submenu_particleplots,iexact,icoordsnew
   use settings_page, only:submenu_page,interactive
@@ -85,10 +85,18 @@ subroutine menu
      
 !--set coordinate and vector labels (depends on coordinate system)
   if (icoords.ne.0 .or. icoordsnew.ne.0) then
-     label(1:ndim) = labelcoord(1:ndim,icoordsnew)
+     do i=1,ndim
+        label(i) = labelcoord(i,icoordsnew)
+        if (abs(units(i)-1.).gt.tiny(units) .and. icoords.eq.icoordsnew) then
+           label(i) = trim(label(i))//trim(unitslabel(i))
+        endif
+     enddo
      do i=1,numplot
         if (iamvec(i).ne.0) then
            label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
+           if (abs(units(i)-1.).gt.tiny(units)) then
+              label(i) = trim(label(i))//trim(unitslabel(i))
+           endif
         endif
      enddo
   endif
