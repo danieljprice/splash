@@ -760,7 +760,8 @@ contains
    real :: vptxminold,vptxmaxold,vptyminold,vptymaxold
    real :: vptxmin,vptxmax,vptymin,vptymax
    real :: xminold,xmaxold,yminold,ymaxold,ymin,ymax
-   real :: oldcolour,oldfill,xch,ych
+   real :: xch,ych
+   integer :: ioldcolour,ioldfill
 
    !--query old viewport and window size
    call pgqvp(0,vptxminold,vptxmaxold,vptyminold,vptymaxold)
@@ -783,16 +784,16 @@ contains
    ymin = -ymax
 
    !--erase space for residual plot
-   call pgqci(oldcolour)
-   call pgqfs(oldfill)
+   call pgqci(ioldcolour)
+   call pgqfs(ioldfill)
    call pgqcs(0,xch,ych)
    call pgsci(0)
    call pgsfs(1)
    call pgsvp(vptxmin - 3.*xch,vptxmax,vptymin,vptymax)
    call pgswin(xminold,xmaxold,ymin,ymax)
    call pgrect(xminold,xmaxold,ymin,ymax)
-   call pgsci(oldcolour)
-   call pgsfs(oldfill)
+   call pgsci(ioldcolour)
+   call pgsfs(ioldfill)
    !--set window and draw axes
    call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
    call pgswin(xminold,xmaxold,ymin,ymax)
