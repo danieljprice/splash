@@ -43,7 +43,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   logical :: iexist,doubleprec
     
   character(len=len(rootname)+10) :: dumpfile
-  integer :: nprint, n1, n2, nptmass
+  integer :: nprint, n1, n2, nptmass, nstepsalloc
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
   
@@ -130,7 +130,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--allocate/reallocate memory if j > maxstep
 !
      if (j.gt.maxstep) then
-        call alloc(maxpart,j+2*nstepsread,maxcol)
+        if (nstepsread.gt.2) then
+	   nstepsalloc = j + 2*nstepsread
+	else
+	   nstepsalloc = j
+	endif
+        call alloc(maxpart,nstepsalloc,maxcol)
      endif
 !
 !--allocate integer arrays required for data read
@@ -202,11 +207,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
      units(10) = udisti**3/umassi
      unitslabel(10) = ' [g/cm\u3\d]'
 !
-!--spit out time
-!
-     tcomp = sqrt((3.*pi)/real(32.*rhozero))
-     print "(2(a,f8.3),a,i8)",'t = ',timei,' t_ff = ',timei/tcomp,' ntotal = ',nprint
-!
 !--convert to single precision and separate pt masses from normal particles
 !
      ipart = 0
@@ -236,6 +236,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            endif
         endif
      enddo
+     if (nptmass.gt.0) print*,' Number of point masses = ',nptmass
      if (nptmassi.ne.nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass'
 !
 !--put any others as unknown
@@ -265,11 +266,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
      if (doubleprec) then
         gamma(j) = real(gammai)
-        time(j) = real(timei)/tcomp
+        time(j) = real(timei)
      else
         gamma(j) = gammasi
-        time(j) = timesi/tcomp     
+        time(j) = timesi   
      endif
+     print*,' time = ',time(j),' gamma = ',gamma(j)
 
      if (ierr /= 0) then
         print "(a)",'*** INCOMPLETE DATA ***'
@@ -335,9 +337,9 @@ subroutine set_labels
   do i=1,ndimV
      label(ivx+i-1) = 'v\d'//labelcoord(i,1)
   enddo
-  label(irho) = 'density (g/cm\u3\d)'
+  label(irho) = 'density'
   label(iutherm) = 'u'
-  label(ih) = 'h       '
+  label(ih) = 'h'
   label(ipmass) = 'particle mass'     
 
     !
@@ -351,7 +353,7 @@ subroutine set_labels
   !
   !--set labels for each particle type
   !
-  ntypes = 2  !!maxparttypes
+  ntypes = 3  !!maxparttypes
   labeltype(1) = 'gas'
   labeltype(2) = 'sink'
   labeltype(3) = 'unknown'

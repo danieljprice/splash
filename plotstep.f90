@@ -579,10 +579,11 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
            if (ndim.eq.3) then
               zmax = 2.*lim(iz,2)
               zmin = 2.*lim(iz,1)
-              dz1 = 1./(zmax - zmin)
+              !dz1 = 1./(zmax - zmin)
               zobs = zmax
-              print*,'dz = ',1./dz1,' zobs = ',zobs
-              print*,'percent warp at z=0 : ',100.*zobs*dz1
+              !print*,'dz = ',1./dz1,' zobs = ',zobs
+              !print*,'percent warp at z=0 : ',100.*zobs*dz1
+	      dz1 = 0.
            endif
            do j=1,ntoti
               xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
