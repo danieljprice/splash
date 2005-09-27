@@ -14,6 +14,7 @@ module exact
   !
   integer :: maxexactpts, iExactLineColour, iExactLineStyle
   logical :: iApplyTransExactFile,iCalculateExactErrors,iPlotResiduals
+  real :: fracinsetResiduals,residualmax
   !
   !--declare all of the parameters required for the various exact solutions
   !
@@ -47,7 +48,7 @@ module exact
   !
   namelist /exactopts/ iexactplotx,iexactploty,filename_exact,maxexactpts, &
        iExactLineColour,iExactLineStyle,iApplyTransExactFile,iCalculateExactErrors, &
-       iPlotResiduals
+       iPlotResiduals,fracinsetResiduals,residualmax
 
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
@@ -109,8 +110,10 @@ contains
     iExactLineColour = 1    ! foreground
     iExactLineStyle = 1     ! solid
     iApplyTransExactFile = .true. ! false if exact from file is already logged
-    iCalculateExactErrors = .false.
+    iCalculateExactErrors = .true.
     iPlotResiduals = .false.
+    fracinsetResiduals = 0.15
+    residualmax = 0.0
     
     return
   end subroutine defaults_set_exact
@@ -245,8 +248,14 @@ contains
     call prompt('enter PGPLOT line colour ',iExactLineColour,1,16)
     call prompt('enter PGPLOT line style  ',iExactLineStyle,1,5)
     call prompt('calculate error norms? ',iCalculateExactErrors)
-    if (iCalculateExactErrors) &
+    if (iCalculateExactErrors) then
        call prompt('plot residuals (as inset in main plot)?',iPlotResiduals)
+       if (iPlotResiduals) then
+          call prompt('enter fraction of plot to use for inset', &
+                      fracinsetResiduals,0.1,0.9)
+          call prompt('enter max residual (0 for adaptive)',residualmax,0.)
+       endif
+    endif
   
     return
   end subroutine options_exact
@@ -384,7 +393,8 @@ contains
   !-----------------------------------------------------------------------
 
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
-                            ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot,pmass,npart)
+                            ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot, &
+                            pmass,npart,imarker)
     use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr
     use prompting
     use exactfromfile, only:exact_fromfile
@@ -400,10 +410,10 @@ contains
     use transforms
     implicit none
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
-    integer, intent(in) :: ndim,ndimV,npart
+    integer, intent(in) :: ndim,ndimV,npart,imarker
     real, intent(in) :: time,xmin,xmax,gamma
     real, intent(in), dimension(npart) :: xplot,yplot,pmass
-    real, dimension(npart) :: residuals
+    real, dimension(npart) :: residuals,ypart
     
     real, parameter :: zero = 1.e-10
     integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle
@@ -648,13 +658,22 @@ contains
        if (itransx.gt.0) call transform(xexact(1:iexactpts),itransx)
        if (itransy.gt.0) call transform(yexact(1:iexactpts),itransy)
        call pgline(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
+       !
+       !--calculate errors
+       !
        if (iCalculateExactErrors) then
+          !--untransform y axis again for error calculation
+          if (itransy.gt.0) call transform_inverse(yexact(1:iexactpts),itransy)
+          !--untransform particle y axis also
+          ypart(1:npart) = yplot(1:npart)
+          if (itransy.gt.0) call transform_inverse(ypart(1:npart),itransy)          
+          !--calculate errors
           call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts), &
-                                xplot(1:npart),yplot(1:npart),residuals(1:npart), &
+                                xplot(1:npart),ypart(1:npart),residuals(1:npart), &
                                 errL1,errL2,errLinf)
           print "(3(a,1pe10.3,1x))",' L1 error = ',errL1,' L2 error = ',errL2, &
                                    ' L(infinity) error = ',errLinf
-          if (iPlotResiduals) call plot_residuals(xplot,residuals)
+          if (iPlotResiduals) call plot_residuals(xplot,residuals,imarker)
        endif
     endif
     !
@@ -670,7 +689,7 @@ contains
   subroutine calculate_errors(xexact,yexact,xpts,ypts,residual,errL1,errL2,errLinf)
    implicit none
    real, dimension(:), intent(in) :: xexact,yexact,xpts,ypts
-   real, dimension(size(xexact)), intent(out) :: residual
+   real, dimension(size(xpts)), intent(out) :: residual
    real, intent(out) :: errL1,errL2,errLinf
    integer :: i,j,npart,iused
    real :: xi,dy,dx,yexacti,err1,ymax
@@ -713,6 +732,7 @@ contains
       errL1 = errL1 + err1
       errL2 = errL2 + err1**2
       errLinf = max(errLinf,err1)
+      if (yexacti.gt.tiny(yexacti)) residual(i) = residual(i)/abs(yexacti)
    enddo
    !
    !--normalise errors (use maximum y value)
@@ -733,32 +753,53 @@ contains
    return
   end subroutine calculate_errors
   
-  subroutine plot_residuals(xpts,residuals)
+  subroutine plot_residuals(xpts,residuals,imarker)
    implicit none
    real, dimension(:), intent(in) :: xpts,residuals
+   integer, intent(in) :: imarker
    real :: vptxminold,vptxmaxold,vptyminold,vptymaxold
    real :: vptxmin,vptxmax,vptymin,vptymax
    real :: xminold,xmaxold,yminold,ymaxold,ymin,ymax
+   real :: oldcolour,oldfill,xch,ych
 
    !--query old viewport and window size
    call pgqvp(0,vptxminold,vptxmaxold,vptyminold,vptymaxold)
    call pgqwin(xminold,xmaxold,yminold,ymaxold)
 
-   !--use bottom 15% of viewport
+   !--use specified bottom % of viewport
    vptxmin = vptxminold
    vptxmax = vptxmaxold
    vptymin = vptyminold
-   vptymax = vptyminold + 0.15*(vptymaxold - vptyminold)
+   vptymax = vptyminold + FracinsetResiduals*(vptymaxold - vptyminold)
    call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
-   
-   !--set window and draw axes
-   ymax = maxval(abs(residuals))
+ 
+   !--set window
+   if (residualmax.lt.tiny(residualmax)) then
+      ymax = maxval(abs(residuals))
+      print*,'max residual = ',ymax
+   else
+      ymax = residualmax
+   endif
    ymin = -ymax
+
+   !--erase space for residual plot
+   call pgqci(oldcolour)
+   call pgqfs(oldfill)
+   call pgqcs(0,xch,ych)
+   call pgsci(0)
+   call pgsfs(1)
+   call pgsvp(vptxmin - 3.*xch,vptxmax,vptymin,vptymax)
    call pgswin(xminold,xmaxold,ymin,ymax)
-   call pgbox('ABCNST',0.0,0,'ABCNST',0.0,0)
+   call pgrect(xminold,xmaxold,ymin,ymax)
+   call pgsci(oldcolour)
+   call pgsfs(oldfill)
+   !--set window and draw axes
+   call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
+   call pgswin(xminold,xmaxold,ymin,ymax)
+   call pgbox('ABCST',0.0,0,'BCNST',0.0,0)
    
    !--plot residuals
-   call pgpt(size(xpts),xpts,residuals,1)
+   call pgpt(size(xpts),xpts,residuals,imarker)
    
    !--restore old viewport and window
    call pgsvp(vptxminold,vptxmaxold,vptyminold,vptymaxold)
