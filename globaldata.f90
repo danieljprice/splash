@@ -66,11 +66,11 @@ module settings_data
  integer :: nstart,n_end,nfreq
  integer, dimension(10) :: isteplist
  logical :: ivegotdata, DataIsBuffered
- logical :: buffer_data,iUseStepList, iCalcQuantities
+ logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
  real, dimension(maxplot) :: units
  character(len=20), dimension(maxplot) :: unitslabel
 
- namelist /dataopts/ buffer_data, iCalcQuantities,units,unitslabel
+ namelist /dataopts/ buffer_data,iCalcQuantities,iRescale
 
 end module settings_data
 !

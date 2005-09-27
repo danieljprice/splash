@@ -48,6 +48,7 @@ subroutine defaults_set_data
   DataIsBuffered = .false.
   units(:) = 1.0
   unitslabel(:) = ' '
+  iRescale = .false.
   
   return
 end subroutine defaults_set_data
@@ -67,11 +68,10 @@ subroutine submenu_data
  implicit none
  integer :: ians, i, icol
  character(len=30) :: fmtstring
- logical :: ireadnow,UnitsHaveChanged,iReScale
+ logical :: ireadnow,UnitsHaveChanged,iChange
  real :: unitsprev
  
  ians = 0
- iReScale = any(abs(units(:)-1.0).gt.tiny(units))
  
  if (iUseStepList) then
     print 10, n_end,iUseStepList,buffer_data,iCalcQuantities,iRescale
@@ -144,40 +144,47 @@ subroutine submenu_data
     endif
 !------------------------------------------------------------------------
  case(6)
-    icol = 1
     UnitsHaveChanged = .false.
-    do while(icol.gt.0)
+    call prompt('Rescale data using unit arrays?',iRescale)
+    if (iRescale) then
+       iChange = .false.
+       call prompt('Do you want to set the rescaling factors? '// &
+                   '(warning: may be overwritten by data read)',iChange)
        icol = 0
-       call prompt('enter column to rescale (0=quit)(-1=reset all)',icol,-1,numplot)
-       if (icol.gt.0) then
-          unitsprev = units(icol)          
-          call prompt('enter rescaling factor (new=old/scale)',units(icol),0.)
-          if (abs(units(icol)-1.0).gt.tiny(units) .and. units(icol).gt.tiny(units)) then
-             if (abs(units(icol) - unitsprev).gt.tiny(units)) UnitsHaveChanged = .true.
-             if (len_trim(unitslabel(icol)).eq.0 .or. UnitsHaveChanged) then
-             !--suggest a label amendment if none already set or if units have changed
-                if (units(icol).gt.100 .or. units(icol).lt.1.e-1) then
-                   write(unitslabel(icol),"(1pe8.1)") units(icol)
-                else
-                   write(unitslabel(icol),"(f5.1)") units(icol)                   
+       if (iChange) icol = 1
+       do while(icol.gt.0)
+          icol = 0
+          call prompt('enter column to rescale (0=quit)(-1=reset all)',icol,-1,numplot)
+          if (icol.gt.0) then
+             unitsprev = units(icol)          
+             call prompt('enter rescaling factor (new=old/scale)',units(icol),0.)
+             if (abs(units(icol)-1.0).gt.tiny(units) .and. units(icol).gt.tiny(units)) then
+                if (abs(units(icol) - unitsprev).gt.tiny(units)) UnitsHaveChanged = .true.
+                if (len_trim(unitslabel(icol)).eq.0 .or. UnitsHaveChanged) then
+                !--suggest a label amendment if none already set or if units have changed
+                   if (units(icol).gt.100 .or. units(icol).lt.1.e-1) then
+                      write(unitslabel(icol),"(1pe8.1)") units(icol)
+                   else
+                      write(unitslabel(icol),"(f5.1)") units(icol)                   
+                   endif
+                   unitslabel(icol) = ' [ x '//trim(adjustl(unitslabel(icol)))//' ]'
                 endif
-                unitslabel(icol) = ' [ x '//trim(adjustl(unitslabel(icol)))//' ]'
+                !--label amendment can be overwritten
+                call prompt('enter label amendment',unitslabel(icol))
+             else
+                UnitsHaveChanged = .true.
+                units(icol) = 1.0
+                unitslabel(icol) = ' '
              endif
-             !--label amendment can be overwritten
-             call prompt('enter label amendment',unitslabel(icol))
-          else
+          elseif (icol.lt.0) then
              UnitsHaveChanged = .true.
-             units(icol) = 1.0
-             unitslabel(icol) = ' '
+             print "(/a)",' resetting all scale factors to unity...'
+             units = 1.0
+             unitslabel = ' '
           endif
-       elseif (icol.lt.0) then
-          UnitsHaveChanged = .true.
-          print "(/a)",' resetting all scale factors to unity...'
-          units = 1.0
-          unitslabel = ' '
-       endif
-       print*
-    enddo
+          print*
+       enddo
+    endif
     !
     !--re-read/rescale data if units have changed
     !

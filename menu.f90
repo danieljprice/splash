@@ -13,7 +13,7 @@ subroutine menu
   use labels, only: label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
-                     icoords,buffer_data,ncolumns,units,unitslabel
+                     icoords,buffer_data,ncolumns,unitslabel,iRescale
   use settings_limits, only:submenu_limits
   use settings_part, only:submenu_particleplots,iexact,icoordsnew
   use settings_page, only:submenu_page,interactive
@@ -37,7 +37,6 @@ subroutine menu
 
   irender = 0
   ivecplot = 0
-  ipowerspec = 0
   ipickx = 1
   ipicky = 1
 
@@ -59,15 +58,21 @@ subroutine menu
   !  we don't start plotting new quantities
   !
   nextra = 0
+  ipowerspec = 0
+  iacplane = 0
   if (ndim.le.1) then ! if 1D or no coord data (then prompts for which x)
      nextra = 1      ! one extra plot = power spectrum
      ipowerspec = ncolumns + ncalc + 1
      label(ipowerspec) = '1D power spectrum'
+  else
+     ipowerspec = 0
   endif
   if (iexact.eq.4) then       ! toy star plot a-c plane
      nextra = nextra + 1
      iacplane = ncolumns + ncalc + nextra
      label(iacplane) = 'a-c plane'
+  else
+     iacplane = 0
   endif
 
   if (ivegotdata) then
@@ -87,14 +92,14 @@ subroutine menu
   if (icoords.ne.0 .or. icoordsnew.ne.0) then
      do i=1,ndim
         label(i) = labelcoord(i,icoordsnew)
-        if (abs(units(i)-1.).gt.tiny(units) .and. icoords.eq.icoordsnew) then
+        if (iRescale .and. icoords.eq.icoordsnew) then
            label(i) = trim(label(i))//trim(unitslabel(i))
         endif
      enddo
      do i=1,numplot
         if (iamvec(i).ne.0) then
            label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
-           if (abs(units(i)-1.).gt.tiny(units)) then
+           if (iRescale) then
               label(i) = trim(label(i))//trim(unitslabel(i))
            endif
         endif
@@ -196,7 +201,7 @@ subroutine menu
            call prompt(' (x axis) ',ipickx)
            !--go back to y prompt if out of range
            ! (apologies for the gratuitous use of goto - I learnt BASIC as a kid)
-           if (ipickx.gt.numplot .or. ipickx.le.0) goto 9901
+           if (ipickx.gt.numplot .or. ipickx.le.0) cycle menuloop
            !
            !--work out whether rendering is allowed based on presence of rho, h & m in data read
            !  also must be in base coordinate system and no transformations applied
