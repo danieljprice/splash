@@ -231,7 +231,8 @@ end subroutine initialise_plotting
 subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                     npartoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
-  use exact, only:exact_solution,atstar,ctstar,sigma
+  use exact, only:exact_solution, &
+             atstar,ctstar,sigma
   use toystar1D, only:exact_toystar_ACplane
   use toystar2D, only:exact_toystar_ACplane2D
   use labels, only:label,labeltype,labelvec,iamvec, &
@@ -974,7 +975,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                     itrans(iplotx),itrans(iploty),icoordsnew, &
                     ndim,ndimV,timei,xmin,xmax,gammai, &
                     xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
-                    pmass(1:npartoftype(1)),npartoftype(1))
+                    pmass(1:npartoftype(1)),npartoftype(1),imarktype(1))
            endif
            !
            !--enter interactive mode
@@ -1086,7 +1087,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
            call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                 xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
-                pmass(1:npartoftype(1)),npartoftype(1))
+                pmass(1:npartoftype(1)),npartoftype(1),imarktype(1))
         endif
         !
         !--enter interactive mode
