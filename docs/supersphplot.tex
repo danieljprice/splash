@@ -440,7 +440,7 @@ kernel and $h$ is correct.
 \item \textbf{plot exact solution}. The following exact solutions are provided
 \begin{itemize}
 \item Hydrodynamic shock tubes (Riemann problem)
-\item Spherically-symmetric sedov blast wave problem. This
+\item Spherically-symmetric sedov blast wave problem.
 \item Polytropes (with arbitrary $\gamma$)
 \item One dimensional toy stars. This is a particularly simple test
 problem for SPH codes described in \citet{mp04}.
@@ -448,17 +448,19 @@ problem for SPH codes described in \citet{mp04}.
 wavelength on the plot specified.
 \item MHD shock tubes (tabulated). These are tabulated solutions for 7 specific MHD
 shock tube problems.
+\item h vs $\rho$. This is the exact solution relating smoothing length and density in
+the form $h \propto (m/\rho)^{1/\nu}$ where $\nu$ is the number of spatial dimensions.
+\item radial density profiles. For various models commonly used in $N-$body simulations.
 \item Exact solution from a file. This option reads in an exact solution from the
 filename input by the user, assuming the file contains two columns containing the $x-$ and $y-$ co-ordinates of
 an exact solution to be plotted as a line on the plot specified.
 \end{itemize}
 Details of the calculation of the exact solutions and examples of their output are
-given in Appendix \ref{sec:exact}. Note that the PGPLOT call to plot the line is included in the
-exact solution subroutine so as to provide flexibility should an exact solution require
-multiple lines on the page / different line styles etc. (although none of those
-provided do).
+given in Appendix~\ref{sec:exact}.
 \item \textbf{exact solution options}. These options allow you to change the colour and line
-style of the exact solution plot.
+style of the exact solution plot. Also turns on/off calculation of various error norms
+together with an inset plot of the residual error on the particles. See
+Appendix~\ref{sec:exact} for details.
 \end{enumerate}
 
 
@@ -475,7 +477,7 @@ data.
 \item \textbf{x-y limits track particle}. Co-ordinate limits are centred on the
 selected particle for all timesteps, with offsets as input by the user. This
 effectively gives the `Lagrangian' perspective.
-\item \textbf{zoom in/out}.
+\item \textbf{zoom in/out}. Multiplies the current limits by a fixed factor.
 \item \textbf{apply transformations (log,1/x)}. Allows you to apply transformations such as log, 1/x, sqrt
 etc. to selected data columns.
 \item \textbf{save current limits to file}. Saves the current values of the
@@ -500,7 +502,7 @@ the $y-$axis is determined by the aspect ratio of the current plot.
 images. A demonstration of all the colour schemes can be also be invoked from
 this menu option. Setting the colour scheme to zero plots only the contours of
 the rendered quantity (assuming that plot contours is set to true). The colour
-schemes given are as follows:
+schemes given are shown in Figure~\ref{fig:colourschemes} and are as follows:
 
 \begin{tabular}{rcp{0.8\textwidth}}
   0 & : & contours only \\
@@ -510,10 +512,19 @@ schemes given are as follows:
   4 & : & rainbow \\
   5 & : & universe \\
   6 & : & shade of pale \\
-  7 & : & red-blue-green \\
-  8 & : & heat
+  7 & : & red-blue-yellow \\
+  8 & : & heat \\
+  9 & : & blue-yellow-red \\
+  10 & : & purple-blue-green \\
 \end{tabular}
 
+\begin{figure}
+\begin{center}
+\begin{turn}{270}\epsfig{file=colourschemes.ps,height=\textwidth}\end{turn}
+\caption{SUPERSPHPLOT colour schemes}
+\label{fig:colourschemes}
+\end{center}
+\end{figure}
 Note that the colour scheme can also be changed interactively by pressing m or M
 in interactive mode.
 
@@ -916,6 +927,7 @@ Filename & Description \\
      danpgwedg.f          & my very minor modification of pgwedg\\
      defaults.f90           & writes/reads default options to/from file\\
      exact.f90              & module handling exact solution settings\\
+     exact\_densityprofiles.f90 & various $N-$body density profiles \\
      exact\_fromfile.f90     & reads an exact solution tabulated in a file\\
      exact\_mhdshock.f90     & some tabulated solutions for mhd shocks\\ 
      exact\_polytrope.f90    & exact solution for a polytrope\\
@@ -955,12 +967,46 @@ Filename & Description \\
      setpage.f90            & sets up the PGPLOT page (replaces call to PGENV/PGLAB)\\
      supersphplot.f90	 & main program, drives menu loop\\
      timestepping.f90       & controls stepping through timesteps\\
-     titles\_read.f90        & reads a list of titles to be used to label each timestep\\
+     titles.f90        & reads a list of titles to be used to label each timestep\\
      transform.f90	 	 & applies various transformations to data (log10, 1/x, etc) \\
 \end{longtable}
 
-\section{Exact solutions}
+\section{Exact solution details}
 \label{sec:exact}
+\subsection{Errors}
+The error norms calculated when exact solutions are plotted are as follows: The
+error for each particle is given by
+\begin{equation}
+e_i = f_i - f_{exact},
+\end{equation}
+where the exact solution $f_{exact}(x)$ is the solution returned from the exact
+solution subroutines (with resolution adjustable in the exact solution options menu
+option) interpolated to the position of the current particle $x_i$ via a simple linear
+interpolation. The absolute $L_1$ error norm is simply the average of the errors across
+the domain, calculated according to
+\begin{equation}
+\Vert e \Vert_{L_1} = \frac{1}{N f_{max}} \sum_{i=1}^N \vert e_i \vert,
+\end{equation}
+where $f_{max}$ is the maximum value of the exact solution in the region in which the
+particles lie (also only particles in the current plot are used) which is used to
+normalise the error estimate. A better error norm is the $L_2$ or \emph{Root Mean Square}
+ (RMS) norm given by
+\begin{equation}
+\Vert e \Vert_{L_2} = \left[\frac{1}{N} \left( \frac{1}{f_{max}} \sum_{i=1}^N \vert e_i
+\vert^2 \right)\right]^{1/2}.
+\end{equation}
+Finally the maximum error, or $L_\infty$ norm is calculated according to
+\begin{equation}
+\Vert e \Vert_{L_\infty} = \frac{1}{f_{max}} {\rm max}_i \vert e_i \vert.
+\end{equation}
+which is the most stringent error norm.
+
+ The inset plot of the individual particle errors shows the fractional deviation for
+ each particle given by
+\begin{equation}
+e_{i,frac} = (f_i - f_{exact}) / f_{exact}.
+\end{equation}
+
 \subsection{Shock tubes (Riemann problem)}
  The subroutine \verb+exact_shock+ plots the exact solution for a one-dimensional shock tube
 (Riemann problem). The difficult bit of the problem is to determine the jump in
