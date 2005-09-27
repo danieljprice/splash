@@ -68,12 +68,12 @@ subroutine exact_densityprofiles(iplot,iprofile,Msphere,rsoft,xplot,yplot,ierr)
     case(2)
 !--potential
        do i=1,size(xplot)
-          yplot(i) = -Msphere/sqrt(rsoft**2 + xplot(i)**2)
+          yplot(i) = -Msphere/(rsoft + xplot(i))
        enddo
 !--force
     case(3)
        do i=1,size(xplot)
-          yplot(i) = Msphere*xplot(i)/((rsoft**2 + xplot(i)**2)**1.5)
+          yplot(i) = Msphere/(rsoft + xplot(i))**2
        enddo 
 !--density
     case default
