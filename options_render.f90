@@ -67,8 +67,8 @@ subroutine submenu_render
     case(2)
        promptloop: do
           if (icolours.lt.0) icolours = 1
-          write(*,"(6(5(i2,a),/))") (i,'='//trim(schemename(i)),i=1,ncolourschemes)
-          print *,'(-ve = demo, 0 = contours only)'
+          write(*,"(i2,a,1x)") (i,': '//trim(schemename(i)),i=1,ncolourschemes)
+          print "(a)",'(-ve = demo, 0 = contours only)'
           call prompt('enter colour scheme for rendering ',icolours,max=ncolourschemes)
           if (icolours.lt.0) then
              call colour_demo
