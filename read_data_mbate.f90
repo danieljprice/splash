@@ -30,7 +30,7 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,units,unitslabel
   use mem_allocation
   implicit none
   integer, intent(in) :: indexstart
@@ -38,9 +38,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(len=*), intent(in) :: rootname
   integer, parameter :: maxptmass = 1000
   real, parameter :: pi=3.141592653589
-  integer :: i,j,ifile,ierr
-  integer :: npart_max,nstep_max,ncolstep
-  logical :: iexist
+  integer :: i,j,ifile,ierr,ipart
+  integer :: npart_max,nstep_max,ncolstep,npart,nptmassi,nunknown
+  logical :: iexist,doubleprec
     
   character(len=len(rootname)+10) :: dumpfile
   integer :: nprint, n1, n2, nptmass
@@ -49,21 +49,18 @@ subroutine read_data(rootname,indexstart,nstepsread)
   
   !--use these lines if dump is double precision
   real(doub_prec), dimension(:,:), allocatable :: dattemp
-  real(doub_prec), dimension(:), allocatable :: dummy
   real(doub_prec) :: udisti,umassi,utimei
   real(doub_prec) :: timei, gammai
   real(doub_prec) :: rhozero, RK2
   real(doub_prec) :: escap,tkin,tgrav,tterm
-  real(doub_prec) :: dtmax, tcomp
+  real(doub_prec) :: dtmax
 
   !--use these lines for single precision
-  !real, dimension(:,:), allocatable :: dattemp
-  !real, dimension(:), allocatable :: dummy
-  !real(doub_prec) :: udisti,umassi,utimei
-  !real :: timei, gammai
-  !real :: rhozero, RK2
-  !real :: escap,tkin,tgrav,tterm
-  !real :: dtmax,tcomp
+  real, dimension(:,:), allocatable :: dattemps
+  real :: timesi, gammasi
+  real :: rhozeros, RK2s
+  real :: escaps,tkins,tgravs,tterms
+  real :: dtmaxs,tcomp
 
   nstepsread = 0
   nstep_max = 0
@@ -106,10 +103,18 @@ subroutine read_data(rootname,indexstart,nstepsread)
       !--read the number of particles in the first step,
       !  allocate memory and rewind
       !
-      read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint 
+      read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint,n1,n2,timei
+      print*,'nprint = ',nprint
       if (.not.allocated(dat) .or. nprint.gt.npart_max) then
          npart_max = max(npart_max,INT(1.1*nprint))
          call alloc(npart_max,nstep_max,ncolstep+ncalc)
+      endif
+      doubleprec = .true.
+      !--try single precision if non-sensible values for time, gamma etc.
+      if (ierr.ne.0 .or. timei.lt.0. .or. timei.gt.1e30  &
+          .or. gammai.lt.1. .or. gammai.gt.10. &
+          .or. rhozero.lt.0. .or. RK2.lt.0. .or. RK2.gt.1.e10) then
+          doubleprec = .false.
       endif
       rewind(15)
    endif
@@ -128,18 +133,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
         call alloc(maxpart,j+2*nstepsread,maxcol)
      endif
 !
-!--allocate a temporary array for double precision variables
+!--allocate integer arrays required for data read
 !
-     if (allocated(dattemp)) deallocate(dattemp)
-     allocate(dattemp(npart_max,ncolstep),stat=ierr)
-     if (ierr /= 0) print*,'not enough memory in read_data'
-!
-!--allocate a dummy arrays for data I want to throw away
-!
-     if (allocated(dummy)) deallocate(dummy)
-     allocate(dummy(npart_max),stat=ierr)
-     if (ierr /= 0) print*,'not enough memory in read_data'
-
      if (allocated(isteps)) deallocate(isteps)
      allocate(isteps(npart_max),stat=ierr)
      if (ierr /= 0) print*,'not enough memory in read_data'
@@ -147,58 +142,142 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (allocated(iphase)) deallocate(iphase)
      allocate(iphase(npart_max),stat=ierr)
      if (ierr /= 0) print*,'not enough memory in read_data'
-
 !
 !--now read the timestep data in the dumpfile
 !
      write(*,"(a,i5,a)",advance="no") '| step ',j,': '
 
-     read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
-          nprint, n1, n2, timei, gammai, rhozero, RK2, &
-          (dattemp(i,7), i=1, nprint),escap, tkin, tgrav, tterm, &
-          (dattemp(i,1), i=1, nprint), (dattemp(i,2), i=1, nprint), &
-          (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
-          (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
-          (dattemp(i,8), i=1, nprint), (dattemp(i,9), i=1, nprint), &
-          (dattemp(i,10), i=1, nprint), (dattemp(i,11),i=1,nprint), &
-          dtmax, (isteps(i), i=1,nprint), (iphase(i),i=1,nprint), &
-          nptmass, (listpm(i), i=1,nptmass)
+     if (doubleprec) then
+        print "(a)",'double precision dump'
+        !
+        !--allocate a temporary array for (double precision) variables
+        !
+        if (allocated(dattemp)) deallocate(dattemp)
+        allocate(dattemp(npart_max,ncolstep),stat=ierr)
+        if (ierr /= 0) print*,'not enough memory in read_data'
+
+        read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
+             nprint, n1, n2, timei, gammai, rhozero, RK2, &
+             (dattemp(i,7), i=1, nprint),escap, tkin, tgrav, tterm, &
+             (dattemp(i,1), i=1, nprint), (dattemp(i,2), i=1, nprint), &
+             (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
+             (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
+             (dattemp(i,8), i=1, nprint), (dattemp(i,9), i=1, nprint), &
+             (dattemp(i,10), i=1, nprint), (dattemp(i,11),i=1,nprint), &
+             dtmax, (isteps(i), i=1,nprint), (iphase(i),i=1,nprint), &
+             nptmass, (listpm(i), i=1,nptmass)
+     else
+        !
+        !--allocate a temporary array for (double precision) variables
+        !
+        if (allocated(dattemps)) deallocate(dattemps)
+        allocate(dattemps(npart_max,ncolstep),stat=ierr)
+        if (ierr /= 0) print*,'not enough memory in read_data'
+
+        print "(a)",'single precision dump'
+        read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
+             nprint, n1, n2, timesi, gammasi, rhozeros, RK2s, &
+             (dattemps(i,7), i=1, nprint),escaps, tkins, tgravs, tterms, &
+             (dattemps(i,1), i=1, nprint), (dattemps(i,2), i=1, nprint), &
+             (dattemps(i,3), i=1, nprint), (dattemps(i,4), i=1, nprint), &
+             (dattemps(i,5), i=1, nprint), (dattemps(i,6), i=1, nprint), &
+             (dattemps(i,8), i=1, nprint), (dattemps(i,9), i=1, nprint), &
+             (dattemps(i,10), i=1, nprint), (dattemps(i,11),i=1,nprint), &
+             dtmaxs, (isteps(i), i=1,nprint), (iphase(i),i=1,nprint), &
+             nptmass, (listpm(i), i=1,nptmass)
+     endif
+!
+!--set transformation factors between code units/real units
+!
+     units(1:3) = 1./udisti
+     unitslabel(1:3) = ' [cm]'
+     units(4:6) = utimei/udisti
+     unitslabel(4:6) = ' [cm/s]'
+     units(7) = 1./udisti
+     unitslabel(7) = ' [cm]'
+     units(8) = utimei**2/udisti**2
+     unitslabel(8) = ' [erg/g]'
+     units(9) = 1./umassi
+     unitslabel(9) = ' [g]'
+     units(10) = udisti**3/umassi
+     unitslabel(10) = ' [g/cm\u3\d]'
+!
+!--spit out time
+!
+     tcomp = sqrt((3.*pi)/real(32.*rhozero))
+     print "(2(a,f8.3),a,i8)",'t = ',timei,' t_ff = ',timei/tcomp,' ntotal = ',nprint
+!
+!--convert to single precision and separate pt masses from normal particles
+!
+     ipart = 0
+     do i=1,nprint
+        if (iphase(i).eq.0) then
+           ipart = ipart + 1
+           if (doubleprec) then
+              dat(ipart,1:ncolstep,j) = real(dattemp(i,1:ncolstep))
+           else
+              dat(ipart,1:ncolstep,j) = dattemps(i,1:ncolstep)
+           endif
+        endif
+     enddo
+     npart = ipart
+!
+!--place point masses after normal particles
+!     
+     nptmassi = 0
+     do i=1,nprint
+        if (iphase(i).ge.1) then
+           ipart = ipart + 1
+           nptmassi = nptmassi + 1
+           if (doubleprec) then
+              dat(ipart,1:ncolstep,j) = real(dattemp(i,1:ncolstep))
+           else
+              dat(ipart,1:ncolstep,j) = dattemps(i,1:ncolstep)
+           endif
+        endif
+     enddo
+     if (nptmassi.ne.nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass'
+!
+!--put any others as unknown
+!     
+     nunknown = 0
+     do i=1,nprint
+        if (iphase(i).lt.0) then
+           ipart = ipart + 1
+           nunknown = nunknown + 1
+           if (doubleprec) then
+              dat(ipart,1:ncolstep,j) = real(dattemp(i,1:ncolstep))
+           else
+              dat(ipart,1:ncolstep,j) = dattemps(i,1:ncolstep)
+           endif
+        endif
+     enddo
+     if (nunknown.gt.0) print *,nunknown,' particles of unknown type (probably dead)' 
+
+     if (allocated(dattemp)) deallocate(dattemp)
+     if (allocated(dattemps)) deallocate(dattemps)
+     if (allocated(isteps)) deallocate(isteps)
+     if (allocated(iphase)) deallocate(iphase)
+
+     npartoftype(1,j) = npart
+     npartoftype(2,j) = nptmassi
+     npartoftype(3,j) = nunknown
+
+     if (doubleprec) then
+        gamma(j) = real(gammai)
+        time(j) = real(timei)/tcomp
+     else
+        gamma(j) = gammasi
+        time(j) = timesi/tcomp     
+     endif
 
      if (ierr /= 0) then
-        print "(a)",'*** INCOMPLETE DATA (CHECK PRECISION) ***'
+        print "(a)",'*** INCOMPLETE DATA ***'
         nstepsread = nstepsread + 1
         exit over_steps_in_file
      else
         nstepsread = nstepsread + 1
      endif
-!
-!--spit out time
-!
-     tcomp = sqrt((3.*pi)/(32*rhozero))
-     print "(2(a,f8.3),a,i8)",'t = ',timei,' t_ff = ',timei/tcomp,' ntotal = ',nprint
-     if (nptmass.gt.0) then
-        print *,'WARNING: nptmasses = ',nptmass,' but ptmasses not yet implemented'
-     endif
-!
-!--convert to single precision
-!
-     print "(a)",'| converting to single precision... '
-     dat(1:nprint,1:ncolstep,j) = real(dattemp(1:nprint,1:ncolstep))
-
-!
-!--convert to physical units
-!
-     dat(1:nprint,10,j) = dat(1:nprint,10,j) !!!*real(umassi/udisti**3)
-     if (allocated(dattemp)) deallocate(dattemp)
-     if (allocated(dummy)) deallocate(dummy)
-     if (allocated(isteps)) deallocate(isteps)
-     if (allocated(iphase)) deallocate(iphase)
-
-     npartoftype(1,j) = nprint
-     npartoftype(2,j) = 0
-
-     gamma(j) = real(gammai)
-     time(j) = real(timei)/tcomp
      j = j + 1
 
    enddo over_steps_in_file
@@ -274,8 +353,8 @@ subroutine set_labels
   !
   ntypes = 2  !!maxparttypes
   labeltype(1) = 'gas'
-  !!labeltype(2) = 'ghost'
   labeltype(2) = 'sink'
+  labeltype(3) = 'unknown'
  
 !-----------------------------------------------------------
 
