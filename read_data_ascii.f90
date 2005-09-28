@@ -34,8 +34,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,iunit,ncolstep
-  integer :: nprint,npart_max,nstep_max,icol
+  integer :: nprint,npart_max,nstep_max,icol,nheaderlines
   logical :: iexist
+  real :: dummyreal
   character(len=len(rootname)+4) :: dumpfile
 
   nstepsread = 0
@@ -69,8 +70,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   if (ierr /= 0) then
      print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
   else
-     call get_ncolumns(iunit,ncolstep)
-     if (ncolstep.le.0) return
+     call get_ncolumns(iunit,ncolstep,nheaderlines)
+     if (ncolstep.le.0) then
+        print "(a)",'*** ERROR: zero/undetermined number of columns in file ***'
+        return
+     endif
      !
      !--allocate memory initially
      !
@@ -90,7 +94,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   if (j.gt.maxstep) then
      call alloc(maxpart,j+1,maxcol)
   endif
-
+!
+!--read header lines, try to use it to set time
+!
+  do i=1,nheaderlines
+     read(iunit,*,iostat=ierr) dummyreal
+     if (ierr.eq.0) time(j) = dummyreal
+     print*,'setting time = ',dummyreal,' from header line ',i
+  enddo
 !
 !--now read the timestep data in the dumpfile
 !
@@ -108,7 +119,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nprint = i - 1
   nstepsread = nstepsread + 1
   if (ierr < 0) then
-     print*,' end of file: npts = ',nprint
+     print*,'end of file: npts = ',nprint
   elseif (ierr > 0) then
      print*,' *** error reading file, npts = ',nprint,' ***'
   endif
@@ -117,7 +128,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   npartoftype(:,j) = 0
   npartoftype(1,j) = nprint
 
-  time(j) = 0. !!real(j)
+  !!time(j) = 0. !!real(j)
   !!print*,' setting "time" = dump number = ',time(j)
   gamma(j) = 1.666666666667
 
@@ -133,34 +144,66 @@ contains
 ! file must already be open and at the start
 ! slightly ad-hoc but its the best way I could think of!
 !
-subroutine get_ncolumns(lunit,ncolumns)
+subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
  implicit none
  integer, intent(in) :: lunit
- integer, intent(out) :: ncolumns
- integer :: ierr,i,nblanklines
+ integer, intent(out) :: ncolumns,nheaderlines
+ integer :: ierr,ncolprev,ncolsthisline
  character(len=2000) :: line
- real :: dummyreal(100)
 
- nblanklines = 0
+ nheaderlines = 0
  line = ' '
  ierr = 0
- do while (len_trim(line).eq.0 .and. ierr.eq.0)
+ ncolumns = 0
+ ncolprev = 666
+ ncolsthisline = 0
+!
+!--loop until we find two consecutive lines with the same number of columns (but non zero)
+!
+ do while ((len_trim(line).eq.0 .or. ncolsthisline.ne.ncolprev .or. ncolumns.eq.0) .and. ierr.eq.0)
+    ncolprev = ncolumns
     read(lunit,"(a)",iostat=ierr) line
-    nblanklines = nblanklines + 1
+    if (ierr.eq.0) call get_columns(line,ncolsthisline)
+    if (ncolsthisline.ne.0) nheaderlines = nheaderlines + 1
+    if (ncolsthisline.gt.0) ncolumns = ncolsthisline
+    print*,'ncolumns = ',ncolumns,ncolsthisline,' header lines = ',nheaderlines
  enddo
- if (ierr .ne.0 ) then
+ !--subtract 2 from the header line count (the last two lines which were the same)
+ nheaderlines = max(nheaderlines - 2,0)
+ if (ierr .gt.0 ) then
     ncolumns = 0
-    return
+ elseif (ierr .lt. 0) then
+    print*,ncolumns,ncolprev
  else
-    if (nblanklines.gt.1) print*,'skipped ',nblanklines-1,' blank lines'
-    rewind(lunit)
+    if (nheaderlines.gt.0) print*,'skipped ',nheaderlines,' header lines'
  endif
+ rewind(lunit)
+
+ if (ncolumns.eq.0) then
+    print "(a)",' ERROR: no columns of real numbers found'
+ else
+    print "(a,i3)",' number of data columns = ',ncolumns
+ endif
+ 
+end subroutine get_ncolumns
+
+!
+!--this routine gets the number of columns from a given line
+!
+subroutine get_columns(line,ncolumns)
+ implicit none
+ character(len=*), intent(in) :: line
+ integer, intent(out) :: ncolumns
+ real :: dummyreal(100)
+ integer :: ierr,i
+
  dummyreal = -666.0
  
  ierr = 0
  read(line,*,iostat=ierr) (dummyreal(i),i=1,size(dummyreal))
  if (ierr .gt. 0) then
-    print "(a)",' WARNING: not all columns contain real numbers '
+    ncolumns = -1
+    return
  endif
 
  i = 1
@@ -173,12 +216,8 @@ subroutine get_ncolumns(lunit,ncolumns)
        return
     endif
  enddo
- if (ncolumns.eq.0) then
-    print "(a)",' ERROR: no columns of real numbers found'
- else
-    print "(a,i3)",' number of data columns = ',ncolumns
- endif
-end subroutine get_ncolumns
+
+end subroutine get_columns
                    
 end subroutine read_data
 
@@ -191,28 +230,26 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,labeltype,ix
+  use labels, only:label,labeltype,ix,irho,ipmass,ih
   use params
-  use settings_data, only:ncolumns,ntypes
+  use settings_data, only:ncolumns,ntypes,ndim
   use geometry, only:labelcoord
   implicit none
-  integer :: i,ierr
-
-  ix(:) = 0
-!  do i=1,ndim
-!     ix(i) = i
-!  enddo
-!  label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  
+  integer :: i,ierr  
 !
 !--read column labels from the columns file if it exists
 !  
   open(unit=51,file='columns',status='old',iostat=ierr)
   if (ierr /=0) then
-     print "(a)",' columns file not found: using default labels'
+     print "(3(/,a))",' WARNING: columns file not found: using default labels',&
+                    ' To change the labels, create a file called ''columns'' ',&
+                    '  in the current directory with one label per line'
   else
      overcols: do i=1,ncolumns
         read(51,"(a)",iostat=ierr) label(i)
+        if (label(i)(1:3).eq.'den' .or. label(i)(1:3).eq.'rho') irho = i
+        if (label(i)(1:5).eq.'pmass' .or. label(i)(1:13).eq.'particle mass') ipmass = i
+        if (label(i)(1:1).eq.'h' .or. label(i)(1:6).eq.'smooth') ih = i
         if (ierr < 0) then
            print "(a,i3)",' ERROR: end of file in columns file: read to column ',i-1
            exit overcols
@@ -223,19 +260,30 @@ subroutine set_labels
      enddo overcols
      close(unit=51)
   endif
-  print "(3(/,a),/)",'WARNING: Rendering capabilities cannot be enabled', &
-                 '         until positions of rho, h, pmass etc are', &
-                 '         known (see read_data_ascii.f90 for details)'
   
-!!  ivx = ndim+1
-!!  ih = ndim+ndimV+2        !  smoothing length
-!!  label(ih) = 'h'
-!!  irho = ndim+ndimV+1     ! location of rho in data array
-!!  label(irho) = 'density'      
-!!  iutherm = 0  !  thermal energy
-!!  label(iutherm) = 'u'
-!!  ipmass = 0  !  particle mass
-!!  label(ipmass) = 'particle mass'
+  if (label(1)(1:1).eq.'x') then
+     ndim = 1
+     ix(1) = 1
+     if (label(2)(1:1).eq.'y') then
+        ndim = 2
+        ix(2) = 2
+        if (label(3)(1:1).eq.'z') then
+           ndim = 3
+           ix(3) = 3
+        endif
+     endif
+  endif
+  if (ndim.ne.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
+  if (irho.ne.0) print "(a,i2)",' Assuming density in column ',irho
+  if (ipmass.ne.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
+  if (ih.ne.0) print "(a,i2)",' Assuming smoothing length in column ',ih
+  
+  if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
+     print "(4(/,a))",' WARNING: Rendering capabilities cannot be enabled', &
+                 '  until positions of x,rho, h, pmass etc are known', &
+                 '  (simplest way is to label the relevant columns ',&
+                 '  appropriately in the columns file)'
+  endif
   
 !!  iamvec(ivx:ivx+ndimV-1) = ivx
 !!  labelvec(ivx:ivx+ndimV-1) = 'v'
