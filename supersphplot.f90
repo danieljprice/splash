@@ -23,6 +23,10 @@ program supersphplot
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.0.5 (28/9/05)
+!           : error calculation for exact solutions, legend for plot markers,
+!             exact_densityprofiles added, more colour schemes, 
+!             unit rescaling improved, other minor changes + bug fixes
 !     1.0.4 (17/8/05) 
 !           : better colour schemes; interactive colour scheme changing; 
 !             various minor changes and bug fixes
@@ -209,7 +213,7 @@ subroutine print_header
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/, &
    '   \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ ',/)      
 
- print "(a)",' ( version 1.0.4 [17/08/05] Copyright (C) 2005)'
+ print "(a)",' ( version 1.0.5 [28/09/05] Copyright (C) 2005)'
  print 30 
 30 format(/,    &
    ' * SUPERSPHPLOT comes with ABSOLUTELY NO WARRANTY.',/, &
