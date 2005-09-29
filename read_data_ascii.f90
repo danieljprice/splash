@@ -166,7 +166,6 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
     if (ierr.eq.0) call get_columns(line,ncolsthisline)
     if (ncolsthisline.ne.0) nheaderlines = nheaderlines + 1
     if (ncolsthisline.gt.0) ncolumns = ncolsthisline
-    print*,'ncolumns = ',ncolumns,ncolsthisline,' header lines = ',nheaderlines
  enddo
  !--subtract 2 from the header line count (the last two lines which were the same)
  nheaderlines = max(nheaderlines - 2,0)
