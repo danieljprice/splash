@@ -128,7 +128,7 @@ contains
     implicit none
     integer, intent(inout) :: iexact
     integer :: ierr
-    logical :: ians
+    logical :: ians,iexist
 
     print 10
 10  format(' 0) none ',/,               &
@@ -227,7 +227,18 @@ contains
           call prompt('enter column containing grav. force',icolfgrav,0)
        endif
     case(9)
-       call prompt('enter filename ',filename_exact)
+       iexist = .false.
+       do while(.not.iexist)
+          call prompt('enter filename ',filename_exact)
+          inquire(file=filename_exact,exist=iexist)
+          if (iexist) then
+             print "(a)",'file seems OK'
+          else
+             ians = .true.
+             call prompt('file does not exist: try again? ',ians)
+             if (.not.ians) return
+          endif
+       enddo
        call prompt('enter x axis of exact solution ',iexactplotx,1)
        call prompt('enter y axis of exact solution ',iexactploty,1)
        print "(a)",'apply column transformations to exact solution?'
