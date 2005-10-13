@@ -27,21 +27,24 @@ contains
 ! CHANGEABLE:
 !   icolourpart(npart) : flag indicating colour of particles
 !   xmin, xmax, ymin, ymax : current plot limits
+!   rendermin, rendermax   : current rendering limits
+!   vecmax : maximum vector limits
 !
 ! OUTPUT:
 !   iadvance : integer telling the loop how to advance the timestep
 !   isave    : integer telling the loop to save the settings
 !
-subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, &
-  zcoords,hi,icolourpart,xmin,xmax,ymin,ymax,zpos,dz,rendermin,rendermax, &
-  anglex,angley,anglez,ndim,itrackpart,icolourscheme,iadvance,isave)
+subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
+  xcoords,ycoords,zcoords,hi,icolourpart,xmin,xmax,ymin,ymax,zpos,dz, &
+  rendermin,rendermax,vecmax,anglex,angley,anglez,ndim, &
+  itrackpart,icolourscheme,iadvance,isave)
   implicit none
-  integer, intent(in) :: npart,irender,ndim,iplotz
+  integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy
   integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
   real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
-  real, intent(inout) :: xmin,xmax,ymin,ymax,zpos,dz,rendermin,rendermax
+  real, intent(inout) :: xmin,xmax,ymin,ymax,zpos,dz,rendermin,rendermax,vecmax
   real, intent(inout) :: anglex,angley,anglez
   logical, intent(out) :: isave  
   real, parameter :: pi=3.141592653589
@@ -222,10 +225,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
         print*,' g: plot a line and find its g)radient'
         print*,' G: move le(G)end to current position'
         print*,' T: move (T)itle to current position'
+        print*,' H: move vector plot legend H(ere)'
         if (irender.ge.0) then
            print*,' m: change colour m)ap to next'
            print*,' M: change colour M)ap to previous'
         endif
+        print*,' v: decrease arrow size on vector plots'
+        print*,' V: increase arrow size on vector plots'
         if (rotation) then
            print*,' , .: rotate about z axis by +(-) 15 degrees'
            print*,' < >: rotate about z axis by +(-) 30 degrees'
@@ -261,6 +267,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
            call save_limits_track(iploty,ymin,ymax,ycoords(itrackpart))
         endif
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
+        if (ivecx.gt.0 .and. ivecy.gt.0) then
+           call save_limits(ivecx,-vecmax,vecmax)
+           call save_limits(ivecy,-vecmax,vecmax)
+        endif
         if (ncircpart.gt.0) call save_circles(ncircpart,icircpart)
         if (rotation) call save_rotation(ndim,anglex,angley,anglez)
         if (iplotz.gt.0) call save_xsecpos(zpos)
@@ -420,7 +430,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      case('a') ! reset plot limits
         if (xpt.gt.xmax .and. irender.gt.0) then
            call useadaptive
-           iadvance = 0
+           iadvance = 0              ! that it should change the render limits
            iexit = .true.
         else
            if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymax) then
@@ -437,6 +447,23 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
               iadvance = 0
               iexit = .true.
            endif
+        endif
+     !
+     !--zoom in/out on vector plots (arrow size)
+     !
+     case('v')
+        if (ivecx.gt.0 .and. ivecy.gt.0) then
+           print*,'decreasing vector arrow size'
+           vecmax = 1.2*vecmax
+           iadvance = 0
+           iexit = .true.
+        endif
+     case('V')
+        if (ivecx.gt.0 .and. ivecy.gt.0) then
+           print*,'increasing vector arrow size'
+           vecmax = 0.8*vecmax
+           iadvance = 0
+           iexit = .true.
         endif
      !
      !--set/unset log axes
@@ -639,6 +666,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,xcoords,ycoords, 
      case('T') ! move title here
         print*,'setting title position to current location...'
         call mvtitle(xpt,ypt,xmin,xmax,ymax)
+     case('H') ! move vector legend here
+        if (ivecx.gt.0 .and. ivecy.gt.0) then
+           print*,'setting vector plot legend to current location...'
+           call mvlegendvec(xpt,ypt,xmin,xmax,ymax)
+        endif
      case('m') ! change colour map (next scheme)
         call change_colourmap(icolourscheme,1)
      case('M') ! change colour map (previous scheme)
@@ -856,7 +888,23 @@ subroutine mvlegend(xi,yi,xmin,xmax,ymax)
  
  return
 end subroutine mvlegend
-
+!
+!--move the vector legend to the current position
+!
+subroutine mvlegendvec(xi,yi,xmin,xmax,ymax)
+ use settings_vecplot, only:hposlegendvec,vposlegendvec
+ implicit none
+ real, intent(in) :: xi,yi,xmin,xmax,ymax
+ real :: xch,ych
+ 
+ hposlegendvec = (xi - xmin)/(xmax-xmin)
+ !--query character height in world coordinates
+ call pgqcs(4,xch,ych)
+ vposlegendvec = (ymax - yi)/ych
+ print*,'hpos = ',hposlegendvec,' vpos = ',vposlegendvec
+ 
+ return
+end subroutine mvlegendvec
 !
 !--move the title to the current position
 !

@@ -49,60 +49,63 @@ end subroutine legend
 !        vpos : vertical position in character heights from top
 !-----------------------------------------------------------------
 
-subroutine legend_vec(vecmax,scale,label,charheight)
- use settings_vecplot, only: hposlegendvec, vposlegendvec
+subroutine legend_vec(label,vecmax,dx,hpos,vpos,charheight)
  implicit none
- real, intent(in) :: vecmax,scale,charheight
+ real, intent(in) :: vecmax,dx,hpos,vpos,charheight
  character(len=*), intent(in) :: label
- integer, parameter :: npixx=1, npixy=5
- integer :: j
- real, dimension(npixx,npixy) :: vecx,vecy
  real :: xmin,xmax,ymin,ymax
- real :: xch,ych,dx
- real :: xpos,ypos !!,xpos2,ypos2,rarrow
+ real :: xch,ych,charheightarrow
+ real :: xpos,ypos,xbox(4),ybox(4),dxlabel,dxstring
+ integer :: icolindex
  character(len=len(label)+10) :: string
- real :: trans(6)
- 
+
+ write(string,"('=',1pe7.1)") vecmax
 !
 !--convert hpos and vpos to x, y to plot arrow
 !
  call pgqwin(xmin,xmax,ymin,ymax)
-!! print*,'lims = ',xmin,xmax,ymin,ymax
- xpos = xmin + hposlegendvec*(xmax-xmin)
- call pgqcs(0,xch,ych) 
- ypos = ymin - vposlegendvec*ych
-
-!! print*,'legendvec: xpos, ypos = ',xpos,ypos
- 
- dx = ych
- 
- do j=1,npixy
-    vecx(npixx,j) = (npixy-j)*vecmax
-    vecy(npixx,j) = vecx(npixx,j)
- enddo
-
-!set up grid for rendering 
-
- trans(1) = xpos - 0.5*dx                ! this is for the pgvect call
- trans(2) = dx
- trans(3) = 0.0
- trans(4) = ypos - 0.5*dx
- trans(5) = 0.0
- trans(6) = dx
+ call pgqch(charheightarrow)
+ call pgsch(charheight)
+ xpos = xmin + hpos*(xmax-xmin)
+ call pgqcs(4,xch,ych) 
+ ypos = ymax - (vpos + 1.)*ych
 !
-!--this should match the call in render_vec
+!--enquire size of label
 !
-! call pgvect(vecx(:,:),vecy(:,:),npixx,npixy,1,npixx,1,npixy, &
-!      scale,0,trans,-1000.0)
+ call pgqtxt(xpos,ypos,0.0,0.0,trim(label),xbox,ybox)
+ dxlabel = xbox(3) - xbox(2) + 0.5*xch
 !
-!--plot a box around the legend
-! 
-!! call pgbox(xpos,ypos,xpos2,ypos2)
-!! write(string,"(a,'=',f6.2)") trim(label),scale
- 
-
-! call pgarro(xpos,ypos,xpos2,ypos2)
-! call pgmtext('t',-vposlegendvec,hposlegendvec+0.02,0.0,trim(string))
+!--enquire size of string
+!
+ call pgqtxt(xpos,ypos,0.0,0.0,trim(string),xbox,ybox)
+ dxstring = xbox(3) - xbox(2)
+!
+!--draw box around all of the legend
+!
+ call pgqci(icolindex)
+ call pgsci(0)
+ call pgrect(xpos-0.25*dx,xpos+dxlabel+dxstring+dx,ypos-0.5*dx,ypos + dx)
+ call pgsci(icolindex)
+ call pgsfs(2)
+ call pgrect(xpos-0.25*dx,xpos+dxlabel+dxstring+dx,ypos-0.5*dx,ypos + dx)
+ call pgsfs(1)
+!
+!--write label
+!
+ call pgtext(xpos,ypos,trim(label))
+ xpos = xpos + dxlabel
+!
+!--draw arrow
+!
+ call pgsch(charheightarrow)
+ call pgarro(xpos,ypos,xpos+dx/sqrt(2.),ypos+dx/sqrt(2.))
+ xpos = xpos + dx/sqrt(2.)
+!
+!--write numerical value
+!
+ call pgsch(charheight)
+!! call pgmtext('t',-vpos,hpos+0.02,0.0,trim(string))
+ call pgtext(xpos,ypos,trim(string))
 
  return
 end subroutine legend_vec

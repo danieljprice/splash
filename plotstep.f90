@@ -10,7 +10,7 @@ module timestep_plotting
 
   real, dimension(:), allocatable, private :: datpix1D, xgrid
   real, private :: xmin,xmax,ymin,ymax,zmin,zmax,ymean
-  real, private :: rendermin,rendermax
+  real, private :: rendermin,rendermax,vecmax
   real, private :: dxsec,xsecpos
   real, private :: charheight
   real, private :: dxgrid,xmingrid,xmaxgrid
@@ -32,11 +32,12 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use colours, only:colour_set
   use labels, only:label,ipowerspec
   use limits, only:lim
-  use multiplot
+  use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti
   use prompting
   use titles, only:read_titles,read_steptitles
   use settings_data, only:ndim,numplot
-  use settings_page
+  use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
+                     colour_fore,colour_back,iadapt,iadaptcoords
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle
   use settings_render, only:icolours,iplotcont_nomulti
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec
@@ -237,8 +238,9 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
   use toystar2D, only:exact_toystar_ACplane2D
   use labels, only:label,labeltype,labelvec,iamvec, &
               ih,irho,ipmass,ix,iacplane,ipowerspec
-  use limits
-  use multiplot
+  use limits, only:lim
+  use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
+                iplotcontmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
   use rotation
   use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,n_end,nfreq
@@ -580,7 +582,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
               zmax = 2.*lim(iz,2)
               zmin = 2.*lim(iz,1)
               !dz1 = 1./(zmax - zmin)
-              zobs = zmax
+              !zobs = zmax
               !print*,'dz = ',1./dz1,' zobs = ',zobs
               !print*,'percent warp at z=0 : ',100.*zobs*dz1
 	      dz1 = 0.
@@ -937,8 +939,15 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                 labelvecplot = trim(labelvec(ivectorplot))
                 pixwidth = (xmax-xmin)/real(npixvec)
                 npixyvec = int((ymax-ymin)/pixwidth) + 1
+                if (iadvance.ne.0) then
+                   if (iadapt) then
+                      vecmax = -1.0  ! plot limits then set in vectorplot
+                   else
+                      vecmax = max(lim(ivecx,2),lim(ivecy,2))
+                   endif
+                endif
 
-                call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidth,labelvecplot)
+                call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidth,vecmax,labelvecplot)
              endif
            endif
            !---------------------------------
@@ -993,10 +1002,10 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  else
                     irendered = irenderplot
                  endif
-                 call interactive_part(ninterp,iplotx,iploty,iplotz,irendered, &
+                 call interactive_part(ninterp,iplotx,iploty,iplotz,irendered,ivecx,ivecy, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       hh(1:ninterp),icolourme(1:ninterp), &
-                      xmin,xmax,ymin,ymax,xsecpos,dxsec,rendermin,rendermax, &
+                      xmin,xmax,ymin,ymax,xsecpos,dxsec,rendermin,rendermax,vecmax, &
                       angletempx,angletempy,angletempz,ndim,itrackpart,icolours,iadvance,isave)
                  !--turn rotation on if necessary
                  if (abs(angletempx-anglex).gt.tol) irotate = .true.
@@ -1098,10 +1107,10 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
         if (interactive) then
            if (nacross*ndown.eq.1) then
               iadvance = nfreq
-              call interactive_part(ntoti,iplotx,iploty,0,irenderpart, &
+              call interactive_part(ntoti,iplotx,iploty,0,irenderpart,0,0, &
                    xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
                    hh(1:ntoti),icolourme(1:ntoti), &
-                   xmin,xmax,ymin,ymax,dummy,dummy,rendermin,rendermax, &
+                   xmin,xmax,ymin,ymax,dummy,dummy,rendermin,rendermax,vecmax, &
                    angletempx,angletempy,angletempz,ndim,itrackpart,icolours,iadvance,isave)
               if (iadvance.eq.-666) return
            elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
@@ -1382,30 +1391,24 @@ contains
 ! interface to vector plotting routines
 ! so that pixel arrays are allocated appropriately
 !-------------------------------------------------------------------
-  subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidth,label)
+  subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidth,vmax,label)
    use fieldlines
-   use settings_vecplot
+   use settings_vecplot, only:UseBackgndColorVecplot
    use interpolations2D, only:interpolate2D_vec
    use projections3D, only:interpolate3D_proj_vec
    use render, only:render_vec
    implicit none
    integer, intent(in) :: ivecx,ivecy,numpixx,numpixy
    real, intent(in) :: pixwidth
+   real, intent(inout) :: vmax
    character(len=*), intent(in) :: label
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
-   real :: vecmax
 
    print*,'plotting vector field ',trim(label)
    if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
         .or.(ivecy.le.ndim).or.(ivecy.gt.ndataplots)) then
       print*,'error finding location of vector plot in array'
    else
-      if (iadapt) then
-         vecmax = -1.0  ! plot limits then set in vectorplot
-      else                    
-         vecmax = max(lim(ivecx,2),lim(ivecy,2))
-      endif
-
       !!--plot arrows in either background or foreground colour
       if (UseBackgndColorVecplot) call pgsci(0)
 
@@ -1455,7 +1458,7 @@ contains
       !
       !--plot it
       !
-      call render_vec(vecpixx,vecpixy,vecmax, &
+      call render_vec(vecpixx,vecpixy,vmax, &
            numpixx,numpixy,xmin,ymin,pixwidth,trim(label))
 
       if (UseBackgndColorVecplot) call pgsci(1)

@@ -24,8 +24,8 @@ subroutine defaults_set_vecplot
   UseBackgndColorVecplot = .false. ! plot vector plot using black/white
   iplotpartvec = .true.   ! whether to plot particles on vector plot
   iVecplotLegend = .true.
-  hposlegendvec = 0.1
-  vposlegendvec = -1.0
+  hposlegendvec = 0.05
+  vposlegendvec = 2.0
 
   return
 end subroutine defaults_set_vecplot
@@ -62,9 +62,9 @@ subroutine submenu_vecplot
     if (iVecplotLegend) then
        print*,'note that the following settings can also be changed interactively'
        call prompt('Enter horizontal position as fraction of viewport', &
-                   hposlegendvec,-0.1,1.1)
+                   hposlegendvec,0.0,1.0)
        call prompt('Enter vertical position in character heights from top', &
-                    vposlegendvec)
+                    vposlegendvec,0.0)
     endif
  end select
 
