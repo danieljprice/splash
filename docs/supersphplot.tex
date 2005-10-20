@@ -112,8 +112,8 @@ The basic steps for installation are as follows:
 \begin{enumerate}
 \item make sure you have a Fortran 95 compiler (such as g95)
 \item make sure you have the PGPLOT libraries installed
+\item compile SUPERSPHPLOT and link with PGPLOT
 \item write a read\_data subroutine so that SUPERSPHPLOT can read your data format
-\item compile SUPERSPHPLOT with your read\_data subroutine and link with PGPLOT
 \end{enumerate}
 
 \subsubsection{Fortran 90/95 compilers}
@@ -157,7 +157,8 @@ GADGET code (\verb+read_data_gadget.f90+) and also for Matthew Bate's SPH code
 data read which I use is given in \verb+read_data_dansph.f90+.
 
 Further details on writing your own subroutine are given in
-appendix~\ref{sec:writeyourown}
+appendix~\ref{sec:writeyourown}. The *easiest* way is to email me a sample data file and the subroutine
+you used to write it and I can then create a data read for your file format.
 
 \subsubsection{Compiling and linking with PGPLOT}
 

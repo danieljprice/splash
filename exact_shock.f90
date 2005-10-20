@@ -29,6 +29,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
   real, dimension(:), intent(in) :: xplot
   real, dimension(size(xplot)), intent(out) :: yplot
   
+  integer :: i
   real, dimension(size(xplot)) :: dens, pr, vel
   real :: cs_L,cs_R, gamfac
   real :: ppost, vpost, vfan, vshock
@@ -117,33 +118,64 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
 !--------------------------------------------------------------
 ! reconstruct the shock profile for all x
 !--------------------------------------------------------------
-  
-  where(xplot <= xleft)  ! <= otherwise problems at t=0
-!    undisturbed medium to the left
-     pr = p_L
-     dens = rho_L
-     vel = v_L
-  elsewhere(xplot < xfan)
-!    inside expansion fan
-     dens = rho_L*(gamfac*(xzero-xplot)/(cs_L*time) + (1.-gamfac))**(2./(gamma-1.))
-     pr = p_L*(dens/rho_L)**gamma
-     vel = (1.-gamfac)*(cs_L -(xzero-xplot)/time)
-  elsewhere(xplot < xcontact)
-!    between expansion fan and contact discontinuity
-     pr = ppost
-     dens = rho_L*(ppost/p_L)**(1./gamma)
-     vel = vpost
-  elsewhere(xplot < xshock)
-!    post-shock, ahead of contact discontinuity
-     pr = ppost
-     dens = rho_R*(gamfac+ppost/p_R)/(1+gamfac*ppost/p_R)
-     vel = vpost
-  elsewhere
-!    undisturbed medium to the right
-     pr = p_R
-     dens = rho_R
-     vel = v_R
-  end where
+
+!--here is a cheap, dirty f90 version for crap compilers
+  do i=1,size(xplot)
+     if (xplot(i) <= xleft) then
+!       undisturbed medium to the left
+	pr(i) = p_L
+	dens(i) = rho_L
+	vel(i) = v_L
+     elseif (xplot(i) < xfan) then
+!       inside expansion fan
+        dens(i) = rho_L*(gamfac*(xzero-xplot(i))/(cs_L*time) + (1.-gamfac))**(2./(gamma-1.))
+        pr(i) = p_L*(dens(i)/rho_L)**gamma
+        vel(i) = (1.-gamfac)*(cs_L -(xzero-xplot(i))/time)
+     elseif (xplot(i) < xcontact) then
+!       between expansion fan and contact discontinuity
+	pr(i) = ppost
+	dens(i) = rho_L*(ppost/p_L)**(1./gamma)
+	vel(i) = vpost
+     elseif (xplot(i) < xshock) then
+!       post-shock, ahead of contact discontinuity
+	pr(i) = ppost
+	dens(i) = rho_R*(gamfac+ppost/p_R)/(1+gamfac*ppost/p_R)
+	vel(i) = vpost
+     else
+!       undisturbed medium to the right
+	pr(i) = p_R
+	dens(i) = rho_R
+	vel(i) = v_R
+     endif
+  enddo  
+
+!--this is the beautiful, f95 version (which won't compile on pgf90)
+!  where(xplot <= xleft)  ! <= otherwise problems at t=0
+!!    undisturbed medium to the left
+!     pr = p_L
+!     dens = rho_L
+!     vel = v_L
+!  elsewhere(xplot < xfan)
+!!    inside expansion fan
+!     dens = rho_L*(gamfac*(xzero-xplot)/(cs_L*time) + (1.-gamfac))**(2./(gamma-1.))
+!     pr = p_L*(dens/rho_L)**gamma
+!     vel = (1.-gamfac)*(cs_L -(xzero-xplot)/time)
+!  elsewhere(xplot < xcontact)
+!!    between expansion fan and contact discontinuity
+!     pr = ppost
+!     dens = rho_L*(ppost/p_L)**(1./gamma)
+!     vel = vpost
+!  elsewhere(xplot < xshock)
+!!    post-shock, ahead of contact discontinuity
+!     pr = ppost
+!     dens = rho_R*(gamfac+ppost/p_R)/(1+gamfac*ppost/p_R)
+!     vel = vpost
+!  elsewhere
+!!    undisturbed medium to the right
+!     pr = p_R
+!     dens = rho_R
+!     vel = v_R
+!  end where
 
 !------------------------------------
 !  determine which solution to plot
