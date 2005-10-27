@@ -323,9 +323,9 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
   pmass = 0.
   
   !--set the arrays needed for rendering if they are present
-  if (ih.gt.0 .and. ih.lt.ndataplots) hh(:) = dat(:,ih)
-  if (irho.gt.0 .and. irho.lt.ndataplots) rho(:) = dat(:,irho)
-  if (ipmass.gt.0 .and. ipmass.lt.ndataplots) pmass(:) = dat(:,ipmass)
+  if (ih.gt.0 .and. ih.le.ndataplots) hh(:) = dat(:,ih)
+  if (irho.gt.0 .and. irho.le.ndataplots) rho(:) = dat(:,irho)
+  if (ipmass.gt.0 .and. ipmass.le.ndataplots) pmass(:) = dat(:,ipmass)
   !
   !--set number of particles to use in the interpolation routines
   !  (ie. including only gas particles and ghosts)
