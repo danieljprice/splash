@@ -1,19 +1,20 @@
 !-------------------------------------------------------------------------
-! Module containing settings and options relating to vector plots
-! includes default values of these options and submenu for changing them
+! Module containing settings and options relating to cross sections,
+! rotations and 3D plotting.
+! Includes default values of these options and submenu for changing them
 !-------------------------------------------------------------------------
 module settings_xsecrot
  implicit none
  integer :: nxsec,irotateaxes
- logical :: xsec_nomulti, irotate, flythru
- real :: anglex, angley, anglez
+ logical :: xsec_nomulti, irotate, flythru, use3Dperspective
+ real :: anglex, angley, anglez, zobserver, zdistunitmag
  real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
  real, dimension(3) :: xorigin,xminrotaxes,xmaxrotaxes
 
  namelist /xsecrotopts/ xsec_nomulti,xsecpos_nomulti,flythru, &
           xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
           irotate,irotateaxes,anglex, angley, anglez, &
-          xminrotaxes,xmaxrotaxes
+          xminrotaxes,xmaxrotaxes,use3Dperspective,zobserver,zdistunitmag
 
 contains
 
@@ -38,6 +39,9 @@ subroutine defaults_set_xsecrotate
   xorigin = 0.
   xminrotaxes = 0.
   xmaxrotaxes = 0.
+  use3Dperspective = .false.
+  zobserver = 0.
+  zdistunitmag = 0.
 
   return
 end subroutine defaults_set_xsecrotate
@@ -58,14 +62,15 @@ subroutine submenu_xsecrotate
  if (ndim.eq.1) print*,' WARNING: none of these options have any effect in 1D'
  ians = 0
  interact = .true.
- print 10,xsec_nomulti,xsecpos_nomulti,irotate,irotateaxes
+ print 10,xsec_nomulti,xsecpos_nomulti,irotate,use3Dperspective,irotateaxes
 10  format(' 0) exit ',/,                 &
            ' 1) toggle cross section/projection           (',L1,' )',/, &
            ' 2) set cross section position                (',f5.2,' )',/, &
            ' 3) rotation on/off                           (',L1,' )',/, &
            ' 4) change rotation options',/, &
-           ' 5) set axes for rotated plots                (',i2,' )')
- call prompt('enter option',ians,0,5)
+           ' 5) 3D perspective on/off                     (',L1,' )',/, &
+           ' 6) set axes for rotated/3D plots             (',i2,' )')
+ call prompt('enter option',ians,0,6)
 !
 !--options
 !
@@ -137,6 +142,10 @@ subroutine submenu_xsecrotate
     endif
 !------------------------------------------------------------------------
  case(5)
+    use3Dperspective = .not.use3Dperspective
+    print "(a,L1)",' 3D perspective = ',use3Dperspective
+!------------------------------------------------------------------------
+ case(6)
     print*,'0 : do not plot rotated axes'
     print*,'1 : plot rotated axes'
     print*,'2 : plot rotated box'

@@ -184,6 +184,11 @@ subroutine colour_set(icolourscheme)
                  nset,1.0,brightness)
 
   endif  
+!
+!--always set the minimum colour to the background
+!
+  call PGQCR(0,red,green,blue)
+  call PGSCR(icolourmin,red,green,blue)
   
   print*,'using colour scheme ',trim(schemename(icolourscheme))
   return

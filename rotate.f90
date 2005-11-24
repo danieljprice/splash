@@ -70,12 +70,16 @@ subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
   y = r*SIN(phi)
 !
 !--change perspective according to z depth
-!  (for straight rotation == parallel projections use dz1 = 0 on input)
+!  (for straight rotation == parallel projections use dz1= 0 on input)
 !  zobs is the z position of the observer.
 !
-  zfrac = (zobs - z)*dz1
-  xcoords(1) = x*(1. - zfrac)
-  xcoords(2) = y*(1. - zfrac)
+  if (abs(dz1).gt.tiny(dz1)) then
+     zfrac = abs(dz1/(z-zobs))
+  else
+     zfrac = 1.0
+  endif
+  xcoords(1) = x*zfrac
+  xcoords(2) = y*zfrac
   xcoords(3) = z
   
   return

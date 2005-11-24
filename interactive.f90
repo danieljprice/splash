@@ -35,8 +35,8 @@ contains
 !   isave    : integer telling the loop to save the settings
 !
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
-  xcoords,ycoords,zcoords,hi,icolourpart,xmin,xmax,ymin,ymax,zpos,dz, &
-  rendermin,rendermax,vecmax,anglex,angley,anglez,ndim, &
+  xcoords,ycoords,zcoords,hi,icolourpart,xmin,xmax,ymin,ymax, &
+  rendermin,rendermax,vecmax,anglex,angley,anglez,ndim,x_sec,zpos,dz, &
   itrackpart,icolourscheme,iadvance,isave)
   implicit none
   integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy
@@ -46,6 +46,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
   real, intent(inout) :: xmin,xmax,ymin,ymax,zpos,dz,rendermin,rendermax,vecmax
   real, intent(inout) :: anglex,angley,anglez
+  logical, intent(in) :: x_sec
   logical, intent(out) :: isave  
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,nc,ierr,ixsec
@@ -83,7 +84,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   rotation = .false.
   if (iplotx.le.ndim .and. iploty.le.ndim .and. ndim.ge.2) rotation = .true.
   
-  if (iplotz.gt.0) then
+  if (iplotz.gt.0 .and. x_sec) then
      zptmin = zpos - 0.5*dz
      zptmax = zpos + 0.5*dz
   else
@@ -241,10 +242,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               print*,'? |: rotate about y axis by +/- 30 degrees '
               print*,' x: take cross section '
               if (iplotz.gt.0) then
-                 print*,' u: move cross section position up (towards observer)'
-                 print*,' U: move cross section position up more'
-                 print*,' d: move cross section position down (away from observer)'
-                 print*,' D: move cross section position down more'
+                 print*,' u: move cross section/perspective position up (towards observer)'
+                 print*,' U: move cross section/perspective position up more'
+                 print*,' d: move cross section/perspective position down (away from observer)'
+                 print*,' D: move cross section/perspective position down more'
               endif
            endif
         endif
@@ -272,7 +273,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         endif
         if (ncircpart.gt.0) call save_circles(ncircpart,icircpart)
         if (rotation) call save_rotation(ndim,anglex,angley,anglez)
-        if (iplotz.gt.0) call save_xsecpos(zpos)
+        if (iplotz.gt.0) then
+           if (x_sec) then
+              call save_xsecpos(zpos)
+           else
+              call save_perspective(zpos,dz)
+           endif
+        endif
         print*,'> plot settings saved <'
      !
      !--actions on left click
@@ -312,7 +319,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            yptmax = max(ypt,ypt2)
            print*,'xrange = ',xptmin,'->',xptmax
            print*,'yrange = ',yptmin,'->',yptmax
-           if (iplotz.ne.0) then
+           if (iplotz.ne.0 .and. x_sec) then
               print*,'(zrange = ',zptmin,'->',zptmax,')'
            endif
            select case (char2)
@@ -630,17 +637,31 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      !
      case('u') ! move cross section up by dxsec
         if (iplotz.gt.0 .and. ndim.eq.3) then
-           print*,'shifting cross section position up by ',dz
-           zpos = zpos + dz
-           iadvance = 0
-           iexit = .true.
+           if (x_sec) then
+              print*,'shifting cross section position up by ',dz
+              zpos = zpos + dz
+              iadvance = 0
+              iexit = .true.
+           else
+              print*,'shifting perspective position up ',dz
+              zpos = zpos + dz
+              iadvance = 0
+              iexit = .true.           
+           endif
         endif
      case('U') ! move cross section up by 2*dxsec
         if (iplotz.gt.0 .and. ndim.eq.3) then
-           print*,'shifting cross section position up by ',2.*dz
-           zpos = zpos + 2.*dz
-           iadvance = 0
-           iexit = .true.
+           if (x_sec) then
+              print*,'shifting cross section position up by ',2.*dz
+              zpos = zpos + 2.*dz
+              iadvance = 0
+              iexit = .true.
+           else
+              print*,'shifting perspective position up by ',2.*dz
+              zpos = zpos + 2.*dz
+              iadvance = 0
+              iexit = .true.           
+           endif
         endif
      case('d') ! move cross section down by dxsec
         if (iplotz.gt.0 .and. ndim.eq.3) then
@@ -1049,6 +1070,21 @@ subroutine save_xsecpos(xsecpos)
  
  return
 end subroutine save_xsecpos
+
+!
+!--saves 3D perspective
+!
+subroutine save_perspective(zpos,dz)
+ use settings_xsecrot, only:zobserver,zdistunitmag
+ implicit none
+ real, intent(in) :: zpos,dz
+ 
+ zobserver = zpos
+ zdistunitmag = dz
+ 
+ return
+end subroutine save_perspective
+
 !
 !--saves circles of interaction
 !
