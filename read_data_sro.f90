@@ -76,7 +76,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (minidump) then
         ncolumns = 11
      else
-        ncolumns = 24
+        ncolumns = 27
      endif
   else
      ncolumns = 7  ! number of columns in file  
@@ -211,7 +211,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            !--read full dump
            !              
               if (doubleprec) then
-                 allocate(datdb(maxpart,24),stat=ierr)
+                 allocate(datdb(maxpart,27),stat=ierr)
                  if (ierr /= 0) then
                     print*,"(a)",'*** error allocating memory for double conversion ***'
                     return
@@ -233,6 +233,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    (datdb(i,20),i=1,nprint),(datdb(i,21),i=1,nprint),&
                    (datdb(i,22),i=1,nprint),(datdb(i,23),i=1,nprint),&
                    (datdb(i,24),i=1,nprint),&
+                   (datdb(i,25),i=1,nprint),&
+                   (datdb(i,26),i=1,nprint),&
+                   (datdb(i,27),i=1,nprint),&
                    (datdb(i,9), i=nprint+1, nprint+nptmass), &
                    (datdb(i,1), i=nprint+1, nprint+nptmass), &
                    (datdb(i,2), i=nprint+1, nprint+nptmass), &
@@ -248,7 +251,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                     if (allocated(datdb)) deallocate(datdb)
                     return
                  else
-                    dat(:,1:24,j) = real(datdb(:,1:24))
+                    dat(:,1:27,j) = real(datdb(:,1:27))
                     time(j) = real(timedb)
                  endif                
               else
@@ -267,6 +270,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    (dat(i,20,j),i=1,nprint),(dat(i,21,j),i=1,nprint),&
                    (dat(i,22,j),i=1,nprint),(dat(i,23,j),i=1,nprint),&
                    (dat(i,24,j),i=1,nprint),&
+                   (dat(i,25,j),i=1,nprint),&
+                   (dat(i,26,j),i=1,nprint),&
+                   (dat(i,27,j),i=1,nprint),&
                    (dat(i,9,j), i=nprint+1, nprint+nptmass), &
                    (dat(i,1,j), i=nprint+1, nprint+nptmass), &
                    (dat(i,2,j), i=nprint+1, nprint+nptmass), &
@@ -387,8 +393,9 @@ subroutine set_labels
      ivx = 0
      ih = 4        !  smoothing length
      irho = 5     ! location of rho in data array
-     iutherm = 6  !  thermal energy
+     iutherm = 0  !  thermal energy
      ipmass = 7  !  particle mass
+     label(6) = 'T'
      if (ncolumns.gt.7) then
         iBfirst = 8
         idivB = 11 
@@ -411,6 +418,9 @@ subroutine set_labels
      label(16) = 'psi'
      idivB = 17
      label(24) = 'grad h'
+     label(25) = 'grad soft'
+     label(26) = 'av  '
+     label(27) = 'avB'
 
      iamvec(18:20) = 18
      labelvec(18:20) = 'J'
