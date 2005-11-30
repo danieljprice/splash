@@ -23,6 +23,8 @@ contains
 !   zcoords(npart) : z coordinates (or third quantity) of particles
 !   hi(npart)      : smoothing lengths of particles
 !   zmin, zmax     : range of z within which to plot particles
+!   istep          : current step position
+!   ilaststep      : position of last timestep
 !
 ! CHANGEABLE:
 !   icolourpart(npart) : flag indicating colour of particles
@@ -37,9 +39,9 @@ contains
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   xcoords,ycoords,zcoords,hi,icolourpart,xmin,xmax,ymin,ymax, &
   rendermin,rendermax,vecmax,anglex,angley,anglez,ndim,x_sec,zpos,dz, &
-  itrackpart,icolourscheme,iadvance,isave)
+  itrackpart,icolourscheme,iadvance,istep,ilaststep,isave)
   implicit none
-  integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy
+  integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy,istep,ilaststep
   integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
@@ -709,11 +711,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         iadvance = 0
         iexit = .true.
      case(' ','n','N') ! space
+        iadvance = abs(iadvance)
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
         read(char,*,iostat=ierr) iadvance
         if (ierr /=0) then
-           print*,'*** error setting timestep jump' 
+           print*,'*** internal error setting timestep jump' 
            iadvance = 1
         endif
         print*,' setting timestep jump = ',iadvance
@@ -737,6 +740,28 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            if (anglex.lt.0.) anglex = anglex + 360.        
         endif
      endif
+     !
+     !--do not let timestep go outside of bounds
+     !  if we are at the first/last step, just print message and do nothing
+     !  if iadvance trips over the bounds, jump to last/first step
+     !
+     if (iadvance.ne.-666 .and. iexit) then
+        if (istep + iadvance .gt. ilaststep) then
+           print "(1x,a)",'reached last timestep'
+           if (ilaststep-istep .gt.0) then
+              iadvance= ilaststep - istep
+           else
+              iexit = .false.
+           endif
+        elseif (istep + iadvance .lt. 1) then
+           print "(1x,a)",'reached first timestep: can''t go back!'
+           if (1-istep .lt.0) then
+              iadvance= 1 - istep
+           else
+              iexit = .false.
+           endif
+        endif
+     endif
 
   enddo interactiveloop
   return
@@ -746,9 +771,10 @@ end subroutine interactive_part
 ! cut down version of interactive mode -> controls timestepping only
 ! used in powerspectrum / extra plots
 !
-subroutine interactive_step(iadvance,xmin,xmax,ymin,ymax)
+subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax)
  implicit none
  integer, intent(inout) :: iadvance
+ integer, intent(in) :: istep,ilaststep
  real, intent(inout) :: xmin,xmax,ymin,ymax
  integer :: nc,ierr
  real :: xpt,ypt,xpt2,ypt2
@@ -762,7 +788,6 @@ subroutine interactive_step(iadvance,xmin,xmax,ymin,ymax)
      print*,'entering interactive mode...press h in plot window for help'
   else
      print*,'cannot enter interactive mode: device has no cursor'
-     iadvance = -666
      return
   endif
   char = 'A'
@@ -870,6 +895,7 @@ subroutine interactive_step(iadvance,xmin,xmax,ymin,ymax)
         iadvance = 0
         iexit = .true.
      case(' ','n','N') ! space
+        iadvance = abs(iadvance)
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
         read(char,*,iostat=ierr) iadvance
@@ -882,7 +908,28 @@ subroutine interactive_step(iadvance,xmin,xmax,ymin,ymax)
         iadvance = 10
         print*,' setting timestep jump = ',iadvance
      end select
-
+     !
+     !--do not let timestep go outside of bounds
+     !  if we are at the first/last step, just print message and do nothing
+     !  if iadvance trips over the bounds, jump to last/first step
+     !
+     if (iadvance.ne.-666 .and. iexit) then
+        if (istep + iadvance .gt. ilaststep) then
+           print "(1x,a)",'reached last timestep'
+           if (ilaststep-istep .gt.0) then
+              iadvance= ilaststep - istep
+           else
+              iexit = .false.
+           endif
+        elseif (istep + iadvance .lt. 1) then
+           print "(1x,a)",'reached first timestep: can''t go back!'
+           if (1-istep .lt.0) then
+              iadvance= 1 - istep
+           else
+              iexit = .false.
+           endif
+        endif
+     endif
   enddo
   return
 end subroutine interactive_step

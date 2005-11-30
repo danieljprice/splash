@@ -19,17 +19,28 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   
   call initialise_plotting(ipicky,ipickx,irender)
 
-  !------------------------------------------------------------------------      
+  !----------------------------------------------------------------------------  
   ! loop over timesteps (flexible to allow going forwards/backwards in
   !                      interactive mode)
-  !------------------------------------------------------------------------            
+  !
+  ! bookkeeping is as follows:
+  !            i : current step number or position in steplist array
+  !        istep : current or requested location in the dat array
+  !                (requested location is sent to get_nextstep which skips files
+  !                or steps appropriately and sets actual location)
+  !       icount : current step number
+  !                (as if all steps were in memory in sequential order)
+  ! istepsonpage : number of steps which have been plotted on current page
+  !                this is used because steps are coloured/marked differently
+  !                from this routine (call to colour_timestep)
+  !----------------------------------------------------------------------------         
   i = nstart
   iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
   ifile = 1
   istepsonpage = 0
   icount = nstart
 
-  over_timesteps: do while (i.le.n_end)
+  over_timesteps: do while (i.le.n_end .and. icount.le.n_end)
 
      if (iUseStepList) then
         istep = isteplist(i)
@@ -84,10 +95,6 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
      if (iadvance.eq.-666) exit over_timesteps
      i = i + iadvance
      icount = icount + iadvance
-     if (interactive .and. icount.ge.n_end) then
-        if (i.gt.n_end) i = n_end
-        icount = n_end
-     endif
 
   enddo over_timesteps
 
@@ -201,11 +208,14 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
   if (iChangeColours) then
      if (allocated(icolourme)) then
         icolour = istep + 1
-        if (icolour.gt.16) print*,'warning: step colour > 16: unknown colour'
+        if (icolour.gt.16) then
+           print "(a)",'warning: step colour > 16: re-using colours'
+           icolour = mod(icolour-1,16) + 1
+        endif
         icolourme = icolour
         linecolourthisstep = icolour
      else
-        print*,'***error: array not allocated in colour_timestep***'
+        print "(a)",'***error: array not allocated in colour_timestep***'
      endif
   endif
   if (iChangeStyles) then

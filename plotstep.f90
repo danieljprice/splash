@@ -1028,7 +1028,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                       hh(1:ninterp),icolourme(1:ninterp), &
                       xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax, &
                       angletempx,angletempy,angletempz,ndim,x_sec,zpos,dz, &
-                      itrackpart,icolours,iadvance,isave)
+                      itrackpart,icolours,iadvance,istep,n_end,isave)
                  !--turn rotation on if necessary
                  if (abs(angletempx-anglex).gt.tol) irotate = .true.
                  if (abs(angletempy-angley).gt.tol) irotate = .true.
@@ -1041,7 +1041,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  !--timestep control only if multiple plots on page
                  !
                  iadvance = nfreq
-                 call interactive_step(iadvance,xmin,xmax,ymin,ymax)
+                 call interactive_step(iadvance,istep,n_end,xmin,xmax,ymin,ymax)
                  if (iadvance.eq.-666) return
               endif
            endif
@@ -1134,14 +1134,14 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                    hh(1:ntoti),icolourme(1:ntoti), &
                    xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax, &
                    angletempx,angletempy,angletempz,ndim, &
-                   .false.,dummy,dummy,itrackpart,icolours,iadvance,isave)
+                   .false.,dummy,dummy,itrackpart,icolours,iadvance,istep,n_end,isave)
               if (iadvance.eq.-666) return
            elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
               !
               !--timestep control only if multiple plots on page
               !
               iadvance = nfreq
-              call interactive_step(iadvance,xmin,xmax,ymin,ymax)
+              call interactive_step(iadvance,istep,n_end,xmin,xmax,ymin,ymax)
               if (iadvance.eq.-666) return
            endif
         endif
@@ -1306,7 +1306,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
         if (interactive .and.((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) &
            .or. lastplot)) then
            iadvance = nfreq
-           call interactive_step(iadvance,xmin,xmax,ymin,ymax)
+           call interactive_step(iadvance,istep,n_end,xmin,xmax,ymin,ymax)
            if (iadvance.eq.-666) return
         endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
