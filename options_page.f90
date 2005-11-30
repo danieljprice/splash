@@ -44,7 +44,7 @@ subroutine defaults_set_page
   vposlegend = 2.0      ! vertical legend position in character heights
   legendtext = 't='
   
-  iPlotTitles = .true.  ! whether or not to plot titles
+  iPlotTitles = .false.  ! whether or not to plot titles
   hpostitle = 0.5       ! horizontal title position as fraction of viewport
   vpostitle = 1.0       ! vertical title position in character heights
   fjusttitle = 0.5      ! justification factor for title
