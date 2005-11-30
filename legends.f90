@@ -56,6 +56,7 @@ subroutine legend_vec(label,vecmax,dx,hpos,vpos,charheight)
  real :: xmin,xmax,ymin,ymax
  real :: xch,ych,charheightarrow
  real :: xpos,ypos,xbox(4),ybox(4),dxlabel,dxstring
+ real :: dxbuffer,dybuffer,dxbox,dybox
  integer :: icolindex
  character(len=len(label)+10) :: string
 
@@ -80,14 +81,21 @@ subroutine legend_vec(label,vecmax,dx,hpos,vpos,charheight)
  call pgqtxt(xpos,ypos,0.0,0.0,trim(string),xbox,ybox)
  dxstring = xbox(3) - xbox(2)
 !
+!--set size of box in x direction
+!
+ dxbuffer = 0.25*xch
+ dybuffer = 0.25*ych
+ dxbox = dxlabel + dxstring + dx + dxbuffer
+ dybox = max(ych,dx/sqrt(2.)) + 0.5*dybuffer
+!
 !--draw box around all of the legend
 !
  call pgqci(icolindex)
  call pgsci(0)
- call pgrect(xpos-0.25*dx,xpos+dxlabel+dxstring+dx,ypos-0.5*dx,ypos + dx)
+ call pgrect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
  call pgsci(icolindex)
  call pgsfs(2)
- call pgrect(xpos-0.25*dx,xpos+dxlabel+dxstring+dx,ypos-0.5*dx,ypos + dx)
+ call pgrect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
  call pgsfs(1)
 !
 !--write label
@@ -99,7 +107,7 @@ subroutine legend_vec(label,vecmax,dx,hpos,vpos,charheight)
 !
  call pgsch(charheightarrow)
  call pgarro(xpos,ypos,xpos+dx/sqrt(2.),ypos+dx/sqrt(2.))
- xpos = xpos + dx/sqrt(2.)
+ xpos = xpos + dx
 !
 !--write numerical value
 !
