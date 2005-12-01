@@ -521,13 +521,14 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
               !
               !--opacity is the fractional density
               !
-              fopacity = (rhoi - rhomin)*drhorange
+              fopacity = (rhoi - rhomin)*drhorange*wab
               fopacity = min(fopacity,1.0)
               fopacity = max(fopacity,0.0)
               !
               !--render, obscuring previously drawn pixels by relevant amount
               !
               datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*(term*wab)          
+!              datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + (term*wab)          
            endif
 
         enddo
