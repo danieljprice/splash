@@ -375,7 +375,7 @@ subroutine set_labels
   logical :: minidump
 
   minidump = .false.
-  if (rootname(1)(1:8).eq.'minidump') minidump = .true.
+  if (index(rootname(1),'minidump').ne.0) minidump = .true.
   
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -457,7 +457,7 @@ subroutine set_labels
 !     label(ivx+i-1) = 'v\d'//labelcoord(i,1)
 !  enddo
   label(irho) = '\gr'      
-  label(iutherm) = 'u'
+  if (iutherm.gt.0) label(iutherm) = 'u'
   label(ih) = 'h       '
   label(ipmass) = 'particle mass'
   !
