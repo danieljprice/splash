@@ -309,10 +309,10 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
   real, dimension(maxpart) :: renderplot,hh,pmass,rho
   real :: angleradx, anglerady, angleradz
   real :: rendermintemp,rendermaxtemp
-  real :: xsecmin,xsecmax,dummy
+  real :: xsecmin,xsecmax,dummy,rhomin,rhomax
   real :: pixwidth,dxfreq
 
-  character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
+  character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot,labelrho
   character(len=120) :: title
   character(len=20) :: string
   
@@ -733,18 +733,26 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                          ninterp,xmin,ymin,zpos,datpix,npixx,npixy,pixwidth)
                  else
                     !!--do fast projection
-                    call interpolate3D_projection( &
-                         xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                         pmass(1:ninterp),rho(1:ninterp),   &
-                         hh(1:ninterp), dat(1:ninterp,irenderplot), &
-                         ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz)
-                    !!--do fast projection with opacity
-!                    call interpolate3D_proj_opacity( &
+!                    call interpolate3D_projection( &
 !                         xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
 !                         pmass(1:ninterp),rho(1:ninterp),   &
 !                         hh(1:ninterp), dat(1:ninterp,irenderplot), &
-!                         ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz, &
-!                         lim(irho,1),lim(irho,2))
+!                         ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz)
+                    !!--do fast projection with opacity
+                    rhomin = lim(irho,1)
+                    rhomax = lim(irho,2)
+                    call transform(rho(1:ninterp),itrans(irho))
+                    call transform_limits(rhomin,rhomax,itrans(irho))
+                    labelrho = transform_label(label(irho),itrans(irho))
+                    print "(1x,a,1pe10.2,a,1pe10.2)", &
+                          'opaque for '//trim(labelrho)//' > ',rhomax, &
+                          ', transparent for '//trim(labelrho)//' < ',rhomin
+                    call interpolate3D_proj_opacity( &
+                         xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                         pmass(1:ninterp),rho(1:ninterp),   &
+                         hh(1:ninterp), dat(1:ninterp,irenderplot), &
+                         ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz, &
+                         rhomin,rhomax)
                  endif
 
               endif ! whether 3D grid or fast renderings

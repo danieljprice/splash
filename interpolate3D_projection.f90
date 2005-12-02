@@ -30,7 +30,7 @@ subroutine setup_integratedkernel
  real :: r, dist, step, ypos, v, v2, val
  real :: coldens, v2m
 
- print "(a)",' setting up integrated kernel table...'
+ print "(1x,a)",'setting up integrated kernel table...'
 
  do i=1,maxcoltable
     r=(i-1)/500.
@@ -117,7 +117,7 @@ subroutine interpolate3D_projection(x,y,z,pmass,rho,hh,dat,npart, &
   datsmooth = 0.
   term = 0.
   dmaxcoltable = 1./real(maxcoltable)
-  print "(a)",'projecting from particles to pixels...'
+  print "(1x,a)",'projecting from particles to pixels...'
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_proj: error: pixel width <= 0'
      return
@@ -271,7 +271,7 @@ subroutine interpolate3D_proj_vec(x,y,pmass,rho,hh,vecx,vecy,npart,&
   termx = 0.
   termy = 0.
   dmaxcoltable = 1./real(maxcoltable)
-  print "(a)",'projecting vector from particles to pixels...'
+  print "(1x,a)",'projecting vector from particles to pixels...'
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_proj_vec: error: pixel width <= 0'
      return
@@ -409,7 +409,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
   term = 0.
   dmaxcoltable = 1./real(maxcoltable)
   dwnorm = 1./coltable(1)
-  print "(a)",'projecting (with variable opacity) from particles to pixels...'
+  print "(1x,a)",'projecting (with variable opacity) from particles to pixels...'
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_proj: error: pixel width <= 0'
      return
@@ -439,8 +439,6 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
 !--first sort the particles in z so that we do the opacity in the correct order
 !
   call indexx(npart,z,iorder)
-  call cpu_time(tsec)
-  print*,'sorting complete in ',tsec-t_start,'s'
   
   over_particles: do ipart=1,npart
      !
