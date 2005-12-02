@@ -220,15 +220,19 @@ subroutine menu
            !
            if (ipicky.le.ndim .and. ipickx.le.ndim .and. iAllowRendering) then
               call prompt('(render) (0=none)',irender,0,numplot)
-              ivecplottemp = -1
-              do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
-                 ivecplottemp = ivecplot
-                 call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
-                 if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
-                    print "(a)",'Error, value not in list' 
-                 endif
-              enddo
-              ivecplot = ivecplottemp
+              if (any(iamvec(1:numplot).ne.0)) then
+                 ivecplottemp = -1
+                 do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
+                    ivecplottemp = ivecplot
+                    call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
+                    if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
+                       print "(a)",'Error, value not in list' 
+                    endif
+                 enddo
+                 ivecplot = ivecplottemp
+              else
+                 ivecplot = 0
+              endif
               if (ivecplot.gt.0 .and. irender.eq.0) then
                  call prompt('plot particles?',iplotpartvec)
               endif
@@ -424,15 +428,19 @@ subroutine menu
                xsecposmulti(i) = xsecposmulti(1)
             endif
          endif
-         ivecplottemp = -1
-         do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
-            ivecplottemp = ivecplot
-            call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
-            if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
-               print "(a)",'Error, value not in list' 
-            endif
-         enddo
-         ivecplotmulti(i) = ivecplottemp
+         if (any(iamvec(1:numplot).gt.0)) then
+            ivecplottemp = -1
+            do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
+               ivecplottemp = ivecplot
+               call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
+               if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
+                  print "(a)",'Error, value not in list' 
+               endif
+            enddo
+            ivecplotmulti(i) = ivecplottemp
+         else
+            ivecplotmulti(i) = 0
+         endif
          if (ivecplotmulti(i).gt.0 .and. irendermulti(i).eq.0) then
             call prompt('plot particles?',iplotpartvec)
          endif
