@@ -590,17 +590,16 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
               print "(a,f6.2)",'rotating particles about x by ',angletempx
            endif
            if (ndim.eq.3) then
-              if (iadvance.ne.0) then
-                 if (use3Dperspective .and. .not.x_sec) then
-                    dz = zdistunitmag
-                    zpos = zobserver
-                 elseif (.not.x_sec) then
-                    dz = 0.
-                    zpos = 0.
-                 endif
+              if (iadvance.ne.0 .and. use3Dperspective .and. .not.x_sec) then
+                 dz = zdistunitmag
+                 zpos = zobserver
               endif
-              if (use3Dperspective .and. .not.x_sec) &
+              if (use3Dperspective .and. .not.x_sec) then
                  print*,'unit magnification at  = ',dz,' observer at = ',zpos
+              else
+                 dz = 0.
+                 zpos = 0.
+              endif
            endif
            do j=1,ntoti
               xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
