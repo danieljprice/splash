@@ -9,8 +9,10 @@ module projections3D
  implicit none
 
  integer, parameter, private :: maxcoltable = 1000
- real, parameter, private :: pi = 3.1415926536      
+ real, parameter, private :: pi = 3.1415926536
+ real, parameter, private :: radkernel = 2.0
  real, dimension(maxcoltable), private :: coltable
+ real, parameter :: dmaxcoltable = 1./real(maxcoltable)
 
  public :: setup_integratedkernel
  public :: interpolate3D_projection
@@ -66,6 +68,34 @@ subroutine setup_integratedkernel
  return
 end subroutine setup_integratedkernel
 
+!
+! This function interpolates from the table of integrated kernel values
+! to give w(q)
+!
+real function wfromtable(qq)
+ implicit none
+ real :: qq,dxx,dwdx
+ integer :: index, index1
+ !
+ !--find nearest index in table
+ !
+ index = int(0.5*qq*maxcoltable) + 1
+ index1 = min(index + 1,maxcoltable)
+ !
+ !--find increment along from this index
+ !
+ dxx = 0.5*qq*maxcoltable - index*dmaxcoltable
+ !
+ !--find gradient
+ !
+ dwdx = (coltable(index1) - coltable(index))*dmaxcoltable
+ !
+ !--compute value of integrated kernel
+ !
+ wfromtable = coltable(index) + dwdx*dxx
+
+end function wfromtable
+
 !--------------------------------------------------------------------------
 !     subroutine to interpolate from particle data to even grid of pixels
 !
@@ -105,18 +135,14 @@ subroutine interpolate3D_projection(x,y,z,pmass,rho,hh,dat,npart, &
   real, intent(out), dimension(npixx,npixy) :: datsmooth
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  integer :: index, index1
   integer :: iprintinterval, iprintnext, iprogress, itmin
   real :: hi,hi1,radkern,qq,wab,rab,const
   real :: term,rho1i,dx,dy,xpix,ypix,zfrac
-  real :: dxx,dwdx
-  real :: dmaxcoltable
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress
 
   datsmooth = 0.
   term = 0.
-  dmaxcoltable = 1./real(maxcoltable)
   print "(1x,a)",'projecting from particles to pixels...'
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_proj: error: pixel width <= 0'
@@ -196,17 +222,9 @@ subroutine interpolate3D_projection(x,y,z,pmass,rho,hh,dat,npart, &
            !
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
-           !                     
-           !!--find nearest index in table
-           index = int(0.5*qq*maxcoltable) + 1
-           if (index.lt.maxcoltable) then
-              index1 = index + 1
-              !--find increment along from this index
-              dxx = qq - index*maxcoltable
-              !--find gradient                  
-              dwdx = (coltable(index1) - coltable(index))*dmaxcoltable
-              !--compute value of integrated kernel
-              wab = coltable(index) + dwdx*dxx
+           !
+           if (qq.lt.radkernel) then
+              wab = wfromtable(qq)
               !
               !--calculate data value at this pixel using the summation interpolant
               !                  
@@ -261,16 +279,13 @@ subroutine interpolate3D_proj_vec(x,y,pmass,rho,hh,vecx,vecy,npart,&
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  integer :: index,index1
   real :: hi,hi1,radkern,qq,wab,rab,const
   real :: rho1i,termx,termy,dx,dy,xpix,ypix
-  real :: dxx,dwdx,dmaxcoltable
 
   vecsmoothx = 0.
   vecsmoothy = 0.
   termx = 0.
   termy = 0.
-  dmaxcoltable = 1./real(maxcoltable)
   print "(1x,a)",'projecting vector from particles to pixels...'
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_proj_vec: error: pixel width <= 0'
@@ -328,23 +343,14 @@ subroutine interpolate3D_proj_vec(x,y,pmass,rho,hh,vecx,vecy,npart,&
            !
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
-           !                     
-           !!--find nearest index in table
-           index = int(0.5*qq*maxcoltable) + 1
-           if (index.lt.maxcoltable) then
-              index1 = index + 1
-              !--find increment along from this index
-              dxx = qq - index*maxcoltable
-              !--find gradient                  
-              dwdx = (coltable(index1) - coltable(index))*dmaxcoltable
-              !--compute value of integrated kernel
-              wab = coltable(index) + dwdx*dxx
+           !
+           if (qq.lt.radkernel) then
+              wab = wfromtable(qq)
               !
               !--calculate data value at this pixel using the summation interpolant
               !  
-              vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab          
-              vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab          
-
+              vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab
+              vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab
            endif
 
         enddo
@@ -395,15 +401,13 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
   real, dimension(3,npixx,npixy) :: rgb
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  integer :: index, index1
   integer :: iprintinterval, iprintnext, iprogress, itmin
   integer, dimension(npart) :: iorder
   integer :: ipart,ifirstcolour,ilastcolour,ir,ib,ig,ierr,maxcolour,indexi
   real :: hi,hi1,radkern,qq,wab,rab,const
   real :: term,rho1i,dx,dy,xpix,ypix,zfrac
-  real :: dxx,dwdx,dwnorm
+  real :: dwnorm
   real :: drhorange,fopacity,rhoi
-  real :: dmaxcoltable
   real, dimension(1) :: dati
   real :: t_start,t_end,t_used,tsec
   real :: rgbtable(3,256),ddatrange,datfraci
@@ -411,7 +415,6 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
 
   datsmooth = 0.
   term = 0.
-  dmaxcoltable = 1./real(maxcoltable)
   dwnorm = 1./coltable(1)
   print "(1x,a)",'projecting (with variable opacity) from particles to pixels...'
   if (pixwidth.le.0.) then
@@ -523,17 +526,9 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
            !
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
-           !                     
-           !!--find nearest index in table
-           index = int(0.5*qq*maxcoltable) + 1
-           if (index.lt.maxcoltable) then
-              index1 = index + 1
-              !--find increment along from this index
-              dxx = 0.5*qq*maxcoltable - index*dmaxcoltable
-              !--find gradient                  
-              dwdx = (coltable(index1) - coltable(index))*dmaxcoltable
-              !--compute value of integrated kernel
-              wab = coltable(index) + dwdx*dxx
+           !
+           if (qq.lt.radkernel) then
+              wab = wfromtable(qq)
               !--use normalised value here
               wab = wab*dwnorm
               !
