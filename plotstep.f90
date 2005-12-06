@@ -758,7 +758,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                          pmass(1:ninterp),rho(1:ninterp),   &
                          hh(1:ninterp), dat(1:ninterp,irenderplot), &
                          ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz, &
-                         rhomin,rhomax,rendermin,rendermax,itrans(irenderplot))
+                         rhomin,rhomax,rendermin,rendermax,itrans(irenderplot),istep)
                  endif
 
               endif ! whether 3D grid or fast renderings

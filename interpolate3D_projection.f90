@@ -390,11 +390,11 @@ end subroutine interpolate3D_proj_vec
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobs,dz1,rhomin,rhomax,datmin,datmax,itrans)
+     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobs,dz1,rhomin,rhomax,datmin,datmax,itrans,istep)
 
   use transforms
   implicit none
-  integer, intent(in) :: npart,npixx,npixy,itrans
+  integer, intent(in) :: npart,npixx,npixy,itrans,istep
   real, intent(in), dimension(npart) :: x,y,z,pmass,rho,hh,dat
   real, intent(in) :: xmin,ymin,pixwidth,zobs,dz1,rhomin,rhomax,datmin,datmax
   real, dimension(npixx,npixy), intent(out) :: datsmooth
@@ -412,6 +412,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
   real :: t_start,t_end,t_used,tsec
   real :: rgbtable(3,256),ddatrange,datfraci
   logical :: iprintprogress
+  character(len=120) :: filename
 
   datsmooth = 0.
   term = 0.
@@ -564,11 +565,13 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
 !
 !--write PPM--
 !  
-  open(unit=78,file='supersphplot.ppm',status='replace',form='formatted',iostat=ierr)
+  write(filename,"(a,i5.5,a)") 'supersphplot_',istep,'.ppm' 
+  open(unit=78,file=filename,status='replace',form='formatted',iostat=ierr)
   if (ierr /=0) then
      print*,'error opening ppm file'
      return
   endif
+  print "(1x,a,i5.5,a)", 'writing to file supersphplot_',istep,'.ppm' 
 !
 !--PPM header
 !
