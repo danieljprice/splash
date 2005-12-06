@@ -384,25 +384,29 @@ end subroutine interpolate3D_proj_vec
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobs,dz1,rhomin,rhomax)
+     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobs,dz1,rhomin,rhomax,datmin,datmax,itrans)
 
+  use transforms
   implicit none
-  integer, intent(in) :: npart,npixx,npixy
+  integer, intent(in) :: npart,npixx,npixy,itrans
   real, intent(in), dimension(npart) :: x,y,z,pmass,rho,hh,dat
-  real, intent(in) :: xmin,ymin,pixwidth,zobs,dz1,rhomin,rhomax
-  real, intent(out), dimension(npixx,npixy) :: datsmooth
+  real, intent(in) :: xmin,ymin,pixwidth,zobs,dz1,rhomin,rhomax,datmin,datmax
+  real, dimension(npixx,npixy), intent(out) :: datsmooth
+  real, dimension(3,npixx,npixy) :: rgb
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   integer :: index, index1
   integer :: iprintinterval, iprintnext, iprogress, itmin
   integer, dimension(npart) :: iorder
-  integer :: ipart
+  integer :: ipart,ifirstcolour,ilastcolour,ir,ib,ig,ierr,maxcolour,indexi
   real :: hi,hi1,radkern,qq,wab,rab,const
   real :: term,rho1i,dx,dy,xpix,ypix,zfrac
   real :: dxx,dwdx,dwnorm
   real :: drhorange,fopacity,rhoi
   real :: dmaxcoltable
+  real, dimension(1) :: dati
   real :: t_start,t_end,t_used,tsec
+  real :: rgbtable(3,256),ddatrange,datfraci
   logical :: iprintprogress
 
   datsmooth = 0.
@@ -420,6 +424,13 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
      print "(a)",'error: rhomin=rhomax in opacity rendering'
      return
   endif
+  if (abs(datmax-datmin).gt.tiny(datmin)) then
+     ddatrange = 1./abs(datmax-datmin)
+  else
+     print "(a)",'error: datmin=datmax in opacity rendering'
+     return
+  endif
+  rgb = 0.
   !
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
@@ -435,6 +446,10 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
 !--get starting CPU time
 !
   call cpu_time(t_start)
+!
+!--get the rgb colours from the colour table
+!  
+  call tabulate_colours(rgbtable,ifirstcolour,ilastcolour)
 !
 !--first sort the particles in z so that we do the opacity in the correct order
 !
@@ -477,6 +492,11 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
 !     endif
      !term = const*pmass(i)*dat(i)*rho1i
      term = dat(i)
+     dati = term
+     call transform(dati,itrans)
+     datfraci = (dati(1) - datmin)*ddatrange
+     datfraci = max(datfraci,0.)
+     datfraci = min(datfraci,1.)
      !
      !--for each particle work out which pixels it contributes to
      !               
@@ -509,7 +529,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
            if (index.lt.maxcoltable) then
               index1 = index + 1
               !--find increment along from this index
-              dxx = qq - index*maxcoltable
+              dxx = 0.5*qq*maxcoltable - index*dmaxcoltable
               !--find gradient                  
               dwdx = (coltable(index1) - coltable(index))*dmaxcoltable
               !--compute value of integrated kernel
@@ -518,15 +538,28 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
               wab = wab*dwnorm
               !
               !--opacity is the fractional density
+              !  NB this is not quite right if log is applied to density
               !
               fopacity = (rhoi - rhomin)*drhorange*wab
               fopacity = min(fopacity,1.0)
               fopacity = max(fopacity,0.0)
               !
+              !--determine colour contribution of current point
+              !  (work out position in colour table)
+              !  NB: wab does not make sense here if we have taken the log of dat
+              !
+              indexi = int(datfraci*(ilastcolour-ifirstcolour)) + ifirstcolour
+              !
               !--render, obscuring previously drawn pixels by relevant amount
               !
-              datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*(term*wab)          
-!              datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + (term*wab)          
+              rgb(1,ipix,jpix) = (1.-fopacity)*rgb(1,ipix,jpix) + fopacity*rgbtable(1,indexi)
+              rgb(2,ipix,jpix) = (1.-fopacity)*rgb(2,ipix,jpix) + fopacity*rgbtable(2,indexi)
+              rgb(3,ipix,jpix) = (1.-fopacity)*rgb(3,ipix,jpix) + fopacity*rgbtable(3,indexi)
+              !
+              !--this is the rendering of the colour value -- ie. position in the colour table
+              !  previously drawn colours (data values) are obscured by relevant amount
+              ! 
+              datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*(term*wab)
            endif
 
         enddo
@@ -534,6 +567,32 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
 
   enddo over_particles
 !
+!--write PPM--
+!  
+  open(unit=78,file='supersphplot.ppm',status='replace',form='formatted',iostat=ierr)
+  if (ierr /=0) then
+     print*,'error opening ppm file'
+     return
+  endif
+!
+!--PPM header
+!
+  maxcolour = 256
+  write(78,"(a)") 'P3'
+  write(78,"(a)") '# supersphplot.ppm created by supersphplot (c) 2005 Daniel Price'
+  write(78,"(i4,1x,i4)") npixx, npixy
+  write(78,"(i3)") maxcolour
+!--pixel information
+  do jpix = npixy,1,-1
+     do ipix = 1,npixx
+        ir = max(min(int(rgb(1,ipix,jpix)*maxcolour),maxcolour),0)
+        ig = max(min(int(rgb(2,ipix,jpix)*maxcolour),maxcolour),0)
+        ib = max(min(int(rgb(3,ipix,jpix)*maxcolour),maxcolour),0)
+        write(78,"(i3,1x,i3,1x,i3,2x)") ir,ig,ib
+     enddo
+  enddo
+  close(unit=78)
+! 
 !--get ending CPU time
 !
   call cpu_time(t_end)
@@ -549,6 +608,28 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,rho,hh,dat,npart, &
   return
 
 end subroutine interpolate3D_proj_opacity
+
+!
+!--this subroutine queries PGPLOT for the current colour table
+!  returns colour table and start/end colour indices
+!
+subroutine tabulate_colours(rgbtable,istart,iend)
+ implicit none
+ real, intent(out), dimension(:,:) :: rgbtable
+ integer, intent(out) :: istart,iend
+ integer :: i
+ 
+ call pgqcir(istart,iend)
+ if (iend.gt.size(rgbtable(1,:))) then
+    print*,'error: too many colours for array size in tabulate_colours'
+ endif
+ 
+ do i=istart,iend
+    call pgqcr(i,rgbtable(1,i),rgbtable(2,i),rgbtable(3,i))
+ enddo
+ 
+ return
+end subroutine tabulate_colours
 
 
 subroutine indexx(n, arr, indx)
