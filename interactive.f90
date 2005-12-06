@@ -231,6 +231,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         if (irender.ge.0) then
            print*,' m: change colour m)ap to next'
            print*,' M: change colour M)ap to previous'
+           print*,' i: i)nvert colour map'
         endif
         print*,' v: decrease arrow size on vector plots'
         print*,' V: increase arrow size on vector plots'
@@ -697,6 +698,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         call change_colourmap(icolourscheme,1)
      case('M') ! change colour map (previous scheme)
         call change_colourmap(icolourscheme,-1)
+     case('i') ! invert colour map
+        icolourscheme = -icolourscheme
+        call change_colourmap(icolourscheme,0)
      !
      !--timestepping
      !
@@ -1158,8 +1162,8 @@ subroutine change_colourmap(imap,istep)
  integer, intent(in) :: istep
  
  imap = imap + istep
- if (imap.gt.ncolourschemes) imap = 1
- if (imap.lt.1) imap = ncolourschemes
+ if (abs(imap).gt.ncolourschemes) imap = 1
+ if (abs(imap).lt.1) imap = ncolourschemes
  call colour_set(imap)
  
 end subroutine change_colourmap

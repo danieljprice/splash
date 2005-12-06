@@ -65,18 +65,18 @@ subroutine submenu_render
        call prompt('enter number of pixels along x axis',npix,1,10000)
 !------------------------------------------------------------------------
     case(2)
-       promptloop: do
-          if (icolours.lt.0) icolours = 1
-          write(*,"(i2,a,1x)") (i,': '//trim(schemename(i)),i=1,ncolourschemes)
-          print "(a)",'(-ve = demo, 0 = contours only)'
-          call prompt('enter colour scheme for rendering ',icolours,max=ncolourschemes)
-          if (icolours.lt.0) then
-             call colour_demo
-             cycle promptloop
-          else
-             exit promptloop
-          endif
-       enddo promptloop
+!       promptloop: do
+!          if (icolours.lt.0) icolours = 1
+       write(*,"(i2,a,1x)") (i,': '//trim(schemename(i)),i=1,ncolourschemes)
+       print "(a)",'(-ve = inverse, 0 = contours only)'
+       call prompt('enter colour scheme for rendering ',icolours,-ncolourschemes,ncolourschemes)
+!          if (icolours.lt.0) then
+!             call colour_demo
+!             cycle promptloop
+!          else
+!             exit promptloop
+!          endif
+!       enddo promptloop
        !
        ! by default, plot contours if no colour scheme and don't if a colour scheme chosen
        !

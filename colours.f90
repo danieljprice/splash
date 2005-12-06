@@ -32,7 +32,7 @@ subroutine colour_set(icolourscheme)
   integer, intent(in) :: icolourscheme
   integer :: i,icolourmin,icolmin,icolmax,ncolmax,ncolours,nset
   real :: hue,light,sat,brightness,red,green,blue
-  real :: dhue,dlight,dsat,dred,dgreen,dblue
+  real :: dhue,dlight,dsat,dred,dgreen,dblue,contrast
   real, dimension(8) :: lumarr,redarr,greenarr,bluearr
   logical :: rgb
       
@@ -116,7 +116,7 @@ subroutine colour_set(icolourscheme)
 !--set colour indexes from icolourmin-> icolourmin+ncolours
 !  increment values in steps
 !
-  if (icolourscheme .lt. 2) then
+  if (abs(icolourscheme) .lt. 2) then
      do i=icolourmin,icolourmin+ncolours
         if (rgb) then
            red = red + dred
@@ -138,7 +138,11 @@ subroutine colour_set(icolourscheme)
      enddo
   else
      brightness = 0.5
-     select case(icolourscheme)
+     contrast = 1.0
+     !--invert colour table for negative values
+     if (icolourscheme.lt.0) contrast = -1.0
+     
+     select case(abs(icolourscheme))
      case(2)
      !--red temperature
      nset = 5
@@ -234,7 +238,7 @@ subroutine colour_set(icolourscheme)
      end select
 
      call PGCTAB(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &
-                 nset,1.0,brightness)
+                 nset,contrast,brightness)
 
   endif  
 !
@@ -243,7 +247,11 @@ subroutine colour_set(icolourscheme)
 !  call PGQCR(0,red,green,blue)
 !  call PGSCR(icolourmin,red,green,blue)
   
-  print*,'using colour scheme ',trim(schemename(icolourscheme))
+  if (icolourscheme.lt.0) then
+     print "(1x,a)",'using colour scheme inverse '//trim(schemename(abs(icolourscheme)))
+  else
+     print "(1x,a)",'using colour scheme '//trim(schemename(icolourscheme))
+  endif
   return
   
 end subroutine colour_set

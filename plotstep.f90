@@ -227,7 +227,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   
   !!--set colour table
   if (((irender.gt.ndim).or.any(irendermulti(1:nyplots).gt.ndim)) &
-       .and.(icolours.gt.0)) then
+       .and.(icolours.ne.0)) then
      call colour_set(icolours)
   endif
     

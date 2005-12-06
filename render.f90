@@ -38,11 +38,11 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 
  print*,'rendering...',npixx,'x',npixy,',array size=',size(datpix),minval(datpix)
 
- if (icolours.eq.1) then        ! greyscale
+ if (abs(icolours).eq.1) then        ! greyscale
     if (iPlotColourBar) call colourbar(icolours,datmin,datmax,trim(label),log)
     call pggray(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
 
- elseif (icolours.gt.1) then        ! colour
+ elseif (abs(icolours).gt.1) then        ! colour
     if (iPlotColourBar) call colourbar(icolours,datmin,datmax,trim(label),log)
 !    call pgwedg('ri',2.0,4.0,datmin,datmax,' ')
 !    call pgpixl(datpix,npixx,npixx,1,npixx,1,npixx,xmin,xmax,ymin,ymax)
@@ -102,9 +102,9 @@ subroutine colourbar(icolours,datmin,datmax,label,log)
 !
 !--Note that plots use my modification of pgwedg which plots vertical numbers on axes
 !          
- if (icolours.eq.1) then        ! greyscale
+ if (abs(icolours).eq.1) then        ! greyscale
     call danpgwedg('rgv'//clog,disp,width,datmin,datmax,trim(label),ColourBarDisp)
- elseif (icolours.gt.1) then        ! colour
+ elseif (abs(icolours).gt.1) then        ! colour
     call danpgwedg('riv'//clog,disp,width,datmin,datmax,trim(label),ColourBarDisp)
  endif
 
