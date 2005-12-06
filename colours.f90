@@ -4,7 +4,7 @@
 !
 module colours
  implicit none
- integer, parameter :: ncolourmax = 256*16
+ integer, parameter :: ncolourmax = 256
  integer, parameter :: ncolourschemes = 14
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
@@ -53,13 +53,13 @@ subroutine colour_set(icolourscheme)
 !  adjust ncolours if necessary
 !      
   call PGQCOL(icolmin,icolmax)
-  print*,' from device = ',icolmin,icolmax
+!  print*,' from device = ',icolmin,icolmax
   call PGQCIR(icolmin,icolmax)
-  print*,' other = ',icolmin,icolmax
+!  print*,' other = ',icolmin,icolmax
   if (icolourmin.lt.icolmin) icolourmin = icolmin
   ncolmax = icolmax - icolourmin
   if (ncolours.gt.ncolmax) then  
-!     ncolours = ncolmax
+     ncolours = ncolmax
      print*,'Warning: Device allows only ',ncolours+1,' colours'
   endif
   !
@@ -168,7 +168,7 @@ subroutine colour_set(icolourscheme)
      greenarr(1:nset)= (/0.0,0.000,0.000,0.00,1.000,1.000,1.0000,0.0/)
      bluearr(1:nset) = (/0.0,0.569,1.000,1.00,1.000,0.000,0.0000,0.0/)
      case(6)
-     !--universe
+     !--universe (this is my attempt at ripping off a spiral galaxy colour table)
      nset = 6
      lumarr(1:nset) =  (/0.0,0.20,0.4,0.60,0.95,1.0/)
      redarr(1:nset) =  (/0.0,0.10,0.2,0.40,1.00,1.0/)
@@ -240,8 +240,8 @@ subroutine colour_set(icolourscheme)
 !
 !--always set the minimum colour to the background
 !
-  call PGQCR(0,red,green,blue)
-  call PGSCR(icolourmin,red,green,blue)
+!  call PGQCR(0,red,green,blue)
+!  call PGSCR(icolourmin,red,green,blue)
   
   print*,'using colour scheme ',trim(schemename(icolourscheme))
   return
