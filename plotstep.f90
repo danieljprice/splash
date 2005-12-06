@@ -744,6 +744,13 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                     call transform(rho(1:ninterp),itrans(irho))
                     call transform_limits(rhomin,rhomax,itrans(irho))
                     labelrho = transform_label(label(irho),itrans(irho))
+
+                    if (iadvance.ne.0) then
+                       rendermin = lim(irenderplot,1)
+                       rendermax = lim(irenderplot,2)
+                       call transform_limits(rendermin,rendermax,itrans(irenderplot))
+                    endif
+
                     print "(1x,a,1pe10.2,a,1pe10.2)", &
                           'opaque for '//trim(labelrho)//' > ',rhomax, &
                           ', transparent for '//trim(labelrho)//' < ',rhomin
@@ -752,7 +759,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                          pmass(1:ninterp),rho(1:ninterp),   &
                          hh(1:ninterp), dat(1:ninterp,irenderplot), &
                          ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz, &
-                         rhomin,rhomax)
+                         rhomin,rhomax,rendermin,rendermax,itrans(irenderplot))
                  endif
 
               endif ! whether 3D grid or fast renderings
@@ -967,6 +974,10 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                 ivecy = iamvec(ivectorplot) + iploty - 1
 
                 labelvecplot = trim(labelvec(ivectorplot))
+                !!--set label for projection plots (2268 or 2412 for integral sign)
+                if (ndim.eq.3 .and..not. x_sec) then
+                   labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
+                endif
                 pixwidth = (xmax-xmin)/real(npixvec)
                 npixyvec = int((ymax-ymin)/pixwidth) + 1
                 if (iadvance.ne.0) then
