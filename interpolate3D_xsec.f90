@@ -83,9 +83,9 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
      ipixmin = int((x(i) - radkern - xmin)/pixwidth)
      jpixmin = int((y(i) - radkern - ymin)/pixwidth)
      kpixmin = int((z(i) - radkern - zmin)/zpixwidth)
-     ipixmax = int((x(i) + radkern - xmin)/pixwidth)
-     jpixmax = int((y(i) + radkern - ymin)/pixwidth)
-     kpixmax = int((z(i) + radkern - zmin)/zpixwidth)
+     ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
+     jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
+     kpixmax = int((z(i) + radkern - zmin)/zpixwidth) + 1
 
      !         PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
      !         PRINT*,'z slices = ',kpixmin,zmin + kpixmin*zpixwidth, !- 0.5*zpixwidth,
@@ -104,13 +104,13 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
      !--loop over pixels, adding the contribution from this particle
      !
      do kpix = kpixmin,kpixmax
-        zpix = zmin + (kpix)*zpixwidth  !- 0.5*zpixwidth
+        zpix = zmin + (kpix-0.5)*zpixwidth
         dz = zpix - z(i)
         do jpix = jpixmin,jpixmax
-           ypix = ymin + (jpix)*pixwidth  !- 0.5*pixwidth
+           ypix = ymin + (jpix-0.5)*pixwidth
            dy = ypix - y(i)  
            do ipix = ipixmin,ipixmax
-              xpix = xmin + (ipix)*pixwidth   !- 0.5*pixwidth
+              xpix = xmin + (ipix-0.5)*pixwidth
               dx = xpix - x(i)
               rab = sqrt(dx**2 + dy**2 + dz**2)
               qq = rab*hi1
@@ -213,8 +213,8 @@ subroutine interpolate3D_fastxsec(x,y,z,pmass,rho,hh,dat,npart,&
         !               
         ipixmin = int((x(i) - radkern - xmin)/pixwidth)
         jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-        ipixmax = int((x(i) + radkern - xmin)/pixwidth)
-        jpixmax = int((y(i) + radkern - ymin)/pixwidth)
+        ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
+        jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
 
         ! PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
         ! PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
@@ -227,10 +227,10 @@ subroutine interpolate3D_fastxsec(x,y,z,pmass,rho,hh,dat,npart,&
         !--loop over pixels, adding the contribution from this particle
         !
         do jpix = jpixmin,jpixmax
-           ypix = ymin + (jpix)*pixwidth - 0.5*pixwidth
+           ypix = ymin + (jpix-0.5)*pixwidth
            dy = ypix - y(i)
            do ipix = ipixmin,ipixmax
-              xpix = xmin + (ipix)*pixwidth - 0.5*pixwidth
+              xpix = xmin + (ipix-0.5)*pixwidth
               dx = xpix - x(i)
               rab = sqrt(dx**2 + dy**2 + dz2)
               qq = rab*hi1
@@ -354,8 +354,8 @@ subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
         !               
         ipixmin = int((x(i) - radkern - xmin)/pixwidth)
         jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-        ipixmax = int((x(i) + radkern - xmin)/pixwidth)
-        jpixmax = int((y(i) + radkern - ymin)/pixwidth)
+        ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
+        jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
 
         ! PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
         ! PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
@@ -368,10 +368,10 @@ subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
         !--loop over pixels, adding the contribution from this particle
         !
         do jpix = jpixmin,jpixmax
-           ypix = ymin + (jpix)*pixwidth - 0.5*pixwidth
+           ypix = ymin + (jpix-0.5)*pixwidth
            dy = ypix - y(i)
            do ipix = ipixmin,ipixmax
-              xpix = xmin + (ipix)*pixwidth - 0.5*pixwidth
+              xpix = xmin + (ipix-0.5)*pixwidth
               dx = xpix - x(i)
               rab = sqrt(dx**2 + dy**2 + dz2)
               qq = rab*hi1
