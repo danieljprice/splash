@@ -91,15 +91,34 @@ subroutine calc_quantities(ifromstep,itostep)
   !
   if (iBfirst.ne.0) then
      nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 6
+     ncalc = ncalc + 1
      ipmag = nstartfromcolumn + 1
-     ibeta = nstartfromcolumn + 2
-     itotpr = nstartfromcolumn + 3      
-     idivBerr = nstartfromcolumn + 4
-     icrosshel = nstartfromcolumn + 5
-     ivalfven = nstartfromcolumn + 6
-     !!icurr = ncolumns + 8
-     icurr = 0
+     if (ipr.ne.0 .and. ipmag.ne.0) then
+        nstartfromcolumn = ncolumns + ncalc
+        ncalc = ncalc + 2
+        ibeta = nstartfromcolumn + 1
+        itotpr = nstartfromcolumn + 2
+     endif
+     if (idivB.ne.0 .and. ih.ne.0) then
+        nstartfromcolumn = ncolumns + ncalc
+        ncalc = ncalc + 1
+        idivBerr = nstartfromcolumn + 1
+     endif
+     if (ivx.ne.0) then
+        nstartfromcolumn = ncolumns + ncalc
+        ncalc = ncalc + 1
+        icrosshel = nstartfromcolumn + 1
+     endif
+     if (ipmag.ne.0 .and. (irho.ne.0)) then
+        nstartfromcolumn = ncolumns + ncalc
+        ncalc = ncalc + 1
+        ivalfven = nstartfromcolumn + 1
+     endif
+!     if (iJfirst.ne.0 .and.irho.ne.0) then
+!        nstartfromcolumn = ncolumns + ncalc
+!        ncalc = ncalc + 1
+!        icurr = nstartfromcolumn + 1
+!     endif
   else
 !     nstartfromcolumn = ncolumns + ncalc
 !     ncalc = ncalc + ndimV
@@ -224,7 +243,7 @@ subroutine calc_quantities(ifromstep,itostep)
                                                dat(j,iBfirst:iBfirst+ndimV-1,i))
            enddo
            !!--plasma beta
-           if (ibeta.ne.0 .and. ipr.ne.0) then
+           if (ibeta.ne.0) then
               where(abs(dat(1:ntoti,ipmag,i)).gt.tiny(dat))
                  dat(1:ntoti,ibeta,i) = dat(1:ntoti,ipr,i)/dat(1:ntoti,ipmag,i)
               elsewhere  
@@ -234,11 +253,11 @@ subroutine calc_quantities(ifromstep,itostep)
         endif
            
         !!--total pressure (gas + magnetic)     
-        if ((itotpr.ne.0).and.(ipr.ne.0).and.(ipmag.ne.0)) then
+        if (itotpr.ne.0) then
            dat(1:ntoti,itotpr,i) = dat(1:ntoti,ipr,i) + dat(1:ntoti,ipmag,i)
         endif
         !!--div B error        (h*divB / abs(B))
-        if ((idivBerr.ne.0).and.(idivB.ne.0).and.(ih.ne.0)) then
+        if (idivBerr.ne.0) then
            do j=1,ntoti
               Bmag = sqrt(dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i), &
                                       dat(j,iBfirst:iBfirst+ndimV-1,i)))
@@ -249,7 +268,7 @@ subroutine calc_quantities(ifromstep,itostep)
               endif
            enddo
         endif
-        if ((icurr.ne.0).and.(iJfirst.ne.0).and.irho.ne.0) then
+        if (icurr.ne.0) then
            do j=1,ntoti
               Jmag = sqrt(dot_product(dat(j,iJfirst:iJfirst+ndimV-1,i), &
                    dat(j,iJfirst:iJfirst+ndimV-1,i)))
@@ -258,13 +277,13 @@ subroutine calc_quantities(ifromstep,itostep)
               endif
            enddo
         endif
-        if ((icrosshel.ne.0).and.(iBfirst.ne.0).and.ivx.ne.0) then
+        if (icrosshel.ne.0) then
            do j=1,ntoti
               dat(j,icrosshel,i) = dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i),  &
                    dat(j,ivx:ivx+ndimV-1,i))
            enddo
         endif
-        if ((ivalfven.ne.0) .and.(ipmag.ne.0).and.(irho.ne.0)) then
+        if (ivalfven.ne.0) then
            where (dat(:,irho,i).gt.tiny(dat))
               dat(:,ivalfven,i) = sqrt(dat(:,ipmag,i)/dat(:,irho,i))
            elsewhere
