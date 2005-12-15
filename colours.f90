@@ -48,7 +48,7 @@ subroutine colour_set(icolourscheme)
   blue = 0.0
   rgb = .false.
   ncolours = ncolourmax
-  nset = 5
+  nset = 0
 !
 !--set first colour index (warning: colours 1-16 have presets, so
 !  overwriting these means that line graphs that use colour will come
@@ -152,7 +152,7 @@ subroutine colour_set(icolourscheme)
      select case(abs(icolourscheme))
      case(2)
      !--red temperature (IDL red-temperature)
-     nset = 5
+     nset = 4
      lumarr(1:nset) =  (/0.0,0.69,0.75,1.0/)
      redarr(1:nset) =  (/0.0,1.00,1.00,1.0/)
      greenarr(1:nset)= (/0.0,0.41,0.52,1.0/)

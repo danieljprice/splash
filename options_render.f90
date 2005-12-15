@@ -38,10 +38,10 @@ end subroutine defaults_set_render
 ! options for rendering / vector plots
 !-----------------------------------------------------------------------------
 subroutine submenu_render
-  use colours
+  use colours, only:schemename,ncolourschemes,colour_demo
   use prompting
   implicit none
-  integer :: ians,i
+  integer :: ians,i,ierr,icolourprev
 !
 !--rendering options
 !
@@ -65,18 +65,23 @@ subroutine submenu_render
        call prompt('enter number of pixels along x axis',npix,1,10000)
 !------------------------------------------------------------------------
     case(2)
-!       promptloop: do
-!          if (icolours.lt.0) icolours = 1
+       ierr = 1
+       icolourprev = icolours
        write(*,"(i2,a,1x)") (i,': '//trim(schemename(i)),i=1,ncolourschemes)
+       write(*,"(i2,a,1x)") ncolourschemes+1,': demo plot of all schemes'
        print "(a)",'(-ve = inverse, 0 = contours only)'
-       call prompt('enter colour scheme for rendering ',icolours,-ncolourschemes,ncolourschemes)
-!          if (icolours.lt.0) then
-!             call colour_demo
-!             cycle promptloop
-!          else
-!             exit promptloop
-!          endif
-!       enddo promptloop
+       promptloop: do while (ierr /= 0)
+          call prompt('enter colour scheme for rendering ',icolours,-ncolourschemes,ncolourschemes+1)
+          !
+          ! demonstration plot of all colour schemes
+          !      
+          ierr = 0
+          if (abs(icolours).eq.ncolourschemes+1) then
+             call colour_demo
+             icolours = icolourprev
+             ierr = 1
+          endif
+       enddo promptloop
        !
        ! by default, plot contours if no colour scheme and don't if a colour scheme chosen
        !
