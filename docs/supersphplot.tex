@@ -578,7 +578,7 @@ supersphplot. The (h)elp option simply expands the text for the options menus (I
 may add to this soon). (q)uit, unsurprisingly, quits. Typing a number greater than the number of
 data columns also exits the program (e.g. I often simply type 99 to exit).
 
-\section{Interpolations}
+\section{Algorithms}
 
 \subsection{Rendering of 2D data}
 \subsubsection{Interpolation to pixels}
@@ -590,10 +590,10 @@ interpolant. In two dimensions the interpolant is simply
 \end{equation}
 where the summation is over contributing particles and $W$ is the standard cubic spline kernel, given by
 \begin{equation}
-W(q) = \frac{\sigma}{h^\nu}\left\{ \begin{array}{ll}
+W(r,h) = \frac{\sigma}{h^\nu}\left\{ \begin{array}{ll}
 1 - \frac{3}{2}q^2 + \frac{3}{4}q^3, & 0 \le q < 1; \\
 \frac{1}{4}(2-q)^3, & 1 \le q < 2; \\
-0 & q \ge 2 \end{array} \right.
+0 & q \ge 2 \end{array} \right. \label{eq:cubicspline}
 \end{equation}
 where $q = \vert {\bf r}_a - {\bf r}_b \vert / h$, $\nu$ is the number of spatial
 dimensions and the normalisation constant $\sigma$ is given by $2/3$, $10/(7\pi)$ and $1/\pi$ in
@@ -657,16 +657,56 @@ a straight cross section as described above.
 \subsection{Rendering of 3D data}
  In three dimensions we must take either a projection through the whole domain or a cross section slice.
  
-\subsubsection{Projections} 
- In the projection case the interpolation is similar to the 2D case, that is the interpolant is
-given by
+\subsubsection{Projections (line of sight integration)}
+ In the projection case we wish to obtain an integral of the rendered quantity along the line of sight. We
+begin with the SPH summation interpolant \citep{monaghan92} in the form
 \begin{equation}
-\phi(x,y) = \sum_b m_b \frac{\phi_b}{\rho_b} Y(x - x_b, y-y_b, h_b).
+f(x,y,z) = \sum_b m_b \frac{\phi_b}{\rho_b} W(x - x_b, y-y_b, z-z_b, h_b)
 \end{equation}
-In this case, however, the kernel (denoted $Y$) is the usual cubic spline but integrated through one spatial
-dimension. This results in a map of the rendered quantity integrated along the line of sight.
-In the case of vector quantities each component is interpolated separately, giving a vector
-map which is also integrated along the line of
+where $W$ is the usual (3D) cubic spline kernel (\ref{eq:cubicspline}). Taking the integral of both sides
+along the line of sight (assumed to be along the z axis) we have
+\begin{equation}
+\int f(x,y,z) {\rm dz} = \sum_b m_b \frac{\phi_b}{\rho_b} \int W(x - x_b, y-y_b, z-z_b, h_b) {\rm dz}.
+\end{equation}
+This shows that the line-of-sight integration for three dimensions can be written as a two dimensional
+interpolation
+\begin{equation}
+\phi(x,y) = \int f {\rm dz} = \sum_b m_b \frac{f_b}{\rho_b} Y(x - x_b, y-y_b, h_b).
+\end{equation}
+where the 2D kernel (denoted $Y$) is the 3D kernel integrated through one spatial
+dimension, ie.
+\begin{equation}
+Y(x,y) = \int W(x,y,z) dz.
+\end{equation}
+
+
+For practical purposes we write $Y$ in the form
+\begin{equation}
+Y(r_{xy}, h) = \frac{2}{\pi h^2} F(q_{xy})
+\end{equation}
+where $q_{xy} = r_{xy}/h$ and $F(q_{xy})$ is given by
+\begin{equation}
+F(q_{xy}) = \left[ \int_{-q_{xy}}^{q_{xy}} f(q){\rm dq_z} \right] \label{eq:integratedform}
+\end{equation}
+where $q_z=z/h$, $q= q_{xy} + q_z$ and $f$ is the usual kernel function for the cubic spline, ie.
+\begin{equation}
+f(q) = \left\{ \begin{array}{ll}
+1 - \frac{3}{2}q^2 + \frac{3}{4}q^3, & 0 \le q < 1; \\
+\frac{1}{4}(2-q)^3, & 1 \le q < 2; \\
+0 & q \ge 2 \end{array} \right.
+\end{equation}
+The integral (\ref{eq:integratedform}) is not obviously tractable analytically. However it is
+straightforward to perform this integration numerically (for all $q_{xy}$'s from $0\to 2$) and store the results in a table for the
+interpolation calculation. This is the method adopted in SUPERSPHPLOT. An alternative would be to use a
+different kernel in the visualisation for which the above integral can be calculated analytically.
+
+
+In the case of vector quantities each component is interpolated separately in the form
+\begin{eqnarray}
+f^x(x,y) & = & \sum_b m_b \frac{f^x_b}{\rho_b} Y(x - x_b, y-y_b, h_b), \nonumber \\
+f^y(x,y) & = & \sum_b m_b \frac{f^y_b}{\rho_b} Y(x - x_b, y-y_b, h_b),
+\end{eqnarray}
+giving a vector map which is also integrated along the line of
 sight.
 
 \subsubsection{Cross sections of 3D data}
@@ -693,43 +733,6 @@ the 'd' (for down) and 'u' (for up) keys in interactive mode.
 \paragraph{Flythru}
  With the cross section option chosen in 3D, a flythru may be chosen at the plotting prompt. This
 plots multiple slices through the data.
-
-\section{Other features}
-
-\subsection{Rotation}
- Rotation is achieved by tranforming to cylindrical co-ordinates about each axis, incrementing the
-azimuthal angle appropriately and transforming back to cartesians. Rotated axes or boxes can be
-plotted using the rotation options in the x)sec/rotate submenu, giving 3D perspective. Rotation can also be set
-interactively (press 'h' in interactive mode to see the exact keystrokes). 
-
-\subsection{Plot titles}
-\label{sec:title}
- Plots may be titled individually by creating a file called \verb+titlelist+ in
-the current directory, with the title on each line corresponding to the position
-of the plot on the page. Thus the title is the same between timesteps unless the
-steps are plotted together on the same physical page. Leave blank lines for
-plots without titles. For example, creating a file called \verb+titlelist+ in
-the current directory, containing the text:
-\begin{verbatim}
-plot one
-plot two
-plot three
-\end{verbatim}
-and positioning the title using the default options, produces the titles shown
-on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the physical page).
-
-%%\begin{figure}
-%\centering
-%
-%\caption{Example use of plot titles}
-%\label{fig:titleexample}
-%\end{figure}
-
-\subsection{Plot legends}
-\label{sec:legend}
- The text (e.g. `\verb+t=+') used in the legend can be changed via
-the legend options in the (p)age submenu. The numerical value is taken from the \verb+time+ array
-in the data read.
 
 \subsection{Power spectrums (1D only)}
  In one dimension an extra plot item appears
@@ -766,6 +769,44 @@ since I have used them once or twice in one dimensional simulations where speed
 is not an issue. The algorithms are fairly simple to extend to multidimensional
 data, although faster implementations would be needed (such as a Fast
 Fourier Transform routine).
+
+\subsection{Rotation}
+ Rotation is achieved by tranforming to cylindrical co-ordinates about each axis, incrementing the
+azimuthal angle appropriately and transforming back to cartesians. Rotated axes or boxes can be
+plotted using the rotation options in the x)sec/rotate submenu, giving 3D perspective. Rotation can also be set
+interactively (press 'h' in interactive mode to see the exact keystrokes). 
+
+\section{Other features}
+
+
+\subsection{Plot titles}
+\label{sec:title}
+ Plots may be titled individually by creating a file called \verb+titlelist+ in
+the current directory, with the title on each line corresponding to the position
+of the plot on the page. Thus the title is the same between timesteps unless the
+steps are plotted together on the same physical page. Leave blank lines for
+plots without titles. For example, creating a file called \verb+titlelist+ in
+the current directory, containing the text:
+\begin{verbatim}
+plot one
+plot two
+plot three
+\end{verbatim}
+and positioning the title using the default options, produces the titles shown
+on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the physical page).
+
+%%\begin{figure}
+%\centering
+%
+%\caption{Example use of plot titles}
+%\label{fig:titleexample}
+%\end{figure}
+
+\subsection{Plot legends}
+\label{sec:legend}
+ The text (e.g. `\verb+t=+') used in the legend can be changed via
+the legend options in the (p)age submenu. The numerical value is taken from the \verb+time+ array
+in the data read.
 
 
 \section{FAQS: How do I...}
