@@ -201,9 +201,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    (dat(i,3,j), i=nprint+1, nprint+nptmass)
               endif
               dat(1:nprint,7,j) = 1.4/real(nprint)
-              print "(a,1pe10.4)", &
-                   ' WARNING: hardwiring particle masses on minidump to ', &
-                   1.4/real(nprint)
+              print "(a)", &
+               ' WARNING: hardwiring particle masses on minidump to 1.4/npart'
            else
 
               dat(:,:,j) = 0. ! because ptmasses don't have all quantities
@@ -325,9 +324,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
            endif
 
            dat(1:nprint,7,j) = 1.4/real(nprint)
-           print "(a,1pe10.4)", &
-                ' WARNING: hardwiring particle masses on minidump to ', &
-                1.4/real(nprint)
+           print "(a)", &
+             ' WARNING: hardwiring particle masses on minidump to 1.4/npart'
         endif
              
         if (allocated(datdb)) deallocate(datdb)
