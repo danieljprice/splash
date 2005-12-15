@@ -5,6 +5,7 @@
 ! the data is stored in the global array dat
 !
 ! THIS VERSION FOR DAN'S SPMHD CODE (BINARY DUMPS)
+! PRE NOV 2005 FORMAT
 ! -> Now automatically handles single/double precision
 !
 ! >> this subroutine must return values for the following: <<
@@ -27,9 +28,9 @@
 
 subroutine read_data(rootname,indexstart,nstepsread)
   use exact, only:hfact
-  use particle_data, only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol
+  use particle_data
   use params
-!  use labels
+  use labels
   use filenames, only:nfiles
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iformat, &
                           buffer_data
@@ -40,7 +41,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   character(len=len(rootname)+4) :: datfile
-  integer :: i,icol,ierr,iunit,ilen
+  integer :: i,j,icol,ierr,iunit
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin,ncolstep,nparti,ntoti
   integer, dimension(3) :: ibound
@@ -50,8 +51,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real, dimension(3) :: xmin, xmax  
   real(doub_prec) :: timeind,gammaind,hfactind
   real(doub_prec), dimension(3) :: xmind, xmaxd
-  real(doub_prec), dimension(:), allocatable :: dattempd
-  character(len=20) :: geomfile
 
   iunit = 11 ! file unit number
   ndim_max = 1
@@ -79,20 +78,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
   singleprecision = .false.
   read(iunit,iostat=ierr,end=80) timeind,npartin,ntotin,gammaind, &
-       hfactind,ndim_max,ndimV_max,ncol_max,iformat
-!  print*,'time = ',timeind,' hfact = ',hfactind,' ndim=',ndim_max,'ncol=',ncol_max
-!  print*,'npart = ',npartin,ntotin,geomfile
+       hfactind,ndim_max,ndimV_max,ncol_max,icoords
+  !!print*,'time = ',timeind,' hfact = ',hfactind,' ndim=',ndim_max,'ncol=',ncol_max
+  !!print*,'npart = ',npartin,ntotin
   if (ierr /= 0 .or. ndim_max.le.0 .or. ndim_max.gt.3 &
      .or. ndimV_max.le.0 .or. ndimV_max.gt.3 &
      .or. ncol_max.le.0 .or. ncol_max.gt.100 &
      .or. npartin.le.0 .or. npartin.gt.1e7 .or. ntotin.le.0 .or. ntotin.gt.1e7 &
-     .or. iformat.lt.0 .or. iformat.gt.10) then
+     .or. icoords.le.0 .or. icoords.gt.10) then
      !
      !--try single precision
      !
      rewind(iunit)
      read(iunit,iostat=ierr,end=80) timein,npartin,ntotin,gammain, &
-         hfactin,ndim_max,ndimV_max,ncol_max,iformat
+         hfactin,ndim_max,ndimV_max,ncol_max,icoords
      singleprecision = .true.
      
      if (ierr /= 0) then
@@ -123,6 +122,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   i = indexstart
   nstepsread = 0
   
+  overstepsinfile: do while (i <= maxstep)
+     !!print*,' reading step ',i
      reallocate = .false.
      npart_max = maxpart
      nstep_max = maxstep
@@ -131,14 +132,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      if (singleprecision) then
         print "(a)",'single precision dump'
-        read(iunit,iostat=ierr) timein,nparti,ntoti,gammain, &
-          hfactin,ndim,ndimV,ncolstep,iformat,ibound(1:ndim), &
-          xmin(1:ndim),xmax(1:ndim),ilen,geomfile(1:ilen)
+        read(iunit,iostat=ierr,end=67) timein,nparti,ntoti,gammain, &
+          hfactin,ndim,ndimV,ncolstep,icoords,iformat,ibound(1:ndim), &
+          xmin(1:ndim),xmax(1:ndim)
      else
         print "(a)",'double precision dump'
-        read(iunit,iostat=ierr) timeind,nparti,ntoti,gammaind, &
-          hfactind,ndim,ndimV,ncolstep,iformat,ibound(1:ndim), &
-          xmind(1:ndim),xmaxd(1:ndim),ilen,geomfile(1:ilen)
+        read(iunit,iostat=ierr,end=67) timeind,nparti,ntoti,gammaind, &
+          hfactind,ndim,ndimV,ncolstep,icoords,iformat,ibound(1:ndim), &
+          xmind(1:ndim),xmaxd(1:ndim)
         timein = real(timeind)
         gammain = real(gammaind)
         hfactin = real(hfactind)
@@ -161,14 +162,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
      print "(/a14,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
      print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolstep,'gamma',gamma(i),'hfact',hfact
      print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
-     select case(geomfile(1:6))
-     case('cylrpz')
-        icoords = 2
-     case('sphrpt')
-        icoords = 3
-     case default
-        icoords = 1
-     end select
      if (icoords.gt.1) print "(a14,':',2x,a)",' geometry',labelcoordsys(icoords)
      if (any(ibound(1:ndim).ne.0)) then
         print "(a14,':',a15,' =',3(f8.4))",'boundaries','xmin',xmin(1:ndim)
@@ -220,27 +213,109 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   
      if (ntoti.gt.0) then
-        if (.not.singleprecision) allocate(dattempd(ntoti))
-        do icol=1,ncolstep
-           if (singleprecision) then
-              read (iunit,iostat=ierr,end=67) dat(1:ntoti,icol,i)
-           else
-              read (iunit,iostat=ierr,end=67) dattempd(1:ntoti)
-              dat(1:ntoti,icol,i) = real(dattempd(1:ntoti))
-           endif
-           if (ierr /= 0) print "(a,i2,a)",'*** error reading column ',icol,' ***'
+        !
+        !--read position vector
+        !
+        icol = 1
+        call readvec(dat(1:ntoti,1:ndim,i),ntoti,ndim,singleprecision,ierr)
+        if (ierr /= 0) then
+           print "(a)",'*** error reading particle positions ***'
+           exit overstepsinfile
+        endif
+        icol = icol + ndim
+        !
+        !--read velocity vector
+        !
+        call readvec(dat(1:ntoti,icol:icol+ndimV-1,i),ntoti,ndimV,singleprecision,ierr)
+        if (ierr /= 0) then
+           print "(a)",'*** error reading velocities ***'
+           exit overstepsinfile
+        endif
+        icol = icol + ndimV
+        !
+        !--read scalar variables
+        !
+        do j=1,4
+           call readcol(dat(1:ntoti,icol,i),ntoti,singleprecision,ierr)
+           if (ierr /= 0) print "(a)",'*** error reading column data ***'
+           icol = icol + 1
         enddo
-        if (allocated(dattempd)) deallocate(dattempd)
+        !
+        !--non-MHD output
+        !
+          if (iformat.ne.2) then
+        !
+        !--read alpha, alphau
+        !
+           call readvec(dat(1:ntoti,icol:icol+1,i),ntoti,2,singleprecision,ierr)
+           if (ierr /= 0) then
+              print "(a)",'*** error reading alphas ***'
+              exit overstepsinfile
+           endif
+           icol = icol + 2
+
+        !
+        !--pr, div v, gradh
+        !          
+           do j=icol,ncolstep
+              call readcol(dat(1:ntoti,j,i),ntoti,singleprecision,ierr)
+              if (ierr /= 0) print "(a)",'*** error reading column data ***'
+           enddo
+        
+        else
+        !
+        !--MHD output
+        !
+        !
+        !--read alpha, alphau, alphaB
+        !
+           call readvec(dat(1:ntoti,icol:icol+2,i),ntoti,3,singleprecision,ierr)
+           if (ierr /= 0) then
+              print "(a)",'*** error reading alphas ***'
+              exit overstepsinfile
+           endif
+           icol = icol + 3
+        !
+        !--Bfield
+        !
+           call readvec(dat(1:ntoti,icol:icol+ndimV-1,i),ntoti,ndimV,singleprecision,ierr)
+           if (ierr /= 0) then
+              print "(a)",'*** error reading B ***'
+              exit overstepsinfile
+           endif
+           icol = icol + ndimV
+        !
+        !--psi, pr, div v, div B
+        !
+           do j = 1,4
+              call readcol(dat(1:ntoti,icol,i),ntoti,singleprecision,ierr)
+              if (ierr /= 0) print "(a)",'*** error reading column data ***'
+              icol = icol + 1
+           enddo
+        !
+        !--curl B
+        !
+           call readvec(dat(1:ntoti,icol:icol+ndimV-1,i),ntoti,ndimV,singleprecision,ierr)
+           if (ierr /= 0) then
+              print "(a)",'*** error reading curl B ***'
+              exit overstepsinfile
+           endif
+           icol = icol + ndimV
+           
+        endif
+        !!print*,'columns read = ',icol,' should be = ',ncolumns
+
      else
         npartoftype(1,i) = 1
         npartoftype(2,i) = 0
         dat(:,:,i) = 0.
      endif
 
-   goto 68
+     i = i + 1
+  enddo overstepsinfile
+
 67 continue
-   print "(a)",' > end of file reached <'
-68 continue
+   !!!print "(a)",' > end of file <'
   !
   !--close data file and return
   !                    
@@ -252,11 +327,64 @@ ndimV = ndimV_max
 
 print*,'> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
        ' last step ntot = ',sum(npartoftype(:,indexstart+nstepsread-1))
+return    
+!
+!--errors
+!
+80 continue
+print*,' *** data file empty, no steps read ***'
 return
 
-80 continue
-print*,' *** data file empty : no timesteps ***'
-return
+contains
+
+ subroutine readvec(datin,ntotal,ndims,singleprec,ierr)
+   implicit none
+   integer, intent(in) :: ndims,ntotal
+   integer, intent(out) :: ierr
+   real, intent(out), dimension(ntotal,ndims) :: datin
+   logical, intent(in) :: singleprec
+   
+   integer :: ipos
+   real, dimension(ndims,ntotal) :: datvec
+   real(doub_prec), dimension(ndims,ntotal) :: datvecd
+!
+!--read a vector quantity and restructure into columns
+!
+   if (singleprec) then
+      read (iunit,iostat=ierr) datvec(1:ndims,1:ntotal)
+      do ipos = 1,ndims
+         datin(1:ntotal,ipos) = datvec(ipos,1:ntotal)
+      enddo
+   else
+      read (iunit,iostat=ierr) datvecd(1:ndims,1:ntotal)
+      do ipos = 1,ndims
+         datin(1:ntotal,ipos) = real(datvecd(ipos,1:ntotal))
+      enddo           
+   endif
+   
+ end subroutine readvec
+!
+!--read scalar quantity and convert to single precision
+!
+ subroutine readcol(datin,ntotal,singleprec,ierr)
+   implicit none
+   integer, intent(in) :: ntotal
+   integer, intent(out) :: ierr
+   real, intent(out), dimension(ntotal) :: datin
+   logical, intent(in) :: singleprec
+   
+   real(doub_prec), dimension(ntotal) :: dattempd
+!
+!--read several scalar quantities
+!
+   if (singleprec) then
+      read (iunit,iostat=ierr) datin(1:ntotal)
+   else
+      read (iunit,iostat=ierr) dattempd(1:ntotal)
+      datin(1:ntotal) = real(dattempd(1:ntotal))
+   endif
+   
+ end subroutine readcol
  
 end subroutine read_data
 
@@ -265,8 +393,7 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
- use labels, only:ix,ivx,ih,irho,iutherm,ipmass,ipr,iBfirst, &
-             idivB,iJfirst,iamvec,labelvec,label,labeltype
+ use labels
  use params
  use settings_data, only:ndim,ndimV,ncolumns,iformat,ntypes
  use geometry, only:labelcoord
