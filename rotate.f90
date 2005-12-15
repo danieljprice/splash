@@ -34,6 +34,7 @@ end subroutine rotate2D
 
 !
 !--3D rotation (about x, y and z axes)
+!  This is done in the order z-y-x
 !
 subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
   implicit none
@@ -45,22 +46,6 @@ subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
   y = xcoords(2)
   z = xcoords(3)
 !
-!--rotate about x
-!
-  r = sqrt(y**2 + z**2)
-  phi = ATAN2(z,y)
-  phi = phi - anglex  
-  y = r*COS(phi)
-  z = r*SIN(phi)
-!
-!--rotate about y
-!
-  r = sqrt(x**2 + z**2)
-  phi = ATAN2(x,z)
-  phi = phi - angley  
-  z = r*COS(phi)
-  x = r*SIN(phi)
-!
 !--rotate about z
 !  
   r = sqrt(x**2 + y**2)
@@ -68,6 +53,22 @@ subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
   phi = phi - anglez
   x = r*COS(phi)
   y = r*SIN(phi)
+!
+!--rotate about y
+!
+  r = sqrt(z**2 + x**2)
+  phi = ATAN2(z,x)
+  phi = phi - angley
+  z = r*SIN(phi)
+  x = r*COS(phi)
+!
+!--rotate about x
+!
+  r = sqrt(y**2 + z**2)
+  phi = ATAN2(z,y)
+  phi = phi - anglex  
+  y = r*COS(phi)
+  z = r*SIN(phi)
 !
 !--change perspective according to z depth
 !  (for straight rotation == parallel projections use dz1= 0 on input)
