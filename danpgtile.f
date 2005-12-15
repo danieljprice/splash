@@ -103,8 +103,15 @@ c effective viewport size = size - margins
 c
       vptsizeeffx = 1.0 - vmarginright - vmarginleft
       vptsizeeffy = 1.0 - vmargintop - vmarginbottom
-c     reduce x size if just=1 to get right aspect ratio
-      IF (aspectratio.lt.1.0) vptsizeeffx = aspectratio*vptsizeeffy   !!/devaspectratio
+c     reduce x or y size if just=1 to get right aspect ratio
+      IF (aspectratio.lt.1.0) THEN
+         vptsizeeffx = aspectratio*vptsizeeffy
+      ELSEIF (aspectratio.gt.1.0) THEN
+         vptsizeeffy = vptsizeeffx/aspectratio
+      ENDIF
+c
+c--set size of each panel
+c      
       panelsizex = vptsizeeffx/nx
       panelsizey = vptsizeeffy/ny 
       ix = iplot - ((iplot-1)/nx)*nx
