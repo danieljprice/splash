@@ -11,16 +11,23 @@ module colours
       'red              ', &
       'ice blue         ', &
       'heat             ', &
-      'heat II          ', &
-      'universe         ', &
+      'rainbow          ', &
+      'prism            ', &
       'red-blue-yellow  ', &
       'blue-yellow-red  ', &
       'purple-blue-green', &
-      'highlight        ', &
-      'red-greeny-blue  ', &
-      'dolag other      ', &
-      'dolag III        ', &
-      'dolag IV         '/)
+      'gamma            ', &
+      'red-green-blue   ', &
+      'blue-green-red   ', &
+      'rainbow II       ', &
+      'rainbow III      '/)
+!
+!--rgb colours of the colour table are stored in the array below
+!  this is used for colour blending (opacity rendering)
+!
+  integer :: ifirstcolour, ncolours
+  real, dimension(3,ncolourmax) :: rgbtable
+  
 contains
 
 ! ------------------------------------------------------------------------
@@ -30,10 +37,10 @@ contains
 subroutine colour_set(icolourscheme)
   implicit none
   integer, intent(in) :: icolourscheme
-  integer :: i,icolourmin,icolmin,icolmax,ncolmax,ncolours,nset
+  integer :: i,icolmin,icolmax,ncolmax,nset,index
   real :: hue,light,sat,brightness,red,green,blue
   real :: dhue,dlight,dsat,dred,dgreen,dblue,contrast
-  real, dimension(8) :: lumarr,redarr,greenarr,bluearr
+  real, dimension(18) :: lumarr,redarr,greenarr,bluearr
   logical :: rgb
       
   red = 0.0
@@ -47,7 +54,7 @@ subroutine colour_set(icolourscheme)
 !  overwriting these means that line graphs that use colour will come
 !  out funny). Best to leave 0 and 1 alone as these are black and white.
 !
-  icolourmin = 2
+  ifirstcolour = 2
 !
 !--inquire as to colour range available on current device
 !  adjust ncolours if necessary
@@ -56,8 +63,8 @@ subroutine colour_set(icolourscheme)
 !  print*,' from device = ',icolmin,icolmax
   call PGQCIR(icolmin,icolmax)
 !  print*,' other = ',icolmin,icolmax
-  if (icolourmin.lt.icolmin) icolourmin = icolmin
-  ncolmax = icolmax - icolourmin
+  if (ifirstcolour.lt.icolmin) ifirstcolour = icolmin
+  ncolmax = icolmax - ifirstcolour
   if (ncolours.gt.ncolmax) then  
      ncolours = ncolmax
      print*,'Warning: Device allows only ',ncolours+1,' colours'
@@ -65,7 +72,7 @@ subroutine colour_set(icolourscheme)
   !
   !--set this as the range of colour indices to use
   !
-  call PGSCIR(icolourmin,icolourmin+ncolours)  
+  call PGSCIR(ifirstcolour,ifirstcolour+ncolours)  
 
 !
 !--starting values
@@ -113,11 +120,11 @@ subroutine colour_set(icolourscheme)
 !!     return
   end select
 !
-!--set colour indexes from icolourmin-> icolourmin+ncolours
+!--set colour indexes from ifirstcolour-> ifirstcolour+ncolours
 !  increment values in steps
 !
   if (abs(icolourscheme) .lt. 2) then
-     do i=icolourmin,icolourmin+ncolours
+     do i=ifirstcolour,ifirstcolour+ncolours
         if (rgb) then
            red = red + dred
            blue = blue + dblue
@@ -136,7 +143,7 @@ subroutine colour_set(icolourscheme)
            call PGSHLS(i,hue,light,sat)
         endif
      enddo
-  else
+  elseif (abs(icolourscheme).lt.15) then
      brightness = 0.5
      contrast = 1.0
      !--invert colour table for negative values
@@ -144,19 +151,19 @@ subroutine colour_set(icolourscheme)
      
      select case(abs(icolourscheme))
      case(2)
-     !--red temperature
+     !--red temperature (IDL red-temperature)
      nset = 5
-     lumarr(1:nset) =  (/0.0,0.475,0.7,0.75,1.0/)
-     redarr(1:nset) =  (/0.0,0.680,1.0,1.0,1.0/)
-     greenarr(1:nset)= (/0.0,0.000,0.4,0.5,1.0/)
-     bluearr(1:nset) = (/0.0,0.000,0.0,0.0,1.0/)
+     lumarr(1:nset) =  (/0.0,0.69,0.75,1.0/)
+     redarr(1:nset) =  (/0.0,1.00,1.00,1.0/)
+     greenarr(1:nset)= (/0.0,0.41,0.52,1.0/)
+     bluearr(1:nset) = (/0.0,0.00,0.00,1.0/)
      case(3)
-     !--ice blue
-     nset = 4
-     lumarr(1:nset) =  (/0.0,0.375,0.75,1.0/)
-     redarr(1:nset) =  (/0.0,0.0,0.0,1.0/)
-     greenarr(1:nset)= (/0.0,0.0,0.6,1.0/)
-     bluearr(1:nset) = (/0.0,0.5,1.0,1.0/)
+     !--ice blue (IDL blue-white)
+     nset =  5
+     lumarr(1:nset)  = (/0.000,0.376,0.737,0.753,1.000/)
+     redarr(1:nset)  = (/0.000,0.000,0.000,0.000,1.000/)
+     greenarr(1:nset)= (/0.000,0.000,0.580,0.604,1.000/)
+     bluearr(1:nset) = (/0.000,0.510,1.000,1.000,1.000/)
      case(4)
      !--heat
      nset = 5
@@ -172,27 +179,44 @@ subroutine colour_set(icolourscheme)
      greenarr(1:nset)= (/0.0,0.000,0.000,0.00,1.000,1.000,1.0000,0.0/)
      bluearr(1:nset) = (/0.0,0.569,1.000,1.00,1.000,0.000,0.0000,0.0/)
      case(6)
-     !--universe (this is my attempt at ripping off a spiral galaxy colour table)
-     nset = 6
-     lumarr(1:nset) =  (/0.0,0.20,0.4,0.60,0.95,1.0/)
-     redarr(1:nset) =  (/0.0,0.10,0.2,0.40,1.00,1.0/)
-     greenarr(1:nset)= (/0.0,0.15,0.2,0.42,1.00,1.0/)
-     bluearr(1:nset) = (/0.0,0.30,0.4,0.50,0.95,1.0/)
-     
+     !--prism (IDL prism)
+     nset =  8
+     lumarr(1:nset)  = (/0.000,0.251,0.263,0.494,0.502,0.749,0.753,1.000/)
+     redarr(1:nset)  = (/0.000,0.953,1.000,0.035,0.000,0.000,0.000,0.000/)
+     greenarr(1:nset)= (/0.000,0.000,0.043,0.969,1.000,0.000,0.000,0.000/)
+     bluearr(1:nset) = (/0.000,0.000,0.000,0.000,0.027,0.984,1.000,0.000/)
+!     case(6)
+!     !--universe (this is my attempt at ripping off a spiral galaxy colour table)
+!     nset = 6
+!     lumarr(1:nset) =  (/0.0,0.20,0.4,0.60,0.95,1.0/)
+!     redarr(1:nset) =  (/0.0,0.10,0.2,0.40,1.00,1.0/)
+!     greenarr(1:nset)= (/0.0,0.15,0.2,0.42,1.00,1.0/)
+!     bluearr(1:nset) = (/0.0,0.30,0.4,0.50,0.95,1.0/)  
      case(7)
-     nset = 7
-     !--red-blue-yellow
-     lumarr(1:nset) =   (/0.0,0.2,0.35,0.4, 0.7, 0.9,1.0/)
-     redarr(1:nset) =   (/0.0,0.9,0.01,0.25,0.5,0.75,1.0/)
-     bluearr(1:nset) =  (/0.0,0.2,0.48,0.50,1.0,0.05,1.0/)
-     greenarr(1:nset) = (/0.0,0.1,0.24,0.25,0.5,0.75,1.0/)
+     !--red-blue-yellow (IDL stern special)
+     nset =  7
+     lumarr(1:nset)  = (/0.000,0.055,0.247,0.251,0.502,0.737,1.000/)
+     redarr(1:nset)  = (/0.000,0.996,0.000,0.251,0.502,0.737,1.000/)
+     greenarr(1:nset)= (/0.000,0.055,0.247,0.251,0.502,0.737,1.000/)
+     bluearr(1:nset) = (/0.000,0.106,0.490,0.498,1.000,0.000,1.000/)
+!    this was another attempt at the same thing
+!     nset = 7
+!     lumarr(1:nset) =   (/0.0,0.2,0.35,0.4, 0.7, 0.9,1.0/)
+!     redarr(1:nset) =   (/0.0,0.9,0.01,0.25,0.5,0.75,1.0/)
+!     greenarr(1:nset) = (/0.0,0.1,0.24,0.25,0.5,0.75,1.0/)
+!     bluearr(1:nset) =  (/0.0,0.2,0.48,0.50,1.0,0.05,1.0/)
      case(8)
-     !--blue-yellow-red
-     nset = 6
-     lumarr(1:nset) =  (/0.0,0.2,0.4,0.6,0.8,1.0/)
-     redarr(1:nset) =  (/0.0,0.0,0.5,1.0,1.0,0.5/)
-     bluearr(1:nset) = (/1.0,1.0,0.5,0.0,0.0,0.0/)
-     greenarr(1:nset)= (/0.0,1.0,0.5,1.0,0.0,0.0/)
+     !--blue-yellow-red (IDL blue-red 0.34)
+     nset = 10
+     lumarr(1:nset)  = (/0.000,0.004,0.125,0.129,0.380,0.384,0.635,0.886,0.996,1.000/)
+     redarr(1:nset)  = (/0.000,0.000,0.000,0.000,0.000,0.000,1.000,1.000,0.514,0.514/)
+     greenarr(1:nset)= (/0.000,0.000,0.000,0.000,1.000,1.000,1.000,0.000,0.000,0.000/)
+     bluearr(1:nset) = (/0.514,0.514,1.000,1.000,1.000,1.000,0.000,0.000,0.000,0.000/)
+!     nset = 6
+!     lumarr(1:nset) =  (/0.0,0.2,0.4,0.6,0.8,1.0/)
+!     redarr(1:nset) =  (/0.0,0.0,0.5,1.0,1.0,0.5/)
+!     bluearr(1:nset) = (/1.0,1.0,0.5,0.0,0.0,0.0/)
+!     greenarr(1:nset)= (/0.0,1.0,0.5,1.0,0.0,0.0/)
      case(9)
      !--purple-blue-green
      nset = 6
@@ -201,12 +225,12 @@ subroutine colour_set(icolourscheme)
      bluearr(1:nset) = (/0.0,0.2,0.5,0.98,0.0,0.0/)
      greenarr(1:nset)= (/0.0,0.0,0.0,0.0,0.62,0.98/)
      case(10)
-     nset = 3
-     !--blue-green-red ("highlight")
-     lumarr(1:nset) =   (/0.0,0.5,1.0/)
-     redarr(1:nset) =   (/0.0,0.5,1.0/)
-     greenarr(1:nset) = (/0.0,1.0,0.0/)
-     bluearr(1:nset) =  (/1.0,0.5,0.0/)
+     !--gamma (IDL stdgamma-ii)
+     nset = 18
+     lumarr(1:nset)  =(/0.,0.184,0.192,0.251,0.31,0.376,0.427,0.431,0.443,0.502,0.569,0.624,0.635,0.682,0.69,0.749,0.753,1./)
+     redarr(1:nset)  =(/0.,0.000,0.035,0.318,0.31,0.643,0.914,1.000,1.000,1.000,1.000,1.000,1.000,0.639,0.678,0.976,1.00,1./)
+     greenarr(1:nset)=(/0.,0.000,0.000,0.000,0.00,0.000,0.000,0.000,0.000,0.318,0.639,0.639,0.639,0.639,0.639,1.000,1.00,1./)
+     bluearr(1:nset) =(/0.,0.957,1.000,0.682,0.365,0.00,0.000,0.000,0.000,0.000,0.322,0.000,0.000,0.000,0.000,0.188,0.20,1./)
      case(11)
      nset = 3
      !--red-greeny-blue
@@ -215,43 +239,68 @@ subroutine colour_set(icolourscheme)
      greenarr(1:nset) = (/0.0,0.66,0.0/)
      bluearr(1:nset) =  (/0.0,0.66,1.0/)
      case(12)
-     nset = 5
+     nset = 3
+     !--blue-green-red ("highlight")
+     lumarr(1:nset) =   (/0.0,0.5,1.0/)
+     redarr(1:nset) =   (/0.0,0.5,1.0/)
+     greenarr(1:nset) = (/0.0,1.0,0.0/)
+     bluearr(1:nset) =  (/1.0,0.5,0.0/)
+!     nset = 5
      !--dolag other
-     lumarr(1:nset) =   (/0.0,0.33,0.5,0.66,1.0/)
-     redarr(1:nset) =   (/0.0,1.00,0.5,0.00,1.0/)
-     greenarr(1:nset) = (/0.0,0.66,1.0,0.66,0.0/)
-     bluearr(1:nset) =  (/1.0,0.66,0.5,0.33,0.0/)
+!     lumarr(1:nset) =   (/0.0,0.33,0.5,0.66,1.0/)
+!     redarr(1:nset) =   (/0.0,1.00,0.5,0.00,1.0/)
+!     greenarr(1:nset) = (/0.0,0.66,1.0,0.66,0.0/)
+!     bluearr(1:nset) =  (/1.0,0.66,0.5,0.33,0.0/)
      case(13)
-     nset = 6
-     !--dolag III
-     lumarr(1:nset) =   (/0.0,0.2,0.5,0.65,0.8,1.0/)
-     redarr(1:nset) =   (/1.0,0.0,0.0,0.0,1.0,1.0/)
-     greenarr(1:nset) = (/0.0,1.0,0.0,1.0,0.0,1.0/)
-     bluearr(1:nset) =  (/0.0,0.0,1.0,1.0,1.0,1.0/)
+     !--rainbow II (as used in NS merger I)
+     nset = 10
+     lumarr(1:nset)  = (/0.000,0.153,0.157,0.310,0.314,0.467,0.471,0.624,0.627,1.000/)
+     redarr(1:nset)  = (/1.000,1.000,0.996,0.016,0.000,0.000,0.000,0.000,0.020,1.000/)
+     greenarr(1:nset)= (/0.000,0.980,1.000,1.000,1.000,1.000,0.984,0.004,0.000,0.000/)
+     bluearr(1:nset) = (/0.000,0.000,0.000,0.000,0.012,0.988,1.000,1.000,1.000,1.000/)
      case(14)
-     nset = 6
-     !--dolag IV
-     lumarr(1:nset) =   (/0.0,0.16,0.33,0.5,0.66,1.0/)
-     redarr(1:nset) =   (/0.0,0.00,1.00,0.5,0.00,1.0/)
-     greenarr(1:nset) = (/0.0,0.00,0.66,1.0,0.66,0.0/)
-     bluearr(1:nset) =  (/0.0,1.00,1.00,1.0,0.66,0.0/)
+     !--rainbow III
+     nset = 13
+     lumarr(1:nset)  = (/0.000,0.004,0.110,0.114,0.333,0.557,0.561,0.565,0.569,0.776,0.780,0.996,1.000/)
+     redarr(1:nset)  = (/0.486,0.486,0.012,0.000,0.000,0.004,0.020,0.051,0.055,0.992,1.000,1.000,1.000/)
+     greenarr(1:nset)= (/0.000,0.000,0.000,0.008,0.996,1.000,1.000,1.000,1.000,1.000,0.988,0.020,0.020/)
+     bluearr(1:nset) = (/1.000,1.000,1.000,1.000,1.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000/)
      end select
 
      call PGCTAB(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &
                  nset,contrast,brightness)
-
-  endif  
-!
-!--always set the minimum colour to the background
-!
-!  call PGQCR(0,red,green,blue)
-!  call PGSCR(icolourmin,red,green,blue)
-  
-  if (icolourscheme.lt.0) then
-     print "(1x,a)",'using colour scheme inverse '//trim(schemename(abs(icolourscheme)))
-  else
-     print "(1x,a)",'using colour scheme '//trim(schemename(icolourscheme))
   endif
+!
+!--if icolourscheme = ncolourschemes+1 set the PGPLOT colour indices 
+!  from the contents of the rgbtable array
+!
+  if (abs(icolourscheme).eq.ncolourschemes+1) then
+     call PGSCIR(ifirstcolour,ifirstcolour+ncolourmax)
+     do i=1,ncolourmax
+        index = ifirstcolour + (i-1)
+        call pgscr(index,rgbtable(1,i),rgbtable(2,i),rgbtable(3,i))
+     enddo
+     print "(1x,a)",'using colour scheme other'
+
+  elseif (abs(icolourscheme).le.ncolourschemes) then
+!
+!--also store the colour table as a list of r,g,b values
+!
+     do i=1,ncolours+1
+        index = ifirstcolour + (i-1)
+        call pgqcr(index,rgbtable(1,i),rgbtable(2,i),rgbtable(3,i))
+     enddo
+
+     if (icolourscheme.lt.0) then
+        print "(1x,a)",'using colour scheme inverse '//trim(schemename(abs(icolourscheme)))
+     else
+        print "(1x,a)",'using colour scheme '//trim(schemename(icolourscheme))
+     endif
+  else
+     print "(1x,a)",'warning: unknown colour scheme - uses default greyscale'
+
+  endif
+  
   return
   
 end subroutine colour_set
@@ -316,5 +365,6 @@ subroutine colour_demo
   call pgend 
 
 end subroutine colour_demo
+
 
 end module colours
