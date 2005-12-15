@@ -189,12 +189,12 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
 !--initialise opacity for 3D opacity rendering
 !       
        if (use3Dopacityrendering) then
-          hav = 0.5*(lim(ih,2) + lim(ih,1))*zdistunitmag/zobserver
+          hav = 0.5*(lim(ih,2) + lim(ih,1))
           pmassav = 0.5*(lim(ipmass,2) + lim(ipmass,1))
           call prompt('enter approximate surface depth (number of smoothing lengths):',taupartdepth)          
           rkappa = pi*hav*hav/(pmassav*coltable(1)*taupartdepth)
           print*,'using current h and pmass limits to calculate kappa...'
-          print*,'taking average h (with z projection) = ',hav,' average particle mass = ',pmassav
+          print*,'taking average h = ',hav,' average particle mass = ',pmassav
           print*,'kappa (particle cross section per unit mass) = ',rkappa
        endif
     endif

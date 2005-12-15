@@ -15,7 +15,7 @@ contains
 !
 !     where tau_i is the integrated optical depth through the particle,
 !     and S_nu is the colour calculated from a colour table for the rendered data.
-!     Note that we have an intensity in red, green and blue for colour plots.
+!     We calculate an intensity in red, green and blue for colour plots.
 !
 !     tau_i = kappa \int rho dz
 !
@@ -66,7 +66,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,npart, &
   integer :: iprintinterval, iprintnext, iprogress, itmin
   integer, dimension(npart) :: iorder
   integer :: ipart,ir,ib,ig,ierr,maxcolour,indexi
-  real :: hi,hi1,radkern,qq,wab,rab,const,pmassav
+  real :: hi,hi1,radkern,qq,wab,rab,pmassav
   real :: term,dx,dy,xpix,ypix,zfrac,hav
   real :: fopacity,tau,rkappatemp,termi
   real, dimension(1) :: dati
@@ -97,22 +97,13 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,npart, &
 !  we can give the "actual" optical depth for the current frame in terms of number of
 !  smoothing lengths. This is purely for diagnostic purposes only.
 !
-  hav = 0.
-!--calculate average h with z projection
-  do i=1,npart 
-     hi = hh(i)
-     if (abs(dz1).gt.tiny(dz1)) then
-        zfrac = abs(dz1/(z(i)-zobs))
-        hi = hi*zfrac
-     endif
-     hav = hav + hi
-  enddo
-  hav = hav/real(npart)
+!--calculate average h
+  hav = sum(hh(1:npart))/real(npart)
 !--average particle mass
   pmassav = sum(pmass(1:npart))/real(npart)
   rkappatemp = pi*hav*hav/(pmassav*coltable(1))
-  print*,'average h (with z projection) = ',hav,' average mass = ',pmassav
-  print "(1x,a,f5.1,a)",'typical optical depth is ~',rkappatemp/rkappa,' smoothing lengths'  
+  print*,'average h = ',hav,' average mass = ',pmassav
+  print "(1x,a,f6.2,a)",'typical optical depth is ~',rkappatemp/rkappa,' smoothing lengths'  
   rgb = 0.
   !
   !--print a progress report if it is going to take a long time
@@ -151,6 +142,9 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,npart, &
      i = iorder(ipart)
      !
      !--set kernel related quantities
+     !  need to be careful with 3D perspective -- the radkern changes with z
+     !  but *not* the 1/h^2 in tau (because the change in 1/h^2 in tau
+     !  would be cancelled by the corresponding change to h^2 in kappa)
      !
      hi = hh(i)
      if (hi.le.0.) then
@@ -160,10 +154,11 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,npart, &
         zfrac = abs(dz1/(z(i)-zobs))
         hi = hi*zfrac
      endif
+     !--these are the quantities used in the kernel r^2/h^2
+     radkern = 2.*hi
      hi1 = 1./hi
-     radkern = 2.*hi  !radius of the smoothing kernel
-     const = hi1*hi1
-     term = const*pmass(i)
+     !--this is the term which multiplies tau
+     term = pmass(i)/(hh(i)*hh(i))
      !
      !--determine colour contribution of current point
      !  (work out position in colour table)
