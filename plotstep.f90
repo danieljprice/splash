@@ -30,7 +30,7 @@ contains
 subroutine initialise_plotting(ipicky,ipickx,irender)
   use params
   use colours, only:colour_set
-  use labels, only:label,ipowerspec
+  use labels, only:label,ipowerspec,ih,ipmass
   use limits, only:lim
   use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti
   use prompting
@@ -41,13 +41,16 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle
   use settings_render, only:icolours,iplotcont_nomulti
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
-                        use3Dperspective,zobserver,zdistunitmag
+                        use3Dperspective,use3Dopacityrendering,zobserver,zdistunitmag,taupartdepth,rkappa
   use settings_powerspec, only:options_powerspec
   use particle_data, only:npartoftype
+  use projections3D, only:coltable
   implicit none
+  real, parameter :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender
   integer :: i,j,ierr
   logical :: iadapting
+  real :: hav,pmassav
   
   !------------------------------------------------------------------------
   ! initialisations
@@ -176,12 +179,24 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
 !
 !--initialise 3D perspective
 !
-
-       zobserver = 10.*lim(iplotz,2)
-       zdistunitmag = lim(iplotz,2)
+       !--set default values if none set
+       if (abs(zobserver).lt.tiny(zobserver)) zobserver = 10.*lim(iplotz,2)
+       if (abs(zdistunitmag).lt.tiny(zdistunitmag)) zdistunitmag = lim(iplotz,2)
        call prompt('enter z coordinate of observer ',zobserver)
        call prompt('enter distance from observer for unit magnification '//&
                   '(screen position)',zdistunitmag,0.)
+!
+!--initialise opacity for 3D opacity rendering
+!       
+       if (use3Dopacityrendering) then
+          hav = 0.5*(lim(ih,2) + lim(ih,1))*zdistunitmag/zobserver
+          pmassav = 0.5*(lim(ipmass,2) + lim(ipmass,1))
+          call prompt('enter approximate surface depth (number of smoothing lengths):',taupartdepth)          
+          rkappa = pi*hav*hav/(pmassav*coltable(1)*taupartdepth)
+          print*,'using current h and pmass limits to calculate kappa...'
+          print*,'taking average h (with z projection) = ',hav,' average particle mass = ',pmassav
+          print*,'kappa (particle cross section per unit mass) = ',rkappa
+       endif
     endif
 
   endif
@@ -278,7 +293,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
   use powerspectrums, only:powerspectrum
   use interpolations1D, only:interpolate1D
   use interpolations2D, only:interpolate2D, interpolate2D_xsec
-  use projections3D, only:interpolate3D_projection,interpolate3D_proj_opacity
+  use projections3D, only:interpolate3D_projection
+  use opacityrendering3D, only:interpolate3D_proj_opacity
   use xsections3D, only:interpolate3D, interpolate3D_fastxsec, &
                         interpolate3D_xsec_vec
   use titles, only:pagetitles,steptitles
@@ -309,10 +325,10 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
   real, dimension(maxpart) :: renderplot,hh,pmass,rho
   real :: angleradx, anglerady, angleradz
   real :: rendermintemp,rendermaxtemp
-  real :: xsecmin,xsecmax,dummy,rhomin,rhomax
+  real :: xsecmin,xsecmax,dummy
   real :: pixwidth,dxfreq
 
-  character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot,labelrho
+  character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
   character(len=20) :: string
   
@@ -577,17 +593,17 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
         !--rotate the particles about the z (and y) axes
         !  only applies to particle plots at the moment
         !
-        if (ndim.ge.2 .and. irotate) then
+        if (ndim.ge.2 .and. (irotate .or. (ndim.eq.3 .and.use3Dperspective))) then
            !
            !--convert angles to radians
            !
            angleradz = angletempz*pi/180.
            anglerady = angletempy*pi/180.
            angleradx = angletempx*pi/180.
-           print "(a,f6.2)",'rotating particles about z by ',angletempz
+           print "(1x,a,f6.2)",'rotating particles about z by ',angletempz
            if (ndim.eq.3) then
-              print "(a,f6.2)",'rotating particles about y by ',angletempy
-              print "(a,f6.2)",'rotating particles about x by ',angletempx
+              print "(1x,a,f6.2)",'rotating particles about y by ',angletempy
+              print "(1x,a,f6.2)",'rotating particles about x by ',angletempx
            endif
            if (ndim.eq.3) then
               if (iadvance.ne.0 .and. use3Dperspective .and. .not.x_sec) then
@@ -595,7 +611,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  zpos = zobserver
               endif
               if (use3Dperspective .and. .not.x_sec) then
-                 print*,'unit magnification at  = ',dz,' observer at = ',zpos
+                 print*,' observer height = ',zpos,', screen at ',zpos-dz
               else
                  dz = 0.
                  zpos = 0.
@@ -731,34 +747,41 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                          hh(1:ninterp),dat(1:ninterp,irenderplot), &
                          ninterp,xmin,ymin,zpos,datpix,npixx,npixy,pixwidth)
                  else
-                    !!--do fast projection
-!                    call interpolate3D_projection( &
-!                         xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-!                         pmass(1:ninterp),rho(1:ninterp),   &
-!                         hh(1:ninterp), dat(1:ninterp,irenderplot), &
-!                         ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz)
-                    !!--do fast projection with opacity
-                    rhomin = lim(irho,1)
-                    rhomax = lim(irho,2)
-                    call transform(rho(1:ninterp),itrans(irho))
-                    call transform_limits(rhomin,rhomax,itrans(irho))
-                    labelrho = transform_label(label(irho),itrans(irho))
+                 
+                    if (use3Dperspective .and. use3Dopacityrendering) then
+                       !
+                       !--opacity rendering
+                       !
+                       !!--limits for rendered quantity
+                       if (iadvance.ne.0 .or. .not.iChangeRenderLimits) then
+                          if (iadapt) then
+                             !!--if adaptive limits, find limits of rendered array
+                             print*,'adapting render limits for opacity rendering'
+                             rendermin = minval(dat(1:ninterp,irenderplot))
+                             rendermax = maxval(dat(1:ninterp,irenderplot))
+                          else
+                             !!--or use fixed limits
+                             rendermin = lim(irenderplot,1)
+                             rendermax = lim(irenderplot,2)
+                          endif
+                          !!--apply transformations to limits
+                          call transform_limits(rendermin,rendermax,itrans(irenderplot))
+                       endif
 
-                    if (iadvance.ne.0) then
-                       rendermin = lim(irenderplot,1)
-                       rendermax = lim(irenderplot,2)
-                       call transform_limits(rendermin,rendermax,itrans(irenderplot))
+                       !!--do fast projection with opacity
+                       call interpolate3D_proj_opacity( &
+                            xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                            pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz,rkappa, &
+                            rendermin,rendermax,itrans(irenderplot),istep)                    
+                    else
+                       !!--do fast projection of z integrated data (e.g. column density)
+                       call interpolate3D_projection( &
+                            xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                            pmass(1:ninterp),rho(1:ninterp),   &
+                            hh(1:ninterp), dat(1:ninterp,irenderplot), &
+                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz)
                     endif
-
-                    print "(1x,a,1pe10.2,a,1pe10.2)", &
-                          'opaque for '//trim(labelrho)//' > ',rhomax, &
-                          ', transparent for '//trim(labelrho)//' < ',rhomin
-                    call interpolate3D_proj_opacity( &
-                         xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                         pmass(1:ninterp),rho(1:ninterp),   &
-                         hh(1:ninterp), dat(1:ninterp,irenderplot), &
-                         ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz, &
-                         rhomin,rhomax,rendermin,rendermax,itrans(irenderplot),istep)
                  endif
 
               endif ! whether 3D grid or fast renderings
@@ -841,23 +864,20 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  !---------------------------------------------------------------
                  !!--do transformations on rendered array  
                  call transform2(datpix,itrans(irenderplot))
+                 
+                 !!--set label for rendered quantity
                  labelrender = label(irenderplot)
                  !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
-                 if (ndim.eq.3 .and..not. x_sec) then
+                 if (ndim.eq.3 .and..not. x_sec .and..not.(use3Dperspective.and.use3Dopacityrendering)) then
                     labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
                     if (irenderplot.eq.irho) labelrender = 'column density'
                  endif
                  !!--apply transformations to the label for the rendered quantity 
-                 !!  but don't do this for log as we use a logarithmic axis instead
-                 log = .false.
-                 !if (itrans(irenderplot).eq.1) then
-                 !   log = .true.
-                 !else 
-                    labelrender = transform_label(labelrender,itrans(irenderplot))
-                 !endif
+                 labelrender = transform_label(labelrender,itrans(irenderplot))
+                 
                  !!--limits for rendered quantity
                  if (iadvance.ne.0 .or. .not.iChangeRenderLimits) then
-                    if (iadapt) then
+                    if (iadapt .and. .not.(use3Dperspective.and.use3Dopacityrendering.and.ndim.eq.3)) then
                        !!--if adaptive limits, find limits of rendered array
                        rendermin = minval(datpix)
                        rendermax = maxval(datpix)

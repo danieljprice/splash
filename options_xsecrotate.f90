@@ -6,15 +6,17 @@
 module settings_xsecrot
  implicit none
  integer :: nxsec,irotateaxes
- logical :: xsec_nomulti, irotate, flythru, use3Dperspective
- real :: anglex, angley, anglez, zobserver, zdistunitmag
+ logical :: xsec_nomulti, irotate, flythru, use3Dperspective, use3Dopacityrendering
+ real :: anglex, angley, anglez, zobserver, zdistunitmag, taupartdepth, rkappa
  real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
  real, dimension(3) :: xorigin,xminrotaxes,xmaxrotaxes
 
  namelist /xsecrotopts/ xsec_nomulti,xsecpos_nomulti,flythru, &
           xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
           irotate,irotateaxes,anglex, angley, anglez, &
-          xminrotaxes,xmaxrotaxes,use3Dperspective,zobserver,zdistunitmag
+          xminrotaxes,xmaxrotaxes,use3Dperspective, &
+          use3Dopacityrendering,zobserver,zdistunitmag, &
+          taupartdepth
 
 contains
 
@@ -40,8 +42,11 @@ subroutine defaults_set_xsecrotate
   xminrotaxes = 0.
   xmaxrotaxes = 0.
   use3Dperspective = .false.
+  use3Dopacityrendering = .false.
   zobserver = 0.
   zdistunitmag = 0.
+  rkappa = 0. ! rkappa is set from taupartdepth later
+  taupartdepth = 2.
 
   return
 end subroutine defaults_set_xsecrotate
@@ -57,20 +62,25 @@ subroutine submenu_xsecrotate
  implicit none
  integer :: ians,i
  character(len=1) :: char
+ character(len=4) :: text
  logical :: interact
  
  if (ndim.eq.1) print*,' WARNING: none of these options have any effect in 1D'
  ians = 0
  interact = .true.
- print 10,xsec_nomulti,xsecpos_nomulti,irotate,use3Dperspective,irotateaxes
+ if (xsec_nomulti) then
+    text = 'xsec'
+ else
+    text = 'proj'
+ endif
+ print 10,text,xsecpos_nomulti,irotate,use3Dperspective,irotateaxes
 10  format(' 0) exit ',/,                 &
-           ' 1) toggle cross section/projection           (',L1,' )',/, &
+           ' 1) switch between cross section/projection   (',a4,' )',/, &
            ' 2) set cross section position                (',f5.2,' )',/, &
-           ' 3) rotation on/off                           (',L1,' )',/, &
-           ' 4) change rotation options',/, &
-           ' 5) 3D perspective on/off                     (',L1,' )',/, &
-           ' 6) set axes for rotated/3D plots             (',i2,' )')
- call prompt('enter option',ians,0,6)
+           ' 3) rotation settings/options                 (',L1,' )',/, &
+           ' 4) 3D projection options                     (',L1,' )',/, &
+           ' 5) set axes for rotated/3D plots             (',i2,' )')
+ call prompt('enter option',ians,0,5)
 !
 !--options
 !
@@ -126,10 +136,10 @@ subroutine submenu_xsecrotate
        print*,'WARNING: this option has no effect in 1D'
     endif
 !------------------------------------------------------------------------
- case(3,4)
-    if (ians.eq.3) irotate = .not.irotate
+ case(3)
+    call prompt('use rotation?',irotate)
     print*,'rotate = ',irotate
-    if (irotate .or. ians.eq.4) then
+    if (irotate) then
        call prompt('enter rotation angle about z axis (deg)',anglez,0.,360.)
        if (ndim.eq.3) then
           call prompt('enter rotation angle about y axis (deg)',angley,0.,360.)
@@ -141,11 +151,15 @@ subroutine submenu_xsecrotate
        enddo
     endif
 !------------------------------------------------------------------------
- case(5)
-    use3Dperspective = .not.use3Dperspective
+ case(4)
+    call prompt('use 3D perspective?',use3Dperspective)
     print "(a,L1)",' 3D perspective = ',use3Dperspective
+    if (use3Dperspective) then
+       call prompt('use opacity rendering (ray tracing) on 3D plots?',use3Dopacityrendering)
+       print "(a,L1)",' 3D opacity rendering = ',use3Dopacityrendering
+    endif
 !------------------------------------------------------------------------
- case(6)
+ case(5)
     print*,'0 : do not plot rotated axes'
     print*,'1 : plot rotated axes'
     print*,'2 : plot rotated box'

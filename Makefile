@@ -55,6 +55,7 @@ SOURCESF90= globaldata.f90 transform.f90 \
          rotate.f90 interpolate1D.f90 \
          interpolate2D.f90 interpolate3D_xsec.f90 \
          interpolate3D_projection.f90\
+         interpolate3D_opacity.f90\
          interactive.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
          powerspectrums.f90 render.f90 setpage.f90 \
@@ -83,17 +84,11 @@ gadget: $(OBJECTS) read_data_gadget.o
 vine: $(OBJECTS) read_data_VINE.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o vsupersphplot $(OBJECTS) read_data_vine.o
 
-dansph: $(OBJECTS) read_data_dansph.o
+ndspmhd: $(OBJECTS) read_data_dansph.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_dansph.o
 
-nina: $(OBJECTS) read_data_nina.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o nsupersphplot $(OBJECTS) read_data_nina.o
-
-spmhd: $(OBJECTS) read_data_mbate_mhd.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o msupersphplot $(OBJECTS) read_data_mbate_mhd.o
-
-sinksph: $(OBJECTS) read_data_mbate_hydro.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o hdsupersphplot $(OBJECTS) read_data_mbate_hydro.o
+dansph: $(OBJECTS) read_data_dansph_old.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o dsupersphplot $(OBJECTS) read_data_dansph_old.o
 
 scwsph: $(OBJECTS) read_data_scw.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o wsupersphplot $(OBJECTS) read_data_scw.o
@@ -108,6 +103,21 @@ sphNG: $(OBJECTS) read_data_sphNG.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o ssupersphplot $(OBJECTS) read_data_sphNG.o
 
 
+## some dependencies as I get around to it
+defaults.o: ./titles.mod ./particle_data.mod ./settings_powerspec.mod \
+            ./settings_xsecrot.mod ./settings_vecplot.mod ./settings_render.mod \
+            ./settings_page.mod ./settings_part.mod ./settings_data.mod \
+            ./options_data.mod ./settings_limits.mod ./multiplot.mod \
+            ./limits.mod ./labels.mod ./filenames.mod ./exact.mod defaults.f90
+
+exact.o: ./transforms.mod ./densityprofiles.mod ./wave.mod ./toystar2d.mod \
+         ./toystar1d.mod ./shock.mod ./sedov.mod ./rhoh.mod ./polytrope.mod \
+         ./mhdshock.mod ./exactfromfile.mod ./labels.mod ./filenames.mod \
+         ./prompting.mod ./settings_data.mod exact.f90
+         
+options_render.o: colours.mod
+interactive.o: colours.mod
+
 ## other stuff
 
 doc:
@@ -119,6 +129,11 @@ tar:
 targz:
 	tar cf supersphplot.tar Makefile $(MODULES) $(SOURCES) read_data*.f90
 	gzip supersphplot.tar
+
+## unit tests of various modules as I write them
+
+tests: ./tests/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o test_interpolation3D ./tests/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
 
 clean:
 	rm *.o *.mod
