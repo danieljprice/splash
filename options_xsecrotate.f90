@@ -140,6 +140,9 @@ subroutine submenu_xsecrotate
     call prompt('use rotation?',irotate)
     print*,'rotate = ',irotate
     if (irotate) then
+       print*,'note that rotations are done in the order z-y-x '
+       print*,'this means the y and x rotations are done about the *new* y and x axes'
+       print*,'if in doubt, set the angles interactively in this order'
        call prompt('enter rotation angle about z axis (deg)',anglez,0.,360.)
        if (ndim.eq.3) then
           call prompt('enter rotation angle about y axis (deg)',angley,0.,360.)
