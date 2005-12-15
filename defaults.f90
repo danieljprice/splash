@@ -134,10 +134,15 @@ subroutine defaults_write
  use settings_powerspec, only:powerspecopts
  use multiplot, only:multi
  implicit none
- integer :: i
+ integer :: i,ierr
        
  open(unit=1,file='defaults',status='replace',form='formatted', &
-      delim='apostrophe') ! without delim namelists may not be readable
+      delim='apostrophe',iostat=ierr) ! without delim namelists may not be readable
+    if (ierr /= 0) then 
+       print*,'ERROR: cannot write defaults file'
+       close(unit=1)
+       return
+    endif
     write(1,NML=dataopts)
     write(1,NML=plotopts)
     write(1,NML=pageopts)
