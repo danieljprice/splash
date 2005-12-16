@@ -5,7 +5,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 14
+ integer, parameter :: ncolourschemes = 15
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
@@ -17,6 +17,7 @@ module colours
       'blue-yellow-red  ', &
       'purple-blue-green', &
       'gamma            ', &
+      'gamma- no black  ', &
       'red-green-blue   ', &
       'blue-green-red   ', &
       'rainbow II       ', &
@@ -232,13 +233,20 @@ subroutine colour_set(icolourscheme)
      greenarr(1:nset)=(/0.,0.000,0.000,0.000,0.00,0.000,0.000,0.000,0.000,0.318,0.639,0.639,0.639,0.639,0.639,1.000,1.00,1./)
      bluearr(1:nset) =(/0.,0.957,1.000,0.682,0.365,0.00,0.000,0.000,0.000,0.000,0.322,0.000,0.000,0.000,0.000,0.188,0.20,1./)
      case(11)
+     !--gamma but without the fade to black
+     nset = 18
+     lumarr(1:nset)  =(/0.,0.184,0.192,0.251,0.31,0.376,0.427,0.431,0.443,0.502,0.569,0.624,0.635,0.682,0.69,0.749,0.753,1./)
+     redarr(1:nset)  =(/0.,0.000,0.035,0.318,0.31,0.643,0.914,1.000,1.000,1.000,1.000,1.000,1.000,0.639,0.678,0.976,1.00,1./)
+     greenarr(1:nset)=(/0.,0.000,0.000,0.000,0.00,0.000,0.000,0.000,0.000,0.318,0.639,0.639,0.639,0.639,0.639,1.000,1.00,1./)
+     bluearr(1:nset) =(/1.,1.000,1.000,0.682,0.365,0.00,0.000,0.000,0.000,0.000,0.322,0.000,0.000,0.000,0.000,0.188,0.20,1./)
+     case(12)
      nset = 3
      !--red-greeny-blue
      lumarr(1:nset) =   (/0.0,0.5,1.0/)
      redarr(1:nset) =   (/1.0,0.66,0.0/)
      greenarr(1:nset) = (/0.0,0.66,0.0/)
      bluearr(1:nset) =  (/0.0,0.66,1.0/)
-     case(12)
+     case(13)
      nset = 3
      !--blue-green-red ("highlight")
      lumarr(1:nset) =   (/0.0,0.5,1.0/)
@@ -251,14 +259,14 @@ subroutine colour_set(icolourscheme)
 !     redarr(1:nset) =   (/0.0,1.00,0.5,0.00,1.0/)
 !     greenarr(1:nset) = (/0.0,0.66,1.0,0.66,0.0/)
 !     bluearr(1:nset) =  (/1.0,0.66,0.5,0.33,0.0/)
-     case(13)
+     case(14)
      !--rainbow II (as used in NS merger I)
      nset = 10
      lumarr(1:nset)  = (/0.000,0.153,0.157,0.310,0.314,0.467,0.471,0.624,0.627,1.000/)
      redarr(1:nset)  = (/1.000,1.000,0.996,0.016,0.000,0.000,0.000,0.000,0.020,1.000/)
      greenarr(1:nset)= (/0.000,0.980,1.000,1.000,1.000,1.000,0.984,0.004,0.000,0.000/)
      bluearr(1:nset) = (/0.000,0.000,0.000,0.000,0.012,0.988,1.000,1.000,1.000,1.000/)
-     case(14)
+     case(15)
      !--rainbow III
      nset = 13
      lumarr(1:nset)  = (/0.000,0.004,0.110,0.114,0.333,0.557,0.561,0.565,0.569,0.776,0.780,0.996,1.000/)
