@@ -194,17 +194,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--set transformation factors between code units/real units
 !
-     units(1:3) = 1./udisti
+     units(1:3) = udisti
      unitslabel(1:3) = ' [cm]'
-     units(4:6) = utimei/udisti
+     units(4:6) = udisti/utimei
      unitslabel(4:6) = ' [cm/s]'
-     units(7) = 1./udisti
+     units(7) = udisti
      unitslabel(7) = ' [cm]'
-     units(8) = utimei**2/udisti**2
+     units(8) = (udisti/utimei)**2
      unitslabel(8) = ' [erg/g]'
-     units(9) = 1./umassi
+     units(9) = umassi
      unitslabel(9) = ' [g]'
-     units(10) = udisti**3/umassi
+     units(10) = umassi/udisti**3
      unitslabel(10) = ' [g/cm\u3\d]'
 !
 !--convert to single precision and separate pt masses from normal particles

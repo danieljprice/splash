@@ -168,20 +168,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
 !   npower = int(log10(udist))
 !   udist = udist/10.**npower
-   units(1:3) = 1./udist
+   units(1:3) = udist
    unitslabel(1:3) = ' [cm]'
 !   do i=1,3
 !      write(unitslabel(i),"('[ 10\u',i2,'\d cm]')") npower
 !   enddo
-   units(4) = 1./umass
+   units(4) = umass
    unitslabel(4) = ' [g]'
-   units(5) = 1./udist
+   units(5) = udist
    unitslabel(5) = ' [cm]'
-   units(6:8) = utime/udist
+   units(6:8) = udist/utime
    unitslabel(6:8) = ' [cm/s]'
-   units(9) = utime**2/udist**2
+   units(9) = (udist/utime)**2
    unitslabel(9) = ' [erg/g]'
-   units(10) = udist**3/umass
+   units(10) = umass/udist**3
    unitslabel(10) = ' [g/cm\u3\d]'
 !
 !--Array headers

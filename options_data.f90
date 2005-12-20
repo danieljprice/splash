@@ -69,7 +69,7 @@ subroutine submenu_data
  integer :: ians, i, icol
  character(len=30) :: fmtstring
  logical :: ireadnow,UnitsHaveChanged,iChange
- real :: unitsprev
+ real :: unitsprev,dunits
  
  ians = 0
  
@@ -148,7 +148,7 @@ subroutine submenu_data
     call prompt('Rescale data using unit arrays?',iRescale)
     if (iRescale) then
        iChange = .false.
-       call prompt('Do you want to set the rescaling factors? '// &
+       call prompt('Do you want to set the units? '// &
                    '(warning: may be overwritten by data read)',iChange)
        icol = 0
        if (iChange) icol = 1
@@ -157,15 +157,16 @@ subroutine submenu_data
           call prompt('enter column to rescale (0=quit)(-1=reset all)',icol,-1,numplot)
           if (icol.gt.0) then
              unitsprev = units(icol)          
-             call prompt('enter rescaling factor (new=old/scale)',units(icol),0.)
+             call prompt('enter units for this column (new=old*units)',units(icol),0.)
              if (abs(units(icol)-1.0).gt.tiny(units) .and. units(icol).gt.tiny(units)) then
                 if (abs(units(icol) - unitsprev).gt.tiny(units)) UnitsHaveChanged = .true.
                 if (len_trim(unitslabel(icol)).eq.0 .or. UnitsHaveChanged) then
                 !--suggest a label amendment if none already set or if units have changed
-                   if (units(icol).gt.100 .or. units(icol).lt.1.e-1) then
-                      write(unitslabel(icol),"(1pe8.1)") units(icol)
+                   dunits = 1./units(icol)
+                   if (dunits.gt.100 .or. dunits.lt.1.e-1) then
+                      write(unitslabel(icol),"(1pe8.1)") dunits
                    else
-                      write(unitslabel(icol),"(f5.1)") units(icol)                   
+                      write(unitslabel(icol),"(f5.1)") dunits                  
                    endif
                    unitslabel(icol) = ' [ x '//trim(adjustl(unitslabel(icol)))//' ]'
                 endif
@@ -178,7 +179,7 @@ subroutine submenu_data
              endif
           elseif (icol.lt.0) then
              UnitsHaveChanged = .true.
-             print "(/a)",' resetting all scale factors to unity...'
+             print "(/a)",' resetting all units to unity...'
              units = 1.0
              unitslabel = ' '
           endif

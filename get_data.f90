@@ -84,20 +84,32 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--change units if necessary
      !
-     if (iRescale .and. any(abs(units(:)-1.0).gt.tiny(units))) then
+     if (iRescale .and. any(abs(units(1:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
-              dat(:,i,nstart:n_end) = dat(:,i,nstart:n_end)/units(i)
+              dat(:,i,nstart:n_end) = dat(:,i,nstart:n_end)*units(i)
               label(i) = trim(label(i))//trim(unitslabel(i))
            endif
         enddo
-     endif
+     endif     
      !
      !--calculate various additional quantities
      !
      if (n_end.ge.nstart .and. iCalcQuantities) then
         call calc_quantities(nstart,n_end)
+     endif
+     !
+     !--override units of calculated quantities if necessary
+     !
+     if (iRescale .and. any(abs(units(ncolumns+1:ncolumns+ncalc)-1.0).gt.tiny(units))) then
+        write(*,"(/a)") ' rescaling data...'
+        do i=ncolumns+1,ncolumns+ncalc
+           if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
+              dat(:,i,nstart:n_end) = dat(:,i,nstart:n_end)*units(i)
+              label(i) = trim(label(i))//trim(unitslabel(i))
+           endif
+        enddo
      endif
      !
      !--read plot limits from file, otherwise set plot limits
@@ -137,11 +149,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--change units if necessary
      !
-     if (iRescale .and. any(abs(units(:)-1.0).gt.tiny(units))) then
+     if (iRescale .and. any(abs(units(1:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
-              dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))/units(i)
+              dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)
               label(i) = trim(label(i))//trim(unitslabel(i))
            endif
         enddo
@@ -151,6 +163,18 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      if (nstepsinfile(ireadfile).gt.0 .and. iCalcQuantities) then
         call calc_quantities(1,nstepsinfile(ireadfile))
+     endif
+     !
+     !--override units of calculated quantities if necessary
+     !
+     if (iRescale .and. any(abs(units(ncolumns+1:ncolumns+ncalc)-1.0).gt.tiny(units))) then
+        write(*,"(/a)") ' rescaling data...'
+        do i=ncolumns+1,ncolumns+ncalc
+           if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
+              dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)
+              label(i) = trim(label(i))//trim(unitslabel(i))
+           endif
+        enddo
      endif
      !
      !--only set limits if reading the first file for the first time
