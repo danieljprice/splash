@@ -19,7 +19,7 @@ subroutine calc_quantities(ifromstep,itostep)
   integer :: i,j,nstartfromcolumn,ncolsnew
   integer :: ientrop,idhdrho,ivalfven,imach,ideltarho
   integer :: ipmag,ibeta,itotpr,idivBerr,icurr,icrosshel
-  integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
+  integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti,iBmag
   real :: Bmag, Jmag, veltemp, spsound
   real, parameter :: pi = 3.1415926536
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
@@ -43,6 +43,7 @@ subroutine calc_quantities(ifromstep,itostep)
   ivalfven = 0
   imach = 0
   ideltarho = 0
+  iBmag = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -90,9 +91,12 @@ subroutine calc_quantities(ifromstep,itostep)
   !--specify MHD quantities
   !
   if (iBfirst.ne.0) then
+!     nstartfromcolumn = ncolumns + ncalc
+!     ncalc = ncalc + 1
+!     ipmag = nstartfromcolumn + 1
      nstartfromcolumn = ncolumns + ncalc
      ncalc = ncalc + 1
-     ipmag = nstartfromcolumn + 1
+     iBmag = nstartfromcolumn + 1
      if (ipr.ne.0 .and. ipmag.ne.0) then
         nstartfromcolumn = ncolumns + ncalc
         ncalc = ncalc + 2
@@ -236,6 +240,13 @@ subroutine calc_quantities(ifromstep,itostep)
      !--magnetic quantities
      !
      if (iBfirst.ne.0) then
+        !!--abs(B)
+        if (iBmag.ne.0) then
+           do j=1,ntoti
+              dat(j,iBmag,i) = sqrt(dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i), &
+                                             dat(j,iBfirst:iBfirst+ndimV-1,i)))
+           enddo
+        endif
         !!--magnetic pressure
         if (ipmag.ne.0) then
            do j=1,ntoti
@@ -304,6 +315,7 @@ subroutine calc_quantities(ifromstep,itostep)
   if (imach.ne.0) label(imach) = '|v|/c\ds'
   if (ideltarho.ne.0) label(ideltarho) = '\gd \gr'
   
+  if (iBmag.ne.0) label(iBmag) = '|B|'
   if (ipmag.ne.0) label(ipmag) = 'B\u2\d/2'
   if (itotpr.ne.0) label(itotpr) = 'P_gas + P_mag'
   if (ibeta.ne.0) label(ibeta) = 'plasma \gb'
