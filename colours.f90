@@ -48,7 +48,7 @@ subroutine colour_set(icolourscheme)
   green = 0.0
   blue = 0.0
   rgb = .false.
-  ncolours = ncolourmax
+  ncolours = ncolourmax-1
   nset = 0
 !
 !--set first colour index (warning: colours 1-16 have presets, so
@@ -153,11 +153,11 @@ subroutine colour_set(icolourscheme)
      select case(abs(icolourscheme))
      case(2)
      !--red temperature (IDL red-temperature)
-     nset = 4
-     lumarr(1:nset) =  (/0.0,0.69,0.75,1.0/)
-     redarr(1:nset) =  (/0.0,1.00,1.00,1.0/)
-     greenarr(1:nset)= (/0.0,0.41,0.52,1.0/)
-     bluearr(1:nset) = (/0.0,0.00,0.00,1.0/)
+     nset =  5
+     lumarr(1:nset)  = (/0.000,0.475,0.694,0.745,1.000/)
+     redarr(1:nset)  = (/0.000,0.686,1.000,1.000,1.000/)
+     greenarr(1:nset)= (/0.000,0.004,0.420,0.518,1.000/)
+     bluearr(1:nset) = (/0.000,0.000,0.000,0.000,1.000/)
      case(3)
      !--ice blue (IDL blue-white)
      nset =  5
