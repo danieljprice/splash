@@ -204,7 +204,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
               print "(a)", &
                ' WARNING: hardwiring particle masses on minidump to 1.4/npart'
            else
-
+           
               dat(:,:,j) = 0. ! because ptmasses don't have all quantities
            !
            !--read full dump
@@ -366,11 +366,12 @@ end subroutine read_data
 subroutine set_labels
   use filenames, only:rootname
   use labels
-  use settings_data, only:ndim,ndimV,ncolumns,ntypes
+  use settings_data, only:ndim,ndimV,ncolumns,ntypes,units,unitslabel
   use geometry, only:labelcoord
   implicit none
   integer :: i
   logical :: minidump
+  real :: udistcm,udistkm,utime,umass
 
   minidump = .false.
   if (index(rootname(1),'minidump').ne.0) minidump = .true.
@@ -403,6 +404,28 @@ subroutine set_labels
         label(13) = 'grad soft'
         label(14) = 'dsoft'
      endif
+!
+!--set transformation factors between code units/real units
+!
+     udistkm = 1.5  ! km
+     udistcm = 1.5e5
+     utime = 5.0415e-6
+     umass = 1.99e33
+     units(1:3) = udistkm
+     unitslabel(1:3) = ' [km]'
+     units(ih) = udistkm
+     unitslabel(ih) = ' [km]'
+     units(ipmass) = umass
+     unitslabel(ipmass) = ' [g]'
+     units(irho) = umass/udistcm**3
+     unitslabel(irho) = ' [g/cm\u3\d]'
+     if (iBfirst.gt.0) then
+        units(iBfirst:iBfirst+ndimV-1) = 8.0988e14
+        unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
+        units(idivB) = units(iBfirst)/udistcm
+        unitslabel(idivB) = ' [G/cm]'
+     endif
+              
   else !--full dump
      ivx = ndim+1
      ih = 7
@@ -431,6 +454,29 @@ subroutine set_labels
      do i=1,ndimV
         label(21+i-1) = labelvec(21)//'\d'//labelcoord(i,1)
      enddo
+!
+!--set transformation factors between code units/real units
+!
+     udistkm = 1.5  ! km
+     udistcm = 1.5e5
+     utime = 5.0415e-6
+     umass = 1.99e33
+     units(1:3) = udistkm
+     unitslabel(1:3) = ' [km]'
+     units(4:6) = 1.0
+     unitslabel(4:6) = '/c'
+     units(7) = udistkm
+     unitslabel(7) = ' [km]'
+     units(8) = (udistcm/utime)**2
+     unitslabel(8) = ' [erg/g]'
+     units(9) = umass
+     unitslabel(9) = ' [g]'
+     units(10) = umass/udistcm**3
+     unitslabel(10) = ' [g/cm\u3\d]'
+     units(iBfirst:iBfirst+ndimV-1) = 8.0988e14
+     unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
+     units(idivB) = units(iBfirst)/udistcm
+     unitslabel(idivB) = ' [G/cm]'
   endif
 
   if (ivx.ne.0) then
