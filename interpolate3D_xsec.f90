@@ -41,13 +41,14 @@ contains
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D(x,y,z,hh,weight,dat,npart,&
-     xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidth,zpixwidth)
+     xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidth,zpixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy,npixz
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   real, intent(in) :: xmin,ymin,zmin,pixwidth,zpixwidth
   real, intent(out), dimension(npixx,npixy,npixz) :: datsmooth
+  logical, intent(in) :: normalise
   real, dimension(npixx,npixy,npixz) :: datnorm
 
   integer :: i,ipix,jpix,kpix
@@ -123,7 +124,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,npart,&
               !--calculate data value at this pixel using the summation interpolant
               !  
               datsmooth(ipix,jpix,kpix) = datsmooth(ipix,jpix,kpix) + term*wab          
-              datnorm(ipix,jpix,kpix) = datnorm(ipix,jpix,kpix) + termnorm*wab          
+              if (normalise) datnorm(ipix,jpix,kpix) = datnorm(ipix,jpix,kpix) + termnorm*wab          
 
            enddo
         enddo
@@ -132,9 +133,11 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,npart,&
   !
   !--normalise dat array
   !
-  where (datnorm > 0.)
-     datsmooth = datsmooth/datnorm
-  end where
+  if (normalise) then
+     where (datnorm > tiny(datnorm))
+        datsmooth = datsmooth/datnorm
+     end where
+  endif
   
   return
 
@@ -162,13 +165,14 @@ end subroutine interpolate3D
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
-     xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidth)
+     xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   real, intent(in) :: xmin,ymin,pixwidth,zslice
   real, intent(out), dimension(npixx,npixy) :: datsmooth
+  logical, intent(in) :: normalise
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
@@ -257,7 +261,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
                  !--calculate data value at this pixel using the summation interpolant
                  !  
                  datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
-                 datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab      
+                 if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
 
               endif
 
@@ -269,9 +273,13 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
   !
   !--normalise dat array
   !
-  where (datnorm > 0.)
-     datsmooth = datsmooth/datnorm*rescalefac
-  end where
+  if (normalise) then
+     !--normalise everywhere (required if not using SPH weighting)
+     where (datnorm > tiny(datnorm))
+        datsmooth = datsmooth/datnorm
+     end where
+  endif
+  datsmooth = datsmooth*rescalefac
   
   return
 
@@ -310,13 +318,14 @@ end subroutine interpolate3D_fastxsec
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,npart,&
-     xmin,ymin,zslice,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth)
+     xmin,ymin,zslice,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
   real, intent(in) :: xmin,ymin,pixwidth,zslice
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
+  logical, intent(in) :: normalise
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
@@ -396,7 +405,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,npart,&
                  !  
                  vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab          
                  vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab          
-                 datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab      
+                 if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab      
 
               endif
 
@@ -408,10 +417,12 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,npart,&
   !
   !--normalise dat array(s)
   !
-  where (datnorm > 0.)
-     vecsmoothx = vecsmoothx/datnorm
-     vecsmoothy = vecsmoothy/datnorm
-  end where
+  if (normalise) then
+     where (datnorm > tiny(datnorm))
+        vecsmoothx = vecsmoothx/datnorm
+        vecsmoothy = vecsmoothy/datnorm
+     end where
+  endif
 
   return
 

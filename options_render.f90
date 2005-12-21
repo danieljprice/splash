@@ -6,14 +6,14 @@ module settings_render
  implicit none
  integer :: ncontours,npix,icolours
  logical :: iplotcont_nomulti
- logical :: iPlotColourBar,icolour_particles
+ logical :: iPlotColourBar,icolour_particles,inormalise_interpolations
  real :: ColourBarDisp
  !--colour bar width is set here as it must be known for page setup
  !  in principle it could be user-changeable but this adds pointless options
  real, parameter :: ColourBarWidth = 5.5
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
-   iPlotColourBar,icolour_particles,ColourBarDisp
+   iPlotColourBar,icolour_particles,ColourBarDisp,inormalise_interpolations
 
 contains
 
@@ -30,6 +30,7 @@ subroutine defaults_set_render
   icolour_particles = .false. ! colour particles instead of using pixels
   ncontours = 30             ! number of contours to plot
   ColourBarDisp = 3.2
+  inormalise_interpolations = .false.       ! do not normalise interpolations
 
   return
 end subroutine defaults_set_render
@@ -47,15 +48,16 @@ subroutine submenu_render
 !
   ians = 0
   print 10,npix,icolours,iplotcont_nomulti,ncontours, &
-        iPlotColourBar,icolour_particles
+        iPlotColourBar,icolour_particles,inormalise_interpolations
 10 format(' 0) exit ',/,                      &
            ' 1) change number of pixels           (',i5,' )',/, &
            ' 2) change colour scheme              (',i2,' )',/,    &
            ' 3) toggle plot contours              ( ',L1,' )',/, &
            ' 4) change number of contours         (',i3,' )',/, &
-           ' 5) colour bar options                ( ',L1,' )',/, &
-           ' 6) use particle colours not pixels   ( ',L1,' )' )
-  call prompt('enter option',ians,0,6)
+           ' 5) colour bar options                ( ',L1,' )',/,&
+           ' 6) use particle colours not pixels   ( ',L1,' )',/,& 
+           ' 7) normalise interpolations          ( ',L1,' )')
+  call prompt('enter option',ians,0,7)
 !
 !--options
 !
@@ -109,6 +111,10 @@ subroutine submenu_render
     case(6)
        icolour_particles = .not.icolour_particles
        print*,'particles colouring = ',icolour_particles
+!------------------------------------------------------------------------
+    case(7)
+       inormalise_interpolations = .not.inormalise_interpolations
+       print*,'normalisation of interpolations = ',inormalise_interpolations
 
   end select
     

@@ -37,7 +37,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use titles, only:read_titles,read_steptitles
   use settings_data, only:ndim,numplot
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
-                     colour_fore,colour_back,iadapt,iadaptcoords
+                     colour_fore,colour_back,iadapt,iadaptcoords,linewidth
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle
   use settings_render, only:icolours,iplotcont_nomulti
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
@@ -248,7 +248,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   endif
     
   !!--set line width to something visible
-  call pgslw(2)
+  call pgslw(linewidth)
   
   linecolourthisstep = linecolour
   linestylethisstep = linestyle
@@ -278,7 +278,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend,iPlotStepLegend, &
                      charheightmm,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
-                       iPlotColourBar,icolour_particles
+                       iPlotColourBar,icolour_particles,inormalise_interpolations
   use settings_vecplot, only:npixvec, iplotpartvec
   use settings_xsecrot
   use settings_powerspec
@@ -333,7 +333,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
   character(len=120) :: title
   character(len=20) :: string
   
-  logical :: iColourBar, rendering
+  logical :: iColourBar, rendering, inormalise
   
 34   format (25(' -'))
 
@@ -375,8 +375,10 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
      else
         weight(1:ninterp) = (dat(1:ninterp,ipmass))/(dat(1:ninterp,irho)*dat(1:ninterp,ih)**ndim)
      endif
+     inormalise = inormalise_interpolations
   else
      weight(1:ninterp) = 1.0
+     inormalise = .true.
   endif
   
   !-------------------------------------
@@ -678,7 +680,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  allocate ( datpix(npixx,npixy) )
                  call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                       hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
-                      ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
+                      ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,inormalise)
               endif
            case(3)
               !!--interpolation to 3D grid - then take multiple cross sections/projections
@@ -690,7 +692,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
                       zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
                       dat(1:ninterp,irenderplot), &
-                      ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dz)
+                      ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dz, &
+                      inormalise)
               endif
            end select
 
@@ -790,7 +793,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                             xplot(1:ninterp),yplot(1:ninterp), &
                             zplot(1:ninterp),hh(1:ninterp), &
                             weight(1:ninterp),dat(1:ninterp,irenderplot), &
-                            ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth)
+                            ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
+                            inormalise)
                     endif
                  else                 
                     if (use3Dperspective .and. use3Dopacityrendering) then
@@ -833,7 +837,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                    dat(1:ninterp,iplotx),dat(1:ninterp,iploty),&
                    hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                    ninterp,xseclineX1,xseclineY1,xseclineX2,xseclineY2, &
-                   datpix1D,npixx)
+                   datpix1D,npixx,inormalise)
               !
               !--find limits of datpix1D for plotting
               !  do transformations on rendered array where appropriate
@@ -1513,7 +1517,7 @@ contains
               hh(1:ninterp),weight(1:ninterp), &
               dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
               ninterp,xmin,ymin,zslicepos, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidth)
+              vecpixx,vecpixy,numpixx,numpixy,pixwidth,inormalise)
          else
             call interpolate3D_proj_vec(xplot(1:ninterp), &
               yplot(1:ninterp),pmass(1:ninterp), &
@@ -1538,7 +1542,7 @@ contains
          call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
               hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ivecx), &
               dat(1:ninterp,ivecy),ninterp,xmin,ymin, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidth)
+              vecpixx,vecpixy,numpixx,numpixy,pixwidth,inormalise)
       
       case default
          print "(a,i1,a)",'ERROR: Cannot do vector plotting in ',ndim,' dimensions'

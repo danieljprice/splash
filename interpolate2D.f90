@@ -33,13 +33,14 @@ contains
 !--------------------------------------------------------------------------
 
 subroutine interpolate2D(x,y,hh,weight,dat,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidth)
+     xmin,ymin,datsmooth,npixx,npixy,pixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,hh,weight,dat
   real, intent(in) :: xmin,ymin,pixwidth
   real, intent(out), dimension(npixx,npixy) :: datsmooth
+  logical, intent(in) :: normalise
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
@@ -107,7 +108,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,npart, &
            !--calculate data value at this pixel using the summation interpolant
            !  
            datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
-           datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+           if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
 
         enddo
      enddo
@@ -116,9 +117,11 @@ subroutine interpolate2D(x,y,hh,weight,dat,npart, &
   !
   !--normalise dat array
   !
-  where (datnorm > 0.)
-     datsmooth = datsmooth/datnorm
-  end where
+  if (normalise) then
+     where (datnorm > 0.)
+        datsmooth = datsmooth/datnorm
+     end where
+  endif
 
   return
 
@@ -142,13 +145,14 @@ end subroutine interpolate2D
 !--------------------------------------------------------------------------
 
 subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,npart, &
-     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth)
+     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,hh,weight,vecx,vecy
   real, intent(in) :: xmin,ymin,pixwidth
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx,vecsmoothy
+  logical, intent(in) :: normalise
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
@@ -219,7 +223,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,npart, &
            !  
            vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab
            vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab
-           datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+           if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
 
         enddo
      enddo
@@ -228,10 +232,12 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,npart, &
   !
   !--normalise dat arrays
   !
-  where (datnorm > 0.)
-     vecsmoothx = vecsmoothx/datnorm
-     vecsmoothy = vecsmoothy/datnorm
-  end where
+  if (normalise) then
+     where (datnorm > 0.)
+        vecsmoothx = vecsmoothx/datnorm
+        vecsmoothy = vecsmoothy/datnorm
+     end where
+  endif
 
   return
 
@@ -270,13 +276,14 @@ end subroutine interpolate2D_vec
 !--------------------------------------------------------------------------
 
 subroutine interpolate2D_xsec(x,y,hh,weight,dat,npart,&
-     x1,y1,x2,y2,datsmooth,npixx)
+     x1,y1,x2,y2,datsmooth,npixx,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx
   real, intent(in), dimension(npart) :: x,y,hh,weight,dat
   real, intent(in) :: x1,y1,x2,y2
   real, intent(out), dimension(npixx) :: datsmooth
+  logical, intent(in) :: normalise
   real, dimension(npixx) :: datnorm
 
   integer :: i,ipix,ipixmin,ipixmax
@@ -409,7 +416,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,npart,&
            !--calculate data value at this pixel using the summation interpolant
            !  
            datsmooth(ipix) = datsmooth(ipix) + term*wab
-           datnorm(ipix) = datnorm(ipix) + termnorm*wab      
+           if (normalise) datnorm(ipix) = datnorm(ipix) + termnorm*wab      
 
         enddo
 
@@ -419,9 +426,11 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,npart,&
   !
   !--normalise dat array
   !
-  where (datnorm > 0.)
-     datsmooth = datsmooth/datnorm
-  end where
+  if (normalise) then
+     where (datnorm > 0.)
+        datsmooth = datsmooth/datnorm
+     end where
+  endif
 
   return
 
