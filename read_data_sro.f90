@@ -352,11 +352,57 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   close(15)
 
+  !
+  !--transform velocities to corotating frame
+  !
+  if (.not.minidump) then
+     print*,' transforming velocities to corotating frame'
+     call set_corotating_vels(dat(1:nprint,1:2,j-1),dat(1:nprint,7,j-1),dat(1:nprint,4:5,j-1),n1,n2,nprint)
+  endif
+
   print*,'>> end of dump file: nsteps =',j-1,'ntot = ', &
         sum(npartoftype(:,j-1)),'nptmass=',npartoftype(2,j-1)
    
 return
-                    
+
+contains
+
+ subroutine set_corotating_vels(xy,pmass,vxy,n1,n2,npart)
+  implicit none
+  integer, intent(in) :: n1,n2,npart
+  real, dimension(npart,2), intent(inout) :: xy,vxy
+  real, dimension(npart) :: pmass
+  real :: mass1,mass2,xcm1,ycm1,xcm2,ycm2,vxcm1,vycm1,vxcm2,vycm2
+  
+  !
+  !--get centre of mass of star 1 and star 2
+  !
+  mass1 = SUM(pmass(1:n1))
+  xcm1 = SUM(pmass(1:n1)*xy(1:n1,1))/mass1
+  ycm1 = SUM(pmass(1:n1)*xy(1:n1,2))/mass1
+  
+  mass2 = SUM(pmass(n1+1:npart))
+  xcm2 = SUM(pmass(n1+1:npart)*xy(n1+1:npart,1))/mass2
+  ycm2 = SUM(pmass(n1+1:npart)*xy(n1+1:npart,2))/mass2
+  !
+  !--work out centre of mass velocities for each star
+  !
+  vxcm1 = SUM(pmass(1:n1)*vxy(1:n1,1))/mass1
+  vycm1 = SUM(pmass(1:n1)*vxy(1:n1,2))/mass1
+
+  vxcm2 = SUM(pmass(n1+1:npart)*vxy(n1+1:npart,1))/mass2
+  vycm2 = SUM(pmass(n1+1:npart)*vxy(n1+1:npart,2))/mass2
+  
+  !
+  !--subtract centre of mass velocities appropriately
+  !
+  vxy(1:n1,1) = vxy(1:n1,1) - vxcm1
+  vxy(1:n1,2) = vxy(1:n1,2) - vycm1
+  vxy(n1+1:npart,1) = vxy(n1+1:npart,1) - vxcm2
+  vxy(n1+1:npart,2) = vxy(n1+1:npart,2) - vycm2
+ 
+ end subroutine set_corotating_vels
+                     
 end subroutine read_data
 
 !!------------------------------------------------------------
