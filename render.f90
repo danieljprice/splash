@@ -131,10 +131,10 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  
 !set up grid for rendering 
 
- trans(1) = xmin !- 0.5*dx                ! this is for the pgimag call
+ trans(1) = xmin - 0.5*dx                ! this is for the pgimag call
  trans(2) = dx                        ! see help for pgimag/pggray/pgcont
  trans(3) = 0.0
- trans(4) = ymin !- 0.5*dx
+ trans(4) = ymin - 0.5*dx
  trans(5) = 0.0
  trans(6) = dx
 
@@ -153,7 +153,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  endif
  
  call pgvect(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
-      1,npixx,1,npixy,scale,0,trans,-1000.0)
+      1,npixx,1,npixy,scale,0,trans,0.0)
 
  if (iVecplotLegend) then
     call legend_vec(label,vecmax,dx,hposlegendvec,vposlegendvec,charheight)
