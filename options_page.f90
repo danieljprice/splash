@@ -70,17 +70,17 @@ subroutine submenu_page
  papersizey = papersizex*aspectratio
  print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,tile, &
           iPlotTitles,hpostitle,vpostitle,iPlotLegend,iPlotStepLegend, &
-          hposlegend,vposlegend,linewidth,charheightmm
+          hposlegend,vposlegend,charheightmm,linewidth
 10 format(' 0) exit ',/,                   &
-        ' 1) change steps per page  (',i2,')',/, &
+        ' 1) change steps per plot  (',i2,')',/, &
         ' 2) axes options           (',i2,')',/, &
         ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
         ' 4) change plots per page  (',i2,1x,i2,')',/, &
          ' 5) toggle plot tiling     (',L1,')',/, & 
          ' 6) title options          (',L1,1x,f5.2,1x,f4.1,')',/, &
          ' 7) legend options         (',L1,1x,L1,1x,f5.2,1x,f4.1,')',/, &
-         ' 8) set character height   (',i1,')',/,&
-         ' 9) adjust line width      (',f4.1,')',/,&
+         ' 8) set character height   (',f4.1,')',/,&
+         ' 9) adjust line width      (',i1,')',/,&
          '10) set foreground/background colours ')
  call prompt('enter option ',iaction,0,10)
 
