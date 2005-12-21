@@ -32,26 +32,28 @@ contains
 !     Daniel Price, Institute of Astronomy, Cambridge, July 2003
 !--------------------------------------------------------------------------
 
-subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
+subroutine interpolate2D(x,y,hh,weight,dat,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidth)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
-  real, intent(in), dimension(npart) :: x,y,pmass,rho,hh,dat
+  real, intent(in), dimension(npart) :: x,y,hh,weight,dat
   real, intent(in) :: xmin,ymin,pixwidth
   real, intent(out), dimension(npixx,npixy) :: datsmooth
+  real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,h2,radkern,qq,wab,rab,const
-  real :: term,dx,dy,xpix,ypix
+  real :: hi,hi1,radkern,qq,wab,rab,const
+  real :: term,termnorm,dx,dy,xpix,ypix
 
   datsmooth = 0.
-  term = 0.
+  datnorm = 0.
   print*,'interpolating from particles to 2D grid...'
   if (pixwidth.le.0.) then
      print*,'interpolate2D: error: pixel width <= 0'
      return
   endif
+  const = 10./(7.*pi)  ! normalisation constant
   !
   !--loop over particles
   !      
@@ -65,10 +67,9 @@ subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
         return
      endif
      hi1 = 1./hi
-     h2 = hi*hi
      radkern = 2.*hi  ! radius of the smoothing kernel
-     const = 10./(7.*pi*h2)  ! normalisation constant
-     if (rho(i).ne.0.) term = pmass(i)*dat(i)/rho(i) 
+     termnorm = const*weight(i)
+     term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to
      !               
@@ -96,9 +97,9 @@ subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
            !--SPH kernel - standard cubic spline
            !                     
            if (qq.lt.1.0) then
-              wab = const*(1.-1.5*qq**2 + 0.75*qq**3)
+              wab = (1.-1.5*qq**2 + 0.75*qq**3)
            elseif (qq.lt.2.0) then
-              wab = const*0.25*(2.-qq)**3
+              wab = 0.25*(2.-qq)**3
            else
               wab = 0.
            endif
@@ -106,11 +107,18 @@ subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
            !--calculate data value at this pixel using the summation interpolant
            !  
            datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
+           datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
 
         enddo
      enddo
 
   enddo
+  !
+  !--normalise dat array
+  !
+  where (datnorm > 0.)
+     datsmooth = datsmooth/datnorm
+  end where
 
   return
 
@@ -133,28 +141,29 @@ end subroutine interpolate2D
 !     Daniel Price, University of Exeter, March 2005
 !--------------------------------------------------------------------------
 
-subroutine interpolate2D_vec(x,y,pmass,rho,hh,vecx,vecy,npart, &
+subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,npart, &
      xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
-  real, intent(in), dimension(npart) :: x,y,pmass,rho,hh,vecx,vecy
+  real, intent(in), dimension(npart) :: x,y,hh,weight,vecx,vecy
   real, intent(in) :: xmin,ymin,pixwidth
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx,vecsmoothy
+  real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,h2,radkern,qq,wab,rab,const,rho1i
-  real :: termx,termy,dx,dy,xpix,ypix
+  real :: hi,hi1,radkern,qq,wab,rab,const
+  real :: termnorm,termx,termy,dx,dy,xpix,ypix
 
   vecsmoothx = 0.
   vecsmoothy = 0.
-  termx = 0.
-  termy = 0.
+  datnorm = 0.
   print*,'interpolating vector field from particles to 2D grid...'
   if (pixwidth.le.0.) then
      print*,'interpolate2D_vec: error: pixel width <= 0'
      return
   endif
+  const = 10./(7.*pi)  ! normalisation constant
   !
   !--loop over particles
   !      
@@ -168,16 +177,10 @@ subroutine interpolate2D_vec(x,y,pmass,rho,hh,vecx,vecy,npart, &
         return
      endif
      hi1 = 1./hi
-     h2 = hi*hi
      radkern = 2.*hi  ! radius of the smoothing kernel
-     const = 10./(7.*pi*h2)  ! normalisation constant
-     if (rho(i).ne.0.) then
-        rho1i = 1./rho(i)
-     else
-        rho1i = 0.
-     endif
-     termx = const*pmass(i)*vecx(i)*rho1i
-     termy = const*pmass(i)*vecy(i)*rho1i 
+     termnorm = const*weight(i)
+     termx = termnorm*vecx(i)
+     termy = termnorm*vecy(i)
      !
      !--for each particle work out which pixels it contributes to
      !               
@@ -216,11 +219,19 @@ subroutine interpolate2D_vec(x,y,pmass,rho,hh,vecx,vecy,npart, &
            !  
            vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab
            vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab
+           datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
 
         enddo
      enddo
 
   enddo
+  !
+  !--normalise dat arrays
+  !
+  where (datnorm > 0.)
+     vecsmoothx = vecsmoothx/datnorm
+     vecsmoothy = vecsmoothy/datnorm
+  end where
 
   return
 
@@ -258,18 +269,19 @@ end subroutine interpolate2D_vec
 !     Daniel Price, Institute of Astronomy, Cambridge, Feb 2004
 !--------------------------------------------------------------------------
 
-subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
+subroutine interpolate2D_xsec(x,y,hh,weight,dat,npart,&
      x1,y1,x2,y2,datsmooth,npixx)
 
   implicit none
   integer, intent(in) :: npart,npixx
-  real, intent(in), dimension(npart) :: x,y,pmass,rho,hh,dat
+  real, intent(in), dimension(npart) :: x,y,hh,weight,dat
   real, intent(in) :: x1,y1,x2,y2
   real, intent(out), dimension(npixx) :: datsmooth
+  real, dimension(npixx) :: datnorm
 
   integer :: i,ipix,ipixmin,ipixmax
-  real :: hi,hi1,h2,radkern,qq,wab,rab,const
-  real :: term,dx,dy,xpix,ypix,pixwidth,xpixwidth,xlength
+  real :: hi,hi1,radkern,qq,wab,rab,const
+  real :: term,termnorm,dx,dy,xpix,ypix,pixwidth,xpixwidth,xlength
   real :: gradient,yintercept,aa,bb,cc,determinant,det
   real :: xstart,xend,ystart,yend,rstart,rend
   real :: tol
@@ -312,7 +324,8 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
   !--now interpolate to the line of pixels
   !
   datsmooth = 0.
-  term = 0.
+  datnorm = 0.
+  const = 10./(7.*pi)   ! normalisation constant
   !
   !--loop over particles
   !      
@@ -326,10 +339,9 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
         return
      endif
      hi1 = 1./hi
-     h2 = hi*hi
      radkern = 2.*hi    ! radius of the smoothing kernel
-     const = 10./(7.*pi*h2)   ! normalisation constant
-     if (rho(i).ne.0.) term = pmass(i)*dat(i)/rho(i) 
+     termnorm = const*weight(i)
+     term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to
      !  to do this we need to work out the two points at which the line
@@ -387,22 +399,29 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
            !--SPH kernel - standard cubic spline in 2D
            !     
            if (qq.lt.1.0) then
-              wab = const*(1.-1.5*qq**2 + 0.75*qq**3)
+              wab = (1.-1.5*qq**2 + 0.75*qq**3)
            elseif (qq.lt.2.0) then
-              wab = const*0.25*(2.-qq)**3
+              wab = 0.25*(2.-qq)**3
            else
               wab = 0.
            endif
            !
            !--calculate data value at this pixel using the summation interpolant
            !  
-           datsmooth(ipix) = datsmooth(ipix) + term*wab          
+           datsmooth(ipix) = datsmooth(ipix) + term*wab
+           datnorm(ipix) = datnorm(ipix) + termnorm*wab      
 
         enddo
 
      endif
 
   enddo
+  !
+  !--normalise dat array
+  !
+  where (datnorm > 0.)
+     datsmooth = datsmooth/datnorm
+  end where
 
   return
 

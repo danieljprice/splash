@@ -7,7 +7,7 @@
 
 module xsections3D
  implicit none
- real, parameter, private :: pi = 3.1415926536      
+ real, parameter, private :: dpi = 1./3.1415926536      
  public :: interpolate3D, interpolate3D_fastxsec, interpolate3D_xsec_vec
  
 contains
@@ -15,22 +15,24 @@ contains
 !--------------------------------------------------------------------------
 !     subroutine to interpolate from particle data to even grid of pixels
 !
-!     The data is smoothed using the SPH summation interpolant,
-!     that is, we compute the smoothed array according to
+!     The data is interpolated according to the formula
 !
-!     datsmooth(pixel) = sum_b m_b dat_b/rho_b W(r-r_b, h_b)
+!     datsmooth(pixel) = sum_b weight_b dat_b W(r-r_b, h_b)
 ! 
 !     where _b is the quantity at the neighbouring particle b and
-!     W is the smoothing kernel, for which we use the usual cubic spline
+!     W is the smoothing kernel, for which we use the usual cubic spline.
+!
+!     For a standard SPH smoothing the weight function for each particle should be
+!
+!     weight = pmass/(rho*h^3)
 !
 !     this version is written for slices through a rectangular volume, ie.
 !     assumes a uniform pixel size in x,y, whilst the number of pixels
 !     in the z direction can be set to the number of cross-section slices.
 !
 !     Input: particle coordinates  : x,y,z (npart)
-!            particle masses       : pmass (npart)
-!            density on particles  : rho   (npart) - must be computed separately
-!            smoothing lengths     : hh    (npart) - could be computed from density
+!            smoothing lengths     : hh    (npart)
+!            weights for each particle : weight (npart)
 !            scalar data to smooth : dat   (npart)
 !
 !     Output: smoothed data            : datsmooth (npixx,npixy,npixz)
@@ -38,27 +40,29 @@ contains
 !     Daniel Price, Institute of Astronomy, Cambridge 16/7/03
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
+subroutine interpolate3D(x,y,z,hh,weight,dat,npart,&
      xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidth,zpixwidth)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy,npixz
-  real, intent(in), dimension(npart) :: x,y,z,pmass,rho,hh,dat
+  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   real, intent(in) :: xmin,ymin,zmin,pixwidth,zpixwidth
   real, intent(out), dimension(npixx,npixy,npixz) :: datsmooth
+  real, dimension(npixx,npixy,npixz) :: datnorm
 
   integer :: i,ipix,jpix,kpix
   integer :: ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
-  real :: hi,hi1,h3,radkern,qq,wab,rab,const
-  real :: term,dx,dy,dz,xpix,ypix,zpix
+  real :: hi,hi1,radkern,qq,wab,rab,const
+  real :: term,termnorm,dx,dy,dz,xpix,ypix,zpix
 
   datsmooth = 0.
-  term = 0.
+  datnorm = 0.
   print*,'interpolating from particles to 3D grid...'
    if (pixwidth.le.0.) then
      print*,'interpolate3D: error: pixel width <= 0'
      return
   endif
+  const = dpi  ! normalisation constant (3D)
   !
   !--loop over particles
   !      
@@ -72,11 +76,9 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
         return
      endif
      hi1 = 1./hi
-     h3 = hi*hi*hi
      radkern = 2.*hi   ! radius of the smoothing kernel
-     const = 1./(pi*h3)  ! normalisation constant (3D)
-     term = 0.
-     if (rho(i).ne.0.) term = pmass(i)*dat(i)/rho(i) 
+     termnorm = const*weight(i)
+     term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to
      !               
@@ -86,13 +88,6 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
      ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
      jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
      kpixmax = int((z(i) + radkern - zmin)/zpixwidth) + 1
-
-     !         PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
-     !         PRINT*,'z slices = ',kpixmin,zmin + kpixmin*zpixwidth, !- 0.5*zpixwidth,
-     !     &                 kpixmax,zmin + kpixmax*zpixwidth                !- 0.5*zpixwidth
-     !        PRINT*,'should cover z = ',z(i)-radkern,' to ',z(i)+radkern         
-     !         PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
-     !         PRINT*,'xmin,ymin = ',xmin,ymin,zmin
 
      if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
      if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
@@ -118,9 +113,9 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
               !--SPH kernel - standard cubic spline
               !                     
               if (qq.lt.1.0) then
-                 wab = const*(1.-1.5*qq**2 + 0.75*qq**3)
+                 wab = 1.-1.5*qq**2 + 0.75*qq**3
               elseif (qq.lt.2.0) then
-                 wab = const*0.25*(2.-qq)**3
+                 wab = 0.25*(2.-qq)**3
               else
                  wab = 0.
               endif
@@ -128,12 +123,19 @@ subroutine interpolate3D(x,y,z,pmass,rho,hh,dat,npart,&
               !--calculate data value at this pixel using the summation interpolant
               !  
               datsmooth(ipix,jpix,kpix) = datsmooth(ipix,jpix,kpix) + term*wab          
+              datnorm(ipix,jpix,kpix) = datnorm(ipix,jpix,kpix) + termnorm*wab          
 
            enddo
         enddo
      enddo
   enddo
-
+  !
+  !--normalise dat array
+  !
+  where (datnorm > 0.)
+     datsmooth = datsmooth/datnorm
+  end where
+  
   return
 
 end subroutine interpolate3D
@@ -159,25 +161,38 @@ end subroutine interpolate3D
 !     Daniel Price, Institute of Astronomy, Cambridge, 23/9/03
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_fastxsec(x,y,z,pmass,rho,hh,dat,npart,&
+subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
      xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidth)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
-  real, intent(in), dimension(npart) :: x,y,z,pmass,rho,hh,dat
+  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   real, intent(in) :: xmin,ymin,pixwidth,zslice
   real, intent(out), dimension(npixx,npixy) :: datsmooth
+  real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,h3,radkern,qq,wab,rab,const
-  real :: term,dx,dy,dz,dz2,xpix,ypix
+  real :: hi,hi1,radkern,qq,wab,rab,const
+  real :: termnorm,term,dx,dy,dz,dz2,xpix,ypix,rescalefac
 
   datsmooth = 0.
-  term = 0.
+  datnorm = 0.
   print*,'taking fast cross section...',zslice
   if (pixwidth.le.0.) then
      print*,'interpolate3D_xsec: error: pixel width <= 0'
      return
+  elseif (npart.le.0) then
+     print*,'interpolate3D_xsec: error: npart = 0'
+     return
+  endif
+  const = dpi
+  !
+  !--renormalise dat array by first element to speed things up
+  !
+  if (dat(1).gt.tiny(dat)) then
+     rescalefac = dat(1)
+  else
+     rescalefac = 1.0
   endif
   !
   !--loop over particles
@@ -192,7 +207,6 @@ subroutine interpolate3D_fastxsec(x,y,z,pmass,rho,hh,dat,npart,&
         return
      endif
      hi1 = 1./hi
-     h3 = hi*hi*hi
      radkern = 2.*hi    ! radius of the smoothing kernel
      !
      !--for each particle, work out distance from the cross section slice.
@@ -205,9 +219,8 @@ subroutine interpolate3D_fastxsec(x,y,z,pmass,rho,hh,dat,npart,&
      !
      if (abs(dz) .lt. radkern) then
 
-        const = 1./(pi*h3)  ! normalisation constant (3D)
-        term = 0.
-        if (rho(i).ne.0.) term = const*pmass(i)*dat(i)/rho(i) 
+        termnorm = const*weight(i)
+        term = termnorm*dat(i)/rescalefac
         !
         !--for each particle work out which pixels it contributes to
         !               
@@ -215,9 +228,6 @@ subroutine interpolate3D_fastxsec(x,y,z,pmass,rho,hh,dat,npart,&
         jpixmin = int((y(i) - radkern - ymin)/pixwidth)
         ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
         jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
-
-        ! PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
-        ! PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
 
         if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
         if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
@@ -246,7 +256,8 @@ subroutine interpolate3D_fastxsec(x,y,z,pmass,rho,hh,dat,npart,&
                  !
                  !--calculate data value at this pixel using the summation interpolant
                  !  
-                 datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab          
+                 datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
+                 datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab      
 
               endif
 
@@ -255,7 +266,13 @@ subroutine interpolate3D_fastxsec(x,y,z,pmass,rho,hh,dat,npart,&
 
      endif                  ! if particle within 2h of slice
   enddo                     ! over particles
-
+  !
+  !--normalise dat array
+  !
+  where (datnorm > 0.)
+     datsmooth = datsmooth/datnorm*rescalefac
+  end where
+  
   return
 
 end subroutine interpolate3D_fastxsec
@@ -292,28 +309,29 @@ end subroutine interpolate3D_fastxsec
 !     Daniel Price, Institute of Astronomy, Cambridge, 23/9/03
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
+subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,npart,&
      xmin,ymin,zslice,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
-  real, intent(in), dimension(npart) :: x,y,z,pmass,rho,hh,vecx,vecy
+  real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
   real, intent(in) :: xmin,ymin,pixwidth,zslice
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
+  real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,h3,radkern,qq,wab,rab,const
-  real :: rho1i,termx,termy,dx,dy,dz,dz2,xpix,ypix
+  real :: hi,hi1,radkern,qq,wab,rab,const
+  real :: termx,termy,termnorm,dx,dy,dz,dz2,xpix,ypix
 
   vecsmoothx = 0.
   vecsmoothy = 0.
-  termx = 0.
-  termy = 0.
+  datnorm = 0.
   print*,'taking fast cross section...',zslice
   if (pixwidth.le.0.) then
      print*,'interpolate3D_xsec_vec: error: pixel width <= 0'
      return
   endif
+  const = dpi ! normalisation constant (3D)
   !
   !--loop over particles
   !      
@@ -327,7 +345,6 @@ subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
         return
      endif
      hi1 = 1./hi
-     h3 = hi*hi*hi
      radkern = 2.*hi    ! radius of the smoothing kernel
      !
      !--for each particle, work out distance from the cross section slice.
@@ -339,16 +356,9 @@ subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
      !  otherwise skip all this and start on the next particle
      !
      if (abs(dz) .lt. radkern) then
-
-        const = 1./(pi*h3)  ! normalisation constant (3D)
-        if (rho(i).ne.0.) then
-           rho1i = 1./rho(i)
-        else
-           rho1i = 0.
-        endif
-        
-        termx = const*pmass(i)*vecx(i)*rho1i
-        termy = const*pmass(i)*vecy(i)*rho1i
+        termnorm = const*weight(i)
+        termx = termnorm*vecx(i)
+        termy = termnorm*vecy(i)
         !
         !--for each particle work out which pixels it contributes to
         !               
@@ -356,9 +366,6 @@ subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
         jpixmin = int((y(i) - radkern - ymin)/pixwidth)
         ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
         jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
-
-        ! PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
-        ! PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
 
         if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
         if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
@@ -389,6 +396,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
                  !  
                  vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab          
                  vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab          
+                 datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab      
 
               endif
 
@@ -397,6 +405,13 @@ subroutine interpolate3D_xsec_vec(x,y,z,pmass,rho,hh,vecx,vecy,npart,&
 
      endif                  ! if particle within 2h of slice
   enddo                     ! over particles
+  !
+  !--normalise dat array(s)
+  !
+  where (datnorm > 0.)
+     vecsmoothx = vecsmoothx/datnorm
+     vecsmoothy = vecsmoothy/datnorm
+  end where
 
   return
 

@@ -271,7 +271,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                 iplotcontmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
   use rotation
-  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,n_end,nfreq
+  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,n_end,nfreq,iRescale,units
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
                      iplotline,linecolourthisstep,linestylethisstep
@@ -323,7 +323,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
   real, dimension(:,:,:), allocatable :: datpix3D
   real, dimension(ndim) :: xcoords,vecnew,xmintemp,xmaxtemp
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
-  real, dimension(maxpart) :: renderplot,hh,pmass,rho
+  real, dimension(maxpart) :: renderplot,hh,pmass,rho,weight
   real :: angleradx, anglerady, angleradz
   real :: rendermintemp,rendermaxtemp
   real :: xsecmin,xsecmax,dummy
@@ -364,6 +364,21 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
   if (labeltype(2)(1:5).eq.'ghost' .and. iplotpartoftype(2)) then
      ninterp = ninterp + npartoftype(2)
   endif
+  !
+  !--set weight factor for interpolation routines
+  !
+  if (ipmass.gt.0) then
+  !  make sure this is done in code units (ie. a consistent set)
+     if (iRescale) then
+        weight(1:ninterp) = (dat(1:ninterp,ipmass)/units(ipmass))/ &
+                            (dat(1:ninterp,irho)/units(irho)*(dat(1:ninterp,ih)/units(ih))**ndim)
+     else
+        weight(1:ninterp) = (dat(1:ninterp,ipmass))/(dat(1:ninterp,irho)*dat(1:ninterp,ih)**ndim)
+     endif
+  else
+     weight(1:ninterp) = 1.0
+  endif
+  
   !-------------------------------------
   ! loop over plots per timestep
   !-------------------------------------
@@ -661,10 +676,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
               !!  allocate memory for rendering array
               if (.not. x_sec) then
                  allocate ( datpix(npixx,npixy) )
-                 call interpolate2D( &
-                      xplot(1:ninterp),yplot(1:ninterp), &
-                      pmass(1:ninterp),rho(1:ninterp), &
-                      hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                 call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
+                      hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                       ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth)
               endif
            case(3)
@@ -674,10 +687,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  !!--allocate memory for 3D rendering array
                  allocate ( datpix3D(npixx,npixy,npixz) )
                  !!--interpolate from particles to 3D grid
-                 call interpolate3D( &
-                      xplot(1:ninterp),yplot(1:ninterp), &
-                      zplot(1:ninterp),pmass(1:ninterp),  &
-                      rho(1:ninterp),hh(1:ninterp), &
+                 call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
+                      zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
                       dat(1:ninterp,irenderplot), &
                       ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dz)
               endif
@@ -777,9 +788,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                             ' : fast cross section', xmin,ymin
                        call interpolate3D_fastxsec( &
                             xplot(1:ninterp),yplot(1:ninterp), &
-                            zplot(1:ninterp), &
-                            pmass(1:ninterp),rho(1:ninterp),    &
-                            hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                            zplot(1:ninterp),hh(1:ninterp), &
+                            weight(1:ninterp),dat(1:ninterp,irenderplot), &
                             ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth)
                     endif
                  else                 
@@ -820,9 +830,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
               call set_grid1D(xmin,dxgrid,npixx)
 
               call interpolate2D_xsec( &
-                   dat(1:ninterp,iplotx),dat(1:ninterp,iploty), &
-                   pmass(1:ninterp),rho(1:ninterp),    &
-                   hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                   dat(1:ninterp,iplotx),dat(1:ninterp,iploty),&
+                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                    ninterp,xseclineX1,xseclineY1,xseclineX2,xseclineY2, &
                    datpix1D,npixx)
               !
@@ -1501,8 +1510,8 @@ contains
          if (x_sec) then ! take vector plot in cross section
             call interpolate3D_xsec_vec(xplot(1:ninterp), &
               yplot(1:ninterp),zplot(1:ninterp), &
-              pmass(1:ninterp),rho(1:ninterp),  &
-              hh(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+              hh(1:ninterp),weight(1:ninterp), &
+              dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
               ninterp,xmin,ymin,zslicepos, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidth)
          else
@@ -1527,8 +1536,7 @@ contains
          !  ninterp,numpixx,numpixy)
          
          call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
-              pmass(1:ninterp),rho(1:ninterp), &
-              hh(1:ninterp),dat(1:ninterp,ivecx), &
+              hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ivecx), &
               dat(1:ninterp,ivecy),ninterp,xmin,ymin, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidth)
       
