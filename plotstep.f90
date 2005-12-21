@@ -11,7 +11,7 @@ module timestep_plotting
   real, dimension(:), allocatable, private :: datpix1D, xgrid
   real, private :: xmin,xmax,ymin,ymax,zmin,zmax,ymean
   real, private :: rendermin,rendermax,vecmax
-  real, private :: dz,zpos
+  real, private :: dz,zslicepos,dobserver,dscreenfromobserver
   real, private :: charheight
   real, private :: dxgrid,xmingrid,xmaxgrid
   real, private :: angletempx, angletempy, angletempz
@@ -41,7 +41,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle
   use settings_render, only:icolours,iplotcont_nomulti
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
-                        use3Dperspective,use3Dopacityrendering,zobserver,zdistunitmag,taupartdepth,rkappa
+                        use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth,rkappa
   use settings_powerspec, only:options_powerspec
   use particle_data, only:npartoftype
   use projections3D, only:coltable
@@ -144,8 +144,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
            read*,nxsec
            !!--dz is the distance between slices            
            dz = (lim(iplotz,2)-lim(iplotz,1))/float(nxsec)
-           zpos = lim(iplotz,1) - 0.5*dz
-           xsecpos_nomulti = zpos
+           zslicepos = lim(iplotz,1) - 0.5*dz
+           xsecpos_nomulti = zslicepos
         else
 !
 !--if single cross-section, read position of cross-section slice
@@ -175,20 +175,21 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
               dz = 0.1*(lim(iplotz,2)-lim(iplotz,1))
            endif
         endif ! flythru or single
-     elseif (iplotz.gt.0 .and. use3Dperspective) then
+     endif
+     
+     if (iplotz.gt.0 .and. use3Dperspective) then
 !
 !--initialise 3D perspective
 !
        !--set default values if none set
        if (abs(zobserver).lt.tiny(zobserver)) zobserver = 10.*lim(iplotz,2)
-       if (abs(zdistunitmag).lt.tiny(zdistunitmag)) zdistunitmag = lim(iplotz,2)
+       if (abs(dzscreenfromobserver).lt.tiny(dzscreenfromobserver)) dzscreenfromobserver = lim(iplotz,2)
        call prompt('enter z coordinate of observer ',zobserver)
-       call prompt('enter distance from observer for unit magnification '//&
-                  '(screen position)',zdistunitmag,0.)
+       call prompt('enter distance between observer and projection screen ',dzscreenfromobserver,0.)
 !
 !--initialise opacity for 3D opacity rendering
 !       
-       if (use3Dopacityrendering) then
+       if (use3Dopacityrendering .and. irender.gt.0) then
           hav = 0.5*(lim(ih,2) + lim(ih,1))
           pmassav = 0.5*(lim(ipmass,2) + lim(ipmass,1))
           call prompt('enter approximate surface depth (number of smoothing lengths):',taupartdepth)          
@@ -388,7 +389,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
         ivectorplot = ivecplotmulti(nyplot)
         iplotcont = iplotcontmulti(nyplot)
         x_sec = x_secmulti(nyplot)
-        zpos = xsecposmulti(nyplot)
+        zslicepos = xsecposmulti(nyplot)
      else
         if (icolour_particles) then
            irenderpart = irender
@@ -400,7 +401,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
         ivectorplot = ivecplot
         iplotcont = iplotcont_nomulti
         x_sec = xsec_nomulti
-        if (iadvance.ne.0 .and. x_sec) zpos = xsecpos_nomulti        
+        if (iadvance.ne.0 .and. x_sec) zslicepos = xsecpos_nomulti        
      endif
      if (ivectorplot.gt.0) iplotpart = iplotpartvec
 
@@ -606,15 +607,15 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
               print "(1x,a,f6.2)",'rotating particles about x by ',angletempx
            endif
            if (ndim.eq.3) then
-              if (iadvance.ne.0 .and. use3Dperspective .and. .not.x_sec) then
-                 dz = zdistunitmag
-                 zpos = zobserver
+              if (iadvance.ne.0 .and. use3Dperspective) then
+                 dscreenfromobserver = dzscreenfromobserver
+                 dobserver = zobserver
               endif
-              if (use3Dperspective .and. .not.x_sec) then
-                 print*,' observer height = ',zpos,', screen at ',zpos-dz
+              if (use3Dperspective .and. (.not.x_sec .or. x_sec.and.use3Dopacityrendering)) then
+                 print*,' observer height = ',dobserver,', screen at ',dobserver-dscreenfromobserver
               else
-                 dz = 0.
-                 zpos = 0.
+                 dscreenfromobserver = 0.
+                 dobserver = 0.
               endif
            endif
            do j=1,ntoti
@@ -622,7 +623,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                if (ndim.eq.2) then
                   call rotate2D(xcoords(:),angleradz)
                elseif (ndim.eq.3) then
-                  call rotate3D(xcoords(:),angleradx,anglerady,angleradz,zpos,dz)
+                  call rotate3D(xcoords(:),angleradx,anglerady,angleradz,dobserver,dscreenfromobserver)
                endif
               xplot(j) = xcoords(iplotx) + xorigin(iplotx)
               yplot(j) = xcoords(iploty) + xorigin(iploty)
@@ -706,12 +707,12 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
            if (x_sec) then
               !!--for multislice cross section (flythru)
               !!  increment the position of the current cross section slice          
-              if (flythru) zpos = zpos + dz
+              if (flythru) zslicepos = zslicepos + dz
               !!--for cross sections of particle plots, need range of co-ordinates in which
               !!  particles may lie
               if (iplotpart) then
-                 xsecmin = zpos-0.5*dz
-                 xsecmax = zpos+0.5*dz
+                 xsecmin = zslicepos-0.5*dz
+                 xsecmax = zslicepos+0.5*dz
               endif
            endif
 
@@ -726,9 +727,9 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
               ! if we have rendered to a 3D grid, take cross sections from this array
               !------------------------------------------------------------------------
               if (x_sec .and. nxsec.gt.2) then
-                 ipixxsec = int((zpos-zmin)/dz) + 1
+                 ipixxsec = int((zslicepos-zmin)/dz) + 1
                  if (ipixxsec.gt.npixz) ipixxsec = npixz
-                 print*,TRIM(label(iplotz)),' = ',zpos, &
+                 print*,TRIM(label(iplotz)),' = ',zslicepos, &
                       ' cross section, pixel ',ipixxsec
                  datpix = datpix3D(:,:,ipixxsec)    ! slices are in 3rd dimension
 
@@ -736,43 +737,60 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  !-------------------------------------------------------------------
                  !  or do a fast projection/cross section of 3D data to 2D array
                  !-------------------------------------------------------------------
-                 if (x_sec) then
-                    !!--do fast cross-section
-                    print*,trim(label(ix(iplotz))),' = ',zpos,  &
-                         ' : fast cross section', xmin,ymin
-                    call interpolate3D_fastxsec( &
-                         xplot(1:ninterp),yplot(1:ninterp), &
-                         zplot(1:ninterp), &
-                         pmass(1:ninterp),rho(1:ninterp),    &
-                         hh(1:ninterp),dat(1:ninterp,irenderplot), &
-                         ninterp,xmin,ymin,zpos,datpix,npixx,npixy,pixwidth)
-                 else
                  
-                    if (use3Dperspective .and. use3Dopacityrendering) then
-                       !
-                       !--opacity rendering
-                       !
-                       !!--limits for rendered quantity
-                       if (iadvance.ne.0 .or. .not.iChangeRenderLimits) then
-                          if (iadapt) then
-                             !!--if adaptive limits, find limits of rendered array
-                             print*,'adapting render limits for opacity rendering'
-                             rendermin = minval(dat(1:ninterp,irenderplot))
-                             rendermax = maxval(dat(1:ninterp,irenderplot))
-                          else
-                             !!--or use fixed limits
-                             rendermin = lim(irenderplot,1)
-                             rendermax = lim(irenderplot,2)
-                          endif
-                          !!--apply transformations to limits
-                          call transform_limits(rendermin,rendermax,itrans(irenderplot))
+                 !--set limits for opacity rendering
+                 if (use3Dperspective .and. use3Dopacityrendering) then
+                    if (iadvance.ne.0 .or. .not.iChangeRenderLimits) then
+                       if (iadapt) then
+                          !!--if adaptive limits, find limits of rendered array
+                          print*,'adapting render limits for opacity rendering'
+                          rendermin = minval(dat(1:ninterp,irenderplot))
+                          rendermax = maxval(dat(1:ninterp,irenderplot))
+                       else
+                          !!--or use fixed limits
+                          rendermin = lim(irenderplot,1)
+                          rendermax = lim(irenderplot,2)
                        endif
+                       !!--apply transformations to limits
+                       call transform_limits(rendermin,rendermax,itrans(irenderplot))
+                    endif
+                 endif
 
+                 if (x_sec) then
+                    if (use3Dperspective .and. use3Dopacityrendering) then
+                       !!--do surface-rendered cross-section with opacity
+                       print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
+                            ' : opacity-rendered cross section', xmin,ymin                    
+                       call interpolate3D_proj_opacity( &
+                            xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                            pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                            dat(1:ninterp,iz), &
+                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver, &
+                            dscreenfromobserver,rkappa,zslicepos, &
+                            rendermin,rendermax,itrans(irenderplot),istep)                    
+                    elseif (use3Dperspective) then
+                       print*,'ERROR: X_SEC WITH 3D PERSPECTIVE NOT IMPLEMENTED'
+                       datpix = 0.
+                    else
+                       !!--do fast cross-section
+                       print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
+                            ' : fast cross section', xmin,ymin
+                       call interpolate3D_fastxsec( &
+                            xplot(1:ninterp),yplot(1:ninterp), &
+                            zplot(1:ninterp), &
+                            pmass(1:ninterp),rho(1:ninterp),    &
+                            hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                            ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth)
+                    endif
+                 else                 
+                    if (use3Dperspective .and. use3Dopacityrendering) then
                        !!--do fast projection with opacity
                        call interpolate3D_proj_opacity( &
                             xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                             pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
-                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz,rkappa, &
+                            dat(1:ninterp,iz), &
+                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver, &
+                            dscreenfromobserver,rkappa,huge(zslicepos), &
                             rendermin,rendermax,itrans(irenderplot),istep)                    
                     else
                        !!--do fast projection of z integrated data (e.g. column density)
@@ -780,7 +798,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                             xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                             pmass(1:ninterp),rho(1:ninterp),   &
                             hh(1:ninterp), dat(1:ninterp,irenderplot), &
-                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,zpos,dz)
+                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver,dscreenfromobserver)
                     endif
                  endif
 
@@ -909,10 +927,10 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  !!--print plot limits to screen
                  print*,trim(labelrender),' min, max = ',rendermin,rendermax
                                        
-                 !!--call subroutine to actually render the image       
+                 !!--call subroutine to actually render the image
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                      npixx,npixy,xmin,ymin,pixwidth,    &
-                      icolours,iplotcont,iColourBar,ncontours,log)
+                   npixx,npixy,xmin,ymin,pixwidth,    &
+                   icolours,iplotcont,iColourBar,ncontours,log)
 
                  !!--plot other particle types (e.g. sink particles) on top
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
@@ -1017,7 +1035,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
               if (ndim.eq.3) then
                  call rotate_axes3D(irotateaxes,iplotx,iploty, &
                       xminrotaxes(1:ndim),xmaxrotaxes(1:ndim),xorigin(1:ndim), &
-                      angleradx,anglerady,angleradz,zpos,dz)
+                      angleradx,anglerady,angleradz,dobserver,dscreenfromobserver)
               elseif (ndim.eq.2) then
                  call rotate_axes2D(irotateaxes,xminrotaxes(1:ndim), &
                                    xmaxrotaxes(1:ndim),xorigin(1:ndim),angleradz)
@@ -1066,7 +1084,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       hh(1:ninterp),icolourme(1:ninterp), &
                       xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax, &
-                      angletempx,angletempy,angletempz,ndim,x_sec,zpos,dz, &
+                      angletempx,angletempy,angletempz,ndim,x_sec,zslicepos,dz, &
+                      dobserver,dscreenfromobserver, &
                       itrackpart,icolours,iadvance,istep,n_end,isave)
                  !--turn rotation on if necessary
                  if (abs(angletempx-anglex).gt.tol) irotate = .true.
@@ -1173,7 +1192,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                    hh(1:ntoti),icolourme(1:ntoti), &
                    xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax, &
                    angletempx,angletempy,angletempz,ndim, &
-                   .false.,dummy,dummy,itrackpart,icolours,iadvance,istep,n_end,isave)
+                   .false.,dummy,dummy,dummy,dummy,itrackpart,icolours,iadvance,istep,n_end,isave)
               if (iadvance.eq.-666) return
            elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
               !
@@ -1484,7 +1503,7 @@ contains
               yplot(1:ninterp),zplot(1:ninterp), &
               pmass(1:ninterp),rho(1:ninterp),  &
               hh(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-              ninterp,xmin,ymin,zpos, &
+              ninterp,xmin,ymin,zslicepos, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidth)
          else
             call interpolate3D_proj_vec(xplot(1:ninterp), &

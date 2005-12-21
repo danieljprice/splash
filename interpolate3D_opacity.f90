@@ -48,21 +48,23 @@ contains
 !     (c) 2005 Daniel Price. Last modified Dec 2005.
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobs,dz1,rkappa,datmin,datmax,itrans,istep)
+subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
+     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobserver,dscreenfromobserver, &
+     rkappa,zcut,datmin,datmax,itrans,istep)
 
   use transforms
   use colours, only:rgbtable,ncolours
   implicit none
   real, parameter :: pi=3.1415926536
   integer, intent(in) :: npart,npixx,npixy,itrans,istep
-  real, intent(in), dimension(npart) :: x,y,z,pmass,hh,dat
-  real, intent(in) :: xmin,ymin,pixwidth,zobs,dz1,datmin,datmax,rkappa
+  real, intent(in), dimension(npart) :: x,y,z,pmass,hh,dat,zorig
+  real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreenfromobserver, &
+                      zcut,datmin,datmax,rkappa
   real, dimension(npixx,npixy), intent(out) :: datsmooth
   real, dimension(3,npixx,npixy) :: rgb
   real, dimension(3) :: rgbi,drgb
 
-  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused
   integer :: iprintinterval, iprintnext, iprogress, itmin
   integer, dimension(npart) :: iorder
   integer :: ipart,ir,ib,ig,ierr,maxcolour,indexi
@@ -103,7 +105,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,npart, &
   pmassav = sum(pmass(1:npart))/real(npart)
   rkappatemp = pi*hav*hav/(pmassav*coltable(1))
   print*,'average h = ',hav,' average mass = ',pmassav
-  print "(1x,a,f6.2,a)",'typical optical depth is ~',rkappatemp/rkappa,' smoothing lengths'  
+  print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'  
   rgb = 0.
   !
   !--print a progress report if it is going to take a long time
@@ -125,6 +127,8 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,npart, &
 !
   call indexx(npart,z,iorder)
   
+  nused = 0
+  
   over_particles: do ipart=1,npart
      !
      !--report on progress
@@ -141,8 +145,16 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,npart, &
      !
      i = iorder(ipart)
      !
-     !--set kernel related quantities
-     !  need to be careful with 3D perspective -- the radkern changes with z
+     !--allow slicing [take only particles with z(unrotated) < zcut]
+     !
+     particle_within_zcut: if (zorig(i).lt.zcut) then
+    
+     !  count particles within slice
+     nused = nused + 1
+     !
+     !--adjust h according to 3D perspective
+     !  need to be careful -- the kernel quantities
+     !  change with z (e.g. radkern, r^2/h^2)
      !  but *not* the 1/h^2 in tau (because the change in 1/h^2 in tau
      !  would be cancelled by the corresponding change to h^2 in kappa)
      !
@@ -150,10 +162,11 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,npart, &
      if (hi.le.0.) then
         print*,'interpolate3D_proj_opacity: error: h <= 0 ',i,hi
         return
-     elseif (abs(dz1).gt.tiny(dz1)) then
-        zfrac = abs(dz1/(z(i)-zobs))
+     elseif (abs(dscreenfromobserver).gt.tiny(dscreenfromobserver)) then
+        zfrac = abs(dscreenfromobserver/(z(i)-zobserver))
         hi = hi*zfrac
      endif
+     
      !--these are the quantities used in the kernel r^2/h^2
      radkern = 2.*hi
      hi1 = 1./hi
@@ -229,6 +242,8 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,npart, &
 
         enddo
      enddo
+     
+     endif particle_within_zcut
 
   enddo over_particles
 !
@@ -272,6 +287,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,npart, &
   else
      print*,'completed in ',t_used,'s'
   endif
+  if (zcut.lt.huge(zcut)) print*,'slice contains ',nused,' of ',npart,' particles'
   
   return
 
@@ -371,7 +387,7 @@ subroutine indexx(n, arr, indx)
       istack(jstack - 1) = l
       l = i
    endif
-endif
+ endif
 
 goto 1
 end subroutine indexx

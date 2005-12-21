@@ -7,7 +7,8 @@ module settings_xsecrot
  implicit none
  integer :: nxsec,irotateaxes
  logical :: xsec_nomulti, irotate, flythru, use3Dperspective, use3Dopacityrendering
- real :: anglex, angley, anglez, zobserver, zdistunitmag, taupartdepth, rkappa
+ real :: anglex, angley, anglez, zobserver, dzscreenfromobserver
+ real :: taupartdepth, rkappa
  real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
  real, dimension(3) :: xorigin,xminrotaxes,xmaxrotaxes
 
@@ -15,7 +16,7 @@ module settings_xsecrot
           xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
           irotate,irotateaxes,anglex, angley, anglez, &
           xminrotaxes,xmaxrotaxes,use3Dperspective, &
-          use3Dopacityrendering,zobserver,zdistunitmag, &
+          use3Dopacityrendering,zobserver,dzscreenfromobserver, &
           taupartdepth
 
 contains
@@ -44,7 +45,7 @@ subroutine defaults_set_xsecrotate
   use3Dperspective = .false.
   use3Dopacityrendering = .false.
   zobserver = 0.
-  zdistunitmag = 0.
+  dzscreenfromobserver = 0.
   rkappa = 0. ! rkappa is set from taupartdepth later
   taupartdepth = 2.
 
@@ -73,14 +74,15 @@ subroutine submenu_xsecrotate
  else
     text = 'proj'
  endif
- print 10,text,xsecpos_nomulti,irotate,use3Dperspective,irotateaxes
+ print 10,text,xsecpos_nomulti,irotate,use3Dperspective,use3Dopacityrendering,irotateaxes
 10  format(' 0) exit ',/,                 &
-           ' 1) switch between cross section/projection   (',a4,' )',/, &
-           ' 2) set cross section position                (',f5.2,' )',/, &
-           ' 3) rotation settings/options                 (',L1,' )',/, &
-           ' 4) 3D projection options                     (',L1,' )',/, &
-           ' 5) set axes for rotated/3D plots             (',i2,' )')
- call prompt('enter option',ians,0,5)
+           ' 1) switch between cross section/projection     ( ',a4,' )',/, &
+           ' 2) set cross section position                  (',f5.2,' )',/, &
+           ' 3) rotation settings/options                   (',L1,' )',/, &
+           ' 4) 3D perspective on/off                       (',L1,' )',/, &
+           ' 5) 3D surface rendering on/off/options         (',L1,' )',/, &
+           ' 6) set axes for rotated/3D plots               (',i2,' )')
+ call prompt('enter option',ians,0,6)
 !
 !--options
 !
@@ -155,14 +157,17 @@ subroutine submenu_xsecrotate
     endif
 !------------------------------------------------------------------------
  case(4)
-    call prompt('use 3D perspective?',use3Dperspective)
+    use3Dperspective = .not.use3Dperspective
     print "(a,L1)",' 3D perspective = ',use3Dperspective
-    if (use3Dperspective) then
-       call prompt('use opacity rendering (ray tracing) on 3D plots?',use3Dopacityrendering)
-       print "(a,L1)",' 3D opacity rendering = ',use3Dopacityrendering
-    endif
 !------------------------------------------------------------------------
  case(5)
+    call prompt('use opacity rendering (ray tracing) on 3D plots?',use3Dopacityrendering)
+    print "(a,L1)",' 3D opacity rendering = ',use3Dopacityrendering
+    if (use3Dopacityrendering .and..not.use3Dperspective) then
+       print "(a)",' also turning on 3D perspective (which must be set for this to work)'
+    endif
+!------------------------------------------------------------------------
+ case(6)
     print*,'0 : do not plot rotated axes'
     print*,'1 : plot rotated axes'
     print*,'2 : plot rotated box'
