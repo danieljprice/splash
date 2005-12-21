@@ -6,7 +6,6 @@
 
 module interpolations1D
  implicit none
- real, parameter, private :: pi = 3.1415926536      
  public :: interpolate1D
  
 contains
@@ -73,7 +72,7 @@ subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
      !--for each particle work out which pixels it contributes to
      !               
      ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-     ipixmax = int((x(i) + radkern - xmin)/pixwidth)
+     ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
 
      if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
      if (ipixmax.gt.npixx) ipixmax = npixx ! to pixels in the image
@@ -81,7 +80,7 @@ subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
      !--loop over pixels, adding the contribution from this particle
      !
      do ipix = ipixmin,ipixmax
-        xpix = xmin + (ipix)*pixwidth - 0.5*pixwidth
+        xpix = xmin + (ipix-0.5)*pixwidth
         dx = xpix - x(i)
         rab = abs(dx)
         qq = rab*hi1

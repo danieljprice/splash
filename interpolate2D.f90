@@ -74,26 +74,21 @@ subroutine interpolate2D(x,y,pmass,rho,hh,dat,npart, &
      !               
      ipixmin = int((x(i) - radkern - xmin)/pixwidth)
      jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-     ipixmax = int((x(i) + radkern - xmin)/pixwidth)
-     jpixmax = int((y(i) + radkern - ymin)/pixwidth)
+     ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
+     jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
 
      if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-     if (ipixmax.lt.1) ipixmax = 1
      if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
-     if (jpixmax.lt.1) jpixmax = 1
      if (ipixmax.gt.npixx) ipixmax = npixx
-     if (ipixmin.gt.npixx) ipixmin = npixx
      if (jpixmax.gt.npixy) jpixmax = npixy
-     if (jpixmin.gt.npixy) jpixmin = npixy
      !
      !--loop over pixels, adding the contribution from this particle
      !
      do jpix = jpixmin,jpixmax
+        ypix = ymin + (jpix-0.5)*pixwidth
+        dy = ypix - y(i)
         do ipix = ipixmin,ipixmax
-
-           ypix = ymin + (jpix)*pixwidth !- 0.5*pixwidth
-           xpix = xmin + (ipix)*pixwidth !- 0.5*pixwidth
-           dy = ypix - y(i)
+           xpix = xmin + (ipix-0.5)*pixwidth
            dx = xpix - x(i)
            rab = sqrt(dx**2 + dy**2)
            qq = rab*hi1
@@ -188,26 +183,21 @@ subroutine interpolate2D_vec(x,y,pmass,rho,hh,vecx,vecy,npart, &
      !               
      ipixmin = int((x(i) - radkern - xmin)/pixwidth)
      jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-     ipixmax = int((x(i) + radkern - xmin)/pixwidth)
-     jpixmax = int((y(i) + radkern - ymin)/pixwidth)
+     ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
+     jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
 
      if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-     if (ipixmax.lt.1) ipixmax = 1
      if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
-     if (jpixmax.lt.1) jpixmax = 1
      if (ipixmax.gt.npixx) ipixmax = npixx
-     if (ipixmin.gt.npixx) ipixmin = npixx
      if (jpixmax.gt.npixy) jpixmax = npixy
-     if (jpixmin.gt.npixy) jpixmin = npixy
      !
      !--loop over pixels, adding the contribution from this particle
      !
      do jpix = jpixmin,jpixmax
+        ypix = ymin + (jpix-0.5)*pixwidth
+        dy = ypix - y(i)
         do ipix = ipixmin,ipixmax
-
-           ypix = ymin + (jpix)*pixwidth !- 0.5*pixwidth
-           xpix = xmin + (ipix)*pixwidth !- 0.5*pixwidth
-           dy = ypix - y(i)
+           xpix = xmin + (ipix-0.5)*pixwidth
            dx = xpix - x(i)
            rab = sqrt(dx**2 + dy**2)
            qq = rab*hi1
@@ -375,7 +365,7 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
         rend = sqrt((xend-x1)**2 + (yend-y1)**2)
 
         ipixmin = int(rstart/pixwidth)
-        ipixmax = int(rend/pixwidth)
+        ipixmax = int(rend/pixwidth) + 1
 
         if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
         if (ipixmax.lt.1) ipixmax = 1
@@ -387,7 +377,7 @@ subroutine interpolate2D_xsec(x,y,pmass,rho,hh,dat,npart,&
         !if (debug) print*,' particle ',i,': ',ipixmin,ipixmax,xstart,x(i),xend 
         do ipix = ipixmin,ipixmax
 
-           xpix = x1 + (ipix)*xpixwidth - 0.5*xpixwidth
+           xpix = x1 + (ipix-0.5)*xpixwidth
            ypix = gradient*xpix + yintercept
            dy = ypix - y(i)
            dx = xpix - x(i)
