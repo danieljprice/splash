@@ -5,7 +5,7 @@
 module settings_page
  use settings_limits, only:iadapt,iadaptcoords
  implicit none
- integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage
+ integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth
  logical :: iColourEachStep,iChangeStyles,tile,interactive
  logical :: iPlotLegend,iPlotStepLegend,iPlotTitles
  real :: papersizex,aspectratio
@@ -16,7 +16,7 @@ module settings_page
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &
    iPlotLegend,iPlotStepLegend,hposlegend,vposlegend,iPlotTitles,hpostitle, &
-   vpostitle,fjusttitle,legendtext,colour_fore, colour_back, charheightmm
+   vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheightmm,linewidth
 
 contains
 
@@ -51,6 +51,7 @@ subroutine defaults_set_page
   colour_fore = ' '
   colour_back = ' '
   charheightmm = 4.0    ! character height in mm
+  linewidth = 2         ! PGPLOT line width
 
   return
 end subroutine defaults_set_page
@@ -69,7 +70,7 @@ subroutine submenu_page
  papersizey = papersizex*aspectratio
  print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,tile, &
           iPlotTitles,hpostitle,vpostitle,iPlotLegend,iPlotStepLegend, &
-          hposlegend,vposlegend,charheightmm
+          hposlegend,vposlegend,linewidth,charheightmm
 10 format(' 0) exit ',/,                   &
         ' 1) change steps per page  (',i2,')',/, &
         ' 2) axes options           (',i2,')',/, &
@@ -78,9 +79,10 @@ subroutine submenu_page
          ' 5) toggle plot tiling     (',L1,')',/, & 
          ' 6) title options          (',L1,1x,f5.2,1x,f4.1,')',/, &
          ' 7) legend options         (',L1,1x,L1,1x,f5.2,1x,f4.1,')',/, &
-         ' 8) set character height   (',f4.1,')',/,&
-         ' 9) set foreground/background colours ')
- call prompt('enter option ',iaction,0,9)
+         ' 8) set character height   (',i1,')',/,&
+         ' 9) adjust line width      (',f4.1,')',/,&
+         '10) set foreground/background colours ')
+ call prompt('enter option ',iaction,0,10)
 
  select case(iaction)
 !------------------------------------------------------------------------
@@ -201,6 +203,10 @@ subroutine submenu_page
      return
 !------------------------------------------------------------------------
   case(9)
+     call prompt('Enter PGPLOT line width ',linewidth,1,5)
+     return
+!------------------------------------------------------------------------
+  case(10)
      ierr = 1
      ntries = 1
      !--open null device so that colours can be recognised
