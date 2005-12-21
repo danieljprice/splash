@@ -18,10 +18,10 @@ contains
 !        vpos : vertical position in character heights from top
 !-----------------------------------------------------------------
 
-subroutine legend(t)
- use settings_page, only:hposlegend, vposlegend, legendtext
+subroutine legend(legendtext,t,unitslabel,hpos,vpos)
  implicit none
- real, intent(in) :: t    
+ real, intent(in) :: t,hpos,vpos
+ character(len=*), intent(in) :: legendtext,unitslabel
  integer :: mm,pp,nc,ndecimal,ndec
  real :: tplot
  character(len=30) :: string
@@ -36,7 +36,7 @@ subroutine legend(t)
  mm=nint(tplot*ndec)
  pp=nint(log10(tplot)-log10(tplot*ndec))
  call pgnumb(mm,pp,1,string,nc)
- call pgmtext('T',-vposlegend,hposlegend,0.0,trim(legendtext)//string(1:nc))
+ call pgmtext('T',-vpos,hpos,0.0,trim(legendtext)//string(1:nc)//trim(unitslabel))
 
  return
 end subroutine legend
@@ -123,12 +123,13 @@ end subroutine legend_vec
 !  uses current line style and colour
 !  plots this below the time legend
 !-------------------------------------------------------------------------
-subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle,iplotpts,iplotline,text)
-  use settings_page, only:hposlegend, vposlegend
+subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
+           iplotpts,iplotline,text,hposlegend,vposlegend)
   implicit none
   integer, intent(in) :: icall,icolour,imarkerstyle,ilinestyle
   logical, intent(in) :: iplotpts,iplotline
   character(len=*), intent(in) :: text
+  real, intent(in) :: hposlegend,vposlegend
   integer :: icolourprev, ilinestyleprev
   real, dimension(3) :: xline,yline
   real :: xch, ych, xmin, xmax, ymin, ymax

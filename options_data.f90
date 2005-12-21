@@ -158,7 +158,7 @@ subroutine submenu_data
           if (icol.gt.0) then
              unitsprev = units(icol)          
              call prompt('enter units for this column (new=old*units)',units(icol),0.)
-             if (abs(units(icol)-1.0).gt.tiny(units) .and. units(icol).gt.tiny(units)) then
+             if (units(icol).gt.tiny(units)) then
                 if (abs(units(icol) - unitsprev).gt.tiny(units)) UnitsHaveChanged = .true.
                 if (len_trim(unitslabel(icol)).eq.0 .or. UnitsHaveChanged) then
                 !--suggest a label amendment if none already set or if units have changed
@@ -171,7 +171,7 @@ subroutine submenu_data
                    unitslabel(icol) = ' [ x '//trim(adjustl(unitslabel(icol)))//' ]'
                 endif
                 !--label amendment can be overwritten
-                call prompt('enter label amendment',unitslabel(icol))
+                call prompt('enter label amendment ',unitslabel(icol))
              else
                 UnitsHaveChanged = .true.
                 units(icol) = 1.0

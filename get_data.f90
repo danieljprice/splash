@@ -25,7 +25,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
                      DataisBuffered,iCalcQuantities,ndim,icoords, &
                      iRescale,units,unitslabel
   use settings_part, only:iexact,icoordsnew
-  use particle_data, only:dat
+  use particle_data, only:dat,time
   use prompting
   use labels, only:label,labelvec,iamvec
   use geometry, only:labelcoord
@@ -77,7 +77,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nstepstotal,' ncolumns = ',ncolumns
 
      !
-     !--set labels for each column of data
+     !--set labels (and units) for each column of data
      !
      print "(/a)",' setting plot labels...'
      call set_labels
@@ -92,6 +92,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
               label(i) = trim(label(i))//trim(unitslabel(i))
            endif
         enddo
+        time(nstart:n_end) = time(nstart:n_end)*units(0)
      endif     
      !
      !--calculate various additional quantities
@@ -142,7 +143,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      n_end = sum(nstepsinfile(1:nfiles))
      nstepstotal = n_end
      !
-     !--set labels for each column of data
+     !--set labels (and units) for each column of data
      !
      !!print "(/a)",' setting plot labels...'
      call set_labels
@@ -157,6 +158,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
               label(i) = trim(label(i))//trim(unitslabel(i))
            endif
         enddo
+        time(1:nstepsinfile(ireadfile)) = time(1:nstepsinfile(ireadfile))*units(0)
      endif
      !
      !--calculate various additional quantities

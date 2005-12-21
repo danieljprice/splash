@@ -525,6 +525,9 @@ subroutine set_labels
      unitslabel(idivB) = ' [G/cm]'
   endif
 
+  units(0) = utime*1000.
+  unitslabel(0) = ' ms'
+
   if (ivx.ne.0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'

@@ -271,12 +271,14 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                 iplotcontmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
   use rotation
-  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,n_end,nfreq,iRescale,units
+  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,n_end,nfreq,iRescale,units,&
+                     unitslabel
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
                      iplotline,linecolourthisstep,linestylethisstep
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend,iPlotStepLegend, &
-                     charheightmm,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
+                     charheightmm,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage, &
+                     hposlegend,vposlegend,legendtext
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
                        iPlotColourBar,icolour_particles,inormalise_interpolations
   use settings_vecplot, only:npixvec, iplotpartvec
@@ -331,7 +333,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
-  character(len=20) :: string
+  character(len=20) :: string,labeltimeunits
   
   logical :: iColourBar, rendering, inormalise
   
@@ -349,6 +351,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
   hh = 0.
   rho = 0.
   pmass = 0.
+  labeltimeunits = ' '
+  if (iReScale) labeltimeunits = unitslabel(0)
   
   !--set the arrays needed for rendering if they are present
   if (ih.gt.0 .and. ih.le.ndataplots) hh(:) = dat(:,ih)
@@ -1056,11 +1060,12 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
            endif
            
            !--print legend if this is the first plot on the page    
-           if (iPlotLegend .and. nyplot.eq.1) call legend(timei)
+           if (iPlotLegend .and. nyplot.eq.1) call legend(legendtext,timei,labeltimeunits, &
+                                                          hposlegend,vposlegend)
            !--line/marker style/colour legend for multiple timesteps on same page
            if (iPlotStepLegend .and. nyplot.eq.1 .and. istepsonpage.gt.0) then
               call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
-                                  iplotpartoftype(1),iplotline,trim(steptitles(istepsonpage)))
+                   iplotpartoftype(1),iplotline,trim(steptitles(istepsonpage)),hposlegend,vposlegend)
            endif
            !--print title if appropriate
            if (iPlotTitles .and. ipanel.le.ntitles) then
@@ -1141,11 +1146,12 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
         !--------------------------------
 
         !--plot time on plot
-        if (iPlotLegend .and. nyplot.eq.1) call legend(timei)
+        if (iPlotLegend .and. nyplot.eq.1) call legend(legendtext,timei,labeltimeunits, &
+                                                       hposlegend,vposlegend)
         !--line/marker style/colour legend for multiple timesteps on same page
         if (iPlotStepLegend .and. nyplot.eq.1 .and. istep.gt.0) then
            call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
-                               iplotpartoftype(1),iplotline,trim(steptitles(istep)))
+                iplotpartoftype(1),iplotline,trim(steptitles(istepsonpage)),hposlegend,vposlegend)
         endif
         !--print title if appropriate
         if (iPlotTitles .and. nstepsperpage.eq.1 .and. ipanel.le.ntitles) then
@@ -1359,11 +1365,12 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
         !
         !--if this is the first plot on the page, print legend
         !
-        if (iPlotLegend .and. ipanel.eq.1) call legend(timei)
+        if (iPlotLegend .and. ipanel.eq.1) call legend(legendtext,timei,labeltimeunits, &
+                                                       hposlegend,vposlegend)
         !--line/marker style/colour legend for multiple timesteps on same page
         if (iPlotStepLegend .and. nyplot.eq.1) then
            call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
-                               .true.,.false.,trim(steptitles(istepsonpage)))
+                .true.,.false.,trim(steptitles(istepsonpage)),hposlegend,vposlegend)
         endif
         !--print title if appropriate
         if (iPlotTitles .and. nstepsperpage.eq.1 .and. ipanel.le.ntitles) then
