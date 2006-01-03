@@ -11,7 +11,7 @@ program test_interpolation
  integer, parameter :: npixx = 10, npixy = 10
  integer :: i,j,k,ipart,icalc
  real, dimension(npart) :: x,y,z,pmass,h,rho
- real, dimension(npart) :: dat
+ real, dimension(npart) :: dat,weight
  real, dimension(npixx,npixy) :: datpix
  real :: xmin,xmax,ymin,ymax,zmin,zmax,dx,dy,dz,ypos,zpos
  real :: totmass,massp,vol,dens,h0,columndens,dxpix
@@ -70,6 +70,7 @@ program test_interpolation
     rho(i) = dens
     h(i) = h0
     dat(i) = rho(i)
+    weight(i) = pmass(i)/(rho(i)*h(i)**3)
  enddo
 !
 !--setup integrated kernel table
@@ -101,6 +102,7 @@ program test_interpolation
        !if (erri.gt.0.05) print*,i,j,' column dens = ',datpix(i,j),' should be ',columndens
     enddo
  enddo
+ print "(70('-'))"
  print*,'average error in column density interpolation = ',err/real(icalc)
 
 ! call pgenv(xmin,xmax,ymin,ymax,0,0)
@@ -115,10 +117,9 @@ program test_interpolation
 !
 !--take cross section at midplane and check density
 !
- call interpolate3D_fastxsec(x,y,z,pmass,rho,h,dat,npart,&
-     xmin,ymin,0.0,datpix,npixx,npixy,dxpix)
-     
- print*,'cross section at z=0 :'
+ print "(70('-'))"
+ call interpolate3D_fastxsec(x,y,z,h,weight,dat,npart,&
+     xmin,ymin,0.0,datpix,npixx,npixy,dxpix,.false.)     
  err = 0.
  icalc = 0
  do j=2,npixy-1
@@ -130,6 +131,7 @@ program test_interpolation
     enddo
  enddo
  print*,'average error in xsec interpolation = ',err/real(icalc)
+ print "(70('-'))"
 
  
 ! call pgenv(xmin,xmax,ymin,ymax,0,0)
@@ -141,5 +143,21 @@ program test_interpolation
 ! trans(6) = dxpix
 ! call pgimag(datpix,npixx,npixy,1,npixx,1,npixy,0.0,1.0,trans)
 ! call pgend
+!
+!--take normalised cross section at midplane and check density
+!
+ call interpolate3D_fastxsec(x,y,z,h,weight,dat,npart,&
+     xmin,ymin,0.0,datpix,npixx,npixy,dxpix,.true.)     
+ err = 0.
+ icalc = 0
+ do j=2,npixy-1
+    do i=2,npixx-1
+       icalc = icalc + 1
+       erri = abs(datpix(i,j)-dens)/dens
+       err = err + erri
+       !if (erri.gt.0.05) print*,i,j,' xsec dens = ',datpix(i,j),' should be ',dens
+    enddo
+ enddo
+ print*,'average error in normalised xsec interpolation = ',err/real(icalc)
 
 end program test_interpolation
