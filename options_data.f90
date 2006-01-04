@@ -147,10 +147,10 @@ subroutine submenu_data
  case(6) 
     print "(a)",'current settings for conversion to physical units are:'
     call set_labels ! reset labels for printing
-    do i=1,ncolumns
+    do i=1,numplot
        print "(a,a3,a,a3,1pe10.3)",trim(label(i))//trim(unitslabel(i)),' = ',trim(label(i)),' x ',units(i)
     enddo
-    print "(a,a3,a,a3,1pe8.2)",'time'//trim(unitslabel(i)),' = ','time',' x ',units(0)
+    print "(a,a3,a,a3,1pe8.2)",'time'//trim(unitslabel(0)),' = ','time',' x ',units(0)
     
     iRescaleprev = iRescale
     iRescale = .not.iRescale
