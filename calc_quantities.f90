@@ -11,7 +11,7 @@ contains
 subroutine calc_quantities(ifromstep,itostep)
   use labels
   use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,unitslabel
   use settings_part, only:iexact
   use mem_allocation
   implicit none
@@ -305,17 +305,24 @@ subroutine calc_quantities(ifromstep,itostep)
   enddo
   !
   !--set labels for calculated quantities
+  !  also units label where dimensions have not changed
   !
   if (ientrop.ne.0) label(ientrop) = 'entropy'
   if (idhdrho.ne.0) label(idhdrho) = 'dh/d\gr'
-  if (irad.ne.0) label(irad) = 'radius '
+  if (irad.ne.0) then
+     label(irad) = 'radius '
+     unitslabel(irad) = unitslabel(ix(1))
+  endif
   if (irad2.ne.0) label(irad2) = 'r\d\(0737)'    !!!parallel'
   if (ike.ne.0) label(ike) = 'v\u2\d/2'
   if (ipr.gt.ncolumns) label(ipr) = 'P_gas'
   if (imach.ne.0) label(imach) = '|v|/c\ds'
   if (ideltarho.ne.0) label(ideltarho) = '\gd \gr'
   
-  if (iBmag.ne.0) label(iBmag) = '|B|'
+  if (iBmag.ne.0) then
+     label(iBmag) = '|B|'
+     unitslabel(iBmag) = unitslabel(iBfirst)
+  endif
   if (ipmag.ne.0) label(ipmag) = 'B\u2\d/2'
   if (itotpr.ne.0) label(itotpr) = 'P_gas + P_mag'
   if (ibeta.ne.0) label(ibeta) = 'plasma \gb'
