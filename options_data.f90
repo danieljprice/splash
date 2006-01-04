@@ -163,7 +163,7 @@ subroutine submenu_data
           call get_data(1,.true.,firsttime=.true.)
        endif    
     elseif (iRescale) then
-       do i=1,numplot
+       do i=1,ncolumns
           label(i) = trim(label(i))//trim(unitslabel(i))
        enddo
     endif
