@@ -177,6 +177,10 @@ subroutine submenu_data
        call prompt('enter column to change units (0=time,-1=quit,-2=reset all)',icol,-2,numplot)
        if (icol.ge.0) then
           unitsprev = units(icol)
+          if (icol.gt.ncolumns) then
+             print "(a)",' WARNING: calculated quantities are automatically calculated in physical units '
+             print "(a)",' this means that units set here will be re-scalings of these physical values'
+          endif
           if (icol.eq.0) then
              call prompt('enter time units (new=old*units)',units(icol),0.)
           else

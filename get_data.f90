@@ -111,6 +111,10 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
               label(i) = trim(label(i))//trim(unitslabel(i))
            endif
         enddo
+     elseif (iRescale) then
+        do i=ncolumns+1,ncolumns+ncalc
+           label(i) = trim(label(i))//trim(unitslabel(i))
+        enddo
      endif
      !
      !--read plot limits from file, otherwise set plot limits
@@ -176,6 +180,10 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
               dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)
               label(i) = trim(label(i))//trim(unitslabel(i))
            endif
+        enddo
+     elseif (iRescale) then
+        do i=ncolumns+1,ncolumns+ncalc
+           label(i) = trim(label(i))//trim(unitslabel(i))
         enddo
      endif
      !
