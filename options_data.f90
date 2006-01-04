@@ -68,7 +68,7 @@ subroutine submenu_data
  implicit none
  integer :: ians, i, icol
  character(len=30) :: fmtstring
- logical :: ireadnow,UnitsHaveChanged,iChange
+ logical :: ireadnow,UnitsHaveChanged,iRescaleprev
  real :: unitsprev,dunits
  
  ians = 0
@@ -85,8 +85,9 @@ subroutine submenu_data
            ' 3) plot selected steps only               (  ',L1,' )',/, &
            ' 4) buffering of data on/off               (  ',L1, ' )',/, &
            ' 5) turn calculate extra quantities on/off (  ',L1, ' )',/, &
-           ' 6) rescale data (change units)            (  ',L1, ' )')
- call prompt('enter option',ians,0,6)
+           ' 6) use physical units                     (  ',L1, ' )',/,&
+           ' 7) change physical unit settings ')
+ call prompt('enter option',ians,0,7)
 !
 !--options
 !
@@ -143,49 +144,73 @@ subroutine submenu_data
        print "(/a,L1)",' Calculation of extra quantities = ',iCalcQuantities    
     endif
 !------------------------------------------------------------------------
- case(6)
-    UnitsHaveChanged = .false.
-    call prompt('Rescale data using unit arrays?',iRescale)
-    if (iRescale) then
-       iChange = .false.
-       call prompt('Do you want to set the units? '// &
-                   '(warning: may be overwritten by data read)',iChange)
-       icol = 0
-       if (iChange) icol = 1
-       do while(icol.gt.0)
-          icol = 0
-          call prompt('enter column to rescale (0=quit)(-1=reset all)',icol,-1,numplot)
-          if (icol.gt.0) then
-             unitsprev = units(icol)          
-             call prompt('enter units for this column (new=old*units)',units(icol),0.)
-             if (units(icol).gt.tiny(units)) then
-                if (abs(units(icol) - unitsprev).gt.tiny(units)) UnitsHaveChanged = .true.
-                if (len_trim(unitslabel(icol)).eq.0 .or. UnitsHaveChanged) then
-                !--suggest a label amendment if none already set or if units have changed
-                   dunits = 1./units(icol)
-                   if (dunits.gt.100 .or. dunits.lt.1.e-1) then
-                      write(unitslabel(icol),"(1pe8.1)") dunits
-                   else
-                      write(unitslabel(icol),"(f5.1)") dunits                  
-                   endif
-                   unitslabel(icol) = ' [ x '//trim(adjustl(unitslabel(icol)))//' ]'
-                endif
-                !--label amendment can be overwritten
-                call prompt('enter label amendment ',unitslabel(icol))
-             else
-                UnitsHaveChanged = .true.
-                units(icol) = 1.0
-                unitslabel(icol) = ' '
-             endif
-          elseif (icol.lt.0) then
-             UnitsHaveChanged = .true.
-             print "(/a)",' resetting all units to unity...'
-             units = 1.0
-             unitslabel = ' '
-          endif
-          print*
+ case(6) 
+    print "(a)",'current settings for conversion to physical units are:'
+    call set_labels ! reset labels for printing
+    do i=1,ncolumns
+       print "(a,a3,a,a3,1pe10.3)",trim(label(i))//trim(unitslabel(i)),' = ',trim(label(i)),' x ',units(i)
+    enddo
+    print "(a,a3,a,a3,1pe8.2)",'time'//trim(unitslabel(i)),' = ','time',' x ',units(0)
+    
+    iRescaleprev = iRescale
+    call prompt('Use physical units?',iRescale)
+    
+    if ((iRescale .and..not. iRescaleprev) .or. (iRescaleprev .and..not.iRescale)) then
+       if (buffer_data) then
+          call get_data(-1,.true.)
+       else
+          call get_data(1,.true.,firsttime=.true.)
+       endif    
+    elseif (iRescale) then
+       do i=1,numplot
+          label(i) = trim(label(i))//trim(unitslabel(i))
        enddo
     endif
+!------------------------------------------------------------------------
+ case(7)
+    UnitsHaveChanged = .false.
+    icol = 1
+    print "(a)",' *** WARNING: if units are set in the data read, changes here have no effect ***'
+    do while(icol.ge.0)
+       icol = -1
+       call prompt('enter column to change units (0=time,-1=quit,-2=reset all)',icol,-2,numplot)
+       if (icol.ge.0) then
+          unitsprev = units(icol)
+          if (icol.eq.0) then
+             call prompt('enter time units (new=old*units)',units(icol),0.)
+          else
+             call prompt('enter '//trim(label(icol))//' units (new=old*units)',units(icol),0.)
+          endif
+          if (units(icol).gt.tiny(units)) then
+             if (abs(units(icol) - unitsprev).gt.tiny(units)) UnitsHaveChanged = .true.
+             if (len_trim(unitslabel(icol)).eq.0 .or. UnitsHaveChanged) then
+             !--suggest a label amendment if none already set or if units have changed
+                dunits = 1./units(icol)
+                if (dunits.gt.100 .or. dunits.lt.1.e-1) then
+                   write(unitslabel(icol),"(1pe8.1)") dunits
+                else
+                   write(unitslabel(icol),"(f5.1)") dunits                  
+                endif
+                unitslabel(icol) = ' [ x '//trim(adjustl(unitslabel(icol)))//' ]'
+             endif
+             !--label amendment can be overwritten
+             call prompt('enter label amendment ',unitslabel(icol))
+          else
+             UnitsHaveChanged = .true.
+             units(icol) = 1.0
+             unitslabel(icol) = ' '
+          endif
+       elseif (icol.eq.-2) then
+          UnitsHaveChanged = .true.
+          print "(/a)",' resetting all units to unity...'
+          units = 1.0
+          unitslabel = ' '
+       endif
+       print*
+    enddo
+    
+    if (.not.iRescale .and. UnitsHaveChanged) call prompt('Apply physical units to data?',iRescale)
+    
     !
     !--re-read/rescale data if units have changed
     !
