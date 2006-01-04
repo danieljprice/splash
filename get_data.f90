@@ -84,7 +84,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--change units if necessary
      !
-     if (iRescale .and. any(abs(units(1:ncolumns)-1.0).gt.tiny(units))) then
+     if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
@@ -150,7 +150,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--change units if necessary
      !
-     if (iRescale .and. any(abs(units(1:ncolumns)-1.0).gt.tiny(units))) then
+     if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
