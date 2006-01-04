@@ -32,7 +32,7 @@ contains
 !
 !     Input: particle coordinates  : x,y,z (npart)
 !            smoothing lengths     : hh    (npart)
-!            weights for each particle : weight (npart)
+!            weight for each particle : weight (npart)
 !            scalar data to smooth : dat   (npart)
 !
 !     Output: smoothed data            : datsmooth (npixx,npixy,npixz)

@@ -9,7 +9,7 @@ module projections3D
  implicit none
 
  integer, parameter, private :: maxcoltable = 1000
- real, parameter, private :: pi = 3.1415926536
+ real, parameter, private :: dpi = 1./3.1415926536
  real, parameter :: radkernel = 2.0
  real, dimension(maxcoltable) :: coltable
  real, parameter :: dmaxcoltable = 1./real(maxcoltable)
@@ -64,7 +64,7 @@ subroutine setup_integratedkernel
           coldens = coldens + wkern*dz
        endif
     enddo
-    coltable(i)=2.0*coldens/pi
+    coltable(i)=2.0*coldens*dpi
  end do
  
  return
@@ -103,7 +103,7 @@ end function wfromtable
 !     The data is smoothed using the SPH summation interpolant,
 !     that is, we compute the smoothed array according to
 !
-!     datsmooth(pixel) = sum_b m_b dat_b/rho_b W(r-r_b, h_b)
+!     datsmooth(pixel) = sum_b weight_b dat_b W(r-r_b, h_b)
 ! 
 !     where _b is the quantity at the neighbouring particle b and
 !     W is the smoothing kernel, for which we use the usual cubic spline
@@ -114,10 +114,16 @@ end function wfromtable
 !     ** This results in a column density map of the interpolated quantity
 !     ** From a similar routine by Matthew Bate.
 !
+!     The (dimensionless) weight for each particle should be
+!
+!     weight = pmass/(rho*h^3)
+!
+!     the interface is written in this form to avoid floating exceptions
+!     on physically scaled data.
+!
 !     Input: particle coordinates  : x,y,z (npart) - note that z is only required for perspective
-!            particle masses       : pmass (npart)
-!            density on particles  : rho   (npart) - must be computed separately
-!            smoothing lengths     : hh    (npart) - could be computed from density
+!            smoothing lengths     : hh    (npart)
+!            weight for each particle : weight (npart)
 !            scalar data to smooth : dat   (npart)
 !
 !     Output: smoothed data            : datsmooth (npixx,npixy)
@@ -126,19 +132,19 @@ end function wfromtable
 !     3D perspective added Nov 2005
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_projection(x,y,z,pmass,rho,hh,dat,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobs,dz1)
+subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
+     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobserver,dscreen)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
-  real, intent(in), dimension(npart) :: x,y,z,pmass,rho,hh,dat
-  real, intent(in) :: xmin,ymin,pixwidth,zobs,dz1
+  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
+  real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreen
   real, intent(out), dimension(npixx,npixy) :: datsmooth
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   integer :: iprintinterval, iprintnext, iprogress, itmin
-  real :: hi,hi1,radkern,qq,wab,rab,const
-  real :: term,rho1i,dx,dy,xpix,ypix,zfrac
+  real :: hi,hi1,radkern,qq,wab,rab
+  real :: term,dx,dy,xpix,ypix,zfrac
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress
 
@@ -153,8 +159,7 @@ subroutine interpolate3D_projection(x,y,z,pmass,rho,hh,dat,npart, &
   !--check column density table has actually been setup
   !
   if (abs(coltable(1)).le.1.e-5) then
-     print "(1x,a)",'interpolate3D_proj: error: must call setup_integratedkernel first!'
-     return
+     call setup_integratedkernel
   endif
   !
   !--print a progress report if it is going to take a long time
@@ -187,23 +192,16 @@ subroutine interpolate3D_projection(x,y,z,pmass,rho,hh,dat,npart, &
      !--set kernel related quantities
      !
      hi = hh(i)
+     term = weight(i)*hi*dat(i) ! h gives the z length scale (NB: no perspective)
      if (hi.le.0.) then
         print*,'interpolate3D_proj: error: h <= 0 ',i,hi
         return
-     elseif (abs(dz1).gt.tiny(dz1)) then
-        zfrac = abs(dz1/(z(i)-zobs))
+     elseif (abs(dscreen).gt.tiny(dscreen)) then
+        zfrac = abs(dscreen/(z(i)-zobserver))
         hi = hi*zfrac
      endif
      hi1 = 1./hi
      radkern = 2.*hi  !radius of the smoothing kernel
-     !         const = 10./(7.*pi*h2)  ! normalisation constant
-     const = hi1*hi1
-     if (rho(i).gt.0.) then
-        rho1i = 1./rho(i)
-     else
-        rho1i = 0.
-     endif
-     term = const*pmass(i)*dat(i)*rho1i
      !
      !--for each particle work out which pixels it contributes to
      !               
@@ -265,9 +263,8 @@ end subroutine interpolate3D_projection
 !     Same as previous but for a vector quantity
 !
 !     Input: particle coordinates  : x,y   (npart)
-!            particle masses       : pmass (npart)
-!            density on particles  : rho   (npart) - must be computed separately
-!            smoothing lengths     : hh    (npart) - could be computed from density
+!            smoothing lengths     : hh    (npart)
+!            weight for each particle : weight (npart)
 !            vector data to smooth : vecx  (npart)
 !                                    vecy  (npart)
 !
@@ -277,18 +274,18 @@ end subroutine interpolate3D_projection
 !     Daniel Price 23/12/04
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_proj_vec(x,y,pmass,rho,hh,vecx,vecy,npart,&
-     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth)
+subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,npart,&
+     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth,zobserver,dscreen)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
-  real, intent(in), dimension(npart) :: x,y,pmass,rho,hh,vecx,vecy
-  real, intent(in) :: xmin,ymin,pixwidth
+  real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
+  real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreen
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,radkern,qq,wab,rab,const
-  real :: rho1i,termx,termy,dx,dy,xpix,ypix
+  real :: hi,hi1,radkern,qq,wab,rab,const,zfrac
+  real :: termx,termy,dx,dy,xpix,ypix
 
   vecsmoothx = 0.
   vecsmoothy = 0.
@@ -307,21 +304,19 @@ subroutine interpolate3D_proj_vec(x,y,pmass,rho,hh,vecx,vecy,npart,&
      !--set kernel related quantities
      !
      hi = hh(i)
+     const = weight(i)*hi ! h gives the z length scale (NB: no perspective)
      if (hi.le.0.) then
         print*,'interpolate3D_proj_vec: error: h <= 0 ',i,hi
         return
+     elseif (abs(dscreen).gt.tiny(dscreen)) then
+        zfrac = abs(dscreen/(z(i)-zobserver))
+        hi = hi*zfrac
      endif
      hi1 = 1./hi
      radkern = 2.*hi    ! radius of the smoothing kernel
-     const = hi1*hi1
-     if (rho(i).ne.0.) then
-        rho1i = 1./rho(i)
-     else
-        rho1i = 0.
-     endif
         
-     termx = const*pmass(i)*vecx(i)*rho1i
-     termy = const*pmass(i)*vecy(i)*rho1i
+     termx = const*vecx(i)
+     termy = const*vecy(i)
      !
      !--for each particle work out which pixels it contributes to
      !               

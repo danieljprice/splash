@@ -814,8 +814,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                        !!--do fast projection of z integrated data (e.g. column density)
                        call interpolate3D_projection( &
                             xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                            pmass(1:ninterp),rho(1:ninterp),   &
-                            hh(1:ninterp), dat(1:ninterp,irenderplot), &
+                            hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                             ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver,dscreenfromobserver)
                     endif
                  endif
@@ -1527,11 +1526,10 @@ contains
               vecpixx,vecpixy,numpixx,numpixy,pixwidth,inormalise)
          else
             call interpolate3D_proj_vec(xplot(1:ninterp), &
-              yplot(1:ninterp),pmass(1:ninterp), &
-              rho(1:ninterp),hh(1:ninterp), &
-              dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+              yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+              weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
               ninterp,xmin,ymin, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidth)
+              vecpixx,vecpixy,numpixx,numpixy,pixwidth,dobserver,dscreenfromobserver)
          endif
       case(2)
          !
