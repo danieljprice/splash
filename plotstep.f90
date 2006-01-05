@@ -193,7 +193,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
           hav = 0.5*(lim(ih,2) + lim(ih,1))
           pmassav = 0.5*(lim(ipmass,2) + lim(ipmass,1))
           call prompt('enter approximate surface depth (number of smoothing lengths):',taupartdepth)          
-          rkappa = pi*hav*hav/(pmassav*coltable(1)*taupartdepth)
+          rkappa = pi*hav*hav/(pmassav*coltable(0)*taupartdepth)
           print*,'using current h and pmass limits to calculate kappa...'
           print*,'taking average h = ',hav,' average particle mass = ',pmassav
           print*,'kappa (particle cross section per unit mass) = ',rkappa

@@ -1,5 +1,5 @@
 module opacityrendering3D
- use projections3D, only:interpolate3D_projection,wfromtable,radkernel,coltable
+ use projections3D, only:interpolate3D_projection,wfromtable,radkernel2,coltable
  implicit none
  private :: indexx
 
@@ -68,8 +68,8 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
   integer :: iprintinterval, iprintnext, iprogress, itmin
   integer, dimension(npart) :: iorder
   integer :: ipart,ir,ib,ig,ierr,maxcolour,indexi
-  real :: hi,hi1,radkern,qq,wab,rab,pmassav
-  real :: term,dx,dy,xpix,ypix,zfrac,hav
+  real :: hi,hi1,hi21,radkern,q2,wab,rab2,pmassav
+  real :: term,dx,dy,dy2,xpix,ypix,zfrac,hav
   real :: fopacity,tau,rkappatemp,termi
   real, dimension(1) :: dati
   real :: t_start,t_end,t_used,tsec
@@ -103,7 +103,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
   hav = sum(hh(1:npart))/real(npart)
 !--average particle mass
   pmassav = sum(pmass(1:npart))/real(npart)
-  rkappatemp = pi*hav*hav/(pmassav*coltable(1))
+  rkappatemp = pi*hav*hav/(pmassav*coltable(0))
   print*,'average h = ',hav,' average mass = ',pmassav
   print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'  
   rgb = 0.
@@ -170,6 +170,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
      !--these are the quantities used in the kernel r^2/h^2
      radkern = 2.*hi
      hi1 = 1./hi
+     hi21 = hi1*hi1
      !--this is the term which multiplies tau
      term = pmass(i)/(hh(i)*hh(i))
      !
@@ -211,17 +212,18 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
      do jpix = jpixmin,jpixmax
         ypix = ymin + (jpix-0.5)*pixwidth
         dy = ypix - y(i)
+        dy2 = dy*dy
         do ipix = ipixmin,ipixmax
            xpix = xmin + (ipix-0.5)*pixwidth
            dx = xpix - x(i)
-           rab = sqrt(dx**2 + dy**2)
-           qq = rab*hi1
+           rab2 = dx**2 + dy2
+           q2 = rab2*hi21
            !
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
            !
-           if (qq.lt.radkernel) then
-              wab = wfromtable(qq)
+           if (q2.lt.radkernel2) then
+              wab = wfromtable(q2)
               !
               !--get incremental tau for this pixel from the integrated SPH kernel
               !

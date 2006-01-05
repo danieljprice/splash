@@ -8,11 +8,13 @@
 module projections3D
  implicit none
 
- integer, parameter, private :: maxcoltable = 1000
+ integer, parameter :: maxcoltable = 1000
  real, parameter, private :: dpi = 1./3.1415926536
  real, parameter :: radkernel = 2.0
- real, dimension(maxcoltable) :: coltable
- real, parameter :: dmaxcoltable = 1./real(maxcoltable)
+ real, parameter :: radkernel2 = radkernel*radkernel
+ real, dimension(0:maxcoltable) :: coltable
+ real, parameter, private :: dq2table = radkernel*radkernel/real(maxcoltable)
+ real, parameter, private :: ddq2table = 1./dq2table
 
  public :: setup_integratedkernel
  public :: interpolate3D_projection
@@ -24,26 +26,24 @@ contains
 subroutine setup_integratedkernel
 !-------------------------------------------------------------
 !     tabulates the integral through the cubic spline kernel
+!     tabulated in (r/h)**2 so that sqrt is not necessary
 !-------------------------------------------------------------
  implicit none
  integer :: i,j
- real :: dr,rxy,rxy2,deltaz,dz,z,q2,q,wkern,coldens
- integer, parameter :: npts = 4000
+ real :: rxy2,deltaz,dz,z,q2,q,wkern,coldens
+ integer, parameter :: npts = 100
 
  print "(1x,a)",'setting up integrated kernel table...'
 
- dr = radkernel/real(maxcoltable - 1)
-
- do i=1,maxcoltable
+ do i=0,maxcoltable
 !
-!--tabulate for (cylindrical) r between 0 and radkernel
+!--tabulate for (cylindrical) r**2 between 0 and radkernel**2
 !
-    rxy = (i-1)*dr
-    rxy2 = rxy**2
+    rxy2 = i*dq2table
 !
 !--integrate z between 0 and sqrt(radkernel^2 - rxy^2)
 !
-    deltaz = sqrt(radkernel**2 - rxy2)
+    deltaz = sqrt(radkernel2 - rxy2)
     dz = deltaz/real(npts-1)
     coldens = 0.
     
@@ -73,23 +73,23 @@ end subroutine setup_integratedkernel
 ! This function interpolates from the table of integrated kernel values
 ! to give w(q)
 !
-real function wfromtable(qq)
+real function wfromtable(q2)
  implicit none
- real :: qq,dxx,dwdx
+ real :: q2,dxx,dwdx
  integer :: index, index1
  !
  !--find nearest index in table
  !
- index = int(0.5*qq*maxcoltable) + 1
+ index = int(q2*ddq2table)
  index1 = min(index + 1,maxcoltable)
  !
  !--find increment along from this index
  !
- dxx = 0.5*qq*maxcoltable - index*dmaxcoltable
+ dxx = q2 - index*dq2table
  !
  !--find gradient
  !
- dwdx = (coltable(index1) - coltable(index))*dmaxcoltable
+ dwdx = (coltable(index1) - coltable(index))*ddq2table
  !
  !--compute value of integrated kernel
  !
@@ -143,8 +143,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   integer :: iprintinterval, iprintnext, iprogress, itmin
-  real :: hi,hi1,radkern,qq,wab,rab
-  real :: term,dx,dy,xpix,ypix,zfrac
+  real :: hi,hi1,hi21,radkern,wab,rab2,q2
+  real :: term,dx,dy,dy2,xpix,ypix,zfrac
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress
 
@@ -201,6 +201,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
         hi = hi*zfrac
      endif
      hi1 = 1./hi
+     hi21 = hi1*hi1
      radkern = 2.*hi  !radius of the smoothing kernel
      !
      !--for each particle work out which pixels it contributes to
@@ -220,17 +221,18 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
      do jpix = jpixmin,jpixmax
         ypix = ymin + (jpix-0.5)*pixwidth
         dy = ypix - y(i)
+        dy2 = dy*dy
         do ipix = ipixmin,ipixmax
            xpix = xmin + (ipix-0.5)*pixwidth
            dx = xpix - x(i)
-           rab = sqrt(dx**2 + dy**2)
-           qq = rab*hi1
+           rab2 = dx*dx + dy2
+           q2 = rab2*hi21
            !
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
            !
-           if (qq.lt.radkernel) then
-              wab = wfromtable(qq)
+           if (q2.lt.radkernel2) then
+              wab = wfromtable(q2)
               !
               !--calculate data value at this pixel using the summation interpolant
               !                  
@@ -284,8 +286,8 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,npart,&
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,radkern,qq,wab,rab,const,zfrac
-  real :: termx,termy,dx,dy,xpix,ypix
+  real :: hi,hi1,hi21,radkern,q2,wab,rab2,const,zfrac
+  real :: termx,termy,dx,dy,dy2,xpix,ypix
 
   vecsmoothx = 0.
   vecsmoothy = 0.
@@ -313,6 +315,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,npart,&
         hi = hi*zfrac
      endif
      hi1 = 1./hi
+     hi21 = hi1*hi1
      radkern = 2.*hi    ! radius of the smoothing kernel
         
      termx = const*vecx(i)
@@ -338,17 +341,18 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,npart,&
      do jpix = jpixmin,jpixmax
         ypix = ymin + (jpix-0.5)*pixwidth
         dy = ypix - y(i)
+        dy2 = dy*dy
         do ipix = ipixmin,ipixmax
            xpix = xmin + (ipix-0.5)*pixwidth
            dx = xpix - x(i)
-           rab = sqrt(dx**2 + dy**2)
-           qq = rab*hi1
+           rab2 = dx**2 + dy2
+           q2 = rab2*hi21
            !
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
            !
-           if (qq.lt.radkernel) then
-              wab = wfromtable(qq)
+           if (q2.lt.radkernel2) then
+              wab = wfromtable(q2)
               !
               !--calculate data value at this pixel using the summation interpolant
               !  
