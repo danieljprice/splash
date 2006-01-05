@@ -215,6 +215,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      do i=1,ncolumns+ncalc
         if (iamvec(i).ne.0) then
            label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
+           if (iRescale .and. icoords.eq.icoordsnew) label(i) = trim(label(i))//unitslabel(i)
         endif
      enddo
   endif
