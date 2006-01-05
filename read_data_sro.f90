@@ -37,6 +37,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer, parameter :: maxptmass = 10
+  real, parameter :: hfact = 1.5
+  real, parameter :: dhfact3 = 1./hfact**3
   integer :: i,j,ifile,ierr
   integer :: nprint,nptmass,npart_max,nstep_max
   integer :: n1,n2
@@ -200,9 +202,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    (dat(i,2,j), i=nprint+1, nprint+nptmass), &
                    (dat(i,3,j), i=nprint+1, nprint+nptmass)
               endif
-              dat(1:nprint,7,j) = 1.4/real(nprint)
-              print "(a)", &
-               ' WARNING: hardwiring particle masses on minidump to 1.4/npart'
+              !
+              !--because masses are not dumped, we need to reconstruct them
+              !  from density and h (only strictly true for grad h code)
+              !
+              dat(1:nprint,7,j) = dat(1:nprint,4,j)**3*dat(1:nprint,5,j)*dhfact3
+              print "(a,f3.1,a)", &
+               ' WARNING: setting particle masses assuming h = ',hfact,'*(m/rho)^(1/3)'
            else
            
               dat(:,:,j) = 0. ! because ptmasses don't have all quantities
@@ -322,10 +328,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
               (dat(i,2,j), i=nprint+1, nprint+nptmass), &
               (dat(i,3,j), i=nprint+1, nprint+nptmass)
            endif
-
-           dat(1:nprint,7,j) = 1.4/real(nprint)
-           print "(a)", &
-             ' WARNING: hardwiring particle masses on minidump to 1.4/npart'
+           !
+           !--because masses are not dumped, we need to reconstruct them
+           !  from density and h (only strictly true for grad h code)
+           !
+           dat(1:nprint,7,j) = dat(1:nprint,4,j)**3*dat(1:nprint,5,j)*dhfact3
+           print "(a,f3.1,a)", &
+            ' WARNING: setting particle masses assuming h = ',hfact,'*(m/rho)^(1/3)'
         endif
              
         if (allocated(datdb)) deallocate(datdb)
