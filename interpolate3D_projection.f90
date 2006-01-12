@@ -13,7 +13,7 @@ module projections3D
  real, parameter :: radkernel = 2.0
  real, parameter :: radkernel2 = radkernel*radkernel
  real, dimension(0:maxcoltable) :: coltable
- real, parameter, private :: dq2table = radkernel*radkernel/real(maxcoltable)
+ real, parameter, private :: dq2table = radkernel*radkernel/maxcoltable
  real, parameter, private :: ddq2table = 1./dq2table
 
  public :: setup_integratedkernel
@@ -35,7 +35,7 @@ subroutine setup_integratedkernel
 
  print "(1x,a)",'setting up integrated kernel table...'
 
- do i=0,maxcoltable
+ do i=0,maxcoltable-1
 !
 !--tabulate for (cylindrical) r**2 between 0 and radkernel**2
 !
@@ -46,7 +46,7 @@ subroutine setup_integratedkernel
     deltaz = sqrt(radkernel2 - rxy2)
     dz = deltaz/real(npts-1)
     coldens = 0.
-    
+    if (deltaz.ne.deltaz) print "(a)",'WARNING: NaN in kernel table setup'
     do j=1,npts
        z = (j-1)*dz
        q2 = rxy2 + z*z
@@ -66,6 +66,7 @@ subroutine setup_integratedkernel
     enddo
     coltable(i)=2.0*coldens*dpi
  end do
+ coltable(maxcoltable) = 0.
  
  return
 end subroutine setup_integratedkernel
@@ -81,6 +82,7 @@ real function wfromtable(q2)
  !--find nearest index in table
  !
  index = int(q2*ddq2table)
+ index = min(index,maxcoltable)
  index1 = min(index + 1,maxcoltable)
  !
  !--find increment along from this index
