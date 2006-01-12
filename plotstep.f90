@@ -615,8 +615,10 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
         !--rotate the particles about the z (and y) axes
         !  only applies to particle plots at the moment
         !
-        dscreenfromobserver = 0.
-        dobserver = 0.
+        if (iadvance.ne.0) then
+           dscreenfromobserver = 0.
+           dobserver = 0.
+        endif
                 
         if (ndim.ge.2 .and. (irotate .or. (ndim.eq.3 .and.use3Dperspective))) then
            !
