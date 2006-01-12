@@ -82,17 +82,9 @@ converted into animations or inserted into \LaTeX documents.
 \end{itemize}
 
 \subsection{What it doesn't do}
-At the moment SUPERSPHPLOT is designed specifically for gas dynamics
+At the moment SUPERSPHPLOT is geared towards gas dynamics
 simulations with SPH and has basically grown out of my visualisation needs.
-However as other applications arise other features may be needed which have not
-yet been included. In particular the following have not been addressed
-specifically:
-\begin{itemize}
-\item Clever 3D plotting (isosurfaces, distortion etc). Visualisation in 3D is achieved by taking cross-sections and projections through the SPH data and using rotation to give the appropriate perspective (along with plotting the rotated axes/box). Similarly 2D data is plotted by means of
-rendered images. In the current version there are not yet capabilities for surface plots or cubes
-with faces showing cross sections and the like (although I regularly think about it!).
-\item It also doesn't make cappucinos.
-\end{itemize}
+Thus it may not be particularly useful for things like water and solids etc. in SPH.
 
 \subsection{Version History}
 
@@ -695,7 +687,7 @@ f(q) = \left\{ \begin{array}{ll}
 \frac{1}{4}(2-q)^3, & 1 \le q < 2; \\
 0 & q \ge 2 \end{array} \right.
 \end{equation}
-The integral (\ref{eq:integratedform}) is not obviously tractable analytically. However it is
+The integral (\ref{eq:integratedform}) is not (obviously) tractable analytically. However it is
 straightforward to perform this integration numerically (for all $q_{xy}$'s from $0\to 2$) and store the results in a table for the
 interpolation calculation. This is the method adopted in SUPERSPHPLOT. An alternative would be to use a
 different kernel in the visualisation for which the above integral can be calculated analytically.
@@ -734,6 +726,33 @@ the 'd' (for down) and 'u' (for up) keys in interactive mode.
  With the cross section option chosen in 3D, a flythru may be chosen at the plotting prompt. This
 plots multiple slices through the data.
 
+\subsection{Rotation \& 3D perspective}
+\subsubsection{Rotation}
+ An angle of rotation about may be set each axis may be set in the x)sec/rotate submenu or
+interactively (press 'h' in interactive mode to see the exact keystrokes). Rotations are performed in the
+order $z-y-x$. This means that the $y-$ rotation angle is an angle about the \emph{new} $y-$axis, defined
+by the $z$ rotation and similarly for the $x-$ rotation. If you think about it long enough, it makes
+sense. If in doubt, do it interactively and set the angles in the order $z-y-x$.
+
+ Rotated axes or boxes can be plotted using the rotation options in the x)sec/rotate submenu. A
+different origin can also be set from the rotation options in this menu.
+
+\subsubsection{3D perspective}
+ 3D perspective (turned on/off in the xsec/rotate menu) is defined by two parameters: a distance to the observer (which we will call $zobs$) and a distance
+between the observer and a screen placed in front of the observer (which we will call $dscreen$).
+The transformation from usual $x$ and $y$ to screen $x'$ and $y'$ is then given by
+\begin{eqnarray}
+x' & = & x*dscreen/(zobs-z), \nonumber \\
+y' & = & y*dscreen/(zobs-z).
+\end{eqnarray}
+ This means that objects at the screen distance will have unit magnification, objects closer than the
+screen will appear larger (points diverge) and objects further away will appear smaller (points
+converge)\footnote{Objects in the mirror may be closer than they appear}. The situation could be
+beautifully illustrated if I could be bothered drawing a figure. I have found reasonable
+results with something like a $1/10$ reduction at the typical distance of the object (ie.
+observer is placed at a distance of $10\times$ object size with distance to screen of $1\times$ object
+size. SUPERSPHPLOT sets this as default using the z plot limit as the `object size'.
+
 \subsection{Power spectrums (1D only)}
  In one dimension an extra plot item appears
 in the data menu which takes a power spectrum (in space) of a particular
@@ -770,11 +789,6 @@ is not an issue. The algorithms are fairly simple to extend to multidimensional
 data, although faster implementations would be needed (such as a Fast
 Fourier Transform routine).
 
-\subsection{Rotation}
- Rotation is achieved by tranforming to cylindrical co-ordinates about each axis, incrementing the
-azimuthal angle appropriately and transforming back to cartesians. Rotated axes or boxes can be
-plotted using the rotation options in the x)sec/rotate submenu, giving 3D perspective. Rotation can also be set
-interactively (press 'h' in interactive mode to see the exact keystrokes). 
 
 \section{Other features}
 
