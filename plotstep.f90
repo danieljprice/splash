@@ -17,7 +17,7 @@ module timestep_plotting
   real, private :: angletempx, angletempy, angletempz
 
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
-  logical, private :: log, inewpage, tile_plots, isave, lastplot
+  logical, private :: inewpage, tile_plots, isave, lastplot
   logical, private :: initialise_xsec
   logical, private :: imulti,iChangeRenderLimits
 
@@ -946,7 +946,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  !!--call subroutine to actually render the image
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                    npixx,npixy,xmin,ymin,pixwidth,    &
-                   icolours,iplotcont,iColourBar,ncontours,log)
+                   icolours,iplotcont,iColourBar,ncontours,.false.)
 
                  !!--plot other particle types (e.g. sink particles) on top
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
