@@ -8,7 +8,7 @@ module options_data
 ! integer :: ndataplots
 ! integer :: ndim, ndimv 
 ! integer :: icoords, iformat, ntypes
-! integer :: nstart,n_end,nfreq
+! integer :: istartatstep,iendatstep,nfreq
 ! integer, dimension(10) :: isteplist
 ! logical :: ivegotdata, buffer_data, iUseStepList!
 !
@@ -35,8 +35,8 @@ subroutine defaults_set_data
   ncolumns=maxplot-ncalc        ! number of columns in data file
   ndim = 0          ! number of coordinate dimensions
   ndimV = ndim      ! default velocity same dim as coords
-  nstart = 1        ! timestep to start from
-  n_end = 1000      ! timestep to finish on
+  istartatstep = 1        ! timestep to start from
+  iendatstep = 1000      ! timestep to finish on
   nfreq = 1         ! frequency of timesteps to read
   icoords = 1       ! co-ordinate system of simulation
   buffer_data = .false.
@@ -58,7 +58,7 @@ end subroutine defaults_set_data
 ! (read new data or change timesteps plotted)
 !----------------------------------------------------------------------
 subroutine submenu_data
- use filenames, only:nstepstotal,nstepsinfile,ifileopen
+ use filenames, only:nsteps,nstepsinfile,ifileopen
  use prompting
  use getdata, only:get_data
  use settings_data
@@ -74,9 +74,9 @@ subroutine submenu_data
  ians = 0
  
  if (iUseStepList) then
-    print 10, n_end,iUseStepList,buffer_data,iCalcQuantities,iRescale
+    print 10, iendatstep,iUseStepList,buffer_data,iCalcQuantities,iRescale
  else
-    print 10, (n_end-nstart+1)/nfreq,iUseStepList,buffer_data,iCalcQuantities,iRescale
+    print 10, (iendatstep-istartatstep+1)/nfreq,iUseStepList,buffer_data,iCalcQuantities,iRescale
  endif
  
 10  format(' 0) exit ',/,               &
@@ -102,22 +102,22 @@ subroutine submenu_data
 !------------------------------------------------------------------------
  case(2)
     iUseStepList = .false.
-    call prompt('Start at timestep ',nstart,1,nstepstotal)
-    call prompt('End at timestep   ',n_end,nstart,nstepstotal)
-    call prompt(' Frequency of steps to read',nfreq,1,nstepstotal)
-    print *,' Steps = ',(n_end-nstart+1)/nfreq
+    call prompt('Start at timestep ',istartatstep,1,nsteps)
+    call prompt('End at timestep   ',iendatstep,istartatstep,nsteps)
+    call prompt(' Frequency of steps to read',nfreq,1,nsteps)
+    print *,' Steps = ',(iendatstep-istartatstep+1)/nfreq
 !------------------------------------------------------------------------
  case(3)
     iUseStepList = .true.
-    nstart = 1
+    istartatstep = 1
     nfreq = 1
-    n_end = min(n_end,size(isteplist))
+    iendatstep = min(iendatstep,size(isteplist),nsteps)
     call prompt('Enter number of steps to plot ', &
-         n_end,1,size(isteplist))
-    do i=1,n_end
-       if (isteplist(i).le.0 .or. isteplist(i).gt.nstepstotal) isteplist(i) = i
+         iendatstep,1,size(isteplist))
+    do i=1,iendatstep
+       if (isteplist(i).le.0 .or. isteplist(i).gt.nsteps) isteplist(i) = i
        write(fmtstring,"(a,i2)") 'Enter step ',i
-       call prompt(fmtstring,isteplist(i),1,nstepstotal)
+       call prompt(fmtstring,isteplist(i),1,nsteps)
     enddo
 !------------------------------------------------------------------------
  case(4)
@@ -134,8 +134,8 @@ subroutine submenu_data
     iCalcQuantities = .not.iCalcQuantities
     if (iCalcQuantities) then
        if (DataIsBuffered) then
-          call calc_quantities(nstart,n_end)
-          call set_limits(nstart,n_end,numplot-ncalc+1,numplot)
+          call calc_quantities(1,nsteps)
+          call set_limits(1,nsteps,numplot-ncalc+1,numplot)
        else
           call calc_quantities(1,nstepsinfile(ifileopen))
           call set_limits(1,nstepsinfile(ifileopen),numplot-ncalc+1,numplot)

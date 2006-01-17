@@ -21,6 +21,7 @@ module particle_data
  integer :: maxpart,maxstep,maxcol ! dimensions of dat array
  integer, allocatable, dimension(:) :: icolourme
  integer, allocatable, dimension(:,:) :: npartoftype
+ integer, allocatable, dimension(:) :: istepinfile,iposinfile
  real, allocatable, dimension(:) :: time, gamma
  real, allocatable, dimension(:,:,:) :: dat
 end module particle_data
@@ -30,7 +31,7 @@ end module particle_data
 module filenames
  implicit none
  integer, parameter :: maxfile = 1001
- integer :: nfiles,nstepstotal,ifileopen
+ integer :: nfiles,nsteps,ifileopen
  character(len=120), dimension(maxfile) :: rootname
  integer, dimension(maxfile) :: nstepsinfile
 end module filenames
@@ -63,7 +64,7 @@ module settings_data
  integer :: ndataplots
  integer :: ndim, ndimv 
  integer :: icoords, iformat, ntypes
- integer :: nstart,n_end,nfreq
+ integer :: istartatstep,iendatstep,nfreq
  integer, dimension(10) :: isteplist
  logical :: ivegotdata, DataIsBuffered
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale

@@ -21,7 +21,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use exact, only:read_exactparams
   use filenames
   use limits, only:set_limits,read_limits
-  use settings_data, only:ncolumns,nstart,n_end,ncalc,ivegotdata, &
+  use settings_data, only:ncolumns,iendatstep,ncalc,ivegotdata, &
                      DataisBuffered,iCalcQuantities,ndim,icoords, &
                      iRescale,units,unitslabel
   use settings_part, only:iexact,icoordsnew
@@ -51,11 +51,25 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   !
   ncolumns = 0
   ncalc = 0
-  n_end = 0
+  nsteps = 0
   istart = 1
   ivegotdata = .false.
   ifileopen = ireadfile
   DataIsBuffered = .false.
+  !
+  !--nstepsinfile is initialised to negative
+  !  this is set progressively as files are read
+  !  for non-buffered data file 1 is read and the rest are assumed to be the same
+  !  then these files are corrected as they are read. By initialising nstepsinfile
+  !  to negative, this means that if we get dud files (with nstepsinfile=0) we
+  !  know that this is really the file contents (not just an initialised value of nstepsinfile)
+  !  and can skip the file on the second encounter (see timestepping.f90) 
+  !
+  if (present(firsttime)) then
+     if (firsttime) then
+        nstepsinfile(:) = -1
+     endif
+  endif
 
   if (ireadfile.le.0) then
      !
@@ -67,14 +81,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         call read_data(rootname(i),istart,nstepsinfile(i))
         istart = istart + nstepsinfile(i) ! number of next step in data array
      enddo
-     nstart = 1
-     n_end = istart - 1
-     nstepstotal = n_end
-     if (nstepstotal.gt.0) then
+     nsteps = istart - 1
+     if (nsteps.gt.0) then
         ivegotdata = .true.
         DataIsBuffered = .true.
      endif
-     print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nstepstotal,' ncolumns = ',ncolumns
+     print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nsteps,' ncolumns = ',ncolumns
 
      !
      !--set labels (and units) for each column of data
@@ -88,17 +100,17 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
-              dat(:,i,nstart:n_end) = dat(:,i,nstart:n_end)*units(i)
+              dat(:,i,1:nsteps) = dat(:,i,1:nsteps)*units(i)
               label(i) = trim(label(i))//trim(unitslabel(i))
            endif
         enddo
-        time(nstart:n_end) = time(nstart:n_end)*units(0)
+        time(1:nsteps) = time(1:nsteps)*units(0)
      endif     
      !
      !--calculate various additional quantities
      !
-     if (n_end.ge.nstart .and. iCalcQuantities) then
-        call calc_quantities(nstart,n_end)
+     if (nsteps.ge.1 .and. iCalcQuantities) then
+        call calc_quantities(1,nsteps)
      endif
      !
      !--override units of calculated quantities if necessary
@@ -107,7 +119,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         write(*,"(/a)") ' rescaling data...'
         do i=ncolumns+1,ncolumns+ncalc
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
-              dat(:,i,nstart:n_end) = dat(:,i,nstart:n_end)*units(i)
+              dat(:,i,1:nsteps) = dat(:,i,1:nsteps)*units(i)
               label(i) = trim(label(i))//trim(unitslabel(i))
            endif
         enddo
@@ -122,7 +134,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      limitsfile = trim(rootname(1))//'.limits'
      call read_limits(limitsfile,ierr)
      if (ierr.gt.0 .and. ivegotdata .and. nstepsinfile(1).ge.1) then
-        call set_limits(nstart,n_end,1,ncolumns+ncalc)
+        call set_limits(1,nsteps,1,ncolumns+ncalc)
      endif
      
   elseif (ireadfile.gt.0) then
@@ -139,13 +151,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !  which have not been read
      !
      do i=1,nfiles
-        if (nstepsinfile(i).eq.0) then
+        if (nstepsinfile(i).eq.-1) then
            nstepsinfile(i) = nstepsinfile(ireadfile)
         endif
      enddo
-     nstart = 1
-     n_end = sum(nstepsinfile(1:nfiles))
-     nstepstotal = n_end
+     nsteps = sum(nstepsinfile(1:nfiles))
      !
      !--set labels (and units) for each column of data
      !
@@ -198,10 +208,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
        
      if (setlimits) then
         call set_limits(1,nstepsinfile(ireadfile),1,ncolumns+ncalc)
+        !--also set iendatstep the first time around
+        iendatstep = nsteps
      endif
   endif
 !
-!--reset coordinate and vector labels depending on coordinate system)
+!--reset coordinate and vector labels (depending on coordinate system)
 !
   if (icoords.ne.0 .or. icoordsnew.ne.0) then
      if (icoordsnew.le.0) then

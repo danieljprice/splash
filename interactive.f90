@@ -34,12 +34,11 @@ contains
 !
 ! OUTPUT:
 !   iadvance : integer telling the loop how to advance the timestep
-!   isave    : integer telling the loop to save the settings
 !
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   xcoords,ycoords,zcoords,hi,icolourpart,xmin,xmax,ymin,ymax, &
   rendermin,rendermax,vecmax,anglex,angley,anglez,ndim,x_sec,zslicepos,dzslice, &
-  zobserver,dscreen,itrackpart,icolourscheme,iadvance,istep,ilaststep,isave)
+  zobserver,dscreen,itrackpart,icolourscheme,iadvance,istep,ilaststep)
   implicit none
   integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy,istep,ilaststep
   integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
@@ -49,7 +48,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax
   real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
   logical, intent(in) :: x_sec
-  logical, intent(out) :: isave  
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,nc,ierr,ixsec
   integer :: nmarked,ncircpart,itrackparttemp
@@ -82,7 +80,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   ncircpart = 0
   itrackparttemp = itrackpart
   iexit = .false.
-  isave = .false.
   rotation = .false.
   if (iplotx.le.ndim .and. iploty.le.ndim .and. ndim.ge.2) rotation = .true.
   
@@ -260,7 +257,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         print*,' q,Q: (q)uit plotting'             
         print*,'-------------------------------------------------------'
      case('s','S')
-        isave = .not.isave
         if (iplotx.le.ndim .and. iploty.le.ndim) itrackpart = itrackparttemp
         if (itrackpart.eq.0) then
            call save_limits(iplotx,xmin,xmax)
@@ -774,7 +770,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               iexit = .false.
            endif
         elseif (istep + iadvance .lt. 1) then
-           print "(1x,a)",'reached first timestep: can''t go back!'
+           print "(1x,a)",'reached first timestep: can''t go back'
            if (1-istep .lt.0) then
               iadvance= 1 - istep
            else
@@ -942,7 +938,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax)
               iexit = .false.
            endif
         elseif (istep + iadvance .lt. 1) then
-           print "(1x,a)",'reached first timestep: can''t go back!'
+           print "(1x,a)",'reached first timestep: can''t go back'
            if (1-istep .lt.0) then
               iadvance= 1 - istep
            else

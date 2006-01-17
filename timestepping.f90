@@ -8,13 +8,15 @@ contains
 ! This subroutine drives the main plotting loop
 !
 subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
+  use filenames, only:nsteps
   use particle_data, only:npartoftype,time,gamma,dat
-  use settings_data, only:nstart,n_end,nfreq,DataIsBuffered,iUsesteplist,isteplist
+  use settings_data, only:istartatstep,iendatstep,nfreq,DataIsBuffered, &
+                          iUsesteplist,isteplist,ncolumns
   use settings_page, only:interactive,nstepsperpage,iColourEachStep,iChangeStyles
   use timestep_plotting, only:initialise_plotting,plotstep
   implicit none
   integer, intent(in) :: ipicky,ipickx,irender,ivecplot
-  integer :: i, icount, istep, ifile, iadvance, istepsonpage
+  integer :: ipos, istep, ilocindat, iadvance, istepsonpage
   logical :: ipagechange
   
   call initialise_plotting(ipicky,ipickx,irender)
@@ -24,55 +26,86 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   !                      interactive mode)
   !
   ! bookkeeping is as follows:
-  !            i : current step number or position in steplist array
-  !        istep : current or requested location in the dat array
+  !         ipos : current step number or position in steplist array
+  !    ilocindat : current or requested location in the dat array
+  !                (usually 1, but can be > 1 if more than one step per file
+  !                 or data is buffered to memory) 
   !                (requested location is sent to get_nextstep which skips files
   !                or steps appropriately and sets actual location)
-  !       icount : current step number
+  !       istep :  current step number
   !                (as if all steps were in memory in sequential order)
   ! istepsonpage : number of steps which have been plotted on current page
   !                this is used because steps are coloured/marked differently
   !                from this routine (call to colour_timestep)
+  !
   !----------------------------------------------------------------------------         
-  i = nstart
+  ipos = istartatstep
   iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
-  ifile = 1
   istepsonpage = 0
-  icount = nstart
+  istep = istartatstep
 
-  over_timesteps: do while (i.le.n_end .and. icount.le.n_end)
-
+  over_timesteps: do while (ipos.le.iendatstep)
+     
+     ipos = max(ipos,1) !--can't go further back than ipos=1
+     
      if (iUseStepList) then
-        istep = isteplist(i)
-        icount = isteplist(i)
-     else
-        istep = i
-     endif
-
-     if (.not.DataIsBuffered) then    
-        !
-        !--make sure we have data for this timestep
-        !
-        call get_nextstep(istep,ifile)
-        if (.not.iUseStepList) then ! istep can be reset to last in file
-           i = istep
+        istep = isteplist(ipos)
+        if (istep.gt.nsteps) then
+           print*,'ERROR: step > nsteps in step list, setting step = last'
+           istep = nsteps
+        elseif (istep.le.0) then
+        !--this should never happen
+           stop 'internal error: corrupted step list: please send bug report'        
         endif
-        if (istep.eq.-666) exit over_timesteps
+     else
+        istep = ipos
+        if (istep.ge.nsteps) then
+           istep = nsteps
+           iendatstep = istep
+           ipos = min(ipos,iendatstep)
+        endif
      endif
+     
      !
-     !--check timestepping
+     !--make sure we have data for this timestep
      !
-     if (istep.lt.1) then
-        print*,'reached first step: can''t go back'
-        istep = 1
-        i = 1
-        icount = 1
-     endif
-     if (istep.lt.nstart) then
-        print*,'warning: i < nstart'
-     endif
+     if (DataIsBuffered) then
+        !--if data is in memory, we just go to the position in dat
+        if (istep.gt.nsteps) then
+           print*,'error: step # > nsteps, setting step = last'
+           istep = nsteps
+        endif
+        ilocindat = istep
+     else    
+        !--otherwise read file containing this step into memory and get position in dat array
+        !  (note that nsteps can change in get_nextstep, so may need to re-evaluate
+        !   whether we are on the last step or not, and adjust iendatstep to last step)
+        !
+        call get_nextstep(istep,ilocindat)
 
-     print 33, time(istep),icount
+        if (.not.iUseStepList .and. istep.ge.nsteps) then
+           !--reset step position to last useable timestep (ie. nsteps)
+           istep = nsteps
+           iendatstep = istep
+           !--use interactive halt at last step (ie. set position = last position)
+           if (interactive) then
+              ipos = min(ipos,iendatstep)
+              !--if istep has changed, may need to re-read step 
+              !  (get_nextstep does nothing if istep is the same)
+              call get_nextstep(istep,ilocindat)
+           endif
+        endif
+        !--this is a general "catch all" when step cannot be located
+        if (ilocindat.le.0) then
+           print*,'ERROR: could not locate timestep'
+           exit over_timesteps
+        endif
+     endif
+     
+     !
+     !--write timestepping log
+     !
+     print 33, time(ilocindat),istep
 33   format (5('-'),' t = ',f9.4,', dump #',i5,1x,18('-'))
 
      istepsonpage = istepsonpage + 1
@@ -87,21 +120,26 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
         call colour_timestep(istepsonpage,iColourEachStep,iChangeStyles)
      endif
 
-     call plotstep(icount,istepsonpage,irender,ivecplot,npartoftype(:,istep), &
-                   dat(:,:,istep),time(istep),gamma(istep),ipagechange,iadvance)
+!     print*,'ipos = ',ipos,' istep = ',istep,' iposindat = ',ilocindat
+     call plotstep(ipos,istep,istepsonpage,irender,ivecplot,npartoftype(:,ilocindat), &
+                   dat(:,:,ilocindat),time(ilocindat),gamma(ilocindat),ipagechange,iadvance)
 !
-!--increment timestep
+!--increment timestep -- iadvance can be changed interactively
 !
-     if (iadvance.eq.-666) exit over_timesteps
-     i = i + iadvance
-     icount = icount + iadvance
+     if (iadvance.eq.-666) exit over_timesteps ! this is the interactive quit signal
+     ipos = ipos + iadvance ! if ipos goes over iendatstep, this ends the loop
 
   enddo over_timesteps
 
   if (.not.interactive) then
-     !!call pgebuf
      print*,'press return to finish'
      read*
+     !--if somehow the data has become corrupted (e.g. last file full of rubbish)
+     !  read in the first dump again
+     if (ncolumns.le.0) then
+        print*,'data is corrupted: re-reading first data file'
+        call get_nextstep(1,ilocindat)
+     endif
   endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -115,81 +153,75 @@ end subroutine timestep_loop
 !-------------------------------------------------------------------
 ! works out whether or not we need to read another dump into memory
 !-------------------------------------------------------------------
-subroutine get_nextstep(i,ifile)
- use filenames, only:nstepsinfile,nfiles,ifileopen
- use settings_page, only:interactive
+recursive subroutine get_nextstep(istep,iposinfile)
+ use filenames, only:nstepsinfile,nfiles,ifileopen,nsteps
  use getdata, only:get_data
  implicit none
- integer, intent(inout) :: i,ifile
- integer :: iskipfiles,ifileprev
+ integer, intent(in) :: istep
+ integer, intent(out) :: iposinfile
+ integer :: ifile,nstepstotal,nstepsprev
+
+ !
+ !--request is for step istep
+ !  need to determine which file step i is in, 
+ !  whether or not it is already in memory (and read it if not)
+ !  and finally determine position of requested step in dat array
+ !
+ ifile = 0
+ nstepstotal = 0
+ nstepsprev = 0
+ iposinfile = 1 ! this should always be overwritten anyway
+ do while (nstepstotal.lt.istep .and. ifile.lt.nfiles)
+    ifile = ifile + 1
+    nstepsprev = nstepstotal
+    nstepstotal = nstepstotal + nstepsinfile(ifile)
+ enddo
+ 
+ if (nstepstotal.ge.istep) then
+ !--set position in dat array depending on how many steps are in the file
+    iposinfile = istep - nstepsprev
+ else
+ !--this is where we cannot locate the timestep in the data (not enough steps)
+ !  ie. ifile > nfiles
+    print*,'reached last useable timestep'
+    iposinfile = 0
+    return
+ endif
+
+! print*,'step ',istep,' in file ',ifile,' nsteps = ',nsteps
+! print*,'position in file = ',iposinfile
+ if (istep.gt.nsteps) then
+    iposinfile = 0
+    return
+ endif
 
  !
  !--if data is not stored in memory, read next step from file
- !  skip files if necessary. At the moment assumes number of steps in
- !  each file are the same
+ !  At the moment assumes number of steps in each file are the same
  !
- !  request is for timestep i from file ifile
- !  if i > number of steps in this file, tries to skip
- !  appropriate number of files to get to timestep requested
- !
- ifileprev = ifile
- !!print*,'request step ',i,' from file #',ifile,' nstepsinfile= ',nstepsinfile(ifile)
  
- if (i.gt.nstepsinfile(ifile)) then
-    if (nstepsinfile(ifile).ge.1) then
-       iskipfiles = (i-nstepsinfile(ifile)-1)/nstepsinfile(ifile)
-    else
-       print*,'*** error in timestepping: file contains zero timesteps'
-       iskipfiles = 0
-    endif
-    if (iskipfiles.ge.1) then
-       print*,'skipping ',iskipfiles,' files '
-    elseif (iskipfiles.lt.0) then
-       print*,'error with iskipfiles = ',iskipfiles
-       iskipfiles = 0
-    endif
-    ifile = ifile+iskipfiles+1
- elseif (i.lt.1) then
-    ifile = ifile-1
-    if (ifile.ge.1) then
-       iskipfiles = (i)/nstepsinfile(ifile)
-       if (abs(iskipfiles).gt.0) print*,'skipping back ',abs(iskipfiles),' files'
-       ifile = ifile + iskipfiles
-       if (ifile.lt.1) then
-          ifile = 1
-          print*,'can''t skip back that far, starting at file ',ifile
-       endif
-    else
-       ifile = 1
-    endif
- endif
-
+ !--neither or these two error conditions should occur
  if (ifile.gt.nfiles) then
-    if (interactive) then  ! freeze on last step
-       ifile = nfiles
-       i = nstepsinfile(ifile)
-    else ! if non-interactive, exit timestepping loop
-       ifile = nfiles
-       i = -666
-       return
-    endif
+    print*,'*** get_nextstep: error: ifile > nfiles'
  elseif (ifile.lt.1) then
     print*,'*** get_nextstep: error: request for file < 1'
  elseif (ifile.ne.ifileopen) then
+ !
+ !--read next data file and determine position in file
+ !
     call get_data(ifile,.true.)
-    if (i.gt.nstepsinfile(ifileprev)) then
-       i = MOD(i-nstepsinfile(ifileprev)-1,nstepsinfile(ifileprev)) + 1
-    elseif (i.lt.1) then
-       i = nstepsinfile(ifile) + MOD(i,nstepsinfile(ifileprev))
+ !
+ !--because nstepsinfile is predicted for files which have
+ !  not been opened, we may have the situation where 
+ !  iposinfile does not point to a real timestep (ie. iposinfile > nstepsinfile).
+ !  In this case we query the step again with our better knowledge of nstepsinfile.
+ !
+    if (iposinfile.gt.nstepsinfile(ifile)) then
+       print*,'not enough steps in file... trying next file'
+       call get_nextstep(istep,iposinfile)
     endif
-    if (i.ne.1) then
-       print*,'starting at step ',i
-    endif
-    !!print*,'getting file ',ifile,' step ',i
  endif
  
- return
-
  return
 end subroutine get_nextstep     
 
