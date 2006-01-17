@@ -33,8 +33,8 @@ end subroutine defaults_set_limits
 ! submenu with options relating to plot limits
 !----------------------------------------------------------------------
 subroutine submenu_limits(help)
- use filenames, only:rootname
- use settings_data, only:nstart,n_end,ndataplots,numplot,ndim,ivegotdata
+ use filenames, only:rootname,nsteps,nstepsinfile,ifileopen
+ use settings_data, only:ndataplots,numplot,ndim,ivegotdata,DataIsBuffered
  !!use settings_page, only:nstepsperpage
  use multiplot, only:itrans
  use prompting
@@ -201,8 +201,8 @@ subroutine submenu_limits(help)
      endif
   case(7)
      if (helpmode) then
-        print "(5(/a))",'Re-reads the plot limits from the .limits file ',&
-                    '(see help for write limits file)',&
+        print "(5(/a))",'Re-reads the plot limits from a file ',&
+                    '(see help for write limits file for format)',&
                     'Note that this means that the limits contained in this file',&
                     'can be manually changed by the user whilst the program is ',&
                     'still running.'
@@ -219,7 +219,11 @@ subroutine submenu_limits(help)
                     'Note that these limits will only apply when fixed limits are used'
      else
         if (ivegotdata) then
-           call set_limits(nstart,n_end,1,ndataplots)
+           if (DataIsBuffered) then
+              call set_limits(1,nsteps,1,ndataplots)
+           else
+              call set_limits(1,nstepsinfile(ifileopen),1,ndataplots)
+           endif
         else
            print*,'no data with which to set limits!!'
         endif
