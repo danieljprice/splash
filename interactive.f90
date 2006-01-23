@@ -56,7 +56,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real :: xpt2,ypt2,charheight
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
-  real :: xlength,ylength,renderlength,renderpt,drender
+  real :: xlength,ylength,renderlength,renderpt,drender,zoomfac
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
   character(len=20) :: string
@@ -76,6 +76,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
 !  ypt = 0.
   xpt2 = 0.
   ypt2 = 0.
+  zoomfac = 1.0
   nc = 0
   ncircpart = 0
   itrackparttemp = itrackpart
@@ -254,7 +255,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then left (right) click'
         print*,' h: (h)elp'
         print*,' s: (s)ave current settings for all steps'
-        print*,' q,Q: (q)uit plotting'             
+        print*,' q,Q: (q)uit plotting'
+        print*
+        print*,' Z(oom) : timstepping, zoom and limits-changing options '
+        print*,'          are multiplied by a factor of 10'        
         print*,'-------------------------------------------------------'
      case('s','S')
         if (iplotx.le.ndim .and. iploty.le.ndim) itrackpart = itrackparttemp
@@ -395,17 +399,17 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         renderlength = rendermax - rendermin
         select case(char)
         case('-')
-           xlength = 1.1*xlength
-           ylength = 1.1*ylength
+           xlength = 1.1*zoomfac*xlength
+           ylength = 1.1*zoomfac*ylength
            renderlength = 1.1*renderlength
         case('_')
-           xlength = 1.2*xlength
-           ylength = 1.2*ylength
-           renderlength = 1.2*renderlength
+           xlength = 1.2*zoomfac*xlength
+           ylength = 1.2*zoomfac*ylength
+           renderlength = 1.2*zoomfac*renderlength
         case('+')
-           xlength = 0.9*xlength
-           ylength = 0.9*ylength
-           renderlength = 0.9*renderlength
+           xlength = 0.9/zoomfac*xlength
+           ylength = 0.9/zoomfac*ylength
+           renderlength = 0.9/zoomfac*renderlength
         case('o') !--reset cursor to origin
            xpt = 0.
            ypt = 0.
@@ -459,14 +463,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      case('v')
         if (ivecx.gt.0 .and. ivecy.gt.0) then
            print*,'decreasing vector arrow size'
-           vecmax = 1.2*vecmax
+           vecmax = 1.2*zoomfac*vecmax
            iadvance = 0
            iexit = .true.
         endif
      case('V')
         if (ivecx.gt.0 .and. ivecy.gt.0) then
            print*,'increasing vector arrow size'
-           vecmax = 0.8*vecmax
+           vecmax = 0.8/zoomfac*vecmax
            iadvance = 0
            iexit = .true.
         endif
@@ -735,10 +739,20 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'*** internal error setting timestep jump' 
            iadvance = 1
         endif
+        iadvance = int(zoomfac*iadvance)
         print*,' setting timestep jump = ',iadvance
      case(')')
-        iadvance = 10
+        iadvance = int(zoomfac*10)
         print*,' setting timestep jump = ',iadvance
+     !
+     !--multiply everything by a factor of 10     
+     !
+     case('Z')
+        zoomfac = 10.*zoomfac
+        if (zoomfac.gt.1000.) then
+           zoomfac = 1.0
+        endif
+        print*,' LIMITS/TIMESTEPPING CHANGES NOW x ',zoomfac
      !
      !--unknown
      !
