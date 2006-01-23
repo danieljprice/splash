@@ -9,7 +9,7 @@ module timestep_plotting
   integer, private :: iplots,ipanel
 
   real, dimension(:), allocatable, private :: datpix1D, xgrid
-  real, private :: xmin,xmax,ymin,ymax,zmin,zmax,ymean
+  real, private :: xmin,xmax,ymin,ymax,zmin,zmax
   real, private :: rendermin,rendermax,vecmax
   real, private :: dz,zslicepos,dobserver,dscreenfromobserver
   real, private :: charheight
@@ -17,7 +17,7 @@ module timestep_plotting
   real, private :: angletempx, angletempy, angletempz
 
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
-  logical, private :: inewpage, tile_plots, isave, lastplot
+  logical, private :: inewpage, tile_plots, lastplot
   logical, private :: initialise_xsec
   logical, private :: imulti,iChangeRenderLimits
 
@@ -257,9 +257,10 @@ end subroutine initialise_plotting
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
+subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                     npartoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
+  use filenames, only:nsteps
   use exact, only:exact_solution, &
              atstar,ctstar,sigma
   use toystar1D, only:exact_toystar_ACplane
@@ -271,8 +272,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                 iplotcontmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
   use rotation
-  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,n_end,nfreq,iRescale,units,&
-                     unitslabel
+  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,nfreq,iRescale,units,&
+                     unitslabel,iendatstep
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
                      iplotline,linecolourthisstep,linestylethisstep
@@ -304,7 +305,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
   use render, only:render_pix,colourbar
 
   implicit none
-  integer, intent(in) :: istep, istepsonpage, irender, ivecplot
+  integer, intent(in) :: ipos, istep, istepsonpage, irender, ivecplot
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(:,:), intent(in) :: dat
   real, intent(in) :: timei,gammai
@@ -1087,7 +1088,8 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
            !
            !--enter interactive mode
            !
-           lastplot = (istep.eq.n_end .and. nyplot.eq.nyplots .and. k.eq.nxsec)
+           lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
+                       .and. nyplot.eq.nyplots .and. k.eq.nxsec)
 
            if (interactive) then
               if (nacross*ndown.eq.1) then
@@ -1105,7 +1107,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                       xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax, &
                       angletempx,angletempy,angletempz,ndim,x_sec,zslicepos,dz, &
                       dobserver,dscreenfromobserver, &
-                      itrackpart,icolours,iadvance,istep,n_end,isave)
+                      itrackpart,icolours,iadvance,ipos,iendatstep)
                  !--turn rotation on if necessary
                  if (abs(angletempx-anglex).gt.tol) irotate = .true.
                  if (abs(angletempy-angley).gt.tol) irotate = .true.
@@ -1118,7 +1120,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                  !--timestep control only if multiple plots on page
                  !
                  iadvance = nfreq
-                 call interactive_step(iadvance,istep,n_end,xmin,xmax,ymin,ymax)
+                 call interactive_step(iadvance,ipos,iendatstep,xmin,xmax,ymin,ymax)
                  if (iadvance.eq.-666) return
               endif
            endif
@@ -1202,7 +1204,7 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
         !
         !--enter interactive mode
         !
-        lastplot = (istep.eq.n_end .and. nyplot.eq.nyplots)
+        lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) .and. nyplot.eq.nyplots)
 
         if (interactive) then
            if (nacross*ndown.eq.1) then
@@ -1212,14 +1214,14 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
                    hh(1:ntoti),icolourme(1:ntoti), &
                    xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax, &
                    angletempx,angletempy,angletempz,ndim, &
-                   .false.,dummy,dummy,dummy,dummy,itrackpart,icolours,iadvance,istep,n_end,isave)
+                   .false.,dummy,dummy,dummy,dummy,itrackpart,icolours,iadvance,ipos,iendatstep)
               if (iadvance.eq.-666) return
            elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
               !
               !--timestep control only if multiple plots on page
               !
               iadvance = nfreq
-              call interactive_step(iadvance,istep,n_end,xmin,xmax,ymin,ymax)
+              call interactive_step(iadvance,ipos,iendatstep,xmin,xmax,ymin,ymax)
               if (iadvance.eq.-666) return
            endif
         endif
@@ -1380,12 +1382,12 @@ subroutine plotstep(istep,istepsonpage,irender,ivecplot, &
            endif
         endif
 
-        lastplot = (istep.eq.n_end)
+        lastplot = (ipos.eq.iendatstep .or. istep.eq.nsteps)
 
         if (interactive .and.((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) &
            .or. lastplot)) then
            iadvance = nfreq
-           call interactive_step(iadvance,istep,n_end,xmin,xmax,ymin,ymax)
+           call interactive_step(iadvance,ipos,iendatstep,xmin,xmax,ymin,ymax)
            if (iadvance.eq.-666) return
         endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
