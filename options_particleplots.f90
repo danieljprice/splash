@@ -50,12 +50,13 @@ end subroutine defaults_set_part
 subroutine submenu_particleplots
   use exact, only:options_exact,submenu_exact
   use labels, only:labeltype
-  use settings_data, only:icoords,ntypes
+  use limits, only:lim
+  use settings_data, only:icoords,ntypes,ndim
   use particle_data, only:npartoftype
   use prompting
-  use geometry, only:maxcoordsys,labelcoordsys
+  use geometry, only:maxcoordsys,labelcoordsys,coord_transform_limits
   implicit none
-  integer :: i,iaction,n,itype
+  integer :: i,iaction,n,itype,icoordsprev
 
   iaction = 0
   print 10, iplotline,ilabelpart,ncircpart, &
@@ -124,9 +125,15 @@ subroutine submenu_particleplots
      enddo
 20   format(' 0) reset (=',i2,')')
 30   format(1x,i1,')',1x,a)
+     icoordsprev = icoordsnew
      call prompt(' Enter coordinate system to plot in:', &
                  icoordsnew,0,maxcoordsys)
      if (icoordsnew.eq.0) icoordsnew = icoords
+     if (icoordsnew.ne.icoordsprev) then
+        print*,'modifying plot limits for new coordinate system'
+        call coord_transform_limits(lim(1:ndim,1),lim(1:ndim,2), &
+                                    icoordsprev,icoordsnew,ndim)
+     endif
      return
 !------------------------------------------------------------------------
   case(7)

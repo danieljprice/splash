@@ -354,7 +354,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
   pmass = 0.
   labeltimeunits = ' '
   if (iReScale) labeltimeunits = unitslabel(0)
-  
+    
   !--set the arrays needed for rendering if they are present
   if (ih.gt.0 .and. ih.le.ndataplots) hh(:) = dat(:,ih)
   if (irho.gt.0 .and. irho.le.ndataplots) rho(:) = dat(:,irho)
@@ -471,20 +471,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                  if (iplotx.le.ndim) xplot(j) = xcoords(iplotx)
                  if (iploty.le.ndim) yplot(j) = xcoords(iploty)
               enddo
-              if (iadvance.ne.0) then
-                 xmintemp = lim(ix(1:ndim),1)
-                 xmaxtemp = lim(ix(1:ndim),2)
-                 call coord_transform_limits(xmintemp,xmaxtemp, &
-                                             icoords,icoordsnew,ndim)
-                 if (iplotx.le.ndim) then
-                    xmin = xmintemp(iplotx)
-                    xmax = xmaxtemp(iplotx)
-                 endif
-                 if (iploty.le.ndim) then
-                    ymin = xmintemp(iploty)
-                    ymax = xmaxtemp(iploty)
-                 endif
-              endif
            endif
            if (iamvec(iplotx).gt.0) then
               if (iplotx-iamvec(iplotx)+1 .le. ndim) then
