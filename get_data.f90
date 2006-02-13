@@ -12,7 +12,7 @@
 module getdata
  implicit none
  public :: get_data
-
+ integer, private :: ncolumnsfirst
  private
 
 contains
@@ -68,6 +68,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   if (present(firsttime)) then
      if (firsttime) then
         nstepsinfile(:) = -1
+        ncolumnsfirst = 0
      endif
   endif
 
@@ -80,6 +81,13 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      do i=1,nfiles
         call read_data(rootname(i),istart,nstepsinfile(i))
         istart = istart + nstepsinfile(i) ! number of next step in data array
+        if (nstepsinfile(i).gt.0 .and. ncolumnsfirst.eq.0 .and. ncolumns.gt.0) then
+           ncolumnsfirst = ncolumns
+        elseif (nstepsinfile(i).gt.0 .and. ncolumns.ne.ncolumnsfirst) then
+           print "(a,i2,a,i2,a)",' WARNING: file contains ',ncolumns, &
+           ' columns, which differs from ',ncolumnsfirst,' read previously'
+           ncolumns = max(ncolumns,ncolumnsfirst)
+        endif
      enddo
      nsteps = istart - 1
      if (nsteps.gt.0) then
@@ -146,6 +154,25 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
      !!print*,'nsteps in file = ',nstepsinfile(ireadfile)
      if (ANY(nstepsinfile(1:ireadfile).gt.0)) ivegotdata = .true.
+     !
+     !--set ncolumns on first step only
+     !
+     if (ivegotdata .and. ncolumnsfirst.eq.0 .and. ncolumns.gt.0) then
+        ncolumnsfirst = ncolumns
+     endif
+     !--override ncolumns from file and warn if different to first file
+     if (ncolumnsfirst.gt.0) then
+        if (ncolumns.ne.ncolumnsfirst) then
+           print "(1x,a,i2,a,i2,a)",'WARNING: file contains ',ncolumns, &
+           ' columns, which differs from ',ncolumnsfirst,' read previously'
+           if (ncolumns.lt.ncolumnsfirst) then
+              print "(10x,a,i2,/)",'setting data = 0 for columns > ',ncolumnsfirst
+           elseif (ncolumns.gt.ncolumnsfirst) then
+              print "(10x,a,i2,a,/)",'extra data beyond column ',ncolumnsfirst,' will be ignored'
+           endif
+           ncolumns = ncolumnsfirst
+        endif
+     endif     
      !
      !--assume there are the same number of steps in the other files
      !  which have not been read
