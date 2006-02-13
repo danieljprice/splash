@@ -18,9 +18,11 @@ subroutine calc_quantities(ifromstep,itostep)
   integer, intent(in) :: ifromstep, itostep
   integer :: i,j,nstartfromcolumn,ncolsnew
   integer :: ientrop,idhdrho,ivalfven,imach,ideltarho
-  integer :: ipmag,ibeta,itotpr,idivBerr,icurr,icrosshel
-  integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti,iBmag
-  real :: Bmag, Jmag, veltemp, spsound
+  integer :: ipmag,ibeta,itotpr,idivBerr,icrosshel
+  integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
+  integer :: iamvecprev,ivec,nveclist,ivecstart,inewcol
+  integer, dimension(ncolumns) :: iveclist,ivecmagcol
+  real :: Bmag, veltemp, spsound
   real, parameter :: pi = 3.1415926536
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
   !
@@ -33,7 +35,6 @@ subroutine calc_quantities(ifromstep,itostep)
   ibeta = 0
   itotpr = 0
   idivBerr = 0
-  icurr = 0
   icrosshel = 0
   irad2 = 0
   ivpar = 0
@@ -43,7 +44,6 @@ subroutine calc_quantities(ifromstep,itostep)
   ivalfven = 0
   imach = 0
   ideltarho = 0
-  iBmag = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -94,9 +94,6 @@ subroutine calc_quantities(ifromstep,itostep)
 !     nstartfromcolumn = ncolumns + ncalc
 !     ncalc = ncalc + 1
 !     ipmag = nstartfromcolumn + 1
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 1
-     iBmag = nstartfromcolumn + 1
      if (ipr.ne.0 .and. ipmag.ne.0) then
         nstartfromcolumn = ncolumns + ncalc
         ncalc = ncalc + 2
@@ -128,26 +125,33 @@ subroutine calc_quantities(ifromstep,itostep)
 !     ncalc = ncalc + ndimV
 !     ivpar = nstartfromcolumn + 1
 !     ivperp= nstartfromcolumn + 2
-!     ipmag = 0
-!     ibeta = 0
-!     itotpr = 0
-!     idivBerr = 0
   endif
 
-  if (ndim.eq.2 .and. iBfirst.ne.0 .and. ivx.ne.0) then
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 5
-     irad2 = nstartfromcolumn + 1
-     ivpar = nstartfromcolumn + 2
-     ivperp = nstartfromcolumn + 3
-     iBpar = nstartfromcolumn + 4
-     iBperp = nstartfromcolumn + 5
-!  else
-!     irad2 = 0
-!     ivpar = 0
-!     ivperp = 0
-!     iBpar = 0
-!     iBperp = 0         
+!  if (ndim.eq.2 .and. iBfirst.ne.0 .and. ivx.ne.0) then
+!     nstartfromcolumn = ncolumns + ncalc
+!     ncalc = ncalc + 5
+!     irad2 = nstartfromcolumn + 1
+!     ivpar = nstartfromcolumn + 2
+!     ivperp = nstartfromcolumn + 3
+!     iBpar = nstartfromcolumn + 4
+!     iBperp = nstartfromcolumn + 5
+!  endif
+!
+!--magnitudes of all vector quantities (cartesian only)
+!
+  iamvecprev = 0
+  nveclist = 0
+  iveclist(:) = 0
+  if (icoords.eq.1) then
+     do i=1,ncolumns
+        if (iamvec(i).gt.0 .and. iamvec(i).le.ncolumns .and. iamvec(i).ne.iamvecprev) then
+           ncalc = ncalc + 1
+           nveclist = nveclist + 1
+           iveclist(nveclist) = iamvec(i)
+           ivecmagcol(nveclist) = ncolumns + ncalc
+           iamvecprev = iamvec(i)
+        endif
+     enddo
   endif
   
   print*,'calculating ',ncalc,' additional quantities...'
@@ -240,13 +244,6 @@ subroutine calc_quantities(ifromstep,itostep)
      !--magnetic quantities
      !
      if (iBfirst.ne.0) then
-        !!--abs(B)
-        if (iBmag.ne.0) then
-           do j=1,ntoti
-              dat(j,iBmag,i) = sqrt(dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i), &
-                                             dat(j,iBfirst:iBfirst+ndimV-1,i)))
-           enddo
-        endif
         !!--magnetic pressure
         if (ipmag.ne.0) then
            do j=1,ntoti
@@ -279,15 +276,6 @@ subroutine calc_quantities(ifromstep,itostep)
               endif
            enddo
         endif
-        if (icurr.ne.0) then
-           do j=1,ntoti
-              Jmag = sqrt(dot_product(dat(j,iJfirst:iJfirst+ndimV-1,i), &
-                   dat(j,iJfirst:iJfirst+ndimV-1,i)))
-              if (dat(j,irho,i).ne.0) then
-                 dat(j,icurr,i) = Jmag !!/sqrt(dat(irho,j,i))
-              endif
-           enddo
-        endif
         if (icrosshel.ne.0) then
            do j=1,ntoti
               dat(j,icrosshel,i) = dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i),  &
@@ -302,6 +290,18 @@ subroutine calc_quantities(ifromstep,itostep)
            end where
         endif
      endif
+     !
+     !--magnitudes of all vector quantities
+     !
+     do ivec=1,nveclist
+        inewcol = ivecmagcol(ivec)
+        ivecstart = iveclist(ivec)
+        do j=1,ntoti
+           dat(j,inewcol,i) = sqrt(dot_product(dat(j,ivecstart:ivecstart+ndimV-1,i), &
+                                               dat(j,ivecstart:ivecstart+ndimV-1,i)))
+        enddo
+     enddo
+
   enddo
   !
   !--set labels for calculated quantities
@@ -319,17 +319,18 @@ subroutine calc_quantities(ifromstep,itostep)
   if (imach.ne.0) label(imach) = '|v|/c\ds'
   if (ideltarho.ne.0) label(ideltarho) = '\gd \gr'
   
-  if (iBmag.ne.0) then
-     label(iBmag) = '|B|'
-     unitslabel(iBmag) = unitslabel(iBfirst)
-  endif
   if (ipmag.ne.0) label(ipmag) = 'B\u2\d/2'
   if (itotpr.ne.0) label(itotpr) = 'P_gas + P_mag'
   if (ibeta.ne.0) label(ibeta) = 'plasma \gb'
   if (idivberr.ne.0) label(idivberr) = 'h |div B| / |B|'
-  if (icurr.ne.0) label(icurr) = '|J|'
   if (icrosshel.ne.0) label(icrosshel) = 'B dot v'
   if (ivalfven.ne.0) label(ivalfven) = 'v\dalfven'
+  !
+  !--magnitudes of all vector quantities
+  !
+  do ivec=1,nveclist
+     label(ivecmagcol(ivec)) = '|'//trim(labelvec(iveclist(ivec)))//'|'
+  enddo
   
   if (ivpar.ne.0) label(ivpar) = 'v\d\(0737)'  !!!_parallel'
   if (ivperp.ne.0) label(ivperp) = 'v\d\(0738)' !!_perp'
