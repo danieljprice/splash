@@ -32,7 +32,7 @@ subroutine menu
   integer :: ipicky,ipickx,irender,ivecplot
   integer :: iamvecprev, ivecplottemp
   character(len=2) :: ioption
-  character(len=50) :: vecprompt
+  character(len=100) :: vecprompt
   logical :: iAllowRendering
 
   irender = 0
