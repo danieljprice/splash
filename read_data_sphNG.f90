@@ -41,7 +41,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: i,j,ifile,ierr,iunit,int1,int2,int3,i1,iarr
   integer :: npart_max,nstep_max,ncolstep,icolumn
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
-  integer :: nskip,nprint,npart,itype,ntypes,npower
+  integer :: nskip,nprint,npart,itype,ntypes
+  integer :: ipos,nptmass,nptmassi,nunknown
   logical :: iexist, doubleprec
     
   character(len=len(rootname)+10) :: dumpfile
@@ -49,9 +50,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   
   integer*8, dimension(maxarrsizes) :: isize
   integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
+  integer*1, dimension(:), allocatable :: iphase
   real(doub_prec), dimension(:), allocatable :: dattemp
   real(doub_prec) :: udist, utime, umass, r8
   real, dimension(maxreal) :: dummyreal
+  real, dimension(:,:), allocatable :: dattemp2
 
 
   nstepsread = 0
@@ -86,6 +89,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    open(unit=15,iostat=ierr,file=dumpfile,status='old',form='unformatted')
    if (ierr /= 0) then
       print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
+      return
    else
       !
       !--read header key to work out precision
@@ -218,16 +222,37 @@ subroutine read_data(rootname,indexstart,nstepsread)
    time(j) = dummyreal(1)
    gamma(j) = dummyreal(3)
    npartoftype(1,j) = npart
+   nptmass = isize(2)
    print "(a,1pe12.4,a,0pf8.4)",' time = ',time(j),' gamma = ',gamma(j)
    nstepsread = nstepsread + 1
    ncolumns = ncolstep + ncalc
    icolumn = 0
+   if (allocated(iphase)) deallocate(iphase)
+   allocate(iphase(npart_max))
 !
 !--Arrays
 !
    do iarr=1,narrsizes
-!--skip integer arrays (not needed for plotting)
-      nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
+!--read iphase from array block 1 if sinks are present
+      if (iarr.eq.1 .and. narrsizes.gt.1 .and. isize(2).gt.0) then
+         !--skip default int
+         nskip = nint(iarr)
+         do i=1,nskip
+            read(iunit,end=55,iostat=ierr)
+         enddo
+         if (nint1(iarr).lt.1) then
+            print "(a)",'ERROR: sinks present but can''t locate iphase in dump'
+            !--skip remaining integer arrays
+            nskip = nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
+         else
+            read(iunit,end=55,iostat=ierr) iphase(1:isize(iarr))
+            !--skip remaining integer arrays
+            nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
+         endif
+      else
+!--otherwise skip all integer arrays (not needed for plotting)
+         nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
+      endif
       !!print*,'skipping ',nskip,' isize = ',isize(iarr)
       do i=1,nskip
          read(iunit,end=55,iostat=ierr)
@@ -267,11 +292,74 @@ subroutine read_data(rootname,indexstart,nstepsread)
          enddo
       endif
    enddo
-
-55 continue
 !
 !--reached end of file
 !
+55 continue
+!
+!--place point masses after normal particles
+!     
+     if (any(iphase.ne.0)) then
+        allocate(dattemp2(nptmass,ncolstep))
+
+     nptmassi = 0
+     ipos = 0
+     do i=1,npart
+        ipos = ipos + 1
+        if (iphase(i).ge.1) then
+           nptmassi = nptmassi + 1
+!--save point mass information in temporary array
+           if (nptmassi.gt.size(dattemp2(:,1))) stop 'error: ptmass array bounds exceeded in data read'
+           dattemp2(nptmassi,1:ncolstep) = dat(i,1:ncolstep,j)
+!--shuffle dat array
+           if (ipos+1 .le.npart) then
+              dat(ipos,1:ncolstep,j) = dat(ipos+1,1:ncolstep,j)
+           endif
+           ipos = ipos - 1
+        endif
+     enddo
+     if (nptmassi.ne.nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass =',nptmass
+!--append ptmasses to end of dat array
+     do i=1,nptmassi
+        ipos = ipos + 1
+        dat(ipos,1:ncolstep,j) = dattemp2(i,1:ncolstep)
+     enddo
+!
+!--do the same with unknown/dead particles
+!     
+     nunknown = 0
+     ipos = 0
+     do i=1,npart
+        ipos = ipos + 1
+        if (iphase(i).lt.0) then
+           nunknown = nunknown + 1
+!--save information in temporary array
+           if (nunknown.gt.size(dattemp2(:,1))) stop 'error: array bounds for dead particles exceeded in data read'
+           dattemp2(nunknown,1:ncolstep) = dat(i,1:ncolstep,j)
+!--shuffle dat array
+           if (ipos+1.le.npart) then
+              dat(ipos,1:ncolstep,j) = dat(ipos+1,1:ncolstep,j)
+           endif
+           ipos = ipos - 1
+        endif
+     enddo
+!--append dead particles to end of dat array
+     do i=1,nunknown
+        ipos = ipos + 1
+        dat(ipos,1:ncolstep,j) = dattemp2(i,1:ncolstep)
+     enddo
+
+     endif
+
+     if (allocated(dattemp)) deallocate(dattemp)
+     if (allocated(dattemp2)) deallocate(dattemp2)
+     if (allocated(iphase)) deallocate(iphase)
+
+     npartoftype(1,j) = npart - nptmassi - nunknown
+     npartoftype(2,j) = nptmassi
+     npartoftype(3,j) = nunknown
+     print*,' n(gas) = ',npartoftype(1,j),' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown
+
 close(15)
    
 return
@@ -342,10 +430,10 @@ subroutine set_labels
   !
   !--set labels for each particle type
   !
-  ntypes = 2  !!maxparttypes
+  ntypes = 3  !!maxparttypes
   labeltype(1) = 'gas'
-  !!labeltype(2) = 'ghost'
   labeltype(2) = 'sink'
+  labeltype(3) = 'unknown/dead'
  
 !-----------------------------------------------------------
 
