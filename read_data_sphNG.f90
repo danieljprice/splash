@@ -300,7 +300,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--place point masses after normal particles
 !     
      if (any(iphase.ne.0)) then
-        allocate(dattemp2(nptmass,ncolstep))
+        nunknown = 0
+        do i=1,npart
+           if (iphase(i).ne.0) nunknown = nunknown + 1
+        enddo
+        allocate(dattemp2(nunknown,ncolstep))
+        
 
      nptmassi = 0
      ipos = 0
