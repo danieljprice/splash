@@ -159,12 +159,14 @@ subroutine submenu_xsecrotate
  case(4)
     use3Dperspective = .not.use3Dperspective
     print "(a,L1)",' 3D perspective = ',use3Dperspective
+    if (.not.use3Dperspective) use3Dopacityrendering = .false.
 !------------------------------------------------------------------------
  case(5)
-    call prompt('use opacity rendering (ray tracing) on 3D plots?',use3Dopacityrendering)
+    use3Dopacityrendering = .not.use3Dopacityrendering
     print "(a,L1)",' 3D opacity rendering = ',use3Dopacityrendering
     if (use3Dopacityrendering .and..not.use3Dperspective) then
        print "(a)",' also turning on 3D perspective (which must be set for this to work)'
+       use3Dperspective = .true.
     endif
 !------------------------------------------------------------------------
  case(6)
