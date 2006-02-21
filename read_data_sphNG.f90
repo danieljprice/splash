@@ -52,7 +52,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
   integer*1, dimension(:), allocatable :: iphase
   real(doub_prec), dimension(:), allocatable :: dattemp
-  real(doub_prec) :: udist, utime, umass, r8
+  real(doub_prec) :: udist, utime, umass, umagfd, r8
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
 
@@ -166,7 +166,18 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
    read(iunit,end=55,iostat=ierr) nreal8s
    print "(a,i3)",' ndoubles = ',nreal8s
-   read(iunit,end=55,iostat=ierr) udist,umass,utime
+   if (nreal8s.ge.4) then
+      read(iunit,end=55,iostat=ierr) udist,umass,utime,umagfd   
+   elseif (nreal8s.ge.3) then
+      read(iunit,end=55,iostat=ierr) udist,umass,utime
+   else
+      print "(a)",'*** error: units not found in file'
+      udist = 1.0
+      umass = 1.0
+      utime = 1.0
+      umagfd = 1.0
+      read(iunit,end=55,iostat=ierr)
+   endif
    if (ierr /= 0) then
       print "(a)",'*** error reading units'
    endif
@@ -203,7 +214,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       read(iunit,end=55,iostat=ierr) isize(iarr),nint(iarr),nint1(iarr),nint2(iarr), &
                  nint4(iarr),nint8(iarr),nreal(iarr),nreal4(iarr),nreal8(iarr)
       if (iarr.eq.1) npart = isize(iarr)
-      print *,'size ',iarr,' dim = ',isize(iarr),'nint=',nint(iarr),nint1(iarr), &
+      print *,'block ',iarr,' dim = ',isize(iarr),'nint=',nint(iarr),nint1(iarr), &
             nint2(iarr),nint4(iarr),nint8(iarr),'nreal =',nreal(iarr),nreal4(iarr),nreal8(iarr)
 !--we are going to read all real arrays but need to convert them all to default real
       if (isize(iarr).eq.isize(1)) then
@@ -316,11 +327,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--save point mass information in temporary array
            if (nptmassi.gt.size(dattemp2(:,1))) stop 'error: ptmass array bounds exceeded in data read'
            dattemp2(nptmassi,1:ncolstep) = dat(i,1:ncolstep,j)
-!--shuffle dat array
-           if (ipos+1 .le.npart) then
-              dat(ipos,1:ncolstep,j) = dat(ipos+1,1:ncolstep,j)
-           endif
+           !print*,i,' removed'
            ipos = ipos - 1
+        endif
+!--shuffle dat array
+        if (ipos.ne.i .and. i.lt.npart) then
+!           print*,'copying ',i+1,'->',ipos+1
+           dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
         endif
      enddo
      if (nptmassi.ne.nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass =',nptmass
@@ -341,11 +354,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--save information in temporary array
            if (nunknown.gt.size(dattemp2(:,1))) stop 'error: array bounds for dead particles exceeded in data read'
            dattemp2(nunknown,1:ncolstep) = dat(i,1:ncolstep,j)
-!--shuffle dat array
-           if (ipos+1.le.npart) then
-              dat(ipos,1:ncolstep,j) = dat(ipos+1,1:ncolstep,j)
-           endif
+!           print*,i,' removed'
            ipos = ipos - 1
+        endif
+!--shuffle dat array
+        if (ipos.ne.i .and. i.lt.npart) then
+!           print*,'copying ',i+1,'->',ipos+1
+           dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
         endif
      enddo
 !--append dead particles to end of dat array
