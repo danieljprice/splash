@@ -7,23 +7,16 @@ program test_interpolation
  implicit none
  integer, parameter :: idimx = 100
  integer, parameter :: idim = idimx**3
+ integer, parameter :: ipixx = 1000, ipixy = 1000
  integer :: npart,npartx,nparty,npartz
- integer :: npixx, npixy
+ integer :: npixx, npixy,i
  real, dimension(idim) :: x,y,z,pmass,h,rho
  real, dimension(idim) :: dat,weight
- real, dimension(1000,1000) :: datpix
+ real, dimension(ipixx,ipixy) :: datpix
+ real, dimension(0:maxcoltable) :: q,w
  real :: xmin,xmax,ymin,ymax,zmin,zmax
- real :: columndens,dxpix,err,dens
+ real :: columndens,dxpix,err,dens,datmax
  real :: trans(6)
-!
-!--set up a cubic lattice of particles
-!
- npartx = 50
- nparty = 50
- npartz = 50
- npart = npartx*nparty*npartz
- npixx = 100
- npixy = 100
  
  xmin = -0.5
  xmax = 0.5
@@ -31,8 +24,7 @@ program test_interpolation
  ymax = 0.5
  zmin = -0.5
  zmax = 0.5
- call setgrid(npartx,nparty,npartz,x,y,z,pmass,rho,h,weight,xmin,xmax,ymin,ymax,zmin,zmax)
-! call pgopen('/xw')
+ call pgopen('/xw')
 ! call pgenv(xmin,xmax,ymin,ymax,0,0)
 ! call pglabel('x','y',' ')
 ! call pgpt(npart,x,y,1)
@@ -49,11 +41,104 @@ program test_interpolation
 !
 !--check value of the integration at q=zero (can do this analytically)
 !
- print*,'coltable(0) = ',coltable(1),' should be ',2.*0.75/3.1415926536
+ print*,'coltable(0) = ',coltable(0),' should be ',2.*0.75/3.1415926536
 !
-!--now call interpolation routine to 10x10x10 pixels
+!--plot integrated kernel
 !
+ call pgenv(0.,2.,0.,coltable(0)*1.1,0,0)
+ call pglabel('r','int W',' ')
+ print*,'radkernel = ',radkernel
+ 
+ do i=0,50
+    q(i) = i*radkernel/50.
+    !print*,q(i)
+    w(i) = wfromtable(q(i)*q(i))
+ enddo
+ call pgsci(3) 
+ call pgline(50,q,w)
+
+! do i=1,maxcoltable
+!    q(i) = sqrt((i-1)*radkernel*radkernel*dmaxcoltable)
+! enddo
+! call pgsci(2)
+! call pgline(maxcoltable,q,coltable)
+ call pgsci(1)
+!
+!--setup one particle
+!
+ print*,'SINGLE PARTICLE TEST'
+ npart = 1
+ npixx = 1000
+ npixy = 1000
+ x(1) = 0.5*(xmin + xmax)
+ y(1) = 0.5*(ymin + ymax)
+ z(1) = 0.5*(zmin + zmax)
+ rho(1) = 1.0
+ pmass(1) = 2.0
+ h(1) = 0.5*xmax
+ weight(1) = 1./1.5**3
+ dat(1) = rho(1)
  dxpix = (xmax-xmin)/real(npixx)
+ call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
+                               weight(1:npart),dat(1:npart),npart,xmin,ymin, &
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.)
+ call pgenv(xmin,xmax,ymin,ymax,1,0)
+ trans = 0.
+ trans(1) = xmin - 0.5*dxpix
+ trans(2) = dxpix
+ trans(4) = ymin - 0.5*dxpix
+ trans(6) = dxpix
+ datmax = maxval(datpix(1:npixx,1:npixy))
+ print*,'max datpix = ',datmax,maxloc(datpix(1:npixx,1:npixy))
+
+ !!print*,'datpix = ',datpix(1:npixx,1:npixy)
+ call pgimag(datpix,ipixx,ipixy,1,npixx,1,npixy,0.0,datmax,trans)
+!
+!--setup two overlapping particles
+!
+ print*,'TWO PARTICLE TEST'
+ npart = 2
+ npixx = 1000
+ npixy = 1000
+ x(1) = -0.25
+ x(2) = 0.25
+ y(2) = 0.5*(ymin + ymax)
+ z(2) = 0.5*(zmin + zmax)
+ rho(2) = 1.0
+ pmass(2) = 2.0
+ h(2) = 0.5*xmax
+ weight(2) = 1./1.5**3
+ dat(2) = rho(2)
+ dxpix = (xmax-xmin)/real(npixx)
+ call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
+                               weight(1:npart),dat(1:npart),npart,xmin,ymin, &
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.)
+ call pgenv(xmin,xmax,ymin,ymax,1,0)
+ trans = 0.
+ trans(1) = xmin - 0.5*dxpix
+ trans(2) = dxpix
+ trans(4) = ymin - 0.5*dxpix
+ trans(6) = dxpix
+ datmax = maxval(datpix(1:npixx,1:npixy))
+ print*,'max datpix = ',datmax,maxloc(datpix(1:npixx,1:npixy))
+
+ !!print*,'datpix = ',datpix(1:npixx,1:npixy)
+ call pgimag(datpix,ipixx,ipixy,1,npixx,1,npixy,0.0,datmax,trans)
+!
+!--set up a cubic lattice of particles
+! 
+ print*,'NORMAL LATTICE TEST'
+ npartx = 50
+ nparty = 50
+ npartz = 50
+ npart = npartx*nparty*npartz
+ npixx = 500
+ npixy = 500
+ dxpix = (xmax-xmin)/real(npixx)
+ call setgrid(npartx,nparty,npartz,x,y,z,pmass,rho,h,weight,xmin,xmax,ymin,ymax,zmin,zmax) 
+!
+!--now call interpolation routine to pixels
+!
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),npart,xmin,ymin, &
                                datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.)
@@ -66,14 +151,14 @@ program test_interpolation
  print "(70('-'))"
  print*,'average error in column density interpolation = ',err
 
-! call pgenv(xmin,xmax,ymin,ymax,0,0)
-! call pgpixl(datpix,npixx,npixy,1,npixx,1,npixy,xmin,xmax,ymin,ymax)
-! trans = 0.
-! trans(1) = xmin - 0.5*dxpix
-! trans(2) = dxpix
-! trans(4) = ymin - 0.5*dxpix
-! trans(6) = dxpix
-! call pgimag(datpix,npixx,npixy,1,npixx,1,npixy,0.0,1.0,trans)
+ call pgenv(xmin,xmax,ymin,ymax,0,0)
+! call pgpixl(datpix,ipixx,ipixy,1,npixx,1,npixy,xmin,xmax,ymin,ymax)
+ trans = 0.
+ trans(1) = xmin - 0.5*dxpix
+ trans(2) = dxpix
+ trans(4) = ymin - 0.5*dxpix
+ trans(6) = dxpix
+ call pgimag(datpix,ipixx,ipixy,1,npixx,1,npixy,0.0,1.0,trans)
 
 !
 !--take cross section at midplane and check density
@@ -88,14 +173,14 @@ program test_interpolation
  print "(70('-'))"
 
  
-! call pgenv(xmin,xmax,ymin,ymax,0,0)
-! call pgpixl(datpix,npixx,npixy,1,npixx,1,npixy,xmin,xmax,ymin,ymax)
+ call pgenv(xmin,xmax,ymin,ymax,0,0)
+! call pgpixl(datpix,ipixx,ipixy,1,npixx,1,npixy,xmin,xmax,ymin,ymax)
 ! trans = 0.
 ! trans(1) = xmin - 0.5*dxpix
 ! trans(2) = dxpix
 ! trans(4) = ymin - 0.5*dxpix
 ! trans(6) = dxpix
-! call pgimag(datpix,npixx,npixy,1,npixx,1,npixy,0.0,1.0,trans)
+ call pgimag(datpix,ipixx,ipixy,1,npixx,1,npixy,0.0,1.0,trans)
 ! call pgend
 !
 !--take normalised cross section at midplane and check density
@@ -106,6 +191,8 @@ program test_interpolation
 
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,dens,err)
  print*,'average error in normalised xsec interpolation = ',err
+ call pgend
+
  print "(70('-'))"
 
  print*,'SPEED CHECKS...'
@@ -142,6 +229,8 @@ program test_interpolation
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,columndens,err)
  print*,'average error in projection = ',err
 
+
+ 
 contains
 
 subroutine setgrid(npartx,nparty,npartz,x,y,z,pmass,rho,h,weight,xmin,xmax,ymin,ymax,zmin,zmax)
