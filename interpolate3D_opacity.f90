@@ -61,7 +61,8 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
   real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreenfromobserver, &
                       zcut,datmin,datmax,rkappa
   real, dimension(npixx,npixy), intent(out) :: datsmooth
-  real, dimension(3,npixx,npixy) :: rgb
+  real, dimension(npixx,npixy) :: brightness
+!  real, dimension(3,npixx,npixy) :: rgb
   real, dimension(3) :: rgbi,drgb
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused
@@ -70,7 +71,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
   integer :: ipart,ir,ib,ig,ierr,maxcolour,indexi
   real :: hi,hi1,hi21,radkern,q2,wab,rab2,pmassav
   real :: term,dx,dy,dy2,xpix,ypix,zfrac,hav
-  real :: fopacity,tau,rkappatemp,termi
+  real :: fopacity,tau,rkappatemp,termi,xi,yi
   real, dimension(1) :: dati
   real :: t_start,t_end,t_used,tsec
   real :: ddatrange,datfraci,ftable
@@ -79,6 +80,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
 
   datsmooth = 0.
   term = 0.
+  brightness = 0.
   print "(1x,a)",'ray tracing from particles to pixels...'
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_opacity: error: pixel width <= 0'
@@ -106,7 +108,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
   rkappatemp = pi*hav*hav/(pmassav*coltable(0))
   print*,'average h = ',hav,' average mass = ',pmassav
   print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'  
-  rgb = 0.
+!  rgb = 0.
   !
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
@@ -177,30 +179,32 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
      !--determine colour contribution of current point
      !  (work out position in colour table)
      !
-     dati = dat(i)
+!     dati = dat(i)
+     xi = x(i)
+     yi = y(i)
      termi = dat(i)
-     call transform(dati,itrans)
-     datfraci = (dati(1) - datmin)*ddatrange
-     datfraci = max(datfraci,0.)
-     datfraci = min(datfraci,1.)
-     !--define colour for current particle
-     ftable = datfraci*ncolours
-     indexi = int(ftable) + 1
-     indexi = min(indexi,ncolours)
-     if (indexi.lt.ncolours) then
-     !--do linear interpolation from colour table
-        drgb(:) = rgbtable(:,indexi+1) - rgbtable(:,indexi)
-        rgbi(:) = rgbtable(:,indexi) + (ftable - int(ftable))*drgb(:)
-     else
-        rgbi(:) = rgbtable(:,indexi)
-     endif
+!     call transform(dati,itrans)
+!     datfraci = (dati(1) - datmin)*ddatrange
+!     datfraci = max(datfraci,0.)
+!     datfraci = min(datfraci,1.)
+!     !--define colour for current particle
+!     ftable = datfraci*ncolours
+!     indexi = int(ftable) + 1
+!     indexi = min(indexi,ncolours)
+!     if (indexi.lt.ncolours) then
+!     !--do linear interpolation from colour table
+!        drgb(:) = rgbtable(:,indexi+1) - rgbtable(:,indexi)
+!        rgbi(:) = rgbtable(:,indexi) + (ftable - int(ftable))*drgb(:)
+!     else
+!        rgbi(:) = rgbtable(:,indexi)
+!     endif
      !
      !--for each particle work out which pixels it contributes to
      !               
-     ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-     jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-     ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
-     jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
+     ipixmin = int((xi - radkern - xmin)/pixwidth)
+     jpixmin = int((yi - radkern - ymin)/pixwidth)
+     ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
+     jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
 
      if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
      if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
@@ -211,11 +215,11 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
      !
      do jpix = jpixmin,jpixmax
         ypix = ymin + (jpix-0.5)*pixwidth
-        dy = ypix - y(i)
+        dy = ypix - yi
         dy2 = dy*dy
         do ipix = ipixmin,ipixmax
            xpix = xmin + (ipix-0.5)*pixwidth
-           dx = xpix - x(i)
+           dx = xpix - xi
            rab2 = dx**2 + dy2
            q2 = rab2*hi21
            !
@@ -231,15 +235,10 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
               fopacity = 1. - exp(-tau)
               !
               !--render, obscuring previously drawn pixels by relevant amount
+              !  also calculate total brightness (`transparency') of each pixel
               !
-              rgb(1,ipix,jpix) = (1.-fopacity)*rgb(1,ipix,jpix) + fopacity*rgbi(1)
-              rgb(2,ipix,jpix) = (1.-fopacity)*rgb(2,ipix,jpix) + fopacity*rgbi(2)
-              rgb(3,ipix,jpix) = (1.-fopacity)*rgb(3,ipix,jpix) + fopacity*rgbi(3)
-              !
-              !--this is an approximate version with no colour blending for output to 
-              !  screen
-              ! 
               datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*termi
+              brightness(ipix,jpix) = brightness(ipix,jpix) + fopacity
            endif
 
         enddo
@@ -269,9 +268,31 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
 !--pixel information
   do jpix = npixy,1,-1
      do ipix = 1,npixx
-        ir = max(min(int(rgb(1,ipix,jpix)*maxcolour),maxcolour),0)
-        ig = max(min(int(rgb(2,ipix,jpix)*maxcolour),maxcolour),0)
-        ib = max(min(int(rgb(3,ipix,jpix)*maxcolour),maxcolour),0)
+
+        dati(1) = datsmooth(ipix,jpix)
+        call transform(dati,itrans)
+        datfraci = (dati(1) - datmin)*ddatrange
+        datfraci = max(datfraci,0.)
+        datfraci = min(datfraci,1.)
+        !--define colour for current particle
+        ftable = datfraci*ncolours
+        indexi = int(ftable) + 1
+        indexi = min(indexi,ncolours)
+        if (indexi.lt.ncolours) then
+        !--do linear interpolation from colour table
+           drgb(:) = rgbtable(:,indexi+1) - rgbtable(:,indexi)
+           rgbi(:) = rgbtable(:,indexi) + (ftable - int(ftable))*drgb(:)
+        else
+           rgbi(:) = rgbtable(:,indexi)
+        endif
+        rgbi(:) = rgbi(:)*min(brightness(ipix,jpix),1.0)
+        ir = max(min(int(rgbi(1)*maxcolour),maxcolour),0)
+        ig = max(min(int(rgbi(2)*maxcolour),maxcolour),0)
+        ib = max(min(int(rgbi(3)*maxcolour),maxcolour),0)
+
+!        ir = max(min(int(rgb(1,ipix,jpix)*maxcolour),maxcolour),0)
+!        ig = max(min(int(rgb(2,ipix,jpix)*maxcolour),maxcolour),0)
+!        ib = max(min(int(rgb(3,ipix,jpix)*maxcolour),maxcolour),0)
 !!        if (rgb(1,ipix,jpix).gt.0.999) print*,rgb(1,ipix,jpix),ir
         write(78,"(i3,1x,i3,1x,i3,2x)") ir,ig,ib
      enddo
