@@ -4,7 +4,7 @@
 !------------------------------------------------------------------------
 module render
  implicit none
- public :: render_pix, render_vec, colourbar
+ public :: render_pix, render_vec, render_opacity, colourbar
  private
 
 contains
@@ -36,7 +36,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  trans(5) = 0.0
  trans(6) = dx
 
- print*,'rendering...',npixx,'x',npixy,',array size=',size(datpix),minval(datpix)
+ print*,'rendering...',npixx,'x',npixy,'=',size(datpix),' pixels'
 
  if (abs(icolours).eq.1) then        ! greyscale
     if (iPlotColourBar) call colourbar(icolours,datmin,datmax,trim(label),log)
@@ -101,7 +101,7 @@ subroutine colourbar(icolours,datmin,datmax,label,log)
  if (log) clog = 'l'
 !
 !--Note that plots use my modification of pgwedg which plots vertical numbers on axes
-!          
+!
  if (abs(icolours).eq.1) then        ! greyscale
     call danpgwedg('rgv'//clog,disp,width,datmin,datmax,trim(label),ColourBarDisp)
  elseif (abs(icolours).gt.1) then        ! colour
@@ -117,7 +117,7 @@ end subroutine colourbar
 !--------------------------------------------------------------------------
  
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
-                  xmin,ymin,dx,label) 
+                  xmin,ymin,dx,label,unitslabel) 
  use legends, only:legend_vec
  use settings_vecplot, only:iVecplotLegend,hposlegendvec,vposlegendvec
  implicit none
@@ -125,7 +125,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  real, intent(in) :: xmin,ymin,dx
  real, intent(inout) :: vecmax
  real, dimension(npixx,npixy), intent(in) :: vecpixx,vecpixy
- character(len=*), intent(in) :: label
+ character(len=*), intent(in) :: label,unitslabel
  real :: trans(6),scale
  real :: charheight
  
@@ -138,7 +138,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  trans(5) = 0.0
  trans(6) = dx
 
- print*,trim(label),' vector plot..',npixx,'x',npixy,',array size=',size(vecpixx)
+ print*,'vector plot..',npixx,'x',npixy,'=',size(vecpixx),' pixels'
  !!print*,'max(x component) = ',maxval(vecpixx),'max(y component) = ',maxval(vecpixy)
 
  call pgsah(2,45.0,0.7)   ! arrow style
@@ -151,17 +151,75 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  else
     scale=dx/vecmax
  endif
+ print*,trim(label),' max = ',vecmax
  
  call pgvect(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
       1,npixx,1,npixy,scale,0,trans,0.0)
 
  if (iVecplotLegend) then
-    call legend_vec(label,vecmax,dx,hposlegendvec,vposlegendvec,charheight)
+    call legend_vec(label,unitslabel,vecmax,dx,hposlegendvec,vposlegendvec,charheight)
  endif
  call pgsch(charheight)
  
  return
  
 end subroutine render_vec
+
+!
+!--attempt to render an array of red, green and blue colours
+!  using PGPLOT
+!
+subroutine render_opacity(rgbcolours,npixx,npixy,xmin,xmax,ymin,ymax, &
+                          iPlotColourBar,icolours,datmin,datmax,label)
+ implicit none
+ integer, intent(in) :: npixx,npixy
+ real, dimension(3,npixx,npixy), intent(in) :: rgbcolours
+ real, intent(in) :: xmin,xmax,ymin,ymax,datmin,datmax
+ logical, intent(in) :: iPlotColourBar
+ integer, intent(in) :: icolours
+ character(len=*), intent(in) :: label
+ 
+ integer, dimension(npixx,npixy) :: icolourarray
+ integer :: ncolours,ir,ig,ib,nshades,nshades2,index,ipix,jpix
+ integer :: indexmax,indexmin
+ real :: denom,red,green,blue
+
+ if (iPlotColourBar) call colourbar(icolours,datmin,datmax,trim(label),.false.) 
+!
+!--set the colour table corresponding to all possible combinations
+!  of red, green and blue
+!
+ call pgqcol(indexmin,indexmax)
+ ncolours = indexmax - indexmin + 1
+ nshades = int(ncolours**(1./3.))
+ print*,'ncolours = ',ncolours,'nshades = ',nshades,nshades**3
+ denom = 1./real(nshades-1)
+ nshades2 = nshades*nshades
+ !ncolours = nshades*nshades*nshades
+
+ do ir=1,nshades
+    red = (ir-1)*denom
+    do ig=1,nshades
+       green = (ig-1)*denom
+       do ib=1,nshades
+          index = (ir-1)*nshades2 + (ig-1)*nshades + (ib-1) + indexmin
+          blue = (ib-1)*denom
+          call pgscr(index,red,green,blue)
+       enddo
+    enddo
+ enddo
+
+ do jpix=1,npixy
+    do ipix=1,npixx
+       ir = int(rgbcolours(1,ipix,jpix)*nshades)
+       ig = int(rgbcolours(2,ipix,jpix)*nshades)
+       ib = int(rgbcolours(3,ipix,jpix)*nshades)
+       icolourarray(ipix,jpix) = (ir-1)*nshades2 + (ig-1)*nshades + (ib-1) + indexmin
+    enddo
+ enddo
+ 
+ call pgpixl(icolourarray,npixx,npixy,1,npixx,1,npixy,xmin,xmax,ymin,ymax)
+
+end subroutine render_opacity
 
 end module render

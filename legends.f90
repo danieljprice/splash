@@ -1,5 +1,5 @@
 !-----------------------------------------------------------------
-!     module containing routines for plotting legends
+!     module containing routines for plotting legends in PGPLOT
 !     subroutines:
 !      legend      : plots time on plots
 !      legend_vec  : plots legend with vector arrow
@@ -47,20 +47,31 @@ end subroutine legend
 !           t : current time
 !        hpos : horizontal position as fraction of viewport
 !        vpos : vertical position in character heights from top
+!  charheight : this is the text character height
+!               (legend_vec is called directly after plotting the arrows,
+!                which may use a different character size - so we plot
+!                the arrow here in the same way, but then revert to 
+!                the text character height to write the text)
 !-----------------------------------------------------------------
 
-subroutine legend_vec(label,vecmax,dx,hpos,vpos,charheight)
+subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  implicit none
  real, intent(in) :: vecmax,dx,hpos,vpos,charheight
- character(len=*), intent(in) :: label
+ character(len=*), intent(in) :: label,unitslabel
  real :: xmin,xmax,ymin,ymax
  real :: xch,ych,charheightarrow
  real :: xpos,ypos,xbox(4),ybox(4),dxlabel,dxstring
  real :: dxbuffer,dybuffer,dxbox,dybox
- integer :: icolindex
- character(len=len(label)+10) :: string
-
- write(string,"('=',1pe7.1)") vecmax
+ real :: xminnew,xmaxnew,yminnew,ymaxnew,x1,x2,y1,y2
+ integer :: icolindex,mm,pp,nc,ndec
+ character(len=len(label)+20) :: string
+ 
+ ndec = 3
+ mm=nint(vecmax/10.**(nint(log10(vecmax)-ndec)))
+ pp=nint(log10(vecmax)-ndec)
+ call pgnumb(mm,pp,0,string,nc)
+ string = '='//trim(string)
+! write(string,"('=',1pe7.1)") vecmax
 !
 !--convert hpos and vpos to x, y to plot arrow
 !
@@ -83,7 +94,7 @@ subroutine legend_vec(label,vecmax,dx,hpos,vpos,charheight)
 !
 !--set size of box in x direction
 !
- dxbuffer = 0.25*xch
+ dxbuffer = 0.25*xch ! these are size of margins (x and y)
  dybuffer = 0.25*ych
  dxbox = dxlabel + dxstring + dx + dxbuffer
  dybox = max(ych,dx/sqrt(2.)) + 0.5*dybuffer
@@ -91,29 +102,49 @@ subroutine legend_vec(label,vecmax,dx,hpos,vpos,charheight)
 !--draw box around all of the legend
 !
  call pgqci(icolindex)
+! draw a rectangle in the background colour with solid fill style
  call pgsci(0)
- call pgrect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
- call pgsci(icolindex)
- call pgsfs(2)
- call pgrect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
  call pgsfs(1)
+ call pgrect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
+! change back to normal colour index 
+ call pgsci(icolindex)
+! draw an outline around the box
+! call pgsfs(2)
+! call pgrect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
+! call pgsfs(1)
 !
 !--write label
 !
  call pgtext(xpos,ypos,trim(label))
  xpos = xpos + dxlabel
 !
-!--draw arrow
+!--Draw arrow. Here we have to perform tricks to get the arrow 
+!  to appear even if outside the usual plotting area
 !
+!--save viewport settings
+ call pgqvp(0,x1,x2,y1,y2)
+!--now allow the whole screen to be the viewport...
+ call pgsvp(0.0,1.0,0.0,1.0)
+!  ...but correspondingly adjust window so that x and y positions 
+!  are the same as in the old viewport 
+ xminnew = xmin - x1*(xmax-xmin)/(x2-x1)
+ xmaxnew = xmax + (1.-x2)*(xmax-xmin)/(x2-x1)
+ yminnew = ymin - y1*(ymax-ymin)/(y2-y1)
+ ymaxnew = ymax + (1.-y2)*(ymax-ymin)/(y2-y1)
+ call pgswin(xminnew,xmaxnew,yminnew,ymaxnew)
+!--use character height original arrows were drawn with
  call pgsch(charheightarrow)
  call pgarro(xpos,ypos,xpos+dx/sqrt(2.),ypos+dx/sqrt(2.))
+!--restore viewport settings
+ call pgsvp(x1,x2,y1,y2)
+ call pgswin(xmin,xmax,ymin,ymax)
  xpos = xpos + dx
 !
-!--write numerical value
+!--write numerical value and units label
 !
  call pgsch(charheight)
 !! call pgmtext('t',-vpos,hpos+0.02,0.0,trim(string))
- call pgtext(xpos,ypos,trim(string))
+ call pgtext(xpos,ypos,trim(string)//trim(unitslabel))
 
  return
 end subroutine legend_vec

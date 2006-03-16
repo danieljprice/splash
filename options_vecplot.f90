@@ -24,8 +24,8 @@ subroutine defaults_set_vecplot
   UseBackgndColorVecplot = .false. ! plot vector plot using black/white
   iplotpartvec = .true.   ! whether to plot particles on vector plot
   iVecplotLegend = .true.
-  hposlegendvec = 0.05
-  vposlegendvec = 2.0
+  hposlegendvec = 0.02
+  vposlegendvec = -1.5
 
   return
 end subroutine defaults_set_vecplot

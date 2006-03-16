@@ -9,7 +9,7 @@ module timestep_plotting
   integer, private :: iplots,ipanel
 
   real, dimension(:), allocatable, private :: datpix1D, xgrid
-  real, private :: xmin,xmax,ymin,ymax,zmin,zmax
+  real, private :: xmin,xmax,ymin,ymax,zmin
   real, private :: rendermin,rendermax,vecmax
   real, private :: dz,zslicepos,dobserver,dscreenfromobserver
   real, private :: charheight
@@ -862,7 +862,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
            just = 1  ! x and y axis have same scale
            ! unless 1D xsec through 2D data or non-cartesian
            if ((irenderplot.gt.ndim .and. ndim.eq.2 .and. x_sec) &
-               .or.(icoordsnew.ne.1)) then
+               .or.(icoordsnew.gt.1)) then
               just = 0 
            endif
            title = ' '
@@ -1016,7 +1016,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                 ivecx = iamvec(ivectorplot) + iplotx - 1
                 ivecy = iamvec(ivectorplot) + iploty - 1
 
-                labelvecplot = trim(labelvec(ivectorplot))
+                labelvecplot = trim(labelvec(ivectorplot))//trim(unitslabel(ivectorplot))
                 !!--set label for projection plots (2268 or 2412 for integral sign)
                 if (ndim.eq.3 .and..not. x_sec) then
                    labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
@@ -1408,8 +1408,8 @@ contains
     !--------------------------------------------------------------
 
     if (interactive) then
-       print*,trim(labelx),'min,max = ',xmin,xmax
-       print*,trim(labely),'min,max = ',ymin,ymax
+       print*,trim(labelx),' min, max = ',xmin,xmax
+       print*,trim(labely),' min, max = ',ymin,ymax
     endif
 
     !---------------------
@@ -1495,7 +1495,7 @@ contains
    character(len=*), intent(in) :: label
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
 
-   print*,'plotting vector field ',trim(label)
+   !print*,'plotting vector field ',trim(label)
    if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
         .or.(ivecy.le.ndim).or.(ivecy.gt.ndataplots)) then
       print*,'error finding location of vector plot in array'
@@ -1548,7 +1548,7 @@ contains
       !--plot it
       !
       call render_vec(vecpixx,vecpixy,vmax, &
-           numpixx,numpixy,xmin,ymin,pixwidth,trim(label))
+           numpixx,numpixy,xmin,ymin,pixwidth,trim(label),' ')
 
       if (UseBackgndColorVecplot) call pgsci(1)
 
@@ -1557,6 +1557,5 @@ contains
   end subroutine vector_plot
 
 end subroutine plotstep
-  
 
 end module timestep_plotting
