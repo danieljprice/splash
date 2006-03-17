@@ -23,6 +23,10 @@ program supersphplot
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.5   (/06)
+!           : 3D perspective added, 3D opacity rendering, improved rotation,
+!             colour schemes, adjustable vector arrows (+legend), improved timestepping
+!             behaviour, speed enhancements, physical unit rescaling
 !     1.0.5 (28/9/05)
 !           : error calculation for exact solutions, legend for plot markers,
 !             exact_densityprofiles added, more colour schemes, 
@@ -213,7 +217,7 @@ subroutine print_header
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/, &
    '   \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ ',/)      
 
- print "(a)",' ( version 1.1 beta [21/12/05] Copyright (C) 2005)'
+ print "(a)",' ( version 1.5 [17/3/06] Copyright (C) 2005-2006)'
  print 30 
 30 format(/,    &
    ' * SUPERSPHPLOT comes with ABSOLUTELY NO WARRANTY.',/, &
