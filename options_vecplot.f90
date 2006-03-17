@@ -64,7 +64,7 @@ subroutine submenu_vecplot
        call prompt('Enter horizontal position as fraction of viewport', &
                    hposlegendvec,0.0,1.0)
        call prompt('Enter vertical position in character heights from top', &
-                    vposlegendvec,0.0)
+                    vposlegendvec)
     endif
  end select
 

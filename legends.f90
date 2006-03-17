@@ -106,8 +106,8 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  call pgsci(0)
  call pgsfs(1)
  call pgrect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
-! change back to normal colour index 
- call pgsci(icolindex)
+! change to foreground colour index
+ call pgsci(1)
 ! draw an outline around the box
 ! call pgsfs(2)
 ! call pgrect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
@@ -145,6 +145,9 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  call pgsch(charheight)
 !! call pgmtext('t',-vpos,hpos+0.02,0.0,trim(string))
  call pgtext(xpos,ypos,trim(string)//trim(unitslabel))
+!
+!--restore colour index
+ call pgsci(icolindex)
 
  return
 end subroutine legend_vec
