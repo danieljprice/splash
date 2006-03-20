@@ -280,7 +280,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                      iplotline,linecolourthisstep,linestylethisstep
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend,iPlotStepLegend, &
                      charheightmm,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage, &
-                     hposlegend,vposlegend,legendtext
+                     hposlegend,vposlegend,fjustlegend,legendtext
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
                        iPlotColourBar,icolour_particles,inormalise_interpolations
   use settings_vecplot, only:npixvec, iplotpartvec
@@ -1050,7 +1050,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
            
            !--print legend if this is the first plot on the page    
            if (iPlotLegend .and. nyplot.eq.1) call legend(legendtext,timei,labeltimeunits, &
-                                                          hposlegend,vposlegend)
+                                                          hposlegend,vposlegend,fjustlegend)
            !--line/marker style/colour legend for multiple timesteps on same page
            if (iPlotStepLegend .and. nyplot.eq.1 .and. istepsonpage.gt.0) then
               call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
@@ -1137,7 +1137,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
 
         !--plot time on plot
         if (iPlotLegend .and. nyplot.eq.1) call legend(legendtext,timei,labeltimeunits, &
-                                                       hposlegend,vposlegend)
+                                                       hposlegend,vposlegend,fjustlegend)
         !--line/marker style/colour legend for multiple timesteps on same page
         if (iPlotStepLegend .and. nyplot.eq.1 .and. istep.gt.0) then
            call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
@@ -1356,7 +1356,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
         !--if this is the first plot on the page, print legend
         !
         if (iPlotLegend .and. ipanel.eq.1) call legend(legendtext,timei,labeltimeunits, &
-                                                       hposlegend,vposlegend)
+                                                       hposlegend,vposlegend,fjustlegend)
         !--line/marker style/colour legend for multiple timesteps on same page
         if (iPlotStepLegend .and. nyplot.eq.1) then
            call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &

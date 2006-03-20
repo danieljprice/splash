@@ -9,14 +9,15 @@ module settings_page
  logical :: iColourEachStep,iChangeStyles,tile,interactive
  logical :: iPlotLegend,iPlotStepLegend,iPlotTitles
  real :: papersizex,aspectratio
- real :: hposlegend,vposlegend,hpostitle,vpostitle,fjusttitle
+ real :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
  real :: charheightmm
  character(len=20) :: colour_fore, colour_back, legendtext
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &
    iPlotLegend,iPlotStepLegend,hposlegend,vposlegend,iPlotTitles,hpostitle, &
-   vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheightmm,linewidth
+   vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheightmm,linewidth,&
+   fjustlegend
 
 contains
 
@@ -40,8 +41,9 @@ subroutine defaults_set_page
   
   iPlotLegend = .true.  ! whether or not to plot legend
   iPlotStepLegend = .false. ! timestep legend
-  hposlegend = 0.75     ! horizontal legend position as fraction of viewport
+  hposlegend = 0.95     ! horizontal legend position as fraction of viewport
   vposlegend = 2.0      ! vertical legend position in character heights
+  fjustlegend = 1.0    ! justification factor for legend
   legendtext = 't='
   
   iPlotTitles = .false.  ! whether or not to plot titles
@@ -90,9 +92,10 @@ subroutine submenu_page
      call prompt('Enter number of timesteps per page',nstepsperpage,1)
      print*,'Plotting up to ',nstepsperpage,' timesteps per page'
      if (nstepsperpage.gt.1) then
-        if (iadapt) then
+        if (iadapt .or. iadaptcoords) then
            print "(a)",'(note that adaptive plot limits are now off)'
            iadapt = .false.
+           iadaptcoords = .false.
         endif
         if (nstepsperpage.gt.14) then
            print "(a)",'(and that steps per page > number of colours, ie. colours will repeat)'
@@ -194,7 +197,7 @@ subroutine submenu_page
         call prompt('Enter horizontal position as fraction of viewport', &
              hposlegend,0.0,1.0)
         call prompt('Enter vertical position in character heights from top',vposlegend)
-
+        call prompt('Enter justification factor (0.0=left 1.0=right)',fjustlegend,0.0,1.0)
      endif
      return
 !------------------------------------------------------------------------

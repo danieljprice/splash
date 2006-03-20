@@ -972,7 +972,7 @@ end subroutine interactive_step
 !--move the legend to the current position
 !
 subroutine mvlegend(xi,yi,xmin,xmax,ymax)
- use settings_page, only:hposlegend,vposlegend
+ use settings_page, only:hposlegend,vposlegend,fjustlegend
  implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  real :: xch,ych
@@ -981,7 +981,15 @@ subroutine mvlegend(xi,yi,xmin,xmax,ymax)
  !--query character height in world coordinates
  call pgqcs(4,xch,ych)
  vposlegend = (ymax - yi)/ych
- print*,'hpos = ',hposlegend,' vpos = ',vposlegend
+ !--automatically change justification
+ if (hposlegend < 0.25) then
+    fjustlegend = 0.0
+ elseif (hposlegend > 0.75) then
+    fjustlegend = 1.0
+ else
+    fjustlegend = 0.5
+ endif
+ print*,'hpos = ',hposlegend,' vpos = ',vposlegend,' just = ',fjustlegend
  
  return
 end subroutine mvlegend
@@ -1006,7 +1014,7 @@ end subroutine mvlegendvec
 !--move the title to the current position
 !
 subroutine mvtitle(xi,yi,xmin,xmax,ymax)
- use settings_page, only:hpostitle,vpostitle
+ use settings_page, only:hpostitle,vpostitle,fjusttitle
  implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  real :: xch,ych
@@ -1015,7 +1023,16 @@ subroutine mvtitle(xi,yi,xmin,xmax,ymax)
  !--query character height in world coordinates
  call pgqcs(4,xch,ych)
  vpostitle = (yi - ymax)/ych
- print*,'hpos = ',hpostitle,' vpos = ',vpostitle
+
+ !--automatically change justification
+ if (hpostitle < 0.25) then
+    fjusttitle = 0.0
+ elseif (hpostitle > 0.75) then
+    fjusttitle = 1.0
+ else
+    fjusttitle = 0.5
+ endif
+ print*,'hpos = ',hpostitle,' vpos = ',vpostitle,' just = ',fjusttitle
  
  return
 end subroutine mvtitle

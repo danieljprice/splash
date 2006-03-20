@@ -18,9 +18,9 @@ contains
 !        vpos : vertical position in character heights from top
 !-----------------------------------------------------------------
 
-subroutine legend(legendtext,t,unitslabel,hpos,vpos)
+subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust)
  implicit none
- real, intent(in) :: t,hpos,vpos
+ real, intent(in) :: t,hpos,vpos,fjust
  character(len=*), intent(in) :: legendtext,unitslabel
  integer :: mm,pp,nc,ndecimal,ndec
  real :: tplot
@@ -36,7 +36,7 @@ subroutine legend(legendtext,t,unitslabel,hpos,vpos)
  mm=nint(tplot*ndec)
  pp=nint(log10(tplot)-log10(tplot*ndec))
  call pgnumb(mm,pp,1,string,nc)
- call pgmtext('T',-vpos,hpos,0.0,trim(legendtext)//string(1:nc)//trim(unitslabel))
+ call pgmtext('T',-vpos,hpos,fjust,trim(legendtext)//string(1:nc)//trim(unitslabel))
 
  return
 end subroutine legend
