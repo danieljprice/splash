@@ -59,19 +59,13 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  real, intent(in) :: vecmax,dx,hpos,vpos,charheight
  character(len=*), intent(in) :: label,unitslabel
  real :: xmin,xmax,ymin,ymax
- real :: xch,ych,charheightarrow
+ real :: xch,ych,charheightarrow,adjustlength,vecmaxnew
  real :: xpos,ypos,xbox(4),ybox(4),dxlabel,dxstring
- real :: dxbuffer,dybuffer,dxbox,dybox,xcen,ycen
+ real :: dxbuffer,dybuffer,dxbox,dybox
  real :: xminnew,xmaxnew,yminnew,ymaxnew,x1,x2,y1,y2
  integer :: icolindex,mm,pp,nc,ndec
  character(len=len(label)+20) :: string
  
- ndec = 2
- mm=int(vecmax/10.**(int(log10(vecmax)-ndec)))
- pp=int(log10(vecmax)-ndec)
- call pgnumb(mm,pp,0,string,nc)
- string = '='//trim(string)
-! write(string,"('=',1pe7.1)") vecmax
 !
 !--convert hpos and vpos to x, y to plot arrow
 !
@@ -81,6 +75,20 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  xpos = xmin + hpos*(xmax-xmin)
  call pgqcs(4,xch,ych) 
  ypos = ymax - (vpos + 1.)*ych
+!
+!--format string containing numerical value
+!  vecmax corresponds to arrow of length dx
+!  we will draw an arrow of length sqrt(dx^2 + ych^2)
+!  so adjust vecmax accordingly
+!
+ adjustlength = sqrt(0.5*dx**2 + ych**2)/dx
+ vecmaxnew = adjustlength*vecmax
+ ndec = 2
+ mm=int(vecmaxnew/10.**(int(log10(vecmaxnew)-ndec)))
+ pp=int(log10(vecmaxnew)-ndec)
+ call pgnumb(mm,pp,0,string,nc)
+ string = '='//trim(string)
+! write(string,"('=',1pe7.1)") vecmax 
 !
 !--enquire size of label
 !
@@ -97,7 +105,7 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  dxbuffer = 0.25*xch ! these are size of margins (x and y)
  dybuffer = 0.25*ych
  dxbox = dxlabel + dxstring + 1.1*dx/sqrt(2.) + dxbuffer
- dybox = max(ych,dx/sqrt(2.)) + 0.5*dybuffer
+ dybox = ych + 0.5*dybuffer
 !
 !--draw box around all of the legend
 !
@@ -133,12 +141,10 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  ymaxnew = ymax + (1.-y2)*(ymax-ymin)/(y2-y1)
  call pgswin(xminnew,xmaxnew,yminnew,ymaxnew)
 !--use character height original arrows were drawn with
+!  (this is to get the arrow head size right)
  call pgsch(charheightarrow)
-!--draw arrow centred
- xcen = 0.5*(2.*xpos + dx/sqrt(2.))
- ycen = 0.5*(2.*ypos + max(dx/sqrt(2.),ych))
- call pgarro(xcen-0.5*dx/sqrt(2.),ycen-0.5*dx/sqrt(2.), &
-             xcen+0.5*dx/sqrt(2.),ycen+0.5*dx/sqrt(2.))
+!--draw arrow
+ call pgarro(xpos,ypos,xpos + dx/sqrt(2.),ypos + ych)
 !--restore viewport settings
  call pgsvp(x1,x2,y1,y2)
  call pgswin(xmin,xmax,ymin,ymax)
