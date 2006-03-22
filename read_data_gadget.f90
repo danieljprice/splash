@@ -232,13 +232,13 @@ subroutine read_data(rootname,istepstart,nstepsread)
               print*,'read ',Npartoftype(itype,i),' masses for type ', &
                      itype,index1,'->',index2,indexstart,'->',indexend
               dat(index1:index2,7,i) = dattemp1(indexstart:indexend)
+              indexstart = indexend + 1
            else  ! masses not dumped
               print*,'setting masses for type ',itype,' = ', &
                      real(Massoftype(itype)),index1,'->',index2
               dat(index1:index2,7,i) = real(Massoftype(itype))
            endif
            index1 = index2 + 1
-           indexstart = indexend + 1
         endif
      enddo
      deallocate(dattemp1)
