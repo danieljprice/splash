@@ -70,12 +70,12 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
   integer, dimension(npart) :: iorder
   integer :: ipart,ir,ib,ig,ierr,maxcolour,indexi
   real :: hi,hi1,hi21,radkern,q2,wab,rab2,pmassav
-  real :: term,dx,dy,dy2,xpix,ypix,zfrac,hav
+  real :: term,dx,dy,dy2,xpix,ypix,zfrac,hav,zcutoff
   real :: fopacity,tau,rkappatemp,termi,xi,yi
   real, dimension(1) :: dati
   real :: t_start,t_end,t_used,tsec
   real :: ddatrange,datfraci,ftable
-  logical :: iprintprogress
+  logical :: iprintprogress,adjustzperspective
   character(len=120) :: filename
 
   datsmooth = 0.
@@ -91,6 +91,13 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
   else
      print "(a)",'error: datmin=datmax in opacity rendering'
      return
+  endif
+  if (abs(dscreenfromobserver).gt.tiny(dscreenfromobserver)) then
+     adjustzperspective = .true.
+     zcutoff = zobserver
+  else
+     adjustzperspective = .false.
+     zcutoff = huge(zobserver)
   endif
 
 !
@@ -149,7 +156,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
      !
      !--allow slicing [take only particles with z(unrotated) < zcut]
      !
-     particle_within_zcut: if (zorig(i).lt.zcut) then
+     particle_within_zcut: if (zorig(i).lt.zcut .and. z(i).lt.zcutoff) then
     
      !  count particles within slice
      nused = nused + 1
@@ -164,7 +171,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
      if (hi.le.0.) then
         print*,'interpolate3D_proj_opacity: error: h <= 0 ',i,hi
         return
-     elseif (abs(dscreenfromobserver).gt.tiny(dscreenfromobserver)) then
+     elseif (adjustzperspective) then
         zfrac = abs(dscreenfromobserver/(z(i)-zobserver))
         hi = hi*zfrac
      endif
