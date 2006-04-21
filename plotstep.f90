@@ -367,7 +367,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
   !
   ntoti = sum(npartoftype)
   ninterp = npartoftype(1)
-  if (labeltype(2)(1:5).eq.'ghost' .and. iplotpartoftype(2)) then
+  if (labeltype(2)(1:5).eq.'ghost') then
      ninterp = ninterp + npartoftype(2)
   endif
   !
@@ -752,8 +752,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                        if (iadapt) then
                           !!--if adaptive limits, find limits of rendered array
                           print*,'adapting render limits for opacity rendering'
-                          rendermin = minval(dat(1:ninterp,irenderplot))
-                          rendermax = maxval(dat(1:ninterp,irenderplot))
+                          rendermin = minval(dat(1:npartoftype(1),irenderplot))
+                          rendermax = maxval(dat(1:npartoftype(1),irenderplot))
                        else
                           !!--or use fixed limits
                           rendermin = lim(irenderplot,1)
