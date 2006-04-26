@@ -137,7 +137,13 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
   if (ntoti.gt.maxpart) then
      reallocate = .true.
-     npart_max = int(1.1*ntoti)
+     if (maxpart.gt.0) then
+        ! if we are reallocating, try not to do it again
+        npart_max = int(1.1*ntoti)
+     else
+        ! if first time, save on memory
+        npart_max = int(ntoti)
+     endif
   endif
   if (i.ge.maxstep .and. i.ne.1) then
      nstep_max = i + max(10,INT(0.1*nstep_max))
