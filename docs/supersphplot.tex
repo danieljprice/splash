@@ -320,20 +320,24 @@ starting SUPERSPHPLOT.
 \subsection{(d)ata options}
 These options relate to the data read and are as follows:
 \begin{enumerate}
-\item \textbf{read new data}. Read new data, using a different runname.
-\item \textbf{change number of timesteps read}. Set timestep number to start
+\item \textbf{read new data /re-read data}. Read new data, using a different runname.
+\item \textbf{change number of timesteps used}. Set timestep number to start
 reading from, timestep number to stop reading from and the frequency of
 timesteps to read (e.g. every two steps). This can also be changed interactively in
 interactive mode.
 \item \textbf{plot selected steps only}. Here you can choose to plot only a selected
-few timesteps.
+few timesteps (in any order).
 \item \textbf{buffering of data on/off}. Turn buffering of input data on/off.
 Buffering on means that all the timesteps are read into memory (good for small
 data sets). Buffering off means that only one data file at a time is read into
 memory. Default is off.
 \item \textbf{turn calculate extra quantities on/off}. Turns on/off the calculation
-of additional data columns (e.g. pressure, entropy, radius) from the main data.
-\item \textbf{rescale data (change units)}. Enables rescaling of columns. This
+of additional data columns (e.g. radius and magnitudes of vector quantities) from the main data.
+\item \textbf{use physical units}. Switches between code units (or ``data file units") and rescaled
+``physical" units (with amended labels). Some data reads (sphNG, srosph, mbate) now set the transformations
+between physical units and code units. Alternatively these transformations can be set manually using the next menu
+item.
+\item \textbf{change physical unit settings}. Enables rescaling of columns. This
 is useful for changing units but also for changing the axis labels. For
 example, where the $y-$axis looks crowded because the numeric axis labels read something
 like $1\times 10^{-4}$, the rescaling option can be used to rescale the data so
@@ -366,7 +370,7 @@ the interactive mode, limited only by your imagination. Please send me your sugg
 \label{sec:optionspage}
  This submenu contains options relating to the PGPLOT page setup. The options are as follows:
 \begin{enumerate}
-\item \textbf{change steps per page}. (default=1) Allows multiple timesteps to be plotted on
+\item \textbf{change steps per plot}. (default=1) Allows multiple timesteps to be plotted on
 the same page.
 \item \textbf{axes options}. Changes the appearance of the axes. The variable is
 the same as the AXIS variable used in the call to PGENV in the standard PGPLOT
@@ -502,13 +506,18 @@ schemes given are shown in Figure~\ref{fig:colourschemes} and are as follows:
   1 & : & greyscale \\
   2 & : & red \\
   3 & : & ice blue \\
-  4 & : & rainbow \\
-  5 & : & universe \\
-  6 & : & shade of pale \\
+  4 & : & heat \\
+  5 & : & rainbow \\
+  6 & : & prism \\
   7 & : & red-blue-yellow \\
-  8 & : & heat \\
-  9 & : & blue-yellow-red \\
-  10 & : & purple-blue-green \\
+  8 & : & blue-yellow-red \\
+  9 & : & purple-blue-green \\
+  10 & : & gamma \\
+  11 & : & gamma- no black \\
+  12 & : & red-green-blue \\
+  13 & : & blue-green-red \\
+  14 & : & rainbow I \\
+  15 & : & rainbow II \\
 \end{tabular}
 
 \begin{figure}
@@ -534,6 +543,9 @@ bar on rendered images.
 simply plotted by colouring the particles according to the rendered field. This is somewhat
 cruder but can be a good indication of where individual particles might be affecting results.
 Note that any colouring of the particles set in interactive mode will be overwritten.
+\item \textbf{normalise interpolations}. This option means that the SPH interpolations are
+normalised. In general this leads to smoother rendering but also means that edges and surfaces appear
+more prominently (and a bit strange). Note that this option only affects cross-section slices. Default is off.
 \end{enumerate}
 
 \subsection{(v)ector plot options}
@@ -552,15 +564,22 @@ interactively.
 
 \subsection{(x) cross section/rotation options}
 \begin{enumerate}
-\item \textbf{toggle cross section/projection}. For 3D data, toggles whether to
+\item \textbf{switch between cross section/projection}. For 3D data, whether to
 plot the rendered quantity integrated along the line of sight (projection) or in
 a particular cross section along the line of sight. For 2D data setting the
-cross section option gives arbitrary 1D cross sections through 2D data. Also applies to vector and plots.
+cross section option gives arbitrary 1D cross sections through 2D data. Also applies to vector plots.
 \item \textbf{set cross section position}. Sets the position of the cross section slice.
-\item \textbf{rotation on/off}. Turns rotation on/off.
-\item \textbf{change rotation options}. Set angles of rotation.
-\item \textbf{set axes for rotated plots}. Allows you to plot rotated axes, boxes and planes
-in two and three dimensions.
+\item \textbf{rotation settings/options}. Turns rotation on/off. Allows manual setting of rotation
+angles and the origin about which to rotate.
+\item \textbf{3D perspective}. Turns 3D perspective on/off (ie. objects at larger z distance get
+smaller).
+\item \textbf{3D surface rendering on/off/options}. 3D surface rendering performs a ray-trace through
+the particle data, thus visualising the "last scattering surface". When set, the user is prompted for
+an "optical depth" before plotting which determines the position of the surface. Only applies to 3D
+data. When set with cross-section (instead of projection), particles at or below the z value of the
+slice are used.
+\item \textbf{set axes for rotated/3D plots}. Allows you to plot rotated axes, boxes and planes
+in two and three dimensions. At present these are plotted on top of the particle renderings.
 \end{enumerate}
 
 \subsection{(s)ave, (h)elp, (q)uit}
@@ -650,6 +669,7 @@ a straight cross section as described above.
  In three dimensions we must take either a projection through the whole domain or a cross section slice.
  
 \subsubsection{Projections (line of sight integration)}
+\label{sec:proj}
  In the projection case we wish to obtain an integral of the rendered quantity along the line of sight. We
 begin with the SPH summation interpolant \citep{monaghan92} in the form
 \begin{equation}
@@ -725,6 +745,108 @@ the 'd' (for down) and 'u' (for up) keys in interactive mode.
 \paragraph{Flythru}
  With the cross section option chosen in 3D, a flythru may be chosen at the plotting prompt. This
 plots multiple slices through the data.
+
+
+\subsubsection{3D surface rendering of SPH data}
+ This option is introduced in version 1.5 of SUPERSPHPLOT. The idea is to produce a visualisation of
+the surface of a data set by performing a ray-trace through the SPH particles, with the density
+distribution giving the optical depth and the rendered quantity providing the colour. Thus
+low-density regions will be transparent whilst high density regions will be `optically thick' and
+therefore opaque. 
+
+For a homogeneous medium the transport equation for a ray traced from $0\to D$ is
+\begin{equation}
+I_\nu(D) = I_\nu(0) e^{-\tau_\nu (D)} + S_\nu(1 - e^{-\tau_\nu(D)}),
+\label{eq:transport}
+\end{equation}
+where $I_\nu$ is the (frequency dependent) intensity, $S_\nu$ is the source function along the ray
+and $\tau$ is the monochromatic optical depth. The first term in (\ref{eq:transport}) represents absorption (ie.
+intensity decreases by $e^{-\tau}$ whilst the second term represents emission. For example, at large
+optical depth ($\tau\to\infty$) everything is obscured and all we see is the source function (ie.
+light emitted from D), whereas at low optical depth $\tau\to 0$ the source function contributes
+nothing and all we see is the previous intensity $I(0)$.
+
+The optical depth $\tau$ is given by
+\begin{equation}
+\tau(D) = \int \kappa \rho {\rm ds},
+\end{equation}
+where $\rho$ is the density and $\kappa$ is the opacity (with dimensions of ``cross section per unit
+mass").
+
+ For SPH visualisation the procedure is as follows. First of all we sort the particles in `z' (where
+$z$ represents the distance from the observer to the particle. Then starting from the furthest
+particles, we consider the attenuation of a ray through each particle. Since what we are after is a
+final 2D pixel map, what we do in practise is take one ray for each pixel, but rather than taking a
+ray at a time (and looping over particles), we loop over all of the particles (from back to front),
+calculating the contribution of that particle to all rays (`pixels') in the final pixel map. The
+optical depth through the particle is given by
+\begin{equation}
+\tau(x,y) = \kappa \int \rho {\rm dz},
+\end{equation}
+where we have assumed that the opacity $\kappa$ is independent of $z$. Using the SPH summation for
+the density, we have
+\begin{equation}
+\tau(x,y) = \kappa \sum_b m_b \int W(\vert {\bf r} - {\bf r}_b \vert,h) {\rm dz},
+\label{eq:tauxy}
+\end{equation}
+giving just a summation involving the SPH kernel integrated through one spatial dimension, which is
+the same as is used in the 3D projections (see $\ref{sec:proj}$ for details of how we compute this).
+All that remains is to adjust $\kappa$ appropriately to give the desired surface position. In
+SUPERSPHPLOT an approximate value for $\kappa$ is computed according to
+\begin{equation}
+\kappa = \frac{\pi \bar{h}^2 }{ (\bar{m}Y(0) d)}
+\end{equation} 
+where $\bar{h}$ and $\bar{m}$ are estimates for the average smoothing length and particle mass, calculated from the current (fixed) plot limits according to $\bar{h} = 0.5*(h_{min} + h_{max})$
+(similarly for $\bar{m}$ - the important aspect here is that these values do not change between dump
+files) and $Y(0)$ is the value of the integrated kernel function
+(\S\ref{sec:proj})at the origin. The dimensionless parameter $d$ is then a user defined value giving
+approximately the surface depth in terms of ``number of smoothing lengths".
+
+
+ Actually, we rather than computing the sum $\ref{eq:tauxy}$ for the whole ray, we consider just the
+attenuation of the ray through one particle at a time, using the optical depth for that particle alone.
+Looping over each particle, we calculate the contribution to all rays within the kernel radius $2h$. That
+is we have, for each particle
+\begin{equation}
+I(x,y,in front of particle) = I(x,y,behind particle) e^{-\tau_i(x,y)} + S_i(1 - e^{-\tau_i(x,y)}),
+\label{eq:transportp}
+\end{equation} 
+where $S_i$ is the source function (discussed below) and the optical depth through the particle's reach is
+\begin{equation}
+\tau_i (x,y) = \kappa m_i Y(x-x_i,y-y_i,h),
+\end{equation}
+where $Y$ is the integrated kernel function as in \S\ref{sec:proj}.
+
+ 
+ In the computation of the surface rendering, there are two ways of proceeding. The first option is to assign each
+particle an actual red, green and blue colour corresponding to the particle's value of the rendered
+quantity (ie. from the colour table). The source function then consists of a red, green and blue
+intensity $S_{i(r)},S_{i(g)},S_{i(b)}$. Then we would add up [ie. using (\ref{eq:transportp})] the intensities in each colour (red, green and blue) to get final red, green and blue values at each pixel. The effect of this is to ``blend" colours (so a red plus blue would make
+purple), which is more like what happens in a real gas, but is meaningless in the sense that the
+colours produced may no longer correspond to those in the colour table.
+
+ 
+ The alternative is to use a `monochromatic' intensity - that is where the source function $S_i$ for each
+particle is just the value of the rendered quantity at the particle location. Alongside this a
+`total' optical depth is computed along each ray. Again, we add up the
+intensities according to (\ref{eq:transport}), but now there is only a single value of $I$ for each
+pixel, which corresponds to a final ``ray-averaged" value of the rendered quantity. The pixel map can
+then be rendered in the usual manner using the ray-averaged values (which represent the values of the
+rendered quantity at the `last scattering surface'). The only complication here is that we must make
+the particles optically thin to the background. Thus the final colours must be faded to the
+background colour (ie. black) according to the total optical depth computed for each pixel.
+
+
+ The latter method is the one used in SUPERSPHPLOT. The one caveat is that, because
+it means using more than 256 colours (for example, if we have a colour map with 256 colours, we
+need to then have all 256 colours at varying levels of intensity), at present this is implemented by
+writing the pixel map directly to a .ppm file (called supersphplot\_\#\#\#\#\#.dat where the number
+is the number of the current dumpfile) and the approximate version (ie. without the background fade)
+is given to the PGPLOT device (e.g. the /xw screen). The .ppm files can be converted easily to any
+other format (e.g. png, ps) using netpbm tools (\url{http://netpbm.sourceforge.net/}) such as
+ppmtopng, ppmtops.
+
+ For examples of the 3D surface rendering in SUPERSPHPLOT, have a look at my movies of neutron star mergers at \url{http://www.astro.ex.ac.uk/people/dprice/research/nsmag}.
 
 \subsection{Rotation \& 3D perspective}
 \subsubsection{Rotation}
@@ -909,7 +1031,7 @@ together to form an animation. Under unix the \verb+gifmerge+ command (if instal
 of making a single animated gif file out of a series of gif images. Animated gifs are robust but
 require large amounts of memory to run at any reasonable speed. However many software packages exist
 for converting animated gifs into other, more compressed formats (such as the windows .avi format or
-under unix the .fli format\footnote{Note that MPEG is a particularly poor choice for simulation data}). One such package is the
+under unix the .fli format). One such package is the
 \verb+convert+ command included as part of the GIMP (Gnu Image Manipulation Package) toolkit.
 For presentations the windows .avi format is a good choice, although codecs for conversion are a
 little harder to come by. Under windows the commercially available \verb+videomach+ program is one
