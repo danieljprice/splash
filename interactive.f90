@@ -51,7 +51,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,nc,ierr,ixsec
   integer :: nmarked,ncircpart,itrackparttemp
-  integer, dimension(npart) :: icircpart
+  integer, dimension(1000) :: icircpart
  !! real :: xpt,ypt
   real :: xpt2,ypt2,charheight
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
@@ -128,9 +128,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
                ' h = ',hi(iclosest)
         !--save settings for these
         ncircpart = ncircpart + 1
-        if (ncircpart.gt.npart) then
+        if (ncircpart.gt.size(icircpart)) then
            print*,'WARNING: ncircles > array limits, cannot save'
-           ncircpart = npart
+           ncircpart = size(icircpart)
         else
            icircpart(ncircpart) = iclosest
         endif
@@ -378,13 +378,16 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
                     if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
                     .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax) &
                     .and.(zcoords(i).ge.zptmin .and. zcoords(i).le.zptmax)) then
-                        ncircpart = ncircpart + 1
-                        icircpart(ncircpart) = i
-                        call pgsfs(2)
-                        call pgcirc(xcoords(i),ycoords(i),2.*hi(i))
+                        if (ncircpart.lt.size(icircpart)) then
+                           ncircpart = ncircpart + 1                        
+                           icircpart(ncircpart) = i
+                           call pgsfs(2)
+                           call pgcirc(xcoords(i),ycoords(i),2.*hi(i))
+                        endif
                     endif
                  enddo
                  print*,'set ',ncircpart,' circles of interaction in selected region'
+                 if (ncircpart.eq.size(icircpart)) print*,' (first ',size(icircpart),' only)'
               endif
            case default
               print*,' action cancelled'
@@ -1192,7 +1195,7 @@ subroutine save_circles(ncircpartset,icircpartset)
  imax = min(size(icircpartset),size(icircpart),ncircpartset)
  ncircpart = imax
  icircpart(1:imax) = icircpartset(1:imax)
- print*,'saving ',imax,' circles of interaction'
+ print*,'saving ',imax,' circles of interaction only'
  
 end subroutine save_circles
 !

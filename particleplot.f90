@@ -156,14 +156,14 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
      !
      !--set fill area style and line width
      !
-     call pgsfs(2)
      call pgqlw(linewidth)
      call pgslw(2)
      call pgqci(icolourindex)
      call pgsci(2)
-     
+     call pgsfs(2)
+          
      if (iplotx.le.ndim .and. iploty.le.ndim) then
-        print*,'plotting circles of interaction',ncircpart
+        print*,'plotting ',ncircpart,' circles of interaction'
         do n = 1,ncircpart
            if (icircpart(n).gt.ntot) then 
               print*,'error: particle index > number of particles'

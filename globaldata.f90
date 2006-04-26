@@ -21,7 +21,6 @@ module particle_data
  integer :: maxpart,maxstep,maxcol ! dimensions of dat array
  integer, allocatable, dimension(:) :: icolourme
  integer, allocatable, dimension(:,:) :: npartoftype
- integer, allocatable, dimension(:) :: istepinfile,iposinfile
  real, allocatable, dimension(:) :: time, gamma
  real, allocatable, dimension(:,:,:) :: dat
 end module particle_data

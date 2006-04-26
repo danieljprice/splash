@@ -12,13 +12,12 @@ contains
 !----------------------------------------------------------------------------
 subroutine alloc(npartin,nstep,ncolumnsin)
   use particle_data
-  use settings_part, only:icircpart
   implicit none
   integer, intent(in) :: npartin,nstep,ncolumnsin
   integer :: maxpartold,maxstepold,maxcolold
   integer :: ierr,ncolumns
   logical :: reallocate,reallocate_part,reallocate_step
-  integer, dimension(:), allocatable :: icolourmetemp,icircparttemp
+  integer, dimension(:), allocatable :: icolourmetemp
   integer, dimension(:,:), allocatable :: npartoftypetemp
   real, dimension(:), allocatable :: timetemp, gammatemp
   real, dimension(:,:,:), allocatable :: dattemp
@@ -74,8 +73,6 @@ subroutine alloc(npartin,nstep,ncolumnsin)
      if (reallocate_part) then
         allocate(icolourmetemp(maxpartold),stat=ierr)
         if (ierr /= 0) stop 'error allocating memory (icolourmetemp)'
-        allocate(icircparttemp(maxpartold),stat=ierr)
-        if (ierr /= 0) stop 'error allocating memory (icircparttemp)'
      endif
 
      dattemp = dat
@@ -83,8 +80,7 @@ subroutine alloc(npartin,nstep,ncolumnsin)
 
      if (reallocate_part) then
         icolourmetemp(1:maxpartold) = icolourme(1:maxpartold)
-        icircparttemp(1:maxpartold) = icircpart(1:maxpartold)
-        deallocate(icolourme,icircpart)
+        deallocate(icolourme)
      endif
 
      if (reallocate_step) then
@@ -128,15 +124,10 @@ subroutine alloc(npartin,nstep,ncolumnsin)
      allocate(icolourme(maxpart),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory for icolourme array'
      icolourme = 1
-
-     allocate(icircpart(maxpart),stat=ierr)
-     if (ierr /= 0) stop 'error allocating memory for icolourme array'
-     icircpart = 0
      
      if (reallocate_part) then
         icolourme(1:maxpartold) = icolourmetemp(1:maxpartold)
-        icircpart(1:maxpartold) = icircparttemp(1:maxpartold)
-        deallocate(icolourmetemp,icircparttemp)
+        deallocate(icolourmetemp)
      endif
   endif
 !
@@ -174,12 +165,10 @@ end subroutine alloc
 !-----------------------------------------
 subroutine deallocate_all
  use particle_data
- use settings_part, only:icircpart
  implicit none
  
  if (allocated(dat)) deallocate(dat)
  if (allocated(icolourme)) deallocate(icolourme)
- if (allocated(icircpart)) deallocate(icircpart)
  if (allocated(npartoftype)) deallocate(npartoftype)
  if (allocated(time)) deallocate(time)
  if (allocated(gamma)) deallocate(gamma)

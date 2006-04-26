@@ -6,8 +6,8 @@ module settings_part
  use params
  implicit none
  integer, dimension(maxparttypes) :: imarktype
+ integer, dimension(100) :: icircpart
  integer :: ncircpart, icoordsnew
- integer, dimension(:), allocatable :: icircpart
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
  logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings
  logical :: iplotline,ilabelpart
@@ -33,6 +33,7 @@ subroutine defaults_set_part
   iexact = 0              ! exact solution to plot
   ilabelpart = .false.    ! plot particle numbers
   icoordsnew = icoords
+  icircpart(:) = 0
   
   iplotpartoftype(1) = .true. ! whether or not to plot particles of certain types
   iplotpartoftype(2:maxparttypes) = .false.
@@ -94,6 +95,13 @@ subroutine submenu_particleplots
      call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))
      if (ncircpart.gt.0) then
         do n=1,ncircpart
+           if (icircpart(n).eq.0) then
+              if (n.gt.1) then
+                 icircpart(n) = icircpart(n-1)+1
+              else
+                 icircpart(n) = 1
+              endif
+           endif
            call prompt('Enter particle number to plot circle around', &
                     icircpart(n),1,maxval(npartoftype(1,:)))
         enddo
