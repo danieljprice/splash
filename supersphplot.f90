@@ -128,13 +128,14 @@ program supersphplot
   use filenames, only:rootname,nfiles,maxfile
   use getdata, only:get_data
   use defaults, only:defaults_set,defaults_read
+  use limits, only:read_limits
   use mainmenu, only:menu
   use mem_allocation, only:deallocate_all
   use projections3D, only:setup_integratedkernel
   use settings_data, only:buffer_data
   use system_commands
   implicit none
-  integer :: i
+  integer :: i,ierr
   logical :: ihavereadfilenames
 
   !
@@ -185,6 +186,11 @@ program supersphplot
   ! setup kernel table for fast column density plots in 3D
   !
   call setup_integratedkernel
+  
+  !
+  !--read plot limits from file
+  !
+  call read_limits('supersphplot.limits',ierr)
   
   !
   ! enter main menu

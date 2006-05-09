@@ -10,7 +10,8 @@ module mainmenu
 contains
 
 subroutine menu
-  use labels, only: label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass
+  use labels, only:label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass
+  use limits, only:write_limits
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
                      icoords,buffer_data,ncolumns,unitslabel,iRescale
@@ -164,7 +165,7 @@ subroutine menu
 ! 
   print 12
   print "(a)",' d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)'
-  print "(a)",' r(ender) v(ector) x(sec/rotate) s(ave) q(uit)' 
+  print "(a)",' r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)' 
   print 12
 
 !
@@ -304,15 +305,22 @@ subroutine menu
         print "(/a)",' This submenu sets options relating to the plot limits'
         call submenu_limits(help=.true.)
 !------------------------------------------------------------------------
-     case('s','S')
+     case('s')
         call defaults_write
+     case('S')
+        call defaults_write
+        call write_limits('supersphplot.limits')     
      case('?s','?S')
-        print "(6(/a))",' The (s)ave option saves the default options to a ', &
+        print "(6(/a),/,4(/a))",' The (s)ave option saves the default options to a ', &
                     ' file called `defaults'' in the current directory which', &
                     ' is read automatically upon the next invocation of supersphplot.',&
                     ' This file uses namelist formatting and may be edited ', &
                     ' manually prior to startup if so desired. This is quite',&
-                    ' useful for setting multiplots with many plots per page'
+                    ' useful for setting multiplots with many plots per page',&
+                    ' The (S)ave option writes both the defaults file and ',&
+                    ' also saves the current plot limits to a file called',&
+                    ' ''supersphplot.limits'' which is also read automatically',&
+                    ' at startup.'
 !------------------------------------------------------------------------
      case('h','H')
         print "(4(/a))",' For help on any menu item type a question mark ',&
