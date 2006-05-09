@@ -240,6 +240,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    icolumn = 0
    if (allocated(iphase)) deallocate(iphase)
    allocate(iphase(npart_max))
+   iphase(:) = 0
 !
 !--Arrays
 !
@@ -307,67 +308,70 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--reached end of file
 !
 55 continue
+
+    nptmassi = 0
+    nunknown = 0
 !
 !--place point masses after normal particles
 !     
-     if (any(iphase.ne.0)) then
-        nunknown = 0
-        do i=1,npart
-           if (iphase(i).ne.0) nunknown = nunknown + 1
-        enddo
-        allocate(dattemp2(nunknown,ncolstep))
+    if (any(iphase(1:nprint).ne.0)) then
+       nunknown = 0
+       do i=1,npart
+          if (iphase(i).ne.0) nunknown = nunknown + 1
+       enddo
+       allocate(dattemp2(nunknown,ncolstep))
         
 
-     nptmassi = 0
-     ipos = 0
-     do i=1,npart
-        ipos = ipos + 1
-        if (iphase(i).ge.1) then
-           nptmassi = nptmassi + 1
-!--save point mass information in temporary array
-           if (nptmassi.gt.size(dattemp2(:,1))) stop 'error: ptmass array bounds exceeded in data read'
-           dattemp2(nptmassi,1:ncolstep) = dat(i,1:ncolstep,j)
-           !print*,i,' removed'
-           ipos = ipos - 1
-        endif
-!--shuffle dat array
-        if (ipos.ne.i .and. i.lt.npart) then
-!           print*,'copying ',i+1,'->',ipos+1
-           dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
-        endif
-     enddo
-     if (nptmassi.ne.nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass =',nptmass
-!--append ptmasses to end of dat array
-     do i=1,nptmassi
-        ipos = ipos + 1
-        dat(ipos,1:ncolstep,j) = dattemp2(i,1:ncolstep)
-     enddo
+       nptmassi = 0
+       ipos = 0
+       do i=1,npart
+          ipos = ipos + 1
+          if (iphase(i).ge.1) then
+             nptmassi = nptmassi + 1
+             !--save point mass information in temporary array
+             if (nptmassi.gt.size(dattemp2(:,1))) stop 'error: ptmass array bounds exceeded in data read'
+             dattemp2(nptmassi,1:ncolstep) = dat(i,1:ncolstep,j)
+             !print*,i,' removed'
+             ipos = ipos - 1
+          endif
+         !--shuffle dat array
+          if (ipos.ne.i .and. i.lt.npart) then
+  !           print*,'copying ',i+1,'->',ipos+1
+             dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
+          endif
+       enddo
+       if (nptmassi.ne.nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass =',nptmass
+       !--append ptmasses to end of dat array
+       do i=1,nptmassi
+          ipos = ipos + 1
+          dat(ipos,1:ncolstep,j) = dattemp2(i,1:ncolstep)
+       enddo
 !
 !--do the same with unknown/dead particles
 !     
-     nunknown = 0
-     ipos = 0
-     do i=1,npart
-        ipos = ipos + 1
-        if (iphase(i).lt.0) then
-           nunknown = nunknown + 1
-!--save information in temporary array
-           if (nunknown.gt.size(dattemp2(:,1))) stop 'error: array bounds for dead particles exceeded in data read'
-           dattemp2(nunknown,1:ncolstep) = dat(i,1:ncolstep,j)
-!           print*,i,' removed'
-           ipos = ipos - 1
-        endif
-!--shuffle dat array
-        if (ipos.ne.i .and. i.lt.npart) then
-!           print*,'copying ',i+1,'->',ipos+1
-           dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
-        endif
-     enddo
-!--append dead particles to end of dat array
-     do i=1,nunknown
-        ipos = ipos + 1
-        dat(ipos,1:ncolstep,j) = dattemp2(i,1:ncolstep)
-     enddo
+       nunknown = 0
+       ipos = 0
+       do i=1,npart
+          ipos = ipos + 1
+          if (iphase(i).lt.0) then
+             nunknown = nunknown + 1
+             !--save information in temporary array
+             if (nunknown.gt.size(dattemp2(:,1))) stop 'error: array bounds for dead particles exceeded in data read'
+             dattemp2(nunknown,1:ncolstep) = dat(i,1:ncolstep,j)
+  !           print*,i,' removed'
+             ipos = ipos - 1
+          endif
+          !--shuffle dat array
+          if (ipos.ne.i .and. i.lt.npart) then
+  !           print*,'copying ',i+1,'->',ipos+1
+             dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
+          endif
+       enddo
+       !--append dead particles to end of dat array
+       do i=1,nunknown
+          ipos = ipos + 1
+          dat(ipos,1:ncolstep,j) = dattemp2(i,1:ncolstep)
+       enddo
 
      endif
 
