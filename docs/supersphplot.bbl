@@ -5,6 +5,10 @@
   Method to Multidimensional Ideal Magnetohydrodynamics}'.
 \newblock {\em J. Comp. Phys.} {\bf 115}, 485--514.
 
+\bibitem[\protect\citeauthoryear{{Monaghan}}{1992}]{monaghan92}
+{Monaghan}, J.~J.: 1992, `{Smoothed particle hydrodynamics}'.
+\newblock {\em Ann. Rev. Astron. Astrophys.} {\bf 30}, 543--574.
+
 \bibitem[\protect\citeauthoryear{{Monaghan} and {Price}}{2004}]{mp04}
 {Monaghan}, J.~J. and D.~J. {Price}: 2004, `{Toy stars in one dimension}'.
 \newblock {\em MNRAS} {\bf 350}, 1449--1456.
