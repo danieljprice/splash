@@ -328,7 +328,7 @@ subroutine colour_demo
   real :: xmin,xmax,ymin,ymax,dx,dy,trans(6)
   character(len=10) :: string
 
-  call pgbegin(0,'/xw',1,ncolourschemes)
+  call pgbegin(0,'?',1,ncolourschemes)
 !!  call pgpaper(6.0,8.0) !!!0.25/sqrt(2.))
 
   xmin = 0.0
