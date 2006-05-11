@@ -2,7 +2,7 @@ program supersphplot
 !---------------------------------------------------------------------------------
 !
 !     SUPERSPHPLOT - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005 Daniel Price 
+!     Copyright (C) 2005-2006 Daniel Price 
 !     dprice@astro.ex.ac.uk
 !
 !     --------------------------------------------------------------------------
@@ -23,6 +23,9 @@ program supersphplot
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.5.2 (11/5/06)
+!           : S) option for saving limits and defaults; MUCH faster interactive
+!             replotting (no unnecessary re-rendering), a few other minor things
 !     1.5.1 (26/4/06)
 !           : docs updated for v1.5, other minor changes
 !     1.5   (17/3/06)
@@ -188,7 +191,7 @@ program supersphplot
   call setup_integratedkernel
   
   !
-  !--read plot limits from file
+  !--read plot limits from file (overrides get_data limits settings)
   !
   call read_limits('supersphplot.limits',ierr)
   
@@ -225,7 +228,7 @@ subroutine print_header
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/, &
    '   \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ ',/)      
 
- print "(a)",' ( version 1.5.1 [26/4/06] Copyright (C) 2005-2006)'
+ print "(a)",' ( version 1.5.2 [11/5/06] Copyright (C) 2005-2006)'
  print 30 
 30 format(/,    &
    ' * SUPERSPHPLOT comes with ABSOLUTELY NO WARRANTY.',/, &
@@ -233,8 +236,8 @@ subroutine print_header
    '   under certain conditions (see LICENSE file for details). *',/,/, &
    ' Comments, bugs, suggestions and queries to: dprice@astro.ex.ac.uk ',/, &
    ' Check for updates at: www.astro.ex.ac.uk/people/dprice/supersphplot ',/, &
-   ' Credits are always nice (but not essential) - However, if you plot ',/, &
-   ' something *really* nice, please send me a copy. ',/)
+   ' Credits are always nice (but not essential) - however, if you plot ',/, &
+   ' something beautiful, please send me a copy for the gallery. ',/)
       
 end subroutine print_header
              
