@@ -9,6 +9,8 @@ module timestep_plotting
   integer, private :: iplots,ipanel
 
   real, dimension(:), allocatable, private :: datpix1D, xgrid
+  real, dimension(:,:), allocatable, private :: datpix
+  real, dimension(:,:,:), allocatable, private :: datpix3D
   real, private :: xmin,xmax,ymin,ymax,zmin
   real, private :: rendermin,rendermax,vecmax
   real, private :: dz,zslicepos,dobserver,dscreenfromobserver
@@ -19,7 +21,10 @@ module timestep_plotting
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
   logical, private :: inewpage, tile_plots, lastplot
   logical, private :: initialise_xsec
-  logical, private :: imulti,iChangeRenderLimits
+  logical, private :: imulti,iChangeRenderLimits,irerender
+  
+  public :: initialise_plotting, plotstep
+  private
 
 contains
 
@@ -68,6 +73,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   lastplot = .false.
   iplotpart = .true.
   iChangeRenderLimits = .false.
+  irerender = .false.
   xmin = 0.
   xmax = 0.
   ymin = 0.
@@ -323,8 +329,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
 
   real, parameter :: pi = 3.1415926536
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
-  real, dimension(:,:), allocatable :: datpix
-  real, dimension(:,:,:), allocatable :: datpix3D
   real, dimension(ndim) :: xcoords,vecnew
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
   real, dimension(maxpart) :: renderplot,hh,pmass,rho,weight
@@ -437,7 +441,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
      initdataplots: if (iploty.le.ndataplots .and. iplotx.le.ndataplots) then
         xplot(1:ntoti) = dat(1:ntoti,iplotx)
         yplot(1:ntoti) = dat(1:ntoti,iploty)
-        zplot = 0. !--reset later if x-sec
+        zplot = 0.   !--set later if x-sec
         xsecmin = 0. !-- " " 
         xsecmax = 0.
         labelx = label(iplotx)
@@ -599,15 +603,22 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
            labelz = label(iplotz)
         endif
 
+        if (iadvance.ne.0) then
+           !--set 3D perspective values to off (zero) by default
+           dscreenfromobserver = 0.
+           dobserver = 0.
+           irerender = .false.
+           !
+           !--this is a flag to say whether or not rendered limits have been changed
+           !  interactively. False by default, but must retain value whilst
+           !  iadvance = 0
+           !
+           iChangeRenderLimits = .false.
+        endif
         !
         !--rotate the particles about the z (and y) axes
         !  only applies to particle plots at the moment
-        !
-        if (iadvance.ne.0) then
-           dscreenfromobserver = 0.
-           dobserver = 0.
-        endif
-                
+        !                
         if (ndim.ge.2 .and. (irotate .or. (ndim.eq.3 .and.use3Dperspective))) then
            !
            !--convert angles to radians
@@ -620,12 +631,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
               print "(1x,a,f6.2)",'rotating particles about y by ',angletempy
               print "(1x,a,f6.2)",'rotating particles about x by ',angletempx
            endif
-           if (ndim.eq.3) then
-              if (iadvance.ne.0 .and. use3Dperspective) then
+           if (ndim.eq.3 .and. use3Dperspective) then
+              if (iadvance.ne.0) then
                  dscreenfromobserver = dzscreenfromobserver
                  dobserver = zobserver
               endif
-              if (use3Dperspective .and. (.not.x_sec .or. x_sec.and.use3Dopacityrendering)) then
+              if (.not.x_sec .or. x_sec.and.use3Dopacityrendering) then
                  print*,' observer height = ',dobserver,', screen at ',dobserver-dscreenfromobserver
               endif
            endif
@@ -663,33 +674,42 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
               npixz = nxsec
            endif
 
-           if (allocated(datpix)) deallocate(datpix)
-           if (allocated(datpix3D)) deallocate(datpix3D)
+           if (iadvance.ne.0 .or. irerender) then
+              if (allocated(datpix)) then
+                 if (npixx.ne.size(datpix(:,1)) .or. npixy.ne.size(datpix(1,:))) then
+                    deallocate(datpix)           
+                    allocate (datpix(npixx,npixy))
+                 endif
+              else
+                 allocate (datpix(npixx,npixy))                 
+              endif
 
-           select case(ndim)
-           case(2)
-              !!--interpolate to 2D grid
-              !!  allocate memory for rendering array
-              if (.not. x_sec) then
-                 allocate ( datpix(npixx,npixy) )
-                 call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
-                      hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
-                      ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,inormalise)
-              endif
-           case(3)
-              !!--interpolation to 3D grid - then take multiple cross sections/projections
-              !!  do this if taking more than 2 cross sections, otherwise use fast xsec
-              if (x_sec.and.nxsec.gt.2) then
-                 !!--allocate memory for 3D rendering array
-                 allocate ( datpix3D(npixx,npixy,npixz) )
-                 !!--interpolate from particles to 3D grid
-                 call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
-                      zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
-                      dat(1:ninterp,irenderplot), &
-                      ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dz, &
-                      inormalise)
-              endif
-           end select
+              select case(ndim)
+              case(2)
+                 !!--interpolate to 2D grid
+                 !!  allocate memory for rendering array
+                 if (.not. x_sec) then
+                    allocate ( datpix(npixx,npixy) )
+                    call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
+                         hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                         ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,inormalise)
+                 endif
+              case(3)
+                 !!--interpolation to 3D grid - then take multiple cross sections/projections
+                 !!  do this if taking more than 2 cross sections, otherwise use fast xsec
+                 if (x_sec.and.nxsec.gt.2) then
+                    !!--allocate memory for 3D rendering array
+                    if (allocated(datpix3D)) deallocate(datpix3D)
+                    allocate ( datpix3D(npixx,npixy,npixz) )
+                    !!--interpolate from particles to 3D grid
+                    call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
+                         zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
+                         dat(1:ninterp,irenderplot), &
+                         ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dz, &
+                         inormalise)
+                 endif
+              end select
+           endif
 
         endif
         !
@@ -698,12 +718,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
         iplotpart = .true.
         if (ivectorplot.gt.0) iplotpart = iplotpartvec
         if (irenderplot.gt.0) iplotpart = .false.
-        !
-        !--this is a flag to say whether or not rendered limits have been changed
-        !  interactively. False by default, but must retain value whilst
-        !  iadvance = 0
-        !
-        if (iadvance.ne.0) iChangeRenderLimits = .false.
 
         !
         !%%%%%%%%%%%%%%% loop over cross-section slices %%%%%%%%%%%%%%%%%%%%%%%
@@ -728,8 +742,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
            if (irenderplot.gt.ndim .and. ndim.eq.3) then
 
               !!--allocate memory for 2D rendered array
-              if (allocated(datpix)) deallocate(datpix)
-              allocate ( datpix(npixx,npixy) )
+              if (iadvance.ne.0) then
+                 if (allocated(datpix)) then
+                    if (npixx.ne.size(datpix(:,1)) .or. npixy.ne.size(datpix(1,:))) then
+                       deallocate(datpix)
+                       print*,'reallocating...'
+                       allocate ( datpix(npixx,npixy) )
+                    endif
+                 else
+                    print*,'allocating...'
+                    allocate ( datpix(npixx,npixy) )
+                 endif
+              endif
 
               !------------------------------------------------------------------------
               ! if we have rendered to a 3D grid, take cross sections from this array
@@ -746,7 +770,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                  !  or do a fast projection/cross section of 3D data to 2D array
                  !-------------------------------------------------------------------
                  
-                 !--set limits for opacity rendering
+                 !--set limits for opacity rendering 
+                 !  (these must be known before the interpolate call)
                  if (use3Dperspective .and. use3Dopacityrendering) then
                     if (iadvance.ne.0 .or. .not.iChangeRenderLimits) then
                        if (iadapt) then
@@ -764,48 +789,51 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                     endif
                  endif
 
-                 if (x_sec) then
-                    if (use3Dperspective .and. use3Dopacityrendering) then
-                       !!--do surface-rendered cross-section with opacity
-                       print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
-                            ' : opacity-rendered cross section', xmin,ymin                    
-                       call interpolate3D_proj_opacity( &
-                            xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                            pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
-                            dat(1:ninterp,iz), &
-                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver, &
-                            dscreenfromobserver,rkappa,zslicepos, &
-                            rendermin,rendermax,itrans(irenderplot),istep)                    
-                    elseif (use3Dperspective) then
-                       print*,'ERROR: X_SEC WITH 3D PERSPECTIVE NOT IMPLEMENTED'
-                       datpix = 0.
-                    else
-                       !!--do fast cross-section
-                       print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
-                            ' : fast cross section', xmin,ymin
-                       call interpolate3D_fastxsec( &
-                            xplot(1:ninterp),yplot(1:ninterp), &
-                            zplot(1:ninterp),hh(1:ninterp), &
-                            weight(1:ninterp),dat(1:ninterp,irenderplot), &
-                            ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
-                            inormalise)
-                    endif
-                 else                 
-                    if (use3Dperspective .and. use3Dopacityrendering) then
-                       !!--do fast projection with opacity
-                       call interpolate3D_proj_opacity( &
-                            xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                            pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
-                            dat(1:ninterp,iz), &
-                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver, &
-                            dscreenfromobserver,rkappa,huge(zslicepos), &
-                            rendermin,rendermax,itrans(irenderplot),istep)                    
-                    else
-                       !!--do fast projection of z integrated data (e.g. column density)
-                       call interpolate3D_projection( &
-                            xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                            hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
-                            ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver,dscreenfromobserver)
+                 !--only rerender if absolutely necessary
+                 if (iadvance.ne.0 .or. irerender) then
+                    if (x_sec) then
+                       if (use3Dperspective .and. use3Dopacityrendering) then
+                          !!--do surface-rendered cross-section with opacity
+                          print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
+                               ' : opacity-rendered cross section', xmin,ymin                    
+                          call interpolate3D_proj_opacity( &
+                               xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                               pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               dat(1:ninterp,iz), &
+                               ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver, &
+                               dscreenfromobserver,rkappa,zslicepos, &
+                               rendermin,rendermax,itrans(irenderplot),istep)                    
+                       elseif (use3Dperspective) then
+                          print*,'ERROR: X_SEC WITH 3D PERSPECTIVE NOT IMPLEMENTED'
+                          datpix = 0.
+                       else
+                          !!--do fast cross-section
+                          print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
+                               ' : fast cross section', xmin,ymin
+                          call interpolate3D_fastxsec( &
+                               xplot(1:ninterp),yplot(1:ninterp), &
+                               zplot(1:ninterp),hh(1:ninterp), &
+                               weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                               ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
+                               inormalise)
+                       endif
+                    else                 
+                       if (use3Dperspective .and. use3Dopacityrendering) then
+                          !!--do fast projection with opacity
+                          call interpolate3D_proj_opacity( &
+                               xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                               pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               dat(1:ninterp,iz), &
+                               ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver, &
+                               dscreenfromobserver,rkappa,huge(zslicepos), &
+                               rendermin,rendermax,itrans(irenderplot),istep)                    
+                       else
+                          !!--do fast projection of z integrated data (e.g. column density)
+                          call interpolate3D_projection( &
+                               xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                               hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                               ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver,dscreenfromobserver)
+                       endif
                     endif
                  endif
 
@@ -886,8 +914,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                  !---------------------------------------------------------------
                  ! scalar quantity which has been rendered to a 2D pixel array (datpix)
                  !---------------------------------------------------------------
-                 !!--do transformations on rendered array  
-                 call transform2(datpix,itrans(irenderplot))
+                 !!--do transformations on rendered array (but only the first time!)
+                 if (iadvance.ne.0 .or. irerender) then
+                    call transform2(datpix,itrans(irenderplot))
+                 endif
                  
                  !!--set label for rendered quantity
                  labelrender = label(irenderplot)
@@ -900,13 +930,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                  labelrender = transform_label(labelrender,itrans(irenderplot))
                  
                  !!--limits for rendered quantity
+                 write(string,"(i8)") itrans(irenderplot) ! used to determine whether logged or not
                  if (iadvance.ne.0 .or. .not.iChangeRenderLimits) then
                     if (iadapt .and. .not.(use3Dperspective.and.use3Dopacityrendering.and.ndim.eq.3)) then
                        !!--if adaptive limits, find limits of rendered array
-                       rendermin = minval(datpix)
+                       if (index(string,'1').ne.0) then
+                          rendermin = minval(datpix,mask=datpix.gt.-666.) ! see below
+                       else
+                          rendermin = minval(datpix)
+                       endif
                        rendermax = maxval(datpix)
                        print*,'adapting render limits'
-                    else
+                    elseif (.not.iadapt) then
                        !!--or apply transformations to fixed limits
                        rendermin = lim(irenderplot,1)
                        rendermax = lim(irenderplot,2)
@@ -917,11 +952,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                  !!--if log, then set zero values to minimum
                  !!  (must be done after minimum is known)
                  !!
-                 write(string,"(i8)") itrans(irenderplot)
-                 if (index(string(1:len_trim(string)),'1').ne.0) then
+                 if (index(string,'1').ne.0) then
                     !!print*,'setting zero values to ',rendermin,' on log array'
                     where (abs(datpix).lt.tiny(datpix))
-                       datpix = rendermin
+                       datpix = -666. ! just some very negative number !rendermin
                     end where
                     !!  also do not let max=0 as this is suspiciously wrong
                     if (iadapt .and. abs(rendermax).lt.tiny(datpix)) then
@@ -970,6 +1004,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                           !!--if adaptive limits, find limits of rendered array
                           rendermin = minval(renderplot(1:ntoti))
                           rendermax = maxval(renderplot(1:ntoti))
+                          print*,'adapting render limits'
                        else
                           !!--or apply transformations to fixed limits
                           rendermin = lim(irenderpart,1)
@@ -1088,12 +1123,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                  else
                     irendered = irenderplot
                  endif
+                 iChangeRenderLimits = .false.
                  call interactive_part(ninterp,iplotx,iploty,iplotz,irendered,ivecx,ivecy, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       hh(1:ninterp),icolourme(1:ninterp), &
                       xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax, &
                       angletempx,angletempy,angletempz,ndim,x_sec,zslicepos,dz, &
-                      dobserver,dscreenfromobserver, &
+                      dobserver,dscreenfromobserver,irerender, &
                       itrackpart,icolours,iadvance,ipos,iendatstep)
                  !--turn rotation on if necessary
                  if (abs(angletempx-anglex).gt.tol) irotate = .true.
@@ -1201,7 +1237,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                    hh(1:ntoti),icolourme(1:ntoti), &
                    xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax, &
                    angletempx,angletempy,angletempz,ndim, &
-                   .false.,dummy,dummy,dummy,dummy,itrackpart,icolours,iadvance,ipos,iendatstep)
+                   .false.,dummy,dummy,dummy,dummy,irerender, &
+                   itrackpart,icolours,iadvance,ipos,iendatstep)
               if (iadvance.eq.-666) return
            elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
               !

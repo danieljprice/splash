@@ -5,6 +5,8 @@ module interactive_routines
  real, private :: xpt
  real, private :: ypt
  
+ private
+ 
 contains
 !
 !--interactive tools on particle plots
@@ -34,11 +36,13 @@ contains
 !
 ! OUTPUT:
 !   iadvance : integer telling the loop how to advance the timestep
+!   irerender : if set, redo rendering. Anything which requires rendering
+!               to be recalculated must set this
 !
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   xcoords,ycoords,zcoords,hi,icolourpart,xmin,xmax,ymin,ymax, &
   rendermin,rendermax,vecmax,anglex,angley,anglez,ndim,x_sec,zslicepos,dzslice, &
-  zobserver,dscreen,itrackpart,icolourscheme,iadvance,istep,ilaststep)
+  zobserver,dscreen,irerender,itrackpart,icolourscheme,iadvance,istep,ilaststep)
   implicit none
   integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy,istep,ilaststep
   integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
@@ -48,6 +52,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax
   real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
   logical, intent(in) :: x_sec
+  logical, intent(out) :: irerender
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,nc,ierr,ixsec
   integer :: nmarked,ncircpart,itrackparttemp
@@ -82,6 +87,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   itrackparttemp = itrackpart
   iexit = .false.
   rotation = .false.
+  irerender = .false.
   if (iplotx.le.ndim .and. iploty.le.ndim .and. ndim.ge.2) rotation = .true.
   
   if (iplotz.gt.0 .and. x_sec) then
@@ -104,6 +110,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      !--find closest particle
      !  
      rmin = 1.e6
+     iclosest = 0
      do i=1,npart
         rr = (xcoords(i)-xpt)**2 + (ycoords(i)-ypt)**2
         if (rr.lt.rmin) then
@@ -117,25 +124,33 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      !--particle plot stuff
      !
      case('p')
-        print*,' closest particle = ',iclosest,'x = ',xcoords(iclosest),' y =',ycoords(iclosest)
-        call pgnumb(iclosest,0,1,string,nc)
-        call pgqch(charheight)
-        call pgsch(2.0)
-        call pgtext(xcoords(iclosest),ycoords(iclosest),string(1:nc))
-        call pgsch(charheight)
-     case('c','C')
-        print*,'plotting circle of interaction on particle ',iclosest, &
-               ' h = ',hi(iclosest)
-        !--save settings for these
-        ncircpart = ncircpart + 1
-        if (ncircpart.gt.size(icircpart)) then
-           print*,'WARNING: ncircles > array limits, cannot save'
-           ncircpart = size(icircpart)
+        if (iclosest.gt.0 .and. iclosest.le.npart) then
+           print*,' closest particle = ',iclosest,'x = ',xcoords(iclosest),' y =',ycoords(iclosest)
+           call pgnumb(iclosest,0,1,string,nc)
+           call pgqch(charheight)
+           call pgsch(2.0)
+           call pgtext(xcoords(iclosest),ycoords(iclosest),string(1:nc))
+           call pgsch(charheight)
         else
-           icircpart(ncircpart) = iclosest
+           print*,'error: could not determine closest particle'
         endif
-        call pgsfs(2)
-        call pgcirc(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
+     case('c','C')
+        if (iclosest.gt.0 .and. iclosest.le.npart) then
+           print*,'plotting circle of interaction on particle ',iclosest, &
+                  ' h = ',hi(iclosest)
+           !--save settings for these
+           ncircpart = ncircpart + 1
+           if (ncircpart.gt.size(icircpart)) then
+              print*,'WARNING: ncircles > array limits, cannot save'
+              ncircpart = size(icircpart)
+           else
+              icircpart(ncircpart) = iclosest
+           endif
+           call pgsfs(2)
+           call pgcirc(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
+        else
+           print*,'error: could not determine closest particle'
+        endif
      case('t')
      !--track closest particle (must save to activate)
         if (iplotx.le.ndim .and. iploty.le.ndim) then
@@ -144,9 +159,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               itrackparttemp = 0
               print*,' particle tracking limits OFF'
            else
-              itrackparttemp = iclosest
-              print*,' limits set to track particle ',itrackparttemp
-              print*,' save settings to activate '
+              if (iclosest.gt.0 .and. iclosest.le.npart) then
+                 itrackparttemp = iclosest
+                 print*,' limits set to track particle ',itrackparttemp
+                 print*,' save settings to activate '
+              else
+                 print*,'error: could not determine closest particle'
+              endif
            endif
         endif
      case('g')   ! draw a line between two points
@@ -334,6 +353,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               ymin = yptmin
               ymax = yptmax
               iadvance = 0
+              irerender = .true.
               iexit = .true.
            case('0','1','2','3','4','5','6','7','8','9') ! mark particles
               if (irender.le.0) then
@@ -422,6 +442,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            xmin = xpt - 0.5*xlength
            xmax = xpt + 0.5*xlength
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
         if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmax) then
@@ -429,6 +450,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            ymin = ypt - 0.5*ylength
            ymax = ypt + 0.5*ylength
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
         if (xpt.gt.xmax .and. irender.gt.0) then
@@ -450,6 +472,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               xmin = minval(xcoords)
               xmax = maxval(xcoords)
               iadvance = 0
+              irerender = .true.
               iexit = .true.
            endif
            if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmax) then
@@ -457,6 +480,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               ymin = minval(ycoords)
               ymax = maxval(ycoords)
               iadvance = 0
+              irerender = .true.
               iexit = .true.
            endif
         endif
@@ -487,6 +511,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         if (xpt.gt.xmax .and. irender.gt.0) then
            call change_itrans(irender,rendermin,rendermax)
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         elseif (xpt.lt.xmin) then
            if (iploty.le.ndim .and. irender.gt.0) then
@@ -513,6 +538,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing z rotation angle by -15 degrees...'
            anglez = anglez - 15.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      case('<')
@@ -520,6 +546,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing z rotation angle by -30 degrees...'
            anglez = anglez - 30.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      case('.')
@@ -527,6 +554,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing z rotation angle by 15 degrees...'
            anglez = anglez + 15.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      case('>')
@@ -534,6 +562,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing z rotation angle by 30 degrees...'
            anglez = anglez + 30.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      case('/')
@@ -541,6 +570,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing y rotation angle by -15 degrees...'
            angley = angley - 15.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      case('?')
@@ -548,6 +578,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing y rotation angle by -30 degrees...'
            angley = angley - 30.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      case('\')
@@ -555,6 +586,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing y rotation angle by 15 degrees...'
            angley = angley + 15.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      case('|')
@@ -562,6 +594,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing y rotation angle by 30 degrees...'
            angley = angley + 30.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      case('[')
@@ -569,6 +602,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing x rotation angle by -15 degrees...'
            anglex = anglex - 15.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      case('{')
@@ -576,6 +610,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing x rotation angle by -30 degrees...'
            anglex = anglex - 30.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      case(']')
@@ -583,6 +618,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing x rotation angle by 15 degrees...'
            anglex = anglex + 15.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      case('}')
@@ -590,6 +626,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing x rotation angle by 30 degrees...'
            anglex = anglex + 30.
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      !
@@ -633,6 +670,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               zslicepos = yint/COS(anglerad)
               print*,'iploty = ',ixsec, ' xsecpos = ',zslicepos
               iadvance = 0
+              irerender = .true.
               iexit = .true.
            case default
               print*,' action cancelled'
@@ -647,11 +685,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               print*,'shifting cross section position up by ',dzslice
               zslicepos = zslicepos + dzslice
               iadvance = 0
+              irerender = .true.
               iexit = .true.
            else
               print*,'shifting perspective position up ',dscreen
               zobserver = zobserver + dscreen
               iadvance = 0
+              irerender = .true.
               iexit = .true.           
            endif
         endif
@@ -661,11 +701,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               print*,'shifting cross section position up by ',2.*dzslice
               zslicepos = zslicepos + 2.*dzslice
               iadvance = 0
+              irerender = .true.
               iexit = .true.
            else
               print*,'shifting perspective position up by ',2.*dscreen
               zobserver = zobserver + 2.*dscreen
               iadvance = 0
+              irerender = .true.
               iexit = .true.           
            endif
         endif
@@ -674,29 +716,25 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            if (x_sec) then
               print*,'shifting cross section position down by ',dzslice
               zslicepos = zslicepos - dzslice
-              iadvance = 0
-              iexit = .true.
            else
               print*,'shifting perspective position down by ',dscreen
               zobserver = zobserver - dscreen
-              iadvance = 0
-              iexit = .true.           
            endif
+           iadvance = 0
+           irerender = .true.
+           iexit = .true.           
         endif     
      case('D') ! move cross section down by 2*dxsec
         if (iplotz.gt.0 .and. ndim.eq.3) then
            if (x_sec) then
               print*,'shifting cross section position down by ',2.*dzslice
               zslicepos = zslicepos - 2.*dzslice
-              iadvance = 0
-              iexit = .true.
            else
               print*,'shifting perspective position down by ',2.*dscreen
               zobserver = zobserver - 2.*dscreen
-              iadvance = 0
-              iexit = .true.           
            endif
            iadvance = 0
+           irerender = .true.
            iexit = .true.
         endif
      !
@@ -705,21 +743,33 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      case('G') ! move legend here
         print*,'setting legend position to current location...'
         call mvlegend(xpt,ypt,xmin,xmax,ymax)
+        iadvance = 0
+        iexit = .true.
      case('T') ! move title here
         print*,'setting title position to current location...'
         call mvtitle(xpt,ypt,xmin,xmax,ymax)
+        iadvance = 0
+        iexit = .true.
      case('H') ! move vector legend here
         if (ivecx.gt.0 .and. ivecy.gt.0) then
            print*,'setting vector plot legend to current location...'
            call mvlegendvec(xpt,ypt,xmin,xmax,ymax)
         endif
+        iadvance = 0
+        iexit = .true.
      case('m') ! change colour map (next scheme)
         call change_colourmap(icolourscheme,1)
+        iadvance = 0
+        iexit = .true.
      case('M') ! change colour map (previous scheme)
         call change_colourmap(icolourscheme,-1)
+        iadvance = 0
+        iexit = .true.
      case('i') ! invert colour map
         icolourscheme = -icolourscheme
         call change_colourmap(icolourscheme,0)
+        iadvance = 0
+        iexit = .true.
      !
      !--timestepping
      !
@@ -732,6 +782,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         iexit = .true.
      case('r','R') ! replot
         iadvance = 0
+        irerender = .true.
         iexit = .true.
      case(' ','n','N') ! space
         iadvance = abs(iadvance)
