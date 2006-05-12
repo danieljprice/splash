@@ -10,6 +10,7 @@ program test_interpolation
  integer, parameter :: ipixx = 1000, ipixy = 1000
  integer :: npart,npartx,nparty,npartz
  integer :: npixx, npixy,i
+ real, parameter :: errtol = 1.e-7
  real, dimension(idim) :: x,y,z,pmass,h,rho
  real, dimension(idim) :: dat,weight
  real, dimension(ipixx,ipixy) :: datpix
@@ -17,6 +18,7 @@ program test_interpolation
  real :: xmin,xmax,ymin,ymax,zmin,zmax
  real :: columndens,dxpix,err,dens,datmax
  real :: trans(6)
+ logical :: ifastrender
  
  xmin = -0.5
  xmax = 0.5
@@ -24,6 +26,8 @@ program test_interpolation
  ymax = 0.5
  zmin = -0.5
  zmax = 0.5
+ ifastrender = .true.
+ print*,'accelerated rendering = ',ifastrender
  call pgopen('/xw')
 ! call pgenv(xmin,xmax,ymin,ymax,0,0)
 ! call pglabel('x','y',' ')
@@ -41,7 +45,13 @@ program test_interpolation
 !
 !--check value of the integration at q=zero (can do this analytically)
 !
- print*,'coltable(0) = ',coltable(0),' should be ',2.*0.75/3.1415926536
+ if (abs(coltable(0)-1.5/3.1415926536).lt.errtol) then
+    print*,'CENTRAL KERNEL TABLE OK'
+ else
+    print*,'coltable(0) = ',coltable(0),' should be ',2.*0.75/3.1415926536
+    print*,'error = ',abs(coltable(0)-1.5/3.1415926536)
+    print*,'ERROR: CENTRAL INTEGRATED KERNEL VALUE WRONG'
+ endif
 !
 !--plot integrated kernel
 !
@@ -68,20 +78,20 @@ program test_interpolation
 !
  print*,'SINGLE PARTICLE TEST'
  npart = 1
- npixx = 1000
- npixy = 1000
+ npixx = 10
+ npixy = 10
  x(1) = 0.5*(xmin + xmax)
  y(1) = 0.5*(ymin + ymax)
  z(1) = 0.5*(zmin + zmax)
  rho(1) = 1.0
  pmass(1) = 2.0
- h(1) = 0.5*xmax
+ h(1) = 0.35*xmax
  weight(1) = 1./1.5**3
  dat(1) = rho(1)
- dxpix = (xmax-xmin)/real(npixx)
+ dxpix = (xmax-xmin)/real(npixx) 
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,.false.)
  call pgenv(xmin,xmax,ymin,ymax,1,0)
  trans = 0.
  trans(1) = xmin - 0.5*dxpix
@@ -90,8 +100,30 @@ program test_interpolation
  trans(6) = dxpix
  datmax = maxval(datpix(1:npixx,1:npixy))
  print*,'max datpix = ',datmax,maxloc(datpix(1:npixx,1:npixy))
-
- !!print*,'datpix = ',datpix(1:npixx,1:npixy)
+ if (abs(datmax-0.035367373).gt.errtol) then
+    print*,'FAILED: central maximum wrong, error = ',abs(datmax-0.035367373)
+ else
+    print*,'OK: central maximum seems fine'
+ endif
+ call pgimag(datpix,ipixx,ipixy,1,npixx,1,npixy,0.0,datmax,trans)
+ 
+ print*,'TEST WITH ACCELERATION'
+ call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
+                               weight(1:npart),dat(1:npart),npart,xmin,ymin, &
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,.true.)
+ call pgenv(xmin,xmax,ymin,ymax,1,0)
+ trans = 0.
+ trans(1) = xmin - 0.5*dxpix
+ trans(2) = dxpix
+ trans(4) = ymin - 0.5*dxpix
+ trans(6) = dxpix
+ datmax = maxval(datpix(1:npixx,1:npixy))
+ print*,'max datpix = ',datmax,maxloc(datpix(1:npixx,1:npixy))
+ if (abs(datmax-0.035367373).gt.errtol) then
+    print*,'FAILED: central maximum wrong, error = ',abs(datmax-0.035367373)
+ else
+    print*,'OK: central maximum seems fine'
+ endif
  call pgimag(datpix,ipixx,ipixy,1,npixx,1,npixy,0.0,datmax,trans)
 !
 !--setup two overlapping particles
@@ -106,13 +138,13 @@ program test_interpolation
  z(2) = 0.5*(zmin + zmax)
  rho(2) = 1.0
  pmass(2) = 2.0
- h(2) = 0.5*xmax
+ h(1:2) = 0.5*xmax
  weight(2) = 1./1.5**3
  dat(2) = rho(2)
  dxpix = (xmax-xmin)/real(npixx)
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,ifastrender)
  call pgenv(xmin,xmax,ymin,ymax,1,0)
  trans = 0.
  trans(1) = xmin - 0.5*dxpix
@@ -141,7 +173,7 @@ program test_interpolation
 !
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,ifastrender)
 !
 !--check output
 !
@@ -150,6 +182,11 @@ program test_interpolation
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,columndens,err)
  print "(70('-'))"
  print*,'average error in column density interpolation = ',err
+ if (err.gt.0.05) then
+    print*,'FAILED: average error > usual'
+ else
+    print*,'OK: average error same as usual'
+ endif
 
  call pgenv(xmin,xmax,ymin,ymax,0,0)
 ! call pgpixl(datpix,ipixx,ipixy,1,npixx,1,npixy,xmin,xmax,ymin,ymax)
@@ -208,7 +245,7 @@ program test_interpolation
  dxpix = (xmax-xmin)/real(npixx)
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,ifastrender)
  
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,columndens,err)
  print*,'average error in projection = ',err
@@ -224,7 +261,7 @@ program test_interpolation
  dxpix = (xmax-xmin)/real(npixx)
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,ifastrender)
  
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,columndens,err)
  print*,'average error in projection = ',err

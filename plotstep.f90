@@ -268,8 +268,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                     npartoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
   use filenames, only:nsteps
-  use exact, only:exact_solution, &
-             atstar,ctstar,sigma
+  use exact, only:exact_solution,atstar,ctstar,sigma
   use toystar1D, only:exact_toystar_ACplane
   use toystar2D, only:exact_toystar_ACplane2D
   use labels, only:label,labeltype,labelvec,iamvec, &
@@ -288,7 +287,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                      charheightmm,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage, &
                      hposlegend,vposlegend,fjustlegend,legendtext
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
-                       iPlotColourBar,icolour_particles,inormalise_interpolations
+      iPlotColourBar,icolour_particles,inormalise_interpolations,ifastrender
   use settings_vecplot, only:npixvec, iplotpartvec
   use settings_xsecrot
   use settings_powerspec
@@ -832,7 +831,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                           call interpolate3D_projection( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
-                               ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver,dscreenfromobserver)
+                               ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
+                               dobserver,dscreenfromobserver,ifastrender)
                        endif
                     endif
                  endif
@@ -1425,7 +1425,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
 
 
   enddo over_plots ! over plots per timestep (nyplot)
-  
+  if (iadvance.ne.0) then
+     if (allocated(datpix)) deallocate(datpix)
+     if (allocated(datpix3D)) deallocate(datpix3D)
+  endif
+    
 contains
 
 !----------------------------------------------

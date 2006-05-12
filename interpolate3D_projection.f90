@@ -135,20 +135,23 @@ end function wfromtable
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobserver,dscreen)
+     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobserver,dscreen,useaccelerate)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreen
   real, intent(out), dimension(npixx,npixy) :: datsmooth
+  real :: row(npixx)
 
-  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  integer :: iprintinterval, iprintnext, iprogress, itmin
-  real :: hi,hi1,hi21,radkern,wab,rab2,q2
-  real :: term,dx,dy,dy2,xpix,ypix,zfrac
+  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpart
+  integer :: iprintinterval, iprintnext, iprogress, itmin,ipixi,jpixi,jpixcopy
+  real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
+  real :: term,dy,dy2,ypix,zfrac
   real :: t_start,t_end,t_used,tsec
-  logical :: iprintprogress
+  logical :: iprintprogress,accelerate,useaccelerate
+  
+  !useaccelerate = .true.
 
   datsmooth = 0.
   term = 0.
@@ -178,6 +181,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
 !--get starting CPU time
 !
   call cpu_time(t_start)
+
+  xminpix = xmin - 0.5*pixwidth
+  yminpix = ymin - 0.5*pixwidth
   
   over_particles: do i=1,npart
      !
@@ -190,6 +196,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
            iprintnext = iprintnext + iprintinterval
         endif
      endif
+     xi = x(i)
+     yi = y(i)
      !
      !--set kernel related quantities
      !
@@ -207,42 +215,98 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
      radkern = 2.*hi  !radius of the smoothing kernel
      !
      !--for each particle work out which pixels it contributes to
-     !               
-     ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-     jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-     ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
-     jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
+     !
+     npixpart = int(radkern/pixwidth) + 1
+     jpixi = int((yi-ymin)/pixwidth) + 1
+     ipixi = int((xi-xmin)/pixwidth) + 1
+     ipixmin = ipixi - npixpart
+     ipixmax = ipixi + npixpart
+     jpixmin = jpixi - npixpart
+     jpixmax = jpixi + npixpart
 
-     if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
-     if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-     if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
-     if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
+!     ipixmin = int((xi - radkern - xmin)/pixwidth)
+!     jpixmin = int((yi - radkern - ymin)/pixwidth)
+!     ipixmax = ipixmin + npixpart !!int((xi + radkern - xmin)/pixwidth) + 1
+!     jpixmax = jpixmin + npixpart !!int((yi + radkern - ymin)/pixwidth) + 1
+     
      !
      !--loop over pixels, adding the contribution from this particle
+     !  copy by quarters if all pixels within domain
      !
-     do jpix = jpixmin,jpixmax
-        ypix = ymin + (jpix-0.5)*pixwidth
-        dy = ypix - y(i)
-        dy2 = dy*dy
-        do ipix = ipixmin,ipixmax
-           xpix = xmin + (ipix-0.5)*pixwidth
-           dx = xpix - x(i)
-           rab2 = dx*dx + dy2
-           q2 = rab2*hi21
-           !
-           !--SPH kernel - integral through cubic spline
-           !  interpolate from a pre-calculated table
-           !
-           if (q2.lt.radkernel2) then
-              wab = wfromtable(q2)
+     accelerate = useaccelerate .and. ipixmin.ge.1 .and. ipixmax.le.npixx &
+                                .and. jpixmin.ge.1 .and. jpixmax.le.npixy
+     
+     if (accelerate) then
+        !--adjust xi, yi to centre of pixel
+        xi = xminpix + ipixi*pixwidth
+        yi = yminpix + jpixi*pixwidth
+        do jpix = jpixi,jpixmax
+           ypix = yminpix + jpix*pixwidth
+           dy = ypix - yi
+           dy2 = dy*dy
+           row = 0.
+           do ipix = ipixi,ipixmax
+              q2 = ((xminpix + ipix*pixwidth - xi)**2 + dy2)*hi21
               !
-              !--calculate data value at this pixel using the summation interpolant
-              !                  
-              datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab          
+              !--SPH kernel - integral through cubic spline
+              !  interpolate from a pre-calculated table
+              !
+              if (q2.lt.radkernel2) then
+                 wab = wfromtable(q2)
+                 !
+                 !--calculate data value at this pixel using the summation interpolant
+                 !                  
+                 datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
+                 row(ipix) = term*wab
+              endif
+           enddo
+           !--copy top right -> top left
+           do ipix=ipixmin,ipixi-1
+              datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + row(ipixmax-(ipix-ipixmin))
+           enddo
+           if (jpix.ne.jpixi) then
+              jpixcopy = jpixi - (jpix-jpixi)
+              !--copy top right -> bottom left 
+              do ipix=ipixmin,ipixi-1
+                 datsmooth(ipix,jpixcopy) = datsmooth(ipix,jpixcopy) + row(ipixmax-(ipix-ipixmin))
+              enddo
+              !--copy top right -> bottom right
+              do ipix=ipixi,ipixmax
+                 datsmooth(ipix,jpixcopy) = datsmooth(ipix,jpixcopy) + row(ipix)
+              enddo
            endif
-
         enddo
-     enddo
+          
+     else
+
+        if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
+        if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
+        if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
+        if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
+
+        do jpix = jpixmin,jpixmax
+           ypix = yminpix + jpix*pixwidth
+           dy = ypix - yi
+           dy2 = dy*dy
+           do ipix = ipixmin,ipixmax
+              !xpix = xminpix + ipix*pixwidth
+              !dx = xpix - xi
+              !rab2 = (xminpix + ipix*pixwidth - xi)**2 + dy2
+              q2 = ((xminpix + ipix*pixwidth - xi)**2 + dy2)*hi21
+              !
+              !--SPH kernel - integral through cubic spline
+              !  interpolate from a pre-calculated table
+              !
+              if (q2.lt.radkernel2) then
+                 wab = wfromtable(q2)
+                 !
+                 !--calculate data value at this pixel using the summation interpolant
+                 !                  
+                 datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab          
+              endif
+           enddo
+        enddo
+     endif
 
   enddo over_particles
 !
