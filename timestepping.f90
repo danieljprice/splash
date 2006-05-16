@@ -105,8 +105,13 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
      !
      !--write timestepping log
      !
-     print 33, time(ilocindat),istep
-33   format (5('-'),' t = ',f9.4,', dump #',i5,1x,18('-'))
+     if (time(ilocindat).lt.1.e-2 .or. time(ilocindat).gt.1.e2) then
+        print 33, time(ilocindat),istep
+     else     
+        print 34, time(ilocindat),istep
+     endif
+33   format (5('-'),' t = ',1pe8.2,', dump #',i5,1x,18('-'))
+34   format (5('-'),' t = ',f8.2,', dump #',i5,1x,18('-'))
 
      istepsonpage = istepsonpage + 1
      if (nstepsperpage.gt.1 .and. istepsonpage.le.nstepsperpage) then
