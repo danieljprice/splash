@@ -144,8 +144,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
   real, intent(out), dimension(npixx,npixy) :: datsmooth
   real :: row(npixx)
 
-  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpart
-  integer :: iprintinterval, iprintnext, iprogress, itmin,ipixi,jpixi,jpixcopy
+  integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpart
+  integer :: iprintinterval, iprintnext, itmin,ipixi,jpixi,jpixcopy
+  integer(kind=8) :: iprogress,i
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
   real :: term,dy,dy2,ypix,zfrac
   real :: t_start,t_end,t_used,tsec
