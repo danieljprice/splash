@@ -149,8 +149,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
   integer(kind=8) :: iprogress,i
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
   real :: term,dy,dy2,ypix,zfrac
+  real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
   real :: t_start,t_end,t_used,tsec
-  logical :: iprintprogress,accelerate,useaccelerate
+  logical :: iprintprogress,use3Dperspective,accelerate,useaccelerate
   
   !useaccelerate = .true.
 
@@ -178,6 +179,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
   iprintinterval = 25
   if (npart.ge.1e6) iprintinterval = 10
   iprintnext = iprintinterval
+  use3Dperspective = abs(dscreen).gt.tiny(dscreen)
 !
 !--get starting CPU time
 !
@@ -185,6 +187,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
 
   xminpix = xmin - 0.5*pixwidth
   yminpix = ymin - 0.5*pixwidth
+  xmax = xmin + npixx*pixwidth
+  ymax = ymin + npixy*pixwidth
   
   over_particles: do i=1,npart
      !
@@ -197,23 +201,38 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
            iprintnext = iprintnext + iprintinterval
         endif
      endif
-     xi = x(i)
-     yi = y(i)
      !
-     !--set kernel related quantities
+     !--set h related quantities
      !
      hi = hh(i)
-     term = weight(i)*hi*dat(i) ! h gives the z length scale (NB: no perspective)
      if (hi.le.0.) then
         print*,'interpolate3D_proj: error: h <= 0 ',i,hi
         return
-     elseif (abs(dscreen).gt.tiny(dscreen)) then
+     elseif (use3Dperspective) then
         zfrac = abs(dscreen/(z(i)-zobserver))
         hi = hi*zfrac
      endif
+     radkern = radkernel*hi  !radius of the smoothing kernel
+     
+     !--cycle as soon as we know the particle does not contribute
+     xi = x(i)
+     xpixmin = xi - radkern
+     if (xpixmin.gt.xmax) cycle over_particles
+     xpixmax = xi + radkern
+     if (xpixmax.lt.xmin) cycle over_particles
+     
+     yi = y(i)
+     ypixmin = yi - radkern
+     if (ypixmin.gt.ymax) cycle over_particles
+     ypixmax = yi + radkern
+     if (ypixmax.lt.ymin) cycle over_particles
+
+     !
+     !--set kernel related quantities
+     !
      hi1 = 1./hi
      hi21 = hi1*hi1
-     radkern = 2.*hi  !radius of the smoothing kernel
+     term = weight(i)*hi*dat(i) ! h gives the z length scale (NB: no perspective)
      !
      !--for each particle work out which pixels it contributes to
      !
@@ -234,8 +253,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
      !--loop over pixels, adding the contribution from this particle
      !  copy by quarters if all pixels within domain
      !
-     accelerate = useaccelerate .and. ipixmin.ge.1 .and. ipixmax.le.npixx &
-                                .and. jpixmin.ge.1 .and. jpixmax.le.npixy
+     accelerate = useaccelerate .and. npixpart.gt.5 &
+                 .and. ipixmin.ge.1 .and. ipixmax.le.npixx &
+                 .and. jpixmin.ge.1 .and. jpixmax.le.npixy
      
      if (accelerate) then
         !--adjust xi, yi to centre of pixel
