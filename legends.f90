@@ -22,20 +22,27 @@ subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust)
  implicit none
  real, intent(in) :: t,hpos,vpos,fjust
  character(len=*), intent(in) :: legendtext,unitslabel
- integer :: mm,pp,nc,ndecimal,ndec
+ integer :: mm,pp,nc,ndecimal
  real :: tplot
  character(len=30) :: string
 
- ndecimal = 2        ! number of decimal places to display
- ndec = 10**ndecimal
- if (t.eq.0.0) then
-    tplot = 1e-6
+ if (t.lt.1.0) then
+    ndecimal = 2
  else
-    tplot = t    !/(2.*3.1415926536)
+    ndecimal = 3        ! number of decimal places to display
  endif
- mm=nint(tplot*ndec)
- pp=nint(log10(tplot)-log10(tplot*ndec))
- call pgnumb(mm,pp,1,string,nc)
+ if (t.lt.tiny(t)) then
+    string = '0'
+    nc = 1
+ else
+    tplot = abs(t)    !/(2.*3.1415926536)
+    mm=int(tplot/10.**(int(log10(tplot)-ndecimal)))
+    pp=int(log10(tplot)-ndecimal)
+! mm=nint(tplot*ndec)
+! pp=nint(log10(tplot)-log10(tplot*ndec))
+    call pgnumb(mm,pp,1,string,nc)
+    if (t.lt.0.) string='-'//string(1:nc)
+ endif
  call pgmtext('T',-vpos,hpos,fjust,trim(legendtext)//string(1:nc)//trim(unitslabel))
 
  return
