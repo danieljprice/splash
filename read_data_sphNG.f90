@@ -183,6 +183,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
 !   npower = int(log10(udist))
 !   udist = udist/10.**npower
+!   udistAU = udist/1.495979e13
    units(1:3) = udist
    unitslabel(1:3) = ' [cm]'
 !   do i=1,3
@@ -198,6 +199,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
    unitslabel(9) = ' [erg/g]'
    units(10) = umass/udist**3
    unitslabel(10) = ' [g/cm\u3\d]'
+   units(0) = utime/3.1536e7
+   unitslabel(0) = ' yrs'
+   
 !
 !--Array headers
 !
@@ -338,6 +342,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
           if (ipos.ne.i .and. i.lt.npart) then
   !           print*,'copying ',i+1,'->',ipos+1
              dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
+             !--must also shuffle iphase (to be correct for other types)
+             iphase(ipos+1) = iphase(i+1)
           endif
        enddo
        if (nptmassi.ne.nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass =',nptmass
@@ -365,6 +371,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
           if (ipos.ne.i .and. i.lt.npart) then
   !           print*,'copying ',i+1,'->',ipos+1
              dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
+             iphase(ipos+1) = iphase(i+1) ! for completeness (ie. if more types used in future)
           endif
        enddo
        !--append dead particles to end of dat array
