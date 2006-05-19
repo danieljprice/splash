@@ -91,9 +91,14 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  adjustlength = sqrt(0.5*dx**2 + ych**2)/dx
  vecmaxnew = adjustlength*vecmax
  ndec = 2
- mm=int(vecmaxnew/10.**(int(log10(vecmaxnew)-ndec)))
- pp=int(log10(vecmaxnew)-ndec)
- call pgnumb(mm,pp,0,string,nc)
+ if (vecmaxnew.lt.tiny(vecmaxnew)) then
+    string = '0'
+    nc = 1
+ else
+    mm=int(vecmaxnew/10.**(int(log10(vecmaxnew)-ndec)))
+    pp=int(log10(vecmaxnew)-ndec)
+    call pgnumb(mm,pp,0,string,nc)
+ endif
  string = '='//trim(string)
 ! write(string,"('=',1pe7.1)") vecmax 
 !
