@@ -34,6 +34,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
   real :: cs_L,cs_R, gamfac
   real :: ppost, vpost, vfan, vshock
   real :: xzero,xleft,xfan,xcontact,xshock
+  logical :: useisothermal
 
   print*,'Plotting exact Riemann solution at t = ',time,' gamma = ',gamma
 !
@@ -71,8 +72,10 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
 
   if (gamma.gt.1.0001) then
      call get_pstar(gamma,p_L,p_R,v_L,v_R,cs_L,cs_R,ppost,vpost)
+     useisothermal = .false.
   else
      print*,'using isothermal solver...',p_L/rho_L, p_R/rho_R
+     useisothermal = .true.
      call get_pstar_isothermal(p_L/rho_L,v_L,v_R,rho_L,rho_R,ppost,vpost)
   endif
 
@@ -128,7 +131,11 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
 	vel(i) = v_L
      elseif (xplot(i) < xfan) then
 !       inside expansion fan
-        dens(i) = rho_L*(gamfac*(xzero-xplot(i))/(cs_L*time) + (1.-gamfac))**(2./(gamma-1.))
+        if (useisothermal) then ! this is a bit of a guess 
+           dens(i) = rho_L*exp((xleft-xplot(i))/(cs_L*time))
+        else
+           dens(i) = rho_L*(gamfac*(xzero-xplot(i))/(cs_L*time) + (1.-gamfac))**(2./(gamma-1.))
+        endif
         pr(i) = p_L*(dens(i)/rho_L)**gamma
         vel(i) = (1.-gamfac)*(cs_L -(xzero-xplot(i))/time)
      elseif (xplot(i) < xcontact) then
