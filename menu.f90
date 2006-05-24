@@ -171,9 +171,10 @@ subroutine menu
 !
 !--prompt user for selection
 !
-9901 continue
   write(*,"(a)",ADVANCE='NO') 'Please enter your selection now (y axis or option):'
-  read(*,*,ERR=9901) ioption 
+  read(*,*,iostat=ierr) ioption
+  if (ierr < 0) stop 'reached end of input' ! end of input (e.g. in script)
+  if (ierr > 0) stop 'error reading input' 
 
 !------------------------------------------------------------
 !  if input is an integer and within range, plot data
@@ -201,7 +202,6 @@ subroutine menu
            if (ipickx.eq.0) ipickx = 1 ! do not allow zero as default
            call prompt(' (x axis) ',ipickx)
            !--go back to y prompt if out of range
-           ! (apologies for the gratuitous use of goto - I learnt BASIC as a kid)
            if (ipickx.gt.numplot .or. ipickx.le.0) cycle menuloop
            !
            !--work out whether rendering is allowed based on presence of rho, h & m in data read
