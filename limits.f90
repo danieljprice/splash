@@ -83,7 +83,7 @@ end subroutine write_limits
 !
 subroutine read_limits(limitsfile,ierr)
   use labels, only:label
-  use settings_data, only:numplot
+  use settings_data, only:numplot,ncolumns,ncalc
   use prompting
   implicit none
   character(len=*), intent(in) :: limitsfile
@@ -114,8 +114,12 @@ subroutine read_limits(limitsfile,ierr)
   close(unit=54)
   return
 999 continue
-  print*,'end of file in ',trim(limitsfile),': limits read to column ',i
-  ierr = -1
+  !--only give error if we really do not have enough columns
+  !  (on first call nextra is not set)
+  if (i.le.ncolumns+ncalc) then
+     print*,'end of file in ',trim(limitsfile),': limits read to column ',i
+     ierr = -1
+  endif
   close(unit=54)
   return
 
