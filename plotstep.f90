@@ -680,7 +680,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                     allocate (datpix(npixx,npixy))
                  endif
               else
-                 allocate (datpix(npixx,npixy))                 
+                 allocate (datpix(npixx,npixy))
               endif
 
               select case(ndim)
@@ -688,7 +688,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                  !!--interpolate to 2D grid
                  !!  allocate memory for rendering array
                  if (.not. x_sec) then
-                    allocate ( datpix(npixx,npixy) )
                     call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                          hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                          ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,inormalise)
@@ -1137,14 +1136,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                  if (abs(angletempz-anglez).gt.tol) irotate = .true.
                  if (abs(rendermintemp-rendermin).gt.tol) iChangeRenderLimits = .true.
                  if (abs(rendermaxtemp-rendermax).gt.tol) iChangeRenderLimits = .true.
-                 if (iadvance.eq.-666) return
+                 if (iadvance.eq.-666) exit over_plots
               elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
                  !
                  !--timestep control only if multiple plots on page
                  !
                  iadvance = nfreq
                  call interactive_step(iadvance,ipos,iendatstep,xmin,xmax,ymin,ymax)
-                 if (iadvance.eq.-666) return
+                 if (iadvance.eq.-666) exit over_plots
               endif
            endif
 
@@ -1239,14 +1238,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                    angletempx,angletempy,angletempz,ndim, &
                    .false.,dummy,dummy,dummy,dummy,irerender, &
                    itrackpart,icolours,iadvance,ipos,iendatstep)
-              if (iadvance.eq.-666) return
+              if (iadvance.eq.-666) exit over_plots
            elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
               !
               !--timestep control only if multiple plots on page
               !
               iadvance = nfreq
               call interactive_step(iadvance,ipos,iendatstep,xmin,xmax,ymin,ymax)
-              if (iadvance.eq.-666) return
+              if (iadvance.eq.-666) exit over_plots
            endif
         endif
 
@@ -1412,7 +1411,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
            .or. lastplot)) then
            iadvance = nfreq
            call interactive_step(iadvance,ipos,iendatstep,xmin,xmax,ymin,ymax)
-           if (iadvance.eq.-666) return
+           if (iadvance.eq.-666) exit over_plots
         endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! if plot not in correct range
@@ -1425,10 +1424,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
 
 
   enddo over_plots ! over plots per timestep (nyplot)
+  
   if (iadvance.ne.0) then
      if (allocated(datpix)) deallocate(datpix)
      if (allocated(datpix3D)) deallocate(datpix3D)
   endif
+  
+  return
     
 contains
 
