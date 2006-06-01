@@ -271,7 +271,7 @@ subroutine set_labels
  use settings_data, only:ndim,ndimV,ncolumns,iformat,ntypes
  use geometry, only:labelcoord
  implicit none
- integer :: i
+ integer :: i,icol
 
  if (ndim.le.0 .or. ndim.gt.3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -307,75 +307,80 @@ subroutine set_labels
  label(ipmass) = 'particle mass'
  label(ndim + ndimV+5) = '\ga'
  label(ndim + ndimV+6) = '\ga\du'
- if (iformat.eq.2) then
-
+ icol = ndim+ndimV + 7
+ if (iformat.eq.2 .or. iformat.eq.4) then
     !
     !--mag field (vector)
     !
-    label(ndim + ndimV+7) = '\ga\dB'
-    iBfirst = ndim + ndimV+7+1        ! location of Bx
+    label(icol) = '\ga\dB'
+    iBfirst = icol+1        ! location of Bx
     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
     do i=1,ndimV
        label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1) !' (x10\u-3\d)' !//'/rho'
     enddo
+    icol = icol + ndimV
     !
     !--more scalars
     !
-    label(ndim+2*ndimV+8) = 'psi'
+    icol = icol + 1
+    label(icol) = 'psi'
     
-    ipr = ndim + 2*ndimV + 9 !  pressure
+    icol = icol + 1
+    ipr = icol !  pressure
     label(ipr) = 'P'
-    label(ndim+2*ndimV+10) = 'div v'
+    
+    icol = icol + 1
+    label(icol) = 'div v'
 
-    idivB = ndim+2*ndimV+11
+    icol = icol + 1
+    idivB = icol
     label(idivB) = 'div B'
     !
     !--current density (vector)
     !
-    iJfirst = ndim+2*ndimV+11+1
-    iamvec(iJfirst:iJfirst+ndimV-1) = iJfirst
-    labelvec(iJfirst:iJfirst+ndimV-1) = 'J'
-    do i=1,ndimV
-       label(iJfirst+i-1) = trim(labelvec(iJfirst))//labelcoord(i,1)
-    enddo
+    iJfirst = icol + 1
+    iamvec(icol+1:icol+ndimV) = icol + 1
+    labelvec(icol+1:icol+ndimV) = 'J'
+    icol = icol + ndimV
+    
+    icol = icol + 1
+    label(icol) = 'grad h'
+    
+    iamvec(icol+1:icol+ndimV) = icol + 1
+    labelvec(icol+1:icol+ndimV) = 'force'
+    icol = icol + ndimV
+
  else
-    ipr = ndim + ndimV + 7 !  pressure
+    ipr = icol !  pressure
     label(ipr) = 'P'
-    label(ndim+ndimV+8) = 'grad h'
-    label(ndim+ndimV+9) = 'grad soft'
-    label(ndim+ndimV+10) = 'phi'
-    label(ndim+ndimV+11) = 'f_grav'
-!    label(ndim+ndimV+8) = 'div v'
-!    label(ndim+ndimV+9) = 'grad h'
-    if (iformat.eq.3) then
-       !!!irho = ndim+ndimV+9
-       label(ndim+ndimV+9) = 'rho*'
-       label(ndim+ndimV+10) = 'sqrt g'
-       iamvec(ndim+ndimV+11:ndim+ndimV+10+ndimV) = ndim+ndimV+11
-       labelvec(ndim+ndimV+11:ndim+ndimV+10+ndimV) = 'pmom'
-       do i=1,ndimV
-          label(ndim+ndimV+10+i) = labelvec(ndim+ndimV+11)//labelcoord(i,1)
-       enddo
-    endif
+    icol = icol + 1
+    label(icol) = 'div v'
+    icol = icol + 1    
+    label(icol) = 'grad h'
+
+    iamvec(icol+1:icol+ndimV) = icol + 1
+    labelvec(icol+1:icol+ndimV) = 'force'
+    icol = icol + ndimV
+!    do i=1,ndimV
+!       label(ndim+ndimV+9+i) = labelvec(ndim+2*ndimV+ndimV)//labelcoord(i,1)
+!    enddo
+
     iBfirst = 0
  endif
- 
- if (ncolumns.gt.ndim+3*ndimV+11) then
-    label(ndim+3*ndimV+12) = 'f_visc_x'
-    label(ndim+3*ndimV+13) = 'f_visc_y'
-    label(ndim+3*ndimV+14) = 'f_x'
-    label(ndim+3*ndimV+15) = 'f_y'
+ if (iformat.gt.2) then
+    !!!irho = ndim+ndimV+9
+    icol = icol + 1
+    label(icol) = 'rho*'
+    icol = icol + 1
+    label(icol) = 'sqrt g'
+    iamvec(icol+1:icol+ndimV) = icol + 1
+    labelvec(icol+1:icol+ndimV) = 'pmom'
+    do i=1,ndimV
+       label(icol+i) = labelvec(icol+i)//labelcoord(i,1)
+    enddo
+    icol = icol + ndimV
  endif
-! 
-!--these are here for backwards compatibility -- could be removed
-!  if (ncolumns.gt.ndim+3*ndimV+7) then
-!     label(ndim + 3*ndimV+8) = 'v_parallel'
-!     label(ndim + 3*ndimV+9) = 'v_perp'
-!     label(ndim + 3*ndimV+10) = 'B_parallel'
-!     label(ndim + 3*ndimV+11) = 'B_perp'
-!  endif
-
 !
 !--set labels for each type of particles
 !
