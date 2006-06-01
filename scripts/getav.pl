@@ -4,19 +4,20 @@ use strict;
 use warnings;
 
 use List::Util qw(sum);
+my $file = ' ';
 
-my $file = 'plummerMC.output';
+foreach $file (@ARGV) {
+   open my $fh, '<', $file or die "Can't open $file: $!";
+   my @errors;
 
-open my $fh, '<', $file or die "Can't open $file: $!";
-my @errors;
+   while ( <$fh> ) {
+       my ($error) = m/L2 error\s+=\s+(\S*)\s+/;
+       push @errors, $error;
+   }
 
-while ( <$fh> ) {
-    my ($error) = m/L2 error\s+=\s+(\S*)\s+/;
-    push @errors, $error;
+   my $avg = sum(@errors) / scalar(@errors);
+
+   print "$file: Average error: $avg\n";
 }
-
-my $avg = sum(@errors) / scalar(@errors);
-
-print "Average error: $avg\n";
 
 #print "$_\n" for @errors;
