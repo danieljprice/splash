@@ -116,12 +116,10 @@ subroutine submenu_page
      print*,' 0 : draw box and label it with coordinates;'
      print*,' 1 : same as AXIS=0, but also draw the coordinate axes (X=0, Y=0);'
      print*,' 2 : same as AXIS=1, but also draw grid lines at major increments of the coordinates;'
-
-
-!     print*,'10 : draw box and label X-axis logarithmically;'
-!     print*,'20 : draw box and label Y-axis logarithmically;'
-!     print*,'30 : draw box and label both axes logarithmically.'
-     call prompt('enter axis option ',iaxis,-3,2)
+     print*,'10 : draw box and label X-axis logarithmically;'
+     print*,'20 : draw box and label Y-axis logarithmically;'
+     print*,'30 : draw box and label both axes logarithmically.'
+     call prompt('enter axis option ',iaxis,-3,30)
      print *,' axis = ',iaxis
      return
 !------------------------------------------------------------------------
