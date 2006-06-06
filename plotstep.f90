@@ -323,7 +323,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
   integer :: nyplot
   integer :: irenderpart,irendered
   integer :: npixx,npixy,npixz,ipixxsec
-  integer :: npixyvec,nfreqpts
+  integer :: npixyvec,nfreqpts,itranstemp
   integer :: index1,index2,itype,icolourprev,linestyleprev
 
   real, parameter :: pi = 3.1415926536
@@ -510,12 +510,36 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
         if (.not.(rendering)) then
            if (itrans(iplotx).ne.0) then
               call transform(xplot(1:ntoti),itrans(iplotx))
-              labelx = transform_label(labelx,itrans(iplotx))
+              if (iaxis.eq.10 .or. iaxis.eq.30) then ! logarithmic axes
+                 write(string,*) itrans(iplotx)
+                 string = adjustl(string)
+                 itranstemp = 0
+                 if (string(len_trim(string):len_trim(string)).eq.'1') then  
+                    if (len_trim(string).gt.1) read(string(1:len_trim(string)-1),*) itranstemp
+                    labelx = transform_label(labelx,itranstemp)
+                 else
+                    labelx = transform_label(labelx,itrans(iplotx))
+                 endif
+              else
+                 labelx = transform_label(labelx,itrans(iplotx))
+              endif
               if (iadvance.ne.0) call transform_limits(xmin,xmax,itrans(iplotx))
            endif
            if (itrans(iploty).ne.0) then
               call transform(yplot(1:ntoti),itrans(iploty))
-              labely = transform_label(labely,itrans(iploty))
+              if (iaxis.eq.20 .or. iaxis.eq.30) then
+                 write(string,*) itrans(iploty)
+                 string = adjustl(string)
+                 itranstemp = 0
+                 if (string(len_trim(string):len_trim(string)).eq.'1') then
+                    if (len_trim(string).gt.1) read(string(1:len_trim(string)-1),*) itranstemp
+                    labely = transform_label(labely,itranstemp)
+                 else
+                    labely = transform_label(labely,itrans(iploty))
+                 endif              
+              else
+                 labely = transform_label(labely,itrans(iploty))
+              endif
               if (iadvance.ne.0) call transform_limits(ymin,ymax,itrans(iploty))
            endif
         endif
