@@ -80,7 +80,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      nprint = 101
      nstep_max = max(nstep_max,indexstart,1)
-     if (.not.allocated(dat) .or. (nprint.gt.npart_max)) then
+     if (.not.allocated(dat) .or. (nprint.gt.npart_max) .or. (ncolstep+ncalc).gt.maxcol) then
         npart_max = max(npart_max,INT(1.1*(nprint)))
         call alloc(npart_max,nstep_max,ncolstep+ncalc)
      endif
