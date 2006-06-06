@@ -127,7 +127,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   else
      iadapting = iadapt
   endif
-  tile_plots = tile .and. isamexaxis.and.isameyaxis.and..not. iadapting
+  tile_plots = tile .and. (.not.iadapting) &
+                    .and. (isamexaxis.and.isameyaxis .or. isameyaxis.and.ndown.eq.1  &
+                                                     .or. isamexaxis.and.nacross.eq.1)
   
   iplotz = 0
   if (initialise_xsec) then
@@ -1104,22 +1106,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                  call rotate_axes2D(irotateaxes,xminrotaxes(1:ndim), &
                                    xmaxrotaxes(1:ndim),xorigin(1:ndim),angleradz)
               endif
-           endif
-           
-           !--print legend if this is the first plot on the page    
-           if (iPlotLegend .and. nyplot.eq.1) call legend(legendtext,timei,labeltimeunits, &
-                                                          hposlegend,vposlegend,fjustlegend)
-           !--line/marker style/colour legend for multiple timesteps on same page
-           if (iPlotStepLegend .and. nyplot.eq.1 .and. istepsonpage.gt.0) then
-              call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
-                   iplotpartoftype(1),iplotline,trim(steptitles(istepsonpage)),hposlegend,vposlegend)
-           endif
-           !--print title if appropriate
-           if (iPlotTitles .and. ipanel.le.ntitles) then
-              if (len_trim(pagetitles(ipanel)).gt.0) then
-                 call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
-              endif
-           endif           
+           endif          
            !
            !--plot exact solution if relevant (before going interactive)
            !
@@ -1193,21 +1180,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
         !--------------------------------
         ! now plot particles
         !--------------------------------
-
-        !--plot time on plot
-        if (iPlotLegend .and. nyplot.eq.1) call legend(legendtext,timei,labeltimeunits, &
-                                                       hposlegend,vposlegend,fjustlegend)
-        !--line/marker style/colour legend for multiple timesteps on same page
-        if (iPlotStepLegend .and. nyplot.eq.1 .and. istep.gt.0) then
-           call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
-                iplotpartoftype(1),iplotline,trim(steptitles(istepsonpage)),hposlegend,vposlegend)
-        endif
-        !--print title if appropriate
-        if (iPlotTitles .and. nstepsperpage.eq.1 .and. ipanel.le.ntitles) then
-           if (len_trim(pagetitles(ipanel)).gt.0) then
-              call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
-           endif
-        endif
         !
         !--sort out particle colouring
         !
@@ -1412,22 +1384,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
            call pgsls(linestyleprev)
 
         endif
-        !
-        !--if this is the first plot on the page, print legend
-        !
-        if (iPlotLegend .and. ipanel.eq.1) call legend(legendtext,timei,labeltimeunits, &
-                                                       hposlegend,vposlegend,fjustlegend)
-        !--line/marker style/colour legend for multiple timesteps on same page
-        if (iPlotStepLegend .and. nyplot.eq.1) then
-           call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
-                .true.,.false.,trim(steptitles(istepsonpage)),hposlegend,vposlegend)
-        endif
-        !--print title if appropriate
-        if (iPlotTitles .and. nstepsperpage.eq.1 .and. ipanel.le.ntitles) then
-           if (len_trim(pagetitles(ipanel)).gt.0) then
-              call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
-           endif
-        endif
 
         lastplot = (ipos.eq.iendatstep .or. istep.eq.nsteps)
 
@@ -1519,6 +1475,26 @@ contains
        call setpage(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
          trim(labelx),trim(labely),trim(title), &
          just,iaxis,barwidth,TitleOffset,isamexaxis,inewpage)
+    endif
+
+    !--plot time on plot
+    if (iPlotLegend .and. nyplot.eq.1) call legend(legendtext,timei,labeltimeunits, &
+                                                   hposlegend,vposlegend,fjustlegend)
+    !--line/marker style/colour legend for multiple timesteps on same page
+    if (iPlotStepLegend .and. nyplot.eq.1 .and. istepsonpage.gt.0) then
+       if (iploty.gt.ndataplots) then
+          call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
+            .false.,.true.,trim(steptitles(istepsonpage)),hposlegend,vposlegend)           
+       else
+          call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
+            iplotpartoftype(1),iplotline,trim(steptitles(istepsonpage)),hposlegend,vposlegend)
+       endif
+    endif
+    !--print title if appropriate
+    if (iPlotTitles .and. istepsonpage.eq.1 .and. ipanel.le.ntitles) then
+       if (len_trim(pagetitles(ipanel)).gt.0) then
+          call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
+       endif
     endif
 
     return
