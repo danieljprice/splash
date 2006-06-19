@@ -1118,6 +1118,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                     pmass(1:npartoftype(1)),npartoftype(1),imarktype(1))
            endif
            !
+           !--annotate with time / marker legend and title
+           !
+           call legends_and_title
+           !
            !--enter interactive mode
            !
            lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
@@ -1219,6 +1223,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                 xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
                 pmass(1:npartoftype(1)),npartoftype(1),imarktype(1))
         endif
+        !
+        !--annotate with time / marker legend and title
+        !
+        call legends_and_title       
         !
         !--enter interactive mode
         !
@@ -1382,6 +1390,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
 
            call pgsci(icolourprev)
            call pgsls(linestyleprev)
+           
+           !
+           !--annotate with time / marker legend and title
+           !
+           call legends_and_title
 
         endif
 
@@ -1477,6 +1490,17 @@ contains
          just,iaxis,barwidth,TitleOffset,isamexaxis,inewpage)
     endif
 
+    return
+  end subroutine page_setup
+  
+!------------------------------------------------------
+! draws legend(s), titles etc
+! (must be called after rendering otherwise rendering
+!  will overwrite plot area)
+!------------------------------------------------------
+  subroutine legends_and_title
+    implicit none
+
     !--plot time on plot
     if (iPlotLegend .and. nyplot.eq.1) call legend(legendtext,timei,labeltimeunits, &
                                                    hposlegend,vposlegend,fjustlegend)
@@ -1496,9 +1520,9 @@ contains
           call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
        endif
     endif
-
+    
     return
-  end subroutine page_setup
+  end subroutine legends_and_title
 
 !--------------------------------------------
 ! sets up a one dimensional grid of pixels
