@@ -1035,14 +1035,14 @@ subroutine mvlegend(xi,yi,xmin,xmax,ymax)
  !--query character height in world coordinates
  call pgqcs(4,xch,ych)
  vposlegend = (ymax - yi)/ych
- !--automatically change justification
- if (hposlegend < 0.25) then
+! !--automatically change justification
+! if (hposlegend < 0.25) then
     fjustlegend = 0.0
- elseif (hposlegend > 0.75) then
-    fjustlegend = 1.0
- else
-    fjustlegend = 0.5
- endif
+! elseif (hposlegend > 0.75) then
+!    fjustlegend = 1.0
+! else
+!    fjustlegend = 0.5
+! endif
  print*,'hpos = ',hposlegend,' vpos = ',vposlegend,' just = ',fjustlegend
  
  return
