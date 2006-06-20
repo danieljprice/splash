@@ -139,6 +139,10 @@ c
          CALL PGSWIN(xmin,xmax,ymin,ymax)
       ENDIF
 c
+c option to return before actually doing anything
+c      
+      IF (title(1:7).EQ.'NOPGBOX') RETURN
+c
 c set options for call to pgbox (draws axes) and label axes where appropriate
 c (options are exactly as in PGENV apart from axis=-3 which I have added)
 c

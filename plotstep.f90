@@ -340,7 +340,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use xsections3D, only:interpolate3D, interpolate3D_fastxsec, &
                         interpolate3D_xsec_vec
   use titles, only:pagetitles,steptitles
-  use render, only:render_pix,colourbar
+  use render, only:render_pix,colourbar,colourbarfull
 
   implicit none
   integer, intent(in) :: ipos, istep, istepsonpage, irender_nomulti, ivecplot
@@ -351,7 +351,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   integer, intent(inout) :: iadvance
   
   integer :: ntoti,iz
-  integer :: i,j,k,icolumn !!,irow
+  integer :: i,j,k,icolumn,irow
   integer :: nyplot
   integer :: irender,irenderpart
   integer :: npixx,npixy,npixz,ipixxsec
@@ -946,13 +946,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               just = 0 
            endif
            title = ' '
-           !--work out if colour bar is going to be plotted
+           !--work out if colour bar is going to be plotted 
+           !  (leave space in page setup if so)
            iColourBar = .false.
            if (irender.gt.ndim) iColourBar = iPlotColourBar
 
            call page_setup
-           !!--on tiled plots, only plot colour bar if last in row
-           if (tile_plots .and. icolumn.ne.nacross) iColourBar = .false.
+           !--only plot colour bar at the end of first row on tiled plots
+           if (tile_plots .and..not.(icolumn.eq.nacross .and. irow.eq.1)) iColourBar = .false.
 
            !--add to log
            if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),xsecmin,label(iplotz),xsecmax
@@ -1022,8 +1023,23 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  !!--call subroutine to actually render the image
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                    npixx,npixy,xmin,ymin,pixwidth,    &
-                   icolours,iplotcont,iColourBar,ncontours,.false.)
-
+                   icolours,iplotcont,.false.,ncontours,.false.)
+                 
+                 !!--plot colour bar
+                 if (iColourBar) then
+                    !--for tiled plots only on last plot in first row,
+                    !  and use full viewport size in the y direction
+                    if (tile_plots) then
+                       if (icolumn.eq.nacross .and. irow.eq.1) &
+                          call colourbarfull(icolours,rendermin,rendermax, &
+                          trim(labelrender),.false.,nacross,ndown,iaxis)
+                    else
+                       !!--plot colour bar, but only if last in row
+                       call colourbar(icolours,rendermin,rendermax, &
+                                      trim(labelrender),.false.)
+                    endif
+                 endif
+                 
                  !!--plot other particle types (e.g. sink particles) on top
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
@@ -1071,11 +1087,20 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                          rendermin,rendermax, &
                          icolourme(1:ntoti),ntoti)
 
-                    !!--plot colour bar, but only if last in row
-                    !!iColourBar = iPlotColourBar
-                    !!if (tile_plots .and. icolumn.ne.nacross) iColourBar = .false.
-                    if (iColourBar) call colourbar(icolours,rendermin,rendermax, &
-                                                   trim(labelrender),.false.)
+                    !!--plot colour bar
+                    if (iColourBar) then
+                       !--for tiled plots only on last plot in first row,
+                       !  and use full viewport size in the y direction
+                       if (tile_plots) then
+                          if (icolumn.eq.nacross .and. irow.eq.1) &
+                             call colourbarfull(icolours,rendermin,rendermax, &
+                             trim(labelrender),.false.,nacross,ndown,iaxis)
+                       else
+                          !!--plot colour bar, but only if last in row
+                          call colourbar(icolours,rendermin,rendermax, &
+                                         trim(labelrender),.false.)
+                       endif
+                    endif
                  endif
                  !
                  !--do particle plot
@@ -1481,7 +1506,7 @@ contains
     if (ipanel.gt.nacross*ndown) ipanel = 1
     !--set counter for where we are in row, col
     icolumn = ipanel - ((ipanel-1)/nacross)*nacross
-    !!irow = (ipanel-1)/nacross + 1 ! not used yet
+    irow = (ipanel-1)/nacross + 1
 
     !--------------------------------------------------------------
     ! set up pgplot page
@@ -1493,6 +1518,8 @@ contains
        !--leave space for colour bar if necessary (at end of row only)
        if (iAllowspaceforcolourbar) then
           call pgqcs(0,xch,ych)
+          !--be CAREFUL changing this - there needs to be an identical version in
+          !  colourbarfull
           barwidth = (ColourBarWidth + 0.25)*ych
        else
           barwidth = 0.

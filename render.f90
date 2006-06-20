@@ -4,7 +4,7 @@
 !------------------------------------------------------------------------
 module render
  implicit none
- public :: render_pix, render_vec, render_opacity, colourbar
+ public :: render_pix, render_vec, render_opacity, colourbar, colourbarfull
  private
 
 contains
@@ -110,6 +110,62 @@ subroutine colourbar(icolours,datmin,datmax,label,log)
 
  return
 end subroutine colourbar
+
+!-------------------------------------------------------
+! this subroutine is the same as colourbar except it
+! uses the full viewport (or at least, the full non-empty viewport as defined by danpgtile)
+! for the bar (used in tiled plots)
+!-------------------------------------------------------
+subroutine colourbarfull(icolours,datmin,datmax,label,log,nacross,ndown,iaxis)
+ use settings_render, only:ColourBarDisp, ColourBarWidth
+ implicit none
+ integer, intent(in) :: icolours,nacross,ndown,iaxis
+ real, intent(in) :: datmin,datmax
+ character(len=*), intent(in) :: label
+ logical, intent(in) :: log
+ character(len=1) :: clog
+ real :: disp, width, vxmin, vxmax, vymin, vymax, vyminnew, vymaxnew
+ real :: xmin,xmax,ymin,ymax,dummy,barwidth,xch,ych
+!
+!--set colour bar displacement and width in character heights
+!
+ disp = 0.5
+ width = ColourBarWidth
+ call pgqcs(0,xch,ych)
+ !--make sure this line is the same as in the page setup routine
+ barwidth = (ColourBarWidth + 0.25)*ych 
+!
+!--set character to send to pgwedg call if log (danpgwedg only) 
+!
+ clog = ' '
+ if (log) clog = 'l'
+
+!--save current viewport settings
+ call pgqvp(0,vxmin,vxmax,vymin,vymax)
+ call pgqwin(xmin,xmax,ymin,ymax)
+
+!--call danpgtile to get the actual viewport extent in y
+!  (use the first plot in the last row as this is guaranteed to be drawn)
+ call danpgtile(nacross*ndown-nacross+1,nacross,ndown,xmin,xmax,ymin,ymax, &
+      ' ',' ','NOPGBOX',1,iaxis,0.0,barwidth,0.0,0.0)
+!--set y to use full (plotted) viewport
+ call pgqvp(0,dummy,dummy,vyminnew,vymaxnew)
+ call pgsvp(vxmin,vxmax,vyminnew,0.9999)
+!
+!--Note that plots use my modification of pgwedg which plots vertical numbers on axes
+!
+ if (abs(icolours).eq.1) then        ! greyscale
+    call danpgwedg('rgv'//clog,disp,width,datmin,datmax,trim(label),ColourBarDisp)
+ elseif (abs(icolours).gt.1) then        ! colour
+    call danpgwedg('riv'//clog,disp,width,datmin,datmax,trim(label),ColourBarDisp)
+ endif
+!--restore viewport settings
+ call pgsvp(vxmin,vxmax,vymin,vymax)
+ call pgswin(xmin,xmax,ymin,ymax)
+ 
+ return
+end subroutine colourbarfull
+
 
 !--------------------------------------------------------------------------
 !  this subroutine takes a 2D grid of vector data (ie. x and y components)
