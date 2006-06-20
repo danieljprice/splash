@@ -33,12 +33,13 @@ c  Daniel Price, Institute of Astronomy, Cambridge, 2004.
 c
       SUBROUTINE DANPGTILE(iplotin,nx,ny,xmin,xmax,ymin,ymax, 
      &                     labelx,labely,title,just,axis,
-     &                     vmarginleft,vmarginright,vmarginbottom, 
-     &                     vmargintop)
+     &                     vmarginleftin,vmarginrightin,
+     &                     vmarginbottomin,vmargintopin) 
       IMPLICIT NONE
       INTEGER iplotin,nx,ny,just,axis
       INTEGER iplot,ix,iy
-      REAL xmin,xmax,ymin,ymax
+      REAL xmin,xmax,ymin,ymax,vmarginleftin,vmarginrightin
+      REAL vmargintopin,vmarginbottomin
       REAL vptsizeeffx,vptsizeeffy,panelsizex,panelsizey
       REAL vmargintop,vmarginbottom,vmarginleft,vmarginright
       REAL vptxmin,vptxmax,vptymin,vptymax
@@ -93,9 +94,14 @@ c allow enough room for the plot labels if they are drawn
 c NB: PGPLOT sets the character height as some fraction of the smallest
 c     dimension
 c
+      vmargintop = vmargintopin
+      vmarginright = vmarginrightin
       IF (axis.GE.0) THEN
-         vmarginleft = vmarginleft + (ylabeloffset+1.0)*xch
-         vmarginbottom = vmarginbottom + (xlabeloffset+1.0)*ych
+         vmarginleft = vmarginleftin + (ylabeloffset+1.0)*xch
+         vmarginbottom = vmarginbottomin + (xlabeloffset+1.0)*ych
+      ELSE
+         vmarginleft = vmarginleftin
+         vmarginbottom = vmarginbottomin
       ENDIF
 c
 c effective viewport size = size - margins
