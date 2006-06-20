@@ -121,8 +121,8 @@ c      print*,panelsizex,panelsizey,vptsizeeffx,vptsizeeffy
       
       vptxmin = vmarginleft + (ix-1)*panelsizex
       vptxmax = vptxmin + panelsizex
-      vptymin = vmarginbottom + (ny-iy)*panelsizey
-      vptymax = vptymin + panelsizey
+      vptymax = (1.0 - vmargintop) - (iy-1)*panelsizey
+      vptymin = vptymax - panelsizey
 c      print*,vptxmin,vptxmax,vptymin,vptymax
       CALL PGSVP(vptxmin,vptxmax,vptymin,vptymax)
 c
