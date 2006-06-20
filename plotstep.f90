@@ -20,8 +20,7 @@ module timestep_plotting
 
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
   logical, private :: inewpage, tile_plots, lastplot
-  logical, private :: initialise_xsec
-  logical, private :: imulti,iChangeRenderLimits,irerender
+  logical, private :: imulti,iChangeRenderLimits,irerender,iAllowspaceforcolourbar
   
   public :: initialise_plotting, plotstep
   private
@@ -32,7 +31,7 @@ contains
 ! initialise plotting options
 ! called once for all steps
 !
-subroutine initialise_plotting(ipicky,ipickx,irender)
+subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
   use params
   use colours, only:colour_set
   use labels, only:label,ipowerspec,ih,ipmass
@@ -44,7 +43,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                      colour_fore,colour_back,iadapt,iadaptcoords,linewidth
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle
-  use settings_render, only:icolours,iplotcont_nomulti
+  use settings_render, only:icolours,iplotcont_nomulti,iPlotColourBar
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
                         use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth,rkappa
   use settings_powerspec, only:options_powerspec
@@ -52,9 +51,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   use projections3D, only:coltable
   implicit none
   real, parameter :: pi=3.1415926536
-  integer, intent(in) :: ipicky,ipickx,irender
-  integer :: i,j,ierr
-  logical :: iadapting
+  integer, intent(in) :: ipicky,ipickx,irender_nomulti
+  integer :: i,j,ierr,ifirst
+  logical :: iadapting,iamrendering,icoordplot,iallrendered
   real :: hav,pmassav
   
   !------------------------------------------------------------------------
@@ -74,6 +73,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   iplotpart = .true.
   iChangeRenderLimits = .false.
   irerender = .false.
+  
   xmin = 0.
   xmax = 0.
   ymin = 0.
@@ -82,6 +82,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   if (ndim.eq.1) x_sec = .false. ! can't have xsec in 1D
   nxsec = 1
 
+  iamrendering = .false.
   if (ipicky.eq.numplot+1) then   ! multiplot
      imulti = .true.
      nyplots = nyplotmulti
@@ -95,6 +96,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
      !
      if (any(multiplotx(1:nyplotmulti).ne.multiplotx(1))) isamexaxis = .false.
      if (any(multiploty(1:nyplotmulti).ne.multiploty(1))) isameyaxis = .false.
+     if (any(irendermulti(1:nyplotmulti).gt.ndim)) iamrendering = .true.
   else
      !
      !--or else set number of plots = 1 and use ipicky and ipickx
@@ -103,16 +105,21 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
      nyplots = 1 
      iploty = ipicky
      iplotx = ipickx
+     if (irender_nomulti.gt.ndim) iamrendering = .true.
   endif
 
   !------------------------------------------------------------------------
   ! initialise options to be set before plotting
 
-  initialise_xsec = iploty.le.ndim .and. iplotx.le.ndim
+  icoordplot = iploty.le.ndim .and. iplotx.le.ndim
+  iallrendered = iamrendering
   if (imulti) then
      do i=1,nyplotmulti
         if (multiplotx(i).le.ndim .and. multiploty(i).le.ndim) then
-           initialise_xsec = .true.
+           icoordplot = .true.
+           !--this check is to see if any co-ordinate plots involve just particles
+           !  (if so need to initialise the cross section slice width)
+           if (irendermulti(i).le.ndim) iallrendered = .false.
         endif
      enddo
   endif
@@ -122,17 +129,43 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
   !  if plots are coord plots, make tiling decisions based on iadaptcoords
   !  otherwise use iadapt
   !
-  if (initialise_xsec) then
+  if (icoordplot) then
      iadapting = iadaptcoords
   else
      iadapting = iadapt
   endif
-  tile_plots = tile .and. (.not.iadapting) &
-                    .and. (isamexaxis.and.isameyaxis .or. isameyaxis.and.ndown.eq.1  &
+  tile_plots = tile .and. (isamexaxis.and.isameyaxis .or. isameyaxis.and.ndown.eq.1  &
                                                      .or. isamexaxis.and.nacross.eq.1)
+  !--do not tile if limits are adaptive
+  if (tile_plots .and. (iadapting .or. (iamrendering .and. iadapt))) then
+     print "(a)",'WARNING: cannot tile plots because limits are set to adaptive'
+     tile_plots = .false.
+  endif
   
+  !--( a further constraint on plot tiling is required in the case of 
+  !    multiple renderings which would involve different colour bars )
+  if (iamrendering .and. icolours.ne.0 .and. iPlotColourbar) then
+     !--this option means that a margin is set aside for a colour bar on tiled plots
+     iAllowspaceforcolourbar = .true.
+     !--do not allow tiled plots if multiple (different) colour bars are plotted
+     if (tile_plots) then
+        ifirst = 0
+        do i=1,nyplots
+           if (irendermulti(i).gt.ndim .and. ifirst.eq.0) ifirst = i
+           if (ifirst.gt.0) then
+              if (irendermulti(i).gt.ndim .and. irendermulti(i).ne.irendermulti(ifirst)) then
+                 if (tile_plots) print "(a)",'WARNING: cannot tile plots because of multiple colour bars'
+                 tile_plots = .false.
+              endif
+           endif
+        enddo
+     endif
+  else
+     iAllowspaceforcolourbar = .false.
+  endif  
+    
   iplotz = 0
-  if (initialise_xsec) then
+  if (icoordplot) then
      !!--work out coordinate that is not being plotted 
      iplotz = 0
      if (ndim.ge.3 .and. (x_sec .or. use3Dperspective)) then
@@ -165,7 +198,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
 !--set thickness if plotting particles
 !  (default thickness is half of the average particle spacing)
 !
-           if (irender.le.0 .or. irender.gt.numplot) then
+           if (.not.iallrendered) then
               npartdim = int(maxval(npartoftype(:,1))**(1./real(ndim)))
               print*,'average # of particles in each dimension = ',npartdim
               if (npartdim.gt.0) then
@@ -197,7 +230,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
 !
 !--initialise opacity for 3D opacity rendering
 !       
-       if (use3Dopacityrendering .and. irender.gt.0) then
+       if (use3Dopacityrendering .and. iamrendering) then
           hav = 0.5*(lim(ih,2) + lim(ih,1))
           pmassav = 0.5*(lim(ipmass,2) + lim(ipmass,1))
           print*,'using current h and pmass limits to calculate kappa (cross section/unit mass)'
@@ -251,10 +284,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender)
 10 format(' error: ',a,' colour "',a,'" not found in table')
   
   !!--set colour table
-  if (((irender.gt.ndim).or.any(irendermulti(1:nyplots).gt.ndim)) &
-       .and.(icolours.ne.0)) then
-     call colour_set(icolours)
-  endif
+  if (iamrendering .and.(icolours.ne.0)) call colour_set(icolours)
     
   !!--set line width to something visible
   call pgslw(linewidth)
@@ -266,7 +296,7 @@ end subroutine initialise_plotting
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
+subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     npartoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
   use filenames, only:nsteps
@@ -313,7 +343,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
   use render, only:render_pix,colourbar
 
   implicit none
-  integer, intent(in) :: ipos, istep, istepsonpage, irender, ivecplot
+  integer, intent(in) :: ipos, istep, istepsonpage, irender_nomulti, ivecplot
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(:,:), intent(in) :: dat
   real, intent(in) :: timei,gammai
@@ -323,7 +353,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
   integer :: ntoti,iz
   integer :: i,j,k,icolumn !!,irow
   integer :: nyplot
-  integer :: irenderpart,irendered
+  integer :: irender,irenderpart
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec,nfreqpts,itranstemp
   integer :: index1,index2,itype,icolourprev,linestyleprev
@@ -407,30 +437,27 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
      if (imulti) then
         iploty = multiploty(nyplot)
         iplotx = multiplotx(nyplot)
-        if (icolour_particles) then
-           irenderpart = irendermulti(nyplot)
-           irenderplot = 0
-        else
-           irenderpart = 0
-           irenderplot = irendermulti(nyplot)
-        endif
+        irender = irendermulti(nyplot)
         ivectorplot = ivecplotmulti(nyplot)
         iplotcont = iplotcontmulti(nyplot)
         x_sec = x_secmulti(nyplot)
         zslicepos = xsecposmulti(nyplot)
      else
-        if (icolour_particles) then
-           irenderpart = irender
-           irenderplot = 0
-        else
-           irenderpart = 0
-           irenderplot = irender
-        endif
+        irender = irender_nomulti
         ivectorplot = ivecplot
         iplotcont = iplotcont_nomulti
         x_sec = xsec_nomulti
         if (iadvance.ne.0 .and. x_sec) zslicepos = xsecpos_nomulti        
      endif
+
+     if (icolour_particles) then
+        irenderpart = irender
+        irenderplot = 0
+     else
+        irenderpart = 0
+        irenderplot = irender
+     endif
+
      if (ivectorplot.gt.0) iplotpart = iplotpartvec
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -914,7 +941,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
 
            just = 1  ! x and y axis have same scale
            ! unless 1D xsec through 2D data or non-cartesian
-           if ((irenderplot.gt.ndim .and. ndim.eq.2 .and. x_sec) &
+           if ((irender.gt.ndim .and. ndim.eq.2 .and. x_sec) &
                .or.(icoordsnew.gt.1)) then
               just = 0 
            endif
@@ -1132,13 +1159,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender,ivecplot, &
                  iadvance = nfreq
                  rendermintemp = rendermin
                  rendermaxtemp = rendermax
-                 if (icolour_particles) then
-                    irendered = irenderpart
-                 else
-                    irendered = irenderplot
-                 endif
                  iChangeRenderLimits = .false.
-                 call interactive_part(ninterp,iplotx,iploty,iplotz,irendered,ivecx,ivecy, &
+                 call interactive_part(ninterp,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       hh(1:ninterp),icolourme(1:ninterp), &
                       xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax, &
@@ -1436,7 +1458,7 @@ contains
     use pagesetup
     use settings_render, only:ColourBarWidth
     implicit none
-    real :: barwidth, TitleOffset
+    real :: barwidth, TitleOffset,xch,ych
     logical :: ipanelchange
         
     !--------------------------------------------------------------
@@ -1465,18 +1487,28 @@ contains
     ! set up pgplot page
     !--------------------------------------------------------------
 
-    if (iColourBar) then
-       barwidth = ColourBarWidth
-    else
-       barwidth = 0.
-    endif
+
 
     if (tile_plots) then
+       !--leave space for colour bar if necessary (at end of row only)
+       if (iAllowspaceforcolourbar) then
+          call pgqcs(0,xch,ych)
+          barwidth = (ColourBarWidth + 0.25)*ych
+       else
+          barwidth = 0.
+       endif
+
        inewpage = ipanel.eq.1 .and. ipanelchange .and. ipagechange
        if (inewpage) call pgpage
        call danpgtile(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
-                      trim(labelx),trim(labely),trim(title),just,iaxis)
+                      trim(labelx),trim(labely),trim(title),just,iaxis,0.0,barwidth,0.0,0.0)
     else
+       !--work out whether to leave space for colour bar (for each plot)
+       if (iColourBar) then
+          barwidth = ColourBarWidth
+       else
+          barwidth = 0.
+       endif
         !--change the page if pagechange set
        !  or, if turned off, between plots on first page only
        inewpage = ipagechange .or. (iplots.le.nacross*ndown .and. ipanelchange)

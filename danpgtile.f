@@ -26,11 +26,15 @@ c   labely : y axis label (should be same for all plots)
 c   title  : current plot title (can differ between plots)
 c   just   : just=1 gives equal aspect ratios (same as in PGENV)
 c   axis   : axes options (same as in PGENV)
+c   vmarginleft,right,bottom,top : initial margin sizes (% of page)
+c            (default should be zero for these)
 c
 c  Daniel Price, Institute of Astronomy, Cambridge, 2004.
 c
       SUBROUTINE DANPGTILE(iplotin,nx,ny,xmin,xmax,ymin,ymax, 
-     &                      labelx,labely,title,just,axis)
+     &                     labelx,labely,title,just,axis,
+     &                     vmarginleft,vmarginright,vmarginbottom, 
+     &                     vmargintop)
       IMPLICIT NONE
       INTEGER iplotin,nx,ny,just,axis
       INTEGER iplot,ix,iy
@@ -89,14 +93,9 @@ c allow enough room for the plot labels if they are drawn
 c NB: PGPLOT sets the character height as some fraction of the smallest
 c     dimension
 c
-      vmarginright = 0.00001
-      vmargintop = 0.00001
       IF (axis.GE.0) THEN
-         vmarginleft = (ylabeloffset+1.0)*xch
-         vmarginbottom = (xlabeloffset+1.0)*ych
-      ELSE
-         vmarginleft = 0.00001
-         vmarginbottom = 0.00001
+         vmarginleft = vmarginleft + (ylabeloffset+1.0)*xch
+         vmarginbottom = vmarginbottom + (xlabeloffset+1.0)*ych
       ENDIF
 c
 c effective viewport size = size - margins

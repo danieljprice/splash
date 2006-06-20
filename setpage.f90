@@ -51,17 +51,15 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
      !
      if (axis.GE.0) then
         !
-        !--PGPLOT seems to leave a (small) buffer around all plots
-        !  so if only one plot label per page, can leave less space
-        !  for the axes labels since they can go into the buffer region
+        !--leave a bit of buffer space if more than one plot on page
         !
         if (nx.gt.1) then
-           vptxmin = (ylabeloffset+2.0)*xch
+           vptxmin = (ylabeloffset+1.5)*xch
         else
            vptxmin = (ylabeloffset+1.0)*xch
         endif
         if (ny.gt.1 .and. .not.isamexaxis) then
-           vptymin = (xlabeloffset+2.0)*ych
+           vptymin = (xlabeloffset+1.5)*ych
         elseif (ny.gt.1) then
            vptymin = (xlabeloffset+0.25)*ych
         else
@@ -73,7 +71,7 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
      
      !--also leave room for colour bar if necessary
      if (colourbarwidth.GT.0.) then
-        vptxmax = vptxmax - (colourbarwidth + 0.25)*ych
+        vptxmax = vptxmax - (colourbarwidth + 1.6)*xch
      endif
 
      call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
