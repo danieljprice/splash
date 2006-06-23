@@ -98,6 +98,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      open(unit=15,iostat=ierr,file=dumpfile,status='old',form='unformatted')
      if (ierr /= 0) then
         print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
+        return
      else
         !
         !--read the number of particles in the first step,
@@ -181,11 +182,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    (datdb(i,1), i=nprint+1, nprint+nptmass), &
                    (datdb(i,2), i=nprint+1, nprint+nptmass), &
                    (datdb(i,3), i=nprint+1, nprint+nptmass)
-                if (ierr /= 0) then
+                if (ierr .gt. 0) then
                    print "(a)",'|*** ERROR READING (DOUBLE PRECISION) TIMESTEP ***'
                    if (allocated(datdb)) deallocate(datdb)
                    return
                 else
+                   if (ierr /= 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
                    dat(:,1:ncolumns,j) = real(datdb(:,1:ncolumns))
                    time(j) = real(timedb)
                 endif
@@ -223,7 +225,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                  else
                     datdb = 0.
                  endif
-                 read(15,end=55,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
+                 read(15,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
                    nptmass,timedb,(datdb(i,7),i=1,nprint), &
                    escapdb,tkindb,tgravdb,ttermdb, &
                    (datdb(i,1),i=1,nprint),(datdb(i,2),i=1,nprint),  &
@@ -251,16 +253,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    (datdb(i,21), i=nprint+1, nprint+nptmass), &
                    (datdb(i,22), i=nprint+1, nprint+nptmass), &
                    (datdb(i,23), i=nprint+1, nprint+nptmass) 
-                 if (ierr /= 0) then
-                    print "(a)",'|*** ERROR READING (DOUBLE PRECISION) TIMESTEP ***'
-                    if (allocated(datdb)) deallocate(datdb)
-                    return
-                 else
-                    dat(:,1:27,j) = real(datdb(:,1:27))
-                    time(j) = real(timedb)
-                 endif                
+
+                   if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
+                   if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
+                   dat(:,1:ncolumns,j) = real(datdb(:,1:ncolumns))
+                   time(j) = real(timedb)
+        
               else
-                 read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
+                 read(15,iostat=ierr) nprint,rstar,mstar,n1,n2, &
                    nptmass,time(j),(dat(i,7,j),i=1,nprint), &
                    escap,tkin,tgrav,tterm, &
                    (dat(i,1,j),i=1,nprint),(dat(i,2,j),i=1,nprint),  &
@@ -288,6 +288,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    (dat(i,21,j), i=nprint+1, nprint+nptmass), &
                    (dat(i,22,j), i=nprint+1, nprint+nptmass), &
                    (dat(i,23,j), i=nprint+1, nprint+nptmass) 
+
+                   if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
+                   if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
+
               endif  
            endif
         else
@@ -339,10 +343,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
              
         if (allocated(datdb)) deallocate(datdb)
              
-        if (ierr /= 0) then
+        if (ierr /= 0 ) then
            print "(a)",'|*** ERROR READING TIMESTEP ***'
-           return
-        else
+!           return
+!        else
            nstepsread = nstepsread + 1
         endif
 
