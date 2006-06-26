@@ -36,7 +36,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
   use colours, only:colour_set
   use labels, only:label,ipowerspec,ih,ipmass
   use limits, only:lim
-  use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti
+  use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti,x_secmulti
   use prompting
   use titles, only:read_titles,read_steptitles
   use settings_data, only:ndim,numplot
@@ -52,7 +52,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
   implicit none
   real, parameter :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti
-  integer :: i,j,ierr,ifirst
+  integer :: i,j,ierr,ifirst,iplotzprev
   logical :: iadapting,iamrendering,icoordplot,iallrendered
   real :: hav,pmassav
   
@@ -97,6 +97,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
      if (any(multiplotx(1:nyplotmulti).ne.multiplotx(1))) isamexaxis = .false.
      if (any(multiploty(1:nyplotmulti).ne.multiploty(1))) isameyaxis = .false.
      if (any(irendermulti(1:nyplotmulti).gt.ndim)) iamrendering = .true.
+     if (any(x_secmulti(1:nyplotmulti))) x_sec = .true.
   else
      !
      !--or else set number of plots = 1 and use ipicky and ipickx
@@ -113,6 +114,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
 
   icoordplot = iploty.le.ndim .and. iplotx.le.ndim
   iallrendered = iamrendering
+  iplotz = 0
   if (imulti) then
      do i=1,nyplotmulti
         if (multiplotx(i).le.ndim .and. multiploty(i).le.ndim) then
@@ -120,8 +122,28 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
            !--this check is to see if any co-ordinate plots involve just particles
            !  (if so need to initialise the cross section slice width)
            if (irendermulti(i).le.ndim) iallrendered = .false.
+           iplotzprev = iplotz
+           !!--work out coordinate that is not being plotted on cross-section/ 3D plots
+           iplotz = 0
+           if (ndim.ge.3 .and. (x_sec .or. use3Dperspective)) then
+              do j=1,ndim
+                 if ((multiplotx(i).ne.multiploty(i)).and. &
+                     (j.ne.multiplotx(i)).and.(j.ne.multiploty(i))) iplotz = j
+              enddo
+              !--use only first iplotz in the case of multiple slices
+              !  (only effect is on default values for slice thickness etc below)
+              if (iplotzprev.gt.0) iplotz = iplotzprev
+           endif
         endif
      enddo
+  elseif (icoordplot) then
+     !!--work out coordinate that is not being plotted 
+     if (ndim.ge.3 .and. (x_sec .or. use3Dperspective)) then
+        do j=1,ndim
+           if ((iplotx.ne.iploty).and. &
+               (j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
+        enddo
+     endif
   endif
 
   !
@@ -164,17 +186,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
      iAllowspaceforcolourbar = .false.
   endif  
     
-  iplotz = 0
   if (icoordplot) then
-     !!--work out coordinate that is not being plotted 
-     iplotz = 0
-     if (ndim.ge.3 .and. (x_sec .or. use3Dperspective)) then
-        do j=1,ndim
-           if ((iplotx.ne.iploty).and. &
-               (j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
-        enddo
-     endif
-     
      if (x_sec .and. iplotz.gt.0) then
 !
 !--if series of cross sections (flythru), set position of first one
@@ -191,7 +203,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
 !
 !--if single cross-section, read position of cross-section slice
 !
-           call prompt(' enter '//trim(label(iplotz))// &
+           if (.not.imulti) call prompt(' enter '//trim(label(iplotz))// &
                        ' position for cross-section slice:', &
                        xsecpos_nomulti,lim(iplotz,1),lim(iplotz,2))
 !
@@ -206,8 +218,13 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
               else
                  dz = 0.
               endif
-              call prompt(' enter thickness of cross section slice:', &
+              if (imulti) then
+                 call prompt(' enter thickness for cross section slice(s):', &
                            dz,0.0,lim(iplotz,2)-lim(iplotz,1))
+              else
+                 call prompt(' enter thickness of cross section slice:', &
+                           dz,0.0,lim(iplotz,2)-lim(iplotz,1))           
+              endif
            elseif (ndim.eq.3) then
 !
 !--for rendered cross sections in 3D, set thickness to 10%
@@ -447,7 +464,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         ivectorplot = ivecplot
         iplotcont = iplotcont_nomulti
         x_sec = xsec_nomulti
-        if (iadvance.ne.0 .and. x_sec) zslicepos = xsecpos_nomulti        
+        if (iadvance.ne.0 .and. x_sec) zslicepos = xsecpos_nomulti
      endif
 
      if (icolour_particles) then

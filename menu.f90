@@ -360,7 +360,7 @@ subroutine menu
    use settings_xsecrot, only: xsec_nomulti, xsecpos_nomulti
    implicit none
    integer :: ifac
-   logical :: iansx, iansy, ichange
+   logical :: isamex, isamey, ichange, icoordplot
    
    call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
    !--guess nacross,ndown based on largest factor
@@ -376,25 +376,25 @@ subroutine menu
    if (nacross.le.0) nacross = 1
    ndown = nyplotmulti/nacross
    print*,'setting nacross,ndown = ',nacross,ndown 
-   iansx = .true.
-   call prompt('Same x axis for all?',iansx)
-   if (iansx) then
+   isamex = all(multiplotx(1:nyplotmulti).eq.multiplotx(1))
+   call prompt('Same x axis for all?',isamex)
+   if (isamex) then
       call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
       multiplotx(2:nyplotmulti) = multiplotx(1)
    endif
-   iansy = .false.
-   if (ndim.ge.2) call prompt('Same y axis for all?',iansy)
-   if (iansy) then
+   isamey = all(multiploty(1:nyplotmulti).eq.multiploty(1))
+   if (ndim.ge.2) call prompt('Same y axis for all?',isamey)
+   if (isamey) then
       call prompt('Enter y axis for all plots',multiploty(1),1,numplot)
       multiploty(2:nyplotmulti) = multiploty(1)
    endif
 
    do i=1,nyplotmulti
-      print*,'Plot number ',i,':'
-      if (.not.iansy .or. multiploty(i).gt.ndataplots .or. multiploty(i).le.0) then
+      print*,'-------------- Plot number ',i,' --------------'
+      if (.not.isamey .or. multiploty(i).gt.ndataplots .or. multiploty(i).le.0) then
          call prompt(' y axis ',multiploty(i),1,numplot)
       endif
-      if (.not.iansx) then
+      if (.not.isamex) then
          if (multiploty(i).le.ndataplots) then
             call prompt(' x axis ',multiplotx(i),1,ndataplots)
          else
@@ -411,31 +411,12 @@ subroutine menu
                    .and.(icoords.eq.icoordsnew) &
                    .and.(itrans(multiplotx(i)).eq.0 .and. itrans(multiploty(i)).eq.0)
       
-      if ((multiplotx(i).le.ndim).and.(multiploty(i).le.ndim) .and.iAllowRendering) then
+      icoordplot = (multiplotx(i).le.ndim .and. multiploty(i).le.ndim)
+      
+      if (icoordplot .and.iAllowRendering) then
          call prompt('(render) (0=none)',irendermulti(i),0,numplot)
-         if (irendermulti(i).ne.0) then
-            ichange = .false.
-            call prompt(' change rendering options for this plot? ',ichange)
-            if (ichange) then
-               call prompt('plot contours? ',iplotcontmulti(i))
-               if (ndim.ge.2) then
-                  call prompt(' cross section (no=projection)? ',x_secmulti(i))
-                  if (x_secmulti(i)) then
-                     call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
-                  endif
-               endif
-            elseif (i.eq.1) then
-               print*,'copying options from rendering settings'
-               iplotcontmulti(i) = iplotcont_nomulti
-               x_secmulti(i) = xsec_nomulti
-               xsecposmulti(i) = xsecpos_nomulti
-            else  
-               print*,'using same rendering options as plot 1'       
-               iplotcontmulti(i) = iplotcontmulti(1)
-               x_secmulti(i) = x_secmulti(1)
-               xsecposmulti(i) = xsecposmulti(1)
-            endif
-         endif
+         iplotcontmulti(i) = iplotcont_nomulti
+
          if (any(iamvec(1:numplot).gt.0)) then
             ivecplottemp = -1
             do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
@@ -456,6 +437,14 @@ subroutine menu
          irendermulti(i) = 0
          ivecplotmulti(i) = 0
       endif
+
+      if (icoordplot .and. ndim.ge.2) then
+         call prompt(' is this a cross section (no=projection)? ',x_secmulti(i))
+         if (x_secmulti(i)) then
+            call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
+         endif
+      endif
+      
    enddo
    
    return
