@@ -23,12 +23,15 @@ program supersphplot
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.5.3 (27/5/06)
+!           : minor bug fixes/improvements to multiple plots per page, colour bar labelling
+!             tiled plots, legend. Accelerated rendering option for projections.
 !     1.5.2 (11/5/06)
 !           : S) option for saving limits and defaults; MUCH faster interactive
 !             replotting (no unnecessary re-rendering), a few other minor things
 !     1.5.1 (26/4/06)
 !           : docs updated for v1.5, other minor changes
-!     1.5   (17/3/06)
+!     1.5.0 (17/3/06)
 !           : 3D perspective added, 3D opacity rendering, improved rotation,
 !             colour schemes, adjustable vector arrows (+legend), improved timestepping
 !             behaviour, speed enhancements, physical unit rescaling
@@ -71,7 +74,7 @@ program supersphplot
 !     exact_sedov        : exact solution for sedov blast wave
 !     exact_shock        : exact solution for hydrodynamic shocks
 !     exact_wave         : exact solution for a propagating sine wave
-!     exact_toystar      : exact solution for the toy star problem
+!     exact_toystar1D    : exact solution for the 1D toy star problem
 !     exact_toystar2D    : exact solution for the 2D toy star problem
 !     get_data           : wrapper for main data read
 !     geometry           : module handling different coordinate systems
@@ -102,7 +105,7 @@ program supersphplot
 !     setpage            : sets up the PGPLOT page (replaces call to PGENV/PGLAB)
 !     supersphplot	 : main program, drives menu loop
 !     timestepping       : controls stepping through timesteps
-!     titles_read        : reads a list of titles to be used to label each timestep
+!     titles             : reads a list of titles to be used to label each timestep
 !     transform	 	 : applies various transformations to data (log10, 1/x, etc)
 !
 !     File format is specified in the subroutine read_data   
@@ -228,7 +231,7 @@ subroutine print_header
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/, &
    '   \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ ',/)      
 
- print "(a)",' ( version 1.5.2 [11/5/06] Copyright (C) 2005-2006)'
+ print "(a)",' ( version 1.5.3 [27/6/06] Copyright (C) 2005-2006)'
  print 30 
 30 format(/,    &
    ' * SUPERSPHPLOT comes with ABSOLUTELY NO WARRANTY.',/, &
