@@ -33,7 +33,7 @@ subroutine defaults_set_render
   ncontours = 30             ! number of contours to plot
   ColourBarDisp = 3.2
   inormalise_interpolations = .false.       ! do not normalise interpolations
-  ifastrender = .true. ! use accelerated rendering
+  ifastrender = .false. ! use accelerated rendering
 
   return
 end subroutine defaults_set_render
