@@ -43,6 +43,9 @@ module exact
   !--rho vs h
   real :: hfact
   character(len=120) :: filename_exact
+  !--equilibrium torus
+  real :: Mstar,Rtorus,distortion
+  
   !
   !--sort these into a namelist for input/output
   !
@@ -54,7 +57,7 @@ module exact
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
        polyk,sigma0,norder,morder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact, &
-       iprofile,Msphere,rsoft,icolpoten,icolfgrav
+       iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion
        
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -105,6 +108,10 @@ contains
     Msphere = 1.0
     icolpoten = 0
     icolfgrav = 0
+!   equilibrium torus
+    Mstar = 1.0
+    Rtorus = 1.0
+    distortion = 1.1
 
     maxexactpts = 1001      ! points in exact solution plot
     iExactLineColour = 1    ! foreground
@@ -140,8 +147,9 @@ contains
          ' 6) mhd shock tubes (tabulated) ',/,  &
          ' 7) h vs rho ',/, &
          ' 8) radial density profiles ',/, &
-         ' 9) read from file ')
-    call prompt('enter exact solution to plot',iexact,0,9)
+         ' 9) papaloizou & pringle torus ',/, &
+         '10) read from file ')
+    call prompt('enter exact solution to plot',iexact,0,10)
     print*,' plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
@@ -227,6 +235,12 @@ contains
           call prompt('enter column containing grav. force',icolfgrav,0)
        endif
     case(9)
+       call prompt('enter mass of central object',Mstar,0.)
+       call prompt('enter radius of torus centre',Rtorus,0.)
+       call prompt('enter distortion parameter ',distortion,1.,2.)
+       if (abs(polyk-1.0).lt.tiny(polyk)) polyk = 0.0764
+       call prompt('enter K in P= K*rho^gamma',polyk,0.)
+    case(10)
        iexist = .false.
        do while(.not.iexist)
           call prompt('enter filename ',filename_exact)
@@ -405,7 +419,7 @@ contains
 
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot, &
-                            pmass,npart,imarker)
+                            pmass,npart,imarker,unitsx,unitsy,irescale)
     use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr
     use prompting
     use exactfromfile, only:exact_fromfile
@@ -414,6 +428,7 @@ contains
     use rhoh, only:exact_rhoh
     use sedov, only:exact_sedov
     use shock, only:exact_shock
+    use torus, only:exact_torus
     use toystar1D, only:exact_toystar1D, exact_toystar_ACplane
     use toystar2D, only:exact_toystar2D
     use wave, only:exact_wave
@@ -422,8 +437,9 @@ contains
     implicit none
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
     integer, intent(in) :: ndim,ndimV,npart,imarker
-    real, intent(in) :: time,xmin,xmax,gamma
+    real, intent(in) :: time,xmin,xmax,gamma,unitsx,unitsy
     real, intent(in), dimension(npart) :: xplot,yplot,pmass
+    logical, intent(in) :: irescale
     real, dimension(npart) :: residuals,ypart
     
     real, parameter :: zero = 1.e-10
@@ -651,13 +667,31 @@ contains
              call exact_densityprofiles(3,iprofile,Msphere,rsoft,xexact,yexact,ierr)          
           endif
        endif
-    case(9) ! exact solution read from file
+    case(9) ! torus
+       if (iplotx.eq.irad .or.(igeom.eq.3 .and. iplotx.eq.ix(1))) then
+          if (iploty.eq.irho) then
+             call exact_torus(1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
+          elseif (iploty.eq.ipr) then
+             call exact_torus(2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+          elseif (iploty.eq.iutherm) then
+             call exact_torus(3,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+          endif
+       !--pr vs z at r=Rtorus
+       elseif (igeom.eq.2 .and. iplotx.eq.ix(3) .and.iploty.eq.ipr) then
+          call exact_torus(4,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+       endif
+    case(10) ! exact solution read from file
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
           call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
           if (ierr.le.0 .and. .not.iApplyTransExactFile) then
              call pgline(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
              ierr = 1
+          endif
+          !--change into physical units if appropriate
+          if (iRescale .and. iApplyTransExactFile) then
+             xexact(1:iexactpts) = xexact(1:iexactpts)*unitsx
+             yexact(1:iexactpts) = yexact(1:iexactpts)*unitsy
           endif
        endif
     end select

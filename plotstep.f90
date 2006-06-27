@@ -1184,7 +1184,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     itrans(iplotx),itrans(iploty),icoordsnew, &
                     ndim,ndimV,timei,xmin,xmax,gammai, &
                     xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
-                    pmass(1:npartoftype(1)),npartoftype(1),imarktype(1))
+                    pmass(1:npartoftype(1)),npartoftype(1),imarktype(1), &
+                    units(iplotx),units(iploty),irescale)
            endif
            !
            !--annotate with time / marker legend and title
@@ -1285,7 +1286,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                 xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
-                pmass(1:npartoftype(1)),npartoftype(1),imarktype(1))
+                pmass(1:npartoftype(1)),npartoftype(1),imarktype(1), &
+                units(iplotx),units(iploty),irescale)
         endif
         !
         !--annotate with time / marker legend and title
