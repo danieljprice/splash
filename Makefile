@@ -43,7 +43,7 @@ SOURCESF90= globaldata.f90 transform.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \
          exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 \
-         exact_densityprofiles.f90 \
+         exact_densityprofiles.f90 exact_torus.f90 \
          limits.f90 options_limits.f90 \
          exact.f90 options_page.f90 \
          options_particleplots.f90 \
@@ -132,7 +132,7 @@ targz:
 
 ## unit tests of various modules as I write them
 
-tests: ./tests/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
+tests: interpolate3D_projection.o interpolate3D_xsec.o ./tests/test_interpolate3D.o 
 	$(FC) $(FFLAGS) $(LDFLAGS) -o test_interpolation3D ./tests/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
 
 clean:
