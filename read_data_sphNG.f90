@@ -41,7 +41,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: i,j,ifile,ierr,iunit,int1,int2,int3,i1,iarr
   integer :: npart_max,nstep_max,ncolstep,icolumn
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
-  integer :: nskip,nprint,npart,itype,ntypes
+  integer :: nskip,ntotal,npart,itype,ntypes
   integer :: ipos,nptmass,nptmassi,nunknown
   logical :: iexist, doubleprec
     
@@ -96,7 +96,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
       !
       doubleprec = .true.
       read(iunit,end=55,iostat=ierr) int1,r8,int2,i1,int3
-      if (int1.ne.690706) then
+      if (ierr /= 0) then
+         print "(a)",'*** ERROR READING FILE : corrupted/zero size?'
+         return
+      elseif (int1.ne.690706) then
          print "(a)",'*** ERROR READING HEADER: wrong endian?'
          return
       endif
@@ -112,7 +115,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--read file ID
 !     
-   read(iunit,end=55,iostat=ierr) fileident
+   read(iunit,iostat=ierr) fileident
    if (ierr /=0) then
       print "(a)",'*** ERROR READING FILE ID ***'
       return
@@ -122,13 +125,18 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--read number of default ints
 !   
-   read(iunit,end=55,iostat=ierr) nints
+   read(iunit,iostat=ierr) nints
    if (ierr /=0) then
       print "(a)",'error reading nints'
       return
    else
-      read(iunit,end=55,iostat=ierr) nprint
-      print*,'nprint = ',nprint
+      read(iunit,iostat=ierr) npart
+      if (ierr /=0) then
+         print "(a)",'error reading npart'
+         return
+      else
+         print*,'npart = ',npart
+      endif
    endif
 !--int*1, int*2, int*4, int*8
    do i=1,4
@@ -217,7 +225,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    do iarr=1,narrsizes
       read(iunit,end=55,iostat=ierr) isize(iarr),nint(iarr),nint1(iarr),nint2(iarr), &
                  nint4(iarr),nint8(iarr),nreal(iarr),nreal4(iarr),nreal8(iarr)
-      if (iarr.eq.1) npart = isize(iarr)
+      if (iarr.eq.1) ntotal = isize(iarr)
       print *,'block ',iarr,' dim = ',isize(iarr),'nint=',nint(iarr),nint1(iarr), &
             nint2(iarr),nint4(iarr),nint8(iarr),'nreal =',nreal(iarr),nreal4(iarr),nreal8(iarr)
 !--we are going to read all real arrays but need to convert them all to default real
@@ -237,6 +245,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    time(j) = dummyreal(1)
    gamma(j) = dummyreal(3)
    npartoftype(1,j) = npart
+   npartoftype(2,j) = ntotal - npart
    nptmass = isize(2)
    print "(a,1pe12.4,a,0pf8.4)",' time = ',time(j),' gamma = ',gamma(j)
    nstepsread = nstepsread + 1
@@ -254,14 +263,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
          !--skip default int
          nskip = nint(iarr)
          do i=1,nskip
-            read(iunit,end=55,iostat=ierr)
+            read(iunit,end=33,iostat=ierr)
          enddo
          if (nint1(iarr).lt.1) then
             print "(a)",'ERROR: sinks present but can''t locate iphase in dump'
             !--skip remaining integer arrays
             nskip = nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
          else
-            read(iunit,end=55,iostat=ierr) iphase(1:isize(iarr))
+            read(iunit,end=33,iostat=ierr) iphase(1:isize(iarr))
             !--skip remaining integer arrays
             nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
          endif
@@ -271,13 +280,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
       !!print*,'skipping ',nskip,' isize = ',isize(iarr)
       do i=1,nskip
-         read(iunit,end=55,iostat=ierr)
+         read(iunit,end=33,iostat=ierr)
       enddo
 !--skip real arrays if size different      
       if (isize(iarr).ne.isize(1)) then
          nskip = nreal(iarr) + nreal4(iarr) + nreal8(iarr)
          do i=1,nskip
-            read(iunit,end=55,iostat=ierr)
+            read(iunit,end=33,iostat=ierr)
          enddo
       else
 !--otherwise read them      
@@ -287,38 +296,38 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !        default reals may need converting
          do i=1,nreal(iarr)
             if (doubleprec) then
-               read(iunit,end=55,iostat=ierr) dattemp(1:isize(iarr))
+               read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                icolumn = icolumn + 1
                dat(1:isize(iarr),icolumn,j) = real(dattemp(1:isize(iarr)))
             else
                icolumn = icolumn + 1
-               read(iunit,end=55,iostat=ierr) dat(1:isize(iarr),icolumn,j)
+               read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j)
             endif
          enddo
 !        real4's go straight into dat
          do i=1,nreal4(iarr)
             icolumn = icolumn + 1
-            read(iunit,end=55,iostat=ierr) dat(1:isize(iarr),icolumn,j) 
+            read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j) 
          enddo
 !        real 8's need converting
          do i=1,nreal8(iarr)
             icolumn = icolumn + 1
-            read(iunit,end=55,iostat=ierr) dattemp(1:isize(iarr))
+            read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
             dat(1:isize(iarr),icolumn,j) = real(dattemp(1:isize(iarr)))
          enddo
       endif
    enddo
 !
-!--reached end of file
+!--reached end of file (during data read)
 !
-55 continue
+33 continue
 
     nptmassi = 0
     nunknown = 0
 !
 !--place point masses after normal particles
 !     
-    if (any(iphase(1:nprint).ne.0)) then
+    if (any(iphase(1:ntotal).ne.0)) then
        nunknown = 0
        do i=1,npart
           if (iphase(i).ne.0) nunknown = nunknown + 1
@@ -328,7 +337,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
        nptmassi = 0
        ipos = 0
-       do i=1,npart
+       do i=1,ntotal
           ipos = ipos + 1
           if (iphase(i).ge.1) then
              nptmassi = nptmassi + 1
@@ -339,7 +348,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              ipos = ipos - 1
           endif
          !--shuffle dat array
-          if (ipos.ne.i .and. i.lt.npart) then
+          if (ipos.ne.i .and. i.lt.ntotal) then
   !           print*,'copying ',i+1,'->',ipos+1
              dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
              !--must also shuffle iphase (to be correct for other types)
@@ -357,7 +366,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !     
        nunknown = 0
        ipos = 0
-       do i=1,npart
+       do i=1,ntotal
           ipos = ipos + 1
           if (iphase(i).lt.0) then
              nunknown = nunknown + 1
@@ -368,7 +377,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              ipos = ipos - 1
           endif
           !--shuffle dat array
-          if (ipos.ne.i .and. i.lt.npart) then
+          if (ipos.ne.i .and. i.lt.ntotal) then
   !           print*,'copying ',i+1,'->',ipos+1
              dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
              iphase(ipos+1) = iphase(i+1) ! for completeness (ie. if more types used in future)
@@ -387,9 +396,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (allocated(iphase)) deallocate(iphase)
 
      npartoftype(1,j) = npart - nptmassi - nunknown
-     npartoftype(2,j) = nptmassi
-     npartoftype(3,j) = nunknown
-     print*,' n(gas) = ',npartoftype(1,j),' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown
+     npartoftype(2,j) = ntotal - nptmassi - nunknown - npart
+     npartoftype(3,j) = nptmassi
+     npartoftype(4,j) = nunknown
+     if (npartoftype(2,j).ne.0) then
+        print*,' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j),' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown
+     else
+        print*,' n(gas) = ',npartoftype(1,j),' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown
+     endif
+     
+     close(15)
+     
+     return
+
+55 continue
+   print "(a)", ' *** ERROR: end of file during header read ***'
 
 close(15)
    
@@ -433,11 +454,21 @@ subroutine set_labels
         iBfirst = 13
         iamvec(13:15) = 13
         labelvec(13:15) = 'B'
-        idivB = 16
-        label(idivB) = 'div B'
-        iJfirst = 17
-        iamvec(17:19) = 17
-        labelvec(17:19) = 'J'
+        if (ncolumns.ge.21) then
+           label(16) = 'Euler alpha'
+           label(17) = 'Euler beta'
+           idivB = 18
+           label(idivB) = 'div B'
+           iJfirst = 19
+           iamvec(19:21) = 19
+           labelvec(19:21) = 'J'        
+        else
+           idivB = 16
+           label(idivB) = 'div B'
+           iJfirst = 17
+           iamvec(17:19) = 17
+           labelvec(17:19) = 'J'
+        endif
      endif
   endif
   
@@ -461,10 +492,11 @@ subroutine set_labels
   !
   !--set labels for each particle type
   !
-  ntypes = 3  !!maxparttypes
+  ntypes = 4  !!maxparttypes
   labeltype(1) = 'gas'
-  labeltype(2) = 'sink'
-  labeltype(3) = 'unknown/dead'
+  labeltype(2) = 'ghost'
+  labeltype(3) = 'sink'
+  labeltype(4) = 'unknown/dead'
  
 !-----------------------------------------------------------
 
