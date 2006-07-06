@@ -429,10 +429,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   if (ipmass.gt.0) then
   !  make sure this is done in code units (ie. a consistent set)
      if (iRescale) then
-        weight(1:ninterp) = (dat(1:ninterp,ipmass)/units(ipmass))/ &
+        where(dat(1:ninterp,irho) > tiny(dat) .and. dat(1:ninterp,ih) > tiny(dat))
+           weight(1:ninterp) = (dat(1:ninterp,ipmass)/units(ipmass))/ &
                             (dat(1:ninterp,irho)/units(irho)*(dat(1:ninterp,ih)/units(ih))**ndim)
+        elsewhere
+           weight(1:ninterp) = 0.
+        endwhere
      else
-        weight(1:ninterp) = (dat(1:ninterp,ipmass))/(dat(1:ninterp,irho)*dat(1:ninterp,ih)**ndim)
+        where(dat(1:ninterp,irho) > tiny(dat) .and. dat(1:ninterp,ih) > tiny(dat))
+           weight(1:ninterp) = (dat(1:ninterp,ipmass))/(dat(1:ninterp,irho)*dat(1:ninterp,ih)**ndim)
+        elsewhere
+           weight(1:ninterp) = 0.
+        endwhere
      endif
      inormalise = inormalise_interpolations
   else
