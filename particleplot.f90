@@ -62,7 +62,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
      endif
      if (index2.lt.index1) then
         call pgebuf
-        exit over_types
+        cycle over_types
      endif
 
      if (iplotpartoftype(itype) .and. npartoftype(itype).gt.0) then
