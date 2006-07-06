@@ -320,7 +320,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use exact, only:exact_solution,atstar,ctstar,sigma
   use toystar1D, only:exact_toystar_ACplane
   use toystar2D, only:exact_toystar_ACplane2D
-  use labels, only:label,labeltype,labelvec,iamvec, &
+  use labels, only:label,labelvec,iamvec, &
               ih,irho,ipmass,ix,iacplane,ipowerspec
   use limits, only:lim
   use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
@@ -328,10 +328,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use particle_data, only:maxpart,icolourme
   use rotation
   use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,nfreq,iRescale,units,&
-                     unitslabel,iendatstep
+                     unitslabel,iendatstep,ntypes
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
-                     iplotline,linecolourthisstep,linestylethisstep
+                     UseTypeInRenderings,iplotline,linecolourthisstep,linestylethisstep
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend,iPlotStepLegend, &
                      charheightmm,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage, &
                      hposlegend,vposlegend,fjustlegend,legendtext
@@ -374,13 +374,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   integer :: irender,irenderpart
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec,nfreqpts,itranstemp
-  integer :: index1,index2,itype,icolourprev,linestyleprev
+  integer :: i1,i2,index1,index2,itype,icolourprev,linestyleprev
 
   real, parameter :: pi = 3.1415926536
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(ndim) :: xcoords,vecnew
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
-  real, dimension(maxpart) :: renderplot,hh,pmass,rho,weight
+  real, dimension(maxpart) :: renderplot,hh,pmass,weight
   real :: angleradx, anglerady, angleradz
   real :: rendermintemp,rendermaxtemp
   real :: xsecmin,xsecmax,dummy
@@ -404,46 +404,52 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   yplot = 0.
   dummy = 0.
   hh = 0.
-  rho = 0.
   pmass = 0.
   labeltimeunits = ' '
   if (iReScale) labeltimeunits = unitslabel(0)
     
   !--set the arrays needed for rendering if they are present
   if (ih.gt.0 .and. ih.le.ndataplots) hh(:) = dat(:,ih)
-  if (irho.gt.0 .and. irho.le.ndataplots) rho(:) = dat(:,irho)
   if (ipmass.gt.0 .and. ipmass.le.ndataplots) pmass(:) = dat(:,ipmass)
   !
   !--set number of particles to use in the interpolation routines
-  !  (ie. including only gas particles and ghosts)
-  !--if plotting ghost particles, set ntotplot = ntot, else ntot=npart
+  !  (by default, only the gas particles)
   !
   ntoti = sum(npartoftype)
   ninterp = npartoftype(1)
-  if (labeltype(2)(1:5).eq.'ghost') then
-     ninterp = ninterp + npartoftype(2)
-  endif
+  if (any(UseTypeInRenderings(2:ntypes))) ninterp = ntoti
   !
   !--set weight factor for interpolation routines
   !
-  if (ipmass.gt.0) then
-  !  make sure this is done in code units (ie. a consistent set)
-     if (iRescale) then
-        where(dat(1:ninterp,irho) > tiny(dat) .and. dat(1:ninterp,ih) > tiny(dat))
-           weight(1:ninterp) = (dat(1:ninterp,ipmass)/units(ipmass))/ &
-                            (dat(1:ninterp,irho)/units(irho)*(dat(1:ninterp,ih)/units(ih))**ndim)
-        elsewhere
-           weight(1:ninterp) = 0.
-        endwhere
-     else
-        where(dat(1:ninterp,irho) > tiny(dat) .and. dat(1:ninterp,ih) > tiny(dat))
-           weight(1:ninterp) = (dat(1:ninterp,ipmass))/(dat(1:ninterp,irho)*dat(1:ninterp,ih)**ndim)
-        elsewhere
-           weight(1:ninterp) = 0.
-        endwhere
-     endif
-     inormalise = inormalise_interpolations
+  if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
+     i2 = 0
+     do itype=1,ntypes
+        i1 = i2 + 1
+        i2 = i2 + npartoftype(itype)
+        !--set weights to zero for particle types not used in the rendering
+        if (.not.UseTypeInRenderings(itype)) then
+           weight(i1:i2) = 0.
+        else
+           !  make sure this is done in code units (ie. a consistent set)
+           if (iRescale) then
+              where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
+                 weight(i1:i2) = (dat(i1:i2,ipmass)/units(ipmass))/ &
+                                  (dat(i1:i2,irho)/units(irho)*(dat(i1:i2,ih)/units(ih))**ndim)
+              elsewhere
+                 weight(i1:i2) = 0.
+              endwhere
+           else
+              where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
+                 weight(i1:i2) = (dat(i1:i2,ipmass))/(dat(i1:i2,irho)*dat(i1:i2,ih)**ndim)
+              elsewhere
+                 weight(i1:i2) = 0.
+              endwhere
+           endif
+        endif
+        inormalise = inormalise_interpolations
+     enddo
   else
+  !--if particle mass has not been set, then must use normalised interpolations
      weight(1:ninterp) = 1.0
      inormalise = .true.
   endif
@@ -1406,10 +1412,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
               ninterp = ntoti
               !!--interpolate to 1D grid  
-              call interpolate1D(dat(1:ninterp,ipowerspecx), & 
-                   pmass(1:ninterp),rho(1:ninterp), &
-                   hh(1:ninterp),dat(1:ninterp,ipowerspecy), & 
-                   ninterp,xmingrid,datpix1D,ngrid,dxgrid)
+              call interpolate1D(dat(1:ninterp,ipowerspecx),hh(1:ninterp), &
+                   weight(1:ninterp),dat(1:ninterp,ipowerspecy), & 
+                   ninterp,xmingrid,datpix1D,ngrid,dxgrid,inormalise)
               !!--plot interpolated 1D data to check it
               !!print*,minval(datpix1D),maxval(datpix1D)
               !call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
