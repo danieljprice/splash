@@ -16,20 +16,30 @@ contains
 !     The data is smoothed using the SPH summation interpolant,
 !     that is, we compute the smoothed array according to
 !
-!     datsmooth(pixel) = sum_b m_b dat_b/rho_b W(r-r_b, h_b)
+!     datsmooth(pixel) = sum_j w_j W(r-r_j, h_j)
 ! 
-!     where _b is the quantity at the neighbouring particle b and
-!     W is the smoothing kernel, for which we use the usual cubic spline
+!     where _j is the quantity at the neighbouring particle j and
+!     W is the smoothing kernel, for which we use the usual cubic spline.
+!     For an SPH interpolation the weight for each particle should be
+!     the dimensionless quantity
 !
-!     Input: particle coordinates  : x,y   (npart)
-!            particle masses       : pmass (npart)
-!            density on particles  : rho   (npart) - must be computed separately
-!            smoothing lengths     : hh    (npart) - could be computed from density
-!            scalar data to smooth : dat   (npart)
+!     w_j = m_j / (rho_j * h_j**ndim)
+!
+!     Other weights can be used (e.g. constants), but in this case the
+!     normalisation option should also be set.
+!
+!     Input: particle coordinates  : x,y    (npart)
+!            smoothing lengths     : hh     (npart)
+!            interpolation weights : weight (npart)
+!            scalar data to smooth : dat    (npart)
+!
+!            number of pixels in x,y : npixx,npixy
+!            pixel width             : pixwidth
+!            option to normalise interpolation : normalise (.true. or .false.)
 !
 !     Output: smoothed data            : datsmooth (npixx,npixy)
 !
-!     Daniel Price, Institute of Astronomy, Cambridge, July 2003
+!     Written by Daniel Price 2003-2006
 !--------------------------------------------------------------------------
 
 subroutine interpolate2D(x,y,hh,weight,dat,npart, &
@@ -54,22 +64,29 @@ subroutine interpolate2D(x,y,hh,weight,dat,npart, &
      print*,'interpolate2D: error: pixel width <= 0'
      return
   endif
+  if (any(hh(1:npart).le.tiny(hh))) then
+     print*,'interpolate2D: warning: ignoring some or all particles with h < 0'
+  endif
   const = 10./(7.*pi)  ! normalisation constant
   !
   !--loop over particles
   !      
-  do i=1,npart
+  over_parts: do i=1,npart
+     !
+     !--skip particles with zero weights
+     !
+     termnorm = const*weight(i)
+     if (termnorm.le.0.) cycle over_parts
+     !
+     !--skip particles with wrong h's
+     !
+     hi = hh(i)
+     if (hi.le.tiny(hi)) cycle over_parts
      !
      !--set kernel related quantities
      !
-     hi = hh(i)
-     if (hi.le.0.) then
-        print*,'interpolate2D: error: h <= 0 ',i,hi
-        return
-     endif
      hi1 = 1./hi
      radkern = 2.*hi  ! radius of the smoothing kernel
-     termnorm = const*weight(i)
      term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to
@@ -113,7 +130,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,npart, &
         enddo
      enddo
 
-  enddo
+  enddo over_parts
   !
   !--normalise dat array
   !
@@ -132,9 +149,8 @@ end subroutine interpolate2D
 !     ** this version does vector quantities
 !
 !     Input: particle coordinates  : x,y   (npart)
-!            particle masses       : pmass (npart)
-!            density on particles  : rho   (npart) - must be computed separately
-!            smoothing lengths     : hh    (npart) - could be computed from density
+!            smoothing lengths     : hh     (npart)
+!            interpolation weights : weight (npart)
 !            vector data to smooth : vecx  (npart)
 !                                    vecy  (npart)
 !
@@ -167,22 +183,29 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,npart, &
      print*,'interpolate2D_vec: error: pixel width <= 0'
      return
   endif
+  if (any(hh(1:npart).le.tiny(hh))) then
+     print*,'interpolate2D_vec: warning: ignoring some or all particles with h < 0'
+  endif
   const = 10./(7.*pi)  ! normalisation constant
   !
   !--loop over particles
   !      
-  do i=1,npart
+  over_parts: do i=1,npart
+     !
+     !--skip particles with zero weights
+     !
+     termnorm = const*weight(i)
+     if (termnorm.le.0.) cycle over_parts
+     !
+     !--skip particles with wrong h's
+     !
+     hi = hh(i)
+     if (hi.le.tiny(hi)) cycle over_parts
      !
      !--set kernel related quantities
      !
-     hi = hh(i)
-     if (hi.le.0.) then
-        print*,'interpolate2D_vec: error: h <= 0 ',i,hi
-        return
-     endif
      hi1 = 1./hi
      radkern = 2.*hi  ! radius of the smoothing kernel
-     termnorm = const*weight(i)
      termx = termnorm*vecx(i)
      termy = termnorm*vecy(i)
      !
@@ -228,7 +251,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,npart, &
         enddo
      enddo
 
-  enddo
+  enddo over_parts
   !
   !--normalise dat arrays
   !
@@ -256,18 +279,9 @@ end subroutine interpolate2D_vec
 !         in 3D it is simpler just to rotate the particles first and then take
 !         a straight cross section.
 !
-!     The data is smoothed using the SPH summation interpolant,
-!     that is, we compute the smoothed array according to
-!
-!     datsmooth(pixel) = sum_b m_b dat_b/rho_b W(r-r_b, h_b)
-! 
-!     where _b is the quantity at the neighbouring particle b and
-!     W is the smoothing kernel, for which we use the usual cubic spline
-!
 !     Input: particle coordinates  : x,y   (npart)
-!            particle masses       : pmass (npart)
-!            density on particles  : rho   (npart) - must be computed separately
-!            smoothing lengths     : hh    (npart) - could be computed from density
+!            smoothing lengths     : hh     (npart)
+!            interpolation weights : weight (npart)
 !            scalar data to smooth : dat   (npart)
 !
 !     Output: smoothed data            : datsmooth (npixx)
@@ -336,18 +350,22 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,npart,&
   !
   !--loop over particles
   !      
-  do i=1,npart
+  over_parts: do i=1,npart
+     !
+     !--skip particles with zero weights
+     !
+     termnorm = const*weight(i)
+     if (termnorm.le.0.) cycle over_parts
+     !
+     !--skip particles with wrong h's
+     !
+     hi = hh(i)
+     if (hi.le.tiny(hi)) cycle over_parts
      !
      !--set kernel related quantities
      !
-     hi = hh(i)
-     if (hi.le.0.) then
-        print*,'interpolate2D_xsec: error: h <= 0 ',i,hi
-        return
-     endif
      hi1 = 1./hi
      radkern = 2.*hi    ! radius of the smoothing kernel
-     termnorm = const*weight(i)
      term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to
@@ -422,7 +440,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,npart,&
 
      endif
 
-  enddo
+  enddo over_parts
   !
   !--normalise dat array
   !
