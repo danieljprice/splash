@@ -16,58 +16,78 @@ contains
 !     The data is smoothed using the SPH summation interpolant,
 !     that is, we compute the smoothed array according to
 !
-!     datsmooth(pixel) = sum_b m_b dat_b/rho_b W(r-r_b, h_b)
+!     datsmooth(pixel) = sum_j w_j W(r-r_j, h_j)
 ! 
-!     where _b is the quantity at the neighbouring particle b and
-!     W is the smoothing kernel, for which we use the usual cubic spline
+!     where _j is the quantity at the neighbouring particle j and
+!     W is the smoothing kernel, for which we use the usual cubic spline.
+!     For an SPH interpolation the weight for each particle should be
+!     the dimensionless quantity
 !
-!     Input: particle coordinates  : x     (npart)
-!            particle masses       : pmass (npart)
-!            density on particles  : rho   (npart) - must be computed separately
-!            smoothing lengths     : hh    (npart) - could be computed from density
-!            scalar data to smooth : dat   (npart)
+!     w_j = m_j / (rho_j * h_j**ndim)
+!
+!     Other weights can be used (e.g. constants), but in this case the
+!     normalisation option should also be set.
+!
+!     Input: particle coordinates  : x      (npart)
+!            smoothing lengths     : hh     (npart)
+!            interpolation weights : weight (npart)
+!            scalar data to smooth : dat    (npart)
+!
+!            number of pixels in x   : npixx
+!            pixel width             : pixwidth
+!            option to normalise interpolation : normalise (.true. or .false.)
 !
 !     Output: smoothed data            : datsmooth (npixx)
 !
-!     Daniel Price, Institute of Astronomy, Cambridge, Dec 2003
+!     Written by Daniel Price 2003-2006
 !--------------------------------------------------------------------------
 
-subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
-     xmin,datsmooth,npixx,pixwidth)
+subroutine interpolate1D(x,hh,weight,dat,npart,  &
+     xmin,datsmooth,npixx,pixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx
-  real, intent(in), dimension(npart) :: x,pmass,rho,hh,dat
+  real, intent(in), dimension(npart) :: x,hh,weight,dat
   real, intent(in) :: xmin,pixwidth
   real, intent(out), dimension(npixx) :: datsmooth
+  logical, intent(in) :: normalise
+  real, dimension(npixx) :: datnorm
 
   integer :: i,ipix,ipixmin,ipixmax
   real :: hi,hi1,radkern,qq,wab,rab,const
-  real :: term,dx,xpix
+  real :: term,termnorm,dx,xpix
 
   datsmooth = 0.
   term = 0.
   print*,'interpolating from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
   if (pixwidth.le.0.) then
-     print*,'interpolate2D: error: pixel width <= 0'
+     print*,'interpolate1D: error: pixel width <= 0'
      return
   endif
+  if (any(hh(1:npart).le.tiny(hh))) then
+     print*,'interpolate1D: warning: ignoring some or all particles with h < 0'
+  endif
+  const = 2./3.  ! normalisation constant
   !
   !--loop over particles
   !      
-  do i=1,npart
+  over_parts: do i=1,npart
+     !
+     !--skip particles with zero weights
+     !
+     termnorm = const*weight(i)
+     if (termnorm.le.0.) cycle over_parts
+     !
+     !--skip particles with wrong h's
+     !
+     hi = hh(i)
+     if (hi.le.tiny(hi)) cycle over_parts
      !
      !--set kernel related quantities
      !
-     hi = hh(i)
-     if (hi.le.0.) then
-        print*,'interpolate1D: error: h <= 0 ',i,hi
-        return
-     endif
      hi1 = 1./hi
      radkern = 2.*hi   ! radius of the smoothing kernel
-     const = 2./(3.*hi)   ! normalisation constant
-     if (rho(i).ne.0.) term = pmass(i)*dat(i)/rho(i) 
+     term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to
      !               
@@ -88,9 +108,9 @@ subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
         !--SPH kernel - standard cubic spline
         !     
         if (qq.lt.1.0) then
-           wab = const*(1.-1.5*qq**2 + 0.75*qq**3)
+           wab = (1.-1.5*qq**2 + 0.75*qq**3)
         elseif (qq.lt.2.0) then
-           wab = const*0.25*(2.-qq)**3
+           wab = 0.25*(2.-qq)**3
         else
            wab = 0.
         endif
@@ -98,9 +118,18 @@ subroutine interpolate1D(x,pmass,rho,hh,dat,npart,  &
         !--calculate data value at this pixel using the summation interpolant
         !  
         datsmooth(ipix) = datsmooth(ipix) + term*wab          
+        if (normalise) datnorm(ipix) = datnorm(ipix) + termnorm*wab
      enddo
 
-  enddo
+  enddo over_parts
+  !
+  !--normalise dat array
+  !
+  if (normalise) then
+     where (datnorm > 0.)
+        datsmooth = datsmooth/datnorm
+     end where
+  endif
 
   return
 
