@@ -328,10 +328,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use particle_data, only:maxpart,icolourme
   use rotation
   use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,nfreq,iRescale,units,&
-                     unitslabel,iendatstep,ntypes
+                     unitslabel,iendatstep,ntypes,UseTypeInRenderings
   use settings_limits
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
-                     UseTypeInRenderings,iplotline,linecolourthisstep,linestylethisstep
+                     iplotline,linecolourthisstep,linestylethisstep
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend,iPlotStepLegend, &
                      charheightmm,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage, &
                      hposlegend,vposlegend,fjustlegend,legendtext
@@ -417,17 +417,20 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   !
   ntoti = sum(npartoftype)
   ninterp = npartoftype(1)
-  if (any(UseTypeInRenderings(2:ntypes))) ninterp = ntoti
+  if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes))) ninterp = ntoti
+  print*,'ninterp = ',ninterp, ' ntoti = ',ntoti
   !
   !--set weight factor for interpolation routines
   !
   if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
      i2 = 0
      do itype=1,ntypes
+        !--check for consistency that if particles are not plotted, they are also not plotted on renderings
+        if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.
         i1 = i2 + 1
         i2 = i2 + npartoftype(itype)
         !--set weights to zero for particle types not used in the rendering
-        if (.not.UseTypeInRenderings(itype)) then
+        if (.not.iplotpartoftype(itype) .or. .not.UseTypeInRenderings(itype)) then
            weight(i1:i2) = 0.
         else
            !  make sure this is done in code units (ie. a consistent set)

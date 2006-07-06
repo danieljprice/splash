@@ -68,6 +68,7 @@ module settings_data
  logical :: ivegotdata, DataIsBuffered
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
  real, dimension(0:maxplot) :: units
+ logical, dimension(maxparttypes) :: UseTypeInRenderings
  character(len=20), dimension(0:maxplot) :: unitslabel
 
  namelist /dataopts/ buffer_data,iCalcQuantities,iRescale

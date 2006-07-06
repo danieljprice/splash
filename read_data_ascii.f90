@@ -231,7 +231,7 @@ end subroutine read_data
 subroutine set_labels
   use labels, only:label,labeltype,ix,irho,ipmass,ih
   use params
-  use settings_data, only:ncolumns,ntypes,ndim
+  use settings_data, only:ncolumns,ntypes,ndim,UseTypeInRenderings
   use geometry, only:labelcoord
   implicit none
   integer :: i,ierr  
@@ -294,6 +294,8 @@ subroutine set_labels
   !
   ntypes = 1 !!maxparttypes
   labeltype(1) = 'gas'
+  UseTypeInRenderings(1) = .true.
+  
  
 !-----------------------------------------------------------
 

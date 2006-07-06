@@ -357,6 +357,9 @@ subroutine set_labels
   labeltype(1) = 'gas'
   labeltype(2) = 'sink'
   labeltype(3) = 'unknown'
+  UseTypeInRenderings(1) = .true.
+  UseTypeInRenderings(2) = .false.
+  UseTypeInRenderings(3) = .true.
  
 !-----------------------------------------------------------
 

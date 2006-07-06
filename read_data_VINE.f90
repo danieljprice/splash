@@ -259,6 +259,8 @@ subroutine set_labels
   ntypes = 2
   labeltype(1) = 'gas'
   labeltype(2) = 'Nbody'
+  UseTypeInRenderings(1) = .true.
+  UseTypeInRenderings(2) = .false.
  
 !-----------------------------------------------------------
 

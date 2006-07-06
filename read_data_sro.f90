@@ -182,15 +182,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                    (datdb(i,1), i=nprint+1, nprint+nptmass), &
                    (datdb(i,2), i=nprint+1, nprint+nptmass), &
                    (datdb(i,3), i=nprint+1, nprint+nptmass)
-                if (ierr .gt. 0) then
-                   print "(a)",'|*** ERROR READING (DOUBLE PRECISION) TIMESTEP ***'
-                   if (allocated(datdb)) deallocate(datdb)
-                   return
-                else
+
                    if (ierr /= 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
                    dat(:,1:ncolumns,j) = real(datdb(:,1:ncolumns))
                    time(j) = real(timedb)
-                endif
                             
               else
                  read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
@@ -347,8 +342,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
            print "(a)",'|*** ERROR READING TIMESTEP ***'
 !           return
 !        else
-           nstepsread = nstepsread + 1
+!           nstepsread = nstepsread + 1
         endif
+        nstepsread = nstepsread + 1
 
         npartoftype(1,j) = nprint
         npartoftype(2,j) = nptmass
@@ -425,7 +421,8 @@ end subroutine read_data
 subroutine set_labels
   use filenames, only:rootname
   use labels
-  use settings_data, only:ndim,ndimV,ncolumns,ntypes,units,unitslabel
+  use settings_data, only:ndim,ndimV,ncolumns,ntypes,units,unitslabel, &
+                          UseTypeInRenderings
   use geometry, only:labelcoord
   implicit none
   integer :: i
@@ -572,6 +569,8 @@ subroutine set_labels
   ntypes = 2 !!maxparttypes
   labeltype(1) = 'gas'
   labeltype(2) = 'point mass'
+  UseTypeInRenderings(1) = .true.
+  UseTypeInRenderings(2) = .false.
  
 !-----------------------------------------------------------
 

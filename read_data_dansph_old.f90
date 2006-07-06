@@ -395,7 +395,8 @@ end subroutine read_data
 subroutine set_labels
  use labels
  use params
- use settings_data, only:ndim,ndimV,ncolumns,iformat,ntypes
+ use settings_data, only:ndim,ndimV,ncolumns,iformat,ntypes, &
+                    UseTypeInRenderings
  use geometry, only:labelcoord
  implicit none
  integer :: i
@@ -509,6 +510,8 @@ subroutine set_labels
  ntypes = 2
  labeltype(1) = 'gas'
  labeltype(2) = 'ghost'
+ UseTypeInRenderings(1) = .true.
+ UseTypeInRenderings(2) = .true.
  
 !-----------------------------------------------------------
 

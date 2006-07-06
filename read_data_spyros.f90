@@ -222,6 +222,7 @@ subroutine set_labels
   !
   ntypes = 1
   labeltype(1) = 'gas'
+  UseTypeInRenderings(1) = .true.
  
 !-----------------------------------------------------------
 

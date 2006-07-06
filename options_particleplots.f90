@@ -9,11 +9,11 @@ module settings_part
  integer, dimension(100) :: icircpart
  integer :: ncircpart, icoordsnew
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
- logical, dimension(maxparttypes) :: iplotpartoftype,UseTypeInRenderings,PlotOnRenderings
+ logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings
  logical :: iplotline,ilabelpart
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
-   imarktype,iplotpartoftype,PlotOnRenderings,UseTypeInRenderings, &
+   imarktype,iplotpartoftype,PlotOnRenderings, &
    iexact,icoordsnew
 
 contains
@@ -39,8 +39,6 @@ subroutine defaults_set_part
   iplotpartoftype(1) = .true. ! whether or not to plot particles of certain types
   iplotpartoftype(2:maxparttypes) = .false.
   PlotOnRenderings = .false.
-  UseTypeInRenderings(1) = .true.
-  UseTypeInRenderings(2:maxparttypes) = .false.  
   imarktype = 1              ! PGPLOT marker for all particles
   imarktype(2) = 4           ! PGPLOT marker for ghost/dark matter particles
   imarktype(3) = 17          ! PGPLOT marker for sink particles 
@@ -55,7 +53,7 @@ subroutine submenu_particleplots
   use exact, only:options_exact,submenu_exact
   use labels, only:labeltype
   use limits, only:lim
-  use settings_data, only:icoords,ntypes,ndim
+  use settings_data, only:icoords,ntypes,ndim,UseTypeInRenderings
   use particle_data, only:npartoftype
   use prompting
   use geometry, only:maxcoordsys,labelcoordsys,coord_transform_limits
@@ -116,8 +114,6 @@ subroutine submenu_particleplots
      do itype=1,ntypes
         call prompt('Plot '//trim(labeltype(itype))//' particles?',iplotpartoftype(itype))
         if (iplotpartoftype(itype) .and. itype.gt.1) then
-           print "(a)",'Use '//trim(labeltype(itype))//' particles in renderings?'
-           call prompt('ie. are these particles to be treated as SPH particles?',UseTypeInRenderings(itype))
            if (.not.UseTypeInRenderings(itype)) then
               call prompt('Plot on top of rendered plots?',PlotOnRenderings(itype))
            else

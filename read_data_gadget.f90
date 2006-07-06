@@ -349,6 +349,8 @@ subroutine set_labels
   labeltype(1) = 'gas'
   labeltype(2) = 'dark matter'
   labeltype(5) = 'star'
+  UseTypeInRenderings(1) = .true.
+  UseTypeInRenderings(2:5) = .false.
 
 !-----------------------------------------------------------
   return

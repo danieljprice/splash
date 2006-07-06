@@ -497,7 +497,11 @@ subroutine set_labels
   labeltype(2) = 'ghost'
   labeltype(3) = 'sink'
   labeltype(4) = 'unknown/dead'
- 
+  UseTypeInRenderings(1) = .true.
+  UseTypeInRenderings(2) = .true.
+  UseTypeInRenderings(3) = .false.
+  UseTypeInRenderings(4) = .true.  ! only applies if turned on
+
 !-----------------------------------------------------------
 
   return 

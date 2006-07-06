@@ -189,6 +189,7 @@ subroutine set_labels
   !
   ntypes = 1 !!maxparttypes
   labeltype(1) = 'gas'
+  UseTypeInRenderings(1) = .true.
  
 !-----------------------------------------------------------
 
