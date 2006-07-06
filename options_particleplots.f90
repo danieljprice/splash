@@ -123,6 +123,8 @@ subroutine submenu_particleplots
            else
               PlotonRenderings(itype) = .false.
            endif
+        elseif (.not.iplotpartoftype(itype)) then
+           PlotonRenderings(itype) = .false.
         endif
      enddo
      return           
