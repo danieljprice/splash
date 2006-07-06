@@ -418,7 +418,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   ntoti = sum(npartoftype)
   ninterp = npartoftype(1)
   if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes))) ninterp = ntoti
-  print*,'ninterp = ',ninterp, ' ntoti = ',ntoti
   !
   !--set weight factor for interpolation routines
   !
