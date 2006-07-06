@@ -396,7 +396,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (allocated(iphase)) deallocate(iphase)
 
      npartoftype(1,j) = npart - nptmassi - nunknown
-     npartoftype(2,j) = ntotal - nptmassi - nunknown - npart
+     npartoftype(2,j) = ntotal - npart
      npartoftype(3,j) = nptmassi
      npartoftype(4,j) = nunknown
      if (npartoftype(2,j).ne.0) then
