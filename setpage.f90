@@ -1,6 +1,6 @@
 module pagesetup
  implicit none
- public :: setpage
+ public :: setpage, redraw_axes
  real, parameter, private :: xlabeloffset = 3.0, ylabeloffset = 3.0
  
  private
@@ -153,5 +153,54 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
   
   return
 end subroutine setpage
+
+!
+!--this subroutine is a cut down version of the above, which ONLY redraws the axes
+!  (so that axes can be redrawn on *top* of what has been plotted).
+!
+!  inputs:
+!         axis   : axes options (same as in PGENV, with axis=-3 added)
+!
+
+subroutine redraw_axes(iaxis)
+  implicit none
+  integer, intent(in) :: iaxis
+  character(len=10) :: xopts, yopts
+!
+!--set plot axes (options are exactly as in PGENV, with axis=-3 added)
+!
+  yopts = '*'
+  select case(iaxis)
+  case(-3)
+     xopts = 'BCST'
+  case(-2)
+     xopts = ' '
+  case(-1)
+     xopts = 'BC'
+  case(0)
+     xopts = 'BCST'
+  case(1)
+     xopts = 'ABCST'
+  case(2)
+     xopts = 'ABCGST'
+  case(10)
+     xopts = 'BCSTL'
+     yopts = 'BCST'
+  case(20)
+     xopts = 'BCST'
+     yopts = 'BCSTL'
+  case(30)
+     xopts = 'BCSTL'
+     yopts = 'BCSTL'
+  case default
+     CALL GRWARN('redraw_axes: illegal AXIS argument.')
+     xopts = 'BCST'
+  end select
+  if (yopts.eq.'*') yopts = xopts
+
+  call pgbox(xopts,0.0,0,yopts,0.0,0)
+
+  return
+end subroutine redraw_axes
 
 end module pagesetup

@@ -358,6 +358,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                         interpolate3D_xsec_vec
   use titles, only:pagetitles,steptitles
   use render, only:render_pix,colourbar,colourbarfull
+  use pagesetup, only:redraw_axes
 
   implicit none
   integer, intent(in) :: ipos, istep, istepsonpage, irender_nomulti, ivecplot
@@ -1188,6 +1189,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     units(iplotx),units(iploty),irescale)
            endif
            !
+           !--redraw axes over what has been plotted
+           !
+           call redraw_axes(iaxis)
+           !
            !--annotate with time / marker legend and title
            !
            call legends_and_title
@@ -1290,9 +1295,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                 units(iplotx),units(iploty),irescale)
         endif
         !
+        !--redraw axes over what has been plotted
+        !
+        call redraw_axes(iaxis)
+        !
         !--annotate with time / marker legend and title
         !
-        call legends_and_title       
+        call legends_and_title
         !
         !--enter interactive mode
         !
@@ -1457,6 +1466,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            call pgsci(icolourprev)
            call pgsls(linestyleprev)
            
+           !
+           !--redraw axes over what has been plotted
+           !
+           call redraw_axes(iaxis)           
            !
            !--annotate with time / marker legend and title
            !
