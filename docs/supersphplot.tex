@@ -291,12 +291,20 @@ screen, producing the graph shown in Figure \ref{fig:swave1D}.
 \label{tab:devices}
 \end{table}
 
-\begin{figure}
-\centering
-\caption{example plot}
-\end{figure}
- Plot settings are controlled via the menu options and are described below. 
+A more complicated plot would be where both the $x-$ and $y-$ axes refer to co-ordinates. For example
+\begin{verbatim}
+Please enter your selection now (y axis or option):2
+(x axis) (<cr>=1): 1
+(render) (0=none) ([0:12], <cr>=0):9
+(vector plot) (0=none, 3=v) ([0:3], <cr>=0):3
+Graphics device/type (? to see list, default /xwin): 
+\end{verbatim}
+Notice that in this case that options appeared for rendered and vector plots. The above choices
+would give a rendered plot of density with velocity arrows drawn on top. The render options are
+*only* enabled if, in the read\_data subroutine, values are set for the integer parameters irho, ipmass and ih
+corresponding to the locations of density, particle mass and smoothing length in the data arrays.
 
+ Plot settings are controlled via the menu options and are described below. 
 
 \section{Menu options}
  The program options may be changed in a series of submenus. The defaults for all of
@@ -403,6 +411,7 @@ viewport (ie. enter some large numbers). To customise the legend see
 \end{enumerate}
 
 \subsection{particle plot (o)ptions}
+\label{sec:opts}
  These options relate to pure `particle plots'. The options are as follows:
 \begin{enumerate}
 \item \textbf{plot line joining particles}. When set, this option plots a line connecting the (gas only) particles
@@ -425,9 +434,10 @@ This is primarily useful in debugging neighbour finding routines. Where only one
 coordinate this function plots an error bar of length $2h$ in either direction is plotted
 in the direction of the coordinate axis.
 \item \textbf{toggle plot particles by type}. Enables particles of certain types only to be plotted
-(e.g. dark matter particles only, gas particles only etc.). Also prompts to allow particles of given types to be
+(e.g. dark matter particles only, gas particles only etc.). Also prompts to allow particles of non-SPH types to be
 plotted on top of rendered plots (useful for sink or star particles). This is not allowed for gas
-(SPH) particles.
+(SPH) particles (the fact that particles of a given type are SPH particles or not is specified by the UseTypeInRendering
+flags in the set\_labels part of the read\_data file).
 \item \textbf{change graph markers for each type}. This option sets the PGPLOT marker used for each
 type of particle in the particle plots. The list of markers is given in the
 PGPLOT user guide and is also listed in Appendix \ref{sec:pgplotmarkers}. 
@@ -992,14 +1002,31 @@ are not present.
  Usual practise in SPH simulations near boundaries is
 to introduce ghost particles which mirror the real particles. SUPERSPHPLOT does not
 explicitly setup any ghost particles but will use any that are present in the data
-(specified using \verb+labeltype = 'ghost'+ in the \verb+read_data+ subroutine and
-then specifying the number of particles of this type). Ghost particles contribute
+(see next question for how to specify multiple particle types). Additional particle types contribute
 to the rendering calculations but not to the determination of the plot limits. Note,
 however, that SUPERSPHPLOT does \emph{not} set up ghost particles itself, as this may depend
 on the type and location of the boundary. Thus if your simulation uses ghost particle
 boundaries, the ghost particles should be dumped alongside the gas particles in the
 output file so that their positions, masses, densities and smoothing lengths can be
 read into SUPERSPHPLOT and used to render the image appropriately.
+
+\subsection{How does supersphplot handle multiple particle types?}
+SUPERSPHPLOT can handle up to 6 different particle types. These can be turned on and off in the particle plot
+o)ptions menu (\S\ref{sec:opts}). These types are be specified in the set\_labels part of the read\_data
+routine, which contains some lines of code along the lines of:
+\begin{verbatim}
+ntypes = 3
+labeltype(1) = 'gas'
+labeltype(2) = 'ghost'
+labeltype(3) = 'sink'
+UseTypeInRenderings(1) = .true.
+UseTypeInRenderings(2) = .true.
+UseTypeInRenderings(3) = .false.
+\end{verbatim}
+which says that there are 3 particle types, with names as given, and that types 1 and 2 are SPH particles and
+should be used in the rendering where appropriate (ie. only when plotting of this type is turned on in the
+o)pts menu). Particle types which are to be used in renderings should have masses, densities and smoothing
+lengths read. Non-SPH particle types (e.g. sink particles) can be optionally plotted on top of rendered plots.
 
 \subsection{Use special characters in the plot labels?}
  Several of the examples shown in this manual use special characters (such as
