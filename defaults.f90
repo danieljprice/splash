@@ -21,7 +21,7 @@ subroutine defaults_set
   use multiplot
   use settings_limits, only:defaults_set_limits
   use options_data, only:defaults_set_data
-  use settings_data, only:ndim
+  use settings_data, only:ndim,UseTypeInRenderings
   use settings_part, only:defaults_set_part
   use settings_page, only:defaults_set_page
   use settings_render, only:defaults_set_render
@@ -108,6 +108,9 @@ subroutine defaults_set
   do i=2,maxparttypes
      write(labeltype(i),"(a,i1)") 'type ',i
   enddo
+  UseTypeInRenderings(1) = .true.
+  UseTypeInRenderings(2:maxparttypes) = .false.  
+  
   !  vector labels
   iamvec(:) = 0
   labelvec = ' '
