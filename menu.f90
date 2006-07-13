@@ -75,6 +75,8 @@ subroutine menu
   else
      iacplane = 0
   endif
+  nextra = nextra + 1
+  label(ncolumns+ncalc+nextra) = 'gwaves'
 
   if (ivegotdata) then
      numplot = ncolumns + ncalc + nextra

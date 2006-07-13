@@ -359,6 +359,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use titles, only:pagetitles,steptitles
   use render, only:render_pix,colourbar,colourbarfull
   use pagesetup, only:redraw_axes
+  use exactfromfile, only:exact_fromfile
 
   implicit none
   integer, intent(in) :: ipos, istep, istepsonpage, irender_nomulti, ivecplot
@@ -375,6 +376,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec,nfreqpts,itranstemp
   integer :: i1,i2,index1,index2,itype,icolourprev,linestyleprev
+  integer :: ierr,ipt
 
   real, parameter :: pi = 3.1415926536
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
@@ -1490,6 +1492,38 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !
            call legends_and_title
 
+        else
+        !
+        !--plot the contents of an extra two-column ascii file
+        !
+           call exact_fromfile('gwaves1.dat',xplot,yplot,nfreqpts,ierr)
+           just = 0
+           title = ' '
+           labelx = 't [ms]'
+           labely = 'h'
+           if (iadvance.ne.0) then
+              xmin = minval(xplot(1:nfreqpts))
+              xmax = maxval(xplot(1:nfreqpts))
+              ymin = minval(yplot(1:nfreqpts))
+              ymax = maxval(yplot(1:nfreqpts))
+              !--adjust y axes
+              ymin = (ymin + ymax)/2. - 0.55*(ymax-ymin)
+              ymax = (ymin + ymax)/2. + 0.55*(ymax-ymin)
+           endif
+           call page_setup
+           !--plot extra point corresponding to current time
+           ipt = 0
+           do i=1,nfreqpts-1
+              if (xplot(i).le.timei .and. xplot(i+1).gt.timei) ipt = i
+           enddo
+           if (ipt.ne.0) then
+              call pgpt1(xplot(ipt),yplot(ipt),4)
+              call pgline(ipt,xplot(1:ipt),yplot(1:ipt))
+           endif
+           
+           call redraw_axes(iaxis)
+           call legends_and_title
+        
         endif
 
         lastplot = (ipos.eq.iendatstep .or. istep.eq.nsteps)
