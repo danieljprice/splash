@@ -5,7 +5,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 15
+ integer, parameter :: ncolourschemes = 19
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
@@ -18,10 +18,14 @@ module colours
       'purple-blue-green', &
       'gamma            ', &
       'gamma- no black  ', &
-      'red-green-blue   ', &
+      'grn-red-blue-wht ', &
       'blue-green-red   ', &
       'rainbow II       ', &
-      'rainbow III      '/)
+      'rainbow III      ', &
+      'haze             ', &
+      'huesatval2       ', &
+      'blue-red         ', &
+      'blue-grn-red-yell'/)
 !
 !--rgb colours of the colour table are stored in the array below
 !  this is used for colour blending (opacity rendering)
@@ -144,7 +148,7 @@ subroutine colour_set(icolourscheme)
            call PGSHLS(i,hue,light,sat)
         endif
      enddo
-  elseif (abs(icolourscheme).lt.15) then
+  elseif (abs(icolourscheme).le.ncolourschemes) then
      brightness = 0.5
      contrast = 1.0
      !--invert colour table for negative values
@@ -194,20 +198,14 @@ subroutine colour_set(icolourscheme)
 !     greenarr(1:nset)= (/0.0,0.15,0.2,0.42,1.00,1.0/)
 !     bluearr(1:nset) = (/0.0,0.30,0.4,0.50,0.95,1.0/)  
      case(7)
-     !--red-blue-yellow (IDL stern special)
+     !--red-blue-yellow (IDL 16: stern special)
      nset =  7
      lumarr(1:nset)  = (/0.000,0.055,0.247,0.251,0.502,0.737,1.000/)
      redarr(1:nset)  = (/0.000,0.996,0.000,0.251,0.502,0.737,1.000/)
      greenarr(1:nset)= (/0.000,0.055,0.247,0.251,0.502,0.737,1.000/)
      bluearr(1:nset) = (/0.000,0.106,0.490,0.498,1.000,0.000,1.000/)
-!    this was another attempt at the same thing
-!     nset = 7
-!     lumarr(1:nset) =   (/0.0,0.2,0.35,0.4, 0.7, 0.9,1.0/)
-!     redarr(1:nset) =   (/0.0,0.9,0.01,0.25,0.5,0.75,1.0/)
-!     greenarr(1:nset) = (/0.0,0.1,0.24,0.25,0.5,0.75,1.0/)
-!     bluearr(1:nset) =  (/0.0,0.2,0.48,0.50,1.0,0.05,1.0/)
      case(8)
-     !--blue-yellow-red (IDL blue-red 0.34)
+     !--blue-yellow-red (IDL 34: blue-red)
      nset = 10
      lumarr(1:nset)  = (/0.000,0.004,0.125,0.129,0.380,0.384,0.635,0.886,0.996,1.000/)
      redarr(1:nset)  = (/0.000,0.000,0.000,0.000,0.000,0.000,1.000,1.000,0.514,0.514/)
@@ -226,7 +224,7 @@ subroutine colour_set(icolourscheme)
      bluearr(1:nset) = (/0.0,0.2,0.5,0.98,0.0,0.0/)
      greenarr(1:nset)= (/0.0,0.0,0.0,0.0,0.62,0.98/)
      case(10)
-     !--gamma (IDL stdgamma-ii)
+     !--gamma (IDL 6: stdgamma-ii)
      nset = 18
      lumarr(1:nset)  =(/0.,0.184,0.192,0.251,0.31,0.376,0.427,0.431,0.443,0.502,0.569,0.624,0.635,0.682,0.69,0.749,0.753,1./)
      redarr(1:nset)  =(/0.,0.000,0.035,0.318,0.31,0.643,0.914,1.000,1.000,1.000,1.000,1.000,1.000,0.639,0.678,0.976,1.00,1./)
@@ -240,19 +238,26 @@ subroutine colour_set(icolourscheme)
      greenarr(1:nset)=(/0.,0.000,0.000,0.000,0.00,0.000,0.000,0.000,0.000,0.318,0.639,0.639,0.639,0.639,0.639,1.000,1.00,1./)
      bluearr(1:nset) =(/0.5,0.957,1.000,0.682,0.365,0.00,0.000,0.000,0.000,0.000,0.322,0.000,0.000,0.000,0.000,0.188,0.20,1./)
      case(12)
-     nset = 3
-     !--red-greeny-blue
-     lumarr(1:nset) =   (/0.0,0.5,1.0/)
-     redarr(1:nset) =   (/1.0,0.66,0.0/)
-     greenarr(1:nset) = (/0.0,0.66,0.0/)
-     bluearr(1:nset) =  (/0.0,0.66,1.0/)
+     !--IDL 3: grn-red-blu-wht
+     nset = 13
+     lumarr(1:nset)  = (/0.000,0.008,0.047,0.110,0.125,0.267,0.282,0.298,0.773,0.788,0.863,0.988,1.000/)
+     redarr(1:nset)  = (/0.000,0.000,0.000,0.000,0.094,0.941,0.988,0.988,0.643,0.639,0.580,0.988,1.000/)
+     greenarr(1:nset)= (/0.000,0.282,0.424,0.988,0.941,0.094,0.000,0.000,0.000,0.000,0.000,0.988,1.000/)
+     bluearr(1:nset) = (/0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.004,0.984,1.000,1.000,1.000,1.000/)
      case(13)
+     !--these are Klaus Dolag colour schemes
      nset = 3
      !--blue-green-red ("highlight")
      lumarr(1:nset) =   (/0.0,0.5,1.0/)
      redarr(1:nset) =   (/0.0,0.5,1.0/)
      greenarr(1:nset) = (/0.0,1.0,0.0/)
      bluearr(1:nset) =  (/1.0,0.5,0.0/)
+!     nset = 3
+!     !--red-greeny-blue
+!     lumarr(1:nset) =   (/0.0,0.5,1.0/)
+!     redarr(1:nset) =   (/1.0,0.66,0.0/)
+!     greenarr(1:nset) = (/0.0,0.66,0.0/)
+!     bluearr(1:nset) =  (/0.0,0.66,1.0/)
 !     nset = 5
      !--dolag other
 !     lumarr(1:nset) =   (/0.0,0.33,0.5,0.66,1.0/)
@@ -267,12 +272,40 @@ subroutine colour_set(icolourscheme)
      greenarr(1:nset)= (/0.000,0.980,1.000,1.000,1.000,1.000,0.984,0.004,0.000,0.000/)
      bluearr(1:nset) = (/0.000,0.000,0.000,0.000,0.012,0.988,1.000,1.000,1.000,1.000/)
      case(15)
-     !--rainbow III
+    !--rainbow III
      nset = 13
      lumarr(1:nset)  = (/0.000,0.004,0.110,0.114,0.333,0.557,0.561,0.565,0.569,0.776,0.780,0.996,1.000/)
      redarr(1:nset)  = (/0.486,0.486,0.012,0.000,0.000,0.004,0.020,0.051,0.055,0.992,1.000,1.000,1.000/)
      greenarr(1:nset)= (/0.000,0.000,0.000,0.008,0.996,1.000,1.000,1.000,1.000,1.000,0.988,0.020,0.020/)
      bluearr(1:nset) = (/1.000,1.000,1.000,1.000,1.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000/)
+     case(16)
+     !--haze (IDL 17: haze)
+     nset = 11
+     lumarr(1:nset)  = (/0.000,0.008,0.016,0.486,0.494,0.502,0.514,0.953,0.961,0.996,1.000/)
+     redarr(1:nset)  = (/0.655,1.000,0.976,0.047,0.031,0.016,0.027,0.898,0.914,0.984,0.984/)
+     greenarr(1:nset)= (/0.439,0.835,0.824,0.161,0.149,0.137,0.122,0.706,0.718,0.765,0.765/)
+     bluearr(1:nset) = (/1.000,0.996,0.980,0.510,0.502,0.494,0.482,0.043,0.035,0.000,0.000/)     
+     case(17)
+     !--huesatval
+     nset = 11
+     lumarr(1:nset)  = (/0.000,0.506,0.514,0.675,0.682,0.843,0.851,0.961,0.969,0.996,1.000/)
+     redarr(1:nset)  = (/1.000,0.494,0.486,0.329,0.345,0.988,1.000,1.000,1.000,1.000,1.000/)
+     greenarr(1:nset)= (/0.992,0.992,1.000,1.000,1.000,1.000,0.969,0.345,0.294,0.114,0.114/)
+     bluearr(1:nset) = (/0.992,1.000,0.980,0.337,0.322,0.161,0.153,0.043,0.035,0.008,0.008/)
+     case(18)
+     !--blue-red2 (IDL 12: blue-red)
+     nset = 10
+     lumarr(1:nset)  = (/0.000,0.016,0.247,0.255,0.498,0.506,0.749,0.757,0.996,1.000/)
+     redarr(1:nset)  = (/0.000,0.000,0.000,0.000,0.000,0.016,1.000,1.000,1.000,1.000/)
+     greenarr(1:nset)= (/0.000,0.016,1.000,0.984,0.000,0.000,0.000,0.000,0.000,0.000/)
+     bluearr(1:nset) = (/0.000,0.016,1.000,1.000,1.000,1.000,1.000,0.984,0.000,0.000/)
+     case(19)
+     !--blue-green-red-yellow (IDL 5: blue-green-red-yellow)
+     nset =  8
+     lumarr(1:nset)  = (/0.000,0.125,0.188,0.314,0.439,0.502,0.565,1.000/)
+     redarr(1:nset)  = (/0.000,0.000,0.000,0.000,0.000,0.471,0.784,1.000/)
+     greenarr(1:nset)= (/0.000,0.000,0.196,0.588,0.549,0.392,0.000,1.000/)
+     bluearr(1:nset) = (/0.000,0.259,0.392,0.392,0.000,0.000,0.000,0.000/)
      end select
 
      call PGCTAB(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &
