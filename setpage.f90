@@ -1,7 +1,7 @@
 module pagesetup
  implicit none
- public :: setpage, redraw_axes
- real, parameter, private :: xlabeloffset = 3.0, ylabeloffset = 3.0
+ public :: setpage, redraw_axes, setpage2
+ real, parameter, private :: xlabeloffset = 3.0, ylabeloffset = 4.5
  
  private
 
@@ -98,6 +98,10 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
         xopts = 'ABCNST'
      case(2)
         xopts = 'ABCGNST'
+     case(3)
+        xopts = 'BCNST'
+     case(4)
+        xopts = 'ABCNST'
      case(10)
         xopts = 'BCNSTL'
         yopts = 'BCNST'
@@ -132,7 +136,7 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
   endif
   
   !--label plot
-  if (axis.ge.0) then
+  if (axis.ge.0 .and. axis.ne.3 .and. axis.ne.4) then
      !
      !--label x axis only if on last row
      !  or if x axis quantities are different
@@ -202,5 +206,272 @@ subroutine redraw_axes(iaxis)
 
   return
 end subroutine redraw_axes
+
+!
+!--this subroutine determines the setup of the PGPLOT page
+!  sorts out labelling of axes, positioning of windows etc
+!  can be used as a replacement for PGENV and PGLABEL
+!  
+!  divides up a single page into subpanels
+!  
+!
+!  simple subroutine to tile graphs appropriately on a page in pgplot
+!  divides up a single panel into subpanels, with a margin at the edge
+!  should replace the call to pgenv and pglabel
+!
+!  for tiled plots the page setup looks like this:
+!
+!    |   |   |   | 
+!  --+---+---+---+--
+!    | 1 | 2 | 3 |
+!  --+---+---+---+--
+!    | 4 | 5 | 6 |
+!  --+---+---+---+--
+!    |   |   |   |
+!
+!  (ie. with margins in x and y)
+!  note that we divide up a single panel, so pgbeg should be called with nx=1,ny=1
+!
+!  arguments:
+!   iplot  : current plot number
+!   nx     : number of panels in x direction
+!   ny     : number of panels in y direction
+!   xmin,  : xmax, ymin, ymax : plot limits (if tiled should be same for all plots)
+!   labelx : x axis label (if tiled should be same for all plots)
+!   labely : y axis label (if tiled should be same for all plots)
+!   title  : current plot title (can differ between plots)
+!   just   : just=1 gives equal aspect ratios (same as in pgenv)
+!   axis   : axes options (same as in pgenv with a few extra)
+!   vmarginleft,right,bottom,top : initial margin sizes (% of page (if tiled) or panel (if not))
+!            (default should be zero for these)
+!   tile   : assumes all plots can be tiled
+!
+!  This version by Daniel Price, July 2006
+!
+  subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,axis, &
+                      vmarginleftin,vmarginrightin,vmarginbottomin,vmargintopin, &
+                      colourbarwidth,titleoffset,isamexaxis,tile) 
+  implicit none
+  integer, intent(in) :: iplotin,nx,ny,just,axis
+  real, intent(in) :: xmin, xmax, ymin, ymax, colourbarwidth, titleoffset
+  real, intent(in) :: vmarginleftin,vmarginrightin,vmargintopin,vmarginbottomin
+  character(len=*), intent(in) :: labelx,labely,title
+  logical, intent(in) :: isamexaxis,tile
+  integer iplot,ix,iy
+  real vptsizeeffx,vptsizeeffy,panelsizex,panelsizey
+  real vmargintop,vmarginbottom,vmarginleft,vmarginright
+  real vptxmin,vptxmax,vptymin,vptymax
+  real aspectratio,devaspectratio,x1,x2,y1,y2
+  real xch,ych
+  character xopts*10, yopts*10
+!
+! new page if iplot > number of plots on page
+!
+  if (iplotin.gt.nx*ny) then
+     if (mod(iplotin,nx*ny).eq.1) call pgpage
+     iplot = iplotin - (nx*ny)*((iplotin-1)/(nx*ny))
+  elseif (iplotin.le.0) then
+     return
+  else
+     iplot = iplotin
+  endif
+!
+! check for errors in input
+!      
+  if (nx.le.0 .or. ny.le.0) return
+!
+! for tiled plots, adjust effective viewport size if just=1 and graphs are not square
+!      
+  if (tile .and. just.eq.1) then
+     if (ymax.eq.ymin) then
+        print*,'danpgtile: error tiling plots: ymax=ymin'
+        return
+     endif
+!
+! query the current aspect ratio of the device and set aspect ratio appropriately
+!
+     call pgqvsz(3,x1,x2,y1,y2)
+     devaspectratio = (x2-x1)/(y2-y1)
+     aspectratio = ((xmax-xmin)*nx)/((ymax-ymin)*ny)/devaspectratio
+  else
+     aspectratio = 1.0
+  endif
+!
+! set positions of x and y labels in units of character height from edge
+!
+!  xlabeloffset = 3.0
+!  ylabeloffset = 4.5
+!
+! query the character height as fraction of viewport
+!
+  call pgqcs(0,xch,ych)
+!
+! set margin size in units of viewport dimensions
+! allow enough room for the plot labels if they are drawn
+! nb: pgplot sets the character height as some fraction of the smallest
+!     dimension
+!
+! for tiled plots, these margins apply to the whole page
+! otherwise, these are applied to each panel individually
+!
+  vmargintop = vmargintopin
+  vmarginright = vmarginrightin
+  if (axis.ge.0) then
+     vmarginleft = vmarginleftin + (ylabeloffset+1.5)*xch
+     vmarginbottom = vmarginbottomin + (xlabeloffset+1.0)*ych
+
+     if (.not.tile) then
+        if (ny.gt.1 .and. .not.isamexaxis) then
+           vmarginbottom = vmarginbottom + 0.5*ych
+        elseif (ny.gt.1) then
+           vmarginbottom = vmarginbottom + 0.25*ych
+        endif
+     endif
+  else
+     vmarginleft = vmarginleftin
+     vmarginbottom = vmarginbottomin
+  endif
+!
+!--set size of each panel
+!
+  ix = iplot - ((iplot-1)/nx)*nx
+  iy = (iplot-1)/nx + 1
+
+  if (tile) then
+     !
+     ! effective viewport size = size - margins (only used for tiled
+     !
+     vptsizeeffx = 1.0 - vmarginright - vmarginleft
+     vptsizeeffy = 1.0 - vmargintop - vmarginbottom
+     !     reduce x or y size if just=1 to get right aspect ratio
+     if (aspectratio.lt.1.0) then
+        vptsizeeffx = aspectratio*vptsizeeffy
+     elseif (aspectratio.gt.1.0) then
+        vptsizeeffy = vptsizeeffx/aspectratio
+     endif
+
+     panelsizex = vptsizeeffx/nx
+     panelsizey = vptsizeeffy/ny 
+   !      print*,i,ix,iy
+   !      print*,panelsizex,panelsizey,vptsizeeffx,vptsizeeffy
+
+     vptxmin = vmarginleft + (ix-1)*panelsizex
+     vptxmax = vptxmin + panelsizex
+     vptymax = (1.0 - vmargintop) - (iy-1)*panelsizey
+     vptymin = vptymax - panelsizey
+  else
+     !--use full page for non-tiled plots, then set margins inside each panel
+     panelsizex = 1.0/nx
+     panelsizey = 1.0/ny
+     vptxmin = (ix-1)*panelsizex + vmarginleft
+     vptxmax = ix*panelsizex - vmarginright
+     vptymax = 1.0 - (iy-1)*panelsizey - vmargintop
+     vptymin = 1.0 - iy*panelsizey + vmarginbottom
+     
+     !--also leave room for title if necessary
+     vptymax = vptymax - titleoffset*ych
+     
+     !--also leave room for colour bar if necessary
+     if (colourbarwidth.GT.0.) then
+        vptxmax = vptxmax - (colourbarwidth + 1.6)*xch
+     endif
+
+  endif
+      print*,vptxmin,vptxmax,vptymin,vptymax
+  call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
+!
+! set axes
+!
+  if (just.eq.1) then
+     call pgwnad(xmin,xmax,ymin,ymax)
+  else
+     call pgswin(xmin,xmax,ymin,ymax)
+  endif
+!
+! option to return before actually doing anything
+!      
+  if (title(1:7).eq.'NOPGBOX') return
+!
+! set options for call to pgbox (draws axes) and label axes where appropriate
+! (options are exactly as in pgenv apart from axis=-3 which i have added)
+!
+  yopts = '*'
+  if (axis.eq.-3) then
+     xopts = 'BCST'
+  elseif (axis.eq.-2) then
+     xopts = ' '
+  elseif (axis.eq.-1) then
+    xopts = 'BC'
+  elseif (axis.eq.0) then
+    xopts = 'BCST'
+  elseif (axis.eq.1) then
+    xopts = 'ABCST'
+  elseif (axis.eq.2) then
+    xopts = 'ABCGST'
+  elseif (axis.eq.10) then
+    xopts = 'BCSTL'
+    yopts = 'BCST'
+  elseif (axis.eq.20) then
+    xopts = 'BCST'
+    yopts = 'BCSTL'
+  elseif (axis.eq.30) then
+    xopts = 'BCSTL'
+    yopts = 'BCSTL'
+  else
+    call grwarn('danpgtile: illegal axis argument.')
+    xopts = 'BCNST'
+  endif
+  if (yopts.eq.'*') yopts = xopts
+!
+! label plot
+!
+  if (tile) then
+     !
+     ! decide whether to number and label the y axis
+     !      
+     if (ix.eq.1 .and. axis.ge.0) then
+        yopts = '1VN'//yopts
+        call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
+     elseif (axis.ge.0) then
+        yopts = yopts//'N'
+     endif  
+     !
+     ! decide whether to number and label the x axis
+     !      
+     if (iy.eq.ny .and. axis.ge.0) then
+        xopts = 'N'//xopts
+        call pgmtxt('B',xlabeloffset,0.5,0.5,labelx)
+     endif
+     !
+     ! plot the title if inside the plot boundaries
+     !
+     if (titleoffset.lt.0.) call pgmtxt('t',-titleoffset,0.96,1.0,title)
+
+  elseif (axis.ge.0) then
+     !
+     !--label x axis only if on last row
+     !  or if x axis quantities are different
+     !
+     if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis)) then
+        call pgmtxt('B',xlabeloffset,0.5,0.5,labelx)
+     endif
+     !--always plot numbers
+     xopts = 'N'//xopts
+     !
+     !--always label y axis
+     !
+     yopts = '1VN'//yopts
+     call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
+     !
+     !--always plot title
+     !
+     call pgmtxt('T',-titleoffset,0.5,0.5,title)
+
+  endif
+
+  call pgbox(xopts,0.0,0,yopts,0.0,0)
+
+  return      
+end subroutine
 
 end module pagesetup
