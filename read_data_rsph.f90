@@ -50,8 +50,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real, dimension(10) :: rheader
   real(doub_prec), dimension(10) :: dheader
   character(len=100) :: headerstring
+  character(len=10), dimension(maxplot) :: cheader
   real, dimension(:,:), allocatable :: dattemp
   real(doub_prec), dimension(:,:), allocatable :: dattempd
+  common /chead/ cheader
 
   iunit = 11 ! file unit number
   nstepsread = 0
@@ -120,13 +122,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
   if (ierr /= 0) then
      print*,'WARNING: errors during rheader read'
   endif
-  print*,'rheader = ',rheader
+  print "(1x,a,20(1x,f8.2))",'rheader = ',rheader
   read(iunit,iostat=ierr,end=80) dheader(1:isizeheader)
   if (ierr /= 0) then
      print*,'WARNING: errors during dheader read'
   endif
-  print*,'dheader = ',dheader
-
+  print "(1x,a,20(1x,1pe8.2))",'dheader = ',dheader(1:isizeheader)
+  do icol=1,ncolumns-ndim
+     read(iunit,iostat=ierr,end=80) cheader(icol)(1:isizeheader)
+  enddo
+!  print "(a)",(trim(cheader(icol)),icol=1,ncolumns-ndim)
 !
 !--allocate/reallocate memory for data arrays
 !
@@ -248,12 +253,14 @@ subroutine set_labels
  use labels, only:ix,ivx,ih,irho,iutherm,ipmass,ipr,iBfirst, &
              idivB,iJfirst,iamvec,labelvec,label,labeltype
  use params
- use settings_data, only:ndim,ndimV,ncolumns,iformat,ntypes, &
+ use settings_data, only:ndim,ndimV,ncolumns,ntypes, &
                     UseTypeInRenderings
  use particle_data, only:gamma
  use geometry, only:labelcoord
  implicit none
  integer :: i,icol
+ character(len=10), dimension(maxplot) :: cheader
+ common /chead/ cheader
 
  if (ndim.le.0 .or. ndim.gt.3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -267,32 +274,25 @@ subroutine set_labels
  do i=1,ndim
     ix(i) = i
  enddo
- ipmass = ndim + 1
- irho = ndim + 2
- icol = ndim+3
- label(icol) = 'P'
- !if ((gamma(1)-1.0).gt.tiny(gamma(1))) then
- !   iutherm = ndim+4
- !   icol = icol + 1
- !else
-    iutherm = 0
- !endif
- icol = icol + 1
-
- label(icol) = 's'
- icol = icol + 1
-
- ih = icol
- label(ih) = 'h'
- icol = icol + 1
-
- label(icol) = 'time bin #'
- icol = icol + 1
-
- label(icol) = 'type'
- icol = icol + 1
-
- ivx = icol
+ label(:)(1:len(label)) = ' '
+ do i=ndim+1,ncolumns
+    label(i) = cheader(i-ndim)
+    !--would be nice to use select case here but compiler bug
+    !  with trim on compaq fortran prevents this
+    if (label(i)(1:1)=='m' .or. label(i)(1:5)=='mass') then
+       ipmass = i
+    elseif (label(i)(1:3)=='rho' .or. label(i)(1:4)=='dens') then
+       irho = i
+    elseif (label(i)(1:1)=='h' .or. label(i)(1:6).eq.'smooth') then
+       ih = i
+    elseif (label(i)(1:2)=='u ' .or. label(i)(1:1).eq.'e') then
+       iutherm = i
+    elseif (label(i)(1:1)=='v') then
+       if (ivx.eq.0 .or. i.lt.iBfirst) ivx = i
+    elseif (label(i)(1:1)=='B') then
+       if (iBfirst.eq.0 .or. i.lt.iBfirst) iBfirst = i
+    endif
+ enddo
 
  label(ix(1:ndim)) = labelcoord(1:ndim,1)
  !
@@ -303,12 +303,10 @@ subroutine set_labels
  do i=1,ndimV
     label(ivx+i-1) = trim(labelvec(ivx+i-1))//'\d'//labelcoord(i,1)
  enddo
-
- 
- label(irho) = '\gr'
- if (iutherm.gt.0) label(iutherm) = 'u'
- label(ih) = 'h       '
- label(ipmass) = 'particle mass'
+ if (iBfirst.gt.0) then
+    iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
+    labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
+ endif
 !
 !--set labels for each type of particles
 !
