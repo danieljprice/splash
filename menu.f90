@@ -75,8 +75,8 @@ subroutine menu
   else
      iacplane = 0
   endif
-  nextra = nextra + 1
-  label(ncolumns+ncalc+nextra) = 'gwaves'
+  !nextra = nextra + 1
+  !label(ncolumns+ncalc+nextra) = 'gwaves'
 
   if (ivegotdata) then
      numplot = ncolumns + ncalc + nextra
@@ -144,7 +144,7 @@ subroutine menu
      if (iadjust.ne.0) then
         print 13, ihalf + iadjust,transform_label(label(ihalf + iadjust), &
              itrans(ihalf+iadjust))
-     endif  
+     endif 
 !
 !--multiplot
 !  
