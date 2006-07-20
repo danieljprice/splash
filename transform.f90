@@ -390,7 +390,7 @@ end subroutine transform_limits_inverse
 function transform_label(label,itrans)
   implicit none
   integer :: itrans,itransmulti,i,ndigits
-  integer, dimension(20) :: digit
+  integer, dimension(5) :: digit
   character(len=*) :: label
   character(len=len(label)+20) :: transform_label
   character(len=len(label)+20) :: temp_label      

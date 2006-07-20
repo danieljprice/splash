@@ -52,12 +52,6 @@ subroutine submenu_limits(help)
  helpmode = .false.
  if (present(help)) helpmode=help
  zoom = 1.0
- 
- index = 1
- do i=1,ntrans
-    write(transprompt(index:),"(1x,i1,'=',a,',')") i,trim(transform_label('x',i))
-    index = len_trim(transprompt) + 1
- enddo
 
  iaction = 0
  if (iadapt) then
@@ -160,6 +154,12 @@ subroutine submenu_limits(help)
     endif
 !------------------------------------------------------------------------
   case(5)
+     index = 1
+     do i=1,ntrans
+        write(transprompt(index:),"(1x,i1,'=',a,',')") i,trim(transform_label('x',i))
+        index = len_trim(transprompt) + 1
+     enddo
+
      if (helpmode) then
         print "(/a)",' Applies log, inverse and other transformations to data columns'
      else
