@@ -65,9 +65,9 @@ subroutine submenu_particleplots
         iplotpartoftype,imarktype,icoordsnew,iexact
 10  format(' 0) exit ',/,                 &
          ' 1) plot line joining particles        ( ',L1,' ) ',/, &
-         ' 2) toggle label particles             ( ',L1,' ) ',/,           &
+         ' 2) label particles                    ( ',L1,' ) ',/,           &
          ' 3) plot circles of interaction        ( ',i3,' ) ',/,           &
-         ' 4) toggle plot particles by type      ( ',6(L1,',',1x),' )',/,  &
+         ' 4) turn on/off particles by type      ( ',6(L1,',',1x),' )',/,  &
          ' 5) change graph markers for each type ( ',6(i2,',',1x),' )',/,  &
          ' 6) change coordinate systems          ( ',i2,' ) ',/,           &
          ' 7) plot exact solution                ( ',i2,' ) ',/, &

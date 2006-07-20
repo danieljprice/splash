@@ -78,7 +78,7 @@ subroutine submenu_page
         ' 2) axes options           (',i2,')',/, &
         ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
         ' 4) change plots per page  (',i2,1x,i2,')',/, &
-         ' 5) toggle plot tiling     (',L1,')',/, & 
+         ' 5) plot tiling on/off     (',L1,')',/, & 
          ' 6) title options          (',L1,1x,f5.2,1x,f4.1,')',/, &
          ' 7) legend options         (',L1,1x,L1,1x,f5.2,1x,f4.1,')',/, &
          ' 8) set character height   (',f4.1,')',/,&

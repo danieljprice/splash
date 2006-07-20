@@ -55,7 +55,7 @@ subroutine submenu_render
 10 format(' 0) exit ',/,                      &
            ' 1) change number of pixels           (',i5,' )',/, &
            ' 2) change colour scheme              (',i2,' )',/,    &
-           ' 3) toggle plot contours              ( ',L1,' )',/, &
+           ' 3) plot contours                     ( ',L1,' )',/, &
            ' 4) change number of contours         (',i3,' )',/, &
            ' 5) colour bar options                ( ',L1,' )',/,&
            ' 6) use particle colours not pixels   ( ',L1,' )',/,& 

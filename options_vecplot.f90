@@ -42,7 +42,7 @@ subroutine submenu_vecplot
  print 10,npixvec,UseBackgndColorVecplot,iVecplotLegend
 10  format(' 0) exit ',/, &
            ' 1) change number of pixels                   (',i4,' )',/, &
-           ' 2) toggle background/foreground colour       (',L1,' )',/, &
+           ' 2) use background/foreground colour          (',L1,' )',/, &
            ' 3) vector plot legend settings               (',L1,' )')
  call prompt('enter option',ians,0,3)
 !
