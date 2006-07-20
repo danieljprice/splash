@@ -27,7 +27,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use settings_part, only:iexact,icoordsnew
   use particle_data, only:dat,time
   use prompting
-  use labels, only:label,labelvec,iamvec
+  use labels, only:label,labelvec,iamvec,ih,irho,ipmass
   use geometry, only:labelcoord
   use calcquantities, only:calc_quantities
   use titles, only:steptitles
@@ -238,6 +238,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         !--also set iendatstep the first time around
         iendatstep = nsteps
      endif
+  endif
+  if (ndim.ne.0 .and. (irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0)) then
+     print "(4(/,a))",' WARNING: Rendering capabilities cannot be enabled', &
+                 '  until positions of density, smoothing length and particle', &
+                 '  masses are known (specified using the integer variables ', &
+                 '  irho,ih and ipmass in the read_data routine)'
   endif
 !
 !--reset coordinate and vector labels (depending on coordinate system)
