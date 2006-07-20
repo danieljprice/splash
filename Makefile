@@ -102,6 +102,11 @@ spyros: $(OBJECTS) read_data_spyros.o
 sphNG: $(OBJECTS) read_data_sphNG.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o ssupersphplot $(OBJECTS) read_data_sphNG.o
 
+RSPH: rsph
+
+rsph: $(OBJECTS) read_data_rsph.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o rsupersphplot $(OBJECTS) read_data_rsph.o
+
 
 ## some dependencies as I get around to it
 defaults.o: ./titles.mod ./particle_data.mod ./settings_powerspec.mod \
@@ -134,6 +139,8 @@ targz:
 
 tests: interpolate3D_projection.o interpolate3D_xsec.o ./tests/test_interpolate3D.o 
 	$(FC) $(FFLAGS) $(LDFLAGS) -o test_interpolation3D ./tests/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
+test2: transform.o ./tests/test_transform.o 
+	$(FC) $(FFLAGS) $(LDFLAGS) -o test_transform ./tests/test_transform.o transform.o
 
 clean:
 	rm *.o *.mod
