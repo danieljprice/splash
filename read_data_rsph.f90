@@ -258,7 +258,7 @@ subroutine set_labels
  use particle_data, only:gamma
  use geometry, only:labelcoord
  implicit none
- integer :: i,icol
+ integer :: i,icol,j
  character(len=10), dimension(maxplot) :: cheader
  common /chead/ cheader
 
@@ -274,11 +274,14 @@ subroutine set_labels
  do i=1,ndim
     ix(i) = i
  enddo
- label(:)(1:len(label)) = ' '
+
  do i=ndim+1,ncolumns
     label(i) = cheader(i-ndim)
-    !--would be nice to use select case here but compiler bug
-    !  with trim on compaq fortran prevents this
+    !--blank characters in c are ascii zero - correct these to spaces
+    do j=1,len(label(i))
+       if (iachar(label(i)(j:j)).eq.0) label(i)(j:j) = ' '
+    enddo
+    !--set positions of various quantities depending on labels
     if (label(i)(1:1)=='m' .or. label(i)(1:5)=='mass') then
        ipmass = i
     elseif (label(i)(1:3)=='rho' .or. label(i)(1:4)=='dens') then
@@ -288,7 +291,7 @@ subroutine set_labels
     elseif (label(i)(1:2)=='u ' .or. label(i)(1:1).eq.'e') then
        iutherm = i
     elseif (label(i)(1:1)=='v') then
-       if (ivx.eq.0 .or. i.lt.iBfirst) ivx = i
+       if (ivx.eq.0 .or. i.lt.ivx) ivx = i
     elseif (label(i)(1:1)=='B') then
        if (iBfirst.eq.0 .or. i.lt.iBfirst) iBfirst = i
     endif
