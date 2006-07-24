@@ -13,11 +13,11 @@ subroutine calc_quantities(ifromstep,itostep)
   use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,unitslabel
   use settings_part, only:iexact
-  use mem_allocation
+  use mem_allocation, only:alloc
   implicit none
   integer, intent(in) :: ifromstep, itostep
   integer :: i,j,nstartfromcolumn,ncolsnew
-  integer :: ientrop,idhdrho,ivalfven,imach,ideltarho
+  integer :: ientrop,idhdrho,ivalfven,imach,ideltarho,ivol
   integer :: ipmag,ibeta,itotpr,idivBerr,icrosshel
   integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
   integer :: iamvecprev,ivec,nveclist,ivecstart,inewcol
@@ -44,6 +44,7 @@ subroutine calc_quantities(ifromstep,itostep)
   ivalfven = 0
   imach = 0
   ideltarho = 0
+  ivol = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -81,6 +82,12 @@ subroutine calc_quantities(ifromstep,itostep)
      ncalc = ncalc + 1
      ideltarho = nstartfromcolumn + 1
   endif
+  !--mean particle spacing (m/rho)**(1/ndim)
+  !if (ipmass.ne.0 .and. irho.ne.0 .and. ndim.ge.1) then
+  !   nstartfromcolumn = ncolumns + ncalc
+  !   ncalc = ncalc + 1
+  !   ivol = nstartfromcolumn + 1
+  !endif
   !--dh/drho
   !if (ih.ne.0 .and. irho.ne.0) then
   !  nstartfromcolumn = ncolumns + ncalc
@@ -105,11 +112,11 @@ subroutine calc_quantities(ifromstep,itostep)
         ncalc = ncalc + 1
         idivBerr = nstartfromcolumn + 1
      endif
-     if (ivx.ne.0) then
-        nstartfromcolumn = ncolumns + ncalc
-        ncalc = ncalc + 1
-        icrosshel = nstartfromcolumn + 1
-     endif
+!     if (ivx.ne.0) then
+!        nstartfromcolumn = ncolumns + ncalc
+!        ncalc = ncalc + 1
+!        icrosshel = nstartfromcolumn + 1
+!     endif
      if (ipmag.ne.0 .and. (irho.ne.0)) then
         nstartfromcolumn = ncolumns + ncalc
         ncalc = ncalc + 1
@@ -211,6 +218,14 @@ subroutine calc_quantities(ifromstep,itostep)
            dat(j,ike,i) = 0.5*dot_product(dat(j,ivx:ivx+ndimV-1,i), &
                                           dat(j,ivx:ivx+ndimV-1,i))
         enddo
+     endif
+     !!--volume - (m/rho)**(1/ndim)
+     if (ivol.ne.0) then
+        where (dat(1:ntoti,irho,i).gt.tiny(dat))
+           dat(1:ntoti,ivol,i) = (dat(1:ntoti,ipmass,i)/dat(1:ntoti,irho,i))**(1./real(ndim))    
+        else where
+           dat(1:ntoti,ivol,i) = 0.
+        end where
      endif
      !!--delta rho for toy star
      if ((ideltarho.ne.0).and.(irho.ne.0).and.(irad.ne.0)) then
@@ -318,6 +333,7 @@ subroutine calc_quantities(ifromstep,itostep)
   if (ipr.gt.ncolumns) label(ipr) = 'P_gas'
   if (imach.ne.0) label(imach) = '|v|/c\ds'
   if (ideltarho.ne.0) label(ideltarho) = '\gd \gr'
+  if (ivol.ne.0) label(ivol) = '(m/rho)^1/ndim'
   
   if (ipmag.ne.0) label(ipmag) = 'B\u2\d/2'
   if (itotpr.ne.0) label(itotpr) = 'P_gas + P_mag'
