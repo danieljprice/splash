@@ -32,7 +32,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use filenames, only:nfiles
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,ntypes, &
                           buffer_data
-  use mem_allocation
+  use mem_allocation, only:alloc
   use geometry, only:labelcoordsys
   implicit none
   integer, intent(in) :: indexstart
@@ -80,7 +80,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--read first header line
 !
   read(iunit,iostat=ierr,end=80) headerstring
-  print "(1x,a)",trim(headerstring)
+  print "(1x,a)",'header string="'//trim(headerstring)//'"'
 !
 !--read other header lines (short/normal/long ints, reals, doubles)
 !
@@ -98,10 +98,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--check for errors in sheader
   !
-  if (ndim.gt.3 .or. ndimV.gt.3 .or. ndim.le.0 .or. ndimV.le.0) then
-     print*,'*** error in header: ndim = ',ndim,' ndimV = ', ndimV
+  if (ndim.gt.3 .or. ndimV.gt.3 .or. ndim.le.0 .or. ndimV.le.0 .or. &
+      ncolumns.le.0 ) then
+     print*,'*** ERROR: header corrupted: ndim = ',ndim,' ndimV = ', ndimV
+     ndim = 0
+     ndimV = 0
+     ntypes = 0
+     ncolumns = 0
      close(iunit)
      return
+  elseif (ncolumns.gt.maxplot) then
+     print "(1x,a)",'*** WARNING: too many columns for array limits'
+     ncolumns = maxplot
+     print "(1x,a,i2,a)",'    reading only first ',ncolumns,' columns'
   endif
 
   read(iunit,iostat=ierr,end=80) iheader(1:isizeheader)
@@ -251,14 +260,13 @@ end subroutine read_data
 
 subroutine set_labels
  use labels, only:ix,ivx,ih,irho,iutherm,ipmass,ipr,iBfirst, &
-             idivB,iJfirst,iamvec,labelvec,label,labeltype
+             iamvec,labelvec,label,labeltype
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes, &
                     UseTypeInRenderings
- use particle_data, only:gamma
  use geometry, only:labelcoord
  implicit none
- integer :: i,icol,j
+ integer :: i,j
  character(len=10), dimension(maxplot) :: cheader
  common /chead/ cheader
 
@@ -286,10 +294,12 @@ subroutine set_labels
        ipmass = i
     elseif (label(i)(1:3)=='rho' .or. label(i)(1:4)=='dens') then
        irho = i
-    elseif (label(i)(1:1)=='h' .or. label(i)(1:6).eq.'smooth') then
+    elseif (label(i)(1:1)=='h' .or. label(i)(1:6)=='smooth') then
        ih = i
-    elseif (label(i)(1:2)=='u ' .or. label(i)(1:1).eq.'e') then
+    elseif (label(i)(1:2)=='u ' .or. label(i)(1:1)=='e') then
        iutherm = i
+    elseif (label(i)(1:2)=='pr' .or. trim(label(i))=='P') then
+       ipr = i
     elseif (label(i)(1:1)=='v') then
        if (ivx.eq.0 .or. i.lt.ivx) ivx = i
     elseif (label(i)(1:1)=='B') then
@@ -314,11 +324,15 @@ subroutine set_labels
 !--set labels for each type of particles
 !
  labeltype(1) = 'gas'
- labeltype(2) = 'auxiliary'
- labeltype(3) = 'mirror'
  UseTypeInRenderings(1) = .true.
- UseTypeInRenderings(2) = .true.
- UseTypeInRenderings(3) = .true.
+ if (ntypes.ge.2) then
+    labeltype(2) = 'auxiliary'
+    UseTypeInRenderings(2) = .true.
+ endif
+ if (ntypes.ge.3) then
+    labeltype(3) = 'mirror'
+    UseTypeInRenderings(3) = .true.
+ endif
  
 !-----------------------------------------------------------
 
