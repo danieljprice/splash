@@ -390,7 +390,7 @@ end subroutine redraw_axes
 !
 ! option to return before actually doing anything
 !      
-  if (title(1:7).eq.'NOPGBOX') return
+  if (trim(title).eq.'NOPGBOX') return
 !
 ! set options for call to pgbox (draws axes) and label axes where appropriate
 ! (options are exactly as in pgenv apart from axis=-3 which i have added)
