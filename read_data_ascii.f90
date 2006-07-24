@@ -278,10 +278,10 @@ subroutine set_labels
   if (ih.ne.0) print "(a,i2)",' Assuming smoothing length in column ',ih
   
   if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
-     print "(4(/,a))",' WARNING: Rendering capabilities cannot be enabled', &
-                 '  until positions of x,rho, h, pmass etc are known', &
-                 '  (simplest way is to label the relevant columns ',&
-                 '  appropriately in the columns file)'
+     print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
+                 '  until positions of density, smoothing length and particle', &
+                 '  mass are known (for the ascii read the simplest way is to ', &
+                 '   relevant columns appropriately in the columns file)'
   endif
   
 !!  iamvec(ivx:ivx+ndimV-1) = ivx
