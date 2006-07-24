@@ -23,7 +23,7 @@ subroutine menu
   use settings_xsecrot, only:submenu_xsecrotate
   use multiplot
   use prompting
-  use transforms
+  use transforms, only:transform_label
   use defaults, only:defaults_write
   use geometry, only:labelcoord
   use getdata, only:get_data
@@ -325,11 +325,14 @@ subroutine menu
                     ' at startup.'
 !------------------------------------------------------------------------
      case('h','H')
-        print "(4(/a))",' For help on any menu item type a question mark ',&
+        print "(10(/a))",' For help on any menu item type a question mark ',&
                  ' preceding the appropriate letter.',&
                  ' ie. ?d gives help on the data submenu',&
                  '     ?x gives help on cross section/rotation', &
-                 '     ...you get the idea'
+                 '   ', &
+                 ' for detailed help, consult the user guide',&
+                 ' and/or the online FAQ. If you''re really stuck, email me! '
+        read*
      case('?h','?H')
         print "(2(/a))",' You mean to tell me you need help on help???',&
                       ' You need help.'
@@ -359,10 +362,9 @@ subroutine menu
   subroutine options_multiplot
    use settings_page, only: nacross, ndown
    use settings_render, only: iplotcont_nomulti
-   use settings_xsecrot, only: xsec_nomulti, xsecpos_nomulti
    implicit none
    integer :: ifac
-   logical :: isamex, isamey, ichange, icoordplot
+   logical :: isamex, isamey, icoordplot
    
    call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
    !--guess nacross,ndown based on largest factor
