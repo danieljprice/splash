@@ -31,7 +31,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc
-  use mem_allocation
+  use mem_allocation, only:alloc
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
@@ -137,6 +137,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
            endif
         endif
         print "(a,f10.2,a,i9,a,i6)",' time: ',timei,' npart: ',nprint,' nptmass: ',nptmass
+        !--change to single precision if stupid answers
+        if (n1.le.0.or.n1.gt.1e10.or.n2.lt.0.or.n2.gt.1e10 &
+            .or.nptmass.lt.0.or.nptmass.gt.1.e6 .or. nprint.le.0 &
+            .or. nprint.gt.1e10) then
+           print "(a)",' *** ERRORS IN TIMESTEP HEADER: NO DATA READ ***'
+           close(15)
+           return
+        endif
  
        if (.not.allocated(dat) .or. (nprint+nptmass).gt.npart_max) then
            npart_max = max(npart_max,INT(1.1*(nprint+nptmass)))
@@ -364,14 +372,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--transform velocities to corotating frame
   !
-  if (.not.minidump) then
+  if (.not.minidump .and. allocated(dat)) then
      print*,' transforming velocities to corotating frame'
      call set_corotating_vels(dat(1:nprint,1:2,j-1),dat(1:nprint,7,j-1),dat(1:nprint,4:5,j-1),n1,n2,nprint)
   endif
 
-  print*,'>> end of dump file: nsteps =',j-1,'ntot = ', &
+  if (allocated(npartoftype)) then
+     print*,'>> end of dump file: nsteps =',j-1,'ntot = ', &
         sum(npartoftype(:,j-1)),'nptmass=',npartoftype(2,j-1)
-   
+  endif
 return
 
 contains
