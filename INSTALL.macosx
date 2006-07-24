@@ -9,6 +9,8 @@ The basic steps for installation are:
 3) compile SUPERSPHPLOT and link with PGPLOT
 4) if desired/necessary write a read_data subroutine so that SUPERSPHPLOT can read your data format
 
+For troubleshooting of some common installation problems,
+ have a look at the online FAQ.
 
 All of the above steps can be done "by hand" - to do so follow the detailed instructions in the INSTALL
 file. However on Mac OS/X there are several tools which make installation easier, so the steps are the
@@ -30,6 +32,8 @@ F90C = g95
 F90FLAGS = -O3
 LDFLAGS = -L/usr/X11R6/lib -lX11 -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
+(these flags should be identical to those in the PGPLOT makefile in the /sw/lib/pgplot directory,
+ with the addition of -lg2c which links to the g77 libraries that fink uses to compile PGPLOT)
 SYSTEMFILE = system_f2003.f90
 
 at this point, type 'make' and supersphplot should compile and link successfully. You may at this point try

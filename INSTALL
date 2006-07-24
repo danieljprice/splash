@@ -9,6 +9,9 @@ The basic steps for installation are:
 3) compile SUPERSPHPLOT and link with PGPLOT
 4) if desired/necessary write a read_data subroutine so that SUPERSPHPLOT can read your data format
 
+For troubleshooting of some common installation problems,
+ have a look at the online FAQ.
+
 1) ---------------- Fortran 95 compilers ---------------------------
 
  By now, many Fortran 90/95 compilers exist. In terms of free ones, the Intel compiler has a
@@ -72,7 +75,8 @@ crap>locate libX11
  If, having found the PGPLOT and X11
 libraries, the program still won't compile, it is usually
 because the PGPLOT on your system has been compiled with a different compiler to
-the one you are using. A first attempt is to try using the g2c libraries
+the one you are using, and the libraries from that compiler must also be linked.
+For g77-compiled PGPLOT (very common) the relevant library is g2c, so use:
 
 LDFLAGS = -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11 -lg2c
 
