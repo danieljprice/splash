@@ -36,7 +36,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
-  integer, parameter :: maxptmass = 10
   real, parameter :: hfact = 1.5
   real, parameter :: dhfact3 = 1./hfact**3
   integer :: i,j,ifile,ierr
@@ -138,9 +137,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
         endif
         print "(a,f10.2,a,i9,a,i6)",' time: ',timei,' npart: ',nprint,' nptmass: ',nptmass
         !--change to single precision if stupid answers
-        if (n1.le.0.or.n1.gt.1e10.or.n2.lt.0.or.n2.gt.1e10 &
-            .or.nptmass.lt.0.or.nptmass.gt.1.e6 .or. nprint.le.0 &
-            .or. nprint.gt.1e10) then
+        if (nptmass.lt.0.or.nptmass.gt.1.e6 .or. nprint.lt.0 &
+            .or. nprint.gt.1e10 .or. (nprint.eq.0 .and. nptmass.eq.0)) then
            print "(a)",' *** ERRORS IN TIMESTEP HEADER: NO DATA READ ***'
            close(15)
            return
