@@ -176,8 +176,9 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,radkern,qq,wab,rab,const
-  real :: termnorm,term,dx,dy,dz,dz2,xpix,ypix,rescalefac
+  real :: hi,hi1,radkern,qq,qq2,wab,const,xi,yi,hi21
+  real :: termnorm,term,dy,dy2,dz,dz2,ypix,rescalefac
+  real, dimension(npixx) :: dx2i
 
   datsmooth = 0.
   datnorm = 0.
@@ -211,18 +212,21 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
         return
      endif
      hi1 = 1./hi
+     hi21 = hi1*hi1
      radkern = 2.*hi    ! radius of the smoothing kernel
      !
      !--for each particle, work out distance from the cross section slice.
      !
      dz = zslice - z(i)
-     dz2 = dz**2
+     dz2 = dz**2*hi21
      !
      !--if this is < 2h then add the particle's contribution to the pixels
      !  otherwise skip all this and start on the next particle
      !
-     if (abs(dz) .lt. radkern) then
+     if (dz2 .lt. 4.0) then
 
+        xi = x(i)
+        yi = y(i)
         termnorm = const*weight(i)
         term = termnorm*dat(i)/rescalefac
         !
@@ -238,22 +242,27 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
         if (ipixmax.gt.npixx) ipixmax = npixx
         if (jpixmax.gt.npixy) jpixmax = npixy
         !
+        !--precalculate an array of dx2 for this particle (optimisation)
+        !
+        do ipix=ipixmin,ipixmax
+           dx2i(ipix) = ((xmin + (ipix-0.5)*pixwidth - xi)**2)*hi21
+        enddo
+        !
         !--loop over pixels, adding the contribution from this particle
         !
         do jpix = jpixmin,jpixmax
            ypix = ymin + (jpix-0.5)*pixwidth
-           dy = ypix - y(i)
+           dy = ypix - yi
+           dy2 = dy*dy*hi21
            do ipix = ipixmin,ipixmax
-              xpix = xmin + (ipix-0.5)*pixwidth
-              dx = xpix - x(i)
-              rab = sqrt(dx**2 + dy**2 + dz2)
-              qq = rab*hi1
+              qq2 = dx2i(ipix) + dy2 + dz2
+              qq = sqrt(qq2)
               !
               !--SPH kernel - standard cubic spline
               !     
               if (qq.lt.2.0) then
                  if (qq.lt.1.0) then
-                    wab = (1.-1.5*qq**2 + 0.75*qq**3)
+                    wab = (1.-1.5*qq2 + 0.75*qq*qq2)
                  else
                     wab = 0.25*(2.-qq)**3
                  endif

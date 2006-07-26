@@ -82,7 +82,7 @@ real function wfromtable(q2)
  !--find nearest index in table
  !
  index = int(q2*ddq2table)
- index = min(index,maxcoltable)
+ !index = min(index,maxcoltable) ! should be unnecessary if q2 < radkernel checked
  index1 = min(index + 1,maxcoltable)
  !
  !--find increment along from this index
@@ -150,6 +150,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
   real :: term,dy,dy2,ypix,zfrac
   real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
+  real, dimension(npixx) :: xpix,dx2i
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress,use3Dperspective,accelerate,useaccelerate
   
@@ -189,7 +190,13 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
   yminpix = ymin - 0.5*pixwidth
   xmax = xmin + npixx*pixwidth
   ymax = ymin + npixy*pixwidth
-  
+!
+!--store x value for each pixel (for optimisation)
+!  
+  do ipix=1,npixx
+     xpix(ipix) = xminpix + ipix*pixwidth
+  enddo
+
   over_particles: do i=1,npart
      !
      !--report on progress
@@ -248,7 +255,6 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
 !     jpixmin = int((yi - radkern - ymin)/pixwidth)
 !     ipixmax = ipixmin + npixpart !!int((xi + radkern - xmin)/pixwidth) + 1
 !     jpixmax = jpixmin + npixpart !!int((yi + radkern - ymin)/pixwidth) + 1
-     
      !
      !--loop over pixels, adding the contribution from this particle
      !  copy by quarters if all pixels within domain
@@ -256,6 +262,17 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
      accelerate = useaccelerate .and. npixpart.gt.5 &
                  .and. ipixmin.ge.1 .and. ipixmax.le.npixx &
                  .and. jpixmin.ge.1 .and. jpixmax.le.npixy
+
+     if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
+     if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
+     if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
+     if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
+     !
+     !--precalculate an array of dx2 for this particle (optimisation)
+     !
+     do ipix=ipixmin,ipixmax
+        dx2i(ipix) = ((xpix(ipix) - xi)**2)*hi21
+     enddo
      
      if (accelerate) then
         !--adjust xi, yi to centre of pixel
@@ -264,10 +281,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
         do jpix = jpixi,jpixmax
            ypix = yminpix + jpix*pixwidth
            dy = ypix - yi
-           dy2 = dy*dy
-           row = 0.
+           dy2 = dy*dy*hi21
            do ipix = ipixi,ipixmax
-              q2 = ((xminpix + ipix*pixwidth - xi)**2 + dy2)*hi21
+              q2 = dx2i(ipix) + dy2
               !
               !--SPH kernel - integral through cubic spline
               !  interpolate from a pre-calculated table
@@ -279,8 +295,11 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
                  !                  
                  datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
                  row(ipix) = term*wab
+              else
+                 row(ipix) = 0.
               endif
            enddo
+           !--NB: the following actions can and should be vectorized (but I don't know how...)
            !--copy top right -> top left
            do ipix=ipixmin,ipixi-1
               datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + row(ipixmax-(ipix-ipixmin))
@@ -300,20 +319,15 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
           
      else
 
-        if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
-        if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-        if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
-        if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
-
         do jpix = jpixmin,jpixmax
            ypix = yminpix + jpix*pixwidth
            dy = ypix - yi
-           dy2 = dy*dy
+           dy2 = dy*dy*hi21
            do ipix = ipixmin,ipixmax
               !xpix = xminpix + ipix*pixwidth
               !dx = xpix - xi
               !rab2 = (xminpix + ipix*pixwidth - xi)**2 + dy2
-              q2 = ((xminpix + ipix*pixwidth - xi)**2 + dy2)*hi21
+              q2 = dx2i(ipix) + dy2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
               !
               !--SPH kernel - integral through cubic spline
               !  interpolate from a pre-calculated table
