@@ -86,7 +86,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--open the (unformatted) binary file
 !
-   open(unit=15,iostat=ierr,file=dumpfile,status='old',form='unformatted')
+   open(unit=iunit,iostat=ierr,file=dumpfile,status='old',form='unformatted')
    if (ierr /= 0) then
       print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
       return
@@ -97,10 +97,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
       doubleprec = .true.
       read(iunit,end=55,iostat=ierr) int1,r8,int2,i1,int3
       if (ierr /= 0) then
-         print "(a)",'*** ERROR READING FILE : corrupted/zero size?'
+         print "(a)",'*** ERROR READING FILE : corrupted/zero size/wrong endian?'
+         close(iunit)
          return
       elseif (int1.ne.690706) then
          print "(a)",'*** ERROR READING HEADER: wrong endian?'
+         close(iunit)
          return
       endif
       if (int2.ne.780806) then
@@ -118,6 +120,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    read(iunit,iostat=ierr) fileident
    if (ierr /=0) then
       print "(a)",'*** ERROR READING FILE ID ***'
+      close(iunit)
       return
    else
       print "(a)",'File ID: '//trim(fileident)
@@ -128,11 +131,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
    read(iunit,iostat=ierr) nints
    if (ierr /=0) then
       print "(a)",'error reading nints'
+      close(iunit)
       return
    else
       read(iunit,iostat=ierr) npart
       if (ierr /=0) then
          print "(a)",'error reading npart'
+         close(iunit)
          return
       else
          print*,'npart = ',npart
@@ -150,6 +155,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    read(iunit,end=55,iostat=ierr) nreals
    if (ierr /=0) then
       print "(a)",'error reading default reals'
+      close(iunit)
       return
    else
       print*,'nreals = ',nreals
@@ -216,6 +222,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    read(iunit,end=55,iostat=ierr) narrsizes
    if (ierr /= 0) then 
       print "(a)",'*** error reading number of array sizes ***'
+      close(iunit)
       return
    elseif (narrsizes.gt.maxarrsizes) then
       narrsizes = maxarrsizes
