@@ -161,7 +161,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         ncolumnsfirst = ncolumns
      endif
      !--override ncolumns from file and warn if different to first file
-     if (ncolumnsfirst.gt.0) then
+     if (ncolumnsfirst.gt.0 .and. nstepsinfile(ireadfile).gt.0) then
         if (ncolumns.ne.ncolumnsfirst) then
            print "(1x,a,i2,a,i2,a)",'WARNING: file contains ',ncolumns, &
            ' columns, which differs from ',ncolumnsfirst,' read previously'
