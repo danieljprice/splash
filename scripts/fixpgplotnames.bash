@@ -21,8 +21,10 @@ fi
 #
 for x in pgplot.???;
 do
-   lennum=${#numoffset};
-   newname=${x/./_$numoffset.}
+   num=1;
+   let "num=num+numoffset";
+   lennum=${#num};
+   newname=${x/./_$num.}
    if test $lennum -eq 1; then newname=${newname/_/_000}; fi;
    if test $lennum -eq 2; then newname=${newname/_/_00}; fi;
    if test $lennum -eq 3; then newname=${newname/_/_0}; fi;
