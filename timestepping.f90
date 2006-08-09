@@ -1,7 +1,8 @@
 module timestepping
  implicit none
  public :: timestep_loop
- private :: get_nextstep
+ 
+ private
  
 contains
 !

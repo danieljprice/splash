@@ -29,7 +29,11 @@
 !------------------------------------------------------------------------
 module transforms
  integer, parameter, public :: ntrans = 5  ! this is the number of different transformations
- real, parameter :: zerolog = 1.e-12 ! this is minimum set if xmin = 0 and log
+ real, parameter, private :: zerolog = 1.e-12 ! this is minimum set if xmin = 0 and log
+ public :: transform,transform_inverse,transform2
+ public :: transform_limits,transform_limits_inverse,transform_label
+
+ private
 
 contains
 !------------------------------------------------------------------------
@@ -68,7 +72,7 @@ subroutine transform(array,itrans)
            where (arraytemp > 0)
               arraytemp = log10(arraytemp)
            elsewhere
-              arraytemp = 0.
+              arraytemp = 0.  !!log10(tiny(arraytemp))
            end where
         case('2')
            arraytemp = abs(arraytemp)    
