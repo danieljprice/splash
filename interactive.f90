@@ -1,6 +1,6 @@
 module interactive_routines
  implicit none
- public :: interactive_part,interactive_step
+ public :: interactive_part,interactive_step,interactive_multi
  private :: mvlegend,mvtitle,save_limits,save_rotation
  real, private :: xpt
  real, private :: ypt
@@ -42,7 +42,8 @@ contains
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   xcoords,ycoords,zcoords,hi,icolourpart,xmin,xmax,ymin,ymax, &
   rendermin,rendermax,vecmax,anglex,angley,anglez,ndim,x_sec,zslicepos,dzslice, &
-  zobserver,dscreen,irerender,itrackpart,icolourscheme,iadvance,istep,ilaststep)
+  zobserver,dscreen,irerender,itrackpart,icolourscheme,iadvance,istep,ilaststep, &
+  interactivereplot)
   implicit none
   integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy,istep,ilaststep
   integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
@@ -52,7 +53,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax
   real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
   logical, intent(in) :: x_sec
-  logical, intent(out) :: irerender
+  logical, intent(out) :: irerender,interactivereplot
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,nc,ierr,ixsec
   integer :: nmarked,ncircpart,itrackparttemp
@@ -88,6 +89,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   iexit = .false.
   rotation = .false.
   irerender = .false.
+  interactivereplot = .false.
   if (iplotx.le.ndim .and. iploty.le.ndim .and. ndim.ge.2) rotation = .true.
   
   if (iplotz.gt.0 .and. x_sec) then
@@ -322,6 +324,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               print*,'setting render min = ',rendermin
               print*,'setting render max = ',rendermax              
               iadvance = 0
+              interactivereplot = .true.
               iexit = .true.
            endif
         !
@@ -353,6 +356,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               ymin = yptmin
               ymax = yptmax
               iadvance = 0
+              interactivereplot = .true.
               irerender = .true.
               iexit = .true.
            case('0','1','2','3','4','5','6','7','8','9') ! mark particles
@@ -373,6 +377,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
                  print*,'marked ',nmarked,' particles in selected region'
               endif
               iadvance = 0
+              interactivereplot = .true.
               iexit = .true.
            case('p') ! plot selected particles only
               if (irender.le.0) then
@@ -390,6 +395,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
                  print*,'plotting selected ',nmarked,' particles only'
               endif
               iadvance = 0
+              interactivereplot = .true.
               iexit = .true.           
            case('c') ! set circles of interaction in marked region
               if (irender.le.0) then
@@ -442,6 +448,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            xmin = xpt - 0.5*xlength
            xmax = xpt + 0.5*xlength
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -450,6 +457,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            ymin = ypt - 0.5*ylength
            ymax = ypt + 0.5*ylength
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -459,12 +467,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            rendermin = renderpt - 0.5*renderlength
            rendermax = renderpt + 0.5*renderlength
            iadvance = 0
+           interactivereplot = .true.
            iexit = .true.
         endif
      case('a') ! reset plot limits
         if (xpt.gt.xmax .and. irender.gt.0) then
            call useadaptive
            iadvance = 0              ! that it should change the render limits
+           interactivereplot = .true.
            iexit = .true.
         else
            if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymax) then
@@ -472,6 +482,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               xmin = minval(xcoords)
               xmax = maxval(xcoords)
               iadvance = 0
+              interactivereplot = .true.
               irerender = .true.
               iexit = .true.
            endif
@@ -480,6 +491,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               ymin = minval(ycoords)
               ymax = maxval(ycoords)
               iadvance = 0
+              interactivereplot = .true.
               irerender = .true.
               iexit = .true.
            endif
@@ -492,6 +504,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'decreasing vector arrow size'
            vecmax = 1.2*zoomfac*vecmax
            iadvance = 0
+           interactivereplot = .true.
            iexit = .true.
         endif
      case('V')
@@ -499,6 +512,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'increasing vector arrow size'
            vecmax = 0.8/zoomfac*vecmax
            iadvance = 0
+           interactivereplot = .true.
            iexit = .true.
         endif
      !
@@ -511,6 +525,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         if (xpt.gt.xmax .and. irender.gt.0) then
            call change_itrans(irender,rendermin,rendermax)
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         elseif (xpt.lt.xmin) then
@@ -519,6 +534,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            else
               call change_itrans(iploty,ymin,ymax)
               iadvance = 0
+              interactivereplot = .true.
               iexit = .true.
            endif
         elseif (ypt.lt.ymin) then
@@ -527,6 +543,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            else
               call change_itrans(iplotx,xmin,xmax)
               iadvance = 0
+              interactivereplot = .true.
               iexit = .true.
            endif
         endif
@@ -538,6 +555,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing z rotation angle by -15 degrees...'
            anglez = anglez - 15.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -546,6 +564,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing z rotation angle by -30 degrees...'
            anglez = anglez - 30.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -554,6 +573,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing z rotation angle by 15 degrees...'
            anglez = anglez + 15.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -562,6 +582,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing z rotation angle by 30 degrees...'
            anglez = anglez + 30.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -570,6 +591,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing y rotation angle by -15 degrees...'
            angley = angley - 15.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -578,6 +600,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing y rotation angle by -30 degrees...'
            angley = angley - 30.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -586,6 +609,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing y rotation angle by 15 degrees...'
            angley = angley + 15.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -594,6 +618,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing y rotation angle by 30 degrees...'
            angley = angley + 30.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -602,6 +627,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing x rotation angle by -15 degrees...'
            anglex = anglex - 15.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -610,6 +636,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing x rotation angle by -30 degrees...'
            anglex = anglex - 30.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -618,6 +645,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing x rotation angle by 15 degrees...'
            anglex = anglex + 15.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -626,6 +654,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'changing x rotation angle by 30 degrees...'
            anglex = anglex + 30.
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -670,6 +699,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               zslicepos = yint/COS(anglerad)
               print*,'iploty = ',ixsec, ' xsecpos = ',zslicepos
               iadvance = 0
+              interactivereplot = .true.
               irerender = .true.
               iexit = .true.
            case default
@@ -685,12 +715,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               print*,'shifting cross section position up by ',dzslice
               zslicepos = zslicepos + dzslice
               iadvance = 0
+              interactivereplot = .true.
               irerender = .true.
               iexit = .true.
            else
               print*,'shifting perspective position up ',dscreen
               zobserver = zobserver + dscreen
               iadvance = 0
+              interactivereplot = .true.
               irerender = .true.
               iexit = .true.           
            endif
@@ -701,12 +733,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               print*,'shifting cross section position up by ',2.*dzslice
               zslicepos = zslicepos + 2.*dzslice
               iadvance = 0
+              interactivereplot = .true.
               irerender = .true.
               iexit = .true.
            else
               print*,'shifting perspective position up by ',2.*dscreen
               zobserver = zobserver + 2.*dscreen
               iadvance = 0
+              interactivereplot = .true.
               irerender = .true.
               iexit = .true.           
            endif
@@ -721,6 +755,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               zobserver = zobserver - dscreen
            endif
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.           
         endif     
@@ -734,6 +769,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               zobserver = zobserver - 2.*dscreen
            endif
            iadvance = 0
+           interactivereplot = .true.
            irerender = .true.
            iexit = .true.
         endif
@@ -744,11 +780,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         print*,'setting legend position to current location...'
         call mvlegend(xpt,ypt,xmin,xmax,ymax)
         iadvance = 0
+        interactivereplot = .true.
         iexit = .true.
      case('T') ! move title here
         print*,'setting title position to current location...'
         call mvtitle(xpt,ypt,xmin,xmax,ymax)
         iadvance = 0
+        interactivereplot = .true.
         iexit = .true.
      case('H') ! move vector legend here
         if (ivecx.gt.0 .and. ivecy.gt.0) then
@@ -756,19 +794,23 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            call mvlegendvec(xpt,ypt,xmin,xmax,ymax)
         endif
         iadvance = 0
+        interactivereplot = .true.
         iexit = .true.
      case('m') ! change colour map (next scheme)
         call change_colourmap(icolourscheme,1)
         iadvance = 0
+        interactivereplot = .true.
         iexit = .true.
      case('M') ! change colour map (previous scheme)
         call change_colourmap(icolourscheme,-1)
         iadvance = 0
+        interactivereplot = .true.
         iexit = .true.
      case('i') ! invert colour map
         icolourscheme = -icolourscheme
         call change_colourmap(icolourscheme,0)
         iadvance = 0
+        interactivereplot = .true.
         iexit = .true.
      !
      !--timestepping
@@ -782,6 +824,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         iexit = .true.
      case('r','R') ! replot
         iadvance = 0
+        interactivereplot = .true.
         irerender = .true.
         iexit = .true.
      case(' ','n','N') ! space
@@ -854,15 +897,18 @@ end subroutine interactive_part
 !
 ! cut down version of interactive mode -> controls timestepping only
 ! used in powerspectrum / extra plots
+! THIS IS NOW LARGELY OBSOLETE (superseded by interactive_multi)
+!  AND WILL BE REMOVED IN FUTURE VERSIONS
 !
-subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax)
+subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interactivereplot)
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(in) :: istep,ilaststep
  real, intent(inout) :: xmin,xmax,ymin,ymax
+ logical, intent(out) :: interactivereplot
  integer :: nc,ierr
  real :: xpt,ypt,xpt2,ypt2
- real :: xlength, ylength
+ real :: xlength, ylength, zoomfac
  character(len=1) :: char,char2
  character(len=5) :: string
  logical :: iexit
@@ -877,7 +923,9 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax)
   char = 'A'
   xpt = 0.
   ypt = 0.
+  zoomfac = 1.0
   iexit = .false.
+  interactivereplot = .false.
   
   do while (.not.iexit)
      call pgcurs(xpt,ypt,char)
@@ -903,9 +951,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax)
         print*,' (h)elp                       : h'
         print*,' (q)uit plotting              : q, Q'             
         print*,'-------------------------------------------------------'
-     !
-     !--zoom
-     !
+
      case('A') ! left click
         !
         !--draw rectangle from the point and reset the limits
@@ -922,40 +968,47 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax)
            ymin = min(ypt,ypt2)
            ymax = max(ypt,ypt2)
            iadvance = 0
+           interactivereplot = .true.
            iexit = .true.
         case default
            print*,' action cancelled'
         end select    
-     case('-','_') ! zoom out by 10 or 20%
-        print*,'zooming out'
+     !
+     !--zooming
+     !
+     case('-','_','+','o') ! zoom out by 10 or 20%
         xlength = xmax - xmin
         ylength = ymax - ymin
         select case(char)
         case('-')
-           xlength = 1.1*xlength
-           ylength = 1.1*ylength
+           xlength = 1.1*zoomfac*xlength
+           ylength = 1.1*zoomfac*ylength
         case('_')
-           xlength = 1.2*xlength
-           ylength = 1.2*ylength
+           xlength = 1.2*zoomfac*xlength
+           ylength = 1.2*zoomfac*ylength
+        case('+')
+           xlength = 0.9/zoomfac*xlength
+           ylength = 0.9/zoomfac*ylength
+        case('o') !--reset cursor to origin
+           xpt = 0.
+           ypt = 0.
         end select
-        xmin = xpt - 0.5*xlength
-        xmax = xpt + 0.5*xlength
-        ymin = ypt - 0.5*ylength
-        ymax = ypt + 0.5*ylength
-        iadvance = 0
-        iexit = .true.
-     case('+') ! zoom in by 10%
-        print*,'zooming in'
-        xlength = xmax - xmin
-        ylength = ymax - ymin
-        xlength = 0.9*xlength
-        ylength = 0.9*ylength
-        xmin = xpt - 0.5*xlength
-        xmax = xpt + 0.5*xlength
-        ymin = ypt - 0.5*ylength
-        ymax = ypt + 0.5*ylength
-        iadvance = 0
-        iexit = .true.
+        if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymax) then
+           print*,'zooming on x axis'
+           xmin = xpt - 0.5*xlength
+           xmax = xpt + 0.5*xlength
+           iadvance = 0
+           interactivereplot = .true.
+           iexit = .true.
+        endif
+        if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmax) then
+           print*,'zooming on y axis'
+           ymin = ypt - 0.5*ylength
+           ymax = ypt + 0.5*ylength
+           iadvance = 0
+           interactivereplot = .true.
+           iexit = .true.
+        endif
      !
      !--general plot stuff
      !
@@ -977,6 +1030,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax)
         iexit = .true.
      case('r','R') ! replot
         iadvance = 0
+        interactivereplot = .true.
         iexit = .true.
      case(' ','n','N') ! space
         iadvance = abs(iadvance)
@@ -984,13 +1038,28 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax)
      case('0','1','2','3','4','5','6','7','8','9')
         read(char,*,iostat=ierr) iadvance
         if (ierr /=0) then
-           print*,'*** error setting timestep jump' 
+           print*,'*** internal error setting timestep jump' 
            iadvance = 1
         endif
+        iadvance = int(zoomfac*iadvance)
         print*,' setting timestep jump = ',iadvance
      case(')')
-        iadvance = 10
+        iadvance = int(zoomfac*10)
         print*,' setting timestep jump = ',iadvance
+     !
+     !--multiply everything by a factor of 10     
+     !
+     case('Z')
+        zoomfac = 10.*zoomfac
+        if (zoomfac.gt.1000.) then
+           zoomfac = 1.0
+        endif
+        print*,' LIMITS/TIMESTEPPING CHANGES NOW x ',zoomfac
+     !
+     !--unknown
+     !
+     case default
+        print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '"'
      end select
      !
      !--do not let timestep go outside of bounds
@@ -1017,6 +1086,424 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax)
   enddo
   return
 end subroutine interactive_step
+
+!
+! interactive mode for multiple plots per page - requires determination of which plot/panel
+!  a mouse-click refers to from stored settings for the viewport and limits for each plot.
+! (this could be made into the only subroutine required)
+!
+subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr,iplotyarr, &
+                             irenderarr,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
+                             barwmulti,nacross,ndim,icolourscheme,interactivereplot)
+ implicit none
+ integer, intent(inout) :: iadvance
+ integer, intent(inout) :: istep
+ integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim
+ integer, intent(inout) :: icolourscheme
+ integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr
+ real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
+ real, dimension(:), intent(inout) :: xmin,xmax
+ logical, intent(out) :: interactivereplot
+ integer :: nc,ierr,ipanel,ipanel2,istepnew,i
+ real :: xpt2,ypt2,xpti,ypti,renderpt
+ real :: xlength,ylength,renderlength,drender,zoomfac
+ real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
+ real :: xmini,xmaxi,ymini,ymaxi
+ character(len=1) :: char,char2
+ character(len=5) :: string
+ logical :: iexit
+ 
+  call pgqinf('CURSOR',string,nc)
+  if (string(1:nc).eq.'YES') then
+     print*,'entering interactive mode...press h in plot window for help'
+  else
+     print*,'cannot enter interactive mode: device has no cursor'
+     return
+  endif
+  char = 'A'
+  xpt = 0.
+  ypt = 0.
+  zoomfac = 1.0
+  iexit = .false.
+  interactivereplot = .false.
+  istepnew = ifirststeponpage - iadvance
+!  print*,'istep = ',istepnew
+  
+  interactive_loop: do while (.not.iexit)
+     call pgcurs(xpt,ypt,char)
+     !
+     !--exit if the device is not interactive
+     !
+     if (char.eq.achar(0)) return
+  
+!     print*,'x, y = ',xpt,ypt,' function = ',char
+     !
+     !--determine which plot the cursor falls on
+     !
+     call pgqwin(xmini,xmaxi,ymini,ymaxi)
+     call get_vptxy(xpt,ypt,vptxi,vptyi)
+     
+     ipanel = getpanel(vptxi,vptyi)
+
+     !--translate vpt co-ords to x,y in current panel
+     call getxy(vptxi,vptyi,xpti,ypti,ipanel)
+
+     select case(char)
+     case('h')
+        print*,'----- interactive mode commands (multiple plots per page) -----'
+        print*,' left click (or A) : select region'
+        print*,'  left click again to zoom on selection'
+        print*,'  (select colour bar to change rendering limits)'
+        print*,' +   : zoom in by 10%'
+        print*,' -(_): zoom out by 10(20)%'
+!        print*,' a   : (a)djust/reset plot limits to fit '
+        print*,'      NB for these options cursor inside the plot changes both x and y,'
+        print*,'       whereas cursor over a specific axis zooms on that axis only'
+        print*,'       (applies to colour bar if mouse is over colour bar)'
+        print*,' l: (l)og / unlog axis (with cursor over the axis to change)'  
+        print*,'    (applies to colour bar if mouse is over colour bar)'
+!        print*,' o: re-centre plot on (o)rigin'
+        print*,' r: (r)eplot current plot'
+!        print*,' g: plot a line and find its g)radient'
+        print*,' G: move le(G)end to current position'
+        print*,' T: move (T)itle to current position'
+!        print*,' H: move vector plot legend H(ere)'
+        print*,' m: change colour m)ap to next'
+        print*,' M: change colour M)ap to previous'
+        print*,' i: i)nvert colour map'
+!        print*,' v: decrease arrow size on vector plots'
+!        print*,' V: increase arrow size on vector plots'
+        print*,' next timestep/plot   : space, n'
+        print*,' previous timestep    : right click (or X), b'
+        print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then left (right) click'
+        print*,' h: (h)elp'
+        print*,' s: (s)ave current settings for all steps'
+        print*,' q,Q: (q)uit plotting'
+        print*
+        print*,' Z(oom) : timstepping, zoom and limits-changing options '
+        print*,'          are multiplied by a factor of 10'        
+        print*,'---------------------------------------------------------------'
+     case('s','S')
+        do i=1,size(vptxmin)
+           call save_limits(iplotxarr(i),xmin(iplotxarr(i)),xmax(iplotxarr(i)))
+           call save_limits(iplotyarr(i),xmin(iplotyarr(i)),xmax(iplotyarr(i)))
+           if (irenderarr(i).gt.0) call save_limits(irenderarr(i),xmin(irenderarr(i)),xmax(irenderarr(i)))
+        enddo
+        print*,'> plot settings saved <'
+     case('A') ! left click
+        !
+        !--draw rectangle from the point and reset the limits
+        !
+        print*,'select area: '
+        print*,'left click : zoom'
+        !
+        !--change colour bar limits
+        !
+        if (ipanel.gt.0 .and. xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
+           print*,'click to set rendering limits'
+           call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
+           if (char2 == 'A') then
+              drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
+                        (xmax(iplotyarr(ipanel))-xmin(iplotyarr(ipanel)))
+              xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(ypt,ypt2)-xmin(iplotyarr(ipanel)))*drender
+              xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(ypt,ypt2)-xmin(iplotyarr(ipanel)))*drender
+              print*,'setting render min = ',xmin(irenderarr(ipanel))
+              print*,'setting render max = ',xmax(irenderarr(ipanel))
+              interactivereplot = .true.
+              iexit = .true.
+           endif
+        else
+           call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
+           select case (char2)
+           case('A')   ! zoom if another left click
+              !call pgrect(xpt,xpt2,ypt,ypt2)
+              call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
+              !--use centre point of first click and current click to
+              !  better determine panel
+              vptxceni = 0.5*(vptxi + vptx2i)
+              vptyceni = 0.5*(vptyi + vpty2i)
+              ipanel2 = getpanel(vptxceni,vptyceni)
+              if (ipanel2.gt.0 .and. ipanel2.ne.ipanel) then
+                 ipanel = ipanel2
+                 print*,'panel = ',ipanel
+              endif
+
+              if (ipanel.le.0) cycle interactive_loop
+              call getxy(vptx2i,vpty2i,xpt2,ypt2,ipanel)
+              !--reset first point according to current panel
+              call getxy(vptxi,vptyi,xpti,ypti,ipanel)
+
+              xmin(iplotxarr(ipanel)) = min(xpti,xpt2)
+              xmax(iplotxarr(ipanel)) = max(xpti,xpt2)
+              xmin(iplotyarr(ipanel)) = min(ypti,ypt2)
+              xmax(iplotyarr(ipanel)) = max(ypti,ypt2)
+              print*,'setting limits: xmin = ',xmin(iplotxarr(ipanel)),' xmax = ',xmax(iplotxarr(ipanel))
+   !           iadvance = 0
+              istep = istepnew
+              interactivereplot = .true.
+              iexit = .true.
+           case default
+              print*,' action cancelled'
+           end select
+        endif
+     !
+     !--zooming
+     !
+     case('-','_','+','o') ! zoom out by 10 or 20%
+        if (ipanel.le.0) cycle interactive_loop
+        xlength = xmax(iplotxarr(ipanel)) - xmin(iplotxarr(ipanel))
+        ylength = xmax(iplotyarr(ipanel)) - xmin(iplotyarr(ipanel))
+        renderlength = xmax(irenderarr(ipanel)) - xmin(irenderarr(ipanel))
+        select case(char)
+        case('-')
+           xlength = 1.1*zoomfac*xlength
+           ylength = 1.1*zoomfac*ylength
+        case('_')
+           xlength = 1.2*zoomfac*xlength
+           ylength = 1.2*zoomfac*ylength
+        case('+')
+           xlength = 0.9/zoomfac*xlength
+           ylength = 0.9/zoomfac*ylength
+        case('o') !--reset cursor to origin
+           xpt = 0.
+           ypt = 0.
+        end select
+        if (xpti.ge.xmin(iplotxarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel))) then
+           print*,'zooming on x axis'
+           xmin(iplotxarr(ipanel)) = xpti - 0.5*xlength
+           xmax(iplotxarr(ipanel)) = xpti + 0.5*xlength
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        endif
+        if (ypti.ge.xmin(iplotyarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel))) then
+           print*,'zooming on y axis'
+           xmin(iplotyarr(ipanel)) = ypti - 0.5*ylength
+           xmax(iplotyarr(ipanel)) = ypti + 0.5*ylength
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        endif
+        if (xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
+           !--rendering zoom does not allow pan - renderpt is always centre of axis
+           renderpt = 0.5*(xmin(irenderarr(ipanel)) + xmax(irenderarr(ipanel)))
+           xmin(irenderarr(ipanel)) = renderpt - 0.5*renderlength
+           xmax(irenderarr(ipanel)) = renderpt + 0.5*renderlength
+           interactivereplot = .true.
+           iexit = .true.
+        endif
+     !
+     !--set/unset log axes
+     !
+     case('l')
+        !
+        !--change colour bar, y and x itrans between log / not logged
+        !
+        if (xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
+           call change_itrans(irenderarr(ipanel),xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)))
+           interactivereplot = .true.
+           iexit = .true.
+        elseif (xpti.lt.xmin(iplotxarr(ipanel))) then
+           if (iplotyarr(ipanel).le.ndim .and. irenderarr(ipanel).gt.0) then
+              print "(a)",'error: cannot log coordinate axes with rendering'
+           else
+              call change_itrans(iplotyarr(ipanel),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
+              interactivereplot = .true.
+              iexit = .true.
+           endif
+        elseif (ypti.lt.xmin(iplotyarr(ipanel))) then
+           if (iplotxarr(ipanel).le.ndim .and. irenderarr(ipanel).gt.0) then
+              print "(a)",'error: cannot log coordinate axes with rendering'
+           else
+              call change_itrans(iplotxarr(ipanel),xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)))
+              interactivereplot = .true.
+              iexit = .true.
+           endif
+        endif
+     !
+     !--general plot stuff
+     !
+     case('G') ! move legend here
+        print*,'setting legend position to current location...'
+        if (ipanel.gt.0) then
+           call mvlegend(xpti,ypti,xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),xmax(iplotyarr(ipanel)))
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        endif
+     case('T') ! move title here
+        if (ipanel.gt.0) then
+           print*,'setting title position to current location...'
+           call mvtitle(xpti,ypti,xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),xmax(iplotyarr(ipanel)))
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        endif
+     case('m') ! change colour map (next scheme)
+        call change_colourmap(icolourscheme,1)
+        istep = istepnew
+        interactivereplot = .true.
+        iexit = .true.
+     case('M') ! change colour map (previous scheme)
+        call change_colourmap(icolourscheme,-1)
+        istep = istepnew
+        interactivereplot = .true.
+        iexit = .true.
+     case('i') ! invert colour map
+        icolourscheme = -icolourscheme
+        call change_colourmap(icolourscheme,0)
+        istep = istepnew
+        interactivereplot = .true.
+        iexit = .true.
+     !
+     !--timestepping
+     !
+     case('q','Q')
+        iadvance = -666
+        print*,'quitting...'
+        iexit = .true.
+     case('X','b','B') ! right click -> go back
+        iadvance = -abs(iadvance)
+        iexit = .true.
+     case('r','R') ! replot
+        interactivereplot = .true.
+        istep = istepnew
+        iexit = .true.
+     case(' ','n','N') ! space
+        iadvance = abs(iadvance)
+        iexit = .true.
+     case('0','1','2','3','4','5','6','7','8','9')
+        read(char,*,iostat=ierr) iadvance
+        if (ierr /=0) then
+           print*,'*** internal error setting timestep jump' 
+           iadvance = 1
+        endif
+        iadvance = int(zoomfac*iadvance)
+        print*,' setting timestep jump = ',iadvance
+     case(')')
+        iadvance = int(zoomfac*10)
+        print*,' setting timestep jump = ',iadvance
+     !
+     !--multiply everything by a factor of 10     
+     !
+     case('Z')
+        zoomfac = 10.*zoomfac
+        if (zoomfac.gt.1000.) then
+           zoomfac = 1.0
+        endif
+        print*,' LIMITS/TIMESTEPPING CHANGES NOW x ',zoomfac
+     !
+     !--unknown
+     !
+     case default
+        print*,' x, y = ',xpti,ypti,'; unknown option "',trim(char), '"'
+     end select
+     !
+     !--do not let timestep go outside of bounds
+     !  if we are at the first/last step, just print message and do nothing
+     !  if iadvance trips over the bounds, jump to last/first step
+     !
+     if (iadvance.ne.-666 .and. iexit) then
+        if (istep + iadvance .gt. ilaststep) then
+           print "(1x,a)",'reached last timestep'
+           if (ilaststep-istep .gt.0) then
+              iadvance= ilaststep - istep
+           else
+              iexit = .false.
+           endif
+        elseif (istep + iadvance .lt. 1) then
+           print "(1x,a)",'reached first timestep: can''t go back'
+           if (1-istep .lt.0) then
+              iadvance= 1 - istep
+           else
+              iexit = .false.
+           endif
+        endif
+     endif
+  enddo interactive_loop
+  return
+  
+  contains
+  
+   !---
+   ! utility which translates between world co-ordinates (x,y)
+   ! and viewport co-ordinates (relative to the whole viewport)
+   !---
+   subroutine get_vptxy(x,y,vptx,vpty)
+    implicit none
+    real, intent(in) :: x,y
+    real, intent(out) :: vptx,vpty
+    real :: vptxmini,vptxmaxi,vptymini,vptymaxi
+
+    call pgqvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
+    vptx = vptxmini + (x-xmini)/(xmaxi-xmini)*(vptxmaxi-vptxmini)
+    vpty = vptymini + (y-ymini)/(ymaxi-ymini)*(vptymaxi-vptymini)
+
+   end subroutine get_vptxy
+
+   !--------
+   ! utility to return which panel we are in given a point on the viewport
+   ! and the viewport limits for each panel.
+   !--------
+   integer function getpanel(vptx,vpty)
+    implicit none
+    real :: vptx,vpty,vptxmini,vptymini,vptymaxi
+    integer :: i,icol
+    
+    getpanel = 0
+    icol = 0
+    do i=1,size(vptxmin)
+       icol = icol + 1
+       if (icol.gt.nacross) icol = 1
+       if (icol.gt.1) then
+          ! if column>1 assign panel by being to the right of previous panel
+          vptxmini = vptxmax(i-1)+barwmulti(i-1)
+       else
+          vptxmini = 0.       
+       endif
+       if (i.gt.nacross) then
+          ! if not first row, assign panel by being below row above
+          vptymaxi = vptymin(i-nacross)
+       else
+          vptymaxi = 1.
+       endif
+       !--if last row then allow ymin to extend to bottom of page
+       if (i.gt.(size(vptxmin)-nacross)) then
+          vptymini = 0.
+       else
+          vptymini = vptymin(i)
+       endif
+       if (vptx.gt.vptxmini .and. vptx.lt.(vptxmax(i)+barwmulti(i)) .and. &
+           vpty.gt.vptymini .and. vpty.lt.vptymaxi) then
+          if (getpanel.ne.0) print*,'Warning: multiple matching panels found'
+          getpanel = i
+       endif
+    enddo
+
+    end function getpanel
+    
+   !--------
+   ! utility to return x,y coordinates in a given panel given viewport coords
+   !--------
+    
+    subroutine getxy(vptx,vpty,x,y,ipanel)
+     implicit none
+     real, intent(in) :: vptx,vpty
+     real, intent(out) :: x,y
+     integer, intent(in) :: ipanel
+     
+     if (ipanel.gt.0) then
+        x = xmin(iplotxarr(ipanel)) + (vptx-vptxmin(ipanel))/(vptxmax(ipanel)-vptxmin(ipanel)) &
+                          *(xmax(iplotxarr(ipanel))-xmin(iplotxarr(ipanel)))
+        y = xmin(iplotyarr(ipanel)) + (vpty-vptymin(ipanel))/(vptymax(ipanel)-vptymin(ipanel)) &
+                          *(xmax(iplotyarr(ipanel))-xmin(iplotyarr(ipanel)))
+     endif
+     
+     return   
+    end subroutine getxy
+
+end subroutine interactive_multi
+
 
 !-----------------------------------------------------------
 ! These subroutines interface to the actual plot settings
