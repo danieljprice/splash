@@ -74,15 +74,15 @@ subroutine submenu_page
           iPlotTitles,hpostitle,vpostitle,iPlotLegend,iPlotStepLegend, &
           hposlegend,vposlegend,charheightmm,linewidth
 10 format(' 0) exit ',/,                   &
-        ' 1) change steps per plot  (',i2,')',/, &
-        ' 2) axes options           (',i2,')',/, &
-        ' 3) change paper size      (',f5.2,1x,f5.2,')',/, &
-        ' 4) change plots per page  (',i2,1x,i2,')',/, &
-         ' 5) plot tiling on/off     (',L1,')',/, & 
-         ' 6) title options          (',L1,1x,f5.2,1x,f4.1,')',/, &
-         ' 7) legend options         (',L1,1x,L1,1x,f5.2,1x,f4.1,')',/, &
-         ' 8) set character height   (',f4.1,')',/,&
-         ' 9) adjust line width      (',i1,')',/,&
+        ' 1) change page after n timesteps (n =',i2,')',/, &
+        ' 2) axes options                  (',i2,')',/, &
+        ' 3) change paper size             (',f5.2,1x,f5.2,')',/, &
+        ' 4) change plots per page         (',i2,1x,i2,')',/, &
+         ' 5) plot tiling on/off            (',L1,')',/, & 
+         ' 6) title options                 (',L1,1x,f5.2,1x,f4.1,')',/, &
+         ' 7) legend options                (',L1,1x,L1,1x,f5.2,1x,f4.1,')',/, &
+         ' 8) set character height          (',f4.1,')',/,&
+         ' 9) adjust line width             (',i1,')',/,&
          '10) set foreground/background colours ')
  call prompt('enter option ',iaction,0,10)
 
@@ -104,6 +104,8 @@ subroutine submenu_page
 !!        if (.not.iColourEachStep) icolourthisstep = 1
         call prompt('Use different markers/line style for each? ',iChangeStyles)
         if (iColourEachStep .or. iChangeStyles) then
+           print "(/,a,/,a)",' (to change the legend text, create a file called', &
+                       '  ''legend'' in the working directory, with one label per line)'
            call prompt('Plot legend of marker styles/colours?',iPlotStepLegend)
         endif
      endif
@@ -191,7 +193,12 @@ subroutine submenu_page
      call prompt('Plot time legend?',iPlotLegend)
      if (iPlotLegend) call prompt('Enter legend text ',legendtext)
      call prompt('Plot legend of marker styles/colours for each step?',iPlotStepLegend)
+     if (iPlotStepLegend) then
+     print "(/,a,/,a,/)",' Hint: to change the step legend text, create a file called', &
+                 '  ''legend'' in the working directory, with one label per line'
+     endif
      if (iPlotLegend .or. iPlotStepLegend) then
+        print "(a)",'------ set legend position (can also be done interactively) --------'
         call prompt('Enter horizontal position as fraction of viewport', &
              hposlegend,0.0,1.0)
         call prompt('Enter vertical position in character heights from top',vposlegend)
@@ -213,14 +220,14 @@ subroutine submenu_page
      !--open null device so that colours can be recognised
      call pgopen('/null')
      do while (ierr /= 0 .and. ntries.le.3)
-        call prompt('Enter background colour (by name) ',colour_back)
+        call prompt('Enter background colour (by name, e.g. "black") ',colour_back)
         call pgscrn(0,colour_back,ierr)
         ntries = ntries + 1
      enddo
      ierr = 1
      ntries = 1
      do while (ierr /= 0 .and. ntries.le.3)
-        call prompt('Enter foreground colour (by name) ',colour_fore)
+        call prompt('Enter foreground colour (by name, e.g. "white") ',colour_fore)
         call pgscrn(1,colour_fore,ierr)
         ntries = ntries + 1
      enddo

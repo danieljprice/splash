@@ -379,8 +379,8 @@ the interactive mode, limited only by your imagination. Please send me your sugg
 \label{sec:optionspage}
  This submenu contains options relating to the PGPLOT page setup. The options are as follows:
 \begin{enumerate}
-\item \textbf{change steps per plot}. (default=1) Allows multiple timesteps to be plotted on
-the same page.
+\item \textbf{change page after n timesteps}. (default=1) Allows multiple timesteps to be plotted on
+the same page, with an associated legend if so desired.
 \item \textbf{axes options}. Changes the appearance of the axes. The variable is
 the same as the AXIS variable used in the call to PGENV in the standard PGPLOT
 routines, except that I have also added the $-3$ option. The options are
@@ -392,10 +392,13 @@ as follows:
  -1 & : & draw box only; \\
   0 & : & draw box and label it with coordinates; \\
   1 & : & same as AXIS=0, but also draw the coordinate axes (X=0, Y=0); \\
-  2 & : & same as AXIS=1, but also draw grid lines at major increments of the coordinates;
+  2 & : & same as AXIS=1, but also draw grid lines at major increments of the coordinates; \\
+  10 & : & draw box and label X-axis logarithmically; \\
+  20 & : & draw box and label Y-axis logarithmically; \\
+  30 & : & draw box and label both axes logarithmically. \\
 \end{tabular}
 
-\item \textbf{change paper size}. Sets the size of the plotting page.
+\item \textbf{change paper size}. Sets the size and proportions of the plotting page.
 \item \textbf{change plots per page}. Changes the number of plots on each
 physical page.
 \item \textbf{toggle plot tiling}. When set, plots with more than one plot on
@@ -817,7 +820,7 @@ SUPERSPHPLOT an approximate value for $\kappa$ is computed according to
 \end{equation} 
 where $\bar{h}$ and $\bar{m}$ are estimates for the average smoothing length and particle mass, calculated from the current (fixed) plot limits according to $\bar{h} = 0.5*(h_{min} + h_{max})$
 (similarly for $\bar{m}$ - the important aspect here is that these values do not change between dump
-files) and $Y(0)$ is the value of the integrated kernel function
+files and can be restored from saved settings) and $Y(0)$ is the value of the integrated kernel function
 (\S\ref{sec:proj})at the origin. The dimensionless parameter $d$ is then a user defined value giving
 approximately the surface depth in terms of ``number of smoothing lengths".
 
@@ -959,10 +962,20 @@ on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the ph
 
 \subsection{Plot legends}
 \label{sec:legend}
- The text (e.g. `\verb+t=+') used in the legend can be changed via
+ The text (e.g. `\verb+t=+') used in the time legend can be changed via
 the legend options in the (p)age submenu. The numerical value is taken from the \verb+time+ array
 in the data read.
 
+When more than one timestep is plotted per page, usually with different markers/colours, an additional legend can be
+plotted (turn this on in the legend options part of the (p)age submenu, or when prompted whilst setting the "change page
+after n timesteps" option). The text for this legend is just the filename by default (if one timestep per file) or just
+something dull like 'step 1' (if more than one timestep per file). To change the legend text, create
+a file called 'legend' in the working directory, with one label per line.
+
+ A legend for the arrow size on vector plots can be turned on or off in the v)ector submenu. 
+
+ Positions for all of the legends can also be set in interactive mode (press 'h' in interactive mode for the relevant
+ commands).
 
 \section{FAQS: How do I...}
 

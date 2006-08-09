@@ -1,9 +1,12 @@
 module titles
  implicit none
- integer, parameter :: maxtitles = 50
- integer, parameter :: maxsteptitles = 1000
+ integer, parameter, private :: maxtitles = 50
+ integer, parameter, private :: maxsteplegend = 100
  character(len=60), dimension(maxtitles), public :: pagetitles
- character(len=60), dimension(maxsteptitles), public :: steptitles
+ character(len=60), dimension(maxsteplegend), public :: steplegend
+ public :: read_titles, read_steplegend
+ 
+ private
  
 contains
 !
@@ -43,21 +46,22 @@ subroutine read_titles(ntitles)
 
 end subroutine read_titles
 !
-!--reads a list of titles (one per line), to be used to label each timestep
+!--reads a list of labels (one per line) to be used in the timestep legend
+! (ie. for multiple timesteps on same page)
 !
-subroutine read_steptitles(nsteptitles)
+subroutine read_steplegend(nsteptitles)
   implicit none
   integer, intent(out) :: nsteptitles
   integer :: i
-  character(len=50) :: titlefile
+  character(len=50) :: legendfile
 
-  titlefile = 'legend'
+  legendfile = 'legend'
   nsteptitles = 0
 
-  open(unit=57,file=titlefile,status='old',form='formatted',ERR=997)
-  print*,'reading legend text from file ''',trim(titlefile),''''
+  open(unit=57,file=legendfile,status='old',form='formatted',ERR=997)
+  print*,'reading legend text from file ''',trim(legendfile),''''
   do i=1,maxtitles
-     read(57,"(a)",err=998,end=66) steptitles(i)
+     read(57,"(a)",err=998,end=66) steplegend(i)
   enddo
   print*,'WARNING: array limits reached read ',maxtitles,' titles'
   nsteptitles = maxtitles
@@ -69,7 +73,7 @@ subroutine read_steptitles(nsteptitles)
 
   return
 
-997 continue  ! title file does not exist, so do nothing and return
+997 continue  ! legend file does not exist, so do nothing and return
   return
 998 continue
   print*,'*** error reading legend file : at line ',i-1
@@ -77,6 +81,6 @@ subroutine read_steptitles(nsteptitles)
   close(unit=57)
   return
 
-end subroutine read_steptitles
+end subroutine read_steplegend
 
 end module titles

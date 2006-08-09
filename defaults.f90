@@ -29,7 +29,7 @@ subroutine defaults_set
   use settings_xsecrot, only:defaults_set_xsecrotate
   use settings_powerspec, only:defaults_set_powerspec
   use particle_data, only:maxpart,maxstep,maxcol
-  use titles, only:pagetitles,steptitles
+  use titles, only:pagetitles,steplegend
   implicit none
   integer :: i
 !
@@ -118,7 +118,7 @@ subroutine defaults_set
   !--titles
   !
   pagetitles = ' '
-  steptitles = ' '
+  steplegend = ' '
   
   return    
 end subroutine defaults_set

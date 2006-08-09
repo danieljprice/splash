@@ -30,7 +30,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use labels, only:label,labelvec,iamvec,ih,irho,ipmass
   use geometry, only:labelcoord
   use calcquantities, only:calc_quantities
-  use titles, only:steptitles
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
@@ -277,12 +276,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         call read_exactparams(iexact,rootname(ireadfile),ierr)
      endif
   endif
-  !
-  !--set step title if not already set
-  !
-  do i=1,min(nfiles,size(steptitles))
-     if (len_trim(steptitles(i)).eq.0) steptitles(i) = trim(rootname(i))
-  enddo
+
   return
 end subroutine get_data
 
