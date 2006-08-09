@@ -377,7 +377,7 @@ end subroutine redraw_axes
      endif
 
   endif
-      print*,vptxmin,vptxmax,vptymin,vptymax
+!      print*,vptxmin,vptxmax,vptymin,vptymax
   call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
 !
 ! set axes
