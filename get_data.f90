@@ -165,9 +165,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
            print "(1x,a,i2,a,i2,a)",'WARNING: file contains ',ncolumns, &
            ' columns, which differs from ',ncolumnsfirst,' read previously'
            if (ncolumns.lt.ncolumnsfirst) then
-              print "(10x,a,i2,/)",'setting data = 0 for columns > ',ncolumnsfirst
+              print "(10x,a,i2,/)",'setting data = 0 for columns > ',ncolumns
+              dat(:,ncolumns+1:ncolumnsfirst,1:nstepsinfile(ireadfile)) = 0.
            elseif (ncolumns.gt.ncolumnsfirst) then
-              print "(10x,a,i2,a,/)",'extra data beyond column ',ncolumnsfirst,' will be ignored'
+              print "(10x,a,i2,a)",'extra data beyond column ',ncolumnsfirst,' will be ignored'
+              print "(10x,a,/)",'(read this file first to use this data)'
            endif
            ncolumns = ncolumnsfirst
         endif
