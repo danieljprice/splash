@@ -31,7 +31,7 @@ subroutine defaults_set_render
   iplotcont_nomulti = .false. ! plot contours
   icolour_particles = .false. ! colour particles instead of using pixels
   ncontours = 30             ! number of contours to plot
-  ColourBarDisp = 3.2
+  ColourBarDisp = 5.0 ! displacement of colour bar label from edge
   inormalise_interpolations = .false.       ! do not normalise interpolations
   ifastrender = .false. ! use accelerated rendering
 

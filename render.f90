@@ -133,7 +133,7 @@ subroutine colourbarfull(icolours,datmin,datmax,label,log,nacross,ndown,iaxis)
  width = ColourBarWidth
  call pgqcs(0,xch,ych)
  !--make sure this line is the same as in the page setup routine
- barwidth = (ColourBarWidth + 0.25)*ych 
+ barwidth = (max(ColourBarWidth*0.4 + ColourBarDisp,ColourBarWidth) + 0.25)*ych 
 !
 !--set character to send to pgwedg call if log (danpgwedg only) 
 !
