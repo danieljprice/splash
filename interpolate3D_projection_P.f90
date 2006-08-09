@@ -166,6 +166,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
      print "(1x,a)",'interpolate3D_proj: error: pixel width <= 0'
      return
   endif
+  if (.not.useaccelerate) then
+     print "(1x,a)",'(use accelerated rendering option to make this faster)'
+  endif
   if (any(hh(1:npart).le.tiny(hh))) then
      print*,'interpolate3D_projection: warning: ignoring some or all particles with h < 0'
   endif
