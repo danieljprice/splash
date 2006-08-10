@@ -59,7 +59,7 @@ endif
 ifeq ($(SYSTEM),g95)
 #  using the g95 compiler
    F90C= g95
-   F90FLAGS= -03 -ffast-math
+   F90FLAGS= -O3 -ffast-math
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
@@ -70,7 +70,7 @@ endif
 ifeq ($(SYSTEM),nagf95)
 #  NAG f95 compiler
    F90C= f95
-   F90FLAGS= -03
+   F90FLAGS= -O3
    SYSTEMFILE= system_unix_NAG.f90
    PARALLEL= no
    KNOWN_SYSTEM=yes
