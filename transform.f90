@@ -45,13 +45,24 @@ contains
 !    input number is > 10 (e.g. 321 means 1/x, then abs, then log10)
 !
 !------------------------------------------------------------------------
-subroutine transform(array,itrans)
+subroutine transform(array,itrans,errval)
   implicit none
   integer, intent(in) :: itrans
   real, dimension(:), intent(inout) :: array
+  real, intent(in), optional :: errval
   real, dimension(size(array)) :: arraytemp
+  real :: errvali
   character(len=20) :: string
   integer :: i
+  !
+  !--errval is the value to be set for errors
+  !  (default is zero if not present)
+  !
+  if (present(errval)) then
+     errvali = errval
+  else
+     errvali = 0. 
+  endif
   !
   !--extract the digits from the input number 
   !
@@ -69,27 +80,31 @@ subroutine transform(array,itrans)
         !
         select case(string(i:i))
         case('1')
-           where (arraytemp > 0.)
+           where (arraytemp > 0. .and. arraytemp.ne.errvali)
               arraytemp = log10(arraytemp)
            elsewhere
-              arraytemp = 0.  !!log10(tiny(arraytemp))
+              arraytemp = errvali
            end where
         case('2')
-           arraytemp = abs(arraytemp)    
+           where (arraytemp.ne.errvali)
+              arraytemp = abs(arraytemp)
+           end where   
         case('3')
-           where (arraytemp .ne. 0.)
+           where (arraytemp .ne. 0. .and. arraytemp.ne.errvali)
               arraytemp = 1./arraytemp
            elsewhere
-              arraytemp = 0.
+              arraytemp = errvali
            end where
         case('4') 
-           where (arraytemp .gt. 0.)
+           where (arraytemp .gt. 0. .and. arraytemp.ne.errvali)
               arraytemp = sqrt(arraytemp)
            elsewhere
-              arraytemp = 0.
+              arraytemp = errvali
            end where
         case('5')
-           arraytemp = arraytemp**2             
+           where (arraytemp.ne.errvali)
+              arraytemp = arraytemp**2   
+           end where          
         end select
      enddo
 
@@ -103,13 +118,24 @@ end subroutine transform
 !  inverse transform
 !
 !------------------------------------------------------------------------
-subroutine transform_inverse(array,itrans)
+subroutine transform_inverse(array,itrans,errval)
   implicit none
   integer, intent(in) :: itrans
   real, dimension(:), intent(inout) :: array
+  real, intent(in), optional :: errval
   real, dimension(size(array)) :: arraytemp
+  real :: errvali
   character(len=20) :: string
   integer :: i
+  !
+  !--errval is the value to be set for errors
+  !  (default is zero if not present)
+  !
+  if (present(errval)) then
+     errvali = errval
+  else
+     errvali = 0. 
+  endif
   !
   !--extract the digits from the input number 
   !
@@ -127,20 +153,24 @@ subroutine transform_inverse(array,itrans)
         !
         select case(string(i:i))
         case('1')
-           arraytemp = 10**arraytemp
+           where (arraytemp.ne.errvali)
+              arraytemp = 10**arraytemp
+           end where
         case('3')
-           where (arraytemp .ne. 0)
+           where (arraytemp .ne. 0. .and. arraytemp.ne.errvali)
               arraytemp = 1./arraytemp
            elsewhere
-              arraytemp = 0.
+              arraytemp = errvali
            end where
         case('4') 
-           arraytemp = arraytemp**2
+           where (arraytemp.ne.errvali)
+              arraytemp = arraytemp**2
+           end where
         case('5')
-           where (arraytemp .gt. 0)
+           where (arraytemp .gt. 0. .and. arraytemp.ne.errvali)
               arraytemp = sqrt(arraytemp)
            elsewhere
-              arraytemp = 0.
+              arraytemp = errvali
            end where
         end select
      enddo
@@ -156,13 +186,24 @@ end subroutine transform_inverse
 !  applies the transformation to the same array as was input
 !
 !------------------------------------------------------------------------
-subroutine transform2(array,itrans)
+subroutine transform2(array,itrans,errval)
   implicit none
   integer, intent(in) :: itrans
   real, dimension(:,:), intent(inout) :: array
+  real, intent(in), optional :: errval
   real, dimension(size(array(:,1)),size(array(1,:))) :: arraytemp
+  real :: errvali
   character(len=20) :: string
   integer :: i
+  !
+  !--errval is the value to be set for errors
+  !  (default is zero if not present)
+  !
+  if (present(errval)) then
+     errvali = errval
+  else
+     errvali = 0. 
+  endif
   !
   !--extract the digits from the input number 
   !
@@ -180,27 +221,31 @@ subroutine transform2(array,itrans)
         !
         select case(string(i:i))
         case('1')
-           where (arraytemp > 0.)
+           where (arraytemp > 0. .and. arraytemp.ne.errvali)
               arraytemp = log10(arraytemp)
            elsewhere
-              arraytemp = 0.
+              arraytemp = errvali
            end where
         case('2')
-           arraytemp = abs(arraytemp)    
+           where (arraytemp.ne.errvali)
+              arraytemp = abs(arraytemp)
+           end where  
         case('3')
-           where (arraytemp .ne. 0.)
+           where (arraytemp .ne. 0. .and. arraytemp.ne.errvali)
               arraytemp = 1./arraytemp
            elsewhere
-              arraytemp = 0.
+              arraytemp = errvali
            end where
         case('4') 
-           where (arraytemp .gt. 0.)
+           where (arraytemp .gt. 0. .and. arraytemp.ne.errvali)
               arraytemp = sqrt(arraytemp)
            elsewhere
-              arraytemp = 0.
+              arraytemp = errvali
            end where
         case('5')
-           arraytemp = arraytemp**2         
+           where (arraytemp.ne.errvali)
+              arraytemp = arraytemp**2
+           end where     
         end select
      enddo
 
