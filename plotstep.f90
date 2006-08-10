@@ -1017,7 +1017,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  !---------------------------------------------------------------
                  !!--do transformations on rendered array (but only the first time!)
                  if (.not.interactivereplot .or. irerender) then
-                    call transform2(datpix,itrans(irenderplot))
+                    write(string,"(i8)") itrans(irenderplot) ! used to determine whether logged or not
+                    if (index(string,'1').ne.0) then
+                       !!--if log, then set zero values to some large negative number
+                       !   but exclude this value from adaptive limits determination
+                       call transform2(datpix,itrans(irenderplot),errval=-666.)
+                    else
+                       call transform2(datpix,itrans(irenderplot))                    
+                    endif
                  endif
                  
                  !!--set label for rendered quantity
@@ -1031,12 +1038,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  labelrender = transform_label(labelrender,itrans(irenderplot))
                  
                  !!--limits for rendered quantity
-                 write(string,"(i8)") itrans(irenderplot) ! used to determine whether logged or not
                  if (.not.interactivereplot .or. .not.iChangeRenderLimits) then
                     if (iadapt .and. .not.(use3Dperspective.and.use3Dopacityrendering.and.ndim.eq.3)) then
                        !!--if adaptive limits, find limits of rendered array
                        if (index(string,'1').ne.0) then
-                          rendermin = minval(datpix,mask=datpix.gt.-666.) ! see below
+                          rendermin = minval(datpix,mask=datpix.ne.-666.) ! see above
                        else
                           rendermin = minval(datpix)
                        endif
@@ -1050,15 +1056,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     endif
                  endif
                  
-                 !!--if log, then set zero values to minimum
-                 !!  (must be done after minimum is known)
-                 !!
+                 !!  do not let max=0 on log plots as this is suspiciously wrong
                  if (index(string,'1').ne.0) then
-                    !!print*,'setting zero values to ',rendermin,' on log array'
-                    where (abs(datpix).lt.tiny(datpix))
-                       datpix = -666. ! just some very negative number !rendermin
-                    end where
-                    !!  also do not let max=0 as this is suspiciously wrong
                     if (iadapt .and. abs(rendermax).lt.tiny(datpix)) then
                        !!print*,'max=0 on log plot, fixing'
                        rendermax = maxval(datpix)
