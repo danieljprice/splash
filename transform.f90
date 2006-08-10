@@ -69,7 +69,7 @@ subroutine transform(array,itrans)
         !
         select case(string(i:i))
         case('1')
-           where (arraytemp > 0)
+           where (arraytemp > 0.)
               arraytemp = log10(arraytemp)
            elsewhere
               arraytemp = 0.  !!log10(tiny(arraytemp))
@@ -77,13 +77,13 @@ subroutine transform(array,itrans)
         case('2')
            arraytemp = abs(arraytemp)    
         case('3')
-           where (arraytemp .ne. 0)
+           where (arraytemp .ne. 0.)
               arraytemp = 1./arraytemp
            elsewhere
               arraytemp = 0.
            end where
         case('4') 
-           where (arraytemp .gt. 0)
+           where (arraytemp .gt. 0.)
               arraytemp = sqrt(arraytemp)
            elsewhere
               arraytemp = 0.
@@ -180,7 +180,7 @@ subroutine transform2(array,itrans)
         !
         select case(string(i:i))
         case('1')
-           where (arraytemp > 0)
+           where (arraytemp > 0.)
               arraytemp = log10(arraytemp)
            elsewhere
               arraytemp = 0.
@@ -188,13 +188,13 @@ subroutine transform2(array,itrans)
         case('2')
            arraytemp = abs(arraytemp)    
         case('3')
-           where (arraytemp .ne. 0)
+           where (arraytemp .ne. 0.)
               arraytemp = 1./arraytemp
            elsewhere
               arraytemp = 0.
            end where
         case('4') 
-           where (arraytemp .gt. 0)
+           where (arraytemp .gt. 0.)
               arraytemp = sqrt(arraytemp)
            elsewhere
               arraytemp = 0.
