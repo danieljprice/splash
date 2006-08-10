@@ -38,7 +38,8 @@ PARALLEL= no
 OMPFLAGS=
 #
 # the endian flag can be used to compile the code to read BIG or LITTLE endian data
-# some compilers allow this to be done at runtime (e.g. g95, ifort)
+# some compilers also allow this to be done at runtime (e.g. g95, ifort) by setting
+# an environment variable appropriately (e.g. G95_ENDIAN or F_UFMTENDIAN)
 #
 ENDIAN=
 #ENDIAN='BIG'
@@ -99,11 +100,10 @@ ifeq ($(SYSTEM),ifort)
 endif
 
 ifeq ($(SYSTEM),pgf90)
-#  this is for the intel fortran compiler
+#  this is for the Portland Group Fortran 90 compiler
    F90C= pgf90
    F90FLAGS= -O -Mbackslash
    SYSTEMFILE= system_unix.f90
-# or use setenv F_UFMTENDIAN=big or little at runtime
    KNOWN_SYSTEM=yes
 endif
 

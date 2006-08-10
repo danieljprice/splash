@@ -35,7 +35,42 @@ however check to see if it is already installed on your system (if so, the libra
 usually located in /usr/local/pgplot).
 
 
-3a) ------------------- Compiling the code --------------------------------
+3) ------------------- Compiling the code (the short way) --------------------------------
+
+Once you have a copy of PGPLOT installed, preset options for the most common Fortran compilers are
+given in the Makefile provided an environment variable called SYSTEM is set appropriately.
+Typing 'make' will give you the following message:
+
+ make: WARNING: value of SYSTEM =  not recognised...
+ =>set the environment variable SYSTEM to one listed 
+   in the Makefile and try again
+
+options for the SYSTEM variable for compiling the code are:
+
+g95 -- settings for the g95 compiler
+nagf95 -- settings for the NAG f95 compiler
+sunf95 -- settings for the Sun f95 compiler
+ifort -- settings for the Intel Fortran Compiler
+pgf90 -- settings for the Portland Group Fortran 90 compiler
+
+options which compile and also link PGPLOT on specific machines are:
+
+mymac -- settings for a Mac using g95 with PGPLOT installed via fink
+ukaff1a -- settings for the ukaff1a supercomputer
+
+for a full list, have a look in the Makefile itself. To set the SYSTEM variable, in a sh/bash shell type
+
+export SYSTEM='mymac'
+
+or under csh/tcsh type
+
+setenv SYSTEM 'mymac'
+
+then simply type 'make', which will compile the code using the presets corresponding to your choice of
+SYSTEM variable. Unless you have used one of the SYSTEM presets that also links to PGPLOT, you will probably
+need to manually change the link-time settings (see step 3b, below).
+
+3a) ------------------- Compiling the code (more generally) --------------------------------
 In the Makefile, you will need to set the Fortran compiler and flags to your local version, e.g..
 
 F90C = g95
@@ -54,15 +89,17 @@ F90FLAGS = -O -Mbackslash
 
 3b) ------------------- linking with PGPLOT libraries ---------------------
  Secondly the compiler must be able to link to the PGPLOT and X11 libraries on
-your system. As a first attempt try using:
+your system. The settings for these are given at the top of the Makefile by the settings:
 
-LDFLAGS = -lpgplot -lX11
+X11LIBS= -lX11
+PGPLOTLIBS= -lpgplot
 
 If that works at a first attempt, take a moment to think several happy thoughts about your system
 administrator. If these libraries are not found, you will need to enter the
 library paths by hand. On most systems this is something like:
 
-LDFLAGS = -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11
+X11LIBS= -L/usr/X11R6/lib -lX11
+PGPLOTLIBS= -L/usr/local/pgplot -lpgplot
 
 (assuming the PGPLOT libraries are in the /usr/local/pgplot directory and the
 X11 libraries are in /usr/X11R6/lib). If this does not work, try using the
@@ -78,7 +115,7 @@ because the PGPLOT on your system has been compiled with a different compiler to
 the one you are using, and the libraries from that compiler must also be linked.
 For g77-compiled PGPLOT (very common) the relevant library is g2c, so use:
 
-LDFLAGS = -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11 -lg2c
+PGPLOTLIBS = -L/usr/local/pgplot -lpgplot -lg2c
 
 If the PNG drivers are incorporated into the PGPLOT installation, the -lpng libraries must also be added.
 Failing that, ask your system administrator(!) or simply download your own copy of
@@ -86,8 +123,11 @@ the PGPLOT libraries and make sure it is compiled with the same compiler as you
 are using to compile the SUPERSPHPLOT source code (e.g. g95).
 
  Secondly, you will need to modify the system-dependent routines for your
-compiler. These are located in the file system_unix.f90 which works for most
-unix-based compilers (including g95). A file system_unix_NAG
+compiler. These are specified via the settings:
+
+SYSTEMFILE = system_unix.f90 
+
+which works for most unix-based compilers (including g95). A file system_unix_NAG
 is included for the NAG f95 compiler. A version for Fortran 2003 compatible
 compilers (such as g95) is also given (system_f2003.f90).
 
@@ -98,6 +138,9 @@ however in the meantime the calls in the system module may require some adjustme
 particular system you are compiling the code on. The program is still fully
 functional without this call working, but it does make things convenient (in particular it means that
 SUPERSPHPLOT can be invoked using wildcards (*,?) in filenames).
+
+If you are still stuck at this point, have a look at the online FAQ for some common problems, or feel free
+to email me.
 
 4) -------------- writing your data_read subroutine -------------------
 
