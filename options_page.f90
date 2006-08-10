@@ -74,23 +74,23 @@ subroutine submenu_page
           iPlotTitles,hpostitle,vpostitle,iPlotLegend,iPlotStepLegend, &
           hposlegend,vposlegend,charheightmm,linewidth
 10 format(' 0) exit ',/,                   &
-        ' 1) change page after n timesteps (n =',i2,')',/, &
-        ' 2) axes options                  (',i2,')',/, &
-        ' 3) change paper size             (',f5.2,1x,f5.2,')',/, &
-        ' 4) change plots per page         (',i2,1x,i2,')',/, &
-         ' 5) plot tiling on/off            (',L1,')',/, & 
-         ' 6) title options                 (',L1,1x,f5.2,1x,f4.1,')',/, &
-         ' 7) legend options                (',L1,1x,L1,1x,f5.2,1x,f4.1,')',/, &
-         ' 8) set character height          (',f4.1,')',/,&
-         ' 9) adjust line width             (',i1,')',/,&
+        ' 1) change panel after n timesteps (n =',i2,')',/, &
+        ' 2) axes options                   (',i2,')',/, &
+        ' 3) change paper size              (',f5.2,1x,f5.2,')',/, &
+        ' 4) change plots per page          (',i2,1x,i2,')',/, &
+         ' 5) plot tiling on/off             (',L1,')',/, & 
+         ' 6) title options                  (',L1,1x,f5.2,1x,f4.1,')',/, &
+         ' 7) legend options                 (',L1,1x,L1,1x,f5.2,1x,f4.1,')',/, &
+         ' 8) set character height           (',f4.1,')',/,&
+         ' 9) adjust line width              (',i1,')',/,&
          '10) set foreground/background colours ')
  call prompt('enter option ',iaction,0,10)
 
  select case(iaction)
 !------------------------------------------------------------------------
   case(1)
-     call prompt('Enter number of timesteps per page',nstepsperpage,1)
-     print*,'Plotting up to ',nstepsperpage,' timesteps per page'
+     call prompt('Enter number of timesteps per panel',nstepsperpage,1)
+     print*,'Plotting up to ',nstepsperpage,' timesteps per panel'
      if (nstepsperpage.gt.1) then
         if (iadapt .or. iadaptcoords) then
            print "(a)",'(note that adaptive plot limits are now off)'
@@ -98,7 +98,7 @@ subroutine submenu_page
            iadaptcoords = .false.
         endif
         if (nstepsperpage.gt.14) then
-           print "(a)",'(and that steps per page > number of colours, ie. colours will repeat)'
+           print "(a)",'(and that steps per panel > number of colours, ie. colours will repeat)'
         endif
         call prompt('Use different colours for each step?',iColourEachStep)
 !!        if (.not.iColourEachStep) icolourthisstep = 1
