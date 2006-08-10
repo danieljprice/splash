@@ -110,7 +110,7 @@ endif
 ifeq ($(SYSTEM),ukaff1a)
 #  this is for ukaff1a
    F90C= xlf90_r
-   F90FLAGS= -O5 -qnoescape -qsuffix=f=f90 -qextname
+   F90FLAGS= -O4 -qnoescape -qsuffix=f=f90 -qextname
    OMPFLAGS= -qsmp=noauto
    SYSTEMFILE= system_f2003.f90
    PGPLOTLIBS= -L/home/dprice/pgplot -lpgplot  
