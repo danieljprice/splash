@@ -18,6 +18,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   use settings_data, only:ndim,icoords,ntypes
   use settings_part, only:imarktype,ncircpart,icoordsnew,icircpart, &
                           ilabelpart,iplotline,linestylethisstep,linecolourthisstep
+  use danpgutils, only:danpgsch
   implicit none
   integer, intent(in) :: ntot, iplotx, iploty
   integer, intent(in), dimension(ntot) :: icolourpart

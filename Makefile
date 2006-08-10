@@ -9,7 +9,7 @@
 
 ## Compiler options
 F90C =  g95
-F90FLAGS =  -O2
+F90FLAGS = -O3 
 
 LDFLAGS = -L/usr/X11R6/lib -lX11 -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
@@ -39,6 +39,7 @@ FFLAGS = $(F90FLAGS)
 SOURCESF90= globaldata.f90 transform.f90 \
          prompting.f90 geometry.f90 \
          colours.f90 colourparts.f90 \
+         danpgutils.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \
          exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
@@ -64,7 +65,7 @@ SOURCESF90= globaldata.f90 transform.f90 \
          $(SYSTEMFILE) supersphplot.f90
 
 # these are `external' f77 subroutines
-SOURCESF= danpgsch.f danpgtile.f danpgwedg.f
+SOURCESF= ##danpgsch.f danpgtile.f danpgwedg.f
 
 OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o) 
 
@@ -94,7 +95,7 @@ scwsph: $(OBJECTS) read_data_scw.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o wsupersphplot $(OBJECTS) read_data_scw.o
 
 srosph: $(OBJECTS) read_data_sro.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_sro.o 
+	$(FC) $(FFLAGS) $(LDFLAGS) -o rsupersphplot $(OBJECTS) read_data_sro.o 
 
 spyros: $(OBJECTS) read_data_spyros.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o ssupersphplot $(OBJECTS) read_data_spyros.o

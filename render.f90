@@ -4,7 +4,7 @@
 !------------------------------------------------------------------------
 module render
  implicit none
- public :: render_pix, render_vec, render_opacity, colourbar, colourbarfull
+ public :: render_pix, render_vec, render_opacity, colourbar
  private
 
 contains
@@ -80,15 +80,23 @@ end subroutine render_pix
 ! changeable parameter and the character height
 ! is not changed)
 !-------------------------------------------------------
-subroutine colourbar(icolours,datmin,datmax,label,log)
+subroutine colourbar(icolours,datmin,datmax,label,log, &
+                     vptxmaxfull,vptyminfull,vptymaxfull)
  use settings_render, only:ColourBarDisp, ColourBarWidth
  implicit none
  integer, intent(in) :: icolours
  real, intent(in) :: datmin,datmax
  character(len=*), intent(in) :: label
  logical, intent(in) :: log
+ real, intent(in), optional :: vptxmaxfull,vptyminfull,vptymaxfull
+ integer, parameter :: npixwedg = 400
+ real, dimension(6), parameter :: trans = (/0.0,1.0,0.0,0.0,0.0,1.0/)
+ real, dimension(npixwedg) :: sample
+ integer :: i
  character(len=1) :: clog
- real :: disp, width
+ real :: disp,width,xch,ych,dx
+ real :: xmin,xmax,ymin,ymax,vptxmin,vptxmax,vptymin,vptymax
+ real :: vptxmini,vptxmaxi,vptymini,vptymaxi
 !
 !--set colour bar displacement and width in character heights
 !
@@ -99,73 +107,69 @@ subroutine colourbar(icolours,datmin,datmax,label,log)
 !
  clog = ' '
  if (log) clog = 'l'
-!
-!--Note that plots use my modification of pgwedg which plots vertical numbers on axes
-!
- if (abs(icolours).eq.1) then        ! greyscale
-    call danpgwedg('rgv'//clog,disp,width,datmin,datmax,trim(label),ColourBarDisp)
- elseif (abs(icolours).gt.1) then        ! colour
-    call danpgwedg('riv'//clog,disp,width,datmin,datmax,trim(label),ColourBarDisp)
+
+ call pgbbuf
+ call pgqwin(xmin,xmax,ymin,ymax)
+ call pgqvp(0,vptxmin,vptxmax,vptymin,vptymax)
+ call pgqcs(0,xch,ych)
+ !--if colour bar stretches across multiple plots,
+ !  override settings for vptymin and vptymax with input values
+ if (present(vptxmaxfull) .and. present(vptyminfull) .and. present(vptymaxfull)) then
+    vptxmaxi = vptxmaxfull
+    vptymini = vptyminfull
+    vptymaxi = vptymaxfull
+ else
+    vptxmaxi = vptxmax
+    vptymini = vptymin
+    vptymaxi = vptymax
  endif
+!
+!--translate width and displacement to viewport co-ordinates
+!
+ width = width*xch
+ disp = disp*xch
+!
+!--set viewport for the wedge
+! 
+ vptxmini = vptxmaxi + disp
+ vptxmaxi = vptxmini + width*0.4
+ call pgsvp(vptxmini,vptxmaxi,vptymini,vptymaxi)
+!
+!--fill array with all values from datmin to datmax
+!
+ dx = (datmax-datmin)/real(npixwedg-1)
+ do i=1,npixwedg
+    sample(i) = datmin + (i-1)*dx
+ enddo
+!
+!--draw colour bar, by cleverly setting window size
+!
+ call pgswin(0.9,1.1,1.0,real(npixwedg))
+ if (abs(icolours).eq.1) then        ! greyscale
+    call pggray(sample,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans)
+ elseif (abs(icolours).gt.1) then        ! colour
+    call pgimag(sample,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans)
+ endif
+ call pgswin(0.0,1.0,datmin,datmax)
+!
+!--draw labelled frame around the wedge
+!
+ call pgbox('BC',0.0,0,'BCMSTVRV',0.0,0)
+!
+!--write the units label
+!
+ if (label.ne.' ') then
+    call pgmtxt('R',ColourBarDisp+1.0,1.0,1.0,trim(label))
+ endif
+!
+!--reset window and viewport
+!
+ call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
+ call pgswin(xmin,xmax,ymin,ymax)
+ call pgebuf
 
  return
 end subroutine colourbar
-
-!-------------------------------------------------------
-! this subroutine is the same as colourbar except it
-! uses the full viewport (or at least, the full non-empty viewport as defined by danpgtile)
-! for the bar (used in tiled plots)
-!-------------------------------------------------------
-subroutine colourbarfull(icolours,datmin,datmax,label,log,nacross,ndown,iaxis)
- use settings_render, only:ColourBarDisp, ColourBarWidth
- implicit none
- integer, intent(in) :: icolours,nacross,ndown,iaxis
- real, intent(in) :: datmin,datmax
- character(len=*), intent(in) :: label
- logical, intent(in) :: log
- character(len=1) :: clog
- real :: disp, width, vxmin, vxmax, vymin, vymax, vyminnew, vymaxnew
- real :: xmin,xmax,ymin,ymax,dummy,barwidth,xch,ych
-!
-!--set colour bar displacement and width in character heights
-!
- disp = 0.5
- width = ColourBarWidth
- call pgqcs(0,xch,ych)
- !--make sure this line is the same as in the page setup routine
- barwidth = (max(ColourBarWidth*0.4 + ColourBarDisp,ColourBarWidth) + 0.25)*ych 
-!
-!--set character to send to pgwedg call if log (danpgwedg only) 
-!
- clog = ' '
- if (log) clog = 'l'
-
-!--save current viewport settings
- call pgqvp(0,vxmin,vxmax,vymin,vymax)
- call pgqwin(xmin,xmax,ymin,ymax)
-
-!--call danpgtile to get the actual viewport extent in y
-!  (use the first plot in the last row as this is guaranteed to be drawn)
- call danpgtile(nacross*ndown-nacross+1,nacross,ndown,xmin,xmax,ymin,ymax, &
-      ' ',' ','NOPGBOX',1,iaxis,0.0,barwidth,0.0,0.0)
-!--set y to use full (plotted) viewport
- call pgqvp(0,dummy,dummy,vyminnew,vymaxnew)
- call pgsvp(vxmin,vxmax,vyminnew,0.9999)
-!
-!--Note that plots use my modification of pgwedg which plots vertical numbers on axes
-!
- if (abs(icolours).eq.1) then        ! greyscale
-    call danpgwedg('rgv'//clog,disp,width,datmin,datmax,trim(label),ColourBarDisp)
- elseif (abs(icolours).gt.1) then        ! colour
-    call danpgwedg('riv'//clog,disp,width,datmin,datmax,trim(label),ColourBarDisp)
- endif
-!--restore viewport settings
- call pgsvp(vxmin,vxmax,vymin,vymax)
- call pgswin(xmin,xmax,ymin,ymax)
- 
- return
-end subroutine colourbarfull
-
 
 !--------------------------------------------------------------------------
 !  this subroutine takes a 2D grid of vector data (ie. x and y components)

@@ -333,6 +333,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     npartoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
   use filenames, only:nsteps
+  use danpgutils, only:danpgsch
   use exact, only:exact_solution,atstar,ctstar,sigma
   use toystar1D, only:exact_toystar_ACplane
   use toystar2D, only:exact_toystar_ACplane2D
@@ -372,7 +373,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use opacityrendering3D, only:interpolate3D_proj_opacity
   use xsections3D, only:interpolate3D, interpolate3D_fastxsec, &
                         interpolate3D_xsec_vec
-  use render, only:render_pix,colourbar,colourbarfull
+  use render, only:render_pix,colourbar
   use pagesetup, only:redraw_axes
   use exactfromfile, only:exact_fromfile
 
@@ -994,8 +995,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            if (irender.gt.ndim) iColourBar = iPlotColourBar
 
            call page_setup
+
+           lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
+                       .and. nyplot.eq.nyplots .and. k.eq.nxsec)
+
            !--only plot colour bar at the end of first row on tiled plots
-           if (tile_plots .and..not.(icolumn.eq.nacross .and. irow.eq.1)) iColourBar = .false.
+           if (tile_plots .and..not.(ipanel.eq.nacross*ndown .or. lastplot)) iColourBar = .false.
+
 
            !--add to log
            if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),xsecmin,label(iplotz),xsecmax
@@ -1072,9 +1078,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     !--for tiled plots only on last plot in first row,
                     !  and use full viewport size in the y direction
                     if (tile_plots) then
-                       if (icolumn.eq.nacross .and. irow.eq.1) &
-                          call colourbarfull(icolours,rendermin,rendermax, &
-                          trim(labelrender),.false.,nacross,ndown,iaxis)
+                       call colourbar(icolours,rendermin,rendermax, &
+                       trim(labelrender),.false.,maxval(vptxmax(1:ipanel)), &
+                       minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
                     else
                        !!--plot colour bar, but only if last in row
                        call colourbar(icolours,rendermin,rendermax, &
@@ -1134,9 +1140,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                        !--for tiled plots only on last plot in first row,
                        !  and use full viewport size in the y direction
                        if (tile_plots) then
-                          if (icolumn.eq.nacross .and. irow.eq.1) &
-                             call colourbarfull(icolours,rendermin,rendermax, &
-                             trim(labelrender),.false.,nacross,ndown,iaxis)
+                          call colourbar(icolours,rendermin,rendermax, &
+                          trim(labelrender),.false.,maxval(vptxmax(1:ipanel)), &
+                          minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
                        else
                           !!--plot colour bar, but only if last in row
                           call colourbar(icolours,rendermin,rendermax, &
@@ -1223,8 +1229,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !
            !--enter interactive mode
            !
-           lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
-                       .and. nyplot.eq.nyplots .and. k.eq.nxsec)
 
            if (interactive) then
               if (nacross*ndown.eq.1) then
@@ -1630,8 +1634,6 @@ contains
        !--leave space for colour bar if necessary (at end of row only on tiled plots)
        if ((tile_plots .and. iAllowspaceforcolourbar).or.(.not.tile_plots.and.iColourBar)) then
           call pgqcs(0,xch,ych)
-          !--be CAREFUL changing this - there needs to be an identical version in
-          !  colourbarfull
           barwidth = max(ColourBarWidth*(0.4)+0.75 + ColourBarDisp+1.25,ColourBarWidth*0.4+0.75)*xch
 !       elseif (.not.tile_plots .and. iColourBar) then
 !          barwidth = ColourBarWidth
