@@ -19,10 +19,10 @@ module geometry
  implicit none
  integer, parameter :: maxcoordsys = 3
  real, parameter, private :: pi = 3.1415926536
- character(len=20), dimension(maxcoordsys), parameter :: labelcoordsys = &
-    (/'cartesian         ', &
-      'cylindrical polars', &
-      'spherical polars  '/)
+ character(len=*), dimension(maxcoordsys), parameter :: labelcoordsys = &
+    (/'cartesian   x,y,z      ', &
+      'cylindrical r,phi,z    ', &
+      'spherical   r,phi,theta'/)
  character(len=*), dimension(3,maxcoordsys), parameter :: labelcoord = &
     reshape((/'x    ','y    ','z    ', &
               'r    ','phi  ','z    ', &
@@ -221,14 +221,14 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         !        
         ! output is cartesian (default)
         !
-        dxdx(1,1) = SIN(xin(2))*COS(xin(3))         ! dx/dr
-        dxdx(1,2) = xin(1)*COS(xin(2))*COS(xin(3))  ! dx/dtheta
-        dxdx(1,3) = -xin(1)*SIN(xin(2))*SIN(xin(3)) ! dx/dphi
+        dxdx(1,1) = COS(xin(2))*SIN(xin(3))         ! dx/dr
+        dxdx(1,2) = -xin(1)*SIN(xin(2))*SIN(xin(3)) ! dx/dphi
+        dxdx(1,3) = xin(1)*COS(xin(2))*COS(xin(3))  ! dx/dtheta
         dxdx(2,1) = SIN(xin(2))*SIN(xin(3))         ! dy/dr
-        dxdx(2,2) = xin(1)*COS(xin(2))*SIN(xin(3))  ! dy/dtheta
-        dxdx(2,3) = xin(1)*SIN(xin(2))*COS(xin(3))  ! dy/dphi
-        dxdx(3,1) = COS(xin(2))                     ! dz/dr
-        dxdx(3,2) = -xin(1)*SIN(xin(2))             ! dz/dtheta
+        dxdx(2,2) = xin(1)*COS(xin(2))*SIN(xin(3))  ! dy/dphi
+        dxdx(2,3) = xin(1)*SIN(xin(2))*COS(xin(3))  ! dy/dtheta
+        dxdx(3,1) = COS(xin(3))                     ! dz/dr
+        dxdx(3,2) = -xin(1)*SIN(xin(3))             ! dz/dtheta
      end select
 !
 !--input is cylindrical polars
