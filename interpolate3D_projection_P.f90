@@ -146,9 +146,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpart
   integer :: iprintinterval, iprintnext, itmin,ipixi,jpixi,jpixcopy
-#ifdef _OPENMP
   integer :: OMP_GET_NUM_THREADS
-#endif
   integer(kind=8) :: iprogress,i
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
   real :: term,dy,dy2,ypix,zfrac
@@ -215,24 +213,22 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
 !$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
 !$OMP PRIVATE(dx2i,row,q2,ypix,dy,dy2,wab) &
 !$OMP PRIVATE(i,ipix,jpix,jpixcopy)
-#ifdef _OPENMP
-     print "(1x,a,i3,a)",'Using ',OMP_GET_NUM_THREADS(),' cpus'
-#endif
+!$OMP MASTER
+  print "(1x,a,i3,a)",'Using ',OMP_GET_NUM_THREADS(),' cpus'
+!$OMP END MASTER
 
 !$OMP DO SCHEDULE (guided, 2)
   over_particles: do i=1,npart
      !
      !--report on progress
      !
-#ifndef _OPENMP
-     if (iprintprogress) then
-        iprogress = 100*i/npart
-        if (iprogress.ge.iprintnext) then
-           write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
-           iprintnext = iprintnext + iprintinterval
-        endif
-     endif
-#endif
+!!     if (iprintprogress) then
+!!        iprogress = 100*i/npart
+!!        if (iprogress.ge.iprintnext) then
+!!           write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
+!!           iprintnext = iprintnext + iprintinterval
+!!        endif
+!!     endif
      !
      !--set h related quantities
      !
