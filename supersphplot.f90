@@ -23,6 +23,9 @@ program supersphplot
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.6.0   (10/8/06)
+!           : Interactive mode on multiple plots per page; highly optimised interpolation
+!             + parallel version; new Makefile; various bug fixes
 !     1.5.4 (06/7/06)
 !           : Handles multiple SPH/non-SPH particle types; axes redrawn after rendering;
 !             minor bug fixes
@@ -65,9 +68,7 @@ program supersphplot
 !     calc_quantities    : calculates additional quantities from particle data
 !     colours            : colour schemes for rendering
 !     colourparts	 : colours particles
-!     danpgsch           : sets character height independent of page size
-!     danpgtile          : my utility for tiling plots on the pgplot page
-!     danpgwedg          : my very minor modification of pgwedg
+!     danpgutils         : some utilities I have written for use with PGPLOT
 !     defaults           : writes/reads default options to/from file
 !     exact              : module handling exact solution settings
 !     exact_fromfile     : reads an exact solution tabulated in a file
@@ -234,7 +235,7 @@ subroutine print_header
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/, &
    '   \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ ',/)      
 
- print "(a)",' ( version 1.5.4 [6/7/06] Copyright (C) 2005-2006)'
+ print "(a)",' ( version 1.6 [10th Aug ''06] Copyright (C) 2005-2006)'
  print 30 
 30 format(/,    &
    ' * SUPERSPHPLOT comes with ABSOLUTELY NO WARRANTY.',/, &
