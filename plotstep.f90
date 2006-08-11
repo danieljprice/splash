@@ -440,7 +440,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   !
   !--set weight factor for interpolation routines
   !
-  if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
+  if (ipmass.gt.0 .and. ipmass.le.ndataplots .and. &
+      irho.gt.0 .and. irho.le.ndataplots .and. &
+      ih .gt. 0 .and. ih.le.ndataplots ) then
      i2 = 0
      do itype=1,ntypes
         !--check for consistency that if particles are not plotted, they are also not plotted on renderings
