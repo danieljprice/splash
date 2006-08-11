@@ -1253,7 +1253,9 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         if (ipanel.le.0) cycle interactive_loop
         xlength = xmax(iplotxarr(ipanel)) - xmin(iplotxarr(ipanel))
         ylength = xmax(iplotyarr(ipanel)) - xmin(iplotyarr(ipanel))
-        renderlength = xmax(irenderarr(ipanel)) - xmin(irenderarr(ipanel))
+        if (irenderarr(ipanel).gt.0) then
+           renderlength = xmax(irenderarr(ipanel)) - xmin(irenderarr(ipanel))
+        endif
         select case(char)
         case('-')
            xlength = 1.1*zoomfac*xlength

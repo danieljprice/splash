@@ -528,8 +528,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         xmax = xmaxmulti(iplotx)
         ymin = xminmulti(iploty)
         ymax = xmaxmulti(iploty)
-        rendermin = xminmulti(irender)
-        rendermax = xmaxmulti(irender)
+        if (irender.gt.0) then
+           rendermin = xminmulti(irender)
+           rendermax = xmaxmulti(irender)
+        endif
      endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1686,9 +1688,11 @@ contains
     xmaxmulti(iplotx) = xmax
     xminmulti(iploty) = ymin
     xmaxmulti(iploty) = ymax
-    xminmulti(irender) = rendermin
-    xmaxmulti(irender) = rendermax
-
+    if (irender.gt.0) then
+       xminmulti(irender) = rendermin
+       xmaxmulti(irender) = rendermax
+    endif
+    
     return
   end subroutine page_setup
   
