@@ -164,6 +164,11 @@ subroutine calc_quantities(ifromstep,itostep)
   print*,'calculating ',ncalc,' additional quantities...'
   ncolsnew = ncolumns + ncalc
   if (ncolsnew.gt.maxcol) call alloc(maxpart,maxstep,ncolsnew) 
+!
+!--reset iamvec to zero for calculated columns
+!
+  iamvec(ncolumns+1:ncolsnew) = 0
+  labelvec(ncolumns+1:ncolsnew) = ' '
 
   do i=ifromstep,itostep
      ntoti = SUM(npartoftype(:,i))
