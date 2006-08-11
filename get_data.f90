@@ -240,11 +240,28 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         iendatstep = nsteps
      endif
   endif
-  if (ndim.ne.0 .and. (irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0)) then
-     print "(4(/,a))",' WARNING: Rendering capabilities cannot be enabled', &
+  !
+  !--check for errors in data read / print warnings
+  !
+  if (ndim.ne.0) then
+     if (irho.gt.ncolumns) then
+        print "(a)",' ERROR with irho setting in data read'
+        irho = 0
+     endif
+     if (ih.gt.ncolumns) then
+        print "(a)",' ERROR with ih setting in data read '
+        ih = 0
+     endif
+     if (ipmass.gt.ncolumns) then
+        print "(a)",' ERROR with ipmass setting in data read'
+        ipmass = 0
+     endif
+     if (irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
+        print "(4(/,a))",' WARNING: Rendering capabilities cannot be enabled', &
                  '  until positions of density, smoothing length and particle', &
                  '  masses are known (specified using the integer variables ', &
                  '  irho,ih and ipmass in the read_data routine)'
+     endif
   endif
 !
 !--reset coordinate and vector labels (depending on coordinate system)
