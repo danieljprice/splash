@@ -71,7 +71,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   open(unit=iunit,iostat=ierr,file=datfile,status='old',form='unformatted')
   if (ierr /= 0) then
-     print*,'*** Error opening '//trim(datfile)//' ***'
+     print*,' *** Error opening '//trim(datfile)//' ***'
      return
   endif
 !
@@ -94,9 +94,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
      read(iunit,iostat=ierr,end=80) timein,npartin,ntotin,gammain, &
          hfactin,ndim_max,ndimV_max,ncol_max,iformat
      singleprecision = .true.
-     
-     if (ierr /= 0) then
-        print "(a)",'*** Error reading first header ***'
+     if (ierr /= 0 .or. ndim_max.le.0 .or. ndim_max.gt.3 &
+        .or. ndimV_max.le.0 .or. ndimV_max.gt.3 &
+        .or. ncol_max.le.0 .or. ncol_max.gt.100 &
+        .or. npartin.le.0 .or. npartin.gt.1e7 .or. ntotin.le.0 .or. ntotin.gt.1e7 &
+        .or. iformat.lt.0 .or. iformat.gt.10) then
+
+        print "(a)",' *** Error reading first header ***'
         print*,' time = ',timein,' hfact = ',hfactin,' ndim=',ndim_max,'ncol=',ncol_max
         close(iunit)
         return
