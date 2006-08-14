@@ -15,7 +15,6 @@ module timestep_plotting
   real, private :: xmin,xmax,ymin,ymax,zmin
   real, private :: rendermin,rendermax,vecmax
   real, private :: dz,zslicepos,dobserver,dscreenfromobserver
-  real, private :: charheight
   real, private :: dxgrid,xmingrid,xmaxgrid
   real, private :: angletempx, angletempy, angletempz
   !--buffer for interactive mode on multiplots
@@ -333,7 +332,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     npartoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
   use filenames, only:nsteps
-  use danpgutils, only:danpgsch
   use exact, only:exact_solution,atstar,ctstar,sigma
   use toystar1D, only:exact_toystar_ACplane
   use toystar2D, only:exact_toystar_ACplane2D
@@ -350,7 +348,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
                      iplotline,linecolourthisstep,linestylethisstep
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend,iPlotStepLegend, &
-                     charheightmm,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage, &
+                     charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage, &
                      hposlegend,vposlegend,fjustlegend,legendtext
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
       iPlotColourBar,icolour_particles,inormalise_interpolations,ifastrender
@@ -491,8 +489,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
      if (nyplot.gt.1) print 34 
      !--make sure character height is set correctly
-     call danpgsch(charheightmm,2) ! set in mm
-     call pgqch(charheight) ! in PGPLOT scaled units
+     call pgsch(charheight) ! in PGPLOT scaled units
+
      iColourBar = .false.   ! should be false by default until set to true
 
      !--set current x, y, render and vector plot from multiplot array

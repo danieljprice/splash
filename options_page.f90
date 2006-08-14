@@ -10,13 +10,13 @@ module settings_page
  logical :: iPlotLegend,iPlotStepLegend,iPlotTitles
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
- real :: charheightmm
+ real :: charheight
  character(len=20) :: colour_fore, colour_back, legendtext
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &
    iPlotLegend,iPlotStepLegend,hposlegend,vposlegend,iPlotTitles,hpostitle, &
-   vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheightmm,linewidth,&
+   vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheight,linewidth,&
    fjustlegend
 
 contains
@@ -52,8 +52,8 @@ subroutine defaults_set_page
   fjusttitle = 0.5      ! justification factor for title
   colour_fore = ' '
   colour_back = ' '
-  charheightmm = 4.0    ! character height in mm
-  linewidth = 2         ! PGPLOT line width
+  charheight = 1.0    ! PGPLOT character height
+  linewidth = 2       ! PGPLOT line width
 
   return
 end subroutine defaults_set_page
@@ -72,7 +72,7 @@ subroutine submenu_page
  papersizey = papersizex*aspectratio
  print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,tile, &
           iPlotTitles,hpostitle,vpostitle,iPlotLegend,iPlotStepLegend, &
-          hposlegend,vposlegend,charheightmm,linewidth
+          hposlegend,vposlegend,charheight,linewidth
 10 format(' 0) exit ',/,                   &
         ' 1) change panel after n timesteps (n =',i2,')',/, &
         ' 2) axes options                   (',i2,')',/, &
@@ -207,7 +207,7 @@ subroutine submenu_page
      return
 !------------------------------------------------------------------------
   case(8)
-     call prompt('Enter page character height in mm ',charheightmm,1.,50.)
+     call prompt('Enter PGPLOT character height ',charheight,0.1,10.)
      return
 !------------------------------------------------------------------------
   case(9)

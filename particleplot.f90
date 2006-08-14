@@ -18,7 +18,6 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   use settings_data, only:ndim,icoords,ntypes
   use settings_part, only:imarktype,ncircpart,icoordsnew,icircpart, &
                           ilabelpart,iplotline,linestylethisstep,linecolourthisstep
-  use danpgutils, only:danpgsch
   implicit none
   integer, intent(in) :: ntot, iplotx, iploty
   integer, intent(in), dimension(ntot) :: icolourpart
@@ -31,11 +30,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   character(len=*), intent(in) :: labelz
   integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle
   integer :: lenstring,index1,index2,ntotplot,icolourstart
-  real :: charheight
+!  real :: charheight
   character(len=20) :: string
   
   !--query current character height and colour
-  call pgqch(charheight)
+!  call pgqch(charheight)
   call pgqci(icolourstart)
   !!print "(a,i8)",' entering particle plot, total particles = ',ntot
   !
@@ -86,9 +85,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  !!--plot particle label
                  if (ilabelpart) then
                     call pgnumb(j,0,1,string,lenstring)
-                    call danpgsch(4.0,2)
                     call pgtext(xplot(j),yplot(j),string(1:lenstring))
-                    call pgsch(charheight)
                  endif
               endif
            enddo
@@ -122,9 +119,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
               print*,'plotting particle labels ',index1,':',index2
               do j=index1,index2
                  call pgnumb(j,0,1,string,lenstring)
-                 call danpgsch(4.0,2)
                  call pgtext(xplot(j),yplot(j),string(1:lenstring))
-                 call pgsch(charheight)
               enddo
            endif
         endif
