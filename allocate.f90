@@ -112,7 +112,10 @@ subroutine alloc(npartin,nstep,ncolumnsin)
 !--main data array
 !
   allocate(dat(maxpart,maxcol,maxstep), stat=ierr)
-  if (ierr /= 0) stop 'error allocating memory for dat array'
+  if (ierr /= 0) then
+     print*,' parts = ',maxpart,' columns = ',maxcol,' steps = ',maxstep
+     stop 'error allocating memory for dat array'
+  endif
     
   if (reallocate) then
      dat(1:maxpartold,1:maxcolold,1:maxstepold) = dattemp(1:maxpartold,1:maxcolold,1:maxstepold)
