@@ -68,7 +68,6 @@ program supersphplot
 !     calc_quantities    : calculates additional quantities from particle data
 !     colours            : colour schemes for rendering
 !     colourparts	 : colours particles
-!     danpgutils         : some utilities I have written for use with PGPLOT
 !     defaults           : writes/reads default options to/from file
 !     exact              : module handling exact solution settings
 !     exact_fromfile     : reads an exact solution tabulated in a file

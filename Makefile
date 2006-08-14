@@ -59,7 +59,20 @@ endif
 ifeq ($(SYSTEM),g95)
 #  using the g95 compiler
    F90C= g95
+   F90FLAGS= -O3 -ffast-math -fbounds-check
+   SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
+   ENDIANFLAGBIG= -fendian='BIG'
+   ENDIANFLAGLITTLE= -fendian='LITTLE'
+   PARALLEL= no
+   KNOWN_SYSTEM=yes
+endif
+
+ifeq ($(SYSTEM),myg95)
+#  using the g95 compiler
+   F90C= myg95
    F90FLAGS= -O3 -ffast-math
+   X11LIBS= -L/usr/X11R6/lib64 -lX11
+   PGPLOTLIBS = -L/usr/local64/pgplot -lpgplot -lpng -lg2c
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
@@ -168,7 +181,6 @@ endif
 SOURCESF90= globaldata.f90 transform.f90 \
          prompting.f90 geometry.f90 \
          colours.f90 colourparts.f90 \
-         danpgutils.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \
          exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
