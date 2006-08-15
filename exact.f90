@@ -419,7 +419,7 @@ contains
 
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot, &
-                            pmass,npart,imarker,unitsx,unitsy,irescale)
+                            pmass,npart,imarker,unitsx,unitsy,irescale,iaxisy)
     use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr
     use prompting
     use exactfromfile, only:exact_fromfile
@@ -436,7 +436,7 @@ contains
     use transforms
     implicit none
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
-    integer, intent(in) :: ndim,ndimV,npart,imarker
+    integer, intent(in) :: ndim,ndimV,npart,imarker,iaxisy
     real, intent(in) :: time,xmin,xmax,gamma,unitsx,unitsy
     real, intent(in), dimension(npart) :: xplot,yplot,pmass
     logical, intent(in) :: irescale
@@ -718,7 +718,7 @@ contains
                                 errL1,errL2,errLinf)
           print "(3(a,1pe10.3,1x))",' L1 error = ',errL1,' L2 error = ',errL2, &
                                    ' L(infinity) error = ',errLinf
-          if (iPlotResiduals) call plot_residuals(xplot,residuals,imarker)
+          if (iPlotResiduals) call plot_residuals(xplot,residuals,imarker,iaxisy)
        endif
     endif
     !
@@ -798,10 +798,10 @@ contains
    return
   end subroutine calculate_errors
   
-  subroutine plot_residuals(xpts,residuals,imarker)
+  subroutine plot_residuals(xpts,residuals,imarker,iaxisy)
    implicit none
    real, dimension(:), intent(in) :: xpts,residuals
-   integer, intent(in) :: imarker
+   integer, intent(in) :: imarker,iaxisy
    real :: vptxminold,vptxmaxold,vptyminold,vptymaxold
    real :: vptxmin,vptxmax,vptymin,vptymax
    real :: xminold,xmaxold,yminold,ymaxold,ymin,ymax
@@ -834,7 +834,11 @@ contains
    call pgqcs(0,xch,ych)
    call pgsci(0)
    call pgsfs(1)
-   call pgsvp(vptxmin - 3.*xch,vptxmax,vptymin,vptymax)
+   if (iaxisy.le.0) then
+      call pgsvp(vptxmin,vptxmax,vptymin,vptymax)   
+   else
+      call pgsvp(vptxmin - 3.*xch,vptxmax,vptymin,vptymax)
+   endif
    call pgswin(xminold,xmaxold,ymin,ymax)
    call pgrect(xminold,xmaxold,ymin,ymax)
    call pgsci(ioldcolour)
@@ -842,7 +846,11 @@ contains
    !--set window and draw axes
    call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
    call pgswin(xminold,xmaxold,ymin,ymax)
-   call pgbox('ABCST',0.0,0,'BCNST',0.0,0)
+   if (iaxisy.le.0) then
+      call pgbox('ABCST',0.0,0,'BCST',0.0,0)   
+   else
+      call pgbox('ABCST',0.0,0,'BNCST',0.0,0)
+   endif
    
    !--plot residuals
    call pgpt(size(xpts),xpts,residuals,imarker)

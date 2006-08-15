@@ -391,7 +391,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec,nfreqpts,itranstemp
   integer :: i1,i2,itype,icolourprev,linestyleprev
-  integer :: ierr,ipt,nplots,nyplotstart
+  integer :: ierr,ipt,nplots,nyplotstart,iaxisy
 
   real, parameter :: pi = 3.1415926536
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
@@ -1209,17 +1209,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               endif
            endif          
            !
-           !--plot exact solution if relevant (before going interactive)
-           !
-           if (iexact.ne.0) then
-               call exact_solution(iexact,iplotx,iploty, &
-                    itrans(iplotx),itrans(iploty),icoordsnew, &
-                    ndim,ndimV,timei,xmin,xmax,gammai, &
-                    xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
-                    pmass(1:npartoftype(1)),npartoftype(1),imarktype(1), &
-                    units(iplotx),units(iploty),irescale)
-           endif
-           !
            !--redraw axes over what has been plotted
            !
            call redraw_axes(iaxis)
@@ -1227,6 +1216,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !--annotate with time / marker legend and title
            !
            call legends_and_title
+           !
+           !--plot exact solution if relevant (before going interactive)
+           !
+           if (iexact.ne.0) then
+              iaxisy = iaxis
+              if (tile_plots .and. icolumn.ne.1) iaxisy = 0
+              call exact_solution(iexact,iplotx,iploty, &
+                   itrans(iplotx),itrans(iploty),icoordsnew, &
+                   ndim,ndimV,timei,xmin,xmax,gammai, &
+                   xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
+                   pmass(1:npartoftype(1)),npartoftype(1),imarktype(1), &
+                   units(iplotx),units(iploty),irescale,iaxisy)
+           endif
            !
            !--enter interactive mode
            !
@@ -1323,14 +1325,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
              zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
              icolourme(1:ntoti),npartoftype(:),iplotpartoftype,.false.,0.0,0.0,' ')
-
-        if (iexact.ne.0) then
-           call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
-                icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
-                xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
-                pmass(1:npartoftype(1)),npartoftype(1),imarktype(1), &
-                units(iplotx),units(iploty),irescale)
-        endif
         !
         !--redraw axes over what has been plotted
         !
@@ -1339,6 +1333,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !--annotate with time / marker legend and title
         !
         call legends_and_title
+        !
+        !--plot exact solution (after redrawn axis for residual plots)
+        !
+        if (iexact.ne.0) then
+           iaxisy = iaxis
+           if (tile_plots .and. icolumn.ne.1) iaxisy = 0
+           call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
+                icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
+                xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
+                pmass(1:npartoftype(1)),npartoftype(1),imarktype(1), &
+                units(iplotx),units(iploty),irescale,iaxisy)
+        endif
         !
         !--enter interactive mode
         !
@@ -1631,50 +1637,29 @@ contains
     ! set up pgplot page
     !--------------------------------------------------------------
 
-!    if (tile_plots) then
-       !--leave space for colour bar if necessary (at end of row only on tiled plots)
-       if ((tile_plots .and. iAllowspaceforcolourbar).or.(.not.tile_plots.and.iColourBar)) then
-          call pgqcs(0,xch,ych)
-          barwidth = max(ColourBarWidth*(0.4)+0.75 + ColourBarDisp+1.25,ColourBarWidth*0.4+0.75)*xch
-!       elseif (.not.tile_plots .and. iColourBar) then
-!          barwidth = ColourBarWidth
-       else
-          barwidth = 0.
-       endif
-       !--work out whether or not to leave space above plots for titles
-       TitleOffset = 0.
-       if (iPlotTitles .and. nstepsperpage.eq.1 .and. vpostitle.gt.0.) TitleOffset = vpostitle + 1.5
+    !--leave space for colour bar if necessary (at end of row only on tiled plots)
+    if ((tile_plots .and. iAllowspaceforcolourbar).or.(.not.tile_plots.and.iColourBar)) then
+       call pgqcs(0,xch,ych)
+       barwidth = (ColourBarWidth*(0.4)+0.75 + max(ColourBarDisp+1.25,0.0))*xch
+    else
+       barwidth = 0.
+    endif
+    !--work out whether or not to leave space above plots for titles
+    TitleOffset = 0.
+    if (iPlotTitles .and. nstepsperpage.eq.1 .and. vpostitle.gt.0.) TitleOffset = vpostitle + 1.5
 
-       inewpage = ipanel.eq.1 .and. ipanelchange .and. ipagechange
-       if (inewpage) then
-          call pgpage
-          !--store ipos and nyplot positions for first on page 
-          !  as starting point for interactive replotting
-          nyplotfirstonpage = nyplot
-          ifirststeponpage = ipos
-       endif
-!       call danpgtile(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
-!                      trim(labelx),trim(labely),trim(title),just,iaxis,0.0,barwidth,0.0,0.0)
+    inewpage = ipanel.eq.1 .and. ipanelchange .and. ipagechange
+    if (inewpage) then
+       call pgpage
+       !--store ipos and nyplot positions for first on page 
+       !  as starting point for interactive replotting
+       nyplotfirstonpage = nyplot
+       ifirststeponpage = ipos
+    endif
 
-       call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
-                     trim(labelx),trim(labely),trim(title),just,iaxis,0.001,barwidth+0.001,0.001,0.001, &
-                      0.0,TitleOffset,isamexaxis,tile_plots)
-!    else
-!       !--work out whether to leave space for colour bar (for each plot)
-!       if (iColourBar) then
-!          barwidth = ColourBarWidth
-!      else
-!          barwidth = 0.
-!       endif
-!        !--change the page if pagechange set
-!       !  or, if turned off, between plots on first page only
-!       inewpage = ipagechange .or. (iplots.le.nacross*ndown .and. ipanelchange)
-!       
-       
-!       call setpage(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
-!         trim(labelx),trim(labely),trim(title), &
-!         just,iaxis,barwidth,TitleOffset,isamexaxis,inewpage)
-!    endif
+    call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
+                  trim(labelx),trim(labely),trim(title),just,iaxis,0.001,barwidth+0.001,0.001,0.001, &
+                  0.0,TitleOffset,isamexaxis,tile_plots)
 
     !--store current page setup for interactive mode on multiplots
     call pgqvp(0,vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
