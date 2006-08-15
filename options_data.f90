@@ -14,8 +14,8 @@ module options_data
 !
 ! !namelist /dataopts/ buffer_data
  !
-! public :: submenu_data,defaults_set_data
-! private
+ public :: submenu_data,defaults_set_data
+ private
 
 contains
 
@@ -33,12 +33,14 @@ subroutine defaults_set_data
   ncalc = 0         ! number of columns to calculate(e.g. radius)
   nextra = 0        ! extra plots aside from particle data
   ncolumns=maxplot-ncalc        ! number of columns in data file
+  ndataplots = ncolumns
   ndim = 0          ! number of coordinate dimensions
   ndimV = ndim      ! default velocity same dim as coords
   istartatstep = 1        ! timestep to start from
   iendatstep = 1000      ! timestep to finish on
   nfreq = 1         ! frequency of timesteps to read
   icoords = 1       ! co-ordinate system of simulation
+  iformat = 0       ! file format
   buffer_data = .false.
   iUseStepList = .false.
   do i=1,size(isteplist)
@@ -49,6 +51,8 @@ subroutine defaults_set_data
   units(:) = 1.0
   unitslabel(:) = ' '
   iRescale = .false.
+  ivegotdata = .false.
+  ntypes = 1
   
   return
 end subroutine defaults_set_data
@@ -61,7 +65,9 @@ subroutine submenu_data
  use filenames, only:nsteps,nstepsinfile,ifileopen
  use prompting
  use getdata, only:get_data
- use settings_data
+ use settings_data, only:istartatstep,iendatstep,nfreq,iUseStepList, &
+     isteplist,buffer_data,iCalcQuantities,iRescale,units,unitslabel, &
+     DataIsBuffered,numplot,ncalc,ncolumns
  use calcquantities, only:calc_quantities
  use limits, only:set_limits
  use labels, only:label
