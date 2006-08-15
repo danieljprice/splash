@@ -834,7 +834,7 @@ contains
    call pgqcs(0,xch,ych)
    call pgsci(0)
    call pgsfs(1)
-   if (iaxisy.le.0) then
+   if (iaxisy.lt.0) then
       call pgsvp(vptxmin,vptxmax,vptymin,vptymax)   
    else
       call pgsvp(vptxmin - 3.*xch,vptxmax,vptymin,vptymax)
@@ -846,10 +846,10 @@ contains
    !--set window and draw axes
    call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
    call pgswin(xminold,xmaxold,ymin,ymax)
-   if (iaxisy.le.0) then
+   if (iaxisy.lt.0) then
       call pgbox('ABCST',0.0,0,'BCST',0.0,0)   
    else
-      call pgbox('ABCST',0.0,0,'BNCST',0.0,0)
+      call pgbox('ABCST',0.0,0,'BVNCST',0.0,0)
    endif
    
    !--plot residuals

@@ -1221,7 +1221,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !
            if (iexact.ne.0) then
               iaxisy = iaxis
-              if (tile_plots .and. icolumn.ne.1) iaxisy = 0
+              if (tile_plots .and. icolumn.ne.1) iaxisy = -1
               call exact_solution(iexact,iplotx,iploty, &
                    itrans(iplotx),itrans(iploty),icoordsnew, &
                    ndim,ndimV,timei,xmin,xmax,gammai, &
@@ -1338,7 +1338,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !
         if (iexact.ne.0) then
            iaxisy = iaxis
-           if (tile_plots .and. icolumn.ne.1) iaxisy = 0
+           if (tile_plots .and. icolumn.ne.1) iaxisy = -1
            call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                 xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
