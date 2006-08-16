@@ -56,7 +56,7 @@ module exact
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
        polyk,sigma0,norder,morder,rhosedov,esedov, &
-       rho_L, rho_R, pr_L, pr_R, v_L, v_R, hfact, &
+       rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion
        
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
@@ -99,7 +99,7 @@ contains
     v_R = 0.0
     iexactplotx = 0
     iexactploty = 0
-    ishk = 0
+    ishk = 1
     hfact = 1.2
     filename_exact = ' '
 !   density profile parameters
