@@ -1449,7 +1449,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
    !--------
    integer function getpanel(vptx,vpty)
     implicit none
-    real :: vptx,vpty,vptxmini,vptymini,vptymaxi
+    real :: vptx,vpty,vptxmini,vptymini
     integer :: i,icol
     
     getpanel = 0
@@ -1463,20 +1463,17 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
        else
           vptxmini = 0.       
        endif
-       if (i.gt.nacross) then
-          ! if not first row, assign panel by being below row above
-          vptymaxi = vptymin(i-nacross)
-       else
-          vptymaxi = 1.
-       endif
        !--if last row then allow ymin to extend to bottom of page
        if (i.gt.(size(vptxmin)-nacross)) then
           vptymini = 0.
+       ! if not last row assign panel by being above row below
+       elseif (i+nacross.le.size(vptxmin)) then
+          vptymini = vptymax(i+nacross)
        else
           vptymini = vptymin(i)
        endif
        if (vptx.gt.vptxmini .and. vptx.lt.(vptxmax(i)+barwmulti(i)) .and. &
-           vpty.gt.vptymini .and. vpty.lt.vptymaxi) then
+           vpty.gt.vptymini .and. vpty.lt.vptymax(i)) then
           if (getpanel.ne.0) print*,'Warning: multiple matching panels found'
           getpanel = i
        endif
