@@ -400,6 +400,10 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
 
   case default
      ierr = 1
+     npts = 0
+     ypts = 0.
+     xpts = 0.
+     return
 
   end select
   !
@@ -432,6 +436,8 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      endif
   case(9)
      ypts(1:npts) = Bxzero
+  case default
+     print*,'error: unknown solution to plot'
   end select
   
   return

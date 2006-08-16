@@ -217,7 +217,8 @@ contains
        call prompt('enter period ',period)
     case(6)
        print "(a)",' MHD shock tube tables: '
-       call prompt('enter solution to plot ',ishk,0,7)
+       if (ishk.le.0) ishk = 1
+       call prompt('enter solution to plot ',ishk,1,7)
     case(7)
        call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
     case(8)
@@ -293,12 +294,13 @@ contains
   !-----------------------------------------------------------------------
   subroutine read_exactparams(iexact,rootname,ierr)
     use settings_data, only:ndim
+    use prompting
     implicit none
     integer, intent(in) :: iexact
     character(len=*), intent(in) :: rootname
     integer, intent(out) :: ierr
     
-    integer :: ios,idash
+    integer :: idash
     character(len=len_trim(rootname)+8) :: filename
 
     idash = index(rootname,'_')
@@ -381,8 +383,15 @@ contains
        !
        !--attempt to guess which MHD shock tube has been done from filename
        !
-       read(rootname(5:5),*,iostat=ios) ishk
-       if (ios.ne.0) ishk = 1
+          !read(rootname(5:5),*,iostat=ios) ishk
+          !if (ios.ne.0) ishk = 1
+       !
+       !--prompt for shock type if not set  
+       !
+       if (ishk.le.0) then ! prompt
+          ishk = 1
+          call prompt('enter shock solution to plot',ishk,1,7)
+       endif
        return
 
     end select
@@ -604,10 +613,6 @@ contains
     case(6) ! mhd shock tubes
        ! this subroutine modifies xexact
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
-          !--prompt for shock type if not set  
-          if (ishk.eq.0) then ! prompt
-             call prompt('enter shock solution to plot',ishk,0,6)
-          endif
           if (iploty.eq.irho) then
              call exact_mhdshock(1,ishk,time,gamma,xmin,xmax, &
                                  xexact,yexact,iexactpts,ierr)
