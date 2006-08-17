@@ -82,6 +82,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   else
      ncolumns = 7  ! number of columns in file  
   endif
+  n1 = 0
+  n2 = 0
   !
   !--allocate memory initially
   !
@@ -368,11 +370,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
   close(15)
 
   !
+  !--reset centre of mass to zero
+  !
+!  if (allocated(dat) .and. n2.eq.0) then
+!     if (minidump) then
+!        call reset_centre_of_mass(dat(1:nprint,1:3,j-1),dat(1:nprint,7,j-1),nprint)
+!     else ! full dumps ipmass = 9
+!        call reset_centre_of_mass(dat(1:nprint,1:3,j-1),dat(1:nprint,9,j-1),nprint)
+!     endif
+!  endif
+  !
   !--transform velocities to corotating frame
   !
   if (.not.minidump .and. allocated(dat)) then
      print*,' transforming velocities to corotating frame'
-     call set_corotating_vels(dat(1:nprint,1:2,j-1),dat(1:nprint,7,j-1),dat(1:nprint,4:5,j-1),n1,n2,nprint)
+     call set_corotating_vels(dat(1:nprint,1:2,j-1),dat(1:nprint,9,j-1),dat(1:nprint,4:5,j-1),n1,n2,nprint)
   endif
 
   if (allocated(npartoftype)) then
@@ -383,6 +395,36 @@ return
 
 contains
 
+!
+!--reset centre of mass to zero
+!
+ subroutine reset_centre_of_mass(xyz,pmass,npart)
+  implicit none
+  integer, intent(in) :: npart
+  real, dimension(npart,3), intent(inout) :: xyz
+  real, dimension(npart) :: pmass
+  real :: masstot,xcm,ycm,zcm
+  
+  !
+  !--get centre of mass
+  !
+  masstot = SUM(pmass(1:npart))
+  xcm = SUM(pmass(1:npart)*xyz(1:npart,1))/masstot
+  ycm = SUM(pmass(1:npart)*xyz(1:npart,2))/masstot
+  zcm = SUM(pmass(1:npart)*xyz(1:npart,3))/masstot
+  
+  print*,' centre of mass is at ',xcm,ycm,zcm
+  print*,' resetting to zero...'
+  xyz(1:npart,1) = xyz(1:npart,1) - xcm
+  xyz(1:npart,2) = xyz(1:npart,2) - ycm
+  xyz(1:npart,3) = xyz(1:npart,3) - zcm
+  
+  return
+ end subroutine reset_centre_of_mass
+
+!
+!--adjust velocities to corotating frame
+!
  subroutine set_corotating_vels(xy,pmass,vxy,n1,n2,npart)
   implicit none
   integer, intent(in) :: n1,n2,npart
