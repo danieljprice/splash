@@ -1209,6 +1209,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
               xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(ypt,ypt2)-xmin(iplotyarr(ipanel)))*drender
               print*,'setting render min = ',xmin(irenderarr(ipanel))
               print*,'setting render max = ',xmax(irenderarr(ipanel))
+              istep = istepnew
               interactivereplot = .true.
               iexit = .true.
            endif
@@ -1291,6 +1292,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
            renderpt = 0.5*(xmin(irenderarr(ipanel)) + xmax(irenderarr(ipanel)))
            xmin(irenderarr(ipanel)) = renderpt - 0.5*renderlength
            xmax(irenderarr(ipanel)) = renderpt + 0.5*renderlength
+           istep = istepnew
            interactivereplot = .true.
            iexit = .true.
         endif
@@ -1303,6 +1305,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         !
         if (xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
            call change_itrans(irenderarr(ipanel),xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)))
+           istep = istepnew
            interactivereplot = .true.
            iexit = .true.
         elseif (xpti.lt.xmin(iplotxarr(ipanel))) then
@@ -1310,6 +1313,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
               print "(a)",'error: cannot log coordinate axes with rendering'
            else
               call change_itrans(iplotyarr(ipanel),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
+              istep = istepnew
               interactivereplot = .true.
               iexit = .true.
            endif
@@ -1318,6 +1322,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
               print "(a)",'error: cannot log coordinate axes with rendering'
            else
               call change_itrans(iplotxarr(ipanel),xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)))
+              istep = istepnew
               interactivereplot = .true.
               iexit = .true.
            endif
@@ -1464,7 +1469,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
           vptxmini = -0.1 ! allow for some error
        endif
        !--if first row extend ymax to top of page
-       if (i.lt.nacross) then
+       if (i.le.nacross) then
           vptymaxi = 1.1
        else
           vptymaxi = vptymax(i)
