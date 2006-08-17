@@ -668,7 +668,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               ymax = yplot(itrackpart) + xmaxoffset_track(iploty)           
            endif
         endif
-
+        
+        !--work out centre of mass/origin
+        if (ipmass.ne.0 .and. ndim.gt.0) then
+           xcoords(:) = 0.
+           do i=1,ndim
+              do j=1,npartoftype(1)
+                 xcoords(i) = xcoords(i) + dat(j,ix(i))*pmass(j)
+              enddo
+              xcoords(i) = xcoords(i)/sum(pmass(1:npartoftype(1)))
+           enddo
+           print*,'centre of mass = ',xcoords(1:ndim)
+        endif
+        
      endif initdataplots
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
