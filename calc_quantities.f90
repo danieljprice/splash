@@ -98,14 +98,14 @@ subroutine calc_quantities(ifromstep,itostep)
   !--specify MHD quantities
   !
   if (iBfirst.ne.0) then
-!     nstartfromcolumn = ncolumns + ncalc
-!     ncalc = ncalc + 1
-!     ipmag = nstartfromcolumn + 1
+     nstartfromcolumn = ncolumns + ncalc
+     ncalc = ncalc + 1
+     ipmag = nstartfromcolumn + 1
      if (ipr.ne.0 .and. ipmag.ne.0) then
         nstartfromcolumn = ncolumns + ncalc
         ncalc = ncalc + 2
         ibeta = nstartfromcolumn + 1
-        itotpr = nstartfromcolumn + 2
+!        itotpr = nstartfromcolumn + 2
      endif
      if (idivB.ne.0 .and. ih.ne.0) then
         nstartfromcolumn = ncolumns + ncalc
@@ -174,7 +174,12 @@ subroutine calc_quantities(ifromstep,itostep)
      ntoti = SUM(npartoftype(:,i))
      !!--pressure if not in data array
      if ((ipr.gt.ncolumns).and.(irho.ne.0).and.(iutherm.ne.0)) then
-        dat(1:ntoti,ipr,i) = dat(1:ntoti,irho,i)*dat(1:ntoti,iutherm,i)*(gamma(i)-1.)
+        if (gamma(i).gt.1.00001) then
+           dat(1:ntoti,ipr,i) = dat(1:ntoti,irho,i)*dat(1:ntoti,iutherm,i)*(gamma(i)-1.)
+        else
+        !--for isothermal it depends what utherm is set to. This is the case in sphNG:
+           dat(1:ntoti,ipr,i) = dat(1:ntoti,irho,i)*dat(1:ntoti,iutherm,i)*2./3.
+        endif
      endif
      !!--entropy
      if (ientrop.ne.0 .and. ipr.ne.0) then
@@ -191,7 +196,11 @@ subroutine calc_quantities(ifromstep,itostep)
                                  dat(j,ivx:ivx+ndimV-1,i))
            if (dat(j,irho,i).gt.tiny(dat)) then
               spsound = gamma(i)*dat(j,ipr,i)/dat(j,irho,i)
-              dat(j,imach,i) = sqrt(veltemp/spsound)
+              if (spsound.gt.tiny(spsound)) then
+                 dat(j,imach,i) = sqrt(veltemp/spsound)
+              else
+                 dat(j,imach,i) = 0.
+              endif
            else
               dat(j,imach,i) = 0.
            endif
@@ -289,7 +298,7 @@ subroutine calc_quantities(ifromstep,itostep)
            do j=1,ntoti
               Bmag = sqrt(dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i), &
                                       dat(j,iBfirst:iBfirst+ndimV-1,i)))
-              if (Bmag.gt.0.) then
+              if (Bmag.gt.tiny(Bmag)) then
                  dat(j,idivBerr,i) = abs(dat(j,idivB,i))*dat(j,ih,i)/Bmag
               else
                  dat(j,idivBerr,i) = 0.
