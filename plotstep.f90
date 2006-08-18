@@ -1675,7 +1675,11 @@ contains
 
     !--store current page setup for interactive mode on multiplots
     call pgqvp(0,vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
-    barwmulti(ipanel) = barwidth
+    if (tile_plots) then
+       barwmulti(ipanel) = 0.
+    else    
+       barwmulti(ipanel) = barwidth
+    endif
     iplotxtemp(ipanel) = iplotx
     iplotytemp(ipanel) = iploty
     irendertemp(ipanel) = irender

@@ -1207,10 +1207,19 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
            print*,'click to set rendering limits'
            call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
            if (char2 == 'A') then
-              drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                        (xmax(iplotyarr(ipanel))-xmin(iplotyarr(ipanel)))
-              xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(ypt,ypt2)-xmin(iplotyarr(ipanel)))*drender
-              xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(ypt,ypt2)-xmin(iplotyarr(ipanel)))*drender
+              if (barwmulti(ipanel).gt.tiny(barwmulti)) then
+                 drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
+                           (xmax(iplotyarr(ipanel))-xmin(iplotyarr(ipanel)))
+                 xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(ypt,ypt2)-xmin(iplotyarr(ipanel)))*drender
+                 xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(ypt,ypt2)-xmin(iplotyarr(ipanel)))*drender
+              else
+                 call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
+              !--for global colour bars (ie. on tiled plots) use viewport co-ordinates to set render limits
+                 drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
+                           (maxval(vptymax) - minval(vptymin))
+                 xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptyi,vpty2i)-minval(vptymin))*drender
+                 xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptyi,vpty2i)-minval(vptymin))*drender              
+              endif
               print*,'setting render min = ',xmin(irenderarr(ipanel))
               print*,'setting render max = ',xmax(irenderarr(ipanel))
               istep = istepnew
@@ -1462,7 +1471,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
    !--------
    integer function getpanel(vptx,vpty)
     implicit none
-    real :: vptx,vpty,vptxmini,vptymini,vptymaxi
+    real :: vptx,vpty,vptxmini,vptxmaxi,vptymini,vptymaxi
     integer :: i,icol
     
     getpanel = 0
@@ -1476,6 +1485,13 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
        else
           vptxmini = -0.1 ! allow for some error
        endif
+       !--if last column extend xmax to right of page
+       if (icol.eq.nacross) then
+          vptxmaxi = 1.1
+       else ! otherwise use max of current panel + space containing the colour bar
+          vptxmaxi = vptxmax(i) + barwmulti(i)
+       endif
+       
        !--if first row extend ymax to top of page
        if (i.le.nacross) then
           vptymaxi = 1.1
@@ -1491,7 +1507,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
        else
           vptymini = vptymin(i)
        endif
-       if (vptx.gt.vptxmini .and. vptx.lt.(vptxmax(i)+barwmulti(i)) .and. &
+       if (vptx.gt.vptxmini .and. vptx.lt.vptxmaxi .and. &
            vpty.gt.vptymini .and. vpty.lt.vptymaxi) then
           if (getpanel.ne.0) print*,'Warning: multiple matching panels found'
           getpanel = i
