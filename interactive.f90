@@ -1104,7 +1104,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
  real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
  real, dimension(:), intent(inout) :: xmin,xmax
  logical, intent(out) :: interactivereplot
- integer :: nc,ierr,ipanel,ipanel2,istepnew,i
+ integer :: nc,ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage
  real :: xpt2,ypt2,xpti,ypti,renderpt
  real :: xlength,ylength,renderlength,drender,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
@@ -1126,8 +1126,12 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
   zoomfac = 1.0
   iexit = .false.
   interactivereplot = .false.
+  istepin = istep
   istepnew = ifirststeponpage - iadvance
+  istepsonpage = abs(istep - ifirststeponpage)/iadvance + 1
+  istepjump = 1
 !  print*,'istep = ',istepnew
+!  print*,'steps on page = ',istepsonpage
   
   interactive_loop: do while (.not.iexit)
      call pgcurs(xpt,ypt,char)
@@ -1370,26 +1374,28 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         print*,'quitting...'
         iexit = .true.
      case('X','b','B') ! right click -> go back
-        iadvance = -abs(iadvance)
+!        iadvance = -abs(iadvance)
+        istep = istepin - (istepjump)*istepsonpage - iadvance*istepsonpage
         iexit = .true.
      case('r','R') ! replot
         interactivereplot = .true.
         istep = istepnew
         iexit = .true.
      case(' ','n','N') ! space
-        iadvance = abs(iadvance)
+        !iadvance = abs(iadvance)
+        istep = istepin + (istepjump-1)*istepsonpage
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
-        read(char,*,iostat=ierr) iadvance
+        read(char,*,iostat=ierr) istepjump
         if (ierr /=0) then
            print*,'*** internal error setting timestep jump' 
-           iadvance = 1
+           istepjump = 1
         endif
-        iadvance = int(zoomfac*iadvance)
-        print*,' setting timestep jump = ',iadvance
+        istepjump = int(zoomfac*istepjump)
+        print*,' setting timestep jump = ',istepjump
      case(')')
-        iadvance = int(zoomfac*10)
-        print*,' setting timestep jump = ',iadvance
+        istepjump = int(zoomfac*10)
+        print*,' setting timestep jump = ',istepjump
      !
      !--multiply everything by a factor of 10     
      !
@@ -1413,16 +1419,18 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
      if (iadvance.ne.-666 .and. iexit) then
         if (istep + iadvance .gt. ilaststep) then
            print "(1x,a)",'reached last timestep'
-           if (ilaststep-istep .gt.0) then
-              iadvance= ilaststep - istep
+           if (istepin.ne.ilaststep) then
+              istep = ilaststep - istepsonpage*iadvance
            else
+              istep = istepin
               iexit = .false.
            endif
         elseif (istep + iadvance .lt. 1) then
            print "(1x,a)",'reached first timestep: can''t go back'
-           if (1-istep .lt.0) then
-              iadvance= 1 - istep
+           if (ifirststeponpage.ne.1) then
+              istep = 1 - iadvance
            else
+              istep = istepin
               iexit = .false.
            endif
         endif
