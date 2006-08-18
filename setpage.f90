@@ -345,18 +345,30 @@ end subroutine redraw_axes
      vptsizeeffy = 1.0 - vmargintop - vmarginbottom
      !     reduce x or y size if just=1 to get right aspect ratio
      if (aspectratio.lt.1.0) then
-        vptsizeeffx = aspectratio*vptsizeeffy
+        if (aspectratio*vptsizeeffy.lt.vptsizeeffx) then
+           vptsizeeffx = aspectratio*vptsizeeffy
+        !  but this could still be bigger than the margins allow...
+        else
+           vptsizeeffy = vptsizeeffx/aspectratio
+        endif
      elseif (aspectratio.gt.1.0) then
-        vptsizeeffy = vptsizeeffx/aspectratio
+        if (vptsizeeffx/aspectratio.lt.vptsizeeffy) then
+           vptsizeeffy = vptsizeeffx/aspectratio     
+        !  but this could still be bigger than the margins allow...
+        else
+           vptsizeeffx = vptsizeeffy*aspectratio
+        endif
      endif
 
      panelsizex = vptsizeeffx/nx
      panelsizey = vptsizeeffy/ny 
-   !      print*,i,ix,iy
-   !      print*,panelsizex,panelsizey,vptsizeeffx,vptsizeeffy
+!         print*,ix,iy,nx,ny
+!         print*,panelsizex,panelsizey,vptsizeeffx,vptsizeeffy
 
+!     print*,'margins = ',vmarginleft,vmarginright
      vptxmin = vmarginleft + (ix-1)*panelsizex
      vptxmax = vptxmin + panelsizex
+         print*,vptxmin,vptxmax
      vptymax = (1.0 - vmargintop) - (iy-1)*panelsizey
      vptymin = vptymax - panelsizey
   else
