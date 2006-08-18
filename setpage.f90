@@ -317,7 +317,7 @@ end subroutine redraw_axes
   vmargintop = vmargintopin
   vmarginright = vmarginrightin
   if (axis.ge.0) then
-     vmarginleft = vmarginleftin + (ylabeloffset+1.5)*xch
+     vmarginleft = vmarginleftin + (ylabeloffset+1.0)*xch
      vmarginbottom = vmarginbottomin + (xlabeloffset+1.0)*ych
 
      if (.not.tile) then
