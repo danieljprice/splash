@@ -89,7 +89,7 @@ subroutine submenu_page
  select case(iaction)
 !------------------------------------------------------------------------
   case(1)
-     call prompt('Enter number of timesteps per panel',nstepsperpage,1)
+     call prompt('Enter number of timesteps per panel ',nstepsperpage,0)
      print*,'Plotting up to ',nstepsperpage,' timesteps per panel'
      if (nstepsperpage.gt.1) then
         if (iadapt .or. iadaptcoords) then
@@ -98,7 +98,7 @@ subroutine submenu_page
            iadaptcoords = .false.
         endif
         if (nstepsperpage.gt.14) then
-           print "(a)",'(and that steps per panel > number of colours, ie. colours will repeat)'
+           print "(a)",'(warning: steps per panel > number of colours, ie. colours will repeat)'
         endif
         call prompt('Use different colours for each step?',iColourEachStep)
 !!        if (.not.iColourEachStep) icolourthisstep = 1
