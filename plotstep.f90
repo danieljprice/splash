@@ -761,6 +761,16 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            if (ipagechange .and. .not.interactivereplot) then
               call adapt_limits(iplotx,xplot,xmin,xmax,'x')
               call adapt_limits(iploty,yplot,ymin,ymax,'y')
+           endif        !!-reset co-ordinate plot limits if particle tracking           
+           if (itrackpart.gt.0 .and. .not.interactivereplot) then
+              if (iplotx.le.ndim) then
+                 xmin = xplot(itrackpart) - xminoffset_track(iplotx)
+                 xmax = xplot(itrackpart) + xmaxoffset_track(iplotx)
+              endif
+              if (iploty.le.ndim) then
+                 ymin = yplot(itrackpart) - xminoffset_track(iploty)
+                 ymax = yplot(itrackpart) + xmaxoffset_track(iploty)           
+              endif
            endif
         endif 
 
@@ -1611,6 +1621,7 @@ contains
   subroutine page_setup
     use pagesetup, only:setpage2
     use settings_render, only:ColourBarWidth,ColourBarDisp
+    use settings_page, only:nstepsperpage
     implicit none
     real :: barwidth, TitleOffset,xch,ych
     logical :: ipanelchange
@@ -1621,6 +1632,7 @@ contains
     iplots = iplots + 1
     
     ipanelchange = .true.
+    if (nstepsperpage.eq.0 .and. iplots.gt.1) ipanelchange = .false. ! this is an option to never change panels
     if (iplots.gt.1 .and. nyplots.eq.1 .and. nacross*ndown.gt.1.and..not.ipagechange) ipanelchange = .false.
     if (ipanelchange) ipanel = ipanel + 1
     if (ipanel.gt.nacross*ndown) ipanel = 1
@@ -1669,10 +1681,11 @@ contains
        ifirststeponpage = ipos
     endif
 
-    call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
+    if (nstepsperpage.ne.0 .or. inewpage) then
+       call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
                   trim(labelx),trim(labely),trim(title),just,iaxis,0.001,barwidth+0.001,0.001,0.001, &
                   0.0,TitleOffset,isamexaxis,tile_plots)
-
+    endif
     !--store current page setup for interactive mode on multiplots
     call pgqvp(0,vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
     if (tile_plots) then
