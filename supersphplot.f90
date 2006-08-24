@@ -23,6 +23,8 @@ program supersphplot
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.6.1   (24/8/06)
+!           : bug fixes to 1.6.0, further improvements to interactive mode on multiplots.
 !     1.6.0   (10/8/06)
 !           : Interactive mode on multiple plots per page; highly optimised interpolation
 !             + parallel version; new Makefile; various bug fixes
@@ -234,7 +236,7 @@ subroutine print_header
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/, &
    '   \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ ',/)      
 
- print "(a)",' ( version 1.6 [10th Aug ''06] Copyright (C) 2005-2006)'
+ print "(a)",' ( version 1.6.1 [24th Aug ''06] Copyright (C) 2005-2006)'
  print 30 
 30 format(/,    &
    ' * SUPERSPHPLOT comes with ABSOLUTELY NO WARRANTY.',/, &
