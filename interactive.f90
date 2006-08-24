@@ -287,6 +287,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            call save_limits(iplotx,xmin,xmax)
            call save_limits(iploty,ymin,ymax)
         else
+           print*,'tracking particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
            call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
            call save_limits_track(iploty,ymin,ymax,ycoords(itrackpart))
         endif
