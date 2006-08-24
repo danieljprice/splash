@@ -249,22 +249,6 @@ RSPH: rsph
 rsph: checksystem $(OBJECTS) read_data_rsph.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o rsupersphplot $(OBJECTS) read_data_rsph.o
 
-
-## some dependencies as I get around to it
-defaults.o: ./titles.mod ./particle_data.mod ./settings_powerspec.mod \
-            ./settings_xsecrot.mod ./settings_vecplot.mod ./settings_render.mod \
-            ./settings_page.mod ./settings_part.mod ./settings_data.mod \
-            ./options_data.mod ./settings_limits.mod ./multiplot.mod \
-            ./limits.mod ./labels.mod ./filenames.mod ./exact.mod defaults.f90
-
-exact.o: ./transforms.mod ./densityprofiles.mod ./wave.mod ./toystar2d.mod \
-         ./toystar1d.mod ./shock.mod ./sedov.mod ./rhoh.mod ./polytrope.mod \
-         ./mhdshock.mod ./exactfromfile.mod ./labels.mod ./filenames.mod \
-         ./prompting.mod ./settings_data.mod exact.f90
-         
-options_render.o: colours.mod
-interactive.o: colours.mod
-
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
 	@echo ""
