@@ -35,7 +35,7 @@ module exact
   integer :: ishk
   !--density profiles
   integer :: iprofile,icolpoten,icolfgrav
-  real :: Msphere,rsoft
+  real, dimension(2) :: Msphere,rsoft
   !--from file
   integer :: iexactplotx, iexactploty
   !--shock tube
@@ -104,8 +104,10 @@ contains
     filename_exact = ' '
 !   density profile parameters
     iprofile = 1
-    rsoft = 1.0
-    Msphere = 1.0
+    rsoft(1) = 1.0
+    rsoft(2) = 0.1
+    Msphere(1) = 1.0
+    Msphere(2) = 0.0
     icolpoten = 0
     icolfgrav = 0
 !   equilibrium torus
@@ -226,8 +228,8 @@ contains
 20     format(' 1) Plummer sphere  [ rho = 3M r_s**2 /(4 pi (r**2 + r_s**2)**5/2) ]',/, &
               ' 2) Hernquist model [ rho =     M r_s /(2 pi r (r_s + r)**3        ]')
        call prompt('enter density profile to plot',iprofile,1,2)
-       call prompt('enter total mass of sphere M',Msphere,0.)
-       call prompt('enter softening length length r_s,',rsoft,0.)
+       call prompt('enter total mass of sphere M',Msphere(1),0.)
+       call prompt('enter scale length length r_s,',rsoft(1),0.)
        ians = .false.
        if (icolpoten.gt.0) ians = .true.
        call prompt('Are the gravitational potential and/or force dumped?',ians)
@@ -235,6 +237,8 @@ contains
           call prompt('enter column containing grav. potential',icolpoten,0)
           call prompt('enter column containing grav. force',icolfgrav,0)
        endif
+       call prompt('enter mass of 2nd component',Msphere(2),0.)
+       call prompt('enter scale length r_s for 2nd component,',rsoft(2),0.)
     case(9)
        call prompt('enter mass of central object',Mstar,0.)
        call prompt('enter radius of torus centre',Rtorus,0.)
