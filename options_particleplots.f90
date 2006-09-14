@@ -61,23 +61,47 @@ subroutine submenu_particleplots
   integer :: i,iaction,n,itype,icoordsprev
 
   iaction = 0
-  print 10, iplotline,ilabelpart,ncircpart, &
-        iplotpartoftype,imarktype,icoordsnew,iexact
-10  format(' 0) exit ',/,                 &
-         ' 1) plot line joining particles        ( ',L1,' ) ',/, &
-         ' 2) label particles                    ( ',L1,' ) ',/,           &
-         ' 3) plot circles of interaction        ( ',i3,' ) ',/,           &
-         ' 4) turn on/off particles by type      ( ',6(L1,',',1x),' )',/,  &
-         ' 5) change graph markers for each type ( ',6(i2,',',1x),' )',/,  &
-         ' 6) change coordinate systems          ( ',i2,' ) ',/,           &
+  print 10,iplotpartoftype,imarktype,iplotline,ilabelpart,ncircpart, &
+           icoordsnew,iexact
+10  format('------------- particle plot options -------------------',/,&
+         ' 0) exit ',/,                 &
+         ' 1) turn on/off particles by type      ( ',6(L1,',',1x),' )',/,  &
+         ' 2) change graph markers for each type ( ',6(i2,',',1x),' )',/,  &
+         ' 3) plot line joining particles        ( ',L1,' ) ',/, &
+         ' 4) label particles                    ( ',L1,' ) ',/, &
+         ' 5) plot smoothing circles             ( ',i3,' ) ',/, &
+         ' 6) change coordinate systems          ( ',i2,' ) ',/, &
          ' 7) plot exact solution                ( ',i2,' ) ',/, &
          ' 8) exact solution options')
     call prompt('enter option',iaction,0,8)
 !
   select case(iaction)
-
 !------------------------------------------------------------------------
   case(1)
+     !          plot particles by type?
+     do itype=1,ntypes
+        call prompt('Plot '//trim(labeltype(itype))//' particles?',iplotpartoftype(itype))
+        if (iplotpartoftype(itype) .and. itype.gt.1) then
+           if (.not.UseTypeInRenderings(itype)) then
+              call prompt('Plot on top of rendered plots?',PlotOnRenderings(itype))
+           else
+              PlotonRenderings(itype) = .false.
+           endif
+        elseif (.not.iplotpartoftype(itype)) then
+           PlotonRenderings(itype) = .false.
+        endif
+     enddo
+     return           
+!------------------------------------------------------------------------
+  case(2)
+     print*,'(0 Square) (1 .) (2 +) (3 *) (4 o) (5 x) (17 bold circle) (-8 bigger bold circle)'
+     do itype=1,ntypes
+        call prompt(' Enter PGPLOT marker for '//trim(labeltype(itype)) &
+             //' particles:',imarktype(itype),-8,31)
+     enddo
+     return   
+!------------------------------------------------------------------------
+  case(3)
      call prompt('plot line joining particles?',iplotline)
      if (iplotline) then     
         call prompt('Enter PGPLOT line style to use ',linestyle,0,5)
@@ -85,13 +109,13 @@ subroutine submenu_particleplots
      endif
      return 
 !-----------------------------------------------------------------------
-  case(2)
+  case(4)
      !          label particles with particle numbers
      ilabelpart=.not.ilabelpart
      print*,' label particles = ',ilabelpart
      return           
 !------------------------------------------------------------------------
-  case(3)
+  case(5)
      print*,'Note that circles of interaction can also be set interactively'
      call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))
      if (ncircpart.gt.0) then
@@ -108,30 +132,6 @@ subroutine submenu_particleplots
         enddo
      endif
      return           
-!------------------------------------------------------------------------
-  case(4)
-     !          plot particles by type?
-     do itype=1,ntypes
-        call prompt('Plot '//trim(labeltype(itype))//' particles?',iplotpartoftype(itype))
-        if (iplotpartoftype(itype) .and. itype.gt.1) then
-           if (.not.UseTypeInRenderings(itype)) then
-              call prompt('Plot on top of rendered plots?',PlotOnRenderings(itype))
-           else
-              PlotonRenderings(itype) = .false.
-           endif
-        elseif (.not.iplotpartoftype(itype)) then
-           PlotonRenderings(itype) = .false.
-        endif
-     enddo
-     return           
-!------------------------------------------------------------------------
-  case(5)
-     print*,'(0 Square) (1 .) (2 +) (3 *) (4 o) (5 x) (17 bold circle) (-8 bigger bold circle)'
-     do itype=1,ntypes
-        call prompt(' Enter PGPLOT marker for '//trim(labeltype(itype)) &
-             //' particles:',imarktype(itype),-8,31)
-     enddo
-     return   
 !------------------------------------------------------------------------
   case(6)
      print 20,icoords
