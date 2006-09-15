@@ -401,7 +401,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   real :: angleradx, anglerady, angleradz
   real :: rendermintemp,rendermaxtemp
   real :: xsecmin,xsecmax,dummy
-  real :: pixwidth,dxfreq
+  real :: pixwidth,dxfreq,dunitspmass,dunitsrho,dunitsh
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
@@ -453,9 +453,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         else
            !  make sure this is done in code units (ie. a consistent set)
            if (iRescale) then
+              dunitspmass = 1./units(ipmass)
+              dunitsrho = 1./units(irho)
+              dunitsh = 1./units(ih)
               where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
-                 weight(i1:i2) = (dat(i1:i2,ipmass)/units(ipmass))/ &
-                                  (dat(i1:i2,irho)/units(irho)*(dat(i1:i2,ih)/units(ih))**ndim)
+                 weight(i1:i2) = (dat(i1:i2,ipmass)*dunitspmass)/ &
+                                  ((dat(i1:i2,irho)*dunitsrho)*(dat(i1:i2,ih)*dunitsh)**ndim)
               elsewhere
                  weight(i1:i2) = 0.
               endwhere
