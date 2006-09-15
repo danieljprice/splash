@@ -1268,17 +1268,22 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         ylength = xmax(iplotyarr(ipanel)) - xmin(iplotyarr(ipanel))
         if (irenderarr(ipanel).gt.0) then
            renderlength = xmax(irenderarr(ipanel)) - xmin(irenderarr(ipanel))
+        else
+           renderlength = 0.
         endif
         select case(char)
         case('-')
            xlength = 1.1*zoomfac*xlength
            ylength = 1.1*zoomfac*ylength
+           renderlength = 1.1*zoomfac*renderlength
         case('_')
            xlength = 1.2*zoomfac*xlength
            ylength = 1.2*zoomfac*ylength
+           renderlength = 1.2*zoomfac*renderlength
         case('+')
            xlength = 0.9/zoomfac*xlength
            ylength = 0.9/zoomfac*ylength
+           renderlength = 0.9/zoomfac*renderlength
         case('o') !--reset cursor to origin
            xpt = 0.
            ypt = 0.
@@ -1302,6 +1307,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         if (xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
            !--rendering zoom does not allow pan - renderpt is always centre of axis
            renderpt = 0.5*(xmin(irenderarr(ipanel)) + xmax(irenderarr(ipanel)))
+           print*,'zooming on colour bar'
            xmin(irenderarr(ipanel)) = renderpt - 0.5*renderlength
            xmax(irenderarr(ipanel)) = renderpt + 0.5*renderlength
            istep = istepnew
