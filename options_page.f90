@@ -53,7 +53,7 @@ subroutine defaults_set_page
   colour_fore = ' '
   colour_back = ' '
   charheight = 1.0    ! PGPLOT character height
-  linewidth = 2       ! PGPLOT line width
+  linewidth = 1       ! PGPLOT line width
 
   return
 end subroutine defaults_set_page
