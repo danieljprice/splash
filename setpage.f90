@@ -368,7 +368,6 @@ end subroutine redraw_axes
 !     print*,'margins = ',vmarginleft,vmarginright
      vptxmin = vmarginleft + (ix-1)*panelsizex
      vptxmax = vptxmin + panelsizex
-         print*,vptxmin,vptxmax
      vptymax = (1.0 - vmargintop) - (iy-1)*panelsizey
      vptymin = vptymax - panelsizey
   else
