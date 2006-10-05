@@ -6,11 +6,11 @@ module settings_vecplot
  implicit none
  integer :: npixvec
  logical :: UseBackgndColorVecplot, iplotpartvec
- logical :: iVecplotLegend
+ logical :: iVecplotLegend,iplotstreamlines
  real :: hposlegendvec,vposlegendvec
 
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot,iplotpartvec,&
-          iVecplotLegend,hposlegendvec,vposlegendvec
+          iVecplotLegend,hposlegendvec,vposlegendvec,iplotstreamlines
 
 contains
 
@@ -26,6 +26,7 @@ subroutine defaults_set_vecplot
   iVecplotLegend = .true.
   hposlegendvec = 0.02
   vposlegendvec = -1.5
+  iplotstreamlines = .false. ! plot stream lines instead of arrows
 
   return
 end subroutine defaults_set_vecplot
@@ -39,12 +40,14 @@ subroutine submenu_vecplot
  integer :: ians
   
  ians = 0
- print 10,npixvec,UseBackgndColorVecplot,iVecplotLegend
-10  format(' 0) exit ',/, &
+ print 10,npixvec,UseBackgndColorVecplot,iVecplotLegend,iplotstreamlines
+10  format('--------------- vector plot options -------------------',/,&
+           ' 0) exit ',/, &
            ' 1) change number of pixels                   (',i4,' )',/, &
            ' 2) use background/foreground colour          (',L1,' )',/, &
-           ' 3) vector plot legend settings               (',L1,' )')
- call prompt('enter option',ians,0,3)
+           ' 3) vector plot legend settings               (',L1,' )',/, &
+           ' 4) plot stream/field lines instead of arrows (',L1,' )')
+ call prompt('enter option',ians,0,4)
 !
 !--options
 !
@@ -66,6 +69,12 @@ subroutine submenu_vecplot
        call prompt('Enter vertical position in character heights from top', &
                     vposlegendvec)
     endif
+!------------------------------------------------------------------------
+ case(4)
+    iplotstreamlines = .not.iplotstreamlines
+    print "(2(a,/))",' Note: the number of stream lines plotted is determined by', &
+                     ' the "change number of contours" option in the r)ender menu'
+    call prompt('use stream lines instead of arrows? ',iplotstreamlines)
  end select
 
  return

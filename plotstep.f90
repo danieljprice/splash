@@ -1815,17 +1815,17 @@ contains
 ! so that pixel arrays are allocated appropriately
 !-------------------------------------------------------------------
   subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidth,vmax,label)
-   use settings_vecplot, only:UseBackgndColorVecplot
+   use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines
    use interpolations2D, only:interpolate2D_vec
    use projections3D, only:interpolate3D_proj_vec
    use render, only:render_vec
-!   use fieldlines
+   use fieldlines, only:streamlines
    implicit none
    integer, intent(in) :: ivecx,ivecy,numpixx,numpixy
    real, intent(in) :: pixwidth
    real, intent(inout) :: vmax
    character(len=*), intent(in) :: label
-   real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
+   real, dimension(numpixx,numpixy) :: vecpixx, vecpixy, datpix
 
    !print*,'plotting vector field ',trim(label)
    if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
@@ -1879,9 +1879,19 @@ contains
       !
       !--plot it
       !
-      call render_vec(vecpixx,vecpixy,vmax, &
-           numpixx,numpixy,xmin,ymin,pixwidth,trim(label),' ')
-
+      if (iplotstreamlines) then
+         !print*,'rendering streamlines of vector field...'
+         call streamlines(vecpixx,vecpixy,datpix,numpixx,numpixy,xmin,ymin,pixwidth)
+         !  print*,'min,max = ', minval(datpix),maxval(datpix)
+         call render_pix(datpix,minval(datpix),maxval(datpix),'crap', &
+                   numpixx,numpixy,xmin,ymin,pixwidth,    &
+                   0,.true.,.false.,ncontours,.false.)
+         !call render_vec(vecpixx,vecpixy,vmax, &
+         !     numpixx,numpixy,xmin,ymin,pixwidth,trim(label),' ')
+      else
+         call render_vec(vecpixx,vecpixy,vmax, &
+              numpixx,numpixy,xmin,ymin,pixwidth,trim(label),' ')
+      endif
       if (UseBackgndColorVecplot) call pgsci(1)
 
    endif

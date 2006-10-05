@@ -1,11 +1,103 @@
 !
 ! module for field line / flux tube plotting in 2 and 3 dimensions
-! THIS IS *VERY* EXPERIMENTAL AND UNDOCUMENTED
 !
 module fieldlines
  implicit none
+ public :: streamlines
  private :: trace2D,interpolate_pt
+
+ private
+ 
 contains
+
+!---------------------------------------------------------------------------
+!
+! This subroutine integrates a 2D vector field to give the stream function
+! Plotting the contours of this function gives the field/stream lines
+!
+! The solution is given by
+!
+!  A(x,y) = \int v_x dy - \int v_y dx
+!
+! which we compute, knowing v_x and v_y on a fixed grid of square pixels,
+! by a simple trapezoidal integration for each component.
+!
+! For SPH, this means we first interpolate the vector field to
+! get v_x and v_y on the two-dimensional grid. This then also works for
+! cross sections / projections of 3D vector fields by first interpolating
+! to the 2D grid.
+!
+!
+! Inputs: vecpixx(npixx,npixy) : x component of vector field on fixed grid
+!         vecpixy(npixx,npixy) : y component of vector field on fixed grid
+!         xmin, ymin           : xmin and ymin of grid
+!         pixwidth             : grid cell size (pixels are square)
+!         npixx,npixy          : number of grid cells (pixels) in x,y
+!
+! Output: datpix(npixx,npixy) : stream function on fixed grid
+!
+! written by Daniel Price dprice@astro.ex.ac.uk
+!
+! Last modified: 5th Oct. 2006
+!
+!---------------------------------------------------------------------------
+subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,xmin,ymin,pixwidth)
+ implicit none
+ real, intent(in), dimension(npixx,npixy) :: vecpixx,vecpixy
+ real, intent(in) :: xmin,ymin,pixwidth
+ real, intent(out), dimension(npixx,npixy) :: datpix
+ integer, intent(in) :: npixx,npixy
+ real :: weighty,weightx,termx,termy,fyi
+ real, dimension(npixx) :: fx
+ integer :: i,j
+ !
+ !--check for errors in input
+ !
+ if (pixwidth.le.0.) then
+    print "(1x,a)",'streamlines: error: pixel width <= 0'
+    datpix = 0.
+    return
+ endif
+ !
+ !--initialise quantities
+ !
+ do i=1,npixx
+    fx(i) = 0.
+ enddo
+ !
+ !--perform the integration
+ !
+ do j=1,npixy
+    fyi = 0.
+    do i=1,npixx
+       termx = vecpixx(i,j)*pixwidth
+       termy = -vecpixy(i,j)*pixwidth
+       if (i.eq.1) then ! trapezoidal rule
+          fyi = fyi + 0.5*termy
+          weighty = -0.5
+       else
+          weighty = 0.5
+          fyi = fyi + termy
+       endif
+       if (j.eq.1 .or. j.eq.npixy) then ! trapezoidal rule
+          fx(i) = fx(i) + 0.5*termx
+          weightx = -0.5
+       else
+          fx(i) = fx(i) + termx
+          weightx = 0.5
+       endif
+       datpix(i,j) = fx(i) + fyi - weighty*termy - weightx*termx
+    enddo
+ enddo
+ 
+ return
+end subroutine streamlines
+
+!---------------------------------------------------------------------------------
+!
+! THE REST OF THIS MODULE IS EITHER OLD, *VERY* EXPERIMENTAL AND/OR UNDOCUMENTED
+!
+!---------------------------------------------------------------------------------
 
 !
 ! we want to trace the curve through a 2D vector field
