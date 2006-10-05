@@ -72,16 +72,16 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,xmin,ymin,pixwidth)
     do i=1,npixx
        termx = vecpixx(i,j)*pixwidth
        termy = -vecpixy(i,j)*pixwidth
-       if (i.eq.1) then ! trapezoidal rule
+       if (i.eq.1 .or. i.eq.npixx) then ! trapezoidal rule
           fyi = fyi + 0.5*termy
-          weighty = -0.5
+          weighty = 0.
        else
           weighty = 0.5
           fyi = fyi + termy
        endif
        if (j.eq.1 .or. j.eq.npixy) then ! trapezoidal rule
           fx(i) = fx(i) + 0.5*termx
-          weightx = -0.5
+          weightx = 0.
        else
           fx(i) = fx(i) + termx
           weightx = 0.5
