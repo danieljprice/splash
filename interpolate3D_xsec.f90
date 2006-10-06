@@ -232,10 +232,10 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
         !
         !--for each particle work out which pixels it contributes to
         !               
-        ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-        jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-        ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
-        jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
+        ipixmin = int((xi - radkern - xmin)/pixwidth)
+        jpixmin = int((yi - radkern - ymin)/pixwidth)
+        ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
+        jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
 
         if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
         if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
@@ -245,7 +245,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
         !--precalculate an array of dx2 for this particle (optimisation)
         !
         do ipix=ipixmin,ipixmax
-           dx2i(ipix) = ((xmin + (ipix-0.5)*pixwidth - xi)**2)*hi21
+           dx2i(ipix) = ((xmin + (ipix-0.5)*pixwidth - xi)**2)*hi21 + dz2
         enddo
         !
         !--loop over pixels, adding the contribution from this particle
@@ -255,7 +255,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
            dy = ypix - yi
            dy2 = dy*dy*hi21
            do ipix = ipixmin,ipixmax
-              qq2 = dx2i(ipix) + dy2 + dz2
+              qq2 = dx2i(ipix) + dy2
               qq = sqrt(qq2)
               !
               !--SPH kernel - standard cubic spline
