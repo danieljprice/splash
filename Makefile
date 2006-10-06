@@ -59,12 +59,27 @@ endif
 ifeq ($(SYSTEM),g95)
 #  using the g95 compiler
    F90C= g95
-   F90FLAGS= -O3 -ffast-math -fbounds-check
+   F90FLAGS= -O3 -ffast-math
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
    PARALLEL= no
    KNOWN_SYSTEM=yes
+endif
+
+ifeq ($(SYSTEM), gfortran_macosx)
+#   gfortran with pgplot installed via fink
+    F90C= gfortran
+    F90FLAGS= -O3 -Wall
+    PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
+          -laquaterm # -lSystemStubs use this on OS/X Tiger
+    SYSTEMFILE= system_unix.f90
+    DBLFLAG= -fdefault-real-8
+    DEBUGFLAG= -g -frange-check
+    OMPFLAG= -fopenmp
+    KNOWN_SYSTEM=yes
+    ENDIANFLAGBIG= -fconvert=big-endian
+    ENDIANFLAGLITTLE= -fconvert=little-endian
 endif
 
 ifeq ($(SYSTEM),myg95)
@@ -295,6 +310,8 @@ tests: interpolate3D_projection.o interpolate3D_xsec.o ./tests/test_interpolate3
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o test_interpolation3D ./tests/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
 test2: transform.o ./tests/test_transform.o 
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o test_transform ./tests/test_transform.o transform.o
+test3: fieldlines.o ./tests/test_fieldlines.o 
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o test_fieldlines ./tests/test_fieldlines.o fieldlines.o
 
 clean:
 	rm *.o *.mod
