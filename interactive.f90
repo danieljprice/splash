@@ -1206,21 +1206,20 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
            print*,'click to set rendering limits'
            call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
            if (char2 == 'A') then
+              call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
               if (barwmulti(ipanel).gt.tiny(barwmulti)) then
                  drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                           (xmax(iplotyarr(ipanel))-xmin(iplotyarr(ipanel)))
-                 xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(ypt,ypt2)-xmin(iplotyarr(ipanel)))*drender
-                 xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(ypt,ypt2)-xmin(iplotyarr(ipanel)))*drender
+                           (vptymax(ipanel) -vptymin(ipanel))
+                 xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptyi,vpty2i)-vptymin(ipanel))*drender
+                 xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptyi,vpty2i)-vptymin(ipanel))*drender
               else
-                 call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
               !--for global colour bars (ie. on tiled plots) use viewport co-ordinates to set render limits
                  drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
                            (maxval(vptymax) - minval(vptymin))
                  xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptyi,vpty2i)-minval(vptymin))*drender
                  xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptyi,vpty2i)-minval(vptymin))*drender              
               endif
-              print*,'setting render min = ',xmin(irenderarr(ipanel))
-              print*,'setting render max = ',xmax(irenderarr(ipanel))
+              print*,'setting render min, max = ',xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel))
               istep = istepnew
               interactivereplot = .true.
               iexit = .true.
