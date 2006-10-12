@@ -31,7 +31,7 @@ STATICLIBS=
 #
 # set the parallel flag to yes to compile with openMP directives
 #
-PARALLEL= no
+#PARALLEL=no
 #
 # the openMP flags should be set in the lines defining your system type
 # (ie. leave line below blank)
@@ -138,7 +138,7 @@ endif
 ifeq ($(SYSTEM),ukaff1a)
 #  this is for ukaff1a
    F90C= xlf90_r
-   F90FLAGS= -O4 -qnoescape -qsuffix=f=f90 -qextname
+   F90FLAGS= -O3 -qnoescape -qsuffix=f=f90 -qextname
    OMPFLAGS= -qsmp=noauto
    SYSTEMFILE= system_f2003.f90
    PGPLOTLIBS= -L/home/dprice/pgplot -lpgplot  
@@ -263,6 +263,8 @@ RSPH: rsph
 
 rsph: checksystem $(OBJECTS) read_data_rsph.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o rsupersphplot $(OBJECTS) read_data_rsph.o
+
+all: ndspmhd dansph sphNG srosph gadget mbatesph ascii
 
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
