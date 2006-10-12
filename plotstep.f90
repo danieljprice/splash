@@ -346,7 +346,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                      unitslabel,iendatstep,ntypes,UseTypeInRenderings
   use settings_limits, only:itrackpart,iadapt,iadaptcoords,scalemax,xminoffset_track,xmaxoffset_track
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
-                     iplotline,linecolourthisstep,linestylethisstep
+                     iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend,iPlotStepLegend, &
                      charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage, &
                      hposlegend,vposlegend,fjustlegend,legendtext
@@ -423,6 +423,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   hh = 0.
   pmass = 0.
   labeltimeunits = ' '
+  k = nxsec ! matters for lastplot in page_setup for non-coord plots
   if (iReScale) labeltimeunits = unitslabel(0)
     
   !--set the arrays needed for rendering if they are present
@@ -1003,6 +1004,97 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               endif
 
            endif ! 2 or 3D and rendering
+           
+           !------------------------------------------------------------------
+           !   apply transformations to, and find limits for the 2D 
+           !   pixel array datpix resulting from the interpolation operations
+           !   do this *before* the page setup so that rendermin,max
+           !   can be stored in page_setup for interactive plots
+           !------------------------------------------------------------------
+           if (irenderplot.gt.0) then
+              if (ndim.eq.3 .or. (ndim.eq.2 .and..not.x_sec)) then
+                 write(string,"(i8)") itrans(irenderplot) ! used to determine whether logged or not
+                 logged = (index(string,'1').ne.0)
+                 !!--do transformations on rendered array (but only the first time!)
+                 if (.not.interactivereplot .or. irerender) then
+                    if (logged) then
+                       !!--if log, then set zero values to some large negative number
+                       !   but exclude this value from adaptive limits determination
+                       call transform2(datpix,itrans(irenderplot),errval=-666.)
+                    else
+                       call transform2(datpix,itrans(irenderplot))                    
+                    endif
+                 endif
+
+                 !!--set label for rendered quantity
+                 labelrender = label(irenderplot)
+                 !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
+                 if (ndim.eq.3 .and..not. x_sec .and..not.(use3Dperspective.and.use3Dopacityrendering)) then
+                    labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
+                    if (irenderplot.eq.irho) labelrender = 'column density'
+                 endif
+                 !!--apply transformations to the label for the rendered quantity 
+                 labelrender = transform_label(labelrender,itrans(irenderplot))
+
+                 !!--limits for rendered quantity
+                 if (.not.interactivereplot .or. .not.iChangeRenderLimits) then
+                    if (iadapt .and. .not.(use3Dperspective.and.use3Dopacityrendering.and.ndim.eq.3)) then
+                       !!--if adaptive limits, find limits of rendered array
+                       if (logged) then
+   !                          rendermin = minval(datpix,mask=datpix.ne.-666.) ! see above
+                          rendermin = minval(datpix,mask=abs(datpix+666.).gt.tiny(datpix)) ! see above
+                       else
+                          rendermin = minval(datpix)
+                       endif
+                       rendermax = maxval(datpix)
+                       print*,'adapting render limits'
+                    elseif (.not.iadapt) then
+                       !!--or apply transformations to fixed limits
+                       rendermin = lim(irenderplot,1)
+                       rendermax = lim(irenderplot,2)
+                       call transform_limits(rendermin,rendermax,itrans(irenderplot))
+                    endif
+                 endif
+
+                 !!  do not let max=0 on log plots as this is suspiciously wrong
+                 if (logged) then
+                    if (iadapt .and. abs(rendermax).lt.tiny(datpix)) then
+                       !!print*,'max=0 on log plot, fixing'
+                       rendermax = maxval(datpix)
+                    endif
+                 endif
+              endif
+           
+           !-------------------------------------------------------------------------
+           !   similar but where particle colouring is used instead of interpolation
+           !-------------------------------------------------------------------------
+           elseif (irenderpart.gt.0 .and. iplotpart) then
+              !--apply transformations to render array and set label
+              renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
+              call transform(renderplot(1:ntoti),itrans(irenderpart))
+              labelrender = label(irenderpart)
+              labelrender = transform_label(labelrender,itrans(irenderpart))
+
+              !!--limits for rendered quantity
+              if (.not.interactivereplot .or. .not.iChangeRenderLimits) then
+                 if (iadapt) then
+                    !!--if adaptive limits, find limits of rendered array
+                    rendermin = minval(renderplot(1:ntoti))
+                    rendermax = maxval(renderplot(1:ntoti))
+                    print*,'adapting render limits'
+                 else
+                    !!--or apply transformations to fixed limits
+                    rendermin = lim(irenderpart,1)
+                    rendermax = lim(irenderpart,2)
+                    call transform_limits(rendermin,rendermax,itrans(irenderpart))
+                 endif
+              endif
+              !
+              !--actually colour the particles
+              !
+              call colour_particles(renderplot(1:ntoti), &
+                   rendermin,rendermax,icolourme(1:ntoti),ntoti)
+           endif
            !-----end of preliminary muff for 2D/3D cross sections/renderings ------------------
 
            !---------------------------------
@@ -1026,10 +1118,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
                        .and. nyplot.eq.nyplots .and. k.eq.nxsec)
 
-           !--only plot colour bar at the end of first row on tiled plots
-           if (tile_plots .and..not.(ipanel.eq.nacross*ndown .or. lastplot)) iColourBar = .false.
-
-
            !--add to log
            if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),xsecmin,label(iplotz),xsecmax
 35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
@@ -1039,88 +1127,17 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !------------------------------
            if (irenderplot.gt.ndim) then
               if ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) then
-                 !---------------------------------------------------------------
-                 ! scalar quantity which has been rendered to a 2D pixel array (datpix)
-                 !---------------------------------------------------------------
-                 write(string,"(i8)") itrans(irenderplot) ! used to determine whether logged or not
-                 logged = (index(string,'1').ne.0)
-                 !!--do transformations on rendered array (but only the first time!)
-                 if (.not.interactivereplot .or. irerender) then
-                    if (logged) then
-                       !!--if log, then set zero values to some large negative number
-                       !   but exclude this value from adaptive limits determination
-                       call transform2(datpix,itrans(irenderplot),errval=-666.)
-                    else
-                       call transform2(datpix,itrans(irenderplot))                    
-                    endif
-                 endif
-                 
-                 !!--set label for rendered quantity
-                 labelrender = label(irenderplot)
-                 !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
-                 if (ndim.eq.3 .and..not. x_sec .and..not.(use3Dperspective.and.use3Dopacityrendering)) then
-                    labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
-                    if (irenderplot.eq.irho) labelrender = 'column density'
-                 endif
-                 !!--apply transformations to the label for the rendered quantity 
-                 labelrender = transform_label(labelrender,itrans(irenderplot))
-                 
-                 !!--limits for rendered quantity
-                 if (.not.interactivereplot .or. .not.iChangeRenderLimits) then
-                    if (iadapt .and. .not.(use3Dperspective.and.use3Dopacityrendering.and.ndim.eq.3)) then
-                       !!--if adaptive limits, find limits of rendered array
-                       if (logged) then
-!                          rendermin = minval(datpix,mask=datpix.ne.-666.) ! see above
-                          rendermin = minval(datpix,mask=abs(datpix+666.).gt.tiny(datpix)) ! see above
-                       else
-                          rendermin = minval(datpix)
-                       endif
-                       rendermax = maxval(datpix)
-                       print*,'adapting render limits'
-                    elseif (.not.iadapt) then
-                       !!--or apply transformations to fixed limits
-                       rendermin = lim(irenderplot,1)
-                       rendermax = lim(irenderplot,2)
-                       call transform_limits(rendermin,rendermax,itrans(irenderplot))
-                    endif
-                 endif
-                 
-                 !!  do not let max=0 on log plots as this is suspiciously wrong
-                 if (logged) then
-                    if (iadapt .and. abs(rendermax).lt.tiny(datpix)) then
-                       !!print*,'max=0 on log plot, fixing'
-                       rendermax = maxval(datpix)
-                    endif
-                 endif
-
-                 !!--print plot limits to screen
-                 print*,trim(labelrender),' min, max = ',rendermin,rendermax
                                        
                  !!--call subroutine to actually render the image
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                    npixx,npixy,xmin,ymin,pixwidth,    &
                    icolours,iplotcont,.false.,ncontours,.false.)
                  
-                 !!--plot colour bar
-                 if (iColourBar) then
-                    !--for tiled plots only on last plot in first row,
-                    !  and use full viewport size in the y direction
-                    if (tile_plots) then
-                       call colourbar(icolours,rendermin,rendermax, &
-                       trim(labelrender),.false.,maxval(vptxmax(1:ipanel)), &
-                       minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
-                    else
-                       !!--plot colour bar, but only if last in row
-                       call colourbar(icolours,rendermin,rendermax, &
-                                      trim(labelrender),.false.)
-                    endif
-                 endif
-                 
-                 !!--plot other particle types (e.g. sink particles) on top
+                 !!--plot non-gas particle types (e.g. sink particles) on top
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),npartoftype(:),PlotOnRenderings(:), &
-                   x_sec,xsecmin,xsecmax,labelz)
+                   x_sec,xsecmin,xsecmax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
 
               elseif (ndim.eq.2 .and. x_sec) then
                  !---------------------------------------------------------------
@@ -1133,64 +1150,17 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               ! particle plots
               !-----------------------
               if (iplotpart) then
-                 !
-                 !--sort out particle colouring
-                 !
-                 if (irenderpart.gt.0 .and. irenderpart.le.numplot) then
-                    renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
-                    call transform(renderplot(1:ntoti),itrans(irenderpart))
-                    labelrender = label(irenderpart)
-                    labelrender = transform_label(labelrender,itrans(irenderpart))
-                    
-                    !!--limits for rendered quantity
-                    if (.not.interactivereplot .or. .not.iChangeRenderLimits) then
-                       if (iadapt) then
-                          !!--if adaptive limits, find limits of rendered array
-                          rendermin = minval(renderplot(1:ntoti))
-                          rendermax = maxval(renderplot(1:ntoti))
-                          print*,'adapting render limits'
-                       else
-                          !!--or apply transformations to fixed limits
-                          rendermin = lim(irenderpart,1)
-                          rendermax = lim(irenderpart,2)
-                          call transform_limits(rendermin,rendermax,itrans(irenderpart))
-                       endif
-                    endif
-                    !!--print plot limits to screen
-                    print*,trim(labelrender),' min, max = ',rendermin,rendermax       
-
-                    call colour_particles(renderplot(1:ntoti), &
-                         rendermin,rendermax, &
-                         icolourme(1:ntoti),ntoti)
-
-                    !!--plot colour bar
-                    if (iColourBar) then
-                       !--for tiled plots only on last plot in first row,
-                       !  and use full viewport size in the y direction
-                       if (tile_plots) then
-                          call colourbar(icolours,rendermin,rendermax, &
-                          trim(labelrender),.false.,maxval(vptxmax(1:ipanel)), &
-                          minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
-                       else
-                          !!--plot colour bar, but only if last in row
-                          call colourbar(icolours,rendermin,rendermax, &
-                                         trim(labelrender),.false.)
-                       endif
-                    endif
-                 endif
-                 !
-                 !--do particle plot
-                 !
+                 !!--plot all particle types
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),npartoftype(:),iplotpartoftype(:), &
-                   x_sec,xsecmin,xsecmax,labelz)
+                   x_sec,xsecmin,xsecmax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
               else
-                 !!--plot other particle types on top of vector plots (e.g. sinks)
+                 !!--plot non-gas particle types on top of vector plots (e.g. sinks)
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),npartoftype(:),PlotOnRenderings(:), &
-                   x_sec,xsecmin,xsecmax,labelz)
+                   x_sec,xsecmin,xsecmax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
                    
               endif
            endif
@@ -1211,7 +1181,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                 endif
                 pixwidth = (xmax-xmin)/real(npixvec)
                 npixyvec = int((ymax-ymin)/pixwidth) + 1
-                if (.not.interactivereplot) then
+                if (.not.interactivereplot .or. nacross*ndown.gt.1) then ! not if vecmax changed interactively
                    if (iadapt) then
                       vecmax = -1.0  ! plot limits then set in vectorplot
                    else
@@ -1309,19 +1279,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
      elseif ((iploty.gt.ndim .or. iplotx.gt.ndim)  &
           .and.(iploty.le.ndataplots .and. iplotx.le.ndataplots)) then
-
-        !--------------------------------
-        ! setup page
-        !--------------------------------
-        just = 0
-        title = ' '
-        call page_setup
-
-        !--------------------------------
-        ! now plot particles
-        !--------------------------------
         !
-        !--sort out particle colouring
+        !--sort out particle colouring 
+        !  (at present this is NOT used -can't render if not co-ord plot)
         !
         if (irenderpart.gt.0 .and. irenderpart.le.numplot) then
            renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
@@ -1338,20 +1298,26 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               rendermax = lim(irenderpart,2)
               call transform_limits(rendermin,rendermax,itrans(irenderpart))
            endif
-           !!--print plot limits to screen
-           print*,trim(labelrender),' min, max = ',rendermin,rendermax       
 
            call colour_particles(renderplot(1:ntoti), &
                 rendermin,rendermax, &
                 icolourme(1:ntoti),ntoti)
         endif
-        !
-        !--do the particle plot
-        !
+        
+        !--------------------------------
+        ! setup page
+        !--------------------------------
+        just = 0
+        title = ' '
+        call page_setup
 
+        !--------------------------------
+        ! now plot particles
+        !--------------------------------
         call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
              zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-             icolourme(1:ntoti),npartoftype(:),iplotpartoftype,.false.,0.0,0.0,' ')
+             icolourme(1:ntoti),npartoftype(:),iplotpartoftype,.false.,0.0,0.0,' ', &
+             xmin,xmax,ymin,ymax,ifastparticleplot)
         !
         !--redraw axes over what has been plotted
         !
@@ -1660,6 +1626,9 @@ contains
     if (interactive) then
        print*,trim(labelx),' min, max = ',xmin,xmax
        print*,trim(labely),' min, max = ',ymin,ymax
+       if (irender.gt.0) then
+          print*,trim(labelrender),' min, max = ',rendermin,rendermax
+       endif 
     endif
 
     !--------------------------------------------------------------
@@ -1691,8 +1660,37 @@ contains
                   trim(labelx),trim(labely),trim(title),just,iaxis,0.001,barwidth+0.001,0.001,0.001, &
                   0.0,TitleOffset,isamexaxis,tile_plots)
     endif
-    !--store current page setup for interactive mode on multiplots
+    
+    !--query and save viewport co-ordinates set up for this panel
     call pgqvp(0,vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
+
+    !--------------------------------------------------------------
+    ! plot colour bar for rendered plots
+    !--------------------------------------------------------------
+    if (irender.gt.0 .and. irender.le.numplot) then
+       lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
+                          .and. nyplot.eq.nyplots .and. k.eq.nxsec)
+       !--only plot colour bar at the end of first row on tiled plots
+       if (tile_plots .and..not.(ipanel.eq.nacross*ndown .or. lastplot)) iColourBar = .false.
+
+       if (iColourBar) then
+          !--for tiled plots only on last plot in first row,
+          !  and use full viewport size in the y direction
+          if (tile_plots) then
+             call colourbar(icolours,rendermin,rendermax, &
+             trim(labelrender),.false.,maxval(vptxmax(1:ipanel)), &
+             minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
+          else
+             !!--plot colour bar, but only if last in row
+             call colourbar(icolours,rendermin,rendermax, &
+                            trim(labelrender),.false.)
+          endif
+       endif
+    endif
+
+    !--------------------------------------------------------------
+    ! store current page setup for interactive mode on multiplots
+    !--------------------------------------------------------------    
     if (tile_plots) then
        barwmulti(ipanel) = 0.
     else    
@@ -1826,6 +1824,8 @@ contains
    real, intent(inout) :: vmax
    character(len=*), intent(in) :: label
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy, datpix
+   integer :: i,j
+   real :: vmag
 
    !print*,'plotting vector field ',trim(label)
    if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
@@ -1881,6 +1881,18 @@ contains
       !
       if (iplotstreamlines) then
          !print*,'rendering streamlines of vector field...'
+         if (ndim.eq.3) then
+            !--normalise the 3D vector field
+            do j=1,numpixy
+               do i=1,numpixx
+                  vmag = sqrt(vecpixx(i,j)**2 + vecpixy(i,j)**2)
+                  if (vmag.gt.tiny(vmag)) then
+                     vecpixx(i,j) = vecpixx(i,j)/vmag
+                     vecpixy(i,j) = vecpixy(i,j)/vmag
+                  endif
+               enddo
+            enddo                  
+         endif
          call streamlines(vecpixx,vecpixy,datpix,numpixx,numpixy,xmin,ymin,pixwidth)
          !  print*,'min,max = ', minval(datpix),maxval(datpix)
          call render_pix(datpix,minval(datpix),maxval(datpix),'crap', &
