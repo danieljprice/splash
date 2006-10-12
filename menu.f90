@@ -225,11 +225,14 @@ subroutine menu
               call prompt('(render) (0=none)',irender,0,numplot)
               if (any(iamvec(1:numplot).ne.0)) then
                  ivecplottemp = -1
-                 do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
+                 ierr = 1
+                 do while(ierr.ne.0 .and. ivecplottemp.ne.0)
                     ivecplottemp = ivecplot
+                    ierr = 0
                     call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
                     if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
-                       print "(a)",'Error, value not in list' 
+                       print "(a)",'Error, value not in list'
+                       ierr = 1
                     endif
                  enddo
                  ivecplot = ivecplottemp
@@ -363,7 +366,7 @@ subroutine menu
    use settings_page, only: nacross, ndown
    use settings_render, only: iplotcont_nomulti
    implicit none
-   integer :: ifac
+   integer :: ifac,ierr
    logical :: isamex, isamey, icoordplot
    
    call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
@@ -423,11 +426,14 @@ subroutine menu
 
          if (any(iamvec(1:numplot).gt.0)) then
             ivecplottemp = -1
-            do while(.not.any(iamvec(1:numplot).eq.ivecplottemp).and.ivecplottemp.ne.0)
-               ivecplottemp = ivecplot
+            ierr = 1
+            do while(ierr.ne.0 .and. ivecplottemp.ne.0)
+               ivecplottemp = ivecplotmulti(i)
+               ierr = 0
                call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
                if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
-                  print "(a)",'Error, value not in list' 
+                  print "(a)",'Error, value not in list'
+                  ierr = 1
                endif
             enddo
             ivecplotmulti(i) = ivecplottemp
