@@ -10,11 +10,11 @@ module settings_part
  integer :: ncircpart, icoordsnew
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
  logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings
- logical :: iplotline,ilabelpart
+ logical :: iplotline,ilabelpart,ifastparticleplot
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
-   iexact,icoordsnew
+   iexact,icoordsnew,ifastparticleplot
 
 contains
 
@@ -42,6 +42,7 @@ subroutine defaults_set_part
   imarktype = 1              ! PGPLOT marker for all particles
   imarktype(2) = 4           ! PGPLOT marker for ghost/dark matter particles
   imarktype(3) = 17          ! PGPLOT marker for sink particles 
+  ifastparticleplot = .true. ! allow crowded-field elimination on particle plots
 
   return
 end subroutine defaults_set_part
@@ -62,7 +63,7 @@ subroutine submenu_particleplots
 
   iaction = 0
   print 10,iplotpartoftype,imarktype,iplotline,ilabelpart,ncircpart, &
-           icoordsnew,iexact
+           ifastparticleplot,icoordsnew,iexact
 10  format('------------- particle plot options -------------------',/,&
          ' 0) exit ',/,                 &
          ' 1) turn on/off particles by type      ( ',6(L1,',',1x),' )',/,  &
@@ -70,10 +71,11 @@ subroutine submenu_particleplots
          ' 3) plot line joining particles        ( ',L1,' ) ',/, &
          ' 4) label particles                    ( ',L1,' ) ',/, &
          ' 5) plot smoothing circles             ( ',i3,' ) ',/, &
-         ' 6) change coordinate systems          ( ',i2,' ) ',/, &
-         ' 7) plot exact solution                ( ',i2,' ) ',/, &
-         ' 8) exact solution options')
-    call prompt('enter option',iaction,0,8)
+         ' 6) use fast particle plotting         ( ',L1,' ) ',/, &
+         ' 7) change coordinate systems          ( ',i2,' ) ',/, &
+         ' 8) plot exact solution                ( ',i2,' ) ',/, &
+         ' 9) exact solution options')
+    call prompt('enter option',iaction,0,9)
 !
   select case(iaction)
 !------------------------------------------------------------------------
@@ -134,6 +136,12 @@ subroutine submenu_particleplots
      return           
 !------------------------------------------------------------------------
   case(6)
+     print "(1x,a,/,a,/)",'Fast particle plotting excludes particles in crowded regions', &
+                     ' Turn this option off to always plot every particle'  
+     call prompt('Allow fast particle plotting?',ifastparticleplot)
+     return 
+!------------------------------------------------------------------------
+  case(7)
      print 20,icoords
      do i=1,maxcoordsys
         print 30,i,labelcoordsys(i)
@@ -151,11 +159,11 @@ subroutine submenu_particleplots
      endif
      return
 !------------------------------------------------------------------------
-  case(7)
+  case(8)
      call submenu_exact(iexact)
      return
 !------------------------------------------------------------------------
-  case(8)
+  case(9)
      call options_exact
      return     
 !------------------------------------------------------------------------

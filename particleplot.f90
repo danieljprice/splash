@@ -7,13 +7,15 @@ contains
 !
 !  Drives raw particle plots
 !  Handles different particle types, particle cross-sections, particle labelling
+!  fast-plotting added 12.10.06 (excludes particles in crowded fields)
 !
 !  Arguments:
 !
 !
 subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                         icolourpart,npartoftype,iplotpartoftype, &
-                        use_zrange,zmin,zmax,labelz)
+                        use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
+                        fastparticleplot)
   use labels, only:labeltype, maxparttypes
   use settings_data, only:ndim,icoords,ntypes
   use settings_part, only:imarktype,ncircpart,icoordsnew,icircpart, &
@@ -24,14 +26,18 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(ntot), intent(in) :: xplot, yplot, zplot, h
   real, dimension(ntot) :: xerrb, yerrb, herr
-  real, intent(in) :: zmin,zmax
-  logical, intent(in) :: use_zrange
+  real, intent(in) :: zmin,zmax,xmin,xmax,ymin,ymax
+  logical, intent(in) :: use_zrange,fastparticleplot
   logical, dimension(maxparttypes), intent(in) :: iplotpartoftype
   character(len=*), intent(in) :: labelz
   integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle
   integer :: lenstring,index1,index2,ntotplot,icolourstart
 !  real :: charheight
   character(len=20) :: string
+  integer, parameter :: ncellx = 500, ncelly = 500 ! for crowded field reduction
+  integer(kind=1), dimension(ncellx,ncelly) :: nincell
+  integer :: icellx,icelly !,notplotted
+  real :: dxcell1,dycell1
   
   !--query current character height and colour
 !  call pgqch(charheight)
@@ -98,9 +104,33 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            !
            call pgqci(icolourindex)
            if (all(icolourpart(index1:index2).eq.icolourpart(index1))) then
-              print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
               call pgsci(icolourpart(index1))
-              call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+              if (fastparticleplot) then
+                 !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
+                 write(*,"(a,i8,1x,a)") &
+                      ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
+                 dxcell1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
+                 dycell1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
+                 nincell(1:ncellx,1:ncelly) = 0
+                 !notplotted = 0
+                 do j=index1,index2
+                    icellx = int((xplot(j) - xmin)*dxcell1) + 1
+                    icelly = int((yplot(j) - ymin)*dycell1) + 1
+                    if (icellx.gt.0 .and. icellx.le.ncellx .and. icelly.gt.0 .and. icelly.le.ncelly) then
+                       if (nincell(icellx,icelly).eq.0) then
+                          nincell(icellx,icelly) = nincell(icellx,icelly) + 1
+                          call pgpt(1,xplot(j),yplot(j),imarktype(itype))
+                       !else
+                       !   notplotted = notplotted + 1
+                       endif
+                    endif
+                 enddo
+                 !write(*,"(a,i7,a)") ' (minus ',notplotted,' in crowded fields)'
+              else
+                 !--plot all particles of this type
+                 print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
+                 call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+              endif
            else
               nplotted = 0
               do j=index1,index2
