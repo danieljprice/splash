@@ -80,6 +80,15 @@ program test_fieldlines
 
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,datpix1(1:npixx,1:npixy),err)
  print*,'average error in stream line calculation  = ',err
+ if (npixx.eq.400 .and. npixy.eq.400) then
+    if (err < 0.00019) then
+       print*,'PASSED: error within limits'
+    else
+       print*,'FAILED: error too large!'    
+    endif
+ else
+    print*,'setup different to usual one'
+ endif
  call pgend
 
  print "(70('-'))"
