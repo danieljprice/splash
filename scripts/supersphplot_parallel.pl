@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!/usr/bin/perl
 #
 # farms out jobs to a list of machines, finding available CPU
 #
@@ -7,10 +7,13 @@ use warnings;
 use IO::Handle;
 
 my $run;
-my $exe='~/ndspmhd/plot/ssupersphplot';
+my $home=`cd; pwd -P`;
+chomp ($home);
+my $exe="$home/ndspmhd/plot/ssupersphplot";
 my $inputfile='input';
 my $pgplotdev='none';
 my $pgplotfile='pgplot';
+my $pgplotdir= $ENV{'PGPLOT_DIR'}; # get this from the environment
 
 if ($#ARGV < 1 ) {
    die "Usage: $0 nfilesperplot file1 [file2 file3 ... filen] \n also with a file called input \n";
@@ -60,17 +63,28 @@ my $filestart = 0;
 my $fileend = $filestart + $nfilesperplot;
 for ($run=1;$run<=$nruns;$run++) {
     my @inputstemp = @inputs;
-    my $pgplotfile = "$files[$filestart].$ext";
+    my $num = sprintf("%05d",$run);
+    my $pgplotfile = "pgplot_$num.$ext";
     $inputstemp[$devline] = "$pgplotfile$pgplotdev\n";
     print "------------ run $run : $pgplotfile ------------\n";
     my @argsn=@files[$filestart..$fileend-1];
-#    print "@inputstemp \n";
+#---write the input file
     open(INPUTF,"> input$run") || die("can't write temporary files");
-    print INPUTF "@inputstemp \n";
+    foreach $line (@inputstemp) {
+       chomp($line);
+       print INPUTF "$line \n";
+    }
     close(INPUTF);
-#---here is the executable line---
-    my $commandline = "cd $pwd; $exe @argsn < input$run \n";
-    farmjob_xgrid( $commandline ) || die "error farming job \n";
+#---write the executable script---   
+    open(RUNSCR,"> run$run.csh") || die("can't write run script");
+    print RUNSCR "#!/bin/tcsh \n";
+    print RUNSCR "setenv PGPLOT_DIR $pgplotdir \n";
+    print RUNSCR "cd $pwd \n";
+    print RUNSCR "$exe @argsn < input$run >& run$run.output \n";
+    close(RUNSCR);
+    system "chmod a+x run$run.csh";
+    my $commandline = "./run$run.csh";
+    farmjob_xgrid( $commandline );
 #---------------------------------
     $filestart = $fileend;
     $fileend = $filestart + $nfilesperplot;
@@ -79,62 +93,52 @@ exit;
 
 sub farmjob_xgrid {
     my $commandline=shift;
-    print "command line is $commandline \n";
     my $xgridauth = "-hostname cytosine.ex.ac.uk -auth Kerberos";
     my $jobid = `xgrid $xgridauth -job submit $commandline` || die "xgrid not found \n";
     ($jobid) = $jobid =~ m/jobIdentifier\s+=\s+(\d+);/; # \s matches spaces (+ = at least one) \d decimals
-    print "job id = $jobid \n";
-    system "echo echo deleting... >> cleanup; echo xgrid $xgridauth -job delete -id $jobid >> cleanup";
+    print "farmed via xgrid: job id = $jobid \n";
+    system "echo echo deleting... >> cleanxgrid; echo xgrid $xgridauth -job delete -id $jobid >> cleanxgrid";
+    system "echo echo getting results... >> getresultsxgrid; echo xgrid $xgridauth -job results -id $jobid >> getresultsxgrid";
+    sleep 1; # avoid multiple rapid-fire requests to xgrid server
 }
 
 sub farmjob_ssh {
-    my (@machines) = `cat machinelist`;
-    if ( $#machines < 1 ) {
+    my $commandline=shift;
+    my (@machines) = `cat machinelist` or die "ERROR: for ssh version must list machines in file machinelist \n";
+    my $nmachines = $#machines;
+    if ( $nmachines < 1 ) {
        die "ERROR: no machines specified in file machinelist \n";
-    } elsif ( $#machines < $nruns ) {
-       print "WARNING: not enough machines given to run all jobs \n"
     }
 
-    exit;
     my $machine;
-    my $njobsrun = 1;
-    my $jobsrun;
-    my $ncpu = 1;
-    my $njobspermachine = 3;
+    my $njobsrun = 0;
+    my $loadavmax = 0.5;
     my $n;
 
     # loop through all available machines looking for spare CPU
-    foreach $machine (@machines) {
+    while ($njobsrun < $runs) {
+        
         chomp($machine);
+        my $loadav = 0.;
         print "----------------- \n trying $machine \n";
     #    get load average for this machine using uptime command
-        my $loadav = `ssh $machine uptime | cut -f5 -d':' | cut -f1 -d','`;
-        chomp($loadav);
-        print " load average last 1 minute = $loadav";
-        if ( $loadav < 50.0 ) {
+        if ($loadavmax > 0.0) {
+           my $uptime=`ssh $machine uptime`;
+           ($loadav) = $uptime =~ m/load averages:(\d+\.\d+)\s/;
+           print " load average last 1 minute = $loadav";
+        }
+        if ( $loadav < $loadavmax ) {
            print " ...OK \n";
+           $njobsrun = $njobsrun + 1;
            # run the job
-           for ($n = 1;$n<=$njobspermachine;$n++){
     #           print "running $rootname$njobsrun on machine $machine at nice +19\n";
     #           system "ssh $machine 'cd $pwd/$rootname; nice +19 ./$ndim$SPMHD $rootname$njobsrun > $rootname$njobsrun.output &' ";
-               $njobsrun = $njobsrun + 1;
-               if ($njobsrun > $nruns) {
-                  print "===========================================\n";
-                  print "\n Hurrah! all jobs successfully submitted \n";
-                  $jobsrun = $njobsrun - 1;
-                  print " $jobsrun jobs run \n";
-                  exit;
-               }  
-           } 
         } else {
            print " ...too busy \n";
         }
+
     }
-
-    $jobsrun = $njobsrun - 1;
-    print "=======================================================\n";
-    print "WARNING: not enough machines available to run all jobs \n";
-    print " $jobsrun jobs run \n";
-    exit;
+    print "===========================================\n";
+    print "\n Hurrah! all jobs successfully submitted \n";
+    print " $njobsrun jobs run \n";
 }
-
