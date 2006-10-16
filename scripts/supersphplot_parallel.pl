@@ -103,7 +103,7 @@ sub farmjob_xgrid {
 }
 
 sub farmjob_ssh {
-    my $commandline=shift;
+    my ($commandline,$runs)=@_;
     my (@machines) = `cat machinelist` or die "ERROR: for ssh version must list machines in file machinelist \n";
     my $nmachines = $#machines;
     if ( $nmachines < 1 ) {
