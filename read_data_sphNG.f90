@@ -30,7 +30,7 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,units,unitslabel
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,units,unitslabel,iformat
   use mem_allocation
   implicit none
   integer, intent(in) :: indexstart
@@ -43,7 +43,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
   integer :: nskip,ntotal,npart,itype,ntypes
   integer :: ipos,nptmass,nptmassi,nunknown
-  logical :: iexist, doubleprec
+  integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
+  logical :: iexist, doubleprec, smalldump,imadepmasscolumn
     
   character(len=len(rootname)+10) :: dumpfile
   character(len=100) :: fileident
@@ -55,6 +56,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real(doub_prec) :: udist, utime, umass, umagfd, r8
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
+  real :: pmassinitial
 
 
   nstepsread = 0
@@ -124,6 +126,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
       return
    else
       print "(a)",'File ID: '//trim(fileident)
+   endif
+   iformat = 0
+   smalldump = .false.
+   imadepmasscolumn = .false.
+   if (fileident(1:1).eq.'S') then
+      smalldump = .true.
    endif
 !
 !--read number of default ints
@@ -245,6 +253,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
    enddo
    
    npart_max = maxval(isize(1:narrsizes))
+   if (smalldump) then
+      if (nreals.ge.15) then
+         pmassinitial = dummyreal(15)
+         if (pmassinitial.gt.tiny(0.)) then
+            ncolstep = ncolstep + 1  ! make an extra column to contain particle mass
+            imadepmasscolumn = .true.
+         endif
+      else
+         print "(a)",' error extracting pmassinitial from small dump file'
+         pmassinitial = 0.
+      endif
+      if (abs(pmassinitial).lt.tiny(0.) .and. nreal(1).lt.4) then
+         print "(a)",' error: particle masses not present in small dump file'   
+      endif
+   endif
 !
 !--allocate memory for all columns
 !
@@ -264,6 +287,32 @@ subroutine read_data(rootname,indexstart,nstepsread)
    if (allocated(iphase)) deallocate(iphase)
    allocate(iphase(npart_max))
    iphase(:) = 0
+!
+!--to handle both small and full dumps, we need to place the quantities dumped
+!  in both small and full dumps at the start of the dat array
+!  quantities only in the full dump then come after
+!  also means that hydro/MHD are "semi-compatible" in the sense that x,y,z,m,h and rho
+!  are in the same place for both types of dump
+!
+   nhydroarrays = 6 ! x,y,z,m,h,rho
+   nhydroarraysinfile = nreal(1) + nreal4(1) + nreal8(1)
+   if (imadepmasscolumn) nhydroarraysinfile = nhydroarraysinfile + 1
+   if (nhydroarraysinfile .lt.nhydroarrays) then
+      print "(a)",' ERROR: one of x,y,z,m,h or rho missing in small dump read'
+      nhydroarrays = nreal(1)+nreal4(1)+nreal8(1)
+   endif
+   if (narrsizes.ge.4) then
+      nmhdarrays = 3 ! Bx,By,Bz
+   else
+      nmhdarrays = 0
+   endif
+   imaxcolumnread = 0
+   iformat = 0 ! hydro full dump
+   if (smalldump) iformat = 1 ! hydro small dump
+   if (narrsizes.ge.4) then
+      iformat = 2 ! mhd full dump
+      if (smalldump) iformat = 3 ! mhd small dump
+   endif
 !
 !--Arrays
 !
@@ -303,25 +352,50 @@ subroutine read_data(rootname,indexstart,nstepsread)
          if (allocated(dattemp)) deallocate(dattemp)
          allocate(dattemp(isize(iarr)),stat=ierr)
          if (ierr /=0) print "(a)",'ERROR in memory allocation'
+
 !        default reals may need converting
          do i=1,nreal(iarr)
+            if (iarr.eq.1 .and. i.eq.6) then
+               ! read x,y,z,m,h and then place arrays after always-present ones
+               icolumn = nhydroarrays+nmhdarrays + 1
+               imaxcolumnread = icolumn
+            elseif (iarr.eq.4 .and. i.le.3) then
+               icolumn = 6 + i
+            else
+               icolumn = imaxcolumnread + 1
+               imaxcolumnread = icolumn
+            endif
             if (doubleprec) then
                read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
-               icolumn = icolumn + 1
                dat(1:isize(iarr),icolumn,j) = real(dattemp(1:isize(iarr)))
             else
-               icolumn = icolumn + 1
                read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j)
             endif
          enddo
+!        set masses for equal mass particles (not dumped in small dump)
+         if (smalldump .and. iarr.eq.1 .and. nreal(1).lt.4) then
+            if (abs(pmassinitial).gt.tiny(pmassinitial)) then
+               icolumn = 4
+               dat(1:isize(iarr),icolumn,j) = pmassinitial
+            endif
+         endif
 !        real4's go straight into dat
+         imaxcolumnread = max(icolumn,6)
          do i=1,nreal4(iarr)
-            icolumn = icolumn + 1
+            if (iarr.eq.1 .and. i.eq.1) then
+               icolumn = 6 ! density
+            elseif (iarr.eq.1 .and. smalldump .and. i.eq.2) then
+               icolumn = 5 ! h which is real4 in small dumps
+            else
+               icolumn = imaxcolumnread + 1
+               imaxcolumnread = icolumn
+            endif
             read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j) 
          enddo
+         icolumn = imaxcolumnread
 !        real 8's need converting
          do i=1,nreal8(iarr)
-            icolumn = icolumn + 1
+            icolumn = icolumn + 1 !!nextcolumn(icolumn,iarr,nhydroarrays,nmhdarrays,imaxcolumnread) 
             read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
             dat(1:isize(iarr),icolumn,j) = real(dattemp(1:isize(iarr)))
          enddo
@@ -427,7 +501,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 close(15)
    
 return
-                    
+                  
 end subroutine read_data
 
 !!------------------------------------------------------------
@@ -450,57 +524,70 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+!--all formats read the following columns    
   do i=1,ndim
      ix(i) = i
   enddo
   ipmass = 4   !  particle mass
   ih = 5       !  smoothing length
-  ivx = 6
-  iutherm = 9  !  thermal energy
-  irho = 10     ! location of rho in data array
-  if (ncolumns.gt.10) then
-     label(11) = 'grad h'
-     label(12) = 'grad soft'
-     if (ncolumns.ge.19) then
-        iBfirst = 13
-        iamvec(13:15) = 13
-        labelvec(13:15) = 'B'
+  irho = 6     !  density
+!--the following only for mhd small dumps or full dumps
+  if (ncolumns.ge.7) then
+  select case(iformat)
+     case(0) ! hydro full dump
+        ivx = 7
+        iutherm = 10
+        label(11) = 'grad h'
+        label(12) = 'grad soft'
+     case(2) ! mhd full dump
+        iBfirst = 7
+        ivx = 10
+        iutherm = 13
+        label(14) = 'grad h'
+        label(15) = 'grad soft'
         if (ncolumns.ge.21) then
            label(16) = 'Euler alpha'
            label(17) = 'Euler beta'
            idivB = 18
-           label(idivB) = 'div B'
            iJfirst = 19
-           iamvec(19:21) = 19
-           labelvec(19:21) = 'J'        
-        else
+        elseif (ncolumns.ge.19) then
            idivB = 16
            label(idivB) = 'div B'
            iJfirst = 17
-           iamvec(17:19) = 17
-           labelvec(17:19) = 'J'
         endif
-     endif
+        if (ncolumns.ge.iJfirst+ndimV) then
+           label(iJfirst+ndimV) = 'alpha\dB\u'
+        endif
+     case(3) ! mhd small dump
+        iBfirst = 7
+     end select
   endif
   
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  do i=1,ndimV
-     label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-  enddo
-  label(irho) = 'density'
-  label(iutherm) = 'u'
-  label(ih) = 'h       '
-  label(ipmass) = 'particle mass'     
+  if (irho.gt.0) label(irho) = 'density'
+  if (iutherm.gt.0) label(iutherm) = 'u'
+  if (ih.gt.0) label(ih) = 'h       '
+  if (ipmass.gt.0) label(ipmass) = 'particle mass'     
+  if (idivB.gt.0) label(idivB) = 'div B'
 
   !
   !--set labels for vector quantities
   !
-  iamvec(ivx:ivx+ndimV-1) = ivx
-  labelvec(ivx:ivx+ndimV-1) = 'v'
-  do i=1,ndimV
-     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-  enddo
+  if (ivx.gt.0) then
+     iamvec(ivx:ivx+ndimV-1) = ivx
+     labelvec(ivx:ivx+ndimV-1) = 'v'
+     do i=1,ndimV
+        label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
+     enddo
+  endif
+  if (iBfirst.gt.0) then
+     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
+     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
+  endif
+  if (iJfirst.gt.0) then
+     iamvec(iJfirst:iJfirst+ndimV-1) = iJfirst
+     labelvec(iJfirst:iJfirst+ndimV-1) = 'J'  
+  endif
   !
   !--set labels for each particle type
   !
