@@ -53,11 +53,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
   integer*1, dimension(:), allocatable :: iphase
   real(doub_prec), dimension(:), allocatable :: dattemp
-  real(doub_prec) :: udist, utime, umass, umagfd, r8
+  real(doub_prec) :: udist,umass,utime,umagfd,r8
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
   real :: pmassinitial
-
+  common /sphNGunits/ udist,umass,utime,umagfd
 
   nstepsread = 0
   nstep_max = 0
@@ -204,27 +204,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
    if (ierr /= 0) then
       print "(a)",'*** error reading units'
    endif
-!   npower = int(log10(udist))
-!   udist = udist/10.**npower
-!   udistAU = udist/1.495979e13
-   units(1:3) = udist
-   unitslabel(1:3) = ' [cm]'
-!   do i=1,3
-!      write(unitslabel(i),"('[ 10\u',i2,'\d cm]')") npower
-!   enddo
-   units(4) = umass
-   unitslabel(4) = ' [g]'
-   units(5) = udist
-   unitslabel(5) = ' [cm]'
-   units(6:8) = udist/utime
-   unitslabel(6:8) = ' [cm/s]'
-   units(9) = (udist/utime)**2
-   unitslabel(9) = ' [erg/g]'
-   units(10) = umass/udist**3
-   unitslabel(10) = ' [g/cm\u3\d]'
-   units(0) = utime/3.1536e7
-   unitslabel(0) = ' yrs'
-   
 !
 !--Array headers
 !
@@ -515,6 +494,8 @@ subroutine set_labels
   use geometry, only:labelcoord
   implicit none
   integer :: i
+  real(doub_prec) :: udist,umass,utime,umagfd
+  common /sphNGunits/ udist,umass,utime,umagfd
   
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -588,6 +569,33 @@ subroutine set_labels
      iamvec(iJfirst:iJfirst+ndimV-1) = iJfirst
      labelvec(iJfirst:iJfirst+ndimV-1) = 'J'  
   endif
+  !
+  !--set units for plot data
+  !
+!   npower = int(log10(udist))
+!   udist = udist/10.**npower
+!   udistAU = udist/1.495979e13
+   units(1:3) = udist
+   unitslabel(1:3) = ' [cm]'
+!   do i=1,3
+!      write(unitslabel(i),"('[ 10\u',i2,'\d cm]')") npower
+!   enddo
+   units(ipmass) = umass
+   unitslabel(ipmass) = ' [g]'
+   units(ih) = udist
+   unitslabel(ih) = ' [cm]'
+   if (ivx.gt.0) then
+      units(ivx:ivx+ndimV-1) = udist/utime
+      unitslabel(ivx:ivx+ndimV-1) = ' [cm/s]'
+   endif
+   if (iutherm.gt.0) then
+      units(iutherm) = (udist/utime)**2
+      unitslabel(iutherm) = ' [erg/g]'
+   endif
+   units(irho) = umass/udist**3
+   unitslabel(irho) = ' [g/cm\u3\d]'
+   units(0) = utime/3.1536e7
+   unitslabel(0) = ' yrs'
   !
   !--set labels for each particle type
   !
