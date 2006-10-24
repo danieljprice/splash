@@ -23,6 +23,9 @@ program supersphplot
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.6.2   (24/10/06)
+!           : fast particle plotting and streamline plotting implemented;
+!             more bug fixes with interactive mode on multiplots; various other bug fixes.
 !     1.6.1   (24/8/06)
 !           : bug fixes to 1.6.0, further improvements to interactive mode on multiplots.
 !     1.6.0   (10/8/06)
@@ -81,6 +84,7 @@ program supersphplot
 !     exact_wave         : exact solution for a propagating sine wave
 !     exact_toystar1D    : exact solution for the 1D toy star problem
 !     exact_toystar2D    : exact solution for the 2D toy star problem
+!     fieldlines         : module handling streamline plotting
 !     get_data           : wrapper for main data read
 !     geometry           : module handling different coordinate systems
 !     globaldata         : various modules containing "global" variables
@@ -236,7 +240,7 @@ subroutine print_header
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/, &
    '   \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ ',/)      
 
- print "(a)",' ( version 1.6.1 [24th Aug ''06] Copyright (C) 2005-2006)'
+ print "(a)",' ( version 1.6.2 [24th Oct ''06] Copyright (C) 2005-2006)'
  print 30 
 30 format(/,    &
    ' * SUPERSPHPLOT comes with ABSOLUTELY NO WARRANTY.',/, &
