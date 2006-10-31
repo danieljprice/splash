@@ -1,9 +1,10 @@
 !-----------------------------------------------------------------
 !     module containing routines for plotting legends in PGPLOT
 !     subroutines:
-!      legend      : plots time on plots
-!      legend_vec  : plots legend with vector arrow
-!      legend_part : plots different particle types
+!      legend         : plots time on plots
+!      legend_vec     : plots legend with vector arrow
+!      legend_markers : plots different particle types
+!      legend_scale   : plots a scale on co-ordinate plots
 !-----------------------------------------------------------------
 module legends
  implicit none
@@ -237,5 +238,28 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
   call pgstbg(-1) ! reset text background to transparent
 
 end subroutine legend_markers
+
+subroutine legend_scale(dxscale,hpos,vpos,text)
+  implicit none
+  real, intent(in) :: dxscale,hpos,vpos
+  character(len=*), intent(in) :: text
+  real :: xmin,xmax,ymin,ymax,xch,ych,xpos,ypos
+  
+  !--draw horizontal "error bar" one character height above text
+  call pgqwin(xmin,xmax,ymin,ymax)
+  if (dxscale.gt.(xmax-xmin)) then
+     print "(a)",'Error: scale size exceeds x dimensions: scale not plotted'
+  else
+     call pgqcs(4,xch,ych)
+     ypos = ymin + (vpos+1.25)*ych
+     xpos = xmin + hpos*(xmax-xmin)
+     print*,'xpos,ypos = ',xpos,ypos
+     call pgerr1(5,xpos,ypos,0.5*dxscale,1.0)
+
+     !--write text at the position specified
+     call pgmtxt('B',-vpos,hpos,0.5,trim(text))
+  endif
+  
+end subroutine legend_scale
 
 end module legends

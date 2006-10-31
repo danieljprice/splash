@@ -42,7 +42,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
   use labels, only:label,ipowerspec,ih,ipmass
   use limits, only:lim
   use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti,x_secmulti
-  use prompting
+  use prompting, only:prompt
   use titles, only:read_titles,read_steplegend
   use settings_data, only:ndim,numplot
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
@@ -361,7 +361,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use transforms
   use interactive_routines
   use geometry
-  use legends, only:legend,legend_markers
   use particleplots, only:particleplot
   use powerspectrums, only:powerspectrum
   use interpolations1D, only:interpolate1D
@@ -1030,7 +1029,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
                  if (ndim.eq.3 .and..not. x_sec .and..not.(use3Dperspective.and.use3Dopacityrendering)) then
                     labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
-                    if (irenderplot.eq.irho) labelrender = 'column density'
+                    if (irenderplot.eq.irho) then
+                       labelrender = 'column density'
+                       !--try to get units label right for column density
+                       !  would be nice to have a more robust way of knowing what the units mean
+                       if (iRescale .and. trim(adjustl(unitslabel(ix(1)))).eq.'[cm]' &
+                                    .and. trim(adjustl(unitslabel(irho))).eq.'[g/cm\u3\d]') then
+                          labelrender = trim(labelrender)//' [g/cm\u2\d]'
+                       endif
+                    endif
                  endif
                  !!--apply transformations to the label for the rendered quantity 
                  labelrender = transform_label(labelrender,itrans(irenderplot))
@@ -1716,10 +1723,12 @@ contains
 !  will overwrite plot area)
 !------------------------------------------------------
   subroutine legends_and_title
+    use legends, only:legend,legend_markers,legend_scale
     use titles, only:pagetitles,steplegend
     use filenames, only:nstepsinfile,nfiles,rootname
     use settings_page, only:iPlotLegend,iPlotStepLegend, &
-        hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnFirstRowOnly
+        hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnFirstRowOnly, &
+        iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext
     implicit none
     character(len=len(steplegend(1))) :: steplegendtext
 
@@ -1752,6 +1761,12 @@ contains
        if (len_trim(pagetitles(ipanel)).gt.0) then
           call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
        endif
+    endif
+    
+    !--scale on co-ordinate plots
+    if (iPlotScale .and. (iscalepanel.eq.0 .or. ipanel.eq.iscalepanel) &
+                   .and. iplotx.le.ndim .and. iploty.le.ndim) then
+       call legend_scale(dxscale,hposscale,vposscale,scaletext)
     endif
     
     return

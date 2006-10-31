@@ -5,19 +5,22 @@
 module settings_page
  use settings_limits, only:iadapt,iadaptcoords
  implicit none
- integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth
+ integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
  logical :: iColourEachStep,iChangeStyles,tile,interactive
  logical :: iPlotLegend,iPlotStepLegend,iPlotTitles,iPlotLegendOnFirstRowOnly
+ logical :: iPlotScale
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
  real :: charheight
- character(len=20) :: colour_fore, colour_back, legendtext
+ real :: dxscale,hposscale,vposscale
+ character(len=20) :: colour_fore, colour_back, legendtext, scaletext
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &
    iPlotLegend,iPlotStepLegend,hposlegend,vposlegend,iPlotTitles,hpostitle, &
    vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheight,linewidth,&
-   fjustlegend,iPlotLegendOnFirstRowOnly
+   fjustlegend,iPlotLegendOnFirstRowOnly, &
+   iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel
 
 contains
 
@@ -56,6 +59,13 @@ subroutine defaults_set_page
   charheight = 1.0    ! PGPLOT character height
   linewidth = 1       ! PGPLOT line width
 
+  iPlotScale = .false.
+  hposscale = 0.5
+  vposscale = 1.0
+  dxscale = 1.0
+  scaletext = '1 unit'
+  iscalepanel = 0
+
   return
 end subroutine defaults_set_page
 
@@ -71,19 +81,19 @@ subroutine submenu_page
 
  iaction = 0
  papersizey = papersizex*aspectratio
- print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,tile, &
+ print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,print_logical(tile), &
           print_logical(iPlotLegend),print_logical(iPlotStepLegend),print_logical(iPlotTitles), &
           charheight,linewidth
-10 format(' 0) exit ',/,                   &
-        ' 1) change panel after n timesteps (n =',i2,')',/, &
-        ' 2) axes options                   (',i2,')',/, &
-        ' 3) change paper size              (',f5.2,1x,f5.2,')',/, &
-        ' 4) change plots per page          (',i2,1x,i2,')',/, &
-         ' 5) plot tiling on/off             (',L1,')',/, & 
-         ' 6) legend and title options       (',1x,a,1x,a,1x,a,1x,')',/, &
-         ' 7) set character height           (',f4.1,')',/,&
-         ' 8) adjust line width              (',i1,')',/,&
-         ' 9) set foreground/background colours ')
+10 format('---------------- page setup options -------------------',/,&
+          ' 0) exit ',/,                   &
+          ' 1) change panel after n timesteps  (n =',i2,')',/, &
+          ' 2) axes options                    (',i2,')',/, &
+          ' 3) change paper size               (',f5.2,1x,f5.2,')',/, &
+          ' 4) change plots per page           (',i2,1x,'x',1x,i2,', tiling is ',a,')',/, &
+          ' 5) legend and title options        (',1x,a,1x,a,1x,a,1x,')',/, &
+          ' 6) set character height            (',f4.1,')',/,&
+          ' 7) adjust line width               (',i1,')',/,&
+          ' 8) set foreground/background colours ')
  call prompt('enter option ',iaction,0,9)
 
  select case(iaction)
@@ -173,13 +183,12 @@ subroutine submenu_page
   case(4)
      call prompt('Enter number of plots across:',nacross,1,numplot)
      call prompt('Enter number of plots down  :',ndown,1,numplot)
+     if (nacross*ndown.gt.1) then
+        call prompt('Tile plots on the page where possible?',tile)
+     endif
      return
 !------------------------------------------------------------------------
   case(5)
-     tile = .not.tile
-     print*,'tile plots = ',tile
-!------------------------------------------------------------------------
-  case(6)
      if (iPlotStepLegend) then
         print "(/,a,/,a,/)",' Hint: to change the step legend text, create a file called', &
                  '  ''legend'' in the working directory, with one label per line'
@@ -190,7 +199,8 @@ subroutine submenu_page
      endif     
      print 20,print_logical(iPlotLegend),print_logical(iPlotTitles),print_logical(iPlotStepLegend), &
               trim(legendtext),print_logical(iPlotLegendOnFirstRowOnly), &
-              hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
+              hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle, &
+              print_logical(iPlotScale)
 20   format('0) exit ',/,                   &
             ' 1) time legend on/off                         (',1x,a,1x,')',/, &
             ' 2) titles on/off                              (',1x,a,1x,')',/, &
@@ -198,10 +208,11 @@ subroutine submenu_page
             ' 4) change time legend text                    (''',a,''')',/, &
             ' 5) plot time legend on first row only         (',1x,a,1x,')',/, & 
             ' 6) set legend position and justification      (',f5.2,1x,f5.2,1x,f5.2,')',/, &
-            ' 7) set title position and justification       (',f5.2,1x,f5.2,1x,f5.2,')')
+            ' 7) set title position and justification       (',f5.2,1x,f5.2,1x,f5.2,')',/, &
+            ' 8) plot scale on co-ordinate plots            (',1x,a,1x,')')
 
      jaction = 0
-     call prompt(' Enter option ',jaction,0,7)
+     call prompt(' Enter option ',jaction,0,8)
 
      select case(jaction)
      case(1)
@@ -242,19 +253,32 @@ subroutine submenu_page
              hpostitle,0.0,1.0)
         call prompt('Enter vertical position in character heights above top',vpostitle)
         call prompt('Enter justification factor (0.0=left 1.0=right)',fjusttitle,0.0,1.0)
+     case(8)
+        call prompt('Plot scale on co-ordinate plots? ',iPlotScale)
+        if (iPlotScale) then
+           call prompt('Enter length of scale in the current x,y,z units ',dxscale)
+           call prompt('Enter text to appear below scale (e.g. ''10 AU'')',scaletext)
+           call prompt('Enter horizontal position as fraction of viewport', &
+                       hposscale,0.0,1.0)
+           call prompt('Enter vertical position in character heights above bottom',vposscale)
+           if (nacross*ndown.gt.1) then
+              call prompt('Enter which panel on the plotting page the scale should appear on '// &
+                   '(0=all co-ordinate plots)',iscalepanel,0,nacross*ndown)
+           endif
+        endif
      end select
 
      return
 !------------------------------------------------------------------------
-  case(7)
+  case(6)
      call prompt('Enter PGPLOT character height ',charheight,0.1,10.)
      return
 !------------------------------------------------------------------------
-  case(8)
+  case(7)
      call prompt('Enter PGPLOT line width ',linewidth,1,5)
      return
 !------------------------------------------------------------------------
-  case(9)
+  case(8)
      ierr = 1
      ntries = 1
      !--open null device so that colours can be recognised
