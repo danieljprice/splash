@@ -56,6 +56,9 @@
 ! 19/10/04 : problem with if (present(min) .and. min < newvalue)
 !            on some compilers
 !
+! Function print_logical added by D.Price 31/10/06 takes in a logical
+! variable and returns 'on' or 'off' as appropriate.
+!
 module prompting
 
    private                     
@@ -74,7 +77,7 @@ module prompting
       module procedure &
       integer_prompt, real_prompt, string_prompt, double_prompt, logical_prompt
    end interface
-   public :: prompt 
+   public :: prompt,print_logical
     
 contains
 
@@ -450,5 +453,21 @@ contains
       endif
       
    end subroutine string_prompt
+   ! 
+   !  Routine added by D.Price (31/10/06)
+   !  Takes in a logical variable and returns a string 'on' or 'off' as appropriate
+   !
+   
+   function print_logical(lvalue)
+      logical, intent(in) :: lvalue
+      character(len=3) :: print_logical
+      
+      if (lvalue) then
+         print_logical = 'ON'
+      else
+         print_logical = 'OFF'
+      endif
+      
+   end function print_logical
    
 end module prompting
