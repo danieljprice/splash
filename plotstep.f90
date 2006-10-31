@@ -347,9 +347,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use settings_limits, only:itrackpart,iadapt,iadaptcoords,scalemax,xminoffset_track,xmaxoffset_track
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
                      iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot
-  use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,iPlotLegend,iPlotStepLegend, &
-                     charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage, &
-                     hposlegend,vposlegend,fjustlegend,legendtext
+  use settings_page, only:nacross,ndown,iadapt,interactive,iaxis, &
+                     charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
       iPlotColourBar,icolour_particles,inormalise_interpolations,ifastrender
   use settings_vecplot, only:npixvec, iplotpartvec
@@ -1719,12 +1718,15 @@ contains
   subroutine legends_and_title
     use titles, only:pagetitles,steplegend
     use filenames, only:nstepsinfile,nfiles,rootname
+    use settings_page, only:iPlotLegend,iPlotStepLegend, &
+        hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnFirstRowOnly
     implicit none
     character(len=len(steplegend(1))) :: steplegendtext
 
     !--plot time on plot
-    if (iPlotLegend .and. nyplot.eq.1) call legend(legendtext,timei,labeltimeunits, &
-                                                   hposlegend,vposlegend,fjustlegend)
+    if (iPlotLegend .and. nyplot.eq.1 .and. .not.(iPlotLegendOnFirstRowOnly .and. irow.gt.1)) &
+       call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend)
+       
     !--line/marker style/colour legend for multiple timesteps on same page
     if (iPlotStepLegend .and. nyplot.eq.1 .and. istepsonpage.gt.0) then
        !
