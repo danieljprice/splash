@@ -8,7 +8,7 @@ module settings_page
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
  logical :: iColourEachStep,iChangeStyles,tile,interactive
  logical :: iPlotLegend,iPlotStepLegend,iPlotTitles,iPlotLegendOnFirstRowOnly
- logical :: iPlotScale
+ logical :: iPlotScale,iUseBackgroundColourForAxes
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
  real :: charheight
@@ -20,7 +20,7 @@ module settings_page
    iPlotLegend,iPlotStepLegend,hposlegend,vposlegend,iPlotTitles,hpostitle, &
    vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheight,linewidth,&
    fjustlegend,iPlotLegendOnFirstRowOnly, &
-   iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel
+   iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes
 
 contains
 
@@ -296,6 +296,9 @@ subroutine submenu_page
         ntries = ntries + 1
      enddo
      call pgclos
+    
+     call prompt('Do you want to plot axes and overlaid text in background colour'// &
+                 ' (default is foreground) ?',iUseBackgroundColourForAxes)
     
      return
   end select

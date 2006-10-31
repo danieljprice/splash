@@ -1598,7 +1598,7 @@ contains
   subroutine page_setup
     use pagesetup, only:setpage2
     use settings_render, only:ColourBarWidth,ColourBarDisp
-    use settings_page, only:nstepsperpage
+    use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes
     implicit none
     real :: barwidth, TitleOffset,xch,ych
     logical :: ipanelchange
@@ -1640,6 +1640,8 @@ contains
     !--------------------------------------------------------------
     ! set up pgplot page
     !--------------------------------------------------------------
+    !--use foreground colour
+    call pgsci(1)
 
     !--leave space for colour bar if necessary (at end of row only on tiled plots)
     if ((tile_plots .and. iAllowspaceforcolourbar).or.(.not.tile_plots.and.iColourBar)) then
@@ -1713,6 +1715,9 @@ contains
        xminmulti(irender) = rendermin
        xmaxmulti(irender) = rendermax
     endif
+    
+    !--change to background colour index for overlaid text and axes
+    if (iUseBackGroundColourForAxes) call pgsci(0)
     
     return
   end subroutine page_setup
