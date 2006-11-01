@@ -30,15 +30,15 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,units,unitslabel,iformat
-  use mem_allocation
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat
+  use mem_allocation, only:alloc
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer, parameter :: maxarrsizes = 10, maxreal = 50
   real, parameter :: pi=3.141592653589
-  integer :: i,j,ifile,ierr,iunit,int1,int2,int3,i1,iarr
+  integer :: i,j,ierr,iunit,int1,int2,int3,i1,iarr
   integer :: npart_max,nstep_max,ncolstep,icolumn
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
   integer :: nskip,ntotal,npart,itype,ntypes
@@ -56,13 +56,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real(doub_prec) :: udist,umass,utime,umagfd,r8
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
-  real :: pmassinitial
-  common /sphNGunits/ udist,umass,utime,umagfd
+  real :: pmassinitial,rhozero,tfreefall
+  common /sphNGunits/ udist,umass,utime,umagfd,tfreefall
 
   nstepsread = 0
   nstep_max = 0
   npart_max = maxpart
-  ifile = 1
   iunit = 15
 
   dumpfile = trim(rootname)   
@@ -256,6 +255,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--extract required information
    time(j) = dummyreal(1)
    gamma(j) = dummyreal(3)
+   rhozero = dummyreal(4)
+   tfreefall = SQRT((3. * pi) / (32. * rhozero))
    npartoftype(1,j) = npart
    npartoftype(2,j) = ntotal - npart
    nptmass = isize(2)
@@ -488,14 +489,17 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels
+  use labels, only:label,labeltype,labelvec,iamvec, &
+              ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst
   use params
-  use settings_data
+  use settings_data, only:ndim,ndimV,ntypes,ncolumns,iformat, &
+                     units,unitslabel,UseTypeInRenderings
   use geometry, only:labelcoord
   implicit none
   integer :: i
+  real :: tfreefall
   real(doub_prec) :: udist,umass,utime,umagfd
-  common /sphNGunits/ udist,umass,utime,umagfd
+  common /sphNGunits/ udist,umass,utime,umagfd,tfreefall
   
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -594,8 +598,12 @@ subroutine set_labels
    endif
    units(irho) = umass/udist**3
    unitslabel(irho) = ' [g/cm\u3\d]'
-   units(0) = utime/3.1536e7
-   unitslabel(0) = ' yrs'
+   !--use the following two lines for time in years
+   !units(0) = utime/3.1536e7
+   !unitslabel(0) = ' yrs'
+   !--or use these two lines for time in free-fall times
+   units(0) = 1./tfreefall
+   unitslabel(0) = ' '
   !
   !--set labels for each particle type
   !
