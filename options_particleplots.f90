@@ -5,7 +5,7 @@
 module settings_part
  use params
  implicit none
- integer, dimension(maxparttypes) :: imarktype
+ integer, dimension(maxparttypes) :: imarktype,icolourtypedefault
  integer, dimension(100) :: icircpart
  integer :: ncircpart, icoordsnew
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
@@ -14,7 +14,7 @@ module settings_part
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
-   iexact,icoordsnew,ifastparticleplot
+   iexact,icoordsnew,ifastparticleplot,icolourtypedefault
 
 contains
 
@@ -41,7 +41,8 @@ subroutine defaults_set_part
   PlotOnRenderings = .false.
   imarktype = 1              ! PGPLOT marker for all particles
   imarktype(2) = 4           ! PGPLOT marker for ghost/dark matter particles
-  imarktype(3) = 17          ! PGPLOT marker for sink particles 
+  imarktype(3) = 17          ! PGPLOT marker for sink particles
+  icolourtypedefault = 1     ! default colour for each particle type
   ifastparticleplot = .true. ! allow crowded-field elimination on particle plots
 
   return
@@ -60,22 +61,35 @@ subroutine submenu_particleplots
   use geometry, only:maxcoordsys,labelcoordsys,coord_transform_limits
   implicit none
   integer :: i,iaction,n,itype,icoordsprev
+  character(len=2) :: charntypes
+  character(len=1000) :: fmtstring
 
   iaction = 0
-  print 10,iplotpartoftype,imarktype,iplotline,ilabelpart,ncircpart, &
-           ifastparticleplot,icoordsnew,iexact
-10  format('------------- particle plot options -------------------',/,&
-         ' 0) exit ',/,                 &
-         ' 1) turn on/off particles by type      ( ',6(L1,',',1x),' )',/,  &
-         ' 2) change graph markers for each type ( ',6(i2,',',1x),' )',/,  &
-         ' 3) plot line joining particles        ( ',L1,' ) ',/, &
-         ' 4) label particles                    ( ',L1,' ) ',/, &
-         ' 5) plot smoothing circles             ( ',i3,' ) ',/, &
-         ' 6) use fast particle plotting         ( ',L1,' ) ',/, &
-         ' 7) change coordinate systems          ( ',i2,' ) ',/, &
-         ' 8) plot exact solution                ( ',i2,' ) ',/, &
-         ' 9) exact solution options')
-    call prompt('enter option',iaction,0,9)
+  
+  !--we require some tricks with the format string to print only the actual number of
+  !  particle types rather than the whole array
+  !
+  if (ntypes.gt.100) print*,'WARNING: Internal error: ntypes too large for formatting in particle plot menu'
+  write(charntypes,"(i2)") ntypes-1
+  fmtstring="('------------- particle plot options -------------------',/,"// &
+         "' 0) exit ',/,"// &
+         "' 1) turn on/off particles by type       ( ',"//charntypes//"(a,',',1x),a,' )',/,"// &
+         "' 2) change graph markers for each type  ( ',"//charntypes//"(i2,',',1x),i2,' )',/,"//  &
+         "' 3) change default colour for each type ( ',"//charntypes//"(i2,',',1x),i2,' )',/,"//  &
+         "' 4) plot line joining particles         ( ',a,' ) ',/,"// &
+         "' 5) label particles                     ( ',a,' ) ',/,"// &
+         "' 6) plot smoothing circles              ( ',i3,' ) ',/,"// &
+         "' 7) use fast particle plotting          ( ',a,' ) ',/,"// &
+         "' 8) change coordinate systems           ( ',i2,' ) ',/,"// &
+         "' 9) plot exact solution                 ( ',i2,' ) ',/,"// &
+         "'10) exact solution options')"
+
+  print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
+           imarktype(1:ntypes),icolourtypedefault(1:ntypes),print_logical(iplotline), &
+           print_logical(ilabelpart),ncircpart, &
+           print_logical(ifastparticleplot),icoordsnew,iexact
+
+  call prompt('enter option',iaction,0,9)
 !
   select case(iaction)
 !------------------------------------------------------------------------
@@ -85,7 +99,7 @@ subroutine submenu_particleplots
         call prompt('Plot '//trim(labeltype(itype))//' particles?',iplotpartoftype(itype))
         if (iplotpartoftype(itype) .and. itype.gt.1) then
            if (.not.UseTypeInRenderings(itype)) then
-              call prompt('Plot on top of rendered plots?',PlotOnRenderings(itype))
+              call prompt('>> Plot '//trim(labeltype(itype))//' particles on top of rendered plots?',PlotOnRenderings(itype))
            else
               PlotonRenderings(itype) = .false.
            endif
@@ -104,6 +118,14 @@ subroutine submenu_particleplots
      return   
 !------------------------------------------------------------------------
   case(3)
+     print*,'0=background 1=foreground 2->10=various colours'
+     do itype=1,ntypes
+        call prompt(' Enter default colour for '//trim(labeltype(itype)) &
+             //' particles:',icolourtypedefault(itype),0,14)
+     enddo
+     return   
+!------------------------------------------------------------------------
+  case(4)
      call prompt('plot line joining particles?',iplotline)
      if (iplotline) then     
         call prompt('Enter PGPLOT line style to use ',linestyle,0,5)
@@ -111,13 +133,13 @@ subroutine submenu_particleplots
      endif
      return 
 !-----------------------------------------------------------------------
-  case(4)
+  case(5)
      !          label particles with particle numbers
      ilabelpart=.not.ilabelpart
      print*,' label particles = ',ilabelpart
      return           
 !------------------------------------------------------------------------
-  case(5)
+  case(6)
      print*,'Note that circles of interaction can also be set interactively'
      call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))
      if (ncircpart.gt.0) then
@@ -135,13 +157,13 @@ subroutine submenu_particleplots
      endif
      return           
 !------------------------------------------------------------------------
-  case(6)
+  case(7)
      print "(1x,a,/,a,/)",'Fast particle plotting excludes particles in crowded regions', &
                      ' Turn this option off to always plot every particle'  
      call prompt('Allow fast particle plotting?',ifastparticleplot)
      return 
 !------------------------------------------------------------------------
-  case(7)
+  case(8)
      print 20,icoords
      do i=1,maxcoordsys
         print 30,i,labelcoordsys(i)
@@ -159,11 +181,11 @@ subroutine submenu_particleplots
      endif
      return
 !------------------------------------------------------------------------
-  case(8)
+  case(9)
      call submenu_exact(iexact)
      return
 !------------------------------------------------------------------------
-  case(9)
+  case(10)
      call options_exact
      return     
 !------------------------------------------------------------------------

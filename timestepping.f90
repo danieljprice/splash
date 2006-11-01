@@ -124,6 +124,8 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
      !--colour the timestep if appropriate
      if (nstepsperpage.gt.1 .and. (iColourEachStep .or. iChangeStyles)) then
         call colour_timestep(istepsonpage,iColourEachStep,iChangeStyles)
+     else
+        call colourparts_default(npartoftype(:,ilocindat))
      endif
 
 !     print*,'ipos = ',ipos,' istep = ',istep,' iposindat = ',ilocindat
@@ -277,5 +279,28 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
 
   return
 end subroutine colour_timestep
+
+!---------------------------------------------------------------------------------------
+! colours all the particles using the default colour for their type
+! but ONLY if colours like red, green have not already been set (ie. if all colours < 1)
+!---------------------------------------------------------------------------------------
+subroutine colourparts_default(npartoftype)
+  use settings_data, only:ntypes
+  use particle_data, only:icolourme
+  use settings_part, only:icolourtypedefault
+  implicit none
+  integer, dimension(:), intent(in) :: npartoftype
+  integer :: index1,index2,itype
+  
+  index1 = 1
+  if (all(icolourme(1:sum(npartoftype(1:ntypes))).le.1)) then
+     do itype=1,ntypes
+        index2 = index1 + npartoftype(itype) - 1
+        icolourme(index1:index2) = icolourtypedefault(itype)
+        index1 = index2 + 1
+     enddo
+  endif
+
+end subroutine colourparts_default
 
 end module timestepping
