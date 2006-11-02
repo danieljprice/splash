@@ -239,21 +239,35 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
 
 end subroutine legend_markers
 
+!-------------------------------------------------------------------
+!     plots labelled scale (horizontal error bar of a given length)
+!     can be used on co-ordinate plots to give a length scale
+!
+!     e.g. would produce something like:
+!
+!                   |----|
+!                   10 AU
+!
+!     arguments:
+!        dxscale : length of scale in current x units
+!        hpos : horizontal position as fraction of viewport
+!        vpos : vertical position in character heights from top
+!        text : label to print above scale
+!-----------------------------------------------------------------
 subroutine legend_scale(dxscale,hpos,vpos,text)
   implicit none
   real, intent(in) :: dxscale,hpos,vpos
   character(len=*), intent(in) :: text
   real :: xmin,xmax,ymin,ymax,xch,ych,xpos,ypos
   
-  !--draw horizontal "error bar" one character height above text
   call pgqwin(xmin,xmax,ymin,ymax)
   if (dxscale.gt.(xmax-xmin)) then
      print "(a)",'Error: scale size exceeds x dimensions: scale not plotted'
   else
      call pgqcs(4,xch,ych)
+     !--draw horizontal "error bar" above text
      ypos = ymin + (vpos+1.25)*ych
      xpos = xmin + hpos*(xmax-xmin)
-     print*,'xpos,ypos = ',xpos,ypos
      call pgerr1(5,xpos,ypos,0.5*dxscale,1.0)
 
      !--write text at the position specified
