@@ -374,8 +374,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use exactfromfile, only:exact_fromfile
 
   implicit none
-  integer, intent(inout) :: ipos
-  integer, intent(in) :: istep, istepsonpage, irender_nomulti, ivecplot
+  integer, intent(inout) :: ipos, istepsonpage
+  integer, intent(in) :: istep, irender_nomulti, ivecplot
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(:,:), intent(in) :: dat
   real, intent(in) :: timei,gammai
@@ -1232,12 +1232,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    pmass(1:npartoftype(1)),npartoftype(1),imarktype(1), &
                    units(iplotx),units(iploty),irescale,iaxisy)
            endif
+
+           !--the following line sets the number of steps on page to nstepsonpage
+           !  in the case where we reach the last timestep before nstepsonpage is reached
+           !  (makes interactive replotting behave better)
+           if (lastplot) istepsonpage = nstepsperpage
+
            !
            !--enter interactive mode
            !
 
            if (interactive) then
-              if (nacross*ndown.eq.1) then
+              if (nacross*ndown.eq.1 .and. nstepsperpage.eq.1) then
                  iadvance = nfreq
                  rendermintemp = rendermin
                  rendermaxtemp = rendermax
@@ -1348,9 +1354,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !--enter interactive mode
         !
         lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) .and. nyplot.eq.nyplots)
+        !--the following line sets the number of steps on page to nstepsonpage
+        !  in the case where we reach the last timestep before nstepsonpage is reached
+        !  (makes interactive replotting behave better)
+        if (lastplot) istepsonpage = nstepsperpage
 
         if (interactive) then
-           if (nacross*ndown.eq.1) then
+           if (nacross*ndown.eq.1 .and. nstepsperpage.eq.1) then
               iadvance = nfreq
               iChangeRenderLimits = .false.
               call interactive_part(ntoti,iplotx,iploty,0,irenderpart,0,0, &
@@ -1560,6 +1570,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         endif
 
         lastplot = (ipos.eq.iendatstep .or. istep.eq.nsteps)
+        !--the following line sets the number of steps on page to nstepsonpage
+        !  in the case where we reach the last timestep before nstepsonpage is reached
+        !  (makes interactive replotting behave better)
+        if (lastplot) istepsonpage = nstepsperpage
 
         if (interactive .and.((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) &
            .or. lastplot)) then
@@ -1618,7 +1632,7 @@ contains
     irow = (ipanel-1)/nacross + 1
 
     !--if we are in interactive mode, use the currently buffered plot limits
-    if (interactivereplot .and. nacross*ndown.gt.1) then
+    if (interactivereplot .and. (nacross*ndown.gt.1 .or. nstepsperpage.gt.1)) then
        xmin = xminmulti(iplotx)
        xmax = xmaxmulti(iplotx)
        ymin = xminmulti(iploty)
