@@ -62,6 +62,7 @@ subroutine submenu_particleplots
   implicit none
   integer :: i,iaction,n,itype,icoordsprev
   character(len=2) :: charntypes
+  character(len=20) :: substring1,substring2
   character(len=1000) :: fmtstring
 
   iaction = 0
@@ -70,12 +71,23 @@ subroutine submenu_particleplots
   !  particle types rather than the whole array
   !
   if (ntypes.gt.100) print*,'WARNING: Internal error: ntypes too large for formatting in particle plot menu'
-  write(charntypes,"(i2)") ntypes-1
+  if (ntypes.le.0) then
+     substring1 = "no types specified"
+     substring2 = "not applicable" 
+  elseif (ntypes.eq.1) then
+     substring1 = "a"
+     substring2 = "i2"
+  else
+     write(charntypes,"(i2)") ntypes-1
+     substring1 = charntypes//"(a,',',1x),a"
+     substring2 = charntypes//"(i2,',',1x),i2"
+  endif
+  
   fmtstring="('------------- particle plot options -------------------',/,"// &
          "' 0) exit ',/,"// &
-         "' 1) turn on/off particles by type       ( ',"//charntypes//"(a,',',1x),a,' )',/,"// &
-         "' 2) change graph markers for each type  ( ',"//charntypes//"(i2,',',1x),i2,' )',/,"//  &
-         "' 3) change default colour for each type ( ',"//charntypes//"(i2,',',1x),i2,' )',/,"//  &
+         "' 1) turn on/off particles by type       ( ',"//trim(substring1)//",' )',/,"// &
+         "' 2) change graph markers for each type  ( ',"//trim(substring2)//",' )',/,"//  &
+         "' 3) change default colour for each type ( ',"//trim(substring2)//",' )',/,"//  &
          "' 4) plot line joining particles         ( ',a,' ) ',/,"// &
          "' 5) label particles                     ( ',a,' ) ',/,"// &
          "' 6) plot smoothing circles              ( ',i3,' ) ',/,"// &
