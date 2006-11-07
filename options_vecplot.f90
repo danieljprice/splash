@@ -40,13 +40,14 @@ subroutine submenu_vecplot
  integer :: ians
   
  ians = 0
- print 10,npixvec,UseBackgndColorVecplot,iVecplotLegend,iplotstreamlines
+ print 10,npixvec,print_logical(UseBackgndColorVecplot), &
+          print_logical(iVecplotLegend),print_logical(iplotstreamlines)
 10  format('--------------- vector plot options -------------------',/,&
            ' 0) exit ',/, &
            ' 1) change number of pixels                   (',i4,' )',/, &
-           ' 2) use background/foreground colour          (',L1,' )',/, &
-           ' 3) vector plot legend settings               (',L1,' )',/, &
-           ' 4) plot stream/field lines instead of arrows (',L1,' )')
+           ' 2) use background colour for arrows          ( ',a,' )',/, &
+           ' 3) vector plot legend settings               ( ',a,' )',/, &
+           ' 4) plot stream/field lines instead of arrows ( ',a,' )')
  call prompt('enter option',ians,0,4)
 !
 !--options
@@ -58,7 +59,8 @@ subroutine submenu_vecplot
 !------------------------------------------------------------------------
  case(2)
     UseBackgndColorVecplot = .not.UseBackgndColorVecplot
-    print*,'use background colour on vector plots = ',UseBackgndColorVecplot
+    print*,'use background colour on vector plots = ', &
+           print_logical(UseBackgndColorVecplot)
 !------------------------------------------------------------------------
  case(3)
     call prompt('plot vector legend?',iVecplotLegend)

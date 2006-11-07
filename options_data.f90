@@ -80,18 +80,21 @@ subroutine submenu_data
  ians = 0
  
  if (iUseStepList) then
-    print 10, iendatstep,iUseStepList,buffer_data,iCalcQuantities,iRescale
+    print 10, iendatstep,print_logical(iUseStepList),print_logical(buffer_data), &
+              print_logical(iCalcQuantities),print_logical(iRescale)
  else
-    print 10, (iendatstep-istartatstep+1)/nfreq,iUseStepList,buffer_data,iCalcQuantities,iRescale
+    print 10, (iendatstep-istartatstep+1)/nfreq,print_logical(iUseStepList), &
+              print_logical(buffer_data),print_logical(iCalcQuantities), &
+              print_logical(iRescale)
  endif
- 
-10  format(' 0) exit ',/,               &
+10  format('----------------- data read options -------------------',/,&
+           ' 0) exit ',/,               &
            ' 1) read new data /re-read data',/,      &
            ' 2) change number of timesteps used        ( ',i5, ' )',/, &
-           ' 3) plot selected steps only               (  ',L1,' )',/, &
-           ' 4) buffering of data on/off               (  ',L1, ' )',/, &
-           ' 5) turn calculate extra quantities on/off (  ',L1, ' )',/, &
-           ' 6) use physical units                     (  ',L1, ' )',/,&
+           ' 3) plot selected steps only               (  ',a,' )',/, &
+           ' 4) buffering of data on/off               (  ',a,' )',/, &
+           ' 5) turn calculate extra quantities on/off (  ',a,' )',/, &
+           ' 6) use physical units                     (  ',a,' )',/,&
            ' 7) change physical unit settings ')
  call prompt('enter option',ians,0,7)
 !
