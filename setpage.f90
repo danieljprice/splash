@@ -86,6 +86,8 @@ subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
 !
      yopts = '*'
      select case(axis)
+     case(-4)
+        xopts = 'BCT'
      case(-3)
         xopts = 'BCST'
      case(-2)
@@ -175,6 +177,8 @@ subroutine redraw_axes(iaxis)
 !
   yopts = '*'
   select case(iaxis)
+  case(-4)
+     xopts = 'BCT'
   case(-3)
      xopts = 'BCST'
   case(-2)
@@ -284,7 +288,7 @@ end subroutine redraw_axes
 !      
   if (tile .and. just.eq.1) then
      if (ymax.eq.ymin) then
-        print*,'danpgtile: error tiling plots: ymax=ymin'
+        print*,'setpage: error tiling plots: ymax=ymin'
         return
      endif
 !
@@ -404,34 +408,37 @@ end subroutine redraw_axes
   if (trim(title).eq.'NOPGBOX') return
 !
 ! set options for call to pgbox (draws axes) and label axes where appropriate
-! (options are exactly as in pgenv apart from axis=-3 which i have added)
+! (options are exactly as in pgenv apart from axis=-3,-4 which i have added)
 !
   yopts = '*'
-  if (axis.eq.-3) then
+  select case(axis)
+  case(-4)
+     xopts = 'BCT'
+  case(-3)
      xopts = 'BCST'
-  elseif (axis.eq.-2) then
+  case(-2)
      xopts = ' '
-  elseif (axis.eq.-1) then
+  case(-1)
     xopts = 'BC'
-  elseif (axis.eq.0) then
+  case(0)
     xopts = 'BCST'
-  elseif (axis.eq.1) then
+  case(1)
     xopts = 'ABCST'
-  elseif (axis.eq.2) then
+  case(2)
     xopts = 'ABCGST'
-  elseif (axis.eq.10) then
+  case(10)
     xopts = 'BCSTL'
     yopts = 'BCST'
-  elseif (axis.eq.20) then
+  case(20)
     xopts = 'BCST'
     yopts = 'BCSTL'
-  elseif (axis.eq.30) then
+  case(30)
     xopts = 'BCSTL'
     yopts = 'BCSTL'
-  else
-    call grwarn('danpgtile: illegal axis argument.')
+  case default
+    print*,'setpage: illegal axis argument.'
     xopts = 'BCNST'
-  endif
+  end select
   if (yopts.eq.'*') yopts = xopts
 !
 ! label plot

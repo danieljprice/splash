@@ -122,7 +122,8 @@ subroutine submenu_page
      return          
 !------------------------------------------------------------------------
   case(2)
-     print*,'-3 : same as AXIS=-1, but also draw tick marks;'
+     print*,'-4 : draw box and major tick marks only;'
+     print*,'-3 : draw box and tick marks (major and minor) only;'
      print*,'-2 : draw no box, axes or labels;'
      print*,'-1 : draw box only;'
      print*,' 0 : draw box and label it with coordinates;'
@@ -131,7 +132,7 @@ subroutine submenu_page
      print*,'10 : draw box and label X-axis logarithmically;'
      print*,'20 : draw box and label Y-axis logarithmically;'
      print*,'30 : draw box and label both axes logarithmically.'
-     call prompt('enter axis option ',iaxis,-3,30)
+     call prompt('enter axis option ',iaxis,-4,30)
      print *,' axis = ',iaxis
      return
 !------------------------------------------------------------------------
