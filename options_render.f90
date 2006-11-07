@@ -50,17 +50,19 @@ subroutine submenu_render
 !--rendering options
 !
   ians = 0
-  print 10,npix,icolours,iplotcont_nomulti,ncontours, &
-        iPlotColourBar,icolour_particles,inormalise_interpolations,ifastrender
-10 format(' 0) exit ',/,                      &
+  print 10,npix,icolours,print_logical(iplotcont_nomulti),ncontours, &
+        print_logical(iPlotColourBar),print_logical(icolour_particles), &
+        print_logical(inormalise_interpolations),print_logical(ifastrender)
+10 format('----------------- rendering options -------------------',/, &
+           ' 0) exit ',/,                      &
            ' 1) change number of pixels           (',i5,' )',/, &
            ' 2) change colour scheme              (',i2,' )',/,    &
-           ' 3) plot contours                     ( ',L1,' )',/, &
+           ' 3) plot contours                     ( ',a,' )',/, &
            ' 4) change number of contours         (',i3,' )',/, &
-           ' 5) colour bar options                ( ',L1,' )',/,&
-           ' 6) use particle colours not pixels   ( ',L1,' )',/,& 
-           ' 7) normalise interpolations          ( ',L1,' )',/,&
-           ' 8) use accelerated rendering         ( ',L1,' )')
+           ' 5) colour bar options                ( ',a,' )',/,&
+           ' 6) use particle colours not pixels   ( ',a,' )',/,& 
+           ' 7) normalise interpolations          ( ',a,' )',/,&
+           ' 8) use accelerated rendering         ( ',a,' )')
   call prompt('enter option',ians,0,8)
 !
 !--options

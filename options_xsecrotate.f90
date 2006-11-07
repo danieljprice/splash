@@ -74,14 +74,17 @@ subroutine submenu_xsecrotate
  else
     text = 'proj'
  endif
- print 10,text,xsecpos_nomulti,irotate,use3Dperspective,use3Dopacityrendering,irotateaxes
-10  format(' 0) exit ',/,                 &
+ print 10,text,xsecpos_nomulti,print_logical(irotate), &
+          print_logical(use3Dperspective),print_logical(use3Dopacityrendering), &
+          irotateaxes
+10  format('---------- cross section / 3D plotting options --------',/, &
+           ' 0) exit ',/,       &
            ' 1) switch between cross section/projection     ( ',a4,' )',/, &
            ' 2) set cross section position                  (',f5.2,' )',/, &
-           ' 3) rotation settings/options                   (',L1,' )',/, &
-           ' 4) 3D perspective on/off                       (',L1,' )',/, &
-           ' 5) 3D surface rendering on/off/options         (',L1,' )',/, &
-           ' 6) set axes for rotated/3D plots               (',i2,' )')
+           ' 3) rotation settings/options                   ( ',a,' )',/, &
+           ' 4) 3D perspective on/off                       ( ',a,' )',/, &
+           ' 5) 3D surface rendering on/off/options         ( ',a,' )',/, &
+           ' 6) set axes for rotated/3D plots               ( ',i2,' )')
  call prompt('enter option',ians,0,6)
 !
 !--options

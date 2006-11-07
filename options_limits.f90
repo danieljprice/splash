@@ -55,12 +55,13 @@ subroutine submenu_limits(help)
 
  iaction = 0
  if (iadapt) then
-    print 10,iadapt,iadaptcoords,itrackpart,scalemax
+    print 10,print_logical(iadapt),print_logical(iadaptcoords),itrackpart,scalemax
  else
-    print 10,iadapt,iadaptcoords,itrackpart,zoom
+    print 10,print_logical(iadapt),print_logical(iadaptcoords),itrackpart,zoom
  endif
-10 format(' 0) exit ',/,                 &
-        ' 1) set adaptive/fixed limits  ( ',L1,L1,' )   ',/,  &
+10 format('------------------ limits options ---------------------',/, &
+        ' 0) exit ',/,                 &
+        ' 1) set adaptive/fixed limits     ( ',a,', ',a,' )   ',/,  &
         ' 2) set manual limits ',/,     &
         ' 3) xy limits track particle      ( ',i8,' )   ',/,   &
         ' 4) zoom in/out                   ( ',f4.2,' ) ',/,   &
