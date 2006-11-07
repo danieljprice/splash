@@ -230,6 +230,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
    enddo
    
+!
+!--this is a bug fix for a corrupt version of wdump outputting bad
+!  small dump files
+!
+   if (smalldump .and. nreal(1).eq.5) then
+      print*,'FIXING CORRUPT HEADER ON SMALL DUMPS: assuming nreal=3 not 5'
+      nreal(1) = 3
+      ncolstep = ncolstep - 2
+   endif
+   
    npart_max = maxval(isize(1:narrsizes))
    if (smalldump) then
       if (nreals.ge.15) then
