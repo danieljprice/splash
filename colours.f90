@@ -9,7 +9,7 @@ module colours
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
-      'ice blue         ', &
+      'red-yellow-wht   ', &
       'heat             ', &
       'rainbow          ', &
       'prism            ', &
@@ -51,6 +51,9 @@ subroutine colour_set(icolourscheme)
   red = 0.0
   green = 0.0
   blue = 0.0
+  dred = 0.
+  dblue = 0.
+  dgreen = 0.
   rgb = .false.
   ncolours = ncolourmax-1
   nset = 0
@@ -83,33 +86,6 @@ subroutine colour_set(icolourscheme)
 !--starting values
 !      
   select case(icolourscheme)
-!  case(2)  
-!    red
-!     rgb = .false.
-!     hue=100
-!     light=0.0
-!     sat=1.0      
-!     dlight = 1.0/FLOAT(ncolours)
-!     dsat = 0.0
-!     dhue = 80.0/FLOAT(ncolours)         
-  case(2)        ! green
-!    universe
-     rgb = .true.         
-     red=0.
-     green=0.
-     blue=1./6.
-     dred =1.0/FLOAT(ncolours)
-     dgreen = 1.0/FLOAT(ncolours)
-     dblue = (1./6.)/FLOAT(ncolours)
-!  case(3)        ! blue
-!    ice blue
-!     rgb = .false.
-!     hue=330
-!     light=0.0
-!     sat=1.0
-!     dlight = 1.0/FLOAT(ncolours)
-!     dsat = 0.0
-!     dhue = 40.0/FLOAT(ncolours)
   case(3) 
 !    rainbow
      rgb = .false.         
@@ -119,7 +95,6 @@ subroutine colour_set(icolourscheme)
      dlight = 0.0        !/FLOAT(ncolours)
      dsat = 0.0
      dhue = 320.0/FLOAT(ncolours)
-
 !  case default
 !    default is greyscale
 !!     return
@@ -163,12 +138,19 @@ subroutine colour_set(icolourscheme)
      greenarr(1:nset)= (/0.000,0.004,0.420,0.518,1.000/)
      bluearr(1:nset) = (/0.000,0.000,0.000,0.000,1.000/)
      case(3)
-     !--ice blue (IDL blue-white)
-     nset =  5
-     lumarr(1:nset)  = (/0.000,0.376,0.737,0.753,1.000/)
-     redarr(1:nset)  = (/0.000,0.000,0.000,0.000,1.000/)
-     greenarr(1:nset)= (/0.000,0.000,0.580,0.604,1.000/)
-     bluearr(1:nset) = (/0.000,0.510,1.000,1.000,1.000/)
+     !--Bate red-yellow-white
+     nset =  4
+     lumarr(1:nset)  = (/0.000,0.337,0.666,1.000/)
+     redarr(1:nset)  = (/0.000,1.000,1.000,1.000/)
+     greenarr(1:nset)= (/0.000,0.000,1.000,1.000/)
+     bluearr(1:nset) = (/0.000,0.000,0.000,1.000/)
+!     case(3)
+!     !--ice blue (IDL blue-white)
+!     nset =  5
+!     lumarr(1:nset)  = (/0.000,0.376,0.737,0.753,1.000/)
+!     redarr(1:nset)  = (/0.000,0.000,0.000,0.000,1.000/)
+!     greenarr(1:nset)= (/0.000,0.000,0.580,0.604,1.000/)
+!     bluearr(1:nset) = (/0.000,0.510,1.000,1.000,1.000/)
      case(4)
      !--heat
      nset = 5
