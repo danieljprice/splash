@@ -200,14 +200,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (ierr /=0 ) then
         print "(a)",'error reading particle positions'
      else
-        do icol=1,3
+        do icol=1,ndim
            dat(1:ntoti,icol,i) = dattemp(icol,1:ntoti)
         enddo
      endif
      !
      !--read rest of data columns
      !
-     do icol=4,ncolumns
+     do icol=ndim+1,ncolumns
         read(iunit,iostat=ierr) dat(1:ntoti,icol,i)
         if (ierr /= 0) print "(a,i2)", 'error reading column ',icol
      enddo
@@ -228,7 +228,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      !--read rest of data columns
      !
-     do icol=4,ncolumns
+     do icol=ndim+1,ncolumns
         read(iunit,iostat=ierr) dattempd(1,1:ntoti)
         if (ierr /= 0) print "(a,i2)", 'error reading column ',icol
         !--convert to single precision
@@ -242,7 +242,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--close data file and return
   !                    
-close(unit=11)
+close(unit=iunit)
 
 print "(a)",' finished data read '
 
@@ -290,7 +290,7 @@ subroutine set_labels
        if (iachar(label(i)(j:j)).eq.0) label(i)(j:j) = ' '
     enddo
     !--set positions of various quantities depending on labels
-    if (label(i)(1:1)=='m' .or. label(i)(1:5)=='mass') then
+    if (label(i)(1:1)=='m' .or. label(i)(1:4)=='mass') then
        ipmass = i
     elseif (label(i)(1:3)=='rho' .or. label(i)(1:4)=='dens') then
        irho = i
@@ -311,11 +311,13 @@ subroutine set_labels
  !
  !--label vector quantities (e.g. velocity) appropriately
  !
- iamvec(ivx:ivx+ndimV-1) = ivx
- labelvec(ivx:ivx+ndimV-1) = 'v'
- do i=1,ndimV
-    label(ivx+i-1) = trim(labelvec(ivx+i-1))//'\d'//labelcoord(i,1)
- enddo
+ if (ivx.gt.0) then
+    iamvec(ivx:ivx+ndimV-1) = ivx
+    labelvec(ivx:ivx+ndimV-1) = 'v'
+    do i=1,ndimV
+       label(ivx+i-1) = trim(labelvec(ivx+i-1))//'\d'//labelcoord(i,1)
+    enddo
+ endif
  if (iBfirst.gt.0) then
     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
