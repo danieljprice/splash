@@ -256,11 +256,11 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
            dy2 = dy*dy*hi21
            do ipix = ipixmin,ipixmax
               qq2 = dx2i(ipix) + dy2
-              qq = sqrt(qq2)
               !
               !--SPH kernel - standard cubic spline
               !     
-              if (qq.lt.2.0) then
+              if (qq2.lt.4.0) then
+                 qq = sqrt(qq2)
                  if (qq.lt.1.0) then
                     wab = (1.-1.5*qq2 + 0.75*qq*qq2)
                  else
