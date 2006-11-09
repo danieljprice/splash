@@ -94,7 +94,7 @@ subroutine submenu_page
           ' 6) set character height            (',f4.1,')',/,&
           ' 7) adjust line width               (',i1,')',/,&
           ' 8) set foreground/background colours ')
- call prompt('enter option ',iaction,0,9)
+ call prompt('enter option ',iaction,0,8)
 
  select case(iaction)
 !------------------------------------------------------------------------
