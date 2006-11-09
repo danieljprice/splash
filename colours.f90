@@ -9,7 +9,7 @@ module colours
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
-      'red-yellow-wht   ', &
+      'red-yellow-white ', &
       'heat             ', &
       'rainbow          ', &
       'prism            ', &
