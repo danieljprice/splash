@@ -9,10 +9,10 @@ contains
 ! This subroutine drives the main plotting loop
 !
 subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
-  use filenames, only:nsteps
+  use filenames, only:nsteps,ifileopen
   use particle_data, only:npartoftype,time,gamma,dat
   use settings_data, only:istartatstep,iendatstep,nfreq,DataIsBuffered, &
-                          iUsesteplist,isteplist,ncolumns
+                          iUsesteplist,isteplist,ncolumns,ipartialread
   use settings_page, only:interactive,nstepsperpage,iColourEachStep,iChangeStyles
   use timestep_plotting, only:initialise_plotting,plotstep
   implicit none
@@ -44,6 +44,9 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
   istepsonpage = 0
   istep = istartatstep
+  !--if the current file has only been partially read, 
+  !  make sure we read the file again now that we may have different plotting options
+  if (ipartialread) ifileopen = 0
 
   over_timesteps: do while (ipos.le.iendatstep)
      

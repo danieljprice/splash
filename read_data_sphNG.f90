@@ -25,12 +25,15 @@
 !
 ! most of these values are stored in global arrays 
 ! in the module 'particle_data'
+!
+! Partial data read implemented Nov 2006 means that columns with
+! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
   use mem_allocation, only:alloc
   implicit none
   integer, intent(in) :: indexstart
@@ -355,11 +358,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
                icolumn = imaxcolumnread + 1
                imaxcolumnread = icolumn
             endif
-            if (doubleprec) then
-               read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
-               dat(1:isize(iarr),icolumn,j) = real(dattemp(1:isize(iarr)))
+            if (required(icolumn)) then
+               if (doubleprec) then
+                  read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
+                  dat(1:isize(iarr),icolumn,j) = real(dattemp(1:isize(iarr)))
+               else
+                  read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j)
+               endif
             else
-               read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j)
+               read(iunit,end=33,iostat=ierr)
             endif
          enddo
 !        set masses for equal mass particles (not dumped in small dump)
@@ -380,14 +387,22 @@ subroutine read_data(rootname,indexstart,nstepsread)
                icolumn = imaxcolumnread + 1
                imaxcolumnread = icolumn
             endif
-            read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j) 
+            if (required(icolumn)) then
+               read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j)
+            else
+               read(iunit,end=33,iostat=ierr)
+            endif 
          enddo
          icolumn = imaxcolumnread
 !        real 8's need converting
          do i=1,nreal8(iarr)
             icolumn = icolumn + 1 !!nextcolumn(icolumn,iarr,nhydroarrays,nmhdarrays,imaxcolumnread) 
-            read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
-            dat(1:isize(iarr),icolumn,j) = real(dattemp(1:isize(iarr)))
+            if (required(icolumn)) then
+               read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
+               dat(1:isize(iarr),icolumn,j) = real(dattemp(1:isize(iarr)))
+            else
+               read(iunit,end=33,iostat=ierr)
+            endif
          enddo
       endif
    enddo
@@ -396,6 +411,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 33 continue
 
+    !--set flag to indicate that only part of this file has been read 
+    if (.not.all(required(1:ncolstep))) ipartialread = .true.
     nptmassi = 0
     nunknown = 0
 !

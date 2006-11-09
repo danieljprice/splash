@@ -25,13 +25,16 @@
 !
 ! most of these values are stored in global arrays 
 ! in the module 'particle_data'
+!
+! Partial data read implemented Nov 2006 means that columns with
+! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data
   use params
   use labels
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
   use mem_allocation
   implicit none
   integer, intent(in) :: istepstart
@@ -172,36 +175,53 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      !--read positions of all particles
      !
-     print*,'positions ',ntoti
-     read (11, iostat=ierr) dattemp(1:3,1:ntoti)        
-     if (ierr /= 0) then
-        print "(a)",'error encountered whilst reading positions '
-        return
+     if (any(required(1:3))) then
+        print*,'positions ',ntoti
+        read (11, iostat=ierr) dattemp(1:3,1:ntoti)        
+        if (ierr /= 0) then
+           print "(a)",'error encountered whilst reading positions '
+           return
+        else
+           do icol=1,3
+              dat(1:ntoti,icol,i) = dattemp(icol,1:ntoti)
+           enddo
+        endif
      else
-        do icol=1,3
-           dat(1:ntoti,icol,i) = dattemp(icol,1:ntoti)
-        enddo
+        read(11, iostat=ierr)
+        if (ierr /= 0) then
+           print "(a)",'error skipping positions '
+           return
+        endif
      endif
      !
      !--same for velocities
      !
-     print*,'velocities ',ntoti
-     read (11, iostat=ierr) dattemp(1:3,1:ntoti)
-     if (ierr /= 0) then
-        print "(a)",'error encountered whilst reading velocities'
-     else        
-        do icol=4,6
-           dat(1:ntoti,icol,i) = dattemp(icol-3,1:ntoti)
-        enddo
+     if (any(required(4:6))) then
+        print*,'velocities ',ntoti
+        read (11, iostat=ierr) dattemp(1:3,1:ntoti)
+        if (ierr /= 0) then
+           print "(a)",'error encountered whilst reading velocities'
+        else        
+           do icol=4,6
+              dat(1:ntoti,icol,i) = dattemp(icol-3,1:ntoti)
+           enddo
+        endif
+     else
+        read(11, iostat=ierr)
+        if (ierr /= 0) then
+           print "(a)",'error skipping velocities '
+           return
+        endif
      endif
      !
-     !--read particle ID
+     !--skip read of particle ID (only required if we sort the particles
+     !  back into their correct order, which is not implemented at present)
      !
-     print*,'particle ID ',ntoti
-     if (allocated(iamtemp)) deallocate(iamtemp)
-     allocate(iamtemp(npart_max))
-     read (11,iostat=ierr) iamtemp(1:ntoti)
-     deallocate(iamtemp)
+     !print*,'particle ID ',ntoti
+     !if (allocated(iamtemp)) deallocate(iamtemp)
+     !allocate(iamtemp(npart_max))
+     read (11,iostat=ierr) ! iamtemp(1:ntoti)
+     !deallocate(iamtemp)
      if (ierr /= 0) then
         print "(a)",'error encountered whilst reading particle ID'
      endif
@@ -211,50 +231,61 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !--work out total number of masses dumped 
      Nmassesdumped = 0
      do itype = 1,6
-        if (abs(Massoftype(itype)).lt.1.e-8) then
+        if (abs(Massoftype(itype)).lt.tiny(Massoftype)) then
            Nmassesdumped = Nmassesdumped + Npartoftype(itype,i)
         endif
      enddo
-     print*,'particle masses ',Nmassesdumped
-
-     !--read this number of entries
-     if (allocated(dattemp1)) deallocate(dattemp1)
-     allocate(dattemp1(Nmassesdumped))
-     if (Nmassesdumped.gt.0) then
-        read(11,iostat=ierr) dattemp1(1:Nmassesdumped)
-     endif
-     if (ierr /= 0) then
-        print "(a)",'error reading particle masses'
-     endif
-     !--now copy to the appropriate sections of the .dat array
-     indexstart = 1
-     index1 = 1
-
-     do itype=1,6
-        if (Npartoftype(itype,i).ne.0) then
-           index2 = index1 + Npartoftype(itype,i) -1
-           if (abs(Massoftype(itype)).lt.1.e-8) then ! masses dumped
-              indexend = indexstart + Npartoftype(itype,i) - 1
-              print*,'read ',Npartoftype(itype,i),' masses for type ', &
-                     itype,index1,'->',index2,indexstart,'->',indexend
-              dat(index1:index2,7,i) = dattemp1(indexstart:indexend)
-              indexstart = indexend + 1
-           else  ! masses not dumped
-              print*,'setting masses for type ',itype,' = ', &
-                     real(Massoftype(itype)),index1,'->',index2
-              dat(index1:index2,7,i) = real(Massoftype(itype))
-           endif
-           index1 = index2 + 1
+     
+     if (required(7)) then
+        print*,'particle masses ',Nmassesdumped
+        !--read this number of entries
+        if (allocated(dattemp1)) deallocate(dattemp1)
+        allocate(dattemp1(Nmassesdumped))
+        if (Nmassesdumped.gt.0) then
+           read(11,iostat=ierr) dattemp1(1:Nmassesdumped)
         endif
-     enddo
-     deallocate(dattemp1)
+        if (ierr /= 0) then
+           print "(a)",'error reading particle masses'
+        endif
+        !--now copy to the appropriate sections of the .dat array
+        indexstart = 1
+        index1 = 1
+
+        do itype=1,6
+           if (Npartoftype(itype,i).ne.0) then
+              index2 = index1 + Npartoftype(itype,i) -1
+              if (abs(Massoftype(itype)).lt.1.e-8) then ! masses dumped
+                 indexend = indexstart + Npartoftype(itype,i) - 1
+                 print*,'read ',Npartoftype(itype,i),' masses for type ', &
+                        itype,index1,'->',index2,indexstart,'->',indexend
+                 dat(index1:index2,7,i) = dattemp1(indexstart:indexend)
+                 indexstart = indexend + 1
+              else  ! masses not dumped
+                 print*,'setting masses for type ',itype,' = ', &
+                        real(Massoftype(itype)),index1,'->',index2
+                 dat(index1:index2,7,i) = real(Massoftype(itype))
+              endif
+              index1 = index2 + 1
+           endif
+        enddo
+        deallocate(dattemp1)
+     elseif (Nmassesdumped.gt.0) then
+        read(11,iostat=ierr)
+        if (ierr /= 0) then
+           print "(a)",'error reading particle masses'
+        endif
+     endif
      !
      !--read other quantities for rest of particles
      !
      print*,'gas properties ',npartoftype(1,i)
      do icol=8,ncolstep
         !!print*,icol
-        read (11,iostat=ierr) dat(1:npartoftype(1,i),icol,i)
+        if (required(icol)) then
+           read (11,iostat=ierr) dat(1:npartoftype(1,i),icol,i)
+        else
+           read (11,iostat=ierr)
+        endif
         if (ierr /= 0) then
            print "(a,i3)",'error reading particle data from column ',icol
         endif
@@ -262,7 +293,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         !--for some reason the smoothing length output by GADGET is
         !  twice the usual SPH smoothing length
         !
-        if (icol.eq.ncolstep) then
+        if (icol.eq.ncolstep .and. required(icol)) then
            dat(1:npartoftype(1,i),icol,i) = 0.5*dat(1:npartoftype(1,i),icol,i)
         endif
      enddo
@@ -277,6 +308,10 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !--now memory has been allocated, set arrays which are constant for all time
 !
   gamma = 5./3.
+!
+!--set flag to indicate that only part of this file has been read 
+!
+  if (.not.all(required(1:ncolstep))) ipartialread = .true.
 !
 !--close data file and return
 !                    

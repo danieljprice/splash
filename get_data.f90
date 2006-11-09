@@ -23,7 +23,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use limits, only:set_limits,read_limits
   use settings_data, only:ncolumns,iendatstep,ncalc,ivegotdata, &
                      DataisBuffered,iCalcQuantities,ndim,icoords, &
-                     iRescale,units,unitslabel
+                     iRescale,units,unitslabel,required,ipartialread
   use settings_part, only:iexact,icoordsnew
   use particle_data, only:dat,time
   use prompting
@@ -35,8 +35,10 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   logical, intent(in) :: gotfilenames
   logical, intent(in), optional :: firsttime
   logical :: setlimits
+  logical, parameter :: timing = .true.
   integer :: i,istart,ierr
   character(len=len(rootname)+7) :: limitsfile
+  real :: t1,t2
 
   if (.not.gotfilenames) then
      if (nfiles.le.0 .or. nfiles.gt.maxfile) nfiles = 1
@@ -55,6 +57,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   ivegotdata = .false.
   ifileopen = ireadfile
   DataIsBuffered = .false.
+  ipartialread = .false.
   !
   !--nstepsinfile is initialised to negative
   !  this is set progressively as files are read
@@ -68,6 +71,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      if (firsttime) then
         nstepsinfile(:) = -1
         ncolumnsfirst = 0
+        required = .true.
      endif
   endif
 
@@ -76,6 +80,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--read all steps from the data file
      !
      nstepsinfile(1:nfiles) = 0
+     required = .true.
      print "(/a)",' reading from all dumpfiles...'
      do i=1,nfiles
         call read_data(rootname(i),istart,nstepsinfile(i))
@@ -150,7 +155,19 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      nstepsinfile(ireadfile) = 0
      print "(/a)",' reading single dumpfile'
+     if (timing) call cpu_time(t1)
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
+     if (timing) then
+        call cpu_time(t2)
+        if (ipartialread) then
+           print*,'time for (partial) data read = ',t2-t1,'s'
+        else
+           print*,'time for data read = ',t2-t1,'s'
+        endif
+!        do i=1,ncolumns+ncalc
+!           print*,' required(',i,') = ',required(i)
+!        enddo
+     endif
      !!print*,'nsteps in file = ',nstepsinfile(ireadfile)
      if (ANY(nstepsinfile(1:ireadfile).gt.0)) ivegotdata = .true.
      !
@@ -206,7 +223,13 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--calculate various additional quantities
      !
      if (nstepsinfile(ireadfile).gt.0 .and. iCalcQuantities) then
-        call calc_quantities(1,nstepsinfile(ireadfile))
+        if (ipartialread .and. .not.any(required(ncolumns+1:ncolumns+ncalc))) then
+           !--for partial data reads do a "pretend" call to calc quantities 
+           !  just to get ncalc and column labels right
+           call calc_quantities(1,nstepsinfile(ireadfile),dontcalculate=.true.)
+        else
+           call calc_quantities(1,nstepsinfile(ireadfile))
+        endif
      endif
      !
      !--override units of calculated quantities if necessary
@@ -243,7 +266,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   !
   !--check for errors in data read / print warnings
   !
-  if (ndim.ne.0) then
+  if (ndim.ne.0 .and. ncolumns.gt.0) then
      if (irho.gt.ncolumns) then
         print "(a)",' ERROR with irho setting in data read'
         irho = 0

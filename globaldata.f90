@@ -4,7 +4,7 @@
 !
 !----------------------------------------------------------------------------
 !
-!--global parameters  (should really allocate memory appropriately)
+!--global parameters
 !
 module params
  implicit none
@@ -65,9 +65,12 @@ module settings_data
  integer :: icoords, iformat, ntypes
  integer :: istartatstep,iendatstep,nfreq
  integer, dimension(10) :: isteplist
- logical :: ivegotdata, DataIsBuffered
+ logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
  real, dimension(0:maxplot) :: units
+ !--required array is dimensioned 0:maxplot so that required(icol) = .true.
+ !  does nothing bad if icol = 0 (much safer that way)
+ logical, dimension(0:maxplot) :: required
  logical, dimension(maxparttypes) :: UseTypeInRenderings
  character(len=20), dimension(0:maxplot) :: unitslabel
 

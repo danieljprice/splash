@@ -39,12 +39,12 @@ contains
 subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
   use params
   use colours, only:colour_set
-  use labels, only:label,ipowerspec,ih,ipmass
+  use labels, only:label,ipowerspec,ih,ipmass,irho
   use limits, only:lim
   use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti,x_secmulti
   use prompting, only:prompt
   use titles, only:read_titles,read_steplegend
-  use settings_data, only:ndim,numplot
+  use settings_data, only:ndim,numplot,ncalc,required
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                      colour_fore,colour_back,iadapt,iadaptcoords,linewidth
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle
@@ -281,6 +281,29 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
      .or. (imulti.and.any(multiploty(1:nyplotmulti).eq.ipowerspec))) then
      call options_powerspec
   endif
+
+  !!--for fast data read, set which columns are required from the file
+  !   (note that required(0)= whatever is a valid statement, just has no effect)
+  required = .false.  ! by default, no columns required
+!  if (fastdataread) then
+     if (imulti) then
+        required(multiplotx(1:nyplotmulti)) = .true.
+        required(multiploty(1:nyplotmulti)) = .true.
+        required(irendermulti(1:nyplotmulti)) = .true.
+     else
+        required(iplotx) = .true.
+        required(iploty) = .true.
+     endif
+     required(iplotz) = .true.
+     if (iamrendering) then
+        required(ipmass) = .true.
+        required(irho) = .true.
+        required(ih) = .true.
+        required(irender_nomulti) = .true.
+     endif
+  !!--must read everything if we are plotting a calculated quantity
+     if (any(required(numplot-ncalc+1:numplot))) required = .true.
+!  endif
 
   !!--read step titles (don't need to store ntitles for this)
   nsteplegendlines = 0
@@ -672,16 +695,16 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         endif
         
         !--work out centre of mass/origin
-        if (ipmass.ne.0 .and. ndim.gt.0) then
-           xcoords(:) = 0.
-           do i=1,ndim
-              do j=1,npartoftype(1)
-                 xcoords(i) = xcoords(i) + dat(j,ix(i))*pmass(j)
-              enddo
-              xcoords(i) = xcoords(i)/sum(pmass(1:npartoftype(1)))
-           enddo
-           print*,'centre of mass = ',xcoords(1:ndim)
-        endif
+!        if (ipmass.ne.0 .and. ndim.gt.0) then
+!           xcoords(:) = 0.
+!           do i=1,ndim
+!              do j=1,npartoftype(1)
+!                 xcoords(i) = xcoords(i) + dat(j,ix(i))*pmass(j)
+!              enddo
+!              xcoords(i) = xcoords(i)/sum(pmass(1:npartoftype(1)))
+!           enddo
+!           print*,'centre of mass = ',xcoords(1:ndim)
+!        endif
         
      endif initdataplots
 
