@@ -101,7 +101,7 @@ subroutine submenu_particleplots
            print_logical(ilabelpart),ncircpart, &
            print_logical(ifastparticleplot),icoordsnew,iexact
 
-  call prompt('enter option',iaction,0,9)
+  call prompt('enter option',iaction,0,10)
 !
   select case(iaction)
 !------------------------------------------------------------------------
