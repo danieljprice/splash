@@ -14,8 +14,8 @@ if ($#ARGV < 1 ) {
 #---------------------------------------------------------
 #  set farming method options are ssh, xgrid
 #---------------------------------------------------------
-my $farmusing='ssh';
-#my $farmusing='xgrid';
+#my $farmusing='ssh';
+my $farmusing='xgrid';
 #---------------------------------------------------------
 #  set name and location of the supersphplot executable
 #---------------------------------------------------------
@@ -84,9 +84,9 @@ my $fileend = $filestart + $nfilesperplot;
 my $n = 0;
 for ($run=1;$run<=$nruns;$run++) {
     my @inputstemp = @inputs;
-    my $num = sprintf("%05d",$run);
-    #my $pgplotfile = "pgplot_$num.$ext";
-    my $pgplotfile = "pgplot.$ext\_$run";
+    my $num = sprintf("%04d",$run);
+    my $pgplotfile = "pgplot_$num.$ext";
+    #my $pgplotfile = "pgplot.$ext\_$run";
     $inputstemp[$devline] = "$pgplotfile$pgplotdev\n";
     print "------------ run $run : $pgplotfile ------------\n";
     my @argsn=@files[$filestart..$fileend-1];
@@ -101,7 +101,8 @@ for ($run=1;$run<=$nruns;$run++) {
     open(RUNSCR,"> run$run.csh") || die("can't write run script");
     print RUNSCR "#!/bin/tcsh \n";
     print RUNSCR "setenv PGPLOT_DIR $pgplotdir \n";
-    print RUNSCR "setenv LD_LIBRARY_PATH $ldpath \n";
+    print RUNSCR "source $home/.cshrc \n";
+#    print RUNSCR "setenv LD_LIBRARY_PATH $ldpath \n";
     print RUNSCR "cd $pwd \n";
     print RUNSCR "$exe @argsn < input$run >& run$run.output \n";
     close(RUNSCR);
@@ -130,7 +131,7 @@ exit;
 
 sub farmjob_xgrid {
     my $commandline=shift;
-    my $xgridauth = "-hostname cytosine.ex.ac.uk -auth Kerberos";
+    my $xgridauth = "-hostname cytosine.ex.ac.uk -auth Kerberos -gid 0";
     my $jobid = `xgrid $xgridauth -job submit $commandline` || die "xgrid not found \n";
     ($jobid) = $jobid =~ m/jobIdentifier\s+=\s+(\d+);/; # \s matches spaces (+ = at least one) \d decimals
     print "farmed via xgrid: job id = $jobid \n";
