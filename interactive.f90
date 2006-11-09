@@ -1123,6 +1123,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
   endif
   char = 'A'
   zoomfac = 1.0
+  xpt2 = 0.
+  ypt2 = 0.
   iexit = .false.
   interactivereplot = .false.
   istepin = istep
