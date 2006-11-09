@@ -11,9 +11,10 @@ contains
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels
   use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,unitslabel
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords
   use settings_part, only:iexact
   use mem_allocation, only:alloc
+  use settings_units, only:unitslabel
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate

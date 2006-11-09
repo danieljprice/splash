@@ -23,13 +23,14 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use limits, only:set_limits,read_limits
   use settings_data, only:ncolumns,iendatstep,ncalc,ivegotdata, &
                      DataisBuffered,iCalcQuantities,ndim,icoords, &
-                     iRescale,units,unitslabel,required,ipartialread
+                     iRescale,required,ipartialread
   use settings_part, only:iexact,icoordsnew
   use particle_data, only:dat,time
   use prompting
   use labels, only:label,labelvec,iamvec,ih,irho,ipmass
   use geometry, only:labelcoord
   use calcquantities, only:calc_quantities
+  use settings_units, only:units,unitslabel
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames

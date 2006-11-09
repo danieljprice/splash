@@ -470,9 +470,9 @@ end subroutine read_data
 subroutine set_labels
   use filenames, only:rootname
   use labels
-  use settings_data, only:ndim,ndimV,ncolumns,ntypes,units,unitslabel, &
-                          UseTypeInRenderings
+  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
   use geometry, only:labelcoord
+  use settings_units, only:units,unitslabel
   implicit none
   integer :: i
   logical :: minidump

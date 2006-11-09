@@ -25,6 +25,7 @@ contains
 !---------------------------------------------
 subroutine defaults_set_data
   use settings_data
+  use settings_units, only:units,unitslabel
   use params, only:maxplot
   implicit none
   integer :: i
@@ -66,16 +67,16 @@ subroutine submenu_data
  use prompting
  use getdata, only:get_data
  use settings_data, only:istartatstep,iendatstep,nfreq,iUseStepList, &
-     isteplist,buffer_data,iCalcQuantities,iRescale,units,unitslabel, &
+     isteplist,buffer_data,iCalcQuantities,iRescale, &
      DataIsBuffered,numplot,ncalc,ncolumns
  use calcquantities, only:calc_quantities
  use limits, only:set_limits
  use labels, only:label
+ use settings_units, only:units,unitslabel,set_units,write_unitsfile
  implicit none
- integer :: ians, i, icol
+ integer :: ians, i
  character(len=30) :: fmtstring
- logical :: ireadnow,UnitsHaveChanged,iRescaleprev
- real :: unitsprev,dunits
+ logical :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile
  
  ians = 0
  
@@ -179,49 +180,13 @@ subroutine submenu_data
 !------------------------------------------------------------------------
  case(7)
     UnitsHaveChanged = .false.
-    icol = 1
-    print "(a)",' *** WARNING: if units are set in the data read, changes here have no effect ***'
-    do while(icol.ge.0)
-       icol = -1
-       call prompt('enter column to change units (0=time,-1=quit,-2=reset all)',icol,-2,numplot)
-       if (icol.ge.0) then
-          unitsprev = units(icol)
-          if (icol.gt.ncolumns) then
-             print "(a)",' WARNING: calculated quantities are automatically calculated in physical units '
-             print "(a)",' this means that units set here will be re-scalings of these physical values'
-          endif
-          if (icol.eq.0) then
-             call prompt('enter time units (new=old*units)',units(icol),0.)
-          else
-             call prompt('enter '//trim(label(icol))//' units (new=old*units)',units(icol),0.)
-          endif
-          if (units(icol).gt.tiny(units)) then
-             if (abs(units(icol) - unitsprev).gt.tiny(units)) UnitsHaveChanged = .true.
-             if (len_trim(unitslabel(icol)).eq.0 .or. UnitsHaveChanged) then
-             !--suggest a label amendment if none already set or if units have changed
-                dunits = 1./units(icol)
-                if (dunits.gt.100 .or. dunits.lt.1.e-1) then
-                   write(unitslabel(icol),"(1pe8.1)") dunits
-                else
-                   write(unitslabel(icol),"(f5.1)") dunits                  
-                endif
-                unitslabel(icol) = ' [ x '//trim(adjustl(unitslabel(icol)))//' ]'
-             endif
-             !--label amendment can be overwritten
-             call prompt('enter label amendment ',unitslabel(icol))
-          else
-             UnitsHaveChanged = .true.
-             units(icol) = 1.0
-             unitslabel(icol) = ' '
-          endif
-       elseif (icol.eq.-2) then
-          UnitsHaveChanged = .true.
-          print "(/a)",' resetting all units to unity...'
-          units = 1.0
-          unitslabel = ' '
-       endif
-       print*
-    enddo
+    call set_units(ncolumns,numplot,UnitsHaveChanged)
+    
+    if (UnitsHaveChanged) then
+       iwriteunitsfile = .true.
+       call prompt(' save units to file? ',iwriteunitsfile)
+       if (iwriteunitsfile) call write_unitsfile('supersphplot.units',numplot)
+    endif
     
     if (.not.iRescale .and. UnitsHaveChanged) call prompt('Apply physical units to data?',iRescale)
     

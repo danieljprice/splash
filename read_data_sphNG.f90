@@ -520,9 +520,9 @@ subroutine set_labels
   use labels, only:label,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst
   use params
-  use settings_data, only:ndim,ndimV,ntypes,ncolumns,iformat, &
-                     units,unitslabel,UseTypeInRenderings
+  use settings_data, only:ndim,ndimV,ntypes,ncolumns,iformat,UseTypeInRenderings
   use geometry, only:labelcoord
+  use settings_units, only:units,unitslabel
   implicit none
   integer :: i
   real :: tfreefall

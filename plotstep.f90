@@ -365,8 +365,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                 iplotcontmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
   use rotation
-  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,nfreq,iRescale,units,&
-                     unitslabel,iendatstep,ntypes,UseTypeInRenderings
+  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,nfreq,iRescale, &
+                     iendatstep,ntypes,UseTypeInRenderings
   use settings_limits, only:itrackpart,iadapt,iadaptcoords,scalemax,xminoffset_track,xmaxoffset_track
   use settings_part, only:icoordsnew,iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
                      iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot
@@ -377,6 +377,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use settings_vecplot, only:npixvec, iplotpartvec
   use settings_xsecrot
   use settings_powerspec
+  use settings_units, only:units,unitslabel
 !
 !--subroutines called from this routine
 !
