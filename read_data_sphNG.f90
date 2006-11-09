@@ -195,6 +195,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       read(iunit,end=55,iostat=ierr) udist,umass,utime,umagfd   
    elseif (nreal8s.ge.3) then
       read(iunit,end=55,iostat=ierr) udist,umass,utime
+      umagfd = 1.0
    else
       print "(a)",'*** error: units not found in file'
       udist = 1.0
@@ -625,6 +626,11 @@ subroutine set_labels
    endif
    units(irho) = umass/udist**3
    unitslabel(irho) = ' [g/cm\u3\d]'
+   if (iBfirst.gt.0) then
+      units(iBfirst:iBfirst+ndimV-1) = umagfd
+      unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
+   endif
+   
    !--use the following two lines for time in years
    !units(0) = utime/3.1536e7
    !unitslabel(0) = ' yrs'
