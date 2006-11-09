@@ -16,7 +16,7 @@ contains
 !     The data is smoothed using the SPH summation interpolant,
 !     that is, we compute the smoothed array according to
 !
-!     datsmooth(pixel) = sum_j w_j W(r-r_j, h_j)
+!     datsmooth(pixel) = sum_j w_j dat_j W(r-r_j, h_j)
 ! 
 !     where _j is the quantity at the neighbouring particle j and
 !     W is the smoothing kernel, for which we use the usual cubic spline.
