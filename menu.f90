@@ -370,18 +370,23 @@ subroutine menu
    logical :: isamex, isamey, icoordplot
    
    call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
-   !--guess nacross,ndown based on largest factor
-   ifac = nyplotmulti/2
-   do while (mod(nyplotmulti,ifac).ne.0 .and. ifac.gt.1)
-      ifac = ifac - 1
-   end do
-   if (ifac.le.1) then
-      nacross = nyplotmulti/2
+   if (nyplotmulti.eq.1) then
+      nacross = 1
+      ndown = 1
    else
-      nacross = ifac
+      !--guess nacross,ndown based on largest factor
+      ifac = nyplotmulti/2
+      do while (mod(nyplotmulti,ifac).ne.0 .and. ifac.gt.1)
+         ifac = ifac - 1
+      end do
+      if (ifac.le.1) then
+         nacross = nyplotmulti/2
+      else
+         nacross = ifac
+      endif
+      if (nacross.le.0) nacross = 1
+      ndown = nyplotmulti/nacross
    endif
-   if (nacross.le.0) nacross = 1
-   ndown = nyplotmulti/nacross
    print*,'setting nacross,ndown = ',nacross,ndown 
    isamex = all(multiplotx(1:nyplotmulti).eq.multiplotx(1))
    call prompt('Same x axis for all?',isamex)
