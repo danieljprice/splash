@@ -229,9 +229,9 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,labeltype,ix,irho,ipmass,ih
+  use labels, only:label,labeltype,ix,irho,ipmass,ih,iutherm,ipr,ivx,iamvec,labelvec
   use params
-  use settings_data, only:ncolumns,ntypes,ndim,UseTypeInRenderings
+  use settings_data, only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
   use geometry, only:labelcoord
   implicit none
   integer :: i,ierr  
@@ -248,7 +248,21 @@ subroutine set_labels
         read(51,"(a)",iostat=ierr) label(i)
         if (label(i)(1:3).eq.'den' .or. label(i)(1:3).eq.'rho') irho = i
         if (label(i)(1:5).eq.'pmass' .or. label(i)(1:13).eq.'particle mass') ipmass = i
-        if (label(i)(1:1).eq.'h' .or. label(i)(1:6).eq.'smooth') ih = i
+        !--use first column labelled h as smoothing length
+        if (ih.eq.0 .and. (label(i)(1:1).eq.'h' .or. label(i)(1:6).eq.'smooth')) ih = i
+        if (trim(label(i)).eq.'u'.or.label(i)(1:6).eq.'utherm' &
+            .or.trim(label(i)).eq.'internal energy') then
+           iutherm = i
+        endif
+        if (ivx.eq.0 .and. label(i)(1:1).eq.'v') then
+           ivx = i
+           ndimV = 1
+        endif
+        !--set ndimV as number of columns with v as label
+        if (ivx.gt.0 .and. i.gt.ivx .and. i.le.ivx+2) then
+           if (label(i)(1:1).eq.'v') ndimV = i - ivx + 1
+        endif
+        if (label(i)(1:2).eq.'pr') ipr = i
         if (ierr < 0) then
            print "(a,i3)",' ERROR: end of file in columns file: read to column ',i-1
            exit overcols
@@ -272,11 +286,19 @@ subroutine set_labels
         endif
      endif
   endif
-  if (ndim.ne.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
-  if (irho.ne.0) print "(a,i2)",' Assuming density in column ',irho
-  if (ipmass.ne.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
-  if (ih.ne.0) print "(a,i2)",' Assuming smoothing length in column ',ih
-  
+  if (ndim.gt.0) print "(a,i1,i1)",' Assuming number of dimensions = ',ndim,ndimV
+  if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
+  if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
+  if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
+  if (iutherm.gt.0) print "(a,i2)",' Assuming thermal energy in column ',iutherm
+  if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
+  if (ivx.gt.0) then
+     if (ndimV.gt.1) then
+        print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1     
+     else
+        print "(a,i2)",' Assuming velocity in column ',ivx
+     endif
+  endif
   if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
      print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
                  '  until positions of density, smoothing length and particle', &
@@ -284,11 +306,13 @@ subroutine set_labels
                  '   relevant columns appropriately in the columns file)'
   endif
   
-!!  iamvec(ivx:ivx+ndimV-1) = ivx
-!!  labelvec(ivx:ivx+ndimV-1) = 'v'
-!!  do i=1,ndimV
-!!     label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-!!  enddo
+  if (ivx.gt.0) then
+     iamvec(ivx:ivx+ndimV-1) = ivx
+     labelvec(ivx:ivx+ndimV-1) = 'v'
+     do i=1,ndimV
+       label(ivx+i-1) = 'v\d'//labelcoord(i,1)
+     enddo
+  endif
   !
   !--set labels for each particle type
   !
