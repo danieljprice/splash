@@ -30,7 +30,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use labels, only:label,labelvec,iamvec,ih,irho,ipmass
   use geometry, only:labelcoord
   use calcquantities, only:calc_quantities
-  use settings_units, only:units,unitslabel
+  use settings_units, only:units,unitslabel,read_unitsfile
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
@@ -107,15 +107,16 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      print "(/a)",' setting plot labels...'
      call set_labels
      !
-     !--change units if necessary
+     !--read units file and change units if necessary
      !
+     call read_unitsfile('supersphplot.units',ncolumns,ierr)     
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
               dat(:,i,1:nsteps) = dat(:,i,1:nsteps)*units(i)
-              label(i) = trim(label(i))//trim(unitslabel(i))
            endif
+           if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
         enddo
         time(1:nsteps) = time(1:nsteps)*units(0)
      endif     
@@ -133,12 +134,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         do i=ncolumns+1,ncolumns+ncalc
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
               dat(:,i,1:nsteps) = dat(:,i,1:nsteps)*units(i)
-              label(i) = trim(label(i))//trim(unitslabel(i))
+              if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
            endif
         enddo
      elseif (iRescale) then
         do i=ncolumns+1,ncolumns+ncalc
-           label(i) = trim(label(i))//trim(unitslabel(i))
+           if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
         enddo
      endif
      !
@@ -208,15 +209,16 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !!print "(/a)",' setting plot labels...'
      call set_labels
      !
-     !--change units if necessary
+     !--read units file and change units if necessary
      !
+     call read_unitsfile('supersphplot.units',ncolumns,ierr)
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
               dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)
-              label(i) = trim(label(i))//trim(unitslabel(i))
            endif
+           if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
         enddo
         time(1:nstepsinfile(ireadfile)) = time(1:nstepsinfile(ireadfile))*units(0)
      endif
@@ -240,12 +242,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         do i=ncolumns+1,ncolumns+ncalc
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
               dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)
-              label(i) = trim(label(i))//trim(unitslabel(i))
+              if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
            endif
         enddo
      elseif (iRescale) then
         do i=ncolumns+1,ncolumns+ncalc
-           label(i) = trim(label(i))//trim(unitslabel(i))
+           if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
         enddo
      endif
      !

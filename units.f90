@@ -12,9 +12,7 @@ module settings_units
 
 contains
 !
-!--set plot limits for all columns
-!
-!  NB: does not differentiate between particle types at the moment
+!--set units
 !
 subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
   use prompting, only:prompt
@@ -85,8 +83,8 @@ subroutine write_unitsfile(unitsfile,ncolumns)
   if (ierr /=0) then
      print*,'ERROR: cannot write units file'
   else
-     do i=1,ncolumns
-        write(77,*,iostat=ierr) units(i),unitslabel(i)
+     do i=0,ncolumns
+        write(77,*,iostat=ierr) units(i),';',unitslabel(i)
         if (ierr /= 0) then
            print*,'ERROR whilst writing units file'
            close(unit=77)
@@ -107,14 +105,33 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
   character(len=*), intent(in) :: unitsfile
   integer, intent(in) :: ncolumns
   integer, intent(out) :: ierr
-  integer :: i
+  character(len=len(unitslabel)+20) :: line
+  integer :: i,itemp,isemicolon
 
   ierr = 0
 
   open(unit=78,file=unitsfile,status='old',form='formatted',err=997)
-  print*,'reading plot limits from file ',trim(unitsfile)
-  do i=1,ncolumns
-     read(78,*,err=998,end=999) units(i),unitslabel(i)
+  print "(/,a)",' reading units from file '//trim(unitsfile)
+  do i=0,ncolumns
+!
+!    read a line from the file
+!
+     read(78,"(a)",err=998,end=999) line
+!
+!    now get units from the first part of the line
+!
+     read(line,*,iostat=itemp) units(i)
+     if (itemp /= 0) print*,'error reading units for column ',i
+!
+!    units label is what comes after the semicolon
+!
+     isemicolon = index(line,';')
+     if (isemicolon.gt.0) then
+        unitslabel(i) = trim(line(isemicolon+1:))
+     else
+        print*,'error reading units label for column ',i
+     endif
+!     print*,i,'units = ',units(i),'label = ',unitslabel(i)
   enddo
   close(unit=78)
 

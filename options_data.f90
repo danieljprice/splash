@@ -132,7 +132,7 @@ subroutine submenu_data
 !------------------------------------------------------------------------
  case(4)
     buffer_data = .not.buffer_data
-    print "(/a,L1)",' Buffering of data = ',buffer_data
+    print "(/a)",' Buffering of data = '//print_logical(buffer_data)
     if (buffer_data) then
        call prompt('Do you want to read all data into memory now?',ireadnow)
        if (ireadnow) then
@@ -151,7 +151,7 @@ subroutine submenu_data
           call set_limits(1,nstepsinfile(ifileopen),numplot-ncalc+1,numplot)
        endif
     else
-       print "(/a,L1)",' Calculation of extra quantities = ',iCalcQuantities    
+       print "(/a)",' Calculation of extra quantities = '//print_logical(iCalcQuantities)   
     endif
 !------------------------------------------------------------------------
  case(6) 
