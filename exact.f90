@@ -149,7 +149,7 @@ contains
          ' 6) mhd shock tubes (tabulated) ',/,  &
          ' 7) h vs rho ',/, &
          ' 8) radial density profiles ',/, &
-         ' 9) papaloizou & pringle torus ',/, &
+         ' 9) torus ',/, &
          '10) read from file ')
     call prompt('enter exact solution to plot',iexact,0,10)
     print*,' plotting exact solution number ',iexact
@@ -679,15 +679,24 @@ contains
     case(9) ! torus
        if (iplotx.eq.irad .or.(igeom.eq.3 .and. iplotx.eq.ix(1))) then
           if (iploty.eq.irho) then
-             call exact_torus(1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
+             call exact_torus(1,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_torus(2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+             call exact_torus(2,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
           elseif (iploty.eq.iutherm) then
-             call exact_torus(3,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+             call exact_torus(3,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
           endif
        !--pr vs z at r=Rtorus
        elseif (igeom.eq.2 .and. iplotx.eq.ix(3) .and.iploty.eq.ipr) then
-          call exact_torus(4,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+          call exact_torus(4,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+       endif
+       if (igeom.eq.4 .and. iplotx.eq.ix(1)) then
+          if (iploty.eq.irho) then
+             call exact_torus(1,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
+          elseif (iploty.eq.ipr) then
+             call exact_torus(2,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+          elseif (iploty.eq.iutherm) then
+             call exact_torus(3,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+          endif
        endif
     case(10) ! exact solution read from file
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
