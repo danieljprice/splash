@@ -47,7 +47,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
   use settings_data, only:ndim,numplot,ncalc,required
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                      colour_fore,colour_back,iadapt,iadaptcoords,linewidth
-  use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle
+  use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
   use settings_render, only:icolours,iplotcont_nomulti,iPlotColourBar
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
                         use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth,rkappa
@@ -301,6 +301,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
         required(ih) = .true.
         required(irender_nomulti) = .true.
      endif
+  !!--always read co-ordinates (e.g. co-ordinate transforms)
+     required(1:ndim) = .true.
+  !!--need mass for some exact solutions
+     if (iexact.eq.7) required(ipmass) = .true.
   !!--must read everything if we are plotting a calculated quantity
      if (any(required(numplot-ncalc+1:numplot))) required = .true.
 !  endif
