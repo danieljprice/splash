@@ -7,26 +7,31 @@
 !  itype = 1    : cartesian (default)
 !  itype = 2    : cylindrical
 !  itype = 3    : spherical
+!  itype = 4    : toroidal
 !
 ! Currently handles:
 !
 !  cartesian -> cylindrical, spherical polar
 !  cylindrical -> cartesian
 !  spherical polar -> cartesian
+!  toroidal r,theta,phi <-> cartesian
 !
 !-----------------------------------------------------------------
 module geometry
  implicit none
- integer, parameter :: maxcoordsys = 3
+ integer, parameter :: maxcoordsys = 4
  real, parameter, private :: pi = 3.1415926536
+ real, parameter, private :: Rtorus = 1.0
  character(len=*), dimension(maxcoordsys), parameter :: labelcoordsys = &
     (/'cartesian   x,y,z      ', &
       'cylindrical r,phi,z    ', &
-      'spherical   r,phi,theta'/)
+      'spherical   r,phi,theta', &
+      'toroidal    r,theta,phi'/)
  character(len=*), dimension(3,maxcoordsys), parameter :: labelcoord = &
     reshape((/'x    ','y    ','z    ', &
               'r    ','phi  ','z    ', &
-              'r    ','phi  ','theta'/),shape=(/3,maxcoordsys/))
+              'r    ','phi  ','theta', &
+              'r_tor','theta','phi  '/),shape=(/3,maxcoordsys/))
  
 contains
 !-----------------------------------------------------------------
@@ -47,6 +52,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
   integer, intent(in) :: ndimin,ndimout,itypein,itypeout
   real, intent(in), dimension(ndimin) :: xin
   real, intent(out), dimension(ndimout) :: xout
+  real :: rcyl
 !
 !--check for errors in input
 !
@@ -113,6 +119,25 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         end select
      end select
 !
+!--input is torus co-ordinates
+!
+  case(4)
+     select case(itypeout)
+     case default
+        !        
+        ! output is cartesian (default)
+        !
+        if (itypeout.ne.1) print*,'warning: using default cartesian output'
+        if (ndimin.ne.3) then
+           xout(1:ndimout) = xin(1:ndimout)
+        else
+           rcyl = xin(1)*COS(xin(2)) + Rtorus
+           xout(1) = rcyl*COS(xin(3))
+           if (ndimout.ge.2) xout(2) = rcyl*SIN(xin(3))
+           if (ndimout.ge.3) xout(3) = xin(1)*SIN(xin(2))
+        endif
+     end select
+!
 !--input is cartesian co-ordinates
 !
   case default
@@ -136,7 +161,20 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         if (ndimout.ge.2) xout(2) = ATAN2(xin(2),xin(1)) ! phi
         if (ndimout.ge.3) then
            ! theta = ACOS(z/r)
-           xout(3) = ACOS(xin(3)/xout(1))   
+           xout(3) = ACOS(xin(3)/xout(1))
+        endif
+     case(4)
+        !
+        !--output is torus r,theta,phi co-ordinates
+        !
+        if (ndimin.ne.3) then
+           ! not applicable if ndim < 3
+           xout(1:ndimout) = xin(1:ndimout)
+        else
+           rcyl = SQRT(xin(1)**2 + xin(2)**2)
+           xout(1) = SQRT(xin(3)**2 + (rcyl - Rtorus)**2)
+           if (ndimout.ge.2) xout(2) = ASIN(xin(3)/xout(1))
+           if (ndimout.ge.3) xout(3) = ATAN2(xin(2),xin(1))
         endif
      case default
         !
@@ -252,6 +290,20 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
 !
   case default
      select case(itypeout)
+     case(4)
+        !
+        ! output is toroidal
+        !
+        rcyl = xin(1)*COS(xin(2)) + Rtorus
+ !       dxdx(1,1) = COS(xin(2))*SIN(xin(3))         ! dr/dx
+ !       dxdx(1,2) = -xin(1)*SIN(xin(2))*SIN(xin(3)) ! dr/dy
+ !       dxdx(1,3) = xin(1)*COS(xin(2))*COS(xin(3))  ! dr/dz
+ !       dxdx(2,1) = SIN(xin(2))*SIN(xin(3))         ! dtheta/dx
+ !       dxdx(2,2) = xin(1)*COS(xin(2))*SIN(xin(3))  ! dtheta/dy
+ !       dxdx(2,3) = xin(1)*SIN(xin(2))*COS(xin(3))  ! dtheta/dz
+ !       dxdx(3,1) = COS(xin(3))                     ! dphi/dx
+ !       dxdx(3,2) = -xin(1)*SIN(xin(3))             ! dphi/dy
+ !       dxdx(3,2) = -xin(1)*SIN(xin(3))             ! dphi/dz
      case(3)
         !
         ! output is spherical
