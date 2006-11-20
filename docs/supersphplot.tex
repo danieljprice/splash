@@ -897,7 +897,7 @@ results with something like a $1/10$ reduction at the typical distance of the ob
 observer is placed at a distance of $10\times$ object size with distance to screen of $1\times$ object
 size. SUPERSPHPLOT sets this as default using the z plot limit as the `object size'.
 
-\subsection{Power spectrums (1D only)}
+\subsection{Power spectra (1D only)}
  In one dimension an extra plot item appears
 in the data menu which takes a power spectrum (in space) of a particular
 variable defined on the particles. Upon selection the user is prompted for
@@ -933,6 +933,38 @@ is not an issue. The algorithms are fairly simple to extend to multidimensional
 data, although faster implementations would be needed (such as a Fast
 Fourier Transform routine).
 
+\subsection{Co-ordinate transformations}
+The particles and vectors defined on the particles can be plotted in non-cartesian co-ordinate
+systems. The co-ordinate system can be set via the particle plot o)ptions menu, via the ``change co-ordinate
+system'' option. The actual co-ordinate transformations are defined in a standalone Fortran module called
+\verb+geometry.f90+ and the precise details can be determined by looking in this file. For reference, however
+the transformations given below.
+
+\subsubsection{Cylindrical Polar Co-ordinates}
+For cylindrical co-ordinates the transformations are
+\begin{eqnarray}
+r & = & \sqrt{x^2 + y^2} \\
+\phi & = & \atan{y/x} \\
+z & = & z  \\
+\end{eqnarray}
+with inverse
+\begin{eqnarray}
+x & = & r\cos{(\phi)} \\
+y & = & r\sin{(\phi)} \\
+z & = & z\\
+\end{eqnarray}
+For vector quantities the transformations are:
+\begin{eqnarray}
+v_r & = & v_x \frac{x}{r} + v_y \frac{y}{r} \\
+v_\phi & = & v_x \left(\frac{-y}{r^2}\right) + v_y \left(\frac{x}{r^2}\right) \\
+v_z & = & v_z \\
+\end{eqnarray}
+with inverse
+\begin{eqnarray}
+v_x & = & v_r \cos{(\phi)} - v_\phi r \sin{(\phi)} \\
+v_y & = & v_r \sin{(\phi)} + v_\phi r \cos{(\phi)} \\
+v_z & = & v_z \\
+\end{eqnarray}
 
 \section{Other features}
 
