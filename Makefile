@@ -45,16 +45,19 @@ ENDIAN=
 #ENDIAN='BIG'
 #ENDIAN='LITTLE'
 
-ifeq ($(SYSTEM),mymac)
-#  these are the settings for a Mac with pgplot installed via fink
-   F90C= g95
-   F90FLAGS= -O3 -ffast-math
-   PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
-          -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
-   SYSTEMFILE= system_f2003.f90
-   PARALLEL= no
-   KNOWN_SYSTEM=yes
-endif
+#--------------------------------------------------------------
+#  the following are general settings for particular compilers
+#
+#  set the environment variable 'SYSTEM' to one of those
+#  listed to use the appropriate settings
+#
+#  e.g. in tcsh use
+#  setenv SYSTEM 'g95'
+#
+#  in bash the equivalent is
+#  export SYSTEM='g95'
+#
+#--------------------------------------------------------------
 
 ifeq ($(SYSTEM),g95)
 #  using the g95 compiler
@@ -67,31 +70,15 @@ ifeq ($(SYSTEM),g95)
    KNOWN_SYSTEM=yes
 endif
 
-ifeq ($(SYSTEM), gfortran_macosx)
-#   gfortran with pgplot installed via fink
-    F90C= gfortran
-    F90FLAGS= -O3 -Wall
-    PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
-          -laquaterm # -lSystemStubs use this on OS/X Tiger
-    SYSTEMFILE= system_unix.f90
-    DBLFLAG= -fdefault-real-8
-    DEBUGFLAG= -g -frange-check
-    OMPFLAG= -fopenmp
-    KNOWN_SYSTEM=yes
-    ENDIANFLAGBIG= -fconvert=big-endian
-    ENDIANFLAGLITTLE= -fconvert=little-endian
-endif
-
-ifeq ($(SYSTEM),myg95)
-#  using the g95 compiler
-   F90C= myg95
-   F90FLAGS= -O3 -ffast-math
-   X11LIBS= -L/usr/X11R6/lib64 -lX11
-   PGPLOTLIBS = -L/usr/local64/pgplot -lpgplot -lpng -lg2c
-   SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
-   ENDIANFLAGBIG= -fendian='BIG'
-   ENDIANFLAGLITTLE= -fendian='LITTLE'
-   PARALLEL= no
+ifeq ($(SYSTEM), gfortran)
+#  gfortran compiler (part of gcc 4.x.x)
+   F90C= gfortran
+   F90FLAGS= -O3 -Wall
+   SYSTEMFILE= system_unix.f90
+   DEBUGFLAG= -g -frange-check
+   OMPFLAG= -fopenmp
+   ENDIANFLAGBIG= -fconvert=big-endian
+   ENDIANFLAGLITTLE= -fconvert=little-endian
    KNOWN_SYSTEM=yes
 endif
 
@@ -135,6 +122,12 @@ ifeq ($(SYSTEM),pgf90)
    KNOWN_SYSTEM=yes
 endif
 
+#--------------------------------------------------------------
+#
+# the following presets are machine-specific
+#
+#--------------------------------------------------------------
+
 ifeq ($(SYSTEM),ukaff1a)
 #  this is for ukaff1a
    F90C= xlf90_r
@@ -146,6 +139,60 @@ ifeq ($(SYSTEM),ukaff1a)
    KNOWN_SYSTEM=yes
 endif
 
+ifeq ($(SYSTEM),mymac)
+#  these are the settings for a Mac G4 running Panther 
+#  using g95 with pgplot installed via fink
+   F90C= g95
+   F90FLAGS= -O3 -ffast-math
+   PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
+          -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
+   SYSTEMFILE= system_f2003.f90
+   PARALLEL= no
+   KNOWN_SYSTEM=yes
+endif
+
+ifeq ($(SYSTEM), gfortran_macosx)
+#   gfortran with pgplot installed via fink
+    F90C= gfortran
+    F90FLAGS= -O3 -Wall
+    PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
+          -laquaterm # -lSystemStubs use this on OS/X Tiger
+    SYSTEMFILE= system_unix.f90
+    DBLFLAG= -fdefault-real-8
+    DEBUGFLAG= -g -frange-check
+    OMPFLAG= -fopenmp
+    ENDIANFLAGBIG= -fconvert=big-endian
+    ENDIANFLAGLITTLE= -fconvert=little-endian
+    KNOWN_SYSTEM=yes
+endif
+
+ifeq ($(SYSTEM),myg95)
+#  using the g95 compiler
+   F90C= myg95
+   F90FLAGS= -O3 -ffast-math
+   X11LIBS= -L/usr/X11R6/lib64 -lX11
+   PGPLOTLIBS = -L/usr/local64/pgplot -lpgplot -lpng -lg2c
+   SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
+   ENDIANFLAGBIG= -fendian='BIG'
+   ENDIANFLAGLITTLE= -fendian='LITTLE'
+   PARALLEL= no
+   KNOWN_SYSTEM=yes
+endif
+
+ifeq ($(SYSTEM),maccluster)
+#  using the g95 compiler on the iMac cluster in Exeter
+   F90C= g95
+   F90FLAGS= -O3 -ffast-math -Wall -Wextra -Wno=165 
+   X11LIBS= -L/usr/X11R6/lib -lX11
+   PGPLOTLIBS= -lSystemStubs
+   STATICLIBS= /AstroUsers/djp212/pgplot/libpgplot.a
+   SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
+   ENDIANFLAGBIG= -fendian='BIG'
+   ENDIANFLAGLITTLE= -fendian='LITTLE'
+   DEBUGFLAG=-fbounds-check
+   PARALLEL= no
+   KNOWN_SYSTEM=yes
+endif
 #
 # these are the flags used for linking
 #
@@ -165,6 +212,10 @@ endif
 
 ifeq ($(PARALLEL),yes)
     F90FLAGS += $(OMPFLAGS)
+endif
+
+ifeq ($(DEBUG),yes)
+    F90FLAGS += $(DEBUGFLAG)
 endif
 
 # Fortran flags same as F90
