@@ -934,37 +934,69 @@ data, although faster implementations would be needed (such as a Fast
 Fourier Transform routine).
 
 \subsection{Co-ordinate transformations}
-The particles and vectors defined on the particles can be plotted in non-cartesian co-ordinate
-systems. The co-ordinate system can be set via the particle plot o)ptions menu, via the ``change co-ordinate
-system'' option. The actual co-ordinate transformations are defined in a standalone Fortran module called
-\verb+geometry.f90+ and the precise details can be determined by looking in this file. For reference, however
-the transformations given below.
+Particle positions and vectors defined on the particles can be plotted in non-cartesian coordinate
+systems. The coordinate system can be set via the particle plot o)ptions menu, via the ``change co-ordinate
+system'' option. The actual coordinate transformations are defined in a standalone Fortran module called
+\verb+geometry.f90+ and the precise details can be determined by looking in this file. For reference, however the transformations are given below.
 
-\subsubsection{Cylindrical Polar Co-ordinates}
-For cylindrical co-ordinates the transformations are
-\begin{eqnarray}
-r & = & \sqrt{x^2 + y^2} \\
-\phi & = & \atan{y/x} \\
-z & = & z  \\
-\end{eqnarray}
-with inverse
-\begin{eqnarray}
-x & = & r\cos{(\phi)} \\
-y & = & r\sin{(\phi)} \\
-z & = & z\\
-\end{eqnarray}
-For vector quantities the transformations are:
-\begin{eqnarray}
-v_r & = & v_x \frac{x}{r} + v_y \frac{y}{r} \\
-v_\phi & = & v_x \left(\frac{-y}{r^2}\right) + v_y \left(\frac{x}{r^2}\right) \\
-v_z & = & v_z \\
-\end{eqnarray}
-with inverse
-\begin{eqnarray}
-v_x & = & v_r \cos{(\phi)} - v_\phi r \sin{(\phi)} \\
-v_y & = & v_r \sin{(\phi)} + v_\phi r \cos{(\phi)} \\
-v_z & = & v_z \\
-\end{eqnarray}
+\subsubsection{Cylindrical Polar Coordinates}
+For cylindrical coordinates the transformations are:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+r & = & \sqrt{x^2 + y^2}    & & x & = & r\cos\phi \\
+\phi & = & \tan^{-1}{(y/x)} &; & y & = & r\sin\phi \\
+z & = & z                             & & z & = & z\\
+\end{array}
+\end{displaymath}
+where vectors transform according to:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+v_r      & = & v_x \frac{x}{r} + v_y \frac{y}{r}  & & v_x & = & v_r \cos\phi - v_\phi r \sin\phi \\
+v_\phi & = & v_x \left(\frac{-y}{r^2}\right) + v_y \left(\frac{x}{r^2}\right) &; &v_y & = & v_r \sin\phi + v_\phi r \cos\phi \\
+v_z      & = & v_z & & v_z & = & v_z \\
+\end{array}
+\end{displaymath}
+
+\subsubsection{Spherical Polar Coordinates}
+For spherical coordinates the transformations are:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+r & = & \sqrt{x^2 + y^2 + z^{2}}    & & x & = & r\cos\phi\sin\theta\\
+\phi & = & \tan^{-1}{(y/x)}              &; & y & = & r\sin\phi\sin\theta \\
+\theta & = & \cos^{-1}(z/r)             & & z & = & r\cos\theta \\
+\end{array}
+\end{displaymath}
+where vectors transform according to:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+v_r      & = & v_x \frac{x}{r} + v_y \frac{y}{r} + v_{z}\frac{z}{r}  & & v_x & = & v_r \cos\phi\sin\theta- v_\phi r \sin\phi\sin\theta + v_\theta r\cos\phi\cos\theta \\
+v_\phi & = & v_x \left(\frac{-y}{x^2 + y^{2}}\right) + v_y \left(\frac{x}{x^2 + y^{2}}\right) &; &v_y & = & v_r \sin\phi\sin\theta + v_\phi r \cos\phi\sin\theta + v_{\theta} r\sin\phi\cos\theta \\
+v_\theta & = & v_{x}\frac{xy}{\sqrt{x^{2} + y^{2}}} + v_{y}\frac{yz}{\sqrt{x^{2} + y^{2}}} - v_{z}\frac{(x^{2} + y^{2})}{r^{2}\sqrt{x^{2} + y^{2}}}  & & v_z & = & v_r \cos\theta - v_\theta r \sin\theta \\
+\end{array}
+\end{displaymath}
+
+\subsubsection{Toroidal Coordinates}
+Toroidal coordinates represent a local frame of reference inside a torus. The coordinate transformations are given by
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+r & = & \sqrt{[(x^2 + y^2)^{1/2} - R]^{2} + z^{2}}    & & x & = & (r\cos\theta + R) \cos\phi \\
+\theta & = & \sin^{-1}{(z/r)}              &; & y & = & (r\cos\theta + R)\sin\phi \\
+\phi & = & \tan^{-1}(y/x)             & & z & = & r\sin\theta \\
+\end{array}
+\end{displaymath}
+where $R$ is the radius of the torus and vectors transform according to:
+\begin{displaymath}
+\begin{array}{lclp{2cm}lcl}
+v_r      & = & v_x \frac{x(r_{cyl} - R)}{r r_{cyl}} + v_y \frac{y(r_{cyl} - R)}{r r_{cyl}} + v_{z} \frac{z}{r}  & & v_x & = & v_r \cos\theta\cos\phi- v_\theta r \sin\theta\cos\phi - v_\phi (r\cos\theta + R)\sin\phi \\
+v_\theta & = & v_x \frac{-zx}{r^{2} r_{cyl}}  + v_y\frac{-zy}{r^{2} r_{cyl}}  + v_{z}\frac{(r_{cyl} - R)}{r^{2}} &; &v_y & = & v_r \cos\theta\sin\phi - v_\theta r\sin\theta\sin\phi + v_\phi (r \cos\theta + R)\cos\phi \\
+v_\phi & = & v_{x} \left(\frac{-y}{x^{2} + y^{2}}\right) + v_{y} \left(\frac{x}{x^{2} + y^{2}}\right) & & v_z & = & v_{r}\sin\theta + v_{\theta} r\cos\theta \\
+\end{array}
+\end{displaymath}
+where we have defined, for convenience,
+\begin{equation}
+r_{cyl} = \sqrt{x^{2} + y^{2}}. \nonumber
+\end{equation}
+The torus radius $R$ is a parameter in the \verb+geometry+ module and is set to $1$ by default.
 
 \section{Other features}
 

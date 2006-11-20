@@ -251,6 +251,23 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
 !
   select case(itypein)
 !
+!--input is toroidal
+!
+  case(4)
+     select case(itypeout)
+     case default  
+        rcyl = xin(1)*COS(xin(2)) + Rtorus
+        dxdx(1,1) = COS(xin(2))*COS(xin(3))         ! dx/dr
+        dxdx(1,2) = -xin(1)*SIN(xin(2))*COS(xin(3)) ! dx/dtheta
+        dxdx(1,3) = rcyl*SIN(xin(3))                ! dx/dphi
+        dxdx(2,1) = COS(xin(2))*SIN(xin(3))         ! dy/dr
+        dxdx(2,2) = -xin(1)*SIN(xin(2))*SIN(xin(3)) ! dy/dtheta
+        dxdx(2,3) = rcyl*COS(xin(3))                ! dy/dphi
+        dxdx(3,1) = SIN(xin(3))                     ! dz/dr
+        dxdx(3,2) = xin(1)*COS(xin(3))              ! dz/dtheta
+!        dxdx(3,3) = 0.                              ! dz/dphi
+     end select
+!
 !--input is spherical polars
 !
   case(3)
@@ -266,7 +283,7 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         dxdx(2,2) = xin(1)*COS(xin(2))*SIN(xin(3))  ! dy/dphi
         dxdx(2,3) = xin(1)*SIN(xin(2))*COS(xin(3))  ! dy/dtheta
         dxdx(3,1) = COS(xin(3))                     ! dz/dr
-        dxdx(3,2) = -xin(1)*SIN(xin(3))             ! dz/dtheta
+        dxdx(3,3) = -xin(1)*SIN(xin(3))             ! dz/dtheta
      end select
 !
 !--input is cylindrical polars
@@ -294,16 +311,27 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         !
         ! output is toroidal
         !
-        rcyl = xin(1)*COS(xin(2)) + Rtorus
- !       dxdx(1,1) = COS(xin(2))*SIN(xin(3))         ! dr/dx
- !       dxdx(1,2) = -xin(1)*SIN(xin(2))*SIN(xin(3)) ! dr/dy
- !       dxdx(1,3) = xin(1)*COS(xin(2))*COS(xin(3))  ! dr/dz
- !       dxdx(2,1) = SIN(xin(2))*SIN(xin(3))         ! dtheta/dx
- !       dxdx(2,2) = xin(1)*COS(xin(2))*SIN(xin(3))  ! dtheta/dy
- !       dxdx(2,3) = xin(1)*SIN(xin(2))*COS(xin(3))  ! dtheta/dz
- !       dxdx(3,1) = COS(xin(3))                     ! dphi/dx
- !       dxdx(3,2) = -xin(1)*SIN(xin(3))             ! dphi/dy
- !       dxdx(3,2) = -xin(1)*SIN(xin(3))             ! dphi/dz
+        rcyl = sqrt(xin(1)**2 + xin(2)**2)
+        if (rcyl.gt.tiny(rcyl)) then
+           rcyl1 = 1./rcyl
+        else
+           rcyl1 = 0.
+        endif
+        rr = sqrt((rcyl - Rtorus)**2 + xin(3)**2)
+        if (rr.gt.tiny(rr)) then
+           rr1 = 1./rr
+        else
+           rr1 = 0.
+        endif
+        dxdx(1,1) = (rcyl - Rtorus)*xin(1)*rr1*rcyl1 ! dr/dx
+        dxdx(1,2) = (rcyl - Rtorus)*xin(2)*rr1*rcyl1 ! dr/dy
+        dxdx(1,3) = xin(3)*rr1                       ! dr/dz
+        dxdx(2,1) = -xin(3)*xin(1)*rr1*rr1*rcyl1     ! dtheta/dx
+        dxdx(2,2) = -xin(3)*xin(2)*rr1*rr1*rcyl1     ! dtheta/dy
+        dxdx(2,3) = (rcyl - Rtorus)*rr1*rr1          ! dtheta/dz
+        dxdx(3,1) = -xin(2)*rcyl1**2                 ! dphi/dx
+        dxdx(3,2) = xin(1)*rcyl1**2                  ! dphi/dy
+!        dxdx(3,3) = 0.                              ! dphi/dz
      case(3)
         !
         ! output is spherical
@@ -314,26 +342,26 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         else
            rr1 = 0.
         endif
-           dxdx(1,1) = xin(1)*rr1  ! dr/dx
-           if (ndimin.ge.2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
-           if (ndimin.eq.3) dxdx(1,3) = xin(3)*rr1  ! dr/dz 
-           if (ndimin.ge.2) then
-              dxdx(2,1) = -xin(2)*rr1**2 ! dtheta/dx
-              dxdx(2,2) = xin(1)*rr1**2 ! dtheta/dy
-              dxdx(2,3) = 0.
-              if (ndimin.ge.3) then
-                 rcyl2 = dot_product(xin(1:2),xin(1:2))
-                 rcyl = sqrt(rcyl2)
-                 if (rcyl.gt.tiny(rcyl)) then
-                    rcyl1 = 1./rcyl
-                 else
-                    rcyl1 = 0.
-                 endif
-                 dxdx(3,1) = xin(1)*xin(3)*rr1*rr1*rcyl1 ! dphi/dx
-                 dxdx(3,2) = xin(2)*xin(3)*rr1*rr1*rcyl1 ! dphi/dy
-                 dxdx(3,3) = -rcyl2*rr1*rr1*rcyl1 ! dphi/dz
-              endif
+        dxdx(1,1) = xin(1)*rr1  ! dr/dx
+        if (ndimin.ge.2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
+        if (ndimin.eq.3) dxdx(1,3) = xin(3)*rr1  ! dr/dz 
+        if (ndimin.ge.2) then
+           rcyl2 = dot_product(xin(1:2),xin(1:2))
+           rcyl = sqrt(rcyl2)
+           if (rcyl.gt.tiny(rcyl)) then
+              rcyl1 = 1./rcyl
+           else
+              rcyl1 = 0.
            endif
+           dxdx(2,1) = -xin(2)*rcyl1**2 ! dphi/dx
+           dxdx(2,2) = xin(1)*rcyl1**2 ! dphi/dy
+           dxdx(2,3) = 0.
+           if (ndimin.ge.3) then
+              dxdx(3,1) = xin(1)*xin(3)*rr1*rr1*rcyl1 ! dtheta/dx
+              dxdx(3,2) = xin(2)*xin(3)*rr1*rr1*rcyl1 ! dtheta/dy
+              dxdx(3,3) = -rcyl2*rr1*rr1*rcyl1 ! dtheta/dz
+           endif
+        endif
      case(2)
         !
         !--output is cylindrical
