@@ -35,7 +35,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,iunit,ncolstep
   integer :: nprint,npart_max,nstep_max,icol,nheaderlines
-  logical :: iexist
+  logical :: iexist,timeset
   real :: dummyreal
   character(len=len(rootname)+4) :: dumpfile
 
@@ -97,10 +97,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--read header lines, try to use it to set time
 !
+  timeset = .false.
   do i=1,nheaderlines
      read(iunit,*,iostat=ierr) dummyreal
-     if (ierr.eq.0) time(j) = dummyreal
-     print*,'setting time = ',dummyreal,' from header line ',i
+     if (ierr.eq.0 .and. .not. timeset) then
+        time(j) = dummyreal
+        timeset = .true.
+        print*,'setting time = ',dummyreal,' from header line ',i
+     endif
   enddo
 !
 !--now read the timestep data in the dumpfile
@@ -150,6 +154,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
  integer, intent(out) :: ncolumns,nheaderlines
  integer :: ierr,ncolprev,ncolsthisline
  character(len=2000) :: line
+ logical :: nansinfile,infsinfile
 
  nheaderlines = 0
  line = ' '
@@ -157,12 +162,16 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
  ncolumns = 0
  ncolprev = 666
  ncolsthisline = 0
+ nansinfile = .false.
+ infsinfile = .false.
 !
 !--loop until we find two consecutive lines with the same number of columns (but non zero)
 !
  do while ((len_trim(line).eq.0 .or. ncolsthisline.ne.ncolprev .or. ncolumns.eq.0) .and. ierr.eq.0)
     ncolprev = ncolumns
     read(lunit,"(a)",iostat=ierr) line
+    if (index(line,'NaN').gt.0) nansinfile = .true.
+    if (index(line,'Inf').gt.0) infsinfile = .true.
     if (ierr.eq.0) call get_columns(line,ncolsthisline)
     if (ncolsthisline.ne.0) nheaderlines = nheaderlines + 1
     if (ncolsthisline.gt.0) ncolumns = ncolsthisline
@@ -176,6 +185,8 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
  else
     if (nheaderlines.gt.0) print*,'skipped ',nheaderlines,' header lines'
  endif
+ if (nansinfile) print "(a)",' INDIAN BREAD WARNING!! NaNs in file!!'
+ if (infsinfile) print "(a)",' WARNING!! Infs in file!!'
  rewind(lunit)
 
  if (ncolumns.eq.0) then
@@ -229,12 +240,12 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,labeltype,ix,irho,ipmass,ih,iutherm,ipr,ivx,iamvec,labelvec
+  use labels, only:label,labeltype,ix,irho,ipmass,ih,iutherm,ipr,ivx,iBfirst,iamvec,labelvec
   use params
   use settings_data, only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
   use geometry, only:labelcoord
   implicit none
-  integer :: i,ierr  
+  integer :: i,ierr,ndimVtemp
 !
 !--read column labels from the columns file if it exists
 !  
@@ -246,15 +257,23 @@ subroutine set_labels
   else
      overcols: do i=1,ncolumns
         read(51,"(a)",iostat=ierr) label(i)
-        if (label(i)(1:3).eq.'den' .or. label(i)(1:3).eq.'rho') irho = i
-        if (label(i)(1:5).eq.'pmass' .or. label(i)(1:13).eq.'particle mass') ipmass = i
+!
+!--guess positions of various quantities from the column labels
+!
+        if (label(i)(1:3).eq.'den' .or. label(i)(1:3).eq.'rho') then
+           irho = i
+        elseif (label(i)(1:5).eq.'pmass' .or. label(i)(1:13).eq.'particle mass') then
+           ipmass = i
         !--use first column labelled h as smoothing length
-        if (ih.eq.0 .and. (label(i)(1:1).eq.'h' .or. label(i)(1:6).eq.'smooth')) ih = i
-        if (trim(label(i)).eq.'u'.or.label(i)(1:6).eq.'utherm' &
+        elseif (ih.eq.0 .and. (label(i)(1:1).eq.'h' &
+                .or. label(i)(1:6).eq.'smooth')) then
+           ih = i
+        elseif (trim(label(i)).eq.'u'.or.label(i)(1:6).eq.'utherm' &
             .or.trim(label(i)).eq.'internal energy') then
            iutherm = i
-        endif
-        if (ivx.eq.0 .and. label(i)(1:1).eq.'v') then
+        elseif (label(i)(1:2).eq.'pr') then
+           ipr = i
+        elseif (ivx.eq.0 .and. label(i)(1:1).eq.'v') then
            ivx = i
            ndimV = 1
         endif
@@ -262,7 +281,19 @@ subroutine set_labels
         if (ivx.gt.0 .and. i.gt.ivx .and. i.le.ivx+2) then
            if (label(i)(1:1).eq.'v') ndimV = i - ivx + 1
         endif
-        if (label(i)(1:2).eq.'pr') ipr = i
+        if (iBfirst.eq.0 .and. (label(i)(1:2).eq.'bx' .or. label(i)(1:2).eq.'Bx')) then
+           iBfirst = i
+        endif
+        !--set ndimV as number of columns with v as label
+        if (iBfirst.gt.0 .and. i.gt.iBfirst .and. i.le.iBfirst+2) then
+           if (label(i)(1:1).eq.'b') then
+              ndimVtemp = i - iBfirst + 1
+              if (ndimV.gt.0 .and. ndimVtemp.gt.ndimV) then
+                 print "(a)",' WARNING: possible confusion with vector dimensions'
+                 ndimV = ndimVtemp
+              endif
+           endif
+        endif        
         if (ierr < 0) then
            print "(a,i3)",' ERROR: end of file in columns file: read to column ',i-1
            exit overcols
@@ -286,7 +317,8 @@ subroutine set_labels
         endif
      endif
   endif
-  if (ndim.gt.0) print "(a,i1,i1)",' Assuming number of dimensions = ',ndim,ndimV
+  if (ndim.gt.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
+  if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
   if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
   if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
   if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
@@ -311,6 +343,13 @@ subroutine set_labels
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV
        label(ivx+i-1) = 'v\d'//labelcoord(i,1)
+     enddo
+  endif
+  if (iBfirst.gt.0) then
+     iamvec(iBfirst:iBfirst+ndimV-1) = ivx
+     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
+     do i=1,ndimV
+       label(iBfirst+i-1) = 'B\d'//labelcoord(i,1)
      enddo
   endif
   !
