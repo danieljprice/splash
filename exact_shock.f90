@@ -10,8 +10,12 @@
 ! Calls a separate subroutine to calculate the post-shock pressure
 ! and velocity (this is the difficult bit).
 !
+! Handles all cases of left and right-going shocks and rarefactions
+!
 ! Daniel Price, Institute of Astronomy, Cambridge, 2004
-! dprice@ast.cam.ac.uk
+!               University of Exeter 2004-2006
+!
+! dprice@astro.ex.ac.uk
 !-----------------------------------------------------------------------
 module shock
  implicit none
@@ -32,9 +36,9 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
   integer :: i
   real, dimension(size(xplot)) :: dens, pr, vel
   real :: cs_L,cs_R, gamfac
-  real :: ppost, vpost, vfan, vshock
-  real :: xzero,xleft,xfan,xcontact,xshock
-  logical :: useisothermal
+  real :: ppost, vpost, vleft, vright
+  real :: xzero,xleft,xleftleft,xcontact,xright,xrightright
+  logical :: useisothermal,leftisshock,rightisshock
 
   print*,'Plotting exact Riemann solution at t = ',time,' gamma = ',gamma
 !
@@ -49,9 +53,6 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
      print*,'error: pr <= 0 on input ',p_L, p_R
      ierr = 2
      return
-!  elseif (gamma.lt.1.0001) then
-!     print*,'error: isothermal solver not implemented'
-!     return
   endif  
 !
 !  xzero is the position of the shock at t=0
@@ -84,70 +85,144 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
 !  reconstruct the shock profile
 !------------------------------------------------------------
 
-  !  post shock velocity (speed at which fluid behind shock is 
-  !  moving to the right)
   !
-!!  vpost = 
+  !  check whether solutions are shocks or rarefactions
+  !
+  if (ppost .gt. p_L) then
+     leftisshock = .true.
+  else
+     leftisshock = .false.
+  endif
+  if (ppost .gt. p_R) then
+     rightisshock = .true.
+  else
+     rightisshock = .false.
+  endif
+  if (leftisshock) then
+     print*,' left-going wave is a shock '
+  else
+     print*,' left-going wave is a rarefaction'  
+  endif
+  if (rightisshock) then
+     print*,' right-going wave is a shock '
+  else
+     print*,' right-going wave is a rarefaction'  
+  endif
+
+  if (rightisshock) then ! right hand wave is a shock
   !
   !  speed of the shock front
   !
-  vshock = v_R + cs_R**2*(ppost/p_R - 1.)/(gamma*(vpost-v_R))
+     vright = v_R + cs_R**2*(ppost/p_R - 1.)/(gamma*(vpost-v_R))
+  else ! right hand wave is a rarefaction
   !
   !  speed at which the right end of rarefaction fan moves
   !
-  vfan = cs_L - 0.5*(gamma+1.)*vpost + 0.5*(gamma-1.)*v_L
+     vright = cs_R + 0.5*(gamma+1.)*vpost - 0.5*(gamma-1.)*v_R 
+  endif
+  !
+  !  repeat for left-going wave
+  !
+  if (leftisshock) then
+     vleft = -v_L + cs_L**2*(ppost/p_L - 1.)/(gamma*(vpost+v_L))
+  else
+     vleft = cs_L - 0.5*(gamma+1.)*vpost + 0.5*(gamma-1.)*v_L
+  endif
 
 !-------------------------------------------------------------
 ! now work out the locations of various features in the shock
 !-------------------------------------------------------------
+
 !
-! left end of expansion fan (propagates at the sound speed into the "left" fluid)
+! position of left-going shock or back end of left-going rarefaction
 !
-  xleft = xzero - (cs_L - v_L)*time 
+  xleft = xzero - abs(vleft)*time
+  if (leftisshock) then
+     xleftleft = xleft
+  else
 !
-! right end of expansion fan
+! front end of left-going expansion fan (propagates at sound speed into "left" fluid)
 !
-  xfan = xzero - vfan*time
+     xleftleft = xzero - (cs_L - v_L)*time
+  endif
 !
 ! position of the interface between the "left" fluid from the "right" fluid
 ! (the contact discontinuity)
 !
   xcontact = xzero + vpost*time
-!
-! shock position (distance the shock has travelled into the "right" fluid)
-!
-  xshock = xzero + vshock*time
 
+!
+! position of right-going shock or back end of right-going rarefaction
+!
+  xright = xzero + abs(vright)*time
+  if (rightisshock) then
+     xrightright = xright
+  else
+!
+! right end of right-going expansion fan (propagates at sound speed into "right" fluid)
+!
+     xrightright = xzero + (cs_R + v_R)*time
+  endif
+  
 !--------------------------------------------------------------
 ! reconstruct the shock profile for all x
 !--------------------------------------------------------------
 
 !--here is a cheap, dirty f90 version for crap compilers
   do i=1,size(xplot)
-     if (xplot(i) <= xleft) then
+     if (xplot(i) <= xleftleft) then
 !       undisturbed medium to the left
 	pr(i) = p_L
 	dens(i) = rho_L
 	vel(i) = v_L
-     elseif (xplot(i) < xfan) then
-!       inside expansion fan
-        if (useisothermal) then ! this is a bit of a guess 
-           dens(i) = rho_L*exp((xleft-xplot(i))/(cs_L*time))
+     elseif (xplot(i) < xleft) then
+        if (leftisshock) then
+	   pr(i) = ppost
+	   dens(i) = rho_L*(gamfac+ppost/p_L)/(1+gamfac*ppost/p_L)
+!	   dens(i) = rho_L*(ppost/p_L)**(1./gamma)
+	   vel(i) = vpost
         else
-           dens(i) = rho_L*(gamfac*(xzero-xplot(i))/(cs_L*time) + (1.-gamfac))**(2./(gamma-1.))
+!       inside expansion fan
+           if (useisothermal) then ! this is a bit of a guess 
+              dens(i) = rho_L*exp((xleft-xplot(i))/(cs_L*time) + v_L/cs_L)
+           else
+              dens(i) = rho_L*(gamfac*(xzero-xplot(i))/(cs_L*time) + gamfac*v_L/cs_L + (1.-gamfac))**(2./(gamma-1.))
+           endif
+           pr(i) = p_L*(dens(i)/rho_L)**gamma
+           vel(i) = (1.-gamfac)*(cs_L -(xzero-xplot(i))/time) + gamfac*v_L
         endif
-        pr(i) = p_L*(dens(i)/rho_L)**gamma
-        vel(i) = (1.-gamfac)*(cs_L -(xzero-xplot(i))/time)
      elseif (xplot(i) < xcontact) then
-!       between expansion fan and contact discontinuity
+!       between left expansion fan/shock and contact discontinuity
+!       post-shock, ahead of contact discontinuity but before right going wave
 	pr(i) = ppost
-	dens(i) = rho_L*(ppost/p_L)**(1./gamma)
+	if (leftisshock) then
+           dens(i) = rho_L*(gamfac+ppost/p_L)/(1+gamfac*ppost/p_L)
+        else
+   	   dens(i) = rho_L*(ppost/p_L)**(1./gamma)
+        endif
 	vel(i) = vpost
-     elseif (xplot(i) < xshock) then
-!       post-shock, ahead of contact discontinuity
+     elseif (xplot(i) < xright) then
+!       post-shock, ahead of contact discontinuity but before right going wave
 	pr(i) = ppost
-	dens(i) = rho_R*(gamfac+ppost/p_R)/(1+gamfac*ppost/p_R)
+        if (rightisshock) then
+	   dens(i) = rho_R*(gamfac+ppost/p_R)/(1+gamfac*ppost/p_R)
+        else
+   	   dens(i) = rho_R*(ppost/p_R)**(1./gamma)        
+        endif
 	vel(i) = vpost
+     elseif (xplot(i) < xrightright) then
+        if (rightisshock) then
+!       irrelevant as in this case xrightright = xright
+        else
+!        inside expansion fan to right
+           if (useisothermal) then ! this is a bit of a guess 
+              dens(i) = rho_R*exp(-(xright-xplot(i))/(cs_R*time) - v_R/cs_R)
+           else
+              dens(i) = rho_R*(gamfac*(xplot(i)-xzero)/(cs_R*time) - gamfac*v_R/cs_R + (1.-gamfac))**(2./(gamma-1.))
+           endif
+           pr(i) = p_R*(dens(i)/rho_R)**gamma
+           vel(i) = (1.-gamfac)*(-cs_R - (xzero-xplot(i))/time) + gamfac*v_R
+        endif
      else
 !       undisturbed medium to the right
 	pr(i) = p_R
