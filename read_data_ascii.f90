@@ -105,6 +105,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
         timeset = .true.
         print*,'setting time = ',dummyreal,' from header line ',i
      endif
+     if (timeset .and. ierr.eq.0 .and. dummyreal.gt.0.999999 .and. dummyreal.lt.2.000001) then
+        gamma(j) = dummyreal
+     endif
   enddo
 !
 !--now read the timestep data in the dumpfile
