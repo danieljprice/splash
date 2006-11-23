@@ -35,7 +35,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,iunit,ncolstep
   integer :: nprint,npart_max,nstep_max,icol,nheaderlines
-  logical :: iexist,timeset
+  logical :: iexist,timeset,gammaset
   real :: dummyreal
   character(len=len(rootname)+4) :: dumpfile
 
@@ -98,15 +98,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--read header lines, try to use it to set time
 !
   timeset = .false.
+  gammaset = .false.
   do i=1,nheaderlines
      read(iunit,*,iostat=ierr) dummyreal
+     if (timeset .and. .not.gammaset .and. ierr.eq.0 &
+        .and. dummyreal.gt.0.999999 .and. dummyreal.lt.2.000001) then
+        print*,'setting gamma = ',dummyreal,' from header line ',i
+        gamma(j) = dummyreal
+        gammaset = .true.
+     endif
      if (ierr.eq.0 .and. .not. timeset) then
         time(j) = dummyreal
         timeset = .true.
         print*,'setting time = ',dummyreal,' from header line ',i
-     endif
-     if (timeset .and. ierr.eq.0 .and. dummyreal.gt.0.999999 .and. dummyreal.lt.2.000001) then
-        gamma(j) = dummyreal
      endif
   enddo
 !
