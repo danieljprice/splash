@@ -189,7 +189,7 @@ ifeq ($(SYSTEM),maccluster)
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
-   DEBUGFLAG=-fbounds-check
+   DEBUGFLAG=-fbounds-check -ftrace=full
    PARALLEL= no
    KNOWN_SYSTEM=yes
 endif
