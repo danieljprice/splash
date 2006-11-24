@@ -24,7 +24,6 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
   real :: unitsprev,dunits
 
   icol = 1
-  print "(a)",' *** WARNING: if units are set in the data read, changes here have no effect ***'
   do while(icol.ge.0)
      icol = -1
      call prompt('enter column to change units (0=time,-1=quit,-2=reset all)',icol,-2,numplot)
@@ -41,8 +40,8 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
         endif
         if (units(icol).gt.tiny(units)) then
            if (abs(units(icol) - unitsprev).gt.tiny(units)) UnitsHaveChanged = .true.
-           if (len_trim(unitslabel(icol)).eq.0 .or. UnitsHaveChanged) then
-           !--suggest a label amendment if none already set or if units have changed
+           if (len_trim(unitslabel(icol)).eq.0) then
+           !--suggest a label amendment if none already set
               dunits = 1./units(icol)
               if (dunits.gt.100 .or. dunits.lt.1.e-1) then
                  write(unitslabel(icol),"(1pe8.1)") dunits
