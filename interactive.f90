@@ -1515,10 +1515,14 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
        endif
        if (vptx.gt.vptxmini .and. vptx.lt.vptxmaxi .and. &
            vpty.gt.vptymini .and. vpty.lt.vptymaxi) then
-          if (getpanel.ne.0) print*,'Warning: multiple matching panels found'
+          if (getpanel.ne.0) print*,'Warning: multiple matching panels found ',getpanel,i
           getpanel = i
        endif
     enddo
+    if (getpanel.eq.0) then
+       print*,'Error determining panel: assuming last'
+       getpanel = size(vptxmin)
+    endif
 
     end function getpanel
     

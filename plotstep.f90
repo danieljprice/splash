@@ -1296,7 +1296,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  !
                  iadvance = nfreq
 !                 call interactive_step(iadvance,ipos,iendatstep,xmin,xmax,ymin,ymax)
-                 nplots = nacross*ndown
+                 nplots = ipanel
                  irerender = .true.
                  iChangeRenderLimits = .true.
                  call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep, &
@@ -1405,7 +1405,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               !
               iadvance = nfreq
 !              call interactive_step(iadvance,ipos,iendatstep,xmin,xmax,ymin,ymax)
-              nplots = nacross*ndown
+              nplots = ipanel
               irerender = .true.
               iChangeRenderLimits = .true.
               call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep, &
