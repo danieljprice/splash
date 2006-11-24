@@ -376,6 +376,8 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   !
   do ivec=1,nveclist
      label(ivecmagcol(ivec)) = '|'//trim(labelvec(iveclist(ivec)))//'|'
+  !--set units label for vector magnitudes to be the same as the vectors
+     unitslabel(ivecmagcol(ivec)) = unitslabel(iveclist(ivec))
   enddo
   
   if (ivpar.ne.0) label(ivpar) = 'v\d\(0737)'  !!!_parallel'
