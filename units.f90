@@ -16,17 +16,19 @@ contains
 !
 subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
   use prompting, only:prompt
-  use labels, only:label
+  use labels, only:label,ix,ih,iamvec,labelvec
+  use settings_data, only:ndim,ndimV
   implicit none
   integer, intent(in) :: ncolumns,numplot
   logical, intent(out) :: UnitsHaveChanged
   integer :: icol
   real :: unitsprev,dunits
+  logical :: applytoall
 
   icol = 1
   do while(icol.ge.0)
      icol = -1
-     call prompt('enter column to change units (0=time,-1=quit,-2=reset all)',icol,-2,numplot)
+     call prompt('enter column to change units (-2=reset all,-1=quit,0=time)',icol,-2,numplot)
      if (icol.ge.0) then
         unitsprev = units(icol)
         if (icol.gt.ncolumns) then
@@ -34,11 +36,11 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
            print "(a)",' this means that units set here will be re-scalings of these physical values'
         endif
         if (icol.eq.0) then
-           call prompt('enter time units (new=old*units)',units(icol),0.)
+           call prompt('enter time units (new=old*units)',units(icol))
         else
-           call prompt('enter '//trim(label(icol))//' units (new=old*units)',units(icol),0.)
+           call prompt('enter '//trim(label(icol))//' units (new=old*units)',units(icol))
         endif
-        if (units(icol).gt.tiny(units)) then
+        if (abs(units(icol)).gt.tiny(units)) then
            if (abs(units(icol) - unitsprev).gt.tiny(units)) UnitsHaveChanged = .true.
            if (len_trim(unitslabel(icol)).eq.0) then
            !--suggest a label amendment if none already set
@@ -57,6 +59,48 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
            units(icol) = 1.0
            unitslabel(icol) = ' '
         endif
+        if (UnitsHaveChanged) then
+           !
+           !--prompt to apply same units to coordinates and h for consistency
+           !
+           if (any(ix(1:ndim).eq.icol) .or. icol.eq.ih) then
+              applytoall = .true.
+              !--try to make prompts apply to whichever situation we have
+              if (ndim.eq.1) then
+                 if (icol.eq.ix(1) .and. ih.gt.0) then
+                    call prompt(' Apply these units to h?',applytoall)                                  
+                 else
+                    call prompt(' Apply these units to '//trim(label(ix(1)))//'?',applytoall)              
+                 endif
+              elseif (any(ix(1:ndim).eq.icol) .and. ih.gt.0) then
+                 call prompt(' Apply these units to all coordinates and h?',applytoall)              
+              else
+                 call prompt(' Apply these units to all coordinates?',applytoall)
+              endif
+              if (applytoall) then
+                 units(ix(1:ndim)) = units(icol)
+                 unitslabel(ix(1:ndim)) = unitslabel(icol)
+                 if (ih.gt.0) then
+                    units(ih) = units(icol)
+                    unitslabel(ih) = unitslabel(icol)
+                 endif
+              endif
+           endif
+           !
+           !--also sensible to apply same units to all components of a vector
+           !
+           if (ndimV.gt.1 .and. iamvec(icol).gt.0) then
+              applytoall = .true.
+              call prompt(' Apply these units to all components of '//trim(labelvec(icol))//'?',applytoall)
+              if (applytoall) then
+                 where (iamvec(1:ncolumns).eq.iamvec(icol))
+                    units(1:ncolumns) = units(icol)
+                    unitslabel(1:ncolumns) = unitslabel(icol)
+                 end where
+              endif
+           endif
+        endif
+
      elseif (icol.eq.-2) then
         UnitsHaveChanged = .true.
         print "(/a)",' resetting all units to unity...'
@@ -97,7 +141,7 @@ subroutine write_unitsfile(unitsfile,ncolumns)
 
 end subroutine write_unitsfile
 !
-!--read plot limits for all columns from a file
+!--read units for all columns from a file
 !
 subroutine read_unitsfile(unitsfile,ncolumns,ierr)
   implicit none

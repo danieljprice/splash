@@ -127,22 +127,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         call calc_quantities(1,nsteps)
      endif
      !
-     !--override units of calculated quantities if necessary
-     !
-     if (iRescale .and. any(abs(units(ncolumns+1:ncolumns+ncalc)-1.0).gt.tiny(units))) then
-        write(*,"(/a)") ' rescaling data...'
-        do i=ncolumns+1,ncolumns+ncalc
-           if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
-              dat(:,i,1:nsteps) = dat(:,i,1:nsteps)*units(i)
-              if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
-           endif
-        enddo
-     elseif (iRescale) then
-        do i=ncolumns+1,ncolumns+ncalc
-           if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
-        enddo
-     endif
-     !
      !--read plot limits from file, otherwise set plot limits
      !
      limitsfile = trim(rootname(1))//'.limits'
@@ -233,22 +217,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         else
            call calc_quantities(1,nstepsinfile(ireadfile))
         endif
-     endif
-     !
-     !--override units of calculated quantities if necessary
-     !
-     if (iRescale .and. any(abs(units(ncolumns+1:ncolumns+ncalc)-1.0).gt.tiny(units))) then
-        write(*,"(/a)") ' rescaling data...'
-        do i=ncolumns+1,ncolumns+ncalc
-           if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
-              dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)
-              if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
-           endif
-        enddo
-     elseif (iRescale) then
-        do i=ncolumns+1,ncolumns+ncalc
-           if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
-        enddo
      endif
      !
      !--only set limits if reading the first file for the first time

@@ -11,10 +11,10 @@ contains
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels
   use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iRescale
   use settings_part, only:iexact
   use mem_allocation, only:alloc
-  use settings_units, only:unitslabel
+  use settings_units, only:unitslabel,units
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
@@ -384,6 +384,23 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   if (ivperp.ne.0) label(ivperp) = 'v\d\(0738)' !!_perp'
   if (iBpar.ne.0) label(iBpar) = 'B\d\(0737)'  !!_parallel'
   if (iBperp.ne.0) label(iBperp) = 'B\d\(0738)' !!_perp'
+  !
+  !--override units of calculated quantities if necessary
+  !
+  if (iRescale .and. any(abs(units(ncolumns+1:ncolumns+ncalc)-1.0).gt.tiny(units)) &
+      .and. .not.skip) then
+     write(*,"(/a)") ' rescaling data...'
+     do i=ncolumns+1,ncolumns+ncalc
+        if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
+           dat(:,i,ifromstep:itostep) = dat(:,i,ifromstep:itostep)*units(i)
+           if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
+        endif
+     enddo
+  elseif (iRescale) then
+     do i=ncolumns+1,ncolumns+ncalc
+        if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
+     enddo
+  endif
   
   return
 end subroutine calc_quantities
