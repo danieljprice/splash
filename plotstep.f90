@@ -36,18 +36,18 @@ contains
 ! initialise plotting options
 ! called once for all steps
 !
-subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
+subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   use params
   use colours, only:colour_set
-  use labels, only:label,ipowerspec,ih,ipmass,irho
+  use labels, only:label,ipowerspec,ih,ipmass,irho,iamvec
   use limits, only:lim
-  use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti,x_secmulti
+  use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti,x_secmulti,ivecplotmulti
   use prompting, only:prompt
   use titles, only:read_titles,read_steplegend
-  use settings_data, only:ndim,numplot,ncalc,required
+  use settings_data, only:ndim,ndimV,numplot,ncalc,required,icoords
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                      colour_fore,colour_back,iadapt,iadaptcoords,linewidth
-  use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
+  use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact,icoordsnew
   use settings_render, only:icolours,iplotcont_nomulti,iPlotColourBar
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
                         use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth,rkappa
@@ -56,7 +56,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
   use projections3D, only:coltable
   implicit none
   real, parameter :: pi=3.1415926536
-  integer, intent(in) :: ipicky,ipickx,irender_nomulti
+  integer, intent(in) :: ipicky,ipickx,irender_nomulti,ivecplot
   integer :: i,j,ierr,ifirst,iplotzprev
   logical :: iadapting,iamrendering,icoordplot,iallrendered
   real :: hav,pmassav
@@ -301,12 +301,28 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti)
         required(ih) = .true.
         required(irender_nomulti) = .true.
      endif
-  !!--always read co-ordinates (e.g. co-ordinate transforms)
-     required(1:ndim) = .true.
+
   !!--need mass for some exact solutions
      if (iexact.eq.7) required(ipmass) = .true.
   !!--must read everything if we are plotting a calculated quantity
      if (any(required(numplot-ncalc+1:numplot))) required = .true.
+  !!--vectors
+     if (imulti) then
+        do i=1,nyplotmulti
+           if (ivecplotmulti(i).gt.0) then
+              required(ivecplotmulti(i):ivecplotmulti(i)+ndimV-1) = .true.
+           endif
+        enddo
+     elseif (ivecplot.gt.0) then
+        required(ivecplot:ivecplot+ndimV-1) = .true.
+     endif
+   !!--if geometry is not default must read all coords 
+   !!  and if we are plotting a vector component, all components
+     if (icoordsnew.ne.icoords) then
+        required(1:ndim) = .true.
+        if (iamvec(iplotx).gt.0) required(iamvec(iplotx):iamvec(iplotx)+ndimV-1) = .true.
+        if (iamvec(iploty).gt.0) required(iamvec(iploty):iamvec(iploty)+ndimV-1) = .true.
+     endif
 !  endif
 
   !!--read step titles (don't need to store ntitles for this)

@@ -20,7 +20,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   integer :: ipos, istep, ilocindat, iadvance, istepsonpage
   logical :: ipagechange
   
-  call initialise_plotting(ipicky,ipickx,irender)
+  call initialise_plotting(ipicky,ipickx,irender,ivecplot)
 
   !----------------------------------------------------------------------------  
   ! loop over timesteps (flexible to allow going forwards/backwards in
