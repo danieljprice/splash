@@ -315,17 +315,17 @@ subroutine menu
         call defaults_write
      case('S')
         call defaults_write
-        call write_limits('supersphplot.limits')     
+        call write_limits('splash.limits')     
      case('?s','?S')
         print "(6(/a),/,4(/a))",' The (s)ave option saves the default options to a ', &
                     ' file called `defaults'' in the current directory which', &
-                    ' is read automatically upon the next invocation of supersphplot.',&
+                    ' is read automatically upon the next invocation of splash.',&
                     ' This file uses namelist formatting and may be edited ', &
                     ' manually prior to startup if so desired. This is quite',&
                     ' useful for setting multiplots with many plots per page',&
                     ' The (S)ave option writes both the defaults file and ',&
                     ' also saves the current plot limits to a file called',&
-                    ' ''supersphplot.limits'' which is also read automatically',&
+                    ' ''splash.limits'' which is also read automatically',&
                     ' at startup.'
 !------------------------------------------------------------------------
      case('h','H')

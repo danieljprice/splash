@@ -189,7 +189,7 @@ subroutine submenu_limits(help)
                      ' file. By default this file is called `filename.limits''',&
                      ' where filename is the name of the *first* data file.', &
                      ' If you use the default name, this file will be automatically ',&
-                     ' read upon the next invocation of supersphplot. Using', &
+                     ' read upon the next invocation of splash. Using', &
                      ' another filename the limits file can be read by selecting ',&
                      ' option (7) from this menu. Note that limits read from file',&
                      ' will only apply when fixed (ie. not adaptive) limits are used.'  

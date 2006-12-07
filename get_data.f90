@@ -109,7 +109,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--read units file and change units if necessary
      !
-     call read_unitsfile('supersphplot.units',ncolumns,ierr)     
+     call read_unitsfile('splash.units',ncolumns,ierr)     
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
@@ -195,7 +195,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--read units file and change units if necessary
      !
-     call read_unitsfile('supersphplot.units',ncolumns,ierr)
+     call read_unitsfile('splash.units',ncolumns,ierr)
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns

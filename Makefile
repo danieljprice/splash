@@ -1,5 +1,5 @@
 ##-------------------------------------------------------------------##
-##     Makefile for compiling supersphplot (uses PGPLOT)             ##
+##     Makefile for compiling SPLASH (uses PGPLOT)                   ##
 ##     Written by Daniel Price					     ##
 ##     University of Exeter, UK, 2006                    	     ##
 ##                                                                   ##
@@ -125,6 +125,8 @@ endif
 #--------------------------------------------------------------
 #
 # the following presets are machine-specific
+# (ie. relate to both the compiler and a specific
+#      installation of pgplot)
 #
 #--------------------------------------------------------------
 
@@ -144,6 +146,7 @@ ifeq ($(SYSTEM),mymac)
 #  using g95 with pgplot installed via fink
    F90C= g95
    F90FLAGS= -O3 -ffast-math
+   DEBUGFLAG= -g -fbounds-check -ftrace=full
    PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
    SYSTEMFILE= system_f2003.f90
@@ -269,7 +272,7 @@ SOURCESF90= globaldata.f90 transform.f90 \
          powerspectrums.f90 render.f90 setpage.f90 \
          plotstep.f90 timestepping.f90 \
          defaults.f90 menu.f90 \
-         $(SYSTEMFILE) supersphplot.f90
+         $(SYSTEMFILE) splash.f90
 
 # these are `external' f77 subroutines
 SOURCESF=
@@ -281,46 +284,46 @@ OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o) $(STATICLIBS)
 # (move yours to the top so that you can simply type "make")
 #
 ascii: checksystem $(OBJECTS) read_data_ascii.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o asupersphplot $(OBJECTS) read_data_ascii.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o asplash $(OBJECTS) read_data_ascii.o
 
 mbatesph: checksystem $(OBJECTS) read_data_mbate.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o bsupersphplot $(OBJECTS) read_data_mbate.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o bsplash $(OBJECTS) read_data_mbate.o
 
 gadget: checksystem $(OBJECTS) read_data_gadget.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o gsupersphplot $(OBJECTS) read_data_gadget.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o gsplash $(OBJECTS) read_data_gadget.o
 
 vine: checksystem $(OBJECTS) read_data_VINE.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o vsupersphplot $(OBJECTS) read_data_vine.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o vsplash $(OBJECTS) read_data_vine.o
 
 ndspmhd: checksystem $(OBJECTS) read_data_dansph.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o supersphplot $(OBJECTS) read_data_dansph.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o splash $(OBJECTS) read_data_dansph.o
 
 dansph: checksystem $(OBJECTS) read_data_dansph_old.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o dsupersphplot $(OBJECTS) read_data_dansph_old.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o dsplash $(OBJECTS) read_data_dansph_old.o
 
 scwsph: checksystem $(OBJECTS) read_data_scw.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o wsupersphplot $(OBJECTS) read_data_scw.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o wsplash $(OBJECTS) read_data_scw.o
 
 srosph: checksystem $(OBJECTS) read_data_sro.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o rsupersphplot $(OBJECTS) read_data_sro.o 
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o rsplash $(OBJECTS) read_data_sro.o 
 
 spyros: checksystem $(OBJECTS) read_data_spyros.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ssupersphplot $(OBJECTS) read_data_spyros.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ssplash $(OBJECTS) read_data_spyros.o
 
 sphNG: checksystem $(OBJECTS) read_data_sphNG.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ssupersphplot $(OBJECTS) read_data_sphNG.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ssplash $(OBJECTS) read_data_sphNG.o
 
 RSPH: rsph
 
 rsph: checksystem $(OBJECTS) read_data_rsph.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o rsupersphplot $(OBJECTS) read_data_rsph.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o rsplash $(OBJECTS) read_data_rsph.o
 
 all: ndspmhd dansph sphNG srosph gadget mbatesph ascii
 
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
 	@echo ""
-	@echo "Compiling supersphplot for $(SYSTEM) system..........."
+	@echo "Compiling splash for $(SYSTEM) system..........."
 	@echo ""
         ifeq ($(ENDIAN), BIG)
 	     @echo "Flags set for conversion to BIG endian"
@@ -335,7 +338,7 @@ checksystem:
         endif
    else
 	@echo ""
-	@echo " Makefile for SUPERSPHPLOT by Daniel Price "
+	@echo " Makefile for splash by Daniel Price "
 	@echo " -- see INSTALL file for detailed instructions"
 	@echo ""
 	@echo " make: WARNING: value of SYSTEM = $(SYSTEM) not recognised..."
@@ -348,14 +351,14 @@ checksystem:
 ## other stuff
 
 doc:
-	cd docs; latex supersphplot; latex supersphplot; dvips supersphplot -o supersphplot.ps; ps2pdf13 supersphplot.ps
+	cd docs; latex splash; latex splash; dvips splash -o splash.ps; ps2pdf13 splash.ps
 
 tar:
-	tar cf supersphplot.tar Makefile $(SOURCESF90) $(SOURCESF) read_data*.f90
+	tar cf splash.tar Makefile $(SOURCESF90) $(SOURCESF) read_data*.f90
 
 targz:
-	tar cf supersphplot.tar Makefile $(SOURCESF90) $(SOURCESF) read_data*.f90
-	gzip supersphplot.tar
+	tar cf splash.tar Makefile $(SOURCESF90) $(SOURCESF) read_data*.f90
+	gzip splash.tar
 
 ## unit tests of various modules as I write them
 

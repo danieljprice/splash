@@ -43,7 +43,7 @@ contains
 !     Output: smoothed data            : datsmooth (npixx,npixy)
 !
 !     NB: AT PRESENT WE WRITE A PPM FILE DIRECTLY WITH THE RGB COLOURS
-!         AND OUTPUT JUST THE MONOCHROMATIC VERSION TO SUPERSPHPLOT.
+!         AND OUTPUT JUST THE MONOCHROMATIC VERSION TO SPLASH.
 !
 !     (c) 2005 Daniel Price. Last modified Dec 2005.
 !--------------------------------------------------------------------------
@@ -257,19 +257,19 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
 !
 !--write PPM--
 !  
-  write(filename,"(a,i5.5,a)") 'supersphplot_',istep,'.ppm' 
+  write(filename,"(a,i5.5,a)") 'splash_',istep,'.ppm' 
   open(unit=78,file=filename,status='replace',form='formatted',iostat=ierr)
   if (ierr /=0) then
      print*,'error opening ppm file'
      return
   endif
-  print "(1x,a,i5.5,a)", 'writing to file supersphplot_',istep,'.ppm' 
+  print "(1x,a,i5.5,a)", 'writing to file splash_',istep,'.ppm' 
 !
 !--PPM header
 !
   maxcolour = 255
   write(78,"(a)") 'P3'
-  write(78,"(a)") '# supersphplot.ppm created by supersphplot (c) 2005 Daniel Price'
+  write(78,"(a)") '# splash.ppm created by splash (c) 2005-2007 Daniel Price'
   write(78,"(i4,1x,i4)") npixx, npixy
   write(78,"(i3)") maxcolour
 !--pixel information

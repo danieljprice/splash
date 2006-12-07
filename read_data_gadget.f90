@@ -56,7 +56,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   nstepsread = 0
   if (maxparttypes.lt.6) then
      print*,' *** ERROR: not enough particle types for GADGET data read ***'
-     print*,' *** you need to edit supersphplot parameters and recompile ***'
+     print*,' *** you need to edit splash parameters and recompile ***'
      stop
   endif
   

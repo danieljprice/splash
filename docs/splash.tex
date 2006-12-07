@@ -11,7 +11,7 @@
 \setlength{\textwidth}{16cm}
 
 \begin{titlepage}
-\title{Visualisation of SPH data using SUPERSPHPLOT - v\input{version}}
+\title{Visualisation of SPH data using SPLASH - v\input{version}}
 \author{Daniel Price}
 \end{titlepage}
 
@@ -40,17 +40,17 @@ manipulation of data prior to plotting. Much of this manipulation makes sense
 within an SPH framework (for example the interpolation provided by the kernel
 and rotation of the particles for perspective).
 
- SUPERSPHPLOT is designed for this specific task - to use SPH tools to analyse SPH data and to make this a
+ SPLASH is designed for this specific task - to use SPH tools to analyse SPH data and to make this a
 straightforward task such that publishable images and animations can be obtained
 as efficiently as possible from the raw data with a minimum amount of effort
 from the user. I have found in the process that the development of powerful
 visualisation tools has enabled me to pick up on effects present in my
 simulation results that I would not otherwise have noticed (in particular the
 difference between a raw particle plot and a rendered image can be substantial). Part of the goal of
-SUPERSPHPLOT is to eliminate the use of crap-looking particle plots as a means of representing SPH data!
+SPLASH is to eliminate the use of crap-looking particle plots as a means of representing SPH data!
 
 \subsection{What it does}
-SUPERSPHPLOT is a utility for visualisation of output from (astrophysical) simulations using the
+SPLASH is a utility for visualisation of output from (astrophysical) simulations using the
 Smoothed Particle Hydrodynamics (SPH) method in one, two and three dimensions.
 It is written in Fortran 90/95 and
 utilises PGPLOT subroutines to do the actual plotting. In particular the following
@@ -83,7 +83,7 @@ converted into animations or inserted into \LaTeX documents.
 \end{itemize}
 
 \subsection{What it doesn't do}
-At the moment SUPERSPHPLOT is geared towards gas dynamics
+At the moment SPLASH is geared towards gas dynamics
 simulations with SPH and has basically grown out of my visualisation needs.
 Thus it may not be particularly useful for things like water and solids etc. in SPH.
 
@@ -96,7 +96,7 @@ Thus it may not be particularly useful for things like water and solids etc. in 
 \end{tabular}
 
 \subsection{Licence}
-SUPERSPHPLOT - a visualisation tool for SPH data \copyright 2005 Daniel Price.
+SPLASH - a visualisation tool for SPH data \copyright 2005 Daniel Price.
  This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 \section{Getting started}
@@ -105,8 +105,8 @@ The basic steps for installation are as follows:
 \begin{enumerate}
 \item make sure you have a Fortran 95 compiler (such as g95)
 \item make sure you have the PGPLOT libraries installed
-\item compile SUPERSPHPLOT and link with PGPLOT
-\item write a read\_data subroutine so that SUPERSPHPLOT can read your data format
+\item compile SPLASH and link with PGPLOT
+\item write a read\_data subroutine so that SPLASH can read your data format
 \end{enumerate}
 
 \subsubsection{Fortran 90/95 compilers}
@@ -116,7 +116,7 @@ g95 compiler, downloadable from:
 \begin{quote}
 \url{http://www.g95.org}
 \end{quote}
-successfully compiles SUPERSPHPLOT and if necessary the PGPLOT libraries.
+successfully compiles SPLASH and if necessary the PGPLOT libraries.
 
 \subsubsection{PGPLOT}
  The PGPLOT
@@ -130,13 +130,13 @@ or by ftp from
 \end{quote}
 however check to see if it is already installed on your system (if so, the libraries are
 usually located in /usr/local/pgplot). For details of the actual plotting subroutines
-used by the SUPERSPHPLOT source code, you may want to refer to the PGPLOT userguide:
+used by the SPLASH source code, you may want to refer to the PGPLOT userguide:
 \begin{quote}
 \url{http://www.astro.caltech.edu/~tjp/pgplot/contents.html}
 \end{quote}
 
 \subsubsection{Reading your data}
- The most important part is getting SUPERSPHPLOT to read your data format.
+ The most important part is getting SPLASH to read your data format.
 If you are using a publically available code, it is reasonably likely that I
 have already written a read data subroutine which will read your dumps.
 If not it is best to look at some of the other examples and change the 
@@ -188,7 +188,7 @@ LDFLAGS = -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11 -lg2c
 If the PNG drivers are incorporated into the PGPLOT installation, the \verb+-lpng+ libraries must also be added.
 Failing that, ask your system administrator(!) or simply download your own copy of
 the PGPLOT libraries and make sure it is compiled with the same compiler as you
-are using to compile the SUPERSPHPLOT source code.
+are using to compile the SPLASH source code.
 
 \begin{table}
 \begin{center}
@@ -213,7 +213,7 @@ NAG f95 & F90C = f95 & \\
 \end{table}
 \subsection{Environment variables}
  Several useful environment variables can be set for PGPLOT and several of them
-are very useful for SUPERSPHPLOT. In a tcsh shell type:
+are very useful for SPLASH. In a tcsh shell type:
 \begin{verbatim}
 setenv PGPLOT_DEV /xwin
 setenv PGPLOT_BACKGROUND white
@@ -222,26 +222,26 @@ setenv PGPLOT_FOREGROUND black
 The first command sets the default device to the X-window, rather than the /null
 device. The latter two commands set the background and foreground colours of the
 plotting page. Note that these environment variables should be set \emph{before}
-invoking supersphplot (it is simplest to set them upon starting the shell by placing
+invoking splash (it is simplest to set them upon starting the shell by placing
 them in your .tcshrc or bash/sh equivalent file). For other environment
 variables which can be set, refer to the PGPLOT user guide.
 
 \subsection{System dependent routines}
  System dependent subroutines are interfaced in a separate \verb+system+ module in the file \verb+system_unix.f90+.
-At present the only calls to these routines are made from \verb+supersphplot.f90+ which
+At present the only calls to these routines are made from \verb+splash.f90+ which
 reads the run name(s) from the command line. A standardised format for performing this
 task is included in the standards for the next release of Fortran (Fortran 2003),
 however in the meantime the calls in the \verb+system+ module may require some adjustment depending on the
 particular system you are compiling the code on. The program is still fully
 functional without this call working, but it does make things convenient (in particular it means that
-SUPERSPHPLOT can be invoked using wildcards ($*,?$) in filenames).
+SPLASH can be invoked using wildcards ($*,?$) in filenames).
 
 \section{A brief tour...}
  Once you have a read data file that will read your data format,
-SUPERSPHPLOT is invoked with the name of the data
+SPLASH is invoked with the name of the data
 file(s) on the command line, e.g.
 \begin{verbatim}
-supersphplot myrun*.dat
+splash myrun*.dat
 \end{verbatim}
 
 After a successful data read, the menu should appear as something like the
@@ -311,7 +311,7 @@ corresponding to the locations of density, particle mass and smoothing length in
 these options are initially set in the subroutine defaults\_set. The options set using
 the submenus can be saved using the (s)ave option from the menu. This saves all of
 the current options to a file called `defaults' in the current directory, which is
-automatically read upon starting supersphplot the next time. This file is written using
+automatically read upon starting splash the next time. This file is written using
 the namelist formatting option provided by Fortran 90. An alternative way of setting
 options is to edit this file directly prior to invoking the program.
 
@@ -324,7 +324,7 @@ section or projection) and/or vector plot. For rendered plots plotting of
 contours can be turned on/off between plots and for cross sections the position of
 the cross section can also be changed between plots. An alternative method for
 specifying a multiplot is to edit the \verb+defaults+ file directly prior to
-starting SUPERSPHPLOT.
+starting SPLASH.
 
 \subsection{(d)ata options}
 These options relate to the data read and are as follows:
@@ -495,7 +495,7 @@ etc. to selected data columns.
 limits calculated from the data read or set manually using option 2 to a
 file (default name is `filename.limits') where filename is the name of the first data file
 read. If using the default filename, this limits file is automatically read upon the next
-invocation of supersphplot with the same filename.
+invocation of splash with the same filename.
 Otherwise the limits file can be read by choosing option 7 from this submenu. The limits apply
 only when fixed limits are set.
 \item \textbf{re-read limits file}. Re-reads the plot limits from the
@@ -537,7 +537,7 @@ schemes given are shown in Figure~\ref{fig:colourschemes} and are as follows:
 \begin{figure}
 \begin{center}
 \begin{turn}{270}\epsfig{file=colourschemes.ps,height=\textwidth}\end{turn}
-\caption{SUPERSPHPLOT colour schemes}
+\caption{SPLASH colour schemes}
 \label{fig:colourschemes}
 \end{center}
 \end{figure}
@@ -599,12 +599,12 @@ in two and three dimensions. At present these are plotted on top of the particle
 \subsection{(s,S)ave, (h)elp, (q)uit}
  The (s)ave option saves the default options to a file called `defaults' in the
 current directory which is read automatically upon the next invocation of
-supersphplot. This file uses namelist formatting and may be edited manually prior to  
+splash. This file uses namelist formatting and may be edited manually prior to  
 startup if so desired (this is quite useful for setting multiplots with many plots per
  page).
  
   The (S)ave option writes both the defaults file and also saves the current plot
-limits to a file called `supersphplot.limits' which is also read automatically
+limits to a file called `splash.limits' which is also read automatically
 at startup.
 
 The (h)elp option simply expands the text for the options menus (I
@@ -731,7 +731,7 @@ f(q) = \left\{ \begin{array}{ll}
 \end{equation}
 The integral (\ref{eq:integratedform}) is not (obviously) tractable analytically. However it is
 straightforward to perform this integration numerically (for all $q_{xy}$'s from $0\to 2$) and store the results in a table for the
-interpolation calculation. This is the method adopted in SUPERSPHPLOT. An alternative would be to use a
+interpolation calculation. This is the method adopted in SPLASH. An alternative would be to use a
 different kernel in the visualisation for which the above integral can be calculated analytically.
 
 
@@ -747,7 +747,7 @@ sight.
  A cross section can be taken of SPH data by summing the
 contributions to each pixel in the cross section plane from all particles within
 $2h$ of the plane. In
-the implementation used in SUPERSPHPLOT the cross section is always at a fixed value of the third co-ordinate
+the implementation used in SPLASH the cross section is always at a fixed value of the third co-ordinate
 (ie. for xy plots the cross section is in the z direction). Oblique cross
 sections can be taken by rotating the particles first. Vector cross sections are taken by
 interpolating each component separately.
@@ -770,7 +770,7 @@ plots multiple slices through the data.
 
 
 \subsubsection{3D surface rendering of SPH data}
- This option is introduced in version 1.5 of SUPERSPHPLOT. The idea is to produce a visualisation of
+ This option is introduced in version 1.5 of SPLASH. The idea is to produce a visualisation of
 the surface of a data set by performing a ray-trace through the SPH particles, with the density
 distribution giving the optical depth and the rendered quantity providing the colour. Thus
 low-density regions will be transparent whilst high density regions will be `optically thick' and
@@ -814,7 +814,7 @@ the density, we have
 giving just a summation involving the SPH kernel integrated through one spatial dimension, which is
 the same as is used in the 3D projections (see $\ref{sec:proj}$ for details of how we compute this).
 All that remains is to adjust $\kappa$ appropriately to give the desired surface position. In
-SUPERSPHPLOT an approximate value for $\kappa$ is computed according to
+SPLASH an approximate value for $\kappa$ is computed according to
 \begin{equation}
 \kappa = \frac{\pi \bar{h}^2 }{ (\bar{m}Y(0) d)}
 \end{equation} 
@@ -859,16 +859,16 @@ the particles optically thin to the background. Thus the final colours must be f
 background colour (ie. black) according to the total optical depth computed for each pixel.
 
 
- The latter method is the one used in SUPERSPHPLOT. The one caveat is that, because
+ The latter method is the one used in SPLASH. The one caveat is that, because
 it means using more than 256 colours (for example, if we have a colour map with 256 colours, we
 need to then have all 256 colours at varying levels of intensity), at present this is implemented by
-writing the pixel map directly to a .ppm file (called supersphplot\_\#\#\#\#\#.dat where the number
+writing the pixel map directly to a .ppm file (called splash\_\#\#\#\#\#.dat where the number
 is the number of the current dumpfile) and the approximate version (ie. without the background fade)
 is given to the PGPLOT device (e.g. the /xw screen). The .ppm files can be converted easily to any
 other format (e.g. png, ps) using netpbm tools (\url{http://netpbm.sourceforge.net/}) such as
 ppmtopng, ppmtops.
 
- For examples of the 3D surface rendering in SUPERSPHPLOT, have a look at my movies of neutron star mergers at \url{http://www.astro.ex.ac.uk/people/dprice/research/nsmag}.
+ For examples of the 3D surface rendering in SPLASH, have a look at my movies of neutron star mergers at \url{http://www.astro.ex.ac.uk/people/dprice/research/nsmag}.
 
 \subsection{Rotation \& 3D perspective}
 \subsubsection{Rotation}
@@ -895,7 +895,7 @@ converge)\footnote{Objects in the mirror may be closer than they appear}. The si
 beautifully illustrated if I could be bothered drawing a figure. I have found reasonable
 results with something like a $1/10$ reduction at the typical distance of the object (ie.
 observer is placed at a distance of $10\times$ object size with distance to screen of $1\times$ object
-size. SUPERSPHPLOT sets this as default using the z plot limit as the `object size'.
+size. SPLASH sets this as default using the z plot limit as the `object size'.
 
 \subsection{Power spectra (1D only)}
  In one dimension an extra plot item appears
@@ -1045,15 +1045,15 @@ a file called 'legend' in the working directory, with one label per line.
 
 \subsection{Read/process my data into images without having to answer prompts?}
  Firstly edit the settings in the \verb+defaults+ file in the current
-directory (created by doing a `save defaults' from the main menu) before invoking SUPERSPHPLOT.
+directory (created by doing a `save defaults' from the main menu) before invoking SPLASH.
 
- Having edited the defaults file, the simplest way of running SUPERSPHPLOT
-non-interactively is to write a small shell script which runs SUPERSPHPLOT
+ Having edited the defaults file, the simplest way of running SPLASH
+non-interactively is to write a small shell script which runs SPLASH
 and answers the prompts appropriately. Something like the following should work:
 \begin{verbatim}
 #!/usr/bin/tcsh
 cd plot
-supersphplot myrun* << ENDINPUT
+splash myrun* << ENDINPUT
 2
 1
 8
@@ -1077,18 +1077,18 @@ are not present.
 
 \subsection{What about boundaries? How does the rendering work near a boundary?}
  Usual practise in SPH simulations near boundaries is
-to introduce ghost particles which mirror the real particles. SUPERSPHPLOT does not
+to introduce ghost particles which mirror the real particles. SPLASH does not
 explicitly setup any ghost particles but will use any that are present in the data
 (see next question for how to specify multiple particle types). Additional particle types contribute
 to the rendering calculations but not to the determination of the plot limits. Note,
-however, that SUPERSPHPLOT does \emph{not} set up ghost particles itself, as this may depend
+however, that SPLASH does \emph{not} set up ghost particles itself, as this may depend
 on the type and location of the boundary. Thus if your simulation uses ghost particle
 boundaries, the ghost particles should be dumped alongside the gas particles in the
 output file so that their positions, masses, densities and smoothing lengths can be
-read into SUPERSPHPLOT and used to render the image appropriately.
+read into SPLASH and used to render the image appropriately.
 
-\subsection{How does supersphplot handle multiple particle types?}
-SUPERSPHPLOT can handle up to 6 different particle types. These can be turned on and off in the particle plot
+\subsection{How does splash handle multiple particle types?}
+SPLASH can handle up to 6 different particle types. These can be turned on and off in the particle plot
 o)ptions menu (\S\ref{sec:opts}). These types are be specified in the set\_labels part of the read\_data
 routine, which contains some lines of code along the lines of:
 \begin{verbatim}
@@ -1257,7 +1257,7 @@ Filename & Description \\
      render.f90	 	 & takes array of pixels and plots render map/contours etc\\
      rotate.f90             & subroutines controlling rotation of particles\\
      setpage.f90            & sets up the PGPLOT page (replaces call to PGENV/PGLAB)\\
-     supersphplot.f90	 & main program, drives menu loop\\
+     splash.f90	 & main program, drives menu loop\\
      timestepping.f90       & controls stepping through timesteps\\
      titles.f90        & reads a list of titles to be used to label each timestep\\
      transform.f90	 	 & applies various transformations to data (log10, 1/x, etc) \\

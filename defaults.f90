@@ -139,10 +139,10 @@ subroutine defaults_write
  implicit none
  integer :: i,ierr
        
- open(unit=1,file='defaults',status='replace',form='formatted', &
+ open(unit=1,file='splash.defaults',status='replace',form='formatted', &
       delim='apostrophe',iostat=ierr) ! without delim namelists may not be readable
     if (ierr /= 0) then 
-       print*,'ERROR: cannot write defaults file'
+       print*,'ERROR: cannot write splash.defaults file'
        close(unit=1)
        return
     endif
@@ -160,7 +160,7 @@ subroutine defaults_write
        write(1,"(a)") trim(rootname(i))
     enddo
  close(unit=1)
- print*,'default options saved to file'
+ print*,'default options saved to file splash.defaults'
     
  return              
 end subroutine defaults_write
@@ -184,49 +184,49 @@ subroutine defaults_read
  logical :: iexist
  integer :: ierr,i
  
- inquire (exist=iexist, file='defaults')
+ inquire (exist=iexist, file='splash.defaults')
  if (iexist) then
-    open(unit=1,file='defaults',status='old',form='formatted')
+    open(unit=1,file='splash.defaults',status='old',form='formatted')
     
     ierr = 0
     read(1,NML=dataopts,end=77,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading data options from defaults'    
+    if (ierr /= 0) print "(a)",'error reading data options from splash.defaults'    
     
     ierr = 0
     read(1,NML=plotopts,end=77,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading plot options from defaults'
+    if (ierr /= 0) print "(a)",'error reading plot options from splash.defaults'
 
     ierr = 0
     read(1,NML=pageopts,end=77,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading page options from defaults'
+    if (ierr /= 0) print "(a)",'error reading page options from splash.defaults'
 
     ierr = 0
     read(1,NML=renderopts,end=77,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading render options from defaults'
+    if (ierr /= 0) print "(a)",'error reading render options from splash.defaults'
 
     ierr = 0
     read(1,NML=vectoropts,end=77,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading vector plot options from defaults'
+    if (ierr /= 0) print "(a)",'error reading vector plot options from splash.defaults'
 
     ierr = 0
     read(1,NML=xsecrotopts,end=77,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading xsec/rotation options from defaults'
+    if (ierr /= 0) print "(a)",'error reading xsec/rotation options from splash.defaults'
 
     ierr = 0
     read(1,NML=powerspecopts,end=77,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading power spectrum options from defaults'
+    if (ierr /= 0) print "(a)",'error reading power spectrum options from splash.defaults'
 
     ierr = 0
     read(1,NML=exactopts,end=77,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading exact solution options from defaults'    
+    if (ierr /= 0) print "(a)",'error reading exact solution options from splash.defaults'    
 
     ierr = 0
     read(1,NML=exactparams,end=77,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading exact solution parameters from defaults'    
+    if (ierr /= 0) print "(a)",'error reading exact solution parameters from splash.defaults'    
   
     ierr = 0
     read(1,NML=multi,end=77,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading multiplot options from defaults'
+    if (ierr /= 0) print "(a)",'error reading multiplot options from splash.defaults'
 
     do i=1,maxfile
        read(1,*,end=66,iostat=ierr) rootname(i)
@@ -237,12 +237,12 @@ subroutine defaults_read
     print*,'read default options from file '
     return
  else
-    print*,'defaults file not found: using program settings'
+    print*,'splash.defaults file not found: using program settings'
     return
  endif
  
 77 continue
- print*,'**** warning: end of file in defaults ****'
+ print*,'**** warning: end of file in splash.defaults ****'
  close(unit=1)
 
  return

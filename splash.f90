@@ -1,7 +1,7 @@
-program supersphplot
+program splash
 !---------------------------------------------------------------------------------
 !
-!     SUPERSPHPLOT - a plotting utility for SPH data in 1, 2 and 3 dimensions
+!     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
 !     Copyright (C) 2005-2006 Daniel Price 
 !     dprice@astro.ex.ac.uk
 !
@@ -23,6 +23,8 @@ program supersphplot
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.7.0 : (07/12/06)
+!             renamed SPLASH instead of SUPERSPHPLOT
 !     1.6.2   (24/10/06)
 !           : fast particle plotting and streamline plotting implemented;
 !             more bug fixes with interactive mode on multiplots; various other bug fixes.
@@ -112,7 +114,7 @@ program supersphplot
 !     render	 	 : takes array of pixels and plots render map/contours etc
 !     rotate             : subroutines controlling rotation of particles
 !     setpage            : sets up the PGPLOT page (replaces call to PGENV/PGLAB)
-!     supersphplot	 : main program, drives menu loop
+!     splash             : main program, drives menu loop
 !     timestepping       : controls stepping through timesteps
 !     titles             : reads a list of titles to be used to label each timestep
 !     transform	 	 : applies various transformations to data (log10, 1/x, etc)
@@ -205,7 +207,7 @@ program supersphplot
   !
   !--read plot limits from file (overrides get_data limits settings)
   !
-  call read_limits('supersphplot.limits',ierr)
+  call read_limits('splash.limits',ierr)
   
   !
   ! enter main menu
@@ -226,31 +228,29 @@ subroutine print_header
  implicit none
       
  print 10
-10 format(/, &
-   "                                     _           _       _   ",/, &
-   " ___ _   _ _ __   ___ _ __ ___ _ __ | |__  _ __ | | ___ | |_ ",/, &
-   "/ __| | | | '_ \ / _ \ '__/ __| '_ \| '_ \| '_ \| |/ _ \| __|",/, &
-   "\__ \ |_| | |_) |  __/ |  \__ \ |_) | | | | |_) | | (_) | |_ ",/, &
-   "|___/\__,_| .__/ \___|_|  |___/ .__/|_| |_| .__/|_|\___/ \__|",/, &
-   "          |_|                 |_|         |_|                ")
+10 format( &
+   "    _                                                 _  ",/, &
+   "   (_)   _               _           _         _     (_)_",/, &
+   "      _ (_)    ___ _ __ | | __ _ ___| |__     (_)   _  (_)",/, &
+   "   _ (_)  _   / __| '_ \| |/ _` / __| '_ \       _ (_)    ",/, &
+   "  (_)  _ (_)  \__ \ |_) | | (_| \__ \ | | |  _  (_) _    ",/, &
+   "      (_)  _  |___/ .__/|_|\__,_|___/_| |_| (_)  _ (_)   ",/, &
+   "          (_)  (_)|_| (_) (_)  (_)(_) (_)(_) (_)(_)     ")        
  print 20
-20 format(  &
-   '    _   _     _   _   _   _   _   _     _   _   _   _   _  ',/, &
-   '   / \ / \   / \ / \ / \ / \ / \ / \   / \ / \ / \ / \ / \ ',/, &
-   '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/, &
-   '   \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ ',/)      
+20 format(/,  &
+   '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",' ( version 1.6.2 [24th Oct ''06] Copyright (C) 2005-2006)'
+ print "(a)",'  ( version 1.7.0 [7th Dec ''06] Copyright (C) 2005-2007 )'
  print 30 
 30 format(/,    &
-   ' * SUPERSPHPLOT comes with ABSOLUTELY NO WARRANTY.',/, &
+   ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
    '   This is free software; and you are welcome to redistribute it ',/, &
    '   under certain conditions (see LICENSE file for details). *',/,/, &
    ' Comments, bugs, suggestions and queries to: dprice@astro.ex.ac.uk ',/, &
-   ' Check for updates at: www.astro.ex.ac.uk/people/dprice/supersphplot ',/, &
-   ' Credits are always nice (but not essential) - however, if you plot ',/, &
-   ' something beautiful, please send me a copy for the gallery. ',/)
+   ' Check for updates at: www.astro.ex.ac.uk/people/dprice/splash ',/, &
+   ' Please spread the word by giving credits in your paper, and if you ',/, &
+   ' plot something beautiful, please send me a copy for the gallery. ',/)
       
 end subroutine print_header
              
-end program supersphplot
+end program splash

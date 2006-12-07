@@ -185,7 +185,7 @@ subroutine submenu_data
     if (UnitsHaveChanged) then
        iwriteunitsfile = .true.
        call prompt(' save units to file? ',iwriteunitsfile)
-       if (iwriteunitsfile) call write_unitsfile('supersphplot.units',numplot)
+       if (iwriteunitsfile) call write_unitsfile('splash.units',numplot)
     endif
     
     if (.not.iRescale .and. UnitsHaveChanged) call prompt('Apply physical units to data?',iRescale)

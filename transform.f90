@@ -21,7 +21,7 @@
 !   transform_limits : transforms the plot limits appropriately
 !   transform_label  : changes the plot label appropriately
 !
-! Written for use in supersphplot by
+! Written for use in supersphplot/splash by
 ! Daniel Price, Institute of Astronomy, Cambridge, UK 2002-2004
 !               University of Exeter, UK              2004-
 ! dprice@astro.ex.ac.uk
