@@ -116,7 +116,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  do j=index1,index2
                     icellx = int((xplot(j) - xmin)*dxcell1) + 1
                     icelly = int((yplot(j) - ymin)*dycell1) + 1
-                    if (icellx.gt.0 .and. icellx.le.ncellx .and. icelly.gt.0 .and. icelly.le.ncelly) then
+                    !--exclude particles if there are more than one particle per
+                    !  cell or if z < zobserver (for 3D perspective)
+                    if (zplot(j).le.zmax &
+                       .and. icellx.gt.0 .and. icellx.le.ncellx &
+                       .and. icelly.gt.0 .and. icelly.le.ncelly) then
                        if (nincell(icellx,icelly).eq.0) then
                           nincell(icellx,icelly) = nincell(icellx,icelly) + 1
                           call pgpt(1,xplot(j),yplot(j),imarktype(itype))
@@ -134,7 +138,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            else
               nplotted = 0
               do j=index1,index2
-                 if (icolourpart(j).gt.0) then
+                 if (icolourpart(j).gt.0 .and. zplot(j).le.zmax) then
                     nplotted = nplotted + 1
                     call pgsci(icolourpart(j))
                     call pgpt(1,xplot(j),yplot(j),imarktype(itype))

@@ -221,6 +221,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
      if (hi.le.0.) then
         cycle over_particles
      elseif (use3Dperspective) then
+        if (z(i).gt.zobserver) cycle over_particles
         zfrac = abs(dscreen/(z(i)-zobserver))
         hi = hi*zfrac
      endif
@@ -417,6 +418,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,npart,&
         print*,'interpolate3D_proj_vec: error: h <= 0 ',i,hi
         return
      elseif (abs(dscreen).gt.tiny(dscreen)) then
+        if (z(i).gt.zobserver) cycle over_particles
         zfrac = abs(dscreen/(z(i)-zobserver))
         hi = hi*zfrac
      endif

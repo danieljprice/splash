@@ -788,6 +788,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               endif
               if (.not.x_sec .or. x_sec.and.use3Dopacityrendering) then
                  print*,' observer height = ',dobserver,', screen at ',dobserver-dscreenfromobserver
+                 xsecmax = dobserver
               endif
            endif
            do j=1,ntoti
