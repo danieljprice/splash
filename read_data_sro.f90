@@ -432,11 +432,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
         else
            rewind(41)
            if (doubleprec) then
-              read(41,iostat=ierr1) nprint,((datdb(k,i),k=1,max_spec+2),i=1,nprint),Etot_burn_cgsdb
+              read(41,iostat=ierr1) nprint,((datdb(i,k),k=1,max_spec+2),i=1,nprint),Etot_burn_cgsdb
               dat(:,ncol+1:ncolumns,j) = real(datdb(:,1:max_spec+2))
               print*,' Etot_burn (cgs) = ',Etot_burn_cgsdb
            else
-              read(41,iostat=ierr1) nprint,((dat(k,i,j),k=1,max_spec+2),i=1,nprint),Etot_burn_cgs
+              read(41,iostat=ierr1) nprint,((dat(i,k,j),k=1,max_spec+2),i=1,nprint),Etot_burn_cgs
               print*,' Etot_burn (cgs) = ',Etot_burn_cgs
            endif
            if (ierr1 < 0) then
