@@ -86,6 +86,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (index(dumpfile,'SMBH').gt.0) magfield = .false.
      if (index(dumpfile,'nsbh').gt.0) magfield = .false.
      if (index(dumpfile,'NSBH').gt.0) magfield = .false.
+     if (index(dumpfile,'WD').gt.0) magfield = .false.
   endif
   !
   !--override this with environment variable
@@ -214,7 +215,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            if (.not.iexist) then
               print "(a)",' abundance file '//trim(abunfile)//' NOT FOUND'
            else
-              open(unit=41,file=abunfile,status='old',form='formatted',iostat=ierr1)
+              open(unit=41,file=abunfile,status='old',form='unformatted',iostat=ierr1)
               if (ierr1 /= 0) then
                  print "(a)",'*** ERROR OPENING '//trim(abunfile)
               else
