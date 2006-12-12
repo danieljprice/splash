@@ -23,8 +23,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.7.0 : (07/12/06)
-!             renamed SPLASH instead of SUPERSPHPLOT
+!     1.7.0 : (13/12/06)
+!             renamed SPLASH instead of SUPERSPHPLOT; much faster data read
+!             for gadget and sphNG reads (only required columns read); 
+!             physical units can be saved to file; new menu formats; various
+!             other bug fixes. 
 !     1.6.2   (24/10/06)
 !           : fast particle plotting and streamline plotting implemented;
 !             more bug fixes with interactive mode on multiplots; various other bug fixes.
@@ -240,7 +243,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( version 1.7.0 [7th Dec ''06] Copyright (C) 2005-2007 )'
+ print "(a)",'  ( version 1.7.0 [13th Dec ''06] Copyright (C) 2005-2007 )'
  print 30 
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
