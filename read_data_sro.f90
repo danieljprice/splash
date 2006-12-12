@@ -44,22 +44,25 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
+  integer, parameter :: max_spec = 7 ! number of species in abundance file
   real, parameter :: hfact = 1.5
   real, parameter :: dhfact3 = 1./hfact**3
-  integer :: i,j,k,ierr
+  integer :: i,j,k,ierr,ierr1
   integer :: nprint,nptmass,npart_max,nstep_max
-  integer :: n1,n2
-  logical :: iexist,magfield,minidump,doubleprec
+  integer :: n1,n2,idump,ncol
+  logical :: iexist,magfield,minidump,doubleprec,iabunfileopen
   character(len=len(rootname)) :: dumpfile
+  character(len=13) :: abunfile
   character(len=10) :: string
-  real :: timei,tkin,tgrav,tterm,escap,rstar,mstar
+  real :: timei,tkin,tgrav,tterm,escap,rstar,mstar,Etot_burn_cgs
   real(doub_prec) :: timedb,tkindb,tgravdb,ttermdb
-  real(doub_prec) :: escapdb,rstardb,mstardb
+  real(doub_prec) :: escapdb,rstardb,mstardb,Etot_burn_cgsdb
   real(doub_prec), dimension(:,:), allocatable :: datdb
 
   nstepsread = 0
   nstep_max = 0
   npart_max = maxpart
+  iabunfileopen = .false.
 
   dumpfile = trim(rootname)   
   !
@@ -101,18 +104,18 @@ subroutine read_data(rootname,indexstart,nstepsread)
   ndimV = 3
   if (magfield) then
      if (minidump) then
-        ncolumns = 11
+        ncol = 11
         iformat = 1
      else
-        ncolumns = 27
+        ncol = 27
         iformat = 2
      endif
   else
      if (minidump) then
-        ncolumns = 7  ! number of columns in file
+        ncol = 7  ! number of columns in file
         iformat = 3
      else
-        ncolumns = 16
+        ncol = 16
         iformat = 4
      endif 
   endif
@@ -130,271 +133,327 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--open the (unformatted) binary file and read the number of particles
   !
-     open(unit=15,iostat=ierr,file=dumpfile,status='old',form='unformatted')
-     if (ierr /= 0) then
-        print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
-        return
-     else
-        !
-        !--read the number of particles in the first step,
-        !  allocate memory and rewind
-        !
-        doubleprec = .true.
-        if (minidump) then
-           !--try double precision first
-           read(15,end=55,iostat=ierr) timedb,nprint,nptmass
-           !--change to single precision if stupid answers
-           if (nprint.le.0.or.nprint.gt.1e10 &
-               .or.nptmass.lt.0.or.nptmass.gt.1e6) then
-              doubleprec = .false.
-              rewind(15)
-              read(15,end=55,iostat=ierr) timei,nprint,nptmass
-              if (magfield) then
-                 print "(a)",' single precision MHD minidump'
-              else
-                 print "(a)",' single precision hydro minidump'              
-              endif
+  open(unit=15,iostat=ierr,file=dumpfile,status='old',form='unformatted')
+  if (ierr /= 0) then
+     print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
+     return
+  else
+     !
+     !--read the number of particles in the first step,
+     !  allocate memory and rewind
+     !
+     doubleprec = .true.
+     if (minidump) then
+        !--try double precision first
+        read(15,end=55,iostat=ierr) timedb,nprint,nptmass
+        !--change to single precision if stupid answers
+        if (nprint.le.0.or.nprint.gt.1e10 &
+            .or.nptmass.lt.0.or.nptmass.gt.1e6) then
+           doubleprec = .false.
+           rewind(15)
+           read(15,end=55,iostat=ierr) timei,nprint,nptmass
+           if (magfield) then
+              print "(a)",' single precision MHD minidump'
            else
-              if (magfield) then
-                 print "(a)",' double precision MHD minidump'
-              else
-                 print "(a)",' double precision hydro minidump'
-              endif
-              timei = real(timedb)
+              print "(a)",' single precision hydro minidump'              
            endif
         else
-           !--try double precision first
-           read(15,end=55,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
-                   nptmass,timedb
-           !--change to single precision if stupid answers
-           if (n1.lt.0.or.n1.gt.1e10.or.n2.lt.0.or.n2.gt.1e10 &
-              .or.nptmass.lt.0.or.nptmass.gt.1.e6) then
-              doubleprec = .false.
-              rewind(15)
-              read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
-                   nptmass,timei
-              if (magfield) then
-                 print "(a)",' single precision full MHD dump'              
-              else
-                 print "(a)",' single precision full hydro dump'
-              endif
+           if (magfield) then
+              print "(a)",' double precision MHD minidump'
            else
-              if (magfield) then
-                 print "(a)",' double precision full MHD dump'
+              print "(a)",' double precision hydro minidump'
+           endif
+           timei = real(timedb)
+        endif
+     else
+        !--try double precision first
+        read(15,end=55,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
+                nptmass,timedb
+        !--change to single precision if stupid answers
+        if (n1.lt.0.or.n1.gt.1e10.or.n2.lt.0.or.n2.gt.1e10 &
+           .or.nptmass.lt.0.or.nptmass.gt.1.e6) then
+           doubleprec = .false.
+           rewind(15)
+           read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
+                nptmass,timei
+           if (magfield) then
+              print "(a)",' single precision full MHD dump'              
+           else
+              print "(a)",' single precision full hydro dump'
+           endif
+        else
+           if (magfield) then
+              print "(a)",' double precision full MHD dump'
+           else
+              print "(a)",' double precision full hydro dump'              
+           endif
+           timei = real(timedb)           
+        endif
+     endif
+     print "(a,f10.2,a,i9,a,i6)",' time: ',timei,' npart: ',nprint,' nptmass: ',nptmass
+     !--barf if stupid answers in single and double precision
+     if (nptmass.lt.0.or.nptmass.gt.1.e6 .or. nprint.lt.0 &
+         .or. nprint.gt.1e10 .or. (nprint.eq.0 .and. nptmass.eq.0)) then
+        print "(a)",' *** ERRORS IN TIMESTEP HEADER: NO DATA READ ***'
+        close(15)
+        return
+     endif
+
+     ncolumns = ncol
+     !
+     !--check if abundance files are present and read from them
+     !
+     if (.not.magfield) then
+        !--extract dump number from filename (ie. what comes after the '.')
+        read(dumpfile(index(dumpfile,'.')+1:len_trim(dumpfile)),*,iostat=ierr1) idump
+        if (ierr1 /= 0) then
+           print "(a)",' error extracting dump number from filename' 
+        else
+           write(abunfile,"(a,'.',i5.5)") 'abun_a7',idump
+           inquire(file=abunfile,exist=iexist)
+           if (.not.iexist) then
+              print "(a)",' abundance file '//trim(abunfile)//' NOT FOUND'
+           else
+              open(unit=41,file=abunfile,status='old',form='formatted',iostat=ierr1)
+              if (ierr1 /= 0) then
+                 print "(a)",'*** ERROR OPENING '//trim(abunfile)
               else
-                 print "(a)",' double precision full hydro dump'              
+                 ncolumns = ncol + max_spec + 2
+                 iabunfileopen = .true.
               endif
-              timei = real(timedb)           
            endif
         endif
-        print "(a,f10.2,a,i9,a,i6)",' time: ',timei,' npart: ',nprint,' nptmass: ',nptmass
-        !--barf if stupid answers in single and double precision
-        if (nptmass.lt.0.or.nptmass.gt.1.e6 .or. nprint.lt.0 &
-            .or. nprint.gt.1e10 .or. (nprint.eq.0 .and. nptmass.eq.0)) then
-           print "(a)",' *** ERRORS IN TIMESTEP HEADER: NO DATA READ ***'
-           close(15)
-           return
-        endif
- 
-       if (.not.allocated(dat) .or. (nprint+nptmass).gt.npart_max) then
-           npart_max = max(npart_max,INT(1.1*(nprint+nptmass)))
-           call alloc(npart_max,nstep_max,ncolumns)
-        endif
-        rewind(15)
      endif
-     if (ierr /= 0) then
-        print "(a)",'*** ERROR READING TIMESTEP HEADER ***'
-     else
+
+     if (.not.allocated(dat) .or. (nprint+nptmass).gt.npart_max) then
+        npart_max = max(npart_max,INT(1.1*(nprint+nptmass)))
+        call alloc(npart_max,nstep_max,ncolumns)
+     endif
+     rewind(15)
+  endif
+  if (ierr /= 0) then
+     print "(a)",'*** ERROR READING TIMESTEP HEADER ***'
+  else
 !
 !--loop over the timesteps in this file
 !     
-        npart_max = max(npart_max,nprint)
+     npart_max = max(npart_max,nprint)
 !
 !--allocate/reallocate memory if j > maxstep
 !
-        if (j.gt.maxstep) then
-           call alloc(maxpart,j+1,maxcol)
-        endif
+     if (j.gt.maxstep) then
+        call alloc(maxpart,j+1,maxcol)
+     endif
 !
 !--now read the timestep data in the dumpfile
 !
-        if (magfield) then
-           if (minidump) then
-              dat(:,:,j) = 0.
+     if (magfield) then
+        if (minidump) then
+           dat(:,:,j) = 0.
 
-              if (doubleprec) then
-                 allocate(datdb(maxpart,ncolumns),stat=ierr)
-                 if (ierr /= 0) then
-                    print*,"(a)",'*** error allocating memory for double conversion ***'
-                    return
-                 else
-                    datdb = 0.
-                 endif
-                 read(15,end=55,iostat=ierr) timedb,nprint,nptmass, &
-                   ((datdb(i,k),i=1,nprint),k=1,6),  &
-                   ((datdb(i,k),i=1,nprint),k=8,ncolumns), &
-                   (datdb(i,7), i=nprint+1, nprint+nptmass), &
-                   ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,3)
-
-                   if (ierr /= 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
-                   dat(:,1:ncolumns,j) = real(datdb(:,1:ncolumns))
-                   time(j) = real(timedb)
-                            
+           if (doubleprec) then
+              allocate(datdb(maxpart,ncol),stat=ierr)
+              if (ierr /= 0) then
+                 print*,"(a)",'*** error allocating memory for double conversion ***'
+                 return
               else
-                 read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
-                   ((dat(i,k,j),i=1,nprint),k=1,6), &
-                   ((dat(i,k,j),i=1,nprint),k=8,ncolumns), &
-                   (dat(i,7,j), i=nprint+1, nprint+nptmass), &
-                   ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,3)
+                 datdb = 0.
               endif
-              !
-              !--because masses are not dumped, we need to reconstruct them
-              !  from density and h (only strictly true for grad h code)
-              !
-              dat(1:nprint,7,j) = dat(1:nprint,4,j)**3*dat(1:nprint,5,j)*dhfact3
-              print "(a,f3.1,a)", &
-               ' WARNING: setting particle masses assuming h = ',hfact,'*(m/rho)^(1/3)'
+              read(15,end=55,iostat=ierr) timedb,nprint,nptmass, &
+                ((datdb(i,k),i=1,nprint),k=1,6),  &
+                ((datdb(i,k),i=1,nprint),k=8,ncol), &
+                (datdb(i,7), i=nprint+1, nprint+nptmass), &
+                ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,3)
+
+                if (ierr /= 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
+                dat(:,1:ncol,j) = real(datdb(:,1:ncol))
+                time(j) = real(timedb)
+
            else
-           
-              dat(:,:,j) = 0. ! because ptmasses don't have all quantities
+              read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
+                ((dat(i,k,j),i=1,nprint),k=1,6), &
+                ((dat(i,k,j),i=1,nprint),k=8,ncol), &
+                (dat(i,7,j), i=nprint+1, nprint+nptmass), &
+                ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,3)
+           endif
            !
-           !--read full dump
-           !              
-              if (doubleprec) then
-                 allocate(datdb(maxpart,27),stat=ierr)
-                 if (ierr /= 0) then
-                    print*,"(a)",'*** error allocating memory for double conversion ***'
-                    return
-                 else
-                    datdb = 0.
-                 endif
-                 read(15,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
-                   nptmass,timedb,(datdb(i,7),i=1,nprint), &
-                   escapdb,tkindb,tgravdb,ttermdb, &
-                   ((datdb(i,k),i=1,nprint),k=1,6), &
-                   ((datdb(i,k),i=1,nprint),k=8,ncolumns), &
-                   (datdb(i,9), i=nprint+1, nprint+nptmass), &
-                   ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,6), &
-                   ((datdb(i,k), i=nprint+1, nprint+nptmass),k=21,23)
-
-                   if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
-                   if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
-                   dat(:,1:ncolumns,j) = real(datdb(:,1:ncolumns))
-                   time(j) = real(timedb)
-        
-              else
-                 read(15,iostat=ierr) nprint,rstar,mstar,n1,n2, &
-                   nptmass,time(j),(dat(i,7,j),i=1,nprint), &
-                   escap,tkin,tgrav,tterm, &
-                   ((dat(i,k,j),i=1,nprint),k=1,6), &
-                   ((dat(i,k,j),i=1,nprint),k=8,ncolumns), &
-                   (dat(i,9,j), i=nprint+1, nprint+nptmass), &
-                   ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,6), &
-                   ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=21,23)
-
-                   if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
-                   if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
-
-              endif  
-           endif
+           !--because masses are not dumped, we need to reconstruct them
+           !  from density and h (only strictly true for grad h code)
+           !
+           dat(1:nprint,7,j) = dat(1:nprint,4,j)**3*dat(1:nprint,5,j)*dhfact3
+           print "(a,f3.1,a)", &
+            ' WARNING: setting particle masses assuming h = ',hfact,'*(m/rho)^(1/3)'
         else
-        !
-        !--hydro minidumps
-        !
-           if (minidump) then
-              if (doubleprec) then
-                 allocate(datdb(maxpart,7),stat=ierr)
-                 if (ierr /= 0) then
-                    print*,"(a)",'*** error allocating memory for double conversion ***'
-                    return
-                 else
-                    datdb = 0.
-                 endif
-                 read(15,end=55,iostat=ierr) timedb,nprint,nptmass, &
-                 ((datdb(i,k), i=1, nprint),k=1,6), &
-                 (datdb(i,7), i=nprint+1, nprint+nptmass), &
-                 ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,3)
 
-                 if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
-                 if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
-                 dat(:,1:ncolumns,j) = real(datdb(:,1:ncolumns))
-                 time(j) = real(timedb)
+           dat(:,:,j) = 0. ! because ptmasses don't have all quantities
+        !
+        !--read full dump
+        !              
+           if (doubleprec) then
+              allocate(datdb(maxpart,27),stat=ierr)
+              if (ierr /= 0) then
+                 print*,"(a)",'*** error allocating memory for double conversion ***'
+                 return
               else
-                 read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
-                 ((dat(i,k,j), i=1, nprint),k=1,6), &
-                 (dat(i,7,j), i=nprint+1, nprint+nptmass), &
-                 ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,3)
+                 datdb = 0.
               endif
-              !
-              !--because masses are not dumped, we need to reconstruct them
-              !  from density and h (only strictly true for grad h code)
-              !
-              dat(1:nprint,7,j) = dat(1:nprint,4,j)**3*dat(1:nprint,5,j)*dhfact3
-              print "(a,f3.1,a)", &
-               ' WARNING: setting particle masses assuming h = ',hfact,'*(m/rho)^(1/3)'
+              read(15,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
+                nptmass,timedb,(datdb(i,7),i=1,nprint), &
+                escapdb,tkindb,tgravdb,ttermdb, &
+                ((datdb(i,k),i=1,nprint),k=1,6), &
+                ((datdb(i,k),i=1,nprint),k=8,ncol), &
+                (datdb(i,9), i=nprint+1, nprint+nptmass), &
+                ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,6), &
+                ((datdb(i,k), i=nprint+1, nprint+nptmass),k=21,23)
+
+                if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
+                if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
+                dat(:,1:ncol,j) = real(datdb(:,1:ncol))
+                time(j) = real(timedb)
+
            else
-        !
-        !--hydro full dumps
-        !
-              dat(:,:,j) = 0. ! because ptmasses don't have all quantities
+              read(15,iostat=ierr) nprint,rstar,mstar,n1,n2, &
+                nptmass,time(j),(dat(i,7,j),i=1,nprint), &
+                escap,tkin,tgrav,tterm, &
+                ((dat(i,k,j),i=1,nprint),k=1,6), &
+                ((dat(i,k,j),i=1,nprint),k=8,ncol), &
+                (dat(i,9,j), i=nprint+1, nprint+nptmass), &
+                ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,6), &
+                ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=21,23)
 
-              if (doubleprec) then
-                 allocate(datdb(maxpart,ncolumns),stat=ierr)
-                 if (ierr /= 0) then
-                    print*,"(a)",'*** error allocating memory for double conversion ***'
-                    return
-                 else
-                    datdb = 0.
-                 endif
-                 read(15,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
-                   nptmass,timedb,(datdb(i,7),i=1,nprint), &
-                   escapdb,tkindb,tgravdb,ttermdb, &
-                   ((datdb(i,k),i=1,nprint),k=1,6), &
-                   ((datdb(i,k),i=1,nprint),k=8,ncolumns), &
-                   (datdb(i,9), i=nprint+1, nprint+nptmass), &
-                   ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,6), &
-                   ((datdb(i,k), i=nprint+1, nprint+nptmass),k=13,15)
+                if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
+                if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
 
-                   if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
-                   if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
-                   dat(:,1:ncolumns,j) = real(datdb(:,1:ncolumns))
-                   time(j) = real(timedb)
-        
-              else
-                 read(15,iostat=ierr) nprint,rstar,mstar,n1,n2, &
-                   nptmass,time(j),(dat(i,7,j),i=1,nprint), &
-                   escap,tkin,tgrav,tterm, &
-                   ((dat(i,k,j),i=1,nprint),k=1,6), &
-                   ((dat(i,k,j),i=1,nprint),k=8,ncolumns), &
-                   (dat(i,9,j), i=nprint+1, nprint+nptmass), &
-                   ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,6), &
-                   ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=13,15)
-
-                   if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
-                   if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
-
-              endif             
-           endif
+           endif  
         endif
-             
-        if (allocated(datdb)) deallocate(datdb)
-             
-        if (ierr /= 0 ) then
-           print "(a)",'|*** ERROR READING TIMESTEP ***'
+     else
+     !
+     !--hydro minidumps
+     !
+        if (minidump) then
+           if (doubleprec) then
+              allocate(datdb(maxpart,7),stat=ierr)
+              if (ierr /= 0) then
+                 print*,"(a)",'*** error allocating memory for double conversion ***'
+                 return
+              else
+                 datdb = 0.
+              endif
+              read(15,end=55,iostat=ierr) timedb,nprint,nptmass, &
+              ((datdb(i,k), i=1, nprint),k=1,6), &
+              (datdb(i,7), i=nprint+1, nprint+nptmass), &
+              ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,3)
+
+              if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
+              if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
+              dat(:,1:ncol,j) = real(datdb(:,1:ncol))
+              time(j) = real(timedb)
+           else
+              read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
+              ((dat(i,k,j), i=1, nprint),k=1,6), &
+              (dat(i,7,j), i=nprint+1, nprint+nptmass), &
+              ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,3)
+           endif
+           !
+           !--because masses are not dumped, we need to reconstruct them
+           !  from density and h (only strictly true for grad h code)
+           !
+           dat(1:nprint,7,j) = dat(1:nprint,4,j)**3*dat(1:nprint,5,j)*dhfact3
+           print "(a,f3.1,a)", &
+            ' WARNING: setting particle masses assuming h = ',hfact,'*(m/rho)^(1/3)'
+        else
+     !
+     !--hydro full dumps
+     !
+           dat(:,:,j) = 0. ! because ptmasses don't have all quantities
+
+           if (doubleprec) then
+              allocate(datdb(maxpart,ncol),stat=ierr)
+              if (ierr /= 0) then
+                 print*,"(a)",'*** error allocating memory for double conversion ***'
+                 return
+              else
+                 datdb = 0.
+              endif
+              read(15,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
+                nptmass,timedb,(datdb(i,7),i=1,nprint), &
+                escapdb,tkindb,tgravdb,ttermdb, &
+                ((datdb(i,k),i=1,nprint),k=1,6), &
+                ((datdb(i,k),i=1,nprint),k=8,ncol), &
+                (datdb(i,9), i=nprint+1, nprint+nptmass), &
+                ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,6), &
+                ((datdb(i,k), i=nprint+1, nprint+nptmass),k=13,15)
+
+                if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
+                if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
+                dat(:,1:ncol,j) = real(datdb(:,1:ncol))
+                time(j) = real(timedb)
+
+           else
+              read(15,iostat=ierr) nprint,rstar,mstar,n1,n2, &
+                nptmass,time(j),(dat(i,7,j),i=1,nprint), &
+                escap,tkin,tgrav,tterm, &
+                ((dat(i,k,j),i=1,nprint),k=1,6), &
+                ((dat(i,k,j),i=1,nprint),k=8,ncol), &
+                (dat(i,9,j), i=nprint+1, nprint+nptmass), &
+                ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,6), &
+                ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=13,15)
+
+                if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
+                if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
+
+           endif             
+        endif
+     endif
+
+     if (ierr /= 0 ) then
+        print "(a)",'|*** ERROR READING TIMESTEP ***'
 !           return
 !        else
 !           nstepsread = nstepsread + 1
-        endif
-        nstepsread = nstepsread + 1
-
-        npartoftype(1,j) = nprint
-        npartoftype(2,j) = nptmass
-
-!!        print*,j,' time = ',time(j)
-        gamma(j) = 1.666666666667
-        j = j + 1
-     
      endif
+     nstepsread = nstepsread + 1
+
+     npartoftype(1,j) = nprint
+     npartoftype(2,j) = nptmass
+!!        print*,j,' time = ',time(j)
+     gamma(j) = 1.666666666667
+!
+!--read abundances from abundance file
+!
+     if (iabunfileopen) then
+        print "(a)",' ... reading abundances from '//trim(abunfile)//' ...'
+        read(41,iostat=ierr1) nprint
+        if (ierr1 /= 0) then
+           print "(a)",' *** ERROR READING ABUNDANCE FILE ***'
+        elseif (nprint.ne.npartoftype(1,j)) then
+           print "(a)",' *** ERROR: npart in abundance file differs from full dump ***'        
+        else
+           rewind(41)
+           if (doubleprec) then
+              read(41,iostat=ierr1) nprint,((datdb(k,i),k=1,max_spec+2),i=1,nprint),Etot_burn_cgsdb
+              dat(:,ncol+1:ncolumns,j) = real(datdb(:,1:max_spec+2))
+              print*,' Etot_burn (cgs) = ',Etot_burn_cgsdb
+           else
+              read(41,iostat=ierr1) nprint,((dat(k,i,j),k=1,max_spec+2),i=1,nprint),Etot_burn_cgs
+              print*,' Etot_burn (cgs) = ',Etot_burn_cgs
+           endif
+           if (ierr1 < 0) then
+              print "(a)",' *** END OF FILE REACHED IN ABUNDANCE FILE ***'
+           elseif (ierr1 > 0) then
+              print "(a)",' *** ERRORS DURING ABUNDANCE FILE READ ***'
+           elseif (nprint.ne.npartoftype(1,j)) then
+              print "(a)",' *** ERROR: npart in abundance file differs from full dump ***'        
+           endif
+        endif
+        close(unit=41)
+     endif
+
+     j = j + 1
+
+     if (allocated(datdb)) deallocate(datdb)
+
+  endif
 
 55 continue
   !
@@ -405,7 +464,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--reset centre of mass to zero
   !
-  if (allocated(dat) .and. n2.eq.0 .and. lenvironment('RSPLASH_RESET_COM')) then
+  if (allocated(dat) .and. n2.eq.0 .and. lenvironment('RSPLASH_RESET_CM')) then
      if (minidump) then
         call reset_centre_of_mass(dat(1:nprint,1:3,j-1),dat(1:nprint,7,j-1),nprint)
      else ! full dumps ipmass = 9
@@ -612,6 +671,11 @@ subroutine set_labels
            label(13+i-1) = labelvec(13)//'\d'//labelcoord(i,1)
         enddo
         label(16) = 'dgrav'
+        if (ncolumns.gt.16) then
+           do i=17,ncolumns
+              write(label(i),"('species ',i2)") i-16
+           enddo
+        endif
 
         udistkm = 1.5  ! km
         udistcm = 1.5e5
@@ -640,7 +704,7 @@ subroutine set_labels
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV
-        label(iBfirst+i-1) = labelvec(iBfirst)//'\d'//labelcoord(i,1)
+        label(ivx+i-1) = labelvec(ivx)//'\d'//labelcoord(i,1)
      enddo
   endif
 
