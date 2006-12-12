@@ -7,6 +7,13 @@
 !
 ! *** CONVERTS TO SINGLE PRECISION ***
 !
+! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
+!  ENVIRONMENT VARIABLES:
+!
+! RSPLASH_FORMAT can be 'MHD' or 'HYDRO'
+! RSPLASH_RESET_COM if 'YES' then centre of mass is reset for n2=0 (ie single objects)
+! RSPLASH_COROTATING if 'YES' then velocities are transformed to corotating frame
+!
 ! the data is stored in the global array dat
 !
 ! >> this subroutine must return values for the following: <<
@@ -28,21 +35,23 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data
+  use particle_data, only:dat,time,npartoftype,gamma,maxpart,maxcol,maxstep
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc
+  use settings_data, only:ndim,ndimV,ncolumns,iformat
   use mem_allocation, only:alloc
+  use system_commands, only:lenvironment,get_environment
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   real, parameter :: hfact = 1.5
   real, parameter :: dhfact3 = 1./hfact**3
-  integer :: i,j,ifile,ierr
+  integer :: i,j,k,ierr
   integer :: nprint,nptmass,npart_max,nstep_max
   integer :: n1,n2
   logical :: iexist,magfield,minidump,doubleprec
   character(len=len(rootname)) :: dumpfile
+  character(len=10) :: string
   real :: timei,tkin,tgrav,tterm,escap,rstar,mstar
   real(doub_prec) :: timedb,tkindb,tgravdb,ttermdb
   real(doub_prec) :: escapdb,rstardb,mstardb
@@ -51,8 +60,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstepsread = 0
   nstep_max = 0
   npart_max = maxpart
-  ifile = 1
-  magfield = .true.
 
   dumpfile = trim(rootname)   
   !
@@ -69,6 +76,25 @@ subroutine read_data(rootname,indexstart,nstepsread)
   minidump = .false.
   if (index(dumpfile,'minidump').ne.0) minidump = .true.
   !
+  !--try to guess full dump format from file names
+  !
+  magfield = .true.
+  if (.not.minidump) then
+     if (index(dumpfile,'SMBH').gt.0) magfield = .false.
+     if (index(dumpfile,'nsbh').gt.0) magfield = .false.
+     if (index(dumpfile,'NSBH').gt.0) magfield = .false.
+  endif
+  !
+  !--override this with environment variable
+  !
+  call get_environment('RSPLASH_FORMAT',string)
+  select case(trim(adjustl(string)))
+  case('MHD','mhd')
+     magfield = .true.
+  case('WD','hydro','HYDRO')
+     magfield = .false.
+  end select
+  !
   !--fix number of spatial dimensions
   !
   ndim = 3
@@ -76,11 +102,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
   if (magfield) then
      if (minidump) then
         ncolumns = 11
+        iformat = 1
      else
         ncolumns = 27
+        iformat = 2
      endif
   else
-     ncolumns = 7  ! number of columns in file  
+     if (minidump) then
+        ncolumns = 7  ! number of columns in file
+        iformat = 3
+     else
+        ncolumns = 16
+        iformat = 4
+     endif 
   endif
   n1 = 0
   n2 = 0
@@ -115,9 +149,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
               doubleprec = .false.
               rewind(15)
               read(15,end=55,iostat=ierr) timei,nprint,nptmass
-              print "(a)",' single precision minidump'
+              if (magfield) then
+                 print "(a)",' single precision MHD minidump'
+              else
+                 print "(a)",' single precision hydro minidump'              
+              endif
            else
-              print "(a)",' double precision minidump'
+              if (magfield) then
+                 print "(a)",' double precision MHD minidump'
+              else
+                 print "(a)",' double precision hydro minidump'
+              endif
               timei = real(timedb)
            endif
         else
@@ -131,14 +173,22 @@ subroutine read_data(rootname,indexstart,nstepsread)
               rewind(15)
               read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
                    nptmass,timei
-              print "(a)",' single precision full dump'
+              if (magfield) then
+                 print "(a)",' single precision full MHD dump'              
+              else
+                 print "(a)",' single precision full hydro dump'
+              endif
            else
-              print "(a)",' double precision full dump'
+              if (magfield) then
+                 print "(a)",' double precision full MHD dump'
+              else
+                 print "(a)",' double precision full hydro dump'              
+              endif
               timei = real(timedb)           
            endif
         endif
         print "(a,f10.2,a,i9,a,i6)",' time: ',timei,' npart: ',nprint,' nptmass: ',nptmass
-        !--change to single precision if stupid answers
+        !--barf if stupid answers in single and double precision
         if (nptmass.lt.0.or.nptmass.gt.1.e6 .or. nprint.lt.0 &
             .or. nprint.gt.1e10 .or. (nprint.eq.0 .and. nptmass.eq.0)) then
            print "(a)",' *** ERRORS IN TIMESTEP HEADER: NO DATA READ ***'
@@ -181,15 +231,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                     datdb = 0.
                  endif
                  read(15,end=55,iostat=ierr) timedb,nprint,nptmass, &
-                   (datdb(i,1),i=1,nprint),(datdb(i,2),i=1,nprint),  &
-                   (datdb(i,3),i=1,nprint),(datdb(i,4),i=1,nprint),  &
-                   (datdb(i,5),i=1,nprint),(datdb(i,6),i=1, nprint), &
-                   (datdb(i,8),i=1,nprint),(datdb(i,9),i=1,nprint),  &
-                   (datdb(i,10),i=1,nprint),(datdb(i,11),i=1,nprint),&
+                   ((datdb(i,k),i=1,nprint),k=1,6),  &
+                   ((datdb(i,k),i=1,nprint),k=8,ncolumns), &
                    (datdb(i,7), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,1), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,2), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,3), i=nprint+1, nprint+nptmass)
+                   ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,3)
 
                    if (ierr /= 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
                    dat(:,1:ncolumns,j) = real(datdb(:,1:ncolumns))
@@ -197,15 +242,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                             
               else
                  read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
-                   (dat(i,1,j),i=1,nprint),(dat(i,2,j),i=1,nprint),  &
-                   (dat(i,3,j),i=1,nprint),(dat(i,4,j),i=1,nprint),  &
-                   (dat(i,5,j),i=1,nprint),(dat(i,6,j),i=1, nprint), &
-                   (dat(i,8,j),i=1,nprint),(dat(i,9,j),i=1,nprint),  &
-                   (dat(i,10,j),i=1,nprint),(dat(i,11,j),i=1,nprint),&
+                   ((dat(i,k,j),i=1,nprint),k=1,6), &
+                   ((dat(i,k,j),i=1,nprint),k=8,ncolumns), &
                    (dat(i,7,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,1,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,2,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,3,j), i=nprint+1, nprint+nptmass)
+                   ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,3)
               endif
               !
               !--because masses are not dumped, we need to reconstruct them
@@ -231,31 +271,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
                  read(15,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
                    nptmass,timedb,(datdb(i,7),i=1,nprint), &
                    escapdb,tkindb,tgravdb,ttermdb, &
-                   (datdb(i,1),i=1,nprint),(datdb(i,2),i=1,nprint),  &
-                   (datdb(i,3),i=1,nprint),(datdb(i,4),i=1,nprint),  &
-                   (datdb(i,5),i=1,nprint),(datdb(i,6),i=1, nprint), &
-                   (datdb(i,8),i=1,nprint),(datdb(i,9),i=1,nprint),  &
-                   (datdb(i,10),i=1,nprint),(datdb(i,11),i=1,nprint),&
-                   (datdb(i,12),i=1,nprint),(datdb(i,13),i=1,nprint),&
-                   (datdb(i,14),i=1,nprint),(datdb(i,15),i=1,nprint),&
-                   (datdb(i,16),i=1,nprint),(datdb(i,17),i=1,nprint),&
-                   (datdb(i,18),i=1,nprint),(datdb(i,19),i=1,nprint),&
-                   (datdb(i,20),i=1,nprint),(datdb(i,21),i=1,nprint),&
-                   (datdb(i,22),i=1,nprint),(datdb(i,23),i=1,nprint),&
-                   (datdb(i,24),i=1,nprint),&
-                   (datdb(i,25),i=1,nprint),&
-                   (datdb(i,26),i=1,nprint),&
-                   (datdb(i,27),i=1,nprint),&
+                   ((datdb(i,k),i=1,nprint),k=1,6), &
+                   ((datdb(i,k),i=1,nprint),k=8,ncolumns), &
                    (datdb(i,9), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,1), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,2), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,3), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,4), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,5), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,6), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,21), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,22), i=nprint+1, nprint+nptmass), &
-                   (datdb(i,23), i=nprint+1, nprint+nptmass) 
+                   ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,6), &
+                   ((datdb(i,k), i=nprint+1, nprint+nptmass),k=21,23)
 
                    if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
                    if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
@@ -266,31 +286,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
                  read(15,iostat=ierr) nprint,rstar,mstar,n1,n2, &
                    nptmass,time(j),(dat(i,7,j),i=1,nprint), &
                    escap,tkin,tgrav,tterm, &
-                   (dat(i,1,j),i=1,nprint),(dat(i,2,j),i=1,nprint),  &
-                   (dat(i,3,j),i=1,nprint),(dat(i,4,j),i=1,nprint),  &
-                   (dat(i,5,j),i=1,nprint),(dat(i,6,j),i=1, nprint), &
-                   (dat(i,8,j),i=1,nprint),(dat(i,9,j),i=1,nprint),  &
-                   (dat(i,10,j),i=1,nprint),(dat(i,11,j),i=1,nprint),&
-                   (dat(i,12,j),i=1,nprint),(dat(i,13,j),i=1,nprint),&
-                   (dat(i,14,j),i=1,nprint),(dat(i,15,j),i=1,nprint),&
-                   (dat(i,16,j),i=1,nprint),(dat(i,17,j),i=1,nprint),&
-                   (dat(i,18,j),i=1,nprint),(dat(i,19,j),i=1,nprint),&
-                   (dat(i,20,j),i=1,nprint),(dat(i,21,j),i=1,nprint),&
-                   (dat(i,22,j),i=1,nprint),(dat(i,23,j),i=1,nprint),&
-                   (dat(i,24,j),i=1,nprint),&
-                   (dat(i,25,j),i=1,nprint),&
-                   (dat(i,26,j),i=1,nprint),&
-                   (dat(i,27,j),i=1,nprint),&
+                   ((dat(i,k,j),i=1,nprint),k=1,6), &
+                   ((dat(i,k,j),i=1,nprint),k=8,ncolumns), &
                    (dat(i,9,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,1,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,2,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,3,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,4,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,5,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,6,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,21,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,22,j), i=nprint+1, nprint+nptmass), &
-                   (dat(i,23,j), i=nprint+1, nprint+nptmass) 
+                   ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,6), &
+                   ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=21,23)
 
                    if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
                    if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
@@ -299,49 +299,82 @@ subroutine read_data(rootname,indexstart,nstepsread)
            endif
         else
         !
-        !--for hydro can only do minidumps at present
+        !--hydro minidumps
         !
-           if (doubleprec) then
-              allocate(datdb(maxpart,7),stat=ierr)
-              if (ierr /= 0) then
-                 print*,"(a)",'*** error allocating memory for double conversion ***'
-                 return
-              else
-                 datdb = 0.
-              endif
-              read(15,end=55,iostat=ierr) timedb,nprint,nptmass, &
-              (datdb(i,1), i=1, nprint), (datdb(i,2), i=1,nprint), &
-              (datdb(i,3), i=1, nprint), (datdb(i,4), i=1,nprint), &
-              (datdb(i,5), i=1, nprint), (datdb(i,6), i=1, nprint), &
-              (datdb(i,7), i=nprint+1, nprint+nptmass), &
-              (datdb(i,1), i=nprint+1, nprint+nptmass), &
-              (datdb(i,2), i=nprint+1, nprint+nptmass), &
-              (datdb(i,3), i=nprint+1, nprint+nptmass)
-              if (ierr /= 0) then
-                 print "(a)",'|*** ERROR READING (DOUBLE PRECISION) TIMESTEP ***'
-                 if (allocated(datdb)) deallocate(datdb)
-                 return
-              else
-                 dat(:,1:7,j) = real(datdb(:,1:7))
+           if (minidump) then
+              if (doubleprec) then
+                 allocate(datdb(maxpart,7),stat=ierr)
+                 if (ierr /= 0) then
+                    print*,"(a)",'*** error allocating memory for double conversion ***'
+                    return
+                 else
+                    datdb = 0.
+                 endif
+                 read(15,end=55,iostat=ierr) timedb,nprint,nptmass, &
+                 ((datdb(i,k), i=1, nprint),k=1,6), &
+                 (datdb(i,7), i=nprint+1, nprint+nptmass), &
+                 ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,3)
+
+                 if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
+                 if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
+                 dat(:,1:ncolumns,j) = real(datdb(:,1:ncolumns))
                  time(j) = real(timedb)
+              else
+                 read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
+                 ((dat(i,k,j), i=1, nprint),k=1,6), &
+                 (dat(i,7,j), i=nprint+1, nprint+nptmass), &
+                 ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,3)
               endif
+              !
+              !--because masses are not dumped, we need to reconstruct them
+              !  from density and h (only strictly true for grad h code)
+              !
+              dat(1:nprint,7,j) = dat(1:nprint,4,j)**3*dat(1:nprint,5,j)*dhfact3
+              print "(a,f3.1,a)", &
+               ' WARNING: setting particle masses assuming h = ',hfact,'*(m/rho)^(1/3)'
            else
-              read(15,end=55,iostat=ierr) time(j),nprint,nptmass, &
-              (dat(i,1,j), i=1, nprint), (dat(i,2,j), i=1,nprint), &
-              (dat(i,3,j), i=1, nprint), (dat(i,4,j), i=1,nprint), &
-              (dat(i,5,j), i=1, nprint), (dat(i,6,j), i=1, nprint), &
-              (dat(i,7,j), i=nprint+1, nprint+nptmass), &
-              (dat(i,1,j), i=nprint+1, nprint+nptmass), &
-              (dat(i,2,j), i=nprint+1, nprint+nptmass), &
-              (dat(i,3,j), i=nprint+1, nprint+nptmass)
+        !
+        !--hydro full dumps
+        !
+              dat(:,:,j) = 0. ! because ptmasses don't have all quantities
+
+              if (doubleprec) then
+                 allocate(datdb(maxpart,ncolumns),stat=ierr)
+                 if (ierr /= 0) then
+                    print*,"(a)",'*** error allocating memory for double conversion ***'
+                    return
+                 else
+                    datdb = 0.
+                 endif
+                 read(15,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
+                   nptmass,timedb,(datdb(i,7),i=1,nprint), &
+                   escapdb,tkindb,tgravdb,ttermdb, &
+                   ((datdb(i,k),i=1,nprint),k=1,6), &
+                   ((datdb(i,k),i=1,nprint),k=8,ncolumns), &
+                   (datdb(i,9), i=nprint+1, nprint+nptmass), &
+                   ((datdb(i,k), i=nprint+1, nprint+nptmass),k=1,6), &
+                   ((datdb(i,k), i=nprint+1, nprint+nptmass),k=13,15)
+
+                   if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
+                   if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
+                   dat(:,1:ncolumns,j) = real(datdb(:,1:ncolumns))
+                   time(j) = real(timedb)
+        
+              else
+                 read(15,iostat=ierr) nprint,rstar,mstar,n1,n2, &
+                   nptmass,time(j),(dat(i,7,j),i=1,nprint), &
+                   escap,tkin,tgrav,tterm, &
+                   ((dat(i,k,j),i=1,nprint),k=1,6), &
+                   ((dat(i,k,j),i=1,nprint),k=8,ncolumns), &
+                   (dat(i,9,j), i=nprint+1, nprint+nptmass), &
+                   ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=1,6), &
+                   ((dat(i,k,j), i=nprint+1, nprint+nptmass),k=13,15)
+
+                   if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
+                   if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
+
+              endif             
            endif
-           !
-           !--because masses are not dumped, we need to reconstruct them
-           !  from density and h (only strictly true for grad h code)
-           !
-           dat(1:nprint,7,j) = dat(1:nprint,4,j)**3*dat(1:nprint,5,j)*dhfact3
-           print "(a,f3.1,a)", &
-            ' WARNING: setting particle masses assuming h = ',hfact,'*(m/rho)^(1/3)'
         endif
              
         if (allocated(datdb)) deallocate(datdb)
@@ -372,19 +405,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--reset centre of mass to zero
   !
-!  if (allocated(dat) .and. n2.eq.0) then
-!     if (minidump) then
-!        call reset_centre_of_mass(dat(1:nprint,1:3,j-1),dat(1:nprint,7,j-1),nprint)
-!     else ! full dumps ipmass = 9
-!        call reset_centre_of_mass(dat(1:nprint,1:3,j-1),dat(1:nprint,9,j-1),nprint)
-!     endif
-!  endif
+  if (allocated(dat) .and. n2.eq.0 .and. lenvironment('RSPLASH_RESET_COM')) then
+     if (minidump) then
+        call reset_centre_of_mass(dat(1:nprint,1:3,j-1),dat(1:nprint,7,j-1),nprint)
+     else ! full dumps ipmass = 9
+        call reset_centre_of_mass(dat(1:nprint,1:3,j-1),dat(1:nprint,9,j-1),nprint)
+     endif
+  endif
+  
   !
   !--transform velocities to corotating frame
   !
-  if (.not.minidump .and. allocated(dat)) then
-     print*,' transforming velocities to corotating frame'
-     call set_corotating_vels(dat(1:nprint,1:2,j-1),dat(1:nprint,9,j-1),dat(1:nprint,4:5,j-1),n1,n2,nprint)
+  if (.not.minidump .and. allocated(dat) .and. lenvironment('RSPLASH_COROTATING')) then
+     print*,'TRANSFORMING VELOCITIES TO CORORATING FRAME'
+     call set_corotating_vels(dat(1:nprint,1:2,j-1),dat(1:nprint,9,j-1),dat(1:nprint,4:5,j-1),n1,nprint)
   endif
 
   if (allocated(npartoftype)) then
@@ -425,23 +459,24 @@ contains
 !
 !--adjust velocities to corotating frame
 !
- subroutine set_corotating_vels(xy,pmass,vxy,n1,n2,npart)
+ subroutine set_corotating_vels(xy,pmass,vxy,n1,npart)
   implicit none
-  integer, intent(in) :: n1,n2,npart
+  integer, intent(in) :: n1,npart
   real, dimension(npart,2), intent(inout) :: xy,vxy
   real, dimension(npart) :: pmass
-  real :: mass1,mass2,xcm1,ycm1,xcm2,ycm2,vxcm1,vycm1,vxcm2,vycm2
+  real :: mass1,mass2 !,xcm1,ycm1,xcm2,ycm2
+  real :: vxcm1,vycm1,vxcm2,vycm2
   
   !
   !--get centre of mass of star 1 and star 2
   !
   mass1 = SUM(pmass(1:n1))
-  xcm1 = SUM(pmass(1:n1)*xy(1:n1,1))/mass1
-  ycm1 = SUM(pmass(1:n1)*xy(1:n1,2))/mass1
+!  xcm1 = SUM(pmass(1:n1)*xy(1:n1,1))/mass1
+!  ycm1 = SUM(pmass(1:n1)*xy(1:n1,2))/mass1
   
   mass2 = SUM(pmass(n1+1:npart))
-  xcm2 = SUM(pmass(n1+1:npart)*xy(n1+1:npart,1))/mass2
-  ycm2 = SUM(pmass(n1+1:npart)*xy(n1+1:npart,2))/mass2
+!  xcm2 = SUM(pmass(n1+1:npart)*xy(n1+1:npart,1))/mass2
+!  ycm2 = SUM(pmass(n1+1:npart)*xy(n1+1:npart,2))/mass2
   !
   !--work out centre of mass velocities for each star
   !
@@ -469,8 +504,9 @@ end subroutine read_data
 
 subroutine set_labels
   use filenames, only:rootname
-  use labels
-  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
+  use labels, only:label,labelvec,labeltype,iamvec,&
+              ix,ivx,ih,irho,iutherm,ipmass,iBfirst,idivB
+  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry, only:labelcoord
   use settings_units, only:units,unitslabel
   implicit none
@@ -534,38 +570,55 @@ subroutine set_labels
   else !--full dump
      ivx = ndim+1
      ih = 7
-     irho = 10
      iutherm = 8 
      ipmass = 9
-
+     irho = 10
      label(11) = 'temperature [ MeV ]'
      label(12) = 'electron fraction (y\de\u)'
-     iBfirst = 13
-     label(16) = 'psi'
-     idivB = 17
-     label(24) = 'grad h'
-     label(25) = 'grad soft'
-     label(26) = 'av  '
-     label(27) = 'avB'
 
-     iamvec(18:20) = 18
-     labelvec(18:20) = 'J'
-     do i=1,ndimV
-        label(18+i-1) = labelvec(18)//'\d'//labelcoord(i,1)
-     enddo
-     
-     iamvec(21:23) = 21
-     labelvec(21:23) = 'force'
-     do i=1,ndimV
-        label(21+i-1) = labelvec(21)//'\d'//labelcoord(i,1)
-     enddo
+     if (iformat.eq.2) then ! MHD full dump
+        iBfirst = 13
+        label(16) = 'psi'
+        idivB = 17
+        iamvec(18:20) = 18
+        labelvec(18:20) = 'force'
+        do i=1,ndimV
+           label(18+i-1) = labelvec(18)//'\d'//labelcoord(i,1)
+        enddo
+        label(21) = 'Euler alpha'
+        label(22) = 'Euler beta'
+        label(23) = 'Bevol\dz'
+        label(24) = 'grad h'
+        label(25) = 'grad soft'
+        label(26) = 'av  '
+        label(27) = 'avB'
 !
 !--set transformation factors between code units/real units
 !
-     udistkm = 1.5  ! km
-     udistcm = 1.5e5
-     utime = 5.0415e-6
-     umass = 1.99e33
+        udistkm = 1.5  ! km
+        udistcm = 1.5e5
+        utime = 5.0415e-6
+        umass = 1.99e33
+
+        units(iBfirst:iBfirst+ndimV-1) = 8.0988e14
+        unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
+        units(idivB) = units(iBfirst)/udistcm
+        unitslabel(idivB) = ' [G/cm]'
+
+     else
+        iamvec(13:15) = 13
+        labelvec(13:15) = 'force'
+        do i=1,ndimV
+           label(13+i-1) = labelvec(13)//'\d'//labelcoord(i,1)
+        enddo
+        label(16) = 'dgrav'
+
+        udistkm = 1.5  ! km
+        udistcm = 1.5e5
+        utime = 5.0415e-6
+        umass = 1.99e33
+     endif
+
      units(1:3) = udistkm
      unitslabel(1:3) = ' [km]'
      units(4:6) = 1.0
@@ -578,10 +631,6 @@ subroutine set_labels
      unitslabel(9) = ' [g]'
      units(10) = umass/udistcm**3
      unitslabel(10) = ' [g/cm\u3\d]'
-     units(iBfirst:iBfirst+ndimV-1) = 8.0988e14
-     unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
-     units(idivB) = units(iBfirst)/udistcm
-     unitslabel(idivB) = ' [G/cm]'
   endif
 
   units(0) = utime*1000.
@@ -605,9 +654,6 @@ subroutine set_labels
   endif
   
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-!  do i=1,ndimV
-!     label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-!  enddo
   label(irho) = '\gr'      
   if (iutherm.gt.0) label(iutherm) = 'u'
   label(ih) = 'h       '
