@@ -205,8 +205,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !--check if abundance files are present and read from them
      !
      if (.not.magfield) then
-        !--extract dump number from filename (ie. what comes after the '.')
-        read(dumpfile(index(dumpfile,'.')+1:len_trim(dumpfile)),*,iostat=ierr1) idump
+        !--extract dump number from filename (last 5 characters)
+        read(dumpfile(len_trim(dumpfile)-4:len_trim(dumpfile)),*,iostat=ierr1) idump
         if (ierr1 /= 0) then
            print "(a)",' error extracting dump number from filename' 
         else
@@ -673,9 +673,21 @@ subroutine set_labels
         enddo
         label(16) = 'dgrav'
         if (ncolumns.gt.16) then
+           label(11) = 'temperature [ 10\u6\dK ]'
            do i=17,ncolumns
               write(label(i),"('species ',i2)") i-16
            enddo
+           if (ncolumns.ge.25) then
+              label(17) = 'He'
+              label(18) = 'C'
+              label(19) = 'O'
+              label(20) = 'Ne'
+              label(21) = 'Mg'
+              label(22) = 'Si'
+              label(23) = 'Fe'
+              label(24) = 'mean A'
+              label(25) = 'mean Z'
+           endif
         endif
 
         udistkm = 1.5  ! km
