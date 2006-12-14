@@ -160,6 +160,11 @@ program splash
   character(len=120) :: string
 
   !
+  ! set default options
+  !
+  call defaults_set
+  
+  !
   !  default names for defaults file and limits file
   !
   defaultsfile = 'splash.defaults'
@@ -203,11 +208,6 @@ program splash
   !
   call print_header
 
-  !
-  ! set default options
-  !
-  call defaults_set
-  
   !
   ! read default options from file if it exists
   !
