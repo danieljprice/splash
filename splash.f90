@@ -145,7 +145,7 @@ program splash
 !      multiplot enables you to set up multiple plots per page, mixing from any type.
 !
 !----------------------------------------------------------------------------------
-  use filenames, only:rootname,nfiles,maxfile
+  use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile
   use getdata, only:get_data
   use defaults, only:defaults_set,defaults_read
   use limits, only:read_limits
@@ -155,9 +155,49 @@ program splash
   use settings_data, only:buffer_data
   use system_commands
   implicit none
-  integer :: i,ierr
+  integer :: i,ierr,nargs
   logical :: ihavereadfilenames
+  character(len=120) :: string
 
+  !
+  !  default names for defaults file and limits file
+  !
+  defaultsfile = 'splash.defaults'
+  limitsfile = 'splash.limits'
+  !
+  !  read all arguments off command line
+  !
+  call get_number_arguments(nargs)
+  !
+  !  extract command line arguments and filenames
+  !
+  i = 0
+  nfiles = 0
+  do while (i < nargs)
+     i = i + 1
+     call get_argument(i,string)
+
+     if (string(1:1).eq.'-') then
+        select case(string(2:2))
+        case('l')
+           i = i + 1
+           call get_argument(i,limitsfile)
+        case('f')
+           i = i + 1
+           call get_argument(i,defaultsfile)
+        case default
+           print "(a,/)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
+           print "(a)",'unknown command line argument '''//trim(string)//''''
+           print "(a)",'Usage: splash [-f defaultsfile] [-l limitsfile] file1 file2 ...'
+           stop
+        end select
+     else
+        nfiles = nfiles + 1
+        if (nfiles.le.maxfile) then
+           rootname(nfiles) = trim(string)
+        endif
+     endif
+  enddo
   !
   ! print header
   !
@@ -171,20 +211,16 @@ program splash
   !
   ! read default options from file if it exists
   !
-  call defaults_read
-
+  call defaults_read(defaultsfile)
+  
   !
-  ! get filenames from command line if possible
-  !
-  call get_number_arguments(nfiles)
+  ! check that we have got filenames
+  !  
   if (nfiles.gt.0) then
      if (nfiles.gt.maxfile) then
         print*,' WARNING: number of files >= array size: setting nfiles = ',maxfile     
         nfiles = maxfile
      endif
-     do i=1,nfiles
-        call get_argument(i,rootname(i))
-     enddo
   endif   
   if (nfiles.ge.1 .and. rootname(1)(1:1).ne.' ') then
      ihavereadfilenames = .true.
@@ -210,7 +246,7 @@ program splash
   !
   !--read plot limits from file (overrides get_data limits settings)
   !
-  call read_limits('splash.limits',ierr)
+  call read_limits(trim(limitsfile),ierr)
   
   !
   ! enter main menu

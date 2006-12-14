@@ -10,6 +10,7 @@ module mainmenu
 contains
 
 subroutine menu
+  use filenames, only:defaultsfile,limitsfile
   use labels, only:label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass
   use limits, only:write_limits
   use options_data, only:submenu_data
@@ -312,13 +313,13 @@ subroutine menu
         call submenu_limits(help=.true.)
 !------------------------------------------------------------------------
      case('s')
-        call defaults_write
+        call defaults_write(defaultsfile)
      case('S')
-        call defaults_write
-        call write_limits('splash.limits')     
+        call defaults_write(defaultsfile)
+        call write_limits(limitsfile)     
      case('?s','?S')
         print "(6(/a),/,4(/a))",' The (s)ave option saves the default options to a ', &
-                    ' file called `defaults'' in the current directory which', &
+                    ' file called `splash.defaults'' in the current directory which', &
                     ' is read automatically upon the next invocation of splash.',&
                     ' This file uses namelist formatting and may be edited ', &
                     ' manually prior to startup if so desired. This is quite',&
