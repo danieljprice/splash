@@ -572,7 +572,7 @@ subroutine set_labels
   implicit none
   integer :: i
   logical :: minidump
-  real :: udistcm,udistkm,utime,umass
+  real :: udistcm,udistkm,utime,umass,uvelkms
 
   minidump = .false.
   if (index(rootname(1),'minidump').ne.0) minidump = .true.
@@ -665,6 +665,19 @@ subroutine set_labels
         units(idivB) = units(iBfirst)/udistcm
         unitslabel(idivB) = ' [G/cm]'
 
+        units(1:3) = udistkm
+        unitslabel(1:3) = ' [km]'
+        units(4:6) = 1.0
+        unitslabel(4:6) = '/c'
+        units(7) = udistkm
+        unitslabel(7) = ' [km]'
+        units(8) = (udistcm/utime)**2
+        unitslabel(8) = ' [erg/g]'
+        units(9) = umass
+        unitslabel(9) = ' [g]'
+        units(10) = umass/udistcm**3
+        unitslabel(10) = ' [g/cm\u3\d]'
+
      else
         iamvec(13:15) = 13
         labelvec(13:15) = 'force'
@@ -690,24 +703,25 @@ subroutine set_labels
            endif
         endif
 
-        udistkm = 1.5  ! km
-        udistcm = 1.5e5
-        utime = 5.0415e-6
+        udistcm = 1.0e9
+        utime = 2.7443
         umass = 1.99e33
+        uvelkms = (udistcm/utime)/1e5
+
+        units(1:3) = 1.0 !!udistcm
+        unitslabel(1:3) = ' [10\u9\d cm]'
+        units(4:6) = uvelkms
+        unitslabel(4:6) = ' [km/s]'
+        units(ih) = units(1)
+        unitslabel(ih) = unitslabel(1)
+        units(8) = (udistcm/utime)**2
+        unitslabel(8) = ' [erg/g]'
+        units(9) = umass
+        unitslabel(9) = ' [g]'
+        units(10) = umass/udistcm**3
+        unitslabel(10) = ' [g/cm\u3\d]'
      endif
 
-     units(1:3) = udistkm
-     unitslabel(1:3) = ' [km]'
-     units(4:6) = 1.0
-     unitslabel(4:6) = '/c'
-     units(7) = udistkm
-     unitslabel(7) = ' [km]'
-     units(8) = (udistcm/utime)**2
-     unitslabel(8) = ' [erg/g]'
-     units(9) = umass
-     unitslabel(9) = ' [g]'
-     units(10) = umass/udistcm**3
-     unitslabel(10) = ' [g/cm\u3\d]'
   endif
 
   units(0) = utime*1000.
