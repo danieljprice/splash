@@ -230,9 +230,11 @@ subroutine defaults_read(filename)
     read(1,NML=multi,end=77,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading multiplot options from '//trim(filename)
 
-    do i=1,maxfile
-       read(1,*,end=66,iostat=ierr) rootname(i)
-    enddo
+    if (len_trim(rootname(1)).eq.0) then
+       do i=1,maxfile
+          read(1,*,end=66,iostat=ierr) rootname(i)
+       enddo
+    endif
 66  continue
 
     close(unit=1)
