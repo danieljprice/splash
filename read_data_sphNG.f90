@@ -311,15 +311,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--Arrays
 !
    do iarr=1,narrsizes
-!--read iphase from array block 1 if sinks are present
-      if (iarr.eq.1 .and. narrsizes.gt.1 .and. isize(2).gt.0) then
+!--read iphase from array block 1
+      if (iarr.eq.1) then
          !--skip default int
          nskip = nint(iarr)
          do i=1,nskip
             read(iunit,end=33,iostat=ierr)
          enddo
          if (nint1(iarr).lt.1) then
-            print "(a)",'ERROR: sinks present but can''t locate iphase in dump'
+            print "(a)",'ERROR: can''t locate iphase in dump'
             !--skip remaining integer arrays
             nskip = nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
          else
