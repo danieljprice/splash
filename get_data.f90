@@ -38,7 +38,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   logical :: setlimits
   logical, parameter :: timing = .true.
   integer :: i,istart,ierr
-  character(len=len(rootname)+7) :: limitsfile
+!  character(len=len(rootname)+7) :: limitsfile
   real :: t1,t2
 
   if (.not.gotfilenames) then
