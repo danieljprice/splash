@@ -2,7 +2,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2006 Daniel Price 
+!     Copyright (C) 2005-2007 Daniel Price 
 !     dprice@astro.ex.ac.uk
 !
 !     --------------------------------------------------------------------------
@@ -23,6 +23,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.7.1 : (04/01/07)
+!             command line options for defaults and limits files added; 
+!             minor bug fixes
 !     1.7.0 : (13/12/06)
 !             renamed SPLASH instead of SUPERSPHPLOT; much faster data read
 !             for gadget and sphNG reads (only required columns read); 
@@ -279,7 +282,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( version 1.7.0 [13th Dec ''06] Copyright (C) 2005-2007 )'
+ print "(a)",'  ( version 1.7.1 [4th Jan ''07] Copyright (C) 2005-2007 )'
  print 30 
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
