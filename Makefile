@@ -41,7 +41,7 @@ OMPFLAGS=
 # some compilers also allow this to be done at runtime (e.g. g95, ifort) by setting
 # an environment variable appropriately (e.g. G95_ENDIAN or F_UFMTENDIAN)
 #
-ENDIAN=
+#ENDIAN=
 #ENDIAN='BIG'
 #ENDIAN='LITTLE'
 
@@ -94,8 +94,9 @@ endif
 ifeq ($(SYSTEM),sunf95)
 #  sun f95 compiler on linux
    F90C= sunf95
-   F90FLAGS= -fast
+   F90FLAGS= -fast -ftrap=%none
    OMPFLAGS= -openmp
+   DEBUGFLAG= -g -C -w4 -errtags -erroff=COMMENT_1582,COMMENT_1744 -ftrap=%all
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -xfilebyteorder=big16:%all
    ENDIANFLAGLITTLE= -xfilebyteorder=little16:%all
