@@ -33,20 +33,19 @@ end subroutine defaults_set_limits
 ! submenu with options relating to plot limits
 !----------------------------------------------------------------------
 subroutine submenu_limits(help)
- use filenames, only:rootname,nsteps,nstepsinfile,ifileopen
+ use filenames, only:nsteps,nstepsinfile,ifileopen
  use settings_data, only:ndataplots,numplot,ndim,ivegotdata,DataIsBuffered
  !!use settings_page, only:nstepsperpage
  use multiplot, only:itrans
  use prompting
- use limits
+ use limits, only:lim,set_limits
  use labels, only:label,ix
  use transforms, only:ntrans,transform_label
  implicit none
  logical, intent(in), optional :: help
- integer :: iaction,ipick,i,ierr,index
+ integer :: iaction,ipick,i,index
  real :: diff, mid, zoom
  character(len=120) :: transprompt
- character(len=len(rootname)+7) :: limitsfile
  logical :: helpmode
  
  helpmode = .false.
@@ -66,13 +65,11 @@ subroutine submenu_limits(help)
         ' 3) xy limits track particle      ( ',i8,' )   ',/,   &
         ' 4) zoom in/out                   ( ',f4.2,' ) ',/,   &
         ' 5) apply transformations (log10,1/x) ',/, &
-        ' 6) save current limits to file ',/, &
-        ' 7) re-read limits file         ',/, &
-        ' 8) reset limits for all plots  ')
+        ' 6) reset limits for all plots  ')
  if (helpmode) then
-    call prompt('choose option for help on a specific item ',iaction,0,8)
+    call prompt('choose option for help on a specific item ',iaction,0,6)
  else
-    call prompt('enter option ',iaction,0,8)
+    call prompt('enter option ',iaction,0,6)
  endif
 !
 !--limits
@@ -89,7 +86,8 @@ subroutine submenu_limits(help)
     else
        call prompt('Use adaptive plot limits?',iadapt)
        call prompt('Use adaptive plot limits on coordinate axes?',iadaptcoords)
-       print*,'adaptive plot limits = ',iadapt,' on coords = ',iadaptcoords
+       print "(a)",'adaptive plot limits = '//print_logical(iadapt)// &
+                   ' on coords = '//print_logical(iadaptcoords)
     !if (nstepsperpage.gt.1 .and. (iadapt .or. iadaptcoords)) then
     !   print*,'WARNING: adaptive limits and multiple steps per page don''t mix'
     !endif
@@ -183,38 +181,8 @@ subroutine submenu_limits(help)
         enddo
         return
      endif
+!------------------------------------------------------------------------
   case(6)
-     if (helpmode) then
-        print "(9(/a))",' Saves the current values of the fixed plot limits to', &
-                     ' file. By default this file is called `filename.limits''',&
-                     ' where filename is the name of the *first* data file.', &
-                     ' If you use the default name, this file will be automatically ',&
-                     ' read upon the next invocation of splash. Using', &
-                     ' another filename the limits file can be read by selecting ',&
-                     ' option (7) from this menu. Note that limits read from file',&
-                     ' will only apply when fixed (ie. not adaptive) limits are used.'  
-     else
-        limitsfile = trim(rootname(1))//'.limits'
-        call prompt('Enter name of limits file to write ',limitsfile)
-        !--append .limits if necessary
-        !!!if (index(limitsfile,'.limits').eq.0) limitsfile = trim(limitsfile)//'.limits'
-        call write_limits(limitsfile)
-     endif
-  case(7)
-     if (helpmode) then
-        print "(5(/a))",'Re-reads the plot limits from a file ',&
-                    '(see help for write limits file for format)',&
-                    'Note that this means that the limits contained in this file',&
-                    'can be manually changed by the user whilst the program is ',&
-                    'still running.'
-     else
-        limitsfile = trim(rootname(1))//'.limits'
-        call prompt('Enter name of limits file to read ',limitsfile)
-        !--append .limits if necessary
-        !!!if (index(limitsfile,'.limits').eq.0) limitsfile = trim(limitsfile)//'.limits'
-        call read_limits(limitsfile,ierr)
-     endif
-  case(8)
      if (helpmode) then
         print "(2(/a))",'Resets plot limits using all data currently in memory', &
                     'Note that these limits will only apply when fixed limits are used'
