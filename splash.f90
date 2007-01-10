@@ -227,6 +227,7 @@ program splash
   endif   
   if (nfiles.ge.1 .and. rootname(1)(1:1).ne.' ') then
      ihavereadfilenames = .true.
+     if (nfiles.gt.1) print*,nfiles,' filenames read from command line'
   else
      ihavereadfilenames = .false.
      print "(a/)",' no filenames read from command line'
