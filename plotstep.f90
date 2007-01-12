@@ -442,7 +442,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   real, dimension(maxpart) :: renderplot,hh,pmass,weight
   real :: angleradx, anglerady, angleradz
   real :: rendermintemp,rendermaxtemp
-  real :: xsecmin,xsecmax,dummy
+  real :: zslicemin,zslicemax,dummy
   real :: pixwidth,dxfreq,dunitspmass,dunitsrho,dunitsh
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
@@ -588,8 +588,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         xplot(1:ntoti) = dat(1:ntoti,iplotx)
         yplot(1:ntoti) = dat(1:ntoti,iploty)
         zplot = 0.   !--set later if x-sec
-        xsecmin = 0. !-- " " 
-        xsecmax = 0.
+        zslicemin = -huge(zslicemax) !-- " " 
+        zslicemax = huge(zslicemax)
         labelx = label(iplotx)
         labely = label(iploty)
         if (.not.interactivereplot) then
@@ -788,7 +788,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               endif
               if (.not.x_sec .or. x_sec.and.use3Dopacityrendering) then
                  print*,' observer height = ',dobserver,', screen at ',dobserver-dscreenfromobserver
-                 xsecmax = dobserver
+                 zslicemax = dobserver
               endif
            endif
            do j=1,ntoti
@@ -898,8 +898,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               !!--for cross sections of particle plots, need range of co-ordinates in which
               !!  particles may lie
               if (iplotpart) then
-                 xsecmin = zslicepos-0.5*dz
-                 xsecmax = zslicepos+0.5*dz
+                 zslicemin = zslicepos-0.5*dz
+                 zslicemax = zslicepos+0.5*dz
               endif
            endif
 
@@ -1170,7 +1170,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                        .and. nyplot.eq.nyplots .and. k.eq.nxsec)
 
            !--add to log
-           if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),xsecmin,label(iplotz),xsecmax
+           if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),zslicemin,label(iplotz),zslicemax
 35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
 
            !------------------------------
@@ -1188,7 +1188,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),npartoftype(:),PlotOnRenderings(:), &
-                   x_sec,xsecmin,xsecmax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
+                   x_sec,zslicemin,zslicemax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
 
               elseif (ndim.eq.2 .and. x_sec) then
                  !---------------------------------------------------------------
@@ -1205,13 +1205,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),npartoftype(:),iplotpartoftype(:), &
-                   x_sec,xsecmin,xsecmax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
+                   x_sec,zslicemin,zslicemax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
               else
                  !!--plot non-gas particle types on top of vector plots (e.g. sinks)
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),npartoftype(:),PlotOnRenderings(:), &
-                   x_sec,xsecmin,xsecmax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
+                   x_sec,zslicemin,zslicemax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
                    
               endif
            endif
@@ -1373,8 +1373,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !--------------------------------
         call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
              zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-             icolourme(1:ntoti),npartoftype(:),iplotpartoftype,.false.,0.0,0.0,' ', &
-             xmin,xmax,ymin,ymax,ifastparticleplot)
+             icolourme(1:ntoti),npartoftype(:),iplotpartoftype,.false., &
+             zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
         !
         !--redraw axes over what has been plotted
         !

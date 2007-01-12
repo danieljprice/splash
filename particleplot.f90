@@ -112,7 +112,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  dxcell1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
                  dycell1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
                  nincell(1:ncellx,1:ncelly) = 0
-                 !notplotted = 0
+!                 notplotted = 0
                  do j=index1,index2
                     icellx = int((xplot(j) - xmin)*dxcell1) + 1
                     icelly = int((yplot(j) - ymin)*dycell1) + 1
@@ -122,14 +122,14 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                        .and. icellx.gt.0 .and. icellx.le.ncellx &
                        .and. icelly.gt.0 .and. icelly.le.ncelly) then
                        if (nincell(icellx,icelly).eq.0) then
-                          nincell(icellx,icelly) = nincell(icellx,icelly) + 1
-                          call pgpt(1,xplot(j),yplot(j),imarktype(itype))
-                       !else
-                       !   notplotted = notplotted + 1
+                          nincell(icellx,icelly) = nincell(icellx,icelly) + 1_1  ! this +1 of type int*1
+                          call pgpt1(xplot(j),yplot(j),imarktype(itype))
+!                       else
+!                          notplotted = notplotted + 1
                        endif
                     endif
                  enddo
-                 !write(*,"(a,i7,a)") ' (minus ',notplotted,' in crowded fields)'
+!                 write(*,"(a,i7,a)") ' (minus ',notplotted,' in crowded fields)'
               else
                  !--plot all particles of this type
                  print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
@@ -259,7 +259,7 @@ end subroutine particleplot
 ! PGPLOT page must already be set up - this just draws the "circle"
 !
 subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
-  use geometry
+  use geometry, only:coord_transform,maxcoordsys,labelcoordsys
   implicit none
   integer, intent(in) :: igeom, igeomold
   real, intent(in) :: x,y,h
