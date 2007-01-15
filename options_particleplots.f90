@@ -89,19 +89,17 @@ subroutine submenu_particleplots
          "' 2) change graph markers for each type  ( ',"//trim(substring2)//",' )',/,"//  &
          "' 3) set colour for each particle type   ( ',"//trim(substring2)//",' )',/,"//  &
          "' 4) plot line joining particles         ( ',a,' ) ',/,"// &
-         "' 5) label particles                     ( ',a,' ) ',/,"// &
-         "' 6) plot smoothing circles              ( ',i3,' ) ',/,"// &
-         "' 7) use fast particle plotting          ( ',a,' ) ',/,"// &
-         "' 8) change coordinate systems           ( ',i2,' ) ',/,"// &
-         "' 9) plot exact solution                 ( ',i2,' ) ',/,"// &
-         "'10) exact solution options')"
+         "' 5) plot smoothing circles              ( ',i3,' ) ',/,"// &
+         "' 6) use fast particle plotting          ( ',a,' ) ',/,"// &
+         "' 7) change coordinate systems           ( ',i2,' ) ',/,"// &
+         "' 8) plot exact solution                 ( ',i2,' ) ',/,"// &
+         "' 9) set exact solution line style & colour ')"
 
   print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
            imarktype(1:ntypes),idefaultcolourtype(1:ntypes),print_logical(iplotline), &
-           print_logical(ilabelpart),ncircpart, &
-           print_logical(ifastparticleplot),icoordsnew,iexact
+           ncircpart,print_logical(ifastparticleplot),icoordsnew,iexact
 
-  call prompt('enter option',iaction,0,10)
+  call prompt('enter option',iaction,0,9)
 !
   select case(iaction)
 !------------------------------------------------------------------------
@@ -150,14 +148,14 @@ subroutine submenu_particleplots
         call prompt('Enter PGPLOT colour for line ',linecolour,0,15)
      endif
      return 
-!-----------------------------------------------------------------------
-  case(5)
-     !          label particles with particle numbers
-     ilabelpart=.not.ilabelpart
-     print*,' label particles = ',ilabelpart
-     return           
+!!-----------------------------------------------------------------------
+!!  case(5)
+!     !          label particles with particle numbers
+!     ilabelpart=.not.ilabelpart
+!     print*,' label particles = ',ilabelpart
+!     return           
 !------------------------------------------------------------------------
-  case(6)
+  case(5)
      print*,'Note that circles of interaction can also be set interactively'
      call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))
      if (ncircpart.gt.0) then
@@ -175,13 +173,13 @@ subroutine submenu_particleplots
      endif
      return           
 !------------------------------------------------------------------------
-  case(7)
+  case(6)
      print "(1x,a,/,a,/)",'Fast particle plotting excludes particles in crowded regions', &
                      ' Turn this option off to always plot every particle'  
      call prompt('Allow fast particle plotting?',ifastparticleplot)
      return 
 !------------------------------------------------------------------------
-  case(8)
+  case(7)
      print 20,icoords
      do i=1,maxcoordsys
         print 30,i,labelcoordsys(i)
@@ -199,11 +197,11 @@ subroutine submenu_particleplots
      endif
      return
 !------------------------------------------------------------------------
-  case(9)
+  case(8)
      call submenu_exact(iexact)
      return
 !------------------------------------------------------------------------
-  case(10)
+  case(9)
      call options_exact
      return     
 !------------------------------------------------------------------------
