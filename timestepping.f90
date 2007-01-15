@@ -301,11 +301,11 @@ subroutine colourparts_default(npartoftype)
   
   index1 = 1
   do itype=1,ntypes
+     index2 = index1 + npartoftype(itype) - 1
      if (idefaultcolourtype(itype).ge.0) then
-        index2 = index1 + npartoftype(itype) - 1
         icolourme(index1:index2) = idefaultcolourtype(itype)
-        index1 = index2 + 1
      endif
+     index1 = index2 + 1
   enddo
 
 end subroutine colourparts_default
