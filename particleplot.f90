@@ -60,7 +60,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   !
   index1 = 1
   over_types: do itype=1,ntypes
-     call pgbbuf
+     call pgbbuf !--buffer PGPLOT output until each particle type finished
      index2 = index1 + npartoftype(itype) - 1
      if (index2.gt.ntot) then 
         index2 = ntot
@@ -79,7 +79,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            nplotted = 0
            do j=index1,index2
               if (zplot(j).lt.zmax .and. zplot(j).gt.zmin) then
-                 if (icolourpart(j).gt.0) then
+                 if (icolourpart(j).ge.0) then
                     nplotted = nplotted + 1
                     call pgsci(icolourpart(j))
                     call pgpt(1,xplot(j),yplot(j),imarktype(itype))
@@ -103,7 +103,8 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            !--otherwise plot all particles of this type using appropriate marker and colour
            !
            call pgqci(icolourindex)
-           if (all(icolourpart(index1:index2).eq.icolourpart(index1))) then
+           if (all(icolourpart(index1:index2).eq.icolourpart(index1) &
+               .and. icolourpart(index1).ge.0)) then
               call pgsci(icolourpart(index1))
               if (fastparticleplot) then
                  !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
@@ -116,16 +117,14 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  do j=index1,index2
                     icellx = int((xplot(j) - xmin)*dxcell1) + 1
                     icelly = int((yplot(j) - ymin)*dycell1) + 1
-                    !--exclude particles if there are more than one particle per
-                    !  cell or if z < zobserver (for 3D perspective)
-                    if (zplot(j).le.zmax &
-                       .and. icellx.gt.0 .and. icellx.le.ncellx &
+                    !--exclude particles if there are more than one particle per cell
+                    if (icellx.gt.0 .and. icellx.le.ncellx &
                        .and. icelly.gt.0 .and. icelly.le.ncelly) then
                        if (nincell(icellx,icelly).eq.0) then
                           nincell(icellx,icelly) = nincell(icellx,icelly) + 1_1  ! this +1 of type int*1
                           call pgpt1(xplot(j),yplot(j),imarktype(itype))
 !                       else
-!                          notplotted = notplotted + 1
+!                         notplotted = notplotted + 1
                        endif
                     endif
                  enddo
@@ -138,10 +137,10 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            else
               nplotted = 0
               do j=index1,index2
-                 if (icolourpart(j).gt.0 .and. zplot(j).le.zmax) then
+                 if (icolourpart(j).ge.0) then
                     nplotted = nplotted + 1
                     call pgsci(icolourpart(j))
-                    call pgpt(1,xplot(j),yplot(j),imarktype(itype))
+                    call pgpt1(xplot(j),yplot(j),imarktype(itype))
                  endif
               enddo
               print*,' plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
@@ -159,7 +158,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
         endif
      endif
      index1 = index2 + 1
-     call pgebuf
+     call pgebuf !--flush PGPLOT buffer at end of each type
   enddo over_types
 
   !

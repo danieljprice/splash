@@ -461,6 +461,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   labelvecplot = ' '
   xplot = 0.
   yplot = 0.
+  zplot = 0.
   dummy = 0.
   hh = 0.
   pmass = 0.
@@ -789,6 +790,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               if (.not.x_sec .or. x_sec.and.use3Dopacityrendering) then
                  print*,' observer height = ',dobserver,', screen at ',dobserver-dscreenfromobserver
                  zslicemax = dobserver
+                 zslicemin = -huge(zslicemin)
               endif
            endif
            do j=1,ntoti
@@ -967,7 +969,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                                dat(1:ninterp,iz), &
                                ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver, &
                                dscreenfromobserver,rkappa,zslicepos, &
-                               rendermin,rendermax,itrans(irenderplot),istep)                    
+                               rendermin,rendermax,itrans(irenderplot),istep)
                        elseif (use3Dperspective) then
                           print*,'ERROR: X_SEC WITH 3D PERSPECTIVE NOT IMPLEMENTED'
                           datpix = 0.
@@ -1188,7 +1190,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),npartoftype(:),PlotOnRenderings(:), &
-                   x_sec,zslicemin,zslicemax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
+                   (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
+                   xmin,xmax,ymin,ymax,ifastparticleplot)
 
               elseif (ndim.eq.2 .and. x_sec) then
                  !---------------------------------------------------------------
@@ -1205,13 +1208,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),npartoftype(:),iplotpartoftype(:), &
-                   x_sec,zslicemin,zslicemax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
+                   (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
+                   xmin,xmax,ymin,ymax,ifastparticleplot)
               else
                  !!--plot non-gas particle types on top of vector plots (e.g. sinks)
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),npartoftype(:),PlotOnRenderings(:), &
-                   x_sec,zslicemin,zslicemax,labelz,xmin,xmax,ymin,ymax,ifastparticleplot)
+                   (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
+                   xmin,xmax,ymin,ymax,ifastparticleplot)
                    
               endif
            endif

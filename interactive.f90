@@ -371,6 +371,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
                         if (ierr /=0) then
                            print*,'*** error marking particle' 
                            icolourpart(i) = 1
+                        !--translate 0 to icolourpart = -1 for non-plotted particles
+                        elseif (icolourpart(i).eq.0) then
+                           icolourpart(i) = -1
                         endif
                         nmarked = nmarked + 1
                     endif
@@ -390,7 +393,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
                        nmarked = nmarked + 1
                        if (icolourpart(i).le.0) icolourpart(i) = 1
                     else
-                       icolourpart(i) = 0
+                       icolourpart(i) = -1
                     endif
                  enddo
                  print*,'plotting selected ',nmarked,' particles only'
