@@ -1,7 +1,10 @@
 ##-------------------------------------------------------------------##
-##     Makefile for compiling SPLASH (uses PGPLOT)                   ##
+##     Makefile for compiling SPLASH and linking with PGPLOT         ##
 ##     Written by Daniel Price					     ##
 ##     University of Exeter, UK, 2006                    	     ##
+##                                                                   ##
+##     requires GNU make (on some systems this is 'gmake' instead    ##
+##                        of 'make')                                 ##
 ##                                                                   ##
 ##     see the INSTALL file for detailed installation instructions   ##
 ##-------------------------------------------------------------------##
@@ -64,6 +67,7 @@ ifeq ($(SYSTEM),g95)
    F90C= g95
    F90FLAGS= -O3 -ffast-math
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
+   DEBUGFLAG= -Wall -Wextra -g -fbounds-check -ftrace=full
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
    PARALLEL= no
@@ -147,7 +151,7 @@ ifeq ($(SYSTEM),mymac)
 #  using g95 with pgplot installed via fink
    F90C= g95
    F90FLAGS= -O3 -ffast-math
-   DEBUGFLAG= -g -fbounds-check -ftrace=full
+   DEBUGFLAG= -Wall -Wextra -g -fbounds-check -ftrace=full
    PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
    SYSTEMFILE= system_f2003.f90
@@ -185,7 +189,13 @@ endif
 
 ifeq ($(SYSTEM),maccluster)
 #  using the g95 compiler on the iMac cluster in Exeter
-   F90C= g95
+   ifeq ($(MACHTYPE),i386)
+      F90C= myg95
+      EXT= _i386
+   else
+      F90C= g95
+      EXT= _ppc
+   endif
    F90FLAGS= -O3 -ffast-math -Wall -Wextra -Wno=165 
    X11LIBS= -L/usr/X11R6/lib -lX11
    PGPLOTLIBS= -lSystemStubs
@@ -197,6 +207,7 @@ ifeq ($(SYSTEM),maccluster)
    PARALLEL= no
    KNOWN_SYSTEM=yes
 endif
+
 #
 # these are the flags used for linking
 #
@@ -312,7 +323,11 @@ spyros: checksystem $(OBJECTS) read_data_spyros.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ssplash $(OBJECTS) read_data_spyros.o
 
 sphNG: checksystem $(OBJECTS) read_data_sphNG.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ssplash $(OBJECTS) read_data_sphNG.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ssplash$(EXT) $(OBJECTS) read_data_sphNG.o
+#--build universal binary on mac cluster
+   ifeq ($(SYSTEM), maccluster)
+	lipo -create ssplash_ppc ssplash_i386 -output ssplash || cp ssplash$(EXT) ssplash
+   endif
 
 RSPH: rsph
 
@@ -342,7 +357,7 @@ checksystem:
 	@echo " Makefile for splash by Daniel Price "
 	@echo " -- see INSTALL file for detailed instructions"
 	@echo ""
-	@echo " make: WARNING: value of SYSTEM = $(SYSTEM) not recognised..."
+	@echo " make: ERROR: value of SYSTEM = $(SYSTEM) not recognised..."
 	@echo " =>set the environment variable SYSTEM to one listed "
 	@echo "   in the Makefile and try again"
 	@echo ""
@@ -363,7 +378,9 @@ targz:
 
 ## unit tests of various modules as I write them
 
-tests: interpolate3D_projection.o interpolate3D_xsec.o ./tests/test_interpolate3D.o 
+tests: test1 test2 test3
+
+test1: interpolate3D_projection.o interpolate3D_xsec.o ./tests/test_interpolate3D.o 
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o test_interpolation3D ./tests/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
 test2: transform.o ./tests/test_transform.o 
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o test_transform ./tests/test_transform.o transform.o
