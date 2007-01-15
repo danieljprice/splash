@@ -5,7 +5,7 @@
 module settings_part
  use params
  implicit none
- integer, dimension(maxparttypes) :: imarktype,icolourtypedefault
+ integer, dimension(maxparttypes) :: imarktype,idefaultcolourtype
  integer, dimension(100) :: icircpart
  integer :: ncircpart, icoordsnew
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
@@ -14,7 +14,7 @@ module settings_part
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
-   iexact,icoordsnew,ifastparticleplot,icolourtypedefault
+   iexact,icoordsnew,ifastparticleplot,idefaultcolourtype
 
 contains
 
@@ -42,7 +42,7 @@ subroutine defaults_set_part
   imarktype = 1              ! PGPLOT marker for all particles
   imarktype(2) = 4           ! PGPLOT marker for ghost/dark matter particles
   imarktype(3) = 17          ! PGPLOT marker for sink particles
-  icolourtypedefault = 1     ! default colour for each particle type
+  idefaultcolourtype = -1     ! default colour for each particle type
   ifastparticleplot = .true. ! allow crowded-field elimination on particle plots
 
   return
@@ -87,7 +87,7 @@ subroutine submenu_particleplots
          "' 0) exit ',/,"// &
          "' 1) turn on/off particles by type       ( ',"//trim(substring1)//",' )',/,"// &
          "' 2) change graph markers for each type  ( ',"//trim(substring2)//",' )',/,"//  &
-         "' 3) change default colour for each type ( ',"//trim(substring2)//",' )',/,"//  &
+         "' 3) set colour for each particle type   ( ',"//trim(substring2)//",' )',/,"//  &
          "' 4) plot line joining particles         ( ',a,' ) ',/,"// &
          "' 5) label particles                     ( ',a,' ) ',/,"// &
          "' 6) plot smoothing circles              ( ',i3,' ) ',/,"// &
@@ -97,7 +97,7 @@ subroutine submenu_particleplots
          "'10) exact solution options')"
 
   print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
-           imarktype(1:ntypes),icolourtypedefault(1:ntypes),print_logical(iplotline), &
+           imarktype(1:ntypes),idefaultcolourtype(1:ntypes),print_logical(iplotline), &
            print_logical(ilabelpart),ncircpart, &
            print_logical(ifastparticleplot),icoordsnew,iexact
 
@@ -130,10 +130,16 @@ subroutine submenu_particleplots
      return   
 !------------------------------------------------------------------------
   case(3)
-     print*,'0=background 1=foreground 2->10=various colours'
+     print "(2(a,/),/,4(a,/))", &
+           ' Warning: setting a colour for a particle type overrides', &
+           '          (at each new timestep) colours set interactively ', &
+           ' -1 = retain interactively set colours between timesteps', &
+           '  0 = background ',&
+           '  1 = foreground ',&
+           '  2->10 = various colours (see PGPLOT default colour indices)'
      do itype=1,ntypes
         call prompt(' Enter default colour for '//trim(labeltype(itype)) &
-             //' particles:',icolourtypedefault(itype),0,14)
+             //' particles:',idefaultcolourtype(itype),-1,14)
      enddo
      return   
 !------------------------------------------------------------------------
