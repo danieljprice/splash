@@ -156,7 +156,7 @@ program splash
   use mem_allocation, only:deallocate_all
   use projections3D, only:setup_integratedkernel
   use settings_data, only:buffer_data
-  use system_commands
+  use system_commands, only:get_number_arguments,get_argument
   implicit none
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames
@@ -194,8 +194,9 @@ program splash
            i = i + 1
            call get_argument(i,defaultsfile)
         case default
-           print "(a,/)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
-           print "(a)",'unknown command line argument '''//trim(string)//''''
+           print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
+           print "(a,/)",'v1.7.1+ [4th Jan ''07] '
+           if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
            print "(a)",'Usage: splash [-f defaultsfile] [-l limitsfile] file1 file2 ...'
            stop
         end select
@@ -283,7 +284,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( version 1.7.1 [4th Jan ''07] Copyright (C) 2005-2007 )'
+ print "(a)",'  ( version 1.7.1+ [4th Jan ''07] Copyright (C) 2005-2007 )'
  print 30 
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
