@@ -19,14 +19,14 @@ contains
 
 subroutine get_data(ireadfile,gotfilenames,firsttime)
   use exact, only:read_exactparams
-  use filenames
-  use limits, only:set_limits,read_limits
+  use filenames, only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
+  use limits, only:set_limits
   use settings_data, only:ncolumns,iendatstep,ncalc,ivegotdata, &
                      DataisBuffered,iCalcQuantities,ndim,icoords, &
                      iRescale,required,ipartialread
   use settings_part, only:iexact,icoordsnew
   use particle_data, only:dat,time
-  use prompting
+  use prompting, only:prompt
   use labels, only:label,labelvec,iamvec,ih,irho,ipmass
   use geometry, only:labelcoord
   use calcquantities, only:calc_quantities
@@ -38,7 +38,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   logical :: setlimits
   logical, parameter :: timing = .true.
   integer :: i,istart,ierr
-!  character(len=len(rootname)+7) :: limitsfile
   real :: t1,t2
 
   if (.not.gotfilenames) then
@@ -127,10 +126,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         call calc_quantities(1,nsteps)
      endif
      !
-     !--read plot limits from file, otherwise set plot limits
+     !--set plot limits
      !
-     limitsfile = trim(rootname(1))//'.limits'
-     call read_limits(limitsfile,ierr)
      if (ierr.gt.0 .and. ivegotdata .and. nstepsinfile(1).ge.1) then
         call set_limits(1,nsteps,1,ncolumns+ncalc)
      endif
