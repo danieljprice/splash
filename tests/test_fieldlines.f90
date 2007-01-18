@@ -38,7 +38,7 @@ program test_fieldlines
  enddo
 
  call streamlines(vecpixx(1:npixx,1:npixy),vecpixy(1:npixx,1:npixy), &
-      datpix(1:npixx,1:npixy),npixx,npixy,xmin,ymin,dxpix)
+      datpix(1:npixx,1:npixy),npixx,npixy,dxpix)
 
  call pgenv(xmin,xmax,ymin,ymax,1,0)
  trans = 0.
