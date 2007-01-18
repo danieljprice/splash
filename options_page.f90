@@ -50,7 +50,7 @@ subroutine defaults_set_page
   legendtext = 't='
   iPlotLegendOnFirstRowOnly = .false.
   
-  iPlotTitles = .false.  ! whether or not to plot titles
+  iPlotTitles = .true.  ! whether or not to plot titles
   hpostitle = 0.5       ! horizontal title position as fraction of viewport
   vpostitle = 1.0       ! vertical title position in character heights
   fjusttitle = 0.5      ! justification factor for title
@@ -167,9 +167,8 @@ subroutine submenu_page
          papersizey = 6.0
         aspectratio = papersizey/papersizex
      case(7)
-        call prompt(' x size (inches) ',papersizex,0.0,12.0)
-        call prompt(' y size (inches) or aspect ratio (-ve)', &
-             papersizey,-12.0,12.0)
+        call prompt(' x size (inches) ',papersizex,0.0)
+        call prompt(' y size (inches) or aspect ratio (-ve)',papersizey)
         if (papersizey.lt.0.0) then
            aspectratio = abs(papersizey)
         else
