@@ -1235,7 +1235,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                 if (ndim.eq.3 .and..not. x_sec) then
                    labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
                 endif
-                pixwidth = (xmax-xmin)/real(npixvec)
+                pixwidth = (xmax-xmin)/real(npixvec - 1)
                 npixyvec = int((ymax-ymin)/pixwidth) + 1
                 if (.not.interactivereplot .or. nacross*ndown.gt.1) then ! not if vecmax changed interactively
                    if (iadapt) then
@@ -1963,10 +1963,9 @@ contains
          return
       end select
       !
-      !--plot it
+      !--plot it, either as streamlines or arrows
       !
       if (iplotstreamlines) then
-         !print*,'rendering streamlines of vector field...'
          if (ndim.eq.3) then
             !--normalise the 3D vector field
             do j=1,numpixy
@@ -1976,16 +1975,14 @@ contains
                      vecpixx(i,j) = vecpixx(i,j)/vmag
                      vecpixy(i,j) = vecpixy(i,j)/vmag
                   endif
-               enddo
+              enddo
             enddo                  
          endif
-         call streamlines(vecpixx,vecpixy,datpix,numpixx,numpixy,xmin,ymin,pixwidth)
-         !  print*,'min,max = ', minval(datpix),maxval(datpix)
+         call streamlines(vecpixx,vecpixy,datpix,numpixx,numpixy,pixwidth)
+           
          call render_pix(datpix,minval(datpix),maxval(datpix),'crap', &
                    numpixx,numpixy,xmin,ymin,pixwidth,    &
                    0,.true.,.false.,ncontours,.false.)
-         !call render_vec(vecpixx,vecpixy,vmax, &
-         !     numpixx,numpixy,xmin,ymin,pixwidth,trim(label),' ')
       else
          call render_vec(vecpixx,vecpixy,vmax, &
               numpixx,numpixy,xmin,ymin,pixwidth,trim(label),' ')

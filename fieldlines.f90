@@ -17,7 +17,7 @@ contains
 !
 ! The solution is given by
 !
-!  A(x,y) = \int v_x dy - \int v_y dx
+!  A(x,y) = \int v_x(x,y) dy - \int v_y(x,y) dx
 !
 ! which we compute, knowing v_x and v_y on a fixed grid of square pixels,
 ! by a simple trapezoidal integration for each component.
@@ -41,14 +41,16 @@ contains
 ! Last modified: 5th Oct. 2006
 !
 !---------------------------------------------------------------------------
-subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,xmin,ymin,pixwidth)
+subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
  implicit none
  real, intent(in), dimension(npixx,npixy) :: vecpixx,vecpixy
- real, intent(in) :: xmin,ymin,pixwidth
+ real, intent(in) :: pixwidth
  real, intent(out), dimension(npixx,npixy) :: datpix
+ real, dimension(npixx,npixy) :: datpix2
  integer, intent(in) :: npixx,npixy
- real :: weighty,weightx,termx,termy,fyi
- real, dimension(npixx) :: fx
+ real(kind=8) :: fyj
+! real(kind=8), dimension(npixy) :: fylast
+ real(kind=8), dimension(npixx) :: fx !!,fxlast
  integer :: i,j
  !
  !--check for errors in input
@@ -58,37 +60,54 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,xmin,ymin,pixwidth)
     datpix = 0.
     return
  endif
+ 
+ fyj = 0.
  !
- !--initialise quantities
- !
- do i=1,npixx
-    fx(i) = 0.
- enddo
- !
- !--perform the integration
+ !--perform the integration forwards
  !
  do j=1,npixy
-    fyi = 0.
     do i=1,npixx
-       termx = vecpixx(i,j)*pixwidth
-       termy = -vecpixy(i,j)*pixwidth
-       if (i.eq.1 .or. i.eq.npixx) then ! trapezoidal rule
-          fyi = fyi + 0.5*termy
-          weighty = 0.
+       !--trapezoidal rule in x
+       if (i.eq.1) then
+          fyj = 0.
        else
-          weighty = 0.5
-          fyi = fyi + termy
+          fyj = fyj - 0.5*pixwidth*(vecpixy(i-1,j)+vecpixy(i,j))    
        endif
-       if (j.eq.1 .or. j.eq.npixy) then ! trapezoidal rule
-          fx(i) = fx(i) + 0.5*termx
-          weightx = 0.
+       !--trapezoidal rule in y
+       if (j.eq.1) then
+          fx(i) = 0.
        else
-          fx(i) = fx(i) + termx
-          weightx = 0.5
+          fx(i) = fx(i) + 0.5*pixwidth*(vecpixx(i,j-1)+vecpixx(i,j))
        endif
-       datpix(i,j) = fx(i) + fyi - weighty*termy - weightx*termx
+       datpix(i,j) = real(fx(i) + fyj)
+!       if (i.eq.npixx) fylast(j) = fyj
+!       if (j.eq.npixy) fxlast(i) = fx(i)
     enddo
  enddo
+ !
+ !--perform the integration backwards
+ !
+ do j=npixy,1,-1
+   do i=npixx,1,-1
+       !--trapezoidal rule in y
+       if (i.eq.npixx) then
+          fyj = 0.
+       else
+          fyj = fyj + 0.5*pixwidth*(vecpixy(i+1,j)+vecpixy(i,j))    
+       endif
+       !--trapezoidal rule in x
+       if (j.eq.npixy) then
+          fx(i) = 0.
+       else
+          fx(i) = fx(i) - 0.5*pixwidth*(vecpixx(i,j+1)+vecpixx(i,j))
+       endif
+       datpix2(i,j) = real(fx(i) + fyj)
+    enddo
+ enddo
+ !
+ !--average the two
+ !
+ datpix = 0.5*(datpix + datpix2)
  
  return
 end subroutine streamlines
