@@ -355,6 +355,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                imaxcolumnread = icolumn
             elseif (iarr.eq.4 .and. i.le.3) then
                icolumn = 6 + i
+               imaxcolumnread = max(imaxcolumnread,icolumn)
             else
                icolumn = imaxcolumnread + 1
                imaxcolumnread = icolumn
@@ -378,7 +379,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             endif
          endif
 !        real4's go straight into dat
-         imaxcolumnread = max(icolumn,6)
+         imaxcolumnread = max(imaxcolumnread,icolumn,6)
          do i=1,nreal4(iarr)
             if (iarr.eq.1 .and. i.eq.1) then
                icolumn = 6 ! density
