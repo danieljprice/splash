@@ -82,20 +82,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !--try to guess full dump format from file names
   !
   magfield = .true.
-  if (.not.minidump) then
-     if (index(dumpfile,'SMBH').gt.0) magfield = .false.
-     if (index(dumpfile,'nsbh').gt.0) magfield = .false.
-     if (index(dumpfile,'NSBH').gt.0) magfield = .false.
-     if (index(dumpfile,'WD').gt.0) magfield = .false.
-  endif
+!  if (.not.minidump) then
+!     if (index(dumpfile,'SMBH').gt.0) magfield = .false.
+!     if (index(dumpfile,'nsbh').gt.0) magfield = .false.
+!     if (index(dumpfile,'NSBH').gt.0) magfield = .false.
+!     if (index(dumpfile,'WD').gt.0) magfield = .false.
+!  endif
   !
   !--override this with environment variable
   !
   call get_environment('RSPLASH_FORMAT',string)
   select case(trim(adjustl(string)))
-  case('MHD','mhd')
+  case('MHD','mhd','ns','NS')
      magfield = .true.
-  case('WD','hydro','HYDRO')
+  case('WD','hydro','HYDRO','ns_bh_v2')
      magfield = .false.
   end select
   !
