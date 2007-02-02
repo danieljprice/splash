@@ -59,7 +59,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   integer :: nmarked,ncircpart,itrackparttemp
   integer, dimension(1000) :: icircpart
  !! real :: xpt,ypt
-  real :: xpt2,ypt2,charheight
+  real :: xpt2,ypt2,charheight,xcen,ycen
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
   real :: xlength,ylength,renderlength,renderpt,drender,zoomfac
@@ -429,6 +429,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      case('-','_','+','o') ! zoom out by 10 or 20%
         xlength = xmax - xmin
         ylength = ymax - ymin
+        xcen = 0.5*(xmax + xmin)
+        ycen = 0.5*(ymax + ymin)
         renderlength = rendermax - rendermin
         select case(char)
         case('-')
@@ -443,14 +445,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            xlength = 0.9/zoomfac*xlength
            ylength = 0.9/zoomfac*ylength
            renderlength = 0.9/zoomfac*renderlength
-        case('o') !--reset cursor to origin
-           xpt = 0.
-           ypt = 0.
         end select
         if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymax) then
            print*,'zooming on x axis'
-           xmin = xpt - 0.5*xlength
-           xmax = xpt + 0.5*xlength
+           xmin = xcen - 0.5*xlength
+           xmax = xcen + 0.5*xlength
            iadvance = 0
            interactivereplot = .true.
            irerender = .true.
@@ -458,8 +457,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         endif
         if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmax) then
            print*,'zooming on y axis'
-           ymin = ypt - 0.5*ylength
-           ymax = ypt + 0.5*ylength
+           ymin = ycen - 0.5*ylength
+           ymax = ycen + 0.5*ylength
            iadvance = 0
            interactivereplot = .true.
            irerender = .true.
@@ -473,6 +472,17 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            iadvance = 0
            interactivereplot = .true.
            iexit = .true.
+        endif
+        if (char.eq.'o') then !--recentre plot on origin
+           xmin = -0.5*xlength
+           xmax = 0.5*xlength
+           xmin = -0.5*ylength
+           xmax = 0.5*ylength
+           iadvance = 0
+           interactivereplot = .true.
+           iexit = .true.
+           xpt = 0.
+           ypt = 0.
         endif
      case('a') ! reset plot limits
         if (xpt.gt.xmax .and. irender.gt.0) then
@@ -1112,7 +1122,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
  real :: xpt2,ypt2,xpti,ypti,renderpt
  real :: xlength,ylength,renderlength,drender,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
- real :: xmini,xmaxi,ymini,ymaxi
+ real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen
  character(len=1) :: char,char2
  character(len=5) :: string
  logical :: iexit
@@ -1270,6 +1280,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         if (ipanel.le.0) cycle interactive_loop
         xlength = xmax(iplotxarr(ipanel)) - xmin(iplotxarr(ipanel))
         ylength = xmax(iplotyarr(ipanel)) - xmin(iplotyarr(ipanel))
+        xcen = 0.5*(xmax(iplotxarr(ipanel)) + xmin(iplotxarr(ipanel)))
+        ycen = 0.5*(xmax(iplotyarr(ipanel)) + xmin(iplotyarr(ipanel)))
         if (irenderarr(ipanel).gt.0) then
            renderlength = xmax(irenderarr(ipanel)) - xmin(irenderarr(ipanel))
         else
@@ -1288,22 +1300,19 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
            xlength = 0.9/zoomfac*xlength
            ylength = 0.9/zoomfac*ylength
            renderlength = 0.9/zoomfac*renderlength
-        case('o') !--reset cursor to origin
-           xpt = 0.
-           ypt = 0.
         end select
         if (xpti.ge.xmin(iplotxarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel))) then
            print*,'zooming on x axis'
-           xmin(iplotxarr(ipanel)) = xpti - 0.5*xlength
-           xmax(iplotxarr(ipanel)) = xpti + 0.5*xlength
+           xmin(iplotxarr(ipanel)) = xcen - 0.5*xlength
+           xmax(iplotxarr(ipanel)) = xcen + 0.5*xlength
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
         endif
         if (ypti.ge.xmin(iplotyarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel))) then
            print*,'zooming on y axis'
-           xmin(iplotyarr(ipanel)) = ypti - 0.5*ylength
-           xmax(iplotyarr(ipanel)) = ypti + 0.5*ylength
+           xmin(iplotyarr(ipanel)) = ycen - 0.5*ylength
+           xmax(iplotyarr(ipanel)) = ycen + 0.5*ylength
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
@@ -1317,6 +1326,17 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
+        endif
+        if (char.eq.'o') then !--recentre plot on origin
+           xmin(iplotxarr(ipanel)) = -0.5*xlength
+           xmax(iplotxarr(ipanel)) = 0.5*xlength
+           xmin(iplotyarr(ipanel)) = -0.5*ylength
+           xmax(iplotyarr(ipanel)) = 0.5*ylength
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+           xpt = 0.
+           ypt = 0.
         endif
      !
      !--set/unset log axes
