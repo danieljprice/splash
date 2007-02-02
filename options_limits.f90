@@ -46,6 +46,7 @@ subroutine submenu_limits(help)
  integer :: iaction,ipick,i,index
  real :: diff, mid, zoom
  character(len=120) :: transprompt
+ character(len=5) :: string,string2
  logical :: helpmode
  
  helpmode = .false.
@@ -54,10 +55,16 @@ subroutine submenu_limits(help)
 
  iaction = 0
  if (iadapt) then
-    print 10,print_logical(iadapt),print_logical(iadaptcoords),itrackpart,scalemax
+    string = 'ADAPT'
  else
-    print 10,print_logical(iadapt),print_logical(iadaptcoords),itrackpart,zoom
+    string = 'FIXED'
  endif
+ if (iadaptcoords) then
+    string2 = 'ADAPT'
+ else
+    string2 = 'FIXED'
+ endif
+ print 10,trim(string),trim(string2),itrackpart,zoom
 10 format('------------------ limits options ---------------------',/, &
         ' 0) exit ',/,                 &
         ' 1) set adaptive/fixed limits     ( ',a,', ',a,' )   ',/,  &
@@ -101,7 +108,7 @@ subroutine submenu_limits(help)
        do while (ipick.gt.0)
           ipick = 0
           !write(*,*)
-          call prompt('Enter plot number to set limits (0=quit)',ipick,0,numplot)
+          call prompt('Enter column number to set limits (0=quit)',ipick,0,numplot)
           if (ipick.gt.0) then
              call prompt(trim(label(ipick))//' min ',lim(ipick,1))
              call prompt(trim(label(ipick))//' max ',lim(ipick,2))
