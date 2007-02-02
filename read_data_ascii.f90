@@ -234,13 +234,14 @@ end subroutine get_columns
                    
 end subroutine read_data
 
-!!------------------------------------------------------------
+!!-------------------------------------------------------------------
 !! set labels for each column of data
 !!
-!! * basically in this case we do nothing except guess that
-!!   the first 3 columns are coordinates
+!! read these from a file called 'columns' in the current directory
+!! then take sensible guesses as to which quantities are which
+!! from the column labels
 !!
-!!------------------------------------------------------------
+!!-------------------------------------------------------------------
 
 subroutine set_labels
   use labels, only:label,labeltype,ix,irho,ipmass,ih,iutherm,ipr,ivx,iBfirst,iamvec,labelvec
