@@ -28,7 +28,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc
-  use mem_allocation
+  use mem_allocation, only:alloc
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
