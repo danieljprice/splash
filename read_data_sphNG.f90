@@ -100,12 +100,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
       !
       doubleprec = .true.
       read(iunit,end=55,iostat=ierr) int1,r8,int2,i1,int3
-      if (ierr /= 0) then
-         print "(a)",'*** ERROR READING FILE : corrupted/zero size/wrong endian?'
-         close(iunit)
-         return
-      elseif (int1.ne.690706) then
-         print "(a)",'*** ERROR READING HEADER: wrong endian?'
+      if (int1.ne.690706) then
+         print "(a)",'*** ERROR READING HEADER: corrupt file/zero size/wrong endian?'
          close(iunit)
          return
       endif
