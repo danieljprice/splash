@@ -528,6 +528,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   !-------------------------------------
   if (interactivereplot .and. ipos.eq.ifirststeponpage) then
      nyplotstart = nyplotfirstonpage
+     ipanel = 0
   else
      nyplotstart = 1
   endif
@@ -1802,7 +1803,8 @@ contains
     character(len=len(steplegend(1))) :: steplegendtext
 
     !--plot time on plot
-    if (iPlotLegend .and. nyplot.eq.1 .and. .not.(iPlotLegendOnFirstRowOnly .and. irow.gt.1)) &
+    if (iPlotLegend .and. nyplot.eq.1 .and. .not.(iPlotLegendOnFirstRowOnly .and. irow.gt.1) &
+        .and. timei.gt.-0.5*huge(timei)) &  ! but not if time has not been read from dump
        call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend)
        
     !--line/marker style/colour legend for multiple timesteps on same page

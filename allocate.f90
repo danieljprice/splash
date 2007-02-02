@@ -144,7 +144,7 @@ subroutine alloc(npartin,nstep,ncolumnsin)
      if (ierr /= 0) stop 'error allocating memory for header arrays'
 
      npartoftype = 0
-     time = 0.
+     time = -huge(time) ! initialise like this so we know if has not been read
      gamma = 0.
 
      if (reallocate_step) then
