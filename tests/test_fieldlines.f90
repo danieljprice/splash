@@ -89,6 +89,78 @@ program test_fieldlines
  else
     print*,'setup different to usual one'
  endif
+ 
+!---------------------
+!  dipole field test
+!----------------------
+
+ print "(70('-'))"
+ print*,'DIPOLE TEST'
+ npixx = 400
+ npixy = 400
+ dxpix = (xmax-xmin)/real(npixx)
+ do j = 1,npixy
+    yi = ymin + (j-0.5)*dxpix
+    do i = 1,npixx
+       xi = xmin + (i-0.5)*dxpix
+       vecpixx(i,j) = func_vecx_dipole(xi,yi)
+       vecpixy(i,j) = func_vecy_dipole(xi,yi)
+       datpix1(i,j) = func_stream_dipole(xi,yi)
+    enddo
+ enddo
+
+ call streamlines(vecpixx(1:npixx,1:npixy),vecpixy(1:npixx,1:npixy), &
+      datpix(1:npixx,1:npixy),npixx,npixy,dxpix)
+
+ call pgenv(xmin,xmax,ymin,ymax,1,0)
+ trans = 0.
+ trans(1) = xmin - 0.5*dxpix
+ trans(2) = dxpix
+ trans(4) = ymin - 0.5*dxpix
+ trans(6) = dxpix
+ datmax = maxval(datpix(1:npixx,1:npixy))
+ datmin = minval(datpix(1:npixx,1:npixy))
+ print*,'min,max datpix = ',datmin,datmax
+ datpix(1:npixx,1:npixy) = datpix(1:npixx,1:npixy) - 0.5*(datmax + datmin)
+ datmax = maxval(datpix(1:npixx,1:npixy))
+ datmin = minval(datpix(1:npixx,1:npixy))
+ print*,'min,max datpix = ',datmin,datmax
+
+! call pgimag(datpix,ipixx,ipixy,1,npixx,1,npixy,datmin,datmax,trans)    
+!
+!--set contour levels
+! 
+  dcont = (datmax-datmin)/real(nc+1)   ! even contour levels
+  do i=1,nc
+     levels(i) = datmin + real(i)*dcont
+  enddo
+!
+!--plot contours (use pgcont if pgcons causes trouble)
+!
+ call pgcons(datpix(1:npixx,1:npixy),npixx,npixy,1,npixx,1,npixy,levels(1:nc),nc,trans)
+
+! call pgenv(xmin,xmax,ymin,ymax,1,0)
+
+ datmax = maxval(datpix1(1:npixx,1:npixy))
+ datmin = minval(datpix1(1:npixx,1:npixy)) 
+ print*,'min,max datpix1 = ',datmin,datmax
+
+! call pgimag(datpix1,ipixx,ipixy,1,npixx,1,npixy,datmin,datmax,trans)
+! call pgcons(datpix1(1:npixx,1:npixy),npixx,npixy,1,npixx,1,npixy,levels(1:nc),nc,trans)
+
+ call geterr(datpix(1:npixx,1:npixy),npixx,npixy,datpix1(1:npixx,1:npixy),err)
+ print*,'average error in stream line calculation  = ',err
+ if (npixx.eq.400 .and. npixy.eq.400) then
+    if (err < 0.00019) then
+       print*,'PASSED: error within limits'
+    else
+       print*,'FAILED: error too large!'    
+    endif
+ else
+    print*,'setup different to usual one'
+ endif
+ 
+ 
  call pgend
 
  print "(70('-'))"
@@ -118,6 +190,40 @@ real function func_stream(xi,yi)
  func_stream = 0.5/pi*(cos(2.*pi*yi) + 0.5*cos(4.*pi*xi))
  
 end function func_stream
+
+!----------------
+! dipole 
+!----------------
+real function func_vecx_dipole(xi,yi)
+ implicit none
+ real :: xi,yi
+ real, parameter :: Bdipole = 1.0, Rdipole = 0.3, eps=0.3
+
+ func_vecx_dipole = 3.*Bdipole*Rdipole**3*(Rdipole + xi)*yi/ &
+        sqrt((Rdipole + xi)**2 + yi**2 + (eps*Rdipole)**2)**5
+ 
+end function func_vecx_dipole
+
+real function func_vecy_dipole(xi,yi)
+ implicit none
+ real :: xi,yi
+ real, parameter :: Bdipole = 1.0, Rdipole = 0.3, eps=0.3
+ 
+ func_vecy_dipole = Bdipole*Rdipole**3/ &
+        sqrt((Rdipole + xi)**2 + yi**2 + (eps*Rdipole)**2)**3
+ 
+end function func_vecy_dipole
+
+real function func_stream_dipole(xi,yi)
+ implicit none
+ real :: xi,yi
+ real, parameter :: Bdipole = 1.0, Rdipole = 0.3, eps=0.3
+ 
+ func_stream_dipole = -Bdipole*Rdipole**3*(Rdipole + xi)/ &
+        sqrt((Rdipole + xi)**2 + yi**2 + (eps*Rdipole)**2)**3
+  
+end function func_stream_dipole
+
 
 subroutine geterr(datpix,npixx,npixy,datexact,err)
  implicit none
