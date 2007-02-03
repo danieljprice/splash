@@ -67,12 +67,12 @@ subroutine submenu_limits(help)
  print 10,trim(string),trim(string2),itrackpart,zoom
 10 format('------------------ limits options ---------------------',/, &
         ' 0) exit ',/,                 &
-        ' 1) set adaptive/fixed limits     ( ',a,', ',a,' )   ',/,  &
-        ' 2) set manual limits ',/,     &
-        ' 3) xy limits track particle      ( ',i8,' )   ',/,   &
-        ' 4) zoom in/out                   ( ',f4.2,' ) ',/,   &
-        ' 5) apply transformations (log10,1/x) ',/, &
-        ' 6) reset limits for all plots  ')
+        ' 1) use adaptive/fixed limits           ( ',a,', ',a,' )   ',/,  &
+        ' 2) set limits manually ',/,     &
+        ' 3) make xy limits relative to particle ( ',i8,' )   ',/,   &
+        ' 4) zoom in/out                         ( ',f4.2,' ) ',/,   &
+        ' 5) apply log or inverse transformations to columns ',/, &
+        ' 6) reset limits for all columns  ')
  if (helpmode) then
     call prompt('choose option for help on a specific item ',iaction,0,6)
  else
@@ -172,7 +172,6 @@ subroutine submenu_limits(help)
         ipick = 1
         do while (ipick.gt.0 .and. ipick.le.numplot)
            ipick = 0
-           !!print*,'Enter plot number to apply transformation '
            call prompt('Enter column to apply transform (0=quit,-1=all) ',ipick)
            if (ipick.le.numplot .and. ipick.ne.0) then
               print "(a)", trim(transprompt)
