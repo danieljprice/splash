@@ -297,9 +297,9 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         sinphi = SIN(xin(2))
         cosphi = COS(xin(2))
         dxdx(1,1) = cosphi            ! dx/dr
-        dxdx(1,2) = -xin(1)*sinphi    ! dx/dphi
+        dxdx(1,2) = -sinphi           ! 1/r*dx/dphi
         dxdx(2,1) = sinphi            ! dy/dr
-        dxdx(2,2) = xin(1)*cosphi     ! dy/dphi
+        dxdx(2,2) = cosphi            ! 1/r*dy/dphi
         dxdx(3,3) = 1.                ! dz/dz
      end select
 !
@@ -375,8 +375,8 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         dxdx(1,1) = xin(1)*rr1  ! dr/dx
         if (ndimin.ge.2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
         if (ndimout.ge.2) then
-           dxdx(2,1) = -xin(2)*rr1**2 ! dphi/dx
-           dxdx(2,2) = xin(1)*rr1**2  ! dphi/dy
+           dxdx(2,1) = -xin(2)*rr1 ! r*dphi/dx
+           dxdx(2,2) = xin(1)*rr1  ! r*dphi/dy
            if (ndimout.eq.3) dxdx(3,3) = 1.  ! dz/dz 
         endif
      case default
