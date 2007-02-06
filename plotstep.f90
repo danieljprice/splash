@@ -1231,7 +1231,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                 ivecx = iamvec(ivectorplot) + iplotx - 1
                 ivecy = iamvec(ivectorplot) + iploty - 1
 
-                labelvecplot = trim(labelvec(ivectorplot))//trim(unitslabel(ivectorplot))
+                if (iRescale) then
+                   labelvecplot = trim(labelvec(ivectorplot))//trim(unitslabel(ivectorplot))
+                else
+                   labelvecplot = trim(labelvec(ivectorplot))      
+                endif
                 !!--set label for projection plots (2268 or 2412 for integral sign)
                 if (ndim.eq.3 .and..not. x_sec) then
                    labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
