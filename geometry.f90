@@ -366,7 +366,7 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         !
         !--output is cylindrical
         !
-        rr = sqrt(dot_product(xin(1:max(ndimin,2)),xin(1:max(ndimin,2))))
+        rr = sqrt(dot_product(xin(1:min(ndimin,2)),xin(1:min(ndimin,2))))
         if (rr.ne.0.) then
            rr1 = 1./rr
         else
