@@ -951,8 +951,8 @@ z & = & z                             & & z & = & z\\
 where vectors transform according to:
 \begin{displaymath}
 \begin{array}{lclp{1cm}lcl}
-v_r      & = & v_x \frac{x}{r} + v_y \frac{y}{r}  & & v_x & = & v_r \cos\phi - v_\phi r \sin\phi \\
-v_\phi & = & v_x \left(\frac{-y}{r^2}\right) + v_y \left(\frac{x}{r^2}\right) &; &v_y & = & v_r \sin\phi + v_\phi r \cos\phi \\
+v_r      & = & v_x \frac{x}{r} + v_y \frac{y}{r}  & & v_x & = & v_r \cos\phi - v_\phi \sin\phi \\
+v_\phi & = & v_x \left(\frac{-y}{r}\right) + v_y \left(\frac{x}{r}\right) &; &v_y & = & v_r \sin\phi + v_\phi \cos\phi \\
 v_z      & = & v_z & & v_z & = & v_z \\
 \end{array}
 \end{displaymath}
@@ -987,14 +987,14 @@ r & = & \sqrt{[(x^2 + y^2)^{1/2} - R]^{2} + z^{2}}    & & x & = & (r\cos\theta +
 where $R$ is the radius of the torus and vectors transform according to:
 \begin{displaymath}
 \begin{array}{lclp{2cm}lcl}
-v_r      & = & v_x \frac{x(r_{cyl} - R)}{r r_{cyl}} + v_y \frac{y(r_{cyl} - R)}{r r_{cyl}} + v_{z} \frac{z}{r}  & & v_x & = & v_r \cos\theta\cos\phi- v_\theta r \sin\theta\cos\phi - v_\phi (r\cos\theta + R)\sin\phi \\
-v_\theta & = & v_x \frac{-zx}{r^{2} r_{cyl}}  + v_y\frac{-zy}{r^{2} r_{cyl}}  + v_{z}\frac{(r_{cyl} - R)}{r^{2}} &; &v_y & = & v_r \cos\theta\sin\phi - v_\theta r\sin\theta\sin\phi + v_\phi (r \cos\theta + R)\cos\phi \\
-v_\phi & = & v_{x} \left(\frac{-y}{x^{2} + y^{2}}\right) + v_{y} \left(\frac{x}{x^{2} + y^{2}}\right) & & v_z & = & v_{r}\sin\theta + v_{\theta} r\cos\theta \\
+v_r      & = & v_x \frac{x(r_{cyl} - R)}{r r_{cyl}} + v_y \frac{y(r_{cyl} - R)}{r r_{cyl}} + v_{z} \frac{z}{r}  & & v_x & = & v_r \cos\theta\cos\phi- v_\theta \sin\theta\cos\phi - v_\phi\sin\phi \\
+v_\theta & = & v_x \frac{-zx}{r r_{cyl}}  + v_y\frac{-zy}{r r_{cyl}}  + v_{z}\frac{(r_{cyl} - R)}{r} &; &v_y & = & v_r \cos\theta\sin\phi - v_\theta \sin\theta\sin\phi + v_\phi\cos\phi \\
+v_\phi & = & v_{x} \left(\frac{-y}{r_{cyl}}\right) + v_{y} \left(\frac{x}{r_{cyl}}\right) & & v_z & = & v_{r}\sin\theta + v_{\theta} \cos\theta \\
 \end{array}
 \end{displaymath}
 where we have defined, for convenience,
 \begin{equation}
-r_{cyl} = \sqrt{x^{2} + y^{2}}. \nonumber
+r_{cyl} = \sqrt{x^{2} + y^{2}} = r\cos\theta + R. \nonumber
 \end{equation}
 The torus radius $R$ is a parameter in the \verb+geometry+ module and is set to $1$ by default.
 

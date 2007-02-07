@@ -256,16 +256,15 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
   case(4)
      select case(itypeout)
      case default  
-        rcyl = xin(1)*COS(xin(2)) + Rtorus
         dxdx(1,1) = COS(xin(2))*COS(xin(3))         ! dx/dr
-        dxdx(1,2) = -xin(1)*SIN(xin(2))*COS(xin(3)) ! dx/dtheta
-        dxdx(1,3) = rcyl*SIN(xin(3))                ! dx/dphi
+        dxdx(1,2) = -SIN(xin(2))*COS(xin(3))        ! 1/r dx/dtheta
+        dxdx(1,3) = SIN(xin(3))                     ! 1/rcyl dx/dphi
         dxdx(2,1) = COS(xin(2))*SIN(xin(3))         ! dy/dr
-        dxdx(2,2) = -xin(1)*SIN(xin(2))*SIN(xin(3)) ! dy/dtheta
-        dxdx(2,3) = rcyl*COS(xin(3))                ! dy/dphi
+        dxdx(2,2) = -SIN(xin(2))*SIN(xin(3))        ! 1/r dy/dtheta
+        dxdx(2,3) = COS(xin(3))                     ! 1/rcyl dy/dphi
         dxdx(3,1) = SIN(xin(3))                     ! dz/dr
-        dxdx(3,2) = xin(1)*COS(xin(3))              ! dz/dtheta
-!        dxdx(3,3) = 0.                              ! dz/dphi
+        dxdx(3,2) = COS(xin(3))                     ! 1/r dz/dtheta
+!        dxdx(3,3) = 0.                             ! dz/dphi
      end select
 !
 !--input is spherical polars
@@ -326,11 +325,11 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         dxdx(1,1) = (rcyl - Rtorus)*xin(1)*rr1*rcyl1 ! dr/dx
         dxdx(1,2) = (rcyl - Rtorus)*xin(2)*rr1*rcyl1 ! dr/dy
         dxdx(1,3) = xin(3)*rr1                       ! dr/dz
-        dxdx(2,1) = -xin(3)*xin(1)*rr1*rr1*rcyl1     ! dtheta/dx
-        dxdx(2,2) = -xin(3)*xin(2)*rr1*rr1*rcyl1     ! dtheta/dy
-        dxdx(2,3) = (rcyl - Rtorus)*rr1*rr1          ! dtheta/dz
-        dxdx(3,1) = -xin(2)*rcyl1**2                 ! dphi/dx
-        dxdx(3,2) = xin(1)*rcyl1**2                  ! dphi/dy
+        dxdx(2,1) = -xin(3)*xin(1)*rr1*rcyl1         ! dtheta/dx
+        dxdx(2,2) = -xin(3)*xin(2)*rr1*rcyl1         ! dtheta/dy
+        dxdx(2,3) = (rcyl - Rtorus)*rr1              ! dtheta/dz
+        dxdx(3,1) = -xin(2)*rcyl1                    ! dphi/dx
+        dxdx(3,2) = xin(1)*rcyl1                     ! dphi/dy
 !        dxdx(3,3) = 0.                              ! dphi/dz
      case(3)
         !
