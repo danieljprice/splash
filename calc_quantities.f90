@@ -20,7 +20,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   logical, intent(in), optional :: dontcalculate
   integer :: i,j,nstartfromcolumn,ncolsnew
   integer :: ientrop,idhdrho,ivalfven,imach,ideltarho,ivol
-  integer :: ipmag,ibeta,itotpr,idivBerr,icrosshel
+  integer :: ipmag,ibeta,itotpr,idivBerr,icrosshel,ithermal
   integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
   integer :: iamvecprev,ivec,nveclist,ivecstart,inewcol
   integer, dimension(ncolumns) :: iveclist,ivecmagcol
@@ -71,6 +71,12 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      ncalc = ncalc + 1
      irad = nstartfromcolumn + 1
   endif
+  !--thermal energy per unit volume
+  if (irho.ne.0 .and. iutherm.ne.0) then
+     nstartfromcolumn = ncolumns + ncalc
+     ncalc = ncalc + 1
+     ithermal = nstartfromcolumn + 1
+  endif  
   !--entropy
   if (irho.ne.0 .and. iutherm.ne.0) then
      nstartfromcolumn = ncolumns + ncalc
@@ -247,6 +253,9 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                                            dat(j,ivx:ivx+ndimV-1,i))
          enddo
       endif
+      if (ithermal.ne.0) then
+         dat(1:ntoti,ithermal,i) = dat(1:ntoti,irho,i)*dat(1:ntoti,iutherm,i)
+      endif
       !!--volume - (m/rho)**(1/ndim)
       if (ivol.ne.0) then
          where (dat(1:ntoti,irho,i).gt.tiny(dat))
@@ -362,6 +371,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   if (ike.ne.0) label(ike) = 'v\u2\d/2'
   if (ipr.gt.ncolumns) label(ipr) = 'P_gas'
   if (imach.ne.0) label(imach) = '|v|/c\ds'
+  if (ithermal.ne.0) label(ithermal) = '\gr u'
   if (ideltarho.ne.0) label(ideltarho) = '\gd \gr'
   if (ivol.ne.0) label(ivol) = '(m/rho)^1/ndim'
   
