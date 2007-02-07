@@ -51,7 +51,8 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
      if (nu.eq.1) then
         term = currj0**2*atorus**2*(1. - ra2)*(7.*ra2**2 - 23.*ra2 + 13.)/96.
      elseif (nu.eq.2) then
-        term = currj0**2*atorus**2*(1. - ra2)*(22.*ra2**4 - 113.*ra2**3 + 237.*ra2**2 - 213.*ra2 + 57.)/720.
+!        term = currj0**2*atorus**2*(1. - ra2)*(22.*ra2**4 - 113.*ra2**3 + 237.*ra2**2 - 213.*ra2 + 57.)/720.
+        term = currj0**2*atorus**2*(47. - 12.*ra2**5 + 75.*ra2**4 - 200.*ra2**3 + 270.*ra2**2 - 180*ra2)/720.
      endif
 
      select case(iplot)
