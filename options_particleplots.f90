@@ -51,7 +51,7 @@ end subroutine defaults_set_part
 !----------------------------------------------------------------------
 ! submenu with options relating to particle plots
 !----------------------------------------------------------------------
-subroutine submenu_particleplots
+subroutine submenu_particleplots(ichoose)
   use exact, only:options_exact,submenu_exact
   use labels, only:labeltype
   use limits, only:lim
@@ -60,12 +60,13 @@ subroutine submenu_particleplots
   use prompting
   use geometry, only:maxcoordsys,labelcoordsys,coord_transform_limits
   implicit none
+  integer, intent(in) :: ichoose
   integer :: i,iaction,n,itype,icoordsprev
   character(len=2) :: charntypes
   character(len=20) :: substring1,substring2
   character(len=1000) :: fmtstring
 
-  iaction = 0
+  iaction = ichoose
   
   !--we require some tricks with the format string to print only the actual number of
   !  particle types rather than the whole array
@@ -95,11 +96,13 @@ subroutine submenu_particleplots
          "' 8) plot exact solution                 ( ',i2,' ) ',/,"// &
          "' 9) set exact solution line style & colour ')"
 
-  print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
-           imarktype(1:ntypes),idefaultcolourtype(1:ntypes),print_logical(iplotline), &
-           ncircpart,print_logical(ifastparticleplot),icoordsnew,iexact
+  if (iaction.le.0 .or. iaction.gt.9) then
+     print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
+              imarktype(1:ntypes),idefaultcolourtype(1:ntypes),print_logical(iplotline), &
+              ncircpart,print_logical(ifastparticleplot),icoordsnew,iexact
 
-  call prompt('enter option',iaction,0,9)
+     call prompt('enter option',iaction,0,9)
+  endif
 !
   select case(iaction)
 !------------------------------------------------------------------------

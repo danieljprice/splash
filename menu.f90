@@ -33,7 +33,7 @@ subroutine menu
   implicit none
   integer :: i,icol,ihalf,iadjust,index,ierr
   integer :: ipicky,ipickx,irender,ivecplot
-  integer :: iamvecprev, ivecplottemp
+  integer :: iamvecprev, ivecplottemp,ichoose
   character(len=2) :: ioption
   character(len=100) :: vecprompt
   logical :: iAllowRendering
@@ -127,6 +127,8 @@ subroutine menu
         index = len_trim(vecprompt) + 1
      endif
   enddo 
+
+  ichoose = 0
 
 !---------------------------------------------------------------------------
 !  print menu
@@ -263,7 +265,7 @@ subroutine menu
 !------------------------------------------------------------------------
 !  if input is a string, use menu options
 !------------------------------------------------------------------------
-     select case(adjustl(ioption))
+     select case(ioption(1:1))
 !------------------------------------------------------------------------
      case('m','M')
         call options_multiplot
@@ -287,7 +289,9 @@ subroutine menu
         print "(/a)",' This submenu sets (p)age setup options'
 !------------------------------------------------------------------------
      case('o','O')
-        call submenu_particleplots
+        read(ioption(2:2),*,iostat=ierr) ichoose
+        if (ierr /= 0) ichoose = 0
+        call submenu_particleplots(ichoose)
      case('?o','?O')
         print "(/a)",' This submenu sets particle plot (o)ptions'
 !------------------------------------------------------------------------
@@ -332,8 +336,6 @@ subroutine menu
      case('h','H')
         print "(10(/a))",' For help on any menu item type a question mark ',&
                  ' preceding the appropriate letter.',&
-                 ' ie. ?d gives help on the data submenu',&
-                 '     ?x gives help on cross section/rotation', &
                  '   ', &
                  ' for detailed help, consult the user guide',&
                  ' and/or the online FAQ. If you''re really stuck, email me! '
