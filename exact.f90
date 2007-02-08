@@ -433,7 +433,7 @@ contains
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot, &
                             pmass,npart,imarker,unitsx,unitsy,irescale,iaxisy)
-    use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr
+    use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst
     use prompting
     use exactfromfile, only:exact_fromfile
     use mhdshock, only:exact_mhdshock
@@ -689,6 +689,7 @@ contains
        elseif (igeom.eq.2 .and. iplotx.eq.ix(3) .and.iploty.eq.ipr) then
           call exact_torus(4,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
        endif
+       !--solutions for tokamak torus
        if (igeom.eq.4 .and. iplotx.eq.ix(1)) then
           if (iploty.eq.irho) then
              call exact_torus(1,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
@@ -696,8 +697,10 @@ contains
              call exact_torus(2,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
           elseif (iploty.eq.iutherm) then
              call exact_torus(3,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
-          elseif (iploty.eq.ibfirst+1 .and. ibfirst.gt.0) then
+          elseif (iploty.eq.iBfirst+1 .and. iBfirst.gt.0) then
              call exact_torus(4,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)          
+          elseif (iploty.eq.iJfirst+2 .and. iJfirst.gt.0) then
+             call exact_torus(5,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)          
           endif
        endif
     case(10) ! exact solution read from file

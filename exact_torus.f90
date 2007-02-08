@@ -40,7 +40,7 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
 !--Tokamak torus (in torus 'r' co-ordinate)
 !
   case(2)
-  if (nu.le.0 .or. (iplot.ne.4 .and. nu.gt.2)) then
+  if (nu.le.0 .or. (iplot.lt.4 .and. nu.gt.2)) then
      print*,'error: solution not found for nu value in tokamak torus'
      ierr = 5
      return
@@ -72,6 +72,9 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
         else
            yplot(i) = 0.
         endif
+     case(5)
+     !--Jphi current
+        yplot(i) = currj0*(1. - ra2)**nu
      end select
   enddo    
 !
