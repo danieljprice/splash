@@ -696,6 +696,8 @@ contains
              call exact_torus(2,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
           elseif (iploty.eq.iutherm) then
              call exact_torus(3,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+          elseif (iploty.eq.ibfirst+1 .and. ibfirst.gt.0) then
+             call exact_torus(4,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)          
           endif
        endif
     case(10) ! exact solution read from file

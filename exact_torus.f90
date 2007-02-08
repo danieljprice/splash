@@ -40,7 +40,7 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
 !--Tokamak torus (in torus 'r' co-ordinate)
 !
   case(2)
-  if (nu.le.0 .or. nu.gt.2) then
+  if (nu.le.0 .or. (iplot.ne.4 .and. nu.gt.2)) then
      print*,'error: solution not found for nu value in tokamak torus'
      ierr = 5
      return
@@ -51,7 +51,6 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
      if (nu.eq.1) then
         term = currj0**2*atorus**2*(1. - ra2)*(7.*ra2**2 - 23.*ra2 + 13.)/96.
      elseif (nu.eq.2) then
-!        term = currj0**2*atorus**2*(1. - ra2)*(22.*ra2**4 - 113.*ra2**3 + 237.*ra2**2 - 213.*ra2 + 57.)/720.
         term = currj0**2*atorus**2*(47. - 12.*ra2**5 + 75.*ra2**4 - 200.*ra2**3 + 270.*ra2**2 - 180*ra2)/720.
      endif
 
@@ -65,6 +64,14 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
      case(3)
      !--thermal energy
         yplot(i) = term
+     case(4)
+     !--Btheta
+        if (xplot(i).gt.tiny(xplot(i))) then
+           yplot(i) = 0.5*currj0*atorus**2/(nu+1)* &
+                   (1.-(1.-ra2)**(nu+1))/xplot(i)
+        else
+           yplot(i) = 0.
+        endif
      end select
   enddo    
 !
