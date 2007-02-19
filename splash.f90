@@ -23,6 +23,12 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.7.2 : (19/02/07) 
+!             Menu shortcuts implemented; bug fix/ more sensible transformation
+!             of angular vector components in different co-ordinate systems;
+!             improvements to interactive zoom and origin recentreing;
+!             improved colour-by-type option; restrictions on page size removed;
+!             minor bug fixes
 !     1.7.1 : (04/01/07)
 !             command line options for defaults and limits files added; 
 !             minor bug fixes
@@ -195,7 +201,7 @@ program splash
            call get_argument(i,defaultsfile)
         case default
            print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
-           print "(a,/)",'v1.7.1+ [4th Jan ''07] '
+           print "(a,/)",'v1.7.2 [19th Feb ''07] '
            if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
            print "(a)",'Usage: splash [-f defaultsfile] [-l limitsfile] file1 file2 ...'
            stop
@@ -284,7 +290,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( version 1.7.1+ [4th Jan ''07] Copyright (C) 2005-2007 )'
+ print "(a)",'  ( version 1.7.2 [19th Feb ''07] Copyright (C) 2005-2007 )'
  print 30 
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
