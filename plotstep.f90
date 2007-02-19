@@ -404,7 +404,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use colourparts
   use transforms
   use interactive_routines
-  use geometry
+  use geometry, only:coord_transform,vector_transform,labelcoordsys
   use particleplots, only:particleplot
   use powerspectrums, only:powerspectrum
   use interpolations1D, only:interpolate1D
@@ -449,7 +449,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   character(len=120) :: title
   character(len=20) :: string,labeltimeunits
   
-  logical :: iColourBar, rendering, inormalise, logged
+  logical :: iColourBar, rendering, inormalise, logged, dumxsec
   
 34   format (25(' -'))
 
@@ -466,6 +466,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   hh = 0.
   pmass = 0.
   labeltimeunits = ' '
+  dumxsec = .false.
   k = nxsec ! matters for lastplot in page_setup for non-coord plots
   if (iReScale) labeltimeunits = unitslabel(0)
     
@@ -554,7 +555,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         irender = irender_nomulti
         ivectorplot = ivecplot
         iplotcont = iplotcont_nomulti
-        x_sec = xsec_nomulti
+        if (.not.interactivereplot) x_sec = xsec_nomulti
         if (.not.interactivereplot .and. x_sec) zslicepos = xsecpos_nomulti
      endif
 
@@ -1423,7 +1424,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    hh(1:ntoti),icolourme(1:ntoti), &
                    xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax, &
                    angletempx,angletempy,angletempz,ndim, &
-                   .false.,dummy,dummy,dummy,dummy,irerender, &
+                   dumxsec,dummy,dummy,dummy,dummy,irerender, &
                    itrackpart,icolours,iadvance,ipos,iendatstep,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_plots ! this should be unnecessary
            elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then

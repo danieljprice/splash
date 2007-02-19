@@ -52,7 +52,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
   real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax
   real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
-  logical, intent(in) :: x_sec
+  logical, intent(inout) :: x_sec
   logical, intent(out) :: irerender,interactivereplot
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,nc,ierr,ixsec
@@ -300,7 +300,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         if (rotation) call save_rotation(ndim,anglex,angley,anglez)
         if (iplotz.gt.0) then
            if (x_sec) then
-              call save_xsecpos(zslicepos)
+              call save_xsecpos(zslicepos,x_sec)
            else
               call save_perspective(zobserver,dscreen)
            endif
@@ -711,6 +711,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               ! y intercept
               yint = yline(2) - (dy/dx)*xline(2)
               zslicepos = yint/COS(anglerad)
+              !--if we are in column density mode, change back to cross-section mode
+              x_sec = .true.
               print*,'iploty = ',ixsec, ' xsecpos = ',zslicepos
               iadvance = 0
               interactivereplot = .true.
@@ -1763,12 +1765,14 @@ end subroutine save_rotation
 !
 !--saves cross section position
 !
-subroutine save_xsecpos(xsecpos)
- use settings_xsecrot, only:xsecpos_nomulti
+subroutine save_xsecpos(xsecpos,xsec)
+ use settings_xsecrot, only:xsecpos_nomulti,xsec_nomulti
  implicit none
  real, intent(in) :: xsecpos
+ logical, intent(in) :: xsec
  
  xsecpos_nomulti = xsecpos
+ xsec_nomulti = xsec
  
  return
 end subroutine save_xsecpos
