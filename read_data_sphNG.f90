@@ -387,7 +387,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             elseif (iarr.eq.1 .and. smalldump .and. i.eq.2) then
                icolumn = 5 ! h which is real4 in small dumps
             else
-               icolumn = imaxcolumnread + 1
+               icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
             endif
             imaxcolumnread = max(imaxcolumnread,icolumn)
             if (required(icolumn)) then
