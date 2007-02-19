@@ -862,7 +862,7 @@ background colour (ie. black) according to the total optical depth computed for 
  The latter method is the one used in SPLASH. The one caveat is that, because
 it means using more than 256 colours (for example, if we have a colour map with 256 colours, we
 need to then have all 256 colours at varying levels of intensity), at present this is implemented by
-writing the pixel map directly to a .ppm file (called splash\_\#\#\#\#\#.dat where the number
+writing the pixel map directly to a .ppm file (called splash\_\#\#\#\#\#.ppm where the number
 is the number of the current dumpfile) and the approximate version (ie. without the background fade)
 is given to the PGPLOT device (e.g. the /xw screen). The .ppm files can be converted easily to any
 other format (e.g. png, ps) using netpbm tools (\url{http://netpbm.sourceforge.net/}) such as
