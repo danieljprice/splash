@@ -278,7 +278,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         print*,' s: (s)ave current settings for all steps'
         print*,' q,Q: (q)uit plotting'
         print*
-        print*,' Z(oom) : timstepping, zoom and limits-changing options '
+        print*,' z,Z(oom) : timstepping, zoom and limits-changing options '
         print*,'          are multiplied by a factor of 10'        
         print*,'-------------------------------------------------------'
      case('s','S')
@@ -858,7 +858,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      !
      !--multiply everything by a factor of 10     
      !
-     case('Z')
+     case('z','Z')
         zoomfac = 10.*zoomfac
         if (zoomfac.gt.1000.) then
            zoomfac = 1.0
@@ -1063,7 +1063,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
      !
      !--multiply everything by a factor of 10     
      !
-     case('Z')
+     case('z','Z')
         zoomfac = 10.*zoomfac
         if (zoomfac.gt.1000.) then
            zoomfac = 1.0
@@ -1198,7 +1198,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         print*,' s: (s)ave current settings for all steps'
         print*,' q,Q: (q)uit plotting'
         print*
-        print*,' Z(oom) : timstepping, zoom and limits-changing options '
+        print*,' z,Z(oom) : timstepping, zoom and limits-changing options '
         print*,'          are multiplied by a factor of 10'        
         print*,'---------------------------------------------------------------'
      case('s','S')
@@ -1437,7 +1437,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
      !
      !--multiply everything by a factor of 10     
      !
-     case('Z')
+     case('z','Z')
         zoomfac = 10.*zoomfac
         if (zoomfac.gt.1000.) then
            zoomfac = 1.0
