@@ -3,7 +3,9 @@
 ! change this to change the format of data input
 !
 ! THIS VERSION IS FOR READING UNFORMATTED OUTPUT FROM
-! THE NEXT GENERATION SPH CODE
+! THE NEXT GENERATION SPH CODE (sphNG)
+!
+! (also my Phantom SPH code which uses a similar format)
 !
 ! *** CONVERTS TO SINGLE PRECISION ***
 !
@@ -47,7 +49,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: nskip,ntotal,npart,itype,ntypes
   integer :: ipos,nptmass,nptmassi,nunknown
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
-  logical :: iexist, doubleprec, smalldump,imadepmasscolumn
+  logical :: iexist, doubleprec, smalldump,imadepmasscolumn,phantomdump
     
   character(len=len(rootname)+10) :: dumpfile
   character(len=100) :: fileident
@@ -84,6 +86,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   j = indexstart
   nstepsread = 0
+  doubleprec = .true.
  !!! call alloc(max(1,maxpart),max(ncolumns,1),max(indexstart,maxstep))
   
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
@@ -130,6 +133,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
    imadepmasscolumn = .false.
    if (fileident(1:1).eq.'S') then
       smalldump = .true.
+   endif
+   if (index(fileident,'Phantom').ne.0) then
+      phantomdump = .true.
+   else
+      phantomdump = .false.
    endif
 !
 !--read number of default ints
@@ -193,12 +201,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
       read(iunit,end=55,iostat=ierr) udist,umass,utime
       umagfd = 1.0
    else
-      print "(a)",'*** error: units not found in file'
+      print "(a)",'*** WARNING: units not found in file'
       udist = 1.0
       umass = 1.0
       utime = 1.0
       umagfd = 1.0
-      read(iunit,end=55,iostat=ierr)
    endif
    if (ierr /= 0) then
       print "(a)",'*** error reading units'
@@ -241,7 +248,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
    
    npart_max = maxval(isize(1:narrsizes))
-   if (smalldump) then
+   if (smalldump .or. phantomdump) then
       if (nreals.ge.15) then
          pmassinitial = dummyreal(15)
          if (pmassinitial.gt.tiny(0.)) then
@@ -315,7 +322,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             read(iunit,end=33,iostat=ierr)
          enddo
          if (nint1(iarr).lt.1) then
-            print "(a)",'ERROR: can''t locate iphase in dump'
+            if (.not.phantomdump) print "(a)",'ERROR: can''t locate iphase in dump'
             !--skip remaining integer arrays
             nskip = nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
          else
@@ -348,14 +355,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
             if (iarr.eq.1 .and. i.eq.6) then
                ! read x,y,z,m,h and then place arrays after always-present ones
                icolumn = nhydroarrays+nmhdarrays + 1
-               imaxcolumnread = icolumn
             elseif (iarr.eq.4 .and. i.le.3) then
                icolumn = 6 + i
-               imaxcolumnread = max(imaxcolumnread,icolumn)
             else
                icolumn = imaxcolumnread + 1
-               imaxcolumnread = icolumn
             endif
+            imaxcolumnread = max(imaxcolumnread,icolumn)
             if (required(icolumn)) then
                if (doubleprec) then
                   read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
@@ -383,8 +388,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                icolumn = 5 ! h which is real4 in small dumps
             else
                icolumn = imaxcolumnread + 1
-               imaxcolumnread = icolumn
             endif
+            imaxcolumnread = max(imaxcolumnread,icolumn)
             if (required(icolumn)) then
                read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j)
             else
