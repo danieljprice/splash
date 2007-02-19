@@ -151,7 +151,7 @@ ifeq ($(SYSTEM),mymac)
 #  using g95 with pgplot installed via fink
    F90C= g95
    F90FLAGS= -O3 -ffast-math
-   DEBUGFLAG= -Wall -Wextra -g -fbounds-check -ftrace=full
+   DEBUGFLAG= -Wall -Wextra -Wno=165 -g -fbounds-check -ftrace=full
    PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
    SYSTEMFILE= system_f2003.f90
