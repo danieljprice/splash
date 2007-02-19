@@ -1,5 +1,5 @@
 !-----------------------------------------------------------------
-! Module containing subroutines to transform between 
+! Standalone module containing subroutines to transform between 
 ! different co-ordinate systems, for co-ordinates and vectors
 ! (e.g. from cartesian to cylindrical polar and vice versa)
 !
@@ -16,22 +16,30 @@
 !  spherical polar -> cartesian
 !  toroidal r,theta,phi <-> cartesian
 !
+! written by Daniel Price 2004-2007
+! as part of the SPLASH SPH visualisation package
 !-----------------------------------------------------------------
 module geometry
  implicit none
- integer, parameter :: maxcoordsys = 4
- real, parameter, private :: pi = 3.1415926536
- real, parameter, private :: Rtorus = 1.0
- character(len=*), dimension(maxcoordsys), parameter :: labelcoordsys = &
+ integer, parameter, public :: maxcoordsys = 4
+
+ character(len=*), dimension(maxcoordsys), parameter, public :: labelcoordsys = &
     (/'cartesian   x,y,z      ', &
       'cylindrical r,phi,z    ', &
       'spherical   r,phi,theta', &
       'toroidal    r,theta,phi'/)
- character(len=*), dimension(3,maxcoordsys), parameter :: labelcoord = &
+ character(len=*), dimension(3,maxcoordsys), parameter, public :: labelcoord = &
     reshape((/'x    ','y    ','z    ', &
               'r    ','phi  ','z    ', &
               'r    ','phi  ','theta', &
               'r_tor','theta','phi  '/),shape=(/3,maxcoordsys/))
+
+ public :: coord_transform, vector_transform, coord_transform_limits
+
+ real, parameter, private :: pi = 3.1415926536
+ real, parameter, private :: Rtorus = 1.0
+ 
+ private
  
 contains
 !-----------------------------------------------------------------
@@ -276,13 +284,13 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         ! output is cartesian (default)
         !
         dxdx(1,1) = COS(xin(2))*SIN(xin(3))         ! dx/dr
-        dxdx(1,2) = -xin(1)*SIN(xin(2))*SIN(xin(3)) ! dx/dphi
-        dxdx(1,3) = xin(1)*COS(xin(2))*COS(xin(3))  ! dx/dtheta
+        dxdx(1,2) = -SIN(xin(2))                    ! 1/rcyl dx/dphi
+        dxdx(1,3) = COS(xin(2))*COS(xin(3))         ! 1/r dx/dtheta
         dxdx(2,1) = SIN(xin(2))*SIN(xin(3))         ! dy/dr
-        dxdx(2,2) = xin(1)*COS(xin(2))*SIN(xin(3))  ! dy/dphi
-        dxdx(2,3) = xin(1)*SIN(xin(2))*COS(xin(3))  ! dy/dtheta
+        dxdx(2,2) = COS(xin(2))                     ! 1/rcyl dy/dphi
+        dxdx(2,3) = SIN(xin(2))*COS(xin(3))         ! 1/r dy/dtheta
         dxdx(3,1) = COS(xin(3))                     ! dz/dr
-        dxdx(3,3) = -xin(1)*SIN(xin(3))             ! dz/dtheta
+        dxdx(3,3) = -SIN(xin(3))                    ! 1/r dz/dtheta
      end select
 !
 !--input is cylindrical polars
@@ -352,13 +360,13 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
            else
               rcyl1 = 0.
            endif
-           dxdx(2,1) = -xin(2)*rcyl1**2 ! dphi/dx
-           dxdx(2,2) = xin(1)*rcyl1**2 ! dphi/dy
+           dxdx(2,1) = -xin(2)*rcyl1 ! rcyl dphi/dx
+           dxdx(2,2) = xin(1)*rcyl1  ! rcyl dphi/dy
            dxdx(2,3) = 0.
            if (ndimin.ge.3) then
-              dxdx(3,1) = xin(1)*xin(3)*rr1*rr1*rcyl1 ! dtheta/dx
-              dxdx(3,2) = xin(2)*xin(3)*rr1*rr1*rcyl1 ! dtheta/dy
-              dxdx(3,3) = -rcyl2*rr1*rr1*rcyl1 ! dtheta/dz
+              dxdx(3,1) = xin(1)*xin(3)*rr1*rcyl1 ! r dtheta/dx
+              dxdx(3,2) = xin(2)*xin(3)*rr1*rcyl1 ! r dtheta/dy
+              dxdx(3,3) = -rcyl2*rr1*rcyl1 ! r dtheta/dz
            endif
         endif
      case(2)

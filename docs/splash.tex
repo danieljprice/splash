@@ -953,9 +953,10 @@ where vectors transform according to:
 \begin{array}{lclp{1cm}lcl}
 v_r      & = & v_x \frac{x}{r} + v_y \frac{y}{r}  & & v_x & = & v_r \cos\phi - v_\phi \sin\phi \\
 v_\phi & = & v_x \left(\frac{-y}{r}\right) + v_y \left(\frac{x}{r}\right) &; &v_y & = & v_r \sin\phi + v_\phi \cos\phi \\
-v_z      & = & v_z & & v_z & = & v_z \\
+v_z      & = & v_z & & v_z & = & v_z. \\
 \end{array}
 \end{displaymath}
+In the case where these vectors are velocities, the $v_{\phi}$ component corresponds to $v_{\phi} = r\dot{\phi}$.
 
 \subsubsection{Spherical Polar Coordinates}
 For spherical coordinates the transformations are:
@@ -969,11 +970,12 @@ r & = & \sqrt{x^2 + y^2 + z^{2}}    & & x & = & r\cos\phi\sin\theta\\
 where vectors transform according to:
 \begin{displaymath}
 \begin{array}{lclp{1cm}lcl}
-v_r      & = & v_x \frac{x}{r} + v_y \frac{y}{r} + v_{z}\frac{z}{r}  & & v_x & = & v_r \cos\phi\sin\theta- v_\phi r \sin\phi\sin\theta + v_\theta r\cos\phi\cos\theta \\
-v_\phi & = & v_x \left(\frac{-y}{x^2 + y^{2}}\right) + v_y \left(\frac{x}{x^2 + y^{2}}\right) &; &v_y & = & v_r \sin\phi\sin\theta + v_\phi r \cos\phi\sin\theta + v_{\theta} r\sin\phi\cos\theta \\
-v_\theta & = & v_{x}\frac{xy}{\sqrt{x^{2} + y^{2}}} + v_{y}\frac{yz}{\sqrt{x^{2} + y^{2}}} - v_{z}\frac{(x^{2} + y^{2})}{r^{2}\sqrt{x^{2} + y^{2}}}  & & v_z & = & v_r \cos\theta - v_\theta r \sin\theta \\
+v_r      & = & v_x \frac{x}{r} + v_y \frac{y}{r} + v_{z}\frac{z}{r}  & & v_x & = & v_r \cos\phi\sin\theta- v_\phi \sin\phi + v_\theta \cos\phi\cos\theta \\
+v_\phi & = & v_x \left(\frac{-y}{\sqrt{x^2 + y^{2}}}\right) + v_y \left(\frac{x}{\sqrt{x^2 + y^{2}}}\right) &; &v_y & = & v_r \sin\phi\sin\theta + v_\phi \cos\phi + v_{\theta} \sin\phi\cos\theta \\
+v_\theta & = & v_{x}\frac{xz}{r \sqrt{x^{2} + y^{2}}} + v_{y}\frac{yz}{r \sqrt{x^{2} + y^{2}}} - v_{z}\frac{(x^{2} + y^{2})}{r\sqrt{x^{2} + y^{2}}}  & & v_z & = & v_r \cos\theta - v_\theta \sin\theta. \\
 \end{array}
 \end{displaymath}
+In the case where these vectors are velocities, the components $v_{\phi}$ and $v_{\theta}$ correspond to $v_{\phi} = r\sin{\theta}\dot{\phi}$ and $v_{\theta} = r\dot{\theta}$ respectively.
 
 \subsubsection{Toroidal Coordinates}
 Toroidal coordinates represent a local frame of reference inside a torus. The coordinate transformations are given by
