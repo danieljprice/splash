@@ -189,7 +189,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   iamvec(ncolumns+1:ncolsnew) = 0
   labelvec(ncolumns+1:ncolsnew) = ' '
 
-  if (.not.skip) then
+  if (.not.skip .and. ncalc.gt.0) then
    do i=ifromstep,itostep
       ntoti = SUM(npartoftype(:,i))
       !!--pressure if not in data array

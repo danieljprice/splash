@@ -22,7 +22,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   print 100,ifromstep,itostep,ifromcol,itocol
 100 format(/' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
   if (ifromcol.gt.maxcol .or. itocol.gt.maxcol) then
-     print "(a)",' *** internal error: set_limits: column > array size ***'
+     print "(a)",' *** error: set_limits: column > array size ***'
      return
   endif
 
