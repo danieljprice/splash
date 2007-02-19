@@ -55,37 +55,42 @@ end subroutine defaults_set_xsecrotate
 !----------------------------------------------------------------------
 ! sets options relating to cross sectioning / rotation
 !----------------------------------------------------------------------
-subroutine submenu_xsecrotate
+subroutine submenu_xsecrotate(ichoose)
  use labels, only:label,ix
  use limits, only:lim
  use prompting
  use settings_data, only:ndim
  implicit none
+ integer, intent(in) :: ichoose
  integer :: ians,i
  character(len=1) :: char
  character(len=4) :: text
  logical :: interact
  
+ print "(a)",'---------- cross section / 3D plotting options --------'
  if (ndim.eq.1) print*,' WARNING: none of these options have any effect in 1D'
- ians = 0
+ ians = ichoose
  interact = .true.
  if (xsec_nomulti) then
     text = 'xsec'
  else
     text = 'proj'
  endif
- print 10,text,xsecpos_nomulti,print_logical(irotate), &
-          print_logical(use3Dperspective),print_logical(use3Dopacityrendering), &
-          irotateaxes
-10  format('---------- cross section / 3D plotting options --------',/, &
-           ' 0) exit ',/,       &
-           ' 1) switch between cross section/projection     ( ',a4,' )',/, &
-           ' 2) set cross section position                  (',f5.2,' )',/, &
-           ' 3) rotation settings/options                   ( ',a,' )',/, &
-           ' 4) 3D perspective on/off                       ( ',a,' )',/, &
-           ' 5) 3D surface rendering on/off/options         ( ',a,' )',/, &
-           ' 6) set axes for rotated/3D plots               ( ',i2,' )')
- call prompt('enter option',ians,0,6)
+ 
+ if (ians.le.0 .or. ians.gt.6) then
+    print 10,text,xsecpos_nomulti,print_logical(irotate), &
+             print_logical(use3Dperspective),print_logical(use3Dopacityrendering), &
+             irotateaxes
+10  format( &
+              ' 0) exit ',/,       &
+              ' 1) switch between cross section/projection     ( ',a4,' )',/, &
+              ' 2) set cross section position                  (',f5.2,' )',/, &
+              ' 3) rotation settings/options                   ( ',a,' )',/, &
+              ' 4) 3D perspective on/off                       ( ',a,' )',/, &
+              ' 5) 3D surface rendering on/off/options         ( ',a,' )',/, &
+              ' 6) set axes for rotated/3D plots               ( ',i2,' )')
+    call prompt('enter option',ians,0,6)
+ endif
 !
 !--options
 !

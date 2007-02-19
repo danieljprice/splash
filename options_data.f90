@@ -62,7 +62,7 @@ end subroutine defaults_set_data
 ! sets options relating to current data
 ! (read new data or change timesteps plotted)
 !----------------------------------------------------------------------
-subroutine submenu_data
+subroutine submenu_data(ichoose)
  use filenames, only:nsteps,nstepsinfile,ifileopen
  use prompting
  use getdata, only:get_data
@@ -74,21 +74,25 @@ subroutine submenu_data
  use labels, only:label
  use settings_units, only:units,unitslabel,set_units,write_unitsfile
  implicit none
+ integer, intent(in) :: ichoose
  integer :: ians, i
  character(len=30) :: fmtstring
  logical :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile
  
- ians = 0
+ ians = ichoose
+
+ print "(a)",'----------------- data read options -------------------'
  
- if (iUseStepList) then
-    print 10, iendatstep,print_logical(iUseStepList),print_logical(buffer_data), &
-              print_logical(iCalcQuantities),print_logical(iRescale)
- else
-    print 10, (iendatstep-istartatstep+1)/nfreq,print_logical(iUseStepList), &
-              print_logical(buffer_data),print_logical(iCalcQuantities), &
-              print_logical(iRescale)
- endif
-10  format('----------------- data read options -------------------',/,&
+ if (ians.le.0 .or. ians.gt.7) then
+    if (iUseStepList) then
+       print 10, iendatstep,print_logical(iUseStepList),print_logical(buffer_data), &
+                 print_logical(iCalcQuantities),print_logical(iRescale)
+    else
+       print 10, (iendatstep-istartatstep+1)/nfreq,print_logical(iUseStepList), &
+                 print_logical(buffer_data),print_logical(iCalcQuantities), &
+                 print_logical(iRescale)
+    endif
+10  format( &
            ' 0) exit ',/,               &
            ' 1) read new data /re-read data',/,      &
            ' 2) change number of timesteps used        ( ',i5, ' )',/, &
@@ -97,7 +101,8 @@ subroutine submenu_data
            ' 5) turn calculate extra quantities on/off (  ',a,' )',/, &
            ' 6) use physical units                     (  ',a,' )',/,&
            ' 7) change physical unit settings ')
- call prompt('enter option',ians,0,7)
+    call prompt('enter option',ians,0,7)
+ endif
 !
 !--options
 !

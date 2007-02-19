@@ -84,7 +84,7 @@ subroutine submenu_particleplots(ichoose)
      substring2 = charntypes//"(i2,',',1x),i2"
   endif
   
-  fmtstring="('------------- particle plot options -------------------',/,"// &
+  fmtstring="("// &
          "' 0) exit ',/,"// &
          "' 1) turn on/off particles by type       ( ',"//trim(substring1)//",' )',/,"// &
          "' 2) change graph markers for each type  ( ',"//trim(substring2)//",' )',/,"//  &
@@ -96,6 +96,7 @@ subroutine submenu_particleplots(ichoose)
          "' 8) plot exact solution                 ( ',i2,' ) ',/,"// &
          "' 9) set exact solution line style & colour ')"
 
+  print "(a)",'------------- particle plot options -------------------'
   if (iaction.le.0 .or. iaction.gt.9) then
      print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
               imarktype(1:ntypes),idefaultcolourtype(1:ntypes),print_logical(iplotline), &

@@ -24,7 +24,7 @@ subroutine menu
   use settings_xsecrot, only:submenu_xsecrotate
   use settings_units, only:unitslabel
   use multiplot
-  use prompting
+  use prompting, only:prompt
   use transforms, only:transform_label
   use defaults, only:defaults_write
   use geometry, only:labelcoord
@@ -265,91 +265,81 @@ subroutine menu
 !------------------------------------------------------------------------
 !  if input is a string, use menu options
 !------------------------------------------------------------------------
+!--  Menu shortcuts; so you can type e.g. o2 and get the o)ptions menu, item 2
+     read(ioption(2:2),*,iostat=ierr) ichoose
+     if (ierr /= 0) ichoose = 0
+
      select case(ioption(1:1))
 !------------------------------------------------------------------------
+!+ Sets up plotting of (m)ultiple quantities per timestep
      case('m','M')
         call options_multiplot
-     case('?m','?M')
-        print "(/a)",' Sets up plotting of (m)ultiple quantities per timestep'
 !------------------------------------------------------------------------
+!+ This submenu sets options relating to the (d)ata read
      case('d','D')
-        call submenu_data
-     case('?d','?D')
-        print "(/a)",' This submenu sets options relating to the (d)ata read'
+        call submenu_data(ichoose)
 !------------------------------------------------------------------------
+!+ This option turns (i)nteractive mode on/off
      case('i','I')
         interactive = .not.interactive
         print*,' Interactive mode = ',interactive
-     case('?i','?I')
-        print "(/a)",' This option turns (i)nteractive mode on/off'
 !------------------------------------------------------------------------
+!+ This submenu sets (p)age setup options
      case('p','P')
-        call submenu_page
-     case('?p','?P')
-        print "(/a)",' This submenu sets (p)age setup options'
+        call submenu_page(ichoose)
 !------------------------------------------------------------------------
+!+ This submenu sets particle plot (o)ptions
      case('o','O')
-        read(ioption(2:2),*,iostat=ierr) ichoose
-        if (ierr /= 0) ichoose = 0
         call submenu_particleplots(ichoose)
-     case('?o','?O')
-        print "(/a)",' This submenu sets particle plot (o)ptions'
 !------------------------------------------------------------------------
+!+ This submenu sets (r)endering options
      case('r','R')
-        call submenu_render
-     case('?r','?R')
-        print "(/a)",' This submenu sets (r)endering options'
+        call submenu_render(ichoose)
 !------------------------------------------------------------------------
+!+ This submenu sets (v)ector plotting options
      case('v','V')
-        call submenu_vecplot
-     case('?v','?V')
-        print "(/a)",' This submenu sets (v)ector plotting options'
+        call submenu_vecplot(ichoose)
 !------------------------------------------------------------------------
+!+ This submenu sets cross section and rotation options
      case('x','X')
-        call submenu_xsecrotate
-     case('?x','?X')
-        print "(/a)",' This submenu sets cross section and rotation options'
+        call submenu_xsecrotate(ichoose)
 !------------------------------------------------------------------------
+!+ This submenu sets options relating to the plot limits
      case('l','L')
-        call submenu_limits
-     case('?l','?L')
-        print "(/a)",' This submenu sets options relating to the plot limits'
-        call submenu_limits(help=.true.)
+        call submenu_limits(ichoose)
 !------------------------------------------------------------------------
+!+ The (s)ave option saves the default options to a
+!+ file called `splash.defaults'' in the current directory which
+!+ is read automatically upon the next invocation of splash.
+!+ This file uses namelist formatting and may be edited
+!+ manually prior to startup if so desired. This is quite
+!+ useful for setting multiplots with many plots per page
+!+ The (S)ave option writes both the defaults file and
+!+ also saves the current plot limits to a file called
+!+ 'splash.limits' which is also read automatically
+!+ at startup.
      case('s')
         call defaults_write(defaultsfile)
      case('S')
         call defaults_write(defaultsfile)
         call write_limits(limitsfile)     
-     case('?s','?S')
-        print "(6(/a),/,4(/a))",' The (s)ave option saves the default options to a ', &
-                    ' file called `splash.defaults'' in the current directory which', &
-                    ' is read automatically upon the next invocation of splash.',&
-                    ' This file uses namelist formatting and may be edited ', &
-                    ' manually prior to startup if so desired. This is quite',&
-                    ' useful for setting multiplots with many plots per page',&
-                    ' The (S)ave option writes both the defaults file and ',&
-                    ' also saves the current plot limits to a file called',&
-                    ' ''splash.limits'' which is also read automatically',&
-                    ' at startup.'
 !------------------------------------------------------------------------
+!+ Slightly obsolete: prints whatever help may be helpful
      case('h','H')
-        print "(10(/a))",' For help on any menu item type a question mark ',&
-                 ' preceding the appropriate letter.',&
+        print "(10(/a))",' Hint: menu items can be shortcut by typing, e.g. o2 for ',&
+                 ' the o)ptions menu, item 2.',&
                  '   ', &
                  ' for detailed help, consult the user guide',&
+                 '  (splash/docs/ssplash.pdf ',&
+                 '   or http://www.astro.ex.ac.uk/people/dprice/splash/userguide/)', &
                  ' and/or the online FAQ. If you''re really stuck, email me! '
         read*
-     case('?h','?H')
-        print "(2(/a))",' You mean to tell me you need help on help???',&
-                      ' You need help.'
 !------------------------------------------------------------------------
+!+ (q)uit, unsurprisingly, quits. Typing a number greater
+!+ than the number of data columns also exits the program
+!+ (e.g. I often simply type 99 to exit).
      case('q','Q')
         return
-     case('?q','?Q')
-        print "(3(/a))",' (q)uit, unsurprisingly, quits. Typing a number greater',&
-                    ' than the number of data columns also exits the program',&
-                    ' (e.g. I often simply type 99 to exit).'
 !------------------------------------------------------------------------
      case DEFAULT
         print "(a)",'unknown option '//trim(ioption) 

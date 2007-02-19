@@ -72,29 +72,35 @@ end subroutine defaults_set_page
 !----------------------------------------------------------------------
 ! submenu with options relating to page setup
 !----------------------------------------------------------------------
-subroutine submenu_page
+subroutine submenu_page(ichoose)
  use settings_data, only:numplot
  use prompting
  implicit none
+ integer, intent(in) :: ichoose
  integer :: iaction,ierr,ntries,jaction
  real :: papersizey
 
- iaction = 0
+ iaction = ichoose
+ 
  papersizey = papersizex*aspectratio
- print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,print_logical(tile), &
-          print_logical(iPlotLegend),print_logical(iPlotStepLegend),print_logical(iPlotTitles), &
-          charheight,linewidth
-10 format('---------------- page setup options -------------------',/,&
+ print "(a)",'---------------- page setup options -------------------'
+ 
+ if (iaction.le.0 .or. iaction.gt.8) then
+    print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,print_logical(tile), &
+             print_logical(iPlotLegend),print_logical(iPlotStepLegend),print_logical(iPlotTitles), &
+             charheight,linewidth
+10 format( &
           ' 0) exit ',/,                   &
-          ' 1) change panel after n timesteps  (n =',i2,')',/, &
-          ' 2) axes options                    (',i2,')',/, &
-          ' 3) change paper size               (',f5.2,1x,f5.2,')',/, &
-          ' 4) change plots per page           (',i2,1x,'x',1x,i2,', tiling is ',a,')',/, &
-          ' 5) legend and title options        (',1x,a,1x,a,1x,a,1x,')',/, &
-          ' 6) set character height            (',f4.1,')',/,&
-          ' 7) adjust line width               (',i1,')',/,&
+          ' 1) plot n steps on top of each other (n =',i2,')',/, &
+          ' 2) axes options                      (',i2,')',/, &
+          ' 3) change paper size                 (',f5.2,1x,f5.2,')',/, &
+          ' 4) change plots per page             (',i2,1x,'x',1x,i2,', tiling is ',a,')',/, &
+          ' 5) legend and title options          (',1x,a,1x,a,1x,a,1x,')',/, &
+          ' 6) set character height              (',f4.1,')',/,&
+          ' 7) adjust line width                 (',i1,')',/,&
           ' 8) set foreground/background colours ')
- call prompt('enter option ',iaction,0,8)
+    call prompt('enter option ',iaction,0,8)
+ endif
 
  select case(iaction)
 !------------------------------------------------------------------------

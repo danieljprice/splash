@@ -34,21 +34,26 @@ end subroutine defaults_set_vecplot
 !----------------------------------------------------------------------
 ! sets options relating to vector plots
 !----------------------------------------------------------------------
-subroutine submenu_vecplot
+subroutine submenu_vecplot(ichoose)
  use prompting
  implicit none
+ integer, intent(in) :: ichoose
  integer :: ians
   
- ians = 0
- print 10,npixvec,print_logical(UseBackgndColorVecplot), &
-          print_logical(iVecplotLegend),print_logical(iplotstreamlines)
-10  format('--------------- vector plot options -------------------',/,&
-           ' 0) exit ',/, &
-           ' 1) change number of pixels                   (',i4,' )',/, &
-           ' 2) use background colour for arrows          ( ',a,' )',/, &
-           ' 3) vector plot legend settings               ( ',a,' )',/, &
-           ' 4) plot stream/field lines instead of arrows ( ',a,' )')
- call prompt('enter option',ians,0,4)
+ ians = ichoose
+ print "(a)",'--------------- vector plot options -------------------'
+
+ if (ians.le.0 .or. ians.gt.4) then
+    print 10,npixvec,print_logical(UseBackgndColorVecplot), &
+             print_logical(iVecplotLegend),print_logical(iplotstreamlines)
+10  format( &
+             ' 0) exit ',/, &
+             ' 1) change number of pixels                   (',i4,' )',/, &
+             ' 2) use background colour for arrows          ( ',a,' )',/, &
+             ' 3) vector plot legend settings               ( ',a,' )',/, &
+             ' 4) plot stream/field lines instead of arrows ( ',a,' )')
+    call prompt('enter option',ians,0,4)
+ endif
 !
 !--options
 !
