@@ -13,6 +13,8 @@
 ! RSPLASH_FORMAT can be 'MHD' or 'HYDRO'
 ! RSPLASH_RESET_COM if 'YES' then centre of mass is reset for n2=0 (ie single objects)
 ! RSPLASH_COROTATING if 'YES' then velocities are transformed to corotating frame
+! RSPLASH_HFACT can be changed to give correct hfact value for particle masses
+!  on minidumps: e.g. setenv RSPLASH_HFACT=1.2
 !
 ! the data is stored in the global array dat
 !
@@ -45,8 +47,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer, parameter :: max_spec = 7 ! number of species in abundance file
-  real, parameter :: hfact = 1.5
-  real, parameter :: dhfact3 = 1./hfact**3
+  real :: hfact, dhfact3,hfacttemp
   integer :: i,j,k,ierr,ierr1
   integer :: nprint,nptmass,npart_max,nstep_max
   integer :: n1,n2,idump,ncol
@@ -63,6 +64,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstep_max = 0
   npart_max = maxpart
   iabunfileopen = .false.
+  hfact = 1.5
+  dhfact3 = 1./hfact**3
 
   dumpfile = trim(rootname)   
   !
@@ -78,6 +81,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   minidump = .false.
   if (index(dumpfile,'minidump').ne.0) minidump = .true.
+  !
+  !--get hfact for minidumps
+  !
+  if (minidump) then
+     call get_environment('RSPLASH_HFACT',string)
+     read(string,*,iostat=ierr) hfacttemp
+     if (hfacttemp.gt.0.5 .and. hfacttemp .lt.10.0 .and. ierr.eq.0) then
+        hfact = hfacttemp
+        print *,'setting hfact =',hfact,' from RSPLASH_HFACT environment variable'
+     else
+        print "(1x,a)",'error reading hfact from RSPLASH_HFACT environment variable'
+     endif
+  endif
   !
   !--try to guess full dump format from file names
   !
