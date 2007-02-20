@@ -59,9 +59,13 @@ subroutine interpolate2D(x,y,hh,weight,dat,npart, &
 
   datsmooth = 0.
   datnorm = 0.
-  print*,'interpolating from particles to 2D grid...'
+  if (normalise) then
+     print "(1x,a)",'interpolating from particles to 2D grid (normalised)...'
+  else
+     print "(1x,a)",'interpolating from particles to 2D grid (non-normalised)...'  
+  endif
   if (pixwidth.le.0.) then
-     print*,'interpolate2D: error: pixel width <= 0'
+     print "(1x,a)",'interpolate2D: error: pixel width <= 0'
      return
   endif
   if (any(hh(1:npart).le.tiny(hh))) then
@@ -178,7 +182,11 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,npart, &
   vecsmoothx = 0.
   vecsmoothy = 0.
   datnorm = 0.
-  print*,'interpolating vector field from particles to 2D grid...'
+  if (normalise) then
+     print "(1x,a)",'interpolating vector field from particles to 2D grid (normalised)...'
+  else
+     print "(1x,a)",'interpolating vector field from particles to 2D grid (non-normalised)...'  
+  endif
   if (pixwidth.le.0.) then
      print*,'interpolate2D_vec: error: pixel width <= 0'
      return

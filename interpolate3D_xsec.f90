@@ -58,9 +58,13 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,npart,&
 
   datsmooth = 0.
   datnorm = 0.
-  print*,'interpolating from particles to 3D grid...'
-   if (pixwidth.le.0.) then
-     print*,'interpolate3D: error: pixel width <= 0'
+  if (normalise) then
+     print "(1x,a)",'interpolating from particles to 3D grid (normalised) ...'  
+  else
+     print "(1x,a)",'interpolating from particles to 3D grid (non-normalised) ...'
+  endif
+  if (pixwidth.le.0.) then
+     print "(1x,a)",'interpolate3D: error: pixel width <= 0'
      return
   endif
   const = dpi  ! normalisation constant (3D)
@@ -182,7 +186,11 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
 
   datsmooth = 0.
   datnorm = 0.
-  print*,'taking fast cross section...',zslice
+  if (normalise) then
+     print*,'taking fast cross section (normalised)...',zslice
+  else
+     print*,'taking fast cross section (non-normalised)...',zslice
+  endif
   if (pixwidth.le.0.) then
      print*,'interpolate3D_xsec: error: pixel width <= 0'
      return
@@ -344,7 +352,11 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,npart,&
   vecsmoothx = 0.
   vecsmoothy = 0.
   datnorm = 0.
-  print*,'taking fast cross section...',zslice
+  if (normalise) then
+     print*,'taking fast cross section (normalised)...',zslice
+  else
+     print*,'taking fast cross section (non-normalised)...',zslice
+  endif
   if (pixwidth.le.0.) then
      print*,'interpolate3D_xsec_vec: error: pixel width <= 0'
      return

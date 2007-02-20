@@ -59,7 +59,11 @@ subroutine interpolate1D(x,hh,weight,dat,npart,  &
 
   datsmooth = 0.
   term = 0.
-  print*,'interpolating from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+  if (normalise) then
+     print*,'interpolating (normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+  else
+     print*,'interpolating (non-normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+  endif
   if (pixwidth.le.0.) then
      print*,'interpolate1D: error: pixel width <= 0'
      return
