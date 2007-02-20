@@ -263,7 +263,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
      print*,'error opening ppm file'
      return
   endif
-  print "(1x,a,i5.5,a)", 'writing to file splash_',istep,'.ppm' 
+  print "(a)", 'writing to file '//trim(filename) 
 !
 !--PPM header
 !
