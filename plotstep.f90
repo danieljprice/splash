@@ -402,7 +402,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 !--subroutines called from this routine
 !
   use colourparts
-  use transforms
+  use transforms, only:transform,transform2,transform_limits,transform_label,transform_inverse
   use interactive_routines
   use geometry, only:coord_transform,vector_transform,labelcoordsys
   use particleplots, only:particleplot
@@ -861,7 +861,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  if (.not. x_sec) then
                     call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                          hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
-                         ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,inormalise)
+                         icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy, &
+                         pixwidth,inormalise)
                  endif
               case(3)
                  !!--interpolation to 3D grid - then take multiple cross sections/projections
@@ -873,7 +874,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     !!--interpolate from particles to 3D grid
                     call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
                          zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
-                         dat(1:ninterp,irenderplot), &
+                         dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
                          ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dz, &
                          inormalise)
                  endif
@@ -968,7 +969,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                           call interpolate3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
-                               dat(1:ninterp,iz), &
+                               dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver, &
                                dscreenfromobserver,rkappa,zslicepos, &
                                rendermin,rendermax,itrans(irenderplot),istep)
@@ -982,7 +983,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                           call interpolate3D_fastxsec( &
                                xplot(1:ninterp),yplot(1:ninterp), &
                                zplot(1:ninterp),hh(1:ninterp), &
-                               weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                               weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
                                inormalise)
                        endif
@@ -992,7 +993,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                           call interpolate3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
-                               dat(1:ninterp,iz), &
+                               dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver, &
                                dscreenfromobserver,rkappa,huge(zslicepos), &
                                rendermin,rendermax,itrans(irenderplot),istep)                    
@@ -1001,7 +1002,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                           call interpolate3D_projection( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
-                               ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
+                               icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                dobserver,dscreenfromobserver,ifastrender)
                        endif
                     endif
@@ -1027,7 +1028,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               call interpolate2D_xsec( &
                    dat(1:ninterp,iplotx),dat(1:ninterp,iploty),&
                    hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
-                   ninterp,xseclineX1,xseclineY1,xseclineX2,xseclineY2, &
+                   icolourme(1:ninterp),ninterp,xseclineX1,xseclineY1,xseclineX2,xseclineY2, &
                    datpix1D,npixx,inormalise)
               !
               !--find limits of datpix1D for plotting
@@ -1516,7 +1517,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               ninterp = ntoti
               !!--interpolate to 1D grid  
               call interpolate1D(dat(1:ninterp,ipowerspecx),hh(1:ninterp), &
-                   weight(1:ninterp),dat(1:ninterp,ipowerspecy), & 
+                   weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), & 
                    ninterp,xmingrid,datpix1D,ngrid,dxgrid,inormalise)
               !!--plot interpolated 1D data to check it
               !!print*,minval(datpix1D),maxval(datpix1D)
@@ -1938,13 +1939,13 @@ contains
               yplot(1:ninterp),zplot(1:ninterp), &
               hh(1:ninterp),weight(1:ninterp), &
               dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-              ninterp,xmin,ymin,zslicepos, &
+              icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidth,inormalise)
          else
             call interpolate3D_proj_vec(xplot(1:ninterp), &
               yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
               weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-              ninterp,xmin,ymin, &
+              icolourme(1:ninterp),ninterp,xmin,ymin, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidth,dobserver,dscreenfromobserver)
          endif
       case(2)
@@ -1962,7 +1963,7 @@ contains
          
          call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
               hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ivecx), &
-              dat(1:ninterp,ivecy),ninterp,xmin,ymin, &
+              dat(1:ninterp,ivecy),icolourme(1:ninterp),ninterp,xmin,ymin, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidth,inormalise)
       
       case default

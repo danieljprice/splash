@@ -40,12 +40,13 @@ contains
 !     Daniel Price, Institute of Astronomy, Cambridge 16/7/03
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D(x,y,z,hh,weight,dat,npart,&
+subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidth,zpixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy,npixz
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
+  integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,zmin,pixwidth,zpixwidth
   real, intent(out), dimension(npixx,npixy,npixz) :: datsmooth
   logical, intent(in) :: normalise
@@ -71,7 +72,11 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,npart,&
   !
   !--loop over particles
   !      
-  do i=1,npart
+  over_parts: do i=1,npart
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_parts
      !
      !--set kernel related quantities
      !
@@ -133,7 +138,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,npart,&
            enddo
         enddo
      enddo
-  enddo
+  enddo over_parts
   !
   !--normalise dat array
   !
@@ -168,12 +173,13 @@ end subroutine interpolate3D
 !     Daniel Price, Institute of Astronomy, Cambridge, 23/9/03
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
+subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
      xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
+  integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth,zslice
   real, intent(out), dimension(npixx,npixy) :: datsmooth
   logical, intent(in) :: normalise
@@ -210,7 +216,11 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
   !
   !--loop over particles
   !      
-  do i=1,npart
+  over_parts: do i=1,npart
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_parts
      !
      !--set kernel related quantities
      !
@@ -286,7 +296,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,npart,&
         enddo
 
      endif                  ! if particle within 2h of slice
-  enddo                     ! over particles
+  enddo over_parts                    ! over particles
   !
   !--normalise dat array
   !
@@ -334,12 +344,13 @@ end subroutine interpolate3D_fastxsec
 !     Daniel Price, Institute of Astronomy, Cambridge, 23/9/03
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,npart,&
+subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      xmin,ymin,zslice,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
+  integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth,zslice
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
   logical, intent(in) :: normalise
@@ -365,7 +376,11 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,npart,&
   !
   !--loop over particles
   !      
-  do i=1,npart
+  over_parts: do i=1,npart
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_parts
      !
      !--set kernel related quantities
      !
@@ -434,7 +449,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,npart,&
         enddo
 
      endif                  ! if particle within 2h of slice
-  enddo                     ! over particles
+  enddo over_parts                    ! over particles
   !
   !--normalise dat array(s)
   !

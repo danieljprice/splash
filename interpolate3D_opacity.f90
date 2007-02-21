@@ -1,5 +1,5 @@
 module opacityrendering3D
- use projections3D, only:interpolate3D_projection,wfromtable,radkernel2,coltable
+ use projections3D, only:wfromtable,radkernel2,coltable
  implicit none
  private :: indexx
 
@@ -48,16 +48,17 @@ contains
 !     (c) 2005 Daniel Price. Last modified Dec 2005.
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
+subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobserver,dscreenfromobserver, &
      rkappa,zcut,datmin,datmax,itrans,istep)
 
-  use transforms
+  use transforms, only:transform
   use colours, only:rgbtable,ncolours
   implicit none
   real, parameter :: pi=3.1415926536
   integer, intent(in) :: npart,npixx,npixy,itrans,istep
   real, intent(in), dimension(npart) :: x,y,z,pmass,hh,dat,zorig
+  integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreenfromobserver, &
                       zcut,datmin,datmax,rkappa
   real, dimension(npixx,npixy), intent(out) :: datsmooth
@@ -153,6 +154,10 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,npart, &
      !--render in order from back to front
      !
      i = iorder(ipart)
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_particles
      !
      !--allow slicing [take only particles with z(unrotated) < zcut]
      !

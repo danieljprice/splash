@@ -134,14 +134,16 @@ end function wfromtable
 !     3D perspective added Nov 2005
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
+subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobserver,dscreen,useaccelerate)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
+  integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreen
   real, intent(out), dimension(npixx,npixy) :: datsmooth
+  logical, intent(in) :: useaccelerate
   real :: row(npixx)
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpart
@@ -152,7 +154,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
   real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
   real, dimension(npixx) :: xpix,dx2i
   real :: t_start,t_end,t_used,tsec
-  logical :: iprintprogress,use3Dperspective,accelerate,useaccelerate
+  logical :: iprintprogress,use3Dperspective,accelerate
   
   !useaccelerate = .true.
 
@@ -214,6 +216,10 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,npart, &
            iprintnext = iprintnext + iprintinterval
         endif
      endif
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_particles
      !
      !--set h related quantities
      !
@@ -383,12 +389,13 @@ end subroutine interpolate3D_projection
 !     Daniel Price 23/12/04
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,npart,&
+subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth,zobserver,dscreen)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
+  integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreen
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
 
@@ -409,6 +416,10 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,npart,&
   !--loop over particles
   !      
   over_particles: do i=1,npart
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_particles
      !
      !--set kernel related quantities
      !

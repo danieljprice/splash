@@ -42,12 +42,13 @@ contains
 !     Written by Daniel Price 2003-2006
 !--------------------------------------------------------------------------
 
-subroutine interpolate1D(x,hh,weight,dat,npart,  &
+subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
      xmin,datsmooth,npixx,pixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx
   real, intent(in), dimension(npart) :: x,hh,weight,dat
+  integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,pixwidth
   real, intent(out), dimension(npixx) :: datsmooth
   logical, intent(in) :: normalise
@@ -76,6 +77,10 @@ subroutine interpolate1D(x,hh,weight,dat,npart,  &
   !--loop over particles
   !      
   over_parts: do i=1,npart
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_parts
      !
      !--skip particles with zero weights
      !

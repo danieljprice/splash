@@ -42,12 +42,13 @@ contains
 !     Written by Daniel Price 2003-2006
 !--------------------------------------------------------------------------
 
-subroutine interpolate2D(x,y,hh,weight,dat,npart, &
+subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,hh,weight,dat
+  integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth
   real, intent(out), dimension(npixx,npixy) :: datsmooth
   logical, intent(in) :: normalise
@@ -76,6 +77,10 @@ subroutine interpolate2D(x,y,hh,weight,dat,npart, &
   !--loop over particles
   !      
   over_parts: do i=1,npart
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_parts
      !
      !--skip particles with zero weights
      !
@@ -164,12 +169,13 @@ end subroutine interpolate2D
 !     Daniel Price, University of Exeter, March 2005
 !--------------------------------------------------------------------------
 
-subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,npart, &
+subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
      xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,hh,weight,vecx,vecy
+  integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx,vecsmoothy
   logical, intent(in) :: normalise
@@ -199,6 +205,10 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,npart, &
   !--loop over particles
   !      
   over_parts: do i=1,npart
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_parts
      !
      !--skip particles with zero weights
      !
@@ -297,12 +307,13 @@ end subroutine interpolate2D_vec
 !     Daniel Price, Institute of Astronomy, Cambridge, Feb 2004
 !--------------------------------------------------------------------------
 
-subroutine interpolate2D_xsec(x,y,hh,weight,dat,npart,&
+subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
      x1,y1,x2,y2,datsmooth,npixx,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx
   real, intent(in), dimension(npart) :: x,y,hh,weight,dat
+  integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: x1,y1,x2,y2
   real, intent(out), dimension(npixx) :: datsmooth
   logical, intent(in) :: normalise
@@ -359,6 +370,10 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,npart,&
   !--loop over particles
   !      
   over_parts: do i=1,npart
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_parts
      !
      !--skip particles with zero weights
      !
