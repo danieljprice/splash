@@ -37,6 +37,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
   use mem_allocation, only:alloc
+  use labels, only:ipmass,irho,ih,ix
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
@@ -61,7 +62,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real(doub_prec) :: udist,umass,utime,umagfd,r8
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
-  real :: pmassinitial,rhozero,tfreefall
+  real :: pmassinitial,rhozero,tfreefall,hfact
   common /sphNGunits/ udist,umass,utime,umagfd,tfreefall
 
   nstepsread = 0
@@ -262,6 +263,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
       if (abs(pmassinitial).lt.tiny(0.) .and. nreal(1).lt.4) then
          print "(a)",' error: particle masses not present in small dump file'   
       endif
+      !--for phantom dumps, also make a column for density
+      if (phantomdump) then
+         ncolstep = ncolstep + 1
+      endif
    endif
 !
 !--allocate memory for all columns
@@ -277,7 +282,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
    npartoftype(1,j) = npart
    npartoftype(2,j) = ntotal - npart
    nptmass = isize(2)
-   print "(a,1pe12.4,a,0pf8.4)",' time = ',time(j),' gamma = ',gamma(j)
+   hfact = 1.2
+   if (phantomdump) then
+      if (nreals.lt.6) then
+         print "(a)",' error: hfact not present in phantom dump'
+      else
+         hfact = dummyreal(6)
+      endif
+      print "(a,1pe12.4,a,0pf6.3,a,0pf5.2,a,1pe7.1)", &
+            ' time = ',time(j),' gamma = ',gamma(j), &
+            ' hfact = ',hfact,' tolh = ',dummyreal(7)
+   else
+      print "(a,1pe12.4,a,0pf8.4)",' time = ',time(j),' gamma = ',gamma(j)
+   endif
    nstepsread = nstepsread + 1
    ncolumns = ncolstep + ncalc
    icolumn = 0
@@ -291,12 +308,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !  also means that hydro/MHD are "semi-compatible" in the sense that x,y,z,m,h and rho
 !  are in the same place for both types of dump
 !
+   ix(1) = 1
+   ix(2) = 2
+   ix(3) = 3
+   ipmass = 4
+   ih = 5
+   irho = 6
    nhydroarrays = 6 ! x,y,z,m,h,rho
    nhydroarraysinfile = nreal(1) + nreal4(1) + nreal8(1)
    if (imadepmasscolumn) nhydroarraysinfile = nhydroarraysinfile + 1
-   if (nhydroarraysinfile .lt.nhydroarrays) then
+   if (nhydroarraysinfile .lt.nhydroarrays .and. .not.phantomdump) then
       print "(a)",' ERROR: one of x,y,z,m,h or rho missing in small dump read'
       nhydroarrays = nreal(1)+nreal4(1)+nreal8(1)
+   elseif (phantomdump .and. (nreal(1).lt.3 .or. nreal4(1).lt.1)) then
+      print "(a)",' ERROR: x,y,z or h missing in phantom read'
    endif
    if (narrsizes.ge.4) then
       nmhdarrays = 3 ! Bx,By,Bz
@@ -352,11 +377,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
 !        default reals may need converting
          do i=1,nreal(iarr)
-            if (iarr.eq.1 .and. i.eq.6) then
+            if (iarr.eq.1.and.((phantomdump.and.i.eq.4) &
+               .or.(.not.phantomdump.and.i.eq.6))) then
                ! read x,y,z,m,h and then place arrays after always-present ones
+               ! (for phantom read x,y,z only)
                icolumn = nhydroarrays+nmhdarrays + 1
             elseif (iarr.eq.4 .and. i.le.3) then
-               icolumn = 6 + i
+               icolumn = nhydroarrays + i
             else
                icolumn = imaxcolumnread + 1
             endif
@@ -371,30 +398,50 @@ subroutine read_data(rootname,indexstart,nstepsread)
             else
                read(iunit,end=33,iostat=ierr)
             endif
+!            print*,'real',icolumn
          enddo
 !        set masses for equal mass particles (not dumped in small dump)
-         if (smalldump .and. iarr.eq.1 .and. nreal(1).lt.4) then
+         if (((smalldump.and.nreal(1).lt.4).or.phantomdump).and. iarr.eq.1) then
             if (abs(pmassinitial).gt.tiny(pmassinitial)) then
                icolumn = 4
                dat(1:isize(iarr),icolumn,j) = pmassinitial
+!               print*,icolumn
             endif
          endif
 !        real4's go straight into dat
          imaxcolumnread = max(imaxcolumnread,icolumn,6)
          do i=1,nreal4(iarr)
-            if (iarr.eq.1 .and. i.eq.1) then
-               icolumn = 6 ! density
-            elseif (iarr.eq.1 .and. smalldump .and. i.eq.2) then
-               icolumn = 5 ! h which is real4 in small dumps
+            if (phantomdump) then
+               if (iarr.eq.1 .and. i.eq.1) then
+                  icolumn = ih ! h is always first real4 in phantom dumps
+                  !--density depends on h being read
+                  if (required(irho)) required(ih) = .true.
+               else
+                  icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
+               endif
             else
-               icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
+               if (iarr.eq.1 .and. i.eq.1) then
+                  icolumn = irho ! density
+               elseif (iarr.eq.1 .and. smalldump .and. i.eq.2) then
+                  icolumn = ih ! h which is real4 in small dumps
+               else
+                  icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
+               endif
             endif
             imaxcolumnread = max(imaxcolumnread,icolumn)
             if (required(icolumn)) then
                read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j)
             else
                read(iunit,end=33,iostat=ierr)
-            endif 
+            endif
+!            print*,icolumn
+            !--construct density for phantom dumps based on h, hfact and particle mass
+            if (phantomdump .and. icolumn.eq.ih) then
+               icolumn = irho ! density
+               if (required(irho)) dat(1:isize(iarr),irho,j) = &
+                                pmassinitial*(hfact/dat(1:isize(iarr),ih,j))**3
+!               print*,icolumn
+            endif
          enddo
          icolumn = imaxcolumnread
 !        real 8's need converting
