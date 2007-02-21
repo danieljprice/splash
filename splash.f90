@@ -167,6 +167,7 @@ program splash
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames
   character(len=120) :: string
+  character(len=*), parameter :: version = 'v1.8 beta [> 19th Feb ''07]'
 
   !
   ! set default options
@@ -201,7 +202,7 @@ program splash
            call get_argument(i,defaultsfile)
         case default
            print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
-           print "(a,/)",'v1.7.2 [19th Feb ''07] '
+           print "(a,/)",trim(version)
            if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
            print "(a)",'Usage: splash [-f defaultsfile] [-l limitsfile] file1 file2 ...'
            stop
@@ -290,7 +291,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( version 1.7.2 [19th Feb ''07] Copyright (C) 2005-2007 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2007 )'
  print 30 
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
