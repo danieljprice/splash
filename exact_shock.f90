@@ -124,7 +124,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
   !  repeat for left-going wave
   !
   if (leftisshock) then
-     vleft = -v_L + cs_L**2*(ppost/p_L - 1.)/(gamma*(vpost+v_L))
+     vleft = v_L + cs_L**2*(ppost/p_L - 1.)/(gamma*(vpost-v_L))
   else
      vleft = cs_L - 0.5*(gamma+1.)*vpost + 0.5*(gamma-1.)*v_L
   endif
