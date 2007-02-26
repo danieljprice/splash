@@ -28,11 +28,11 @@ PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot -lpng -lg2c
 #
 SYSTEMFILE= system_unix.f90
 #
-# this can be used to statically link the pgplot libraries if all else fails
+# this can be used to static link the pgplot libraries if all else fails
 #
 STATICLIBS=
 #
-# set the parallel flag to yes to compile with openMP directives
+# set the parallel flag to 'yes' to compile with openMP directives
 #
 #PARALLEL=no
 #
@@ -190,6 +190,7 @@ endif
 ifeq ($(SYSTEM),maccluster)
 #  using the g95 compiler on the iMac cluster in Exeter
    ifeq ($(MACHTYPE),i386)
+   #  this stuff is for building universal binaries across intel/ppc macs
       F90C= myg95
       EXT= _i386
    else
@@ -200,7 +201,22 @@ ifeq ($(SYSTEM),maccluster)
    X11LIBS= -L/usr/X11R6/lib -lX11
    PGPLOTLIBS= -lSystemStubs
    STATICLIBS= /AstroUsers/djp212/pgplot/libpgplot.a
-   SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
+   SYSTEMFILE= system_f2003.f90
+   ENDIANFLAGBIG= -fendian='BIG'
+   ENDIANFLAGLITTLE= -fendian='LITTLE'
+   DEBUGFLAG=-fbounds-check -ftrace=full
+   PARALLEL= no
+   KNOWN_SYSTEM=yes
+endif
+
+ifeq ($(SYSTEM),astromac)
+#  using the g95 compiler on the Astrophysics cluster in Exeter
+   F90C= g95
+   F90FLAGS= -O3 -ffast-math -Wall -Wextra -Wno=165
+   X11LIBS= -L/usr/X11R6/lib -lX11
+   PGPLOTLIBS= -L/opt/local/lib -lpng -lg2c
+   STATICLIBS= /usr/local/pgplot/libpgplot.a
+   SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
    DEBUGFLAG=-fbounds-check -ftrace=full
