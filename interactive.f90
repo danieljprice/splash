@@ -1122,7 +1122,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
  real :: xpt2,ypt2,xpti,ypti,renderpt
  real :: xlength,ylength,renderlength,drender,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
- real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen
+ real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen,gradient,dr,yint
+ real, dimension(4) :: xline,yline
  character(len=1) :: char,char2
  character(len=5) :: string
  logical :: iexit
@@ -1182,7 +1183,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         print*,'    (applies to colour bar if mouse is over colour bar)'
 !        print*,' o: re-centre plot on (o)rigin'
         print*,' r: (r)eplot current plot'
-!        print*,' g: plot a line and find its g)radient'
+        print*,' g: plot a line and find its g)radient'
         print*,' G: move le(G)end to current position'
         print*,' T: move (T)itle to current position'
 !        print*,' H: move vector plot legend H(ere)'
@@ -1201,6 +1202,48 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         print*,' z,Z(oom) : timstepping, zoom and limits-changing options '
         print*,'          are multiplied by a factor of 10'        
         print*,'---------------------------------------------------------------'
+     case('g')   ! draw a line between two points
+        xline(2) = xpt
+        yline(2) = ypt
+        !--mark first point
+        call pgpt1(xpt,ypt,4)
+        !--select second point
+        print*,' select another point (using left click or g) to plot line '
+        call pgband(1,1,xline(2),yline(2),xline(3),yline(3),char2)
+        !--draw line if left click or g
+        select case(char2)
+        case('A','g')
+           !--mark second point
+           call pgpt1(xline(3),yline(3),4)
+           xlength = xline(3)-xline(2)
+           if (abs(xlength).lt.tiny(xlength)) then
+              xline(1) = xline(2)
+              xline(4) = xline(2)
+              yline(1) = xmin(iplotyarr(ipanel))
+              yline(4) = xmax(iplotyarr(ipanel))
+              print*,' error: gradient = infinite'
+           elseif (xline(2).lt.xline(3)) then 
+              xline(1) = xmin(iplotxarr(ipanel))
+              xline(4) = xmax(iplotxarr(ipanel))
+           else
+              xline(1) = xmax(iplotxarr(ipanel))
+              xline(4) = xmin(iplotxarr(ipanel))
+           endif           
+           if (abs(xlength).gt.tiny(xlength)) then
+              ylength = yline(3)-yline(2)
+              gradient = ylength/xlength
+              yint = yline(3) - gradient*xline(3)
+              dr = sqrt(xlength**2 + ylength**2)
+              print*,' dr = ',dr,' dx = ',xlength,' dy = ',ylength
+              print*,' gradient = ',gradient,' y intercept = ',yint
+              yline(1) = gradient*xline(1) + yint
+              yline(4) = gradient*xline(4) + yint
+           endif
+           !--plot line joining the two points
+           call pgline(4,xline,yline)
+        case default
+           print*,' action cancelled'       
+        end select
      case('s','S')
         do i=1,size(vptxmin)
            call save_limits(iplotxarr(i),xmin(iplotxarr(i)),xmax(iplotxarr(i)))
