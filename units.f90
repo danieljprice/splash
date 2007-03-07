@@ -5,7 +5,9 @@ module settings_units
  use params
  implicit none
  real, dimension(0:maxplot), public :: units
+ real, public :: unitzintegration
  character(len=20), dimension(0:maxplot), public :: unitslabel
+ character(len=20), public :: labelzintegration
  public :: set_units,read_unitsfile,write_unitsfile
  
  private
@@ -85,18 +87,32 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
                     unitslabel(ih) = unitslabel(icol)
                  endif
               endif
+              !
+              !--set units for z integration in 3D
+              !  so for example can have x,y,z in kpc but column density in g/cm^2
+              !
+              if (abs(unitzintegration-1.0).le.tiny(unitzintegration)) then
+                 unitzintegration = units(icol)
+                 labelzintegration = unitslabel(icol)
+              endif
+              if (ndim.eq.3) then
+                 call prompt(' Enter unit for ''z'' in 3D column integrated plots ',unitzintegration)
+                 call prompt(' Enter label for z integration unit (e.g. [cm])',labelzintegration)
+              endif
            endif
            !
            !--also sensible to apply same units to all components of a vector
            !
-           if (ndimV.gt.1 .and. iamvec(icol).gt.0) then
-              applytoall = .true.
-              call prompt(' Apply these units to all components of '//trim(labelvec(icol))//'?',applytoall)
-              if (applytoall) then
-                 where (iamvec(1:ncolumns).eq.iamvec(icol))
-                    units(1:ncolumns) = units(icol)
-                    unitslabel(1:ncolumns) = unitslabel(icol)
-                 end where
+           if (icol.gt.0) then
+              if (ndimV.gt.1 .and. iamvec(icol).gt.0) then
+                 applytoall = .true.
+                 call prompt(' Apply these units to all components of '//trim(labelvec(icol))//'?',applytoall)
+                 if (applytoall) then
+                    where (iamvec(1:ncolumns).eq.iamvec(icol))
+                       units(1:ncolumns) = units(icol)
+                       unitslabel(1:ncolumns) = unitslabel(icol)
+                    end where
+                 endif
               endif
            endif
         endif
@@ -126,8 +142,9 @@ subroutine write_unitsfile(unitsfile,ncolumns)
   if (ierr /=0) then
      print*,'ERROR: cannot write units file'
   else
-     do i=0,ncolumns
-        write(77,*,iostat=ierr) units(i),';',unitslabel(i)
+     write(77,*,iostat=ierr) units(0),';',trim(unitslabel(0)),';',unitzintegration,';',labelzintegration
+     do i=1,ncolumns
+        write(77,*,iostat=ierr) units(i),';',trim(unitslabel(i))
         if (ierr /= 0) then
            print*,'ERROR whilst writing units file'
            close(unit=77)
@@ -144,14 +161,17 @@ end subroutine write_unitsfile
 !--read units for all columns from a file
 !
 subroutine read_unitsfile(unitsfile,ncolumns,ierr)
+  use settings_data, only:ndim
   implicit none
   character(len=*), intent(in) :: unitsfile
   integer, intent(in) :: ncolumns
   integer, intent(out) :: ierr
   character(len=len(unitslabel)+20) :: line
-  integer :: i,itemp,isemicolon
+  integer :: i,itemp,isemicolon,isemicolon2,isemicolon3
+  logical :: ierrzunits
 
   ierr = 0
+  ierrzunits = .false.
 
   open(unit=78,file=unitsfile,status='old',form='formatted',err=997)
   print "(/,a)",' reading units from file '//trim(unitsfile)
@@ -169,13 +189,43 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
 !    units label is what comes after the semicolon
 !
      isemicolon = index(line,';')
-     if (isemicolon.gt.0) then
-        unitslabel(i) = trim(line(isemicolon+1:))
+     if (i.eq.0) then
+        !--time line also contains unit of z integration
+        isemicolon2 = index(line(isemicolon+1:),';')
+        if (isemicolon2.gt.0) then
+           isemicolon2 = isemicolon + isemicolon2
+           unitslabel(i) = trim(line(isemicolon+1:isemicolon2-1))
+           isemicolon3 = isemicolon2 + index(line(isemicolon2+1:),';')
+           read(line(isemicolon2+1:isemicolon3-1),*,iostat=itemp) unitzintegration
+           if (itemp /= 0) then
+              print*,'error reading unit for z integration'
+              ierrzunits = .true.
+           else
+              labelzintegration = trim(line(isemicolon3+1:))
+           endif
+        else
+           ierrzunits = .true.
+           print*,'error: could not read z integration unit from units file'
+           if (isemicolon.gt.0) then
+              unitslabel(i) = trim(line(isemicolon+1:))
+           else
+              print*,'error reading units label for column ',i
+           endif       
+        endif
      else
-        print*,'error reading units label for column ',i
+        if (isemicolon.gt.0) then
+           unitslabel(i) = trim(line(isemicolon+1:))
+        else
+           print*,'error reading units label for column ',i
+        endif
      endif
 !     print*,i,'units = ',units(i),'label = ',unitslabel(i)
   enddo
+  if (ierrzunits .and. ndim.eq.3) then
+     unitzintegration = units(3)
+     labelzintegration = unitslabel(3)
+  endif
+  
   close(unit=78)
 
   return

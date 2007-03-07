@@ -571,7 +571,7 @@ subroutine set_labels
   use params
   use settings_data, only:ndim,ndimV,ntypes,ncolumns,iformat,UseTypeInRenderings
   use geometry, only:labelcoord
-  use settings_units, only:units,unitslabel
+  use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
   implicit none
   integer :: i
   real :: tfreefall
@@ -686,6 +686,9 @@ subroutine set_labels
    !--or use these two lines for time in free-fall times
    units(0) = 1./tfreefall
    unitslabel(0) = ' '
+  
+  unitzintegration = udist
+  labelzintegration = ' [cm]'
   !
   !--set labels for each particle type
   !
