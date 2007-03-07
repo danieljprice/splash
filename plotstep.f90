@@ -1918,17 +1918,23 @@ contains
    real, intent(inout) :: vmax
    character(len=*), intent(in) :: label
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy, datpix
-   integer :: i,j
+   integer :: i,j,icolourprev
    real :: vmag
+   
+   !--query colour index
+   call pgqci(icolourprev)
 
    !print*,'plotting vector field ',trim(label)
    if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
         .or.(ivecy.le.ndim).or.(ivecy.gt.ndataplots)) then
       print*,'error finding location of vector plot in array'
    else
-      !!--plot arrows in either background or foreground colour
-      if (UseBackgndColorVecplot) call pgsci(0)
-
+      !--plot arrows in either background or foreground colour
+      if (UseBackgndColorVecplot) then
+         call pgsci(0)
+      else
+         call pgsci(1)
+      endif
       !
       !--interpolate using appropriate routine for number of dimensions
       !
@@ -1995,9 +2001,11 @@ contains
          call render_vec(vecpixx,vecpixy,vmax, &
               numpixx,numpixy,xmin,ymin,pixwidth,trim(label),' ')
       endif
-      if (UseBackgndColorVecplot) call pgsci(1)
 
    endif
+   
+   !--restore colour index
+   call pgsci(icolourprev)
   
   end subroutine vector_plot
 
