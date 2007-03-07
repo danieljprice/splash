@@ -339,7 +339,7 @@ subroutine set_labels
      print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
                  '  until positions of density, smoothing length and particle', &
                  '  mass are known (for the ascii read the simplest way is to ', &
-                 '   relevant columns appropriately in the columns file)'
+                 '  label the relevant columns appropriately in the columns file)'
   endif
   
   if (ivx.gt.0) then
