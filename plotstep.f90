@@ -263,11 +263,13 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
 !--initialise opacity for 3D opacity rendering
 !       
        if (use3Dopacityrendering .and. iamrendering) then
-          hav = 0.5*(lim(ih,2) + lim(ih,1))
-          pmassav = 0.5*(lim(ipmass,2) + lim(ipmass,1))
+          hav = lim(ih,1) !! 0.5*(lim(ih,2) + lim(ih,1))
+          if (hav.le.0.) hav = 0.5*lim(ih,2) ! take 0.5*max if min is zero
+          pmassav = lim(ipmass,1)
+          if (pmassav.le.0.) pmassav = 0.5*lim(ipmass,2) ! take 0.5*max if min is zero
           print*,'using current h and pmass limits to calculate kappa (cross section/unit mass)'
-          print*,'taking average h = ',hav,' average particle mass = ',pmassav
-          print*,'[ kappa = pi*h_mean**2/(particle_mass*n_smoothing_lengths) ]'
+          print*,'min h = ',hav,' min particle mass = ',pmassav
+          print*,'[ kappa = pi*h_min**2/(particle_mass*n_smoothing_lengths) ]'
           call prompt('enter approximate surface depth (number of smoothing lengths):',taupartdepth)          
           rkappa = pi*hav*hav/(pmassav*coltable(0)*taupartdepth)
           print*,'kappa (particle cross section per unit mass) = ',rkappa
