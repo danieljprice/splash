@@ -179,7 +179,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
   character(len=*), intent(in) :: unitsfile
   integer, intent(in) :: ncolumns
   integer, intent(out) :: ierr
-  character(len=len(unitslabel)+20) :: line
+  character(len=2*len(unitslabel)+40) :: line
   integer :: i,itemp,isemicolon,isemicolon2,isemicolon3
   logical :: ierrzunits
 
@@ -216,7 +216,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
            else
               labelzintegration = trim(line(isemicolon3+1:))
            endif
-        else
+       else
            ierrzunits = .true.
            print*,'error: could not read z integration unit from units file'
            if (isemicolon.gt.0) then
