@@ -260,7 +260,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
       if (ivol.ne.0) then
          where (dat(1:ntoti,irho,i).gt.tiny(dat))
             dat(1:ntoti,ivol,i) = (dat(1:ntoti,ipmass,i)/dat(1:ntoti,irho,i))**(1./real(ndim))    
-         else where
+         elsewhere
             dat(1:ntoti,ivol,i) = 0.
          end where
       endif
