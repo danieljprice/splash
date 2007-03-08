@@ -474,8 +474,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         if (char.eq.'o') then !--recentre plot on origin
            xmin = -0.5*xlength
            xmax = 0.5*xlength
-           xmin = -0.5*ylength
-           xmax = 0.5*ylength
+           ymin = -0.5*ylength
+           ymax = 0.5*ylength
            iadvance = 0
            interactivereplot = .true.
            iexit = .true.
