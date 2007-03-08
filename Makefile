@@ -140,6 +140,7 @@ ifeq ($(SYSTEM),ukaff1a)
    F90C= xlf90_r
    F90FLAGS= -O3 -qnoescape -qsuffix=f=f90 -qextname
    OMPFLAGS= -qsmp=noauto
+   DEBUGFLAG= -C -g
    SYSTEMFILE= system_f2003.f90
    PGPLOTLIBS= -L/home/dprice/pgplot -lpgplot  
    STATICLIBS= /home/dprice/pgplot/libpgplot.a /home/dprice/plot/libg2cmodified.a
