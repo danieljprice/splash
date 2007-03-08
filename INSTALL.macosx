@@ -1,4 +1,4 @@
-To compile SUPERSPHPLOT you will need the following on your system, both of which
+To compile SPLASH you will need the following on your system, both of which
 are freely available:
 - The PGPLOT graphics subroutine library
 - A Fortran 95 compiler
@@ -6,8 +6,8 @@ are freely available:
 The basic steps for installation are:
 1) make sure you have a Fortran 90/95 compiler (such as g95)
 2) make sure you have the PGPLOT libraries installed
-3) compile SUPERSPHPLOT and link with PGPLOT
-4) if desired/necessary write a read_data subroutine so that SUPERSPHPLOT can read your data format
+3) compile SPLASH and link with PGPLOT
+4) if desired/necessary write a read_data subroutine so that SPLASH can read your data format
 
 For troubleshooting of some common installation problems,
  have a look at the online FAQ.
@@ -29,7 +29,7 @@ following:
 4) set the environment variable SYSTEM to 'mymac', e.g.
    export SYSTEM='mymac'
 
-at this point, type 'make' and supersphplot should compile and link successfully. You may at this point try
+at this point, type 'make' and SPLASH should compile and link successfully. You may at this point try
 using the ascii data read to read some of your files. The next step is to read
 your own data format (see below).
 

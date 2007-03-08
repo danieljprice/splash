@@ -1,4 +1,4 @@
-To compile SUPERSPHPLOT you will need the following on your system, both of whic
+To compile SPLASH you will need the following on your system, both of whic
 are freely available:
 - The PGPLOT graphics subroutine library
 - A Fortran 95 compiler
@@ -6,8 +6,8 @@ are freely available:
 The basic steps for installation are:
 1) make sure you have a Fortran 90/95 compiler (such as g95)
 2) make sure you have the PGPLOT libraries installed
-3) compile SUPERSPHPLOT and link with PGPLOT
-4) if desired/necessary write a read_data subroutine so that SUPERSPHPLOT can read your data format
+3) compile SPLASH and link with PGPLOT
+4) if desired/necessary write a read_data subroutine so that SPLASH can read your data format
 
 For troubleshooting of some common installation problems,
  have a look at the online FAQ.
@@ -19,7 +19,7 @@ non-commercial version available for linux and the g95 compiler, downloadable fr
 
 http://www.g95.org
 
-successfully compiles SUPERSPHPLOT and if necessary the PGPLOT
+successfully compiles SPLASH and if necessary the PGPLOT
 libraries. 
 
 2) ------------------- PGPLOT -----------------------------------------
@@ -120,7 +120,7 @@ PGPLOTLIBS = -L/usr/local/pgplot -lpgplot -lg2c
 If the PNG drivers are incorporated into the PGPLOT installation, the -lpng libraries must also be added.
 Failing that, ask your system administrator(!) or simply download your own copy of
 the PGPLOT libraries and make sure it is compiled with the same compiler as you
-are using to compile the SUPERSPHPLOT source code (e.g. g95).
+are using to compile the SPLASH source code (e.g. g95).
 
  Secondly, you will need to modify the system-dependent routines for your
 compiler. These are specified via the settings:
@@ -131,13 +131,13 @@ which works for most unix-based compilers (including g95). A file system_unix_NA
 is included for the NAG f95 compiler. A version for Fortran 2003 compatible
 compilers (such as g95) is also given (system_f2003.f90).
 
-At present the only calls to these routines are made from supersphplot.f90 which
+At present the only calls to these routines are made from SPLASH.f90 which
 reads the run name(s) from the command line. A standardised format for performing this
 task is included in the standards for the next release of Fortran (Fortran 2003),
 however in the meantime the calls in the system module may require some adjustment depending on the
 particular system you are compiling the code on. The program is still fully
 functional without this call working, but it does make things convenient (in particular it means that
-SUPERSPHPLOT can be invoked using wildcards (*,?) in filenames).
+SPLASH can be invoked using wildcards (*,?) in filenames).
 
 If you are still stuck at this point, have a look at the online FAQ for some common problems, or feel free
 to email me.
