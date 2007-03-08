@@ -8,11 +8,24 @@ module settings_units
  real, public :: unitzintegration
  character(len=20), dimension(0:maxplot), public :: unitslabel
  character(len=20), public :: labelzintegration
- public :: set_units,read_unitsfile,write_unitsfile
+ public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
  
  private
 
 contains
+!
+!--initialise the units arrays to some harmless default values
+!
+subroutine defaults_set_units
+ implicit none
+
+ units(:) = 1.0
+ unitzintegration = 1.0
+ unitslabel(:) = ' '
+ labelzintegration = ' '
+
+ return
+end subroutine defaults_set_units
 !
 !--set units
 !
@@ -142,9 +155,9 @@ subroutine write_unitsfile(unitsfile,ncolumns)
   if (ierr /=0) then
      print*,'ERROR: cannot write units file'
   else
-     write(77,*,iostat=ierr) units(0),';',trim(unitslabel(0)),';',unitzintegration,';',labelzintegration
+     write(77,*,iostat=ierr) units(0),';',unitslabel(0),';',unitzintegration,';',labelzintegration
      do i=1,ncolumns
-        write(77,*,iostat=ierr) units(i),';',trim(unitslabel(i))
+        write(77,*,iostat=ierr) units(i),';',unitslabel(i)
         if (ierr /= 0) then
            print*,'ERROR whilst writing units file'
            close(unit=77)

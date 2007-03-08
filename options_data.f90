@@ -25,7 +25,6 @@ contains
 !---------------------------------------------
 subroutine defaults_set_data
   use settings_data
-  use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
   use params, only:maxplot
   implicit none
   integer :: i
@@ -49,10 +48,6 @@ subroutine defaults_set_data
   enddo
   iCalcQuantities = .false.
   DataIsBuffered = .false.
-  units(:) = 1.0
-  unitzintegration = 1.0
-  unitslabel(:) = ' '
-  labelzintegration = ' '
   iRescale = .false.
   ivegotdata = .false.
   ntypes = 1

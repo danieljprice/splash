@@ -28,6 +28,7 @@ subroutine defaults_set
   use settings_vecplot, only:defaults_set_vecplot
   use settings_xsecrot, only:defaults_set_xsecrotate
   use settings_powerspec, only:defaults_set_powerspec
+  use settings_units, only:defaults_set_units
   use particle_data, only:maxpart,maxstep,maxcol
   use titles, only:pagetitles,steplegend
   implicit none
@@ -43,7 +44,8 @@ subroutine defaults_set
   call defaults_set_xsecrotate
   call defaults_set_vecplot
   call defaults_set_exact
-  call defaults_set_powerspec 
+  call defaults_set_powerspec
+  call defaults_set_units
 !
 !--limits (could set them to anything but min & max must be different
 !          to enable them to be reset interactively if not set elsewhere)
