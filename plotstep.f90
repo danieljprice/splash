@@ -572,12 +572,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      if (ivectorplot.gt.0) iplotpart = iplotpartvec
 
      !--if replotting in interactive mode, use the temporarily stored plot limits
-     if (interactivereplot .and. nacross*ndown.gt.1) then
+     !  (check iplot values are sensible though, otherwise will seg fault here)
+     if (interactivereplot .and. nacross*ndown.gt.1 &
+         .and. iploty.gt.0 .and. iploty.le.numplot &
+         .and. iploty.gt.0 .and. iploty.le.numplot) then
         xmin = xminmulti(iplotx)
         xmax = xmaxmulti(iplotx)
         ymin = xminmulti(iploty)
         ymax = xmaxmulti(iploty)
-        if (irender.gt.0) then
+        if (irender.gt.0 .and. irender.le.numplot) then
            rendermin = xminmulti(irender)
            rendermax = xmaxmulti(irender)
         endif
