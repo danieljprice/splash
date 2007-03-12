@@ -1108,14 +1108,14 @@ end subroutine interactive_step
 !
 subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr,iplotyarr, &
                              irenderarr,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
-                             barwmulti,nacross,ndim,icolourscheme,interactivereplot)
+                             barwmulti,xminadapt,xmaxadapt,nacross,ndim,icolourscheme,interactivereplot)
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep
  integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim
  integer, intent(inout) :: icolourscheme
  integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr
- real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
+ real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti,xminadapt,xmaxadapt
  real, dimension(:), intent(inout) :: xmin,xmax
  logical, intent(out) :: interactivereplot
  integer :: nc,ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage
@@ -1175,7 +1175,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         print*,'  (select colour bar to change rendering limits)'
         print*,' +   : zoom in by 10%'
         print*,' -(_): zoom out by 10(20)%'
-!        print*,' a   : (a)djust/reset plot limits to fit '
+        print*,' a   : (a)djust/reset plot limits to fit '
         print*,'      NB for these options cursor inside the plot changes both x and y,'
         print*,'       whereas cursor over a specific axis zooms on that axis only'
         print*,'       (applies to colour bar if mouse is over colour bar)'
@@ -1380,6 +1380,33 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
            iexit = .true.
            xpt = 0.
            ypt = 0.
+        endif
+     case('a') ! adapt plot limits
+        if (xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
+           xmin(irenderarr(ipanel)) = xminadapt(irenderarr(ipanel))
+           xmax(irenderarr(ipanel)) = xmaxadapt(irenderarr(ipanel))
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        else
+           if (xpti.ge.xmin(iplotxarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel)) &
+              .and. ypti.le.xmax(iplotyarr(ipanel))) then
+              print*,'resetting x limits'
+              xmin(iplotxarr(ipanel)) = xminadapt(iplotxarr(ipanel))
+              xmax(iplotxarr(ipanel)) = xmaxadapt(iplotxarr(ipanel))
+              istep = istepnew
+              interactivereplot = .true.
+              iexit = .true.
+           endif
+           if (ypti.ge.xmin(iplotyarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel)) &
+              .and. xpti.le.xmax(iplotxarr(ipanel))) then
+              print*,'resetting y limits'
+              xmin(iplotyarr(ipanel)) = xminadapt(iplotyarr(ipanel))
+              xmax(iplotyarr(ipanel)) = xmaxadapt(iplotyarr(ipanel))
+              istep = istepnew
+              interactivereplot = .true.
+              iexit = .true.
+           endif
         endif
      !
      !--set/unset log axes

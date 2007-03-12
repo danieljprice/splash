@@ -19,7 +19,7 @@ module timestep_plotting
   real, private :: angletempx, angletempy, angletempz
   !--buffer for interactive mode on multiplots
   integer, dimension(maxplot) :: iplotxtemp,iplotytemp,irendertemp
-  real, dimension(maxplot) :: xminmulti,xmaxmulti
+  real, dimension(maxplot) :: xminmulti,xmaxmulti,xminadapt,xmaxadapt
   real, dimension(maxplot) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
 
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
@@ -946,11 +946,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  !  (these must be known before the interpolate call)
                  if (use3Dperspective .and. use3Dopacityrendering) then
                     if (.not.interactivereplot .or. .not.iChangeRenderLimits) then
+                    !!--find (adaptive) limits of rendered array
+                       rendermin = minval(dat(1:ninterp,irenderplot))
+                       rendermax = maxval(dat(1:ninterp,irenderplot))
+                       xminadapt(irenderpart) = min(rendermin,xminadapt(irenderplot))
+                       xmaxadapt(irenderpart) = max(rendermax,xmaxadapt(irenderplot))
                        if (iadapt) then
-                          !!--if adaptive limits, find limits of rendered array
                           print*,'adapting render limits for opacity rendering'
-                          rendermin = minval(dat(1:npartoftype(1),irenderplot))
-                          rendermax = maxval(dat(1:npartoftype(1),irenderplot))
                        else
                           !!--or use fixed limits
                           rendermin = lim(irenderplot,1)
@@ -1046,11 +1048,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               labelx = 'cross section'
               !!--if adaptive limits, find limits of datpix
               if (.not.interactivereplot) then               
+                 ymin = minval(datpix1D)
+                 ymax = maxval(datpix1D)
+                 xminadapt(irenderplot) = min(ymin,xminadapt(irenderplot))
+                 xmaxadapt(irenderplot) = max(ymax,xmaxadapt(irenderplot))
                  if (iadapt) then
-                    ymin = minval(datpix1D)
-                    ymax = maxval(datpix1D)
+                    print*,' adapting y limits'
                  else
-                    !!--or apply transformations to fixed limits
+                    !!--or use fixed limits and apply transformations
                     ymin = lim(irenderplot,1)
                     ymax = lim(irenderplot,2)
                     call transform_limits(ymin,ymax,itrans(irenderplot))
@@ -1101,8 +1106,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
                  !!--limits for rendered quantity
                  if (.not.interactivereplot .or. .not.iChangeRenderLimits) then
-                    if (iadapt .and. .not.(use3Dperspective.and.use3Dopacityrendering.and.ndim.eq.3)) then
-                       !!--if adaptive limits, find limits of rendered array
+                    if (.not.(use3Dperspective.and.use3Dopacityrendering.and.ndim.eq.3)) then
+                       !!--find (adaptive) limits of rendered array
                        if (logged) then
    !                          rendermin = minval(datpix,mask=datpix.ne.-666.) ! see above
                           rendermin = minval(datpix,mask=abs(datpix+666.).gt.tiny(datpix)) ! see above
@@ -1110,8 +1115,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                           rendermin = minval(datpix)
                        endif
                        rendermax = maxval(datpix)
+                       xminadapt(irenderplot) = min(rendermin,xminadapt(irenderplot))
+                       xmaxadapt(irenderplot) = max(rendermax,xmaxadapt(irenderplot))
+                    endif
+                    if (iadapt) then
                        print*,'adapting render limits'
-                    elseif (.not.iadapt) then
+                    else
                        !!--or apply transformations to fixed limits
                        rendermin = lim(irenderplot,1)
                        rendermax = lim(irenderplot,2)
@@ -1139,14 +1148,16 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               labelrender = transform_label(labelrender,itrans(irenderpart))
 
               !!--limits for rendered quantity
-              if (.not.interactivereplot .or. .not.iChangeRenderLimits) then
+              if (.not.interactivereplot .or. .not.iChangeRenderLimits) then                
+                 !!--find (adaptive) limits of rendered array
+                 rendermin = minval(renderplot(1:ntoti))
+                 rendermax = maxval(renderplot(1:ntoti))
+                 xminadapt(irenderpart) = min(rendermin,xminadapt(irenderpart))
+                 xmaxadapt(irenderpart) = max(rendermax,xmaxadapt(irenderpart))
                  if (iadapt) then
-                    !!--if adaptive limits, find limits of rendered array
-                    rendermin = minval(renderplot(1:ntoti))
-                    rendermax = maxval(renderplot(1:ntoti))
                     print*,'adapting render limits'
                  else
-                    !!--or apply transformations to fixed limits
+                    !!--use fixed limits and apply transformations
                     rendermin = lim(irenderpart,1)
                     rendermax = lim(irenderpart,2)
                     call transform_limits(rendermin,rendermax,itrans(irenderpart))
@@ -1339,7 +1350,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                       iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
                       xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
                       vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
-                      nacross,ndim,icolours,interactivereplot)
+                      xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,interactivereplot)
                  if (iadvance.eq.-666 .or. interactivereplot) exit over_plots
               endif
            endif
@@ -1364,15 +1375,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            call transform(renderplot(1:ntoti),itrans(irenderpart))
 
            !!--limits for rendered quantity
-           if (iadapt .and. .not.interactivereplot) then
-              !!--if adaptive limits, find limits of rendered array
+           if (.not.interactivereplot) then
+              !!--find (adaptive) limits of rendered array
               rendermin = minval(renderplot(1:ntoti))
               rendermax = maxval(renderplot(1:ntoti))
-           elseif (.not.interactivereplot) then                   
-              !!--or apply transformations to fixed limits
-              rendermin = lim(irenderpart,1)
-              rendermax = lim(irenderpart,2)
-              call transform_limits(rendermin,rendermax,itrans(irenderpart))
+              xminadapt(irenderpart) = min(rendermin,xminadapt(irenderpart))
+              xmaxadapt(irenderpart) = max(rendermax,xmaxadapt(irenderpart))
+              if (.not.iadapt) then
+              !!--use fixed limits and apply transformations
+                 rendermin = lim(irenderpart,1)
+                 rendermax = lim(irenderpart,2)
+                 call transform_limits(rendermin,rendermax,itrans(irenderpart))
+              endif
            endif
 
            call colour_particles(renderplot(1:ntoti), &
@@ -1448,7 +1462,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
                    xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
                    vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
-                   nacross,ndim,icolours,interactivereplot)
+                   xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_plots
            endif
         endif
@@ -1739,6 +1753,11 @@ contains
        !  as starting point for interactive replotting
        nyplotfirstonpage = nyplot
        ifirststeponpage = ipos
+       !--reset the adaptive plot limits for this page
+       if (.not.interactivereplot) then
+          xminadapt = huge(xminadapt)
+          xmaxadapt = -huge(xmaxadapt)
+       endif
     endif
 
     if (nstepsperpage.ne.0 .or. inewpage) then
@@ -1889,22 +1908,34 @@ contains
     real, intent(out) :: xmini,xmaxi
     character(len=*), intent(in) :: labeli
     integer :: index1,index2,itype
+    real :: xmintemp,xmaxtemp
     
+    !--calculate adaptive limits for this quantity
+    xmintemp = huge(xmintemp)
+    xmaxtemp = -huge(xmaxtemp)
+    index1 = 1
+    do itype=1,maxparttypes
+       index2 = index1 + npartoftype(itype) - 1
+       if (iplotpartoftype(itype).and.npartoftype(itype).gt.0 &
+          .or. (iplotline.and.itype.eq.1)) then
+          xmintemp = min(xmintemp,minval(xploti(index1:index2)))
+          xmaxtemp = max(xmaxtemp,maxval(xploti(index1:index2))*scalemax)
+       endif
+       index1 = index2 + 1
+    enddo
+    
+    !--save the adaptive limits for interactive plotting
+    if (interactive) then
+       xminadapt(iplot) = min(xmintemp,xminadapt(iplot))
+       xmaxadapt(iplot) = max(xmaxtemp,xmaxadapt(iplot))
+    endif
+    
+    !--set these as limits if adaptive limits are on   
     if ((iplot.le.ndim .and. iadaptcoords) &
     .or.(iplot.gt.ndim .and. iadapt)) then
-       xmini = huge(xmini)
-       xmaxi = -huge(xmaxi)
-       index1 = 1
        print "(1x,a)",'adapting '//trim(labeli)//' limits'
-       do itype=1,maxparttypes
-          index2 = index1 + npartoftype(itype) - 1
-          if (iplotpartoftype(itype).and.npartoftype(itype).gt.0 &
-             .or. (iplotline.and.itype.eq.1)) then
-             xmini = min(xmini,minval(xploti(index1:index2)))
-             xmaxi = max(xmaxi,maxval(xploti(index1:index2))*scalemax)
-          endif
-          index1 = index2 + 1
-       enddo
+       xmini = xmintemp
+       xmaxi = xmaxtemp
     endif
     
   end subroutine adapt_limits
