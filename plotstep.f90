@@ -86,6 +86,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   xmax = 0.
   ymin = 0.
   ymax = 0.
+  xminadapt = huge(xminadapt)
+  xmaxadapt = -huge(xmaxadapt)
 
   if (ndim.eq.1) x_sec = .false. ! can't have xsec in 1D
   nxsec = 1
@@ -706,7 +708,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !--adjust plot limits if adaptive plot limits set
         !  (find minimum/maximum only on particle types actually plotted)
         !
-        if (ipagechange .and. .not.interactivereplot .and. itrackpart.le.0 .and. .not.irotate) then
+        if (.not.interactivereplot .and. itrackpart.le.0 .and. .not.irotate) then
            call adapt_limits(iplotx,xplot,xmin,xmax,'x')
            call adapt_limits(iploty,yplot,ymin,ymax,'y')
         endif
@@ -814,7 +816,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               endif
            enddo
            !--adapt plot limits after rotations have been done
-           if (ipagechange .and. .not.interactivereplot) then
+           if (.not.interactivereplot) then
               call adapt_limits(iplotx,xplot,xmin,xmax,'x')
               call adapt_limits(iploty,yplot,ymin,ymax,'y')
            endif        !!-reset co-ordinate plot limits if particle tracking           
@@ -1935,7 +1937,7 @@ contains
     
     !--set these as limits if adaptive limits are on   
     if ((iplot.le.ndim .and. iadaptcoords) &
-    .or.(iplot.gt.ndim .and. iadapt)) then
+    .or.(iplot.gt.ndim .and. iadapt) .and. ipagechange) then
        print "(1x,a)",'adapting '//trim(labeli)//' limits'
        xmini = xmintemp
        xmaxi = xmaxtemp

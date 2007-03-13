@@ -1115,8 +1115,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
  integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim
  integer, intent(inout) :: icolourscheme
  integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr
- real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti,xminadapt,xmaxadapt
- real, dimension(:), intent(inout) :: xmin,xmax
+ real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
+ real, dimension(:), intent(inout) :: xmin,xmax,xminadapt,xmaxadapt
  logical, intent(out) :: interactivereplot
  integer :: nc,ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage
  real :: xpt2,ypt2,xpti,ypti,renderpt
@@ -1416,7 +1416,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         !--change colour bar, y and x itrans between log / not logged
         !
         if (xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
-           call change_itrans(irenderarr(ipanel),xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)))
+           call change_itrans2(irenderarr(ipanel),xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)),&
+                               xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel)))
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
@@ -1424,7 +1425,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
            if (iplotyarr(ipanel).le.ndim .and. irenderarr(ipanel).gt.0) then
               print "(a)",'error: cannot log coordinate axes with rendering'
            else
-              call change_itrans(iplotyarr(ipanel),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
+              call change_itrans2(iplotyarr(ipanel),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)),&
+                                  xminadapt(iplotyarr(ipanel)),xmaxadapt(iplotyarr(ipanel)))
               istep = istepnew
               interactivereplot = .true.
               iexit = .true.
@@ -1433,7 +1435,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
            if (iplotxarr(ipanel).le.ndim .and. irenderarr(ipanel).gt.0) then
               print "(a)",'error: cannot log coordinate axes with rendering'
            else
-              call change_itrans(iplotxarr(ipanel),xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)))
+              call change_itrans2(iplotxarr(ipanel),xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),&
+                                  xminadapt(iplotxarr(ipanel)),xmaxadapt(iplotxarr(ipanel)))
               istep = istepnew
               interactivereplot = .true.
               iexit = .true.
@@ -1804,6 +1807,30 @@ subroutine change_itrans(iplot,xmin,xmax)
  endif
  
 end subroutine change_itrans
+
+subroutine change_itrans2(iplot,xmin,xmax,xmina,xmaxa)
+ use multiplot, only:itrans
+ use settings_data, only:numplot
+ use transforms, only:transform_limits,transform_limits_inverse
+ implicit none
+ integer, intent(in) :: iplot
+ real, intent(inout) :: xmin, xmax, xmina, xmaxa
+ 
+ if (iplot.le.numplot) then
+    if (itrans(iplot).eq.1) then
+       itrans(iplot) = 0
+       !!--untransform the plot limits
+       call transform_limits_inverse(xmin,xmax,1)
+       call transform_limits_inverse(xmina,xmaxa,1)
+    else
+       itrans(iplot) = 1
+       !!--transform the plot limits
+       call transform_limits(xmin,xmax,itrans(iplot))
+       call transform_limits(xmina,xmaxa,itrans(iplot))
+    endif
+ endif
+ 
+end subroutine change_itrans2
 
 subroutine useadaptive
  use settings_limits, only:iadapt
