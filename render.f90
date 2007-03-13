@@ -181,7 +181,7 @@ end subroutine colourbar
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
                   xmin,ymin,dx,label,unitslabel) 
  use legends, only:legend_vec
- use settings_vecplot, only:iVecplotLegend,hposlegendvec,vposlegendvec
+ use settings_vecplot, only:iVecplotLegend,hposlegendvec,vposlegendvec,iplotarrowheads
  implicit none
  integer, intent(in) :: npixx,npixy
  real, intent(in) :: xmin,ymin,dx
@@ -203,7 +203,11 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  print*,'vector plot..',npixx,'x',npixy,'=',size(vecpixx),' pixels'
  !!print*,'max(x component) = ',maxval(vecpixx),'max(y component) = ',maxval(vecpixy)
 
- call pgsah(2,45.0,0.7)   ! arrow style
+ if (iplotarrowheads) then
+    call pgsah(2,45.0,0.7)   ! arrow style
+ else
+    call pgsah(2,0.0,1.0)
+ endif
  call pgqch(charheight)
  call pgsch(0.3)          ! size of arrow head
  if (vecmax.le.0.0) then  ! adaptive limits

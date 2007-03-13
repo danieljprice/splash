@@ -6,11 +6,12 @@ module settings_vecplot
  implicit none
  integer :: npixvec
  logical :: UseBackgndColorVecplot, iplotpartvec
- logical :: iVecplotLegend,iplotstreamlines
+ logical :: iVecplotLegend,iplotstreamlines,iplotarrowheads
  real :: hposlegendvec,vposlegendvec
 
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot,iplotpartvec,&
-          iVecplotLegend,hposlegendvec,vposlegendvec,iplotstreamlines
+          iVecplotLegend,hposlegendvec,vposlegendvec,iplotstreamlines, &
+          iplotarrowheads
 
 contains
 
@@ -27,6 +28,7 @@ subroutine defaults_set_vecplot
   hposlegendvec = 0.02
   vposlegendvec = -1.5
   iplotstreamlines = .false. ! plot stream lines instead of arrows
+  iplotarrowheads = .true.
 
   return
 end subroutine defaults_set_vecplot
@@ -43,16 +45,18 @@ subroutine submenu_vecplot(ichoose)
  ians = ichoose
  print "(a)",'--------------- vector plot options -------------------'
 
- if (ians.le.0 .or. ians.gt.4) then
+ if (ians.le.0 .or. ians.gt.5) then
     print 10,npixvec,print_logical(UseBackgndColorVecplot), &
-             print_logical(iVecplotLegend),print_logical(iplotstreamlines)
+             print_logical(iVecplotLegend),print_logical(iplotstreamlines), &
+             print_logical(iplotarrowheads)
 10  format( &
              ' 0) exit ',/, &
              ' 1) change number of pixels                   (',i4,' )',/, &
              ' 2) use background colour for arrows          ( ',a,' )',/, &
              ' 3) vector plot legend settings               ( ',a,' )',/, &
-             ' 4) plot stream/field lines instead of arrows ( ',a,' )')
-    call prompt('enter option',ians,0,4)
+             ' 4) plot stream/field lines instead of arrows ( ',a,' )',/, &
+             ' 5) turn arrow heads on/off                   ( ',a,' )')
+    call prompt('enter option',ians,0,5)
  endif
 !
 !--options
@@ -82,6 +86,10 @@ subroutine submenu_vecplot(ichoose)
     print "(2(a,/))",' Note: the number of stream lines plotted is determined by', &
                      ' the "change number of contours" option in the r)ender menu'
     call prompt('use stream lines instead of arrows? ',iplotstreamlines)
+!------------------------------------------------------------------------
+ case(5)
+    iplotarrowheads = .not.iplotarrowheads
+    call prompt('plot arrow heads? ',iplotarrowheads)
  end select
 
  return
