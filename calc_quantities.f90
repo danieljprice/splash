@@ -9,7 +9,8 @@ contains
 !!   calculates various additional quantities from the input data
 !!
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
-  use labels
+  use labels, only:label,labelvec,iamvec,ix,irho,ih,ipmass,iutherm,ipr,ivx,ike, &
+                   irad,iBfirst,idivB
   use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iRescale
   use settings_part, only:iexact
@@ -18,7 +19,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
-  integer :: i,j,nstartfromcolumn,ncolsnew
+  integer :: i,j,ncolsnew
   integer :: ientrop,idhdrho,ivalfven,imach,ideltarho,ivol
   integer :: ipmag,ibeta,itotpr,idivBerr,icrosshel,ithermal
   integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
@@ -36,13 +37,12 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      skip = dontcalculate
   else
      skip = .false.
-  endif
-  
+  endif  
   !
   !--initialise extra quantities to zero
   !
-  ientrop = 0
   ike = 0
+  ientrop = 0
   idhdrho = 0
   ipmag = 0
   ibeta = 0
@@ -65,102 +65,50 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   !--specify hydro quantities
   !
   ncalc = 0
+  
   !--radius
-  if (ndim.gt.0) then
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 1
-     irad = nstartfromcolumn + 1
-  endif
+  if (ndim.gt.0) call addcolumn(irad,'radius ')
+  if (irad.gt.0) unitslabel(irad) = unitslabel(ix(1))
   !--thermal energy per unit volume
-  if (irho.ne.0 .and. iutherm.ne.0) then
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 1
-     ithermal = nstartfromcolumn + 1
-  endif  
+  if (irho.ne.0 .and. iutherm.ne.0) call addcolumn(ithermal,'\gr u')
   !--entropy
-  if (irho.ne.0 .and. iutherm.ne.0) then
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 1
-     ientrop = nstartfromcolumn + 1
-  endif
+  if (irho.ne.0 .and. iutherm.ne.0) call addcolumn(ientrop,'entropy')
   !--pressure
   if ((ipr.eq.0 .or. ipr.gt.ncolumns) .and. iutherm.ne.0.and.irho.ne.0) then
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 1
-     ipr = nstartfromcolumn + 1
+     call addcolumn(ipr,'pressure')
   endif
   !--mach number
-  if (ivx.ne.0 .and. ipr.ne.0 .and. irho.ne.0) then
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 1
-     imach = nstartfromcolumn + 1
-  endif
+  if (ivx.ne.0 .and. ipr.ne.0 .and. irho.ne.0) call addcolumn(imach,'mach number')
   !--deltarho for toy star
-  if (irho.ne.0 .and. irad.ne.0 .and. iexact.eq.4) then
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 1
-     ideltarho = nstartfromcolumn + 1
-  endif
+  if (irho.ne.0 .and. irad.ne.0 .and. iexact.eq.4) call addcolumn(ideltarho,'\gd \gr')
   !--mean particle spacing (m/rho)**(1/ndim)
-  !if (ipmass.ne.0 .and. irho.ne.0 .and. ndim.ge.1) then
-  !   nstartfromcolumn = ncolumns + ncalc
-  !   ncalc = ncalc + 1
-  !   ivol = nstartfromcolumn + 1
-  !endif
+  !if (ipmass.ne.0 .and. irho.ne.0 .and. ndim.ge.1) call addcolumn(ivol,'m/rho^(1/ndim)')
   !--dh/drho
-  !if (ih.ne.0 .and. irho.ne.0) then
-  !  nstartfromcolumn = ncolumns + ncalc
-  !   ncalc = ncalc + 1
-  !   idhdrho = nstartfromcolumn + 1
-  !endif
+  !if (ih.ne.0 .and. irho.ne.0) call addcolumn(idhdrho,'dh/d\gr')
+
   !
   !--specify MHD quantities
   !
   if (iBfirst.ne.0) then
-     nstartfromcolumn = ncolumns + ncalc
-     ncalc = ncalc + 1
-     ipmag = nstartfromcolumn + 1
+     call addcolumn(ipmag,'B\u2\d/2')
      if (ipr.ne.0 .and. ipmag.ne.0) then
-        nstartfromcolumn = ncolumns + ncalc
-        ncalc = ncalc + 2
-        ibeta = nstartfromcolumn + 1
-!        itotpr = nstartfromcolumn + 2
+        call addcolumn(ibeta,'plasma \gb')
+!        call addcolumn(itotpr,'P_gas + P_mag')
      endif
-     if (idivB.ne.0 .and. ih.ne.0) then
-        nstartfromcolumn = ncolumns + ncalc
-        ncalc = ncalc + 1
-        idivBerr = nstartfromcolumn + 1
-     endif
-!     if (ivx.ne.0) then
-!        nstartfromcolumn = ncolumns + ncalc
-!        ncalc = ncalc + 1
-!        icrosshel = nstartfromcolumn + 1
-!     endif
-     if (ipmag.ne.0 .and. (irho.ne.0)) then
-        nstartfromcolumn = ncolumns + ncalc
-        ncalc = ncalc + 1
-        ivalfven = nstartfromcolumn + 1
-     endif
-!     if (iJfirst.ne.0 .and.irho.ne.0) then
-!        nstartfromcolumn = ncolumns + ncalc
-!        ncalc = ncalc + 1
-!        icurr = nstartfromcolumn + 1
-!     endif
+     if (idivB.ne.0 .and. ih.ne.0) call addcolumn(idivBerr,'h |div B| / |B|')
+!     if (ivx.ne.0) call addcolumn(icrosshel,'B dot v')
+     if (ipmag.ne.0 .and. (irho.ne.0)) call addcolumn(ivalfven,'v\dalfven\u')
   else
-!     nstartfromcolumn = ncolumns + ncalc
-!     ncalc = ncalc + ndimV
-!     ivpar = nstartfromcolumn + 1
-!     ivperp= nstartfromcolumn + 2
+!     call addcolumn(ivpar,'v\d\(0737)')
+!     call addcolumn(ivperp,'v\d\(0738)')
   endif
 
 !  if (ndim.eq.2 .and. iBfirst.ne.0 .and. ivx.ne.0) then
-!     nstartfromcolumn = ncolumns + ncalc
-!     ncalc = ncalc + 5
-!     irad2 = nstartfromcolumn + 1
-!     ivpar = nstartfromcolumn + 2
-!     ivperp = nstartfromcolumn + 3
-!     iBpar = nstartfromcolumn + 4
-!     iBperp = nstartfromcolumn + 5
+!     call addcolumn(irad2,'r\d\(0737)')
+!     call addcolumn(ivpar,'v\d\(0737)')
+!     call addcolumn(ivperp,'v\d\(0738)')
+!     call addcolumn(iBpar,'B\d\(0737)')
+!     call addcolumn(iBperp,'B\d\(0738)')
 !  endif
 !
 !--magnitudes of all vector quantities (cartesian only)
@@ -171,10 +119,11 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   if (icoords.eq.1) then
      do i=1,ncolumns
         if (iamvec(i).gt.0 .and. iamvec(i).le.ncolumns .and. iamvec(i).ne.iamvecprev) then
-           ncalc = ncalc + 1
            nveclist = nveclist + 1
            iveclist(nveclist) = iamvec(i)
-           ivecmagcol(nveclist) = ncolumns + ncalc
+           call addcolumn(ivecmagcol(nveclist),'|'//trim(labelvec(iamvec(i)))//'|')           
+           !--set units label for vector magnitudes to be the same as the vectors
+           unitslabel(ivecmagcol(nveclist)) = unitslabel(iamvec(i))
            iamvecprev = iamvec(i)
         endif
      enddo
@@ -358,43 +307,6 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
    
   endif  ! skip
   !
-  !--set labels for calculated quantities
-  !  also units label where dimensions have not changed
-  !
-  if (ientrop.ne.0) label(ientrop) = 'entropy'
-  if (idhdrho.ne.0) label(idhdrho) = 'dh/d\gr'
-  if (irad.ne.0) then
-     label(irad) = 'radius '
-     unitslabel(irad) = unitslabel(ix(1))
-  endif
-  if (irad2.ne.0) label(irad2) = 'r\d\(0737)'    !!!parallel'
-  if (ike.ne.0) label(ike) = 'v\u2\d/2'
-  if (ipr.gt.ncolumns) label(ipr) = 'P_gas'
-  if (imach.ne.0) label(imach) = '|v|/c\ds'
-  if (ithermal.ne.0) label(ithermal) = '\gr u'
-  if (ideltarho.ne.0) label(ideltarho) = '\gd \gr'
-  if (ivol.ne.0) label(ivol) = '(m/rho)^1/ndim'
-  
-  if (ipmag.ne.0) label(ipmag) = 'B\u2\d/2'
-  if (itotpr.ne.0) label(itotpr) = 'P_gas + P_mag'
-  if (ibeta.ne.0) label(ibeta) = 'plasma \gb'
-  if (idivberr.ne.0) label(idivberr) = 'h |div B| / |B|'
-  if (icrosshel.ne.0) label(icrosshel) = 'B dot v'
-  if (ivalfven.ne.0) label(ivalfven) = 'v\dalfven'
-  !
-  !--magnitudes of all vector quantities
-  !
-  do ivec=1,nveclist
-     label(ivecmagcol(ivec)) = '|'//trim(labelvec(iveclist(ivec)))//'|'
-  !--set units label for vector magnitudes to be the same as the vectors
-     unitslabel(ivecmagcol(ivec)) = unitslabel(iveclist(ivec))
-  enddo
-  
-  if (ivpar.ne.0) label(ivpar) = 'v\d\(0737)'  !!!_parallel'
-  if (ivperp.ne.0) label(ivperp) = 'v\d\(0738)' !!_perp'
-  if (iBpar.ne.0) label(iBpar) = 'B\d\(0737)'  !!_parallel'
-  if (iBperp.ne.0) label(iBperp) = 'B\d\(0738)' !!_perp'
-  !
   !--override units of calculated quantities if necessary
   !
   if (iRescale .and. any(abs(units(ncolumns+1:ncolumns+ncalc)-1.0).gt.tiny(units)) &
@@ -414,5 +326,24 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   
   return
 end subroutine calc_quantities
+
+subroutine addcolumn(inewcolumn,labelin)
+ use labels, only:label
+ use settings_data, only:ncolumns,ncalc 
+ implicit none
+ integer, intent(out) :: inewcolumn
+ character(len=*), intent(in) :: labelin
+
+ ncalc = ncalc + 1
+ inewcolumn = ncolumns + ncalc
+ if (inewcolumn.le.size(label)) then
+    label(inewcolumn) = trim(labelin)
+ else
+    print*,' WARNING!!! too many columns for array dimensions'
+    print*,' => change parameter ''maxplot'' in globaldata.f90 and recompile'
+ endif
+
+ return
+end subroutine addcolumn
 
 end module calcquantities
