@@ -23,6 +23,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.8.0 : (14/03/07)
+!             hidden particles not used in rendering; units for z integration added;
+!             a) & g) implemented in interactive mode for multiple-plots-per-page;
+!             improved cross section using x in interactive mode
 !     1.7.2 : (19/02/07) 
 !             Menu shortcuts implemented; bug fix/ more sensible transformation
 !             of angular vector components in different co-ordinate systems;
@@ -167,7 +171,7 @@ program splash
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.8 beta [> 19th Feb ''07]'
+  character(len=*), parameter :: version = 'v1.8 [14th Mar ''07]'
 
   !
   ! set default options
