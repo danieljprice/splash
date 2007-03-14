@@ -7,11 +7,12 @@ module settings_vecplot
  integer :: npixvec
  logical :: UseBackgndColorVecplot, iplotpartvec
  logical :: iVecplotLegend,iplotstreamlines,iplotarrowheads
- real :: hposlegendvec,vposlegendvec
+ logical :: iplotsynchrotron
+ real :: hposlegendvec,vposlegendvec,rcrit,zcrit,synchrotronspecindex
 
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot,iplotpartvec,&
           iVecplotLegend,hposlegendvec,vposlegendvec,iplotstreamlines, &
-          iplotarrowheads
+          iplotarrowheads,iplotsynchrotron,rcrit,zcrit,synchrotronspecindex
 
 contains
 
@@ -29,6 +30,10 @@ subroutine defaults_set_vecplot
   vposlegendvec = -1.5
   iplotstreamlines = .false. ! plot stream lines instead of arrows
   iplotarrowheads = .true.
+  iplotsynchrotron = .false.
+  zcrit = 2.5 ! kpc
+  rcrit = 13. ! kpc
+  synchrotronspecindex = 0.8
 
   return
 end subroutine defaults_set_vecplot
@@ -38,6 +43,7 @@ end subroutine defaults_set_vecplot
 !----------------------------------------------------------------------
 subroutine submenu_vecplot(ichoose)
  use prompting
+ use settings_data, only:ndim
  implicit none
  integer, intent(in) :: ichoose
  integer :: ians
@@ -90,6 +96,13 @@ subroutine submenu_vecplot(ichoose)
  case(5)
     iplotarrowheads = .not.iplotarrowheads
     call prompt('plot arrow heads? ',iplotarrowheads)
+    if (ndim.eq.3 .and. .not.iplotarrowheads) then
+       call prompt(' plot synchrotron map? ',iplotsynchrotron)
+       call prompt(' enter rcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',rcrit,0.)
+       call prompt(' enter zcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',zcrit,0.)
+       call prompt(' enter synchrotron spectral index I_nu = nu^-alpha ',synchrotronspecindex,0.)
+    endif
+    
  end select
 
  return

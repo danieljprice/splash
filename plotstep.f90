@@ -1950,9 +1950,10 @@ contains
 ! so that pixel arrays are allocated appropriately
 !-------------------------------------------------------------------
   subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidth,vmax,label)
-   use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines
+   use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines,iplotarrowheads, &
+                         iplotsynchrotron,rcrit,zcrit,synchrotronspecindex
    use interpolations2D, only:interpolate2D_vec
-   use projections3D, only:interpolate3D_proj_vec
+   use projections3D, only:interpolate3D_proj_vec,interpolate3D_proj_vec_synchrotron
    use render, only:render_vec
    use fieldlines, only:streamlines
    implicit none
@@ -1991,16 +1992,34 @@ contains
               icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidth,inormalise)
          else
-            call interpolate3D_proj_vec(xplot(1:ninterp), &
-              yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
-              weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-              icolourme(1:ninterp),ninterp,xmin,ymin, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidth,dobserver,dscreenfromobserver)
-              !!--adjust the units of the z-integrated quantity
-              if (iRescale .and. units(ih).gt.0.) then
-                 vecpixx = vecpixx*(unitzintegration/units(ih))
-                 vecpixy = vecpixy*(unitzintegration/units(ih))
-              endif
+            if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then
+               call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+                 yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                 weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                 icolourme(1:ninterp),ninterp,xmin,ymin, &
+                 vecpixx,vecpixy,datpix,numpixx,numpixy,pixwidth,rcrit,zcrit,synchrotronspecindex)
+                 !!--adjust the units of the z-integrated quantity
+                 if (iRescale .and. units(ih).gt.0.) then
+                    vecpixx = vecpixx*(unitzintegration/units(ih))
+                    vecpixy = vecpixy*(unitzintegration/units(ih))
+                    datpix = datpix*(unitzintegration/units(ih))
+                 endif            
+                 !--plot contours of synchrotron intensity
+                 call render_pix(datpix,minval(datpix),maxval(datpix),'crap', &
+                   numpixx,numpixy,xmin,ymin,pixwidth,    &
+                   0,.true.,.false.,ncontours,.false.)
+            else
+               call interpolate3D_proj_vec(xplot(1:ninterp), &
+                 yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                 weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                 icolourme(1:ninterp),ninterp,xmin,ymin, &
+                 vecpixx,vecpixy,numpixx,numpixy,pixwidth,dobserver,dscreenfromobserver)
+                 !!--adjust the units of the z-integrated quantity
+                 if (iRescale .and. units(ih).gt.0.) then
+                    vecpixx = vecpixx*(unitzintegration/units(ih))
+                    vecpixy = vecpixy*(unitzintegration/units(ih))
+                 endif
+            endif
          endif
       case(2)
          !
