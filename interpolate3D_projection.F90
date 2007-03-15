@@ -351,12 +351,12 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
         !
         !--if particle is entirely within one pixel, add full contribution to that pixel
         !
-        if (ipixmin.eq.ipixmax .and. jpixmin.eq.jpixmax) then
-           if (ipixmin.ge.1 .and. ipixmin.le.npixx .and. &
-               jpixmin.ge.1 .and. jpixmin.le.npixy) then
-              datsmooth(ipixmin,jpixmin) = datsmooth(ipixmin,jpixmin) + term*radkernel2
-           endif
-        endif
+!        if (ipixmin.eq.ipixmax .and. jpixmin.eq.jpixmax) then
+!           if (ipixmin.ge.1 .and. ipixmin.le.npixx .and. &
+!               jpixmin.ge.1 .and. jpixmin.le.npixy) then
+!              datsmooth(ipixmin,jpixmin) = datsmooth(ipixmin,jpixmin) + term*radkernel2
+!           endif
+!        endif
 
         if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
         if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
@@ -648,14 +648,14 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      !
      !--if particle is entirely within one pixel, add full contribution to that pixel
      !
-     if (ipixmin.eq.ipixmax .and. jpixmin.eq.jpixmax) then
-        if (ipixmin.ge.1 .and. ipixmin.le.npixx .and. &
-            jpixmin.ge.1 .and. jpixmin.le.npixy) then
-           stokesQ(ipixmin,jpixmin) = stokesQ(ipixmin,jpixmin) + termx*radkernel2
-           stokesU(ipixmin,jpixmin) = stokesU(ipixmin,jpixmin) + termy*radkernel2
-           stokesI(ipixmin,jpixmin) = stokesI(ipixmin,jpixmin) + term*radkernel2
-        endif
-     endif
+!     if (ipixmin.eq.ipixmax .and. jpixmin.eq.jpixmax) then
+!        if (ipixmin.ge.1 .and. ipixmin.le.npixx .and. &
+!            jpixmin.ge.1 .and. jpixmin.le.npixy) then
+!           stokesQ(ipixmin,jpixmin) = stokesQ(ipixmin,jpixmin) + termx*radkernel2
+!           stokesU(ipixmin,jpixmin) = stokesU(ipixmin,jpixmin) + termy*radkernel2
+!           stokesI(ipixmin,jpixmin) = stokesI(ipixmin,jpixmin) + termx*radkernel2
+!        endif
+!     endif
 
      ! PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
      ! PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
