@@ -112,6 +112,7 @@ ifeq ($(SYSTEM),ifort)
    F90C= ifort
    F90FLAGS= -O3 -Vaxlib -nbs
    OMPFLAGS= -openmp
+   DEBUGFLAG= -C -g
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -convert big_endian
    ENDIANFLAGLITTLE= -convert little_endian
