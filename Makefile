@@ -80,7 +80,7 @@ ifeq ($(SYSTEM), gfortran)
    F90FLAGS= -O3 -Wall
    SYSTEMFILE= system_unix.f90
    DEBUGFLAG= -g -frange-check
-   OMPFLAG= -fopenmp
+   OMPFLAGS= -fopenmp
    ENDIANFLAGBIG= -fconvert=big-endian
    ENDIANFLAGLITTLE= -fconvert=little-endian
    KNOWN_SYSTEM=yes
