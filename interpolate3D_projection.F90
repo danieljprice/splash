@@ -147,7 +147,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpart
   integer :: iprintinterval, iprintnext, itmin,ipixi,jpixi,jpixcopy
+#ifdef _OPENMP
   integer :: OMP_GET_NUM_THREADS
+#endif
   integer(kind=8) :: iprogress,i
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
   real :: term,dy,dy2,ypix,zfrac
@@ -435,6 +437,17 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   !
   !--loop over particles
   !      
+!$OMP PARALLEL default(none) &
+!$OMP SHARED(hh,z,x,y,weight,vecx,vecy,itype,vecsmoothx,vecsmoothy,npart) &
+!$OMP SHARED(xmin,ymin,pixwidth,zobserver,dscreen) &
+!$OMP SHARED(npixx,npixy) &
+!$OMP PRIVATE(hi,radkern,const,zfrac,ypix,xpix) &
+!$OMP PRIVATE(hi1,hi21,termx,termy) &
+!$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
+!$OMP PRIVATE(dy,dy2,dx,rab2,q2,wab) &
+!$OMP PRIVATE(i,ipix,jpix)
+
+!$OMP DO SCHEDULE(guided, 2)
   over_particles: do i=1,npart
      !
      !--skip particles with itype < 0
@@ -446,8 +459,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      hi = hh(i)
      const = weight(i)*hi ! h gives the z length scale (NB: no perspective)
      if (hi.le.0.) then
-        print*,'interpolate3D_proj_vec: error: h <= 0 ',i,hi
-        return
+        cycle over_particles
      elseif (abs(dscreen).gt.tiny(dscreen)) then
         if (z(i).gt.zobserver) cycle over_particles
         zfrac = abs(dscreen/(z(i)-zobserver))
@@ -503,6 +515,8 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      enddo
 
   enddo over_particles
+!$OMP END DO
+!$OMP END PARALLEL
 
   return
 
@@ -561,6 +575,18 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
   !
   !--loop over particles
   !      
+!$OMP PARALLEL default(none) &
+!$OMP SHARED(hh,z,x,y,weight,vecx,vecy,itype,stokesQ,stokesU,stokesI,npart) &
+!$OMP SHARED(xmin,ymin,pixwidth,rcrit,zcrit,alpha) &
+!$OMP SHARED(npixx,npixy,pintrinsic) &
+!$OMP PRIVATE(hi,xi,yi,zi,radkern,const) &
+!$OMP PRIVATE(hi1,hi21,term,termx,termy) &
+!$OMP PRIVATE(rcyl,crdens,Bperp,emissivity,angle) &
+!$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
+!$OMP PRIVATE(dy,dy2,dx,xpix,ypix,rab2,q2,wab) &
+!$OMP PRIVATE(i,ipix,jpix)
+
+!$OMP DO SCHEDULE(guided, 2)
   over_particles: do i=1,npart
      !
      !--skip particles with itype < 0
@@ -570,12 +596,9 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      !--set kernel related quantities
      !
      hi = hh(i)
+     if (hi.le.0.) cycle over_particles
      const = weight(i)*hi ! h gives the z length scale (NB: no perspective)
      zi = z(i)
-     if (hi.le.0.) then
-        print*,'interpolate3D_proj_vec: error: h <= 0 ',i,hi
-        return
-     endif
      hi1 = 1./hi
      hi21 = hi1*hi1
      radkern = 2.*hi    ! radius of the smoothing kernel
@@ -642,6 +665,8 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      enddo
 
   enddo over_particles
+!$OMP END DO
+!$OMP END PARALLEL
 
   return
 
