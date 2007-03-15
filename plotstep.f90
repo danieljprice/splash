@@ -1094,8 +1094,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  labelrender = label(irenderplot)
                  !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
                  if (ndim.eq.3 .and..not. x_sec .and..not.(use3Dperspective.and.use3Dopacityrendering)) then
-                    labelrender = '\(2268) '//trim(labelrender)//' d'// &
-                       trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//trim(labelzintegration)
+                    if (iRescale) then
+                       labelrender = '\(2268) '//trim(labelrender)//' d'// &
+                          trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//trim(labelzintegration)
+                    else
+                       labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
+                    endif
                     if (irenderplot.eq.irho) then
                        labelrender = 'column density'
                        !--try to get units label right for column density
@@ -1263,7 +1267,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                 endif
                 !!--set label for projection plots (2268 or 2412 for integral sign)
                 if (ndim.eq.3 .and..not. x_sec) then
-                   labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
+                   if (iRescale) then
+                      labelvecplot = '\(2268) '//trim(labelvecplot)//' d'// &
+                        trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//trim(labelzintegration)
+                   else
+                      labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
+                   endif
                 endif
                 pixwidth = (xmax-xmin)/real(npixvec - 1)
                 npixyvec = int((ymax-ymin)/pixwidth) + 1
