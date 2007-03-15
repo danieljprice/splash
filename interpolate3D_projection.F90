@@ -585,7 +585,7 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      !--assumed distribution of cosmic ray electrons in galaxy
      !  (should use UNROTATED x,y if rotation added)
      rcyl = sqrt(xi**2 + yi**2)
-     crdens = exp(-rcyl/rcrit - zi/zcrit)
+     crdens = exp(-rcyl/rcrit - abs(zi)/zcrit)
      
      !--calculate synchrotron emissivity based on Bperp and a spectral index alpha
      Bperp = sqrt(vecx(i)**2 + vecy(i)**2)
