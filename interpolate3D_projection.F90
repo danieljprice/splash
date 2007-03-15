@@ -215,7 +215,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$OMP PRIVATE(dx2i,row,q2,ypix,dy,dy2,wab) &
 !$OMP PRIVATE(i,ipix,jpix,jpixcopy)
 !$OMP MASTER
-#ifdef _openmp
+#ifdef _OPENMP
   print "(1x,a,i3,a)",'Using ',OMP_GET_NUM_THREADS(),' cpus'
 #endif
 !$OMP END MASTER
@@ -225,7 +225,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !
      !--report on progress
      !
-#ifndef _openmp
+#ifndef _OPENMP
      if (iprintprogress) then
         iprogress = 100*i/npart
         if (iprogress.ge.iprintnext) then

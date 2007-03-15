@@ -139,7 +139,7 @@ ifeq ($(SYSTEM),ukaff1a)
 #  this is for ukaff1a
    F90C= xlf90_r
    F90FLAGS= -O3 -qnoescape -qsuffix=f=f90 -qextname
-   OMPFLAGS= -qsmp=noauto
+   OMPFLAGS= -qsmp=omp
    DEBUGFLAG= -C -g
    SYSTEMFILE= system_f2003.f90
    PGPLOTLIBS= -L/home/dprice/pgplot -lpgplot  
