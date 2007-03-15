@@ -954,8 +954,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     !!--find (adaptive) limits of rendered array
                        rendermin = minval(dat(1:ninterp,irenderplot))
                        rendermax = maxval(dat(1:ninterp,irenderplot))
-                       xminadapt(irenderpart) = min(rendermin,xminadapt(irenderplot))
-                       xmaxadapt(irenderpart) = max(rendermax,xmaxadapt(irenderplot))
+                       xminadapt(irenderplot) = min(rendermin,xminadapt(irenderplot))
+                       xmaxadapt(irenderplot) = max(rendermax,xmaxadapt(irenderplot))
                        if (iadapt) then
                           print*,'adapting render limits for opacity rendering'
                        else
@@ -1075,7 +1075,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !   do this *before* the page setup so that rendermin,max
            !   can be stored in page_setup for interactive plots
            !------------------------------------------------------------------
-           if (irenderplot.gt.0) then
+           if (irenderplot.gt.0 .and. irenderplot.le.numplot) then
               if (ndim.eq.3 .or. (ndim.eq.2 .and..not.x_sec)) then
                  write(string,"(i8)") itrans(irenderplot) ! used to determine whether logged or not
                  logged = (index(string,'1').ne.0)

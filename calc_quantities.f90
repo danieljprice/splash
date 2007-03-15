@@ -58,6 +58,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   imach = 0
   ideltarho = 0
   ivol = 0
+  ithermal = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -202,11 +203,11 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                                            dat(j,ivx:ivx+ndimV-1,i))
          enddo
       endif
-      if (ithermal.ne.0) then
+      if (ithermal.ne.0 .and. iutherm.ne.0 .and. irho.ne.0) then
          dat(1:ntoti,ithermal,i) = dat(1:ntoti,irho,i)*dat(1:ntoti,iutherm,i)
       endif
       !!--volume - (m/rho)**(1/ndim)
-      if (ivol.ne.0) then
+      if (ivol.ne.0 .and. ipmass.ne.0 .and. irho.ne.0 .and. ndim.gt.0) then
          where (dat(1:ntoti,irho,i).gt.tiny(dat))
             dat(1:ntoti,ivol,i) = (dat(1:ntoti,ipmass,i)/dat(1:ntoti,irho,i))**(1./real(ndim))    
          elsewhere
