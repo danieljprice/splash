@@ -261,17 +261,10 @@ FFLAGS = $(F90FLAGS)
 	$(FC) $(FFLAGS) -c $< -o $@
 %.o : %.f90
 	$(F90C) $(F90FLAGS) -c $< -o $@
+%.o : %.F90
+	$(F90C) $(FPPFLAGS) $(F90FLAGS) -c $< -o $@
 %.o : %.f95
 	$(F90C) $(F90FLAGS) -c $< -o $@
-
-#
-# use either the parallel or serial versions of some routines
-#
-ifeq ($(PARALLEL),yes)
-   INTERPROUTINES= interpolate3D_projection_P.f90
-else
-   INTERPROUTINES= interpolate3D_projection.f90
-endif
 
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
@@ -294,7 +287,7 @@ SOURCESF90= globaldata.f90 transform.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 \
          rotate.f90 interpolate1D.f90 \
          interpolate2D.f90 interpolate3D_xsec.f90 \
-         $(INTERPROUTINES) \
+         interpolate3D_projection.F90 \
          interpolate3D_opacity.f90\
          interactive.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
@@ -306,7 +299,8 @@ SOURCESF90= globaldata.f90 transform.f90 \
 # these are `external' f77 subroutines
 SOURCESF=
 
-OBJECTS = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o) $(STATICLIBS)
+OBJECTS1 = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o) $(STATICLIBS)
+OBJECTS= $(OBJECTS1:.F90=.o)
 
 #
 # Now compile with the appropriate data read file
