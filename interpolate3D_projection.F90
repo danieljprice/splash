@@ -143,6 +143,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreen
   real, intent(out), dimension(npixx,npixy) :: datsmooth
+  logical, intent(in) :: useaccelerate
   real :: row(npixx)
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpart
@@ -156,10 +157,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
   real, dimension(npixx) :: xpix,dx2i
   real :: t_start,t_end,t_used,tsec
-  logical :: iprintprogress,use3Dperspective,accelerate,useaccelerate
+  logical :: iprintprogress,use3Dperspective,accelerate
   
-  !useaccelerate = .true.
-
   datsmooth = 0.
   term = 0.
   print "(1x,a)",'projecting from particles to pixels...'
@@ -294,22 +293,17 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      accelerate = useaccelerate .and. npixpart.gt.5 &
                  .and. ipixmin.ge.1 .and. ipixmax.le.npixx &
                  .and. jpixmin.ge.1 .and. jpixmax.le.npixy
-
-     if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
-     if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-     if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
-     if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
-     !
-     !--precalculate an array of dx2 for this particle (optimisation)
-     !
-     do ipix=ipixmin,ipixmax
-        dx2i(ipix) = ((xpix(ipix) - xi)**2)*hi21
-     enddo
      
      if (accelerate) then
         !--adjust xi, yi to centre of pixel
         xi = xminpix + ipixi*pixwidth
         yi = yminpix + jpixi*pixwidth
+        !
+        !--precalculate an array of dx2 for this particle (optimisation)
+        !
+        do ipix=ipixmin,ipixmax
+           dx2i(ipix) = ((xpix(ipix) - xi)**2)*hi21
+        enddo
         do jpix = jpixi,jpixmax
            ypix = yminpix + jpix*pixwidth
            dy = ypix - yi
@@ -350,6 +344,30 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
         enddo
           
      else
+        ipixmin = int((xi - radkern - xmin)/pixwidth)
+        jpixmin = int((yi - radkern - ymin)/pixwidth)
+        ipixmax = int((xi + radkern - xmin)/pixwidth)
+        jpixmax = int((yi + radkern - ymin)/pixwidth)
+        !
+        !--if particle is entirely within one pixel, add full contribution to that pixel
+        !
+        if (ipixmin.eq.ipixmax .and. jpixmin.eq.jpixmax) then
+           if (ipixmin.ge.1 .and. ipixmin.le.npixx .and. &
+               jpixmin.ge.1 .and. jpixmin.le.npixy) then
+              datsmooth(ipixmin,jpixmin) = datsmooth(ipixmin,jpixmin) + term*radkernel2
+           endif
+        endif
+
+        if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
+        if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
+        if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
+        if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
+        !
+        !--precalculate an array of dx2 for this particle (optimisation)
+        !
+        do ipix=ipixmin,ipixmax
+           dx2i(ipix) = ((xpix(ipix) - xi)**2)*hi21
+        enddo
 
         do jpix = jpixmin,jpixmax
            ypix = yminpix + jpix*pixwidth
@@ -627,6 +645,17 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      jpixmin = int((yi - radkern - ymin)/pixwidth)
      ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
      jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
+     !
+     !--if particle is entirely within one pixel, add full contribution to that pixel
+     !
+     if (ipixmin.eq.ipixmax .and. jpixmin.eq.jpixmax) then
+        if (ipixmin.ge.1 .and. ipixmin.le.npixx .and. &
+            jpixmin.ge.1 .and. jpixmin.le.npixy) then
+           stokesQ(ipixmin,jpixmin) = stokesQ(ipixmin,jpixmin) + termx*radkernel2
+           stokesU(ipixmin,jpixmin) = stokesU(ipixmin,jpixmin) + termy*radkernel2
+           stokesI(ipixmin,jpixmin) = stokesI(ipixmin,jpixmin) + term*radkernel2
+        endif
+     endif
 
      ! PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
      ! PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
