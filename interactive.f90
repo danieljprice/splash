@@ -1383,6 +1383,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         endif
      case('a') ! adapt plot limits
         if (xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
+           print*,'adapting render limits ',xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel))
            xmin(irenderarr(ipanel)) = xminadapt(irenderarr(ipanel))
            xmax(irenderarr(ipanel)) = xmaxadapt(irenderarr(ipanel))
            istep = istepnew
@@ -1391,7 +1392,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
         else
            if (xpti.ge.xmin(iplotxarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel)) &
               .and. ypti.le.xmax(iplotyarr(ipanel))) then
-              print*,'resetting x limits'
+              print*,'adapting x limits ',xminadapt(iplotxarr(ipanel)),xmaxadapt(iplotxarr(ipanel))
               xmin(iplotxarr(ipanel)) = xminadapt(iplotxarr(ipanel))
               xmax(iplotxarr(ipanel)) = xmaxadapt(iplotxarr(ipanel))
               istep = istepnew
@@ -1400,7 +1401,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
            endif
            if (ypti.ge.xmin(iplotyarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel)) &
               .and. xpti.le.xmax(iplotxarr(ipanel))) then
-              print*,'resetting y limits'
+              print*,'adapting y limits ',xminadapt(iplotyarr(ipanel)),xmaxadapt(iplotyarr(ipanel))
               xmin(iplotyarr(ipanel)) = xminadapt(iplotyarr(ipanel))
               xmax(iplotyarr(ipanel)) = xmaxadapt(iplotyarr(ipanel))
               istep = istepnew
