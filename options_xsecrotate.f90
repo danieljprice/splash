@@ -7,6 +7,7 @@ module settings_xsecrot
  implicit none
  integer :: nxsec,irotateaxes
  logical :: xsec_nomulti, irotate, flythru, use3Dperspective, use3Dopacityrendering
+ logical :: writeppm
  real :: anglex, angley, anglez, zobserver, dzscreenfromobserver
  real :: taupartdepth, rkappa
  real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
@@ -17,7 +18,7 @@ module settings_xsecrot
           irotate,irotateaxes,anglex, angley, anglez, &
           xminrotaxes,xmaxrotaxes,use3Dperspective, &
           use3Dopacityrendering,zobserver,dzscreenfromobserver, &
-          taupartdepth
+          taupartdepth,writeppm
 
 contains
 
@@ -48,6 +49,7 @@ subroutine defaults_set_xsecrotate
   dzscreenfromobserver = 0.
   rkappa = 0. ! rkappa is set from taupartdepth later
   taupartdepth = 2.
+  writeppm = .true.
 
   return
 end subroutine defaults_set_xsecrotate
@@ -171,10 +173,15 @@ subroutine submenu_xsecrotate(ichoose)
 !------------------------------------------------------------------------
  case(5)
     use3Dopacityrendering = .not.use3Dopacityrendering
-    print "(a,L1)",' 3D opacity rendering = ',use3Dopacityrendering
+    call prompt(' Use 3D opacity rendering? ',use3Dopacityrendering)
     if (use3Dopacityrendering .and..not.use3Dperspective) then
        print "(a)",' also turning on 3D perspective (which must be set for this to work)'
        use3Dperspective = .true.
+    endif
+    if (use3Dopacityrendering) then
+       print "(/,a)",' Warning: 3D opacity rendering sends only an approximate version '
+       print "(a,/)",' to the PGPLOT device (not corrected for brightness) '
+       call prompt(' Do you want to write a ppm file in addition to PGPLOT output?',writeppm)
     endif
 !------------------------------------------------------------------------
  case(6)
