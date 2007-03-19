@@ -10,7 +10,7 @@ module timestep_plotting
   integer, private :: iplots,ipanel
 
   real, dimension(:), allocatable, private :: datpix1D, xgrid
-  real, dimension(:,:), allocatable, private :: datpix
+  real, dimension(:,:), allocatable, private :: datpix, brightness
   real, dimension(:,:,:), allocatable, private :: datpix3D
   real, private :: xmin,xmax,ymin,ymax,zmin
   real, private :: rendermin,rendermax,vecmax
@@ -21,6 +21,7 @@ module timestep_plotting
   integer, dimension(maxplot) :: iplotxtemp,iplotytemp,irendertemp
   real, dimension(maxplot) :: xminmulti,xmaxmulti,xminadapt,xmaxadapt
   real, dimension(maxplot) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
+  real, private :: xminadapti,xmaxadapti,yminadapti,ymaxadapti,renderminadapt,rendermaxadapt
 
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
   logical, private :: inewpage, tile_plots, lastplot
@@ -399,7 +400,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
       iPlotColourBar,icolour_particles,inormalise_interpolations,ifastrender
   use settings_vecplot, only:npixvec, iplotpartvec
-  use settings_xsecrot
+  use settings_xsecrot, only:nxsec,irotateaxes,xsec_nomulti,irotate,flythru,use3Dperspective, &
+                             use3Dopacityrendering,writeppm,anglex,angley,anglez,zobserver, &
+                             dzscreenfromobserver,taupartdepth,rkappa,xsecpos_nomulti, &
+                             xseclineX1,xseclineX2,xseclineY1,xseclineY2,xorigin,xminrotaxes,xmaxrotaxes
   use settings_powerspec
   use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
 !
@@ -414,7 +418,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use interpolations1D, only:interpolate1D
   use interpolations2D, only:interpolate2D, interpolate2D_xsec
   use projections3D, only:interpolate3D_projection
-  use opacityrendering3D, only:interpolate3D_proj_opacity
+  use opacityrendering3D, only:interpolate3D_proj_opacity,interpolate3D_proj_opacity_writeppm
   use xsections3D, only:interpolate3D, interpolate3D_fastxsec, &
                         interpolate3D_xsec_vec
   use render, only:render_pix,colourbar
@@ -709,8 +713,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !  (find minimum/maximum only on particle types actually plotted)
         !
         if (.not.interactivereplot .and. itrackpart.le.0 .and. .not.irotate) then
-           call adapt_limits(iplotx,xplot,xmin,xmax,'x')
-           call adapt_limits(iploty,yplot,ymin,ymax,'y')
+           call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x')
+           call adapt_limits(iploty,yplot,ymin,ymax,yminadapti,ymaxadapti,'y')
         endif
 
         !!-reset co-ordinate plot limits if particle tracking           
@@ -817,8 +821,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            enddo
            !--adapt plot limits after rotations have been done
            if (.not.interactivereplot) then
-              call adapt_limits(iplotx,xplot,xmin,xmax,'x')
-              call adapt_limits(iploty,yplot,ymin,ymax,'y')
+              call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x')
+              call adapt_limits(iploty,yplot,ymin,ymax,yminadapti,ymaxadapti,'y')
            endif        !!-reset co-ordinate plot limits if particle tracking           
            if (itrackpart.gt.0 .and. .not.interactivereplot) then
               if (iplotx.le.ndim) then
@@ -856,9 +860,17 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  if (npixx.ne.size(datpix(:,1)) .or. npixy.ne.size(datpix(1,:))) then
                     deallocate(datpix)           
                     allocate (datpix(npixx,npixy))
+                    if (ndim.eq.3 .and. use3Dperspective .and. use3Dopacityrendering) then
+                       if (allocated(brightness)) deallocate(brightness)
+                       allocate(brightness(npixx,npixy))
+                    endif
                  endif
               else
                  allocate (datpix(npixx,npixy))
+                 if (ndim.eq.3 .and. use3Dperspective .and. use3Dopacityrendering) then
+                    if (allocated(brightness)) deallocate(brightness)
+                    allocate(brightness(npixx,npixy))
+                 endif
               endif
 
               select case(ndim)
@@ -946,27 +958,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  !-------------------------------------------------------------------
                  !  or do a fast projection/cross section of 3D data to 2D array
                  !-------------------------------------------------------------------
-                 
-                 !--set limits for opacity rendering 
-                 !  (these must be known before the interpolate call)
-                 if (use3Dperspective .and. use3Dopacityrendering) then
-                    if (.not.interactivereplot .or. .not.iChangeRenderLimits) then
-                    !!--find (adaptive) limits of rendered array
-                       rendermin = minval(dat(1:ninterp,irenderplot))
-                       rendermax = maxval(dat(1:ninterp,irenderplot))
-                       xminadapt(irenderplot) = min(rendermin,xminadapt(irenderplot))
-                       xmaxadapt(irenderplot) = max(rendermax,xmaxadapt(irenderplot))
-                       if (iadapt) then
-                          print*,'adapting render limits for opacity rendering'
-                       else
-                          !!--or use fixed limits
-                          rendermin = lim(irenderplot,1)
-                          rendermax = lim(irenderplot,2)
-                       endif
-                       !!--apply transformations to limits
-                       call transform_limits(rendermin,rendermax,itrans(irenderplot))
-                    endif
-                 endif
 
                  !--only rerender if absolutely necessary
                  if (.not.interactivereplot .or. irerender) then
@@ -979,9 +970,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
-                               ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver, &
-                               dscreenfromobserver,rkappa,zslicepos, &
-                               rendermin,rendermax,itrans(irenderplot),istep)
+                               ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,dobserver, &
+                               dscreenfromobserver,rkappa,zslicepos)
                        elseif (use3Dperspective) then
                           print*,'ERROR: X_SEC WITH 3D PERSPECTIVE NOT IMPLEMENTED'
                           datpix = 0.
@@ -1003,9 +993,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
-                               ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth,dobserver, &
-                               dscreenfromobserver,rkappa,huge(zslicepos), &
-                               rendermin,rendermax,itrans(irenderplot),istep)                    
+                               ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,dobserver, &
+                               dscreenfromobserver,rkappa,huge(zslicepos))                    
                        else
                           !!--do fast projection of z integrated data (e.g. column density)
                           call interpolate3D_projection( &
@@ -1115,20 +1104,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
                  !!--limits for rendered quantity
                  if (.not.interactivereplot .or. .not.iChangeRenderLimits) then
-                    if (.not.(use3Dperspective.and.use3Dopacityrendering.and.ndim.eq.3)) then
-                       !!--find (adaptive) limits of rendered array
-                       if (logged) then
-   !                          rendermin = minval(datpix,mask=datpix.ne.-666.) ! see above
-                          rendermin = minval(datpix,mask=abs(datpix+666.).gt.tiny(datpix)) ! see above
-                       else
-                          rendermin = minval(datpix)
-                       endif
-                       rendermax = maxval(datpix)
-                       xminadapt(irenderplot) = min(rendermin,xminadapt(irenderplot))
-                       xmaxadapt(irenderplot) = max(rendermax,xmaxadapt(irenderplot))
+                    !!--find (adaptive) limits of rendered array
+                    if (logged) then
+!                          rendermin = minval(datpix,mask=datpix.ne.-666.) ! see above
+                       renderminadapt = minval(datpix,mask=abs(datpix+666.).gt.tiny(datpix)) ! see above
+                    else
+                       renderminadapt = minval(datpix)
                     endif
+                    rendermaxadapt = maxval(datpix)
+
                     if (iadapt) then
                        print*,'adapting render limits'
+                       rendermin = renderminadapt
+                       rendermax = rendermaxadapt
                     else
                        !!--or apply transformations to fixed limits
                        rendermin = lim(irenderplot,1)
@@ -1159,13 +1147,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               !!--limits for rendered quantity
               if (.not.interactivereplot .or. .not.iChangeRenderLimits) then                
                  !!--find (adaptive) limits of rendered array
-                 rendermin = minval(renderplot(1:ntoti))
-                 rendermax = maxval(renderplot(1:ntoti))
-                 xminadapt(irenderpart) = min(rendermin,xminadapt(irenderpart))
-                 xmaxadapt(irenderpart) = max(rendermax,xmaxadapt(irenderpart))
-                 if (iadapt) then
-                    print*,'adapting render limits'
-                 else
+                 call adapt_limits(irenderpart,renderplot(1:ntoti),rendermin,rendermax, &
+                                   renderminadapt,rendermaxadapt,trim(labelrender))
+                 if (.not.iadapt) then
                     !!--use fixed limits and apply transformations
                     rendermin = lim(irenderpart,1)
                     rendermax = lim(irenderpart,2)
@@ -1222,6 +1206,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    icolourme(1:ntoti),npartoftype(:),PlotOnRenderings(:), &
                    (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                    xmin,xmax,ymin,ymax,ifastparticleplot)
+                 
+                 !!--write ppm if interpolate3D_opacity
+                 if (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm) then
+                    call interpolate3D_proj_opacity_writeppm(datpix,brightness,npixx,npixy,rendermin,rendermax,istep)
+                 endif
 
               elseif (ndim.eq.2 .and. x_sec) then
                  !---------------------------------------------------------------
@@ -1689,6 +1678,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   if (.not.interactivereplot) then
      if (allocated(datpix1D)) deallocate(datpix1D)
      if (allocated(datpix)) deallocate(datpix)
+     if (allocated(brightness)) deallocate(brightness)
      if (allocated(datpix3D)) deallocate(datpix3D)
   endif
   
@@ -1767,11 +1757,6 @@ contains
        !  as starting point for interactive replotting
        nyplotfirstonpage = nyplot
        ifirststeponpage = ipos
-       !--reset the adaptive plot limits for this page
-       if (.not.interactivereplot) then
-          xminadapt = huge(xminadapt)
-          xmaxadapt = -huge(xmaxadapt)
-       endif
     endif
 
     if (nstepsperpage.ne.0 .or. inewpage) then
@@ -1822,9 +1807,28 @@ contains
     xmaxmulti(iplotx) = xmax
     xminmulti(iploty) = ymin
     xmaxmulti(iploty) = ymax
-    if (irender.gt.0) then
+    if (irender.gt.0 .and. irender.le.numplot) then
        xminmulti(irender) = rendermin
        xmaxmulti(irender) = rendermax
+    endif
+
+    !
+    ! store adaptive plot limits for a) in interactive mode 
+    ! on multiple plots per page
+    !
+    if (.not.interactivereplot) then
+       if (inewpage) then
+          xminadapt = huge(xminadapt)
+          xmaxadapt = -huge(xmaxadapt)
+       endif
+       xminadapt(iplotx) = min(xminadapt(iplotx),xminadapti)
+       xmaxadapt(iplotx) = max(xmaxadapt(iplotx),xmaxadapti)
+       xminadapt(iploty) = min(xminadapt(iploty),yminadapti)
+       xmaxadapt(iploty) = max(xmaxadapt(iploty),ymaxadapti)
+       if (irender.gt.0 .and. irender.le.numplot) then
+          xminadapt(irender) = min(xminadapt(irender),renderminadapt)
+          xmaxadapt(irender) = max(xmaxadapt(irender),rendermaxadapt)
+       endif
     endif
     
     !--change to background colour index for overlaid text and axes
@@ -1915,41 +1919,35 @@ contains
 ! particles which are to be plotted on the page
 !---------------------------------------------------
   
-  subroutine adapt_limits(iplot,xploti,xmini,xmaxi,labeli)
+  subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,labeli)
     implicit none
     integer, intent(in) :: iplot
     real, dimension(:), intent(in) :: xploti
-    real, intent(out) :: xmini,xmaxi
+    real, intent(out) :: xmini,xmaxi,xminadaptive,xmaxadaptive
     character(len=*), intent(in) :: labeli
     integer :: index1,index2,itype
-    real :: xmintemp,xmaxtemp
+    real :: xminadaptive,xmaxadaptive
     
     !--calculate adaptive limits for this quantity
-    xmintemp = huge(xmintemp)
-    xmaxtemp = -huge(xmaxtemp)
+    xminadaptive = huge(xminadaptive)
+    xmaxadaptive = -huge(xmaxadaptive)
     index1 = 1
     do itype=1,maxparttypes
        index2 = index1 + npartoftype(itype) - 1
        if (iplotpartoftype(itype).and.npartoftype(itype).gt.0 &
           .or. (iplotline.and.itype.eq.1)) then
-          xmintemp = min(xmintemp,minval(xploti(index1:index2)))
-          xmaxtemp = max(xmaxtemp,maxval(xploti(index1:index2))*scalemax)
+          xminadaptive = min(xminadaptive,minval(xploti(index1:index2)))
+          xmaxadaptive = max(xmaxadaptive,maxval(xploti(index1:index2))*scalemax)
        endif
        index1 = index2 + 1
     enddo
-    
-    !--save the adaptive limits for interactive plotting
-    if (interactive) then
-       xminadapt(iplot) = min(xmintemp,xminadapt(iplot))
-       xmaxadapt(iplot) = max(xmaxtemp,xmaxadapt(iplot))
-    endif
     
     !--set these as limits if adaptive limits are on   
     if ((iplot.le.ndim .and. iadaptcoords) &
     .or.(iplot.gt.ndim .and. iadapt) .and. ipagechange) then
        print "(1x,a)",'adapting '//trim(labeli)//' limits'
-       xmini = xmintemp
-       xmaxi = xmaxtemp
+       xmini = xminadaptive
+       xmaxi = xmaxadaptive
     endif
     
   end subroutine adapt_limits
