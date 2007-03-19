@@ -41,6 +41,7 @@ contains
 !               rkappa    : particle cross section per unit mass
 !
 !     Output: smoothed data            : datsmooth (npixx,npixy)
+!             brightness array         : brightness (npixx,npixy)
 !
 !     NB: AT PRESENT WE WRITE A PPM FILE DIRECTLY WITH THE RGB COLOURS
 !         AND OUTPUT JUST THE MONOCHROMATIC VERSION TO SPLASH.
@@ -49,35 +50,28 @@ contains
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobserver,dscreenfromobserver, &
-     rkappa,zcut,datmin,datmax,itrans,istep)
+     xmin,ymin,datsmooth,brightness,npixx,npixy,pixwidth,zobserver,dscreenfromobserver, &
+     rkappa,zcut)
 
-  use transforms, only:transform
-  use colours, only:rgbtable,ncolours
   implicit none
   real, parameter :: pi=3.1415926536
-  integer, intent(in) :: npart,npixx,npixy,itrans,istep
+  integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,pmass,hh,dat,zorig
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreenfromobserver, &
-                      zcut,datmin,datmax,rkappa
-  real, dimension(npixx,npixy), intent(out) :: datsmooth
-  real, dimension(npixx,npixy) :: brightness
-!  real, dimension(3,npixx,npixy) :: rgb
-  real, dimension(3) :: rgbi,drgb
+                      zcut,rkappa
+  real, dimension(npixx,npixy), intent(out) :: datsmooth, brightness
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused
   integer :: iprintinterval, iprintnext, iprogress, itmin
   integer, dimension(npart) :: iorder
-  integer :: ipart,ir,ib,ig,ierr,maxcolour,indexi
+  integer :: ipart
   real :: hi,hi1,hi21,radkern,q2,wab,rab2,pmassav
   real :: term,dx,dy,dy2,xpix,ypix,zfrac,hav,zcutoff
   real :: fopacity,tau,rkappatemp,termi,xi,yi
   real, dimension(1) :: dati
   real :: t_start,t_end,t_used,tsec
-  real :: ddatrange,datfraci,ftable
   logical :: iprintprogress,adjustzperspective
-  character(len=120) :: filename
 
   datsmooth = 0.
   term = 0.
@@ -87,12 +81,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
      print "(a)",'interpolate3D_opacity: error: pixel width <= 0'
      return
   endif
-  if (abs(datmax-datmin).gt.tiny(datmin)) then
-     ddatrange = 1./abs(datmax-datmin)
-  else
-     print "(a)",'error: datmin=datmax in opacity rendering'
-     return
-  endif
+
   if (abs(dscreenfromobserver).gt.tiny(dscreenfromobserver)) then
      adjustzperspective = .true.
      zcutoff = zobserver
@@ -116,7 +105,6 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
   rkappatemp = pi*hav*hav/(pmassav*coltable(0))
   print*,'average h = ',hav,' average mass = ',pmassav
   print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'  
-!  rgb = 0.
   !
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
@@ -195,21 +183,6 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
      xi = x(i)
      yi = y(i)
      termi = dat(i)
-!     call transform(dati,itrans)
-!     datfraci = (dati(1) - datmin)*ddatrange
-!     datfraci = max(datfraci,0.)
-!     datfraci = min(datfraci,1.)
-!     !--define colour for current particle
-!     ftable = datfraci*ncolours
-!     indexi = int(ftable) + 1
-!     indexi = min(indexi,ncolours)
-!     if (indexi.lt.ncolours) then
-!     !--do linear interpolation from colour table
-!        drgb(:) = rgbtable(:,indexi+1) - rgbtable(:,indexi)
-!        rgbi(:) = rgbtable(:,indexi) + (ftable - int(ftable))*drgb(:)
-!     else
-!        rgbi(:) = rgbtable(:,indexi)
-!     endif
      !
      !--for each particle work out which pixels it contributes to
      !               
@@ -259,6 +232,46 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
      endif particle_within_zcut
 
   enddo over_particles
+
+! 
+!--get ending CPU time
+!
+  call cpu_time(t_end)
+  t_used = t_end - t_start
+  if (t_used.gt.60) then
+     itmin = int(t_used/60)
+     tsec = t_used - (itmin*60)
+     print*,'completed in ',itmin,' min ',tsec,'s'
+  else
+     print*,'completed in ',t_used,'s'
+  endif
+  if (zcut.lt.huge(zcut)) print*,'slice contains ',nused,' of ',npart,' particles'
+  
+  return
+
+end subroutine interpolate3D_proj_opacity
+
+subroutine interpolate3D_proj_opacity_writeppm(datsmooth,brightness,npixx,npixy,datmin,datmax,istep)
+  use colours, only:rgbtable,ncolours
+  implicit none
+  integer, intent(in) :: npixx,npixy
+  real, intent(in), dimension(npixx,npixy) :: datsmooth,brightness
+  real, intent(in) :: datmin,datmax
+  integer, intent(in) :: istep
+  character(len=120) :: filename
+!  real, dimension(3,npixx,npixy) :: rgb
+  real, dimension(3) :: rgbi,drgb
+  real :: dati,ddatrange,datfraci,ftable
+  integer :: ipix,jpix,ir,ib,ig,ierr,maxcolour,indexi
+!
+!--check for errors
+!
+  if (abs(datmax-datmin).gt.tiny(datmin)) then
+     ddatrange = 1./abs(datmax-datmin)
+  else
+     print "(a)",'error: datmin=datmax : pointless writing ppm file'
+     return
+  endif
 !
 !--write PPM--
 !  
@@ -281,9 +294,8 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
   do jpix = npixy,1,-1
      do ipix = 1,npixx
 
-        dati(1) = datsmooth(ipix,jpix)
-        call transform(dati,itrans)
-        datfraci = (dati(1) - datmin)*ddatrange
+        dati = datsmooth(ipix,jpix)
+        datfraci = (dati - datmin)*ddatrange
         datfraci = max(datfraci,0.)
         datfraci = min(datfraci,1.)
         !--define colour for current particle
@@ -301,33 +313,13 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
         ir = max(min(int(rgbi(1)*maxcolour),maxcolour),0)
         ig = max(min(int(rgbi(2)*maxcolour),maxcolour),0)
         ib = max(min(int(rgbi(3)*maxcolour),maxcolour),0)
-
-!        ir = max(min(int(rgb(1,ipix,jpix)*maxcolour),maxcolour),0)
-!        ig = max(min(int(rgb(2,ipix,jpix)*maxcolour),maxcolour),0)
-!        ib = max(min(int(rgb(3,ipix,jpix)*maxcolour),maxcolour),0)
-!!        if (rgb(1,ipix,jpix).gt.0.999) print*,rgb(1,ipix,jpix),ir
         write(78,"(i3,1x,i3,1x,i3,2x)") ir,ig,ib
      enddo
   enddo
   close(unit=78)
-! 
-!--get ending CPU time
-!
-  call cpu_time(t_end)
-  t_used = t_end - t_start
-  if (t_used.gt.60) then
-     itmin = int(t_used/60)
-     tsec = t_used - (itmin*60)
-     print*,'completed in ',itmin,' min ',tsec,'s'
-  else
-     print*,'completed in ',t_used,'s'
-  endif
-  if (zcut.lt.huge(zcut)) print*,'slice contains ',nused,' of ',npart,' particles'
   
   return
-
-end subroutine interpolate3D_proj_opacity
-
+end subroutine interpolate3D_proj_opacity_writeppm
 
 subroutine indexx(n, arr, indx)
 !************************************************************
