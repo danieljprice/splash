@@ -33,7 +33,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use filenames, only:nfiles
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iformat, &
                           buffer_data
-  use mem_allocation
+  use mem_allocation, only:alloc
   use geometry, only:labelcoordsys
   implicit none
   integer, intent(in) :: indexstart
@@ -272,7 +272,7 @@ subroutine set_labels
  use labels, only:ix,ivx,ih,irho,iutherm,ipmass,ipr,iBfirst, &
              idivB,iJfirst,iamvec,labelvec,label,labeltype
  use params
- use settings_data, only:ndim,ndimV,ncolumns,iformat,ntypes, &
+ use settings_data, only:ndim,ndimV,iformat,ntypes, &
                     UseTypeInRenderings
  use geometry, only:labelcoord
  implicit none

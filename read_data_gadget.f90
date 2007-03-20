@@ -31,11 +31,10 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,istepstart,nstepsread)
-  use particle_data
+  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
-  use labels
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
-  use mem_allocation
+  use mem_allocation, only:alloc
   implicit none
   integer, intent(in) :: istepstart
   integer, intent(out) :: nstepsread
@@ -329,9 +328,9 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels
+  use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm
   use params
-  use settings_data
+  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
   use geometry, only:labelcoord
   implicit none
   integer :: i

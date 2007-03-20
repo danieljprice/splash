@@ -402,9 +402,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use settings_vecplot, only:npixvec, iplotpartvec
   use settings_xsecrot, only:nxsec,irotateaxes,xsec_nomulti,irotate,flythru,use3Dperspective, &
                              use3Dopacityrendering,writeppm,anglex,angley,anglez,zobserver, &
-                             dzscreenfromobserver,taupartdepth,rkappa,xsecpos_nomulti, &
+                             dzscreenfromobserver,rkappa,xsecpos_nomulti, &
                              xseclineX1,xseclineX2,xseclineY1,xseclineY2,xorigin,xminrotaxes,xmaxrotaxes
-  use settings_powerspec
+  use settings_powerspec, only:nfreqspec,wavelengthmin,wavelengthmax,ipowerspecx,ipowerspecy,idisordered
   use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
 !
 !--subroutines called from this routine
@@ -1925,9 +1925,7 @@ contains
     real, dimension(:), intent(in) :: xploti
     real, intent(out) :: xmini,xmaxi,xminadaptive,xmaxadaptive
     character(len=*), intent(in) :: labeli
-    integer :: index1,index2,itype
-    real :: xminadaptive,xmaxadaptive
-    
+    integer :: index1,index2,itype    
     !--calculate adaptive limits for this quantity
     xminadaptive = huge(xminadaptive)
     xmaxadaptive = -huge(xmaxadaptive)
