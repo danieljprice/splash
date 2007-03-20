@@ -168,9 +168,8 @@ ifeq ($(SYSTEM), gfortran_macosx)
     PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm # -lSystemStubs use this on OS/X Tiger
     SYSTEMFILE= system_unix.f90
-    DBLFLAG= -fdefault-real-8
     DEBUGFLAG= -g -frange-check
-    OMPFLAG= -fopenmp
+    OMPFLAGS= -fopenmp
     ENDIANFLAGBIG= -fconvert=big-endian
     ENDIANFLAGLITTLE= -fconvert=little-endian
     KNOWN_SYSTEM=yes
@@ -289,7 +288,7 @@ SOURCESF90= globaldata.f90 transform.f90 \
          rotate.f90 interpolate1D.f90 \
          interpolate2D.f90 interpolate3D_xsec.f90 \
          interpolate3D_projection.F90 \
-         interpolate3D_opacity.f90\
+         interpolate3D_opacity.f90 interpolate_vec.f90 \
          interactive.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
          powerspectrums.f90 render.f90 setpage.f90 \
