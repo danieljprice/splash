@@ -17,15 +17,15 @@
 !     Daniel Price, Institute of Astronomy, Cambridge, 20/8/04
 !--------------------------------------------------------------------------
 
-subroutine interpolate_vec(x,y,vecx,vecy, &
-     xmin,ymin,dx,vecpixx,vecpixy,itype,npart,npixx,npixy)
+subroutine interpolate_vec(x,y,vecx,vecy,itype, &
+     xmin,ymin,dx,vecpixx,vecpixy,npart,npixx,npixy)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,vecx,vecy
+  integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,dx
   real, intent(out), dimension(npixx,npixy) :: vecpixx, vecpixy
-  integer, intent(in), dimension(npart) :: itype
   real, parameter :: pi = 3.1415926536
   integer :: i,j,k,ix,iy
   integer, dimension(npixx,npixy) :: ihoc,numcell
