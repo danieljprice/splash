@@ -18,13 +18,14 @@
 !--------------------------------------------------------------------------
 
 subroutine interpolate_vec(x,y,vecx,vecy, &
-     xmin,ymin,dx,vecpixx,vecpixy,npart,npixx,npixy)
+     xmin,ymin,dx,vecpixx,vecpixy,itype,npart,npixx,npixy)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,vecx,vecy
   real, intent(in) :: xmin,ymin,dx
   real, intent(out), dimension(npixx,npixy) :: vecpixx, vecpixy
+  integer, intent(in), dimension(npart) :: itype
   real, parameter :: pi = 3.1415926536
   integer :: i,j,k,ix,iy
   integer, dimension(npixx,npixy) :: ihoc,numcell
@@ -42,11 +43,13 @@ subroutine interpolate_vec(x,y,vecx,vecy, &
   ihoc(:,:) = -1   ! head of chain
   numcell(:,:) = 0
   do i=1,npart
-     ix = int((x(i)-xmin)/dx)+1
-     iy = int((y(i)-ymin)/dx)+1
-     if ((ix.ge.1).and.(ix.le.npixx).and.(iy.ge.1).and.(iy.le.npixy)) then
-        ll(i)=ihoc(ix,iy)   ! set link list of this particle to old head of list
-        ihoc(ix,iy) = i            ! set head of chain to this particle
+     if (itype(i).ge.0) then
+        ix = int((x(i)-xmin)/dx)+1
+        iy = int((y(i)-ymin)/dx)+1
+        if ((ix.ge.1).and.(ix.le.npixx).and.(iy.ge.1).and.(iy.le.npixy)) then
+           ll(i)=ihoc(ix,iy)   ! set link list of this particle to old head of list
+           ihoc(ix,iy) = i            ! set head of chain to this particle
+        endif
      endif
   enddo
   !
