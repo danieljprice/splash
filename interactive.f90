@@ -860,7 +860,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      !
      case('z','Z')
         zoomfac = 10.*zoomfac
-        if (zoomfac.gt.1000.) then
+        if (zoomfac.gt.1000000.) then
            zoomfac = 1.0
         endif
         print*,' LIMITS/TIMESTEPPING CHANGES NOW x ',zoomfac
@@ -1065,7 +1065,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
      !
      case('z','Z')
         zoomfac = 10.*zoomfac
-        if (zoomfac.gt.1000.) then
+        if (zoomfac.gt.1000000.) then
            zoomfac = 1.0
         endif
         print*,' LIMITS/TIMESTEPPING CHANGES NOW x ',zoomfac
@@ -1513,7 +1513,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
      !
      case('z','Z')
         zoomfac = 10.*zoomfac
-        if (zoomfac.gt.1000.) then
+        if (zoomfac.gt.1000000.) then
            zoomfac = 1.0
         endif
         print*,' LIMITS/TIMESTEPPING CHANGES NOW x ',zoomfac
