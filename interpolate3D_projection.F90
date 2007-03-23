@@ -607,6 +607,10 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      print*,' synchrotron spectral index I_nu = nu^-',alpha
      print*,' intrinsic polarisation fraction = ',pintrinsic
   endif
+  if (present(utherm) .and. present(uthermcutoff)) then
+     print*,' using only particles with utherm > ',uthermcutoff
+  endif
+  
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_proj_vec_synchrotron: error: pixel width <= 0'
      return
