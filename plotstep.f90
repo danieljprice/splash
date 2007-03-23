@@ -1999,8 +1999,7 @@ contains
               icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)
          else
-            if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then
-               
+            if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then               
                !--get synchrotron polarisation vectors
                call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
                  yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
@@ -2008,27 +2007,6 @@ contains
                  icolourme(1:ninterp),ninterp,xmin,ymin, &
                  vecpixx,vecpixy,datpix(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
                  rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)
-               
-               !--get synchrotron polarisation intensity using more pixels
-               call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
-                 yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
-                 weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-                 icolourme(1:ninterp),ninterp,xmin,ymin, &
-                 datpix(1:npixx,1:npixy),datpix(1:npixx,1:npixy), & ! these are just dummy arguments
-                 datpix(1:npixx,1:npixy),npixx,npixy,pixwidth, &
-                 rcrit,zcrit,synchrotronspecindex,pixwidthvec,.true.)
-                 
-               !--adjust the units of the z-integrated quantity
-               if (iRescale .and. units(ih).gt.0.) then
-                  vecpixx = vecpixx*(unitzintegration/units(ih))
-                  vecpixy = vecpixy*(unitzintegration/units(ih))
-                  datpix = datpix*(unitzintegration/units(ih))
-               endif
-               
-               !--plot contours of synchrotron intensity
-               call render_pix(datpix(1:npixx,1:npixy),minval(datpix(1:npixx,1:npixy)), &
-                 maxval(datpix(1:npixx,1:npixy)),'crap', &
-                 npixx,npixy,xmin,ymin,pixwidth,0,.true.,.false.,ncontours,.false.)
             else
             !   call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
             !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
@@ -2040,12 +2018,14 @@ contains
                  weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                  icolourme(1:ninterp),ninterp,xmin,ymin, &
                  vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,dobserver,dscreenfromobserver)
-                 !!--adjust the units of the z-integrated quantity
-                 if (iRescale .and. units(ih).gt.0.) then
-                    vecpixx = vecpixx*(unitzintegration/units(ih))
-                    vecpixy = vecpixy*(unitzintegration/units(ih))
-                 endif
             endif
+            
+            !--adjust the units of the z-integrated quantity
+            if (iRescale .and. units(ih).gt.0.) then
+               vecpixx = vecpixx*(unitzintegration/units(ih))
+               vecpixy = vecpixy*(unitzintegration/units(ih))
+            endif
+            
          endif
       case(2)
          !
@@ -2094,6 +2074,28 @@ contains
       else
          call render_vec(vecpixx,vecpixy,vmax, &
               numpixx,numpixy,xmin,ymin,pixwidthvec,trim(label),' ')
+         
+         if (iplotsynchrotron .and. .not. iplotarrowheads) then
+            !--get synchrotron polarisation intensity using more pixels
+            call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+              yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+              weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+              icolourme(1:ninterp),ninterp,xmin,ymin, &
+              datpix(1:npixx,1:npixy),datpix(1:npixx,1:npixy), & ! these are just dummy arguments
+              datpix(1:npixx,1:npixy),npixx,npixy,pixwidth, &
+              rcrit,zcrit,synchrotronspecindex,pixwidthvec,.true.)
+
+            !--adjust the units of the z-integrated quantity
+            if (iRescale .and. units(ih).gt.0.) then
+               datpix = datpix*(unitzintegration/units(ih))
+            endif
+
+            !--plot contours of synchrotron intensity
+            call render_pix(datpix(1:npixx,1:npixy),minval(datpix(1:npixx,1:npixy)), &
+              maxval(datpix(1:npixx,1:npixy)),'crap', &
+              npixx,npixy,xmin,ymin,pixwidth,0,.true.,.false.,ncontours,.false.)
+         endif
+
       endif
 
    endif
