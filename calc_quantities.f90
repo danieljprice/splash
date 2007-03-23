@@ -153,7 +153,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
       endif
       !!--entropy
       if (ientrop.ne.0 .and. ipr.ne.0) then
-         where (dat(1:ntoti,irho,i).gt.tiny(dat)) 
+         where (dat(1:ntoti,irho,i).gt.tiny(0.)) 
             dat(1:ntoti,ientrop,i) = dat(1:ntoti,ipr,i)/dat(1:ntoti,irho,i)**gamma(i)
          elsewhere
             dat(1:ntoti,ientrop,i) = 0.
@@ -164,7 +164,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
          do j=1,ntoti
             veltemp = dot_product(dat(j,ivx:ivx+ndimV-1,i), &
                                   dat(j,ivx:ivx+ndimV-1,i))
-            if (dat(j,irho,i).gt.tiny(dat)) then
+            if (dat(j,irho,i).gt.tiny(0.)) then
                spsound = gamma(i)*dat(j,ipr,i)/dat(j,irho,i)
                if (spsound.gt.tiny(spsound)) then
                   dat(j,imach,i) = sqrt(veltemp/spsound)
@@ -178,7 +178,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
       endif
       !!--dh/drho
       if (idhdrho.ne.0) then
-         where (dat(1:ntoti,irho,i).gt.tiny(dat)) 
+         where (dat(1:ntoti,irho,i).gt.tiny(0.)) 
             dat(1:ntoti,idhdrho,i) = &
                -dat(1:ntoti,ih,i)/(ndim*(dat(1:ntoti,irho,i)))
          elsewhere
@@ -208,7 +208,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
       endif
       !!--volume - (m/rho)**(1/ndim)
       if (ivol.ne.0 .and. ipmass.ne.0 .and. irho.ne.0 .and. ndim.gt.0) then
-         where (dat(1:ntoti,irho,i).gt.tiny(dat))
+         where (dat(1:ntoti,irho,i).gt.tiny(0.))
             dat(1:ntoti,ivol,i) = (dat(1:ntoti,ipmass,i)/dat(1:ntoti,irho,i))**(1./real(ndim))    
          elsewhere
             dat(1:ntoti,ivol,i) = 0.
@@ -254,7 +254,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
             enddo
             !!--plasma beta
             if (ibeta.ne.0) then
-               where(abs(dat(1:ntoti,ipmag,i)).gt.tiny(dat))
+               where(abs(dat(1:ntoti,ipmag,i)).gt.tiny(0.))
                   dat(1:ntoti,ibeta,i) = dat(1:ntoti,ipr,i)/dat(1:ntoti,ipmag,i)
                elsewhere  
                   dat(1:ntoti,ibeta,i) = 0.
@@ -285,7 +285,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
             enddo
          endif
          if (ivalfven.ne.0) then
-            where (dat(:,irho,i).gt.tiny(dat))
+            where (dat(:,irho,i).gt.tiny(0.))
                dat(:,ivalfven,i) = sqrt(dat(:,ipmag,i)/dat(:,irho,i))
             elsewhere
                dat(:,ivalfven,i) = 0.
@@ -310,11 +310,11 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   !
   !--override units of calculated quantities if necessary
   !
-  if (iRescale .and. any(abs(units(ncolumns+1:ncolumns+ncalc)-1.0).gt.tiny(units)) &
+  if (iRescale .and. any(abs(units(ncolumns+1:ncolumns+ncalc)-1.0).gt.tiny(0.)) &
       .and. .not.skip) then
      write(*,"(/a)") ' rescaling data...'
      do i=ncolumns+1,ncolumns+ncalc
-        if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
+        if (abs(units(i)-1.0).gt.tiny(0.) .and. units(i).gt.tiny(0.)) then
            dat(:,i,ifromstep:itostep) = dat(:,i,ifromstep:itostep)*units(i)
            if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
         endif
