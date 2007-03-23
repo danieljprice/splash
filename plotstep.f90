@@ -451,7 +451,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   real :: angleradx, anglerady, angleradz
   real :: rendermintemp,rendermaxtemp
   real :: zslicemin,zslicemax,dummy
-  real :: pixwidth,dxfreq,dunitspmass,dunitsrho,dunitsh
+  real :: pixwidth,pixwidthvec,dxfreq,dunitspmass,dunitsrho,dunitsh
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
@@ -1263,7 +1263,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                       labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
                    endif
                 endif
-                pixwidth = (xmax-xmin)/real(npixvec - 1)
+                pixwidthvec = (xmax-xmin)/real(npixvec - 1)
+                pixwidth = (xmax-xmin)/real(npixx - 1) ! used in synchrotron plots
                 npixyvec = int((ymax-ymin)/pixwidth) + 1
                 if (.not.interactivereplot .or. nacross*ndown.gt.1) then ! not if vecmax changed interactively
                    if (iadapt) then
@@ -1273,7 +1274,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    endif
                 endif
 
-                call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidth,vecmax,labelvecplot)
+                call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,vecmax,labelvecplot)
              endif
            endif
            !---------------------------------
@@ -1954,7 +1955,7 @@ contains
 ! interface to vector plotting routines
 ! so that pixel arrays are allocated appropriately
 !-------------------------------------------------------------------
-  subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidth,vmax,label)
+  subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,vmax,label)
    use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines,iplotarrowheads, &
                          iplotsynchrotron,rcrit,zcrit,synchrotronspecindex
    use interpolations2D, only:interpolate2D_vec
@@ -1963,10 +1964,11 @@ contains
    use fieldlines, only:streamlines
    implicit none
    integer, intent(in) :: ivecx,ivecy,numpixx,numpixy
-   real, intent(in) :: pixwidth
+   real, intent(in) :: pixwidthvec
    real, intent(inout) :: vmax
    character(len=*), intent(in) :: label
-   real, dimension(numpixx,numpixy) :: vecpixx, vecpixy, datpix
+   real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
+   real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpix
    integer :: i,j,icolourprev
    real :: vmag
    
@@ -1995,24 +1997,38 @@ contains
               hh(1:ninterp),weight(1:ninterp), &
               dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
               icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidth,inormalise)
+              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)
          else
             if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then
-              call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+               
+               !--get synchrotron polarisation vectors
+               call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
                  yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                  weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                  icolourme(1:ninterp),ninterp,xmin,ymin, &
-                 vecpixx,vecpixy,datpix,numpixx,numpixy,pixwidth,rcrit,zcrit,synchrotronspecindex)
-                 !!--adjust the units of the z-integrated quantity
-                 if (iRescale .and. units(ih).gt.0.) then
-                    vecpixx = vecpixx*(unitzintegration/units(ih))
-                    vecpixy = vecpixy*(unitzintegration/units(ih))
-                    datpix = datpix*(unitzintegration/units(ih))
-                 endif
-                 !--plot contours of synchrotron intensity
-                 call render_pix(datpix,minval(datpix),maxval(datpix),'crap', &
-                   numpixx,numpixy,xmin,ymin,pixwidth,    &
-                   0,.true.,.false.,ncontours,.false.)
+                 vecpixx,vecpixy,datpix(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
+                 rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)
+               
+               !--get synchrotron polarisation intensity using more pixels
+               call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+                 yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                 weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                 icolourme(1:ninterp),ninterp,xmin,ymin, &
+                 datpix(1:npixx,1:npixy),datpix(1:npixx,1:npixy), & ! these are just dummy arguments
+                 datpix(1:npixx,1:npixy),npixx,npixy,pixwidth, &
+                 rcrit,zcrit,synchrotronspecindex,pixwidthvec,.true.)
+                 
+               !--adjust the units of the z-integrated quantity
+               if (iRescale .and. units(ih).gt.0.) then
+                  vecpixx = vecpixx*(unitzintegration/units(ih))
+                  vecpixy = vecpixy*(unitzintegration/units(ih))
+                  datpix = datpix*(unitzintegration/units(ih))
+               endif
+               
+               !--plot contours of synchrotron intensity
+               call render_pix(datpix(1:npixx,1:npixy),minval(datpix(1:npixx,1:npixy)), &
+                 maxval(datpix(1:npixx,1:npixy)),'crap', &
+                 npixx,npixy,xmin,ymin,pixwidth,0,.true.,.false.,ncontours,.false.)
             else
             !   call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
             !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
@@ -2023,7 +2039,7 @@ contains
                  yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                  weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                  icolourme(1:ninterp),ninterp,xmin,ymin, &
-                 vecpixx,vecpixy,numpixx,numpixy,pixwidth,dobserver,dscreenfromobserver)
+                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,dobserver,dscreenfromobserver)
                  !!--adjust the units of the z-integrated quantity
                  if (iRescale .and. units(ih).gt.0.) then
                     vecpixx = vecpixx*(unitzintegration/units(ih))
@@ -2041,13 +2057,13 @@ contains
          !     rho(1:ninterp),xmin,xmax,ymin,ymax)
          !call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
          !  dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-         !  xmin,ymin,pixwidth,vecpixx,vecpixy, &
+         !  xmin,ymin,pixwidthvec,vecpixx,vecpixy, &
          !  ninterp,numpixx,numpixy)
          
          call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
               hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ivecx), &
               dat(1:ninterp,ivecy),icolourme(1:ninterp),ninterp,xmin,ymin, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidth,inormalise)
+              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)
       
       case default
          print "(a,i1,a)",'ERROR: Cannot do vector plotting in ',ndim,' dimensions'
@@ -2069,14 +2085,15 @@ contains
               enddo
             enddo                  
          endif
-         call streamlines(vecpixx,vecpixy,datpix,numpixx,numpixy,pixwidth)
+         call streamlines(vecpixx,vecpixy,datpix(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec)
            
-         call render_pix(datpix,minval(datpix),maxval(datpix),'crap', &
-                   numpixx,numpixy,xmin,ymin,pixwidth,    &
+         call render_pix(datpix(1:numpixx,1:numpixy), &
+                   minval(datpix(1:numpixx,1:numpixy)),maxval(datpix(1:numpixx,1:numpixy)), &
+                   'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,    &
                    0,.true.,.false.,ncontours,.false.)
       else
          call render_vec(vecpixx,vecpixy,vmax, &
-              numpixx,numpixy,xmin,ymin,pixwidth,trim(label),' ')
+              numpixx,numpixy,xmin,ymin,pixwidthvec,trim(label),' ')
       endif
 
    endif

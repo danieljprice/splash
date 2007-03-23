@@ -251,7 +251,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
         hi = hi*zfrac
      endif
      
-     !--take resolution length as minimum of h and 1/2 pixel width
+     !--take resolution length as max of h and 1/2 pixel width
      hsmooth = max(hi,0.5*pixwidth)
      radkern = radkernel*hsmooth  !radius of the smoothing kernel
      
@@ -351,15 +351,6 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
         jpixmin = int((yi - radkern - ymin)/pixwidth)
         ipixmax = int((xi + radkern - xmin)/pixwidth)
         jpixmax = int((yi + radkern - ymin)/pixwidth)
-        !
-        !--if particle is entirely within one pixel, add full contribution to that pixel
-        !
-!        if (ipixmin.eq.ipixmax .and. jpixmin.eq.jpixmax) then
-!           if (ipixmin.ge.1 .and. ipixmin.le.npixx .and. &
-!               jpixmin.ge.1 .and. jpixmin.le.npixy) then
-!              datsmooth(ipixmin,jpixmin) = datsmooth(ipixmin,jpixmin) + term*radkernel2
-!           endif
-!        endif
 
         if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
         if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
@@ -487,7 +478,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
         hi = hi*zfrac
      endif
 
-     !--take resolution length as minimum of h and 1/2 pixel width
+     !--take resolution length as max of h and 1/2 pixel width
      hsmooth = max(hi,0.5*pixwidth)
 
      radkern = radkernel*hsmooth    ! radius of the smoothing kernel
@@ -552,6 +543,15 @@ end subroutine interpolate3D_proj_vec
 !     Computes synchrotron emission (Stokes Q, U) for a given B field
 !     at present assuming no faraday rotation
 !
+!     For references see:
+!
+!      Urbanik et al. (1997), A&A 326, 465
+!      Sokoloff et al. (1998), MNRAS, 299, 189
+!      Gomez & Cox (2004), ApJ 615, 744 (for Cosmic Ray distribution esp.)
+!
+!     Faraday rotation could be included easily but
+!     I have not yet done so.
+!
 !     Input: particle coordinates  : x,y   (npart)
 !            smoothing lengths     : hh    (npart)
 !            weight for each particle : weight (npart)
@@ -563,36 +563,47 @@ end subroutine interpolate3D_proj_vec
 !                                     : stokesI (npixx,npixy)
 !
 !     DOES NOT WORK FOR ROTATED CONFIGURATIONS YET!!
-!     (but none of the vector routines do...)
+!     (ie. z is assumed to be z_galaxy in the cosmic ray distribution)
 !
 !     Daniel Price 14/03/07
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
-     xmin,ymin,stokesQ,stokesU,stokesI,npixx,npixy,pixwidth,rcrit,zcrit,alpha)
+     xmin,ymin,stokesQ,stokesU,stokesI,npixx,npixy,pixwidth,rcrit,zcrit,alpha,qpixwidth,getIonly)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,pixwidth,rcrit,zcrit,alpha
+  real, intent(in) :: xmin,ymin,pixwidth,rcrit,zcrit,alpha,qpixwidth
+  logical, intent(in) :: getIonly
   real, intent(out), dimension(npixx,npixy) :: stokesQ,stokesU,stokesI
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,hi21,radkern,q2,wab,rab2,const,hsmooth
-  real :: termx,termy,term,dx,dy,dy2,xpix,ypix,xi,yi,zi
+  real :: hi,hi1,hi21,radkern,q2,wab,const,hsmooth
+  real :: termx,termy,term,dy,dy2,ypix,xi,yi,zi
   real :: crdens,emissivity,Bperp,angle,pintrinsic,rcyl
-
-  stokesU = 0.
-  stokesQ = 0.
-  stokesI = 0.
+  real, dimension(npixx) :: dx2i
+  
+  if (getIonly) then
+     stokesI = 0.
+  else
+     stokesU = 0.
+     stokesQ = 0.
+  endif
   termx = 0.
   termy = 0.
-  print "(1x,a)",'getting synchrotron map from B field...'
-  print*,' assuming cosmic ray electron distribution exp(-r/',rcrit,' -z/',zcrit,') (kpc)'
-  print*,' synchrotron spectral index I_nu = nu^-',alpha
+  term = 0.
   pintrinsic = (3. + 3.*alpha)/(5. + 3.*alpha)
-  print*,' intrinsic polarisation fraction = ',pintrinsic
+
+  if (getIonly) then
+     print "(1x,a)",'getting synchrotron intensity map from B field...'
+  else
+     print "(1x,a)",'getting synchrotron polarisation map from B field...'
+     print*,' assuming cosmic ray electron distribution exp(-r/',rcrit,' -z/',zcrit,') (kpc)'
+     print*,' synchrotron spectral index I_nu = nu^-',alpha
+     print*,' intrinsic polarisation fraction = ',pintrinsic
+  endif
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_proj_vec_synchrotron: error: pixel width <= 0'
      return
@@ -608,7 +619,7 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
 !$OMP PRIVATE(hsmooth,hi1,hi21,term,termx,termy) &
 !$OMP PRIVATE(rcyl,crdens,Bperp,emissivity,angle) &
 !$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
-!$OMP PRIVATE(dy,dy2,dx,xpix,ypix,rab2,q2,wab) &
+!$OMP PRIVATE(dy,dy2,dx2i,ypix,q2,wab) &
 !$OMP PRIVATE(i,ipix,jpix)
 
 !$OMP DO SCHEDULE(guided, 2)
@@ -625,8 +636,9 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      const = weight(i)*hi ! h gives the z length scale (NB: no perspective)
      zi = z(i)
 
-     !--take resolution length as minimum of h and 1/2 pixel width
-     hsmooth = max(hi,0.5*pixwidth)
+     !--take resolution length as max of h and 1/2 pixel width
+     !  (for intensity calculation, qpixwidth is pixel width of Q,U calculation)
+     hsmooth = max(hi,0.5*pixwidth,0.5*qpixwidth)
      hi1 = 1./hsmooth
      hi21 = hi1*hi1
      radkern = radkernel*hsmooth    ! radius of the smoothing kernel
@@ -642,12 +654,14 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      Bperp = sqrt(vecx(i)**2 + vecy(i)**2)
      emissivity = crdens*Bperp**(1. + alpha)
      
-     !--faraday rotation would change angle here
-     angle = atan2(vecy(i),vecx(i))
-     
-     termx = pintrinsic*emissivity*const*COS(angle)
-     termy = pintrinsic*emissivity*const*SIN(angle)
-     term = emissivity*const
+     if (getIonly) then
+        term = emissivity*const    
+     else
+        !--faraday rotation would change angle here
+        angle = atan2(vecy(i),vecx(i))     
+        termx = pintrinsic*emissivity*const*COS(angle)
+        termy = pintrinsic*emissivity*const*SIN(angle)
+     endif
      !
      !--for each particle work out which pixels it contributes to
      !               
@@ -655,17 +669,6 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      jpixmin = int((yi - radkern - ymin)/pixwidth)
      ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
      jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
-     !
-     !--if particle is entirely within one pixel, add full contribution to that pixel
-     !
-!     if (ipixmin.eq.ipixmax .and. jpixmin.eq.jpixmax) then
-!        if (ipixmin.ge.1 .and. ipixmin.le.npixx .and. &
-!            jpixmin.ge.1 .and. jpixmin.le.npixy) then
-!           stokesQ(ipixmin,jpixmin) = stokesQ(ipixmin,jpixmin) + termx*radkernel2
-!           stokesU(ipixmin,jpixmin) = stokesU(ipixmin,jpixmin) + termy*radkernel2
-!           stokesI(ipixmin,jpixmin) = stokesI(ipixmin,jpixmin) + termx*radkernel2
-!        endif
-!     endif
 
      ! PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
      ! PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
@@ -674,18 +677,24 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
      if (ipixmax.gt.npixx) ipixmax = npixx
      if (jpixmax.gt.npixy) jpixmax = npixy
+
+     !
+     !--precalculate an array of dx2 for this particle (optimisation)
+     !
+     do ipix=ipixmin,ipixmax
+        dx2i(ipix) = ((xmin + (ipix-0.5)*pixwidth - xi)**2)*hi21
+     enddo
      !
      !--loop over pixels, adding the contribution from this particle
      !
      do jpix = jpixmin,jpixmax
         ypix = ymin + (jpix-0.5)*pixwidth
         dy = ypix - yi
-        dy2 = dy*dy
+        dy2 = dy*dy*hi21
         do ipix = ipixmin,ipixmax
-           xpix = xmin + (ipix-0.5)*pixwidth
-           dx = xpix - xi
-           rab2 = dx**2 + dy2
-           q2 = rab2*hi21
+           !xpix = xmin + (ipix-0.5)*pixwidth
+           !dx = xpix - xi
+           q2 = dx2i(ipix) + dy2
            !
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
@@ -695,9 +704,12 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
               !
               !--calculate data value at this pixel using the summation interpolant
               !
-              stokesQ(ipix,jpix) = stokesQ(ipix,jpix) + termx*wab
-              stokesU(ipix,jpix) = stokesU(ipix,jpix) + termy*wab
-              stokesI(ipix,jpix) = stokesI(ipix,jpix) + term*wab
+              if (getIonly) then
+                 stokesI(ipix,jpix) = stokesI(ipix,jpix) + term*wab           
+              else
+                 stokesQ(ipix,jpix) = stokesQ(ipix,jpix) + termx*wab
+                 stokesU(ipix,jpix) = stokesU(ipix,jpix) + termy*wab
+              endif
            endif
 
         enddo
