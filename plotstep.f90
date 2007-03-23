@@ -1255,14 +1255,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    labelvecplot = trim(labelvec(ivectorplot))      
                 endif
                 !!--set label for projection plots (2268 or 2412 for integral sign)
-                !if (ndim.eq.3 .and..not. x_sec) then
-                !   if (iRescale) then
-                !      labelvecplot = '\(2268) '//trim(labelvecplot)//' d'// &
-                !        trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//trim(labelzintegration)
-                !   else
-                !      labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
-                !   endif
-                !endif
+                if (ndim.eq.3 .and..not. x_sec) then
+                   if (iRescale) then
+                      labelvecplot = '\(2268) '//trim(labelvecplot)//' d'// &
+                        trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//trim(labelzintegration)
+                   else
+                      labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
+                   endif
+                endif
                 pixwidth = (xmax-xmin)/real(npixvec - 1)
                 npixyvec = int((ymax-ymin)/pixwidth) + 1
                 if (.not.interactivereplot .or. nacross*ndown.gt.1) then ! not if vecmax changed interactively
