@@ -614,7 +614,7 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
 !$OMP PARALLEL default(none) &
 !$OMP SHARED(hh,z,x,y,weight,vecx,vecy,itype,stokesQ,stokesU,stokesI,npart) &
 !$OMP SHARED(xmin,ymin,pixwidth,rcrit,zcrit,alpha) &
-!$OMP SHARED(npixx,npixy,pintrinsic) &
+!$OMP SHARED(npixx,npixy,pintrinsic,qpixwidth,getIonly) &
 !$OMP PRIVATE(hi,xi,yi,zi,radkern,const) &
 !$OMP PRIVATE(hsmooth,hi1,hi21,term,termx,termy) &
 !$OMP PRIVATE(rcyl,crdens,Bperp,emissivity,angle) &
