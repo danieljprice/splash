@@ -109,7 +109,7 @@ subroutine submenu_render(ichoose)
        print*,'plot contours = ',iplotcont_nomulti
 !------------------------------------------------------------------------
     case(4)
-       call prompt(' enter number of contours between min,max',ncontours,1,500)
+       call prompt(' enter number of contours between min,max',ncontours,0,500)
 !------------------------------------------------------------------------
     case(5)
        call prompt(' plot colour bar? ',iPlotColourBar)
