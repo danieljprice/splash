@@ -1264,8 +1264,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    endif
                 endif
                 pixwidthvec = (xmax-xmin)/real(npixvec - 1)
+                npixyvec = int((ymax-ymin)/pixwidthvec) + 1
                 pixwidth = (xmax-xmin)/real(npixx - 1) ! used in synchrotron plots
-                npixyvec = int((ymax-ymin)/pixwidth) + 1
+
                 if (.not.interactivereplot .or. nacross*ndown.gt.1) then ! not if vecmax changed interactively
                    if (iadapt) then
                       vecmax = -1.0  ! plot limits then set in vectorplot
