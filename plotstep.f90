@@ -1258,7 +1258,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                 if (ndim.eq.3 .and..not. x_sec) then
                    if (iRescale) then
                       labelvecplot = '\(2268) '//trim(labelvecplot)//' d'// &
-                        trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//trim(labelzintegration)
+                        trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//' [code units]'
                    else
                       labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
                    endif
@@ -2033,10 +2033,10 @@ contains
             endif
             
             !--adjust the units of the z-integrated quantity
-            if (iRescale .and. units(ih).gt.0.) then
-               vecpixx = vecpixx*(unitzintegration/units(ih))
-               vecpixy = vecpixy*(unitzintegration/units(ih))
-            endif
+            !if (iRescale .and. units(ih).gt.0.) then
+            !   vecpixx = vecpixx*(unitzintegration/units(ih))
+            !   vecpixy = vecpixy*(unitzintegration/units(ih))
+            !endif
             
          endif
       case(2)
@@ -2109,9 +2109,9 @@ contains
             endif
 
             !--adjust the units of the z-integrated quantity
-            if (iRescale .and. units(ih).gt.0.) then
-               datpix = datpix*(unitzintegration/units(ih))
-            endif
+            !if (iRescale .and. units(ih).gt.0.) then
+            !   datpix = datpix*(unitzintegration/units(ih))
+            !endif
 
             !--plot contours of synchrotron intensity
             call render_pix(datpix(1:npixx,1:npixy),minval(datpix(1:npixx,1:npixy)), &
