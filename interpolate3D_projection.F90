@@ -153,7 +153,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 #endif
   integer(kind=8) :: iprogress,i
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
-  real :: term,dy,dy2,ypix,zfrac
+  real :: term,dy,dy2,ypix,zfrac,hsmooth
   real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
   real, dimension(npixx) :: xpix,dx2i
   real :: t_start,t_end,t_used,tsec
@@ -211,7 +211,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$OMP SHARED(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidth) &
 !$OMP SHARED(npixx,npixy,dscreen,zobserver,use3Dperspective,useaccelerate) &
 !$OMP PRIVATE(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
-!$OMP PRIVATE(hi1,hi21,term,npixpart,jpixi,ipixi) &
+!$OMP PRIVATE(hsmooth,hi1,hi21,term,npixpart,jpixi,ipixi) &
 !$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
 !$OMP PRIVATE(dx2i,row,q2,ypix,dy,dy2,wab) &
 !$OMP PRIVATE(i,ipix,jpix,jpixcopy)
@@ -250,7 +250,10 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
         zfrac = abs(dscreen/(z(i)-zobserver))
         hi = hi*zfrac
      endif
-     radkern = radkernel*hi  !radius of the smoothing kernel
+     
+     !--take resolution length as minimum of h and 1/2 pixel width
+     hsmooth = max(hi,0.5*pixwidth)
+     radkern = radkernel*hsmooth  !radius of the smoothing kernel
      
      !--cycle as soon as we know the particle does not contribute
      xi = x(i)
@@ -268,7 +271,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !
      !--set kernel related quantities
      !
-     hi1 = 1./hi
+     hi1 = 1./hsmooth
      hi21 = hi1*hi1
      term = weight(i)*hi*dat(i) ! h gives the z length scale (NB: no perspective)
      !
@@ -440,7 +443,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,hi21,radkern,q2,wab,rab2,const,zfrac
+  real :: hi,hi1,hi21,radkern,q2,wab,rab2,const,zfrac,hsmooth
   real :: termx,termy,dx,dy,dy2,xpix,ypix
 
   vecsmoothx = 0.
@@ -460,7 +463,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
 !$OMP SHARED(xmin,ymin,pixwidth,zobserver,dscreen) &
 !$OMP SHARED(npixx,npixy) &
 !$OMP PRIVATE(hi,radkern,const,zfrac,ypix,xpix) &
-!$OMP PRIVATE(hi1,hi21,termx,termy) &
+!$OMP PRIVATE(hsmooth,hi1,hi21,termx,termy) &
 !$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
 !$OMP PRIVATE(dy,dy2,dx,rab2,q2,wab) &
 !$OMP PRIVATE(i,ipix,jpix)
@@ -483,9 +486,13 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
         zfrac = abs(dscreen/(z(i)-zobserver))
         hi = hi*zfrac
      endif
-     hi1 = 1./hi
+
+     !--take resolution length as minimum of h and 1/2 pixel width
+     hsmooth = max(hi,0.5*pixwidth)
+
+     radkern = radkernel*hsmooth    ! radius of the smoothing kernel
+     hi1 = 1./hsmooth
      hi21 = hi1*hi1
-     radkern = 2.*hi    ! radius of the smoothing kernel
         
      termx = const*vecx(i)
      termy = const*vecy(i)
@@ -572,7 +579,7 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
   real, intent(out), dimension(npixx,npixy) :: stokesQ,stokesU,stokesI
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,hi21,radkern,q2,wab,rab2,const
+  real :: hi,hi1,hi21,radkern,q2,wab,rab2,const,hsmooth
   real :: termx,termy,term,dx,dy,dy2,xpix,ypix,xi,yi,zi
   real :: crdens,emissivity,Bperp,angle,pintrinsic,rcyl
 
@@ -598,7 +605,7 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
 !$OMP SHARED(xmin,ymin,pixwidth,rcrit,zcrit,alpha) &
 !$OMP SHARED(npixx,npixy,pintrinsic) &
 !$OMP PRIVATE(hi,xi,yi,zi,radkern,const) &
-!$OMP PRIVATE(hi1,hi21,term,termx,termy) &
+!$OMP PRIVATE(hsmooth,hi1,hi21,term,termx,termy) &
 !$OMP PRIVATE(rcyl,crdens,Bperp,emissivity,angle) &
 !$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
 !$OMP PRIVATE(dy,dy2,dx,xpix,ypix,rab2,q2,wab) &
@@ -617,9 +624,12 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      if (hi.le.0.) cycle over_particles
      const = weight(i)*hi ! h gives the z length scale (NB: no perspective)
      zi = z(i)
-     hi1 = 1./hi
+
+     !--take resolution length as minimum of h and 1/2 pixel width
+     hsmooth = max(hi,0.5*pixwidth)
+     hi1 = 1./hsmooth
      hi21 = hi1*hi1
-     radkern = 2.*hi    ! radius of the smoothing kernel
+     radkern = radkernel*hsmooth    ! radius of the smoothing kernel
      xi = x(i)
      yi = y(i)
      

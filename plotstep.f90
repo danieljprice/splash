@@ -1997,7 +1997,7 @@ contains
               icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidth,inormalise)
          else
-            if (iplotsynchrotron .and. .not.iplotstreamlines) then
+            if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then
               call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
                  yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                  weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
@@ -2008,27 +2008,27 @@ contains
                     vecpixx = vecpixx*(unitzintegration/units(ih))
                     vecpixy = vecpixy*(unitzintegration/units(ih))
                     datpix = datpix*(unitzintegration/units(ih))
-                 endif            
+                 endif
                  !--plot contours of synchrotron intensity
                  call render_pix(datpix,minval(datpix),maxval(datpix),'crap', &
                    numpixx,numpixy,xmin,ymin,pixwidth,    &
                    0,.true.,.false.,ncontours,.false.)
             else
-               call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
-                 dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
-                 xmin,ymin,pixwidth,vecpixx,vecpixy, &
-                 ninterp,numpixx,numpixy)
+            !   call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
+            !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
+            !     xmin,ymin,pixwidth,vecpixx,vecpixy, &
+            !     ninterp,numpixx,numpixy)
 
-            !   call interpolate3D_proj_vec(xplot(1:ninterp), &
-            !     yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
-            !     weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-            !     icolourme(1:ninterp),ninterp,xmin,ymin, &
-            !     vecpixx,vecpixy,numpixx,numpixy,pixwidth,dobserver,dscreenfromobserver)
-            !     !!--adjust the units of the z-integrated quantity
-            !     if (iRescale .and. units(ih).gt.0.) then
-            !        vecpixx = vecpixx*(unitzintegration/units(ih))
-            !        vecpixy = vecpixy*(unitzintegration/units(ih))
-            !     endif
+               call interpolate3D_proj_vec(xplot(1:ninterp), &
+                 yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                 weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                 icolourme(1:ninterp),ninterp,xmin,ymin, &
+                 vecpixx,vecpixy,numpixx,numpixy,pixwidth,dobserver,dscreenfromobserver)
+                 !!--adjust the units of the z-integrated quantity
+                 if (iRescale .and. units(ih).gt.0.) then
+                    vecpixx = vecpixx*(unitzintegration/units(ih))
+                    vecpixy = vecpixy*(unitzintegration/units(ih))
+                 endif
             endif
          endif
       case(2)
