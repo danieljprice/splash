@@ -569,7 +569,8 @@ end subroutine interpolate3D_proj_vec
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
-     xmin,ymin,stokesQ,stokesU,stokesI,npixx,npixy,pixwidth,rcrit,zcrit,alpha,qpixwidth,getIonly)
+     xmin,ymin,stokesQ,stokesU,stokesI,npixx,npixy,pixwidth,rcrit,zcrit,alpha, &
+     qpixwidth,getIonly,utherm,uthermcutoff)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
@@ -578,6 +579,8 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
   real, intent(in) :: xmin,ymin,pixwidth,rcrit,zcrit,alpha,qpixwidth
   logical, intent(in) :: getIonly
   real, intent(out), dimension(npixx,npixy) :: stokesQ,stokesU,stokesI
+  real, intent(in), dimension(npart), optional :: utherm
+  real, intent(in), optional :: uthermcutoff
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   real :: hi,hi1,hi21,radkern,q2,wab,const,hsmooth
@@ -614,7 +617,7 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
 !$OMP PARALLEL default(none) &
 !$OMP SHARED(hh,z,x,y,weight,vecx,vecy,itype,stokesQ,stokesU,stokesI,npart) &
 !$OMP SHARED(xmin,ymin,pixwidth,rcrit,zcrit,alpha) &
-!$OMP SHARED(npixx,npixy,pintrinsic,qpixwidth,getIonly) &
+!$OMP SHARED(npixx,npixy,pintrinsic,qpixwidth,getIonly,utherm,uthermcutoff) &
 !$OMP PRIVATE(hi,xi,yi,zi,radkern,const) &
 !$OMP PRIVATE(hsmooth,hi1,hi21,term,termx,termy) &
 !$OMP PRIVATE(rcyl,crdens,Bperp,emissivity,angle) &
@@ -628,6 +631,12 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
      !--skip particles with itype < 0
      !
      if (itype(i).lt.0) cycle over_particles
+     !
+     !--skip particles with utherm < uthermcutoff
+     !
+     if (present(utherm) .and. present(uthermcutoff)) then
+        if (utherm(i).lt.uthermcutoff) cycle over_particles
+     endif
      !
      !--set kernel related quantities
      !

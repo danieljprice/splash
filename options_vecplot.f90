@@ -8,11 +8,13 @@ module settings_vecplot
  logical :: UseBackgndColorVecplot, iplotpartvec
  logical :: iVecplotLegend,iplotstreamlines,iplotarrowheads
  logical :: iplotsynchrotron
- real :: hposlegendvec,vposlegendvec,rcrit,zcrit,synchrotronspecindex
+ real :: hposlegendvec,vposlegendvec
+ real :: rcrit,zcrit,synchrotronspecindex,uthermcutoff
 
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot,iplotpartvec,&
           iVecplotLegend,hposlegendvec,vposlegendvec,iplotstreamlines, &
-          iplotarrowheads,iplotsynchrotron,rcrit,zcrit,synchrotronspecindex
+          iplotarrowheads,iplotsynchrotron,rcrit,zcrit,synchrotronspecindex, &
+          uthermcutoff
 
 contains
 
@@ -34,6 +36,7 @@ subroutine defaults_set_vecplot
   zcrit = 2.5 ! kpc
   rcrit = 13. ! kpc
   synchrotronspecindex = 0.8
+  uthermcutoff = -1. ! flags this as uninitialised
 
   return
 end subroutine defaults_set_vecplot
@@ -43,7 +46,9 @@ end subroutine defaults_set_vecplot
 !----------------------------------------------------------------------
 subroutine submenu_vecplot(ichoose)
  use prompting
- use settings_data, only:ndim
+ use settings_data, only:ndim,numplot
+ use labels, only:iutherm
+ use limits, only:lim
  implicit none
  integer, intent(in) :: ichoose
  integer :: ians
@@ -98,9 +103,22 @@ subroutine submenu_vecplot(ichoose)
     call prompt('plot arrow heads? ',iplotarrowheads)
     if (ndim.eq.3 .and. .not.iplotarrowheads) then
        call prompt(' plot synchrotron map? ',iplotsynchrotron)
-       call prompt(' enter rcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',rcrit,0.)
-       call prompt(' enter zcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',zcrit,0.)
-       call prompt(' enter synchrotron spectral index I_nu = nu^-alpha ',synchrotronspecindex,0.)
+       if (iplotsynchrotron) then
+          if (iutherm.lt.0 .or. iutherm.gt.numplot) then
+             print "(a)",' Warning: cannot use thermal energy cutoff in synchrotron plots' 
+             print "(a)",' (could not locate thermal energy in data columns)'
+          endif
+          call prompt(' enter rcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',rcrit,0.)
+          call prompt(' enter zcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',zcrit,0.)
+          call prompt(' enter synchrotron spectral index I_nu = nu^-alpha ',synchrotronspecindex,0.)
+          if (iutherm.gt.0 .and. iutherm.le.numplot) then
+             !--set sensible default value for uthermcutoff
+             if (uthermcutoff.lt.-tiny(uthermcutoff)) then
+                uthermcutoff = 0.5*(lim(iutherm,1) + lim(iutherm,2))
+             endif
+             call prompt(' enter threshold thermal energy in current units (u < utherm not used) ',uthermcutoff,0.) 
+          endif
+       endif
     endif
     
  end select

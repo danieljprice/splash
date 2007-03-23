@@ -1958,11 +1958,12 @@ contains
 !-------------------------------------------------------------------
   subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,vmax,label)
    use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines,iplotarrowheads, &
-                         iplotsynchrotron,rcrit,zcrit,synchrotronspecindex
+                         iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff
    use interpolations2D, only:interpolate2D_vec
    use projections3D, only:interpolate3D_proj_vec,interpolate3D_proj_vec_synchrotron
    use render, only:render_vec
    use fieldlines, only:streamlines
+   use labels, only:iutherm
    implicit none
    integer, intent(in) :: ivecx,ivecy,numpixx,numpixy
    real, intent(in) :: pixwidthvec
@@ -2002,12 +2003,22 @@ contains
          else
             if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then               
                !--get synchrotron polarisation vectors
-               call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
-                 yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
-                 weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-                 icolourme(1:ninterp),ninterp,xmin,ymin, &
-                 vecpixx,vecpixy,datpix(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
-                 rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)
+               if (iutherm.gt.0 .and. iutherm.le.numplot .and. uthermcutoff.gt.0.) then
+                  call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+                    yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                    weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                    icolourme(1:ninterp),ninterp,xmin,ymin, &
+                    vecpixx,vecpixy,datpix(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
+                    rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false., &
+                    dat(1:ninterp,iutherm),uthermcutoff)
+               else
+                  call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+                    yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                    weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                    icolourme(1:ninterp),ninterp,xmin,ymin, &
+                    vecpixx,vecpixy,datpix(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
+                    rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)               
+               endif
             else
             !   call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
             !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
@@ -2078,13 +2089,24 @@ contains
          
          if (iplotsynchrotron .and. .not. iplotarrowheads) then
             !--get synchrotron polarisation intensity using more pixels
-            call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
-              yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
-              weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-              icolourme(1:ninterp),ninterp,xmin,ymin, &
-              datpix(1:npixx,1:npixy),datpix(1:npixx,1:npixy), & ! these are just dummy arguments
-              datpix(1:npixx,1:npixy),npixx,npixy,pixwidth, &
-              rcrit,zcrit,synchrotronspecindex,pixwidthvec,.true.)
+            if (iutherm.gt.0 .and. iutherm.le.numplot .and. uthermcutoff.gt.0.) then
+               call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+                 yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                 weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                 icolourme(1:ninterp),ninterp,xmin,ymin, &
+                 datpix(1:npixx,1:npixy),datpix(1:npixx,1:npixy), & ! these are just dummy arguments
+                 datpix(1:npixx,1:npixy),npixx,npixy,pixwidth, &
+                 rcrit,zcrit,synchrotronspecindex,pixwidthvec,.true., &
+                 dat(1:ninterp,iutherm),uthermcutoff)
+            else
+               call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+                 yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                 weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                 icolourme(1:ninterp),ninterp,xmin,ymin, &
+                 datpix(1:npixx,1:npixy),datpix(1:npixx,1:npixy), & ! these are just dummy arguments
+                 datpix(1:npixx,1:npixy),npixx,npixy,pixwidth, &
+                 rcrit,zcrit,synchrotronspecindex,pixwidthvec,.true.)              
+            endif
 
             !--adjust the units of the z-integrated quantity
             if (iRescale .and. units(ih).gt.0.) then
