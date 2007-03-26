@@ -1,3 +1,8 @@
+!--------------------------------------------------------------------------
+!
+!  Module with some auxiliary routines related to vector interpolation
+!
+!--------------------------------------------------------------------------
 module interpolate_vec
  implicit none
  public :: interpolate_vec_average
@@ -9,10 +14,13 @@ contains
 
 !--------------------------------------------------------------------------
 !
-!  Hides vector arrows (sets them to zero) where there are "no particles"
-!  "no particles" is defined as where the quantity interpolated
-!  to the array datpix falls below the current minimum limit 
-!  of the render axis.
+!  Hides vector arrows (sets them to zero) where there are no particles
+!  contained in the pixel (as opposed to merely contributing to the pixel)
+!
+!  means you can avoid funny looking plots with arrows in otherwise
+!  empty regions
+!
+!  Daniel Price 26/3/07
 !
 !--------------------------------------------------------------------------
 subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
