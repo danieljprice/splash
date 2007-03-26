@@ -1,3 +1,64 @@
+module interpolate_vec
+ implicit none
+ public :: interpolate_vec_average
+ public :: mask_vectors
+ 
+ private
+ 
+contains
+
+!--------------------------------------------------------------------------
+!
+!  Hides vector arrows (sets them to zero) where there are "no particles"
+!  "no particles" is defined as where the quantity interpolated
+!  to the array datpix falls below the current minimum limit 
+!  of the render axis.
+!
+!--------------------------------------------------------------------------
+subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
+                        vecpixx,vecpixy,npixvecx,npixvecy)
+ implicit none
+ integer, intent(in) :: npart,npixvecx,npixvecy
+ integer, dimension(npart), intent(in) :: itype
+ real, dimension(npart), intent(in) :: xplot,yplot
+ real, intent(in) :: xmin,xmax,ymin,ymax
+ real, dimension(npixvecx,npixvecy), intent(inout) :: vecpixx,vecpixy
+ integer(kind=1), dimension(npixvecx,npixvecy) :: nincell
+ integer :: icellx,icelly,j
+ real :: dxcell1,dycell1
+ 
+ print "(2x,a)",'(hiding arrows where there are no particles)'
+
+ dxcell1 = (npixvecx - 1)/(xmax-xmin + tiny(xmin))
+ dycell1 = (npixvecy - 1)/(ymax-ymin + tiny(ymin))
+!
+!--count particles which fall into each pixel ("cell")
+!
+ nincell(:,:) = 0
+ do j=1,npart
+    if (itype(j).ge.0) then ! exclude not-plotted particles
+       icellx = int((xplot(j) - xmin)*dxcell1) + 1
+       icelly = int((yplot(j) - ymin)*dycell1) + 1
+       !--exclude particles if there are more than one particle per cell
+       if (icellx.gt.0 .and. icellx.le.npixvecx &
+          .and. icelly.gt.0 .and. icelly.le.npixvecy) then
+          if (nincell(icellx,icelly).eq.0) then
+             nincell(icellx,icelly) = nincell(icellx,icelly) + 1_1  ! this +1 of type int*1
+          endif
+       endif
+    endif
+ enddo 
+!
+!--set vector arrow lengths to zero in cells where there are no particles
+!
+ where (nincell.eq.0)
+    vecpixx = 0.
+    vecpixy = 0. 
+ end where
+ 
+ return
+end subroutine mask_vectors
+
 !--------------------------------------------------------------------------
 !    Interpolates vector quantity from particles to even grid of pixels
 !
@@ -17,7 +78,7 @@
 !     Daniel Price, Institute of Astronomy, Cambridge, 20/8/04
 !--------------------------------------------------------------------------
 
-subroutine interpolate_vec(x,y,vecx,vecy,itype, &
+subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
      xmin,ymin,dx,vecpixx,vecpixy,npart,npixx,npixy)
 
   implicit none
@@ -26,7 +87,6 @@ subroutine interpolate_vec(x,y,vecx,vecy,itype, &
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,dx
   real, intent(out), dimension(npixx,npixy) :: vecpixx, vecpixy
-  real, parameter :: pi = 3.1415926536
   integer :: i,j,k,ix,iy
   integer, dimension(npixx,npixy) :: ihoc,numcell
   integer, dimension(npart) :: ll
@@ -81,4 +141,6 @@ subroutine interpolate_vec(x,y,vecx,vecy,itype, &
   enddo
   return
   
-end subroutine interpolate_vec
+end subroutine interpolate_vec_average
+
+end module interpolate_vec

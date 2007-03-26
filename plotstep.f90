@@ -1958,9 +1958,10 @@ contains
 !-------------------------------------------------------------------
   subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,vmax,label)
    use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines,iplotarrowheads, &
-                         iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff
+       iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff,ihidearrowswherenoparts
    use interpolations2D, only:interpolate2D_vec
    use projections3D, only:interpolate3D_proj_vec,interpolate3D_proj_vec_synchrotron
+   use interpolate_vec, only:mask_vectors
    use render, only:render_vec
    use fieldlines, only:streamlines
    use labels, only:iutherm
@@ -1970,7 +1971,7 @@ contains
    real, intent(inout) :: vmax
    character(len=*), intent(in) :: label
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
-   real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpix
+   real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpixvec
    integer :: i,j,icolourprev
    real :: vmag
    
@@ -2008,7 +2009,7 @@ contains
                     yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                     weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                     icolourme(1:ninterp),ninterp,xmin,ymin, &
-                    vecpixx,vecpixy,datpix(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
+                    vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
                     rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false., &
                     dat(1:ninterp,iutherm),uthermcutoff)
                else
@@ -2016,11 +2017,11 @@ contains
                     yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                     weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                     icolourme(1:ninterp),ninterp,xmin,ymin, &
-                    vecpixx,vecpixy,datpix(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
+                    vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
                     rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)               
                endif
             else
-            !   call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
+            !   call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
             !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
             !     xmin,ymin,pixwidth,vecpixx,vecpixy, &
             !     ninterp,numpixx,numpixy)
@@ -2047,7 +2048,7 @@ contains
          !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
          !     hh(1:ninterp),pmass(1:ninterp), &
          !     rho(1:ninterp),xmin,xmax,ymin,ymax)
-         !call interpolate_vec(xplot(1:ninterp),yplot(1:ninterp), &
+         !call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
          !  dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
          !  xmin,ymin,pixwidthvec,vecpixx,vecpixy, &
          !  ninterp,numpixx,numpixy)
@@ -2077,13 +2078,19 @@ contains
               enddo
             enddo                  
          endif
-         call streamlines(vecpixx,vecpixy,datpix(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec)
+         call streamlines(vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec)
            
-         call render_pix(datpix(1:numpixx,1:numpixy), &
-                   minval(datpix(1:numpixx,1:numpixy)),maxval(datpix(1:numpixx,1:numpixy)), &
-                   'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,    &
-                   0,.true.,.false.,ncontours,.false.)
+         call render_pix(datpixvec(1:numpixx,1:numpixy), &
+                         minval(datpixvec(1:numpixx,1:numpixy)), &
+                         maxval(datpixvec(1:numpixx,1:numpixy)), &
+                         'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,    &
+                         0,.true.,.false.,ncontours,.false.)
       else
+         if (ihidearrowswherenoparts) then
+            call mask_vectors(xplot(1:ninterp),yplot(1:ninterp),icolourme(1:ninterp),ninterp, &
+                              xmin,xmax,ymin,ymax,vecpixx,vecpixy,numpixx,numpixy)
+         endif
+      
          call render_vec(vecpixx,vecpixy,vmax, &
               numpixx,numpixy,xmin,ymin,pixwidthvec,trim(label),' ')
          
@@ -2094,8 +2101,8 @@ contains
                  yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                  weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                  icolourme(1:ninterp),ninterp,xmin,ymin, &
-                 datpix(1:npixx,1:npixy),datpix(1:npixx,1:npixy), & ! these are just dummy arguments
-                 datpix(1:npixx,1:npixy),npixx,npixy,pixwidth, &
+                 datpixvec(1:npixx,1:npixy),datpixvec(1:npixx,1:npixy), & ! these are just dummy arguments
+                 datpixvec(1:npixx,1:npixy),npixx,npixy,pixwidth, &
                  rcrit,zcrit,synchrotronspecindex,pixwidthvec,.true., &
                  dat(1:ninterp,iutherm),uthermcutoff)
             else
@@ -2103,8 +2110,8 @@ contains
                  yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                  weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                  icolourme(1:ninterp),ninterp,xmin,ymin, &
-                 datpix(1:npixx,1:npixy),datpix(1:npixx,1:npixy), & ! these are just dummy arguments
-                 datpix(1:npixx,1:npixy),npixx,npixy,pixwidth, &
+                 datpixvec(1:npixx,1:npixy),datpixvec(1:npixx,1:npixy), & ! these are just dummy arguments
+                 datpixvec(1:npixx,1:npixy),npixx,npixy,pixwidth, &
                  rcrit,zcrit,synchrotronspecindex,pixwidthvec,.true.)              
             endif
 
@@ -2114,8 +2121,8 @@ contains
             !endif
 
             !--plot contours of synchrotron intensity
-            call render_pix(datpix(1:npixx,1:npixy),minval(datpix(1:npixx,1:npixy)), &
-              maxval(datpix(1:npixx,1:npixy)),'crap', &
+            call render_pix(datpixvec(1:npixx,1:npixy),minval(datpixvec(1:npixx,1:npixy)), &
+              maxval(datpixvec(1:npixx,1:npixy)),'crap', &
               npixx,npixy,xmin,ymin,pixwidth,0,.true.,.false.,ncontours,.false.)
          endif
 

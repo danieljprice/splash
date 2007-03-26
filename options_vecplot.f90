@@ -7,14 +7,14 @@ module settings_vecplot
  integer :: npixvec
  logical :: UseBackgndColorVecplot, iplotpartvec
  logical :: iVecplotLegend,iplotstreamlines,iplotarrowheads
- logical :: iplotsynchrotron
+ logical :: iplotsynchrotron,ihidearrowswherenoparts
  real :: hposlegendvec,vposlegendvec
  real :: rcrit,zcrit,synchrotronspecindex,uthermcutoff
 
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot,iplotpartvec,&
           iVecplotLegend,hposlegendvec,vposlegendvec,iplotstreamlines, &
           iplotarrowheads,iplotsynchrotron,rcrit,zcrit,synchrotronspecindex, &
-          uthermcutoff
+          uthermcutoff,ihidearrowswherenoparts
 
 contains
 
@@ -37,6 +37,7 @@ subroutine defaults_set_vecplot
   rcrit = 13. ! kpc
   synchrotronspecindex = 0.8
   uthermcutoff = -1. ! flags this as uninitialised
+  ihidearrowswherenoparts = .false.
 
   return
 end subroutine defaults_set_vecplot
@@ -56,18 +57,20 @@ subroutine submenu_vecplot(ichoose)
  ians = ichoose
  print "(a)",'--------------- vector plot options -------------------'
 
- if (ians.le.0 .or. ians.gt.5) then
+ if (ians.le.0 .or. ians.gt.6) then
     print 10,npixvec,print_logical(UseBackgndColorVecplot), &
              print_logical(iVecplotLegend),print_logical(iplotstreamlines), &
-             print_logical(iplotarrowheads)
+             print_logical(iplotarrowheads), &
+             print_logical(ihidearrowswherenoparts)
 10  format( &
              ' 0) exit ',/, &
              ' 1) change number of pixels                   (',i4,' )',/, &
              ' 2) use background colour for arrows          ( ',a,' )',/, &
              ' 3) vector plot legend settings               ( ',a,' )',/, &
              ' 4) plot stream/field lines instead of arrows ( ',a,' )',/, &
-             ' 5) turn arrow heads on/off                   ( ',a,' )')
-    call prompt('enter option',ians,0,5)
+             ' 5) turn arrow heads on/off                   ( ',a,' )',/, &
+             ' 6) hide arrows where there are no particles  ( ',a,' )')
+    call prompt('enter option',ians,0,6)
  endif
 !
 !--options
@@ -120,6 +123,10 @@ subroutine submenu_vecplot(ichoose)
           endif
        endif
     endif
+!------------------------------------------------------------------------
+ case(6)
+    ihidearrowswherenoparts = .not.ihidearrowswherenoparts
+    call prompt('hide vector arrows where there are no particles ? ',ihidearrowswherenoparts)
     
  end select
 
