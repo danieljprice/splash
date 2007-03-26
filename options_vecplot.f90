@@ -4,7 +4,7 @@
 !-------------------------------------------------------------------------
 module settings_vecplot
  implicit none
- integer :: npixvec
+ integer :: npixvec,minpartforarrow
  logical :: UseBackgndColorVecplot, iplotpartvec
  logical :: iVecplotLegend,iplotstreamlines,iplotarrowheads
  logical :: iplotsynchrotron,ihidearrowswherenoparts
@@ -14,7 +14,7 @@ module settings_vecplot
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot,iplotpartvec,&
           iVecplotLegend,hposlegendvec,vposlegendvec,iplotstreamlines, &
           iplotarrowheads,iplotsynchrotron,rcrit,zcrit,synchrotronspecindex, &
-          uthermcutoff,ihidearrowswherenoparts
+          uthermcutoff,ihidearrowswherenoparts,minpartforarrow
 
 contains
 
@@ -38,6 +38,7 @@ subroutine defaults_set_vecplot
   synchrotronspecindex = 0.8
   uthermcutoff = -1. ! flags this as uninitialised
   ihidearrowswherenoparts = .false.
+  minpartforarrow = 1
 
   return
 end subroutine defaults_set_vecplot
@@ -125,8 +126,10 @@ subroutine submenu_vecplot(ichoose)
     endif
 !------------------------------------------------------------------------
  case(6)
-    ihidearrowswherenoparts = .not.ihidearrowswherenoparts
     call prompt('hide vector arrows where there are no particles ? ',ihidearrowswherenoparts)
+    if (ihidearrowswherenoparts) then
+       call prompt(' enter minimum number of particles in pixel cell for arrow to be plotted ',minpartforarrow,1)
+    endif
     
  end select
 

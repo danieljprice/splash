@@ -24,18 +24,21 @@ contains
 !
 !--------------------------------------------------------------------------
 subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
-                        vecpixx,vecpixy,npixvecx,npixvecy)
+                        vecpixx,vecpixy,npixvecx,npixvecy,minincell)
  implicit none
- integer, intent(in) :: npart,npixvecx,npixvecy
+ integer, intent(in) :: npart,npixvecx,npixvecy,minincell
  integer, dimension(npart), intent(in) :: itype
  real, dimension(npart), intent(in) :: xplot,yplot
  real, intent(in) :: xmin,xmax,ymin,ymax
  real, dimension(npixvecx,npixvecy), intent(inout) :: vecpixx,vecpixy
- integer(kind=1), dimension(npixvecx,npixvecy) :: nincell
+ integer, dimension(npixvecx,npixvecy) :: nincell
  integer :: icellx,icelly,j
  real :: dxcell1,dycell1
+ character(len=16) :: chmin
  
- print "(2x,a)",'(hiding arrows where there are no particles)'
+ !--write nice, neat information line
+ write(chmin,"(g10.0)") minincell
+ print "(2x,a)",'(hiding arrows where there are < '//trim(adjustl(chmin))//' particles in pixel cell)'
 
  dxcell1 = (npixvecx - 1)/(xmax-xmin + tiny(xmin))
  dycell1 = (npixvecy - 1)/(ymax-ymin + tiny(ymin))
@@ -50,16 +53,14 @@ subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
        !--exclude particles if there are more than one particle per cell
        if (icellx.gt.0 .and. icellx.le.npixvecx &
           .and. icelly.gt.0 .and. icelly.le.npixvecy) then
-          if (nincell(icellx,icelly).eq.0) then
-             nincell(icellx,icelly) = nincell(icellx,icelly) + 1_1  ! this +1 of type int*1
-          endif
+          nincell(icellx,icelly) = nincell(icellx,icelly) + 1
        endif
     endif
  enddo 
 !
 !--set vector arrow lengths to zero in cells where there are no particles
 !
- where (nincell.eq.0)
+ where (nincell.lt.minincell)
     vecpixx = 0.
     vecpixy = 0. 
  end where

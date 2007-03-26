@@ -1958,7 +1958,8 @@ contains
 !-------------------------------------------------------------------
   subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,vmax,label)
    use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines,iplotarrowheads, &
-       iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff,ihidearrowswherenoparts
+       iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff, &
+       ihidearrowswherenoparts,minpartforarrow
    use interpolations2D, only:interpolate2D_vec
    use projections3D, only:interpolate3D_proj_vec,interpolate3D_proj_vec_synchrotron
    use interpolate_vec, only:mask_vectors
@@ -2088,7 +2089,7 @@ contains
       else
          if (ihidearrowswherenoparts) then
             call mask_vectors(xplot(1:ninterp),yplot(1:ninterp),icolourme(1:ninterp),ninterp, &
-                              xmin,xmax,ymin,ymax,vecpixx,vecpixy,numpixx,numpixy)
+                              xmin,xmax,ymin,ymax,vecpixx,vecpixy,numpixx,numpixy,minpartforarrow)
          endif
       
          call render_vec(vecpixx,vecpixy,vmax, &
