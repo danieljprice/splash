@@ -23,6 +23,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.8.1 : (28/03/07)
+!             option to hide vector arrows where there are no particles added;
+!             smoother 3D plotting at low pixel numbers;
+!             (smoother vector plots); bug fixes with a); issues with
+!             round-off error with z integration of vectors fixed.
 !     1.8.0 : (14/03/07)
 !             hidden particles not used in rendering; units for z integration added;
 !             a) & g) implemented in interactive mode for multiple-plots-per-page;
@@ -171,7 +176,7 @@ program splash
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.8 [14th Mar ''07]'
+  character(len=*), parameter :: version = 'v1.8.1 [28th Mar ''07]'
 
   !
   ! set default options
