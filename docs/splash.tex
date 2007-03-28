@@ -110,9 +110,7 @@ The basic steps for installation are as follows:
 \end{enumerate}
 
 \subsubsection{Fortran 90/95 compilers}
- By now, many Fortran 90/95 compilers exist. In terms of free ones, the Intel compiler has a
- non-commercial version available for linux and the
-g95 compiler, downloadable from:
+ By now, many Fortran 90/95 compilers exist. In terms of free ones, the g95 compiler, downloadable from:
 \begin{quote}
 \url{http://www.g95.org}
 \end{quote}
@@ -135,8 +133,13 @@ used by the SPLASH source code, you may want to refer to the PGPLOT userguide:
 \url{http://www.astro.caltech.edu/~tjp/pgplot/contents.html}
 \end{quote}
 
+\subsubsection{Compiling and linking with PGPLOT}
+For detailed instructions on compiling and linking with PGPLOT, refer to the INSTALL file in the root directory of the SPLASH distribution (or \url{http://www.astro.ex.ac.uk/people/dprice/splash/download/INSTALL}.
+
+A successful `make' will produce only the binary corresponding to the ascii data format -- `asplash' (by convention the first letter refers to the data format for which splash has been compiled). Using `make all' will build all of the supported data formats (e.g. GADGET is `gsplash', Matthew Bate's sphNG code is `ssplash', my own format is `dsplash' etc.). 
+
 \subsubsection{Reading your data}
- The most important part is getting SPLASH to read your data format.
+ The most important part is getting SPLASH to read *your* data format.
 If you are using a publically available code, it is reasonably likely that I
 have already written a read data subroutine which will read your dumps.
 If not it is best to look at some of the other examples and change the 
@@ -145,73 +148,17 @@ unformatted data files is *much* faster than reading from formatted (ascii)
 output.   
 
 I have supplied subroutines for reading output from the publically available
-GADGET code (\verb+read_data_gadget.f90+) and also for Matthew Bate's SPH code
-(\verb+read_data_mbate.f90+) which is widely used in the UK. Another example of a
+GADGET code (\verb+read_data_gadget.f90+) and also for Matthew Bate's sphNG code
+(\verb+read_data_sphNG.f90+) which is widely used in the UK. Another example of a
 data read which I use is given in \verb+read_data_dansph.f90+.
 
 Further details on writing your own subroutine are given in
 appendix~\ref{sec:writeyourown}. The *easiest* way is to email me a sample data file and the subroutine
-you used to write it and I can then create a data read for your file format.
+you used to write it and I can then create a data read for your file format (I won't mind).
 
-\subsubsection{Compiling and linking with PGPLOT}
-
- In the Makefile, you will need to set the Fortran compiler and flags to your local version, e.g..
-\begin{verbatim}
-F90C = g95
-F90FLAGS = -O
-\end{verbatim}
- Secondly the compiler must be able to link to the PGPLOT and X11 libraries on
-your system. As a first attempt try using:
-\begin{verbatim}
-LDFLAGS = -lpgplot -lX11
-\end{verbatim}
-If that works at a first attempt, take a moment to think several happy thoughts about your system
-administrator. If these libraries are not found, you will need to enter the
-library paths by hand. On most systems this is something like:
-\begin{verbatim}
-LDFLAGS = -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11
-\end{verbatim}
-(assuming the PGPLOT libraries are in the /usr/local/pgplot directory and the
-X11 libraries are in /usr/X11R6/lib). If this does not work, try using the
-\verb+locate+ command to find the libraries on your system:
-\begin{verbatim}
-locate libpgplot
-locate libX11
-\end{verbatim}
- If, having found the PGPLOT and X11
-libraries, the program still won't compile, it is usually
-because the PGPLOT on your system has been compiled with a different compiler to
-the one you are using. A first attempt is to try using the g2c libraries
-\begin{verbatim}
-LDFLAGS = -L/usr/local/pgplot -lpgplot -L/usr/X11R6/lib -lX11 -lg2c
-\end{verbatim}
-If the PNG drivers are incorporated into the PGPLOT installation, the \verb+-lpng+ libraries must also be added.
-Failing that, ask your system administrator(!) or simply download your own copy of
-the PGPLOT libraries and make sure it is compiled with the same compiler as you
-are using to compile the SPLASH source code.
-
-\begin{table}
-\begin{center}
-\begin{tabular}{|l|l|p{0.3\textwidth}|}
-\hline
-compiler & flags & notes \\
-\hline
-g95 & F90C = g95 & \\
-    & F90FLAGS = -O3 & \\ 
-    & SYSTEMFILE = system\_f2003.f90 & g95 accepts Fortran 2003 system commands\\
-\hline
-ifc & F90C = ifc & \\
-    & F90FLAGS = -03 -Vaxlib -nbs & -nbs treats backslashes as normal characters\\
-    & SYSTEMFILE = system\_unix.f90 & \\
-\hline
-NAG f95 & F90C = f95 & \\
-        & F90FLAGS = -0  & \\
-        & SYSTEMFILE = system\_unix\_NAG.f90 & \\
-\hline
-\end{tabular}
-\end{center}
-\end{table}
 \subsection{Environment variables}
+
+\subsubsection{PGPLOT}
  Several useful environment variables can be set for PGPLOT and several of them
 are very useful for SPLASH. In a tcsh shell type:
 \begin{verbatim}
@@ -226,23 +173,34 @@ invoking splash (it is simplest to set them upon starting the shell by placing
 them in your .tcshrc or bash/sh equivalent file). For other environment
 variables which can be set, refer to the PGPLOT user guide.
 
-\subsection{System dependent routines}
- System dependent subroutines are interfaced in a separate \verb+system+ module in the file \verb+system_unix.f90+.
-At present the only calls to these routines are made from \verb+splash.f90+ which
-reads the run name(s) from the command line. A standardised format for performing this
-task is included in the standards for the next release of Fortran (Fortran 2003),
-however in the meantime the calls in the \verb+system+ module may require some adjustment depending on the
-particular system you are compiling the code on. The program is still fully
-functional without this call working, but it does make things convenient (in particular it means that
-SPLASH can be invoked using wildcards ($*,?$) in filenames).
+\subsubsection{Endian changing}
+ On some compilers, the endian-ness (byte order) of the file read for unformatted (binary) data files can also be changed at runtime. This is useful for looking at files on different systems to the one on which they were created (e.g. x86 machines create little-endian files by default, whereas IBM/powerpc machines create big-endian).
+ 
+  Using g95, the relevant environment variable is
+\begin{verbatim}
+setenv G95_ENDIAN 'BIG'
+\end{verbatim}
+or 'LITTLE' as appropriate. With the ifort compiler, the equivalent is:
+\begin{verbatim}
+setenv F_UFMTENDIAN 'big'
+\end{verbatim}
+or 'little'. 
+
+ For compilers without this feature, almost all can change the endian-ness at compile time, and the appropriate flags for doing so can be set using
+\begin{verbatim}
+setenv ENDIAN 'BIG'
+\end{verbatim}
+or LITTLE before \emph{compiling} splash (this adds the appropriate compile-time flags for the compiler selected using the SYSTEM environment variable in the SPLASH Makefile). 
 
 \section{A brief tour...}
- Once you have a read data file that will read your data format,
+ Once you have successfully compiled SPLASH with a read data file that will read your data format,
 SPLASH is invoked with the name of the data
 file(s) on the command line, e.g.
 \begin{verbatim}
 splash myrun*.dat
 \end{verbatim}
+where splash should be replaced with `asplash', `gsplash' etc. depending on the data format. \\
+
 
 After a successful data read, the menu should appear as something like the
 following:
@@ -301,8 +259,8 @@ Graphics device/type (? to see list, default /xwin):
 \end{verbatim}
 Notice that in this case that options appeared for rendered and vector plots. The above choices
 would give a rendered plot of density with velocity arrows drawn on top. The render options are
-*only* enabled if, in the read\_data subroutine, values are set for the integer parameters irho, ipmass and ih
-corresponding to the locations of density, particle mass and smoothing length in the data arrays.
+*only* enabled if, in the read\_data subroutine, values are set for the integer parameters irho, ipmass and ih corresponding to the locations of density, particle mass and smoothing length in the data arrays.
+
 
  Plot settings are controlled via the menu options and are described below. 
 
@@ -1045,6 +1003,35 @@ a file called 'legend' in the working directory, with one label per line.
 
 \section{FAQS: How do I...}
 
+\subsection{Fix the annoying PGPLOT file naming system?} 
+When you run splash to make a series of plots it generate files with names..
+\begin{verbatim}
+pgplot.gif
+pgplot.gif_1
+pgplot.gif_2
+...
+pgplot.gif_10
+pgplot.gif_11
+pgplot.gif_12
+..
+pgplot.gif_200
+pgplot.gif_201
+\end{verbatim}
+The annoying thing is that the numeric indices on these files are out of order and, when using
+standard programs to make animations, results in frames out of sequence.
+
+ The problem is related to PGPLOT file naming conventions. The fix is that, included in the splash/scripts directory is a script called 'fixpgplotnames.bash'. If you run this in the directory where your files are located, ie.
+\begin{verbatim}
+cd mydir
+~/splash/scripts/fixpgplotnames.bash
+\end{verbatim}
+will rename all of the files sensibly. If you run it with a number as the argument
+\begin{verbatim}
+~/splash/scripts/fixpgplotnames.bash 10
+\end{verbatim}
+it will rename filenames adding 10 to the number (actually 11 because it starts from 1). This is
+useful if you run splash multiple times to get different parts of an animation. 
+
 \subsection{Read/process my data into images without having to answer prompts?}
  Firstly edit the settings in the \verb+defaults+ file in the current
 directory (created by doing a `save defaults' from the main menu) before invoking SPLASH.
@@ -1161,13 +1148,11 @@ format is great for animations of simulations but as yet does not import into po
 appreciated. The following in particular would be very useful:
 
 \begin{itemize}
-\item Exact solutions for your favourite test problem(s). It would be great to
-build a library of user-contributed exact solutions.
+\item Exact solutions for your favourite test problem(s). Even just an analytic description which I can write the code for, or a subroutine if you're brave.
 \item Data analysis tools (e.g. fourier transforms / statistical analysis /
 algorithms for finding binary stars etc) which could be incorporated.
-\item New visualisation techniques (e.g. an isosurfacing routine for SPH, better
-vortex line tracing).
-\item More colour schemes (see \verb+colours.f90+ for how to do this)
+\item New visualisation techniques (e.g. an isosurfacing routine for SPH, 3D stream line tracing).
+\item More colour schemes (simply email me a table of the rgb colour indices, or failing that simply an image of the colour scheme and I will add it)
 \item Pretty pictures! If you happen to plot some of your data and spend the
 next several minutes marvelling at how astoundingly beautiful it all looks, please send
 me a copy (either ps, gif or a movie) to add to the gallery and a few lines
@@ -1183,7 +1168,7 @@ what it does and try to catch as many errors as possible so that the whole
 program is robust.  One thing I have avoided doing is to use any SPH
 routines which explicitly require finding neighbours, to avoid introducing treecodes and
 the like and to keep the program independent of any particular implementation of
-SPH. An example of a
+SPH. An example of such a
 routine would be to find the div/curl of a vector quantity using
 the SPH summation.
 
@@ -1216,9 +1201,6 @@ Filename & Description \\
      calc\_quantities.f90    & calculates additional quantities from particle data \\
      colours.f90            & colour schemes for rendering\\
      colourparts.f90	 & colours particles\\
-     danpgsch.f           & sets character height independent of page size\\
-     danpgtile.f          & my utility for tiling plots on the pgplot page\\
-     danpgwedg.f          & my very minor modification of pgwedg\\
      defaults.f90           & writes/reads default options to/from file\\
      exact.f90              & module handling exact solution settings\\
      exact\_densityprofiles.f90 & various $N-$body density profiles \\
