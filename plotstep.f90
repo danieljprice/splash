@@ -171,7 +171,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
      iadapting = iadapt
   endif
   tile_plots = tile .and. (isamexaxis.and.isameyaxis .or. isameyaxis.and.ndown.eq.1  &
-                                                     .or. isamexaxis.and.nacross.eq.1)
+                      .or. isamexaxis.and.nacross.eq.1) .and. (nacross*ndown.gt.1)
   !--do not tile if limits are adaptive
   if (tile_plots .and. (iadapting .or. (iamrendering .and. iadapt))) then
      print "(a)",'WARNING: cannot tile plots because limits are set to adaptive'
@@ -1124,7 +1124,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !--work out if colour bar is going to be plotted 
            !  (leave space in page setup if so)
            iColourBar = .false.
-           if (irender.gt.ndim) iColourBar = iPlotColourBar
+           if (irender.gt.ndim .and..not.(ndim.eq.2.and.x_sec)) iColourBar = iPlotColourBar
 
            call page_setup
 
