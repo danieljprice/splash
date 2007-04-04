@@ -763,7 +763,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !--rotate the particles about the z (and y and x) axes
         !  only applies to particle plots at the moment
         !
-        if (ndim.ge.2 .and. (irotate .or. (ndim.eq.3 .and.use3Dperspective))) then
+        if (ndim.ge.2 .and. (irotate .or. (ndim.eq.3 .and.use3Dperspective)) &
+            .and. icoordsnew.eq.1) then
            call rotationandperspective(angletempx,angletempy,angletempz,dzscreentemp,zobservertemp, &
                                        xplot,yplot,zplot,ntoti,iplotx,iploty,iplotz,dat)
            !--adapt plot limits after rotations have been done
@@ -1228,7 +1229,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !---------------------------------
            ! plot rotated axes
            !---------------------------------
-           if (irotate .and. irotateaxes.gt.0) then
+           if (irotate .and. irotateaxes.gt.0 .and. icoordsnew.eq.1) then
               call rotatedaxes(irotateaxes,iplotx,iploty,angletempx,angletempy,angletempz, &
                                dzscreentemp,zobservertemp)
            endif          
