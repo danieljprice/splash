@@ -48,7 +48,7 @@ module settings_xsecrot
 
  !--public procedure names
  public :: defaults_set_xsecrotate,submenu_xsecrotate,getsequencepos,insidesequence
- public :: write_animfile,read_animfile
+ public :: write_animfile,read_animfile,setsequenceend
  
  private
 
@@ -239,9 +239,10 @@ subroutine submenu_animation()
  use limits, only:lim
  use labels, only:ix
  use settings_data, only:ndim,istartatstep,iendatstep,numplot
- use filenames, only:nsteps
+ use filenames, only:nsteps,animfile
  implicit none
  integer :: i,j,ierr
+ logical :: ians
 
  do i = 1, nseq
     print "(a,i2,a)",'----------------- sequence ',i,' ----------------------'
@@ -360,15 +361,150 @@ subroutine submenu_animation()
     nseq = 0
  else
     ihavesetsequence = .true.
-    print "(3(/,a))",'Note: these sequences are saved to file using the S)ave option from the main menu', &
-                   ' This will save the splash.defaults file, the splash.limits file', &
-                   ' and a file called ''splash.anim'' which contains the animation sequence info'
-    print "(/,a)",' press any key to continue...'
-    read*
+    ians = .true.
+    print "(/,a)",'Note: sequences can also be saved later using S) from the main menu'
+    call prompt(' save sequences to '//trim(animfile)//' file now? ',ians)
+    if (ians) call write_animfile(animfile)
  endif
  
  return
 end subroutine submenu_animation
+
+!----------------------------------------------------------------------
+!
+!  subroutine called from interactive mode which sets the current
+!  plot settings as the end point to an animation sequence
+!
+!----------------------------------------------------------------------
+subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
+                          anglexi,angleyi,anglezi,zobserveri,use3Dopacity,taupartdepthi, &
+                          x_sec,xsecposi,xmin,xmax,ymin,ymax,rendermin,rendermax)
+ use limits, only:lim
+ use multiplot, only:itrans
+ use settings_data, only:ndim,numplot
+ use transforms, only:transform_limits,transform_limits_inverse,transform_label
+ implicit none
+ integer, intent(in) :: ipos,iplotx,iploty,irender
+ real, intent(in) :: anglexi,angleyi,anglezi,zobserveri,taupartdepthi,xsecposi
+ real, intent(in) :: xmin,xmax,ymin,ymax,rendermin,rendermax
+ logical, intent(in) :: rotation, use3Dopacity,x_sec
+ integer :: i
+ real :: xminfixed,xmaxfixed,yminfixed,ymaxfixed,renderminfixed,rendermaxfixed
+ 
+ nseq = 0
+ iseqtype(:) = 0
+!
+!--compare transformed limits
+!
+ xminfixed = lim(iplotx,1)
+ xmaxfixed = lim(iplotx,2)
+ call transform_limits(xminfixed,xmaxfixed,itrans(iplotx))
+ 
+ yminfixed = lim(iploty,1)
+ ymaxfixed = lim(iploty,2)
+ call transform_limits(yminfixed,ymaxfixed,itrans(iploty))
+ 
+ if (irender.gt.0 .and. irender.le.numplot) then
+    renderminfixed = lim(irender,1)
+    rendermaxfixed = lim(irender,2)
+    call transform_limits(renderminfixed,rendermaxfixed,itrans(irender))
+ endif
+
+!--set however many sequences are required to capture the change in parameters
+! 
+ !--change of x-y limits
+ if (  notequal(xmin,xminfixed) .or. notequal(xmax,xmaxfixed) &
+   .or.notequal(ymin,yminfixed) .or. notequal(ymax,ymaxfixed)) then
+    nseq = nseq + 1
+    iseqtype(nseq) = 1
+    xminseqend = xmin
+    xmaxseqend = xmax
+    yminseqend = ymin
+    ymaxseqend = ymax
+    print*,trim(transform_label('xmin,max',itrans(iplotx)))//' start = ',xminfixed,xmaxfixed, &
+          ' end = ',xminseqend,xmaxseqend
+    print*,trim(transform_label('ymin,max',itrans(iploty)))//' start = ',yminfixed,ymaxfixed, &
+          ' end = ',yminseqend,ymaxseqend
+    !--always store untransformed limits
+    call transform_limits_inverse(xminseqend,xmaxseqend,itrans(iplotx))
+    call transform_limits_inverse(yminseqend,ymaxseqend,itrans(iploty))
+ endif
+ !--change of rotation angles
+ if (ndim.ge.2 .and. rotation .and. &
+    (notequal(anglexi,anglex).or.notequal(angleyi,angley).or.notequal(anglezi,anglez))) then
+    nseq = nseq + 1
+    iseqtype(nseq) = 2
+    anglexend = anglexi
+    angleyend = angleyi
+    anglezend = anglezi
+    print*,'angle x start = ',anglex,' end = ',anglexend
+    print*,'angle y start = ',angley,' end = ',angleyend
+    print*,'angle z start = ',anglez,' end = ',anglezend
+ endif
+ !--change of render limits
+ if (ndim.gt.1 .and. irender.gt.0 .and. irender.le.numplot) then
+    if (notequal(rendermin,renderminfixed) .or. notequal(rendermax,rendermaxfixed)) then
+       nseq = nseq + 1
+       iseqtype(nseq) = 3
+       icolchange = irender
+       xmincolend = rendermin
+       xmaxcolend = rendermax
+       print*,trim(transform_label('rendermin,max',itrans(irender)))//' start = ',renderminfixed,rendermaxfixed, &
+              ' end = ',xmincolend,xmaxcolend
+       !--always store untransformed limits
+       call transform_limits_inverse(xmincolend,xmaxcolend,itrans(irender))
+    endif
+ endif
+ !--change of observer position
+ if (ndim.eq.3 .and. notequal(zobserveri,zobserver)) then
+    nseq = nseq + 1
+    iseqtype(nseq) = 4
+    zobserverend = zobserveri
+ endif
+ !--change of cross section position
+ if (ndim.eq.3 .and. x_sec .and. notequal(xsecpos_nomulti,xsecposi)) then
+    nseq = nseq + 1
+    iseqtype(nseq) = 5
+    xsecpos_nomulti_end = xsecposi
+ endif
+ !--change of opacity
+ if (use3Dopacity .and. notequal(taupartdepthi,taupartdepth)) then
+    nseq = nseq + 1
+    iseqtype(nseq) = 6
+    taupartdepthend = taupartdepthi
+ endif
+ 
+ !--all sequences start from 1 and end at current dump position
+ iseqstart(1:nseq) = 1
+ iseqend(1:nseq) = ipos
+ 
+ if (nseq.gt.0) then
+    print "(1x,a,i1,a)",'total of ',nseq,' sequences set:'
+    do i=1,nseq
+       print "(1x,i1,': ',a)",i,trim(labelseqtype(iseqtype(i)))
+    enddo
+    print "(a,i5)",' sequences start at dump 1 and end at dump ',ipos
+ else
+    print "(a)",' no sequences set (no change in parameters)'
+ endif
+ 
+ return
+end subroutine setsequenceend
+
+!----------------------------------------------------------------------
+!  utility function for comparing real numbers
+!----------------------------------------------------------------------
+logical function notequal(r1,r2)
+ implicit none
+ real, intent(in) :: r1,r2
+ 
+ if (abs(r1-r2).gt.epsilon(r1)) then
+    notequal = .true.
+ else
+    notequal = .false.
+ endif
+ 
+end function notequal
 
 !----------------------------------------------------------------------
 ! query function determining whether or not a given timestep
@@ -397,14 +533,19 @@ end function insidesequence
 !----------------------------------------------------------------------
 subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
                           anglexi,angleyi,anglezi,zobserveri,taupartdepthi, &
-                          xsecposi,xmin,xmax,ymin,ymax,rendermin,rendermax)
+                          xsecposi,xmin,xmax,ymin,ymax,rendermin,rendermax,isetrenderlimits)
  use limits, only:lim
+ use multiplot, only:itrans
+ use transforms, only:transform_limits
  implicit none
  integer, intent(in) :: ipos,iframe,iplotx,iploty,irender
  real, intent(out) :: anglexi,angleyi,anglezi,zobserveri,taupartdepthi,xsecposi
  real, intent(out) :: xmin,xmax,ymin,ymax,rendermin,rendermax
+ logical, intent(out) :: isetrenderlimits
  integer :: i,iposinseq,iposend
- real :: xfrac
+ real :: xfrac,xminstart,xmaxstart,xminend,xmaxend,yminstart,ymaxstart,yminend,ymaxend
+ 
+ isetrenderlimits = .false.
  
  do i=1,nseq
     !--set starting values based on first position
@@ -422,24 +563,59 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
        endif
        select case(iseqtype(i))
        case(1)
-          xmin = lim(iplotx,1) + xfrac*(xminseqend - lim(iplotx,1))
-          xmax = lim(iplotx,2) + xfrac*(xmaxseqend - lim(iplotx,2))
-          ymin = lim(iploty,1) + xfrac*(yminseqend - lim(iploty,1))
-          ymax = lim(iploty,2) + xfrac*(ymaxseqend - lim(iploty,2))
+          xminstart = lim(iplotx,1)
+          xmaxstart = lim(iplotx,2)
+          yminstart = lim(iploty,1)
+          ymaxstart = lim(iploty,2)
+          call transform_limits(xminstart,xmaxstart,itrans(iplotx))
+          call transform_limits(yminstart,ymaxstart,itrans(iploty))
+          xminend = xminseqend
+          xmaxend = xmaxseqend
+          yminend = yminseqend
+          ymaxend = ymaxseqend
+          call transform_limits(xminend,xmaxend,itrans(iplotx))
+          call transform_limits(yminend,ymaxend,itrans(iploty))
+          !--steps are linear in the transformed space
+          !  and limits returned are *already transformed*
+          xmin = xminstart + xfrac*(xminend - xminstart)
+          xmax = xmaxstart + xfrac*(xmaxend - xmaxstart)
+          ymin = yminstart + xfrac*(yminend - yminstart)
+          ymax = ymaxstart + xfrac*(ymaxend - ymaxstart)
        case(2)
           anglexi = anglex + xfrac*(anglexend - anglex)
           angleyi = angley + xfrac*(angleyend - angley)
           anglezi = anglez + xfrac*(anglezend - anglez)
        case(3)
+          !--steps are linear in the transformed space
+          !  and limits returned are *already transformed*         
           if (iplotx.eq.icolchange) then
-             xmin = lim(iplotx,1) + xfrac*(xmincolend - lim(iplotx,1))
-             xmax = lim(iplotx,2) + xfrac*(xmaxcolend - lim(iplotx,2))
+             xminstart = lim(iplotx,1)
+             xmaxstart = lim(iplotx,2)
+             call transform_limits(xminstart,xmaxstart,itrans(iplotx))
+             xminend = xmincolend
+             xmaxend = xmaxcolend
+             call transform_limits(xminend,xmaxend,itrans(iplotx))
+             xmin = xminstart + xfrac*(xminend - xminstart)
+             xmax = xmaxstart + xfrac*(xmaxend - xmaxstart)
           elseif (iploty.eq.icolchange) then
-             ymin = lim(iploty,1) + xfrac*(xmincolend - lim(iploty,1))
-             ymax = lim(iploty,2) + xfrac*(xmaxcolend - lim(iploty,2))
+             yminstart = lim(iploty,1)
+             ymaxstart = lim(iploty,2)
+             call transform_limits(yminstart,ymaxstart,itrans(iploty))
+             yminend = xmincolend
+             ymaxend = xmaxcolend
+             call transform_limits(yminend,ymaxend,itrans(iploty))
+             ymin = yminstart + xfrac*(yminend - yminstart)
+             ymax = ymaxstart + xfrac*(ymaxend - ymaxstart)
           elseif (irender.eq.icolchange) then
-             rendermin = lim(irender,1) + xfrac*(xmincolend - lim(irender,1))
-             rendermax = lim(irender,2) + xfrac*(xmaxcolend - lim(irender,2))
+             xminstart = lim(irender,1)
+             xmaxstart = lim(irender,2)
+             call transform_limits(xminstart,xmaxstart,itrans(irender))             
+             xminend = xmincolend
+             xmaxend = xmaxcolend
+             call transform_limits(xminend,xmaxend,itrans(irender))
+             rendermin = xminstart + xfrac*(xminend - xminstart)
+             rendermax = xmaxstart + xfrac*(xmaxend - xmaxstart)
+             isetrenderlimits = .true.
           endif
        case(4)
           zobserveri = zobserver + xfrac*(zobserverend - zobserver)

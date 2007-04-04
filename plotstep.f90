@@ -492,7 +492,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   character(len=120) :: title
   character(len=20) :: string,labeltimeunits
   
-  logical :: iColourBar, rendering, inormalise, logged, dumxsec
+  logical :: iColourBar, rendering, inormalise, logged, dumxsec, isetrenderlimits
   
 34   format (25(' -'))
 
@@ -510,6 +510,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   pmass = 0.
   labeltimeunits = ' '
   dumxsec = .false.
+  isetrenderlimits = .false.
   k = nxsec ! matters for lastplot in page_setup for non-coord plots
   if (iReScale) labeltimeunits = unitslabel(0)
     
@@ -678,16 +679,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               taupartdepthtemp = 0.
            endif
         endif
-        if (nseq.gt.0) then
-           call getsequencepos(ipos,iframe,iplotx,iploty,irender, &
-                angletempx,angletempy,angletempz,zobservertemp,taupartdepthtemp,&
-                zslicepos,xmin,xmax,ymin,ymax,rendermin,rendermax)
-        endif
-        !--for 3D perspective, do not plot particles behind the observer
-        if (ndim.eq.3.and.use3Dperspective) then
-           zslicemax = zobservertemp
-           if (use3Dopacityrendering) rkappa = rkappafac/taupartdepthtemp
-        endif
         !
         !--flag for whether or not we have raw particle plot or not
         !  (not allowed to use transformations on coords otherwise)
@@ -726,6 +717,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         if (itrackpart.gt.0 .and. .not.interactivereplot) then
            call settrackinglimits(itrackpart,iplotx,xplot,xmin,xmax)
            call settrackinglimits(itrackpart,iploty,yplot,ymin,ymax)
+        endif
+
+        !--override settings based on positions in sequence
+        if (nseq.gt.0) then
+           call getsequencepos(ipos,iframe,iplotx,iploty,irender, &
+                angletempx,angletempy,angletempz,zobservertemp,taupartdepthtemp,&
+                zslicepos,xmin,xmax,ymin,ymax,rendermin,rendermax,isetrenderlimits)
+        endif
+        !--for 3D perspective, do not plot particles behind the observer
+        if (ndim.eq.3.and.use3Dperspective) then
+           zslicemax = zobservertemp
+           if (use3Dopacityrendering) rkappa = rkappafac/taupartdepthtemp
         endif
         
      endif initdataplots
@@ -1052,7 +1055,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     endif
                     rendermaxadapt = maxval(datpix)
 
-                    if (.not.interactivereplot) then
+                    if (.not.interactivereplot .and. .not.isetrenderlimits) then
                        if (iadapt) then
                           print*,'adapting render limits'
                           rendermin = renderminadapt
@@ -1086,8 +1089,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               labelrender = transform_label(labelrender,itrans(irenderpart))
 
               !!--limits for rendered quantity
-              if (.not.interactivereplot) then                
+              if (.not.interactivereplot .and. .not.isetrenderlimits) then
                  !!--find (adaptive) limits of rendered array
+                 !   (note: something may be not quite right here with adapt during anim sequences)
                  call adapt_limits(irenderpart,renderplot(1:ntoti),rendermin,rendermax, &
                                    renderminadapt,rendermaxadapt,trim(labelrender))
                  if (.not.iadapt) then

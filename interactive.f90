@@ -45,6 +45,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   anglex,angley,anglez,ndim,x_sec,zslicepos,dzslice, &
   zobserver,dscreen,use3Dopacity,taupartdepth,irerender,itrackpart,icolourscheme, &
   iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
+  use settings_xsecrot, only:setsequenceend
   implicit none
   integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
   integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
@@ -262,6 +263,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,' k: decrease opacity on opacity-rendered plots (Z for x10)'
            print*,' K: increase opacity on opacity-rendered plots (Z for x10)'
         endif
+        print*,' e, E: use current frame/settings as end point to animation sequence'
         if (ndim.gt.1) then
            print*,' , .: rotate about z axis by +(-) 15 degrees'
            print*,' < >: rotate about z axis by +(-) 30 degrees'
@@ -602,6 +604,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               iexit = .true.
            endif
         endif
+     !
+     !--save as end point of animation sequence
+     !
+     case('e','E')
+        call setsequenceend(istep,iplotx,iploty,irender,rotation, &
+                          anglex,angley,anglez,zobserver,use3Dopacity,taupartdepth, &
+                          x_sec,zslicepos,xmin,xmax,ymin,ymax,rendermin,rendermax)
      !
      !--rotation
      !
