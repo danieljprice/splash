@@ -32,7 +32,7 @@ module filenames
  integer, parameter :: maxfile = 10001
  integer :: nfiles,nsteps,ifileopen
  character(len=120), dimension(maxfile) :: rootname
- character(len=120) :: defaultsfile,limitsfile
+ character(len=120) :: defaultsfile,limitsfile,animfile
  integer, dimension(maxfile) :: nstepsinfile
 end module filenames
 !

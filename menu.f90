@@ -10,7 +10,7 @@ module mainmenu
 contains
 
 subroutine menu
-  use filenames, only:defaultsfile,limitsfile
+  use filenames, only:defaultsfile,limitsfile,animfile
   use labels, only:label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass
   use limits, only:write_limits
   use options_data, only:submenu_data
@@ -21,7 +21,7 @@ subroutine menu
   use settings_page, only:submenu_page,interactive
   use settings_render, only:submenu_render
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
-  use settings_xsecrot, only:submenu_xsecrotate
+  use settings_xsecrot, only:submenu_xsecrotate,write_animfile
   use settings_units, only:unitslabel
   use multiplot
   use prompting, only:prompt
@@ -322,7 +322,8 @@ subroutine menu
         call defaults_write(defaultsfile)
      case('S')
         call defaults_write(defaultsfile)
-        call write_limits(limitsfile)     
+        call write_limits(limitsfile)
+        call write_animfile(animfile)
 !------------------------------------------------------------------------
 !+ Slightly obsolete: prints whatever help may be helpful
      case('h','H')
@@ -330,7 +331,7 @@ subroutine menu
                  ' the o)ptions menu, item 2.',&
                  '   ', &
                  ' for detailed help, consult the user guide',&
-                 '  (splash/docs/ssplash.pdf ',&
+                 '  (splash/docs/splash.pdf ',&
                  '   or http://www.astro.ex.ac.uk/people/dprice/splash/userguide/)', &
                  ' and/or the online FAQ. If you''re really stuck, email me! '
         read*

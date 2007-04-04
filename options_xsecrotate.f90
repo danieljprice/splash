@@ -5,20 +5,52 @@
 !-------------------------------------------------------------------------
 module settings_xsecrot
  implicit none
- integer :: nxsec,irotateaxes
- logical :: xsec_nomulti, irotate, flythru, use3Dperspective, use3Dopacityrendering
- logical :: writeppm
- real :: anglex, angley, anglez, zobserver, dzscreenfromobserver
- real :: taupartdepth, rkappa
- real :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
- real, dimension(3) :: xorigin,xminrotaxes,xmaxrotaxes
+ !--public variables
+ integer, public :: nframes,nseq
+ integer, public :: nxsec,irotateaxes
+ logical, public :: xsec_nomulti, irotate, flythru, use3Dperspective, use3Dopacityrendering
+ logical, public :: writeppm
+ real, public :: anglex, angley, anglez, zobserver, dzscreenfromobserver
+ real, public :: taupartdepth
+ real, public :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
+ real, public, dimension(3) :: xorigin,xminrotaxes,xmaxrotaxes
+ 
+ !--private variables related to animation sequences
+ integer, parameter, private :: maxseq = 6
+ integer, dimension(maxseq), private :: iseqstart,iseqend,iseqtype
+ integer, private :: icolchange
+ real, private :: xminseqend,xmaxseqend,yminseqend,ymaxseqend
+ real, private :: anglezend,angleyend,anglexend,zobserverend,taupartdepthend
+ real, private :: xmincolend,xmaxcolend,xsecpos_nomulti_end
+ logical, private :: ihavesetsequence
+ character(len=*), dimension(maxseq), parameter, private :: labelseqtype = &
+    (/'steady zoom on x and y axes                       ', &
+      'steady rotation                                   ', &
+      'steady change of limits (e.g. for colour bar)     ', &
+      'steady movement of 3D observer                    ', &
+      'sequence of cross section slices through a 3D box ', &
+      'steady change of opacity for 3D surface plots     '/)
 
+ !--namelists for writing to defaults file and .anim file
+ public :: xsecrotopts
  namelist /xsecrotopts/ xsec_nomulti,xsecpos_nomulti,flythru, &
           xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
           irotate,irotateaxes,anglex, angley, anglez, &
           xminrotaxes,xmaxrotaxes,use3Dperspective, &
           use3Dopacityrendering,zobserver,dzscreenfromobserver, &
           taupartdepth,writeppm
+
+ private :: animopts
+ namelist /animopts/ nseq,nframes,iseqstart,iseqend,iseqtype, &
+          xminseqend,xmaxseqend,yminseqend,ymaxseqend, &
+          anglezend,angleyend,anglexend,zobserverend,taupartdepthend, &
+          icolchange,xmincolend,xmaxcolend,xsecpos_nomulti_end
+
+ !--public procedure names
+ public :: defaults_set_xsecrotate,submenu_xsecrotate,getsequencepos,insidesequence
+ public :: write_animfile,read_animfile
+ 
+ private
 
 contains
 
@@ -47,9 +79,28 @@ subroutine defaults_set_xsecrotate
   use3Dopacityrendering = .false.
   zobserver = 0.
   dzscreenfromobserver = 0.
-  rkappa = 0. ! rkappa is set from taupartdepth later
   taupartdepth = 2.
   writeppm = .true.
+
+  !--defaults for animation sequences
+  nseq = 0
+  nframes = 0
+  iseqstart(:) = 0
+  iseqend(:) = 0
+  xminseqend = 0.
+  xmaxseqend = 0.
+  yminseqend = 0.
+  ymaxseqend = 0.
+  anglezend = 360.
+  angleyend = 0.
+  anglexend = 0.
+  icolchange = 0
+  xmincolend = 0.
+  xmaxcolend = 0.
+  zobserverend = 0.
+  taupartdepthend = 2000.0
+  xsecpos_nomulti_end = 0.
+  ihavesetsequence = .false.
 
   return
 end subroutine defaults_set_xsecrotate
@@ -58,6 +109,7 @@ end subroutine defaults_set_xsecrotate
 ! sets options relating to cross sectioning / rotation
 !----------------------------------------------------------------------
 subroutine submenu_xsecrotate(ichoose)
+ use filenames, only:nsteps
  use labels, only:label,ix
  use limits, only:lim
  use prompting
@@ -65,14 +117,12 @@ subroutine submenu_xsecrotate(ichoose)
  implicit none
  integer, intent(in) :: ichoose
  integer :: ians,i
- character(len=1) :: char
+ logical :: iyes
  character(len=4) :: text
- logical :: interact
  
  print "(a)",'---------- cross section / 3D plotting options --------'
  if (ndim.eq.1) print*,' WARNING: none of these options have any effect in 1D'
  ians = ichoose
- interact = .true.
  if (xsec_nomulti) then
     text = 'xsec'
  else
@@ -80,17 +130,17 @@ subroutine submenu_xsecrotate(ichoose)
  endif
  
  if (ians.le.0 .or. ians.gt.6) then
-    print 10,text,xsecpos_nomulti,print_logical(irotate), &
+    print 10,text,print_logical(irotate),anglex,angley,anglez, &
              print_logical(use3Dperspective),print_logical(use3Dopacityrendering), &
-             irotateaxes
+             irotateaxes,nseq
 10  format( &
               ' 0) exit ',/,       &
-              ' 1) switch between cross section/projection     ( ',a4,' )',/, &
-              ' 2) set cross section position                  (',f5.2,' )',/, &
-              ' 3) rotation settings/options                   ( ',a,' )',/, &
-              ' 4) 3D perspective on/off                       ( ',a,' )',/, &
-              ' 5) 3D surface rendering on/off/options         ( ',a,' )',/, &
-              ' 6) set axes for rotated/3D plots               ( ',i2,' )')
+              ' 1) switch between cross section/projection      ( ',a4,' )',/, &
+              ' 2) rotation on/off/options                      ( ',a,3(1x,f5.2),' )',/, &
+              ' 3) 3D perspective on/off                        ( ',a,' )',/, &
+              ' 4) 3D surface rendering on/off/options          ( ',a,' )',/, &
+              ' 5) set axes for rotated/3D plots                ( ',i2,' )',/, &
+              ' 6) set animation sequence (rotate,flythru etc.) ( ',i2,' )')
     call prompt('enter option',ians,0,6)
  endif
 !
@@ -103,52 +153,6 @@ subroutine submenu_xsecrotate(ichoose)
     print *,' Cross section = ',xsec_nomulti
 !------------------------------------------------------------------------
  case(2)
-    flythru = .false.
-    if (ndim.eq.3) then
-       call prompt('Do you want a fly-through',flythru)
-       if (.not.flythru) then
-          call prompt('enter co-ordinate location of cross section slice', &
-               xsecpos_nomulti)
-       endif
-    elseif (ndim.eq.2) then
-       call prompt('set cross section position interactively?',interact)
-       
-       if (interact) then
-       !
-       !--set cross section position interactively
-       !
-          call pgbegin(0,'/xw',1,1)
-          call pgenv(lim(1,1),lim(1,2),lim(2,1),lim(2,2),1,0)
-          call pgcurs(xseclineX1,xseclineY1,char)
-          print*,'please select cross section line'
-          call pgband(1,1,xseclineX1,xseclineY1,xseclineX2,xseclineY2,char)
-          print*,'cross section line: xmin = ',xseclineX1,' xmax = ',xseclineX2
-          print*,'                    ymin = ',xseclineY1,' ymax = ',xseclineY2
-          call pgend       
-       else
-       !
-       !--set position manually
-       !
-          if (abs(xseclineX2-xseclineX1).lt.1.e-5 .and. &
-              abs(xseclineY2-xseclineY1).lt.1.e-5) then
-          !--if not already set (ie. if all = 0.0)
-          !  then set default line to diagonal across the domain
-             xseclineX1 = lim(1,1)
-             xseclineX2 = lim(1,2)
-             xseclineY1 = lim(2,1)
-             xseclineY2 = lim(2,2)
-          endif
-          print*,'please set position of cross section through 2D data:'
-          call prompt('enter xmin of cross section line',xseclineX1)
-          call prompt('enter xmax of cross section line',xseclineX2)
-          call prompt('enter ymin of cross section line',xseclineY1)
-          call prompt('enter ymax of cross section line',xseclineY2)
-       endif
-    else
-       print*,'WARNING: this option has no effect in 1D'
-    endif
-!------------------------------------------------------------------------
- case(3)
     call prompt('use rotation?',irotate)
     print*,'rotate = ',irotate
     if (irotate) then
@@ -166,12 +170,12 @@ subroutine submenu_xsecrotate(ichoose)
        enddo
     endif
 !------------------------------------------------------------------------
- case(4)
+ case(3)
     use3Dperspective = .not.use3Dperspective
-    print "(a,L1)",' 3D perspective = ',use3Dperspective
+    call prompt(' Use 3D perspective? ',use3Dperspective)
     if (.not.use3Dperspective) use3Dopacityrendering = .false.
 !------------------------------------------------------------------------
- case(5)
+ case(4)
     use3Dopacityrendering = .not.use3Dopacityrendering
     call prompt(' Use 3D opacity rendering? ',use3Dopacityrendering)
     if (use3Dopacityrendering .and..not.use3Dperspective) then
@@ -184,7 +188,7 @@ subroutine submenu_xsecrotate(ichoose)
        call prompt(' Do you want to write a ppm file in addition to PGPLOT output?',writeppm)
     endif
 !------------------------------------------------------------------------
- case(6)
+ case(5)
     print*,'0 : do not plot rotated axes'
     print*,'1 : plot rotated axes'
     print*,'2 : plot rotated box'
@@ -201,9 +205,333 @@ subroutine submenu_xsecrotate(ichoose)
           call prompt('enter '//trim(label(ix(i)))//'max:',xmaxrotaxes(i))
        enddo
     endif
+!------------------------------------------------------------------------
+ case(6)
+    print "(a,i1,a)",'Note: Up to ',maxseq,' sequences (1 of each type) can be set '
+    call prompt('Enter number of sequences to use (0=none)',nseq,0,maxseq)
+
+    if (nseq.gt.0) then
+       !--set sensible default value for number of frames
+       if (nframes.eq.0) then
+          if (nsteps.gt.1) then
+             nframes = 1
+          else
+             nframes = 10
+          endif
+       endif
+       call prompt('Enter number of frames generated between dumps (applies to all sequences)',nframes,1,500)
+
+       iyes = .true.
+       if (ihavesetsequence) call prompt('Change sequence settings?',iyes)
+       if (iyes) call submenu_animation()
+    endif    
+
  end select
 
  return
 end subroutine submenu_xsecrotate
+
+!----------------------------------------------------------------------
+! sets up animation sequences
+!----------------------------------------------------------------------
+subroutine submenu_animation()
+ use prompting, only:prompt
+ use limits, only:lim
+ use labels, only:ix
+ use settings_data, only:ndim,istartatstep,iendatstep,numplot
+ use filenames, only:nsteps
+ implicit none
+ integer :: i,j,ierr
+
+ do i = 1, nseq
+    print "(a,i2,a)",'----------------- sequence ',i,' ----------------------'
+    if (iseqstart(i).eq.0) iseqstart(i) = max(istartatstep,1)
+    if (iseqend(i).eq.0) iseqend(i) = max(1,iendatstep,istartatstep)
+    if (nsteps.gt.1) then
+       call prompt('Enter starting dump for sequence ',iseqstart(i),1,nsteps)
+       call prompt('Enter finishing dump for sequence ',iseqend(i),1,nsteps)
+    endif
+
+    ierr = 1
+    do while (ierr /= 0)
+       print "(7(/,1x,i1,1x,':',1x,a))",0,'none (remove sequence) ', &
+                                       (j,labelseqtype(j),j=1,maxseq)
+
+       call prompt('Enter type of sequence ',iseqtype(i),0,maxseq)
+       !--allow only one sequence of each type
+       ierr = 0
+       if (i.gt.1) then
+          if (any(iseqtype(1:i-1).eq.iseqtype(i)).and.iseqtype(i).gt.0) then
+             print "(a)",' Error: can only have one sequence of each type '
+             ierr = 2
+          endif
+       endif
+    end do
+
+    select case(iseqtype(i))
+    case(1)
+       print "(a)",'Note: zoom sequence starts using current fixed x,y plot limits'
+       if (abs(xminseqend).lt.tiny(xminseqend) .and. abs(xmaxseqend).lt.tiny(xmaxseqend)) then
+          xminseqend = lim(1,1) 
+          xmaxseqend = lim(1,2)
+       endif
+       call prompt(' Enter finishing xmin ',xminseqend)
+       call prompt(' Enter finishing xmax ',xmaxseqend)
+       if (abs(yminseqend).lt.tiny(yminseqend) .and. abs(ymaxseqend).lt.tiny(ymaxseqend)) then
+          yminseqend = lim(2,1) 
+          ymaxseqend = lim(2,2)
+       endif
+       call prompt(' Enter finishing ymin ',yminseqend)
+       call prompt(' Enter finishing ymax ',ymaxseqend)       
+    case(2)
+       if (ndim.lt.2) then
+          print "(a)",' ERROR: cannot use this sequence in 1D'
+          iseqtype(i) = 0
+       endif
+       if (.not.irotate) then
+          print "(a)",' Turning rotation on...'
+          irotate = .true.
+       endif
+       print "(a)",'Note: rotation sequence starts using current rotation settings'
+       call prompt(' Enter finishing rotation angle (z axis) ',anglezend)
+       call prompt(' Enter finishing rotation angle (y axis) ',angleyend)
+       call prompt(' Enter finishing rotation angle (x axis) ',anglexend)
+    case(3)
+       call prompt(' Enter column to change limits ',icolchange,1,numplot)
+       print "(a)",'Note: limits start from current fixed plot limits for this column'
+       if (abs(xmincolend).lt.tiny(xmincolend) .and. abs(xmaxcolend).lt.tiny(xmaxcolend)) then
+          xmincolend = lim(icolchange,1) 
+          xmaxcolend = lim(icolchange,2)
+       endif
+       call prompt(' Enter finishing minimum value ',xmincolend)
+       call prompt(' Enter finishing maximum value ',xmaxcolend)
+    case(4)
+       if (ndim.ne.3) then
+          print "(a)",' ERROR: cannot use this sequence in < 3D'
+          iseqtype(i) = 0
+       endif
+       if (.not.use3Dperspective) then
+          print "(a)",'Turning 3D perspective on...'
+          use3Dperspective = .true.
+       endif
+       print "(a)",'Note: observer starts at current observer settings '
+       print "(a)",'      (screen height does not change)'
+       !--try to give sensible default values
+       if (abs(zobserverend).lt.tiny(zobserverend)) then
+          if (abs(zobserver).gt.tiny(zobserver)) then
+             zobserverend = 5.*zobserver
+          elseif (ix(3).gt.0 .and. ix(3).le.numplot) then
+             zobserverend = 10.*lim(ix(3),2)
+          endif
+       endif
+       call prompt(' Enter finishing 3D observer height ',zobserverend)
+    case(5)
+       if (ndim.ne.3) then
+          print "(a)",' ERROR: cannot use this sequence in < 3D'
+          iseqtype(i) = 0
+       endif
+       if (.not.xsec_nomulti) then
+          print "(a)",'Changing from projection to cross-section'
+          xsec_nomulti = .true.
+          if (use3Dperspective .and. .not.use3Dopacityrendering) then
+             print "(a)",'Turning 3D perspecitve off'
+             use3Dperspective = .false.
+          endif
+       endif
+       print "(a)",'Note: slice position starts from value set at initial prompt'
+       call prompt(' Enter finishing slice position ',xsecpos_nomulti_end)
+    case(6)
+       if (ndim.ne.3) then
+          print "(a)",' ERROR: cannot use this sequence in < 3D'
+          iseqtype(i) = 0
+       endif
+       if (.not.use3Dperspective .or. .not.use3Dopacityrendering) then
+          print "(a)",'Turning 3D opacity rendering and 3D perspective on...'
+          use3Dopacityrendering = .true.
+          use3Dperspective = .true.
+       endif
+       print "(a)",'Note: opacity sequence starts from current opacity value '
+       call prompt('Enter finishing opacity in units of average smoothing length ',taupartdepthend)
+    end select
+ enddo
+
+ if (all(iseqtype(1:nseq).eq.0)) then
+    print "(a)",' No sequences set!'
+    nseq = 0
+ else
+    ihavesetsequence = .true.
+    print "(3(/,a))",'Note: these sequences are saved to file using the S)ave option from the main menu', &
+                   ' This will save the splash.defaults file, the splash.limits file', &
+                   ' and a file called ''splash.anim'' which contains the animation sequence info'
+    print "(/,a)",' press any key to continue...'
+    read*
+ endif
+ 
+ return
+end subroutine submenu_animation
+
+!----------------------------------------------------------------------
+! query function determining whether or not a given timestep
+! is inside an animation sequence or not
+! (and thus whether or not to generate extra frames)
+!----------------------------------------------------------------------
+logical function insidesequence(ipos)
+ implicit none
+ integer, intent(in) :: ipos
+ integer :: i
+ 
+ insidesequence = .false.
+ do i=1,nseq
+    if (iseqtype(i).gt.0 .and. iseqstart(i).le.ipos .and. iseqend(i).ge.ipos) then
+       insidesequence = .true.
+    endif
+ enddo
+ 
+ return
+end function insidesequence
+
+!----------------------------------------------------------------------
+! query function which returns the current plot parameters
+! based on the position in each sequence 
+! (given the current frame & dump position)
+!----------------------------------------------------------------------
+subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
+                          anglexi,angleyi,anglezi,zobserveri,taupartdepthi, &
+                          xsecposi,xmin,xmax,ymin,ymax,rendermin,rendermax)
+ use limits, only:lim
+ implicit none
+ integer, intent(in) :: ipos,iframe,iplotx,iploty,irender
+ real, intent(out) :: anglexi,angleyi,anglezi,zobserveri,taupartdepthi,xsecposi
+ real, intent(out) :: xmin,xmax,ymin,ymax,rendermin,rendermax
+ integer :: i,iposinseq,iposend
+ real :: xfrac
+ 
+ do i=1,nseq
+    !--set starting values based on first position
+    if (ipos.ge.iseqstart(i)) then
+       iposinseq = (ipos-iseqstart(i))*nframes + iframe
+       iposend = (iseqend(i)-iseqstart(i))*nframes + nframes
+       xfrac = (iposinseq-1)/real(iposend-1)
+       xfrac = min(xfrac,1.0)
+       
+       if (iposinseq.gt.iposend) then
+          print "(1x,a)",'-->  '//trim(labelseqtype(iseqtype(i)))//' finished : frac = 1.0'
+       else
+          print "(1x,a,i3,a,i3,a,f4.2)",'-->  frame ', &
+                 iposinseq,' / ',iposend,' of '//trim(labelseqtype(iseqtype(i)))//': frac = ',xfrac
+       endif
+       select case(iseqtype(i))
+       case(1)
+          xmin = lim(iplotx,1) + xfrac*(xminseqend - lim(iplotx,1))
+          xmax = lim(iplotx,2) + xfrac*(xmaxseqend - lim(iplotx,2))
+          ymin = lim(iploty,1) + xfrac*(yminseqend - lim(iploty,1))
+          ymax = lim(iploty,2) + xfrac*(ymaxseqend - lim(iploty,2))
+       case(2)
+          anglexi = anglex + xfrac*(anglexend - anglex)
+          angleyi = angley + xfrac*(angleyend - angley)
+          anglezi = anglez + xfrac*(anglezend - anglez)
+       case(3)
+          if (iplotx.eq.icolchange) then
+             xmin = lim(iplotx,1) + xfrac*(xmincolend - lim(iplotx,1))
+             xmax = lim(iplotx,2) + xfrac*(xmaxcolend - lim(iplotx,2))
+          elseif (iploty.eq.icolchange) then
+             ymin = lim(iploty,1) + xfrac*(xmincolend - lim(iploty,1))
+             ymax = lim(iploty,2) + xfrac*(xmaxcolend - lim(iploty,2))
+          elseif (irender.eq.icolchange) then
+             rendermin = lim(irender,1) + xfrac*(xmincolend - lim(irender,1))
+             rendermax = lim(irender,2) + xfrac*(xmaxcolend - lim(irender,2))
+          endif
+       case(4)
+          zobserveri = zobserver + xfrac*(zobserverend - zobserver)
+       case(5)
+          xsecposi = xsecpos_nomulti + xfrac*(xsecpos_nomulti_end - xsecpos_nomulti)
+       case(6)
+          taupartdepthi = taupartdepth + xfrac*(taupartdepthend - taupartdepth)
+       end select
+    endif
+ enddo
+ 
+ return
+end subroutine getsequencepos
+
+!-----------------------------------------------
+! writes animation sequence options to file 
+! (should match read_animfile)
+!-----------------------------------------------
+subroutine write_animfile(filename)
+ use prompting, only:prompt
+ implicit none
+ character(len=*), intent(in) :: filename
+ integer :: ierr
+ logical :: iexist, idelete
+ 
+ if (nseq.gt.0) then
+    open(unit=15,file=filename,status='replace',form='formatted', &
+         delim='apostrophe',iostat=ierr) ! without delim namelists may not be readable
+       if (ierr /= 0) then 
+          print*,'ERROR: cannot write file '//trim(filename)
+          close(unit=15)
+          return
+       endif
+       write(15,NML=animopts)
+    close(unit=15)
+    print*,'animation sequences saved to file '//trim(filename)
+ elseif (nseq.eq.0) then
+    inquire(file=trim(filename),exist=iexist)
+    if (iexist) then
+       idelete = .true.
+       call prompt(' delete '//trim(filename)//' file? ',idelete)
+       if (idelete) then
+          open(unit=15,status='replace',file=filename,iostat=ierr)
+          close(unit=15,status='delete',iostat=ierr)
+          if (ierr /= 0) then
+             print "(a)",' Error deleting '//trim(filename)
+          else
+             print "(a)",trim(filename)//' deleted'
+          endif
+       endif
+    endif
+ endif
+    
+ return              
+end subroutine write_animfile
+
+!-----------------------------------------------
+! reads animation sequence options from file 
+! (should match write_animfile)
+!-----------------------------------------------
+subroutine read_animfile(filename)
+ use filenames, only:nsteps
+ implicit none
+ character(len=*), intent(in) :: filename
+ logical :: iexist
+ integer :: ierr
+ 
+ inquire (exist=iexist, file=filename)
+ if (iexist) then
+    open(unit=15,file=filename,status='old',form='formatted')
+
+    ierr = 0
+    read(15,NML=animopts,end=77,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading animation sequences from '//trim(filename)
+
+    close(unit=15)
+    print "(1x,a)",'read animation sequences from '//trim(filename)
+    ihavesetsequence = .true.
+    return
+ else
+    return
+ endif
+ 
+77 continue
+ print*,'**** warning: end of file in '//trim(filename)//' ****'
+ close(unit=15)
+ 
+ if (nseq.gt.0 .and. all(iseqstart(1:nseq).gt.nsteps)) then
+    print "(a)",' WARNING: animation sequences have no effect!! (not enough dumps)'
+ endif
+
+ return
+end subroutine read_animfile
 
 end module settings_xsecrot

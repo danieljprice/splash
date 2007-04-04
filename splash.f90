@@ -163,7 +163,7 @@ program splash
 !      multiplot enables you to set up multiple plots per page, mixing from any type.
 !
 !----------------------------------------------------------------------------------
-  use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile
+  use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile,animfile
   use getdata, only:get_data
   use defaults, only:defaults_set,defaults_read
   use limits, only:read_limits
@@ -171,12 +171,13 @@ program splash
   use mem_allocation, only:deallocate_all
   use projections3D, only:setup_integratedkernel
   use settings_data, only:buffer_data
+  use settings_xsecrot, only:read_animfile
   use system_commands, only:get_number_arguments,get_argument
   implicit none
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.8.1 [28th Mar ''07]'
+  character(len=*), parameter :: version = 'v1.9beta [3rd Apr ''07]'
 
   !
   ! set default options
@@ -188,6 +189,7 @@ program splash
   !
   defaultsfile = 'splash.defaults'
   limitsfile = 'splash.limits'
+  animfile = 'splash.anim'
   !
   !  read all arguments off command line
   !
@@ -265,9 +267,14 @@ program splash
   call setup_integratedkernel
   
   !
-  !--read plot limits from file (overrides get_data limits settings)
+  ! read plot limits from file (overrides get_data limits settings)
   !
   call read_limits(trim(limitsfile),ierr)
+
+  !
+  ! read animation file if it exists
+  !
+  call read_animfile(animfile)
   
   !
   ! enter main menu

@@ -41,19 +41,22 @@ contains
 !
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   xcoords,ycoords,zcoords,hi,icolourpart,xmin,xmax,ymin,ymax, &
-  rendermin,rendermax,vecmax,anglex,angley,anglez,ndim,x_sec,zslicepos,dzslice, &
-  zobserver,dscreen,irerender,itrackpart,icolourscheme,iadvance,istep,ilaststep, &
-  interactivereplot)
+  rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
+  anglex,angley,anglez,ndim,x_sec,zslicepos,dzslice, &
+  zobserver,dscreen,use3Dopacity,taupartdepth,irerender,itrackpart,icolourscheme, &
+  iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
   implicit none
-  integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy,istep,ilaststep
+  integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
   integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
   real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
-  real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax
+  real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax,taupartdepth
   real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
+  real, intent(in) :: renderminadapt,rendermaxadapt
   logical, intent(inout) :: x_sec
   logical, intent(out) :: irerender,interactivereplot
+  logical, intent(in) :: use3Dopacity
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,nc,ierr,ixsec
   integer :: nmarked,ncircpart,itrackparttemp
@@ -252,9 +255,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,' M: change colour M)ap to previous'
            print*,' i: i)nvert colour map'
         endif
-        print*,' v: decrease arrow size on vector plots'
-        print*,' V: increase arrow size on vector plots'
-        if (rotation) then
+        print*,' v: decrease arrow size on vector plots (Z for x10)'
+        print*,' V: increase arrow size on vector plots (Z for x10)'
+        print*,' w: adapt vector arrow size to maximum value'
+        if (ndim.ge.3) then
+           print*,' k: decrease opacity on opacity-rendered plots (Z for x10)'
+           print*,' K: increase opacity on opacity-rendered plots (Z for x10)'
+        endif
+        if (ndim.gt.1) then
            print*,' , .: rotate about z axis by +(-) 15 degrees'
            print*,' < >: rotate about z axis by +(-) 30 degrees'
            if (ndim.ge.3) then
@@ -295,6 +303,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         if (ivecx.gt.0 .and. ivecy.gt.0) then
            call save_limits(ivecx,-vecmax,vecmax)
            call save_limits(ivecy,-vecmax,vecmax)
+        endif
+        if (ndim.eq.3 .and. iplotz.gt.0 .and. irender.gt.0 .and. use3Dopacity) then
+           call save_opacity(taupartdepth)
         endif
         if (ncircpart.gt.0) call save_circles(ncircpart,icircpart)
         if (rotation) call save_rotation(ndim,anglex,angley,anglez)
@@ -484,7 +495,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         endif
      case('a') ! reset plot limits
         if (xpt.gt.xmax .and. irender.gt.0) then
-           call useadaptive
+           rendermin = renderminadapt
+           rendermax = rendermaxadapt
            iadvance = 0              ! that it should change the render limits
            interactivereplot = .true.
            iexit = .true.
@@ -525,6 +537,37 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            vecmax = 0.8/zoomfac*vecmax
            iadvance = 0
            interactivereplot = .true.
+           iexit = .true.
+        endif
+     case('w','W')
+        if (ivecx.gt.0 .and. ivecy.gt.0) then
+           print*,'adapting vector arrow size'
+           vecmax = -1.0
+           iadvance = 0
+           interactivereplot = .true.
+           iexit = .true.
+        endif
+     !
+     !--change opacity on 3D opacity rendered plots
+     !
+     case('k')
+        if (ndim.eq.3 .and. iplotz.gt.0 .and. irender.ne.0 .and. use3Dopacity) then
+           print*,'decreasing opacity by factor of ',1.5*zoomfac
+           !--opacity goes like 1/taupartdepth
+           taupartdepth = 1.5*zoomfac*taupartdepth
+           iadvance = 0
+           interactivereplot = .true.
+           irerender = .true.
+           iexit = .true.
+        endif
+     case('K')
+        if (ndim.eq.3 .and. iplotz.gt.0 .and. irender.ne.0 .and. use3Dopacity) then
+           print*,'increasing opacity by factor of ',1.5*zoomfac
+           !--opacity goes like 1/taupartdepth
+           taupartdepth = taupartdepth/(1.5*zoomfac)
+           iadvance = 0
+           interactivereplot = .true.
+           irerender = .true.
            iexit = .true.
         endif
      !
@@ -887,14 +930,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      !  if iadvance trips over the bounds, jump to last/first step
      !
      if (iadvance.ne.-666 .and. iexit) then
-        if (istep + iadvance .gt. ilaststep) then
+        if (istep + iadvance .gt. ilaststep .and. iframe.eq.nframes) then
            print "(1x,a)",'reached last timestep'
            if (ilaststep-istep .gt.0) then
               iadvance= ilaststep - istep
            else
               iexit = .false.
            endif
-        elseif (istep + iadvance .lt. 1) then
+        elseif (istep + iadvance .lt. 1 .and. iframe.eq.1) then
            print "(1x,a)",'reached first timestep: can''t go back'
            if (1-istep .lt.0) then
               iadvance= 1 - istep
@@ -1106,13 +1149,13 @@ end subroutine interactive_step
 !  a mouse-click refers to from stored settings for the viewport and limits for each plot.
 ! (this could be made into the only subroutine required)
 !
-subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr,iplotyarr, &
-                             irenderarr,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
+subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,ifirstframeonpage,nframes, &
+                             lastpanel,iplotxarr,iplotyarr,irenderarr,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
                              barwmulti,xminadapt,xmaxadapt,nacross,ndim,icolourscheme,interactivereplot)
  implicit none
  integer, intent(inout) :: iadvance
- integer, intent(inout) :: istep
- integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim
+ integer, intent(inout) :: istep,iframe,lastpanel
+ integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim,ifirstframeonpage,nframes
  integer, intent(inout) :: icolourscheme
  integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr
  real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
@@ -1488,6 +1531,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
      case('X','b','B') ! right click -> go back
 !        iadvance = -abs(iadvance)
         istep = istepin - (istepjump)*istepsonpage - iadvance*istepsonpage
+        lastpanel = 0
         iexit = .true.
      case('r','R') ! replot
         interactivereplot = .true.
@@ -1496,6 +1540,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
      case(' ','n','N') ! space
         !iadvance = abs(iadvance)
         istep = istepin + (istepjump-1)*istepsonpage
+        lastpanel = 0
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
         read(char,*,iostat=ierr) istepjump
@@ -1529,7 +1574,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
      !  if iadvance trips over the bounds, jump to last/first step
      !
      if (iadvance.ne.-666 .and. iexit) then
-        if (istep + iadvance .gt. ilaststep) then
+        if (istep + iadvance .gt. ilaststep .and. iframe.eq.nframes) then
            print "(1x,a)",'reached last timestep'
            if (istepin.ne.ilaststep) then
               istep = ilaststep - istepsonpage*iadvance
@@ -1537,7 +1582,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iplotxarr
               istep = istepin
               iexit = .false.
            endif
-        elseif (istep + iadvance .lt. 1) then
+        elseif (istep + iadvance .lt. 1 .and. ifirstframeonpage.eq.1) then
            print "(1x,a)",'reached first timestep: can''t go back'
            if (ifirststeponpage.ne.1) then
               istep = 1 - iadvance
@@ -1833,13 +1878,6 @@ subroutine change_itrans2(iplot,xmin,xmax,xmina,xmaxa)
  
 end subroutine change_itrans2
 
-subroutine useadaptive
- use settings_limits, only:iadapt
- implicit none
- 
- iadapt = .true.
- 
-end subroutine useadaptive
 !
 !--saves rotation options
 !
@@ -1886,7 +1924,18 @@ subroutine save_perspective(zpos,dz)
  
  return
 end subroutine save_perspective
-
+!
+!--saves 3D opacity
+!
+subroutine save_opacity(taupartdepthi)
+ use settings_xsecrot, only:taupartdepth
+ implicit none
+ real, intent(in) :: taupartdepthi
+ 
+ taupartdepth = taupartdepthi
+ 
+ return
+end subroutine save_opacity
 !
 !--saves circles of interaction
 !
