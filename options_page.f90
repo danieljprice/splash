@@ -35,7 +35,7 @@ subroutine defaults_set_page
   nstepsperpage = 1
   iColourEachStep = .true. ! change colours if nstepsperpage > 1
   iChangeStyles = .false.  ! change marker/ line styles if nstepsperpage > 1
-  tile = .false.
+  tile = .true.
   nacross = 1           ! number of plots across page
   ndown = 1             ! number of plots down page
   ipapersize = 0        ! paper size option
@@ -50,7 +50,7 @@ subroutine defaults_set_page
   legendtext = 't='
   iPlotLegendOnFirstRowOnly = .false.
   
-  iPlotTitles = .true.  ! whether or not to plot titles
+  iPlotTitles = .false.  ! whether or not to plot titles
   hpostitle = 0.5       ! horizontal title position as fraction of viewport
   vpostitle = 1.0       ! vertical title position in character heights
   fjusttitle = 0.5      ! justification factor for title
