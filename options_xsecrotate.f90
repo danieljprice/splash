@@ -484,6 +484,14 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
        print "(1x,i1,': ',a)",i,trim(labelseqtype(iseqtype(i)))
     enddo
     print "(a,i5)",' sequences start at dump 1 and end at dump ',ipos
+    if (nframes.le.0) then
+       if (ipos.eq.1) then
+          nframes = 10
+       else
+          nframes = 1
+       endif
+       print "(a,i3)",' setting number of frames = ',nframes
+    endif
  else
     print "(a)",' no sequences set (no change in parameters)'
  endif
