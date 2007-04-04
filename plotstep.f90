@@ -2034,6 +2034,9 @@ contains
       else
          call pgsci(1)
       endif
+      if (irotate) then
+         print "(a)",'WARNING: rotation not yet implemented on vector components'
+      endif
       !
       !--interpolate using appropriate routine for number of dimensions
       !
