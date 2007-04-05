@@ -66,11 +66,13 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
   integer :: iprintinterval, iprintnext, iprogress, itmin
   integer, dimension(npart) :: iorder
   integer :: ipart
-  real :: hi,hi1,hi21,radkern,q2,wab,rab2,pmassav
-  real :: term,dx,dy,dy2,xpix,ypix,zfrac,hav,zcutoff
+  real :: hi,hi1,hi21,radkern,q2,wab,pmassav
+  real :: term,dx,dy,dy2,ypix,zfrac,hav,zcutoff
   real :: fopacity,tau,rkappatemp,termi,xi,yi
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress,adjustzperspective
+  real, dimension(npixx) :: xpix,dx2i
+  real :: xminpix,yminpix
 
   datsmooth = 0.
   term = 0.
@@ -79,6 +81,9 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_opacity: error: pixel width <= 0'
      return
+  endif
+  if (any(hh(1:npart).le.tiny(hh))) then
+     print*,'interpolate3D_opacity: warning: ignoring some or all particles with h < 0'
   endif
 
   if (abs(dscreenfromobserver).gt.tiny(dscreenfromobserver)) then
@@ -123,6 +128,14 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
 !--first sort the particles in z so that we do the opacity in the correct order
 !
   call indexx(npart,z,iorder)
+!
+!--store x value for each pixel (for optimisation)
+!  
+  xminpix = xmin - 0.5*pixwidth
+  yminpix = ymin - 0.5*pixwidth
+  do ipix=1,npixx
+     xpix(ipix) = xminpix + ipix*pixwidth
+  enddo
   
   nused = 0
   
@@ -161,8 +174,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
      !
      hi = hh(i)
      if (hi.le.0.) then
-        print*,'interpolate3D_proj_opacity: error: h <= 0 ',i,hi
-        return
+        cycle over_particles
      elseif (adjustzperspective) then
         zfrac = abs(dscreenfromobserver/(z(i)-zobserver))
         hi = hi*zfrac
@@ -195,17 +207,21 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
      if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
      if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
      !
+     !--precalculate an array of dx2 for this particle (optimisation)
+     !
+     do ipix=ipixmin,ipixmax
+        dx2i(ipix) = ((xpix(ipix) - xi)**2)*hi21
+     enddo
+
+     !
      !--loop over pixels, adding the contribution from this particle
      !
      do jpix = jpixmin,jpixmax
-        ypix = ymin + (jpix-0.5)*pixwidth
+        ypix = yminpix + jpix*pixwidth
         dy = ypix - yi
-        dy2 = dy*dy
+        dy2 = dy*dy*hi21
         do ipix = ipixmin,ipixmax
-           xpix = xmin + (ipix-0.5)*pixwidth
-           dx = xpix - xi
-           rab2 = dx**2 + dy2
-           q2 = rab2*hi21
+           q2 = dx2i(ipix) + dy2
            !
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
