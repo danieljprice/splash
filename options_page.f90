@@ -94,7 +94,7 @@ subroutine submenu_page(ichoose)
           ' 1) plot n steps on top of each other (n =',i2,')',/, &
           ' 2) axes options                      (',i2,')',/, &
           ' 3) change paper size                 (',f5.2,1x,f5.2,')',/, &
-          ' 4) change plots per page             (',i2,1x,'x',1x,i2,', tiling is ',a,')',/, &
+          ' 4) subdivide page into panels        (',i2,1x,'x',1x,i2,', tiling is ',a,')',/, &
           ' 5) legend and title options          (',1x,a,1x,a,1x,a,1x,')',/, &
           ' 6) set character height              (',f4.1,')',/,&
           ' 7) adjust line width                 (',i1,')',/,&
@@ -187,8 +187,8 @@ subroutine submenu_page(ichoose)
      return            
 !------------------------------------------------------------------------
   case(4)
-     call prompt('Enter number of plots across:',nacross,1,numplot)
-     call prompt('Enter number of plots down  :',ndown,1,numplot)
+     call prompt('Enter number of plots across (columns):',nacross,1,numplot)
+     call prompt('Enter number of plots down   (rows):',ndown,1,numplot)
      if (nacross*ndown.gt.1) then
         call prompt('Tile plots on the page where possible?',tile)
      endif
