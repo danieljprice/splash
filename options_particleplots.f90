@@ -4,10 +4,11 @@
 !-------------------------------------------------------------------------
 module settings_part
  use params
+ use settings_data, only:icoordsnew
  implicit none
  integer, dimension(maxparttypes) :: imarktype,idefaultcolourtype
  integer, dimension(100) :: icircpart
- integer :: ncircpart, icoordsnew
+ integer :: ncircpart
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
  logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings
  logical :: iplotline,ilabelpart,ifastparticleplot
@@ -195,7 +196,6 @@ subroutine submenu_particleplots(ichoose)
                  icoordsnew,0,maxcoordsys)
      if (icoordsnew.eq.0) icoordsnew = icoords
      if (icoordsnew.ne.icoordsprev) then
-        print*,'modifying plot limits for new coordinate system'
         call coord_transform_limits(lim(1:ndim,1),lim(1:ndim,2), &
                                     icoordsprev,icoordsnew,ndim)
      endif

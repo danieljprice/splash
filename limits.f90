@@ -14,7 +14,9 @@ contains
 !
 subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   use labels, only:label
+  use geometry, only:coord_transform_limits
   use particle_data, only:npartoftype,dat,maxcol
+  use settings_data, only:ndim,icoords,icoordsnew
   implicit none
   integer, intent(in) :: ifromstep,itostep,ifromcol,itocol
   integer :: i,j,k,ntoti
@@ -47,14 +49,23 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
      endif  
   enddo
   print "(a/)",' plot limits set'
-
+  
+  !
+  !--transform coord limits into new coordinate system if coord transform is applied
+  !
+  if (icoordsnew.ne.icoords .and. ndim.gt.0 .and. ifromcol.le.ndim) then
+     call coord_transform_limits(lim(1:ndim,1),lim(1:ndim,2), &
+                                 icoords,icoordsnew,ndim)
+  endif
+  
+  return
 end subroutine set_limits
 !
 !--save plot limits for all columns to a file
 !
 subroutine write_limits(limitsfile)
   use settings_data, only:numplot
-  use prompting
+  use prompting, only:prompt
   implicit none
   character(len=*), intent(in) :: limitsfile
   integer :: i
@@ -84,7 +95,7 @@ end subroutine write_limits
 subroutine read_limits(limitsfile,ierr)
   use labels, only:label
   use settings_data, only:numplot,ncolumns,ncalc
-  use prompting
+  use prompting, only:prompt
   implicit none
   character(len=*), intent(in) :: limitsfile
   integer, intent(out) :: ierr

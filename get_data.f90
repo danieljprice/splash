@@ -23,8 +23,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use limits, only:set_limits
   use settings_data, only:ncolumns,iendatstep,ncalc,ivegotdata, &
                      DataisBuffered,iCalcQuantities,ndim,icoords, &
-                     iRescale,required,ipartialread
-  use settings_part, only:iexact,icoordsnew
+                     icoordsnew,iRescale,required,ipartialread
+  use settings_part, only:iexact
   use particle_data, only:dat,time
   use prompting, only:prompt
   use labels, only:label,labelvec,iamvec,ih,irho,ipmass

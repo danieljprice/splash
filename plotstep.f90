@@ -46,10 +46,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti,x_secmulti,ivecplotmulti
   use prompting, only:prompt
   use titles, only:read_titles,read_steplegend
-  use settings_data, only:ndim,ndimV,numplot,ncalc,required,icoords
+  use settings_data, only:ndim,ndimV,numplot,ncalc,required,icoords,icoordsnew
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                      colour_fore,colour_back,iadapt,iadaptcoords,linewidth
-  use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact,icoordsnew
+  use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
   use settings_render, only:icolours,iplotcont_nomulti,iPlotColourBar
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
                         xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
@@ -430,10 +430,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                 iplotcontmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
-  use settings_data, only:numplot,ndataplots,icoords,ndim,ndimV,nfreq,iRescale, &
+  use settings_data, only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
                      iendatstep,ntypes,UseTypeInRenderings
   use settings_limits, only:itrackpart,iadapt,iadaptcoords,scalemax
-  use settings_part, only:icoordsnew,iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
+  use settings_part, only:iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
                      iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis, &
                      charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage

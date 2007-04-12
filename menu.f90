@@ -15,9 +15,9 @@ subroutine menu
   use limits, only:write_limits
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
-                     icoords,buffer_data,ncolumns,iRescale
+                     icoords,icoordsnew,buffer_data,ncolumns,iRescale
   use settings_limits, only:submenu_limits
-  use settings_part, only:submenu_particleplots,iexact,icoordsnew
+  use settings_part, only:submenu_particleplots,iexact
   use settings_page, only:submenu_page,interactive
   use settings_render, only:submenu_render
   use settings_vecplot, only:submenu_vecplot,iplotpartvec

@@ -63,7 +63,7 @@ module settings_data
  integer :: numplot,ncalc,ncolumns,nextra
  integer :: ndataplots
  integer :: ndim, ndimv 
- integer :: icoords, iformat, ntypes
+ integer :: icoords,icoordsnew,iformat,ntypes
  integer :: istartatstep,iendatstep,nfreq
  integer, dimension(10) :: isteplist
  logical :: ivegotdata, DataIsBuffered, ipartialread
