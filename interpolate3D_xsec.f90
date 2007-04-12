@@ -68,6 +68,9 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      print "(1x,a)",'interpolate3D: error: pixel width <= 0'
      return
   endif
+  if (any(hh(1:npart).le.tiny(hh))) then
+     print*,'interpolate3D: WARNING: ignoring some or all particles with h < 0'
+  endif
   const = dpi  ! normalisation constant (3D)
   !
   !--loop over particles
@@ -81,10 +84,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      !--set kernel related quantities
      !
      hi = hh(i)
-     if (hi.le.0.) then
-        print*,'interpolate3D: error: h <= 0 ',i,hi
-        return
-     endif
+     if (hi.le.0.) cycle over_parts
      hi1 = 1./hi
      radkern = 2.*hi   ! radius of the smoothing kernel
      termnorm = const*weight(i)
@@ -204,6 +204,9 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
      print*,'interpolate3D_xsec: error: npart = 0'
      return
   endif
+  if (any(hh(1:npart).le.tiny(hh))) then
+     print*,'interpolate3D_xsec: WARNING: ignoring some or all particles with h < 0'
+  endif
   const = dpi
   !
   !--renormalise dat array by first element to speed things up
@@ -225,10 +228,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
      !--set kernel related quantities
      !
      hi = hh(i)
-     if (hi.le.0.) then
-        print*,'interpolate3D_xsec: error: h <= 0 ',i,hi
-        return
-     endif
+     if (hi.le.0.) cycle over_parts
      hi1 = 1./hi
      hi21 = hi1*hi1
      radkern = 2.*hi    ! radius of the smoothing kernel
@@ -372,6 +372,9 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      print*,'interpolate3D_xsec_vec: error: pixel width <= 0'
      return
   endif
+  if (any(hh(1:npart).le.tiny(hh))) then
+     print*,'interpolate3D_xsec_vec: WARNING: ignoring some or all particles with h < 0'
+  endif
   const = dpi ! normalisation constant (3D)
   !
   !--loop over particles
@@ -385,10 +388,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      !--set kernel related quantities
      !
      hi = hh(i)
-     if (hi.le.0.) then
-        print*,'interpolate3D_xsec_vec: error: h <= 0 ',i,hi
-        return
-     endif
+     if (hi.le.0.) cycle over_parts
      hi1 = 1./hi
      radkern = 2.*hi    ! radius of the smoothing kernel
      !
