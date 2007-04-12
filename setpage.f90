@@ -201,7 +201,7 @@ subroutine redraw_axes(iaxis)
      xopts = 'BCSTL'
      yopts = 'BCSTL'
   case default
-     CALL GRWARN('redraw_axes: illegal AXIS argument.')
+     print*,'redraw_axes: illegal AXIS argument.'
      xopts = 'BCST'
   end select
   if (yopts.eq.'*') yopts = xopts
