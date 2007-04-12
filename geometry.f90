@@ -418,6 +418,7 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
     print*,'Error: limits coord transform: ndim invalid on input'
     return
  endif 
+ print*,'modifying plot limits for new coordinate system'
 !
 !--by default do nothing
 !
@@ -425,6 +426,23 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
  xmaxtemp(1:ndim) = xmax(1:ndim)
 
  select case(itypein)
+!
+!--input is toroidal
+!
+ case(4)
+    select case(itypeout)
+    case default
+    !
+    !--cartesian output
+    !
+    xmintemp(1:min(ndim,2)) = -Rtorus - xmax(1)
+    xmaxtemp(1:min(ndim,2)) = Rtorus + xmax(1)
+    if (ndim.eq.3) then
+       xmintemp(3) = -xmax(1)
+       xmaxtemp(3) = xmax(1)
+    endif
+    
+    end select
 !
 !--input is spherical
 !
@@ -456,6 +474,21 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
 !
  case default
     select case(itypeout)
+    case(4)
+    !
+    !--output is toroidal
+    !
+    xmintemp(1) = 0.
+    xmaxtemp(1) = max(maxval(abs(xmax(1:min(ndim,2))))-Rtorus, &
+                      maxval(abs(xmin(1:min(ndim,2))))-Rtorus)
+    if (ndim.ge.2) then
+       xmintemp(2) = -0.5*pi
+       xmaxtemp(2) = 0.5*pi
+       if (ndim.ge.3) then
+          xmintemp(3) = -pi
+          xmaxtemp(3) = pi
+       endif
+    endif
     !
     !--output is spherical
     !
