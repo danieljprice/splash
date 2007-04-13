@@ -1,14 +1,13 @@
 \documentclass[a4paper,11pt]{article}
-\usepackage{natbib,epsfig,rotating,longtable,url,amsmath}
-\usepackage{varioref}
+\usepackage{natbib,rotating,longtable,url,amsmath,nameref}
 %% font
-\usepackage{mathptmx}
+\usepackage{mathptmx,graphicx}
 \graphicspath{{figs/}}
 \setlength{\topmargin}{-1.5cm}
 \setlength{\textheight}{22.5cm}
-\setlength{\oddsidemargin}{0.3cm}
-\setlength{\evensidemargin}{0.3cm}
-\setlength{\textwidth}{16cm}
+\setlength{\oddsidemargin}{-0.3cm}
+\setlength{\evensidemargin}{-0.3cm}
+\setlength{\textwidth}{17cm}
 
 \begin{titlepage}
 \title{Visualisation of SPH data using SPLASH - v\input{version}}
@@ -18,7 +17,7 @@
 \begin{document}
 \begin{figure}
 \begin{center}
-\begin{turn}{270}\epsfig{file=hyperbolic.ps,height=\textwidth}\end{turn}
+\includegraphics[angle=270,width=\textwidth]{hyperbolic.pdf}
 \end{center}
 \end{figure}
 \maketitle
@@ -109,14 +108,14 @@ The basic steps for installation are as follows:
 \item write a read\_data subroutine so that SPLASH can read your data format
 \end{enumerate}
 
-\subsubsection{Fortran 90/95 compilers}
+\subsubsection{ Fortran 90/95 compilers}
  By now, many Fortran 90/95 compilers exist. In terms of free ones, the g95 compiler, downloadable from:
 \begin{quote}
 \url{http://www.g95.org}
 \end{quote}
 successfully compiles SPLASH and if necessary the PGPLOT libraries.
 
-\subsubsection{PGPLOT}
+\subsubsection{ PGPLOT}
  The PGPLOT
 graphics subroutine library is freely downloadable from
 \begin{quote}
@@ -133,12 +132,12 @@ used by the SPLASH source code, you may want to refer to the PGPLOT userguide:
 \url{http://www.astro.caltech.edu/~tjp/pgplot/contents.html}
 \end{quote}
 
-\subsubsection{Compiling and linking with PGPLOT}
+\subsubsection{ Compiling and linking with PGPLOT}
 For detailed instructions on compiling and linking with PGPLOT, refer to the INSTALL file in the root directory of the SPLASH distribution (or \url{http://www.astro.ex.ac.uk/people/dprice/splash/download/INSTALL}.
 
 A successful `make' will produce only the binary corresponding to the ascii data format -- `asplash' (by convention the first letter refers to the data format for which splash has been compiled). Using `make all' will build all of the supported data formats (e.g. GADGET is `gsplash', Matthew Bate's sphNG code is `ssplash', my own format is `dsplash' etc.). 
 
-\subsubsection{Reading your data}
+\subsubsection{ Reading your data}
  The most important part is getting SPLASH to read *your* data format.
 If you are using a publically available code, it is reasonably likely that I
 have already written a read data subroutine which will read your dumps.
@@ -158,7 +157,7 @@ you used to write it and I can then create a data read for your file format (I w
 
 \subsection{Environment variables}
 
-\subsubsection{PGPLOT}
+\subsubsection{ PGPLOT}
  Several useful environment variables can be set for PGPLOT and several of them
 are very useful for SPLASH. In a tcsh shell type:
 \begin{verbatim}
@@ -173,7 +172,7 @@ invoking splash (it is simplest to set them upon starting the shell by placing
 them in your .tcshrc or bash/sh equivalent file). For other environment
 variables which can be set, refer to the PGPLOT user guide.
 
-\subsubsection{Endian changing}
+\subsubsection{ Endian changing}
  On some compilers, the endian-ness (byte order) of the file read for unformatted (binary) data files can also be changed at runtime. This is useful for looking at files on different systems to the one on which they were created (e.g. x86 machines create little-endian files by default, whereas IBM/powerpc machines create big-endian).
  
   Using g95, the relevant environment variable is
@@ -192,7 +191,10 @@ setenv ENDIAN 'BIG'
 \end{verbatim}
 or LITTLE before \emph{compiling} splash (this adds the appropriate compile-time flags for the compiler selected using the SYSTEM environment variable in the SPLASH Makefile). 
 
-\section{A brief tour...}
+\section{Basic SPLASH usage}
+\label{sec:basic}
+
+\subsection{Simple two column plot}
  Once you have successfully compiled SPLASH with a read data file that will read your data format,
 SPLASH is invoked with the name of the data
 file(s) on the command line, e.g.
@@ -201,118 +203,242 @@ splash myrun*.dat
 \end{verbatim}
 where splash should be replaced with `asplash', `gsplash' etc. depending on the data format. \\
 
-
 After a successful data read, the menu should appear as something like the
-following:
+following (the example given is for a ``minidump'' from Stephan Rosswog's SPH code):
 \begin{verbatim}
- You may choose from a delectable sample of plots
- -------------------------------------------------------
-  1) x                     7) particle mass
-  2) y                     8) u
-  3) z                     9) \gr
-  4) v\dx                 10) pressure
-  5) v\dy                 11) entropy
-  6) v\dz                 12) h
- -------------------------------------------------------
- 13) multiplot [  4 ]      m) set multiplot
- -------------------------------------------------------
-  d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)
-  r(ender) v(ector) x(sec/rotate) s(ave) q(uit)
- -------------------------------------------------------
+dprice$ rsplash minidump.00001 
+\end{verbatim}
+\begin{verbatim}
+    _                                                 _  
+   (_)   _               _           _         _     (_)_
+      _ (_)    ___ _ __ | | __ _ ___| |__     (_)   _  (_)
+   _ (_)  _   / __| '_ \| |/ _` / __| '_ \       _ (_)    
+  (_)  _ (_)  \__ \ |_) | | (_| \__ \ | | |  _  (_) _    
+      (_)  _  |___/ .__/|_|\__,_|___/_| |_| (_)  _ (_)   
+          (_)  (_)|_| (_) (_)  (_)(_) (_)(_) (_)(_)     
+
+  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )
+
+...etc...
+\end{verbatim}
+\begin{verbatim}
+ You may choose from a delectable sample of plots 
+-------------------------------------------------------
+  1) x                     7) particle mass       
+  2) y                     8) B\dx                
+  3) z                     9) B\dy                
+  4) h                    10) B\dz                
+  5) \gr                  11) div B               
+  6) T                   
+-------------------------------------------------------
+ 12) multiplot [  4 ]      m) set multiplot 
+-------------------------------------------------------
+ d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)
+ r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
+-------------------------------------------------------
 Please enter your selection now (y axis or option):
 \end{verbatim}
-The simplest plot is of two quantities where only one is a coordinate, for
-example
+The simplest plot is of two quantities which are not both coordinates. For
+example, to plot density vs smoothing length, type
 \begin{verbatim}
-Please enter your selection now (y axis or option): 9
-(x axis) (<cr>=1): 1
+Please enter your selection now (y axis or option): 5
+(x axis) (<cr>=1): 4
  Graphics device/type (? to see list, default /xwin): /xw
 \end{verbatim}
- A full list of available graphics devices is given in the PGPLOT user guide.
-Some of the most useful devices are given in table \ref{tab:devices}. In the
+ The ``<cr>'' refers to the default value assigned if you just press the return key. The last prompt asks for the PGPLOT device to which output should be directed. A full list of available graphics devices is given in the PGPLOT user guide. Some of the most useful devices are given in table \ref{tab:devices}. In the
 above we have selected the X-window driver which means that the output is sent to the
-screen, producing the graph shown in Figure \ref{fig:swave1D}.
+screen (provided X-windows is running), as demonstrated in the screenshot shown in Figure \ref{fig:rhoh}. 
+
+ Many useful tasks can now be achieved by moving the mouse to the plot window and selecting areas or pressing keystrokes -- this is ``interactive mode''. Pressing `h' in the plot window shows (in the terminal) the full list of commands. Of the more useful ones are: pressing `l' with the mouse over the colour bar to use a logarithmic axis, press 'a' on either the colour bar or inside the plot to adapt the plot limits, select an area with the mouse to zoom. See also \S\ref{sec:interactive}.
+
+To exit the plot, move the mouse to the plot window and press 'q' (quit). To exit splash altogether press 'q' again from the splash main menu (in the terminal). 
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{rhoh.jpg}
+\caption{Screenshot of simple two column plot to an X-window}
+\label{fig:rhoh}
+\end{center}
+\end{figure}
+
 \begin{table}[h]
 \centering
-\begin{tabular}{|l|l|}
+\begin{tabular}{|l|l|l|l|}
 \hline
-\verb+/xw+, \verb+/xwin+ & X-Window (interactive) \\
-\verb+/ps+ & Postscript (landscape) \\
-\verb+/vps+ & Postscript (portrait) \\
-\verb+/cps+ & Colour Postscript \\
-\verb+/gif+ & GIF \\
-\verb+/png+ & PNG (if installed) \\
-\verb+/null+ & null device (no output) \\
+\verb+/xw+, \verb+/xwin+ & X-Window (interactive) & verb+/gif+ & GIF \\
+\verb+/ps+ & Postscript (landscape) & \verb+/png+ & PNG (if installed) \\
+\verb+/vps+ & Postscript (portrait) & \verb+/null+ & null device (no output) \\
+\verb+/cps+ & Colour Postscript & & \\
 \hline
 \end{tabular}
 \caption{Commonly used graphics devices available in PGPLOT}
 \label{tab:devices}
 \end{table}
 
-A more complicated plot would be where both the $x-$ and $y-$ axes refer to co-ordinates. For example
+\subsection{Rendered plots}
+\label{sec:renderplot}
+A more complicated plot is where both the $x-$ and $y-$ axes refer to co-ordinates. For example
 \begin{verbatim}
 Please enter your selection now (y axis or option):2
 (x axis) (<cr>=1): 1
-(render) (0=none) ([0:12], <cr>=0):9
-(vector plot) (0=none, 3=v) ([0:3], <cr>=0):3
-Graphics device/type (? to see list, default /xwin): 
+(render) (0=none) ([0:11], <cr>=0):5
+(vector plot) (0=none, 8=B) ([0:8], <cr>=0):0
+Graphics device/type (? to see list, default /xwin): /xw
 \end{verbatim}
-Notice that in this case that options appeared for rendered and vector plots. The above choices
-would give a rendered plot of density with velocity arrows drawn on top. The render options are
-*only* enabled if, in the read\_data subroutine, values are set for the integer parameters irho, ipmass and ih corresponding to the locations of density, particle mass and smoothing length in the data arrays.
+Notice that in this case that options appeared for rendered and vector plots. Our choice of ``5'' at the (render) prompt corresponds to column 5, which in this case is the density, producing the plot shown in the screenshot in Figure~\ref{fig:renderplot}.
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{renderplot.jpg}
+\caption{Screenshot of 3D column density plot to an X-window}
+\label{fig:renderplot}
+\end{center}
+\end{figure}
 
+ Note that the render prompts only appear if, in the read\_data subroutine, values are set for the integer parameters irho, ipmass and ih corresponding to the locations of density, particle mass and smoothing length in the data arrays and provided the number of coordinate dimensions is 2 or greater (SPLASH can be used for SPH codes in 1, 2 and 3 dimensions and even for plotting ascii data where there are no ``coordinates'').
 
- Plot settings are controlled via the menu options and are described below. 
+\subsection{Cross section slice}
+To plot a cross section slice instead of a projection in 3D, type 'x' at the main menu to open the 'cross section/3D plotting options' menu and choose option 1 ``switch between cross section and projection''. Then re-plot the rendered plot again (exactly as in the previous example \S\ref{sec:renderplot}), setting the slice position at the prompt:
+\begin{verbatim}
+enter z position for cross-section slice: ([-8.328:8.327], <cr>=0.000):
+\end{verbatim}
+which produces the plot shown in the screenshot in Figure~\ref{fig:renderplot_xsec}.
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{renderplot_xsec.jpg}
+\caption{Screenshot of 3D cross section slice plot to an X-window}
+\label{fig:renderplot_xsec}
+\end{center}
+\end{figure}
 
-\section{Menu options}
- The program options may be changed in a series of submenus. The defaults for all of
-these options are initially set in the subroutine defaults\_set. The options set using
+\subsection{Vector plots}
+ A prompt to plot vector arrows on top of rendered plots (or on top of particle plots) appears whenever vectors are present in the data (see \S\ref{sec:dataread}).
+
+\subsection{Moving forwards and backwards through data files}
+ If you have put more than one file on the command line (or alternatively the file contains more than one dump), it is then possible to move forwards and backwards through the data by pressing the space bar with the cursor in the plot window (this is ``interactive mode''). To see the keystrokes for moving backwards or moving forwards/backwards by a specified number of steps, press 'h' in interactive mode. If you plot to a non-interactive device, SPLASH simply cycles through all the files on the command line automatically.
+
+\subsection{Zooming in and out / changing plot limits}
+ Having plotted to an interactive device (e.g. /xw), tasks such as zooming in and out, selecting, colouring and hiding particles, changing the limits of both the plot and the colour bar and many other things can be achieved using either the mouse (ie. selecting an area on which to zoom in) or by a combination of the mouse and a keystroke (e.g. move the mouse over a particle and press 'c' to see the size of the smoothing circle for that particle). One of the most useful commands in interactive mode is 'a' (adapt plot limits) which can be used to restore the plot limits to the maximum values for the data currently plotted (similarly pressing 'a' on the colour bar resets the colour bar limits to the minimum and maximum values of the rendered quantity). Pressing 'h' in interactive mode (that is, with your mouse in the plotting window) gives the full list of interactive commands (note that the text appears in the terminal from which SPLASH was invoked). Press 's' in the plot window to save changes between timesteps, otherwise the settings will revert when you move to the next timestep. 
+ 
+ These tasks can also be achieved non-interactively by a series of drop-down submenus invoked from the main menu by typing a single character. For example limits changing options are contained in the l)imits submenu, so to manually set plot limits we would type ``l'' from the main menu, then ``2'' for option 2 (set manual limits) and follow the prompts to set the limits for a particular data column. 
+
+\subsection{Producing a postscript figure for a paper}
+ Producing a postscript plot suitable for inclusion in a \LaTeX  file is simple: at the PGPLOT device prompt, 
+\begin{verbatim}
+ Graphics device/type (? to see list, default /xwin):
+\end{verbatim}
+instead of ``/xw'' (for an X-window), simply type ``/ps'' to use the postscript driver. This produces a file which by default is called pgplot.ps. To specify both the device and filename, type ``myfile.ps/ps'' as the device. Files produced in this way can be directly incorporated into \LaTeX  using standard packages such as graphicx, psfig or epsfig (note that there are only very minor differences between a .eps file and a .ps file -- an eps file can be generated from a .ps file using ``ps2epsf'' if you really care). Options you may wish to change for postscript plots are the line width (generally 2-3 is better for visible axes in papers) and/or the character height (which sets the size of the axes labels). Both can be changed via the p)age options submenu (ie. type ``p'' from the main menu). The reason the line width is only 1 by default is that thicker line widths can look poor on output to pixel devices such as gif and png.
+
+\subsection{Producing a sequence of plots for a movie}
+ In order to produce a movie of a simulation, the first step is to generate a sequence of plots corresponding to different times in the simulation. To achieve this in SPLASH, simply invoke SPLASH with all of the filenames on the command line (e.g. \verb+splash dump*+), adjust until it looks right (either interactively or using the menu options), if in interactive mode type 's' to save the current settings, then plot the same thing again but to a non-interactive device. For a movie it is best to use a pixel device such as gif or png. To do this, at the PGPLOT device prompt:
+\begin{verbatim}
+ Graphics device/type (? to see list, default /xwin):
+\end{verbatim}
+type /gif or /png (depending on which drivers have been installed in your PGPLOT installation -- typing ``?'' at this prompt shows you the list). This will generate a series of plots with names such as \verb+pgplot.gif+, \verb+pgplot.gif_2+, \verb+pgplot.gif_3+ corresponding to each new plotting page generated. To change these into more sensible names use the script provided in the splash/scripts directory (see \S\ref{sec:fixpgplotnames}). 
+ 
+ Having obtained a sequence of images there are a variety of ways to make these into an animation using both free and commercial software. Suggestions on software packages to use for Mac, Linux and Windows can be found in the online faq (\url{http://www.astro.ex.ac.uk/people/dprice/splash/faqs.html}). I generally use the application ``graphic converter'' on Mac OS/X which makes quicktime movies from a sequence of images.
+
+\section{Changing plot settings}
+ The plot settings may be changed in a series of submenus. The options set using
 the submenus can be saved using the (s)ave option from the menu. This saves all of
-the current options to a file called `defaults' in the current directory, which is
-automatically read upon starting splash the next time. This file is written using
-the namelist formatting option provided by Fortran 90. An alternative way of setting
-options is to edit this file directly prior to invoking the program.
+the current options to a file called \verb+splash.defaults+ in the current directory, which is
+automatically read upon starting splash the next time. To revert to default options, simply delete this file.
+Pressing `S' from the main menu saves both the \verb+splash.defaults+ file and also saves the plot limits to a file called \verb+splash.limits+. This file is a simple two-column ascii file corresponding to the minimum and maximum plot limits for each column of data. Thus saving using 'S' means that exactly the same plot can be plotted next time splash is invoked, where saving using 's' means that the plot settings will be the same although the limits will be different. To reset the plot limits either adjust the limits and press 'S' again or simply delete the splash.limits file.
 
 \subsection{set (m)ultiplot}
- The multiplot option enables plotting of several different plots on the same
-physical page. Plots with the same $x-$ and $y-$ axes are tiled if the tiling
-option from the (p)age options menu (\S\vref{sec:optionspage}) is set. Each plot
-can have independent $x-$ and $y-$ axes as well as a different rendering (cross
-section or projection) and/or vector plot. For rendered plots plotting of
-contours can be turned on/off between plots and for cross sections the position of
-the cross section can also be changed between plots. An alternative method for
-specifying a multiplot is to edit the \verb+defaults+ file directly prior to
-starting SPLASH.
+\label{sec:multiplot}
+\subsubsection{ Plotting more than one column from the same file on the same page (multiplot)}
+ Press 'm'  (``set multiplot'') from the main menu to set up a multiplot. Note that a ``multiplot'' (multiple columns plotted from the same file) is different to plotting ``multiple plots per page'' (divide the plotting page up into panels). The number of panels across and down on a page can be changed (see \ref{sec:nacrossndown}) irrespective of whether or not you are also plotting multiple columns from the same file.
+
+Once you have gone through the options to set up a multiplot, to actually plot what you have set simply type the number of the column corresponding to ``multiplot'' at the $y-$axis prompt.
 
 \subsection{(d)ata options}
-These options relate to the data read and are as follows:
-\begin{enumerate}
-\item \textbf{read new data /re-read data}. Read new data, using a different runname.
-\item \textbf{change number of timesteps used}. Set timestep number to start
-reading from, timestep number to stop reading from and the frequency of
-timesteps to read (e.g. every two steps). This can also be changed interactively in
-interactive mode.
-\item \textbf{plot selected steps only}. Here you can choose to plot only a selected
-few timesteps (in any order).
-\item \textbf{buffering of data on/off}. Turn buffering of input data on/off.
-Buffering on means that all the timesteps are read into memory (good for small
-data sets). Buffering off means that only one data file at a time is read into
-memory. Default is off.
-\item \textbf{turn calculate extra quantities on/off}. Turns on/off the calculation
-of additional data columns (e.g. radius and magnitudes of vector quantities) from the main data.
-\item \textbf{use physical units}. Switches between code units (or ``data file units") and rescaled
-``physical" units (with amended labels). Some data reads (sphNG, srosph, mbate) now set the transformations
-between physical units and code units. Alternatively these transformations can be set manually using the next menu
-item.
-\item \textbf{change physical unit settings}. Enables rescaling of columns. This
-is useful for changing units but also for changing the axis labels. For
-example, where the $y-$axis looks crowded because the numeric axis labels read something
-like $1\times 10^{-4}$, the rescaling option can be used to rescale the data so
-that the numeric label reads $1$ whilst the label string is amended to read $y
-[\times 10^{-4}]$.
-\end{enumerate}
+The following can all be achieved from the d)ata options menu:
+
+\subsubsection{ Re-reading the initial data / changing the dump file}
+\label{sec:d1}
+ The data can be re-read from the dump file or a new dump file can be selected by choosing  the d)ata menu, option 1 (or just ``d1'' from the main menu). In practise it is usually faster to exit splash and restart with the new dump file name on the command line (remember to save by pressing 'S' from the main menu before exiting to save both the current settings and the plot limits -- then you can continue plotting with the current settings using a new dump file).
+ 
+ If you have placed more than one file on the command line, then pressing space in interactive mode will read (and plot) the next file (press 'h' in interactive mode for a full list of commands - you can move forwards and backwards using arbitrary jumps). For non-interactive devices or where interactive mode is turned off dump files are cycled through automatically, plotting the same plot for each file/timestep.
+ 
+\subsubsection{ Using only a subset of data files / plotting every $n-$th dump file}
+\label{sec:subsetofsteps}
+ When splash is invoked with more than one filename on the command line (for example, where all files are selected with something like ``splash DUMP*'') it is often helpful to use only a subset of the files. This can be set in the d)ata menu, selecting option 2 ``change number of timesteps used''. This prompts something like:
+\begin{verbatim}
+ Start at timestep ([1:10], <cr>=1):
+ End at timestep ([1:10], <cr>=10):
+ Frequency of steps to read ([1:10], <cr>=1):
+\end{verbatim}
+so that the beginning, end and frequency (e.g. 2 would mean read every second step) of dump files to use can be set.
+
+ To plot a subset of the data files in *any* order, see \S\ref{sec:selectedstepsonly}. 
+
+ Of course, another way to achieve the same thing is to explicitly order the files on the command line. A method I often use is to write all filenames to a file, e.g. 
+\begin{verbatim}
+ls DUMP* > filelist
+\end{verbatim}
+then edit the file to list only the files I want to use, then invoke splash using
+\begin{verbatim}
+splash `cat filelist`
+\end{verbatim}
+(note the direction of the quotes which is unix-speak for ``use the result of this command''). 
+
+\subsubsection{ Plotting a subset of data files in non-sequential order}
+\label{sec:selectedstepsonly}
+ A subset of data files from the command line can be chosen in any order using the ``plot selected steps only'' option from the d)ata submenu, which then prompts the user to enter something like the following:
+\begin{verbatim}
+ Enter number of steps to plot ([1:10], <cr>=0):5
+ Enter step  1 ([1:10], <cr>=1):5
+ Enter step  2 ([1:10], <cr>=2):2
+ Enter step  3 ([1:10], <cr>=3):1
+ Enter step  4 ([1:10], <cr>=4):4
+ Enter step  5 ([1:10], <cr>=5):3
+\end{verbatim}
+Note that only a limited number of steps can be selected in this way. An alternative way is to order the files on the command line before invoking splash (see \S\ref{sec:subsetofsteps}). 
+
+\subsubsection{ Plotting more than one file without re-reading the data from disk}
+\label{sec:buffering}
+ For small data sets (or a small number of dump files) it is often useful to read all of the data into memory so that you can move rapidly forwards and backwards between dumps (e.g. in interactive mode, or where both dumps are plotted on the same page) without unnecessary re-reading of data from disk. This is achieved by turning ``buffering of data'' on in the d)ata menu (provided you have the memory of course!!). Non-buffered data means that only one file at a time is read.
+
+\subsubsection{ Calculating additional quantities not dumped}
+Turn ``calculate extra quantities'' on in the d)ata menu. This turns on the calculation of several additional quantities such as radius and the magnitude of all vector quantities. 
+
+ At the moment it is not possible for the user to change the list of quantities from within splash (although it is on my to-do list). However, additional quantities are calculated in the subroutine \verb+calc_quantities+ in the file \verb+calc_quantities.f90+, in which it is quite a simple matter to add your own by following those already implemented. 
+
+See also \S\ref{sec:geom} for how to transform vectors (and positions) into different coordinate systems. 
+
+\subsubsection{ Plotting data in physical units}
+\label{sec:physicalunits}
+ Data can be plotted in physical units by turning on the ``use physical units'' option in the d)ata submenu. The settings for transforming the data into physical units may be changed via the ``change physical unit settings'' option in the d)ata menu. (see \S\ref{sec:changingunits})
+
+ For some data reads (sphNG, srosph) the scalings required to transform the data into physical units are read from the dump file. These are used as the default values but are overridden as soon as changes are made by the user (that is, by the presence of a `splash.units' file) (see \S\ref{sec:changingunits}).
+ 
+\subsubsection{ Rescaling data columns}
+See \S\ref{sec:physicalunits}.
+
+\subsubsection{ Plotting column density in g/cm$^{2}$ without having x,y,z in cm}
+See \S\ref{sec:changingunits}. In addition to units for each column (and a unit for time -- see \S\ref{sec:timeunits}) a unit can be set for the length scale added in 3D column integrated plots. The prompt for this appears after the units of either $x$, $y$, $z$ or $h$ has been changed via the ``change physical unit settings'' option in the d)ata menu. The length unit for integration is saved in the first row of the splash.units file, after the units for time.
+
+\subsubsection{ Changing physical unit settings}
+\label{sec:changingunits}
+The settings for transforming the data into physical units may be changed via the ``change physical unit settings'' option in the d)ata menu. To apply the physical units to the data select the ``use physical units'' option in the d)ata submenu.
+
+ The transformation used is $new= old*units$ where ``old'' is the data as read from the dump file and ``new'' is the value actually plotted. The data menu option also prompts for a units label which is appended to the usual label. Brackets and spaces should be explicitly included in the label as required.
+ 
+  Once units have been changed, the user is prompted to save the unit settings to a file called `splash.units'. This file is straightforward to edit by hand. To revert to the default unit settings simply delete this file. To revert to code units turn ``use physical units'' off in the d)ata menu.
+ 
+ A further example of where this option can be useful is where the $y-$axis looks crowded because the numeric axis labels read something
+like $1\times 10^{-4}$. The units option can be used to rescale the data so
+that the numeric label reads $1$ (by setting $units=10^{4}$) whilst the label string is amended to read $y
+[\times 10^{-4}]$ by setting the units label to $y [ \times 10^{-4}]$.
+
+\subsubsection{ Changing the axis label to something like $x$ $[ \times 10^{4} ]$}
+See \S\ref{sec:changingunits}.
+
+\subsubsection{ Changing the time units}
+\label{sec:timeunits}
+Units for the time used in the legend can be changed using the ``change physical unit settings'' in the d)ata menu. Changing the units of column zero corresponds to the time (appears as the first row in the `splash.units' file). 
 
 \subsection{(i)nteractive mode}
+\label{sec:interactive}
  The menu option turns on/off interactive mode. With this option turned on and
 an appropriate device selected (ie. the X-window, not /gif or /ps), after
 each plot the program waits for specific commands from the user. With the cursor
@@ -326,23 +452,70 @@ to quit interactive mode.
  A full list of these commands is obtained by holding
 the cursor in the plot window and pressing the `h' key (h for help). Note that changes made in interactive mode will only be saved by pressing the
 `s' (for save) key. Otherwise pressing the space bar (to advance to the next
-timestep) erases the changes made whilst in interactive mode. A somewhat limited
-interactive mode applies when there is more than one plot per page. If the multiplot option has been used, the timestep changing commands only
-take effect on the last plot per timestep.
+timestep) erases the changes made whilst in interactive mode. A more limited
+interactive mode applies when there is more than one plot per page.
 
  Many more commands could be added to
 the interactive mode, limited only by your imagination. Please send me your suggestions!
 
+\subsubsection{ Colouring a subset of the particles and retaining this colour through other timesteps}
+\label{sec:colourparts}
+
+\begin{figure}
+\centering
+\begin{tabular}{cc}
+\includegraphics[angle=270,width=0.4\textwidth]{colourparts.pdf} &
+\includegraphics[angle=270,width=0.4\textwidth]{colourparts_highdens.pdf}
+\end{tabular}
+\caption{Example of particles coloured interactively using the mouse (left) and selection using a parameter range (right), which is the same as the plot on the left but showing only the ``high density'' particles (after an intermediate plot of density vs x on which I selected a subset of particles and hit 'p')}
+\label{fig:colourparts}
+\end{figure}
+
+ In interactive mode, select a subset of the particles using the mouse (that is left click and resize the box until it contains the region you require), then press either 1-9 to colour the selected particles with colours corresponding to PGPLOT colour indices 1-9, press 'p' to plot only those particles selected (hiding all other particles), or 'h' to hide the selected particles. An example is shown in the left panel of Figure~\ref{fig:colourparts}.  Particles retain these colours between timesteps and even between plots. This feature can therefore be used to find particles within a certain parameter range (e.g. by plotting density with x, selecting/colouring particles in a given density range, then plotting x vs y in which the particles will appear as previously selected/coloured). An example of this feature is shown in the right panel of Figure~\ref{fig:colourparts} where I have plotted an intermediate plot of density vs x on which I selected a subset of particles and hit 'p' (to plot only that subset), then re-plotted x vs y with the new particle selections.
+ 
+ To ``un-hide'' or ``de-colour'' particles, simply select the entire plotting area and press ``1'' to restore all particles to the foreground colour index.
+ 
+  Particles hidden in this manner are also no longer used in the rendering calculation. Thus it is possible to render using only a subset of the particles (e.g. using only half of a box, or only high density particles). An example is shown in Figure~\ref{fig:rendersubset}.
+
+ To colour the particles according to the value of a particular quantity, see \S\ref{sec:colournotrender}.
+
+\subsubsection{ Plotting only a subset of the particles}
+ To turn plotting of certain particle \emph{types} on and off, see \S\ref{sec:plotparticlesbytype}. To interactively select a subset of the particles to plot, see \S\ref{sec:colourparts}.
+
+\subsubsection{ Rendering using only a subset of the particles}
+See \S\ref{sec:colourparts}. An example is shown in Figure~\ref{fig:rendersubset} taking one of the rendered examples in \S\ref{sec:basic}, selected half of the domain with the mouse, pressed 'p' to plot only the selected particles. The result is the plot shown.
+\begin{figure}[h]
+\begin{center}
+\includegraphics[angle=270,width=0.5\textwidth]{rendersubset.pdf}
+\caption{Example of rendering using only a subset of the particles. Here I have selected only particles on the right hand side of the plot using the mouse.}
+\label{fig:rendersubset}
+\end{center}
+\end{figure}
+
+\subsubsection{ Taking an oblique cross section interactively}
+ It is possible to take an oblique cross section through 3D data using a combination of rotation and cross section slice plotting. To set the position interactively, press 'x' in interactive mode to draw the position of the cross section line (e.g. on an x-y plot this then produces a z-x plot with the appropriate amount of rotation to give the cross section slice in the position selected). Note that this will work even if the current plot is a 3D column integrated projection (in this case the setting ``projection or cross section'' changes to ``cross section'' in order to plot the slice). 
+
 \subsection{(p)age options}
 \label{sec:optionspage}
- This submenu contains options relating to the PGPLOT page setup. The options are as follows:
-\begin{enumerate}
-\item \textbf{change page after n timesteps}. (default=1) Allows multiple timesteps to be plotted on
-the same page, with an associated legend if so desired.
-\item \textbf{axes options}. Changes the appearance of the axes. The variable is
-the same as the AXIS variable used in the call to PGENV in the standard PGPLOT
-routines, except that I have also added the $-3$ option. The options are
-as follows:
+ Options related to the page setup are changed in the p)age submenu.
+
+\subsubsection{ Overlaying timesteps/multiple dump files on top of each other}
+\label{sec:nstepsontopofeachother}
+ It is possible to over-plot data from one file on top of data from another using the ``plot n steps on top of each other'' option from the p)age submenu. Setting $n$ to a number greater than one means that the page is not changed until $n$ steps have been plotted. Following the prompts, it is possible to change the colour of all particles between steps and the graph markers used and plot an associated legend (see below). Note that this option can also be used in combination with a multiplot (see \S\ref{sec:multiplot}) -- for example plotting the density vs x and pressure vs x in separate panels, then with $n > 1$ all timesteps will be plotted in \emph{each} panel). 
+
+When more than one timestep is plotted per page with different markers/colours, an additional legend can be
+plotted (turn this on in the legend options part of the (p)age submenu, or when prompted whilst setting the "plot n steps on top of each other" option). The text for this legend is just the filename by default (if one timestep per file) or just something dull like 'step 1' (if more than one timestep per file). 
+
+To change the legend text, create a file called \verb+legend+ in the working directory, with one label per line. The position of the legend can be changed either manually via the ``legend and title options'' in the p)age submenu, or by positioning the mouse in interactive mode and pressing 'G' (similar keys apply for moving plot titles and the legend for vector plots -- press 'h' in interactive mode for a full list). 
+
+\subsubsection{ Plotting results from multiple files in the same panel}
+ See \ref{sec:nstepsontopofeachother}.
+
+\subsubsection{ Plotting more than one dump file on the same page}
+ Note that this is slightly different to ``plotting more than one dump file on the same panel''
+
+\subsubsection{ Changing axes settings}
+\label{sec:axessettings}
 
 \begin{tabular}{rcp{0.8\textwidth}}
 -3 & : & same as AXIS=-1, but also draw tick marks; \\
@@ -356,60 +529,166 @@ as follows:
   30 & : & draw box and label both axes logarithmically. \\
 \end{tabular}
 
-\item \textbf{change paper size}. Sets the size and proportions of the plotting page.
-\item \textbf{change plots per page}. Changes the number of plots on each
-physical page.
-\item \textbf{toggle plot tiling}. When set, plots with more than one plot on
-the page and the same $y-$ and $x-$ axes are automatically tiled together.
-\item \textbf{title options}. Adjusts the position of the title on
-each plot. To turn off plot titling, set the position outside the viewport (ie.
-enter some large numbers). For details of plot titling see \S\vref{sec:title}
-\item \textbf{legend options}. Adjusts the position of the legend on
-each plot. Again, to turn off the legend, set the position outside of the
-viewport (ie. enter some large numbers). To customise the legend see
-\S\vref{sec:legend}
-\item \textbf{set foreground/background colours}. Does what it says.
-\end{enumerate}
+\subsubsection{ Turning axes off}
+See \S\ref{sec:axessettings}.
+
+\subsubsection{ Turning axes labels off}
+
+\subsubsection{ Using logarithmic axes labels}
+
+\subsubsection{ Changing the size of the plotting surface}
+
+\subsubsection{ Dividing the plotting page into panels}
+
+\subsubsection{ Tiling plots with the same $x-$ and $y-$ axes}
+\label{sec:tiling}
+ Plots with the same $x-$ and $y-$ axes are tiled if the tiling
+option from the (p)age options menu (\S\ref{sec:optionspage}) is set. 
+
+\subsubsection{ Adding titles to plots / repositioning titles}
+\label{sec:title}
+ Plots may be titled individually by creating a file called \verb+titlelist+ in
+the current directory, with the title on each line corresponding to the position
+of the plot on the page. Thus the title is the same between timesteps unless the
+steps are plotted together on the same physical page. Leave blank lines for
+plots without titles. For example, creating a file called \verb+titlelist+ in
+the current directory, containing the text:
+\begin{verbatim}
+plot one
+plot two
+plot three
+\end{verbatim}
+and positioning the title using the default options, produces the titles shown
+on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the physical page).
+
+\subsubsection{ Turning off/moving the time legend}
+
+\subsubsection{ Changing the text of the time legend}
+
+ To rescale the \emph{value} of the time displayed in the time legend (default value is as read from the dump file), see \S\ref{sec:timeunits}.
+ 
+\subsubsection{ Plotting the time legend on the first row of panels only}
+
+\subsubsection{ Plotting a length scale on coordinate plots}
+
+\subsubsection{ Changing the character height for axes, labels and legends}
+
+\subsubsection{ Using a thicker line width on plots}
+
+\subsubsection{ Changing the foreground and background colours}
+
+\subsubsection{ Plotting axes, legends and titles in white even when the labels are plotted in black}
+
 
 \subsection{particle plot (o)ptions}
 \label{sec:opts}
- These options relate to pure `particle plots'. The options are as follows:
-\begin{enumerate}
-\item \textbf{plot line joining particles}. When set, this option plots a line connecting the (gas only) particles
+ The following are tasks which can be achieved via options in the o) menu [particle plot o)ptions].
+ 
+\subsubsection{ Plotting non-gas particles (e.g. ghosts, boundary, sink particles)}
+Also prompts to allow particles of non-SPH types to be
+plotted on top of rendered plots (useful for sink or star particles). This is not allowed for gas
+(SPH) particles (the fact that particles of a given type are SPH particles or not is specified by the UseTypeInRendering
+flags in the set\_labels part of the read\_data file).
+\label{sec:plotparticlesbytype}
+
+\subsubsection{ Plotting non-gas particles on top of rendered plots}
+
+\subsubsection{ Using ghost particles in the rendering}
+
+\subsubsection{ Turn off plotting of gas particles}
+
+\subsubsection{ Changing graph markers for each particle type}
+ The full list of available markers is given in the
+PGPLOT user guide. 
+
+\subsubsection{ Plotting each particle type in a different colour}
+
+\subsubsection{ Plotting using lines instead of dots (e.g. for energy vs time plots)}
+ When set, this option plots a line connecting the (gas only) particles
 in the order that they appear in the data array. Useful mainly in one dimension or when plotting ascii data, although can give an indication of the
-relative closeness of the particles in memory and in physical space in higher dimensions. The line colours and
-styles can be changed.
+relative closeness of the particles in memory and in physical space in higher dimensions. The line colours and styles can be changed.
 
  To plot the line only with no particles, use the option 4) from this menu to turn off
 plotting of gas particles.
 
+\subsubsection{ Plotting multiple lines with different colours/line styles and a legend}
+
  When multiple timesteps are plotted on the same physical page, the line style can be
 changed instead of the colour (this occurs when the change colour option is chosen for multiple steps per page
--- see the ``change plots per page" option in the p)age options submenu [\S\vref{sec:optionspage}]).
-\item \textbf{toggle label particles}. This option prints the number of each particle
-next to its position on the plot (for all particles). Primarily useful for debugging neighbour finding
-routines. An alternative is to use the `p' option in interactive mode.
-\item \textbf{plot circles of interaction}. On coordinate plots this option plots a circle of
+-- see the ``change plots per page" option in the p)age options submenu [\S\ref{sec:optionspage}]).
+
+\subsubsection{ Joining the dots}
+
+\subsubsection{ Plotting the size of the smoothing circle around selected particles}
+\label{sec:smoothingcircle}
+On coordinate plots this option plots a circle of
 radius $2h$ around selected particles. 
 This is primarily useful in debugging neighbour finding routines. Where only one of the axes is a 
 coordinate this function plots an error bar of length $2h$ in either direction is plotted
-in the direction of the coordinate axis.
-\item \textbf{toggle plot particles by type}. Enables particles of certain types only to be plotted
-(e.g. dark matter particles only, gas particles only etc.). Also prompts to allow particles of non-SPH types to be
-plotted on top of rendered plots (useful for sink or star particles). This is not allowed for gas
-(SPH) particles (the fact that particles of a given type are SPH particles or not is specified by the UseTypeInRendering
-flags in the set\_labels part of the read\_data file).
-\item \textbf{change graph markers for each type}. This option sets the PGPLOT marker used for each
-type of particle in the particle plots. The list of markers is given in the
-PGPLOT user guide and is also listed in Appendix \ref{sec:pgplotmarkers}. 
-\item \textbf{change co-ordinate systems}. This feature transforms the particle
-co-ordinates \emph{and} vector components into non-cartesian co-ordinate systems. Note that
-renderings can only be done in the base co-ordinate system so that the interpolation using the SPH
-kernel and $h$ is correct.  
-\item \textbf{plot exact solution}. The following exact solutions are provided
+in the direction of the coordinate axis. See also \S\ref{sec:findingaparticle} for more details.
+
+\subsubsection{ Locating a particular particle in the data set}
+\label{sec:findingaparticle}
+ The best way to locate a particular particle in the data set is to use the ``plot smoothing circles'' option in the particle plot o)ptions submenu, e.g:
+\begin{verbatim}
+Please enter your selection now (y axis or option):o5
+------------- particle plot options -------------------
+ Note that circles of interaction can also be set interactively
+Enter number of circles to draw ([0:100], <cr>=0):1
+Enter particle number to plot circle around ([1:959], <cr>=1): 868
+\end{verbatim}
+ then upon plotting a coordinate plot (e.g. x vs y), particle 868 will be plotted with a circle of size $2h$ which makes it easy to distinguish from the other particles. See also \S\ref{sec:smoothingcircle}.
+
+\subsubsection{ Making sure absolutely all particles are plotted}
+
+\subsubsection{ Plotting in different co-ordinate systems (e.g. cylindrical co-ordinates)}
+\label{sec:geom}
+ The coordinates of position and of all vector components can be transformed into non-cartesian coordinate systems using the ``change coordinate system'' option in the particle plot o)ptions submenu. For example, a dump file with columns as follows:
+\begin{verbatim}
+-------------------------------------------------------
+  1) x                     6) log density         
+  2) y                     7) v\dx                
+  3) z                     8) v\dy                
+  4) particle mass         9) v\dz                
+  5) h                   
+-------------------------------------------------------
+ 10) multiplot [  4 ]      m) set multiplot 
+-------------------------------------------------------
+Please enter your selection now (y axis or option):
+\end{verbatim}
+choosing o), option 7) and choosing cylindrical coordinates then produces;
+\begin{verbatim}
+ You may choose from a delectable sample of plots 
+-------------------------------------------------------
+  1) r                     6) log density         
+  2) phi                   7) v\dr                
+  3) z                     8) v\dphi              
+  4) particle mass         9) v\dz                
+  5) h                   
+-------------------------------------------------------
+...
+\end{verbatim}
+transforming both coordinates and vectors into the chosen coordinate system. Note that rendering is disabled in coordinate systems other than those native to the file (ie. anything non-cartesian for you -- part of the reason for this feature was that I was experimenting with SPH in cylindrical and spherical coordinates where the reverse transformation was necessary). 
+
+ Details of the coordinate transformations are given in \S\ref{sec:coordtransforms}.
+
+ If you have a coordinate system you would like implemented, please email me the details!
+
+\subsubsection{ Plotting vector components in different coordinate systems}
+See \S\ref{sec:geom}.
+
+\subsubsection{ Plotting orbital velocities}
+See \S\ref{sec:geom}.
+
+\subsubsection{ Plotting against azimuthal angle/cylindrical radius/etc}
+See \S\ref{sec:geom}.
+
+\subsubsection{ Plotting the exact solution to common test problems}
+\label{sec:exactsolns}
+ The following exact solutions are provided
 \begin{itemize}
-\item Hydrodynamic shock tubes (Riemann problem)
-\item Spherically-symmetric sedov blast wave problem.
+\item Hydrodynamic shock tubes (Riemann problem) -- a full solution is provided for all types of waves propagating in either direction.
+\item Spherically-symmetric 3D sedov blast wave problem.
 \item Polytropes (with arbitrary $\gamma$)
 \item One dimensional toy stars. This is a particularly simple test
 problem for SPH codes described in \citet{mp04}.
@@ -426,48 +705,53 @@ an exact solution to be plotted as a line on the plot specified.
 \end{itemize}
 Details of the calculation of the exact solutions and examples of their output are
 given in Appendix~\ref{sec:exact}.
-\item \textbf{exact solution options}. These options allow you to change the colour and line
+
+\subsubsection{ Plotting an exact solution from a file}
+ See \S\ref{sec:exactsolns}. One of the options for exact solution plotting is to read a two column ascii file and plot the results. The filename can be specified by the user and will be saved to the `splash.defaults' file so that the solution will be read and plotted on subsequent invocations of SPLASH.
+
+\subsubsection{ Changing the exact solution line style \& colour}
+ These options allow you to change the colour and line
 style of the exact solution plot. Also turns on/off calculation of various error norms
 together with an inset plot of the residual error on the particles. See
 Appendix~\ref{sec:exact} for details.
-\end{enumerate}
+
+\subsubsection{ Setting the number of points used in an exact solution calculation}
+
+\subsubsection{ Plotting an inset plot of residual errors from an exact solution}
 
 
 \subsection{plot (l)imits}
-\label{sec:optionslimits}
- The options for plot limits are as follows:
-\begin{enumerate}
-\item \textbf{set adaptive/fixed limits}. With limits set to adaptive, plot
-limits are minimum and maximum of quantities at current
-timestep. With fixed limits, the plot limits retain their default values
-for all timesteps. An independent setting applies to the particle co-ordinates.
-\item \textbf{set manual limits}. Manually set the limits for each column of
-data.
-\item \textbf{x-y limits track particle}. Co-ordinate limits are centred on the
+
+\subsubsection{ Using plot limits which adapt automatically for each new plot}
+
+\subsubsection{ Using adaptive plot limits for the colour bar but not for the coordinates}
+
+\subsubsection{ Setting plot limits manually}
+ Plot limits can be set manually using option 2) of the l)imits menu (or simply ``l2'' from the main menu). Alternatively you can edit the `splash.limits' file created by a S)ave from the main menu prior to invoking splash (this file simply contains the minimum and maximum limits for each column on consecutive lines).
+
+\subsubsection{ Making plot limits relative to a particular particle}
+
+\subsubsection{ Plotting in a comoving reference frame}
+ Co-ordinate limits are centred on the
 selected particle for all timesteps, with offsets as input by the user. This
 effectively gives the `Lagrangian' perspective.
-\item \textbf{zoom in/out}. Multiplies the current limits by a fixed factor.
-\item \textbf{apply transformations (log,1/x)}. Allows you to apply transformations such as log, 1/x, sqrt
-etc. to selected data columns.
-\item \textbf{save current limits to file}. Saves the current values of the
-limits calculated from the data read or set manually using option 2 to a
-file (default name is `filename.limits') where filename is the name of the first data file
-read. If using the default filename, this limits file is automatically read upon the next
-invocation of splash with the same filename.
-Otherwise the limits file can be read by choosing option 7 from this submenu. The limits apply
-only when fixed limits are set.
-\item \textbf{re-read limits file}. Re-reads the plot limits from the
-limits file. Note that these limits will only apply if fixed plot limits are set.
-\item \textbf{reset limits for all plots}. Recalculates the limits for all columns based on
-the data currently in memory.
-\end{enumerate}
+
+\subsubsection{ Scaling plot limits by a fixed amount}
+
+\subsubsection{ Plotting with log axes.}
+
+\subsubsection{ Plotting the square root, inverse or square of a quantity}
+
+\subsubsection{ Restoring plot limits to their minimum and maximum values in the current dump file}
 
 \subsection{(r)endering options}
-\begin{enumerate}
-\item \textbf{change number of pixels}. Set the number of pixels along the
-$x-$axis. Pixels are assumed to be square such that the number of pixels along
-the $y-$axis is determined by the aspect ratio of the current plot.
-\item \textbf{change colour scheme}. Changes the colour scheme used on rendered
+\subsubsection{ Changing the number of pixels in a rendered image}
+ The number of pixels in a rendered image can be changed using the r)ender menu, option 1 (or simply type ``r1'' from the main menu). The number set is the number of pixels along the
+$x-$axis. The number of pixels along the $y-$axis is determined by the aspect ratio of the plot.
+
+\subsubsection{ Using a different colour scheme}
+
+Changes the colour scheme used on rendered
 images. A demonstration of all the colour schemes can be also be invoked from
 this menu option. Setting the colour scheme to zero plots only the contours of
 the rendered quantity (assuming that plot contours is set to true). The colour
@@ -494,7 +778,7 @@ schemes given are shown in Figure~\ref{fig:colourschemes} and are as follows:
 
 \begin{figure}
 \begin{center}
-\begin{turn}{270}\epsfig{file=colourschemes.ps,height=\textwidth}\end{turn}
+%%\begin{turn}{270}\epsfig{file=colourschemes.ps,height=\textwidth}\end{turn}
 \caption{SPLASH colour schemes}
 \label{fig:colourschemes}
 \end{center}
@@ -505,56 +789,70 @@ in interactive mode.
  User contributed colour schemes are eagerly invited (see the subroutine
 `colour\_set' for details on how to do this).
 
-\item \textbf{toggle plot contours}. Determines whether or not to plot contours
-in addition to the rendered quantity.
-\item \textbf{change number of contours}. Sets the number of contours to be
-plotted. 
-\item \textbf{colour bar options}. Sets options relating to the colour
-bar on rendered images.
-\item \textbf{use particle colours not pixels}. With this option set, rendered plots are
+\subsubsection{ Plotting contours as well as the rendered image}
+
+\subsubsection{ Plotting contours instead of a rendered image}
+
+\subsubsection{ Changing the number of contour levels}
+
+\subsubsection{ Turning the colour bar off/ moving the colour bar label}
+
+\subsubsection{ Using coloured particles instead of rendering to pixels}
+\label{sec:colournotrender}
+With this option set, rendered plots are
 simply plotted by colouring the particles according to the rendered field. This is somewhat
 cruder but can be a good indication of where individual particles might be affecting results.
 Note that any colouring of the particles set in interactive mode will be overwritten.
-\item \textbf{normalise interpolations}. This option means that the SPH interpolations are
+
+\subsubsection{ Using normalised interpolations}
+This option means that the SPH interpolations are
 normalised. In general this leads to smoother rendering but also means that edges and surfaces appear
-more prominently (and a bit strange). Note that this option only affects cross-section slices. Default is off.
-\end{enumerate}
+more prominently (and a bit strange). Note that in 3D this option only affects cross-section slices (as it is a bit meaningless to normalise a column-integrated or opacity-rendered plot). 
+
+\subsubsection{ Speeding up the rendering on 3D column integrated plots}
+
+\subsubsection{ Selecting and rendering only a subset of the particles}
 
 \subsection{(v)ector plot options}
-\begin{enumerate}
-\item \textbf{change number of pixels}. Set the number of pixels along the
-$x-$axis to be used in the vector plots. As in the rendered images, pixels are assumed to be square such that the number of pixels along
-the $y-$axis is determined by the aspect ratio of the current plot.
-\item \textbf{toggle background/foreground colour}. Determines whether or not to
-plot the vector arrows in the current background or foreground colour (by
-default these are white and black respectively). This must
-be user determined to give the best contrast between the vector arrows and the
-rendered image.
-\item \textbf{vector plot legend settings}. Options for vector plot legend. Note that the position can also be set
-interactively.
-\end{enumerate}
 
-\subsection{(x) cross section/rotation options}
-\begin{enumerate}
-\item \textbf{switch between cross section/projection}. For 3D data, whether to
-plot the rendered quantity integrated along the line of sight (projection) or in
-a particular cross section along the line of sight. For 2D data setting the
-cross section option gives arbitrary 1D cross sections through 2D data. Also applies to vector plots.
-\item \textbf{set cross section position}. Sets the position of the cross section slice.
-\item \textbf{rotation settings/options}. Turns rotation on/off. Allows manual setting of rotation
-angles and the origin about which to rotate.
-\item \textbf{3D perspective}. Turns 3D perspective on/off (ie. objects at larger z distance get
-smaller).
-\item \textbf{3D surface rendering on/off/options}. 3D surface rendering performs a ray-trace through
+\subsubsection{ Changing the number of arrows on vector plots}
+
+\subsubsection{ Changing the number of pixels in vector plots}
+
+\subsubsection{ Plotting vector arrows in white instead of black or vice-versa}
+
+\subsubsection{ Turning off the legend for vector plots}
+
+\subsubsection{ Turning arrow heads off for vector plots}
+
+\subsubsection{ Hiding vector arrows where there are no SPH particles}
+
+\subsubsection{ Plotting a vector plot in a cross section slice}
+
+\subsection{(x) cross section/3D plotting options}
+
+\subsubsection{ Plotting a cross section slice through 3D data}
+
+\subsubsection{ Plotting a cross section line through 2D data}
+
+\subsubsection{ Rotating the particles}
+
+\subsubsection{ Setting the origin about which particles are rotated}
+
+\subsubsection{ Adding 3D perspective}
+
+\subsubsection{ Using 3D surface rendering}
+ 3D surface rendering performs a ray-trace through
 the particle data, thus visualising the "last scattering surface". When set, the user is prompted for
 an "optical depth" before plotting which determines the position of the surface. Only applies to 3D
 data. When set with cross-section (instead of projection), particles at or below the z value of the
 slice are used.
-\item \textbf{set axes for rotated/3D plots}. Allows you to plot rotated axes, boxes and planes
-in two and three dimensions. At present these are plotted on top of the particle renderings.
-\end{enumerate}
 
-\subsection{(s,S)ave, (h)elp, (q)uit}
+\subsubsection{ Plotting 3D box / 3D axes}
+
+\subsection{Miscellaneous other options}
+
+\subsubsection{ Saving plot settings / plot limits to disk}
  The (s)ave option saves the default options to a file called `defaults' in the
 current directory which is read automatically upon the next invocation of
 splash. This file uses namelist formatting and may be edited manually prior to  
@@ -565,14 +863,29 @@ startup if so desired (this is quite useful for setting multiplots with many plo
 limits to a file called `splash.limits' which is also read automatically
 at startup.
 
+\subsubsection{ My attempt at in-built help}
 The (h)elp option simply expands the text for the options menus (I
-may add to this soon). (q)uit, unsurprisingly, quits. Typing a number greater than the number of
+may add to this soon).
+
+\subsubsection{ Exiting splash}
+ (q)uit, unsurprisingly, quits. Typing a number greater than the number of
 data columns also exits the program (e.g. I often simply type 99 to exit).
+
+
+\section{Advanced plotting examples}
+
+\subsection{Multi-panelled figure}
+
+\subsection{Surface rendering}
+
+\subsection{Using asplash to plot energy vs time plots}
+
+\subsection{Powerspectrum of 1D data}
 
 \section{Algorithms}
 
 \subsection{Rendering of 2D data}
-\subsubsection{Interpolation to pixels}
+\subsubsection{ Interpolation to pixels}
  For a contour or rendered plot of a scalar quantity $\phi$ we
 interpolate from the particles to an array of pixels using the SPH summation
 interpolant. In two dimensions the interpolant is simply
@@ -590,7 +903,7 @@ where $q = \vert {\bf r}_a - {\bf r}_b \vert / h$, $\nu$ is the number of spatia
 dimensions and the normalisation constant $\sigma$ is given by $2/3$, $10/(7\pi)$ and $1/\pi$ in
 1, 2 and 3 dimensions respectively.
 
-\subsubsection{Cross sections of 2D data}
+\subsubsection{ Cross sections of 2D data}
 The cross-sectioning algorithm for 2D data (giving a 1D line) is slightly
 different, in that it also works for oblique cross sections. The
 cross-sectioning is done in the subroutine interpolate2D\_xsec. The cross
@@ -624,7 +937,7 @@ the contribution using the SPH summation interpolant
 
 \begin{figure}
 \begin{center}
-\epsfig{file=xsec2D.eps,width=0.5\textwidth}
+%%\epsfig{file=xsec2D.eps,width=0.5\textwidth}
 \caption{Computation of a one dimensional cross section through 2D data}
 \label{fig:xsec2D}
 \end{center}
@@ -648,7 +961,7 @@ a straight cross section as described above.
 \subsection{Rendering of 3D data}
  In three dimensions we must take either a projection through the whole domain or a cross section slice.
  
-\subsubsection{Projections (line of sight integration)}
+\subsubsection{ Projections (line of sight integration)}
 \label{sec:proj}
  In the projection case we wish to obtain an integral of the rendered quantity along the line of sight. We
 begin with the SPH summation interpolant \citep{monaghan92} in the form
@@ -701,7 +1014,7 @@ f^y(x,y) & = & \sum_b m_b \frac{f^y_b}{\rho_b} Y(x - x_b, y-y_b, h_b),
 giving a vector map which is also integrated along the line of
 sight.
 
-\subsubsection{Cross sections of 3D data}
+\subsubsection{ Cross sections of 3D data}
  A cross section can be taken of SPH data by summing the
 contributions to each pixel in the cross section plane from all particles within
 $2h$ of the plane. In
@@ -716,7 +1029,7 @@ the 'd' (for down) and 'u' (for up) keys in interactive mode.
 
 \begin{figure}
 \begin{center}
-\epsfig{file=xsec3D.eps,width=0.5\textwidth}
+%\epsfig{file=xsec3D.eps,width=0.5\textwidth}
 \caption{Computation of a two dimensional cross section through 3D data}
 \label{fig:xsec3D}
 \end{center}
@@ -727,7 +1040,7 @@ the 'd' (for down) and 'u' (for up) keys in interactive mode.
 plots multiple slices through the data.
 
 
-\subsubsection{3D surface rendering of SPH data}
+\subsubsection{ 3D surface rendering of SPH data}
  This option is introduced in version 1.5 of SPLASH. The idea is to produce a visualisation of
 the surface of a data set by performing a ray-trace through the SPH particles, with the density
 distribution giving the optical depth and the rendered quantity providing the colour. Thus
@@ -829,7 +1142,7 @@ ppmtopng, ppmtops.
  For examples of the 3D surface rendering in SPLASH, have a look at my movies of neutron star mergers at \url{http://www.astro.ex.ac.uk/people/dprice/research/nsmag}.
 
 \subsection{Rotation \& 3D perspective}
-\subsubsection{Rotation}
+\subsubsection{ Rotation}
  An angle of rotation about may be set each axis may be set in the x)sec/rotate submenu or
 interactively (press 'h' in interactive mode to see the exact keystrokes). Rotations are performed in the
 order $z-y-x$. This means that the $y-$ rotation angle is an angle about the \emph{new} $y-$axis, defined
@@ -839,7 +1152,7 @@ sense. If in doubt, do it interactively and set the angles in the order $z-y-x$.
  Rotated axes or boxes can be plotted using the rotation options in the x)sec/rotate submenu. A
 different origin can also be set from the rotation options in this menu.
 
-\subsubsection{3D perspective}
+\subsubsection{ 3D perspective}
  3D perspective (turned on/off in the xsec/rotate menu) is defined by two parameters: a distance to the observer (which we will call $zobs$) and a distance
 between the observer and a screen placed in front of the observer (which we will call $dscreen$).
 The transformation from usual $x$ and $y$ to screen $x'$ and $y'$ is then given by
@@ -892,12 +1205,13 @@ data, although faster implementations would be needed (such as a Fast
 Fourier Transform routine).
 
 \subsection{Co-ordinate transformations}
+\label{sec:coordtransforms}
 Particle positions and vectors defined on the particles can be plotted in non-cartesian coordinate
 systems. The coordinate system can be set via the particle plot o)ptions menu, via the ``change co-ordinate
 system'' option. The actual coordinate transformations are defined in a standalone Fortran module called
 \verb+geometry.f90+ and the precise details can be determined by looking in this file. For reference, however the transformations are given below.
 
-\subsubsection{Cylindrical Polar Coordinates}
+\subsubsection{ Cylindrical Polar Coordinates}
 For cylindrical coordinates the transformations are:
 \begin{displaymath}
 \begin{array}{lclp{1cm}lcl}
@@ -916,7 +1230,7 @@ v_z      & = & v_z & & v_z & = & v_z. \\
 \end{displaymath}
 In the case where these vectors are velocities, the $v_{\phi}$ component corresponds to $v_{\phi} = r\dot{\phi}$.
 
-\subsubsection{Spherical Polar Coordinates}
+\subsubsection{ Spherical Polar Coordinates}
 For spherical coordinates the transformations are:
 \begin{displaymath}
 \begin{array}{lclp{1cm}lcl}
@@ -935,7 +1249,7 @@ v_\theta & = & v_{x}\frac{xz}{r \sqrt{x^{2} + y^{2}}} + v_{y}\frac{yz}{r \sqrt{x
 \end{displaymath}
 In the case where these vectors are velocities, the components $v_{\phi}$ and $v_{\theta}$ correspond to $v_{\phi} = r\sin{\theta}\dot{\phi}$ and $v_{\theta} = r\dot{\theta}$ respectively.
 
-\subsubsection{Toroidal Coordinates}
+\subsubsection{ Toroidal Coordinates}
 Toroidal coordinates represent a local frame of reference inside a torus. The coordinate transformations are given by
 \begin{displaymath}
 \begin{array}{lclp{1cm}lcl}
@@ -959,30 +1273,6 @@ r_{cyl} = \sqrt{x^{2} + y^{2}} = r\cos\theta + R. \nonumber
 The torus radius $R$ is a parameter in the \verb+geometry+ module and is set to $1$ by default.
 
 \section{Other features}
-
-
-\subsection{Plot titles}
-\label{sec:title}
- Plots may be titled individually by creating a file called \verb+titlelist+ in
-the current directory, with the title on each line corresponding to the position
-of the plot on the page. Thus the title is the same between timesteps unless the
-steps are plotted together on the same physical page. Leave blank lines for
-plots without titles. For example, creating a file called \verb+titlelist+ in
-the current directory, containing the text:
-\begin{verbatim}
-plot one
-plot two
-plot three
-\end{verbatim}
-and positioning the title using the default options, produces the titles shown
-on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the physical page).
-
-%%\begin{figure}
-%\centering
-%
-%\caption{Example use of plot titles}
-%\label{fig:titleexample}
-%\end{figure}
 
 \subsection{Plot legends}
 \label{sec:legend}
@@ -1054,15 +1344,6 @@ ENDINPUT
 which would plot the data in columns 2 and 1 and render the data in column 8 with
 output to file \verb+mypostscript.ps+.
 
-\subsection{Calculate additional quantities?}
- Additional quantities are calculated in the subroutine \verb+calc_quantities+,
-in which it should be a simple matter to add your own.
-If the calculated quantity is to be used elsewhere (for example in an exact
-solution), an indicator should be created for its position in the data array
-(e.g. the integer variable \verb+ih+ refers to the position of the smoothing
-length in the data array). It is also preferable to indicate those quantities
-from which the new quantity is calculated, so that no error will occur if they
-are not present.
 
 \subsection{What about boundaries? How does the rendering work near a boundary?}
  Usual practise in SPH simulations near boundaries is
@@ -1308,7 +1589,7 @@ with
 \beta = \frac{\gamma - 1}{\gamma + 1}.
 \end{equation}
 
-\subsubsection{Riemann solver}
+\subsubsection{ Riemann solver}
  The algorithm for determining the post-shock velocity and pressure is taken
 from \citet{toro92}.
 
@@ -1391,13 +1672,13 @@ P = K \rho^\gamma,
  The exact solutions provided assume the equations are scaled such that
 $\Omega^2 = 1$.
  
-\subsubsection{Static structure}
+\subsubsection{ Static structure}
 The static structure is given by
 \begin{equation}
 \bar \rho = 1- x^2,
 \end{equation}
 
-\subsubsection{Linear solutions}
+\subsubsection{ Linear solutions}
 The linear solution for the velocity is given by
 \begin{equation}
 v = 0.05 C_s G_n(x) \cos{\omega t} )
@@ -1411,7 +1692,7 @@ where
 \eta = 0.1 C_s \omega P_{n+1}(x) \sin{(\omega t)})
 \end{equation}
 
-\subsubsection{Non-linear solution}
+\subsubsection{ Non-linear solution}
 In this case the velocity is given by
 \begin{equation}
 v = A(t) x,
