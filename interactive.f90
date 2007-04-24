@@ -222,12 +222,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      case('h')
         print*,'-------------- interactive mode commands --------------'
         print*,' left click (or A) : select region'
-        print*,'  left click again to zoom on selection'
-        if (irender.ne.0) then
-           print*,'  select colour bar to change rendering limits'
-        else
-           print*,'  or press 1-9 to mark selected particles with colour 1-9'
-        endif
+        print*,'      left click again to zoom on selection'
+        print*,'      or press 1-9 to mark selected particles with colour 1-9'
+        print*,' left click on colour bar : change rendering limits'
         print*,' +   : zoom in by 10%'
         print*,' -(_): zoom out by 10(20)%'
         print*,' a   : (a)djust/reset plot limits to fit '
@@ -243,19 +240,15 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         print*,' o: re-centre plot on (o)rigin'
         print*,' r: (r)eplot current plot'
         print*,' p: label closest (p)article'
-        if (iplotx.le.ndim .and. iploty.le.ndim) then
-           print*,' t: t)rack closest particle/turn tracking off'
-        endif
+        print*,' t: t)rack closest particle/turn tracking off (coord plots only)'
         print*,' c: plot (c)ircle of interaction for closest particle'        
         print*,' g: plot a line and find its g)radient'
         print*,' G: move le(G)end to current position'
         print*,' T: move (T)itle to current position'
         print*,' H: move vector plot legend H(ere)'
-        if (irender.ge.0) then
-           print*,' m: change colour m)ap to next'
-           print*,' M: change colour M)ap to previous'
-           print*,' i: i)nvert colour map'
-        endif
+        print*,' m: change colour m)ap to next (rendered plots only)'
+        print*,' M: change colour M)ap to previous (rendered plots only)'
+        print*,' i: i)nvert colour map (rendered plots only)'
         print*,' v: decrease arrow size on vector plots (Z for x10)'
         print*,' V: increase arrow size on vector plots (Z for x10)'
         print*,' w: adapt vector arrow size to maximum value'
@@ -265,14 +258,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         endif
         print*,' e, E: use current frame/settings as end point to animation sequence'
         if (ndim.gt.1) then
-           print*,' , .: rotate about z axis by +(-) 15 degrees'
-           print*,' < >: rotate about z axis by +(-) 30 degrees'
+           print*,' , .: rotate about z axis by +(-) 15 degrees (coord plots only)'
+           print*,' < >: rotate about z axis by +(-) 30 degrees (coord plots only)'
            if (ndim.ge.3) then
-              print*,'[ ]: rotate about x axis by +/- 15 degrees '
-              print*,'{ }: rotate about x axis by +/- 30 degrees '
-              print*,'/ \: rotate about y axis by +/- 15 degrees '
-              print*,'? |: rotate about y axis by +/- 30 degrees '
-              print*,' x: take cross section '
+              print*,'[ ]: rotate about x axis by +/- 15 degrees (coord plots only)'
+              print*,'{ }: rotate about x axis by +/- 30 degrees (coord plots only) '
+              print*,'/ \: rotate about y axis by +/- 15 degrees (coord plots only) '
+              print*,'? |: rotate about y axis by +/- 30 degrees (coord plots only) '
+              print*,' x: take cross section (coord plots only) '
               if (iplotz.gt.0) then
                  print*,' u: move cross section/perspective position up (towards observer)'
                  print*,' U: move cross section/perspective position up more'
