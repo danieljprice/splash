@@ -173,6 +173,7 @@ program splash
   use settings_data, only:buffer_data
   use settings_xsecrot, only:read_animfile
   use system_commands, only:get_number_arguments,get_argument
+  use asciiutils, only:read_asciifile
   implicit none
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames
@@ -249,7 +250,11 @@ program splash
      if (nfiles.gt.1) print*,nfiles,' filenames read from command line'
   else
      ihavereadfilenames = .false.
-     print "(a/)",' no filenames read from command line'
+     print "(a)",' no filenames read from command line'
+     call read_asciifile('splash.filenames',nfiles,rootname)
+     print*,nfiles,' filenames read from splash.filenames file'
+     print*
+     if (nfiles.gt.0) ihavereadfilenames = .true.
   endif
 
   !
@@ -319,5 +324,5 @@ subroutine print_header
    ' plot something beautiful, please send me a copy for the gallery. ',/)
       
 end subroutine print_header
-             
+
 end program splash
