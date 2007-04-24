@@ -1929,6 +1929,7 @@ contains
 !-------------------------------------------------------------------
   subroutine changecoords(iplotx,iploty,xplot,yplot,ntot)
    use geometry, only:coord_transform,labelcoordsys
+   use settings_data, only:xorigin
    implicit none
    integer, intent(in) :: iplotx,iploty,ntot
    real, dimension(:), intent(inout) :: xplot,yplot
@@ -1940,7 +1941,7 @@ contains
       print*,'changing coords from ',trim(labelcoordsys(icoords)), &
              ' to ',trim(labelcoordsys(icoordsnew))
       do j=1,ntot
-         call coord_transform(dat(j,ix(1:ndim)),ndim,icoords, &
+         call coord_transform(dat(j,ix(1:ndim))-xorigin(1:ndim),ndim,icoords, &
                               xcoords(1:ndim),ndim,icoordsnew)
          if (iplotx.le.ndim) xplot(j) = xcoords(iplotx)
          if (iploty.le.ndim) yplot(j) = xcoords(iploty)
@@ -1954,6 +1955,7 @@ contains
 !-------------------------------------------------------------------
   subroutine changeveccoords(iplot,xploti,ntot)
    use geometry, only:vector_transform,labelcoordsys
+   use settings_data, only:xorigin
    implicit none
    integer, intent(in) :: iplot,ntot
    real, dimension(:), intent(inout) :: xploti
@@ -1965,7 +1967,7 @@ contains
          print*,'changing vector component from ', &
           trim(labelcoordsys(icoords)),' to ',trim(labelcoordsys(icoordsnew))
          do j=1,ntot
-            call vector_transform(dat(j,ix(1:ndim)), &
+            call vector_transform(dat(j,ix(1:ndim))-xorigin(1:ndim), &
                  dat(j,iamvec(iplot):iamvec(iplot)+ndim-1), &
                  ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
             xploti(j) = vecnew(iplot-iamvec(iplot)+1)
@@ -2193,8 +2195,8 @@ end subroutine plotstep
 subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,yploti,zploti, &
                                   ntot,iplotx,iploty,iplotz,dat)
   use labels, only:ix
-  use settings_data, only:ndim
-  use settings_xsecrot, only:xorigin,use3Dperspective
+  use settings_data, only:ndim,xorigin
+  use settings_xsecrot, only:use3Dperspective
   use rotation, only:rotate2D,rotate3D
   implicit none
   real, intent(in) :: anglexi,angleyi,anglezi,dzscreen,zobs
@@ -2245,8 +2247,8 @@ end subroutine rotationandperspective
 !-------------------------------------------------------------------
 subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscreen,zobs)
   use rotation, only:rotate_axes3D,rotate_axes2D
-  use settings_data, only:ndim
-  use settings_xsecrot, only:xminrotaxes,xmaxrotaxes,xorigin,use3Dperspective
+  use settings_data, only:ndim,xorigin
+  use settings_xsecrot, only:xminrotaxes,xmaxrotaxes,use3Dperspective
   implicit none
   integer, intent(in) :: irotateaxes,iplotx,iploty
   real, intent(in) :: anglexi,angleyi,anglezi

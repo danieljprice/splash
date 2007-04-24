@@ -51,6 +51,7 @@ subroutine defaults_set_data
   iRescale = .false.
   ivegotdata = .false.
   ntypes = 1
+  xorigin = 0.
   
   return
 end subroutine defaults_set_data

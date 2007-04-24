@@ -12,9 +12,8 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels, only:label,labelvec,iamvec,ix,irho,ih,ipmass,iutherm,ipr,ivx,ike, &
                    irad,iBfirst,idivB
   use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iRescale
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iRescale,xorigin
   use settings_part, only:iexact
-  use settings_xsecrot, only:xorigin
   use mem_allocation, only:alloc
   use settings_units, only:unitslabel,units
   implicit none

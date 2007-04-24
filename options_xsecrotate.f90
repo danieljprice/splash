@@ -38,7 +38,7 @@ module settings_xsecrot
           irotate,irotateaxes,anglex, angley, anglez, &
           xminrotaxes,xmaxrotaxes,use3Dperspective, &
           use3Dopacityrendering,zobserver,dzscreenfromobserver, &
-          taupartdepth,writeppm,xorigin
+          taupartdepth,writeppm
 
  private :: animopts
  namelist /animopts/ nseq,nframes,iseqstart,iseqend,iseqtype, &
@@ -72,7 +72,6 @@ subroutine defaults_set_xsecrotate
   anglex = 0.
   angley = 0.
   anglez = 0.
-  xorigin = 0.
   xminrotaxes = 0.
   xmaxrotaxes = 0.
   use3Dperspective = .false.
@@ -109,16 +108,18 @@ end subroutine defaults_set_xsecrotate
 ! sets options relating to cross sectioning / rotation
 !----------------------------------------------------------------------
 subroutine submenu_xsecrotate(ichoose)
- use filenames, only:nsteps
- use labels, only:label,ix
+ use filenames, only:nsteps,nstepsinfile,ifileopen
+ use labels, only:label,ix,irad
  use limits, only:lim
  use prompting
- use settings_data, only:ndim
+ use settings_data, only:ndim,xorigin,iCalcQuantities,DataIsBuffered
+ use calcquantities, only:calc_quantities
  implicit none
  integer, intent(in) :: ichoose
  integer :: ians,i
- logical :: iyes
+ logical :: iyes,ichangedorigin
  character(len=4) :: text
+ real, dimension(3) :: xorigintemp
  
  print "(a)",'---------- cross section / 3D plotting options --------'
  if (ndim.eq.1) print*,' WARNING: none of these options have any effect in 1D'
@@ -136,7 +137,7 @@ subroutine submenu_xsecrotate(ichoose)
 10  format( &
               ' 0) exit ',/,       &
               ' 1) switch between cross section/projection      ( ',a4,' )',/, &
-              ' 2) rotation on/off/settings                     ( ',a,3(1x,f5.2),' )',/, &
+              ' 2) rotation on/off/settings (incl. origin pos)  ( ',a,3(1x,f5.2),' )',/, &
               ' 3) 3D perspective on/off                        ( ',a,' )',/, &
               ' 4) 3D surface rendering on/off                  ( ',a,' )',/, &
               ' 5) set axes for rotated/3D plots                ( ',i2,' )',/, &
@@ -154,7 +155,7 @@ subroutine submenu_xsecrotate(ichoose)
 !------------------------------------------------------------------------
  case(2)
     call prompt('use rotation?',irotate)
-    print*,'rotate = ',irotate
+    print "(a)",' rotation is '//trim(print_logical(irotate))
     if (irotate) then
        print*,'note that rotations are done in the order z-y-x '
        print*,'this means the y and x rotations are done about the *new* y and x axes'
@@ -164,10 +165,25 @@ subroutine submenu_xsecrotate(ichoose)
           call prompt('enter rotation angle about y axis (deg)',angley,0.,360.)
           call prompt('enter rotation angle about x axis (deg)',anglex,0.,360.)
        endif
-       !xorigin(1:ndim) = 0.5*(lim(1:ndim,1) + lim(1:ndim,2))
-       do i=1,ndim
-          call prompt('enter location of origin '//trim(label(ix(i))),xorigin(i))
-       enddo
+    endif
+    
+    !xorigin(1:ndim) = 0.5*(lim(1:ndim,1) + lim(1:ndim,2))
+    xorigintemp(1:ndim) = xorigin(1:ndim)
+    ichangedorigin = .false.
+    print "(a)",' Note that origin settings affect both rotation and radius calculations'
+    do i=1,ndim
+       call prompt('enter location of origin '//trim(label(ix(i))),xorigin(i))
+       if (abs(xorigin(i)-xorigintemp(i)).gt.tiny(0.)) then
+          ichangedorigin = .true.
+       endif
+    enddo
+    !--recalculate radius if origin settings have changed
+    if (ichangedorigin .and. iCalcQuantities .and. irad.gt.0) then
+       if (DataIsBuffered) then
+          call calc_quantities(1,nsteps)
+       else
+          call calc_quantities(1,nstepsinfile(ifileopen))
+       endif
     endif
 !------------------------------------------------------------------------
  case(3)
