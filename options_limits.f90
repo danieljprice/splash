@@ -4,7 +4,6 @@
 !-------------------------------------------------------------------------
 module settings_limits
  implicit none
- integer :: itrackpart
  logical :: iadapt, iadaptcoords
  real :: scalemax
  real, dimension(3) :: xminoffset_track, xmaxoffset_track
@@ -22,7 +21,6 @@ subroutine defaults_set_limits
   iadaptcoords = .false.
   scalemax = 1.0       ! for rescaling adaptive limits
   itrans(:) = 0        ! no transformations (log10 etc)
-  itrackpart = 0       ! particle to track (none)
   xminoffset_track = 0.5 ! offset of limits from tracked particle
   xmaxoffset_track = 0.5 !
  
@@ -34,16 +32,18 @@ end subroutine defaults_set_limits
 !----------------------------------------------------------------------
 subroutine submenu_limits(ichoose)
  use filenames, only:nsteps,nstepsinfile,ifileopen
- use settings_data, only:ndataplots,numplot,ndim,ivegotdata,DataIsBuffered
+ use settings_data, only:ndataplots,numplot,ndim,ivegotdata,iCalcQuantities, &
+                    DataIsBuffered,itrackpart
+ use calcquantities, only:calc_quantities
  !!use settings_page, only:nstepsperpage
  use multiplot, only:itrans
  use prompting
  use limits, only:lim,set_limits
- use labels, only:label,ix
+ use labels, only:label,ix,irad
  use transforms, only:ntrans,transform_label
  implicit none
  integer, intent(in) :: ichoose
- integer :: iaction,ipick,i,index
+ integer :: iaction,ipick,i,index,itrackpartprev
  real :: diff, mid, zoom
  character(len=120) :: transprompt
  character(len=5) :: string,string2
@@ -124,6 +124,7 @@ subroutine submenu_limits(ichoose)
 !+ particle for all timesteps, with offsets as input by the user.
 !+ This effectively gives the `Lagrangian' perspective.
 
+    itrackpartprev = itrackpart
     call prompt('Enter particle to track: ',itrackpart,0)
     print*,'tracking particle ',itrackpart
     if (itrackpart.gt.0) then
@@ -133,6 +134,16 @@ subroutine submenu_limits(ichoose)
           call prompt('Enter offset for '//trim(label(ix(i)))//'max :', &
                       xmaxoffset_track(i))
        enddo
+       if (itrackpart.ne.itrackpartprev .and. iCalcQuantities  &
+           .and. irad.gt.0 .and. irad.le.numplot) then
+       !--radius calculation is relative to tracked particle
+          print "(a)",' recalculating radius relative to tracked particle '
+          if (DataIsBuffered) then
+             call calc_quantities(1,nsteps)
+          else
+             call calc_quantities(1,nstepsinfile(ifileopen))
+          endif
+       endif
     endif
 !------------------------------------------------------------------------
  case(4)

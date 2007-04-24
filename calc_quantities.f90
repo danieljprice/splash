@@ -12,7 +12,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels, only:label,labelvec,iamvec,ix,irho,ih,ipmass,iutherm,ipr,ivx,ike, &
                    irad,iBfirst,idivB
   use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iRescale,xorigin
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iRescale,xorigin,itrackpart
   use settings_part, only:iexact
   use mem_allocation, only:alloc
   use settings_units, only:unitslabel,units
@@ -187,13 +187,23 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
       endif
       !!--radius         
       if (irad.ne.0) then
-         if (icoords.gt.1) then  
+         if (icoords.gt.1) then
             dat(1:ntoti,irad,i) = dat(1:ntoti,ix(1),i)
          else
-            do j=1,ntoti
-               dat(j,irad,i) = sqrt(dot_product(dat(j,ix(1:ndim),i)-xorigin(1:ndim),   &
-                 dat(j,ix(1:ndim),i)-xorigin(1:ndim)))
-            enddo        
+            !--make radius relative to tracked particle if particle tracking is set
+            if (itrackpart.gt.0 .and. itrackpart.le.ntoti) then
+               do j=1,ntoti
+                  dat(j,irad,i) = sqrt(dot_product( &
+                                  dat(j,ix(1:ndim),i)-dat(itrackpart,ix(1:ndim),i), &
+                                  dat(j,ix(1:ndim),i)-dat(itrackpart,ix(1:ndim),i)))
+               enddo
+            else
+            !--else calculate radius using origin settings for rotation
+               do j=1,ntoti
+                  dat(j,irad,i) = sqrt(dot_product(dat(j,ix(1:ndim),i)-xorigin(1:ndim),   &
+                    dat(j,ix(1:ndim),i)-xorigin(1:ndim)))
+               enddo
+            endif    
          endif
       endif
       !!--specific KE

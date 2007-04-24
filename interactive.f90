@@ -300,6 +300,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'tracking particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
            call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
            call save_limits_track(iploty,ymin,ymax,ycoords(itrackpart))
+           call save_itrackpart_recalculateradius()
         endif
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
         if (ivecx.gt.0 .and. ivecy.gt.0) then
@@ -1837,6 +1838,27 @@ subroutine save_limits_track(iplot,xmin,xmax,xi)
  
  return
 end subroutine save_limits_track
+!
+!--recalculates radius
+!
+subroutine save_itrackpart_recalculateradius()
+ use filenames, only:nsteps,nstepsinfile,ifileopen
+ use settings_data, only:numplot,DataIsBuffered,iCalcQuantities
+ use calcquantities, only:calc_quantities
+ use labels, only:irad
+ implicit none
+
+ if (iCalcQuantities .and. irad.gt.0 .and. irad.le.numplot) then
+    print "(a)",' Recalculating radius relative to tracked particle'
+    if (DataIsBuffered) then
+       call calc_quantities(1,nsteps)
+    else
+       call calc_quantities(1,nstepsinfile(ifileopen))
+    endif
+ endif
+  
+ return
+end subroutine save_itrackpart_recalculateradius
 !
 !--toggles log/unlog
 !  note this only changes a pure log transform: will not change combinations

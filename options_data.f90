@@ -52,6 +52,7 @@ subroutine defaults_set_data
   ivegotdata = .false.
   ntypes = 1
   xorigin = 0.
+  itrackpart = 0 ! particle tracking limits (none)
   
   return
 end subroutine defaults_set_data
