@@ -269,7 +269,7 @@ FFLAGS = $(F90FLAGS)
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
 
-SOURCESF90= globaldata.f90 transform.f90 \
+SOURCESF90= globaldata.f90 asciiutils.f90 transform.f90 \
          prompting.f90 geometry.f90 \
          colours.f90 colourparts.f90 units.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
