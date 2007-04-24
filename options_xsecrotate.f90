@@ -38,7 +38,7 @@ module settings_xsecrot
           irotate,irotateaxes,anglex, angley, anglez, &
           xminrotaxes,xmaxrotaxes,use3Dperspective, &
           use3Dopacityrendering,zobserver,dzscreenfromobserver, &
-          taupartdepth,writeppm
+          taupartdepth,writeppm,xorigin
 
  private :: animopts
  namelist /animopts/ nseq,nframes,iseqstart,iseqend,iseqtype, &
