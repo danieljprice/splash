@@ -95,7 +95,7 @@ subroutine submenu_particleplots(ichoose)
          "' 6) use fast particle plotting          ( ',a,' ) ',/,"// &
          "' 7) change coordinate systems           ( ',i2,' ) ',/,"// &
          "' 8) plot exact solution                 ( ',i2,' ) ',/,"// &
-         "' 9) set exact solution line style & colour ')"
+         "' 9) exact solution plot options ')"
 
   print "(a)",'------------- particle plot options -------------------'
   if (iaction.le.0 .or. iaction.gt.9) then
