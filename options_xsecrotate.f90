@@ -367,7 +367,9 @@ subroutine submenu_animation()
           use3Dopacityrendering = .true.
           use3Dperspective = .true.
        endif
-       print "(a)",'Note: opacity sequence starts from current opacity value '
+       print "(3(a,/))",'Note: opacity sequence starts from current opacity value ', &
+                      '      and that logarithmic steps are used if finishing value is', &
+                      '      set to more than 1000 times the starting value (or vice-versa) '
        call prompt('Enter finishing opacity in units of average smoothing length ',taupartdepthend)
     end select
  enddo
@@ -566,6 +568,7 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
  real, intent(out) :: anglexi,angleyi,anglezi,zobserveri,taupartdepthi,xsecposi
  real, intent(out) :: xmin,xmax,ymin,ymax,rendermin,rendermax
  logical, intent(out) :: isetrenderlimits
+ logical :: logtaudepth
  integer :: i,iposinseq,iposend
  real :: xfrac,xminstart,xmaxstart,xminend,xmaxend,yminstart,ymaxstart,yminend,ymaxend
  
@@ -646,7 +649,14 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
        case(5)
           xsecposi = xsecpos_nomulti + xfrac*(xsecpos_nomulti_end - xsecpos_nomulti)
        case(6)
-          taupartdepthi = taupartdepth + xfrac*(taupartdepthend - taupartdepth)
+          logtaudepth = (taupartdepthend .gt. 1.001e3*taupartdepth) &
+                    .or.(taupartdepthend .lt. 1.001e-3*taupartdepth)
+          if (logtaudepth) then
+             print "(a)",'     (incrementing optical depth logarithmically)'
+             taupartdepthi = taupartdepth*(taupartdepthend/taupartdepth)**xfrac
+          else
+             taupartdepthi = taupartdepth + xfrac*(taupartdepthend - taupartdepth)
+          endif
        end select
     endif
  enddo
