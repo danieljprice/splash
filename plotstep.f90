@@ -308,9 +308,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
 !       
        if (use3Dopacityrendering .and. iamrendering) then
           hav = lim(ih,1) !! 0.5*(lim(ih,2) + lim(ih,1))
-          if (hav.le.0.) hav = 0.5*lim(ih,2) ! take 0.5*max if min is zero
+          if (hav.le.epsilon(hav)) hav = 0.5*lim(ih,2) ! take 0.5*max if min is zero
           pmassav = lim(ipmass,1)
-          if (pmassav.le.0.) pmassav = 0.5*lim(ipmass,2) ! take 0.5*max if min is zero
+          if (pmassav.le.epsilon(hav)) pmassav = 0.5*lim(ipmass,2) ! take 0.5*max if min is zero
           print*,'using current h and pmass limits to calculate kappa (cross section/unit mass)'
           print*,'min h = ',hav,' min particle mass = ',pmassav
           print*,'[ kappa = pi*h_min**2/(particle_mass*n_smoothing_lengths) ]'
