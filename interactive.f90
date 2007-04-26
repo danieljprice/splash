@@ -441,7 +441,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         case('-')
            xlength = 1.1*zoomfac*xlength
            ylength = 1.1*zoomfac*ylength
-           renderlength = 1.1*renderlength
+           renderlength = 1.1*zoomfac*renderlength
         case('_')
            xlength = 1.2*zoomfac*xlength
            ylength = 1.2*zoomfac*ylength
