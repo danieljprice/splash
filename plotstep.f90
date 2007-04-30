@@ -258,7 +258,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
 !--set up for 1D cross sections through 2D data
 !    
     elseif (ndim.eq.2 .and. x_sec) then
-       ians = .true.
+       ians = .false.
        call prompt('set cross section position interactively?',ians)
        
        if (ians) then
@@ -1618,6 +1618,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      if (allocated(datpix)) deallocate(datpix)
      if (allocated(brightness)) deallocate(brightness)
      if (allocated(datpix3D)) deallocate(datpix3D)
+     if (allocated(xgrid)) deallocate(xgrid)
   endif
   
   return
