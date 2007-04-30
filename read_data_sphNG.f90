@@ -33,10 +33,11 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data
+  use particle_data, only:dat,gamma,time,npartoftype,maxpart,maxstep,maxcol
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
   use mem_allocation, only:alloc
+  use system_commands, only:lenvironment
   use labels, only:ipmass,irho,ih,ix
   implicit none
   integer, intent(in) :: indexstart
@@ -47,8 +48,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: i,j,ierr,iunit,int1,int2,int3,i1,iarr
   integer :: npart_max,nstep_max,ncolstep,icolumn
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
-  integer :: nskip,ntotal,npart,itype,ntypes
-  integer :: ipos,nptmass,nptmassi,nunknown
+  integer :: nskip,ntotal,npart,n1,n2,itype,ntypes
+  integer :: ipos,nptmass,nptmassi,nunknown,ipmass,isink
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
   logical :: iexist, doubleprec, smalldump,imadepmasscolumn,phantomdump
     
@@ -58,10 +59,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer*8, dimension(maxarrsizes) :: isize
   integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
   integer*1, dimension(:), allocatable :: iphase
+  integer, dimension(:), allocatable :: listpm
   real(doub_prec), dimension(:), allocatable :: dattemp
   real(doub_prec) :: udist,umass,utime,umagfd,r8
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
+  real, dimension(3) :: xyzsink
   real :: pmassinitial,rhozero,tfreefall,hfact
   common /sphNGunits/ udist,umass,utime,umagfd,tfreefall
 
@@ -69,6 +72,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstep_max = 0
   npart_max = maxpart
   iunit = 15
+  ipmass = 4
 
   dumpfile = trim(rootname)   
   !
@@ -149,9 +153,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
       close(iunit)
       return
    else
-      read(iunit,iostat=ierr) npart
+      if (nints.lt.3) print "(a)",'WARNING: npart,n1,n2 NOT IN HEADER??'
+      read(iunit,iostat=ierr) npart,n1,n2
       if (ierr /=0) then
-         print "(a)",'error reading npart'
+         print "(a)",'error reading npart,n1,n2'
          close(iunit)
          return
       else
@@ -222,6 +227,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
    elseif (narrsizes.gt.maxarrsizes) then
       narrsizes = maxarrsizes
       print "(a,i2)",'WARNING: too many array sizes: reading only ',narrsizes
+   endif
+   if (narrsizes.ge.4 .and. nreal8s.lt.4) then
+      print "(a)",' WARNING: could not read magnetic units from dump file'
    endif
    ncolstep = 0
    do iarr=1,narrsizes
@@ -355,17 +363,53 @@ subroutine read_data(rootname,indexstart,nstepsread)
             !--skip remaining integer arrays
             nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
          endif
+      elseif (smalldump .and. iarr.eq.2) then
+!--read listpm from array block 2 for small dumps (needed here to extract sink masses)
+         if (allocated(listpm)) deallocate(listpm)
+         allocate(listpm(isize(iarr)))
+         if (nint(iarr).lt.1) then      
+            print "(a)",'ERROR: can''t locate listpm in dump'
+            nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
+         else
+            read(iunit,end=33,iostat=ierr) listpm(1:isize(iarr))
+            nskip = nint(iarr) - 1 + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
+         endif
       else
 !--otherwise skip all integer arrays (not needed for plotting)
          nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
       endif
-      !!print*,'skipping ',nskip,' isize = ',isize(iarr)
       do i=1,nskip
          read(iunit,end=33,iostat=ierr)
       enddo
-!--skip real arrays if size different      
+!      
+!--real arrays
+!
       if (isize(iarr).ne.isize(1)) then
-         nskip = nreal(iarr) + nreal4(iarr) + nreal8(iarr)
+         if (smalldump .and. iarr.eq.2 .and. allocated(listpm)) then
+!--read sink particle masses from block 2 for small dumps
+            if (nreal(iarr).lt.1) then
+               print "(a)",'ERROR: sink masses not present in small dump'
+               nskip = nreal(iarr) + nreal4(iarr) + nreal8(iarr)
+            else
+               if (doubleprec) then
+                  !--convert default real to single precision where necessart
+                  if (allocated(dattemp)) deallocate(dattemp)
+                  allocate(dattemp(isize(iarr)),stat=ierr)
+                  if (ierr /=0) print "(a)",'ERROR in memory allocation'
+                  read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
+                  if (nptmass.ne.isize(iarr)) print "(a)",'ERROR: nptmass.ne.block size'
+                  do i=1,nptmass
+                     dat(listpm(i),ipmass,j) = real(dattemp(i))
+                  enddo
+               else
+                  read(iunit,end=33,iostat=ierr) (dat(listpm(i),ipmass,j),i=1,nptmass)
+               endif 
+               nskip = nreal(iarr) - 1 + nreal4(iarr) + nreal8(iarr)
+            endif
+         else
+!--for other blocks, skip real arrays if size different
+            nskip = nreal(iarr) + nreal4(iarr) + nreal8(iarr)
+         endif
          do i=1,nskip
             read(iunit,end=33,iostat=ierr)
          enddo
@@ -401,10 +445,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !            print*,'real',icolumn
          enddo
 !        set masses for equal mass particles (not dumped in small dump)
-         if (((smalldump.and.nreal(1).lt.4).or.phantomdump).and. iarr.eq.1) then
+         if (((smalldump.and.nreal(1).lt.ipmass).or.phantomdump).and. iarr.eq.1) then
             if (abs(pmassinitial).gt.tiny(pmassinitial)) then
-               icolumn = 4
-               dat(1:isize(iarr),icolumn,j) = pmassinitial
+               icolumn = ipmass
+               where (iphase(1:isize(iarr)).eq.0) dat(1:isize(iarr),icolumn,j) = pmassinitial
 !               print*,icolumn
             endif
          endif
@@ -460,6 +504,35 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--reached end of file (during data read)
 !
 33 continue
+ !
+ !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
+ !
+    if (allocated(dat) .and. n1.GT.0 .and. lenvironment('SSPLASH_RESET_CM')) then
+       call reset_centre_of_mass(dat(1:n1,1:3,j),dat(1:n1,4,j),iphase(1:n1),n1)
+    endif
+ !
+ !--centre on sink if "SSPLASH_CENTRE_ON_SINK" is set
+ !
+    if (lenvironment('SSPLASH_CENTRE_ON_SINK')) then
+       if (nptmass.EQ.1) then
+          isink = 0
+          xyzsink = 0.
+          do i=1,ntotal
+             if (iphase(i).GE.1) then
+                isink = i
+                xyzsink(1:3) = dat(isink,1:3,j)
+             endif
+          enddo
+          if (isink.EQ.0) then
+             print "(a)",'WARNING: SSPLASH_CENTRE_ON_SINK set but cannot find sink'
+          else
+             print "(a,3(1pe10.3,1x))",' CENTREING ON SINK PARTICLE ',PACK(xyzsink(1:3),required(1:3))
+             do i=1,3
+                dat(1:ntotal,i,j) = dat(1:ntotal,i,j) - xyzsink(i)
+             enddo
+          endif
+       endif
+    endif   
 
     !--set flag to indicate that only part of this file has been read 
     if (.not.all(required(1:ncolstep))) ipartialread = .true.
@@ -537,6 +610,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (allocated(dattemp)) deallocate(dattemp)
      if (allocated(dattemp2)) deallocate(dattemp2)
      if (allocated(iphase)) deallocate(iphase)
+     if (allocated(listpm)) deallocate(listpm)
 
      npartoftype(1,j) = npart - nptmassi - nunknown
      npartoftype(2,j) = ntotal - npart
@@ -558,7 +632,44 @@ subroutine read_data(rootname,indexstart,nstepsread)
 close(15)
    
 return
-                  
+
+contains
+
+!
+!--reset centre of mass to zero
+!
+ subroutine reset_centre_of_mass(xyz,pmass,iphase,np)
+  implicit none
+  integer, intent(in) :: np
+  real, dimension(np,3), intent(inout) :: xyz
+  real, dimension(np), intent(in) :: pmass
+  integer*1, dimension(np), intent(in) :: iphase
+  real :: masstot,pmassi
+  real, dimension(3) :: xcm
+  integer :: i
+  
+  !
+  !--get centre of mass
+  !
+  xcm(:) = 0.
+  masstot = 0.
+  do i=1,np
+     if (iphase(i).ge.0) then
+        pmassi = pmass(i)
+        masstot = masstot + pmass(i)
+        where (required(1:3)) xcm(:) = xcm(:) + pmassi*xyz(i,:)
+     endif
+  enddo
+  xcm(:) = xcm(:)/masstot
+  print*,'RESETTING CENTRE OF MASS (',pack(xcm,required(1:3)),') TO ZERO '
+  
+  if (required(1)) xyz(1:np,1) = xyz(1:np,1) - xcm(1)
+  if (required(2)) xyz(1:np,2) = xyz(1:np,2) - xcm(2)
+  if (required(3)) xyz(1:np,3) = xyz(1:np,3) - xcm(3)
+  
+  return
+ end subroutine reset_centre_of_mass
+
 end subroutine read_data
 
 !!------------------------------------------------------------
