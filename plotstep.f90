@@ -1669,7 +1669,7 @@ contains
     if (interactive) then
        print*,trim(labelx),' min, max = ',xmin,xmax
        print*,trim(labely),' min, max = ',ymin,ymax
-       if (irender.gt.0) then
+       if (irender.gt.0 .and. .not.(ndim.eq.2 .and. x_sec)) then
           print*,trim(labelrender),' min, max = ',rendermin,rendermax
        endif 
     endif
