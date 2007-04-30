@@ -776,8 +776,17 @@ the form $h \propto (m/\rho)^{1/\nu}$ where $\nu$ is the number of spatial dimen
 filename input by the user, assuming the file contains two columns containing the $x-$ and $y-$ coordinates of
 an exact solution to be plotted as a line on the plot specified.
 \end{itemize}
-Details of the calculation of the exact solutions and examples of their output are
-given in Appendix~\ref{sec:exact}.
+Details of the calculation of the exact solutions are given in Appendix~\ref{sec:exact}. An example plot using the Sedov blast wave exact solution is shown in Figure~\ref{fig:sedov}.
+
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{sedov_example.png}
+\caption{Example of a plot utilising the Sedov blast wave exact solution. Taken from Rosswog \& Price (2007).}
+\label{fig:sedov}
+\end{center}
+\end{figure}
+
 
 \subsubsection{ Plotting an exact solution from a file}
  See \S\ref{sec:exactsolns}. One of the options for exact solution plotting is to read a two column ascii file and plot the results. The filename can be specified by the user and will be saved to the `splash.defaults' file so that the solution will be read and plotted on subsequent invocations of SPLASH.
@@ -1206,9 +1215,7 @@ irregularly sampled data which can have significant advantages over
 interpolation. Algorithms for both of these methods have been
 implemented. For the first, the SPH data is interpolated to a one dimensional
 grid using the kernel before calculating the (slow!) fourier
-transform. For the second, an algorithm due to
-Lomb and \citet{scargle81} similar to a routine described in \citet{numericalrecipes} is
-used. 
+transform. The second method computes a Lomb/Scargle periodogram as described in \citet{numericalrecipes}. 
 
  It should be stressed, however, that \emph{neither} of the subroutines for
 calculating the power spectrum is particularly fast and have \emph{only} been included as a preliminary feature since I have used them once or twice in one dimensional simulations where speed is not an issue. The algorithms are fairly simple to extend to multidimensional
