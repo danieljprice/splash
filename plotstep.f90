@@ -982,7 +982,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               !
               call transform(datpix1D,itrans(irenderplot))
               labely = transform_label(label(irenderplot),itrans(irenderplot))
-              labelx = 'cross section'
+              if (abs(xseclineY2-xseclineY1).gt.epsilon(0.)) then
+                 labelx = 'cross section' ! only if cross-section is oblique (otherwise keep x axis label)
+              endif
               !!--if adaptive limits, find limits of datpix
               if (.not.interactivereplot) then               
                  ymin = minval(datpix1D)
