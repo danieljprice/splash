@@ -44,7 +44,7 @@ OMPFLAGS=
 # some compilers also allow this to be done at runtime (e.g. g95, ifort) by setting
 # an environment variable appropriately (e.g. G95_ENDIAN or F_UFMTENDIAN)
 #
-#ENDIAN=
+ENDIAN=
 #ENDIAN='BIG'
 #ENDIAN='LITTLE'
 
@@ -306,7 +306,11 @@ OBJECTS= $(OBJECTS1:.F90=.o)
 # (move yours to the top so that you can simply type "make")
 #
 ascii: checksystem $(OBJECTS) read_data_ascii.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o asplash $(OBJECTS) read_data_ascii.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o asplash$(EXT) $(OBJECTS) read_data_ascii.o
+#--build universal binary on mac cluster
+   ifeq ($(SYSTEM), maccluster)
+	lipo -create asplash_ppc asplash_i386 -output asplash || cp asplash$(EXT) asplash
+   endif
 
 mbatesph: checksystem $(OBJECTS) read_data_mbate.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o bsplash $(OBJECTS) read_data_mbate.o
