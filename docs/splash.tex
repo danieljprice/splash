@@ -1005,6 +1005,9 @@ Rotated axes or boxes can be plotted using the ``set axes for rotated/3D plots''
 \subsubsection{ Plotting a sequence of frames rotating a data set through 360 degrees}
 This can be achieved by setting an animation sequence with a steady change of rotation angle. See \S\ref{sec:animseq}.
 
+\subsubsection{ Plotting a `fly-around' of 3D data}
+This can be achieved by setting an animation sequence with a steady change of rotation angle. See \S\ref{sec:animseq}.
+
 \subsubsection{ Plotting a flythru of 3D data}
  A sequence of cross section slices progressively deeper into a 3D box or alternatively a steady movement of the 3D observer (on projection plots) can be plotted by setting up an animation sequence. See \S\ref{sec:animseq} for details.
 
@@ -1046,6 +1049,142 @@ data columns also exits the program (e.g. I often simply type 99 to exit).
 \section{Advanced plotting examples}
 
 \subsection{Multi-panelled figure}
+ The following is an example plot taken from \citet{pb07}. Here I will plot a sequence of plots tiled on the same page, so that columns correspond to dumps taken from different runs at the same time and rows correspond to an evolutionary sequence from a given run. The plot uses sphNG data which contains sink particles, so I also want these to appear on the plots and be plotted in white. Basically I want the plots to be plotted such that as much of the plot is taken up by data and very little by axes and the like but still conveying all of the necessary infomation.
+ 
+ We proceed as follows: Firstly, each different run (corresponding in this case to a series of runs with different magnetic field strength) are in different subdirectories with names like \verb+mbossbod_f10.0/+, \verb+mbossbod_f5.0/+, etc. which all contain a sequence of dump files with names like \verb+mbos001+, \verb+mbos002+ etc. To begin the plot, I start by creating a new, empty subdirectory so that the \verb+splash.defaults+ and \verb+splash.limits+ files created by pressing 'S' from the main menu will be in this directory such that running splash from that directory always produces this plot. So:
+\begin{verbatim}
+dprice% mkdir plot1
+dprice% cd plot1
+\end{verbatim}
+then having decided which dump files from each run to use, I create a text file listing these filenames (with the full relative pathname) in the order in which I will plot them. For example, calling this file (arbitrarily) \verb+filelistplot+, the contents should be something like the following:
+\begin{verbatim}
+dprice% more filelistplot 
+../mbossbod_f20.0/mbos259
+../mbossbod_f20.0/mbos263
+../mbossbod_f20.0/mbos268
+../mbossbod_f20.0/mbos275
+../mbossbod_f20.0/mbos294
+../mbossbod_f10.0/mbos259
+../mbossbod_f10.0/mbos263
+../mbossbod_f10.0/mbos268
+../mbossbod_f10.0/mbos275
+../mbossbod_f10.0/mbos294
+../mbossbod_f7.5/mbos259
+../mbossbod_f7.5/mbos263
+../mbossbod_f7.5/mbos268
+...
+\end{verbatim}
+ Then invoke splash (ssplash for sphNG) with these filenames on the command line:
+\begin{verbatim}
+ssplash `cat filelistplot`
+\end{verbatim}
+after which the first dump file should be read, indicated by output along the lines of:
+\begin{verbatim}
+ reading single dumpfile
+>>>>>>>>>>>>>>>>>>>>>>>>>> ../mbossbod_f20.0/mbos259 <<<<<<<<<<<<<<<<<<<<<<<<<<
+double precision dump
+File ID: SHydroRTMHD1
+ npart =  491567
+...
+\end{verbatim}
+
+An alternative method is to rename the `filelistplot' file \verb+splash.filenames+, from which the filenames will be read if there are none specified on the command line (this feature was implemented as a workaround for a limit to the number of command line arguments on the some compilers).
+
+ The first stage is to get a plot of a single panel looking good. So, from the main menu, we will plot a simple rendering of density and adjust the plot limits until we are happy:
+\begin{verbatim}
+ You may choose from a delectable sample of plots 
+-------------------------------------------------------
+  1) x                     6) density             
+  2) y                     7) B\dx                
+  3) z                     8) B\dy                
+  4) particle mass         9) B\dz                
+  5) h                   
+-------------------------------------------------------
+ 10) multiplot [  4 ]      m) set multiplot 
+-------------------------------------------------------
+ d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)
+ r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
+-------------------------------------------------------
+Please enter your selection now (y axis or option):2
+(x axis) (<cr>=1):
+ (render) (0=none) ([0:9], <cr>=0):6
+ (vector plot) (0=none, 7=B) ([0:7], <cr>=0):
+  Graphics device/type (? to see list, default /xw): /xw
+\end{verbatim}
+which should produce the plot shown in the left hand panel of Figure~\ref{fig:multipart1}. Not much can be seen at first -- just a few white dots. This is mainly a result of the density axis (ie. the colour bar) not being logged. Moving the cursor over the colour bar and pressing `l' results in the plot shown in the right hand panel of Figure~\ref{fig:multipart1}.
+\begin{figure}[h]
+\begin{center}
+\begin{tabular}{cc}
+\includegraphics[width=0.5\textwidth]{multipart1.png} &
+\includegraphics[width=0.5\textwidth]{multipart2.png}
+\end{tabular}
+\caption{First stage in the multi-panelled figure tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed `l' (right)}
+\label{fig:multipart1}
+\end{center}
+\end{figure}
+
+Before we proceed any further, we will first change the axes to be in physical units rather than code units. Pressing `q' in the plot window to exit interactive mode and return to the main menu, and from the d)ata menu, turn the ``use physical units option'' on:
+\begin{verbatim}
+Please enter your selection now (y axis or option):d
+----------------- data read options -------------------
+ 0) exit 
+ 1) read new data /re-read data
+ 2) change number of timesteps used        (     1 )
+ 3) plot selected steps only               (  OFF )
+ 4) buffering of data on/off               (  OFF )
+ 5) turn calculate extra quantities on/off (  OFF )
+ 6) use physical units                     (  OFF )
+ 7) change physical unit settings 
+enter option ([0:7], <cr>=0):6
+ current settings for conversion to physical units are:
+x [cm] = x x  1.000E+16
+y [cm] = y x  1.000E+16
+z [cm] = z x  1.000E+16
+particle mass [g] = particle mass x  1.991E+33
+h [cm] = h x  1.000E+16
+density [g/cm\u3\d] = density x  1.991E-15
+B\dx [G] = B\dx x  1.000E+00
+B\dy [G] = B\dy x  1.000E+00
+B\dz [G] = B\dz x  1.000E+00
+time = time x 1.13E-01
+Use physical units? (<cr>=yes):yes
+\end{verbatim}
+ The default transformations to physical units are in this case set in the data read. However it would be nicer in this case to set the x and y axis units to AU (Astronomical Units), rather than cm. From the d)ata menu we proceed as follows:
+\begin{verbatim}
+enter option ([0:7], <cr>=0):7
+ enter column to change units (-2=reset all,-1=quit,0=time) ([-2:9], <cr>=-1):1
+ enter x [cm] units (new=old*units) (<cr>=0.1000E+17):668.3893
+ enter label amendment (<cr>=[cm]): [AU]
+ Apply these units to all coordinates and h? (<cr>=yes):
+ Enter unit for 'z' in 3D column integrated plots (<cr>=0.1000E+17):
+ Enter label for z integration unit (e.g. [cm]) (<cr>=[cm]):
+
+enter column to change units (-2=reset all,-1=quit,0=time) ([-2:9], <cr>=-1):
+
+save units to file? (<cr>=yes):
+ saving plot limits to file splash.units
+\end{verbatim}
+where in the above I set the multiplicative factor such that the x axis will be in AU and correspondingly changed the units label to `` [AU]'' (note the preceding space). I was also prompted to change the unit for 'z integration' -- this is the length unit added when integrating a quantity through z. Leaving this in cm means that, even though the coordinate axes are in AU, the density (in g/cm$^{3}$) is integrated through z in cm, giving column density in g/cm$^{2}$ (as opposed to g /cm$^{3}$ AU). 
+
+ To save what we have done so far, press `s' from the main menu to save the current settings to the \verb+splash.defaults+ file:
+\begin{verbatim}
+ Please enter your selection now (y axis or option):s
+ default options saved to file splash.defaults
+\end{verbatim}
+
+ Having turned physical units on, we replot the same plot (ie. answering 2, 1, 6, 0, /xw to the prompts, as previously). First of all we find simply a white screen. This is a result of the colour bar axis now being wrong. Moving the mouse over the colour bar and pressing `a' (to adapt) results in the plot shown in the left hand panel of Figure~\ref{fig:multipart3}. The plot looks basically identical to the previous plot, except that the axes are now in physical units (x and y are in AU and column density is in g/cm$^{2}$). 
+
+Next, we zoom in to the central region of interest using the mouse -- selecting a region and clicking to zoom in. Pressing `o' centres the plot on the origin and as we zoom in it we also press `a' over the colour bar to readjust the colour bar limits to the max/min on the zoomed-in plot. Finishing with the adjustments (and pressing `s' in the plot window to save the current settings) results in the plot shown in the right hand panel of Figure~\ref{fig:multipart3}.
+\begin{figure}[h]
+\begin{center}
+\begin{tabular}{cc}
+\includegraphics[width=0.5\textwidth]{multipart3.png} &
+\includegraphics[width=0.5\textwidth]{multipart4.png}
+\end{tabular}
+\caption{Second stage in the multi-panelled figure tutorial: having changed the axes into physical units (left) and zooming in and adjusting the colour bar (right).}
+\label{fig:multipart3}
+\end{center}
+\end{figure}
 
 \subsection{Surface rendering}
  Here I will give an example of how to use the 3D surface rendering feature starting with a dump file kindly supplied by Giuseppe Lodato from an SPH simulation of a warped accretion disc. First we read the file (in sphNG format, so we use ssplash):
@@ -1430,7 +1569,7 @@ Filename & Description \\
      render.f90	 	 & takes array of pixels and plots render map/contours etc\\
      rotate.f90             & subroutines controlling rotation of particles\\
      setpage.f90            & sets up the PGPLOT page (replaces call to PGENV/PGLAB)\\
-     splash.f90	 & main program, drives menu loop\\
+     splash.f90	 & main program, handles startup/ command line reading\\
      timestepping.f90       & controls stepping through timesteps\\
      titles.f90        & reads a list of titles to be used to label each timestep\\
      transform.f90	 	 & applies various transformations to data (log10, 1/x, etc) \\
