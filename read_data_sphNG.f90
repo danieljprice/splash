@@ -49,7 +49,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: npart_max,nstep_max,ncolstep,icolumn
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
   integer :: nskip,ntotal,npart,n1,n2,itype,ntypes
-  integer :: ipos,nptmass,nptmassi,nunknown,ipmass,isink
+  integer :: ipos,nptmass,nptmassi,nunknown,isink
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
   logical :: iexist, doubleprec, smalldump,imadepmasscolumn,phantomdump
     
