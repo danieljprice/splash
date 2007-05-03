@@ -28,30 +28,35 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data
-  use params
+  use particle_data, only:npartoftype,dat,time,gamma,maxcol,maxpart,maxstep
+  use params, only:doub_prec
   use settings_data, only:ndim,ndimV,ncolumns,ncalc
-  use mem_allocation
+  use labels, only:ivx, iBfirst
+  use mem_allocation, only:alloc
+  use system_commands, only:lenvironment
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
 
-  integer, parameter :: iheadlength = 1000
-  integer :: i,j,ierr,nparti,ntoti
+  integer :: iheadlength
+  integer :: i,j,ierr,nparti,ntoti,i1,icol
   integer :: npart_max,nstep_max,ncolstep
-  logical :: iexist
+  logical :: iexist,mhdread
     
   character(len=len(rootname)+10) :: dumpfile
-  integer, dimension(iheadlength) :: iheader
-  integer, dimension(:), allocatable :: ipindx
+  integer, parameter :: maxheadlength = 1000
+  integer, dimension(maxheadlength) :: iheader
+  integer, dimension(:), allocatable :: ipindx,itstepbin
   
   !--we are assuming dump is double precision
-  real(doub_prec), dimension(iheadlength) :: dheader
+  real(doub_prec), dimension(maxheadlength) :: dheader
   real(doub_prec), dimension(:,:), allocatable :: dattemp, dattempvec
 
   nstepsread = 0
   npart_max = maxpart
+  !--this is the default header length
+  iheadlength = maxheadlength
 
   dumpfile = trim(rootname)   
   !
@@ -67,15 +72,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  ncolstep = 12  ! number of columns in file
-  ncolumns = ncolstep
-  !
-  !--allocate memory initially
-  !
+  mhdread = .false.
+  if (lenvironment('VINE_MHD')) then
+     mhdread = .true.
+  endif
+  
   nstep_max = max(indexstart,1)
 
   j = indexstart
   nstepsread = 0
+  nparti = 0
+  ncolstep = 0
   
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
@@ -85,6 +92,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   if (ierr /= 0) then
      print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
   else
+     if (mhdread) print "(a)",' assuming MHD file from VINE_MHD setting'
      !
      !--read timestep header (integers only)
      !
@@ -92,11 +100,24 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      !--get number of particles from header and allocate memory
      !
+     iheadlength = iheader(1)
+     if (iheadlength.gt.maxheadlength) print "(a)",' ERROR: header length too big!'
      ntoti = iheader(2)
      nparti = iheader(3)
-     
+     ndim = iheader(30)
+     ndimV = ndim
+     if (mhdread) then
+        ncolstep = 2*ndim + 6 + ndim
+     else
+        ncolstep = 2*ndim + 6
+     endif
+     ncolumns = ncolstep
      if (.not.allocated(dat) .or. ntoti.gt.npart_max) then
-        npart_max = max(npart_max,INT(1.1*ntoti))
+        if (.not.allocated(dat)) then
+           npart_max = ntoti
+        else
+           npart_max = max(npart_max,INT(1.1*ntoti))
+        endif
         call alloc(npart_max,nstep_max,ncolstep+ncalc)
      endif
      !
@@ -126,7 +147,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--allocate a temporary array for vectors
 !
        if (allocated(dattempvec)) deallocate(dattempvec)
-       allocate(dattempvec(7,npart_max),stat=ierr)
+       if (mhdread) then
+          allocate(dattempvec(3*ndim+1,npart_max),stat=ierr)
+       else
+          allocate(dattempvec(2*ndim+1,npart_max),stat=ierr)       
+       endif
        dattempvec = 0.
        if (ierr /= 0) print*,'not enough memory in read_data'
 !
@@ -134,52 +159,91 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
        if (allocated(ipindx)) deallocate(ipindx)
        allocate(ipindx(npart_max),stat=ierr)
-       ipindx = 0
+       !ipindx = 0
        if (ierr /= 0) print*,'not enough memory in read_data'
+!
+!--allocate a temporary array for itstepbin (MHD only)
+!
+       if (mhdread) then
+          if (allocated(itstepbin)) deallocate(itstepbin)
+          allocate(itstepbin(npart_max),stat=ierr)
+          !itstepbin = 0
+          if (ierr /= 0) print*,'not enough memory in read_data'
+       endif
 !
 !--now read the timestep data in the dumpfile
 !
        write(*,"(a,i5,a)",advance="no") '| step ',j,': '
 
-       read(15,iostat=ierr), &
-            (iheader(i),i=1,iheadlength), &
-            (dheader(i),i=1,iheadlength), &
-            (dattempvec(1:4,i),i=1,ntoti), &
-            (dattempvec(5:7,i),i=1,ntoti), &
-            (dattemp(i,8), i=1,ntoti), &
-            (dattemp(i,9), i=1,nparti), &
-            (dattemp(i,10), i=1,nparti), &
-            (dattemp(i,11), i=1,nparti), &
-            (dattemp(i,12), i=1,ntoti), &
-            (ipindx(i), i=1,ntoti)
+       ivx = ndim + 2 ! location of vx in 'columns'
+!      starting point for non position and velocity columns
+       icol = ndim + 1 + ndimV + 1
+
+       if (mhdread) then
+          iBfirst = icol+5
+          read(15,iostat=ierr), &
+               (iheader(i),i=1,iheadlength), &
+               (dheader(i),i=1,iheadlength), &
+               (dattempvec(1:ndim+1,i),i=1,ntoti), &
+               (dattempvec(ivx:ivx+ndimV-1,i),i=1,ntoti), &
+               (dattemp(i,icol), i=1,ntoti), &
+               (dattemp(i,icol+1), i=1,nparti), &
+               (dattemp(i,icol+2), i=1,nparti), &
+               (dattemp(i,icol+3), i=1,nparti), &
+               (dattemp(i,icol+4), i=1,ntoti), &
+               (ipindx(i), i=1,ntoti), &
+               (itstepbin(i),i=1,ntoti), &
+               (dattempvec(ivx+ndimV:ivx+2*ndimV-1,i),i=1,nparti)       
+       else
+          read(15,iostat=ierr), &
+               (iheader(i),i=1,iheadlength), &
+               (dheader(i),i=1,iheadlength), &
+               (dattempvec(1:ndim+1,i),i=1,ntoti), &
+               (dattempvec(ivx:ivx+ndimV-1,i),i=1,ntoti), &
+               (dattemp(i,icol), i=1,ntoti), &
+               (dattemp(i,icol+1), i=1,nparti), &
+               (dattemp(i,icol+2), i=1,nparti), &
+               (dattemp(i,icol+3), i=1,nparti), &
+               (dattemp(i,icol+4), i=1,ntoti), &
+               (ipindx(i), i=1,ntoti)
+       endif
 
        if (ierr < 0) then
-          print "(a)",'*** END OF FILE IN READ DATA (CHECK PRECISION) ***'
-          close(15)
-          return
+          print "(a)",'*** END OF FILE IN READ DATA ***'
        elseif (ierr /= 0) then
-          print "(a)",'*** ERROR READING DATA ***'
-          close(15)
-          return
-       else
-          nstepsread = nstepsread + 1
+          if (mhdread) then
+             print "(a)",'*** ERROR READING DATA: MAYBE NOT AN MHD FILE?? ***'          
+          else
+             print "(a)",'*** ERROR READING DATA ***'
+          endif
        endif
+       nstepsread = nstepsread + 1
 !
 !--spit out time
 !
        time(j) = real(dheader(1))
        gamma(j) = real(dheader(4))
-       print "(a,f8.3,a,i8)",'t = ',time(j),' ntotal = ',ntoti
+       print "(a,f8.3,2(a,i8))",'t = ',time(j),' n(SPH) = ',ntoti,' n(Nbody) = ',ntoti-nparti
 !
-!--convert vectors to columns and double to single precision
+!--convert posm and velocity vectors to columns and double to single precision
 !
-       do i=1,7
+       do i=1,2*ndim+1
           dat(ipindx(1:ntoti),i,j) = real(dattempvec(i,1:ntoti))
        enddo
 !
+!--convert B vectors to columns and double to single precision
+!
+       if (mhdread) then
+          i1 = iBfirst - 1
+          do i=ivx+ndimV,ivx+2*ndimV-1
+             i1 = i1 + 1
+             dat(ipindx(1:nparti),i1,j) = real(dattempvec(i,1:nparti))
+          enddo
+       endif
+!
 !--now convert scalars
 !
-       dat(ipindx(1:ntoti),8:ncolstep,j) = real(dattemp(1:ntoti,8:ncolstep))
+       dat(ipindx(1:ntoti),icol:ncolstep,j) = real(dattemp(1:ntoti,icol:ncolstep))
 
 !
 !--set particle numbers
@@ -192,6 +256,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
        if (allocated(dattemp)) deallocate(dattemp)
        if (allocated(dattempvec)) deallocate(dattempvec)
        if (allocated(ipindx)) deallocate(ipindx)
+       if (allocated(itstepbin)) deallocate(itstepbin)
 
   endif
 
@@ -213,9 +278,10 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels
+  use labels, only:label,ih,ipmass,ivx,iutherm,irho,ix,iBfirst, &
+                   labelvec,iamvec,labeltype
   use params
-  use settings_data
+  use settings_data, only:ndim,ndimV,UseTypeInRenderings,ntypes
   use geometry, only:labelcoord
   implicit none
   integer :: i
@@ -232,19 +298,20 @@ subroutine set_labels
   do i=1,ndim
      ix(i) = i
   enddo
-  ivx = 5
-  ih = 8        !  smoothing length
-  iutherm = 9  !  thermal energy
-  ipmass = 4   !  particle mass      
-  irho = 10     ! location of rho in data array
+  ipmass = ndim+1   !  particle mass      
+  ivx = ndim+2
+  
+  ih = ndim + 1 + ndimV + 1       !  smoothing length
+  iutherm = ih+1  !  thermal energy
+  irho = iutherm+1     ! location of rho in data array
   
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  label(irho) = '\gr'
+  label(irho) = 'density'
   label(iutherm) = 'u'
   label(ih) = 'h'
   label(ipmass) = 'particle mass'
-  label(11) = 'alpha'
-  label(12) = 'poten'
+  label(irho+1) = 'alpha'
+  label(irho+2) = 'poten'
   !
   !--set labels for vector quantities
   !
@@ -253,6 +320,13 @@ subroutine set_labels
   do i=1,ndimV
      label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
   enddo
+  if (iBfirst.gt.0) then
+     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
+     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
+     do i=1,ndimV
+        label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
+     enddo
+  endif
   !
   !--set labels for each particle type
   !
