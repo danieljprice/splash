@@ -50,7 +50,7 @@ subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
     if (itype(j).ge.0) then ! exclude not-plotted particles
        icellx = int((xplot(j) - xmin)*dxcell1) + 1
        icelly = int((yplot(j) - ymin)*dycell1) + 1
-       !--exclude particles if there are more than one particle per cell
+       !--count number of particles in each cell
        if (icellx.gt.0 .and. icellx.le.npixvecx &
           .and. icelly.gt.0 .and. icelly.le.npixvecy) then
           nincell(icellx,icelly) = nincell(icellx,icelly) + 1
