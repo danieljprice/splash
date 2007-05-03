@@ -60,10 +60,11 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   implicit none
   real, parameter :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,ivecplot
-  integer :: i,j,ierr,ifirst,iplotzprev
+  integer :: i,j,ierr,ifirst,iplotzprev,ilen
   logical :: iadapting,iamrendering,icoordplot,iallrendered,ians
   real :: hav,pmassav
   character(len=1) :: char
+  character(len=20) :: string
   
   !------------------------------------------------------------------------
   ! initialisations
@@ -407,8 +408,20 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   !!--set colour table
   if (iamrendering .and.(icolours.ne.0)) call colour_set(icolours)
     
-  !!--set line width to something visible
-  call pgslw(linewidth)
+  !!--set line width (0=auto based on whether device is vector or not)
+  if (linewidth.le.0) then
+     call pgqinf('TYPE',string,ilen)
+     select case(string(1:ilen))
+     case('PS','CPS','VPS','VCPS')
+        print "(a)",' setting line width = 2 for '//string(1:ilen)//' device'
+        call pgslw(2)
+     case default
+        print "(a)",' setting line width = 1 for '//string(1:ilen)//' device'
+        call pgslw(1)
+     end select
+  else
+     call pgslw(linewidth)
+  endif
   
   linecolourthisstep = linecolour
   linestylethisstep = linestyle
@@ -2026,8 +2039,9 @@ contains
    integer :: i,j,icolourprev
    real :: vmag
    
-   !--query colour index
+   !--query colour index and line width
    call pgqci(icolourprev)
+   call pgqlw(linewidthprev)
 
    !print*,'plotting vector field ',trim(label)
    if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
@@ -2184,8 +2198,9 @@ contains
 
    endif
    
-   !--restore colour index
+   !--restore colour index and line width
    call pgsci(icolourprev)
+   call pgslw(linewidthprev)
   
   end subroutine vector_plot
 

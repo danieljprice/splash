@@ -57,7 +57,7 @@ subroutine defaults_set_page
   colour_fore = ' '
   colour_back = ' '
   charheight = 1.0    ! PGPLOT character height
-  linewidth = 1       ! PGPLOT line width
+  linewidth = 0       ! PGPLOT line width
 
   iPlotScale = .false.
   hposscale = 0.5
@@ -281,7 +281,11 @@ subroutine submenu_page(ichoose)
      return
 !------------------------------------------------------------------------
   case(7)
-     call prompt('Enter PGPLOT line width ',linewidth,1,5)
+     print "(3(/,a))",' Setting line width to 0 means automatic line width choice:', &
+                    ' This gives width = 2 for vector devices (/ps,/cps etc)', &
+                    '        and width = 1 elsewhere (e.g. for pixel devices)'
+     print*
+     call prompt('Enter PGPLOT line width (0=auto)',linewidth,0,5)
      return
 !------------------------------------------------------------------------
   case(8)
