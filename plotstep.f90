@@ -2036,7 +2036,7 @@ contains
    character(len=*), intent(in) :: label
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
    real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpixvec
-   integer :: i,j,icolourprev
+   integer :: i,j,icolourprev,linewidthprev
    real :: vmag
    
    !--query colour index and line width
