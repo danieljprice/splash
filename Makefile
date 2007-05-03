@@ -319,7 +319,7 @@ gadget: checksystem $(OBJECTS) read_data_gadget.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o gsplash $(OBJECTS) read_data_gadget.o
 
 vine: checksystem $(OBJECTS) read_data_VINE.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o vsplash $(OBJECTS) read_data_vine.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o vsplash $(OBJECTS) read_data_VINE.o
 
 ndspmhd: checksystem $(OBJECTS) read_data_dansph.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o splash $(OBJECTS) read_data_dansph.o

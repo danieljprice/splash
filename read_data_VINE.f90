@@ -88,7 +88,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      !--read timestep header (integers only)
      !
-     read(15,end=55,iostat=ierr) (iheader(i),i=1,iheadlength)
+     read(15,iostat=ierr) (iheader(i),i=1,iheadlength)
      !
      !--get number of particles from header and allocate memory
      !
@@ -174,12 +174,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--convert vectors to columns and double to single precision
 !
        do i=1,7
-          dat(1:ntoti,i,j) = real(dattempvec(i,1:ntoti))
+          dat(ipindx(1:ntoti),i,j) = real(dattempvec(i,1:ntoti))
        enddo
 !
 !--now convert scalars
 !
-       dat(1:ntoti,8:ncolstep,j) = real(dattemp(1:ntoti,8:ncolstep))
+       dat(ipindx(1:ntoti),8:ncolstep,j) = real(dattemp(1:ntoti,8:ncolstep))
 
 !
 !--set particle numbers
