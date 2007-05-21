@@ -356,7 +356,7 @@ subroutine set_labels
   !--set labels of the quantities read in
   !
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  label(irho) = '\gr'
+  label(irho) = 'density'
   label(iutherm) = 'u'
   label(ipmass) = 'particle mass'
   
