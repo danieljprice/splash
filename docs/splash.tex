@@ -618,6 +618,7 @@ and positioning the title using the default options, produces the titles shown
 on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the physical page).
 
 \subsubsection{ Turning off/moving the time legend}
+\label{sec:legendoff}
  The position of the time legend can be set interactively by positioning the mouse in the plot window and pressing 'G'. To set the position non-interactively and/or change additional settings such as the justification, use the ``legend and title options'' in the p)age setup submenu.
 
 \subsubsection{ Changing the text in the time legend}
@@ -642,6 +643,7 @@ on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the ph
  The line width used for axes and text can be changed via the p)age submenu. Note that line width changes are not always obvious when plotting to an interactive device (e.g. an X-window) but influence non-interactive devices strongly. The default line width is 1 which in my experience looks best for pixel-based devices such as .gif and .png (e.g. when making movies). For vector devices such as postscript (e.g. to use in a paper) plots look better with a thicker line width (like 2 or 3). 
 
 \subsubsection{ Changing the foreground and background colours}
+\label{sec:pagecolours}
  The background and foreground colour of a plot can be changed vie the ``set foreground/background colours'' option in the p)age submenu.
 
 \subsubsection{ Plotting axes, legends and titles in white even when the labels are plotted in black}
@@ -690,6 +692,7 @@ flags in the set\_labels part of the read\_data file).
  The graph markers used to plot each particle type can be changed via the ``change graph markers for each type'' option in the particle plot o)ptions submenu. The full list of available markers is given in the PGPLOT user guide. 
 
 \subsubsection{ Plotting each particle type in a different colour}
+\label{sec:partcolours}
  Each particle type can be plotted in a different colour via the ``set colour for each particle type'' option in the particle plot o)ptions submenu (press `o' from the main menu).
 
 \subsubsection{ Plotting using lines instead of dots (e.g. for energy vs time plots)}
@@ -1064,6 +1067,241 @@ data columns also exits the program (e.g. I often simply type 99 to exit).
 
 
 \section{Advanced plotting examples}
+
+\subsection{Rendered plot of star formation data}
+ This is an example using data provided by Paul Clark. The data is from an SPH simulation of star formation in sphNG format. We read the dump file as follows:
+\begin{verbatim}
+dprice/dustfrag> ssplash omuk162
+\end{verbatim}
+after which we get output along the lines of:
+\begin{verbatim}
+...
+ reading single dumpfile
+>>>>>>>>>>>>>>>>>>>>>>>>>> omuk162 <<<<<<<<<<<<<<<<<<<<<<<<<<
+double precision dump
+File ID: FHydroRTMHD1
+ npart =  11744854
+...
+\end{verbatim}
+and arrive at the main menu:
+\begin{verbatim}
+ You may choose from a delectable sample of plots 
+-------------------------------------------------------
+  1) x                                7) v\dx                
+  2) y                                8) v\dy                
+  3) z                                9) v\dz                
+  4) particle mass        10) u                   
+  5) h                              11) grad h              
+  6) density             
+-------------------------------------------------------
+ 12) multiplot [  4 ]      m) set multiplot 
+-------------------------------------------------------
+ d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)
+ r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
+-------------------------------------------------------
+Please enter your selection now (y axis or option):
+\end{verbatim}
+here we want to plot a rendered plot of column density (density is in column 6), so we type `2' for column 2 (y) as the y axis, `1' for column 1 (x) as the x-axis and at the render prompt `6', for density, ie:
+\begin{verbatim}
+Please enter your selection now (y axis or option):2
+(x axis) (<cr>=1):
+ (render) (0=none) ([0:11], <cr>=0):6
+ (vector plot) (0=none, 7=v) ([0:7], <cr>=0):0
+ Graphics device/type (? to see list, default /xw): /xw
+\end{verbatim}
+producing the plot shown in Figure~\ref{fig:starpart1} -- somewhat black! The main thing to note is the limits on the colour bar (extending from $0$ to $10^{7}$ on a linear scale) which is the main source of all the blackness. Moving the cursor over the colour bar and pressing `l' for log produces the figure shown on the right hand side --- a vast improvement!
+\begin{figure}[h]
+\begin{center}
+\begin{tabular}{cc}
+\includegraphics[width=0.5\textwidth]{starpart1.png} &
+\includegraphics[width=0.5\textwidth]{starpart2.png}
+\end{tabular}
+\caption{First stage in the star formation figure tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed `l' (right)}
+\label{fig:starpart1}
+\end{center}
+\end{figure}
+For this visualisation we will eventually want the data in physical units rather than code units. For the sphNG read these units are already specified in the read\_data routine, so all we have to do is turn physical units on. Pressing `q' from interactive mode (that is, with the cursor in the plot window) returns us to the main menu.
+
+ Physical units are turned on from the d)ata menu, as follows:
+\begin{verbatim}
+Please enter your selection now (y axis or option):d
+----------------- data read options -------------------
+ 0) exit 
+ 1) read new data /re-read data
+ 2) change number of timesteps used        (     1 )
+ 3) plot selected steps only               (  OFF )
+ 4) buffering of data on/off               (  OFF )
+ 5) turn calculate extra quantities on/off (  OFF )
+ 6) use physical units                     (  OFF )
+ 7) change physical unit settings 
+enter option ([0:7], <cr>=0):6
+ current settings for conversion to physical units are:
+x [cm] = x x  1.000E+17
+y [cm] = y x  1.000E+17
+z [cm] = z x  1.000E+17
+particle mass [g] = particle mass x  1.991E+33
+h [cm] = h x  1.000E+17
+density [g/cm\u3\d] = density x  1.991E-18
+v\dx [cm/s] = v\dx x  3.645E+04
+v\dy [cm/s] = v\dy x  3.645E+04
+v\dz [cm/s] = v\dz x  3.645E+04
+u [erg/g] = u x  1.328E+09
+grad h = grad h x  1.000E+00
+time = time x 1.69E+00
+Use physical units? (<cr>=yes):
+\end{verbatim}
+returning us to the main menu with labels changed as follows:
+\begin{verbatim}
+You may choose from a delectable sample of plots 
+-------------------------------------------------------
+  1) x [cm]                7) v\dx [cm/s]         
+  2) y [cm]                8) v\dy [cm/s]         
+  3) z [cm]                9) v\dz [cm/s]         
+  4) particle mass [g]    10) u [erg/g]           
+  5) h [cm]               11) grad h              
+  6) log density [g/cm\u3
+-------------------------------------------------------
+ 12) multiplot [  4 ]      m) set multiplot 
+-------------------------------------------------------
+ d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)
+ r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
+-------------------------------------------------------
+Please enter your selection now (y axis or option):
+\end{verbatim}
+at this stage we will save the current settings to file by pressing `s' from the main menu.
+\begin{verbatim}
+Please enter your selection now (y axis or option):s
+ default options saved to file splash.defaults
+\end{verbatim}
+Actually we would prefer the column labels in AU, but we will come to that later. Replotting the same plot (that is 2, 1, 6, 0, /xw from the main menu) plots the same plot we had before, but with the axes in physical units. Zooming in (using the mouse) on the region of interest and adapting the colour bar limits by moving the mouse over the colour bar and pressing `a' produces the plot shown in the left panel of Figure~\ref{fig:starpart2}. 
+\begin{figure}[h]
+\begin{center}
+\begin{tabular}{cc}
+\includegraphics[width=0.5\textwidth]{starpart3.png} &
+\includegraphics[width=0.5\textwidth]{starpart4.png}
+\end{tabular}
+\caption{Second stage in the star formation figure tutorial: having applied physical units, zooming in and pressing `a' on the colour bar (left) and having changed the colour scheme (right)}
+\label{fig:starpart2}
+\end{center}
+\end{figure}
+ For this kind of plot, the Bate colour scheme looks better -- pressing `m' with the mouse in the plot window changes the colour scheme, producing the plot shown in the right hand panel of Figure~\ref{fig:starpart2}. Pressing `s' in interactive mode (that is, with the mouse in the plot window) saves the current zoom and colour bar settings (but not to disk until you also press `S' from the main menu). Pressing `q' from interactive mode returns to the main menu.
+ 
+ Next we want to turn on the plotting of sink particles (all particle types other than gas are turned off by default). This is done in the o)ptions submenu as follows:
+\begin{verbatim}
+ Please enter your selection now (y axis or option):o
+------------- particle plot options -------------------
+ 0) exit 
+ 1) turn on/off particles by type       ( ON, OFF, OFF, OFF )
+ 2) change graph markers for each type  (  1,  4, 17,  1 )
+ 3) set colour for each particle type   ( -1, -1, -1, -1 )
+ 4) plot line joining particles         ( OFF ) 
+ 5) plot smoothing circles              (   0 ) 
+ 6) use fast particle plotting          ( ON  ) 
+ 7) change coordinate systems           (  1 ) 
+ 8) plot exact solution                 (  0 ) 
+ 9) exact solution plot options 
+enter option ([0:9], <cr>=0):1
+ Plot gas particles? (<cr>=yes):
+ Plot ghost particles? (<cr>=no):
+ Plot sink particles? (<cr>=no):y
+ >> Plot sink particles on top of rendered plots? (<cr>=no):y
+ Plot unknown/dead particles? (<cr>=no):
+\end{verbatim}
+ Repeating our previous plot (ie. 2, 1, 6, 0, /xw) produces the plot shown in the left panel of Figure~\ref{fig:starpart3}. 
+ \begin{figure}[h]
+\begin{center}
+\begin{tabular}{cc}
+\includegraphics[width=0.5\textwidth]{starpart5.png} &
+\includegraphics[width=0.5\textwidth]{starpart6.png}
+\end{tabular}
+\caption{Third stage in the star formation figure tutorial: having turned sink particle plotting on (left) replacing the axes with a scale (right)}
+\label{fig:starpart3}
+\end{center}
+\end{figure}
+ The axes in [cm] are kind of ugly, so we could either change this to a sensible unit or plot a scale instead. We will do the latter. The axes can be turned off in the p)age submenu, as follows:
+\begin{verbatim}
+ Please enter your selection now (y axis or option):p
+---------------- page setup options -------------------
+...
+ 2) axes options                      ( 0)
+...
+enter option ([0:8], <cr>=0):2
+  -4 : draw box and major tick marks only;
+ -3 : draw box and tick marks (major and minor) only;
+ -2 : draw no box, axes or labels;
+ -1 : draw box only;
+  0 : draw box and label it with coordinates;
+  1 : same as AXIS=0, but also draw the coordinate axes (X=0, Y=0);
+  2 : same as AXIS=1, but also draw grid lines at major increments of the coordinates;
+ 10 : draw box and label X-axis logarithmically;
+ 20 : draw box and label Y-axis logarithmically;
+ 30 : draw box and label both axes logarithmically.
+enter axis option ([-4:30], <cr>=0):-2
+   axis =  -2
+\end{verbatim}
+The option to plot a scale of a particular length is also to be found in the p)age menu. We will choose to plot a scale of length 0.1 pc. 
+\begin{verbatim}
+Please enter your selection now (y axis or option):p
+---------------- page setup options -------------------
+...
+ 5) legend and title options          ( ON  OFF OFF )
+...
+enter option ([0:8], <cr>=0):5
+ 0) exit 
+ 1) time legend on/off                         ( ON  )
+ 2) titles on/off                              ( OFF )
+ 3) legend for multiple steps per page on/off  ( OFF )
+ 4) change time legend text                    ('t=')
+ 5) plot time legend on first row only         ( OFF )
+ 6) set legend position and justification      ( 0.95  2.00  1.00)
+ 7) set title position and justification       ( 0.50  1.00  0.50)
+ 8) plot scale on co-ordinate plots            ( OFF )
+Enter option ([0:8], <cr>=0):8
+ Plot scale on co-ordinate plots? (<cr>=no):y
+ Enter length of scale in the current x,y,z units (<cr>=1.000):3.0856e15
+ Enter text to appear below scale (e.g. '10 AU') (<cr>=1 unit): 0.1 pc
+ Enter horizontal position as fraction of viewport ([0.000:1.000], <cr>=0.5000):
+ Enter vertical position in character heights above bottom (<cr>=1.000):
+\end{verbatim}
+Note that because the x axis units were already in cm, we simply entered the value for 0.1pc in these units. Before plotting again, we should save what we have done so far to disk: Pressing `S' from the main menu saves both the current plot settings \emph{and} the plot limits to disk:
+\begin{verbatim}
+Please enter your selection now (y axis or option):S
+ default options saved to file splash.defaults
+ saving plot limits to file splash.limits
+\end{verbatim}
+Plotting our figure again (2-1-6-0-/xw) produces the plot shown in the right hand panel of Figure~\ref{fig:starpart3}. 
+
+ Nearly there...! To add the finishing touches we want to increase the number of pixels substantially. This is done in the r)ender menu, option 1, for which we can use the shortcut `r1':
+\begin{verbatim}
+Please enter your selection now (y axis or option):r1
+----------------- rendering options -------------------
+enter number of pixels along x axis ([1:10000], <cr>=200):1000
+\end{verbatim}
+then, to plot the figure to file instead of the screen, we simply choose a different PGPLOT device at the prompt:
+\begin{verbatim}
+Please enter your selection now (y axis or option):2
+(x axis) (<cr>=1):
+ (render) (0=none) ([0:11], <cr>=6):
+ (vector plot) (0=none, 7=v) ([0:7], <cr>=0):
+ Graphics device/type (? to see list, default /xw): starpartfinal.gif/gif
+\end{verbatim}
+producing our final finished Figure shown in Figure~\ref{fig:starfinal}.
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{starpartfinal.png}
+\caption{Finished star formation plot}
+\label{fig:starfinal}
+\end{center}
+\end{figure}
+
+ Pressing `S' from the main menu saves all of the settings and plot limits to disk, so invoking splash again will produce the same plot. To produce the same plot on a sequence of dumps, simply put more than one file on the command line and plot to a non-interactive device (see \ref{sec:movies}). Use the postscript devices /ps or /cps (for colour) to make figures suitable for inclusion in a paper.
+
+Other things you may want to do with this plot include:
+\begin{itemize}
+\item Turn the time legend off. See \S\ref{sec:legendoff}.
+\item Change the colour of sink particles. See \S\ref{sec:partcolours}.
+\item Change the foreground/background colour of the page. See \S\ref{sec:pagecolours}.
+\end{itemize}
 
 \subsection{Multi-panelled figure}
  The following is an example plot taken from \citet{pb07}. Here I will plot a sequence of plots tiled on the same page, so that columns correspond to dumps taken from different runs at the same time and rows correspond to an evolutionary sequence from a given run. The plot uses sphNG data which contains sink particles, so I also want these to appear on the plots and be plotted in white. Basically I want the plots to be plotted such that as much of the plot is taken up by data and very little by axes and the like but still conveying all of the necessary infomation.
