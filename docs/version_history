@@ -49,7 +49,7 @@ bug fixes to 1.6.0; further improvements to interactive mode on multiplots
 fast particle plotting and streamline plotting implemented; more bug fixes with interactive mode on multiplots; various other bug fixes
  
 1.7.0:
-renames SPLASH instead of SUPERSPHPLOT; much faster data read for gadget and sphNG reads (only required columns read); physical units can be saved to file; new menu formats; various other bug fixes
+renamed SPLASH instead of SUPERSPHPLOT; much faster data read for gadget and sphNG reads (only required columns read); physical units can be saved to file; new menu formats; various other bug fixes
  
 1.7.1:
 command line options for defaults and limits files added; minor bug fixes
@@ -62,4 +62,7 @@ hidden particles not used in rendering; units for z integration addded; a) and g
  
 1.8.1:
 option to hide vector arrows where there are no particles added; smoother 3D plotting at low pixel numbers; (smoother vector plots); bug fixes with a); issues with round-off error with z integration of vectors fixed
+ 
+1.9.0:
+animation sequences implemented; origin settings now affect radius calculation and are relative to tracked particle; automatic line width choice for postscript devices; w key adapts vector arrows; vastly improved userguide
  
