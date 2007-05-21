@@ -5,10 +5,6 @@
   Method to Multidimensional Ideal Magnetohydrodynamics}'.
 \newblock {\em J. Comp. Phys.} {\bf 115}, 485--514.
 
-\bibitem[\protect\citeauthoryear{{Monaghan}}{1992}]{monaghan92}
-{Monaghan}, J.~J.: 1992, `{Smoothed particle hydrodynamics}'.
-\newblock {\em Ann. Rev. Astron. Astrophys.} {\bf 30}, 543--574.
-
 \bibitem[\protect\citeauthoryear{{Monaghan} and {Price}}{2004}]{mp04}
 {Monaghan}, J.~J. and D.~J. {Price}: 2004, `{Toy stars in one dimension}'.
 \newblock {\em MNRAS} {\bf 350}, 1449--1456.
@@ -17,6 +13,11 @@
 {Press}, W.~H., S.~A. {Teukolsky}, W.~T. {Vetterling}, and B.~P. {Flannery}:
   1992, {\em {Numerical recipes in FORTRAN. The art of scientific computing}}.
 \newblock Cambridge: University Press, |c1992, 2nd ed.
+
+\bibitem[\protect\citeauthoryear{{Price} and {Bate}}{2007}]{pb07}
+{Price}, D.~J. and M.~R. {Bate}: 2007, `{The impact of magnetic fields on
+  single and binary star formation}'.
+\newblock {\em MNRAS} {\bf 377}, 77--90.
 
 \bibitem[\protect\citeauthoryear{{Ryu} and {Jones}}{1995}]{rj95}
 {Ryu}, D. and T.~W. {Jones}: 1995, `{Numerical magetohydrodynamics in

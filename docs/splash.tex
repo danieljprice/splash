@@ -133,9 +133,9 @@ used by the SPLASH source code, you may want to refer to the PGPLOT userguide:
 \end{quote}
 
 \subsubsection{ Compiling and linking with PGPLOT}
-For detailed instructions on compiling and linking with PGPLOT, refer to the INSTALL file in the root directory of the SPLASH distribution (or \url{http://www.astro.ex.ac.uk/people/dprice/splash/download/INSTALL}.
+For detailed instructions on compiling and linking with PGPLOT, refer to the INSTALL file in the root directory of the SPLASH distribution (or \url{http://www.astro.ex.ac.uk/people/dprice/splash/download/INSTALL}).
 
-A successful `make' will produce only the binary corresponding to the ascii data format -- `asplash' (by convention the first letter refers to the data format for which splash has been compiled). Using `make all' will build all of the supported data formats (e.g. GADGET is `gsplash', Matthew Bate's sphNG code is `ssplash', my own format is `dsplash' etc.). 
+A successful `make' will produce only the binary corresponding to the ascii data format -- `asplash' (by convention the first letter refers to the data format for which splash has been compiled). Using `make all' will build all of the supported data formats (e.g. GADGET is `gsplash', Matthew Bate's sphNG code is `ssplash', the VINE code is `vsplash', my own format is `dsplash' etc.). 
 
 \subsubsection{ Reading your data}
  The most important part is getting SPLASH to read *your* data format.
@@ -156,6 +156,7 @@ appendix~\ref{sec:writeyourown}. The *easiest* way is to email me a sample data 
 you used to write it and I can then create a data read for your file format (I won't mind).
 
 \subsection{Environment variables}
+\label{sec:envvariables}
 
 \subsubsection{ PGPLOT}
  Several useful environment variables can be set for PGPLOT and several of them
@@ -344,6 +345,22 @@ instead of ``/xw'' (for an X-window), simply type ``/ps'' to use the postscript 
 type /gif or /png (depending on which drivers have been installed in your PGPLOT installation -- typing ``?'' at this prompt shows you the list). This will generate a series of plots with names such as \verb+pgplot.gif+, \verb+pgplot.gif_2+, \verb+pgplot.gif_3+ corresponding to each new plotting page generated. To change these into more sensible names use the script provided in the splash/scripts directory (see \S\ref{sec:fixpgplotnames}). 
  
  Having obtained a sequence of images there are a variety of ways to make these into an animation using both free and commercial software. Suggestions on software packages to use for Mac, Linux and Windows can be found in the online faq (\url{http://www.astro.ex.ac.uk/people/dprice/splash/faqs.html}). I generally use the application ``graphic converter'' on Mac OS/X which makes quicktime movies from a sequence of images.
+ 
+ 
+\section{Ten quick hints for producing good-looking plots}
+In this section I have listed ten quick suggestions for simple changes to settings which can improve the look of a visualisation substantially compared to the default options. These are as follows:
+\begin{enumerate}
+\item {\bf Log the colour bar.} This is often the reason why your first rendered plot may look somewhat blank, especially if the simulation is dominated by a few high density objects. To do this simply move the cursor over the colour bar and hit ``l'' (for log). Alternatively log transformations can be applied to columns non-interactively via the ``apply log or inverse transformations to columns'' option in the l)imits menu.
+\item {\bf Adjust the colour bar limits}. Position the mouse over the colour bar and click to set the minimum and maximum limit on the colour bar. To revert to the widest max/min possible for the data plotted, press `a' with the cursor positioned over the colour bar. Note that limits can also be set manually in the l)imits submenu.
+\item {\bf Try changing the colour scheme}. Press `m' or `M' in interactive mode to cycle forwards or backwards through the available colour schemes.
+\item {\bf Increase the number of pixels}. The default number of pixels along the $x-$axis is 200, chosen to allow faster interactive plotting. However, for production plots it is much better to use at least 400-500 pixels for figures to go in research papers and up to 1000-2000 for making movies (beware that using more pixels also increases the file size substantially!). Change the number of pixels using the ``change number of pixels'' option in the r)ender submenu.
+\item {\bf Try using normalised interpolations}. If your simulation does not involve free surfaces (or alternatively if the free surfaces are not visible in the figure), turning the ``normalise interpolations'' option on (in the r)ender submenu) may improve the smoothness of the rendering (sometimes substantially). This is turned off by default because it leads to funny-looking edges. Note that option has no effect on 3D projection plots (where it is not meaningful to normalise the interpolation).
+\item {\bf Try turning the axes off}. For movies, often axes are unnecessary and detract from the visual appeal. Axes can be turned off in the ``axes options'' option in the p)age submenu.
+\item {\bf Change axes/page colours}. The background colour (colour of the page) and foreground colour (used for axes etc) can be changed vie the ``set foreground/background colours'' option in the p)age submenu. Alternatively these can be changed prior to invoking SPLASH by setting the PGPLOT\_FOREGROUND and PGPLOT\_BACKGROUND environment variables (see \S\ref{sec:envvariables}).
+\item {\bf Move the legend or turn it off}. The time legend can be moved by positioning the mouse and pressing `G' in interactive mode. The legend can be turned off using the ``legend and title options'' option in the p)age submenu. Similarly the vector plot legend can be turned on/off in the v)ector submenu and moved by positioning the cursor and pressing `H'.
+\item {\bf Use physical units on the axes}. These can be set via the d)ata submenu. See \S\ref{sec:changingunits} for more details.
+\item {\bf Save settings to disk!} Don't waste your effort without being able to reproduce the plot you have been working on. Pressing `s' in interactive mode only saves the current settings for subsequent timesteps. Pressing `s' from the main menu saves these settings to disk. Pressing `S' from the main menu saves both the plot options \emph{and} the plot limits, so that the current plot can be reproduced exactly when splash is next invoked.
+\end{enumerate}
 
 \section{Changing plot settings}
  The plot settings may be changed in a series of submenus. The options set using
