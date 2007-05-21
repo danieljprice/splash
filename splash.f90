@@ -23,6 +23,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.9.0 : (21/05/07)
+!             animation sequences implemented; origin settings now affect radius
+!             calculation and are relative to tracked particle; automatic line
+!             width choice for postscript devices; w key adapts vector arrows; 
+!             vastly improved userguide 
 !     1.8.1 : (28/03/07)
 !             option to hide vector arrows where there are no particles added;
 !             smoother 3D plotting at low pixel numbers;
@@ -178,7 +183,7 @@ program splash
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.9beta [3rd May ''07]'
+  character(len=*), parameter :: version = 'v1.9 [21st May ''07]'
 
   !
   ! set default options
