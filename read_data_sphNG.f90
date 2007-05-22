@@ -71,6 +71,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstepsread = 0
   nstep_max = 0
   npart_max = maxpart
+  npart = 0
   iunit = 15
   ipmass = 4
 
@@ -153,10 +154,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
       close(iunit)
       return
    else
-      if (nints.lt.3) print "(a)",'WARNING: npart,n1,n2 NOT IN HEADER??'
-      read(iunit,iostat=ierr) npart,n1,n2
+      if (nints.lt.3) then
+         if (.not.phantomdump) print "(a)",'WARNING: npart,n1,n2 NOT IN HEADER??'
+         read(iunit,iostat=ierr) npart
+      else
+         read(iunit,iostat=ierr) npart,n1,n2      
+      endif
       if (ierr /=0) then
-         print "(a)",'error reading npart,n1,n2'
+         print "(a)",'error reading npart,n1,n2)'
          close(iunit)
          return
       else
@@ -235,7 +240,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
    do iarr=1,narrsizes
       read(iunit,end=55,iostat=ierr) isize(iarr),nint(iarr),nint1(iarr),nint2(iarr), &
                  nint4(iarr),nint8(iarr),nreal(iarr),nreal4(iarr),nreal8(iarr)
-      if (iarr.eq.1) ntotal = isize(iarr)
+      if (iarr.eq.1) then
+         ntotal = isize(iarr)
+         if (npart.le.0) npart = ntotal
+      endif
       if (isize(iarr).gt.0) then
          print *,'block ',iarr,' dim = ',isize(iarr),'nint=',nint(iarr),nint1(iarr), &
             nint2(iarr),nint4(iarr),nint8(iarr),'nreal =',nreal(iarr),nreal4(iarr),nreal8(iarr)
@@ -363,7 +371,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             !--skip remaining integer arrays
             nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
          endif
-      elseif (smalldump .and. iarr.eq.2) then
+      elseif (smalldump .and. iarr.eq.2 .and. isize(iarr).gt.0) then
 !--read listpm from array block 2 for small dumps (needed here to extract sink masses)
          if (allocated(listpm)) deallocate(listpm)
          allocate(listpm(isize(iarr)))
@@ -388,7 +396,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          if (smalldump .and. iarr.eq.2 .and. allocated(listpm)) then
 !--read sink particle masses from block 2 for small dumps
             if (nreal(iarr).lt.1) then
-               print "(a)",'ERROR: sink masses not present in small dump'
+               if (isize(iarr).gt.0) print "(a)",'ERROR: sink masses not present in small dump'
                nskip = nreal(iarr) + nreal4(iarr) + nreal8(iarr)
             else
                if (doubleprec) then
