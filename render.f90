@@ -38,11 +38,11 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 
  print*,'rendering...',npixx,'x',npixy,'=',size(datpix),' pixels'
 
- if (abs(icolours).eq.1) then        ! greyscale
-    if (iPlotColourBar) call colourbar(icolours,datmin,datmax,trim(label),log)
-    call pggray(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
+! if (abs(icolours).eq.1) then        ! greyscale
+!    if (iPlotColourBar) call colourbar(icolours,datmin,datmax,trim(label),log)
+!    call pggray(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
 
- elseif (abs(icolours).gt.1) then        ! colour
+ if (abs(icolours).gt.0) then        ! colour
     if (iPlotColourBar) call colourbar(icolours,datmin,datmax,trim(label),log)
 !    call pgwedg('ri',2.0,4.0,datmin,datmax,' ')
 !    call pgpixl(datpix,npixx,npixx,1,npixx,1,npixx,xmin,xmax,ymin,ymax)
@@ -147,9 +147,9 @@ subroutine colourbar(icolours,datmin,datmax,label,log, &
 !--draw colour bar, by cleverly setting window size
 !
  call pgswin(0.9,1.1,1.0,real(npixwedg))
- if (abs(icolours).eq.1) then        ! greyscale
-    call pggray(sample,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans)
- elseif (abs(icolours).gt.1) then        ! colour
+! if (abs(icolours).eq.1) then        ! greyscale
+!    call pggray(sample,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans)
+ if (abs(icolours).gt.0) then        ! colour
     call pgimag(sample,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans)
  endif
  call pgswin(0.0,1.0,datmin,datmax)

@@ -43,18 +43,9 @@ subroutine colour_set(icolourscheme)
   implicit none
   integer, intent(in) :: icolourscheme
   integer :: i,icolmin,icolmax,ncolmax,nset,index
-  real :: hue,light,sat,brightness,red,green,blue
-  real :: dhue,dlight,dsat,dred,dgreen,dblue,contrast
+  real :: brightness,contrast
   real, dimension(18) :: lumarr,redarr,greenarr,bluearr
-  logical :: rgb
-      
-  red = 0.0
-  green = 0.0
-  blue = 0.0
-  dred = 0.
-  dblue = 0.
-  dgreen = 0.
-  rgb = .false.
+
   ncolours = ncolourmax-1
   nset = 0
 !
@@ -82,54 +73,20 @@ subroutine colour_set(icolourscheme)
   !
   call PGSCIR(ifirstcolour,ifirstcolour+ncolours)  
 
-!
-!--starting values
-!      
-  select case(icolourscheme)
-  case(3) 
-!    rainbow
-     rgb = .false.         
-     hue=100
-     light=0.5
-     sat=1.0
-     dlight = 0.0        !/FLOAT(ncolours)
-     dsat = 0.0
-     dhue = 320.0/FLOAT(ncolours)
-!  case default
-!    default is greyscale
-!!     return
-  end select
-!
-!--set colour indexes from ifirstcolour-> ifirstcolour+ncolours
-!  increment values in steps
-!
-  if (abs(icolourscheme) .lt. 2) then
-     do i=ifirstcolour,ifirstcolour+ncolours
-        if (rgb) then
-           red = red + dred
-           blue = blue + dblue
-           green = green + dgreen
-           red = min(red,1.0)
-           blue = min(blue,1.0)
-           green = min(green,1.0)
-           red = max(red,0.)
-           blue = max(blue,0.)
-           green = max(green,0.)
-           call PGSCR(i,red,green,blue)
-        else   
-           hue = hue + dhue
-           sat = sat + dsat
-           light = light + dlight
-           call PGSHLS(i,hue,light,sat)
-        endif
-     enddo
-  elseif (abs(icolourscheme).le.ncolourschemes) then
+  if (abs(icolourscheme).le.ncolourschemes) then
      brightness = 0.5
      contrast = 1.0
      !--invert colour table for negative values
      if (icolourscheme.lt.0) contrast = -1.0
      
      select case(abs(icolourscheme))
+     case(1)
+     !--greyscale
+     nset =  2
+     lumarr(1:nset)  = (/0.000,1.000/)
+     redarr(1:nset)  = (/0.000,1.000/)
+     greenarr(1:nset)= (/0.000,1.000/)
+     bluearr(1:nset) = (/0.000,1.000/)
      case(2)
      !--red temperature (IDL red-temperature)
      nset =  5
@@ -370,16 +327,16 @@ subroutine colour_demo
         sample(i,j) = (i-1)*dx
      enddo
   enddo
-  call pgsch(2.0)
-  call pgenv(xmin,xmax,ymin,ymax,0,-1)
-  call pgsch(1.0)
-  call pggray(sample,npixx,npixy,1,npixx,1,npixy, &
-              minval(sample),maxval(sample),trans)
-  call pgnumb(1,0,0,string,nc)
-  call pgsch(7.0)
-  call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(1)))
+!  call pgsch(2.0)
+!  call pgenv(xmin,xmax,ymin,ymax,0,-1)
+!  call pgsch(1.0)
+!  call pggray(sample,npixx,npixy,1,npixx,1,npixy, &
+!              minval(sample),maxval(sample),trans)
+!  call pgnumb(1,0,0,string,nc)
+!  call pgsch(7.0)
+!  call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(1)))
 
-  do i=2,ncolourschemes
+  do i=1,ncolourschemes
      call pgsch(2.0)      
      call pgenv(xmin,xmax,ymin,ymax,0,-1) 
      call pgsch(7.0)
