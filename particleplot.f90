@@ -106,7 +106,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            if (all(icolourpart(index1:index2).eq.icolourpart(index1) &
                .and. icolourpart(index1).ge.0)) then
               call pgsci(icolourpart(index1))
-              if (fastparticleplot) then
+              if (fastparticleplot .and. (index2-index1).gt.100) then
                  !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
                  write(*,"(a,i8,1x,a)") &
                       ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
