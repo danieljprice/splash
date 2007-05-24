@@ -47,28 +47,34 @@ subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
   z = xcoords(3)
 !
 !--rotate about z
-!  
-  r = sqrt(x**2 + y**2)
-  phi = ATAN2(y,x)
-  phi = phi - anglez
-  x = r*COS(phi)
-  y = r*SIN(phi)
+! 
+  if (abs(anglez).gt.tiny(anglez)) then
+     r = sqrt(x**2 + y**2)
+     phi = ATAN2(y,x)
+     phi = phi - anglez
+     x = r*COS(phi)
+     y = r*SIN(phi)
+  endif
 !
 !--rotate about y
 !
-  r = sqrt(z**2 + x**2)
-  phi = ATAN2(z,x)
-  phi = phi - angley
-  z = r*SIN(phi)
-  x = r*COS(phi)
+  if (abs(angley).gt.tiny(angley)) then
+     r = sqrt(z**2 + x**2)
+     phi = ATAN2(z,x)
+     phi = phi - angley
+     z = r*SIN(phi)
+     x = r*COS(phi)
+  endif
 !
 !--rotate about x
 !
-  r = sqrt(y**2 + z**2)
-  phi = ATAN2(z,y)
-  phi = phi - anglex  
-  y = r*COS(phi)
-  z = r*SIN(phi)
+  if (abs(anglex).gt.tiny(anglex)) then
+     r = sqrt(y**2 + z**2)
+     phi = ATAN2(z,y)
+     phi = phi - anglex  
+     y = r*COS(phi)
+     z = r*SIN(phi)
+  endif
 !
 !--change perspective according to z depth
 !  (for straight rotation == parallel projections use dz1= 0 on input)

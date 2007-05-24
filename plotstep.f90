@@ -2243,6 +2243,11 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
      endif
   endif
 
+!$OMP PARALLEL default(none) &
+!$OMP SHARED(dat,xorigin,ndim,angleradx,anglerady,angleradz,zobs,dzscreen) &
+!$OMP SHARED(xploti,yploti,zploti,iplotx,iploty,iplotz,ntot,ix) &
+!$OMP PRIVATE(j,xcoords)
+!$OMP DO
   do j=1,ntot
      xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
      if (ndim.eq.2) then
@@ -2256,6 +2261,8 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
         zploti(j) = xcoords(iplotz) + xorigin(iplotz)
      endif
   enddo
+!$OMP END DO
+!$OMP END PARALLEL
 
   return
 end subroutine rotationandperspective
