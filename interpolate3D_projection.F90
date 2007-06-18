@@ -425,7 +425,7 @@ end subroutine interpolate3D_projection
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
-     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth,zobserver,dscreen)
+     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth,normalise,zobserver,dscreen)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
@@ -433,16 +433,28 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreen
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
+  logical, intent(in) :: normalise
+  real, dimension(:,:), allocatable :: datnorm
 
-  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,ierr
   real :: hi,hi1,hi21,radkern,q2,wab,rab2,const,zfrac,hsmooth
-  real :: termx,termy,dx,dy,dy2,xpix,ypix
+  real :: termx,termy,termnorm,dx,dy,dy2,xpix,ypix
 
   vecsmoothx = 0.
   vecsmoothy = 0.
   termx = 0.
   termy = 0.
-  print "(1x,a)",'projecting vector from particles to pixels...'
+  if (normalise) then
+     print "(1x,a)",'projecting vector (normalised) from particles to pixels...'
+     allocate(datnorm(npixx,npixy),stat=ierr)
+     if (ierr /= 0) then
+        print "(a)",'interpolate3D_proj_vec: error allocating memory'
+        return
+     endif
+     datnorm = 0.
+  else
+     print "(1x,a)",'projecting vector from particles to pixels...'  
+  endif
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_proj_vec: error: pixel width <= 0'
      return
@@ -453,9 +465,9 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
 !$OMP PARALLEL default(none) &
 !$OMP SHARED(hh,z,x,y,weight,vecx,vecy,itype,vecsmoothx,vecsmoothy,npart) &
 !$OMP SHARED(xmin,ymin,pixwidth,zobserver,dscreen) &
-!$OMP SHARED(npixx,npixy) &
+!$OMP SHARED(npixx,npixy,normalise) &
 !$OMP PRIVATE(hi,radkern,const,zfrac,ypix,xpix) &
-!$OMP PRIVATE(hsmooth,hi1,hi21,termx,termy) &
+!$OMP PRIVATE(hsmooth,hi1,hi21,termx,termy,termnorm) &
 !$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
 !$OMP PRIVATE(dy,dy2,dx,rab2,q2,wab) &
 !$OMP PRIVATE(i,ipix,jpix)
@@ -488,6 +500,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
         
      termx = const*vecx(i)
      termy = const*vecy(i)
+     termnorm = const
      !
      !--for each particle work out which pixels it contributes to
      !               
@@ -526,6 +539,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
               !  
               vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab
               vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab
+              if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
            endif
 
         enddo
@@ -534,6 +548,15 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   enddo over_particles
 !$OMP END DO
 !$OMP END PARALLEL
+
+  if (normalise .and. allocated(datnorm)) then
+     !--normalise everywhere
+     where (datnorm > tiny(datnorm))
+        vecsmoothx = vecsmoothx/datnorm
+        vecsmoothy = vecsmoothy/datnorm
+     end where
+  endif
+  if (allocated(datnorm)) deallocate(datnorm)
 
   return
 
