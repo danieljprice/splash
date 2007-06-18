@@ -468,10 +468,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use powerspectrums, only:powerspectrum,powerspec3D_sph
   use interpolations1D, only:interpolate1D
   use interpolations2D, only:interpolate2D, interpolate2D_xsec
+  use interpolations3D, only:interpolate3D
   use projections3D, only:interpolate3D_projection
   use opacityrendering3D, only:interpolate3D_proj_opacity,interpolate3D_proj_opacity_writeppm
-  use xsections3D, only:interpolate3D, interpolate3D_fastxsec, &
-                        interpolate3D_xsec_vec
+  use xsections3D, only:interpolate3D_fastxsec,interpolate3D_xsec_vec
   use render, only:render_pix,colourbar
   use pagesetup, only:redraw_axes
   use exactfromfile, only:exact_fromfile

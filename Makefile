@@ -284,8 +284,8 @@ SOURCESF90= globaldata.f90 asciiutils.f90 transform.f90 \
          options_limits.f90 options_page.f90 \
 	 options_powerspec.f90 options_render.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 \
-         rotate.f90 interpolate1D.f90 \
-         interpolate2D.f90 interpolate3D_xsec.f90 \
+         rotate.f90 interpolate1D.f90 interpolate2D.f90 \
+         interpolate3D.f90 interpolate3D_xsec.f90 \
          interpolate3D_projection.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
          interactive.f90 \

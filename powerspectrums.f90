@@ -183,7 +183,7 @@ end subroutine mean_variance
 !
 subroutine powerspec3D_sph(x,y,z,dat,hh,weight,icolours,npart, &
  ngrid,xmin,xmax,freq,power,normalise)
- use xsections3D, only:interpolate3D
+ use interpolations3D, only:interpolate3D
  implicit none
  integer, intent(in) :: npart,ngrid
  real, dimension(npart), intent(in) :: x,y,z,dat,hh,weight
