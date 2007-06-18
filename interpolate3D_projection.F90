@@ -153,7 +153,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 #endif
   integer(kind=8) :: iprogress,i
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
-  real :: term,dy,dy2,ypix,zfrac,hsmooth
+  real :: term,dy,dy2,ypix,zfrac,hsmooth,horigi
   real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
   real, dimension(npixx) :: xpix,dx2i
   real :: t_start,t_end,t_used,tsec
@@ -211,7 +211,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$OMP SHARED(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidth) &
 !$OMP SHARED(npixx,npixy,dscreen,zobserver,use3Dperspective,useaccelerate) &
 !$OMP PRIVATE(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
-!$OMP PRIVATE(hsmooth,hi1,hi21,term,npixpart,jpixi,ipixi) &
+!$OMP PRIVATE(hsmooth,horigi,hi1,hi21,term,npixpart,jpixi,ipixi) &
 !$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
 !$OMP PRIVATE(dx2i,row,q2,ypix,dy,dy2,wab) &
 !$OMP PRIVATE(i,ipix,jpix,jpixcopy)
@@ -243,6 +243,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !--set h related quantities
      !
      hi = hh(i)
+     horigi = hi
      if (hi.le.0.) then
         cycle over_particles
      elseif (use3Dperspective) then
@@ -273,7 +274,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !
      hi1 = 1./hsmooth
      hi21 = hi1*hi1
-     term = weight(i)*hi*dat(i) ! h gives the z length scale (NB: no perspective)
+     term = weight(i)*horigi*dat(i) ! h gives the z length scale (NB: no perspective)
      !
      !--for each particle work out which pixels it contributes to
      !
