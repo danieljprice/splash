@@ -465,7 +465,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use transforms, only:transform,transform2,transform_limits,transform_label,transform_inverse
   use interactive_routines
   use particleplots, only:particleplot
-  use powerspectrums, only:powerspectrum
+  use powerspectrums, only:powerspectrum,powerspec3D_sph
   use interpolations1D, only:interpolate1D
   use interpolations2D, only:interpolate2D, interpolate2D_xsec
   use projections3D, only:interpolate3D_projection
@@ -1448,72 +1448,86 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            iplots = iplots + 1
            ipanel = ipanel + 1
            if (ipanel.gt.nacross*ndown) ipanel = 1
-        elseif (iploty.eq.ipowerspec) then 
+        elseif (iploty.eq.ipowerspec) then
         !
         !--power spectrum plots (uses x and data as yet unspecified)
         !
            labelx = 'frequency'
            labely = 'power'
-           if (.not.interactivereplot) then
-              xmin = 1./wavelengthmax  ! freq min
-              xmax = 1./wavelengthmin  ! freq max
-           endif
-           if (.not.interactivereplot .and. itrans(iploty).gt.0) then
-              call transform_limits(xmin,xmax,itrans(iploty))
-           endif       
-           !
-           !--setup frequency grid (evenly spaced in transformed grid)
-           !
-           nfreqpts = nfreqspec
-           if (nfreqpts.ge.size(xplot)) then
-              nfreqpts = size(xplot)
-              print*,' WARNING: nfreqpts > array size, restricting to ',nfreqpts
+        !   
+        !--3D: use FFT routines
+        !
+           if (ndim.eq.3) then
+              call powerspec3D_sph(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
+                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), & 
+                   ninterp,nfreqspec,lim(ipowerspecx,1),lim(ipowerspecx,2),xplot(1:nfreqspec), &
+                   yplot(1:nfreqspec),inormalise)
            else
-              print "(a,i6)",' number of frequency points = ',nfreqpts
-           endif
-           dxfreq = (xmax - xmin)/real(nfreqpts)
-           do i=1,nfreqpts
-              xplot(i) = xmin + (i-1)*dxfreq
-           enddo
-           !
-           !--transform back to frequency space
-           !
-           if (itrans(iploty).gt.0) &
-              call transform_inverse(xplot(1:nfreqpts),itrans(iploty))
+        !
+        !--1D: use slow FT routines or Lomb periodogram
+        !   
+              if (.not.interactivereplot) then
+                 xmin = 1./wavelengthmax  ! freq min
+                 xmax = 1./wavelengthmin  ! freq max
+              endif
+              if (.not.interactivereplot .and. itrans(iploty).gt.0) then
+                 call transform_limits(xmin,xmax,itrans(iploty))
+              endif       
+              !
+              !--setup frequency grid (evenly spaced in transformed grid)
+              !
+              nfreqpts = nfreqspec
+              if (nfreqpts.ge.size(xplot)) then
+                 nfreqpts = size(xplot)
+                 print*,' WARNING: nfreqpts > array size, restricting to ',nfreqpts
+              else
+                 print "(a,i6)",' number of frequency points = ',nfreqpts
+              endif
+              dxfreq = (xmax - xmin)/real(nfreqpts)
+              do i=1,nfreqpts
+                 xplot(i) = xmin + (i-1)*dxfreq
+              enddo
+              !
+              !--transform back to frequency space
+              !
+              if (itrans(iploty).gt.0) &
+                 call transform_inverse(xplot(1:nfreqpts),itrans(iploty))
 
-           if (.not.idisordered) then! interpolate first
-              !!--allocate memory for 1D grid (size = 2*npart)
-              ngrid = 2*npartoftype(1)
-              !!--set up 1D grid
-              xmingrid = lim(ipowerspecx,1)
-              xmaxgrid = lim(ipowerspecx,2)
-              dxgrid = (xmaxgrid-xmingrid)/ngrid
-              call set_grid1D(xmingrid,dxgrid,ngrid)
+              if (.not.idisordered) then! interpolate first
+                 !!--allocate memory for 1D grid (size = 2*npart)
+                 ngrid = 2*npartoftype(1)
+                 !!--set up 1D grid
+                 xmingrid = lim(ipowerspecx,1)
+                 xmaxgrid = lim(ipowerspecx,2)
+                 dxgrid = (xmaxgrid-xmingrid)/ngrid
+                 call set_grid1D(xmingrid,dxgrid,ngrid)
 
-              ninterp = ntoti
-              !!--interpolate to 1D grid  
-              call interpolate1D(dat(1:ninterp,ipowerspecx),hh(1:ninterp), &
-                   weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), & 
-                   ninterp,xmingrid,datpix1D,ngrid,dxgrid,inormalise)
-              !!--plot interpolated 1D data to check it
-              !!print*,minval(datpix1D),maxval(datpix1D)
-              !call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
-              !call pgbox('BCNST',0.0,0,'1BVCNST',0.0,0)      
-              !call pglabel('x',label(ipowerspecy),'1D interpolation')
-              !call pgline(ngrid,xgrid,datpix1D)
-              !read*
-              !call pgpage! change page
+                 ninterp = ntoti
+                 !!--interpolate to 1D grid  
+                 call interpolate1D(dat(1:ninterp,ipowerspecx),hh(1:ninterp), &
+                      weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), & 
+                      ninterp,xmingrid,datpix1D,ngrid,dxgrid,inormalise)
+                 !!--plot interpolated 1D data to check it
+                 !!print*,minval(datpix1D),maxval(datpix1D)
+                 !call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
+                 !call pgbox('BCNST',0.0,0,'1BVCNST',0.0,0)      
+                 !call pglabel('x',label(ipowerspecy),'1D interpolation')
+                 !call pgline(ngrid,xgrid,datpix1D)
+                 !read*
+                 !call pgpage! change page
 
-              !!--call power spectrum calculation on the even grid
-              call powerspectrum(ngrid,xgrid,datpix1D,nfreqpts,xplot(1:nfreqpts), &
-                                 yplot(1:nfreqpts),idisordered)
-              if (allocated(datpix1D)) deallocate(datpix1D)
-              if (allocated(xgrid)) deallocate(xgrid)             
-           else
-              !!--or else call power spectrum calculation on the particles themselves    
-              call powerspectrum(ntoti,dat(1:ntoti,ipowerspecx), &
-                   dat(1:ntoti,ipowerspecy),nfreqpts, &
-                   xplot(1:nfreqpts),yplot(1:nfreqpts),idisordered)
+                 !!--call power spectrum calculation on the even grid
+                 call powerspectrum(ngrid,xgrid,datpix1D,nfreqpts,xplot(1:nfreqpts), &
+                                    yplot(1:nfreqpts),idisordered)
+                 if (allocated(datpix1D)) deallocate(datpix1D)
+                 if (allocated(xgrid)) deallocate(xgrid)             
+              else
+                 !!--or else call power spectrum calculation on the particles themselves    
+                 call powerspectrum(ntoti,dat(1:ntoti,ipowerspecx), &
+                      dat(1:ntoti,ipowerspecy),nfreqpts, &
+                      xplot(1:nfreqpts),yplot(1:nfreqpts),idisordered)
+              endif
+           
            endif
 
            if (.not.interactivereplot) then
@@ -2098,7 +2112,7 @@ contains
                  yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                  weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                  icolourme(1:ninterp),ninterp,xmin,ymin, &
-                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,zobservertemp,dzscreentemp)
+                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,.false.,zobservertemp,dzscreentemp)
             endif
             
             !--adjust the units of the z-integrated quantity
