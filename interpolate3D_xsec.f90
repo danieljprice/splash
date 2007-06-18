@@ -42,7 +42,6 @@ contains
 
 subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidth,zpixwidth,normalise)
-  use fastmath, only:finvsqrt
   implicit none
   integer, intent(in) :: npart,npixx,npixy,npixz
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
@@ -187,14 +186,20 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
               !
               if (q2.lt.4.0) then                  
                  if (qq.lt.1.0) then
-                    if (q2.gt.epsilon(q2)) then
-                       qq = q2*finvsqrt(q2)
-                       wab = 1.-1.5*q2 + 0.75*q2*qq
-                    else
-                       wab = 1.
-                    endif
+                    qq = sqrt(q2)
+                    wab = 1.-1.5*q2 + 0.75*q2*qq
+!
+!-- the following lines use a fast inverse sqrt function
+!
+!                    if (q2.gt.epsilon(q2)) then
+!                       qq = q2*finvsqrt(q2)
+!                       wab = 1.-1.5*q2 + 0.75*q2*qq
+!                    else
+!                       wab = 1.
+!                    endif
                  else
-                    qq = q2*finvsqrt(q2)
+                    qq = sqrt(q2)
+!                    qq = q2*finvsqrt(q2)
                     wab = 0.25*(2.-qq)**3
                  endif
                  !
