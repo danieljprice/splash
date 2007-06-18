@@ -42,7 +42,7 @@ contains
 
 subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidth,zpixwidth,normalise)
-
+  use fastmath, only:finvsqrt
   implicit none
   integer, intent(in) :: npart,npixx,npixy,npixz
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
@@ -53,10 +53,15 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   real, dimension(npixx,npixy,npixz) :: datnorm
 
   integer :: i,ipix,jpix,kpix
+  integer :: iprintinterval,iprintnext,iprogress
   integer :: ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
-  real :: hi,hi1,radkern,qq,wab,rab,const
-  real :: term,termnorm,dx,dy,dz,xpix,ypix,zpix
-
+  real :: xminpix,yminpix,zminpix
+  real, dimension(npixx) :: xpix,dx2i
+  real :: xi,yi,zi,hi,hi1,hi21,radkern,qq,wab,q2,const,dyz2,dz2
+  real :: term,termnorm,dx,dy,dz,ypix,zpix
+  real :: t_start,t_end
+  logical :: iprintprogress
+  
   datsmooth = 0.
   datnorm = 0.
   if (normalise) then
@@ -71,33 +76,84 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   if (any(hh(1:npart).le.tiny(hh))) then
      print*,'interpolate3D: WARNING: ignoring some or all particles with h < 0'
   endif
+
+  !
+  !--print a progress report if it is going to take a long time
+  !  (a "long time" is, however, somewhat system dependent)
+  !
+  iprintprogress = (npart .ge. 100000) .or. (npixx*npixy .gt.100000)
+  !
+  !--loop over particles
+  !
+  iprintinterval = 25
+  if (npart.ge.1e6) iprintinterval = 10
+  iprintnext = iprintinterval
+  !
+  !--get starting CPU time
+  !
+  call cpu_time(t_start)
+
+  xminpix = xmin - 0.5*pixwidth
+  yminpix = ymin - 0.5*pixwidth
+  zminpix = zmin - 0.5*zpixwidth
+!  xmax = xmin + npixx*pixwidth
+!  ymax = ymin + npixy*pixwidth
+!
+!--store x value for each pixel (for optimisation)
+!  
+  do ipix=1,npixx
+     xpix(ipix) = xminpix + ipix*pixwidth
+  enddo
   const = dpi  ! normalisation constant (3D)
   !
   !--loop over particles
   !      
   over_parts: do i=1,npart
      !
+     !--report on progress
+     !
+     if (mod(i,10000).eq.0) then
+        call cpu_time(t_end)
+        print*,i,t_end-t_start
+     endif
+     if (iprintprogress) then
+        iprogress = 100*i/npart
+        if (iprogress.ge.iprintnext) then
+           write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
+           iprintnext = iprintnext + iprintinterval
+        endif
+     endif
+     !
      !--skip particles with itype < 0
      !
      if (itype(i).lt.0) cycle over_parts
+
+     hi = hh(i)
+     if (hi.le.0.) cycle over_parts
+
      !
      !--set kernel related quantities
      !
-     hi = hh(i)
-     if (hi.le.0.) cycle over_parts
+     xi = x(i)
+     yi = y(i)
+     zi = z(i)
+
      hi1 = 1./hi
+     hi21 = hi1*hi1
      radkern = 2.*hi   ! radius of the smoothing kernel
      termnorm = const*weight(i)
      term = termnorm*dat(i)
+
+
      !
      !--for each particle work out which pixels it contributes to
      !               
-     ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-     jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-     kpixmin = int((z(i) - radkern - zmin)/zpixwidth)
-     ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
-     jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
-     kpixmax = int((z(i) + radkern - zmin)/zpixwidth) + 1
+     ipixmin = int((xi - radkern - xmin)/pixwidth)
+     jpixmin = int((yi - radkern - ymin)/pixwidth)
+     kpixmin = int((zi - radkern - zmin)/zpixwidth)
+     ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
+     jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
+     kpixmax = int((zi + radkern - zmin)/zpixwidth) + 1
 
      if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
      if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
@@ -106,35 +162,47 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      if (jpixmax.gt.npixy) jpixmax = npixy
      if (kpixmax.gt.npixz) kpixmax = npixz
      !
+     !--precalculate an array of dx2 for this particle (optimisation)
+     !
+     do ipix=ipixmin,ipixmax
+        dx2i(ipix) = ((xpix(ipix) - xi)**2)*hi21
+     enddo
+     !
      !--loop over pixels, adding the contribution from this particle
      !
      do kpix = kpixmin,kpixmax
-        zpix = zmin + (kpix-0.5)*zpixwidth
-        dz = zpix - z(i)
+        zpix = zminpix + kpix*zpixwidth
+        dz = zpix - zi
+        dz2 = dz*dz*hi21
+        
         do jpix = jpixmin,jpixmax
-           ypix = ymin + (jpix-0.5)*pixwidth
-           dy = ypix - y(i)  
+           ypix = yminpix + jpix*pixwidth
+           dy = ypix - yi
+           dyz2 = dy*dy*hi21 + dz2
+           
            do ipix = ipixmin,ipixmax
-              xpix = xmin + (ipix-0.5)*pixwidth
-              dx = xpix - x(i)
-              rab = sqrt(dx**2 + dy**2 + dz**2)
-              qq = rab*hi1
+              q2 = dx2i(ipix) + dyz2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
               !
               !--SPH kernel - standard cubic spline
-              !                     
-              if (qq.lt.1.0) then
-                 wab = 1.-1.5*qq**2 + 0.75*qq**3
-              elseif (qq.lt.2.0) then
-                 wab = 0.25*(2.-qq)**3
-              else
-                 wab = 0.
-              endif
               !
-              !--calculate data value at this pixel using the summation interpolant
-              !  
-              datsmooth(ipix,jpix,kpix) = datsmooth(ipix,jpix,kpix) + term*wab          
-              if (normalise) datnorm(ipix,jpix,kpix) = datnorm(ipix,jpix,kpix) + termnorm*wab          
-
+              if (q2.lt.4.0) then                  
+                 if (qq.lt.1.0) then
+                    if (q2.gt.epsilon(q2)) then
+                       qq = q2*finvsqrt(q2)
+                       wab = 1.-1.5*q2 + 0.75*q2*qq
+                    else
+                       wab = 1.
+                    endif
+                 else
+                    qq = q2*finvsqrt(q2)
+                    wab = 0.25*(2.-qq)**3
+                 endif
+                 !
+                 !--calculate data value at this pixel using the summation interpolant
+                 !  
+                 datsmooth(ipix,jpix,kpix) = datsmooth(ipix,jpix,kpix) + term*wab          
+                 if (normalise) datnorm(ipix,jpix,kpix) = datnorm(ipix,jpix,kpix) + termnorm*wab          
+              endif
            enddo
         enddo
      enddo
