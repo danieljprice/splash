@@ -19,7 +19,7 @@ module colours
       'gamma            ', &
       'gamma- no black  ', &
       'grn-red-blue-wht ', &
-      'blue-green-red   ', &
+      'blk-blu-cyan-yell', &
       'rainbow II       ', &
       'rainbow III      ', &
       'haze             ', &
@@ -184,13 +184,19 @@ subroutine colour_set(icolourscheme)
      greenarr(1:nset)= (/0.000,0.282,0.424,0.988,0.941,0.094,0.000,0.000,0.000,0.000,0.000,0.988,1.000/)
      bluearr(1:nset) = (/0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.004,0.984,1.000,1.000,1.000,1.000/)
      case(13)
-     !--these are Klaus Dolag colour schemes
-     nset = 3
-     !--blue-green-red ("highlight")
-     lumarr(1:nset) =   (/0.0,0.5,1.0/)
-     redarr(1:nset) =   (/0.0,0.5,1.0/)
-     greenarr(1:nset) = (/0.0,1.0,0.0/)
-     bluearr(1:nset) =  (/1.0,0.5,0.0/)
+     !--black-blue-cyan-yellow
+     nset = 4
+     lumarr(1:nset) =  (/0.,0.333,0.666,1.0/)
+     redarr(1:nset) =  (/0.0,0.0,0.0,1.0/)
+     greenarr(1:nset)= (/0.0,0.0,1.0,1.0/)
+     bluearr(1:nset) = (/0.0,1.0,1.0,0.0/)
+!     !--these are Klaus Dolag colour schemes
+!     nset = 3
+!     !--blue-green-red ("highlight")
+!     lumarr(1:nset) =   (/0.0,0.5,1.0/)
+!     redarr(1:nset) =   (/0.0,0.5,1.0/)
+!     greenarr(1:nset) = (/0.0,1.0,0.0/)
+!     bluearr(1:nset) =  (/1.0,0.5,0.0/)
 !     nset = 3
 !     !--red-greeny-blue
 !     lumarr(1:nset) =   (/0.0,0.5,1.0/)
