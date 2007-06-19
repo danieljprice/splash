@@ -229,7 +229,7 @@ end subroutine powerspec3D_sph
 !
 subroutine power3d_fft(dat,nx,ny,nz,power,freq,nk)
  implicit none
- include 'fftw3.f'
+! include 'fftw3.f'
  integer, intent(in) :: nx,ny,nz,nk
  real, intent(in), dimension(nx,ny,nz) :: dat
  real, intent(in), dimension(nk) :: freq
