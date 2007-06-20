@@ -5,7 +5,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 19
+ integer, parameter :: ncolourschemes = 21
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
@@ -25,7 +25,9 @@ module colours
       'haze             ', &
       'huesatval2       ', &
       'blue-red         ', &
-      'blue-grn-red-yell'/)
+      'blue-grn-red-yell', &
+      'Bate BRY original', &
+      'Bate BRY saoimage'/)
 !
 !--rgb colours of the colour table are stored in the array below
 !  this is used for colour blending (opacity rendering)
@@ -257,6 +259,20 @@ subroutine colour_set(icolourscheme)
      redarr(1:nset)  = (/0.000,0.000,0.000,0.000,0.000,0.471,0.784,1.000/)
      greenarr(1:nset)= (/0.000,0.000,0.196,0.588,0.549,0.392,0.000,1.000/)
      bluearr(1:nset) = (/0.000,0.259,0.392,0.392,0.000,0.000,0.000,0.000/)
+     case(20)
+     !--Bate BRY original
+     nset =  5
+     lumarr(1:nset)  = (/0.000,0.195,0.586,0.781,1.00/)
+     redarr(1:nset)  = (/0.000,0.000,1.000,1.000,1.00/)
+     greenarr(1:nset)= (/0.000,0.000,0.000,1.000,1.00/)
+     bluearr(1:nset) = (/0.000,1.000,0.000,0.000,1.00/)
+     case(21)
+     !--Bate BRY saoimage
+     nset =  5
+     lumarr(1:nset)  = (/0.000,0.25,0.50,0.75,1.00/)
+     redarr(1:nset)  = (/0.000,0.00,1.00,1.00,1.00/)
+     greenarr(1:nset)= (/0.000,0.00,0.00,1.00,1.00/)
+     bluearr(1:nset) = (/0.000,1.00,0.00,0.00,1.00/)
      end select
 
      call PGCTAB(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &
