@@ -18,12 +18,19 @@ subroutine read_titles(ntitles)
  integer, intent(out) :: ntitles
  integer :: i
  character(len=50) :: titlefile
+ logical :: iexist
 
- titlefile = 'titlelist'
+ titlefile = 'splash.titles'
+ !--also allow obsolete title filename
+ inquire(file=titlefile,exist=iexist)
+ if (.not.iexist) then
+    inquire(file='titlelist',exist=iexist)
+    if (iexist) titlefile='titlelist'
+ endif
  ntitles = 0
 
  call read_asciifile(titlefile,ntitles,pagetitles)
- if (ntitles.gt.0) print*,'read plot titles from file ',trim(titlefile)  
+ if (ntitles.gt.0) print "(a)",'read plot titles from file '//trim(titlefile)  
 
  return
 end subroutine read_titles
@@ -37,12 +44,19 @@ subroutine read_steplegend(nsteptitles)
  integer, intent(out) :: nsteptitles
  integer :: i
  character(len=50) :: legendfile
+ logical :: iexist
 
- legendfile = 'legend'
+ legendfile = 'splash.legend'
+ !--also allow obsolete legend filename
+ inquire(file=legendfile,exist=iexist)
+ if (.not.iexist) then
+    inquire(file='legend',exist=iexist)
+    if (iexist) legendfile='legend'
+ endif
  nsteptitles = 0
 
  call read_asciifile(legendfile,nsteptitles,steplegend)
- if (nsteptitles.gt.0) print*,'read legend text from file ''',trim(legendfile),''''
+ if (nsteptitles.gt.0) print "(a)"//'read legend text from file '''//trim(legendfile)//''''
 
  return
 end subroutine read_steplegend
