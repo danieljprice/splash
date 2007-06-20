@@ -73,7 +73,7 @@ end subroutine defaults_set_page
 ! submenu with options relating to page setup
 !----------------------------------------------------------------------
 subroutine submenu_page(ichoose)
- use settings_data, only:numplot
+ use params, only:maxplot
  use prompting
  implicit none
  integer, intent(in) :: ichoose
@@ -187,8 +187,8 @@ subroutine submenu_page(ichoose)
      return            
 !------------------------------------------------------------------------
   case(4)
-     call prompt('Enter number of plots across (columns):',nacross,1,numplot)
-     call prompt('Enter number of plots down   (rows):',ndown,1,numplot)
+     call prompt('Enter number of plots across (columns):',nacross,1,maxplot)
+     call prompt('Enter number of plots down   (rows):',ndown,1,maxplot/nacross)
      if (nacross*ndown.gt.1) then
         call prompt('Tile plots on the page where possible?',tile)
      endif
