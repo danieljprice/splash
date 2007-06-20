@@ -6,8 +6,9 @@ module settings_page
  use settings_limits, only:iadapt,iadaptcoords
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
+ integer :: iPlotLegendOnlyOnPanel
  logical :: iColourEachStep,iChangeStyles,tile,interactive
- logical :: iPlotLegend,iPlotStepLegend,iPlotTitles,iPlotLegendOnFirstRowOnly
+ logical :: iPlotLegend,iPlotStepLegend,iPlotTitles
  logical :: iPlotScale,iUseBackgroundColourForAxes
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
@@ -19,7 +20,7 @@ module settings_page
    nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &
    iPlotLegend,iPlotStepLegend,hposlegend,vposlegend,iPlotTitles,hpostitle, &
    vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheight,linewidth,&
-   fjustlegend,iPlotLegendOnFirstRowOnly, &
+   fjustlegend,iPlotLegendOnlyOnPanel, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes
 
 contains
@@ -48,7 +49,7 @@ subroutine defaults_set_page
   vposlegend = 2.0      ! vertical legend position in character heights
   fjustlegend = 1.0    ! justification factor for legend
   legendtext = 't='
-  iPlotLegendOnFirstRowOnly = .false.
+  iPlotLegendOnlyOnPanel = 0
   
   iPlotTitles = .false.  ! whether or not to plot titles
   hpostitle = 0.5       ! horizontal title position as fraction of viewport
@@ -197,69 +198,61 @@ subroutine submenu_page(ichoose)
   case(5)
      if (iPlotStepLegend) then
         print "(/,a,/,a,/)",' Hint: to change the step legend text, create a file called', &
-                 '  ''legend'' in the working directory, with one label per line'
+                 '  ''splash.legend'' in the working directory, with one label per line'
      endif
      if (iPlotTitles) then
         print "(/,a,/,a,/)",' To set the plot titles, create a file called', &
-                 '  ''titlelist'' in the working directory, with one title per line'
+                 '  ''splash.titles'' in the working directory, with one title per line'
      endif     
-     print 20,print_logical(iPlotLegend),print_logical(iPlotTitles),print_logical(iPlotStepLegend), &
-              trim(legendtext),print_logical(iPlotLegendOnFirstRowOnly), &
-              hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle, &
-              print_logical(iPlotScale)
+     print 20,print_logical(iPlotLegend),hposlegend,vposlegend,fjustlegend,trim(legendtext), &
+              print_logical(iPlotTitles),hpostitle,vpostitle,fjusttitle, &
+              print_logical(iPlotStepLegend), print_logical(iPlotScale),iPlotLegendOnlyOnPanel
 20   format('0) exit ',/,                   &
-            ' 1) time legend on/off                         (',1x,a,1x,')',/, &
-            ' 2) titles on/off                              (',1x,a,1x,')',/, &
+            ' 1) time legend on/off/settings                (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,1x,'"',a,'")',/, &
+            ' 2) titles on/off/settings                     (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,')',/, &
             ' 3) legend for multiple steps per page on/off  (',1x,a,1x,')',/, &
-            ' 4) change time legend text                    (''',a,''')',/, &
-            ' 5) plot time legend on first row only         (',1x,a,1x,')',/, & 
-            ' 6) set legend position and justification      (',f5.2,1x,f5.2,1x,f5.2,')',/, &
-            ' 7) set title position and justification       (',f5.2,1x,f5.2,1x,f5.2,')',/, &
-            ' 8) plot scale on co-ordinate plots            (',1x,a,1x,')')
+            ' 4) plot scale on co-ordinate plots            (',1x,a,1x,')',/, &
+            ' 5) legend only on nth panel/first row/column  (',1x,i1,1x,')')
 
      jaction = 0
-     call prompt(' Enter option ',jaction,0,8)
+     call prompt(' Enter option ',jaction,0,5)
 
      select case(jaction)
      case(1)
-        iPlotLegend = .not.iPlotLegend
+        call prompt('Plot time legend? ',iPlotLegend)
         print "(a)",'Time legend is '//print_logical(iPlotLegend)
+        if (iPlotLegend) then
+           call prompt('Enter legend text ',legendtext)
+           
+           print "(a)",'------ set legend position (can also be done interactively) --------'
+           call prompt('Enter horizontal position as fraction of viewport', &
+                hposlegend,0.0,1.0)
+           call prompt('Enter vertical position in character heights from top',vposlegend)
+           call prompt('Enter justification factor (0.0=left 1.0=right)',fjustlegend,0.0,1.0)         
+
+        endif
      case(2)
-        iPlotTitles = .not.iPlotTitles
-        print "(a)",'Titles are '//print_logical(iPlotTitles)
+        print "(/,a,/,a,/)",' To set the plot titles, create a file called', &
+                 '  ''splash.titles'' in the working directory, with one title per line'
+        call prompt('Use plot titles? ',iPlotTitles)
+        print "(a)",'Titles are '//print_logical(iPlotTitles) 
         if (iPlotTitles) then
-           print "(/,a,/,a,/)",' To set the plot titles, create a file called', &
-                    '  ''titlelist'' in the working directory, with one title per line'
-           print*,' press return to continue '
-           read*
+           print "(a)",'------ set title position (can also be done interactively) --------'
+           call prompt('Enter horizontal position as fraction of viewport', &
+                hpostitle,0.0,1.0)
+           call prompt('Enter vertical position in character heights above top',vpostitle)
+           call prompt('Enter justification factor (0.0=left 1.0=right)',fjusttitle,0.0,1.0)
         endif
      case(3)
         iPlotStepLegend = .not.iPlotStepLegend
         print "(a)",'Step legend is '//print_logical(iPlotStepLegend)
         if (iPlotStepLegend) then
            print "(/,a,/,a,/)",' Hint: to change the step legend text, create a file called', &
-                    '  ''legend'' in the working directory, with one label per line'
+                    '  ''splash.legend'' in the working directory, with one label per line'
            print*,' press return to continue '
            read*
         endif
      case(4)
-        call prompt('Enter legend text ',legendtext)
-     case(5)
-        iPlotLegendOnFirstRowOnly = .not.iPlotLegendOnFirstRowOnly
-        print "(a)",'Plot legend on first row only is '//print_logical(iPlotLegendOnFirstRowOnly)
-     case(6)
-        print "(a)",'------ set legend position (can also be done interactively) --------'
-        call prompt('Enter horizontal position as fraction of viewport', &
-             hposlegend,0.0,1.0)
-        call prompt('Enter vertical position in character heights from top',vposlegend)
-        call prompt('Enter justification factor (0.0=left 1.0=right)',fjustlegend,0.0,1.0)     
-     case(7)
-        print "(a)",'------ set title position (can also be done interactively) --------'
-        call prompt('Enter horizontal position as fraction of viewport', &
-             hpostitle,0.0,1.0)
-        call prompt('Enter vertical position in character heights above top',vpostitle)
-        call prompt('Enter justification factor (0.0=left 1.0=right)',fjusttitle,0.0,1.0)
-     case(8)
         call prompt('Plot scale on co-ordinate plots? ',iPlotScale)
         if (iPlotScale) then
            call prompt('Enter length of scale in the current x,y,z units ',dxscale)
@@ -272,6 +265,13 @@ subroutine submenu_page(ichoose)
                    '(0=all co-ordinate plots)',iscalepanel,0,nacross*ndown)
            endif
         endif
+     case(5)
+        print "(/,'  0 : plot legend on every panel ',/,"// &
+               "' -1 : plot legend on first row only ',/,"// &
+               "' -2 : plot legend on first column only ',/,"// &
+               "'  n : plot legend on nth panel only ')"
+
+        call prompt('Enter selection ',iPlotLegendOnlyOnPanel,-2)
      end select
 
      return
