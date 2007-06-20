@@ -1816,13 +1816,16 @@ contains
     use titles, only:pagetitles,steplegend
     use filenames, only:nstepsinfile,nfiles,rootname
     use settings_page, only:iPlotLegend,iPlotStepLegend, &
-        hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnFirstRowOnly, &
+        hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnlyOnPanel, &
         iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext
     implicit none
     character(len=len(steplegend(1))) :: steplegendtext
 
     !--plot time on plot
-    if (iPlotLegend .and. nyplot.eq.1 .and. .not.(iPlotLegendOnFirstRowOnly .and. irow.gt.1) &
+    if (iPlotLegend .and. nyplot.eq.1 &
+        .and..not.(iPlotLegendOnlyOnPanel.gt.0 .and. ipanel.ne.iPlotLegendOnlyOnPanel) &
+        .and..not.(iPlotLegendOnlyOnPanel.eq.-1 .and. irow.gt.1) &
+        .and..not.(iPlotLegendOnlyOnPanel.eq.-2 .and. icolumn.gt.1) &
         .and. timei.gt.-0.5*huge(timei)) &  ! but not if time has not been read from dump
        call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend)
        
