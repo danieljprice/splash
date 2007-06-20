@@ -7,7 +7,7 @@
 !   call prompt(PROMPT,VAR,...)
 !
 !Action: writes the string PROMPT on the terminal plus the current
-!        value of the variable VAR and reads VAR. If  <cr>
+!        value of the variable VAR and reads VAR. If  default
 !        is pressed instead of a new value,
 !        the variable VAR stays untouched.
 !
@@ -58,6 +58,10 @@
 !
 ! Function print_logical added by D.Price 31/10/06 takes in a logical
 ! variable and returns 'on' or 'off' as appropriate.
+!
+! 20/06/07: D. Price:
+! Default part of prompt changed from "<cr>=" to the more human "default="
+! Also the character string prompt puts the default value in quotes
 !
 module prompting
 
@@ -111,11 +115,11 @@ contains
       !
       
       if (present(min).or.present(max)) then
-         write(*,"(a,1x,'([',a,':',a,'],',1x,'<cr>=',a,'):',1x)",advance='no') &
+         write(*,"(a,1x,'([',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(chmin)), &
                  trim(adjustl(chmax)), trim(adjustl(string))
       else
-         write(*,"(a,1x,'(<cr>=',a,'):',1x)",advance='no') &
+         write(*,"(a,1x,'(default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(string))
       endif
       
@@ -193,11 +197,11 @@ contains
       !
       
       if (present(min).or.present(max)) then
-         write(*,"(a,1x,'([',a,':',a,'],',1x,'<cr>=',a,'):',1x)",advance='no') &
+         write(*,"(a,1x,'([',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(chmin)), &
                  trim(adjustl(chmax)), trim(adjustl(string))
       else
-         write(*,"(a,1x,'(<cr>=',a,'):',1x)",advance='no') &
+         write(*,"(a,1x,'(default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(string))
       endif
       
@@ -276,11 +280,11 @@ contains
       !
       
       if (present(min).or.present(max)) then
-         write(*,"(a,1x,'([',a,':',a,'],',1x,'<cr>=',a,'):',1x)",advance='no') &
+         write(*,"(a,1x,'([',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(chmin)), &
                  trim(adjustl(chmax)), trim(adjustl(string))
       else
-         write(*,"(a,1x,'(<cr>=',a,'):',1x)",advance='no') &
+         write(*,"(a,1x,'(default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(string))
       endif
       
@@ -359,7 +363,7 @@ contains
       !  Write prompt string to terminal
       !
       
-      write(*,"(a,1x,'(<cr>=',a,'):',1x)",advance='no') &
+      write(*,"(a,1x,'(default=',a,'):',1x)",advance='no') &
            trim(adjustl(text)), trim(adjustl(string))
            
       !
@@ -420,7 +424,7 @@ contains
       !  Write prompt string to terminal
       !
       
-      write(*,"(a,1x,'(<cr>=',a,'):',1x)",advance='no') &
+      write(*,"(a,1x,'(default=""',a,'""):',1x)",advance='no') &
            trim(adjustl(text)), trim(adjustl(string))
            
       !
