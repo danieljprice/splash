@@ -212,7 +212,7 @@ subroutine submenu_page(ichoose)
             ' 2) titles on/off/settings                     (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,')',/, &
             ' 3) legend for multiple steps per page on/off  (',1x,a,1x,')',/, &
             ' 4) plot scale on co-ordinate plots            (',1x,a,1x,')',/, &
-            ' 5) legend only on nth panel/first row/column  (',1x,i1,1x,')')
+            ' 5) legend only on nth panel/first row/column  (',1x,i2,1x,')')
 
      jaction = 0
      call prompt(' Enter option ',jaction,0,5)
