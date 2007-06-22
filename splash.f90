@@ -224,7 +224,7 @@ program splash
            print "(a)",'Usage: splash [-f defaultsfile] [-l limitsfile] file1 file2 ...'
            stop
         end select
-     else
+     elseif (len_trim(string).gt.0) then
         nfiles = nfiles + 1
         if (nfiles.le.maxfile) then
            rootname(nfiles) = trim(string)
