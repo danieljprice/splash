@@ -110,11 +110,14 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
      !
      !--write timestepping log
      !
-     if (time(ilocindat).lt.1.e-2 .or. time(ilocindat).gt.1.e2) then
+     if (time(ilocindat).lt.-0.5*huge(1.)) then
+        print 32, istep
+     elseif (time(ilocindat).lt.1.e-2 .or. time(ilocindat).gt.1.e2) then
         print 33, time(ilocindat),istep
      else     
         print 34, time(ilocindat),istep
      endif
+32   format (5('-'),' t = (not read), dump #',i5,1x,18('-'))
 33   format (5('-'),' t = ',1pe8.2,', dump #',i5,1x,18('-'))
 34   format (5('-'),' t = ',f8.2,', dump #',i5,1x,18('-'))
 
