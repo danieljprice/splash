@@ -37,7 +37,7 @@ subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust)
     nc = 1
  else
     tplot = abs(t)    !/(2.*3.1415926536)
-    mm=int(tplot/10.**(int(log10(tplot)-ndecimal)))
+    mm=nint(tplot/10.**(int(log10(tplot)-ndecimal)))
     pp=int(log10(tplot)-ndecimal)
 ! mm=nint(tplot*ndec)
 ! pp=nint(log10(tplot)-log10(tplot*ndec))
