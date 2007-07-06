@@ -325,8 +325,9 @@ subroutine print_header
    '   under certain conditions (see LICENSE file for details). *',/,/, &
    ' Comments, bugs, suggestions and queries to: dprice@astro.ex.ac.uk ',/, &
    ' Check for updates at: www.astro.ex.ac.uk/people/dprice/splash ',/, &
-   ' Please spread the word by giving credits in your paper, and if you ',/, &
-   ' plot something beautiful, please send me a copy for the gallery. ',/)
+   ' Please cite Price (2007, PASA submitted) if you use splash for ',/, &
+   ' scientific work and if you plot something beautiful, why not',/, &
+   ' send me a copy for the gallery? ',/)
       
 end subroutine print_header
 
