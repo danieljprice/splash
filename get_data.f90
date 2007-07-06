@@ -25,9 +25,9 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
                      DataisBuffered,iCalcQuantities,ndim,icoords, &
                      icoordsnew,iRescale,required,ipartialread
   use settings_part, only:iexact
-  use particle_data, only:dat,time
-  use prompting, only:prompt
-  use labels, only:label,labelvec,iamvec,ih,irho,ipmass
+  use particle_data, only:dat,time,npartoftype
+  use prompting, only:prompt,ucase
+  use labels, only:label,labelvec,iamvec,ih,irho,ipmass,labeltype
   use geometry, only:labelcoord
   use calcquantities, only:calc_quantities
   use settings_units, only:units,unitslabel,read_unitsfile
@@ -252,6 +252,13 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
                  '  until positions of density, smoothing length and particle', &
                  '  masses are known (specified using the integer variables ', &
                  '  irho,ih and ipmass in the read_data routine)'
+     endif
+     if (nsteps.gt.0) then
+        if (sum(npartoftype(:,:)).gt.0 .and. any(npartoftype(1,:).eq.0)) then
+           print "(3(/,a),/)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES:', &
+                              '  nothing will appear unless plotting of other particle ', &
+                              '  types is turned on via the o)ptions menu'
+        endif
      endif
   endif
 !
