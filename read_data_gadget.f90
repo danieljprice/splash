@@ -35,6 +35,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
   use mem_allocation, only:alloc
+  use labels, only:ih,irho
+  use system_utils, only:renvironment
   implicit none
   integer, intent(in) :: istepstart
   integer, intent(out) :: nstepsread
@@ -42,7 +44,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   character(len=len(rootname)+10) :: datfile
   integer, dimension(maxparttypes) :: npartoftypei,Nall
   integer, dimension(:), allocatable :: iamtemp
-  integer :: i,itype,icol,ierr
+  integer :: i,j,itype,icol,ierr
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
   integer :: ncolstep,npart_max,nstep_max,ntoti
   integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
@@ -50,7 +52,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   real(doub_prec) :: timetemp,ztemp
   real(doub_prec), dimension(6) :: Massoftype
   real, dimension(:), allocatable :: dattemp1
-  real, dimension(:,:), allocatable :: dattemp
+  real :: hsoft
 
   nstepsread = 0
   if (maxparttypes.lt.6) then
@@ -112,6 +114,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
      ncolstep = 10 ! 3 x pos, 3 x vel, pmass, utherm, rho, h
      ncolumns = ncolstep  
   endif
+  irho = 9
+  ih = ncolstep
   
   ntoti = int(sum(npartoftypei(1:6)))
   print*,'time             : ',timetemp
@@ -169,21 +173,15 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !--read particle data
   !
   if (ntoti.gt.0) then
-     if (allocated(dattemp)) deallocate(dattemp)
-     allocate(dattemp(3,ntoti))
      !
      !--read positions of all particles
      !
      if (any(required(1:3))) then
         print*,'positions ',ntoti
-        read (11, iostat=ierr) dattemp(1:3,1:ntoti)        
+        read (11, iostat=ierr) (dat(j,1:3,i),j=1,ntoti)
         if (ierr /= 0) then
            print "(a)",'error encountered whilst reading positions '
            return
-        else
-           do icol=1,3
-              dat(1:ntoti,icol,i) = dattemp(icol,1:ntoti)
-           enddo
         endif
      else
         read(11, iostat=ierr)
@@ -197,13 +195,9 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      if (any(required(4:6))) then
         print*,'velocities ',ntoti
-        read (11, iostat=ierr) dattemp(1:3,1:ntoti)
+        read (11, iostat=ierr) (dat(j,4:6,i),j=1,ntoti)
         if (ierr /= 0) then
            print "(a)",'error encountered whilst reading velocities'
-        else        
-           do icol=4,6
-              dat(1:ntoti,icol,i) = dattemp(icol-3,1:ntoti)
-           enddo
         endif
      else
         read(11, iostat=ierr)
@@ -280,23 +274,41 @@ subroutine read_data(rootname,istepstart,nstepsread)
      print*,'gas properties ',npartoftype(1,i)
      do icol=8,ncolstep
         !!print*,icol
-        if (required(icol)) then
-           read (11,iostat=ierr) dat(1:npartoftype(1,i),icol,i)
-        else
-           read (11,iostat=ierr)
-        endif
-        if (ierr /= 0) then
-           print "(a,i3)",'error reading particle data from column ',icol
-        endif
+        if (npartoftype(1,i).gt.0) then
+           if (required(icol)) then
+              read (11,iostat=ierr) dat(1:npartoftype(1,i),icol,i)
+           else
+              read (11,iostat=ierr)
+           endif
+           if (ierr /= 0) then
+              print "(a,i3)",'error reading particle data from column ',icol
+           endif
         !
         !--for some reason the smoothing length output by GADGET is
         !  twice the usual SPH smoothing length
         !
-        if (icol.eq.ncolstep .and. required(icol)) then
-           dat(1:npartoftype(1,i),icol,i) = 0.5*dat(1:npartoftype(1,i),icol,i)
+           if (icol.eq.ncolstep .and. required(icol)) then
+              dat(1:npartoftype(1,i),icol,i) = 0.5*dat(1:npartoftype(1,i),icol,i)
+           endif
         endif
      enddo
-
+     !
+     !--if a value for the dark matter smoothing length is set
+     !  via the environment variable GSPLASH_DARKMATTER_HSOFT,
+     !  give dark matter particles this smoothing length
+     !  and a density of 1 (so column density plots work)
+     !
+     hsoft = renvironment('GSPLASH_DARKMATTER_HSOFT')
+     if (hsoft.gt.tiny(hsoft)) then
+        if (required(ih)) then
+           print "(a,1pe10.3,a)",' Assigning smoothing length of h = ',hsoft, &
+                                 ' to dark matter particles'
+           dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),ih,i) = hsoft
+        endif
+        if (required(irho)) then
+           dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),irho,i) = 1.0
+        endif
+     endif
 
   else
      ntoti = 1
@@ -332,8 +344,10 @@ subroutine set_labels
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
   use geometry, only:labelcoord
+  use system_utils, only:renvironment
   implicit none
   integer :: i
+  real :: hsoft
 
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -384,7 +398,17 @@ subroutine set_labels
   labeltype(2) = 'dark matter'
   labeltype(5) = 'star'
   UseTypeInRenderings(1) = .true.
-  UseTypeInRenderings(2:5) = .false.
+  !
+  !--dark matter particles are of non-SPH type (ie. cannot be used in renderings)
+  !  unless they have had a smoothing length defined
+  !
+  hsoft = renvironment('GSPLASH_DARKMATTER_HSOFT')
+  if (hsoft.gt.tiny(hsoft)) then
+     UseTypeInRenderings(2) = .true.
+  else
+     UseTypeInRenderings(2) = .false.  
+  endif
+  UseTypeInRenderings(3:5) = .false.
 
 !-----------------------------------------------------------
   return

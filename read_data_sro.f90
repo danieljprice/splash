@@ -41,7 +41,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use params
   use settings_data, only:ndim,ndimV,ncolumns,iformat
   use mem_allocation, only:alloc
-  use system_commands, only:lenvironment,get_environment
+  use system_utils, only:lenvironment
+  use system_commands, only:get_environment
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
