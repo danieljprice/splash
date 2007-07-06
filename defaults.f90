@@ -190,7 +190,7 @@ subroutine defaults_read(filename)
  
  inquire (exist=iexist, file=filename)
  if (iexist) then
-    open(unit=1,file=filename,status='old',form='formatted')
+    open(unit=1,file=filename,status='old',form='formatted',err=88)
     
     ierr = 0
     read(1,NML=dataopts,end=77,iostat=ierr)
@@ -248,8 +248,11 @@ subroutine defaults_read(filename)
  endif
  
 77 continue
- print*,'**** warning: end of file in '//trim(filename)//' ****'
+ print "(a)",'**** warning: end of file in '//trim(filename)//' ****'
  close(unit=1)
+
+88 continue
+ print "(a)",' *** error opening defaults file '//trim(filename)//': using program settings'
 
  return
 end subroutine defaults_read
