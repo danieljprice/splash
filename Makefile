@@ -292,7 +292,7 @@ SOURCESF90= globaldata.f90 asciiutils.f90 transform.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
          powerspectrums.f90 render.f90 setpage.f90 \
          plotstep.f90 timestepping.f90 \
-         defaults.f90 menu.f90 \
+         defaults.f90 menu.f90 system_utils.f90 \
          $(SYSTEMFILE) splash.f90
 
 # these are `external' f77 subroutines

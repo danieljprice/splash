@@ -36,24 +36,4 @@ contains
  
  end subroutine get_environment
 
- !--this routine returns a logical variable
- !  from an environment variable setting
- !  and should not require modification
- ! (just acts as an interface to get_environment)
- !
- logical function lenvironment(variable)
-    character(len=*), intent(in) :: variable
-    character(len=10) :: string
-    
-    call get_environment(variable,string)
-    if (trim(string).eq.'yes'.or.trim(string).eq.'YES' &
-    .or.trim(string).eq.'true'.or.trim(string).eq.'TRUE' &
-    .or.trim(string).eq.'on'.or.trim(string).eq.'ON') then
-       lenvironment = .true.
-    else
-       lenvironment = .false.
-    endif
- 
- end function lenvironment
- 
 end module system_commands
