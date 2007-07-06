@@ -148,6 +148,22 @@ ifeq ($(SYSTEM),ukaff1a)
    KNOWN_SYSTEM=yes
 endif
 
+ifeq ($(SYSTEM),zen)
+#  this is for the intel fortran compiler
+   F90C= ifort
+   F90FLAGS= -O3 -mcmodel=medium -axT -ipo -warn all #-assume nounderscore
+   OMPFLAGS= -openmp
+   DEBUGFLAG= -C -g
+   SYSTEMFILE= system_f2003.f90
+   ENDIANFLAGBIG= -convert big_endian
+   ENDIANFLAGLITTLE= -convert little_endian
+   X11LIBS= -L/home/djp212/lib -lX11
+   PGPLOTLIBS= #-L${PGPLOT_DIR} -lpgplot
+   STATICLIBS= /home/djp212/pgplot/libpgplot.a
+# or use setenv F_UFMTENDIAN=big or little at runtime
+   KNOWN_SYSTEM=yes
+endif
+
 ifeq ($(SYSTEM),mymac)
 #  these are the settings for a Mac G4 running Panther 
 #  using g95 with pgplot installed via fink
@@ -292,8 +308,8 @@ SOURCESF90= globaldata.f90 asciiutils.f90 transform.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
          powerspectrums.f90 render.f90 setpage.f90 \
          plotstep.f90 timestepping.f90 \
-         defaults.f90 menu.f90 system_utils.f90 \
-         $(SYSTEMFILE) splash.f90
+         defaults.f90 menu.f90 \
+         $(SYSTEMFILE) system_utils.f90 splash.f90
 
 # these are `external' f77 subroutines
 SOURCESF=
