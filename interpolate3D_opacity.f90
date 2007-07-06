@@ -67,7 +67,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
   integer, dimension(npart) :: iorder
   integer :: ipart
   real :: hi,hi1,hi21,radkern,q2,wab,pmassav
-  real :: term,dx,dy,dy2,ypix,zfrac,hav,zcutoff
+  real :: term,dy,dy2,ypix,zfrac,hav,zcutoff
   real :: fopacity,tau,rkappatemp,termi,xi,yi
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress,adjustzperspective

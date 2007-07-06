@@ -38,7 +38,7 @@ subroutine options_powerspec
  use settings_data, only:ndim,ndataplots,numplot
  use limits, only:lim
  use labels, only:ipowerspec
- use prompting
+ use prompting, only:prompt
  implicit none
  real :: boxsize
 
