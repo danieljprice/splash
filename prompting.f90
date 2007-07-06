@@ -52,16 +52,20 @@
 ! e-mail: ullrich@ceres1.physi.uni-heidelberg.de
 ! Last mod: 18 Aug 94
 !
-! Bug fixes by D.Price, University of Exeter, dprice@astro.ex.ac.uk:
+! Changes by D.Price, University of Exeter, dprice@astro.ex.ac.uk:
 ! 19/10/04 : problem with if (present(min) .and. min < newvalue)
 !            on some compilers
 !
-! Function print_logical added by D.Price 31/10/06 takes in a logical
-! variable and returns 'on' or 'off' as appropriate.
+! 31/10/06: D. Price:
+! Function print_logical added for displaying logicals: takes in a logical
+! variable and returns a string 'on' or 'off' as appropriate.
 !
 ! 20/06/07: D. Price:
 ! Default part of prompt changed from "<cr>=" to the more human "default="
 ! Also the character string prompt puts the default value in quotes
+!
+! 03/07/07: D. Price:
+! Functions ucase and lcase added for converting strings to upper or lower case
 !
 module prompting
 
@@ -81,7 +85,7 @@ module prompting
       module procedure &
       integer_prompt, real_prompt, string_prompt, double_prompt, logical_prompt
    end interface
-   public :: prompt,print_logical
+   public :: prompt,print_logical,lcase,ucase
     
 contains
 
@@ -463,6 +467,7 @@ contains
    !
    
    function print_logical(lvalue)
+      implicit none
       logical, intent(in) :: lvalue
       character(len=3) :: print_logical
       
@@ -474,4 +479,46 @@ contains
       
    end function print_logical
    
+   ! 
+   !  Routine added by D.Price (03/07/07)
+   !  converts a string to upper case
+   !
+   
+   function ucase(string)
+      implicit none
+      character(len=*), intent(in) :: string
+      character(len=len(string)) :: ucase
+      integer :: is,ia
+      integer, parameter             :: aoffset = 32
+      
+      ucase = string
+      do is = 1, len(ucase)
+         ia = iachar(ucase(is:is))
+         if (ia >= iachar('a').and.ia <= iachar('z')) &
+             ucase(is:is) = achar(ia-aoffset)
+      enddo
+   
+   end function ucase
+
+   ! 
+   !  Routine added by D.Price (03/07/07)
+   !  converts a string to lower case
+   !
+   
+   function lcase(string)
+      implicit none
+      character(len=*), intent(in) :: string
+      character(len=len(string)) :: lcase
+      integer :: is,ia
+      integer, parameter             :: aoffset = 32
+      
+      lcase = string
+      do is = 1, len(lcase)
+         ia = iachar(lcase(is:is))
+         if (ia >= iachar('A').and.ia <= iachar('Z')) &
+             lcase(is:is) = achar(ia+aoffset)
+      enddo
+      
+   end function lcase
+
 end module prompting
