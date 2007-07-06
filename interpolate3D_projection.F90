@@ -464,7 +464,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   !      
 !$OMP PARALLEL default(none) &
 !$OMP SHARED(hh,z,x,y,weight,vecx,vecy,itype,vecsmoothx,vecsmoothy,npart) &
-!$OMP SHARED(xmin,ymin,pixwidth,zobserver,dscreen) &
+!$OMP SHARED(xmin,ymin,pixwidth,zobserver,dscreen,datnorm) &
 !$OMP SHARED(npixx,npixy,normalise) &
 !$OMP PRIVATE(hi,radkern,const,zfrac,ypix,xpix) &
 !$OMP PRIVATE(hsmooth,hi1,hi21,termx,termy,termnorm) &
