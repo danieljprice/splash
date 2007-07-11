@@ -192,6 +192,32 @@ setenv ENDIAN 'BIG'
 \end{verbatim}
 or LITTLE before \emph{compiling} splash (this adds the appropriate compile-time flags for the compiler selected using the SYSTEM environment variable in the SPLASH Makefile). 
 
+\subsubsection{ Gadget data read}
+\label{sec:gsplash}
+ For several data reads there are environment variables which can be set at runtime which are specific to the data read. For the gadget read these are:\newline
+
+\begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+GSPLASH\_USE\_Z & if `YES' or `TRUE' uses the redshift in the legend instead of code time \\
+GSPLASH\_DARKMATTER\_HSOFT & if given a value $>$ 0.0 will assign a smoothing length to dark matter particles for which rendered plots of column density can then be made.
+\end{tabular}
+
+\subsubsection{ sphNG data read}
+ For the sphNG read the environment variable options are:\newline
+
+\begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+SSPLASH\_CENTRE\_ON\_SINK & if `YES' or `TRUE' resets the positions such that the sink particle is positioned at the origin (applies only where there is one, and only one, sink particle present)\\
+SSPLASH\_RESET\_CM & if `YES' or `TRUE' resets the positions such that the centre of mass is exactly at the origin.
+\end{tabular}
+
+\subsubsection{ Stephan Rosswog data read}
+ For the srosph read the environment variable options are:\newline
+
+\begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+RSPLASH\_FORMAT & can be `MHD' or `HYDRO' which read the appropriate data format from either the MHD or hydrodynamic codes \\
+RSPLASH\_RESET\_COM & if `YES' or `TRUE' resets the positions such that the centre of mass is exactly at the origin. \\
+RSPLASH\_COROTATING & if `YES' or `TRUE' then velocities are transformed to corotating frame \\
+RSPLASH\_HFACT & can be changed to give correct parameter in $h=h_{fact}(m/\rho)^{1/3}$ used to set the particle masses when rendering minidumps (ie. when the mass is not dumped). Default is RSPLASH\_HFACT=1.5
+\end{tabular}
 \section{Basic SPLASH usage}
 \label{sec:basic}
 
@@ -683,7 +709,13 @@ flags in the set\_labels part of the read\_data file).
  Particles can be turned on or off by type via the ``turn on/off particles by type'' option in the particle plot o)ptions submenu. See \ref{sec:plotparticlesbytype}. 
 
 \subsubsection{ Plotting dark matter particles}
- See \ref{sec:plotparticlesbytype}
+\label{sec:darkmatter}
+ To plot dark matter particles (e.g. for the gadget read) the particle type corresponding to dark matter particles must be turned on via the ``turn on/off particles by type'' option in the o) submenu. Turning this option on means that dark matter particles will appear on particle plots. For the gadget data read it is also possible to produce a rendered plot of dark matter column density by defining a smoothing length for dark matter particles via the GSPLASH\_DARKMATTER\_HSOFT environment variable (see \S\ref{sec:gsplash} for details). With this variable set dark matter particles are treated identically to SPH particles and can be rendered as usual (although the only meaningful quantity to render is the mass density).
+ 
+  Note that for simulations using both SPH and dark matter particles, dark matter particles will contribute (incorrectly) to the SPH rendering when the environment variable is set and the plotting of dark matter particles is turned on. Thus to plot just gas column density in this case, dark matter particles must be turned off [via the o) menu option], and similarly to plot just dark matter density if both SPH and dark matter particles are present, SPH particles must be turned off.
+ 
+\subsubsection{ Plotting a column density plot of dark matter/N-body particles}
+ See \ref{sec:darkmatter}.
 
 \subsubsection{ Plotting sink particles}
  Sink particles will be plotted on particle plots once turned on via the ``turn on/off particles by type'' option in the particle plot o)ptions submenu. Setting this option also gives a prompt for whether or not to plot sink particles on top of rendered plots (to which the answer should be yes).  See \ref{sec:plotparticlesbytype} for more details.

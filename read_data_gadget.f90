@@ -308,6 +308,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            endif
         endif
      enddo
+     
      !
      !--if a value for the dark matter smoothing length is set
      !  via the environment variable GSPLASH_DARKMATTER_HSOFT,
@@ -323,6 +324,12 @@ subroutine read_data(rootname,istepstart,nstepsread)
         endif
         if (required(irho)) then
            dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),irho,i) = 1.0
+        endif
+     else
+        if (npartoftype(1,i).le.0 .and. sum(npartoftype(:,i)).gt.0) then
+           print "(3(/,a),/)",' NOTE!! For gadget data using dark matter only, column density ',&
+                              ' plots can be produced by setting the GSPLASH_DARKMATTER_HSOFT ',&
+                              ' environment variable to give the dark matter smoothing length'
         endif
      endif
 
