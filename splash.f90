@@ -23,6 +23,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.9.1 : (11/07/07)
+!             environment variables + improvements to gadget data read; better
+!             prompting; 3 new colour schemes; improved legend/title options;
+!             other minor changes
 !     1.9.0 : (21/05/07)
 !             animation sequences implemented; origin settings now affect radius
 !             calculation and are relative to tracked particle; automatic line
@@ -183,7 +187,7 @@ program splash
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.9+ [June ''07]'
+  character(len=*), parameter :: version = 'v1.9.1 [11th July '07]'
 
   !
   ! set default options
