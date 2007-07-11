@@ -243,7 +243,7 @@ The simplest plot is of two quantities which are not both coordinates. For
 example, to plot density vs smoothing length, type
 \begin{verbatim}
 Please enter your selection now (y axis or option): 5
-(x axis) (<cr>=1): 4
+(x axis) (default=1): 4
  Graphics device/type (? to see list, default /xwin): /xw
 \end{verbatim}
  The \verb+<cr>+ refers to the default value assigned if you just press the return key. The last prompt asks for the PGPLOT device to which output should be directed. A full list of available graphics devices is given in the PGPLOT user guide. Some of the most useful devices are given in table \ref{tab:devices}. In the
@@ -280,9 +280,9 @@ To exit the plot, move the mouse to the plot window and press 'q' (quit). To exi
 A more complicated plot is where both the $x-$ and $y-$ axes refer to coordinates. For example
 \begin{verbatim}
 Please enter your selection now (y axis or option):2
-(x axis) (<cr>=1): 1
-(render) (0=none) ([0:11], <cr>=0):5
-(vector plot) (0=none, 8=B) ([0:8], <cr>=0):0
+(x axis) (default=1): 1
+(render) (0=none) ([0:11], default=0):5
+(vector plot) (0=none, 8=B) ([0:8], default=0):0
 Graphics device/type (? to see list, default /xwin): /xw
 \end{verbatim}
 Notice that in this case that options appeared for rendered and vector plots. Our choice of ``5'' at the (render) prompt corresponds to column 5, which in this case is the density, producing the plot shown in the screenshot in Figure~\ref{fig:renderplot}.
@@ -299,7 +299,7 @@ Notice that in this case that options appeared for rendered and vector plots. Ou
 \subsection{Cross section slice}
 To plot a cross section slice instead of a projection in 3D, type 'x' at the main menu to open the 'cross section/3D plotting options' menu and choose option 1 ``switch between cross section and projection''. Then re-plot the rendered plot again (exactly as in the previous example \S\ref{sec:renderplot}), setting the slice position at the prompt:
 \begin{verbatim}
-enter z position for cross-section slice: ([-8.328:8.327], <cr>=0.000):
+enter z position for cross-section slice: ([-8.328:8.327], default=0.000):
 \end{verbatim}
 which produces the plot shown in the screenshot in Figure~\ref{fig:renderplot_xsec}.
 \begin{figure}[h]
@@ -313,7 +313,7 @@ which produces the plot shown in the screenshot in Figure~\ref{fig:renderplot_xs
 \subsection{Vector plots}
  A prompt to plot vector arrows on top of rendered plots (or on top of particle plots) appears whenever vectors are present in the data (for details of how to specify this in your data read, see \S\ref{sec:dataread}), taking the form:
 \begin{verbatim}
-(vector plot) (0=none, 8=B) ([0:8], <cr>=0):0
+(vector plot) (0=none, 8=B) ([0:8], default=0):0
 \end{verbatim}
 where the number refers to the column of the first component of the vector quantity. 
 
@@ -389,9 +389,9 @@ The following can all be achieved from the d)ata options menu:
 \label{sec:subsetofsteps}
  When splash is invoked with more than one filename on the command line (for example, where all files are selected with something like ``splash DUMP*'') it is often helpful to use only a subset of the files. This can be set in the d)ata menu, selecting option 2 ``change number of timesteps used''. This prompts something like:
 \begin{verbatim}
- Start at timestep ([1:10], <cr>=1):
- End at timestep ([1:10], <cr>=10):
- Frequency of steps to read ([1:10], <cr>=1):
+ Start at timestep ([1:10], default=1):
+ End at timestep ([1:10], default=10):
+ Frequency of steps to read ([1:10], default=1):
 \end{verbatim}
 so that the beginning, end and frequency (e.g. 2 would mean read every second step) of dump files to use can be set.
 
@@ -411,12 +411,12 @@ splash `cat filelist`
 \label{sec:selectedstepsonly}
  A subset of data files from the command line can be chosen in any order using the ``plot selected steps only'' option from the d)ata submenu, which then prompts the user to enter something like the following:
 \begin{verbatim}
- Enter number of steps to plot ([1:10], <cr>=0):5
- Enter step  1 ([1:10], <cr>=1):5
- Enter step  2 ([1:10], <cr>=2):2
- Enter step  3 ([1:10], <cr>=3):1
- Enter step  4 ([1:10], <cr>=4):4
- Enter step  5 ([1:10], <cr>=5):3
+ Enter number of steps to plot ([1:10], default=0):5
+ Enter step  1 ([1:10], default=1):5
+ Enter step  2 ([1:10], default=2):2
+ Enter step  3 ([1:10], default=3):1
+ Enter step  4 ([1:10], default=4):4
+ Enter step  5 ([1:10], default=5):3
 \end{verbatim}
 Note that only a limited number of steps can be selected in this way. An alternative way is to order the files on the command line before invoking splash (see \S\ref{sec:subsetofsteps}). 
 
@@ -654,10 +654,10 @@ on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the ph
 ---------------- page setup options -------------------
 ...
  8) set foreground/background colours 
-enter option ([0:8], <cr>=0):8
- Enter background colour (by name, e.g. "black") (<cr>=):white
- Enter foreground colour (by name, e.g. "white") (<cr>=):black
- Do you want to plot axes and overlaid text in background colour (default is foreground) ? (<cr>=no):y
+enter option ([0:8], default=0):8
+ Enter background colour (by name, e.g. "black") (default=):white
+ Enter foreground colour (by name, e.g. "white") (default=):black
+ Do you want to plot axes and overlaid text in background colour (default is foreground) ? (default=no):y
 \end{verbatim}
  In the above I have selected a background colour of white, a foreground colour of black. Answering yes to the last question means that those parts of the axes which lie on top of the viewing surface (and any labels) will be plotted in white (the background colour) instead of the foreground colour (black). 
 
@@ -726,8 +726,8 @@ in the direction of the coordinate axis. See also \S\ref{sec:findingaparticle} f
 Please enter your selection now (y axis or option):o5
 ------------- particle plot options -------------------
  Note that circles of interaction can also be set interactively
-Enter number of circles to draw ([0:100], <cr>=0):1
-Enter particle number to plot circle around ([1:959], <cr>=1): 868
+Enter number of circles to draw ([0:100], default=0):1
+Enter particle number to plot circle around ([1:959], default=1): 868
 \end{verbatim}
  then upon plotting a coordinate plot (e.g. x vs y), particle 868 will be plotted with a circle of size $2h$ which makes it easy to distinguish from the other particles. See also \S\ref{sec:smoothingcircle}.
 
@@ -971,11 +971,11 @@ Rotations are performed in the order $z-y-x$. This means that the $y-$ rotation 
  3D perspective can be turned on via the ``3D perspective on/off'' option in the x) menu. Prompts for setting the perspective position then appear after the usual prompts for y and x axes, rendering and vector plots, ie. something like the following:
 \begin{verbatim}
 Please enter your selection now (y axis or option):2
-(x axis) (<cr>=1):
- (render) (0=none) ([0:20], <cr>=0):
- (vector plot) (0=none, 7=B, 10=v, 17=J) ([0:17], <cr>=0):
- enter z coordinate of observer (<cr>=1.800):
- enter distance between observer and projection screen ([0.000:], <cr>=0.1800):
+(x axis) (default=1):
+ (render) (0=none) ([0:20], default=0):
+ (vector plot) (0=none, 7=B, 10=v, 17=J) ([0:17], default=0):
+ enter z coordinate of observer (default=1.800):
+ enter distance between observer and projection screen ([0.000:], default=0.1800):
  Graphics device/type (? to see list, default /xwin): 
 \end{verbatim}
  
@@ -1104,9 +1104,9 @@ Please enter your selection now (y axis or option):
 here we want to plot a rendered plot of column density (density is in column 6), so we type `2' for column 2 (y) as the y axis, `1' for column 1 (x) as the x-axis and at the render prompt `6', for density, ie:
 \begin{verbatim}
 Please enter your selection now (y axis or option):2
-(x axis) (<cr>=1):
- (render) (0=none) ([0:11], <cr>=0):6
- (vector plot) (0=none, 7=v) ([0:7], <cr>=0):0
+(x axis) (default=1):
+ (render) (0=none) ([0:11], default=0):6
+ (vector plot) (0=none, 7=v) ([0:7], default=0):0
  Graphics device/type (? to see list, default /xw): /xw
 \end{verbatim}
 producing the plot shown in Figure~\ref{fig:starpart1} -- somewhat black! The main thing to note is the limits on the colour bar (extending from $0$ to $10^{7}$ on a linear scale) which is the main source of all the blackness. Moving the cursor over the colour bar and pressing `l' for log produces the figure shown on the right hand side --- a vast improvement!
@@ -1134,7 +1134,7 @@ Please enter your selection now (y axis or option):d
  5) turn calculate extra quantities on/off (  OFF )
  6) use physical units                     (  OFF )
  7) change physical unit settings 
-enter option ([0:7], <cr>=0):6
+enter option ([0:7], default=0):6
  current settings for conversion to physical units are:
 x [cm] = x x  1.000E+17
 y [cm] = y x  1.000E+17
@@ -1148,7 +1148,7 @@ v\dz [cm/s] = v\dz x  3.645E+04
 u [erg/g] = u x  1.328E+09
 grad h = grad h x  1.000E+00
 time = time x 1.69E+00
-Use physical units? (<cr>=yes):
+Use physical units? (default=yes):
 \end{verbatim}
 returning us to the main menu with labels changed as follows:
 \begin{verbatim}
@@ -1200,12 +1200,12 @@ Actually we would prefer the column labels in AU, but we will come to that later
  7) change coordinate systems           (  1 ) 
  8) plot exact solution                 (  0 ) 
  9) exact solution plot options 
-enter option ([0:9], <cr>=0):1
- Plot gas particles? (<cr>=yes):
- Plot ghost particles? (<cr>=no):
- Plot sink particles? (<cr>=no):y
- >> Plot sink particles on top of rendered plots? (<cr>=no):y
- Plot unknown/dead particles? (<cr>=no):
+enter option ([0:9], default=0):1
+ Plot gas particles? (default=yes):
+ Plot ghost particles? (default=no):
+ Plot sink particles? (default=no):y
+ >> Plot sink particles on top of rendered plots? (default=no):y
+ Plot unknown/dead particles? (default=no):
 \end{verbatim}
  Repeating our previous plot (ie. 2, 1, 6, 0, /xw) produces the plot shown in the left panel of Figure~\ref{fig:starpart3}. 
  \begin{figure}[h]
@@ -1225,7 +1225,7 @@ enter option ([0:9], <cr>=0):1
 ...
  2) axes options                      ( 0)
 ...
-enter option ([0:8], <cr>=0):2
+enter option ([0:8], default=0):2
   -4 : draw box and major tick marks only;
  -3 : draw box and tick marks (major and minor) only;
  -2 : draw no box, axes or labels;
@@ -1236,7 +1236,7 @@ enter option ([0:8], <cr>=0):2
  10 : draw box and label X-axis logarithmically;
  20 : draw box and label Y-axis logarithmically;
  30 : draw box and label both axes logarithmically.
-enter axis option ([-4:30], <cr>=0):-2
+enter axis option ([-4:30], default=0):-2
    axis =  -2
 \end{verbatim}
 The option to plot a scale of a particular length is also to be found in the p)age menu. We will choose to plot a scale of length 0.1 pc. 
@@ -1246,7 +1246,7 @@ Please enter your selection now (y axis or option):p
 ...
  5) legend and title options          ( ON  OFF OFF )
 ...
-enter option ([0:8], <cr>=0):5
+enter option ([0:8], default=0):5
  0) exit 
  1) time legend on/off                         ( ON  )
  2) titles on/off                              ( OFF )
@@ -1256,12 +1256,12 @@ enter option ([0:8], <cr>=0):5
  6) set legend position and justification      ( 0.95  2.00  1.00)
  7) set title position and justification       ( 0.50  1.00  0.50)
  8) plot scale on co-ordinate plots            ( OFF )
-Enter option ([0:8], <cr>=0):8
- Plot scale on co-ordinate plots? (<cr>=no):y
- Enter length of scale in the current x,y,z units (<cr>=1.000):3.0856e15
- Enter text to appear below scale (e.g. '10 AU') (<cr>=1 unit): 0.1 pc
- Enter horizontal position as fraction of viewport ([0.000:1.000], <cr>=0.5000):
- Enter vertical position in character heights above bottom (<cr>=1.000):
+Enter option ([0:8], default=0):8
+ Plot scale on co-ordinate plots? (default=no):y
+ Enter length of scale in the current x,y,z units (default=1.000):3.0856e15
+ Enter text to appear below scale (e.g. '10 AU') (default=1 unit): 0.1 pc
+ Enter horizontal position as fraction of viewport ([0.000:1.000], default=0.5000):
+ Enter vertical position in character heights above bottom (default=1.000):
 \end{verbatim}
 Note that because the x axis units were already in cm, we simply entered the value for 0.1pc in these units. Before plotting again, we should save what we have done so far to disk: Pressing `S' from the main menu saves both the current plot settings \emph{and} the plot limits to disk:
 \begin{verbatim}
@@ -1275,14 +1275,14 @@ Plotting our figure again (2-1-6-0-/xw) produces the plot shown in the right han
 \begin{verbatim}
 Please enter your selection now (y axis or option):r1
 ----------------- rendering options -------------------
-enter number of pixels along x axis ([1:10000], <cr>=200):1000
+enter number of pixels along x axis ([1:10000], default=200):1000
 \end{verbatim}
 then, to plot the figure to file instead of the screen, we simply choose a different PGPLOT device at the prompt:
 \begin{verbatim}
 Please enter your selection now (y axis or option):2
-(x axis) (<cr>=1):
- (render) (0=none) ([0:11], <cr>=6):
- (vector plot) (0=none, 7=v) ([0:7], <cr>=0):
+(x axis) (default=1):
+ (render) (0=none) ([0:11], default=6):
+ (vector plot) (0=none, 7=v) ([0:7], default=0):
  Graphics device/type (? to see list, default /xw): starpartfinal.gif/gif
 \end{verbatim}
 producing our final finished Figure shown in Figure~\ref{fig:starfinal}.
@@ -1361,9 +1361,9 @@ An alternative method is to rename the `filelistplot' file \verb+splash.filename
  r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
 -------------------------------------------------------
 Please enter your selection now (y axis or option):2
-(x axis) (<cr>=1):
- (render) (0=none) ([0:9], <cr>=0):6
- (vector plot) (0=none, 7=B) ([0:7], <cr>=0):
+(x axis) (default=1):
+ (render) (0=none) ([0:9], default=0):6
+ (vector plot) (0=none, 7=B) ([0:7], default=0):
   Graphics device/type (? to see list, default /xw): /xw
 \end{verbatim}
 which should produce the plot shown in the left hand panel of Figure~\ref{fig:multipart1}. Not much can be seen at first -- just a few white dots. This is mainly a result of the density axis (ie. the colour bar) not being logged. Moving the cursor over the colour bar and pressing `l' results in the plot shown in the right hand panel of Figure~\ref{fig:multipart1}.
@@ -1390,7 +1390,7 @@ Please enter your selection now (y axis or option):d
  5) turn calculate extra quantities on/off (  OFF )
  6) use physical units                     (  OFF )
  7) change physical unit settings 
-enter option ([0:7], <cr>=0):6
+enter option ([0:7], default=0):6
  current settings for conversion to physical units are:
 x [cm] = x x  1.000E+16
 y [cm] = y x  1.000E+16
@@ -1402,21 +1402,21 @@ B\dx [G] = B\dx x  1.000E+00
 B\dy [G] = B\dy x  1.000E+00
 B\dz [G] = B\dz x  1.000E+00
 time = time x 1.13E-01
-Use physical units? (<cr>=yes):yes
+Use physical units? (default=yes):yes
 \end{verbatim}
  The default transformations to physical units are in this case set in the data read. However it would be nicer in this case to set the x and y axis units to AU (Astronomical Units), rather than cm. From the d)ata menu we proceed as follows:
 \begin{verbatim}
-enter option ([0:7], <cr>=0):7
- enter column to change units (-2=reset all,-1=quit,0=time) ([-2:9], <cr>=-1):1
- enter x [cm] units (new=old*units) (<cr>=0.1000E+17):668.3893
- enter label amendment (<cr>=[cm]): [AU]
- Apply these units to all coordinates and h? (<cr>=yes):
- Enter unit for 'z' in 3D column integrated plots (<cr>=0.1000E+17):
- Enter label for z integration unit (e.g. [cm]) (<cr>=[cm]):
+enter option ([0:7], default=0):7
+ enter column to change units (-2=reset all,-1=quit,0=time) ([-2:9], default=-1):1
+ enter x [cm] units (new=old*units) (default=0.1000E+17):668.3893
+ enter label amendment (default=[cm]): [AU]
+ Apply these units to all coordinates and h? (default=yes):
+ Enter unit for 'z' in 3D column integrated plots (default=0.1000E+17):
+ Enter label for z integration unit (e.g. [cm]) (default=[cm]):
 
-enter column to change units (-2=reset all,-1=quit,0=time) ([-2:9], <cr>=-1):
+enter column to change units (-2=reset all,-1=quit,0=time) ([-2:9], default=-1):
 
-save units to file? (<cr>=yes):
+save units to file? (default=yes):
  saving plot limits to file splash.units
 \end{verbatim}
 where in the above I set the multiplicative factor such that the x axis will be in AU and correspondingly changed the units label to `` [AU]'' (note the preceding space). I was also prompted to change the unit for 'z integration' -- this is the length unit added when integrating a quantity through z. Leaving this in cm means that, even though the coordinate axes are in AU, the density (in g/cm$^{3}$) is integrated through z in cm, giving column density in g/cm$^{2}$ (as opposed to g /cm$^{3}$ AU). 
@@ -1466,9 +1466,9 @@ Please enter your selection now (y axis or option):
  Firstly we want to plot just a simple render plot of density. Thus we choose:
 \begin{verbatim}
  Please enter your selection now (y axis or option):2
-(x axis) (<cr>=1):
- (render) (0=none) ([0:9], <cr>=0):6
- (vector plot) (0=none, 7=v) ([0:7], <cr>=0):
+(x axis) (default=1):
+ (render) (0=none) ([0:9], default=0):6
+ (vector plot) (0=none, 7=v) ([0:7], default=0):
  Graphics device/type (? to see list, default /xwin): /xw
 \end{verbatim} 
 producing the plot shown in the left panel of Figure~\ref{fig:surfpart1} (I have used \verb+/png+ instead of \verb+/xw+ to produce the figures for the userguide). Moving the cursor over the colour bar and pressing `l' to log the colour bar axis produces the Figure in the right panel of Figure~\ref{fig:surfpart1}.
@@ -1505,26 +1505,26 @@ Then we have the Figure shown in the left panel of Figure~\ref{fig:surfpart2}.
 \begin{verbatim}
 Please enter your selection now (y axis or option):x4
 ---------- cross section / 3D plotting options --------
-Use 3D opacity rendering? (<cr>=yes):y
+Use 3D opacity rendering? (default=yes):y
   also turning on 3D perspective (which must be set for this to work)
 
  Warning: 3D opacity rendering sends only an approximate version 
  to the PGPLOT device (not corrected for brightness) 
 
-Do you want to write a ppm file in addition to PGPLOT output? (<cr>=yes):y
+Do you want to write a ppm file in addition to PGPLOT output? (default=yes):y
 \end{verbatim}
 Now we replot the original plot with the new settings as follows:
 \begin{verbatim}
 Please enter your selection now (y axis or option):2
-(x axis) (<cr>=1):
- (render) (0=none) ([0:9], <cr>=6):
- (vector plot) (0=none, 7=v) ([0:7], <cr>=0):
- enter z coordinate of observer (<cr>=53.58):
- enter distance between observer and projection screen ([0.000:], <cr>=5.358):
+(x axis) (default=1):
+ (render) (0=none) ([0:9], default=6):
+ (vector plot) (0=none, 7=v) ([0:7], default=0):
+ enter z coordinate of observer (default=53.58):
+ enter distance between observer and projection screen ([0.000:], default=5.358):
  using current h and pmass limits to calculate kappa (cross section/unit mass)
  min h =  0.1197254  min particle mass =  3.812551E-11
  [ kappa = pi*h_min**2/(particle_mass*n_smoothing_lengths) ]
-enter approximate surface depth (number of smoothing lengths): ([0.000:], <cr>=2.000):
+enter approximate surface depth (number of smoothing lengths): ([0.000:], default=2.000):
  kappa (particle cross section per unit mass) =  1.2369025E+9
  Graphics device/type (? to see list, default /xwin): 
 \end{verbatim}
@@ -1546,7 +1546,7 @@ Note that the plot suddenly appears much smaller -- this is a consequence of the
 \begin{verbatim}
 Please enter your selection now (y axis or option):r1
 ----------------- rendering options -------------------
-enter number of pixels along x axis ([1:10000], <cr>=200):1000
+enter number of pixels along x axis ([1:10000], default=200):1000
 \end{verbatim}
 Next, we turn the axes off using the p)age submenu:
 \begin{verbatim}
@@ -1562,7 +1562,7 @@ Please enter your selection now (y axis or option):p2
  10 : draw box and label X-axis logarithmically;
  20 : draw box and label Y-axis logarithmically;
  30 : draw box and label both axes logarithmically.
-enter axis option ([-4:30], <cr>=0):-2
+enter axis option ([-4:30], default=0):-2
   axis =  -2
 \end{verbatim}
  Plotting the same plot again now results in the plot shown in the right panel of Figure~\ref{fig:surfpart3}.
@@ -1572,13 +1572,13 @@ Notice that in the right panel of Figure~\ref{fig:surfpart3} the surface looks q
 \begin{verbatim}
 Please enter your selection now (y axis or option):p8
 ---------------- page setup options -------------------
-Enter background colour (by name, e.g. "black") (<cr>=):black
- Enter foreground colour (by name, e.g. "white") (<cr>=):white
- Do you want to plot axes and overlaid text in background colour (default is foreground) ? (<cr>=no):
+Enter background colour (by name, e.g. "black") (default=):black
+ Enter foreground colour (by name, e.g. "white") (default=):white
+ Do you want to plot axes and overlaid text in background colour (default is foreground) ? (default=no):
 \end{verbatim}
 Now, replotting the same plot again, but this time adjusting the opacity at the prompt:
 \begin{verbatim}
-enter approximate surface depth (number of smoothing lengths): ([0.000:], <cr>=2.000):200.0
+enter approximate surface depth (number of smoothing lengths): ([0.000:], default=2.000):200.0
 \end{verbatim}
  Finally, moving the time legend by positioning the cursor and pressing 'G' and zooming out slightly by pressing `-' once, we arrive at our finished figure (or movie frame) shown in Figure~\ref{fig:surfpartfinal}. Pressing `s' in interactive mode saves the settings, then pressing `q' returns to the splash main menu. To save the settings to disk, press `S' from the main menu to save both the \verb+splash.defaults+ file and the \verb+splash.limits+ file.
 \begin{figure}[h!]
