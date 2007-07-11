@@ -7,6 +7,14 @@
 ! NOTE THAT THIS ONLY "OFFICIALLY" WORKS WITH THE PARALLEL CODE AS WE
 ! REQUIRE KNOWLEDGE OF THE PARTICLE SMOOTHING LENGTHS
 !
+! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
+!  ENVIRONMENT VARIABLES:
+!
+! GSPLASH_USE_Z if 'YES' uses redshift in the legend instead of time
+! GSPLASH_DARKMATTER_HSOFT if given a value > 0.0 will assign a
+!  smoothing length to dark matter particles which can then be
+!  used in the rendering
+!
 ! the data is stored in the global array dat
 !
 ! >> this subroutine must return values for the following: <<
@@ -36,7 +44,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
   use mem_allocation, only:alloc
   use labels, only:ih,irho
-  use system_utils, only:renvironment
+  use system_utils, only:renvironment,lenvironment
   implicit none
   integer, intent(in) :: istepstart
   integer, intent(out) :: nstepsread
@@ -165,10 +173,16 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !--copy header into header arrays
   !
   npartoftype(:,i) = npartoftypei
-!  time(i) = real(timetemp)
-!--use this line for redshift
-  time(i) = real(ztemp)
-  
+  !
+  !--set time to be used in the legend
+  !
+  if (lenvironment('GSPLASH_USE_Z')) then
+     !--use this line for redshift
+     time(i) = real(ztemp)
+  else
+     !--use this line for code time
+     time(i) = real(timetemp) 
+  endif  
   !
   !--read particle data
   !
