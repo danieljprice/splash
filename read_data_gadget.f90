@@ -42,6 +42,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
+  use settings_page, only:legendtext
   use mem_allocation, only:alloc
   use labels, only:ih,irho
   use system_utils, only:renvironment,lenvironment
@@ -178,6 +179,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   if (lenvironment('GSPLASH_USE_Z')) then
      !--use this line for redshift
+     legendtext = 'z='
      time(i) = real(ztemp)
   else
      !--use this line for code time
