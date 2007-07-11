@@ -187,7 +187,7 @@ program splash
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.9.1 [11th July '07]'
+  character(len=*), parameter :: version = 'v1.9.1 [11th July ''07]'
 
   !
   ! set default options
