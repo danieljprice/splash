@@ -66,3 +66,6 @@ option to hide vector arrows where there are no particles added; smoother 3D plo
 1.9.0:
 animation sequences implemented; origin settings now affect radius calculation and are relative to tracked particle; automatic line width choice for postscript devices; w key adapts vector arrows; vastly improved userguide
  
+1.9.1:
+environment variables + improvements to gadget data read; better prompting; 3 new colour schemes; improved legend/title options; other minor changes
+ 
