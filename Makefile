@@ -157,9 +157,8 @@ ifeq ($(SYSTEM),zen)
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -convert big_endian
    ENDIANFLAGLITTLE= -convert little_endian
-   X11LIBS= -L/home/djp212/lib -lX11
-   PGPLOTLIBS= #-L${PGPLOT_DIR} -lpgplot
-   STATICLIBS= /home/djp212/pgplot/libpgplot.a
+   X11LIBS=-L/usr/X11R6/lib64 -lX11
+   PGPLOTLIBS= -L${PGPLOT_DIR} -lpgplot -lpng
 # or use setenv F_UFMTENDIAN=big or little at runtime
    KNOWN_SYSTEM=yes
 endif
