@@ -123,7 +123,7 @@ endif
 ifeq ($(SYSTEM),pgf90)
 #  this is for the Portland Group Fortran 90 compiler
    F90C= pgf90
-   F90FLAGS= -O -Mbackslash
+   F90FLAGS= -O -mcmodel=medium
    SYSTEMFILE= system_unix.f90
    KNOWN_SYSTEM=yes
 endif
@@ -240,6 +240,18 @@ ifeq ($(SYSTEM),astromac)
    KNOWN_SYSTEM=yes
 endif
 
+ifeq ($(SYSTEM),spectrum)
+#  sun f95 compiler on linux
+   F90C= f95
+   F90FLAGS= -fast -ftrap=%none
+   OMPFLAGS= -openmp
+   DEBUGFLAG= -g -C -w4 -errtags -erroff=COMMENT_1582,COMMENT_1744 -ftrap=%all
+   SYSTEMFILE= system_f2003.f90
+   ENDIANFLAGBIG= -xfilebyteorder=big16:%all
+   ENDIANFLAGLITTLE= -xfilebyteorder=little16:%all
+   X11LIBS = -L/usr/X11R6/lib64 -lX11
+   KNOWN_SYSTEM=yes
+endif
 #
 # these are the flags used for linking
 #
