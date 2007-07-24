@@ -184,7 +184,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
         else
 !       inside expansion fan
            if (useisothermal) then ! this is a bit of a guess 
-              dens(i) = rho_L*exp((xleft-xplot(i))/(cs_L*time) + v_L/cs_L)
+              dens(i) = rho_L*exp((xleftleft-xplot(i))/(cs_L*time) + v_L/cs_L)
            else
               dens(i) = rho_L*(gamfac*(xzero-xplot(i))/(cs_L*time) + gamfac*v_L/cs_L + (1.-gamfac))**(2./(gamma-1.))
            endif
@@ -216,7 +216,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
         else
 !        inside expansion fan to right
            if (useisothermal) then ! this is a bit of a guess 
-              dens(i) = rho_R*exp(-(xright-xplot(i))/(cs_R*time) - v_R/cs_R)
+              dens(i) = rho_R*exp(-(xrightright-xplot(i))/(cs_R*time) - v_R/cs_R)
            else
               dens(i) = rho_R*(gamfac*(xplot(i)-xzero)/(cs_R*time) - gamfac*v_R/cs_R + (1.-gamfac))**(2./(gamma-1.))
            endif
