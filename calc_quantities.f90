@@ -24,10 +24,12 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   integer :: ipmag,ibeta,itotpr,idivBerr,icrosshel,ithermal
   integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
   integer :: iamvecprev,ivec,nveclist,ivecstart,inewcol
+  integer :: imri
   integer, dimension(ncolumns) :: iveclist,ivecmagcol
   logical :: skip
   real :: Bmag, veltemp, spsound
   real, parameter :: pi = 3.1415926536
+  real, parameter :: Omega0 = 1.e-3 ! for MRI delta v
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
   
   !
@@ -59,6 +61,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   ideltarho = 0
   ivol = 0
   ithermal = 0
+  imri = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -99,6 +102,8 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      if (idivB.ne.0 .and. ih.ne.0) call addcolumn(idivBerr,'h |div B| / |B|')
 !     if (ivx.ne.0) call addcolumn(icrosshel,'B dot v')
      if (ipmag.ne.0 .and. (irho.ne.0)) call addcolumn(ivalfven,'v\dalfven\u')
+     !--MRI perturbed velocity (delta v)
+     if (ivx.ne.0 .and. ndim.ge.2 .and. ndimV.ge.2) call addcolumn(imri,'\gd v\dy\u')
   else
 !     call addcolumn(ivpar,'v\d\(0737)')
 !     call addcolumn(ivperp,'v\d\(0738)')
@@ -300,6 +305,9 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
             elsewhere
                dat(:,ivalfven,i) = 0.
             end where
+         endif
+         if (ivx.gt.0 .and. ndim.ge.2 .and. ndimV.ge.2) then
+            dat(:,imri,i) = dat(:,ivx+1,i) + 1.5*Omega0*dat(:,ix(1),i)
          endif
       endif
       !
