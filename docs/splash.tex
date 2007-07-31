@@ -192,9 +192,19 @@ setenv ENDIAN 'BIG'
 \end{verbatim}
 or LITTLE before \emph{compiling} splash (this adds the appropriate compile-time flags for the compiler selected using the SYSTEM environment variable in the SPLASH Makefile). 
 
+\subsubsection{ Ascii data read}
+\label{sec:asplash}
+ For several data reads there are environment variables which can be set at runtime which are specific to the data read. For the
+ ascii data read (`asplash') these are:\newline
+
+\begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+ASPLASH\_NCOLUMNS & if given a value $>$0 sets the number of columns to be read from ascii data (overrides the automatic number of
+columns determination)
+\end{tabular}
+
 \subsubsection{ Gadget data read}
 \label{sec:gsplash}
- For several data reads there are environment variables which can be set at runtime which are specific to the data read. For the gadget read these are:\newline
+ For the gadget read (`gsplash') the environment variable options are:\newline
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 GSPLASH\_USE\_Z & if `YES' or `TRUE' uses the redshift in the legend instead of code time \\
@@ -202,7 +212,7 @@ GSPLASH\_DARKMATTER\_HSOFT & if given a value $>$ 0.0 will assign a smoothing le
 \end{tabular}
 
 \subsubsection{ sphNG data read}
- For the sphNG read the environment variable options are:\newline
+ For the sphNG read (`ssplash') the environment variable options are:\newline
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 SSPLASH\_CENTRE\_ON\_SINK & if `YES' or `TRUE' resets the positions such that the sink particle is positioned at the origin (applies only where there is one, and only one, sink particle present)\\
@@ -210,7 +220,7 @@ SSPLASH\_RESET\_CM & if `YES' or `TRUE' resets the positions such that the centr
 \end{tabular}
 
 \subsubsection{ Stephan Rosswog data read}
- For the srosph read the environment variable options are:\newline
+ For the srosph read (`rsplash') the environment variable options are:\newline
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 RSPLASH\_FORMAT & can be `MHD' or `HYDRO' which read the appropriate data format from either the MHD or hydrodynamic codes \\
