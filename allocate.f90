@@ -19,6 +19,7 @@ subroutine alloc(npartin,nstep,ncolumnsin)
   logical :: reallocate,reallocate_part,reallocate_step
   integer, dimension(:), allocatable :: icolourmetemp
   integer, dimension(:,:), allocatable :: npartoftypetemp
+  real, dimension(:,:), allocatable :: massoftypetemp
   real, dimension(:), allocatable :: timetemp, gammatemp
   real, dimension(:,:,:), allocatable :: dattemp
 !
@@ -89,6 +90,11 @@ subroutine alloc(npartin,nstep,ncolumnsin)
         npartoftypetemp = npartoftype
         deallocate(npartoftype)
 
+        allocate(massoftypetemp(maxparttypes,maxstep),stat=ierr)
+        if (ierr /= 0) stop 'error allocating memory (npartoftypetemp)'
+        massoftypetemp = massoftype
+        deallocate(massoftype)
+
         allocate(timetemp(maxstep),gammatemp(maxstep),stat=ierr)
         if (ierr /= 0) stop 'error allocating memory (timetemp,gammatemp)'
         timetemp = time
@@ -140,18 +146,23 @@ subroutine alloc(npartin,nstep,ncolumnsin)
      allocate(npartoftype(maxparttypes,maxstep),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory for header arrays'
 
+     allocate(massoftype(maxparttypes,maxstep),stat=ierr)
+     if (ierr /= 0) stop 'error allocating memory for header arrays'
+
      allocate(time(maxstep),gamma(maxstep),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory for header arrays'
 
      npartoftype = 0
+     massoftype = 0.
      time = -huge(time) ! initialise like this so we know if has not been read
      gamma = 0.
 
      if (reallocate_step) then
         npartoftype(:,1:maxstepold) = npartoftypetemp(:,1:maxstepold)
+        massoftype(:,1:maxstepold) = massoftypetemp(:,1:maxstepold)
         time(1:maxstepold) = timetemp(1:maxstepold)
         gamma(1:maxstepold) = gammatemp(1:maxstepold)
-        deallocate(npartoftypetemp)
+        deallocate(npartoftypetemp,massoftypetemp)
         deallocate(timetemp,gammatemp)
      endif
   endif
@@ -173,6 +184,7 @@ subroutine deallocate_all
  if (allocated(dat)) deallocate(dat)
  if (allocated(icolourme)) deallocate(icolourme)
  if (allocated(npartoftype)) deallocate(npartoftype)
+ if (allocated(massoftype)) deallocate(massoftype)
  if (allocated(time)) deallocate(time)
  if (allocated(gamma)) deallocate(gamma)
  

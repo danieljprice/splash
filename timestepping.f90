@@ -10,7 +10,7 @@ contains
 !
 subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   use filenames, only:nsteps,ifileopen
-  use particle_data, only:npartoftype,time,gamma,dat
+  use particle_data, only:npartoftype,massoftype,time,gamma,dat
   use settings_data, only:istartatstep,iendatstep,nfreq,DataIsBuffered, &
                           iUsesteplist,isteplist,ncolumns,ipartialread
   use settings_page, only:interactive,nstepsperpage,iColourEachStep,iChangeStyles
@@ -122,14 +122,14 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
 34   format (5('-'),' t = ',f8.2,', dump #',i5,1x,18('-'))
 
      istepsonpage = istepsonpage + 1
-     if (nstepsperpage.gt.1 .and. istepsonpage.le.nstepsperpage) then
+     if ((nstepsperpage.gt.1 .and. istepsonpage.le.nstepsperpage).or.nstepsperpage.eq.0) then
         ipagechange = .false.
      else
         istepsonpage = 1
         ipagechange = .true.
      endif
      !--colour the timestep if appropriate
-     if (nstepsperpage.gt.1 .and. (iColourEachStep .or. iChangeStyles)) then
+     if ((nstepsperpage.eq.0 .or. nstepsperpage.gt.1) .and. (iColourEachStep .or. iChangeStyles)) then
         call colour_timestep(istepsonpage,iColourEachStep,iChangeStyles)
      else
      !--otherwise set default colours for each particle type
@@ -140,7 +140,8 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
 
 !     print*,'ipos = ',ipos,' istep = ',istep,' iposindat = ',ilocindat
      call plotstep(ipos,istep,istepsonpage,irender,ivecplot,npartoftype(:,ilocindat), &
-                   dat(:,:,ilocindat),time(ilocindat),gamma(ilocindat),ipagechange,iadvance)
+                   massoftype(:,ilocindat),dat(:,:,ilocindat),time(ilocindat),gamma(ilocindat), &
+                   ipagechange,iadvance)
 !
 !--increment timestep -- iadvance can be changed interactively
 !

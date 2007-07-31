@@ -46,7 +46,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti,x_secmulti,ivecplotmulti
   use prompting, only:prompt
   use titles, only:read_titles,read_steplegend
-  use settings_data, only:ndim,ndimV,numplot,ncalc,required,icoords,icoordsnew
+  use settings_data, only:ndim,ndimV,numplot,ncolumns,required,icoords,icoordsnew
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                      colour_fore,colour_back,iadapt,iadaptcoords,linewidth
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
@@ -352,7 +352,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   !!--need mass for some exact solutions
      if (iexact.eq.7) required(ipmass) = .true.
   !!--must read everything if we are plotting a calculated quantity
-     if (any(required(numplot-ncalc+1:numplot))) required = .true.
+     if (any(required(ncolumns+1:numplot))) required = .true.
   !!--vectors
      if (imulti) then
         do i=1,nyplotmulti
@@ -431,7 +431,7 @@ end subroutine initialise_plotting
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
-                    npartoftype,dat,timei,gammai,ipagechange,iadvance)
+                    npartoftype,massoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
   use filenames, only:nsteps
   use exact, only:exact_solution,atstar,ctstar,sigma
@@ -480,6 +480,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   integer, intent(inout) :: ipos, istepsonpage
   integer, intent(in) :: istep, irender_nomulti, ivecplot
   integer, dimension(maxparttypes), intent(in) :: npartoftype
+  real, dimension(maxparttypes), intent(in) :: massoftype
   real, dimension(:,:), intent(in) :: dat
   real, intent(in) :: timei,gammai
   logical, intent(in) :: ipagechange
@@ -498,7 +499,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
   real, dimension(maxpart) :: renderplot,hh,pmass,weight
   real :: rkappa
-  real :: zslicemin,zslicemax,dummy
+  real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax
   real :: pixwidth,pixwidthvec,dxfreq,dunitspmass,dunitsrho,dunitsh
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
@@ -520,7 +521,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   zplot = 0.
   dummy = 0.
   hh = 0.
-  pmass = 0.
   labeltimeunits = ' '
   dumxsec = .false.
   isetrenderlimits = .false.
@@ -529,7 +529,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
     
   !--set the arrays needed for rendering if they are present
   if (ih.gt.0 .and. ih.le.ndataplots) hh(:) = dat(:,ih)
-  if (ipmass.gt.0 .and. ipmass.le.ndataplots) pmass(:) = dat(:,ipmass)
+  if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
+     pmassmin = minval(dat(:,ipmass))
+     pmassmax = maxval(dat(:,ipmass))
+  else
+     pmassmin = massoftype(1)
+     pmassmax = massoftype(1)
+  endif
   !
   !--set number of particles to use in the interpolation routines
   !  (by default, only the gas particles)
@@ -567,6 +573,37 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            else
               where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
                  weight(i1:i2) = (dat(i1:i2,ipmass))/(dat(i1:i2,irho)*dat(i1:i2,ih)**ndim)
+              elsewhere
+                 weight(i1:i2) = 0.
+              endwhere
+           endif
+        endif
+        inormalise = inormalise_interpolations
+     enddo
+  elseif (massoftype(1).gt.0.) then
+     i2 = 0
+     do itype=1,ntypes
+        !--check for consistency that if particles are not plotted, they are also not plotted on renderings
+        if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.
+        i1 = i2 + 1
+        i2 = i2 + npartoftype(itype)
+        !--set weights to zero for particle types not used in the rendering
+        if (.not.iplotpartoftype(itype) .or. .not.UseTypeInRenderings(itype)) then
+           weight(i1:i2) = 0.
+        else
+           !  make sure this is done in code units (ie. a consistent set)
+           if (iRescale) then
+              dunitsrho = 1./units(irho)
+              dunitsh = 1./units(ih)
+              where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
+                 weight(i1:i2) = massoftype(itype)/ &
+                                ((dat(i1:i2,irho)*dunitsrho)*(dat(i1:i2,ih)*dunitsh)**ndim)
+              elsewhere
+                 weight(i1:i2) = 0.
+              endwhere
+           else
+              where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
+                 weight(i1:i2) = massoftype(itype)/(dat(i1:i2,irho)*dat(i1:i2,ih)**ndim)
               elsewhere
                  weight(i1:i2) = 0.
               endwhere
@@ -922,12 +959,21 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                           !!--do surface-rendered cross-section with opacity
                           print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
                                ' : opacity-rendered cross section', xmin,ymin                    
-                          call interpolate3D_proj_opacity( &
+                          if (ipmass.gt.0) then
+                             call interpolate3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos)
+                          else
+                             call interpolate3D_proj_opacity( &
+                               xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                               massoftype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               dat(1:ninterp,iz),icolourme(1:ninterp), &
+                               ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
+                               dzscreentemp,rkappa,zslicepos)                          
+                          endif
                        elseif (use3Dperspective) then
                           print*,'ERROR: X_SEC WITH 3D PERSPECTIVE NOT IMPLEMENTED'
                           datpix = 0.
@@ -945,12 +991,21 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     else                 
                        if (use3Dperspective .and. use3Dopacityrendering) then
                           !!--do fast projection with opacity
-                          call interpolate3D_proj_opacity( &
+                          if (ipmass.gt.0) then
+                             call interpolate3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               pmass(1:ninterp),hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
-                               dzscreentemp,rkappa,huge(zslicepos))                    
+                               dzscreentemp,rkappa,huge(zslicepos))
+                          else
+                             call interpolate3D_proj_opacity( &
+                               xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                               massoftype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               dat(1:ninterp,iz),icolourme(1:ninterp), &
+                               ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
+                               dzscreentemp,rkappa,huge(zslicepos))
+                          endif
                        else
                           !!--do fast projection of z integrated data (e.g. column density)
                           call interpolate3D_projection( &
@@ -1266,7 +1321,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    itrans(iplotx),itrans(iploty),icoordsnew, &
                    ndim,ndimV,timei,xmin,xmax,gammai, &
                    xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
-                   pmass(1:npartoftype(1)),npartoftype(1),imarktype(1), &
+                   pmassmin,pmassmax,npartoftype(1),imarktype(1), &
                    units(iplotx),units(iploty),irescale,iaxisy)
            endif
 
@@ -1382,7 +1437,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                 xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
-                pmass(1:npartoftype(1)),npartoftype(1),imarktype(1), &
+                pmassmin,pmassmax,npartoftype(1),imarktype(1), &
                 units(iplotx),units(iploty),irescale,iaxisy)
         endif
         !
@@ -1677,6 +1732,7 @@ contains
     if (iplots.gt.1 .and. nyplots.eq.1 .and. nacross*ndown.gt.1.and..not.ipagechange) ipanelchange = .false.
     if (ipanelchange) ipanel = ipanel + 1
     if (ipanel.gt.nacross*ndown) ipanel = 1
+    ipanel = max(ipanel,1) ! catch panel=0 if panel is not changing
     !--set counter for where we are in row, col
     icolumn = ipanel - ((ipanel-1)/nacross)*nacross
     irow = (ipanel-1)/nacross + 1
@@ -1727,7 +1783,27 @@ contains
        ifirststeponpage = ipos
        nframefirstonpage = iframe
     endif
-
+    !
+    !--do not allow limits to be the same
+    !
+    if (abs(xmax-xmin).lt.tiny(xmax)) then
+       print "(a)",' WARNING: '//trim(labelx)//'min='//trim(labelx)//'max '
+       xmax = xmax + 1.0
+       if (xmin.gt.0.) then
+          xmin = max(xmin - 1.0,xmin,0.)
+       else
+          xmin = xmin - 1.0
+       endif
+    endif
+    if (abs(ymax-ymin).lt.tiny(ymax)) then
+       print "(a)",' WARNING: '//trim(labely)//'min='//trim(labely)//'max '
+       ymax = ymax + 1.0
+       if (ymin.gt.0.) then
+          ymin = max(ymin - 1.0,ymin,0.)
+       else
+          ymin = ymin - 1.0
+       endif
+    endif
     if (nstepsperpage.ne.0 .or. inewpage) then
        call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
                   trim(labelx),trim(labely),trim(title),just,iaxis,0.001,barwidth+0.001,0.001,0.001, &
