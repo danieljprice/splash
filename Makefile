@@ -128,6 +128,18 @@ ifeq ($(SYSTEM),pgf90)
    KNOWN_SYSTEM=yes
 endif
 
+ifeq ($(SYSTEM),pathf95)
+#  this is for the Pathscale f95 compiler
+   F90C= pathf95
+   F90FLAGS= -Ofast -mcmodel=medium
+   DEBUGFLAG= -C -g
+   OMPFLAGS= -openmp
+   SYSTEMFILE= system_f2003.f90
+   ENDIANFLAGBIG= -convert big_endian
+   ENDIANFLAGLITTLE= -convert little_endian
+   KNOWN_SYSTEM=yes
+endif
+
 #--------------------------------------------------------------
 #
 # the following presets are machine-specific
@@ -138,13 +150,28 @@ endif
 
 ifeq ($(SYSTEM),ukaff1a)
 #  this is for ukaff1a
-   F90C= xlf90_r
-   F90FLAGS= -O3 -qnoescape -qsuffix=f=f90 -qextname
+   F90C= xlf90_r ##-Wl,-t
+   F90FLAGS= -O3 -qnoescape -qsuffix=f=f90 -qextname 
    OMPFLAGS= -qsmp=omp
    DEBUGFLAG= -C -g
    SYSTEMFILE= system_f2003.f90
-   PGPLOTLIBS= -L/home/dprice/pgplot -lpgplot  
-   STATICLIBS= /home/dprice/pgplot/libpgplot.a /home/dprice/plot/libg2cmodified.a
+   PGPLOTLIBS=   
+   STATICLIBS= /home/dprice/pgplot/libpgplot.a /home/dprice/plot/libg2cmodified.a 
+   KNOWN_SYSTEM=yes
+endif
+
+ifeq ($(SYSTEM),ukaff1b)
+#  this is for the new nodes on ukaff 
+   F90C= pathf95
+   F90FLAGS= -Ofast -mcmodel=medium
+   DEBUGFLAG= -C -g
+   OMPFLAGS= -openmp
+   SYSTEMFILE= system_f2003.f90
+   ENDIANFLAGBIG= -convert big_endian
+   ENDIANFLAGLITTLE= -convert little_endian
+   X11LIBS= -L/home/dprice/lib -lX11
+   PGPLOTLIBS= -L/home/dprice/pgplot2 -lpgplot
+   EXT=2   # call the binary something different
    KNOWN_SYSTEM=yes
 endif
 
