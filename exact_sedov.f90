@@ -25,6 +25,7 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
   real :: rhoshock, ushock, prshock
   real :: eta_0, power
   real :: ubar,ubarzero,dubar
+  real :: phi,dphi
   integer :: i,ishock
 
   ierr = 0
@@ -49,6 +50,19 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
 !!  ushock = 2.*power*eta_0*((energy*time**2./rhozero)**(power-1.))*energy*time/rhozero
   ushock = 2.*power*rshock/time
   print*,' rshock = ',rshock, ' ushock = ',ushock
+!
+!--on x-y plots plot a circle at radius rshock
+!
+  if (iplot.eq.0) then
+     dphi = 2.*pi/real(npts-1)
+     phi = 0.
+     do i=1,npts
+        phi = (i-1)*dphi
+        rplot(i) = rshock*cos(phi)
+        yplot(i) = rshock*sin(phi)
+     enddo
+     return
+  endif
 !
 !--jump conditions to find states behind shock
 !
