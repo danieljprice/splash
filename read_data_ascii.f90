@@ -4,6 +4,13 @@
 !
 ! THIS VERSION IS FOR GENERAL ASCII DATA FORMATS
 !
+! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
+!  ENVIRONMENT VARIABLES:
+!
+! ASPLASH_NCOLUMNS can be used to override the automatic ncolumns choice
+!
+! e.g. setenv ASPLASH_NCOLUMNS=10
+!
 ! the data is stored in the global array dat
 !
 ! >> this subroutine must return values for the following: <<
@@ -30,11 +37,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use settings_data, only:ndim,ndimV,ncolumns,ncalc
   use mem_allocation, only:alloc
   use asciiutils, only:get_ncolumns
+  use system_utils, only:ienvironment
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
-  integer :: i,j,ierr,iunit,ncolstep
+  integer :: i,j,ierr,iunit,ncolstep,ncolenv
   integer :: nprint,npart_max,nstep_max,icol,nheaderlines
   logical :: iexist,timeset,gammaset
   real :: dummyreal
@@ -72,6 +80,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
      print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
   else
      call get_ncolumns(iunit,ncolstep,nheaderlines)
+     !--override columns setting with environment variable
+     ncolenv = ienvironment('ASPLASH_NCOLUMNS',-1)
+     if (ncolenv.gt.0) then
+        print "(a,i3,a)",' setting ncolumns = ',ncolenv,' from ASPLASH_NCOLUMNS environment variable'
+        ncolstep = ncolenv
+     endif
      if (ncolstep.le.0) then
         print "(a)",'*** ERROR: zero/undetermined number of columns in file ***'
         return
