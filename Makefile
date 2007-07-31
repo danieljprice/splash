@@ -169,7 +169,7 @@ ifeq ($(SYSTEM),ukaff1b)
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -convert big_endian
    ENDIANFLAGLITTLE= -convert little_endian
-   X11LIBS= -L/home/dprice/lib -lX11
+   X11LIBS= -L/home/dprice/lib -lX11 -lpng
    PGPLOTLIBS= -L/home/dprice/pgplot2 -lpgplot
    EXT=2   # call the binary something different
    KNOWN_SYSTEM=yes
