@@ -5,6 +5,8 @@ module opacityrendering3D
 
 contains
 !--------------------------------------------------------------------------
+! $Id: interpolate3D_opacity.f90,v 1.14 2007/07/31 10:07:33 dprice Exp $
+!
 !     subroutine to do a ray trace through the particle data
 !
 !     we use the radiation transport equation along a ray, that is
@@ -33,9 +35,12 @@ contains
 !     meaningful values for kappa in terms of "surface depth in units of smoothing lengths")
 !
 !     Input: particle coordinates  : x,y,z (npart) - note that z is only required for perspective
-!            particle masses       : pmass (npart)
+!            particle masses       : pmass (npmass)
 !            smoothing lengths     : hh    (npart)
 !            scalar data to smooth : dat   (npart)
+!
+!     Particle masses can be sent in as either a single scalar (npmass = 1)
+!      or as an array of length npart (npmass=npart)
 !
 !     Settings: zobs, dz1 : settings for 3D projection
 !               rkappa    : particle cross section per unit mass
@@ -46,17 +51,18 @@ contains
 !     NB: AT PRESENT WE WRITE A PPM FILE DIRECTLY WITH THE RGB COLOURS
 !         AND OUTPUT JUST THE MONOCHROMATIC VERSION TO SPLASH.
 !
-!     (c) 2005 Daniel Price. Last modified Dec 2005.
+!     (c) 2005-2007 Daniel Price
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
+subroutine interpolate3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npart, &
      xmin,ymin,datsmooth,brightness,npixx,npixy,pixwidth,zobserver,dscreenfromobserver, &
      rkappa,zcut)
 
   implicit none
   real, parameter :: pi=3.1415926536
-  integer, intent(in) :: npart,npixx,npixy
-  real, intent(in), dimension(npart) :: x,y,z,pmass,hh,dat,zorig
+  integer, intent(in) :: npart,npixx,npixy,npmass
+  real, intent(in), dimension(npart) :: x,y,z,hh,dat,zorig
+  real, intent(in), dimension(npmass) :: pmass
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreenfromobserver, &
                       zcut,rkappa
@@ -85,7 +91,16 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
   if (any(hh(1:npart).le.tiny(hh))) then
      print*,'interpolate3D_opacity: warning: ignoring some or all particles with h < 0'
   endif
-
+  !--check that npmass is sensible
+  if (npmass.lt.1 .or. npmass.gt.npart) then
+     print*,'interpolate3D_opacity: ERROR in input number of particle masses '
+     return
+  endif
+  !--these values for npmass are not sensible but the routine will still work
+  if (npmass.ne.1 .and. npmass.ne.npart) then
+     print*,'WARNING: interpolate3D_opacity: number of particle masses input =',npmass
+  endif
+  
   if (abs(dscreenfromobserver).gt.tiny(dscreenfromobserver)) then
      adjustzperspective = .true.
      zcutoff = zobserver
@@ -105,7 +120,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
 !--calculate average h
   hav = sum(hh(1:npart))/real(npart)
 !--average particle mass
-  pmassav = sum(pmass(1:npart))/real(npart)
+  pmassav = sum(pmass(1:npmass))/real(npmass)
   rkappatemp = pi*hav*hav/(pmassav*coltable(0))
   print*,'average h = ',hav,' average mass = ',pmassav
   print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'  
@@ -185,7 +200,11 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,hh,dat,zorig,itype,npart, &
      hi1 = 1./hi
      hi21 = hi1*hi1
      !--this is the term which multiplies tau
-     term = pmass(i)/(hh(i)*hh(i))
+     if (npmass.eq.npart) then
+        term = pmass(i)/(hh(i)*hh(i))
+     else
+        term = pmass(1)/(hh(i)*hh(i))
+     endif
      !
      !--determine colour contribution of current point
      !  (work out position in colour table)
