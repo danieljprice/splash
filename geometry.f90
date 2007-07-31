@@ -23,12 +23,12 @@ module geometry
  implicit none
  integer, parameter, public :: maxcoordsys = 4
 
- character(len=23), dimension(maxcoordsys), parameter, public :: labelcoordsys = &
+ character(len=24), dimension(maxcoordsys), parameter, public :: labelcoordsys = &
     (/'cartesian   x,y,z      ', &
       'cylindrical r,phi,z    ', &
       'spherical   r,phi,theta', &
       'toroidal    r,theta,phi'/)
- character(len=5), dimension(3,maxcoordsys), parameter, public :: labelcoord = &
+ character(len=6), dimension(3,maxcoordsys), parameter, public :: labelcoord = &
     reshape((/'x    ','y    ','z    ', &
               'r    ','phi  ','z    ', &
               'r    ','phi  ','theta', &
