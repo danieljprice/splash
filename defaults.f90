@@ -10,63 +10,23 @@ module defaults
 contains
 
 !!
-!! set initial default options
-!! these are used if no defaults file is found
+!! initialise some variables
+!! this should only be called at code start
 !!
-subroutine defaults_set
-  use exact, only:defaults_set_exact
+subroutine defaults_set_initial
   use filenames, only:rootname
   use labels
   use limits, only:lim
-  use multiplot
-  use settings_limits, only:defaults_set_limits
-  use options_data, only:defaults_set_data
-  use settings_data, only:ndim,UseTypeInRenderings
-  use settings_part, only:defaults_set_part
-  use settings_page, only:defaults_set_page
-  use settings_render, only:defaults_set_render
-  use settings_vecplot, only:defaults_set_vecplot
-  use settings_xsecrot, only:defaults_set_xsecrotate
-  use settings_powerspec, only:defaults_set_powerspec
-  use settings_units, only:defaults_set_units
   use particle_data, only:maxpart,maxstep,maxcol
-  use titles, only:pagetitles,steplegend
+  use settings_data, only:ndim,UseTypeInRenderings
   implicit none
   integer :: i
-!
-!--set defaults for submenu options
-!
-  call defaults_set_data
-  call defaults_set_limits
-  call defaults_set_page
-  call defaults_set_part
-  call defaults_set_render
-  call defaults_set_xsecrotate
-  call defaults_set_vecplot
-  call defaults_set_exact
-  call defaults_set_powerspec
-  call defaults_set_units
 !
 !--limits (could set them to anything but min & max must be different
 !          to enable them to be reset interactively if not set elsewhere)
 !
   lim(:,1) = 0.
   lim(:,2) = 1.
-  itrans(:) = 0
-!
-!--multiplot
-!
-  nyplotmulti = 4           ! number of plots in multiplot
-  multiploty(:) = 0
-  do i=1,4
-     multiploty(i) = ndim+i  ! first plot : y axis
-  enddo
-  multiplotx(:) = 1          ! first plot : x axis
-  irendermulti(:) = 0        ! rendering
-  ivecplotmulti(:) = 0       ! vector plot
-  x_secmulti(:) = .false.    ! take cross section?
-  xsecposmulti(:) = 0.0      ! position of cross section
-  iplotcontmulti(:) = .false.
   !
   !--array positions of specific quantities
   !
@@ -116,6 +76,67 @@ subroutine defaults_set
   !  vector labels
   iamvec(:) = 0
   labelvec = ' '
+
+  return
+end subroutine defaults_set_initial
+
+!!
+!! set initial default options
+!! these are used if no defaults file is found
+!!
+subroutine defaults_set(evsplash)
+  use exact, only:defaults_set_exact
+  use multiplot
+  use settings_limits, only:defaults_set_limits
+  use options_data, only:defaults_set_data
+  use settings_part, only:defaults_set_part,defaults_set_part_ev
+  use settings_page, only:defaults_set_page,defaults_set_page_ev
+  use settings_render, only:defaults_set_render
+  use settings_vecplot, only:defaults_set_vecplot
+  use settings_xsecrot, only:defaults_set_xsecrotate
+  use settings_powerspec, only:defaults_set_powerspec
+  use settings_units, only:defaults_set_units
+  use titles, only:pagetitles,steplegend
+  implicit none
+  logical, intent(in) :: evsplash
+  integer :: i
+!
+!--set defaults for submenu options
+!
+  call defaults_set_data
+  call defaults_set_limits
+  call defaults_set_page
+  call defaults_set_part
+  call defaults_set_render
+  call defaults_set_xsecrotate
+  call defaults_set_vecplot
+  call defaults_set_exact
+  call defaults_set_powerspec
+  call defaults_set_units
+!
+!--if using evsplash, override some default options
+!
+  if (evsplash) then
+     print*,'setting evsplash defaults'
+     call defaults_set_page_ev
+     call defaults_set_part_ev
+  endif
+
+  itrans(:) = 0
+!
+!--multiplot
+!
+  nyplotmulti = 4           ! number of plots in multiplot
+  multiploty(:) = 0
+  do i=1,4
+     multiploty(i) = 1+i       ! first plot : y axis
+  enddo
+  multiplotx(:) = 1          ! first plot : x axis
+  irendermulti(:) = 0        ! rendering
+  ivecplotmulti(:) = 0       ! vector plot
+  x_secmulti(:) = .false.    ! take cross section?
+  xsecposmulti(:) = 0.0      ! position of cross section
+  iplotcontmulti(:) = .false.
   !
   !--titles
   !

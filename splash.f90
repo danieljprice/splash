@@ -174,7 +174,7 @@ program splash
 !----------------------------------------------------------------------------------
   use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile,animfile
   use getdata, only:get_data
-  use defaults, only:defaults_set,defaults_read
+  use defaults, only:defaults_set_initial,defaults_set,defaults_read
   use limits, only:read_limits
   use mainmenu, only:menu
   use mem_allocation, only:deallocate_all
@@ -185,14 +185,14 @@ program splash
   use asciiutils, only:read_asciifile
   implicit none
   integer :: i,ierr,nargs
-  logical :: ihavereadfilenames
+  logical :: ihavereadfilenames,evsplash
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.9.1 [11th July ''07]'
+  character(len=*), parameter :: version = 'v1.9.1+ [July ''07]'
 
   !
-  ! set default options
+  ! initialise some basic code variables
   !
-  call defaults_set
+  call defaults_set_initial
   
   !
   !  default names for defaults file and limits file
@@ -200,6 +200,7 @@ program splash
   defaultsfile = 'splash.defaults'
   limitsfile = 'splash.limits'
   animfile = 'splash.anim'
+  evsplash = .false.
   !
   !  read all arguments off command line
   !
@@ -221,6 +222,11 @@ program splash
         case('f')
            i = i + 1
            call get_argument(i,defaultsfile)
+        case('e')
+           evsplash = .true.
+           defaultsfile = 'evsplash.defaults'
+           limitsfile = 'evsplash.limits'
+           animfile = 'evsplash.anim'
         case default
            print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
            print "(a,/)",trim(version)
@@ -239,6 +245,10 @@ program splash
   ! print header
   !
   call print_header
+  !
+  ! set default options (used if defaults file does not exist)
+  !
+  call defaults_set(evsplash)
 
   !
   ! read default options from file if it exists
