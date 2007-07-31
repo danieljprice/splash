@@ -432,7 +432,7 @@ contains
 
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot, &
-                            pmass,npart,imarker,unitsx,unitsy,irescale,iaxisy)
+                            pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
     use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst
     use prompting
     use exactfromfile, only:exact_fromfile
@@ -451,14 +451,15 @@ contains
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
     integer, intent(in) :: ndim,ndimV,npart,imarker,iaxisy
     real, intent(in) :: time,xmin,xmax,gamma,unitsx,unitsy
-    real, intent(in), dimension(npart) :: xplot,yplot,pmass
+    real, intent(in) :: pmassmin,pmassmax
+    real, intent(in), dimension(npart) :: xplot,yplot
     logical, intent(in) :: irescale
     real, dimension(npart) :: residuals,ypart
     
     real, parameter :: zero = 1.e-10
     integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle
     real, dimension(maxexactpts) :: xexact,yexact,xtemp
-    real :: pmassmin,pmassmax,dx,ymean,errL1,errL2,errLinf
+    real :: dx,ymean,errL1,errL2,errLinf
 
     !
     !--change line style and colour settings, but save old ones
@@ -523,6 +524,8 @@ contains
           elseif (iploty.eq.ike) then
              call exact_sedov(4,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           endif
+       !elseif (igeom.le.1 .and. iplotx.le.ndim .and. iploty.le.ndim) then
+       !   call exact_sedov(0,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
        endif
 
     case(3)! polytrope
@@ -650,8 +653,6 @@ contains
        !--h = (1/rho)^(1/ndim)
        if ((iploty.eq.ih).and.(iplotx.eq.irho)) then
           !--if variable particle masses, plot one for each pmass value
-          pmassmin = minval(pmass)
-          pmassmax = maxval(pmass)
           call exact_rhoh(ndim,hfact,pmassmin,xexact,yexact,ierr)
 
           if (abs(pmassmin-pmassmax).gt.zero .and. pmassmin.gt.zero) then
