@@ -49,6 +49,18 @@ subroutine defaults_set_part
   return
 end subroutine defaults_set_part
 
+!---------------------------------------------
+! changed default values for these options
+!---------------------------------------------
+subroutine defaults_set_part_ev
+  implicit none
+
+  iplotline = .true.     ! plot line joining the particles
+  iplotpartoftype(1:maxparttypes) = .false. ! whether or not to plot particles of certain types
+
+  return
+end subroutine defaults_set_part_ev
+
 !----------------------------------------------------------------------
 ! submenu with options relating to particle plots
 !----------------------------------------------------------------------
@@ -58,7 +70,7 @@ subroutine submenu_particleplots(ichoose)
   use limits, only:lim
   use settings_data, only:icoords,ntypes,ndim,UseTypeInRenderings
   use particle_data, only:npartoftype
-  use prompting
+  use prompting, only:prompt,print_logical
   use geometry, only:maxcoordsys,labelcoordsys,coord_transform_limits
   implicit none
   integer, intent(in) :: ichoose

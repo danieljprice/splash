@@ -70,12 +70,30 @@ subroutine defaults_set_page
   return
 end subroutine defaults_set_page
 
+!---------------------------------------------
+! changed default values for evsplash
+!---------------------------------------------
+subroutine defaults_set_page_ev
+  implicit none
+
+  nstepsperpage = 1000
+  iColourEachStep = .true. ! change colours if nstepsperpage > 1
+  iChangeStyles = .true.   ! change marker/ line styles if nstepsperpage > 1
+  iPlotLegend = .true.  ! whether or not to plot legend
+  iPlotStepLegend = .true. ! timestep legend
+  hposlegend = 0.1     ! horizontal legend position as fraction of viewport
+  vposlegend = 2.0      ! vertical legend position in character heights
+  fjustlegend = 0.0    ! justification factor for legend
+  
+  return
+end subroutine defaults_set_page_ev
+
 !----------------------------------------------------------------------
 ! submenu with options relating to page setup
 !----------------------------------------------------------------------
 subroutine submenu_page(ichoose)
  use params, only:maxplot
- use prompting
+ use prompting, only:prompt,print_logical
  implicit none
  integer, intent(in) :: ichoose
  integer :: iaction,ierr,ntries,jaction
