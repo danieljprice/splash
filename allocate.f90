@@ -33,10 +33,17 @@ subroutine alloc(npartin,nstep,ncolumnsin)
      print*,'allocate: error in input, nstep = ',nstep
      return
   endif
-  if (ncolumnsin.le.0) then
+  if (ncolumnsin.lt.0) then
      print*,'allocate: error in input, ncolumns = ',ncolumnsin
      return
+  elseif (ncolumnsin.eq.0) then
+     print*,'WARNING: allocate: ncolumns = 0 in input'  
   endif
+  !--do nothing if array sizes are the same
+  if (npartin.eq.maxpart .and. ncolumnsin.eq.maxcol .and. nstep.eq.maxstep) then
+     return
+  endif
+
 !
 !--save array sizes
 !
