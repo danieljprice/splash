@@ -23,9 +23,9 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use limits, only:set_limits
   use settings_data, only:ncolumns,iendatstep,ncalc,ivegotdata, &
                      DataisBuffered,iCalcQuantities,ndim,icoords, &
-                     icoordsnew,iRescale,required,ipartialread
+                     icoordsnew,iRescale,required,ipartialread,lowmemorymode
   use settings_part, only:iexact
-  use particle_data, only:dat,time,npartoftype
+  use particle_data, only:dat,time,npartoftype,maxcol
   use prompting, only:prompt,ucase
   use labels, only:label,labelvec,iamvec,ih,irho,ipmass,labeltype
   use geometry, only:labelcoord
@@ -72,6 +72,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         nstepsinfile(:) = -1
         ncolumnsfirst = 0
         required = .true.
+        if (lowmemorymode) required = .false.
      endif
   endif
 
@@ -166,7 +167,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
            ' columns, which differs from ',ncolumnsfirst,' read previously'
            if (ncolumns.lt.ncolumnsfirst) then
               print "(10x,a,i2,/)",'setting data = 0 for columns > ',ncolumns
-              dat(:,ncolumns+1:ncolumnsfirst,1:nstepsinfile(ireadfile)) = 0.
+              dat(:,ncolumns+1:min(ncolumnsfirst,maxcol),1:nstepsinfile(ireadfile)) = 0.
            elseif (ncolumns.gt.ncolumnsfirst) then
               print "(10x,a,i2,a)",'extra data beyond column ',ncolumnsfirst,' will be ignored'
               print "(10x,a,/)",'(read this file first to use this data)'
@@ -195,7 +196,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      call read_unitsfile('splash.units',ncolumns,ierr)
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
-        do i=1,ncolumns
+        do i=1,min(ncolumns,maxcol)
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
               dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)
            endif

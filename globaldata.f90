@@ -72,6 +72,7 @@ module settings_data
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
  !--required array is dimensioned 0:maxplot so that required(icol) = .true.
  !  does nothing bad if icol = 0 (much safer that way)
+ logical :: lowmemorymode
  logical, dimension(0:maxplot) :: required
  logical, dimension(maxparttypes) :: UseTypeInRenderings
  real, dimension(3) :: xorigin

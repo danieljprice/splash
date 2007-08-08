@@ -35,7 +35,8 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data, only:dat,gamma,time,npartoftype,maxpart,maxstep,maxcol
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread,&
+                     lowmemorymode
   use mem_allocation, only:alloc
   use system_utils, only:lenvironment
   use labels, only:ipmass,irho,ih,ix
@@ -49,7 +50,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: npart_max,nstep_max,ncolstep,icolumn
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
   integer :: nskip,ntotal,npart,n1,n2,itype,ntypes
-  integer :: ipos,nptmass,nptmassi,nunknown,isink
+  integer :: ipos,nptmass,nptmassi,nunknown,isink,ilastrequired
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
   logical :: iexist, doubleprec, smalldump,imadepmasscolumn,phantomdump
     
@@ -288,7 +289,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--allocate memory for all columns
 !
    if (npart_max.gt.maxpart .or. j.gt.maxstep .or. (ncolstep+ncalc).gt.maxcol) then
-      call alloc(npart_max,j,ncolstep+ncalc)
+      if (lowmemorymode) then
+         ilastrequired = 0
+         do i=1,ncolstep+ncalc
+            if (required(i)) ilastrequired = i
+         enddo
+         call alloc(npart_max,j,ilastrequired)
+      else
+         call alloc(npart_max,j,ncolstep+ncalc)
+      endif
    endif
 !--extract required information
    time(j) = dummyreal(1)
@@ -423,9 +432,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
          enddo
       else
 !--otherwise read them      
-         if (allocated(dattemp)) deallocate(dattemp)
-         allocate(dattemp(isize(iarr)),stat=ierr)
-         if (ierr /=0) print "(a)",'ERROR in memory allocation'
+         if ((doubleprec.and.nreal(iarr).gt.0).or.nreal8(iarr).gt.0) then
+            if (allocated(dattemp)) deallocate(dattemp)
+            allocate(dattemp(isize(iarr)),stat=ierr)
+            if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattemp)'
+         endif
 
 !        default reals may need converting
          do i=1,nreal(iarr)
@@ -456,7 +467,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
          if (((smalldump.and.nreal(1).lt.ipmass).or.phantomdump).and. iarr.eq.1) then
             if (abs(pmassinitial).gt.tiny(pmassinitial)) then
                icolumn = ipmass
-               where (iphase(1:isize(iarr)).eq.0) dat(1:isize(iarr),icolumn,j) = pmassinitial
+               if (required(ipmass)) then
+                  where (iphase(1:isize(iarr)).eq.0) dat(1:isize(iarr),icolumn,j) = pmassinitial
+               endif
 !               print*,icolumn
             endif
          endif

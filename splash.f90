@@ -179,15 +179,16 @@ program splash
   use mainmenu, only:menu
   use mem_allocation, only:deallocate_all
   use projections3D, only:setup_integratedkernel
-  use settings_data, only:buffer_data
+  use settings_data, only:buffer_data,lowmemorymode
   use settings_xsecrot, only:read_animfile
   use system_commands, only:get_number_arguments,get_argument
+  use system_utils, only:lenvironment
   use asciiutils, only:read_asciifile
   implicit none
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames,evsplash
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.9.1+ [July ''07]'
+  character(len=*), parameter :: version = 'v1.9.1+ [Aug ''07]'
 
   !
   ! initialise some basic code variables
@@ -201,6 +202,7 @@ program splash
   limitsfile = 'splash.limits'
   animfile = 'splash.anim'
   evsplash = .false.
+  lowmemorymode = lenvironment('SPLASH_LOW_MEM')
   !
   !  read all arguments off command line
   !
@@ -215,26 +217,30 @@ program splash
      call get_argument(i,string)
 
      if (string(1:1).eq.'-') then
-        select case(string(2:2))
+        select case(trim(string(2:)))
         case('l')
            i = i + 1
            call get_argument(i,limitsfile)
         case('f')
            i = i + 1
            call get_argument(i,defaultsfile)
-        case('e')
+        case('e','ev')
            evsplash = .true.
            defaultsfile = 'evsplash.defaults'
            limitsfile = 'evsplash.limits'
            animfile = 'evsplash.anim'
+        case('lowmem','lm')
+           lowmemorymode = .true.
+        case('nolowmem','nlm')
+           lowmemorymode = .false.
         case default
            print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
            print "(a,/)",trim(version)
            if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
-           print "(a)",'Usage: splash [-f defaultsfile] [-l limitsfile] file1 file2 ...'
+           print "(a)",'Usage: splash [-f defaultsfile] [-l limitsfile] [-ev] [-lowmem] file1 file2 ...'
            stop
         end select
-     elseif (len_trim(string).gt.0) then
+     elseif (len_trim(string).gt.0) then 
         nfiles = nfiles + 1
         if (nfiles.le.maxfile) then
            rootname(nfiles) = trim(string)
@@ -275,6 +281,7 @@ program splash
      print*
      if (nfiles.gt.0) ihavereadfilenames = .true.
   endif
+  if (lowmemorymode) print "(a)",' << running in low memory mode >>'
 
   !
   ! read data from file
