@@ -19,21 +19,29 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   use settings_data, only:ndim,icoords,icoordsnew
   implicit none
   integer, intent(in) :: ifromstep,itostep,ifromcol,itocol
-  integer :: i,j,k,ntoti
+  integer :: i,j,k,ntoti,itocoli
 
   print 100,ifromstep,itostep,ifromcol,itocol
 100 format(/' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
-  if (ifromcol.gt.maxcol .or. itocol.gt.maxcol) then
+  if (ifromcol.gt.maxcol .or. maxcol.eq.0) then
      print "(a)",' *** error: set_limits: column > array size ***'
      return
   endif
-
+  if (ifromcol.gt.itocol) then
+     print "(a)",' *** error in call to set_limits: begin column > end column'
+     return
+  endif
+  itocoli = itocol
+  if (itocol.gt.maxcol) then
+     print "(a,i3,a)",' *** warning: set_limits: only setting limits up to column ',maxcol,' ***'
+     itocoli = maxcol
+  endif
   !!--find limits of particle properties	  
   lim(ifromcol:itocol,1) = huge(lim)
   lim(ifromcol:itocol,2) = -huge(lim)
   do i=ifromstep,itostep
      ntoti = sum(npartoftype(:,i))
-     do j=ifromcol,itocol
+     do j=ifromcol,itocoli
         do k=1,ntoti
            lim(j,1) = min(lim(j,1),dat(k,j,i))
            lim(j,2) = max(lim(j,2),dat(k,j,i))
