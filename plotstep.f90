@@ -497,10 +497,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
-  real, dimension(maxpart) :: renderplot,hh,pmass,weight
+  real, dimension(maxpart) :: renderplot,hh,weight
   real :: rkappa
   real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax
-  real :: pixwidth,pixwidthvec,dxfreq,dunitspmass,dunitsrho,dunitsh
+  real :: pixwidth,pixwidthvec,dxfreq
+  real(doub_prec) :: dunitspmass,dunitsrho,dunitsh
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
@@ -561,9 +562,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         else
            !  make sure this is done in code units (ie. a consistent set)
            if (iRescale) then
-              dunitspmass = 1./units(ipmass)
-              dunitsrho = 1./units(irho)
-              dunitsh = 1./units(ih)
+              dunitspmass = 1.d0/units(ipmass)
+              dunitsrho = 1.d0/units(irho)
+              dunitsh = 1.d0/units(ih)
               where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
                  weight(i1:i2) = (dat(i1:i2,ipmass)*dunitspmass)/ &
                                   ((dat(i1:i2,irho)*dunitsrho)*(dat(i1:i2,ih)*dunitsh)**ndim)
@@ -593,8 +594,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         else
            !  make sure this is done in code units (ie. a consistent set)
            if (iRescale) then
-              dunitsrho = 1./units(irho)
-              dunitsh = 1./units(ih)
+              dunitsrho = 1.d0/units(irho)
+              dunitsh = 1.d0/units(ih)
               where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
                  weight(i1:i2) = massoftype(itype)/ &
                                 ((dat(i1:i2,irho)*dunitsrho)*(dat(i1:i2,ih)*dunitsh)**ndim)
