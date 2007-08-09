@@ -67,6 +67,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
   real :: xlength,ylength,renderlength,renderpt,drender,zoomfac
+  real :: dxlength,dylength,xmaxin,ymaxin
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
   character(len=20) :: string
@@ -86,6 +87,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
 !  ypt = 0.
   xpt2 = 0.
   ypt2 = 0.
+  xmaxin = xmax
+  ymaxin = ymax
   zoomfac = 1.0
   nc = 0
   ncircpart = 0
@@ -117,8 +120,16 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      !  
      rmin = 1.e6
      iclosest = 0
+     xlength = xmax - xmin
+     ylength = ymax - ymin
+     if (xlength.gt.tiny(xlength)) then
+        dxlength = 1./xlength
+     else
+        dxlength = 0.
+     endif
+     
      do i=1,npart
-        rr = (xcoords(i)-xpt)**2 + (ycoords(i)-ypt)**2
+        rr = ((xcoords(i)-xpt)*dxlength)**2 + ((ycoords(i)-ypt)*dylength)**2
         if (rr.lt.rmin) then
            iclosest = i
            rmin = rr
@@ -451,7 +462,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            ylength = 0.9/zoomfac*ylength
            renderlength = 0.9/zoomfac*renderlength
         end select
-        if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymax) then
+        if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymaxin) then
            print*,'zooming on x axis'
            xmin = xcen - 0.5*xlength
            xmax = xcen + 0.5*xlength
@@ -460,7 +471,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            irerender = .true.
            iexit = .true.
         endif
-        if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmax) then
+        if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmaxin) then
            print*,'zooming on y axis'
            ymin = ycen - 0.5*ylength
            ymax = ycen + 0.5*ylength
@@ -497,7 +508,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            interactivereplot = .true.
            iexit = .true.
         else
-           if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymax) then
+           xmaxin = xmax
+           if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymaxin) then
               print*,'resetting x limits'
               xmin = minval(xcoords)
               xmax = maxval(xcoords)
@@ -506,7 +518,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               irerender = .true.
               iexit = .true.
            endif
-           if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmax) then
+           if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmaxin) then
               print*,'resetting y limits'
               ymin = minval(ycoords)
               ymax = maxval(ycoords)
@@ -1168,7 +1180,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  real :: xpt2,ypt2,xpti,ypti,renderpt
  real :: xlength,ylength,renderlength,drender,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
- real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen,gradient,dr,yint
+ real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen,gradient,dr,yint,xmaxin
  real, dimension(4) :: xline,yline
  character(len=1) :: char,char2
  character(len=5) :: string
@@ -1390,6 +1402,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            ylength = 0.9/zoomfac*ylength
            renderlength = 0.9/zoomfac*renderlength
         end select
+        xmaxin = xmax(iplotxarr(ipanel))
         if (xpti.ge.xmin(iplotxarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel))) then
            print*,'zooming on x axis'
            xmin(iplotxarr(ipanel)) = xcen - 0.5*xlength
@@ -1398,7 +1411,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            interactivereplot = .true.
            iexit = .true.
         endif
-        if (ypti.ge.xmin(iplotyarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel))) then
+        if (ypti.ge.xmin(iplotyarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel)) .and. xpti.le.xmaxin) then
            print*,'zooming on y axis'
            xmin(iplotyarr(ipanel)) = ycen - 0.5*ylength
            xmax(iplotyarr(ipanel)) = ycen + 0.5*ylength
