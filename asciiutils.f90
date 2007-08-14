@@ -91,18 +91,18 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
 !
 !--loop until we find two consecutive lines with the same number of columns (but non zero)
 !
- do while ((len_trim(line).eq.0 .or. ncolsthisline.ne.ncolprev .or. ncolumns.eq.0) .and. ierr.eq.0)
+ do while ((len_trim(line).eq.0 .or. ncolsthisline.ne.ncolprev .or. ncolumns.le.0) .and. ierr.eq.0)
     ncolprev = ncolumns
     read(lunit,"(a)",iostat=ierr) line
     if (index(line,'NaN').gt.0) nansinfile = .true.
     if (index(line,'Inf').gt.0) infsinfile = .true.
     if (ierr.eq.0) call get_columns(line,ncolsthisline)
     if (ncolsthisline.ne.0) nheaderlines = nheaderlines + 1
-    if (ncolsthisline.gt.0) ncolumns = ncolsthisline
+    ncolumns = ncolsthisline
  enddo
  !--subtract 2 from the header line count (the last two lines which were the same)
  nheaderlines = max(nheaderlines - 2,0)
- if (ierr .gt.0 ) then
+ if (ierr .gt.0 .or. ncolumns.le.0) then
     ncolumns = 0
  elseif (ierr .lt. 0) then
     print*,ncolumns,ncolprev
