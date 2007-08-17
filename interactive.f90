@@ -127,8 +127,15 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      else
         dxlength = 0.
      endif
-     
+     if (ylength.gt.tiny(ylength)) then
+        dylength = 1./ylength
+     else
+        dylength = 0.
+     endif
+          
      do i=1,npart
+        !rr = (xcoords(i)-xpt)**2 + (ycoords(i)-ypt)**2
+        !--use distance normalised on screen
         rr = ((xcoords(i)-xpt)*dxlength)**2 + ((ycoords(i)-ypt)*dylength)**2
         if (rr.lt.rmin) then
            iclosest = i
@@ -178,7 +185,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            else
               if (iclosest.gt.0 .and. iclosest.le.npart) then
                  itrackparttemp = iclosest
-                 print*,' limits set to track particle ',itrackparttemp
+                 print*,' limits set to track particle ',itrackparttemp,' x, y = ', &
+                        xcoords(iclosest),ycoords(iclosest)
                  print*,' save settings to activate '
               else
                  print*,'error: could not determine closest particle'
