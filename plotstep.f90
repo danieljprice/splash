@@ -493,7 +493,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec,nfreqpts
   integer :: i1,i2,itype,icolourprev,linestyleprev
-  integer :: ierr,ipt,nplots,nyplotstart,iaxisy
+  integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
@@ -527,6 +527,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   isetrenderlimits = .false.
   k = nxsec ! matters for lastplot in page_setup for non-coord plots
   if (iReScale) labeltimeunits = unitslabel(0)
+  iaxistemp = iaxis
     
   !--set the arrays needed for rendering if they are present
   if (ih.gt.0 .and. ih.le.ndataplots) hh(:) = dat(:,ih)
@@ -655,6 +656,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      call pgsch(charheight) ! in PGPLOT scaled units
 
      iColourBar = .false.   ! should be false by default until set to true
+     iaxistemp = iaxis
 
      !--set current x, y, render and vector plot from multiplot array
      if (imulti) then
@@ -816,6 +818,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !
         if (ndim.ge.2 .and. (irotate .or. (ndim.eq.3 .and.use3Dperspective)) &
             .and. icoordsnew.eq.1) then
+           if ((irotate .and. (angletempx.gt.tiny(0.) .or. angletempy.gt.tiny(0.))) &
+               .or.(ndim.eq.3 .and.use3Dperspective .and. dzscreentemp.gt.tiny(0.))) then
+              iaxistemp = -3
+           endif
            call rotationandperspective(angletempx,angletempy,angletempz,dzscreentemp,zobservertemp, &
                                        xplot,yplot,zplot,ntoti,iplotx,iploty,iplotz,dat)
            !--adapt plot limits after rotations have been done
@@ -1307,7 +1313,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !
            !--redraw axes over what has been plotted
            !
-           call redraw_axes(iaxis)
+           call redraw_axes(iaxistemp)
            !
            !--annotate with time / marker legend and title
            !
@@ -1807,7 +1813,7 @@ contains
     endif
     if (nstepsperpage.ne.0 .or. inewpage) then
        call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
-                  trim(labelx),trim(labely),trim(title),just,iaxis,0.001,barwidth+0.001,0.001,0.001, &
+                  trim(labelx),trim(labely),trim(title),just,iaxistemp,0.001,barwidth+0.001,0.001,0.001, &
                   0.0,TitleOffset,isamexaxis,tile_plots)
     endif
     
