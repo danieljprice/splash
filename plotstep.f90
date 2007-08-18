@@ -820,7 +820,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
             .and. icoordsnew.eq.1) then
            if ((irotate .and. (angletempx.gt.tiny(0.) .or. angletempy.gt.tiny(0.))) &
                .or.(ndim.eq.3 .and.use3Dperspective .and. dzscreentemp.gt.tiny(0.))) then
-              iaxistemp = -3
+              if (iaxis.ge.0) iaxistemp = -3
            endif
            call rotationandperspective(angletempx,angletempy,angletempz,dzscreentemp,zobservertemp, &
                                        xplot,yplot,zplot,ntoti,iplotx,iploty,iplotz,dat)
