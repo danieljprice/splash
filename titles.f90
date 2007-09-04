@@ -16,7 +16,6 @@ subroutine read_titles(ntitles)
  use asciiutils, only:read_asciifile
  implicit none
  integer, intent(out) :: ntitles
- integer :: i
  character(len=50) :: titlefile
  logical :: iexist
 
@@ -42,7 +41,6 @@ subroutine read_steplegend(nsteptitles)
  use asciiutils, only:read_asciifile
  implicit none
  integer, intent(out) :: nsteptitles
- integer :: i
  character(len=50) :: legendfile
  logical :: iexist
 
