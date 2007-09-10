@@ -1902,11 +1902,11 @@ contains
         hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnlyOnPanel, &
         iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext,iUseBackGroundColourForAxes
     implicit none
-    integer :: icolourprev
+    integer :: icoloursave
     character(len=len(steplegend(1))) :: steplegendtext
     
     !--save colour index
-    call pgqci(icolourprev)
+    call pgqci(icoloursave)
 
     !--use foreground colour by default for legends
     call pgsci(1)
@@ -1976,7 +1976,7 @@ contains
     endif
     
     !--restore colour index
-    call pgsci(icolourprev)
+    call pgsci(icoloursave)
     
     return
   end subroutine legends_and_title
@@ -2169,11 +2169,11 @@ contains
    character(len=*), intent(in) :: label
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
    real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpixvec
-   integer :: i,j,icolourprev,linewidthprev
+   integer :: i,j,icoloursav,linewidthprev
    real :: vmag
    
    !--query colour index and line width
-   call pgqci(icolourprev)
+   call pgqci(icoloursav)
    call pgqlw(linewidthprev)
 
    !print*,'plotting vector field ',trim(label)
@@ -2332,7 +2332,7 @@ contains
    endif
    
    !--restore colour index and line width
-   call pgsci(icolourprev)
+   call pgsci(icoloursav)
    call pgslw(linewidthprev)
   
   end subroutine vector_plot
