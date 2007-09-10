@@ -1900,20 +1900,35 @@ contains
     use filenames, only:nstepsinfile,nfiles,rootname
     use settings_page, only:iPlotLegend,iPlotStepLegend, &
         hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnlyOnPanel, &
-        iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext
+        iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext,iUseBackGroundColourForAxes
     implicit none
+    integer :: icolourprev
     character(len=len(steplegend(1))) :: steplegendtext
+    
+    !--save colour index
+    call pgqci(icolourprev)
 
+    !--use foreground colour by default for legends
+    call pgsci(1)
+    
     !--plot time on plot
     if (iPlotLegend .and. nyplot.eq.1 &
         .and..not.(iPlotLegendOnlyOnPanel.gt.0 .and. ipanel.ne.iPlotLegendOnlyOnPanel) &
         .and..not.(iPlotLegendOnlyOnPanel.eq.-1 .and. irow.gt.1) &
         .and..not.(iPlotLegendOnlyOnPanel.eq.-2 .and. icolumn.gt.1) &
-        .and. timei.gt.-0.5*huge(timei)) &  ! but not if time has not been read from dump
+        .and. timei.gt.-0.5*huge(timei)) then  ! but not if time has not been read from dump
+
+       !--change to background colour index for legend text if overlaid
+       if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call pgsci(0)
+
        call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend)
-       
+    endif
+
     !--line/marker style/colour legend for multiple timesteps on same page
     if (iPlotStepLegend .and. nyplot.eq.1 .and. istepsonpage.gt.0) then
+
+       !--change to background colour index for overlaid text and axes
+       if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call pgsci(0)
        !
        !--use filenames in legend if none set
        !
@@ -1932,18 +1947,36 @@ contains
             iplotpartoftype(1),iplotline,trim(steplegendtext),hposlegend,vposlegend)
        endif
     endif
+    
+    !--use foreground colour by default for title
+    call pgsci(1)
+
     !--print title if appropriate
     if (iPlotTitles .and. istepsonpage.eq.1 .and. ipanel.le.ntitles) then
        if (len_trim(pagetitles(ipanel)).gt.0) then
+          
+          !--change to background colour index if title is overlaid
+          if (iUseBackGroundColourForAxes .and. vpostitle.lt.0.) call pgsci(0)
+
           call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
        endif
     endif
+
+    !--use foreground colour by default for scale
+    call pgsci(1)
     
     !--scale on co-ordinate plots
     if (iPlotScale .and. (iscalepanel.eq.0 .or. ipanel.eq.iscalepanel) &
                    .and. iplotx.le.ndim .and. iploty.le.ndim) then
+
+       !--change to background colour index if title is overlaid
+       if (iUseBackGroundColourForAxes .and. vposscale.gt.0.) call pgsci(0)
+
        call legend_scale(dxscale,hposscale,vposscale,scaletext)
     endif
+    
+    !--restore colour index
+    call pgsci(icolourprev)
     
     return
   end subroutine legends_and_title
