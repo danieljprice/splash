@@ -7,14 +7,14 @@ module settings_vecplot
  integer :: npixvec,minpartforarrow
  logical :: UseBackgndColorVecplot, iplotpartvec
  logical :: iVecplotLegend,iplotstreamlines,iplotarrowheads
- logical :: iplotsynchrotron,ihidearrowswherenoparts
+ logical :: iplotsynchrotron,ihidearrowswherenoparts,iallarrowssamelength
  real :: hposlegendvec,vposlegendvec
  real :: rcrit,zcrit,synchrotronspecindex,uthermcutoff
 
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot,iplotpartvec,&
           iVecplotLegend,hposlegendvec,vposlegendvec,iplotstreamlines, &
           iplotarrowheads,iplotsynchrotron,rcrit,zcrit,synchrotronspecindex, &
-          uthermcutoff,ihidearrowswherenoparts,minpartforarrow
+          uthermcutoff,ihidearrowswherenoparts,minpartforarrow,iallarrowssamelength
 
 contains
 
@@ -39,6 +39,7 @@ subroutine defaults_set_vecplot
   uthermcutoff = -1. ! flags this as uninitialised
   ihidearrowswherenoparts = .false.
   minpartforarrow = 1
+  iallarrowssamelength = .false.
 
   return
 end subroutine defaults_set_vecplot
@@ -58,11 +59,12 @@ subroutine submenu_vecplot(ichoose)
  ians = ichoose
  print "(a)",'--------------- vector plot options -------------------'
 
- if (ians.le.0 .or. ians.gt.6) then
+ if (ians.le.0 .or. ians.gt.7) then
     print 10,npixvec,print_logical(UseBackgndColorVecplot), &
              print_logical(iVecplotLegend),print_logical(iplotstreamlines), &
              print_logical(iplotarrowheads), &
-             print_logical(ihidearrowswherenoparts)
+             print_logical(ihidearrowswherenoparts), &
+             print_logical(iallarrowssamelength)
 10  format( &
              ' 0) exit ',/, &
              ' 1) change number of pixels                   (',i4,' )',/, &
@@ -70,8 +72,9 @@ subroutine submenu_vecplot(ichoose)
              ' 3) vector plot legend settings               ( ',a,' )',/, &
              ' 4) plot stream/field lines instead of arrows ( ',a,' )',/, &
              ' 5) turn arrow heads on/off                   ( ',a,' )',/, &
-             ' 6) hide arrows where there are no particles  ( ',a,' )')
-    call prompt('enter option',ians,0,6)
+             ' 6) hide arrows where there are no particles  ( ',a,' )',/, &
+             ' 7) all arrows same length - ie. direction only ( ',a,' )')
+    call prompt('enter option',ians,0,7)
  endif
 !
 !--options
@@ -130,7 +133,9 @@ subroutine submenu_vecplot(ichoose)
     if (ihidearrowswherenoparts) then
        call prompt(' enter minimum number of particles in pixel cell for arrow to be plotted ',minpartforarrow,1)
     endif
-    
+!------------------------------------------------------------------------
+ case(7)
+    call prompt('make all arrows same length (ie. only show direction, not magnitude) ?',iallarrowssamelength)    
  end select
 
  return

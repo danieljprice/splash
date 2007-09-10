@@ -181,12 +181,14 @@ end subroutine colourbar
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
                   xmin,ymin,dx,label,unitslabel) 
  use legends, only:legend_vec
- use settings_vecplot, only:iVecplotLegend,hposlegendvec,vposlegendvec,iplotarrowheads
+ use settings_vecplot, only:iVecplotLegend,hposlegendvec,vposlegendvec,iplotarrowheads,&
+                            iallarrowssamelength
  implicit none
  integer, intent(in) :: npixx,npixy
  real, intent(in) :: xmin,ymin,dx
  real, intent(inout) :: vecmax
  real, dimension(npixx,npixy), intent(in) :: vecpixx,vecpixy
+ real, dimension(npixx,npixy) :: dvmag
  character(len=*), intent(in) :: label,unitslabel
  real :: trans(6),scale
  real :: charheight
@@ -210,21 +212,40 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  endif
  call pgqch(charheight)
  call pgsch(0.3)          ! size of arrow head
- if (vecmax.le.0.0) then  ! adaptive limits
-    scale = 0.0
-    vecmax = max(maxval(vecpixx(:,:)),maxval(vecpixy(:,:)))
-    if (vecmax.gt.0.) scale = dx/vecmax
- else
-    scale=dx/vecmax
- endif
- print*,trim(label),' max = ',vecmax
  
- call pgvect(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
-      1,npixx,1,npixy,scale,0,trans,0.0)
+ if (iallarrowssamelength) then
+    if (vecmax.le.0.0) vecmax = 1.0 ! adaptive limits
+    scale=dx/vecmax
+    print*,trim(label),' showing direction only: max = ',vecmax
 
- if (iVecplotLegend) then
-    call legend_vec(label,unitslabel,vecmax,dx,hposlegendvec,vposlegendvec,charheight)
+    where (abs(vecpixx).gt.tiny(vecpixx) .and. abs(vecpixy).gt.tiny(vecpixy)) 
+       dvmag(:,:) = 1./sqrt(vecpixx**2 + vecpixy**2)
+    elsewhere
+       dvmag(:,:) = 0.
+    end where
+    !scale = 1.0
+    print*,'scale = ',scale
+
+    call pgvect(vecpixx(:,:)*dvmag(:,:),vecpixy(:,:)*dvmag(:,:),npixx,npixy, &
+         1,npixx,1,npixy,scale,0,trans,0.0)
+ else
+    if (vecmax.le.0.0) then  ! adaptive limits
+       scale = 0.0
+       vecmax = max(maxval(vecpixx(:,:)),maxval(vecpixy(:,:)))
+       if (vecmax.gt.0.) scale = dx/vecmax
+    else
+       scale=dx/vecmax
+    endif
+    print*,trim(label),' max = ',vecmax
+
+    call pgvect(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
+         1,npixx,1,npixy,scale,0,trans,0.0)
+
+    if (iVecplotLegend) then
+       call legend_vec(label,unitslabel,vecmax,dx,hposlegendvec,vposlegendvec,charheight)
+    endif
  endif
+ 
  call pgsch(charheight)
  
  return
