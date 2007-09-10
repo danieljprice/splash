@@ -343,7 +343,9 @@ end subroutine redraw_axes
 
   if (tile) then
      !--also leave room for title if necessary
-     vmargintop = vmargintop + max(titleoffset,0.)*ych
+     if (titleoffset.ge.0.) then
+        vmargintop = vmargintop + (titleoffset+0.5)*ych
+     endif
 
      !
      ! effective viewport size = size - margins (only used for tiled
@@ -387,7 +389,9 @@ end subroutine redraw_axes
      vptymin = 1.0 - iy*panelsizey + vmarginbottom
      
      !--also leave room for title if necessary
-     vptymax = vptymax - max(titleoffset,0.)*ych
+     if (titleoffset.ge.0.) then
+        vptymax = vptymax - (titleoffset+0.5)*ych
+     endif
      
      !--also leave room for colour bar if necessary
      if (colourbarwidth.GT.0.) then

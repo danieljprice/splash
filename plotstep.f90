@@ -1779,7 +1779,7 @@ contains
     endif
     !--work out whether or not to leave space above plots for titles
     TitleOffset = 0.
-    if (iPlotTitles .and. nstepsperpage.eq.1 .and. vpostitle.gt.0.) TitleOffset = vpostitle + 1.5
+    if (iPlotTitles .and. nstepsperpage.eq.1 .and. vpostitle.gt.0.) TitleOffset = vpostitle
 
     inewpage = ipanel.eq.1 .and. ipanelchange .and. ipagechange
     if (inewpage) then
