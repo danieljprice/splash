@@ -11,6 +11,9 @@ module params
  integer, parameter :: doub_prec = selected_real_kind(P=10,R=30)
  integer, parameter :: maxplot=64   ! maximum number of plots (for multiplot arrays)
  integer, parameter :: maxparttypes = 6  ! max # of different particle types
+
+ public
+
 end module params
 !
 !--particle data
@@ -24,6 +27,9 @@ module particle_data
  real, allocatable, dimension(:,:) :: massoftype
  real, allocatable, dimension(:) :: time, gamma
  real, allocatable, dimension(:,:,:) :: dat
+
+ public
+
 end module particle_data
 !
 !--filename
@@ -35,6 +41,9 @@ module filenames
  character(len=120), dimension(maxfile) :: rootname
  character(len=120) :: defaultsfile,limitsfile,animfile
  integer, dimension(maxfile) :: nstepsinfile
+ 
+ public
+
 end module filenames
 !
 !--labels for all plots and the locations of certain useful variables
@@ -50,6 +59,9 @@ module labels
  integer :: ipmass,ike
  integer :: idivb,iJfirst
  integer :: iacplane,ipowerspec
+ 
+ public
+
 end module labels
 
 !------------------------------------
@@ -79,6 +91,8 @@ module settings_data
 
  namelist /dataopts/ buffer_data,iCalcQuantities,iRescale,xorigin
 
+ public
+
 end module settings_data
 !
 !--multiplot settings
@@ -98,5 +112,7 @@ module multiplot
  namelist /multi/ nyplotmulti,                                  &
     itrans,multiplotx,multiploty,irendermulti,                  &
     ivecplotmulti,iplotcontmulti,x_secmulti,xsecposmulti
- 
+
+ public
+
 end module multiplot
