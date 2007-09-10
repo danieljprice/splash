@@ -188,7 +188,7 @@ program splash
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames,evsplash
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.9.1+ [Aug ''07]'
+  character(len=*), parameter :: version = 'v1.9.1+ [Sep ''07]'
 
   !
   ! initialise some basic code variables
@@ -346,9 +346,9 @@ subroutine print_header
    '   under certain conditions (see LICENSE file for details). *',/,/, &
    ' Comments, bugs, suggestions and queries to: dprice@astro.ex.ac.uk ',/, &
    ' Check for updates at: www.astro.ex.ac.uk/people/dprice/splash ',/, &
-   ' Please cite Price (2007, PASA submitted) if you use splash for ',/, &
-   ' scientific work and if you plot something beautiful, why not',/, &
-   ' send me a copy for the gallery? ',/)
+   ' Please cite Price (2007, PASA accepted, arXiv:0709.0832) if you ',/, &
+   ' use SPLASH for scientific work and if you plot something beautiful,',/, &
+   ' why not send me a copy for the gallery? ',/)
       
 end subroutine print_header
 
