@@ -344,7 +344,7 @@ end subroutine redraw_axes
   if (tile) then
      !--also leave room for title if necessary
      if (titleoffset.ge.0.) then
-        vmargintop = vmargintop + (titleoffset+0.5)*ych
+        vmargintop = vmargintop + (titleoffset+0.75)*ych
      endif
 
      !
@@ -390,7 +390,7 @@ end subroutine redraw_axes
      
      !--also leave room for title if necessary
      if (titleoffset.ge.0.) then
-        vptymax = vptymax - (titleoffset+0.5)*ych
+        vptymax = vptymax - (titleoffset+0.75)*ych
      endif
      
      !--also leave room for colour bar if necessary
