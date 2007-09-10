@@ -342,6 +342,9 @@ end subroutine redraw_axes
   iy = (iplot-1)/nx + 1
 
   if (tile) then
+     !--also leave room for title if necessary
+     vmargintop = vmargintop + max(titleoffset,0.)*ych
+
      !
      ! effective viewport size = size - margins (only used for tiled
      !
@@ -384,7 +387,7 @@ end subroutine redraw_axes
      vptymin = 1.0 - iy*panelsizey + vmarginbottom
      
      !--also leave room for title if necessary
-     vptymax = vptymax - titleoffset*ych
+     vptymax = vptymax - max(titleoffset,0.)*ych
      
      !--also leave room for colour bar if necessary
      if (colourbarwidth.GT.0.) then
