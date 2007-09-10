@@ -324,10 +324,18 @@ subroutine submenu_page(ichoose)
         ntries = ntries + 1
      enddo
      call pgclos
-    
-     call prompt('Do you want to plot axes and overlaid text in background colour'// &
-                 ' (default is foreground) ?',iUseBackgroundColourForAxes)
-    
+
+     print "(4(/,a))",' Overlaid (that is, drawn inside the plot borders) axis ', &
+                      ' ticks, legend text and titles are by default plotted in ', &
+                      ' the foreground colour [ie. '//trim(colour_fore)//'].'
+     
+     if (len_trim(colour_back).gt.0 .and. len_trim(colour_fore).gt.0) then
+        call prompt('Do you want to plot these in background colour [ie. '//trim(colour_back)//'] instead ?',&
+                    iUseBackgroundColourForAxes)     
+     else
+        call prompt('Do you want to plot these in background colour instead? ',iUseBackgroundColourForAxes)
+     endif
+     
      return
   end select
  
