@@ -5,7 +5,7 @@ module opacityrendering3D
 
 contains
 !--------------------------------------------------------------------------
-! $Id: interpolate3D_opacity.f90,v 1.14 2007/07/31 10:07:33 dprice Exp $
+! $Id: interpolate3D_opacity.f90,v 1.15 2007/09/11 08:52:57 dprice Exp $
 !
 !     subroutine to do a ray trace through the particle data
 !
@@ -159,7 +159,7 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npar
      !--report on progress
      !
      if (iprintprogress) then
-        iprogress = 100*ipart/npart
+        iprogress = 100*(ipart/npart)
         if (iprogress.ge.iprintnext) then
            write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,ipart
            iprintnext = iprintnext + iprintinterval
