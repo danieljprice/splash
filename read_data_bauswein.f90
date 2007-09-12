@@ -5,6 +5,14 @@
 ! THIS VERSION IS FOR READING UNFORMATTED OUTPUT FROM ANDREAS BAUSWEIN'S CODE
 ! (ie. STRAIGHT FROM THE DATA DUMP)
 !
+! *** CONVERTS TO SINGLE PRECISION ***
+!
+! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
+!  ENVIRONMENT VARIABLES:
+!
+! BSPLASH_R8 if 'YES' or 'TRUE' then assumes data is double precision
+! BSPLASH_NCOL to change the number of columns read from the file, 
+! e.g. setenv BSPLASH_NCOL=22
 !
 ! the data is stored in the global array dat
 !
@@ -31,15 +39,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use params
   use settings_data, only:ndim,ndimV,ncolumns
   use mem_allocation, only:alloc
-!  use system_utils, only:lenvironment
-!  use system_commands, only:get_environment
+  use system_utils, only:lenvironment,ienvironment
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,k,ierr
   integer :: nprint,n1,npart_max,nstep_max
-  integer :: ncol,nread,nerr
+  integer :: ncol,nread,nerr,ncoltemp
   logical :: iexist,doubleprec
   character(len=len(rootname)) :: dumpfile
   real :: timei,dti
@@ -67,6 +74,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !--number of columns to read from file
   ncol = 21
   doubleprec = .false.
+  
+  !--can override these settings with environment variables
+  if (lenvironment('BSPLASH_R8')) doubleprec = .true.
+  ncoltemp = ienvironment('BSPLASH_NCOL')
+  if (ncoltemp.gt.0) ncol = ncoltemp
   !
   !--allocate memory initially
   !
@@ -94,14 +106,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
         read(15,end=55,iostat=ierr) nprint,n1,timei,dti
      endif
      print "(a,f10.2,a,i10,a,i10,a,f10.4)",' time: ',timei,' npart: ',nprint,' n1: ',n1,' dt = ',dti
-     !--barf if stupid answers in single and double precision
+     !--barf if stupid values read
      if (nprint.le.0 .or. nprint.gt.1e10) then
-        print "(a)",' *** ERRORS IN TIMESTEP HEADER: NO DATA READ ***'
+        print "(a)",' *** ERRORS IN TIMESTEP HEADER: WRONG ENDIAN? ***'
         close(15)
         return
      elseif (ierr /= 0) then
         print "(a)",'*** WARNING: ERRORS READING HEADER ***'  
      endif
+     if (timei.lt.0. .or. dti.lt.0.) print "(a)",'*** ERROR: t < 0: use setenv BSPLASH_R8=TRUE for double precision'
      ncolumns = ncol
 
      if (.not.allocated(dat) .or. nprint.gt.npart_max) then
