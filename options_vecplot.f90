@@ -48,7 +48,7 @@ end subroutine defaults_set_vecplot
 ! sets options relating to vector plots
 !----------------------------------------------------------------------
 subroutine submenu_vecplot(ichoose)
- use prompting
+ use prompting, only:prompt,print_logical
  use settings_data, only:ndim,numplot
  use labels, only:iutherm
  use limits, only:lim
@@ -135,6 +135,7 @@ subroutine submenu_vecplot(ichoose)
     endif
 !------------------------------------------------------------------------
  case(7)
+    iallarrowssamelength = .not.iallarrowssamelength
     call prompt('make all arrows same length (ie. only show direction, not magnitude) ?',iallarrowssamelength)    
  end select
 

@@ -214,8 +214,8 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  call pgsch(0.3)          ! size of arrow head
  
  if (iallarrowssamelength) then
-    if (vecmax.le.0.0) vecmax = 1.0 ! adaptive limits
-    scale=dx/vecmax
+    !!if (vecmax.le.0.0) vecmax = 1.0 ! adaptive limits
+    scale=0.9*dx !!/vecmax
     print*,trim(label),' showing direction only: max = ',vecmax
 
     where (abs(vecpixx).gt.tiny(vecpixx) .and. abs(vecpixy).gt.tiny(vecpixy)) 
@@ -223,9 +223,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
     elsewhere
        dvmag(:,:) = 0.
     end where
-    !scale = 1.0
-    print*,'scale = ',scale
-
+    
     call pgvect(vecpixx(:,:)*dvmag(:,:),vecpixy(:,:)*dvmag(:,:),npixx,npixy, &
          1,npixx,1,npixy,scale,0,trans,0.0)
  else
