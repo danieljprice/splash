@@ -86,6 +86,13 @@ At the moment SPLASH is geared towards gas dynamics
 simulations with SPH and has basically grown out of my visualisation needs.
 Thus it may not be particularly useful for things like water and solids etc. in SPH.
 
+\subsection{SPLASH, the paper}
+ The algorithms implemented in SPLASH are not described here, but instead described in a paper \citep{splashpaper} to be published in the Publications of the Astronomical Society of Australia, available from:
+
+\url{http://arxiv.org/abs/0709.0832}
+
+\noindent This paper should be cited whenever you use SPLASH for scientific purposes.
+
 \subsection{Version History}
 
 \begin{tabular}{|l|l|p{0.75\textwidth}|}
@@ -383,7 +390,7 @@ type /gif or /png (depending on which drivers have been installed in your PGPLOT
  Having obtained a sequence of images there are a variety of ways to make these into an animation using both free and commercial software. Suggestions on software packages to use for Mac, Linux and Windows can be found in the online faq (\url{http://www.astro.ex.ac.uk/people/dprice/splash/faqs.html}). I generally use the application ``graphic converter'' on Mac OS/X which makes quicktime movies from a sequence of images.
  
  
-\section{Ten quick hints for producing good-looking plots}
+\subsection{Ten quick hints for producing good-looking plots}
 In this section I have listed ten quick suggestions for simple changes to settings which can improve the look of a visualisation substantially compared to the default options. These are as follows:
 \begin{enumerate}
 \item {\bf Log the colour bar.} This is often the reason why your first rendered plot may look somewhat blank, especially if the simulation is dominated by a few high density objects. To do this simply move the cursor over the colour bar and hit ``l'' (for log). Alternatively log transformations can be applied to columns non-interactively via the ``apply log or inverse transformations to columns'' option in the l)imits menu.
@@ -691,9 +698,14 @@ on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the ph
 ...
  8) set foreground/background colours 
 enter option ([0:8], default=0):8
- Enter background colour (by name, e.g. "black") (default=):white
- Enter foreground colour (by name, e.g. "white") (default=):black
- Do you want to plot axes and overlaid text in background colour (default is foreground) ? (default=no):y
+ Enter background colour (by name, e.g. "black") (default=""):white
+ Enter foreground colour (by name, e.g. "white") (default=""):black
+
+ Overlaid (that is, drawn inside the plot borders) axis 
+ ticks, legend text and titles are by default plotted in 
+ the foreground colour [ie. black].
+
+Do you want to plot these in background colour [ie. white] instead ? (default=no):y
 \end{verbatim}
  In the above I have selected a background colour of white, a foreground colour of black. Answering yes to the last question means that those parts of the axes which lie on top of the viewing surface (and any labels) will be plotted in white (the background colour) instead of the foreground colour (black). 
 
@@ -989,6 +1001,9 @@ more prominently (and a bit strange). The general rule-of-thumb I use is therefo
 
 \subsubsection{ Plotting a vector plot in a cross section slice}
  Vector plots are either in a cross section slice or are column integrated projections depending on the setting of the ``switch between cross section/projection'' option in the x) menu. Setting this to cross section and plotting a vector plot produces a vector plot in a cross section slice.
+
+\subsubsection{ Making all arrow the same length (ie. showing direction only, not magnitude)}
+ An option to plot all vector arrows of the same length (instead of the default option where the length of the arrow is proportional to the vector magnitude) can be set from the v) menu.
 
 \subsection{(x) cross section/3D plotting options}
 
@@ -1638,6 +1653,11 @@ ssplash warp???
 then plotting the same plot as previously to a non-interactive device will cycle through all dump files producing a sequence of plots with names like \verb+pgplot.png+, \verb+pgplot.png_2+ etc. (see \S\ref{sec:fixpgplotnames} for details of how to fix the file naming scheme).
 
 \subsection{Using asplash to plot energy vs time plots}
+ asplash (that is, the compilation of splash which reads ascii files) can also be used for non-SPH data. For example I often use it to plot the contents of the .ev file my SPH code dumps monitoring quantities like energy and angular momentum at every timestep. A shortcut way of setting options appropriate to reading such files (e.g. plotting lines instead of dots, plotting all files on the same page) is implemented by adding the ``-e'' option to the command line: e.g.
+\begin{verbatim}
+asplash -e file1.ev file2.ev file3.ev
+\end{verbatim}
+also, using the -e option on the command line means that any modification to the preset options /limits are saved to files called \verb+evsplash.defaults+ and \verb+evsplash.limits+ instead of the usual \verb+splash.defaults+ and \verb+splash.limits+. This means the defaults for this type of plot are saved separately to those for ``normal'' plots of SPH data.
 
 \subsection{Powerspectrum of 1D data}
  In one dimension an extra plot item appears
