@@ -372,6 +372,9 @@ mbatesph: checksystem $(OBJECTS) read_data_mbate.o
 gadget: checksystem $(OBJECTS) read_data_gadget.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o gsplash $(OBJECTS) read_data_gadget.o
 
+bauswein: checksystem $(OBJECTS) read_data_bauswein.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o bsplash $(OBJECTS) read_data_bauswein.o 
+
 vine: checksystem $(OBJECTS) read_data_VINE.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o vsplash $(OBJECTS) read_data_VINE.o
 
