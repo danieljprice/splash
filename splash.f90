@@ -23,6 +23,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.9.2 : (12/09/07)
+!             improvements to ascii read including asplash -e option;
+!             smarter foreground/background colour changing for titles;
+!             min=max problem fixed (caught by splash not pgplot); 
+!             fixed vector arrow length option; other minor changes and bug fixes
 !     1.9.1 : (11/07/07)
 !             environment variables + improvements to gadget data read; better
 !             prompting; 3 new colour schemes; improved legend/title options;
@@ -188,7 +193,7 @@ program splash
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames,evsplash
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.9.1+ [Sep ''07]'
+  character(len=*), parameter :: version = 'v1.9.2 [12th Sep ''07]'
 
   !
   ! initialise some basic code variables
