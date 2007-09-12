@@ -69,3 +69,6 @@ animation sequences implemented; origin settings now affect radius calculation a
 1.9.1:
 environment variables + improvements to gadget data read; better prompting; 3 new colour schemes; improved legend/title options; other minor changes
  
+1.9.2:
+improvements to ascii read including asplash -e option; smarter foreground/background colour changing for titles; min=max problem fixed (caught by splash not pgplot); fixed vector arrow length option; other minor changes and bug fixes
+ 
