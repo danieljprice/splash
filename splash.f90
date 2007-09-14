@@ -226,9 +226,17 @@ program splash
         case('l')
            i = i + 1
            call get_argument(i,limitsfile)
-        case('f')
+        case('d','f')
            i = i + 1
            call get_argument(i,defaultsfile)
+        case('p')
+           i = i + 1
+           call get_argument(i,string)
+           if (len_trim(string).gt.0) then
+              defaultsfile = trim(string)//'.defaults'
+              limitsfile = trim(string)//'.limits'
+              animfile = trim(string)//'.anim'
+           endif
         case('e','ev')
            evsplash = .true.
            defaultsfile = 'evsplash.defaults'
@@ -242,7 +250,7 @@ program splash
            print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
            print "(a,/)",trim(version)
            if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
-           print "(a)",'Usage: splash [-f defaultsfile] [-l limitsfile] [-ev] [-lowmem] file1 file2 ...'
+           print "(a)",'Usage: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] [-lowmem] file1 file2 ...'
            stop
         end select
      elseif (len_trim(string).gt.0) then 
