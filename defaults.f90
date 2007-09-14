@@ -117,7 +117,7 @@ subroutine defaults_set(evsplash)
 !--if using evsplash, override some default options
 !
   if (evsplash) then
-     print*,'setting evsplash defaults'
+     print "(a)",'setting evsplash defaults'
      call defaults_set_page_ev
      call defaults_set_part_ev
   endif
@@ -184,7 +184,7 @@ subroutine defaults_write(filename)
        write(1,"(a)") trim(rootname(i))
     enddo
  close(unit=1)
- print*,'default options saved to file '//trim(filename)
+ print "(a)",'default options saved to file '//trim(filename)
     
  return              
 end subroutine defaults_write
