@@ -84,7 +84,7 @@ end subroutine defaults_set_initial
 !! set initial default options
 !! these are used if no defaults file is found
 !!
-subroutine defaults_set(evsplash)
+subroutine defaults_set(use_evdefaults)
   use exact, only:defaults_set_exact
   use multiplot
   use settings_limits, only:defaults_set_limits
@@ -98,7 +98,7 @@ subroutine defaults_set(evsplash)
   use settings_units, only:defaults_set_units
   use titles, only:pagetitles,steplegend
   implicit none
-  logical, intent(in) :: evsplash
+  logical, intent(in) :: use_evdefaults
   integer :: i
 !
 !--set defaults for submenu options
@@ -116,7 +116,7 @@ subroutine defaults_set(evsplash)
 !
 !--if using evsplash, override some default options
 !
-  if (evsplash) then
+  if (use_evdefaults) then
      print "(a)",'setting evsplash defaults'
      call defaults_set_page_ev
      call defaults_set_part_ev
