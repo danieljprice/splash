@@ -177,7 +177,8 @@ program splash
 !      multiplot enables you to set up multiple plots per page, mixing from any type.
 !
 !----------------------------------------------------------------------------------
-  use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile,animfile
+  use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile,animfile, &
+                      unitsfile,fileprefix
   use getdata, only:get_data
   use defaults, only:defaults_set_initial,defaults_set,defaults_read
   use limits, only:read_limits
@@ -193,7 +194,7 @@ program splash
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames,evsplash
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.9.2 [12th Sep ''07]'
+  character(len=*), parameter :: version = 'v1.9.2+ [Sep ''07]'
 
   !
   ! initialise some basic code variables
@@ -203,9 +204,11 @@ program splash
   !
   !  default names for defaults file and limits file
   !
-  defaultsfile = 'splash.defaults'
-  limitsfile = 'splash.limits'
-  animfile = 'splash.anim'
+  fileprefix = 'splash'
+  defaultsfile = trim(fileprefix)//'.defaults'
+  limitsfile = trim(fileprefix)//'.limits'
+  animfile = trim(fileprefix)//'.anim'
+  unitsfile = trim(fileprefix)//'.units'
   evsplash = .false.
   lowmemorymode = lenvironment('SPLASH_LOW_MEM')
   !
@@ -232,23 +235,17 @@ program splash
         case('p')
            i = i + 1
            call get_argument(i,string)
-           if (len_trim(string).gt.0) then
-              defaultsfile = trim(string)//'.defaults'
-              limitsfile = trim(string)//'.limits'
-              animfile = trim(string)//'.anim'
-           endif
+           if (len_trim(string).gt.0) fileprefix = trim(string)
         case('e','ev')
            evsplash = .true.
-           defaultsfile = 'evsplash.defaults'
-           limitsfile = 'evsplash.limits'
-           animfile = 'evsplash.anim'
+           fileprefix = 'evsplash'
         case('lowmem','lm')
            lowmemorymode = .true.
         case('nolowmem','nlm')
            lowmemorymode = .false.
         case default
            print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
-           print "(a,/)",trim(version)
+           print "(a,/)",trim(version)//' (c) 2005-2007 Daniel Price '
            if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
            print "(a)",'Usage: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] [-lowmem] file1 file2 ...'
            stop
@@ -260,6 +257,12 @@ program splash
         endif
      endif
   enddo
+
+  defaultsfile = trim(fileprefix)//'.defaults'
+  limitsfile = trim(fileprefix)//'.limits'
+  animfile = trim(fileprefix)//'.anim'
+  unitsfile = trim(fileprefix)//'.units'
+
   !
   ! print header
   !
@@ -289,8 +292,8 @@ program splash
   else
      ihavereadfilenames = .false.
      print "(a)",' no filenames read from command line'
-     call read_asciifile('splash.filenames',nfiles,rootname)
-     print*,nfiles,' filenames read from splash.filenames file'
+     call read_asciifile(trim(fileprefix)//'.filenames',nfiles,rootname)
+     print*,nfiles,' filenames read from '//trim(fileprefix)//'.filenames file'
      print*
      if (nfiles.gt.0) ihavereadfilenames = .true.
   endif

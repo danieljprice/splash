@@ -93,6 +93,7 @@ end subroutine defaults_set_page_ev
 !----------------------------------------------------------------------
 subroutine submenu_page(ichoose)
  use params, only:maxplot
+ use filenames, only:fileprefix
  use prompting, only:prompt,print_logical
  implicit none
  integer, intent(in) :: ichoose
@@ -216,11 +217,11 @@ subroutine submenu_page(ichoose)
   case(5)
      if (iPlotStepLegend) then
         print "(/,a,/,a,/)",' Hint: to change the step legend text, create a file called', &
-                 '  ''splash.legend'' in the working directory, with one label per line'
+                 '  '''//trim(fileprefix)//'.legend'' in the working directory, with one label per line'
      endif
      if (iPlotTitles) then
         print "(/,a,/,a,/)",' To set the plot titles, create a file called', &
-                 '  ''splash.titles'' in the working directory, with one title per line'
+                 '  '''//trim(fileprefix)//'.titles'' in the working directory, with one title per line'
      endif     
      print 20,print_logical(iPlotLegend),hposlegend,vposlegend,fjustlegend,trim(legendtext), &
               print_logical(iPlotTitles),hpostitle,vpostitle,fjusttitle, &
@@ -251,7 +252,7 @@ subroutine submenu_page(ichoose)
         endif
      case(2)
         print "(/,a,/,a,/)",' To set the plot titles, create a file called', &
-                 '  ''splash.titles'' in the working directory, with one title per line'
+                 '  '''//trim(fileprefix)//'.titles'' in the working directory, with one title per line'
         call prompt('Use plot titles? ',iPlotTitles)
         print "(a)",'Titles are '//print_logical(iPlotTitles) 
         if (iPlotTitles) then
@@ -266,7 +267,7 @@ subroutine submenu_page(ichoose)
         print "(a)",'Step legend is '//print_logical(iPlotStepLegend)
         if (iPlotStepLegend) then
            print "(/,a,/,a,/)",' Hint: to change the step legend text, create a file called', &
-                    '  ''splash.legend'' in the working directory, with one label per line'
+                    '  '''//trim(fileprefix)//'.legend'' in the working directory, with one label per line'
            print*,' press return to continue '
            read*
         endif

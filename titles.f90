@@ -14,12 +14,13 @@ contains
 !
 subroutine read_titles(ntitles)
  use asciiutils, only:read_asciifile
+ use filenames, only:fileprefix
  implicit none
  integer, intent(out) :: ntitles
  character(len=50) :: titlefile
  logical :: iexist
 
- titlefile = 'splash.titles'
+ titlefile = trim(fileprefix)//'.titles'
  !--also allow obsolete title filename
  inquire(file=titlefile,exist=iexist)
  if (.not.iexist) then
@@ -39,12 +40,13 @@ end subroutine read_titles
 !
 subroutine read_steplegend(nsteptitles)
  use asciiutils, only:read_asciifile
+ use filenames, only:fileprefix
  implicit none
  integer, intent(out) :: nsteptitles
  character(len=50) :: legendfile
  logical :: iexist
 
- legendfile = 'splash.legend'
+ legendfile = trim(fileprefix)//'.legend'
  !--also allow obsolete legend filename
  inquire(file=legendfile,exist=iexist)
  if (.not.iexist) then

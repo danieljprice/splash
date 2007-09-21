@@ -62,7 +62,7 @@ end subroutine defaults_set_data
 ! (read new data or change timesteps plotted)
 !----------------------------------------------------------------------
 subroutine submenu_data(ichoose)
- use filenames, only:nsteps,nstepsinfile,ifileopen
+ use filenames, only:nsteps,nstepsinfile,ifileopen,unitsfile
  use prompting
  use getdata, only:get_data
  use settings_data, only:istartatstep,iendatstep,nfreq,iUseStepList, &
@@ -189,7 +189,7 @@ subroutine submenu_data(ichoose)
     if (UnitsHaveChanged) then
        iwriteunitsfile = .true.
        call prompt(' save units to file? ',iwriteunitsfile)
-       if (iwriteunitsfile) call write_unitsfile('splash.units',numplot)
+       if (iwriteunitsfile) call write_unitsfile(trim(unitsfile),numplot)
     endif
     
     if (.not.iRescale .and. UnitsHaveChanged) call prompt('Apply physical units to data?',iRescale)

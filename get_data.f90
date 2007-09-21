@@ -19,7 +19,7 @@ contains
 
 subroutine get_data(ireadfile,gotfilenames,firsttime)
   use exact, only:read_exactparams
-  use filenames, only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
+  use filenames, only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen,unitsfile
   use limits, only:set_limits
   use settings_data, only:ncolumns,iendatstep,ncalc,ivegotdata, &
                      DataisBuffered,iCalcQuantities,ndim,icoords, &
@@ -109,7 +109,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--read units file and change units if necessary
      !
-     call read_unitsfile('splash.units',ncolumns,ierr)     
+     call read_unitsfile(trim(unitsfile),ncolumns,ierr)     
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
@@ -193,7 +193,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--read units file and change units if necessary
      !
-     call read_unitsfile('splash.units',ncolumns,ierr)
+     call read_unitsfile(trim(unitsfile),ncolumns,ierr)
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,min(ncolumns,maxcol)

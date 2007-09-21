@@ -39,7 +39,8 @@ module filenames
  integer, parameter :: maxfile = 10001
  integer :: nfiles,nsteps,ifileopen
  character(len=120), dimension(maxfile) :: rootname
- character(len=120) :: defaultsfile,limitsfile,animfile
+ character(len=100) :: fileprefix
+ character(len=120) :: defaultsfile,limitsfile,animfile,unitsfile
  integer, dimension(maxfile) :: nstepsinfile
  
  public
