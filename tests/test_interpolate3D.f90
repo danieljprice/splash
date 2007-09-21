@@ -13,12 +13,13 @@ program test_interpolation
  real, parameter :: errtol = 1.e-7
  real, dimension(idim) :: x,y,z,pmass,h,rho
  real, dimension(idim) :: dat,weight
+ integer, dimension(idim) :: itype
  real, dimension(ipixx,ipixy) :: datpix
  real, dimension(0:maxcoltable) :: q,w
  real :: xmin,xmax,ymin,ymax,zmin,zmax
  real :: columndens,dxpix,err,dens,datmax
  real :: trans(6)
- logical :: ifastrender
+ logical :: ifastrender,normalise
  
  xmin = -0.5
  xmax = 0.5
@@ -26,6 +27,7 @@ program test_interpolation
  ymax = 0.5
  zmin = -0.5
  zmax = 0.5
+ itype = 0
  ifastrender = .true.
  print*,'accelerated rendering = ',ifastrender
  call pgopen('/xw')
@@ -88,10 +90,11 @@ program test_interpolation
  h(1) = 0.35*xmax
  weight(1) = 1./1.5**3
  dat(1) = rho(1)
- dxpix = (xmax-xmin)/real(npixx) 
+ dxpix = (xmax-xmin)/real(npixx)
+ normalise = .false.
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
-                               weight(1:npart),dat(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,.false.)
+                               weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,.false.)
  call pgenv(xmin,xmax,ymin,ymax,1,0)
  trans = 0.
  trans(1) = xmin - 0.5*dxpix
@@ -109,8 +112,8 @@ program test_interpolation
  
  print*,'TEST WITH ACCELERATION'
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
-                               weight(1:npart),dat(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,.true.)
+                               weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,.true.)
  call pgenv(xmin,xmax,ymin,ymax,1,0)
  trans = 0.
  trans(1) = xmin - 0.5*dxpix
@@ -143,8 +146,8 @@ program test_interpolation
  dat(2) = rho(2)
  dxpix = (xmax-xmin)/real(npixx)
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
-                               weight(1:npart),dat(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,ifastrender)
+                               weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,ifastrender)
  call pgenv(xmin,xmax,ymin,ymax,1,0)
  trans = 0.
  trans(1) = xmin - 0.5*dxpix
@@ -172,8 +175,8 @@ program test_interpolation
 !--now call interpolation routine to pixels
 !
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
-                               weight(1:npart),dat(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,ifastrender)
+                               weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,ifastrender)
 !
 !--check output
 !
@@ -196,17 +199,44 @@ program test_interpolation
  trans(4) = ymin - 0.5*dxpix
  trans(6) = dxpix
  call pgimag(datpix,ipixx,ipixy,1,npixx,1,npixy,0.0,1.0,trans)
-
+!
+!--NORMALISED VERSION OF ABOVE
+!
+ normalise = .true.
+ call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
+                               weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,ifastrender)
+!
+!--check output
+!
+ dens = rho(1)
+ call geterr(datpix(1:npixx,1:npixy),npixx,npixy,dens,err)
+ print "(70('-'))"
+ print*,'average error in <density> interpolation = ',err
+ print*,' dens = ',dens,' datpix = ',datpix(1:10,1:10)
+ if (err.gt.0.05) then
+    print*,'FAILED: average error > usual'
+ else
+    print*,'OK: average error same as usual'
+ endif
+ call pgenv(xmin,xmax,ymin,ymax,0,0)
+! call pgpixl(datpix,ipixx,ipixy,1,npixx,1,npixy,xmin,xmax,ymin,ymax)
+ trans = 0.
+ trans(1) = xmin - 0.5*dxpix
+ trans(2) = dxpix
+ trans(4) = ymin - 0.5*dxpix
+ trans(6) = dxpix
+ call pgimag(datpix,ipixx,ipixy,1,npixx,1,npixy,0.0,1.0,trans)
 !
 !--take cross section at midplane and check density
 !
  print "(70('-'))"
  call interpolate3D_fastxsec(x(1:npart),y(1:npart),z(1:npart), &
-      h(1:npart),weight(1:npart),dat(1:npart),npart,&
+      h(1:npart),weight(1:npart),dat(1:npart),itype(1:npart),npart,&
       xmin,ymin,0.0,datpix(1:npixx,1:npixy),npixx,npixy,dxpix,.false.)     
 
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,dens,err)
- print*,'average error in normalised xsec interpolation = ',err
+ print*,'average error in non-normalised xsec interpolation = ',err
  print "(70('-'))"
 
  
@@ -223,17 +253,22 @@ program test_interpolation
 !--take normalised cross section at midplane and check density
 !
  call interpolate3D_fastxsec(x(1:npart),y(1:npart),z(1:npart), &
-      h(1:npart),weight(1:npart),dat(1:npart),npart,&
+      h(1:npart),weight(1:npart),dat(1:npart),itype(1:npart),npart,&
       xmin,ymin,0.0,datpix(1:npixx,1:npixy),npixx,npixy,dxpix,.true.)     
 
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,dens,err)
  print*,'average error in normalised xsec interpolation = ',err
+ call pgenv(xmin,xmax,ymin,ymax,0,0)
+ call pgimag(datpix,ipixx,ipixy,1,npixx,1,npixy,0.0,1.0,trans)
+
+ print*,'closing PGPLOT'
  call pgend
 
  print "(70('-'))"
 
  print*,'SPEED CHECKS...'
  
+ normalise = .true.
  npixx = 1
  npixy = 1
  npartx = idimx
@@ -244,8 +279,8 @@ program test_interpolation
  
  dxpix = (xmax-xmin)/real(npixx)
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
-                               weight(1:npart),dat(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,ifastrender)
+                               weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,ifastrender)
  
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,columndens,err)
  print*,'average error in projection = ',err
@@ -260,8 +295,8 @@ program test_interpolation
  
  dxpix = (xmax-xmin)/real(npixx)
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
-                               weight(1:npart),dat(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,0.,0.,ifastrender)
+                               weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,ifastrender)
  
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,columndens,err)
  print*,'average error in projection = ',err
@@ -302,7 +337,7 @@ subroutine setgrid(npartx,nparty,npartz,x,y,z,pmass,rho,h,weight,xmin,xmax,ymin,
 !
 !--set other properties
 !
- totmass = 1.0
+ totmass = 3.1415926536
  massp = totmass/real(npart)
  vol = (xmax-xmin)*(ymax-ymin)*(zmax-zmin)
  dens = totmass/vol

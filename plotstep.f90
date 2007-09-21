@@ -1019,7 +1019,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
-                               zobservertemp,dzscreentemp,ifastrender)
+                               inormalise,zobservertemp,dzscreentemp,ifastrender)
                           !!--adjust the units of the z-integrated quantity
                           if (iRescale .and. units(ih).gt.0.) then
                              datpix = datpix*(unitzintegration/units(ih))
@@ -1103,19 +1103,23 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  labelrender = label(irenderplot)
                  !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
                  if (ndim.eq.3 .and..not. x_sec .and..not.(use3Dperspective.and.use3Dopacityrendering)) then
-                    if (iRescale) then
-                       labelrender = '\(2268) '//trim(labelrender)//' d'// &
-                          trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//trim(labelzintegration)
+                    if (inormalise) then
+                       labelrender = '< '//trim(labelrender)//' >'
                     else
-                       labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
-                    endif
-                    if (irenderplot.eq.irho) then
-                       labelrender = 'column density'
-                       !--try to get units label right for column density
-                       !  would be nice to have a more robust way of knowing what the units mean
-                       if (iRescale .and. index(labelzintegration,'cm').gt.0  &
-                                    .and. trim(adjustl(unitslabel(irho))).eq.'[g/cm\u3\d]') then
-                          labelrender = trim(labelrender)//' [g/cm\u2\d]'
+                       if (iRescale) then
+                          labelrender = '\(2268) '//trim(labelrender)//' d'// &
+                             trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//trim(labelzintegration)
+                       else
+                          labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
+                       endif
+                       if (irenderplot.eq.irho) then
+                          labelrender = 'column density'
+                          !--try to get units label right for column density
+                          !  would be nice to have a more robust way of knowing what the units mean
+                          if (iRescale .and. index(labelzintegration,'cm').gt.0  &
+                                       .and. trim(adjustl(unitslabel(irho))).eq.'[g/cm\u3\d]') then
+                             labelrender = trim(labelrender)//' [g/cm\u2\d]'
+                          endif
                        endif
                     endif
                  endif

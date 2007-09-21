@@ -135,7 +135,8 @@ end function wfromtable
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidth,zobserver,dscreen,useaccelerate)
+     xmin,ymin,datsmooth,npixx,npixy,pixwidth,normalise,zobserver,dscreen, &
+     useaccelerate)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
@@ -143,6 +144,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreen
   real, intent(out), dimension(npixx,npixy) :: datsmooth
+  logical, intent(in) :: normalise
+  real, dimension(npixx,npixy) :: datnorm
   logical, intent(in) :: useaccelerate
   real :: row(npixx)
 
@@ -153,7 +156,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 #endif
   integer(kind=8) :: iprogress,i
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
-  real :: term,dy,dy2,ypix,zfrac,hsmooth,horigi
+  real :: term,termnorm,dy,dy2,ypix,zfrac,hsmooth,horigi
   real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
   real, dimension(npixx) :: xpix,dx2i
   real :: t_start,t_end,t_used,tsec
@@ -161,7 +164,12 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   
   datsmooth = 0.
   term = 0.
-  print "(1x,a)",'projecting from particles to pixels...'
+  if (normalise) then
+     print "(1x,a)",'projecting (normalised) from particles to pixels...'
+     datnorm = 0.
+  else
+     print "(1x,a)",'projecting from particles to pixels...'  
+  endif
   if (pixwidth.le.0.) then
      print "(1x,a)",'interpolate3D_proj: error: pixel width <= 0'
      return
@@ -210,8 +218,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$OMP SHARED(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
 !$OMP SHARED(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidth) &
 !$OMP SHARED(npixx,npixy,dscreen,zobserver,use3Dperspective,useaccelerate) &
+!$OMP SHARED(datnorm,normalise) &
 !$OMP PRIVATE(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
-!$OMP PRIVATE(hsmooth,horigi,hi1,hi21,term,npixpart,jpixi,ipixi) &
+!$OMP PRIVATE(hsmooth,horigi,hi1,hi21,term,termnorm,npixpart,jpixi,ipixi) &
 !$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
 !$OMP PRIVATE(dx2i,row,q2,ypix,dy,dy2,wab) &
 !$OMP PRIVATE(i,ipix,jpix,jpixcopy)
@@ -274,7 +283,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !
      hi1 = 1./hsmooth
      hi21 = hi1*hi1
-     term = weight(i)*horigi*dat(i) ! h gives the z length scale (NB: no perspective)
+     termnorm = weight(i)*horigi
+     term = termnorm*dat(i) ! h gives the z length scale (NB: no perspective)
      !
      !--for each particle work out which pixels it contributes to
      !
@@ -294,7 +304,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !--loop over pixels, adding the contribution from this particle
      !  copy by quarters if all pixels within domain
      !
-     accelerate = useaccelerate .and. npixpart.gt.5 &
+     accelerate = useaccelerate .and. (.not.normalise) .and. npixpart.gt.5 &
                  .and. ipixmin.ge.1 .and. ipixmax.le.npixx &
                  .and. jpixmin.ge.1 .and. jpixmax.le.npixy
      
@@ -382,7 +392,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
                  !
                  !--calculate data value at this pixel using the summation interpolant
                  !                  
-                 datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab          
+                 datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
+                 if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
               endif
            enddo
         enddo
@@ -391,6 +402,15 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   enddo over_particles
 !$OMP END DO
 !$OMP END PARALLEL
+!
+!--normalise dat array
+!
+  if (normalise) then
+     !--normalise everywhere (required if not using SPH weighting)
+     where (datnorm > tiny(datnorm))
+        datsmooth = datsmooth/datnorm
+     end where
+  endif
 !
 !--get ending CPU time
 !
