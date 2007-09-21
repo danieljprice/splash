@@ -245,9 +245,17 @@ program splash
            lowmemorymode = .false.
         case default
            print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
-           print "(a,/)",trim(version)//' (c) 2005-2007 Daniel Price '
+           print "(a)",'(c) 2005-2007 Daniel Price '
+           print "(a,/)",trim(version)
            if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
-           print "(a)",'Usage: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] [-lowmem] file1 file2 ...'
+           print "(a,/)",'Usage: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] [-lowmem] file1 file2 ...'
+
+           print "(a,/)",'Command line options:'
+           print "(a)",' -p fileprefix   : changes the prefix to ALL settings files read/written by splash'
+           print "(a)",' -d defaultsfile : changes name of defaults file read/written by splash'
+           print "(a)",' -l limitsfile   : changes name of limits file read/written by splash'
+           print "(a)",' -e, -ev         : use default options best suited to ascii evolution files (ie. energy vs time)'
+           print "(a)",' -lm, -lowmem    : use low memory mode [applies only to sphNG data read at present]'
            stop
         end select
      elseif (len_trim(string).gt.0) then 
