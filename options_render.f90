@@ -7,7 +7,7 @@ module settings_render
  integer :: ncontours,npix,icolours
  logical :: iplotcont_nomulti
  logical :: iPlotColourBar,icolour_particles,inormalise_interpolations
- logical :: ifastrender
+ logical :: ifastrender,idensityweightedinterpolation
  real :: ColourBarDisp
  !--colour bar width is set here as it must be known for page setup
  !  in principle it could be user-changeable but this adds pointless options
@@ -15,7 +15,7 @@ module settings_render
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
    iPlotColourBar,icolour_particles,ColourBarDisp,inormalise_interpolations, &
-   ifastrender
+   ifastrender,idensityweightedinterpolation
 
 contains
 
@@ -34,6 +34,7 @@ subroutine defaults_set_render
   ColourBarDisp = 5.0 ! displacement of colour bar label from edge
   inormalise_interpolations = .false.       ! do not normalise interpolations
   ifastrender = .false. ! use accelerated rendering
+  idensityweightedinterpolation = .false.
 
   return
 end subroutine defaults_set_render
@@ -43,7 +44,7 @@ end subroutine defaults_set_render
 !-----------------------------------------------------------------------------
 subroutine submenu_render(ichoose)
   use colours, only:schemename,ncolourschemes,colour_demo
-  use prompting
+  use prompting, only:prompt,print_logical
   implicit none
   integer, intent(in) :: ichoose
   integer :: ians,i,ierr,icolourprev
@@ -56,18 +57,20 @@ subroutine submenu_render(ichoose)
   if (ians.le.0 .or. ians.gt.8) then
      print 10,npix,icolours,print_logical(iplotcont_nomulti),ncontours, &
            print_logical(iPlotColourBar),print_logical(icolour_particles), &
-           print_logical(inormalise_interpolations),print_logical(ifastrender)
+           print_logical(inormalise_interpolations),print_logical(ifastrender),&
+           print_logical(idensityweightedinterpolation)
 10   format( &
           ' 0) exit ',/,                      &
-          ' 1) change number of pixels           (',i5,' )',/, &
-          ' 2) change colour scheme              (',i2,' )',/,    &
-          ' 3) plot contours                     ( ',a,' )',/, &
-          ' 4) change number of contours         (',i3,' )',/, &
-          ' 5) colour bar options                ( ',a,' )',/,&
-          ' 6) use particle colours not pixels   ( ',a,' )',/,& 
-          ' 7) normalise interpolations          ( ',a,' )',/,&
-          ' 8) use accelerated rendering         ( ',a,' )')
-     call prompt('enter option',ians,0,8)
+          ' 1) change number of pixels            (',i5,' )',/, &
+          ' 2) change colour scheme               (',i2,' )',/,    &
+          ' 3) plot contours                      ( ',a,' )',/, &
+          ' 4) change number of contours          (',i3,' )',/, &
+          ' 5) colour bar options                 ( ',a,' )',/,&
+          ' 6) use particle colours not pixels    ( ',a,' )',/,& 
+          ' 7) normalise interpolations           ( ',a,' )',/,&
+          ' 8) use accelerated rendering          ( ',a,' )',/,&
+          ' 9) use density weighted interpolation ( ',a,' )')
+     call prompt('enter option',ians,0,9)
   endif
 !
 !--options
@@ -134,6 +137,11 @@ subroutine submenu_render(ichoose)
           print*,' Warning: this is slightly approximate (particle position'
           print*,'          assumed to be at centre of pixel)'
        endif
+!------------------------------------------------------------------------
+    case(9)
+       idensityweightedinterpolation = .not.idensityweightedinterpolation
+       print "(a)",' density weighted interpolation is '// &
+                   print_logical(idensityweightedinterpolation)
   end select
     
  return

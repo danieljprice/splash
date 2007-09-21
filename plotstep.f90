@@ -493,7 +493,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   integer :: irender,irenderpart
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec,nfreqpts
-  integer :: i1,i2,itype,icolourprev,linestyleprev
+  integer :: icolourprev,linestyleprev
   integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
@@ -502,7 +502,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   real :: rkappa
   real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax
   real :: pixwidth,pixwidthvec,dxfreq
-  real(doub_prec) :: dunitspmass,dunitsrho,dunitsh
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=120) :: title
@@ -549,76 +548,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   !
   !--set weight factor for interpolation routines
   !
-  if (ipmass.gt.0 .and. ipmass.le.ndataplots .and. &
-      irho.gt.0 .and. irho.le.ndataplots .and. &
-      ih .gt. 0 .and. ih.le.ndataplots ) then
-     i2 = 0
-     do itype=1,ntypes
-        !--check for consistency that if particles are not plotted, they are also not plotted on renderings
-        if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.
-        i1 = i2 + 1
-        i2 = i2 + npartoftype(itype)
-        !--set weights to zero for particle types not used in the rendering
-        if (.not.iplotpartoftype(itype) .or. .not.UseTypeInRenderings(itype)) then
-           weight(i1:i2) = 0.
-        else
-           !  make sure this is done in code units (ie. a consistent set)
-           if (iRescale) then
-              dunitspmass = 1.d0/units(ipmass)
-              dunitsrho = 1.d0/units(irho)
-              dunitsh = 1.d0/units(ih)
-              where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
-                 weight(i1:i2) = (dat(i1:i2,ipmass)*dunitspmass)/ &
-                                  ((dat(i1:i2,irho)*dunitsrho)*(dat(i1:i2,ih)*dunitsh)**ndim)
-              elsewhere
-                 weight(i1:i2) = 0.
-              endwhere
-           else
-              where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
-                 weight(i1:i2) = (dat(i1:i2,ipmass))/(dat(i1:i2,irho)*dat(i1:i2,ih)**ndim)
-              elsewhere
-                 weight(i1:i2) = 0.
-              endwhere
-           endif
-        endif
-        inormalise = inormalise_interpolations
-     enddo
-  elseif (massoftype(1).gt.0.) then
-     i2 = 0
-     do itype=1,ntypes
-        !--check for consistency that if particles are not plotted, they are also not plotted on renderings
-        if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.
-        i1 = i2 + 1
-        i2 = i2 + npartoftype(itype)
-        !--set weights to zero for particle types not used in the rendering
-        if (.not.iplotpartoftype(itype) .or. .not.UseTypeInRenderings(itype)) then
-           weight(i1:i2) = 0.
-        else
-           !  make sure this is done in code units (ie. a consistent set)
-           if (iRescale) then
-              dunitsrho = 1.d0/units(irho)
-              dunitsh = 1.d0/units(ih)
-              where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
-                 weight(i1:i2) = massoftype(itype)/ &
-                                ((dat(i1:i2,irho)*dunitsrho)*(dat(i1:i2,ih)*dunitsh)**ndim)
-              elsewhere
-                 weight(i1:i2) = 0.
-              endwhere
-           else
-              where(dat(i1:i2,irho) > tiny(dat) .and. dat(i1:i2,ih) > tiny(dat))
-                 weight(i1:i2) = massoftype(itype)/(dat(i1:i2,irho)*dat(i1:i2,ih)**ndim)
-              elsewhere
-                 weight(i1:i2) = 0.
-              endwhere
-           endif
-        endif
-        inormalise = inormalise_interpolations
-     enddo
-  else
-  !--if particle mass has not been set, then must use normalised interpolations
-     weight(1:ninterp) = 1.0
-     inormalise = .true.
-  endif
+  call set_interpolation_weights(weight,dat)
 
   !
   !--add a loop over frames for animation sequences
@@ -2157,7 +2087,124 @@ contains
     
     return
    end subroutine settrackinglimits
-   
+
+!-------------------------------------------------------------------
+! interface for setting interpolation weights
+!-------------------------------------------------------------------
+  subroutine set_interpolation_weights(weighti,dati)
+    use settings_render, only:idensityweightedinterpolation
+    implicit none
+    real, dimension(:), intent(out) :: weighti
+    real, dimension(:,:), intent(in) :: dati
+    integer :: i2,i1,itype
+    real(doub_prec) :: dunitspmass,dunitsrho,dunitsh
+
+    if (ipmass.gt.0 .and. ipmass.le.ndataplots .and. &
+        irho.gt.0 .and. irho.le.ndataplots .and. &
+        ih .gt. 0 .and. ih.le.ndataplots ) then
+       i2 = 0
+       if (idensityweightedinterpolation) then
+          do itype=1,ntypes
+             !--check for consistency that if particles are not plotted, they are also not plotted on renderings
+             if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.
+             i1 = i2 + 1
+             i2 = i2 + npartoftype(itype)
+             !--set weights to zero for particle types not used in the rendering
+             if (.not.iplotpartoftype(itype) .or. .not.UseTypeInRenderings(itype)) then
+                weighti(i1:i2) = 0.
+             else
+                !  make sure this is done in code units (ie. a consistent set)
+                if (iRescale) then
+                   dunitspmass = 1.d0/units(ipmass)
+                   dunitsh = 1.d0/units(ih)
+                   where(dati(i1:i2,ih) > tiny(dati))
+                      weighti(i1:i2) = (dati(i1:i2,ipmass)*dunitspmass)/ &
+                                       ((dati(i1:i2,ih)*dunitsh)**ndim)
+                   elsewhere
+                      weighti(i1:i2) = 0.
+                   endwhere
+                else
+                   where(dati(i1:i2,ih) > tiny(dati))
+                      weighti(i1:i2) = (dati(i1:i2,ipmass))/(dati(i1:i2,ih)**ndim)
+                   elsewhere
+                      weighti(i1:i2) = 0.
+                   endwhere
+                endif
+             endif
+             inormalise = .true.
+          enddo
+          print "(a)",' USING DENSITY WEIGHTED INTERPOLATION '
+       else
+          do itype=1,ntypes
+             !--check for consistency that if particles are not plotted, they are also not plotted on renderings
+             if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.
+             i1 = i2 + 1
+             i2 = i2 + npartoftype(itype)
+             !--set weights to zero for particle types not used in the rendering
+             if (.not.iplotpartoftype(itype) .or. .not.UseTypeInRenderings(itype)) then
+                weighti(i1:i2) = 0.
+             else
+                !  make sure this is done in code units (ie. a consistent set)
+                if (iRescale) then
+                   dunitspmass = 1.d0/units(ipmass)
+                   dunitsrho = 1.d0/units(irho)
+                   dunitsh = 1.d0/units(ih)
+                   where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
+                      weighti(i1:i2) = (dati(i1:i2,ipmass)*dunitspmass)/ &
+                                       ((dati(i1:i2,irho)*dunitsrho)*(dati(i1:i2,ih)*dunitsh)**ndim)
+                   elsewhere
+                      weighti(i1:i2) = 0.
+                   endwhere
+                else
+                   where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
+                      weighti(i1:i2) = (dati(i1:i2,ipmass))/(dati(i1:i2,irho)*dati(i1:i2,ih)**ndim)
+                   elsewhere
+                      weighti(i1:i2) = 0.
+                   endwhere
+                endif
+             endif
+             inormalise = inormalise_interpolations
+          enddo
+       endif
+    elseif (massoftype(1).gt.0.) then
+       i2 = 0
+       do itype=1,ntypes
+          !--check for consistency that if particles are not plotted, they are also not plotted on renderings
+          if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.
+          i1 = i2 + 1
+          i2 = i2 + npartoftype(itype)
+          !--set weights to zero for particle types not used in the rendering
+          if (.not.iplotpartoftype(itype) .or. .not.UseTypeInRenderings(itype)) then
+             weighti(i1:i2) = 0.
+          else
+             !  make sure this is done in code units (ie. a consistent set)
+             if (iRescale) then
+                dunitsrho = 1.d0/units(irho)
+                dunitsh = 1.d0/units(ih)
+                where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
+                   weighti(i1:i2) = massoftype(itype)/ &
+                                  ((dati(i1:i2,irho)*dunitsrho)*(dati(i1:i2,ih)*dunitsh)**ndim)
+                elsewhere
+                   weighti(i1:i2) = 0.
+                endwhere
+             else
+                where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
+                   weighti(i1:i2) = massoftype(itype)/(dati(i1:i2,irho)*dati(i1:i2,ih)**ndim)
+                elsewhere
+                   weighti(i1:i2) = 0.
+                endwhere
+             endif
+          endif
+          inormalise = inormalise_interpolations
+       enddo
+    else
+    !--if particle mass has not been set, then must use normalised interpolations
+       weight(1:ninterp) = 1.0
+       inormalise = .true.
+    endif
+
+  end subroutine set_interpolation_weights
+
 !-------------------------------------------------------------------
 ! interface to vector plotting routines
 ! so that pixel arrays are allocated appropriately
