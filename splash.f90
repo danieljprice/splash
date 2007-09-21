@@ -190,6 +190,7 @@ program splash
   use system_commands, only:get_number_arguments,get_argument
   use system_utils, only:lenvironment
   use asciiutils, only:read_asciifile
+  use write_pixmap, only:isoutputformat,iwritepixmap,pixmapformat
   implicit none
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames,evsplash
@@ -220,6 +221,7 @@ program splash
   !
   i = 0
   nfiles = 0
+  iwritepixmap = .false.
   do while (i < nargs)
      i = i + 1
      call get_argument(i,string)
@@ -236,6 +238,16 @@ program splash
            i = i + 1
            call get_argument(i,string)
            if (len_trim(string).gt.0) fileprefix = trim(string)
+        case('o')
+           i = i + 1
+           call get_argument(i,string)
+           if (isoutputformat(string)) then
+              iwritepixmap = .true.
+              pixmapformat = trim(string)
+           else
+              print "(a)",' invalid output format for -o option'
+              stop
+           endif
         case('e','ev')
            evsplash = .true.
            fileprefix = 'evsplash'

@@ -324,7 +324,7 @@ FFLAGS = $(F90FLAGS)
 # really should include all dependencies but I am lazy
 
 SOURCESF90= globaldata.f90 asciiutils.f90 transform.f90 \
-         prompting.f90 geometry.f90 \
+         prompting.f90 geometry.f90 write_pixmap.f90 \
          colours.f90 colourparts.f90 units.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \

@@ -475,6 +475,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use render, only:render_pix,colourbar
   use pagesetup, only:redraw_axes
   use exactfromfile, only:exact_fromfile
+  use write_pixmap, only:iwritepixmap,writepixmap
 
   implicit none
   integer, intent(inout) :: ipos, istepsonpage
@@ -1238,6 +1239,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  if (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm) then
                     call interpolate3D_proj_opacity_writeppm(datpix,brightness,npixx,npixy, &
                          rendermin,rendermax,((istep-1)*nframesloop + iframe))
+                 endif
+            
+                 if (iwritepixmap) then
+                    call writepixmap(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax,trim(labelrender),&
+                                     ((istep-1)*nframesloop + iframe))
                  endif
 
               elseif (ndim.eq.2 .and. x_sec) then
