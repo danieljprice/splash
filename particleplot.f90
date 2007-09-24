@@ -103,6 +103,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            !--otherwise plot all particles of this type using appropriate marker and colour
            !
            call pgqci(icolourindex)
+           dxcell1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
+           dycell1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
+
            if (all(icolourpart(index1:index2).eq.icolourpart(index1) &
                .and. icolourpart(index1).ge.0)) then
               call pgsci(icolourpart(index1))
@@ -110,8 +113,6 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
                  write(*,"(a,i8,1x,a)") &
                       ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
-                 dxcell1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
-                 dycell1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
                  nincell(1:ncellx,1:ncelly) = 0
 !                 notplotted = 0
                  do j=index1,index2
@@ -136,14 +137,37 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
               endif
            else
               nplotted = 0
+              nincell(1:ncellx,1:ncelly) = 0
+
               do j=index1,index2
                  if (icolourpart(j).ge.0) then
                     nplotted = nplotted + 1
-                    call pgsci(icolourpart(j))
-                    call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                    if (fastparticleplot .and. (index2-index1).gt.100) then
+                       icellx = int((xplot(j) - xmin)*dxcell1) + 1
+                       icelly = int((yplot(j) - ymin)*dycell1) + 1
+                       !--exclude particles if there are more than 2 particles per cell
+                       !  (two here because particles can have different colours)
+                       if (icellx.gt.0 .and. icellx.le.ncellx &
+                          .and. icelly.gt.0 .and. icelly.le.ncelly) then
+                          if (nincell(icellx,icelly).le.0) then
+                             nincell(icellx,icelly) = nincell(icellx,icelly) + 1_1  ! this +1 of type int*1
+                             call pgsci(icolourpart(j))
+                             call pgpt1(xplot(j),yplot(j),imarktype(itype))
+   !                       else
+   !                         notplotted = notplotted + 1
+                          endif
+                       endif
+                    else
+                       call pgsci(icolourpart(j))
+                       call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                    endif
                  endif
               enddo
-              print*,' plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
+              if (fastparticleplot .and. (index2-index1).gt.100) then
+                 print*,' fast-plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
+              else
+                 print*,' plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
+              endif
            endif
            call pgsci(icolourindex)
 
