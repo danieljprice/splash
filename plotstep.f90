@@ -303,7 +303,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
        if (abs(zobserver).lt.tiny(zobserver)) zobserver = 10.*lim(iplotz,2)
        if (abs(dzscreenfromobserver).lt.tiny(dzscreenfromobserver)) dzscreenfromobserver = lim(iplotz,2)
        call prompt('enter z coordinate of observer ',zobserver)
-       call prompt('enter distance between observer and projection screen ',dzscreenfromobserver,0.)
+       call prompt('enter distance for unit magnification ',dzscreenfromobserver,0.)
 !
 !--initialise opacity for 3D opacity rendering
 !       
