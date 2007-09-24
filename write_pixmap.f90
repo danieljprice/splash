@@ -77,7 +77,7 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
     print*,'error opening '//trim(filename)
     return
  endif
- write(*,"(a)",ADVANCE='NO'), '> writing pixel map to file '//trim(filename)//' ...'
+ write(*,"(a)",ADVANCE='NO') '> writing pixel map to file '//trim(filename)//' ...'
 
  write(stringx,"(i10)") npixx
  write(stringy,"(i10)") npixy
@@ -89,7 +89,7 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
- write(iunit,"(a)",err=66),'# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy))
+ write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy))
  do j=1,npixy
     write(iunit,*,err=66) datpix(1:npixx,j)
  enddo
