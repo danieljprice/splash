@@ -726,10 +726,10 @@ contains
   
   print*,'SUBTRACTING COROTATING VELOCITIES, OMEGA = ',omeg
   do i=1,np
-     velxy(i,1) = velxy(i,1) - xy(i,2)*omeg
+     velxy(i,1) = velxy(i,1) + xy(i,2)*omeg
   enddo
   do i=1,np
-     velxy(i,2) = velxy(i,2) + xy(i,1)*omeg
+     velxy(i,2) = velxy(i,2) - xy(i,1)*omeg
   enddo
   
   return
