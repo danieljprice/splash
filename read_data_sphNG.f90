@@ -9,6 +9,12 @@
 !
 ! *** CONVERTS TO SINGLE PRECISION ***
 !
+! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
+!  ENVIRONMENT VARIABLES:
+!
+! SSPLASH_RESET_CM if 'YES' then centre of mass is reset to origin
+! SSPLASH_OMEGA if non-zero subtracts corotating velocities with omega as set
+!
 ! the data is stored in the global array dat
 !
 ! >> this subroutine must return values for the following: <<
@@ -38,8 +44,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread,&
                      lowmemorymode
   use mem_allocation, only:alloc
-  use system_utils, only:lenvironment
-  use labels, only:ipmass,irho,ih,ix
+  use system_utils, only:lenvironment,renvironment
+  use labels, only:ipmass,irho,ih,ix,ivx
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
@@ -66,7 +72,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
   real, dimension(3) :: xyzsink
-  real :: pmassinitial,rhozero,tfreefall,hfact
+  real :: pmassinitial,rhozero,tfreefall,hfact,omega
   common /sphNGunits/ udist,umass,utime,umagfd,tfreefall
 
   nstepsread = 0
@@ -360,6 +366,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
       iformat = 2 ! mhd full dump
       if (smalldump) iformat = 3 ! mhd small dump
    endif
+   if (iformat.eq.0) then
+      ivx = 7
+   elseif (iformat.eq.2) then
+      ivx = 10
+   else
+      ivx = 0
+   endif
 !
 !--Arrays
 !
@@ -553,7 +566,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
              enddo
           endif
        endif
-    endif   
+    endif
+ !
+ !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
+ !
+    if (allocated(dat) .and. n1.GT.0 .and. .not. smalldump) then
+       omega = renvironment('SSPLASH_OMEGA')
+       if (abs(omega).gt.tiny(omega) .and. ivx.gt.0) then
+          if (.not.all(required(1:2)) .or. .not.all(required(ivx:ivx+1))) then
+             print*,' ERROR subtracting corotating frame with partial data read'
+          else
+             call reset_corotating_velocities(n1,dat(1:n1,1:2,j),dat(1:n1,ivx:ivx+1,j),omega)
+          endif
+       endif
+    endif
 
     !--set flag to indicate that only part of this file has been read 
     if (.not.all(required(1:ncolstep))) ipartialread = .true.
@@ -690,6 +716,24 @@ contains
   
   return
  end subroutine reset_centre_of_mass
+
+ subroutine reset_corotating_velocities(np,xy,velxy,omeg)
+  implicit none
+  integer, intent(in) :: np
+  real, dimension(np,2), intent(in) :: xy
+  real, dimension(np,2), intent(inout) :: velxy
+  real, intent(in) :: omeg  
+  
+  print*,'SUBTRACTING COROTATING VELOCITIES, OMEGA = ',omeg
+  do i=1,np
+     velxy(i,1) = velxy(i,1) - xy(i,2)*omeg
+  enddo
+  do i=1,np
+     velxy(i,2) = velxy(i,2) + xy(i,1)*omeg
+  enddo
+  
+  return
+ end subroutine reset_corotating_velocities
 
 end subroutine read_data
 
