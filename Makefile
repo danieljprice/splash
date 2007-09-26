@@ -405,6 +405,9 @@ RSPH: rsph
 rsph: checksystem $(OBJECTS) read_data_rsph.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o rsplash $(OBJECTS) read_data_rsph.o
 
+tipsy: checksystem $(OBJECTS) read_data_tipsy.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o tsplash $(OBJECTS) read_data_tipsy.o
+
 all: ndspmhd dansph sphNG srosph gadget mbatesph ascii
 
 checksystem:
