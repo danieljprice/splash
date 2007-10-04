@@ -29,13 +29,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use params
   use settings_data, only:ndim,ndimV,ncolumns
   use mem_allocation, only:alloc
-  use labels, only:label
+  use labels, only:label,ih
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,ic,icol
-  integer :: nprint,ngas,nptmass,npart_max,nstep_max
+  integer :: nprint,ngas,ndark,nptmass,npart_max,nstep_max
   integer :: ncol,nerr,nread
   logical :: iexist
   character(len=len(rootname)) :: dumpfile
@@ -73,10 +73,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
      read(15,*,end=55,iostat=ierr) nprint,ngas,nptmass
      read(15,*,end=55,iostat=ierr) ndim
      read(15,*,end=55,iostat=ierr) timei
-     print "(a,f10.2,a,i10,a,i10)",' time: ',timei,' ntot: ',nprint,' ngas: ',ngas
+     ndark = nprint - ngas - nptmass
+     print "(a,f10.2,4(a,i10))",' time: ',timei,' ntot: ',nprint,' ngas: ',ngas,' ndark: ',ndark,' nstar: ',nptmass
      !--barf if stupid values read
-     if (nprint.le.0 .or. nprint.gt.1e10 .or. ndim.le.0 .or. ndim.gt.3) then
-        print "(a)",' *** ERRORS IN TIMESTEP HEADER ***'
+     if (nprint.le.0 .or. nprint.gt.1e10 .or. ndim.le.0 .or. ndim.gt.3 .or. ndark.le.0) then
+        print "(a)",' *** ERROR READING TIMESTEP HEADER ***'
         close(15)
         return
      elseif (ierr /= 0) then
@@ -97,19 +98,47 @@ subroutine read_data(rootname,indexstart,nstepsread)
      time(j) = timei
 
      nread = 0
-     nerr = 0
      call set_labels
-     !--pmass
-     do ic=1,ncol
+     
+     !--pmass,x,y,z,vx,vy,vz
+     do ic=1,2*ndim+1
+        nerr = 0
         nread = nread + 1
-        if (ic.eq.1) then
+        if (ic.eq.1) then ! pmass
            icol = ndim + 1
-        elseif (ic.ge.2 .and. ic.le.ndim+1) then
+        elseif (ic.ge.2 .and. ic.le.ndim+1) then ! x, y, z
            icol = ic - 1
-        else
+        else ! everything after
            icol = ic
         endif
+        nerr = 0
         do i=1,nprint
+           read(15,*,end=44,iostat=ierr) dat(i,icol,j)
+           if (ierr /= 0) nerr = nerr + 1
+        enddo
+        if (nerr.gt.0) print "(/,a)",'*** WARNING: ERRORS READING '//trim(label(icol))//' ON ',nerr,' LINES'
+     enddo
+     !--h dark matter
+     if (ndark.gt.0) then
+        nerr = 0
+        do i=ngas+1,ngas+ndark-1
+           read(15,*,end=44,iostat=ierr) dat(i,ih,j)
+           if (ierr /= 0) nerr = nerr + 1
+        enddo
+        if (nerr.gt.0) print *,'*** WARNING: ERRORS READING DARK MATTER H ON ',nerr,' LINES'
+     endif
+     !--h star particles
+     if (nptmass.gt.0) then
+        nerr = 0
+        do i=ngas+ndark+1,ngas+ndark+nptmass-1
+           read(15,*,end=44,iostat=ierr) dat(i,ih,j)
+           if (ierr /= 0) nerr = nerr + 1
+        enddo
+        if (nerr.gt.0) print *,'*** WARNING: ERRORS READING PTMASS H ON ',nerr,' LINES'
+     endif
+     !--density, temperature, sph smoothing length
+     do icol=2*ndim+2,ncol
+        do i=1,ngas
            read(15,*,end=44,iostat=ierr) dat(i,icol,j)
            if (ierr /= 0) nerr = nerr + 1
         enddo
@@ -125,7 +154,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
      nstepsread = nstepsread + 1
      npartoftype(1,j) = ngas
-     npartoftype(2,j) = nptmass
+     npartoftype(2,j) = ndark
+     npartoftype(3,j) = nptmass
      gamma(j) = 1.666666666667
      j = j + 1
 
@@ -171,7 +201,7 @@ subroutine set_labels
   enddo
   ipmass = ndim + 1
   ivx = ndim + 2
-  irho = 2*ndim+2
+  irho = ivx + ndim
   iutherm = irho + 1
   ih = iutherm + 1
   
@@ -191,11 +221,13 @@ subroutine set_labels
   !
   !--set labels for each particle type
   !
-  ntypes = 2
+  ntypes = 3
   labeltype(1) = 'gas'
-  labeltype(2) = 'point mass'
+  labeltype(2) = 'dark matter'
+  labeltype(3) = 'star'
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .false.
+  UseTypeInRenderings(3) = .false.
  
 !-----------------------------------------------------------
 
