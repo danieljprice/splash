@@ -74,9 +74,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
      read(15,*,end=55,iostat=ierr) ndim
      read(15,*,end=55,iostat=ierr) timei
      ndark = nprint - ngas - nptmass
-     print "(a,f10.2,4(a,i10))",' time: ',timei,' ntot: ',nprint,' ngas: ',ngas,' ndark: ',ndark,' nstar: ',nptmass
+     print "(a,f10.2,1(a,i1))",' time: ',timei,' ndim: ',ndim
+     print "(4(a,i10))",' ntot: ',nprint,' ngas: ',ngas,' ndark: ',ndark,' nstar: ',nptmass
      !--barf if stupid values read
-     if (nprint.le.0 .or. nprint.gt.1e10 .or. ndim.le.0 .or. ndim.gt.3 .or. ndark.le.0) then
+     if (nprint.le.0 .or. nprint.gt.1e10 .or. ndim.le.0 .or. ndim.gt.3 .or. ndark.lt.0) then
         print "(a)",' *** ERROR READING TIMESTEP HEADER ***'
         close(15)
         return
@@ -111,6 +112,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         else ! everything after
            icol = ic
         endif
+        !print "(1x,a)",trim(label(icol))
         nerr = 0
         do i=1,nprint
            read(15,*,end=44,iostat=ierr) dat(i,icol,j)
@@ -130,7 +132,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !--h star particles
      if (nptmass.gt.0) then
         nerr = 0
-        do i=ngas+ndark+1,ngas+ndark+nptmass-1
+        do i=ngas+ndark+1,ngas+ndark+nptmass
            read(15,*,end=44,iostat=ierr) dat(i,ih,j)
            if (ierr /= 0) nerr = nerr + 1
         enddo
@@ -138,12 +140,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
      !--density, temperature, sph smoothing length
      do icol=2*ndim+2,ncol
+        nread = nread + 1
+        !print "(1x,a)",trim(label(icol))
         do i=1,ngas
            read(15,*,end=44,iostat=ierr) dat(i,icol,j)
            if (ierr /= 0) nerr = nerr + 1
         enddo
         if (nerr.gt.0) print "(/,a)",'*** WARNING: ERRORS READING '//trim(label(icol))//' ON ',nerr,' LINES'
      enddo
+     
+     !--multiply sph smoothing length x 2
+     dat(1:ngas,ih,j) = dat(1:ngas,ih,j)*2.
 
 44   continue
      
