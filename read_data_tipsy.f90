@@ -4,13 +4,6 @@
 !
 ! THIS VERSION IS FOR READING TIPSY FILES
 !
-! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
-!  ENVIRONMENT VARIABLES:
-!
-! BSPLASH_R8 if 'YES' or 'TRUE' then assumes data is double precision
-! BSPLASH_NCOL to change the number of columns read from the file, 
-! e.g. setenv BSPLASH_NCOL=22
-!
 ! the data is stored in the global array dat
 !
 ! >> this subroutine must return values for the following: <<
@@ -36,6 +29,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use params
   use settings_data, only:ndim,ndimV,ncolumns
   use mem_allocation, only:alloc
+  use labels, only:label
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
@@ -82,7 +76,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      print "(a,f10.2,a,i10,a,i10)",' time: ',timei,' ntot: ',nprint,' ngas: ',ngas
      !--barf if stupid values read
      if (nprint.le.0 .or. nprint.gt.1e10 .or. ndim.le.0 .or. ndim.gt.3) then
-        print "(a)",' *** ERRORS IN TIMESTEP HEADER: WRONG ENDIAN? ***'
+        print "(a)",' *** ERRORS IN TIMESTEP HEADER ***'
         close(15)
         return
      elseif (ierr /= 0) then
@@ -104,6 +98,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
      nread = 0
      nerr = 0
+     call set_labels
      !--pmass
      do ic=1,ncol
         nread = nread + 1
@@ -118,13 +113,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
            read(15,*,end=44,iostat=ierr) dat(i,icol,j)
            if (ierr /= 0) nerr = nerr + 1
         enddo
-        if (nerr.gt.0) print *,'*** WARNING: ERRORS READING ',i,'th QUANTITY ON ',nerr,' LINES'
+        if (nerr.gt.0) print "(/,a)",'*** WARNING: ERRORS READING '//trim(label(icol))//' ON ',nerr,' LINES'
      enddo
 
 44   continue
      
      if (nread.lt.ncol) then
-        print "(a)",' WARNING: END OF FILE: read to column ',nread
+        print "(a,i2)",' WARNING: END OF FILE: READ TO COLUMN ',nread
         ncolumns = nread
      endif
 
@@ -140,7 +135,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--reached end of file during header read
   !
-  print "(a)",' WARNING: END OF FILE: read to column ',nread
   close(15)
 
   if (allocated(npartoftype)) then
@@ -185,7 +179,7 @@ subroutine set_labels
   label(ih) = 'h'
   if (iutherm.gt.0) label(iutherm) = 'u'
   label(ipmass) = 'particle mass'
-  label(irho) = '\gr'
+  label(irho) = 'density'
 
   if (ivx.ne.0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
