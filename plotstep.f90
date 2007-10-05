@@ -2403,7 +2403,7 @@ end subroutine plotstep
 subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,yploti,zploti, &
                                   ntot,iplotx,iploty,iplotz,dat)
   use labels, only:ix
-  use settings_data, only:ndim,xorigin
+  use settings_data, only:ndim,xorigin,itrackpart
   use settings_xsecrot, only:use3Dperspective
   use rotation, only:rotate2D,rotate3D
   implicit none
@@ -2432,23 +2432,40 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
         print "(a)",' INTERNAL ERROR: no 3D perspective but observer set'
      endif
   endif
+  if (itrackpart.ge.0 .and. itrackpart.le.ntot) then
+     print*,'rotating about tracked particle ',itrackpart,' x,y,z = ',dat(itrackpart,ix(1:ndim))
+  elseif (any(abs(xorigin).ge.tiny(xorigin))) then
+     print*,'rotating about x,y,z = ',xorigin(1:ndim)
+  endif
 
 !$OMP PARALLEL default(none) &
 !$OMP SHARED(dat,xorigin,ndim,angleradx,anglerady,angleradz,zobs,dzscreen) &
-!$OMP SHARED(xploti,yploti,zploti,iplotx,iploty,iplotz,ntot,ix) &
+!$OMP SHARED(xploti,yploti,zploti,iplotx,iploty,iplotz,ntot,ix,itrackpart) &
 !$OMP PRIVATE(j,xcoords)
 !$OMP DO
   do j=1,ntot
-     xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
+     if (itrackpart.ge.0 .and. itrackpart.le.ntot) then
+        xcoords(1:ndim) = dat(j,ix(1:ndim)) - dat(itrackpart,ix(1:ndim))
+     else
+        xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
+     endif
      if (ndim.eq.2) then
         call rotate2D(xcoords(:),angleradz)
      elseif (ndim.eq.3) then
         call rotate3D(xcoords(1:ndim),angleradx,anglerady,angleradz,zobs,dzscreen)
      endif
-     xploti(j) = xcoords(iplotx) + xorigin(iplotx)
-     yploti(j) = xcoords(iploty) + xorigin(iploty)
-     if (iplotz.gt.0) then
-        zploti(j) = xcoords(iplotz) + xorigin(iplotz)
+     if (itrackpart.ge.0 .and. itrackpart.le.ntot) then
+        xploti(j) = xcoords(iplotx) + dat(itrackpart,ix(iplotx))
+        yploti(j) = xcoords(iploty) + dat(itrackpart,ix(iploty))
+        if (iplotz.gt.0) then
+           zploti(j) = xcoords(iplotz) + dat(itrackpart,ix(iplotz))
+        endif     
+     else
+        xploti(j) = xcoords(iplotx) + xorigin(iplotx)
+        yploti(j) = xcoords(iploty) + xorigin(iploty)
+        if (iplotz.gt.0) then
+           zploti(j) = xcoords(iplotz) + xorigin(iplotz)
+        endif
      endif
   enddo
 !$OMP END DO
