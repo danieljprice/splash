@@ -191,7 +191,8 @@ subroutine set_labels
 !
         if (label(i)(1:3).eq.'den' .or. label(i)(1:3).eq.'rho') then
            irho = i
-        elseif (label(i)(1:5).eq.'pmass' .or. label(i)(1:13).eq.'particle mass') then
+        elseif (label(i)(1:5).eq.'pmass' .or. label(i)(1:13).eq.'particle mass' &
+                .or. index(label(i),'mass').ne.0) then
            ipmass = i
         !--use first column labelled h as smoothing length
         elseif (ih.eq.0 .and. (label(i)(1:1).eq.'h' &
