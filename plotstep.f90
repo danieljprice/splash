@@ -27,7 +27,7 @@ module timestep_plotting
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
   logical, private :: inewpage, tile_plots, lastplot
   logical, private :: imulti,irerender,iAllowspaceforcolourbar
-  logical, private :: interactivereplot
+  logical, private :: interactivereplot,ihavesetcolours
   
   public :: initialise_plotting, plotstep
   private
@@ -383,11 +383,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   ! initialise PGPLOT
 
   !!--start PGPLOT
-!  if (tile_plots) then
-     call pgbegin(0,'?',1,1)
-!  else
-!     call pgbegin(0,'?',nacross,ndown)
-!  endif
+  call pgbegin(0,'?',1,1)
 
   !!--set paper size if necessary
   if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
@@ -406,7 +402,13 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
 10 format(' error: ',a,' colour "',a,'" not found in table')
   
   !!--set colour table
-  if (iamrendering .and.(icolours.ne.0)) call colour_set(icolours)
+  !   do this regardless of whether rendering or not
+  if (iamrendering .and. icolours.ne.0) then
+     call colour_set(icolours)
+     ihavesetcolours = .true.
+  else
+     ihavesetcolours = .false.
+  endif
     
   !!--set line width (0=auto based on whether device is vector or not)
   if (linewidth.le.0) then
@@ -433,6 +435,7 @@ end subroutine initialise_plotting
 subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     npartoftype,massoftype,dat,timei,gammai,ipagechange,iadvance)
   use params
+  use colours, only:colour_set
   use filenames, only:nsteps
   use exact, only:exact_solution,atstar,ctstar,sigma
   use toystar1D, only:exact_toystar_ACplane
@@ -528,7 +531,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   k = nxsec ! matters for lastplot in page_setup for non-coord plots
   if (iReScale) labeltimeunits = unitslabel(0)
   iaxistemp = iaxis
-    
+  
   !--set the arrays needed for rendering if they are present
   if (ih.gt.0 .and. ih.le.ndataplots) hh(:) = dat(:,ih)
   if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
@@ -545,6 +548,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   ntoti = sum(npartoftype)
   ninterp = npartoftype(1)
   if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes))) ninterp = ntoti
+
+  !--set the colour table if it has not been set and particles have been coloured previously
+  if (any(icolourme(1:ntoti).gt.16) .and. .not.ihavesetcolours) call colour_set(icolours)
   !
   !--set weight factor for interpolation routines
   !
@@ -668,7 +674,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !  (not allowed to use transformations on coords otherwise)
         !
         rendering = (iplotx.le.ndim .and. iploty.le.ndim .and. &
-                     (irenderplot.gt.ndim .or. ivectorplot.gt.0))
+                     (irenderplot.gt.ndim .or. ivectorplot.gt.0) .and. &
+                     (.not.icolour_particles))
         !
         !--change coordinate system if relevant
         !        
@@ -684,7 +691,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         if (.not.(rendering)) then
            if (itrans(iplotx).ne.0) call applytrans(xplot,xmin,xmax,labelx,itrans(iplotx),'x')
            if (itrans(iploty).ne.0) call applytrans(yplot,ymin,ymax,labely,itrans(iploty),'y')
-        endif   
+        endif
  
         !--write username, date on plot
         !         if (nacross.le.2.and.ndown.le.2) call pgiden
@@ -1100,18 +1107,23 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               call transform(renderplot(1:ntoti),itrans(irenderpart))
               labelrender = label(irenderpart)
               labelrender = transform_label(labelrender,itrans(irenderpart))
-
+              
+              call adapt_limits(irenderpart,renderplot(1:ntoti),rendermin,rendermax, &
+                                renderminadapt,rendermaxadapt,trim(labelrender))
+              
               !!--limits for rendered quantity
               if (.not.interactivereplot .and. .not.isetrenderlimits) then
                  !!--find (adaptive) limits of rendered array
                  !   (note: something may be not quite right here with adapt during anim sequences)
-                 call adapt_limits(irenderpart,renderplot(1:ntoti),rendermin,rendermax, &
-                                   renderminadapt,rendermaxadapt,trim(labelrender))
-                 if (.not.iadapt) then
+
+                 if (iadapt) then
+                    rendermin = renderminadapt
+                    rendermax = rendermaxadapt
+                 else
                     !!--use fixed limits and apply transformations
                     rendermin = lim(irenderpart,1)
                     rendermax = lim(irenderpart,2)
-                    call transform_limits(rendermin,rendermax,itrans(irenderpart))
+                    call transform_limits(rendermin,rendermax,itrans(irenderpart))  
                  endif
               endif
               !
@@ -1464,6 +1476,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), & 
                    ninterp,nfreqspec,lim(ipowerspecx,1),lim(ipowerspecx,2),xplot(1:nfreqspec), &
                    yplot(1:nfreqspec),inormalise)
+              xmin = max(minval(xplot(1:nfreqspec)),1.0)
+              xmax = maxval(xplot(1:nfreqspec))
+              nfreqpts = nfreqspec
            else
         !
         !--1D: use slow FT routines or Lomb periodogram
@@ -2025,7 +2040,6 @@ contains
    real, dimension(ndim) :: xcoords
    integer :: j
 
-   !--do this if one is a coord but not if rendering
    if (iplotx.le.ndim .or. iploty.le.ndim) then
       print*,'changing coords from ',trim(labelcoordsys(icoords)), &
              ' to ',trim(labelcoordsys(icoordsnew))
