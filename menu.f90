@@ -19,7 +19,7 @@ subroutine menu
   use settings_limits, only:submenu_limits
   use settings_part, only:submenu_particleplots,iexact
   use settings_page, only:submenu_page,interactive
-  use settings_render, only:submenu_render
+  use settings_render, only:submenu_render,icolour_particles
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
   use settings_xsecrot, only:submenu_xsecrotate,write_animfile
   use settings_units, only:unitslabel
@@ -216,8 +216,8 @@ subroutine menu
            iAllowRendering = (ih.gt.0 .and. ih.le.ndataplots) &
                         .and.(irho.gt.0 .and. irho.le.ndataplots) &
                         .and.(ipmass.gt.0 .and. ipmass.le.ndataplots)  &
-                        .and.(icoords.eq.icoordsnew) &
-                        .and.(itrans(ipickx).eq.0 .and. itrans(ipicky).eq.0)
+                        .and.(icoords.eq.icoordsnew .or. icolour_particles) &
+                        .and.((itrans(ipickx).eq.0 .and. itrans(ipicky).eq.0).or.icolour_particles)
            !
            !--prompt for render and vector plots 
            ! -> only allow if in "natural" coord system, otherwise h's would be wrong)
