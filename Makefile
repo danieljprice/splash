@@ -17,7 +17,11 @@ KNOWN_SYSTEM=no
 #
 F90C= 
 F90FLAGS=
-X11LIBS= -L/usr/X11R6/lib -lX11
+ifeq ($(findstring 64,$(MACHTYPE)),64)
+   X11LIBS= -L/usr/X11R6/lib64 -lX11
+else
+   X11LIBS= -L/usr/X11R6/lib -lX11
+endif
 #
 # change the line below depending on where/how you have installed PGPLOT
 # (some settings of the SYSTEM variable for specific machines overwrite this)
@@ -123,8 +127,9 @@ endif
 ifeq ($(SYSTEM),pgf90)
 #  this is for the Portland Group Fortran 90 compiler
    F90C= pgf90
-   F90FLAGS= -O -mcmodel=medium
+   F90FLAGS= -O -mcmodel=medium -Mbackslash -Ktrap=none
    SYSTEMFILE= system_unix.f90
+   ENDIANFLAGBIG= -Mbyteswapio
    KNOWN_SYSTEM=yes
 endif
 
