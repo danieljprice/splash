@@ -29,7 +29,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use params
   use settings_data, only:ndim,ndimV,ncolumns
   use mem_allocation, only:alloc
-  use labels, only:label,ih
+  use labels, only:label,ih,ipmass,irho
+  use exact, only:hfact
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
@@ -149,8 +150,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
         if (nerr.gt.0) print "(/,a)",'*** WARNING: ERRORS READING '//trim(label(icol))//' ON ',nerr,' LINES'
      enddo
      
-     !--multiply sph smoothing length x 2
-     dat(1:ngas,ih,j) = dat(1:ngas,ih,j)*2.
+     !
+     !--often tipsy dumps contain only a (fixed) gravitational softening length
+     ! for sph particles. In this case we need to create a sensible smoothing length
+     ! (and warn people about the evils of using fixed softening lengths for sph particles)
+     !
+     if (ngas.ge.0 .and. all(abs(dat(1:ngas,ih,j)-dat(1,ih,j)).le.tiny(dat))) then
+        print "(a)",'WARNING: fixed softening lengths detected: simulation may contain artificial fragmentation!'
+        print "(a,f4.2,a,i1,a)",'       : creating SPH smoothing lengths using h = ',hfact,'*(m/rho)**(1/',ndim,')'
+        dat(1:ngas,ih,j) = hfact*(dat(1:ngas,ipmass,j)/(dat(1:ngas,irho,j) + tiny(dat)))**(1./ndim)
+     endif
 
 44   continue
      
