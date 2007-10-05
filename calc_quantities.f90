@@ -24,7 +24,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   integer :: ipmag,ibeta,itotpr,idivBerr,icrosshel,ithermal
   integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
   integer :: iamvecprev,ivec,nveclist,ivecstart,inewcol
-  integer :: imri
+  integer :: imri,ipk
   integer, dimension(ncolumns) :: iveclist,ivecmagcol
   logical :: skip
   real :: Bmag, veltemp, spsound
@@ -89,6 +89,8 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   !if (ipmass.ne.0 .and. irho.ne.0 .and. ndim.ge.1) call addcolumn(ivol,'m/rho^(1/ndim)')
   !--dh/drho
   !if (ih.ne.0 .and. irho.ne.0) call addcolumn(idhdrho,'dh/d\gr')
+  !--pk
+  call addcolumn(ipk,'P(k) k\u2')
 
   !
   !--specify MHD quantities
@@ -197,6 +199,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
          else
             !--make radius relative to tracked particle if particle tracking is set
             if (itrackpart.gt.0 .and. itrackpart.le.ntoti) then
+               print "(a,i10)",' radius relative to particle ',itrackpart
                do j=1,ntoti
                   dat(j,irad,i) = sqrt(dot_product( &
                                   dat(j,ix(1:ndim),i)-dat(itrackpart,ix(1:ndim),i), &
@@ -204,6 +207,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                enddo
             else
             !--else calculate radius using origin settings for rotation
+               print*,'radius relative to origin = ',xorigin(1:ndim)
                do j=1,ntoti
                   dat(j,irad,i) = sqrt(dot_product(dat(j,ix(1:ndim),i)-xorigin(1:ndim),   &
                     dat(j,ix(1:ndim),i)-xorigin(1:ndim)))
@@ -233,6 +237,12 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
       if ((ideltarho.ne.0).and.(irho.ne.0).and.(irad.ne.0)) then
          do j=1,ntoti
             dat(j,ideltarho,i) = dat(j,irho,i) - (1.-dat(j,irad,i)**2)
+         enddo
+      endif
+      !!--P(k)*k-2
+      if ((ipk.ne.0)) then
+         do j=1,ntoti
+            dat(j,ipk,i) = dat(j,2,i)*dat(j,1,i)**2
          enddo
       endif
       !!--distance along the line with angle 30deg w.r.t. x axis
