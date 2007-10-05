@@ -67,7 +67,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
   real :: xlength,ylength,renderlength,renderpt,drender,zoomfac
-  real :: dxlength,dylength,xmaxin,ymaxin
+  real :: dxlength,dylength,xmaxin,ymaxin,xorigin,yorigin
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
   character(len=20) :: string
@@ -498,10 +498,18 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            iexit = .true.
         endif
         if (char.eq.'o') then !--recentre plot on origin
-           xmin = -0.5*xlength
-           xmax = 0.5*xlength
-           ymin = -0.5*ylength
-           ymax = 0.5*ylength
+           if (itrackpart.gt.0) then
+               print*,'centreing limits on tracked particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
+               xorigin = xcoords(itrackpart)
+               yorigin = ycoords(itrackpart)
+           else
+               xorigin = 0.
+               yorigin = 0.
+           endif
+           xmin = xorigin - 0.5*xlength
+           xmax = xorigin + 0.5*xlength
+           ymin = yorigin - 0.5*ylength
+           ymax = yorigin + 0.5*ylength
            iadvance = 0
            interactivereplot = .true.
            iexit = .true.
