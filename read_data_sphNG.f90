@@ -42,7 +42,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data, only:dat,gamma,time,npartoftype,maxpart,maxstep,maxcol,icolourme
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread,&
-                     lowmemorymode
+                     lowmemorymode,ntypes
   use mem_allocation, only:alloc
   use system_utils, only:lenvironment,renvironment
   use labels, only:ipmass,irho,ih,ix,ivx
@@ -55,9 +55,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: i,j,ierr,iunit,int1,int2,int3,i1,iarr
   integer :: npart_max,nstep_max,ncolstep,icolumn
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
-  integer :: nskip,ntotal,npart,n1,n2,itype,ntypes
+  integer :: nskip,ntotal,npart,n1,n2,itype,ninttypes
   integer :: ipos,nptmass,nptmassi,nunknown,isink,ilastrequired
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
+  integer, dimension(maxparttypes) :: npartoftypei
   logical :: iexist, doubleprec, smalldump,imadepmasscolumn,phantomdump
     
   character(len=len(rootname)+10) :: dumpfile
@@ -164,6 +165,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
       if (nints.lt.3) then
          if (.not.phantomdump) print "(a)",'WARNING: npart,n1,n2 NOT IN HEADER??'
          read(iunit,iostat=ierr) npart
+      elseif (phantomdump) then
+         ntypes = nints - 1
+         read(iunit,iostat=ierr) npart,npartoftypei(1:ntypes)
       else
          read(iunit,iostat=ierr) npart,n1,n2      
       endif
@@ -177,8 +181,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
 !--int*1, int*2, int*4, int*8
    do i=1,4
-      read(iunit,end=55,iostat=ierr) ntypes
-      do itype=1,ntypes
+      read(iunit,end=55,iostat=ierr) ninttypes
+      do itype=1,ninttypes
          read(iunit,end=55,iostat=ierr)
       enddo
       if (ierr /=0) print "(a)",'error skipping int types'
@@ -310,8 +314,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
    gamma(j) = dummyreal(3)
    rhozero = dummyreal(4)
    tfreefall = SQRT((3. * pi) / (32. * rhozero))
-   npartoftype(1,j) = npart
-   npartoftype(2,j) = ntotal - npart
+   if (phantomdump) then
+      npartoftype(1:ntypes,j) = npartoftypei(1:ntypes)
+   else
+      npartoftype(1,j) = npart
+      npartoftype(2,j) = ntotal - npart
+   endif
    nptmass = isize(2)
    hfact = 1.2
    if (phantomdump) then
@@ -672,12 +680,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (allocated(iphase)) deallocate(iphase)
      if (allocated(listpm)) deallocate(listpm)
 
-     npartoftype(1,j) = npart - nptmassi - nunknown
-     npartoftype(2,j) = ntotal - npart
-     npartoftype(3,j) = nptmassi
-     npartoftype(4,j) = nunknown
-     if (npartoftype(2,j).ne.0) then
-        print*,' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j),' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown
+     if (.not.phantomdump) then
+        npartoftype(1,j) = npart - nptmassi - nunknown
+        npartoftype(2,j) = ntotal - npart
+        npartoftype(3,j) = nptmassi
+        npartoftype(4,j) = nunknown
+     endif
+     
+     if (phantomdump) then
+        print*,' n(gas) = ',npartoftype(1,j),' n(dust) = ',npartoftype(2,j)
+     elseif (npartoftype(2,j).ne.0) then
+        print*,' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j),' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown        
      else
         print*,' n(gas) = ',npartoftype(1,j),' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown
      endif
@@ -881,15 +894,23 @@ subroutine set_labels
   !
   !--set labels for each particle type
   !
-  ntypes = 4  !!maxparttypes
-  labeltype(1) = 'gas'
-  labeltype(2) = 'ghost'
-  labeltype(3) = 'sink'
-  labeltype(4) = 'unknown/dead'
-  UseTypeInRenderings(1) = .true.
-  UseTypeInRenderings(2) = .true.
-  UseTypeInRenderings(3) = .false.
-  UseTypeInRenderings(4) = .true.  ! only applies if turned on
+  if (ntypes.eq.2) then  ! phantom
+     ntypes = 2  !!maxparttypes
+     labeltype(1) = 'gas'
+     labeltype(2) = 'dust'
+     UseTypeInRenderings(1) = .true.
+     UseTypeInRenderings(2) = .false.  
+  else
+     ntypes = 4  !!maxparttypes
+     labeltype(1) = 'gas'
+     labeltype(2) = 'ghost'
+     labeltype(3) = 'sink'
+     labeltype(4) = 'unknown/dead'
+     UseTypeInRenderings(1) = .true.
+     UseTypeInRenderings(2) = .true.
+     UseTypeInRenderings(3) = .false.
+     UseTypeInRenderings(4) = .true.  ! only applies if turned on
+  endif
 
 !-----------------------------------------------------------
 
