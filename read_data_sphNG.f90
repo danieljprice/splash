@@ -39,7 +39,7 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data, only:dat,gamma,time,npartoftype,maxpart,maxstep,maxcol
+  use particle_data, only:dat,gamma,time,npartoftype,maxpart,maxstep,maxcol,icolourme
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread,&
                      lowmemorymode
@@ -516,8 +516,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
             !--construct density for phantom dumps based on h, hfact and particle mass
             if (phantomdump .and. icolumn.eq.ih) then
                icolumn = irho ! density
-               if (required(irho)) dat(1:isize(iarr),irho,j) = &
+               !
+               !--dead particles have -ve smoothing lengths in phantom
+               !  so use abs(h) for these particles and hide them
+               !
+               if (required(irho)) then
+                  where (dat(1:isize(iarr),ih,j).gt.0.)
+                     dat(1:isize(iarr),irho,j) = &
                                 pmassinitial*(hfact/dat(1:isize(iarr),ih,j))**3
+                  elsewhere (dat(1:isize(iarr),ih,j).gt.0.)
+                     dat(1:isize(iarr),irho,j) = &
+                                pmassinitial*(hfact/abs(dat(1:isize(iarr),ih,j)))**3
+                     icolourme(1:isize(iarr)) = -1
+                  end where
+               endif
+                   
 !               print*,icolumn
             endif
          enddo
