@@ -62,6 +62,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   ivol = 0
   ithermal = 0
   imri = 0
+  ipk = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -90,7 +91,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   !--dh/drho
   !if (ih.ne.0 .and. irho.ne.0) call addcolumn(idhdrho,'dh/d\gr')
   !--pk
-  call addcolumn(ipk,'P(k) k\u2')
+  !call addcolumn(ipk,'P(k) k\u2')
 
   !
   !--specify MHD quantities
@@ -205,9 +206,9 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                                   dat(j,ix(1:ndim),i)-dat(itrackpart,ix(1:ndim),i), &
                                   dat(j,ix(1:ndim),i)-dat(itrackpart,ix(1:ndim),i)))
                enddo
-            else
+            elseif (any(abs(xorigin(1:ndim)).gt.tiny(xorigin))) then
             !--else calculate radius using origin settings for rotation
-               print*,'radius relative to origin = ',xorigin(1:ndim)
+               print*,'radius calculated relative to origin = ',xorigin(1:ndim)
                do j=1,ntoti
                   dat(j,irad,i) = sqrt(dot_product(dat(j,ix(1:ndim),i)-xorigin(1:ndim),   &
                     dat(j,ix(1:ndim),i)-xorigin(1:ndim)))

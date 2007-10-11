@@ -2446,7 +2446,7 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
         print "(a)",' INTERNAL ERROR: no 3D perspective but observer set'
      endif
   endif
-  if (itrackpart.ge.0 .and. itrackpart.le.ntot) then
+  if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
      print*,'rotating about tracked particle ',itrackpart,' x,y,z = ',dat(itrackpart,ix(1:ndim))
   elseif (any(abs(xorigin).ge.tiny(xorigin))) then
      print*,'rotating about x,y,z = ',xorigin(1:ndim)
@@ -2458,7 +2458,7 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
 !$OMP PRIVATE(j,xcoords)
 !$OMP DO
   do j=1,ntot
-     if (itrackpart.ge.0 .and. itrackpart.le.ntot) then
+     if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
         xcoords(1:ndim) = dat(j,ix(1:ndim)) - dat(itrackpart,ix(1:ndim))
      else
         xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
