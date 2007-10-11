@@ -24,12 +24,12 @@ contains
 !
 !--------------------------------------------------------------------------
 subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
-                        vecpixx,vecpixy,npixvecx,npixvecy,minincell)
+                        vecpixx,vecpixy,npixvecx,npixvecy,minincell,blankval)
  implicit none
  integer, intent(in) :: npart,npixvecx,npixvecy,minincell
  integer, dimension(npart), intent(in) :: itype
  real, dimension(npart), intent(in) :: xplot,yplot
- real, intent(in) :: xmin,xmax,ymin,ymax
+ real, intent(in) :: xmin,xmax,ymin,ymax,blankval
  real, dimension(npixvecx,npixvecy), intent(inout) :: vecpixx,vecpixy
  integer, dimension(npixvecx,npixvecy) :: nincell
  integer :: icellx,icelly,j
@@ -56,13 +56,13 @@ subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
           nincell(icellx,icelly) = nincell(icellx,icelly) + 1
        endif
     endif
- enddo 
+ enddo
 !
 !--set vector arrow lengths to zero in cells where there are no particles
 !
  where (nincell.lt.minincell)
-    vecpixx = 0.
-    vecpixy = 0. 
+    vecpixx = blankval
+    vecpixy = blankval
  end where
  
  return

@@ -2242,6 +2242,7 @@ contains
    real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpixvec
    integer :: i,j,icoloursav,linewidthprev
    real :: vmag
+   real :: blankval,datmax
    
    !--query colour index and line width
    call pgqci(icoloursav)
@@ -2350,17 +2351,34 @@ contains
               enddo
             enddo                  
          endif
+        
          call streamlines(vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec)
-           
-         call render_pix(datpixvec(1:numpixx,1:numpixy), &
+         
+         if (ihidearrowswherenoparts) then
+            datmax = maxval(datpixvec(1:numpixx,1:numpixy))
+            blankval = 2.*datmax
+            call mask_vectors(xplot(1:ninterp),yplot(1:ninterp),icolourme(1:ninterp),ninterp, &
+                              xmin,xmax,ymin,ymax,datpixvec(1:numpixx,1:numpixy), &
+                              datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,minpartforarrow,blankval)
+
+            !--use blanking for values of zero
+            call render_pix(datpixvec(1:numpixx,1:numpixy), &
+                         minval(datpixvec(1:numpixx,1:numpixy)), &
+                         datmax, &
+                         'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,    &
+                         0,.true.,.false.,ncontours,.false.,blank=blankval)
+         else
+            call render_pix(datpixvec(1:numpixx,1:numpixy), &
                          minval(datpixvec(1:numpixx,1:numpixy)), &
                          maxval(datpixvec(1:numpixx,1:numpixy)), &
                          'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,    &
                          0,.true.,.false.,ncontours,.false.)
+         endif
+
       else
          if (ihidearrowswherenoparts) then
             call mask_vectors(xplot(1:ninterp),yplot(1:ninterp),icolourme(1:ninterp),ninterp, &
-                              xmin,xmax,ymin,ymax,vecpixx,vecpixy,numpixx,numpixy,minpartforarrow)
+                              xmin,xmax,ymin,ymax,vecpixx,vecpixy,numpixx,numpixy,minpartforarrow,0.)
          endif
       
          call render_vec(vecpixx,vecpixy,vmax, &
@@ -2468,7 +2486,7 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
      elseif (ndim.eq.3) then
         call rotate3D(xcoords(1:ndim),angleradx,anglerady,angleradz,zobs,dzscreen)
      endif
-     if (itrackpart.ge.0 .and. itrackpart.le.ntot) then
+     if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
         xploti(j) = xcoords(iplotx) + dat(itrackpart,ix(iplotx))
         yploti(j) = xcoords(iploty) + dat(itrackpart,ix(iploty))
         if (iplotz.gt.0) then

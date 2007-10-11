@@ -16,13 +16,14 @@ contains
 !------------------------------------------------------------------------
  
 subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
-                  xmin,ymin,dx,icolours,iplotcont,iPlotColourBar,nc,log)
+                  xmin,ymin,dx,icolours,iplotcont,iPlotColourBar,nc,log,blank)
  implicit none
  integer, intent(in) :: npixx,npixy,nc,icolours
  real, intent(in) :: xmin,ymin,datmin,datmax,dx
  real, dimension(npixx,npixy), intent(in) :: datpix
  logical, intent(in) :: iplotcont,iPlotColourBar,log
- character(len=*), intent(in) :: label  
+ character(len=*), intent(in) :: label
+ real, intent(in), optional :: blank
  
  integer :: i
  real :: trans(6),levels(nc),dcont
@@ -53,7 +54,6 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !--contours
 !
  if (iplotcont) then
-    print*,'plotting ',nc,' contours...'
 !
 !--set contour levels
 ! 
@@ -63,8 +63,17 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
     enddo
 !
 !--plot contours (use pgcont if pgcons causes trouble)
+!  with blanking if blank is input
 !
-    call pgcons(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
+    if (present(blank)) then
+       print*,'plotting ',nc,' contours (with blanking)...'
+       !print*,' blanking = ',blank,'min,max = ',datmin,datmax
+       call pgconb(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans,blank)
+    else
+       print*,'plotting ',nc,' contours...'
+       call pgcons(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
+    endif
+!
 !--this line prints the label inside the contour plot
 !  (now obsolete-- this functionality can be achieved using plot titles)
 !    call pgmtxt('T',-2.0,0.05,0.0,trim(label))
