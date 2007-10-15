@@ -39,7 +39,7 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data, only:dat,gamma,time,npartoftype,maxpart,maxstep,maxcol,icolourme
+  use particle_data, only:dat,gamma,time,npartoftype,maxpart,maxstep,maxcol,icolourme,massoftype
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread,&
                      lowmemorymode,ntypes
@@ -59,6 +59,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: ipos,nptmass,nptmassi,nunknown,isink,ilastrequired
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
   integer, dimension(maxparttypes) :: npartoftypei
+  real, dimension(maxparttypes) :: massoftypei
   logical :: iexist, doubleprec, smalldump,imadepmasscolumn,phantomdump
     
   character(len=len(rootname)+10) :: dumpfile
@@ -73,7 +74,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
   real, dimension(3) :: xyzsink
-  real :: pmassinitial,rhozero,tfreefall,hfact,omega
+  real :: rhozero,tfreefall,hfact,omega
   common /sphNGunits/ udist,umass,utime,umagfd,tfreefall
 
   nstepsread = 0
@@ -278,16 +279,22 @@ subroutine read_data(rootname,indexstart,nstepsread)
    npart_max = maxval(isize(1:narrsizes))
    if (smalldump .or. phantomdump) then
       if (nreals.ge.15) then
-         pmassinitial = dummyreal(15)
-         if (pmassinitial.gt.tiny(0.)) then
+         massoftypei(1) = dummyreal(15)
+         if (massoftypei(1).gt.tiny(0.)) then
             ncolstep = ncolstep + 1  ! make an extra column to contain particle mass
             imadepmasscolumn = .true.
          endif
+         !--read dust mass from phantom dumps
+         if (phantomdump .and. nreals.ge.16) then
+            massoftypei(2) = dummyreal(16)
+         else
+            massoftypei(2) = 0.
+         endif
       else
-         print "(a)",' error extracting pmassinitial from small dump file'
-         pmassinitial = 0.
+         print "(a)",' error extracting particle mass from small dump file'
+         massoftypei(1) = 0.
       endif
-      if (abs(pmassinitial).lt.tiny(0.) .and. nreal(1).lt.4) then
+      if (abs(massoftypei(1)).lt.tiny(0.) .and. nreal(1).lt.4) then
          print "(a)",' error: particle masses not present in small dump file'   
       endif
       !--for phantom dumps, also make a column for density
@@ -486,10 +493,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
          enddo
 !        set masses for equal mass particles (not dumped in small dump)
          if (((smalldump.and.nreal(1).lt.ipmass).or.phantomdump).and. iarr.eq.1) then
-            if (abs(pmassinitial).gt.tiny(pmassinitial)) then
+            if (abs(massoftypei(1)).gt.tiny(massoftypei)) then
                icolumn = ipmass
                if (required(ipmass)) then
-                  where (iphase(1:isize(iarr)).eq.0) dat(1:isize(iarr),icolumn,j) = pmassinitial
+                  where (iphase(1:isize(iarr)).eq.0) dat(1:isize(iarr),icolumn,j) = massoftypei(1)
+               endif
+               !--dust mass for phantom particles
+               if (phantomdump .and. npartoftypei(2).gt.0) then
+                  print *,' dust particle mass = ',massoftypei(2),' ratio dust/gas = ',massoftypei(2)/massoftypei(1)
+                  dat(npartoftypei(1)+1:npartoftypei(1)+npartoftypei(2),icolumn,j) = massoftypei(2)
                endif
 !               print*,icolumn
             endif
@@ -531,10 +543,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                if (required(irho)) then
                   where (dat(1:isize(iarr),ih,j).gt.0.)
                      dat(1:isize(iarr),irho,j) = &
-                                pmassinitial*(hfact/dat(1:isize(iarr),ih,j))**3
+                        dat(1:isize(iarr),ipmass,j)*(hfact/dat(1:isize(iarr),ih,j))**3
                   elsewhere (dat(1:isize(iarr),ih,j).gt.0.)
                      dat(1:isize(iarr),irho,j) = &
-                                pmassinitial*(hfact/abs(dat(1:isize(iarr),ih,j)))**3
+                        dat(1:isize(iarr),ipmass,j)*(hfact/abs(dat(1:isize(iarr),ih,j)))**3
                      icolourme(1:isize(iarr)) = -1
                   end where
                endif
@@ -689,10 +701,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
      
      if (phantomdump) then
         print*,' n(gas) = ',npartoftype(1,j),' n(dust) = ',npartoftype(2,j)
-     elseif (npartoftype(2,j).ne.0) then
-        print*,' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j),' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown        
      else
-        print*,' n(gas) = ',npartoftype(1,j),' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown
+        if (npartoftype(2,j).ne.0) then
+           print*,' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j), &
+                  ' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown        
+        else
+           print*,' n(gas) = ',npartoftype(1,j),' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown
+        endif
      endif
      
      close(15)
