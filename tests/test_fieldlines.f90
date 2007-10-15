@@ -8,7 +8,7 @@ program test_fieldlines
  integer, parameter :: ipixx = 1000, ipixy = 1000, nc = 100
  integer :: npixx, npixy,i,j
  real, parameter :: errtol = 1.e-7
- real, dimension(ipixx,ipixy) :: datpix,vecpixx,vecpixy,datpix1
+ real, dimension(ipixx,ipixy) :: datpix,vecpixx,vecpixy,datpix1,datpix2,vecpixx1,vecpixy1
  real :: xmin,xmax,ymin,ymax,zmin,zmax,dxpix
  real :: xi,yi,datmin,datmax,err,dcont
  real, parameter :: pi=3.1415926536
@@ -24,11 +24,13 @@ program test_fieldlines
  
  print "(70('-'))"
  print*,'ORSZAG-TANG TEST'
+
  npixx = 400
  npixy = 400
  dxpix = (xmax-xmin)/real(npixx)
  do j = 1,npixy
     yi = ymin + (j-0.5)*dxpix
+    if (j.le.10) print*,'y = ',yi
     do i = 1,npixx
        xi = xmin + (i-0.5)*dxpix
        vecpixx(i,j) = func_vecx(xi,yi)
@@ -39,6 +41,28 @@ program test_fieldlines
 
  call streamlines(vecpixx(1:npixx,1:npixy),vecpixy(1:npixx,1:npixy), &
       datpix(1:npixx,1:npixy),npixx,npixy,dxpix)
+
+ do j = 1,npixy,2
+    yi = ymin + (j-0.5)*2.*dxpix
+    do i = 1,npixx,2
+       xi = xmin + (i-0.5)*2.*dxpix
+       vecpixx1((i+1)/2,(j+1)/2) = func_vecx(xi,yi) !vecpixx(i,j)
+       vecpixy1((i+1)/2,(j+1)/2) = func_vecy(xi,yi) !vecpixy(i,j)
+    enddo
+ enddo
+ npixx = npixx/2
+ npixy = npixy/2
+ dxpix = (xmax-xmin)/real(npixx)
+ call streamlines(vecpixx1(1:npixx,1:npixy),vecpixy1(1:npixx,1:npixy), &
+      datpix2(1:npixx,1:npixy),npixx,npixy,dxpix)
+ npixx = npixx*2
+ npixy = npixy*2 
+ dxpix = (xmax-xmin)/real(npixx)
+ !do j=1,npixy,2
+ !   do i=1,npixx,2
+ !      datpix(i,j) = (4.*datpix(i,j) - datpix2((i+1)/2,(j+1)/2))/3.
+ !   enddo
+ !enddo
 
  call pgenv(xmin,xmax,ymin,ymax,1,0)
  trans = 0.
@@ -54,6 +78,7 @@ program test_fieldlines
  datmin = minval(datpix(1:npixx,1:npixy))
  print*,'min,max datpix = ',datmin,datmax
 
+ print*,'plotting integrated array...'
 ! call render_pix(datpix(1:npixx,1:npixy),datmin,datmax,'crap',npixx,npixy, &
 !                 xmin,ymin,dxpix,0,.true.,.false.,30,.false.)
  call pgimag(datpix,ipixx,ipixy,1,npixx,1,npixy,datmin,datmax,trans)    
@@ -75,8 +100,9 @@ program test_fieldlines
  datmin = minval(datpix1(1:npixx,1:npixy)) 
  print*,'min,max datpix1 = ',datmin,datmax
 
+ !print*,' plotting exact solution ...'
 ! call pgimag(datpix1,ipixx,ipixy,1,npixx,1,npixy,datmin,datmax,trans)
- call pgcons(datpix1(1:npixx,1:npixy),npixx,npixy,1,npixx,1,npixy,levels(1:nc),nc,trans)
+ !call pgcons(datpix1(1:npixx,1:npixy),npixx,npixy,1,npixx,1,npixy,levels(1:nc),nc,trans)
 
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,datpix1(1:npixx,1:npixy),err)
  print*,'average error in stream line calculation  = ',err
