@@ -1679,7 +1679,7 @@ contains
   subroutine page_setup
     use pagesetup, only:setpage2
     use settings_render, only:ColourBarWidth,ColourBarDisp
-    use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes
+    use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes,vposlegend,iPlotLegend
     implicit none
     real :: barwidth, TitleOffset,xch,ych
     logical :: ipanelchange
@@ -1732,9 +1732,10 @@ contains
     else
        barwidth = 0.
     endif
-    !--work out whether or not to leave space above plots for titles
+    !--work out whether or not to leave space above plots for titles/legends
     TitleOffset = 0.
     if (iPlotTitles .and. nstepsperpage.eq.1 .and. vpostitle.gt.0.) TitleOffset = vpostitle
+    if (iPlotLegend .and. nstepsperpage.eq.1 .and. vposlegend.lt.0.) TitleOffset = max(Titleoffset,-vposlegend)
 
     inewpage = ipanel.eq.1 .and. ipanelchange .and. ipagechange
     if (inewpage) then
@@ -1768,7 +1769,7 @@ contains
     endif
     if (nstepsperpage.ne.0 .or. inewpage) then
        call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
-                  trim(labelx),trim(labely),trim(title),just,iaxistemp,0.001,barwidth+0.001,0.001,0.001, &
+                  trim(labelx),trim(labely),' ',just,iaxistemp,0.001,barwidth+0.001,0.001,0.001, &
                   0.0,TitleOffset,isamexaxis,tile_plots)
     endif
     
