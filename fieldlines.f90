@@ -48,9 +48,8 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
  real, intent(out), dimension(npixx,npixy) :: datpix
  real, dimension(npixx,npixy) :: datpix2
  integer, intent(in) :: npixx,npixy
- real(kind=8) :: fyj
-! real(kind=8), dimension(npixy) :: fylast
- real(kind=8), dimension(npixx) :: fx !!,fxlast
+ real(kind=8) :: fyj,fyjhalf,term,termi,termj,fxprevi,fyjprev
+ real(kind=8), dimension(npixx) :: fx,fxhalf
  integer :: i,j
  !
  !--check for errors in input
@@ -62,48 +61,111 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
  endif
  
  fyj = 0.
+ fyjhalf = 0.
  !
  !--perform the integration forwards
  !
  do j=1,npixy
     do i=1,npixx
-       !--trapezoidal rule in x
+       term = 0.
        if (i.eq.1) then
           fyj = 0.
+          fyjhalf = 0.
        else
-          fyj = fyj - 0.5*pixwidth*(vecpixy(i-1,j)+vecpixy(i,j))    
+          fyjprev = fyj
+          !--trapezoidal rule in x
+          termj = 0.5*pixwidth*(vecpixy(i-1,j)+vecpixy(i,j))
+          fyj = fyj - termj
+          if (mod(i-1,2).eq.0) then ! 3, 5, 7, 9 ...
+             !
+             !--for odd points, use trapezoidal solution at half grid points
+             !  to get Simpson's rule
+             !
+             fyjhalf = fyjhalf - pixwidth*(vecpixy(i-2,j)+vecpixy(i,j))
+             term = term + 4./3.*fyj - 1./3.*fyjhalf
+          else
+             !
+             !--for even points, use Simpson's rule up to last odd point
+             !  then finish with a trapezoidal integration over last two points
+             !
+             term = term + 4./3.*fyjprev - 1./3.*fyjhalf - termj
+          endif
        endif
-       !--trapezoidal rule in y
+       !
+       !--same as above but for integration in y
+       !
        if (j.eq.1) then
           fx(i) = 0.
+          fxhalf(i) = 0.
+          fxprevi = 0.
        else
-          fx(i) = fx(i) + 0.5*pixwidth*(vecpixx(i,j-1)+vecpixx(i,j))
+          fxprevi = fx(i)
+          termi = 0.5*pixwidth*(vecpixx(i,j-1)+vecpixx(i,j))
+          fx(i) = fx(i) + termi
+          if (mod(j-1,2).eq.0) then
+             fxhalf(i) = fxhalf(i) + pixwidth*(vecpixx(i,j-2)+vecpixx(i,j))
+             term = term + 4./3.*fx(i) - 1./3.*fxhalf(i)
+          else
+             term = term + 4./3.*fxprevi - 1./3.*fxhalf(i) + termi
+          endif
        endif
-       datpix(i,j) = real(fx(i) + fyj)
-!       if (i.eq.npixx) fylast(j) = fyj
-!       if (j.eq.npixy) fxlast(i) = fx(i)
+       
+       datpix(i,j) = term
     enddo
  enddo
  !
  !--perform the integration backwards
  !
+ datpix2 = 0.
  do j=npixy,1,-1
-   do i=npixx,1,-1
-       !--trapezoidal rule in y
+    do i=npixx,1,-1
+       term = 0.
        if (i.eq.npixx) then
           fyj = 0.
+          fyjhalf = 0.
        else
-          fyj = fyj + 0.5*pixwidth*(vecpixy(i+1,j)+vecpixy(i,j))    
+          fyjprev = fyj
+          !--trapezoidal rule in x
+          termj = 0.5*pixwidth*(vecpixy(i+1,j)+vecpixy(i,j))
+          fyj = fyj + termj
+          if (mod(npixx-i,2).eq.0) then ! 3, 5, 7, 9 ...
+             !
+             !--for odd points, use trapezoidal solution at half grid points
+             !  to get Simpson's rule
+             !
+             fyjhalf = fyjhalf + pixwidth*(vecpixy(i+2,j)+vecpixy(i,j))
+             term = term + 4./3.*fyj - 1./3.*fyjhalf
+          else
+             !
+             !--for even points, use Simpson's rule up to last odd point
+             !  then finish with a trapezoidal integration over last two points
+             !
+             term = term + 4./3.*fyjprev - 1./3.*fyjhalf + termj
+          endif
        endif
-       !--trapezoidal rule in x
+       !
+       !--same as above but for integration in y
+       !
        if (j.eq.npixy) then
           fx(i) = 0.
+          fxhalf(i) = 0.
+          fxprevi = 0.
        else
-          fx(i) = fx(i) - 0.5*pixwidth*(vecpixx(i,j+1)+vecpixx(i,j))
+          fxprevi = fx(i)
+          termi = 0.5*pixwidth*(vecpixx(i,j+1)+vecpixx(i,j))
+          fx(i) = fx(i) - termi
+          if (mod(npixy-j,2).eq.0) then
+             fxhalf(i) = fxhalf(i) - pixwidth*(vecpixx(i,j+2)+vecpixx(i,j))
+             term = term + 4./3.*fx(i) - 1./3.*fxhalf(i)
+          else
+             term = term + 4./3.*fxprevi - 1./3.*fxhalf(i) - termi
+          endif
        endif
-       datpix2(i,j) = real(fx(i) + fyj)
+       
+       datpix2(i,j) = term
     enddo
  enddo
+ 
  !
  !--average the two
  !
