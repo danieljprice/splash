@@ -117,7 +117,7 @@ subroutine submenu_render(ichoose)
           print "(1x,i1,')',1x,a)",i,trim(labelcolourbarstyles(i))
        enddo
        call prompt(' enter colour bar style to use ',iColourBarStyle,0,maxcolourbarstyles)
-       print "(a)",'colour bar style = '//trim(labelcolourbarstyle(iColourBarStyle))
+       print "(a)",'colour bar style = '//trim(labelcolourbarstyles(iColourBarStyle))
        if (iColourBarStyle.eq.1) then
           call prompt(' enter displacement of text from edge (character heights) ', &
                       ColourBarDisp)
