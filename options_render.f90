@@ -3,19 +3,16 @@
 ! includes default values of these options and submenu for changing them
 !-------------------------------------------------------------------------
 module settings_render
+ use colourbar, only:ColourBarDisp
  implicit none
- integer :: ncontours,npix,icolours
+ integer :: ncontours,npix,icolours,iColourBarStyle
  logical :: iplotcont_nomulti
- logical :: iPlotColourBar,icolour_particles,inormalise_interpolations
+ logical :: icolour_particles,inormalise_interpolations
  logical :: ifastrender,idensityweightedinterpolation
- real :: ColourBarDisp
- !--colour bar width is set here as it must be known for page setup
- !  in principle it could be user-changeable but this adds pointless options
- real, parameter :: ColourBarWidth = 5.5
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
-   iPlotColourBar,icolour_particles,ColourBarDisp,inormalise_interpolations, &
-   ifastrender,idensityweightedinterpolation
+   icolour_particles,ColourBarDisp,inormalise_interpolations, &
+   ifastrender,idensityweightedinterpolation,iColourBarStyle
 
 contains
 
@@ -27,7 +24,7 @@ subroutine defaults_set_render
 
   icolours = 2               ! colour scheme to use
   npix = 200                 ! pixels in x direction for rendering
-  iPlotColourBar = .true.! whether or not to plot the colour bar
+  iColourBarStyle = 1        ! whether or not to plot the colour bar and style
   iplotcont_nomulti = .false. ! plot contours
   icolour_particles = .false. ! colour particles instead of using pixels
   ncontours = 30             ! number of contours to plot
@@ -43,6 +40,7 @@ end subroutine defaults_set_render
 ! options for rendered plots
 !-----------------------------------------------------------------------------
 subroutine submenu_render(ichoose)
+  use colourbar, only:maxcolourbarstyles,labelcolourbarstyles
   use colours, only:schemename,ncolourschemes,colour_demo
   use prompting, only:prompt,print_logical
   implicit none
@@ -56,7 +54,7 @@ subroutine submenu_render(ichoose)
   
   if (ians.le.0 .or. ians.gt.8) then
      print 10,npix,icolours,print_logical(iplotcont_nomulti),ncontours, &
-           print_logical(iPlotColourBar),print_logical(icolour_particles), &
+           iColourBarStyle,print_logical(icolour_particles), &
            print_logical(inormalise_interpolations),print_logical(ifastrender),&
            print_logical(idensityweightedinterpolation)
 10   format( &
@@ -65,7 +63,7 @@ subroutine submenu_render(ichoose)
           ' 2) change colour scheme               (',i2,' )',/,    &
           ' 3) plot contours                      ( ',a,' )',/, &
           ' 4) change number of contours          (',i3,' )',/, &
-          ' 5) colour bar options                 ( ',a,' )',/,&
+          ' 5) colour bar options                 ( ',i2,' )',/,&
           ' 6) use particle colours not pixels    ( ',a,' )',/,& 
           ' 7) normalise interpolations           ( ',a,' )',/,&
           ' 8) use accelerated rendering          ( ',a,' )',/,&
@@ -115,9 +113,12 @@ subroutine submenu_render(ichoose)
        call prompt(' enter number of contours between min,max',ncontours,0,500)
 !------------------------------------------------------------------------
     case(5)
-       call prompt(' plot colour bar? ',iPlotColourBar)
-       print*,'plot colour bar = ',iPlotColourBar
-       if (iPlotColourBar) then
+       do i=0,maxcolourbarstyles
+          print "(1x,i1,')',1x,a)",i,trim(labelcolourbarstyles(i))
+       enddo
+       call prompt(' enter colour bar style to use ',iColourBarStyle,0,maxcolourbarstyles)
+       print "(a)",'colour bar style = '//trim(labelcolourbarstyle(iColourBarStyle))
+       if (iColourBarStyle.eq.1) then
           call prompt(' enter displacement of text from edge (character heights) ', &
                       ColourBarDisp)
        endif

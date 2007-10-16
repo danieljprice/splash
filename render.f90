@@ -3,8 +3,9 @@
 !  pixel arrays and the PGPLOT routines which do the actual rendering
 !------------------------------------------------------------------------
 module render
+ use colourbar, only:plotcolourbar
  implicit none
- public :: render_pix, render_vec, render_opacity, colourbar
+ public :: render_pix, render_vec, render_opacity
  private
 
 contains
@@ -16,12 +17,13 @@ contains
 !------------------------------------------------------------------------
  
 subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
-                  xmin,ymin,dx,icolours,iplotcont,iPlotColourBar,nc,log,blank)
+                  xmin,ymin,dx,icolours,iplotcont,iColourBarStyle,nc,log,blank)
  implicit none
  integer, intent(in) :: npixx,npixy,nc,icolours
  real, intent(in) :: xmin,ymin,datmin,datmax,dx
  real, dimension(npixx,npixy), intent(in) :: datpix
- logical, intent(in) :: iplotcont,iPlotColourBar,log
+ logical, intent(in) :: iplotcont,log
+ integer, intent(in) :: iColourBarStyle
  character(len=*), intent(in) :: label
  real, intent(in), optional :: blank
  
@@ -44,7 +46,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !    call pggray(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
 
  if (abs(icolours).gt.0) then        ! colour
-    if (iPlotColourBar) call colourbar(icolours,datmin,datmax,trim(label),log)
+    if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarstyle,icolours,datmin,datmax,trim(label),log)
 !    call pgwedg('ri',2.0,4.0,datmin,datmax,' ')
 !    call pgpixl(datpix,npixx,npixx,1,npixx,1,npixx,xmin,xmax,ymin,ymax)
     call pgimag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
@@ -83,104 +85,6 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  return
  
 end subroutine render_pix
-
-!-------------------------------------------------------
-! this subroutine interfaces to my version of PGWEDG
-! which plots the colour bar (differences are that
-! text is written vertically, txtsep is a
-! changeable parameter and the character height
-! is not changed)
-!-------------------------------------------------------
-subroutine colourbar(icolours,datmin,datmax,label,log, &
-                     vptxmaxfull,vptyminfull,vptymaxfull)
- use settings_render, only:ColourBarDisp, ColourBarWidth
- implicit none
- integer, intent(in) :: icolours
- real, intent(in) :: datmin,datmax
- character(len=*), intent(in) :: label
- logical, intent(in) :: log
- real, intent(in), optional :: vptxmaxfull,vptyminfull,vptymaxfull
- integer, parameter :: npixwedg = 400
- real, dimension(6), parameter :: trans = (/0.0,1.0,0.0,0.0,0.0,1.0/)
- real, dimension(npixwedg) :: sample
- integer :: i
- character(len=1) :: clog
- real :: disp,width,xch,ych,dx
- real :: xmin,xmax,ymin,ymax,vptxmin,vptxmax,vptymin,vptymax
- real :: vptxmini,vptxmaxi,vptymini,vptymaxi
-!
-!--set colour bar displacement and width in character heights
-!
- disp = 0.5
- width = ColourBarWidth
-!
-!--set character to send to pgwedg call if log (danpgwedg only) 
-!
- clog = ' '
- if (log) clog = 'l'
-
- call pgbbuf
- call pgqwin(xmin,xmax,ymin,ymax)
- call pgqvp(0,vptxmin,vptxmax,vptymin,vptymax)
- call pgqcs(0,xch,ych)
- !--if colour bar stretches across multiple plots,
- !  override settings for vptymin and vptymax with input values
- if (present(vptxmaxfull) .and. present(vptyminfull) .and. present(vptymaxfull)) then
-    vptxmaxi = vptxmaxfull
-    vptymini = vptyminfull
-    vptymaxi = vptymaxfull
- else
-    vptxmaxi = vptxmax
-    vptymini = vptymin
-    vptymaxi = vptymax
- endif
-!
-!--translate width and displacement to viewport co-ordinates
-!
- width = width*xch
- disp = disp*xch
-!
-!--set viewport for the wedge
-! 
- vptxmini = vptxmaxi + disp
- vptxmaxi = vptxmini + width*0.4
- call pgsvp(vptxmini,vptxmaxi,vptymini,vptymaxi)
-!
-!--fill array with all values from datmin to datmax
-!
- dx = (datmax-datmin)/real(npixwedg-1)
- do i=1,npixwedg
-    sample(i) = datmin + (i-1)*dx
- enddo
-!
-!--draw colour bar, by cleverly setting window size
-!
- call pgswin(0.9,1.1,1.0,real(npixwedg))
-! if (abs(icolours).eq.1) then        ! greyscale
-!    call pggray(sample,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans)
- if (abs(icolours).gt.0) then        ! colour
-    call pgimag(sample,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans)
- endif
- call pgswin(0.0,1.0,datmin,datmax)
-!
-!--draw labelled frame around the wedge
-!
- call pgbox('BC',0.0,0,'BCMSTVRV',0.0,0)
-!
-!--write the units label
-!
- if (label.ne.' ') then
-    call pgmtxt('R',ColourBarDisp+1.0,1.0,1.0,trim(label))
- endif
-!
-!--reset window and viewport
-!
- call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
- call pgswin(xmin,xmax,ymin,ymax)
- call pgebuf
-
- return
-end subroutine colourbar
 
 !--------------------------------------------------------------------------
 !  this subroutine takes a 2D grid of vector data (ie. x and y components)
@@ -264,12 +168,12 @@ end subroutine render_vec
 !  using PGPLOT
 !
 subroutine render_opacity(rgbcolours,npixx,npixy,xmin,xmax,ymin,ymax, &
-                          iPlotColourBar,icolours,datmin,datmax,label)
+                          iColourBarStyle,icolours,datmin,datmax,label)
  implicit none
  integer, intent(in) :: npixx,npixy
  real, dimension(3,npixx,npixy), intent(in) :: rgbcolours
  real, intent(in) :: xmin,xmax,ymin,ymax,datmin,datmax
- logical, intent(in) :: iPlotColourBar
+ integer, intent(in) :: iColourBarStyle
  integer, intent(in) :: icolours
  character(len=*), intent(in) :: label
  
@@ -278,7 +182,7 @@ subroutine render_opacity(rgbcolours,npixx,npixy,xmin,xmax,ymin,ymax, &
  integer :: indexmax,indexmin
  real :: denom,red,green,blue
 
- if (iPlotColourBar) call colourbar(icolours,datmin,datmax,trim(label),.false.) 
+ if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarStyle,icolours,datmin,datmax,trim(label),.false.) 
 !
 !--set the colour table corresponding to all possible combinations
 !  of red, green and blue

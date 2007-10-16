@@ -50,7 +50,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                      colour_fore,colour_back,iadapt,iadaptcoords,linewidth
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
-  use settings_render, only:icolours,iplotcont_nomulti,iPlotColourBar
+  use settings_render, only:icolours,iplotcont_nomulti,iColourBarStyle
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
                         xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
                         use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth
@@ -181,7 +181,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   
   !--( a further constraint on plot tiling is required in the case of 
   !    multiple renderings which would involve different colour bars )
-  if (iamrendering .and. icolours.ne.0 .and. iPlotColourbar) then
+  if (iamrendering .and. icolours.ne.0 .and. iColourbarStyle.gt.0) then
      !--this option means that a margin is set aside for a colour bar on tiled plots
      iAllowspaceforcolourbar = .true.
      !--do not allow tiled plots if multiple (different) colour bars are plotted
@@ -454,7 +454,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis, &
                      charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
-      iPlotColourBar,icolour_particles,inormalise_interpolations,ifastrender
+      iColourBarStyle,icolour_particles,inormalise_interpolations,ifastrender
   use settings_vecplot, only:npixvec, iplotpartvec
   use settings_xsecrot, only:nxsec,irotateaxes,xsec_nomulti,irotate,flythru,use3Dperspective, &
       use3Dopacityrendering,writeppm,anglex,angley,anglez,zobserver,dzscreenfromobserver,taupartdepth, &
@@ -475,7 +475,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use projections3D, only:interpolate3D_projection
   use opacityrendering3D, only:interpolate3D_proj_opacity,interpolate3D_proj_opacity_writeppm
   use xsections3D, only:interpolate3D_fastxsec,interpolate3D_xsec_vec
-  use render, only:render_pix,colourbar
+  use render, only:render_pix
   use pagesetup, only:redraw_axes
   use exactfromfile, only:exact_fromfile
   use write_pixmap, only:iwritepixmap,writepixmap
@@ -510,7 +510,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   character(len=120) :: title
   character(len=20) :: string,labeltimeunits
   
-  logical :: iColourBar, rendering, inormalise, logged, dumxsec, isetrenderlimits
+  logical :: iPlotColourBar, rendering, inormalise, logged, dumxsec, isetrenderlimits
   
 34   format (25(' -'))
 
@@ -592,7 +592,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      !--make sure character height is set correctly
      call pgsch(charheight) ! in PGPLOT scaled units
 
-     iColourBar = .false.   ! should be false by default until set to true
+     iPlotColourBar = .false.   ! should be false by default until set to true
      iaxistemp = iaxis
 
      !--set current x, y, render and vector plot from multiplot array
@@ -1147,8 +1147,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            title = ' '
            !--work out if colour bar is going to be plotted 
            !  (leave space in page setup if so)
-           iColourBar = .false.
-           if (irender.gt.ndim .and..not.(ndim.eq.2.and.x_sec)) iColourBar = iPlotColourBar
+           iPlotColourBar = .false.
+           if (irender.gt.ndim .and..not.(ndim.eq.2.and.x_sec)) iPlotColourBar = (iColourBarStyle.gt.0)
 
            call page_setup
 
@@ -1168,7 +1168,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  !!--call subroutine to actually render the image
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                    npixx,npixy,xmin,ymin,pixwidth,    &
-                   icolours,iplotcont,.false.,ncontours,.false.)
+                   icolours,iplotcont,0,ncontours,.false.)
                  
                  !!--plot non-gas particle types (e.g. sink particles) on top
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
@@ -1302,7 +1302,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                       xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
                       angletempx,angletempy,angletempz,ndim,x_sec,zslicepos,dz, &
                       zobservertemp,dzscreentemp,use3Dopacityrendering,taupartdepthtemp,irerender, &
-                      itrackpart,icolours,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
+                      itrackpart,icolours,iColourBarStyle,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
                  !--turn rotation on if necessary
                  if (abs(angletempx-anglex).gt.tol) irotate = .true.
                  if (abs(angletempy-angley).gt.tol) irotate = .true.
@@ -1320,7 +1320,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                       nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
                       xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
                       vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
-                      xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,interactivereplot)
+                      xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,iColourBarStyle,interactivereplot)
                  if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
               endif
            endif
@@ -1417,7 +1417,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
                    angletempx,angletempy,angletempz,ndim, &
                    dumxsec,dummy,dummy,dummy,dummy,.false.,dummy,irerender, &
-                   itrackpart,icolours,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
+                   itrackpart,icolours,iColourBarStyle,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames ! this should be unnecessary
            elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
               !
@@ -1431,7 +1431,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
                    xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
                    vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
-                   xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,interactivereplot)
+                   xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,iColourBarStyle,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
            endif
         endif
@@ -1677,11 +1677,11 @@ contains
 ! actually plotted
 !----------------------------------------------
   subroutine page_setup
+    use colourbar, only:get_colourbarmargins,plotcolourbar
     use pagesetup, only:setpage2
-    use settings_render, only:ColourBarWidth,ColourBarDisp
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes,vposlegend,iPlotLegend
     implicit none
-    real :: barwidth, TitleOffset,xch,ych
+    real :: barwidth, TitleOffset,xch,ych,xmaxmargin,yminmargin
     logical :: ipanelchange
 
     !---------------------
@@ -1725,10 +1725,11 @@ contains
     !--use foreground colour
     call pgsci(1)
 
+    yminmargin = 0.001
+    xmaxmargin = 0.001
     !--leave space for colour bar if necessary (at end of row only on tiled plots)
-    if ((tile_plots .and. iAllowspaceforcolourbar).or.(.not.tile_plots.and.iColourBar)) then
-       call pgqcs(0,xch,ych)
-       barwidth = (ColourBarWidth*(0.4)+0.75 + max(ColourBarDisp+1.25,0.0))*xch
+    if ((tile_plots .and. iAllowspaceforcolourbar).or.(.not.tile_plots.and.iPlotColourBar)) then
+       call get_colourbarmargins(iColourBarStyle,xmaxmargin,yminmargin,barwidth)
     else
        barwidth = 0.
     endif
@@ -1769,7 +1770,7 @@ contains
     endif
     if (nstepsperpage.ne.0 .or. inewpage) then
        call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
-                  trim(labelx),trim(labely),' ',just,iaxistemp,0.001,barwidth+0.001,0.001,0.001, &
+                  trim(labelx),trim(labely),' ',just,iaxistemp,0.001,xmaxmargin,yminmargin,0.001, &
                   0.0,TitleOffset,isamexaxis,tile_plots)
     endif
     
@@ -1783,18 +1784,19 @@ contains
        lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
                           .and. nyplot.eq.nyplots .and. k.eq.nxsec)
        !--only plot colour bar at the end of first row on tiled plots
-       if (tile_plots .and..not.(ipanel.eq.nacross*ndown .or. lastplot)) iColourBar = .false.
+       if (tile_plots .and..not.(ipanel.eq.nacross*ndown .or. lastplot)) iPlotColourBar = .false.
 
-       if (iColourBar) then
+       if (iPlotColourBar) then
           !--for tiled plots only on last plot in first row,
           !  and use full viewport size in the y direction
           if (tile_plots) then
-             call colourbar(icolours,rendermin,rendermax, &
-             trim(labelrender),.false.,maxval(vptxmax(1:ipanel)), &
+             call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
+             trim(labelrender),.false., &
+             minval(vptxmin(1:ipanel)),maxval(vptxmax(1:ipanel)), &
              minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
           else
              !!--plot colour bar, but only if last in row
-             call colourbar(icolours,rendermin,rendermax, &
+             call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
                             trim(labelrender),.false.)
           endif
        endif
@@ -1805,7 +1807,7 @@ contains
     !--------------------------------------------------------------    
     if (tile_plots) then
        barwmulti(ipanel) = 0.
-    else    
+    else
        barwmulti(ipanel) = barwidth
     endif
     iplotxtemp(ipanel) = iplotx
@@ -2367,13 +2369,13 @@ contains
                          minval(datpixvec(1:numpixx,1:numpixy)), &
                          datmax, &
                          'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,    &
-                         0,.true.,.false.,ncontours,.false.,blank=blankval)
+                         0,.true.,0,ncontours,.false.,blank=blankval)
          else
             call render_pix(datpixvec(1:numpixx,1:numpixy), &
                          minval(datpixvec(1:numpixx,1:numpixy)), &
                          maxval(datpixvec(1:numpixx,1:numpixy)), &
                          'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,    &
-                         0,.true.,.false.,ncontours,.false.)
+                         0,.true.,0,ncontours,.false.)
          endif
 
       else
@@ -2414,7 +2416,7 @@ contains
             !--plot contours of synchrotron intensity
             call render_pix(datpixvec(1:npixx,1:npixy),minval(datpixvec(1:npixx,1:npixy)), &
               maxval(datpixvec(1:npixx,1:npixy)),'crap', &
-              npixx,npixy,xmin,ymin,pixwidth,0,.true.,.false.,ncontours,.false.)
+              npixx,npixy,xmin,ymin,pixwidth,0,.true.,0,ncontours,.false.)
          endif
 
       endif

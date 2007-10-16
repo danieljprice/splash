@@ -1,4 +1,5 @@
 module interactive_routines
+ use colourbar, only:barisvertical,incolourbar
  implicit none
  public :: interactive_part,interactive_step,interactive_multi
  private :: mvlegend,mvtitle,save_limits,save_rotation
@@ -44,10 +45,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
   anglex,angley,anglez,ndim,x_sec,zslicepos,dzslice, &
   zobserver,dscreen,use3Dopacity,taupartdepth,irerender,itrackpart,icolourscheme, &
-  iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
+  iColourBarStyle,iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
   use settings_xsecrot, only:setsequenceend
   implicit none
   integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
+  integer, intent(in) :: iColourBarStyle
   integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
@@ -71,7 +73,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
   character(len=20) :: string
-  logical :: iexit, rotation
+  logical :: iexit, rotation, verticalbar, iamincolourbar
 
   call pgqinf('CURSOR',string,nc)
   if (string(1:nc).eq.'YES') then
@@ -98,6 +100,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   irerender = .false.
   interactivereplot = .false.
   if (iplotx.le.ndim .and. iploty.le.ndim .and. ndim.ge.2) rotation = .true.
+  verticalbar = barisvertical(iColourBarStyle)
   
   if (iplotz.gt.0 .and. x_sec) then
      zptmin = zslicepos - 0.5*dzslice
@@ -107,7 +110,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      zptmin = -huge(zptmin)
      zptmax = huge(zptmax)
   endif
-  
+ 
   interactiveloop: do while (.not.iexit)
      call pgcurs(xpt,ypt,char)
      !
@@ -142,7 +145,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            rmin = rr
         endif
      enddo
-     
+
+     !--query the position of the colour bar
+     iamincolourbar = incolourbar(iColourBarStyle,xpt,ypt,xmin,xmax,ymin,ymax)
+
      select case(char)
      !
      !--particle plot stuff
@@ -341,13 +347,23 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         !
         !--change colour bar limits
         !
-        if (xpt.gt.xmax .and. irender.gt.0) then
+        if (iamincolourbar .and. irender.gt.0) then
            print*,'click to set rendering limits'
-           call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
+           if (verticalbar) then
+              call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
+           else
+              call pgband(4,1,xpt,ypt,xpt2,ypt2,char2)           
+           endif
            if (char2 == 'A') then
-              drender = (rendermax-rendermin)/(ymax-ymin)
-              rendermax = rendermin + (max(ypt,ypt2)-ymin)*drender
-              rendermin = rendermin + (min(ypt,ypt2)-ymin)*drender
+              if (verticalbar) then
+                 drender = (rendermax-rendermin)/(ymax-ymin)
+                 rendermax = rendermin + (max(ypt,ypt2)-ymin)*drender
+                 rendermin = rendermin + (min(ypt,ypt2)-ymin)*drender
+              else
+                 drender = (rendermax-rendermin)/(xmax-xmin)
+                 rendermax = rendermin + (max(xpt,xpt2)-xmin)*drender
+                 rendermin = rendermin + (min(xpt,xpt2)-xmin)*drender              
+              endif
               print*,'setting render min = ',rendermin
               print*,'setting render max = ',rendermax              
               iadvance = 0
@@ -470,33 +486,36 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            ylength = 0.9/zoomfac*ylength
            renderlength = 0.9/zoomfac*renderlength
         end select
-        if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymaxin) then
-           print*,'zooming on x axis'
-           xmin = xcen - 0.5*xlength
-           xmax = xcen + 0.5*xlength
-           iadvance = 0
-           interactivereplot = .true.
-           irerender = .true.
-           iexit = .true.
-        endif
-        if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmaxin) then
-           print*,'zooming on y axis'
-           ymin = ycen - 0.5*ylength
-           ymax = ycen + 0.5*ylength
-           iadvance = 0
-           interactivereplot = .true.
-           irerender = .true.
-           iexit = .true.
-        endif
-        if (xpt.gt.xmax .and. irender.gt.0) then
+        if (iamincolourbar .and. irender.gt.0) then
            !--rendering zoom does not allow pan - renderpt is always centre of axis
            renderpt = 0.5*(rendermin + rendermax)
            rendermin = renderpt - 0.5*renderlength
            rendermax = renderpt + 0.5*renderlength
+           print*,'zooming on colour bar: min, max = ',rendermin,rendermax
            iadvance = 0
            interactivereplot = .true.
            iexit = .true.
+        else
+           if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymaxin) then
+              xmin = xcen - 0.5*xlength
+              xmax = xcen + 0.5*xlength
+              print*,'zooming on x axis: min, max = ',xmin,xmax
+              iadvance = 0
+              interactivereplot = .true.
+              irerender = .true.
+              iexit = .true.
+           endif
+           if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmaxin) then
+              ymin = ycen - 0.5*ylength
+              ymax = ycen + 0.5*ylength
+              print*,'zooming on y axis: min, max = ',ymin,ymax
+              iadvance = 0
+              interactivereplot = .true.
+              irerender = .true.
+              iexit = .true.
+           endif
         endif
+
         if (char.eq.'o') then !--recentre plot on origin
            if (itrackpart.gt.0) then
                print*,'centreing limits on tracked particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
@@ -517,7 +536,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            ypt = 0.
         endif
      case('a') ! reset plot limits
-        if (xpt.gt.xmax .and. irender.gt.0) then
+        if (iamincolourbar .and. irender.gt.0) then
            rendermin = renderminadapt
            rendermax = rendermaxadapt
            iadvance = 0              ! that it should change the render limits
@@ -601,7 +620,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         !
         !--change colour bar, y and x itrans between log / not logged
         !
-        if (xpt.gt.xmax .and. irender.gt.0) then
+        if (iamincolourbar .and. irender.gt.0) then
            call change_itrans(irender,rendermin,rendermax)
            iadvance = 0
            interactivereplot = .true.
@@ -1182,11 +1201,11 @@ end subroutine interactive_step
 !
 subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,ifirstframeonpage,nframes, &
                              lastpanel,iplotxarr,iplotyarr,irenderarr,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
-                             barwmulti,xminadapt,xmaxadapt,nacross,ndim,icolourscheme,interactivereplot)
+                             barwmulti,xminadapt,xmaxadapt,nacross,ndim,icolourscheme,iColourBarStyle,interactivereplot)
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep,iframe,lastpanel
- integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim,ifirstframeonpage,nframes
+ integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim,ifirstframeonpage,nframes,iColourBarStyle
  integer, intent(inout) :: icolourscheme
  integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr
  real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
@@ -1200,7 +1219,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  real, dimension(4) :: xline,yline
  character(len=1) :: char,char2
  character(len=5) :: string
- logical :: iexit
+ logical :: iexit,iamincolourbar,verticalbar
  
   call pgqinf('CURSOR',string,nc)
   if (string(1:nc).eq.'YES') then
@@ -1221,6 +1240,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   istepjump = 1
 !  print*,'istep = ',istepnew
 !  print*,'steps on page = ',istepsonpage
+  verticalbar = barisvertical(iColourBarStyle)
   
   interactive_loop: do while (.not.iexit)
      call pgcurs(xpt,ypt,char)
@@ -1241,6 +1261,14 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !--translate vpt co-ords to x,y in current panel
      call getxy(vptxi,vptyi,xpti,ypti,ipanel)
 
+     !--query the position of the colour bar
+     if (ipanel.gt.0) then
+        iamincolourbar = incolourbar(iColourBarStyle,xpti,ypti,xmin(iplotxarr(ipanel)), &
+                         xmax(iplotxarr(ipanel)),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
+     else
+        iamincolourbar = .false.
+     endif
+
      select case(char)
      case('h')
         print*,'----- interactive mode commands (multiple plots per page) -----'
@@ -1255,7 +1283,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         print*,'       (applies to colour bar if mouse is over colour bar)'
         print*,' l: (l)og / unlog axis (with cursor over the axis to change)'  
         print*,'    (applies to colour bar if mouse is over colour bar)'
-!        print*,' o: re-centre plot on (o)rigin'
+        print*,' o: re-centre plot on (o)rigin'
         print*,' r: (r)eplot current plot'
         print*,' g: plot a line and find its g)radient'
         print*,' G: move le(G)end to current position'
@@ -1334,22 +1362,40 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         !
         !--change colour bar limits
         !
-        if (ipanel.gt.0 .and. xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
+        if (ipanel.gt.0 .and. iamincolourbar .and. irenderarr(ipanel).gt.0) then
            print*,'click to set rendering limits'
-           call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
+           if (verticalbar) then
+              call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
+           else
+              call pgband(4,1,xpt,ypt,xpt2,ypt2,char2)           
+           endif
            if (char2 == 'A') then
               call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
               if (barwmulti(ipanel).gt.tiny(barwmulti)) then
-                 drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                           (vptymax(ipanel) -vptymin(ipanel))
-                 xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptyi,vpty2i)-vptymin(ipanel))*drender
-                 xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptyi,vpty2i)-vptymin(ipanel))*drender
+                 if (verticalbar) then
+                    drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
+                              (vptymax(ipanel) -vptymin(ipanel))
+                    xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptyi,vpty2i)-vptymin(ipanel))*drender
+                    xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptyi,vpty2i)-vptymin(ipanel))*drender               
+                 else
+                    drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
+                              (vptxmax(ipanel) -vptxmin(ipanel))
+                    xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptxi,vptx2i)-vptxmin(ipanel))*drender
+                    xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptxi,vptx2i)-vptxmin(ipanel))*drender
+                 endif
               else
               !--for global colour bars (ie. on tiled plots) use viewport co-ordinates to set render limits
-                 drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                           (maxval(vptymax) - minval(vptymin))
-                 xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptyi,vpty2i)-minval(vptymin))*drender
-                 xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptyi,vpty2i)-minval(vptymin))*drender              
+                 if (verticalbar) then
+                    drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
+                              (maxval(vptymax) - minval(vptymin))
+                    xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptyi,vpty2i)-minval(vptymin))*drender
+                    xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptyi,vpty2i)-minval(vptymin))*drender
+                 else
+                    drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
+                              (maxval(vptxmax) - minval(vptxmin))
+                    xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptxi,vptx2i)-minval(vptxmin))*drender
+                    xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptxi,vptx2i)-minval(vptxmin))*drender
+                 endif             
               endif
               print*,'setting render min, max = ',xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel))
               istep = istepnew
@@ -1419,31 +1465,32 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            renderlength = 0.9/zoomfac*renderlength
         end select
         xmaxin = xmax(iplotxarr(ipanel))
-        if (xpti.ge.xmin(iplotxarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel))) then
-           print*,'zooming on x axis'
-           xmin(iplotxarr(ipanel)) = xcen - 0.5*xlength
-           xmax(iplotxarr(ipanel)) = xcen + 0.5*xlength
-           istep = istepnew
-           interactivereplot = .true.
-           iexit = .true.
-        endif
-        if (ypti.ge.xmin(iplotyarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel)) .and. xpti.le.xmaxin) then
-           print*,'zooming on y axis'
-           xmin(iplotyarr(ipanel)) = ycen - 0.5*ylength
-           xmax(iplotyarr(ipanel)) = ycen + 0.5*ylength
-           istep = istepnew
-           interactivereplot = .true.
-           iexit = .true.
-        endif
-        if (xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
+        if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
            !--rendering zoom does not allow pan - renderpt is always centre of axis
            renderpt = 0.5*(xmin(irenderarr(ipanel)) + xmax(irenderarr(ipanel)))
-           print*,'zooming on colour bar'
            xmin(irenderarr(ipanel)) = renderpt - 0.5*renderlength
            xmax(irenderarr(ipanel)) = renderpt + 0.5*renderlength
+           print*,'zooming on colour bar: min, max = ',xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel))
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
+        else
+           if (xpti.ge.xmin(iplotxarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel))) then
+              xmin(iplotxarr(ipanel)) = xcen - 0.5*xlength
+              xmax(iplotxarr(ipanel)) = xcen + 0.5*xlength
+              print*,'zooming on x axis: min, max = ',xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel))
+              istep = istepnew
+              interactivereplot = .true.
+              iexit = .true.
+           endif
+           if (ypti.ge.xmin(iplotyarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel)) .and. xpti.le.xmaxin) then
+              xmin(iplotyarr(ipanel)) = ycen - 0.5*ylength
+              xmax(iplotyarr(ipanel)) = ycen + 0.5*ylength
+              print*,'zooming on y axis: min, max = ',xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel))
+              istep = istepnew
+              interactivereplot = .true.
+              iexit = .true.
+           endif
         endif
         if (char.eq.'o') then !--recentre plot on origin
            xmin(iplotxarr(ipanel)) = -0.5*xlength
@@ -1457,7 +1504,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            ypt = 0.
         endif
      case('a') ! adapt plot limits
-        if (xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
+        if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
            print*,'adapting render limits ',xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel))
            xmin(irenderarr(ipanel)) = xminadapt(irenderarr(ipanel))
            xmax(irenderarr(ipanel)) = xmaxadapt(irenderarr(ipanel))
@@ -1491,7 +1538,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         !
         !--change colour bar, y and x itrans between log / not logged
         !
-        if (xpti.gt.xmax(iplotxarr(ipanel)) .and. irenderarr(ipanel).gt.0) then
+        if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
            call change_itrans2(irenderarr(ipanel),xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)),&
                                xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel)))
            istep = istepnew
@@ -1651,7 +1698,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
    !--------
    integer function getpanel(vptx,vpty)
     implicit none
-    real :: vptx,vpty,vptxmini,vptxmaxi,vptymini,vptymaxi
+    real, intent(in) :: vptx,vpty
+    real :: vptxmini,vptxmaxi,vptymini,vptymaxi
     integer :: i,icol
     
     getpanel = 0
@@ -1668,8 +1716,10 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        !--if last column extend xmax to right of page
        if (icol.eq.nacross) then
           vptxmaxi = 1.1
-       else ! otherwise use max of current panel + space containing the colour bar
+       elseif (verticalbar) then ! otherwise use max of current panel + space containing the colour bar
           vptxmaxi = vptxmax(i) + barwmulti(i)
+       else
+          vptxmaxi = vptxmax(i)
        endif
        
        !--if first row extend ymax to top of page
@@ -1684,6 +1734,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        ! if not last row assign panel by being above row below
        elseif (i+nacross.le.size(vptxmin)) then
           vptymini = vptymax(i+nacross)
+       elseif (.not.verticalbar) then
+          vptymini = vptymin(i) - barwmulti(i)
        else
           vptymini = vptymin(i)
        endif
