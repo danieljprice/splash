@@ -184,7 +184,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
               !--SPH kernel - standard cubic spline
               !
               if (q2.lt.4.0) then                  
-                 if (qq.lt.1.0) then
+                 if (q2.lt.1.0) then
                     qq = sqrt(q2)
                     wab = 1.-1.5*q2 + 0.75*q2*qq
 !
