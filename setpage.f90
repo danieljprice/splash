@@ -353,7 +353,7 @@ end subroutine redraw_axes
      vptsizeeffx = 1.0 - vmarginright - vmarginleft
      vptsizeeffy = 1.0 - vmargintop - vmarginbottom
      !     reduce x or y size if just=1 to get right aspect ratio
-     if (aspectratio.lt.1.0) then
+     if (aspectratio.le.1.0) then
         if (aspectratio*vptsizeeffy.lt.vptsizeeffx) then
            vptsizeeffx = aspectratio*vptsizeeffy
         !  but this could still be bigger than the margins allow...
