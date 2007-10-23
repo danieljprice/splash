@@ -52,10 +52,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(len=*), intent(in) :: rootname
   integer, parameter :: maxarrsizes = 10, maxreal = 50
   real, parameter :: pi=3.141592653589
-  integer :: i,j,ierr,iunit,int1,int2,int3,i1,iarr
+  integer :: i,j,ierr,iunit,int1,int2,int3,i1,iarr,i2
   integer :: npart_max,nstep_max,ncolstep,icolumn
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
   integer :: nskip,ntotal,npart,n1,n2,itype,ninttypes
+  integer :: nreassign,naccrete,nkill,iblock,nblocks,ntotblock
   integer :: ipos,nptmass,nptmassi,nunknown,isink,ilastrequired
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
   integer, dimension(maxparttypes) :: npartoftypei
@@ -157,6 +158,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--read number of default ints
 !   
+   nblocks = 1 ! number of MPI blocks
    read(iunit,iostat=ierr) nints
    if (ierr /=0) then
       print "(a)",'error reading nints'
@@ -169,15 +171,18 @@ subroutine read_data(rootname,indexstart,nstepsread)
       elseif (phantomdump) then
          ntypes = nints - 1
          read(iunit,iostat=ierr) npart,npartoftypei(1:ntypes)
+      elseif (nints.ge.7) then
+         read(iunit,iostat=ierr) npart,n1,n2,nreassign,naccrete,nkill,nblocks
       else
-         read(iunit,iostat=ierr) npart,n1,n2      
+         print "(a)",'warning: nblocks not read from file (assuming non-MPI dump)'         
+         read(iunit,iostat=ierr) npart,n1,n2
       endif
       if (ierr /=0) then
-         print "(a)",'error reading npart,n1,n2)'
+         print "(a)",'error reading npart,n1,n2 and/or number of MPI blocks'
          close(iunit)
          return
       else
-         print*,'npart = ',npart
+         print *,'npart = ',npart,' MPI blocks = ',nblocks
       endif
    endif
 !--int*1, int*2, int*4, int*8
@@ -234,9 +239,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
       print "(a)",'*** error reading units'
    endif
 !
-!--Array headers
+!--Total number of array blocks in the file
 !
    read(iunit,end=55,iostat=ierr) narrsizes
+   narrsizes = narrsizes/nblocks
    if (ierr /= 0) then 
       print "(a)",'*** error reading number of array sizes ***'
       close(iunit)
@@ -248,13 +254,26 @@ subroutine read_data(rootname,indexstart,nstepsread)
    if (narrsizes.ge.4 .and. nreal8s.lt.4) then
       print "(a)",' WARNING: could not read magnetic units from dump file'
    endif
+   print*,' number of array sizes = ',narrsizes
+!
+!--Attempt to read all MPI blocks
+!
+   ntotal = 0
+   ntotblock = 0
+   i2 = 0
+
+   over_MPIblocks: do iblock=1,nblocks
+      
+      if (nblocks.gt.1) print "(10('-'),' MPI block ',i4,1x,10('-'))",iblock
+   
    ncolstep = 0
    do iarr=1,narrsizes
       read(iunit,end=55,iostat=ierr) isize(iarr),nint(iarr),nint1(iarr),nint2(iarr), &
                  nint4(iarr),nint8(iarr),nreal(iarr),nreal4(iarr),nreal8(iarr)
       if (iarr.eq.1) then
-         ntotal = isize(iarr)
-         if (npart.le.0) npart = ntotal
+         ntotblock = isize(iarr)
+         if (npart.le.0) npart = ntotblock
+         ntotal = ntotal + ntotblock
       endif
       if (isize(iarr).gt.0) then
          print *,'block ',iarr,' dim = ',isize(iarr),'nint=',nint(iarr),nint1(iarr), &
@@ -264,8 +283,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       if (isize(iarr).eq.isize(1)) then
          ncolstep = ncolstep + nreal(iarr) + nreal4(iarr) + nreal8(iarr)
       endif
-   enddo
-   
+   enddo 
 !
 !--this is a bug fix for a corrupt version of wdump outputting bad
 !  small dump files
@@ -276,8 +294,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
       ncolstep = ncolstep - 2
    endif
    
-   npart_max = maxval(isize(1:narrsizes))
-   if (smalldump .or. phantomdump) then
+   npart_max = max(maxval(isize(1:narrsizes)),npart,ntotal)
+   if (smalldump .or. phantomdump .and. iblock.eq.1) then
       if (nreals.ge.15) then
          massoftypei(1) = dummyreal(15)
          if (massoftypei(1).gt.tiny(0.)) then
@@ -297,101 +315,111 @@ subroutine read_data(rootname,indexstart,nstepsread)
       if (abs(massoftypei(1)).lt.tiny(0.) .and. nreal(1).lt.4) then
          print "(a)",' error: particle masses not present in small dump file'   
       endif
-      !--for phantom dumps, also make a column for density
-      if (phantomdump) then
-         ncolstep = ncolstep + 1
-      endif
+   endif
+
+   !--for phantom dumps, also make a column for density
+   if (phantomdump) then
+      ncolstep = ncolstep + 1
    endif
 !
-!--allocate memory for all columns
+!--allocate memory now that we know the number of columns
 !
-   if (npart_max.gt.maxpart .or. j.gt.maxstep .or. (ncolstep+ncalc).gt.maxcol) then
+   ncolumns = ncolstep + ncalc
+   if (npart_max.gt.maxpart .or. j.gt.maxstep .or. ncolumns.gt.maxcol) then
       if (lowmemorymode) then
          ilastrequired = 0
-         do i=1,ncolstep+ncalc
+         do i=1,ncolumns
             if (required(i)) ilastrequired = i
          enddo
          call alloc(npart_max,j,ilastrequired)
       else
-         call alloc(npart_max,j,ncolstep+ncalc)
+         call alloc(npart_max,j,ncolumns)
       endif
+      if (allocated(iphase)) deallocate(iphase)
+      allocate(iphase(npart_max))
+      iphase(:) = 0
    endif
+
+   
+   if (iblock.eq.1) then
 !--extract required information
-   time(j) = dummyreal(1)
-   gamma(j) = dummyreal(3)
-   rhozero = dummyreal(4)
-   tfreefall = SQRT((3. * pi) / (32. * rhozero))
-   if (phantomdump) then
-      npartoftype(1:ntypes,j) = npartoftypei(1:ntypes)
-   else
-      npartoftype(1,j) = npart
-      npartoftype(2,j) = ntotal - npart
-   endif
-   nptmass = isize(2)
-   hfact = 1.2
-   if (phantomdump) then
-      if (nreals.lt.6) then
-         print "(a)",' error: hfact not present in phantom dump'
+      time(j) = dummyreal(1)
+      gamma(j) = dummyreal(3)
+      rhozero = dummyreal(4)
+      tfreefall = SQRT((3. * pi) / (32. * rhozero))
+      if (phantomdump) then
+         npartoftype(1:ntypes,j) = npartoftypei(1:ntypes)
       else
-         hfact = dummyreal(6)
+         npartoftype(1,j) = npart
+         npartoftype(2,j) = max(ntotal - npart,0)
       endif
-      print "(a,1pe12.4,a,0pf6.3,a,0pf5.2,a,1pe7.1)", &
-            ' time = ',time(j),' gamma = ',gamma(j), &
-            ' hfact = ',hfact,' tolh = ',dummyreal(7)
-   else
-      print "(a,1pe12.4,a,0pf8.4)",' time = ',time(j),' gamma = ',gamma(j)
-   endif
-   nstepsread = nstepsread + 1
-   ncolumns = ncolstep + ncalc
-   icolumn = 0
-   if (allocated(iphase)) deallocate(iphase)
-   allocate(iphase(npart_max))
-   iphase(:) = 0
+      nptmass = isize(2)
+      hfact = 1.2
+      if (phantomdump) then
+         if (nreals.lt.6) then
+            print "(a)",' error: hfact not present in phantom dump'
+         else
+            hfact = dummyreal(6)
+         endif
+         print "(a,1pe12.4,a,0pf6.3,a,0pf5.2,a,1pe7.1)", &
+               ' time = ',time(j),' gamma = ',gamma(j), &
+               ' hfact = ',hfact,' tolh = ',dummyreal(7)
+      else
+         print "(a,1pe12.4,a,0pf8.4)",' time = ',time(j),' gamma = ',gamma(j)
+      endif
+      nstepsread = nstepsread + 1
 !
-!--to handle both small and full dumps, we need to place the quantities dumped
-!  in both small and full dumps at the start of the dat array
-!  quantities only in the full dump then come after
-!  also means that hydro/MHD are "semi-compatible" in the sense that x,y,z,m,h and rho
-!  are in the same place for both types of dump
+!--   to handle both small and full dumps, we need to place the quantities dumped
+!     in both small and full dumps at the start of the dat array
+!     quantities only in the full dump then come after
+!     also means that hydro/MHD are "semi-compatible" in the sense that x,y,z,m,h and rho
+!     are in the same place for both types of dump
 !
-   ix(1) = 1
-   ix(2) = 2
-   ix(3) = 3
-   ipmass = 4
-   ih = 5
-   irho = 6
-   nhydroarrays = 6 ! x,y,z,m,h,rho
-   nhydroarraysinfile = nreal(1) + nreal4(1) + nreal8(1)
-   if (imadepmasscolumn) nhydroarraysinfile = nhydroarraysinfile + 1
-   if (nhydroarraysinfile .lt.nhydroarrays .and. .not.phantomdump) then
-      print "(a)",' ERROR: one of x,y,z,m,h or rho missing in small dump read'
-      nhydroarrays = nreal(1)+nreal4(1)+nreal8(1)
-   elseif (phantomdump .and. (nreal(1).lt.3 .or. nreal4(1).lt.1)) then
-      print "(a)",' ERROR: x,y,z or h missing in phantom read'
-   endif
-   if (narrsizes.ge.4) then
-      nmhdarrays = 3 ! Bx,By,Bz
-   else
-      nmhdarrays = 0
-   endif
-   imaxcolumnread = 0
-   iformat = 0 ! hydro full dump
-   if (smalldump) iformat = 1 ! hydro small dump
-   if (narrsizes.ge.4) then
-      iformat = 2 ! mhd full dump
-      if (smalldump) iformat = 3 ! mhd small dump
-   endif
-   if (iformat.eq.0) then
-      ivx = 7
-   elseif (iformat.eq.2) then
-      ivx = 10
-   else
-      ivx = 0
-   endif
+      ix(1) = 1
+      ix(2) = 2
+      ix(3) = 3
+      ipmass = 4
+      ih = 5
+      irho = 6
+      nhydroarrays = 6 ! x,y,z,m,h,rho
+      nhydroarraysinfile = nreal(1) + nreal4(1) + nreal8(1)
+      if (imadepmasscolumn) nhydroarraysinfile = nhydroarraysinfile + 1
+      if (nhydroarraysinfile .lt.nhydroarrays .and. .not.phantomdump) then
+         print "(a)",' ERROR: one of x,y,z,m,h or rho missing in small dump read'
+         nhydroarrays = nreal(1)+nreal4(1)+nreal8(1)
+      elseif (phantomdump .and. (nreal(1).lt.3 .or. nreal4(1).lt.1)) then
+         print "(a)",' ERROR: x,y,z or h missing in phantom read'
+      endif
+      if (narrsizes.ge.4) then
+         nmhdarrays = 3 ! Bx,By,Bz
+      else
+         nmhdarrays = 0
+      endif
+      iformat = 0 ! hydro full dump
+      if (smalldump) iformat = 1 ! hydro small dump
+      if (narrsizes.ge.4) then
+         iformat = 2 ! mhd full dump
+         if (smalldump) iformat = 3 ! mhd small dump
+      endif
+      if (iformat.eq.0) then
+         ivx = 7
+      elseif (iformat.eq.2) then
+         ivx = 10
+      else
+         ivx = 0
+      endif
+   endif ! iblock = 1
 !
 !--Arrays
 !
+   imaxcolumnread = 0
+   icolumn = 0
+   i1 = i2 + 1
+   i2 = i1 + isize(1) - 1
+   print*,'particles: ',i1,' to ',i2
+
    do iarr=1,narrsizes
+ 
 !--read iphase from array block 1
       if (iarr.eq.1) then
          !--skip default int
@@ -404,7 +432,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             !--skip remaining integer arrays
             nskip = nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
          else
-            read(iunit,end=33,iostat=ierr) iphase(1:isize(iarr))
+            read(iunit,end=33,iostat=ierr) iphase(i1:i2)
             !--skip remaining integer arrays
             nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
          endif
@@ -482,9 +510,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
             if (required(icolumn)) then
                if (doubleprec) then
                   read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
-                  dat(1:isize(iarr),icolumn,j) = real(dattemp(1:isize(iarr)))
+                  dat(i1:i2,icolumn,j) = real(dattemp(1:isize(iarr)))
                else
-                  read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j)
+                  read(iunit,end=33,iostat=ierr) dat(i1:i2,icolumn,j)
                endif
             else
                read(iunit,end=33,iostat=ierr)
@@ -496,7 +524,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             if (abs(massoftypei(1)).gt.tiny(massoftypei)) then
                icolumn = ipmass
                if (required(ipmass)) then
-                  where (iphase(1:isize(iarr)).eq.0) dat(1:isize(iarr),icolumn,j) = massoftypei(1)
+                  where (iphase(i1:i2).eq.0) dat(i1:i2,icolumn,j) = massoftypei(1)
                endif
                !--dust mass for phantom particles
                if (phantomdump .and. npartoftypei(2).gt.0) then
@@ -528,7 +556,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             endif
             imaxcolumnread = max(imaxcolumnread,icolumn)
             if (required(icolumn)) then
-               read(iunit,end=33,iostat=ierr) dat(1:isize(iarr),icolumn,j)
+               read(iunit,end=33,iostat=ierr) dat(i1:i2,icolumn,j)
             else
                read(iunit,end=33,iostat=ierr)
             endif
@@ -541,13 +569,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
                !  so use abs(h) for these particles and hide them
                !
                if (required(irho)) then
-                  where (dat(1:isize(iarr),ih,j).gt.0.)
-                     dat(1:isize(iarr),irho,j) = &
-                        dat(1:isize(iarr),ipmass,j)*(hfact/dat(1:isize(iarr),ih,j))**3
-                  elsewhere (dat(1:isize(iarr),ih,j).gt.0.)
-                     dat(1:isize(iarr),irho,j) = &
-                        dat(1:isize(iarr),ipmass,j)*(hfact/abs(dat(1:isize(iarr),ih,j)))**3
-                     icolourme(1:isize(iarr)) = -1
+                  where (dat(i1:i2,ih,j).gt.0.)
+                     dat(i1:i2,irho,j) = &
+                        dat(i1:i2,ipmass,j)*(hfact/dat(i1:i2,ih,j))**3
+                  elsewhere (dat(i1:i2,ih,j).gt.0.)
+                     dat(i1:i2,irho,j) = &
+                        dat(i1:i2,ipmass,j)*(hfact/abs(dat(i1:i2,ih,j)))**3
+                     icolourme(i1:i2) = -1
                   end where
                endif
                    
@@ -560,13 +588,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
             icolumn = icolumn + 1 !!nextcolumn(icolumn,iarr,nhydroarrays,nmhdarrays,imaxcolumnread) 
             if (required(icolumn)) then
                read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
-               dat(1:isize(iarr),icolumn,j) = real(dattemp(1:isize(iarr)))
+               dat(i1:i2,icolumn,j) = real(dattemp(1:isize(iarr)))
             else
                read(iunit,end=33,iostat=ierr)
             endif
          enddo
       endif
-   enddo
+   enddo ! over array sizes
+   enddo over_MPIblocks
 !
 !--reached end of file (during data read)
 !
