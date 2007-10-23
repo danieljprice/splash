@@ -294,7 +294,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
       ncolstep = ncolstep - 2
    endif
    
-   npart_max = max(maxval(isize(1:narrsizes)),npart,ntotal)
+   npart_max = maxval(isize(1:narrsizes))
+   npart_max = max(npart_max,npart,ntotal)
+
    if (smalldump .or. phantomdump .and. iblock.eq.1) then
       if (nreals.ge.15) then
          massoftypei(1) = dummyreal(15)
@@ -927,11 +929,11 @@ subroutine set_labels
    endif
    
    !--use the following two lines for time in years
-   !units(0) = utime/3.1536e7
-   !unitslabel(0) = ' yrs'
+   units(0) = utime/3.1536e7
+   unitslabel(0) = ' yrs'
    !--or use these two lines for time in free-fall times
-   units(0) = 1./tfreefall
-   unitslabel(0) = ' '
+   !units(0) = 1./tfreefall
+   !unitslabel(0) = ' '
   
   unitzintegration = udist
   labelzintegration = ' [cm]'
