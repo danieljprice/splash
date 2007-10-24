@@ -149,10 +149,10 @@ subroutine submenu_data(ichoose)
     if (iCalcQuantities) then
        if (DataIsBuffered) then
           call calc_quantities(1,nsteps)
-          call set_limits(1,nsteps,numplot-ncalc+1,numplot)
+          call set_limits(1,nsteps,ncolumns+1,ncolumns+ncalc)
        else
           call calc_quantities(1,nstepsinfile(ifileopen))
-          call set_limits(1,nstepsinfile(ifileopen),numplot-ncalc+1,numplot)
+          call set_limits(1,nstepsinfile(ifileopen),ncolumns+1,ncolumns+ncalc)
        endif
     else
        print "(/a)",' Calculation of extra quantities = '//print_logical(iCalcQuantities)   
