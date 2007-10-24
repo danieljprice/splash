@@ -22,7 +22,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use filenames, only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen,unitsfile
   use limits, only:set_limits
   use settings_data, only:ncolumns,iendatstep,ncalc,ivegotdata, &
-                     DataisBuffered,iCalcQuantities,ndim,icoords, &
+                     DataisBuffered,iCalcQuantities,ndim,ndimV,icoords, &
                      icoordsnew,iRescale,required,ipartialread,lowmemorymode
   use settings_part, only:iexact
   use particle_data, only:dat,time,npartoftype,maxcol
@@ -236,6 +236,14 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   !--check for errors in data read / print warnings
   !
   if (ndim.ne.0 .and. ncolumns.gt.0) then
+     if (ndim.lt.0 .or. ndim.gt.3) then
+        print "(a)",' ERROR with ndim setting in data read, using ndim=3'
+        ndim = 3
+     endif
+     if (ndimV.lt.0 .or. ndimV.gt.3) then
+        print "(a)",' ERROR with ndimV setting in data read, using ndimV=3'
+        ndimV = 3
+     endif
      if (irho.gt.ncolumns) then
         print "(a)",' ERROR with irho setting in data read'
         irho = 0
