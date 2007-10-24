@@ -59,7 +59,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
   logical :: iexist,reallocate
   real(doub_prec) :: timetemp,ztemp
-  real(doub_prec), dimension(6) :: Massoftype
+  real(doub_prec), dimension(6) :: massoftypei
   real, dimension(:), allocatable :: dattemp1
   real :: hsoft
 
@@ -106,7 +106,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   !--read header for this timestep
   !
-  read(11,iostat=ierr) npartoftypei(1:6),Massoftype,timetemp,ztemp, &
+  read(11,iostat=ierr) npartoftypei(1:6),massoftypei,timetemp,ztemp, &
       iFlagSfr,iFlagFeedback,Nall(1:6),iFlagCool,nfiles
   if (ierr /= 0) then
      print "(a)", '*** ERROR READING TIMESTEP HEADER ***'
@@ -129,7 +129,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   ntoti = int(sum(npartoftypei(1:6)))
   print*,'time             : ',timetemp
   print*,'Npart (by type)  : ',npartoftypei
-  print*,'Mass  (by type)  : ',Massoftype
+  print*,'Mass  (by type)  : ',massoftypei
   print*,'N_gas            : ',npartoftypei(1)
   print*,'N_total          : ',ntoti
   print*,'N data columns   : ',ncolstep
@@ -240,7 +240,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !--work out total number of masses dumped 
      Nmassesdumped = 0
      do itype = 1,6
-        if (abs(Massoftype(itype)).lt.tiny(Massoftype)) then
+        if (abs(massoftypei(itype)).lt.tiny(massoftypei)) then
            Nmassesdumped = Nmassesdumped + Npartoftype(itype,i)
         endif
      enddo
@@ -263,7 +263,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         do itype=1,6
            if (Npartoftype(itype,i).ne.0) then
               index2 = index1 + Npartoftype(itype,i) -1
-              if (abs(Massoftype(itype)).lt.1.e-8) then ! masses dumped
+              if (abs(massoftypei(itype)).lt.1.e-8) then ! masses dumped
                  indexend = indexstart + Npartoftype(itype,i) - 1
                  print*,'read ',Npartoftype(itype,i),' masses for type ', &
                         itype,index1,'->',index2,indexstart,'->',indexend
@@ -271,8 +271,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
                  indexstart = indexend + 1
               else  ! masses not dumped
                  print*,'setting masses for type ',itype,' = ', &
-                        real(Massoftype(itype)),index1,'->',index2
-                 dat(index1:index2,7,i) = real(Massoftype(itype))
+                        real(massoftypei(itype)),index1,'->',index2
+                 dat(index1:index2,7,i) = real(massoftypei(itype))
               endif
               index1 = index2 + 1
            endif
