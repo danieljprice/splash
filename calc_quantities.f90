@@ -206,9 +206,12 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                                   dat(j,ix(1:ndim),i)-dat(itrackpart,ix(1:ndim),i), &
                                   dat(j,ix(1:ndim),i)-dat(itrackpart,ix(1:ndim),i)))
                enddo
-            elseif (any(abs(xorigin(1:ndim)).gt.tiny(xorigin))) then
-            !--else calculate radius using origin settings for rotation
-               print*,'radius calculated relative to origin = ',xorigin(1:ndim)
+            else
+            !--calculate radius using origin settings for rotation
+               if (any(abs(xorigin(1:ndim)).gt.tiny(xorigin))) then
+                  !--only print origin setting if non-zero
+                  print*,'radius calculated relative to origin = ',xorigin(1:ndim)
+               endif
                do j=1,ntoti
                   dat(j,irad,i) = sqrt(dot_product(dat(j,ix(1:ndim),i)-xorigin(1:ndim),   &
                     dat(j,ix(1:ndim),i)-xorigin(1:ndim)))
