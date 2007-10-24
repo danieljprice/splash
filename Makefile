@@ -301,12 +301,19 @@ ifeq ($(ENDIAN), LITTLE)
     F90FLAGS += ${ENDIANFLAGLITTLE}
 endif
 
+# compile in parallel
 ifeq ($(PARALLEL),yes)
     F90FLAGS += $(OMPFLAGS)
 endif
 
+# add debugging flags at compile time
 ifeq ($(DEBUG),yes)
     F90FLAGS += $(DEBUGFLAG)
+endif
+
+# rename the executable for development work
+ifeq ($(DEV),yes)
+    EXT= -dev
 endif
 
 # Fortran flags same as F90
@@ -413,7 +420,9 @@ rsph: checksystem $(OBJECTS) read_data_rsph.o
 tipsy: checksystem $(OBJECTS) read_data_tipsy.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o tsplash $(OBJECTS) read_data_tipsy.o
 
-all: ndspmhd dansph sphNG srosph gadget mbatesph ascii
+all: sphNG srosph gadget tipsy ascii
+
+myall: ndspmhd dansph sphNG srosph gadget mbatesph tipsy ascii
 
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
