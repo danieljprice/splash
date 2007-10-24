@@ -337,11 +337,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
       else
          call alloc(npart_max,j,ncolumns)
       endif
-      if (allocated(iphase)) deallocate(iphase)
-      allocate(iphase(npart_max))
-      iphase(:) = 0
    endif
 
+   if (allocated(iphase)) deallocate(iphase)
+   allocate(iphase(npart_max))
+   iphase(:) = 0
    
    if (iblock.eq.1) then
 !--extract required information
@@ -453,6 +453,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--otherwise skip all integer arrays (not needed for plotting)
          nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
       endif
+      !print*,'skipping ',nskip
       do i=1,nskip
          read(iunit,end=33,iostat=ierr)
       enddo
@@ -519,7 +520,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             else
                read(iunit,end=33,iostat=ierr)
             endif
-!            print*,'real',icolumn
+            !print*,'real',icolumn
          enddo
 !        set masses for equal mass particles (not dumped in small dump)
          if (((smalldump.and.nreal(1).lt.ipmass).or.phantomdump).and. iarr.eq.1) then
@@ -533,7 +534,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   print *,' dust particle mass = ',massoftypei(2),' ratio dust/gas = ',massoftypei(2)/massoftypei(1)
                   dat(npartoftypei(1)+1:npartoftypei(1)+npartoftypei(2),icolumn,j) = massoftypei(2)
                endif
-!               print*,icolumn
+               !print*,icolumn
             endif
          endif
 !        real4's go straight into dat
