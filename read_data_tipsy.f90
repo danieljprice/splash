@@ -321,6 +321,7 @@ subroutine read_tipsybody_binary(iunitb,ierr,nread)
  read(iunitb) dummy ! WHY DO WE NEED THIS??
  nerr = 0
  do i=1,ngas
+    !--pmass,x,y,z,vx,vy,vz,rho,temp,h
     read(iunitb,end=44,iostat=ierr) dat(i,ipmass,j),dat(i,1:ndim,j),dat(i,ndim+2:ncolumns,j),dummy,dummy
     !print*,' gas mass = ',i,dat(i,ipmass,j), ' xyz = ',dat(i,1:ndim,j)
     if (ierr /= 0) nerr = nerr + 1
@@ -368,7 +369,7 @@ end subroutine read_data
 
 subroutine set_labels
   use labels, only:label,labelvec,labeltype,iamvec,&
-              ix,ivx,ih,irho,iutherm,ipmass
+              ix,ivx,ih,irho,ipmass !,iutherm
   use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
   use geometry, only:labelcoord
   !use settings_units, only:units,unitslabel
@@ -390,12 +391,13 @@ subroutine set_labels
   ipmass = ndim + 1
   ivx = ndim + 2
   irho = ivx + ndim
-  iutherm = irho + 1
-  ih = iutherm + 1
+  !iutherm = irho + 1
+  label(irho+1) = 'temperature'
+  ih = irho + 2
   
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(ih) = 'h'
-  if (iutherm.gt.0) label(iutherm) = 'u'
+  !if (iutherm.gt.0) label(iutherm) = 'temperature'
   label(ipmass) = 'particle mass'
   label(irho) = 'density'
 
