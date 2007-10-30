@@ -382,7 +382,7 @@ subroutine print_header
    '   under certain conditions (see LICENSE file for details). *',/,/, &
    ' Comments, bugs, suggestions and queries to: dprice@astro.ex.ac.uk ',/, &
    ' Check for updates at: www.astro.ex.ac.uk/people/dprice/splash ',/, &
-   ' Please cite Price (2007, PASA accepted, arXiv:0709.0832) if you ',/, &
+   ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
    ' use SPLASH for scientific work and if you plot something beautiful,',/, &
    ' why not send me a copy for the gallery? ',/)
       
