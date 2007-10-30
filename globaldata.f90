@@ -52,7 +52,7 @@ end module filenames
 module labels
  use params
  implicit none
- character(len=40), dimension(maxplot+2) :: label,labelvec
+ character(len=60), dimension(maxplot+2) :: label,labelvec
  character(len=20), dimension(maxparttypes) :: labeltype
  integer, dimension(3) :: ix
  integer, dimension(maxplot) :: iamvec
