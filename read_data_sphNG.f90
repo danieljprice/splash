@@ -168,6 +168,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       if (nints.lt.3) then
          if (.not.phantomdump) print "(a)",'WARNING: npart,n1,n2 NOT IN HEADER??'
          read(iunit,iostat=ierr) npart
+         npartoftypei(1) = npart
       elseif (phantomdump) then
          ntypes = nints - 1
          read(iunit,iostat=ierr) npart,npartoftypei(1:ntypes)
