@@ -163,7 +163,7 @@ subroutine defaults_write(filename)
  character(len=*), intent(in) :: filename
  integer :: i,ierr
        
- open(unit=1,file=filename,status='replace',form='formatted', &
+ open(unit=1,file=trim(adjustl(filename)),status='replace',form='formatted', &
       delim='apostrophe',iostat=ierr) ! without delim namelists may not be readable
     if (ierr /= 0) then 
        print*,'ERROR: cannot write file '//trim(filename)
