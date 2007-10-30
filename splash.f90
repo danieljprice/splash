@@ -206,10 +206,10 @@ program splash
   !  default names for defaults file and limits file
   !
   fileprefix = 'splash'
-  defaultsfile = trim(fileprefix)//'.defaults'
-  limitsfile = trim(fileprefix)//'.limits'
-  animfile = trim(fileprefix)//'.anim'
-  unitsfile = trim(fileprefix)//'.units'
+  defaultsfile = trim(adjustl(fileprefix))//'.defaults'
+  limitsfile = trim(adjustl(fileprefix))//'.limits'
+  animfile = trim(adjustl(fileprefix))//'.anim'
+  unitsfile = trim(adjustl(fileprefix))//'.units'
   evsplash = .false.
   lowmemorymode = lenvironment('SPLASH_LOW_MEM')
   !
@@ -278,10 +278,10 @@ program splash
      endif
   enddo
 
-  defaultsfile = trim(fileprefix)//'.defaults'
-  limitsfile = trim(fileprefix)//'.limits'
-  animfile = trim(fileprefix)//'.anim'
-  unitsfile = trim(fileprefix)//'.units'
+  defaultsfile = trim(adjustl(fileprefix))//'.defaults'
+  limitsfile = trim(adjustl(fileprefix))//'.limits'
+  animfile = trim(adjustl(fileprefix))//'.anim'
+  unitsfile = trim(adjustl(fileprefix))//'.units'
 
   !
   ! print header
