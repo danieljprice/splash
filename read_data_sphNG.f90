@@ -159,6 +159,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--read number of default ints
 !   
    nblocks = 1 ! number of MPI blocks
+   npartoftypei(:) = 0
    read(iunit,iostat=ierr) nints
    if (ierr /=0) then
       print "(a)",'error reading nints'
