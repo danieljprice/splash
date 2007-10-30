@@ -160,9 +160,11 @@ ifeq ($(SYSTEM),ukaff1a)
    OMPFLAGS= -qsmp=omp
    DEBUGFLAG= -C -g
    SYSTEMFILE= system_f2003.f90
+   X11LIBS= -L/usr/X11R6/lib -lX11
    PGPLOTLIBS=   
    STATICLIBS= /home/dprice/pgplot/libpgplot.a /home/dprice/plot/libg2cmodified.a 
    KNOWN_SYSTEM=yes
+#   EXT=_temp
 endif
 
 ifeq ($(SYSTEM),ukaff1b)
