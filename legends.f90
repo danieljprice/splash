@@ -192,7 +192,7 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
   real :: xch, ych, xmin, xmax, ymin, ymax
   real :: vspace, vpos
 
-  call pgstbg(0)           ! opaque text to overwrite previous
+  !call pgstbg(0)           ! opaque text to overwrite previous
 !
 !--set horizontal and vertical position and spacing
 !  in units of the character height
