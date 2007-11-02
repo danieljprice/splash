@@ -100,8 +100,8 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
    !--set viewport for the wedge
    !
-   vptymaxi = vptymini - disp*xch
-   vptymini = vptymaxi - xch*width*0.4
+   vptymaxi = vptymini - 0.25*ych
+   vptymini = vptymaxi - 2.*ych
    call pgsvp(vptxmini,vptxmaxi,vptymini,vptymaxi)
    !
    !--draw colour bar, by cleverly setting window size
@@ -117,6 +117,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !--draw labelled frame around the wedge
    !
     call pgbox('BCNST',0.0,0,'BC',0.0,0)
+    !call pgbox('BNST',0.0,0,'BC',0.0,0)
    !
    !--write the units label
    !
@@ -230,7 +231,7 @@ subroutine get_colourbarmargins(istyle,xmaxmargin,yminmargin,barwidth)
 
  select case(istyle)
  case(2)
-    barwidth = (ColourBarWidth*(0.4)+0.75 + 2.5)*xch
+    barwidth = 2.5*ych
     yminmargin = yminmargin + barwidth
  case default
     barwidth = (ColourBarWidth*(0.4)+0.75 + max(ColourBarDisp+1.25,0.0))*xch
