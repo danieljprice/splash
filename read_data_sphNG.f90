@@ -183,6 +183,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
          print "(a)",'error reading npart,n1,n2 and/or number of MPI blocks'
          close(iunit)
          return
+      elseif (nblocks.gt.2000) then
+         print *,'npart = ',npart,' MPI blocks = ',nblocks
+         nblocks = 1
+         print*,' corrupt number of MPI blocks, assuming 1 '
       else
          print *,'npart = ',npart,' MPI blocks = ',nblocks
       endif
@@ -412,6 +416,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
       else
          ivx = 0
       endif
+      
+      if (narrsizes.ge.3 .and. isize(3).eq.isize(1)) then
+      !--we have radiative transfer in the dump
+         iformat = 4 ! radiative transfer dump
+      endif
+      
    endif ! iblock = 1
 !
 !--Arrays
@@ -454,6 +464,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
       else
 !--otherwise skip all integer arrays (not needed for plotting)
          nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
+      endif
+      
+      if (iarr.eq.3 .and. lenvironment('SSPLASH_BEN_HACKED')) then
+         nskip = nskip - 1
+         print*,' FIXING HACKED DUMP FILE'
       endif
       !print*,'skipping ',nskip
       do i=1,nskip
@@ -565,7 +580,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             else
                read(iunit,end=33,iostat=ierr)
             endif
-!            print*,icolumn
+            !print*,icolumn
             !--construct density for phantom dumps based on h, hfact and particle mass
             if (phantomdump .and. icolumn.eq.ih) then
                icolumn = irho ! density
@@ -604,7 +619,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--reached end of file (during data read)
 !
+   goto 34
 33 continue
+   print "(1x,a)",'WARNING: end of file during read'
+34 continue
  !
  !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
  !
@@ -818,7 +836,7 @@ end subroutine read_data
 
 subroutine set_labels
   use labels, only:label,labeltype,labelvec,iamvec, &
-              ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst
+              ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy
   use params
   use settings_data, only:ndim,ndimV,ntypes,ncolumns,iformat,UseTypeInRenderings
   use geometry, only:labelcoord
@@ -826,7 +844,7 @@ subroutine set_labels
   implicit none
   integer :: i
   real :: tfreefall
-  real(doub_prec) :: udist,umass,utime,umagfd
+  real(doub_prec) :: udist,umass,utime,umagfd,uergg
   common /sphNGunits/ udist,umass,utime,umagfd,tfreefall
   
   if (ndim.le.0 .or. ndim.gt.3) then
@@ -847,7 +865,7 @@ subroutine set_labels
 !--the following only for mhd small dumps or full dumps
   if (ncolumns.ge.7) then
   select case(iformat)
-     case(0) ! hydro full dump
+     case(0,4) ! hydro full dump
         ivx = 7
         iutherm = 10
         label(11) = 'grad h'
@@ -874,7 +892,24 @@ subroutine set_labels
      case(3) ! mhd small dump
         iBfirst = 7
      end select
+     if (iformat.eq.4) then ! radiative transfer dump
+        iradenergy = 12
+        label(iradenergy) = 'radiation energy'
+        label(13) = 'opacity'
+        icv = 14
+        label(icv) = 'u/T'
+        label(15) = 'lambda'
+        label(16) = 'eddington factor'
+        !--units
+        uergg = (udist/utime)**2
+        units(iradenergy) = uergg
+        units(13) = udist**2/umass
+        units(icv) = uergg
+        units(15) = 1.0
+        units(16) = 1.0
+     endif
   endif
+
   
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   if (irho.gt.0) label(irho) = 'density'
