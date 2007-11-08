@@ -60,6 +60,7 @@ module labels
  integer :: ipmass,ike
  integer :: idivb,iJfirst
  integer :: iacplane,ipowerspec
+ integer :: icv,iradenergy
  
  public
 

@@ -10,7 +10,7 @@ contains
 !!
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels, only:label,labelvec,iamvec,ix,irho,ih,ipmass,iutherm,ipr,ivx,ike, &
-                   irad,iBfirst,idivB
+                   irad,iBfirst,idivB,icv,iradenergy
   use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iRescale,xorigin,itrackpart
   use settings_part, only:iexact
@@ -25,12 +25,14 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
   integer :: iamvecprev,ivec,nveclist,ivecstart,inewcol
   integer :: imri,ipk
+  integer :: itempgas,itemprad
   integer, dimension(ncolumns) :: iveclist,ivecmagcol
   logical :: skip
   real :: Bmag, veltemp, spsound
   real, parameter :: pi = 3.1415926536
   real, parameter :: Omega0 = 1.e-3 ! for MRI delta v
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
+  real, parameter :: radconst = 7.5646e-15
   
   !
   !--allow dummy call to set labels without actually calculating stuff
@@ -63,6 +65,8 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   ithermal = 0
   imri = 0
   ipk = 0
+  itempgas = 0
+  itemprad = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -93,6 +97,11 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   !--pk
   !call addcolumn(ipk,'P(k) k\u2')
 
+  !
+  !--radiative transfer stuff
+  !
+  if (ndim.gt.0 .and. iutherm.gt.0 .and. icv.gt.0) call addcolumn(itempgas,'gas temperature')
+  if (ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0) call addcolumn(itemprad,'radiation temperature')
   !
   !--specify MHD quantities
   !
@@ -269,6 +278,25 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
          endif
          if (iBperp.ne.0) then
             dat(1:ntoti,iBperp,i) = dat(1:ntoti,iBfirst+1,i)*COS(anglexy) - dat(1:ntoti,iBfirst,i)*SIN(anglexy)
+         endif
+      endif
+      !
+      !--radiative transfer quantities
+      !
+      !!--gas temperature
+      if (itempgas.gt.0 .and. ndim.gt.0 .and. iutherm.gt.0 .and. icv.gt.0) then
+         where(abs(dat(1:ntoti,icv,i)).gt.tiny(0.))
+            dat(1:ntoti,itempgas,i) = dat(1:ntoti,iutherm,i)/dat(1:ntoti,icv,i)
+         elsewhere  
+            dat(1:ntoti,itempgas,i) = 0.
+         endwhere
+      endif
+      !!--radiation temperature
+      if (itemprad.gt.0 .and. ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0) then
+         if (iRescale) then
+            dat(1:ntoti,itemprad,i) = abs(dat(1:ntoti,irho,i)*dat(1:ntoti,iradenergy,i)/radconst)**0.25
+         else ! if not using physical units, still give radiation temperature in physical units
+            dat(1:ntoti,itemprad,i) = abs(dat(1:ntoti,irho,i)*units(irho)*dat(1:ntoti,iradenergy,i)*units(iradenergy)/radconst)**0.25         
          endif
       endif
       !
