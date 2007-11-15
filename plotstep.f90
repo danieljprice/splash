@@ -1969,7 +1969,7 @@ contains
     implicit none
     integer, intent(in) :: iplot
     real, dimension(:), intent(in) :: xploti
-    real, intent(out) :: xmini,xmaxi,xminadaptive,xmaxadaptive
+    real, intent(inout) :: xmini,xmaxi,xminadaptive,xmaxadaptive
     character(len=*), intent(in) :: labeli
     integer :: index1,index2,itype    
     !--calculate adaptive limits for this quantity
