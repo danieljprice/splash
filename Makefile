@@ -373,6 +373,8 @@ OBJECTS= $(OBJECTS1:.F90=.o)
 # Now compile with the appropriate data read file
 # (move yours to the top so that you can simply type "make")
 #
+all: sphNG srosph gadget tipsy dragon vine ascii
+
 ascii: checksystem $(OBJECTS) read_data_ascii.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o asplash$(EXT) $(OBJECTS) read_data_ascii.o
 #--build universal binary on mac cluster
@@ -388,6 +390,9 @@ gadget: checksystem $(OBJECTS) read_data_gadget.o
 
 bauswein: checksystem $(OBJECTS) read_data_bauswein.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o bsplash $(OBJECTS) read_data_bauswein.o 
+
+dragon: checksystem $(OBJECTS) read_data_dragon.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o dsplash $(OBJECTS) read_data_dragon.o
 
 vine: checksystem $(OBJECTS) read_data_VINE.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o vsplash $(OBJECTS) read_data_VINE.o
@@ -422,7 +427,7 @@ rsph: checksystem $(OBJECTS) read_data_rsph.o
 tipsy: checksystem $(OBJECTS) read_data_tipsy.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o tsplash $(OBJECTS) read_data_tipsy.o
 
-all: sphNG srosph gadget tipsy ascii
+gasoline: tipsy
 
 myall: ndspmhd dansph sphNG srosph gadget mbatesph tipsy ascii
 
