@@ -43,13 +43,13 @@ contains
 !---------------------------------------------------------------------------
 subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
  implicit none
+ integer, intent(in) :: npixx,npixy
  real, intent(in), dimension(npixx,npixy) :: vecpixx,vecpixy
  real, intent(in) :: pixwidth
  real, intent(out), dimension(npixx,npixy) :: datpix
  real, dimension(npixx,npixy) :: datpix2
- integer, intent(in) :: npixx,npixy
- real(kind=8) :: fyj,fyjhalf,term,termi,termj,fxprevi,fyjprev
- real(kind=8), dimension(npixx) :: fx,fxhalf
+ double precision :: fyj,fyjhalf,term,termi,termj,fxprevi,fyjprev
+ double precision, dimension(npixx) :: fx,fxhalf
  integer :: i,j
  !
  !--check for errors in input
