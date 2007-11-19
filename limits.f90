@@ -73,7 +73,6 @@ end subroutine set_limits
 !
 subroutine write_limits(limitsfile)
   use settings_data, only:numplot
-  use prompting, only:prompt
   implicit none
   character(len=*), intent(in) :: limitsfile
   integer :: i
@@ -103,7 +102,6 @@ end subroutine write_limits
 subroutine read_limits(limitsfile,ierr)
   use labels, only:label
   use settings_data, only:numplot,ncolumns,ncalc
-  use prompting, only:prompt
   implicit none
   character(len=*), intent(in) :: limitsfile
   integer, intent(out) :: ierr
