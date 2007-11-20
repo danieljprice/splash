@@ -38,7 +38,7 @@ contains
 !
 ! written by Daniel Price dprice@astro.ex.ac.uk
 !
-! Last modified: 5th Oct. 2006
+! Oct 2007: uses Simpson's rule instead of trapezoidal
 !
 !---------------------------------------------------------------------------
 subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
@@ -110,7 +110,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
           endif
        endif
        
-       datpix(i,j) = term
+       datpix(i,j) = real(term)
     enddo
  enddo
  !
@@ -162,7 +162,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
           endif
        endif
        
-       datpix2(i,j) = term
+       datpix2(i,j) = real(term)
     enddo
  enddo
  
