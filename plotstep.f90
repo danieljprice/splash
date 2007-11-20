@@ -433,7 +433,7 @@ end subroutine initialise_plotting
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
-                    npartoftype,massoftype,dat,timei,gammai,ipagechange,iadvance)
+                    iamtype,npartoftype,masstype,dat,timei,gammai,ipagechange,iadvance)
   use params
   use colours, only:colour_set
   use filenames, only:nsteps
@@ -473,18 +473,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use interpolations2D, only:interpolate2D, interpolate2D_xsec
   use interpolations3D, only:interpolate3D
   use projections3D, only:interpolate3D_projection
-  use opacityrendering3D, only:interpolate3D_proj_opacity,interpolate3D_proj_opacity_writeppm
+  use interpolate3D_opacity, only:interp3D_proj_opacity !,interp3D_proj_opacity_writeppm
   use xsections3D, only:interpolate3D_fastxsec,interpolate3D_xsec_vec
   use render, only:render_pix
   use pagesetup, only:redraw_axes
   use exactfromfile, only:exact_fromfile
-  use write_pixmap, only:iwritepixmap,writepixmap
+  use write_pixmap, only:iwritepixmap,writepixmap,write_pixmap_ppm
 
   implicit none
   integer, intent(inout) :: ipos, istepsonpage
   integer, intent(in) :: istep, irender_nomulti, ivecplot
+  integer(kind=int1), dimension(:), intent(in) :: iamtype
   integer, dimension(maxparttypes), intent(in) :: npartoftype
-  real, dimension(maxparttypes), intent(in) :: massoftype
+  real, dimension(maxparttypes), intent(in) :: masstype
   real, dimension(:,:), intent(in) :: dat
   real, intent(in) :: timei,gammai
   logical, intent(in) :: ipagechange
@@ -538,8 +539,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      pmassmin = minval(dat(:,ipmass))
      pmassmax = maxval(dat(:,ipmass))
   else
-     pmassmin = massoftype(1)
-     pmassmax = massoftype(1)
+     pmassmin = masstype(1)
+     pmassmax = masstype(1)
   endif
   !
   !--set number of particles to use in the interpolation routines
@@ -547,14 +548,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   !
   ntoti = sum(npartoftype)
   ninterp = npartoftype(1)
-  if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes))) ninterp = ntoti
-
+  if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes)) &
+      .or. size(iamtype).gt.1) ninterp = ntoti
+  
   !--set the colour table if it has not been set and particles have been coloured previously
   if (any(icolourme(1:ntoti).gt.16) .and. .not.ihavesetcolours) call colour_set(icolours)
   !
   !--set weight factor for interpolation routines
   !
-  call set_interpolation_weights(weight,dat)
+  call set_interpolation_weights(weight,dat,iamtype)
 
   !
   !--add a loop over frames for animation sequences
@@ -905,16 +907,16 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                           print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
                                ' : opacity-rendered cross section', xmin,ymin                    
                           if (ipmass.gt.0) then
-                             call interpolate3D_proj_opacity( &
+                             call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos)
                           else
-                             call interpolate3D_proj_opacity( &
+                             call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               massoftype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               masstype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos)                          
@@ -937,16 +939,16 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                        if (use3Dperspective .and. use3Dopacityrendering) then
                           !!--do fast projection with opacity
                           if (ipmass.gt.0) then
-                             call interpolate3D_proj_opacity( &
+                             call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,huge(zslicepos))
                           else
-                             call interpolate3D_proj_opacity( &
+                             call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               massoftype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               masstype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,huge(zslicepos))
@@ -1173,17 +1175,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  !!--plot non-gas particle types (e.g. sink particles) on top
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-                   icolourme(1:ntoti),npartoftype(:),PlotOnRenderings(:), &
+                   icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
                    (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                    xmin,xmax,ymin,ymax,ifastparticleplot)
                  
                  !!--write ppm if interpolate3D_opacity
                  if (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm) then
-                    call interpolate3D_proj_opacity_writeppm(datpix,brightness,npixx,npixy, &
-                         rendermin,rendermax,((istep-1)*nframesloop + iframe))
-                 endif
-            
-                 if (iwritepixmap) then
+                    call write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax, &
+                                          trim(labelrender),((istep-1)*nframesloop + iframe),brightness)
+                    !call interp3D_proj_opacity_writeppm(datpix,brightness,npixx,npixy, &
+                    !     rendermin,rendermax,((istep-1)*nframesloop + iframe))
+                 !!--dump pixmap to file if option set
+                 elseif (iwritepixmap) then
                     call writepixmap(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax,trim(labelrender),&
                                      ((istep-1)*nframesloop + iframe))
                  endif
@@ -1202,14 +1205,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  !!--plot all particle types
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-                   icolourme(1:ntoti),npartoftype(:),iplotpartoftype(:), &
+                   icolourme(1:ntoti),iamtype,npartoftype(:),iplotpartoftype(:), &
                    (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                    xmin,xmax,ymin,ymax,ifastparticleplot)
               else
                  !!--plot non-gas particle types on top of vector plots (e.g. sinks)
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-                   icolourme(1:ntoti),npartoftype(:),PlotOnRenderings(:), &
+                   icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
                    (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                    xmin,xmax,ymin,ymax,ifastparticleplot)
                    
@@ -1377,7 +1380,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !--------------------------------
         call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
              zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-             icolourme(1:ntoti),npartoftype(:),iplotpartoftype,.false., &
+             icolourme(1:ntoti),iamtype,npartoftype(:),iplotpartoftype,.false., &
              zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
         !
         !--redraw axes over what has been plotted
@@ -1681,7 +1684,7 @@ contains
     use pagesetup, only:setpage2
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes,vposlegend,iPlotLegend
     implicit none
-    real :: barwidth, TitleOffset,xch,ych,xmaxmargin,yminmargin
+    real :: barwidth, TitleOffset,xmaxmargin,yminmargin
     logical :: ipanelchange
 
     !---------------------
@@ -2108,112 +2111,141 @@ contains
 !-------------------------------------------------------------------
 ! interface for setting interpolation weights
 !-------------------------------------------------------------------
-  subroutine set_interpolation_weights(weighti,dati)
+  subroutine set_interpolation_weights(weighti,dati,iamtypei)
     use settings_render, only:idensityweightedinterpolation
     implicit none
     real, dimension(:), intent(out) :: weighti
     real, dimension(:,:), intent(in) :: dati
-    integer :: i2,i1,itype
+    integer(kind=int1), dimension(:), intent(in) :: iamtypei
+    integer :: i2,i1,itype,ipart
     real(doub_prec) :: dunitspmass,dunitsrho,dunitsh
+
+    dunitspmass = 1.d0
+    dunitsrho = 1.d0
+    dunitsh = 1.d0
+    if (iRescale) then
+       if (ipmass.gt.0) dunitspmass = 1.d0/units(ipmass)
+       if (ih.gt.0) dunitsh = 1.d0/units(ih)
+       if (irho.gt.0) dunitsrho = 1.d0/units(irho)
+    endif
+    !--check for consistency that if particles are not plotted, they are also not plotted on renderings
+    do itype=1,ntypes
+       if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.   
+    enddo
 
     if (ipmass.gt.0 .and. ipmass.le.ndataplots .and. &
         irho.gt.0 .and. irho.le.ndataplots .and. &
         ih .gt. 0 .and. ih.le.ndataplots ) then
-       i2 = 0
-       if (idensityweightedinterpolation) then
-          do itype=1,ntypes
-             !--check for consistency that if particles are not plotted, they are also not plotted on renderings
-             if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.
-             i1 = i2 + 1
-             i2 = i2 + npartoftype(itype)
-             !--set weights to zero for particle types not used in the rendering
-             if (.not.iplotpartoftype(itype) .or. .not.UseTypeInRenderings(itype)) then
-                weighti(i1:i2) = 0.
-             else
-                !  make sure this is done in code units (ie. a consistent set)
-                if (iRescale) then
-                   dunitspmass = 1.d0/units(ipmass)
-                   dunitsh = 1.d0/units(ih)
-                   where(dati(i1:i2,ih) > tiny(dati))
-                      weighti(i1:i2) = (dati(i1:i2,ipmass)*dunitspmass)/ &
-                                       ((dati(i1:i2,ih)*dunitsh)**ndim)
-                   elsewhere
-                      weighti(i1:i2) = 0.
-                   endwhere
+       
+       if (size(iamtype).gt.1) then
+          !
+          !--particles with mixed types
+          !
+          do ipart=1,ninterp
+             itype = iamtypei(ipart)
+             if (.not.iplotpartoftype(itype) .or. .not.UseTypeinRenderings(itype)) then
+                weighti(ipart) = 0.
+             elseif (idensityweightedinterpolation) then
+                if (dati(ipart,ih) > tiny(dati)) then
+                   weighti(ipart) = (dati(ipart,ipmass)*dunitspmass)/ &
+                                   ((dati(ipart,ih)*dunitsh)**ndim)
                 else
-                   where(dati(i1:i2,ih) > tiny(dati))
-                      weighti(i1:i2) = (dati(i1:i2,ipmass))/(dati(i1:i2,ih)**ndim)
-                   elsewhere
-                      weighti(i1:i2) = 0.
-                   endwhere
+                   weighti(ipart) = 0.
+                endif
+             else
+                if (dati(ipart,irho) > tiny(dati) .and. dati(ipart,ih) > tiny(dati)) then
+                   weighti(ipart) = (dati(ipart,ipmass)*dunitspmass)/ &
+                                   ((dati(ipart,irho)*dunitsrho)*(dati(ipart,ih)*dunitsh)**ndim)
+                else
+                   weighti(ipart) = 0.
                 endif
              endif
-             inormalise = .true.
           enddo
-          print "(a)",' USING DENSITY WEIGHTED INTERPOLATION '
        else
+          !
+          !--particles ordered by type
+          !
+          i2 = 0
           do itype=1,ntypes
-             !--check for consistency that if particles are not plotted, they are also not plotted on renderings
-             if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.
              i1 = i2 + 1
              i2 = i2 + npartoftype(itype)
              !--set weights to zero for particle types not used in the rendering
              if (.not.iplotpartoftype(itype) .or. .not.UseTypeInRenderings(itype)) then
                 weighti(i1:i2) = 0.
+             elseif (idensityweightedinterpolation) then
+             !--for density weighted interpolation use m/h**ndim
+                where(dati(i1:i2,ih) > tiny(dati))
+                   weighti(i1:i2) = (dati(i1:i2,ipmass)*dunitspmass)/ &
+                                    ((dati(i1:i2,ih)*dunitsh)**ndim)
+                elsewhere
+                   weighti(i1:i2) = 0.
+                endwhere
              else
-                !  make sure this is done in code units (ie. a consistent set)
-                if (iRescale) then
-                   dunitspmass = 1.d0/units(ipmass)
-                   dunitsrho = 1.d0/units(irho)
-                   dunitsh = 1.d0/units(ih)
-                   where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
-                      weighti(i1:i2) = (dati(i1:i2,ipmass)*dunitspmass)/ &
-                                       ((dati(i1:i2,irho)*dunitsrho)*(dati(i1:i2,ih)*dunitsh)**ndim)
-                   elsewhere
-                      weighti(i1:i2) = 0.
-                   endwhere
-                else
-                   where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
-                      weighti(i1:i2) = (dati(i1:i2,ipmass))/(dati(i1:i2,irho)*dati(i1:i2,ih)**ndim)
-                   elsewhere
-                      weighti(i1:i2) = 0.
-                   endwhere
-                endif
+             !--usual interpolation use m/(rho h**ndim)
+                where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
+                   weighti(i1:i2) = (dati(i1:i2,ipmass)*dunitspmass)/ &
+                                    ((dati(i1:i2,irho)*dunitsrho)*(dati(i1:i2,ih)*dunitsh)**ndim)
+                elsewhere
+                   weighti(i1:i2) = 0.
+                endwhere
              endif
-             inormalise = inormalise_interpolations
           enddo
        endif
-    elseif (massoftype(1).gt.0.) then
-       i2 = 0
-       do itype=1,ntypes
-          !--check for consistency that if particles are not plotted, they are also not plotted on renderings
-          if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.
-          i1 = i2 + 1
-          i2 = i2 + npartoftype(itype)
-          !--set weights to zero for particle types not used in the rendering
-          if (.not.iplotpartoftype(itype) .or. .not.UseTypeInRenderings(itype)) then
-             weighti(i1:i2) = 0.
-          else
-             !  make sure this is done in code units (ie. a consistent set)
-             if (iRescale) then
-                dunitsrho = 1.d0/units(irho)
-                dunitsh = 1.d0/units(ih)
+       
+       if (idensityweightedinterpolation) then
+          print "(a)",' USING DENSITY WEIGHTED INTERPOLATION '
+          inormalise = .true.
+       else
+          inormalise = inormalise_interpolations
+       endif
+
+    elseif (masstype(1).gt.0.) then
+       
+       if (size(iamtype).gt.1) then
+          !
+          !--particles with mixed types
+          !
+          do ipart=1,ninterp
+             itype = iamtypei(ipart)
+             if (.not.iplotpartoftype(itype) .or. .not.UseTypeinRenderings(itype)) then
+                weighti(ipart) = 0.
+             elseif (idensityweightedinterpolation) then
+                if (dati(ipart,ih) > tiny(dati)) then
+                   weighti(ipart) = (masstype(itype)*dunitspmass)/ &
+                                   ((dati(ipart,ih)*dunitsh)**ndim)
+                else
+                   weighti(ipart) = 0.
+                endif
+             else
+                if (dati(ipart,irho) > tiny(dati) .and. dati(ipart,ih) > tiny(dati)) then
+                   weighti(ipart) = (masstype(itype)*dunitspmass)/ &
+                                   ((dati(ipart,irho)*dunitsrho)*(dati(ipart,ih)*dunitsh)**ndim)
+                else
+                   weighti(ipart) = 0.
+                endif
+             endif
+          enddo
+       else
+          !
+          !--particles ordered by type
+          !
+          i2 = 0
+          do itype=1,ntypes
+             i1 = i2 + 1
+             i2 = i2 + npartoftype(itype)
+             !--set weights to zero for particle types not used in the rendering
+             if (.not.iplotpartoftype(itype) .or. .not.UseTypeInRenderings(itype)) then
+                weighti(i1:i2) = 0.
+             else
                 where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
-                   weighti(i1:i2) = massoftype(itype)/ &
+                   weighti(i1:i2) = masstype(itype)/ &
                                   ((dati(i1:i2,irho)*dunitsrho)*(dati(i1:i2,ih)*dunitsh)**ndim)
                 elsewhere
                    weighti(i1:i2) = 0.
                 endwhere
-             else
-                where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
-                   weighti(i1:i2) = massoftype(itype)/(dati(i1:i2,irho)*dati(i1:i2,ih)**ndim)
-                elsewhere
-                   weighti(i1:i2) = 0.
-                endwhere
              endif
-          endif
-          inormalise = inormalise_interpolations
-       enddo
+          enddo
+       endif
     else
     !--if particle mass has not been set, then must use normalised interpolations
        weight(1:ninterp) = 1.0
@@ -2231,7 +2263,7 @@ contains
        iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff, &
        ihidearrowswherenoparts,minpartforarrow
    use interpolations2D, only:interpolate2D_vec
-   use projections3D, only:interpolate3D_proj_vec,interpolate3D_proj_vec_synchrotron
+   use projections3D, only:interpolate3D_proj_vec,interp3D_proj_vec_synctron
    use interpolate_vec, only:mask_vectors
    use render, only:render_vec
    use fieldlines, only:streamlines
@@ -2281,7 +2313,7 @@ contains
             if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then               
                !--get synchrotron polarisation vectors
                if (iutherm.gt.0 .and. iutherm.le.numplot .and. uthermcutoff.gt.0.) then
-                  call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+                  call interp3D_proj_vec_synctron(xplot(1:ninterp), &
                     yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                     weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                     icolourme(1:ninterp),ninterp,xmin,ymin, &
@@ -2289,7 +2321,7 @@ contains
                     rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false., &
                     dat(1:ninterp,iutherm),uthermcutoff)
                else
-                  call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+                  call interp3D_proj_vec_synctron(xplot(1:ninterp), &
                     yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                     weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                     icolourme(1:ninterp),ninterp,xmin,ymin, &
@@ -2390,7 +2422,7 @@ contains
          if (iplotsynchrotron .and. .not. iplotarrowheads) then
             !--get synchrotron polarisation intensity using more pixels
             if (iutherm.gt.0 .and. iutherm.le.numplot .and. uthermcutoff.gt.0.) then
-               call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+               call interp3D_proj_vec_synctron(xplot(1:ninterp), &
                  yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                  weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                  icolourme(1:ninterp),ninterp,xmin,ymin, &
@@ -2399,7 +2431,7 @@ contains
                  rcrit,zcrit,synchrotronspecindex,pixwidthvec,.true., &
                  dat(1:ninterp,iutherm),uthermcutoff)
             else
-               call interpolate3D_proj_vec_synchrotron(xplot(1:ninterp), &
+               call interp3D_proj_vec_synctron(xplot(1:ninterp), &
                  yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                  weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                  icolourme(1:ninterp),ninterp,xmin,ymin, &

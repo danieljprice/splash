@@ -39,7 +39,7 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data, only:dat,gamma,time,npartoftype,maxpart,maxstep,maxcol,icolourme,massoftype
+  use particle_data, only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,icolourme,masstype
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread,&
                      lowmemorymode,ntypes
@@ -52,11 +52,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(len=*), intent(in) :: rootname
   integer, parameter :: maxarrsizes = 10, maxreal = 50
   real, parameter :: pi=3.141592653589
-  integer :: i,j,ierr,iunit,int1,int2,int3,i1,iarr,i2
+  integer :: i,j,ierr,iunit,intg1,int2,int3,i1,iarr,i2
   integer :: npart_max,nstep_max,ncolstep,icolumn
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
-  integer :: nskip,ntotal,npart,n1,n2,itype,ninttypes
-  integer :: nreassign,naccrete,nkill,iblock,nblocks,ntotblock
+  integer :: nskip,ntotal,npart,n1,n2,itype,ninttypes,ngas
+  integer :: nreassign,naccrete,nkill,iblock,nblocks,ntotblock,ncolcopy
   integer :: ipos,nptmass,nptmassi,nunknown,isink,ilastrequired
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
   integer, dimension(maxparttypes) :: npartoftypei
@@ -103,7 +103,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   j = indexstart
   nstepsread = 0
   doubleprec = .true.
- !!! call alloc(max(1,maxpart),max(ncolumns,1),max(indexstart,maxstep))
   
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
 !
@@ -118,8 +117,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
       !--read header key to work out precision
       !
       doubleprec = .true.
-      read(iunit,end=55,iostat=ierr) int1,r8,int2,i1,int3
-      if (int1.ne.690706) then
+      read(iunit,end=55,iostat=ierr) intg1,r8,int2,i1,int3
+      if (intg1.ne.690706) then
          print "(a)",'*** ERROR READING HEADER: corrupt file/zero size/wrong endian?'
          close(iunit)
          return
@@ -341,7 +340,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          enddo
          call alloc(npart_max,j,ilastrequired)
       else
-         call alloc(npart_max,j,ncolumns)
+         call alloc(npart_max,j,ncolumns,mixedtypes=.true.)
       endif
    endif
 
@@ -668,17 +667,43 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
     !--set flag to indicate that only part of this file has been read 
     if (.not.all(required(1:ncolstep))) ipartialread = .true.
+    
+    
     nptmassi = 0
     nunknown = 0
+    ngas = 0
+!
+!--translate iphase into particle types (mixed type storage)
+!
+    if (size(iamtype(:,j)).gt.1) then
+       do i=1,npart
+          select case(iphase(i))
+          case(0)
+            iamtype(i,j) = 1
+            ngas = ngas + 1
+          case(1:)
+            iamtype(i,j) = 3
+            nptmassi = nptmassi + 1
+          case default
+            iamtype(i,j) = 4
+            nunknown = nunknown + 1
+          end select
+       enddo
+       do i=npart+1,ntotal
+          iamtype(i,j) = 2
+       enddo
+       print*,'mixed types: ngas = ',ngas,nptmassi,nunknown
+    elseif (any(iphase(1:ntotal).ne.0)) then
 !
 !--place point masses after normal particles
+!  if not storing the iamtype array
 !     
-    if (any(iphase(1:ntotal).ne.0)) then
        nunknown = 0
        do i=1,npart
           if (iphase(i).ne.0) nunknown = nunknown + 1
        enddo
-       allocate(dattemp2(nunknown,ncolstep))
+       ncolcopy = min(ncolstep,maxcol)
+       allocate(dattemp2(nunknown,ncolcopy))
 
        nptmassi = 0
        ipos = 0
@@ -688,14 +713,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
              nptmassi = nptmassi + 1
              !--save point mass information in temporary array
              if (nptmassi.gt.size(dattemp2(:,1))) stop 'error: ptmass array bounds exceeded in data read'
-             dattemp2(nptmassi,1:ncolstep) = dat(i,1:ncolstep,j)
+             dattemp2(nptmassi,1:ncolcopy) = dat(i,1:ncolcopy,j)
 !             print*,i,' removed', dat(i,1:3,j)
              ipos = ipos - 1
           endif
          !--shuffle dat array
           if (ipos.ne.i .and. i.lt.ntotal) then
   !           print*,'copying ',i+1,'->',ipos+1
-             dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
+             dat(ipos+1,1:ncolcopy,j) = dat(i+1,1:ncolcopy,j)
              !--must also shuffle iphase (to be correct for other types)
              iphase(ipos+1) = iphase(i+1)
           endif
@@ -705,7 +730,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
        do i=1,nptmassi
           ipos = ipos + 1             
 !          print*,ipos,' appended', dattemp2(i,1:3)
-          dat(ipos,1:ncolstep,j) = dattemp2(i,1:ncolstep)
+          dat(ipos,1:ncolcopy,j) = dattemp2(i,1:ncolcopy)
           !--we make iphase = 1 for point masses (could save iphase and copy across but no reason to)
           iphase(ipos) = 1
        enddo
@@ -720,21 +745,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
              nunknown = nunknown + 1
              !--save information in temporary array
              if (nunknown.gt.size(dattemp2(:,1))) stop 'error: array bounds for dead particles exceeded in data read'
-             dattemp2(nunknown,1:ncolstep) = dat(i,1:ncolstep,j)
+             dattemp2(nunknown,1:ncolcopy) = dat(i,1:ncolcopy,j)
   !           print*,i,' removed'
              ipos = ipos - 1
           endif
           !--shuffle dat array
           if (ipos.ne.i .and. i.lt.ntotal) then
              !print*,'copying ',i+1,'->',ipos+1
-             dat(ipos+1,1:ncolstep,j) = dat(i+1,1:ncolstep,j)
+             dat(ipos+1,1:ncolcopy,j) = dat(i+1,1:ncolcopy,j)
              iphase(ipos+1) = iphase(i+1) ! for completeness (ie. if more types used in future)
           endif
        enddo
        !--append dead particles to end of dat array
        do i=1,nunknown
           ipos = ipos + 1
-          dat(ipos,1:ncolstep,j) = dattemp2(i,1:ncolstep)
+          dat(ipos,1:ncolcopy,j) = dattemp2(i,1:ncolcopy)
        enddo
 
      endif

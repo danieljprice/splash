@@ -13,15 +13,17 @@ contains
 !
 !
 subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
-                        icolourpart,npartoftype,iplotpartoftype, &
+                        icolourpart,iamtype,npartoftype,iplotpartoftype, &
                         use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
                         fastparticleplot)
+  use params, only:int1
   use labels, only:labeltype, maxparttypes
   use settings_data, only:ndim,icoords,ntypes
   use settings_part, only:imarktype,ncircpart,icoordsnew,icircpart, &
                           ilabelpart,iplotline,linestylethisstep,linecolourthisstep
   implicit none
   integer, intent(in) :: ntot, iplotx, iploty
+  integer(kind=int1), dimension(:), intent(in) :: iamtype
   integer, intent(in), dimension(ntot) :: icolourpart
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(ntot), intent(in) :: xplot, yplot, zplot, h
@@ -31,13 +33,15 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   logical, dimension(maxparttypes), intent(in) :: iplotpartoftype
   character(len=*), intent(in) :: labelz
   integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle
-  integer :: lenstring,index1,index2,ntotplot,icolourstart
+  integer :: lenstring,index1,index2,ntotplot,icolourstart,nlooptypes,ilooptype
+  integer, dimension(maxparttypes) :: nplottedtype
 !  real :: charheight
   character(len=20) :: string
   integer, parameter :: ncellx = 500, ncelly = 500 ! for crowded field reduction
-  integer(kind=1), dimension(ncellx,ncelly) :: nincell
+  integer(kind=int1), dimension(ncellx,ncelly) :: nincell
   integer :: icellx,icelly !,notplotted
   real :: dxcell1,dycell1
+  logical :: mixedtypes
   
   !--query current character height and colour
 !  call pgqch(charheight)
@@ -59,9 +63,26 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   !--loop over all particle types
   !
   index1 = 1
-  over_types: do itype=1,ntypes
+  nplottedtype = 0
+  nlooptypes = ntypes
+  mixedtypes = size(iamtype).gt.1
+  if (mixedtypes) nlooptypes = 1
+  
+  over_types: do ilooptype=1,nlooptypes
      call pgbbuf !--buffer PGPLOT output until each particle type finished
-     index2 = index1 + npartoftype(itype) - 1
+     if (mixedtypes) then
+        index1 = 1
+        index2 = ntot
+        itype = 0
+     else
+        itype = ilooptype
+        index2 = index1 + npartoftype(itype) - 1
+        if (.not.iplotpartoftype(itype)) then
+           index1 = index2 + 1
+           call pgebuf
+           cycle over_types
+        endif
+     endif
      if (index2.gt.ntot) then 
         index2 = ntot
         print "(a)",' WARNING: incomplete data'
@@ -71,114 +92,150 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
         cycle over_types
      endif
 
-     if (iplotpartoftype(itype) .and. npartoftype(itype).gt.0) then
-        if (use_zrange) then
-           !
-           !--if particle cross section, plot particles only in a defined (z) coordinate range
-           !
-           nplotted = 0
-           do j=index1,index2
-              if (zplot(j).lt.zmax .and. zplot(j).gt.zmin) then
-                 if (icolourpart(j).ge.0) then
-                    nplotted = nplotted + 1
-                    call pgsci(icolourpart(j))
-                    call pgpt(1,xplot(j),yplot(j),imarktype(itype))
-                 endif
-                 !--plot circle of interaction if gas particle
-                 if (itype.eq.1 .and. ncircpart.gt.0 .and. ANY(icircpart(1:ncircpart).eq.j)) then
-                    call pgcirc(xplot(j),yplot(j),2*h(j))
-                 endif
-                 !!--plot particle label
-                 if (ilabelpart) then
-                    call pgnumb(j,0,1,string,lenstring)
-                    call pgtext(xplot(j),yplot(j),string(1:lenstring))
-                 endif
+     if (use_zrange) then
+        !
+        !--if particle cross section, plot particles only in a defined (z) coordinate range
+        !
+        nplotted = 0
+        overj: do j=index1,index2
+           if (mixedtypes) then
+              itype = min(max(iamtype(j),1),maxparttypes)
+              if (.not.iplotpartoftype(itype)) cycle overj
+           endif
+           if (zplot(j).lt.zmax .and. zplot(j).gt.zmin) then
+              if (icolourpart(j).ge.0) then
+                 nplotted = nplotted + 1
+                 nplottedtype(itype) = nplottedtype(itype) + 1
+                 call pgsci(icolourpart(j))
+                 call pgpt(1,xplot(j),yplot(j),imarktype(itype))
               endif
-           enddo
+              !--plot circle of interaction if gas particle
+              if (itype.eq.1 .and. ncircpart.gt.0 .and. ANY(icircpart(1:ncircpart).eq.j)) then
+                 call pgcirc(xplot(j),yplot(j),2*h(j))
+              endif
+              !!--plot particle label
+              if (ilabelpart) then
+                 call pgnumb(j,0,1,string,lenstring)
+                 call pgtext(xplot(j),yplot(j),string(1:lenstring))
+              endif
+           endif
+        enddo overj
+        if (mixedtypes) then
+           do itype=1,ntypes
+              if (iplotpartoftype(itype) .and. nplottedtype(itype).gt.0) then
+                 print*,' plotted ',nplottedtype(itype),' of ', &
+                   npartoftype(itype),trim(labeltype(itype))//' particles in range ', &
+                   trim(labelz),' = ',zmin,' -> ',zmax
+              endif
+           enddo          
+        else
            print*,' plotted ',nplotted,' of ', &
              index2-index1+1,trim(labeltype(itype))//' particles in range ', &
              trim(labelz),' = ',zmin,' -> ',zmax
-        else
-           !
-           !--otherwise plot all particles of this type using appropriate marker and colour
-           !
-           call pgqci(icolourindex)
-           dxcell1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
-           dycell1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
-
-           if (all(icolourpart(index1:index2).eq.icolourpart(index1) &
-               .and. icolourpart(index1).ge.0)) then
-              call pgsci(icolourpart(index1))
-              if (fastparticleplot .and. (index2-index1).gt.100) then
-                 !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
-                 write(*,"(a,i8,1x,a)") &
-                      ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
-                 nincell(1:ncellx,1:ncelly) = 0
+        endif
+     else
+        !
+        !--otherwise plot all particles of this type using appropriate marker and colour
+        !
+        call pgqci(icolourindex)
+        dxcell1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
+        dycell1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
+        !
+        !--all particles in range have same colour and type
+        !
+        if (.not.mixedtypes .and. all(icolourpart(index1:index2).eq.icolourpart(index1)) &
+            .and. icolourpart(index1).ge.0) then
+           call pgsci(icolourpart(index1))
+           if (fastparticleplot .and. (index2-index1).gt.100) then
+              !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
+              write(*,"(a,i8,1x,a)") &
+                   ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
+              nincell(1:ncellx,1:ncelly) = 0
 !                 notplotted = 0
-                 do j=index1,index2
+              do j=index1,index2
+                 icellx = int((xplot(j) - xmin)*dxcell1) + 1
+                 icelly = int((yplot(j) - ymin)*dycell1) + 1
+                 !--exclude particles if there are more than one particle per cell
+                 if (icellx.gt.0 .and. icellx.le.ncellx &
+                    .and. icelly.gt.0 .and. icelly.le.ncelly) then
+                    if (nincell(icellx,icelly).eq.0) then
+                       nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
+                       call pgpt1(xplot(j),yplot(j),imarktype(itype))
+!                       else
+!                         notplotted = notplotted + 1
+                    endif
+                 endif
+              enddo
+!                 write(*,"(a,i7,a)") ' (minus ',notplotted,' in crowded fields)'
+           else
+              !--plot all particles of this type
+              print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
+              call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+           endif
+        else
+        !
+        !--mixed colours and/or mixed types
+        !
+           nplotted = 0
+           nplottedtype = 0
+           nincell(1:ncellx,1:ncelly) = 0
+
+           overj2: do j=index1,index2
+              if (icolourpart(j).ge.0) then
+                 if (mixedtypes) then
+                    itype = iamtype(j)
+                    if (.not.iplotpartoftype(itype)) cycle overj2
+                    nplottedtype(itype) = nplottedtype(itype) + 1
+                 endif
+                 nplotted = nplotted + 1
+                 if (fastparticleplot .and. npartoftype(itype).gt.100) then
                     icellx = int((xplot(j) - xmin)*dxcell1) + 1
                     icelly = int((yplot(j) - ymin)*dycell1) + 1
-                    !--exclude particles if there are more than one particle per cell
+                    !--exclude particles if there are more than 2 particles per cell
+                    !  (two here because particles can have different colours)
                     if (icellx.gt.0 .and. icellx.le.ncellx &
                        .and. icelly.gt.0 .and. icelly.le.ncelly) then
-                       if (nincell(icellx,icelly).eq.0) then
-                          nincell(icellx,icelly) = nincell(icellx,icelly) + 1_1  ! this +1 of type int*1
+                       if (nincell(icellx,icelly).le.0) then
+                          nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
+                          call pgsci(icolourpart(j))
                           call pgpt1(xplot(j),yplot(j),imarktype(itype))
 !                       else
 !                         notplotted = notplotted + 1
                        endif
                     endif
-                 enddo
-!                 write(*,"(a,i7,a)") ' (minus ',notplotted,' in crowded fields)'
-              else
-                 !--plot all particles of this type
-                 print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
-                 call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+                 else
+                    call pgsci(icolourpart(j))
+                    call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                 endif
               endif
-           else
-              nplotted = 0
-              nincell(1:ncellx,1:ncelly) = 0
-
-              do j=index1,index2
-                 if (icolourpart(j).ge.0) then
-                    nplotted = nplotted + 1
-                    if (fastparticleplot .and. (index2-index1).gt.100) then
-                       icellx = int((xplot(j) - xmin)*dxcell1) + 1
-                       icelly = int((yplot(j) - ymin)*dycell1) + 1
-                       !--exclude particles if there are more than 2 particles per cell
-                       !  (two here because particles can have different colours)
-                       if (icellx.gt.0 .and. icellx.le.ncellx &
-                          .and. icelly.gt.0 .and. icelly.le.ncelly) then
-                          if (nincell(icellx,icelly).le.0) then
-                             nincell(icellx,icelly) = nincell(icellx,icelly) + 1_1  ! this +1 of type int*1
-                             call pgsci(icolourpart(j))
-                             call pgpt1(xplot(j),yplot(j),imarktype(itype))
-   !                       else
-   !                         notplotted = notplotted + 1
-                          endif
-                       endif
-                    else
-                       call pgsci(icolourpart(j))
-                       call pgpt1(xplot(j),yplot(j),imarktype(itype))
+           enddo overj2
+           if (mixedtypes) then
+              do itype=1,ntypes
+                 if (iplotpartoftype(itype)) then
+                    if (fastparticleplot .and. npartoftype(itype).gt.100) then
+                       print*,' fast-plotted ',nplottedtype(itype),' of ',npartoftype(itype),trim(labeltype(itype))//' particles'
+                    elseif (npartoftype(itype).gt.0) then
+                       print*,' plotted ',nplottedtype(itype),' of ',npartoftype(itype),trim(labeltype(itype))//' particles'
                     endif
                  endif
-              enddo
-              if (fastparticleplot .and. (index2-index1).gt.100) then
+              enddo     
+           else
+              if (fastparticleplot .and. npartoftype(itype).gt.100) then
                  print*,' fast-plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
               else
                  print*,' plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
               endif
            endif
-           call pgsci(icolourindex)
+        endif
+        call pgsci(icolourindex)
 
-           if (ilabelpart) then
-              !!--plot particle labels
-              print*,'plotting particle labels ',index1,':',index2
-              do j=index1,index2
-                 call pgnumb(j,0,1,string,lenstring)
-                 call pgtext(xplot(j),yplot(j),string(1:lenstring))
-              enddo
-           endif
+        if (ilabelpart) then
+           !!--plot particle labels
+           print*,'plotting particle labels ',index1,':',index2
+           do j=index1,index2
+              call pgnumb(j,0,1,string,lenstring)
+              call pgtext(xplot(j),yplot(j),string(1:lenstring))
+           enddo
         endif
      endif
      index1 = index2 + 1

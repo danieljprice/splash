@@ -10,16 +10,18 @@ contains
 !  the dimensions allocated
 !
 !----------------------------------------------------------------------------
-subroutine alloc(npartin,nstep,ncolumnsin)
+subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
   use particle_data
   implicit none
   integer, intent(in) :: npartin,nstep,ncolumnsin
+  logical, intent(in), optional :: mixedtypes
   integer :: maxpartold,maxstepold,maxcolold
   integer :: ierr,ncolumns
-  logical :: reallocate,reallocate_part,reallocate_step
+  logical :: reallocate,reallocate_part,reallocate_step,reallocate_itype
   integer, dimension(:), allocatable :: icolourmetemp
+  integer(kind=int1), dimension(:,:), allocatable :: iamtypetemp
   integer, dimension(:,:), allocatable :: npartoftypetemp
-  real, dimension(:,:), allocatable :: massoftypetemp
+  real, dimension(:,:), allocatable :: masstypetemp
   real, dimension(:), allocatable :: timetemp, gammatemp
   real, dimension(:,:,:), allocatable :: dattemp
 !
@@ -64,6 +66,7 @@ subroutine alloc(npartin,nstep,ncolumnsin)
   reallocate = .false.
   reallocate_part = .false.
   reallocate_step = .false.
+  reallocate_itype = .false.
 !
 !--if re-allocating, copy arrays to temporary versions
 !
@@ -81,14 +84,21 @@ subroutine alloc(npartin,nstep,ncolumnsin)
      if (reallocate_part) then
         allocate(icolourmetemp(maxpartold),stat=ierr)
         if (ierr /= 0) stop 'error allocating memory (icolourmetemp)'
+        icolourmetemp(1:maxpartold) = icolourme(1:maxpartold)
+        deallocate(icolourme)
      endif
 
      dattemp = dat
      deallocate(dat)
-
-     if (reallocate_part) then
-        icolourmetemp(1:maxpartold) = icolourme(1:maxpartold)
-        deallocate(icolourme)
+     
+     if (allocated(iamtype)) then
+        reallocate_itype = (reallocate_part .or. reallocate_step) .and. (size(iamtype(:,1)).eq.maxpartold)
+        if (reallocate_itype) then
+           allocate(iamtypetemp(maxpartold,maxstepold), stat=ierr)
+           if (ierr /= 0) stop 'error allocating memory (iamtypetemp)'
+           iamtypetemp(1:maxpartold,1:maxstepold) = iamtype(1:maxpartold,1:maxstepold)
+           deallocate(iamtype)
+        endif
      endif
 
      if (reallocate_step) then
@@ -97,10 +107,10 @@ subroutine alloc(npartin,nstep,ncolumnsin)
         npartoftypetemp = npartoftype
         deallocate(npartoftype)
 
-        allocate(massoftypetemp(maxparttypes,maxstep),stat=ierr)
+        allocate(masstypetemp(maxparttypes,maxstep),stat=ierr)
         if (ierr /= 0) stop 'error allocating memory (npartoftypetemp)'
-        massoftypetemp = massoftype
-        deallocate(massoftype)
+        masstypetemp = masstype
+        deallocate(masstype)
 
         allocate(timetemp(maxstep),gammatemp(maxstep),stat=ierr)
         if (ierr /= 0) stop 'error allocating memory (timetemp,gammatemp)'
@@ -132,7 +142,39 @@ subroutine alloc(npartin,nstep,ncolumnsin)
     
   if (reallocate) then
      dat(1:maxpartold,1:maxcolold,1:maxstepold) = dattemp(1:maxpartold,1:maxcolold,1:maxstepold)
+     deallocate(dattemp)
   endif
+!
+!--type array if necessary
+!
+  if (present(mixedtypes)) then
+     if (mixedtypes) then
+        allocate(iamtype(maxpart,maxstep), stat=ierr)
+        if (ierr /= 0) stop 'error allocating memory for type array'
+        iamtype = 1
+        !--copy contents if reallocating
+        if (reallocate_itype) then
+           iamtype(1:maxpartold,1:maxstepold) = iamtypetemp(1:maxpartold,1:maxstepold)
+           deallocate(iamtypetemp)
+        endif     
+     else
+        !--if called with mixedtypes explictly false, deallocate itype array
+        if (allocated(iamtype)) deallocate(iamtype)
+     endif
+  elseif (reallocate_itype) then
+     !--if called without mixedtypes, preserve contents of itype array
+     allocate(iamtype(maxpart,maxstep), stat=ierr)
+     if (ierr /= 0) stop 'error allocating memory for type array'
+     iamtype = 1
+
+     iamtype(1:maxpartold,1:maxstepold) = iamtypetemp(1:maxpartold,1:maxstepold)
+     deallocate(iamtypetemp)
+  endif
+  !--make sure iamtype is always allocated for safety, just with size=1 if not used
+  if (.not.allocated(iamtype)) then
+     allocate(iamtype(1,maxstep),stat=ierr)
+     if (ierr /= 0) stop 'error allocating memory for type array (1)'
+  endif  
 !
 !--particle arrays
 !
@@ -153,23 +195,23 @@ subroutine alloc(npartin,nstep,ncolumnsin)
      allocate(npartoftype(maxparttypes,maxstep),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory for header arrays'
 
-     allocate(massoftype(maxparttypes,maxstep),stat=ierr)
+     allocate(masstype(maxparttypes,maxstep),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory for header arrays'
 
      allocate(time(maxstep),gamma(maxstep),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory for header arrays'
 
      npartoftype = 0
-     massoftype = 0.
+     masstype = 0.
      time = -huge(time) ! initialise like this so we know if has not been read
      gamma = 0.
 
      if (reallocate_step) then
         npartoftype(:,1:maxstepold) = npartoftypetemp(:,1:maxstepold)
-        massoftype(:,1:maxstepold) = massoftypetemp(:,1:maxstepold)
+        masstype(:,1:maxstepold) = masstypetemp(:,1:maxstepold)
         time(1:maxstepold) = timetemp(1:maxstepold)
         gamma(1:maxstepold) = gammatemp(1:maxstepold)
-        deallocate(npartoftypetemp,massoftypetemp)
+        deallocate(npartoftypetemp,masstypetemp)
         deallocate(timetemp,gammatemp)
      endif
   endif
@@ -190,8 +232,9 @@ subroutine deallocate_all
  
  if (allocated(dat)) deallocate(dat)
  if (allocated(icolourme)) deallocate(icolourme)
+ if (allocated(iamtype)) deallocate(iamtype)
  if (allocated(npartoftype)) deallocate(npartoftype)
- if (allocated(massoftype)) deallocate(massoftype)
+ if (allocated(masstype)) deallocate(masstype)
  if (allocated(time)) deallocate(time)
  if (allocated(gamma)) deallocate(gamma)
  

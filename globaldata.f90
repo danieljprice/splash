@@ -9,6 +9,8 @@
 module params
  implicit none
  integer, parameter :: doub_prec = selected_real_kind(P=10,R=30)
+ integer, parameter :: int1 = selected_int_kind(1)
+ integer, parameter :: int8 = selected_int_kind(9)
  integer, parameter :: maxplot=64   ! maximum number of plots (for multiplot arrays)
  integer, parameter :: maxparttypes = 6  ! max # of different particle types
 
@@ -23,8 +25,9 @@ module particle_data
  implicit none
  integer :: maxpart,maxstep,maxcol ! dimensions of dat array
  integer, allocatable, dimension(:) :: icolourme
+ integer(kind=int1), allocatable, dimension(:,:) :: iamtype
  integer, allocatable, dimension(:,:) :: npartoftype
- real, allocatable, dimension(:,:) :: massoftype
+ real, allocatable, dimension(:,:) :: masstype
  real, allocatable, dimension(:) :: time, gamma
  real, allocatable, dimension(:,:,:) :: dat
 

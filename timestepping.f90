@@ -10,7 +10,7 @@ contains
 !
 subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   use filenames, only:nsteps,ifileopen
-  use particle_data, only:npartoftype,massoftype,time,gamma,dat
+  use particle_data, only:iamtype,npartoftype,masstype,time,gamma,dat
   use settings_data, only:istartatstep,iendatstep,nfreq,DataIsBuffered, &
                           iUsesteplist,isteplist,ncolumns,ipartialread
   use settings_page, only:interactive,nstepsperpage,iColourEachStep,iChangeStyles
@@ -134,13 +134,13 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
      else
      !--otherwise set default colours for each particle type
      !  (do not call if repeating same step so interactive colours stick for same step)
-        if (istep.ne.istepprev) call colourparts_default(npartoftype(:,ilocindat))
+        if (istep.ne.istepprev) call colourparts_default(npartoftype(:,ilocindat),iamtype(:,ilocindat))
         istepprev = istep
      endif
 
 !     print*,'ipos = ',ipos,' istep = ',istep,' iposindat = ',ilocindat
-     call plotstep(ipos,istep,istepsonpage,irender,ivecplot,npartoftype(:,ilocindat), &
-                   massoftype(:,ilocindat),dat(:,:,ilocindat),time(ilocindat),gamma(ilocindat), &
+     call plotstep(ipos,istep,istepsonpage,irender,ivecplot,iamtype(:,ilocindat),npartoftype(:,ilocindat), &
+                   masstype(:,ilocindat),dat(:,:,ilocindat),time(ilocindat),gamma(ilocindat), &
                    ipagechange,iadvance)
 !
 !--increment timestep -- iadvance can be changed interactively
@@ -293,24 +293,36 @@ end subroutine colour_timestep
 
 !---------------------------------------------------------------------------------------
 ! colours all the particles using the default colour for their type
-! but ONLY if colours like red, green have not already been set (ie. if all colours = 1)
 !---------------------------------------------------------------------------------------
-subroutine colourparts_default(npartoftype)
+subroutine colourparts_default(npartoftype,iamtype)
+  use params, only:int1
   use settings_data, only:ntypes
   use particle_data, only:icolourme
   use settings_part, only:idefaultcolourtype
   implicit none
   integer, dimension(:), intent(in) :: npartoftype
-  integer :: index1,index2,itype
+  integer(kind=int1), dimension(:), intent(in) :: iamtype
+  integer :: i,index1,index2,itype
   
-  index1 = 1
-  do itype=1,ntypes
-     index2 = index1 + npartoftype(itype) - 1
-     if (idefaultcolourtype(itype).ge.0) then
-        icolourme(index1:index2) = idefaultcolourtype(itype)
-     endif
-     index1 = index2 + 1
-  enddo
+  if (size(iamtype).gt.1) then
+     do i=1,sum(npartoftype(1:ntypes))
+        itype = iamtype(i)
+        if (itype.gt.0 .and. itype.le.ntypes) then
+           if (idefaultcolourtype(itype).ge.0) then
+              icolourme(i) = idefaultcolourtype(itype)
+           endif
+        endif
+     enddo
+  else
+     index1 = 1
+     do itype=1,ntypes
+        index2 = index1 + npartoftype(itype) - 1
+        if (idefaultcolourtype(itype).ge.0) then
+           icolourme(index1:index2) = idefaultcolourtype(itype)
+        endif
+        index1 = index2 + 1
+     enddo
+  endif
 
 end subroutine colourparts_default
 
