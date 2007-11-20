@@ -239,9 +239,11 @@ subroutine power3d_fft(dat,nx,ny,nz,power,freq,nk)
  real :: ddenom,ptot
  integer :: ierr,k,j,i,kz,ky,kx,kk,ik
 !--this is for ACML
- complex :: comm(nx*ny*nz+5*(nx+ny+nz))
+! complex :: comm(nx*ny*nz+5*(nx+ny+nz))
 !--this is for FFTW
- integer(kind=8) :: plan
+! integer*8 :: plan
+
+ ierr = 0
 !
 !--convert data to complex
 !
