@@ -1,11 +1,11 @@
-module opacityrendering3D
+module interpolate3D_opacity
  use projections3D, only:wfromtable,radkernel2,coltable
  implicit none
  private :: indexx
 
 contains
 !--------------------------------------------------------------------------
-! $Id: interpolate3D_opacity.f90,v 1.15 2007/09/11 08:52:57 dprice Exp $
+! $Id: interpolate3D_opacity.f90,v 1.16 2007/11/20 17:05:35 dprice Exp $
 !
 !     subroutine to do a ray trace through the particle data
 !
@@ -54,7 +54,7 @@ contains
 !     (c) 2005-2007 Daniel Price
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npart, &
+subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npart, &
      xmin,ymin,datsmooth,brightness,npixx,npixy,pixwidth,zobserver,dscreenfromobserver, &
      rkappa,zcut)
 
@@ -283,9 +283,9 @@ subroutine interpolate3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npar
   
   return
 
-end subroutine interpolate3D_proj_opacity
+end subroutine interp3D_proj_opacity
 
-subroutine interpolate3D_proj_opacity_writeppm(datsmooth,brightness,npixx,npixy,datmin,datmax,istep)
+subroutine interp3D_proj_opacity_writeppm(datsmooth,brightness,npixx,npixy,datmin,datmax,istep)
   use colours, only:rgbtable,ncolours
   implicit none
   integer, intent(in) :: npixx,npixy
@@ -353,7 +353,7 @@ subroutine interpolate3D_proj_opacity_writeppm(datsmooth,brightness,npixx,npixy,
   close(unit=78)
   
   return
-end subroutine interpolate3D_proj_opacity_writeppm
+end subroutine interp3D_proj_opacity_writeppm
 
 subroutine indexx(n, arr, indx)
 !************************************************************
@@ -453,4 +453,4 @@ subroutine indexx(n, arr, indx)
 goto 1
 end subroutine indexx
 
-end module opacityrendering3D
+end module interpolate3D_opacity

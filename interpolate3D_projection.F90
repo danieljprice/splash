@@ -18,7 +18,7 @@ module projections3D
 
  public :: setup_integratedkernel
  public :: interpolate3D_projection
- public :: interpolate3D_proj_vec,interpolate3D_proj_vec_synchrotron
+ public :: interpolate3D_proj_vec,interp3D_proj_vec_synctron
  public :: wfromtable
 
 contains
@@ -154,7 +154,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 #ifdef _OPENMP
   integer :: OMP_GET_NUM_THREADS
 #endif
-  integer(kind=8) :: iprogress,i
+  integer(kind=selected_int_kind(10)) :: iprogress,i  ! up to 10 digits
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
   real :: term,termnorm,dy,dy2,ypix,zfrac,hsmooth,horigi
   real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
@@ -612,7 +612,7 @@ end subroutine interpolate3D_proj_vec
 !     Daniel Price 14/03/07
 !--------------------------------------------------------------------------
 
-subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
+subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      xmin,ymin,stokesQ,stokesU,stokesI,npixx,npixy,pixwidth,rcrit,zcrit,alpha, &
      qpixwidth,getIonly,utherm,uthermcutoff)
 
@@ -778,7 +778,7 @@ subroutine interpolate3D_proj_vec_synchrotron(x,y,z,hh,weight,vecx,vecy,itype,np
 
   return
 
-end subroutine interpolate3D_proj_vec_synchrotron
+end subroutine interp3D_proj_vec_synctron
 
 
 end module projections3D
