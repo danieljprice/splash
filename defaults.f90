@@ -18,7 +18,7 @@ subroutine defaults_set_initial
   use labels
   use limits, only:lim
   use particle_data, only:maxpart,maxstep,maxcol
-  use settings_data, only:ndim,UseTypeInRenderings
+  use settings_data, only:UseTypeInRenderings
   implicit none
   integer :: i
 !
@@ -31,9 +31,6 @@ subroutine defaults_set_initial
   !--array positions of specific quantities
   !
   ix = 0
-  !do i=1,ndim
-  !   ix(i) = i       ! coords
-  !enddo
   ivx = 0      ! vx
   irho = 0     ! density
   ipr = 0      ! pressure
