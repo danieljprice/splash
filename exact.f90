@@ -132,7 +132,7 @@ contains
   !----------------------------------------------------------------------
   subroutine submenu_exact(iexact)
     use settings_data, only:ndim
-    use prompting
+    use prompting, only:prompt
     use filenames, only:rootname
     implicit none
     integer, intent(inout) :: iexact
@@ -271,7 +271,7 @@ contains
   ! sets options relating to exact solution plotting
   !---------------------------------------------------
   subroutine options_exact
-    use prompting
+    use prompting, only:prompt
     implicit none
     
     call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
@@ -298,7 +298,7 @@ contains
   !-----------------------------------------------------------------------
   subroutine read_exactparams(iexact,rootname,ierr)
     use settings_data, only:ndim
-    use prompting
+    use prompting, only:prompt
     implicit none
     integer, intent(in) :: iexact
     character(len=*), intent(in) :: rootname
@@ -434,7 +434,7 @@ contains
                             ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot, &
                             pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
     use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst
-    use prompting
+    use prompting, only:prompt
     use exactfromfile, only:exact_fromfile
     use mhdshock, only:exact_mhdshock
     use polytrope, only:exact_polytrope
@@ -442,11 +442,11 @@ contains
     use sedov, only:exact_sedov
     use shock, only:exact_shock
     use torus, only:exact_torus
-    use toystar1D, only:exact_toystar1D, exact_toystar_ACplane
+    use toystar1D, only:exact_toystar1D  !, exact_toystar_ACplane
     use toystar2D, only:exact_toystar2D
     use wave, only:exact_wave
     use densityprofiles, only:exact_densityprofiles
-    use transforms
+    use transforms, only:transform,transform_inverse
     implicit none
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
     integer, intent(in) :: ndim,ndimV,npart,imarker,iaxisy
@@ -651,10 +651,15 @@ contains
        endif
     case(7) 
        !--h = (1/rho)^(1/ndim)
-       if ((iploty.eq.ih).and.(iplotx.eq.irho)) then
-          !--if variable particle masses, plot one for each pmass value
-          call exact_rhoh(ndim,hfact,pmassmin,xexact,yexact,ierr)
+       if (((iploty.eq.ih).and.(iplotx.eq.irho)) .or. &
+           ((iplotx.eq.ih).and.(iploty.eq.irho))) then
+          if (iplotx.eq.ih) then
+             call exact_rhoh(2,ndim,hfact,pmassmin,xexact,yexact,ierr)       
+          else
+             call exact_rhoh(1,ndim,hfact,pmassmin,xexact,yexact,ierr)
+          endif
 
+          !--if variable particle masses, plot one for each pmass value
           if (abs(pmassmin-pmassmax).gt.zero .and. pmassmin.gt.zero) then
              !--plot first line
              if (ierr.le.0) then
@@ -664,7 +669,11 @@ contains
                 call pgline(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
              endif
              !--leave this one to be plotted below  
-             call exact_rhoh(ndim,hfact,pmassmax,xexact,yexact,ierr)
+             if (iplotx.eq.ih) then
+                call exact_rhoh(2,ndim,hfact,pmassmax,xexact,yexact,ierr)       
+             else
+                call exact_rhoh(1,ndim,hfact,pmassmax,xexact,yexact,ierr)
+             endif
           endif
        endif
     case(8) ! density profiles

@@ -10,9 +10,9 @@ module rhoh
 
 contains
 
-subroutine exact_rhoh(ndim,hfact,pmassval,xplot,yplot,ierr)
+subroutine exact_rhoh(iplot,ndim,hfact,pmassval,xplot,yplot,ierr)
  implicit none
- integer, intent(in) :: ndim
+ integer, intent(in) :: iplot,ndim
  integer, intent(out) :: ierr
  real, intent(in) :: hfact,pmassval
  real, dimension(:), intent(in) :: xplot
@@ -21,11 +21,19 @@ subroutine exact_rhoh(ndim,hfact,pmassval,xplot,yplot,ierr)
  if (hfact.gt.0.01) then
     ierr = 0
 
-    where (xplot > 0)    
-      yplot(:) = hfact*(pmassval/xplot(:))**(1./FLOAT(ndim))
-    elsewhere
-      yplot(:) = huge(yplot)
-    end where
+    if (iplot.eq.2) then ! x axis is h
+       where (xplot > tiny(xplot))    
+         yplot(:) = pmassval*(hfact/xplot(:))**ndim
+       elsewhere
+         yplot(:) = huge(yplot)
+       end where
+    else ! y axis is h
+       where (xplot > tiny(xplot))    
+         yplot(:) = hfact*(pmassval/xplot(:))**(1./FLOAT(ndim))
+       elsewhere
+         yplot(:) = huge(yplot)
+       end where    
+    endif
     write(*,"(a,f5.2,a,1pe8.2,a,i1,a)") ' plotting h = ',hfact, &
                                '*(',pmassval,'/rho)**(1/',ndim,')'
  else
