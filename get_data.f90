@@ -27,7 +27,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use settings_part, only:iexact
   use particle_data, only:dat,time,npartoftype,maxcol
   use prompting, only:prompt,ucase
-  use labels, only:label,labelvec,iamvec,ih,irho,ipmass,labeltype
+  use labels, only:label,labelvec,iamvec,ix,ih,irho,ipmass,labeltype
   use geometry, only:labelcoord
   use calcquantities, only:calc_quantities
   use settings_units, only:units,unitslabel,read_unitsfile
@@ -243,6 +243,13 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      if (ndimV.lt.0 .or. ndimV.gt.3) then
         print "(a)",' ERROR with ndimV setting in data read, using ndimV=3'
         ndimV = 3
+     endif
+     if (ndim.ge.2  .and. any(ix(2:ndim).eq.ix(1))) then
+        print "(a)",' WARNING: error in ix setting in set_labels: fixing '
+        ix(1) = max(ix(1),1)
+        do i=2,ndim
+           ix(i) = i
+        enddo
      endif
      if (irho.gt.ncolumns) then
         print "(a)",' ERROR with irho setting in data read'
