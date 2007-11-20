@@ -37,7 +37,7 @@ subroutine submenu_limits(ichoose)
  use calcquantities, only:calc_quantities
  !!use settings_page, only:nstepsperpage
  use multiplot, only:itrans
- use prompting
+ use prompting, only:prompt,print_logical
  use limits, only:lim,set_limits
  use labels, only:label,ix,irad
  use transforms, only:ntrans,transform_label

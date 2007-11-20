@@ -111,7 +111,7 @@ subroutine submenu_xsecrotate(ichoose)
  use filenames, only:nsteps,nstepsinfile,ifileopen
  use labels, only:label,ix,irad
  use limits, only:lim
- use prompting
+ use prompting, only:prompt,print_logical
  use settings_data, only:ndim,xorigin,iCalcQuantities,DataIsBuffered
  use calcquantities, only:calc_quantities
  implicit none
