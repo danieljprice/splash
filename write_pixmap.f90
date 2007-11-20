@@ -9,7 +9,7 @@ module write_pixmap
  implicit none
  logical, public :: iwritepixmap
  character(len=5), public :: pixmapformat
- public :: isoutputformat,writepixmap
+ public :: isoutputformat,writepixmap,write_pixmap_ppm
  
  private
 
@@ -24,7 +24,7 @@ logical function isoutputformat(string)
 
  isoutputformat = .false.
  select case(trim(string))
- case('ascii')
+ case('ascii','ppm')
      isoutputformat = .true.
  end select
  return
@@ -45,8 +45,8 @@ subroutine writepixmap(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep
  select case(trim(pixmapformat))
  case('ascii')
     call write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep)
-! case('ppm')
-!    call write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label)
+ case('ppm')
+    call write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep)
 ! case('fits')
 !    call write_pixmap_fits(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label)
  case default
@@ -81,7 +81,7 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
 
  write(stringx,"(i10)") npixx
  write(stringy,"(i10)") npixy
- write(iunit,"(a)",err=66) '# '//trim(filename)//' created by splash (c) 2005-2007 Daniel Price'
+ write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by splash (c) 2005-2007 Daniel Price'
  write(iunit,"(a)",err=66) '# Contains 2D pixel array '//trim(adjustl(stringx))//' x '//trim(adjustl(stringy))//' written as '
  write(iunit,"(a)",err=66) '#   do j=1,'//trim(adjustl(stringy))
  write(iunit,"(a)",err=66) '#      write(*,*) dat(1:'//trim(adjustl(stringx))//',j)'
@@ -103,5 +103,89 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  return
 
 end subroutine write_pixmap_ascii
+
+!-----------------------------------------------------------------
+!   output pixmap as a raw .ppm file
+!-----------------------------------------------------------------
+subroutine write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep,brightness)
+ use colours, only:rgbtable,ncolours
+ implicit none
+ integer, intent(in) :: npixx,npixy
+ real, intent(in), dimension(npixx,npixy) :: datpix
+ real, intent(in), dimension(npixx,npixy), optional :: brightness
+ real, intent(in) :: xmin,ymin,dx,datmin,datmax
+ character(len=*), intent(in) :: label
+ integer, intent(in) :: istep
+ character(len=120) :: filename
+ real, dimension(3) :: rgbi,drgb
+ real :: dati,ddatrange,datfraci,ftable
+ integer :: ipix,jpix,ir,ib,ig,ierr,maxcolour,indexi
+ integer, parameter :: iunit = 167
+!
+!--check for errors
+!
+ if (abs(datmax-datmin).gt.tiny(datmin)) then
+    ddatrange = 1./abs(datmax-datmin)
+ else
+    print "(a)",'error: datmin=datmax : pointless writing ppm file'
+    return
+ endif
+!
+!--write PPM--
+!  
+ write(filename,"(a,i5.5,a)") trim(fileprefix)//'_',istep,'.ppm'
+ open(unit=iunit,file=filename,status='replace',form='formatted',iostat=ierr)
+ if (ierr /=0) then
+    print*,'error opening ppm file'
+    return
+ endif
+ write(*,"(a)",ADVANCE='NO') '> writing pixel map to file '//trim(filename)//' ...'
+!
+!--PPM header
+!
+ maxcolour = 255
+ write(iunit,"(a)",err=66) 'P3'
+ write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by splash (c) 2005-2007 Daniel Price'
+ write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
+ write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
+ write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
+ write(iunit,"(i4,1x,i4)",err=66) npixx, npixy
+ write(iunit,"(i3)",err=66) maxcolour
+!--pixel information
+ do jpix = npixy,1,-1
+    do ipix = 1,npixx
+       dati = datpix(ipix,jpix)
+       datfraci = (dati - datmin)*ddatrange
+       datfraci = max(datfraci,0.)
+       datfraci = min(datfraci,1.)
+       !--define colour for current particle
+       ftable = datfraci*ncolours
+       indexi = int(ftable) + 1
+       indexi = min(indexi,ncolours)
+       if (indexi.lt.ncolours) then
+       !--do linear interpolation from colour table
+          drgb(:) = rgbtable(:,indexi+1) - rgbtable(:,indexi)
+          rgbi(:) = rgbtable(:,indexi) + (ftable - int(ftable))*drgb(:)
+       else
+          rgbi(:) = rgbtable(:,indexi)
+       endif
+       if (present(brightness)) then
+          rgbi(:) = rgbi(:)*min(brightness(ipix,jpix),1.0)
+       endif
+       ir = max(min(int(rgbi(1)*maxcolour),maxcolour),0)
+       ig = max(min(int(rgbi(2)*maxcolour),maxcolour),0)
+       ib = max(min(int(rgbi(3)*maxcolour),maxcolour),0)
+       write(iunit,"(i3,1x,i3,1x,i3,2x)",err=66) ir,ig,ib
+    enddo
+ enddo
+ close(unit=iunit)
+ print "(a)",'OK'
+ return
+
+66 continue
+ print "(a)",' ERROR during write '
+ close(iunit)
+ return
+end subroutine write_pixmap_ppm
 
 end module write_pixmap
