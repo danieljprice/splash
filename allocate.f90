@@ -91,13 +91,20 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
      dattemp = dat
      deallocate(dat)
      
-     if (allocated(iamtype)) then
+     if (allocated(iamtype)) then ! should always be true
+        !--if iamtype has meaningful contents and reallocation is necessary
         reallocate_itype = (reallocate_part .or. reallocate_step) .and. (size(iamtype(:,1)).eq.maxpartold)
         if (reallocate_itype) then
            allocate(iamtypetemp(maxpartold,maxstepold), stat=ierr)
            if (ierr /= 0) stop 'error allocating memory (iamtypetemp)'
            iamtypetemp(1:maxpartold,1:maxstepold) = iamtype(1:maxpartold,1:maxstepold)
            deallocate(iamtype)
+        endif
+        
+        !--if iamtype has size 1 or 0 but should be allocated here,
+        !  deallocate so we can give it correct size
+        if (present(mixedtypes)) then
+           if (mixedtypes .and. size(iamtype(:,1)).lt.maxpart) deallocate(iamtype)
         endif
      endif
 
@@ -148,7 +155,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
 !--type array if necessary
 !
   if (present(mixedtypes)) then
-     if (mixedtypes) then
+     if (mixedtypes .and. .not.allocated(iamtype)) then
         allocate(iamtype(maxpart,maxstep), stat=ierr)
         if (ierr /= 0) stop 'error allocating memory for type array'
         iamtype = 1
@@ -156,8 +163,8 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
         if (reallocate_itype) then
            iamtype(1:maxpartold,1:maxstepold) = iamtypetemp(1:maxpartold,1:maxstepold)
            deallocate(iamtypetemp)
-        endif     
-     else
+        endif
+     elseif (.not.mixedtypes) then
         !--if called with mixedtypes explictly false, deallocate itype array
         if (allocated(iamtype)) deallocate(iamtype)
      endif
