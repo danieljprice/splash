@@ -105,7 +105,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--set labels (and units) for each column of data
      !
      print "(/a)",' setting plot labels...'
-     call set_labels
+     if (ivegotdata .and. ncolumns.gt.0) call set_labels
      !
      !--read units file and change units if necessary
      !
@@ -145,8 +145,10 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         call cpu_time(t2)
         if (ipartialread) then
            print*,'time for (partial) data read = ',t2-t1,'s'
+           print*
         else
            print*,'time for data read = ',t2-t1,'s'
+           print*
         endif
 !        do i=1,ncolumns+ncalc
 !           print*,' required(',i,') = ',required(i)
@@ -189,7 +191,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--set labels (and units) for each column of data
      !
      !!print "(/a)",' setting plot labels...'
-     call set_labels
+     if (ivegotdata .and. ncolumns.gt.0) call set_labels
      !
      !--read units file and change units if necessary
      !
