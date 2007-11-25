@@ -27,8 +27,15 @@ logical function isoutputformat(string)
  case('ascii','ppm')
      isoutputformat = .true.
  end select
+ 
+ if (.not.isoutputformat) then
+    print "(a)",' possible formats for -o option: '
+    print "(a)",' -o ppm   : dump pixel map to ppm file'
+    print "(a)",' -o ascii : dump pixel map to ascii file'
+    print "(a)",' use -p to change the prefix for the filenames'
+ endif
+ 
  return
-
 end function isoutputformat
 
 !-----------------------------------------------------------------
