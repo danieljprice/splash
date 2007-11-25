@@ -34,10 +34,10 @@ contains
 ! is not changed)
 !-------------------------------------------------------
 subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
-                     vptxminfull,vptxmaxfull,vptyminfull,vptymaxfull)
+           xlabeloffset,vptxminfull,vptxmaxfull,vptyminfull,vptymaxfull)
  implicit none
  integer, intent(in) :: istyle,icolours
- real, intent(in) :: datmin,datmax
+ real, intent(in) :: datmin,datmax,xlabeloffset
  character(len=*), intent(in) :: label
  logical, intent(in) :: log
  real, intent(in), optional :: vptxminfull,vptxmaxfull,vptyminfull,vptymaxfull
@@ -100,7 +100,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
    !--set viewport for the wedge
    !
-   vptymaxi = vptymini - 0.25*ych
+   vptymaxi = vptymini - (0.25 + xlabeloffset)*ych
    vptymini = vptymaxi - 2.*ych
    call pgsvp(vptxmini,vptxmaxi,vptymini,vptymaxi)
    !
@@ -231,7 +231,7 @@ subroutine get_colourbarmargins(istyle,xmaxmargin,yminmargin,barwidth)
 
  select case(istyle)
  case(2)
-    barwidth = 2.5*ych
+    barwidth = 5.0*ych
     yminmargin = yminmargin + barwidth
  case default
     barwidth = (ColourBarWidth*(0.4)+0.75 + max(ColourBarDisp+1.25,0.0))*xch

@@ -1,7 +1,7 @@
 module pagesetup
  implicit none
  public :: setpage, redraw_axes, setpage2
- real, parameter, private :: xlabeloffset = 3.0, ylabeloffset = 4.5
+ real, parameter, public :: xlabeloffset = 3.0, ylabeloffset = 4.5
  
  private
 
@@ -219,7 +219,7 @@ end subroutine redraw_axes
 !  divides up a single page into subpanels
 !  
 !
-!  simple subroutine to tile graphs appropriately on a page in pgplot
+!  option to tile graphs appropriately on a page in pgplot
 !  divides up a single panel into subpanels, with a margin at the edge
 !  should replace the call to pgenv and pglabel
 !
@@ -387,7 +387,8 @@ end subroutine redraw_axes
      vptxmax = ix*panelsizex - vmarginright
      vptymax = 1.0 - (iy-1)*panelsizey - vmargintop
      vptymin = 1.0 - iy*panelsizey + vmarginbottom
-     
+
+
      !--also leave room for title if necessary
      if (titleoffset.ge.0.) then
         vptymax = vptymax - (titleoffset+0.75)*ych
@@ -399,7 +400,7 @@ end subroutine redraw_axes
      endif
 
   endif
-!      print*,vptxmin,vptxmax,vptymin,vptymax
+  !    print*,vptxmin,vptxmax,vptymin,vptymax
   call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
 !
 ! set axes

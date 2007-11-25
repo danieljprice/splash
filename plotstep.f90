@@ -1681,10 +1681,10 @@ contains
 !----------------------------------------------
   subroutine page_setup
     use colourbar, only:get_colourbarmargins,plotcolourbar
-    use pagesetup, only:setpage2
+    use pagesetup, only:setpage2,xlabeloffset
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes,vposlegend,iPlotLegend
     implicit none
-    real :: barwidth, TitleOffset,xmaxmargin,yminmargin
+    real :: barwidth, TitleOffset,xmaxmargin,yminmargin,xlabeloffsettemp
     logical :: ipanelchange
 
     !---------------------
@@ -1728,6 +1728,8 @@ contains
     !--use foreground colour
     call pgsci(1)
 
+    xlabeloffsettemp = xlabeloffset + 1.0
+    if (iaxistemp.lt.0) xlabeloffsettemp = 0.
     yminmargin = 0.001
     xmaxmargin = 0.001
     !--leave space for colour bar if necessary (at end of row only on tiled plots)
@@ -1794,13 +1796,13 @@ contains
           !  and use full viewport size in the y direction
           if (tile_plots) then
              call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
-             trim(labelrender),.false., &
-             minval(vptxmin(1:ipanel)),maxval(vptxmax(1:ipanel)), &
-             minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
+                  trim(labelrender),.false.,xlabeloffsettemp, &
+                  minval(vptxmin(1:ipanel)),maxval(vptxmax(1:ipanel)), &
+                  minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
           else
              !!--plot colour bar, but only if last in row
              call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
-                            trim(labelrender),.false.)
+                            trim(labelrender),.false.,xlabeloffsettemp)
           endif
        endif
     endif
