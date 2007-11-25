@@ -10,7 +10,7 @@ module mainmenu
 contains
 
 subroutine menu
-  use filenames, only:defaultsfile,limitsfile,animfile
+  use filenames, only:defaultsfile,limitsfile,animfile,fileprefix,set_filenames
   use labels, only:label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass
   use limits, only:write_limits
   use options_data, only:submenu_data
@@ -18,20 +18,20 @@ subroutine menu
                      icoords,icoordsnew,buffer_data,ncolumns,iRescale
   use settings_limits, only:submenu_limits
   use settings_part, only:submenu_particleplots,iexact
-  use settings_page, only:submenu_page,interactive
+  use settings_page, only:submenu_page,submenu_legend,interactive
   use settings_render, only:submenu_render,icolour_particles
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
   use settings_xsecrot, only:submenu_xsecrotate,write_animfile
   use settings_units, only:unitslabel
   use multiplot
-  use prompting, only:prompt
+  use prompting, only:prompt,print_logical
   use transforms, only:transform_label
   use defaults, only:defaults_write
   use geometry, only:labelcoord
   use getdata, only:get_data
   use timestepping
   implicit none
-  integer :: i,icol,ihalf,iadjust,index,ierr
+  integer :: i,icol,ihalf,iadjust,indexi,ierr
   integer :: ipicky,ipickx,irender,ivecplot
   integer :: iamvecprev, ivecplottemp,ichoose
   character(len=2) :: ioption
@@ -63,7 +63,7 @@ subroutine menu
   nextra = 0
   ipowerspec = 0
   iacplane = 0
-  if (ndim.le.1) then ! if 1D or no coord data (then prompts for which x)
+  if (ndim.le.1) then !! .or. ndim.eq.3) then ! if 1D or no coord data (then prompts for which x)
      nextra = 1      ! one extra plot = power spectrum
      ipowerspec = ncolumns + ncalc + 1
      label(ipowerspec) = '1D power spectrum'
@@ -112,19 +112,19 @@ subroutine menu
   endif
 !--set contents of the vector plotting prompt
   vecprompt(1:6) = '0=none'
-  index = 7
+  indexi = 7
   iamvecprev = 0
   do icol=1,numplot
      if (iamvec(icol).ne.0 .and. iamvec(icol).ne.iamvecprev) then
         iamvecprev = iamvec(icol)
         if (iamvec(icol).ge.10) then
-           write(vecprompt(index:),"(',',1x,i2,'=',a)") &
+           write(vecprompt(indexi:),"(',',1x,i2,'=',a)") &
                  iamvec(icol),trim(labelvec(icol))
         else
-           write(vecprompt(index:),"(',',1x,i1,'=',a)") &        
+           write(vecprompt(indexi:),"(',',1x,i1,'=',a)") &        
                  iamvec(icol),trim(labelvec(icol))
         endif
-        index = len_trim(vecprompt) + 1
+        indexi = len_trim(vecprompt) + 1
      endif
   enddo 
 
@@ -170,8 +170,12 @@ subroutine menu
 !--options 
 ! 
   print 12
-  print "(a)",' d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)'
-  print "(a)",' r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)' 
+  if (ndim.le.1) then
+     print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end s,S(ave) q(uit)'  
+  else
+     print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end h(elp)'
+     print "(a)",' r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)'
+  endif
   print 12
 
 !
@@ -282,7 +286,7 @@ subroutine menu
 !+ This option turns (i)nteractive mode on/off
      case('i','I')
         interactive = .not.interactive
-        print*,' Interactive mode = ',interactive
+        print "(a)",' Interactive mode is '//print_logical(interactive)
 !------------------------------------------------------------------------
 !+ This submenu sets (p)age setup options
      case('p','P')
@@ -292,16 +296,23 @@ subroutine menu
      case('o','O')
         call submenu_particleplots(ichoose)
 !------------------------------------------------------------------------
+!+ This submenu sets le(g)end and title options
+     case('g','G')
+        call submenu_legend(ichoose)
+!------------------------------------------------------------------------
 !+ This submenu sets (r)endering options
      case('r','R')
+        if (ndim.le.1) print "(a)",'WARNING: these options have no effect in < 2D'
         call submenu_render(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets (v)ector plotting options
      case('v','V')
+        if (ndim.le.1) print "(a)",'WARNING: these options have no effect in < 2D'
         call submenu_vecplot(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets cross section and rotation options
      case('x','X')
+        if (ndim.le.1) print "(a)",'WARNING: these options have no effect in < 2D'
         call submenu_xsecrotate(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets options relating to the plot limits
@@ -319,8 +330,20 @@ subroutine menu
 !+ 'splash.limits' which is also read automatically
 !+ at startup.
      case('s')
+        if (ioption(2:2).eq.'a') then
+           call prompt('enter prefix for defaults file: ',fileprefix)
+           if (index(fileprefix,'.defaults').eq.0) then
+              defaultsfile = trim(fileprefix)//'.defaults'
+           else
+              defaultsfile = trim(fileprefix)
+           endif
+        endif
         call defaults_write(defaultsfile)
      case('S')
+        if (ioption(2:2).eq.'a' .or. ioption(2:2).eq.'A') then
+           call prompt('enter prefix for filenames: ',fileprefix)
+           call set_filenames(trim(fileprefix))
+        endif
         call defaults_write(defaultsfile)
         call write_limits(limitsfile)
         call write_animfile(animfile)
@@ -328,12 +351,11 @@ subroutine menu
 !+ Slightly obsolete: prints whatever help may be helpful
      case('h','H')
         print "(10(/a))",' Hint: menu items can be shortcut by typing, e.g. o2 for ',&
-                 ' the o)ptions menu, item 2.',&
-                 '   ', &
-                 ' for detailed help, consult the user guide',&
+                 ' the o)ptions menu, item 2.',' ', &
+                 ' for detailed help, consult the user guide',' ',&
                  '  (splash/docs/splash.pdf ',&
                  '   or http://www.astro.ex.ac.uk/people/dprice/splash/userguide/)', &
-                 ' and/or the online FAQ. If you''re really stuck, email me! '
+                 ' ',' and/or the online FAQ. If you''re really stuck, email me! '
         read*
 !------------------------------------------------------------------------
 !+ (q)uit, unsurprisingly, quits. Typing a number greater
