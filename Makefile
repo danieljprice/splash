@@ -223,6 +223,19 @@ ifeq ($(SYSTEM),mymac)
    KNOWN_SYSTEM=yes
 endif
 
+ifeq ($(SYSTEM),intelmac)
+#  these are the settings for an Intel Macbook running Tiger
+#  using gfortran with pgplot installed via fink
+   F90C= gfortran
+   F90FLAGS= -O3 -ffast-math
+   DEBUGFLAG= -Wall -Wextra -Wno=165 -g -frange-check
+   PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -L/sw/lib -lpng \
+          -laquaterm -Wl,-framework -Wl,Foundation -lSystemStubs
+   SYSTEMFILE= system_f2003.f90
+   PARALLEL= no
+   KNOWN_SYSTEM=yes
+endif
+
 ifeq ($(SYSTEM), gfortran_macosx)
 #   gfortran with pgplot installed via fink
     F90C= gfortran
