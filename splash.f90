@@ -23,6 +23,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.10.0 : (xx/11/07)
+!             -p command line option; horizontal colour bars implemented;
+!             TIPSY and DRAGON data reads; can dump pixel map to ascii/ppm files;
+!             density weighted rendering; normalisation applies to column 
+!             density plots; improved particle tracking; various bug fixes       
 !     1.9.2 : (12/09/07)
 !             improvements to ascii read including asplash -e option;
 !             smarter foreground/background colour changing for titles;
@@ -178,7 +183,7 @@ program splash
 !
 !----------------------------------------------------------------------------------
   use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile,animfile, &
-                      unitsfile,fileprefix
+                      unitsfile,fileprefix,set_filenames
   use getdata, only:get_data
   use defaults, only:defaults_set_initial,defaults_set,defaults_read
   use limits, only:read_limits
@@ -195,7 +200,7 @@ program splash
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames,evsplash
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.9.2+ [Sep ''07]'
+  character(len=*), parameter :: version = 'v1.10beta [24th Nov ''07]'
 
   !
   ! initialise some basic code variables
@@ -206,10 +211,8 @@ program splash
   !  default names for defaults file and limits file
   !
   fileprefix = 'splash'
-  defaultsfile = trim(adjustl(fileprefix))//'.defaults'
-  limitsfile = trim(adjustl(fileprefix))//'.limits'
-  animfile = trim(adjustl(fileprefix))//'.anim'
-  unitsfile = trim(adjustl(fileprefix))//'.units'
+  call set_filenames(trim(fileprefix))
+
   evsplash = .false.
   lowmemorymode = lenvironment('SPLASH_LOW_MEM')
   !
@@ -245,7 +248,6 @@ program splash
               iwritepixmap = .true.
               pixmapformat = trim(string)
            else
-              print "(a)",' invalid output format for -o option'
               stop
            endif
         case('e','ev')
@@ -260,14 +262,16 @@ program splash
            print "(a)",'(c) 2005-2007 Daniel Price '
            print "(a,/)",trim(version)
            if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
-           print "(a,/)",'Usage: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] [-lowmem] file1 file2 ...'
+           print "(a,/)",'Usage: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] '// &
+                         '[-lowmem] [-o format] file1 file2 ...'
 
            print "(a,/)",'Command line options:'
-           print "(a)",' -p fileprefix   : changes the prefix to ALL settings files read/written by splash'
-           print "(a)",' -d defaultsfile : changes name of defaults file read/written by splash'
-           print "(a)",' -l limitsfile   : changes name of limits file read/written by splash'
+           print "(a)",' -p fileprefix   : change prefix to ALL settings files read/written by splash '
+           print "(a)",' -d defaultsfile : change name of defaults file read/written by splash'
+           print "(a)",' -l limitsfile   : change name of limits file read/written by splash'
            print "(a)",' -e, -ev         : use default options best suited to ascii evolution files (ie. energy vs time)'
            print "(a)",' -lm, -lowmem    : use low memory mode [applies only to sphNG data read at present]'
+           print "(a)",' -o pixformat    : dump pixel map in pixformat format (use just -o for list of formats)'
            stop
         end select
      elseif (len_trim(string).gt.0) then 
@@ -278,11 +282,7 @@ program splash
      endif
   enddo
 
-  defaultsfile = trim(adjustl(fileprefix))//'.defaults'
-  limitsfile = trim(adjustl(fileprefix))//'.limits'
-  animfile = trim(adjustl(fileprefix))//'.anim'
-  unitsfile = trim(adjustl(fileprefix))//'.units'
-
+  call set_filenames(trim(fileprefix))
   !
   ! print header
   !

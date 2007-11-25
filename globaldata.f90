@@ -35,7 +35,7 @@ module particle_data
 
 end module particle_data
 !
-!--filename
+!--filenames
 !
 module filenames
  implicit none
@@ -47,6 +47,20 @@ module filenames
  integer, dimension(maxfile) :: nstepsinfile
  
  public
+
+contains
+
+ subroutine set_filenames(prefix)
+  implicit none
+  character(len=*), intent(in) :: prefix
+
+  defaultsfile = trim(adjustl(fileprefix))//'.defaults'
+  limitsfile = trim(adjustl(fileprefix))//'.limits'
+  animfile = trim(adjustl(fileprefix))//'.anim'
+  unitsfile = trim(adjustl(fileprefix))//'.units'
+  
+  return
+ end subroutine set_filenames
 
 end module filenames
 !
