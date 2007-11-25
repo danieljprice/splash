@@ -645,6 +645,38 @@ The plotting page can be divided into panels using the ``subdivide page into pan
  Plots with the same $x-$ and $y-$ axes are tiled if the tiling
 option from the (p)age options menu (\S\ref{sec:optionspage}) is set. Tiling means that only one axis is shown where multiple plots share the same x or y axis and that the plots are placed as close to each other as possible. For rendered plots a shared colour bar is plotted which spans the full length of the page.
 
+\subsubsection{ Changing the character height for axes, labels and legends}
+ The character height used for axes, labels and legends can be changed via the p)age setup options submenu. Note that the character height is relative to the paper size (which can also be changed -- see \S\ref{sec:papersize}).
+
+\subsubsection{ Using a thicker line width on plots}
+ The line width used for axes and text can be changed via the p)age submenu. Note that line width changes are not always obvious when plotting to an interactive device (e.g. an X-window) but influence non-interactive devices strongly. The default line width is 1 which in my experience looks best for pixel-based devices such as .gif and .png (e.g. when making movies). For vector devices such as postscript (e.g. to use in a paper) plots look better with a thicker line width (like 2 or 3). 
+
+\subsubsection{ Changing the foreground and background colours}
+\label{sec:pagecolours}
+ The background and foreground colour of a plot can be changed vie the ``set foreground/background colours'' option in the p)age submenu.
+
+\subsubsection{ Plotting axes, legends and titles in white even when the labels are plotted in black}
+ By default, axes, legends and titles are plotted in the foreground colour (e.g. black). However if the plot itself is also largely black (e.g. when rendering or when lots of particles are plotted) it can be useful to overplot those parts of the axes and labelling which lie on top of the plotting surface in the background colour (e.g. white). A prompt for this is given when setting the ``set foreground/background colours'' option in the p)age submenu. 
+ 
+ The prompt appears as follows:
+\begin{verbatim}
+---------------- page setup options -------------------
+...
+ 8) set foreground/background colours 
+enter option ([0:8], default=0):8
+ Enter background colour (by name, e.g. "black") (default=""):white
+ Enter foreground colour (by name, e.g. "white") (default=""):black
+
+ Overlaid (that is, drawn inside the plot borders) axis 
+ ticks, legend text and titles are by default plotted in 
+ the foreground colour [ie. black].
+
+Do you want to plot these in background colour [ie. white] instead ? (default=no):y
+\end{verbatim}
+ In the above I have selected a background colour of white, a foreground colour of black. Answering yes to the last question means that those parts of the axes which lie on top of the viewing surface (and any labels) will be plotted in white (the background colour) instead of the foreground colour (black). 
+
+\subsection{le(g)end and title options}
+
 \subsubsection{ Adding titles to plots / repositioning titles}
 \label{sec:title}
  Plots may be titled individually by creating a file called \verb+titlelist+ in
@@ -680,35 +712,6 @@ on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the ph
 \subsubsection{ Plotting a length scale on coordinate plots}
  An option to plot a length scale (ie. \verb+|---|+ with a label below it indicating the length) on coordinate plots (ie. plots where both $x-$ and $y-$axes refer to particle coordinates) is provided in the ``legend and title options'' in the p)age setup submenu.
 
-\subsubsection{ Changing the character height for axes, labels and legends}
- The character height used for axes, labels and legends can be changed via the p)age setup options submenu. Note that the character height is relative to the paper size (which can also be changed -- see \S\ref{sec:papersize}).
-
-\subsubsection{ Using a thicker line width on plots}
- The line width used for axes and text can be changed via the p)age submenu. Note that line width changes are not always obvious when plotting to an interactive device (e.g. an X-window) but influence non-interactive devices strongly. The default line width is 1 which in my experience looks best for pixel-based devices such as .gif and .png (e.g. when making movies). For vector devices such as postscript (e.g. to use in a paper) plots look better with a thicker line width (like 2 or 3). 
-
-\subsubsection{ Changing the foreground and background colours}
-\label{sec:pagecolours}
- The background and foreground colour of a plot can be changed vie the ``set foreground/background colours'' option in the p)age submenu.
-
-\subsubsection{ Plotting axes, legends and titles in white even when the labels are plotted in black}
- By default, axes, legends and titles are plotted in the foreground colour (e.g. black). However if the plot itself is also largely black (e.g. when rendering or when lots of particles are plotted) it can be useful to overplot those parts of the axes and labelling which lie on top of the plotting surface in the background colour (e.g. white). A prompt for this is given when setting the ``set foreground/background colours'' option in the p)age submenu. 
- 
- The prompt appears as follows:
-\begin{verbatim}
----------------- page setup options -------------------
-...
- 8) set foreground/background colours 
-enter option ([0:8], default=0):8
- Enter background colour (by name, e.g. "black") (default=""):white
- Enter foreground colour (by name, e.g. "white") (default=""):black
-
- Overlaid (that is, drawn inside the plot borders) axis 
- ticks, legend text and titles are by default plotted in 
- the foreground colour [ie. black].
-
-Do you want to plot these in background colour [ie. white] instead ? (default=no):y
-\end{verbatim}
- In the above I have selected a background colour of white, a foreground colour of black. Answering yes to the last question means that those parts of the axes which lie on top of the viewing surface (and any labels) will be plotted in white (the background colour) instead of the foreground colour (black). 
 
 \subsection{particle plot (o)ptions}
 \label{sec:opts}
