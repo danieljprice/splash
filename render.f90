@@ -46,7 +46,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !    call pggray(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
 
  if (abs(icolours).gt.0) then        ! colour
-    if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarstyle,icolours,datmin,datmax,trim(label),log)
+    if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarstyle,icolours,datmin,datmax,trim(label),log,0.)
 !    call pgwedg('ri',2.0,4.0,datmin,datmax,' ')
 !    call pgpixl(datpix,npixx,npixx,1,npixx,1,npixx,xmin,xmax,ymin,ymax)
     call pgimag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
@@ -182,7 +182,7 @@ subroutine render_opacity(rgbcolours,npixx,npixy,xmin,xmax,ymin,ymax, &
  integer :: indexmax,indexmin
  real :: denom,red,green,blue
 
- if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarStyle,icolours,datmin,datmax,trim(label),.false.) 
+ if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarStyle,icolours,datmin,datmax,trim(label),.false.,0.) 
 !
 !--set the colour table corresponding to all possible combinations
 !  of red, green and blue
