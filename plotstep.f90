@@ -174,7 +174,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   tile_plots = tile .and. (isamexaxis.and.isameyaxis .or. isameyaxis.and.ndown.eq.1  &
                       .or. isamexaxis.and.nacross.eq.1) .and. (nacross*ndown.gt.1)
   !--do not tile if limits are adaptive
-  if (tile_plots .and. (iadapting .or. (iamrendering .and. iadapt))) then
+  if (tile_plots .and. (iadapting .or. (iamrendering .and. iadapt .and. iColourbarStyle.gt.0))) then
      print "(a)",'WARNING: cannot tile plots because limits are set to adaptive'
      tile_plots = .false.
   endif
