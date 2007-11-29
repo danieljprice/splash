@@ -23,11 +23,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.10.0 : (xx/11/07)
-!             -p command line option; horizontal colour bars implemented;
-!             TIPSY and DRAGON data reads; can dump pixel map to ascii/ppm files;
+!     1.10.0 : (28/11/07)
+!             horizontal colour bars implemented; -p, -o command line options;
+!             can have mixed types in data reads; TIPSY and DRAGON data reads;
 !             density weighted rendering; normalisation applies to column 
-!             density plots; improved particle tracking; various bug fixes       
+!             density plots; improved particle tracking; save as option; various bug fixes       
 !     1.9.2 : (12/09/07)
 !             improvements to ascii read including asplash -e option;
 !             smarter foreground/background colour changing for titles;
@@ -200,7 +200,7 @@ program splash
   integer :: i,ierr,nargs
   logical :: ihavereadfilenames,evsplash
   character(len=120) :: string
-  character(len=*), parameter :: version = 'v1.10beta [24th Nov ''07]'
+  character(len=*), parameter :: version = 'v1.10 [28th Nov ''07]'
 
   !
   ! initialise some basic code variables
