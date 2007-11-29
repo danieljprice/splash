@@ -103,7 +103,7 @@ Thus it may not be particularly useful for things like water and solids etc. in 
 \end{tabular}
 
 \subsection{Licence}
-SPLASH - a visualisation tool for SPH data \copyright 2005 Daniel Price.
+SPLASH - a visualisation tool for SPH data \copyright 2005-2007 Daniel Price.
  This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 \section{Getting started}
@@ -155,8 +155,7 @@ unformatted data files is *much* faster than reading from formatted (ascii)
 output.   
 
 I have supplied subroutines for reading output from the publically available
-GADGET code (\verb+read_data_gadget.f90+) and also for Matthew Bate's sphNG code
-(\verb+read_data_sphNG.f90+) which is widely used in the UK. Another example of a
+GADGET code (\verb+read_data_gadget.f90+), for GASOLINE (\verb+read_data_tipsy.f90+), VINE (\verb+read_data_VINE.f90+), DRAGON (\verb+read_data_dragon.f90+) and also for Matthew Bate's sphNG code (\verb+read_data_sphNG.f90+) which is widely used in the UK. Another example of a
 data read which I use is given in \verb+read_data_dansph.f90+.
 
 Further details on writing your own subroutine are given in
@@ -236,6 +235,14 @@ RSPLASH\_RESET\_COM & if `YES' or `TRUE' resets the positions such that the cent
 RSPLASH\_COROTATING & if `YES' or `TRUE' then velocities are transformed to corotating frame \\
 RSPLASH\_HFACT & can be changed to give correct parameter in $h=h_{fact}(m/\rho)^{1/3}$ used to set the particle masses when rendering minidumps (ie. when the mass is not dumped). Default is RSPLASH\_HFACT=1.5
 \end{tabular}
+
+\subsubsection{ Dragon data read}
+ For the DRAGON read (`dsplash') the environment variable options are:\newline
+
+\begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+DSPLASH\_EXTRACOLS & specifies number of extra columns present in the file which are dumped after the itype array
+\end{tabular}
+
 \section{Basic SPLASH usage}
 \label{sec:basic}
 
@@ -278,7 +285,7 @@ dprice$ rsplash minidump.00001
 -------------------------------------------------------
  12) multiplot [  4 ]      m) set multiplot 
 -------------------------------------------------------
- d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)
+ d(ata) p(age) o(pts) l(imits) le(g)end h(elp)
  r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
 -------------------------------------------------------
 Please enter your selection now (y axis or option):
@@ -290,7 +297,7 @@ Please enter your selection now (y axis or option): 5
 (x axis) (default=1): 4
  Graphics device/type (? to see list, default /xwin): /xw
 \end{verbatim}
- The \verb+<cr>+ refers to the default value assigned if you just press the return key. The last prompt asks for the PGPLOT device to which output should be directed. A full list of available graphics devices is given in the PGPLOT user guide. Some of the most useful devices are given in table \ref{tab:devices}. In the
+ The \verb+default=+ refers to the default value assigned if you just press the return key. The last prompt asks for the PGPLOT device to which output should be directed. A full list of available graphics devices is given in the PGPLOT user guide. Some of the most useful devices are given in table \ref{tab:devices}. In the
 above we have selected the X-window driver which means that the output is sent to the
 screen (provided X-windows is running), as demonstrated in the screenshot shown in Figure \ref{fig:rhoh}. 
 
@@ -401,7 +408,7 @@ In this section I have listed ten quick suggestions for simple changes to settin
 \item {\bf Try using normalised interpolations}. If your simulation does not involve free surfaces (or alternatively if the free surfaces are not visible in the figure), turning the ``normalise interpolations'' option on (in the r)ender submenu) may improve the smoothness of the rendering (sometimes substantially). This is turned off by default because it leads to funny-looking edges. Note that option has no effect on 3D projection plots (where it is not meaningful to normalise the interpolation).
 \item {\bf Try turning the axes off}. For movies, often axes are unnecessary and detract from the visual appeal. Axes can be turned off in the ``axes options'' option in the p)age submenu.
 \item {\bf Change axes/page colours}. The background colour (colour of the page) and foreground colour (used for axes etc) can be changed vie the ``set foreground/background colours'' option in the p)age submenu. Alternatively these can be changed prior to invoking SPLASH by setting the PGPLOT\_FOREGROUND and PGPLOT\_BACKGROUND environment variables (see \S\ref{sec:envvariables}).
-\item {\bf Move the legend or turn it off}. The time legend can be moved by positioning the mouse and pressing `G' in interactive mode. The legend can be turned off using the ``legend and title options'' option in the p)age submenu. Similarly the vector plot legend can be turned on/off in the v)ector submenu and moved by positioning the cursor and pressing `H'.
+\item {\bf Move the legend or turn it off}. The time legend can be moved by positioning the mouse and pressing `G' in interactive mode. The legend can be turned off using the le(g)end submenu. Similarly the vector plot legend can be turned on/off in the v)ector submenu and moved by positioning the cursor and pressing `H'.
 \item {\bf Use physical units on the axes}. These can be set via the d)ata submenu. See \S\ref{sec:changingunits} for more details.
 \item {\bf Save settings to disk!} Don't waste your effort without being able to reproduce the plot you have been working on. Pressing `s' in interactive mode only saves the current settings for subsequent timesteps. Pressing `s' from the main menu saves these settings to disk. Pressing `S' from the main menu saves both the plot options \emph{and} the plot limits, so that the current plot can be reproduced exactly when splash is next invoked.
 \end{enumerate}
@@ -511,7 +518,7 @@ Units for the time used in the legend can be changed using the ``change physical
 
 \subsection{(i)nteractive mode}
 \label{sec:interactive}
- The menu option turns on/off interactive mode. With this option turned on and
+ The menu option i) turns on/off interactive mode (alternatively use ``interactive mode on/off'' in the p)age submenu). With this option turned on (the default) and
 an appropriate device selected (ie. the X-window, not /gif or /ps), after
 each plot the program waits for specific commands from the user. With the cursor
 positioned anywhere in the plot window (but not outside it!), many different
@@ -597,7 +604,7 @@ This can be achieved by selecting and colouring particles at a particular timest
 \end{figure}
 
 When more than one timestep is plotted per page with different markers/colours, an additional legend can be
-plotted (turn this on in the legend options part of the (p)age submenu, or when prompted whilst setting the "plot n steps on top of each other" option). The text for this legend is just the filename by default (if one timestep per file) or just something dull like 'step 1' (if more than one timestep per file). 
+plotted (turn this on in the le(g)end submenu, or when prompted whilst setting the "plot n steps on top of each other" option). The text for this legend is just the filename by default (if one timestep per file) or just something dull like 'step 1' (if more than one timestep per file). 
 
 To change the legend text, create a file called \verb+legend+ in the working directory, with one label per line. The position of the legend can be changed either manually via the ``legend and title options'' in the p)age submenu, or by positioning the mouse in interactive mode and pressing 'G' (similar keys apply for moving plot titles and the legend for vector plots -- press 'h' in interactive mode for a full list). 
 
@@ -695,22 +702,22 @@ on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the ph
 
 \subsubsection{ Turning off/moving the time legend}
 \label{sec:legendoff}
- The position of the time legend can be set interactively by positioning the mouse in the plot window and pressing 'G'. To set the position non-interactively and/or change additional settings such as the justification, use the ``legend and title options'' in the p)age setup submenu.
+ The position of the time legend can be set interactively by positioning the mouse in the plot window and pressing 'G'. To set the position non-interactively and/or change additional settings such as the justification, use the ``time legend on/off/settings'' option in the le(g)end submenu.
 
 \subsubsection{ Changing the text in the time legend}
 \label{sec:timelegendtext}
- The text which appears the time legend (by default this is ``t='') can be changed via the ``legend and title options'' in the p)age setup submenu.
+ The text which appears the time legend (by default this is ``t='') can be changed via the  ``time legend on/off/settings'' option in the le(g)end submenu.
 
  To rescale the \emph{value} of the time displayed in the time legend (default value is as read from the dump file), see \S\ref{sec:timeunits}.
  
 \subsubsection{ Making the legend read ``z='' instead of ``t=''}
- See \ref{sec:timelegendtext}. An option to change the legend text is provided in the ``legend and title options'' in the p)age setup submenu. The numeric value of the time legend is as read into the \verb+time+ array in the read\_data routine. This value can be rescaled by setting a unit for time (see \S\ref{sec:timeunits}). 
+ See \ref{sec:timelegendtext}. An option to change the legend text is provided in the  ``time legend on/off/settings'' option in the le(g)end submenu. The numeric value of the time legend is as read into the \verb+time+ array in the read\_data routine. This value can be rescaled by setting a unit for time (see \S\ref{sec:timeunits}). 
   
-\subsubsection{ Plotting the time legend on the first row of panels only}
- An option to plot the time legend on the first row of panels only appears in the ``legend and title options'' in the p)age setup submenu.
+\subsubsection{ Plotting the time legend on the first row/column of panels / nth panel only}
+ An option to plot the time legend on the first row or column of panels or on a single panel only appears in the in the le(g)end submenu.
 
 \subsubsection{ Plotting a length scale on coordinate plots}
- An option to plot a length scale (ie. \verb+|---|+ with a label below it indicating the length) on coordinate plots (ie. plots where both $x-$ and $y-$axes refer to particle coordinates) is provided in the ``legend and title options'' in the p)age setup submenu.
+ An option to plot a length scale (ie. \verb+|---|+ with a label below it indicating the length) on coordinate plots (ie. plots where both $x-$ and $y-$axes refer to particle coordinates) is provided in the le(g)end submenu.
 
 
 \subsection{particle plot (o)ptions}
@@ -952,7 +959,10 @@ To plot contours instead of the rendered image, use the ``change colour scheme''
  The number of contour levels used whenever contours are drawn can be set via the ``change number of contours'' option in the r)ender menu.
 
 \subsubsection{ Turning the colour bar off/ moving the colour bar label}
- The colour bar can be turned off and the label moved closer to the bar itself via the ``colour bar options'' option in the r)ender menu.
+ The colour bar can be turned on or off and the style chosen (e.g. horizontal vs vertical) and for the vertical bar, the label moved closer to the bar itself, via the ``colour bar options'' option in the r)ender menu.
+
+\subsubsection{ Using a horizontal colour bar}
+ An option to use a horizontal colour bar instead of the default vertical arrangement is given in the ``colour bar options'' option in the r)ender submenu.
 
 \subsubsection{ Using coloured particles instead of rendering to pixels}
 \label{sec:colournotrender}
@@ -966,6 +976,9 @@ more prominently (and a bit strange). The general rule-of-thumb I use is therefo
 
 \subsubsection{ Speeding up the rendering on 3D column integrated plots}
  Interpolation on 3D column integrated plots can be made faster by setting the ``use accelerated rendering'' option in the r)ender menu. The reason this is an option is that it makes a small approximation by assuming that each particle lies exactly in the centre of a pixel.  In general this works very well but is not set by default because it can produce funny looking results when the particles are aligned on a regular grid (e.g. as is often the case in initial conditions). Typical speed-ups range from $\times 2$ up to $\times 4$, so it is highly recommended for interactive work.
+
+\subsubsection{ Using density weighted interpolation}
+ Density weighted interpolation (where a quantity is plotted times $\rho$) can be turned on in the r)ender menu.
 
 \subsubsection{ Selecting and rendering only a subset of the particles}
  An example of how to render using only a selected subset of the particles was given in \S\ref{sec:rendersubset}.
@@ -1115,6 +1128,8 @@ startup if so desired (this is quite useful for setting multiplots with many plo
 limits to a file called `splash.limits' which is also read automatically
 at startup. If animation sequences have been set (see \S\ref{sec:animseq}), this also saves the `splash.anim' file to disk.
 
+ Typing ``sa'' or ``Sa'' gives a ``save-as'' option, whereby the prefix of files saved by splash can be changed (e.g. using ``sa'' the defaults file can be renamed, whereas using ``Sa'' all files saved by SPLASH are given a new prefix). The prefix to the configuration files which are written by SPLASH can also be changed using the \verb+-p+ option on the command line (the default is ``splash'', ie. ``splash.defaults'', ``splash.limits'' etc).
+
 \subsubsection{ My attempt at in-built help}
 The (h)elp option at the moment does nothing particularly useful apart from tell you about menu shortcuts (see \S\ref{sec:menushortcuts}). It seemed like a good idea at the time\ldots
 
@@ -1157,7 +1172,7 @@ and arrive at the main menu:
 -------------------------------------------------------
  12) multiplot [  4 ]      m) set multiplot 
 -------------------------------------------------------
- d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)
+ d(ata) p(age) o(pts) l(imits) le(g)end h(elp)
  r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
 -------------------------------------------------------
 Please enter your selection now (y axis or option):
@@ -1224,7 +1239,7 @@ You may choose from a delectable sample of plots
 -------------------------------------------------------
  12) multiplot [  4 ]      m) set multiplot 
 -------------------------------------------------------
- d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)
+ d(ata) p(age) o(pts) l(imits) le(g)end h(elp)
  r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
 -------------------------------------------------------
 Please enter your selection now (y axis or option):
@@ -1300,24 +1315,21 @@ enter option ([0:8], default=0):2
 enter axis option ([-4:30], default=0):-2
    axis =  -2
 \end{verbatim}
-The option to plot a scale of a particular length is also to be found in the p)age menu. We will choose to plot a scale of length 0.1 pc. 
+The option to plot a scale of a particular length is also to be found in the le(g)end menu. We will choose to plot a scale of length 0.1 pc. 
 \begin{verbatim}
-Please enter your selection now (y axis or option):p
----------------- page setup options -------------------
-...
- 5) legend and title options          ( ON  OFF OFF )
-...
-enter option ([0:8], default=0):5
+Please enter your selection now (y axis or option):g
+---------------- legend and title options -------------------
+
+ To set the plot titles, create a file called
+  'splash.titles' in the working directory, with one title per line
+
  0) exit 
- 1) time legend on/off                         ( ON  )
- 2) titles on/off                              ( OFF )
+ 1) time legend on/off/settings                ( ON   0.87  1.87  0.00 "t=")
+ 2) titles on/off/settings                     ( ON   0.20 -0.92  0.00)
  3) legend for multiple steps per page on/off  ( OFF )
- 4) change time legend text                    ('t=')
- 5) plot time legend on first row only         ( OFF )
- 6) set legend position and justification      ( 0.95  2.00  1.00)
- 7) set title position and justification       ( 0.50  1.00  0.50)
- 8) plot scale on co-ordinate plots            ( OFF )
-Enter option ([0:8], default=0):8
+ 4) plot scale on co-ordinate plots            ( OFF )
+ 5) legend only on nth panel/first row/column  (  0 )
+Enter option ([0:5], default=0):4
  Plot scale on co-ordinate plots? (default=no):y
  Enter length of scale in the current x,y,z units (default=1.000):3.0856e15
  Enter text to appear below scale (e.g. '10 AU') (default=1 unit): 0.1 pc
@@ -1418,7 +1430,7 @@ An alternative method is to rename the `filelistplot' file \verb+splash.filename
 -------------------------------------------------------
  10) multiplot [  4 ]      m) set multiplot 
 -------------------------------------------------------
- d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)
+ d(ata) p(age) o(pts) l(imits) le(g)end h(elp)
  r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
 -------------------------------------------------------
 Please enter your selection now (y axis or option):2
@@ -1519,7 +1531,7 @@ after which we reach the main menu:
 -------------------------------------------------------
  10) multiplot [  4 ]      m) set multiplot 
 -------------------------------------------------------
- d(ata) i(nteractive) p(age) o(pts) l(imits) h(elp)
+ d(ata) p(age) o(pts) l(imits) le(g)end h(elp)
  r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
 -------------------------------------------------------
 Please enter your selection now (y axis or option):
@@ -1802,6 +1814,9 @@ the appendix to the PGPLOT user guide.
 \subsection{Making movies}
 See \S\ref{sec:movies} and the online FAQ (\url{http://www.astro.ex.ac.uk/people/dprice/splash/faqs.html}).
 
+\subsection{Outputting the raw pixel map to a file}
+ The actual pixel map rendered to the graphics device (ie. when a quantity is rendered to pixels, not for particle plots) can be output directly to a file, or series of files by using the \verb+-o+ command line option when you invoke SPLASH. Invoking SPLASH with \verb+-o+ produces a list of currently implemented formats (at the moment these are an ascii dump file and ppm format). This is useful if you need to compare the image to the output from another code (e.g. using a different visualisation tool) or if you wish to have a ``raw'' rendering, that is without annotation on the plots, but which (in the ppm case) uses more colours. The files are given default names such as ``splash\_00001.dat'' or ``splash\_00001.ppm'' where the number corresponds to the frame number as would be rendered to the PGPLOT graphics device.
+
 \section{User contributions / Wishlist for future improvements}
  Please contribute!! Any user contributions and/or suggestions would be greatly
 appreciated. The following in particular would be very useful:
@@ -1832,7 +1847,7 @@ although check that this email address is current because I am still a postdoc!
  Several of the routines were developed from ideas used by Matthew Bate and SPLASH has been refined by many useful discussions with the aforementioned. The
 polytrope exact solution is from a routine by Joe Monaghan. I am indebted to one
 Thomas S. Ullrich at the University of Heidelberg who wrote the prompting module
-which is used throughout the program. Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve SPLASH, including, but not limited to: John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor and John Regan.
+which is used throughout the program. Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve SPLASH, including, but not limited to: John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Irsic, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika and Richard Alexander.
 
 \newpage
 \appendix
