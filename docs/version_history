@@ -24,6 +24,9 @@ better colour schemes; interactive colour scheme changing; various minor changes
 1.0.5:
 error calculation for exact solutions; legend for plot markers; exact(densityprofiles) added; more colour schemes; unit rescaling improved; other minor changes and bug fixes
  
+1.10.0:
+horizontal colour bars implemented; -p, -o command line options; can have mixed types in data reads; TIPSY and DRAGON data reads; density weighted rendering; normalisation option applies to column density plots; improved particle tracking; save as option; various bug fixes
+ 
 1.5:
 3D perspective added, 3D opacity rendering, improved rotation, colour schemes, adjustable vector arrows (+legend), improved timestepping behaviour, speed enhancements, physical unit rescaling
  
