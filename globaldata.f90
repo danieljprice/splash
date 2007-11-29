@@ -54,10 +54,11 @@ contains
   implicit none
   character(len=*), intent(in) :: prefix
 
-  defaultsfile = trim(adjustl(fileprefix))//'.defaults'
-  limitsfile = trim(adjustl(fileprefix))//'.limits'
-  animfile = trim(adjustl(fileprefix))//'.anim'
-  unitsfile = trim(adjustl(fileprefix))//'.units'
+  defaultsfile = trim(adjustl(prefix))//'.defaults'
+  limitsfile = trim(adjustl(prefix))//'.limits'
+  animfile = trim(adjustl(prefix))//'.anim'
+  unitsfile = trim(adjustl(prefix))//'.units'
+  fileprefix = trim(adjustl(prefix))
   
   return
  end subroutine set_filenames

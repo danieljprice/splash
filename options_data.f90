@@ -63,7 +63,7 @@ end subroutine defaults_set_data
 !----------------------------------------------------------------------
 subroutine submenu_data(ichoose)
  use filenames, only:nsteps,nstepsinfile,ifileopen,unitsfile
- use prompting
+ use prompting, only:prompt,print_logical
  use getdata, only:get_data
  use settings_data, only:istartatstep,iendatstep,nfreq,iUseStepList, &
      isteplist,buffer_data,iCalcQuantities,iRescale, &
