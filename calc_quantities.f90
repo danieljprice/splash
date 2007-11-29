@@ -296,7 +296,8 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
          if (iRescale) then
             dat(1:ntoti,itemprad,i) = abs(dat(1:ntoti,irho,i)*dat(1:ntoti,iradenergy,i)/radconst)**0.25
          else ! if not using physical units, still give radiation temperature in physical units
-            dat(1:ntoti,itemprad,i) = abs(dat(1:ntoti,irho,i)*units(irho)*dat(1:ntoti,iradenergy,i)*units(iradenergy)/radconst)**0.25         
+            dat(1:ntoti,itemprad,i) = abs(dat(1:ntoti,irho,i)*units(irho)*dat(1:ntoti,iradenergy,i) &
+                                      *units(iradenergy)/radconst)**0.25         
          endif
       endif
       !
