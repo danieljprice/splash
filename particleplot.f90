@@ -183,7 +183,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            overj2: do j=index1,index2
               if (icolourpart(j).ge.0) then
                  if (mixedtypes) then
-                    itype = iamtype(j)
+                    itype = int(iamtype(j))
                     if (.not.iplotpartoftype(itype)) cycle overj2
                     nplottedtype(itype) = nplottedtype(itype) + 1
                  endif
