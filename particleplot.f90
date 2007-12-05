@@ -99,7 +99,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
         nplotted = 0
         overj: do j=index1,index2
            if (mixedtypes) then
-              itype = min(max(iamtype(j),1),maxparttypes)
+              itype = min(max(int(iamtype(j)),1),maxparttypes)
               if (.not.iplotpartoftype(itype)) cycle overj
            endif
            if (zplot(j).lt.zmax .and. zplot(j).gt.zmin) then
