@@ -52,8 +52,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(len=*), intent(in) :: rootname
   integer, parameter :: maxarrsizes = 10, maxreal = 50
   real, parameter :: pi=3.141592653589
-  integer :: i,j,ierr,iunit,intg1,int2,int3,i1,iarr,i2
-  integer :: npart_max,nstep_max,ncolstep,icolumn
+  integer :: i,j,ierr,iunit,intg1,int2,int3,i1,iarr,i2,iptmass1,iptmass2
+  integer :: npart_max,nstep_max,ncolstep,icolumn,nptmasstot
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
   integer :: nskip,ntotal,npart,n1,n2,itype,ninttypes,ngas
   integer :: nreassign,naccrete,nkill,iblock,nblocks,ntotblock,ncolcopy
@@ -265,7 +265,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
    ntotal = 0
    ntotblock = 0
+   nptmasstot = 0
    i2 = 0
+   iptmass2 = 0
 
    over_MPIblocks: do iblock=1,nblocks
       
@@ -279,7 +281,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
          ntotblock = isize(iarr)
          if (npart.le.0) npart = ntotblock
          ntotal = ntotal + ntotblock
+      elseif (iarr.eq.2) then
+         nptmasstot = nptmasstot + isize(iarr)
       endif
+      
       if (isize(iarr).gt.0) then
          print *,'block ',iarr,' dim = ',isize(iarr),'nint=',nint(iarr),nint1(iarr), &
             nint2(iarr),nint4(iarr),nint8(iarr),'nreal =',nreal(iarr),nreal4(iarr),nreal8(iarr)
@@ -343,10 +348,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
          call alloc(npart_max,j,ncolumns,mixedtypes=.true.)
       endif
    endif
-
-   if (allocated(iphase)) deallocate(iphase)
-   allocate(iphase(npart_max))
-   iphase(:) = 0
    
    if (iblock.eq.1) then
 !--extract required information
@@ -360,7 +361,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
          npartoftype(1,j) = npart
          npartoftype(2,j) = max(ntotal - npart,0)
       endif
-      nptmass = isize(2)
       hfact = 1.2
       if (phantomdump) then
          if (nreals.lt.6) then
@@ -420,6 +420,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
       !--we have radiative transfer in the dump
          iformat = 4 ! radiative transfer dump
       endif
+
+      if (allocated(iphase)) deallocate(iphase)
+      allocate(iphase(npart_max))
+      iphase(:) = 0
       
    endif ! iblock = 1
 !
@@ -430,6 +434,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
    i1 = i2 + 1
    i2 = i1 + isize(1) - 1
    print*,'particles: ',i1,' to ',i2
+   iptmass1 = iptmass2 + 1
+   iptmass2 = iptmass1 + isize(2) - 1
+   nptmass = nptmasstot
+   if (nptmass.gt.0) print*,'point masses: ',iptmass1,' to ',iptmass2,' of ',nptmass
 
    do iarr=1,narrsizes
  
@@ -490,11 +498,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   if (ierr /=0) print "(a)",'ERROR in memory allocation'
                   read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                   if (nptmass.ne.isize(iarr)) print "(a)",'ERROR: nptmass.ne.block size'
-                  do i=1,nptmass
-                     dat(listpm(i),ipmass,j) = real(dattemp(i))
+                  do i=1,isize(iarr)
+                     dat(listpm(iptmass1+i-1),ipmass,j) = real(dattemp(i))
                   enddo
                else
-                  read(iunit,end=33,iostat=ierr) (dat(listpm(i),ipmass,j),i=1,nptmass)
+                  read(iunit,end=33,iostat=ierr) (dat(listpm(i),ipmass,j),i=iptmass1,iptmass2)
                endif 
                nskip = nreal(iarr) - 1 + nreal4(iarr) + nreal8(iarr)
             endif
@@ -693,6 +701,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
           iamtype(i,j) = 2
        enddo
        print*,'mixed types: ngas = ',ngas,nptmassi,nunknown
+
     elseif (any(iphase(1:ntotal).ne.0)) then
 !
 !--place point masses after normal particles
