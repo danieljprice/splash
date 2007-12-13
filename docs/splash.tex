@@ -652,6 +652,13 @@ The plotting page can be divided into panels using the ``subdivide page into pan
  Plots with the same $x-$ and $y-$ axes are tiled if the tiling
 option from the (p)age options menu (\S\ref{sec:optionspage}) is set. Tiling means that only one axis is shown where multiple plots share the same x or y axis and that the plots are placed as close to each other as possible. For rendered plots a shared colour bar is plotted which spans the full length of the page.
 
+\subsubsection{ Using non-proportional scales for spatial dimensions}
+\label{sec:squarexy}
+ By default if the x and y axes are both spatial coordinates, the axes are scaled proportionately. This can be changed via the ``spatial dimensions have same scale'' option in the p)age submenu.
+
+\subsubsection{ Using non-square axes on coordinate plots}
+ See \S\ref{sec:squarexy}.
+ 
 \subsubsection{ Changing the character height for axes, labels and legends}
  The character height used for axes, labels and legends can be changed via the p)age setup options submenu. Note that the character height is relative to the paper size (which can also be changed -- see \S\ref{sec:papersize}).
 
@@ -669,8 +676,8 @@ option from the (p)age options menu (\S\ref{sec:optionspage}) is set. Tiling mea
 \begin{verbatim}
 ---------------- page setup options -------------------
 ...
- 8) set foreground/background colours 
-enter option ([0:8], default=0):8
+ 9) set foreground/background colours 
+enter option ([0:8], default=0):9
  Enter background colour (by name, e.g. "black") (default=""):white
  Enter foreground colour (by name, e.g. "white") (default=""):black
 
@@ -1118,7 +1125,7 @@ This can be achieved by setting an animation sequence with a steady change of ro
 \subsection{Miscellaneous other useful things}
 
 \subsubsection{ Saving plot settings / plot limits to disk}
- The (s)ave option saves the default options to a file called `defaults' in the
+ The (s)ave option saves the default options to a file called `splash.defaults' in the
 current directory which is read automatically upon the next invocation of
 splash. This file uses namelist formatting and may be edited manually prior to  
 startup if so desired (this is quite useful for setting multiplots with many plots per
