@@ -9,7 +9,7 @@ module settings_page
  integer :: iPlotLegendOnlyOnPanel
  logical :: iColourEachStep,iChangeStyles,tile,interactive
  logical :: iPlotLegend,iPlotStepLegend,iPlotTitles
- logical :: iPlotScale,iUseBackgroundColourForAxes
+ logical :: iPlotScale,iUseBackgroundColourForAxes,usesquarexy
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
  real :: charheight
@@ -21,7 +21,8 @@ module settings_page
    iPlotLegend,iPlotStepLegend,hposlegend,vposlegend,iPlotTitles,hpostitle, &
    vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheight,linewidth,&
    fjustlegend,iPlotLegendOnlyOnPanel, &
-   iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes
+   iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
+   usesquarexy
 
 contains
 
@@ -66,6 +67,8 @@ subroutine defaults_set_page
   dxscale = 1.0
   scaletext = '1 unit'
   iscalepanel = 0
+  
+  usesquarexy = .true. ! spatial dimensions have same scale
 
   return
 end subroutine defaults_set_page
@@ -104,20 +107,21 @@ subroutine submenu_page(ichoose)
  papersizey = papersizex*aspectratio
  print "(a)",'---------------- page setup options -------------------'
  
- if (iaction.le.0 .or. iaction.gt.8) then
+ if (iaction.le.0 .or. iaction.gt.9) then
     print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,print_logical(tile), &
-             charheight,linewidth,trim(print_logical(interactive))
+             trim(print_logical(usesquarexy)),charheight,linewidth,trim(print_logical(interactive))
 10 format( &
           ' 0) exit ',/,                   &
-          ' 1) plot n steps on top of each other (n =',i4,')',/, &
-          ' 2) axes options                      (',i2,')',/, &
-          ' 3) change paper size                 (',f5.2,1x,f5.2,')',/, &
-          ' 4) subdivide page into panels        (',i2,1x,'x',1x,i2,', tiling is ',a,')',/, &
-          ' 5) set character height              (',f4.1,')',/,&
-          ' 6) adjust line width                 (',i2, ')',/,&
-          ' 7) interactive mode on/off           ( ',a,' )',/,&
-          ' 8) set foreground/background colours ')
-    call prompt('enter option ',iaction,0,8)
+          ' 1) plot n steps on top of each other   (n =',i4,')',/, &
+          ' 2) axes options                        (',i2,')',/, &
+          ' 3) change paper size                   (',f5.2,1x,f5.2,')',/, &
+          ' 4) subdivide page into panels          (',i2,1x,'x',1x,i2,', tiling is ',a,')',/, &
+          ' 5) spatial dimensions have same scale  ( ',a,' )',/,&
+          ' 6) set character height                (',f4.1,')',/,&
+          ' 7) adjust line width                   (',i2, ')',/,&
+          ' 8) interactive mode on/off             ( ',a,' )',/,&
+          ' 9) set foreground/background colours ')
+    call prompt('enter option ',iaction,0,9)
  endif
 
  select case(iaction)
@@ -213,10 +217,14 @@ subroutine submenu_page(ichoose)
      return
 !------------------------------------------------------------------------
   case(5)
+     usesquarexy = .not.usesquarexy
+     print "(a)",' Same scale for spatial dimensions is '//print_logical(usesquarexy)
+!------------------------------------------------------------------------
+  case(6)
      call prompt('Enter PGPLOT character height ',charheight,0.1,10.)
      return
 !------------------------------------------------------------------------
-  case(6)
+  case(7)
      print "(3(/,a))",' Setting line width to 0 means automatic line width choice:', &
                     ' This gives width = 2 for vector devices (/ps,/cps etc)', &
                     '        and width = 1 elsewhere (e.g. for pixel devices)'
@@ -224,11 +232,11 @@ subroutine submenu_page(ichoose)
      call prompt('Enter PGPLOT line width (0=auto)',linewidth,0,5)
      return
 !------------------------------------------------------------------------
-  case(7)
+  case(8)
      interactive = .not.interactive
      print "(a)",' Interactive mode is '//print_logical(interactive)
 !------------------------------------------------------------------------
-  case(8)
+  case(9)
      ierr = 1
      ntries = 1
      !--open null device so that colours can be recognised

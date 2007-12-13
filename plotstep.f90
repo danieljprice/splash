@@ -451,7 +451,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use settings_limits, only:iadapt,iadaptcoords,scalemax
   use settings_part, only:iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
                      iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot
-  use settings_page, only:nacross,ndown,iadapt,interactive,iaxis, &
+  use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,usesquarexy, &
                      charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
       iColourBarStyle,icolour_particles,inormalise_interpolations,ifastrender
@@ -1140,7 +1140,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            ! setup page
            !---------------------------------
 
-           just = 1  ! x and y axis have same scale
+           if (usesquarexy) then
+              just = 1  ! x and y axis have same scale
+           else
+              just = 0
+           endif
            ! unless 1D xsec through 2D data or non-cartesian
            if ((irender.gt.ndim .and. ndim.eq.2 .and. x_sec) &
                .or.(icoordsnew.gt.1)) then
