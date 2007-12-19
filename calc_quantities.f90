@@ -87,7 +87,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      call addcolumn(ipr,'pressure')
   endif
   !--mach number
-  if (ivx.ne.0 .and. ipr.ne.0 .and. irho.ne.0) call addcolumn(imach,'mach number')
+  if (ipr.ne.0 .and. irho.ne.0 .and. ivx.ne.0) call addcolumn(imach,'mach number')
   !--deltarho for toy star
   if (irho.ne.0 .and. irad.ne.0 .and. iexact.eq.4) call addcolumn(ideltarho,'\gd \gr')
   !--mean particle spacing (m/rho)**(1/ndim)
@@ -177,7 +177,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
          endwhere
       endif
       !!--mach number
-      if (imach.ne.0) then
+      if (imach.ne.0 .and. ivx.ne.0 .and. irho.ne.0 .and. ipr.ne.0) then
          do j=1,ntoti
             veltemp = dot_product(dat(j,ivx:ivx+ndimV-1,i), &
                                   dat(j,ivx:ivx+ndimV-1,i))
