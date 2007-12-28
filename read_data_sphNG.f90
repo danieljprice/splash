@@ -170,8 +170,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
          read(iunit,iostat=ierr) npart
          npartoftypei(1) = npart
       elseif (phantomdump) then
-         ntypes = nints - 1
-         read(iunit,iostat=ierr) npart,npartoftypei(1:ntypes)
+         if (nints.lt.7) then
+            ntypes = nints - 1
+            read(iunit,iostat=ierr) npart,npartoftypei(1:ntypes)
+         else
+            ntypes = 1
+            read(iunit,iostat=ierr) npart,npartoftypei(1:5),nblocks
+            print*,'here',nints,npart,npartoftypei(1:5),nblocks
+         endif
       elseif (nints.ge.7) then
          read(iunit,iostat=ierr) npart,n1,n2,nreassign,naccrete,nkill,nblocks
       else
@@ -193,9 +199,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--int*1, int*2, int*4, int*8
    do i=1,4
       read(iunit,end=55,iostat=ierr) ninttypes
-      do itype=1,ninttypes
-         read(iunit,end=55,iostat=ierr)
-      enddo
+      if (ninttypes.gt.0) read(iunit,end=55,iostat=ierr)
       if (ierr /=0) print "(a)",'error skipping int types'
    enddo
 !--default reals
