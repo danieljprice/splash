@@ -81,7 +81,7 @@ real function wfromtable(q2)
  !
  !--find nearest index in table
  !
- index = int(q2*ddq2table)
+ index = max(int(q2*ddq2table),0) ! the max prevents seg faults on NaNs for q2
  !index = min(index,maxcoltable) ! should be unnecessary if q2 < radkernel checked
  index1 = min(index + 1,maxcoltable)
  !
