@@ -61,7 +61,7 @@ OMPFLAGS=
 # some compilers also allow this to be done at runtime (e.g. g95, ifort) by setting
 # an environment variable appropriately (e.g. G95_ENDIAN or F_UFMTENDIAN)
 #
-ENDIAN=
+#ENDIAN=
 #ENDIAN='BIG'
 #ENDIAN='LITTLE'
 
@@ -366,6 +366,7 @@ FFLAGS = $(F90FLAGS)
 SOURCESF90= globaldata.f90 asciiutils.f90 transform.f90 \
          prompting.f90 geometry.f90 colourbar.f90 \
          colours.f90 colourparts.f90 units.f90 write_pixmap.f90 \
+         write_sphdata.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \
          exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
@@ -374,7 +375,8 @@ SOURCESF90= globaldata.f90 asciiutils.f90 transform.f90 \
          exact.f90 limits.f90 \
          allocate.f90 titles.f90 \
          options_particleplots.f90 \
-         calc_quantities.f90 get_data.f90 options_data.f90 \
+         calc_quantities.f90 get_data.f90 convert.f90 \
+         options_data.f90 \
          options_limits.f90 options_page.f90 \
 	 options_powerspec.f90 options_render.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 \
@@ -390,7 +392,7 @@ SOURCESF90= globaldata.f90 asciiutils.f90 transform.f90 \
          $(SYSTEMFILE) system_utils.f90 splash.f90
 
 # these are `external' f77 subroutines
-SOURCESF=
+SOURCESF= 
 
 OBJECTS1 = $(SOURCESF:.f=.o) $(SOURCESF90:.f90=.o) $(STATICLIBS)
 OBJECTS= $(OBJECTS1:.F90=.o)
@@ -488,7 +490,7 @@ checksystem:
 ## other stuff
 
 doc:
-	cd docs; latex splash; latex splash; dvips splash -o splash.ps; ps2pdf13 splash.ps
+	cd docs; pdflatex splash; pdflatex splash
 
 tar:
 	tar cf splash.tar Makefile $(SOURCESF90) $(SOURCESF) read_data*.f90

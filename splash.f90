@@ -196,10 +196,13 @@ program splash
   use system_utils, only:lenvironment
   use asciiutils, only:read_asciifile
   use write_pixmap, only:isoutputformat,iwritepixmap,pixmapformat
+  use convert, only:convert_all
+  use write_sphdata, only:issphformat
   implicit none
   integer :: i,ierr,nargs
-  logical :: ihavereadfilenames,evsplash
+  logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
+  character(len=12) :: convertformat
   character(len=*), parameter :: version = 'v1.10 [28th Nov ''07]'
 
   !
@@ -225,6 +228,7 @@ program splash
   i = 0
   nfiles = 0
   iwritepixmap = .false.
+  doconvert = .false.
   do while (i < nargs)
      i = i + 1
      call get_argument(i,string)
@@ -271,9 +275,24 @@ program splash
            print "(a)",' -l limitsfile   : change name of limits file read/written by splash'
            print "(a)",' -e, -ev         : use default options best suited to ascii evolution files (ie. energy vs time)'
            print "(a)",' -lm, -lowmem    : use low memory mode [applies only to sphNG data read at present]'
-           print "(a)",' -o pixformat    : dump pixel map in pixformat format (use just -o for list of formats)'
+           print "(a)",' -o pixformat    : dump pixel map in specified format (use just -o for list of formats)'
+           print "(a)"
+           print "(a)",' to format       : convert SPH data file(s) to different format'
+           print "(a)",'                   example usage "ssplash to ascii" for sphNG to ascii conversion'
            stop
         end select
+     elseif (trim(string).eq.'to') then
+     !
+     !--for converting SPH formats
+     !
+           i = i + 1
+           call get_argument(i,string)
+           if (issphformat(string)) then
+              doconvert = .true.
+              convertformat = trim(string)
+           else
+              stop
+           endif     
      elseif (len_trim(string).gt.0) then 
         nfiles = nfiles + 1
         if (nfiles.le.maxfile) then
@@ -319,34 +338,45 @@ program splash
   endif
   if (lowmemorymode) print "(a)",' << running in low memory mode >>'
 
-  !
-  ! read data from file
-  !
-  if (buffer_data) then
-     call get_data(-1,ihavereadfilenames)
+
+  if (doconvert) then
+
+     !
+     ! batch convert all dump files into the output format
+     !
+     call convert_all(convertformat,ihavereadfilenames)
+  
   else
-     call get_data(1,ihavereadfilenames,firsttime=.true.)
+     !
+     ! read data from file
+     !
+     if (buffer_data) then
+        call get_data(-1,ihavereadfilenames)
+     else
+        call get_data(1,ihavereadfilenames,firsttime=.true.)
+     endif
+
+     !
+     ! setup kernel table for fast column density plots in 3D
+     !
+     call setup_integratedkernel
+
+     !
+     ! read plot limits from file (overrides get_data limits settings)
+     !
+     call read_limits(trim(limitsfile),ierr)
+
+     !
+     ! read animation file if it exists
+     !
+     call read_animfile(animfile)
+
+     !
+     ! enter main menu
+     !
+     call menu
+  
   endif
-
-  !
-  ! setup kernel table for fast column density plots in 3D
-  !
-  call setup_integratedkernel
-  
-  !
-  ! read plot limits from file (overrides get_data limits settings)
-  !
-  call read_limits(trim(limitsfile),ierr)
-
-  !
-  ! read animation file if it exists
-  !
-  call read_animfile(animfile)
-  
-  !
-  ! enter main menu
-  !
-  call menu
   
   !
   ! deallocate all memory (not strictly necessary)
