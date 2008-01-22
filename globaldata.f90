@@ -82,6 +82,37 @@ module labels
  
  public
 
+contains
+
+ subroutine reset_columnids
+  implicit none
+  !
+  !--array positions of specific quantities
+  !  Identification is used in exact solution
+  !  plotting and calculation of additional quantities
+  !
+  ix = 0
+  ivx = 0      ! vx
+  irho = 0     ! density
+  ipr = 0      ! pressure
+  iutherm = 0  ! thermal energy
+  ih = 0       ! smoothing length
+  irad = 0     ! radius
+  ipmass = 0   ! particle mass
+  ipr = 0      ! pressure
+  irad = 0     ! radius
+  ipowerspec = 0 ! power spectrum
+  iBfirst = 0  ! Bx
+  iacplane = 0
+  ike = 0
+  idivB = 0
+  iJfirst = 0
+  icv = 0
+  iradenergy = 0
+  
+  return
+ end subroutine reset_columnids
+
 end module labels
 
 !------------------------------------

@@ -15,7 +15,7 @@ contains
 !!
 subroutine defaults_set_initial
   use filenames, only:rootname
-  use labels
+  use labels, only:label,labeltype,iamvec,labelvec,reset_columnids
   use limits, only:lim
   use particle_data, only:maxpart,maxstep,maxcol
   use settings_data, only:UseTypeInRenderings
@@ -27,24 +27,7 @@ subroutine defaults_set_initial
 !
   lim(:,1) = 0.
   lim(:,2) = 1.
-  !
-  !--array positions of specific quantities
-  !
-  ix = 0
-  ivx = 0      ! vx
-  irho = 0     ! density
-  ipr = 0      ! pressure
-  iutherm = 0  ! thermal energy
-  ih = 0       ! smoothing length
-  ipmass = 0   ! particle mass
-  ipr = 0      ! pressure
-  irad = 0     ! radius
-  ipowerspec = 0 ! power spectrum
-  iBfirst = 0
-  iacplane = 0
-  ike = 0
-  idivB = 0
-  iJfirst = 0
+  call reset_columnids()
   !
   !--filenames
   !
@@ -59,16 +42,16 @@ subroutine defaults_set_initial
   !--labels
   !
   !  column labels
-  do i=1,maxplot
+  do i=1,size(label)
      write(label(i),"(a,i3)") 'column ',i
   enddo
   !  particle types
   labeltype(1) = 'gas'
-  do i=2,maxparttypes
+  do i=2,size(labeltype)
      write(labeltype(i),"(a,i1)") 'type ',i
   enddo
-  UseTypeInRenderings(1) = .true.
-  UseTypeInRenderings(2:maxparttypes) = .false.  
+  UseTypeInRenderings(:) = .false.
+  UseTypeInRenderings(1) = .true.  
   
   !  vector labels
   iamvec(:) = 0
