@@ -55,9 +55,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: i,j,ierr,iunit,intg1,int2,int3,i1,iarr,i2,iptmass1,iptmass2
   integer :: npart_max,nstep_max,ncolstep,icolumn,nptmasstot
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
-  integer :: nskip,ntotal,npart,n1,n2,itype,ninttypes,ngas
+  integer :: nskip,ntotal,npart,n1,n2,ninttypes,ngas
   integer :: nreassign,naccrete,nkill,iblock,nblocks,ntotblock,ncolcopy
-  integer :: ipos,nptmass,nptmassi,nunknown,isink,ilastrequired
+  integer :: ipos,nptmass,nptmassi,nunknown,isink,ilastrequired,istartmhd,istartrt,nmhd
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
   integer, dimension(maxparttypes) :: npartoftypei
   real, dimension(maxparttypes) :: massoftypei
@@ -76,7 +76,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real, dimension(:,:), allocatable :: dattemp2
   real, dimension(3) :: xyzsink
   real :: rhozero,tfreefall,hfact,omega
-  common /sphNGunits/ udist,umass,utime,umagfd,tfreefall
+  common /sphNGunits/ udist,umass,utime,umagfd,tfreefall,istartmhd,istartrt,nmhd
 
   nstepsread = 0
   nstep_max = 0
@@ -403,6 +403,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
       if (narrsizes.ge.4) then
          nmhdarrays = 3 ! Bx,By,Bz
+         nmhd = nreal(4) + nreal4(4) + nreal8(4) - nmhdarrays ! how many "extra" mhd arrays
       else
          nmhdarrays = 0
       endif
@@ -435,6 +436,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
    imaxcolumnread = 0
    icolumn = 0
+   istartmhd = 0
+   istartrt = 0
    i1 = i2 + 1
    i2 = i1 + isize(1) - 1
    print*,'particles: ',i1,' to ',i2
@@ -444,7 +447,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
    if (nptmass.gt.0) print*,'point masses: ',iptmass1,' to ',iptmass2,' of ',nptmass
 
    do iarr=1,narrsizes
- 
+      if (nreal(iarr) + nreal4(iarr) + nreal8(iarr).gt.0) then
+         if (iarr.eq.4) then
+            istartmhd = imaxcolumnread + 1
+         elseif (iarr.eq.3) then
+            istartrt = imaxcolumnread + 1         
+         endif
+      endif 
 !--read iphase from array block 1
       if (iarr.eq.1) then
          !--skip default int
@@ -880,10 +889,10 @@ subroutine set_labels
   use geometry, only:labelcoord
   use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
   implicit none
-  integer :: i
+  integer :: i,istartmhd,istartrt,nmhd
   real :: tfreefall
   real(doub_prec) :: udist,umass,utime,umagfd,uergg
-  common /sphNGunits/ udist,umass,utime,umagfd,tfreefall
+  common /sphNGunits/ udist,umass,utime,umagfd,tfreefall,istartmhd,istartrt,nmhd
   
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -914,37 +923,42 @@ subroutine set_labels
         iutherm = 13
         label(14) = 'grad h'
         label(15) = 'grad soft'
-        if (ncolumns.ge.21) then
-           label(16) = 'Euler alpha'
-           label(17) = 'Euler beta'
-           idivB = 18
-           iJfirst = 19
-        elseif (ncolumns.ge.19) then
-           idivB = 16
-           label(idivB) = 'div B'
-           iJfirst = 17
+        if (nmhd.ge.7) then
+           iamvec(istartmhd:istartmhd+ndimV-1) = istartmhd
+           labelvec(istartmhd:istartmhd+ndimV-1) = 'A'
+           do i=1,ndimV
+              label(istartmhd+i-1) = trim(labelvec(16))//'\d'//labelcoord(i,1)
+           enddo
+           idivB = istartmhd+ndimV
+        elseif (nmhd.ge.6) then
+           label(istartmhd) = 'Euler alpha'
+           label(istartmhd+1) = 'Euler beta'
+           idivB = istartmhd + 2
+        elseif (nmhd.ge.1) then
+           idivB = istartmhd
         endif
+        iJfirst = idivB + 1
         if (ncolumns.ge.iJfirst+ndimV) then
            label(iJfirst+ndimV) = 'alpha\dB\u'
         endif
      case(3) ! mhd small dump
         iBfirst = 7
      end select
-     if (iformat.eq.4) then ! radiative transfer dump
-        iradenergy = 12
+     if (iformat.eq.4 .and. istartrt.gt.0 .and. istartrt.le.ncolumns) then ! radiative transfer dump
+        iradenergy = istartrt
         label(iradenergy) = 'radiation energy'
-        label(13) = 'opacity'
-        icv = 14
+        label(istartrt+1) = 'opacity'
+        icv = istartrt+2
         label(icv) = 'u/T'
-        label(15) = 'lambda'
-        label(16) = 'eddington factor'
+        label(istartrt+3) = 'lambda'
+        label(istartrt+4) = 'eddington factor'
         !--units
         uergg = (udist/utime)**2
         units(iradenergy) = uergg
-        units(13) = udist**2/umass
+        units(istartrt+1) = udist**2/umass
         units(icv) = uergg
-        units(15) = 1.0
-        units(16) = 1.0
+        units(istartrt+3) = 1.0
+        units(istartrt+4) = 1.0
      endif
   endif
 
