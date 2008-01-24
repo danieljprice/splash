@@ -11,7 +11,7 @@ contains
 
 subroutine convert_all(outformat,igotfilenames)
  use particle_data, only:dat,npartoftype
- use settings_data, only:ncolumns,required,ntypes
+ use settings_data, only:ncolumns,ncalc,required,ntypes
  use filenames, only:rootname,nstepsinfile,nfiles
  use write_sphdata, only:write_sphdump
  use getdata, only:get_data
@@ -37,7 +37,7 @@ subroutine convert_all(outformat,igotfilenames)
           write(filename,"(a,'_',i3.3)") rootname(ifile),idump
        endif
        ntotal = sum(npartoftype(1:ntypes,idump))
-       call write_sphdump(dat(1:ntotal,1:ncolumns,idump),ntotal,ncolumns,rootname(ifile),outformat)
+       call write_sphdump(dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ncolumns+ncalc,rootname(ifile),outformat)
     enddo
  enddo
  print "(/,5('-'),a,/)",'> FINISHED CONVERTING DUMP FILES '
