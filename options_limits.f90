@@ -65,10 +65,10 @@ subroutine submenu_limits(ichoose)
  print "(a)",'------------------ limits options ---------------------'
 10 format( &
         ' 0) exit ',/,                 &
-        ' 1) use adaptive/fixed limits           ( ',a,', ',a,' )   ',/,  &
+        ' 1) use adaptive/fixed limits             ( ',a,', ',a,' )   ',/,  &
         ' 2) set limits manually ',/,     &
-        ' 3) make xy limits relative to particle ( ',i8,' )   ',/,   &
-        ' 4) zoom in/out                         ( ',f4.2,' ) ',/,   &
+        ' 3) xy limits/radius relative to particle ( ',i8,' )   ',/,   &
+        ' 4) zoom in/out                           ( ',f4.2,' ) ',/,   &
         ' 5) apply log or inverse transformations to columns ',/, &
         ' 6) reset limits for all columns  ')
  if (iaction.le.0 .or. iaction.gt.6) then

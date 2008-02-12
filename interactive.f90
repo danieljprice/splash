@@ -65,7 +65,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   integer :: nmarked,ncircpart,itrackparttemp
   integer, dimension(1000) :: icircpart
  !! real :: xpt,ypt
-  real :: xpt2,ypt2,charheight,xcen,ycen
+  real :: xpt2,ypt2,xcen,ycen
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
   real :: xlength,ylength,renderlength,renderpt,drender,zoomfac
@@ -156,11 +156,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      case('p')
         if (iclosest.gt.0 .and. iclosest.le.npart) then
            print*,' closest particle = ',iclosest,'x = ',xcoords(iclosest),' y =',ycoords(iclosest)
-           call pgnumb(iclosest,0,1,string,nc)
-           call pgqch(charheight)
-           call pgsch(2.0)
-           call pgtext(xcoords(iclosest),ycoords(iclosest),string(1:nc))
-           call pgsch(charheight)
+           call plot_number(iclosest,xcoords(iclosest),ycoords(iclosest))
         else
            print*,'error: could not determine closest particle'
         endif
@@ -183,20 +179,19 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         endif
      case('t')
      !--track closest particle (must save to activate)
-        if (iplotx.le.ndim .and. iploty.le.ndim) then
-           if (itrackpart.ne.0 .and. itrackparttemp.eq.itrackpart) then
-              itrackpart = 0
-              itrackparttemp = 0
-              print*,' particle tracking limits OFF'
+        if (itrackpart.ne.0 .and. itrackparttemp.eq.itrackpart) then
+           itrackpart = 0
+           itrackparttemp = 0
+           print*,' particle tracking limits OFF'
+        else
+           if (iclosest.gt.0 .and. iclosest.le.npart) then
+              itrackparttemp = iclosest
+              call plot_number(iclosest,xcoords(iclosest),ycoords(iclosest))
+              print*,' limits set to track particle ',itrackparttemp,' x, y = ', &
+                     xcoords(iclosest),ycoords(iclosest)
+              print*,' save settings to activate '
            else
-              if (iclosest.gt.0 .and. iclosest.le.npart) then
-                 itrackparttemp = iclosest
-                 print*,' limits set to track particle ',itrackparttemp,' x, y = ', &
-                        xcoords(iclosest),ycoords(iclosest)
-                 print*,' save settings to activate '
-              else
-                 print*,'error: could not determine closest particle'
-              endif
+              print*,'error: could not determine closest particle'
            endif
         endif
      case('g')   ! draw a line between two points
@@ -310,14 +305,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         print*,'          are multiplied by a factor of 10'        
         print*,'-------------------------------------------------------'
      case('s','S')
-        if (iplotx.le.ndim .and. iploty.le.ndim) itrackpart = itrackparttemp
+        itrackpart = itrackparttemp
         if (itrackpart.eq.0) then
            call save_limits(iplotx,xmin,xmax)
            call save_limits(iploty,ymin,ymax)
         else
            print*,'tracking particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
-           call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
-           call save_limits_track(iploty,ymin,ymax,ycoords(itrackpart))
+           if (iplotx.le.ndim) call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
+           if (iploty.le.ndim) call save_limits_track(iploty,ymin,ymax,ycoords(itrackpart))
            call save_itrackpart_recalcradius()
         endif
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
@@ -1779,6 +1774,30 @@ end subroutine interactive_multi
 ! These subroutines interface to the actual plot settings
 !-----------------------------------------------------------
 
+!
+!--plot a label showing the particle ID on the plot
+!
+subroutine plot_number(i,xi,yi)
+ implicit none
+ integer, intent(in) :: i
+ real, intent(in) :: xi,yi
+ integer :: nc
+ real :: charheight
+ character(len=20) :: string
+
+ !--convert number to text string
+ call pgnumb(i,0,1,string,nc)
+ !--query and store character height
+ call pgqch(charheight)
+ !--change character height
+ call pgsch(2.0)
+ !--plot text string
+ call pgtext(xi,yi,string(1:nc))
+ !--reset character height
+ call pgsch(charheight)
+
+ return
+end subroutine plot_number
 !
 !--move the legend to the current position
 !

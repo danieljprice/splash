@@ -2055,8 +2055,16 @@ contains
    if (iplotx.le.ndim .or. iploty.le.ndim) then
       print*,'changing coords from ',trim(labelcoordsys(icoords)), &
              ' to ',trim(labelcoordsys(icoordsnew))
+      if (itrackpart.gt.0) print*,' (relative to particle ',itrackpart,')'
+
       do j=1,ntot
-         call coord_transform(dat(j,ix(1:ndim))-xorigin(1:ndim),ndim,icoords, &
+         if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
+            xcoords(1:ndim) = dat(j,ix(1:ndim)) - dat(itrackpart,ix(1:ndim))
+         else
+            xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
+         endif
+
+         call coord_transform(xcoords(1:ndim),ndim,icoords, &
                               xcoords(1:ndim),ndim,icoordsnew)
          if (iplotx.le.ndim) xplot(j) = xcoords(iplotx)
          if (iploty.le.ndim) yplot(j) = xcoords(iploty)
@@ -2075,15 +2083,22 @@ contains
    integer, intent(in) :: iplot,ntot
    real, dimension(:), intent(inout) :: xploti
    integer :: j
-   real, dimension(ndim) :: vecnew
+   real, dimension(ndim) :: xcoords,vecnew
    
    if (iamvec(iplot).gt.0) then
       if (iplot-iamvec(iplot)+1 .le. ndim) then
          print*,'changing vector component from ', &
           trim(labelcoordsys(icoords)),' to ',trim(labelcoordsys(icoordsnew))
+         if (itrackpart.gt.0) print*,' (relative to particle ',itrackpart,')'
          do j=1,ntot
-            call vector_transform(dat(j,ix(1:ndim))-xorigin(1:ndim), &
-                 dat(j,iamvec(iplot):iamvec(iplot)+ndim-1), &
+            if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
+               xcoords(1:ndim) = dat(j,ix(1:ndim)) - dat(itrackpart,ix(1:ndim))
+               vecnew(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1) - dat(itrackpart,iamvec(iplot):iamvec(iplot)+ndim-1)
+            else
+               xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
+               vecnew(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1)
+            endif
+            call vector_transform(xcoords(1:ndim),vecnew(1:ndim), &
                  ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
             xploti(j) = vecnew(iplot-iamvec(iplot)+1)
          enddo
