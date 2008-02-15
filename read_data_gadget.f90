@@ -14,6 +14,12 @@
 ! GSPLASH_DARKMATTER_HSOFT if given a value > 0.0 will assign a
 !  smoothing length to dark matter particles which can then be
 !  used in the rendering
+! GSPLASH_EXTRACOLS if set to a comma separated list of column labels,
+!  will attempt to read additional columns containing gas particle 
+!  properties beyond the end of file
+! GSPLASH_STARPARTCOLS if set to a comma separated list of column labels,
+!  will attempt to read additional columns containing star particle 
+!  properties beyond the end of file
 !
 ! the data is stored in the global array dat
 !
@@ -45,7 +51,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use settings_page, only:legendtext
   use mem_allocation, only:alloc
   use labels, only:ih,irho
-  use system_utils, only:renvironment,lenvironment
+  use system_utils, only:renvironment,lenvironment,ienvironment,envlist
   implicit none
   integer, intent(in) :: istepstart
   integer, intent(out) :: nstepsread
@@ -57,6 +63,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
   integer :: ncolstep,npart_max,nstep_max,ntoti
   integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
+  integer :: nextracols,nstarcols,i1,i2
   logical :: iexist,reallocate
   real(doub_prec) :: timetemp,ztemp
   real(doub_prec), dimension(6) :: massoftypei
@@ -125,6 +132,18 @@ subroutine read_data(rootname,istepstart,nstepsread)
   endif
   irho = 9
   ih = ncolstep
+
+  call envlist('GSPLASH_EXTRACOLS',nextracols)
+  if (nextracols.gt.0) then
+     print "(a,i2,a)",' READING ',nextracols,' EXTRA COLUMNS '
+     ncolstep = ncolstep + nextracols
+  endif
+  call envlist('GSPLASH_STARPARTCOLS',nstarcols)
+  if (nstarcols.gt.0) then
+     print "(a,i2,a)",' READING ',nstarcols,' STAR PARTICLE COLUMN '
+     ncolstep = ncolstep + nstarcols
+  endif
+  ncolumns = ncolstep
   
   ntoti = int(sum(npartoftypei(1:6)))
   print*,'time             : ',timetemp
@@ -290,20 +309,28 @@ subroutine read_data(rootname,istepstart,nstepsread)
      print*,'gas properties ',npartoftype(1,i)
      do icol=8,ncolstep
         !!print*,icol
+        if (icol.gt.ncolstep-nstarcols) then
+           i1 = sum(npartoftype(1:4,i)) + 1
+           i2 = i1 + npartoftype(5,i) - 1
+           print*,'star particle properties ',icol,i1,i2
+        else
+           i1 = 1
+           i2 = npartoftype(1,i)
+        endif 
         if (npartoftype(1,i).gt.0) then
            if (required(icol)) then
-              read (11,iostat=ierr) dat(1:npartoftype(1,i),icol,i)
+              read (11,iostat=ierr) dat(i1:i2,icol,i)
            else
               read (11,iostat=ierr)
            endif
            if (ierr /= 0) then
-              print "(a,i3)",'error reading particle data from column ',icol
+              print "(1x,a,i3)",'ERROR READING PARTICLE DATA from column ',icol
            endif
         !
         !--for some reason the smoothing length output by GADGET is
         !  twice the usual SPH smoothing length
         !
-           if (icol.eq.ncolstep .and. required(icol)) then
+           if (icol.eq.ih .and. required(icol)) then
               dat(1:npartoftype(1,i),icol,i) = 0.5*dat(1:npartoftype(1,i),icol,i)
            endif
         endif
@@ -365,12 +392,13 @@ end subroutine read_data
 subroutine set_labels
   use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
+  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry, only:labelcoord
-  use system_utils, only:renvironment
+  use system_utils, only:renvironment,envlist
   implicit none
-  integer :: i
+  integer :: i,nextracols,nstarcols
   real :: hsoft
+  character(len=30), dimension(10) :: labelextra
 
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -397,7 +425,7 @@ subroutine set_labels
   label(iutherm) = 'u'
   label(ipmass) = 'particle mass'
   
-  if (ncolumns.gt.10) then
+  if (iformat.eq.1 .and. ncolumns.gt.10) then
      label(10) = 'Ne'
      label(11) = 'Nh'
      ih = 12        !  smoothing length
@@ -405,6 +433,19 @@ subroutine set_labels
      ih = 10
   endif
   label(ih) = 'h'
+  !
+  !--deal with extra columns
+  !
+  if (ncolumns.gt.ih) then
+     call envlist('GSPLASH_EXTRACOLS',nextracols,labelextra)
+     do i=ih+1,ih+nextracols
+        label(i) = trim(labelextra(i-ih))
+     enddo
+     call envlist('GSPLASH_STARPARTCOLS',nstarcols,labelextra)
+     do i=ih+nextracols+1,ih+nextracols+nstarcols
+        label(i) = trim(labelextra(i-ih-nextracols))
+     enddo
+  endif
   !
   !--set labels for vector quantities
   !
