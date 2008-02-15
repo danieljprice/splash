@@ -1959,7 +1959,7 @@ contains
     endif
     
     !--plot shapes
-    if (nshapes.gt.0) call plot_shapes()
+    !if (nshapes.gt.0) call plot_shapes()
     
     !--restore colour index
     call pgsci(icoloursave)
@@ -2598,7 +2598,7 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
 !$omp parallel default(none) &
 !$omp shared(dat,xorigin,ndim,angleradx,anglerady,angleradz,zobs,dzscreen) &
 !$omp shared(xploti,yploti,zploti,iplotx,iploty,iplotz,ntot,ix,itrackpart) &
-!$omp shared(vecploti,ivecstart)
+!$omp shared(vecploti,ivecstart) &
 !$omp private(j,xcoords,veci)
 !$omp do
   do j=1,ntot
