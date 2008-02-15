@@ -172,15 +172,15 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
   do i=1,size(xplot)
      if (xplot(i) <= xleftleft) then
 !       undisturbed medium to the left
-	pr(i) = p_L
-	dens(i) = rho_L
-	vel(i) = v_L
+        pr(i) = p_L
+        dens(i) = rho_L
+        vel(i) = v_L
      elseif (xplot(i) < xleft) then
         if (leftisshock) then
-	   pr(i) = ppost
-	   dens(i) = rho_L*(gamfac+ppost/p_L)/(1+gamfac*ppost/p_L)
-!	   dens(i) = rho_L*(ppost/p_L)**(1./gamma)
-	   vel(i) = vpost
+           pr(i) = ppost
+           dens(i) = rho_L*(gamfac+ppost/p_L)/(1+gamfac*ppost/p_L)
+!           dens(i) = rho_L*(ppost/p_L)**(1./gamma)
+           vel(i) = vpost
         else
 !       inside expansion fan
            if (useisothermal) then ! this is a bit of a guess 
@@ -194,22 +194,22 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
      elseif (xplot(i) < xcontact) then
 !       between left expansion fan/shock and contact discontinuity
 !       post-shock, ahead of contact discontinuity but before right going wave
-	pr(i) = ppost
-	if (leftisshock) then
+        pr(i) = ppost
+        if (leftisshock) then
            dens(i) = rho_L*(gamfac+ppost/p_L)/(1+gamfac*ppost/p_L)
         else
-   	   dens(i) = rho_L*(ppost/p_L)**(1./gamma)
+              dens(i) = rho_L*(ppost/p_L)**(1./gamma)
         endif
-	vel(i) = vpost
+        vel(i) = vpost
      elseif (xplot(i) < xright) then
 !       post-shock, ahead of contact discontinuity but before right going wave
-	pr(i) = ppost
+        pr(i) = ppost
         if (rightisshock) then
-	   dens(i) = rho_R*(gamfac+ppost/p_R)/(1+gamfac*ppost/p_R)
+           dens(i) = rho_R*(gamfac+ppost/p_R)/(1+gamfac*ppost/p_R)
         else
-   	   dens(i) = rho_R*(ppost/p_R)**(1./gamma)        
+              dens(i) = rho_R*(ppost/p_R)**(1./gamma)        
         endif
-	vel(i) = vpost
+        vel(i) = vpost
      elseif (xplot(i) < xrightright) then
         if (rightisshock) then
 !       irrelevant as in this case xrightright = xright
@@ -225,9 +225,9 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
         endif
      else
 !       undisturbed medium to the right
-	pr(i) = p_R
-	dens(i) = rho_R
-	vel(i) = v_R
+        pr(i) = p_R
+        dens(i) = rho_R
+        vel(i) = v_R
      endif
   enddo  
 
