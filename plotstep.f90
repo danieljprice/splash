@@ -499,10 +499,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   integer :: npixyvec,nfreqpts
   integer :: icolourprev,linestyleprev
   integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp
+  integer :: ivectemp
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
   real, dimension(maxpart) :: renderplot,hh,weight
+  real, dimension(:,:), allocatable :: vecplot
   real :: rkappa
   real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax
   real :: pixwidth,pixwidthvec,dxfreq
@@ -762,8 +764,20 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                .or.(ndim.eq.3 .and.use3Dperspective .and. dzscreentemp.gt.tiny(0.))) then
               if (iaxis.ge.0) iaxistemp = -3
            endif
+           ivectemp = 0
+           if (ivectorplot.ge.0) then
+              if (.not.allocated(vecplot) .or. size(vecplot(2,:)).lt.ninterp) then
+                 if (allocated(vecplot)) deallocate(vecplot)
+                 allocate(vecplot(2,ninterp),stat=ierr)
+                 if (ierr /= 0) then
+                    print "(a)",' ERROR allocating memory for vector plot + rotation '
+                    stop
+                 endif
+              endif
+              ivectemp = ivectorplot
+           endif
            call rotationandperspective(angletempx,angletempy,angletempz,dzscreentemp,zobservertemp, &
-                                       xplot,yplot,zplot,ntoti,iplotx,iploty,iplotz,dat)
+                                       xplot,yplot,zplot,ntoti,iplotx,iploty,iplotz,dat,ivectemp,vecplot)
            !--adapt plot limits after rotations have been done
            if (.not.interactivereplot) then
               call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x')
@@ -785,8 +799,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            
            !!--determine number of pixels in rendered image (npix = pixels in x direction)
            pixwidth = (xmax-xmin)/real(npix)
-           npixx = max(int((xmax-xmin)/pixwidth) + 1,1)
-           npixy = max(int((ymax-ymin)/pixwidth) + 1,1)
+           npixx = max(int(0.999*(xmax-xmin)/pixwidth) + 1,1)
+           npixy = max(int(0.999*(ymax-ymin)/pixwidth) + 1,1)
 
            !!--only need z pixels if working with interpolation to 3D grid
            !  (then number of z pixels is equal to number of cross sections)
@@ -888,7 +902,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               ! if we have rendered to a 3D grid, take cross sections from this array
               !------------------------------------------------------------------------
               if (x_sec .and. nxsec.gt.2) then
-                 ipixxsec = int((zslicepos-zmin)/dz) + 1
+                 ipixxsec = int(0.99999*(zslicepos-zmin)/dz) + 1
                  if (ipixxsec.gt.npixz) ipixxsec = npixz
                  print*,TRIM(label(iplotz)),' = ',zslicepos, &
                       ' cross section, pixel ',ipixxsec
@@ -1246,9 +1260,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                       labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
                    endif
                 endif
-                pixwidthvec = (xmax-xmin)/real(npixvec - 1)
-                npixyvec = int((ymax-ymin)/pixwidthvec) + 1
-                pixwidth = (xmax-xmin)/real(npixx - 1) ! used in synchrotron plots
+                pixwidthvec = (xmax-xmin)/real(npixvec)
+                npixyvec = int(0.999*(ymax-ymin)/pixwidthvec) + 1
+                pixwidth = (xmax-xmin)/real(npixx) ! used in synchrotron plots
 
                 if (.not.interactivereplot .or. nacross*ndown.gt.1) then ! not if vecmax changed interactively
                    if (iadapt) then
@@ -1672,6 +1686,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      if (allocated(brightness)) deallocate(brightness)
      if (allocated(datpix3D)) deallocate(datpix3D)
      if (allocated(xgrid)) deallocate(xgrid)
+     if (allocated(vecplot)) deallocate(vecplot)
   endif
   
   return
@@ -1868,6 +1883,7 @@ contains
     use settings_page, only:iPlotLegend,iPlotStepLegend, &
         hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnlyOnPanel, &
         iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext,iUseBackGroundColourForAxes
+    !use shapes, only:nshapes,plot_shapes
     implicit none
     integer :: icoloursave
     character(len=len(steplegend(1))) :: steplegendtext
@@ -1941,6 +1957,9 @@ contains
 
        call legend_scale(dxscale,hposscale,vposscale,scaletext)
     endif
+    
+    !--plot shapes
+    if (nshapes.gt.0) call plot_shapes()
     
     !--restore colour index
     call pgsci(icoloursave)
@@ -2299,6 +2318,7 @@ contains
    integer :: i,j,icoloursav,linewidthprev
    real :: vmag
    real :: blankval,datmax
+   logical :: usevecplot
    
    !--query colour index and line width
    call pgqci(icoloursav)
@@ -2315,8 +2335,11 @@ contains
       else
          call pgsci(1)
       endif
+      usevecplot = .false.
       if (irotate) then
-         print "(a)",'WARNING: rotation not yet implemented on vector components'
+         if (allocated(vecplot)) usevecplot = .true.
+         print*,'using vecplot'
+         !print "(a)",'WARNING: rotation not yet implemented on vector components'
       endif
       !
       !--interpolate using appropriate routine for number of dimensions
@@ -2324,30 +2347,58 @@ contains
       select case(ndim)
       case(3)
          if (x_sec) then ! take vector plot in cross section
-            call interpolate3D_xsec_vec(xplot(1:ninterp), &
-              yplot(1:ninterp),zplot(1:ninterp), &
-              hh(1:ninterp),weight(1:ninterp), &
-              dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-              icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)
+            if (usevecplot) then ! using rotation
+               call interpolate3D_xsec_vec(xplot(1:ninterp), &
+                 yplot(1:ninterp),zplot(1:ninterp), &
+                 hh(1:ninterp),weight(1:ninterp), &
+                 vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
+                 icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
+                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)            
+            else
+               call interpolate3D_xsec_vec(xplot(1:ninterp), &
+                 yplot(1:ninterp),zplot(1:ninterp), &
+                 hh(1:ninterp),weight(1:ninterp), &
+                 dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                 icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
+                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)
+            endif
          else
             if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then               
                !--get synchrotron polarisation vectors
                if (iutherm.gt.0 .and. iutherm.le.numplot .and. uthermcutoff.gt.0.) then
-                  call interp3D_proj_vec_synctron(xplot(1:ninterp), &
-                    yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
-                    weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-                    icolourme(1:ninterp),ninterp,xmin,ymin, &
-                    vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
-                    rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false., &
-                    dat(1:ninterp,iutherm),uthermcutoff)
+                  if (usevecplot) then
+                     call interp3D_proj_vec_synctron(xplot(1:ninterp), &
+                       yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                       weight(1:ninterp),vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
+                       icolourme(1:ninterp),ninterp,xmin,ymin, &
+                       vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
+                       rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false., &
+                       dat(1:ninterp,iutherm),uthermcutoff)                  
+                  else
+                     call interp3D_proj_vec_synctron(xplot(1:ninterp), &
+                       yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                       weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                       icolourme(1:ninterp),ninterp,xmin,ymin, &
+                       vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
+                       rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false., &
+                       dat(1:ninterp,iutherm),uthermcutoff)
+                  endif
                else
-                  call interp3D_proj_vec_synctron(xplot(1:ninterp), &
-                    yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
-                    weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-                    icolourme(1:ninterp),ninterp,xmin,ymin, &
-                    vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
-                    rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)               
+                  if (usevecplot) then
+                     call interp3D_proj_vec_synctron(xplot(1:ninterp), &
+                       yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                       weight(1:ninterp),vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
+                       icolourme(1:ninterp),ninterp,xmin,ymin, &
+                       vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
+                       rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)                  
+                  else
+                     call interp3D_proj_vec_synctron(xplot(1:ninterp), &
+                       yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                       weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                       icolourme(1:ninterp),ninterp,xmin,ymin, &
+                       vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
+                       rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)
+                  endif
                endif
             else
             !   call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
@@ -2355,11 +2406,19 @@ contains
             !     xmin,ymin,pixwidth,vecpixx,vecpixy, &
             !     ninterp,numpixx,numpixy)
 
-               call interpolate3D_proj_vec(xplot(1:ninterp), &
-                 yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
-                 weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-                 icolourme(1:ninterp),ninterp,xmin,ymin, &
-                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,.false.,zobservertemp,dzscreentemp)
+               if (usevecplot) then
+                  call interpolate3D_proj_vec(xplot(1:ninterp), &
+                    yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                    weight(1:ninterp),vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
+                    icolourme(1:ninterp),ninterp,xmin,ymin, &
+                    vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,.false.,zobservertemp,dzscreentemp)
+               else
+                  call interpolate3D_proj_vec(xplot(1:ninterp), &
+                    yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                    weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                    icolourme(1:ninterp),ninterp,xmin,ymin, &
+                    vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,.false.,zobservertemp,dzscreentemp)               
+               endif
             endif
             
             !--adjust the units of the z-integrated quantity
@@ -2382,10 +2441,17 @@ contains
          !  xmin,ymin,pixwidthvec,vecpixx,vecpixy, &
          !  ninterp,numpixx,numpixy)
          
-         call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
+         if (usevecplot) then
+            call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
+              hh(1:ninterp),weight(1:ninterp),vecplot(2,1:ninterp), &
+              vecplot(2,1:ninterp),icolourme(1:ninterp),ninterp,xmin,ymin, &
+              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)         
+         else
+            call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
               hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ivecx), &
               dat(1:ninterp,ivecy),icolourme(1:ninterp),ninterp,xmin,ymin, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)
+         endif
       
       case default
          print "(a,i1,a)",'ERROR: Cannot do vector plotting in ',ndim,' dimensions'
@@ -2489,8 +2555,8 @@ end subroutine plotstep
 ! (completely independent)
 !-------------------------------------------------------------------
 subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,yploti,zploti, &
-                                  ntot,iplotx,iploty,iplotz,dat)
-  use labels, only:ix
+                                  ntot,iplotx,iploty,iplotz,dat,ivecstart,vecploti)
+  use labels, only:ix,iamvec
   use settings_data, only:ndim,xorigin,itrackpart
   use settings_xsecrot, only:use3Dperspective
   use rotation, only:rotate2D,rotate3D
@@ -2498,10 +2564,11 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
   real, intent(in) :: anglexi,angleyi,anglezi,dzscreen,zobs
   real, dimension(:), intent(inout) :: xploti,yploti,zploti
   real, dimension(:,:), intent(in) :: dat
-  integer, intent(in) :: ntot,iplotx,iploty,iplotz
+  real, dimension(:,:), intent(out) :: vecploti
+  integer, intent(in) :: ntot,iplotx,iploty,iplotz,ivecstart
   integer :: j
   real :: angleradx,anglerady,angleradz
-  real, dimension(ndim) :: xcoords
+  real, dimension(ndim) :: xcoords,veci
   !
   !--convert angles to radians
   !
@@ -2526,11 +2593,14 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
      print*,'rotating about x,y,z = ',xorigin(1:ndim)
   endif
 
-!$OMP PARALLEL default(none) &
-!$OMP SHARED(dat,xorigin,ndim,angleradx,anglerady,angleradz,zobs,dzscreen) &
-!$OMP SHARED(xploti,yploti,zploti,iplotx,iploty,iplotz,ntot,ix,itrackpart) &
-!$OMP PRIVATE(j,xcoords)
-!$OMP DO
+  if (ivecstart.gt.0) print "(1x,a)",'(also rotating vector components)'
+
+!$omp parallel default(none) &
+!$omp shared(dat,xorigin,ndim,angleradx,anglerady,angleradz,zobs,dzscreen) &
+!$omp shared(xploti,yploti,zploti,iplotx,iploty,iplotz,ntot,ix,itrackpart) &
+!$omp shared(vecploti,ivecstart)
+!$omp private(j,xcoords,veci)
+!$omp do
   do j=1,ntot
      if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
         xcoords(1:ndim) = dat(j,ix(1:ndim)) - dat(itrackpart,ix(1:ndim))
@@ -2555,9 +2625,22 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
            zploti(j) = xcoords(iplotz) + xorigin(iplotz)
         endif
      endif
+!
+!--rotate vector components
+!
+     if (ivecstart.gt.0) then
+        veci(1:ndim) = dat(j,ivecstart:ivecstart+ndim-1)
+        if (ndim.eq.2) then
+           call rotate2D(veci(:),angleradz)
+        elseif (ndim.eq.3) then
+           call rotate3D(veci(1:ndim),angleradx,anglerady,angleradz,zobs,dzscreen)
+        endif
+        vecploti(1,j) = veci(iplotx)
+        vecploti(2,j) = veci(iploty)
+     endif
   enddo
-!$OMP END DO
-!$OMP END PARALLEL
+!$omp end do
+!$omp end parallel
 
   return
 end subroutine rotationandperspective
