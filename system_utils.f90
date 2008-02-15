@@ -78,5 +78,50 @@ contains
     endif
  
  end function lenvironment
+
+ !
+ !--this routine returns an arbitrary number of 
+ !  comma separated strings
+ !
+ subroutine envlist(variable,nlist,list)
+    implicit none
+    character(len=*), intent(in) :: variable
+    integer, intent(out) :: nlist
+    character(len=*), dimension(:), intent(out), optional :: list
+    character(len=120) :: string
+    character(len=10) :: dummy
+    integer :: i1,i2,ierr
+    logical :: notlistfull
+    
+    list = ' '
+    call get_environment(variable,string)
+    i1 = 1
+    i2 = index(string,',')-1
+    if (i2.eq.-1) i2 = len_trim(string)
+    nlist = 0
+    ierr = 0
+    notlistfull = .true.
+    !print*,i2,i1
+    do while(i2.ge.i1 .and. notlistfull .and. ierr.eq.0)
+       nlist = nlist + 1
+       !print*,'i1,i2,stringfrag= ',i1,i2,trim(string(i1:))
+       if (present(list)) then
+          read(string(i1:i2),"(a)",iostat=ierr) list(nlist)
+          notlistfull = (nlist.lt.size(list))
+       else
+          read(string(i1:i2),"(a)",iostat=ierr) dummy
+          notlistfull = .true.
+       endif
+       i1 = i2 + 2
+       i2 = index(string(i1:),',')
+       if (i2.eq.0) then
+          i2 = len_trim(string)
+       else
+          i2 = i2 + i1 - 2
+       endif
+    enddo
+    
+    return
+ end subroutine envlist
  
 end module system_utils
