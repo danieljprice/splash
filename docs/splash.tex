@@ -215,7 +215,9 @@ columns determination)
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 GSPLASH\_USE\_Z & if `YES' or `TRUE' uses the redshift in the legend instead of code time \\
-GSPLASH\_DARKMATTER\_HSOFT & if given a value $>$ 0.0 will assign a smoothing length to dark matter particles for which rendered plots of column density can then be made.
+GSPLASH\_DARKMATTER\_HSOFT & if given a value $>$ 0.0 will assign a smoothing length to dark matter particles for which rendered plots of column density can then be made. \\
+GSPLASH\_EXTRACOLS & if set to a comma separated list of column labels, will attempt to read additional columns containing gas particle properties beyond the end of the file. \\
+GSPLASH\_STARPARTCOLS & if set to a comma separated list of column labels, will attempt to read additional columns containing star particle properties beyond the end of the file (and after any extra gas particle columns).
 \end{tabular}
 
 \subsubsection{ sphNG data read}
