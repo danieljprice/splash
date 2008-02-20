@@ -72,6 +72,7 @@ subroutine submenu_particleplots(ichoose)
   use particle_data, only:npartoftype
   use prompting, only:prompt,print_logical
   use geometry, only:maxcoordsys,labelcoordsys,coord_transform_limits
+  use multiplot, only:itrans
   implicit none
   integer, intent(in) :: ichoose
   integer :: i,iaction,n,itype,icoordsprev
@@ -208,6 +209,7 @@ subroutine submenu_particleplots(ichoose)
                  icoordsnew,0,maxcoordsys)
      if (icoordsnew.eq.0) icoordsnew = icoords
      if (icoordsnew.ne.icoordsprev) then
+        itrans(1:ndim) = 0
         call coord_transform_limits(lim(1:ndim,1),lim(1:ndim,2), &
                                     icoordsprev,icoordsnew,ndim)
      endif
