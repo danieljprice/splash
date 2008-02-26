@@ -514,6 +514,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   character(len=20) :: string,labeltimeunits
   
   logical :: iPlotColourBar, rendering, inormalise, logged, dumxsec, isetrenderlimits
+  logical :: ichangesize
   
 34   format (25(' -'))
 
@@ -765,8 +766,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               if (iaxis.ge.0) iaxistemp = -3
            endif
            ivectemp = 0
-           if (ivectorplot.ge.0) then
-              if (.not.allocated(vecplot) .or. size(vecplot(2,:)).lt.ninterp) then
+           if (ivectorplot.gt.0) then
+              ichangesize = .false.
+              if (allocated(vecplot)) then
+                 if (size(vecplot(1,:)).lt.ninterp) ichangesize = .true.
+              endif
+              if (.not.allocated(vecplot) .or. ichangesize) then
                  if (allocated(vecplot)) deallocate(vecplot)
                  allocate(vecplot(2,ninterp),stat=ierr)
                  if (ierr /= 0) then
