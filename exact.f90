@@ -45,6 +45,8 @@ module exact
   character(len=120) :: filename_exact
   !--equilibrium torus
   real :: Mstar,Rtorus,distortion
+  !--ring spreading
+  real :: Mring,Rring,viscnu
   
   !
   !--sort these into a namelist for input/output
@@ -57,7 +59,8 @@ module exact
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
        polyk,sigma0,norder,morder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
-       iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion
+       iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
+       Mring,Rring,viscnu
        
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -114,6 +117,10 @@ contains
     Mstar = 1.0
     Rtorus = 1.0
     distortion = 1.1
+!   ring spreading
+    Mring = 1.0
+    Rring = 1.0
+    viscnu = 1.e-3
 
     maxexactpts = 1001      ! points in exact solution plot
     iExactLineColour = 1    ! foreground
@@ -148,10 +155,11 @@ contains
          ' 5) linear wave ',/,          &
          ' 6) mhd shock tubes (tabulated) ',/,  &
          ' 7) h vs rho ',/, &
-         ' 8) radial density profiles ',/, &
+         ' 8) Plummer/Hernquist spheres ',/, &
          ' 9) torus ',/, &
-         '10) read from file ')
-    call prompt('enter exact solution to plot',iexact,0,10)
+         '10) ring spreading ',/, &
+         '11) read from file ')
+    call prompt('enter exact solution to plot',iexact,0,11)
     print*,' plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
@@ -246,6 +254,10 @@ contains
        if (abs(polyk-1.0).lt.tiny(polyk)) polyk = 0.0764
        call prompt('enter K in P= K*rho^gamma',polyk,0.)
     case(10)
+       call prompt('enter mass of ring',Mring,0.)
+       call prompt('enter radius of ring centre R0',Rring,0.)
+       call prompt('enter viscosity parameter nu',viscnu,0.)
+    case(11)
        iexist = .false.
        do while(.not.iexist)
           call prompt('enter filename ',filename_exact)
@@ -446,6 +458,7 @@ contains
     use toystar2D, only:exact_toystar2D
     use wave, only:exact_wave
     use densityprofiles, only:exact_densityprofiles
+    use ringspread, only:exact_ringspread
     use transforms, only:transform,transform_inverse
     implicit none
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
@@ -713,7 +726,13 @@ contains
              call exact_torus(5,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)          
           endif
        endif
-    case(10) ! exact solution read from file
+    case(10)
+       if (iplotx.eq.irad .or.((igeom.eq.3 .or. igeom.eq.2) .and. iplotx.eq.ix(1))) then
+          if (iploty.eq.irho) then
+             call exact_ringspread(1,time,Mring,Rring,viscnu,xexact,yexact,ierr)
+          endif
+       endif
+    case(11) ! exact solution read from file
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
           call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
@@ -799,7 +818,7 @@ contains
                yexacti = yexact(j)
                residual(i) = ypts(i) - yexacti
             else
-               print "(a)",'error in residual calculation'
+               print "(a)",' error in residual calculation'
                residual(i) = 0.
             endif
             iused = iused + 1
@@ -820,7 +839,7 @@ contains
       errL2 = sqrt(errL2/(npart*ymax**2))
       errLinf = errLinf/ymax
    else
-      print "(a)",'error normalising errors'
+      print "(a)",' error normalising errors'
       errL1 = 0.
       errL2 = 0.
       errLinf = 0.
