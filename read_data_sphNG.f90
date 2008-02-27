@@ -52,7 +52,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(len=*), intent(in) :: rootname
   integer, parameter :: maxarrsizes = 10, maxreal = 50
   real, parameter :: pi=3.141592653589
-  integer :: i,j,ierr,iunit,intg1,int2,int3,i1,iarr,i2,iptmass1,iptmass2
+  integer :: i,j,ierr,iunit
+  integer :: intg1,int2,int3
+  integer :: i1,iarr,i2,iptmass1,iptmass2
   integer :: npart_max,nstep_max,ncolstep,icolumn,nptmasstot
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
   integer :: nskip,ntotal,npart,n1,n2,ninttypes,ngas
@@ -75,7 +77,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
   real, dimension(3) :: xyzsink
-  real :: rhozero,tfreefall,hfact,omega
+  real :: rhozero,tfreefall,hfact,omega,r4
   common /sphNGunits/ udist,umass,utime,umagfd,tfreefall,istartmhd,istartrt,nmhd
 
   nstepsread = 0
@@ -117,7 +119,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       !--read header key to work out precision
       !
       doubleprec = .true.
-      read(iunit,end=55,iostat=ierr) intg1,r8,int2,i1,int3
+      read(iunit,iostat=ierr) intg1,r8,int2,i1,int3
       if (intg1.ne.690706) then
          print "(a)",'*** ERROR READING HEADER: corrupt file/zero size/wrong endian?'
          close(iunit)
@@ -125,6 +127,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
       if (int2.ne.780806) then
          print "(a)",'single precision dump'
+         rewind(iunit)
+         read(iunit,iostat=ierr) intg1,r4,int2,i1,int3
+         if (int2.ne.780806) then
+            print "(a)",'ERROR determining single/double precision in file header'
+         endif
          doubleprec = .false.
       elseif (int3.ne.690706) then
          print "(a)",'*** WARNING: default int appears to be int*8: not implemented'
