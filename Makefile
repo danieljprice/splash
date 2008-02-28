@@ -94,7 +94,7 @@ endif
 ifeq ($(SYSTEM), gfortran)
 #  gfortran compiler (part of gcc 4.x.x)
    F90C= gfortran
-   F90FLAGS= -O3 -Wall
+   F90FLAGS= -O3 -Wall -frecord-marker=4
    SYSTEMFILE= system_unix.f90
    DEBUGFLAG= -g -frange-check
    OMPFLAGS= -fopenmp
