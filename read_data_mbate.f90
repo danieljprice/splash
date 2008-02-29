@@ -104,7 +104,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       !--read the number of particles in the first step,
       !  allocate memory and rewind
       !
-      read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint,n1,n2,timei
+      read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint,n1,n2,timei,gammai,rhozero,RK2
       print*,'nprint = ',nprint
       if (.not.allocated(dat) .or. nprint.gt.npart_max) then
          npart_max = max(npart_max,INT(1.1*nprint))
