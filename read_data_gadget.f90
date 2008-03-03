@@ -43,6 +43,11 @@
 ! Partial data read implemented Nov 2006 means that columns with
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
+module gadgetread
+ implicit none
+ real :: hsoft
+ 
+end module gadgetread
 
 subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
@@ -50,25 +55,28 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
   use settings_page, only:legendtext
   use mem_allocation, only:alloc
-  use labels, only:ih,irho
+  use labels, only:ih,irho,ipmass
   use system_utils, only:renvironment,lenvironment,ienvironment,envlist
+  use gadgetread, only:hsoft
   implicit none
   integer, intent(in) :: istepstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
-  character(len=len(rootname)+10) :: datfile
+  character(len=len(rootname)+10) :: datfile,densfile,hfile
+  character(len=4) :: blocklabel
   integer, dimension(maxparttypes) :: npartoftypei,Nall
   integer, dimension(:), allocatable :: iamtemp
-  integer :: i,j,itype,icol,ierr
+  integer :: i,j,itype,icol,ierr,ierrh,ierrrho,nhset
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
   integer :: ncolstep,npart_max,nstep_max,ntoti
   integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
-  integer :: nextracols,nstarcols,i1,i2
+  integer :: nextracols,nstarcols,i1,i2,lenblock,idumpformat
+  integer, parameter :: iunit = 11, iunitd = 102, iunith = 103
   logical :: iexist,reallocate
   real(doub_prec) :: timetemp,ztemp
   real(doub_prec), dimension(6) :: massoftypei
   real, dimension(:), allocatable :: dattemp1
-  real :: hsoft
+  real :: hfact,dmdensi
 
   nstepsread = 0
   if (maxparttypes.lt.6) then
@@ -96,6 +104,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !
   ndim = 3
   ndimV = 3
+  idumpformat = 0
+  idumpformat = ienvironment('GSPLASH_FORMAT')
 !
 !--read data from snapshots
 !  
@@ -105,7 +115,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   !--open data file and read data
   !
-  open(11,iostat=ierr,file=datfile,status='old',form='unformatted')
+  open(iunit,iostat=ierr,file=datfile,status='old',form='unformatted')
   if (ierr /= 0) then
      print "(a)", '*** ERROR OPENING FILE ***'
      return
@@ -113,10 +123,22 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   !--read header for this timestep
   !
-  read(11,iostat=ierr) npartoftypei(1:6),massoftypei,timetemp,ztemp, &
+  if (idumpformat.eq.2) then
+     print "(a)",'READING BLOCK LABELLED GADGET FORMAT'
+     read(iunit,iostat=ierr) blocklabel,lenblock
+     if (ierr /= 0 .or. lenblock.ne.264) then
+        print "(a)",'*** ERROR READING HEADER: wrong endian? ***'
+        close(iunit)
+        return
+     endif
+  endif
+
+  read(iunit,iostat=ierr) npartoftypei(1:6),massoftypei,timetemp,ztemp, &
       iFlagSfr,iFlagFeedback,Nall(1:6),iFlagCool,nfiles
+
   if (ierr /= 0) then
      print "(a)", '*** ERROR READING TIMESTEP HEADER ***'
+     close(iunit)
      return
   endif
 
@@ -130,8 +152,10 @@ subroutine read_data(rootname,istepstart,nstepsread)
      ncolstep = 10 ! 3 x pos, 3 x vel, pmass, utherm, rho, h
      ncolumns = ncolstep  
   endif
-  irho = 9
-  ih = ncolstep
+  !
+  !--call set labels to get ih, ipmass, irho for use in the read routine
+  !
+  call set_labels
 
   call envlist('GSPLASH_EXTRACOLS',nextracols)
   if (nextracols.gt.0) then
@@ -140,7 +164,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   endif
   call envlist('GSPLASH_STARPARTCOLS',nstarcols)
   if (nstarcols.gt.0) then
-     print "(a,i2,a)",' READING ',nstarcols,' STAR PARTICLE COLUMN '
+     print "(a,i2,a)",' READING ',nstarcols,' STAR PARTICLE COLUMN(S) '
      ncolstep = ncolstep + nstarcols
   endif
   ncolumns = ncolstep
@@ -211,15 +235,23 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      !--read positions of all particles
      !
+     if (idumpformat.eq.2) then
+        read(iunit, iostat=ierr) blocklabel,lenblock
+        index2 = (lenblock-8)/12
+        if (index2.ne.ntoti) print "(a)",'warning: number of '//blocklabel//' dumped .ne. ntotal'
+     else
+        index2 = ntoti
+     endif
+
      if (any(required(1:3))) then
         print*,'positions ',ntoti
-        read (11, iostat=ierr) (dat(j,1:3,i),j=1,ntoti)
+        read (iunit, iostat=ierr) (dat(j,1:3,i),j=1,index2)
         if (ierr /= 0) then
            print "(a)",'error encountered whilst reading positions '
            return
         endif
      else
-        read(11, iostat=ierr)
+        read(iunit, iostat=ierr)
         if (ierr /= 0) then
            print "(a)",'error skipping positions '
            return
@@ -228,14 +260,22 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      !--same for velocities
      !
+     if (idumpformat.eq.2) then
+        read(iunit, iostat=ierr) blocklabel,lenblock
+        index2 = (lenblock-8)/12
+        if (index2.ne.ntoti) print "(a)",'warning: number of '//blocklabel//' dumped .ne. ntotal'
+     else
+        index2 = ntoti
+     endif
+
      if (any(required(4:6))) then
         print*,'velocities ',ntoti
-        read (11, iostat=ierr) (dat(j,4:6,i),j=1,ntoti)
+        read (iunit, iostat=ierr) (dat(j,4:6,i),j=1,ntoti)
         if (ierr /= 0) then
            print "(a)",'error encountered whilst reading velocities'
         endif
      else
-        read(11, iostat=ierr)
+        read(iunit, iostat=ierr)
         if (ierr /= 0) then
            print "(a)",'error skipping velocities '
            return
@@ -248,7 +288,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !print*,'particle ID ',ntoti
      !if (allocated(iamtemp)) deallocate(iamtemp)
      !allocate(iamtemp(npart_max))
-     read (11,iostat=ierr) ! iamtemp(1:ntoti)
+     read (iunit,iostat=ierr) ! iamtemp(1:ntoti)
      !deallocate(iamtemp)
      if (ierr /= 0) then
         print "(a)",'error encountered whilst reading particle ID'
@@ -270,7 +310,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         if (allocated(dattemp1)) deallocate(dattemp1)
         allocate(dattemp1(Nmassesdumped))
         if (Nmassesdumped.gt.0) then
-           read(11,iostat=ierr) dattemp1(1:Nmassesdumped)
+           read(iunit,iostat=ierr) dattemp1(1:Nmassesdumped)
         endif
         if (ierr /= 0) then
            print "(a)",'error reading particle masses'
@@ -298,7 +338,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         enddo
         deallocate(dattemp1)
      elseif (Nmassesdumped.gt.0) then
-        read(11,iostat=ierr)
+        read(iunit,iostat=ierr)
         if (ierr /= 0) then
            print "(a)",'error reading particle masses'
         endif
@@ -319,9 +359,9 @@ subroutine read_data(rootname,istepstart,nstepsread)
         endif 
         if (npartoftype(1,i).gt.0) then
            if (required(icol)) then
-              read (11,iostat=ierr) dat(i1:i2,icol,i)
+              read (iunit,iostat=ierr) dat(i1:i2,icol,i)
            else
-              read (11,iostat=ierr)
+              read (iunit,iostat=ierr)
            endif
            if (ierr /= 0) then
               print "(1x,a,i3)",'ERROR READING PARTICLE DATA from column ',icol
@@ -337,29 +377,77 @@ subroutine read_data(rootname,istepstart,nstepsread)
      enddo
      
      !
+     !--try to read dark matter and star particle smoothing lengths and/or density from a separate
+     !  one column ascii file. If only density, use this to compute smoothing lengths.
+     !
+     densfile = trim(rootname)//'.dens'
+     hfile = trim(rootname)//'.hsml'
+     hfact = 1.2 ! related to the analytic neighbour number (hfact=1.2 gives 58 neighbours in 3D)
+     open(unit=iunitd,file=densfile,iostat=ierrrho,status='old',form='formatted')
+     open(unit=iunith,file=hfile,iostat=ierrh,status='old',form='formatted')
+     
+     if (ierrh.eq.0 .or. ierrrho.eq.0) then
+        if (ierrh.eq.0) then
+           print "(a)",' READING DARK MATTER SMOOTHING LENGTHS from '//trim(densfile)
+           j = 1
+           ierr = 0
+           do while (ierr.eq.0 .and. j.le.sum(npartoftype(2:,i)))
+              read(iunith,*,iostat=ierr) dat(npartoftype(1,i)+j,ih,i)
+              j = j + 1
+           enddo
+           print "(a,i10,a)",' SMOOTHING LENGTHS READ for ',j-1,' dark matter / star particles '
+           hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
+           close(unit=iunith)
+        endif
+        
+        if (ierrrho.eq.0) then
+           print "(a)",' READING DARK MATTER DENSITIES FROM '//trim(densfile)
+           j = 1
+           ierr = 0
+           nhset = 0
+           do while (ierr.eq.0 .and. j.le.sum(npartoftype(2:,i)))
+              read(iunitd,*,iostat=ierr) dmdensi
+              if (ierr.eq.0) then
+                 index1 = npartoftype(1,i) + j
+                 dat(index1,irho,i) = dmdensi
+                 if (ierrh.ne.0 .and. dmdensi.gt.tiny(dmdensi)) then
+                    dat(index1,ih,i) = hfact*(dat(index1,ipmass,i)/dmdensi)**(1./3.)
+                    nhset = nhset + 1
+                 endif
+              endif
+              j = j + 1
+           enddo
+           print "(a,i10,a)",' DENSITIES READ FOR ',j-1,' dark matter / star particles '
+           if (ierrh.ne.0) print "(a,i10,a,f5.2,a)", &
+              ' SMOOTHING LENGTHS SET for ',nhset,' DM/star particles using h = ',hfact,'*(m/rho)**(1/3)'
+           hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
+           close(iunitd)
+        endif
+     else
+     !
      !--if a value for the dark matter smoothing length is set
      !  via the environment variable GSPLASH_DARKMATTER_HSOFT,
      !  give dark matter particles this smoothing length
      !  and a density of 1 (so column density plots work)
      !
-     hsoft = renvironment('GSPLASH_DARKMATTER_HSOFT')
-     if (hsoft.gt.tiny(hsoft)) then
-        if (required(ih)) then
-           print "(a,1pe10.3,a)",' Assigning smoothing length of h = ',hsoft, &
-                                 ' to dark matter particles'
-           dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),ih,i) = hsoft
-        endif
-        if (required(irho)) then
-           dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),irho,i) = 1.0
-        endif
-     else
-        if (npartoftype(1,i).le.0 .and. sum(npartoftype(:,i)).gt.0) then
-           print "(3(/,a),/)",' NOTE!! For gadget data using dark matter only, column density ',&
-                              ' plots can be produced by setting the GSPLASH_DARKMATTER_HSOFT ',&
-                              ' environment variable to give the dark matter smoothing length'
+        hsoft = renvironment('GSPLASH_DARKMATTER_HSOFT')
+        if (hsoft.gt.tiny(hsoft)) then
+           if (required(ih)) then
+              print "(a,1pe10.3,a)",' ASSIGNING SMOOTHING LENGTH of h = ',hsoft, &
+                                    ' to dark matter particles'
+              dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),ih,i) = hsoft
+           endif
+           if (required(irho)) then
+              dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),irho,i) = 1.0
+           endif
+        else
+           if (npartoftype(1,i).le.0 .and. sum(npartoftype(:,i)).gt.0) then
+              print "(3(/,a),/)",' NOTE!! For gadget data using dark matter only, column density ',&
+                                 ' plots can be produced by setting the GSPLASH_DARKMATTER_HSOFT ',&
+                                 ' environment variable to give the dark matter smoothing length'
+           endif
         endif
      endif
-
   else
      ntoti = 1
      npartoftype(1,i) = 1
@@ -376,7 +464,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !
 !--close data file and return
 !                    
-  close(unit=11)
+  close(unit=iunit)
 
   if (nstepsread.gt.0) then
      print*,'>> last step ntot =',sum(npartoftype(:,istepstart+nstepsread-1))
@@ -394,10 +482,10 @@ subroutine set_labels
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry, only:labelcoord
-  use system_utils, only:renvironment,envlist
+  use system_utils, only:envlist
+  use gadgetread, only:hsoft
   implicit none
   integer :: i,nextracols,nstarcols
-  real :: hsoft
   character(len=30), dimension(10) :: labelextra
 
   if (ndim.le.0 .or. ndim.gt.3) then
@@ -466,7 +554,6 @@ subroutine set_labels
   !--dark matter particles are of non-SPH type (ie. cannot be used in renderings)
   !  unless they have had a smoothing length defined
   !
-  hsoft = renvironment('GSPLASH_DARKMATTER_HSOFT')
   if (hsoft.gt.tiny(hsoft)) then
      UseTypeInRenderings(2) = .true.
   else
