@@ -43,7 +43,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,iunit,ncolstep,ncolenv
-  integer :: nprint,npart_max,nstep_max,icol,nheaderlines
+  integer :: nprint,npart_max,nstep_max,icol,nheaderlines,nheaderenv
   logical :: iexist,timeset,gammaset
   real :: dummyreal
   character(len=len(rootname)+4) :: dumpfile
@@ -80,6 +80,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
      print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
   else
      call get_ncolumns(iunit,ncolstep,nheaderlines)
+     !--override header lines setting
+     nheaderenv = ienvironment('ASPLASH_NHEADERLINES',-1)
+     if (nheaderenv.gt.0) then
+        print*,' setting nheader lines = ',nheaderenv,' from ASPLASH_NHEADERLINES environment variable'
+        nheaderlines = nheaderenv
+     endif
      !--override columns setting with environment variable
      ncolenv = ienvironment('ASPLASH_NCOLUMNS',-1)
      if (ncolenv.gt.0) then
@@ -114,6 +120,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
   timeset = .false.
   gammaset = .false.
+  if (nheaderlines.gt.0) print*,'skipping ',nheaderlines,' header lines'
+
   do i=1,nheaderlines
      read(iunit,*,iostat=ierr) dummyreal
      if (timeset .and. .not.gammaset .and. ierr.eq.0 &

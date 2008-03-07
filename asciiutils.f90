@@ -106,8 +106,6 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
     ncolumns = 0
  elseif (ierr .lt. 0) then
     print*,ncolumns,ncolprev
- else
-    if (nheaderlines.gt.0) print*,'skipped ',nheaderlines,' header lines'
  endif
  if (nansinfile) print "(a)",' INDIAN BREAD WARNING!! NaNs in file!!'
  if (infsinfile) print "(a)",' WARNING!! Infs in file!!'
