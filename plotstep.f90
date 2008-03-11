@@ -2103,6 +2103,7 @@ contains
   subroutine changeveccoords(iplot,xploti,ntot)
    use geometry, only:vector_transform,labelcoordsys
    use settings_data, only:xorigin
+   use labels, only:ivx
    implicit none
    integer, intent(in) :: iplot,ntot
    real, dimension(:), intent(inout) :: xploti
@@ -2113,11 +2114,15 @@ contains
       if (iplot-iamvec(iplot)+1 .le. ndim) then
          print*,'changing vector component from ', &
           trim(labelcoordsys(icoords)),' to ',trim(labelcoordsys(icoordsnew))
-         if (itrackpart.gt.0) print*,' (relative to particle ',itrackpart,')'
+         if (itrackpart.gt.0 .and. iamvec(iplot).eq.ivx) print*,' (velocities relative to particle ',itrackpart,')'
          do j=1,ntot
             if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
                xcoords(1:ndim) = dat(j,ix(1:ndim)) - dat(itrackpart,ix(1:ndim))
-               vecnew(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1) - dat(itrackpart,iamvec(iplot):iamvec(iplot)+ndim-1)
+               if (iamvec(iplot).eq.ivx) then
+                  vecnew(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1) - dat(itrackpart,iamvec(iplot):iamvec(iplot)+ndim-1)
+               else
+                  vecnew(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1)
+               endif
             else
                xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
                vecnew(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1)
