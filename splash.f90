@@ -2,7 +2,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2007 Daniel Price 
+!     Copyright (C) 2005-2008 Daniel Price 
 !     dprice@astro.ex.ac.uk
 !
 !     --------------------------------------------------------------------------
@@ -23,6 +23,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.10.1 : (11/03/07)
+!             "splash to" command line option converts binary dumps to ascii format;
+!             vector plots + rotation now implemented; block labelled GADGET format read;
+!             ring-spreading exact solution added.      
 !     1.10.0 : (28/11/07)
 !             horizontal colour bars implemented; -p, -o command line options;
 !             can have mixed types in data reads; TIPSY and DRAGON data reads;
@@ -203,7 +207,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.10 [28th Nov ''07]'
+  character(len=*), parameter :: version = 'v1.10.1 [11th Mar ''08]'
 
   !
   ! initialise some basic code variables
@@ -263,7 +267,7 @@ program splash
            lowmemorymode = .false.
         case default
            print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
-           print "(a)",'(c) 2005-2007 Daniel Price '
+           print "(a)",'(c) 2005-2008 Daniel Price '
            print "(a,/)",trim(version)
            if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
            print "(a,/)",'Usage: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] '// &
@@ -404,7 +408,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2007 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2008 )'
  print 30 
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
