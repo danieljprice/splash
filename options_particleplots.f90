@@ -43,6 +43,7 @@ subroutine defaults_set_part
   imarktype = 1              ! PGPLOT marker for all particles
   imarktype(2) = 4           ! PGPLOT marker for ghost/dark matter particles
   imarktype(3) = 17          ! PGPLOT marker for sink particles
+  imarktype(5) = 3           ! PGPLOT marker for star particles (gadget)
   idefaultcolourtype = -1     ! default colour for each particle type
   ifastparticleplot = .true. ! allow crowded-field elimination on particle plots
 
