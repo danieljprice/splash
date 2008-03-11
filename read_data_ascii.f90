@@ -82,7 +82,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      call get_ncolumns(iunit,ncolstep,nheaderlines)
      !--override header lines setting
      nheaderenv = ienvironment('ASPLASH_NHEADERLINES',-1)
-     if (nheaderenv.gt.0) then
+     if (nheaderenv.ge.0) then
         print*,' setting nheader lines = ',nheaderenv,' from ASPLASH_NHEADERLINES environment variable'
         nheaderlines = nheaderenv
      endif
