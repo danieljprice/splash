@@ -60,14 +60,14 @@ features are included:
 images).
 \item Fast projections through 3D data (ie. column density plots, or integration of
 other quantities along the line of sight)
-\item Surface renderings of 3D data
+\item Surface renderings of 3D data.
 \item Vector plots of the velocity (and other vector quantities), including vector
 plots in a cross section slice in 3D.
-\item Rotation and fly-throughs (multiple cross-section slices) of 3D data.
+\item Rotation and animation sequence generation for 3D data.
 \item Automatic stepping through timesteps, making animations simple to produce.
 \item Interactive mode for detailed examination of timestep data (e.g. zooming,
 rotating, plotting particle labels, working out the gradient of a line, stepping forwards/backwards
-through timesteps)
+through timesteps).
 \item Multiple plots on page, including option to automatically tile plots if $y-$ and $x-$ limits
 are the same.
 \item Plot limits can be fixed, adaptive or particle tracking. Also simple to change
@@ -75,8 +75,9 @@ axes to log, invert, square root or absolute of a quantity.
 \item Exact solutions for common SPH test problems (e.g. hydrodynamic shock tubes,
 polytropes).
 \item Calculation of quantities not dumped (e.g. pressure, entropy)
+\item Conversion of binary dump files to ascii format.
 \item Transformation to different coordinate systems (for both coordinates and
-vector components).
+vector components) and rescaling of data into physical units.
 \item Straightforward production of GIF and Postscript images which can then be
 converted into animations or inserted into \LaTeX documents.
 \end{itemize}
@@ -84,7 +85,9 @@ converted into animations or inserted into \LaTeX documents.
 \subsection{What it doesn't do}
 At the moment SPLASH is geared towards gas dynamics
 simulations with SPH and has basically grown out of my visualisation needs.
-Thus it may not be particularly useful for things like water and solids etc. in SPH.
+Thus it may not be particularly useful for things like water and solids etc. in SPH. An SPH visualisation tool geared towards the non-gaseous side of things you may want to have a look at is {\it pv-meshless}, by John Biddiscombe:
+
+\url{https://twiki.cscs.ch/twiki/bin/view/ParaViewMeshless}
 
 \subsection{SPLASH, the paper}
  The algorithms implemented in SPLASH are not described here, but instead described in a paper \citep{splashpaper} (Publications of the Astronomical Society of
@@ -206,19 +209,25 @@ or LITTLE before \emph{compiling} splash (this adds the appropriate compile-time
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 ASPLASH\_NCOLUMNS & if given a value $>$0 sets the number of columns to be read from ascii data (overrides the automatic number of
-columns determination)
+columns determination). \\
+ASPLASH\_NHEADERLINES & if given a value $>=$0 sets the number of header lines to skip (overrides the automatic determination).
 \end{tabular}
 
-\subsubsection{ Gadget data read}
+\subsubsection{ GADGET-2 data read}
 \label{sec:gsplash}
- For the gadget read (`gsplash') the environment variable options are:\newline
+ For the GADGET read (`gsplash') the environment variable options are:\newline
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
-GSPLASH\_USE\_Z & if `YES' or `TRUE' uses the redshift in the legend instead of code time \\
+GSPLASH\_FORMAT & if set = 2, reads the block labelled GADGET format instead of the default (non block labelled) format. \\
+GSPLASH\_USE\_Z & if `YES' or `TRUE' uses the redshift in the legend instead of code time. \\
 GSPLASH\_DARKMATTER\_HSOFT & if given a value $>$ 0.0 will assign a smoothing length to dark matter particles for which rendered plots of column density can then be made. \\
-GSPLASH\_EXTRACOLS & if set to a comma separated list of column labels, will attempt to read additional columns containing gas particle properties beyond the end of the file. \\
-GSPLASH\_STARPARTCOLS & if set to a comma separated list of column labels, will attempt to read additional columns containing star particle properties beyond the end of the file (and after any extra gas particle columns).
+GSPLASH\_EXTRACOLS & if set to a comma separated list of column labels, will attempt to read additional columns containing gas particle properties beyond the end of the file (not applicable if GSPLASH\_FORMAT=2). \\
+GSPLASH\_STARPARTCOLS & if set to a comma separated list of column labels, will attempt to read additional columns containing star particle properties beyond the end of the file (and after any extra gas particle columns) (not applicable if GSPLASH\_FORMAT=2). \\
 \end{tabular}
+
+
+
+ For the GADGET read gsplash will also look for, and read if present, files called \verb+snapshot_xxx.hsml+ and/or \verb+snapshot_xxx.dens+ (where \verb+snapshot_xxx+ is the name of the corresponding GADGET dump file) which contain smoothing lengths and/or a density estimate for dark matter particles (these should just be one-column ascii files).
 
 \subsubsection{ sphNG data read}
  For the sphNG read (`ssplash') the environment variable options are:\newline
@@ -1705,6 +1714,13 @@ Fourier Transform routine).
 
 
 \section{Other useful information}
+
+\subsection{Converting binary dump files to ascii using SPLASH}
+ SPLASH has a command line feature which can be used to convert binary SPH dump files into ascii format. The syntax is
+\begin{verbatim}
+splash to ascii dump001 dump002 dump???
+\end{verbatim}
+which will convert all of the dump files listed on the command line into ascii format (called \verb+dump001.ascii+, \verb+dump002.ascii+ etc.), with columns as would be listed in the main menu if you opened the dump file in SPLASH. Note that the output \emph{includes} calculated extra quantities such as the radius if these have been turned on [in the d) menu] and the settings saved to the \verb+splash.defaults+ file. Similarly the data will be output in physical units if a \verb+splash.units+ file is present.
 
 \subsection{Fixing the PGPLOT file naming system} 
 \label{sec:fixpgplotnames}
