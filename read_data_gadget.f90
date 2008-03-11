@@ -44,8 +44,10 @@
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
 module gadgetread
+ use params, only:maxplot
  implicit none
  real :: hsoft
+ character(len=4), dimension(maxplot) :: blocklabelgas
  
 end module gadgetread
 
@@ -57,7 +59,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use mem_allocation, only:alloc
   use labels, only:ih,irho,ipmass
   use system_utils, only:renvironment,lenvironment,ienvironment,envlist
-  use gadgetread, only:hsoft
+  use gadgetread, only:hsoft,blocklabelgas
   implicit none
   integer, intent(in) :: istepstart
   integer, intent(out) :: nstepsread
@@ -70,7 +72,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
   integer :: ncolstep,npart_max,nstep_max,ntoti
   integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
-  integer :: nextracols,nstarcols,i1,i2,lenblock,idumpformat
+  integer :: nextracols,nstarcols,i1,i2,i3,i4,lenblock,idumpformat
   integer, parameter :: iunit = 11, iunitd = 102, iunith = 103
   logical :: iexist,reallocate
   real(doub_prec) :: timetemp,ztemp
@@ -124,8 +126,9 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !--read header for this timestep
   !
   if (idumpformat.eq.2) then
-     print "(a)",'READING BLOCK LABELLED GADGET FORMAT'
+     print "(a)",' >> reading block labelled gadget format <<'
      read(iunit,iostat=ierr) blocklabel,lenblock
+     !print*,ierr,blocklabel,lenblock
      if (ierr /= 0 .or. lenblock.ne.264) then
         print "(a)",'*** ERROR READING HEADER: wrong endian? ***'
         close(iunit)
@@ -136,40 +139,78 @@ subroutine read_data(rootname,istepstart,nstepsread)
   read(iunit,iostat=ierr) npartoftypei(1:6),massoftypei,timetemp,ztemp, &
       iFlagSfr,iFlagFeedback,Nall(1:6),iFlagCool,nfiles
 
-  if (ierr /= 0) then
-     print "(a)", '*** ERROR READING TIMESTEP HEADER ***'
+  ntoti = int(sum(npartoftypei(1:6)))
+  if (ierr /= 0 .or. ntoti.le.0 .or. any(npartoftypei.lt.0)) then
+     print "(a)", '*** ERROR READING TIMESTEP HEADER: wrong endian? ***'
      close(iunit)
      return
   endif
 
-  iformat = 0
-  if (iFlagCool.gt.0) then
-     iformat = 1
-     ncolstep = 12 ! 3 x pos, 3 x vel, pmass, utherm, rho, Ne, Nh, h
-     ncolumns = ncolstep
+  if (idumpformat.eq.2) then
+     ncolstep = 1
+     do while (ierr.eq.0)
+        call read_blockheader(idumpformat,iunit,0,index2,blocklabelgas(ncolstep),lenblock)
+        read(iunit,iostat=ierr)
+        if (index2.eq.ntoti &
+            .or. index2.eq.npartoftypei(1) &
+            .or. index2.eq.npartoftypei(2) &
+            .or. index2.eq.npartoftypei(5) &
+            .or. index2.eq.(npartoftypei(1)+npartoftypei(5)) & 
+            .or. index2.eq.(npartoftypei(1)+npartoftypei(2))) then
+           select case(blocklabelgas(ncolstep))
+           case('POS ')
+              ncolstep = ncolstep + ndim
+           case('VEL ','BFLD')
+              ncolstep = ncolstep + ndimV
+           case('ID  ')
+              ! not a column
+           case default
+              ncolstep = ncolstep + 1
+           end select
+        endif
+     enddo
+     ncolstep = ncolstep - 1
+     rewind(iunit)
+     read(iunit,iostat=ierr)
+     read(iunit,iostat=ierr)
+     iformat = 2
+     nextracols = 0
+     nstarcols = 0
+
   else
+
      iformat = 0
-     ncolstep = 10 ! 3 x pos, 3 x vel, pmass, utherm, rho, h
-     ncolumns = ncolstep  
+     if (iFlagCool.gt.0) then
+        iformat = 1
+        ncolstep = 12 ! 3 x pos, 3 x vel, pmass, utherm, rho, Ne, Nh, h
+     else
+        iformat = 0
+        ncolstep = 10 ! 3 x pos, 3 x vel, pmass, utherm, rho, h
+     endif
+     if (iFlagSfr.gt.0) then
+        ncolstep = ncolstep + 1
+        iformat = iformat + 10
+     endif
+
+     call envlist('GSPLASH_EXTRACOLS',nextracols)
+     if (nextracols.gt.0) then
+        print "(a,i2,a)",' READING ',nextracols,' EXTRA COLUMNS '
+        ncolstep = ncolstep + nextracols
+     endif
+     call envlist('GSPLASH_STARPARTCOLS',nstarcols)
+     if (nstarcols.gt.0) then
+        print "(a,i2,a)",' READING ',nstarcols,' STAR PARTICLE COLUMN(S) '
+        ncolstep = ncolstep + nstarcols
+     endif  
+
   endif
+  
+  ncolumns = ncolstep
   !
   !--call set labels to get ih, ipmass, irho for use in the read routine
   !
   call set_labels
-
-  call envlist('GSPLASH_EXTRACOLS',nextracols)
-  if (nextracols.gt.0) then
-     print "(a,i2,a)",' READING ',nextracols,' EXTRA COLUMNS '
-     ncolstep = ncolstep + nextracols
-  endif
-  call envlist('GSPLASH_STARPARTCOLS',nstarcols)
-  if (nstarcols.gt.0) then
-     print "(a,i2,a)",' READING ',nstarcols,' STAR PARTICLE COLUMN(S) '
-     ncolstep = ncolstep + nstarcols
-  endif
-  ncolumns = ncolstep
   
-  ntoti = int(sum(npartoftypei(1:6)))
   print*,'time             : ',timetemp
   print*,'Npart (by type)  : ',npartoftypei
   print*,'Mass  (by type)  : ',massoftypei
@@ -235,14 +276,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      !--read positions of all particles
      !
-     if (idumpformat.eq.2) then
-        read(iunit, iostat=ierr) blocklabel,lenblock
-        index2 = (lenblock-8)/12
-        if (index2.ne.ntoti) print "(a)",'warning: number of '//blocklabel//' dumped .ne. ntotal'
-     else
-        index2 = ntoti
-     endif
-
+     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
      if (any(required(1:3))) then
         print*,'positions ',ntoti
         read (iunit, iostat=ierr) (dat(j,1:3,i),j=1,index2)
@@ -260,17 +294,10 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      !--same for velocities
      !
-     if (idumpformat.eq.2) then
-        read(iunit, iostat=ierr) blocklabel,lenblock
-        index2 = (lenblock-8)/12
-        if (index2.ne.ntoti) print "(a)",'warning: number of '//blocklabel//' dumped .ne. ntotal'
-     else
-        index2 = ntoti
-     endif
-
+     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
      if (any(required(4:6))) then
-        print*,'velocities ',ntoti
-        read (iunit, iostat=ierr) (dat(j,4:6,i),j=1,ntoti)
+        print*,'velocities ',index2
+        read (iunit, iostat=ierr) (dat(j,4:6,i),j=1,index2)
         if (ierr /= 0) then
            print "(a)",'error encountered whilst reading velocities'
         endif
@@ -288,7 +315,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !print*,'particle ID ',ntoti
      !if (allocated(iamtemp)) deallocate(iamtemp)
      !allocate(iamtemp(npart_max))
-     read (iunit,iostat=ierr) ! iamtemp(1:ntoti)
+     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
+     if (index2.gt.0) read (iunit,iostat=ierr) ! iamtemp(1:index2)
      !deallocate(iamtemp)
      if (ierr /= 0) then
         print "(a)",'error encountered whilst reading particle ID'
@@ -309,8 +337,10 @@ subroutine read_data(rootname,istepstart,nstepsread)
         !--read this number of entries
         if (allocated(dattemp1)) deallocate(dattemp1)
         allocate(dattemp1(Nmassesdumped))
-        if (Nmassesdumped.gt.0) then
-           read(iunit,iostat=ierr) dattemp1(1:Nmassesdumped)
+        call read_blockheader(idumpformat,iunit,Nmassesdumped,index2,blocklabel,lenblock)
+
+        if (index2.gt.0) then
+           read(iunit,iostat=ierr) dattemp1(1:index2)
         endif
         if (ierr /= 0) then
            print "(a)",'error reading particle masses'
@@ -346,20 +376,67 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      !--read other quantities for rest of particles
      !
-     print*,'gas properties ',npartoftype(1,i)
+     print*,'gas properties ',npartoftypei(1)
      do icol=8,ncolstep
         !!print*,icol
-        if (icol.gt.ncolstep-nstarcols) then
-           i1 = sum(npartoftype(1:4,i)) + 1
-           i2 = i1 + npartoftype(5,i) - 1
-           print*,'star particle properties ',icol,i1,i2
+        i3 = 0
+        i4 = 0
+        if (idumpformat.eq.2) then
+           if (icol.le.ih) then
+              call read_blockheader(idumpformat,iunit,npartoftypei(1),index2,blocklabel,lenblock)           
+           else
+              call read_blockheader(idumpformat,iunit,0,index2,blocklabel,lenblock)
+           endif
+           
+           if (index2.eq.ntoti) then
+              i1 = 1
+              i2 = i1 + index2 - 1
+              print*,blocklabel//' (',index2,': all particles)'
+           elseif (index2.eq.npartoftypei(1)) then
+              i1 = 1
+              i2 = i1 + index2 - 1
+              print*,blocklabel//' (',index2,': gas particles only)'
+           elseif (index2.eq.npartoftypei(2)) then
+              i1 = npartoftypei(1) + 1
+              i2 = i1 + index2 - 1
+              print*,blocklabel//' (',index2,': dark matter particles only)'
+           elseif (index2.eq.npartoftypei(1)+npartoftypei(2)) then
+              i1 = 1
+              i2 = i1 + index2 - 1
+              print*,blocklabel//' (',index2,': gas+dark matter particles only)'
+           elseif (index2.eq.npartoftypei(5)) then
+              i1 = sum(npartoftypei(1:4)) + 1
+              i2 = i1 + index2 - 1
+              print*,blocklabel//' (',index2,': star particles only)'
+           elseif (index2.eq.npartoftypei(1)+npartoftypei(5)) then
+              i1 = 1
+              i2 = npartoftypei(1)
+              i3 = sum(npartoftypei(1:4)) + 1
+              i4 = i3 + npartoftypei(5) - 1
+              print*,blocklabel//' (',index2,': gas+star particles only)'
+           else
+              print*,blocklabel//': ERROR in block length/quantity defined on unknown mix of types n = (',index2,')'
+              i1 = 1
+              i2 = index2
+           endif
         else
-           i1 = 1
-           i2 = npartoftype(1,i)
-        endif 
+           if (icol.gt.ncolstep-nstarcols) then
+              i1 = sum(npartoftypei(1:4)) + 1
+              i2 = i1 + npartoftypei(5) - 1
+              print*,'star particle properties ',icol,i1,i2
+           else
+              i1 = 1
+              i2 = npartoftypei(1)
+           endif
+        endif
+
         if (npartoftype(1,i).gt.0) then
            if (required(icol)) then
-              read (iunit,iostat=ierr) dat(i1:i2,icol,i)
+              if (i3.gt.0) then
+                 read (iunit,iostat=ierr) dat(i1:i2,icol,i),dat(i3:i4,icol,i)
+              else
+                 read (iunit,iostat=ierr) dat(i1:i2,icol,i)
+              endif
            else
               read (iunit,iostat=ierr)
            endif
@@ -470,6 +547,42 @@ subroutine read_data(rootname,istepstart,nstepsread)
      print*,'>> last step ntot =',sum(npartoftype(:,istepstart+nstepsread-1))
   endif
   return
+  
+contains
+
+!!-----------------------------------------------------------------
+!! small utility to transparently handle block labelled data read
+!!-----------------------------------------------------------------
+ subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk)
+  implicit none
+  integer, intent(in) :: idumpfmt,lun,nexpected
+  integer, intent(out) :: ndumped
+  character(len=4), intent(out) :: blklabel
+  integer, intent(out) :: lenblk
+  
+  blklabel = '    '
+  if (idumpformat.eq.2) then
+     read(lun, iostat=ierr) blklabel,lenblk
+     if (ierr /= 0) then
+        ndumped = 0
+        return
+     endif
+     if (blklabel.eq.'POS ' .OR. blklabel.eq.'VEL ' .OR. blklabel.eq.'BFLD') then
+        ndumped = (lenblk-8)/12
+     else
+        ndumped = (lenblk-8)/4
+     endif
+     !if (nexpected.gt.0) then
+     !   if (ndumped.ne.nexpected) then
+     !      !print*,'warning: number of '//blklabel//' dumped (',ndumped,') /= expected (',nexpected,')'
+     !   endif
+     !endif
+  else
+     ndumped = nexpected
+  endif
+  
+  return
+ end subroutine read_blockheader
 
 end subroutine read_data
 
@@ -478,14 +591,15 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm
+  use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm,iBfirst
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry, only:labelcoord
   use system_utils, only:envlist
-  use gadgetread, only:hsoft
+  use gadgetread, only:hsoft,blocklabelgas
+  use prompting, only:lcase
   implicit none
-  integer :: i,nextracols,nstarcols
+  integer :: i,nextracols,nstarcols,icol
   character(len=30), dimension(10) :: labelextra
 
   if (ndim.le.0 .or. ndim.gt.3) then
@@ -497,14 +611,75 @@ subroutine set_labels
      return
   endif
 
-  do i=1,ndim
-     ix(i) = i
-  enddo
-  ivx = 4
-  ipmass = 7
-  irho = 9        ! location of rho in data array
-  ipr = 0
-  iutherm = 8     !  thermal energy
+  if (iformat.eq.2) then
+     icol = 0
+     do i=1,size(blocklabelgas)
+        icol = icol + 1
+        select case(blocklabelgas(i))
+        case('POS ')
+           ix(1) = icol
+           ix(2) = icol+1
+           ix(3) = icol+2
+        case('VEL ')
+           ivx = icol
+        case('BFLD')
+           iBfirst = icol
+        case('MASS')
+           ipmass = icol
+        case('U   ')
+           iutherm = icol
+        case('RHO ')
+           irho = icol
+        case('NE  ')
+           label(icol) = 'N\de\u'
+        case('NH  ')
+           label(icol) = 'N\dh\u'
+        case('HSML')
+           ih = icol
+        case('SFR ')
+           label(icol) = 'Star formation rate'
+        case('TEMP')
+           label(icol) = 'temperature'
+        case('POT ')
+           label(icol) = 'potential'
+        case('ID  ')
+           icol = icol - 1
+        case default
+           label(icol) = trim(lcase(blocklabelgas(i)))
+        end select
+     enddo
+  else
+     do i=1,ndim
+        ix(i) = i
+     enddo
+     ivx = 4
+     ipmass = 7
+     irho = 9        ! location of rho in data array
+     ipr = 0
+     iutherm = 8     !  thermal energy
+     if (iformat.eq.1 .or. iformat.eq.11 .and. ncolumns.gt.10) then
+        label(10) = 'Ne'
+        label(11) = 'Nh'
+        ih = 12        !  smoothing length
+        if (iformat.eq.11) label(13) = 'Star formation rate'
+     else
+        ih = 10
+        if (iformat.eq.1) label(11) = 'Star formation rate'
+     endif
+     !
+     !--deal with extra columns
+     !
+     if (ncolumns.gt.ih) then
+        call envlist('GSPLASH_EXTRACOLS',nextracols,labelextra)
+        do i=ih+1,ih+nextracols
+           label(i) = trim(labelextra(i-ih))
+        enddo
+        call envlist('GSPLASH_STARPARTCOLS',nstarcols,labelextra)
+        do i=ih+nextracols+1,ih+nextracols+nstarcols
+           label(i) = trim(labelextra(i-ih-nextracols))
+        enddo
+     endif
+  endif
   !
   !--set labels of the quantities read in
   !
@@ -512,36 +687,25 @@ subroutine set_labels
   label(irho) = 'density'
   label(iutherm) = 'u'
   label(ipmass) = 'particle mass'
-  
-  if (iformat.eq.1 .and. ncolumns.gt.10) then
-     label(10) = 'Ne'
-     label(11) = 'Nh'
-     ih = 12        !  smoothing length
-  else
-     ih = 10
-  endif
   label(ih) = 'h'
-  !
-  !--deal with extra columns
-  !
-  if (ncolumns.gt.ih) then
-     call envlist('GSPLASH_EXTRACOLS',nextracols,labelextra)
-     do i=ih+1,ih+nextracols
-        label(i) = trim(labelextra(i-ih))
-     enddo
-     call envlist('GSPLASH_STARPARTCOLS',nstarcols,labelextra)
-     do i=ih+nextracols+1,ih+nextracols+nstarcols
-        label(i) = trim(labelextra(i-ih-nextracols))
-     enddo
-  endif
   !
   !--set labels for vector quantities
   !
-  iamvec(ivx:ivx+ndimV-1) = ivx
-  labelvec(ivx:ivx+ndimV-1) = 'v'
-  do i=1,ndimV
-     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-  enddo
+  if (ivx.gt.0) then
+     iamvec(ivx:ivx+ndimV-1) = ivx
+     labelvec(ivx:ivx+ndimV-1) = 'v'
+     do i=1,ndimV
+        label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
+     enddo
+  endif
+
+  if (iBfirst.gt.0) then
+     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
+     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
+     do i=1,ndimV
+        label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
+     enddo
+  endif
   
   !--set labels for each particle type
   !
