@@ -427,6 +427,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
       else
          ivx = 0
       endif
+      !--need to force read of velocities e.g. for corotating frame subtraction
+      if (any(required(ivx:ivx+ndimV-1))) required(ivx:ivx+ndimV-1) = .true.
       
       if (narrsizes.ge.3 .and. isize(3).eq.isize(1)) then
       !--we have radiative transfer in the dump
