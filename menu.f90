@@ -184,7 +184,7 @@ subroutine menu
   write(*,"(a)",ADVANCE='NO') 'Please enter your selection now (y axis or option):'
   read(*,*,iostat=ierr) ioption
   if (ierr < 0) stop 'reached end of input' ! end of input (e.g. in script)
-  if (ierr > 0) stop 'error reading input' 
+  if (ierr > 0) stop !'error reading input' 
 
 !------------------------------------------------------------
 !  if input is an integer and within range, plot data
@@ -390,7 +390,8 @@ subroutine menu
    if (nyplotmulti.eq.1) then
       nacross = 1
       ndown = 1
-   else
+      print*,'setting nacross,ndown = ',nacross,ndown 
+   elseif (nyplotmulti.ne.nacross*ndown) then
       !--guess nacross,ndown based on largest factor
       ifac = nyplotmulti/2
       do while (mod(nyplotmulti,ifac).ne.0 .and. ifac.gt.1)
@@ -403,8 +404,10 @@ subroutine menu
       endif
       if (nacross.le.0) nacross = 1
       ndown = nyplotmulti/nacross
+      print*,'setting nacross,ndown = ',nacross,ndown 
+   else
+      print*,'nacross = ',nacross,' ndown = ',ndown
    endif
-   print*,'setting nacross,ndown = ',nacross,ndown 
    isamex = all(multiplotx(1:nyplotmulti).eq.multiplotx(1))
    call prompt('Same x axis for all?',isamex)
    if (isamex) then
