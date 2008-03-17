@@ -83,7 +83,17 @@ can add it to the officially supported data reads. This also makes it much
 easier for you to upgrade to newer versions as you do not require a locally
 customised version.
 
-5) ----- making pretty pictures -----
+5) ----- running splash/ making pretty pictures -----
+
+In general it is a good idea to set:
+
+limit stacksize unlimited
+
+(csh), or in bash:
+
+ulimit -s unlimited
+
+before running splash.
 
 For detailed help on how to use SPLASH, refer to the (quite extensive) userguide
 in the /docs directory or on the splash web page.
