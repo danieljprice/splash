@@ -11,6 +11,10 @@
 !
 ! e.g. setenv ASPLASH_NCOLUMNS=10
 !
+! ASPLASH_NHEADERLINES can be used to override the automatic number of header line determination
+!
+! e.g. setenv ASPLASH_NHEADERLINES=1
+!
 ! the data is stored in the global array dat
 !
 ! >> this subroutine must return values for the following: <<
@@ -181,12 +185,27 @@ subroutine set_labels
   use params
   use settings_data, only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
   use geometry, only:labelcoord
+  use system_commands, only:get_environment
   implicit none
   integer :: i,ierr,ndimVtemp
+  character(len=120) :: columnfile
+  logical :: iexist
 !
 !--read column labels from the columns file if it exists
-!  
-  open(unit=51,file='columns',status='old',iostat=ierr)
+!
+  call get_environment('ASPLASH_COLUMNSFILE',columnfile)
+  if (len_trim(columnfile).gt.0) then
+     inquire(file=trim(columnfile),exist=iexist)
+     if (iexist) then
+        print "(a)",' using ASPLASH_COLUMNSFILE='//trim(columnfile)
+     else
+        print "(a)",' ERROR: ASPLASH_COLUMNSFILE='//trim(columnfile)//' DOES NOT EXIST'
+        columnfile = 'columns'
+     endif
+  else
+     columnfile = 'columns'
+  endif
+  open(unit=51,file=trim(columnfile),status='old',iostat=ierr)
   if (ierr /=0) then
      print "(3(/,a))",' WARNING: columns file not found: using default labels',&
                     ' To change the labels, create a file called ''columns'' ',&
