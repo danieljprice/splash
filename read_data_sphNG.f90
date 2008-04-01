@@ -37,6 +37,15 @@
 ! Partial data read implemented Nov 2006 means that columns with
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
+module sphNGread
+ use params
+ implicit none
+ real(doub_prec) :: udist,umass,utime,umagfd
+ real :: tfreefall
+ integer :: istartmhd,istartrt,nmhd
+ logical :: phantomdump
+ 
+end module sphNGread
 
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data, only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,icolourme,masstype
@@ -46,6 +55,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use mem_allocation, only:alloc
   use system_utils, only:lenvironment,renvironment
   use labels, only:ipmass,irho,ih,ix,ivx
+  use sphNGread
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
@@ -59,11 +69,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
   integer :: nskip,ntotal,npart,n1,n2,ninttypes,ngas
   integer :: nreassign,naccrete,nkill,iblock,nblocks,ntotblock,ncolcopy
-  integer :: ipos,nptmass,nptmassi,nunknown,isink,ilastrequired,istartmhd,istartrt,nmhd
+  integer :: ipos,nptmass,nptmassi,nunknown,isink,ilastrequired
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
   integer, dimension(maxparttypes) :: npartoftypei
   real, dimension(maxparttypes) :: massoftypei
-  logical :: iexist, doubleprec, smalldump,imadepmasscolumn,phantomdump
+  logical :: iexist, doubleprec, smalldump,imadepmasscolumn
     
   character(len=len(rootname)+10) :: dumpfile
   character(len=100) :: fileident
@@ -73,12 +83,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer*1, dimension(:), allocatable :: iphase
   integer, dimension(:), allocatable :: listpm
   real(doub_prec), dimension(:), allocatable :: dattemp
-  real(doub_prec) :: udist,umass,utime,umagfd,r8
+  real(doub_prec) :: r8
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
   real, dimension(3) :: xyzsink
-  real :: rhozero,tfreefall,hfact,omega,r4
-  common /sphNGunits/ udist,umass,utime,umagfd,tfreefall,istartmhd,istartrt,nmhd
+  real :: rhozero,hfact,omega,r4
 
   nstepsread = 0
   nstep_max = 0
@@ -183,7 +192,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
          else
             ntypes = 1
             read(iunit,iostat=ierr) npart,npartoftypei(1:5),nblocks
-            print*,'here',nints,npart,npartoftypei(1:5),nblocks
          endif
       elseif (nints.ge.7) then
          read(iunit,iostat=ierr) npart,n1,n2,nreassign,naccrete,nkill,nblocks
@@ -550,7 +558,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                ! read x,y,z,m,h and then place arrays after always-present ones
                ! (for phantom read x,y,z only)
                icolumn = nhydroarrays+nmhdarrays + 1
-            elseif (iarr.eq.4 .and. i.le.3) then
+            elseif (.not.phantomdump .and. (iarr.eq.4 .and. i.le.3)) then
                icolumn = nhydroarrays + i
             else
                icolumn = imaxcolumnread + 1
@@ -591,6 +599,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   icolumn = ih ! h is always first real4 in phantom dumps
                   !--density depends on h being read
                   if (required(irho)) required(ih) = .true.
+               elseif (iarr.eq.4 .and. i.le.3) then
+                  icolumn = nhydroarrays + i
                else
                   icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
                endif
@@ -609,7 +619,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             else
                read(iunit,end=33,iostat=ierr)
             endif
-            !print*,icolumn
+            !print*,'real4',icolumn
             !--construct density for phantom dumps based on h, hfact and particle mass
             if (phantomdump .and. icolumn.eq.ih) then
                icolumn = irho ! density
@@ -897,11 +907,10 @@ subroutine set_labels
   use settings_data, only:ndim,ndimV,ntypes,ncolumns,iformat,UseTypeInRenderings
   use geometry, only:labelcoord
   use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
+  use sphNGread
   implicit none
-  integer :: i,istartmhd,istartrt,nmhd
-  real :: tfreefall
-  real(doub_prec) :: udist,umass,utime,umagfd,uergg
-  common /sphNGunits/ udist,umass,utime,umagfd,tfreefall,istartmhd,istartrt,nmhd
+  integer :: i
+  real(doub_prec) :: uergg
   
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -924,31 +933,58 @@ subroutine set_labels
      case(0,4) ! hydro full dump
         ivx = 7
         iutherm = 10
-        label(11) = 'grad h'
-        label(12) = 'grad soft'
+        if (phantomdump) then
+           label(11) = 'alpha'
+           label(12) = 'alphau'
+        else
+           label(11) = 'grad h'
+           label(12) = 'grad soft'
+        endif
      case(2) ! mhd full dump
         iBfirst = 7
         ivx = 10
         iutherm = 13
-        label(14) = 'grad h'
-        label(15) = 'grad soft'
-        if (nmhd.ge.7) then
-           iamvec(istartmhd:istartmhd+ndimV-1) = istartmhd
-           labelvec(istartmhd:istartmhd+ndimV-1) = 'A'
-           do i=1,ndimV
-              label(istartmhd+i-1) = trim(labelvec(16))//'\d'//labelcoord(i,1)
-           enddo
-           idivB = istartmhd+ndimV
-        elseif (nmhd.ge.6) then
-           label(istartmhd) = 'Euler alpha'
-           label(istartmhd+1) = 'Euler beta'
-           idivB = istartmhd + 2
-        elseif (nmhd.ge.1) then
-           idivB = istartmhd
-        endif
-        iJfirst = idivB + 1
-        if (ncolumns.ge.iJfirst+ndimV) then
-           label(iJfirst+ndimV) = 'alpha\dB\u'
+        if (phantomdump) then
+           if (nmhd.ge.4) then
+              iamvec(istartmhd:istartmhd+ndimV-1) = istartmhd
+              labelvec(istartmhd:istartmhd+ndimV-1) = 'A'
+              do i=1,ndimV
+                 label(istartmhd+i-1) = trim(labelvec(istartmhd))//'\d'//labelcoord(i,1)
+              enddo
+              idivB = istartmhd+ndimV
+           elseif (nmhd.ge.3) then
+              label(istartmhd) = 'Euler alpha'
+              label(istartmhd+1) = 'Euler beta'
+              idivB = istartmhd + 2
+           elseif (nmhd.ge.1) then
+              idivB = istartmhd
+           endif
+           iJfirst = 0
+           if (ncolumns.ge.idivB+1) then
+              label(idivB+1) = 'alpha\dB\u'
+           endif
+        
+        else
+           label(14) = 'grad h'
+           label(15) = 'grad soft'
+           if (nmhd.ge.7) then
+              iamvec(istartmhd:istartmhd+ndimV-1) = istartmhd
+              labelvec(istartmhd:istartmhd+ndimV-1) = 'A'
+              do i=1,ndimV
+                 label(istartmhd+i-1) = trim(labelvec(16))//'\d'//labelcoord(i,1)
+              enddo
+              idivB = istartmhd+ndimV
+           elseif (nmhd.ge.6) then
+              label(istartmhd) = 'Euler alpha'
+              label(istartmhd+1) = 'Euler beta'
+              idivB = istartmhd + 2
+           elseif (nmhd.ge.1) then
+              idivB = istartmhd
+           endif
+           iJfirst = idivB + 1
+           if (ncolumns.ge.iJfirst+ndimV) then
+              label(iJfirst+ndimV) = 'alpha\dB\u'
+           endif
         endif
      case(3) ! mhd small dump
         iBfirst = 7
