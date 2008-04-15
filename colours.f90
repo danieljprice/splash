@@ -5,7 +5,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 21
+ integer, parameter :: ncolourschemes = 25
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
@@ -27,7 +27,11 @@ module colours
       'blue-red         ', &
       'blue-grn-red-yell', &
       'Bate BRY saoimage', &
-      'ice (blue-white) '/)
+      'ice (blue-white) ', &
+      'fire             ', &
+      'blue-red         ', &
+      'menacing         ', &
+      'rt               '/)
 !
 !--rgb colours of the colour table are stored in the array below
 !  this is used for colour blending (opacity rendering)
@@ -46,7 +50,7 @@ subroutine colour_set(icolourscheme)
   integer, intent(in) :: icolourscheme
   integer :: i,icolmin,icolmax,ncolmax,nset,index
   real :: brightness,contrast
-  real, dimension(18) :: lumarr,redarr,greenarr,bluearr
+  real, dimension(22) :: lumarr,redarr,greenarr,bluearr
 
   ncolours = ncolourmax-1
   nset = 0
@@ -103,14 +107,6 @@ subroutine colour_set(icolourscheme)
      redarr(1:nset)  = (/0.000,1.000,1.000,1.000/)
      greenarr(1:nset)= (/0.000,0.000,1.000,1.000/)
      bluearr(1:nset) = (/0.000,0.000,0.000,1.000/)
-!     case(3)
-!     !--ice blue (IDL blue-white)
-!     nset =  5
-!     lumarr(1:nset)  = (/0.000,0.376,0.737,0.753,1.000/)
-!     redarr(1:nset)  = (/0.000,0.000,0.000,0.000,1.000/)
-!     greenarr(1:nset)= (/0.000,0.000,0.580,0.604,1.000/)
-!     bluearr(1:nset) = (/0.000,0.510,1.000,1.000,1.000/)
-
      case(4)
      !--heat
      nset = 5
@@ -132,13 +128,6 @@ subroutine colour_set(icolourscheme)
      redarr(1:nset)  = (/0.000,0.953,1.000,0.035,0.000,0.000,0.000,0.000/)
      greenarr(1:nset)= (/0.000,0.000,0.043,0.969,1.000,0.000,0.000,0.000/)
      bluearr(1:nset) = (/0.000,0.000,0.000,0.000,0.027,0.984,1.000,0.000/)
-!     case(6)
-!     !--universe (this is my attempt at ripping off a spiral galaxy colour table)
-!     nset = 6
-!     lumarr(1:nset) =  (/0.0,0.20,0.4,0.60,0.95,1.0/)
-!     redarr(1:nset) =  (/0.0,0.10,0.2,0.40,1.00,1.0/)
-!     greenarr(1:nset)= (/0.0,0.15,0.2,0.42,1.00,1.0/)
-!     bluearr(1:nset) = (/0.0,0.30,0.4,0.50,0.95,1.0/)  
      case(7)
      !--red-blue-yellow (IDL 16: stern special)
      nset =  7
@@ -280,6 +269,42 @@ subroutine colour_set(icolourscheme)
      redarr(1:nset)  = (/0.000,0.000,0.000,0.000,1.000/)
      greenarr(1:nset)= (/0.000,0.000,0.580,0.604,1.000/)
      bluearr(1:nset) = (/0.000,0.510,1.000,1.000,1.000/)
+     case(22)
+     !--fire (from FLASH code)
+     nset =  6
+     lumarr(1:nset)  = (/0.000,0.016,0.078,0.643,0.800,1.000/)
+     redarr(1:nset)  = (/1.000,1.000,1.000,1.000,0.000,0.973/)
+     greenarr(1:nset)= (/0.000,0.039,0.129,0.957,0.357,0.980/)
+     bluearr(1:nset) = (/0.000,0.000,0.000,0.000,0.000,0.973/)
+     case(23)
+     !--blue-red (from FLASH code)
+     nset =  7
+     lumarr(1:nset)  = (/0.000,0.149,0.345,0.541,0.643,0.769,1.000/)
+     redarr(1:nset)  = (/0.000,0.000,0.157,0.792,0.894,0.988,0.996/)
+     greenarr(1:nset)= (/0.063,0.271,0.584,0.800,0.427,0.220,0.004/)
+     bluearr(1:nset) = (/0.173,0.722,0.153,0.153,0.082,0.165,0.000/)
+     case(24)
+     !--menacing (from FLASH code)
+     nset = 22
+     lumarr(1:nset)  = (/0.000,0.078,0.133,0.161,0.169,0.263,0.271,0.302, &
+                         0.357,0.455,0.478,0.514,0.545,0.588,0.612,0.624, &
+                         0.643,0.722,0.749,0.796,0.808,1.000/)
+     redarr(1:nset)  = (/0.388,1.000,0.757,0.953,0.949,0.859,0.906,1.000, &
+                         1.000,0.196,0.098,0.004,0.000,0.000,0.000,0.000, &
+                         0.000,0.051,0.278,0.561,0.612,0.988/)
+     greenarr(1:nset)= (/0.000,0.000,0.118,0.318,0.306,0.749,0.792,1.000, &
+                         1.000,0.490,0.420,0.220,0.125,0.906,0.718,0.569, &
+                         0.000,0.000,0.004,0.008,0.000,0.973/)
+     bluearr(1:nset) = (/0.000,0.000,0.024,0.051,0.059,0.173,0.157,0.000, &
+                         0.000,0.086,0.063,0.004,0.000,0.941,0.827,0.725, &
+                         0.322,0.302,0.518,0.635,0.600,0.988/)
+     case(25)
+     !--RT (from FLASH code)
+     nset =  6
+     lumarr(1:nset)  = (/0.000,0.455,0.580,0.765,0.773,1.000/)
+     redarr(1:nset)  = (/0.220,1.000,1.000,1.000,1.000,1.000/)
+     greenarr(1:nset)= (/0.000,0.000,0.478,0.980,1.000,1.000/)
+     bluearr(1:nset) = (/0.000,0.000,0.000,0.588,0.608,0.737/)
      end select
 
      call PGCTAB(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &
