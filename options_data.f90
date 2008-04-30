@@ -64,7 +64,7 @@ end subroutine defaults_set_data
 subroutine submenu_data(ichoose)
  use filenames, only:nsteps,nstepsinfile,ifileopen,unitsfile
  use prompting, only:prompt,print_logical
- use getdata, only:get_data
+ use getdata, only:get_data,get_labels
  use settings_data, only:istartatstep,iendatstep,nfreq,iUseStepList, &
      isteplist,buffer_data,iCalcQuantities,iRescale, &
      DataIsBuffered,numplot,ncalc,ncolumns
@@ -160,7 +160,7 @@ subroutine submenu_data(ichoose)
 !------------------------------------------------------------------------
  case(6) 
     print "(a)",'current settings for conversion to physical units are:'
-    call set_labels ! reset labels for printing
+    call get_labels ! reset labels for printing
     do i=1,ncolumns
        print "(a,a3,a,a3,1pe10.3)",trim(label(i))//trim(unitslabel(i)),' = ',trim(label(i)),' x ',units(i)
     enddo
@@ -204,7 +204,7 @@ subroutine submenu_data(ichoose)
           call get_data(1,.true.,firsttime=.true.)
        endif
     else
-       call set_labels
+       call get_labels
        do i=1,numplot
           label(i) = trim(label(i))//trim(unitslabel(i))
        enddo

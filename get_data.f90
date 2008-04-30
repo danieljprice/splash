@@ -11,7 +11,7 @@
 !
 module getdata
  implicit none
- public :: get_data
+ public :: get_data, get_labels
  integer, private :: ncolumnsfirst
  private
 
@@ -105,7 +105,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--set labels (and units) for each column of data
      !
      print "(/a)",' setting plot labels...'
-     if (ivegotdata .and. ncolumns.gt.0) call set_labels
+     if (ivegotdata .and. ncolumns.gt.0) call get_labels
      !
      !--read units file and change units if necessary
      !
@@ -189,9 +189,10 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      nsteps = sum(nstepsinfile(1:nfiles))
      !
      !--set labels (and units) for each column of data
+     !  allow this to be overridden by the presence of a splash.columns file
      !
      !!print "(/a)",' setting plot labels...'
-     if (ivegotdata .and. ncolumns.gt.0) call set_labels
+     if (ivegotdata .and. ncolumns.gt.0) call get_labels
      !
      !--read units file and change units if necessary
      !
@@ -314,5 +315,33 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
 
   return
 end subroutine get_data
+
+!-------------------------------------
+!
+! The following is a wrapper routine
+! for the call to set_labels which
+! overrides the label setting from
+! the splash.columns file if present
+!
+!-------------------------------------
+subroutine get_labels
+ use asciiutils, only:read_asciifile
+ use filenames, only:fileprefix
+ use labels, only:label
+ use settings_data, only:ncolumns
+ implicit none
+ logical :: iexist
+ integer :: nlabelsread
+ 
+ call set_labels
+ inquire(file=trim(fileprefix)//'.columns',exist=iexist)
+ nlabelsread = 0
+ if (iexist) then
+    call read_asciifile(trim(fileprefix)//'.columns',nlabelsread,label(1:ncolumns))
+    if (nlabelsread.lt.ncolumns) &
+       print "(a,i3)",' WARNING: end of file in '//trim(fileprefix)//'.columns file: labels read to column ',nlabelsread
+ endif
+
+end subroutine get_labels
 
 end module getdata
