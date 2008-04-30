@@ -11,7 +11,8 @@ contains
 
 subroutine menu
   use filenames, only:defaultsfile,limitsfile,animfile,fileprefix,set_filenames
-  use labels, only:label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass
+  use labels, only:label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass, &
+              isurfdens,itoomre,iutherm
   use limits, only:write_limits
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
@@ -63,9 +64,21 @@ subroutine menu
   nextra = 0
   ipowerspec = 0
   iacplane = 0
+  isurfdens = 0
+  itoomre = 0
+  if (ndim.eq.3 .and. icoordsnew.eq.2 .or. icoordsnew.eq.3) then
+     nextra = nextra + 1
+     isurfdens = ncolumns + ncalc + nextra
+     label(isurfdens) = 'Surface density'
+     if (iutherm.gt.0 .and. iutherm.le.ncolumns) then
+        nextra = nextra + 1
+        itoomre = ncolumns + ncalc + nextra
+        label(itoomre) = 'Toomre Q parameter'
+     endif
+  endif
   if (ndim.le.1) then !! .or. ndim.eq.3) then ! if 1D or no coord data (then prompts for which x)
-     nextra = 1      ! one extra plot = power spectrum
-     ipowerspec = ncolumns + ncalc + 1
+     nextra = nextra + 1      ! one extra plot = power spectrum
+     ipowerspec = ncolumns + ncalc + nextra
      label(ipowerspec) = '1D power spectrum'
   else
      ipowerspec = 0
@@ -254,6 +267,12 @@ subroutine menu
               irender = 0
               ivecplot = 0
            endif
+        elseif (ipicky.gt.0 .and. ipicky.eq.itoomre .or. ipicky.eq.isurfdens) then
+            if (ipicky.eq.isurfdens) print "(a)",' setting x axis to r for surface density plot'
+            if (ipicky.eq.itoomre) print "(a)",' setting x axis to r for Toomre Q plot'
+            ipickx = 1
+            irender = 0
+            ivecplot = 0
         endif
         !
         !--call main plotting routine
@@ -384,30 +403,10 @@ subroutine menu
    use settings_render, only: iplotcont_nomulti
    implicit none
    integer :: ifac,ierr
-   logical :: isamex, isamey, icoordplot
+   logical :: isamex, isamey, icoordplot, anycoordplot, imultisamepanel
    
    call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
-   if (nyplotmulti.eq.1) then
-      nacross = 1
-      ndown = 1
-      print*,'setting nacross,ndown = ',nacross,ndown 
-   elseif (nyplotmulti.ne.nacross*ndown) then
-      !--guess nacross,ndown based on largest factor
-      ifac = nyplotmulti/2
-      do while (mod(nyplotmulti,ifac).ne.0 .and. ifac.gt.1)
-         ifac = ifac - 1
-      end do
-      if (ifac.le.1) then
-         nacross = nyplotmulti/2
-      else
-         nacross = ifac
-      endif
-      if (nacross.le.0) nacross = 1
-      ndown = nyplotmulti/nacross
-      print*,'setting nacross,ndown = ',nacross,ndown 
-   else
-      print*,'nacross = ',nacross,' ndown = ',ndown
-   endif
+
    isamex = all(multiplotx(1:nyplotmulti).eq.multiplotx(1))
    call prompt('Same x axis for all?',isamex)
    if (isamex) then
@@ -421,6 +420,7 @@ subroutine menu
       multiploty(2:nyplotmulti) = multiploty(1)
    endif
 
+   anycoordplot = .false.
    do i=1,nyplotmulti
       print*,'-------------- Plot number ',i,' --------------'
       if (.not.isamey .or. multiploty(i).gt.ndataplots .or. multiploty(i).le.0) then
@@ -444,6 +444,7 @@ subroutine menu
                    .and.(itrans(multiplotx(i)).eq.0 .and. itrans(multiploty(i)).eq.0)
       
       icoordplot = (multiplotx(i).le.ndim .and. multiploty(i).le.ndim)
+      if (icoordplot) anycoordplot = icoordplot
       
       if (icoordplot .and.iAllowRendering) then
          call prompt('(render) (0=none)',irendermulti(i),0,numplot)
@@ -481,6 +482,35 @@ subroutine menu
       endif
       
    enddo
+   
+   if (isamex .and. .not.anycoordplot) then
+      imultisamepanel = .false.
+      !call prompt('plot all plots in same panel? (default is different panels)',imultisamepanel)
+   else
+      imultisamepanel = .false.
+   endif
+
+   if (nyplotmulti.eq.1 .or. imultisamepanel) then
+      nacross = 1
+      ndown = 1
+      print*,'setting nacross,ndown = ',nacross,ndown 
+   elseif (nyplotmulti.ne.nacross*ndown) then
+      !--guess nacross,ndown based on largest factor
+      ifac = nyplotmulti/2
+      do while (mod(nyplotmulti,ifac).ne.0 .and. ifac.gt.1)
+         ifac = ifac - 1
+      end do
+      if (ifac.le.1) then
+         nacross = nyplotmulti/2
+      else
+         nacross = ifac
+      endif
+      if (nacross.le.0) nacross = 1
+      ndown = nyplotmulti/nacross
+      print*,'setting nacross,ndown = ',nacross,ndown 
+   else
+      print*,'nacross = ',nacross,' ndown = ',ndown
+   endif
    
    return
    end subroutine options_multiplot

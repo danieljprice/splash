@@ -79,6 +79,7 @@ module labels
  integer :: idivb,iJfirst
  integer :: iacplane,ipowerspec
  integer :: icv,iradenergy
+ integer :: isurfdens,itoomre
  
  public
 

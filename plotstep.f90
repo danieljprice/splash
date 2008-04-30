@@ -441,7 +441,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use toystar1D, only:exact_toystar_ACplane
   use toystar2D, only:exact_toystar_ACplane2D
   use labels, only:label,labelvec,iamvec, &
-              ih,irho,ipmass,ix,iacplane,ipowerspec
+              ih,irho,ipmass,ix,iacplane,ipowerspec,isurfdens,itoomre,iutherm
   use limits, only:lim
   use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                 iplotcontmulti,x_secmulti,xsecposmulti
@@ -477,6 +477,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use xsections3D, only:interpolate3D_fastxsec,interpolate3D_xsec_vec
   use render, only:render_pix
   use pagesetup, only:redraw_axes
+  use disc, only:disccalc,discplot
   use exactfromfile, only:exact_fromfile
   use write_pixmap, only:iwritepixmap,writepixmap,write_pixmap_ppm
 
@@ -499,7 +500,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   integer :: npixyvec,nfreqpts
   integer :: icolourprev,linestyleprev
   integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp
-  integer :: ivectemp
+  integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
@@ -514,7 +515,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   character(len=20) :: string,labeltimeunits
   
   logical :: iPlotColourBar, rendering, inormalise, logged, dumxsec, isetrenderlimits
-  logical :: ichangesize
+  logical :: ichangesize, initx, inity
   
 34   format (25(' -'))
 
@@ -629,13 +630,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
      !--if replotting in interactive mode, use the temporarily stored plot limits
      !  (check iplot values are sensible though, otherwise will seg fault here)
-     if (interactivereplot .and. nacross*ndown.gt.1 &
-         .and. iploty.gt.0 .and. iploty.le.numplot &
-         .and. iploty.gt.0 .and. iploty.le.numplot) then
-        xmin = xminmulti(iplotx)
-        xmax = xmaxmulti(iplotx)
-        ymin = xminmulti(iploty)
-        ymax = xmaxmulti(iploty)
+     if (interactivereplot .and. (nacross*ndown.gt.1 .or. iploty.gt.ndataplots)) then
+        if (iplotx.gt.0 .and. iplotx.le.numplot) then
+           xmin = xminmulti(iplotx)
+           xmax = xmaxmulti(iplotx)
+        endif
+        if (iploty.gt.0 .and. iploty.le.numplot) then
+           ymin = xminmulti(iploty)
+           ymax = xmaxmulti(iploty)
+        endif
         if (irender.gt.0 .and. irender.le.numplot) then
            rendermin = xminmulti(irender)
            rendermax = xmaxmulti(irender)
@@ -648,19 +651,40 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      ! also set labels and plot limits
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-     initdataplots: if (iploty.le.ndataplots .and. iplotx.le.ndataplots) then
-        xplot(1:ntoti) = dat(1:ntoti,iplotx)
-        yplot(1:ntoti) = dat(1:ntoti,iploty)
+     initx = (iplotx.gt.0 .and. iplotx.le.ndataplots)
+     inity = (iploty.gt.0 .and. iploty.le.ndataplots)
+     if (iplotx.gt.0 .and. iplotx.le.numplot) labelx = label(iplotx)
+     if (iploty.gt.0 .and. iploty.le.numplot) labely = label(iploty)
+
+     initdataplots: if (initx .or. inity) then
+        if (initx) then
+           xplot(1:ntoti) = dat(1:ntoti,iplotx)
+           itransx = itrans(iplotx)
+           iamvecx = iamvec(iplotx)
+        else
+           itransx = 0
+           iamvecx = 0
+        endif
+        if (inity) then
+           yplot(1:ntoti) = dat(1:ntoti,iploty)
+           itransy = itrans(iploty)
+           iamvecy = iamvec(iploty)
+        else
+           itransy = 0
+           iamvecy = 0
+        endif
         zplot = 0.   !--set later if x-sec
         zslicemin = -huge(zslicemax) !-- " " 
         zslicemax = huge(zslicemax)
-        labelx = label(iplotx)
-        labely = label(iploty)
         if (.not.interactivereplot) then
-           xmin = lim(iplotx,1)
-           xmax = lim(iplotx,2)
-           ymin = lim(iploty,1)
-           ymax = lim(iploty,2)
+           if (iplotx.gt.0 .and. iplotx.le.numplot) then
+              xmin = lim(iplotx,1)
+              xmax = lim(iplotx,2)
+           endif
+           if (iploty.gt.0 .and. iploty.le.numplot) then
+              ymin = lim(iploty,1)
+              ymax = lim(iploty,2)
+           endif
            angletempx = anglex
            angletempy = angley
            angletempz = anglez
@@ -687,15 +711,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         if (icoordsnew.ne.icoords) then
            !--do this if one is a coord but not if rendering
            if (.not.rendering) call changecoords(iplotx,iploty,xplot,yplot,ntoti)
-           if (iamvec(iplotx).gt.0) call changeveccoords(iplotx,xplot,ntoti)
-           if (iamvec(iploty).gt.0) call changeveccoords(iploty,yplot,ntoti)
+           if (iamvecx.gt.0) call changeveccoords(iplotx,xplot,ntoti)
+           if (iamvecy.gt.0) call changeveccoords(iploty,yplot,ntoti)
         endif
 
         !--apply transformations (log, 1/x etc) if appropriate
         !  also change labels and limits appropriately
         if (.not.(rendering)) then
-           if (itrans(iplotx).ne.0) call applytrans(xplot,xmin,xmax,labelx,itrans(iplotx),'x')
-           if (itrans(iploty).ne.0) call applytrans(yplot,ymin,ymax,labely,itrans(iploty),'y')
+           if (itransx.ne.0) call applytrans(xplot,xmin,xmax,labelx,itransx,'x')
+           if (itransy.ne.0) call applytrans(yplot,ymin,ymax,labely,itransy,'y')
         endif
  
         !--write username, date on plot
@@ -705,14 +729,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !  (find minimum/maximum only on particle types actually plotted)
         !
         if (.not.interactivereplot .and. itrackpart.le.0 .and. .not.irotate) then
-           call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x')
-           call adapt_limits(iploty,yplot,ymin,ymax,yminadapti,ymaxadapti,'y')
+           if (initx) call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x')
+           if (inity) call adapt_limits(iploty,yplot,ymin,ymax,yminadapti,ymaxadapti,'y')
         endif
 
         !!-reset co-ordinate plot limits if particle tracking           
         if (itrackpart.gt.0 .and. .not.interactivereplot) then
-           call settrackinglimits(itrackpart,iplotx,xplot,xmin,xmax)
-           call settrackinglimits(itrackpart,iploty,yplot,ymin,ymax)
+           if (initx) call settrackinglimits(itrackpart,iplotx,xplot,xmin,xmax)
+           if (inity) call settrackinglimits(itrackpart,iploty,yplot,ymin,ymax)
         endif
 
         !--override settings based on positions in sequence
@@ -1471,11 +1495,68 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         !--------------------------------------------------------------
-        !  then call subroutine to plot the additional plot
-        ! e.g. call routine to do convergence plot here
+        !  plot surface density or Toomre Q parameter
         !--------------------------------------------------------------
+        if (iploty.eq.isurfdens .or. iploty.eq.itoomre) then
+           just = 0
+           title = ' '
+           if (iploty.eq.itoomre) then
+              itemp = 2
+              label(iploty) = 'Q\dToomre\u'
+              labely = trim(label(iploty))
+           else
+              itemp = 1
+              label(iploty) = '\gS'
+              labely = trim(label(iploty))
+           endif
+           if (itrans(iploty).ne.0) labely = trim(transform_label(label(iploty),itrans(iploty)))
+           if ((.not.interactivereplot) .or. irerender) then
+              if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
+                 if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
+                    call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
+                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),dat(1:ntoti,iutherm))
+                 else
+                    call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
+                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty))
+                 endif
+              else
+                 if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
+                    call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
+                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),dat(1:ntoti,iutherm))                 
+                 else
+                    call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
+                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty))
+                 endif
+              endif
+           endif
+           if (iadapt .and. .not.interactivereplot) then
+              print "(1x,a)",'adapting '//trim(labely)//' limits'
+              ymin = yminadapti
+              ymax = ymaxadapti
+           endif
 
-        if (iexact.eq.4 .and. iploty.eq.iacplane) then
+           call page_setup
+
+           call discplot()
+
+           call redraw_axes(iaxis)
+           call legends_and_title
+
+           iadvance = nfreq
+           nplots = ipanel
+           irerender = .true.
+           call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
+                nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
+                xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
+                vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
+                xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,iColourBarStyle,interactivereplot)
+           if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
+           cycle over_plots
+
+        !--------------------------------------------------------------
+        !  plot Toy star A-C plane solution
+        !--------------------------------------------------------------           
+        elseif (iexact.eq.4 .and. iploty.eq.iacplane) then
         !
         !--A vs C for exact toystar solution
         !
@@ -1488,10 +1569,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            iplots = iplots + 1
            ipanel = ipanel + 1
            if (ipanel.gt.nacross*ndown) ipanel = 1
+
+        !--------------------------------------------------------------
+        !  power spectrum plots (uses x and data as yet unspecified)
+        !--------------------------------------------------------------           
         elseif (iploty.eq.ipowerspec) then
-        !
-        !--power spectrum plots (uses x and data as yet unspecified)
-        !
+
            labelx = 'frequency'
            labely = 'power'
         !   
@@ -1626,9 +1709,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            call legends_and_title
 
         else
-        !
-        !--plot the contents of an extra two-column ascii file
-        !
+        !--------------------------------------------------------------
+        !  plot the contents of an extra two-column ascii file
+        !--------------------------------------------------------------           
+
            call exact_fromfile('gwaves1.dat',xplot,yplot,nfreqpts,ierr)
            just = 0
            title = ' '
