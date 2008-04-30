@@ -456,6 +456,11 @@ rsph: checksystem $(OBJECTS) read_data_rsph.o
 tipsy: checksystem $(OBJECTS) read_data_tipsy.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o tsplash $(OBJECTS) read_data_tipsy.o
 
+vanaverbeke: checksystem $(OBJECTS) read_data_vanaverbeke.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o vsplash $(OBJECTS) read_data_vanaverbeke.o 
+
+sigfried: vanaverbeke
+
 gasoline: tipsy
 
 myall: ndspmhd dansph sphNG srosph gadget mbatesph tipsy ascii
