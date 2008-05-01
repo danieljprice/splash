@@ -423,12 +423,18 @@ subroutine menu
    anycoordplot = .false.
    do i=1,nyplotmulti
       print*,'-------------- Plot number ',i,' --------------'
-      if (.not.isamey .or. multiploty(i).gt.ndataplots .or. multiploty(i).le.0) then
+      if (.not.isamey) then
          call prompt(' y axis ',multiploty(i),1,numplot)
       endif
-      if (.not.isamex) then
-         if (multiploty(i).le.ndataplots) then
-            call prompt(' x axis ',multiplotx(i),1,ndataplots)
+      if (multiploty(i).le.ndataplots .and. .not.isamex) then
+         call prompt(' x axis ',multiplotx(i),1,ndataplots)
+      else
+         if (multiploty(i).eq.isurfdens) then
+            print "(a)",' setting x axis to r for surface density plot'
+            multiplotx(i) = 1
+         elseif (multiploty(i).eq.itoomre) then
+            print "(a)",' setting x axis to r for Toomre Q plot'
+            multiplotx(i) = 1
          else
             multiplotx(i) = multiploty(i)
          endif

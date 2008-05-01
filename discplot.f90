@@ -4,7 +4,7 @@
 !-----------------------------------------------------------------
 module disc
  implicit none
- integer, parameter, private :: nbins = 400
+ integer, parameter, private :: nbins = 350
  integer, dimension(nbins), private :: ninbin
  real, dimension(nbins), private :: radius,sigma,spsound
 
@@ -90,16 +90,18 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,itran
        pmassi = pmass(1)
     endif
     ibin = int((rad(1) - rmin)/deltar) + 1
-    rbin = rmin + (ibin-0.5)*deltar
-    
-    area = pi*((rbin + 0.5*deltar)**2 - (rbin - 0.5*deltar)**2)
+    if (ibin.gt.0 .and. ibin.le.nbins) then
+       rbin = rmin + (ibin-0.5)*deltar
+
+       area = pi*((rbin + 0.5*deltar)**2 - (rbin - 0.5*deltar)**2)
 !$omp atomic
-    sigma(ibin) = sigma(ibin) + pmassi/area
-    if (present(utherm)) then
+       sigma(ibin) = sigma(ibin) + pmassi/area
+       if (present(utherm)) then
 !$omp atomic
-       spsound(ibin) = spsound(ibin) + 2./3.*utherm(i)
+          spsound(ibin) = spsound(ibin) + 2./3.*utherm(i)
 !$omp atomic
-       ninbin(ibin) = ninbin(ibin) + 1
+          ninbin(ibin) = ninbin(ibin) + 1
+       endif
     endif
  enddo
 !$omp end do

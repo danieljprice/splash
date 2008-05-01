@@ -41,7 +41,7 @@ contains
 subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   use params
   use colours, only:colour_set
-  use labels, only:label,ipowerspec,ih,ipmass,irho,iamvec
+  use labels, only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,itoomre,iutherm
   use limits, only:lim
   use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti,x_secmulti,ivecplotmulti
   use prompting, only:prompt
@@ -350,7 +350,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
      endif
 
   !!--need mass for some exact solutions
-     if (iexact.eq.7) required(ipmass) = .true.
+     if (iexact.eq.7 .or. iploty.eq.isurfdens) required(ipmass) = .true.
+     if (iploty.eq.itoomre) required(iutherm) = .true.
   !!--must read everything if we are plotting a calculated quantity
      if (any(required(ncolumns+1:numplot))) required = .true.
   !!--vectors
@@ -367,8 +368,12 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
    !!  and if we are plotting a vector component, all components
      if (icoordsnew.ne.icoords) then
         required(1:ndim) = .true.
-        if (iamvec(iplotx).gt.0) required(iamvec(iplotx):iamvec(iplotx)+ndimV-1) = .true.
-        if (iamvec(iploty).gt.0) required(iamvec(iploty):iamvec(iploty)+ndimV-1) = .true.
+        if (iplotx.gt.0 .and. iplotx.le.numplot) then
+           if (iamvec(iplotx).gt.0) required(iamvec(iplotx):iamvec(iplotx)+ndimV-1) = .true.
+        endif
+        if (iploty.gt.0 .and. iploty.le.numplot) then
+           if (iamvec(iploty).gt.0) required(iamvec(iploty):iamvec(iploty)+ndimV-1) = .true.
+        endif
      endif
 !  endif
 
@@ -659,20 +664,21 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      initdataplots: if (initx .or. inity) then
         if (initx) then
            xplot(1:ntoti) = dat(1:ntoti,iplotx)
-           itransx = itrans(iplotx)
            iamvecx = iamvec(iplotx)
         else
-           itransx = 0
            iamvecx = 0
         endif
         if (inity) then
            yplot(1:ntoti) = dat(1:ntoti,iploty)
-           itransy = itrans(iploty)
            iamvecy = iamvec(iploty)
         else
-           itransy = 0
            iamvecy = 0
         endif
+        itransx = 0
+        itransy = 0
+        if (iplotx.gt.0 .and. iplotx.le.numplot) itransx = itrans(iplotx)
+        if (iploty.gt.0 .and. iploty.le.numplot) itransy = itrans(iploty)
+
         zplot = 0.   !--set later if x-sec
         zslicemin = -huge(zslicemax) !-- " " 
         zslicemax = huge(zslicemax)
@@ -718,8 +724,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !--apply transformations (log, 1/x etc) if appropriate
         !  also change labels and limits appropriately
         if (.not.(rendering)) then
-           if (itransx.ne.0) call applytrans(xplot,xmin,xmax,labelx,itransx,'x')
-           if (itransy.ne.0) call applytrans(yplot,ymin,ymax,labely,itransy,'y')
+           if (itransx.ne.0) call applytrans(xplot,xmin,xmax,labelx,itransx,'x',iplotx)
+           if (itransy.ne.0) call applytrans(yplot,ymin,ymax,labely,itransy,'y',iploty)
         endif
  
         !--write username, date on plot
@@ -1537,22 +1543,36 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
            call page_setup
 
+           call pgqci(icolourprev)    ! query line style and colour
+           call pgqls(linestyleprev)
+           ! set appropriate colour and style if multiple steps per page
+           if (nstepsperpage.gt.1) then
+              call pgsci(linecolourthisstep)
+              call pgsls(linestylethisstep)
+           endif
            call discplot()
+
+           !--restore line size and colour
+           call pgsci(icolourprev)
+           call pgsls(linestyleprev)
 
            call redraw_axes(iaxis)
            call legends_and_title
 
-           iadvance = nfreq
-           nplots = ipanel
-           irerender = .true.
-           call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
-                nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
-                xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
-                vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
-                xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,iColourBarStyle,interactivereplot)
-           if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
+           lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) .and. nyplot.eq.nyplots)
+           if (lastplot) istepsonpage = nstepsperpage
+           if (interactive .and. ipanel.eq.nacross*ndown .and. (istepsonpage.eq.nstepsperpage .or. lastplot)) then
+              iadvance = nfreq
+              nplots = ipanel
+              irerender = .true.
+              call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
+                   nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
+                   xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
+                   vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
+                   xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,iColourBarStyle,interactivereplot)
+              if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
+           endif
            cycle over_plots
-
         !--------------------------------------------------------------
         !  plot Toy star A-C plane solution
         !--------------------------------------------------------------           
@@ -2118,9 +2138,9 @@ contains
 ! also adjusts label (depending on
 ! whether log axes are also set or not).
 !-------------------------------------------------------------------
-  subroutine applytrans(xploti,xmini,xmaxi,labelxi,itransx,chaxis)
+  subroutine applytrans(xploti,xmini,xmaxi,labelxi,itransxi,chaxis,iplotxi)
     implicit none
-    integer, intent(in) :: itransx
+    integer, intent(in) :: itransxi,iplotxi
     real, dimension(:), intent(inout) :: xploti
     real, intent(inout) :: xmini,xmaxi
     character(len=*), intent(inout) :: labelxi
@@ -2128,8 +2148,8 @@ contains
     integer :: itranstemp
     character(len=20) :: string
        
-    if (itransx.ne.0) then
-        call transform(xploti(:),itransx)
+    if (itransxi.ne.0) then
+        if (iplotxi.gt.0 .and. iplotxi.le.numplot) call transform(xploti(:),itransxi)
         if ((chaxis.eq.'x' .and. iaxis.eq.10 .or. iaxis.eq.30).or. &
             (chaxis.eq.'y' .and. iaxis.eq.20 .or. iaxis.eq.30)) then ! logarithmic axes
            write(string,*) itransx
@@ -2139,12 +2159,12 @@ contains
               if (len_trim(string).gt.1) read(string(1:len_trim(string)-1),*) itranstemp
               labelxi = transform_label(labelxi,itranstemp)
            else
-              labelxi = transform_label(labelxi,itransx)
+              labelxi = transform_label(labelxi,itransxi)
            endif
         else
-           labelxi = transform_label(labelxi,itransx)
+           labelxi = transform_label(labelxi,itransxi)
         endif
-        if (.not.interactivereplot) call transform_limits(xmini,xmaxi,itransx)
+        if (.not.interactivereplot) call transform_limits(xmini,xmaxi,itransxi)
      endif
   end subroutine applytrans
 
