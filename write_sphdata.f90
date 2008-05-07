@@ -21,11 +21,18 @@ logical function issphformat(string)
  select case(trim(string))
  case('ascii')
      issphformat = .true.
+ case('binary')
+     issphformat = .true.
  end select
  
  if (.not.issphformat) then
     print "(a)",' possible formats for convert mode ("splash to X"): '
-    print "(a)",' splash to ascii : convert SPH data to ascii file'
+    print "(a,/)",' splash to ascii  : convert SPH data to ascii file'
+    print "(a)",  '        to binary : convert SPH data to simple unformatted binary: '
+    print "(a)",  '                     write(1) time,npart,ncolumns'
+    print "(a)",  '                     do i=1,npart'
+    print "(a)",  '                        write(1) dat(1:ncolumns),itype'
+    print "(a)",  '                     enddo'    
  endif
  
  return
@@ -94,6 +101,38 @@ subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filena
     close(iunit)
     print*,'ERROR WRITING ASCII FILE'
     return
+
+ case ('binary')
+    print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.binary WITH ',ncolumns,' COLUMNS'
+    open(unit=iunit,file=trim(filename)//'.binary',status='replace',form='unformatted',iostat=ierr)
+       if (ierr /= 0) then
+          print "(a)",' ERROR OPENING FILE FOR WRITING'
+          return
+       endif
+       write(iunit,iostat=ierr) time,npart,ncolumns
+       if (ierr /= 0) then
+          print "(a)",' ERROR WRITING HEADER LINE TO BINARY FILE '
+       endif
+       !
+       !--write body
+       !
+       if (size(itype).gt.1) then
+          do i=1,npart
+             write(iunit,err=200) dat(i,1:ncolumns),int(itype(i))
+          enddo
+       else
+          do i=1,npart
+             write(iunit,err=200) dat(i,1:ncolumns)
+          enddo       
+       endif
+    close(iunit)
+
+    return
+200 continue
+    close(iunit)
+    print*,'ERROR WRITING BINARY FILE'
+    return
+
  case default
     print "(a)",' ERROR: unknown output format '''//trim(outformat)//''' in write_sphdump'
     return
