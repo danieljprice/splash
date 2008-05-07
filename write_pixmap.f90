@@ -72,6 +72,7 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  real, intent(in) :: xmin,ymin,dx,datmin,datmax
  character(len=*), intent(in) :: label
  character(len=10) :: stringx,stringy
+ character(len=30) :: fmtstring
  character(len=len_trim(fileprefix)+10) :: filename
  integer :: ierr,j
  integer, parameter :: iunit = 166
@@ -97,9 +98,17 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
  write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy))
- do j=1,npixy
-    write(iunit,*,err=66) datpix(1:npixx,j)
- enddo
+ 
+ write(fmtstring,"(a,i6,a)",iostat=ierr) '(',npixx,'(1pe14.6))'
+ if (ierr /= 0) then
+    do j=1,npixy
+       write(iunit,*,err=66) datpix(1:npixx,j)
+    enddo 
+ else
+    do j=1,npixy
+       write(iunit,fmtstring,err=66) datpix(1:npixx,j)
+    enddo
+ endif
  close(iunit)
  print "(a)",'OK'
  return
