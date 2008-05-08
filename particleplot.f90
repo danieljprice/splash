@@ -19,7 +19,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   use params, only:int1
   use labels, only:labeltype, maxparttypes
   use settings_data, only:ndim,icoords,ntypes
-  use settings_part, only:imarktype,ncircpart,icoordsnew,icircpart, &
+  use settings_part, only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
                           ilabelpart,iplotline,linestylethisstep,linecolourthisstep
   implicit none
   integer, intent(in) :: ntot, iplotx, iploty
@@ -75,10 +75,14 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
         index2 = ntot
         itype = 0
      else
-        itype = ilooptype
+        itype = itypeorder(ilooptype)
+        if (itype.eq.1) then
+           index1 = 1
+        else
+           index1 = sum(npartoftype(1:itype-1))+1
+        endif
         index2 = index1 + npartoftype(itype) - 1
         if (.not.iplotpartoftype(itype)) then
-           index1 = index2 + 1
            call pgebuf
            cycle over_types
         endif

@@ -6,7 +6,7 @@ module settings_part
  use params
  use settings_data, only:icoordsnew
  implicit none
- integer, dimension(maxparttypes) :: imarktype,idefaultcolourtype
+ integer, dimension(maxparttypes) :: imarktype,idefaultcolourtype,itypeorder
  integer, dimension(100) :: icircpart
  integer :: ncircpart
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
@@ -15,7 +15,7 @@ module settings_part
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
-   iexact,icoordsnew,ifastparticleplot,idefaultcolourtype
+   iexact,icoordsnew,ifastparticleplot,idefaultcolourtype,itypeorder
 
 contains
 
@@ -25,6 +25,7 @@ contains
 subroutine defaults_set_part
   use settings_data, only:icoords
   implicit none
+  integer :: i
 
   ncircpart = 0
   iplotline = .false.     ! plot line joining the particles
@@ -46,6 +47,9 @@ subroutine defaults_set_part
   imarktype(5) = 3           ! PGPLOT marker for star particles (gadget)
   idefaultcolourtype = -1     ! default colour for each particle type
   ifastparticleplot = .true. ! allow crowded-field elimination on particle plots
+  do i=1,maxparttypes
+     itypeorder(i) = i
+  enddo
 
   return
 end subroutine defaults_set_part
@@ -70,13 +74,13 @@ subroutine submenu_particleplots(ichoose)
   use labels, only:labeltype
   use limits, only:lim
   use settings_data, only:icoords,ntypes,ndim,UseTypeInRenderings
-  use particle_data, only:npartoftype
+  use particle_data, only:npartoftype,iamtype
   use prompting, only:prompt,print_logical
   use geometry, only:maxcoordsys,labelcoordsys,coord_transform_limits
   use multiplot, only:itrans
   implicit none
   integer, intent(in) :: ichoose
-  integer :: i,iaction,n,itype,icoordsprev
+  integer :: i,iaction,n,itype,icoordsprev,ierr
   character(len=2) :: charntypes
   character(len=20) :: substring1,substring2
   character(len=1000) :: fmtstring
@@ -104,9 +108,9 @@ subroutine submenu_particleplots(ichoose)
          "' 1) turn on/off particles by type       ( ',"//trim(substring1)//",' )',/,"// &
          "' 2) change graph markers for each type  ( ',"//trim(substring2)//",' )',/,"//  &
          "' 3) set colour for each particle type   ( ',"//trim(substring2)//",' )',/,"//  &
-         "' 4) plot line joining particles         ( ',a,' ) ',/,"// &
-         "' 5) plot smoothing circles              ( ',i3,' ) ',/,"// &
-         "' 6) use fast particle plotting          ( ',a,' ) ',/,"// &
+         "' 4) change plotting order of types      ( ',"//trim(substring2)//",' )',/,"//  &
+         "' 5) plot line joining particles         ( ',a,' ) ',/,"// &
+         "' 6) plot smoothing circles              ( ',i3,' ) ',/,"// &
          "' 7) change coordinate systems           ( ',i2,' ) ',/,"// &
          "' 8) plot exact solution                 ( ',i2,' ) ',/,"// &
          "' 9) exact solution plot options ')"
@@ -114,8 +118,8 @@ subroutine submenu_particleplots(ichoose)
   print "(a)",'------------- particle plot options -------------------'
   if (iaction.le.0 .or. iaction.gt.9) then
      print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
-              imarktype(1:ntypes),idefaultcolourtype(1:ntypes),print_logical(iplotline), &
-              ncircpart,print_logical(ifastparticleplot),icoordsnew,iexact
+              imarktype(1:ntypes),idefaultcolourtype(1:ntypes),itypeorder(1:ntypes), &
+              print_logical(iplotline),ncircpart,icoordsnew,iexact
 
      call prompt('enter option',iaction,0,9)
   endif
@@ -161,6 +165,36 @@ subroutine submenu_particleplots(ichoose)
      return   
 !------------------------------------------------------------------------
   case(4)
+     if (size(iamtype(:,1)).gt.1) then
+        print "(3(/,a),/)", &
+          ' WARNING: changing type plotting order currently has no effect ', &
+          '          when particle types are mixed in the dump file', &
+          '          (for sphNG read disable this using -lowmem on the command line)'
+     endif
+     
+     print "(9(i1,'=',a,', '))",(i,trim(labeltype(i)),i=1,ntypes)
+     call prompt('enter first particle type to plot',itypeorder(1),1,ntypes)
+     do i=2,ntypes
+        ierr = 1
+        do while (ierr /= 0)
+           itype = itypeorder(i)
+           call prompt('enter next particle type to plot',itype,1,ntypes)
+           if (any(itypeorder(1:i-1).eq.itype)) then
+              print "(a)",' error: cannot be same as previous type'
+              ierr = 1
+           else
+              itypeorder(i) = itype
+              ierr = 0
+           endif
+        enddo
+     enddo
+
+     print "(/,a,/,a,/)",' Fast particle plotting excludes particles in crowded regions', &
+                         ' Turn this option off to always plot every particle'  
+     call prompt('Allow fast particle plotting?',ifastparticleplot)
+     return 
+!------------------------------------------------------------------------
+  case(5)
      call prompt('plot line joining particles?',iplotline)
      if (iplotline) then     
         call prompt('Enter PGPLOT line style to use ',linestyle,0,5)
@@ -174,7 +208,7 @@ subroutine submenu_particleplots(ichoose)
 !     print*,' label particles = ',ilabelpart
 !     return           
 !------------------------------------------------------------------------
-  case(5)
+  case(6)
      print*,'Note that circles of interaction can also be set interactively'
      call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))
      if (ncircpart.gt.0) then
@@ -191,12 +225,6 @@ subroutine submenu_particleplots(ichoose)
         enddo
      endif
      return           
-!------------------------------------------------------------------------
-  case(6)
-     print "(1x,a,/,a,/)",'Fast particle plotting excludes particles in crowded regions', &
-                     ' Turn this option off to always plot every particle'  
-     call prompt('Allow fast particle plotting?',ifastparticleplot)
-     return 
 !------------------------------------------------------------------------
   case(7)
      print 20,icoords
