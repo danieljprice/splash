@@ -78,3 +78,6 @@ horizontal colour bars implemented; -p, -o command line options; can have mixed 
 1.10.1:
 "splash to" command line option converts binary dumps to ascii format; vector plots + rotation now implemented; block labelled GADGET format read; ring-spreading exact solution added; other minor changes
  
+1.10.2:
+disc surface density / toomre q parameter plotting added; flash colour schemes added; splash to binary convert option; can change order in which particle types are plotted; splash.columns file overrides default column label settings; vanaverbeke format read; various bug fixes
+ 
