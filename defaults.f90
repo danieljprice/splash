@@ -139,6 +139,7 @@ subroutine defaults_write(filename)
  use settings_xsecrot, only:xsecrotopts
  use settings_powerspec, only:powerspecopts
  use multiplot, only:multi
+ use shapes, only:shapeopts
  implicit none
  character(len=*), intent(in) :: filename
  integer :: i,ierr
@@ -160,6 +161,7 @@ subroutine defaults_write(filename)
     write(1,NML=exactopts)
     write(1,NML=exactparams)
     write(1,NML=multi)
+    write(1,NML=shapeopts)
     do i=1,nfiles
        write(1,"(a)") trim(rootname(i))
     enddo
@@ -184,6 +186,7 @@ subroutine defaults_read(filename)
  use settings_xsecrot, only:xsecrotopts
  use settings_powerspec, only:powerspecopts
  use exact, only:exactopts,exactparams
+ use shapes, only:shapeopts
  implicit none
  character(len=*), intent(in) :: filename
  logical :: iexist
@@ -191,47 +194,51 @@ subroutine defaults_read(filename)
  
  inquire (exist=iexist, file=filename)
  if (iexist) then
-    open(unit=1,file=filename,status='old',form='formatted',err=88)
+    open(unit=1,file=filename,status='old',form='formatted',delim='apostrophe',err=88)
     
     ierr = 0
-    read(1,NML=dataopts,end=77,iostat=ierr)
+    read(1,NML=dataopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading data options from '//trim(filename)    
     
     ierr = 0
-    read(1,NML=plotopts,end=77,iostat=ierr)
+    read(1,NML=plotopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading plot options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=pageopts,end=77,iostat=ierr)
+    read(1,NML=pageopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading page options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=renderopts,end=77,iostat=ierr)
+    read(1,NML=renderopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading render options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=vectoropts,end=77,iostat=ierr)
+    read(1,NML=vectoropts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading vector plot options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=xsecrotopts,end=77,iostat=ierr)
+    read(1,NML=xsecrotopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading xsec/rotation options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=powerspecopts,end=77,iostat=ierr)
+    read(1,NML=powerspecopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading power spectrum options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=exactopts,end=77,iostat=ierr)
+    read(1,NML=exactopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading exact solution options from '//trim(filename)    
 
     ierr = 0
-    read(1,NML=exactparams,end=77,iostat=ierr)
+    read(1,NML=exactparams,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading exact solution parameters from '//trim(filename)    
   
     ierr = 0
-    read(1,NML=multi,end=77,iostat=ierr)
+    read(1,NML=multi,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading multiplot options from '//trim(filename)
+
+    ierr = 0
+    read(1,NML=shapeopts,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading shape options from '//trim(filename)
 
     if (len_trim(rootname(1)).eq.0) then
        do i=1,maxfile
@@ -247,10 +254,6 @@ subroutine defaults_read(filename)
     print*,trim(filename)//': file not found: using program settings'
     return
  endif
- 
-77 continue
- print "(a)",'**** warning: end of file in '//trim(filename)//' ****'
- close(unit=1)
 
 88 continue
  print "(a)",' *** error opening defaults file '//trim(filename)//': using program settings'
