@@ -11,7 +11,7 @@
 !
 ! VSPLASH_SINGLEPREC if 'YES' or 'TRUE' then assumes data is single precision
 ! VSPLASH_NCOL to change the number of columns read from the file, 
-! e.g. setenv BSPLASH_NCOL=13
+! e.g. setenv VSPLASH_NCOL=13
 !
 ! the data is stored in the global array dat
 !
