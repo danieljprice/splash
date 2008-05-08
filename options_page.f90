@@ -30,6 +30,7 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_page
+  use shapes, only:defaults_set_shapes
   implicit none
 
   interactive = .true.     ! default for interactive mode
@@ -69,6 +70,7 @@ subroutine defaults_set_page
   iscalepanel = 0
   
   usesquarexy = .true. ! spatial dimensions have same scale
+  call defaults_set_shapes
 
   return
 end subroutine defaults_set_page
@@ -278,9 +280,11 @@ end subroutine submenu_page
 subroutine submenu_legend(ichoose)
  use filenames, only:fileprefix
  use prompting, only:prompt,print_logical
+ use shapes, only:nshapes,labelshapetype,shape,submenu_shapes
  implicit none
  integer, intent(in) :: ichoose
- integer :: iaction
+ integer :: iaction,i,ierr,i1,i2
+ character(len=50) :: string
 
  iaction = ichoose
  print "(a)",'---------------- legend and title options -------------------'
@@ -295,20 +299,40 @@ subroutine submenu_legend(ichoose)
              '  '''//trim(fileprefix)//'.titles'' in the working directory, with one title per line'
  endif
   
- if (iaction.le.0 .or. iaction.gt.5) then
+ if (iaction.le.0 .or. iaction.gt.6) then
+    !--format shape settings string
+    if (nshapes.gt.0) then
+       i2 = 2
+       string = ': '
+    else
+       i2 = 0
+       string = ' '
+    endif
+    do i=1,nshapes
+       i1 = i2 + 1
+       i2 = min(i1 + len_trim(labelshapetype(shape(i)%itype)),len(string))
+       write(string(i1:i2),"(a)",iostat=ierr) trim(labelshapetype(shape(i)%itype)(1:i2-i1))
+       if (i.lt.nshapes) then
+          write(string(i2:i2+1),"(', ')",iostat=ierr)
+          i2 = i2 + 1
+       endif
+    enddo
+    !--print menu
     print 20,print_logical(iPlotLegend),hposlegend,vposlegend,fjustlegend,trim(legendtext), &
              print_logical(iPlotTitles),hpostitle,vpostitle,fjusttitle, &
-             print_logical(iPlotStepLegend), print_logical(iPlotScale),iPlotLegendOnlyOnPanel
+             print_logical(iPlotStepLegend), print_logical(iPlotScale),iPlotLegendOnlyOnPanel, &
+             nshapes,trim(string)
 
 20  format(' 0) exit ',/,                   &
-        ' 1) time legend on/off/settings                (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,1x,'"',a,'")',/, &
-        ' 2) titles on/off/settings                     (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,')',/, &
-        ' 3) legend for multiple steps per page on/off  (',1x,a,1x,')',/, &
-        ' 4) plot scale on co-ordinate plots            (',1x,a,1x,')',/, &
-        ' 5) legend only on nth panel/first row/column  (',1x,i2,1x,')')
+        ' 1) time legend on/off/settings                   (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,1x,'"',a,'")',/, &
+        ' 2) titles on/off/settings                        (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,')',/, &
+        ' 3) legend for multiple steps per page on/off     (',1x,a,1x,')',/, &
+        ' 4) plot scale on co-ordinate plots               (',1x,a,1x,')',/, &
+        ' 5) legend only on nth panel/first row/column     (',1x,i2,1x,')',/, &
+        ' 6) annotate plot (e.g. arrow,square,circle,text) (',1x,i2,a,')')
 
     iaction = 0
-    call prompt(' Enter option ',iaction,0,5)
+    call prompt(' Enter option ',iaction,0,6)
  endif
 
  select case(iaction)
@@ -366,6 +390,8 @@ subroutine submenu_legend(ichoose)
            "'  n : plot legend on nth panel only ')"
 
     call prompt('Enter selection ',iPlotLegendOnlyOnPanel,-2)
+ case(6)
+    call submenu_shapes()
  end select
 
  return
