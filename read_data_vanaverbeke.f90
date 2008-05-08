@@ -44,14 +44,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,k,ierr
-  integer :: nprint,npart_max,nstep_max
-  integer :: ncol,nread,nerr,ncoltemp,nsink
+  integer :: nprint,ntotal,npart_max,nstep_max
+  integer :: ncol,nread,nerr,ncoltemp,nsink,nsinkcol,nacc
   logical :: iexist,doubleprec
   integer, parameter :: iunit = 15
   character(len=len(rootname)) :: dumpfile
-  real :: timei
+  real :: timei,gammai
   real(doub_prec), dimension(maxplot) :: datdb
-!  real(doub_prec) :: timedb
+  real(doub_prec) :: timedb,gammadb
 
   nstepsread = 0
   nstep_max = 0
@@ -73,6 +73,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   
   !--number of columns to read from file
   ncol = 10
+  nsinkcol = 7
   doubleprec = .true.
   
   !--can override these settings with environment variables
@@ -97,12 +98,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
      return
   else
      timei = 0.
-     read(iunit,iostat=ierr) nsink
-     print "(a,i10)",' nsinks: ',nsink
+     read(iunit,iostat=ierr) nprint,nacc,nsink
+     print "(3(a,i10))",'npart:',nprint,' naccreted:',nacc,' nsinks:',nsink
+     if (doubleprec) then
+        read(iunit,iostat=ierr) timedb,gammadb
+        timei = real(timedb)
+        gammai = real(gammadb)
+     else
+        read(iunit,iostat=ierr) timei,gammai     
+     endif
+     print "(2(a,1pe12.3))",'time:',timei,' gamma:',gammai
 
      !--barf if stupid values read
-     if (nsink.lt.0 .or. nsink.gt.1e10) then
-        print "(a)",' *** ERROR IN TIMESTEP HEADER: WRONG ENDIAN? ***'
+     if (nprint.lt.0 .or. nacc.lt.0 .or. nsink.lt.0 .or. nsink.gt.1e7) then
+        print "(a)",' *** ERROR IN TIMESTEP HEADER: WRONG ENDIAN? (or old header format)?'
         close(iunit)
         return
      elseif (ierr /= 0) then
@@ -110,28 +119,28 @@ subroutine read_data(rootname,indexstart,nstepsread)
         close(iunit)
         return
      endif
+     if (timei.lt.0. .or. gammai.lt.1.0 .or. gammai.gt.2.0) then
+        print*,'*** ERROR IN HEADER: strange time and/or gamma read: wrong precision?'
+     endif
      ncolumns = ncol
 
-     nprint = 1e5
-     if (.not.allocated(dat) .or. nprint.gt.npart_max) then
-        npart_max = max(npart_max,nprint)
+     ntotal = nprint + nsink
+     if (.not.allocated(dat) .or. ntotal.gt.npart_max) then
+        npart_max = max(npart_max,ntotal)
         call alloc(npart_max,nstep_max,ncolumns)
      endif
      !
      !--now read the timestep data in the dumpfile
      !
      dat(:,:,j) = 0.
-     !time(j) = timei
+     time(j) = timei
+     gamma(j) = gammai
 
      if (doubleprec) then
-        nread = 0
         nerr = 0
-        do i=1,huge(i)
+        nread = 0
+        do i=1,nprint
            nread = nread + 1
-           if (nread.gt.npart_max) then
-              npart_max = max(npart_max,10*nread)
-              call alloc(npart_max,nstep_max,ncolumns)
-           endif
            read(iunit,end=44,iostat=ierr) (datdb(k),k=1,ncol)
            if (ierr /= 0) then
               nerr = nerr + 1
@@ -139,39 +148,40 @@ subroutine read_data(rootname,indexstart,nstepsread)
               dat(i,1:ncol,j) = real(datdb(1:ncol))
            endif
         enddo
-     else
-        nread = 0
-        nerr = 0
-        do i=1,huge(i)
+        do i=nprint+1,nprint+nsink
            nread = nread + 1
-           if (nread.gt.npart_max) then
-              npart_max = max(npart_max,10*nread)
-              call alloc(npart_max,nstep_max,ncolumns)
-           endif
-
+           read(iunit,end=44,iostat=ierr) (datdb(k),k=1,nsinkcol)
+           if (ierr /= 0) then
+              nerr = nerr + 1
+           else
+              dat(i,1:nsinkcol,j) = real(datdb(1:nsinkcol))
+           endif        
+        enddo
+     else
+        nerr = 0
+        nread = 0
+        do i=1,nprint
+           nread = nread + 1
            read(iunit,end=44,iostat=ierr) dat(i,1:ncol,j)
+           if (ierr /= 0) nerr = nerr + 1
+        enddo
+        do i=nprint+1,nprint+nsink
+           nread = nread + 1
+           read(iunit,end=44,iostat=ierr) dat(i,1:nsinkcol,j)
            if (ierr /= 0) nerr = nerr + 1
         enddo
      endif
 
+     goto 45
 44   continue
+     print "(a,i10)",' WARNING: END-OF-FILE AT LINE ',nread
+45   continue
      if (nerr.gt.0) print *,'*** WARNING: ERRORS DURING READ ON ',nerr,' LINES'
-     
-     if (nread.lt.nprint .or. ierr.ne.0) then
-        nprint = nread-1
-        if (nprint.le.0) then
-           print "(a,i10)",' ERROR READING FILE (ZERO PARTICLES): WRONG ENDIAN? '
-           close(unit=iunit)
-           return
-        else
-           print "(a,i10)",' END OF FILE: read to particle ',nprint
-        endif
-     endif
 
      nstepsread = nstepsread + 1
-     npartoftype(1,j) = nprint - nsink
-     npartoftype(2,j) = nsink
-     gamma(j) = 1.666666666667
+     npartoftype(1,j) = nprint - nacc
+     npartoftype(2,j) = nacc
+     npartoftype(3,j) = nsink
      j = j + 1
 
   endif
@@ -232,11 +242,13 @@ subroutine set_labels
   !
   !--set labels for each particle type
   !
-  ntypes = 2
+  ntypes = 3
   labeltype(1) = 'gas'
-  labeltype(2) = 'sink'
+  labeltype(2) = 'accreted/dead'
+  labeltype(3) = 'sink'
   UseTypeInRenderings(1) = .true.
-  UseTypeInRenderings(2) = .false.
+  UseTypeInRenderings(2) = .true.
+  UseTypeInRenderings(3) = .false.
  
 !-----------------------------------------------------------
 
