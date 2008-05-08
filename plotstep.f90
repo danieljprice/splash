@@ -1999,7 +1999,7 @@ contains
     use settings_page, only:iPlotLegend,iPlotStepLegend, &
         hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnlyOnPanel, &
         iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext,iUseBackGroundColourForAxes
-    !use shapes, only:nshapes,plot_shapes
+    use shapes, only:nshapes,plot_shapes
     implicit none
     integer :: icoloursave
     character(len=len(steplegend(1))) :: steplegendtext
@@ -2075,7 +2075,7 @@ contains
     endif
     
     !--plot shapes
-    !if (nshapes.gt.0) call plot_shapes()
+    if (nshapes.gt.0) call plot_shapes()
     
     !--restore colour index
     call pgsci(icoloursave)
