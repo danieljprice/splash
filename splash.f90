@@ -23,7 +23,12 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.10.1 : (11/03/07)
+!     1.10.2 : (08/05/08)
+!             disc surface density / toomre q parameter plotting added; flash colour
+!             schemes added; splash to binary convert option, can change order in
+!             which particle types are plotted; splash.columns file overrides
+!             column label settings; vanaverbeke format read; various bug fixes.
+!     1.10.1 : (11/03/08)
 !             "splash to" command line option converts binary dumps to ascii format;
 !             vector plots + rotation now implemented; block labelled GADGET format read;
 !             ring-spreading exact solution added.      
@@ -187,7 +192,7 @@ program splash
 !
 !----------------------------------------------------------------------------------
   use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile,animfile, &
-                      unitsfile,fileprefix,set_filenames
+                      fileprefix,set_filenames
   use getdata, only:get_data
   use defaults, only:defaults_set_initial,defaults_set,defaults_read
   use limits, only:read_limits
@@ -207,7 +212,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.10.2beta [8th May ''08]'
+  character(len=*), parameter :: version = 'v1.10.2 [8th May ''08]'
 
   !
   ! initialise some basic code variables

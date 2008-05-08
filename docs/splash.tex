@@ -4,9 +4,9 @@
 \usepackage{mathptmx,graphicx}
 \graphicspath{{figs/}}
 \setlength{\topmargin}{-1.5cm}
-\setlength{\textheight}{22.5cm}
-\setlength{\oddsidemargin}{-0.3cm}
-\setlength{\evensidemargin}{-0.3cm}
+\setlength{\textheight}{25.5cm}
+\setlength{\oddsidemargin}{-0.5cm}
+\setlength{\evensidemargin}{-0.5cm}
 \setlength{\textwidth}{17cm}
 
 \begin{titlepage}
@@ -170,7 +170,13 @@ you used to write it and I can then create a data read for your file format (I w
 
 \subsubsection{ PGPLOT}
  Several useful environment variables can be set for PGPLOT and several of them
-are very useful for SPLASH. In a tcsh shell type:
+are very useful for SPLASH. Firstly, to get the basic installation working it is usually necessary to set the environment variable PGPLOT\_DIR to the location of the pgplot directory and possible also PGPLOT\_FONT to specify the location of the font file (see the online faq for font problems), ie. add the appropriate modification of the following line(s) to your .cshrc (or equivalent) file:
+\begin{verbatim}
+setenv PGPLOT_DIR /mypgplotdir/pgplot
+setenv PGPLOT_FONT /mypgplotdir/pgplot/grfont.dat
+\end{verbatim}
+
+Some other useful things to set which control the runtime behaviour of PGPLOT include:
 \begin{verbatim}
 setenv PGPLOT_DEV /xwin
 setenv PGPLOT_BACKGROUND white
@@ -791,6 +797,9 @@ flags in the set\_labels part of the read\_data file).
 \subsubsection{ Plotting each particle type in a different colour}
 \label{sec:partcolours}
  Each particle type can be plotted in a different colour via the ``set colour for each particle type'' option in the particle plot o)ptions submenu (press `o' from the main menu).
+ 
+\subsubsection{ Changing the order in which different particle types are plotted}
+ The order in which particle types are plotted can be changed via the ``change plotting order of types'' option in the particle plot o)ptions submenu. Thus for example it is possible to make dark matter particles be plotted on top of gas particles rather than the default which is vice-versa. Note that at present this is only implemented for particle types which are stored contiguously (one after the other) in the data read, rather than mixed in with each other.
 
 \subsubsection{ Plotting using lines instead of dots (e.g. for energy vs time plots)}
 \label{sec:lines}
@@ -1944,7 +1953,7 @@ although check that this email address is current because I am still a postdoc!
 \section*{Acknowledgements}
  Several of the routines were developed from ideas used by Matthew Bate and SPLASH has been refined by many useful discussions with the aforementioned. The
 polytrope exact solution is from a routine by Joe Monaghan. I am indebted to one Thomas S. Ullrich at the University of Heidelberg who wrote the prompting module
-which is used throughout the program. Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve SPLASH, including, but not limited to: John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Irsic, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika, Richard Alexander, Sigfried Vanaverbeke and Dave Rundle.
+which is used throughout the program. Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve SPLASH, including, but not limited to: John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Ir\v{s}i\v{c}, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika, Richard Alexander, Sigfried Vanaverbeke and Dave Rundle.
 
 \newpage
 \appendix
