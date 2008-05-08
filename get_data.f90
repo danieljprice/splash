@@ -19,7 +19,7 @@ contains
 
 subroutine get_data(ireadfile,gotfilenames,firsttime)
   use exact, only:read_exactparams
-  use filenames, only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen,unitsfile
+  use filenames, only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
   use limits, only:set_limits
   use settings_data, only:ncolumns,iendatstep,ncalc,ivegotdata, &
                      DataisBuffered,iCalcQuantities,ndim,ndimV,icoords, &
@@ -30,7 +30,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use labels, only:label,labelvec,iamvec,ix,ih,irho,ipmass,labeltype
   use geometry, only:labelcoord
   use calcquantities, only:calc_quantities
-  use settings_units, only:units,unitslabel,read_unitsfile
+  use settings_units, only:units,unitslabel
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
@@ -106,10 +106,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      print "(/a)",' setting plot labels...'
      if (ivegotdata .and. ncolumns.gt.0) call get_labels
-     !
-     !--read units file and change units if necessary
-     !
-     call read_unitsfile(trim(unitsfile),ncolumns,ierr)     
+
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
@@ -193,10 +190,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !!print "(/a)",' setting plot labels...'
      if (ivegotdata .and. ncolumns.gt.0) call get_labels
-     !
-     !--read units file and change units if necessary
-     !
-     call read_unitsfile(trim(unitsfile),ncolumns,ierr)
+
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,min(ncolumns,maxcol)
@@ -326,14 +320,18 @@ end subroutine get_data
 !-------------------------------------
 subroutine get_labels
  use asciiutils, only:read_asciifile
- use filenames, only:fileprefix
+ use filenames, only:fileprefix,unitsfile
  use labels, only:label
  use settings_data, only:ncolumns
+ use settings_units, only:read_unitsfile
  implicit none
  logical :: iexist
- integer :: nlabelsread
+ integer :: nlabelsread,ierr
  
  call set_labels
+ !
+ !--look for a .columns file to override the default column labelling
+ !
  inquire(file=trim(fileprefix)//'.columns',exist=iexist)
  nlabelsread = 0
  if (iexist) then
@@ -341,6 +339,12 @@ subroutine get_labels
     if (nlabelsread.lt.ncolumns) &
        print "(a,i3)",' WARNING: end of file in '//trim(fileprefix)//'.columns file: labels read to column ',nlabelsread
  endif
+
+ !
+ !--read units file and change units if necessary
+ !
+ call read_unitsfile(trim(unitsfile),ncolumns,ierr)     
+
 
 end subroutine get_labels
 
