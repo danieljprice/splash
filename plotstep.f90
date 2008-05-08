@@ -734,7 +734,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !--adjust plot limits if adaptive plot limits set
         !  (find minimum/maximum only on particle types actually plotted)
         !
-        if (.not.interactivereplot .and. itrackpart.le.0 .and. .not.irotate) then
+        if (itrackpart.le.0 .and. .not.irotate) then
            if (initx) call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x')
            if (inity) call adapt_limits(iploty,yplot,ymin,ymax,yminadapti,ymaxadapti,'y')
         endif
@@ -1959,7 +1959,9 @@ contains
     ! store adaptive plot limits for a) in interactive mode 
     ! on multiple plots per page
     !
-    if (.not.interactivereplot) then
+    !--adaptive plot limits are allowed to change even during
+    !  interactive replotting
+    !if (.not.interactivereplot) then
        if (inewpage) then
           xminadapt = huge(xminadapt)
           xmaxadapt = -huge(xmaxadapt)
@@ -1972,7 +1974,7 @@ contains
           xminadapt(irender) = min(xminadapt(irender),renderminadapt)
           xmaxadapt(irender) = max(xmaxadapt(irender),rendermaxadapt)
        endif
-    endif
+    !endif
     
     !--change to background colour index for overlaid text and axes
     if (iUseBackGroundColourForAxes) call pgsci(0)
@@ -2123,12 +2125,14 @@ contains
        index1 = index2 + 1
     enddo
     
-    !--set these as limits if adaptive limits are on   
-    if ((iplot.le.ndim .and. iadaptcoords) &
-    .or.(iplot.gt.ndim .and. iadapt) .and. ipagechange) then
-       print "(1x,a)",'adapting '//trim(labeli)//' limits'
-       xmini = xminadaptive
-       xmaxi = xmaxadaptive
+    !--set these as limits if adaptive limits are on
+    if (.not.interactivereplot) then
+       if ((iplot.le.ndim .and. iadaptcoords) &
+       .or.(iplot.gt.ndim .and. iadapt) .and. ipagechange) then
+          print "(1x,a)",'adapting '//trim(labeli)//' limits'
+          xmini = xminadaptive
+          xmaxi = xmaxadaptive
+       endif
     endif
     
   end subroutine adapt_limits
@@ -2452,8 +2456,7 @@ contains
       usevecplot = .false.
       if (irotate) then
          if (allocated(vecplot)) usevecplot = .true.
-         print*,'using vecplot'
-         !print "(a)",'WARNING: rotation not yet implemented on vector components'
+         print*,'using vecplot' ! this is to indicate (to me) that extra memory is in use
       endif
       !
       !--interpolate using appropriate routine for number of dimensions
@@ -2585,7 +2588,7 @@ contains
                      vecpixy(i,j) = vecpixy(i,j)/vmag
                   endif
               enddo
-            enddo                  
+            enddo
          endif
         
          call streamlines(vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec)
