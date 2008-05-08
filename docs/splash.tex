@@ -1,4 +1,4 @@
-\documentclass[a4paper,11pt]{article}
+\documentclass[a4paper,10pt]{article}
 \usepackage{natbib,rotating,longtable,url,amsmath,nameref}
 %% font
 \usepackage{mathptmx,graphicx}
@@ -492,8 +492,10 @@ Turn ``calculate extra quantities'' on in the d)ata menu. This turns on the calc
  Note that the origin for the calculation of radius can be changed via the ``rotation on/off/settings'' option in the x) submenu. If particle tracking limits are set (see \S\ref{sec:track}) the radius is calculated relative to the particle being tracked.
 
  At the moment it is not possible for the user to change the list of quantities from within splash (although it is on my to-do list). However, additional quantities are calculated in the subroutine \verb+calc_quantities+ in the file \verb+calc_quantities.f90+, in which it is quite a simple matter to add your own by following those already implemented. 
+ 
+ What \emph{is} easy is if you simply want to multiply a column by a fixed number (e.g. say you have sound speed squared and you want to plot temperature) - this can be achieved by defining a unit for the column (ie. a factor by which to multiply the column by) -- see \S\ref{sec:physicalunits} for details. The corresponding label can be changed by creating a \verb+splash.columns+ file (or for the ascii read just a file called `columns') containing labels which are used to override the default ones from the data read (one per line) -- see \S\ref{sec:columnsfile} for more details.
 
-See also \S\ref{sec:geom} for how to transform vectors (and positions) into different coordinate systems. 
+See also \S\ref{sec:geom} for how to transform vectors (and positions) into different coordinate systems.
 
 \subsubsection{ Plotting data in physical units}
 \label{sec:physicalunits}
@@ -504,6 +506,18 @@ See also \S\ref{sec:geom} for how to transform vectors (and positions) into diff
 \subsubsection{ Rescaling data columns}
 See \S\ref{sec:physicalunits}.
 
+\subsubsection{ Changing the default column labels}
+\label{sec:columnsfile}
+ The labelling of columns is usually specific to the data format read (except in the case of the ascii read, asplash, where columns are labelled by the creation of a file called `columns'). Aside from changing the labels in the \verb+read_data+ file specific to the format you are reading, it is also possible to override the labelling of columns at runtime by creating a file called \verb+splash.columns+ (or with a different prefix if the \verb+-p+ command line option is used), with one label per line corresponding to each column read from the dump file, e.g.
+\begin{verbatim}
+column 1
+column 2
+column 3
+my quantity
+another quantity
+\end{verbatim}
+Note that the labels in the \verb+splash.columns+ file \emph{will not} override the labels of coordinate axes or labels for vector quantities (as these require the ability to be changed by plotting in different coordinate systems -- see \S\ref{sec:geom}).
+ 
 \subsubsection{ Plotting column density in g/cm$^{2}$ without having x,y,z in cm}
 See \S\ref{sec:changingunits}. In addition to units for each column (and a unit for time -- see \S\ref{sec:timeunits}) a unit can be set for the length scale added in 3D column integrated plots. The prompt for this appears after the units of either $x$, $y$, $z$ or $h$ has been changed via the ``change physical unit settings'' option in the d)ata menu. The length unit for integration is saved in the first row of the splash.units file, after the units for time.
 
@@ -628,18 +642,18 @@ To change the legend text, create a file called \verb+legend+ in the working dir
 \subsubsection{ Changing axes settings}
 \label{sec:axessettings}
  Axes settings can be changed in the p)age submenu, by choosing ``axes options''. The options are as follows:
-\begin{tabular}{rcp{0.8\textwidth}}
--4 & : & same as AXIS=-1, but also draw major tick marks only \\
--3 & : & same as AXIS=-1, but also draw major and minor tick marks; \\
- -2 & : & draw no box, axes or labels; \\
- -1 & : & draw box only; \\
-  0 & : & draw box and label it with coordinates; \\
-  1 & : & same as AXIS=0, but also draw the coordinate axes (X=0, Y=0); \\
-  2 & : & same as AXIS=1, but also draw grid lines at major increments of the coordinates; \\
-  10 & : & draw box and label X-axis logarithmically; \\
-  20 & : & draw box and label Y-axis logarithmically; \\
-  30 & : & draw box and label both axes logarithmically. \\
-\end{tabular}
+\begin{verbatim}
+ -4 : draw box and major tick marks only;
+ -3 : draw box and tick marks (major and minor) only;
+ -2 : draw no box, axes or labels;
+ -1 : draw box only;
+  0 : draw box and label it with coordinates;
+  1 : same as AXIS=0, but also draw the coordinate axes (X=0, Y=0);
+  2 : same as AXIS=1, but also draw grid lines at major increments of the coordinates;
+ 10 : draw box and label X-axis logarithmically;
+ 20 : draw box and label Y-axis logarithmically;
+ 30 : draw box and label both axes logarithmically.
+\end{verbatim}
 
 \subsubsection{ Turning axes off}
  Plot axes can be turned off by choosing ``axes options'' in the p)age submenu. See \S\ref{sec:axessettings} for more details. 
@@ -845,10 +859,12 @@ choosing o), option 7) and choosing cylindrical coordinates then produces;
 ...
 \end{verbatim}
 transforming both coordinates and vectors into the chosen coordinate system. Note that rendering is disabled in coordinate systems other than those native to the file (ie. anything non-cartesian for you -- part of the reason for this feature was that I was experimenting with SPH in cylindrical and spherical coordinates where the reverse transformation was necessary). 
+ For 3D SPH simulations, extra columns will appear in the menu in cylindrical or spherical coordinates allowing plots of azimuthally-averaged surface density and Toomre Q parameter. For more details see \S\ref{sec:surfdens}.
 
  Details of the coordinate transformations are given in \S\ref{sec:coordtransforms}.
 
  If you have a coordinate system you would like implemented, please email me the details!
+
 
 \subsubsection{ Plotting vector components in different coordinate systems}
 See \S\ref{sec:geom}.
@@ -1713,6 +1729,63 @@ data, although faster implementations would be needed (such as a Fast
 Fourier Transform routine).
 
 
+\subsection{Plotting azimuthally-averaged disc surface density and Toomre Q parameter}
+\label{sec:surfdens}
+ For analysis of accretion disc simulations, it is useful to make azimuthally averaged plots of the disc properties such as the surface density and, for self-gravitating discs, the Toomre Q parameter. Extra columns appear to plot both of these quantities when the simulation is 3D and the coordinate system is changed to cylindrical or spherical co-ordinates (in the particle plot (o)ptions menu -- see \S\ref{sec:geom}). For the Toomre Q parameter to appear it is also necessary to have read the thermal energy from the dump file. For example, having read a dump file, change the coordinate system to cylindricals:
+\begin{verbatim}
+Please enter your selection now (y axis or option):o7
+------------- particle plot options -------------------
+ 0) reset (= 1)
+ 1) cartesian   x,y,z       
+ 2) cylindrical r,phi,z     
+ 3) spherical   r,phi,theta 
+ 4) toroidal    r,theta,phi 
+Enter coordinate system to plot in: ([0:4], default=1):2
+\end{verbatim}
+then extra columns appear in the menu:
+\begin{verbatim}
+ You may choose from a delectable sample of plots 
+-------------------------------------------------------
+  1) r                    13) u                   
+  2) phi                  14) grad h              
+  3) z                    15) grad soft           
+ ...                         ...
+ 11) v\dphi               23) Surface density     
+ 12) v\dz                 24) Toomre Q parameter  
+-------------------------------------------------------
+\end{verbatim}
+Then (in this example), select column 23 to plot surface density,
+\begin{verbatim}
+Please enter your selection now (y axis or option):23
+ setting x axis to r for surface density plot
+\end{verbatim}
+...and the plot will appear - an example surface density plot is shown in Figure~\ref{fig:surfdens}.
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{surfdens.pdf}
+\caption{Plot of azimuthally averaged surface density in a 3D accretion disk simulation}
+\label{fig:surfdens}
+\end{center}
+\end{figure}
+
+Azimuthally averaged quantities are calculated by binning the particles into a fixed number of annuli in radius. The mean surface density is calculated using
+\begin{equation}
+\Sigma(r_{ann}) = \frac{M_{ann}}{\pi [(r_{ann} + 0.5\Delta r)^{2} - (r_{ann} - 0.5\Delta r)^{2}]},
+\end{equation}
+that is, the total mass in the annulus (sum of the particle masses) divided by its area, where $r_{ann}$ is the radius (cylindrical or spherical) of the annulus. The Toomre Q parameter, defined as
+\begin{equation}
+Q_{Toomre}(r) = \frac{\bar{c}_{s}(r)\kappa(r)}{\pi \Sigma(r)},
+\end{equation}
+where $\kappa$ is the epicyclic frequency and $\bar{c}_{s}$ is the RMS sound speed, is calculated using the above surface density, assuming a Keplerian rotation profile and a central star mass of unity (ie.  $\kappa(r) = \Omega(r)$, where $\Omega(r) = r^{-3/2}$). The sound speed for each particle $i$ is calculated from the stored thermal energy and $\gamma$ (ratio of specific heats) according to
+\begin{equation}
+c_{s,i}^{2} = \left\{ \begin{array}{ll}
+\frac23 u_{i}, & \gamma = 1; \\
+(\gamma-1)\gamma u_i, & \gamma \neq 1; 
+\end{array}\right.
+\end{equation}
+from which the RMS sound speed is calculated as the square root of the average of $c_{s}^{2}$ on the particles in the annulus.
+
+
 \section{Other useful information}
 
 \subsection{Converting binary dump files to ascii using SPLASH}
@@ -1870,9 +1943,8 @@ although check that this email address is current because I am still a postdoc!
 
 \section*{Acknowledgements}
  Several of the routines were developed from ideas used by Matthew Bate and SPLASH has been refined by many useful discussions with the aforementioned. The
-polytrope exact solution is from a routine by Joe Monaghan. I am indebted to one
-Thomas S. Ullrich at the University of Heidelberg who wrote the prompting module
-which is used throughout the program. Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve SPLASH, including, but not limited to: John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Irsic, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika and Richard Alexander.
+polytrope exact solution is from a routine by Joe Monaghan. I am indebted to one Thomas S. Ullrich at the University of Heidelberg who wrote the prompting module
+which is used throughout the program. Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve SPLASH, including, but not limited to: John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Irsic, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika, Richard Alexander, Sigfried Vanaverbeke and Dave Rundle.
 
 \newpage
 \appendix
