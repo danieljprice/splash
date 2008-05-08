@@ -1520,18 +1520,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
                  if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
                     call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
-                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),dat(1:ntoti,iutherm))
+                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai,dat(1:ntoti,iutherm))
                  else
                     call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
-                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty))
+                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai)
                  endif
               else
                  if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
                     call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
-                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),dat(1:ntoti,iutherm))                 
+                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai,dat(1:ntoti,iutherm))                 
                  else
                     call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
-                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty))
+                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai)
                  endif
               endif
            endif

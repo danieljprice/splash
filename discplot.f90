@@ -14,14 +14,14 @@ module disc
 
 contains
 
-subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,itransx,itransy,utherm)
+subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,itransx,itransy,gamma,utherm)
  use transforms, only:transform_limits_inverse,transform_inverse,transform
  implicit none
  integer, intent(in) :: iplot,npart,npmass,itransx,itransy
  real, dimension(npart), intent(in) :: rpart
  real, dimension(npmass), intent(in) :: pmass
  real, dimension(npart), intent(in), optional :: utherm
- real, intent(in) :: rminin,rmaxin
+ real, intent(in) :: rminin,rmaxin,gamma
  real, intent(out) :: ymin,ymax
  integer :: i,ibin
  real, parameter :: pi = 3.1415926536
@@ -47,6 +47,11 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,itran
  case(2)
     if (present(utherm)) then
        print "(a)",' calculating Toomre Q parameter (assuming Mstar=1 and a Keplerian rotation profile)'
+       if (gamma.lt.1.00001) then
+          print "(a)",' isothermal equation of state: using cs^2 = 2/3*utherm'
+       else
+          print "(a,f6.3,a,f6.3,a)",' ideal gas equation of state: using cs^2 = ',gamma*(gamma-1),'*u (gamma = ',gamma,')'
+       endif
     else
        print "(a)",' ERROR: cannot calculate Toomre Q parameter: thermal energy not present in dump file'
        return
@@ -74,7 +79,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,itran
 !
 !$omp parallel default(none) &
 !$omp shared(npart,rpart,sigma,npmass,pmass,itransx,rmin,deltar) &
-!$omp shared(ninbin,spsound,utherm) &
+!$omp shared(ninbin,spsound,gamma,utherm) &
 !$omp private(i,rad,pmassi,ibin,rbin,area)
 !$omp do
  do i=1,npart
@@ -97,8 +102,13 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,itran
 !$omp atomic
        sigma(ibin) = sigma(ibin) + pmassi/area
        if (present(utherm)) then
+          if (gamma.lt.1.00001) then
 !$omp atomic
-          spsound(ibin) = spsound(ibin) + 2./3.*utherm(i)
+             spsound(ibin) = spsound(ibin) + 2./3.*utherm(i)
+          else
+!$omp atomic
+             spsound(ibin) = spsound(ibin) + gamma*(gamma-1.)*utherm(i)
+          endif
 !$omp atomic
           ninbin(ibin) = ninbin(ibin) + 1
        endif
