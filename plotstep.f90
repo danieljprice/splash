@@ -452,7 +452,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                 iplotcontmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
   use settings_data, only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
-                     iendatstep,ntypes,UseTypeInRenderings,itrackpart
+                     iendatstep,ntypes,UseTypeInRenderings,itrackpart,required
   use settings_limits, only:iadapt,iadaptcoords,scalemax
   use settings_part, only:iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
                      iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot
@@ -543,10 +543,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   iaxistemp = iaxis
   
   !--set the arrays needed for rendering if they are present
-  if (ih.gt.0 .and. ih.le.ndataplots) hh(:) = dat(:,ih)
+  if (ih.gt.0 .and. ih.le.ndataplots .and. required(ih)) hh(:) = dat(:,ih)
   if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
-     pmassmin = minval(dat(:,ipmass))
-     pmassmax = maxval(dat(:,ipmass))
+     if (required(ipmass)) then
+        pmassmin = minval(dat(:,ipmass))
+        pmassmax = maxval(dat(:,ipmass))
+     else
+        pmassmin = 0.
+        pmassmax = 0.
+     endif
   else
      pmassmin = masstype(1)
      pmassmax = masstype(1)
@@ -2293,7 +2298,8 @@ contains
 
     if (ipmass.gt.0 .and. ipmass.le.ndataplots .and. &
         irho.gt.0 .and. irho.le.ndataplots .and. &
-        ih .gt. 0 .and. ih.le.ndataplots ) then
+        ih .gt. 0 .and. ih.le.ndataplots .and. &
+        required(ipmass) .and. required(irho) .and. required(ih)) then
        
        if (size(iamtype).gt.1) then
           !
