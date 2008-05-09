@@ -5,10 +5,11 @@
 ! written by Daniel Price, University of Exeter, dprice@astro.ex.ac.uk
 ! 24th April '07
 !
+! this is a standalone module with no dependencies
 !---------------------------------------------------------------------------
 module asciiutils
  implicit none
- public :: read_asciifile,get_ncolumns
+ public :: read_asciifile,get_ncolumns,ncolumnsline
  
  private
 
@@ -96,7 +97,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
     read(lunit,"(a)",iostat=ierr) line
     if (index(line,'NaN').gt.0) nansinfile = .true.
     if (index(line,'Inf').gt.0) infsinfile = .true.
-    if (ierr.eq.0) call get_columns(line,ncolsthisline)
+    if (ierr.eq.0) ncolsthisline = ncolumnsline(line)
     if (ncolsthisline.ne.0) nheaderlines = nheaderlines + 1
     ncolumns = ncolsthisline
  enddo
@@ -121,13 +122,12 @@ end subroutine get_ncolumns
 
 !---------------------------------------------------------------------------
 !
-! this routine gets the number of columns from a given line
+! function returning the number of columns of real numbers from a given line
 !
 !---------------------------------------------------------------------------
-subroutine get_columns(line,ncolumns)
+integer function ncolumnsline(line)
  implicit none
  character(len=*), intent(in) :: line
- integer, intent(out) :: ncolumns
  real :: dummyreal(100)
  integer :: ierr,i
 
@@ -136,21 +136,22 @@ subroutine get_columns(line,ncolumns)
  ierr = 0
  read(line,*,iostat=ierr) (dummyreal(i),i=1,size(dummyreal))
  if (ierr .gt. 0) then
-    ncolumns = -1
+    ncolumnsline = -1
     return
  endif
 
  i = 1
- ncolumns = 0
+ ncolumnsline = 0
  do while(abs(dummyreal(i)+666.).gt.1.e-10)
-    ncolumns = ncolumns + 1
+    ncolumnsline = ncolumnsline + 1
     i = i + 1
     if (i.gt.size(dummyreal)) then
        print "(a)",'*** ERROR: too many columns in file'
+       ncolumnsline = size(dummyreal)
        return
     endif
  enddo
 
-end subroutine get_columns
+end function ncolumnsline
 
 end module asciiutils
