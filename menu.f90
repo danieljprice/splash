@@ -350,7 +350,7 @@ subroutine menu
 !+ at startup.
      case('s')
         if (ioption(2:2).eq.'a') then
-           call prompt('enter prefix for defaults file: ',fileprefix)
+           call prompt('enter prefix for defaults file: ',fileprefix,noblank=.true.)
            if (index(fileprefix,'.defaults').eq.0) then
               defaultsfile = trim(fileprefix)//'.defaults'
            else
@@ -360,7 +360,7 @@ subroutine menu
         call defaults_write(defaultsfile)
      case('S')
         if (ioption(2:2).eq.'a' .or. ioption(2:2).eq.'A') then
-           call prompt('enter prefix for filenames: ',fileprefix)
+           call prompt('enter prefix for filenames: ',fileprefix,noblank=.true.)
            call set_filenames(trim(fileprefix))
         endif
         call defaults_write(defaultsfile)
