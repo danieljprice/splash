@@ -42,11 +42,11 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   use params
   use colours, only:colour_set
   use labels, only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,itoomre,iutherm
-  use limits, only:lim
+  use limits, only:lim,rangeset
   use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti,x_secmulti,ivecplotmulti
   use prompting, only:prompt
   use titles, only:read_titles,read_steplegend
-  use settings_data, only:ndim,ndimV,numplot,ncolumns,required,icoords,icoordsnew
+  use settings_data, only:ndim,ndimV,numplot,ncolumns,ndataplots,required,icoords,icoordsnew
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                      colour_fore,colour_back,iadapt,iadaptcoords,linewidth
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
@@ -348,7 +348,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
         required(ih) = .true.
         required(irender_nomulti) = .true.
      endif
-
+  !!--need to read columns used for range restrictions
+     do i=1,ndataplots
+        if (rangeset(i)) required(i) = .true.
+     enddo
   !!--need mass for some exact solutions
      if (iexact.eq.7 .or. iploty.eq.isurfdens) required(ipmass) = .true.
      if (iploty.eq.itoomre) required(iutherm) = .true.
@@ -447,7 +450,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use toystar2D, only:exact_toystar_ACplane2D
   use labels, only:label,labelvec,iamvec, &
               ih,irho,ipmass,ix,iacplane,ipowerspec,isurfdens,itoomre,iutherm
-  use limits, only:lim
+  use limits, only:lim,get_particle_subset
   use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                 iplotcontmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
@@ -571,7 +574,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   !--set weight factor for interpolation routines
   !
   call set_interpolation_weights(weight,dat,iamtype)
-
+  !
+  !--exclude subset of particles if parameter range restrictions are set
+  !
+  call get_particle_subset(icolourme,dat,ndataplots)
   !
   !--add a loop over frames for animation sequences
   !  but only generate extra frames if we are inside a sequence
@@ -1525,18 +1531,20 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
                  if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
                     call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
-                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai,dat(1:ntoti,iutherm))
+                         xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
+                         gammai,dat(1:ntoti,iutherm))
                  else
                     call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
-                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai)
+                         xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai)
                  endif
               else
                  if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
                     call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
-                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai,dat(1:ntoti,iutherm))                 
+                         xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
+                         gammai,dat(1:ntoti,iutherm))
                  else
                     call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
-                               xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai)
+                         xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai)
                  endif
               endif
            endif

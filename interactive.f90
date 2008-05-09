@@ -259,6 +259,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         endif
         print*,' o: re-centre plot on (o)rigin'
         print*,' r: (r)eplot current plot'
+        print*,' R: (R)eset/remove all range restrictions'
         print*,' p: label closest (p)article'
         print*,' t: t)rack closest particle/turn tracking off (coord plots only)'
         print*,' c: plot (c)ircle of interaction for closest particle'        
@@ -375,6 +376,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'0 = hide selected particles'
            print*,'p = plot selected particles only'
            print*,'c = plot circles of interaction on selected parts'
+           print*,'x = use particles within x parameter range only'
+           print*,'y = use particles within y parameter range only'
+           print*,'r = use particles within x and y parameter range only'
+           print*,'R = remove all range restrictions'
            call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
            xptmin = min(xpt,xpt2)
            xptmax = max(xpt,xpt2)
@@ -454,6 +459,31 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               enddo
               print*,'set ',ncircpart,' circles of interaction in selected region'
               if (ncircpart.eq.size(icircpart)) print*,' (first ',size(icircpart),' only)'
+           case('x')
+              call restrict_range(iplotx,xptmin,xptmax)
+              iadvance = 0
+              irerender = .true.
+              interactivereplot = .true.
+              iexit = .true.
+           case('y')
+              call restrict_range(iploty,yptmin,yptmax)
+              iadvance = 0
+              irerender = .true.
+              interactivereplot = .true.
+              iexit = .true.
+           case('r')
+              call restrict_range(iplotx,xptmin,xptmax)
+              call restrict_range(iploty,yptmin,yptmax)
+              iadvance = 0
+              irerender = .true.
+              interactivereplot = .true.
+              iexit = .true.
+           case('R')
+              call reset_ranges
+              iadvance = 0
+              irerender = .true.
+              interactivereplot = .true.
+              iexit = .true.
            case default
               print*,' action cancelled'
            end select 
@@ -640,6 +670,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               iexit = .true.
            endif
         endif
+     !
+     !--reset all range restrictions
+     !
+     case('R')
+        call reset_ranges
+        iadvance = 0
+        interactivereplot = .true.
+        iexit = .true.
      !
      !--save as end point of animation sequence
      !
@@ -924,7 +962,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      case('X','b','B') ! right click -> go back
         iadvance = -abs(iadvance)
         iexit = .true.
-     case('r','R') ! replot
+     case('r') ! replot
         iadvance = 0
         interactivereplot = .true.
         irerender = .true.
@@ -1207,7 +1245,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  real, dimension(:), intent(inout) :: xmin,xmax,xminadapt,xmaxadapt
  logical, intent(out) :: interactivereplot
  integer :: nc,ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage
- real :: xpt2,ypt2,xpti,ypti,renderpt
+ real :: xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
  real :: xlength,ylength,renderlength,drender,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
  real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen,gradient,dr,yint,xmaxin
@@ -1280,6 +1318,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         print*,'    (applies to colour bar if mouse is over colour bar)'
         print*,' o: re-centre plot on (o)rigin'
         print*,' r: (r)eplot current plot'
+        print*,' R: (R)eset/remove all range restrictions'
         print*,' g: plot a line and find its g)radient'
         print*,' G: move le(G)end to current position'
         print*,' T: move (T)itle to current position'
@@ -1354,6 +1393,11 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         !
         print*,'select area: '
         print*,'left click : zoom'
+        print*,'x = use particles within x parameter range only'
+        print*,'y = use particles within y parameter range only'
+        print*,'r = use particles within x and y parameter range only'
+        print*,'R = remove all range restrictions'
+
         !
         !--change colour bar limits
         !
@@ -1399,31 +1443,54 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            endif
         else
            call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
+           !call pgrect(xpt,xpt2,ypt,ypt2)
+           call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
+           !--use centre point of first click and current click to
+           !  better determine panel
+           vptxceni = 0.5*(vptxi + vptx2i)
+           vptyceni = 0.5*(vptyi + vpty2i)
+           ipanel2 = getpanel(vptxceni,vptyceni)
+           if (ipanel2.gt.0 .and. ipanel2.ne.ipanel) then
+              ipanel = ipanel2
+              print*,'panel = ',ipanel
+           endif
+           if (ipanel.le.0) cycle interactive_loop
+           call getxy(vptx2i,vpty2i,xpt2,ypt2,ipanel)
+           !--reset first point according to current panel
+           call getxy(vptxi,vptyi,xpti,ypti,ipanel)
+           xptmin = min(xpti,xpt2)
+           xptmax = max(xpti,xpt2)
+           yptmin = min(ypti,ypt2)
+           yptmax = max(ypti,ypt2)
+              
            select case (char2)
            case('A')   ! zoom if another left click
-              !call pgrect(xpt,xpt2,ypt,ypt2)
-              call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
-              !--use centre point of first click and current click to
-              !  better determine panel
-              vptxceni = 0.5*(vptxi + vptx2i)
-              vptyceni = 0.5*(vptyi + vpty2i)
-              ipanel2 = getpanel(vptxceni,vptyceni)
-              if (ipanel2.gt.0 .and. ipanel2.ne.ipanel) then
-                 ipanel = ipanel2
-                 print*,'panel = ',ipanel
-              endif
-
-              if (ipanel.le.0) cycle interactive_loop
-              call getxy(vptx2i,vpty2i,xpt2,ypt2,ipanel)
-              !--reset first point according to current panel
-              call getxy(vptxi,vptyi,xpti,ypti,ipanel)
-
-              xmin(iplotxarr(ipanel)) = min(xpti,xpt2)
-              xmax(iplotxarr(ipanel)) = max(xpti,xpt2)
-              xmin(iplotyarr(ipanel)) = min(ypti,ypt2)
-              xmax(iplotyarr(ipanel)) = max(ypti,ypt2)
+              xmin(iplotxarr(ipanel)) = xptmin
+              xmax(iplotxarr(ipanel)) = xptmax
+              xmin(iplotyarr(ipanel)) = yptmin
+              xmax(iplotyarr(ipanel)) = yptmax
               print*,'setting limits: xmin = ',xmin(iplotxarr(ipanel)),' xmax = ',xmax(iplotxarr(ipanel))
-   !           iadvance = 0
+              istep = istepnew
+              interactivereplot = .true.
+              iexit = .true.
+           case('x')
+              call restrict_range(iplotxarr(ipanel),xptmin,xptmax)
+              istep = istepnew
+              interactivereplot = .true.
+              iexit = .true.
+           case('y')
+              call restrict_range(iplotyarr(ipanel),yptmin,yptmax)
+              istep = istepnew
+              interactivereplot = .true.
+              iexit = .true.
+           case('r')
+              call restrict_range(iplotxarr(ipanel),xptmin,xptmax)
+              call restrict_range(iplotyarr(ipanel),yptmin,yptmax)
+              istep = istepnew
+              interactivereplot = .true.
+              iexit = .true.
+           case('R')
+              call reset_ranges
               istep = istepnew
               interactivereplot = .true.
               iexit = .true.
@@ -1561,6 +1628,14 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            endif
         endif
      !
+     !--reset all range restrictions
+     !
+     case('R')
+        call reset_ranges
+        interactivereplot = .true.
+        istep = istepnew
+        iexit = .true.
+     !
      !--general plot stuff
      !
      case('G') ! move legend here
@@ -1607,7 +1682,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         istep = istepin - (istepjump)*istepsonpage - iadvance*istepsonpage
         lastpanel = 0
         iexit = .true.
-     case('r','R') ! replot
+     case('r') ! replot
         interactivereplot = .true.
         istep = istepnew
         iexit = .true.
@@ -1902,6 +1977,45 @@ subroutine save_limits(iplot,xmin,xmax)
  
  return
 end subroutine save_limits
+
+!
+!--implements parameter range restriction
+!
+subroutine restrict_range(iplot,xmin,xmax)
+ use limits, only:range
+ use multiplot, only:itrans
+ use transforms, only:transform_limits_inverse
+ implicit none
+ integer, intent(in) :: iplot
+ real, intent(in) :: xmin,xmax
+ real :: xmintemp,xmaxtemp
+ 
+ if (itrans(iplot).ne.0) then
+    xmintemp = xmin
+    xmaxtemp = xmax
+    call transform_limits_inverse(xmintemp,xmaxtemp,itrans(iplot))
+    range(iplot,1) = xmintemp
+    range(iplot,2) = xmaxtemp
+ else
+    range(iplot,1) = xmin
+    range(iplot,2) = xmax
+ endif
+ 
+ return
+end subroutine restrict_range
+
+!
+!--interface to routine which removes all parameter range restrictions
+!
+subroutine reset_ranges()
+ use limits, only:reset_all_ranges
+ implicit none
+ 
+ call reset_all_ranges()
+ 
+ return
+end subroutine reset_ranges
+
 !
 !--saves current plot limits for particle tracking
 !

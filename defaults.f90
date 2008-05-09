@@ -16,7 +16,7 @@ contains
 subroutine defaults_set_initial
   use filenames, only:rootname
   use labels, only:label,labeltype,iamvec,labelvec,reset_columnids
-  use limits, only:lim
+  use limits, only:lim,range
   use particle_data, only:maxpart,maxstep,maxcol
   use settings_data, only:UseTypeInRenderings
   implicit none
@@ -27,6 +27,7 @@ subroutine defaults_set_initial
 !
   lim(:,1) = 0.
   lim(:,2) = 1.
+  range(:,:) = 0.
   call reset_columnids()
   !
   !--filenames

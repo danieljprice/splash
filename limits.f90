@@ -1,17 +1,21 @@
+!----------------------------------------------------------
 !
 ! subroutines to do with setting of plot limits from data
+! and using only a subset of the particles according to a
+! range in parameters
 !
+!----------------------------------------------------------
 module limits
  use params
  implicit none
- real, dimension(maxplot,2) :: lim
+ real, dimension(maxplot,2) :: lim,range
 
 contains
-!
-!--set plot limits for all columns
-!
-!  NB: does not differentiate between particle types at the moment
-!
+
+!----------------------------------------------------------
+! set plot limits for all columns
+! NB: does not differentiate between particle types at the moment
+!----------------------------------------------------------
 subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   use labels, only:label
   use geometry, only:coord_transform_limits
@@ -68,11 +72,12 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   
   return
 end subroutine set_limits
-!
-!--save plot limits for all columns to a file
-!
+
+!----------------------------------------------------------
+! save plot limits for all columns to a file
+!----------------------------------------------------------
 subroutine write_limits(limitsfile)
-  use settings_data, only:numplot
+  use settings_data, only:numplot,ndataplots
   implicit none
   character(len=*), intent(in) :: limitsfile
   integer :: i
@@ -81,7 +86,11 @@ subroutine write_limits(limitsfile)
 
   open(unit=55,file=limitsfile,status='replace',form='formatted',ERR=998)
   do i=1,numplot
-     write(55,*,err=999) lim(i,1),lim(i,2)
+     if (rangeset(i) .and. i.lt.ndataplots) then
+        write(55,"(4(1x,1pe14.6))",err=999) lim(i,1),lim(i,2),range(i,1),range(i,2)
+     else
+        write(55,"(2(1x,1pe14.6))",err=999) lim(i,1),lim(i,2)
+     endif
   enddo
   close(unit=55)
 
@@ -96,23 +105,34 @@ subroutine write_limits(limitsfile)
   return
 
 end subroutine write_limits
-!
-!--read plot limits for all columns from a file
-!
+
+!----------------------------------------------------------
+! read plot limits for all columns from a file
+!----------------------------------------------------------
 subroutine read_limits(limitsfile,ierr)
   use labels, only:label
   use settings_data, only:numplot,ncolumns,ncalc
+  use asciiutils, only:ncolumnsline
   implicit none
   character(len=*), intent(in) :: limitsfile
   integer, intent(out) :: ierr
-  integer :: i
+  integer :: i,ncolsline
+  character(len=120) :: line
 
   ierr = 0
 
   open(unit=54,file=limitsfile,status='old',form='formatted',err=997)
   print*,'reading plot limits from file ',trim(limitsfile)
   do i=1,numplot
-     read(54,*,err=998,end=999) lim(i,1),lim(i,2)
+     read(54,"(a)",err=998,end=999) line
+     ncolsline = ncolumnsline(line)
+     if (ncolsline.lt.2) then
+        goto 998
+     elseif (ncolsline.ge.4) then
+        read(line,*,err=998,end=999) lim(i,1),lim(i,2),range(i,1),range(i,2)
+     else
+        read(line,*,err=998,end=999) lim(i,1),lim(i,2)
+     endif
      if (lim(i,1).eq.lim(i,2)) then
         print*,label(i),' min = max = ',lim(i,1)
      endif
@@ -126,6 +146,7 @@ subroutine read_limits(limitsfile,ierr)
   ierr = 1
   return
 998 continue
+  call print_rangeinfo()
   print*,'*** error reading limits from file'
   ierr = 2
   close(unit=54)
@@ -137,9 +158,128 @@ subroutine read_limits(limitsfile,ierr)
      print*,'end of file in ',trim(limitsfile),': limits read to column ',i
      ierr = -1
   endif
+  
+  !--print info about range restrictions read from file
+  call print_rangeinfo()
   close(unit=54)
   return
 
 end subroutine read_limits
+
+!----------------------------------------------------------
+! get a subset of the particles by enforcing range restrictions
+!----------------------------------------------------------
+subroutine get_particle_subset(icolours,datstep,ncolumns)
+ use labels, only:label
+ implicit none
+ integer, intent(inout), dimension(:) :: icolours
+ real, intent(in), dimension(:,:) :: datstep
+ integer, intent(in) :: ncolumns
+ integer :: icol
+ 
+ if (anyrangeset()) then
+    !--reset colours of all particles (to not hidden) if using range restriction
+    where (icolours(:).eq.-1000)
+       icolours(:) = 0
+    elsewhere
+       icolours(:) = abs(icolours(:))
+    endwhere
+
+    do icol=1,ncolumns
+       if (rangeset(icol)) then
+          print "(a,1pe10.3,a,1pe10.3,a)",' | using only particles in range ', &
+                range(icol,1),' < '//trim(label(icol))//' < ',range(icol,2),' |'
+       !
+       !--loop over the particles and colour those outside the range
+       !  NB: background colour (0) is set to -1000
+       !
+          where (datstep(:,icol).lt.range(icol,1) .or. &
+                 datstep(:,icol).gt.range(icol,2))
+             where (icolours.eq.0)
+                icolours = -1000
+             elsewhere
+                icolours = -abs(icolours)
+             end where
+          end where
+       endif
+    enddo
+ endif
+
+ return  
+end subroutine get_particle_subset
+
+!----------------------------------------------------------
+! reset all range restrictions to zero
+!----------------------------------------------------------
+subroutine reset_all_ranges()
+ use particle_data, only:icolourme
+ implicit none
+ 
+ print "(a)",' removing all range restrictions '
+ where (icolourme(:).eq.-1000)
+    icolourme(:) = 0
+ elsewhere
+    icolourme(:) = abs(icolourme(:))
+ endwhere
+ range(:,:) = 0
+
+ return 
+end subroutine reset_all_ranges
+
+!----------------------------------------------------------
+! function which returns whether or not a range
+! has been set for a given column
+!----------------------------------------------------------
+logical function rangeset(icol)
+ implicit none
+ integer, intent(in) :: icol
+ 
+ rangeset = .false.
+ if (abs(range(icol,2)-range(icol,1)).gt.tiny(range)) rangeset = .true.
+
+ return
+end function rangeset
+
+!----------------------------------------------------------
+! function which returns whether or not a range
+! has been set for a given column
+!----------------------------------------------------------
+logical function anyrangeset()
+ use settings_data, only:ndataplots
+ implicit none
+ integer :: i
+ 
+ anyrangeset = .false.
+ do i=1,ndataplots
+    if (rangeset(i)) anyrangeset = .true.
+ enddo
+
+ return
+end function anyrangeset
+
+!----------------------------------------------------------
+! prints info about current range restriction settings
+!----------------------------------------------------------
+subroutine print_rangeinfo()
+ use settings_data, only:ndataplots
+ use labels, only:label
+ implicit none
+ integer :: i
+ 
+ if (anyrangeset()) then
+    print "(/,a,/)",'>> current range restrictions set: '
+    do i=1,ndataplots
+       if (rangeset(i)) then
+          print "(a,1pe10.3,a,1pe10.3,a)", &
+          ' ( ',range(i,1),' < '//trim(label(i))//' < ',range(i,2),' )'
+       endif
+    enddo
+    print "(/,2(a,/))",'>> only particles within this range will be plotted ', &
+                     '   and/or used in interpolation routines'
+ else
+    print "(/,a,/)",'>> no current parameter range restrictions set ' 
+ endif
+
+end subroutine print_rangeinfo
 
 end module limits

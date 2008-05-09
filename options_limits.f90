@@ -38,7 +38,7 @@ subroutine submenu_limits(ichoose)
  !!use settings_page, only:nstepsperpage
  use multiplot, only:itrans
  use prompting, only:prompt,print_logical
- use limits, only:lim,set_limits
+ use limits, only:lim,set_limits,range,rangeset,anyrangeset,print_rangeinfo
  use labels, only:label,ix,irad
  use transforms, only:ntrans,transform_label
  implicit none
@@ -65,15 +65,16 @@ subroutine submenu_limits(ichoose)
  print "(a)",'------------------ limits options ---------------------'
 10 format( &
         ' 0) exit ',/,                 &
-        ' 1) use adaptive/fixed limits             ( ',a,', ',a,' )   ',/,  &
+        ' 1) use adaptive/fixed limits                  ( ',a,', ',a,' )   ',/,  &
         ' 2) set limits manually ',/,     &
-        ' 3) xy limits/radius relative to particle ( ',i8,' )   ',/,   &
-        ' 4) zoom in/out                           ( ',f4.2,' ) ',/,   &
-        ' 5) apply log or inverse transformations to columns ',/, &
-        ' 6) reset limits for all columns  ')
- if (iaction.le.0 .or. iaction.gt.6) then
-    print 10,trim(string),trim(string2),itrackpart,zoom
-    call prompt('enter option ',iaction,0,6)
+        ' 3) xy limits/radius relative to particle          ( ',i8,' )',/,   &
+        ' 4) zoom in/out                                        ( ',f4.2,' )',/, &
+        ' 5) apply log/other transformations to columns ',/, &
+        ' 6) reset limits for all columns  ',/, &
+        ' 7) use subset of data restricted by parameter range     ( ',a,')')
+ if (iaction.le.0 .or. iaction.gt.7) then
+    print 10,trim(string),trim(string2),itrackpart,zoom,print_logical(anyrangeset())
+    call prompt('enter option ',iaction,0,7)
  endif
 !
 !--limits
@@ -204,6 +205,31 @@ subroutine submenu_limits(ichoose)
      else
         print*,'no data with which to set limits!!'
      endif
+!------------------------------------------------------------------------
+ case(7)
+
+!+ Plot subset of data by restricting parameter range
+    
+    ipick = 1
+    do while (ipick.gt.0)
+       ipick = 0
+       call print_rangeinfo()
+
+       call prompt('Enter column to use to restrict data set (-1=none/unset all,0=quit)',ipick,-1,ndataplots)
+       if (ipick.gt.0) then
+          print*,'current plot limits for '//trim(label(ipick))//': (min,max) = ',lim(ipick,1),lim(ipick,2)
+          call prompt(trim(label(ipick))//' min value ',range(ipick,1))
+          call prompt(trim(label(ipick))//' max value ',range(ipick,2),range(ipick,1))
+          if (.not.rangeset(ipick)) then
+             print*,'>> min=max: no restriction set'
+          endif
+       elseif (ipick.eq.-1) then
+          print "(a)",'>> removing all range restrictions on data set'
+          range(:,:) = 0.
+       endif
+       write(*,*)
+    enddo
+    return
   end select
  
  return
