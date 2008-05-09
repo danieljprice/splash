@@ -449,7 +449,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use toystar1D, only:exact_toystar_ACplane
   use toystar2D, only:exact_toystar_ACplane2D
   use labels, only:label,labelvec,iamvec, &
-              ih,irho,ipmass,ix,iacplane,ipowerspec,isurfdens,itoomre,iutherm
+              ih,irho,ipmass,ix,iacplane,ipowerspec,isurfdens,itoomre,iutherm,ipdf
   use limits, only:lim,get_particle_subset
   use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                 iplotcontmulti,x_secmulti,xsecposmulti
@@ -488,6 +488,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use disc, only:disccalc,discplot
   use exactfromfile, only:exact_fromfile
   use write_pixmap, only:iwritepixmap,writepixmap,write_pixmap_ppm
+  use pdfs, only:pdfcalc
 
   implicit none
   integer, intent(inout) :: ipos, istepsonpage
@@ -1512,40 +1513,54 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         !--------------------------------------------------------------
-        !  plot surface density or Toomre Q parameter
+        !  plot surface density, Toomre Q parameter
+        !  or Probability Distribution Function
+        !  => these all involve a new "y column"
+        !     but use a particle property as the x axis
         !--------------------------------------------------------------
-        if (iploty.eq.isurfdens .or. iploty.eq.itoomre) then
+        if (iploty.eq.isurfdens .or. iploty.eq.itoomre .or. iploty.eq.ipdf) then
            just = 0
            title = ' '
            if (iploty.eq.itoomre) then
               itemp = 2
               label(iploty) = 'Q\dToomre\u'
               labely = trim(label(iploty))
-           else
+           elseif (iploty.eq.isurfdens) then
               itemp = 1
               label(iploty) = '\gS'
               labely = trim(label(iploty))
            endif
+
            if (itrans(iploty).ne.0) labely = trim(transform_label(label(iploty),itrans(iploty)))
+
            if ((.not.interactivereplot) .or. irerender) then
-              if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
-                 if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
-                    call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
-                         xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
-                         gammai,dat(1:ntoti,iutherm))
+              !--call routines which actually calculate disc properties from the particles
+              if (iploty.eq.isurfdens .or. iploty.eq.itoomre) then
+                 if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
+                    if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
+                            xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
+                            gammai,dat(1:ntoti,iutherm))
+                    else
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
+                            xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai)
+                    endif
                  else
-                    call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
-                         xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai)
+                    if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
+                            xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
+                            gammai,dat(1:ntoti,iutherm))
+                    else
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
+                            xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai)
+                    endif
                  endif
-              else
-                 if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
-                    call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
-                         xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
-                         gammai,dat(1:ntoti,iutherm))
-                 else
-                    call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
-                         xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),gammai)
-                 endif
+              elseif (iploty.eq.ipdf) then
+                 ngrid = int(0.75*ntoti**(1./3.))+1
+                 call set_grid1D(xmin,1.,ngrid)
+              !--call routine which calculates pdf on the particles
+                 call pdfcalc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D,yminadapti,ymaxadapti, &
+                      itrans(iplotx),itrans(iploty))
               endif
            endif
            if (iadapt .and. .not.interactivereplot) then
@@ -1563,7 +1578,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               call pgsci(linecolourthisstep)
               call pgsls(linestylethisstep)
            endif
-           call discplot()
+           if (iploty.eq.itoomre .or. iploty.eq.isurfdens) then
+              call discplot()
+           elseif (iploty.eq.ipdf) then
+              call pgline(size(xgrid),xgrid,datpix1D)
+              !call pgbin(size(xgrid),xgrid,datpix1D,.true.)
+           endif
 
            !--restore line size and colour
            call pgsci(icolourprev)
@@ -2107,7 +2127,7 @@ contains
     allocate (xgrid(ngridpts))
 
     do igrid = 1,ngridpts
-       xgrid(igrid) = xmin1D + igrid*dxgrid1D - 0.5*dxgrid1D
+       xgrid(igrid) = xmin1D + (igrid-0.5)*dxgrid1D
     enddo
 
   end subroutine set_grid1D

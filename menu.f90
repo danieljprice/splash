@@ -12,7 +12,7 @@ contains
 subroutine menu
   use filenames, only:defaultsfile,limitsfile,animfile,fileprefix,set_filenames
   use labels, only:label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass, &
-              isurfdens,itoomre,iutherm
+              isurfdens,itoomre,iutherm,ipdf
   use limits, only:write_limits
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
@@ -76,6 +76,12 @@ subroutine menu
         label(itoomre) = 'Toomre Q parameter'
      endif
   endif
+  if (ndim.eq.3) then  !--Probability Density Function
+     nextra = nextra + 1
+     ipdf = ncolumns + ncalc + nextra
+     label(ipdf) = 'PDF'
+  endif
+
   if (ndim.le.1) then !! .or. ndim.eq.3) then ! if 1D or no coord data (then prompts for which x)
      nextra = nextra + 1      ! one extra plot = power spectrum
      ipowerspec = ncolumns + ncalc + nextra
@@ -271,6 +277,10 @@ subroutine menu
             if (ipicky.eq.isurfdens) print "(a)",' setting x axis to r for surface density plot'
             if (ipicky.eq.itoomre) print "(a)",' setting x axis to r for Toomre Q plot'
             ipickx = 1
+            irender = 0
+            ivecplot = 0
+        elseif (ipicky.gt.0 .and. ipicky.eq.ipdf) then
+            call prompt(' enter x axis for PDF calculation ',ipickx,1,ndataplots)
             irender = 0
             ivecplot = 0
         endif
