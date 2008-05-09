@@ -80,6 +80,7 @@ module labels
  integer :: iacplane,ipowerspec
  integer :: icv,iradenergy
  integer :: isurfdens,itoomre
+ integer :: ipdf
  
  public
 
