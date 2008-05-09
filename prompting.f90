@@ -67,6 +67,10 @@
 ! 03/07/07: D. Price:
 ! Functions ucase and lcase added for converting strings to upper or lower case
 !
+! 09/05/08: D. Price:
+! String prompt accepts "blank" to set empty string, unless optional
+! argument noblank is set to .true.
+!
 module prompting
 
    private                     
@@ -414,29 +418,42 @@ contains
    !  String prompting routine 
    !
    
-   subroutine string_prompt(text, string, length, case)
+   subroutine string_prompt(text, string, length, case, noblank)
       character(len=*), intent(in)   :: text
       character(len=*)               :: string
       character(len=128)             :: newstring
       integer, optional, intent(out) :: length
       integer, optional              :: case
+      logical, optional, intent(in)  :: noblank
       integer                        :: is, ia
       integer, parameter             :: aoffset = 32
-      
+      logical                        :: allowblank
       
       !
       !  Write prompt string to terminal
       !
-      
-      write(*,"(a,1x,'(default=""',a,'""):',1x)",advance='no') &
-           trim(adjustl(text)), trim(adjustl(string))
-           
+      if (present(noblank)) then
+         allowblank = .not.noblank
+      else
+         allowblank = .true.
+      endif
+      if (allowblank .and. len_trim(adjustl(string)).gt.0) then
+         write(*,"(a,1x,'(null=""blank"",default=""',a,'""):',1x)",advance='no') &
+              trim(adjustl(text)), trim(adjustl(string))      
+      else
+         write(*,"(a,1x,'(default=""',a,'""):',1x)",advance='no') &
+              trim(adjustl(text)), trim(adjustl(string))
+      endif 
       !
       !  Read new value, quit and keep old value if zero sized string
       !
       
-      read(*,"(a)") newstring      
-      if ( len(trim(adjustl(newstring))) /= 0 ) string = newstring
+      read(*,"(a)") newstring
+      if (allowblank .and. trim(adjustl(newstring)).eq.'blank') then
+         string = ' '
+      elseif ( len(trim(adjustl(newstring))) /= 0 ) then
+         string = newstring
+      endif
       if (present(length)) length = len(trim(string))
          
       !
