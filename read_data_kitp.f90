@@ -81,7 +81,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      read(15,iostat=ierr) np,wp
      timei = 0.
-     print "(a,f10.2,a,i10,a,i10,a,f10.4)",' time: ',timei,' npart: ',np,' wp: ',wp
+     print "(a,f10.2,a,i10,a,f10.4)",' time: ',timei,' npart: ',np,' wp: ',wp
      !--barf if stupid values read
      if (np.le.0 .or. np.gt.1e10) then
         print "(a)",' *** ERRORS IN TIMESTEP HEADER: WRONG ENDIAN? ***'
