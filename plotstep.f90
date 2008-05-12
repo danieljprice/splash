@@ -488,7 +488,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use disc, only:disccalc,discplot
   use exactfromfile, only:exact_fromfile
   use write_pixmap, only:iwritepixmap,writepixmap,write_pixmap_ppm
-  use pdfs, only:pdfcalc
+  use pdfs, only:pdfcalc,pdfplot
 
   implicit none
   integer, intent(inout) :: ipos, istepsonpage
@@ -1529,6 +1529,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               itemp = 1
               label(iploty) = '\gS'
               labely = trim(label(iploty))
+           elseif (iploty.eq.ipdf) then
+              label(iploty) = 'PDF '//trim(label(iplotx))
+              labely = trim(label(iploty))
            endif
 
            if (itrans(iploty).ne.0) labely = trim(transform_label(label(iploty),itrans(iploty)))
@@ -1559,8 +1562,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  ngrid = int(0.75*ntoti**(1./3.))+1
                  call set_grid1D(xmin,1.,ngrid)
               !--call routine which calculates pdf on the particles
-                 call pdfcalc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D,yminadapti,ymaxadapti, &
-                      itrans(iplotx),itrans(iploty))
+                 if (irho.gt.0 .and. irho.le.ndataplots) then
+                    call pdfcalc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D,yminadapti,ymaxadapti, &
+                         itrans(iplotx),itrans(iploty),label(iplotx),icolourme(1:ntoti),dat(1:ntoti,irho))                 
+                 else
+                    call pdfcalc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D,yminadapti,ymaxadapti, &
+                         itrans(iplotx),itrans(iploty),label(iplotx),icolourme(1:ntoti))
+                 endif
               endif
            endif
            if (iadapt .and. .not.interactivereplot) then
@@ -1581,8 +1589,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            if (iploty.eq.itoomre .or. iploty.eq.isurfdens) then
               call discplot()
            elseif (iploty.eq.ipdf) then
-              call pgline(size(xgrid),xgrid,datpix1D)
-              !call pgbin(size(xgrid),xgrid,datpix1D,.true.)
+              call pdfplot(size(xgrid),xgrid,datpix1D)
            endif
 
            !--restore line size and colour
