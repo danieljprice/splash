@@ -42,7 +42,7 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
- integer :: istartmhd,istartrt,nmhd
+ integer :: istartmhd,istartrt,nmhd,idivvcol
  logical :: phantomdump
  
 end module sphNGread
@@ -95,6 +95,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   npart = 0
   iunit = 15
   ipmass = 4
+  idivvcol = 0
 
   dumpfile = trim(rootname)   
   !
@@ -349,8 +350,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
 
    !--for phantom dumps, also make a column for density
+   !  and divv, if a .divv file exists
    if (phantomdump) then
       ncolstep = ncolstep + 1
+      inquire(file=trim(dumpfile)//'.divv',exist=iexist)
+      if (iexist) then
+         ncolstep = ncolstep + 1
+         idivvcol = ncolstep
+      endif
    endif
 !
 !--allocate memory now that we know the number of columns
@@ -662,6 +669,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
 33 continue
    print "(1x,a)",'WARNING: end of file during read'
 34 continue
+ !
+ !--read .divv file for phantom dumps
+ !
+    if (phantomdump .and. idivvcol.ne.0) then
+       print "(a)",' reading divv from '//trim(dumpfile)//'.divv'
+       open(unit=66,file=trim(dumpfile)//'.divv',form='unformatted',status='old',iostat=ierr)
+       if (ierr /= 0) then
+          print "(a)",' ERROR opening '//trim(dumpfile)//'.divv'
+       else
+          read(66,iostat=ierr) dat(1:ntotal,idivvcol,j)
+          if (ierr /= 0) print "(a)",' WARNING: ERRORS reading file'
+          close(66)
+       endif
+    endif
  !
  !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
  !
@@ -1014,6 +1035,7 @@ subroutine set_labels
   if (ih.gt.0) label(ih) = 'h       '
   if (ipmass.gt.0) label(ipmass) = 'particle mass'     
   if (idivB.gt.0) label(idivB) = 'div B'
+  if (idivvcol.gt.0) label(idivvcol) = 'div v'
 
   !
   !--set labels for vector quantities
