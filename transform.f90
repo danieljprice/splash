@@ -35,6 +35,14 @@ module transforms
 
  private
 
+ interface transform
+   module procedure transform,transform_limits,transform2,transforma
+ end interface transform
+
+ interface transform_inverse
+   module procedure transform_inverse,transform_limits_inverse,transforma_inverse
+ end interface transform_inverse
+
 contains
 !------------------------------------------------------------------------
 !
@@ -115,6 +123,29 @@ end subroutine transform
 
 !------------------------------------------------------------------------
 !
+!  interface to above for a single real number
+!
+!------------------------------------------------------------------------
+subroutine transforma(aa,itrans,errval)
+  implicit none
+  integer, intent(in) :: itrans
+  real, intent(inout) :: aa
+  real, intent(in), optional :: errval
+  real, dimension(1) :: array
+
+  array(1) = aa
+  if (present(errval)) then
+     call transform(array,itrans,errval=errval)
+  else
+     call transform(array,itrans)  
+  endif
+  aa = array(1)
+
+  return
+end subroutine transforma
+
+!------------------------------------------------------------------------
+!
 !  inverse transform
 !
 !------------------------------------------------------------------------
@@ -179,6 +210,30 @@ subroutine transform_inverse(array,itrans,errval)
   endif
 
 end subroutine transform_inverse
+
+
+!------------------------------------------------------------------------
+!
+!  interface to above for a single real number
+!
+!------------------------------------------------------------------------
+subroutine transforma_inverse(aa,itrans,errval)
+  implicit none
+  integer, intent(in) :: itrans
+  real, intent(inout) :: aa
+  real, intent(in), optional :: errval
+  real, dimension(1) :: array
+
+  array(1) = aa
+  if (present(errval)) then
+     call transform_inverse(array,itrans,errval=errval)
+  else
+     call transform_inverse(array,itrans)  
+  endif
+  aa = array(1)
+
+  return
+end subroutine transforma_inverse
 
 !------------------------------------------------------------------------
 !
