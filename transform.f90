@@ -32,6 +32,7 @@ module transforms
  real, parameter, private :: zerolog = 1.e-12 ! this is minimum set if xmin = 0 and log
  public :: transform,transform_inverse,transform2
  public :: transform_limits,transform_limits_inverse,transform_label
+ public :: convert_to_ln_fac
 
  private
 
@@ -567,5 +568,53 @@ subroutine get_digits(i,digits,ndigits)
   enddo
 
 end subroutine get_digits
+
+!------------------------------------------------------------------------
+!     function returning the correction factor by which to multiply
+!     to convert the log in the transform to a natural log
+!------------------------------------------------------------------------
+real function convert_to_ln_fac(itrans)
+  implicit none
+  integer, intent(in) :: itrans
+  character(len=20) :: string
+  integer :: i
+  real :: xtemp
+
+  !
+  !--default conversion factor is unity
+  !
+  xtemp = 1.0
+  !
+  !--extract the digits from the input number
+  !
+  if (itrans.gt.0) then      
+     write(string,*) itrans
+     do i=len_trim(string),1,-1  ! do digits in reverse
+        !
+        !--perform transformation appropriate to this digit     
+        !
+        select case(string(i:i))
+        !
+        !--correction factor is ln(10.) but can be
+        !  1./ln(10.), sqrt(1./ln(10.), etc. depending
+        !  on other transformations
+        !
+        case('1')
+           xtemp = log(10.)*xtemp
+        case('2')
+           xtemp = abs(xtemp)
+        case('3')
+           xtemp = 1./xtemp
+        case('4')
+           xtemp = sqrt(xtemp)
+        case('5')
+           xtemp = xtemp**2
+        end select
+     enddo
+  endif
+  
+  convert_to_ln_fac = xtemp
+
+end function convert_to_ln_fac
 
 end module transforms
