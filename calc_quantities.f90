@@ -106,7 +106,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   !--specify MHD quantities
   !
   if (iBfirst.ne.0) then
-     call addcolumn(ipmag,'B\u2\d/2')
+     call addcolumn(ipmag,'1/2 B\u2\d')
      if (ipr.ne.0 .and. ipmag.ne.0) then
         call addcolumn(ibeta,'plasma \gb')
 !        call addcolumn(itotpr,'P_gas + P_mag')
@@ -349,7 +349,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                dat(:,ivalfven,i) = 0.
             end where
          endif
-         if (ivx.gt.0 .and. ndim.ge.2 .and. ndimV.ge.2) then
+         if (imri.gt.0 .and. ivx.gt.0 .and. ndim.ge.2 .and. ndimV.ge.2) then
             dat(:,imri,i) = dat(:,ivx+1,i) + 1.5*Omega0*dat(:,ix(1),i)
          endif
       endif
