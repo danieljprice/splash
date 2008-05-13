@@ -9,7 +9,7 @@
 !---------------------------------------------------------------------------
 module asciiutils
  implicit none
- public :: read_asciifile,get_ncolumns,ncolumnsline
+ public :: read_asciifile,get_ncolumns,ncolumnsline,safename
  
  private
 
@@ -153,5 +153,41 @@ integer function ncolumnsline(line)
  enddo
 
 end function ncolumnsline
+
+!---------------------------------------------------------------------------
+!
+! function stripping '/', '\' and spaces out of filenames
+!
+!---------------------------------------------------------------------------
+function safename(string)
+ implicit none
+ character(len=*), intent(in) :: string
+ character(len=len(string)) :: safename
+ integer :: ipos
+ 
+ safename = string
+
+ !--remove forward slashes which can be mistaken for directories: replace with '_'
+ ipos = index(safename,'/')
+ do while (ipos.ne.0)
+    safename = safename(1:ipos-1)//'_'//safename(ipos+1:len_trim(safename))
+    ipos = index(safename,'/')
+ enddo
+ 
+ !--remove spaces: replace with '_'
+ ipos = index(trim(safename),' ')
+ do while (ipos.ne.0)
+    safename = safename(1:ipos-1)//'_'//safename(ipos+1:len_trim(safename))
+    ipos = index(trim(safename),' ')
+ enddo
+ 
+ !--remove escape sequences: remove '\' and position following
+ ipos = index(trim(safename),'\')
+ do while (ipos.ne.0)
+    safename = safename(1:ipos-1)//safename(ipos+2:len_trim(safename))
+    ipos = index(trim(safename),'\')
+ enddo
+
+end function safename
 
 end module asciiutils

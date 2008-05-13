@@ -17,7 +17,7 @@ contains
 !
 !-----------------------------------------------------------------
 subroutine pdfcalc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,itransx,itransy,labelx,icolours,rhopart)
- use transforms, only:transform,transform_inverse,transform_limits
+ use transforms, only:transform,transform_inverse,transform_limits,convert_to_ln_fac
  implicit none
  integer, intent(in) :: npart,nbins
  real, dimension(:), intent(in) :: xpart
@@ -81,16 +81,19 @@ subroutine pdfcalc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,it
  do ibin=1,nbins
     fi = pdf(ibin)
     if (itransx.gt.0) then
-       xbini = xmin + ibin*dx
-       call transform_inverse(xbini,itransx)
-    ! == not used == \int pdf dx = ln(10)*\int x*pdf d(log_10 x)
-    ! instead just use \int pdf dx with dx varying
-       totprob = totprob + 0.5*((xbini - xbinprev)*fi + dxprev*fprev)
-    else
-       totprob = totprob + 0.5*dx*(fi + fprev)
+       fi = fi*convert_to_ln_fac(itransx)
     endif
-    dxprev = xbini - xbinprev
-    fprev = fi
+  !  if (itransx.gt.0) then
+  !     xbini = xmin + ibin*dx
+  !     call transform_inverse(xbini,itransx)
+  !  ! == not used == \int pdf dx = ln(10)*\int x*pdf d(log_10 x)
+  !  ! instead just use \int pdf dx with dx varying
+  !     totprob = totprob + 0.5*((xbini - xbinprev)*fi + dxprev*fprev)
+  !  else
+       totprob = totprob + dx*fi !!0.5*dx*(fi + fprev)
+  !  endif
+    !dxprev = xbini - xbinprev
+    !fprev = fi
  enddo
 !
 !--normalise pdf so total area is unity
@@ -143,6 +146,7 @@ end subroutine pdfplot
 subroutine write_pdf(nbins,xbin,pb,labelx,itransx,volweighted)
  use filenames, only:rootname,ifileopen
  use transforms, only:transform_label,transform_inverse
+ use asciiutils, only:safename
  implicit none
  character(len=*), intent(in) :: labelx
  integer, intent(in) :: nbins,itransx
@@ -153,11 +157,12 @@ subroutine write_pdf(nbins,xbin,pb,labelx,itransx,volweighted)
  integer, parameter :: iunit = 86
  logical :: warned
  
- print "(a)",' writing to '//trim(rootname(ifileopen))//'_pdf_'//trim(labelx)//'.dat'
- open(unit=iunit,file=trim(rootname(ifileopen))//'_pdf_'//trim(labelx)//'.dat', &
+ print "(a)",' writing to '//trim(rootname(ifileopen))//'_pdf_'//trim(safename(labelx))//'.dat'
+ open(unit=iunit,file=trim(rootname(ifileopen))//'_pdf_'//trim(safename(labelx))//'.dat', &
       form='formatted',status='replace',iostat=ierr)
  if (ierr /= 0) then
     print "(a)",'ERROR: could not open file: no output'
+    return
  endif
  
  if (volweighted) then
