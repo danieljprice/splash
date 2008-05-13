@@ -194,6 +194,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
             ntypes = 1
             read(iunit,iostat=ierr) npart,npartoftypei(1:5),nblocks
          endif
+         n1 = npartoftypei(1)
+         n2 = 0
       elseif (nints.ge.7) then
          read(iunit,iostat=ierr) npart,n1,n2,nreassign,naccrete,nkill,nblocks
       else
