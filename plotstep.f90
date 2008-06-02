@@ -1601,7 +1601,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
            lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) .and. nyplot.eq.nyplots)
            if (lastplot) istepsonpage = nstepsperpage
-           if (interactive .and. ipanel.eq.nacross*ndown .and. (istepsonpage.eq.nstepsperpage .or. lastplot)) then
+           if (interactive .and. ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot)) then
               iadvance = nfreq
               nplots = ipanel
               irerender = .true.
