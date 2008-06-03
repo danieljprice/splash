@@ -43,18 +43,19 @@ module sphNGread
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
  integer :: istartmhd,istartrt,nmhd,idivvcol
- logical :: phantomdump
+ logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp
  
 end module sphNGread
 
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data, only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,icolourme,masstype
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread,&
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
                      lowmemorymode,ntypes
   use mem_allocation, only:alloc
   use system_utils, only:lenvironment,renvironment
   use labels, only:ipmass,irho,ih,ix,ivx
+  use calcquantities, only:calc_quantities
   use sphNGread
   implicit none
   integer, intent(in) :: indexstart
@@ -73,7 +74,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
   integer, dimension(maxparttypes) :: npartoftypei
   real, dimension(maxparttypes) :: massoftypei
-  logical :: iexist, doubleprec, smalldump,imadepmasscolumn
+  logical :: iexist, doubleprec,imadepmasscolumn
     
   character(len=len(rootname)+10) :: dumpfile
   character(len=100) :: fileident
@@ -160,8 +161,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
    else
       print "(a)",'File ID: '//trim(fileident)
    endif
-   iformat = 0
    smalldump = .false.
+   mhddump = .false.
+   usingvecp = .false.
+   rtdump = .false.
    imadepmasscolumn = .false.
    if (fileident(1:1).eq.'S') then
       smalldump = .true.
@@ -171,8 +174,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
    else
       phantomdump = .false.
    endif
+   if (index(fileident,'vecp').ne.0) then
+      usingvecp = .true.
+   endif
 !
-!--read number of default ints
+!--read global dump header
 !   
    nblocks = 1 ! number of MPI blocks
    npartoftypei(:) = 0
@@ -294,7 +300,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
    over_MPIblocks: do iblock=1,nblocks
       
       if (nblocks.gt.1) print "(10('-'),' MPI block ',i4,1x,10('-'))",iblock
-   
+!
+!--read array header from this block
+!  
    ncolstep = 0
    do iarr=1,narrsizes
       read(iunit,end=55,iostat=ierr) isize(iarr),nint(iarr),nint1(iarr),nint2(iarr), &
@@ -328,81 +336,31 @@ subroutine read_data(rootname,indexstart,nstepsread)
    
    npart_max = maxval(isize(1:narrsizes))
    npart_max = max(npart_max,npart,ntotal)
-
-   if (smalldump .or. phantomdump .and. iblock.eq.1) then
-      if (nreals.ge.15) then
-         massoftypei(1) = dummyreal(15)
-         if (massoftypei(1).gt.tiny(0.)) then
-            ncolstep = ncolstep + 1  ! make an extra column to contain particle mass
-            imadepmasscolumn = .true.
-         endif
-         !--read dust mass from phantom dumps
-         if (phantomdump .and. nreals.ge.16) then
-            massoftypei(2) = dummyreal(16)
-         else
-            massoftypei(2) = 0.
-         endif
-      else
-         print "(a)",' error extracting particle mass from small dump file'
-         massoftypei(1) = 0.
-      endif
-      if (abs(massoftypei(1)).lt.tiny(0.) .and. nreal(1).lt.4) then
-         print "(a)",' error: particle masses not present in small dump file'   
-      endif
-   endif
-
-   !--for phantom dumps, also make a column for density
-   !  and divv, if a .divv file exists
-   if (phantomdump) then
-      ncolstep = ncolstep + 1
-      inquire(file=trim(dumpfile)//'.divv',exist=iexist)
-      if (iexist) then
-         ncolstep = ncolstep + 1
-         idivvcol = ncolstep
-      endif
-   endif
 !
-!--allocate memory now that we know the number of columns
+!--work out from array header what sort of dump this is and where things should lie
 !
-   ncolumns = ncolstep + ncalc
-   if (npart_max.gt.maxpart .or. j.gt.maxstep .or. ncolumns.gt.maxcol) then
-      if (lowmemorymode) then
-         ilastrequired = 0
-         do i=1,ncolumns
-            if (required(i)) ilastrequired = i
-         enddo
-         call alloc(npart_max,j,ilastrequired)
-      else
-         call alloc(npart_max,j,ncolumns,mixedtypes=.true.)
-      endif
-   endif
-   
    if (iblock.eq.1) then
-!--extract required information
-      time(j) = dummyreal(1)
-      gamma(j) = dummyreal(3)
-      rhozero = dummyreal(4)
-      tfreefall = SQRT((3. * pi) / (32. * rhozero))
-      if (phantomdump) then
-         npartoftype(1:ntypes,j) = npartoftypei(1:ntypes)
-      else
-         npartoftype(1,j) = npart
-         npartoftype(2,j) = max(ntotal - npart,0)
-      endif
-      hfact = 1.2
-      if (phantomdump) then
-         if (nreals.lt.6) then
-            print "(a)",' error: hfact not present in phantom dump'
+      if (smalldump .or. phantomdump) then
+         if (nreals.ge.15) then
+            massoftypei(1) = dummyreal(15)
+            if (massoftypei(1).gt.tiny(0.)) then
+               ncolstep = ncolstep + 1  ! make an extra column to contain particle mass
+               imadepmasscolumn = .true.
+            endif
+            !--read dust mass from phantom dumps
+            if (phantomdump .and. nreals.ge.16) then
+               massoftypei(2) = dummyreal(16)
+            else
+               massoftypei(2) = 0.
+            endif
          else
-            hfact = dummyreal(6)
+            print "(a)",' error extracting particle mass from small dump file'
+            massoftypei(1) = 0.
          endif
-         print "(a,1pe12.4,a,0pf6.3,a,0pf5.2,a,1pe7.1)", &
-               ' time = ',time(j),' gamma = ',gamma(j), &
-               ' hfact = ',hfact,' tolh = ',dummyreal(7)
-      else
-         print "(a,1pe12.4,a,0pf8.4)",' time = ',time(j),' gamma = ',gamma(j)
+         if (abs(massoftypei(1)).lt.tiny(0.) .and. nreal(1).lt.4) then
+            print "(a)",' error: particle masses not present in small dump file'   
+         endif      
       endif
-      nstepsread = nstepsread + 1
 !
 !--   to handle both small and full dumps, we need to place the quantities dumped
 !     in both small and full dumps at the start of the dat array
@@ -431,15 +389,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
       else
          nmhdarrays = 0
       endif
-      iformat = 0 ! hydro full dump
-      if (smalldump) iformat = 1 ! hydro small dump
-      if (narrsizes.ge.4) then
-         iformat = 2 ! mhd full dump
-         if (smalldump) iformat = 3 ! mhd small dump
-      endif
-      if (iformat.eq.0) then
+ 
+      if (narrsizes.ge.4) mhddump = .true.
+
+      if (.not.(mhddump.or.smalldump)) then
          ivx = 7
-      elseif (iformat.eq.2) then
+      elseif (mhddump) then
          ivx = 10
       else
          ivx = 0
@@ -447,15 +402,66 @@ subroutine read_data(rootname,indexstart,nstepsread)
       !--need to force read of velocities e.g. for corotating frame subtraction
       if (any(required(ivx:ivx+ndimV-1))) required(ivx:ivx+ndimV-1) = .true.
       
-      if (narrsizes.ge.3 .and. isize(3).eq.isize(1)) then
-      !--we have radiative transfer in the dump
-         iformat = 4 ! radiative transfer dump
+      !--radiative transfer dump?
+      if (narrsizes.ge.3 .and. isize(3).eq.isize(1)) rtdump = .true.
+      
+      !--for phantom dumps, also make a column for density
+      !  and divv, if a .divv file exists
+      if (phantomdump) then
+         ncolstep = ncolstep + 1
+         inquire(file=trim(dumpfile)//'.divv',exist=iexist)
+         if (iexist) then
+            ncolstep = ncolstep + 1
+            idivvcol = ncolstep
+         endif
       endif
+   endif
+!
+!--allocate memory now that we know the number of columns
+!
+   ncolumns = ncolstep + ncalc
+   if (npart_max.gt.maxpart .or. j.gt.maxstep .or. ncolumns.gt.maxcol) then
+      if (lowmemorymode) then
+         ilastrequired = 0
+         do i=1,ncolumns
+            if (required(i)) ilastrequired = i
+         enddo
+         call alloc(npart_max,j,ilastrequired)
+      else
+         call alloc(npart_max,j,ncolumns,mixedtypes=.true.)
+      endif
+   endif
+   
+   if (iblock.eq.1) then
+!--extract required information from the first block header
+      time(j) = dummyreal(1)
+      gamma(j) = dummyreal(3)
+      rhozero = dummyreal(4)
+      tfreefall = SQRT((3. * pi) / (32. * rhozero))
+      if (phantomdump) then
+         npartoftype(1:ntypes,j) = npartoftypei(1:ntypes)
+      else
+         npartoftype(1,j) = npart
+         npartoftype(2,j) = max(ntotal - npart,0)
+      endif
+      hfact = 1.2
+      if (phantomdump) then
+         if (nreals.lt.6) then
+            print "(a)",' error: hfact not present in phantom dump'
+         else
+            hfact = dummyreal(6)
+         endif
+         print "(a,1pe12.4,a,0pf6.3,a,0pf5.2,a,1pe7.1)", &
+               ' time = ',time(j),' gamma = ',gamma(j), &
+               ' hfact = ',hfact,' tolh = ',dummyreal(7)
+      else
+         print "(a,1pe12.4,a,0pf8.4)",' time = ',time(j),' gamma = ',gamma(j)
+      endif
+      nstepsread = nstepsread + 1
 
       if (allocated(iphase)) deallocate(iphase)
       allocate(iphase(npart_max))
       iphase(:) = 0
-      
    endif ! iblock = 1
 !
 !--Arrays
@@ -640,7 +646,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   where (dat(i1:i2,ih,j).gt.0.)
                      dat(i1:i2,irho,j) = &
                         dat(i1:i2,ipmass,j)*(hfact/dat(i1:i2,ih,j))**3
-                  elsewhere (dat(i1:i2,ih,j).gt.0.)
+                  elsewhere (dat(i1:i2,ih,j).lt.0.)
                      dat(i1:i2,irho,j) = &
                         dat(i1:i2,ipmass,j)*(hfact/abs(dat(i1:i2,ih,j)))**3
                      icolourme(i1:i2) = -1
@@ -927,7 +933,7 @@ subroutine set_labels
   use labels, only:label,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy
   use params
-  use settings_data, only:ndim,ndimV,ntypes,ncolumns,iformat,UseTypeInRenderings
+  use settings_data, only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings
   use geometry, only:labelcoord
   use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
   use sphNGread
@@ -952,8 +958,60 @@ subroutine set_labels
   irho = 6     !  density
 !--the following only for mhd small dumps or full dumps
   if (ncolumns.ge.7) then
-  select case(iformat)
-     case(0,4) ! hydro full dump
+     if (mhddump) then
+        iBfirst = 7 
+        if (.not.smalldump) then
+           ivx = 10
+           iutherm = 13
+
+           if (phantomdump) then
+              !--phantom MHD full dumps
+              if (nmhd.ge.4) then
+                 iamvec(istartmhd:istartmhd+ndimV-1) = istartmhd
+                 labelvec(istartmhd:istartmhd+ndimV-1) = 'A'
+                 do i=1,ndimV
+                    label(istartmhd+i-1) = trim(labelvec(istartmhd))//'\d'//labelcoord(i,1)
+                 enddo
+                 idivB = istartmhd+ndimV
+              elseif (nmhd.ge.3) then
+                 label(istartmhd) = 'Euler alpha'
+                 label(istartmhd+1) = 'Euler beta'
+                 idivB = istartmhd + 2
+              elseif (nmhd.ge.1) then
+                 idivB = istartmhd
+              endif
+              iJfirst = 0
+              if (ncolumns.ge.idivB+1) then
+                 label(idivB+1) = 'alpha\dB\u'
+              endif
+
+           else
+              !--sphNG MHD full dumps
+              label(14) = 'grad h'
+              label(15) = 'grad soft'
+              label(16) = 'alpha'
+              if (nmhd.ge.7 .and. usingvecp) then
+                 iamvec(istartmhd:istartmhd+ndimV-1) = istartmhd
+                 labelvec(istartmhd:istartmhd+ndimV-1) = 'A'
+                 do i=1,ndimV
+                    label(istartmhd+i-1) = trim(labelvec(16))//'\d'//labelcoord(i,1)
+                 enddo
+                 idivB = istartmhd+ndimV
+              elseif (nmhd.ge.6) then
+                 label(istartmhd) = 'Euler alpha'
+                 label(istartmhd+1) = 'Euler beta'
+                 idivB = istartmhd + 2
+              elseif (nmhd.ge.1) then
+                 idivB = istartmhd
+              endif
+              iJfirst = idivB + 1
+              if (ncolumns.ge.iJfirst+ndimV) then
+                 label(iJfirst+ndimV) = 'alpha\dB\u'
+              endif
+           endif
+        endif
+     else
+        ! pure hydro full dump
         ivx = 7
         iutherm = 10
         if (phantomdump) then
@@ -962,71 +1020,30 @@ subroutine set_labels
         else
            label(11) = 'grad h'
            label(12) = 'grad soft'
+           label(13) = 'alpha'
         endif
-     case(2) ! mhd full dump
-        iBfirst = 7
-        ivx = 10
-        iutherm = 13
-        if (phantomdump) then
-           if (nmhd.ge.4) then
-              iamvec(istartmhd:istartmhd+ndimV-1) = istartmhd
-              labelvec(istartmhd:istartmhd+ndimV-1) = 'A'
-              do i=1,ndimV
-                 label(istartmhd+i-1) = trim(labelvec(istartmhd))//'\d'//labelcoord(i,1)
-              enddo
-              idivB = istartmhd+ndimV
-           elseif (nmhd.ge.3) then
-              label(istartmhd) = 'Euler alpha'
-              label(istartmhd+1) = 'Euler beta'
-              idivB = istartmhd + 2
-           elseif (nmhd.ge.1) then
-              idivB = istartmhd
-           endif
-           iJfirst = 0
-           if (ncolumns.ge.idivB+1) then
-              label(idivB+1) = 'alpha\dB\u'
-           endif
-        
-        else
-           label(14) = 'grad h'
-           label(15) = 'grad soft'
-           if (nmhd.ge.7) then
-              iamvec(istartmhd:istartmhd+ndimV-1) = istartmhd
-              labelvec(istartmhd:istartmhd+ndimV-1) = 'A'
-              do i=1,ndimV
-                 label(istartmhd+i-1) = trim(labelvec(16))//'\d'//labelcoord(i,1)
-              enddo
-              idivB = istartmhd+ndimV
-           elseif (nmhd.ge.6) then
-              label(istartmhd) = 'Euler alpha'
-              label(istartmhd+1) = 'Euler beta'
-              idivB = istartmhd + 2
-           elseif (nmhd.ge.1) then
-              idivB = istartmhd
-           endif
-           iJfirst = idivB + 1
-           if (ncolumns.ge.iJfirst+ndimV) then
-              label(iJfirst+ndimV) = 'alpha\dB\u'
-           endif
-        endif
-     case(3) ! mhd small dump
-        iBfirst = 7
-     end select
-     if (iformat.eq.4 .and. istartrt.gt.0 .and. istartrt.le.ncolumns) then ! radiative transfer dump
+     endif 
+
+     if (istartrt.gt.0 .and. istartrt.le.ncolumns) then ! radiative transfer dump
         iradenergy = istartrt
         label(iradenergy) = 'radiation energy'
-        label(istartrt+1) = 'opacity'
-        icv = istartrt+2
-        label(icv) = 'u/T'
-        label(istartrt+3) = 'lambda'
-        label(istartrt+4) = 'eddington factor'
-        !--units
         uergg = (udist/utime)**2
         units(iradenergy) = uergg
-        units(istartrt+1) = udist**2/umass
-        units(icv) = uergg
-        units(istartrt+3) = 1.0
-        units(istartrt+4) = 1.0
+
+        if (.not.smalldump) then
+           label(istartrt+1) = 'opacity'
+           units(istartrt+1) = udist**2/umass
+
+           icv = istartrt+2
+           label(icv) = 'u/T'
+           units(icv) = uergg
+
+           label(istartrt+3) = 'lambda'
+           units(istartrt+3) = 1.0
+
+           label(istartrt+4) = 'eddington factor'
+           units(istartrt+4) = 1.0
+        endif
      endif
   endif
 
