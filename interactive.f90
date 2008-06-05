@@ -571,8 +571,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            xmaxin = xmax
            if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymaxin) then
               print*,'resetting x limits'
-              xmin = minval(xcoords)
-              xmax = maxval(xcoords)
+              xmin = minval(xcoords,mask=(icolourpart.ge.0))
+              xmax = maxval(xcoords,mask=(icolourpart.ge.0))
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
@@ -580,8 +580,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            endif
            if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmaxin) then
               print*,'resetting y limits'
-              ymin = minval(ycoords)
-              ymax = maxval(ycoords)
+              ymin = minval(ycoords,mask=(icolourpart.ge.0))
+              ymax = maxval(ycoords,mask=(icolourpart.ge.0))
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
@@ -1233,14 +1233,14 @@ end subroutine interactive_step
 ! (this could be made into the only subroutine required)
 !
 subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,ifirstframeonpage,nframes, &
-                             lastpanel,iplotxarr,iplotyarr,irenderarr,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
+                             lastpanel,iplotxarr,iplotyarr,irenderarr,ivecarr,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
                              barwmulti,xminadapt,xmaxadapt,nacross,ndim,icolourscheme,iColourBarStyle,interactivereplot)
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep,iframe,lastpanel
  integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim,ifirstframeonpage,nframes,iColourBarStyle
  integer, intent(inout) :: icolourscheme
- integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr
+ integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr,ivecarr
  real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
  real, dimension(:), intent(inout) :: xmin,xmax,xminadapt,xmaxadapt
  logical, intent(out) :: interactivereplot
@@ -1322,12 +1322,13 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         print*,' g: plot a line and find its g)radient'
         print*,' G: move le(G)end to current position'
         print*,' T: move (T)itle to current position'
-!        print*,' H: move vector plot legend H(ere)'
+        print*,' H: move vector plot legend H(ere)'
         print*,' m: change colour m)ap to next'
         print*,' M: change colour M)ap to previous'
         print*,' i: i)nvert colour map'
-!        print*,' v: decrease arrow size on vector plots'
-!        print*,' V: increase arrow size on vector plots'
+        print*,' v: decrease arrow size on vector plots'
+        print*,' V: increase arrow size on vector plots'
+        print*,' w: adapt vector arrow size to maximum value'
         print*,' next timestep/plot   : space, n'
         print*,' previous timestep    : right click (or X), b'
         print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then left (right) click'
@@ -1594,6 +1595,33 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            endif
         endif
      !
+     !--zoom in/out on vector plots (arrow size)
+     !
+     case('v')
+        if (ivecarr(ipanel).gt.0) then
+           print*,'decreasing vector arrow size'
+           xmax(ivecarr(ipanel)) = 1.2*zoomfac*xmax(ivecarr(ipanel))
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        endif
+     case('V')
+        if (ivecarr(ipanel).gt.0) then
+           print*,'increasing vector arrow size'
+           xmax(ivecarr(ipanel)) = 0.8/zoomfac*xmax(ivecarr(ipanel))
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        endif
+     case('w','W')
+        if (ivecarr(ipanel).gt.0) then
+           print*,'adapting vector arrow size'
+           xmax(ivecarr(ipanel)) = -1.0
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        endif
+     !
      !--set/unset log axes
      !
      case('l')
@@ -1653,6 +1681,16 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
+        endif
+     case('H') ! move vector legend here
+        if (ipanel.gt.0) then
+           if (ivecarr(ipanel).gt.0) then
+              print*,'setting vector plot legend to current location...'
+              call mvlegendvec(xpti,ypti,xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),xmax(iplotyarr(ipanel)))
+              istep = istepnew
+              interactivereplot = .true.
+              iexit = .true.
+           endif
         endif
      case('m') ! change colour map (next scheme)
         call change_colourmap(icolourscheme,1)

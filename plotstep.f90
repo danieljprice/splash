@@ -18,7 +18,7 @@ module timestep_plotting
   real, private :: dxgrid,xmingrid,xmaxgrid
   real, private :: angletempx, angletempy, angletempz
   !--buffer for interactive mode on multiplots
-  integer, dimension(maxplot) :: iplotxtemp,iplotytemp,irendertemp
+  integer, dimension(maxplot) :: iplotxtemp,iplotytemp,irendertemp,ivecplottemp
   real, dimension(maxplot) :: xminmulti,xmaxmulti,xminadapt,xmaxadapt
   real, dimension(maxplot) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
   real, private :: xminadapti,xmaxadapti,yminadapti,ymaxadapti,renderminadapt,rendermaxadapt
@@ -520,7 +520,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   real :: pixwidth,pixwidthvec,dxfreq
 
   character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
-  character(len=120) :: title
   character(len=20) :: string,labeltimeunits
   
   logical :: iPlotColourBar, rendering, inormalise, logged, dumxsec, isetrenderlimits
@@ -1195,6 +1194,27 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               call colour_particles(renderplot(1:ntoti), &
                    rendermin,rendermax,icolourme(1:ntoti),ntoti)
            endif
+
+           !-------------------------------------------------------------------------
+           !   similarly, get limits to be used in the vector plot so we can store
+           !   them during page_setup for interactive plots
+           !-------------------------------------------------------------------------           
+           if (ivectorplot.ne.0 .and. ndim.ge.2) then
+             if (iamvec(ivectorplot).ne.0) then
+                !!--choose quantity to be plotted
+                ivecx = iamvec(ivectorplot) + iplotx - 1
+                ivecy = iamvec(ivectorplot) + iploty - 1
+                
+                if (.not.interactivereplot) then ! not if vecmax changed interactively
+                   if (iadapt) then
+                      vecmax = -1.0  ! plot limits then set in vectorplot
+                   else
+                      vecmax = max(lim(ivecx,2),lim(ivecy,2))
+                   endif
+                endif
+             endif
+           endif
+
            !-----end of preliminary muff for 2D/3D cross sections/renderings ------------------
 
            !---------------------------------
@@ -1211,7 +1231,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                .or.(icoordsnew.gt.1)) then
               just = 0 
            endif
-           title = ' '
            !--work out if colour bar is going to be plotted 
            !  (leave space in page setup if so)
            iPlotColourBar = .false.
@@ -1287,40 +1306,30 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !--------------------------------------------------------------
            ! vector maps (can be on top of particle plots and renderings)
            !--------------------------------------------------------------
-           if (ivectorplot.ne.0 .and. ndim.ge.2) then
-             if (iamvec(ivectorplot).ne.0) then
-                !!--choose quantity to be plotted
-                ivecx = iamvec(ivectorplot) + iplotx - 1
-                ivecy = iamvec(ivectorplot) + iploty - 1
+           if (ivecx.gt.0 .and. ivecy.gt.0 .and. ivectorplot.gt.0) then               
+              if (iRescale) then
+                 labelvecplot = trim(labelvec(ivectorplot))//trim(unitslabel(ivectorplot))
+              else
+                 labelvecplot = trim(labelvec(ivectorplot))      
+              endif
+              !!--set label for projection plots (2268 or 2412 for integral sign)
+              if (ndim.eq.3 .and..not. x_sec) then
+                 if (iRescale) then
+                    labelvecplot = '\(2268) '//trim(labelvecplot)//' d'// &
+                      trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//' [code units]'
+                 else
+                    labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
+                 endif
+              endif
+              pixwidthvec = (xmax-xmin)/real(npixvec)
+              npixyvec = int(0.999*(ymax-ymin)/pixwidthvec) + 1
+              pixwidth = (xmax-xmin)/real(npixx) ! used in synchrotron plots
 
-                if (iRescale) then
-                   labelvecplot = trim(labelvec(ivectorplot))//trim(unitslabel(ivectorplot))
-                else
-                   labelvecplot = trim(labelvec(ivectorplot))      
-                endif
-                !!--set label for projection plots (2268 or 2412 for integral sign)
-                if (ndim.eq.3 .and..not. x_sec) then
-                   if (iRescale) then
-                      labelvecplot = '\(2268) '//trim(labelvecplot)//' d'// &
-                        trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//' [code units]'
-                   else
-                      labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
-                   endif
-                endif
-                pixwidthvec = (xmax-xmin)/real(npixvec)
-                npixyvec = int(0.999*(ymax-ymin)/pixwidthvec) + 1
-                pixwidth = (xmax-xmin)/real(npixx) ! used in synchrotron plots
+              call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,vecmax,labelvecplot)
 
-                if (.not.interactivereplot .or. nacross*ndown.gt.1) then ! not if vecmax changed interactively
-                   if (iadapt) then
-                      vecmax = -1.0  ! plot limits then set in vectorplot
-                   else
-                      vecmax = max(lim(ivecx,2),lim(ivecy,2))
-                   endif
-                endif
-
-                call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,vecmax,labelvecplot)
-             endif
+              !--vecmax is returned with the adaptive value if sent in -ve
+              !  store this for use in interactive_multi
+              if (xmaxmulti(ivectorplot).lt.0.) xmaxmulti(ivectorplot) = vecmax
            endif
            
            !---------------------------------
@@ -1386,7 +1395,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  irerender = .true.
                  call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
                       nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
-                      xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
+                      ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
                       vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                       xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,iColourBarStyle,interactivereplot)
                  if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
@@ -1437,7 +1446,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         ! setup page
         !--------------------------------
         just = 0
-        title = ' '
         call page_setup
 
         !--------------------------------
@@ -1497,7 +1505,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               irerender = .true.
               call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
                    nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
-                   xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
+                   ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
                    vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                    xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,iColourBarStyle,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
@@ -1520,7 +1528,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !--------------------------------------------------------------
         if (iploty.eq.isurfdens .or. iploty.eq.itoomre .or. iploty.eq.ipdf) then
            just = 0
-           title = ' '
            if (iploty.eq.itoomre) then
               itemp = 2
               label(iploty) = 'Q\dToomre\u'
@@ -1607,7 +1614,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               irerender = .true.
               call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
                    nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
-                   xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
+                   ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
                    vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                    xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,iColourBarStyle,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
@@ -1743,7 +1750,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            endif
            
            just = 0
-           title = ' '
            call page_setup
 
            call pgqci(icolourprev)    ! query line style and colour
@@ -1775,7 +1781,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
            call exact_fromfile('gwaves1.dat',xplot,yplot,nfreqpts,ierr)
            just = 0
-           title = ' '
            labelx = 't [ms]'
            labely = 'h'
            if (.not.interactivereplot) then
@@ -1876,6 +1881,9 @@ contains
        xmax = xmaxmulti(iplotx)
        ymin = xminmulti(iploty)
        ymax = xmaxmulti(iploty)
+       if (ivectorplot.gt.0 .and. ivectorplot.le.numplot) then
+          vecmax = xmaxmulti(ivectorplot)
+       endif
     endif
 
     !--------------------------------------------------------------
@@ -1986,6 +1994,7 @@ contains
     iplotxtemp(ipanel) = iplotx
     iplotytemp(ipanel) = iploty
     irendertemp(ipanel) = irender
+    ivecplottemp(ipanel) = ivectorplot
     xminmulti(iplotx) = xmin
     xmaxmulti(iplotx) = xmax
     xminmulti(iploty) = ymin
@@ -1993,6 +2002,9 @@ contains
     if (irender.gt.0 .and. irender.le.numplot) then
        xminmulti(irender) = rendermin
        xmaxmulti(irender) = rendermax
+    endif
+    if (ivectorplot.gt.0 .and. ivectorplot.le.numplot) then
+       xmaxmulti(ivectorplot) = vecmax
     endif
 
     !
@@ -2714,7 +2726,7 @@ end subroutine plotstep
 !-------------------------------------------------------------------
 subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,yploti,zploti, &
                                   ntot,iplotx,iploty,iplotz,dat,ivecstart,vecploti)
-  use labels, only:ix,iamvec
+  use labels, only:ix
   use settings_data, only:ndim,xorigin,itrackpart
   use settings_xsecrot, only:use3Dperspective
   use rotation, only:rotate2D,rotate3D
