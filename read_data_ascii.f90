@@ -193,18 +193,29 @@ subroutine set_labels
 !
 !--read column labels from the columns file if it exists
 !
-  call get_environment('ASPLASH_COLUMNSFILE',columnfile)
-  if (len_trim(columnfile).gt.0) then
-     inquire(file=trim(columnfile),exist=iexist)
-     if (iexist) then
-        print "(a)",' using ASPLASH_COLUMNSFILE='//trim(columnfile)
+!  first look for a columns file in the current directory
+!
+  columnfile='columns'
+  inquire(file=trim(columnfile),exist=iexist)
+!
+!  if it does not exist see if the environment variable is set
+!  and the corresponding file exists
+!
+  if (.not.iexist) then
+     call get_environment('ASPLASH_COLUMNSFILE',columnfile)
+     if (len_trim(columnfile).gt.0) then
+        inquire(file=trim(columnfile),exist=iexist)
+        if (iexist) then
+           print "(a)",' using ASPLASH_COLUMNSFILE='//trim(columnfile)
+        else
+           print "(a)",' ERROR: ASPLASH_COLUMNSFILE='//trim(columnfile)//' DOES NOT EXIST'
+           columnfile = 'columns'
+        endif
      else
-        print "(a)",' ERROR: ASPLASH_COLUMNSFILE='//trim(columnfile)//' DOES NOT EXIST'
         columnfile = 'columns'
      endif
-  else
-     columnfile = 'columns'
   endif
+  
   open(unit=51,file=trim(columnfile),status='old',iostat=ierr)
   if (ierr /=0) then
      print "(3(/,a))",' WARNING: columns file not found: using default labels',&
