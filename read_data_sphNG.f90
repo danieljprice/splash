@@ -604,6 +604,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   dat(npartoftypei(1)+1:npartoftypei(1)+npartoftypei(2),icolumn,j) = massoftypei(2)
                endif
                !print*,icolumn
+            elseif (phantomdump) then
+               print*,' ERROR: particle mass zero in Phantom dump file!'
             endif
          endif
 !        real4's go straight into dat
