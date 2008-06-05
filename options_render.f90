@@ -3,7 +3,7 @@
 ! includes default values of these options and submenu for changing them
 !-------------------------------------------------------------------------
 module settings_render
- use colourbar, only:ColourBarDisp
+ use colourbar, only:ColourBarDisp,iplotcolourbarlabel
  implicit none
  integer :: ncontours,npix,icolours,iColourBarStyle
  logical :: iplotcont_nomulti
@@ -12,7 +12,8 @@ module settings_render
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
    icolour_particles,ColourBarDisp,inormalise_interpolations, &
-   ifastrender,idensityweightedinterpolation,iColourBarStyle
+   ifastrender,idensityweightedinterpolation,iColourBarStyle, &
+   iplotcolourbarlabel
 
 contains
 
@@ -32,6 +33,7 @@ subroutine defaults_set_render
   inormalise_interpolations = .false.       ! do not normalise interpolations
   ifastrender = .false. ! use accelerated rendering
   idensityweightedinterpolation = .false.
+  iplotcolourbarlabel = .true.
 
   return
 end subroutine defaults_set_render
@@ -117,11 +119,13 @@ subroutine submenu_render(ichoose)
           print "(1x,i1,')',1x,a)",i,trim(labelcolourbarstyles(i))
        enddo
        call prompt(' enter colour bar style to use ',iColourBarStyle,0,maxcolourbarstyles)
-       print "(a)",'colour bar style = '//trim(labelcolourbarstyles(iColourBarStyle))
-       if (iColourBarStyle.eq.1) then
+       print "(a,/)",'colour bar style = '//trim(labelcolourbarstyles(iColourBarStyle))
+       call prompt(' plot colour bar label?',iplotcolourbarlabel)
+       if (iColourBarStyle.eq.1 .and. iplotcolourbarlabel) then
           call prompt(' enter displacement of text from edge (character heights) ', &
                       ColourBarDisp)
        endif
+
 !------------------------------------------------------------------------
     case(6)
        icolour_particles = .not.icolour_particles

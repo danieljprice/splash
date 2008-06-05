@@ -8,17 +8,20 @@
 !------------------------------------------------------------------------
 module colourbar
  implicit none
- integer, parameter, public :: maxcolourbarstyles = 2
+ integer, parameter, public :: maxcolourbarstyles = 4
  character(len=26), dimension(0:maxcolourbarstyles), parameter, public :: &
    labelcolourbarstyles = (/'no colour bar             ', &
                             'vertical right hand side  ', &
-                            'horizontal underneath plot'/)
+                            'horizontal underneath plot', &
+                            'vertical rhs plot-hugging ', &
+                            'horizontal plot-hugging   '/)
  !
  !--these are settings that have default values but can
  !  be changed if required
  !
  real, public :: ColourBarDisp = 5.0
- real, parameter, public :: ColourBarWidth = 5.5
+ real, parameter, public :: ColourBarWidth = 2. ! width in character heights
+ logical, public :: iplotcolourbarlabel = .true.
 
  public :: plotcolourbar,incolourbar,barisvertical,get_colourbarmargins
 
@@ -57,7 +60,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
 !
 !--set colour bar displacement and width in character heights
 !
- disp = 0.5
+ disp = 0.25
  width = ColourBarWidth
 !
 !--set character to send to pgwedg call if log (danpgwedg only) 
@@ -96,12 +99,14 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  !------------------------
  ! horizontal colour bar
  !------------------------
- case(2)
+ case(2,4)
+
+   if (istyle.eq.4) disp = 0. ! plot-hugging
    !
    !--set viewport for the wedge
    !
-   vptymaxi = vptymini - (0.25 + xlabeloffset)*ych
-   vptymini = vptymaxi - 2.*ych
+   vptymaxi = vptymini - (disp + xlabeloffset)*ych
+   vptymini = vptymaxi - width*ych
    call pgsvp(vptxmini,vptxmaxi,vptymini,vptymaxi)
    !
    !--draw colour bar, by cleverly setting window size
@@ -116,12 +121,19 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
    !--draw labelled frame around the wedge
    !
-    call pgbox('BCNST',0.0,0,'BC',0.0,0)
-    !call pgbox('BNST',0.0,0,'BC',0.0,0)
+    if (istyle.eq.4) then
+       call pgbox('BNST',0.0,0,'BC',0.0,0)    
+    else
+       call pgbox('BCNST',0.0,0,'BC',0.0,0)
+    endif
    !
-   !--write the units label
+   !--write the units label: the position is relative to the bottom of 
+   !  the wedge because of the way we have defined the viewport. 
+   !  For the horizontal colour bar this never needs to change 
+   !  (0.25 space + 1 character height for numeric labels + 0.25 space
+   !   + 1 character height for actual label = 2.5 character heights)
    !
-    if (label.ne.' ') then
+    if (label.ne.' ' .and. iplotcolourbarlabel) then
        call pgmtxt('B',2.5,0.5,0.5,trim(label))
     endif
 
@@ -129,16 +141,13 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  ! vertical colour bar (default)
  !-------------------------------
  case default
-   !
-   !--translate width and displacement to viewport co-ordinates
-   !
-    width = width*xch
-    disp = disp*xch
+    
+    if (istyle.eq.3) disp = 0. ! plot-hugging
    !
    !--set viewport for the wedge
    !
-    vptxmini = vptxmaxi + disp
-    vptxmaxi = vptxmini + width*0.4
+    vptxmini = vptxmaxi + disp*xch
+    vptxmaxi = vptxmini + width*xch
     call pgsvp(vptxmini,vptxmaxi,vptymini,vptymaxi)
    !
    !--draw colour bar, by cleverly setting window size
@@ -153,12 +162,22 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
    !--draw labelled frame around the wedge
    !
-    call pgbox('BC',0.0,0,'BCMSTV',0.0,0)
+    if (istyle.eq.3) then
+       call pgbox('BC',0.0,0,'CMSTV',0.0,0)
+    else
+       call pgbox('BC',0.0,0,'BCMSTV',0.0,0)
+    endif
    !
-   !--write the units label
+   !--write the units label: the position is relative to the edge of 
+   !  the wedge because of the way we have defined the viewport. 
+   !  For the vertical colour bar ColourBarDisp is a set by default to
+   !  the maximum size for the numeric label (written horizontally) -
+   !  this is about 4 character heights for something like "-5 x 10^10"
+   !  We allow the user to adjust this parameter to bring the label
+   !  closer where the numeric labels are smaller (e.g. "-5").
    !
-    if (label.ne.' ') then
-       call pgmtxt('R',ColourBarDisp+1.0,1.0,1.0,trim(label))
+    if (label.ne.' ' .and. iplotcolourbarlabel) then
+       call pgmtxt('R',ColourBarDisp+0.75,1.0,1.0,trim(label))
     endif
  end select
 !
@@ -183,7 +202,7 @@ logical function barisvertical(istyle)
  if (istyle.le.0) return
  
  select case(istyle)
- case(2)
+ case(2,4)
     barisvertical = .false.
  case default
     barisvertical = .true.
@@ -204,7 +223,7 @@ logical function incolourbar(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
  if (istyle.le.0) return
  
  select case(istyle)
- case(2)
+ case(2,4)
     if (ypt.lt.ymin) incolourbar = .true.
  case default
     if (xpt.gt.xmax) incolourbar = .true.
@@ -230,11 +249,19 @@ subroutine get_colourbarmargins(istyle,xmaxmargin,yminmargin,barwidth)
  call pgqcs(0,xch,ych)
 
  select case(istyle)
- case(2)
-    barwidth = 5.0*ych
+ case(2,4)
+    if (iplotcolourbarlabel) then
+       barwidth = (ColourBarWidth+3.0)*ych  ! ie. width + 2.5 + 0.5 margin
+    else
+       barwidth = (ColourBarWidth+2.0)*ych  ! ie. width + 1.5 + 0.5 margin
+    endif
     yminmargin = yminmargin + barwidth
  case default
-    barwidth = (ColourBarWidth*(0.4)+0.75 + max(ColourBarDisp+1.25,0.0))*xch
+    if (iplotcolourbarlabel) then
+       barwidth = (ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch
+    else
+       barwidth = (ColourBarWidth+0.75 + 5.0)*xch
+    endif
     xmaxmargin = xmaxmargin + barwidth
  end select
  
