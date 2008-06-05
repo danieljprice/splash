@@ -23,6 +23,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.11.0 : (XX/XX/08)
+!             ability to use subset of particles in restricted parameter range(s);
+!             probability density function plot option; plot-hugging colour bars added;
+!             ability to annotate plot with a range of shapes; v,V,w and H implemented
+!             in interactive mode for >1 panel.
 !     1.10.2 : (08/05/08)
 !             disc surface density / toomre q parameter plotting added; flash colour
 !             schemes added; splash to binary convert option, can change order in
@@ -212,7 +217,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.11.0alpha [9th May ''08]'
+  character(len=*), parameter :: version = 'v1.11.0beta [5th Jun ''08]'
 
   !
   ! initialise some basic code variables
