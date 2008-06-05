@@ -445,7 +445,7 @@ subroutine menu
          elseif (multiploty(i).eq.itoomre) then
             print "(a)",' setting x axis to r for Toomre Q plot'
             multiplotx(i) = 1
-         else
+         elseif (.not.isamex) then
             multiplotx(i) = multiploty(i)
          endif
       endif
