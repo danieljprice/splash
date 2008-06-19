@@ -120,12 +120,14 @@ subroutine submenu_render(ichoose)
        enddo
        call prompt(' enter colour bar style to use ',iColourBarStyle,0,maxcolourbarstyles)
        print "(a,/)",'colour bar style = '//trim(labelcolourbarstyles(iColourBarStyle))
-       call prompt(' plot colour bar label?',iplotcolourbarlabel)
-       if (iColourBarStyle.eq.1 .and. iplotcolourbarlabel) then
-          call prompt(' enter displacement of text from edge (character heights) ', &
-                      ColourBarDisp)
+       
+       if (iColourBarStyle.gt.0) then
+          call prompt(' plot colour bar label?',iplotcolourbarlabel)
+          if (iColourBarStyle.eq.1 .and. iplotcolourbarlabel) then
+             call prompt(' enter displacement of text from edge (character heights) ', &
+                         ColourBarDisp)
+          endif
        endif
-
 !------------------------------------------------------------------------
     case(6)
        icolour_particles = .not.icolour_particles
