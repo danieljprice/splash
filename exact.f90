@@ -788,7 +788,7 @@ contains
    real, dimension(:), intent(in) :: xexact,yexact,xpts,ypts
    real, dimension(size(xpts)), intent(out) :: residual
    real, intent(out) :: errL1,errL2,errLinf
-   integer :: i,j,npart,iused
+   integer :: i,j,npart,iused,nerr
    real :: xi,dy,dx,yexacti,err1,ymax
 
    errL1 = 0.
@@ -798,6 +798,7 @@ contains
    npart = size(xpts)
    iused = 0
    ymax = -huge(ymax)
+   nerr = 0
    
    do i=1,npart
       xi = xpts(i)
@@ -818,7 +819,7 @@ contains
                yexacti = yexact(j)
                residual(i) = ypts(i) - yexacti
             else
-               print "(a)",' error in residual calculation'
+               nerr = nerr + 1
                residual(i) = 0.
             endif
             iused = iused + 1
@@ -844,7 +845,7 @@ contains
       errL2 = 0.
       errLinf = 0.
    endif
-   
+   if (nerr.gt.0) print*,'WARNING: ',nerr,' errors in residual calculation'
    if (iused.ne.npart) print*,'errors calculated using ',iused,' of ',npart, 'particles'
    
    return
