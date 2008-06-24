@@ -28,8 +28,8 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
   real :: dr,an,rhs,radv,sigma,totmassf,totmass,akf
   real :: realden, realrad, rhocentre
 
-  dr=0.005
-  print *,' gamma = ',gamma
+  dr=0.001
+  print*,' gamma           :',gamma
   an = 1./(gamma-1.)
   v(1) = 0.0
   v(2) = dr*(1.0 - dr*dr/6. )
@@ -39,19 +39,25 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
   r(2) = dr
 
   do while (v(i).ge.0.)         
-    r(i) = (i - 1)*dr         
+    r(i) = (i - 1)*dr
     rhs = - r(i)*(v(i)/r(i))**an
-    v(i+1) = 2*v(i) - v(i-1) + dr*dr*rhs         
-    i = i + 1                   
+    v(i+1) = 2*v(i) - v(i-1) + dr*dr*rhs
+    i = i + 1
+    if (i+1.gt.size(rplot)) then
+       dr = dr*2.
+       r(2) = dr
+       v(2) = dr*(1.0 - dr*dr/6. )
+       i = 2
+    endif
   enddo
   !----------------------------------
   ! now scale the radius
   !----------------------------------
   radv = r(i-1)
-  print *,' rad v ',r(i-1),v(i-1)
+  !print*,' unscaled r, v   :',r(i-1),v(i-1)
 
   sigma = radv
-  print *,' sigma ',sigma
+  !print *,' sigma ',sigma
 
   !--------------------------------------
   ! calculate the mass out to radius r
@@ -74,7 +80,8 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
 
   rhocentre = sigma**3/totmassf
   totmass = rhocentre*totmassf/sigma**3
-  print *,' rhocentre totmass ',rhocentre,totmass
+  print*,' central density :',rhocentre
+  print*,' total mass      :',totmass
 
   akf = 4.*pi*rhocentre**(1.-1./an)/((an+1)*sigma**2)
   print *,' polytropic K required for unit radius = ',akf
