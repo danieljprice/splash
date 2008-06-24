@@ -88,7 +88,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
   real, dimension(3) :: xyzsink
-  real :: rhozero,hfact,omega,r4
+  real :: rhozero,hfact,omega,r4,tff
 
   nstepsread = 0
   nstep_max = 0
@@ -437,7 +437,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
       time(j) = dummyreal(1)
       gamma(j) = dummyreal(3)
       rhozero = dummyreal(4)
-      tfreefall = SQRT((3. * pi) / (32. * rhozero))
+      if (rhozero.gt.0.) then
+         tfreefall = SQRT((3. * pi) / (32. * rhozero))
+         tff = time(j)/tfreefall
+      else
+         tfreefall = 0.
+         tff = 0.
+      endif
       if (phantomdump) then
          npartoftype(1:ntypes,j) = npartoftypei(1:ntypes)
       else
@@ -455,7 +461,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
                ' time = ',time(j),' gamma = ',gamma(j), &
                ' hfact = ',hfact,' tolh = ',dummyreal(7)
       else
-         print "(a,1pe12.4,a,0pf8.4)",' time = ',time(j),' gamma = ',gamma(j)
+         print "(a,1pe12.4,a,0pf9.5,a,f8.4,/,a,1pe12.4,a,1pe9.2,a,1pe10.2)", &
+               '   time: ',time(j),  '   gamma: ',gamma(j), '   RK2: ',dummyreal(5), &
+               ' t/t_ff: ',tff,' rhozero: ',rhozero,' dtmax: ',dummyreal(2)
       endif
       nstepsread = nstepsread + 1
 
