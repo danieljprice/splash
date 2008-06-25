@@ -327,7 +327,7 @@ subroutine submenu_legend(ichoose)
         ' 1) time legend on/off/settings                   (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,1x,'"',a,'")',/, &
         ' 2) titles on/off/settings                        (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,')',/, &
         ' 3) legend for multiple steps per page on/off     (',1x,a,1x,')',/, &
-        ' 4) plot scale on co-ordinate plots               (',1x,a,1x,')',/, &
+        ' 4) plot scale |---| on coordinate plots          (',1x,a,1x,')',/, &
         ' 5) legend only on nth panel/first row/column     (',1x,i2,1x,')',/, &
         ' 6) annotate plot (e.g. arrow,square,circle,text) (',1x,i2,a,')')
 

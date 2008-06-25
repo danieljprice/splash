@@ -724,11 +724,11 @@ Do you want to plot these in background colour [ie. white] instead ? (default=no
 
 \subsubsection{ Adding titles to plots / repositioning titles}
 \label{sec:title}
- Plots may be titled individually by creating a file called \verb+titlelist+ in
+ Plots may be titled individually by creating a file called \verb+splash.titles+ in
 the current directory, with the title on each line corresponding to the position
 of the plot on the page. Thus the title is the same between timesteps unless the
 steps are plotted together on the same physical page. Leave blank lines for
-plots without titles. For example, creating a file called \verb+titlelist+ in
+plots without titles. For example, creating a file called \verb+splash.titles+ in
 the current directory, containing the text:
 \begin{verbatim}
 plot one
@@ -757,7 +757,13 @@ on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the ph
 \subsubsection{ Plotting a length scale on coordinate plots}
  An option to plot a length scale (ie. \verb+|---|+ with a label below it indicating the length) on coordinate plots (ie. plots where both $x-$ and $y-$axes refer to particle coordinates) is provided in the le(g)end submenu.
 
-
+\subsubsection{ Annotating a plot with squares, rectangles, arrows, circles and text}
+ The ability to annotate plots with a range of geometric objects (squares, rectangles, arrows, circles and text) with full control over attributes such as line width, line style, colour, angle and fill style is provided via the ``annotate plot'' option in the le(g)end submenu.
+ 
+ Note that text can also be added to plots by adding titles (\S\ref{sec:title}) which can be different in different panels. Text labels added using shape annotation differ from titles by the fact that they must appear the same in each panel and are positioned according to the world co-ordinates of the plot (rather than relative to the viewport). Shape text can also be displayed at arbitrary angles.
+ 
+ An option to plot length scales (\verb+|---|+) on coordinate plots is implemented separately via the ``plot scale on coordinate plots'' option in the le(g)end menu.
+ 
 \subsection{particle plot (o)ptions}
 \label{sec:opts}
  The following are tasks which can be achieved via options in the o) menu [particle plot o)ptions].
