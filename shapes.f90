@@ -13,6 +13,8 @@ module shapes
    integer :: itype
    integer :: icolour
    integer :: linestyle
+   integer :: linewidth
+   integer :: ifillstyle
    real :: xpos
    real :: ypos
    real :: xlen,ylen
@@ -42,6 +44,8 @@ subroutine defaults_set_shapes
  shape(:)%itype = 0
  shape(:)%icolour = 1
  shape(:)%linestyle = 1
+ shape(:)%linewidth = 1
+ shape(:)%ifillstyle = 2
  shape(:)%xpos = 0.5
  shape(:)%ypos = 0.5
  shape(:)%xlen = 1.
@@ -81,18 +85,19 @@ subroutine submenu_shapes()
     call prompt('enter shape to plot (0 = finish) ',shape(ishape)%itype,0,maxshapetype)
     itype = shape(ishape)%itype
     if (itype.gt.0) then
-       print "(a,i1,a)",'shape ',ishape,' type = '//trim(labelshapetype(itype))
+       print "(a,i1,a)",'shape ',ishape,': type = '//trim(labelshapetype(itype))
        select case(itype)
        case(1) ! square
           call prompt('enter length of side (in x units of plot)',shape(ishape)%xlen,0.)
+          shape(ishape)%ylen = shape(ishape)%xlen
           poslabel = 'centre'
        case(2) ! rectangle
           call prompt('enter length of side (in x units of plot)',shape(ishape)%xlen,0.)
-          call prompt('enter length of side (in y units of plot)',shape(ishape)%xlen,0.)
+          call prompt('enter length of side (in y units of plot)',shape(ishape)%ylen,0.)
           poslabel = 'centre'
        case(3) ! arrow
-          call prompt('enter arrow length (in x units of plot)',shape(ishape)%xlen,0.) 
-          call prompt('enter angle (0 = horizontal) ',shape(ishape)%angle)
+          call prompt('enter arrow length (in x units of plot)',shape(ishape)%xlen,0.)
+          call prompt('enter angle in degrees (0 = horizontal) ',shape(ishape)%angle)
           poslabel = 'head'
        case(4) ! circle
           call prompt('enter radius ',shape(ishape)%xlen,0.)
@@ -109,32 +114,47 @@ subroutine submenu_shapes()
        end select
        call prompt('enter '//trim(poslabel)//' x position (in x units of plot) ',shape(ishape)%xpos)
        call prompt('enter '//trim(poslabel)//' y position (in y units of plot) ',shape(ishape)%ypos)
+       if (itype.eq.1 .or. itype.eq.2 .or. itype.eq.4) then
+          call prompt('enter PGPLOT fill style (1=solid,2=outline,3=hatch,4=crosshatch) for '// &
+                      trim(labelshapetype(itype)),shape(ishape)%ifillstyle,0,5)       
+       endif
        if (itype.ne.6) then
-          call prompt('enter PGPLOT line style for '//trim(labelshapetype(itype)),shape(ishape)%linestyle,0,5)
+          call prompt('enter PGPLOT line style (1=solid,2=dash,3=dotdash,4=dot,5=dashdot) for '// &
+                      trim(labelshapetype(itype)),shape(ishape)%linestyle,0,5)
+       endif
+       if (itype.ne.6) then
+          call prompt('enter PGPLOT line width for '//trim(labelshapetype(itype)),shape(ishape)%linewidth,0)
        endif
        call prompt('enter '//trim(labelshapetype(itype))//' colour (0=background, 1=foreground, 2-16=pgplot colour indices)', &
                    shape(ishape)%icolour,0,16)
     endif
  enddo
  nshapes = ishape - 1
- print*,'NSHAPES SET = ',nshapes
-
+ if (nshapes.gt.0) then
+    print "(/,i2,a,/,15('-'),10(/,i2,')',1x,a10,' (x,y) = (',1pe10.2,',',1pe10.2,')'))",nshapes,' SHAPES SET: ', &
+           (ishape,labelshapetype(shape(ishape)%itype),shape(ishape)%ypos,shape(ishape)%ypos,ishape=1,nshapes)
+ else
+    print "(a)",' NO SHAPES SET '
+ endif
+ 
  return
 end subroutine submenu_shapes
 
 subroutine plot_shapes
  implicit none
- integer :: icolourprev,linestyleprev,ifillstyle,i
+ integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle,i
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot
  real :: xpos,ypos,xlen,ylen,angle,dx,dy
  real, dimension(2) :: xline,yline
+ real, parameter :: pi = 3.1415926536
 !
 !--store current settings
 !
  call pgqci(icolourprev)
  call pgqls(linestyleprev)
+ call pgqlw(linewidthprev)
  call pgqfs(ifillstyle)
-!
+ !
 !--convert hpos and vpos to x, y to plot arrow
 !
  call pgqwin(xmin,xmax,ymin,ymax)
@@ -144,11 +164,14 @@ subroutine plot_shapes
  do i=1,nshapes
     call pgsci(shape(i)%icolour)
     call pgsls(shape(i)%linestyle)
+    call pgslw(shape(i)%linewidth)
+    call pgsfs(shape(i)%ifillstyle)
+
     xpos = shape(i)%xpos
     ypos = shape(i)%ypos
     xlen = shape(i)%xlen
     ylen = shape(i)%ylen
-    angle = shape(i)%angle
+    angle = shape(i)%angle*(pi/180.)
     
     print "(a)",'> plotting shape: '//trim(labelshapetype(shape(i)%itype))
     select case(shape(i)%itype)
@@ -186,6 +209,7 @@ subroutine plot_shapes
  
  call pgsci(icolourprev)
  call pgsls(linestyleprev)
+ call pgslw(linewidthprev)
  call pgsfs(ifillstyle)
  
 end subroutine plot_shapes
