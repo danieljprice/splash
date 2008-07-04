@@ -303,7 +303,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--read array header from this block
 !  
-   ncolstep = 0
+   if (iblock.eq.1) ncolstep = 0
    do iarr=1,narrsizes
       read(iunit,end=55,iostat=ierr) isize(iarr),nint(iarr),nint1(iarr),nint2(iarr), &
                  nint4(iarr),nint8(iarr),nreal(iarr),nreal4(iarr),nreal8(iarr)
@@ -320,7 +320,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             nint2(iarr),nint4(iarr),nint8(iarr),'nreal =',nreal(iarr),nreal4(iarr),nreal8(iarr)
       endif
 !--we are going to read all real arrays but need to convert them all to default real
-      if (isize(iarr).eq.isize(1)) then
+      if (isize(iarr).eq.isize(1) .and. iblock.eq.1) then
          ncolstep = ncolstep + nreal(iarr) + nreal4(iarr) + nreal8(iarr)
       endif
    enddo 
@@ -328,7 +328,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--this is a bug fix for a corrupt version of wdump outputting bad
 !  small dump files
 !
-   if (smalldump .and. nreal(1).eq.5) then
+   if (smalldump .and. nreal(1).eq.5 .and. iblock.eq.1) then
       print*,'FIXING CORRUPT HEADER ON SMALL DUMPS: assuming nreal=3 not 5'
       nreal(1) = 3
       ncolstep = ncolstep - 2
@@ -419,7 +419,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--allocate memory now that we know the number of columns
 !
-   ncolumns = ncolstep + ncalc
+   if (iblock.eq.1) ncolumns = ncolstep + ncalc
    if (npart_max.gt.maxpart .or. j.gt.maxstep .or. ncolumns.gt.maxcol) then
       if (lowmemorymode) then
          ilastrequired = 0
