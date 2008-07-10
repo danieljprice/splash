@@ -691,7 +691,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
  !
  !--read .divv file for phantom dumps
  !
-    if (phantomdump .and. idivvcol.ne.0) then
+    if (phantomdump .and. idivvcol.ne.0 .and. required(idivvcol)) then
        print "(a)",' reading divv from '//trim(dumpfile)//'.divv'
        open(unit=66,file=trim(dumpfile)//'.divv',form='unformatted',status='old',iostat=ierr)
        if (ierr /= 0) then
