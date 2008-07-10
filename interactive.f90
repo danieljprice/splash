@@ -69,7 +69,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
   real :: xlength,ylength,renderlength,renderpt,drender,zoomfac
-  real :: dxlength,dylength,xmaxin,ymaxin,xorigin,yorigin
+  real :: dxlength,dylength,xmaxin,ymaxin
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
   character(len=20) :: string
@@ -160,7 +160,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         else
            print*,'error: could not determine closest particle'
         endif
-     case('c','C')
+     case('c')
         if (iclosest.gt.0 .and. iclosest.le.npart) then
            print*,'plotting circle of interaction on particle ',iclosest, &
                   ' h = ',hi(iclosest)
@@ -262,7 +262,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         print*,' R: (R)eset/remove all range restrictions'
         print*,' p: label closest (p)article'
         print*,' t: t)rack closest particle/turn tracking off (coord plots only)'
-        print*,' c: plot (c)ircle of interaction for closest particle'        
+        print*,' c: plot (c)ircle of interaction for closest particle'
+        print*,' C: centre plot on (C)ursor position (keeping aspect ratio)'        
         print*,' g: plot a line and find its g)radient'
         print*,' G: move le(G)end to current position'
         print*,' T: move (T)itle to current position'
@@ -491,7 +492,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      !
      !--zooming
      !
-     case('-','_','+','o') ! zoom out by 10 or 20%
+     case('-','_','+','o','C') ! zoom in/out
         xlength = xmax - xmin
         ylength = ymax - ymin
         xcen = 0.5*(xmax + xmin)
@@ -510,6 +511,20 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            xlength = 0.9/zoomfac*xlength
            ylength = 0.9/zoomfac*ylength
            renderlength = 0.9/zoomfac*renderlength
+        case('o')
+           if (itrackpart.gt.0) then
+               print*,'centreing limits on tracked particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
+               xcen = xcoords(itrackpart)
+               ycen = ycoords(itrackpart)
+           else
+               xcen = 0.
+               ycen = 0.
+           endif        
+           xpt = 0. ! for next time
+           ypt = 0.
+        case('C')
+           xcen = xpt
+           ycen = ypt
         end select
         if (iamincolourbar .and. irender.gt.0) then
            !--rendering zoom does not allow pan - renderpt is always centre of axis
@@ -539,26 +554,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               irerender = .true.
               iexit = .true.
            endif
-        endif
-
-        if (char.eq.'o') then !--recentre plot on origin
-           if (itrackpart.gt.0) then
-               print*,'centreing limits on tracked particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
-               xorigin = xcoords(itrackpart)
-               yorigin = ycoords(itrackpart)
-           else
-               xorigin = 0.
-               yorigin = 0.
-           endif
-           xmin = xorigin - 0.5*xlength
-           xmax = xorigin + 0.5*xlength
-           ymin = yorigin - 0.5*ylength
-           ymax = yorigin + 0.5*ylength
-           iadvance = 0
-           interactivereplot = .true.
-           iexit = .true.
-           xpt = 0.
-           ypt = 0.
         endif
      case('a') ! reset plot limits
         if (iamincolourbar .and. irender.gt.0) then
@@ -1317,6 +1312,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         print*,' l: (l)og / unlog axis (with cursor over the axis to change)'  
         print*,'    (applies to colour bar if mouse is over colour bar)'
         print*,' o: re-centre plot on (o)rigin'
+        print*,' C: centre plot on (C)ursor position (keeping aspect ratio)'        
         print*,' r: (r)eplot current plot'
         print*,' R: (R)eset/remove all range restrictions'
         print*,' g: plot a line and find its g)radient'
@@ -1502,7 +1498,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !
      !--zooming
      !
-     case('-','_','+','o') ! zoom out by 10 or 20%
+     case('-','_','+','o','C') ! zoom in/out
         if (ipanel.le.0) cycle interactive_loop
         xlength = xmax(iplotxarr(ipanel)) - xmin(iplotxarr(ipanel))
         ylength = xmax(iplotyarr(ipanel)) - xmin(iplotyarr(ipanel))
@@ -1526,6 +1522,14 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            xlength = 0.9/zoomfac*xlength
            ylength = 0.9/zoomfac*ylength
            renderlength = 0.9/zoomfac*renderlength
+        case('o')
+           xcen = 0.
+           ycen = 0.
+           xpt = 0. ! for next time
+           ypt = 0.
+        case('C')
+           xcen = xpt
+           ycen = ypt
         end select
         xmaxin = xmax(iplotxarr(ipanel))
         if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
@@ -1555,17 +1559,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               iexit = .true.
            endif
         endif
-        if (char.eq.'o') then !--recentre plot on origin
-           xmin(iplotxarr(ipanel)) = -0.5*xlength
-           xmax(iplotxarr(ipanel)) = 0.5*xlength
-           xmin(iplotyarr(ipanel)) = -0.5*ylength
-           xmax(iplotyarr(ipanel)) = 0.5*ylength
-           istep = istepnew
-           interactivereplot = .true.
-           iexit = .true.
-           xpt = 0.
-           ypt = 0.
-        endif
+
      case('a') ! adapt plot limits
         if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
            print*,'adapting render limits ',xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel))
