@@ -1525,11 +1525,11 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         case('o')
            xcen = 0.
            ycen = 0.
-           xpt = 0. ! for next time
-           ypt = 0.
+           !xpt = 0. ! for next time
+           !ypt = 0.
         case('C')
-           xcen = xpt
-           ycen = ypt
+           xcen = xpti
+           ycen = ypti
         end select
         xmaxin = xmax(iplotxarr(ipanel))
         if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
