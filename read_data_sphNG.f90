@@ -70,8 +70,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
   integer :: nskip,ntotal,npart,n1,n2,ninttypes,ngas
   integer :: nreassign,naccrete,nkill,iblock,nblocks,ntotblock,ncolcopy
-  integer :: ipos,nptmass,nptmassi,nunknown,isink,ilastrequired
+  integer :: ipos,nptmass,nptmassi,nstar,nunknown,isink,ilastrequired
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
+  integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype
   integer, dimension(maxparttypes) :: npartoftypei
   real, dimension(maxparttypes) :: massoftypei
   logical :: iexist, doubleprec,imadepmasscolumn
@@ -751,6 +752,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
     nptmassi = 0
     nunknown = 0
     ngas = 0
+    nstar = 0
 !
 !--translate iphase into particle types (mixed type storage)
 !
@@ -760,24 +762,28 @@ subroutine read_data(rootname,indexstart,nstepsread)
           case(0)
             iamtype(i,j) = 1
             ngas = ngas + 1
-          case(1:)
+          case(1:9)
             iamtype(i,j) = 3
             nptmassi = nptmassi + 1
-          case default
+          case(10:)
             iamtype(i,j) = 4
+            nstar = nstar + 1
+          case default
+            iamtype(i,j) = 5
             nunknown = nunknown + 1
           end select
        enddo
        do i=npart+1,ntotal
           iamtype(i,j) = 2
-       enddo
-       print*,'mixed types: ngas = ',ngas,nptmassi,nunknown
+       enddo 
+       !print*,'mixed types: ngas = ',ngas,nptmassi,nunknown
 
     elseif (any(iphase(1:ntotal).ne.0)) then
 !
 !--place point masses after normal particles
 !  if not storing the iamtype array
 !     
+       print "(a)",' sorting particles by type...'
        nunknown = 0
        do i=1,npart
           if (iphase(i).ne.0) nunknown = nunknown + 1
@@ -785,61 +791,58 @@ subroutine read_data(rootname,indexstart,nstepsread)
        ncolcopy = min(ncolstep,maxcol)
        allocate(dattemp2(nunknown,ncolcopy))
 
-       nptmassi = 0
-       ipos = 0
-       do i=1,ntotal
-          ipos = ipos + 1
-          if (iphase(i).ge.1) then
-             nptmassi = nptmassi + 1
-             !--save point mass information in temporary array
-             if (nptmassi.gt.size(dattemp2(:,1))) stop 'error: ptmass array bounds exceeded in data read'
-             dattemp2(nptmassi,1:ncolcopy) = dat(i,1:ncolcopy,j)
-!             print*,i,' removed', dat(i,1:3,j)
-             ipos = ipos - 1
-          endif
-         !--shuffle dat array
-          if (ipos.ne.i .and. i.lt.ntotal) then
-  !           print*,'copying ',i+1,'->',ipos+1
-             dat(ipos+1,1:ncolcopy,j) = dat(i+1,1:ncolcopy,j)
-             !--must also shuffle iphase (to be correct for other types)
-             iphase(ipos+1) = iphase(i+1)
-          endif
-       enddo
-       if (nptmassi.ne.nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass =',nptmass
-       !--append ptmasses to end of dat array
-       do i=1,nptmassi
-          ipos = ipos + 1             
-!          print*,ipos,' appended', dattemp2(i,1:3)
-          dat(ipos,1:ncolcopy,j) = dattemp2(i,1:ncolcopy)
-          !--we make iphase = 1 for point masses (could save iphase and copy across but no reason to)
-          iphase(ipos) = 1
-       enddo
-!
-!--do the same with unknown/dead particles
-!     
-       nunknown = 0
-       ipos = 0
-       do i=1,ntotal
-          ipos = ipos + 1
-          if (iphase(i).lt.0) then
-             nunknown = nunknown + 1
-             !--save information in temporary array
-             if (nunknown.gt.size(dattemp2(:,1))) stop 'error: array bounds for dead particles exceeded in data read'
-             dattemp2(nunknown,1:ncolcopy) = dat(i,1:ncolcopy,j)
-  !           print*,i,' removed'
-             ipos = ipos - 1
-          endif
-          !--shuffle dat array
-          if (ipos.ne.i .and. i.lt.ntotal) then
-             !print*,'copying ',i+1,'->',ipos+1
-             dat(ipos+1,1:ncolcopy,j) = dat(i+1,1:ncolcopy,j)
-             iphase(ipos+1) = iphase(i+1) ! for completeness (ie. if more types used in future)
-          endif
-       enddo
-       !--append dead particles to end of dat array
-       do i=1,nunknown
-          ipos = ipos + 1
-          dat(ipos,1:ncolcopy,j) = dattemp2(i,1:ncolcopy)
+       do itype=1,3       
+          nthistype = 0
+          ipos = 0
+          select case(itype)
+          case(1) ! ptmass
+             iphaseminthistype = 1
+             iphasemaxthistype = 9
+          case(2) ! star
+             iphaseminthistype = 10
+             iphasemaxthistype = huge(iphasemaxthistype)
+          case(3) ! unknown
+             iphaseminthistype = -huge(iphaseminthistype)
+             iphasemaxthistype = -1
+          end select
+
+          do i=1,ntotal
+             ipos = ipos + 1
+             if (iphase(i).ge.iphaseminthistype .and. iphase(i).le.iphasemaxthistype) then
+                nthistype = nthistype + 1
+                !--save point mass information in temporary array
+                if (nptmassi.gt.size(dattemp2(:,1))) stop 'error: ptmass array bounds exceeded in data read'
+                dattemp2(nthistype,1:ncolcopy) = dat(i,1:ncolcopy,j)
+   !             print*,i,' removed', dat(i,1:3,j)
+                ipos = ipos - 1
+             endif
+            !--shuffle dat array
+             if (ipos.ne.i .and. i.lt.ntotal) then
+     !           print*,'copying ',i+1,'->',ipos+1
+                dat(ipos+1,1:ncolcopy,j) = dat(i+1,1:ncolcopy,j)
+                !--must also shuffle iphase (to be correct for other types)
+                iphase(ipos+1) = iphase(i+1)
+             endif
+          enddo
+
+          !--append this type to end of dat array
+          do i=1,nthistype
+             ipos = ipos + 1             
+   !          print*,ipos,' appended', dattemp2(i,1:3)
+             dat(ipos,1:ncolcopy,j) = dattemp2(i,1:ncolcopy)
+             !--we make iphase = 1 for point masses (could save iphase and copy across but no reason to)
+             iphase(ipos) = iphaseminthistype
+          enddo
+          
+          select case(itype)
+          case(1)
+             nptmassi = nthistype
+             if (nptmassi.ne.nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass =',nptmass
+          case(2)
+             nstar = nthistype
+          case(3)
+             nunknown = nthistype
+          end select          
        enddo
 
      endif
@@ -850,20 +853,22 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (allocated(listpm)) deallocate(listpm)
 
      if (.not.phantomdump) then
-        npartoftype(1,j) = npart - nptmassi - nunknown
+        npartoftype(1,j) = npart - nptmassi - nstar - nunknown
         npartoftype(2,j) = ntotal - npart
         npartoftype(3,j) = nptmassi
-        npartoftype(4,j) = nunknown
+        npartoftype(4,j) = nstar
+        npartoftype(5,j) = nunknown
      endif
      
      if (phantomdump) then
         print*,' n(gas) = ',npartoftype(1,j),' n(dust) = ',npartoftype(2,j)
      else
         if (npartoftype(2,j).ne.0) then
-           print*,' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j), &
-                  ' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown        
+           print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j), &
+                  ' n(sinks) = ',nptmassi,' n(stars) = ',nstar,' n(unknown) = ',nunknown        
         else
-           print*,' n(gas) = ',npartoftype(1,j),' n(sinks) = ',nptmassi, ' n(unknown) = ',nunknown
+           print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(sinks) = ',nptmassi, &
+                              ' n(stars) = ',nstar,' n(unknown) = ',nunknown
         endif
      endif
      
@@ -1127,21 +1132,23 @@ subroutine set_labels
   !--set labels for each particle type
   !
   if (ntypes.eq.2) then  ! phantom
-     ntypes = 2  !!maxparttypes
+     ntypes = 2
      labeltype(1) = 'gas'
      labeltype(2) = 'dust'
      UseTypeInRenderings(1) = .true.
      UseTypeInRenderings(2) = .false.  
   else
-     ntypes = 4  !!maxparttypes
+     ntypes = 5
      labeltype(1) = 'gas'
      labeltype(2) = 'ghost'
      labeltype(3) = 'sink'
-     labeltype(4) = 'unknown/dead'
+     labeltype(4) = 'star'
+     labeltype(5) = 'unknown/dead'
      UseTypeInRenderings(1) = .true.
      UseTypeInRenderings(2) = .true.
      UseTypeInRenderings(3) = .false.
-     UseTypeInRenderings(4) = .true.  ! only applies if turned on
+     UseTypeInRenderings(4) = .true.
+     UseTypeInRenderings(5) = .true.  ! only applies if turned on
   endif
 
 !-----------------------------------------------------------
