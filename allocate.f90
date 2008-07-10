@@ -99,11 +99,10 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
            if (ierr /= 0) stop 'error allocating memory (iamtypetemp)'
            iamtypetemp(1:maxpartold,1:maxstepold) = iamtype(1:maxpartold,1:maxstepold)
            deallocate(iamtype)
-        endif
         
+        elseif (present(mixedtypes)) then
         !--if iamtype has size 1 or 0 but should be allocated here,
         !  deallocate so we can give it correct size
-        if (present(mixedtypes)) then
            if (mixedtypes .and. size(iamtype(:,1)).lt.maxpart) deallocate(iamtype)
         endif
      endif
