@@ -266,7 +266,7 @@ end subroutine redraw_axes
   real vmargintop,vmarginbottom,vmarginleft,vmarginright
   real vptxmin,vptxmax,vptymin,vptymax
   real aspectratio,devaspectratio,x1,x2,y1,y2
-  real xch,ych
+  real xch,ych,dv,xminpix,xmaxpix,yminpix,ymaxpix
   character xopts*10, yopts*10
 !
 ! new page if iplot > number of plots on page
@@ -401,7 +401,33 @@ end subroutine redraw_axes
 
   endif
   !    print*,vptxmin,vptxmax,vptymin,vptymax
-  call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
+!
+! set viewport
+!
+ !print*,'setting ',vptxmin,vptxmax,vptymin,vptymax
+ call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
+!
+! adjust viewport on pixel devices so that 
+! boundaries lie exactly on pixel boundaries
+!
+ !  query viewport size in pixels
+ call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+
+ !  work out how many viewport coords/pixel
+ dv = (vptymax - vptymin)/(ymaxpix-yminpix)
+
+ !  adjust viewport min/max to lie on pixel boundaries
+ vptymin = vptymin - (yminpix - int(yminpix))*dv
+ vptymax = vptymax - (ymaxpix - int(ymaxpix))*dv
+
+ !  same for x
+ dv = (vptxmax - vptxmin)/(xmaxpix-xminpix)
+ vptxmin = vptxmin - (xminpix - int(xminpix))*dv
+ vptxmax = vptxmax - (xmaxpix - int(xmaxpix))*dv
+
+ !  adjust viewport
+ !print*,'adjusting ',vptxmin,vptxmax,vptymin,vptymax
+ call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
 !
 ! set axes
 !
