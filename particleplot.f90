@@ -15,12 +15,13 @@ contains
 subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                         icolourpart,iamtype,npartoftype,iplotpartoftype, &
                         use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
-                        fastparticleplot)
+                        fastparticleplot,datpix,npixx,npixy,dval)
   use params, only:int1
   use labels, only:labeltype, maxparttypes
   use settings_data, only:ndim,icoords,ntypes
   use settings_part, only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
                           ilabelpart,iplotline,linestylethisstep,linecolourthisstep
+  use interpolations2D, only:interpolate_part,interpolate_part1
   implicit none
   integer, intent(in) :: ntot, iplotx, iploty
   integer(kind=int1), dimension(:), intent(in) :: iamtype
@@ -32,6 +33,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   logical, intent(in) :: use_zrange,fastparticleplot
   logical, dimension(maxparttypes), intent(in) :: iplotpartoftype
   character(len=*), intent(in) :: labelz
+  
+  integer, intent(in), optional :: npixx,npixy
+  real, dimension(:,:), intent(inout), optional :: datpix
+  real, intent(in), optional :: dval
+  
   integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle
   integer :: lenstring,index1,index2,ntotplot,icolourstart,nlooptypes,ilooptype
   integer, dimension(maxparttypes) :: nplottedtype
@@ -40,7 +46,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   integer, parameter :: ncellx = 500, ncelly = 500 ! for crowded field reduction
   integer(kind=int1), dimension(ncellx,ncelly) :: nincell
   integer :: icellx,icelly !,notplotted
-  real :: dxcell1,dycell1
+  real :: dxcell1,dycell1,dxpix
   logical :: mixedtypes
   
   !--query current character height and colour
@@ -59,6 +65,16 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
      print "(a)",' WARNING: particleplot: total not equal to sum of types on input'
      print*,' ntotal = ',ntot,' sum of types = ',ntotplot
   endif
+  dxpix = 0.
+  if (present(datpix)) then
+     if (.not.(present(npixx).and.present(npixy).and.present(dval))) then
+        print "(a)",' INTERNAL ERROR in call to particleplot: optional args not present'
+        return
+     else
+        dxpix = (xmax - xmin)/real(npixx)
+     endif
+  endif
+  
   !
   !--loop over all particle types
   !
@@ -112,6 +128,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  nplottedtype(itype) = nplottedtype(itype) + 1
                  call pgsci(icolourpart(j))
                  call pgpt(1,xplot(j),yplot(j),imarktype(itype))
+                 if (present(datpix)) then
+                    call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                 endif
               endif
               !--plot circle of interaction if gas particle
               if (itype.eq.1 .and. ncircpart.gt.0 .and. ANY(icircpart(1:ncircpart).eq.j)) then
@@ -165,6 +184,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                     if (nincell(icellx,icelly).eq.0) then
                        nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
                        call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                       if (present(datpix)) then
+                          call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                       endif
 !                       else
 !                         notplotted = notplotted + 1
                     endif
@@ -175,6 +197,10 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
               !--plot all particles of this type
               print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
               call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+              if (present(datpix)) then
+                 call interpolate_part(xplot(index1:index2),yplot(index1:index2),h(index1:index2), &
+                                       npartoftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+              endif
            endif
         else
         !
@@ -203,6 +229,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                           nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
                           call pgsci(icolourpart(j))
                           call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                          if (present(datpix)) then
+                             call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                          endif
 !                       else
 !                         notplotted = notplotted + 1
                        endif
@@ -210,6 +239,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  else
                     call pgsci(icolourpart(j))
                     call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                    if (present(datpix)) then
+                       call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                    endif
                  endif
               endif
            enddo overj2

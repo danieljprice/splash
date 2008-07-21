@@ -8,6 +8,7 @@ module interpolations2D
  implicit none
  real, parameter, private :: pi = 3.1415926536      
  public :: interpolate2D, interpolate2D_xsec, interpolate2D_vec
+ public :: interpolate_part, interpolate_part1
  
 contains
 !--------------------------------------------------------------------------
@@ -476,5 +477,95 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
   return
 
 end subroutine interpolate2D_xsec
+
+!--------------------------------------------------------------------------
+!     subroutine to render particles onto a pixel array 
+!     at the maximum or minimum colour
+!
+!     Written by Daniel Price 21/7/2008
+!--------------------------------------------------------------------------
+subroutine interpolate_part(x,y,hh,npart,xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval)
+  implicit none
+  integer, intent(in) :: npart,npixx,npixy
+  real, intent(in), dimension(npart) :: x,y,hh
+  real, intent(in) :: xmin,ymin,pixwidth,datval
+  real, intent(inout), dimension(npixx,npixy) :: datsmooth
+  integer :: i
+
+  if (pixwidth.le.0.) then
+     print "(1x,a)",'interpolate_part: error: pixel width <= 0'
+     return
+  endif
+  if (any(hh(1:npart).le.tiny(hh))) then
+     print*,'interpolate_part: warning: ignoring some or all particles with h < 0'
+  endif
+  !
+  !--loop over particles
+  !
+  over_parts: do i=1,npart
+
+     call interpolate_part1(x(i),y(i),hh(i),xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval)
+    
+  enddo over_parts
+  return
+
+end subroutine interpolate_part
+
+!--------------------------------------------------------------------------
+!     subroutine to render a single particle onto a pixel array
+!
+!     Written by Daniel Price 21/7/2008
+!--------------------------------------------------------------------------
+subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval)
+  implicit none
+  real, intent(in) :: xi,yi,hi,xmin,ymin,pixwidth,datval
+  integer, intent(in) :: npixx,npixy
+  real, intent(inout), dimension(npixx,npixy) :: datsmooth
+  integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  real :: radkern,radkern2,rab2
+  real :: dx,dy2,xpix,ypix
+
+  !
+  !--skip particles with wrong h's
+  !
+  if (hi.le.tiny(hi)) return
+  !
+  !--set kernel related quantities
+  !
+  radkern = max(hi,pixwidth)
+  radkern2 = radkern*radkern  ! radius of the smoothing kernel
+  !
+  !--for each particle work out which pixels it contributes to
+  !               
+  ipixmin = int((xi - radkern - xmin)/pixwidth)
+  jpixmin = int((yi - radkern - ymin)/pixwidth)
+  ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
+  jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
+
+  if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
+  if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
+  if (ipixmax.gt.npixx) ipixmax = npixx
+  if (jpixmax.gt.npixy) jpixmax = npixy
+  !
+  !--loop over pixels, adding the contribution from this particle
+  !
+  do jpix = jpixmin,jpixmax
+     ypix = ymin + (jpix-0.5)*pixwidth
+     dy2 = (ypix - yi)**2
+     do ipix = ipixmin,ipixmax
+        xpix = xmin + (ipix-0.5)*pixwidth
+        dx = xpix - xi
+        rab2 = dx**2 + dy2
+        !
+        !--set data value at this pixel to maximum
+        !
+        if (rab2.lt.radkern2) then
+           datsmooth(ipix,jpix) = datval
+        endif
+     enddo
+  enddo
+  
+  return
+end subroutine interpolate_part1
 
 end module interpolations2D
