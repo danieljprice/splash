@@ -8,6 +8,7 @@ module timestep_plotting
   integer, private :: ngrid,nframefirstonpage
   integer, private :: just, ntitles,nsteplegendlines
   integer, private :: iplots,ipanel
+  integer, public :: iframe
 
   real, dimension(:), allocatable, private :: datpix1D, xgrid
   real, dimension(:,:), allocatable, private :: datpix, brightness
@@ -501,9 +502,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   logical, intent(in) :: ipagechange
   integer, intent(inout) :: iadvance
   
-  integer :: ntoti,iz
+  integer :: ntoti,iz,iseqpos
   integer :: i,j,k,icolumn,irow
-  integer :: nyplot,iframe,nframesloop
+  integer :: nyplot,nframesloop
   integer :: irender,irenderpart
   integer :: npixx,npixy,npixz,ipixxsec
   integer :: npixyvec,nfreqpts
@@ -582,7 +583,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   !--add a loop over frames for animation sequences
   !  but only generate extra frames if we are inside a sequence
   !
-  if (nseq.gt.0 .and. insidesequence(ipos)) then
+  iseqpos = ipos !(ipos-1)/(nacross*ndown) + 1
+  if (nseq.gt.0 .and. insidesequence(iseqpos)) then
      nframesloop = nframes
   else
      nframesloop = 1
@@ -594,7 +596,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
   if (interactivereplot .and. ipos.eq.ifirststeponpage .and. iframe.eq.0) then
      iframe = min(nframefirstonpage,nframesloop)
-  else
+  elseif (ipagechange) then
      iframe = iframe + 1
   endif
   !-------------------------------------
@@ -758,7 +760,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
         !--override settings based on positions in sequence
         if (nseq.gt.0) then
-           call getsequencepos(ipos,iframe,iplotx,iploty,irender, &
+           call getsequencepos(iseqpos,iframe,iplotx,iploty,irender, &
                 angletempx,angletempy,angletempz,zobservertemp,taupartdepthtemp,&
                 zslicepos,xmin,xmax,ymin,ymax,rendermin,rendermax,isetrenderlimits)
         endif
@@ -777,6 +779,24 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      if ((iploty.le.ndim).and.(iplotx.le.ndim)) then
 
         npixx = npix
+        if (npixx.le.0) npixx = 500 ! default for other uses of npixx if auto pixels are used
+        
+        !!--page setup preliminaries
+        if (usesquarexy) then
+           just = 1  ! x and y axis have same scale
+           ! unless 1D xsec through 2D data or non-cartesian
+           if ((irender.gt.ndim .and. ndim.eq.2 .and. x_sec) &
+               .or.(icoordsnew.gt.1)) then
+              just = 0 
+           endif
+        else
+           just = 0
+        endif
+        !--work out if colour bar is going to be plotted 
+        !  (leave space in page setup if so)
+        iPlotColourBar = .false.
+        if (irender.gt.ndim .and..not.(ndim.eq.2.and.x_sec)) iPlotColourBar = (iColourBarStyle.gt.0)
+
 
         !!--work out coordinate that is not being plotted         
         iz = 0
@@ -786,7 +806,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                   (j.ne.iplotx).and.(j.ne.iploty)) iz = j
            enddo
         endif
-        
         iplotz = iz ! this is used as cross sectioned quantity
         if (iplotz.gt.0 .and. iplotz.le.ndataplots) then
            zplot(1:ntoti) = dat(1:ntoti,iplotz)
@@ -844,9 +863,17 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
              ((ndim.eq.3).or.(ndim.eq.2.and..not.x_sec))) then
            
            !!--determine number of pixels in rendered image (npix = pixels in x direction)
-           pixwidth = (xmax-xmin)/real(npix)
-           npixx = max(int(0.999*(xmax-xmin)/pixwidth) + 1,1)
-           npixy = max(int(0.999*(ymax-ymin)/pixwidth) + 1,1)
+           if (npix.gt.0) then
+              pixwidth = (xmax-xmin)/real(npix)
+              npixx = max(int(0.999*(xmax-xmin)/pixwidth) + 1,1)
+              npixy = max(int(0.999*(ymax-ymin)/pixwidth) + 1,1)
+           else
+           !!--automatically reset the pixel number to match the device
+              call page_setup(dummy=.true.)
+              pixwidth = (xmax-xmin)/real(npixx)
+              npixy = max(int(0.999*(ymax-ymin)/pixwidth) + 1,1)
+              npixx = max(int(0.999*(xmax-xmin)/pixwidth) + 1,1)
+           endif
 
            !!--only need z pixels if working with interpolation to 3D grid
            !  (then number of z pixels is equal to number of cross sections)
@@ -1221,21 +1248,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            ! setup page
            !---------------------------------
 
-           if (usesquarexy) then
-              just = 1  ! x and y axis have same scale
-           else
-              just = 0
-           endif
-           ! unless 1D xsec through 2D data or non-cartesian
-           if ((irender.gt.ndim .and. ndim.eq.2 .and. x_sec) &
-               .or.(icoordsnew.gt.1)) then
-              just = 0 
-           endif
-           !--work out if colour bar is going to be plotted 
-           !  (leave space in page setup if so)
-           iPlotColourBar = .false.
-           if (irender.gt.ndim .and..not.(ndim.eq.2.and.x_sec)) iPlotColourBar = (iColourBarStyle.gt.0)
-
            call page_setup
 
            lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
@@ -1255,24 +1267,38 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                    npixx,npixy,xmin,ymin,pixwidth,    &
                    icolours,iplotcont,0,ncontours,.false.)
-                 
-                 !!--plot non-gas particle types (e.g. sink particles) on top
-                 call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-                   zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-                   icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
-                   (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
-                   xmin,xmax,ymin,ymax,ifastparticleplot)
-                 
+                                  
                  !!--write ppm if interpolate3D_opacity
                  if (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm) then
+                    !!--plot non-gas particle types (e.g. sink particles) on top (and to ppm)
+                    call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
+                      zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
+                      icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
+                      (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
+                      xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax)
+
                     call write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax, &
-                                          trim(labelrender),((istep-1)*nframesloop + iframe),brightness)
-                    !call interp3D_proj_opacity_writeppm(datpix,brightness,npixx,npixy, &
-                    !     rendermin,rendermax,((istep-1)*nframesloop + iframe))
+                                          trim(labelrender),((istep-1)*nframesloop + iframe),brightness)                 
                  !!--dump pixmap to file if option set
                  elseif (iwritepixmap) then
+
+                    !!--plot non-gas particle types (e.g. sink particles) on top (and to ppm)
+                    call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
+                      zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
+                      icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
+                      (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
+                      xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax)
+
                     call writepixmap(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax,trim(labelrender),&
                                      ((istep-1)*nframesloop + iframe))
+                 !!--no ppm write
+                 else
+                    !!--plot non-gas particle types (e.g. sink particles) on top
+                    call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
+                      zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
+                      icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
+                      (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
+                      xmin,xmax,ymin,ymax,ifastparticleplot)
                  endif
 
               elseif (ndim.eq.2 .and. x_sec) then
@@ -1852,19 +1878,33 @@ contains
 ! this is called just before a plot is
 ! actually plotted
 !----------------------------------------------
-  subroutine page_setup
+  subroutine page_setup(dummy)
     use colourbar, only:get_colourbarmargins,plotcolourbar
     use pagesetup, only:setpage2,xlabeloffset
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes,vposlegend,iPlotLegend
     implicit none
+    integer :: iplotsave,ipanelsave
     real :: barwidth, TitleOffset,xmaxmargin,yminmargin,xlabeloffsettemp
-    logical :: ipanelchange
+    real :: xminpix,xmaxpix,yminpix,ymaxpix
+    logical :: ipanelchange,dum
+    logical, intent(in), optional :: dummy
+
+    !--------------------------------------------
+    ! whether or not this is a dummy call or not
+    !--------------------------------------------
+    if (present(dummy)) then
+       dum = dummy
+    else
+       dum = .false.
+    endif
 
     !---------------------
     ! increment counters
     !---------------------
-    iplots = iplots + 1
-    
+    iplotsave = iplots
+    ipanelsave = ipanel
+        
+    iplots = iplots + 1    
     ipanelchange = .true.
     if (nstepsperpage.eq.0 .and. iplots.gt.1) ipanelchange = .false. ! this is an option to never change panels
     if (iplots.gt.1 .and. nyplots.eq.1 .and. nacross*ndown.gt.1.and..not.ipagechange) ipanelchange = .false.
@@ -1890,7 +1930,7 @@ contains
     ! output some muff to the screen
     !--------------------------------------------------------------
 
-    if (interactive) then
+    if (interactive .and. .not.dum) then
        print*,trim(labelx),' min, max = ',xmin,xmax
        print*,trim(labely),' min, max = ',ymin,ymax
        if (irender.gt.0 .and. .not.(ndim.eq.2 .and. x_sec)) then
@@ -1902,7 +1942,7 @@ contains
     ! set up pgplot page
     !--------------------------------------------------------------
     !--use foreground colour
-    call pgsci(1)
+    if (.not.dum) call pgsci(1)
 
     xlabeloffsettemp = xlabeloffset + 1.0
     if (iaxistemp.lt.0) xlabeloffsettemp = 0.
@@ -1920,7 +1960,7 @@ contains
     if (iPlotLegend .and. nstepsperpage.eq.1 .and. vposlegend.lt.0.) TitleOffset = max(Titleoffset,-vposlegend)
 
     inewpage = ipanel.eq.1 .and. ipanelchange .and. ipagechange
-    if (inewpage) then
+    if (inewpage .and. .not.dum) then
        call pgpage
        !--store ipos and nyplot positions for first on page 
        !  as starting point for interactive replotting
@@ -1932,7 +1972,7 @@ contains
     !--do not allow limits to be the same
     !
     if (abs(xmax-xmin).lt.tiny(xmax)) then
-       print "(a)",' WARNING: '//trim(labelx)//'min='//trim(labelx)//'max '
+       if (.not.dum) print "(a)",' WARNING: '//trim(labelx)//'min='//trim(labelx)//'max '
        xmax = xmax + 1.0
        if (xmin.gt.0.) then
           xmin = max(xmin - 1.0,xmin,0.)
@@ -1941,7 +1981,7 @@ contains
        endif
     endif
     if (abs(ymax-ymin).lt.tiny(ymax)) then
-       print "(a)",' WARNING: '//trim(labely)//'min='//trim(labely)//'max '
+       if (.not.dum) print "(a)",' WARNING: '//trim(labely)//'min='//trim(labely)//'max '
        ymax = ymax + 1.0
        if (ymin.gt.0.) then
           ymin = max(ymin - 1.0,ymin,0.)
@@ -1950,9 +1990,31 @@ contains
        endif
     endif
     if (nstepsperpage.ne.0 .or. inewpage) then
-       call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
+       if (dum) then !--fake the page setup, then return
+          call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
+                  trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp,0.001,xmaxmargin,yminmargin,0.001, &
+                  0.0,TitleOffset,isamexaxis,tile_plots)
+          call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+          print "(a,i4,a,i4)",' auto-selecting device resolution = ',int(xmaxpix-xminpix)+1,' x ',int(ymaxpix-yminpix)+1
+          npixx = int(xmaxpix-xminpix) + 1
+          npixy = int(ymaxpix-yminpix) + 1
+          if ((xmaxpix-xminpix).gt.1024. .or. (ymaxpix-yminpix).gt.1024) then
+             print "(/,75('*'))"
+             print "(a)",'!! WARNING: PGPLOT will truncate image to 1024 pixels on pixel devices.'
+             print "(a)",'!! To fix this, change line 18 of file grimg2.f in the PGPLOT source code:'
+             print "(a)",'!!          REAL     BUFFER(1026)'
+             print "(a)",'!! changing 1026 to something much bigger, then recompile PGPLOT.'
+             print "(75('*'),/)"
+          endif
+          !--restore saved attributes
+          iplots = iplotsave
+          ipanel = ipanelsave
+          return
+       else
+          call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
                   trim(labelx),trim(labely),' ',just,iaxistemp,0.001,xmaxmargin,yminmargin,0.001, &
                   0.0,TitleOffset,isamexaxis,tile_plots)
+       endif
     endif
     
     !--query and save viewport co-ordinates set up for this panel

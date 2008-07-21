@@ -24,7 +24,7 @@ subroutine defaults_set_render
   implicit none
 
   icolours = 2               ! colour scheme to use
-  npix = 200                 ! pixels in x direction for rendering
+  npix = 0                 ! pixels in x direction for rendering
   iColourBarStyle = 1        ! whether or not to plot the colour bar and style
   iplotcont_nomulti = .false. ! plot contours
   icolour_particles = .false. ! colour particles instead of using pixels
@@ -47,6 +47,7 @@ subroutine submenu_render(ichoose)
   use prompting, only:prompt,print_logical
   implicit none
   integer, intent(in) :: ichoose
+  character(len=5) :: string
   integer :: ians,i,ierr,icolourprev
 !
 !--rendering options
@@ -55,13 +56,18 @@ subroutine submenu_render(ichoose)
   print "(a)",'----------------- rendering options -------------------'
   
   if (ians.le.0 .or. ians.gt.8) then
-     print 10,npix,icolours,print_logical(iplotcont_nomulti),ncontours, &
+     if (npix.gt.0) then
+        write(string,"(i5)") npix
+     else
+        string = 'AUTO'
+     endif
+     print 10,trim(string),icolours,print_logical(iplotcont_nomulti),ncontours, &
            iColourBarStyle,print_logical(icolour_particles), &
            print_logical(inormalise_interpolations),print_logical(ifastrender),&
            print_logical(idensityweightedinterpolation)
 10   format( &
           ' 0) exit ',/,                      &
-          ' 1) change number of pixels            (',i5,' )',/, &
+          ' 1) set number of pixels               ( ',a,' )',/, &
           ' 2) change colour scheme               (',i2,' )',/,    &
           ' 3) plot contours                      ( ',a,' )',/, &
           ' 4) change number of contours          (',i3,' )',/, &
@@ -78,7 +84,12 @@ subroutine submenu_render(ichoose)
  select case(ians)
 !------------------------------------------------------------------------
     case(1)
-       call prompt('enter number of pixels along x axis',npix,1,10000)
+       print "(5(/,a),/)",' Note: setting number of pixels = 0 means that ', &
+                        '       the number of pixels will be automatically ', &
+                        '       chosen to match the device used for plotting.', &
+                        '       The number of pixels is then determined by ', &
+                        '       the page size (set in the p)age menu).'
+       call prompt('enter number of pixels along x axis (0=auto)',npix,0,10000)
 !------------------------------------------------------------------------
     case(2)
        ierr = 1
