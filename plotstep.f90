@@ -2330,7 +2330,7 @@ contains
    integer, intent(in) :: iplot,ntot
    real, dimension(:), intent(inout) :: xploti
    integer :: j
-   real, dimension(ndim) :: xcoords,vecnew
+   real, dimension(ndim) :: xcoords,vecnew,vecin
    
    if (iamvec(iplot).gt.0) then
       if (iplot-iamvec(iplot)+1 .le. ndim) then
@@ -2341,15 +2341,15 @@ contains
             if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
                xcoords(1:ndim) = dat(j,ix(1:ndim)) - dat(itrackpart,ix(1:ndim))
                if (iamvec(iplot).eq.ivx) then
-                  vecnew(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1) - dat(itrackpart,iamvec(iplot):iamvec(iplot)+ndim-1)
+                  vecin(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1) - dat(itrackpart,iamvec(iplot):iamvec(iplot)+ndim-1)
                else
-                  vecnew(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1)
+                  vecin(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1)
                endif
             else
                xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
-               vecnew(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1)
+               vecin(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1)
             endif
-            call vector_transform(xcoords(1:ndim),vecnew(1:ndim), &
+            call vector_transform(xcoords(1:ndim),vecin(1:ndim), &
                  ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
             xploti(j) = vecnew(iplot-iamvec(iplot)+1)
          enddo
