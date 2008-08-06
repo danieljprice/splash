@@ -116,6 +116,7 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
 !
 !--solution ahead of shock front
 ! 
+  ishock = max(ishock,1)
   if (ishock.lt.npts) then
      do i=ishock,npts
         rplot(i) = rshock + (i-ishock)*dr
