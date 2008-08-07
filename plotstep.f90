@@ -596,7 +596,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
   if (interactivereplot .and. ipos.eq.ifirststeponpage .and. iframe.eq.0) then
      iframe = min(nframefirstonpage,nframesloop)
-  elseif (ipagechange) then
+  !elseif (ipagechange .or. nstepsonpage.gt.1) then  ! only change frame after each full page
+  else
      iframe = iframe + 1
   endif
   !-------------------------------------
