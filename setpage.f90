@@ -268,6 +268,7 @@ end subroutine redraw_axes
   real aspectratio,devaspectratio,x1,x2,y1,y2
   real xch,ych,dv,xminpix,xmaxpix,yminpix,ymaxpix
   character xopts*10, yopts*10
+  logical, parameter :: useexactpixelboundaries = .false.
 !
 ! new page if iplot > number of plots on page
 !
@@ -407,35 +408,47 @@ end subroutine redraw_axes
  !print*,'setting ',vptxmin,vptxmax,vptymin,vptymax
  call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
 !
-! adjust viewport on pixel devices so that 
-! boundaries lie exactly on pixel boundaries
-!
- !  query viewport size in pixels
- call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
-
- !  work out how many viewport coords/pixel
- dv = (vptymax - vptymin)/(ymaxpix-yminpix)
-
- !  adjust viewport min/max to lie on pixel boundaries
- vptymin = vptymin - (yminpix - int(yminpix))*dv
- vptymax = vptymax - (ymaxpix - int(ymaxpix))*dv
-
- !  same for x
- dv = (vptxmax - vptxmin)/(xmaxpix-xminpix)
- vptxmin = vptxmin - (xminpix - int(xminpix))*dv
- vptxmax = vptxmax - (xmaxpix - int(xmaxpix))*dv
-
- !  adjust viewport
- !print*,'adjusting ',vptxmin,vptxmax,vptymin,vptymax
- call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
-!
 ! set axes
 !
-  if (just.eq.1) then
-     call pgwnad(xmin,xmax,ymin,ymax)
-  else
-     call pgswin(xmin,xmax,ymin,ymax)
-  endif
+ if (just.eq.1) then
+    call pgwnad(xmin,xmax,ymin,ymax)
+ else
+    call pgswin(xmin,xmax,ymin,ymax)
+ endif
+
+ if (useexactpixelboundaries) then
+    !
+    ! setting axes adjusts the viewport, so query to get adjusted settings
+    !
+    call pgqvp(0,vptxmin,vptxmax,vptymin,vptymax)
+    !print*,'got ',vptxmin,vptxmax,vptymin,vptymax
+    !
+    ! adjust viewport on pixel devices so that 
+    ! boundaries lie exactly on pixel boundaries
+    !
+    !  query viewport size in pixels
+    call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+    !print*,' in pixels = ',xminpix,xmaxpix,yminpix,ymaxpix
+
+    !  work out how many viewport coords/pixel
+    dv = (vptymax - vptymin)/(ymaxpix-yminpix)
+
+    !  adjust viewport min/max to lie on pixel boundaries
+    vptymin = nint(yminpix)*dv
+    vptymax = (nint(ymaxpix)-1.e-4)*dv ! be careful of round-off errors
+
+    !  same for x
+    dv = (vptxmax - vptxmin)/(xmaxpix-xminpix)
+    vptxmin = nint(xminpix)*dv
+    vptxmax = (nint(xmaxpix)-1.e-4)*dv ! be careful of round-off errors
+
+    !  adjust viewport
+    !print*,'adjusting ',vptxmin,vptxmax,vptymin,vptymax
+    call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
+
+    call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+    !print*,' in pixels = ',xminpix,xmaxpix,yminpix,ymaxpix
+ endif
 !
 ! option to return before actually doing anything
 !      
