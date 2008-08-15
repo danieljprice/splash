@@ -20,6 +20,8 @@
 ! GSPLASH_STARPARTCOLS if set to a comma separated list of column labels,
 !  will attempt to read additional columns containing star particle 
 !  properties beyond the end of file
+! GSPLASH_CHECKIDS if 'YES','yes','TRUE' or 'true' then reads and 
+!  checks particle IDS for negative values and flags these as accreted particles
 !
 ! the data is stored in the global array dat
 !
@@ -70,11 +72,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
   integer, dimension(:), allocatable :: iamtemp
   integer :: i,j,itype,icol,ierr,ierrh,ierrrho,nhset
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
-  integer :: ncolstep,npart_max,nstep_max,ntoti
+  integer :: ncolstep,npart_max,nstep_max,ntoti,nacc
   integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
   integer :: nextracols,nstarcols,i1,i2,i3,i4,lenblock,idumpformat
   integer, parameter :: iunit = 11, iunitd = 102, iunith = 103
-  logical :: iexist,reallocate
+  logical :: iexist,reallocate,mixedtypes,checkids
   real(doub_prec) :: timetemp,ztemp
   real(doub_prec), dimension(6) :: massoftypei
   real, dimension(:), allocatable :: dattemp1
@@ -108,6 +110,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   ndimV = 3
   idumpformat = 0
   idumpformat = ienvironment('GSPLASH_FORMAT')
+  checkids = lenvironment('GSPLASH_CHECKIDS')
 !
 !--read data from snapshots
 !  
@@ -202,7 +205,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
         print "(a,i2,a)",' READING ',nstarcols,' STAR PARTICLE COLUMN(S) '
         ncolstep = ncolstep + nstarcols
      endif  
-
+     !call envlist('GSPLASH_EXTRAVECCOLS',nextraveccols)
+     !if (nextraveccols.gt.0) then
+     !   print "(a,i2,a)",' READING ',nextraveccols,' EXTRA COLUMNS '
+     !   ncolstep = ncolstep + nextraveccols
+     !endif
   endif
   
   ncolumns = ncolstep
@@ -311,13 +318,18 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      !--skip read of particle ID (only required if we sort the particles
      !  back into their correct order, which is not implemented at present)
+     !  OR if using particle ID to flag dead particles
      !
-     !print*,'particle ID ',ntoti
-     !if (allocated(iamtemp)) deallocate(iamtemp)
-     !allocate(iamtemp(npart_max))
-     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
-     if (index2.gt.0) read (iunit,iostat=ierr) ! iamtemp(1:index2)
-     !deallocate(iamtemp)
+     if (checkids) then
+        print*,'particle ID ',ntoti
+        if (allocated(iamtemp)) deallocate(iamtemp)
+        allocate(iamtemp(npart_max))
+        call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
+        if (index2.gt.0) read (iunit,iostat=ierr) iamtemp(1:index2)
+     else
+        call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
+        if (index2.gt.0) read (iunit,iostat=ierr) ! skip this line
+     endif
      if (ierr /= 0) then
         print "(a)",'error encountered whilst reading particle ID'
      endif
@@ -352,7 +364,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         do itype=1,6
            if (Npartoftype(itype,i).ne.0) then
               index2 = index1 + Npartoftype(itype,i) -1
-              if (abs(massoftypei(itype)).lt.1.e-8) then ! masses dumped
+              if (abs(massoftypei(itype)).lt.tiny(massoftypei)) then ! masses dumped
                  indexend = indexstart + Npartoftype(itype,i) - 1
                  print*,'read ',Npartoftype(itype,i),' masses for type ', &
                         itype,index1,'->',index2,indexstart,'->',indexend
@@ -377,7 +389,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !--read other quantities for rest of particles
      !
      print*,'gas properties ',npartoftypei(1)
-     do icol=8,ncolstep
+     do icol=8,ncolstep !-nextraveccols
         !!print*,icol
         i3 = 0
         i4 = 0
@@ -453,6 +465,14 @@ subroutine read_data(rootname,istepstart,nstepsread)
         endif
      enddo
      
+     !if (nextraveccols.gt.0) then
+     !   print*,'chemical species ',index2
+     !   read (iunit, iostat=ierr) (dat(j,4:6,i),j=1,index2)
+     !   if (ierr /= 0) then
+     !      print "(a)",'error encountered whilst reading velocities'
+     !   endif
+     !endif
+     
      !
      !--try to read dark matter and star particle smoothing lengths and/or density from a separate
      !  one column ascii file. If only density, use this to compute smoothing lengths.
@@ -519,11 +539,38 @@ subroutine read_data(rootname,istepstart,nstepsread)
            endif
         else
            if (npartoftype(1,i).le.0 .and. sum(npartoftype(:,i)).gt.0) then
-              print "(3(/,a),/)",' NOTE!! For gadget data using dark matter only, column density ',&
+              print "(6(/,a),/)",' NOTE!! For gadget data using dark matter only, column density ',&
                                  ' plots can be produced by setting the GSPLASH_DARKMATTER_HSOFT ',&
-                                 ' environment variable to give the dark matter smoothing length'
+                                 ' environment variable to give the dark matter smoothing length', &
+                                 ' (for a fixed smoothing length)', &
+                                 ' or by creating a one-column ascii file called '//trim(hfile), &
+                                 ' containing the smoothing lengths for the dark matter particles'
            endif
         endif
+     endif
+     
+     !
+     !--DEAL WITH ACCRETED PARTICLES
+     !  if particle ID is less than zero, treat this as an accreted particle
+     !  (give it a negative smoothing length)
+     !
+     if (checkids) then
+        nacc = 0
+        do j=1,index2
+           if (iamtemp(j) < 0) then
+              if (required(ih)) then
+                 dat(j,ih,i) = -abs(dat(j,ih,i))
+              endif
+              nacc = nacc + 1
+           endif
+        enddo
+        if (nacc.gt.0) then
+           print "(a,i10,a,/,a)",' marking ',nacc,' particles with negative ID as accreted/dead', &
+             ' (giving them a negative smoothing length so they will be ignored in renderings)'        
+        else
+           print "(a)",' no particles with negative ID (ie. accreted particles) found'
+        endif
+        deallocate(iamtemp)
      endif
   else
      ntoti = 1
