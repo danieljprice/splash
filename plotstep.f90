@@ -779,8 +779,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
      if ((iploty.le.ndim).and.(iplotx.le.ndim)) then
 
-        npixx = npix
-        if (npixx.le.0) npixx = 500 ! default for other uses of npixx if auto pixels are used
+        if (.not.interactivereplot .or. irerender) then
+           npixx = npix
+           if (npixx.le.0) npixx = 500 ! default for other uses of npixx if auto pixels are used
+        endif
         
         !!--page setup preliminaries
         if (usesquarexy) then
