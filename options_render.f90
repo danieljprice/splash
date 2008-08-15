@@ -42,7 +42,7 @@ end subroutine defaults_set_render
 ! options for rendered plots
 !-----------------------------------------------------------------------------
 subroutine submenu_render(ichoose)
-  use colourbar, only:maxcolourbarstyles,labelcolourbarstyles
+  use colourbar, only:maxcolourbarstyles,labelcolourbarstyles,barisvertical
   use colours, only:schemename,ncolourschemes,colour_demo
   use prompting, only:prompt,print_logical
   implicit none
@@ -134,7 +134,7 @@ subroutine submenu_render(ichoose)
        
        if (iColourBarStyle.gt.0) then
           call prompt(' plot colour bar label?',iplotcolourbarlabel)
-          if (iColourBarStyle.eq.1 .and. iplotcolourbarlabel) then
+          if (barisvertical(iColourBarStyle) .and. iplotcolourbarlabel) then
              call prompt(' enter displacement of text from edge (character heights) ', &
                          ColourBarDisp)
           endif
