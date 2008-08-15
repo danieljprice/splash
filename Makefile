@@ -84,7 +84,7 @@ ifeq ($(SYSTEM),g95)
    F90C= g95
    F90FLAGS= -O3 -ffast-math
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
-   DEBUGFLAG= -Wall -Wextra -g -fbounds-check -ftrace=full
+   DEBUGFLAG= -Wall -Wextra -Wno=165 -g -fbounds-check -ftrace=full
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
    PARALLEL= no
@@ -417,6 +417,9 @@ mbatesph: checksystem $(OBJECTS) read_data_mbate.o
 gadget: checksystem $(OBJECTS) read_data_gadget.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o gsplash $(OBJECTS) read_data_gadget.o
 
+gadget_jsb: checksystem $(OBJECTS) read_data_gadget_jsb.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o gsplash_jsb $(OBJECTS) read_data_gadget_jsb.o
+
 bauswein: checksystem $(OBJECTS) read_data_bauswein.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o bsplash $(OBJECTS) read_data_bauswein.o 
 
@@ -458,6 +461,11 @@ tipsy: checksystem $(OBJECTS) read_data_tipsy.o
 
 vanaverbeke: checksystem $(OBJECTS) read_data_vanaverbeke.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o vsplash $(OBJECTS) read_data_vanaverbeke.o 
+
+ucla: checksystem $(OBJECTS) read_data_UCLA.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o usplash $(OBJECTS) read_data_UCLA.o 
+
+sky: ucla
 
 sigfried: vanaverbeke
 
