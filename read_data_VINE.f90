@@ -31,7 +31,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data, only:npartoftype,dat,time,gamma,maxcol,maxpart,maxstep
   use params, only:doub_prec
   use settings_data, only:ndim,ndimV,ncolumns,ncalc
-  use labels, only:ivx, iBfirst
+  use labels, only:ivx, iBfirst,ih
   use mem_allocation, only:alloc
   use system_utils, only:lenvironment
   implicit none
@@ -53,6 +53,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real(doub_prec), dimension(maxheadlength) :: dheader
   real(doub_prec), dimension(:,:), allocatable :: dattemp, dattempvec
 
+  real :: hfactor
+
   nstepsread = 0
   npart_max = maxpart
   !--this is the default header length
@@ -73,10 +75,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   ndim = 3
   ndimV = 3
   mhdread = .false.
-  if (lenvironment('VINE_MHD')) then
+  if (lenvironment('VSPLASH_MHD') .or. lenvironment('VINE_MHD')) then
      mhdread = .true.
   endif
-  
+  if (lenvironment('VSPLASH_HFAC') .or. lenvironment('VINE_HFAC')) then
+     hfactor = 2.8
+  else
+     hfactor = 1.0
+  endif 
   nstep_max = max(indexstart,1)
 
   j = indexstart
@@ -245,6 +251,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
        dat(ipindx(1:ntoti),icol:ncolstep,j) = real(dattemp(1:ntoti,icol:ncolstep))
 
+       call set_labels
+       if (ih.gt.0 .and. hfactor.gt.1.0) then
+          dat(1:ntoti,ih,j) = hfactor*dat(1:ntoti,ih,j)
+       endif
 !
 !--set particle numbers
 !
