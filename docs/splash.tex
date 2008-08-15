@@ -146,7 +146,7 @@ used by the SPLASH source code, you may want to refer to the PGPLOT userguide:
 \subsubsection{ Compiling and linking with PGPLOT}
 For detailed instructions on compiling and linking with PGPLOT, refer to the INSTALL file in the root directory of the SPLASH distribution (or \url{http://www.astro.ex.ac.uk/people/dprice/splash/download/INSTALL}).
 
-A successful `make' will produce only the binary corresponding to the ascii data format -- `asplash' (by convention the first letter refers to the data format for which splash has been compiled). Using `make all' will build all of the supported data formats (e.g. GADGET is `gsplash', Matthew Bate's sphNG code is `ssplash', the VINE code is `vsplash', my own format is `dsplash' etc.). 
+A successful `make' will produce a binary for each of the main supported SPH data formats -- for example for ascii formats the binary is called `asplash' (by convention the first letter refers to the data format for which splash has been compiled). Details of these are given below.
 
 \subsubsection{ Reading your data}
  The most important part is getting SPLASH to read *your* data format.
@@ -157,9 +157,39 @@ necessary parts to suit your data files. Note that reading directly from
 unformatted data files is *much* faster than reading from formatted (ascii)
 output.   
 
-I have supplied subroutines for reading output from the publically available
-GADGET code (\verb+read_data_gadget.f90+), for GASOLINE (\verb+read_data_tipsy.f90+), VINE (\verb+read_data_VINE.f90+), DRAGON (\verb+read_data_dragon.f90+) and also for Matthew Bate's sphNG code (\verb+read_data_sphNG.f90+) which is widely used in the UK. Another example of a
-data read which I use is given in \verb+read_data_dansph.f90+.
+A standard ``make'' will create the following binaries (corresponding to data reads as listed):
+
+\begin{table}[h!]
+\begin{tabular}{lllp{0.34\textwidth}}
+SPLASH binary & Formats read & read\_data file & Comments \\
+\hline
+asplash & ascii & \verb+read_data_ascii.f90+ & Generic data read for n-column ascii formats. Automatically determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use `asplash -e' to plot non-SPH data (e.g. energy vs time files).\\
+dsplash & DRAGON & \verb+read_data_dragon.f90+ & see environment variable options. \\
+gsplash & GADGET, GADGET-2 &  \verb+read_data_gadget.f90+ & Handles both default and block-labelled formats (see environment variable options). \\
+rsplash & MAGMA & \verb+read_data_srosph.f90+  & Stephan Rosswog's code \\
+ssplash & sphNG, PHANTOM & \verb+read_data_sphNG.f90+ & sphNG is Matthew Bate's SPH code. \\
+tsplash & GASOLINE, TIPSY  &  \verb+read_data_tipsy.f90+ & Reads both binary and ascii TIPSY files (determined automatically). \\
+vsplash & VINE & \verb+read_data_VINE.f90+ & see environment variable options. \\
+\hline
+\end{tabular} 
+\end{table}
+
+Other data reads implemented (but not compiled by default) include the following:
+
+\begin{table}[h!]
+\begin{tabular}{lllp{0.25\textwidth}}
+Format & Binary & read\_data file & Comments \\
+\hline
+Andreas Bauswein's format & bsplash & \verb+read_data_bauswein.f90+  & \\
+Sigfried Vanaverbeke's format & vsplash & \verb+read_data_vanaverbeke.f90+  & \\
+Regularised SPH (Steinar Borve) & rsplash & \verb+read_data_rsph.f90+  & \\
+Sky King/Nikos Mastrodemos & usplash & \verb+read_data_UCLA.f90+  & A good example of a simple ascii format reader \\
+Jamie Bolton GADGET format & gsplash\_jsb & \verb+read_data_gadget_jsb.f90+ & Reads extra arrays before the SPH smoothing length \\
+Old Matthew Bate code & bsplash & \verb+read_data_mbate.f90+  & similar to the original Benz SPH code format \\
+ndspmhd & splash & \verb+read_data_dansph.f90+ & Format for the original code from which SPLASH was simply the plotter (and is now bigger than the code...). \\
+\hline
+\end{tabular}
+\end{table}
 
 Further details on writing your own subroutine are given in
 appendix~\ref{sec:writeyourown}. The *easiest* way is to email me a sample data file and the subroutine
@@ -216,7 +246,9 @@ or LITTLE before \emph{compiling} splash (this adds the appropriate compile-time
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 ASPLASH\_NCOLUMNS & if given a value $>$0 sets the number of columns to be read from ascii data (overrides the automatic number of
 columns determination). \\
-ASPLASH\_NHEADERLINES & if given a value $>=$0 sets the number of header lines to skip (overrides the automatic determination).
+ASPLASH\_NHEADERLINES & if given a value $>=$0 sets the number of header lines to skip (overrides the automatic determination). \\
+ASPLASH\_COLUMNSFILE & can be used to provide the location of (path to) the default `columns' file containing the labels for ascii data (e.g. setenv ASPLASH\_COLUMNSFILE '/home/me/mylabels'). Overridden by the presence of a local `columns' file. \\
+
 \end{tabular}
 
 \subsubsection{ GADGET-2 data read}
@@ -229,14 +261,21 @@ GSPLASH\_USE\_Z & if `YES' or `TRUE' uses the redshift in the legend instead of 
 GSPLASH\_DARKMATTER\_HSOFT & if given a value $>$ 0.0 will assign a smoothing length to dark matter particles for which rendered plots of column density can then be made. \\
 GSPLASH\_EXTRACOLS & if set to a comma separated list of column labels, will attempt to read additional columns containing gas particle properties beyond the end of the file (not applicable if GSPLASH\_FORMAT=2). \\
 GSPLASH\_STARPARTCOLS & if set to a comma separated list of column labels, will attempt to read additional columns containing star particle properties beyond the end of the file (and after any extra gas particle columns) (not applicable if GSPLASH\_FORMAT=2). \\
+GSPLASH\_CHECKIDS & if set to `YES' or `TRUE', reads and checks particle IDs, excluding particles with negative IDs as accreted (gives them a negative smoothing length which means they are ignored in renderings). \\
 \end{tabular}
-
-
 
  For the GADGET read gsplash will also look for, and read if present, files called \verb+snapshot_xxx.hsml+ and/or \verb+snapshot_xxx.dens+ (where \verb+snapshot_xxx+ is the name of the corresponding GADGET dump file) which contain smoothing lengths and/or a density estimate for dark matter particles (these should just be one-column ascii files).
 
+\subsubsection{ VINE data read}
+ For the VINE read (`vsplash') the environment variable options are:\newline
+
+\begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+VSPLASH\_HFAC & if `YES' or `TRUE' multiplies the smoothing length read from the dump file by a factor of 2.8 (for use with older VINE dumps where the smoothing length is defined as in a Plummer kernel rather than as the usual SPH smoothing length). \\
+VSPLASH\_MHD & if `YES' or `TRUE' reads VINE dumps containing MHD arrays (note that setting VINE\_MHD also works). \\
+\end{tabular}
+
 \subsubsection{ sphNG data read}
- For the sphNG read (`ssplash') the environment variable options are:\newline
+ For the sphNG and PHANTOM read (`ssplash') the environment variable options are:\newline
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 SSPLASH\_CENTRE\_ON\_SINK & if `YES' or `TRUE' resets the positions such that the sink particle is positioned at the origin (applies only where there is one, and only one, sink particle present)\\
@@ -1959,7 +1998,7 @@ although check that this email address is current because I am still a postdoc!
 \section*{Acknowledgements}
  Several of the routines were developed from ideas used by Matthew Bate and SPLASH has been refined by many useful discussions with the aforementioned. The
 polytrope exact solution is from a routine by Joe Monaghan. I am indebted to one Thomas S. Ullrich at the University of Heidelberg who wrote the prompting module
-which is used throughout the program. Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve SPLASH, including, but not limited to: John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Ir\v{s}i\v{c}, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika, Richard Alexander, Sigfried Vanaverbeke and Dave Rundle.
+which is used throughout the program. Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve SPLASH, including, but not limited to: Giuseppe Lodato, John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Ir\v{s}i\v{c}, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika, Richard Alexander, Sigfried Vanaverbeke, Dave Rundle, Thomas Grief and Sky King.
 
 \newpage
 \appendix
