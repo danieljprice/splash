@@ -81,6 +81,9 @@ horizontal colour bars implemented; -p, -o command line options; can have mixed 
 1.10.2:
 disc surface density / toomre q parameter plotting added; flash colour schemes added; splash to binary convert option; can change order in which particle types are plotted; splash.columns file overrides default column label settings; vanaverbeke format read; various bug fixes
  
+1.11.0:
+ability to use subset of particles in restricted parameter range(s); probability density function plot option; plot-hugging colour bars added; ability to annotate plot with a range of shapes; v, V, w and H implemented in interactive mode for >1 panel; various bug fixes
+ 
 1.11.0beta:
 ability to use subset of particles in restricted parameter range(s); probability density function plot option; plot-hugging colour bars added; ability to annotate plot with a range of shapes; v,V,w and H implemented in interactive mode for >1 panel
  
