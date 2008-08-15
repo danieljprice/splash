@@ -1947,8 +1947,8 @@ contains
 
     xlabeloffsettemp = xlabeloffset + 1.0
     if (iaxistemp.lt.0) xlabeloffsettemp = 0.
-    yminmargin = 0.001
-    xmaxmargin = 0.001
+    yminmargin = 0.0
+    xmaxmargin = 0.0
     !--leave space for colour bar if necessary (at end of row only on tiled plots)
     if ((tile_plots .and. iAllowspaceforcolourbar).or.(.not.tile_plots.and.iPlotColourBar)) then
        call get_colourbarmargins(iColourBarStyle,xmaxmargin,yminmargin,barwidth)
@@ -1956,7 +1956,7 @@ contains
        barwidth = 0.
     endif
     !--work out whether or not to leave space above plots for titles/legends
-    TitleOffset = 0.
+    TitleOffset = -tiny(Titleoffset)
     if (iPlotTitles .and. nstepsperpage.eq.1 .and. vpostitle.gt.0.) TitleOffset = vpostitle
     if (iPlotLegend .and. nstepsperpage.eq.1 .and. vposlegend.lt.0.) TitleOffset = max(Titleoffset,-vposlegend)
 
@@ -1992,20 +1992,22 @@ contains
     endif
     if (nstepsperpage.ne.0 .or. inewpage) then
        if (dum) then !--fake the page setup, then return
-          call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
-                  trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp,0.001,xmaxmargin,yminmargin,0.001, &
-                  0.0,TitleOffset,isamexaxis,tile_plots)
-          call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
-          print "(a,i4,a,i4)",' auto-selecting device resolution = ',int(xmaxpix-xminpix)+1,' x ',int(ymaxpix-yminpix)+1
-          npixx = int(xmaxpix-xminpix) + 1
-          npixy = int(ymaxpix-yminpix) + 1
-          if ((xmaxpix-xminpix).gt.1024. .or. (ymaxpix-yminpix).gt.1024) then
-             print "(/,75('*'))"
-             print "(a)",'!! WARNING: PGPLOT will truncate image to 1024 pixels on pixel devices.'
-             print "(a)",'!! To fix this, change line 18 of file grimg2.f in the PGPLOT source code:'
-             print "(a)",'!!          REAL     BUFFER(1026)'
-             print "(a)",'!! changing 1026 to something much bigger, then recompile PGPLOT.'
-             print "(75('*'),/)"
+          if (.not.(interactivereplot .and. .not.irerender)) then
+             call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
+                     trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp,0.0,xmaxmargin,yminmargin,0.0, &
+                     0.0,TitleOffset,isamexaxis,tile_plots)
+             call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+             npixx = nint(xmaxpix-xminpix)
+             npixy = nint(ymaxpix-yminpix)
+             print "(a,i4,a,i4)",' auto-selecting device resolution = ',npixx,' x ',npixy
+             if ((xmaxpix-xminpix).gt.1024. .or. (ymaxpix-yminpix).gt.1024) then
+                print "(/,75('*'))"
+                print "(a)",'!! WARNING: PGPLOT will truncate image to 1024 pixels on pixel devices.'
+                print "(a)",'!! To fix this, change line 18 of file grimg2.f in the PGPLOT source code:'
+                print "(a)",'!!          REAL     BUFFER(1026)'
+                print "(a)",'!! changing 1026 to something much bigger, then recompile PGPLOT.'
+                print "(75('*'),/)"
+             endif
           endif
           !--restore saved attributes
           iplots = iplotsave
@@ -2013,7 +2015,7 @@ contains
           return
        else
           call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
-                  trim(labelx),trim(labely),' ',just,iaxistemp,0.001,xmaxmargin,yminmargin,0.001, &
+                  trim(labelx),trim(labely),' ',just,iaxistemp,0.0,xmaxmargin,yminmargin,0.0, &
                   0.0,TitleOffset,isamexaxis,tile_plots)
        endif
     endif
