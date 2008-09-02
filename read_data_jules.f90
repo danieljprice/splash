@@ -35,11 +35,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(IN) :: indexstart
   integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
-  integer :: i,j,ifile,ierr
-  integer :: istep,nprint,npart_max,nstep_max,icol
+  integer :: i,j,ifile,ierr,npart,nweird,nbnd
+  integer :: istep,nprint,npart_max,nstep_max,icol,ncolstep
   logical :: iexist
   character(LEN=LEN(rootname)+4) :: dumpfile
-  real :: timei,dti
+  real :: timei,dti,hi,pmass,totmass,rhozero
 
   nstepsread = 0
   nstep_max = 0
@@ -61,7 +61,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 2
   ndimV = 2
-  ncolumns = 7  ! number of columns in file  
+  ncolstep = 7
+  ncolumns = 8  ! number of columns in file  
   !
   !--allocate memory initially
   !
@@ -82,11 +83,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !--read the number of particles in the first step,
         !  allocate memory and rewind
         !
-        read(15,*,end=55,iostat=ierr) istep,nprint,timei,dti
-        print*,'first time = ',timei,nprint
+        read(15,*,end=55,iostat=ierr) istep,nprint,hi
+        print*,'first time = ',hi,' npart = ',nprint
         if (.not.allocated(dat) .or. (nprint.gt.npart_max)) then
            npart_max = max(npart_max,INT(1.1*(nprint)))
-           call alloc(npart_max,nstep_max,ncolumns)
+           call alloc(npart_max,nstep_max,ncolumns,mixedtypes=.true.)
         endif
         rewind(15)
      endif
@@ -103,17 +104,43 @@ subroutine read_data(rootname,indexstart,nstepsread)
     !--allocate/reallocate memory if j > maxstep
     !
            if (j.gt.maxstep) then
-              call alloc(maxpart,j+1,maxcol)
+              call alloc(maxpart,j+1,maxcol,mixedtypes=.true.)
            endif
     !
     !--now read the timestep data in the dumpfile
     !
-           read(15,*,end=55,iostat=ierr) istep,nprint,time(j),dti
-           do i=1,nprint
-              read(15,*,end=55,iostat=ierr) (dat(i,icol,j),icol = 1,ncolumns)
+           read(15,*,end=55,iostat=ierr) istep,nprint,hi
+			  read(15,*)
+			  rhozero = 1000.
+			  totmass = 3.*4.8*rhozero
+			  pmass = totmass/real(nprint)
+			  print*,' assuming total mass = ',totmass,' (rhozero = ',rhozero,')'
+			  print*,' gives particle mass = ',pmass
+           nbnd = 0
+			  npart = 0
+			  nweird = 0
+			  do i=1,nprint
+              read(15,600,end=55,iostat=ierr) (dat(i,icol,j),icol = 1,ncolstep),iamtype(i,j)
+				  select case(iamtype(i,j))
+				  case(0)
+				     nbnd = nbnd + 1
+					  iamtype(i,j) = 2
+			     case(1)
+				     npart = npart + 1
+					  iamtype(i,j) = 1
+				  case default
+				     nweird = nweird + 1
+					  iamtype(i,j) = 3
+				  end select
+              !print*,i,(dat(i,icol,j),icol = 1,ncolstep),iamtype(i,j)
+				  !--make a fake column for mass
+				  dat(i,8,j) = pmass
            enddo
+600  	     format(2x,7(e12.5),1(i5))
+			  time(j) = real(istep)
 
            if (ierr /= 0) then
+			     print*,'got to ',i,' step ',j
               print "(a)",'|*** ERROR READING TIMESTEP ***'
               return
            else
@@ -121,8 +148,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
            endif
 
            npartoftype(:,j) = 0
-           npartoftype(1,j) = nprint
-
+           npartoftype(1,j) = npart
+           npartoftype(2,j) = nbnd
+           npartoftype(3,j) = nweird
+           if (nweird.gt.0) print*,' WARNING: ',nweird,' particles of unknown type'
            print*,j,' time = ',time(j)
            gamma(j) = 1.666666666667
            j = j + 1
@@ -137,7 +166,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   close(15)
 
   print*,'nstepsread = ',nstepsread
-  print*,'>> end of dump file: nsteps =',j-1,'ntot = ',npartoftype(1,j-1),'nptmass=',npartoftype(2,j-1)
+  print*,'>> end of dump file: nsteps =',j-1,'nfluid = ',npartoftype(1,j-1),'nbound=',npartoftype(2,j-1)
    
 return
                     
@@ -169,15 +198,16 @@ subroutine set_labels
   enddo
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   ivx = ndim+1
-  ih = ndim+ndimV+2        !  smoothing length
+  ipr = ndim+ndimV+2
+  label(ipr) = 'pressure'
+  ih = ndim+ndimV+3        !  smoothing length
   label(ih) = 'h'
   irho = ndim+ndimV+1     ! location of rho in data array
   label(irho) = 'density'      
-  label(ndim+ndimV+3) = 'dfunc/dx'
   iutherm = 0  !  thermal energy
 !  label(iutherm) = 'u'
-  ipmass = 0  !  particle mass
-!  label(ipmass) = 'particle mass'
+  ipmass = 8  !  particle mass
+  label(ipmass) = 'particle mass'
   
   iamvec(ivx:ivx+ndimV-1) = ivx
   labelvec(ivx:ivx+ndimV-1) = 'v'
@@ -187,9 +217,14 @@ subroutine set_labels
   !
   !--set labels for each particle type
   !
-  ntypes = 1 !!maxparttypes
-  labeltype(1) = 'gas'
+  ntypes = 3 !!maxparttypes
+  labeltype(1) = 'fluid'
+  labeltype(2) = 'boundary'
+  labeltype(3) = 'unknown'
+  
   UseTypeInRenderings(1) = .true.
+  UseTypeInRenderings(2) = .false.
+  UseTypeInRenderings(3) = .false.
  
 !-----------------------------------------------------------
 

@@ -26,14 +26,14 @@ endif
 # change the line below depending on where/how you have installed PGPLOT
 # (some settings of the SYSTEM variable for specific machines overwrite this)
 #
-PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot -lpng
+PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot 
 #
 # add one of the lines below if PGPLOT was compiled with a different
 # compiler to the one you are using. May also need -L/dir/ for the directory
 # where the corresponding library is located (e.g. -L/usr/local/gfortran/lib -lgfortran)
 #
 # g77-compiled PGPLOT
-#PGPLOTLIBS += -lg2c
+PGPLOTLIBS += -L/sw/lib -lg2c -lSystemStubs
 #
 # gfortran-compiled PGPLOT
 #PGPLOTLIBS += -lgfortran
@@ -434,6 +434,12 @@ ndspmhd: checksystem $(OBJECTS) read_data_dansph.o
 
 dansph: checksystem $(OBJECTS) read_data_dansph_old.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o dsplash $(OBJECTS) read_data_dansph_old.o
+
+jjm: checksystem $(OBJECTS) read_data_jjm.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o jsplash $(OBJECTS) read_data_jjm.o 
+
+jules: checksystem $(OBJECTS) read_data_jules.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o jsplash $(OBJECTS) read_data_jules.o 
 
 scwsph: checksystem $(OBJECTS) read_data_scw.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o wsplash $(OBJECTS) read_data_scw.o
