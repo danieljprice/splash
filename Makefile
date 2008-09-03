@@ -26,19 +26,19 @@ endif
 # change the line below depending on where/how you have installed PGPLOT
 # (some settings of the SYSTEM variable for specific machines overwrite this)
 #
-PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot 
+PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot -lpng
 #
 # add one of the lines below if PGPLOT was compiled with a different
 # compiler to the one you are using. May also need -L/dir/ for the directory
 # where the corresponding library is located (e.g. -L/usr/local/gfortran/lib -lgfortran)
 #
 # g77-compiled PGPLOT
-PGPLOTLIBS += -L/sw/lib -lg2c -lSystemStubs
+#PGPLOTLIBS += -lg2c
 #
 # gfortran-compiled PGPLOT
 #PGPLOTLIBS += -lgfortran
 #
-# gfortran-compiled PGPLOT
+# g95-compiled PGPLOT
 #PGPLOTLIBS += -lg95
 #
 # this file contains system-dependent routines like getarg, iargc etc.
