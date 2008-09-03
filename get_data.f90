@@ -25,7 +25,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
                      DataisBuffered,iCalcQuantities,ndim,ndimV,icoords, &
                      icoordsnew,iRescale,required,ipartialread,lowmemorymode
   use settings_part, only:iexact
-  use particle_data, only:dat,time,npartoftype,maxcol
+  use particle_data, only:dat,time,npartoftype,maxcol,masstype
   use prompting, only:prompt,ucase
   use labels, only:label,labelvec,iamvec,ix,ih,irho,ipmass,labeltype
   use geometry, only:labelcoord
@@ -83,6 +83,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      nstepsinfile(1:nfiles) = 0
      required = .true.
      print "(/a)",' reading from all dumpfiles...'
+     !call endian_info()
+     
      do i=1,nfiles
         call read_data(rootname(i),istart,nstepsinfile(i))
         istart = istart + nstepsinfile(i) ! number of next step in data array
@@ -136,6 +138,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      nstepsinfile(ireadfile) = 0
      print "(/a)",' reading single dumpfile'
+     !call endian_info()
      if (timing) call cpu_time(t1)
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
      if (timing) then
@@ -260,14 +263,19 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         print "(a)",' ERROR with ipmass setting in data read'
         ipmass = 0
      endif
-     if (irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
+     if (irho.eq.0 .or. ih.eq.0) then
         print "(4(/,a))",' WARNING: Rendering capabilities cannot be enabled', &
                  '  until positions of density, smoothing length and particle', &
                  '  masses are known (specified using the integer variables ', &
                  '  irho,ih and ipmass in the read_data routine)'
+     elseif (irho.gt.0 .and. ih.gt.0 .and. ipmass.eq.0 .and. all(masstype(:,:).lt.tiny(0.))) then
+        print "(2(/,a))",' WARNING: Particle masses not read as array but mass not set:', &
+                         '          RENDERING WILL NOT WORK! '
+     
+     
      endif
      if (nsteps.gt.0) then
-        if (sum(npartoftype(:,:)).gt.0 .and. any(npartoftype(1,:).eq.0)) then
+        if (sum(npartoftype(:,1)).gt.0 .and. npartoftype(1,1).eq.0) then
            print "(3(/,a),/)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES:', &
                               '  nothing will appear unless plotting of other particle ', &
                               '  types is turned on via the o)ptions menu'
@@ -347,5 +355,25 @@ subroutine get_labels
 
 
 end subroutine get_labels
+
+!-------------------------------------
+!
+! simple utility to spit out native
+! endian-ness
+!
+!-------------------------------------
+
+subroutine endian_info
+ implicit none
+ logical, parameter :: bigendian = IACHAR(TRANSFER(1,"a")) == 0
+
+ if (bigendian) then
+    print 10,'BIG'
+ else
+    print 10,'LITTLE'
+ endif
+10 format(' native endian on this machine is ',a,/,' (read endian may be set by compiler flags/environment variables)',/)
+
+end subroutine endian_info
 
 end module getdata
