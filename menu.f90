@@ -238,7 +238,6 @@ subroutine menu
            !
            iAllowRendering = (ih.gt.0 .and. ih.le.ndataplots) &
                         .and.(irho.gt.0 .and. irho.le.ndataplots) &
-                        .and.(ipmass.gt.0 .and. ipmass.le.ndataplots)  &
                         .and.(icoords.eq.icoordsnew .or. icolour_particles) &
                         .and.((itrans(ipickx).eq.0 .and. itrans(ipicky).eq.0).or.icolour_particles)
            !

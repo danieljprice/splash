@@ -43,7 +43,7 @@ module sphNGread
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
  integer :: istartmhd,istartrt,nmhd,idivvcol
- logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp
+ logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass
  
 end module sphNGread
 
@@ -297,6 +297,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
    nptmasstot = 0
    i2 = 0
    iptmass2 = 0
+   igotmass = .true.
+   massoftypei(:) = 0.
 
    over_MPIblocks: do iblock=1,nblocks
       
@@ -341,12 +343,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--work out from array header what sort of dump this is and where things should lie
 !
    if (iblock.eq.1) then
+      igotmass = .true.
       if (smalldump .or. phantomdump) then
          if (nreals.ge.15) then
             massoftypei(1) = dummyreal(15)
-            if (massoftypei(1).gt.tiny(0.)) then
+            if (massoftypei(1).gt.tiny(0.) .and. .not.lowmemorymode) then
                ncolstep = ncolstep + 1  ! make an extra column to contain particle mass
                imadepmasscolumn = .true.
+            elseif (lowmemorymode) then
+               igotmass = .false.
             endif
             !--read dust mass from phantom dumps
             if (phantomdump .and. nreals.ge.16) then
@@ -357,10 +362,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
          else
             print "(a)",' error extracting particle mass from small dump file'
             massoftypei(1) = 0.
+            igotmass = .false.
          endif
          if (abs(massoftypei(1)).lt.tiny(0.) .and. nreal(1).lt.4) then
-            print "(a)",' error: particle masses not present in small dump file'   
-         endif      
+            print "(a)",' error: particle masses not present in small dump file'
+            igotmass = .false.
+         endif
       endif
 !
 !--   to handle both small and full dumps, we need to place the quantities dumped
@@ -372,10 +379,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
       ix(1) = 1
       ix(2) = 2
       ix(3) = 3
-      ipmass = 4
-      ih = 5
-      irho = 6
-      nhydroarrays = 6 ! x,y,z,m,h,rho
+      if (igotmass) then  
+         ipmass = 4
+         ih = 5
+         irho = 6
+         nhydroarrays = 6 ! x,y,z,m,h,rho
+      else
+         ipmass = 0
+         ih = 4
+         irho = 5
+         nhydroarrays = 5 ! x,y,z,h,rho      
+      endif
       nhydroarraysinfile = nreal(1) + nreal4(1) + nreal8(1)
       if (imadepmasscolumn) nhydroarraysinfile = nhydroarraysinfile + 1
       if (nhydroarraysinfile .lt.nhydroarrays .and. .not.phantomdump) then
@@ -394,9 +408,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
       if (narrsizes.ge.4) mhddump = .true.
 
       if (.not.(mhddump.or.smalldump)) then
-         ivx = 7
-      elseif (mhddump) then
-         ivx = 10
+         ivx = nhydroarrays+1
+      elseif (mhddump .and. .not.smalldump) then
+         ivx = nhydroarrays+nmhdarrays+1
       else
          ivx = 0
       endif
@@ -438,6 +452,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
       time(j) = dummyreal(1)
       gamma(j) = dummyreal(3)
       rhozero = dummyreal(4)
+      masstype(:,j) = massoftypei(:)
+
       if (rhozero.gt.0.) then
          tfreefall = SQRT((3. * pi) / (32. * rhozero))
          tff = time(j)/tfreefall
@@ -604,11 +620,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
          if (((smalldump.and.nreal(1).lt.ipmass).or.phantomdump).and. iarr.eq.1) then
             if (abs(massoftypei(1)).gt.tiny(massoftypei)) then
                icolumn = ipmass
-               if (required(ipmass)) then
+               if (required(ipmass) .and. ipmass.gt.0) then
                   where (iphase(i1:i2).eq.0) dat(i1:i2,icolumn,j) = massoftypei(1)
                endif
                !--dust mass for phantom particles
-               if (phantomdump .and. npartoftypei(2).gt.0) then
+               if (phantomdump .and. npartoftypei(2).gt.0 .and. ipmass.gt.0) then
                   print *,' dust particle mass = ',massoftypei(2),' ratio dust/gas = ',massoftypei(2)/massoftypei(1)
                   dat(npartoftypei(1)+1:npartoftypei(1)+npartoftypei(2),icolumn,j) = massoftypei(2)
                endif
@@ -656,10 +672,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                if (required(irho)) then
                   where (dat(i1:i2,ih,j).gt.0.)
                      dat(i1:i2,irho,j) = &
-                        dat(i1:i2,ipmass,j)*(hfact/dat(i1:i2,ih,j))**3
+                        massoftypei(1)*(hfact/dat(i1:i2,ih,j))**3
                   elsewhere (dat(i1:i2,ih,j).lt.0.)
                      dat(i1:i2,irho,j) = &
-                        dat(i1:i2,ipmass,j)*(hfact/abs(dat(i1:i2,ih,j)))**3
+                        massoftypei(1)*(hfact/abs(dat(i1:i2,ih,j)))**3
                      icolourme(i1:i2) = -1
                   end where
                endif
@@ -968,16 +984,22 @@ subroutine set_labels
   do i=1,ndim
      ix(i) = i
   enddo
-  ipmass = 4   !  particle mass
-  ih = 5       !  smoothing length
-  irho = 6     !  density
+  if (igotmass) then
+     ipmass = 4   !  particle mass
+     ih = 5       !  smoothing length
+  else
+     ipmass = 0
+     ih = 4       !  smoothing length
+  endif
+  irho = ih + 1     !  density
+  
 !--the following only for mhd small dumps or full dumps
   if (ncolumns.ge.7) then
      if (mhddump) then
-        iBfirst = 7 
+        iBfirst = irho+1
         if (.not.smalldump) then
-           ivx = 10
-           iutherm = 13
+           ivx = iBfirst+ndimV
+           iutherm = ivx+ndimV
 
            if (phantomdump) then
               !--phantom MHD full dumps
@@ -1002,9 +1024,9 @@ subroutine set_labels
 
            else
               !--sphNG MHD full dumps
-              label(14) = 'grad h'
-              label(15) = 'grad soft'
-              label(16) = 'alpha'
+              label(iutherm+1) = 'grad h'
+              label(iutherm+2) = 'grad soft'
+              label(iutherm+3) = 'alpha'
               if (nmhd.ge.7 .and. usingvecp) then
                  iamvec(istartmhd:istartmhd+ndimV-1) = istartmhd
                  labelvec(istartmhd:istartmhd+ndimV-1) = 'A'
@@ -1027,15 +1049,15 @@ subroutine set_labels
         endif
      else
         ! pure hydro full dump
-        ivx = 7
-        iutherm = 10
+        ivx = irho+1
+        iutherm = ivx + ndimV
         if (phantomdump) then
-           label(11) = 'alpha'
-           label(12) = 'alphau'
+           label(iutherm+1) = 'alpha'
+           label(iutherm+2) = 'alphau'
         else
-           label(11) = 'grad h'
-           label(12) = 'grad soft'
-           label(13) = 'alpha'
+           label(iutherm+1) = 'grad h'
+           label(iutherm+2) = 'grad soft'
+           label(iutherm+3) = 'alpha'
         endif
      endif 
 
@@ -1100,8 +1122,10 @@ subroutine set_labels
 !   do i=1,3
 !      write(unitslabel(i),"('[ 10\u',i2,'\d cm]')") npower
 !   enddo
-   units(ipmass) = umass
-   unitslabel(ipmass) = ' [g]'
+   if (ipmass.gt.0) then
+      units(ipmass) = umass
+      unitslabel(ipmass) = ' [g]'
+   endif
    units(ih) = udist
    unitslabel(ih) = ' [cm]'
    if (ivx.gt.0) then
