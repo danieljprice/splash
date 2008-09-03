@@ -268,7 +268,7 @@ end subroutine redraw_axes
   real aspectratio,devaspectratio,x1,x2,y1,y2
   real xch,ych,dv,xminpix,xmaxpix,yminpix,ymaxpix
   character xopts*10, yopts*10
-  logical, parameter :: useexactpixelboundaries = .false.
+  logical, parameter :: useexactpixelboundaries = .true.
 !
 ! new page if iplot > number of plots on page
 !
@@ -434,12 +434,12 @@ end subroutine redraw_axes
     dv = (vptymax - vptymin)/(ymaxpix-yminpix)
 
     !  adjust viewport min/max to lie on pixel boundaries
-    vptymin = nint(yminpix)*dv
+    vptymin = max((nint(yminpix)-1.e-4)*dv,0.)
     vptymax = (nint(ymaxpix)-1.e-4)*dv ! be careful of round-off errors
 
     !  same for x
     dv = (vptxmax - vptxmin)/(xmaxpix-xminpix)
-    vptxmin = nint(xminpix)*dv
+    vptxmin = max((nint(xminpix)-1.e-4)*dv,0.)
     vptxmax = (nint(xmaxpix)-1.e-4)*dv ! be careful of round-off errors
 
     !  adjust viewport
