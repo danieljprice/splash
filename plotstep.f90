@@ -391,8 +391,13 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   !!------------------------------------------------------------------------
   ! initialise PGPLOT
 
-  !!--start PGPLOT
+  !!--start PGPLOT (prompt for device)
   call pgbegin(0,'?',1,1)
+
+  !--query whether or not device is interactive
+  call pgqinf('CURSOR',string,ilen)
+  !--smoothing length is required if interactive device and coordinate plot
+  if (icoordplot .and. string(1:ilen).eq.'YES') required(ih) = .true.
 
   !!--set paper size if necessary
   if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
@@ -456,7 +461,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                 iplotcontmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
   use settings_data, only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
-                     iendatstep,ntypes,UseTypeInRenderings,itrackpart,required
+                     iendatstep,ntypes,UseTypeInRenderings,itrackpart,required,ipartialread
   use settings_limits, only:iadapt,iadaptcoords,scalemax
   use settings_part, only:iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
                      iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot
@@ -547,7 +552,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   iaxistemp = iaxis
   
   !--set the arrays needed for rendering if they are present
-  if (ih.gt.0 .and. ih.le.ndataplots .and. required(ih)) hh(:) = dat(:,ih)
+  if (ih.gt.0 .and. ih.le.ndataplots .and. (required(ih) .or. .not.ipartialread)) hh(:) = dat(:,ih)
   if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
      if (required(ipmass)) then
         pmassmin = minval(dat(:,ipmass))
@@ -2477,7 +2482,10 @@ contains
           inormalise = inormalise_interpolations
        endif
 
-    elseif (masstype(1).gt.0.) then
+    elseif (masstype(1).gt.0. .and. &
+            irho.gt.0 .and. irho.le.ndataplots .and. &
+            ih .gt. 0 .and. ih.le.ndataplots .and. &
+            required(irho) .and. required(ih)) then
        
        if (size(iamtype).gt.1) then
           !
