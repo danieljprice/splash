@@ -231,7 +231,7 @@ subroutine submenu_page(ichoose)
                     ' This gives width = 2 for vector devices (/ps,/cps etc)', &
                     '        and width = 1 elsewhere (e.g. for pixel devices)'
      print*
-     call prompt('Enter PGPLOT line width (0=auto)',linewidth,0,5)
+     call prompt('Enter PGPLOT line width (0=auto)',linewidth,0)
      return
 !------------------------------------------------------------------------
   case(8)
