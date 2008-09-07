@@ -601,9 +601,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
   if (interactivereplot .and. ipos.eq.ifirststeponpage .and. iframe.eq.0) then
      iframe = min(nframefirstonpage,nframesloop)
-  !elseif (ipagechange .or. nstepsonpage.gt.1) then  ! only change frame after each full page
+  !elseif (ipagechange .or. nstepsperpage.gt.1) then  ! only change frame after each full page
   else
      iframe = iframe + 1
+  endif
+  
+  if (iframe.eq.0) then
+     print*,' Internal error in iframe, setting to 1 '
+     iframe = 1
   endif
   !-------------------------------------
   ! loop over plots per timestep
@@ -2305,7 +2310,7 @@ contains
    implicit none
    integer, intent(in) :: iplotx,iploty,ntot
    real, dimension(:), intent(inout) :: xplot,yplot
-   real, dimension(ndim) :: xcoords
+   real, dimension(ndim) :: xcoords,xcoordsnew
    integer :: j
 
    if (iplotx.le.ndim .or. iploty.le.ndim) then
@@ -2321,9 +2326,9 @@ contains
          endif
 
          call coord_transform(xcoords(1:ndim),ndim,icoords, &
-                              xcoords(1:ndim),ndim,icoordsnew)
-         if (iplotx.le.ndim) xplot(j) = xcoords(iplotx)
-         if (iploty.le.ndim) yplot(j) = xcoords(iploty)
+                              xcoordsnew(1:ndim),ndim,icoordsnew)
+         if (iplotx.le.ndim) xplot(j) = xcoordsnew(iplotx)
+         if (iploty.le.ndim) yplot(j) = xcoordsnew(iploty)
       enddo
    endif
    
