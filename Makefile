@@ -369,7 +369,7 @@ SOURCESF90= globaldata.f90 asciiutils.f90 transform.f90 \
          write_pixmap.f90 write_sphdata.f90 discplot.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \
-         exact_sedov.f90 exact_shock.f90 exact_wave.f90 \
+         exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 \
          exact_densityprofiles.f90 exact_torus.f90 \
          exact_ringspread.f90 \

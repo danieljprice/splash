@@ -158,14 +158,15 @@ contains
          ' 8) Plummer/Hernquist spheres ',/, &
          ' 9) torus ',/, &
          '10) ring spreading ',/, &
-         '11) read from file ')
-    call prompt('enter exact solution to plot',iexact,0,11)
+         '11) special relativistic shock tube',/, &
+         '12) read from file ')
+    call prompt('enter exact solution to plot',iexact,0,12)
     print*,' plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
     !
     select case(iexact)
-    case(1)
+    case(1,11)
        !
        !--read shock parameters from the .shk file
        !
@@ -175,8 +176,13 @@ contains
           call prompt('enter density to right of shock  ',rho_R,0.0)   
           call prompt('enter pressure to left of shock  ',pr_L,0.0)
           call prompt('enter pressure to right of shock ',pr_R,0.0)
-          call prompt('enter velocity to left of shock  ',v_L)
-          call prompt('enter velocity to right of shock ',v_R)
+          if (iexact.eq.11) then
+             call prompt('enter velocity to left of shock  ',v_L,max=1.0)
+             call prompt('enter velocity to right of shock ',v_R,max=1.0)        
+          else
+             call prompt('enter velocity to left of shock  ',v_L)
+             call prompt('enter velocity to right of shock ',v_R)
+          endif
        endif
     case(2)
        call prompt('enter density of ambient medium ',rhosedov,0.0)
@@ -257,7 +263,7 @@ contains
        call prompt('enter mass of ring',Mring,0.)
        call prompt('enter radius of ring centre R0',Rring,0.)
        call prompt('enter viscosity parameter nu',viscnu,0.)
-    case(11)
+    case(12)
        iexist = .false.
        do while(.not.iexist)
           call prompt('enter filename ',filename_exact)
@@ -323,7 +329,7 @@ contains
     if (idash.eq.0) idash = len_trim(rootname)+1
 
     select case(iexact)
-    case(1)
+    case(1,11)
        !
        !--shock tube parameters from .shk file
        !
@@ -453,6 +459,7 @@ contains
     use rhoh, only:exact_rhoh
     use sedov, only:exact_sedov
     use shock, only:exact_shock
+    use shock_sr, only:exact_shock_sr
     use torus, only:exact_torus
     use toystar1D, only:exact_toystar1D  !, exact_toystar_ACplane
     use toystar2D, only:exact_toystar2D
@@ -732,7 +739,19 @@ contains
              call exact_ringspread(1,time,Mring,Rring,viscnu,xexact,yexact,ierr)
           endif
        endif
-    case(11) ! exact solution read from file
+    case(11) ! special relativistic shock tube
+       if (iplotx.eq.ix(1) .and. igeom.le.1) then
+          if (iploty.eq.irho) then
+             call exact_shock_sr(1,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+          elseif (iploty.eq.ipr) then
+             call exact_shock_sr(2,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+          elseif (iploty.eq.ivx) then
+             call exact_shock_sr(3,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+          elseif (iploty.eq.iutherm) then
+             call exact_shock_sr(4,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+          endif
+       endif
+    case(12) ! exact solution read from file
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
           call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
