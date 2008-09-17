@@ -230,7 +230,7 @@ end subroutine exact_shock_sr
   pmin  = (pl + pr)/2.d0 
   pmax  = pmin
 
-5    iloop = iloop + 1
+5 iloop = iloop + 1
 
   pmin  = 0.5d0*max(pmin,0.d0) 
   pmax  = 2.d0*pmax
