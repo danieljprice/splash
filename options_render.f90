@@ -24,7 +24,7 @@ subroutine defaults_set_render
   implicit none
 
   icolours = 2               ! colour scheme to use
-  npix = 0                 ! pixels in x direction for rendering
+  npix = 200                 ! pixels in x direction for rendering
   iColourBarStyle = 1        ! whether or not to plot the colour bar and style
   iplotcont_nomulti = .false. ! plot contours
   icolour_particles = .false. ! colour particles instead of using pixels
