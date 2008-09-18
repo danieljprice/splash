@@ -589,6 +589,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   !  but only generate extra frames if we are inside a sequence
   !
   iseqpos = ipos !(ipos-1)/(nacross*ndown) + 1
+  !print*,' iseqpos = ',iseqpos,ipos
   if (nseq.gt.0 .and. insidesequence(iseqpos)) then
      nframesloop = nframes
   else
@@ -606,6 +607,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      iframe = iframe + 1
   endif
   
+  !print*,'iframe = ',iframe, ipagechange,nstepsperpage
   if (iframe.eq.0) then
      print*,' Internal error in iframe, setting to 1 '
      iframe = 1
@@ -2537,7 +2539,17 @@ contains
              endif
           enddo
        endif
+       
+       if (idensityweightedinterpolation) then
+          print "(a)",' USING DENSITY WEIGHTED INTERPOLATION '
+          inormalise = .true.
+       else
+          inormalise = inormalise_interpolations
+       endif
     else
+       if (required(ih) .and. required(irho)) then 
+          print "(a)",' WARNING: particle mass not set: using normalised interpolations'
+       endif
     !--if particle mass has not been set, then must use normalised interpolations
        weight(1:ninterp) = 1.0
        inormalise = .true.
