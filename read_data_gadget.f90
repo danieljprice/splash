@@ -10,6 +10,8 @@
 ! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
 !  ENVIRONMENT VARIABLES:
 !
+! GSPLASH_FORMAT if = 2 then reads the block-labelled GADGET format
+!   rather than the default format.
 ! GSPLASH_USE_Z if 'YES' uses redshift in the legend instead of time
 ! GSPLASH_DARKMATTER_HSOFT if given a value > 0.0 will assign a
 !  smoothing length to dark matter particles which can then be
@@ -54,7 +56,7 @@ module gadgetread
 end module gadgetread
 
 subroutine read_data(rootname,istepstart,nstepsread)
-  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
+  use particle_data, only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
   use settings_page, only:legendtext
@@ -73,7 +75,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   integer :: i,j,itype,icol,ierr,ierrh,ierrrho,nhset
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
   integer :: ncolstep,npart_max,nstep_max,ntoti,nacc
-  integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
+  integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles,istart
   integer :: nextracols,nstarcols,i1,i2,i3,i4,lenblock,idumpformat
   integer, parameter :: iunit = 11, iunitd = 102, iunith = 103
   logical :: iexist,reallocate,mixedtypes,checkids
@@ -154,12 +156,12 @@ subroutine read_data(rootname,istepstart,nstepsread)
      do while (ierr.eq.0)
         call read_blockheader(idumpformat,iunit,0,index2,blocklabelgas(ncolstep),lenblock)
         read(iunit,iostat=ierr)
-        if (index2.eq.ntoti &
+        if ((ierr.eq.0 .and. index2.gt.0) .and. (index2.eq.ntoti &
             .or. index2.eq.npartoftypei(1) &
             .or. index2.eq.npartoftypei(2) &
             .or. index2.eq.npartoftypei(5) &
             .or. index2.eq.(npartoftypei(1)+npartoftypei(5)) & 
-            .or. index2.eq.(npartoftypei(1)+npartoftypei(2))) then
+            .or. index2.eq.(npartoftypei(1)+npartoftypei(2)))) then
            select case(blocklabelgas(ncolstep))
            case('POS ')
               ncolstep = ncolstep + ndim
@@ -284,6 +286,9 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !--read positions of all particles
      !
      call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
+     if (iformat.eq.2 .and. blocklabel.ne.'POS ')  then
+        print "(a)",' WARNING: expecting positions, got '//blocklabel//' in data read'
+     endif
      if (any(required(1:3))) then
         print*,'positions ',ntoti
         read (iunit, iostat=ierr) (dat(j,1:3,i),j=1,index2)
@@ -302,6 +307,9 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !--same for velocities
      !
      call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
+     if (iformat.eq.2 .and. blocklabel.ne.'VEL ')  then
+        print "(a)",' WARNING: expecting velocity, got '//blocklabel//' in data read'
+     endif
      if (any(required(4:6))) then
         print*,'velocities ',index2
         read (iunit, iostat=ierr) (dat(j,4:6,i),j=1,index2)
@@ -325,9 +333,15 @@ subroutine read_data(rootname,istepstart,nstepsread)
         if (allocated(iamtemp)) deallocate(iamtemp)
         allocate(iamtemp(npart_max))
         call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
+        if (iformat.eq.2 .and. blocklabel.ne.'ID  ') then
+           print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
+        endif
         if (index2.gt.0) read (iunit,iostat=ierr) iamtemp(1:index2)
      else
         call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
+        if (iformat.eq.2 .and. blocklabel.ne.'ID  ') then
+           print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
+        endif
         if (index2.gt.0) read (iunit,iostat=ierr) ! skip this line
      endif
      if (ierr /= 0) then
@@ -344,52 +358,69 @@ subroutine read_data(rootname,istepstart,nstepsread)
         endif
      enddo
      
-     if (required(7)) then
-        print*,'particle masses ',Nmassesdumped
-        !--read this number of entries
-        if (allocated(dattemp1)) deallocate(dattemp1)
-        allocate(dattemp1(Nmassesdumped))
-        call read_blockheader(idumpformat,iunit,Nmassesdumped,index2,blocklabel,lenblock)
-
-        if (index2.gt.0) then
-           read(iunit,iostat=ierr) dattemp1(1:index2)
-        endif
-        if (ierr /= 0) then
-           print "(a)",'error reading particle masses'
-        endif
-        !--now copy to the appropriate sections of the .dat array
-        indexstart = 1
-        index1 = 1
-
-        do itype=1,6
-           if (Npartoftype(itype,i).ne.0) then
-              index2 = index1 + Npartoftype(itype,i) -1
-              if (abs(massoftypei(itype)).lt.tiny(massoftypei)) then ! masses dumped
-                 indexend = indexstart + Npartoftype(itype,i) - 1
-                 print*,'read ',Npartoftype(itype,i),' masses for type ', &
-                        itype,index1,'->',index2,indexstart,'->',indexend
-                 dat(index1:index2,7,i) = dattemp1(indexstart:indexend)
-                 indexstart = indexend + 1
-              else  ! masses not dumped
-                 print*,'setting masses for type ',itype,' = ', &
-                        real(massoftypei(itype)),index1,'->',index2
-                 dat(index1:index2,7,i) = real(massoftypei(itype))
+     if (ipmass.eq.0) then
+        masstype(1:6,i) = real(massoftypei(1:6))
+     else
+        if (required(ipmass)) then
+           print*,'particle masses ',Nmassesdumped
+           !--read this number of entries
+           if (Nmassesdumped.gt.0) then
+              if (allocated(dattemp1)) deallocate(dattemp1)
+              allocate(dattemp1(Nmassesdumped))
+              call read_blockheader(idumpformat,iunit,Nmassesdumped,index2,blocklabel,lenblock)
+              if (iformat.eq.2 .and. blocklabel.ne.'MASS')  then
+                 print "(a)",' WARNING: expecting particle masses, got '//blocklabel//' in data read'
               endif
-              index1 = index2 + 1
+
+           else
+              index2 = 0
            endif
-        enddo
-        deallocate(dattemp1)
-     elseif (Nmassesdumped.gt.0) then
-        read(iunit,iostat=ierr)
-        if (ierr /= 0) then
-           print "(a)",'error reading particle masses'
+
+           if (index2.gt.0) then
+              read(iunit,iostat=ierr) dattemp1(1:index2)
+           endif
+           if (ierr /= 0) then
+              print "(a)",'error reading particle masses'
+           endif
+           !--now copy to the appropriate sections of the .dat array
+           indexstart = 1
+           index1 = 1
+
+           do itype=1,6
+              if (Npartoftype(itype,i).ne.0) then
+                 index2 = index1 + Npartoftype(itype,i) -1
+                 if (abs(massoftypei(itype)).lt.tiny(massoftypei)) then ! masses dumped
+                    indexend = indexstart + Npartoftype(itype,i) - 1
+                    print*,'read ',Npartoftype(itype,i),' masses for type ', &
+                           itype,index1,'->',index2,indexstart,'->',indexend
+                    dat(index1:index2,ipmass,i) = dattemp1(indexstart:indexend)
+                    indexstart = indexend + 1
+                 else  ! masses not dumped
+                    print*,'setting masses for type ',itype,' = ', &
+                           real(massoftypei(itype)),index1,'->',index2
+                    dat(index1:index2,ipmass,i) = real(massoftypei(itype))
+                 endif
+                 index1 = index2 + 1
+              endif
+           enddo
+           if (allocated(dattemp1)) deallocate(dattemp1)
+        elseif (Nmassesdumped.gt.0) then
+           read(iunit,iostat=ierr)
+           if (ierr /= 0) then
+              print "(a)",'error reading particle masses'
+           endif
         endif
      endif
      !
      !--read other quantities for rest of particles
      !
      print*,'gas properties ',npartoftypei(1)
-     do icol=8,ncolstep !-nextraveccols
+     if (ipmass.eq.0) then
+        istart = 7
+     else
+        istart = 8
+     endif
+     do icol=istart,ncolstep !-nextraveccols
         !!print*,icol
         i3 = 0
         i4 = 0
@@ -619,6 +650,7 @@ contains
      else
         ndumped = (lenblk-8)/4
      endif
+     !print*,blklabel,lenblk,ndumped
      !if (nexpected.gt.0) then
      !   if (ndumped.ne.nexpected) then
      !      !print*,'warning: number of '//blklabel//' dumped (',ndumped,') /= expected (',nexpected,')'
@@ -638,7 +670,8 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm,iBfirst
+  use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
+              ih,irho,ipr,iutherm,iBfirst,idivB
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry, only:labelcoord
@@ -680,15 +713,106 @@ subroutine set_labels
         case('NE  ')
            label(icol) = 'N\de\u'
         case('NH  ')
-           label(icol) = 'N\dh\u'
+           label(icol) = 'N\dH\u'
         case('HSML')
            ih = icol
+        case('NHP ')
+           label(icol) = 'N\dH+\u'
+        case('NHE ')
+           label(icol) = 'N\dHe\u'
+        case('NHEP')
+           label(icol) = 'N\dHe+\u'
+        case('elec')
+           label(icol) = 'N\de\u'
+        case('HI  ')
+           label(icol) = 'HI'
+        case('HII ')
+           label(icol) = 'HII'
+        case('HeI ')
+           label(icol) = 'HeI'
+        case('HeII')
+           label(icol) = 'HeII'
+        case('H2I ')
+           label(icol) = 'H\d2\uI'
+        case('H2II')
+           label(icol) = 'H\d2\uII'
+        case('HM  ')
+           label(icol) = 'HM'
         case('SFR ')
            label(icol) = 'Star formation rate'
         case('TEMP')
            label(icol) = 'temperature'
         case('POT ')
            label(icol) = 'potential'
+        case('AGE ')
+           label(icol) = 'Stellar formation time'
+        case('Z   ')
+           label(icol) = 'Metallicity'
+        case('ACCE')
+           label(icol) = 'Acceleration'
+        case('ENDT')
+           label(icol) = 'd(Entropy)/dt'
+        case('STRD')
+           label(icol) = 'Stress (diagonal)'
+        case('STRO')
+           label(icol) = 'Stress (off-diagonal)'
+        case('STRB')
+           label(icol) = 'Stress (bulk)'
+        case('SHCO')
+           label(icol) = 'Shear coefficient'
+        case('TSTP')
+           label(icol) = 'Time step'
+        case('DBDT')
+           label(icol) = 'dB/dt'
+        case('DIVB')
+           label(icol) = 'div B'
+           idivB = icol
+        case('ABVC')
+           label(icol) = 'alpha\dvisc\u'
+        case('AMDC')
+           label(icol) = 'alpha\dresist\u'
+        case('PHI ')
+           label(icol) = 'div B cleaning function'
+        case('COOR')
+           label(icol) = 'Cooling Rate'
+        case('CONR')
+           label(icol) = 'Conduction Rate'
+        case('BFSM')
+           label(icol) = 'B\dsmooth\u'
+        case('DENN')
+           label(icol) = 'Denn'
+        case('CRC0')
+           label(icol) = 'Cosmic Ray C0'
+        case('CRP0')
+           label(icol) = 'Cosmic Ray P0'
+        case('CRE0')
+           label(icol) = 'Cosmic Ray E0'
+        case('CRn0')
+           label(icol) = 'Cosmic Ray n0'
+        case('CRco')
+           label(icol) = 'Cosmic Ray Thermalization Time'
+        case('CRdi')
+           label(icol) = 'Cosmic Ray Dissipation Time'
+        case('BHMA')
+           label(icol) = 'Black hole mass'
+        case('BHMD')
+           label(icol) = 'black hole mass accretion rate'
+        case('MACH')
+           label(icol) = 'Mach number'
+        case('DTEG')
+           label(icol) = 'dt (energy)'
+        case('PSDE')
+           label(icol) = 'Pre-shock density'
+        case('PSEN')
+           label(icol) = 'Pre-shock energy'
+        case('PSXC')
+           label(icol) = 'Pre-shock X\d\u'
+        case('DJMP')
+           label(icol) = 'Density jump'
+        case('EJMP')
+           label(icol) = 'Energy jump'
+        case('CRDE')
+           label(icol) = 'Cosmic Ray injection'        
         case('ID  ')
            icol = icol - 1
         case default
@@ -730,11 +854,11 @@ subroutine set_labels
   !
   !--set labels of the quantities read in
   !
-  label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  label(irho) = 'density'
-  label(iutherm) = 'u'
-  label(ipmass) = 'particle mass'
-  label(ih) = 'h'
+  if (ix(1).gt.0) label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  if (irho.gt.0) label(irho) = 'density'
+  if (iutherm.gt.0) label(iutherm) = 'u'
+  if (ipmass.gt.0) label(ipmass) = 'particle mass'
+  if (ih.gt.0) label(ih) = 'h'
   !
   !--set labels for vector quantities
   !
