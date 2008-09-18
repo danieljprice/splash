@@ -3,7 +3,7 @@ program splash
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
 !     Copyright (C) 2005-2008 Daniel Price 
-!     dprice@astro.ex.ac.uk
+!     daniel.price@sci.monash.edu.au
 !
 !     --------------------------------------------------------------------------
 !
@@ -23,6 +23,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.11.1alpha : (18/09/08)
+!             automatic pixel number implemented; mass does not have to be read from dump file;
+!             bug fix with circles of interaction; bug fixes with block-labelled GADGET read.
 !     1.11.0 : (15/08/08)
 !             ability to use subset of particles in restricted parameter range(s);
 !             probability density function plot option; plot-hugging colour bars added;
@@ -217,7 +220,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.11.0 [15th Aug ''08]'
+  character(len=*), parameter :: version = 'v1.11.1alpha [18th Sep ''08]'
 
   !
   ! initialise some basic code variables
@@ -424,8 +427,8 @@ subroutine print_header
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
    '   This is free software; and you are welcome to redistribute it ',/, &
    '   under certain conditions (see LICENSE file for details). *',/,/, &
-   ' Comments, bugs, suggestions and queries to: dprice@astro.ex.ac.uk ',/, &
-   ' Check for updates at: www.astro.ex.ac.uk/people/dprice/splash ',/, &
+   ' Comments, bugs, suggestions and queries to: daniel.price@sci.monash.edu.au ',/, &
+   ' Check for updates at: http://www.maths.monash.edu.au/~dprice/splash ',/, &
    ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
    ' use SPLASH for scientific work and if you plot something beautiful,',/, &
    ' why not send me a copy for the gallery? ',/)

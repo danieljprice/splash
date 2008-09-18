@@ -382,7 +382,7 @@ subroutine menu
                  ' the o)ptions menu, item 2.',' ', &
                  ' for detailed help, consult the user guide',' ',&
                  '  (splash/docs/splash.pdf ',&
-                 '   or http://www.astro.ex.ac.uk/people/dprice/splash/userguide/)', &
+                 '   or http://www.maths.monash.edu.au/~dprice/splash/userguide/)', &
                  ' ',' and/or the online FAQ. If you''re really stuck, email me! '
         read*
 !------------------------------------------------------------------------
