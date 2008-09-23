@@ -14,6 +14,7 @@
 !
 ! SSPLASH_RESET_CM if 'YES' then centre of mass is reset to origin
 ! SSPLASH_OMEGA if non-zero subtracts corotating velocities with omega as set
+! SSPLASH_OMEGAT if non-zero subtracts corotating positions and velocities with omega as set
 !
 ! the data is stored in the global array dat
 !
@@ -748,15 +749,22 @@ subroutine read_data(rootname,indexstart,nstepsread)
        endif
     endif
  !
- !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
+ !--reset corotating frame velocities if environment variable "SSPLASH_OMEGA" is set
  !
-    if (allocated(dat) .and. n1.GT.0 .and. .not. smalldump) then
-       omega = renvironment('SSPLASH_OMEGA')
-       if (abs(omega).gt.tiny(omega) .and. ivx.gt.0) then
-          if (.not.all(required(1:2)) .or. .not.all(required(ivx:ivx+1))) then
-             print*,' ERROR subtracting corotating frame with partial data read'
-          else
-             call reset_corotating_velocities(n1,dat(1:n1,1:2,j),dat(1:n1,ivx:ivx+1,j),omega)
+    if (allocated(dat) .and. n1.GT.0 .and. all(required(1:2))) then
+       omega = renvironment('SSPLASH_OMEGAT')
+       if (abs(omega).gt.tiny(omega) .and. ndim.ge.2) then
+          call reset_corotating_positions(n1,dat(1:n1,1:2,j),omega,time(j))
+       endif
+
+       if (.not. smalldump) then
+          if (abs(omega).lt.tiny(omega)) omega = renvironment('SSPLASH_OMEGA')
+          if (abs(omega).gt.tiny(omega) .and. ivx.gt.0) then
+             if (.not.all(required(1:2)) .or. .not.all(required(ivx:ivx+1))) then
+                print*,' ERROR subtracting corotating frame with partial data read'
+             else
+                call reset_corotating_velocities(n1,dat(1:n1,1:2,j),dat(1:n1,ivx:ivx+1,j),omega)
+             endif
           endif
        endif
     endif
@@ -953,6 +961,26 @@ contains
   
   return
  end subroutine reset_corotating_velocities
+
+ subroutine reset_corotating_positions(np,xy,omeg,t)
+  implicit none
+  integer, intent(in) :: np
+  real, dimension(np,2), intent(inout) :: xy
+  real, intent(in) :: omeg,t
+  real :: phii,phinew,r
+  
+  print*,'SUBTRACTING COROTATING POSITIONS, OMEGA = ',omeg,' t = ',t
+!$omp parallel do private(i,r,phii,phinew)
+  do i=1,np
+     r = sqrt(xy(i,1)**2 + xy(i,2)**2)
+     phii = atan2(xy(i,2),xy(i,1))
+     phinew = phii + omeg*t
+     xy(i,1) = r*COS(phinew)
+     xy(i,2) = r*SIN(phinew)
+  enddo
+  
+  return
+ end subroutine reset_corotating_positions
 
 end subroutine read_data
 
