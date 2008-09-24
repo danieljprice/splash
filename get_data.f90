@@ -365,7 +365,9 @@ end subroutine get_labels
 
 subroutine endian_info
  implicit none
- logical, parameter :: bigendian = IACHAR(TRANSFER(1,"a")) == 0
+ logical :: bigendian
+ 
+ bigendian = IACHAR(TRANSFER(1,"a")) == 0
 
  if (bigendian) then
     print 10,'BIG'
