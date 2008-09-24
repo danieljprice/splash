@@ -949,14 +949,15 @@ contains
   integer, intent(in) :: np
   real, dimension(np,2), intent(in) :: xy
   real, dimension(np,2), intent(inout) :: velxy
-  real, intent(in) :: omeg  
+  real, intent(in) :: omeg
+  integer :: ip
   
   print*,'SUBTRACTING COROTATING VELOCITIES, OMEGA = ',omeg
-  do i=1,np
-     velxy(i,1) = velxy(i,1) + xy(i,2)*omeg
+  do ip=1,np
+     velxy(ip,1) = velxy(ip,1) + xy(ip,2)*omeg
   enddo
-  do i=1,np
-     velxy(i,2) = velxy(i,2) - xy(i,1)*omeg
+  do ip=1,np
+     velxy(ip,2) = velxy(ip,2) - xy(ip,1)*omeg
   enddo
   
   return
@@ -968,17 +969,24 @@ contains
   real, dimension(np,2), intent(inout) :: xy
   real, intent(in) :: omeg,t
   real :: phii,phinew,r
+  integer :: ip
   
   print*,'SUBTRACTING COROTATING POSITIONS, OMEGA = ',omeg,' t = ',t
-!$omp parallel do private(i,r,phii,phinew)
-  do i=1,np
-     r = sqrt(xy(i,1)**2 + xy(i,2)**2)
-     phii = atan2(xy(i,2),xy(i,1))
+!$omp parallel default(none) &
+!$omp shared(xy,np) &
+!$omp firstprivate(omeg,t) &
+!$omp private(ip,r,phii,phinew)
+!$omp do
+  do ip=1,np
+     r = sqrt(xy(ip,1)**2 + xy(ip,2)**2)
+     phii = atan2(xy(ip,2),xy(ip,1))
      phinew = phii + omeg*t
-     xy(i,1) = r*COS(phinew)
-     xy(i,2) = r*SIN(phinew)
+     xy(ip,1) = r*COS(phinew)
+     xy(ip,2) = r*SIN(phinew)
   enddo
-  
+!$omp end do
+!$omp end parallel
+
   return
  end subroutine reset_corotating_positions
 
