@@ -454,7 +454,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   use exact, only:exact_solution,atstar,ctstar,sigma
   use toystar1D, only:exact_toystar_ACplane
   use toystar2D, only:exact_toystar_ACplane2D
-  use labels, only:label,labelvec,iamvec, &
+  use labels, only:label,labelvec,iamvec,lenlabel, &
               ih,irho,ipmass,ix,iacplane,ipowerspec,isurfdens,itoomre,iutherm,ipdf
   use limits, only:lim,get_particle_subset
   use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
@@ -525,7 +525,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax
   real :: pixwidth,pixwidthvec,dxfreq
 
-  character(len=len(label(1))+20) :: labelx,labely,labelz,labelrender,labelvecplot
+  character(len=lenlabel+20) :: labelx,labely,labelz,labelrender,labelvecplot
   character(len=20) :: string,labeltimeunits
   
   logical :: iPlotColourBar, rendering, inormalise, logged, dumxsec, isetrenderlimits
@@ -1488,7 +1488,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !--------------------------------
         just = 0
         call page_setup
-
+	
         !--------------------------------
         ! now plot particles
         !--------------------------------
