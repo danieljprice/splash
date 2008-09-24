@@ -138,11 +138,15 @@ ifeq ($(SYSTEM),ifort)
 endif
 
 ifeq ($(SYSTEM),pgf90)
-#  this is for the Portland Group Fortran 90 compiler
+#  this is for the Portland Group Fortran 90 compiler (tested with version 7.2-5)
    F90C= pgf90
-   F90FLAGS= -O -mcmodel=medium -Mbackslash -Ktrap=none
+   F90FLAGS= -fast -mcmodel=medium -Mbackslash -Ktrap=none
+   DEBUGFLAG= -C -g -gopt -Mbounds -Mchkfpstk -Mchkptr -Mchkstk -Mcoff \
+              -Mdwarf1 -Mdwarf2 -Melf -Mpgicoff -traceback
+   OMPFLAGS= -mp
    SYSTEMFILE= system_unix.f90
-   ENDIANFLAGBIG= -Mbyteswapio
+   ENDIANFLAGBIG= -Mbyteswapio  # only works on a little-endian machine
+   ENDIANFLAGLITTLE=
    KNOWN_SYSTEM=yes
 endif
 
