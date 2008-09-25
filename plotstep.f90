@@ -1919,7 +1919,7 @@ contains
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes,vposlegend,iPlotLegend
     implicit none
     integer :: iplotsave,ipanelsave
-    real :: barwidth, TitleOffset,xmaxmargin,yminmargin
+    real :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
     real :: xminpix,xmaxpix,yminpix,ymaxpix
     logical :: ipanelchange,dum
     logical, intent(in), optional :: dummy
@@ -1979,8 +1979,19 @@ contains
     !--use foreground colour
     if (.not.dum) call pgsci(1)
 
-    yminmargin = 0.0
-    xmaxmargin = 0.0
+    !--page margins: zero if no box is drawn
+    if (iaxistemp.eq.-2) then
+       xminmargin = 0.0
+       xmaxmargin = 0.0
+       yminmargin = 0.0
+       ymaxmargin = 0.0
+    else ! leave a small buffer to allow for line width changes
+       xminmargin = 0.001
+       xmaxmargin = 0.001
+       yminmargin = 0.001
+       ymaxmargin = 0.001
+    endif
+    
     !--leave space for colour bar if necessary (at end of row only on tiled plots)
     if ((tile_plots .and. iAllowspaceforcolourbar).or.(.not.tile_plots.and.iPlotColourBar)) then
        call get_colourbarmargins(iColourBarStyle,xmaxmargin,yminmargin,barwidth)
@@ -2026,7 +2037,8 @@ contains
        if (dum) then !--fake the page setup, then return
           if (.not.(interactivereplot .and. .not.irerender)) then
              call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
-                     trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp,0.0,xmaxmargin,yminmargin,0.0, &
+                     trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp, &
+                     xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                      0.0,TitleOffset,isamexaxis,tile_plots)
              call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
              npixx = nint(xmaxpix-xminpix)
@@ -2047,7 +2059,8 @@ contains
           return
        else
           call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
-                  trim(labelx),trim(labely),' ',just,iaxistemp,0.0,xmaxmargin,yminmargin,0.0, &
+                  trim(labelx),trim(labely),' ',just,iaxistemp, &
+                  xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                   0.0,TitleOffset,isamexaxis,tile_plots)
        endif
     endif
