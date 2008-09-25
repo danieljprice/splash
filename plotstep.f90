@@ -1914,12 +1914,12 @@ contains
 ! actually plotted
 !----------------------------------------------
   subroutine page_setup(dummy)
-    use colourbar, only:get_colourbarmargins,plotcolourbar
-    use pagesetup, only:setpage2,xlabeloffset
+    use colourbar, only:get_colourbarmargins
+    use pagesetup, only:setpage2
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes,vposlegend,iPlotLegend
     implicit none
     integer :: iplotsave,ipanelsave
-    real :: barwidth, TitleOffset,xmaxmargin,yminmargin,xlabeloffsettemp
+    real :: barwidth, TitleOffset,xmaxmargin,yminmargin
     real :: xminpix,xmaxpix,yminpix,ymaxpix
     logical :: ipanelchange,dum
     logical, intent(in), optional :: dummy
@@ -1979,8 +1979,6 @@ contains
     !--use foreground colour
     if (.not.dum) call pgsci(1)
 
-    xlabeloffsettemp = xlabeloffset + 1.0
-    if (iaxistemp.lt.0) xlabeloffsettemp = 0.
     yminmargin = 0.0
     xmaxmargin = 0.0
     !--leave space for colour bar if necessary (at end of row only on tiled plots)
@@ -2058,31 +2056,6 @@ contains
     call pgqvp(0,vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
 
     !--------------------------------------------------------------
-    ! plot colour bar for rendered plots
-    !--------------------------------------------------------------
-    if (irender.gt.0 .and. irender.le.numplot) then
-       lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
-                          .and. nyplot.eq.nyplots .and. k.eq.nxsec)
-       !--only plot colour bar at the end of first row on tiled plots
-       if (tile_plots .and..not.(ipanel.eq.nacross*ndown .or. lastplot)) iPlotColourBar = .false.
-
-       if (iPlotColourBar) then
-          !--for tiled plots only on last plot in first row,
-          !  and use full viewport size in the y direction
-          if (tile_plots) then
-             call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
-                  trim(labelrender),.false.,xlabeloffsettemp, &
-                  minval(vptxmin(1:ipanel)),maxval(vptxmax(1:ipanel)), &
-                  minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
-          else
-             !!--plot colour bar, but only if last in row
-             call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
-                            trim(labelrender),.false.,xlabeloffsettemp)
-          endif
-       endif
-    endif
-
-    !--------------------------------------------------------------
     ! store current page setup for interactive mode on multiplots
     !--------------------------------------------------------------    
     if (tile_plots) then
@@ -2139,6 +2112,7 @@ contains
 !  will overwrite plot area)
 !------------------------------------------------------
   subroutine legends_and_title
+    use colourbar, only:plotcolourbar
     use legends, only:legend,legend_markers,legend_scale
     use titles, only:pagetitles,steplegend
     use filenames, only:nstepsinfile,nfiles,rootname
@@ -2146,9 +2120,40 @@ contains
         hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnlyOnPanel, &
         iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext,iUseBackGroundColourForAxes
     use shapes, only:nshapes,plot_shapes
+    use pagesetup, only:xlabeloffset
     implicit none
     integer :: icoloursave
     character(len=len(steplegend(1))) :: steplegendtext
+    real :: xlabeloffsettemp
+
+    !--------------------------------------------------------------
+    ! plot colour bar for rendered plots (use currently set colour)
+    ! do this here so it always appears OVERLAID on the renderings
+    !--------------------------------------------------------------
+    if (irender.gt.0 .and. irender.le.numplot) then
+       lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
+                          .and. nyplot.eq.nyplots .and. k.eq.nxsec)
+       !--only plot colour bar at the end of first row on tiled plots
+       if (tile_plots .and..not.(ipanel.eq.nacross*ndown .or. lastplot)) iPlotColourBar = .false.
+
+       if (iPlotColourBar) then
+          xlabeloffsettemp = xlabeloffset + 1.0
+          if (iaxistemp.lt.0) xlabeloffsettemp = 0.
+
+          !--for tiled plots only on last plot in first row,
+          !  and use full viewport size in the y direction
+          if (tile_plots) then
+             call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
+                  trim(labelrender),.false.,xlabeloffsettemp, &
+                  minval(vptxmin(1:ipanel)),maxval(vptxmax(1:ipanel)), &
+                  minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
+          else
+             !!--plot colour bar, but only if last in row
+             call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
+                            trim(labelrender),.false.,xlabeloffsettemp)
+          endif
+       endif
+    endif
     
     !--save colour index
     call pgqci(icoloursave)
