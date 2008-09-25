@@ -2114,7 +2114,7 @@ contains
   subroutine legends_and_title
     use colourbar, only:plotcolourbar
     use legends, only:legend,legend_markers,legend_scale
-    use titles, only:pagetitles,steplegend
+    use titles, only:pagetitles,steplegend,lensteplegend
     use filenames, only:nstepsinfile,nfiles,rootname
     use settings_page, only:iPlotLegend,iPlotStepLegend, &
         hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnlyOnPanel, &
@@ -2123,7 +2123,7 @@ contains
     use pagesetup, only:xlabeloffset
     implicit none
     integer :: icoloursave
-    character(len=len(steplegend(1))) :: steplegendtext
+    character(len=lensteplegend) :: steplegendtext
     real :: xlabeloffsettemp
 
     !--------------------------------------------------------------

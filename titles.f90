@@ -2,8 +2,10 @@ module titles
  implicit none
  integer, parameter, private :: maxtitles = 50
  integer, parameter, private :: maxsteplegend = 100
- character(len=60), dimension(maxtitles), public :: pagetitles
- character(len=60), dimension(maxsteplegend), public :: steplegend
+ integer, parameter, public :: lensteplegend = 60
+ integer, parameter, public :: lenpagetitles = 60
+ character(len=lenpagetitles), dimension(maxtitles), public :: pagetitles
+ character(len=lensteplegend), dimension(maxsteplegend), public :: steplegend
  public :: read_titles, read_steplegend
  
  private
