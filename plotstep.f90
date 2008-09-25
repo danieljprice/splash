@@ -51,7 +51,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                      colour_fore,colour_back,iadapt,iadaptcoords,linewidth
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
-  use settings_render, only:icolours,iplotcont_nomulti,iColourBarStyle
+  use settings_render, only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
                         xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
                         use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth
@@ -233,7 +233,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
 !--set thickness if plotting particles
 !  (default thickness is half of the average particle spacing)
 !
-           if (.not.iallrendered) then
+           if (.not.iallrendered .or. icolour_particles) then
               npartdim = int(maxval(npartoftype(:,1))**(1./real(ndim)))
               print*,'average # of particles in each dimension = ',npartdim
               if (npartdim.gt.0) then
@@ -519,7 +519,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
-  real, dimension(maxpart) :: renderplot,hh,weight
+  real, dimension(maxpart) :: hh,weight
+  real, dimension(:), allocatable :: renderplot
   real, dimension(:,:), allocatable :: vecplot
   real :: rkappa
   real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax
@@ -1206,6 +1207,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !   similar but where particle colouring is used instead of interpolation
            !-------------------------------------------------------------------------
            elseif (irenderpart.gt.0 .and. iplotpart) then
+              !--allocate memory for particle colouring
+              if (.not.allocated(renderplot)) then
+                 allocate(renderplot(ntoti),stat=ierr)
+                 if (ierr /= 0) stop 'error allocating temporary array for particle colouring'
+              endif
+              
               !--apply transformations to render array and set label
               renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
               call transform(renderplot(1:ntoti),itrans(irenderpart))
@@ -1235,6 +1242,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               !
               call colour_particles(renderplot(1:ntoti), &
                    rendermin,rendermax,icolourme(1:ntoti),ntoti)
+
+              !--deallocate memory
+              if (allocated(renderplot)) deallocate(renderplot)
+
            endif
 
            !-------------------------------------------------------------------------
@@ -1459,6 +1470,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         !  (at present this is NOT used -can't render if not co-ord plot)
         !
         if (irenderpart.gt.0 .and. irenderpart.le.numplot) then
+           !--allocate memory for particle colouring
+           if (.not.allocated(renderplot)) then
+              allocate(renderplot(ntoti),stat=ierr)
+              if (ierr /= 0) stop 'error allocating temporary array for particle colouring'
+           endif
+           
            !--apply transformations to render array and set label
            renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
            call transform(renderplot(1:ntoti),itrans(irenderpart))
@@ -1481,6 +1498,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !--actually colour the particles
            call colour_particles(renderplot(1:ntoti), &
                 rendermin,rendermax,icolourme(1:ntoti),ntoti)
+           
+           !--deallocate memory
+           if (allocated(renderplot)) deallocate(renderplot)
         endif
         
         !--------------------------------
