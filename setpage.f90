@@ -1,6 +1,6 @@
 module pagesetup
  implicit none
- public :: setpage, redraw_axes, setpage2
+ public :: setpage, redraw_axes, setpage2, set_exactpixelboundaries
  real, parameter, public :: xlabeloffset = 3.0, ylabeloffset = 4.5
  
  private
@@ -415,40 +415,10 @@ end subroutine redraw_axes
  else
     call pgswin(xmin,xmax,ymin,ymax)
  endif
-
- if (useexactpixelboundaries) then
-    !
-    ! setting axes adjusts the viewport, so query to get adjusted settings
-    !
-    call pgqvp(0,vptxmin,vptxmax,vptymin,vptymax)
-    !print*,'got ',vptxmin,vptxmax,vptymin,vptymax
-    !
-    ! adjust viewport on pixel devices so that 
-    ! boundaries lie exactly on pixel boundaries
-    !
-    !  query viewport size in pixels
-    call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
-    !print*,' in pixels = ',xminpix,xmaxpix,yminpix,ymaxpix
-
-    !  work out how many viewport coords/pixel
-    dv = (vptymax - vptymin)/(ymaxpix-yminpix)
-
-    !  adjust viewport min/max to lie on pixel boundaries
-    vptymin = max((nint(yminpix)-1.e-4)*dv,0.)
-    vptymax = (nint(ymaxpix)-1.e-4)*dv ! be careful of round-off errors
-
-    !  same for x
-    dv = (vptxmax - vptxmin)/(xmaxpix-xminpix)
-    vptxmin = max((nint(xminpix)-1.e-4)*dv,0.)
-    vptxmax = (nint(xmaxpix)-1.e-4)*dv ! be careful of round-off errors
-
-    !  adjust viewport
-    !print*,'adjusting ',vptxmin,vptxmax,vptymin,vptymax
-    call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
-
-    call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
-    !print*,' in pixels = ',xminpix,xmaxpix,yminpix,ymaxpix
- endif
+!
+! adjust viewport to lie exactly on pixel boundaries
+!
+ if (useexactpixelboundaries) call set_exactpixelboundaries()
 !
 ! option to return before actually doing anything
 !      
@@ -538,5 +508,54 @@ end subroutine redraw_axes
 
   return      
 end subroutine
+
+!
+!--this subroutine can be called after PGSVP to
+!  make sure that the viewport lies exactly on
+!  pixel boundaries.
+!
+!  Queries PGPLOT routines directly so no need
+!  for input/output
+!
+
+subroutine set_exactpixelboundaries()
+ implicit none
+ real :: xminpix,xmaxpix,yminpix,ymaxpix
+ real :: vptxmin,vptxmax,vptymin,vptymax
+ real :: dv
+ !
+ ! setting axes adjusts the viewport, so query to get adjusted settings
+ !
+ call pgqvp(0,vptxmin,vptxmax,vptymin,vptymax)
+ !print*,'got ',vptxmin,vptxmax,vptymin,vptymax
+ !
+ ! adjust viewport on pixel devices so that 
+ ! boundaries lie exactly on pixel boundaries
+ !
+ !  query viewport size in pixels
+ call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+ !print*,' in pixels = ',xminpix,xmaxpix,yminpix,ymaxpix
+
+ !  work out how many viewport coords/pixel
+ dv = (vptymax - vptymin)/(ymaxpix-yminpix)
+
+ !  adjust viewport min/max to lie on pixel boundaries
+ vptymin = max((nint(yminpix)-1.e-4)*dv,0.)
+ vptymax = (nint(ymaxpix)-1.e-4)*dv ! be careful of round-off errors
+
+ !  same for x
+ dv = (vptxmax - vptxmin)/(xmaxpix-xminpix)
+ vptxmin = max((nint(xminpix)-1.e-4)*dv,0.)
+ vptxmax = (nint(xmaxpix)-1.e-4)*dv ! be careful of round-off errors
+
+ !  adjust viewport
+ !print*,'adjusting ',vptxmin,vptxmax,vptymin,vptymax
+ call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
+
+ call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+ !print*,' in pixels = ',xminpix,xmaxpix,yminpix,ymaxpix
+
+ return
+end subroutine set_exactpixelboundaries
 
 end module pagesetup

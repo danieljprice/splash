@@ -125,12 +125,25 @@ ifeq ($(SYSTEM),sunf95)
 endif
 
 ifeq ($(SYSTEM),ifort)
-#  this is for the intel fortran compiler
+#  this is for the intel fortran compiler (version 10)
+   F90C= ifort
+   F90FLAGS= -O3 -nbs -i_dynamic
+   OMPFLAGS= -openmp
+   DEBUGFLAG= -C -g
+   SYSTEMFILE= system_f2003.f90
+   ENDIANFLAGBIG= -convert big_endian
+   ENDIANFLAGLITTLE= -convert little_endian
+# or use setenv F_UFMTENDIAN=big or little at runtime
+   KNOWN_SYSTEM=yes
+endif
+
+ifeq ($(SYSTEM),ifort8)
+#  this is for the intel fortran compiler (version 8)
    F90C= ifort
    F90FLAGS= -O3 -Vaxlib -nbs
    OMPFLAGS= -openmp
    DEBUGFLAG= -C -g
-   SYSTEMFILE= system_f2003.f90
+   SYSTEMFILE= system_unix.f90
    ENDIANFLAGBIG= -convert big_endian
    ENDIANFLAGLITTLE= -convert little_endian
 # or use setenv F_UFMTENDIAN=big or little at runtime
@@ -367,7 +380,7 @@ FFLAGS = $(F90FLAGS)
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
 
-SOURCESF90= globaldata.f90 asciiutils.f90 transform.f90 \
+SOURCESF90= globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          prompting.f90 geometry.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 shapes.f90 units.f90 \
          write_pixmap.f90 write_sphdata.f90 discplot.f90 \
@@ -391,7 +404,7 @@ SOURCESF90= globaldata.f90 asciiutils.f90 transform.f90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
          interactive.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
-         powerspectrums.f90 render.f90 setpage.f90 \
+         powerspectrums.f90 render.f90 \
          plotstep.f90 timestepping.f90 \
          defaults.f90 menu.f90 \
          $(SYSTEMFILE) system_utils.f90 splash.f90

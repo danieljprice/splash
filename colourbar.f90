@@ -38,6 +38,7 @@ contains
 !-------------------------------------------------------
 subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
            xlabeloffset,vptxminfull,vptxmaxfull,vptyminfull,vptymaxfull)
+ use pagesetup, only:set_exactpixelboundaries
  implicit none
  integer, intent(in) :: istyle,icolours
  real, intent(in) :: datmin,datmax,xlabeloffset
@@ -49,7 +50,6 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  real, dimension(1,npixwedg) :: sampley
  real, dimension(npixwedg,1) :: samplex
  integer :: i
- character(len=1) :: clog
  real :: disp,width,xch,ych,dx
  real :: xmin,xmax,ymin,ymax,vptxmin,vptxmax,vptymin,vptymax
  real :: vptxmini,vptxmaxi,vptymini,vptymaxi
@@ -63,12 +63,12 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  disp = 0.25
  width = ColourBarWidth
 !
-!--set character to send to pgwedg call if log (danpgwedg only) 
+!--start buffering
 !
- clog = ' '
- if (log) clog = 'l'
-
  call pgbbuf
+!
+!--query and save current viewport, page and character height settings
+!
  call pgqwin(xmin,xmax,ymin,ymax)
  call pgqvp(0,vptxmin,vptxmax,vptymin,vptymax)
  call pgqcs(0,xch,ych)
@@ -108,6 +108,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    vptymaxi = vptymini - (disp + xlabeloffset)*ych
    vptymini = vptymaxi - width*ych
    call pgsvp(vptxmini,vptxmaxi,vptymini,vptymaxi)
+   call set_exactpixelboundaries()
    !
    !--draw colour bar, by cleverly setting window size
    !
@@ -149,6 +150,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
     vptxmini = vptxmaxi + disp*xch
     vptxmaxi = vptxmini + width*xch
     call pgsvp(vptxmini,vptxmaxi,vptymini,vptymaxi)
+    call set_exactpixelboundaries()
    !
    !--draw colour bar, by cleverly setting window size
    !
