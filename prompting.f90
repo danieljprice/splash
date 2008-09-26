@@ -438,7 +438,7 @@ contains
          allowblank = .true.
       endif
       if (allowblank .and. len_trim(adjustl(string)).gt.0) then
-         write(*,"(a,1x,'(null=""blank"",default=""',a,'""):',1x)",advance='no') &
+         write(*,"(a,1x,'(blank=""blank"",default=""',a,'""):',1x)",advance='no') &
               trim(adjustl(text)), trim(adjustl(string))      
       else
          write(*,"(a,1x,'(default=""',a,'""):',1x)",advance='no') &
