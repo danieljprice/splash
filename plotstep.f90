@@ -8,7 +8,7 @@ module timestep_plotting
   integer, private :: ngrid,nframefirstonpage
   integer, private :: just, ntitles,nsteplegendlines
   integer, private :: iplots,ipanel
-  integer, public :: iframe
+  integer, private :: iframesave
 
   real, dimension(:), allocatable, private :: datpix1D, xgrid
   real, dimension(:,:), allocatable, private :: datpix, brightness
@@ -516,6 +516,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   integer :: icolourprev,linestyleprev
   integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp
   integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
+  integer :: iframe
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
@@ -589,26 +590,33 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   !--add a loop over frames for animation sequences
   !  but only generate extra frames if we are inside a sequence
   !
-  iseqpos = ipos !(ipos-1)/(nacross*ndown) + 1
+  iseqpos = (ipos-1)/(nacross*ndown) + 1
   !print*,' iseqpos = ',iseqpos,ipos
+
+  iframe = 0
   if (nseq.gt.0 .and. insidesequence(iseqpos)) then
-     nframesloop = nframes
+     if (nacross*ndown.eq.1) then
+        nframesloop = nframes
+     else
+        nframesloop = max(iframesave+1,1)
+        iframe = iframesave
+        !print*,'iframe=',iframesave,'iseqpos = ',iseqpos,insidesequence(iseqpos)
+     endif
   else
      nframesloop = 1
   endif
-  iframe = 0
   
   !--loop over frames: flexible to allow forwards/backwards in interactive mode
   over_frames: do while (iframe.lt.nframesloop)
 
   if (interactivereplot .and. ipos.eq.ifirststeponpage .and. iframe.eq.0) then
      iframe = min(nframefirstonpage,nframesloop)
-  !elseif (ipagechange .or. nstepsperpage.gt.1) then  ! only change frame after each full page
   else
      iframe = iframe + 1
   endif
   
   !print*,'iframe = ',iframe, ipagechange,nstepsperpage
+  !--sanity check on frame number, should never happen...
   if (iframe.eq.0) then
      print*,' Internal error in iframe, setting to 1 '
      iframe = 1
@@ -1894,6 +1902,24 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
   enddo over_plots ! over plots per timestep (nyplot)
   enddo over_frames ! over nframes for animation sequences
+  
+  !
+  !--frame changing for multiple steps on the page (ie. page split into panels)
+  !
+  iframesave = 0
+  if (iadvance.ne.-666 .and..not.interactivereplot) then
+     if (nacross*ndown.gt.1 .and. insidesequence(iseqpos)) then
+        !--for the last panel on the page, reset the sequence for next time
+        if (ipanel.eq.nacross*ndown) then
+           if (iframe.lt.nframes) then
+              ipos = ipos - nacross*ndown
+           endif
+           iframesave = iframe
+        else
+           iframesave = iframe - 1
+        endif
+     endif
+  endif
   
   if (.not.interactivereplot) then
      if (allocated(datpix1D)) deallocate(datpix1D)
