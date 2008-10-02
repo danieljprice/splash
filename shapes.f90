@@ -15,11 +15,12 @@ module shapes
    integer :: linestyle
    integer :: linewidth
    integer :: ifillstyle
+   integer :: iunits
    real :: xpos
    real :: ypos
    real :: xlen,ylen
    real :: angle,fjust
-   character(len=20) :: text
+   character(len=40) :: text
  end type
  type(shapedef), dimension(maxshapes), public :: shape
 
@@ -46,6 +47,7 @@ subroutine defaults_set_shapes
  shape(:)%linestyle = 1
  shape(:)%linewidth = 1
  shape(:)%ifillstyle = 2
+ shape(:)%iunits = 1
  shape(:)%xpos = 0.5
  shape(:)%ypos = 0.5
  shape(:)%xlen = 1.
@@ -63,9 +65,17 @@ end subroutine defaults_set_shapes
 subroutine submenu_shapes()
  use prompting, only:prompt
  implicit none
- integer :: i,ishape,itype,indexi
+ integer :: i,ishape,itype,indexi,iunits
  character(len=8) :: poslabel
  character(len=80) :: string
+ integer, parameter :: maxunits = 2
+ character(len=20), dimension(maxunits), &
+    parameter :: labelunits = &
+    (/'units of plot       ', &
+      'viewport coordinates'/)
+!      'inches             ', &
+!      'millimeters        ', &
+!      'pixels             '/)
 
  itype = 1
  ishape = 0
@@ -85,25 +95,33 @@ subroutine submenu_shapes()
     call prompt('enter shape to plot (0 = finish) ',shape(ishape)%itype,0,maxshapetype)
     itype = shape(ishape)%itype
     if (itype.gt.0) then
-       print "(a,i1,a)",'shape ',ishape,': type = '//trim(labelshapetype(itype))
+       print "(a,i1,a,/)",'shape ',ishape,': type = '//trim(labelshapetype(itype))
+       
+       !--choose units
+       do i=1,maxunits
+          print "(i1,')',1x,a)",i,trim(labelunits(i))
+       enddo
+       call prompt('enter units to use for plotting shape',shape(ishape)%iunits,0,maxunits)
+       iunits = shape(ishape)%iunits
+
        select case(itype)
        case(1) ! square
-          call prompt('enter length of side (in x units of plot)',shape(ishape)%xlen,0.)
+          call prompt('enter length of side (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           shape(ishape)%ylen = shape(ishape)%xlen
           poslabel = 'centre'
        case(2) ! rectangle
-          call prompt('enter length of side (in x units of plot)',shape(ishape)%xlen,0.)
-          call prompt('enter length of side (in y units of plot)',shape(ishape)%ylen,0.)
+          call prompt('enter x length of side (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
+          call prompt('enter y length of side (in '//trim(labelunits(iunits))//')',shape(ishape)%ylen,0.)
           poslabel = 'centre'
        case(3) ! arrow
-          call prompt('enter arrow length (in x units of plot)',shape(ishape)%xlen,0.)
+          call prompt('enter arrow length (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           call prompt('enter angle in degrees (0 = horizontal) ',shape(ishape)%angle)
           poslabel = 'head'
        case(4) ! circle
-          call prompt('enter radius ',shape(ishape)%xlen,0.)
+          call prompt('enter radius (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           poslabel = 'centre'
        case(5) ! line
-          call prompt('enter line length ',shape(ishape)%xlen,0.)
+          call prompt('enter line length (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           call prompt('enter angle of line in degrees (0 = horizontal) ',shape(ishape)%angle)
           poslabel = 'starting'
        case(6) ! text
@@ -112,8 +130,8 @@ subroutine submenu_shapes()
           call prompt('enter justification factor (0.0=left 1.0=right)',shape(ishape)%fjust)
           poslabel = 'starting'
        end select
-       call prompt('enter '//trim(poslabel)//' x position (in x units of plot) ',shape(ishape)%xpos)
-       call prompt('enter '//trim(poslabel)//' y position (in y units of plot) ',shape(ishape)%ypos)
+       call prompt('enter '//trim(poslabel)//' x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)
+       call prompt('enter '//trim(poslabel)//' y position (in '//trim(labelunits(iunits))//') ',shape(ishape)%ypos)
        if (itype.eq.1 .or. itype.eq.2 .or. itype.eq.4) then
           call prompt('enter PGPLOT fill style (1=solid,2=outline,3=hatch,4=crosshatch) for '// &
                       trim(labelshapetype(itype)),shape(ishape)%ifillstyle,0,5)       
@@ -131,8 +149,9 @@ subroutine submenu_shapes()
  enddo
  nshapes = ishape - 1
  if (nshapes.gt.0) then
-    print "(/,i2,a,/,15('-'),10(/,i2,')',1x,a10,' (x,y) = (',1pe10.2,',',1pe10.2,')'))",nshapes,' SHAPES SET: ', &
-           (ishape,labelshapetype(shape(ishape)%itype),shape(ishape)%ypos,shape(ishape)%ypos,ishape=1,nshapes)
+    print "(/,a,/,15('-'),10(/,i2,')',1x,a10,' (x,y) = (',1pe10.2,',',1pe10.2,') [',a,']'))",' SHAPES SET: ', &
+           (ishape,labelshapetype(shape(ishape)%itype),shape(ishape)%ypos,shape(ishape)%ypos, &
+           trim(labelunits(shape(ishape)%iunits)),ishape=1,nshapes)
  else
     print "(a)",' NO SHAPES SET '
  endif
@@ -142,7 +161,7 @@ end subroutine submenu_shapes
 
 subroutine plot_shapes
  implicit none
- integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle,i
+ integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle,i,iunits
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot
  real :: xpos,ypos,xlen,ylen,angle,dx,dy
  real, dimension(2) :: xline,yline
@@ -160,7 +179,9 @@ subroutine plot_shapes
  call pgqwin(xmin,xmax,ymin,ymax)
  dxplot = xmax - xmin
  dyplot = ymax - ymin
- 
+!
+!--query window size in a variety of other units
+!
  do i=1,nshapes
     call pgsci(shape(i)%icolour)
     call pgsls(shape(i)%linestyle)
@@ -172,6 +193,19 @@ subroutine plot_shapes
     xlen = shape(i)%xlen
     ylen = shape(i)%ylen
     angle = shape(i)%angle*(pi/180.)
+    
+    iunits = shape(i)%iunits
+    select case(iunits)
+    case(2) ! translate from viewport coordinates into plot coordinates
+       xpos = xmin + xpos*dxplot
+       ypos = ymin + ypos*dyplot
+       xlen = xlen*dxplot
+       ylen = ylen*dyplot
+    case(1)
+       ! do nothing here
+    case default ! should never happen
+       print "(a)",' INTERNAL ERROR: unknown units whilst plotting shape'
+    end select
     
     print "(a)",'> plotting shape: '//trim(labelshapetype(shape(i)%itype))
     select case(shape(i)%itype)
