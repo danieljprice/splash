@@ -303,7 +303,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
    over_MPIblocks: do iblock=1,nblocks
       
-      if (nblocks.gt.1) print "(10('-'),' MPI block ',i4,1x,10('-'))",iblock
+      !if (nblocks.gt.1) print "(10('-'),' MPI block ',i4,1x,10('-'))",iblock
 !
 !--read array header from this block
 !  
@@ -319,8 +319,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
          nptmasstot = nptmasstot + isize(iarr)
       endif
       
-      if (isize(iarr).gt.0) then
-         print *,'block ',iarr,' dim = ',isize(iarr),'nint=',nint(iarr),nint1(iarr), &
+      if (isize(iarr).gt.0 .and. iblock.eq.1) then
+         print "(1x,a,i1,a,i12,a,5(i2,1x),a,3(i2,1x))", &
+            'block ',iarr,' dim = ',isize(iarr),' nint =',nint(iarr),nint1(iarr), &
             nint2(iarr),nint4(iarr),nint8(iarr),'nreal =',nreal(iarr),nreal4(iarr),nreal8(iarr)
       endif
 !--we are going to read all real arrays but need to convert them all to default real
@@ -498,11 +499,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
    istartrt = 0
    i1 = i2 + 1
    i2 = i1 + isize(1) - 1
-   print*,'particles: ',i1,' to ',i2
+   print "(1x,a10,i4,3(a,i12))",'MPI block ',iblock,':  particles: ',i1,' to ',i2,' of ',npart
    iptmass1 = iptmass2 + 1
    iptmass2 = iptmass1 + isize(2) - 1
    nptmass = nptmasstot
-   if (nptmass.gt.0) print*,'point masses: ',iptmass1,' to ',iptmass2,' of ',nptmass
+   if (nptmass.gt.0) print "(15x,3(a,i12))",'  pt. masses: ',iptmass1,' to ',iptmass2,' of ',nptmass
 
    do iarr=1,narrsizes
       if (nreal(iarr) + nreal4(iarr) + nreal8(iarr).gt.0) then
