@@ -8,13 +8,15 @@
 !------------------------------------------------------------------------
 module colourbar
  implicit none
- integer, parameter, public :: maxcolourbarstyles = 4
- character(len=26), dimension(0:maxcolourbarstyles), parameter, public :: &
-   labelcolourbarstyles = (/'no colour bar             ', &
-                            'vertical right hand side  ', &
-                            'horizontal underneath plot', &
-                            'vertical rhs plot-hugging ', &
-                            'horizontal plot-hugging   '/)
+ integer, parameter, public :: maxcolourbarstyles = 6
+ character(len=28), dimension(0:maxcolourbarstyles), parameter, public :: &
+   labelcolourbarstyles = (/'no colour bar               ', &
+                            'vertical (right hand side)  ', &
+                            'horizontal (underneath plot)', &
+                            'plot-hugging vertical       ', &
+                            'plot-hugging horizontal     ', &
+                            'one-sided vertical          ', &
+                            'one-sided horizontal        '/)
  !
  !--these are settings that have default values but can
  !  be changed if required
@@ -99,7 +101,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  !------------------------
  ! horizontal colour bar
  !------------------------
- case(2,4)
+ case(2,4,6)
 
    if (istyle.eq.4) disp = 0. ! plot-hugging
    !
@@ -113,17 +115,36 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !--draw colour bar, by cleverly setting window size
    !
    call pgswin(1.0,real(npixwedg),0.0,1.0)
-   ! if (abs(icolours).eq.1) then        ! greyscale
-   !    call pggray(sample,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans)
-    if (abs(icolours).gt.0) then        ! colour
-       call pgimag(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans)
+
+   if (abs(icolours).gt.0) then        ! colour
+    !   
+    !--the standard would be to use the default line below
+    !
+    !   call pgimag(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans)
+    !
+    !--instead we use the following: 
+    !  this is a workaround for a PGPLOT bug with large colour bars
+    !  (> 1024 device pixels long) - plot colour bar in two halves.
+    !
+       call pgsvp(vptxmini,vptxmaxi-0.5*(vptxmaxi-vptxmini),vptymini,vptymaxi)
+       call pgswin(1.0,real(npixwedg/2),0.0,1.0)
+       call set_exactpixelboundaries()
+       call pgimag(samplex,npixwedg,1,1,npixwedg/2,1,1,datmin,datmax,trans)
+
+       call pgsvp(vptxmaxi-0.5*(vptxmaxi-vptxmini)-0.001,vptxmaxi,vptymini,vptymaxi)
+       call pgswin(real(npixwedg/2 + 1),real(npixwedg),0.0,1.0)
+       call set_exactpixelboundaries()
+       call pgimag(samplex,npixwedg,1,npixwedg/2+1,npixwedg,1,1,datmin,datmax,trans)
+       call pgsvp(vptxmini,vptxmaxi,vptymini,vptymaxi)
+
     endif
     call pgswin(datmin,datmax,0.0,1.0)
    !
    !--draw labelled frame around the wedge
    !
-    if (istyle.eq.4) then
-       call pgbox('BNST',0.0,0,'BC',0.0,0)    
+    if (istyle.eq.4 .or. istyle.eq.6) then
+       call pgbox('BNST',0.0,0,'BC',0.0,0)
+       if (istyle.eq.6) call pgbox('C',0.0,0,' ',0.0,0)    
     else
        call pgbox('BCNST',0.0,0,'BC',0.0,0)
     endif
@@ -164,8 +185,9 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
    !--draw labelled frame around the wedge
    !
-    if (istyle.eq.3) then
+    if (istyle.eq.3 .or. istyle.eq.5) then
        call pgbox('BC',0.0,0,'CMSTV',0.0,0)
+       if (istyle.eq.5) call pgbox(' ',0.0,0,'B',0.0,0)
     else
        call pgbox('BC',0.0,0,'BCMSTV',0.0,0)
     endif
@@ -204,7 +226,7 @@ logical function barisvertical(istyle)
  if (istyle.le.0) return
  
  select case(istyle)
- case(2,4)
+ case(2,4,6)
     barisvertical = .false.
  case default
     barisvertical = .true.
@@ -225,7 +247,7 @@ logical function incolourbar(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
  if (istyle.le.0) return
  
  select case(istyle)
- case(2,4)
+ case(2,4,6)
     if (ypt.lt.ymin) incolourbar = .true.
  case default
     if (xpt.gt.xmax) incolourbar = .true.
@@ -251,7 +273,7 @@ subroutine get_colourbarmargins(istyle,xmaxmargin,yminmargin,barwidth)
  call pgqcs(0,xch,ych)
 
  select case(istyle)
- case(2,4)
+ case(2,4,6)
     if (iplotcolourbarlabel) then
        barwidth = (ColourBarWidth+3.0)*ych  ! ie. width + 2.5 + 0.5 margin
     else
