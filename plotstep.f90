@@ -28,7 +28,7 @@ module timestep_plotting
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
   logical, private :: inewpage, tile_plots, lastplot
   logical, private :: imulti,irerender,iAllowspaceforcolourbar
-  logical, private :: interactivereplot,ihavesetcolours
+  logical, private :: interactivereplot,ihavesetcolours,vectordevice
   
   public :: initialise_plotting, plotstep
   private
@@ -65,7 +65,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   logical :: iadapting,iamrendering,icoordplot,iallrendered,ians
   real :: hav,pmassav
   character(len=1) :: char
-  character(len=20) :: string
+  character(len=20) :: string,devstring
   
   !------------------------------------------------------------------------
   ! initialisations
@@ -424,21 +424,31 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
      ihavesetcolours = .false.
   endif
     
+  !!--determine whether or not the device is vector or not
+  !   this affects the choice of line with (if auto line width is used -- see below)
+  !   and also the automatic resolution determination (should not apply to vector devices)
+  !
+  call pgqinf('TYPE',devstring,ilen)
+  select case(devstring(1:ilen))
+  case('PS','CPS','VPS','VCPS','NULL','LATEX')
+     vectordevice = .true.
+  case default
+     vectordevice = .false.
+  end select
+
   !!--set line width (0=auto based on whether device is vector or not)
   if (linewidth.le.0) then
-     call pgqinf('TYPE',string,ilen)
-     select case(string(1:ilen))
-     case('PS','CPS','VPS','VCPS')
-        print "(a)",' setting line width = 2 for '//string(1:ilen)//' device'
+     if (vectordevice) then
+        print "(a)",' setting line width = 2 for '//devstring(1:ilen)//' device'
         call pgslw(2)
-     case default
-        print "(a)",' setting line width = 1 for '//string(1:ilen)//' device'
+     else
+        print "(a)",' setting line width = 1 for '//devstring(1:ilen)//' device'
         call pgslw(1)
-     end select
+     endif  
   else
      call pgslw(linewidth)
   endif
-  
+
   linecolourthisstep = linecolour
   linestylethisstep = linestyle
 
@@ -2069,15 +2079,23 @@ contains
              call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
              npixx = nint(xmaxpix-xminpix)
              npixy = nint(ymaxpix-yminpix)
-             print "(a,i4,a,i4)",' auto-selecting device resolution = ',npixx,' x ',npixy
-             if ((xmaxpix-xminpix).gt.1024. .or. (ymaxpix-yminpix).gt.1024) then
-                print "(/,75('*'))"
-                print "(a)",'!! WARNING: PGPLOT will truncate image to 1024 pixels on pixel devices.'
-                print "(a)",'!! To fix this, change line 18 of file grimg2.f in the PGPLOT source code:'
-                print "(a)",'!!          REAL     BUFFER(1026)'
-                print "(a)",'!! changing 1026 to something much bigger, then recompile PGPLOT.'
-                print "(75('*'),/)"
+             if (vectordevice .and. npixx.gt.500) then
+                npixx = 400/nacross
+                npixy = nint((ymax-ymin)/real(npixx))
+                print "(a,i4,a,i4,a)",' auto-selecting resolution of ',npixx,' x ',npixy,' for vector device'
+                print "(a)",' => set the number of pixels manually if you want more (or less) than this.'
+             else
+                print "(a,i4,a,i4)",' auto-selecting device resolution = ',npixx,' x ',npixy
+                if ((xmaxpix-xminpix).gt.1024. .or. (ymaxpix-yminpix).gt.1024) then
+                   print "(/,75('*'))"
+                   print "(a)",'!! WARNING: PGPLOT will truncate image to 1024 pixels on pixel devices.'
+                   print "(a)",'!! To fix this, change line 18 of file grimg2.f in the PGPLOT source code:'
+                   print "(a)",'!!          REAL     BUFFER(1026)'
+                   print "(a)",'!! changing 1026 to something much bigger, then recompile PGPLOT.'
+                   print "(75('*'),/)"
+                endif
              endif
+             
           endif
           !--restore saved attributes
           iplots = iplotsave
