@@ -1956,7 +1956,7 @@ contains
     implicit none
     integer :: iplotsave,ipanelsave
     real :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
-    real :: xminpix,xmaxpix,yminpix,ymaxpix
+    real :: xminpix,xmaxpix,yminpix,ymaxpix,dxpix
     logical :: ipanelchange,dum
     logical, intent(in), optional :: dummy
 
@@ -2079,9 +2079,10 @@ contains
              call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
              npixx = nint(xmaxpix-xminpix)
              npixy = nint(ymaxpix-yminpix)
-             if (vectordevice .and. npixx.gt.500) then
-                npixx = 400/nacross
-                npixy = nint((ymax-ymin)/real(npixx))
+             if (vectordevice .and. npixx.gt.800) then
+                npixx = 800/nacross
+                dxpix = (xmax-xmin)/npixx
+                npixy = int(0.999*(ymax-ymin)/real(dxpix)) + 1
                 print "(a,i4,a,i4,a)",' auto-selecting resolution of ',npixx,' x ',npixy,' for vector device'
                 print "(a)",' => set the number of pixels manually if you want more (or less) than this.'
              else
