@@ -2079,8 +2079,8 @@ contains
              call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
              npixx = nint(xmaxpix-xminpix)
              npixy = nint(ymaxpix-yminpix)
-             if (vectordevice .and. npixx.gt.800) then
-                npixx = 800/nacross
+             if (vectordevice .and. npixx.gt.1024) then
+                npixx = 1024/nacross
                 dxpix = (xmax-xmin)/npixx
                 npixy = int(0.999*(ymax-ymin)/real(dxpix)) + 1
                 print "(a,i4,a,i4,a)",' auto-selecting resolution of ',npixx,' x ',npixy,' for vector device'
