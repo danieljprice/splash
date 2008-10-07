@@ -2164,6 +2164,12 @@ contains
     integer :: icoloursave
     character(len=lensteplegend) :: steplegendtext
     real :: xlabeloffsettemp
+    
+    !--save colour index
+    call pgqci(icoloursave)
+
+    !--use foreground colour by default for legends
+    call pgsci(1)
 
     !--------------------------------------------------------------
     ! plot colour bar for rendered plots (use currently set colour)
@@ -2193,12 +2199,6 @@ contains
           endif
        endif
     endif
-    
-    !--save colour index
-    call pgqci(icoloursave)
-
-    !--use foreground colour by default for legends
-    call pgsci(1)
     
     !--plot time on plot
     if (iPlotLegend .and. nyplot.eq.1 &
