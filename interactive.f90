@@ -43,7 +43,7 @@ contains
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   xcoords,ycoords,zcoords,hi,icolourpart,xmin,xmax,ymin,ymax, &
   rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
-  anglex,angley,anglez,ndim,x_sec,zslicepos,dzslice, &
+  anglex,angley,anglez,ndim,xorigin,x_sec,zslicepos,dzslice, &
   zobserver,dscreen,use3Dopacity,taupartdepth,irerender,itrackpart,icolourscheme, &
   iColourBarStyle,iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
   use settings_xsecrot, only:setsequenceend
@@ -57,6 +57,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax,taupartdepth
   real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
   real, intent(in) :: renderminadapt,rendermaxadapt
+  real, intent(in), dimension(ndim) :: xorigin
   logical, intent(inout) :: x_sec
   logical, intent(out) :: irerender,interactivereplot
   logical, intent(in) :: use3Dopacity
@@ -517,11 +518,20 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
                xcen = xcoords(itrackpart)
                ycen = ycoords(itrackpart)
            else
-               xcen = 0.
-               ycen = 0.
-           endif        
-           xpt = 0. ! for next time
-           ypt = 0.
+              if (iplotx.le.ndim) then
+                 xcen = xorigin(iplotx)
+              else
+                 xcen = 0.
+              endif
+              if (iploty.le.ndim) then
+                 ycen = xorigin(iploty)
+              else
+                 ycen = 0.
+              endif
+              print*,' centreing plot on origin x,y = ',xcen,ycen
+           endif
+           xpt = xcen ! cursor position for next time
+           ypt = ycen
         case('C')
            xcen = xpt
            ycen = ypt
@@ -1229,7 +1239,8 @@ end subroutine interactive_step
 !
 subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,ifirstframeonpage,nframes, &
                              lastpanel,iplotxarr,iplotyarr,irenderarr,ivecarr,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
-                             barwmulti,xminadapt,xmaxadapt,nacross,ndim,icolourscheme,iColourBarStyle,interactivereplot)
+                             barwmulti,xminadapt,xmaxadapt,nacross,ndim,xorigin,icolourscheme, &
+                             iColourBarStyle,interactivereplot)
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep,iframe,lastpanel
@@ -1238,6 +1249,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr,ivecarr
  real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
  real, dimension(:), intent(inout) :: xmin,xmax,xminadapt,xmaxadapt
+ real, intent(in), dimension(ndim) :: xorigin
  logical, intent(out) :: interactivereplot
  integer :: nc,ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage
  real :: xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
@@ -1523,10 +1535,17 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            ylength = 0.9/zoomfac*ylength
            renderlength = 0.9/zoomfac*renderlength
         case('o')
-           xcen = 0.
-           ycen = 0.
-           !xpt = 0. ! for next time
-           !ypt = 0.
+           if (iplotxarr(ipanel).le.ndim) then
+              xcen = xorigin(iplotxarr(ipanel))
+           else
+              xcen = 0.
+           endif
+           if (iplotyarr(ipanel).le.ndim) then
+              ycen = xorigin(iplotyarr(ipanel))
+           else
+              ycen = 0.
+           endif
+           print*,' centreing plot on origin x,y = ',xcen,ycen
         case('C')
            xcen = xpti
            ycen = ypti
