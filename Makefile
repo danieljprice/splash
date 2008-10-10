@@ -419,7 +419,7 @@ OBJECTS= $(OBJECTS1:.F90=.o)
 # Now compile with the appropriate data read file
 # (move yours to the top so that you can simply type "make")
 #
-all: sphNG srosph gadget tipsy dragon vine ascii
+all: ascii gadget vine sphNG srosph dragon tipsy
 
 ascii: checksystem $(OBJECTS) read_data_ascii.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o asplash$(EXT) $(OBJECTS) read_data_ascii.o
@@ -451,6 +451,9 @@ ndspmhd: checksystem $(OBJECTS) read_data_dansph.o
 
 dansph: checksystem $(OBJECTS) read_data_dansph_old.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o dsplash $(OBJECTS) read_data_dansph_old.o
+
+foulkes: checksystem $(OBJECTS) read_data_foulkes.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o fsplash $(OBJECTS) read_data_foulkes.o 
 
 jjm: checksystem $(OBJECTS) read_data_jjm.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o jsplash $(OBJECTS) read_data_jjm.o 
@@ -489,6 +492,8 @@ ucla: checksystem $(OBJECTS) read_data_UCLA.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o usplash $(OBJECTS) read_data_UCLA.o 
 
 sky: ucla
+
+steve: foulkes
 
 sigfried: vanaverbeke
 
