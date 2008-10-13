@@ -471,7 +471,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                 iplotcontmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
   use settings_data, only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
-                     iendatstep,ntypes,UseTypeInRenderings,itrackpart,required,ipartialread
+                     iendatstep,ntypes,UseTypeInRenderings,itrackpart,required,ipartialread,xorigin
   use settings_limits, only:iadapt,iadaptcoords,scalemax
   use settings_part, only:iexact,iplotpartoftype,imarktype,PlotOnRenderings, &
                      iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot
@@ -1319,7 +1319,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                       icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
-                      xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax)
+                      xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax,brightness)
 
                     call write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax, &
                                           trim(labelrender),((istep-1)*nframesloop + iframe),brightness)                 
@@ -1447,7 +1447,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       hh(1:ninterp),icolourme(1:ninterp), &
                       xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
-                      angletempx,angletempy,angletempz,ndim,x_sec,zslicepos,dz, &
+                      angletempx,angletempy,angletempz,ndim,xorigin(1:ndim),x_sec,zslicepos,dz, &
                       zobservertemp,dzscreentemp,use3Dopacityrendering,taupartdepthtemp,irerender, &
                       itrackpart,icolours,iColourBarStyle,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
                  !--turn rotation on if necessary
@@ -1467,7 +1467,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                       nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
                       ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
                       vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
-                      xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,iColourBarStyle,interactivereplot)
+                      xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
                  if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
               endif
            endif
@@ -1570,7 +1570,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
                    hh(1:ntoti),icolourme(1:ntoti), &
                    xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
-                   angletempx,angletempy,angletempz,ndim, &
+                   angletempx,angletempy,angletempz,ndim,xorigin(1:ndim), &
                    dumxsec,dummy,dummy,dummy,dummy,.false.,dummy,irerender, &
                    itrackpart,icolours,iColourBarStyle,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames ! this should be unnecessary
@@ -1586,7 +1586,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
                    ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
                    vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
-                   xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,iColourBarStyle,interactivereplot)
+                   xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
            endif
         endif
@@ -1695,7 +1695,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                    nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
                    ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
                    vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
-                   xminadapt(:),xmaxadapt(:),nacross,ndim,icolours,iColourBarStyle,interactivereplot)
+                   xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
            endif
            cycle over_plots
