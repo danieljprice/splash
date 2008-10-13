@@ -30,7 +30,7 @@
 module transforms
  integer, parameter, public :: ntrans = 5  ! this is the number of different transformations
  real, parameter, private :: zerolog = 1.e-12 ! this is minimum set if xmin = 0 and log
- public :: transform,transform_inverse,transform2
+ public :: transform,transform_inverse,transform2,trans
  public :: transform_limits,transform_limits_inverse,transform_label
  public :: convert_to_ln_fac
 
@@ -39,6 +39,11 @@ module transforms
  interface transform
    module procedure transform,transform_limits,transform2,transforma
  end interface transform
+ 
+ !--function interface
+ interface trans
+   module procedure transformarray
+ end interface trans
 
  interface transform_inverse
    module procedure transform_inverse,transform_limits_inverse,transforma_inverse
@@ -144,6 +149,28 @@ subroutine transforma(aa,itrans,errval)
 
   return
 end subroutine transforma
+
+!------------------------------------------------------------------------
+!
+!  function interface: returns array valued function
+!
+!------------------------------------------------------------------------
+function transformarray(array,itrans,errval)
+  implicit none
+  integer, intent(in) :: itrans
+  real, intent(in), dimension(:) :: array
+  real, dimension(size(array)) :: transformarray
+  real, intent(in), optional :: errval
+
+  transformarray = array
+  if (present(errval)) then
+     call transform(transformarray,itrans,errval=errval)
+  else
+     call transform(transformarray,itrans)
+  endif
+
+  return
+end function transformarray
 
 !------------------------------------------------------------------------
 !
