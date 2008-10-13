@@ -484,12 +484,13 @@ end subroutine interpolate2D_xsec
 !
 !     Written by Daniel Price 21/7/2008
 !--------------------------------------------------------------------------
-subroutine interpolate_part(x,y,hh,npart,xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval)
+subroutine interpolate_part(x,y,hh,npart,xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval,brightness)
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,hh
   real, intent(in) :: xmin,ymin,pixwidth,datval
   real, intent(inout), dimension(npixx,npixy) :: datsmooth
+  real, intent(inout), dimension(npixx,npixy), optional :: brightness
   integer :: i
 
   if (pixwidth.le.0.) then
@@ -502,11 +503,15 @@ subroutine interpolate_part(x,y,hh,npart,xmin,ymin,datsmooth,npixx,npixy,pixwidt
   !
   !--loop over particles
   !
-  over_parts: do i=1,npart
-
-     call interpolate_part1(x(i),y(i),hh(i),xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval)
-    
-  enddo over_parts
+  if (present(brightness)) then  
+     do i=1,npart
+        call interpolate_part1(x(i),y(i),hh(i),xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval)
+     enddo
+  else
+     do i=1,npart
+        call interpolate_part1(x(i),y(i),hh(i),xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval,brightness)
+     enddo  
+  endif
   return
 
 end subroutine interpolate_part
@@ -516,11 +521,12 @@ end subroutine interpolate_part
 !
 !     Written by Daniel Price 21/7/2008
 !--------------------------------------------------------------------------
-subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval)
+subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval,brightness)
   implicit none
   real, intent(in) :: xi,yi,hi,xmin,ymin,pixwidth,datval
   integer, intent(in) :: npixx,npixy
   real, intent(inout), dimension(npixx,npixy) :: datsmooth
+  real, intent(inout), dimension(npixx,npixy), optional :: brightness
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   real :: radkern,radkern2,rab2
   real :: dx,dy2,xpix,ypix
@@ -532,7 +538,7 @@ subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,d
   !
   !--set kernel related quantities
   !
-  radkern = max(hi,pixwidth)
+  radkern = max(hi,2.*pixwidth)
   radkern2 = radkern*radkern  ! radius of the smoothing kernel
   !
   !--for each particle work out which pixels it contributes to
@@ -561,6 +567,9 @@ subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,d
         !
         if (rab2.lt.radkern2) then
            datsmooth(ipix,jpix) = datval
+           if (present(brightness)) then
+              brightness(ipix,jpix) = 1.0
+           endif
         endif
      enddo
   enddo

@@ -15,7 +15,7 @@ contains
 subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                         icolourpart,iamtype,npartoftype,iplotpartoftype, &
                         use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
-                        fastparticleplot,datpix,npixx,npixy,dval)
+                        fastparticleplot,datpix,npixx,npixy,dval,brightness)
   use params, only:int1
   use labels, only:labeltype, maxparttypes
   use settings_data, only:ndim,icoords,ntypes
@@ -35,7 +35,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   character(len=*), intent(in) :: labelz
   
   integer, intent(in), optional :: npixx,npixy
-  real, dimension(:,:), intent(inout), optional :: datpix
+  real, dimension(:,:), intent(inout), optional :: datpix,brightness
   real, intent(in), optional :: dval
   
   integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle
@@ -129,7 +129,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  call pgsci(icolourpart(j))
                  call pgpt(1,xplot(j),yplot(j),imarktype(itype))
                  if (present(datpix)) then
-                    call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                    if (present(brightness)) then
+                       call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
+                                              npixx,npixy,dxpix,dval,brightness)                    
+                    else
+                       call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
+                                              npixx,npixy,dxpix,dval)
+                    endif
                  endif
               endif
               !--plot circle of interaction if gas particle
@@ -185,7 +191,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                        nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
                        call pgpt1(xplot(j),yplot(j),imarktype(itype))
                        if (present(datpix)) then
-                          call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                          if (present(brightness)) then
+                             call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
+                                                    npixx,npixy,dxpix,dval,brightness)                          
+                          else
+                             call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
+                                                    npixx,npixy,dxpix,dval)
+                          endif
                        endif
 !                       else
 !                         notplotted = notplotted + 1
@@ -198,8 +210,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
               print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
               call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
               if (present(datpix)) then
-                 call interpolate_part(xplot(index1:index2),yplot(index1:index2),h(index1:index2), &
-                                       npartoftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                 if (present(brightness)) then
+                    call interpolate_part(xplot(index1:index2),yplot(index1:index2),h(index1:index2), &
+                                          npartoftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval,brightness)                 
+                 else
+                    call interpolate_part(xplot(index1:index2),yplot(index1:index2),h(index1:index2), &
+                                          npartoftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                 endif
               endif
            endif
         else
@@ -230,7 +247,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                           call pgsci(icolourpart(j))
                           call pgpt1(xplot(j),yplot(j),imarktype(itype))
                           if (present(datpix)) then
-                             call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                             if (present(brightness)) then
+                                call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
+                                                       npixx,npixy,dxpix,dval,brightness)                             
+                             else
+                                call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
+                                                       npixx,npixy,dxpix,dval)
+                             endif
                           endif
 !                       else
 !                         notplotted = notplotted + 1
@@ -240,7 +263,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                     call pgsci(icolourpart(j))
                     call pgpt1(xplot(j),yplot(j),imarktype(itype))
                     if (present(datpix)) then
-                       call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                       if (present(brightness)) then
+                          call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
+                                                 npixx,npixy,dxpix,dval,brightness)                       
+                       else
+                          call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
+                                                 npixx,npixy,dxpix,dval)
+                       endif
                     endif
                  endif
               endif
