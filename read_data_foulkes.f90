@@ -29,13 +29,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,xorigin
   use mem_allocation, only:alloc
+  use system_utils, only:lenvironment
+  use labels, only:ih
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
-  integer :: i,j,ierr,nerr,iunit,ncolstep,ncolenv
+  integer :: i,j,ierr,nerr,iunit,ncolstep
   integer :: nprint,npart_max,nstep_max,icol
-  integer :: nmodel,nstar,ncol,ncolread
+  integer :: nmodel,nstar,ncolread
   logical :: iexist
   real :: tread,hmax,dtmin,tdg,hfac
   real, dimension(3) :: xptmass,yptmass,vxptmass,vyptmass
@@ -60,14 +62,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  ncolstep = 26  ! create one column for particle mass
   nstar = 2
 
   j = indexstart
   nstepsread = 0
   print "(a)",' Steve Foulkes/Carol Haswell/James Murray ascii data format'
-  
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
+
   !
   !--open the file and read the number of particles
   !
@@ -81,16 +82,26 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
   read(iunit,*,iostat=ierr) nmodel,nprint,hmax,tread,dtmin,tdg
   if (ierr /= 0) print "(a)",' WARNING: error(s) reading first header line'
-  print "(a,1pe10.3,a,i10)",' time = ',tread,' npart =',nprint
+  print "(a,1pe10.3,a,i10,a,i10)",' time = ',tread,' npart =',nprint,' model number = ',nmodel
   print "(3(a,1pe10.4))",' hmax = ',hmax,' dtmin = ',dtmin,' tdg = ',tdg
+!
+!--determine how many columns we are going to read
+!
+  if (lenvironment('FSPLASH_READALL')) then
+     ncolstep = 26
+     print "(a)",' reading all columns'
+  else
+     ncolstep = 15
+     print "(a,i2)",' reading only to column 15 (setenv FSPLASH_READALL ''yes'' to read all)'
+  endif
 !
 !--(re)allocate memory
 !
-  nstep_max = max(nstep_max,indexstart,1)
+  nstep_max = max(maxstep,nstep_max,indexstart,1)
   if (.not.allocated(dat) .or. (nprint.gt.maxpart) .or. (ncolstep+ncalc).gt.maxcol) then
-     npart_max = max(npart_max,nprint,maxpart)
+     npart_max = max(npart_max,nprint+nstar,maxpart)
      !--allow extra room if reallocating
-     if (allocated(dat)) npart_max = max(npart_max,INT(1.1*nprint),maxpart)
+     if (allocated(dat)) npart_max = max(npart_max,INT(1.1*(nprint+nstar)),maxpart)
      call alloc(npart_max,nstep_max,max(ncolstep+ncalc,maxcol))
   endif
 !
@@ -137,6 +148,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   close(iunit)
 
+!--set labels to get ih for setting smoothing length of stars
+  call set_labels
+
 !--copy star particle properties into main data array
   do i=nprint+1,nprint+nstar
      dat(i,1,j) = xptmass(i-nprint)
@@ -146,9 +160,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
      dat(i,5,j) = vyptmass(i-nprint)
      dat(i,6,j) = 0.
      dat(i,7:ncolstep,j) = 0.
+     if (ih.gt.0) dat(i,ih,j) = epsilon(0.) ! small but non-zero smoothing length
   enddo
-  print "(' primary position   = (',1pe9.2,',',1pe9.2,')')",xptmass(1),yptmass(1)
-  print "(' secondary position = (',1pe9.2,',',1pe9.2,')')",xptmass(2),yptmass(2)
+  print "(' primary     (x,y) = (',1pe10.2,',',1pe10.2,')')",xptmass(1),yptmass(1)
+  print "(' secondary   (x,y) = (',1pe10.2,',',1pe10.2,')')",xptmass(2),yptmass(2)
   print "(a)",' setting origin to primary position... '
   xorigin(1) = xptmass(1)
   xorigin(2) = yptmass(1)
@@ -168,12 +183,12 @@ end subroutine read_data
 !!-------------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,labeltype,ix,irho,ipmass,ih,ipr,ivx,iamvec,labelvec
+  use labels, only:label,labeltype,ix,irho,ipmass,ih,ivx,iamvec,labelvec
   use params
-  use settings_data, only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
+  use settings_data, only:ntypes,ndim,ndimV,UseTypeInRenderings
   use geometry, only:labelcoord
   implicit none
-  integer :: i,ierr,ndimVtemp,ifx
+  integer :: i,ifx
 
   do i=1,ndim
      ix(i) = i
@@ -182,7 +197,7 @@ subroutine set_labels
   ipmass = ivx+ndimV
   ifx = ipmass+1
   irho = ifx+ndimV
-  label(irho+1) = 'dudt'
+  label(irho+1) = 'du/dt'
   label(irho+2) = 'C\d\s\u'
   label(irho+3) = 'alpha'
   ih = irho+4
