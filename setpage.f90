@@ -523,6 +523,7 @@ subroutine set_exactpixelboundaries()
  real :: xminpix,xmaxpix,yminpix,ymaxpix
  real :: vptxmin,vptxmax,vptymin,vptymax
  real :: dv
+ real, parameter :: tol = 1.e-6
  !
  ! setting axes adjusts the viewport, so query to get adjusted settings
  !
@@ -540,19 +541,19 @@ subroutine set_exactpixelboundaries()
  dv = (vptymax - vptymin)/(ymaxpix-yminpix)
 
  !  adjust viewport min/max to lie on pixel boundaries
- vptymin = max((nint(yminpix)-1.e-4)*dv,0.)
- vptymax = (nint(ymaxpix)-1.e-4)*dv ! be careful of round-off errors
+ vptymin = max((nint(yminpix)-tol)*dv,0.)
+ vptymax = (nint(ymaxpix)-tol)*dv ! be careful of round-off errors
 
  !  same for x
  dv = (vptxmax - vptxmin)/(xmaxpix-xminpix)
- vptxmin = max((nint(xminpix)-1.e-4)*dv,0.)
- vptxmax = (nint(xmaxpix)-1.e-4)*dv ! be careful of round-off errors
+ vptxmin = max((nint(xminpix)-tol)*dv,0.)
+ vptxmax = (nint(xmaxpix)-tol)*dv ! be careful of round-off errors
 
  !  adjust viewport
  !print*,'adjusting ',vptxmin,vptxmax,vptymin,vptymax
  call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
 
- call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+ !call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
  !print*,' in pixels = ',xminpix,xmaxpix,yminpix,ymaxpix
 
  return
