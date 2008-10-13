@@ -84,6 +84,6 @@ disc surface density / toomre q parameter plotting added; flash colour schemes a
 1.11.0:
 ability to use subset of particles in restricted parameter range(s); probability density function plot option; plot-hugging colour bars added; ability to annotate plot with a range of shapes; v, V, w and H implemented in interactive mode for >1 panel; various bug fixes
  
-1.11.0beta:
-ability to use subset of particles in restricted parameter range(s); probability density function plot option; plot-hugging colour bars added; ability to annotate plot with a range of shapes; v,V,w and H implemented in interactive mode for >1 panel
+1.11.1:
+automatic number of pixels and exact pixel boundaries implemented; mass does not have to be read from dump file; frame changes are per-page not per-dump file for animation sequences; lower stacksize footprint; bug fix with circles of interaction; bug fixes with block-labelled GADGET read; Steve Foulkes data read added
  
