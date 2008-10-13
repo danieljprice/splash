@@ -23,9 +23,12 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.11.1alpha : (18/09/08)
-!             automatic pixel number implemented; mass does not have to be read from dump file;
-!             bug fix with circles of interaction; bug fixes with block-labelled GADGET read.
+!     1.11.1 : (13/10/08)
+!             automatic number of pixels and exact pixel boundaries implemented;
+!             mass does not have to be read from dump file; frame changes are per-page
+!             not per-dump file for animation sequences; lower stacksize footprint;
+!             bug fix with circles of interaction; bug fixes with block-labelled GADGET read;
+!             Steve Foulkes data read added.
 !     1.11.0 : (15/08/08)
 !             ability to use subset of particles in restricted parameter range(s);
 !             probability density function plot option; plot-hugging colour bars added;
@@ -220,7 +223,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.11.1alpha [18th Sep ''08]'
+  character(len=*), parameter :: version = 'v1.11.1 [13th Oct ''08]'
 
   !
   ! initialise some basic code variables
