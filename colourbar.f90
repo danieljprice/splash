@@ -55,6 +55,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  real :: disp,width,xch,ych,dx
  real :: xmin,xmax,ymin,ymax,vptxmin,vptxmax,vptymin,vptymax
  real :: vptxmini,vptxmaxi,vptymini,vptymaxi
+ real :: xmaxpix,xminpix,yminpix,ymaxpix
 !
 !--return on style 0
 !
@@ -116,27 +117,35 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
    call pgswin(1.0,real(npixwedg),0.0,1.0)
 
+   !--check number of pixels in colour bar
+   call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+   
    if (abs(icolours).gt.0) then        ! colour
+   !--check if the colour bar will be more than 1024 pixels
+       if ((xmaxpix-xminpix).le.1024) then
     !   
-    !--the standard would be to use the default line below
+    !--the standard way is to use the default line below
     !
-    !   call pgimag(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans)
+          call pgimag(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans)   
+       else
     !
-    !--instead we use the following: 
+    !--if > 1024 pixels, we instead use the following: 
     !  this is a workaround for a PGPLOT bug with large colour bars
     !  (> 1024 device pixels long) - plot colour bar in two halves.
+    !  this works up to 2048 pixels, really should divide by n.
     !
-       call pgsvp(vptxmini,vptxmaxi-0.5*(vptxmaxi-vptxmini),vptymini,vptymaxi)
-       call pgswin(1.0,real(npixwedg/2),0.0,1.0)
-       call set_exactpixelboundaries()
-       call pgimag(samplex,npixwedg,1,1,npixwedg/2,1,1,datmin,datmax,trans)
+          call pgsvp(vptxmini,vptxmaxi-0.5*(vptxmaxi-vptxmini),vptymini,vptymaxi)
+          call pgswin(1.0,real(npixwedg/2),0.0,1.0)
+          call set_exactpixelboundaries()
+          call pgimag(samplex,npixwedg,1,1,npixwedg/2,1,1,datmin,datmax,trans)
 
-       call pgsvp(vptxmaxi-0.5*(vptxmaxi-vptxmini)-0.001,vptxmaxi,vptymini,vptymaxi)
-       call pgswin(real(npixwedg/2 + 1),real(npixwedg),0.0,1.0)
-       call set_exactpixelboundaries()
-       call pgimag(samplex,npixwedg,1,npixwedg/2+1,npixwedg,1,1,datmin,datmax,trans)
-       call pgsvp(vptxmini,vptxmaxi,vptymini,vptymaxi)
-
+          call pgsvp(vptxmaxi-0.5*(vptxmaxi-vptxmini)-0.001,vptxmaxi,vptymini,vptymaxi)
+          call pgswin(real(npixwedg/2 + 1),real(npixwedg),0.0,1.0)
+          call set_exactpixelboundaries()
+          call pgimag(samplex,npixwedg,1,npixwedg/2+1,npixwedg,1,1,datmin,datmax,trans)
+          call pgsvp(vptxmini,vptxmaxi,vptymini,vptymaxi)
+          call set_exactpixelboundaries()
+       endif
     endif
     call pgswin(datmin,datmax,0.0,1.0)
    !
