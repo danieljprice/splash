@@ -93,15 +93,23 @@ contains
     integer :: i1,i2,ierr
     logical :: notlistfull
     
-    list = ' '
+    !--set list to blank strings if argument is present
+    if (present(list)) then
+       list = ' '
+    endif
+    
+    !--get envlist from the environment
     call get_environment(variable,string)
+    
+    !--split the string on commas
     i1 = 1
     i2 = index(string,',')-1
     if (i2.eq.-1) i2 = len_trim(string)
     nlist = 0
     ierr = 0
     notlistfull = .true.
-    !print*,i2,i1
+
+    !--for each comma separated string, add a list member
     do while(i2.ge.i1 .and. notlistfull .and. ierr.eq.0)
        nlist = nlist + 1
        !print*,'i1,i2,stringfrag= ',i1,i2,trim(string(i1:))
