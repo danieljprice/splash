@@ -49,7 +49,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   use settings_xsecrot, only:setsequenceend
   implicit none
   integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
-  integer, intent(in) :: iColourBarStyle
+  integer, intent(inout) :: iColourBarStyle
   integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
@@ -259,12 +259,16 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,'  (applies to colour bar if mouse is over colour bar)'
         endif
         print*,' o: re-centre plot on (o)rigin'
+        print*,' backspace: delete annotation - over axes       : removes axes'
+        print*,'                              - once no axes    : removes legends'
+        print*,'                              - once no legend  : removes titles'
+        print*,'                              - over colour bar : removes colour bar'
         print*,' r: (r)eplot current plot'
         print*,' R: (R)eset/remove all range restrictions'
         print*,' p: label closest (p)article'
         print*,' t: t)rack closest particle/turn tracking off (coord plots only)'
         print*,' c: plot (c)ircle of interaction for closest particle'
-        print*,' C: centre plot on (C)ursor position (keeping aspect ratio)'        
+        print*,' C: centre plot on (C)ursor position (keeping aspect ratio)'
         print*,' g: plot a line and find its g)radient'
         print*,' G: move le(G)end to current position'
         print*,' T: move (T)itle to current position'
@@ -285,10 +289,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            print*,' < >: rotate about z axis by +(-) 30 degrees (coord plots only)'
            if (ndim.ge.3) then
               print*,'[ ]: rotate about x axis by +/- 15 degrees (coord plots only)'
-              print*,'{ }: rotate about x axis by +/- 30 degrees (coord plots only) '
-              print*,'/ \: rotate about y axis by +/- 15 degrees (coord plots only) '
-              print*,'? |: rotate about y axis by +/- 30 degrees (coord plots only) '
-              print*,' x: take cross section (coord plots only) '
+              print*,'{ }: rotate about x axis by +/- 30 degrees (coord plots only)'
+              print*,'/ \: rotate about y axis by +/- 15 degrees (coord plots only)'
+              print*,'? |: rotate about y axis by +/- 30 degrees (coord plots only)'
+              print*,' x: take cross section (coord plots only)'
               if (iplotz.gt.0) then
                  print*,' u: move cross section/perspective position up (towards observer)'
                  print*,' U: move cross section/perspective position up more'
@@ -302,7 +306,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then left (right) click'
         print*,' h: (h)elp'
         print*,' s: (s)ave current settings for all steps'
-        print*,' q,Q: (q)uit plotting'
+        print*,' q,Q,esc: (q)uit plotting'
         print*
         print*,' z,Z(oom) : timstepping, zoom and limits-changing options '
         print*,'          are multiplied by a factor of 10'        
@@ -957,10 +961,22 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         iadvance = 0
         interactivereplot = .true.
         iexit = .true.
+     case(achar(8)) ! delete plot annotation / colour bar (backspace)
+        if (iamincolourbar .and. irender.gt.0) then
+           iColourBarStyle = 0
+           iadvance = 0
+           interactivereplot = .true.
+           iexit = .true.
+        elseif (xpt.lt.xmin .or. xpt.gt.xmax .or. ypt.lt.ymin .or. ypt.gt.ymax) then
+           call deleteaxes()
+           iadvance = 0
+           interactivereplot = .true.
+           iexit = .true.
+        endif
      !
      !--timestepping
      !
-     case('q','Q')
+     case('q','Q',achar(27))
         iadvance = -666
         print*,'quitting...'
         iexit = .true.
@@ -999,7 +1015,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      !--unknown
      !
      case default
-        print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '"'
+        print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '" ',iachar(char)
      end select
 
      if (rotation) then
@@ -1094,7 +1110,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
         print*,' G : move legend to current position'
         print*,' T : move title to current position'
         print*,' (h)elp                       : h'
-        print*,' (q)uit plotting              : q, Q'             
+        print*,' (q)uit plotting              : q, Q, esc'             
         print*,'-------------------------------------------------------'
 
      case('A') ! left click
@@ -1166,7 +1182,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
      !
      !--timestepping
      !
-     case('q','Q')
+     case('q','Q',achar(27))
         iadvance = -666
         print*,'quitting...'
         iexit = .true.
@@ -1204,7 +1220,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
      !--unknown
      !
      case default
-        print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '"'
+        print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '" ',iachar(char)
      end select
      !
      !--do not let timestep go outside of bounds
@@ -1243,8 +1259,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                              iColourBarStyle,interactivereplot)
  implicit none
  integer, intent(inout) :: iadvance
- integer, intent(inout) :: istep,iframe,lastpanel
- integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim,ifirstframeonpage,nframes,iColourBarStyle
+ integer, intent(inout) :: istep,iframe,lastpanel,iColourBarStyle
+ integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim,ifirstframeonpage,nframes
  integer, intent(inout) :: icolourscheme
  integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr,ivecarr
  real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
@@ -1325,6 +1341,10 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         print*,'    (applies to colour bar if mouse is over colour bar)'
         print*,' o: re-centre plot on (o)rigin'
         print*,' C: centre plot on (C)ursor position (keeping aspect ratio)'        
+        print*,' backspace: delete annotation - over axes       : removes axes'
+        print*,'                              - once no axes    : removes legends'
+        print*,'                              - once no legend  : removes titles'
+        print*,'                              - over colour bar : removes colour bar'
         print*,' r: (r)eplot current plot'
         print*,' R: (R)eset/remove all range restrictions'
         print*,' g: plot a line and find its g)radient'
@@ -1721,10 +1741,24 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         istep = istepnew
         interactivereplot = .true.
         iexit = .true.
+     case(achar(8)) ! delete plot annotation / colour bar (backspace)
+        if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
+           iColourBarStyle = 0
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        elseif (xpti.lt.xmin(iplotxarr(ipanel)) .or. xpti.gt.xmax(iplotxarr(ipanel)) &
+           .or. ypti.lt.xmin(iplotyarr(ipanel)) .or. ypti.gt.xmax(iplotyarr(ipanel))) then
+           call deleteaxes()
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        endif
+
      !
      !--timestepping
      !
-     case('q','Q')
+     case('q','Q',achar(27))
         iadvance = -666
         print*,'quitting...'
         iexit = .true.
@@ -1766,7 +1800,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !--unknown
      !
      case default
-        print*,' x, y = ',xpti,ypti,'; unknown option "',trim(char), '"'
+        print*,' x, y = ',xpti,ypti,'; unknown option "',trim(char),'" ',iachar(char)
      end select
      !
      !--do not let timestep go outside of bounds
@@ -1924,15 +1958,53 @@ subroutine plot_number(i,xi,yi)
 
  return
 end subroutine plot_number
+
+
+subroutine deleteaxes()
+ use settings_page, only:iaxis,iPlotLegend,iPlotStepLegend, &
+                    iPlotTitles,iPlotScale 
+ use shapes, only:nshapes
+ use settings_vecplot, only:iVecplotLegend
+ implicit none
+
+ if (iaxis.eq.-2) then
+    !
+    !-- would be better to do this properly by
+    !   determining whether or not the cursor is over
+    !   the legend, shape, title or whatever annotation the user
+    !   wishes to be deleted. Instead at the moment we just
+    !   delete the legends once the axes are already gone, and
+    !   then in a somewhat arbitrary order.
+    !
+    iVecplotLegend = .false.
+    if (iPlotLegend) then
+       iPlotLegend = .false.
+    elseif (iPlotTitles) then
+       iPlotTitles = .false.
+    elseif (nshapes.gt.0) then
+       nshapes = nshapes - 1
+    elseif (iPlotScale) then
+       iPlotScale = .false.
+    endif
+ elseif (iaxis.le.2 .and. iaxis.gt.-2) then
+    iaxis = iaxis - 1
+ elseif (iaxis.gt.2) then
+    iaxis = -1
+ elseif (iaxis.lt.-2) then
+    iaxis = -2
+ endif
+
+end subroutine deleteaxes
 !
 !--move the legend to the current position
 !
 subroutine mvlegend(xi,yi,xmin,xmax,ymax)
- use settings_page, only:hposlegend,vposlegend,fjustlegend
+ use settings_page, only:hposlegend,vposlegend,fjustlegend,iPlotLegend
  implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  real :: xch,ych
  
+ iPlotLegend = .true.
  hposlegend = (xi - xmin)/(xmax-xmin)
  !--query character height in world coordinates
  call pgqcs(4,xch,ych)
@@ -1953,11 +2025,12 @@ end subroutine mvlegend
 !--move the vector legend to the current position
 !
 subroutine mvlegendvec(xi,yi,xmin,xmax,ymax)
- use settings_vecplot, only:hposlegendvec,vposlegendvec
+ use settings_vecplot, only:hposlegendvec,vposlegendvec,iVecplotLegend
  implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  real :: xch,ych
  
+ iVecplotLegend = .true.
  hposlegendvec = (xi - xmin)/(xmax-xmin)
  !--query character height in world coordinates
  call pgqcs(4,xch,ych)
@@ -1970,11 +2043,12 @@ end subroutine mvlegendvec
 !--move the title to the current position
 !
 subroutine mvtitle(xi,yi,xmin,xmax,ymax)
- use settings_page, only:hpostitle,vpostitle,fjusttitle
+ use settings_page, only:hpostitle,vpostitle,fjusttitle,iPlotTitles
  implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  real :: xch,ych
  
+ iPlotTitles = .true.
  hpostitle = (xi - xmin)/(xmax-xmin)
  !--query character height in world coordinates
  call pgqcs(4,xch,ych)
