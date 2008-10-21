@@ -77,7 +77,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(maxparttypes) :: npartoftypei
   real, dimension(maxparttypes) :: massoftypei
   logical :: iexist, doubleprec,imadepmasscolumn
-    
+  logical, parameter :: debug=.true.  
   character(len=len(rootname)+10) :: dumpfile
   character(len=100) :: fileident
   
@@ -510,7 +510,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          if (iarr.eq.4) then
             istartmhd = imaxcolumnread + 1
          elseif (iarr.eq.3) then
-            istartrt = imaxcolumnread + 1         
+            istartrt = max(nhydroarrays+nmhdarrays+1,imaxcolumnread + 1)         
          endif
       endif 
 !--read iphase from array block 1
@@ -606,6 +606,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                icolumn = imaxcolumnread + 1
             endif
             imaxcolumnread = max(imaxcolumnread,icolumn)
+            if (debug) print*,' reading real ',icolumn
             if (required(icolumn)) then
                if (doubleprec) then
                   read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
@@ -616,7 +617,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
             else
                read(iunit,end=33,iostat=ierr)
             endif
-            !print*,'real',icolumn
          enddo
 !        set masses for equal mass particles (not dumped in small dump)
          if (((smalldump.and.nreal(1).lt.ipmass).or.phantomdump).and. iarr.eq.1) then
@@ -630,7 +630,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   print *,' dust particle mass = ',massoftypei(2),' ratio dust/gas = ',massoftypei(2)/massoftypei(1)
                   dat(npartoftypei(1)+1:npartoftypei(1)+npartoftypei(2),icolumn,j) = massoftypei(2)
                endif
-               !print*,icolumn
+               if (debug) print*,'mass ',icolumn
             elseif (phantomdump) then
                print*,' ERROR: particle mass zero in Phantom dump file!'
             endif
@@ -653,17 +653,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   icolumn = irho ! density
                elseif (iarr.eq.1 .and. smalldump .and. i.eq.2) then
                   icolumn = ih ! h which is real4 in small dumps
+               elseif (iarr.eq.4 .and. i.le.3) then
+                  icolumn = nhydroarrays + i
                else
                   icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
                endif
             endif
             imaxcolumnread = max(imaxcolumnread,icolumn)
+            if (debug) print*,'reading real4 ',icolumn
             if (required(icolumn)) then
                read(iunit,end=33,iostat=ierr) dat(i1:i2,icolumn,j)
             else
                read(iunit,end=33,iostat=ierr)
             endif
-            !print*,'real4',icolumn
             !--construct density for phantom dumps based on h, hfact and particle mass
             if (phantomdump .and. icolumn.eq.ih) then
                icolumn = irho ! density
@@ -682,7 +684,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   end where
                endif
                    
-!               print*,icolumn
+               if (debug) print*,'making density ',icolumn
             endif
          enddo
          icolumn = imaxcolumnread
@@ -1109,15 +1111,23 @@ subroutine set_labels
            units(istartrt+1) = udist**2/umass
 
            icv = istartrt+2
-           label(icv) = 'u/T'
-           units(icv) = uergg
 
            label(istartrt+3) = 'lambda'
            units(istartrt+3) = 1.0
 
            label(istartrt+4) = 'eddington factor'
            units(istartrt+4) = 1.0
+        else
+           iutherm = istartrt + 1
+           label(iutherm) = 'u'
+
+           icv = istartrt+2
         endif
+
+       if (icv.gt.0) then
+          label(icv) = 'u/T'
+          units(icv) = uergg
+       endif
      endif
   endif
 
