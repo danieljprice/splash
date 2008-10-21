@@ -443,9 +443,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
          do i=1,ncolumns
             if (required(i)) ilastrequired = i
          enddo
-         call alloc(npart_max,j,ilastrequired)
+         call alloc(max(npart_max,maxpart),j,ilastrequired)
       else
-         call alloc(npart_max,j,ncolumns,mixedtypes=.true.)
+         call alloc(max(npart_max,maxpart),j,ncolumns,mixedtypes=.true.)
       endif
    endif
    
