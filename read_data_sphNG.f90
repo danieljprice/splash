@@ -77,7 +77,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(maxparttypes) :: npartoftypei
   real, dimension(maxparttypes) :: massoftypei
   logical :: iexist, doubleprec,imadepmasscolumn
-  logical, parameter :: debug=.true.  
+!  logical, parameter :: debug=.true.
+  logical, parameter :: debug=.false.
+
   character(len=len(rootname)+10) :: dumpfile
   character(len=100) :: fileident
   
