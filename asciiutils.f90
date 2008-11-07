@@ -61,7 +61,7 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
     read(iunit,"(a)",err=66,end=99) charline(i)
  enddo
  !--end of array limits
- print "(a)",' WARNING: array limits reached reading '//trim(filename)//' max = ',maxlines
+ print "(a,i6)",' WARNING: array limits reached reading '//trim(filename)//', max = ',maxlines
  nlinesread = maxlines
  close(unit=iunit)
  return
@@ -120,7 +120,7 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
  read(iunit,*,err=66,end=99) (realarr(i),i=1,maxlines)
 
  !--end of array limits
- print "(a)",' WARNING: array limits reached reading '//trim(filename)//' max = ',maxlines
+ print "(a,i6)",' WARNING: array limits reached reading '//trim(filename)//', max = ',maxlines
  nlinesread = maxlines
  close(unit=iunit)
  return
