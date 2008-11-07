@@ -44,7 +44,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      if (nfiles.le.0 .or. nfiles.gt.maxfile) nfiles = 1
      call prompt('Enter number of files to read ',nfiles,1,maxfile)
      do i=1,nfiles
-        call prompt('Enter filename to read',rootname(i))
+        call prompt('Enter filename to read',rootname(i),noblank=.true.)
      enddo
   endif
   !
