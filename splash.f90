@@ -23,6 +23,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.11.2 :
+!             backspace over annotation (legends,titles,axes,colour bar) in interactive mode
+!             removes it; "splash calc" command line utility calculates time sequences of 
+!             various things from a sequence of dump files; bug fix causing seg fault.
 !     1.11.1 : (13/10/08)
 !             automatic number of pixels and exact pixel boundaries implemented;
 !             mass does not have to be read from dump file; frame changes are per-page
@@ -218,12 +222,13 @@ program splash
   use write_pixmap, only:isoutputformat,iwritepixmap,pixmapformat
   use convert, only:convert_all
   use write_sphdata, only:issphformat
+  use analysis, only:isanalysis
   implicit none
   integer :: i,ierr,nargs
-  logical :: ihavereadfilenames,evsplash,doconvert
+  logical :: ihavereadfilenames,evsplash,doconvert,ltemp
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.11.1 [13th Oct ''08]'
+  character(len=*), parameter :: version = 'v1.11.2beta [7th Nov ''08]'
 
   !
   ! initialise some basic code variables
@@ -297,8 +302,13 @@ program splash
            print "(a)",' -lm, -lowmem    : use low memory mode [applies only to sphNG data read at present]'
            print "(a)",' -o pixformat    : dump pixel map in specified format (use just -o for list of formats)'
            print "(a)"
-           print "(a)",' to format       : convert SPH data file(s) to different format'
-           print "(a)",'                   example usage "ssplash to ascii" for sphNG to ascii conversion'
+           !print "(a)",' to format       : convert SPH data file(s) to different format'
+           !print "(a)",'                   example usage "ssplash to ascii" for sphNG to ascii conversion'
+           ltemp = issphformat('none')
+           !print "(a)",' calc analysistype : calculate time evolution of quantities'
+           !print "(a)",'                     example usage "ssplash calc max" for max of each column vs time'
+           print "(a)"
+           ltemp = isanalysis('none')
            stop
         end select
      elseif (trim(string).eq.'to') then
@@ -312,7 +322,19 @@ program splash
               convertformat = trim(string)
            else
               stop
-           endif     
+           endif
+     elseif (trim(string).eq.'calc') then
+     !
+     !--for performing analysis on a sequence of dump files
+     !
+           i = i + 1
+           call get_argument(i,string)
+           if (isanalysis(string)) then
+              doconvert = .true.
+              convertformat = trim(string)
+           else
+              stop
+           endif
      elseif (len_trim(string).gt.0) then 
         nfiles = nfiles + 1
         if (nfiles.le.maxfile) then

@@ -10,24 +10,52 @@ module convert
 contains
 
 subroutine convert_all(outformat,igotfilenames)
- use particle_data, only:time,dat,npartoftype,iamtype
- use settings_data, only:ncolumns,ncalc,required,ntypes
+ use particle_data, only:time,dat,npartoftype,masstype,iamtype
+ use settings_data, only:ncolumns,ncalc,required,ntypes,ndimV
  use filenames, only:rootname,nstepsinfile,nfiles
  use write_sphdata, only:write_sphdump
+ use analysis, only:isanalysis,open_analysis,write_analysis,close_analysis
  use getdata, only:get_data
  use prompting, only:ucase
  implicit none
  character(len=*), intent(in) :: outformat
- logical, intent(in) :: igotfilenames
+ logical, intent(inout) :: igotfilenames
+ logical :: doanalysis
  integer :: ifile,idump,ntotal
  character(len=len(rootname)+4) :: filename
+ character(len=10) :: string
  
  required = .true.
- print "(/,5('-'),a,/)",'> CONVERTING DUMPFILES TO '//trim(ucase(outformat))//' FORMAT '
+ doanalysis = isanalysis(outformat,noprint=.true.)
+ 
+ if (.not.doanalysis) then
+ !
+ !--for format conversion each dump file is independent
+ !
+    print "(/,5('-'),a,/)",'> CONVERTING DUMPFILES TO '//trim(ucase(outformat))//' FORMAT '
+ endif
+ 
+ !
+ !--if nfiles = 0 (ie. no files read from command line), then call get_data here
+ !  to also get nfiles correctly prior to the loop
+ !
+ if (nfiles.eq.0) then
+    call get_data(1,igotfilenames)
+    igotfilenames = .true.
+ endif
+ 
  do ifile=1,nfiles
     !--read data from dump file + calculate extra columns
     if (ifile.eq.1) then
        call get_data(ifile,igotfilenames)
+ !
+ !--for analysis we need to initialise the output file
+ !  and close it at the end - do this here so we know
+ !  the first filename and ndimV, labels etc.
+ !
+       if (doanalysis) then
+          call open_analysis(rootname(1),outformat,required,ncolumns+ncalc,ndimV)
+       endif
     else
        call get_data(ifile,.true.)
     endif
@@ -37,13 +65,26 @@ subroutine convert_all(outformat,igotfilenames)
           write(filename,"(a,'_',i3.3)") rootname(ifile),idump
        endif
        ntotal = sum(npartoftype(1:ntypes,idump))
-       call write_sphdump(time(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes, &
+       if (doanalysis) then
+          call write_analysis(time(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes, &
+                          npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
+                          ncolumns+ncalc,ndimV,outformat)
+       else
+          call write_sphdump(time(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes, &
                           npartoftype(1:ntypes,idump),iamtype(:,idump), &
                           ncolumns+ncalc,rootname(ifile),outformat)
+       endif
     enddo
  enddo
- print "(/,5('-'),a,/)",'> FINISHED CONVERTING DUMP FILES '
 
+ !--for analysis we need to start and end differently
+ if (doanalysis) then
+    call close_analysis
+    write(string,"(i10)") nfiles
+    print "(/,5('-'),a,i5,a,/)",'> FINISHED CALCULATING '//trim(ucase(outformat))//' (USED '//trim(adjustl(string))//' DUMP FILES)'
+ else
+    print "(/,5('-'),a,/)",'> FINISHED CONVERTING DUMP FILES '
+ endif
  return
 end subroutine convert_all
 
