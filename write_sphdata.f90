@@ -26,9 +26,9 @@ logical function issphformat(string)
  end select
  
  if (.not.issphformat) then
-    print "(a)",' possible formats for convert mode ("splash to X"): '
-    print "(a,/)",' splash to ascii  : convert SPH data to ascii file'
-    print "(a)",  '        to binary : convert SPH data to simple unformatted binary: '
+    print "(a)",' convert mode ("splash to X dumpfiles"): '
+    print "(a,/)",' splash to ascii  : convert SPH data to ascii file dumpfile.ascii'
+    print "(a)",  '        to binary : convert SPH data to simple unformatted binary dumpfile.binary '
     print "(a)",  '                     write(1) time,npart,ncolumns'
     print "(a)",  '                     do i=1,npart'
     print "(a)",  '                        write(1) dat(1:ncolumns),itype'
@@ -52,17 +52,19 @@ subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filena
  integer, parameter :: iunit = 83
  integer :: ierr,i
  character(len=40) :: fmtstring,fmtstring2,fmtstringlab
- 
- write(fmtstring,"(i10,a)") ncolumns,'(1pe15.7,1x)'
- fmtstring2 = '('//trim(adjustl(fmtstring))//',i1)'
- fmtstring = '('//trim(adjustl(fmtstring))//')'
-
- write(fmtstringlab,"(i10,a)") ncolumns,'(a15,1x),a'
- fmtstringlab = '(''#'',1x,'//trim(adjustl(fmtstringlab))//')'
 
  select case(trim(outformat))
  case ('ascii')
     print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.ascii WITH ',ncolumns,' COLUMNS'
+
+    !--format the header lines to go in the ascii file 
+    write(fmtstring,"(i10,a)") ncolumns,'(1pe15.7,1x)'
+    fmtstring2 = '('//trim(adjustl(fmtstring))//',i1)'
+    fmtstring = '('//trim(adjustl(fmtstring))//')'
+
+    write(fmtstringlab,"(i10,a)") ncolumns,'(a15,1x),a'
+    fmtstringlab = '(''#'',1x,'//trim(adjustl(fmtstringlab))//')'
+
     open(unit=iunit,file=trim(filename)//'.ascii',status='replace',form='formatted',iostat=ierr)
        if (ierr /= 0) then
           print "(a)",' ERROR OPENING FILE FOR WRITING'
@@ -103,6 +105,10 @@ subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filena
     return
 
  case ('binary')
+!
+!--This is the most basic binary (ie. unformatted) file format I could think of,
+!  as an alternative to ascii for large files.
+!
     print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.binary WITH ',ncolumns,' COLUMNS'
     open(unit=iunit,file=trim(filename)//'.binary',status='replace',form='unformatted',iostat=ierr)
        if (ierr /= 0) then
