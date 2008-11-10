@@ -13,7 +13,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   use particle_data, only:iamtype,npartoftype,masstype,time,gamma,dat
   use settings_data, only:istartatstep,iendatstep,nfreq,DataIsBuffered, &
                           iUsesteplist,isteplist,ncolumns,ipartialread
-  use settings_page, only:interactive,nstepsperpage,iColourEachStep,iChangeStyles
+  use settings_page, only:interactive,nstepsperpage,iColourEachStep,iChangeStyles,nomenu
   use timestep_plotting, only:initialise_plotting,plotstep
   implicit none
   integer, intent(in) :: ipicky,ipickx,irender,ivecplot
@@ -151,13 +151,18 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   enddo over_timesteps
 
   if (.not.interactive) then
-     print*,'press return to finish'
-     read*
-     !--if somehow the data has become corrupted (e.g. last file full of rubbish)
-     !  read in the first dump again
-     if (ncolumns.le.0) then
-        print*,'data is corrupted: re-reading first data file'
-        call get_nextstep(1,ilocindat)
+     if (nomenu) then
+        !--gracefully exit
+        print "(/,a,/)",'Finished plotting: Many thankyous for your kind custom.'
+     else ! prepare to return to main menu
+        print*,'press return to finish'
+        read*
+        !--if somehow the data has become corrupted (e.g. last file full of rubbish)
+        !  read in the first dump again
+        if (ncolumns.le.0) then
+           print*,'data is corrupted: re-reading first data file'
+           call get_nextstep(1,ilocindat)
+        endif
      endif
   endif
 

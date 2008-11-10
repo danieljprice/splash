@@ -211,10 +211,10 @@ program splash
   use getdata, only:get_data
   use defaults, only:defaults_set_initial,defaults_set,defaults_read
   use limits, only:read_limits
-  use mainmenu, only:menu
+  use mainmenu, only:menu,allowrendering,set_coordlabels,set_extracols
   use mem_allocation, only:deallocate_all
   use projections3D, only:setup_integratedkernel
-  use settings_data, only:buffer_data,lowmemorymode
+  use settings_data, only:buffer_data,lowmemorymode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots
   use settings_xsecrot, only:read_animfile
   use system_commands, only:get_number_arguments,get_argument
   use system_utils, only:lenvironment
@@ -223,9 +223,11 @@ program splash
   use convert, only:convert_all
   use write_sphdata, only:issphformat
   use analysis, only:isanalysis
+  use timestepping, only:timestep_loop
+  use settings_page, only:interactive,device,nomenu
   implicit none
-  integer :: i,ierr,nargs
-  logical :: ihavereadfilenames,evsplash,doconvert,ltemp
+  integer :: i,ierr,nargs,ipickx,ipicky,irender,ivecplot
+  logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
   character(len=*), parameter :: version = 'v1.11.2beta [7th Nov ''08]'
@@ -254,12 +256,46 @@ program splash
   nfiles = 0
   iwritepixmap = .false.
   doconvert = .false.
+  nomenu = .false.
+  ipickx = 0
+  ipicky = 0
+  irender = 0
+  ivecplot = 0
+  
   do while (i < nargs)
      i = i + 1
      call get_argument(i,string)
 
      if (string(1:1).eq.'-') then
         select case(trim(string(2:)))
+        case('x')
+           i = i + 1
+           call get_argument(i,string)
+           read(string,*,iostat=ierr) ipickx
+           if (ierr /= 0) call print_usage(quit=.true.)
+           nomenu = .true.
+        case('y')
+           i = i + 1
+           call get_argument(i,string)
+           read(string,*,iostat=ierr) ipicky
+           if (ierr /= 0) call print_usage(quit=.true.)
+           nomenu = .true.
+        case('render','r')
+           i = i + 1
+           call get_argument(i,string)
+           read(string,*,iostat=ierr) irender
+           if (ierr /= 0) call print_usage(quit=.true.)
+           nomenu = .true.
+        case('vec','vecplot')
+           i = i + 1
+           call get_argument(i,string)
+           read(string,*,iostat=ierr) ivecplot
+           if (ierr /= 0) call print_usage(quit=.true.)
+           nomenu = .true.
+        case('dev','device')
+           i = i + 1
+           call get_argument(i,device)
+           nomenu = .true.
         case('l')
            i = i + 1
            call get_argument(i,limitsfile)
@@ -287,28 +323,8 @@ program splash
         case('nolowmem','nlm')
            lowmemorymode = .false.
         case default
-           print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
-           print "(a)",'(c) 2005-2008 Daniel Price '
-           print "(a,/)",trim(version)
+           call print_usage
            if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
-           print "(a,/)",'Usage: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] '// &
-                         '[-lowmem] [-o format] file1 file2 ...'
-
-           print "(a,/)",'Command line options:'
-           print "(a)",' -p fileprefix   : change prefix to ALL settings files read/written by splash '
-           print "(a)",' -d defaultsfile : change name of defaults file read/written by splash'
-           print "(a)",' -l limitsfile   : change name of limits file read/written by splash'
-           print "(a)",' -e, -ev         : use default options best suited to ascii evolution files (ie. energy vs time)'
-           print "(a)",' -lm, -lowmem    : use low memory mode [applies only to sphNG data read at present]'
-           print "(a)",' -o pixformat    : dump pixel map in specified format (use just -o for list of formats)'
-           print "(a)"
-           !print "(a)",' to format       : convert SPH data file(s) to different format'
-           !print "(a)",'                   example usage "ssplash to ascii" for sphNG to ascii conversion'
-           ltemp = issphformat('none')
-           !print "(a)",' calc analysistype : calculate time evolution of quantities'
-           !print "(a)",'                     example usage "ssplash calc max" for max of each column vs time'
-           print "(a)"
-           ltemp = isanalysis('none')
            stop
         end select
      elseif (trim(string).eq.'to') then
@@ -413,11 +429,47 @@ program splash
      !
      call read_animfile(animfile)
 
+     if (nomenu) then
+     !
+     !  initialise the things we would need if we called menu directly
+     !
+        call set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
+        call set_coordlabels(numplot)
+        interactive = .false.
+     !
+     ! check command line plot invocation
+     !
+        
+        if (ipicky.gt.0 .and. ipicky.le.numplot+1) then
+           if (ipicky.le.numplot .and. (ipickx.eq.0 .or. ipickx.gt.numplot)) then
+              print "(a)",' ERROR: x plot choice out of bounds'
+              stop
+           endif
+           if (irender.gt.0 .and. .not.allowrendering(ipicky,ipickx)) then
+              print "(a)",' ERROR: cannot render with x, y choice'
+              stop
+           endif
+        else
+           if (irender.gt.0 .and. ndim.ge.2) then
+              ipicky = 2
+              ipickx = 1
+              if (.not.allowrendering(ipicky,ipickx)) then
+                 print "(a)",' ERROR: cannot render'
+                 stop
+              endif
+           else
+              print "(a)",' ERROR: y plot choice out of bounds'
+              stop
+           endif
+        endif
+
+        call timestep_loop(ipicky,ipickx,irender,ivecplot)
+     else
      !
      ! enter main menu
      !
-     call menu
-  
+        call menu
+     endif
   endif
   
   !
@@ -459,5 +511,34 @@ subroutine print_header
    ' why not send me a copy for the gallery? ',/)
       
 end subroutine print_header
+
+subroutine print_usage(quit)
+ implicit none
+ logical, intent(in), optional :: quit
+ logical :: ltemp
+
+ print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
+ print "(a)",'(c) 2005-2008 Daniel Price '
+ print "(a,/)",trim(version)
+ print "(a,/)",'Usage: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] '// &
+               '[-lowmem] [-o format] file1 file2 ...'
+
+ print "(a,/)",'Command line options:'
+ print "(a)",' -p fileprefix   : change prefix to ALL settings files read/written by splash '
+ print "(a)",' -d defaultsfile : change name of defaults file read/written by splash'
+ print "(a)",' -l limitsfile   : change name of limits file read/written by splash'
+ print "(a)",' -e, -ev         : use default options best suited to ascii evolution files (ie. energy vs time)'
+ print "(a)",' -lm, -lowmem    : use low memory mode [applies only to sphNG data read at present]'
+ print "(a)",' -o pixformat    : dump pixel map in specified format (use just -o for list of formats)'
+ print "(a)"
+ ltemp = issphformat('none')
+ print "(a)"
+ ltemp = isanalysis('none')
+
+ if (present(quit)) then
+    if (quit) stop
+ endif
+
+end subroutine print_usage
 
 end program splash

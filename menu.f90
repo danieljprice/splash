@@ -1,9 +1,9 @@
 !--------------------
-!    MAIN MENU
+!  SPLASH MAIN MENU
 !--------------------
 module mainmenu
  implicit none
- public :: menu
+ public :: menu,allowrendering,set_coordlabels,set_extracols
  
  private
 
@@ -11,16 +11,15 @@ contains
 
 subroutine menu
   use filenames, only:defaultsfile,limitsfile,animfile,fileprefix,set_filenames
-  use labels, only:label,labelvec,iamvec,iacplane,ipowerspec,ih,irho,ipmass, &
-              isurfdens,itoomre,iutherm,ipdf
+  use labels, only:label,labelvec,iamvec,isurfdens,itoomre,ipdf
   use limits, only:write_limits
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
                      icoords,icoordsnew,buffer_data,ncolumns,iRescale
   use settings_limits, only:submenu_limits
-  use settings_part, only:submenu_particleplots,iexact
+  use settings_part, only:submenu_particleplots
   use settings_page, only:submenu_page,submenu_legend,interactive
-  use settings_render, only:submenu_render,icolour_particles
+  use settings_render, only:submenu_render
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
   use settings_xsecrot, only:submenu_xsecrotate,write_animfile
   use settings_units, only:unitslabel
@@ -61,74 +60,13 @@ subroutine menu
   !  this means that even if ncolumns changes during data reads while plotting
   !  we don't start plotting new quantities
   !
-  nextra = 0
-  ipowerspec = 0
-  iacplane = 0
-  isurfdens = 0
-  itoomre = 0
-  if (ndim.eq.3 .and. icoordsnew.eq.2 .or. icoordsnew.eq.3) then
-     nextra = nextra + 1
-     isurfdens = ncolumns + ncalc + nextra
-     label(isurfdens) = 'Surface density'
-     if (iutherm.gt.0 .and. iutherm.le.ncolumns) then
-        nextra = nextra + 1
-        itoomre = ncolumns + ncalc + nextra
-        label(itoomre) = 'Toomre Q parameter'
-     endif
-  endif
-  if (ndim.eq.3) then  !--Probability Density Function
-     nextra = nextra + 1
-     ipdf = ncolumns + ncalc + nextra
-     label(ipdf) = 'PDF'
-  endif
+  call set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
+!
+!--set the coordinate and vector labels 
+!  if working in a different coordinate system
+!
+  call set_coordlabels(numplot)
 
-  if (ndim.le.1) then !! .or. ndim.eq.3) then ! if 1D or no coord data (then prompts for which x)
-     nextra = nextra + 1      ! one extra plot = power spectrum
-     ipowerspec = ncolumns + ncalc + nextra
-     label(ipowerspec) = '1D power spectrum'
-  else
-     ipowerspec = 0
-  endif
-  if (iexact.eq.4) then       ! toy star plot a-c plane
-     nextra = nextra + 1
-     iacplane = ncolumns + ncalc + nextra
-     label(iacplane) = 'a-c plane'
-  else
-     iacplane = 0
-  endif
-  !nextra = nextra + 1
-  !label(ncolumns+ncalc+nextra) = 'gwaves'
-
-  if (ivegotdata) then
-     numplot = ncolumns + ncalc + nextra
-     if (numplot.gt.maxplot) then
-        print*,numplot,ncolumns,ncalc,nextra
-        stop 'ERROR: numplot > multiplot array limits: reset this in module params'
-     endif
-     ndataplots = ncolumns + ncalc
-  else
-     numplot = 0
-     ndataplots = 0
-     ncalc = 0
-  endif
-     
-!--set coordinate and vector labels (depends on coordinate system)
-  if (icoords.ne.0 .or. icoordsnew.ne.0) then
-     do i=1,ndim
-        label(i) = labelcoord(i,icoordsnew)
-        if (iRescale .and. icoords.eq.icoordsnew) then
-           label(i) = trim(label(i))//trim(unitslabel(i))
-        endif
-     enddo
-     do i=1,numplot
-        if (iamvec(i).ne.0) then
-           label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
-           if (iRescale) then
-              label(i) = trim(label(i))//trim(unitslabel(i))
-           endif
-        endif
-     enddo
-  endif
 !--set contents of the vector plotting prompt
   vecprompt(1:6) = '0=none'
   indexi = 7
@@ -233,13 +171,9 @@ subroutine menu
            !--go back to y prompt if out of range
            if (ipickx.gt.numplot .or. ipickx.le.0) cycle menuloop
            !
-           !--work out whether rendering is allowed based on presence of rho, h & m in data read
-           !  also must be in base coordinate system and no transformations applied
+           !--work out whether rendering is allowed
            !
-           iAllowRendering = (ih.gt.0 .and. ih.le.ndataplots) &
-                        .and.(irho.gt.0 .and. irho.le.ndataplots) &
-                        .and.(icoords.eq.icoordsnew .or. icolour_particles) &
-                        .and.((itrans(ipickx).eq.0 .and. itrans(ipicky).eq.0).or.icolour_particles)
+           iAllowRendering = allowrendering(ipickx,ipicky)
            !
            !--prompt for render and vector plots 
            ! -> only allow if in "natural" coord system, otherwise h's would be wrong)
@@ -449,14 +383,9 @@ subroutine menu
          endif
       endif
       !
-      !--work out whether rendering is allowed based on presence of rho, h & m in data read
-      !  also must be in base coordinate system and no transformations applied
+      !--work out whether rendering is allowed
       !
-      iAllowRendering = (ih.gt.0 .and. ih.le.ndataplots) &
-                   .and.(irho.gt.0 .and. irho.le.ndataplots) &
-                   .and.(ipmass.gt.0 .and. ipmass.le.ndataplots)  &
-                   .and.(icoords.eq.icoordsnew) &
-                   .and.(itrans(multiplotx(i)).eq.0 .and. itrans(multiploty(i)).eq.0)
+      iAllowRendering = allowrendering(multiplotx(i),multiploty(i))
       
       icoordplot = (multiplotx(i).le.ndim .and. multiploty(i).le.ndim)
       if (icoordplot) anycoordplot = icoordplot
@@ -530,5 +459,139 @@ subroutine menu
    return
    end subroutine options_multiplot
 end subroutine menu
+
+!----------------------------------------------
+! utility function which determines whether
+! or not rendering is allowed or not
+!----------------------------------------------
+logical function allowrendering(iplotx,iploty)
+ use labels, only:ih,irho,ipmass
+ use multiplot, only:itrans
+ use settings_data, only:icoords,icoordsnew,ndataplots
+ use settings_render, only:icolour_particles
+ implicit none
+ integer, intent(in) :: iplotx,iploty
+!
+!--work out whether rendering is allowed based on presence of rho, h & m in data read
+!  also must be in base coordinate system and no transformations applied
+!
+ if ((ih.gt.0 .and. ih.le.ndataplots) &
+    .and.(irho.gt.0 .and. irho.le.ndataplots) &
+    .and.(ipmass.gt.0 .and. ipmass.le.ndataplots)  &
+    .and.(icoords.eq.icoordsnew .or. icolour_particles) &
+    .and.((itrans(iplotx).eq.0 .and. itrans(iploty).eq.0).or.icolour_particles)) then
+ 
+    allowrendering = .true.
+ else
+    allowrendering = .false.
+ endif
+
+end function allowrendering
+
+!----------------------------------------------
+! utility function which sets up the "extra"
+! plot columns and returns the total number
+! of allowed columns for plotting
+!----------------------------------------------
+subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
+ use params, only:maxplot
+ use labels, only:ipowerspec,iacplane,isurfdens,itoomre,iutherm,ipdf,label
+ use settings_data, only:ndim,icoordsnew,ivegotdata
+ use settings_part, only:iexact
+ implicit none
+ integer, intent(in) :: ncolumns
+ integer, intent(inout) :: ncalc
+ integer, intent(out) :: nextra,numplot,ndataplots
+
+ nextra = 0
+ ipowerspec = 0
+ iacplane = 0
+ isurfdens = 0
+ itoomre = 0
+ if (ndim.eq.3 .and. icoordsnew.eq.2 .or. icoordsnew.eq.3) then
+    nextra = nextra + 1
+    isurfdens = ncolumns + ncalc + nextra
+    label(isurfdens) = 'Surface density'
+    if (iutherm.gt.0 .and. iutherm.le.ncolumns) then
+       nextra = nextra + 1
+       itoomre = ncolumns + ncalc + nextra
+       label(itoomre) = 'Toomre Q parameter'
+    endif
+ endif
+ if (ndim.eq.3) then  !--Probability Density Function
+    nextra = nextra + 1
+    ipdf = ncolumns + ncalc + nextra
+    label(ipdf) = 'PDF'
+ endif
+
+ if (ndim.le.1) then !! .or. ndim.eq.3) then ! if 1D or no coord data (then prompts for which x)
+    nextra = nextra + 1      ! one extra plot = power spectrum
+    ipowerspec = ncolumns + ncalc + nextra
+    label(ipowerspec) = '1D power spectrum'
+ else
+    ipowerspec = 0
+ endif
+ if (iexact.eq.4) then       ! toy star plot a-c plane
+    nextra = nextra + 1
+    iacplane = ncolumns + ncalc + nextra
+    label(iacplane) = 'a-c plane'
+ else
+    iacplane = 0
+ endif
+ !nextra = nextra + 1
+ !label(ncolumns+ncalc+nextra) = 'gwaves'
+
+!
+!--now that we know nextra, set the total number of allowed plots (numplot).
+!
+ if (ivegotdata) then
+    numplot = ncolumns + ncalc + nextra
+    if (numplot.gt.maxplot) then
+       print "(a,i3,a)",' ERROR: total number of columns = ',numplot,' is greater '
+       print "(a,i3,a)",'        than the current allowed maximum (',maxplot,').'
+       print "(a)",'        This is set by the parameter "maxplot" in the params module'
+       print "(a)",'        in the file globaldata.f90 -- edit this and recompile splash'
+       print "(a)",'        (or email me if this happens to increase the default limit)'
+       stop
+    endif
+    ndataplots = ncolumns + ncalc
+ else
+    numplot = 0
+    ndataplots = 0
+    ncalc = 0
+ endif
+
+ return
+end subroutine set_extracols
+
+subroutine set_coordlabels(numplot)
+ use geometry, only:labelcoord
+ use labels, only:label,iamvec,labelvec
+ use settings_data, only:icoords,icoordsnew,ndim,iRescale
+ use settings_units, only:unitslabel
+ implicit none
+ integer, intent(in) :: numplot
+ integer :: i
+
+!--set coordinate and vector labels (depends on coordinate system)
+ if (icoords.ne.0 .or. icoordsnew.ne.0) then
+    do i=1,ndim
+       label(i) = labelcoord(i,icoordsnew)
+       if (iRescale .and. icoords.eq.icoordsnew) then
+          label(i) = trim(label(i))//trim(unitslabel(i))
+       endif
+    enddo
+    do i=1,numplot
+       if (iamvec(i).ne.0) then
+          label(i) = trim(labelvec(iamvec(i)))//'\d'//trim(labelcoord(i-iamvec(i)+1,icoordsnew))
+          if (iRescale) then
+             label(i) = trim(label(i))//'\u'//trim(unitslabel(i))
+          endif
+       endif
+    enddo
+ endif
+ 
+ return
+end subroutine set_coordlabels
 
 end module mainmenu

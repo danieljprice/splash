@@ -7,7 +7,7 @@ module settings_page
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
  integer :: iPlotLegendOnlyOnPanel
- logical :: iColourEachStep,iChangeStyles,tile,interactive
+ logical :: iColourEachStep,iChangeStyles,tile,interactive,nomenu
  logical :: iPlotLegend,iPlotStepLegend,iPlotTitles
  logical :: iPlotScale,iUseBackgroundColourForAxes,usesquarexy
  real :: papersizex,aspectratio
@@ -15,6 +15,7 @@ module settings_page
  real :: charheight
  real :: dxscale,hposscale,vposscale
  character(len=20) :: colour_fore, colour_back, legendtext, scaletext
+ character(len=60) :: device
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &

@@ -49,7 +49,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   use titles, only:read_titles,read_steplegend
   use settings_data, only:ndim,ndimV,numplot,ncolumns,ndataplots,required,icoords,icoordsnew
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
-                     colour_fore,colour_back,iadapt,iadaptcoords,linewidth
+      colour_fore,colour_back,iadapt,iadaptcoords,linewidth,device,nomenu,interactive
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
   use settings_render, only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
@@ -61,7 +61,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   implicit none
   real, parameter :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,ivecplot
-  integer :: i,j,ierr,ifirst,iplotzprev,ilen
+  integer :: i,j,ierr,ifirst,iplotzprev,ilen,pgopen
   logical :: iadapting,iamrendering,icoordplot,iallrendered,ians
   real :: hav,pmassav
   character(len=1) :: char
@@ -392,12 +392,29 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   ! initialise PGPLOT
 
   !!--start PGPLOT (prompt for device)
-  call pgbegin(0,'?',1,1)
-
+  if (len_trim(device).eq.0) then
+     call pgbegin(0,'?',1,1)
+  else
+     ierr = pgopen(trim(device))
+     if (ierr /= 0) then
+        print "(a)",' ERROR: unknown PGPLOT device "'//trim(device)//'"'
+        stop
+     endif
+  endif
+  
   !--query whether or not device is interactive
   call pgqinf('CURSOR',string,ilen)
-  !--smoothing length is required if interactive device and coordinate plot
-  if (icoordplot .and. string(1:ilen).eq.'YES') required(ih) = .true.
+  
+  if (string(1:ilen).eq.'YES') then
+     !--turn menu and interactive mode on if
+     !  interactive device invoked from the command line
+     if (nomenu) then
+        interactive = .true.
+        nomenu=.false.
+     endif
+     !--smoothing length is required if interactive device and coordinate plot
+     if (icoordplot) required(ih) = .true.
+  endif
 
   !!--set paper size if necessary
   if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then

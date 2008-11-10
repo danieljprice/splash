@@ -19,6 +19,7 @@ subroutine defaults_set_initial
   use limits, only:lim,range
   use particle_data, only:maxpart,maxstep,maxcol
   use settings_data, only:UseTypeInRenderings
+  use settings_page, only:device
   implicit none
   integer :: i
 !
@@ -57,6 +58,9 @@ subroutine defaults_set_initial
   !  vector labels
   iamvec(:) = 0
   labelvec = ' '
+  
+  !  device from command line
+  device = ' '
 
   return
 end subroutine defaults_set_initial
