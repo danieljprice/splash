@@ -396,7 +396,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
      call pgbegin(0,'?',1,1)
   else
      ierr = pgopen(trim(device))
-     if (ierr /= 0) then
+     if (ierr.le.0) then  ! zero or negative indicates an error
         print "(a)",' ERROR: unknown PGPLOT device "'//trim(device)//'"'
         stop
      endif

@@ -295,7 +295,6 @@ program splash
         case('dev','device')
            i = i + 1
            call get_argument(i,device)
-           nomenu = .true.
         case('l')
            i = i + 1
            call get_argument(i,limitsfile)
@@ -442,11 +441,11 @@ program splash
         
         if (ipicky.gt.0 .and. ipicky.le.numplot+1) then
            if (ipicky.le.numplot .and. (ipickx.eq.0 .or. ipickx.gt.numplot)) then
-              print "(a)",' ERROR: x plot choice out of bounds'
+              print "(a)",' ERROR: x plot not set or out of bounds (use -x col)'
               stop
            endif
            if (irender.gt.0 .and. .not.allowrendering(ipicky,ipickx)) then
-              print "(a)",' ERROR: cannot render with x, y choice'
+              print "(a)",' ERROR: cannot render with x, y choice (must be coords)'
               stop
            endif
         else
@@ -458,7 +457,7 @@ program splash
                  stop
               endif
            else
-              print "(a)",' ERROR: y plot choice out of bounds'
+              print "(a)",' ERROR: y plot not set or out of bounds (use -y col)'
               stop
            endif
         endif
