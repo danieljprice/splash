@@ -256,6 +256,7 @@ end subroutine get_nextstep
 subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
   use particle_data, only:icolourme
   use settings_part, only:linecolourthisstep,linestylethisstep,imarktype
+  use settings_page, only:modlinestyle,modcolour
   implicit none
   integer, intent(in) :: istep
   logical, intent(in) :: iChangeColours, iChangeStyles
@@ -264,10 +265,12 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
   if (iChangeColours) then
      if (allocated(icolourme)) then
         icolour = istep + 1
+        icolour = (icolour-2)/modcolour + 1
         if (icolour.gt.16) then
            print "(a)",'warning: step colour > 16: re-using colours'
            icolour = mod(icolour-1,16) + 1
         endif
+        !icolour = mod(icolour-1,min(modcolour,16)) + 1
         icolourme = icolour
         linecolourthisstep = icolour
      else
@@ -275,7 +278,9 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
      endif
   endif
   if (iChangeStyles) then
-     linestylethisstep = mod(istep-1,5) + 1
+     !--PGPLOT only has 5 line styles, so if modlinestyle should
+     !  not be greater than this
+     linestylethisstep = mod(istep-1,min(modlinestyle,5)) + 1
      imarkernumber = istep
      select case(imarkernumber)
      case(1)

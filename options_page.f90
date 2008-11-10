@@ -6,7 +6,7 @@ module settings_page
  use settings_limits, only:iadapt,iadaptcoords
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
- integer :: iPlotLegendOnlyOnPanel
+ integer :: iPlotLegendOnlyOnPanel,modlinestyle,modcolour
  logical :: iColourEachStep,iChangeStyles,tile,interactive,nomenu
  logical :: iPlotLegend,iPlotStepLegend,iPlotTitles
  logical :: iPlotScale,iUseBackgroundColourForAxes,usesquarexy
@@ -23,7 +23,7 @@ module settings_page
    vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheight,linewidth,&
    fjustlegend,iPlotLegendOnlyOnPanel, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
-   usesquarexy
+   usesquarexy,modlinestyle,modcolour
 
 contains
 
@@ -69,6 +69,8 @@ subroutine defaults_set_page
   dxscale = 1.0
   scaletext = '1 unit'
   iscalepanel = 0
+  modlinestyle = 5
+  modcolour = 1
   
   usesquarexy = .true. ! spatial dimensions have same scale
   call defaults_set_shapes
@@ -142,8 +144,15 @@ subroutine submenu_page(ichoose)
            print "(a)",'(warning: steps per panel > number of colours, ie. colours will repeat)'
         endif
         call prompt('Use different colours for each step?',iColourEachStep)
+        if (iColourEachStep) then
+           call prompt('How often to change colour? (1=every step, 2=every 2nd step etc.)',modcolour,1)
+        endif
 !!        if (.not.iColourEachStep) icolourthisstep = 1
-        call prompt('Use different markers/line style for each? ',iChangeStyles)
+        call prompt('Use different markers/line style for each step? ',iChangeStyles)
+        if (iChangeStyles) then
+           call prompt('Enter number of line styles to cycle through before repeating (5=PGPLOT max)',modlinestyle,1,5)
+        endif
+        
         if (iColourEachStep .or. iChangeStyles) then
            print "(/,a,/,a)",' (to change the legend text, create a file called', &
                        '  ''legend'' in the working directory, with one label per line)'
