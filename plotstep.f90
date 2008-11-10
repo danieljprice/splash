@@ -2250,7 +2250,11 @@ contains
     endif
 
     !--line/marker style/colour legend for multiple timesteps on same page
-    if (iPlotStepLegend .and. nyplot.eq.1 .and. istepsonpage.gt.0) then
+    if (iPlotStepLegend .and. istepsonpage.gt.0 &
+        .and.((nyplot.eq.1 .and. iPlotLegendOnlyOnPanel.eq.0) &
+        .or.(iPlotLegendOnlyOnPanel.gt.0 .and. ipanel.eq.iPlotLegendOnlyOnPanel) &
+        .or.(iPlotLegendOnlyOnPanel.eq.-1 .and. irow.eq.1) &
+        .or.(iPlotLegendOnlyOnPanel.eq.-2 .and. icolumn.eq.1))) then
 
        !--change to background colour index for overlaid text and axes
        if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call pgsci(0)
