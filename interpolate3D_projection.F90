@@ -392,8 +392,13 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
                  !
                  !--calculate data value at this pixel using the summation interpolant
                  !                  
+                 !$omp atomic
                  datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
-                 if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+   
+                 if (normalise) then
+                    !$omp atomic
+                    datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+                 endif
               endif
            enddo
         enddo
