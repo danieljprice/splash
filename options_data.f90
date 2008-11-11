@@ -71,7 +71,8 @@ subroutine submenu_data(ichoose)
  use calcquantities, only:calc_quantities
  use limits, only:set_limits
  use labels, only:label
- use settings_units, only:units,unitslabel,set_units,write_unitsfile
+ use settings_units, only:units,unitslabel,set_units,write_unitsfile, &
+                     unitzintegration,labelzintegration
  implicit none
  integer, intent(in) :: ichoose
  integer :: ians, i
@@ -165,6 +166,7 @@ subroutine submenu_data(ichoose)
        print "(a,a3,a,a3,1pe10.3)",trim(label(i))//trim(unitslabel(i)),' = ',trim(label(i)),' x ',units(i)
     enddo
     print "(a,a3,a,a3,1pe8.2)",'time'//trim(unitslabel(0)),' = ','time',' x ',units(0)
+    print "(a,a3,a,a3,1pe8.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration
     
     iRescaleprev = iRescale
     iRescale = .not.iRescale
