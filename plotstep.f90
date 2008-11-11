@@ -1099,7 +1099,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                                icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                inormalise,zobservertemp,dzscreentemp,ifastrender)
                           !!--adjust the units of the z-integrated quantity
-                          if (iRescale .and. units(ih).gt.0.) then
+                          if (iRescale .and. units(ih).gt.0. .and. .not.inormalise) then
                              datpix = datpix*(unitzintegration/units(ih))
                           endif
                        endif
@@ -2894,7 +2894,7 @@ contains
             endif
 
             !--adjust the units of the z-integrated quantity
-            !if (iRescale .and. units(ih).gt.0.) then
+            !if (iRescale .and. units(ih).gt.0. .and..not.inormalise) then
             !   datpix = datpix*(unitzintegration/units(ih))
             !endif
 
