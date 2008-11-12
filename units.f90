@@ -188,7 +188,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
 
   open(unit=78,file=unitsfile,status='old',form='formatted',err=997)
   print "(/,a)",' reading units from file '//trim(unitsfile)
-  do i=0,ncolumns
+  do i=0,maxplot  ! read all units possibly present in file
 !
 !    read a line from the file
 !
@@ -250,6 +250,10 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
 998 continue
   print*,'*** error reading units from file '
   ierr = 2
+  if (ierrzunits .and. ndim.eq.3) then
+     unitzintegration = units(3)
+     labelzintegration = unitslabel(3)
+  endif
   close(unit=78)
   return
 999 continue
@@ -259,6 +263,11 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
      print*,'end of file in ',trim(unitsfile),': units read to column ',i
      ierr = -1
   endif
+  if (ierrzunits .and. ndim.eq.3) then
+     unitzintegration = units(3)
+     labelzintegration = unitslabel(3)
+  endif
+
   close(unit=78)
   return
 
