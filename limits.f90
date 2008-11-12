@@ -9,6 +9,7 @@ module limits
  use params
  implicit none
  real, dimension(maxplot,2) :: lim,range
+ private :: warn_minmax
 
 contains
 
@@ -56,9 +57,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   !--warn if limits are the same
   ! 
   do j=ifromcol,itocol
-     if (lim(j,2).eq.lim(j,1)) then
-        print "(a,a20,a,1pe9.2)",'  warning: ',label(j),' min = max = ',lim(j,1)
-     endif  
+     call warn_minmax(label(j),lim(j,1),lim(j,2))
   enddo
   print "(a/)",' plot limits set'
   
@@ -133,9 +132,10 @@ subroutine read_limits(limitsfile,ierr)
      else
         read(line,*,err=998,end=999) lim(i,1),lim(i,2)
      endif
-     if (lim(i,1).eq.lim(i,2)) then
-        print*,label(i),' min = max = ',lim(i,1)
-     endif
+     !
+     !--warn if limits are the same
+     !
+     call warn_minmax(label(i),lim(i,1),lim(i,2))
   enddo
   close(unit=54)
 
@@ -281,5 +281,20 @@ subroutine print_rangeinfo()
  endif
 
 end subroutine print_rangeinfo
+
+!----------------------------------------------------------
+! prints warning if min=max in limits setting
+!----------------------------------------------------------
+subroutine warn_minmax(labelx,xmin,xmax)
+ implicit none
+ character(len=*), intent(in) :: labelx
+ real, intent(in) :: xmin,xmax
+ 
+ if (abs(xmin-xmax).lt.tiny(xmax)) then
+    print "(a,a20,a,1pe9.2)",'  warning: ',labelx,' min = max = ',xmin
+ endif
+ 
+ return 
+end subroutine warn_minmax
 
 end module limits
