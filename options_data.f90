@@ -188,11 +188,9 @@ subroutine submenu_data(ichoose)
     UnitsHaveChanged = .false.
     call set_units(ncolumns,numplot,UnitsHaveChanged)
     
-    if (UnitsHaveChanged) then
-       iwriteunitsfile = .true.
-       call prompt(' save units to file? ',iwriteunitsfile)
-       if (iwriteunitsfile) call write_unitsfile(trim(unitsfile),numplot)
-    endif
+    iwriteunitsfile = .true.
+    call prompt(' save units to file? ',iwriteunitsfile)
+    if (iwriteunitsfile) call write_unitsfile(trim(unitsfile),numplot)
     
     if (.not.iRescale .and. UnitsHaveChanged) call prompt('Apply physical units to data?',iRescale)
     
