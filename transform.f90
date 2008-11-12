@@ -30,9 +30,10 @@
 module transforms
  integer, parameter, public :: ntrans = 5  ! this is the number of different transformations
  real, parameter, private :: zerolog = 1.e-12 ! this is minimum set if xmin = 0 and log
- public :: transform,transform_inverse,transform2,trans
+ public :: transform,transform_inverse,trans
  public :: transform_limits,transform_limits_inverse,transform_label
  public :: convert_to_ln_fac
+ public :: islogged
 
  private
 
@@ -643,5 +644,19 @@ real function convert_to_ln_fac(itrans)
   convert_to_ln_fac = xtemp
 
 end function convert_to_ln_fac
+
+!---------------------------------------
+! query function to return whether the
+! transformation involves a log or not
+!---------------------------------------
+logical function islogged(itrans)
+  implicit none
+  integer, intent(in) :: itrans
+  character(len=20) :: string
+
+  write(string,"(i8)") itrans
+  islogged = (index(string,'1').ne.0)
+
+end function islogged
 
 end module transforms

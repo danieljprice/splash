@@ -121,7 +121,7 @@ subroutine defaults_set(use_evdefaults)
   ivecplotmulti(:) = 0       ! vector plot
   x_secmulti(:) = .false.    ! take cross section?
   xsecposmulti(:) = 0.0      ! position of cross section
-  iplotcontmulti(:) = .false.
+  icontourmulti(:) = 0       ! contour plot
   !
   !--titles
   !

@@ -3,7 +3,8 @@ module timestep_plotting
   implicit none
 
   integer, private :: ninterp
-  integer, private :: iplotx,iploty,iplotz,irenderplot,ivectorplot,ivecx,ivecy
+  integer, private :: iplotx,iploty,iplotz,irenderplot,icontourplot
+  integer, private :: ivectorplot,ivecx,ivecy
   integer, private :: nyplots,npartdim,nyplotfirstonpage,ifirststeponpage    
   integer, private :: ngrid,nframefirstonpage
   integer, private :: just, ntitles,nsteplegendlines
@@ -11,10 +12,10 @@ module timestep_plotting
   integer, private :: iframesave
 
   real, dimension(:), allocatable, private :: datpix1D, xgrid
-  real, dimension(:,:), allocatable, private :: datpix, brightness
-  real, dimension(:,:,:), allocatable, private :: datpix3D
+  real, dimension(:,:), allocatable, private :: datpix,datpixcont,brightness
+  real, dimension(:,:,:), allocatable, private :: datpix3D,datpixcont3D
   real, private :: xmin,xmax,ymin,ymax,zmin
-  real, private :: rendermin,rendermax,vecmax
+  real, private :: rendermin,rendermax,vecmax,contmin,contmax
   real, private :: dz,zslicepos,zobservertemp,dzscreentemp,taupartdepthtemp,rkappafac
   real, private :: dxgrid,xmingrid,xmaxgrid
   real, private :: angletempx, angletempy, angletempz
@@ -23,6 +24,7 @@ module timestep_plotting
   real, dimension(maxplot) :: xminmulti,xmaxmulti,xminadapt,xmaxadapt
   real, dimension(maxplot) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
   real, private :: xminadapti,xmaxadapti,yminadapti,ymaxadapti,renderminadapt,rendermaxadapt
+  real, private :: contminadapt,contmaxadapt
   real, parameter, private :: pi = 3.1415926536
 
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
@@ -39,12 +41,13 @@ contains
 ! initialise plotting options
 ! called once for all steps
 !
-subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
+subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot)
   use params
   use colours, only:colour_set
   use labels, only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,itoomre,iutherm
   use limits, only:lim,rangeset
-  use multiplot, only:multiplotx,multiploty,irendermulti,nyplotmulti,x_secmulti,ivecplotmulti
+  use multiplot, only:multiplotx,multiploty,irendermulti,icontourmulti, &
+                 nyplotmulti,x_secmulti,ivecplotmulti
   use prompting, only:prompt
   use titles, only:read_titles,read_steplegend
   use settings_data, only:ndim,ndimV,numplot,ncolumns,ndataplots,required,icoords,icoordsnew
@@ -60,7 +63,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
   use projections3D, only:coltable
   implicit none
   real, parameter :: pi=3.1415926536
-  integer, intent(in) :: ipicky,ipickx,irender_nomulti,ivecplot
+  integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
   integer :: i,j,ierr,ifirst,iplotzprev,ilen,pgopen
   logical :: iadapting,iamrendering,icoordplot,iallrendered,ians
   real :: hav,pmassav
@@ -338,6 +341,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
         required(multiplotx(1:nyplotmulti)) = .true.
         required(multiploty(1:nyplotmulti)) = .true.
         required(irendermulti(1:nyplotmulti)) = .true.
+        required(icontourmulti(1:nyplotmulti)) = .true.
      else
         required(iplotx) = .true.
         required(iploty) = .true.
@@ -348,6 +352,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,ivecplot)
         required(irho) = .true.
         required(ih) = .true.
         required(irender_nomulti) = .true.
+        required(icontour_nomulti) = .true.
      endif
   !!--need to read columns used for range restrictions
      do i=1,ndataplots
@@ -473,7 +478,7 @@ end subroutine initialise_plotting
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
+subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ivecplot, &
                     iamtype,npartoftype,masstype,dat,timei,gammai,ipagechange,iadvance)
   use params
   use colours, only:colour_set
@@ -485,7 +490,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               ih,irho,ipmass,ix,iacplane,ipowerspec,isurfdens,itoomre,iutherm,ipdf
   use limits, only:lim,get_particle_subset
   use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
-                iplotcontmulti,x_secmulti,xsecposmulti
+                icontourmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
   use settings_data, only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
                      iendatstep,ntypes,UseTypeInRenderings,itrackpart,required,ipartialread,xorigin
@@ -494,19 +499,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                      iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,usesquarexy, &
                      charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
-  use settings_render, only:npix,ncontours,icolours,iplotcont_nomulti, &
+  use settings_render, only:npix,ncontours,icolours, &
       iColourBarStyle,icolour_particles,inormalise_interpolations,ifastrender
   use settings_vecplot, only:npixvec, iplotpartvec
   use settings_xsecrot, only:nxsec,irotateaxes,xsec_nomulti,irotate,flythru,use3Dperspective, &
       use3Dopacityrendering,writeppm,anglex,angley,anglez,zobserver,dzscreenfromobserver,taupartdepth, &
       xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2,nseq,nframes,getsequencepos,insidesequence
   use settings_powerspec, only:nfreqspec,wavelengthmin,wavelengthmax,ipowerspecx,ipowerspecy,idisordered
-  use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
+  use settings_units, only:units,unitslabel,unitzintegration
 !
 !--subroutines called from this routine
 !
   use colourparts
-  use transforms, only:transform,transform2,transform_limits,transform_label,transform_inverse
+  use transforms, only:transform,transform_limits,transform_label,transform_inverse,islogged
   use interactive_routines
   use particleplots, only:particleplot
   use powerspectrums, only:powerspectrum,powerspec3D_sph
@@ -525,7 +530,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
 
   implicit none
   integer, intent(inout) :: ipos, istepsonpage
-  integer, intent(in) :: istep, irender_nomulti, ivecplot
+  integer, intent(in) :: istep,irender_nomulti,icontour_nomulti,ivecplot
   integer(kind=int1), dimension(:), intent(in) :: iamtype
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(maxparttypes), intent(in) :: masstype
@@ -554,10 +559,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
   real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax
   real :: pixwidth,pixwidthvec,dxfreq
 
-  character(len=lenlabel+20) :: labelx,labely,labelz,labelrender,labelvecplot
-  character(len=20) :: string,labeltimeunits
+  character(len=lenlabel+20) :: labelx,labely,labelz,labelrender,labelvecplot,labelcont
+  character(len=20) :: labeltimeunits
   
-  logical :: iPlotColourBar, rendering, inormalise, logged, dumxsec, isetrenderlimits
+  logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
+  logical :: dumxsec, isetrenderlimits, gotcontours
   logical :: ichangesize, initx, inity
   
 34   format (25(' -'))
@@ -674,16 +680,35 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         iplotx = multiplotx(nyplot)
         irender = irendermulti(nyplot)
         ivectorplot = ivecplotmulti(nyplot)
-        iplotcont = iplotcontmulti(nyplot)
+        icontourplot = icontourmulti(nyplot)
+        iplotcont = .false. !iplotcontmulti(nyplot)
         x_sec = x_secmulti(nyplot)
         zslicepos = xsecposmulti(nyplot)
      else
         irender = irender_nomulti
         ivectorplot = ivecplot
-        iplotcont = iplotcont_nomulti
+        icontourplot = icontour_nomulti
+        iplotcont = .false. !iplotcont_nomulti
         if (.not.interactivereplot) x_sec = xsec_nomulti
         if (.not.interactivereplot .and. x_sec) zslicepos = xsecpos_nomulti
      endif
+     
+     !--if the contour plot is the same as the rendered plot,
+     !  do not interpolate twice. Instead simply plot the contours
+     !  of the rendered quantity when plotting the render plot.
+     if (irender.gt.ndim .and. irender.le.numplot) then
+        if (icontourplot.eq.irender) then
+           icontourplot = 0
+           iplotcont = .true.
+        endif
+     else
+        !--contours not allowed if not rendering
+        !  (because this can be achieved by rendering with colour scheme 0)
+        icontourplot = 0
+     endif
+     !--flag to indicate that we have actually got the contoured quantity,
+     !  set to true once interpolation has been done.
+     if (.not.interactivereplot .or. irerender) gotcontours = .false.
 
      if (icolour_particles) then
         irenderpart = irender
@@ -709,6 +734,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
         if (irender.gt.0 .and. irender.le.numplot) then
            rendermin = xminmulti(irender)
            rendermax = xmaxmulti(irender)
+           if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
+              contmin = xminmulti(icontourplot)
+              contmax = xmaxmulti(icontourplot)
+           endif
         endif
      endif
 
@@ -877,6 +906,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
               if (iaxis.ge.0) iaxistemp = -3
            endif
            ivectemp = 0
+
+           !--for vector plots with rotation, need to allocate temporary 
+           !  arrays to hold the rotated vector components
            if (ivectorplot.gt.0) then
               ichangesize = .false.
               if (allocated(vecplot)) then
@@ -936,11 +968,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            if (.not.interactivereplot .or. irerender) then
               if (allocated(datpix)) then
                  if (npixx.ne.size(datpix(:,1)) .or. npixy.ne.size(datpix(1,:))) then
-                    deallocate(datpix)           
+                    deallocate(datpix)
                     allocate (datpix(npixx,npixy))
                     if (ndim.eq.3 .and. use3Dperspective .and. use3Dopacityrendering) then
                        if (allocated(brightness)) deallocate(brightness)
                        allocate(brightness(npixx,npixy))
+                    endif
+                    if (icontourplot.gt.ndim) then
+                       if (allocated(datpixcont)) deallocate(datpixcont)
+                       allocate(datpixcont(npixx,npixy))
                     endif
                  endif
               else
@@ -948,6 +984,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  if (ndim.eq.3 .and. use3Dperspective .and. use3Dopacityrendering) then
                     if (allocated(brightness)) deallocate(brightness)
                     allocate(brightness(npixx,npixy))
+                 endif
+                 if (icontourplot.gt.ndim) then
+                    if (allocated(datpixcont)) deallocate(datpixcont)
+                    allocate(datpixcont(npixx,npixy))
                  endif
               endif
 
@@ -960,6 +1000,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                          hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                          icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy, &
                          pixwidth,inormalise)
+                    !--also get contour plot data
+                    if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                       call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
+                            hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                            icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy, &
+                            pixwidth,inormalise)
+                       gotcontours = .true.
+                    endif
                  endif
               case(3)
                  !!--interpolation to 3D grid - then take multiple cross sections/projections
@@ -974,6 +1022,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                          dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
                          ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dz, &
                          inormalise)
+                    
+                    if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                       !!--allocate memory for 3D contouring array
+                       if (allocated(datpixcont3D)) deallocate(datpixcont3D)
+                       allocate ( datpixcont3D(npixx,npixy,npixz) )
+                       !!--interpolate from particles to 3D grid
+                       call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
+                            zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
+                            dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
+                            ninterp,xmin,ymin,zmin,datpixcont3D,npixx,npixy,npixz,pixwidth,dz, &
+                            inormalise)
+                       gotcontours = .true.
+                    endif
                  endif
               end select
            endif
@@ -1013,12 +1074,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  if (allocated(datpix)) then
                     if (npixx.ne.size(datpix(:,1)) .or. npixy.ne.size(datpix(1,:))) then
                        deallocate(datpix)
+                       if (allocated(datpixcont)) deallocate(datpixcont)
                        print*,'reallocating...'
                        allocate ( datpix(npixx,npixy) )
+                       if (icontourplot.gt.ndim) allocate ( datpixcont(npixx,npixy) )
                     endif
                  else
                     print*,'allocating...'
                     allocate ( datpix(npixx,npixy) )
+                    if (icontourplot.gt.ndim) allocate ( datpixcont(npixx,npixy) )
                  endif
               endif
 
@@ -1031,7 +1095,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                  print*,TRIM(label(iplotz)),' = ',zslicepos, &
                       ' cross section, pixel ',ipixxsec
                  datpix = datpix3D(:,:,ipixxsec)    ! slices are in 3rd dimension
-
+                 if (gotcontours) then
+                    datpixcont = datpixcont3D(:,:,ipixxsec)
+                 endif
               else
                  !-------------------------------------------------------------------
                  !  or do a fast projection/cross section of 3D data to 2D array
@@ -1045,6 +1111,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                           print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
                                ' : opacity-rendered cross section', xmin,ymin                    
                           if (ipmass.gt.0) then
+                             if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                                call interp3D_proj_opacity( &
+                                  xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                                  dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,icontourplot), &
+                                  dat(1:ninterp,iz),icolourme(1:ninterp), &
+                                  ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,zobservertemp, &
+                                  dzscreentemp,rkappa,zslicepos)
+                                gotcontours = .true.
+                             endif
                              call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,irenderplot), &
@@ -1052,6 +1127,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos)
                           else
+                             if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                                call interp3D_proj_opacity( &
+                                  xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                                  masstype(1),1,hh(1:ninterp),dat(1:ninterp,icontourplot), &
+                                  dat(1:ninterp,iz),icolourme(1:ninterp), &
+                                  ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,zobservertemp, &
+                                  dzscreentemp,rkappa,zslicepos)
+                                gotcontours = .true.
+                             endif
                              call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                masstype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
@@ -1072,11 +1156,31 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                                weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
                                inormalise)
+                          !!--same but for contour plot
+                          if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                             call interpolate3D_fastxsec( &
+                                  xplot(1:ninterp),yplot(1:ninterp), &
+                                  zplot(1:ninterp),hh(1:ninterp), &
+                                  weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
+                                  ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
+                                  inormalise)
+                             gotcontours = .true.
+                          endif
                        endif
                     else                 
                        if (use3Dperspective .and. use3Dopacityrendering) then
                           !!--do fast projection with opacity
                           if (ipmass.gt.0) then
+                             !--contour plot first
+                             if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                                call interp3D_proj_opacity( &
+                                  xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                                  dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,icontourplot), &
+                                  dat(1:ninterp,iz),icolourme(1:ninterp), &
+                                  ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,zobservertemp, &
+                                  dzscreentemp,rkappa,huge(zslicepos))
+                                gotcontours = .true.
+                             endif
                              call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,irenderplot), &
@@ -1084,6 +1188,16 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,huge(zslicepos))
                           else
+                             !--do contour plot first so brightness corresponds to render plot
+                             if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                                call interp3D_proj_opacity( &
+                                  xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                                  masstype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                                  dat(1:ninterp,iz),icolourme(1:ninterp), &
+                                  ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,zobservertemp, &
+                                  dzscreentemp,rkappa,huge(zslicepos))
+                                gotcontours = .true.
+                             endif
                              call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                masstype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
@@ -1098,9 +1212,21 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                                hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                inormalise,zobservertemp,dzscreentemp,ifastrender)
+                          !!--same but for contour plot
+                          if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                             call interpolate3D_projection( &
+                                  xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                                  icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
+                                  inormalise,zobservertemp,dzscreentemp,ifastrender)
+                             gotcontours = .true.
+                          endif
                           !!--adjust the units of the z-integrated quantity
                           if (iRescale .and. units(ih).gt.0. .and. .not.inormalise) then
                              datpix = datpix*(unitzintegration/units(ih))
+                             if (gotcontours) then
+                                datpixcont = datpixcont*(unitzintegration/units(ih))
+                             endif
                           endif
                        endif
                     endif
@@ -1164,45 +1290,43 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !------------------------------------------------------------------
            if (irenderplot.gt.0 .and. irenderplot.le.numplot) then
               if (ndim.eq.3 .or. (ndim.eq.2 .and..not.x_sec)) then
-                 write(string,"(i8)") itrans(irenderplot) ! used to determine whether logged or not
-                 logged = (index(string,'1').ne.0)
+                 !!--determine whether rendered quantity is logged or not
+                 logged = islogged(itrans(irenderplot))
+                 if (gotcontours) then
+                    loggedcont = islogged(itrans(icontourplot))
+                 else
+                    loggedcont = .false.
+                 endif
                  !!--do transformations on rendered array (but only the first time!)
                  if (.not.interactivereplot .or. irerender) then
                     if (logged) then
                        !!--if log, then set zero values to some large negative number
                        !   but exclude this value from adaptive limits determination
-                       call transform2(datpix,itrans(irenderplot),errval=-666.)
+                       call transform(datpix,itrans(irenderplot),errval=-666.)
                     else
-                       call transform2(datpix,itrans(irenderplot))                    
+                       call transform(datpix,itrans(irenderplot))
+                    endif
+                    if (gotcontours) then
+                       if (loggedcont) then
+                          call transform(datpixcont,itrans(icontourplot),errval=-666.)
+                       else
+                          call transform(datpixcont,itrans(icontourplot))
+                       endif
                     endif
                  endif
 
                  !!--set label for rendered quantity
                  labelrender = label(irenderplot)
+                 if (gotcontours) labelcont = label(icontourplot)
+                 
                  !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
                  if (ndim.eq.3 .and..not. x_sec .and..not.(use3Dperspective.and.use3Dopacityrendering)) then
-                    if (inormalise) then
-                       labelrender = '< '//trim(labelrender)//' >'
-                    else
-                       if (iRescale) then
-                          labelrender = '\(2268) '//trim(labelrender)//' d'// &
-                             trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//trim(labelzintegration)
-                       else
-                          labelrender = '\(2268) '//trim(labelrender)//' d'//trim(label(ix(iz)))
-                       endif
-                       if (irenderplot.eq.irho) then
-                          labelrender = 'column density'
-                          !--try to get units label right for column density
-                          !  would be nice to have a more robust way of knowing what the units mean
-                          if (iRescale .and. index(labelzintegration,'cm').gt.0  &
-                                       .and. trim(adjustl(unitslabel(irho))).eq.'[g/cm\u3\d]') then
-                             labelrender = trim(labelrender)//' [g/cm\u2\d]'
-                          endif
-                       endif
-                    endif
+                    labelrender = integrate_label(labelrender,irender,ix(iz),inormalise)
+                    if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,ix(iz),inormalise)
                  endif
-                 !!--apply transformations to the label for the rendered quantity 
+                 !!--apply transformations to the label(s) for the rendered and contoured quantit(y,ies)
                  labelrender = transform_label(labelrender,itrans(irenderplot))
+                 if (gotcontours) labelcont = transform_label(labelcont,itrans(icontourplot))
 
                  !!--limits for rendered quantity
                  if (.not.interactivereplot .or. irerender) then
@@ -1214,6 +1338,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                        renderminadapt = minval(datpix)
                     endif
                     rendermaxadapt = maxval(datpix)
+                    if (gotcontours) then
+                       if (loggedcont) then
+                          contminadapt = minval(datpixcont,mask=abs(datpixcont+666.).gt.tiny(datpixcont))
+                       else
+                          contminadapt = minval(datpixcont)
+                       endif
+                       contmaxadapt = maxval(datpixcont)
+                    endif
 
                     if (.not.interactivereplot .and. .not.isetrenderlimits) then
                        if (iadapt) then
@@ -1226,6 +1358,17 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                           rendermax = lim(irenderplot,2)
                           call transform_limits(rendermin,rendermax,itrans(irenderplot))
                        endif
+                       if (gotcontours) then
+                          if (iadapt) then
+                             print*,'adapting contour limits'
+                             contmin = contminadapt
+                             contmax = contmaxadapt
+                          else
+                             contmin = lim(icontourplot,1)
+                             contmax = lim(icontourplot,2)
+                             call transform_limits(contmin,contmax,itrans(icontourplot))
+                          endif
+                       endif
                     endif
                  endif
 
@@ -1234,6 +1377,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
                     if (iadapt .and. abs(rendermax).lt.tiny(datpix)) then
                        !!print*,'max=0 on log plot, fixing'
                        rendermax = maxval(datpix)
+                    endif
+                 endif
+                 if (gotcontours .and. loggedcont) then
+                    if (iadapt .and. abs(contmax).lt.tiny(datpixcont)) then
+                       contmax = maxval(datpixcont)
                     endif
                  endif
               endif
@@ -1323,12 +1471,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
            !------------------------------
            if (irenderplot.gt.ndim) then
               if ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) then
-                                       
+
                  !!--call subroutine to actually render the image
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                    npixx,npixy,xmin,ymin,pixwidth,    &
                    icolours,iplotcont,0,ncontours,.false.)
-                                  
+
+                 !!--contour plot of different quantity on top of rendering
+                 if (gotcontours) then
+                    call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
+                         npixx,npixy,xmin,ymin,pixwidth,0,.true.,0,ncontours,.false.)
+                 endif
+                              
                  !!--write ppm if interpolate3D_opacity
                  if (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm) then
                     !!--plot non-gas particle types (e.g. sink particles) on top (and to ppm)
@@ -1948,6 +2102,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      endif
   endif
   
+  !--free all dynamically allocated memory
   if (.not.interactivereplot) then
      if (allocated(datpix1D)) deallocate(datpix1D)
      if (allocated(datpix)) deallocate(datpix)
@@ -1955,6 +2110,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,ivecplot, &
      if (allocated(datpix3D)) deallocate(datpix3D)
      if (allocated(xgrid)) deallocate(xgrid)
      if (allocated(vecplot)) deallocate(vecplot)
+     if (allocated(datpixcont)) deallocate(datpixcont)
+     if (allocated(datpixcont3D)) deallocate(datpixcont3D)
   endif
   
   return
@@ -2023,6 +2180,9 @@ contains
        print*,trim(labely),' min, max = ',ymin,ymax
        if (irender.gt.0 .and. .not.(ndim.eq.2 .and. x_sec)) then
           print*,trim(labelrender),' min, max = ',rendermin,rendermax
+          if (gotcontours) then
+             print*,trim(labelcont),' min, max = ',contmin,contmax
+          endif
        endif 
     endif
 
@@ -3046,5 +3206,40 @@ subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscree
 
   return
 end subroutine rotatedaxes
+
+!---------------------------------------------------------------
+! interface for adjusting the label for column-integrated plots
+!---------------------------------------------------------------
+function integrate_label(labelin,iplot,izcol,normalise)
+  use settings_data, only:iRescale
+  use settings_units, only:labelzintegration,unitslabel
+  use labels, only:irho,label
+  implicit none
+  character(len=*), intent(in) :: labelin
+  integer, intent(in) :: iplot,izcol
+  logical, intent(in) :: normalise
+  character(len=len(label)+20) :: integrate_label
+                   
+  if (normalise) then
+     integrate_label = '< '//trim(labelin)//' >'
+  else
+     if (iRescale) then
+        integrate_label = '\(2268) '//trim(labelin)//' d'// &
+           trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))//trim(labelzintegration)
+     else
+        integrate_label = '\(2268) '//trim(labelin)//' d'//trim(label(izcol))
+     endif
+     if (iplot.eq.irho) then
+        integrate_label = 'column density'
+        !--try to get units label right for column density
+        !  would be nice to have a more robust way of knowing what the units mean
+        if (iRescale .and. index(labelzintegration,'cm').gt.0  &
+                     .and. trim(adjustl(unitslabel(irho))).eq.'[g/cm\u3\d]') then
+           integrate_label = trim(integrate_label)//' [g/cm\u2\d]'
+        endif
+     endif
+  endif
+
+end function integrate_label
 
 end module timestep_plotting

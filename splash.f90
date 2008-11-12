@@ -226,11 +226,11 @@ program splash
   use timestepping, only:timestep_loop
   use settings_page, only:interactive,device,nomenu
   implicit none
-  integer :: i,ierr,nargs,ipickx,ipicky,irender,ivecplot
+  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.11.2beta [7th Nov ''08]'
+  character(len=*), parameter :: version = 'v1.12.0beta [12th Nov ''08]'
 
   !
   ! initialise some basic code variables
@@ -260,6 +260,7 @@ program splash
   ipickx = 0
   ipicky = 0
   irender = 0
+  icontour = 0
   ivecplot = 0
   
   do while (i < nargs)
@@ -286,6 +287,11 @@ program splash
            read(string,*,iostat=ierr) irender
            if (ierr /= 0) call print_usage(quit=.true.)
            nomenu = .true.
+        case('contour','c','cont')
+           i = i + 1
+           call get_argument(i,string)
+           read(string,*,iostat=ierr) icontour
+           if (ierr /= 0) call print_usage(quit=.true.)
         case('vec','vecplot')
            i = i + 1
            call get_argument(i,string)
@@ -444,8 +450,17 @@ program splash
               print "(a)",' ERROR: x plot not set or out of bounds (use -x col)'
               stop
            endif
-           if (irender.gt.0 .and. .not.allowrendering(ipicky,ipickx)) then
-              print "(a)",' ERROR: cannot render with x, y choice (must be coords)'
+           if (irender.gt.0) then
+              if (.not.allowrendering(ipicky,ipickx)) then
+                 print "(a)",' ERROR: cannot render with x, y choice (must be coords)'
+                 stop
+              endif
+              if (icontour.gt.numplot .or. icontour.lt.0) then
+                 print "(a)",' ERROR: contour plot choice out of bounds'
+                 stop 
+              endif
+           elseif (icontour.gt.0) then
+              print "(a)",' ERROR: -cont also requires -render setting'
               stop
            endif
         else
@@ -456,13 +471,17 @@ program splash
                  print "(a)",' ERROR: cannot render'
                  stop
               endif
+              if (icontour.gt.numplot .or. icontour.lt.0) then
+                 print "(a)",' ERROR: contour plot choice out of bounds'
+                 stop
+              endif
            else
               print "(a)",' ERROR: y plot not set or out of bounds (use -y col)'
               stop
            endif
         endif
 
-        call timestep_loop(ipicky,ipickx,irender,ivecplot)
+        call timestep_loop(ipicky,ipickx,irender,icontour,ivecplot)
      else
      !
      ! enter main menu

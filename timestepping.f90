@@ -8,7 +8,7 @@ contains
 !
 ! This subroutine drives the main plotting loop
 !
-subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
+subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
   use filenames, only:nsteps,ifileopen
   use particle_data, only:iamtype,npartoftype,masstype,time,gamma,dat
   use settings_data, only:istartatstep,iendatstep,nfreq,DataIsBuffered, &
@@ -16,11 +16,11 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
   use settings_page, only:interactive,nstepsperpage,iColourEachStep,iChangeStyles,nomenu
   use timestep_plotting, only:initialise_plotting,plotstep
   implicit none
-  integer, intent(in) :: ipicky,ipickx,irender,ivecplot
+  integer, intent(in) :: ipicky,ipickx,irender,icontourplot,ivecplot
   integer :: ipos, istep, ilocindat, iadvance, istepsonpage, istepprev
   logical :: ipagechange
   
-  call initialise_plotting(ipicky,ipickx,irender,ivecplot)
+  call initialise_plotting(ipicky,ipickx,irender,icontourplot,ivecplot)
 
   !----------------------------------------------------------------------------  
   ! loop over timesteps (flexible to allow going forwards/backwards in
@@ -139,9 +139,9 @@ subroutine timestep_loop(ipicky,ipickx,irender,ivecplot)
      endif
 
 !     print*,'ipos = ',ipos,' istep = ',istep,' iposindat = ',ilocindat
-     call plotstep(ipos,istep,istepsonpage,irender,ivecplot,iamtype(:,ilocindat),npartoftype(:,ilocindat), &
-                   masstype(:,ilocindat),dat(:,:,ilocindat),time(ilocindat),gamma(ilocindat), &
-                   ipagechange,iadvance)
+     call plotstep(ipos,istep,istepsonpage,irender,icontourplot,ivecplot,iamtype(:,ilocindat), &
+                   npartoftype(:,ilocindat),masstype(:,ilocindat),dat(:,:,ilocindat), &
+                   time(ilocindat),gamma(ilocindat),ipagechange,iadvance)
 !
 !--increment timestep -- iadvance can be changed interactively
 !

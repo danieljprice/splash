@@ -157,15 +157,15 @@ module multiplot
  integer :: nyplotmulti 
  integer, dimension(maxplot) :: multiplotx,multiploty
  integer, dimension(maxplot) :: irendermulti,ivecplotmulti
- integer, dimension(maxplot) :: itrans
- logical, dimension(maxplot) :: iplotcontmulti, x_secmulti
+ integer, dimension(maxplot) :: itrans,icontourmulti
+ logical, dimension(maxplot) :: x_secmulti
  real, dimension(maxplot) :: xsecposmulti
 !
 !--sort these into a namelist for input/output
 !
  namelist /multi/ nyplotmulti,                                  &
     itrans,multiplotx,multiploty,irendermulti,                  &
-    ivecplotmulti,iplotcontmulti,x_secmulti,xsecposmulti
+    ivecplotmulti,icontourmulti,x_secmulti,xsecposmulti
 
  public
 

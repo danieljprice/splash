@@ -19,7 +19,7 @@ subroutine menu
   use settings_limits, only:submenu_limits
   use settings_part, only:submenu_particleplots
   use settings_page, only:submenu_page,submenu_legend,interactive
-  use settings_render, only:submenu_render
+  use settings_render, only:submenu_render,iplotcont_nomulti
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
   use settings_xsecrot, only:submenu_xsecrotate,write_animfile
   use settings_units, only:unitslabel
@@ -32,13 +32,14 @@ subroutine menu
   use timestepping
   implicit none
   integer :: i,icol,ihalf,iadjust,indexi,ierr
-  integer :: ipicky,ipickx,irender,ivecplot
+  integer :: ipicky,ipickx,irender,ivecplot,icontourplot
   integer :: iamvecprev, ivecplottemp,ichoose
   character(len=2) :: ioption
   character(len=100) :: vecprompt
   logical :: iAllowRendering
 
   irender = 0
+  icontourplot = 0
   ivecplot = 0
   ipickx = 1
   ipicky = 1
@@ -183,6 +184,9 @@ subroutine menu
            !
            if (ipicky.le.ndim .and. ipickx.le.ndim .and. iAllowRendering) then
               call prompt('(render) (0=none)',irender,0,numplot)
+              if (irender.gt.0 .and. iplotcont_nomulti) then
+                 call prompt('(contours) (0=none)',icontourplot,0,numplot)
+              endif
               if (any(iamvec(1:numplot).ne.0)) then
                  ivecplottemp = -1
                  ierr = 1
@@ -220,7 +224,7 @@ subroutine menu
         !
         !--call main plotting routine
         !
-        call timestep_loop(ipicky,ipickx,irender,ivecplot)
+        call timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
      endif
 !------------------------------------------------------------------------
 !  if input is an integer > numplot+1, quit
@@ -392,7 +396,12 @@ subroutine menu
       
       if (icoordplot .and.iAllowRendering) then
          call prompt('(render) (0=none)',irendermulti(i),0,numplot)
-         iplotcontmulti(i) = iplotcont_nomulti
+         if (irendermulti(i).gt.0 .and. iplotcont_nomulti) then
+            call prompt('(contours) (0=none)',icontourmulti(i),0,numplot)
+         else
+            icontourmulti(i) = 0
+         endif
+         !iplotcontmulti(i) = iplotcont_nomulti
 
          if (any(iamvec(1:numplot).gt.0)) then
             ivecplottemp = -1
@@ -415,6 +424,7 @@ subroutine menu
          endif
       else
          irendermulti(i) = 0
+         icontourmulti(i) = 0
          ivecplotmulti(i) = 0
       endif
 
