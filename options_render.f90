@@ -120,7 +120,7 @@ subroutine submenu_render(ichoose)
 !------------------------------------------------------------------------
     case(3)
        iplotcont_nomulti = .not.iplotcont_nomulti
-       print*,'plot contours = ',iplotcont_nomulti
+       print "(a)",' Contour plotting is '//trim(print_logical(iplotcont_nomulti))
 !------------------------------------------------------------------------
     case(4)
        call prompt(' enter number of contours between min,max',ncontours,0,500)
@@ -142,15 +142,17 @@ subroutine submenu_render(ichoose)
 !------------------------------------------------------------------------
     case(6)
        icolour_particles = .not.icolour_particles
-       print*,'particles colouring = ',icolour_particles
+       print "(a)",' Use particle colours instead of pixels is ' &
+                   //trim(print_logical(icolour_particles))
 !------------------------------------------------------------------------
     case(7)
        inormalise_interpolations = .not.inormalise_interpolations
-       print*,'normalisation of interpolations = ',inormalise_interpolations
+       print "(a)",' Normalisation of interpolations is ' &
+                   //trim(print_logical(inormalise_interpolations))
 !------------------------------------------------------------------------
     case(8)
        ifastrender = .not.ifastrender
-       print*,'accelerated rendering = ',ifastrender
+       print "(a)",' Accelerated rendering is '//trim(print_logical(ifastrender))
        if (ifastrender) then
           print*,' Warning: this is slightly approximate (particle position'
           print*,'          assumed to be at centre of pixel)'
@@ -158,7 +160,7 @@ subroutine submenu_render(ichoose)
 !------------------------------------------------------------------------
     case(9)
        idensityweightedinterpolation = .not.idensityweightedinterpolation
-       print "(a)",' density weighted interpolation is '// &
+       print "(a)",' Density weighted interpolation is '// &
                    print_logical(idensityweightedinterpolation)
   end select
     
