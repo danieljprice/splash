@@ -285,6 +285,8 @@ subroutine set_labels
         endif
      endif
   endif
+  if (ndim.lt.1) ndimV = 0
+  
   if (ndim.gt.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
   if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
   if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
