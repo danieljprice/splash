@@ -655,8 +655,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   icolumn = irho ! density
                elseif (iarr.eq.1 .and. smalldump .and. i.eq.2) then
                   icolumn = ih ! h which is real4 in small dumps
-               elseif (iarr.eq.4 .and. i.le.3) then
-                  icolumn = nhydroarrays + i
+               !elseif (iarr.eq.4 .and. i.le.3) then
+               !   icolumn = nhydroarrays + i
                else
                   icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
                endif
@@ -787,7 +787,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
     if (size(iamtype(:,j)).gt.1) then
        do i=1,npart
-          select case(iphase(i))
+          select case(int(iphase(i)))
           case(0)
             iamtype(i,j) = 1
             ngas = ngas + 1
