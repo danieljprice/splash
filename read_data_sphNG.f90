@@ -1130,7 +1130,10 @@ subroutine set_labels
           label(icv) = 'u/T'
           units(icv) = uergg
        endif
-     endif
+    else
+       iradenergy = 0
+       icv = 0
+    endif
   endif
 
   
