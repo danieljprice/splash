@@ -28,7 +28,8 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   integer :: itempgas,itemprad
   integer, dimension(ncolumns) :: iveclist,ivecmagcol
   logical :: skip
-  real :: Bmag, veltemp, spsound
+  real :: Bmag, veltemp, spsound, gmw
+  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
   real, parameter :: pi = 3.1415926536
   real, parameter :: Omega0 = 1.e-3 ! for MRI delta v
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
@@ -100,7 +101,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   !
   !--radiative transfer stuff
   !
-  if (ndim.gt.0 .and. iutherm.gt.0 .and. icv.gt.0) call addcolumn(itempgas,'gas temperature')
+  if (ndim.gt.0 .and. iutherm.gt.0) call addcolumn(itempgas,'gas temperature')
   if (ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0) call addcolumn(itemprad,'radiation temperature')
   !
   !--specify MHD quantities
@@ -284,12 +285,20 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
       !--radiative transfer quantities
       !
       !!--gas temperature
-      if (itempgas.gt.0 .and. ndim.gt.0 .and. iutherm.gt.0 .and. icv.gt.0) then
-         where(abs(dat(1:ntoti,icv,i)).gt.tiny(0.))
-            dat(1:ntoti,itempgas,i) = dat(1:ntoti,iutherm,i)/dat(1:ntoti,icv,i)
-         elsewhere  
-            dat(1:ntoti,itempgas,i) = 0.
-         endwhere
+      if (itempgas.gt.0 .and. ndim.gt.0 .and. iutherm.gt.0) then
+         if (icv.gt.0) then
+            print*,' TEMP USES CV'
+            where(abs(dat(1:ntoti,icv,i)).gt.tiny(0.))
+               dat(1:ntoti,itempgas,i) = dat(1:ntoti,iutherm,i)/dat(1:ntoti,icv,i)
+            elsewhere  
+               dat(1:ntoti,itempgas,i) = 0.
+            endwhere
+         else
+            gmw = 4.0/(2.*0.7 + 0.28)
+            print*,' CALCULATING GAS TEMPERATURE USING ASSUMED MU=',gmw
+            print*,' PHYSICAL UNITS MUST BE ON TO GET A RESULT IN K'
+            dat(1:ntoti,itempgas,i) = 2./3.*gmw*mhonkb*dat(1:ntoti,iutherm,i)
+         endif
       endif
       !!--radiation temperature
       if (itemprad.gt.0 .and. ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0) then
