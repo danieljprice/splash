@@ -19,11 +19,17 @@ contains
  integer function ienvironment(variable,errval)
     character(len=*), intent(in) :: variable
     character(len=30) :: string
+    character(len=5) :: fmtstring
     integer, intent(in), optional :: errval
     integer :: ierr
     
     call get_environment(variable,string)
-    read(string,*,iostat=ierr) ienvironment
+    
+    !--use a formatted read - this is to avoid a compiler bug
+    !  should in general be more robust anyway
+    write(fmtstring,"(a,i2,a)",iostat=ierr) '(i',len_trim(string),')'
+    read(string,fmtstring,iostat=ierr) ienvironment
+    
     if (ierr /= 0) then
        if (present(errval)) then
           ienvironment = errval 
