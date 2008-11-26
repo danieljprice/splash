@@ -72,7 +72,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   character(len=4) :: blocklabel
   integer, dimension(maxparttypes) :: npartoftypei,Nall
   integer, dimension(:), allocatable :: iamtemp
-  integer :: i,j,itype,icol,ierr,ierrh,ierrrho,nhset
+  integer :: i,j,k,itype,icol,ierr,ierrh,ierrrho,nhset,nvec
   integer :: index1,index2,indexstart,indexend,Nmassesdumped
   integer :: ncolstep,npart_max,nstep_max,ntoti,nacc
   integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles,istart
@@ -131,7 +131,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !--read header for this timestep
   !
   if (idumpformat.eq.2) then
-     print "(a)",' >> reading block labelled gadget format <<'
+     print "(a)",' >> reading block labelled Gadget format <<'
      read(iunit,iostat=ierr) blocklabel,lenblock
      !print*,ierr,blocklabel,lenblock
      if (ierr /= 0 .or. lenblock.ne.264) then
@@ -139,6 +139,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
         close(iunit)
         return
      endif
+  else
+     print "(a)",' >> reading default Gadget format <<'
   endif
 
   read(iunit,iostat=ierr) npartoftypei(1:6),massoftypei,timetemp,ztemp, &
@@ -146,7 +148,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
   ntoti = int(sum(npartoftypei(1:6)))
   if (ierr /= 0 .or. ntoti.le.0 .or. any(npartoftypei.lt.0)) then
-     print "(a)", '*** ERROR READING TIMESTEP HEADER: wrong endian? ***'
+     print "(/,a)", '*** ERROR READING TIMESTEP HEADER: wrong endian? ***'
+     print "(/,a)", '   (see splash userguide for compiler-dependent'
+     print "(a)", '    ways to change endianness on the command line)'
+     print "(/,a)", '   (set environment variable GSPLASH_FORMAT to 2 '
+     print "(a,/)", '    if you are using the block-labelled Gadget format)'
      close(iunit)
      return
   endif
@@ -154,7 +160,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   if (idumpformat.eq.2) then
      ncolstep = 1
      do while (ierr.eq.0)
-        call read_blockheader(idumpformat,iunit,0,index2,blocklabelgas(ncolstep),lenblock)
+        call read_blockheader(idumpformat,iunit,0,index2,blocklabelgas(ncolstep),lenblock,nvec)
         read(iunit,iostat=ierr)
         if ((ierr.eq.0 .and. index2.gt.0) .and. (index2.eq.ntoti &
             .or. index2.eq.npartoftypei(1) &
@@ -163,14 +169,10 @@ subroutine read_data(rootname,istepstart,nstepsread)
             .or. index2.eq.(npartoftypei(1)+npartoftypei(5)) & 
             .or. index2.eq.(npartoftypei(1)+npartoftypei(2)))) then
            select case(blocklabelgas(ncolstep))
-           case('POS ')
-              ncolstep = ncolstep + ndim
-           case('VEL ','BFLD')
-              ncolstep = ncolstep + ndimV
            case('ID  ')
               ! not a column
            case default
-              ncolstep = ncolstep + 1
+              ncolstep = ncolstep + nvec
            end select
         endif
      enddo
@@ -285,7 +287,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      !--read positions of all particles
      !
-     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
+     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
      if (iformat.eq.2 .and. blocklabel.ne.'POS ')  then
         print "(a)",' WARNING: expecting positions, got '//blocklabel//' in data read'
      endif
@@ -306,7 +308,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      !--same for velocities
      !
-     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
+     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
      if (iformat.eq.2 .and. blocklabel.ne.'VEL ')  then
         print "(a)",' WARNING: expecting velocity, got '//blocklabel//' in data read'
      endif
@@ -332,13 +334,13 @@ subroutine read_data(rootname,istepstart,nstepsread)
         print*,'particle ID ',ntoti
         if (allocated(iamtemp)) deallocate(iamtemp)
         allocate(iamtemp(npart_max))
-        call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
+        call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
         if (iformat.eq.2 .and. blocklabel.ne.'ID  ') then
            print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
         endif
         if (index2.gt.0) read (iunit,iostat=ierr) iamtemp(1:index2)
      else
-        call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock)
+        call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
         if (iformat.eq.2 .and. blocklabel.ne.'ID  ') then
            print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
         endif
@@ -367,7 +369,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            if (Nmassesdumped.gt.0) then
               if (allocated(dattemp1)) deallocate(dattemp1)
               allocate(dattemp1(Nmassesdumped))
-              call read_blockheader(idumpformat,iunit,Nmassesdumped,index2,blocklabel,lenblock)
+              call read_blockheader(idumpformat,iunit,Nmassesdumped,index2,blocklabel,lenblock,nvec)
               if (iformat.eq.2 .and. blocklabel.ne.'MASS')  then
                  print "(a)",' WARNING: expecting particle masses, got '//blocklabel//' in data read'
               endif
@@ -420,16 +422,18 @@ subroutine read_data(rootname,istepstart,nstepsread)
      else
         istart = 8
      endif
-     do icol=istart,ncolstep !-nextraveccols
+     icol = istart-1
+     do while (icol.lt.ncolstep) !icol=istart,ncolstep !-nextraveccols
         !!print*,icol
         i3 = 0
         i4 = 0
         if (idumpformat.eq.2) then
-           if (icol.le.ih) then
-              call read_blockheader(idumpformat,iunit,npartoftypei(1),index2,blocklabel,lenblock)           
+           if (icol+1.le.ih) then
+              call read_blockheader(idumpformat,iunit,npartoftypei(1),index2,blocklabel,lenblock,nvec)           
            else
-              call read_blockheader(idumpformat,iunit,0,index2,blocklabel,lenblock)
+              call read_blockheader(idumpformat,iunit,0,index2,blocklabel,lenblock,nvec)
            endif
+           icol = icol + nvec
            
            if (index2.eq.ntoti) then
               i1 = 1
@@ -463,6 +467,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
               i2 = index2
            endif
         else
+           nvec = 1
+           icol = icol + nvec
            if (icol.gt.ncolstep-nstarcols) then
               i1 = sum(npartoftypei(1:4)) + 1
               i2 = i1 + npartoftypei(5) - 1
@@ -472,13 +478,18 @@ subroutine read_data(rootname,istepstart,nstepsread)
               i2 = npartoftypei(1)
            endif
         endif
+        
 
         if (npartoftype(1,i).gt.0) then
            if (required(icol)) then
               if (i3.gt.0) then
                  read (iunit,iostat=ierr) dat(i1:i2,icol,i),dat(i3:i4,icol,i)
               else
-                 read (iunit,iostat=ierr) dat(i1:i2,icol,i)
+                 if (nvec.gt.1) then
+                    read (iunit, iostat=ierr) ((dat(k,j,i),j=icol,icol+nvec-1),k=i1,i2)
+                 else
+                    read (iunit,iostat=ierr) dat(i1:i2,icol,i)
+                 endif
               endif
            else
               read (iunit,iostat=ierr)
@@ -631,12 +642,13 @@ contains
 !!-----------------------------------------------------------------
 !! small utility to transparently handle block labelled data read
 !!-----------------------------------------------------------------
- subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk)
+ subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec)
   implicit none
   integer, intent(in) :: idumpfmt,lun,nexpected
   integer, intent(out) :: ndumped
   character(len=4), intent(out) :: blklabel
   integer, intent(out) :: lenblk
+  integer, intent(out) :: nvec
   
   blklabel = '    '
   if (idumpformat.eq.2) then
@@ -647,8 +659,10 @@ contains
      endif
      if (blklabel.eq.'POS ' .OR. blklabel.eq.'VEL ' .OR. blklabel.eq.'BFLD') then
         ndumped = (lenblk-8)/12
+        nvec = 3
      else
         ndumped = (lenblk-8)/4
+        nvec = 1
      endif
      !print*,blklabel,lenblk,ndumped
      !if (nexpected.gt.0) then
