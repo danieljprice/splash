@@ -486,7 +486,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
                  read (iunit,iostat=ierr) dat(i1:i2,icol,i),dat(i3:i4,icol,i)
               else
                  if (nvec.gt.1) then
-                    read (iunit, iostat=ierr) ((dat(k,j,i),j=icol,icol+nvec-1),k=i1,i2)
+                    read (iunit, iostat=ierr) ((dat(k,j,i),j=icol-nvec+1,icol),k=i1,i2)
                  else
                     read (iunit,iostat=ierr) dat(i1:i2,icol,i)
                  endif
