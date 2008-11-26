@@ -487,7 +487,6 @@ logical function allowrendering(iplotx,iploty)
 !
  if ((ih.gt.0 .and. ih.le.ndataplots) &
     .and.(irho.gt.0 .and. irho.le.ndataplots) &
-    .and.(ipmass.gt.0 .and. ipmass.le.ndataplots)  &
     .and.(icoords.eq.icoordsnew .or. icolour_particles) &
     .and.((itrans(iplotx).eq.0 .and. itrans(iploty).eq.0).or.icolour_particles)) then
  
