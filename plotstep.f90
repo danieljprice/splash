@@ -56,7 +56,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
   use settings_render, only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
-                        xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
+                        xseclineX1,xseclineX2,xseclineY1,xseclineY2,xsecwidth, &
                         use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth
   use settings_powerspec, only:options_powerspec
   use particle_data, only:npartoftype
@@ -66,7 +66,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
   integer :: i,j,ierr,ifirst,iplotzprev,ilen,pgopen
   logical :: iadapting,iamrendering,icoordplot,iallrendered,ians
-  real :: hav,pmassav
+  real :: hav,pmassav,dzsuggest
   character(len=1) :: char
   character(len=20) :: string,devstring
   
@@ -236,14 +236,22 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 !--set thickness if plotting particles
 !  (default thickness is half of the average particle spacing)
 !
-           if (.not.iallrendered .or. icolour_particles) then
-              npartdim = int(maxval(npartoftype(:,1))**(1./real(ndim)))
-              print*,'average # of particles in each dimension = ',npartdim
-              if (npartdim.gt.0) then
-                 dz = (lim(iplotz,2)-lim(iplotz,1))/float(npartdim)
+           if (.not.iallrendered .or. icolour_particles) then               
+              if (xsecwidth.gt.0. .and. xsecwidth.lt.(lim(iplotz,2)-lim(iplotz,1))) then
+                 !--already set
+                 dzsuggest = xsecwidth
               else
-                 dz = 0.
+                 !--xsecwidth not set; suggest a good value
+                 npartdim = int(maxval(npartoftype(:,1))**(1./real(ndim)))
+                 print*,'average # of particles in each dimension = ',npartdim
+                 if (npartdim.gt.0) then
+                    dzsuggest = (lim(iplotz,2)-lim(iplotz,1))/float(npartdim)
+                 else
+                    dzsuggest = 0.01*(lim(iplotz,2)-lim(iplotz,1))
+                 endif
               endif
+              dz = dzsuggest
+              
               if (imulti) then
                  call prompt(' enter thickness for cross section slice(s):', &
                            dz,0.0,lim(iplotz,2)-lim(iplotz,1))
@@ -251,6 +259,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                  call prompt(' enter thickness of cross section slice:', &
                            dz,0.0,lim(iplotz,2)-lim(iplotz,1))           
               endif
+              !--if dz has been set from the prompt, save the setting,
+              !  otherwise suggest (possibly different) value again next time
+              if (abs(dz-dzsuggest).gt.tiny(dz)) xsecwidth = dz
+              
            elseif (ndim.eq.3) then
 !
 !--for rendered cross sections in 3D, set thickness to 10%

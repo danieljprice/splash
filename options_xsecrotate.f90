@@ -11,7 +11,7 @@ module settings_xsecrot
  logical, public :: xsec_nomulti, irotate, flythru, use3Dperspective, use3Dopacityrendering
  logical, public :: writeppm
  real, public :: anglex, angley, anglez, zobserver, dzscreenfromobserver
- real, public :: taupartdepth
+ real, public :: taupartdepth,xsecwidth
  real, public :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
  real, public, dimension(3) :: xorigin,xminrotaxes,xmaxrotaxes
  
@@ -38,7 +38,7 @@ module settings_xsecrot
           irotate,irotateaxes,anglex, angley, anglez, &
           xminrotaxes,xmaxrotaxes,use3Dperspective, &
           use3Dopacityrendering,zobserver,dzscreenfromobserver, &
-          taupartdepth,writeppm
+          taupartdepth,writeppm,xsecwidth
 
  private :: animopts
  namelist /animopts/ nseq,nframes,iseqstart,iseqend,iseqtype, &
@@ -67,6 +67,7 @@ subroutine defaults_set_xsecrotate
   xseclineX2 = 0.0
   xseclineY1 = 0.0
   xseclineY2 = 0.0
+  xsecwidth = 0.0   ! width of xsec slices - zero means suggest better value to user
   irotate = .false.
   irotateaxes = 0
   anglex = 0.
@@ -240,6 +241,8 @@ subroutine submenu_xsecrotate(ichoose)
        iyes = .true.
        if (ihavesetsequence) call prompt('Change sequence settings?',iyes)
        if (iyes) call submenu_animation()
+
+       !call prompt('Use same sequence position for all plots on the page?',imultiframeseq)
     endif    
 
  end select
