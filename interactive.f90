@@ -976,7 +976,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
      !
      !--timestepping
      !
-     case('q','Q',achar(27))
+     case('q','Q',achar(27),achar(3))
         iadvance = -666
         print*,'quitting...'
         iexit = .true.
@@ -1182,7 +1182,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
      !
      !--timestepping
      !
-     case('q','Q',achar(27))
+     case('q','Q',achar(27),achar(3))
         iadvance = -666
         print*,'quitting...'
         iexit = .true.
@@ -1758,7 +1758,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !
      !--timestepping
      !
-     case('q','Q',achar(27))
+     case('q','Q',achar(27),achar(3))
         iadvance = -666
         print*,'quitting...'
         iexit = .true.
