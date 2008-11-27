@@ -1,3 +1,15 @@
+!------------------------------------------------------------------------
+!
+! This file is part of the SPLASH visualisation package for SPH.
+! (c) 2002-2008 Daniel Price
+!
+! This is the core routine for the whole code.
+! Drives the plotting pipeline, ie. calls all the routines which
+! do the work.
+!
+! I am gradually trying to make this routine more modular...
+!
+!------------------------------------------------------------------------
 module timestep_plotting
   use params, only:maxplot
   implicit none
@@ -2477,7 +2489,7 @@ contains
     endif
     
     !--plot shapes
-    if (nshapes.gt.0) call plot_shapes()
+    if (nshapes.gt.0) call plot_shapes(ipanel,irow,icolumn)
     
     !--restore colour index
     call pgsci(icoloursave)

@@ -16,6 +16,7 @@ module shapes
    integer :: linewidth
    integer :: ifillstyle
    integer :: iunits
+   integer :: iplotonpanel
    real :: xpos
    real :: ypos
    real :: xlen,ylen
@@ -36,7 +37,7 @@ module shapes
  
 contains
 !-----------------------------------------------------------------
-! shape submenu
+! shape default settings
 !-----------------------------------------------------------------
 subroutine defaults_set_shapes
  implicit none
@@ -48,6 +49,7 @@ subroutine defaults_set_shapes
  shape(:)%linewidth = 1
  shape(:)%ifillstyle = 2
  shape(:)%iunits = 1
+ shape(:)%iplotonpanel = 0
  shape(:)%xpos = 0.5
  shape(:)%ypos = 0.5
  shape(:)%xlen = 1.
@@ -63,6 +65,7 @@ end subroutine defaults_set_shapes
 ! shape submenu
 !-----------------------------------------------------------------
 subroutine submenu_shapes()
+ use params, only:maxplot
  use prompting, only:prompt
  implicit none
  integer :: i,ishape,itype,indexi,iunits
@@ -122,7 +125,7 @@ subroutine submenu_shapes()
           poslabel = 'centre'
        case(5) ! line
           call prompt('enter line length (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
-          call prompt('enter angle of line in degrees (0 = horizontal) ',shape(ishape)%angle)
+          call prompt('enter angle of line in degrees (0.0 = horizontal) ',shape(ishape)%angle)
           poslabel = 'starting'
        case(6) ! text
           call prompt('enter text string ',shape(ishape)%text)
@@ -145,6 +148,17 @@ subroutine submenu_shapes()
        endif
        call prompt('enter '//trim(labelshapetype(itype))//' colour (0=background, 1=foreground, 2-16=pgplot colour indices)', &
                    shape(ishape)%icolour,0,16)
+
+       print "(/,'  0 : plot on every panel ',/,"// &
+              "' -1 : plot on first row only ',/,"// &
+              "' -2 : plot on first column only ',/,"// &
+              "'  n : plot on nth panel only ')"
+
+       !--make sure the current setting falls within the allowed bounds
+       if (shape(ishape)%iplotonpanel.lt.-2 .or. &
+           shape(ishape)%iplotonpanel.gt.maxplot) shape(:)%iplotonpanel = 0
+
+       call prompt('Enter selection ',shape(ishape)%iplotonpanel,-2,maxplot)
     endif
  enddo
  nshapes = ishape - 1
@@ -159,9 +173,11 @@ subroutine submenu_shapes()
  return
 end subroutine submenu_shapes
 
-subroutine plot_shapes
+subroutine plot_shapes(ipanel,irow,icolumn)
  implicit none
- integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle,i,iunits
+ integer, intent(in) :: ipanel,irow,icolumn
+ integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle
+ integer :: i,iunits,iplotonthispanel
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot
  real :: xpos,ypos,xlen,ylen,angle,dx,dy
  real, dimension(2) :: xline,yline
@@ -183,62 +199,70 @@ subroutine plot_shapes
 !--query window size in a variety of other units
 !
  do i=1,nshapes
-    call pgsci(shape(i)%icolour)
-    call pgsls(shape(i)%linestyle)
-    call pgslw(shape(i)%linewidth)
-    call pgsfs(shape(i)%ifillstyle)
 
-    xpos = shape(i)%xpos
-    ypos = shape(i)%ypos
-    xlen = shape(i)%xlen
-    ylen = shape(i)%ylen
-    angle = shape(i)%angle*(pi/180.)
-    
-    iunits = shape(i)%iunits
-    select case(iunits)
-    case(2) ! translate from viewport coordinates into plot coordinates
-       xpos = xmin + xpos*dxplot
-       ypos = ymin + ypos*dyplot
-       xlen = xlen*dxplot
-       ylen = ylen*dyplot
-    case(1)
-       ! do nothing here
-    case default ! should never happen
-       print "(a)",' INTERNAL ERROR: unknown units whilst plotting shape'
-    end select
-    
-    print "(a)",'> plotting shape: '//trim(labelshapetype(shape(i)%itype))
-    select case(shape(i)%itype)
-    case(1,2) ! square, rectangle
-       if (xlen.gt.dxplot .or. ylen.gt.dyplot) then
-          print "(2x,a)",'Error: shape size exceeds plot dimensions: not plotted'
-       else
-          call pgrect(xpos-0.5*xlen,xpos+0.5*xlen,ypos-0.5*ylen,ypos + 0.5*ylen)   
-       endif
-    case(3) ! arrow
-       dx = xlen*cos(angle)
-       dy = xlen*sin(angle)
-       !--do not plot if length > size of plot
-       if (dx.gt.dxplot .or. dy.gt.dyplot) then
-          print "(2x,a)",'Error: arrow length exceeds plot dimensions: arrow not plotted'
-       else
-          call pgarro(xpos-dx,ypos-dy,xpos,ypos)
-       endif
-    case(4) ! circle
-       if (xlen.gt.dxplot .or. xlen.gt.dyplot) then
-          print "(2x,a)",'Error: circle radius exceeds plot dimensions: circle not plotted'
-       else
-          call pgcirc(xpos,ypos,xlen)
-       endif
-    case(5) ! line
-       xline(1) = xpos
-       yline(1) = ypos
-       xline(2) = xpos + xlen*cos(angle)
-       yline(2) = ypos + xlen*sin(angle)
-       call pgline(2,xline,yline)
-    case(6) ! text
-       call pgptext(xpos,ypos,angle,shape(i)%fjust,trim(shape(i)%text))
-    end select
+    iplotonthispanel = shape(i)%iplotonpanel
+    if (iplotonthispanel.eq.0 &
+       .or.(iplotonthispanel.gt.0  .and. ipanel.eq.iplotonthispanel) &
+       .or.(iplotonthispanel.eq.-1 .and. irow.eq.1) &
+       .or.(iplotonthispanel.eq.-2 .and. icolumn.eq.1)) then
+
+       call pgsci(shape(i)%icolour)
+       call pgsls(shape(i)%linestyle)
+       call pgslw(shape(i)%linewidth)
+       call pgsfs(shape(i)%ifillstyle)
+
+       xpos = shape(i)%xpos
+       ypos = shape(i)%ypos
+       xlen = shape(i)%xlen
+       ylen = shape(i)%ylen
+       angle = shape(i)%angle*(pi/180.)
+
+       iunits = shape(i)%iunits
+       select case(iunits)
+       case(2) ! translate from viewport coordinates into plot coordinates
+          xpos = xmin + xpos*dxplot
+          ypos = ymin + ypos*dyplot
+          xlen = xlen*dxplot
+          ylen = ylen*dyplot
+       case(1)
+          ! do nothing here
+       case default ! should never happen
+          print "(a)",' INTERNAL ERROR: unknown units whilst plotting shape'
+       end select
+
+       print "(a)",'> plotting shape: '//trim(labelshapetype(shape(i)%itype))
+       select case(shape(i)%itype)
+       case(1,2) ! square, rectangle
+          if (xlen.gt.dxplot .or. ylen.gt.dyplot) then
+             print "(2x,a)",'Error: shape size exceeds plot dimensions: not plotted'
+          else
+             call pgrect(xpos-0.5*xlen,xpos+0.5*xlen,ypos-0.5*ylen,ypos + 0.5*ylen)   
+          endif
+       case(3) ! arrow
+          dx = xlen*cos(angle)
+          dy = xlen*sin(angle)
+          !--do not plot if length > size of plot
+          if (dx.gt.dxplot .or. dy.gt.dyplot) then
+             print "(2x,a)",'Error: arrow length exceeds plot dimensions: arrow not plotted'
+          else
+             call pgarro(xpos-dx,ypos-dy,xpos,ypos)
+          endif
+       case(4) ! circle
+          if (xlen.gt.dxplot .or. xlen.gt.dyplot) then
+             print "(2x,a)",'Error: circle radius exceeds plot dimensions: circle not plotted'
+          else
+             call pgcirc(xpos,ypos,xlen)
+          endif
+       case(5) ! line
+          xline(1) = xpos
+          yline(1) = ypos
+          xline(2) = xpos + xlen*cos(angle)
+          yline(2) = ypos + xlen*sin(angle)
+          call pgline(2,xline,yline)
+       case(6) ! text
+          call pgptext(xpos,ypos,angle,shape(i)%fjust,trim(shape(i)%text))
+       end select
+    endif
  enddo
  
  call pgsci(icolourprev)
