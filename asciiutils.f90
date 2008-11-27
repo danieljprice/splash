@@ -10,7 +10,7 @@
 !---------------------------------------------------------------------------
 module asciiutils
  implicit none
- public :: read_asciifile,get_ncolumns,ncolumnsline,safename
+ public :: read_asciifile,get_ncolumns,ncolumnsline,safename,cstring
  
  private
 
@@ -268,5 +268,20 @@ function safename(string)
  enddo
 
 end function safename
+
+!---------------------------------------------------------------------------
+!
+! function to safely convert a string to c format (ie. with a terminating
+! ascii null character)
+!
+!---------------------------------------------------------------------------
+function cstring(string)
+ implicit none
+ character(len=*), intent(in) :: string
+ character(len=len_trim(string)+1) :: cstring
+
+ cstring = trim(string)//achar(0)
+
+end function cstring
 
 end module asciiutils
