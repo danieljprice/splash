@@ -278,7 +278,7 @@ end function safename
 function cstring(string)
  implicit none
  character(len=*), intent(in) :: string
- character(len=len_trim(string)+1) :: cstring
+ character(len=len(string)+1) :: cstring
 
  cstring = trim(string)//achar(0)
 
