@@ -20,7 +20,7 @@ void read_flash_hdf5_header(char *filename, float *time, int *npart, int *ncol, 
    herr_t    status;
    herr_t    HDF5_error = -1;
 
-   printf(" opening %s \n",filename);
+   //printf(" opening %s \n",filename);
    file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
    if (file_id == HDF5_error)
       { printf("ERROR opening %s \n",filename); *ierr = 1; return; }
@@ -42,7 +42,7 @@ void read_flash_hdf5_header(char *filename, float *time, int *npart, int *ncol, 
    *npart = HDFxdims[0];
    *ncol = HDFxdims[1];
    //printf(" number of particles %i \n",HDFxdims[0]);
-   printf(" number of columns %i \n",HDFxdims[1]);
+   //printf(" number of columns = %i \n",HDFxdims[1]);
 
    status = H5Sclose(dataspace_id);
    if (status == HDF5_error) { printf("ERROR closing dataspace \n"); *ierr = 4; }
@@ -66,7 +66,7 @@ void read_flash_hdf5_header(char *filename, float *time, int *npart, int *ncol, 
    if (rank > 4) { printf("RANK of dataset exceeds array bounds \n"); *ierr = 3; return; }
    
    int lenheader = HDFxdims[0];
-   printf(" header contains %i items \n",lenheader);
+   //printf(" header contains %i items \n",lenheader);
    
    typedef struct h_t {
        char     name[80];
@@ -96,7 +96,7 @@ void read_flash_hdf5_header(char *filename, float *time, int *npart, int *ncol, 
    
    }
 
-void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *ierr)
+void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired, int *ierr)
    {
    hid_t     file_id;
    hid_t     dataset_id;
@@ -105,7 +105,7 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *ierr)
    herr_t    status;
    herr_t    HDF5_error = -1;
 
-   printf(" re-opening %s \n",filename);
+   //printf(" re-opening %s \n",filename);
    file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
    if (file_id == HDF5_error)
       { printf("ERROR re-opening %s \n",filename); *ierr = 1; return; }
@@ -157,22 +157,24 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *ierr)
     *
     */
    for (i=1;i<*ncol;i++) {
-       offset[0] = 0;
-       offset[1] = i;
-       //printf(" getting column %i offset %i \n",i,offset[0]);
-       //printf(" getting column %i count %i \n",i,count[0]);
-   
-       status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-       if (status == HDF5_error) { printf("ERROR creating hyperslab \n"); *ierr = 4; }
-       
-       if (!H5Sselect_valid(dataspace_id)) { printf("ERROR selecting hyperslab \n"); *ierr = 5; }
-       //printf(" getting column %i count %i \n",i,count[0]);
-       
-       H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
-       
-       // call Fortran back, sending values in temp array to fill into the main splash dat array
-       
-       receive_data_fromc(&i,&*npart,temp,tempid);
+       if (i != 5 && isrequired[i-1]==1) {  // skip column 5 which is the particle ID, above
+          offset[0] = 0;
+          offset[1] = i;
+          //printf(" getting column %i offset %i \n",i,offset[0]);
+          //printf(" getting column %i count %i \n",i,count[0]);
+
+          status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+          if (status == HDF5_error) { printf("ERROR creating hyperslab \n"); *ierr = 4; }
+
+          if (!H5Sselect_valid(dataspace_id)) { printf("ERROR selecting hyperslab \n"); *ierr = 5; }
+          //printf(" getting column %i count %i \n",i,count[0]);
+
+          H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
+
+          // call Fortran back, sending values in temp array to fill into the main splash dat array
+
+          receive_data_fromc(&i,&*npart,temp,tempid);
+       }
    }
    
    // deallocate memory

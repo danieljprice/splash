@@ -33,32 +33,62 @@ module flash_hdf5read
     integer, intent(out) :: npart,ncol,ierr
    end subroutine read_flash_hdf5_header
 
-   subroutine read_flash_hdf5_data(filename,npart,ncol,ierr) bind(c)
+   subroutine read_flash_hdf5_data(filename,npart,ncol,isrequired,ierr) bind(c)
     character(len=*), intent(in) :: filename
+    integer, dimension(ncol), intent(in) :: isrequired
     integer, intent(in) :: npart,ncol
     integer, intent(out) :: ierr
    end subroutine read_flash_hdf5_data
  end interface
+
+contains
+
+!
+! function which maps from the order in which columns
+! are read from the HDF5 file to the order in which they
+! are stored in SPLASH. Differs because there are a couple
+! of useless arrays that we do not read/store (ie. first column 
+! is on/off tag, 5th column is particle ID which we use to order
+! the particles)
+!
+ integer function icolshuffle(icol)
+   implicit none
+   integer, intent(in) :: icol
+
+   select case(icol)
+   case(1)
+      icolshuffle = 4
+   case(2,3,4)
+      icolshuffle = icol - 1
+   case(5)
+      icolshuffle = 0
+   case default
+      icolshuffle = icol
+   end select
+
+ end function icolshuffle
 
 end module flash_hdf5read
 
 subroutine read_data(dumpfile,indexstart,nstepsread)
   use particle_data, only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc
+  use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,lowmemorymode
   use mem_allocation, only:alloc
   use flash_hdf5read
   use asciiutils, only:cstring
   use labels, only:ih,irho
+  use system_utils, only:renvironment
   implicit none
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: dumpfile
   
-  integer :: j,ncolstep
+  integer :: i,j,ncolstep,ilastrequired
   integer :: nprint,npart_max,nstep_max,ierr
+  integer, dimension(0:maxplot) :: isrequired
   logical :: iexist
-  real :: tread,hfact
+  real :: tread,hfact,totmass
 
   nstepsread = 0
   nstep_max = 0
@@ -84,14 +114,26 @@ subroutine read_data(dumpfile,indexstart,nstepsread)
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   
   call read_flash_hdf5_header(cstring(dumpfile),tread,nprint,ncolstep,ierr)
-  print "(a,i10,a,1pe10.3)",' npart = ',nprint,' time = ',tread
+  ncolstep = ncolstep - 1   ! subtract particle ID column
+  print "(a,i10,a,1pe10.3,a,0pi2)",' npart = ',nprint,' time = ',tread
+  
+  call set_labels
+  if (ih.gt.0 .and. required(ih)) required(irho) = .true.
 !
 !--(re)allocate memory
 !
   nstep_max = max(nstep_max,indexstart,1)
   if (.not.allocated(dat) .or. (nprint.gt.maxpart) .or. (ncolstep+ncalc).gt.maxcol) then
      npart_max = max(npart_max,nprint,maxpart)
-     call alloc(npart_max,nstep_max,max(ncolstep+ncalc,maxcol))
+     if (lowmemorymode) then
+        ilastrequired = 0
+        do i=1,ncolstep+ncalc
+           if (required(i)) ilastrequired = i
+        enddo
+        call alloc(npart_max,j,ilastrequired)
+     else
+        call alloc(npart_max,nstep_max,max(ncolstep+ncalc,maxcol))
+     endif
   endif
 !
 !--set the necessary parameters
@@ -100,43 +142,68 @@ subroutine read_data(dumpfile,indexstart,nstepsread)
   nstepsread = nstepsread + 1
   npartoftype(:,j) = 0
   npartoftype(1,j) = nprint
-  masstype(1,j) = 1.0/real(nprint)
+
+  totmass = renvironment('FSPLASH_TOTMASS',-1.0)
+  if (totmass.gt.0.) then
+     print "(a,1pe10.3)",' setting total mass for all particles using FSPLASH_TOTMASS=',totmass 
+  else
+     print "(a)",' FSPLASH_TOTMASS not set, assuming total mass of all particles is 1.0'
+     totmass = 1.0
+  endif
+  masstype(1,j) = totmass/real(nprint)
   time(j) = tread
   gamma(j) = 5./3.
+!
+!--map "required" array to integers
+!  also remap to the order read from the c data read
+!
+  isrequired(:) = 0
+  do i=1,ncolstep
+     if (icolshuffle(i).ne.0 .and. required(icolshuffle(i))) then
+        !print*,'required '//trim(label(icolshuffle(i)))//' so must read ',i
+        isrequired(i) = 1
+     endif
+  enddo
+
+  if (.not.all(required(1:ncolstep))) then
+     ipartialread = .true.
+  else
+     ipartialread = .false.
+  endif
 !
 !--now read the timestep data in the dumpfile
 !  (to avoid Fortran calling C with the array, we don't actually
 !   pass the dat array here - instead we get c to
 !   "call back" to fill the dat array, below)
 !
-  call read_flash_hdf5_data(cstring(dumpfile),nprint,ncolstep,ierr)
+  call read_flash_hdf5_data(cstring(dumpfile),nprint,ncolstep+1,isrequired(1:ncolstep+1),ierr)
   
-  call set_labels
-  hfact = 1.2
-  print "(a,i2)",' creating smoothing length in column ',ih
-  dat(1:nprint,ih,j) = hfact*(masstype(1,j)/dat(1:nprint,irho,j))**(1./3.)
-  
+  if (required(ih)) then
+     hfact = 1.2
+     hfact = renvironment('FSPLASH_HFACT',1.2)
+     print "(a,i2,a,f5.2,a)",' creating smoothing length in column ',ih,' using h =',hfact,'(m/rho)^(1/3)'
+     dat(1:nprint,ih,j) = hfact*(masstype(1,j)/dat(1:nprint,irho,j))**(1./3.)
+  endif
      
 return
 end subroutine read_data
 
 subroutine receive_data_fromc(icol,npart,temparr,id) bind(c)
   use particle_data, only:dat
+  use flash_hdf5read, only:icolshuffle
+  use labels, only:label
   implicit none
   integer, intent(in) :: icol,npart
   double precision, dimension(npart), intent(in) :: temparr
   integer, dimension(npart), intent(in) :: id
   integer :: i,icolput
   
-  select case(icol)
-  case(1)
-     icolput = 4
-  case(2,3,4)
-     icolput = icol - 1
-  case default
-     icolput = icol
-  end select
-  print*,'reading column = ',icol+1,'->',icolput
+  icolput = icolshuffle(icol)
+  if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
+     print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
+     return
+  endif
+  print "(a,i2,a)",' reading column ',icol,' -> '//trim(label(icolput))
 
   do i=1,npart
      if (id(i).lt.1 .or. id(i).gt.npart) then
@@ -168,9 +235,10 @@ subroutine set_labels
 
   do i=1,ndim
      ix(i) = i
+     label(i) = labelcoord(i,1)
   enddo
   irho = 4
-  ih = 9
+  ih = 5
   ivx = 6
   ipmass = 0
   label(irho) = 'density'
