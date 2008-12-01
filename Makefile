@@ -17,16 +17,25 @@ KNOWN_SYSTEM=no
 #
 F90C= 
 F90FLAGS=
-ifeq ($(findstring 64,$(MACHTYPE)),64)
-   X11LIBS= -L/usr/X11R6/lib64 -lX11
-else
-   X11LIBS= -L/usr/X11R6/lib -lX11
-endif
+#
+# change the line below if SPLASH does not find the X11 libraries
+# (some settings of the SYSTEM variable for specific machines overwrite this)
+#
+# X11LIBS= -L/usr/X11R6/lib64 -lX11
+X11LIBS= -L/usr/X11R6/lib -lX11
 #
 # change the line below depending on where/how you have installed PGPLOT
 # (some settings of the SYSTEM variable for specific machines overwrite this)
 #
 PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot -lpng
+#
+# If you need the HDF5 libraries, edit the lines below
+# possibly adding a -L/libpath/ and a -I/includepath/
+#
+HDF5LIBS= -lhdf5
+HDFINCLUDE=
+#HDF5LIBS= -L/opt/local/lib -lhdf5
+#HDFINCLUDE= -I/opt/local/include
 #
 # add one of the lines below if PGPLOT was compiled with a different
 # compiler to the one you are using. May also need -L/dir/ for the directory
@@ -88,6 +97,7 @@ ifeq ($(SYSTEM),g95)
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
    PARALLEL= no
+   CC = gcc
    KNOWN_SYSTEM=yes
 endif
 
@@ -361,6 +371,12 @@ ifeq ($(DEV),yes)
     EXT= -dev
 endif
 
+# link with hdf5 libraries
+ifeq ($(HDF5),yes)
+    CCFLAGS += $(HDF5INCLUDE)
+    LDFLAGS += $(HDF5LIBS)
+endif
+
 # Fortran flags same as F90
 FC = $(F90C)
 FFLAGS = $(F90FLAGS)
@@ -376,6 +392,8 @@ FFLAGS = $(F90FLAGS)
 	$(F90C) $(FPPFLAGS) $(F90FLAGS) -c $< -o $@
 %.o : %.f95
 	$(F90C) $(F90FLAGS) -c $< -o $@
+%.o : %.c
+	$(CC) -c $(CCFLAGS) $< -o $@
 
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
@@ -422,56 +440,64 @@ OBJECTS= $(OBJECTS1:.F90=.o)
 all: ascii gadget vine sphNG srosph dragon tipsy
 
 ascii: checksystem $(OBJECTS) read_data_ascii.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o asplash$(EXT) $(OBJECTS) read_data_ascii.o
+	$(F90C) $(F90FLAGS) -o asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS)
 #--build universal binary on mac cluster
    ifeq ($(SYSTEM), maccluster)
 	lipo -create asplash_ppc asplash_i386 -output asplash || cp asplash$(EXT) asplash
    endif
 
 mbatesph: checksystem $(OBJECTS) read_data_mbate.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o bsplash $(OBJECTS) read_data_mbate.o
+	$(F90C) $(F90FLAGS) -o bsplash $(OBJECTS) read_data_mbate.o $(LDFLAGS)
 
 gadget: checksystem $(OBJECTS) read_data_gadget.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o gsplash $(OBJECTS) read_data_gadget.o
+	$(F90C) $(F90FLAGS) -o gsplash $(OBJECTS) read_data_gadget.o $(LDFLAGS)
 
 gadget_jsb: checksystem $(OBJECTS) read_data_gadget_jsb.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o gsplash_jsb $(OBJECTS) read_data_gadget_jsb.o
+	$(F90C) $(F90FLAGS) -o gsplash_jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
 
 bauswein: checksystem $(OBJECTS) read_data_bauswein.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o bsplash $(OBJECTS) read_data_bauswein.o 
+	$(F90C) $(F90FLAGS) -o bsplash $(OBJECTS) read_data_bauswein.o $(LDFLAGS)
 
 dragon: checksystem $(OBJECTS) read_data_dragon.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o dsplash $(OBJECTS) read_data_dragon.o
+	$(F90C) $(F90FLAGS) -o dsplash $(OBJECTS) read_data_dragon.o $(LDFLAGS)
 
 vine: checksystem $(OBJECTS) read_data_VINE.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o vsplash $(OBJECTS) read_data_VINE.o
+	$(F90C) $(F90FLAGS) -o vsplash $(OBJECTS) read_data_VINE.o $(LDFLAGS)
 
 ndspmhd: checksystem $(OBJECTS) read_data_dansph.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o splash $(OBJECTS) read_data_dansph.o
+	$(F90C) $(F90FLAGS) -o splash $(OBJECTS) read_data_dansph.o $(LDFLAGS)
 
 dansph: checksystem $(OBJECTS) read_data_dansph_old.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o dsplash $(OBJECTS) read_data_dansph_old.o
+	$(F90C) $(F90FLAGS) -o dsplash $(OBJECTS) read_data_dansph_old.o $(LDFLAGS)
 
 foulkes: checksystem $(OBJECTS) read_data_foulkes.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o fsplash $(OBJECTS) read_data_foulkes.o 
+	$(F90C) $(F90FLAGS) -o fsplash $(OBJECTS) read_data_foulkes.o $(LDFLAGS)
+
+flash_hdf5: checksystem $(OBJECTS) read_data_flash_hdf5.o read_data_flash_hdf5_utils.o
+	$(F90C) $(F90FLAGS) -o fsplash $(OBJECTS) read_data_flash_hdf5_utils.o read_data_flash_hdf5.o $(LDFLAGS)
+
+flashhdf5:
+	$(MAKE) flash_hdf5 HDF5=yes
+
+flash: flashhdf5
 
 jjm: checksystem $(OBJECTS) read_data_jjm.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o jsplash $(OBJECTS) read_data_jjm.o 
+	$(F90C) $(F90FLAGS) -o jsplash $(OBJECTS) read_data_jjm.o $(LDFLAGS)
 
 jules: checksystem $(OBJECTS) read_data_jules.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o jsplash $(OBJECTS) read_data_jules.o 
+	$(F90C) $(F90FLAGS) -o jsplash $(OBJECTS) read_data_jules.o $(LDFLAGS)
 
 scwsph: checksystem $(OBJECTS) read_data_scw.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o wsplash $(OBJECTS) read_data_scw.o
+	$(F90C) $(F90FLAGS) -o wsplash $(OBJECTS) read_data_scw.o $(LDFLAGS)
 
 srosph: checksystem $(OBJECTS) read_data_sro.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o rsplash $(OBJECTS) read_data_sro.o 
+	$(F90C) $(F90FLAGS) -o rsplash $(OBJECTS) read_data_sro.o $(LDFLAGS)
 
 spyros: checksystem $(OBJECTS) read_data_spyros.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ssplash $(OBJECTS) read_data_spyros.o
+	$(F90C) $(F90FLAGS) -o ssplash $(OBJECTS) read_data_spyros.o $(LDFLAGS)
 
 sphNG: checksystem $(OBJECTS) read_data_sphNG.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ssplash$(EXT) $(OBJECTS) read_data_sphNG.o
+	$(F90C) $(F90FLAGS) -o ssplash$(EXT) $(OBJECTS) read_data_sphNG.o $(LDFLAGS)
 #--build universal binary on mac cluster
    ifeq ($(SYSTEM), maccluster)
 	lipo -create ssplash_ppc ssplash_i386 -output ssplash || cp ssplash$(EXT) ssplash
@@ -480,16 +506,16 @@ sphNG: checksystem $(OBJECTS) read_data_sphNG.o
 RSPH: rsph
 
 rsph: checksystem $(OBJECTS) read_data_rsph.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o rsplash $(OBJECTS) read_data_rsph.o
+	$(F90C) $(F90FLAGS) -o rsplash $(OBJECTS) read_data_rsph.o $(LDFLAGS)
 
 tipsy: checksystem $(OBJECTS) read_data_tipsy.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o tsplash $(OBJECTS) read_data_tipsy.o
+	$(F90C) $(F90FLAGS) -o tsplash $(OBJECTS) read_data_tipsy.o $(LDFLAGS)
 
 vanaverbeke: checksystem $(OBJECTS) read_data_vanaverbeke.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o vsplash $(OBJECTS) read_data_vanaverbeke.o 
+	$(F90C) $(F90FLAGS) -o vsplash $(OBJECTS) read_data_vanaverbeke.o $(LDFLAGS) 
 
 ucla: checksystem $(OBJECTS) read_data_UCLA.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o usplash $(OBJECTS) read_data_UCLA.o 
+	$(F90C) $(F90FLAGS) -o usplash $(OBJECTS) read_data_UCLA.o $(LDFLAGS)
 
 sky: ucla
 
