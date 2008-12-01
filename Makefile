@@ -33,9 +33,9 @@ PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot -lpng
 # possibly adding a -L/libpath/ and a -I/includepath/
 #
 HDF5LIBS= -lhdf5
-HDFINCLUDE=
+HDF5INCLUDE=
 #HDF5LIBS= -L/opt/local/lib -lhdf5
-#HDFINCLUDE= -I/opt/local/include
+#HDF5INCLUDE= -I/opt/local/include
 #
 # add one of the lines below if PGPLOT was compiled with a different
 # compiler to the one you are using. May also need -L/dir/ for the directory
