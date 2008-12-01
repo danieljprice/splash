@@ -230,7 +230,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.12.0beta [12th Nov ''08]'
+  character(len=*), parameter :: version = 'v1.12.0beta [1st Dec ''08]'
 
   !
   ! initialise some basic code variables
@@ -538,16 +538,25 @@ subroutine print_usage(quit)
  print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
  print "(a)",'(c) 2005-2008 Daniel Price '
  print "(a,/)",trim(version)
- print "(a,/)",'Usage: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] '// &
-               '[-lowmem] [-o format] file1 file2 ...'
+ print "(a,/)",'Usage: splash file1 file2 file3...'
+ print "(a,/,a,/)",'Usage with flags: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] ', &
+               '[-lowmem] [-o format] [-x col] [-y col] [-render col] [-cont col] file1 file2 ...'
 
  print "(a,/)",'Command line options:'
- print "(a)",' -p fileprefix   : change prefix to ALL settings files read/written by splash '
- print "(a)",' -d defaultsfile : change name of defaults file read/written by splash'
- print "(a)",' -l limitsfile   : change name of limits file read/written by splash'
- print "(a)",' -e, -ev         : use default options best suited to ascii evolution files (ie. energy vs time)'
- print "(a)",' -lm, -lowmem    : use low memory mode [applies only to sphNG data read at present]'
- print "(a)",' -o pixformat    : dump pixel map in specified format (use just -o for list of formats)'
+ print "(a)",' -p fileprefix     : change prefix to ALL settings files read/written by splash '
+ print "(a)",' -d defaultsfile   : change name of defaults file read/written by splash'
+ print "(a)",' -l limitsfile     : change name of limits file read/written by splash'
+ print "(a)",' -e, -ev           : use default options best suited to ascii evolution files (ie. energy vs time)'
+ print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
+ print "(a)",' -o pixformat      : dump pixel map in specified format (use just -o for list of formats)'
+ print "(/,a,/)",'Command line plotting mode:'
+ print "(a)",' -x column         : specify x plot on command line (ie. do not prompt for x)'
+ print "(a)",' -y column         : specify y plot on command line (ie. do not prompt for y)'
+ print "(a)",' -r[ender] column  : specify rendered quantity on command line (ie. no render prompt)'
+ print "(a)",'                     (will take columns 1 and 2 as x and y if -x and/or -y not specified)'
+ print "(a)",' -vec[tor] column  : specify vector plot quantity on command line (ie. no vector prompt)'
+ print "(a)",' -c[ontour] column : specify contoured quantity on command line (ie. no contour prompt)'
+ print "(a)",' -dev device       : specify PGPLOT device on command line (ie. do not prompt)'
  print "(a)"
  ltemp = issphformat('none')
  print "(a)"

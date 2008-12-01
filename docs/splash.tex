@@ -8,6 +8,7 @@
 \setlength{\oddsidemargin}{-0.5cm}
 \setlength{\evensidemargin}{-0.5cm}
 \setlength{\textwidth}{17cm}
+\newcommmand{\thisyear}{\year}
 
 \begin{titlepage}
 \title{Visualisation of SPH data using SPLASH - v\input{version}}
@@ -106,7 +107,7 @@ Thus it may not be particularly useful for things like water and solids etc. in 
 \end{longtable}
 
 \subsection{Licence}
-SPLASH - a visualisation tool for SPH data \copyright 2005-2007 Daniel Price.
+SPLASH - a visualisation tool for SPH data \copyright 2004-\thisyear Daniel Price.
  This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 \section{Getting started}
@@ -127,8 +128,7 @@ The basic steps for installation are as follows:
 successfully compiles SPLASH and if necessary the PGPLOT libraries.
 
 \subsubsection{ PGPLOT}
- The PGPLOT
-graphics subroutine library is freely downloadable from
+ The PGPLOT graphics subroutine library is freely downloadable from
 \begin{quote}
 \url{http://www.astro.caltech.edu/~tjp/pgplot/}
 \end{quote}
@@ -309,15 +309,43 @@ DSPLASH\_EXTRACOLS & specifies number of extra columns present in the file which
 \begin{verbatim}
 Command line options:
 
- -p fileprefix   : change prefix to ALL settings files read/written by splash 
- -d defaultsfile : change name of defaults file read/written by splash
- -l limitsfile   : change name of limits file read/written by splash
- -e, -ev         : use default options best suited to ascii evolution files (ie. energy vs time)
- -lm, -lowmem    : use low memory mode [applies only to sphNG data read at present]
- -o pixformat    : dump pixel map in specified format (use just -o for list of formats)
+ -p fileprefix     : change prefix to ALL settings files read/written by splash 
+ -d defaultsfile   : change name of defaults file read/written by splash
+ -l limitsfile     : change name of limits file read/written by splash
+ -e, -ev           : use default options best suited to ascii evolution files (ie. energy vs time)
+ -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]
+ -o pixformat      : dump pixel map in specified format (use just -o for list of formats)
 
- to format       : convert SPH data file(s) to different format
-                   example usage "ssplash to ascii" for sphNG to ascii conversion
+Command line plotting mode:
+
+ -x column         : specify x plot on command line (ie. do not prompt for x)
+ -y column         : specify y plot on command line (ie. do not prompt for y)
+ -r[ender] column  : specify rendered quantity on command line (ie. no render prompt)
+                     (will take columns 1 and 2 as x and y if -x and/or -y not specified)
+ -vec[tor] column  : specify vector plot quantity on command line (ie. no vector prompt)
+ -c[ontour] column : specify contoured quantity on command line (ie. no contour prompt)
+ -dev device       : specify PGPLOT device on command line (ie. do not prompt)
+
+ convert mode ("splash to X dumpfiles"): 
+ splash to ascii  : convert SPH data to ascii file dumpfile.ascii
+
+        to binary : convert SPH data to simple unformatted binary dumpfile.binary 
+                     write(1) time,npart,ncolumns
+                     do i=1,npart
+                        write(1) dat(1:ncolumns),itype
+                     enddo
+
+ analysis mode ("splash calc X dumpfiles") on a sequence of dump files: 
+ splash calc energies     : calculate KE,PE,total energy vs time
+                            output to file called 'energy.out'
+        calc massaboverho : mass above a series of density thresholds vs time
+                            output to file called 'massaboverho.out'
+        calc max          : maximum of each column vs. time
+                            output to file called 'maxvals.out'
+        calc min          : minimum of each column vs. time
+                            output to file called 'minvals.out'
+        calc mean         : mean of each column vs. time
+                            output to file called 'meanvals.out'
 \end{verbatim}
 
  Command-line options can be entered in any order on the command line (even after the dump file names). For more information on the convert utility (`splash to ascii') see \S\ref{sec:convert}. For details of the \verb+-o ppm+ or \verb+-o ascii+ option see \S\ref{sec:writepixmap}. For details of the \verb+-ev+ option, see \S\ref{sec:evsplash}.
