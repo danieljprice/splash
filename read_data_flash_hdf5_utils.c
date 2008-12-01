@@ -134,6 +134,24 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *ierr)
    count[0] = *npart;
    count[1] = 1;
    /* 
+    * read particle IDs first so we can sort into ID order
+    */
+   offset[0] = 0;
+   offset[1] = 5;  // ID in column 5: should check this but this is for the future
+   status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+   if (status == HDF5_error) { printf("ERROR creating hyperslab \n"); *ierr = 4; }
+   if (!H5Sselect_valid(dataspace_id)) { printf("ERROR selecting hyperslab \n"); *ierr = 5; }
+   // read ID
+   H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
+   int* tempid = 0;
+   tempid = malloc(*npart*sizeof(int));
+   
+   // convert temp (double) into integer array
+   for (i=0;i<*npart;i++) {
+       tempid[i] = (int)temp[i];
+   }
+
+   /* 
     * start loop from 1 because first array is a useless "tag" array that
     * we don't need to read.
     *
@@ -152,14 +170,13 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *ierr)
        
        H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
        
-       int j = *npart;
-       
        // call Fortran back, sending values in temp array to fill into the main splash dat array
        
-       receive_data_fromc(&i,&*npart,temp);
+       receive_data_fromc(&i,&*npart,temp,tempid);
    }
    
    // deallocate memory
+   free(tempid);
    free(temp);
 
    status = H5Sclose(dataspace_id);

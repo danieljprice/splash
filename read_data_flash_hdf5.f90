@@ -120,11 +120,12 @@ subroutine read_data(dumpfile,indexstart,nstepsread)
 return
 end subroutine read_data
 
-subroutine receive_data_fromc(icol,npart,temparr) bind(c)
+subroutine receive_data_fromc(icol,npart,temparr,id) bind(c)
   use particle_data, only:dat
   implicit none
   integer, intent(in) :: icol,npart
   double precision, dimension(npart), intent(in) :: temparr
+  integer, dimension(npart), intent(in) :: id
   integer :: i,icolput
   
   select case(icol)
@@ -138,7 +139,11 @@ subroutine receive_data_fromc(icol,npart,temparr) bind(c)
   print*,'reading column = ',icol+1,'->',icolput
 
   do i=1,npart
-     dat(i,icolput,1) = real(temparr(i))
+     if (id(i).lt.1 .or. id(i).gt.npart) then
+        print*,' ERROR in particle id = ',id(i)
+     else
+        dat(id(i),icolput,1) = real(temparr(i))
+     endif
   enddo
 
   return
