@@ -99,21 +99,25 @@ subroutine pdfcalc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,it
 !--normalise pdf so total area is unity
 !
  print*,'normalisation factor = ',totprob ! =npart*dx for equispaced
- pdf(1:nbins) = pdf(1:nbins)/totprob
- 
- call write_pdf(nbins,xbin,pdf,labelx,itransx,volweighted)
-!
-!--return min and max for adaptive plot limit setting
-!  (exclude zero as min)
-! 
- pdfmin = minval(pdf(1:nbins),mask=(pdf(1:nbins).gt.0.))
- pdfmax = maxval(pdf(1:nbins))
-!
-!--apply transformations to y data
-!
- if (itransy.gt.0) then
-    call transform(pdf,itransy)
-    call transform_limits(pdfmin,pdfmax,itransy)
+ if (totprob.le.0.) then
+    print "(a)",' error in normalisation factor: returning non-normalised PDF'
+ else
+    pdf(1:nbins) = pdf(1:nbins)/totprob
+
+    call write_pdf(nbins,xbin,pdf,labelx,itransx,volweighted)
+   !
+   !--return min and max for adaptive plot limit setting
+   !  (exclude zero as min)
+   ! 
+    pdfmin = minval(pdf(1:nbins),mask=(pdf(1:nbins).gt.0.))
+    pdfmax = maxval(pdf(1:nbins))
+   !
+   !--apply transformations to y data
+   !
+    if (itransy.gt.0) then
+       call transform(pdf,itransy)
+       call transform_limits(pdfmin,pdfmax,itransy)
+    endif
  endif
  
 end subroutine pdfcalc
