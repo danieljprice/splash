@@ -228,7 +228,7 @@ end subroutine receive_data_fromc
 subroutine set_labels
   use labels, only:label,labeltype,ix,irho,ipmass,ih,ivx,iamvec,labelvec
   use params
-  use settings_data, only:ntypes,ndim,ndimV,UseTypeInRenderings
+  use settings_data, only:ntypes,ndim,ndimV,UseTypeInRenderings,ncolumns
   use geometry, only:labelcoord
   implicit none
   integer :: i
@@ -237,12 +237,18 @@ subroutine set_labels
      ix(i) = i
      label(i) = labelcoord(i,1)
   enddo
-  irho = 4
   ih = 5
   ivx = 6
   ipmass = 0
-  label(irho) = 'density'
+  label(4) = 'density (from grid)'
   label(ih) = 'smoothing length'
+  irho = 4
+  if (ncolumns.ge.9) then
+     irho = 9
+     label(9) = 'density (on particles)'
+  else
+     irho = 4
+  endif
   
   if (ivx.gt.0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
