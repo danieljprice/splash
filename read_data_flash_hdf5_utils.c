@@ -91,12 +91,12 @@ void read_flash_hdf5_header(char *filename, float *time, int *npart, int *ncol, 
    status = H5Dclose(dataset_id);
    if (status == HDF5_error) { printf("ERROR closing dataset \n"); *ierr = 4; }
 
-   // Additionally check if an SPH density data set is present
-   if (checkfordataset(file_id,"SPH density")==1) {
+   // Additionally check if an SPH_density data set is present
+   if (checkfordataset(file_id,"SPH_density")==1) {
       printf(" file contains SPH-calculated densities \n");
       *ncol += 1;
    } else {
-      printf(" file does not contain SPH density data set \n");
+      printf(" file does not contain SPH_density data set \n");
    }
    
    status = H5Fclose( file_id );
@@ -126,12 +126,12 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired
 
    dataspace_id = H5Dget_space(dataset_id);
 
-   // Additionally check if an SPH density data set is present
+   // Additionally check if an SPH_density data set is present
     
    int ncolloop;
-   int gotSPHdata = checkfordataset(file_id,"SPH density");
+   int gotSPHdata = checkfordataset(file_id,"SPH_density");
    if (gotSPHdata==0) {
-      //printf(" file does not contain SPH density data set \n");
+      //printf(" file does not contain SPH_density data set \n");
       ncolloop = *ncol;
    } else {
       //printf(" file contains SPH-calculated densities \n");
@@ -203,20 +203,20 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired
    status = H5Dclose(dataset_id);
    if (status == HDF5_error) { printf("ERROR closing dataset \n"); *ierr = 4; }
    
-   // Additionally read SPH density data set if it is present
+   // Additionally read SPH_density data set if it is present
    if (gotSPHdata==1) {
-      SPHdataset_id = H5Dopen(file_id,"SPH density");
+      SPHdataset_id = H5Dopen(file_id,"SPH_density");
 
-      printf(" reading SPH density data set \n");
+      printf(" reading SPH_density data set \n");
 
       status = H5Dread(SPHdataset_id,H5T_NATIVE_DOUBLE,H5S_ALL,H5S_ALL,H5P_DEFAULT,temp);
-      if (status == HDF5_error) { printf("ERROR reading SPH density dataspace \n"); *ierr = 3; }
+      if (status == HDF5_error) { printf("ERROR reading SPH_density dataspace \n"); *ierr = 3; }
 
       // call Fortran back, sending values in temp array to fill into the main splash dat array
       receive_data_fromc(&ncolloop,&*npart,temp,tempid);
 
       status = H5Dclose(SPHdataset_id);
-      if (status == HDF5_error) { printf("ERROR closing SPH density dataset \n"); *ierr = 4; }
+      if (status == HDF5_error) { printf("ERROR closing SPH_density dataset \n"); *ierr = 4; }
    }
    
    // deallocate memory
@@ -241,11 +241,11 @@ void write_tracer_particle_density(char *filename, int *npart, double *dens, int
    if (file_id == HDF5_error)
       { printf("ERROR opening %s for write \n",filename); *ierr = 1; return; }
    
-   if (checkfordataset(file_id,"SPH density")==1) {
+   if (checkfordataset(file_id,"SPH_density")==1) {
    // SPH data set already exists, we are going to overwrite it
-      dataset_id = H5Dopen(file_id,"SPH density");
+      dataset_id = H5Dopen(file_id,"SPH_density");
       if (dataset_id == HDF5_error)
-         { printf("ERROR opening SPH density data set for overwrite \n"); *ierr = 2; return; }
+         { printf("ERROR opening SPH_density data set for overwrite \n"); *ierr = 2; return; }
    
    } else {
    // create new dataspace for tracer particle density
@@ -253,9 +253,9 @@ void write_tracer_particle_density(char *filename, int *npart, double *dens, int
       nparth[0] = *npart;
       memspace_id = H5Screate_simple(1,nparth,NULL);
  
-      dataset_id = H5Dcreate(file_id,"SPH density",H5T_NATIVE_DOUBLE,memspace_id,H5P_DEFAULT);
+      dataset_id = H5Dcreate(file_id,"SPH_density",H5T_NATIVE_DOUBLE,memspace_id,H5P_DEFAULT);
       if (dataset_id == HDF5_error)
-         { printf("ERROR creating SPH density data set \n"); *ierr = 2; return; }
+         { printf("ERROR creating SPH_density data set \n"); *ierr = 2; return; }
    }
 
    // write dataset to file
@@ -287,7 +287,7 @@ int checkfordataset(hid_t file_id, char *datasetname)
     hsize_t ndatasets[1];
     H5Gget_num_objs(file_id, ndatasets);
     
-    // loop over all datasets looking for the "SPH density" dataset
+    // loop over all datasets looking for the "SPH_density" dataset
     // set function value to true (1) if it is present
     
     int i;
