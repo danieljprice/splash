@@ -354,19 +354,20 @@ subroutine menu
    
    call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
 
-   isamex = all(multiplotx(1:nyplotmulti).eq.multiplotx(1))
-   call prompt('Same x axis for all?',isamex)
-   if (isamex) then
-      call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
-      multiplotx(2:nyplotmulti) = multiplotx(1)
-   endif
    isamey = all(multiploty(1:nyplotmulti).eq.multiploty(1))
    if (ndim.ge.2) call prompt('Same y axis for all?',isamey)
    if (isamey) then
       call prompt('Enter y axis for all plots',multiploty(1),1,numplot)
       multiploty(2:nyplotmulti) = multiploty(1)
    endif
-
+   
+   isamex = all(multiplotx(1:nyplotmulti).eq.multiplotx(1))
+   call prompt('Same x axis for all?',isamex)
+   if (isamex) then
+      call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
+      multiplotx(2:nyplotmulti) = multiplotx(1)
+   endif
+   
    anycoordplot = .false.
    do i=1,nyplotmulti
       print*,'-------------- Plot number ',i,' --------------'
@@ -382,7 +383,9 @@ subroutine menu
          elseif (multiploty(i).eq.itoomre) then
             print "(a)",' setting x axis to r for Toomre Q plot'
             multiplotx(i) = 1
-         elseif (.not.isamex) then
+         elseif (multiploty(i).eq.ipdf) then
+            call prompt(' enter x axis for PDF calculation ',multiplotx(i),1,ndataplots)         
+         elseif(.not.isamex) then
             multiplotx(i) = multiploty(i)
          endif
       endif
