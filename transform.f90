@@ -10,6 +10,7 @@
 !  3) 1/x
 !  4) sqrt(x)     
 !  5) x^2
+!  6) ln(x)
 !
 ! * combinations of transformations are done when the 
 !   input number is > 10 (e.g. 321 means 1/x, then abs, then log10)
@@ -120,6 +121,12 @@ subroutine transform(array,itrans,errval)
            where (arraytemp.ne.errvali)
               arraytemp = arraytemp**2   
            end where          
+        case('6')
+           where (arraytemp > 0. .and. arraytemp.ne.errvali)
+              arraytemp = log(arraytemp)
+           elsewhere
+              arraytemp = errvali
+           end where
         end select
      enddo
 
@@ -232,6 +239,10 @@ subroutine transform_inverse(array,itrans,errval)
            elsewhere
               arraytemp = errvali
            end where
+        case('6')
+           where (arraytemp.ne.errvali)
+              arraytemp = exp(arraytemp)
+           end where
         end select
      enddo
 
@@ -330,6 +341,12 @@ subroutine transform2(array,itrans,errval)
            where (arraytemp.ne.errvali)
               arraytemp = arraytemp**2
            end where     
+        case('6')
+           where (arraytemp > 0. .and. arraytemp.ne.errvali)
+              arraytemp = log(arraytemp)
+           elsewhere
+              arraytemp = errvali
+           end where
         end select
      enddo
 
@@ -422,6 +439,19 @@ subroutine transform_limits(xmin,xmax,itrans)
         case('5')
            xmintemp = xmintemp**2
            xmaxtemp = xmaxtemp**2
+        case('6')
+           if (xmintemp > 0) then
+              xmintemp = log(xmintemp)
+           elseif (xmintemp.eq.0) then
+              print*,' ln(xmin = 0): min set to ',zerolog
+              xmintemp = log(zerolog)
+           endif
+           if (xmaxtemp > 0) then
+              xmaxtemp = log(xmaxtemp)
+           elseif (xmaxtemp.eq.0) then
+              print*,' ln(xmax = 0): max set to ',zerolog
+              xmaxtemp = log(zerolog)
+           endif
         end select
      enddo
 
@@ -501,6 +531,9 @@ subroutine transform_limits_inverse(xmin,xmax,itrans)
            else
               xmaxtemp = 0.
            endif
+        case('6')
+           xmintemp = exp(xmintemp)
+           xmaxtemp = exp(xmaxtemp)
         end select
      enddo
 
@@ -553,6 +586,8 @@ function transform_label(label,itrans)
            temp_label = 'sqrt('//trim(temp_label)//')'
         case(5)
            temp_label = trim(temp_label)//'\u2\d'
+        case(6)
+           temp_label = 'ln '//trim(temp_label)
         case default
            temp_label = trim(temp_label)
         end select
@@ -637,6 +672,8 @@ real function convert_to_ln_fac(itrans)
            xtemp = sqrt(xtemp)
         case('5')
            xtemp = xtemp**2
+        !case('6')
+        !   xtemp = xtemp
         end select
      enddo
   endif
@@ -655,7 +692,7 @@ logical function islogged(itrans)
   character(len=20) :: string
 
   write(string,"(i8)") itrans
-  islogged = (index(string,'1').ne.0)
+  islogged = (index(string,'1').ne.0 .or. index(string,'6').ne.0)
 
 end function islogged
 
