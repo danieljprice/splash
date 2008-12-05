@@ -29,7 +29,7 @@
 !
 !------------------------------------------------------------------------
 module transforms
- integer, parameter, public :: ntrans = 5  ! this is the number of different transformations
+ integer, parameter, public :: ntrans = 6  ! this is the number of different transformations
  real, parameter, private :: zerolog = 1.e-12 ! this is minimum set if xmin = 0 and log
  public :: transform,transform_inverse,trans
  public :: transform_limits,transform_limits_inverse,transform_label
