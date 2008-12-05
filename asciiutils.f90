@@ -221,7 +221,7 @@ integer function ncolumnsline(line)
 
  i = 1
  ncolumnsline = 0
- do while(abs(dummyreal(i)+666.).gt.1.e-10)
+ do while(abs(dummyreal(i)+666.).gt.tiny(0.))
     ncolumnsline = ncolumnsline + 1
     i = i + 1
     if (i.gt.size(dummyreal)) then
