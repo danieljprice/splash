@@ -56,7 +56,7 @@ contains
 subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot)
   use params
   use colours, only:colour_set
-  use labels, only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,itoomre,iutherm
+  use labels, only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,itoomre,iutherm,ipdf
   use limits, only:lim,rangeset
   use multiplot, only:multiplotx,multiploty,irendermulti,icontourmulti, &
                  nyplotmulti,x_secmulti,ivecplotmulti
@@ -73,6 +73,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use settings_powerspec, only:options_powerspec
   use particle_data, only:npartoftype
   use projections3D, only:coltable
+  use pdfs, only:options_pdf
   implicit none
   real, parameter :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
@@ -357,6 +358,12 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      call options_powerspec
   endif
 
+  !!--prompt for options if plotting power spectrum      
+  if (iploty.eq.ipdf .and. .not. imulti &
+     .or. (imulti.and.any(multiploty(1:nyplotmulti).eq.ipdf))) then
+     call options_pdf
+  endif
+
   !!--for fast data read, set which columns are required from the file
   !   (note that required(0)= whatever is a valid statement, just has no effect)
   required = .false.  ! by default, no columns required
@@ -550,7 +557,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use disc, only:disccalc,discplot
   use exactfromfile, only:exact_fromfile
   use write_pixmap, only:iwritepixmap,writepixmap,write_pixmap_ppm
-  use pdfs, only:pdfcalc,pdfplot
+  use pdfs, only:pdfcalc,pdfplot,npdfbins
 
   implicit none
   integer, intent(inout) :: ipos, istepsonpage
@@ -1840,15 +1847,20 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     endif
                  endif
               elseif (iploty.eq.ipdf) then
-                 ngrid = int(0.75*ntoti**(1./3.))+1
+                 if (npdfbins.gt.0) then
+                    ngrid = npdfbins
+                 else  ! automatic number of bins determination
+                    ngrid = int(0.75*ntoti**(1./3.))+1
+                 endif
                  call set_grid1D(xmin,1.,ngrid)
               !--call routine which calculates pdf on the particles
                  if (irho.gt.0 .and. irho.le.ndataplots) then
-                    call pdfcalc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D,yminadapti,ymaxadapti, &
-                         itrans(iplotx),itrans(iploty),label(iplotx),icolourme(1:ntoti),dat(1:ntoti,irho))                 
+                    call pdfcalc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
+                         yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),label(iplotx), &
+                         (npdfbins.gt.0),icolourme(1:ntoti),dat(1:ntoti,irho))          
                  else
                     call pdfcalc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D,yminadapti,ymaxadapti, &
-                         itrans(iplotx),itrans(iploty),label(iplotx),icolourme(1:ntoti))
+                         itrans(iplotx),itrans(iploty),label(iplotx),(npdfbins.gt.0),icolourme(1:ntoti))
                  endif
               endif
            endif
