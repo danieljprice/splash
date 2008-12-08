@@ -62,7 +62,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                  nyplotmulti,x_secmulti,ivecplotmulti
   use prompting, only:prompt
   use titles, only:read_titles,read_steplegend
-  use settings_data, only:ndim,ndimV,numplot,ncolumns,ndataplots,required,icoords,icoordsnew
+  use settings_data, only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required,icoords,icoordsnew
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
       colour_fore,colour_back,iadapt,iadaptcoords,linewidth,device,nomenu,interactive
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
@@ -393,7 +393,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      if (iexact.eq.7 .or. iploty.eq.isurfdens) required(ipmass) = .true.
      if (iploty.eq.itoomre) required(iutherm) = .true.
   !!--must read everything if we are plotting a calculated quantity
-     if (any(required(ncolumns+1:numplot))) required = .true.
+     if (any(required(ncolumns+1:ncolumns+ncalc))) required = .true.
   !!--vectors
      if (imulti) then
         do i=1,nyplotmulti
