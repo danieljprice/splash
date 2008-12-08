@@ -4,7 +4,7 @@
 !--------------------------------------------------------------
 program time_average_pdfs
  implicit none
- integer, parameter :: iunit = 10, iout = 6, iprint = 5
+ integer, parameter :: iunit = 10, iout = 7, iprint = 6
  integer, parameter :: maxbins = 2000, maxfiles= 200
  integer :: nargs,iarg,nbins,nbinsprev,nfiles,i,ierr
  character(len=120) :: filename,line
@@ -76,12 +76,15 @@ program time_average_pdfs
  do iarg=1,nfiles
     var(1:nbins) = var(1:nbins) + (pdfval(1:nbins,iarg) -  ave(1:nbins))**2
  enddo
+ var(1:nbins) = var(1:nbins)/nfiles
  
+ open(unit=iout,file='averaged_pdf.dat',status='replace',form='formatted')
  write(iout,"(a)") '# [01  xval ] [02  PDF(average)] [03 st. dev] [04 variance]'
  do i=1,nbins
     if (ave(i).gt.0.) then ! only spit out non-zero bins
        write(iout,"(4(1pe10.4,2x))") xval(i),ave(i),sqrt(var(i)),var(i)
     endif
  enddo
+ close(iout)
 
 end program time_average_pdfs
