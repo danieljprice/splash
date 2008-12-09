@@ -467,6 +467,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
       if (phantomdump) then
          npartoftype(1:ntypes,j) = npartoftypei(1:ntypes)
+	 if (nblocks.gt.1) then
+	    print "(a)",' setting ngas=npart for MPI code '
+	    npartoftype(1,j) = npart
+	    npartoftype(2:,j) = 0
+         endif
       else
          npartoftype(1,j) = npart
          npartoftype(2,j) = max(ntotal - npart,0)
@@ -683,7 +688,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      dat(i1:i2,irho,j) = &
                         massoftypei(1)*(hfact/abs(dat(i1:i2,ih,j)))**3
                      icolourme(i1:i2) = -1
-                  end where
+                  elsewhere ! if h = 0.
+		     dat(i1:i2,irho,j) = 0.
+                     icolourme(i1:i2) = -1
+		  end where
                endif
                    
                if (debug) print*,'making density ',icolumn
