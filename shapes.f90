@@ -173,9 +173,10 @@ subroutine submenu_shapes()
  return
 end subroutine submenu_shapes
 
-subroutine plot_shapes(ipanel,irow,icolumn)
+subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
+ use transforms, only:transform
  implicit none
- integer, intent(in) :: ipanel,irow,icolumn
+ integer, intent(in) :: ipanel,irow,icolumn,itransx,itransy
  integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle
  integer :: i,iunits,iplotonthispanel
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot
@@ -225,6 +226,14 @@ subroutine plot_shapes(ipanel,irow,icolumn)
           xlen = xlen*dxplot
           ylen = ylen*dyplot
        case(1)
+          if (itransx.gt.0) then
+             call transform(xpos,itransx)
+             call transform(xlen,itransx)
+          endif
+          if (itransy.gt.0) then
+             call transform(ypos,itransy)
+             call transform(ylen,itransy)
+          endif
           ! do nothing here
        case default ! should never happen
           print "(a)",' INTERNAL ERROR: unknown units whilst plotting shape'

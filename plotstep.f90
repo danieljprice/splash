@@ -2492,7 +2492,7 @@ contains
     
     !--scale on co-ordinate plots
     if (iPlotScale .and. (iscalepanel.eq.0 .or. ipanel.eq.iscalepanel) &
-                   .and. iplotx.le.ndim .and. iploty.le.ndim) then
+                   .and. any(ix(1:ndim).eq.iplotx) .and. any(ix(1:ndim).eq.iploty)) then
 
        !--change to background colour index if title is overlaid
        if (iUseBackGroundColourForAxes .and. vposscale.gt.0.) call pgsci(0)
@@ -2501,7 +2501,7 @@ contains
     endif
     
     !--plot shapes
-    if (nshapes.gt.0) call plot_shapes(ipanel,irow,icolumn)
+    if (nshapes.gt.0) call plot_shapes(ipanel,irow,icolumn,itrans(iplotx),itrans(iploty))
     
     !--restore colour index
     call pgsci(icoloursave)
