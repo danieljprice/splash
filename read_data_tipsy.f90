@@ -77,7 +77,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   select case(trim(adjustl(fmt)))
   case('UNFORMATTED')
      iambinaryfile = 1
-     open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)  
+!     open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)  
+     open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)  
   case('FORMATTED')
      iambinaryfile = 0
      open(unit=iunit,file=dumpfile,status='old',form='formatted',iostat=ierr)  
@@ -110,7 +111,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            !--otherwise, close ascii file, and assume file is binary
            close(unit=iunit)
            iambinaryfile = 1
-           open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)  
+           open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)  
            print "(a)",' reading binary tipsy format '
            call read_tipsyheader_binary(iunit,ierr)
         endif
