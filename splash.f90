@@ -327,6 +327,11 @@ program splash
            lowmemorymode = .true.
         case('nolowmem','nlm')
            lowmemorymode = .false.
+        case('-help')
+           call print_usage
+           print "(/,a)",' Basic splash usage is explained in the userguide,'
+           print "(a,/)",'  located in the directory splash/docs/splash.pdf'
+           stop
         case default
            call print_usage
            if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
@@ -397,7 +402,16 @@ program splash
      call read_asciifile(trim(fileprefix)//'.filenames',nfiles,rootname)
      print*,nfiles,' filenames read from '//trim(fileprefix)//'.filenames file'
      print*
-     if (nfiles.gt.0) ihavereadfilenames = .true.
+     if (nfiles.gt.0) then
+        ihavereadfilenames = .true.
+     else
+        print "(a/,/,5x,a,/)",' Basic usage: ','splash dumpfile(s)'
+        print "(a/,/,5x,a,/)",' e.g.: ','gsplash snap_0*'
+        print "(a)",' Or write the filenames one per line in a file called ''splash.filenames'''
+        print "(a)",' For a full list of command-line options, use splash --help'
+        print "(a,/)",' For help on basic splash usage, consult the userguide: splash/docs/splash.pdf'
+        stop
+     endif
   endif
   if (lowmemorymode) print "(a)",' << running in low memory mode >>'
 
@@ -482,6 +496,10 @@ program splash
         endif
 
         call timestep_loop(ipicky,ipickx,irender,icontour,ivecplot)
+        !
+        ! if we invoked an interactive device, enter the menu as usual, otherwise finish
+        !
+        if (interactive) call menu
      else
      !
      ! enter main menu
