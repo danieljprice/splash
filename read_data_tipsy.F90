@@ -77,9 +77,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   select case(trim(adjustl(fmt)))
   case('UNFORMATTED')
      iambinaryfile = 1
+#ifdef __INTEL_COMPILER
 #if __INTEL_COMPILER<1000
      !--this is how stream access is implemented for ifort 9 and lower
      open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)  
+#else
+     open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)
+#endif
 #else
      open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)  
 #endif
@@ -115,8 +119,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
            !--otherwise, close ascii file, and assume file is binary
            close(unit=iunit)
            iambinaryfile = 1
+#ifdef __INTEL_COMPILER
 #if __INTEL_COMPILER<1000
-           open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)  
+     !--this is how stream access is implemented for ifort 9 and lower
+          open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)  
+#else
+          open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)
+#endif
 #else
            open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)  
 #endif
