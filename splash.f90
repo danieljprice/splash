@@ -23,10 +23,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.11.2 :
-!             backspace over annotation (legends,titles,axes,colour bar) in interactive mode
+!     1.12.0 : (22/12/08)
+!             Command-line plotting implemented; ln transform added; bug fixes in GADGET read;
+!             Backspace over annotation (legends,titles,axes,colour bar) in interactive mode
 !             removes it; "splash calc" command line utility calculates time sequences of 
-!             various things from a sequence of dump files; bug fix causing seg fault.
+!             global quantities from a sequence of dump files; bug fix causing seg fault.
 !     1.11.1 : (13/10/08)
 !             automatic number of pixels and exact pixel boundaries implemented;
 !             mass does not have to be read from dump file; frame changes are per-page
@@ -230,7 +231,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.12.0beta [1st Dec ''08]'
+  character(len=*), parameter :: version = 'v1.12.0 [22nd Dec ''08]'
 
   !
   ! initialise some basic code variables
