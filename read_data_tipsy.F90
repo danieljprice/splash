@@ -77,8 +77,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
   select case(trim(adjustl(fmt)))
   case('UNFORMATTED')
      iambinaryfile = 1
-!     open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)  
+#if __INTEL_COMPILER<1000
+     !--this is how stream access is implemented for ifort 9 and lower
      open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)  
+#else
+     open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)  
+#endif
   case('FORMATTED')
      iambinaryfile = 0
      open(unit=iunit,file=dumpfile,status='old',form='formatted',iostat=ierr)  
@@ -111,7 +115,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
            !--otherwise, close ascii file, and assume file is binary
            close(unit=iunit)
            iambinaryfile = 1
+#if __INTEL_COMPILER<1000
            open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)  
+#else
+           open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)  
+#endif
            print "(a)",' reading binary tipsy format '
            call read_tipsyheader_binary(iunit,ierr)
         endif
