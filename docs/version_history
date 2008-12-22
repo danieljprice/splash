@@ -87,3 +87,6 @@ ability to use subset of particles in restricted parameter range(s); probability
 1.11.1:
 automatic number of pixels and exact pixel boundaries implemented; mass does not have to be read from dump file; frame changes are per-page not per-dump file for animation sequences; lower stacksize footprint; bug fix with circles of interaction; bug fixes with block-labelled GADGET read; Steve Foulkes data read added
  
+1.12.0:
+command-line plotting implemented; ln transform added; bug fixes in GADGET read; backspace over annotation (legends,titles,axes,colour bar) in interactive mode removes it; "splash calc" command line utility calculates time sequences of global quantities from a sequence of dump files; bug fix causing seg fault
+ 
