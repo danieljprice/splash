@@ -24,12 +24,15 @@ contains
     integer :: ierr
     
     call get_environment(variable,string)
-    
+    if (len_trim(string).gt.0) then  
     !--use a formatted read - this is to avoid a compiler bug
     !  should in general be more robust anyway
-    write(fmtstring,"(a,i2,a)",iostat=ierr) '(i',len_trim(string),')'
-    read(string,fmtstring,iostat=ierr) ienvironment
-    
+       write(fmtstring,"(a,i2,a)",iostat=ierr) '(i',len_trim(string),')'
+       read(string,fmtstring,iostat=ierr) ienvironment
+    else
+       ierr = 1
+    endif    
+
     if (ierr /= 0) then
        if (present(errval)) then
           ienvironment = errval 
