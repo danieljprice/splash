@@ -77,8 +77,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(maxparttypes) :: npartoftypei
   real, dimension(maxparttypes) :: massoftypei
   logical :: iexist, doubleprec,imadepmasscolumn
-!  logical, parameter :: debug=.true.
-  logical, parameter :: debug=.false.
+  logical :: debug
 
   character(len=len(rootname)+10) :: dumpfile
   character(len=100) :: fileident
@@ -122,6 +121,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   doubleprec = .true.
   
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
+
+  debug = lenvironment('SSPLASH_DEBUG')
 !
 !--open the (unformatted) binary file
 !
@@ -518,6 +519,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             istartmhd = imaxcolumnread + 1
          elseif (iarr.eq.3) then
             istartrt = max(nhydroarrays+nmhdarrays+1,imaxcolumnread + 1)         
+            if (debug) print*,' istartrt = ',istartrt
          endif
       endif 
 !--read iphase from array block 1
@@ -660,8 +662,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   icolumn = irho ! density
                elseif (iarr.eq.1 .and. smalldump .and. i.eq.2) then
                   icolumn = ih ! h which is real4 in small dumps
-               !elseif (iarr.eq.4 .and. i.le.3) then
-               !   icolumn = nhydroarrays + i
+               elseif (iarr.eq.4 .and. i.le.3) then
+                  icolumn = nhydroarrays + i
                else
                   icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
                endif
