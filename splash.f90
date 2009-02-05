@@ -2,7 +2,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2008 Daniel Price 
+!     Copyright (C) 2005-2009 Daniel Price 
 !     daniel.price@sci.monash.edu.au
 !
 !     --------------------------------------------------------------------------
@@ -231,7 +231,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.12.0 [22nd Dec ''08]'
+  character(len=*), parameter :: version = 'v1.12.0++ [6th Feb ''09]'
 
   !
   ! initialise some basic code variables
@@ -535,14 +535,14 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2008 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2009 )'
  print 30 
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
    '   This is free software; and you are welcome to redistribute it ',/, &
    '   under certain conditions (see LICENSE file for details). *',/,/, &
    ' Comments, bugs, suggestions and queries to: daniel.price@sci.monash.edu.au ',/, &
-   ' Check for updates at: http://www.maths.monash.edu.au/~dprice/splash ',/, &
+   ' Check for updates at: http://users.monash.edu.au/~dprice/splash ',/, &
    ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
    ' use SPLASH for scientific work and if you plot something beautiful,',/, &
    ' why not send me a copy for the gallery? ',/)
