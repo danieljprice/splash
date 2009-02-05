@@ -1104,7 +1104,7 @@ subroutine set_labels
               endif
            endif
         endif
-     else
+     elseif (.not.smalldump) then
         ! pure hydro full dump
         ivx = irho+1
         iutherm = ivx + ndimV
