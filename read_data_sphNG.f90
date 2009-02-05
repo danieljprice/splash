@@ -66,7 +66,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real, parameter :: pi=3.141592653589
   integer :: i,j,ierr,iunit
   integer :: intg1,int2,int3
-  integer :: i1,iarr,i2,iptmass1,iptmass2
+  integer :: i1,iarr,i2,iptmass1,iptmass2,ilocpmassinitial
   integer :: npart_max,nstep_max,ncolstep,icolumn,nptmasstot
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
   integer :: nskip,ntotal,npart,n1,n2,ninttypes,ngas
@@ -350,8 +350,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
    if (iblock.eq.1) then
       igotmass = .true.
       if (smalldump .or. phantomdump) then
-         if (nreals.ge.15) then
-            massoftypei(1) = dummyreal(15)
+         if (phantomdump) then
+            ilocpmassinitial = 15
+         else
+            ilocpmassinitial = 23
+         endif
+         if (nreals.ge.ilocpmassinitial) then
+            massoftypei(1) = dummyreal(ilocpmassinitial)
             if (massoftypei(1).gt.tiny(0.) .and. .not.lowmemorymode) then
                ncolstep = ncolstep + 1  ! make an extra column to contain particle mass
                imadepmasscolumn = .true.
@@ -359,8 +364,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                igotmass = .false.
             endif
             !--read dust mass from phantom dumps
-            if (phantomdump .and. nreals.ge.16) then
-               massoftypei(2) = dummyreal(16)
+            if (phantomdump .and. nreals.ge.ilocpmassinitial+1) then
+               massoftypei(2) = dummyreal(ilocpmassinitial+1)
             else
                massoftypei(2) = 0.
             endif
@@ -517,8 +522,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
       if (nreal(iarr) + nreal4(iarr) + nreal8(iarr).gt.0) then
          if (iarr.eq.4) then
             istartmhd = imaxcolumnread + 1
+            if (debug) print*,' istartmhd = ',istartmhd
          elseif (iarr.eq.3) then
-            istartrt = max(nhydroarrays+nmhdarrays+1,imaxcolumnread + 1)         
+            istartrt = max(nhydroarrays+nmhdarrays+1,imaxcolumnread + 1)
             if (debug) print*,' istartrt = ',istartrt
          endif
       endif 
