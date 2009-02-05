@@ -587,9 +587,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   if (ierr /=0) print "(a)",'ERROR in memory allocation'
                   read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                   if (nptmass.ne.isize(iarr)) print "(a)",'ERROR: nptmass.ne.block size'
-                  do i=1,isize(iarr)
-                     dat(listpm(iptmass1+i-1),ipmass,j) = real(dattemp(i))
-                  enddo
+                  if (ipmass.gt.0) then
+                     do i=1,isize(iarr)
+                        dat(listpm(iptmass1+i-1),ipmass,j) = real(dattemp(i))
+                     enddo
+                  else
+                     print*,'WARNING: sink particle masses not read because no mass array allocated' 
+                  endif
                else
                   read(iunit,end=33,iostat=ierr) (dat(listpm(i),ipmass,j),i=iptmass1,iptmass2)
                endif 
