@@ -43,7 +43,7 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
- integer :: istartmhd,istartrt,nmhd,idivvcol
+ integer :: istartmhd,istartrt,nmhd,idivvcol,nhydroreal4
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass
  
 end module sphNGread
@@ -100,6 +100,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   iunit = 15
   ipmass = 4
   idivvcol = 0
+  nhydroreal4 = 0
 
   dumpfile = trim(rootname)   
   !
@@ -401,6 +402,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          nhydroarrays = 5 ! x,y,z,h,rho      
       endif
       nhydroarraysinfile = nreal(1) + nreal4(1) + nreal8(1)
+      nhydroreal4 = nreal4(1)
       if (imadepmasscolumn) nhydroarraysinfile = nhydroarraysinfile + 1
       if (nhydroarraysinfile .lt.nhydroarrays .and. .not.phantomdump) then
          print "(a)",' ERROR: one of x,y,z,m,h or rho missing in small dump read'
@@ -415,6 +417,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
          nmhdarrays = 0
       endif
  
+      !--radiative transfer dump?
+      if (narrsizes.ge.3 .and. isize(3).eq.isize(1)) rtdump = .true.
+      !--mhd dump?
       if (narrsizes.ge.4) mhddump = .true.
 
       if (.not.(mhddump.or.smalldump)) then
@@ -426,9 +431,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
       !--need to force read of velocities e.g. for corotating frame subtraction
       if (any(required(ivx:ivx+ndimV-1))) required(ivx:ivx+ndimV-1) = .true.
-      
-      !--radiative transfer dump?
-      if (narrsizes.ge.3 .and. isize(3).eq.isize(1)) rtdump = .true.
       
       !--for phantom dumps, also make a column for density
       !  and divv, if a .divv file exists
@@ -1049,6 +1051,7 @@ subroutine set_labels
      ih = 4       !  smoothing length
   endif
   irho = ih + 1     !  density
+  if (smalldump .and. nhydroreal4.ge.3) iutherm = irho+1
   
 !--the following only for mhd small dumps or full dumps
   if (ncolumns.ge.7) then
@@ -1124,7 +1127,14 @@ subroutine set_labels
         uergg = (udist/utime)**2
         units(iradenergy) = uergg
 
-        if (.not.smalldump) then
+        if (smalldump) then
+           icv = istartrt+1
+           !--the following lines refer to a format
+           !  which was hopefully never used
+           !iutherm = istartrt + 1
+           !label(iutherm) = 'u'
+           !icv = istartrt+2
+        else
            label(istartrt+1) = 'opacity'
            units(istartrt+1) = udist**2/umass
 
@@ -1135,11 +1145,6 @@ subroutine set_labels
 
            label(istartrt+4) = 'eddington factor'
            units(istartrt+4) = 1.0
-        else
-           iutherm = istartrt + 1
-           label(iutherm) = 'u'
-
-           icv = istartrt+2
         endif
 
        if (icv.gt.0) then
