@@ -1106,6 +1106,8 @@ subroutine set_labels
                  label(iJfirst+ndimV) = 'alpha\dB\u'
               endif
            endif
+        else ! mhd small dump
+           if (nhydroreal4.ge.3) iutherm = iBfirst+ndimV
         endif
      elseif (.not.smalldump) then
         ! pure hydro full dump
