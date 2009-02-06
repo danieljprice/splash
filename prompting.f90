@@ -71,6 +71,9 @@
 ! String prompt accepts "blank" to set empty string, unless optional
 ! argument noblank is set to .true.
 !
+! 06/02/09: D. Price:
+! Added optional "mask" argument to print_logical routine
+!
 module prompting
 
    private                     
@@ -483,17 +486,26 @@ contains
    !  Takes in a logical variable and returns a string 'on' or 'off' as appropriate
    !
    
-   function print_logical(lvalue)
+   function print_logical(lvalue,mask)
       implicit none
       logical, intent(in) :: lvalue
+      logical, intent(in), optional :: mask
       character(len=3) :: print_logical
+      logical :: maskval
       
-      if (lvalue) then
-         print_logical = 'ON'
+      maskval = .true.
+      if (present(mask)) maskval = mask
+      
+      if (maskval) then
+         if (lvalue) then
+            print_logical = 'ON'
+         else
+            print_logical = 'OFF'
+         endif
       else
-         print_logical = 'OFF'
+         print_logical = '  -'
       endif
-      
+
    end function print_logical
    
    ! 
