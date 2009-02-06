@@ -8,7 +8,7 @@
 \setlength{\oddsidemargin}{-0.5cm}
 \setlength{\evensidemargin}{-0.5cm}
 \setlength{\textwidth}{17cm}
-\newcommmand{\thisyear}{\year}
+\def\thisyear{2008}
 
 \begin{titlepage}
 \title{Visualisation of SPH data using SPLASH - v\input{version}}
@@ -183,6 +183,7 @@ Format & Binary & read\_data file & Comments \\
 Andreas Bauswein's format & bsplash & \verb+read_data_bauswein.f90+  & \\
 Sigfried Vanaverbeke's format & vsplash & \verb+read_data_vanaverbeke.f90+  & \\
 Regularised SPH (Steinar Borve) & rsplash & \verb+read_data_rsph.f90+  & \\
+FLASH tracer particles & fsplash & \verb+read_data_flash_hdf5.f90+  & Reads tracer particle output from the FLASH code. Requires linking against HDF5 libraries \\
 Sky King/Nikos Mastrodemos & usplash & \verb+read_data_UCLA.f90+  & A good example of a simple ascii format reader \\
 Jamie Bolton GADGET format & gsplash\_jsb & \verb+read_data_gadget_jsb.f90+ & Reads extra arrays before the SPH smoothing length \\
 Old Matthew Bate code & bsplash & \verb+read_data_mbate.f90+  & similar to the original Benz SPH code format \\
@@ -1115,7 +1116,9 @@ schemes available are shown in Figure~\ref{fig:colourschemes}.
  User contributed colour schemes are eagerly invited (just send me either: a table of r,g,b colour indices [if you know them] or just an image of a colour bar you wish to reproduce and I will add it).
 
 \subsubsection{ Plotting contours as well as the rendered image}
- Contours of the rendered pixel array can be plotted on top of the rendered plot by setting the ``plot contours'' option from the r)ender menu. To plot contours instead of the rendered image, use the ``change colour scheme'' option from the r)ender menu and choose colour scheme 0 (contours only). 
+ Contours of either the rendered pixel array or of another (separate) quantity can be plotted on top of the rendered plot by setting the ``plot contours'' option from the r)ender menu. With this option set, an extra prompt will appear after the render prompt asking the user for a quantity to be contoured. The contoured quantity can also be set via the command line options (\S\ref{sec:commandline}).
+ 
+ To plot contours \emph{instead} of the rendered image, use the ``change colour scheme'' option from the r)ender menu and choose colour scheme 0 (contours only). 
 
 \subsubsection{ Plotting contours instead of a rendered image}
 To plot contours instead of the rendered image, use the ``change colour scheme'' option from the r)ender menu and choose colour scheme 0 (contours only). 
@@ -1944,6 +1947,28 @@ which will convert all of the dump files listed on the command line into ascii f
 
   For other command line options, see \S\ref{sec:commandline}.
 
+\subsection{Using SPLASH to calculate global quantities as a function of time.}
+ SPLASH has a command line feature that can be used to calculate global quantities on the particles as a function of time, for example kinetic, thermal, magnetic and total energy, total linear and angular momentum. An example to calculate the energies in a sequence of dump files is:
+\begin{verbatim}
+splash calc energies dump001 dump002 dump???
+\end{verbatim}
+Other options are given by typing 'splash calc', which currently has the following options:
+\begin{verbatim}
+splash calc energies     : calculate KE,PE,total energy vs time
+                            output to file called 'energy.out'
+        calc massaboverho : mass above a series of density thresholds vs time
+                            output to file called 'massaboverho.out'
+        calc max          : maximum of each column vs. time
+                            output to file called 'maxvals.out'
+        calc min          : minimum of each column vs. time
+                            output to file called 'minvals.out'
+        calc mean         : mean of each column vs. time
+                            output to file called 'meanvals.out'
+\end{verbatim}
+For the `energies' and `massaboverho' options to be successful, splash must be aware of the locations of the corresponding columns in the data (ie. by the column identification given in the set\_labels routine corresponding to the data read). For the `massaboverho' option an input file is required specifying the density thresholds (a default version is written if the appropriate file is not already present).
+ 
+ For other command line options, see \S\ref{sec:commandline}.
+
 \subsection{Fixing the PGPLOT file naming system} 
 \label{sec:fixpgplotnames}
 
@@ -1977,9 +2002,9 @@ useful if you run splash multiple times to get different parts of an animation.
 
 \subsection{Reading/processing data into images without having to answer prompts}
 \label{sec:batchmode}
- The simplest way of running SPLASH
-non-interactively is to write a small shell script which runs SPLASH
-and answers the prompts appropriately. Something like the following should work:
+ Previously, the only way to run SPLASH
+non-interactively was to write a small shell script which runs SPLASH
+and answers the prompts appropriately. For example:
 \begin{verbatim}
 #!/usr/bin/tcsh
 cd plot
@@ -1994,6 +2019,19 @@ ENDINPUT
 \end{verbatim}
 which would plot the data in columns 2 and 1 and render the data in column 8 with
 output to file \verb+mypostscript.ps+.
+
+ However, in more recent versions SPLASH can be invoked with plot options on the command line.  Thus to achieve the same as in the example given above we would simply use
+ \begin{verbatim}
+ splash myrun* -x 1 -y 2 -render 8 -dev mypostscript.ps/ps
+ \end{verbatim}
+ or simply
+ \begin{verbatim}
+ splash myrun* -render 8 -dev mypostscript.ps/ps
+ \end{verbatim}
+which will assume sensible default values (2 and 1 respectively) for the y and x axes. Similarly a vector plot can be specified with \verb+-vec+ and a contour plot with \verb+-cont+. The full list of command-line flags is given in \S\ref{sec:commandline}.
+
+ If plotting options have been only partially specified on the command line, then prompts will appear for only the remaining options. This can be used for example to specify the PGPLOT device via the \verb+-dev+ command line option, which means that only the device selection prompt does not appear.
+
 
 \subsection{Making frames across multiple processors}
  Making identical plots of a series of dump files for a movie is a task which can inherently be done in parallel. Included in the splash/scripts directory is a perl wrapper for splash (``\verb+splash_parallel.pl+'') which distributes multiple instances of splash across multiple machines, either via ssh or using Apple's xgrid, with a common input file as described in \S\ref{sec:batchmode}. The limitation to this is that you need to have a disk which can be mounted from all client machines (ie. they can read the data files) and preferably with password-less access (e.g. using an ssh key-exchange or Kerberos authentication). The script itself may need some slight adjustment for your particular system.
@@ -2096,7 +2134,7 @@ although check that this email address is current because I am still a postdoc!
 \section*{Acknowledgements}
  Several of the routines were developed from ideas used by Matthew Bate and SPLASH has been refined by many useful discussions with the aforementioned. The
 polytrope exact solution is from a routine by Joe Monaghan. I am indebted to one Thomas S. Ullrich at the University of Heidelberg who wrote the prompting module
-which is used throughout the program. Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve SPLASH, including, but not limited to: Giuseppe Lodato, John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Ir\v{s}i\v{c}, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika, Richard Alexander, Sigfried Vanaverbeke, Dave Rundle, Thomas Grief and Sky King.
+which is used throughout the program. Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve SPLASH, including, but not limited to: Giuseppe Lodato, John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Ir\v{s}i\v{c}, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika, Richard Alexander, Sigfried Vanaverbeke, Dave Rundle, Thomas Grief, Sky King, Florian Buerzle, Gabe Altay, David Madlener and Christoph Federrath.
 
 \newpage
 \appendix
