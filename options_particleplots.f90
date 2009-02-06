@@ -10,12 +10,13 @@ module settings_part
  integer, dimension(100) :: icircpart
  integer :: ncircpart
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
- logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings
+ logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings,UseTypeInContours
  logical :: iplotline,ilabelpart,ifastparticleplot
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
-   iexact,icoordsnew,ifastparticleplot,idefaultcolourtype,itypeorder
+   iexact,icoordsnew,ifastparticleplot,idefaultcolourtype,&
+   itypeorder,UseTypeInContours
 
 contains
 
@@ -50,6 +51,7 @@ subroutine defaults_set_part
   do i=1,maxparttypes
      itypeorder(i) = i
   enddo
+  UseTypeInContours(:) = iplotpartoftype(:)
 
   return
 end subroutine defaults_set_part
@@ -62,6 +64,7 @@ subroutine defaults_set_part_ev
 
   iplotline = .true.     ! plot line joining the particles
   iplotpartoftype(1:maxparttypes) = .false. ! whether or not to plot particles of certain types
+  UseTypeInContours(:) = iplotpartoftype(:)
 
   return
 end subroutine defaults_set_part_ev
@@ -74,6 +77,7 @@ subroutine submenu_particleplots(ichoose)
   use labels, only:labeltype
   use limits, only:lim
   use settings_data, only:icoords,ntypes,ndim,UseTypeInRenderings
+  use settings_render, only:iplotcont_nomulti
   use particle_data, only:npartoftype,iamtype
   use prompting, only:prompt,print_logical
   use geometry, only:maxcoordsys,labelcoordsys,coord_transform_limits
@@ -84,6 +88,7 @@ subroutine submenu_particleplots(ichoose)
   character(len=2) :: charntypes
   character(len=20) :: substring1,substring2
   character(len=1000) :: fmtstring
+  character(len=120) :: contline
 
   iaction = ichoose
   
@@ -102,10 +107,15 @@ subroutine submenu_particleplots(ichoose)
      substring1 = charntypes//"(a,',',1x),a"
      substring2 = charntypes//"(i2,',',1x),i2"
   endif
+  if (iplotcont_nomulti) then
+     contline = "'            use in contour plots:       ( ',"//trim(substring1)//",' )',/,"
+  else
+     contline = ' '
+  endif
   
   fmtstring="("// &
          "' 0) exit ',/,"// &
-         "' 1) turn on/off particles by type       ( ',"//trim(substring1)//",' )',/,"// &
+         "' 1) turn on/off particles by type       ( ',"//trim(substring1)//",' )',/,"//trim(contline)// &
          "' 2) change graph markers for each type  ( ',"//trim(substring2)//",' )',/,"//  &
          "' 3) set colour for each particle type   ( ',"//trim(substring2)//",' )',/,"//  &
          "' 4) change plotting order of types      ( ',"//trim(substring2)//",' )',/,"//  &
@@ -117,10 +127,16 @@ subroutine submenu_particleplots(ichoose)
 
   print "(a)",'------------- particle plot options -------------------'
   if (iaction.le.0 .or. iaction.gt.9) then
-     print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
-              imarktype(1:ntypes),idefaultcolourtype(1:ntypes),itypeorder(1:ntypes), &
-              print_logical(iplotline),ncircpart,icoordsnew,iexact
-
+     if (iplotcont_nomulti) then
+        print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
+                 (trim(print_logical(UseTypeInContours(i),mask=UseTypeInRenderings(i))),i=1,ntypes), &
+                 imarktype(1:ntypes),idefaultcolourtype(1:ntypes),itypeorder(1:ntypes), &
+                 print_logical(iplotline),ncircpart,icoordsnew,iexact     
+     else
+        print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
+                 imarktype(1:ntypes),idefaultcolourtype(1:ntypes),itypeorder(1:ntypes), &
+                 print_logical(iplotline),ncircpart,icoordsnew,iexact
+     endif
      call prompt('enter option',iaction,0,9)
   endif
 !
@@ -129,7 +145,15 @@ subroutine submenu_particleplots(ichoose)
   case(1)
      !          plot particles by type?
      do itype=1,ntypes
-        call prompt('Plot '//trim(labeltype(itype))//' particles?',iplotpartoftype(itype))
+        if (UseTypeinRenderings(itype) .and. ndim.gt.1) then
+           call prompt('Plot '//trim(labeltype(itype))//' particles / use in renderings?',iplotpartoftype(itype))
+           if (iplotcont_nomulti) then
+              call prompt('Use '//trim(labeltype(itype))//' particles in contour plots?',UseTypeInContours(itype))
+           endif
+        else
+           call prompt('Plot '//trim(labeltype(itype))//' particles?',iplotpartoftype(itype))
+           UseTypeInContours(itype) = .false.
+        endif
         if (iplotpartoftype(itype) .and. itype.gt.1) then
            if (.not.UseTypeInRenderings(itype)) then
               call prompt('>> Plot '//trim(labeltype(itype))//' particles on top of rendered plots?',PlotOnRenderings(itype))
