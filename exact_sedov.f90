@@ -14,14 +14,14 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
   implicit none
   integer, intent(in) :: iplot
   integer, intent(out) :: ierr
-  real, intent(in) :: time, gam, rhozero, energy
+  real, intent(in) :: time, gam, rhozero, energy, rmax
   real, dimension(:), intent(inout) :: rplot
   real, dimension(size(rplot)), intent(out) :: yplot
 
   integer, parameter :: ndim = 3
   integer :: npts
   real, parameter :: pi = 3.1415926536
-  real :: rmax, rshock, dr
+  real :: rshock, dr
   real :: rhoshock, ushock, prshock
   real :: eta_0, power
   real :: ubar,ubarzero,dubar
@@ -137,8 +137,8 @@ end subroutine exact_sedov
 !
 real function etau(u,gamma,ndim)
   implicit none
-  integer :: ndim
-  real :: u,gamma
+  integer, intent(in) :: ndim
+  real, intent(in) :: u,gamma
   real :: gam1,term1,term2,power1,power2
   gam1 = gamma-1.
   power1 = (-12.+7.*gamma-13.*gamma**2)/(5.*(-1.+gamma+6.*gamma**2))
@@ -154,7 +154,7 @@ end function etau
 !
 real function rhou(u,gamma)
   implicit none
-  real :: u,gamma
+  real, intent(in) :: u,gamma
   real :: gam1,power1,power2,power3,term1,term2,term3
 
   gam1 = gamma-1.
@@ -173,7 +173,7 @@ end function rhou
 !
 real function pru(u,gamma)
   implicit none
-  real :: u,gamma
+  real, intent(in) :: u,gamma
 
   pru = (gamma+1. - 2.*u)/(2.*gamma*u - gamma - 1.)*u**2*rhou(u,gamma)
 
@@ -183,7 +183,7 @@ end function pru
 !
 real function dudlneta(u,gamma)
   implicit none
-  real :: u,gamma
+  real, intent(in) :: u,gamma
   real :: term1,term2
    
   term1 = u*(5.+5.*gamma + 2.*u - 6.*gamma*u)*(-1.-gamma+2.*gamma*u)
@@ -200,8 +200,9 @@ real function eta0(gamma,ndim)
   implicit none
   integer, parameter :: ipts = 50000
   real, parameter :: pi = 3.1415926536
-  integer :: i, ndim
-  real :: gamma
+  integer, intent(in) :: ndim
+  real, intent(in) :: gamma
+  integer :: i
   real :: u0, u, du
   real :: sum, term, weight, factor
 

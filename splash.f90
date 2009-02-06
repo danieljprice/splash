@@ -555,7 +555,7 @@ subroutine print_usage(quit)
  logical :: ltemp
 
  print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
- print "(a)",'(c) 2005-2008 Daniel Price '
+ print "(a)",'(c) 2005-2009 Daniel Price '
  print "(a,/)",trim(version)
  print "(a,/)",'Usage: splash file1 file2 file3...'
  print "(a,/,a,/)",'Usage with flags: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] ', &

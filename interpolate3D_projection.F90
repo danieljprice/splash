@@ -76,7 +76,8 @@ end subroutine setup_integratedkernel
 !
 real function wfromtable(q2)
  implicit none
- real :: q2,dxx,dwdx
+ real, intent(in) :: q2
+ real :: dxx,dwdx
  integer :: index, index1
  !
  !--find nearest index in table

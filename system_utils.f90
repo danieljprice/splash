@@ -126,7 +126,7 @@ contains
           read(string(i1:i2),"(a)",iostat=ierr) list(nlist)
           notlistfull = (nlist.lt.size(list))
        else
-          read(string(i1:i2),"(a)",iostat=ierr) dummy
+          read(string(i1:i2),"(a)",iostat=ierr) dummy ! to get ierr at end of string
           notlistfull = .true.
        endif
        i1 = i2 + 2

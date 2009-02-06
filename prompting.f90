@@ -101,13 +101,14 @@ contains
    !
    
    recursive subroutine integer_prompt(text, value, min, max)
-      character(len=*), intent(in) :: text
-      integer                      :: value, newvalue
-      character(len=64)            :: string
-      character(len=16)            :: chmin, chmax
-      integer                      :: ios
-      integer, optional            :: min, max
-      logical                      :: error
+      character(len=*), intent(in)  :: text
+      integer, intent(inout)        :: value
+      integer                       :: newvalue
+      character(len=64)             :: string
+      character(len=16)             :: chmin, chmax
+      integer                       :: ios
+      integer, optional, intent(in) :: min, max
+      logical                       :: error
       
       
       chmin = ''                        
@@ -183,11 +184,12 @@ contains
    
    recursive subroutine real_prompt(text, value, min, max)
       character(len=*), intent(in) :: text
-      real                         :: value, newvalue
+      real, intent(inout)          :: value
+      real                         :: newvalue
       character(len=64)            :: string
       character(len=16)            :: chmin, chmax
       integer                      :: ios
-      real, optional               :: min, max
+      real, optional, intent(in)   :: min, max
       logical                      :: error
       
       
@@ -264,14 +266,15 @@ contains
    !
    
    recursive subroutine double_prompt(text, value, min, max)
-      integer, parameter           :: db = kind(0.d0)
-      character(len=*), intent(in) :: text
-      real(kind=db)                :: value, newvalue
-      character(len=64)            :: string
-      character(len=16)            :: chmin, chmax
-      integer                      :: ios
-      real(kind=db), optional      :: min, max
-      logical                      :: error
+      integer, parameter                  :: db = kind(0.d0)
+      character(len=*), intent(in)        :: text
+      real(kind=db), intent(inout)        :: value
+      real(kind=db)                       :: newvalue
+      character(len=64)                   :: string
+      character(len=16)                   :: chmin, chmax
+      integer                             :: ios
+      real(kind=db), optional, intent(in) :: min, max
+      logical                             :: error
       
       
       chmin = ''                        
@@ -349,7 +352,7 @@ contains
    
    recursive subroutine logical_prompt(text, lvalue, default)
       character(len=*), intent(in)  :: text
-      logical                       :: lvalue
+      logical, intent(inout)        :: lvalue
       logical, optional, intent(in) :: default
       character(len=32)             :: string
       
@@ -422,15 +425,15 @@ contains
    !
    
    subroutine string_prompt(text, string, length, case, noblank)
-      character(len=*), intent(in)   :: text
-      character(len=*)               :: string
-      character(len=128)             :: newstring
-      integer, optional, intent(out) :: length
-      integer, optional              :: case
-      logical, optional, intent(in)  :: noblank
-      integer                        :: is, ia
-      integer, parameter             :: aoffset = 32
-      logical                        :: allowblank
+      character(len=*), intent(in)    :: text
+      character(len=*), intent(inout) :: string
+      character(len=128)              :: newstring
+      integer, optional, intent(out)  :: length
+      integer, optional, intent(in)   :: case
+      logical, optional, intent(in)   :: noblank
+      integer                         :: is, ia
+      integer, parameter              :: aoffset = 32
+      logical                         :: allowblank
       
       !
       !  Write prompt string to terminal

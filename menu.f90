@@ -15,14 +15,13 @@ subroutine menu
   use limits, only:write_limits
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
-                     icoords,icoordsnew,buffer_data,ncolumns,iRescale
+                     buffer_data,ncolumns
   use settings_limits, only:submenu_limits
   use settings_part, only:submenu_particleplots
   use settings_page, only:submenu_page,submenu_legend,interactive
   use settings_render, only:submenu_render,iplotcont_nomulti
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
   use settings_xsecrot, only:submenu_xsecrotate,write_animfile
-  use settings_units, only:unitslabel
   use multiplot
   use prompting, only:prompt,print_logical
   use transforms, only:transform_label
@@ -478,7 +477,7 @@ end subroutine menu
 ! or not rendering is allowed or not
 !----------------------------------------------
 logical function allowrendering(iplotx,iploty)
- use labels, only:ih,irho,ipmass
+ use labels, only:ih,irho !,ipmass
  use multiplot, only:itrans
  use settings_data, only:icoords,icoordsnew,ndataplots
  use settings_render, only:icolour_particles

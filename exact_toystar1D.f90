@@ -34,6 +34,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
   real :: fnorm
   logical :: linear
 
+  linear = .false.
   if (norder.ge.0) linear = .true.
   gamp1 = gamma + 1.
   gamm1 = gamma - 1.
@@ -234,6 +235,7 @@ real function Gn(x,n)
   !
   Gnminus2 = 1.
   Gnminus1 = 3.*x
+  Gn = 0. ! avoid compiler warning
   !
   !--use recurrence relation to calculate the rest
   !
@@ -268,6 +270,7 @@ real function Pm(x,m)
   !
   Pmminus2 = 1.
   Pmminus1 = x
+  Pm = 0. ! avoid compiler warning
 
   select case(m)
   case (0)
@@ -377,7 +380,8 @@ end module toystar1D
 !
 !------------------------------------
 real function func(x)
-  real :: x,k,term,fact,gam1,gamp1
+  real, intent(in) :: x
+  real :: k,term,fact,gam1,gamp1
   common /kconst/ k,fact,gam1,gamp1
 
   !      print*,'k = ',k
@@ -394,7 +398,8 @@ end function func
 
 real function func2(x)
   implicit none
-  real x,k,term,fact,gam1,gamp1
+  real, intent(in) :: x
+  real :: k,term,fact,gam1,gamp1
   common /kconst/ k,fact,gam1,gamp1
 
   !      print*,' k = ',k

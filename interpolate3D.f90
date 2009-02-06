@@ -56,7 +56,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   real :: xminpix,yminpix,zminpix
   real, dimension(npixx) :: xpix,dx2i
   real :: xi,yi,zi,hi,hi1,hi21,radkern,qq,wab,q2,const,dyz2,dz2
-  real :: term,termnorm,dx,dy,dz,ypix,zpix
+  real :: term,termnorm,dy,dz,ypix,zpix
   real :: t_start,t_end
   logical :: iprintprogress
   

@@ -1961,7 +1961,7 @@ end subroutine plot_number
 
 
 subroutine deleteaxes()
- use settings_page, only:iaxis,iPlotLegend,iPlotStepLegend, &
+ use settings_page, only:iaxis,iPlotLegend,& !iPlotStepLegend, &
                     iPlotTitles,iPlotScale 
  use shapes, only:nshapes
  use settings_vecplot, only:iVecplotLegend

@@ -579,7 +579,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   integer :: icolourprev,linestyleprev
   integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp
   integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
-  integer :: iframe,itype
+  integer :: iframe
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot

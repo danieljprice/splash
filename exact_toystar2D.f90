@@ -67,6 +67,8 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
 
   omega = 1.0  ! this is omega from the main code (ie. from potential)
   omegasq = omega**2
+  B = 0.
+  D = 0.
 
   if (linear) then
 !---------------------------------------------------------------------------
@@ -278,9 +280,10 @@ end subroutine exact_toystar2D
 !
 real function etar(j,m,rad,gamma)
   implicit none 
-  integer :: j,m,k,kprev   ! j is the radial mode, m is the theta mode
-  real :: rad,gamma,denom
-  real :: ak,akprev,gamm1,freqsq
+  integer, intent(in) :: j,m ! j is the radial mode, m is the theta mode
+  integer :: k,kprev  
+  real, intent(in) :: rad,gamma
+  real :: denom,ak,akprev,gamm1,freqsq
 !
 !--this solution is for arbitrary gamma
 !
@@ -323,8 +326,10 @@ end function etar
 !
 real function detadr(j,m,rad,gamma)
   implicit none
-  integer :: j,m,k,kprev   ! j is the radial mode, m is the theta mode
-  real :: rad,gamma,denom,term1,term2
+  integer, intent(in) :: j, m  ! j is the radial mode, m is the theta mode
+  integer :: k,kprev 
+  real, intent(in) :: rad,gamma
+  real :: denom,term1,term2
   real :: ak,akprev,gamm1,freqsq
 !
 !--this solution is for arbitrary gamma
