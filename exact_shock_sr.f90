@@ -63,16 +63,16 @@ subroutine exact_shock_sr(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,ypl
 !------------------------------------
   select case(iplot)
   case(1)
-     yplot = dens
+     yplot = real(dens)
   case(2)
-     yplot = pr
+     yplot = real(pr)
   case(3)
-     yplot = vel
+     yplot = real(vel)
   case(4)
      if (gamma.gt.1.0001) then
-        yplot = pr/((gamma-1.)*dens)
+        yplot = real(pr/((gamma-1.)*dens))
      else
-        yplot = pr/dens
+        yplot = real(pr/dens)
      endif
   end select
 
@@ -136,19 +136,22 @@ end subroutine exact_shock_sr
 ! internal variables 
 ! ---------
 
-  integer         mn, n, i, iloop 
+  integer, intent(in) :: mn
+  integer         n, i, iloop 
 !  parameter      (mn = 400)
 
-  double precision tol, pmin, pmax, dvel1, dvel2, check
-  double precision rholin,rhorin,plin,prin,vlin,vrin,gamin,tin,xmin
+  double precision tol, pmin, pmax, dvel1, dvel2, check, xmin
+  double precision, intent(in) :: rholin,rhorin,plin,prin,vlin,vrin,gamin,tin
 
   double precision ps, vels
 
-  double precision rhoa(mn), pa(mn), vela(mn), ua(mn)
+  double precision, intent(out) :: rhoa(mn), pa(mn), vela(mn), ua(mn)
 
-  double precision xi, x0
+  double precision, intent(in) :: x0
+  double precision xi
 
-  double precision rad(mn), x1, x2, x3, x4, x5, t
+  double precision, intent(out) :: rad(mn)
+  double precision x1, x2, x3, x4, x5, t
 
 ! ------- 
 ! initial states 
@@ -288,13 +291,13 @@ end subroutine exact_shock_sr
 ! solution on the mesh 
 ! ----------
 
-  do 100 i=1,n
+  do i=1,n
 
     rad(i) = xmin + dfloat(i-1)/dfloat(n-1)
 
-100  continue
+  enddo
 
-  do 120 i=1,n
+  do i=1,n
 
     if (rad(i).le.x1) then
 
@@ -340,7 +343,7 @@ end subroutine exact_shock_sr
 
     end if
 
-120  continue
+   enddo
 
 !  open (3,file='solution.dat',form='formatted',status='new')
 
@@ -378,7 +381,8 @@ end subroutine exact_shock_sr
 ! arguments 
 ! -----
 
-  doubleprecision p, dvel
+  doubleprecision, intent(in)  :: p
+  doubleprecision, intent(out) :: dvel
 
 ! ------- 
 ! common blocks 
@@ -443,7 +447,8 @@ end subroutine exact_shock_sr
 ! arguments 
 ! -----
 
-  doubleprecision pmin, pmax, tol, ps
+  doubleprecision, intent(in) :: pmin, pmax, tol
+  doubleprecision, intent(out) :: ps
 
 ! ------- 
 ! common blocks 
@@ -594,8 +599,8 @@ end subroutine exact_shock_sr
 ! 
 
 !c    comments: 
-!c    this routine closely follows the expressions in marti and mueller, 
-!c    j. fluid mech., (1994)
+!c    this routine closely follows the expressions in Marti and Mueller, 
+!c    J. fluid mech., (1994)
 
   subroutine getvel( p, rhoa, pa, ua, ha, csa, vela, wa, s,  &
                      rho, u,  h,  cs,  vel,  vshock )
@@ -606,9 +611,9 @@ end subroutine exact_shock_sr
 ! arguments 
 ! -----
 
-  double precision p, rhoa, pa, ua, ha, csa, vela, wa  
-  character*1      s 
-  double precision rho, u, h, cs, vel, vshock
+  double precision, intent(in) :: p, rhoa, pa, ua, ha, csa, vela, wa  
+  character*1, intent(in) :: s 
+  double precision, intent(out) :: rho, u, h, cs, vel, vshock
 
 ! ------- 
 ! common blocks 
@@ -629,6 +634,7 @@ end subroutine exact_shock_sr
 ! left or right propagating wave 
 ! ---------------
 
+  sign = 0.d0
   if (s.eq.'l') sign = -1.d0
 
   if (s.eq.'r') sign =  1.d0
@@ -776,13 +782,13 @@ end subroutine exact_shock_sr
 ! arguments 
 ! -----
 
-  double precision xi
+  double precision, intent(in) :: xi
 
-  double precision rhoa, pa, ua, csa, vela
+  double precision, intent(in) :: rhoa, pa, ua, csa, vela
 
-  character        s
+  character, intent(in) ::  s
 
-  double precision rho, p, u, vel
+  double precision, intent(out) :: rho, p, u, vel
 
 ! ------- 
 ! common blocks 
@@ -801,6 +807,7 @@ end subroutine exact_shock_sr
 ! left or right propagating wave 
 ! ---------------
 
+  sign = 0.d0
   if (s.eq.'l') sign =  1.d0
 
   if (s.eq.'r') sign = -1.d0
