@@ -173,7 +173,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      case default
         icoords = 1
      end select
-     if (icoords.gt.1) print "(a14,':',2x,a)",' geometry',labelcoordsys(icoords)
+     print "(a14,a)",' geometry: ',trim(geomfile)//': ('//trim(labelcoordsys(icoords))//')'
      if (any(ibound(1:ndim).ne.0)) then
         print "(a14,':',a15,' =',3(f8.4))",'boundaries','xmin',xmin(1:ndim)
         print "(15x,a15,' =',3(f8.4))",'xmax',xmax(1:ndim)
@@ -377,6 +377,7 @@ subroutine set_labels
     !!!irho = ndim+ndimV+9
     icol = icol + 1
     label(icol) = 'rho*'
+    !irho = icol
     icol = icol + 1
     label(icol) = 'sqrt g'
     iamvec(icol+1:icol+ndimV) = icol + 1
