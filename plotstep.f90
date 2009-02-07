@@ -639,11 +639,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   ninterp = npartoftype(1)
   if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes)) &
       .or. size(iamtype).gt.1) ninterp = ntoti
+  print*,'ninterp = ',ninterp
   
   !--non-SPH particle types cannot be used in contours
   where (.not.UseTypeInRenderings(:))
      UseTypeInContours(:) = .false.
   end where
+
+  !--check for consistency that if particles are not plotted, 
+  !  they are also not plotted on renderings
+  do i=1,ntypes
+     if (.not.iplotpartoftype(i)) PlotOnRenderings(i) = .false.   
+  enddo
   !
   !--check whether or not the particle types used for contouring are
   !  the same as the particle types used for rendering
@@ -659,7 +666,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   !
   !--set weight factor for interpolation routines
   !
-  call set_interpolation_weights(weight,dat,iamtype,UseTypeInRenderings)
+  call set_interpolation_weights(weight,dat,iamtype,(iplotpartoftype .and. UseTypeInRenderings))
   !
   !--exclude subset of particles if parameter range restrictions are set
   !
@@ -2782,10 +2789,6 @@ contains
        if (ih.gt.0) dunitsh = 1.d0/units(ih)
        if (irho.gt.0) dunitsrho = 1.d0/units(irho)
     endif
-    !--check for consistency that if particles are not plotted, they are also not plotted on renderings
-    do itype=1,ntypes
-       if (.not.iplotpartoftype(itype)) PlotOnRenderings(itype) = .false.   
-    enddo
 
     if (ipmass.gt.0 .and. ipmass.le.ndataplots .and. &
         irho.gt.0 .and. irho.le.ndataplots .and. &
@@ -2798,7 +2801,7 @@ contains
           !
           do ipart=1,ninterp
              itype = iamtypei(ipart)
-             if (.not.iplotpartoftype(itype) .or. .not.usetype(itype)) then
+             if (.not.usetype(itype)) then
                 weighti(ipart) = 0.
              elseif (idensityweightedinterpolation) then
                 if (dati(ipart,ih) > tiny(dati)) then
@@ -2825,7 +2828,7 @@ contains
              i1 = i2 + 1
              i2 = i2 + npartoftype(itype)
              !--set weights to zero for particle types not used in the rendering
-             if (.not.iplotpartoftype(itype) .or. .not.usetype(itype)) then
+             if (.not.usetype(itype)) then
                 weighti(i1:i2) = 0.
              elseif (idensityweightedinterpolation) then
              !--for density weighted interpolation use m/h**ndim
@@ -2865,7 +2868,7 @@ contains
           !
           do ipart=1,ninterp
              itype = iamtypei(ipart)
-             if (.not.iplotpartoftype(itype) .or. .not.usetype(itype)) then
+             if (.not.usetype(itype)) then
                 weighti(ipart) = 0.
              elseif (idensityweightedinterpolation) then
                 if (dati(ipart,ih) > tiny(dati)) then
@@ -2892,7 +2895,7 @@ contains
              i1 = i2 + 1
              i2 = i2 + npartoftype(itype)
              !--set weights to zero for particle types not used in the rendering
-             if (.not.iplotpartoftype(itype) .or. .not.usetype(itype)) then
+             if (.not.usetype(itype)) then
                 weighti(i1:i2) = 0.
              else
                 where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
