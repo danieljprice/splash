@@ -266,7 +266,7 @@ end subroutine redraw_axes
   real vmargintop,vmarginbottom,vmarginleft,vmarginright
   real vptxmin,vptxmax,vptymin,vptymax
   real aspectratio,devaspectratio,x1,x2,y1,y2
-  real xch,ych,dv,xminpix,xmaxpix,yminpix,ymaxpix
+  real xch,ych
   character xopts*10, yopts*10
   logical, parameter :: useexactpixelboundaries = .true.
 !
