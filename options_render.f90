@@ -6,14 +6,14 @@ module settings_render
  use colourbar, only:ColourBarDisp,iplotcolourbarlabel
  implicit none
  integer :: ncontours,npix,icolours,iColourBarStyle
- logical :: iplotcont_nomulti
+ logical :: iplotcont_nomulti,ilabelcont
  logical :: icolour_particles,inormalise_interpolations
  logical :: ifastrender,idensityweightedinterpolation
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
    icolour_particles,ColourBarDisp,inormalise_interpolations, &
    ifastrender,idensityweightedinterpolation,iColourBarStyle, &
-   iplotcolourbarlabel
+   iplotcolourbarlabel,ilabelcont
 
 contains
 
@@ -34,6 +34,7 @@ subroutine defaults_set_render
   ifastrender = .false. ! use accelerated rendering
   idensityweightedinterpolation = .false.
   iplotcolourbarlabel = .true.
+  ilabelcont = .false.   ! print numeric labels on contours
 
   return
 end subroutine defaults_set_render
@@ -119,8 +120,12 @@ subroutine submenu_render(ichoose)
        endif
 !------------------------------------------------------------------------
     case(3)
-       iplotcont_nomulti = .not.iplotcont_nomulti
+       call prompt(' plot contours?',iplotcont_nomulti)
        print "(a)",' Contour plotting is '//trim(print_logical(iplotcont_nomulti))
+       if (iplotcont_nomulti) then
+          call prompt(' enter number of contours between min,max',ncontours,0,500)
+          call prompt(' plot numeric labels on contours? ',ilabelcont)
+       endif
 !------------------------------------------------------------------------
     case(4)
        call prompt(' enter number of contours between min,max',ncontours,0,500)

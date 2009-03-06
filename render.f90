@@ -17,18 +17,19 @@ contains
 !------------------------------------------------------------------------
  
 subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
-                  xmin,ymin,dx,icolours,iplotcont,iColourBarStyle,nc,log,blank)
+                  xmin,ymin,dx,icolours,iplotcont,iColourBarStyle,nc,log,ilabelcont,blank)
  implicit none
  integer, intent(in) :: npixx,npixy,nc,icolours
  real, intent(in) :: xmin,ymin,datmin,datmax,dx
  real, dimension(npixx,npixy), intent(in) :: datpix
- logical, intent(in) :: iplotcont,log
+ logical, intent(in) :: iplotcont,log,ilabelcont
  integer, intent(in) :: iColourBarStyle
  character(len=*), intent(in) :: label
  real, intent(in), optional :: blank
  
- integer :: i
- real :: trans(6),levels(nc),dcont
+ integer :: i,ierr
+ real :: trans(6),levels(nc),dcont,charheight
+ character(len=12) :: string
 ! 
 !--set up grid for rendering 
 !
@@ -86,6 +87,29 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
     endif
 10  format(1x,'plotting ',i4,a,' between ',1pe8.2,' and ',1pe8.2,', every ',1pe8.2,':')
 20  format(10(6(1x,1pe9.2),/))
+!
+!--labelling of contour levels
+!
+    if (ilabelcont) then
+       call pgqch(charheight)       ! query character height
+       call pgsch(0.5*charheight)   ! shrink character height
+
+       do i=1,nc
+          if (abs( log10(abs(levels(i)) + tiny(0.))).gt.3) then
+             write(string,"(1pe8.2)",iostat=ierr) levels(i)
+          else
+             write(string,"(f5.2)",iostat=ierr) levels(i)
+          endif
+          if (ierr /= 0) then
+             write(string,*) levels(i)
+             string = trim(adjustl(string))
+          endif
+          !!print*,'level = ',levels(i),string
+          !!call pgsch(0.5)
+          call pgconl(datpix,npixx,npixy,1,npixx,1,npixy,levels(i),trans,trim(string),75,30)
+       enddo
+       call pgsch(charheight) ! restore character height
+    endif
 !
 !--this line prints the label inside the contour plot
 !  (now obsolete-- this functionality can be achieved using plot titles)

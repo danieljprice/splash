@@ -531,7 +531,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,usesquarexy, &
                      charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render, only:npix,ncontours,icolours, &
-      iColourBarStyle,icolour_particles,inormalise_interpolations,ifastrender
+      iColourBarStyle,icolour_particles,inormalise_interpolations,ifastrender,ilabelcont
   use settings_vecplot, only:npixvec, iplotpartvec
   use settings_xsecrot, only:nxsec,irotateaxes,xsec_nomulti,irotate,flythru,use3Dperspective, &
       use3Dopacityrendering,writeppm,anglex,angley,anglez,zobserver,dzscreenfromobserver,taupartdepth, &
@@ -1577,12 +1577,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  !!--call subroutine to actually render the image
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                    npixx,npixy,xmin,ymin,pixwidth,    &
-                   icolours,iplotcont,0,ncontours,.false.)
+                   icolours,iplotcont,0,ncontours,.false.,ilabelcont)
 
                  !!--contour plot of different quantity on top of rendering
                  if (gotcontours) then
                     call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
-                         npixx,npixy,xmin,ymin,pixwidth,0,.true.,0,ncontours,.false.)
+                         npixx,npixy,xmin,ymin,pixwidth,0,.true.,0,ncontours,.false.,ilabelcont)
                  endif
                               
                  !!--write ppm if interpolate3D_opacity
@@ -3118,13 +3118,13 @@ contains
                          minval(datpixvec(1:numpixx,1:numpixy)), &
                          datmax, &
                          'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,    &
-                         0,.true.,0,ncontours,.false.,blank=blankval)
+                         0,.true.,0,ncontours,.false.,ilabelcont,blank=blankval)
          else
             call render_pix(datpixvec(1:numpixx,1:numpixy), &
                          minval(datpixvec(1:numpixx,1:numpixy)), &
                          maxval(datpixvec(1:numpixx,1:numpixy)), &
                          'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,    &
-                         0,.true.,0,ncontours,.false.)
+                         0,.true.,0,ncontours,.false.,ilabelcont)
          endif
 
       else
@@ -3165,7 +3165,7 @@ contains
             !--plot contours of synchrotron intensity
             call render_pix(datpixvec(1:npixx,1:npixy),minval(datpixvec(1:npixx,1:npixy)), &
               maxval(datpixvec(1:npixx,1:npixy)),'crap', &
-              npixx,npixy,xmin,ymin,pixwidth,0,.true.,0,ncontours,.false.)
+              npixx,npixy,xmin,ymin,pixwidth,0,.true.,0,ncontours,.false.,ilabelcont)
          endif
 
       endif
