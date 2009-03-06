@@ -48,7 +48,6 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  if (abs(icolours).gt.0) then        ! colour
     if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarstyle,icolours,datmin,datmax,trim(label),log,0.)
 !    call pgwedg('ri',2.0,4.0,datmin,datmax,' ')
-!    call pgpixl(datpix,npixx,npixx,1,npixx,1,npixx,xmin,xmax,ymin,ymax)
     call pgimag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
 !    call pghi2d(datpix,npixx,npixx,1,npixx,1,npixx,1,0.1,.true.,y) 
  endif
@@ -59,22 +58,34 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !
 !--set contour levels
 ! 
-    dcont = (datmax-datmin)/real(nc+1)   ! even contour levels
-    do i=1,nc
-       levels(i) = datmin + real(i)*dcont
-    enddo
+    if (nc.le.0) then
+       print*,'ERROR: cannot plot contours with ',nc,' levels'
+       return
+    elseif (nc.eq.1) then
+       levels(1) = datmin
+       dcont = 0.
+    else
+       dcont = (datmax-datmin)/real(nc-1)   ! even contour levels
+       do i=1,nc
+          levels(i) = datmin + real(i-1)*dcont
+       enddo
+    endif
 !
 !--plot contours (use pgcont if pgcons causes trouble)
 !  with blanking if blank is input
 !
     if (present(blank)) then
-       print*,'plotting ',nc,' contours (with blanking)...'
+       print 10,nc,' contours (with blanking)',levels(1),levels(nc),dcont
+       print 20,levels(1:nc)
        !print*,' blanking = ',blank,'min,max = ',datmin,datmax
        call pgconb(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans,blank)
     else
-       print*,'plotting ',nc,' contours...'
+       print 10,nc,' contours',levels(1),levels(nc),dcont
+       print 20,levels(1:nc)
        call pgcons(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
     endif
+10  format(1x,'plotting ',i4,a,' between ',1pe8.2,' and ',1pe8.2,', every ',1pe8.2,':')
+20  format(10(6(1x,1pe9.2),/))
 !
 !--this line prints the label inside the contour plot
 !  (now obsolete-- this functionality can be achieved using plot titles)
