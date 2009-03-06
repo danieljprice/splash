@@ -107,8 +107,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--set labels (and units) for each column of data
      !
      print "(/a)",' setting plot labels...'
-     if (ivegotdata .and. ncolumns.gt.0) call get_labels
-
+     if (ivegotdata .and. ncolumns.gt.0) then
+        call get_labels
+        call adjust_data_codeunits
+     endif
+     
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
@@ -192,8 +195,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !  allow this to be overridden by the presence of a splash.columns file
      !
      !!print "(/a)",' setting plot labels...'
-     if (ivegotdata .and. ncolumns.gt.0) call get_labels
-
+     if (ivegotdata .and. ncolumns.gt.0) then
+        call get_labels
+        call adjust_data_codeunits
+     endif
+     
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,min(ncolumns,maxcol)
@@ -235,51 +241,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   !
   !--check for errors in data read / print warnings
   !
-  if (ndim.ne.0 .and. ncolumns.gt.0) then
-     if (ndim.lt.0 .or. ndim.gt.3) then
-        print "(a)",' ERROR with ndim setting in data read, using ndim=3'
-        ndim = 3
-     endif
-     if (ndimV.lt.0 .or. ndimV.gt.3) then
-        print "(a)",' ERROR with ndimV setting in data read, using ndimV=3'
-        ndimV = 3
-     endif
-     if (ndim.ge.2  .and. any(ix(2:ndim).eq.ix(1))) then
-        print "(a)",' WARNING: error in ix setting in set_labels: fixing '
-        ix(1) = max(ix(1),1)
-        do i=2,ndim
-           ix(i) = i
-        enddo
-     endif
-     if (irho.gt.ncolumns) then
-        print "(a)",' ERROR with irho setting in data read'
-        irho = 0
-     endif
-     if (ih.gt.ncolumns) then
-        print "(a)",' ERROR with ih setting in data read '
-        ih = 0
-     endif
-     if (ipmass.gt.ncolumns) then
-        print "(a)",' ERROR with ipmass setting in data read'
-        ipmass = 0
-     endif
-     if (irho.eq.0 .or. ih.eq.0) then
-        print "(4(/,a))",' WARNING: Rendering capabilities cannot be enabled', &
-                 '  until positions of density, smoothing length and particle', &
-                 '  masses are known (specified using the integer variables ', &
-                 '  irho,ih and ipmass in the read_data routine)'
-     elseif (irho.gt.0 .and. ih.gt.0 .and. ipmass.eq.0 .and. all(masstype(:,:).lt.tiny(0.))) then
-        print "(2(/,a))",' WARNING: Particle masses not read as array but mass not set:', &
-                         '          RENDERING WILL NOT WORK! '
-     
-     
-     endif
-     if (nsteps.gt.0) then
-        if (sum(npartoftype(:,1)).gt.0 .and. npartoftype(1,1).eq.0) then
-           print "(3(/,a),/)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES:', &
-                              '  nothing will appear unless plotting of other particle ', &
-                              '  types is turned on via the o)ptions menu'
-        endif
+  if (ndim.ne.0 .and. ncolumns.gt.0 .and. nsteps.gt.0) then
+     if (sum(npartoftype(:,1)).gt.0 .and. npartoftype(1,1).eq.0) then
+        print "(3(/,a),/)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES:', &
+                           '  nothing will appear unless plotting of other particle ', &
+                           '  types is turned on via the o)ptions menu'
      endif
   endif
 !
@@ -338,6 +304,11 @@ subroutine get_labels
  
  call set_labels
  !
+ !--check that label settings are sensible, fix where possible
+ !
+ call check_labels
+ 
+ !
  !--look for a .columns file to override the default column labelling
  !
  inquire(file=trim(fileprefix)//'.columns',exist=iexist)
@@ -347,14 +318,99 @@ subroutine get_labels
     if (nlabelsread.lt.ncolumns) &
        print "(a,i3)",' WARNING: end of file in '//trim(fileprefix)//'.columns file: labels read to column ',nlabelsread
  endif
-
  !
  !--read units file and change units if necessary
  !
  call read_unitsfile(trim(unitsfile),ncolumns,ierr)     
 
-
 end subroutine get_labels
+
+!----------------------------------------------------------------
+!
+!  utility to check that label settings are sensible
+!
+!----------------------------------------------------------------
+subroutine check_labels
+ use settings_data, only:ndim,ndimV,ncolumns
+ use labels, only:ix,irho,ih,ipmass
+ use particle_data, only:masstype
+ implicit none
+ integer :: i
+
+ if (ndim.ne.0 .and. ncolumns.gt.0) then
+    if (ndim.lt.0 .or. ndim.gt.3) then
+       print "(a)",' ERROR with ndim setting in data read, using ndim=3'
+       ndim = 3
+    endif
+    if (ndimV.lt.0 .or. ndimV.gt.3) then
+       print "(a)",' ERROR with ndimV setting in data read, using ndimV=3'
+       ndimV = 3
+    endif
+    if (ndim.ge.2  .and. any(ix(2:ndim).eq.ix(1))) then
+       print "(a)",' WARNING: error in ix setting in set_labels: fixing '
+       ix(1) = max(ix(1),1)
+       do i=2,ndim
+          ix(i) = i
+       enddo
+    endif
+    if (irho.gt.ncolumns) then
+       print "(a)",' ERROR with irho setting in data read'
+       irho = 0
+    endif
+    if (ih.gt.ncolumns) then
+       print "(a)",' ERROR with ih setting in data read '
+       ih = 0
+    endif
+    if (ipmass.gt.ncolumns) then
+       print "(a)",' ERROR with ipmass setting in data read'
+       ipmass = 0
+    endif
+    if (irho.eq.0 .or. ih.eq.0) then
+       print "(4(/,a))",' WARNING: Rendering capabilities cannot be enabled', &
+                '  until positions of density, smoothing length and particle', &
+                '  masses are known (specified using the integer variables ', &
+                '  irho,ih and ipmass in the read_data routine)'
+    elseif (irho.gt.0 .and. ih.gt.0 .and. ipmass.eq.0 .and. all(masstype(:,:).lt.tiny(0.))) then
+       print "(2(/,a))",' WARNING: Particle masses not read as array but mass not set:', &
+                        '          RENDERING WILL NOT WORK! '
+
+
+    endif
+ endif
+
+end subroutine check_labels
+
+!-----------------------------------------------
+!
+!  amend data after the data read based on
+!  various environment variable settings
+!
+!  must be called AFTER the data has been read
+!
+!-----------------------------------------------
+subroutine adjust_data_codeunits
+ use system_utils, only:renvironment
+ use labels, only:ih
+ use settings_data, only:ncolumns
+ use particle_data, only:dat
+ implicit none
+ real :: hmin
+ 
+ if (ih.gt.0 .and. ih.le.ncolumns) then
+    hmin = renvironment('SPLASH_HMIN_CODEUNITS',errval=-1.)
+    if (hmin.gt.0.) then
+       if (.not.allocated(dat)) then
+          print*,' INTERNAL ERROR: dat not allocated in adjust_data_codeunits'
+          return
+       endif
+       print*,' >> SETTING MINIMUM H TO ',hmin
+       where (dat(:,ih,:) < hmin)
+          dat(:,ih,:) = hmin
+       end where
+    endif
+ endif
+ 
+end subroutine adjust_data_codeunits
 
 !-------------------------------------
 !
