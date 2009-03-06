@@ -18,6 +18,7 @@ contains
  
 subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
                   xmin,ymin,dx,icolours,iplotcont,iColourBarStyle,nc,log,ilabelcont,blank)
+ use plotutils, only:formatreal
  implicit none
  integer, intent(in) :: npixx,npixy,nc,icolours
  real, intent(in) :: xmin,ymin,datmin,datmax,dx
@@ -92,21 +93,11 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !
     if (ilabelcont) then
        call pgqch(charheight)       ! query character height
-       call pgsch(0.5*charheight)   ! shrink character height
+       call pgsch(0.75*charheight)   ! shrink character height
 
        do i=1,nc
-          if (abs( log10(abs(levels(i)) + tiny(0.))).gt.3) then
-             write(string,"(1pe8.2)",iostat=ierr) levels(i)
-          else
-             write(string,"(f5.2)",iostat=ierr) levels(i)
-          endif
-          if (ierr /= 0) then
-             write(string,*) levels(i)
-             string = trim(adjustl(string))
-          endif
-          !!print*,'level = ',levels(i),string
-          !!call pgsch(0.5)
-          call pgconl(datpix,npixx,npixy,1,npixx,1,npixy,levels(i),trans,trim(string),75,30)
+          call formatreal(levels(i),string)
+          call pgconl(datpix,npixx,npixy,1,npixx,1,npixy,levels(i),trans,trim(string),npixx/2,30)
        enddo
        call pgsch(charheight) ! restore character height
     endif

@@ -5,7 +5,7 @@
 !---------------------------------------------------------------------------
 module plotutils
  implicit none
- public :: plotline,plotbins
+ public :: plotline,plotbins,formatreal
  
  private
 
@@ -70,5 +70,54 @@ subroutine plotbins(nbins,xbins,ybins,blank)
  
  return
 end subroutine plotbins
+
+!
+!  formatting of real variables into strings (like PGNUMB)
+!
+subroutine formatreal(val,string,ierror)
+ implicit none
+ real, intent(in) :: val
+ character(len=*), intent(out) :: string
+ integer, intent(out), optional :: ierror
+ integer :: ierr,i,idot
+ logical :: nonzero
+
+ if (abs(val).ge.1.d99) then
+    write(string,"(1pe10.3)",iostat=ierr) val
+ elseif (abs(val).lt.1.e-3 .or. abs(val).ge.1.e4) then
+    write(string,"(1pe9.2)",iostat=ierr) val
+ elseif (abs(val).lt.0.1) then
+    write(string,"(f8.3)",iostat=ierr) val
+ elseif (abs(val).ge.100.) then
+    write(string,"(f8.0)",iostat=ierr) val
+ else 
+    write(string,"(f8.2)",iostat=ierr) val
+ endif
+ string = adjustl(trim(string))
+
+ if (present(ierror)) ierror = ierr
+
+ !
+ !--strip trailing zeros after the decimal place
+ !  (and the decimal place if it is the last character)
+ !
+ idot = index(string,'.')
+ if (idot.gt.0) then
+    nonzero = .false.
+    do i = len_trim(string),idot,-1
+       if (.not.nonzero .and. string(i:i).eq.'0') then
+          string(i:i) = ' '
+       elseif (.not.nonzero .and. string(i:i).eq.'.') then
+          string(i:i) = ' '
+          nonzero = .true.
+       else
+          nonzero = .true.
+       endif
+    enddo
+ endif
+ string = trim(string)
+
+ return
+end subroutine formatreal
 
 end module plotutils
