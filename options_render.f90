@@ -4,16 +4,19 @@
 !-------------------------------------------------------------------------
 module settings_render
  use colourbar, only:ColourBarDisp,iplotcolourbarlabel
+ use labels, only:lenlabel
  implicit none
  integer :: ncontours,npix,icolours,iColourBarStyle
  logical :: iplotcont_nomulti,ilabelcont
  logical :: icolour_particles,inormalise_interpolations
  logical :: ifastrender,idensityweightedinterpolation
+ character(len=lenlabel+20) :: projlabelformat
+ integer :: iapplyprojformat
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
    icolour_particles,ColourBarDisp,inormalise_interpolations, &
    ifastrender,idensityweightedinterpolation,iColourBarStyle, &
-   iplotcolourbarlabel,ilabelcont
+   iplotcolourbarlabel,ilabelcont,projlabelformat,iapplyprojformat
 
 contains
 
@@ -35,6 +38,8 @@ subroutine defaults_set_render
   idensityweightedinterpolation = .false.
   iplotcolourbarlabel = .true.
   ilabelcont = .false.   ! print numeric labels on contours
+  projlabelformat = ' '
+  iapplyprojformat = 0
 
   return
 end subroutine defaults_set_render
@@ -46,6 +51,7 @@ subroutine submenu_render(ichoose)
   use colourbar, only:maxcolourbarstyles,labelcolourbarstyles,barisvertical
   use colours, only:schemename,ncolourschemes,colour_demo
   use prompting, only:prompt,print_logical
+  use params, only:maxplot
   implicit none
   integer, intent(in) :: ichoose
   character(len=5) :: string
@@ -65,7 +71,7 @@ subroutine submenu_render(ichoose)
      print 10,trim(string),icolours,print_logical(iplotcont_nomulti),ncontours, &
            iColourBarStyle,print_logical(icolour_particles), &
            print_logical(inormalise_interpolations),print_logical(ifastrender),&
-           print_logical(idensityweightedinterpolation)
+           print_logical(idensityweightedinterpolation),trim(projlabelformat)
 10   format( &
           ' 0) exit ',/,                      &
           ' 1) set number of pixels               ( ',a,' )',/, &
@@ -76,8 +82,9 @@ subroutine submenu_render(ichoose)
           ' 6) use particle colours not pixels    ( ',a,' )',/,& 
           ' 7) normalise interpolations           ( ',a,' )',/,&
           ' 8) use accelerated rendering          ( ',a,' )',/,&
-          ' 9) use density weighted interpolation ( ',a,' )')
-     call prompt('enter option',ians,0,9)
+          ' 9) use density weighted interpolation ( ',a,' )',/, &
+          ' 10) customize label on projection plots ( ',a,' )')
+     call prompt('enter option',ians,0,10)
   endif
 !
 !--options
@@ -167,6 +174,21 @@ subroutine submenu_render(ichoose)
        idensityweightedinterpolation = .not.idensityweightedinterpolation
        print "(a)",' Density weighted interpolation is '// &
                    print_logical(idensityweightedinterpolation)
+!------------------------------------------------------------------------
+    case(10)
+       print "(5(/,a),/,4(/,a),/)", &
+                        ' Example format strings: ', &
+                        '  \(2268) %l d%z %uz       : this is the default format "\int rho [g/cm^3] dz [cm]"', &
+                        '   column %l               : would print "column density" for density', &
+                        '  surface %l               : would print "surface density"', &
+                        '  %l integrated through %z : would print "density integrated through z"', &
+                        ' Format codes: ', &
+                        ' %l  : label for rendered quantity ', &
+                        ' %z  : label for ''z'' ', &
+                        ' %uz : units label for z (only if physical units applied)'
+                        
+       call prompt(' enter label format for projection plots: ',projlabelformat)
+       call prompt(' enter which column to apply format to (0=all) ',iapplyprojformat,0,maxplot)
   end select
     
  return

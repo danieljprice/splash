@@ -11,6 +11,7 @@
 module asciiutils
  implicit none
  public :: read_asciifile,get_ncolumns,ncolumnsline,safename,cstring
+ public :: string_replace
  
  private
 
@@ -283,5 +284,24 @@ function cstring(string)
  cstring = trim(string)//achar(0)
 
 end function cstring
+
+!---------------------------------------------------------------------------
+!
+! subroutine to replace a matching section of a string with another
+! string, possibly of differing length 
+!
+!---------------------------------------------------------------------------
+subroutine string_replace(string,skey,sreplacewith)
+ implicit none
+ character(len=*), intent(inout) :: string
+ character(len=*), intent(in) :: skey,sreplacewith
+ integer :: ipos
+
+ ipos = index(string,skey)
+ if (ipos.gt.0) then
+    string = string(1:ipos-1)//sreplacewith//string(ipos+len(skey):len(string))
+ endif
+
+end subroutine string_replace
 
 end module asciiutils

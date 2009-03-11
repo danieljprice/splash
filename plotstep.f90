@@ -639,7 +639,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   ninterp = npartoftype(1)
   if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes)) &
       .or. size(iamtype).gt.1) ninterp = ntoti
-  print*,'ninterp = ',ninterp
   
   !--non-SPH particle types cannot be used in contours
   where (.not.UseTypeInRenderings(:))
@@ -1421,7 +1420,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  labelrender = label(irenderplot)
                  if (gotcontours) labelcont = label(icontourplot)
                  
-                 !!--set label for column density (projection) plots (2268 or 2412 for integral sign)
+                 !!--set label for column density (projection) plots
                  if (ndim.eq.3 .and..not. x_sec .and..not.(use3Dperspective.and.use3Dopacityrendering)) then
                     labelrender = integrate_label(labelrender,irender,ix(iz),inormalise)
                     if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,ix(iz),inormalise)
@@ -1722,7 +1721,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
                       angletempx,angletempy,angletempz,ndim,xorigin(1:ndim),x_sec,zslicepos,dz, &
                       zobservertemp,dzscreentemp,use3Dopacityrendering,taupartdepthtemp,irerender, &
-                      itrackpart,icolours,iColourBarStyle,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
+                      itrackpart,icolours,iColourBarStyle,labelrender,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
                  !--turn rotation on if necessary
                  if (abs(angletempx-anglex).gt.tol) irotate = .true.
                  if (abs(angletempy-angley).gt.tol) irotate = .true.
@@ -1845,7 +1844,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
                    angletempx,angletempy,angletempz,ndim,xorigin(1:ndim), &
                    dumxsec,dummy,dummy,dummy,dummy,.false.,dummy,irerender, &
-                   itrackpart,icolours,iColourBarStyle,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
+                   itrackpart,icolours,iColourBarStyle,labelrender,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames ! this should be unnecessary
            elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
               !
@@ -3317,33 +3316,45 @@ end subroutine rotatedaxes
 function integrate_label(labelin,iplot,izcol,normalise)
   use settings_data, only:iRescale
   use settings_units, only:labelzintegration,unitslabel
+  use settings_render, only:projlabelformat,iapplyprojformat
   use labels, only:irho,label
+  use asciiutils, only:string_replace
   implicit none
   character(len=*), intent(in) :: labelin
   integer, intent(in) :: iplot,izcol
   logical, intent(in) :: normalise
   character(len=len(label)+20) :: integrate_label
-                   
-  if (normalise) then
-     integrate_label = '< '//trim(labelin)//' >'
-  else
+
+  if (len_trim(projlabelformat).ne.0 .and. (iapplyprojformat.eq.0 .or. iapplyprojformat.eq.iplot)) then
+     integrate_label = projlabelformat
+     call string_replace(integrate_label,'%l',trim(labelin))
      if (iRescale) then
-        integrate_label = '\(2268) '//trim(labelin)//' d'// &
-           trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))//trim(labelzintegration)
+        call string_replace(integrate_label,'%z',trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1)))
+        call string_replace(integrate_label,'%uz',trim(unitslabel(izcol)))
      else
-        integrate_label = '\(2268) '//trim(labelin)//' d'//trim(label(izcol))
+        call string_replace(integrate_label,'%z',trim(label(izcol)))
      endif
-     if (iplot.eq.irho) then
-        integrate_label = 'column density'
-        !--try to get units label right for column density
-        !  would be nice to have a more robust way of knowing what the units mean
-        if (iRescale .and. index(labelzintegration,'cm').gt.0  &
-                     .and. trim(adjustl(unitslabel(irho))).eq.'[g/cm\u3\d]') then
-           integrate_label = trim(integrate_label)//' [g/cm\u2\d]'
+  else
+     if (normalise) then
+        integrate_label = '< '//trim(labelin)//' >'
+     else
+        if (iRescale) then
+           integrate_label = '\(2268) '//trim(labelin)//' d'// &
+              trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))//trim(labelzintegration)
+        else
+           integrate_label = '\(2268) '//trim(labelin)//' d'//trim(label(izcol))
+        endif
+        if (iplot.eq.irho .and. (index(labelin,'density').ne.0 .or. index(labelin,'rho').ne.0)) then
+           integrate_label = 'column density'
+           !--try to get units label right for column density
+           !  would be nice to have a more robust way of knowing what the units mean
+           if (iRescale .and. index(labelzintegration,'cm').gt.0  &
+                        .and. trim(adjustl(unitslabel(irho))).eq.'[g/cm\u3\d]') then
+              integrate_label = trim(integrate_label)//' [g/cm\u2\d]'
+           endif
         endif
      endif
   endif
-
 end function integrate_label
 
 end module timestep_plotting
