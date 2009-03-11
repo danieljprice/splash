@@ -1,5 +1,5 @@
 module interactive_routines
- use colourbar, only:barisvertical,incolourbar
+ use colourbar, only:barisvertical,incolourbar,incolourbarlabel
  implicit none
  public :: interactive_part,interactive_step,interactive_multi
  private :: mvlegend,mvtitle,save_limits,save_rotation
@@ -45,8 +45,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
   anglex,angley,anglez,ndim,xorigin,x_sec,zslicepos,dzslice, &
   zobserver,dscreen,use3Dopacity,taupartdepth,irerender,itrackpart,icolourscheme, &
-  iColourBarStyle,iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
+  iColourBarStyle,labelrender,iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
   use settings_xsecrot, only:setsequenceend
+  use shapes, only:inshape,edit_shape,edit_textbox,delete_shape
+  use multiplot, only:itrans
+  use settings_render, only:projlabelformat,iapplyprojformat
   implicit none
   integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
   integer, intent(inout) :: iColourBarStyle
@@ -58,11 +61,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
   real, intent(in) :: renderminadapt,rendermaxadapt
   real, intent(in), dimension(ndim) :: xorigin
+  character(len=*), intent(inout) :: labelrender
   logical, intent(inout) :: x_sec
   logical, intent(out) :: irerender,interactivereplot
   logical, intent(in) :: use3Dopacity
   real, parameter :: pi=3.141592653589
-  integer :: i,iclosest,nc,ierr,ixsec
+  integer :: i,iclosest,nc,ierr,ixsec,ishape
   integer :: nmarked,ncircpart,itrackparttemp
   integer, dimension(1000) :: icircpart
  !! real :: xpt,ypt
@@ -339,7 +343,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
               call save_perspective(zobserver,dscreen)
            endif
         endif
-        print*,'> plot settings saved <'
+        print*,'> plot settings saved (...but NOT to disk, use ''S'' from the main menu for that) <'
      !
      !--actions on left click
      !
@@ -349,28 +353,49 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         !
         !--change colour bar limits
         !
-        if (iamincolourbar .and. irender.gt.0) then
-           print*,'click to set rendering limits'
-           if (verticalbar) then
-              call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
-           else
-              call pgband(4,1,xpt,ypt,xpt2,ypt2,char2)           
-           endif
-           if (char2 == 'A') then
+        ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty))
+        if (ishape.gt.0) then
+           call edit_shape(ishape,xpt,ypt,itrans(iplotx),itrans(iploty))
+           iadvance = 0
+           interactivereplot = .true.
+           iexit = .true.
+        elseif (iamincolourbar .and. irender.gt.0) then
+           if (incolourbarlabel(iColourBarStyle,xpt,ypt,xmin,xmax,ymin,ymax)) then
               if (verticalbar) then
-                 drender = (rendermax-rendermin)/(ymax-ymin)
-                 rendermax = rendermin + (max(ypt,ypt2)-ymin)*drender
-                 rendermin = rendermin + (min(ypt,ypt2)-ymin)*drender
+                 call edit_textbox(xpt,ypt,90.,labelrender)
+                 projlabelformat = trim(labelrender)
+                 iapplyprojformat = irender
               else
-                 drender = (rendermax-rendermin)/(xmax-xmin)
-                 rendermax = rendermin + (max(xpt,xpt2)-xmin)*drender
-                 rendermin = rendermin + (min(xpt,xpt2)-xmin)*drender              
+                 call edit_textbox(xpt,ypt,0.,labelrender)
+                 projlabelformat = trim(labelrender)
+                 iapplyprojformat = irender
               endif
-              print*,'setting render min = ',rendermin
-              print*,'setting render max = ',rendermax              
               iadvance = 0
               interactivereplot = .true.
               iexit = .true.
+           else
+              print*,'click to set rendering limits'
+              if (verticalbar) then
+                 call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
+              else
+                 call pgband(4,1,xpt,ypt,xpt2,ypt2,char2)           
+              endif
+              if (char2 == 'A') then
+                 if (verticalbar) then
+                    drender = (rendermax-rendermin)/(ymax-ymin)
+                    rendermax = rendermin + (max(ypt,ypt2)-ymin)*drender
+                    rendermin = rendermin + (min(ypt,ypt2)-ymin)*drender
+                 else
+                    drender = (rendermax-rendermin)/(xmax-xmin)
+                    rendermax = rendermin + (max(xpt,xpt2)-xmin)*drender
+                    rendermin = rendermin + (min(xpt,xpt2)-xmin)*drender              
+                 endif
+                 print*,'setting render min = ',rendermin
+                 print*,'setting render max = ',rendermax              
+                 iadvance = 0
+                 interactivereplot = .true.
+                 iexit = .true.
+              endif
            endif
         !
         !--zoom or mark particles
@@ -962,7 +987,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         interactivereplot = .true.
         iexit = .true.
      case(achar(8)) ! delete plot annotation / colour bar (backspace)
-        if (iamincolourbar .and. irender.gt.0) then
+        ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty))
+        if (ishape.gt.0) then
+           call delete_shape(ishape)
+           iadvance = 0
+           interactivereplot = .true.
+           iexit = .true.
+        elseif (iamincolourbar .and. irender.gt.0) then
            iColourBarStyle = 0
            iadvance = 0
            interactivereplot = .true.
@@ -1963,7 +1994,6 @@ end subroutine plot_number
 subroutine deleteaxes()
  use settings_page, only:iaxis,iPlotLegend,& !iPlotStepLegend, &
                     iPlotTitles,iPlotScale 
- use shapes, only:nshapes
  use settings_vecplot, only:iVecplotLegend
  implicit none
 
@@ -1981,8 +2011,6 @@ subroutine deleteaxes()
        iPlotLegend = .false.
     elseif (iPlotTitles) then
        iPlotTitles = .false.
-    elseif (nshapes.gt.0) then
-       nshapes = nshapes - 1
     elseif (iPlotScale) then
        iPlotScale = .false.
     endif

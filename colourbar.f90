@@ -25,8 +25,9 @@ module colourbar
  real, parameter, public :: ColourBarWidth = 2. ! width in character heights
  logical, public :: iplotcolourbarlabel = .true.
 
- public :: plotcolourbar,incolourbar,barisvertical,get_colourbarmargins
-
+ public :: plotcolourbar,incolourbar,incolourbarlabel,barisvertical,get_colourbarmargins
+ real, private :: xlabeloffsetsave = 0.
+ real, parameter, private :: disp = 0.25
  private
  
 contains
@@ -63,8 +64,8 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
 !
 !--set colour bar displacement and width in character heights
 !
- disp = 0.25
  width = ColourBarWidth
+ xlabeloffsetsave = xlabeloffset
 !
 !--start buffering
 !
@@ -264,6 +265,34 @@ logical function incolourbar(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
  
  return
 end function incolourbar
+
+!-------------------------------------------------------
+! query function to see if a given position on
+! the plot should lie within the colour bar or not
+!-------------------------------------------------------
+logical function incolourbarlabel(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
+ implicit none
+ integer, intent(in) :: istyle
+ real, intent(in) :: xpt,ypt,xmin,xmax,ymin,ymax
+ real :: xch,ych
+ 
+ incolourbarlabel = .false.
+
+ if (iplotcolourbarlabel) then
+    call pgqcs(4,xch,ych)
+    print*,'checking colourbar label ',xpt,ypt,ymin-2.5*ych,ych
+    select case(istyle)
+    case(2,4,6)
+       if (ypt.lt.(ymin-(disp + xlabeloffsetsave + ColourBarWidth+2.0)*ych) .and. &
+           ypt.gt.(ymin-(disp + xlabeloffsetsave + ColourBarWidth+3.0)*ych)) incolourbarlabel = .true.
+    case default
+       if (xpt.gt.(xmax+(disp + ColourBarWidth-0.25 + max(ColourBarDisp-0.25,0.0))*xch) .and. &
+           xpt.lt.(xmax+(disp + ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch)) incolourbarlabel = .true.
+    end select
+ endif
+ 
+ return
+end function incolourbarlabel
 
 !-------------------------------------------------------
 ! query function to get margins which should

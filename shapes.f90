@@ -34,6 +34,8 @@ module shapes
       'line     ', &
       'text     '/)
  namelist /shapeopts/ nshapes,shape
+
+ real, parameter, private :: pi = 3.1415926536
  
 contains
 !-----------------------------------------------------------------
@@ -174,15 +176,13 @@ subroutine submenu_shapes()
 end subroutine submenu_shapes
 
 subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
- use transforms, only:transform
  implicit none
  integer, intent(in) :: ipanel,irow,icolumn,itransx,itransy
  integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle
- integer :: i,iunits,iplotonthispanel
+ integer :: i,iplotonthispanel
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot
- real :: xpos,ypos,xlen,ylen,angle,dx,dy
+ real :: xpos,ypos,xlen,ylen,anglerad,dx,dy
  real, dimension(2) :: xline,yline
- real, parameter :: pi = 3.1415926536
 !
 !--store current settings
 !
@@ -212,32 +212,10 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
        call pgslw(shape(i)%linewidth)
        call pgsfs(shape(i)%ifillstyle)
 
-       xpos = shape(i)%xpos
-       ypos = shape(i)%ypos
-       xlen = shape(i)%xlen
-       ylen = shape(i)%ylen
-       angle = shape(i)%angle*(pi/180.)
+       anglerad = shape(i)%angle*(pi/180.)
 
-       iunits = shape(i)%iunits
-       select case(iunits)
-       case(2) ! translate from viewport coordinates into plot coordinates
-          xpos = xmin + xpos*dxplot
-          ypos = ymin + ypos*dyplot
-          xlen = xlen*dxplot
-          ylen = ylen*dyplot
-       case(1)
-          if (itransx.gt.0) then
-             call transform(xpos,itransx)
-             call transform(xlen,itransx)
-          endif
-          if (itransy.gt.0) then
-             call transform(ypos,itransy)
-             call transform(ylen,itransy)
-          endif
-          ! do nothing here
-       case default ! should never happen
-          print "(a)",' INTERNAL ERROR: unknown units whilst plotting shape'
-       end select
+       call convert_units(shape(i),xpos,ypos,xlen,ylen, &
+                          xmin,ymin,dxplot,dyplot,itransx,itransy)
 
        print "(a)",'> plotting shape: '//trim(labelshapetype(shape(i)%itype))
        select case(shape(i)%itype)
@@ -248,8 +226,8 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
              call pgrect(xpos-0.5*xlen,xpos+0.5*xlen,ypos-0.5*ylen,ypos + 0.5*ylen)   
           endif
        case(3) ! arrow
-          dx = xlen*cos(angle)
-          dy = xlen*sin(angle)
+          dx = xlen*cos(anglerad)
+          dy = xlen*sin(anglerad)
           !--do not plot if length > size of plot
           if (dx.gt.dxplot .or. dy.gt.dyplot) then
              print "(2x,a)",'Error: arrow length exceeds plot dimensions: arrow not plotted'
@@ -265,11 +243,11 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
        case(5) ! line
           xline(1) = xpos
           yline(1) = ypos
-          xline(2) = xpos + xlen*cos(angle)
-          yline(2) = ypos + xlen*sin(angle)
+          xline(2) = xpos + xlen*cos(anglerad)
+          yline(2) = ypos + xlen*sin(anglerad)
           call pgline(2,xline,yline)
        case(6) ! text
-          call pgptext(xpos,ypos,angle,shape(i)%fjust,trim(shape(i)%text))
+          call pgptext(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text))
        end select
     endif
  enddo
@@ -280,5 +258,165 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
  call pgsfs(ifillstyle)
  
 end subroutine plot_shapes
+
+integer function inshape(xpt,ypt,itransx,itransy)
+ implicit none
+ real, intent(in) :: xpt,ypt
+ integer, intent(in) :: itransx,itransy
+ integer :: i
+ real :: xpos,ypos,xlen,ylen
+ real :: xmin,ymin,xmax,ymax,dxplot,dyplot
+ real, dimension(4) :: xbox,ybox
+
+ call pgqwin(xmin,xmax,ymin,ymax)
+ dxplot = xmax - xmin
+ dyplot = ymax - ymin
+ 
+ inshape = 0
+ do i=1,nshapes
+
+    call convert_units(shape(i),xpos,ypos,xlen,ylen, &
+                       xmin,ymin,dxplot,dyplot,itransx,itransy)
+
+    select case(shape(i)%itype)
+    case(1,2)  ! square, rectangle
+    
+    case(3) ! arrow
+    
+    case(4) ! circle
+    
+    case(5) ! line
+    
+    case(6) ! text
+       call pgqtxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text),xbox,ybox)
+       if (xpt.gt.minval(xbox) .and. xpt.le.maxval(xbox) &
+          .and. ypt.gt.minval(ybox) .and. ypt.le.maxval(ybox)) then
+          inshape = i
+       endif
+    end select
+ enddo
+ 
+end function inshape
+
+subroutine edit_shape(i,xpt,ypt,itransx,itransy)
+ implicit none
+ integer, intent(in) :: i,itransx,itransy
+ real, intent(in)    :: xpt,ypt
+ real :: xmin,xmax,ymin,ymax,dxplot,dyplot,xlen,ylen
+ real :: xpos,ypos
+
+ call pgqwin(xmin,xmax,ymin,ymax)
+ dxplot = xmax - xmin
+ dyplot = ymax - ymin
+
+ call convert_units(shape(i),xpos,ypos,xlen,ylen, &
+                    xmin,ymin,dxplot,dyplot,itransx,itransy)
+
+ select case(shape(i)%itype)
+ case(6)
+    call edit_textbox(xpos,ypos,shape(i)%angle,shape(i)%text)
+ case default
+ 
+ end select
+
+end subroutine edit_shape
+
+subroutine delete_shape(ishape)
+ implicit none
+ integer, intent(in) :: ishape
+ integer :: i
+
+ if (ishape.gt.0) then
+    do i=ishape+1,nshapes
+       shape(i-1) = shape(i)
+    enddo
+    print "(a)",'> deleted shape: '//trim(labelshapetype(shape(ishape)%itype))
+    nshapes = nshapes - 1
+ endif
+
+end subroutine delete_shape
+
+subroutine convert_units(shape,xpos,ypos,xlen,ylen,xmin,ymin,dxplot,dyplot,itransx,itransy)
+ use transforms, only:transform
+ implicit none
+ type(shapedef), intent(in) :: shape
+ real, intent(out)   :: xpos,ypos,xlen,ylen
+ real, intent(in)    :: xmin,ymin,dxplot,dyplot
+ integer, intent(in) :: itransx,itransy
+
+ xpos = shape%xpos
+ ypos = shape%ypos
+ xlen = shape%xlen
+ ylen = shape%ylen
+
+ select case(shape%iunits)
+ case(2) ! translate from viewport coordinates into plot coordinates
+    xpos = xmin + xpos*dxplot
+    ypos = ymin + ypos*dyplot
+    xlen = xlen*dxplot
+    ylen = ylen*dyplot
+ case(1)
+    if (itransx.gt.0) then
+       call transform(xpos,itransx)
+       call transform(xlen,itransx)
+    endif
+    if (itransy.gt.0) then
+       call transform(ypos,itransy)
+       call transform(ylen,itransy)
+    endif
+    ! do nothing here
+ case default ! should never happen
+    print "(a)",' INTERNAL ERROR: unknown units whilst plotting shape'
+ end select
+
+end subroutine convert_units
+
+
+subroutine edit_textbox(xpt,ypt,angle,string)
+ implicit none
+ real, intent(in) :: xpt,ypt,angle
+ character(len=1) :: mychar
+ real :: xpt2,ypt2
+ character(len=*), intent(inout) :: string
+ character(len=len(string)) :: oldstring
+ integer :: i
+ 
+ print*,'editing text box, esc or ctrl-c to quit'
+ call pgstbg(0)
+ mychar = ' '
+ oldstring = string
+ i = max(len_trim(string)+1,1)
+ call pgptxt(xpt,ypt,angle,0.,string(1:i)//'_')
+ xpt2 = xpt
+ ypt2 = ypt
+ call pgcurs(xpt2,ypt2,mychar)
+ do while (mychar.ne.achar(13) &   ! carriage return
+     .and. mychar.ne.achar(27) &   ! ctrl-c
+     .and. mychar.ne.achar(3))     ! esc
+    if (mychar.eq.achar(8)) then   ! backspace
+       i = max(i - 1,1)
+       string(i:i) = '_'
+       call pgptxt(xpt,ypt,angle,0.,string(1:i))
+       string(i:i) = ' '
+    else
+       string(i:i) = mychar
+       call pgptxt(xpt,ypt,angle,0.,string(1:i))
+       i = min(i + 1,len(string))
+       if (i.eq.len(string)) print*,' reached end of string'
+    endif
+    call pgcurs(xpt2,ypt2,mychar)
+ enddo
+ 
+ !--if ctrl-c or esc, restore original string
+ if (mychar.eq.achar(3) .or. mychar.eq.achar(27)) then
+    string = oldstring
+    print*,'cancelled'
+ else
+    print*,'done: text = "'//trim(string)//'"'
+ endif
+ call pgstbg(-1)
+ 
+end subroutine edit_textbox
+
 
 end module shapes
