@@ -315,7 +315,10 @@ program splash
         case('p')
            i = i + 1
            call get_argument(i,string)
-           if (len_trim(string).gt.0) fileprefix = trim(string)
+           if (len_trim(string).gt.0) then
+              fileprefix = trim(string)
+              call set_filenames(trim(fileprefix))
+           endif
         case('o')
            i = i + 1
            call get_argument(i,string)
@@ -328,6 +331,7 @@ program splash
         case('e','ev')
            evsplash = .true.
            fileprefix = 'evsplash'
+           call set_filenames(trim(fileprefix))
         case('lowmem','lm')
            lowmemorymode = .true.
         case('nolowmem','nlm')
@@ -374,7 +378,6 @@ program splash
      endif
   enddo
 
-  call set_filenames(trim(fileprefix))
   !
   ! print header
   !
