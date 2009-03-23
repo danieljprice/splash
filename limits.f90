@@ -259,7 +259,7 @@ logical function lim2set(icol)
  integer, intent(in) :: icol
  
  lim2set = .false.
- if (abs(lim2(icol,2)-lim2(icol,1)).gt.tiny(lim2)) lim2set = .true.
+ if (abs(lim2(icol,2)).gt.tiny(lim2) .or. abs(lim2(icol,1)).gt.tiny(lim2)) lim2set = .true.
 
  return
 end function lim2set
