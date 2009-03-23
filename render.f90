@@ -86,7 +86,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
        print 20,levels(1:nc)
        call pgcons(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
     endif
-10  format(1x,'plotting ',i4,a,' between ',1pe8.2,' and ',1pe8.2,', every ',1pe8.2,':')
+10  format(1x,'plotting ',i4,a,' between ',1pe10.2,' and ',1pe10.2,', every ',1pe10.2,':')
 20  format(10(6(1x,1pe9.2),/))
 !
 !--labelling of contour levels
