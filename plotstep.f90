@@ -748,7 +748,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      !  do not interpolate twice. Instead simply plot the contours
      !  of the rendered quantity when plotting the render plot.
      if (irender.gt.ndim .and. irender.le.numplot) then
-        if (icontourplot.eq.irender .and. isameweights .and..not.lim2set(icontourplot)) then
+        if (icontourplot.eq.irender .and. isameweights) then
            icontourplot = 0
            iplotcont = .true.
            !print "(a)",' contouring same as rendering'
@@ -1476,6 +1476,21 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                        endif
                     endif
                  endif
+                 if (iplotcont .and. .not.gotcontours) then 
+                 !
+                 !  this is the case where contoured quantity=rendered quantity
+                 !  don't need to recalculate the pixel array but limits can be independent
+                 !  => do this even during interactive replotting as rendermin,max can be changed
+                 !     but contour limits should copy changes unless separate contour limits are set
+                 !
+                    contmin = rendermin
+                    contmax = rendermax
+                    if (lim2set(irenderplot) .and. .not.iadapt) then
+                       contmin = lim2(irenderplot,1)
+                       contmax = lim2(irenderplot,2)
+                       call transform_limits(contmin,contmax,itrans(irenderplot))
+                    endif
+                 endif
 
                  !!  do not let max=0 on log plots as this is suspiciously wrong
                  if (logged) then
@@ -1580,7 +1595,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  !!--call subroutine to actually render the image
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                    npixx,npixy,xmin,ymin,pixwidth,    &
-                   icolours,iplotcont,0,ncontours,.false.,ilabelcont)
+                   icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
 
                  !!--contour plot of different quantity on top of rendering
                  if (gotcontours) then

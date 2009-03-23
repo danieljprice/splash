@@ -17,7 +17,8 @@ contains
 !------------------------------------------------------------------------
  
 subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
-                  xmin,ymin,dx,icolours,iplotcont,iColourBarStyle,nc,log,ilabelcont,blank)
+                  xmin,ymin,dx,icolours,iplotcont,iColourBarStyle,nc,log, &
+                  ilabelcont,contmin,contmax,blank)
  use plotutils, only:formatreal
  implicit none
  integer, intent(in) :: npixx,npixy,nc,icolours
@@ -26,10 +27,10 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  logical, intent(in) :: iplotcont,log,ilabelcont
  integer, intent(in) :: iColourBarStyle
  character(len=*), intent(in) :: label
- real, intent(in), optional :: blank
+ real, intent(in), optional :: contmin,contmax,blank
  
- integer :: i,ierr
- real :: trans(6),levels(nc),dcont,charheight
+ integer :: i
+ real :: trans(6),levels(nc),dcont,charheight,cmin,cmax
  character(len=12) :: string
 ! 
 !--set up grid for rendering 
@@ -57,6 +58,16 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !--contours
 !
  if (iplotcont) then
+    if (present(contmin)) then
+       cmin = contmin
+    else
+       cmin = datmin
+    endif
+    if (present(contmax)) then
+       cmax = contmax
+    else
+       cmax = datmax
+    endif
 !
 !--set contour levels
 ! 
@@ -64,12 +75,12 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
        print*,'ERROR: cannot plot contours with ',nc,' levels'
        return
     elseif (nc.eq.1) then
-       levels(1) = datmin
+       levels(1) = cmin
        dcont = 0.
     else
-       dcont = (datmax-datmin)/real(nc-1)   ! even contour levels
+       dcont = (cmax-cmin)/real(nc-1)   ! even contour levels
        do i=1,nc
-          levels(i) = datmin + real(i-1)*dcont
+          levels(i) = cmin + real(i-1)*dcont
        enddo
     endif
 !
