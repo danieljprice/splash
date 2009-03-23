@@ -519,7 +519,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use toystar2D, only:exact_toystar_ACplane2D
   use labels, only:label,labelvec,iamvec,lenlabel, &
               ih,irho,ipmass,ix,iacplane,ipowerspec,isurfdens,itoomre,iutherm,ipdf
-  use limits, only:lim,get_particle_subset
+  use limits, only:lim,get_particle_subset,lim2,lim2set
   use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                 icontourmulti,x_secmulti,xsecposmulti
   use particle_data, only:maxpart,icolourme
@@ -748,7 +748,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      !  do not interpolate twice. Instead simply plot the contours
      !  of the rendered quantity when plotting the render plot.
      if (irender.gt.ndim .and. irender.le.numplot) then
-        if (icontourplot.eq.irender .and. isameweights) then
+        if (icontourplot.eq.irender .and. isameweights .and..not.lim2set(icontourplot)) then
            icontourplot = 0
            iplotcont = .true.
            !print "(a)",' contouring same as rendering'
@@ -1464,6 +1464,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                              print*,'adapting contour limits'
                              contmin = contminadapt
                              contmax = contmaxadapt
+                          elseif (icontourplot.eq.irenderplot .and. lim2set(icontourplot)) then
+                             contmin = lim2(icontourplot,1)
+                             contmax = lim2(icontourplot,2)
+                             call transform_limits(contmin,contmax,itrans(icontourplot))                          
                           else
                              contmin = lim(icontourplot,1)
                              contmax = lim(icontourplot,2)
@@ -1715,10 +1719,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            if (interactive) then
               if (nacross*ndown.eq.1 .and. nstepsperpage.eq.1) then
                  iadvance = nfreq
-                 call interactive_part(ninterp,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
+                 call interactive_part(ninterp,iplotx,iploty,iplotz,irender,icontourplot,ivecx,ivecy, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       hh(1:ninterp),icolourme(1:ninterp), &
-                      xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
+                      xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,vecmax, &
                       angletempx,angletempy,angletempz,ndim,xorigin(1:ndim),x_sec,zslicepos,dz, &
                       zobservertemp,dzscreentemp,use3Dopacityrendering,taupartdepthtemp,irerender, &
                       itrackpart,icolours,iColourBarStyle,labelrender,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
@@ -1838,10 +1842,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         if (interactive) then
            if (nacross*ndown.eq.1 .and. nstepsperpage.eq.1) then
               iadvance = nfreq
-              call interactive_part(ntoti,iplotx,iploty,0,irenderpart,0,0, &
+              call interactive_part(ntoti,iplotx,iploty,0,irenderpart,0,0,0, &
                    xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
                    hh(1:ntoti),icolourme(1:ntoti), &
-                   xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
+                   xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,vecmax, &
                    angletempx,angletempy,angletempz,ndim,xorigin(1:ndim), &
                    dumxsec,dummy,dummy,dummy,dummy,.false.,dummy,irerender, &
                    itrackpart,icolours,iColourBarStyle,labelrender,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)

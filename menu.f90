@@ -12,11 +12,11 @@ contains
 subroutine menu
   use filenames, only:defaultsfile,limitsfile,animfile,fileprefix,set_filenames
   use labels, only:label,labelvec,iamvec,isurfdens,itoomre,ipdf
-  use limits, only:write_limits
+  use limits, only:write_limits,lim2,lim,reset_lim2,lim2set
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
                      buffer_data,ncolumns
-  use settings_limits, only:submenu_limits
+  use settings_limits, only:submenu_limits,iadapt
   use settings_part, only:submenu_particleplots
   use settings_page, only:submenu_page,submenu_legend,interactive
   use settings_render, only:submenu_render,iplotcont_nomulti
@@ -185,6 +185,16 @@ subroutine menu
               call prompt('(render) (0=none)',irender,0,numplot)
               if (irender.gt.0 .and. iplotcont_nomulti) then
                  call prompt('(contours) (0=none)',icontourplot,0,numplot)
+                 if (icontourplot.eq.irender) then
+                    if (iadapt) then
+                       print "(a)",' contour limits are adaptive '
+                    else
+                       if (.not.lim2set(icontourplot)) lim2(icontourplot,:) = lim(icontourplot,:)
+                       call prompt(' enter min for contours:',lim2(icontourplot,1))
+                       call prompt(' enter max for contours:',lim2(icontourplot,2))
+                       if (all(lim2(icontourplot,:).eq.lim(icontourplot,:))) call reset_lim2(icontourplot)
+                    endif
+                 endif
               endif
               if (any(iamvec(1:numplot).ne.0)) then
                  ivecplottemp = -1
@@ -347,6 +357,7 @@ subroutine menu
   subroutine options_multiplot
    use settings_page, only: nacross, ndown
    use settings_render, only: iplotcont_nomulti
+   use limits, only:lim,lim2,lim2set,reset_lim2
    implicit none
    integer :: ifac,ierr
    logical :: isamex, isamey, icoordplot, anycoordplot, imultisamepanel
@@ -400,6 +411,16 @@ subroutine menu
          call prompt('(render) (0=none)',irendermulti(i),0,numplot)
          if (irendermulti(i).gt.0 .and. iplotcont_nomulti) then
             call prompt('(contours) (0=none)',icontourmulti(i),0,numplot)
+            if (icontourmulti(i).eq.irendermulti(i)) then
+               if (iadapt) then
+                  print "(a)",' contour limits are adaptive '
+               else
+                  if (.not.lim2set(icontourmulti(i))) lim2(icontourmulti(i),:) = lim(icontourmulti(i),:)
+                  call prompt(' enter min for contours:',lim2(icontourmulti(i),1))
+                  call prompt(' enter max for contours:',lim2(icontourmulti(i),2))
+                  if (all(lim2(icontourmulti(i),:).eq.lim(icontourmulti(i),:))) call reset_lim2(icontourmulti(i))
+               endif
+            endif
          else
             icontourmulti(i) = 0
          endif

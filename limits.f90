@@ -8,7 +8,7 @@
 module limits
  use params
  implicit none
- real, dimension(maxplot,2) :: lim,range
+ real, dimension(maxplot,2) :: lim,range,lim2
  private :: warn_minmax
 
 contains
@@ -60,6 +60,8 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
      call warn_minmax(label(j),lim(j,1),lim(j,2))
   enddo
   print "(a/)",' plot limits set'
+
+  lim2(ifromcol:itocol,:) = 0.
   
   !
   !--transform coord limits into new coordinate system if coord transform is applied
@@ -85,8 +87,12 @@ subroutine write_limits(limitsfile)
 
   open(unit=55,file=limitsfile,status='replace',form='formatted',ERR=998)
   do i=1,numplot
-     if (rangeset(i) .and. i.lt.ndataplots) then
-        write(55,"(4(1x,1pe14.6))",err=999) lim(i,1),lim(i,2),range(i,1),range(i,2)
+     if (rangeset(i) .and. i.lt.ndataplots .and. lim2set(i)) then
+        write(55,"(6(1x,1pe14.6))",err=999) lim(i,1),lim(i,2),range(i,1),range(i,2),lim2(i,1),lim2(i,2)
+     elseif (lim2set(i) .and. i.lt.ndataplots) then
+        write(55,"(6(1x,1pe14.6))",err=999) lim(i,1),lim(i,2),0.,0.,lim2(i,1),lim2(i,2)
+     elseif (rangeset(i) .and. i.lt.ndataplots) then
+        write(55,"(4(1x,1pe14.6))",err=999) lim(i,1),lim(i,2),range(i,1),range(i,2)     
      else
         write(55,"(2(1x,1pe14.6))",err=999) lim(i,1),lim(i,2)
      endif
@@ -127,6 +133,8 @@ subroutine read_limits(limitsfile,ierr)
      ncolsline = ncolumnsline(line)
      if (ncolsline.lt.2) then
         goto 998
+     elseif (ncolsline.ge.6) then
+        read(line,*,err=998,end=999) lim(i,1),lim(i,2),range(i,1),range(i,2),lim2(i,1),lim2(i,2)
      elseif (ncolsline.ge.4) then
         read(line,*,err=998,end=999) lim(i,1),lim(i,2),range(i,1),range(i,2)
      else
@@ -147,6 +155,7 @@ subroutine read_limits(limitsfile,ierr)
   return
 998 continue
   call print_rangeinfo()
+  call print_lim2info()
   print*,'*** error reading limits from file'
   ierr = 2
   close(unit=54)
@@ -161,6 +170,7 @@ subroutine read_limits(limitsfile,ierr)
   
   !--print info about range restrictions read from file
   call print_rangeinfo()
+  call print_lim2info()
   close(unit=54)
   return
 
@@ -221,7 +231,7 @@ subroutine reset_all_ranges()
  elsewhere
     icolourme(:) = abs(icolourme(:))
  endwhere
- range(:,:) = 0
+ range(:,:) = 0.
 
  return 
 end subroutine reset_all_ranges
@@ -241,8 +251,36 @@ logical function rangeset(icol)
 end function rangeset
 
 !----------------------------------------------------------
-! function which returns whether or not a range
+! function which returns whether or not lim2
 ! has been set for a given column
+!----------------------------------------------------------
+logical function lim2set(icol)
+ implicit none
+ integer, intent(in) :: icol
+ 
+ lim2set = .false.
+ if (abs(lim2(icol,2)-lim2(icol,1)).gt.tiny(lim2)) lim2set = .true.
+
+ return
+end function lim2set
+
+!----------------------------------------------------------
+! reset all range restrictions to zero
+!----------------------------------------------------------
+subroutine reset_lim2(icol)
+ implicit none
+ integer, intent(in) :: icol
+ 
+ print "(a)",' contour limits same as render limits'
+ if (icol.gt.0 .and. icol.le.maxplot) lim2(icol,:) = 0
+
+ return 
+end subroutine reset_lim2
+
+
+!----------------------------------------------------------
+! function which returns whether or not a range
+! has been set for any column
 !----------------------------------------------------------
 logical function anyrangeset()
  use settings_data, only:ndataplots
@@ -281,6 +319,24 @@ subroutine print_rangeinfo()
  endif
 
 end subroutine print_rangeinfo
+
+!----------------------------------------------------------
+! prints info about current range restriction settings
+!----------------------------------------------------------
+subroutine print_lim2info()
+ use settings_data, only:ndataplots
+ use labels, only:label
+ implicit none
+ integer :: i
+ 
+ do i=1,ndataplots
+    if (lim2set(i)) then
+       print "(a,1pe10.3,a,1pe10.3,a)", &
+       ' ( contours use ',lim2(i,1),' < '//trim(label(i))//' < ',lim2(i,2),' )'
+    endif
+ enddo
+
+end subroutine print_lim2info
 
 !----------------------------------------------------------
 ! prints warning if min=max in limits setting

@@ -40,9 +40,9 @@ contains
 !   irerender : if set, redo rendering. Anything which requires rendering
 !               to be recalculated must set this
 !
-subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
+subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,ivecy, &
   xcoords,ycoords,zcoords,hi,icolourpart,xmin,xmax,ymin,ymax, &
-  rendermin,rendermax,renderminadapt,rendermaxadapt,vecmax, &
+  rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,vecmax, &
   anglex,angley,anglez,ndim,xorigin,x_sec,zslicepos,dzslice, &
   zobserver,dscreen,use3Dopacity,taupartdepth,irerender,itrackpart,icolourscheme, &
   iColourBarStyle,labelrender,iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
@@ -51,13 +51,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
   use multiplot, only:itrans
   use settings_render, only:projlabelformat,iapplyprojformat
   implicit none
-  integer, intent(in) :: npart,irender,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
+  integer, intent(in) :: npart,irender,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
   integer, intent(inout) :: iColourBarStyle
   integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
   real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
-  real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax,taupartdepth
+  real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax,contmin,contmax,taupartdepth
   real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
   real, intent(in) :: renderminadapt,rendermaxadapt
   real, intent(in), dimension(ndim) :: xorigin
@@ -327,6 +327,17 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
            call save_itrackpart_recalcradius()
         endif
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
+        if (icontour.gt.0) then
+           if (icontour.eq.irender &
+               .and. abs(rendermin-contmin).le.tiny(0.) &
+               .and. abs(rendermax-contmax).le.tiny(0.)) then
+              call reset_limits2(icontour)
+           elseif (icontour.eq.irender) then
+              call save_limits(icontour,contmin,contmax,setlim2=.true.)
+           else
+              call save_limits(icontour,contmin,contmax)
+           endif
+        endif
         if (ivecx.gt.0 .and. ivecy.gt.0) then
            call save_limits(ivecx,-vecmax,vecmax)
            call save_limits(ivecy,-vecmax,vecmax)
@@ -391,7 +402,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
                     rendermin = rendermin + (min(xpt,xpt2)-xmin)*drender              
                  endif
                  print*,'setting render min = ',rendermin
-                 print*,'setting render max = ',rendermax              
+                 print*,'setting render max = ',rendermax
                  iadvance = 0
                  interactivereplot = .true.
                  iexit = .true.
@@ -680,7 +691,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,ivecx,ivecy, &
         !--change colour bar, y and x itrans between log / not logged
         !
         if (iamincolourbar .and. irender.gt.0) then
-           call change_itrans(irender,rendermin,rendermax)
+           if (icontour.eq.irender) then
+              call change_itrans2(irender,rendermin,rendermax,contmin,contmax)
+           else
+              call change_itrans(irender,rendermin,rendermax)
+           endif
            iadvance = 0
            interactivereplot = .true.
            irerender = .true.
@@ -2098,8 +2113,8 @@ end subroutine mvtitle
 !
 !--saves current plot limits
 !
-subroutine save_limits(iplot,xmin,xmax)
- use limits, only:lim
+subroutine save_limits(iplot,xmin,xmax,setlim2)
+ use limits, only:lim,lim2
  use multiplot, only:itrans
  use settings_data, only:ndim
  use settings_limits, only:iadapt,iadaptcoords
@@ -2107,17 +2122,32 @@ subroutine save_limits(iplot,xmin,xmax)
  implicit none
  integer, intent(in) :: iplot
  real, intent(in) :: xmin,xmax
+ logical, intent(in), optional :: setlim2
+ logical :: uselim2
  real :: xmintemp,xmaxtemp
+ 
+ uselim2 = .false.
+ if (present(setlim2)) uselim2 = setlim2
  
  if (itrans(iplot).ne.0) then
     xmintemp = xmin
     xmaxtemp = xmax
     call transform_limits_inverse(xmintemp,xmaxtemp,itrans(iplot))
-    lim(iplot,1) = xmintemp
-    lim(iplot,2) = xmaxtemp
+    if (uselim2) then
+       lim2(iplot,1) = xmintemp
+       lim2(iplot,2) = xmaxtemp
+    else
+       lim(iplot,1) = xmintemp
+       lim(iplot,2) = xmaxtemp
+    endif
  else
-    lim(iplot,1) = xmin
-    lim(iplot,2) = xmax
+    if (uselim2) then
+       lim2(iplot,1) = xmin
+       lim2(iplot,2) = xmax
+    else
+       lim(iplot,1) = xmin
+       lim(iplot,2) = xmax
+    endif
  endif
  !
  !--change appropriate plot limits to fixed (not adaptive)
@@ -2168,6 +2198,19 @@ subroutine reset_ranges()
  
  return
 end subroutine reset_ranges
+
+!
+!--interface to routine which resets second set of limits
+!
+subroutine reset_limits2(icol)
+ use limits, only:reset_lim2
+ implicit none
+ integer, intent(in) :: icol
+ 
+ call reset_lim2(icol)
+ 
+ return
+end subroutine reset_limits2
 
 !
 !--saves current plot limits for particle tracking
