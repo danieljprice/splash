@@ -25,7 +25,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
   integer :: iamvecprev,ivec,nveclist,ivecstart,inewcol
   integer :: imri,ipk
-  integer :: itempgas,itemprad
+  integer :: itempgas,itemprad,idudtrad
   integer, dimension(ncolumns) :: iveclist,ivecmagcol
   logical :: skip
   real :: Bmag, veltemp, spsound, gmw
@@ -34,6 +34,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   real, parameter :: Omega0 = 1.e-3 ! for MRI delta v
   real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
   real, parameter :: radconst = 7.5646e-15
+  real, parameter :: lightspeed = 3.e10   ! in cm/s (cgs)
   
   !
   !--allow dummy call to set labels without actually calculating stuff
@@ -68,6 +69,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   ipk = 0
   itempgas = 0
   itemprad = 0
+  idudtrad = 0
   !
   !--specify which of the possible quantities you would like to calculate
   !  (0 = not calculated)
@@ -103,6 +105,8 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   !
   if (ndim.gt.0 .and. iutherm.gt.0) call addcolumn(itempgas,'gas temperature')
   if (ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0) call addcolumn(itemprad,'radiation temperature')
+  if (ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0 .and. icv.gt.0 .and. iutherm.gt.0 .and. iRescale) &
+     call addcolumn(idudtrad,'du/dt\drad\u')
   !
   !--specify MHD quantities
   !
@@ -116,7 +120,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
 !     if (ivx.ne.0) call addcolumn(icrosshel,'B dot v')
      if (ipmag.ne.0 .and. (irho.ne.0)) call addcolumn(ivalfven,'v\dalfven\u')
      !--MRI perturbed velocity (delta v)
-     if (ivx.ne.0 .and. ndim.ge.2 .and. ndimV.ge.2) call addcolumn(imri,'\gd v\dy\u')
+     if (ivx.ne.0 .and. ndim.ge.2 .and. ndimV.ge.3) call addcolumn(imri,'\gd v\d3\u')
   else
 !     call addcolumn(ivpar,'v\d\(0737)')
 !     call addcolumn(ivperp,'v\d\(0738)')
@@ -308,6 +312,15 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
             dat(1:ntoti,itemprad,i) = abs(dat(1:ntoti,irho,i)*units(irho)*dat(1:ntoti,iradenergy,i) &
                                       *units(iradenergy)/radconst)**0.25         
          endif
+         if (idudtrad.gt.0) then
+            if (iRescale) then
+               dat(1:ntoti,idudtrad,i) = lightspeed*dat(1:ntoti,iradenergy+1,i)* &
+                                         (abs(dat(1:ntoti,irho,i))*dat(1:ntoti,iradenergy,i) &
+                                          - radconst*(dat(1:ntoti,iutherm,i)/dat(1:ntoti,icv,i))**4)
+            else
+               dat(1:ntoti,idudtrad,i) = 0.
+            endif
+         endif
       endif
       !
       !--magnetic quantities
@@ -358,8 +371,8 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                dat(:,ivalfven,i) = 0.
             end where
          endif
-         if (imri.gt.0 .and. ivx.gt.0 .and. ndim.ge.2 .and. ndimV.ge.2) then
-            dat(:,imri,i) = dat(:,ivx+1,i) + 1.5*Omega0*dat(:,ix(1),i)
+         if (imri.gt.0 .and. ivx.gt.0 .and. ndim.ge.2 .and. ndimV.ge.3) then
+            dat(:,imri,i) = dat(:,ivx+2,i) + 1.5*Omega0*dat(:,ix(1),i)
          endif
       endif
       !
