@@ -23,6 +23,8 @@ logical function issphformat(string)
      issphformat = .true.
  case('binary')
      issphformat = .true.
+ case('rsph','RSPH')
+     issphformat = .true.
  end select
  
  if (.not.issphformat) then
@@ -39,8 +41,9 @@ logical function issphformat(string)
 end function issphformat
 
 subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filename,outformat)
- use labels, only:labeltype,label
+ use labels, only:labeltype,label,irho,ipmass,ix
  use settings_units, only:unitslabel,units
+ use settings_data, only:ndim
  use params, only:int1
  implicit none
  integer, intent(in) :: npart,ntypes,ncolumns
@@ -50,8 +53,9 @@ subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filena
  real, intent(in), dimension(npart,ncolumns) :: dat
  character(len=*), intent(in) :: filename,outformat
  integer, parameter :: iunit = 83
- integer :: ierr,i
- character(len=40) :: fmtstring,fmtstring2,fmtstringlab
+ integer, parameter :: maxline = 1000
+ integer :: ierr,i,idim,i1,i2
+ character(len=40) :: fmtstring,fmtstring2,fmtstringlab,outfile
 
  select case(trim(outformat))
  case ('ascii')
@@ -138,7 +142,81 @@ subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filena
     close(iunit)
     print*,'ERROR WRITING BINARY FILE'
     return
+ case ('rsph','RSPH')
+!
+!--Files for Steinar Borve's RSPH format
+!
+    if (ndim.lt.2) then
+       print "(a)",' ERROR: cannot write RSPH format for < 2D'
+       return
+    endif
+    outfile = 'ndspmhd2D_pos.dat'
+    print "(a)",' writing to '//trim(outfile)
+    open(unit=iunit,file=outfile,status='replace',form='formatted',iostat=ierr)
+    if (ierr /= 0) then
+       print "(a)",' ERROR OPENING '//trim(outfile)//' FOR WRITING'
+       return
+    endif
+    write(iunit,"(i1)") ndim
+    write(iunit,"(a)") 'position'
+    write(iunit,"(i4)") maxline
+    write(iunit,*) (minval(dat(1:npart,ix(i))),i=1,ndim)
+    write(iunit,*) (maxval(dat(1:npart,ix(i))),i=1,ndim)
+    write(iunit,*) time
+    write(iunit,*) npart
+    do idim=1,2
+       i1 = 1
+       i2 = 0
+       do while (i2 < npart)
+          i2 = i2 + maxline
+          write(iunit,*) dat(i1:i2,ix(idim))
+          i1 = i2 + 1
+       enddo
+    enddo
+    close(unit=iunit)
 
+    outfile = 'ndspmhd2D_rho.dat'
+    print "(a)",' writing to '//trim(outfile)
+    open(unit=iunit,file=outfile,status='replace',form='formatted',iostat=ierr)
+    if (ierr /= 0) then
+       print "(a)",' ERROR OPENING FILE FOR WRITING'
+       return
+    endif
+    write(iunit,"(i1)") ndim
+    write(iunit,"(a)") 'density'
+    write(iunit,"(i4)") maxline
+    write(iunit,*) (minval(dat(1:npart,ix(i))),i=1,ndim)
+    write(iunit,*) (maxval(dat(1:npart,ix(i))),i=1,ndim)
+    i1 = 1
+    i2 = 0
+    do while (i2 < npart)
+       i2 = i2 + maxline
+       write(iunit,*) dat(i1:i2,irho)
+       i1 = i2 + 1
+    enddo
+    close(unit=iunit)
+
+    outfile = 'ndspmhd2D_siz.dat'
+    print "(a)",' writing to '//trim(outfile)
+    open(unit=iunit,file=outfile,status='replace',form='formatted',iostat=ierr)
+    if (ierr /= 0) then
+       print "(a)",' ERROR OPENING FILE FOR WRITING'
+       return
+    endif
+    write(iunit,"(i1)") ndim
+    write(iunit,"(a)") 'size'
+    write(iunit,"(i4)") maxline
+    write(iunit,*) (minval(dat(1:npart,ix(i))),i=1,ndim)
+    write(iunit,*) (maxval(dat(1:npart,ix(i))),i=1,ndim)
+    i1 = 1
+    i2 = 0
+    do while (i2 < npart)
+       i2 = i2 + maxline
+       write(iunit,*) sqrt(dat(i1:i2,ipmass)/dat(i1:i2,irho))
+       i1 = i2 + 1
+    enddo
+    close(unit=iunit)
+    
  case default
     print "(a)",' ERROR: unknown output format '''//trim(outformat)//''' in write_sphdump'
     return
