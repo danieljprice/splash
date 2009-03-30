@@ -150,7 +150,7 @@ subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filena
        print "(a)",' ERROR: cannot write RSPH format for < 2D'
        return
     endif
-    outfile = 'ndspmhd2D_pos.dat'
+    outfile = 'rsph2D_pos.dat'
     print "(a)",' writing to '//trim(outfile)
     open(unit=iunit,file=outfile,status='replace',form='formatted',iostat=ierr)
     if (ierr /= 0) then
@@ -168,14 +168,14 @@ subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filena
        i1 = 1
        i2 = 0
        do while (i2 < npart)
-          i2 = i2 + maxline
+          i2 = min(i2 + maxline,npart)
           write(iunit,*) dat(i1:i2,ix(idim))
           i1 = i2 + 1
        enddo
     enddo
     close(unit=iunit)
 
-    outfile = 'ndspmhd2D_rho.dat'
+    outfile = 'rsph2D_rho.dat'
     print "(a)",' writing to '//trim(outfile)
     open(unit=iunit,file=outfile,status='replace',form='formatted',iostat=ierr)
     if (ierr /= 0) then
@@ -190,13 +190,13 @@ subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filena
     i1 = 1
     i2 = 0
     do while (i2 < npart)
-       i2 = i2 + maxline
+       i2 =  min(i2 + maxline,npart)
        write(iunit,*) dat(i1:i2,irho)
        i1 = i2 + 1
     enddo
     close(unit=iunit)
 
-    outfile = 'ndspmhd2D_siz.dat'
+    outfile = 'rsph2D_siz.dat'
     print "(a)",' writing to '//trim(outfile)
     open(unit=iunit,file=outfile,status='replace',form='formatted',iostat=ierr)
     if (ierr /= 0) then
@@ -211,8 +211,8 @@ subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filena
     i1 = 1
     i2 = 0
     do while (i2 < npart)
-       i2 = i2 + maxline
-       write(iunit,*) sqrt(dat(i1:i2,ipmass)/dat(i1:i2,irho))
+       i2 =  min(i2 + maxline,npart)
+       write(iunit,*) ((dat(i,ipmass)/dat(i,irho))**(1./ndim),i=i1,i2)
        i1 = i2 + 1
     enddo
     close(unit=iunit)
