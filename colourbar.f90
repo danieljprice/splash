@@ -27,7 +27,7 @@ module colourbar
 
  public :: plotcolourbar,incolourbar,incolourbarlabel,barisvertical,get_colourbarmargins
  real, private :: xlabeloffsetsave = 0.
- real, parameter, private :: disp = 0.25
+ real, parameter, private :: dispall = 0.25
  private
  
 contains
@@ -98,6 +98,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
     sampley(1,i) = datmin + (i-1)*dx
     samplex(i,1) = datmin + (i-1)*dx
  enddo
+ disp = dispall
 
  select case(istyle)
  !------------------------
@@ -274,13 +275,14 @@ logical function incolourbarlabel(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
  implicit none
  integer, intent(in) :: istyle
  real, intent(in) :: xpt,ypt,xmin,xmax,ymin,ymax
- real :: xch,ych
+ real :: xch,ych,disp
  
  incolourbarlabel = .false.
-
  if (iplotcolourbarlabel) then
     call pgqcs(4,xch,ych)
     print*,'checking colourbar label ',xpt,ypt,ymin-2.5*ych,ych
+    disp = dispall
+    if (istyle.eq.3 .or. istyle.eq.4) disp = 0.
     select case(istyle)
     case(2,4,6)
        if (ypt.lt.(ymin-(disp + xlabeloffsetsave + ColourBarWidth+2.0)*ych) .and. &
