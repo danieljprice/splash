@@ -269,6 +269,8 @@ GSPLASH\_DARKMATTER\_HSOFT & if given a value $>$ 0.0 will assign a smoothing le
 GSPLASH\_EXTRACOLS & if set to a comma separated list of column labels, will attempt to read additional columns containing gas particle properties beyond the end of the file (not applicable if GSPLASH\_FORMAT=2). \\
 GSPLASH\_STARPARTCOLS & if set to a comma separated list of column labels, will attempt to read additional columns containing star particle properties beyond the end of the file (and after any extra gas particle columns) (not applicable if GSPLASH\_FORMAT=2). \\
 GSPLASH\_CHECKIDS & if set to `YES' or `TRUE', reads and checks particle IDs, excluding particles with negative IDs as accreted (gives them a negative smoothing length which means they are ignored in renderings). \\
+GSPLASH\_HSML\_COLUMN & if set to a positive integer, specifies the location of the smoothing length in the columns, overriding any default settings. \\
+GSPLASH\_IGNORE\_IFLAGCOOL & if set to 'YES' or `TRUE', does not assume that extra columns are present even if the cooling flag is set in the header. \\
 \end{tabular}
 
  For the GADGET read gsplash will also look for, and read if present, files called \verb+snapshot_xxx.hsml+ and/or \verb+snapshot_xxx.dens+ (where \verb+snapshot_xxx+ is the name of the corresponding GADGET dump file) which contain smoothing lengths and/or a density estimate for dark matter particles (these should just be one-column ascii files).
