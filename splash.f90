@@ -23,7 +23,7 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.12.1 : (xx/03/09)
+!     1.12.1 : (20/04/09)
 !             Can edit/delete text shapes interactively, also the colour bar label; can customise
 !             the label on projection plots; contour levels better defined; SPLASH_HMIN_CODEUNITS added;
 !             option for numeric labelling of contours; contour limits can be set separately
@@ -236,7 +236,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.12.1beta [23rd March ''09]'
+  character(len=*), parameter :: version = 'v1.12.1 [20th April ''09]'
 
   !
   ! initialise some basic code variables
