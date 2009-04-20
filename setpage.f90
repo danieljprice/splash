@@ -542,12 +542,12 @@ subroutine set_exactpixelboundaries()
 
  !  adjust viewport min/max to lie on pixel boundaries
  vptymin = max((nint(yminpix)-tol)*dv,0.)
- vptymax = (nint(ymaxpix)-tol)*dv ! be careful of round-off errors
+ vptymax = min((nint(ymaxpix)-tol)*dv,1.0-epsilon(1.0)) ! be careful of round-off errors
 
  !  same for x
  dv = (vptxmax - vptxmin)/(xmaxpix-xminpix)
  vptxmin = max((nint(xminpix)-tol)*dv,0.)
- vptxmax = (nint(xmaxpix)-tol)*dv ! be careful of round-off errors
+ vptxmax = min((nint(xmaxpix)-tol)*dv,1.0-epsilon(1.0)) ! be careful of round-off errors
 
  !  adjust viewport
  !print*,'adjusting ',vptxmin,vptxmax,vptymin,vptymax
