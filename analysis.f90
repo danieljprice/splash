@@ -80,6 +80,7 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
  logical, dimension(0:ncolumns), intent(out) :: required
  character(len=1170) :: headerline   ! len=64 x 18 characters
  character(len=64) :: levelsfile
+ character(len=40) :: fmtstring
  integer, intent(in) :: ncolumns,ndimV
  logical :: iexist
  integer :: ierr,i
@@ -131,7 +132,7 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
        call read_asciifile(trim(levelsfile),nlevels,rholevels)
        print "(a)",' read '//trim(levelsfile)//':'
        do i=1,nlevels
-          print "(a,i2,a,1pe8.2)",' level ',i,': rho > ',rholevels(i)
+          print "(a,i2,a,es8.2)",' level ',i,': rho > ',rholevels(i)
        enddo
        print*
     else
@@ -154,8 +155,8 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !--set filename and header line
     !
     fileout = 'massaboverho.out'
-    write(headerline,"('#',1x,'[',i2.2,1x,a12,']',1x,20('[',i2.2,1x,a6,1pe6.1,a1,']',1x))") &
-          1,'time',(i+1,'M(rho>',rholevels(i),')',i=1,nlevels)
+    write(headerline,"('#',1x,'[',i2.2,1x,a12,']',1x,20('[',i2.2,1x,a4,es8.1,a1,']',1x))") &
+          1,'time',(i+1,'M(d>',rholevels(i),')',i=1,nlevels)
 
  case('max','maxvals')
     !
@@ -166,8 +167,8 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !--set filename and header line
     !
     fileout = 'maxvals.out'
-    write(headerline,"('#',1x,65('[',i2.2,1x,a12,']',2x))") &
-          1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) ncolumns+1
+    write(headerline,fmtstring) 1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
 
  case('min','minvals')
     !
@@ -178,8 +179,8 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !--set filename and header line
     !
     fileout = 'minvals.out'
-    write(headerline,"('#',1x,65('[',i2.2,1x,a12,']',2x))") &
-          1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) ncolumns+1
+    write(headerline,fmtstring) 1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
 
  case('mean','meanvals')
     !
@@ -190,8 +191,8 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !--set filename and header line
     !
     fileout = 'meanvals.out'
-    write(headerline,"('#',1x,65('[',i2.2,1x,a12,']',2x))") &
-          1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) ncolumns+1
+    write(headerline,fmtstring) 1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
 
  end select
 !
@@ -246,16 +247,17 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real, intent(in), dimension(:,:) :: dat
  character(len=*), intent(in) :: analysistype
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
- integer :: itype,i
+ integer :: itype,i,ierr
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi
  real(kind=doub_prec), dimension(3) :: xmom
+ character(len=20) :: fmtstring
 !
 ! array with one value for each column
 !
  real, dimension(maxplot) :: coltemp
 
  print "(/,5('-'),a,/)",'> CALCULATING '//trim(ucase(analysistype))
- print "(1x,'time = ',1pe8.2)",time
+ print "(1x,'time = ',es8.2)",time
  
  select case(trim(analysistype))
  case('energy','energies')
@@ -289,17 +291,22 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     etot = ekin + etherm + epot + emag
     totmom = sqrt(dot_product(xmom(1:ndimV),xmom(1:ndimV)))
 
-    print "(6(/,1x,a6,' = ',1pe8.2))",'etot',etot,'ekin',ekin,'etherm',etherm,'epot',epot,'emag',emag,'totmom',totmom
+    print "(6(/,1x,a6,' = ',es8.2))",'etot',etot,'ekin',ekin,'etherm',etherm,'epot',epot,'emag',emag,'totmom',totmom
     !
     !--write line to output file
     !
-    write(iunit,"(24(1pe18.10,1x))") time,ekin,etherm,emag,epot,etot,totmom
+    write(iunit,"(64(es18.10,1x))") time,ekin,etherm,emag,epot,etot,totmom
 
  case('massaboverho')
     massaboverho(:) = 0.
-    if (ipmass.gt.0 .and. ipmass.le.ncolumns  &
-        .and. irho.gt.0 .and. irho.le.ncolumns) then
-
+    if (irho.gt.0 .and. irho.le.ncolumns) then
+       !
+       !--warn if particle masses not found
+       !
+       if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype.eq.0)) then
+          print "(a)",' WARNING in massaboverho analysis!'// &
+                      ' masses not read or are zero from dump file'
+       endif
        !
        !--calculate mass above each density threshold
        !
@@ -327,12 +334,13 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        !--write output to screen/terminal
        !
        do i=1,nlevels
-          print "(1x,'M(rho > ',1pe8.2,') = ',1pe8.2)",rholevels(i),massaboverho(i)
+          print "(1x,'M(rho > ',es8.2,') = ',es8.2)",rholevels(i),massaboverho(i)
        enddo
        !
        !--write line to output file
        !
-       write(iunit,"(24(1pe18.10,1x))") time,massaboverho(1:nlevels)
+       write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) nlevels+1
+       write(iunit,fmtstring) time,massaboverho(1:nlevels)
        
     else
        print "(a)",' ERROR in massaboverho analysis!'// &
@@ -350,13 +358,14 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write output to screen/terminal
     !
     do i=1,ncolumns
-       print "(1x,a20,'max = ',1pe9.2)",label(i),coltemp(i)
+       print "(1x,a20,'max = ',es9.2)",label(i),coltemp(i)
     enddo
     
     !
     !--write line to output file
     !
-    write(iunit,"(24(1pe18.10,1x))") time,coltemp(1:ncolumns)
+    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
+    write(iunit,fmtstring) time,coltemp(1:ncolumns)
 
  case('min','minvals')
     !
@@ -369,13 +378,14 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write output to screen/terminal
     !
     do i=1,ncolumns
-       print "(1x,a20,'min = ',1pe9.2)",label(i),coltemp(i)
+       print "(1x,a20,'min = ',es9.2)",label(i),coltemp(i)
     enddo
     
     !
     !--write line to output file
     !
-    write(iunit,"(24(1pe18.10,1x))") time,coltemp(1:ncolumns)
+    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
+    write(iunit,fmtstring) time,coltemp(1:ncolumns)
 
  case('mean','meanvals')
     !
@@ -388,13 +398,14 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write output to screen/terminal
     !
     do i=1,ncolumns
-       print "(1x,a20,'mean = ',1pe9.2)",label(i),coltemp(i)
+       print "(1x,a20,'mean = ',es9.2)",label(i),coltemp(i)
     enddo
     
     !
     !--write line to output file
     !
-    write(iunit,"(24(1pe18.10,1x))") time,coltemp(1:ncolumns)
+    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
+    write(iunit,fmtstring) time,coltemp(1:ncolumns)
 
  case default
     print "(a)",' ERROR: unknown analysis type in write_analysis routine'
