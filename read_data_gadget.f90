@@ -187,14 +187,16 @@ subroutine read_data(rootname,istepstart,nstepsread)
   else
 
      iformat = 0
-     if (iFlagCool.gt.0) then
+     if (iFlagCool.gt.0 .and. .not.lenvironment('GSPLASH_IGNORE_IFLAGCOOL')) then
         iformat = 1
         ncolstep = 12 ! 3 x pos, 3 x vel, pmass, utherm, rho, Ne, Nh, h
+        print "(a)",' cooling flag on  : assuming Ne, Nh dumped before h'
      else
         iformat = 0
         ncolstep = 10 ! 3 x pos, 3 x vel, pmass, utherm, rho, h
      endif
      if (iFlagSfr.gt.0) then
+        print "(a)",' star formation flag on: assuming star formation rate dumped '
         ncolstep = ncolstep + 1
         iformat = iformat + 10
      endif
@@ -689,11 +691,11 @@ subroutine set_labels
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry, only:labelcoord
-  use system_utils, only:envlist
+  use system_utils, only:envlist,ienvironment
   use gadgetread, only:hsoft,blocklabelgas
   use prompting, only:lcase
   implicit none
-  integer :: i,nextracols,nstarcols,icol
+  integer :: i,nextracols,nstarcols,icol,ihset
   character(len=30), dimension(10) :: labelextra
 
   if (ndim.le.0 .or. ndim.gt.3) then
@@ -851,6 +853,8 @@ subroutine set_labels
         ih = 10
         if (iformat.eq.1) label(11) = 'Star formation rate'
      endif
+     ihset = ienvironment('GSPLASH_HSML_COLUMN',errval=-1)
+     if (ihset.gt.0) ih = ihset
      !
      !--deal with extra columns
      !
