@@ -36,6 +36,17 @@ ftp://ftp.astro.caltech.edu/pub/pgplot/pgplot5.2.tar.gz
 however check to see if it is already installed on your system (if so, the
 libraries are usually located in /usr/local/pgplot).
 
+If PGPLOT is already installed, make sure that the environment variable PGPLOT_DIR
+is set to the location of the PGPLOT installation directory (e.g. /usr/local/pgplot).
+Check this by typing "echo $PGPLOT_DIR".
+
+If instead you are following the steps below, set the PGPLOT_DIR environment
+variable to the directory to which you will install PGPLOT (e.g. setenv PGPLOT_DIR $HOME/pgplot).
+
+It is a good idea to add the setting of PGPLOT_DIR into your .profile/.bashrc or .tcshrc file
+along with a setting for PGPLOT_DEV (e.g. to "/xw" which sets the default device 
+to be the X-windows device).
+
  --- installing PGPLOT yourself ---
 
 Whilst detailed installation instructions are given in the PGPLOT distribution,
@@ -64,15 +75,17 @@ h) type "make": this should compile through all the .f files and may or may not
    compile the GIF drivers (if not, go back to step d and remove the /GIF drivers
    from the list), but will definitely die for the png driver with an error like:
    make: *** No rule to make target `png.h', needed by `pndriv.o'.  Stop.
-i) edit the makefile and change the line:
+i) edit the makefile and initially try just commenting out the line:
    pndriv.o : ./png.h ./pngconf.h ./zlib.h ./zconf.h
-   to give the correct paths for these files (use "locate png.h" to find where
+   by adding a preceding hash as follows:
+   #pndriv.o : ./png.h ./pngconf.h ./zlib.h ./zconf.h
+   If this does not work, try giving the correct paths for these files (use "locate png.h" to find where
    they are) -- usually this will be the following:
    pndriv.o : /usr/include/png.h /usr/include/pngconf.h /usr/include/zlib.h /usr/include/zconf.h
    
    Also add the above include path to the CFLAGC= variable, by amending the line
    "CFLAGC= xxx" to "CFLAGC= xxx -I/usr/include/"
-   (e.g. on a mac you may need -I/sw/include/).
+   (e.g. on a mac you may need -I/sw/include/ or -I/opt/include/).
    
    Also, for the time being, comment out the line SHARED_LIB= (stuff) and
    replace it with a blank setting:
@@ -101,7 +114,7 @@ provided an environment variable called SYSTEM is set appropriately. Typing
  =>set the environment variable SYSTEM to one listed 
    in the Makefile and try again
 
-options for the SYSTEM variable for compiling the code are:
+Common options for the SYSTEM variable for compiling the code are:
 
 g95 -- settings for the g95 compiler
 nagf95 -- settings for the NAG f95 compiler
@@ -109,7 +122,7 @@ sunf95 -- settings for the Sun f95 compiler
 ifort -- settings for the Intel Fortran Compiler
 pgf90 -- settings for the Portland Group Fortran 90 compiler
 
-options which compile and also link PGPLOT on specific machines are:
+Options which compile and also link PGPLOT on specific machines are:
 
 mymac -- settings for a Mac using g95 with PGPLOT installed via fink
 ukaff1a -- settings for the ukaff1a supercomputer
@@ -304,4 +317,4 @@ Have fun! And remember, if you get stuck you can always email me...
 (it doesn't hurt).
 
 Daniel Price
-dprice@astro.ex.ac.uk
+daniel.price@sci.monash.edu.au

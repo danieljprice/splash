@@ -28,7 +28,14 @@ which make installation easier, so the steps are the following:
    also the libpng libraries). Instructions for installing PGPLOT manually are
    given in the INSTALL file.
 
-3) install g95 or gfortran (either by again using fink or by simply downloading a binary from www.g95.org)
+3) set the PGPLOT_DIR environment variable to the PGPLOT directory
+   (e.g. for Fink, use setenv PGPLOT_DIR /sw/lib/pgplot).
+
+   It is also a good idea at this stage to add the setting of PGPLOT_DIR into your 
+   .profile/.bashrc or .tcshrc file along with a setting for PGPLOT_DEV (e.g. to "/xw"
+   which sets the default device to be the X-windows device).
+
+3) install g95 or gfortran (either by again using Fink or by simply downloading a binary from www.g95.org)
 
 4) set the environment variable SYSTEM to 'mymac', e.g.
    export SYSTEM='mymac'
@@ -102,4 +109,4 @@ Have fun! And remember, if you get stuck you can always email me...
 (it doesn't hurt).
 
 Daniel Price
-dprice@astro.ex.ac.uk
+daniel.price@sci.monash.edu.au
