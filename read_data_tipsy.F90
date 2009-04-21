@@ -78,7 +78,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   case('UNFORMATTED')
      iambinaryfile = 1
 #ifdef __INTEL_COMPILER
-#if __INTEL_COMPILER<1000
+#if __INTEL_COMPILER<1010
      !--this is how stream access is implemented for ifort 9 and lower
      open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)  
 #else
@@ -120,7 +120,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            close(unit=iunit)
            iambinaryfile = 1
 #ifdef __INTEL_COMPILER
-#if __INTEL_COMPILER<1000
+#if __INTEL_COMPILER<1010
      !--this is how stream access is implemented for ifort 9 and lower
           open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)  
 #else
