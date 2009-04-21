@@ -339,6 +339,21 @@ ifeq ($(SYSTEM),spectrum)
    X11LIBS = -L/usr/X11R6/lib64 -lX11
    KNOWN_SYSTEM=yes
 endif
+
+ifeq ($(SYSTEM),cody)
+    F90C= gfortran
+    F90FLAGS= -O3 -Wall
+    SYSTEMFILE= system_f2003.f90
+    DEBUGFLAG= -g -frange-check
+    OMPFLAGS= -fopenmp
+    ENDIANFLAGBIG= -fconvert=big-endian
+    ENDIANFLAGLITTLE= -fconvert=little-endian
+    SNFLAGS= -L$(HOME)/tree16/Objfiles/g5 -lsw
+    CFLAGS = -g -O2 -Wall -I$(HOME)/tree16/include -fbounds-check
+    CC = gcc
+    KNOWN_SYSTEM=yes
+endif
+
 #
 # these are the flags used for linking
 #
@@ -373,7 +388,7 @@ endif
 
 # link with hdf5 libraries
 ifeq ($(HDF5),yes)
-    CCFLAGS += $(HDF5INCLUDE)
+    CFLAGS += $(HDF5INCLUDE)
     LDFLAGS += $(HDF5LIBS)
 endif
 
@@ -406,7 +421,7 @@ FFLAGS = $(F90FLAGS)
 %.o : %.f95
 	$(F90C) $(F90FLAGS) -c $< -o $@
 %.o : %.c
-	$(CC) -c $(CCFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
@@ -502,6 +517,10 @@ jules: checksystem $(OBJECTS) read_data_jules.o
 
 scwsph: checksystem $(OBJECTS) read_data_scw.o
 	$(F90C) $(F90FLAGS) -o wsplash $(OBJECTS) read_data_scw.o $(LDFLAGS)
+
+snsplash: snsph
+snsph: $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o
+	$(FC) $(FFLAGS) -o snsplash $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o $(LDFLAGS) $(SNFLAGS) 
 
 srosph: checksystem $(OBJECTS) read_data_sro.o
 	$(F90C) $(F90FLAGS) -o rsplash $(OBJECTS) read_data_sro.o $(LDFLAGS)
