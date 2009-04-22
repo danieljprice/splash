@@ -46,7 +46,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
-  integer :: i,j,ierr,iunit,ncolstep,ncolenv
+  integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr
   integer :: nprint,npart_max,nstep_max,icol,nheaderlines,nheaderenv
   logical :: iexist,timeset,gammaset
   real :: dummyreal
@@ -145,21 +145,29 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
   i = 0
   ierr = 0
-  overparts: do while (ierr == 0)
+  nerr = 0
+  overparts: do while (ierr >= 0)
      i = i + 1
      if (i.gt.npart_max) then ! reallocate memory if necessary
         npart_max = 10*npart_max
         call alloc(npart_max,nstep_max,ncolstep+ncalc)
      endif
      read(iunit,*,iostat=ierr) (dat(i,icol,j),icol = 1,ncolstep)
+     if (ierr > 0) then
+        nerr = nerr + 1
+        if (nerr .le. 10) print "(a,i8,a)",' ERROR reading data from line ',i+nheaderlines,', skipping'
+        i = i - 1 ! ignore lines with errors
+     endif
   enddo overparts
 
   nprint = i - 1
   nstepsread = nstepsread + 1
+
+  if (nerr > 10) then
+     print "(a,i8,a)",' *** WARNING: errors whilst reading file on ',nerr,' lines: skipped these ***'
+  endif
   if (ierr < 0) then
      print*,'end of file: npts = ',nprint
-  elseif (ierr > 0) then
-     print*,' *** error reading file, npts = ',nprint,' ***'
   endif
 
 
