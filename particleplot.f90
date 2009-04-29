@@ -28,7 +28,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   integer, intent(in), dimension(ntot) :: icolourpart
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, dimension(ntot), intent(in) :: xplot, yplot, zplot, h
-  real, dimension(ntot) :: xerrb, yerrb, herr
+  real, dimension(:), allocatable :: xerrb, yerrb, herr
   real, intent(in) :: zmin,zmax,xmin,xmax,ymin,ymax
   logical, intent(in) :: use_zrange,fastparticleplot
   logical, dimension(maxparttypes), intent(in) :: iplotpartoftype
@@ -336,7 +336,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
      call pgqci(icolourindex)
      call pgsci(2)
      call pgsfs(2)
-          
+
      if (iplotx.le.ndim .and. iploty.le.ndim) then
         print*,'plotting ',ncircpart,' circles of interaction'
         do n = 1,ncircpart
@@ -354,6 +354,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
         enddo
 
      else
+        if (.not.allocated(herr)) then
+           allocate(xerrb(ncircpart),yerrb(ncircpart),herr(ncircpart),stat=ierr)
+           if (ierr /= 0) &
+              stop ' Error allocating memory in particleplot for circles of interaction'
+        endif
         !!--only on specified particles
         do n=1,ncircpart
            if (icircpart(n).gt.ntot) then
@@ -376,6 +381,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            call pgerrb(6,ncircpart,xerrb(1:ncircpart), &
                 yplot(1:ncircpart),herr(1:ncircpart),1.0)      
         endif
+        if (allocated(herr)) deallocate(herr)
+        if (allocated(xerrb)) deallocate(xerrb)
+        if (allocated(yerrb)) deallocate(yerrb)
      endif
      
      call pgslw(linewidth)
