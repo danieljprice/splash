@@ -189,14 +189,17 @@ end subroutine read_data
 !!-------------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,labeltype,ix,irho,ipmass,ih,iutherm,ipr,ivx,iBfirst,iamvec,labelvec
-  use params
-  use settings_data, only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
-  use geometry, only:labelcoord
+  use asciiutils,      only:lcase
+  use labels,          only:label,labeltype,ix,irho,ipmass,ih,iutherm, &
+                            ipr,ivx,iBfirst,iamvec,labelvec,lenlabel
+  !use params,          only:maxparttypes
+  use settings_data,   only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
+  use geometry,        only:labelcoord
   use system_commands, only:get_environment
   implicit none
   integer :: i,ierr,ndimVtemp
-  character(len=120) :: columnfile
+  character(len=120)      :: columnfile
+  character(len=lenlabel) :: labeli
   logical :: iexist
 !
 !--read column labels from the columns file if it exists
@@ -233,36 +236,40 @@ subroutine set_labels
      overcols: do i=1,ncolumns
         read(51,"(a)",iostat=ierr) label(i)
 !
+!--compare all strings in lower case, trimmed and with no preceding spaces
+!
+        labeli = trim(adjustl(lcase(label(i))))
+!
 !--guess positions of various quantities from the column labels
 !
-        if (label(i)(1:3).eq.'den' .or. label(i)(1:3).eq.'rho') then
+        if (labeli(1:3).eq.'den' .or. labeli(1:3).eq.'rho') then
            irho = i
-        elseif (label(i)(1:5).eq.'pmass' .or. label(i)(1:13).eq.'particle mass' &
-                .or. index(label(i),'mass').ne.0) then
+        elseif (labeli(1:5).eq.'pmass' .or. labeli(1:13).eq.'particle mass' &
+                .or. index(labeli,'mass').ne.0) then
            ipmass = i
         !--use first column labelled h as smoothing length
-        elseif (ih.eq.0 .and. (label(i)(1:1).eq.'h' &
-                .or. label(i)(1:6).eq.'smooth')) then
+        elseif (ih.eq.0 .and. (labeli(1:1).eq.'h' &
+                .or. labeli(1:6).eq.'smooth')) then
            ih = i
-        elseif (trim(label(i)).eq.'u'.or.label(i)(1:6).eq.'utherm' &
-            .or.trim(label(i)).eq.'internal energy') then
+        elseif (trim(labeli).eq.'u'.or.labeli(1:6).eq.'utherm' &
+            .or.trim(labeli).eq.'internal energy') then
            iutherm = i
-        elseif (label(i)(1:2).eq.'pr') then
+        elseif (labeli(1:2).eq.'pr') then
            ipr = i
-        elseif (ivx.eq.0 .and. label(i)(1:1).eq.'v') then
+        elseif (ivx.eq.0 .and. labeli(1:1).eq.'v') then
            ivx = i
            ndimV = 1
         endif
         !--set ndimV as number of columns with v as label
         if (ivx.gt.0 .and. i.gt.ivx .and. i.le.ivx+2) then
-           if (label(i)(1:1).eq.'v') ndimV = i - ivx + 1
+           if (labeli(1:1).eq.'v') ndimV = i - ivx + 1
         endif
-        if (iBfirst.eq.0 .and. (label(i)(1:2).eq.'bx' .or. label(i)(1:2).eq.'Bx')) then
+        if (iBfirst.eq.0 .and. (labeli(1:2).eq.'bx')) then
            iBfirst = i
         endif
         !--set ndimV as number of columns with v as label
         if (iBfirst.gt.0 .and. i.gt.iBfirst .and. i.le.iBfirst+2) then
-           if (label(i)(1:1).eq.'b') then
+           if (labeli(1:1).eq.'b') then
               ndimVtemp = i - iBfirst + 1
               if (ndimV.gt.0 .and. ndimVtemp.gt.ndimV) then
                  print "(a)",' WARNING: possible confusion with vector dimensions'
