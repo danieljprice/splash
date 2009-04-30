@@ -16,7 +16,7 @@ subroutine convert_all(outformat,igotfilenames)
  use write_sphdata, only:write_sphdump
  use analysis, only:isanalysis,open_analysis,write_analysis,close_analysis
  use getdata, only:get_data
- use prompting, only:ucase
+ use asciiutils, only:ucase
  implicit none
  character(len=*), intent(in) :: outformat
  logical, intent(inout) :: igotfilenames

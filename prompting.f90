@@ -64,9 +64,6 @@
 ! Default part of prompt changed from "<cr>=" to the more human "default="
 ! Also the character string prompt puts the default value in quotes
 !
-! 03/07/07: D. Price:
-! Functions ucase and lcase added for converting strings to upper or lower case
-!
 ! 09/05/08: D. Price:
 ! String prompt accepts "blank" to set empty string, unless optional
 ! argument noblank is set to .true.
@@ -92,7 +89,7 @@ module prompting
       module procedure &
       integer_prompt, real_prompt, string_prompt, double_prompt, logical_prompt
    end interface
-   public :: prompt,print_logical,lcase,ucase
+   public :: prompt,print_logical
     
 contains
 
@@ -510,47 +507,5 @@ contains
       endif
 
    end function print_logical
-   
-   ! 
-   !  Routine added by D.Price (03/07/07)
-   !  converts a string to upper case
-   !
-   
-   function ucase(string)
-      implicit none
-      character(len=*), intent(in) :: string
-      character(len=len(string)) :: ucase
-      integer :: is,ia
-      integer, parameter             :: aoffset = 32
-      
-      ucase = string
-      do is = 1, len(ucase)
-         ia = iachar(ucase(is:is))
-         if (ia >= iachar('a').and.ia <= iachar('z')) &
-             ucase(is:is) = achar(ia-aoffset)
-      enddo
-   
-   end function ucase
-
-   ! 
-   !  Routine added by D.Price (03/07/07)
-   !  converts a string to lower case
-   !
-   
-   function lcase(string)
-      implicit none
-      character(len=*), intent(in) :: string
-      character(len=len(string)) :: lcase
-      integer :: is,ia
-      integer, parameter             :: aoffset = 32
-      
-      lcase = string
-      do is = 1, len(lcase)
-         ia = iachar(lcase(is:is))
-         if (ia >= iachar('A').and.ia <= iachar('Z')) &
-             lcase(is:is) = achar(ia+aoffset)
-      enddo
-      
-   end function lcase
 
 end module prompting

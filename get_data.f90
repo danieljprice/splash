@@ -18,6 +18,7 @@ module getdata
 contains
 
 subroutine get_data(ireadfile,gotfilenames,firsttime)
+  use asciiutils, only:ucase
   use exact, only:read_exactparams
   use filenames, only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
   use limits, only:set_limits
@@ -26,7 +27,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
                      icoordsnew,iRescale,required,ipartialread,lowmemorymode
   use settings_part, only:iexact
   use particle_data, only:dat,time,npartoftype,maxcol,masstype
-  use prompting, only:prompt,ucase
+  use prompting, only:prompt
   use labels, only:label,labelvec,iamvec,ix,ih,irho,ipmass,labeltype
   use geometry, only:labelcoord
   use calcquantities, only:calc_quantities

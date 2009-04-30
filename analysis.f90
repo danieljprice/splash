@@ -237,7 +237,7 @@ end subroutine open_analysis
 subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,ncolumns,ndimV,analysistype)
  use labels, only:ivx,iBfirst,iutherm,irho,ipmass,labeltype,label
  use params, only:int1,doub_prec,maxplot
- use prompting, only:ucase
+ use asciiutils, only:ucase
  implicit none
  integer, intent(in) :: ntot,ntypes,ncolumns,ndimV
  integer, intent(in), dimension(:) :: npartoftype

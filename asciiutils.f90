@@ -1,10 +1,10 @@
 !---------------------------------------------------------------------------
 ! module containing various utility subroutines 
-! related to reading from ascii files
+! related to reading from ascii files and dealing with string variables
 !
 ! written by Daniel Price, University of Exeter 2007 24th April '07
 ! revised at Monash University, Nov '08.
-! daniel.price@maths.monash.edu.au
+! daniel.price@sci.monash.edu.au
 !
 ! this is a standalone module with no dependencies
 !---------------------------------------------------------------------------
@@ -12,6 +12,7 @@ module asciiutils
  implicit none
  public :: read_asciifile,get_ncolumns,ncolumnsline,safename,cstring
  public :: string_replace
+ public :: ucase,lcase
  
  private
 
@@ -303,5 +304,47 @@ subroutine string_replace(string,skey,sreplacewith)
  endif
 
 end subroutine string_replace
+
+!---------------------------------------------------------------------------
+!
+! Converts a string to upper case
+!
+!---------------------------------------------------------------------------
+function ucase(string)
+ implicit none
+ character(len=*), intent(in) :: string
+ character(len=len(string))   :: ucase
+ integer :: is,ia
+ integer, parameter           :: aoffset = 32
+
+ ucase = string
+ do is = 1, len(ucase)
+    ia = iachar(ucase(is:is))
+    if (ia >= iachar('a').and.ia <= iachar('z')) &
+        ucase(is:is) = achar(ia-aoffset)
+ enddo
+
+end function ucase
+
+!---------------------------------------------------------------------------
+!
+! Converts a string to lower case
+!
+!---------------------------------------------------------------------------
+function lcase(string)
+ implicit none
+ character(len=*), intent(in) :: string
+ character(len=len(string))   :: lcase
+ integer :: is,ia
+ integer, parameter           :: aoffset = 32
+
+ lcase = string
+ do is = 1, len(lcase)
+    ia = iachar(lcase(is:is))
+    if (ia >= iachar('A').and.ia <= iachar('Z')) &
+        lcase(is:is) = achar(ia+aoffset)
+ enddo
+
+end function lcase
 
 end module asciiutils
