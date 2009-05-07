@@ -12,7 +12,7 @@ contains
 !  Arguments:
 !
 !
-subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
+subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, &
                         icolourpart,iamtype,npartoftype,iplotpartoftype, &
                         use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
                         fastparticleplot,datpix,npixx,npixy,dval,brightness)
@@ -20,10 +20,12 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   use labels, only:labeltype, maxparttypes
   use settings_data, only:ndim,icoords,ntypes
   use settings_part, only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
-                          ilabelpart,iplotline,linestylethisstep,linecolourthisstep
+                          ilabelpart,iplotline,linestylethisstep,linecolourthisstep, &
+                          iploterrorbars,ilocerrorbars
   use interpolations2D, only:interpolate_part,interpolate_part1
+  use transforms, only:transform
   implicit none
-  integer, intent(in) :: ntot, iplotx, iploty
+  integer, intent(in) :: ntot, iplotx, iploty, itransx, itransy
   integer(kind=int1), dimension(:), intent(in) :: iamtype
   integer, intent(in), dimension(ntot) :: icolourpart
   integer, dimension(maxparttypes), intent(in) :: npartoftype
@@ -38,7 +40,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   real, dimension(:,:), intent(inout), optional :: datpix,brightness
   real, intent(in), optional :: dval
   
-  integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle
+  integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle,ierr
   integer :: lenstring,index1,index2,ntotplot,icolourstart,nlooptypes,ilooptype
   integer, dimension(maxparttypes) :: nplottedtype
 !  real :: charheight
@@ -319,6 +321,14 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
      call pgline(npartoftype(1),xplot(1:npartoftype(1)), &
                  yplot(1:npartoftype(1)))
 
+     if (iploterrorbars.gt.0) then
+        if (iploty.eq.iploterrorbars) then
+           call plot_errorbarsy(ntot,xplot,yplot,h,itransy)
+        elseif (iplotx.eq.iploterrorbars) then
+           call plot_errorbarsx(ntot,xplot,yplot,h,itransx)
+        endif
+     endif
+
      call pgsls(oldlinestyle)! reset 
      call pgsci(icolourindex)
   endif
@@ -327,7 +337,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   !  around all or selected particles. For plots with only one coordinate axis, 
   !  these are plotted as error bars in the coordinate direction.
   !
-  if (ncircpart.gt.0) then
+  !--this bit is also used for error bar plotting on x or y axis.
+  !
+  if (ncircpart.gt.0 .or. iploterrorbars.gt.0) then
      !
      !--set fill area style and line width
      !
@@ -336,56 +348,66 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
      call pgqci(icolourindex)
      call pgsci(2)
      call pgsfs(2)
-
-     if (iplotx.le.ndim .and. iploty.le.ndim) then
-        print*,'plotting ',ncircpart,' circles of interaction'
-        do n = 1,ncircpart
-           if (icircpart(n).gt.ntot) then 
-              print*,'error: particle index > number of particles'
-           else
-              if (icoordsnew.ne.icoords) then   
-                 call plot_kernel_gr(icoordsnew,icoords,xplot(icircpart(n)),  &
-                      yplot(icircpart(n)),2*h(icircpart(n)))
-              else
-                 call pgcirc(xplot(icircpart(n)),  &
-                      yplot(icircpart(n)),2*h(icircpart(n)))
-              endif
-           endif        
-        enddo
-
-     else
-        if (.not.allocated(herr)) then
-           allocate(xerrb(ncircpart),yerrb(ncircpart),herr(ncircpart),stat=ierr)
-           if (ierr /= 0) &
-              stop ' Error allocating memory in particleplot for circles of interaction'
-        endif
-        !!--only on specified particles
-        do n=1,ncircpart
-           if (icircpart(n).gt.ntot) then
-              print*,'error: particle index > number of particles'
-              xerrb(n) = 0.
-              yerrb(n) = 0.
-              herr(n) = 0.
-           else
-              xerrb(n) = xplot(icircpart(n))
-              yerrb(n) = yplot(icircpart(n))
-              herr(n) = 2.*h(icircpart(n))
-           endif
-        enddo         
-        if (iplotx.le.ndim) then
-           print*,'plotting ',ncircpart,' error bars x axis '
-           call pgerrb(5,ncircpart,xerrb(1:ncircpart), &
-                yerrb(1:ncircpart),herr(1:ncircpart),1.0)
-        elseif (iploty.le.ndim) then
-           print*,'plotting ',ncircpart,' error bars y axis'
-           call pgerrb(6,ncircpart,xerrb(1:ncircpart), &
-                yplot(1:ncircpart),herr(1:ncircpart),1.0)      
-        endif
-        if (allocated(herr)) deallocate(herr)
-        if (allocated(xerrb)) deallocate(xerrb)
-        if (allocated(yerrb)) deallocate(yerrb)
-     endif
      
+     if (iploterrorbars.gt.0) then
+
+     !   if (iploty.eq.iploterrorbars) then
+     !      call plot_errorbarsy(ntot,xplot,yplot,h,itransy)
+     !   elseif (iplotx.eq.iploterrorbars) then
+     !      call plot_errorbarsx(ntot,xplot,yplot,h,itransx)
+     !   endif
+     
+     elseif (ncircpart.gt.0) then
+
+        if (iplotx.le.ndim .and. iploty.le.ndim .and. ncircpart.gt.0) then
+           print*,'plotting ',ncircpart,' circles of interaction'
+           do n = 1,ncircpart
+              if (icircpart(n).gt.ntot) then 
+                 print*,'error: particle index > number of particles'
+              else
+                 if (icoordsnew.ne.icoords) then   
+                    call plot_kernel_gr(icoordsnew,icoords,xplot(icircpart(n)),  &
+                         yplot(icircpart(n)),2*h(icircpart(n)))
+                 else
+                    call pgcirc(xplot(icircpart(n)),  &
+                         yplot(icircpart(n)),2*h(icircpart(n)))
+                 endif
+              endif        
+           enddo        
+        else
+           if (.not.allocated(herr)) then
+              allocate(xerrb(ncircpart),yerrb(ncircpart),herr(ncircpart),stat=ierr)
+              if (ierr /= 0) &
+                 stop ' Error allocating memory in particleplot for circles of interaction'
+           endif
+           !!--only on specified particles
+           do n=1,ncircpart
+              if (icircpart(n).gt.ntot) then
+                 print*,'error: particle index > number of particles'
+                 xerrb(n) = 0.
+                 yerrb(n) = 0.
+                 herr(n) = 0.
+              else
+                 xerrb(n) = xplot(icircpart(n))
+                 yerrb(n) = yplot(icircpart(n))
+                 herr(n) = 2.*h(icircpart(n))
+              endif
+           enddo         
+           if (iplotx.le.ndim) then
+              print*,'plotting ',ncircpart,' error bars x axis '
+              call pgerrb(5,ncircpart,xerrb(1:ncircpart), &
+                   yerrb(1:ncircpart),herr(1:ncircpart),1.0)
+           elseif (iploty.le.ndim) then
+              print*,'plotting ',ncircpart,' error bars y axis'
+              call pgerrb(6,ncircpart,xerrb(1:ncircpart), &
+                   yerrb(1:ncircpart),herr(1:ncircpart),1.0)
+           endif
+           if (allocated(herr)) deallocate(herr)
+           if (allocated(xerrb)) deallocate(xerrb)
+           if (allocated(yerrb)) deallocate(yerrb)
+        endif
+     endif
+
      call pgslw(linewidth)
      call pgsci(icolourindex)
      
@@ -400,6 +422,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
      
 end subroutine particleplot
 
+!--------------------------------------------------------------------------------
 !
 ! subroutine to plot the circle of interaction for a given particle
 ! in general coordinate systems (e.g. cylindrical coordinates)
@@ -411,6 +434,7 @@ end subroutine particleplot
 !
 ! PGPLOT page must already be set up - this just draws the "circle"
 !
+!--------------------------------------------------------------------------------
 subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
   use geometry, only:coord_transform,maxcoordsys,labelcoordsys
   implicit none
@@ -452,5 +476,91 @@ subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
 
   return
 end subroutine plot_kernel_gr
+
+!--------------------------------------------------------------------------------
+!
+!  Plot y-axis error bars, handling the case where the axes are transformed
+!
+!  input x,y are in transformed space (i.e., already logged)
+!  input err is not transformed, (i.e., not logged)
+!
+!--------------------------------------------------------------------------------
+subroutine plot_errorbarsy(npts,x,y,err,itrans)
+ use transforms, only:transform,transform_inverse,islogged
+ implicit none
+ integer, intent(in) :: npts,itrans
+ real, intent(in), dimension(:) :: x,y,err
+ real :: yval,errval
+ real, dimension(2) :: val
+ integer :: i
+ 
+ print*,'plotting ',npts,' error bars y axis'
+ if (itrans.ne.0) then
+    if (islogged(itrans)) then
+       errval = -300.
+    else
+       errval = 0.
+    endif
+    call pgbbuf
+    do i=1,npts
+       yval = y(i)
+       call transform_inverse(yval,itrans)
+       val(1) = yval + err(i)
+       val(2) = yval - err(i)
+       call transform(val,itrans,errval=errval)
+       val(1) = val(1) - y(i)
+       val(2) = y(i) - val(2)
+       call pgerr1(2,x(i),y(i),val(1),1.0)
+       call pgerr1(4,x(i),y(i),val(2),1.0)
+    enddo
+    call pgebuf
+ else
+    call pgerrb(6,npts,x,y,err,1.0)
+ endif
+
+end subroutine plot_errorbarsy
+
+!--------------------------------------------------------------------------------
+!
+!  Plot x-axis error bars, handling the case where the axes are transformed
+!
+!  input x,y are in transformed space (i.e., already logged)
+!  input err is not transformed, (i.e., not logged)
+!
+!--------------------------------------------------------------------------------
+subroutine plot_errorbarsx(npts,x,y,err,itrans)
+ use transforms, only:transform,transform_inverse,islogged
+ implicit none
+ integer, intent(in) :: npts,itrans
+ real, intent(in), dimension(:) :: x,y,err
+ real :: xval,errval
+ real, dimension(2) :: val
+ integer :: i
+ 
+ print*,'plotting ',npts,' error bars x axis '
+ if (itrans.ne.0) then
+    if (islogged(itrans)) then
+       errval = -300.
+    else
+       errval = 0.
+    endif
+    call pgbbuf
+    do i=1,npts
+       xval = x(i)
+       call transform_inverse(xval,itrans)
+       val(1) = xval + err(i)
+       val(2) = xval - err(i)
+       call transform(val,itrans,errval=errval)
+       val(1) = val(1) - x(i)
+       val(2) = x(i) - val(2)
+       call pgerr1(1,x(i),y(i),val(1),1.0)
+       call pgerr1(3,x(i),y(i),val(2),1.0)
+    enddo
+    call pgebuf
+ else
+    call pgerrb(5,npts,x,y,err,1.0)
+ endif
+ 
+end subroutine plot_errorbarsx
 
 end module particleplots

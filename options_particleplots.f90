@@ -8,7 +8,7 @@ module settings_part
  implicit none
  integer, dimension(maxparttypes) :: imarktype,idefaultcolourtype,itypeorder
  integer, dimension(100) :: icircpart
- integer :: ncircpart
+ integer :: ncircpart,iploterrorbars,ilocerrorbars
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
  logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings,UseTypeInContours
  logical :: iplotline,ilabelpart,ifastparticleplot
@@ -16,7 +16,7 @@ module settings_part
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
    iexact,icoordsnew,ifastparticleplot,idefaultcolourtype,&
-   itypeorder,UseTypeInContours
+   itypeorder,UseTypeInContours,iploterrorbars,ilocerrorbars
 
 contains
 
@@ -52,6 +52,8 @@ subroutine defaults_set_part
      itypeorder(i) = i
   enddo
   UseTypeInContours(:) = iplotpartoftype(:)
+  iploterrorbars = 0    ! plot error bars for a particular column
+  ilocerrorbars = 0     ! location of data for error bars in dat array
 
   return
 end subroutine defaults_set_part
@@ -74,9 +76,9 @@ end subroutine defaults_set_part_ev
 !----------------------------------------------------------------------
 subroutine submenu_particleplots(ichoose)
   use exact, only:options_exact,submenu_exact
-  use labels, only:labeltype
+  use labels, only:labeltype,ih
   use limits, only:lim
-  use settings_data, only:icoords,ntypes,ndim,UseTypeInRenderings
+  use settings_data, only:icoords,ntypes,ndim,UseTypeInRenderings,ndataplots
   use settings_render, only:iplotcont_nomulti
   use particle_data, only:npartoftype,iamtype
   use prompting, only:prompt,print_logical
@@ -120,7 +122,7 @@ subroutine submenu_particleplots(ichoose)
          "' 3) set colour for each particle type   ( ',"//trim(substring2)//",' )',/,"//  &
          "' 4) change plotting order of types      ( ',"//trim(substring2)//",' )',/,"//  &
          "' 5) plot line joining particles         ( ',a,' ) ',/,"// &
-         "' 6) plot smoothing circles              ( ',i3,' ) ',/,"// &
+         "' 6) plot error bars/smoothing circles   ( ',i3,' ) ',/,"// &
          "' 7) change coordinate systems           ( ',i2,' ) ',/,"// &
          "' 8) plot exact solution                 ( ',i2,' ) ',/,"// &
          "' 9) exact solution plot options ')"
@@ -233,20 +235,32 @@ subroutine submenu_particleplots(ichoose)
 !     return           
 !------------------------------------------------------------------------
   case(6)
-     print*,'Note that circles of interaction can also be set interactively'
-     call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))
-     if (ncircpart.gt.0) then
-        do n=1,ncircpart
-           if (icircpart(n).eq.0) then
-              if (n.gt.1) then
-                 icircpart(n) = icircpart(n-1)+1
-              else
-                 icircpart(n) = 1
+     if (ndim.le.1 .or. ih.le.0) then
+        print "(2(/,a))",'Note: Circles of interaction can only be plotted if we know the location',&
+                      '         of h in the columns and the number of dimensions is >= 1', &
+                      '  Instead, this option can be used to plot error bars for a particular quantity:'
+        call prompt('Enter column to plot error bars for (0=none)',iploterrorbars,0)
+        if (iploterrorbars.gt.0) then
+           call prompt('Enter location of error data for this column in the data',ilocerrorbars,1)
+           if (ilocerrorbars.eq.0 .or. ilocerrorbars.ge.ndataplots) &
+              print "(a,i2)",' WARNING: currently no data in column ',ilocerrorbars
+        endif
+     else
+        print*,'Note that circles of interaction can also be set interactively'
+        call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))
+        if (ncircpart.gt.0) then
+           do n=1,ncircpart
+              if (icircpart(n).eq.0) then
+                 if (n.gt.1) then
+                    icircpart(n) = icircpart(n-1)+1
+                 else
+                    icircpart(n) = 1
+                 endif
               endif
-           endif
-           call prompt('Enter particle number to plot circle around', &
-                    icircpart(n),1,maxval(npartoftype(1,:)))
-        enddo
+              call prompt('Enter particle number to plot circle around', &
+                       icircpart(n),1,maxval(npartoftype(1,:)))
+           enddo
+        endif
      endif
      return           
 !------------------------------------------------------------------------

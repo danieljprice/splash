@@ -527,7 +527,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                      iendatstep,ntypes,UseTypeInRenderings,itrackpart,required,ipartialread,xorigin
   use settings_limits, only:iadapt,iadaptcoords,scalemax
   use settings_part, only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
-                     iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot
+                     iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
+                     iploterrorbars,ilocerrorbars
   use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,usesquarexy, &
                      charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render, only:npix,ncontours,icolours, &
@@ -1607,7 +1608,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  if (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm) then
                     !!--plot non-gas particle types (e.g. sink particles) on top (and to ppm)
                     call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-                      zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
+                      zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
                       icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                       xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax,brightness)
@@ -1619,7 +1620,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                     !!--plot non-gas particle types (e.g. sink particles) on top (and to ppm)
                     call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-                      zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
+                      zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
                       icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                       xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax)
@@ -1630,7 +1631,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  else
                     !!--plot non-gas particle types (e.g. sink particles) on top
                     call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-                      zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
+                      zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
                       icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                       xmin,xmax,ymin,ymax,ifastparticleplot)
@@ -1649,14 +1650,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               if (iplotpart) then
                  !!--plot all particle types
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-                   zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
+                   zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
                    icolourme(1:ntoti),iamtype,npartoftype(:),iplotpartoftype(:), &
                    (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                    xmin,xmax,ymin,ymax,ifastparticleplot)
               else
                  !!--plot non-gas particle types on top of vector plots (e.g. sinks)
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-                   zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
+                   zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
                    icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
                    (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                    xmin,xmax,ymin,ymax,ifastparticleplot)
@@ -1821,10 +1822,23 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--------------------------------
         ! now plot particles
         !--------------------------------
-        call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-             zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-             icolourme(1:ntoti),iamtype,npartoftype(:),iplotpartoftype,.false., &
-             zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
+        if ((iploterrorbars.gt.0) .and. &
+            (iploterrorbars.eq.iploty .or. iploterrorbars.eq.iplotx) .and. &
+            (ilocerrorbars.gt.0 .and. ilocerrorbars.le.ndataplots)) then
+            !
+            !--plot particles with error bars
+            !
+            call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
+                zplot(1:ntoti),dat(1:ntoti,ilocerrorbars),ntoti,iplotx,iploty,itransx,itransy, &
+                icolourme(1:ntoti),iamtype,npartoftype(:),iplotpartoftype,.false., &
+                zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
+        else
+           call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
+                zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
+                icolourme(1:ntoti),iamtype,npartoftype(:),iplotpartoftype,.false., &
+                zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
+        endif
+ 
         !
         !--redraw axes over what has been plotted
         !
@@ -2933,7 +2947,7 @@ contains
           inormalise = inormalise_interpolations
        endif
     else
-       if (required(ih) .and. required(irho)) then 
+       if (required(ih) .and. required(irho) .and. ih.gt.0 .and. irho.gt.0) then 
           print "(a)",' WARNING: particle mass not set: using normalised interpolations'
        endif
     !--if particle mass has not been set, then must use normalised interpolations
