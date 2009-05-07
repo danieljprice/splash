@@ -515,6 +515,9 @@ jjm: checksystem $(OBJECTS) read_data_jjm.o
 jules: checksystem $(OBJECTS) read_data_jules.o
 	$(F90C) $(F90FLAGS) -o jsplash $(OBJECTS) read_data_jules.o $(LDFLAGS)
 
+timli: checksystem $(OBJECTS) read_data_timli.o
+	$(F90C) $(F90FLAGS) -o jsplash $(OBJECTS) read_data_timli.o $(LDFLAGS)
+
 scwsph: checksystem $(OBJECTS) read_data_scw.o
 	$(F90C) $(F90FLAGS) -o wsplash $(OBJECTS) read_data_scw.o $(LDFLAGS)
 
