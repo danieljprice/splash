@@ -4,7 +4,7 @@ are freely available:
 - A Fortran 95 compiler
 
 The basic steps for installation are:
-1) make sure you have a Fortran 90/95 compiler (such as g95).
+1) make sure you have a Fortran 90/95 compiler (such as g95 or gfortran).
 2) make sure you have the PGPLOT libraries installed.
 3) compile SPLASH and link with PGPLOT.
 4) if desired/necessary write a read_data subroutine so that SPLASH can read
@@ -22,7 +22,10 @@ downloadable from:
 
 http://www.g95.org
 
-successfully compiles SPLASH and if necessary the PGPLOT libraries. 
+successfully compiles SPLASH and if necessary the PGPLOT libraries. gfortran is
+also free and works (and is faster) and can be downloaded from:
+
+http://gcc.gnu.org/wiki/GFortran
 
 2) ------------------- PGPLOT -----------------------------------------
 The PGPLOT graphics subroutine library is freely downloadable from
@@ -51,7 +54,13 @@ to be the X-windows device).
 
 Whilst detailed installation instructions are given in the PGPLOT distribution,
 the general procedure for installing your own version (if necessary) is given
-below (otherwise skip to part 3):
+below (otherwise skip to part 3).
+
+Note: to compile PGPLOT with the png and X-windows drivers may require some packages
+to be installed from your linux distribution. In Ubuntu these are "libpng-dev" and "libX11-dev"
+which can be installed with "sudo apt-get libpng-dev" and "sudo apt-get libX11-dev". Otherwise
+you will encounter errors regarding missing header files -- e.g. "cannot find png.h" and a whole bunch
+of errors.
 
 a) untar the pgplot5.2.tar.gz file (e.g. in your home space):
    "tar xvfz pgplot5.2.tar.gz"
@@ -102,20 +111,28 @@ j) now type "make" again, and you should obtain a successful build. Check that
 3) ------------------- Compiling the code  --------------------------------
 
 Once you have a copy of PGPLOT installed, you can proceed with the SPLASH
-installation. Having untarred the SPLASH bundle: "tar xvfz splash-x.x.x.tar.gz",
+installation. Prior to doing so you should make sure that the PGPLOT_DIR environment
+variable is set (check using "echo $PGPLOT_DIR"). If not, add the following lines
+to your ~/.bashrc file (or the tcsh equivalent):
+
+export PGPLOT_DIR=/me/whereeveriputit/pgplot
+export PGPLOT_DEV=/xw         (this sets the default PGPLOT device).
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PGPLOT_DIR
+
+Now, having untarred the SPLASH bundle: "tar xvfz splash-x.x.x.tar.gz",
 you should have a directory called splash/. Enter this directory: "cd splash"
 and have a look in the Makefile.
 
 Preset options for the most common Fortran compilers are given in the Makefile
-provided an environment variable called SYSTEM is set appropriately. Typing
-'make' will give you the following message:
+provided the variable SYSTEM is set appropriately (either on the command line or as
+an environment variable). On the command line, type
 
- make: WARNING: value of SYSTEM =  not recognised...
- =>set the environment variable SYSTEM to one listed 
-   in the Makefile and try again
+"make SYSTEM=xxx"
 
-Common options for the SYSTEM variable for compiling the code are:
+Where the SYSTEM corresponds to one of those listed in the Makefile, some of the most
+commonly used of which are:
 
+gfortran -- settings for the gfortran compiler
 g95 -- settings for the g95 compiler
 nagf95 -- settings for the NAG f95 compiler
 sunf95 -- settings for the Sun f95 compiler
@@ -127,20 +144,11 @@ Options which compile and also link PGPLOT on specific machines are:
 mymac -- settings for a Mac using g95 with PGPLOT installed via fink
 ukaff1a -- settings for the ukaff1a supercomputer
 
-for a full list, have a look in the Makefile itself. To set the SYSTEM variable,
-in a sh/bash shell type
-
-export SYSTEM='g95'
-
-or under csh/tcsh type
-
-setenv SYSTEM 'g95'
-
-then simply type 'make', which will compile the code using the presets
-corresponding to your choice of SYSTEM variable. Alternatively you can type
-"make SYSTEM=g95". Unless you have used one of the SYSTEM presets that also
-links to PGPLOT, you will additionally need to manually change the link-time
-settings (see step 3b, below).
+If you have the PGPLOT_DIR environment variable set then linking with PGPLOT and
+associated libraries (libpng, libX11) *might just work* and you should find a whole
+bunch of splash binaries (asplash, gsplash, ssplash etc.) have been created. If so,
+then you are done with compilation and can skip directly to step 4 or 5. If not, read
+on.
 
   ---- porting to a new SYSTEM ------
 
