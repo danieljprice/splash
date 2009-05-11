@@ -693,7 +693,7 @@ subroutine set_labels
   use geometry, only:labelcoord
   use system_utils, only:envlist,ienvironment
   use gadgetread, only:hsoft,blocklabelgas
-  use prompting, only:lcase
+  use asciiutils, only:lcase
   implicit none
   integer :: i,nextracols,nstarcols,icol,ihset
   character(len=30), dimension(10) :: labelextra
