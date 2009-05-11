@@ -2332,17 +2332,17 @@ contains
     if (.not.dum) call pgsci(1)
 
     !--page margins: zero if no box is drawn
-    if (iaxistemp.eq.-2) then
+    !if (iaxistemp.eq.-2) then
        xminmargin = 0.0
        xmaxmargin = 0.0
        yminmargin = 0.0
        ymaxmargin = 0.0
-    else ! leave a small buffer to allow for line width changes
-       xminmargin = 0.001
-       xmaxmargin = 0.001
-       yminmargin = 0.001
-       ymaxmargin = 0.001
-    endif
+    !else ! leave a small buffer to allow for line width changes
+    !   xminmargin = 0.001
+    !   xmaxmargin = 0.001
+    !   yminmargin = 0.001
+    !   ymaxmargin = 0.001
+    !endif
     
     !--leave space for colour bar if necessary (at end of row only on tiled plots)
     if ((tile_plots .and. iAllowspaceforcolourbar).or.(.not.tile_plots.and.iPlotColourBar)) then
