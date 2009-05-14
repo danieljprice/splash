@@ -189,6 +189,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    nblocks = 1 ! number of MPI blocks
    npartoftypei(:) = 0
    read(iunit,iostat=ierr) nints
+   if (debug) print*,' nints = ',nints
    if (ierr /=0) then
       print "(a)",'error reading nints'
       close(iunit)
@@ -281,6 +282,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--Total number of array blocks in the file
 !
    read(iunit,end=55,iostat=ierr) narrsizes
+   if (debug) print*,' nblocks(total)=',narrsizes
    narrsizes = narrsizes/nblocks
    if (ierr /= 0) then 
       print "(a)",'*** error reading number of array sizes ***'
