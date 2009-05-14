@@ -353,7 +353,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    if (iblock.eq.1) then
       igotmass = .true.
       if (smalldump .or. phantomdump) then
-         if (phantomdump) then
+         if (phantomdump .or. nreals.eq.15) then
             ilocpmassinitial = 15
          else
             ilocpmassinitial = 23
