@@ -515,8 +515,13 @@ jjm: checksystem $(OBJECTS) read_data_jjm.o
 jules: checksystem $(OBJECTS) read_data_jules.o
 	$(F90C) $(F90FLAGS) -o jsplash $(OBJECTS) read_data_jules.o $(LDFLAGS)
 
-timli: checksystem $(OBJECTS) read_data_timli.o
-	$(F90C) $(F90FLAGS) -o jsplash $(OBJECTS) read_data_timli.o $(LDFLAGS)
+oilonwater: checksystem $(OBJECTS) read_data_oilonwater.o
+	$(F90C) $(F90FLAGS) -o osplash $(OBJECTS) read_data_oilonwater.o $(LDFLAGS)
+
+RSPH: rsph
+
+rsph: checksystem $(OBJECTS) read_data_rsph.o
+	$(F90C) $(F90FLAGS) -o rsplash $(OBJECTS) read_data_rsph.o $(LDFLAGS)
 
 scwsph: checksystem $(OBJECTS) read_data_scw.o
 	$(F90C) $(F90FLAGS) -o wsplash $(OBJECTS) read_data_scw.o $(LDFLAGS)
@@ -538,10 +543,8 @@ sphNG: checksystem $(OBJECTS) read_data_sphNG.o
 	lipo -create ssplash_ppc ssplash_i386 -output ssplash || cp ssplash$(EXT) ssplash
    endif
 
-RSPH: rsph
-
-rsph: checksystem $(OBJECTS) read_data_rsph.o
-	$(F90C) $(F90FLAGS) -o rsplash $(OBJECTS) read_data_rsph.o $(LDFLAGS)
+timli: checksystem $(OBJECTS) read_data_timli.o
+	$(F90C) $(F90FLAGS) -o jsplash $(OBJECTS) read_data_timli.o $(LDFLAGS)
 
 tipsy: checksystem $(OBJECTS) read_data_tipsy.o
 	$(F90C) $(F90FLAGS) -o tsplash $(OBJECTS) read_data_tipsy.o $(LDFLAGS)
