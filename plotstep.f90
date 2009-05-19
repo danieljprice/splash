@@ -529,7 +529,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use settings_part, only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
                      iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
                      iploterrorbars,ilocerrorbars
-  use settings_page, only:nacross,ndown,iadapt,interactive,iaxis,usesquarexy, &
+  use settings_page, only:nacross,ndown,interactive,iaxis,usesquarexy, &
                      charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render, only:npix,ncontours,icolours, &
       iColourBarStyle,icolour_particles,inormalise_interpolations,ifastrender,ilabelcont

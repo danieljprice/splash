@@ -76,12 +76,12 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
  use asciiutils, only:read_asciifile
  use filenames, only:rootname,nfiles
  implicit none
+ integer, intent(in) :: ncolumns,ndimV
  character(len=*), intent(in) :: dumpfile,analysistype
  logical, dimension(0:ncolumns), intent(out) :: required
  character(len=1170) :: headerline   ! len=64 x 18 characters
  character(len=64) :: levelsfile
  character(len=40) :: fmtstring
- integer, intent(in) :: ncolumns,ndimV
  logical :: iexist
  integer :: ierr,i
 !
