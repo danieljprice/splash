@@ -296,6 +296,7 @@ end subroutine read_data
 subroutine set_labels
   use labels
   use params
+  use physcon, only:solarrcgs,solarmcgs
   use settings_data
   use geometry, only:labelcoord
   use oilonwaterread, only:udisti,umassi,utimei
@@ -352,16 +353,16 @@ subroutine set_labels
   !
   !--set transformation factors between code units/real units
   !
-  units(1:3) = udisti
-  unitslabel(1:3) = ' [cm]'
+  units(1:3) = udisti/solarrcgs
+  unitslabel(1:3) = ' [R\d\(2281)\u]'
   units(4:6) = udisti/utimei
   unitslabel(4:6) = ' [cm/s]'
-  units(ih) = udisti
-  unitslabel(ih) = ' [cm]'
+  units(ih) = units(1)
+  unitslabel(ih) = unitslabel(1) 
   units(iutherm) = (udisti/utimei)**2
   unitslabel(iutherm) = ' [erg/g]'
-  units(ipmass) = umassi
-  unitslabel(ipmass) = ' [g]'
+  units(ipmass) = umassi/solarmcgs
+  unitslabel(ipmass) = ' [M\d\(2281)\u]'
   units(irho) = umassi/udisti**3
   unitslabel(irho) = ' [g/cm\u3\d]'
 

@@ -17,6 +17,15 @@ module params
  public
 
 end module params
+
+module physcon
+ use params, only:doub_prec
+ implicit none
+ real(doub_prec), parameter :: solarrcgs = 6.955d10
+ real(doub_prec), parameter :: solarmcgs = 1.989d33
+
+ public
+end module physcon
 !
 !--particle data
 !
