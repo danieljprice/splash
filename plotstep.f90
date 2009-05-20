@@ -511,7 +511,7 @@ end subroutine initialise_plotting
 
 subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ivecplot, &
                     iamtype,npartoftype,masstype,dat,timei,gammai,ipagechange,iadvance)
-  use params
+  use params,  only:doub_prec,int1,maxparttypes
   use colours, only:colour_set
   use filenames, only:nsteps
   use exact, only:exact_solution,atstar,ctstar,sigma
@@ -562,13 +562,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
   implicit none
   integer, intent(inout) :: ipos, istepsonpage
-  integer, intent(in) :: istep,irender_nomulti,icontour_nomulti,ivecplot
+  integer, intent(in)    :: istep,irender_nomulti,icontour_nomulti,ivecplot
   integer(kind=int1), dimension(:), intent(in) :: iamtype
   integer, dimension(maxparttypes), intent(in) :: npartoftype
-  real, dimension(maxparttypes), intent(in) :: masstype
-  real, dimension(:,:), intent(in) :: dat
-  real, intent(in) :: timei,gammai
-  logical, intent(in) :: ipagechange
+  real,    dimension(maxparttypes), intent(in) :: masstype
+  real,    dimension(:,:),          intent(in) :: dat
+  real,       intent(in) :: timei,gammai
+  logical,    intent(in) :: ipagechange
   integer, intent(inout) :: iadvance
   
   integer :: ntoti,iz,iseqpos
@@ -580,13 +580,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   integer :: icolourprev,linestyleprev
   integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp
   integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
-  integer :: iframe
+  integer :: iframe,isize
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
-  real, dimension(max(maxpart,2000)) :: xplot,yplot,zplot
-  real, dimension(maxpart) :: hh,weight
-  real, dimension(:), allocatable :: renderplot
-  real, dimension(:,:), allocatable :: vecplot
+  real, dimension(:), allocatable    :: xplot,yplot,zplot
+  real, dimension(:), allocatable    :: hh,weight
+  real, dimension(:), allocatable    :: renderplot
+  real, dimension(:,:), allocatable  :: vecplot
   real :: rkappa
   real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax
   real :: pixwidth,pixwidthvec,dxfreq
@@ -606,11 +606,21 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   labelz = ' '
   labelrender = ' '
   labelvecplot = ' '
+  !
+  !--allocate temporary memory required for plotting
+  !
+  isize = max(maxpart,2000)
+  allocate(xplot(isize),yplot(isize),zplot(isize),stat=ierr)
+  if (ierr /= 0) stop 'out of memory in plotstep allocating temporary x,y,z arrays'
   xplot = 0.
   yplot = 0.
   zplot = 0.
-  dummy = 0.
+
+  allocate(hh(maxpart),weight(maxpart),stat=ierr)
+  if (ierr /= 0) stop 'out of memory in plotstep allocating temporary h,weight arrays'
   hh = 0.
+
+  dummy = 0.
   labeltimeunits = ' '
   dumxsec = .false.
   isetrenderlimits = .false.
@@ -2252,6 +2262,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      if (allocated(datpixcont)) deallocate(datpixcont)
      if (allocated(datpixcont3D)) deallocate(datpixcont3D)
   endif
+  
+  !--free temporary arrays
+  if (allocated(xplot)) deallocate(xplot)
+  if (allocated(yplot)) deallocate(yplot)
+  if (allocated(zplot)) deallocate(zplot)
+  if (allocated(hh)) deallocate(hh)
+  if (allocated(weight)) deallocate(weight)
   
   return
     
