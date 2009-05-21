@@ -19,9 +19,10 @@ module timestep_plotting
   integer, private :: ivectorplot,ivecx,ivecy
   integer, private :: nyplots,npartdim,nyplotfirstonpage,ifirststeponpage    
   integer, private :: ngrid,nframefirstonpage
-  integer, private :: just, ntitles,nsteplegendlines
+  integer, private :: just,ntitles,nsteplegendlines
   integer, private :: iplots,ipanel
   integer, private :: iframesave
+  integer, private :: npixx,npixy,npixz
 
   real, dimension(:), allocatable, private :: datpix1D, xgrid
   real, dimension(:,:), allocatable, private :: datpix,datpixcont,brightness
@@ -575,8 +576,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   integer :: i,j,k,icolumn,irow
   integer :: nyplot,nframesloop
   integer :: irender,irenderpart
-  integer :: npixx,npixy,npixz,ipixxsec
-  integer :: npixyvec,nfreqpts
+  integer :: npixyvec,nfreqpts,ipixxsec
   integer :: icolourprev,linestyleprev
   integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp
   integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
