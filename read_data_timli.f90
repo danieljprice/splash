@@ -104,7 +104,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
     !--allocate/reallocate memory if j > maxstep
     !
            if (j.gt.maxstep) then
-              call alloc(maxpart,j+1,maxcol,mixedtypes=.true.)
+              call alloc(maxpart,2*j,maxcol,mixedtypes=.true.)
            endif
     !
     !--now read the timestep data in the dumpfile
