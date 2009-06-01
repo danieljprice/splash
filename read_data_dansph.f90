@@ -130,6 +130,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      reallocate = .false.
      npart_max = maxpart
      nstep_max = maxstep
+     geomfile = ' '
      !
      !--read header line for this timestep
      !
@@ -173,7 +174,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      case default
         icoords = 1
      end select
-     print "(a14,a)",' geometry: ',trim(geomfile)//': ('//trim(labelcoordsys(icoords))//')'
+     print "(a14,a)",' geometry: ',trim(geomfile)//' ('//trim(labelcoordsys(icoords))//')'
      if (any(ibound(1:ndim).ne.0)) then
         print "(a14,':',a15,' =',3(f8.4))",'boundaries','xmin',xmin(1:ndim)
         print "(15x,a15,' =',3(f8.4))",'xmax',xmax(1:ndim)
