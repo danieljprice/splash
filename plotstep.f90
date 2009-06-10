@@ -57,7 +57,7 @@ contains
 subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot)
   use params
   use colours, only:colour_set
-  use labels, only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,itoomre,iutherm,ipdf
+  use labels, only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,itoomre,iutherm,ipdf,ix,icolpixmap
   use limits, only:lim,rangeset
   use multiplot, only:multiplotx,multiploty,irendermulti,icontourmulti, &
                  nyplotmulti,x_secmulti,ivecplotmulti
@@ -128,7 +128,15 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      !--work out whether to tile plots and make labelling decisions
      !
      if (any(multiplotx(1:nyplotmulti).ne.multiplotx(1))) isamexaxis = .false.
-     if (any(multiploty(1:nyplotmulti).ne.multiploty(1))) isameyaxis = .false.
+     if (any(multiploty(1:nyplotmulti).ne.multiploty(1))) then
+        isameyaxis = .false.
+        if (any(multiploty(1:nyplotmulti).eq.icolpixmap)) then
+           isameyaxis = .true.
+           do i=1,nyplotmulti
+              if (.not.(multiploty(i).eq.icolpixmap .or. multiploty(i).eq.ix(2))) isameyaxis = .false.
+           enddo
+        endif
+     endif
      if (any(irendermulti(1:nyplotmulti).gt.ndim)) iamrendering = .true.
      if (any(x_secmulti(1:nyplotmulti))) x_sec = .true.
   else
