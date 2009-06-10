@@ -90,7 +90,7 @@ module labels
  integer :: iacplane,ipowerspec
  integer :: icv,iradenergy
  integer :: isurfdens,itoomre
- integer :: ipdf
+ integer :: ipdf,icolpixmap
  
  public
 
@@ -121,6 +121,7 @@ contains
   iJfirst = 0
   icv = 0
   iradenergy = 0
+  icolpixmap = 0
   
   return
  end subroutine reset_columnids

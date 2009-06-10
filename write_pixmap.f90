@@ -3,20 +3,24 @@
 !     to output file in various formats
 !
 !     (c) D. Price 21/09/07
+!     Added read routines June 2009
 !-----------------------------------------------------------------
 module write_pixmap
  use filenames, only:fileprefix
  implicit none
- logical, public :: iwritepixmap
- character(len=5), public :: pixmapformat
+ logical, public :: iwritepixmap = .false.
+ logical, public :: ireadpixmap = .false.
+ character(len=5), public :: pixmapformat = ' '
+ character(len=5), public :: readpixformat = ' '
  public :: isoutputformat,writepixmap,write_pixmap_ppm
+ public :: isinputformat,readpixmap
  
  private
 
 contains
 
 !-----------------------------------------------------------------
-! utility to check if a format selection is valid
+! utility to check if an output format selection is valid
 !-----------------------------------------------------------------
 logical function isoutputformat(string)
  implicit none
@@ -37,6 +41,29 @@ logical function isoutputformat(string)
  
  return
 end function isoutputformat
+
+!-----------------------------------------------------------------
+! utility to check if an input format selection is valid
+!-----------------------------------------------------------------
+logical function isinputformat(string)
+ implicit none
+ character(len=*), intent(in) :: string
+
+ isinputformat = .false.
+ select case(trim(string))
+ case('ascii','ftn','ftn512','chf')
+     isinputformat = .true.
+ end select
+ 
+ if (.not.isinputformat) then
+    print "(a)",' possible formats for -readpix option: '
+    print "(a)",' -readpix ascii  : read pixel maps from ascii file'
+    print "(a)",' -readpix ftn    : read pixel maps from unformatted fortran file "read(1) dat(:,:)"'
+    print "(a)",' -readpix ftn512 : read pixel maps from unformatted fortran file "read(1) dat(1:512,1:512)"'
+ endif
+ 
+ return
+end function isinputformat
 
 !-----------------------------------------------------------------
 !  wrapper routine for all output formats
@@ -89,7 +116,7 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
 
  write(stringx,"(i10)") npixx
  write(stringy,"(i10)") npixy
- write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by splash (c) 2005-2007 Daniel Price'
+ write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by splash (c) 2005-2009 Daniel Price'
  write(iunit,"(a)",err=66) '# Contains 2D pixel array '//trim(adjustl(stringx))//' x '//trim(adjustl(stringy))//' written as '
  write(iunit,"(a)",err=66) '#   do j=1,'//trim(adjustl(stringy))
  write(iunit,"(a)",err=66) '#      write(*,*) dat(1:'//trim(adjustl(stringx))//',j)'
@@ -161,7 +188,7 @@ subroutine write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,
 !
  maxcolour = 255
  write(iunit,"(a)",err=66) 'P3'
- write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by splash (c) 2005-2007 Daniel Price'
+ write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by splash (c) 2005-2009 Daniel Price'
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
@@ -203,5 +230,107 @@ subroutine write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,
  close(iunit)
  return
 end subroutine write_pixmap_ppm
+
+
+!-----------------------------------------------------------------
+!  read in pixels from file
+!-----------------------------------------------------------------
+subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,icol,time,istep,xsec,ierr)
+ use asciiutils, only:safename,basename
+ implicit none
+ real, intent(out), dimension(:,:), allocatable :: datpix
+ integer, intent(out)            :: npixx,npixy,ierr
+ character(len=*), intent(in)    :: dumpfile
+ character(len=*), intent(inout) :: label
+ integer,          intent(in)    :: icol
+ real,             intent(in)    :: time
+ integer,          intent(in)    :: istep
+ logical,          intent(in)    :: xsec
+ integer            :: i
+ integer, parameter :: iunit = 168
+ character(len=128) :: filename
+ character(len=len(dumpfile)) :: dumpfilei
+ logical :: iexist
+ 
+ ierr = 0
+ select case(trim(adjustl(readpixformat)))
+ case('ascii') ! splash pixmap output files
+    write(filename,"(a,i5.5,a)") trim(fileprefix)//'_',istep,'.dat'
+
+    open(unit=iunit,file=filename,status='old',form='formatted',iostat=ierr)
+    if (ierr /=0) then
+       print*,'error opening '//trim(filename)
+       return
+    else
+       close(iunit)
+    endif
+
+ case('ftn','ftn512','chf') ! Christoph Federrath files
+    npixx = 512
+    npixy = 512
+    !
+    !--cycle through possible filenames
+    !
+    dumpfilei = dumpfile
+    iexist = .false.
+    i = 0
+    do while (.not.iexist .and. i.lt.4)
+       i = i + 1
+       select case(i)
+       case(1)
+          if (xsec) then
+             filename = trim(dumpfilei)//'_'//trim(safename(label))//'_slice.pix'
+          else
+             filename = trim(dumpfilei)//'_'//trim(safename(label))//'_proj.pix'
+          endif
+       case(2)
+          filename = trim(dumpfilei)//'_'//trim(safename(label))//'.pix'
+       case(3)
+          if (xsec) then
+             filename = trim(dumpfilei)//'_slice.pix'
+          else
+             filename = trim(dumpfilei)//'_proj.pix'
+          endif
+       case(4)
+          filename = trim(dumpfilei)//'.pix'
+       end select
+       !
+       !--query to see if file exists
+       !
+       inquire(file=filename,exist=iexist)
+       if (.not.iexist) then
+          !print "(a)",' Looking for "'//trim(filename)//'" (not found)'
+          if (i.eq.4) then
+             if (len_trim(dumpfilei).ne.len_trim(basename(dumpfile))) then
+                i = 0
+                dumpfilei = basename(dumpfile)
+             endif
+          endif
+       endif
+    enddo
+    
+    open(unit=iunit,file=filename,status='old',form='unformatted',iostat=ierr)
+    if (ierr /= 0) then
+       print "(a)",' ERROR: cannot open '//trim(filename)
+       ierr = 2
+       return
+    else
+       print "(a)",' reading pixel map from '//trim(filename)
+       allocate(datpix(npixx,npixy),stat=ierr)
+       read(iunit,iostat=ierr) datpix
+       if (ierr /= 0) print "(a,i3)",' WARNING: ERRORS reading pixel map from '//trim(filename)//' on unit ',iunit
+       close(iunit)
+    endif
+ case default
+    if (len_trim(readpixformat).le.0) then
+       print "(a)",' ERROR: pixel format not set prior to read_pixmap call'
+    else
+       print "(a)",' ERROR: unknown pixmap format '//trim(adjustl(readpixformat))
+    endif
+    ierr = 1
+ end select
+
+end subroutine readpixmap
+
 
 end module write_pixmap

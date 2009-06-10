@@ -11,7 +11,7 @@ contains
 
 subroutine menu
   use filenames, only:defaultsfile,limitsfile,animfile,fileprefix,set_filenames
-  use labels, only:label,labelvec,iamvec,isurfdens,itoomre,ipdf
+  use labels, only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap
   use limits, only:write_limits,lim2,lim,reset_lim2,lim2set
   use options_data, only:submenu_data
   use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
@@ -229,6 +229,9 @@ subroutine menu
             call prompt(' enter x axis for PDF calculation ',ipickx,1,ndataplots)
             irender = 0
             ivecplot = 0
+        elseif (ipicky.gt.0 .and. ipicky.eq.icolpixmap) then
+            call prompt(' enter corresponding SPH column for particle data ',irender,0,ndataplots)
+            ivecplot = 0
         endif
         !
         !--call main plotting routine
@@ -329,7 +332,7 @@ subroutine menu
                  ' the o)ptions menu, item 2.',' ', &
                  ' for detailed help, consult the user guide',' ',&
                  '  (splash/docs/splash.pdf ',&
-                 '   or http://www.maths.monash.edu.au/~dprice/splash/userguide/)', &
+                 '   or http://users.monash.edu.au/~dprice/splash/userguide/)', &
                  ' ',' and/or the online FAQ. If you''re really stuck, email me! '
         read*
 !------------------------------------------------------------------------
@@ -380,6 +383,14 @@ subroutine menu
    
    anycoordplot = .false.
    do i=1,nyplotmulti
+      !
+      !--set irender, icontour and ivecplot to zero by default
+      !  These are then set where allowed below
+      !
+      irendermulti(i) = 0
+      icontourmulti(i) = 0
+      ivecplotmulti(i) = 0
+
       print*,'-------------- Plot number ',i,' --------------'
       if (.not.isamey) then
          call prompt(' y axis ',multiploty(i),1,numplot)
@@ -395,6 +406,8 @@ subroutine menu
             multiplotx(i) = 1
          elseif (multiploty(i).eq.ipdf) then
             call prompt(' enter x axis for PDF calculation ',multiplotx(i),1,ndataplots)         
+         elseif (multiploty(i).eq.icolpixmap) then
+            call prompt(' enter corresponding SPH column for particle data ',irendermulti(i),0,ndataplots)
          elseif(.not.isamex) then
             multiplotx(i) = multiploty(i)
          endif
@@ -445,10 +458,6 @@ subroutine menu
          if (ivecplotmulti(i).gt.0 .and. irendermulti(i).eq.0) then
             call prompt('plot particles?',iplotpartvec)
          endif
-      else
-         irendermulti(i) = 0
-         icontourmulti(i) = 0
-         ivecplotmulti(i) = 0
       endif
 
       if (icoordplot .and. ndim.ge.2) then
@@ -527,9 +536,10 @@ end function allowrendering
 !----------------------------------------------
 subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  use params, only:maxplot
- use labels, only:ipowerspec,iacplane,isurfdens,itoomre,iutherm,ipdf,label
+ use labels, only:ipowerspec,iacplane,isurfdens,itoomre,iutherm,ipdf,label,icolpixmap
  use settings_data, only:ndim,icoordsnew,ivegotdata
  use settings_part, only:iexact
+ use write_pixmap, only:ireadpixmap
  implicit none
  integer, intent(in) :: ncolumns
  integer, intent(inout) :: ncalc
@@ -572,6 +582,13 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  endif
  !nextra = nextra + 1
  !label(ncolumns+ncalc+nextra) = 'gwaves'
+ if (ndim.ge.2) then
+    if (ireadpixmap) then
+       nextra = nextra + 1
+       icolpixmap = ncolumns + ncalc + nextra
+       label(icolpixmap) = '2D pixel map'
+    endif
+ endif
 
 !
 !--now that we know nextra, set the total number of allowed plots (numplot).

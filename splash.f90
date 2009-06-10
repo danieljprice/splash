@@ -23,6 +23,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.12.2 : (XX/XX/09)
+!             Stability bug fixes with older compilers. More robust memory handling. Bug fix with automatic
+!             pixel selection causing seg fault.
 !     1.12.1 : (20/04/09)
 !             Can edit/delete text shapes interactively, also the colour bar label; can customise
 !             the label on projection plots; contour levels better defined; SPLASH_HMIN_CODEUNITS added;
@@ -225,7 +228,7 @@ program splash
   use system_commands, only:get_number_arguments,get_argument
   use system_utils, only:lenvironment
   use asciiutils, only:read_asciifile
-  use write_pixmap, only:isoutputformat,iwritepixmap,pixmapformat
+  use write_pixmap, only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
   use convert, only:convert_all
   use write_sphdata, only:issphformat
   use analysis, only:isanalysis
@@ -236,7 +239,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.12.1 [20th April ''09]'
+  character(len=*), parameter :: version = 'v1.12.2beta [9th June ''09]'
 
   !
   ! initialise some basic code variables
@@ -250,7 +253,7 @@ program splash
   call set_filenames(trim(fileprefix))
 
   evsplash = .false.
-  lowmemorymode = lenvironment('SPLASH_LOW_MEM')
+  lowmemorymode = lenvironment('SPLASH_LOW_MEM') .or. lenvironment('SPLASH_LOWMEM')
   !
   !  read all arguments off command line
   !
@@ -261,6 +264,7 @@ program splash
   i = 0
   nfiles = 0
   iwritepixmap = .false.
+  ireadpixmap  = .false.
   doconvert = .false.
   nomenu = .false.
   ipickx = 0
@@ -287,13 +291,13 @@ program splash
            read(string,*,iostat=ierr) ipicky
            if (ierr /= 0) call print_usage(quit=.true.)
            nomenu = .true.
-        case('render','r')
+        case('render','r','ren')
            i = i + 1
            call get_argument(i,string)
            read(string,*,iostat=ierr) irender
            if (ierr /= 0) call print_usage(quit=.true.)
            nomenu = .true.
-        case('contour','c','cont')
+        case('contour','c','cont','con')
            i = i + 1
            call get_argument(i,string)
            read(string,*,iostat=ierr) icontour
@@ -320,12 +324,21 @@ program splash
               fileprefix = trim(string)
               call set_filenames(trim(fileprefix))
            endif
-        case('o')
+        case('o','writepix','wpix')
            i = i + 1
            call get_argument(i,string)
            if (isoutputformat(string)) then
               iwritepixmap = .true.
               pixmapformat = trim(string)
+           else
+              stop
+           endif
+        case('readpix','rpix')
+           i = i + 1
+           call get_argument(i,string)
+           if (isinputformat(string)) then
+              ireadpixmap = .true.
+              readpixformat = trim(string)
            else
               stop
            endif

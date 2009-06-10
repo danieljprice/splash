@@ -1,7 +1,7 @@
 !------------------------------------------------------------------------
 !
 ! This file is part of the SPLASH visualisation package for SPH.
-! (c) 2002-2008 Daniel Price
+! (c) 2002-2009 Daniel Price
 !
 ! This is the core routine for the whole code.
 ! Drives the plotting pipeline, ie. calls all the routines which
@@ -514,12 +514,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     iamtype,npartoftype,masstype,dat,timei,gammai,ipagechange,iadvance)
   use params,  only:doub_prec,int1,maxparttypes
   use colours, only:colour_set
-  use filenames, only:nsteps
+  use filenames, only:nsteps,rootname,ifileopen
   use exact, only:exact_solution,atstar,ctstar,sigma
   use toystar1D, only:exact_toystar_ACplane
   use toystar2D, only:exact_toystar_ACplane2D
   use labels, only:label,labelvec,iamvec,lenlabel, &
-              ih,irho,ipmass,ix,iacplane,ipowerspec,isurfdens,itoomre,iutherm,ipdf
+              ih,irho,ipmass,ix,iacplane,ipowerspec,isurfdens,itoomre,iutherm,ipdf,icolpixmap
   use limits, only:lim,get_particle_subset,lim2,lim2set
   use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                 icontourmulti,x_secmulti,xsecposmulti
@@ -558,7 +558,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use pagesetup, only:redraw_axes
   use disc, only:disccalc,discplot
   use exactfromfile, only:exact_fromfile
-  use write_pixmap, only:iwritepixmap,writepixmap,write_pixmap_ppm
+  use write_pixmap, only:iwritepixmap,writepixmap,write_pixmap_ppm,readpixmap
   use pdfs, only:pdfcalc,pdfplot,npdfbins
 
   implicit none
@@ -1803,7 +1803,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            labelrender = transform_label(labelrender,itrans(irenderpart))
 
            !--limits for rendered quantity
-           if (.not.interactivereplot) then                
+           if (.not.interactivereplot) then
               !--find (adaptive) limits of rendered array
               call adapt_limits(irenderpart,renderplot(1:ntoti),rendermin,rendermax, &
                                 renderminadapt,rendermaxadapt,trim(labelrender))
@@ -2173,6 +2173,87 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            call legends_and_title
 
+        elseif (iploty.eq.icolpixmap) then
+        !--------------------------------------------------------------
+        !  plot the contents of a pixel map read from a file
+        !--------------------------------------------------------------
+           !
+           !--irender should already be set, associating the pixmap
+           !  with a column from the SPH data. Then we can use the
+           !  limit settings from the SPH data. Otherwise just
+           !  treat it like a separate column.
+           !
+           if (irender.eq.0) irender = icolpixmap
+           
+           !--datpix is allocated inside the readpixmap routine
+           if (allocated(datpix)) deallocate(datpix)
+           labelrender = label(irender)
+           call readpixmap(datpix,npixx,npixy,rootname(ifileopen),labelrender,irender,timei,istep,x_sec,ierr)
+           
+           if (.not.interactivereplot) then
+              if (ndim.ge.1) then
+                 xmin = lim(ix(1),1)
+                 xmax = lim(ix(1),2)
+              else
+                 xmin = 0.
+                 xmax = 1.
+              endif
+              if (ndim.ge.2) then
+                 ymin = lim(ix(2),1)
+                 ymax = lim(ix(2),2)
+              else
+                 ymin = 0.
+                 ymax = 1.
+              endif
+           endif
+           if (ndim.ge.1) iplotx = ix(1)
+           if (ndim.ge.2) then
+              iploty = ix(2)
+              labely = label(ix(2))
+           endif
+           pixwidth = (xmax-xmin)/real(npixx)
+
+           if (itrans(irender).ne.0 .and. allocated(datpix)) then
+              call transform(datpix,itrans(irender))
+           endif
+           labelrender = transform_label(labelrender,itrans(irender))
+
+           !--find (adaptive) limits of rendered array
+           if (allocated(datpix)) then
+              renderminadapt = minval(datpix)
+              rendermaxadapt = maxval(datpix)
+           endif
+           !--limits for rendered quantity
+           if (.not.interactivereplot) then
+              if (.not.iadapt) then
+                 !!--use fixed limits and apply transformations
+                 rendermin = lim(irender,1)
+                 rendermax = lim(irender,2)
+                 call transform_limits(rendermin,rendermax,itrans(irender))
+              endif
+           endif
+           
+           just = 1
+           iPlotColourBar = .true.
+           call page_setup
+           
+           if (ierr.eq.0 .and. allocated(datpix)) then
+              !!--call subroutine to actually render the image
+              call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
+                npixx,npixy,xmin,ymin,pixwidth,    &
+                icolours,iplotcont,0,0,.false.,.false.)
+           endif
+           !
+           !--redraw axes over what has been plotted
+           !
+           call redraw_axes(iaxis)
+           !
+           !--annotate with time / marker legend and title
+           !
+           call legends_and_title
+           irender = 0
+           iploty = icolpixmap
+
         else
         !--------------------------------------------------------------
         !  plot the contents of an extra two-column ascii file
@@ -2207,7 +2288,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         
         endif
 
-        lastplot = (ipos.eq.iendatstep .or. istep.eq.nsteps)
+        lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) .and. nyplot.eq.nyplots)
         !--the following line sets the number of steps on page to nstepsonpage
         !  in the case where we reach the last timestep before nstepsonpage is reached
         !  (makes interactive replotting behave better)
@@ -2462,7 +2543,7 @@ contains
     xmaxmulti(iplotx) = xmax
     xminmulti(iploty) = ymin
     xmaxmulti(iploty) = ymax
-    if (irender.gt.0 .and. irender.le.numplot) then
+    if (irender.gt.0) then
        xminmulti(irender) = rendermin
        xmaxmulti(irender) = rendermax
     endif
@@ -2485,7 +2566,7 @@ contains
        xmaxadapt(iplotx) = max(xmaxadapt(iplotx),xmaxadapti)
        xminadapt(iploty) = min(xminadapt(iploty),yminadapti)
        xmaxadapt(iploty) = max(xmaxadapt(iploty),ymaxadapti)
-       if (irender.gt.0 .and. irender.le.numplot) then
+       if (irender.gt.0) then
           xminadapt(irender) = min(xminadapt(irender),renderminadapt)
           xmaxadapt(irender) = max(xmaxadapt(irender),rendermaxadapt)
        endif
@@ -2527,7 +2608,7 @@ contains
     ! plot colour bar for rendered plots (use currently set colour)
     ! do this here so it always appears OVERLAID on the renderings
     !--------------------------------------------------------------
-    if (irender.gt.0 .and. irender.le.numplot) then
+    if (irender.gt.0) then
        lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
                           .and. nyplot.eq.nyplots .and. k.eq.nxsec)
        !--only plot colour bar at the end of first row on tiled plots
