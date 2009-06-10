@@ -10,7 +10,7 @@
 !---------------------------------------------------------------------------
 module asciiutils
  implicit none
- public :: read_asciifile,get_ncolumns,ncolumnsline,safename,cstring
+ public :: read_asciifile,get_ncolumns,ncolumnsline,safename,basename,cstring
  public :: string_replace
  public :: ucase,lcase
  
@@ -270,6 +270,30 @@ function safename(string)
  enddo
 
 end function safename
+
+!---------------------------------------------------------------------------
+!
+! function stripping the directory off a filename
+!
+!---------------------------------------------------------------------------
+function basename(string)
+ implicit none
+ character(len=*), intent(in) :: string
+ character(len=len(string)) :: basename
+ integer :: i,iposmax
+ 
+ basename = string
+ 
+ !--find the last forward slash
+ iposmax = 0
+ i = len_trim(string)
+ do while(i.ge.2 .and. iposmax.eq.0)
+    i = i - 1
+    if (string(i:i).eq.'/') iposmax = i
+ enddo
+ basename = trim(string(iposmax+1:))
+
+end function basename
 
 !---------------------------------------------------------------------------
 !
