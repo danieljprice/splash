@@ -223,7 +223,7 @@ program splash
   use mainmenu, only:menu,allowrendering,set_coordlabels,set_extracols
   use mem_allocation, only:deallocate_all
   use projections3D, only:setup_integratedkernel
-  use settings_data, only:buffer_data,lowmemorymode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots
+  use settings_data, only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots
   use settings_xsecrot, only:read_animfile
   use system_commands, only:get_number_arguments,get_argument
   use system_utils, only:lenvironment
@@ -254,6 +254,7 @@ program splash
 
   evsplash = .false.
   lowmemorymode = lenvironment('SPLASH_LOW_MEM') .or. lenvironment('SPLASH_LOWMEM')
+  debugmode = lenvironment('SPLASH_DEBUG')
   !
   !  read all arguments off command line
   !
