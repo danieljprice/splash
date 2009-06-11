@@ -231,6 +231,7 @@ subroutine menu
             ivecplot = 0
         elseif (ipicky.gt.0 .and. ipicky.eq.icolpixmap) then
             call prompt(' enter corresponding SPH column for particle data ',irender,0,ndataplots)
+            ipickx = 0
             ivecplot = 0
         endif
         !
@@ -383,14 +384,6 @@ subroutine menu
    
    anycoordplot = .false.
    do i=1,nyplotmulti
-      !
-      !--set irender, icontour and ivecplot to zero by default
-      !  These are then set where allowed below
-      !
-      irendermulti(i) = 0
-      icontourmulti(i) = 0
-      ivecplotmulti(i) = 0
-
       print*,'-------------- Plot number ',i,' --------------'
       if (.not.isamey) then
          call prompt(' y axis ',multiploty(i),1,numplot)
@@ -408,6 +401,7 @@ subroutine menu
             call prompt(' enter x axis for PDF calculation ',multiplotx(i),1,ndataplots)         
          elseif (multiploty(i).eq.icolpixmap) then
             call prompt(' enter corresponding SPH column for particle data ',irendermulti(i),0,ndataplots)
+            multiplotx(i) = 0
          elseif(.not.isamex) then
             multiplotx(i) = multiploty(i)
          endif
@@ -458,6 +452,13 @@ subroutine menu
          if (ivecplotmulti(i).gt.0 .and. irendermulti(i).eq.0) then
             call prompt('plot particles?',iplotpartvec)
          endif
+      else
+         !
+         !--set irender, icontour and ivecplot to zero if no rendering allowed
+         !
+         if (multiploty(i).ne.icolpixmap) irendermulti(i) = 0
+         icontourmulti(i) = 0
+         ivecplotmulti(i) = 0
       endif
 
       if (icoordplot .and. ndim.ge.2) then
