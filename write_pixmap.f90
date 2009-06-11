@@ -246,11 +246,11 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,icol,time,istep,xsec,ier
  real,             intent(in)    :: time
  integer,          intent(in)    :: istep
  logical,          intent(in)    :: xsec
- integer            :: i
+ integer            :: i,maxnames
  integer, parameter :: iunit = 168
  character(len=128) :: filename
  character(len=len(dumpfile)) :: dumpfilei
- logical :: iexist
+ logical :: iexist,printinfo
  
  ierr = 0
  select case(trim(adjustl(readpixformat)))
@@ -274,7 +274,10 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,icol,time,istep,xsec,ier
     dumpfilei = dumpfile
     iexist = .false.
     i = 0
-    do while (.not.iexist .and. i.lt.4)
+    filenametries=' '
+    maxnames = 4
+    printinfo = .false.
+    do while (.not.iexist .and. i.lt.maxnames)
        i = i + 1
        select case(i)
        case(1)
@@ -297,17 +300,34 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,icol,time,istep,xsec,ier
        !
        !--query to see if file exists
        !
-       inquire(file=filename,exist=iexist)
+       if (printinfo) then
+          print "('*',a,'*')",'  no file '//filename(1:60)//''
+       else
+          inquire(file=filename,exist=iexist)
+       endif
        if (.not.iexist) then
-          !print "(a)",' Looking for "'//trim(filename)//'" (not found)'
-          if (i.eq.4) then
+          !
+          !--try the same files again but in the current directory
+          !  instead of the directory in which the dump files are located
+          !
+          if (i.eq.maxnames) then
              if (len_trim(dumpfilei).ne.len_trim(basename(dumpfile))) then
                 i = 0
                 dumpfilei = basename(dumpfile)
+             elseif (.not.printinfo) then
+                print "(72('*'),/,'*',a,12x,'*')",' ERROR: could not find any .pix files with matching names:'
+                dumpfilei = dumpfile
+                printinfo = .true.
+                i = 0
              endif
           endif
        endif
     enddo
+    if (.not.iexist) then
+       print "('*',a,'*',/,72('*'))",' Create a file with one of these names (or a soft link) and try again '
+       ierr = 1
+       return
+    endif
     
     open(unit=iunit,file=filename,status='old',form='unformatted',iostat=ierr)
     if (ierr /= 0) then
