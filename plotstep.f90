@@ -63,7 +63,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                  nyplotmulti,x_secmulti,ivecplotmulti
   use prompting, only:prompt
   use titles, only:read_titles,read_steplegend
-  use settings_data, only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required,icoords,icoordsnew
+  use settings_data, only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required,icoords,icoordsnew,debugmode
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
       colour_fore,colour_back,iadapt,iadaptcoords,linewidth,device,nomenu,interactive
   use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
@@ -383,11 +383,11 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         required(irendermulti(1:nyplotmulti)) = .true.
         required(icontourmulti(1:nyplotmulti)) = .true.
      else
-        required(iplotx) = .true.
+        if (iploty.ne.icolpixmap) required(iplotx) = .true.
         required(iploty) = .true.
      endif
      required(iplotz) = .true.
-     if (iamrendering) then
+     if (iamrendering .and. iploty.ne.icolpixmap) then
         required(ipmass) = .true.
         required(irho) = .true.
         required(ih) = .true.
@@ -425,6 +425,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         endif
      endif
 !  endif
+  if (debugmode) print*,'DEBUG: required(1:ncolumns) = ',required(1:) 
 
   !!--read step titles (don't need to store ntitles for this)
   nsteplegendlines = 0
@@ -531,9 +532,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use limits, only:lim,get_particle_subset,lim2,lim2set
   use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                 icontourmulti,x_secmulti,xsecposmulti
-  use particle_data, only:maxpart,icolourme
+  use particle_data, only:maxpart,maxcol,icolourme
   use settings_data, only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
-                     iendatstep,ntypes,UseTypeInRenderings,itrackpart,required,ipartialread,xorigin
+                     iendatstep,ntypes,UseTypeInRenderings,itrackpart,required,ipartialread,xorigin,&
+                     lowmemorymode,debugmode
   use settings_limits, only:iadapt,iadaptcoords,scalemax
   use settings_part, only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
                      iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
@@ -618,15 +620,26 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   !--allocate temporary memory required for plotting
   !
   isize = max(maxpart,2000)
-  allocate(xplot(isize),yplot(isize),zplot(isize),stat=ierr)
-  if (ierr /= 0) stop 'out of memory in plotstep allocating temporary x,y,z arrays'
-  xplot = 0.
-  yplot = 0.
-  zplot = 0.
+  !--do not allocate the temporary arrays if the dat array has not been allocated
+  if (lowmemorymode .and. maxcol.eq.0) then
+     isize = 2000
+  endif
+  if (debugmode) print*,'DEBUG: in plotstep, allocating local memory...'
+  ierr = 0
+  allocate(xplot(isize),stat=ierr)
+  if (ierr /= 0) stop 'out of memory in plotstep allocating temporary x array'
+  allocate(yplot(isize),stat=ierr)
+  if (ierr /= 0) stop 'out of memory in plotstep allocating temporary y array'
+  allocate(zplot(isize),stat=ierr)
+  if (ierr /= 0) stop 'out of memory in plotstep allocating temporary z array'
+  if (allocated(xplot)) xplot = 0.
+  if (allocated(yplot)) yplot = 0.
+  if (allocated(zplot)) zplot = 0.
 
   allocate(hh(maxpart),weight(maxpart),stat=ierr)
   if (ierr /= 0) stop 'out of memory in plotstep allocating temporary h,weight arrays'
   hh = 0.
+  if (debugmode) print*,'DEBUG: in plotstep, allocated local memory successfully'
 
   dummy = 0.
   labeltimeunits = ' '
@@ -684,6 +697,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   !
   !--set weight factor for interpolation routines
   !
+  if (debugmode) print*,'DEBUG: setting interpolation weights...'
   call set_interpolation_weights(weight,dat,iamtype,(iplotpartoftype .and. UseTypeInRenderings))
   !
   !--exclude subset of particles if parameter range restrictions are set
@@ -708,6 +722,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   else
      nframesloop = 1
   endif
+  if (debugmode) print*,'DEBUG: starting frame loop...'
   
   !--loop over frames: flexible to allow forwards/backwards in interactive mode
   over_frames: do while (iframe.lt.nframesloop)
@@ -824,6 +839,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      if (iploty.gt.0 .and. iploty.le.numplot) labely = label(iploty)
 
      initdataplots: if (initx .or. inity) then
+        if (debugmode) print*,'DEBUG: initialising data plots...',initx,inity,iplotx,iploty,ntoti,size(xplot)
         if (initx) then
            xplot(1:ntoti) = dat(1:ntoti,iplotx)
            iamvecx = iamvec(iplotx)
@@ -836,6 +852,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         else
            iamvecy = 0
         endif
+        if (debugmode) print*,'DEBUG: setting itrans...'
         itransx = 0
         itransy = 0
         if (iplotx.gt.0 .and. iplotx.le.numplot) itransx = itrans(iplotx)
@@ -927,6 +944,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
      if ((iploty.le.ndim).and.(iplotx.le.ndim)) then
 
+        if (debugmode) print*,'DEBUG: starting coord plot...'
         if (.not.interactivereplot .or. irerender) then
            npixx = npix
            if (npixx.le.0) npixx = 500 ! default for other uses of npixx if auto pixels are used
@@ -1793,6 +1811,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
      elseif ((iploty.gt.ndim .or. iplotx.gt.ndim)  &
           .and.(iploty.le.ndataplots .and. iplotx.le.ndataplots)) then
+
+        if (debugmode) print*,'DEBUG: starting particle plot...'
         !
         !--sort out particle colouring 
         !  (at present this is NOT used -can't render if not co-ord plot)
@@ -1922,6 +1942,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 ! from the particle data, such as errors etc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+        if (debugmode) print*,'DEBUG: starting extra plot...'
         !--------------------------------------------------------------
         !  plot surface density, Toomre Q parameter
         !  or Probability Distribution Function
@@ -2261,6 +2282,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            call legends_and_title
            irender = 0
            iploty = icolpixmap
+           iplotx = 0
 
         else
         !--------------------------------------------------------------
