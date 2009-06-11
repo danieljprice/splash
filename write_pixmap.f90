@@ -274,7 +274,6 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,icol,time,istep,xsec,ier
     dumpfilei = dumpfile
     iexist = .false.
     i = 0
-    filenametries=' '
     maxnames = 4
     printinfo = .false.
     do while (.not.iexist .and. i.lt.maxnames)
