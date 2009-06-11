@@ -16,29 +16,28 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                         icolourpart,iamtype,npartoftype,iplotpartoftype, &
                         use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
                         fastparticleplot,datpix,npixx,npixy,dval,brightness)
-  use params, only:int1
-  use labels, only:labeltype, maxparttypes
-  use settings_data, only:ndim,icoords,ntypes
-  use settings_part, only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
-                          ilabelpart,iplotline,linestylethisstep,linecolourthisstep, &
-                          iploterrorbars,ilocerrorbars
+  use params,           only:int1
+  use labels,           only:labeltype, maxparttypes
+  use settings_data,    only:ndim,icoords,ntypes
+  use settings_part,    only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
+                             ilabelpart,iplotline,linestylethisstep,linecolourthisstep, &
+                             iploterrorbars,ilocerrorbars
   use interpolations2D, only:interpolate_part,interpolate_part1
-  use transforms, only:transform
+  use transforms,       only:transform
   implicit none
-  integer, intent(in) :: ntot, iplotx, iploty, itransx, itransy
-  integer(kind=int1), dimension(:), intent(in) :: iamtype
-  integer, intent(in), dimension(ntot) :: icolourpart
-  integer, dimension(maxparttypes), intent(in) :: npartoftype
-  real, dimension(ntot), intent(in) :: xplot, yplot, zplot, h
-  real, dimension(:), allocatable :: xerrb, yerrb, herr
-  real, intent(in) :: zmin,zmax,xmin,xmax,ymin,ymax
-  logical, intent(in) :: use_zrange,fastparticleplot
-  logical, dimension(maxparttypes), intent(in) :: iplotpartoftype
-  character(len=*), intent(in) :: labelz
+  integer, intent(in)                           :: ntot,iplotx, iploty, itransx, itransy
+  integer(kind=int1),  dimension(:), intent(in) :: iamtype
+  integer, dimension(:), intent(in)             :: icolourpart
+  integer, dimension(maxparttypes), intent(in)  :: npartoftype
+  real, dimension(:), intent(in)                :: xplot, yplot, zplot, h
+  real, intent(in)                              :: zmin,zmax,xmin,xmax,ymin,ymax
+  logical, intent(in)                           :: use_zrange,fastparticleplot
+  logical, dimension(maxparttypes), intent(in)  :: iplotpartoftype
+  character(len=*), intent(in)                  :: labelz
   
-  integer, intent(in), optional :: npixx,npixy
+  integer, intent(in), optional                 :: npixx,npixy
   real, dimension(:,:), intent(inout), optional :: datpix,brightness
-  real, intent(in), optional :: dval
+  real, intent(in), optional                    :: dval
   
   integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle,ierr
   integer :: lenstring,index1,index2,ntotplot,icolourstart,nlooptypes,ilooptype
@@ -47,8 +46,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   character(len=20) :: string
   integer, parameter :: ncellx = 500, ncelly = 500 ! for crowded field reduction
   integer(kind=int1), dimension(ncellx,ncelly) :: nincell
-  integer :: icellx,icelly !,notplotted
+  integer :: icellx,icelly,maxz !,notplotted
   real :: dxcell1,dycell1,dxpix
+  real, dimension(:), allocatable :: xerrb, yerrb, herr
   logical :: mixedtypes
   
   !--query current character height and colour
@@ -66,6 +66,10 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   elseif (ntot.ne.ntotplot) then
      print "(a)",' WARNING: particleplot: total not equal to sum of types on input'
      print*,' ntotal = ',ntot,' sum of types = ',ntotplot
+  endif
+  maxz = size(zplot)
+  if (use_zrange .and. maxz.lt.ntot) then
+     print "(a)",' WARNING: particleplot: slice plot but z array too small - excluding particles > z array size'
   endif
   dxpix = 0.
   if (present(datpix)) then
@@ -124,30 +128,32 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
               itype = min(max(int(iamtype(j)),1),maxparttypes)
               if (.not.iplotpartoftype(itype)) cycle overj
            endif
-           if (zplot(j).lt.zmax .and. zplot(j).gt.zmin) then
-              if (icolourpart(j).ge.0) then
-                 nplotted = nplotted + 1
-                 nplottedtype(itype) = nplottedtype(itype) + 1
-                 call pgsci(icolourpart(j))
-                 call pgpt(1,xplot(j),yplot(j),imarktype(itype))
-                 if (present(datpix)) then
-                    if (present(brightness)) then
-                       call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                              npixx,npixy,dxpix,dval,brightness)                    
-                    else
-                       call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                              npixx,npixy,dxpix,dval)
+           if (j.le.maxz) then
+              if (zplot(j).lt.zmax .and. zplot(j).gt.zmin) then
+                 if (icolourpart(j).ge.0) then
+                    nplotted = nplotted + 1
+                    nplottedtype(itype) = nplottedtype(itype) + 1
+                    call pgsci(icolourpart(j))
+                    call pgpt(1,xplot(j),yplot(j),imarktype(itype))
+                    if (present(datpix)) then
+                       if (present(brightness)) then
+                          call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
+                                                 npixx,npixy,dxpix,dval,brightness)                    
+                       else
+                          call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
+                                                 npixx,npixy,dxpix,dval)
+                       endif
                     endif
                  endif
-              endif
-              !--plot circle of interaction if gas particle
-              if (itype.eq.1 .and. ncircpart.gt.0 .and. ANY(icircpart(1:ncircpart).eq.j)) then
-                 call pgcirc(xplot(j),yplot(j),2*h(j))
-              endif
-              !!--plot particle label
-              if (ilabelpart) then
-                 call pgnumb(j,0,1,string,lenstring)
-                 call pgtext(xplot(j),yplot(j),string(1:lenstring))
+                 !--plot circle of interaction if gas particle
+                 if (itype.eq.1 .and. ncircpart.gt.0 .and. ANY(icircpart(1:ncircpart).eq.j)) then
+                    call pgcirc(xplot(j),yplot(j),2*h(j))
+                 endif
+                 !!--plot particle label
+                 if (ilabelpart) then
+                    call pgnumb(j,0,1,string,lenstring)
+                    call pgtext(xplot(j),yplot(j),string(1:lenstring))
+                 endif
               endif
            endif
         enddo overj
