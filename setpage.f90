@@ -267,7 +267,7 @@ end subroutine redraw_axes
   real vptxmin,vptxmax,vptymin,vptymax
   real aspectratio,devaspectratio,x1,x2,y1,y2
   real xch,ych
-  character xopts*10, yopts*10
+  character(len=10)  :: xopts, yopts
   logical, parameter :: useexactpixelboundaries = .true.
 !
 ! new page if iplot > number of plots on page
@@ -465,16 +465,16 @@ end subroutine redraw_axes
      ! decide whether to number and label the y axis
      !      
      if (ix.eq.1 .and. axis.ge.0) then
-        yopts = '1VN'//yopts
+        yopts = '1VN'//trim(yopts)
         call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
      elseif (axis.ge.0) then
-        yopts = yopts//'N'
+        yopts = trim(yopts)//'N'
      endif  
      !
      ! decide whether to number and label the x axis
      !      
      if (iy.eq.ny .and. axis.ge.0) then
-        xopts = 'N'//xopts
+        xopts = 'N'//trim(xopts)
         call pgmtxt('B',xlabeloffset,0.5,0.5,labelx)
      endif
      !
@@ -491,11 +491,11 @@ end subroutine redraw_axes
         call pgmtxt('B',xlabeloffset,0.5,0.5,labelx)
      endif
      !--always plot numbers
-     xopts = 'N'//xopts
+     xopts = 'N'//trim(xopts)
      !
      !--always label y axis
      !
-     yopts = '1VN'//yopts
+     yopts = '1VN'//trim(yopts)
      call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
      !
      !--always plot title

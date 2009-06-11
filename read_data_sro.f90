@@ -660,7 +660,7 @@ subroutine set_labels
         iamvec(18:20) = 18
         labelvec(18:20) = 'force'
         do i=1,ndimV
-           label(18+i-1) = labelvec(18)//'\d'//labelcoord(i,1)
+           label(18+i-1) = trim(labelvec(18))//'\d'//labelcoord(i,1)
         enddo
         label(21) = 'Euler alpha'
         label(22) = 'Euler beta'
@@ -699,7 +699,7 @@ subroutine set_labels
         iamvec(13:15) = 13
         labelvec(13:15) = 'force'
         do i=1,ndimV
-           label(13+i-1) = labelvec(13)//'\d'//labelcoord(i,1)
+           label(13+i-1) = trim(labelvec(13))//'\d'//labelcoord(i,1)
         enddo
         label(16) = 'dgrav'
         if (ncolumns.gt.16) then
@@ -748,7 +748,7 @@ subroutine set_labels
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV
-        label(ivx+i-1) = labelvec(ivx)//'\d'//labelcoord(i,1)
+        label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
      enddo
   endif
 
@@ -756,7 +756,7 @@ subroutine set_labels
      iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
      labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
      do i=1,ndimV
-        label(iBfirst+i-1) = labelvec(iBfirst)//'\d'//labelcoord(i,1)
+        label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
      enddo
      label(idivB) = 'div B'
   endif
