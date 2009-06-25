@@ -676,8 +676,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   icolumn = irho ! density
                elseif (iarr.eq.1 .and. smalldump .and. i.eq.2) then
                   icolumn = ih ! h which is real4 in small dumps
-               elseif (iarr.eq.4 .and. i.le.3) then
-                  icolumn = nhydroarrays + i
+               !--this was a bug for sphNG files...
+               !elseif (iarr.eq.4 .and. i.le.3) then
+               !   icolumn = nhydroarrays + i
                else
                   icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
                endif
