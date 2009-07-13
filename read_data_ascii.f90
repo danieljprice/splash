@@ -288,10 +288,10 @@ subroutine set_labels
      close(unit=51)
   endif
   
-  if (label(1)(1:1).eq.'x') then
+  if (label(1)(1:1).eq.'x' .or. label(1)(1:1).eq.'r') then
      ndim = 1
      ix(1) = 1
-     if (label(2)(1:1).eq.'y') then
+     if (label(2)(1:1).eq.'y' .or. label(2)(1:1).eq.'z') then
         ndim = 2
         ix(2) = 2
         if (label(3)(1:1).eq.'z') then
