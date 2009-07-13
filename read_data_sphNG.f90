@@ -120,6 +120,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
   j = indexstart
   nstepsread = 0
   doubleprec = .true.
+  ilastrequired = 0
+  do i=1,size(required)
+     if (required(i)) ilastrequired = i
+  enddo
   
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
 
@@ -448,13 +452,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--allocate memory now that we know the number of columns
 !
-   if (iblock.eq.1) ncolumns = ncolstep + ncalc
+   if (iblock.eq.1) then
+      ncolumns = ncolstep + ncalc
+      ilastrequired = 0
+      do i=1,ncolumns
+         if (required(i)) ilastrequired = i
+      enddo
+   endif
+
    if (npart_max.gt.maxpart .or. j.gt.maxstep .or. ncolumns.gt.maxcol) then
       if (lowmemorymode) then
-         ilastrequired = 0
-         do i=1,ncolumns
-            if (required(i)) ilastrequired = i
-         enddo
          call alloc(max(npart_max,maxpart),j,ilastrequired)
       else
          call alloc(max(npart_max,maxpart),j,ncolumns,mixedtypes=.true.)
@@ -502,6 +509,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                ' t/t_ff: ',tff,' rhozero: ',rhozero,' dtmax: ',dummyreal(2)
       endif
       nstepsread = nstepsread + 1
+      !
+      !--stop reading file here if no columns required
+      !
+      if (ilastrequired.eq.0) exit over_MPIblocks
 
       if (allocated(iphase)) deallocate(iphase)
       allocate(iphase(npart_max))
@@ -752,7 +763,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
  !
  !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
  !
-    if (allocated(dat) .and. n1.GT.0 .and. lenvironment('SSPLASH_RESET_CM')) then
+    if (allocated(dat) .and. n1.GT.0 .and. lenvironment('SSPLASH_RESET_CM') .and. allocated(iphase)) then
        call reset_centre_of_mass(dat(1:n1,1:3,j),dat(1:n1,4,j),iphase(1:n1),n1)
     endif
  !
@@ -762,12 +773,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
        if (nptmass.EQ.1) then
           isink = 0
           xyzsink = 0.
-          do i=1,ntotal
-             if (iphase(i).GE.1) then
-                isink = i
-                xyzsink(1:3) = dat(isink,1:3,j)
-             endif
-          enddo
+          if (allocated(iphase)) then
+             do i=1,ntotal
+                if (iphase(i).GE.1) then
+                   isink = i
+                   xyzsink(1:3) = dat(isink,1:3,j)
+                endif
+             enddo
+          endif
           if (isink.EQ.0) then
              print "(a)",'WARNING: SSPLASH_CENTRE_ON_SINK set but cannot find sink'
           else
@@ -807,6 +820,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
     nunknown = 0
     ngas = 0
     nstar = 0
+    !--can only do this loop if we have read the iphase array
+    iphasealloc: if (allocated(iphase)) then
 !
 !--translate iphase into particle types (mixed type storage)
 !
@@ -887,7 +902,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              !--we make iphase = 1 for point masses (could save iphase and copy across but no reason to)
              iphase(ipos) = iphaseminthistype
           enddo
-          
+
           select case(itype)
           case(1)
              nptmassi = nthistype
@@ -900,6 +915,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
        enddo
 
      endif
+
+     endif iphasealloc
 
      if (allocated(dattemp)) deallocate(dattemp)
      if (allocated(dattemp2)) deallocate(dattemp2)
