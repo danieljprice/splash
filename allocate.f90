@@ -39,7 +39,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
      print*,'allocate: error in input, ncolumns = ',ncolumnsin
      return
   elseif (ncolumnsin.eq.0) then
-     print*,'WARNING: allocate: ncolumns = 0 in input'  
+     print*,'WARNING: allocate: ncolumns = 0 in input'
   endif
   !--do nothing if array sizes are the same
   if (npartin.eq.maxpart .and. ncolumnsin.eq.maxcol .and. nstep.eq.maxstep) then
