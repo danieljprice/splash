@@ -3,8 +3,9 @@ module interactive_routines
  implicit none
  public :: interactive_part,interactive_step,interactive_multi
  private :: mvlegend,mvtitle,save_limits,save_rotation
- real, private :: xpt
- real, private :: ypt
+ private :: get_vptxy
+ real, private :: xcursor = 0.5
+ real, private :: ycursor = 0.5
  
  private
  
@@ -69,8 +70,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   integer :: i,iclosest,nc,ierr,ixsec,ishape
   integer :: nmarked,ncircpart,itrackparttemp
   integer, dimension(1000) :: icircpart
- !! real :: xpt,ypt
-  real :: xpt2,ypt2,xcen,ycen
+  real :: xpt,ypt
+  real :: xpt2,ypt2,xcen,ycen,xminwin,xmaxwin,yminwin,ymaxwin
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
   real :: xlength,ylength,renderlength,renderpt,drender,zoomfac
@@ -90,6 +91,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   char = 'A'
   xline = 0.
   yline = 0.
+  !
+  !--convert saved cursor position (saved in viewport coords)
+  !  back to coordinates
+  !
+  call pgqwin(xminwin,xmaxwin,yminwin,ymaxwin)
+  call get_posxy(xcursor,ycursor,xpt,ypt,xminwin,xmaxwin,yminwin,ymaxwin)
+  
 !  xpt = 0.
 !  ypt = 0.
   xpt2 = 0.
@@ -210,6 +218,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         !--draw line if left click or g
         select case(char2)
         case('A','g')
+           print*
            !--mark second point
            call pgpt1(xline(3),yline(3),4)
            xlength = xline(3)-xline(2)
@@ -226,12 +235,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               xline(1) = xmax
               xline(4) = xmin
            endif           
+           ylength = yline(3)-yline(2)
+           dr = sqrt(xlength**2 + ylength**2)
+           print*,' (x1,y1) = (',xline(2),',',yline(2),')'
+           print*,' (x2,y2) = (',xline(3),',',yline(3),')'
+           print*,' dr = ',dr,' dx = ',xlength,' dy = ',ylength
            if (abs(xlength).gt.tiny(xlength)) then
-              ylength = yline(3)-yline(2)
               gradient = ylength/xlength
               yint = yline(3) - gradient*xline(3)
-              dr = sqrt(xlength**2 + ylength**2)
-              print*,' dr = ',dr,' dx = ',xlength,' dy = ',ylength
               print*,' gradient = ',gradient,' y intercept = ',yint
               yline(1) = gradient*xline(1) + yint
               yline(4) = gradient*xline(4) + yint
@@ -570,8 +581,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               endif
               print*,' centreing plot on origin x,y = ',xcen,ycen
            endif
-           xpt = xcen ! cursor position for next time
-           ypt = ycen
         case('C')
            xcen = xpt
            ycen = ypt
@@ -604,6 +613,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               irerender = .true.
               iexit = .true.
            endif
+        endif
+        if (char.eq.'o') then
+           xpt = xcen
+           ypt = ycen
         endif
      case('a') ! reset plot limits
         if (iamincolourbar .and. irender.gt.0) then
@@ -1063,6 +1076,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      case default
         print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '" ',iachar(char)
      end select
+     
+     !
+     !--save cursor position relative to the viewport
+     !
+     call pgqwin(xminwin,xmaxwin,yminwin,ymaxwin)
+     call get_vptxy(xpt,ypt,xcursor,ycursor,xminwin,xmaxwin,yminwin,ymaxwin)
 
      if (rotation) then
         if (anglez.ge.360.) anglez = anglez - 360.
@@ -1314,7 +1333,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  real, intent(in), dimension(ndim) :: xorigin
  logical, intent(out) :: interactivereplot
  integer :: nc,ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage
- real :: xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
+ real :: xpt,ypt,xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
  real :: xlength,ylength,renderlength,drender,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
  real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen,gradient,dr,yint,xmaxin
@@ -1334,6 +1353,22 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   zoomfac = 1.0
   xpt2 = 0.
   ypt2 = 0.
+  !
+  !--convert saved cursor position (saved in viewport coords)
+  !  back to world coordinates:
+  !
+  !--query window limits in world coords
+  call pgqwin(xmini,xmaxi,ymini,ymaxi)
+
+  !--determine which plot the cursor falls on
+  ipanel = getpanel(xcursor,ycursor)
+
+  !--set the window to correspond to the panel we last left the cursor in
+  call set_panel(ipanel)
+
+  !--set the position in x,y relative to this panel
+  call getxy(xcursor,ycursor,xpt,ypt,ipanel)
+
   iexit = .false.
   interactivereplot = .false.
   istepin = istep
@@ -1355,10 +1390,9 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !
      !--determine which plot the cursor falls on
      !
-     call pgqwin(xmini,xmaxi,ymini,ymaxi)
-     call get_vptxy(xpt,ypt,vptxi,vptyi)
-     
+     call get_vptxy(xpt,ypt,vptxi,vptyi,xmini,xmaxi,ymini,ymaxi)
      ipanel = getpanel(vptxi,vptyi)
+     !print*,'xpt,ypt = ',xpt,ypt,vptxi,vptyi,ipanel
 
      !--translate vpt co-ords to x,y in current panel
      call getxy(vptxi,vptyi,xpti,ypti,ipanel)
@@ -1414,16 +1448,18 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         print*,'          are multiplied by a factor of 10'        
         print*,'---------------------------------------------------------------'
      case('g')   ! draw a line between two points
-        xline(2) = xpt
-        yline(2) = ypt
+        xline(2) = xpti
+        yline(2) = ypti
+        call set_panel(ipanel)
         !--mark first point
-        call pgpt1(xpt,ypt,4)
+        call pgpt1(xpti,ypti,4)
         !--select second point
         print*,' select another point (using left click or g) to plot line '
         call pgband(1,1,xline(2),yline(2),xline(3),yline(3),char2)
         !--draw line if left click or g
         select case(char2)
         case('A','g')
+           print*
            !--mark second point
            call pgpt1(xline(3),yline(3),4)
            xlength = xline(3)-xline(2)
@@ -1440,18 +1476,21 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               xline(1) = xmax(iplotxarr(ipanel))
               xline(4) = xmin(iplotxarr(ipanel))
            endif           
+           ylength = yline(3)-yline(2)
+           dr = sqrt(xlength**2 + ylength**2)
+           print*,' (x1,y1) = (',xline(2),',',yline(2),')'
+           print*,' (x2,y2) = (',xline(3),',',yline(3),')'
+           print*,' dr = ',dr,' dx = ',xlength,' dy = ',ylength
            if (abs(xlength).gt.tiny(xlength)) then
-              ylength = yline(3)-yline(2)
               gradient = ylength/xlength
               yint = yline(3) - gradient*xline(3)
-              dr = sqrt(xlength**2 + ylength**2)
-              print*,' dr = ',dr,' dx = ',xlength,' dy = ',ylength
               print*,' gradient = ',gradient,' y intercept = ',yint
               yline(1) = gradient*xline(1) + yint
               yline(4) = gradient*xline(4) + yint
            endif
            !--plot line joining the two points
            call pgline(4,xline,yline)
+           call reset_panel
         case default
            print*,' action cancelled'       
         end select
@@ -1484,7 +1523,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               call pgband(4,1,xpt,ypt,xpt2,ypt2,char2)           
            endif
            if (char2 == 'A') then
-              call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
+              call get_vptxy(xpt2,ypt2,vptx2i,vpty2i,xmini,xmaxi,ymini,ymaxi)
               if (barwmulti(ipanel).gt.tiny(barwmulti)) then
                  if (verticalbar) then
                     drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
@@ -1519,7 +1558,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         else
            call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
            !call pgrect(xpt,xpt2,ypt,ypt2)
-           call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
+           call get_vptxy(xpt2,ypt2,vptx2i,vpty2i,xmini,xmaxi,ymini,ymaxi)
            !--use centre point of first click and current click to
            !  better determine panel
            vptxceni = 0.5*(vptxi + vptx2i)
@@ -1848,6 +1887,13 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      case default
         print*,' x, y = ',xpti,ypti,'; unknown option "',trim(char),'" ',iachar(char)
      end select
+
+     !
+     !--save cursor position relative to the viewport
+     !
+     call get_vptxy(xpt,ypt,xcursor,ycursor,xmini,xmaxi,ymini,ymaxi)
+     call reset_panel
+
      !
      !--do not let timestep go outside of bounds
      !  if we are at the first/last step, just print message and do nothing
@@ -1881,17 +1927,17 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
    ! utility which translates between world co-ordinates (x,y)
    ! and viewport co-ordinates (relative to the whole viewport)
    !---
-   subroutine get_vptxy(x,y,vptx,vpty)
-    implicit none
-    real, intent(in) :: x,y
-    real, intent(out) :: vptx,vpty
-    real :: vptxmini,vptxmaxi,vptymini,vptymaxi
-
-    call pgqvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
-    vptx = vptxmini + (x-xmini)/(xmaxi-xmini)*(vptxmaxi-vptxmini)
-    vpty = vptymini + (y-ymini)/(ymaxi-ymini)*(vptymaxi-vptymini)
-
-   end subroutine get_vptxy
+   !subroutine get_vptxy(x,y,vptx,vpty)
+   ! implicit none
+   ! real, intent(in) :: x,y
+   ! real, intent(out) :: vptx,vpty
+   ! real :: vptxmini,vptxmaxi,vptymini,vptymaxi
+   !
+   ! call pgqvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
+   ! vptx = vptxmini + (x-xmini)/(xmaxi-xmini)*(vptxmaxi-vptxmini)
+   ! vpty = vptymini + (y-ymini)/(ymaxi-ymini)*(vptymaxi-vptymini)
+   !
+   !end subroutine get_vptxy
 
    !--------
    ! utility to return which panel we are in given a point on the viewport
@@ -1973,8 +2019,67 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      return   
     end subroutine getxy
 
+   !--------
+   ! utility to reset the drawing surface so we can draw in a panel
+   !--------
+    
+    subroutine set_panel(ipanel)
+     implicit none
+     integer, intent(in) :: ipanel
+     
+     if (ipanel.gt.0) then
+        call pgswin(xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
+        !--really should save viewport setting here, but doesn't matter 
+        !  so long as interactive mode is the last thing called
+        call pgsvp(vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
+     endif
+     
+     return   
+    end subroutine set_panel
+    
+    subroutine reset_panel
+     implicit none
+     
+     call pgswin(xmini,xmaxi,ymini,ymaxi)
+     
+    end subroutine reset_panel
+
 end subroutine interactive_multi
 
+!------------------------------------------------------------
+! utility which translates between world co-ordinates (x,y)
+! and viewport co-ordinates (relative to the whole viewport)
+!------------------------------------------------------------
+subroutine get_vptxy(x,y,vptx,vpty,xmini,xmaxi,ymini,ymaxi)
+ implicit none
+ real, intent(in) :: x,y
+ real, intent(out) :: vptx,vpty
+ real, intent(in) :: xmini,xmaxi,ymini,ymaxi
+ real :: vptxmini,vptxmaxi,vptymini,vptymaxi
+
+ call pgqvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
+ vptx = vptxmini + (x-xmini)/(xmaxi-xmini)*(vptxmaxi-vptxmini)
+ vpty = vptymini + (y-ymini)/(ymaxi-ymini)*(vptymaxi-vptymini)
+
+end subroutine get_vptxy
+
+!------------------------------------------------------------
+! utility to return x,y coordinates given viewport coords
+! (only works for single-panelled plots)
+!------------------------------------------------------------
+subroutine get_posxy(vptx,vpty,x,y,xmini,xmaxi,ymini,ymaxi)
+ implicit none
+ real, intent(in) :: vptx,vpty
+ real, intent(out) :: x,y
+ real, intent(in) :: xmini,xmaxi,ymini,ymaxi
+ real :: vptxmini,vptxmaxi,vptymini,vptymaxi
+
+ call pgqvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
+ x = xmini + (vptx-vptxmini)/(vptxmaxi-vptxmini)*(xmaxi-xmini)
+ y = ymini + (vpty-vptymini)/(vptymaxi-vptymini)*(ymaxi-ymini)
+
+ return   
+end subroutine get_posxy
 
 !-----------------------------------------------------------
 ! These subroutines interface to the actual plot settings
