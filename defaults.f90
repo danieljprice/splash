@@ -15,7 +15,7 @@ contains
 !!
 subroutine defaults_set_initial
   use filenames, only:rootname
-  use labels, only:label,labeltype,iamvec,labelvec,reset_columnids
+  use labels, only:label,labeltype,iamvec,labelvec,labeldefault,reset_columnids
   use limits, only:lim,range
   use particle_data, only:maxpart,maxstep,maxcol
   use settings_data, only:UseTypeInRenderings
@@ -45,12 +45,12 @@ subroutine defaults_set_initial
   !
   !  column labels
   do i=1,size(label)
-     write(label(i),"(a,i3)") 'column ',i
+     write(label(i),"(a,1x,i3)") trim(labeldefault),i
   enddo
   !  particle types
   labeltype(1) = 'gas'
   do i=2,size(labeltype)
-     write(labeltype(i),"(a,i1)") 'type ',i
+     write(labeltype(i),"(a,1x,i1)") 'type',i
   enddo
   UseTypeInRenderings(:) = .false.
   UseTypeInRenderings(1) = .true.  

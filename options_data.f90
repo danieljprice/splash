@@ -39,7 +39,7 @@ subroutine defaults_set_data
   istartatstep = 1        ! timestep to start from
   iendatstep = 1000      ! timestep to finish on
   nfreq = 1         ! frequency of timesteps to read
-  icoords = 1       ! co-ordinate system of simulation
+  icoords = 1       ! coordinate system of simulation
   iformat = 0       ! file format
   buffer_data = .false.
   iUseStepList = .false.

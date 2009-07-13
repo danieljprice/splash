@@ -82,6 +82,7 @@ module labels
  integer, parameter :: lenlabel = 60
  character(len=lenlabel), dimension(maxplot+2) :: label,labelvec
  character(len=20), dimension(maxparttypes) :: labeltype
+ character(len=6), parameter :: labeldefault = 'column'
  integer, dimension(3) :: ix
  integer, dimension(maxplot) :: iamvec
  integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst
