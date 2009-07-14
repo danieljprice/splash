@@ -40,9 +40,9 @@ module timestep_plotting
   real, private :: contminadapt,contmaxadapt
   real, parameter, private :: pi = 3.1415926536
 
-  logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis
+  logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis,iamrendering
   logical, private :: inewpage, tile_plots, lastplot
-  logical, private :: imulti,irerender,iAllowspaceforcolourbar
+  logical, private :: imulti,irerender,iAllowspaceforcolourbar,ihavesetweights
   logical, private :: interactivereplot,ihavesetcolours,vectordevice
   
   public :: initialise_plotting, plotstep
@@ -79,7 +79,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   real, parameter :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
   integer :: i,j,ierr,ifirst,iplotzprev,ilen,pgopen
-  logical :: iadapting,iamrendering,icoordplot,iallrendered,ians
+  logical :: iadapting,icoordplot,iallrendered,ians
   real :: hav,pmassav,dzsuggest
   character(len=1) :: char
   character(len=20) :: string,devstring
@@ -697,8 +697,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   !
   !--set weight factor for interpolation routines
   !
-  if (debugmode) print*,'DEBUG: setting interpolation weights...'
-  call set_interpolation_weights(weight,dat,iamtype,(iplotpartoftype .and. UseTypeInRenderings))
+  ihavesetweights = .false.
+  if (iamrendering) then
+     if (debugmode) print*,'DEBUG: setting interpolation weights...'
+     call set_interpolation_weights(weight,dat,iamtype,(iplotpartoftype .and. UseTypeInRenderings))
+  else
+     if (debugmode) print*,'DEBUG: interpolation weights not set because no rendering...'
+  endif
   !
   !--exclude subset of particles if parameter range restrictions are set
   !
@@ -786,6 +791,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            icontourplot = 0
            iplotcont = .true.
            !print "(a)",' contouring same as rendering'
+        elseif (icolours.eq.0) then
+           iplotcont = .true.
         endif
      else
         !--contours not allowed if not rendering
@@ -1723,6 +1730,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               npixyvec = int(0.999*(ymax-ymin)/pixwidthvec) + 1
               pixwidth = (xmax-xmin)/real(npixx) ! used in synchrotron plots
 
+              if (.not.ihavesetweights) then
+                 call set_interpolation_weights(weight,dat,iamtype, &
+                                                (iplotpartoftype .and. UseTypeInRenderings))
+              endif
+              
               call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,vecmax,labelvecplot)
 
               !--vecmax is returned with the adaptive value if sent in -ve
@@ -2076,6 +2088,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--3D: use FFT routines
         !
            if (ndim.eq.3) then
+              if (.not.ihavesetweights) then
+                 call set_interpolation_weights(weight,dat,iamtype,iplotpartoftype)
+              endif
+
               call powerspec3D_sph(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
                    hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), & 
                    ninterp,nfreqspec,lim(ipowerspecx,1),lim(ipowerspecx,2),xplot(1:nfreqspec), &
@@ -2125,6 +2141,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                  ninterp = ntoti
                  !!--interpolate to 1D grid  
+                 if (.not.ihavesetweights) then
+                    call set_interpolation_weights(weight,dat,iamtype,iplotpartoftype)
+                 endif
+
                  call interpolate1D(dat(1:ninterp,ipowerspecx),hh(1:ninterp), &
                       weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), & 
                       ninterp,xmingrid,datpix1D,ngrid,dxgrid,inormalise)
@@ -2941,6 +2961,8 @@ contains
     integer :: i2,i1,itype,ipart
     real(doub_prec) :: dunitspmass,dunitsrho,dunitsh
 
+    ihavesetweights = .true.
+
     dunitspmass = 1.d0
     dunitsrho = 1.d0
     dunitsh = 1.d0
@@ -3075,7 +3097,7 @@ contains
           inormalise = inormalise_interpolations
        endif
     else
-       if (required(ih) .and. required(irho) .and. ih.gt.0 .and. irho.gt.0) then 
+       if (required(ih) .and. required(irho) .and. ih.gt.0 .and. irho.gt.0) then
           print "(a)",' WARNING: particle mass not set: using normalised interpolations'
        endif
     !--if particle mass has not been set, then must use normalised interpolations
