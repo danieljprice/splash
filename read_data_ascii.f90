@@ -326,16 +326,16 @@ subroutine set_labels
   if (ivx.gt.0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
-     do i=1,ndimV
-       label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-     enddo
+!     do i=1,ndimV
+!       label(ivx+i-1) = 'v\d'//labelcoord(i,1)
+!     enddo
   endif
   if (iBfirst.gt.0) then
      iamvec(iBfirst:iBfirst+ndimV-1) = ivx
      labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-     do i=1,ndimV
-       label(iBfirst+i-1) = 'B\d'//labelcoord(i,1)
-     enddo
+!     do i=1,ndimV
+!       label(iBfirst+i-1) = 'B\d'//labelcoord(i,1)
+!     enddo
   endif
   !
   !--set labels for each particle type
