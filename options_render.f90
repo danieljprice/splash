@@ -76,7 +76,7 @@ subroutine submenu_render(ichoose)
           ' 0) exit ',/,                      &
           ' 1) set number of pixels               ( ',a,' )',/, &
           ' 2) change colour scheme               (',i2,' )',/,    &
-          ' 3) plot contours                      ( ',a,' )',/, &
+          ' 3) contour plotting prompt on/off     ( ',a,' )',/, &
           ' 4) change number of contours          (',i3,' )',/, &
           ' 5) colour bar options                 ( ',i2,' )',/,&
           ' 6) use particle colours not pixels    ( ',a,' )',/,& 
@@ -117,25 +117,22 @@ subroutine submenu_render(ichoose)
              ierr = 1
           endif
        enddo promptloop
-       !
-       ! by default, plot contours if no colour scheme and don't if a colour scheme chosen
-       !
-       if (icolours.eq.0) then
-          iplotcont_nomulti = .true.
-       else
-          iplotcont_nomulti = .false.
-       endif
 !------------------------------------------------------------------------
     case(3)
-       call prompt(' plot contours?',iplotcont_nomulti)
-       print "(a)",' Contour plotting is '//trim(print_logical(iplotcont_nomulti))
-       if (iplotcont_nomulti) then
+       if (icolours.eq.0) then
+          print "(2(/,a),/)",' Warning: this option has no effect if colour scheme 0 is set', &
+                             '          (cannot plot contours on top of contours)'
+       endif
+       call prompt(' allow contour plotting prompt?',iplotcont_nomulti)
+       print "(a)",' Contour plotting prompt is '//trim(print_logical(iplotcont_nomulti))
+       if (iplotcont_nomulti .or. icolours.eq.0) then
           call prompt(' enter number of contours between min,max',ncontours,0,500)
           call prompt(' plot numeric labels on contours? ',ilabelcont)
        endif
 !------------------------------------------------------------------------
     case(4)
        call prompt(' enter number of contours between min,max',ncontours,0,500)
+       call prompt(' plot numeric labels on contours? ',ilabelcont)
 !------------------------------------------------------------------------
     case(5)
        do i=0,maxcolourbarstyles

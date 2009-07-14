@@ -20,7 +20,7 @@ subroutine menu
   use settings_limits, only:submenu_limits,iadapt
   use settings_part, only:submenu_particleplots
   use settings_page, only:submenu_page,submenu_legend,interactive
-  use settings_render, only:submenu_render,iplotcont_nomulti
+  use settings_render, only:submenu_render,iplotcont_nomulti,icolours
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
   use settings_xsecrot, only:submenu_xsecrotate,write_animfile
   use multiplot
@@ -184,7 +184,7 @@ subroutine menu
            !
            if (ipicky.le.ndim .and. ipickx.le.ndim .and. iAllowRendering) then
               call prompt('(render) (0=none)',irender,0,numplot)
-              if (irender.gt.0 .and. iplotcont_nomulti) then
+              if (irender.gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
                  call prompt('(contours) (0=none)',icontourplot,0,numplot)
                  if (icontourplot.eq.irender) then
                     if (iadapt) then
@@ -417,7 +417,7 @@ subroutine menu
       
       if (icoordplot .and.iAllowRendering) then
          call prompt('(render) (0=none)',irendermulti(i),0,numplot)
-         if (irendermulti(i).gt.0 .and. iplotcont_nomulti) then
+         if (irendermulti(i).gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
             call prompt('(contours) (0=none)',icontourmulti(i),0,numplot)
             if (icontourmulti(i).eq.irendermulti(i)) then
                if (iadapt) then
