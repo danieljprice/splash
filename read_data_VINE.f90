@@ -7,6 +7,14 @@
 !
 ! *** CONVERTS TO SINGLE PRECISION ***
 !
+! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
+!  ENVIRONMENT VARIABLES:
+!
+! VINE_MHD or VSPLASH_MHD if 'YES' or 'TRUE', reads MHD dump files
+! VINE_HFAC or VSPLASH_HFAC if 'YES' or 'TRUE', multiplies the
+!  smoothing lengths read from the file by a factor of 2.8 for
+!  compatibility with older VINE dump files.
+!
 ! the data is stored in the global array dat
 !
 ! >> this subroutine must return values for the following: <<
@@ -28,30 +36,73 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data, only:npartoftype,dat,time,gamma,maxcol,maxpart,maxstep
-  use params, only:doub_prec
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc
-  use labels, only:ivx, iBfirst,ih
+  use particle_data,  only:npartoftype,dat,time,gamma,maxcol,maxpart,maxstep
+  use params,         only:doub_prec
+  use settings_data,  only:ndim,ndimV,ncolumns,ncalc
+  use labels,         only:ivx, iBfirst,ih,ipmass
   use mem_allocation, only:alloc
-  use system_utils, only:lenvironment
+  use system_utils,   only:lenvironment
   implicit none
-  integer, intent(in) :: indexstart
-  integer, intent(out) :: nstepsread
+  integer, intent(in)          :: indexstart
+  integer, intent(out)         :: nstepsread
   character(len=*), intent(in) :: rootname
+!
+! These are the indices of various values saved in
+! the header part of the dump file.
+!
+! SHOULD BE IDENTICAL TO THOSE DEFINED IN THE VINE io.F FILE...
+!
+  integer,parameter::id_iheadlen= 1, id_npart  = 2, id_npart_sph = 3
+  integer,parameter::id_nstep   = 4, id_idump  = 5, id_makechkpnt= 6
+  integer,parameter::id_idbg    = 7, id_itme   = 8, id_ibctype   = 9
+  integer,parameter::id_indts   =10, id_iusebin=11, id_ipres     =12
+  integer,parameter::id_ipdv    =13, id_ieos   =14, id_icool     =15
+  integer,parameter::id_iheat   =16, id_ivisc  =17, id_ivtime    =18
+  integer,parameter::id_ibals   =19, id_ishok  =20, id_igrav     =21
+  integer,parameter::id_isoft   =22, id_imac   =23, id_ihts      =24
+  integer,parameter::id_iexpand =25, id_ncdumps=26, id_maxclumpsize=27
+  integer,parameter::id_intgrtr =28, id_ishift =29, id_ndim     =30
+  integer,parameter::id_io_fmt  =31, id_iunits =32, id_maxbunchsize=33
+  integer,parameter::id_npoim   =34, id_ndt_ana=35, id_maxbuild =36
+  integer,parameter::id_fullextrap=37,id_revise=38, id_n_dtmax  =39
+  integer,parameter::id_n_ana    =40
+  integer,parameter::id_lastint1=41  !1 after last id for integers 
+
+  integer, parameter::id_t       = 1,id_dtmax   = 2,id_deltnew  = 3
+  integer, parameter::id_gamma   = 4,id_ekin    = 5,id_egrav    = 6
+  integer, parameter::id_etherm  = 7,id_ascale  = 8,id_cosbox   = 9
+  integer, parameter::id_vlength =10,id_alfstar =11,id_betastar =12
+  integer, parameter::id_tol     =13,id_cfl     =14,id_dhmax    =15
+  integer, parameter::id_treeacc =16,id_sepmax  =17,id_hmin     =18
+  integer, parameter::id_eps     =19,id_dtinit  =20,id_tstop    =21
+  integer, parameter::id_dt_out  =22,id_uconst  =23,id_xmas     =24
+  integer, parameter::id_ylen    =25,id_umin    =26,id_rcore    =27
+  integer, parameter::id_h_0     =28,id_omegam  =29,id_gmasslim =30
+  integer, parameter::id_hmax    =31,id_uexpon  =32,id_ftol     =33
+  integer, parameter::id_clhfrac =34,id_xmin    =35,id_xmax     =36
+  integer, parameter::id_ymin    =37,id_ymax    =38,id_zmin     =39
+  integer, parameter::id_zmax    =40
+  integer, parameter::id_eosK    =41,id_rhozero =42,id_ftolpm   =43
+  integer, parameter::id_tolpm   =44,id_tnextout=45,id_alfmax   =46
+  integer, parameter::id_vtol    =47,id_vtolpm  =48,id_dtmin    =49
+  integer, parameter::id_tlastout=50,id_dt_ana  =51,id_bsepmax  =52
+  integer, parameter::id_taucool =53
+  integer, parameter::id_lastreal1=54 !1 after last id for real numbers
 
   integer :: iheadlength
   integer :: i,j,ierr,nparti,ntoti,i1,icol
-  integer :: npart_max,nstep_max,ncolstep
+  integer :: npart_max,nstep_max,ncolstep,nptmass
   logical :: iexist,mhdread
     
-  character(len=len(rootname)+10) :: dumpfile
-  integer, parameter :: maxheadlength = 1000
-  integer, dimension(maxheadlength) :: iheader
+  character(len=len(rootname)+10)    :: dumpfile
+  integer, parameter                 :: maxheadlength = 1000
+  integer, dimension(maxheadlength)  :: iheader
   integer, dimension(:), allocatable :: ipindx,itstepbin
   
   !--we are assuming dump is double precision
-  real(doub_prec), dimension(maxheadlength) :: dheader
+  real(doub_prec), dimension(maxheadlength)    :: dheader
   real(doub_prec), dimension(:,:), allocatable :: dattemp, dattempvec
+  real :: dum
 
   real :: hfactor
 
@@ -90,6 +141,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nparti = 0
   ncolstep = 0
   
+  if (mhdread) then
+     print "(a,/)",' reading VINE MHD format'
+  else
+     print "(a,/)",' reading default VINE format (set VINE_MHD=yes for MHD)'  
+  endif
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
   !--open the (unformatted) binary file and read the number of particles
@@ -98,7 +154,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   if (ierr /= 0) then
      print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
   else
-     if (mhdread) print "(a)",' assuming MHD file from VINE_MHD setting'
      !
      !--read timestep header (integers only)
      !
@@ -106,23 +161,41 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !
      !--get number of particles from header and allocate memory
      !
-     iheadlength = iheader(1)
+     iheadlength = iheader(id_iheadlen)
      if (iheadlength.gt.maxheadlength) print "(a)",' ERROR: header length too big!'
-     ntoti = iheader(2)
-     nparti = iheader(3)
-     ndim = iheader(30)
-     ndimV = ndim
+     ntoti   = iheader(id_npart    )
+     nparti  = iheader(id_npart_sph)
+     nptmass = iheader(id_npoim    )
+     ndim    = iheader(id_ndim     )
+     if (ntoti.lt.nparti) then
+        print*,' *** WARNING: ntotal < npart_sph in header, setting n_total=n_sph'
+        ntoti = nparti
+     endif
+     if (nptmass.lt.0) then
+        print*,' *** WARNING: error in nptmass read from header, nptmass = ',nptmass,' setting to 0'
+        nptmass = 0
+     endif
+     if (nparti.le.0) then
+        print*,' *** WARNING: error in npart read from header, npart = ',nparti
+        ierr = 2
+     endif
+     if (ndim.le.0 .or. ndim.gt.3) then
+        print*,' *** WARNING: error in ndim read from header, ndim = ',ndim
+        ierr = 1
+     endif
+
+     ndimV   = ndim
      if (mhdread) then
         ncolstep = 2*ndim + 6 + ndim
      else
         ncolstep = 2*ndim + 6
      endif
      ncolumns = ncolstep
-     if (.not.allocated(dat) .or. ntoti.gt.npart_max) then
+     if ((.not.allocated(dat) .or. ntoti+nptmass.gt.npart_max) .and. ierr.eq.0) then
         if (.not.allocated(dat)) then
-           npart_max = ntoti
+           npart_max = ntoti + nptmass
         else
-           npart_max = max(npart_max,INT(1.1*ntoti))
+           npart_max = max(npart_max,INT(1.1*(ntoti+nptmass)))
         endif
         call alloc(npart_max,nstep_max,ncolstep+ncalc)
      endif
@@ -132,7 +205,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
      rewind(15)
   endif
   if (ierr /= 0) then
-     print "(a)",'*** ERROR READING TIMESTEP HEADER ***'
+     print "(/,a)", '  *** ERROR READING TIMESTEP HEADER: wrong endian? ***'
+     print "(/,a)", '   (see splash userguide for compiler-dependent'
+     print "(a)", '    ways to change endianness on the command line)'
+     print "(/,a)", '   (set environment variable VINE_MHD to yes or TRUE '
+     print "(a,/)", '    if you are trying to read MHD format)'
   else
 
        npart_max = max(npart_max,ntoti)
@@ -148,7 +225,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
        if (allocated(dattemp)) deallocate(dattemp)
        allocate(dattemp(npart_max,ncolstep),stat=ierr)
        dattemp = 0.
-       if (ierr /= 0) print*,'not enough memory in read_data'
+       if (ierr /= 0) print*,'not enough memory in read_data (dattemp)'
 !
 !--allocate a temporary array for vectors
 !
@@ -159,22 +236,22 @@ subroutine read_data(rootname,indexstart,nstepsread)
           allocate(dattempvec(2*ndim+1,npart_max),stat=ierr)       
        endif
        dattempvec = 0.
-       if (ierr /= 0) print*,'not enough memory in read_data'
+       if (ierr /= 0) print*,'not enough memory in read_data (dattempvec)'
 !
 !--allocate a temporary array for particle index
 !
        if (allocated(ipindx)) deallocate(ipindx)
        allocate(ipindx(npart_max),stat=ierr)
        !ipindx = 0
-       if (ierr /= 0) print*,'not enough memory in read_data'
+       if (ierr /= 0) print*,'not enough memory in read_data (ipindx)'
 !
-!--allocate a temporary array for itstepbin (MHD only)
+!--allocate a temporary array for itstepbin (MHD or point masses only)
 !
-       if (mhdread) then
+       if (mhdread .or. nptmass.gt.0) then
           if (allocated(itstepbin)) deallocate(itstepbin)
           allocate(itstepbin(npart_max),stat=ierr)
           !itstepbin = 0
-          if (ierr /= 0) print*,'not enough memory in read_data'
+          if (ierr /= 0) print*,'not enough memory in read_data (itstepbin)'
        endif
 !
 !--now read the timestep data in the dumpfile
@@ -186,6 +263,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
        icol = ndim + 1 + ndimV + 1
 
        if (mhdread) then
+          if (nptmass.gt.0) then
+             print "(a)",' WARNING: MHD format but point masses are present'
+             print "(a)",'          and reading of point masses is not implemented'
+             print "(a)",' *** Please email a copy of io.F so I can fix this ***  '
+          endif
           iBfirst = icol+5
           read(15,iostat=ierr), &
                (iheader(i),i=1,iheadlength), &
@@ -201,17 +283,43 @@ subroutine read_data(rootname,indexstart,nstepsread)
                (itstepbin(i),i=1,ntoti), &
                (dattempvec(ivx+ndimV:ivx+2*ndimV-1,i),i=1,nparti)       
        else
-          read(15,iostat=ierr), &
-               (iheader(i),i=1,iheadlength), &
-               (dheader(i),i=1,iheadlength), &
-               (dattempvec(1:ndim+1,i),i=1,ntoti), &
-               (dattempvec(ivx:ivx+ndimV-1,i),i=1,ntoti), &
-               (dattemp(i,icol), i=1,ntoti), &
-               (dattemp(i,icol+1), i=1,nparti), &
-               (dattemp(i,icol+2), i=1,nparti), &
-               (dattemp(i,icol+3), i=1,nparti), &
-               (dattemp(i,icol+4), i=1,ntoti), &
-               (ipindx(i), i=1,ntoti)
+          if (nptmass.gt.0) then
+             !
+             !--read point mass information at the end of the dump file
+             !
+             read(15,iostat=ierr), &
+                  (iheader(i),i=1,iheadlength), &
+                  (dheader(i),i=1,iheadlength), &
+                  (dattempvec(1:ndim+1,i),i=1,ntoti), &
+                  (dattempvec(ivx:ivx+ndimV-1,i),i=1,ntoti), &
+                  (dattemp(i,icol), i=1,ntoti), &
+                  (dattemp(i,icol+1), i=1,nparti), &
+                  (dattemp(i,icol+2), i=1,nparti), &
+                  (dattemp(i,icol+3), i=1,nparti), &
+                  (dattemp(i,icol+4), i=1,ntoti), &
+                  (ipindx(i), i=1,ntoti), &
+                  (dum, i=1,nparti), &
+                  (itstepbin(i), i=1,ntoti), &
+                  (dattempvec(1:ndim+1,i),i=ntoti+1,ntoti+nptmass), &
+                  (dattempvec(ivx:ivx+ndimV-1,i),i=ntoti+1,ntoti+nptmass), &
+                  ((dum, i1=1,3),i=1,nptmass), &
+                  (dattemp(i,icol), i=ntoti+1,ntoti+nptmass)
+          else
+             !
+             !--no point masses, so shorter read
+             !
+             read(15,iostat=ierr), &
+                  (iheader(i),i=1,iheadlength), &
+                  (dheader(i),i=1,iheadlength), &
+                  (dattempvec(1:ndim+1,i),i=1,ntoti), &
+                  (dattempvec(ivx:ivx+ndimV-1,i),i=1,ntoti), &
+                  (dattemp(i,icol), i=1,ntoti), &
+                  (dattemp(i,icol+1), i=1,nparti), &
+                  (dattemp(i,icol+2), i=1,nparti), &
+                  (dattemp(i,icol+3), i=1,nparti), &
+                  (dattemp(i,icol+4), i=1,ntoti), &
+                  (ipindx(i), i=1,ntoti)
+          endif
        endif
 
        if (ierr < 0) then
@@ -221,21 +329,28 @@ subroutine read_data(rootname,indexstart,nstepsread)
              print "(a)",'*** ERROR READING DATA: MAYBE NOT AN MHD FILE?? ***'          
           else
              print "(a)",'*** ERROR READING DATA ***'
+             print "(/,a)", '   (set environment variable VINE_MHD to yes or TRUE '
+             print "(a,/)", '    if you are trying to read MHD format)'
           endif
        endif
        nstepsread = nstepsread + 1
 !
 !--spit out time
 !
-       time(j) = real(dheader(1))
-       gamma(j) = real(dheader(4))
-       print "(a,f8.3,2(a,i8))",'t = ',time(j),' n(SPH) = ',ntoti,' n(Nbody) = ',ntoti-nparti
+       time(j)  = real(dheader(id_t    ))
+       gamma(j) = real(dheader(id_gamma))
+       print "(a,f8.3,3(a,i8))",'t = ',time(j),' n(SPH) = ',ntoti,' n(Nbody) = ',ntoti-nparti,' n(star) = ',nptmass
 !
 !--convert posm and velocity vectors to columns and double to single precision
 !
        do i=1,2*ndim+1
           dat(ipindx(1:ntoti),i,j) = real(dattempvec(i,1:ntoti))
        enddo
+       if (nptmass.gt.0) then
+          do i=1,2*ndim+1
+             dat(ntoti+1:ntoti+nptmass,i,j) = real(dattempvec(i,ntoti+1:ntoti+nptmass))
+          enddo
+       endif
 !
 !--convert B vectors to columns and double to single precision
 !
@@ -249,17 +364,29 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--now convert scalars
 !
-       dat(ipindx(1:ntoti),icol:ncolstep,j) = real(dattemp(1:ntoti,icol:ncolstep))
+       dat(ipindx(1:ntoti),icol:ncolstep,j) = real(dattemp(1:ntoti,icol:ncolstep)) 
+       if (nptmass.gt.0) then
+          dat(ntoti+1:ntoti+nptmass,icol,j) = real(dattemp(ntoti+1:ntoti+nptmass,icol))
+       endif
 
        call set_labels
        if (ih.gt.0 .and. hfactor.gt.1.0) then
-          dat(1:ntoti,ih,j) = hfactor*dat(1:ntoti,ih,j)
+          dat(1:ntoti+nptmass,ih,j) = hfactor*dat(1:ntoti+nptmass,ih,j)
        endif
+       
+       if (nptmass.lt.10) then
+          do i=1,nptmass
+             print "('| point mass ',i1,': pos = (',2(es10.2,','),es10.2,'), mass = ',es10.2)", &
+                   i,dat(ntoti+i,1:ndim,j),dat(ntoti+i,ipmass,j)
+          enddo
+       endif
+       
 !
 !--set particle numbers
 !
        npartoftype(1,j) = nparti
        npartoftype(2,j) = ntoti - nparti
+       npartoftype(3,j) = nptmass
 !
 !--clean up
 !
@@ -321,7 +448,7 @@ subroutine set_labels
   label(ih) = 'h'
   label(ipmass) = 'particle mass'
   label(irho+1) = 'alpha'
-  label(irho+2) = 'poten'
+  label(irho+2) = 'potential energy'
   !
   !--set labels for vector quantities
   !
@@ -340,11 +467,13 @@ subroutine set_labels
   !
   !--set labels for each particle type
   !
-  ntypes = 2
+  ntypes = 3
   labeltype(1) = 'gas'
   labeltype(2) = 'Nbody'
+  labeltype(3) = 'point mass'
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .false.
+  UseTypeInRenderings(3) = .false.
  
 !-----------------------------------------------------------
 
