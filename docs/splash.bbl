@@ -24,6 +24,12 @@
   single and binary star formation}'.
 \newblock {\em MNRAS} {\bf 377}, 77--90.
 
+\bibitem[\protect\citeauthoryear{{Price} and {Monaghan}}{2007}]{pm07}
+{Price}, D.~J. and J.~J. {Monaghan}: 2007, `{An energy-conserving formalism for
+  adaptive gravitational force softening in smoothed particle hydrodynamics and
+  N-body codes}'.
+\newblock {\em MNRAS} {\bf 374}, 1347--1358.
+
 \bibitem[\protect\citeauthoryear{{Ryu} and {Jones}}{1995}]{rj95}
 {Ryu}, D. and T.~W. {Jones}: 1995, `{Numerical magetohydrodynamics in
   astrophysics: Algorithm and tests for one-dimensional flow`}'.

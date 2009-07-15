@@ -141,7 +141,7 @@ used by the \splash source code, you may want to refer to the PGPLOT userguide:
 \end{quote}
 
 \subsubsection{ Compiling and linking with PGPLOT}
-For detailed instructions on compiling and linking with PGPLOT, refer to the INSTALL file in the root directory of the \splash distribution (or \url{http://www.maths.monash.edu.au/~dprice/splash/download/INSTALL}).
+For detailed instructions on compiling and linking with PGPLOT, refer to the INSTALL file in the root directory of the \splash distribution (or \url{http://users.monash.edu.au/~dprice/splash/download/INSTALL}).
 
 A successful `make' will produce a binary for each of the main supported SPH data formats -- for example for ascii formats the binary is called `asplash' (by convention the first letter refers to the data format for which \splash has been compiled). Details of these are given below.
 
@@ -341,6 +341,7 @@ Command line plotting mode:
                      do i=1,npart
                         write(1) dat(1:ncolumns),itype
                      enddo
+        to phantom : convert SPH data to binary dump file for PHANTOM
 
  analysis mode ("splash calc X dumpfiles") on a sequence of dump files: 
  splash calc energies     : calculate KE,PE,total energy vs time
@@ -524,7 +525,7 @@ instead of ``/xw'' (for an X-window), simply type ``/ps'' to use the postscript 
 \end{verbatim}
 type /gif or /png (depending on which drivers have been installed in your PGPLOT installation -- typing ``?'' at this prompt shows you the list). This will generate a series of plots with names such as \verb+pgplot.gif+, \verb+pgplot.gif_2+, \verb+pgplot.gif_3+ corresponding to each new plotting page generated. To change these into more sensible names use the script provided in the splash/scripts directory (see \S\ref{sec:fixpgplotnames}). 
  
- Having obtained a sequence of images there are a variety of ways to make these into an animation using both free and commercial software. Suggestions on software packages to use for Mac, Linux and Windows can be found in the online faq (\url{http://www.maths.monash.edu.au/~dprice/splash/faqs.html}). I generally use the application ``graphic converter'' on Mac OS/X which makes quicktime movies from a sequence of images.
+ Having obtained a sequence of images there are a variety of ways to make these into an animation using both free and commercial software. Suggestions on software packages to use for Mac, Linux and Windows can be found in the online faq (\url{http://users.monash.edu.au/~dprice/splash/faqs.html}). I generally use the application ``graphic converter'' on Mac OS/X which makes quicktime movies from a sequence of images.
  
  
 \subsection{Ten quick hints for producing good-looking plots}
@@ -534,10 +535,10 @@ In this section I have listed ten quick suggestions for simple changes to settin
 \item {\bf Adjust the colour bar limits}. Position the mouse over the colour bar and click to set the minimum and maximum limit on the colour bar. To revert to the widest max/min possible for the data plotted, press `a' with the cursor positioned over the colour bar. Note that limits can also be set manually in the l)imits submenu.
 \item {\bf Try changing the colour scheme}. Press `m' or `M' in interactive mode to cycle forwards or backwards through the available colour schemes.
 \item {\bf Increase the number of pixels}. This advice is largely obsolete for later \splash versions, where the pixel number is automatically set to match the output device. In this case the pixel number is determined in effect by the paper size (changeable in the p)age setup menu). For vector devices such as postscript it can still be useful to adjust the pixel setting manually via the ``set number of pixels'' option in the r)ender menu.
-\item {\bf Try using normalised interpolations}. If your simulation does \emph{not} involve free surfaces (or alternatively if the free surfaces are not visible in the figure), turning the ``normalise interpolations'' option on (in the r)ender submenu) may improve the smoothness of the rendering. This is turned off by default because it leads to funny-looking edges. Note that option has no effect on 3D projection plots (where it is not meaningful to normalise the interpolation).
-\item {\bf Try turning the axes off}. For movies, often axes are unnecessary and detract from the visual appeal. Axes can be turned off in the ``axes options'' option in the p)age submenu.
+\item {\bf Try using normalised interpolations}. If your simulation does \emph{not} involve free surfaces (or alternatively if the free surfaces are not visible in the figure), turning the ``normalise interpolations'' option on (in the r)ender submenu) may improve the smoothness of the rendering. This is turned off by default because it leads to funny-looking edges.
+\item {\bf Remove annotation/axes}. For movies, often axes are unnecessary and detract from the visual appeal. Axes, the colour bar and the various legends can be turned off in interactive mode by positioning the cursor appropriately and pressing backspace. Alternatively each can be turned off manually -- axes via the ``axes options'' option in the p)age submenu; the colour bar by the ``colour bar options'' entry in the r)ender menu and the legends via options in the leg)end menu.
 \item {\bf Change axes/page colours}. The background colour (colour of the page) and foreground colour (used for axes etc) can be changed vie the ``set foreground/background colours'' option in the p)age submenu. Alternatively these can be changed prior to invoking \splash by setting the PGPLOT\_FOREGROUND and PGPLOT\_BACKGROUND environment variables (see \S\ref{sec:envvariables}).
-\item {\bf Move the legend or turn it off}. The time legend can be moved by positioning the mouse and pressing `G' in interactive mode. The legend can be turned off using the le(g)end submenu. Similarly the vector plot legend can be turned on/off in the v)ector submenu and moved by positioning the cursor and pressing `H'.
+\item {\bf Move the legend or turn it off}. The time legend can be moved by positioning the mouse and pressing `G' in interactive mode. The legend can be turned off in the le(g)end submenu or by pressing backspace in interactive mode. Similarly the vector plot legend can be turned on/off in the v)ector submenu and moved by positioning the cursor and pressing `H'.
 \item {\bf Use physical units on the axes}. These can be set via the d)ata submenu. See \S\ref{sec:changingunits} for more details.
 \item {\bf Save settings to disk!} Don't waste your effort without being able to reproduce the plot you have been working on. Pressing `s' in interactive mode only saves the current settings for subsequent timesteps. Pressing `s' from the main menu saves these settings to disk. Pressing `S' from the main menu saves both the plot options \emph{and} the plot limits, so that the current plot can be reproduced exactly when \splash is next invoked. Adding an ``a'', as in ``SA'', ``SA'' or ``sa'' to the save options gives a prompt for a different prefix to the filenames (e.g. \verb+splash.defaults+ becomes \verb+myplot.defaults+), which \splash can be invoked to use via the \verb+-p+ command line option (e.g. \verb+splash -p myplot file1 file2...+).
 \end{enumerate}
@@ -899,7 +900,23 @@ flags in the set\_labels part of the read\_data file).
 
 \subsubsection{ Plotting dark matter particles}
 \label{sec:darkmatter}
- To plot dark matter particles (e.g. for the gadget read) the particle type corresponding to dark matter particles must be turned on via the ``turn on/off particles by type'' option in the o) submenu. Turning this option on means that dark matter particles will appear on particle plots. For the gadget data read it is also possible to produce a rendered plot of dark matter column density by defining a smoothing length for dark matter particles via the GSPLASH\_DARKMATTER\_HSOFT environment variable (see \S\ref{sec:gsplash} for details). With this variable set dark matter particles are treated identically to SPH particles and can be rendered as usual (although the only meaningful quantity to render is the mass density).
+ To plot dark matter particles (e.g. for the gadget read) the particle type corresponding to dark matter particles must be turned on via the ``turn on/off particles by type'' option in the o) submenu. Turning this option on means that dark matter particles will appear on particle plots.
+ 
+  To make a rendered plot of dark matter (e.g. showing column density), it is necessary to define smoothing lengths and a fake ``density'' for the dark matter particles. If your data read already supplies individual smoothing lengths for dark matter particles, the only thing to do is define a fake density field with a constant value (e.g. $\rho = 1$ for all dark matter particles). The actual density value does not matter, so long as it is non-zero, as the rendering for density does not use it unless the ``normalise interpolations'' option in the r)ender menu is set (which it is not by default). This is because SPLASH constructs the weight:
+\begin{equation}
+w_{part} = \frac{m_{part}}{\rho_{part} h_{part}^{\nu}},
+\end{equation}
+(see \citealt{splashpaper}) and then interpolates for any quantity A using
+\begin{equation}
+A_{pixels} = \sum_{part} w_{part} A_{part} W_{kernel},
+\end{equation}
+so if $A = \rho$ then the actual rho value cancels. 
+ 
+ For the GADGET data read you can define the smoothing length for dark matter particles by setting the environment variable GSPLASH\_DARKMATTER\_HSOFT (see \S\ref{sec:gsplash} for details), which also triggers the creation of a fake density column as required. With this variable set dark matter particles are treated identically to SPH particles and can be rendered as usual (although the only meaningful quantity to render is the density). A much better way is to define smoothing lengths individually for dark matter particles, for example based on a local number density estimate from the relation
+\begin{equation}
+h \propto n^{-1/3}, \hspace{0.5cm} \textrm{where} \hspace{0.5cm} n_{i} = \sum_{j} W_{ij}.
+\end{equation}
+Actually, none of this should be necessary, as the gravity for dark matter should be softened with smoothing lengths defined like this in the first place. The historical practise of fixed softening lengths has arisen only because of confusion about what softening really means (and worries about energy conservation with adaptive softening lengths). What you are trying to do is solve Poisson's equation for the dark matter density field, defined with a kernel density estimate and using fixed softening lengths is not a way to get a good density... but don't get me started, read \citet{pm07} instead.
  
   Note that for simulations using both SPH and dark matter particles, dark matter particles will contribute (incorrectly) to the SPH rendering when the environment variable is set and the plotting of dark matter particles is turned on. Thus to plot just gas column density in this case, dark matter particles must be turned off [via the o) menu option], and similarly to plot just dark matter density if both SPH and dark matter particles are present, SPH particles must be turned off.
  
@@ -907,10 +924,21 @@ flags in the set\_labels part of the read\_data file).
  See \ref{sec:darkmatter}.
 
 \subsubsection{ Plotting sink particles}
+\label{sec:plotsinks}
  Sink particles will be plotted on particle plots once turned on via the ``turn on/off particles by type'' option in the particle plot o)ptions submenu. Setting this option also gives a prompt for whether or not to plot sink particles on top of rendered plots (to which the answer should be yes).  See \ref{sec:plotparticlesbytype} for more details.
+ 
+  To plot sink particles as a circle scaled to the sink radius, select the appropriate marker type (32-35) in the ``change graph markers for each type'' option in the o) menu. This allows plotting of particles of a given type with circles, filled or open, proportional to their smoothing lengths. Thus, the smoothing length for sink particles needs to be set to their accretion radius (or at least proportional to it).
+
+\subsubsection{ Plotting sink particles with size proportional to the sink radius}
+See \ref{sec:plotsinks}.
+
+\subsubsection{ Plotting a point mass particle with physical size}
+See \ref{sec:plotsinks}.
 
 \subsubsection{ Changing graph markers for each particle type}
  The graph markers used to plot each particle type can be changed via the ``change graph markers for each type'' option in the particle plot o)ptions submenu. The full list of available markers is given in the PGPLOT user guide. 
+ 
+  SPLASH also allows the particles to be marked by a circle proportional to the smoothing length for that particle, implemented as marker types 32-35 under the ``change graph markers for each type'' option in the o) menu.
 
 \subsubsection{ Plotting each particle type in a different colour}
 \label{sec:partcolours}
@@ -1300,7 +1328,7 @@ is given to the PGPLOT device (e.g. the /xw screen). The .ppm files are uncompre
 other format (e.g. png, ps) using netpbm tools (\url{http://netpbm.sourceforge.net/}) such as
 ppmtopng, ppmtops.
 
- For examples of the 3D surface rendering in \splash, have a look at my movies of neutron star mergers at \url{http://www.maths.monash.edu.au/~dprice/research/nsmag}.
+ For examples of the 3D surface rendering in \splash, have a look at my movies of neutron star mergers at \url{http://users.monash.edu.au/~dprice/research/nsmag}.
 
 \subsubsection{ Plotting 3D box / 3D axes}
 Rotated axes or boxes can be plotted using the ``set axes for rotated/3D plots'' option in the x) menu.
@@ -2145,7 +2173,7 @@ the appendix to the PGPLOT user guide.
 \end{quote}
 
 \subsection{Making movies}
-See \S\ref{sec:movies} and the online FAQ (\url{http://www.maths.monash.edu.au/~dprice/splash/faqs.html}).
+See \S\ref{sec:movies} and the online FAQ (\url{http://users.monash.edu.au/~dprice/splash/faqs.html}).
 
 \subsection{Outputting the raw pixel map to a file}
 \label{sec:writepixmap}
