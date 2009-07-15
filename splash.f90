@@ -23,9 +23,15 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.12.2 : (XX/XX/09)
-!             Stability bug fixes with older compilers. More robust memory handling. Bug fix with automatic
-!             pixel selection causing seg fault.
+!     1.12.2 : (15/07/09)
+!             Variable marker sizes added, can plot particles as circles with
+!             size proportional to h; dark matter rendering with block-labelled
+!             GADGET format fixed; VINE read handles star particles; TIPSY read
+!             with ifort10.0.0 works; snsph read added; splash to phantom added;
+!             does not override labels for coords, vectors by default; bug fixes
+!             with contouring options; stability bug fixes with older compilers;
+!             more robust memory handling; bug fix with automatic pixel selection
+!             causing seg fault.
 !     1.12.1 : (20/04/09)
 !             Can edit/delete text shapes interactively, also the colour bar label; can customise
 !             the label on projection plots; contour levels better defined; SPLASH_HMIN_CODEUNITS added;
@@ -227,7 +233,7 @@ program splash
   use settings_xsecrot, only:read_animfile
   use system_commands, only:get_number_arguments,get_argument
   use system_utils, only:lenvironment
-  use asciiutils, only:read_asciifile
+  use asciiutils, only:read_asciifile,basename
   use write_pixmap, only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
   use convert, only:convert_all
   use write_sphdata, only:issphformat
@@ -239,7 +245,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert
   character(len=120) :: string
   character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.12.2beta [9th June ''09]'
+  character(len=*), parameter :: version = 'v1.12.2 [15th July ''09]'
 
   !
   ! initialise some basic code variables
@@ -428,8 +434,9 @@ program splash
      if (nfiles.gt.0) then
         ihavereadfilenames = .true.
      else
-        print "(a/,/,5x,a,/)",' Basic usage: ','splash dumpfile(s)'
-        print "(a/,/,5x,a,/)",' e.g.: ','gsplash snap_0*'
+        call get_argument(0,string)
+        print "(a/,/,5x,a,/)",' Basic usage: ',trim(basename(string))//' dumpfile(s)'
+        print "(a/,/,5x,a,/)",' e.g.: ',trim(basename(string))//' snap_0*'
         print "(a)",' Or write the filenames one per line in a file called ''splash.filenames'''
         print "(a)",' For a full list of command-line options, use splash --help'
         print "(a,/)",' For help on basic splash usage, consult the userguide: splash/docs/splash.pdf'
