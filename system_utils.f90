@@ -80,7 +80,8 @@ contains
     call get_environment(variable,string)
     if (string(1:1).eq.'y'.or.string(1:1).eq.'Y' &
     .or.string(1:1).eq.'t'.or.string(1:1).eq.'T' &
-    .or.trim(string).eq.'on'.or.trim(string).eq.'ON') then
+    .or.trim(string).eq.'on'.or.trim(string).eq.'ON' &
+    .or.trim(string).eq.'1') then
        lenvironment = .true.
     else
        lenvironment = .false.
