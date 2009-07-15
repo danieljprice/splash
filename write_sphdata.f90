@@ -19,46 +19,51 @@ logical function issphformat(string)
 
  issphformat = .false.
  select case(trim(string))
- case('ascii')
+ case('ascii','ASCII')
      issphformat = .true.
- case('binary')
+ case('binary','BINARY')
      issphformat = .true.
  case('rsph','RSPH')
+     issphformat = .true.
+ case('phantom','PHANTOM')
      issphformat = .true.
  end select
  
  if (.not.issphformat) then
     print "(a)",' convert mode ("splash to X dumpfiles"): '
-    print "(a,/)",' splash to ascii  : convert SPH data to ascii file dumpfile.ascii'
-    print "(a)",  '        to binary : convert SPH data to simple unformatted binary dumpfile.binary '
-    print "(a)",  '                     write(1) time,npart,ncolumns'
-    print "(a)",  '                     do i=1,npart'
-    print "(a)",  '                        write(1) dat(1:ncolumns),itype'
-    print "(a)",  '                     enddo'    
+    print "(a,/)",' splash to ascii   : convert SPH data to ascii file dumpfile.ascii'
+    print "(a)",  '        to binary  : convert SPH data to simple unformatted binary dumpfile.binary '
+    print "(a)",  '                      write(1) time,npart,ncolumns'
+    print "(a)",  '                      do i=1,npart'
+    print "(a)",  '                         write(1) dat(1:ncolumns),itype'
+    print "(a)",  '                      enddo'
+    print "(a)",  '        to phantom : convert SPH data to binary dump file for PHANTOM'
  endif
  
  return
 end function issphformat
 
-subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filename,outformat)
- use labels, only:labeltype,label,irho,ipmass,ix
+subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,ncolumns,filename,outformat)
+ use labels,         only:labeltype,label,irho,ipmass,ix
  use settings_units, only:unitslabel,units
- use settings_data, only:ndim
- use params, only:int1
+ use settings_data,  only:ndim
+ use params,         only:int1
+ use write_data_phantom, only:write_sphdata_phantom
  implicit none
- integer, intent(in) :: npart,ntypes,ncolumns
- integer, intent(in), dimension(:) :: npartoftype
+ integer, intent(in)                          :: npart,ntypes,ncolumns
+ integer, intent(in), dimension(:)            :: npartoftype
  integer(kind=int1), intent(in), dimension(:) :: itype
- real, intent(in) :: time
- real, intent(in), dimension(npart,ncolumns) :: dat
- character(len=*), intent(in) :: filename,outformat
+ real, intent(in)                             :: time,gamma
+ real, intent(in), dimension(npart,ncolumns)  :: dat
+ real, intent(in), dimension(:)               :: masstype
+ character(len=*), intent(in)                 :: filename,outformat
  integer, parameter :: iunit = 83
  integer, parameter :: maxline = 1000
- integer :: ierr,i,idim,i1,i2
- character(len=40) :: fmtstring,fmtstring2,fmtstringlab,outfile
+ integer            :: ierr,i,idim,i1,i2
+ character(len=40)  :: fmtstring,fmtstring2,fmtstringlab,outfile
 
  select case(trim(outformat))
- case ('ascii')
+ case ('ascii','ASCII')
     print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.ascii WITH ',ncolumns,' COLUMNS'
 
     !--format the header lines to go in the ascii file 
@@ -108,7 +113,7 @@ subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filena
     print*,'ERROR WRITING ASCII FILE'
     return
 
- case ('binary')
+ case ('binary','BINARY')
 !
 !--This is the most basic binary (ie. unformatted) file format I could think of,
 !  as an alternative to ascii for large files.
@@ -216,7 +221,14 @@ subroutine write_sphdump(time,dat,npart,ntypes,npartoftype,itype,ncolumns,filena
        i1 = i2 + 1
     enddo
     close(unit=iunit)
-    
+
+ case('phantom','PHANTOM')  
+     if (size(itype).gt.1 .and. sum(npartoftype(2:)).gt.0) then
+        print "(a)",' ERROR: writing of PHANTOM dumps not implemented with mixed types'
+     else
+        call write_sphdata_phantom(time,gamma,dat,npart,ntypes,npartoftype,&
+                                   masstype,ncolumns,filename)
+     endif
  case default
     print "(a)",' ERROR: unknown output format '''//trim(outformat)//''' in write_sphdump'
     return

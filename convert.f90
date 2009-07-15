@@ -10,7 +10,7 @@ module convert
 contains
 
 subroutine convert_all(outformat,igotfilenames)
- use particle_data, only:time,dat,npartoftype,masstype,iamtype
+ use particle_data, only:time,gamma,dat,npartoftype,masstype,iamtype
  use settings_data, only:ncolumns,ncalc,required,ntypes,ndimV
  use filenames, only:rootname,nstepsinfile,nfiles
  use write_sphdata, only:write_sphdump
@@ -70,8 +70,8 @@ subroutine convert_all(outformat,igotfilenames)
                           npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
                           ncolumns+ncalc,ndimV,outformat)
        else
-          call write_sphdump(time(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes, &
-                          npartoftype(1:ntypes,idump),iamtype(:,idump), &
+          call write_sphdump(time(idump),gamma(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes, &
+                          npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
                           ncolumns+ncalc,rootname(ifile),outformat)
        endif
     enddo
