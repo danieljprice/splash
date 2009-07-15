@@ -28,7 +28,7 @@ subroutine exact_wave(time,ampl,period,lambda,x0,ymean,xplot,yplot,ierr)
      ierr = 1
      return
   endif
-  if (period.gt.0.) then
+  if (abs(period).gt.tiny(period)) then
      omega = 2.*pi/period
   else
      print*,'warning: period <= 0'
@@ -36,7 +36,11 @@ subroutine exact_wave(time,ampl,period,lambda,x0,ymean,xplot,yplot,ierr)
   endif
 
   do i=1,size(xplot)
-     yplot(i) = ymean*(1. + ampl*sin(2.*pi/lambda*(xplot(i)-x0) - omega*time))
+     if (abs(ymean).le.0.) then
+        yplot(i) = ymean + ampl*sin(2.*pi/lambda*(xplot(i)-x0) - omega*time)
+     else
+        yplot(i) = ymean*(1. + ampl*sin(2.*pi/lambda*(xplot(i)-x0) - omega*time))
+     endif
   enddo
     
   return
