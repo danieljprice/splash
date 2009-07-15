@@ -429,7 +429,8 @@ FFLAGS = $(F90FLAGS)
 SOURCESF90= globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          prompting.f90 geometry.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 shapes.f90 units.f90 \
-         write_pixmap.f90 write_sphdata.f90 analysis.f90 discplot.f90 \
+         write_data_phantom.f90 write_pixmap.f90 write_sphdata.f90 \
+         analysis.f90 discplot.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
