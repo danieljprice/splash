@@ -63,16 +63,17 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                  nyplotmulti,x_secmulti,ivecplotmulti
   use prompting, only:prompt
   use titles, only:read_titles,read_steplegend
-  use settings_data, only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required,icoords,icoordsnew,debugmode
+  use settings_data, only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required, &
+                     icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings
   use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
       colour_fore,colour_back,iadapt,iadaptcoords,linewidth,device,nomenu,interactive
-  use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact
+  use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact,iplotpartoftype
   use settings_render, only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
   use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
                         xseclineX1,xseclineX2,xseclineY1,xseclineY2,xsecwidth, &
                         use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth
   use settings_powerspec, only:options_powerspec
-  use particle_data, only:npartoftype
+  use particle_data, only:npartoftype,masstype
   use projections3D, only:coltable
   use pdfs, only:options_pdf
   implicit none
@@ -348,8 +349,16 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
        if (use3Dopacityrendering .and. iamrendering) then
           hav = lim(ih,1) !! 0.5*(lim(ih,2) + lim(ih,1))
           if (hav.le.epsilon(hav)) hav = 0.5*lim(ih,2) ! take 0.5*max if min is zero
-          pmassav = lim(ipmass,1)
-          if (pmassav.le.epsilon(hav)) pmassav = 0.5*lim(ipmass,2) ! take 0.5*max if min is zero
+          if (ipmass.gt.0) then
+             pmassav = lim(ipmass,1)
+             if (pmassav.le.epsilon(hav)) pmassav = 0.5*lim(ipmass,2) ! take 0.5*max if min is zero
+          else  ! handle case where mass is not a data column
+             pmassav = maxval(masstype)
+             do i=1,ntypes
+                if (iplotpartoftype(i) .and. usetypeinrenderings(i) &
+                    .and. any(masstype(i,:).gt.0.)) pmassav = min(pmassav,maxval(masstype(i,:)))
+             enddo
+          endif
           print*,'using current h and pmass limits to calculate kappa (cross section/unit mass)'
           print*,'min h = ',hav,' min particle mass = ',pmassav
           print*,'[ kappa = pi*h_min**2/(particle_mass*n_smoothing_lengths) ]'
@@ -598,7 +607,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   real, dimension(:), allocatable    :: renderplot
   real, dimension(:,:), allocatable  :: vecplot
   real :: rkappa
-  real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax
+  real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax,pmassav(1)
   real :: pixwidth,pixwidthvec,dxfreq
 
   character(len=lenlabel+20) :: labelx,labely,labelz,labelrender,labelvecplot,labelcont
@@ -651,6 +660,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   
   !--set the arrays needed for rendering if they are present
   if (ih.gt.0 .and. ih.le.ndataplots .and. (required(ih) .or. .not.ipartialread)) hh(:) = dat(:,ih)
+
   if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
      if (required(ipmass)) then
         pmassmin = minval(dat(:,ipmass))
@@ -660,8 +670,16 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         pmassmax = 0.
      endif
   else
-     pmassmin = masstype(1)
-     pmassmax = masstype(1)
+     pmassmin = minval(masstype,mask=(masstype.gt.0.))
+     pmassmax = maxval(masstype)
+     pmassav = masstype(1)
+     if (pmassav(1).le.0.) then
+        do i=ntypes,2,-1
+           if (UseTypeInRenderings(i) .and. iplotpartoftype(i) .and. masstype(i).gt.0.) then
+              pmassav = masstype(i)
+           endif
+        enddo
+     endif
   endif
   !
   !--set number of particles to use in the interpolation routines
@@ -1248,7 +1266,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                                 call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  masstype(1),1,hh(1:ninterp),dat(1:ninterp,icontourplot), &
+                                  pmassav,1,hh(1:ninterp),dat(1:ninterp,icontourplot), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                   dzscreentemp,rkappa,zslicepos)
@@ -1259,7 +1277,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                              endif
                              call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               masstype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               pmassav,1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos)                          
@@ -1328,7 +1346,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                                 call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  masstype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                                  pmassav,1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                   dzscreentemp,rkappa,huge(zslicepos))
@@ -1339,7 +1357,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                              endif
                              call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               masstype(1),1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               pmassav,1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,huge(zslicepos))
@@ -3039,7 +3057,7 @@ contains
           inormalise = inormalise_interpolations
        endif
 
-    elseif (masstype(1).gt.0. .and. &
+    elseif (any(masstype(1:ntypes).gt.0.) .and. &
             irho.gt.0 .and. irho.le.ndataplots .and. &
             ih .gt. 0 .and. ih.le.ndataplots .and. &
             required(irho) .and. required(ih)) then
