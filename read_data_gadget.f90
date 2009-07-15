@@ -22,8 +22,12 @@
 ! GSPLASH_STARPARTCOLS if set to a comma separated list of column labels,
 !  will attempt to read additional columns containing star particle 
 !  properties beyond the end of file
-! GSPLASH_CHECKIDS if 'YES','yes','TRUE' or 'true' then reads and 
-!  checks particle IDS for negative values and flags these as accreted particles
+! GSPLASH_CHECKIDS if 'YES','yes','TRUE' or 'true' then reads and checks
+!  particle IDs for negative values and flags these as accreted particles
+! GSPLASH_HSML_COLUMN if set to a positive integer, specifies the location
+!  of the smoothing length in the columns, overriding any default settings.
+! GSPLASH_IGNORE_IFLAGCOOL if set to 'YES' or `TRUE', does not assume that
+!  extra columns are present even if the cooling flag is set in the header.
 !
 ! the data is stored in the global array dat
 !
@@ -231,11 +235,39 @@ subroutine read_data(rootname,istepstart,nstepsread)
   print*,'N_total          : ',ntoti
   print*,'N data columns   : ',ncolstep
 
-  if (nfiles.gt.1) then
+  if (nfiles.gt.1 .or. nfiles.lt.0) then
      print*,' nfiles = ',nfiles
      print*,'*** ERROR: read from > 1 files not implemented'
      return
   endif
+
+  !--Softening lengths for Dark Matter Particles...
+  hsoft = renvironment('GSPLASH_DARKMATTER_HSOFT')
+  !
+  !--try to read dark matter and star particle smoothing lengths and/or density from a separate
+  !  one column ascii file. If only density, use this to compute smoothing lengths.
+  !
+  densfile = trim(rootname)//'.dens'
+  hfile = trim(rootname)//'.hsml'
+  hfact = 1.2 ! related to the analytic neighbour number (hfact=1.2 gives 58 neighbours in 3D)
+  open(unit=iunitd,file=densfile,iostat=ierrrho,status='old',form='formatted')
+  open(unit=iunith,file=hfile,iostat=ierrh,status='old',form='formatted')
+
+  if (idumpformat.eq.2) then
+     if (ih.eq.0 .and. (hsoft.gt.tiny(hsoft) .or. ierrrho.eq.0 .or. ierrh.eq.0)) then
+        ncolumns = ncolumns + 1
+        blocklabelgas(ncolumns) = 'HSML'
+        ih = ncolumns
+        call set_labels
+     endif
+     if (irho.eq.0 .and. (hsoft.gt.tiny(hsoft) .or. ierrrho.eq.0 .or. ierrh.eq.0)) then
+        ncolumns = ncolumns + 1
+        blocklabelgas(ncolumns) = 'RHO '
+        irho = ncolumns
+        call set_labels
+     endif
+  endif
+  
   !
   !--if successfully read header, increment the nstepsread counter
   !
@@ -265,7 +297,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !--reallocate memory for main data array
   !
   if (reallocate .or. .not.(allocated(dat))) then
-     call alloc(npart_max,nstep_max,max(ncolstep+ncalc,maxcol))
+     call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol))
   endif
   !
   !--copy header into header arrays
@@ -517,52 +549,57 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !   endif
      !endif
      
-     !
-     !--try to read dark matter and star particle smoothing lengths and/or density from a separate
-     !  one column ascii file. If only density, use this to compute smoothing lengths.
-     !
-     densfile = trim(rootname)//'.dens'
-     hfile = trim(rootname)//'.hsml'
-     hfact = 1.2 ! related to the analytic neighbour number (hfact=1.2 gives 58 neighbours in 3D)
-     open(unit=iunitd,file=densfile,iostat=ierrrho,status='old',form='formatted')
-     open(unit=iunith,file=hfile,iostat=ierrh,status='old',form='formatted')
      
      if (ierrh.eq.0 .or. ierrrho.eq.0) then
         if (ierrh.eq.0) then
-           print "(a)",' READING DARK MATTER SMOOTHING LENGTHS from '//trim(densfile)
-           j = 1
+           print "(a)",' READING DARK MATTER SMOOTHING LENGTHS from '//trim(hfile)
            ierr = 0
-           do while (ierr.eq.0 .and. j.le.sum(npartoftype(2:,i)))
-              read(iunith,*,iostat=ierr) dat(npartoftype(1,i)+j,ih,i)
-              j = j + 1
-           enddo
-           print "(a,i10,a)",' SMOOTHING LENGTHS READ for ',j-1,' dark matter / star particles '
-           hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
+           index1 = npartoftype(1,i)+1
+           index2 = npartoftype(1,i)+sum(npartoftype(2:,i))
+           read(iunith,*,iostat=ierr) (dat(j,ih,i),j=index1,index2)
            close(unit=iunith)
+           if (ierr.lt.0) then
+              nhset = 0
+              do j=index1,index2
+                 if (dat(j,ih,i).gt.0.) nhset = nhset + 1
+              enddo
+              print "(a,i10,a,/)",' *** END-OF-FILE: GOT ',nhset,' SMOOTHING LENGTHS ***'
+           elseif (ierr.gt.0) then
+              print "(a)", ' *** ERROR reading smoothing lengths from file'
+           else
+              print "(a,i10,a)",' SMOOTHING LENGTHS READ OK for ',index2-index1+1,' dark matter / star particles '
+           endif
+           hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
         endif
         
         if (ierrrho.eq.0) then
            print "(a)",' READING DARK MATTER DENSITIES FROM '//trim(densfile)
-           j = 1
            ierr = 0
-           nhset = 0
-           do while (ierr.eq.0 .and. j.le.sum(npartoftype(2:,i)))
-              read(iunitd,*,iostat=ierr) dmdensi
-              if (ierr.eq.0) then
-                 index1 = npartoftype(1,i) + j
-                 dat(index1,irho,i) = dmdensi
-                 if (ierrh.ne.0 .and. dmdensi.gt.tiny(dmdensi)) then
-                    dat(index1,ih,i) = hfact*(dat(index1,ipmass,i)/dmdensi)**(1./3.)
-                    nhset = nhset + 1
-                 endif
-              endif
-              j = j + 1
-           enddo
-           print "(a,i10,a)",' DENSITIES READ FOR ',j-1,' dark matter / star particles '
-           if (ierrh.ne.0) print "(a,i10,a,f5.2,a)", &
-              ' SMOOTHING LENGTHS SET for ',nhset,' DM/star particles using h = ',hfact,'*(m/rho)**(1/3)'
-           hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
+           index1 = npartoftype(1,i)+1
+           index2 = npartoftype(1,i)+sum(npartoftype(2:,i))
+           read(iunitd,*,iostat=ierr) (dat(j,irho,i),j=index1,index2)
            close(iunitd)
+           if (ierr.lt.0) then
+              nhset = 0
+              do j=index1,index2
+                 if (dat(j,irho,i).gt.0.) nhset = nhset + 1
+              enddo
+              print "(a,i10,a,/)",' *** END-OF-FILE: GOT ',nhset,' DENSITIES ***'
+           elseif (ierr.gt.0) then
+              print "(a)", ' *** ERROR reading dark matter densities from file'
+           else
+              print "(a,i10,a)",' DENSITY READ OK for ',index2-index1+1,' dark matter / star particles '
+           endif
+           if (ierrh.ne.0 .and. ipmass.gt.0) then
+              where(dat(:,irho,i) > tiny(dat))
+                 dat(:,ih,i) = hfact*(dat(:,ipmass,i)/dat(:,irho,i))**(1./3.)
+              elsewhere
+                 dat(:,ih,i) = 0.
+              end where
+              print "(a,i10,a,f5.2,a)", &
+               ' SMOOTHING LENGTHS SET for ',j-1-index1,' DM/star particles using h = ',hfact,'*(m/rho)**(1/3)'
+           endif
+           hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
         endif
      else
      !
@@ -571,24 +608,43 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !  give dark matter particles this smoothing length
      !  and a density of 1 (so column density plots work)
      !
-        hsoft = renvironment('GSPLASH_DARKMATTER_HSOFT')
         if (hsoft.gt.tiny(hsoft)) then
            if (required(ih)) then
               print "(a,1pe10.3,a)",' ASSIGNING SMOOTHING LENGTH of h = ',hsoft, &
                                     ' to dark matter particles'
-              dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),ih,i) = hsoft
+              !print*,'ih = ',ih,' npartoftype = ',npartoftype(1:2,i), shape(dat)
+              if (ih.gt.0) then
+                 dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),ih,i) = hsoft
+              else
+                 print*,' ERROR: smoothing length not found in data arrays'
+              endif
            endif
            if (required(irho)) then
-              dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),irho,i) = 1.0
+              if (irho.gt.0) then
+                 dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),irho,i) = 1.0
+              else
+                 print*,' ERROR: place for density not found in data arrays'
+              endif
            endif
         else
            if (npartoftype(1,i).le.0 .and. sum(npartoftype(:,i)).gt.0) then
-              print "(6(/,a),/)",' NOTE!! For gadget data using dark matter only, column density ',&
-                                 ' plots can be produced by setting the GSPLASH_DARKMATTER_HSOFT ',&
-                                 ' environment variable to give the dark matter smoothing length', &
-                                 ' (for a fixed smoothing length)', &
-                                 ' or by creating a one-column ascii file called '//trim(hfile), &
-                                 ' containing the smoothing lengths for the dark matter particles'
+              print "(66('*'),4(/,a),/)",'* NOTE!! For GADGET data using dark matter only, column density ',&
+                                 '* plots can be produced by setting the GSPLASH_DARKMATTER_HSOFT ',&
+                                 '* environment variable to give the dark matter smoothing length', &
+                                 '* (for a fixed smoothing length)'
+              hsoft = (maxval(dat(:,1,i)) - minval(dat(:,1,i)))/sum(npartoftype(2:,i))**(1./3.)
+              print*,' suggested value for GSPLASH_DARKMATTER_HSOFT = ',hsoft
+              hsoft = 0.
+              
+              print "(7(/,a),/)",'* Alternatively, and for best results, calculate a number density', &
+                                           '* on dark matter particles, set individual smoothing lengths from', &
+                                           '* this using h = hfact*(n)**(-1/3), with hfact=1.2 and either ', &
+                                           '* dump the results back into the HSML array in the original dump ', &
+                                           '* file (if using the block-labelled format), or create an ascii ',&
+                                           '* file called '//trim(hfile)//' containing the smoothing length ',&
+                                           '* values for the dark matter particles.'
+              print "(2(/,a),/,66('*'),/)",  '* Also make sure normalised interpolations are OFF when plotting ',&
+                                           '* dark matter density '
            endif
         endif
      endif
