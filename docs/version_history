@@ -93,3 +93,6 @@ command-line plotting implemented; ln transform added; bug fixes in GADGET read;
 1.12.1:
 Can edit/delete text shapes interactively, also the colour bar label; can customise the label on projection plots; contour levels better defined; SPLASH\_HMIN\_CODEUNITS added; option for numeric labelling of contours; contour limits can be set separately to render limits for same quantity; minor bug fixes
  
+1.12.2:
+Variable marker sizes added, can plot particles as circles with size proportional to h; dark matter rendering with block-labelled GADGET format fixed; VINE read handles star particles; TIPSY read with ifort10.0.0 works; snsph read added; splash to phantom added; does not override labels for coords, vectors by default; bug fixes with contouring options; stability bug fixes with older compilers; more robust memory handling; bug fix with automatic pixel selection causing seg fault
+ 
