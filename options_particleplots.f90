@@ -12,11 +12,12 @@ module settings_part
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
  logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings,UseTypeInContours
  logical :: iplotline,ilabelpart,ifastparticleplot
+ real    :: hfacmarkers
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
    iexact,icoordsnew,ifastparticleplot,idefaultcolourtype,&
-   itypeorder,UseTypeInContours,iploterrorbars,ilocerrorbars
+   itypeorder,UseTypeInContours,iploterrorbars,ilocerrorbars,hfacmarkers
 
 contains
 
@@ -54,6 +55,7 @@ subroutine defaults_set_part
   UseTypeInContours(:) = iplotpartoftype(:)
   iploterrorbars = 0    ! plot error bars for a particular column
   ilocerrorbars = 0     ! location of data for error bars in dat array
+  hfacmarkers = 1.0
 
   return
 end subroutine defaults_set_part
@@ -169,11 +171,20 @@ subroutine submenu_particleplots(ichoose)
      return           
 !------------------------------------------------------------------------
   case(2)
-     print*,'(0 Square) (1 .) (2 +) (3 *) (4 o) (5 x) (17 bold circle) (-8 bigger bold circle)'
+     print "(/,' Marker options (for all from -8->31, see PGPLOT userguide):',10(/,i2,') ',a))", &
+           0,'square',1,'.',2,'+',3,'*',4,'o',5,'x',17,'bold circle',-8,'large bold circle', &
+           32,'solid circle, size proportional to h', &
+           33,'open circle,  size proportional to h'
+     !print*,'(0 Square) (1 .) (2 +) (3 *) (4 o) (5 x) (17 bold circle) (-8 bigger bold circle)'
      do itype=1,ntypes
-        call prompt(' Enter PGPLOT marker for '//trim(labeltype(itype)) &
-             //' particles:',imarktype(itype),-8,31)
+        call prompt(' Enter marker to use for '//trim(labeltype(itype)) &
+             //' particles:',imarktype(itype),-8,35)
      enddo
+     if (any(imarktype(1:ntypes).ge.32)) then
+        print*
+        call prompt(' Enter proportionality factor for scalable markers (radius = fac*h)',hfacmarkers)
+     endif
+
      return   
 !------------------------------------------------------------------------
   case(3)

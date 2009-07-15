@@ -21,7 +21,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   use settings_data,    only:ndim,icoords,ntypes
   use settings_part,    only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
                              ilabelpart,iplotline,linestylethisstep,linecolourthisstep, &
-                             iploterrorbars,ilocerrorbars
+                             iploterrorbars,ilocerrorbars,hfacmarkers
   use interpolations2D, only:interpolate_part,interpolate_part1
   use transforms,       only:transform
   implicit none
@@ -134,7 +134,17 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                     nplotted = nplotted + 1
                     nplottedtype(itype) = nplottedtype(itype) + 1
                     call pgsci(icolourpart(j))
-                    call pgpt(1,xplot(j),yplot(j),imarktype(itype))
+                    select case(imarktype(itype))
+                    case(33)
+                       call pgsfs(1)
+                       call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
+                    case(32)
+                       call pgsfs(2)
+                       call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
+                    case default
+                       call pgpt(1,xplot(j),yplot(j),imarktype(itype))                    
+                    end select
+
                     if (present(datpix)) then
                        if (present(brightness)) then
                           call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
@@ -197,7 +207,15 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                     .and. icelly.gt.0 .and. icelly.le.ncelly) then
                     if (nincell(icellx,icelly).eq.0) then
                        nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
-                       call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                       select case(imarktype(itype))
+                       case(32:35)
+                          call pgsfs(imarktype(itype)-31)
+                          call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
+                          call pgsfs(1)
+                       case default
+                          call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                       end select
+
                        if (present(datpix)) then
                           if (present(brightness)) then
                              call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
@@ -216,7 +234,16 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
            else
               !--plot all particles of this type
               print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
-              call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+              select case(imarktype(itype))
+              case(32:35)
+                 call pgsfs(imarktype(itype)-31)
+                 do j=1,npartoftype(itype)
+                    call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
+                 enddo
+                 call pgsfs(1)
+              case default
+                 call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+              end select
               if (present(datpix)) then
                  if (present(brightness)) then
                     call interpolate_part(xplot(index1:index2),yplot(index1:index2),h(index1:index2), &
@@ -253,7 +280,14 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                        if (nincell(icellx,icelly).le.0) then
                           nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
                           call pgsci(icolourpart(j))
-                          call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                          select case(imarktype(itype))
+                          case(32:35)
+                             call pgsfs(imarktype(itype)-31)
+                             call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
+                             call pgsfs(1)
+                          case default
+                             call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                          end select
                           if (present(datpix)) then
                              if (present(brightness)) then
                                 call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
@@ -269,7 +303,14 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                     endif
                  else
                     call pgsci(icolourpart(j))
-                    call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                    select case(imarktype(itype))
+                    case(32:35)
+                       call pgsfs(imarktype(itype)-31)
+                       call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
+                       call pgsfs(1)
+                    case default                    
+                       call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                    end select
                     if (present(datpix)) then
                        if (present(brightness)) then
                           call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
