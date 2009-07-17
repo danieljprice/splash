@@ -374,6 +374,10 @@ endif
 # compile in parallel
 ifeq ($(PARALLEL),yes)
     F90FLAGS += $(OMPFLAGS)
+else
+   ifeq ($(OPENMP),yes)
+      F90FLAGS += $(OMPFLAGS)
+   endif
 endif
 
 # add debugging flags at compile time
