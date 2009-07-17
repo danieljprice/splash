@@ -195,7 +195,7 @@ endif
 
 ifeq ($(SYSTEM),ukaff1a)
 #  this is for ukaff1a
-   F90C= xlf90_r ##-Wl,-t
+   F90C= xlf90_r #-Wl,-t
    F90FLAGS= -O3 -qnoescape -qsuffix=f=f90 -qextname 
    OMPFLAGS= -qsmp=omp
    DEBUGFLAG= -C -g
