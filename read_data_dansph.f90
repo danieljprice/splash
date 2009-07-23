@@ -356,6 +356,10 @@ subroutine set_labels
     iamvec(icol+1:icol+ndimV) = icol + 1
     labelvec(icol+1:icol+ndimV) = 'force'
     icol = icol + ndimV
+    
+    iamvec(icol+1:icol+ndimV) = icol + 1
+    labelvec(icol+1:icol+ndimV) = 'A'
+    icol = icol + ndimV
 
  else
     ipr = icol !  pressure
