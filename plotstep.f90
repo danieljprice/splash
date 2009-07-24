@@ -2480,7 +2480,7 @@ contains
     ! output some muff to the screen
     !--------------------------------------------------------------
 
-    if (interactive .and. .not.dum) then
+    if ((interactive .or. iplots.eq.1 .or. iadapt) .and. .not.dum) then
        print*,trim(labelx),' min, max = ',xmin,xmax
        print*,trim(labely),' min, max = ',ymin,ymax
        if (irender.gt.0 .and. .not.(ndim.eq.2 .and. x_sec)) then
