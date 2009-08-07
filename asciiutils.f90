@@ -345,9 +345,10 @@ subroutine string_replace(string,skey,sreplacewith)
  integer :: ipos
 
  ipos = index(string,skey)
- if (ipos.gt.0) then
+ do while(ipos.gt.0)
     string = string(1:ipos-1)//sreplacewith//string(ipos+len(skey):len(string))
- endif
+    ipos = index(string,skey)
+ enddo
 
 end subroutine string_replace
 
