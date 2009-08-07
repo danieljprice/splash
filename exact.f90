@@ -69,6 +69,8 @@ module exact
   real :: Mstar,Rtorus,distortion
   !--ring spreading
   real :: Mring,Rring,viscnu
+  !--arbitrary function
+  character(len=80) :: funcstring
   
   !
   !--sort these into a namelist for input/output
@@ -82,7 +84,7 @@ module exact
        polyk,sigma0,norder,morder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
-       Mring,Rring,viscnu
+       Mring,Rring,viscnu,funcstring
        
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -143,6 +145,8 @@ contains
     Mring = 1.0
     Rring = 1.0
     viscnu = 1.e-3
+!   arbitrary function
+    funcstring = ' '
 
     maxexactpts = 1001      ! points in exact solution plot
     iExactLineColour = 1    ! foreground
@@ -163,9 +167,10 @@ contains
     use settings_data, only:ndim
     use prompting, only:prompt
     use filenames, only:rootname
+    use exactfunction, only:check_function
     implicit none
     integer, intent(inout) :: iexact
-    integer :: ierr
+    integer :: ierr,itry
     logical :: ians,iexist
 
     print 10
@@ -181,9 +186,10 @@ contains
          ' 9) torus ',/, &
          '10) ring spreading ',/, &
          '11) special relativistic shock tube',/, &
-         '12) read from file ')
-    call prompt('enter exact solution to plot',iexact,0,12)
-    print*,' plotting exact solution number ',iexact
+         '12) ANY function f(x)',/, &
+         '13) read from file ')
+    call prompt('enter exact solution to plot',iexact,0,13)
+    print "(a,i2)",'plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
     !
@@ -286,6 +292,22 @@ contains
        call prompt('enter radius of ring centre R0',Rring,0.)
        call prompt('enter viscosity parameter nu',viscnu,0.)
     case(12)
+       ierr = 1
+       itry = 0
+       print "(/,a,4(/,11x,a),/)",' Examples: sin(x)','sqrt(0.5*x)','x^2','exp(-2*x**2)','log10(x/2)'
+       do while(ierr /= 0 .and. itry.lt.10)
+          call prompt('enter function f(x) to plot ',funcstring,noblank=.true.)
+          call check_function(funcstring,ierr)
+          itry = itry + 1
+       enddo
+       if (itry.ge.10) then
+          print "(a)",' *** too many tries, aborting ***'
+          iexact = 0
+       else
+          call prompt('enter x axis of exact solution ',iexactplotx,1)
+          call prompt('enter y axis of exact solution ',iexactploty,1)
+       endif
+    case(13)
        iexist = .false.
        do while(.not.iexist)
           call prompt('enter filename ',filename_exact)
@@ -487,6 +509,7 @@ contains
     use toystar2D, only:exact_toystar2D
     use wave, only:exact_wave
     use densityprofiles, only:exact_densityprofiles
+    use exactfunction, only:exact_function
     use ringspread, only:exact_ringspread
     use transforms, only:transform,transform_inverse
     implicit none
@@ -773,7 +796,11 @@ contains
              call exact_shock_sr(4,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           endif
        endif
-    case(12) ! exact solution read from file
+    case(12) ! arbitrary function parsing
+       if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then
+          call exact_function(funcstring,xexact,yexact,ierr)
+       endif
+    case(13) ! exact solution read from file
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
           call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
