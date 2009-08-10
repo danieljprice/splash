@@ -58,7 +58,7 @@ subroutine exact_function(string,xplot,yplot,ierr)
      do i=1,size(xplot)
         xi = xplot(i)                 ! type conversion here
         yplot(i) = real(evalf(1,xi))  ! type conversion back
-        if (EvalErrType > 0) ierr = EvalErrType
+        if (EvalErrType /= 0) ierr = EvalErrType
      enddo
      if (ierr.ne.0) then
         print "(a)",' *** WARNING: errors during function evaluation: '//trim(EvalerrMsg())
