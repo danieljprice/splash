@@ -70,8 +70,8 @@ module exact
   !--ring spreading
   real :: Mring,Rring,viscnu
   !--arbitrary function
-  character(len=200) :: funcstring
-  
+  integer :: nfunc
+  character(len=120), dimension(5) :: funcstring
   !
   !--sort these into a namelist for input/output
   !
@@ -84,7 +84,7 @@ module exact
        polyk,sigma0,norder,morder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
-       Mring,Rring,viscnu,funcstring
+       Mring,Rring,viscnu,nfunc,funcstring
        
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -146,6 +146,7 @@ contains
     Rring = 1.0
     viscnu = 1.e-3
 !   arbitrary function
+    nfunc = 1
     funcstring = ' '
 
     maxexactpts = 1001      ! points in exact solution plot
@@ -170,7 +171,7 @@ contains
     use exactfunction, only:check_function
     implicit none
     integer, intent(inout) :: iexact
-    integer :: ierr,itry
+    integer :: ierr,itry,i
     logical :: ians,iexist
 
     print 10
@@ -292,24 +293,35 @@ contains
        call prompt('enter radius of ring centre R0',Rring,0.)
        call prompt('enter viscosity parameter nu',viscnu,0.)
     case(12)
-       ierr = 1
        itry = 0
-       print "(/,a,6(/,11x,a),/)",' Examples: sin(2*pi*x)','sqrt(0.5*x)','x^2', &
+       call prompt('enter number of functions to plot ',nfunc,1,size(funcstring))
+       print "(/,a,6(/,11x,a))",' Examples: sin(2*pi*x)','sqrt(0.5*x)','x^2', &
              'exp(-2*x**2)','log10(x/2)','exp(y),y=sin(pi*x)','cos(z/y),z=acos(y),y=x^2'
-       do while(ierr /= 0 .and. itry.lt.10)
-          call prompt('enter function f(x) to plot ',funcstring,noblank=.true.)
-          call check_function(funcstring,ierr)
-          if (ierr /= 0 .and. len(funcstring).eq.len_trim(funcstring)) then
-             print "(a,i3,a)",' (errors are probably because string is too long, max length = ',len(funcstring),')'
+       overfunc: do i=1,nfunc
+          ierr = 1
+          do while(ierr /= 0 .and. itry.lt.10)
+             if (nfunc.gt.1) print "(/,a,i1,/,11('-'),/)",'Function ',i
+             call prompt('enter function f(x) to plot ',funcstring(i),noblank=.true.)
+             call check_function(funcstring(i),ierr)
+             if (ierr /= 0 .and. len(funcstring(i)).eq.len_trim(funcstring(i))) then
+                print "(a,i3,a)",&
+                     ' (errors are probably because string is too long, max length = ',&
+                     len(funcstring(i)),')'
+             endif
+             itry = itry + 1
+          enddo
+          if (itry.ge.10) then
+             print "(a)",' *** too many tries, aborting ***'
+             iexact = 0
+             exit overfunc
           endif
-          itry = itry + 1
-       enddo
-       if (itry.ge.10) then
-          print "(a)",' *** too many tries, aborting ***'
-          iexact = 0
-       else
-          call prompt('enter x axis of exact solution ',iexactplotx,1)
-          call prompt('enter y axis of exact solution ',iexactploty,1)
+       enddo overfunc
+       if (itry.le.10) then
+          print*
+          call prompt('enter y axis of exact solution (0=all plots)',iexactploty,0)
+          if (iexactploty.gt.0) then
+             call prompt('enter x axis of exact solution ',iexactplotx,1)
+          endif
        endif
     case(13)
        iexist = .false.
@@ -558,6 +570,7 @@ contains
     do i=1,maxexactpts
        xexact(i) = xmin + (i-1)*dx
     enddo
+    xtemp = xexact
     if (itransx.gt.0) call transform_inverse(xexact,itransx)
     
     iexactpts = maxexactpts
@@ -801,8 +814,15 @@ contains
           endif
        endif
     case(12) ! arbitrary function parsing
-       if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then
-          call exact_function(funcstring,xexact,yexact,ierr)
+       if ((iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) .or. iexactploty.eq.0) then
+          do i=1,nfunc
+             call exact_function(funcstring(i),xexact,yexact,ierr)
+             if (i.ne.nfunc) then ! plot all except last line here
+                if (itransy.gt.0) call transform(yexact,itransy)
+                !--use xtemp, which is xexact but already transformed
+                call pgline(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
+             endif
+          enddo
        endif
     case(13) ! exact solution read from file
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
