@@ -2748,7 +2748,9 @@ contains
        !
        !--use filenames in legend if none set
        !
-       if (istepsonpage.le.nsteplegendlines) then
+       if (nstepsperpage.ge.1 .and. nsteplegendlines.ge.nstepsperpage*nacross*ndown) then
+          steplegendtext = steplegend(istepsonpage + (ipanel-1)*nstepsperpage)
+       elseif (istepsonpage.le.nsteplegendlines) then
           steplegendtext = steplegend(istepsonpage)
        elseif (all(nstepsinfile(1:nfiles).le.1)) then
           steplegendtext = trim(rootname(istep))
