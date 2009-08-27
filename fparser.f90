@@ -253,7 +253,7 @@ CONTAINS
     REAL(rn)                                    :: r
     LOGICAL                                     :: err
     INTEGER                                     :: ParCnt, & ! Parenthesis counter
-                                                   j,ib,in,lFunc
+                                                   j,ib,in,lFunc,inold,ibold
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     j = 1
     ParCnt = 0
@@ -290,7 +290,16 @@ CONTAINS
           c = Func(j:j)
        ELSE                                                  ! Check for variable
           n = VariableIndex (Func(j:),Var,ib,in)
-          IF (n == 0) CALL ParseErrMsg (j, FuncStr, 'Invalid element: '//Func(j+ib-1:j+in-2))
+          IF (n == 0) THEN                                   ! DP: If not a variable, check for constants
+             ibold = ib
+             inold = in
+             r = MathConst (Func(j:),ib,in,err)
+             IF (err) THEN                                   ! Return error if constants not found
+                CALL ParseErrMsg (j, FuncStr, 'Invalid element: '//Func(j+ib-1:j+in-2))
+                ib = ibold
+                in = inold
+             ENDIF
+          ENDIF
           j = j+in-1
           IF (j > lFunc) EXIT
           c = Func(j:j)
@@ -486,7 +495,7 @@ CONTAINS
     ! Replace ALL appearances of character set ca in string str by character set cb
     ! This version accepts replacement strings of differing lengths
     ! Returns an error if string is too short for the replacement to happen
-    ! Adjusts the ipos array appropriately
+    ! Adjusts the ipos array appropriately (must be called AFTER a call to RemoveSpaces)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IMPLICIT NONE
     CHARACTER (LEN=*),       INTENT(in) :: ca
@@ -503,10 +512,13 @@ CONTAINS
             j+len_trim(cb).gt.lstr) ierr = 1  ! return error about string truncation
 
        if (len(cb).gt.len(ca)) then
-          ipos(j+len(ca):min(j+len(cb)-len(ca),lstr)) = ipos(j+1)
+          do k=min(len_trim(string)+len(cb)-len(ca),lstr),j+len(cb),-1
+             ipos(k) = ipos(max(k-(len(cb)-len(ca)),1))
+          enddo
+          ipos(j:min(j+len(cb)-1,lstr)) = ipos(j)
        elseif (len(cb).lt.len(ca)) then
-          do k = j+len(cb),lstr
-             ipos(k) = ipos(k+len(ca)-len(cb))
+          do k = j+len(cb),len_trim(string)
+             ipos(k) = ipos(min(k+(len(ca)-len(cb)),lstr))
           enddo
        endif
        string = string(1:j-1)//cb//string(j+len(ca):lstr)
@@ -524,11 +536,10 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(INOUT) :: string
     INTEGER :: ierr
     
-    CALL Substitute('pi','3.1415926536d0',string,ierr)
-    if (ierr /= 0) ParseErrType = 2
+    !CALL Substitute('pi','3.1415926536d0',string,ierr)
+    !if (ierr /= 0) ParseErrType = 2
  
   END SUBROUTINE GetConstants
-
   !
   SUBROUTINE Compile (i, F, Var)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
@@ -553,7 +564,7 @@ CONTAINS
                Comp(i)%Stack(Comp(i)%StackSize),       &
                STAT = istat                            )
     IF (istat /= 0) THEN
-       WRITE(*,*) '*** Parser error: Memmory allocation for byte code failed'
+       WRITE(*,*) '*** Parser error: Memory allocation for byte code failed'
        STOP
     ELSE
        Comp(i)%ByteCodeSize = 0
@@ -594,9 +605,43 @@ CONTAINS
        n = cImmed
     ELSE                                                     ! Check for a variable
        n = VariableIndex (F, Var)
-       IF (n > 0) n = VarBegin+n-1_is
+       IF (n > 0) THEN
+          n = VarBegin+n-1_is
+       ELSE   ! Check for Mathematical constants
+          n = MathConstIndex(i, F)
+       ENDIF
     END IF
   END FUNCTION MathItemIndex
+  !
+  FUNCTION MathConstIndex (i, F, ibegin, inext) RESULT (n)
+    !----- -------- --------- --------- --------- --------- --------- --------- -------
+    ! Routine added by D. Price
+    ! Substitute values for Mathematical Constants (e.g. pi)
+    !----- -------- --------- --------- --------- --------- --------- --------- -------
+    IMPLICIT NONE
+    INTEGER,                         INTENT(in) :: i         ! Function identifier  
+    CHARACTER (LEN=*),               INTENT(in) :: F         ! Function substring
+    INTEGER, OPTIONAL,              INTENT(out) :: ibegin, & ! Start position of real number
+                                                   inext     ! 1st character after real number
+    INTEGER(is)                                 :: n         ! Byte value of math item
+    REAL(rn)                                    :: res
+    LOGICAL                                     :: err
+    INTEGER                                     :: ib,in
+    !----- -------- --------- --------- --------- --------- --------- --------- -------
+    n = 0
+    res = MathConst(F,ib,in,err)
+    IF (.not.err) THEN
+       Comp(i)%ImmedSize = Comp(i)%ImmedSize + 1
+       IF (ASSOCIATED(Comp(i)%Immed)) Comp(i)%Immed(Comp(i)%ImmedSize) = res
+       n = cImmed
+    ELSE
+       ib = 1
+       in = 1
+    END IF
+    IF (PRESENT(ibegin)) ibegin = ib
+    IF (PRESENT(inext))  inext  = in
+    
+  END FUNCTION MathConstIndex
   !
   FUNCTION CompletelyEnclosed (F, b, e) RESULT (res)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
@@ -837,6 +882,38 @@ CONTAINS
     IF (PRESENT(inext))  inext  = in
     IF (PRESENT(error))  error  = err
   END FUNCTION RealNum
+
+  !
+  FUNCTION MathConst (str, ibegin, inext, error) RESULT (res)
+    !----- -------- --------- --------- --------- --------- --------- --------- -------
+    ! Return values of Mathematical constants in string
+    !----- -------- --------- --------- --------- --------- --------- --------- -------
+    IMPLICIT NONE
+    CHARACTER (LEN=*),  INTENT(in) :: str                    ! String
+    REAL(rn)                       :: res                    ! Real number
+    INTEGER, OPTIONAL, INTENT(out) :: ibegin,              & ! Start position of real number
+                                      inext                  ! 1st character after real number
+    LOGICAL, OPTIONAL, INTENT(out) :: error                  ! Error flag
+    INTEGER                        :: ib,in
+    LOGICAL                        :: err                    ! Local error flag
+    !----- -------- --------- --------- --------- --------- --------- --------- -------
+    ib = 1
+    in = 1
+    err = .false.
+    IF (str(1:2)=='pi') THEN
+       res = 3.14159265358979323846_rn
+       in = 3
+    ELSE
+       res = 0.0_rn
+       err = .true.
+    ENDIF
+
+    IF (PRESENT(ibegin)) ibegin = ib
+    IF (PRESENT(inext))  inext  = in
+    IF (PRESENT(error))  error  = err
+
+  END FUNCTION MathConst
+
   !  
   SUBROUTINE LowCase (str1, str2)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
