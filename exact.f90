@@ -70,7 +70,7 @@ module exact
   !--ring spreading
   real :: Mring,Rring,viscnu
   !--arbitrary function
-  character(len=80) :: funcstring
+  character(len=200) :: funcstring
   
   !
   !--sort these into a namelist for input/output
@@ -294,10 +294,14 @@ contains
     case(12)
        ierr = 1
        itry = 0
-       print "(/,a,4(/,11x,a),/)",' Examples: sin(x)','sqrt(0.5*x)','x^2','exp(-2*x**2)','log10(x/2)'
+       print "(/,a,6(/,11x,a),/)",' Examples: sin(2*pi*x)','sqrt(0.5*x)','x^2', &
+             'exp(-2*x**2)','log10(x/2)','exp(y),y=sin(pi*x)','cos(z/y),z=acos(y),y=x^2'
        do while(ierr /= 0 .and. itry.lt.10)
           call prompt('enter function f(x) to plot ',funcstring,noblank=.true.)
           call check_function(funcstring,ierr)
+          if (ierr /= 0 .and. len(funcstring).eq.len_trim(funcstring)) then
+             print "(a,i3,a)",' (errors are probably because string is too long, max length = ',len(funcstring),')'
+          endif
           itry = itry + 1
        enddo
        if (itry.ge.10) then
