@@ -950,10 +950,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--apply transformations (log, 1/x etc) if appropriate
         !  also change labels and limits appropriately
         if (.not.(rendering)) then
-           if (itransx.ne.0) call applytrans(xplot,xmin,xmax,labelx,itransx,'x',iplotx)
-           if (itransy.ne.0) call applytrans(yplot,ymin,ymax,labely,itransy,'y',iploty)
+           if (itransx.ne.0) call applytrans(xplot,xmin,xmax,labelx,itransx,'x',iplotx,iaxis,interactivereplot)
+           if (itransy.ne.0) call applytrans(yplot,ymin,ymax,labely,itransy,'y',iploty,iaxis,interactivereplot)
         endif
- 
+
         !--write username, date on plot
         !         if (nacross.le.2.and.ndown.le.2) call pgiden
         !
@@ -2858,41 +2858,7 @@ contains
     endif
     
   end subroutine adapt_limits
-  
-!-------------------------------------------------------------------
-! interface to log, inverse transformations:
-! also adjusts label (depending on
-! whether log axes are also set or not).
-!-------------------------------------------------------------------
-  subroutine applytrans(xploti,xmini,xmaxi,labelxi,itransxi,chaxis,iplotxi)
-    implicit none
-    integer, intent(in) :: itransxi,iplotxi
-    real, dimension(:), intent(inout) :: xploti
-    real, intent(inout) :: xmini,xmaxi
-    character(len=*), intent(inout) :: labelxi
-    character(len=1), intent(in) :: chaxis
-    integer :: itranstemp
-    character(len=20) :: string
-       
-    if (itransxi.ne.0) then
-        if (iplotxi.gt.0 .and. iplotxi.le.numplot) call transform(xploti(:),itransxi)
-        if ((chaxis.eq.'x' .and. iaxis.eq.10 .or. iaxis.eq.30).or. &
-            (chaxis.eq.'y' .and. iaxis.eq.20 .or. iaxis.eq.30)) then ! logarithmic axes
-           write(string,*) itransx
-           string = adjustl(string)
-           itranstemp = 0
-           if (string(len_trim(string):len_trim(string)).eq.'1') then  
-              if (len_trim(string).gt.1) read(string(1:len_trim(string)-1),*) itranstemp
-              labelxi = transform_label(labelxi,itranstemp)
-           else
-              labelxi = transform_label(labelxi,itransxi)
-           endif
-        else
-           labelxi = transform_label(labelxi,itransxi)
-        endif
-        if (.not.interactivereplot) call transform_limits(xmini,xmaxi,itransxi)
-     endif
-  end subroutine applytrans
+
 
 !-------------------------------------------------------------------
 ! interface to coordinate-system transformations
@@ -3401,6 +3367,46 @@ contains
   end subroutine vector_plot
 
 end subroutine plotstep
+
+!-------------------------------------------------------------------
+! interface to log, inverse transformations:
+! also adjusts label (depending on
+! whether log axes are also set or not).
+!  (independent)
+!-------------------------------------------------------------------
+subroutine applytrans(xploti,xmini,xmaxi,labelxi,itransxi,chaxis,iplotxi,iaxis,intreplot)
+  use transforms,    only:transform,transform_label,transform_limits
+  use settings_data, only:numplot
+  implicit none
+  integer, intent(in)               :: itransxi,iplotxi,iaxis
+  real, dimension(:), intent(inout) :: xploti
+  real, intent(inout)               :: xmini,xmaxi
+  character(len=*), intent(inout)   :: labelxi
+  character(len=1), intent(in)      :: chaxis
+  logical, intent(in)               :: intreplot
+  integer           :: itranstemp,lstr
+  character(len=20) :: string
+
+  if (itransxi.ne.0) then
+      if (iplotxi.gt.0 .and. iplotxi.le.numplot) call transform(xploti(:),itransxi)
+      if ((chaxis.eq.'x' .and. (iaxis.eq.10 .or. iaxis.eq.30)).or. &
+          (chaxis.eq.'y' .and. (iaxis.eq.20 .or. iaxis.eq.30))) then ! logarithmic axes
+         write(string,*) itransxi
+         string = adjustl(string)
+         itranstemp = 0
+         lstr = len_trim(string)
+         if (string(lstr:lstr).eq.'1') then  
+            if (lstr.gt.1) read(string(1:lstr-1),*) itranstemp
+            labelxi = transform_label(labelxi,itranstemp)
+         else
+            labelxi = transform_label(labelxi,itransxi)
+         endif
+      else
+         labelxi = transform_label(labelxi,itransxi)
+      endif
+      if (.not.intreplot) call transform_limits(xmini,xmaxi,itransxi)
+   endif
+end subroutine applytrans
 
 !-------------------------------------------------------------------
 ! interface for adding rotation and perspective
