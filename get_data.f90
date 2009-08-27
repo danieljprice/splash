@@ -45,12 +45,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use filenames, only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
   use limits, only:set_limits
   use settings_data, only:ncolumns,iendatstep,ncalc,ivegotdata, &
-                     DataisBuffered,iCalcQuantities,ndim,ndimV,icoords, &
+                     DataisBuffered,iCalcQuantities,ndim,icoords, &
                      icoordsnew,iRescale,required,ipartialread,lowmemorymode
   use settings_part, only:iexact
-  use particle_data, only:dat,time,npartoftype,maxcol,masstype
+  use particle_data, only:dat,time,npartoftype,maxcol
   use prompting, only:prompt
-  use labels, only:label,labelvec,iamvec,ix,ih,irho,ipmass,labeltype
+  use labels, only:label,labelvec,iamvec,labeltype
   use geometry, only:labelcoord
   use calcquantities, only:calc_quantities
   use settings_units, only:units,unitslabel
