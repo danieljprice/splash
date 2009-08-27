@@ -73,6 +73,10 @@ OMPFLAGS=
 #ENDIAN=
 #ENDIAN='BIG'
 #ENDIAN='LITTLE'
+#
+# destination for installed binaries
+#
+DEST=/usr/local/bin
 
 #--------------------------------------------------------------
 #  the following are general settings for particular compilers
@@ -471,6 +475,8 @@ OBJECTS= $(OBJECTS1:.F90=.o)
 # (move yours to the top so that you can simply type "make")
 #
 all: ascii gadget vine sphNG srosph dragon tipsy
+	@echo; echo ' SPLASH successfully compiled! ';
+	@echo; echo ' Use "sudo make install" to copy the binaries to $(DEST)'; echo;
 
 ascii: checksystem $(OBJECTS) read_data_ascii.o
 	$(F90C) $(F90FLAGS) -o asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS)
@@ -595,8 +601,35 @@ checksystem:
 	@echo " =>set the environment variable SYSTEM to one listed "
 	@echo "   in the Makefile and try again"
 	@echo ""
-	quit
+	@$(MAKE) err;
    endif
+
+#
+# install option, copies any binaries compiled to /usr/local/bin/
+# run `make' first, then `make install'. Could in principle
+# have install compile it as well, but environment variables
+# will not be defined if "make" is run using sudo, so better
+# to do the two separately
+#
+install: destcheck installcheck
+	@for x in ?splash; do echo "copying $$x -> $(DEST)/$$x"; cp $$x $(DEST); done;
+	@echo; echo 'installation complete';
+
+installcheck:
+	@if test -e asplash && test -e gsplash; then echo; \
+        echo 'installing compiled binaries to $(DEST)'; \
+        echo '(use "sudo make install" if Permission denied)'; \
+        echo; else echo;\
+        echo 'run "make" first, followed by "sudo make install"'; echo;\
+        $(MAKE) err; fi
+
+destcheck: installcheck
+	@if test -d $(DEST); then echo $(DEST) exists and is a directory; else \
+        echo; echo "*** ERROR in make install ***"; echo "$(DEST) is not a valid directory"; echo;\
+        $(MAKE) err; fi;
+
+err:
+	$(error aborting);
 
 ## other stuff
 
