@@ -617,7 +617,7 @@ install: destcheck installcheck
 
 installcheck:
 	@if test -e asplash && test -e gsplash; then echo; \
-        echo 'installing compiled binaries to $(DEST)'; \
+        echo 'compiled binaries install to $(DEST)'; \
         echo '(use "sudo make install" if Permission denied)'; \
         echo; else echo;\
         echo 'run "make" first, followed by "sudo make install"'; echo;\
@@ -627,6 +627,13 @@ destcheck: installcheck
 	@if test -d $(DEST); then echo $(DEST) exists and is a directory; else \
         echo; echo "*** ERROR in make install ***"; echo "$(DEST) is not a valid directory"; echo;\
         $(MAKE) err; fi;
+
+installclean: destcheck
+	@for x in $(DEST)/?splash; do rm $$x; done;
+
+distclean: installclean
+
+cleanall: clean installclean
 
 err:
 	$(error aborting);
