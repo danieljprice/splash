@@ -213,7 +213,10 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
   real, dimension(3) :: xline,yline
   real :: xch, ych, xmin, xmax, ymin, ymax
   real :: vspace, vpos
-
+!
+!--do not plot anything if string is blank
+!
+  if (len_trim(text).le.0) return
   !call pgstbg(0)           ! opaque text to overwrite previous
 !
 !--set horizontal and vertical position and spacing
