@@ -209,7 +209,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
     if (index(line,'NaN').gt.0) nansinfile = .true.
     if (index(line,'Inf').gt.0) infsinfile = .true.
     if (ierr.eq.0) ncolsthisline = ncolumnsline(line)
-    if (ncolsthisline.ne.0) nheaderlines = nheaderlines + 1
+    if (ncolsthisline.ge.0) nheaderlines = nheaderlines + 1
     ncolumns = ncolsthisline
  enddo
  !--subtract 2 from the header line count (the last two lines which were the same)
@@ -246,10 +246,10 @@ integer function ncolumnsline(line)
  
  ierr = 0
  read(line,*,iostat=ierr) (dummyreal(i),i=1,size(dummyreal))
- if (ierr .gt. 0) then
-    ncolumnsline = -1
-    return
- endif
+ !if (ierr .gt. 0) then
+ !   ncolumnsline = -1
+ !   return
+ !endif
 
  i = 1
  ncolumnsline = 0
