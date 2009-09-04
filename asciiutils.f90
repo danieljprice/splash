@@ -65,6 +65,8 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
  logical :: iexist
  
  nlinesread = 0
+ if (present(ierror)) ierror = 0
+
  !--if file does not exist, do nothing and return
  inquire(file=filename,exist=iexist)
  if (.not.iexist) then
@@ -85,7 +87,11 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
     read(iunit,"(a)",err=66,end=99) charline(i)
  enddo
  !--end of array limits
- print "(a,i6)",' WARNING: array limits reached reading '//trim(filename)//', max = ',maxlines
+ !  check to see if there is anything more in the file. Report error if there is.
+ read(iunit,"(a)",iostat=ierr)
+ if (ierr.eq.0) then
+    print "(a,i6)",' WARNING: array limits reached reading '//trim(filename)//', max = ',maxlines
+ endif
  nlinesread = maxlines
  close(unit=iunit)
  return
@@ -122,6 +128,8 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
  logical :: iexist
  
  nlinesread = 0
+ if (present(ierror)) ierror = 0
+
  !--if file does not exist, do nothing and return
  inquire(file=filename,exist=iexist)
  if (.not.iexist) then
