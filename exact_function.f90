@@ -92,15 +92,20 @@ end subroutine exact_function
 ! check syntax in the function string - this subroutine 
 ! mainly just an interface to checking routines in fparser
 !----------------------------------------------------------------
-subroutine check_function(string,ierr)
+subroutine check_function(string,ierr,verbose)
 ! use fparser, only:checkf
  implicit none
- character(len=*), intent(in) :: string
- integer, intent(out)         :: ierr
+ character(len=*), intent(in)  :: string
+ integer, intent(out)          :: ierr
+ logical, intent(in), optional :: verbose
  integer :: nfunc
  
  call get_nfunc(string,nfunc)
- call parse_subfunctions(string,nfunc,.true.,ierr)
+ if (present(verbose)) then
+    call parse_subfunctions(string,nfunc,.true.,ierr,verbose=verbose) 
+ else
+    call parse_subfunctions(string,nfunc,.true.,ierr)
+ endif
 ! ierr = checkf(string,(/'x'/))
 
 end subroutine check_function
@@ -108,16 +113,21 @@ end subroutine check_function
 !----------------------------------------------------------------
 ! allow sub-function syntax (f(x) = y, y = 24*x)
 !----------------------------------------------------------------
-subroutine parse_subfunctions(string,nfunc,check,ierr)
+subroutine parse_subfunctions(string,nfunc,check,ierr,verbose)
  use fparser, only:checkf,parsef,EvalErrMsg,EvalErrType
  implicit none
  character(len=*), intent(in) :: string
  integer, intent(in)          :: nfunc
  logical, intent(in)          :: check
  integer, intent(out)         :: ierr
+ logical, intent(in), optional :: verbose
  
  character(len=len(string)), dimension(nfunc) :: var
  integer :: ieq,ivars,lstr,j,icommaprev
+ logical :: iverb
+
+ iverb = .true.
+ if (present(verbose)) iverb = verbose
 
  var(1) = 'x'
  ivars = 1
@@ -145,8 +155,10 @@ subroutine parse_subfunctions(string,nfunc,check,ierr)
        endif
        !--function is what lies to right of equals sign
        if (check) then
-          if (ivars.eq.2) print "(a)",'Evaluating sub-functions in the order:'
-          print "(a)",trim(var(ivars))//' = '//string(ieq+1:icommaprev-1)
+          if (iverb) then
+             if (ivars.eq.2) print "(a)",'Evaluating sub-functions in the order:'
+             print "(a)",trim(var(ivars))//' = '//string(ieq+1:icommaprev-1)
+          endif
           ierr = checkf(string(ieq+1:icommaprev-1),var(1:ivars-1))
           if (ierr /= 0) return
        else
@@ -168,7 +180,7 @@ subroutine parse_subfunctions(string,nfunc,check,ierr)
 !--finally, check/parse combined function
 !
  if (check) then
-    if (ivars.ge.2) print "(a)",'f('//trim(var(1))//') = '//string(1:icommaprev-1)
+    if (ivars.ge.2 .and. iverb) print "(1x,a)",'f('//trim(var(1))//') = '//string(1:icommaprev-1)
     ierr = checkf(string(1:icommaprev-1),var(1:ivars))
  else
     call parsef(1,string(1:icommaprev-1),var(1:ivars))
