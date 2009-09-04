@@ -71,7 +71,7 @@ module exact
   real :: Mring,Rring,viscnu
   !--arbitrary function
   integer :: nfunc
-  character(len=120), dimension(5) :: funcstring
+  character(len=120), dimension(10) :: funcstring
   !
   !--sort these into a namelist for input/output
   !
@@ -293,14 +293,14 @@ contains
        call prompt('enter radius of ring centre R0',Rring,0.)
        call prompt('enter viscosity parameter nu',viscnu,0.)
     case(12)
-       itry = 0
        call prompt('enter number of functions to plot ',nfunc,1,size(funcstring))
        print "(/,a,6(/,11x,a))",' Examples: sin(2*pi*x)','sqrt(0.5*x)','x^2', &
              'exp(-2*x**2)','log10(x/2)','exp(y),y=sin(pi*x)','cos(z/y),z=acos(y),y=x^2'
        overfunc: do i=1,nfunc
           ierr = 1
+          itry = 0
           do while(ierr /= 0 .and. itry.lt.10)
-             if (nfunc.gt.1) print "(/,a,i1,/,11('-'),/)",'Function ',i
+             if (nfunc.gt.1) print "(/,a,i2,/,11('-'),/)",'Function ',i
              call prompt('enter function f(x) to plot ',funcstring(i),noblank=.true.)
              call check_function(funcstring(i),ierr)
              if (ierr /= 0 .and. len(funcstring(i)).eq.len_trim(funcstring(i))) then
@@ -312,11 +312,12 @@ contains
           enddo
           if (itry.ge.10) then
              print "(a)",' *** too many tries, aborting ***'
-             iexact = 0
+             ierr = i-1
              exit overfunc
           endif
        enddo overfunc
-       if (itry.le.10) then
+       if (ierr /= 0) nfunc = ierr
+       if (nfunc.gt.0) then
           print*
           call prompt('enter y axis of exact solution (0=all plots)',iexactploty,0)
           if (iexactploty.gt.0) then
@@ -375,14 +376,17 @@ contains
   ! called after main data read and if exact solution chosen from menu
   !-----------------------------------------------------------------------
   subroutine read_exactparams(iexact,rootname,ierr)
-    use settings_data, only:ndim
-    use prompting, only:prompt
+    use settings_data,  only:ndim
+    use prompting,      only:prompt
+    use exactfunction,  only:check_function
+    use filenames,      only:fileprefix
+    use asciiutils,     only:read_asciifile
     implicit none
     integer, intent(in) :: iexact
     character(len=*), intent(in) :: rootname
     integer, intent(out) :: ierr
     
-    integer :: idash
+    integer :: idash,nf,i,j
     character(len=len_trim(rootname)+8) :: filename
 
     idash = index(rootname,'_')
@@ -475,6 +479,42 @@ contains
           call prompt('enter shock solution to plot',ishk,1,7)
        endif
        return
+    case(12)
+       !
+       !--read functions from file
+       !
+       !
+       filename=trim(rootname)//'.func'
+       call read_asciifile(trim(filename),nfunc,funcstring,ierr)
+       if (ierr.eq.-1) then
+          print "(a)",' no file '//trim(filename)
+          filename = trim(fileprefix)//'.func'
+          call read_asciifile(trim(filename),nfunc,funcstring,ierr)
+          if (ierr.eq.-1) print "(a)",' no file '//trim(filename)
+       endif
+       
+       if (nfunc.gt.0) then
+          nf = nfunc
+          i = 0
+          do while(i.lt.nf)
+             i = i + 1
+             call check_function(funcstring(i),ierr,verbose=.false.)
+             if (ierr /= 0) then
+                print "(a)",' error parsing function '//trim(funcstring(i))//', skipping...'
+                do j=i+1,nf
+                   funcstring(j-1) = funcstring(j)
+                enddo
+                funcstring(nf) = ' '
+                nf = nf - 1
+                i = i - 1
+             endif
+          enddo
+          nfunc = nf
+          print "(a,i2,a)",' read ',nfunc,' functions from '//trim(filename)
+       else
+          print "(a)",' *** NO FUNCTIONS READ: none will be plotted ***'
+          ierr = 2
+       endif
 
     end select
 
