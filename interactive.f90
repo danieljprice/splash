@@ -107,7 +107,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   if (string(1:nc).eq.'YES') then
      print*,'entering interactive mode...press h in plot window for help'
   else
-     print*,'cannot enter interactive mode: device has no cursor'
+     !print*,'cannot enter interactive mode: device has no cursor'
      return
   endif
   char = 'A'
@@ -1165,7 +1165,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
   if (string(1:nc).eq.'YES') then
      print*,'entering interactive mode...press h in plot window for help'
   else
-     print*,'cannot enter interactive mode: device has no cursor'
+     !print*,'cannot enter interactive mode: device has no cursor'
      return
   endif
   char = 'A'
@@ -1368,7 +1368,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   if (string(1:nc).eq.'YES') then
      print*,'entering interactive mode...press h in plot window for help'
   else
-     print*,'cannot enter interactive mode: device has no cursor'
+     !print*,'cannot enter interactive mode: device has no cursor'
      return
   endif
   char = 'A'
