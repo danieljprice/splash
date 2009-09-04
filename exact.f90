@@ -485,16 +485,18 @@ contains
        !
        !
        filename=trim(rootname)//'.func'
-       call read_asciifile(trim(filename),nfunc,funcstring,ierr)
+       call read_asciifile(trim(filename),nf,funcstring,ierr)
        if (ierr.eq.-1) then
           print "(a)",' no file '//trim(filename)
           filename = trim(fileprefix)//'.func'
-          call read_asciifile(trim(filename),nfunc,funcstring,ierr)
-          if (ierr.eq.-1) print "(a)",' no file '//trim(filename)
+          call read_asciifile(trim(filename),nf,funcstring,ierr)
+          if (ierr.eq.-1) then
+             print "(a)",' no file '//trim(filename)
+             return
+          endif
        endif
        
-       if (nfunc.gt.0) then
-          nf = nfunc
+       if (nf.gt.0) then
           i = 0
           do while(i.lt.nf)
              i = i + 1
