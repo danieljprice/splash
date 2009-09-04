@@ -151,7 +151,7 @@ CONTAINS
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IF (i < 1 .OR. i > SIZE(Comp)) THEN
        WRITE(*,*) '*** Parser error: Function number ',i,' out of range'
-       STOP
+       RETURN
     END IF
     ParseErrType = 0
     ALLOCATE (ipos(LEN(Func)))                       ! Char. positions in orig. string
@@ -259,24 +259,40 @@ CONTAINS
     j = 1
     ParCnt = 0
     lFunc = LEN_TRIM(Func)
+    
     step: DO
-       IF (j > lFunc) CALL ParseErrMsg (j, FuncStr)
+       IF (j > lFunc) THEN
+          CALL ParseErrMsg (j, FuncStr)
+          EXIT
+       ENDIF
        c = Func(j:j)
        !-- -------- --------- --------- --------- --------- --------- --------- -------
        ! Check for valid operand (must appear)
        !-- -------- --------- --------- --------- --------- --------- --------- -------
        IF (c == '-' .OR. c == '+') THEN                      ! Check for leading - or +
           j = j+1
-          IF (j > lFunc) CALL ParseErrMsg (j, FuncStr, 'Missing operand')
+          IF (j > lFunc) THEN
+             CALL ParseErrMsg (j, FuncStr, 'Missing operand')
+             EXIT
+          ENDIF
           c = Func(j:j)
-          IF (ANY(c == Ops)) CALL ParseErrMsg (j, FuncStr, 'Multiple operators')
+          IF (ANY(c == Ops)) THEN
+             CALL ParseErrMsg (j, FuncStr, 'Multiple operators')
+             EXIT
+          ENDIF
        END IF
        n = MathFunctionIndex (Func(j:))
        IF (n > 0) THEN                                       ! Check for math function
           j = j+LEN_TRIM(Funcs(n))
-          IF (j > lFunc) CALL ParseErrMsg (j, FuncStr, 'Missing function argument')
+          IF (j > lFunc) THEN
+             CALL ParseErrMsg (j, FuncStr, 'Missing function argument')
+             EXIT
+          ENDIF
           c = Func(j:j)
-          IF (c /= '(') CALL ParseErrMsg (j, FuncStr, 'Missing opening parenthesis')
+          IF (c /= '(') THEN
+             CALL ParseErrMsg (j, FuncStr, 'Missing opening parenthesis')
+             EXIT
+          ENDIF
        END IF
        IF (c == '(') THEN                                    ! Check for opening parenthesis
           ParCnt = ParCnt+1
@@ -285,7 +301,10 @@ CONTAINS
        END IF
        IF (SCAN(c,'0123456789.') > 0) THEN                   ! Check for number
           r = RealNum (Func(j:),ib,in,err)
-          IF (err) CALL ParseErrMsg (j, FuncStr, 'Invalid number format:  '//Func(j+ib-1:j+in-2))
+          IF (err) THEN
+             CALL ParseErrMsg (j, FuncStr, 'Invalid number format:  '//Func(j+ib-1:j+in-2))
+             EXIT
+          ENDIF
           j = j+in-1
           IF (j > lFunc) EXIT
           c = Func(j:j)
@@ -299,6 +318,7 @@ CONTAINS
                 CALL ParseErrMsg (j, FuncStr, 'Invalid element: '//Func(j+ib-1:j+in-2))
                 ib = ibold
                 in = inold
+                EXIT
              ENDIF
           ENDIF
           j = j+in-1
@@ -367,11 +387,14 @@ CONTAINS
     ENDIF
     WRITE(*,*)
     WRITE(*,'(A)') ' '//FuncStr
-    DO k=1,ipos(j)
-       WRITE(*,'(A)',ADVANCE='NO') ' '                       ! Advance to the jth position
-    END DO
-    WRITE(*,'(A)') '?'
-    
+    IF (ALLOCATED(ipos)) THEN                               ! Avoid out-of-bounds-errors
+       IF (SIZE(ipos).ge.j) THEN
+          DO k=1,ipos(j)
+             WRITE(*,'(A)',ADVANCE='NO') ' '                ! Advance to the jth position
+          END DO
+          WRITE(*,'(A)') '?'
+       ENDIF
+    ENDIF
     ParseErrType = 1
     
   END SUBROUTINE ParseErrMsg
