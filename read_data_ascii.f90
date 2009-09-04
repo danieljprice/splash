@@ -218,6 +218,7 @@ subroutine set_labels
   use settings_data,   only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
   use geometry,        only:labelcoord
   use system_commands, only:get_environment
+  use filenames,       only:fileprefix
   implicit none
   integer :: i,ierr,ndimVtemp
   character(len=120)      :: columnfile
@@ -227,9 +228,14 @@ subroutine set_labels
 !--read column labels from the columns file if it exists
 !
 !  first look for a columns file in the current directory
+!  either called splash.columns or just 'columns'
 !
-  columnfile='columns'
+  columnfile=trim(fileprefix)//'.columns'
   inquire(file=trim(columnfile),exist=iexist)
+  if (.not.iexist) then
+     columnfile='columns'
+     inquire(file=trim(columnfile),exist=iexist)
+  endif
 !
 !  if it does not exist see if the environment variable is set
 !  and the corresponding file exists
