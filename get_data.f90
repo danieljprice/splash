@@ -33,35 +33,35 @@
 !
 module getdata
  implicit none
- public :: get_data, get_labels
+ public           :: get_data, get_labels
  integer, private :: ncolumnsfirst
  private
 
 contains
 
 subroutine get_data(ireadfile,gotfilenames,firsttime)
-  use asciiutils, only:ucase
-  use exact, only:read_exactparams
-  use filenames, only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
-  use limits, only:set_limits
-  use settings_data, only:ncolumns,iendatstep,ncalc,ivegotdata, &
-                     DataisBuffered,iCalcQuantities,ndim,icoords, &
-                     icoordsnew,iRescale,required,ipartialread,lowmemorymode
-  use settings_part, only:iexact
-  use particle_data, only:dat,time,npartoftype,maxcol
-  use prompting, only:prompt
-  use labels, only:label,labelvec,iamvec,labeltype
-  use geometry, only:labelcoord
+  use asciiutils,     only:ucase
+  use exact,          only:read_exactparams
+  use filenames,      only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
+  use limits,         only:set_limits
+  use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata, &
+                      DataisBuffered,iCalcQuantities,ndim,icoords, &
+                      icoordsnew,iRescale,required,ipartialread,lowmemorymode
+  use settings_part,  only:iexact
+  use particle_data,  only:dat,time,npartoftype,maxcol
+  use prompting,      only:prompt
+  use labels,         only:label,labelvec,iamvec,labeltype
+  use geometry,       only:labelcoord
   use calcquantities, only:calc_quantities
   use settings_units, only:units,unitslabel
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
   logical, intent(in), optional :: firsttime
-  logical :: setlimits
-  logical, parameter :: timing = .true.
+  logical :: setlimits,isfirsttime
+  logical, parameter  :: timing = .true.
   integer :: i,istart,ierr
-  real :: t1,t2
+  real    :: t1,t2
 
   if (.not.gotfilenames) then
      if (nfiles.le.0 .or. nfiles.gt.maxfile) nfiles = 1
@@ -81,6 +81,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   ifileopen = ireadfile
   DataIsBuffered = .false.
   ipartialread = .false.
+  isfirsttime = .false.
+  if (present(firsttime)) isfirsttime = firsttime
   !
   !--nstepsinfile is initialised to negative
   !  this is set progressively as files are read
@@ -90,13 +92,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   !  know that this is really the file contents (not just an initialised value of nstepsinfile)
   !  and can skip the file on the second encounter (see timestepping.f90) 
   !
-  if (present(firsttime)) then
-     if (firsttime) then
-        nstepsinfile(:) = -1
-        ncolumnsfirst = 0
-        required = .true.
-        if (lowmemorymode) required = .false.
-     endif
+  if (isfirsttime) then
+     nstepsinfile(:) = -1
+     ncolumnsfirst = 0
+     required = .true.
+     if (lowmemorymode) required = .false.
+     call endian_info()
   endif
 
   if (ireadfile.le.0) then
@@ -319,10 +320,10 @@ end subroutine get_data
 !
 !-------------------------------------
 subroutine get_labels
- use asciiutils, only:read_asciifile
- use filenames, only:fileprefix,unitsfile
- use labels, only:label
- use settings_data, only:ncolumns
+ use asciiutils,     only:read_asciifile
+ use filenames,      only:fileprefix,unitsfile
+ use labels,         only:label
+ use settings_data,  only:ncolumns
  use settings_units, only:read_unitsfile
  implicit none
  logical :: iexist
@@ -358,7 +359,7 @@ end subroutine get_labels
 !----------------------------------------------------------------
 subroutine check_labels
  use settings_data, only:ndim,ndimV,ncolumns
- use labels, only:ix,irho,ih,ipmass
+ use labels,        only:ix,irho,ih,ipmass
  use particle_data, only:masstype
  implicit none
  integer :: i
@@ -415,8 +416,8 @@ end subroutine check_labels
 !
 !-----------------------------------------------
 subroutine adjust_data_codeunits
- use system_utils, only:renvironment
- use labels, only:ih
+ use system_utils,  only:renvironment
+ use labels,        only:ih
  use settings_data, only:ncolumns
  use particle_data, only:dat
  implicit none
@@ -456,7 +457,7 @@ subroutine endian_info
  else
     print 10,'LITTLE'
  endif
-10 format(' native endian on this machine is ',a,/,' (read endian may be set by compiler flags/environment variables)',/)
+10 format(' native endian on this machine is ',a,/,' (read endian may be set by compiler flags/environment variables)')
 
 end subroutine endian_info
 
