@@ -36,9 +36,10 @@ module analysis
 !
 ! default settings for the density thresholds for massaboverho output
 !
- integer, private :: nlevels
+ integer, private :: nlevels,nfilesread
  real, dimension(maxlevels), private :: rholevels
  character(len=64), private :: fileout
+ real, dimension(:,:), allocatable :: datmean,datvar
 
 contains
 
@@ -64,6 +65,8 @@ logical function isanalysis(string,noprint)
      isanalysis = .true.
  case('mean','meanvals')
      isanalysis = .true.
+ case('timeaverage','timeav')
+     isanalysis = .true.
  end select
  
  if (present(noprint)) then
@@ -84,6 +87,8 @@ logical function isanalysis(string,noprint)
     print "(a)",'                            output to file called ''minvals.out'''
     print "(a)",'        calc mean         : mean of each column vs. time'
     print "(a)",'                            output to file called ''meanvals.out'''
+    print "(a)",'        calc timeaverage  : time average of *all* entries for every particle'
+    print "(a)",'                            output to file called ''time_average.out'''
  endif
  
  return
@@ -216,6 +221,18 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) ncolumns+1
     write(headerline,fmtstring) 1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
 
+ case('timeaverage','timeav')
+    !
+    !--read all columns from dump file
+    !
+    required(:) = .true.
+    !
+    !--set filename and header line
+    !
+    fileout = 'time_average.out'
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']''))')",iostat=ierr) 2*ncolumns
+    write(headerline,fmtstring) (i,label(i)(1:12),i=1,ncolumns),&
+                                (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
  end select
 !
 !--do not replace the file if it already exists
@@ -240,14 +257,16 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
 !  (no header is written if headerline is blank)
 !
  if (len_trim(headerline).gt.0) then
-    write(iunit,"(a)") '# SPLASH: A visualisation tool for SPH data (c)2004-2008 Daniel Price'
+    write(iunit,"(a)") '# SPLASH: A visualisation tool for SPH data (c)2004-2009 Daniel Price'
     write(iunit,"(a)") '# '//trim(fileout)//' produced using "splash calc '//trim(analysistype)// &
                        '" on dump files '//trim(rootname(1))//'->'//trim(rootname(nfiles))
     write(iunit,"(a)") '# use asplash -e '//trim(fileout)//' to plot the contents of this file '
     write(iunit,"(a)") '#'
     write(iunit,"(a)") trim(headerline)
  endif
- 
+
+ nfilesread = 0
+
  return
 end subroutine open_analysis
 
@@ -269,17 +288,24 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real, intent(in), dimension(:,:) :: dat
  character(len=*), intent(in) :: analysistype
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
- integer :: itype,i,ierr
+ integer :: itype,i,j,ierr,ntot1,ncol1
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi
  real(kind=doub_prec), dimension(3) :: xmom
+ real :: delta,dn
  character(len=20) :: fmtstring
 !
 ! array with one value for each column
 !
  real, dimension(maxplot) :: coltemp
 
- print "(/,5('-'),a,/)",'> CALCULATING '//trim(ucase(analysistype))
- print "(1x,'time = ',es8.2)",time
+ nfilesread = nfilesread + 1
+ if (time.ge.0.) then
+    print "(/,5('-'),a,', TIME=',es8.2,' FILE #',i4,/)",&
+          '> CALCULATING '//trim(ucase(analysistype)),time,nfilesread
+ else
+    print "(/,5('-'),a,', FILE #',i4,' (TIME NOT READ)'/)",&
+          '> CALCULATING '//trim(ucase(analysistype)),nfilesread
+ endif
  
  select case(trim(analysistype))
  case('energy','energies')
@@ -429,6 +455,53 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) time,coltemp(1:ncolumns)
 
+ case('timeaverage','timeav')
+    if (.not.allocated(datmean)) then
+       allocate(datmean(ntot,ncolumns),stat=ierr)
+       if (ierr /= 0) stop 'error allocating memory for mean sum in calc'
+       datmean = 0.
+    endif
+    if (.not.allocated(datvar)) then
+       allocate(datvar(ntot,ncolumns),stat=ierr)
+       if (ierr /= 0) stop 'error allocating memory for variance sum in calc'
+       datvar = 0.
+    endif
+    ntot1 = size(datmean(:,1))
+    if (ntot.gt.ntot1) then
+       print*,' WARNING: nrows = ',ntot,' > nrows from previous dumpfile =',ntot1
+       print*,'          ignoring all rows/particles greater than ',ntot1
+    elseif (ntot.lt.ntot1) then
+       print*,' WARNING: nrows = ',ntot,' < nrows from previous dumpfile =',ntot1
+       print*,'          assuming zeros for rows/particles greater than ',ntot
+    endif
+    ncol1 = size(datmean(1,:))
+    if (ncolumns.gt.ncol1) then
+       print*,' WARNING: ncolumns = ',ncolumns,' > ncolumns from previous dumpfile =',ncol1
+       print*,'          ignoring all rows/particles greater than ',ncol1
+    elseif (ncolumns.lt.ncol1) then
+       print*,' WARNING: ncolumns = ',ntot,' < ncolumns from previous dumpfile =',ncol1
+       print*,'          assuming zeros for columns greater than ',ncolumns
+    endif
+    ntot1 = min(ntot1,ntot)
+    ncol1 = min(ncol1,ncolumns)
+    
+    dn = 1./real(nfilesread)
+    !
+    !--compute the mean and variance using Knuth/Welford's compensated
+    !  summation algorithm to minimise round-off error
+    !  (see http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance)
+    !
+    do j=1,ncol1
+       do i=1,ntot1
+          delta = dat(i,j) - datmean(i,j)
+          datmean(i,j) = datmean(i,j) + delta*dn
+          datvar(i,j) = datvar(i,j) + delta*(dat(i,j) - datmean(i,j))
+       enddo
+    enddo
+    return
+    !sum1(:,:) = sum1(:,:) + dat(1:ntot1,1:ncol1)
+    !sum2(:,:) = sum2(:,:) + dat(1:ntot1,1:ncol1)**2
+
  case default
     print "(a)",' ERROR: unknown analysis type in write_analysis routine'
     return 
@@ -482,8 +555,25 @@ end subroutine write_analysis
 !---------------------
 ! close output file
 !---------------------
-subroutine close_analysis
+subroutine close_analysis(analysistype)
  implicit none
+ character(len=*), intent(in) :: analysistype
+ integer :: i
+
+ select case(trim(analysistype))
+ case('timeaverage','timeav')
+    print "(a)",'----> WRITING time_average.out ...'
+    if (allocated(datmean) .and. allocated(datvar) .and. nfilesread.gt.0) then
+       !--get standard deviation from variance (also normalise with 1/n)
+       datvar(:,:) = sqrt(datvar(:,:))/sqrt(real(nfilesread))
+       do i=1,size(datmean(:,1))
+          write(iunit,"(1x,99(es15.7,2x))") datmean(i,:),datvar(i,:)
+       enddo
+    endif
+ end select
+
+ if (allocated(datmean)) deallocate(datmean)
+ if (allocated(datvar)) deallocate(datvar)
 
  close(unit=iunit)
 

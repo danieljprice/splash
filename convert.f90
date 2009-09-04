@@ -101,7 +101,7 @@ subroutine convert_all(outformat,igotfilenames)
 
  !--for analysis we need to start and end differently
  if (doanalysis) then
-    call close_analysis
+    call close_analysis(outformat)
     write(string,"(i10)") nfiles
     print "(/,5('-'),a,i5,a,/)",'> FINISHED CALCULATING '//trim(ucase(outformat))//' (USED '//trim(adjustl(string))//' DUMP FILES)'
  else
