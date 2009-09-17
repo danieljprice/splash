@@ -143,7 +143,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstepsread = 0
   doubleprec = .true.
   ilastrequired = 0
-  do i=1,size(required)
+  do i=1,size(required)-1
      if (required(i)) ilastrequired = i
   enddo
   
