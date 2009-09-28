@@ -77,8 +77,8 @@ subroutine exact_shock_sr(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,ypl
   vr = v_R
   gam = gamma
   t = time
+  rad(:) = xplot(:)
   call riemann(size(xplot),rad,dens,pr,vel,uu,rhol,rhor,pl,prr,vl,vr,gam,t,0.0d0)
-  xplot = real(rad)
 
 !------------------------------------
 !  determine which solution to plot
@@ -96,6 +96,8 @@ subroutine exact_shock_sr(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,ypl
      else
         yplot = real(pr/dens)
      endif
+  case(5) ! rho*
+     yplot = real(dens/dsqrt(1.d0-vel**2))
   end select
 
   return
@@ -172,7 +174,7 @@ end subroutine exact_shock_sr
   double precision, intent(in) :: x0
   double precision xi
 
-  double precision, intent(out) :: rad(mn)
+  double precision, intent(in) :: rad(mn)
   double precision x1, x2, x3, x4, x5, t
 
 ! ------- 
@@ -186,7 +188,7 @@ end subroutine exact_shock_sr
 !  write(*,*) ' time for the solution: ' 
 !  read (*,*)   t
   t = tin
-  xmin = x0 - 0.5d0
+!  xmin = x0 - 0.5d0
 
 ! -----
 ! left state
@@ -313,11 +315,11 @@ end subroutine exact_shock_sr
 ! solution on the mesh 
 ! ----------
 
-  do i=1,n
+  !do i=1,n
 
-    rad(i) = xmin + dfloat(i-1)/dfloat(n-1)
+  !  rad(i) = xmin + dfloat(i-1)/dfloat(n-1)
 
-  enddo
+  !enddo
 
   do i=1,n
 
