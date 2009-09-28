@@ -170,12 +170,14 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
      if (timing) then
         call cpu_time(t2)
-        if (ipartialread) then
-           print*,'time for (partial) data read = ',t2-t1,'s'
-           print*
-        else
-           print*,'time for data read = ',t2-t1,'s'
-           print*
+        if (t2-t1.gt.1.) then
+           if (ipartialread) then
+              print*,'time for (partial) data read = ',t2-t1,'s'
+              print*
+           else
+              print*,'time for data read = ',t2-t1,'s'
+              print*
+           endif
         endif
 !        do i=1,ncolumns+ncalc
 !           print*,' required(',i,') = ',required(i)
