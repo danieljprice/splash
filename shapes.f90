@@ -358,6 +358,47 @@ subroutine delete_shape(ishape)
 
 end subroutine delete_shape
 
+subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel)
+ implicit none
+ real, intent(in)    :: xpt,ypt
+ integer, intent(in) :: itransx,itransy,ipanel
+ integer :: i
+ real :: xmin,xmax,ymin,ymax,xposi,yposi
+
+ nshapes = nshapes + 1
+ if (nshapes.gt.maxshapes) then
+    print*,' *** cannot add shape: array limits reached, delete some shapes first ***'
+    nshapes = maxshapes
+    return
+ endif
+ i = nshapes
+ shape(i)%itype = 6
+ print*,' adding shape '//trim(labelshapetype(shape(i)%itype))
+ shape(i)%icolour = 1
+ shape(i)%linestyle = 1
+ shape(i)%linewidth = 1
+ shape(i)%ifillstyle = 2
+ shape(i)%iplotonpanel = ipanel
+!
+!--position text relative to viewport
+!
+ shape(i)%iunits = 2
+ call pgqwin(xmin,xmax,ymin,ymax)
+ xposi = (xpt - xmin)/(xmax-xmin)
+ yposi = (ypt - ymin)/(ymax-ymin)
+ shape(i)%xpos = xposi
+ shape(i)%ypos = yposi
+
+ shape(i)%xlen = 1.
+ shape(i)%ylen = 1.
+ shape(i)%angle = 0.
+ shape(i)%text = 'click to edit'
+ shape(i)%fjust = 0.
+ call edit_shape(i,xposi,yposi,itransx,itransy)
+
+end subroutine add_textshape
+
+
 subroutine convert_units(shape,xpos,ypos,xlen,ylen,xmin,ymin,dxplot,dyplot,itransx,itransy)
  use transforms, only:transform
  implicit none

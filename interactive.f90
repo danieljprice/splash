@@ -70,7 +70,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   zobserver,dscreen,use3Dopacity,taupartdepth,irerender,itrackpart,icolourscheme, &
   iColourBarStyle,labelrender,iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
   use settings_xsecrot, only:setsequenceend
-  use shapes, only:inshape,edit_shape,edit_textbox,delete_shape
+  use shapes, only:inshape,edit_shape,edit_textbox,delete_shape,add_textshape
   use multiplot, only:itrans
   use settings_render, only:projlabelformat,iapplyprojformat
   implicit none
@@ -309,6 +309,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         print*,' g: plot a line and find its g)radient'
         print*,' G: move le(G)end to current position'
         print*,' T: move (T)itle to current position'
+        print*,' ctrl-t: add text shape at current position'
         print*,' H: move vector plot legend H(ere)'
         print*,' m: change colour m)ap to next (rendered plots only)'
         print*,' M: change colour M)ap to previous (rendered plots only)'
@@ -1036,6 +1037,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         iadvance = 0
         interactivereplot = .true.
         iexit = .true.
+     case(achar(20)) ! add text shape
+        call add_textshape(xpt,ypt,itrans(iplotx),itrans(iploty),0)
      case(achar(8)) ! delete plot annotation / colour bar (backspace)
         ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty))
         if (ishape.gt.0) then
@@ -1053,6 +1056,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            iadvance = 0
            interactivereplot = .true.
            iexit = .true.
+        else
+           print*,' nothing to delete at x,y =',xpt,',',ypt
         endif
      !
      !--timestepping
@@ -1103,7 +1108,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !--save cursor position relative to the viewport
      !
      call pgqwin(xminwin,xmaxwin,yminwin,ymaxwin)
-     call get_vptxy(xpt,ypt,xcursor,ycursor,xminwin,xmaxwin,yminwin,ymaxwin)
+     call get_vptxy(xpt,ypt,xcursor,ycursor)
 
      if (rotation) then
         if (anglez.ge.360.) anglez = anglez - 360.
@@ -1344,6 +1349,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                              lastpanel,iplotxarr,iplotyarr,irenderarr,ivecarr,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
                              barwmulti,xminadapt,xmaxadapt,nacross,ndim,xorigin,icolourscheme, &
                              iColourBarStyle,interactivereplot)
+ use multiplot, only:itrans
+ use shapes, only:add_textshape,inshape,edit_shape,delete_shape
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep,iframe,lastpanel,iColourBarStyle
@@ -1354,7 +1361,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  real, dimension(:), intent(inout) :: xmin,xmax,xminadapt,xmaxadapt
  real, intent(in), dimension(ndim) :: xorigin
  logical, intent(out) :: interactivereplot
- integer :: nc,ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage
+ integer :: nc,ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape
  real :: xpt,ypt,xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
  real :: xlength,ylength,renderlength,drender,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
@@ -1383,13 +1390,18 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   call pgqwin(xmini,xmaxi,ymini,ymaxi)
 
   !--determine which plot the cursor falls on
+  !print*,' saved xcursor,ycursor = ',xcursor,ycursor,vptxmin,vptxmax,vptymin,vptymax
   ipanel = getpanel(xcursor,ycursor)
+  !print*,' saved panel = ',ipanel
 
   !--set the window to correspond to the panel we last left the cursor in
   call set_panel(ipanel)
 
   !--set the position in x,y relative to this panel
   call getxy(xcursor,ycursor,xpt,ypt,ipanel)
+  !print*,' saved x,y = ',xpt,ypt
+  call get_vptxy(xpt,ypt,vptxi,vptyi)
+  !print*,'saved vptx,y = ',vptxi,vptyi,ipanel
 
   iexit = .false.
   interactivereplot = .false.
@@ -1408,17 +1420,18 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !
      if (char.eq.achar(0)) return
   
-!     print*,'x, y = ',xpt,ypt,' function = ',char
+     !print*,'x, y = ',xpt,ypt,' function = ',char
      !
      !--determine which plot the cursor falls on
      !
-     call get_vptxy(xpt,ypt,vptxi,vptyi,xmini,xmaxi,ymini,ymaxi)
+     call get_vptxy(xpt,ypt,vptxi,vptyi)
      ipanel = getpanel(vptxi,vptyi)
      !print*,'xpt,ypt = ',xpt,ypt,vptxi,vptyi,ipanel
 
      !--translate vpt co-ords to x,y in current panel
      call getxy(vptxi,vptyi,xpti,ypti,ipanel)
 
+     !print*,'vptx,y = ',xpti,ypti,vptxi,vptyi,ipanel
      !--query the position of the colour bar
      if (ipanel.gt.0) then
         iamincolourbar = incolourbar(iColourBarStyle,xpti,ypti,xmin(iplotxarr(ipanel)), &
@@ -1545,7 +1558,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               call pgband(4,1,xpt,ypt,xpt2,ypt2,char2)           
            endif
            if (char2 == 'A') then
-              call get_vptxy(xpt2,ypt2,vptx2i,vpty2i,xmini,xmaxi,ymini,ymaxi)
+              call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
               if (barwmulti(ipanel).gt.tiny(barwmulti)) then
                  if (verticalbar) then
                     drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
@@ -1580,7 +1593,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         else
            call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
            !call pgrect(xpt,xpt2,ypt,ypt2)
-           call get_vptxy(xpt2,ypt2,vptx2i,vpty2i,xmini,xmaxi,ymini,ymaxi)
+           call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
            !--use centre point of first click and current click to
            !  better determine panel
            vptxceni = 0.5*(vptxi + vptx2i)
@@ -1809,7 +1822,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      case('G') ! move legend here
         print*,'setting legend position to current location...'
         if (ipanel.gt.0) then
-           call mvlegend(xpti,ypti,xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),xmax(iplotyarr(ipanel)))
+           call mvlegend(xpti,ypti,xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),xmax(iplotyarr(ipanel)),ipanel)
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
@@ -1848,8 +1861,20 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         istep = istepnew
         interactivereplot = .true.
         iexit = .true.
+     case(achar(20)) ! add text shape
+        print*,' adding text in panel ',ipanel
+        call add_textshape(xpti,ypti,itrans(iplotxarr(ipanel)),itrans(iplotyarr(ipanel)),ipanel)
+        istep = istepnew
+        interactivereplot = .true.
+        iexit = .true.
      case(achar(8)) ! delete plot annotation / colour bar (backspace)
-        if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
+        ishape = inshape(xpti,ypti,itrans(iplotxarr(ipanel)),itrans(iplotxarr(ipanel)))
+        if (ishape.gt.0) then
+           call delete_shape(ishape)
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        elseif (iamincolourbar .and. irenderarr(ipanel).gt.0) then
            iColourBarStyle = 0
            istep = istepnew
            interactivereplot = .true.
@@ -1860,6 +1885,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
+        else
+           print*,' nothing to delete at x,y =',xpt,',',ypt
         endif
 
      !
@@ -1913,7 +1940,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !
      !--save cursor position relative to the viewport
      !
-     call get_vptxy(xpt,ypt,xcursor,ycursor,xmini,xmaxi,ymini,ymaxi)
+     call get_vptxy(xpt,ypt,xcursor,ycursor)
      call reset_panel
 
      !
@@ -1945,22 +1972,6 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   
   contains
   
-   !---
-   ! utility which translates between world co-ordinates (x,y)
-   ! and viewport co-ordinates (relative to the whole viewport)
-   !---
-   !subroutine get_vptxy(x,y,vptx,vpty)
-   ! implicit none
-   ! real, intent(in) :: x,y
-   ! real, intent(out) :: vptx,vpty
-   ! real :: vptxmini,vptxmaxi,vptymini,vptymaxi
-   !
-   ! call pgqvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
-   ! vptx = vptxmini + (x-xmini)/(xmaxi-xmini)*(vptxmaxi-vptxmini)
-   ! vpty = vptymini + (y-ymini)/(ymaxi-ymini)*(vptymaxi-vptymini)
-   !
-   !end subroutine get_vptxy
-
    !--------
    ! utility to return which panel we are in given a point on the viewport
    ! and the viewport limits for each panel.
@@ -2015,7 +2026,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        endif
     enddo
     if (getpanel.eq.0) then
-       print*,'Error determining panel: assuming last'
+       !print*,' vptx,y = ',vptx,vpty,vptxmin(:),vptxmax(:)
+       print*,'Error determining panel: assuming last '
        getpanel = size(vptxmin)
     endif
 
@@ -2036,10 +2048,35 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                           *(xmax(iplotxarr(ipanel))-xmin(iplotxarr(ipanel)))
         y = xmin(iplotyarr(ipanel)) + (vpty-vptymin(ipanel))/(vptymax(ipanel)-vptymin(ipanel)) &
                           *(xmax(iplotyarr(ipanel))-xmin(iplotyarr(ipanel)))
+     else
+        x = 0.
+        y = 0.
      endif
      
      return   
     end subroutine getxy
+
+   !---
+   ! utility which translates between world co-ordinates (x,y)
+   ! and viewport co-ordinates (relative to the whole viewport)
+   !---
+   !subroutine get_vptxy(x,y,vptx,vpty,ipanel)
+   ! implicit none
+   ! real, intent(in) :: x,y
+   ! real, intent(out) :: vptx,vpty
+   ! integer, intent(in) :: ipanel
+   !
+   ! if (ipanel.gt.0) then
+   !    vptx = vptxmin(ipanel) + (x-xmin(iplotxarr(ipanel)))/&
+   !    (xmax(iplotxarr(ipanel))-xmin(iplotxarr(ipanel)))*(vptxmax(ipanel)-vptxmini(ipanel))
+   !    vpty = vptymin(ipanel) + (y-xmin(iplotyarr(ipanel)))/&(xmax(iplotyarr(ipanel))-xmin(iplotyarr(ipanel)))*(vptymax(ipanel)-vptymini(ipanel))
+   ! else
+   !   vptx = 0.5
+   !    vpty = 0.5
+   ! endif
+   !
+   !end subroutine get_vptxy
+
 
    !--------
    ! utility to reset the drawing surface so we can draw in a panel
@@ -2072,14 +2109,15 @@ end subroutine interactive_multi
 ! utility which translates between world co-ordinates (x,y)
 ! and viewport co-ordinates (relative to the whole viewport)
 !------------------------------------------------------------
-subroutine get_vptxy(x,y,vptx,vpty,xmini,xmaxi,ymini,ymaxi)
+subroutine get_vptxy(x,y,vptx,vpty)
  implicit none
  real, intent(in) :: x,y
  real, intent(out) :: vptx,vpty
- real, intent(in) :: xmini,xmaxi,ymini,ymaxi
+ real :: xmini,xmaxi,ymini,ymaxi
  real :: vptxmini,vptxmaxi,vptymini,vptymaxi
 
  call pgqvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
+ call pgqwin(xmini,xmaxi,ymini,ymaxi)
  vptx = vptxmini + (x-xmini)/(xmaxi-xmini)*(vptxmaxi-vptxmini)
  vpty = vptymini + (y-ymini)/(ymaxi-ymini)*(vptymaxi-vptymini)
 
@@ -2168,10 +2206,11 @@ end subroutine deleteaxes
 !
 !--move the legend to the current position
 !
-subroutine mvlegend(xi,yi,xmin,xmax,ymax)
- use settings_page, only:hposlegend,vposlegend,fjustlegend,iPlotLegend
+subroutine mvlegend(xi,yi,xmin,xmax,ymax,ipanel)
+ use settings_page, only:hposlegend,vposlegend,fjustlegend,iPlotLegend,iPlotLegendOnlyOnPanel
  implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
+ integer, intent(in), optional :: ipanel
  real :: xch,ych
  
  iPlotLegend = .true.
@@ -2187,6 +2226,9 @@ subroutine mvlegend(xi,yi,xmin,xmax,ymax)
 ! else
 !    fjustlegend = 0.5
 ! endif
+ if (present(ipanel)) then
+    if (ipanel.gt.0 .and. iPlotLegendOnlyOnPanel.gt.0) iPlotLegendOnlyOnPanel = ipanel
+ endif
  print*,'hpos = ',hposlegend,' vpos = ',vposlegend,' just = ',fjustlegend
  
  return
