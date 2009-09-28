@@ -110,11 +110,12 @@ module labels
  integer, dimension(maxplot) :: iamvec
  integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst
  integer :: ipmass,ike
- integer :: idivb,iJfirst
+ integer :: idivb,iJfirst,irhostar
  integer :: iacplane,ipowerspec
  integer :: icv,iradenergy
  integer :: isurfdens,itoomre
  integer :: ipdf,icolpixmap
+ integer :: irhorestframe
  
  public
 
@@ -146,6 +147,7 @@ contains
   icv = 0
   iradenergy = 0
   icolpixmap = 0
+  irhorestframe = 0
   
   return
  end subroutine reset_columnids

@@ -293,7 +293,7 @@ end subroutine read_data
 
 subroutine set_labels
  use labels, only:ix,ivx,ih,irho,iutherm,ipmass,ipr,iBfirst, &
-             idivB,iJfirst,iamvec,labelvec,label,labeltype
+             idivB,iJfirst,iamvec,labelvec,label,labeltype,irhorestframe
  use params
  use settings_data, only:ndim,ndimV,iformat,ntypes, &
                     UseTypeInRenderings
@@ -401,8 +401,9 @@ subroutine set_labels
     iBfirst = 0
  endif
  if (iformat.gt.2) then
-    !!!irho = ndim+ndimV+9
+    irhorestframe = irho
     icol = icol + 1
+    irho = icol
     label(icol) = 'rho*'
     !irho = icol
     icol = icol + 1

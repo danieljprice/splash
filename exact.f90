@@ -553,7 +553,7 @@ contains
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot, &
                             pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
-    use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst
+    use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,irhorestframe
     use prompting, only:prompt
     use exactfromfile, only:exact_fromfile
     use mhdshock, only:exact_mhdshock
@@ -581,7 +581,7 @@ contains
     
     real, parameter :: zero = 1.e-10
     integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle
-    real, dimension(maxexactpts) :: xexact,yexact,xtemp
+    real, dimension(:), allocatable :: xexact,yexact,xtemp
     real :: dx,ymean,errL1,errL2,errLinf
 
     !
@@ -591,6 +591,17 @@ contains
     call pgqls(iCurrentLineStyle)
     call pgsci(iExactLineColour)
     call pgsls(iExactLineStyle)
+    !
+    !--allocate memory
+    !
+    allocate(xexact(maxexactpts),yexact(maxexactpts),xtemp(maxexactpts),stat=ierr)
+    if (ierr /= 0) then
+       print "(a)",'*** ERROR allocating memory for exact solution plotting, skipping ***'
+       if (allocated(xexact)) deallocate(xexact)
+       if (allocated(yexact)) deallocate(yexact)
+       if (allocated(xtemp)) deallocate(xtemp)
+       return
+    endif
 
     !
     !--set x axis (can be overwritten)
@@ -845,7 +856,7 @@ contains
        endif
     case(11) ! special relativistic shock tube
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
-          if (iploty.eq.irho) then
+          if (iploty.eq.irhorestframe) then
              call exact_shock_sr(1,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
              call exact_shock_sr(2,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
@@ -853,6 +864,8 @@ contains
              call exact_shock_sr(3,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm) then
              call exact_shock_sr(4,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+          elseif (iploty.eq.irho) then
+             call exact_shock_sr(5,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           endif
        endif
     case(12) ! arbitrary function parsing
@@ -912,6 +925,12 @@ contains
     !   
     call pgsci(iCurrentColour)
     call pgsls(iCurrentLineStyle)
+    !
+    !--deallocate memory
+    !
+    if (allocated(xexact)) deallocate(xexact)
+    if (allocated(yexact)) deallocate(yexact)
+    if (allocated(xtemp)) deallocate(xtemp)
 
     return
 
