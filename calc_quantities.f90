@@ -336,9 +336,13 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
          endif
          if (idudtrad.gt.0) then
             if (iRescale) then
-               dat(1:ntoti,idudtrad,i) = lightspeed*dat(1:ntoti,iradenergy+1,i)* &
+               where (dat(1:ntoti,icv,i).gt.tiny(0.))
+                  dat(1:ntoti,idudtrad,i) = lightspeed*dat(1:ntoti,iradenergy+1,i)* &
                                          (abs(dat(1:ntoti,irho,i))*dat(1:ntoti,iradenergy,i) &
                                           - radconst*(dat(1:ntoti,iutherm,i)/dat(1:ntoti,icv,i))**4)
+               elsewhere
+                  dat(1:ntoti,idudtrad,i) = 0.
+               endwhere
             else
                dat(1:ntoti,idudtrad,i) = 0.
             endif
