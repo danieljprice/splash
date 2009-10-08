@@ -493,6 +493,13 @@ mbatesph: checksystem $(OBJECTS) read_data_mbate.o
 gadget: checksystem $(OBJECTS) read_data_gadget.o
 	$(F90C) $(F90FLAGS) -o gsplash $(OBJECTS) read_data_gadget.o $(LDFLAGS)
 
+gadgetdualendian: checksystem $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o
+	$(F90C) $(F90FLAGS) -o gsplash $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o $(LDFLAGS)
+
+read_data_gadget_otherendian.o: read_data_gadget.o
+	cat read_data_gadget.f90 | awk "/subroutine read_data/,/end subroutine read_data/ { print }" | sed 's/subroutine read_data/subroutine read_data_otherendian/' > read_data_gadget_otherendian.f90 
+	$(F90C) $(F90FLAGS) $(ENDIANFLAGBIG) -c read_data_gadget_otherendian.f90 -o read_data_gadget_otherendian.o
+
 gadget_jsb: checksystem $(OBJECTS) read_data_gadget_jsb.o
 	$(F90C) $(F90FLAGS) -o gsplash_jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
 
