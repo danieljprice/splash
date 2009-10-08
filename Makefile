@@ -97,7 +97,7 @@ ifeq ($(SYSTEM),g95)
    F90C= g95
    F90FLAGS= -O3 -ffast-math
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
-   DEBUGFLAG= -Wall -Wextra -Wno=165 -g -fbounds-check -ftrace=full
+   DEBUGFLAG= -Wall -Wextra -Wno=165 -g -fbounds-check -ftrace=full -freal=NaN
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
    PARALLEL= no
@@ -229,15 +229,17 @@ endif
 ifeq ($(SYSTEM),zen)
 #  this is for the intel fortran compiler
    F90C= ifort
-   F90FLAGS= -O3 -mcmodel=medium -axT -ipo -warn all #-assume nounderscore
+   F90FLAGS= -O3 -mcmodel=medium -axT -warn all #-ipo #-assume nounderscore
    OMPFLAGS= -openmp
-   DEBUGFLAG= -C -g
+   DEBUGFLAG= -check all -traceback -g
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -convert big_endian
    ENDIANFLAGLITTLE= -convert little_endian
-   X11LIBS=-L/usr/X11R6/lib64 -lX11
-   PGPLOTLIBS= -L${PGPLOT_DIR} -lpgplot -lpng
+   X11LIBS=-L/home/djp212/lib -lX11
+   PGPLOTLIBS= -lpng #-L${PGPLOT_DIR} -lpgplot -lpng
+   STATICLIBS= /home/djp212/pgplot/libpgplot.a
 # or use setenv F_UFMTENDIAN=big or little at runtime
+  # EXT=-dev
    KNOWN_SYSTEM=yes
 endif
 
@@ -503,6 +505,9 @@ dragon: checksystem $(OBJECTS) read_data_dragon.o
 vine: checksystem $(OBJECTS) read_data_VINE.o
 	$(F90C) $(F90FLAGS) -o vsplash $(OBJECTS) read_data_VINE.o $(LDFLAGS)
 
+kitp: checksystem $(OBJECTS) read_data_kitp.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ksplash $(OBJECTS) read_data_kitp.o
+
 ndspmhd: checksystem $(OBJECTS) read_data_dansph.o
 	$(F90C) $(F90FLAGS) -o splash $(OBJECTS) read_data_dansph.o $(LDFLAGS)
 
@@ -547,12 +552,16 @@ srosph: checksystem $(OBJECTS) read_data_sro.o
 spyros: checksystem $(OBJECTS) read_data_spyros.o
 	$(F90C) $(F90FLAGS) -o ssplash $(OBJECTS) read_data_spyros.o $(LDFLAGS)
 
-sphNG: checksystem $(OBJECTS) read_data_sphNG.o
-	$(F90C) $(F90FLAGS) -o ssplash$(EXT) $(OBJECTS) read_data_sphNG.o $(LDFLAGS)
+sphNG: checksystem $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o
+	$(F90C) $(F90FLAGS) -o ssplash$(EXT) $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o $(LDFLAGS)
 #--build universal binary on mac cluster
    ifeq ($(SYSTEM), maccluster)
 	lipo -create ssplash_ppc ssplash_i386 -output ssplash || cp ssplash$(EXT) ssplash
    endif
+
+read_data_sphNG_otherendian.o: read_data_sphNG.o
+	cat read_data_sphNG.f90 | awk "/subroutine read_data/,/end subroutine read_data/ { print }" | sed 's/subroutine read_data/subroutine read_data_otherendian/' > read_data_sphNG_otherendian.f90 
+	$(F90C) $(F90FLAGS) $(ENDIANFLAGBIG) -c read_data_sphNG_otherendian.f90 -o read_data_sphNG_otherendian.o
 
 timli: checksystem $(OBJECTS) read_data_timli.o
 	$(F90C) $(F90FLAGS) -o jsplash $(OBJECTS) read_data_timli.o $(LDFLAGS)
