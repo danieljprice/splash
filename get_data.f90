@@ -168,6 +168,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !call endian_info()
      if (timing) call cpu_time(t1)
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
+!--try different endian if failed the first time
+     !if (nstepsinfile(ireadfile).eq.0) then
+     !   print "(a)",' trying different endian'
+     !   call read_data_otherendian(rootname(ireadfile),istart,nstepsinfile(ireadfile))    
+     !endif
      if (timing) then
         call cpu_time(t2)
         if (t2-t1.gt.1.) then
