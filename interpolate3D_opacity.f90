@@ -91,9 +91,9 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npart, &
   real, dimension(npixx,npixy), intent(out) :: datsmooth, brightness
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused
-  integer :: iprintinterval, iprintnext, iprogress, itmin
+  integer :: iprintinterval, iprintnext,itmin
   integer, dimension(npart) :: iorder
-  integer :: ipart
+  integer(kind=selected_int_kind(12)) :: ipart
   real :: hi,hi1,hi21,radkern,q2,wab,pmassav
   real :: term,dy,dy2,ypix,zfrac,hav,zcutoff
   real :: fopacity,tau,rkappatemp,termi,xi,yi
@@ -101,6 +101,11 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npart, &
   logical :: iprintprogress,adjustzperspective
   real, dimension(npixx) :: xpix,dx2i
   real :: xminpix,yminpix
+!#ifdef _OPENMP
+!  integer :: OMP_GET_NUM_THREADS
+!#else
+  integer(kind=selected_int_kind(12)) :: iprogress
+!#endif
 
   datsmooth = 0.
   term = 0.
@@ -175,11 +180,30 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npart, &
   enddo
   
   nused = 0
-  
+
+!!$OMP PARALLEL default(none) &
+!!$OMP SHARED(hh,z,x,y,zorig,pmass,dat,itype,datsmooth,npmass,npart) &
+!!$OMP SHARED(xmin,ymin,xminpix,yminpix,xpix,pixwidth) &
+!!$OMP SHARED(npixx,npixy,dscreenfromobserver,zobserver,adjustzperspective) &
+!!$OMP SHARED(zcut,zcutoff,iorder,rkappa,brightness) &
+!!$OMP PRIVATE(hi,zfrac,xi,yi,radkern) &
+!!$OMP PRIVATE(hi1,hi21,term,termi) &
+!!$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
+!!$OMP PRIVATE(dx2i,q2,ypix,dy,dy2,wab) &
+!!$OMP PRIVATE(ipart,i,ipix,jpix,tau,fopacity) &
+!!$OMP REDUCTION(+:nused)
+!!$OMP MASTER
+!#ifdef _OPENMP
+!  print "(1x,a,i3,a)",'Using ',OMP_GET_NUM_THREADS(),' cpus'
+!#endif
+!!$OMP END MASTER
+
+!!$OMP DO ORDERED SCHEDULE(dynamic)
   over_particles: do ipart=1,npart
      !
      !--report on progress
      !
+!#ifndef _OPENMP
      if (iprintprogress) then
         iprogress = 100*(ipart/npart)
         if (iprogress.ge.iprintnext) then
@@ -187,6 +211,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npart, &
            iprintnext = iprintnext + iprintinterval
         endif
      endif
+!#endif
      !
      !--render in order from back to front
      !
@@ -288,6 +313,8 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npart, &
      endif particle_within_zcut
 
   enddo over_particles
+!!$OMP END DO
+!!$OMP END PARALLEL
 
 ! 
 !--get ending CPU time
