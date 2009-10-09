@@ -440,6 +440,7 @@ SOURCESF90= globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          prompting.f90 geometry.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 shapes.f90 units.f90 \
          write_data_phantom.f90 write_pixmap.f90 write_sphdata.f90 \
+         $(SYSTEMFILE) system_utils.f90 \
          analysis.f90 discplot.f90 \
          fparser.f90 exact_function.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
@@ -448,7 +449,7 @@ SOURCESF90= globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 \
          exact_densityprofiles.f90 exact_torus.f90 \
          exact_ringspread.f90 exact.f90 limits.f90 \
-         allocate.f90 titles.f90 $(SYSTEMFILE) system_utils.f90 \
+         allocate.f90 titles.f90 \
          options_render.f90 options_particleplots.f90 \
          calc_quantities.f90 get_data.f90 convert.f90 \
          options_data.f90 \
