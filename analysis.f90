@@ -266,8 +266,9 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !--set filename and header line
     !
     fileout = 'rhomach.out'
-    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) 5
-    write(headerline,fmtstring) 1,'time',2,'vwvar(rho)',3,'mwvar(rho)',4,'vwrms v',5,'mwrms v'
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) 9
+    write(headerline,fmtstring) 1,'time',2,'rhomean(vw)',3,'rhomean(mw)',4,'varrho(vw)',5,'varrho(mw)',&
+                                6,'stddevrho(vw)',7,'stddevrho(mw)',8,'rms v (vw)',9,'rms v (mw)'
 
  case('timeaverage','timeav')
     !
@@ -334,9 +335,10 @@ end subroutine open_analysis
 !  analysis file. Called once for each dump file.
 !----------------------------------------------------------------
 subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,ncolumns,ndimV,analysistype)
- use labels, only:ivx,iBfirst,iutherm,irho,ipmass,labeltype,label
- use params, only:int1,doub_prec,maxplot
- use asciiutils, only:ucase
+ use labels,       only:ivx,iBfirst,iutherm,irho,ipmass,labeltype,label
+ use params,       only:int1,doub_prec,maxplot
+ use asciiutils,   only:ucase
+ use system_utils, only:renvironment
  implicit none
  integer, intent(in) :: ntot,ntypes,ncolumns,ndimV
  integer, intent(in), dimension(:) :: npartoftype
@@ -348,8 +350,8 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
  integer :: itype,i,j,ierr,ntot1,ncol1
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi
- real(kind=doub_prec) :: rmsval,totvol,voli,rhoi,rmsvmw,v2i,temp,tempr
- real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,xdelta
+ real(kind=doub_prec) :: rmsval,totvol,voli,rhoi,rmsvmw,v2i
+ real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw
  real(kind=doub_prec), dimension(3) :: xmom
  real :: delta,dn
  character(len=20) :: fmtstring
@@ -597,82 +599,10 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
                    ' velocities not present / not labelled in dump file'
     endif
     !
-    !--calculate density variance (both mass and volume weighted),
-    !  together with mean square velocity
+    !--calculate mean density and rms velocity values on first pass
     !
     rmsval = 0.
     rmsvmw = 0.
-    rhovarmw = 0.
-    rhovarvw = 0.
-    rhomeanvw = 0.
-    rhomeanmw = 0.
-    totvol = 0.
-    ntot1 = 0
-    do i=1,ntot
-       itype  = igettype(i)
-       pmassi = particlemass(i,itype)
-       rhoi   = dat(i,irho)
-       if (rhoi.gt.0.) then
-          voli = pmassi/rhoi
-       else
-          voli = 0.
-       endif
-       !
-       !--mean squared velocity
-       !
-       if (ivx.gt.0 .and. ivx.le.ncolumns) then
-          v2i    = dot_product(dat(i,ivx:ivx+ndimV-1),dat(i,ivx:ivx+ndimV-1))
-          rmsval = rmsval + voli*v2i
-          rmsvmw = rmsvmw + v2i
-       endif
-       !
-       !--density variance, using Knuth/Welfords's compensated sum
-       !  (see http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance)
-       !
-       ntot1 = ntot1 + 1
-       xdelta     = rhoi - rhomeanmw
-       rhomeanmw = rhomeanmw + xdelta/ntot1
-       rhovarmw  = rhovarmw + xdelta*(rhoi - rhomeanmw)
-       !
-       !--volume weighted variance: use West (1979)'s weighted formula
-       !
-       if (i.eq.1) then
-          rhomeanvw = rhoi
-          totvol    = voli
-       else
-          temp      = voli + totvol
-          xdelta    = rhoi - rhomeanvw
-          tempr     = xdelta*voli/temp
-          rhovarvw  = rhovarvw  + totvol*xdelta*tempr
-          rhomeanvw = rhomeanvw + tempr
-       !
-       !--total volume on particles
-       !
-          totvol = temp
-       endif
-    enddo
-    print "(1x,a,es9.2)",'volume = ',totvol
-    rmsval = sqrt(rmsval/totvol)
-    rmsvmw = sqrt(rmsvmw/dble(ntot))
-    
-    rhovarvw = rhovarvw/totvol
-    rhovarmw = rhovarmw/dble(ntot)
-    !
-    !--write output to screen/terminal
-    !
-    print "(1x,'mean density (mass weighted) = ',es11.4,' +/- ',es11.4)",rhomeanmw,sqrt(rhovarmw)
-    print "(1x,'mean density (mass weighted) = ',es11.4,' +/- ',es11.4)",rhomeanmw,sqrt(rhovarmw)
-    print "(1x,'mean density     (vol. weighted) = ',es11.4)",rhomeanvw
-    print "(1x,'density variance (mass weighted) = ',es11.4)",rhovarmw
-    print "(1x,'density variance (vol. weighted) = ',es11.4)",rhovarvw
-    print "(1x,'rms velocity     (mass weighted) = ',es11.4)",rmsvmw
-    print "(1x,'rms velocity     (vol. weighted) = ',es11.4)",rmsval
-    !
-    !--write line to output file
-    !
-    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) 5
-    write(iunit,fmtstring) time,rhovarvw,rhovarmw,rmsval,rmsvmw
-
     rhomeanvw = 0.
     rhomeanmw = 0.
     totvol = 0.
@@ -688,14 +618,44 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        rhomeanmw = rhomeanmw + rhoi
        rhomeanvw = rhomeanvw + pmassi
        totvol = totvol + voli
+
+       !
+       !--mean squared velocity
+       !
+       if (ivx.gt.0 .and. ivx.le.ncolumns) then
+          v2i    = dot_product(dat(i,ivx:ivx+ndimV-1),dat(i,ivx:ivx+ndimV-1))
+          rmsval = rmsval + voli*v2i
+          rmsvmw = rmsvmw + v2i
+       endif
     enddo
+    !
+    !--use the computed volume for velocity, otherwise won't be normalised correctly
+    !
+    rmsval = sqrt(rmsval/totvol)
+    rmsvmw = sqrt(rmsvmw/dble(ntot))   
+
+    !
+    !--option to override volume from sum with environment variable
+    !
+    voli = renvironment('SPLASH_CALC_VOLUME',errval=-1.0)
+    if (voli.gt.0.) then
+       print "(1x,a,es9.2)",&
+                  'volume from sum(m/rho)           = ',totvol
+       totvol = voli
+       print "(1x,a,es9.2,/)",&
+                  '**overridden with SPLASH_CALC_VOLUME = ',totvol
+    else
+       print "(1x,a,es9.2,/,1x,a,/)",&
+                  'volume from sum(m/rho)           = ',totvol,&
+                  '(override this using SPLASH_CALC_VOLUME environment variable)'
+    endif
+
     rhomeanmw = rhomeanmw/real(ntot)
     rhomeanvw = rhomeanvw/totvol
-    print*,' CHECK...'
-    print "(1x,a,es9.2)",'volume = ',totvol
-    print "(1x,'mean density     (mass weighted) = ',es11.4)",rhomeanmw
-    print "(1x,'mean density     (vol. weighted) = ',es11.4)",rhomeanvw
-    
+
+    !
+    !--calculate variance on second pass
+    !
     rhovarvw = 0.
     rhovarmw = 0.
     do i=1,ntot
@@ -712,9 +672,21 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     enddo
     rhovarmw = rhovarmw/real(ntot)
     rhovarvw = rhovarvw/totvol
-    
-    print "(1x,'density variance (mass weighted) = ',es11.4)",rhovarmw
+
+    !
+    !--write output to screen/terminal
+    !
+    print "(1x,'mean density (vol. weighted)     = ',es11.4,' +/- ',es11.4)",rhomeanvw,sqrt(rhovarvw)
+    print "(1x,'mean density (mass weighted)     = ',es11.4,' +/- ',es11.4)",rhomeanmw,sqrt(rhovarmw)
     print "(1x,'density variance (vol. weighted) = ',es11.4)",rhovarvw
+    print "(1x,'density variance (mass weighted) = ',es11.4)",rhovarmw
+    print "(1x,'rms velocity     (vol. weighted) = ',es11.4)",rmsval
+    print "(1x,'rms velocity     (mass weighted) = ',es11.4)",rmsvmw
+    !
+    !--write line to output file
+    !
+    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) 9
+    write(iunit,fmtstring) time,rhomeanvw,rhomeanmw,rhovarvw,rhovarmw,sqrt(rhovarvw),sqrt(rhovarmw),rmsval,rmsvmw
 
  case('timeaverage','timeav')
     if (.not.allocated(datmean)) then
