@@ -266,9 +266,9 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !--set filename and header line
     !
     fileout = 'rhomach.out'
-    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) 9
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) 11
     write(headerline,fmtstring) 1,'time',2,'rhomean(vw)',3,'rhomean(mw)',4,'varrho(vw)',5,'varrho(mw)',&
-                                6,'stddevrho(vw)',7,'stddevrho(mw)',8,'rms v (vw)',9,'rms v (mw)'
+          6,'stddevrho(vw)',7,'stddevrho(mw)',8,'rms v (vw)',9,'rms v (mw)',10,'b (vw)',11,'b (mw)'
 
  case('timeaverage','timeav')
     !
@@ -340,21 +340,21 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  use asciiutils,   only:ucase
  use system_utils, only:renvironment
  implicit none
- integer, intent(in) :: ntot,ntypes,ncolumns,ndimV
+ integer, intent(in)               :: ntot,ntypes,ncolumns,ndimV
  integer, intent(in), dimension(:) :: npartoftype
- real, intent(in), dimension(:) :: massoftype
+ real, intent(in), dimension(:)    :: massoftype
  integer(kind=int1), intent(in), dimension(:) :: iamtype
- real, intent(in) :: time
- real, intent(in), dimension(:,:) :: dat
- character(len=*), intent(in) :: analysistype
+ real, intent(in)                  :: time
+ real, intent(in), dimension(:,:)  :: dat
+ character(len=*), intent(in)      :: analysistype
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
- integer :: itype,i,j,ierr,ntot1,ncol1
+ integer              :: itype,i,j,ierr,ntot1,ncol1
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi
  real(kind=doub_prec) :: rmsval,totvol,voli,rhoi,rmsvmw,v2i
- real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw
+ real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
  real(kind=doub_prec), dimension(3) :: xmom
- real :: delta,dn
- character(len=20) :: fmtstring
+ real                 :: delta,dn
+ character(len=20)    :: fmtstring
 !
 ! array with one value for each column
 !
@@ -682,11 +682,24 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     print "(1x,'density variance (mass weighted) = ',es11.4)",rhovarmw
     print "(1x,'rms velocity     (vol. weighted) = ',es11.4)",rmsval
     print "(1x,'rms velocity     (mass weighted) = ',es11.4)",rmsvmw
+    if (rmsval.gt.0.) then
+       bval = sqrt(rhovarvw)/rmsval
+    else
+       bval = 0.
+    endif
+    if (rmsvmw.gt.0.) then
+       bvalmw = sqrt(rhovarmw)/rmsvmw
+    else
+       bvalmw = 0.
+    endif    
+    print "(1x,'sqrt(sigma^2/v^2)(vol. weighted) = ',f11.3)",bval
+    print "(1x,'sqrt(sigma^2/v^2)(mass weighted) = ',f11.3)",bvalmw
     !
     !--write line to output file
     !
-    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) 9
-    write(iunit,fmtstring) time,rhomeanvw,rhomeanmw,rhovarvw,rhovarmw,sqrt(rhovarvw),sqrt(rhovarmw),rmsval,rmsvmw
+    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) 11
+    write(iunit,fmtstring) time,rhomeanvw,rhomeanmw,rhovarvw,rhovarmw,sqrt(rhovarvw),sqrt(rhovarmw),&
+                           rmsval,rmsvmw,bval,bvalmw
 
  case('timeaverage','timeav')
     if (.not.allocated(datmean)) then
