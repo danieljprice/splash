@@ -65,6 +65,12 @@ logical function isanalysis(string,noprint)
      isanalysis = .true.
  case('mean','meanvals')
      isanalysis = .true.
+ case('rms','rmsvals')
+     isanalysis = .true.
+ case('vrms','vrmsvals','vwrms','rmsvw')
+     isanalysis = .true.
+ case('rhovar','rhomach')
+     isanalysis = .true.
  case('timeaverage','timeav')
      isanalysis = .true.
  end select
@@ -76,19 +82,27 @@ logical function isanalysis(string,noprint)
  endif
  
  if (.not.isanalysis .and. doprint) then
-    print "(a)",' analysis mode ("splash calc X dumpfiles") on a sequence of dump files: '
-    print "(a)",' splash calc energies     : calculate KE,PE,total energy vs time'
-    print "(a)",'                            output to file called ''energy.out'''
-    print "(a)",'        calc massaboverho : mass above a series of density thresholds vs time'
-    print "(a)",'                            output to file called ''massaboverho.out'''
-    print "(a)",'        calc max          : maximum of each column vs. time'
-    print "(a)",'                            output to file called ''maxvals.out'''
-    print "(a)",'        calc min          : minimum of each column vs. time'
-    print "(a)",'                            output to file called ''minvals.out'''
-    print "(a)",'        calc mean         : mean of each column vs. time'
-    print "(a)",'                            output to file called ''meanvals.out'''
-    print "(a)",'        calc timeaverage  : time average of *all* entries for every particle'
-    print "(a)",'                            output to file called ''time_average.out'''
+    print "(a)",' Analysis mode ("splash calc X dumpfiles") on a sequence of dump files: '
+    print "(a)",'  splash calc energies     : calculate KE,PE,total energy vs time'
+    print "(a)",'                             output to file called ''energy.out'''
+    print "(a)",'         calc massaboverho : mass above a series of density thresholds vs time'
+    print "(a)",'                             output to file called ''massaboverho.out'''
+    print "(a)",'         calc rhomach      : density variance and RMS velocity dispersion vs. time'
+    print "(a)",'                             output to file called ''rhomach.out'''
+    print "(a)",'         calc max          : maximum of each column vs. time'
+    print "(a)",'                             output to file called ''maxvals.out'''
+    print "(a)",'         calc min          : minimum of each column vs. time'
+    print "(a)",'                             output to file called ''minvals.out'''
+    print "(a)",'         calc mean         : mean of each column vs. time'
+    print "(a)",'                             output to file called ''meanvals.out'''
+    print "(a)",'         calc rms          : (mass weighted) root mean square of each column vs. time'
+    print "(a)",'                             output to file called ''rmsvals.out'''
+    print "(a)",'         calc vrms         : volume weighted root mean square of each column vs. time'
+    print "(a)",'                             output to file called ''rmsvals-vw.out'''
+    print "(/,a)",'  the above options all produce a small ascii file with one row per input file.'
+    print "(a)",'  the following option produces a file equivalent in size to one input file (in ascii format):'
+    print "(/,a)",'         calc timeaverage  : time average of *all* entries for every particle'
+    print "(a)",'                             output to file called ''time_average.out'''
  endif
  
  return
@@ -109,7 +123,7 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
  character(len=1170) :: headerline   ! len=64 x 18 characters
  character(len=64) :: levelsfile
  character(len=40) :: fmtstring
- logical :: iexist
+ logical :: iexist,standardheader
  integer :: ierr,i
 !
 !--the 'required' array is used by the data reads (where implemented)
@@ -121,6 +135,7 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
  print "(/,5('-'),a,/)",'> CALCULATING '//trim(analysistype)//' vs time for all dump files'
  required(:)=.false.
  headerline = ' '
+ standardheader = .false.
 
  select case(trim(analysistype))
  case('energy','energies')
@@ -183,7 +198,7 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !
     fileout = 'massaboverho.out'
     write(headerline,"('#',1x,'[',i2.2,1x,a12,']',1x,20('[',i2.2,1x,a4,es8.1,a1,']',1x))") &
-          1,'time',(i+1,'M(d>',rholevels(i),')',i=1,nlevels)
+          1,'time',(i+1,'M(r>',rholevels(i),')',i=1,nlevels)
 
  case('max','maxvals')
     !
@@ -194,8 +209,7 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !--set filename and header line
     !
     fileout = 'maxvals.out'
-    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) ncolumns+1
-    write(headerline,fmtstring) 1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
+    standardheader = .true.
 
  case('min','minvals')
     !
@@ -206,8 +220,7 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !--set filename and header line
     !
     fileout = 'minvals.out'
-    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) ncolumns+1
-    write(headerline,fmtstring) 1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
+    standardheader = .true.
 
  case('mean','meanvals')
     !
@@ -218,8 +231,43 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !--set filename and header line
     !
     fileout = 'meanvals.out'
-    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) ncolumns+1
-    write(headerline,fmtstring) 1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
+    standardheader = .true.
+
+ case('rms','rmsvals')
+    !
+    !--read all columns from dump file
+    !
+    required(:) = .true.
+    !
+    !--set filename and header line
+    !
+    fileout = 'rmsvals.out'
+    standardheader = .true.
+
+ case('vrms','vrmsvals','vwrms','rmsvw')
+    !
+    !--read all columns from dump file
+    !
+    required(:) = .true.
+    !
+    !--set filename and header line
+    !
+    fileout = 'rmsvals-vw.out'
+    standardheader = .true.
+
+ case('rhovar','rhomach')
+    !
+    !--read density, velocity info
+    !
+    required(ipmass) = .true.
+    required(irho) = .true.
+    required(ivx:ivx+ndimV-1) = .true.
+    !
+    !--set filename and header line
+    !
+    fileout = 'rhomach.out'
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) 5
+    write(headerline,fmtstring) 1,'time',2,'vwvar(rho)',3,'mwvar(rho)',4,'vwrms v',5,'mwrms v'
 
  case('timeaverage','timeav')
     !
@@ -234,6 +282,16 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     write(headerline,fmtstring) (i,label(i)(1:12),i=1,ncolumns),&
                                 (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
  end select
+
+ if (standardheader) then
+!
+!--standard header is time in column 1, with an entry for each column following
+!  (this is to avoid repeated code above)
+!
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) ncolumns+1
+    write(headerline,fmtstring) 1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
+ endif
+ 
 !
 !--do not replace the file if it already exists
 !
@@ -290,6 +348,8 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
  integer :: itype,i,j,ierr,ntot1,ncol1
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi
+ real(kind=doub_prec) :: rmsval,totvol,voli,rhoi,rmsvmw,v2i,temp,tempr
+ real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,xdelta
  real(kind=doub_prec), dimension(3) :: xmom
  real :: delta,dn
  character(len=20) :: fmtstring
@@ -408,7 +468,6 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     do i=1,ncolumns
        print "(1x,a20,'max = ',es9.2)",label(i),coltemp(i)
     enddo
-    
     !
     !--write line to output file
     !
@@ -428,7 +487,6 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     do i=1,ncolumns
        print "(1x,a20,'min = ',es9.2)",label(i),coltemp(i)
     enddo
-    
     !
     !--write line to output file
     !
@@ -448,12 +506,215 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     do i=1,ncolumns
        print "(1x,a20,'mean = ',es9.2)",label(i),coltemp(i)
     enddo
-    
     !
     !--write line to output file
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) time,coltemp(1:ncolumns)
+
+ case('rms','rmsvals')
+    !
+    !--calculate RMS for each column
+    !
+    do i=1,ncolumns
+       coltemp(i) = sqrt(sum(dat(1:ntot,i)**2)/real(ntot))
+    enddo
+    !
+    !--write output to screen/terminal
+    !
+    do i=1,ncolumns
+       print "(1x,a20,'rms (mass weighted) = ',es9.2)",label(i),coltemp(i)
+    enddo
+    !
+    !--write line to output file
+    !
+    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
+    write(iunit,fmtstring) time,coltemp(1:ncolumns)
+
+ case('vrms','vrmsvals','vwrms','rmsvw')
+    if (irho.le.0 .or. irho.gt.ncolumns) then
+       print "(a)",' ERROR in volume weighted rms calculation!'// &
+                   ' density not present / not labelled in dump file, skipping...'
+       return
+    endif
+    !
+    !--warn if particle masses not found
+    !
+    if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype.eq.0)) then
+       print "(a)",' WARNING in volume weighted rms calculation!'// &
+                   ' masses not read or are zero from dump file'
+    endif
+    !
+    !--calculate volume-weighted RMS for each column
+    !
+    do j=1,ncolumns
+       rmsval = 0.
+       totvol = 0.
+       do i=1,ntot
+          itype  = igettype(i)
+          pmassi = particlemass(i,itype)
+          rhoi   = dat(i,irho)
+          if (rhoi.gt.0.) then
+             voli = pmassi/rhoi
+          else
+             voli = 0.
+          endif
+          
+          rmsval = rmsval + voli*dat(i,j)**2
+          totvol = totvol + voli
+       enddo
+       coltemp(j) = real(sqrt(rmsval/totvol))
+    enddo
+    print "(1x,a,es9.2)",'volume = ',totvol
+    !
+    !--write output to screen/terminal
+    !
+    do i=1,ncolumns
+       print "(1x,a20,'rms (volume weighted) = ',es9.2)",label(i),coltemp(i)
+    enddo
+    !
+    !--write line to output file
+    !
+    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
+    write(iunit,fmtstring) time,coltemp(1:ncolumns)
+
+ case('rhovar','rhomach')
+    if (irho.le.0 .or. irho.gt.ncolumns) then
+       print "(a)",' ERROR in density variance--rms velocity field calculation!'// &
+                   ' density not present / not labelled in dump file, skipping...'
+       return
+    endif
+    !
+    !--warn if particle masses not found
+    !
+    if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype.eq.0)) then
+       print "(a)",' WARNING in volume weighted rms calculation!'// &
+                   ' masses not read or are zero from dump file'
+    endif
+
+    if (ivx.le.0 .or. ivx.gt.ncolumns) then
+       print "(a)",' WARNING in volume weighted rms calculation!'// &
+                   ' velocities not present / not labelled in dump file'
+    endif
+    !
+    !--calculate density variance (both mass and volume weighted),
+    !  together with mean square velocity
+    !
+    rmsval = 0.
+    rmsvmw = 0.
+    rhovarmw = 0.
+    rhovarvw = 0.
+    rhomeanvw = 0.
+    rhomeanmw = 0.
+    totvol = 0.
+    ntot1 = 0
+    do i=1,ntot
+       itype  = igettype(i)
+       pmassi = particlemass(i,itype)
+       rhoi   = dat(i,irho)
+       if (rhoi.gt.0.) then
+          voli = pmassi/rhoi
+       else
+          voli = 0.
+       endif
+       !
+       !--mean squared velocity
+       !
+       if (ivx.gt.0 .and. ivx.le.ncolumns) then
+          v2i    = dot_product(dat(i,ivx:ivx+ndimV-1),dat(i,ivx:ivx+ndimV-1))
+          rmsval = rmsval + voli*v2i
+          rmsvmw = rmsvmw + v2i
+       endif
+       !
+       !--density variance, using Knuth/Welfords's compensated sum
+       !  (see http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance)
+       !
+       ntot1 = ntot1 + 1
+       xdelta     = rhoi - rhomeanmw
+       rhomeanmw = rhomeanmw + xdelta/ntot1
+       rhovarmw  = rhovarmw + xdelta*(rhoi - rhomeanmw)
+       !
+       !--volume weighted variance: use West (1979)'s weighted formula
+       !
+       if (i.eq.1) then
+          rhomeanvw = rhoi
+          totvol    = voli
+       else
+          temp      = voli + totvol
+          xdelta    = rhoi - rhomeanvw
+          tempr     = xdelta*voli/temp
+          rhovarvw  = rhovarvw  + totvol*xdelta*tempr
+          rhomeanvw = rhomeanvw + tempr
+       !
+       !--total volume on particles
+       !
+          totvol = temp
+       endif
+    enddo
+    print "(1x,a,es9.2)",'volume = ',totvol
+    rmsval = sqrt(rmsval/totvol)
+    rmsvmw = sqrt(rmsvmw/dble(ntot))
+    
+    rhovarvw = rhovarvw/totvol
+    rhovarmw = rhovarmw/dble(ntot)
+    !
+    !--write output to screen/terminal
+    !
+    print "(1x,'mean density (mass weighted) = ',es11.4,' +/- ',es11.4)",rhomeanmw,sqrt(rhovarmw)
+    print "(1x,'mean density (mass weighted) = ',es11.4,' +/- ',es11.4)",rhomeanmw,sqrt(rhovarmw)
+    print "(1x,'mean density     (vol. weighted) = ',es11.4)",rhomeanvw
+    print "(1x,'density variance (mass weighted) = ',es11.4)",rhovarmw
+    print "(1x,'density variance (vol. weighted) = ',es11.4)",rhovarvw
+    print "(1x,'rms velocity     (mass weighted) = ',es11.4)",rmsvmw
+    print "(1x,'rms velocity     (vol. weighted) = ',es11.4)",rmsval
+    !
+    !--write line to output file
+    !
+    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) 5
+    write(iunit,fmtstring) time,rhovarvw,rhovarmw,rmsval,rmsvmw
+
+    rhomeanvw = 0.
+    rhomeanmw = 0.
+    totvol = 0.
+    do i=1,ntot
+       itype  = igettype(i)
+       pmassi = particlemass(i,itype)
+       rhoi   = dat(i,irho)
+       if (rhoi.gt.0.) then
+          voli = pmassi/rhoi
+       else
+          voli = 0.
+       endif
+       rhomeanmw = rhomeanmw + rhoi
+       rhomeanvw = rhomeanvw + pmassi
+       totvol = totvol + voli
+    enddo
+    rhomeanmw = rhomeanmw/real(ntot)
+    rhomeanvw = rhomeanvw/totvol
+    print*,' CHECK...'
+    print "(1x,a,es9.2)",'volume = ',totvol
+    print "(1x,'mean density     (mass weighted) = ',es11.4)",rhomeanmw
+    print "(1x,'mean density     (vol. weighted) = ',es11.4)",rhomeanvw
+    
+    rhovarvw = 0.
+    rhovarmw = 0.
+    do i=1,ntot
+       itype  = igettype(i)
+       pmassi = particlemass(i,itype)
+       rhoi   = dat(i,irho)
+       if (rhoi.gt.0.) then
+          voli = pmassi/rhoi
+       else
+          voli = 0.
+       endif
+       rhovarmw = rhovarmw + (rhoi - rhomeanmw)**2
+       rhovarvw = rhovarvw + voli*(rhoi - rhomeanvw)**2
+    enddo
+    rhovarmw = rhovarmw/real(ntot)
+    rhovarvw = rhovarvw/totvol
+    
+    print "(1x,'density variance (mass weighted) = ',es11.4)",rhovarmw
+    print "(1x,'density variance (vol. weighted) = ',es11.4)",rhovarvw
 
  case('timeaverage','timeav')
     if (.not.allocated(datmean)) then
