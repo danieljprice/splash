@@ -266,9 +266,10 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !--set filename and header line
     !
     fileout = 'rhomach.out'
-    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) 11
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) 17
     write(headerline,fmtstring) 1,'time',2,'rhomean(vw)',3,'rhomean(mw)',4,'varrho(vw)',5,'varrho(mw)',&
-          6,'stddevrho(vw)',7,'stddevrho(mw)',8,'rms v (vw)',9,'rms v (mw)',10,'b (vw)',11,'b (mw)'
+          6,'stddevrho(vw)',7,'stddevrho(mw)',8,'rms v (vw)',9,'rms v (mw)',10,'b (vw)',11,'b (mw)',&
+          12,'s mean(vw)',13,'s mean(mw)',14,'s var(vw)',15,'s var(mw)',16,'s stddev(vw)',17,'s stddev(mw)'
 
  case('timeaverage','timeav')
     !
@@ -352,6 +353,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi
  real(kind=doub_prec) :: rmsval,totvol,voli,rhoi,rmsvmw,v2i
  real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
+ real(kind=doub_prec) :: smeanmw,smeanvw,svarmw,svarvw,si
  real(kind=doub_prec), dimension(3) :: xmom
  real                 :: delta,dn
  character(len=20)    :: fmtstring
@@ -606,6 +608,8 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     rhomeanvw = 0.
     rhomeanmw = 0.
     totvol = 0.
+    smeanvw = 0.
+    smeanmw = 0.
     do i=1,ntot
        itype  = igettype(i)
        pmassi = particlemass(i,itype)
@@ -617,6 +621,9 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        endif
        rhomeanmw = rhomeanmw + rhoi
        rhomeanvw = rhomeanvw + pmassi
+       si        = log(rhoi)
+       smeanmw   = smeanmw + si
+       smeanvw   = smeanvw + voli*si
        totvol = totvol + voli
 
        !
@@ -652,26 +659,35 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
 
     rhomeanmw = rhomeanmw/real(ntot)
     rhomeanvw = rhomeanvw/totvol
-
+    smeanmw   = smeanmw/real(ntot)
+    smeanvw   = smeanvw/totvol
     !
     !--calculate variance on second pass
     !
     rhovarvw = 0.
     rhovarmw = 0.
+    svarvw   = 0.
+    svarmw   = 0.
     do i=1,ntot
        itype  = igettype(i)
        pmassi = particlemass(i,itype)
        rhoi   = dat(i,irho)
        if (rhoi.gt.0.) then
           voli = pmassi/rhoi
+          si = log(rhoi)
        else
           voli = 0.
+          si   = 0.
        endif
        rhovarmw = rhovarmw + (rhoi - rhomeanmw)**2
        rhovarvw = rhovarvw + voli*(rhoi - rhomeanvw)**2
+       svarmw   = svarmw   + (si - smeanmw)**2
+       svarvw   = svarvw   + voli*(si - smeanvw)**2
     enddo
     rhovarmw = rhovarmw/real(ntot)
     rhovarvw = rhovarvw/totvol
+    svarmw   = svarmw/real(ntot)
+    svarvw   = svarvw/totvol
 
     !
     !--write output to screen/terminal
@@ -680,15 +696,20 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     print "(1x,'mean density (mass weighted)     = ',es11.4,' +/- ',es11.4)",rhomeanmw,sqrt(rhovarmw)
     print "(1x,'density variance (vol. weighted) = ',es11.4)",rhovarvw
     print "(1x,'density variance (mass weighted) = ',es11.4)",rhovarmw
+    print "(1x,'mean ln density (vol. weighted)     = ',es11.4,' +/- ',es11.4)",smeanvw,sqrt(svarvw)
+    print "(1x,'         -0.5*var(ln density)^2     = ',es11.4)",-0.5*svarvw
+    print "(1x,'mean ln density (mass weighted)     = ',es11.4,' +/- ',es11.4)",smeanmw,sqrt(svarmw)
+    print "(1x,'ln density variance (vol. weighted) = ',es11.4)",svarvw
+    print "(1x,'ln density variance (mass weighted) = ',es11.4)",svarmw
     print "(1x,'rms velocity     (vol. weighted) = ',es11.4)",rmsval
     print "(1x,'rms velocity     (mass weighted) = ',es11.4)",rmsvmw
     if (rmsval.gt.0.) then
-       bval = sqrt(rhovarvw)/rmsval
+       bval = sqrt(svarvw)/rmsval
     else
        bval = 0.
     endif
     if (rmsvmw.gt.0.) then
-       bvalmw = sqrt(rhovarmw)/rmsvmw
+       bvalmw = sqrt(svarmw)/rmsvmw
     else
        bvalmw = 0.
     endif    
@@ -697,9 +718,9 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--write line to output file
     !
-    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) 11
+    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) 17
     write(iunit,fmtstring) time,rhomeanvw,rhomeanmw,rhovarvw,rhovarmw,sqrt(rhovarvw),sqrt(rhovarmw),&
-                           rmsval,rmsvmw,bval,bvalmw
+                           rmsval,rmsvmw,bval,bvalmw,smeanvw,smeanmw,svarvw,svarmw,sqrt(svarvw),sqrt(svarmw)
 
  case('timeaverage','timeav')
     if (.not.allocated(datmean)) then
