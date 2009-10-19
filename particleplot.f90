@@ -43,7 +43,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   use settings_data,    only:ndim,icoords,ntypes
   use settings_part,    only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
                              ilabelpart,iplotline,linestylethisstep,linecolourthisstep, &
-                             iploterrorbars,ilocerrorbars,hfacmarkers
+                             iploterrorbars,hfacmarkers
   use interpolations2D, only:interpolate_part,interpolate_part1
   use transforms,       only:transform
   implicit none
@@ -381,26 +381,28 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   !
   !--plot lines joining particles if relevant
   !
+  call pgqci(icolourindex)
+  call pgsci(linecolourthisstep)
+
   if (iplotline .and. .not.use_zrange) then
      call pgqls(oldlinestyle)
-     call pgqci(icolourindex)
      call pgsls(linestylethisstep)
-     call pgsci(linecolourthisstep)
-
      call pgline(npartoftype(1),xplot(1:npartoftype(1)), &
                  yplot(1:npartoftype(1)))
-
-     if (iploterrorbars.gt.0) then
-        if (iploty.eq.iploterrorbars) then
-           call plot_errorbarsy(ntot,xplot,yplot,h,itransy)
-        elseif (iplotx.eq.iploterrorbars) then
-           call plot_errorbarsx(ntot,xplot,yplot,h,itransx)
-        endif
-     endif
-
      call pgsls(oldlinestyle)! reset 
-     call pgsci(icolourindex)
   endif
+  !
+  !--error bars follow line colour but not line style
+  !
+  if (iploterrorbars.gt.0 .and. .not.use_zrange) then
+     if (iploty.eq.iploterrorbars) then
+        call plot_errorbarsy(ntot,xplot,yplot,h,itransy)
+     elseif (iplotx.eq.iploterrorbars) then
+        call plot_errorbarsx(ntot,xplot,yplot,h,itransx)
+     endif
+  endif
+
+  call pgsci(icolourindex)
   !
   !--plot circles of interaction (ie a circle of radius 2h)
   !  around all or selected particles. For plots with only one coordinate axis, 
