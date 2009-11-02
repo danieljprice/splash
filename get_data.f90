@@ -387,15 +387,23 @@ subroutine check_labels
           ix(i) = i
        enddo
     endif
-    if (irho.gt.ncolumns) then
+    if (ndim.ge.1) then
+       do i=1,ndim
+          if (ix(i).le.0) then
+             ix(i) = i
+             print "(a)",' WARNING: ndim > 0 but zero ix setting in set_labels: fixing '
+          endif
+       enddo
+    endif
+    if (irho.gt.ncolumns .or. irho.lt.0) then
        print "(a)",' ERROR with irho setting in data read'
        irho = 0
     endif
-    if (ih.gt.ncolumns) then
+    if (ih.gt.ncolumns .or. ih.lt.0) then
        print "(a)",' ERROR with ih setting in data read '
        ih = 0
     endif
-    if (ipmass.gt.ncolumns) then
+    if (ipmass.gt.ncolumns .or. ipmass.lt.0) then
        print "(a)",' ERROR with ipmass setting in data read'
        ipmass = 0
     endif
