@@ -697,7 +697,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     print "(1x,'density variance (vol. weighted) = ',es11.4)",rhovarvw
     print "(1x,'density variance (mass weighted) = ',es11.4)",rhovarmw
     print "(1x,'mean ln density (vol. weighted)     = ',es11.4,' +/- ',es11.4)",smeanvw,sqrt(svarvw)
-    print "(1x,'         -0.5*var(ln density)^2     = ',es11.4)",-0.5*svarvw
+    print "(1x,'           -0.5*var(ln density)     = ',es11.4)",-0.5*svarvw
     print "(1x,'mean ln density (mass weighted)     = ',es11.4,' +/- ',es11.4)",smeanmw,sqrt(svarmw)
     print "(1x,'ln density variance (vol. weighted) = ',es11.4)",svarvw
     print "(1x,'ln density variance (mass weighted) = ',es11.4)",svarmw
