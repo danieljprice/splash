@@ -216,6 +216,7 @@ subroutine powerspec3D_sph(x,y,z,dat,hh,weight,icolours,npart, &
  real, dimension(ngrid,ngrid,ngrid) :: dat3D
  real :: dx
  integer :: logngrid,ik
+ logical :: periodic
 !
 !--make sure than ngrid is a factor of 2
 !
@@ -229,8 +230,9 @@ subroutine powerspec3D_sph(x,y,z,dat,hh,weight,icolours,npart, &
 !--interpolate (normalised) from particles to 3D grid suitable for FFT
 !
  print*,'ngrid = ',ngrid
+ periodic = .false.
  call interpolate3D(x,y,z,hh,weight,dat,icolours,npart, &
-      xmin,xmin,xmin,dat3D,ngrid,ngrid,ngrid,dx,dx,normalise)
+      xmin,xmin,xmin,dat3D,ngrid,ngrid,ngrid,dx,dx,normalise,periodic)
 !
 !--setup grid of frequencies for plotting
 !

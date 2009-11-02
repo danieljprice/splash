@@ -45,6 +45,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.13.0 : (xx/11/09)
+!             function parser incorporated; arbitrary function plotting implemented 
+!             as exact solution; command-line SPH->grid conversion ("splash to grid")
+!             implemented.
 !     1.12.2 : (15/07/09)
 !             Variable marker sizes added, can plot particles as circles with
 !             size proportional to h; dark matter rendering with block-labelled
@@ -245,29 +249,30 @@ program splash
 !----------------------------------------------------------------------------------
   use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile,animfile, &
                       fileprefix,set_filenames
-  use getdata, only:get_data
-  use defaults, only:defaults_set_initial,defaults_set,defaults_read
-  use limits, only:read_limits
-  use mainmenu, only:menu,allowrendering,set_coordlabels,set_extracols
-  use mem_allocation, only:deallocate_all
-  use projections3D, only:setup_integratedkernel
-  use settings_data, only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots
+  use getdata,   only:get_data
+  use defaults,  only:defaults_set_initial,defaults_set,defaults_read
+  use limits,    only:read_limits
+  use mainmenu,  only:menu,allowrendering,set_coordlabels,set_extracols
+  use mem_allocation,   only:deallocate_all
+  use projections3D,    only:setup_integratedkernel
+  use settings_data,    only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots
   use settings_xsecrot, only:read_animfile
-  use system_commands, only:get_number_arguments,get_argument
-  use system_utils, only:lenvironment
-  use asciiutils, only:read_asciifile,basename
-  use write_pixmap, only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
-  use convert, only:convert_all
+  use system_commands,  only:get_number_arguments,get_argument
+  use system_utils,  only:lenvironment
+  use asciiutils,    only:read_asciifile,basename
+  use write_pixmap,  only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
+  use convert,       only:convert_all
   use write_sphdata, only:issphformat
-  use analysis, only:isanalysis
-  use timestepping, only:timestep_loop
+  use write_griddata,only:isgridformat,print_gridformats
+  use analysis,      only:isanalysis
+  use timestepping,  only:timestep_loop
   use settings_page, only:interactive,device,nomenu
   implicit none
   integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
-  logical :: ihavereadfilenames,evsplash,doconvert
+  logical :: ihavereadfilenames,evsplash,doconvert,useall
   character(len=120) :: string
-  character(len=12) :: convertformat
-  character(len=*), parameter :: version = 'v1.12.2 [15th July ''09]'
+  character(len=12)  :: convertformat
+  character(len=*), parameter :: version = 'v1.13.0beta [3rd Nov. ''09]'
 
   !
   ! initialise some basic code variables
@@ -295,6 +300,7 @@ program splash
   iwritepixmap = .false.
   ireadpixmap  = .false.
   doconvert = .false.
+  useall = .false.
   nomenu = .false.
   ipickx = 0
   ipicky = 0
@@ -389,16 +395,21 @@ program splash
            if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
            stop
         end select
-     elseif (trim(string).eq.'to') then
+     elseif (trim(string).eq.'to' .or. trim(string).eq.'allto') then
      !
      !--for converting SPH formats
      !
+           if (trim(string).eq.'allto') useall = .true.
            i = i + 1
            call get_argument(i,string)
-           if (issphformat(string)) then
+           if (isgridformat(string)) then
+              doconvert = .true.
+              convertformat = trim(string)
+           elseif (issphformat(string)) then
               doconvert = .true.
               convertformat = trim(string)
            else
+              call print_gridformats()
               stop
            endif
      elseif (trim(string).eq.'calc') then
@@ -473,7 +484,7 @@ program splash
      !
      ! batch convert all dump files into the output format
      !
-     call convert_all(convertformat,ihavereadfilenames)
+     call convert_all(convertformat,ihavereadfilenames,useall)
   
   else
      !
@@ -629,6 +640,7 @@ subroutine print_usage(quit)
  print "(a)",' -dev device       : specify PGPLOT device on command line (ie. do not prompt)'
  print "(a)"
  ltemp = issphformat('none')
+ call print_gridformats()
  print "(a)"
  ltemp = isanalysis('none')
 

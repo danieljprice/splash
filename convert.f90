@@ -31,24 +31,28 @@ module convert
 
 contains
 
-subroutine convert_all(outformat,igotfilenames)
+subroutine convert_all(outformat,igotfilenames,useall)
  use particle_data, only:time,gamma,dat,npartoftype,masstype,iamtype
  use settings_data, only:ncolumns,ncalc,required,ntypes,ndimV
- use filenames, only:rootname,nstepsinfile,nfiles
+ use filenames,     only:rootname,nstepsinfile,nfiles
  use write_sphdata, only:write_sphdump
- use analysis, only:isanalysis,open_analysis,write_analysis,close_analysis
- use getdata, only:get_data
- use asciiutils, only:ucase
+ use write_griddata,only:isgridformat
+ use analysis,      only:isanalysis,open_analysis,write_analysis,close_analysis
+ use convert_grid,  only:convert_to_grid
+ use getdata,       only:get_data
+ use asciiutils,    only:ucase
  implicit none
  character(len=*), intent(in) :: outformat
- logical, intent(inout) :: igotfilenames
- logical :: doanalysis
+ logical, intent(inout)       :: igotfilenames
+ logical, intent(in)          :: useall
+ logical :: doanalysis,converttogrid
  integer :: ifile,idump,ntotal
  character(len=len(rootname)+4) :: filename
  character(len=10) :: string
  
- required = .true.
- doanalysis = isanalysis(outformat,noprint=.true.)
+ required      = .true.  ! read whole dump file by default
+ doanalysis    = isanalysis(outformat,noprint=.true.)
+ converttogrid = isgridformat(outformat)
  
  if (.not.doanalysis) then
  !
@@ -85,16 +89,22 @@ subroutine convert_all(outformat,igotfilenames)
     do idump = 1,nstepsinfile(ifile)
        if (idump.gt.1) then
           write(filename,"(a,'_',i3.3)") rootname(ifile),idump
+       else
+          filename = trim(rootname(ifile))
        endif
        ntotal = sum(npartoftype(1:ntypes,idump))
        if (doanalysis) then
           call write_analysis(time(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes, &
                           npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
                           ncolumns+ncalc,ndimV,outformat)
+       elseif (converttogrid) then
+          call convert_to_grid(time(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes,&
+                               npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
+                               ncolumns+ncalc,filename,outformat,useall)
        else
           call write_sphdump(time(idump),gamma(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes, &
                           npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
-                          ncolumns+ncalc,rootname(ifile),outformat)
+                          ncolumns+ncalc,filename,outformat)
        endif
     enddo
  enddo
