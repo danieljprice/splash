@@ -108,7 +108,7 @@ endif
 ifeq ($(SYSTEM), gfortran)
 #  gfortran compiler (part of gcc 4.x.x)
    F90C= gfortran
-   F90FLAGS= -O3 -Wall -frecord-marker=8
+   F90FLAGS= -O3 -Wall -frecord-marker=4
    SYSTEMFILE= system_f2003.f90
    DEBUGFLAG= -g -frange-check -fbacktrace
    OMPFLAGS= -fopenmp
@@ -449,7 +449,7 @@ FFLAGS = $(F90FLAGS)
 # really should include all dependencies but I am lazy
 
 SOURCESF90= globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
-         prompting.f90 geometry.f90 plotutils.f90 colourbar.f90 \
+         prompting.f90 geometry.f90 interpolation.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 shapes.f90 units.f90 \
          write_data_phantom.f90 write_pixmap.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \
