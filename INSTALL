@@ -16,16 +16,23 @@ For troubleshooting of some common installation problems,
 
 1) ---------------- Fortran 95 compilers ---------------------------
 
- By now, many Fortran 90/95 compilers exist. In terms of free ones, the Intel
-compiler has a non-commercial version available for linux and the g95 compiler,
+ By now, many Fortran 90/95 compilers exist. In terms of free ones, both Intel
+and Sun have non-commercial versions available for Linux and the g95 compiler,
 downloadable from:
 
 http://www.g95.org
 
-successfully compiles SPLASH and if necessary the PGPLOT libraries. gfortran is
-also free and works (and is faster) and can be downloaded from:
+successfully compiles SPLASH and if necessary the PGPLOT libraries.
+
+Gfortran is also free and, as of version 4.2.0, works. The latest version
+can be downloaded from:
 
 http://gcc.gnu.org/wiki/GFortran
+
+I strongly recommend downloading a more recent version of gfortran rather than
+relying on any pre-installed version (use gfortran -v to check the version number).
+In particular versions 4.1.0 and lower *do not* compile splash. Later versions also
+have openMP, so you can compile and run SPLASH in parallel.
 
 2) ------------------- PGPLOT -----------------------------------------
 The PGPLOT graphics subroutine library is freely downloadable from
@@ -44,7 +51,7 @@ is set to the location of the PGPLOT installation directory (e.g. /usr/local/pgp
 Check this by typing "echo $PGPLOT_DIR".
 
 If instead you are following the steps below, set the PGPLOT_DIR environment
-variable to the directory to which you will install PGPLOT (e.g. setenv PGPLOT_DIR $HOME/pgplot).
+variable to the directory to which you will install PGPLOT (e.g. export PGPLOT_DIR=$HOME/pgplot).
 
 It is a good idea to add the setting of PGPLOT_DIR into your .profile/.bashrc or .tcshrc file
 along with a setting for PGPLOT_DEV (e.g. to "/xw" which sets the default device 
