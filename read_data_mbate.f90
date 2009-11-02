@@ -128,10 +128,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
       !
       read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint,n1,n2,timei,gammai,rhozero,RK2
       print*,'nprint = ',nprint
-      if (.not.allocated(dat) .or. nprint.gt.npart_max) then
-         npart_max = max(npart_max,INT(1.1*nprint))
-         call alloc(npart_max,nstep_max,ncolstep+ncalc)
-      endif
       doubleprec = .true.
       !--try single precision if non-sensible values for time, gamma etc.
       if (ierr.ne.0 .or. timei.lt.0. .or. timei.gt.1e30  &
@@ -139,6 +135,18 @@ subroutine read_data(rootname,indexstart,nstepsread)
           .or. rhozero.lt.0. .or. RK2.lt.0. .or. RK2.gt.1.e10) then
           doubleprec = .false.
       endif
+      nstepsalloc = 1
+      do while (ierr == 0)
+         npart_max = max(npart_max,nprint)
+         nstepsalloc = nstepsalloc + 1
+         read(15,iostat=ierr) udisti,umassi,utimei,nprint
+      enddo
+      ierr = 0
+      if (.not.allocated(dat) .or. nprint.gt.npart_max) then
+         npart_max = max(npart_max,INT(1.1*nprint)) 
+         call alloc(npart_max,nstepsalloc,ncolstep+ncalc)
+      endif
+
       rewind(15)
    endif
    if (ierr /= 0) then
@@ -148,16 +156,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--loop over the timesteps in this file
 !     
    over_steps_in_file: do     
-     npart_max = max(npart_max,nprint)
+     !npart_max = max(npart_max,nprint)
 !
 !--allocate/reallocate memory if j > maxstep
 !
      if (j.gt.maxstep) then
-        if (nstepsread.gt.2) then
-	   nstepsalloc = j + 2*nstepsread
-	else
-	   nstepsalloc = j
-	endif
+        !if (nstepsread.gt.2) then
+	!   nstepsalloc = j + 2*nstepsread
+	!else
+	!   nstepsalloc = j
+	!endif
         call alloc(maxpart,nstepsalloc,maxcol)
      endif
 !
