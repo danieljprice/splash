@@ -56,12 +56,12 @@ module particle_data
  use params
  implicit none
  integer :: maxpart,maxstep,maxcol ! dimensions of dat array
- integer, allocatable, dimension(:) :: icolourme
+ integer, allocatable, dimension(:)   :: icolourme
  integer(kind=int1), allocatable, dimension(:,:) :: iamtype
  integer, allocatable, dimension(:,:) :: npartoftype
- real, allocatable, dimension(:,:) :: masstype
- real, allocatable, dimension(:) :: time, gamma
- real, allocatable, dimension(:,:,:) :: dat
+ real, allocatable, dimension(:,:)    :: masstype
+ real, allocatable, dimension(:)      :: time, gamma
+ real, allocatable, dimension(:,:,:)  :: dat
 
  public
 
@@ -77,6 +77,8 @@ module filenames
  character(len=100) :: fileprefix
  character(len=120) :: defaultsfile,limitsfile,animfile,unitsfile
  integer, dimension(maxfile) :: nstepsinfile
+ character(len=68)  :: tagline = &
+  'SPLASH: A visualisation tool for SPH data (c)2004-2009 Daniel Price'
  
  public
 
@@ -87,10 +89,10 @@ contains
   character(len=*), intent(in) :: prefix
 
   defaultsfile = trim(adjustl(prefix))//'.defaults'
-  limitsfile = trim(adjustl(prefix))//'.limits'
-  animfile = trim(adjustl(prefix))//'.anim'
-  unitsfile = trim(adjustl(prefix))//'.units'
-  fileprefix = trim(adjustl(prefix))
+  limitsfile   = trim(adjustl(prefix))//'.limits'
+  animfile     = trim(adjustl(prefix))//'.anim'
+  unitsfile    = trim(adjustl(prefix))//'.units'
+  fileprefix   = trim(adjustl(prefix))
   
   return
  end subroutine set_filenames

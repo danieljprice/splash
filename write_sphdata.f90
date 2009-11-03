@@ -71,6 +71,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  use settings_data,  only:ndim
  use params,         only:int1
  use write_data_phantom, only:write_sphdata_phantom
+ use filenames,      only:tagline
  implicit none
  integer, intent(in)                          :: npart,ntypes,ncolumns
  integer, intent(in), dimension(:)            :: npartoftype
@@ -101,18 +102,17 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
           print "(a)",' ERROR OPENING FILE FOR WRITING'
           return
        endif
-       write(iunit,"(a)",iostat=ierr) '# '//trim(filename)// &
-                          '.ascii created by SPLASH, a visualisation tool for SPH data (c) 2008 Daniel Price'
-       write(iunit,"('#')")
-       write(iunit,"('#',1x,'time:',13x,'time unit (',a,')')",iostat=ierr) trim(unitslabel(0))
-       write(iunit,"('#',2(1x,1pe15.7))",iostat=ierr) time,units(0)
-       write(iunit,"('#')")
-       write(iunit,"('#',1x,'npart:',6(1x,a12))",iostat=ierr) (trim(labeltype(i)),i=1,ntypes)
-       write(iunit,"('#',7x,6(1x,i12))",iostat=ierr) npartoftype(1:ntypes)
-       write(iunit,"('# units:')")
-       write(iunit,"('#'"//fmtstring(2:),iostat=ierr) units(1:ncolumns)
-       write(iunit,fmtstringlab,iostat=ierr) unitslabel(1:ncolumns)
-       write(iunit,"('#')")
+       write(iunit,"(a)",err=100) '# '//trim(filename)//'.ascii '//trim(tagline)
+       write(iunit,"('#')",err=100)
+       write(iunit,"('#',1x,'time:',13x,'time unit (',a,')')",err=100) trim(unitslabel(0))
+       write(iunit,"('#',2(1x,1pe15.7))",err=100) time,units(0)
+       write(iunit,"('#')",err=100)
+       write(iunit,"('#',1x,'npart:',6(1x,a12))",err=100) (trim(labeltype(i)),i=1,ntypes)
+       write(iunit,"('#',7x,6(1x,i12))",err=100) npartoftype(1:ntypes)
+       write(iunit,"('# units:')",err=100)
+       write(iunit,"('#'"//fmtstring(2:),err=100) units(1:ncolumns)
+       write(iunit,fmtstringlab,err=100) unitslabel(1:ncolumns)
+       write(iunit,"('#')",err=100)
        !
        !--write body
        !

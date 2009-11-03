@@ -89,6 +89,12 @@ subroutine open_gridfile(iunit,filenamein,outformat,npixels,ncolumns,time,ierr)
 !  that have all columns in the same file
 !
  select case(trim(lcase(outformat)))
+ case('gridascii','grid')
+ !
+ !--ascii output uses individual files
+ !
+    print "(/,a,i2)",'-----> WRITING TO ASCII OUTPUT FILES'
+
  case('gridbinary','gridbin')
  !
  !--simple unformatted binary format
@@ -97,13 +103,19 @@ subroutine open_gridfile(iunit,filenamein,outformat,npixels,ncolumns,time,ierr)
     print "(/,a,i2)",'----> WRITING TO '//trim(filename)//' on unit ',iunit
     print "(a)",     '      (using unformatted binary format)'
     open(unit=iunit,file=trim(filename),form='unformatted',status='replace',iostat=ierr)
-    if (ierr /= 0) return
-    write(iunit) npixels(1:3),ncolumns,time
+    if (ierr /= 0) then
+       print "(a)",' ERROR opening '//trim(filename)//' for output!'
+       return
+    endif
+
+    write(iunit,iostat=ierr) npixels(1:3),ncolumns,time
+    if (ierr /= 0) then
+       print "(a)",' ERROR writing header to file!'
+       return
+    endif
  
  case('hdf5')
 
- case('gridascii','grid')
-    ! do nothing
  case default
     ! return error if bad format
     print "(a)",' ERROR: unknown output format '''//trim(outformat)//''' in open_gridfile'
@@ -117,7 +129,8 @@ end subroutine open_gridfile
 ! write a particular column to the grid output file
 !------------------------------------------------------
 subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,ierr)
- use asciiutils, only:ucase,lcase
+ use asciiutils, only:ucase,lcase,safename
+ use filenames,  only:tagline
  implicit none
  integer, intent(in)                :: iunit
  character(len=*), intent(in)       :: filenamein,outformat
@@ -126,11 +139,50 @@ subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,ierr)
  character(len=*), intent(in)       :: label
  real, intent(in)                   :: time
  integer, intent(out)               :: ierr
+ character(len=len(filenamein)+20)  :: filename
  integer :: i,j,k
  
  select case(trim(lcase(outformat)))
  case('gridascii','grid')
- 
+    filename = trim(filenamein)//'_'//trim(safename(label))//'_grid.dat'
+    print "(a)",'-----> WRITING '//trim(ucase(label))//' to '//trim(filename)
+    
+    !
+    !--open ascii file
+    !
+    open(unit=iunit,file=trim(filename),form='formatted',status='replace',iostat=ierr)
+    if (ierr /= 0) then
+       print "(a)",' ERROR OPENING FILE FOR WRITING'        
+       return
+    endif
+    write(iunit,"(a)",iostat=ierr) '# '//trim(tagline)
+    write(iunit,"(a)",iostat=ierr) &
+      '# '//trim(filename)//' produced using "splash to '//trim(outformat)// &
+      '" on file '//trim(filenamein)
+    write(iunit,"(a)",iostat=ierr) '#'
+    write(iunit,"(a)",iostat=ierr) '# time:'
+    write(iunit,"(a,es15.7)",iostat=ierr) '# ',time
+    write(iunit,"(a)",iostat=ierr) '#'
+    write(iunit,"(a)",iostat=ierr) '# file contains:'
+    write(iunit,"(a)",iostat=ierr) '# '//trim(label)//' interpolated to 3D grid '
+    write(iunit,"(a)",iostat=ierr) '#'
+    write(iunit,"(a)",iostat=ierr) '# written in the form: '
+    write(iunit,"(a)",iostat=ierr) '#   do k=1,nz'
+    write(iunit,"(a)",iostat=ierr) '#      do j=1,ny'
+    write(iunit,"(a)",iostat=ierr) '#         write(*,*) (dat(i,j,k),i=1,nx)'
+    write(iunit,"(a)",iostat=ierr) '#      enddo'
+    write(iunit,"(a)",iostat=ierr) '#   enddo'
+    write(iunit,"(a)",iostat=ierr) '#'
+    write(iunit,"(a)",iostat=ierr) '# grid dimensions:'
+    write(iunit,"(a)",iostat=ierr) '# nx    ny    nz'
+    write(iunit,*) npixels(1:3)
+    do k=1,npixels(3)
+       do j=1,npixels(2)
+          write(iunit,"(2048(es14.6,1x))") (dat(i,j,k),i=1,npixels(1))
+       enddo
+    enddo
+    close(unit=iunit)
+
  case('gridbinary','gridbin')
     print "(a)",'-----> WRITING '//trim(ucase(label))
     write(iunit,iostat=ierr) (((dat(i,j,k),i=1,npixels(1)),j=1,npixels(2)),k=1,npixels(3))
