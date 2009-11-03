@@ -155,33 +155,39 @@ subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,ierr)
        print "(a)",' ERROR OPENING FILE FOR WRITING'        
        return
     endif
-    write(iunit,"(a)",iostat=ierr) '# '//trim(tagline)
-    write(iunit,"(a)",iostat=ierr) &
+    write(iunit,"(a)",err=100) '# '//trim(tagline)
+    write(iunit,"(a)",err=100) &
       '# '//trim(filename)//' produced using "splash to '//trim(outformat)// &
       '" on file '//trim(filenamein)
-    write(iunit,"(a)",iostat=ierr) '#'
-    write(iunit,"(a)",iostat=ierr) '# time:'
+    write(iunit,"(a)",err=100) '#'
+    write(iunit,"(a)",err=100) '# time:'
     write(iunit,"(a,es15.7)",iostat=ierr) '# ',time
-    write(iunit,"(a)",iostat=ierr) '#'
-    write(iunit,"(a)",iostat=ierr) '# file contains:'
-    write(iunit,"(a)",iostat=ierr) '# '//trim(label)//' interpolated to 3D grid '
-    write(iunit,"(a)",iostat=ierr) '#'
-    write(iunit,"(a)",iostat=ierr) '# written in the form: '
-    write(iunit,"(a)",iostat=ierr) '#   do k=1,nz'
-    write(iunit,"(a)",iostat=ierr) '#      do j=1,ny'
-    write(iunit,"(a)",iostat=ierr) '#         write(*,*) (dat(i,j,k),i=1,nx)'
-    write(iunit,"(a)",iostat=ierr) '#      enddo'
-    write(iunit,"(a)",iostat=ierr) '#   enddo'
-    write(iunit,"(a)",iostat=ierr) '#'
-    write(iunit,"(a)",iostat=ierr) '# grid dimensions:'
-    write(iunit,"(a)",iostat=ierr) '# nx    ny    nz'
-    write(iunit,*) npixels(1:3)
+    write(iunit,"(a)",err=100) '#'
+    write(iunit,"(a)",err=100) '# file contains:'
+    write(iunit,"(a)",err=100) '# '//trim(label)//' interpolated to 3D grid '
+    write(iunit,"(a)",err=100) '#'
+    write(iunit,"(a)",err=100) '# written in the form: '
+    write(iunit,"(a)",err=100) '#   do k=1,nz'
+    write(iunit,"(a)",err=100) '#      do j=1,ny'
+    write(iunit,"(a)",err=100) '#         write(*,*) (dat(i,j,k),i=1,nx)'
+    write(iunit,"(a)",err=100) '#      enddo'
+    write(iunit,"(a)",err=100) '#   enddo'
+    write(iunit,"(a)",err=100) '#'
+    write(iunit,"(a)",err=100) '# grid dimensions:'
+    write(iunit,"(a)",err=100) '# nx    ny    nz'
+    write(iunit,*,err=100) npixels(1:3)
     do k=1,npixels(3)
        do j=1,npixels(2)
-          write(iunit,"(2048(es14.6,1x))") (dat(i,j,k),i=1,npixels(1))
+          write(iunit,"(2048(es14.6,1x))",err=100) (dat(i,j,k),i=1,npixels(1))
        enddo
     enddo
     close(unit=iunit)
+    return
+
+100 continue
+    print "(a)",' ERROR writing grid file'
+    close(unit=iunit)
+    return
 
  case('gridbinary','gridbin')
     print "(a)",'-----> WRITING '//trim(ucase(label))
@@ -189,7 +195,7 @@ subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,ierr)
  case('hdf5')
 
  case default
-    print "(a)",' ERROR: unknown output format '''//trim(outformat)//''' in open_gridfile'
+    print "(a)",' ERROR: unknown output format '''//trim(outformat)//''' in write_grid'
     return
  end select
  
