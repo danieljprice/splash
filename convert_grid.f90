@@ -39,7 +39,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  use labels,          only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst
  use limits,          only:lim
  use settings_units,  only:units
- use settings_data,   only:ndim,ndimV,UseTypeInRenderings,iRescale,required
+ use settings_data,   only:ndim,ndimV,UseTypeInRenderings,iRescale,required,lowmemorymode
  use settings_part,   only:iplotpartoftype
  use settings_render, only:npix,inormalise_interpolations,idensityweightedinterpolation
  use params,          only:int1
@@ -71,7 +71,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  real, dimension(3)    :: datmin,datmax,datmean
  integer, dimension(3) :: npixels
  real    :: hmin,pixwidth,rhominset,rhomin,gridmin,gridmax,gridmean
- logical :: isperiodic,inormalise
+ logical :: isperiodic,inormalise,lowmem
  
  !
  !--check for errors in input settings
@@ -210,6 +210,17 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
     endif
     ncolsgrid = 1 + ndimV*nvec
  endif
+ 
+ !
+ !--use low memory mode for large grids
+ !
+ if (product(npixels).gt.256**3) then
+    lowmem = .true.
+ else
+    lowmem = lowmemorymode
+ endif
+ if (lowmem .and. nvec.gt.0) &
+    print "(a,/)",' [doing velocity field components separately (low memory mode)]'
  !
  !--allocate memory for the grid
  ! 
@@ -316,17 +327,21 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
     enddo
 
  else
-    if (allocated(datgrid)) deallocate(datgrid)
-        
+    if (.not.lowmem) then
+       if (allocated(datgrid)) deallocate(datgrid)
+    endif        
+    
     if (nvec.gt.0) then
 
-       write(*,"(/,a,i5,2(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(:),' x 3 grid ...'
-       allocate(datgridvec(3,npixels(1),npixels(2),npixels(3)),stat=ierr)
-       if (ierr /= 0) then
-          write(*,*) 'FAILED: NOT ENOUGH MEMORY'
-          return
-       else
-          write(*,*) 'OK'
+       if (.not.lowmem) then
+          write(*,"(/,a,i5,2(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(:),' x 3 grid ...'
+          allocate(datgridvec(3,npixels(1),npixels(2),npixels(3)),stat=ierr)
+          if (ierr /= 0) then
+             write(*,*) 'FAILED: NOT ENOUGH MEMORY'
+             return
+          else
+             write(*,*) 'OK'
+          endif
        endif
 
        !
@@ -345,28 +360,52 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
              exit over_vec
           end select
           
-          print fmtstring1,trim(labelvec(iloc))
-          call minmaxmean_part(dat(1:ninterp,iloc:iloc+ndimV-1),weight,ninterp,partmin,partmax,partmean)
-          do i=1,ndimV
-             print fmtstring,' on parts:',partmin(i),partmax(i),partmean(i)
-          enddo
+          if (lowmem) then
+             
+             do i=iloc,iloc+ndimV-1         
+                print "(/,a)",' interpolating '//trim(label(i))
+                print fmtstring1,trim(label(i))
+                call minmaxmean_part(dat(1:ninterp,i:i),weight,ninterp,partmin,partmax,partmean)
+                print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
 
-          call interpolate3D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
-               dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc:iloc+ndimV-1),icolourme,ninterp,&
-               xmin(1),xmin(2),xmin(3),datgridvec,npixels(1),npixels(2),npixels(3),&
-               pixwidth,pixwidth,.true.,isperiodic)
+                call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                     dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
+                     xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
+                     pixwidth,pixwidth,.true.,isperiodic)
 
-          call minmaxmean_gridvec(datgridvec,npixels,ndimV,datmin,datmax,datmean)
-          do i=1,ndimV
-             print fmtstring,' on grid :',datmin(i),datmax(i),datmean(i)
-          enddo
-          !
-          !--write result to grid file
-          !
-          do i=1,ndimV
-             call write_grid(iunit,filename,outformat,datgridvec(i,:,:,:),npixels,&
-                             trim(label(iloc+i-1)),time,pixwidth,xmin,ierr)
-          enddo
+                call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
+                print fmtstring,' on grid :',gridmin,gridmax,gridmean
+                !
+                !--write gridded data to file
+                !
+                call write_grid(iunit,filename,outformat,datgrid,npixels,trim(label(i)),&
+                     time,pixwidth,xmin,ierr)          
+             enddo
+          else
+          
+             print fmtstring1,trim(labelvec(iloc))
+             call minmaxmean_part(dat(1:ninterp,iloc:iloc+ndimV-1),weight,ninterp,partmin,partmax,partmean)
+             do i=1,ndimV
+                print fmtstring,' on parts:',partmin(i),partmax(i),partmean(i)
+             enddo
+
+             call interpolate3D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                  dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc:iloc+ndimV-1),icolourme,ninterp,&
+                  xmin(1),xmin(2),xmin(3),datgridvec,npixels(1),npixels(2),npixels(3),&
+                  pixwidth,pixwidth,.true.,isperiodic)
+
+             call minmaxmean_gridvec(datgridvec,npixels,ndimV,datmin,datmax,datmean)
+             do i=1,ndimV
+                print fmtstring,' on grid :',datmin(i),datmax(i),datmean(i)
+             enddo
+             !
+             !--write result to grid file
+             !
+             do i=1,ndimV
+                call write_grid(iunit,filename,outformat,datgridvec(i,:,:,:),npixels,&
+                                trim(label(iloc+i-1)),time,pixwidth,xmin,ierr)
+             enddo
+          endif
           print*
        enddo over_vec
     endif
