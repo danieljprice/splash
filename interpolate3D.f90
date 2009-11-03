@@ -78,7 +78,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   integer :: iprintinterval,iprintnext,iprogress
   integer :: ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
   integer :: ipixi,jpixi,kpixi,nxpix,nwarn
-  real :: xminpix,yminpix,zminpix
+  real :: xminpix,yminpix,zminpix,hmin,dhmin3
   real, dimension(npixx) :: dx2i
   real :: xi,yi,zi,hi,hi1,hi21,radkern,qq,wab,q2,const,dyz2,dz2
   real :: term,termnorm,dy,dz,ypix,zpix,xpixi
@@ -119,8 +119,12 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   xminpix = xmin - 0.5*pixwidth
   yminpix = ymin - 0.5*pixwidth
   zminpix = zmin - 0.5*zpixwidth
-!  xmax = xmin + npixx*pixwidth
-!  ymax = ymin + npixy*pixwidth
+  !
+  !--use a minimum smoothing length on the grid to make
+  !  sure that particles contribute to at least one pixel
+  !
+  hmin = 0.5*pixwidth
+  dhmin3 = 1./(hmin*hmin*hmin)
 
   const = dpi  ! normalisation constant (3D)
   nwarn = 0
@@ -148,7 +152,18 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      if (itype(i).lt.0) cycle over_parts
 
      hi = hh(i)
-     if (hi.le.0.) cycle over_parts
+     if (hi.le.0.) then
+        cycle over_parts
+     elseif (hi.lt.hmin) then
+     !
+     !--use minimum h to capture subgrid particles
+     !  (get better results *without* adjusting weights)
+     !
+        termnorm = const*weight(i) !*(hi*hi*hi)*dhmin3
+        hi = hmin
+     else
+        termnorm = const*weight(i)
+     endif
 
      !
      !--set kernel related quantities
@@ -160,7 +175,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      hi1 = 1./hi
      hi21 = hi1*hi1
      radkern = 2.*hi   ! radius of the smoothing kernel
-     termnorm = const*weight(i)
+     !termnorm = const*weight(i)
      term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to

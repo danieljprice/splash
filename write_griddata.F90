@@ -47,7 +47,9 @@ logical function isgridformat(string)
      isgridformat = .true.
  case('gridascii')
      isgridformat = .true.
- case('gridbinary')
+ case('gridbinary','gridbin')
+     isgridformat = .true.
+ case('gridtest')
      isgridformat = .true.
  end select
 
@@ -114,7 +116,11 @@ subroutine open_gridfile(iunit,filenamein,outformat,npixels,ncolumns,time,ierr)
        print "(a)",' ERROR writing header to file!'
        return
     endif
- 
+
+ case('gridtest')
+
+    print "(/,a,i2)",'-----> WRITING TO ASCII OUTPUT (TEST) FILES'
+     
  case('hdf5')
 
  case default
@@ -129,7 +135,8 @@ end subroutine open_gridfile
 !------------------------------------------------------
 ! write a particular column to the grid output file
 !------------------------------------------------------
-subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,ierr)
+subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,&
+                      pixwidth,xmin,ierr)
  use asciiutils, only:ucase,lcase,safename
  use filenames,  only:tagline
  implicit none
@@ -138,10 +145,12 @@ subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,ierr)
  real, dimension(:,:,:), intent(in) :: dat
  integer, dimension(3), intent(in)  :: npixels
  character(len=*), intent(in)       :: label
- real, intent(in)                   :: time
+ real, intent(in)                   :: time,pixwidth
+ real, dimension(3), intent(in)     :: xmin
  integer, intent(out)               :: ierr
  character(len=len(filenamein)+20)  :: filename
  integer :: i,j,k
+ real    :: xi,yi,zi
  
  ierr = 0
  select case(trim(lcase(outformat)))
@@ -186,21 +195,59 @@ subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,ierr)
     close(unit=iunit)
     return
 
-100 continue
-    print "(a)",' ERROR writing grid file'
-    close(unit=iunit)
-    return
-
  case('gridbinary','gridbin')
     print "(a)",'-----> WRITING '//trim(ucase(label))
     write(iunit,iostat=ierr) (((dat(i,j,k),i=1,npixels(1)),j=1,npixels(2)),k=1,npixels(3))
+ 
+ case('gridtest')
+    filename = trim(filenamein)//'_'//trim(safename(label))//'_grid.dat'
+    print "(a)",'-----> WRITING '//trim(ucase(label))//' to '//trim(filename)
+    
+    !
+    !--open ascii file
+    !
+    open(unit=iunit,file=trim(filename),form='formatted',status='replace',iostat=ierr)
+    if (ierr /= 0) then
+       print "(a)",' ERROR OPENING FILE FOR WRITING'        
+       return
+    endif
+    write(iunit,"(a)",err=100) '# '//trim(tagline)
+    write(iunit,"(a)",err=100) &
+      '# '//trim(filename)//' produced using "splash to '//trim(outformat)// &
+      '" on file '//trim(filenamein)
+    write(iunit,"(a)",err=100) '# grid dimensions:'
+    write(iunit,"(a)",err=100) '# nx    ny    nz'
+    write(iunit,"(a,3(i5,1x))",err=100) '# ',npixels(1:3)
+    write(iunit,"('#',4('[',a13,']'))",err=100) 'x','y','z',trim(label)
+    do k=1,npixels(3)
+       write(*,"('.')",ADVANCE='NO')
+       zi = xmin(3) + (k-0.5)*pixwidth
+       do j=1,npixels(2)
+          yi = xmin(2) + (j-0.5)*pixwidth
+          do i=1,npixels(1)
+             xi = xmin(1) + (i-0.5)*pixwidth
+             write(iunit,"(4(es14.6,1x))") xi,yi,zi,dat(i,j,k)
+          enddo
+       enddo
+    enddo
+    write(*,*)
+
  case('hdf5')
 
  case default
     print "(a)",' ERROR: unknown output format '''//trim(outformat)//''' in write_grid'
     return
  end select
- 
+
+ return
+!
+!--error handling during write
+!
+100 continue
+    print "(a)",' ERROR writing grid file'
+    close(unit=iunit)
+    return
+
 end subroutine write_grid
 
 end module write_griddata

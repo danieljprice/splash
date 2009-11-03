@@ -189,7 +189,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  endif
  print*
  pixwidth    = (xmax(1)-xmin(1))/npixx
- npixels(:)  = int((xmax(:)-xmin(:) - epsilon(0.))/pixwidth) + 1
+ npixels(:)  = int((xmax(:)-xmin(:) - 0.5*pixwidth)/pixwidth) + 1
 
  !
  !--work out how many columns will be written to file
@@ -248,7 +248,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
 
  call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
       dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
-     xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
+      xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
       pixwidth,pixwidth,inormalise,isperiodic)
  !
  !--set minimum density on the grid
@@ -285,7 +285,8 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  !--write density to grid data file
  !
  print*
- call write_grid(iunit,filename,outformat,datgrid,npixels,trim(label(irho)),time,ierr)
+ call write_grid(iunit,filename,outformat,datgrid,npixels,trim(label(irho)),&
+                 time,pixwidth,xmin,ierr)
 
  !
  !--interpolate remaining quantities to the 3D grid
@@ -309,8 +310,8 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
           !
           !--write gridded data to file
           !
-          call write_grid(iunit,filename,outformat,datgrid,npixels,trim(label(i)),time,ierr)
-
+          call write_grid(iunit,filename,outformat,datgrid,npixels,trim(label(i)),&
+               time,pixwidth,xmin,ierr)
        endif
     enddo
 
@@ -364,7 +365,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
           !
           do i=1,ndimV
              call write_grid(iunit,filename,outformat,datgridvec(i,:,:,:),npixels,&
-                             trim(label(iloc+i-1)),time,ierr)
+                             trim(label(iloc+i-1)),time,pixwidth,xmin,ierr)
           enddo
           print*
        enddo over_vec
