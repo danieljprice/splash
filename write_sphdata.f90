@@ -102,7 +102,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
           print "(a)",' ERROR OPENING FILE FOR WRITING'
           return
        endif
-       write(iunit,"(a)",err=100) '# '//trim(filename)//'.ascii '//trim(tagline)
+       write(iunit,"(a)",err=100) '# '//trim(filename)//'.ascii, created by '//trim(tagline)
        write(iunit,"('#')",err=100)
        write(iunit,"('#',1x,'time:',13x,'time unit (',a,')')",err=100) trim(unitslabel(0))
        write(iunit,"('#',2(1x,1pe15.7))",err=100) time,units(0)
