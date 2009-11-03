@@ -75,6 +75,7 @@ end subroutine print_gridformats
 ! open grid file for output, write header
 !------------------------------------------------------
 subroutine open_gridfile(iunit,filenamein,outformat,npixels,ncolumns,time,ierr)
+ use asciiutils, only:lcase
  implicit none
  integer, intent(in)               :: iunit
  character(len=*), intent(in)      :: filenamein,outformat
@@ -87,8 +88,8 @@ subroutine open_gridfile(iunit,filenamein,outformat,npixels,ncolumns,time,ierr)
 !--Only have to do something here for formats
 !  that have all columns in the same file
 !
- select case(trim(outformat))
- case('gridbinary')
+ select case(trim(lcase(outformat)))
+ case('gridbinary','gridbin')
  !
  !--simple unformatted binary format
  !
@@ -116,7 +117,7 @@ end subroutine open_gridfile
 ! write a particular column to the grid output file
 !------------------------------------------------------
 subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,ierr)
- use asciiutils, only:ucase
+ use asciiutils, only:ucase,lcase
  implicit none
  integer, intent(in)                :: iunit
  character(len=*), intent(in)       :: filenamein,outformat
@@ -127,10 +128,10 @@ subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,ierr)
  integer, intent(out)               :: ierr
  integer :: i,j,k
  
- select case(trim(outformat))
+ select case(trim(lcase(outformat)))
  case('gridascii','grid')
  
- case('gridbinary')
+ case('gridbinary','gridbin')
     print "(a)",'-----> WRITING '//trim(ucase(label))
     write(iunit,iostat=ierr) (((dat(i,j,k),i=1,npixels(1)),j=1,npixels(2)),k=1,npixels(3))
  case('hdf5')

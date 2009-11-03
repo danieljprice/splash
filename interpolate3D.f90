@@ -77,7 +77,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   integer :: i,ipix,jpix,kpix
   integer :: iprintinterval,iprintnext,iprogress
   integer :: ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
-  integer :: ipixi,jpixi,kpixi,nxpix
+  integer :: ipixi,jpixi,kpixi,nxpix,nwarn
   real :: xminpix,yminpix,zminpix
   real, dimension(npixx) :: dx2i
   real :: xi,yi,zi,hi,hi1,hi21,radkern,qq,wab,q2,const,dyz2,dz2
@@ -123,6 +123,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !  ymax = ymin + npixy*pixwidth
 
   const = dpi  ! normalisation constant (3D)
+  nwarn = 0
   !
   !--loop over particles
   !      
@@ -191,8 +192,19 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
            if (ipixi.gt.npixx) ipixi = ipixi - npixx
         endif
         xpixi = xminpix + ipix*pixwidth
-        dx2i(nxpix) = ((xpixi - xi)**2)*hi21
+        !--watch out for errors with perioic wrapping...
+        if (nxpix.le.size(dx2i)) then
+           dx2i(nxpix) = ((xpixi - xi)**2)*hi21
+        endif
      enddo
+     
+     !--if particle contributes to more than npixx pixels
+     !  (i.e. periodic boundaries wrap more than once)
+     !  truncate the contribution and give warning
+     if (nxpix.gt.npixx) then
+        nwarn = nwarn + 1
+        ipixmax = ipixmin + npixx - 1
+     endif
      !
      !--loop over pixels, adding the contribution from this particle
      !
@@ -218,12 +230,12 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
            
            nxpix = 0
            do ipix = ipixmin,ipixmax
+              nxpix = nxpix + 1
               ipixi = ipix
               if (periodic) then
                  if (ipixi.lt.1)     ipixi = ipixi + npixx
                  if (ipixi.gt.npixx) ipixi = ipixi - npixx
               endif
-              nxpix = nxpix + 1
               q2 = dx2i(nxpix) + dyz2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
               !
               !--SPH kernel - standard cubic spline
@@ -256,6 +268,11 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
         enddo
      enddo
   enddo over_parts
+
+  if (nwarn.gt.0) then
+     print "(a,i11,a,/,a)",' interpolate3D: WARNING: contributions truncated from ',nwarn,' particles',&
+                           '                that wrap periodic boundaries more than once'
+  endif
   !
   !--normalise dat array
   !
@@ -285,7 +302,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   integer :: i,ipix,jpix,kpix
   integer :: iprintinterval,iprintnext,iprogress
   integer :: ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
-  integer :: ipixi,jpixi,kpixi,nxpix
+  integer :: ipixi,jpixi,kpixi,nxpix,nwarn
   real :: xminpix,yminpix,zminpix
   real, dimension(npixx) :: dx2i
   real :: xi,yi,zi,hi,hi1,hi21,radkern,qq,wab,q2,const,dyz2,dz2
@@ -332,6 +349,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 !  ymax = ymin + npixy*pixwidth
 
   const = dpi  ! normalisation constant (3D)
+  nwarn = 0
   !
   !--loop over particles
   !      
@@ -400,8 +418,19 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
            if (ipixi.gt.npixx) ipixi = ipixi - npixx
         endif
         xpixi = xminpix + ipix*pixwidth
-        dx2i(nxpix) = ((xpixi - xi)**2)*hi21
+        !--watch out for errors with perioic wrapping...
+        if (nxpix.le.size(dx2i)) then
+           dx2i(nxpix) = ((xpixi - xi)**2)*hi21
+        endif
      enddo
+     
+     !--if particle contributes to more than npixx pixels
+     !  (i.e. periodic boundaries wrap more than once)
+     !  truncate the contribution and give warning
+     if (nxpix.gt.npixx) then
+        nwarn = nwarn + 1
+        ipixmax = ipixmin + npixx - 1
+     endif
      !
      !--loop over pixels, adding the contribution from this particle
      !
@@ -457,6 +486,11 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
         enddo
      enddo
   enddo over_parts
+  
+  if (nwarn.gt.0) then
+     print "(a,i11,a,/,a)",' interpolate3D: WARNING: contributions truncated from ',nwarn,' particles',&
+                           '                that wrap periodic boundaries more than once'
+  endif
   !
   !--normalise dat array
   !

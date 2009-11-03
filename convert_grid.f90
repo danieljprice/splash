@@ -39,7 +39,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  use labels,          only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst
  use limits,          only:lim
  use settings_units,  only:units
- use settings_data,   only:ndim,ndimV,ndataplots,UseTypeInRenderings,iRescale,required
+ use settings_data,   only:ndim,ndimV,UseTypeInRenderings,iRescale,required
  use settings_part,   only:iplotpartoftype
  use settings_render, only:npix,inormalise_interpolations,idensityweightedinterpolation
  use params,          only:int1
@@ -90,9 +90,9 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  print "(a)",' grid dimensions:'
  do i=1,3
     if (maxval(abs(xmax)).lt.1.e7) then
-       print "(1x,a,': ',f8.2,' -> ',f8.2)",trim(label(ix(i))),xmin(i),xmax(i)
+       print "(1x,a,': ',f14.6,' -> ',f14.6)",trim(label(ix(i))),xmin(i),xmax(i)
     else
-       print "(1x,a,': ',es10.2,' -> ',es10.2)",trim(label(ix(i))),xmin(i),xmax(i)
+       print "(1x,a,': ',es14.6,' -> ',es14.6)",trim(label(ix(i))),xmin(i),xmax(i)
     endif
  enddo
  !
@@ -115,15 +115,15 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
     endif
  enddo
  
- if (irho.le.0 .or. irho.gt.ndataplots) then
+ if (irho.le.0 .or. irho.gt.ncolumns) then
     print "(a)",' ERROR: density not found in data read.'
     ierr = 2
  endif
- if (ih.le.0 .or. ih.gt.ndataplots) then
+ if (ih.le.0 .or. ih.gt.ncolumns) then
     print "(a)",' ERROR: smoothing length not found in data read.'
     ierr = 3
  endif
- if (ipmass.le.0 .or. ipmass.gt.ndataplots) then
+ if (ipmass.le.0 .or. ipmass.gt.ncolumns) then
     if (all(masstype(:).lt.tiny(0.))) then
        print "(a)",' ERROR: particle masses not read as column, and mass per type not set.'
        ierr = 4
@@ -155,7 +155,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  !
  inormalise = inormalise_interpolations
  call set_interpolation_weights(weight,dat,itype,(iplotpartoftype .and. UseTypeInRenderings),&
-      ninterp,npartoftype,masstype,ntypes,ndataplots,irho,ipmass,ih,ndim,iRescale,&
+      ninterp,npartoftype,masstype,ntypes,ncolumns,irho,ipmass,ih,ndim,iRescale,&
       idensityweightedinterpolation,inormalise,units,required)
  !
  !--set colours (just in case)
@@ -167,7 +167,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  !
  npixx = npix
  if (npixx.le.0) then
-    print "(a)",' WARNING: number of pixels = 0, using automatic pixel numbers'
+    print "(/,a)",' WARNING: number of pixels = 0, using automatic pixel numbers'
     hmin = 0.
     call minmaxmean_part(dat(:,ih:ih),weight,ninterp,partmin,partmax,partmean,nonzero=.true.)
     hmin = partmin(1)
@@ -175,7 +175,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
        print*,'based on the minimum smoothing length of hmin = ',hmin
        npixels(:) = int(xmax(:) - xmin(:))/hmin + 1
        print "(a,i6,2(' x',i6),a)",' requires ',npixels(:),' pixels to capture the full resolution'
-       if (product(npixels(:)).gt.huge(0) .or. product(npixels(:)).le.0) then
+       if (product(npixels(:)).gt.1024**3 .or. product(npixels(:)).le.0) then
           npixx = 512
           print "(a,i4)",' but this is ridiculous, so instead we choose ',npixx
        else
@@ -187,6 +187,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
        print "(a)",'    so instead we choose npixels = ',npixx
     endif
  endif
+ print*
  pixwidth    = (xmax(1)-xmin(1))/npixx
  npixels(:)  = int((xmax(:)-xmin(:) - epsilon(0.))/pixwidth) + 1
 
@@ -195,7 +196,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  !
  if (interpolateall) then
     ncolsgrid = 0
-    do i=1,ndataplots
+    do i=1,ncolumns
        if (.not.any(ix(:).eq.i) .and. i.ne.ih .and. i.ne.ipmass) then
           ncolsgrid = ncolsgrid + 1
        endif
@@ -204,8 +205,8 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  else
     nvec = 0
     if (ndimV.eq.3) then
-       if (ivx.gt.0 .and. ivx+ndimV-1.le.ndataplots) nvec = nvec + 1
-       if (iBfirst.gt.0 .and. iBfirst+ndimV-1.le.ndataplots) nvec = nvec + 1
+       if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) nvec = nvec + 1
+       if (iBfirst.gt.0 .and. iBfirst+ndimV-1.le.ncolumns) nvec = nvec + 1
     endif
     ncolsgrid = 1 + ndimV*nvec
  endif
@@ -247,7 +248,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
 
  call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
       dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
-      xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
+     xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
       pixwidth,pixwidth,inormalise,isperiodic)
  !
  !--set minimum density on the grid
@@ -290,7 +291,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  !--interpolate remaining quantities to the 3D grid
  !
  if (interpolateall) then
-    do i=1,ndataplots
+    do i=1,ncolumns
        if (.not.any(ix(:).eq.i) .and. i.ne.ih .and. i.ne.ipmass .and. i.ne.irho) then
  
           print "(/,a)",' interpolating '//trim(label(i))

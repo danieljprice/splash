@@ -34,19 +34,20 @@ contains
 subroutine convert_all(outformat,igotfilenames,useall)
  use particle_data, only:time,gamma,dat,npartoftype,masstype,iamtype
  use settings_data, only:ncolumns,ncalc,required,ntypes,ndimV
- use filenames,     only:rootname,nstepsinfile,nfiles
+ use filenames,     only:rootname,nstepsinfile,nfiles,limitsfile
  use write_sphdata, only:write_sphdump
  use write_griddata,only:isgridformat
  use analysis,      only:isanalysis,open_analysis,write_analysis,close_analysis
  use convert_grid,  only:convert_to_grid
  use getdata,       only:get_data
  use asciiutils,    only:ucase
+ use limits,        only:read_limits
  implicit none
  character(len=*), intent(in) :: outformat
  logical, intent(inout)       :: igotfilenames
  logical, intent(in)          :: useall
  logical :: doanalysis,converttogrid
- integer :: ifile,idump,ntotal
+ integer :: ifile,idump,ntotal,ierr
  character(len=len(rootname)+4) :: filename
  character(len=10) :: string
  
@@ -73,7 +74,11 @@ subroutine convert_all(outformat,igotfilenames,useall)
  do ifile=1,nfiles
     !--read data from dump file + calculate extra columns
     if (ifile.eq.1) then
-       call get_data(ifile,igotfilenames)
+       call get_data(ifile,igotfilenames,firsttime=.true.)
+       !
+       ! read plot limits from file (overrides get_data limits settings)
+       !
+       call read_limits(trim(limitsfile),ierr)
  !
  !--for analysis we need to initialise the output file
  !  and close it at the end - do this here so we know
