@@ -88,6 +88,7 @@ subroutine open_gridfile(iunit,filenamein,outformat,npixels,ncolumns,time,ierr)
 !--Only have to do something here for formats
 !  that have all columns in the same file
 !
+ ierr = 0
  select case(trim(lcase(outformat)))
  case('gridascii','grid')
  !
@@ -142,6 +143,7 @@ subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,ierr)
  character(len=len(filenamein)+20)  :: filename
  integer :: i,j,k
  
+ ierr = 0
  select case(trim(lcase(outformat)))
  case('gridascii','grid')
     filename = trim(filenamein)//'_'//trim(safename(label))//'_grid.dat'
