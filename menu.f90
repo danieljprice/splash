@@ -25,8 +25,7 @@
 !--------------------
 module mainmenu
  implicit none
- public :: menu,allowrendering,set_coordlabels,set_extracols
- integer, private :: icoordsprev = -1
+ public :: menu,allowrendering,set_extracols
  
  private
 
@@ -46,11 +45,11 @@ subroutine menu
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
   use settings_xsecrot, only:submenu_xsecrotate,write_animfile
   use multiplot
-  use prompting, only:prompt,print_logical
+  use prompting,  only:prompt,print_logical
   use transforms, only:transform_label
-  use defaults, only:defaults_write
-  use geometry, only:labelcoord
-  use getdata, only:get_data
+  use defaults,   only:defaults_write
+  use geometry,   only:labelcoord
+  use getdata,    only:get_data,set_coordlabels
   use timestepping
   implicit none
   integer :: i,icol,ihalf,iadjust,indexi,ierr
@@ -636,49 +635,5 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
 
  return
 end subroutine set_extracols
-
-subroutine set_coordlabels(numplot)
- use geometry, only:labelcoord
- use labels, only:label,iamvec,labelvec,ix,labeldefault
- use settings_data, only:icoords,icoordsnew,ndim,iRescale
- use settings_units, only:unitslabel
- use getdata, only:get_labels
- implicit none
- integer, intent(in) :: numplot
- integer :: i
- 
- if (icoordsprev.lt.0) icoordsprev = icoordsnew
-
-!--set coordinate and vector labels (depends on coordinate system)
-! if (icoordsnew.gt.0 .or. icoords.gt.0) then
- if (icoordsnew.ne.icoords) then
-    do i=1,ndim
-       label(ix(i)) = labelcoord(i,icoordsnew)
-       if (iRescale .and. icoords.eq.icoordsnew) then
-          label(ix(i)) = trim(label(ix(i)))//trim(unitslabel(ix(i)))
-       endif
-    enddo
- elseif (icoordsnew.ne.icoordsprev) then
-    call get_labels
- endif
-!
-!--set vector labels if iamvec is set and the labels are the default
-! 
- if (icoordsnew.gt.0) then
-    do i=1,numplot
-       if (iamvec(i).ne.0 .and. &
-          (icoordsnew.ne.icoords .or. icoordsnew.ne.icoordsprev &
-           .or. index(label(i),trim(labeldefault)).ne.0)) then
-          label(i) = trim(labelvec(iamvec(i)))//'\d'//trim(labelcoord(i-iamvec(i)+1,icoordsnew))
-          if (iRescale) then
-             label(i) = trim(label(i))//'\u'//trim(unitslabel(i))
-          endif
-       endif
-    enddo
- endif
- icoordsprev = icoordsnew
- 
- return
-end subroutine set_coordlabels
 
 end module mainmenu

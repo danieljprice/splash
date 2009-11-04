@@ -249,10 +249,10 @@ program splash
 !----------------------------------------------------------------------------------
   use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile,animfile, &
                       fileprefix,set_filenames
-  use getdata,   only:get_data
+  use getdata,   only:get_data,set_coordlabels
   use defaults,  only:defaults_set_initial,defaults_set,defaults_read
   use limits,    only:read_limits
-  use mainmenu,  only:menu,allowrendering,set_coordlabels,set_extracols
+  use mainmenu,  only:menu,allowrendering,set_extracols
   use mem_allocation,   only:deallocate_all
   use projections3D,    only:setup_integratedkernel
   use settings_data,    only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots

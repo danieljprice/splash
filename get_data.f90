@@ -33,8 +33,10 @@
 !
 module getdata
  implicit none
- public           :: get_data, get_labels
+ public           :: get_data, get_labels, set_coordlabels
  integer, private :: ncolumnsfirst
+ integer, private :: icoordsprev = -1
+
  private
 
 contains
@@ -45,15 +47,14 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use filenames,      only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
   use limits,         only:set_limits
   use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata, &
-                      DataisBuffered,iCalcQuantities,ndim,icoords, &
-                      icoordsnew,iRescale,required,ipartialread,lowmemorymode
+                      DataisBuffered,iCalcQuantities,ndim,       &
+                      iRescale,required,ipartialread,lowmemorymode
   use settings_part,  only:iexact
   use particle_data,  only:dat,time,npartoftype,maxcol
   use prompting,      only:prompt
-  use labels,         only:label,labelvec,iamvec,labeltype
-  use geometry,       only:labelcoord
+  use labels,         only:labeltype
   use calcquantities, only:calc_quantities
-  use settings_units, only:units,unitslabel
+  use settings_units, only:units
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
@@ -142,7 +143,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
               dat(:,i,1:nsteps) = dat(:,i,1:nsteps)*units(i)
            endif
-           if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
         enddo
         time(1:nsteps) = time(1:nsteps)*units(0)
      endif     
@@ -237,7 +237,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
            if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
               dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)
            endif
-           if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
         enddo
         time(1:nstepsinfile(ireadfile)) = time(1:nstepsinfile(ireadfile))*units(0)
      endif
@@ -279,31 +278,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
                            '  types is turned on via the o)ptions menu'
      endif
   endif
-!
-!--reset coordinate and vector labels (depending on coordinate system)
-!
-  if (icoords.ne.0 .or. icoordsnew.ne.0) then
-     if (icoordsnew.le.0) then
-        if (icoords.gt.0) then
-           icoordsnew = icoords
-        else
-           icoordsnew = 1
-        endif
-     endif
-     if (icoordsnew.ne.icoords) then
-        print*,' resetting coordinate labels ...'
-        do i=1,ndim
-           label(i) = labelcoord(i,icoordsnew)
-           if (iRescale .and. icoords.eq.icoordsnew) label(i) = trim(label(i))//unitslabel(i)
-        enddo
-        do i=1,ncolumns+ncalc
-           if (iamvec(i).ne.0) then
-              label(i) = trim(labelvec(iamvec(i)))//'\d'//labelcoord(i-iamvec(i)+1,icoordsnew)
-              if (iRescale .and. icoords.eq.icoordsnew) label(i) = trim(label(i))//unitslabel(i)
-           endif
-        enddo
-     endif
-  endif
+  !
+  !--reset coordinate and vector labels (depending on coordinate system)
+  !
+  call set_coordlabels(ncolumns+ncalc)
+
   !
   !--read exact solution parameters from files if present
   !
@@ -318,23 +297,23 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   return
 end subroutine get_data
 
-!-------------------------------------
+!----------------------------------------------------------------------
 !
-! The following is a wrapper routine
-! for the call to set_labels which
-! overrides the label setting from
-! the splash.columns file if present
+! The following is a wrapper routine for the call to set_labels which
+! overrides the label setting from the splash.columns file if present.
+! Also adds the units label if the data has been rescaled.
 !
-!-------------------------------------
+!----------------------------------------------------------------------
 subroutine get_labels
  use asciiutils,     only:read_asciifile
  use filenames,      only:fileprefix,unitsfile
  use labels,         only:label
- use settings_data,  only:ncolumns
- use settings_units, only:read_unitsfile
+ use settings_data,  only:ncolumns,iRescale
+ use settings_units, only:read_unitsfile,units,unitslabel
+ use particle_data,  only:maxcol
  implicit none
  logical :: iexist
- integer :: nlabelsread,ierr
+ integer :: nlabelsread,ierr,i
  
  call set_labels
  !
@@ -355,9 +334,90 @@ subroutine get_labels
  !
  !--read units file and change units if necessary
  !
- call read_unitsfile(trim(unitsfile),ncolumns,ierr)     
+ call read_unitsfile(trim(unitsfile),ncolumns,ierr)
+ !
+ !--add units labels to labels
+ !
+ if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
+    do i=1,min(ncolumns,maxcol)
+       if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
+    enddo
+ endif
 
 end subroutine get_labels
+
+!----------------------------------------------------------------
+!
+!  routine to set labels for vector quantities and spatial
+!  coordinates depending on the coordinate system used.
+!
+!----------------------------------------------------------------
+subroutine set_coordlabels(numplot)
+ use geometry,       only:labelcoord
+ use labels,         only:label,iamvec,labelvec,ix,labeldefault
+ use settings_data,  only:icoords,icoordsnew,ndim,iRescale
+ use settings_units, only:unitslabel
+ implicit none
+ integer, intent(in) :: numplot
+ integer             :: i
+!
+!--sanity check on icoordsnew...
+!  (should not be zero)
+!
+ if (icoordsnew.le.0) then
+    if (icoords.gt.0) then
+       icoordsnew = icoords
+    else
+       icoordsnew = 1
+    endif
+ endif
+!
+!--store the previous value of icoordsnew that was used
+!  last time we adjusted the labels
+!
+ if (icoordsprev.lt.0) icoordsprev = icoordsnew
+
+!
+!--set coordinate and vector labels (depends on coordinate system)
+!
+ if (icoordsnew.ne.icoords) then
+!
+!--here we are using a coordinate system that differs from the original
+!  one read from the code (must change labels appropriately)
+!
+    print*,' changing coordinate labels ...'
+    do i=1,ndim
+       label(ix(i)) = labelcoord(i,icoordsnew)
+       if (iRescale .and. icoords.eq.icoordsnew) then
+          label(ix(i)) = trim(label(ix(i)))//trim(unitslabel(ix(i)))
+       endif
+    enddo
+ elseif (icoordsnew.ne.icoordsprev) then
+!
+!--here we are reverting back to the original coordinate system
+!  so we have to re-read the original labels from the data read
+!
+    call get_labels
+ endif
+!
+!--set vector labels if iamvec is set and the labels are the default
+! 
+ if (icoordsnew.gt.0) then
+    do i=1,numplot
+       if (iamvec(i).ne.0 .and. &
+          (icoordsnew.ne.icoords .or. icoordsnew.ne.icoordsprev &
+           .or. index(label(i),trim(labeldefault)).ne.0)) then
+          label(i) = trim(labelvec(iamvec(i)))//'\d'//trim(labelcoord(i-iamvec(i)+1,icoordsnew))
+          if (iRescale) then
+             label(i) = trim(label(i))//'\u'//trim(unitslabel(i))
+          endif
+       endif
+    enddo
+ endif
+ icoordsprev = icoordsnew
+ 
+ return
+end subroutine set_coordlabels
 
 !----------------------------------------------------------------
 !
@@ -422,14 +482,15 @@ subroutine check_labels
 
 end subroutine check_labels
 
-!-----------------------------------------------
+!----------------------------------------------------
 !
 !  amend data after the data read based on
 !  various environment variable settings
 !
 !  must be called AFTER the data has been read
+!  but BEFORE rescaling to physical units is applied
 !
-!-----------------------------------------------
+!----------------------------------------------------
 subroutine adjust_data_codeunits
  use system_utils,  only:renvironment
  use labels,        only:ih

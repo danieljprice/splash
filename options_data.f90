@@ -26,16 +26,6 @@
 !-------------------------------------------------------------------------
 module options_data
  implicit none
-! integer :: numplot,ncalc,ncolumns,nextra
-! integer :: ndataplots
-! integer :: ndim, ndimv 
-! integer :: icoords, iformat, ntypes
-! integer :: istartatstep,iendatstep,nfreq
-! integer, dimension(10) :: isteplist
-! logical :: ivegotdata, buffer_data, iUseStepList!
-!
-! !namelist /dataopts/ buffer_data
- !
  public :: submenu_data,defaults_set_data
  private
 
@@ -85,22 +75,22 @@ end subroutine defaults_set_data
 ! (read new data or change timesteps plotted)
 !----------------------------------------------------------------------
 subroutine submenu_data(ichoose)
- use filenames, only:nsteps,nstepsinfile,ifileopen,unitsfile
- use prompting, only:prompt,print_logical
- use getdata, only:get_data,get_labels
- use settings_data, only:istartatstep,iendatstep,nfreq,iUseStepList, &
-     isteplist,buffer_data,iCalcQuantities,iRescale, &
-     DataIsBuffered,numplot,ncalc,ncolumns
+ use filenames,      only:nsteps,nstepsinfile,ifileopen,unitsfile
+ use prompting,      only:prompt,print_logical
+ use getdata,        only:get_data,get_labels
+ use settings_data,  only:istartatstep,iendatstep,nfreq,iUseStepList, &
+                          isteplist,buffer_data,iCalcQuantities,iRescale, &
+                          DataIsBuffered,numplot,ncalc,ncolumns
  use calcquantities, only:calc_quantities
- use limits, only:set_limits
- use labels, only:label
+ use limits,         only:set_limits
+ use labels,         only:label
  use settings_units, only:units,unitslabel,set_units,write_unitsfile, &
-                     unitzintegration,labelzintegration
+                          unitzintegration,labelzintegration
  implicit none
  integer, intent(in) :: ichoose
- integer :: ians, i
- character(len=30) :: fmtstring
- logical :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile
+ integer             :: ians, i
+ character(len=30)   :: fmtstring
+ logical             :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile
  
  ians = ichoose
 
@@ -186,10 +176,10 @@ subroutine submenu_data(ichoose)
     print "(a)",'current settings for conversion to physical units are:'
     call get_labels ! reset labels for printing
     do i=1,ncolumns
-       print "(a,a3,a,a3,1pe10.3)",trim(label(i))//trim(unitslabel(i)),' = ',trim(label(i)),' x ',units(i)
+       print "(a,a3,a,a3,es10.3)",trim(label(i))//trim(unitslabel(i)),' = ',trim(label(i)),' x ',units(i)
     enddo
-    print "(a,a3,a,a3,1pe8.2)",'time'//trim(unitslabel(0)),' = ','time',' x ',units(0)
-    print "(a,a3,a,a3,1pe8.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration
+    print "(a,a3,a,a3,es8.2)",'time'//trim(unitslabel(0)),' = ','time',' x ',units(0)
+    print "(a,a3,a,a3,es8.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration
     
     iRescaleprev = iRescale
     iRescale = .not.iRescale
@@ -200,11 +190,7 @@ subroutine submenu_data(ichoose)
           call get_data(-1,.true.)
        else
           call get_data(1,.true.,firsttime=.true.)
-       endif    
-    elseif (iRescale) then
-       do i=1,ncolumns
-          label(i) = trim(label(i))//trim(unitslabel(i))
-       enddo
+       endif
     endif
 !------------------------------------------------------------------------
  case(7)
@@ -228,9 +214,6 @@ subroutine submenu_data(ichoose)
        endif
     else
        call get_labels
-       do i=1,numplot
-          label(i) = trim(label(i))//trim(unitslabel(i))
-       enddo
     endif
 !------------------------------------------------------------------------
  end select
