@@ -311,10 +311,14 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
           call minmaxmean_part(dat(1:ninterp,i:i),weight,ninterp,partmin,partmax,partmean)
           print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
 
-          call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
-               dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
-               xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-               pixwidth,pixwidth,.true.,isperiodic)
+          if (iszero(partmin,partmax,1)) then
+             datgrid = 0.
+          else
+             call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                  dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
+                  xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
+                  pixwidth,pixwidth,.true.,isperiodic)
+          endif
 
           call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
           print fmtstring,' on grid :',gridmin,gridmax,gridmean
@@ -367,11 +371,15 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
                 print fmtstring1,trim(label(i))
                 call minmaxmean_part(dat(1:ninterp,i:i),weight,ninterp,partmin,partmax,partmean)
                 print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
-
-                call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
-                     dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
-                     xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-                     pixwidth,pixwidth,.true.,isperiodic)
+                
+                if (iszero(partmin,partmax,1)) then
+                   datgrid = 0.
+                else
+                   call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                        dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
+                        xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
+                        pixwidth,pixwidth,.true.,isperiodic)
+                endif
 
                 call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
                 print fmtstring,' on grid :',gridmin,gridmax,gridmean
@@ -389,10 +397,14 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
                 print fmtstring,' on parts:',partmin(i),partmax(i),partmean(i)
              enddo
 
-             call interpolate3D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
-                  dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc:iloc+ndimV-1),icolourme,ninterp,&
-                  xmin(1),xmin(2),xmin(3),datgridvec,npixels(1),npixels(2),npixels(3),&
-                  pixwidth,pixwidth,.true.,isperiodic)
+             if (iszero(partmin,partmax,ndimV)) then
+                datgridvec = 0.
+             else
+                call interpolate3D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                     dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc:iloc+ndimV-1),icolourme,ninterp,&
+                     xmin(1),xmin(2),xmin(3),datgridvec,npixels(1),npixels(2),npixels(3),&
+                     pixwidth,pixwidth,.true.,isperiodic)
+             endif
 
              call minmaxmean_gridvec(datgridvec,npixels,ndimV,datmin,datmax,datmean)
              do i=1,ndimV
@@ -544,5 +556,23 @@ subroutine minmaxmean_part(dat,weight,npart,partmin,partmax,partmean,nonzero)
 
  return
 end subroutine minmaxmean_part
+
+!----------------------------------------------------
+! calculate max and min and mean values on particles
+!----------------------------------------------------
+logical function iszero(partmin,partmax,ndim)
+ implicit none
+ real, dimension(:), intent(in) :: partmin,partmax
+ integer, intent(in)            :: ndim
+ 
+ if (all(abs(partmin(1:ndim)).lt.tiny(0.)) .and. &
+     all(abs(partmax(1:ndim)).lt.tiny(0.))) then
+    iszero = .true.
+    print "(a)",' min=max=0 on particles: skipping pointless interpolation and setting dat = 0.' 
+ else
+    iszero = .false.
+ endif
+
+end function iszero
 
 end module convert_grid
