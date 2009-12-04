@@ -490,7 +490,7 @@ end subroutine redraw_axes
         yopts = '1VN'//trim(yopts)
         call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
      elseif (axis.ge.0) then
-        yopts = trim(yopts)//'N'
+        !yopts = trim(yopts)//'N'
      endif  
      !
      ! decide whether to number and label the x axis
