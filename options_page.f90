@@ -28,7 +28,7 @@ module settings_page
  use settings_limits, only:iadapt,iadaptcoords
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
- integer :: iPlotLegendOnlyOnPanel,modlinestyle,modcolour
+ integer :: iPlotLegendOnlyOnPanel,modlinestyle,modcolour,maxlinestyle,maxcolour
  logical :: iColourEachStep,iChangeStyles,tile,interactive,nomenu
  logical :: iPlotLegend,iPlotStepLegend,iPlotTitles
  logical :: iPlotScale,iUseBackgroundColourForAxes,usesquarexy
@@ -45,7 +45,7 @@ module settings_page
    vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheight,linewidth,&
    fjustlegend,iPlotLegendOnlyOnPanel, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
-   usesquarexy,modlinestyle,modcolour
+   usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour
 
 contains
 
@@ -91,8 +91,10 @@ subroutine defaults_set_page
   dxscale = 1.0
   scaletext = '1 unit'
   iscalepanel = 0
-  modlinestyle = 5
+  maxlinestyle = 5
+  modlinestyle = 1
   modcolour = 1
+  maxcolour = 16
   
   usesquarexy = .true. ! spatial dimensions have same scale
   call defaults_set_shapes
@@ -168,11 +170,13 @@ subroutine submenu_page(ichoose)
         call prompt('Use different colours for each step?',iColourEachStep)
         if (iColourEachStep) then
            call prompt('How often to change colour? (1=every step, 2=every 2nd step etc.)',modcolour,1)
+           call prompt('Enter max number of colours to use before repeating (16=PGPLOT max)',maxcolour,1,16)
         endif
 !!        if (.not.iColourEachStep) icolourthisstep = 1
         call prompt('Use different markers/line style for each step? ',iChangeStyles)
         if (iChangeStyles) then
-           call prompt('Enter number of line styles to cycle through before repeating (5=PGPLOT max)',modlinestyle,1,5)
+           call prompt('How often to change line style (1=every step, 2=every 2nd step etc.)',modlinestyle,1)
+           call prompt('Enter max number of line styles to cycle through before repeating (5=PGPLOT max)',maxlinestyle,1,5)
         endif
         
         if (iColourEachStep .or. iChangeStyles) then
