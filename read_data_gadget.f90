@@ -737,7 +737,7 @@ contains
         ndumped = 0
         return
      endif
-     if (blklabel.eq.'POS ' .OR. blklabel.eq.'VEL ' .OR. blklabel.eq.'BFLD') then
+     if (blklabel.eq.'POS ' .OR. blklabel.eq.'VEL ' .OR. blklabel.eq.'ACCE' .OR. blklabel.eq.'BFLD') then
         ndumped = (lenblk-8)/12
         nvec = 3
      else
@@ -765,7 +765,7 @@ end subroutine read_data
 
 subroutine set_labels
   use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
-              ih,irho,ipr,iutherm,iBfirst,idivB
+              ih,irho,ipr,iutherm,iBfirst,idivB,iax
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry, only:labelcoord
@@ -796,6 +796,8 @@ subroutine set_labels
            ix(3) = icol+2
         case('VEL ')
            ivx = icol
+        case('ACCE')
+           iax = icol
         case('BFLD')
            iBfirst = icol
         case('MASS')
@@ -842,8 +844,6 @@ subroutine set_labels
            label(icol) = 'Stellar formation time'
         case('Z   ')
            label(icol) = 'Metallicity'
-        case('ACCE')
-           label(icol) = 'Acceleration'
         case('ENDT')
            label(icol) = 'd(Entropy)/dt'
         case('STRD')
@@ -965,7 +965,15 @@ subroutine set_labels
         label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
      enddo
   endif
-
+  
+  if (iax.gt.0) then
+     iamvec(iax:iax+ndimV-1) = iax
+     labelvec(iax:iax+ndimV-1) = 'a'
+     do i=1,ndimV
+        label(iax+i-1) = trim(labelvec(iax))//'\d'//labelcoord(i,1)
+     enddo
+   endif 
+ 
   if (iBfirst.gt.0) then
      iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
      labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
@@ -976,10 +984,11 @@ subroutine set_labels
   
   !--set labels for each particle type
   !
-  ntypes = 5
+  ntypes = 6
   labeltype(1) = 'gas'
   labeltype(2) = 'dark matter'
   labeltype(5) = 'star'
+  labeltype(6) = 'sink'
   UseTypeInRenderings(1) = .true.
   !
   !--dark matter particles are of non-SPH type (ie. cannot be used in renderings)
@@ -990,7 +999,7 @@ subroutine set_labels
   else
      UseTypeInRenderings(2) = .false.  
   endif
-  UseTypeInRenderings(3:5) = .false.
+  UseTypeInRenderings(3:6) = .false.
 
 !-----------------------------------------------------------
   return
