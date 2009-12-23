@@ -2025,7 +2025,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
           getpanel = i
        endif
     enddo
-    if (getpanel.eq.0) then
+    if (getpanel.le.0 .or. getpanel.gt.size(vptxmin)) then
        !print*,' vptx,y = ',vptx,vpty,vptxmin(:),vptxmax(:)
        print*,'Error determining panel: assuming last '
        getpanel = size(vptxmin)
