@@ -2457,13 +2457,14 @@ contains
 ! actually plotted
 !----------------------------------------------
   subroutine page_setup(dummy)
-    use colourbar, only:get_colourbarmargins
-    use pagesetup, only:setpage2
-    use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes,vposlegend,iPlotLegend
+    use colourbar,     only:get_colourbarmargins
+    use pagesetup,     only:setpage2
+    use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
+                            vposlegend,iPlotLegend,usecolumnorder
     implicit none
-    integer :: iplotsave,ipanelsave
-    real :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
-    real :: xminpix,xmaxpix,yminpix,ymaxpix,dxpix
+    integer :: iplotsave,ipanelsave,ipanelpos
+    real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
+    real    :: xminpix,xmaxpix,yminpix,ymaxpix,dxpix
     logical :: ipanelchange,dum
     logical, intent(in), optional :: dummy
     !--------------------------------------------
@@ -2489,9 +2490,15 @@ contains
     if (ipanel.gt.nacross*ndown) ipanel = 1
     ipanel = max(ipanel,1) ! catch panel=0 if panel is not changing
     !--set counter for where we are in row, col
-    icolumn = ipanel - ((ipanel-1)/nacross)*nacross
-    irow = (ipanel-1)/nacross + 1
-
+    if (.not.usecolumnorder) then
+       irow      = ipanel - ((ipanel-1)/ndown)*ndown
+       icolumn   = (ipanel-1)/ndown + 1
+       ipanelpos = (irow-1)*nacross + icolumn
+    else
+       icolumn   = ipanel - ((ipanel-1)/nacross)*nacross
+       irow      = (ipanel-1)/nacross + 1
+       ipanelpos = ipanel
+    endif
     !--if we are in interactive mode, use the currently buffered plot limits
     if (interactivereplot .and. (nacross*ndown.gt.1 .or. nstepsperpage.gt.1)) then
        xmin = xminmulti(iplotx)
@@ -2581,7 +2588,7 @@ contains
     if (nstepsperpage.ne.0 .or. inewpage) then
        if (dum) then !--fake the page setup, then return
           if (.not.(interactivereplot .and. .not.irerender)) then
-             call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
+             call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
                      trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp, &
                      xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                      0.0,TitleOffset,isamexaxis,tile_plots)
@@ -2612,7 +2619,7 @@ contains
           ipanel = ipanelsave
           return
        else
-          call setpage2(ipanel,nacross,ndown,xmin,xmax,ymin,ymax, &
+          call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
                   trim(labelx),trim(labely),' ',just,iaxistemp, &
                   xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                   0.0,TitleOffset,isamexaxis,tile_plots)

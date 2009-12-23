@@ -30,7 +30,7 @@ module settings_page
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
  integer :: iPlotLegendOnlyOnPanel,modlinestyle,modcolour,maxlinestyle,maxcolour
  logical :: iColourEachStep,iChangeStyles,tile,interactive,nomenu
- logical :: iPlotLegend,iPlotStepLegend,iPlotTitles
+ logical :: iPlotLegend,iPlotStepLegend,iPlotTitles,usecolumnorder
  logical :: iPlotScale,iUseBackgroundColourForAxes,usesquarexy
  real :: papersizex,aspectratio
  real :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
@@ -45,7 +45,7 @@ module settings_page
    vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheight,linewidth,&
    fjustlegend,iPlotLegendOnlyOnPanel, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
-   usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour
+   usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder
 
 contains
 
@@ -62,6 +62,7 @@ subroutine defaults_set_page
   iColourEachStep = .true. ! change colours if nstepsperpage > 1
   iChangeStyles = .false.  ! change marker/ line styles if nstepsperpage > 1
   tile = .true.
+  usecolumnorder = .true.
   nacross = 1           ! number of plots across page
   ndown = 1             ! number of plots down page
   ipapersize = 0        ! paper size option
@@ -251,6 +252,7 @@ subroutine submenu_page(ichoose)
      call prompt('Enter number of plots down   (rows):',ndown,1,maxplot/nacross)
      if (nacross*ndown.gt.1) then
         call prompt('Tile plots on the page where possible?',tile)
+        call prompt('Plot panels across-then-down? (no=down-then-across)',usecolumnorder)
      endif
      return
 !------------------------------------------------------------------------
