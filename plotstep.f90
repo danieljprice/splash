@@ -128,6 +128,11 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   ifirststeponpage = 1  ! again, should be unnecessary
   nframefirstonpage = 1
   
+  iplotxtemp(:)   = 1  ! this is just to be safe, so any spurious array access
+  iplotytemp(:)   = 2  ! does not give an out-of-bounds error
+  irendertemp(:)  = 0
+  ivecplottemp(:) = 0
+  
   xmin = 0.
   xmax = 0.
   ymin = 0.
@@ -2461,7 +2466,6 @@ contains
     real :: xminpix,xmaxpix,yminpix,ymaxpix,dxpix
     logical :: ipanelchange,dum
     logical, intent(in), optional :: dummy
-
     !--------------------------------------------
     ! whether or not this is a dummy call or not
     !--------------------------------------------
