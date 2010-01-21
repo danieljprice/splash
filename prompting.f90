@@ -479,7 +479,7 @@ contains
       elseif ( len(trim(adjustl(newstring))) /= 0 ) then
          string = newstring
       endif
-      if (present(length)) length = len(trim(string))
+      if (present(length)) length = len_trim(string)
          
       !
       !  Convert string to upper/lower case if requested
