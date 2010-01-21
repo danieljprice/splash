@@ -529,11 +529,12 @@ subroutine endian_info
  bigendian = IACHAR(TRANSFER(1,"a")) == 0
 
  if (bigendian) then
-    print 10,'BIG'
+    print 10,'BIG-endian'
  else
-    print 10,'LITTLE'
+    print 10,'LITTLE-endian'
  endif
-10 format(' native endian on this machine is ',a,/,' (read endian may be set by compiler flags/environment variables)')
+10 format(' native byte order on this machine is ',a,/,&
+          ' [byte order used to read data may be set by compiler flags/environment variables]')
 
 end subroutine endian_info
 
