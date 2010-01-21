@@ -894,12 +894,22 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      initdataplots: if (initx .or. inity) then
         if (debugmode) print*,'DEBUG: initialising data plots...',initx,inity,iplotx,iploty,ntoti,size(xplot)
         if (initx) then
+           !--check for errors
+           if (iplotx.gt.size(dat(1,:)) .or. iplotx.lt.1) then
+              print*,'ERROR: Internal error with out-of-bounds x column = ',iplotx
+              exit over_plots
+           endif
            xplot(1:ntoti) = dat(1:ntoti,iplotx)
            iamvecx = iamvec(iplotx)
         else
            iamvecx = 0
         endif
         if (inity) then
+           !--check for errors
+           if (iploty.gt.size(dat(1,:)) .or. iploty.lt.1) then
+              print*,'ERROR: Internal error with out-of-bounds y column = ',iploty
+              exit over_plots
+           endif
            yplot(1:ntoti) = dat(1:ntoti,iploty)
            iamvecy = iamvec(iploty)
         else
