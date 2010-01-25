@@ -641,7 +641,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   character(len=20) :: labeltimeunits
   
   logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
-  logical :: dumxsec, isetrenderlimits, gotcontours
+  logical :: dumxsec, isetrenderlimits, gotcontours, iscoordplot
   logical :: ichangesize, initx, inity, isameweights
   logical, parameter :: isperiodic = .false. ! feature not implemented
   
@@ -890,6 +890,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      inity = (iploty.gt.0 .and. iploty.le.ndataplots)
      if (iplotx.gt.0 .and. iplotx.le.numplot) labelx = label(iplotx)
      if (iploty.gt.0 .and. iploty.le.numplot) labely = label(iploty)
+     iscoordplot = (iplotx.le.ndim .and. iploty.le.ndim)
 
      initdataplots: if (initx .or. inity) then
         if (debugmode) print*,'DEBUG: initialising data plots...',initx,inity,iplotx,iploty,ntoti,size(xplot)
@@ -950,9 +951,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--flag for whether or not we have raw particle plot or not
         !  (not allowed to use transformations on coords otherwise)
         !
-        rendering = (iplotx.le.ndim .and. iploty.le.ndim .and. &
-                     (irenderplot.gt.ndim .or. ivectorplot.gt.0) .and. &
-                     (.not.icolour_particles))
+        rendering = (iscoordplot .and.(irenderplot.gt.ndim .or. ivectorplot.gt.0) &
+                     .and.(.not.icolour_particles))
         !
         !--change coordinate system if relevant
         !        
@@ -976,7 +976,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--adjust plot limits if adaptive plot limits set
         !  (find minimum/maximum only on particle types actually plotted)
         !
-        if (itrackpart.le.0 .and. .not.irotate) then
+        if (itrackpart.le.0 .and. .not.(iscoordplot .and. irotate)) then
            if (initx) call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x')
            if (inity) call adapt_limits(iploty,yplot,ymin,ymax,yminadapti,ymaxadapti,'y')
         endif
@@ -1005,7 +1005,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      ! plots with co-ordinates as x and y axis
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-     if ((iploty.le.ndim).and.(iplotx.le.ndim)) then
+     if (iscoordplot) then
 
         if (debugmode) print*,'DEBUG: starting coord plot...'
         if (.not.interactivereplot .or. irerender) then
@@ -2870,6 +2870,8 @@ contains
        endif
        index1 = index2 + 1
     enddo
+    if (debugmode) print*,'DEBUG: ',iplot,': '//trim(labeli)// &
+                   'min,max adaptive = ',xminadaptive,xmaxadaptive
     
     !--set these as limits if adaptive limits are on
     if (.not.interactivereplot) then
