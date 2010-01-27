@@ -139,7 +139,7 @@ CONTAINS
     ENDIF
   END SUBROUTINE endf
   !
-  SUBROUTINE parsef (i, FuncStr, Var)
+  SUBROUTINE parsef (i, FuncStr, Var, err)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     ! Parse ith function string FuncStr and compile it into bytecode
     !----- -------- --------- --------- --------- --------- --------- --------- -------
@@ -148,11 +148,14 @@ CONTAINS
     CHARACTER (LEN=*),               INTENT(in) :: FuncStr   ! Function string
     CHARACTER (LEN=*), DIMENSION(:), INTENT(in) :: Var       ! Array with variable names
     CHARACTER (LEN=LEN(FuncStr))                :: Func      ! Function string, local use
+    INTEGER, INTENT(OUT), OPTIONAL              :: err
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IF (i < 1 .OR. i > SIZE(Comp)) THEN
        WRITE(*,*) '*** Parser error: Function number ',i,' out of range'
+       IF (present(err)) err = 1
        RETURN
     END IF
+    EvalErrType  = 0   ! D. Price : to prevent accidental misuse
     ParseErrType = 0
     ALLOCATE (ipos(LEN(Func)))                       ! Char. positions in orig. string
     Func = FuncStr                                           ! Local copy of function string
@@ -161,6 +164,7 @@ CONTAINS
     !CALL GetConstants (Func)
     CALL CheckSyntax (Func,FuncStr,Var)
     DEALLOCATE (ipos)
+    IF (present(err)) err = ParseErrType
     !--D. Price: return after ParseErr here instead of stop inside CheckSyntax
     IF (ParseErrType /= 0) RETURN
     CALL Compile (i,Func,Var)                                ! Compile into bytecode
@@ -176,6 +180,7 @@ CONTAINS
     CHARACTER (LEN=*), DIMENSION(:), INTENT(in) :: Var       ! Array with variable names
     CHARACTER (LEN=LEN(FuncStr))                :: Func      ! Function string, local use
     !----- -------- --------- --------- --------- --------- --------- --------- -------
+    EvalErrType  = 0   ! D. Price : to prevent accidental misuse
     ParseErrType = 0
     ALLOCATE (ipos(LEN(Func)))                               ! Char. positions in orig. string
     Func = FuncStr                                           ! Local copy of function string
@@ -212,7 +217,12 @@ CONTAINS
        CASE   (cMul); Comp(i)%Stack(SP-1)=Comp(i)%Stack(SP-1)*Comp(i)%Stack(SP); SP=SP-1
        CASE   (cDiv); IF (Comp(i)%Stack(SP)==0._rn) THEN; EvalErrType=1; res=zero; RETURN; ENDIF
                       Comp(i)%Stack(SP-1)=Comp(i)%Stack(SP-1)/Comp(i)%Stack(SP); SP=SP-1
-       CASE   (cPow); Comp(i)%Stack(SP-1)=Comp(i)%Stack(SP-1)**Comp(i)%Stack(SP); SP=SP-1
+       ! D. Price: check for zero to negative powers and negative numbers to fractional powers
+       CASE   (cPow); IF (Comp(i)%Stack(SP-1)==0._rn .and.Comp(i)%Stack(SP)<0._rn) &
+                      THEN; EvalErrType=1; res=zero; RETURN; ENDIF
+                      IF (Comp(i)%Stack(SP-1)<=0._rn .and.(Comp(i)%Stack(SP).ne.nint(Comp(i)%Stack(SP)))) &
+                      THEN; EvalErrType=5; res=zero; RETURN; ENDIF
+                      Comp(i)%Stack(SP-1)=Comp(i)%Stack(SP-1)**Comp(i)%Stack(SP); SP=SP-1
        CASE   (cAbs); Comp(i)%Stack(SP)=ABS(Comp(i)%Stack(SP))
        CASE   (cExp); Comp(i)%Stack(SP)=EXP(Comp(i)%Stack(SP))
        CASE (cLog10); IF (Comp(i)%Stack(SP)<=0._rn) THEN; EvalErrType=3; res=zero; RETURN; ENDIF
@@ -357,10 +367,11 @@ CONTAINS
     ! Return error message
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IMPLICIT NONE
-    CHARACTER (LEN=*), DIMENSION(4), PARAMETER :: m = (/ 'Division by zero                ', &
+    CHARACTER (LEN=*), DIMENSION(5), PARAMETER :: m = (/ 'Division by zero                ', &
                                                          'Argument of SQRT negative       ', &
-                                                         'Argument of LOG negative        ', &
-                                                         'Argument of ASIN or ACOS illegal' /)
+                                                         'Argument of LOG <= 0            ', &
+                                                         'Argument of ASIN or ACOS illegal', &
+                                                         '-ve number to fractional power  '/)
     CHARACTER (LEN=LEN(m))                     :: msg
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IF (EvalErrType < 1 .OR. EvalErrType > SIZE(m)) THEN
