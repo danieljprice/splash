@@ -140,7 +140,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
-           if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
+           if (abs(units(i)-1.0).gt.tiny(units) .and. abs(units(i)).gt.tiny(units)) then
               dat(:,i,1:nsteps) = dat(:,i,1:nsteps)*units(i)
            endif
         enddo
@@ -234,7 +234,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         write(*,"(/a)") ' rescaling data...'
         do i=1,min(ncolumns,maxcol)
-           if (abs(units(i)-1.0).gt.tiny(units) .and. units(i).gt.tiny(units)) then
+           if (abs(units(i)-1.0).gt.tiny(units) .and. abs(units(i)).gt.tiny(units)) then
               dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)
            endif
         enddo
@@ -338,7 +338,7 @@ subroutine get_labels
  !
  !--add units labels to labels
  !
- if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
+ if (iRescale) then
     do i=1,min(ncolumns,maxcol)
        if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
     enddo
