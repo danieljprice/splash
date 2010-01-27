@@ -443,7 +443,7 @@ contains
    !  String prompting routine 
    !
    
-   subroutine string_prompt(text, string, length, case, noblank)
+   recursive subroutine string_prompt(text, string, length, case, noblank, list)
       character(len=*), intent(in)    :: text
       character(len=*), intent(inout) :: string
       character(len=128)              :: newstring
@@ -452,7 +452,8 @@ contains
       logical, optional, intent(in)   :: noblank
       integer                         :: is, ia
       integer, parameter              :: aoffset = 32
-      logical                         :: allowblank
+      logical                         :: allowblank,inlist
+      character(len=*), dimension(:), intent(in), optional :: list
       
       !
       !  Write prompt string to terminal
@@ -499,6 +500,17 @@ contains
                if (ia >= iachar('A').and.ia <= iachar('Z')) &
                    string(is:is) = achar(ia+aoffset)
             enddo
+         endif
+      endif
+      
+      if (present(list)) then
+         inlist = .false.
+         do i=1,size(list)
+            if (trim(adjustl(list(i)))==trim(adjustl(string))) inlist = .true.
+         enddo
+         if (.not.inlist) then
+            print "(a)", "Error, value not in list"
+            call string_prompt(text,string,noblank=.not.allowblank,list=list)
          endif
       endif
       
