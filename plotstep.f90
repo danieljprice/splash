@@ -109,6 +109,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   
   !------------------------------------------------------------------------
   ! initialisations
+  ! should initialise all saved variables here
   !------------------------------------------------------------------------
 
   isamexaxis = .true.  ! same x axis on all plots? (only relevant for >1 plots per page)
@@ -137,8 +138,17 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   xmax = 0.
   ymin = 0.
   ymax = 0.
+  rendermin = 0.
+  rendermax = 0.
+  contmin   = 0.
+  contmax   = 0.
+  vecmax    = 0.
   xminadapt = huge(xminadapt)
   xmaxadapt = -huge(xmaxadapt)
+  renderminadapt = huge(renderminadapt)
+  rendermaxadapt = -huge(rendermaxadapt)
+  contminadapt   = huge(contminadapt)
+  contmaxadapt   = -huge(contmaxadapt)
 
   if (ndim.eq.1) x_sec = .false. ! can't have xsec in 1D
   nxsec = 1
