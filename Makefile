@@ -598,7 +598,7 @@ ucla: checksystem $(OBJECTS) read_data_UCLA.o
 	$(F90C) $(F90FLAGS) -o usplash $(OBJECTS) read_data_UCLA.o $(LDFLAGS)
 
 urban: checksystem $(OBJECTS) read_data_urban.o
-	$(F90C) $(F90FLAGS) -o splash $(OBJECTS) read_data_urban.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o usplash $(OBJECTS) read_data_urban.o $(LDFLAGS)
 
 sky: ucla
 
