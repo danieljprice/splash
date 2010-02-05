@@ -58,7 +58,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(in)          :: indexstart
   integer, intent(out)         :: nstepsread
   character(len=*), intent(in) :: rootname
-  integer :: i,j,ierr,lab,icol
+  integer :: i,j,ierr,lab,icol,ilen
   integer :: nprint,npart_max,nstep_max
   integer :: ncol,nerr,nheaderlines
   logical :: iexist,timeset,gammaset
@@ -189,7 +189,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--now open the sink particle file and read it
 !
-  dumpfile = trim(rootname)//'_S'
+  !--find the last underscore in the file name
+  ilen = index(rootname,'_',back=.true.)
+  if (ilen.le.0) ilen = len_trim(rootname) + 1
+  dumpfile = rootname(1:ilen-1)//'_S'
   inquire(file=trim(dumpfile),exist=iexist)
   if (iexist) then
      open(unit=iunit+1,file=trim(dumpfile),form='formatted',status='old',iostat=ierr)
