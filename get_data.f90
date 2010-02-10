@@ -112,6 +112,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      
      do i=1,nfiles
         call read_data(rootname(i),istart,nstepsinfile(i))
+        !
+        !--do some basic sanity checks
+        !
+        call check_data_read()
+        
         istart = istart + nstepsinfile(i) ! number of next step in data array
         if (nstepsinfile(i).gt.0 .and. ncolumnsfirst.eq.0 .and. ncolumns.gt.0) then
            ncolumnsfirst = ncolumns
@@ -168,6 +173,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !call endian_info()
      if (timing) call cpu_time(t1)
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
+     !
+     !--do some basic sanity checks
+     !
+     call check_data_read()
+
 !--try different endian if failed the first time
      !if (nstepsinfile(ireadfile).eq.0) then
      !   print "(a)",' trying different endian'
@@ -481,6 +491,24 @@ subroutine check_labels
  endif
 
 end subroutine check_labels
+
+!----------------------------------------------------------------
+!
+!  utility to check things about the data read
+!
+!----------------------------------------------------------------
+subroutine check_data_read
+ use settings_data, only:ncolumns
+ implicit none
+ 
+ if (ncolumns.lt.0) then
+    print "(a)",' ERROR with ncolumns (< 0) in data read'
+    ncolumns = 0
+ endif
+ 
+ 
+end subroutine check_data_read
+
 
 !----------------------------------------------------
 !

@@ -102,7 +102,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      return
   else
      call get_ncolumns(iunit,ncol,nheaderlines)
-     ncol = ncol - 1
+     ncol = max(ncol - 1,0)
      !
      !--allocate memory initially
      !
