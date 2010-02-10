@@ -171,6 +171,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         i = i - 1 ! ignore lines with errors
      endif
   enddo overparts
+  close(iunit)
 
   nprint = i - 1
   nstepsread = nstepsread + 1
@@ -221,6 +222,25 @@ subroutine read_data(rootname,indexstart,nstepsread)
      close(iunit+1)
   else
      print "(a)",' sink particle file ('//trim(dumpfile)//') not present'
+  endif
+!
+!--look for a _t file for the time (interim measure)
+!
+  dumpfile = rootname(1:ilen-1)//'_t'
+  inquire(file=trim(dumpfile),exist=iexist)
+  if (iexist) then
+     open(unit=iunit+2,file=trim(dumpfile),form='formatted',status='old',iostat=ierr)
+     if (ierr.ne.0) then
+        print "(a)",' ERROR: could not open time file '//trim(dumpfile)
+     else
+        read(iunit+2,*,iostat=ierr) time(j)
+        if (ierr.ne.0) then
+           print "(a)",' ERROR reading time from file '//trim(dumpfile)
+        else
+           print*,' got time = ',time(j),' from file '//trim(dumpfile)
+        endif
+     endif
+     close(iunit+2)
   endif
 
 return
