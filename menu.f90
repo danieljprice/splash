@@ -32,32 +32,32 @@ module mainmenu
 contains
 
 subroutine menu
-  use filenames, only:defaultsfile,limitsfile,animfile,fileprefix,set_filenames
-  use labels, only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap
-  use limits, only:write_limits,lim2,lim,reset_lim2,lim2set
-  use options_data, only:submenu_data
-  use settings_data, only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
-                     buffer_data,ncolumns
-  use settings_limits, only:submenu_limits,iadapt
-  use settings_part, only:submenu_particleplots
-  use settings_page, only:submenu_page,submenu_legend,interactive
-  use settings_render, only:submenu_render,iplotcont_nomulti,icolours
+  use filenames,        only:defaultsfile,limitsfile,animfile,fileprefix,set_filenames
+  use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap
+  use limits,           only:write_limits,lim2,lim,reset_lim2,lim2set
+  use options_data,     only:submenu_data
+  use settings_data,    only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
+                             buffer_data,ncolumns
+  use settings_limits,  only:submenu_limits,iadapt
+  use settings_part,    only:submenu_particleplots
+  use settings_page,    only:submenu_page,submenu_legend,interactive
+  use settings_render,  only:submenu_render,iplotcont_nomulti,icolours
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
   use settings_xsecrot, only:submenu_xsecrotate,write_animfile
   use multiplot
-  use prompting,  only:prompt,print_logical
-  use transforms, only:transform_label
-  use defaults,   only:defaults_write
-  use geometry,   only:labelcoord
-  use getdata,    only:get_data,set_coordlabels
+  use prompting,        only:prompt,print_logical
+  use transforms,       only:transform_label
+  use defaults,         only:defaults_write
+  use geometry,         only:labelcoord
+  use getdata,          only:get_data,set_coordlabels
   use timestepping
   implicit none
-  integer :: i,icol,ihalf,iadjust,indexi,ierr
-  integer :: ipicky,ipickx,irender,ivecplot,icontourplot
-  integer :: iamvecprev, ivecplottemp,ichoose
-  character(len=2) :: ioption
+  integer            :: i,icol,ihalf,iadjust,indexi,ierr
+  integer            :: ipicky,ipickx,irender,ivecplot,icontourplot
+  integer            :: iamvecprev, ivecplottemp,ichoose
+  character(len=2)   :: ioption
   character(len=100) :: vecprompt
-  logical :: iAllowRendering
+  logical            :: iAllowRendering
 
   irender = 0
   icontourplot = 0
@@ -530,9 +530,9 @@ end subroutine menu
 ! or not rendering is allowed or not
 !----------------------------------------------
 logical function allowrendering(iplotx,iploty)
- use labels, only:ih,irho !,ipmass
- use multiplot, only:itrans
- use settings_data, only:icoords,icoordsnew,ndataplots
+ use labels,          only:ih,irho !,ipmass
+ use multiplot,       only:itrans
+ use settings_data,   only:icoords,icoordsnew,ndataplots
  use settings_render, only:icolour_particles
  implicit none
  integer, intent(in) :: iplotx,iploty
@@ -558,16 +558,21 @@ end function allowrendering
 ! of allowed columns for plotting
 !----------------------------------------------
 subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
- use params, only:maxplot
- use labels, only:ipowerspec,iacplane,isurfdens,itoomre,iutherm,ipdf,label,icolpixmap
+ use params,        only:maxplot
+ use labels,        only:ipowerspec,iacplane,isurfdens,itoomre,iutherm,ipdf,label,icolpixmap
  use settings_data, only:ndim,icoordsnew,ivegotdata
  use settings_part, only:iexact
- use write_pixmap, only:ireadpixmap
+ use write_pixmap,  only:ireadpixmap
  implicit none
- integer, intent(in) :: ncolumns
+ integer, intent(in)    :: ncolumns
  integer, intent(inout) :: ncalc
- integer, intent(out) :: nextra,numplot,ndataplots
+ integer, intent(out)   :: nextra,numplot,ndataplots
 
+ !
+ !--do not add any extra columns if nothing read from file
+ !
+ if (ncolumns.le.0) return
+ 
  nextra = 0
  ipowerspec = 0
  iacplane = 0
@@ -586,6 +591,7 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  if (ndim.eq.3) then  !--Probability Density Function
     nextra = nextra + 1
     ipdf = ncolumns + ncalc + nextra
+    print*,'ipdf = ',ipdf,ncolumns,ncalc,nextra
     label(ipdf) = 'PDF'
  endif
 
