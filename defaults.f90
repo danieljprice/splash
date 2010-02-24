@@ -92,18 +92,18 @@ end subroutine defaults_set_initial
 !! these are used if no defaults file is found
 !!
 subroutine defaults_set(use_evdefaults)
-  use exact, only:defaults_set_exact
+  use exact,              only:defaults_set_exact
   use multiplot
-  use settings_limits, only:defaults_set_limits
-  use options_data, only:defaults_set_data
-  use settings_part, only:defaults_set_part,defaults_set_part_ev
-  use settings_page, only:defaults_set_page,defaults_set_page_ev
-  use settings_render, only:defaults_set_render
-  use settings_vecplot, only:defaults_set_vecplot
-  use settings_xsecrot, only:defaults_set_xsecrotate
+  use settings_limits,    only:defaults_set_limits
+  use options_data,       only:defaults_set_data
+  use settings_part,      only:defaults_set_part,defaults_set_part_ev
+  use settings_page,      only:defaults_set_page,defaults_set_page_ev
+  use settings_render,    only:defaults_set_render
+  use settings_vecplot,   only:defaults_set_vecplot
+  use settings_xsecrot,   only:defaults_set_xsecrotate
   use settings_powerspec, only:defaults_set_powerspec
-  use settings_units, only:defaults_set_units
-  use titles, only:pagetitles,steplegend
+  use settings_units,     only:defaults_set_units
+  use titles,             only:pagetitles,steplegend
   implicit none
   logical, intent(in) :: use_evdefaults
   integer :: i
@@ -156,17 +156,18 @@ end subroutine defaults_set
 !     writes default options to file (should match defaults_read)
 !
 subroutine defaults_write(filename)
- use exact, only:exactopts,exactparams
- use filenames, only:rootname,nfiles
- use settings_data, only:dataopts
- use settings_part, only:plotopts
- use settings_page, only:pageopts
- use settings_render, only:renderopts
- use settings_vecplot, only:vectoropts
- use settings_xsecrot, only:xsecrotopts
+ use exact,              only:exactopts,exactparams
+ use filenames,          only:rootname,nfiles
+ use settings_data,      only:dataopts
+ use settings_part,      only:plotopts
+ use settings_page,      only:pageopts
+ use settings_render,    only:renderopts
+ use settings_vecplot,   only:vectoropts
+ use settings_xsecrot,   only:xsecrotopts
  use settings_powerspec, only:powerspecopts
- use multiplot, only:multi
- use shapes, only:shapeopts
+ use multiplot,          only:multi
+ use shapes,             only:shapeopts
+ use calcquantities,     only:calcopts
  implicit none
  character(len=*), intent(in) :: filename
  integer :: i,ierr
@@ -189,6 +190,7 @@ subroutine defaults_write(filename)
     write(1,NML=exactparams)
     write(1,NML=multi)
     write(1,NML=shapeopts)
+    write(1,NML=calcopts)
     do i=1,nfiles
        write(1,"(a)") trim(rootname(i))
     enddo
@@ -203,17 +205,18 @@ end subroutine defaults_write
 ! these are specified in the modules
 !-----------------------------------------------
 subroutine defaults_read(filename)
- use filenames, only:rootname,maxfile
- use multiplot, only:multi
- use settings_data, only:dataopts
- use settings_part, only:plotopts
- use settings_page, only:pageopts
- use settings_render, only:renderopts
- use settings_vecplot, only:vectoropts
- use settings_xsecrot, only:xsecrotopts
+ use filenames,          only:rootname,maxfile
+ use multiplot,          only:multi
+ use settings_data,      only:dataopts
+ use settings_part,      only:plotopts
+ use settings_page,      only:pageopts
+ use settings_render,    only:renderopts
+ use settings_vecplot,   only:vectoropts
+ use settings_xsecrot,   only:xsecrotopts
  use settings_powerspec, only:powerspecopts
- use exact, only:exactopts,exactparams
- use shapes, only:shapeopts
+ use exact,              only:exactopts,exactparams
+ use shapes,             only:shapeopts
+ use calcquantities,     only:calcopts
  implicit none
  character(len=*), intent(in) :: filename
  logical :: iexist
@@ -266,6 +269,10 @@ subroutine defaults_read(filename)
     ierr = 0
     read(1,NML=shapeopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading shape options from '//trim(filename)
+
+    ierr = 0
+    read(1,NML=calcopts,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading calculated quantity settings from '//trim(filename)
 
     if (len_trim(rootname(1)).eq.0) then
        do i=1,maxfile

@@ -15,48 +15,307 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
-
+!
+! This module allows arbitrary functions to be computed from the
+! particle data. Uses the fparser module to parse the functions.
+!
+!-----------------------------------------------------------------
 module calcquantities
+ use labels, only:lenlabel,lenunitslabel
  implicit none
- public :: calc_quantities
+ public :: calc_quantities,setup_calculated_quantities
+
+ integer, parameter, private :: maxcalc = 10
+ character(len=60),            dimension(maxcalc) :: calcstring = ' '
+ character(len=lenlabel),      dimension(maxcalc) :: calclabel = ' '
+ character(len=lenunitslabel), dimension(maxcalc) :: calcunitslabel = ' '
+
+ integer, parameter, private :: nextravars = 5
+ character(len=lenlabel), dimension(nextravars), parameter, private :: &
+          extravars=(/'t    ','gamma','x0   ','y0   ','z0   '/)
+
+ namelist /calcopts/ calcstring,calclabel,calcunitslabel
+ 
+ public :: calcopts,calcstring,calclabel,calcunitslabel
  private
  
 contains
 
-!!
-!!   calculates various additional quantities from the input data
-!!
+!-----------------------------------------------------------------
+!
+!  Allow the user to edit the list of function strings used
+!  to compute additional quantities from the particle data
+!
+!-----------------------------------------------------------------
+subroutine setup_calculated_quantities(ncalc)
+ use prompting,     only:prompt
+ implicit none
+ integer, intent(out) :: ncalc
+ integer              :: i,istart,iend
+ logical              :: done,first
+ character(len=1)     :: charp
+ 
+ done = .false.
+ first = .true.
+ charp = 'a'
+ calcmenu: do while (.not.done)
+    call check_calculated_quantities(ncalc,i)
+
+    iend = maxcalc
+    if (i.gt.0 .or. .not.first) then
+       charp='a'
+       print*
+       call prompt(' a)dd to, e)dit, c)lear current list or q)uit/finish? ',&
+                   charp,list=(/'a','e','c','q','s','S','Q'/),noblank=.true.)
+       select case(charp)
+       case('a')
+          istart = i
+          iend   = i+1
+       case('c')
+           calcstring(:) = ' '
+           calclabel(:) = ' '
+           calcunitslabel(:) = ' '
+           cycle calcmenu
+       case('q','Q','s','S')
+          done = .true.
+       case default
+          istart = 0
+          iend   = maxcalc
+       end select
+    else
+       istart = 0
+       iend   = 1
+    endif
+
+    if (.not.done) call add_calculated_quantities(istart,iend,ncalc,first)
+    first = .false.
+ enddo calcmenu
+ print*,' setup ',ncalc,' additional quantities'
+ 
+end subroutine setup_calculated_quantities
+
+!-----------------------------------------------------------------
+!
+!  utility (private) to add one or more calculated quantities
+!  to the current list and/or edit previous settings
+!
+!-----------------------------------------------------------------
+subroutine add_calculated_quantities(istart,iend,ncalc,printhelp)
+ use prompting,     only:prompt
+ use fparser,       only:checkf
+ use labels,        only:label,lenlabel
+ use settings_data, only:ncolumns,iRescale
+ use settings_units,only:unitslabel
+ implicit none
+ integer, intent(in)  :: istart,iend
+ integer, intent(out) :: ncalc
+ logical, intent(in)  :: printhelp
+ integer :: i,j,ntries,ierr,iequal
+ logical :: iask
+
+ if (printhelp) then
+    print "(/,a)",' Specify a function to calculate from the data '
+    print "(10(a))",' Valid variables are the column labels',(', '''//trim(extravars(i))//'''',i=1,nextravars-1),&
+                ' and '''//trim(extravars(nextravars))//''' (origin setting) '
+    print "(a)",' Spaces, escape sequences (\d) and units labels are removed from variable names'
+    print "(a)",' Note that previously calculated quantities can be used in subsequent calculations'
+ endif
+ call print_example_quantities()
+ 
+ i = istart + 1
+ ntries = 0
+ ncalc = istart
+ overfuncs: do while(ntries.lt.3 .and. i.le.iend)
+    if (len_trim(calcstring(i)).ne.0 .or. ncalc.gt.istart) write(*,"(a,i2,a)") '[Column ',ncolumns+i,']'
+    call prompt('Enter function string to calculate (blank for none) ',calcstring(i))
+    if (len_trim(calcstring(i)).eq.0) then
+       !
+       !--if editing list and get blank string at prompt,
+       !  remove the entry and shuffle the list appropriately
+       !
+       do j=i,maxcalc-1
+          !print*,' shuffling ',j,' = '//trim(calcstring(j+1))
+          calcstring(j) = trim(calcstring(j+1))
+          if (ncolumns+j+1.lt.size(label)) then
+             calclabel(j) = calclabel(j+1)
+          endif
+          if (len_trim(calcstring(j)).eq.0) then
+             if (j.eq.i) then
+                exit overfuncs
+             else
+                cycle overfuncs
+             endif
+          endif
+       enddo
+    else
+       !
+       !--set label from what lies to the left of the equal sign
+       !
+       iequal = index(calcstring(i),'=')
+       if (iequal.ne.0) then
+          calclabel(i) = calcstring(i)(1:iequal-1)
+          calcstring(i) = calcstring(i)(iequal+1:len_trim(calcstring(i)))
+       endif
+       !
+       !--check for errors parsing function
+       !
+       ierr = checkf(shortlabel(calcstring(i)),&
+              (/(shortlabel(label(i),unitslabel(i)),i=1,ncolumns+i-1),extravars/))
+       if (ierr.ne.0 ) then
+          ntries = ntries + 1
+          print "(a,i1,a)",' error parsing function string: try again (',ntries,' of 3)'
+          if (ntries.eq.3) then
+             iask = .false.
+             call prompt(' Cannot parse function (after 3 attempts). Set as inactive function anyway?',iask)
+             if (iask) then
+                ierr = 0
+             else
+                calcstring(i) = ' '
+             endif
+          endif
+       else
+          write(*,"(a)",advance='no') 'Function parses OK: '
+       endif
+       if (ierr.eq.0) then
+          !
+          !--prompt for label if not set
+          !
+          if (iequal.eq.0) then
+             call prompt(' Enter label for this quantity ',calclabel(i),noblank=.true.)
+          endif
+          if (iRescale) then
+             call prompt(' Enter units label for this quantity ',calcunitslabel(i))
+          endif
+          !print "(a,a,i2,/)",'Setting '//trim(calclabel(i)), &
+          !                   ' = '//trim(calcstring(i))//' in column ',ncolumns+i
+          ncalc = i
+          i = i + 1
+       endif
+    endif
+ enddo overfuncs
+
+end subroutine add_calculated_quantities
+
+!---------------------------------------------------------------------
+!
+!  utility to give a nice list of examples to follow / cut and paste
+!  [ this basically replaces what was hardwired into the
+!    old calc_quantities routine ]
+!
+!---------------------------------------------------------------------
+subroutine print_example_quantities
+ use labels,        only:label,lenlabel,irho,iutherm,ivx,ix,icv,iradenergy
+ use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
+ use settings_units,only:unitslabel
+ use geometry,      only:labelcoord
+ implicit none
+ integer :: i
+
+ print "(/,a)",' Examples based on current data: '
+ !--radius
+ if (ndim.gt.0 .and. icoordsnew.eq.1 .and. ncolumns.ge.ndim) then
+    write(*,"(11x,a)",ADVANCE='NO') 'r = sqrt(('// &
+          trim(shortlabel(label(ix(1)),unitslabel(ix(1))))//'-'//trim(labelcoord(1,1))//'0)**2'
+    if (ndim.gt.1) then
+       write(*,"(a,a,a)") (' + ('//trim(shortlabel(label(ix(i)),unitslabel(ix(i))))// &
+                                                 '-'//trim(labelcoord(i,1))//'0)**2',i=2,ndim),')'
+    else
+       write(*,"(a)") ')'
+    endif
+ elseif (ncolumns.ge.2) then
+ !--if ndim=0 give random example to give at least one
+    print "(11x,a)",trim(shortlabel(label(1)))//'*'//trim(shortlabel(label(2)))
+ endif
+ !--pressure
+ if (irho.gt.0 .and. iutherm.gt.0) then
+    print "(a)",'           pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
+                '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+ endif
+ !--magnitude of v
+ if (ndim.gt.0 .and. ndimV.gt.0 .and. ivx.gt.0 .and. icoordsnew.eq.1) then
+    write(*,"(11x,a)",ADVANCE='NO') '|v| = sqrt('//trim(shortlabel(label(ivx),unitslabel(ivx)))//'**2'
+    if (ndimV.gt.1) then
+       write(*,"(a,a,a)") (' + '//trim(shortlabel(label(i),unitslabel(i)))//'**2',i=ivx+1,ivx+ndimV-1),')'
+    else
+       write(*,"(a)") ')'
+    endif
+ endif
+ !--gas temperature if cv present
+ if (ndim.gt.0 .and. iutherm.gt.0 .and. icv.gt.0) then
+    print "(6x,a)",'T\dgas\u = '//trim(shortlabel(label(iutherm),unitslabel(iutherm)))//'/' &
+                    //trim(shortlabel(label(icv),unitslabel(icv)))
+ endif
+ !--radiation temperature
+ if (ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0) then
+    print "(6x,a)",'T\drad\u = ('//trim(shortlabel(label(irho),unitslabel(irho)))//'*' &
+                    //trim(shortlabel(label(iradenergy),unitslabel(iradenergy)))//'/7.5646e-15)**0.25)'
+ endif
+ print "(a)"
+
+end subroutine print_example_quantities
+
+!-----------------------------------------------------------------
+!
+!  utility (private) to print the current list of calculated
+!  quantities, checking that they parse correctly
+!
+!-----------------------------------------------------------------
+subroutine check_calculated_quantities(ncalcok,ncalctot)
+ use labels,         only:label
+ use settings_data,  only:ncolumns
+ use settings_units, only:unitslabel
+ use fparser,        only:checkf
+ implicit none
+ integer, intent(out) :: ncalcok,ncalctot
+ integer :: i,ierr
+
+ ncalcok = 0
+ ncalctot = 0
+ i = 1
+ print "(/,a)", ' Current list of calculated quantities:'
+ do while(i.le.maxcalc .and. len_trim(calcstring(i)).ne.0)
+    ierr = checkf(shortlabel(calcstring(i)),&
+            (/(shortlabel(label(i),unitslabel(i)),i=1,ncolumns+ncalcok),extravars/),Verbose=.false.)
+
+    if (ierr.eq.0) then
+       ncalcok = ncalcok + 1
+       print "(1x,i2,') ',a50,' [OK]')",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i)
+    else
+       print "(1x,'XX) ',a50,' [INACTIVE]')",trim(calclabel(i))//' = '//calcstring(i)
+    endif
+    ncalctot = i
+    i = i + 1
+ enddo
+ if (ncalcok.eq.0) print "(a)",' (none)'
+
+end subroutine check_calculated_quantities
+
+!-----------------------------------------------------------------
+!
+!  actually compute the extra quantities from the particle data
+!
+!-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
-  use labels, only:label,labelvec,iamvec,ix,irho,ih,ipmass,iutherm,ipr,ivx,ike, &
-                   irad,iBfirst,idivB,icv,iradenergy
-  use particle_data, only:dat,npartoftype,gamma,maxpart,maxstep,maxcol
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iRescale,xorigin,itrackpart
-  use settings_part, only:iexact
+  use labels,         only:label,labelvec,iamvec
+  use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol
+  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode !,itrackpart
   use mem_allocation, only:alloc
   use settings_units, only:unitslabel,units
+  use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
+  use params,         only:maxplot
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
-  integer :: i,j,ncolsnew
-  integer :: ientrop,idhdrho,ivalfven,imach,ideltarho,ivol
-  integer :: ipmag,ibeta,itotpr,idivBerr,icrosshel,ithermal
-  integer :: irad2,ivpar,ivperp,iBpar,iBperp,ntoti
-  integer :: iamvecprev,ivec,nveclist,ivecstart,inewcol
-  integer :: imri,ipk
-  integer :: itempgas,itemprad,idudtrad
-  integer, dimension(ncolumns) :: iveclist,ivecmagcol
+  integer :: i,j,ncolsnew,ierr,icalc,ntoti
   logical :: skip
-  real :: Bmag, veltemp, spsound, gmw
-  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
-  real, parameter :: pi = 3.1415926536
-  real, parameter :: Omega0 = 1.e-3 ! for MRI delta v
-  real :: angledeg,anglexy,runit(3)  ! to plot r at some angle
-  real, parameter :: radconst = 7.5646e-15
-  real, parameter :: lightspeed = 3.e10   ! in cm/s (cgs)
+!  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
+!  real, parameter :: radconst = 7.5646e-15
+!  real, parameter :: lightspeed = 3.e10   ! in cm/s (cgs)
+  real(kind=rn), dimension(maxplot+nextravars) :: vals
   
   !
   !--allow dummy call to set labels without actually calculating stuff
@@ -65,357 +324,88 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      skip = dontcalculate
   else
      skip = .false.
-  endif  
-  !
-  !--initialise extra quantities to zero
-  !
-  ike = 0
-  ientrop = 0
-  idhdrho = 0
-  ipmag = 0
-  ibeta = 0
-  itotpr = 0
-  idivBerr = 0
-  icrosshel = 0
-  irad2 = 0
-  ivpar = 0
-  ivperp = 0
-  iBpar = 0
-  iBperp = 0
-  ivalfven = 0
-  imach = 0
-  ideltarho = 0
-  ivol = 0
-  ithermal = 0
-  imri = 0
-  ipk = 0
-  itempgas = 0
-  itemprad = 0
-  idudtrad = 0
-  !
-  !--specify which of the possible quantities you would like to calculate
-  !  (0 = not calculated)
-  !
-  !--specify hydro quantities
-  !
-  ncalc = 0
+  endif
   
-  !--radius
-  if (ndim.gt.0) call addcolumn(irad,'radius ')
-  if (irad.gt.0) unitslabel(irad) = unitslabel(ix(1))
-  !--thermal energy per unit volume
-  if (irho.ne.0 .and. iutherm.ne.0) call addcolumn(ithermal,'\gr u')
-  !--entropy
-  if (irho.ne.0 .and. iutherm.ne.0) call addcolumn(ientrop,'entropy')
-  !--pressure
-  if ((ipr.eq.0 .or. ipr.gt.ncolumns) .and. iutherm.ne.0.and.irho.ne.0) then
-     call addcolumn(ipr,'pressure')
-  endif
-  !--mach number
-  if (ipr.ne.0 .and. irho.ne.0 .and. ivx.ne.0) call addcolumn(imach,'mach number')
-  !--deltarho for toy star
-  if (irho.ne.0 .and. irad.ne.0 .and. iexact.eq.4) call addcolumn(ideltarho,'\gd \gr')
-  !--mean particle spacing (m/rho)**(1/ndim)
-  !if (ipmass.ne.0 .and. irho.ne.0 .and. ndim.ge.1) call addcolumn(ivol,'m/rho^(1/ndim)')
-  !--dh/drho
-  !if (ih.ne.0 .and. irho.ne.0) call addcolumn(idhdrho,'dh/d\gr')
-  !--pk
-  !call addcolumn(ipk,'P(k) k\u2')
-
-  !
-  !--radiative transfer stuff
-  !
-  if (ndim.gt.0 .and. iutherm.gt.0) call addcolumn(itempgas,'gas temperature')
-  if (ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0) call addcolumn(itemprad,'radiation temperature')
-  if (ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0 .and. icv.gt.0 .and. iutherm.gt.0 .and. iRescale) &
-     call addcolumn(idudtrad,'du/dt\drad\u')
-  !
-  !--specify MHD quantities
-  !
-  if (iBfirst.ne.0) then
-     call addcolumn(ipmag,'1/2 B\u2\d')
-     if (ipr.ne.0 .and. ipmag.ne.0) then
-        call addcolumn(ibeta,'plasma \gb')
-!        call addcolumn(itotpr,'P_gas + P_mag')
+  ierr = 0
+  ncalc = 0
+  i = 1
+  print*
+  do while (i.le.maxcalc .and. len_trim(calcstring(i)).gt.0 .and.ncolumns+ncalc.lt.size(label))
+     ierr = checkf(shortlabel(calcstring(i)),&
+            (/(shortlabel(label(i),unitslabel(i)),i=1,ncolumns+ncalc),extravars/))
+     if (ierr.eq.0 ) then
+        print "(a,a10,' = ',a)",' calculating ',trim(calclabel(i)),trim(calcstring(i))
+        ncalc = ncalc + 1
+        !
+        !--now actually assign the calculated quantity to a particular column
+        !  and set required information for the column
+        !
+        label(ncolumns+ncalc) = trim(calclabel(i))
+        if (iRescale) label(ncolumns+icalc) = trim(label(ncolumns+ncalc))//trim(calcunitslabel(i))
+     else
+        print "(a)",' error parsing function '//trim(calclabel(i))//' = '//trim(calcstring(i))
      endif
-     if (idivB.ne.0 .and. ih.ne.0) call addcolumn(idivBerr,'h |div B| / |B|')
-!     if (ivx.ne.0) call addcolumn(icrosshel,'B dot v')
-     if (ipmag.ne.0 .and. (irho.ne.0)) call addcolumn(ivalfven,'v\dalfven\u')
-     !--MRI perturbed velocity (delta v)
-     if (ivx.ne.0 .and. ndim.ge.2 .and. ndimV.ge.3) call addcolumn(imri,'\gd v\d3\u')
-  else
-!     call addcolumn(ivpar,'v\d\(0737)')
-!     call addcolumn(ivperp,'v\d\(0738)')
-  endif
-
-!  if (ndim.eq.2 .and. iBfirst.ne.0 .and. ivx.ne.0) then
-!     call addcolumn(irad2,'r\d\(0737)')
-!     call addcolumn(ivpar,'v\d\(0737)')
-!     call addcolumn(ivperp,'v\d\(0738)')
-!     call addcolumn(iBpar,'B\d\(0737)')
-!     call addcolumn(iBperp,'B\d\(0738)')
-!  endif
-!
-!--magnitudes of all vector quantities (cartesian only)
-!
-  iamvecprev = 0
-  nveclist = 0
-  iveclist(:) = 0
-  if (icoords.eq.1) then
-     do i=1,ncolumns
-        if (iamvec(i).gt.0 .and. iamvec(i).le.ncolumns .and. iamvec(i).ne.iamvecprev) then
-           nveclist = nveclist + 1
-           iveclist(nveclist) = iamvec(i)
-           call addcolumn(ivecmagcol(nveclist),'|'//trim(labelvec(iamvec(i)))//'|')           
-           !--set units label for vector magnitudes to be the same as the vectors
-           unitslabel(ivecmagcol(nveclist)) = unitslabel(iamvec(i))
-           iamvecprev = iamvec(i)
-        endif
-     enddo
-  endif
+     i = i + 1
+  enddo
   
   if (.not.skip) print*,'calculating ',ncalc,' additional quantities...'
   ncolsnew = ncolumns + ncalc
   if (ncolsnew.gt.maxcol) call alloc(maxpart,maxstep,ncolsnew) 
-!
-!--reset iamvec to zero for calculated columns
-!
+
+  !
+  !--reset iamvec to zero for calculated columns
+  !
   iamvec(ncolumns+1:ncolsnew) = 0
   labelvec(ncolumns+1:ncolsnew) = ' '
 
+  !
+  !--evaluate functions in turn
+  !
   if (.not.skip .and. ncalc.gt.0) then
-   do i=ifromstep,itostep
-      ntoti = SUM(npartoftype(:,i))
-      !!--pressure if not in data array
-      if ((ipr.gt.ncolumns).and.(irho.ne.0).and.(iutherm.ne.0)) then
-         if (gamma(i).gt.1.00001) then
-            dat(1:ntoti,ipr,i) = dat(1:ntoti,irho,i)*dat(1:ntoti,iutherm,i)*(gamma(i)-1.)
-         else
-         !--for isothermal it depends what utherm is set to. This is the case in sphNG:
-            dat(1:ntoti,ipr,i) = dat(1:ntoti,irho,i)*dat(1:ntoti,iutherm,i)*2./3.
-         endif
-      endif
-      !!--entropy
-      if (ientrop.ne.0 .and. ipr.ne.0) then
-         where (dat(1:ntoti,irho,i).gt.tiny(0.)) 
-            dat(1:ntoti,ientrop,i) = dat(1:ntoti,ipr,i)/dat(1:ntoti,irho,i)**gamma(i)
-         elsewhere
-            dat(1:ntoti,ientrop,i) = 0.
-         endwhere
-      endif
-      !!--mach number
-      if (imach.ne.0 .and. ivx.ne.0 .and. irho.ne.0 .and. ipr.ne.0) then
-         do j=1,ntoti
-            veltemp = dot_product(dat(j,ivx:ivx+ndimV-1,i), &
-                                  dat(j,ivx:ivx+ndimV-1,i))
-            if (dat(j,irho,i).gt.tiny(0.)) then
-               spsound = gamma(i)*dat(j,ipr,i)/dat(j,irho,i)
-               if (spsound.gt.tiny(spsound)) then
-                  dat(j,imach,i) = sqrt(veltemp/spsound)
-               else
-                  dat(j,imach,i) = 0.
-               endif
-            else
-               dat(j,imach,i) = 0.
-            endif
-         enddo
-      endif
-      !!--dh/drho
-      if (idhdrho.ne.0) then
-         where (dat(1:ntoti,irho,i).gt.tiny(0.)) 
-            dat(1:ntoti,idhdrho,i) = &
-               -dat(1:ntoti,ih,i)/(ndim*(dat(1:ntoti,irho,i)))
-         elsewhere
-            dat(1:ntoti,idhdrho,i) = 0.
-         endwhere
-      endif
-      !!--radius         
-      if (irad.ne.0) then
-         if (icoords.gt.1) then
-            dat(1:ntoti,irad,i) = dat(1:ntoti,ix(1),i)
-         else
-            !--make radius relative to tracked particle if particle tracking is set
-            if (itrackpart.gt.0 .and. itrackpart.le.ntoti) then
-               print "(a,i10)",' radius relative to particle ',itrackpart
-               do j=1,ntoti
-                  dat(j,irad,i) = sqrt(dot_product( &
-                                  dat(j,ix(1:ndim),i)-dat(itrackpart,ix(1:ndim),i), &
-                                  dat(j,ix(1:ndim),i)-dat(itrackpart,ix(1:ndim),i)))
-               enddo
-            else
-            !--calculate radius using origin settings for rotation
-               if (any(abs(xorigin(1:ndim)).gt.tiny(xorigin))) then
-                  !--only print origin setting if non-zero
-                  print*,'radius calculated relative to origin = ',xorigin(1:ndim)
-               endif
-               do j=1,ntoti
-                  dat(j,irad,i) = sqrt(dot_product(dat(j,ix(1:ndim),i)-xorigin(1:ndim),   &
-                    dat(j,ix(1:ndim),i)-xorigin(1:ndim)))
-               enddo
-            endif    
-         endif
-      endif
-      !!--specific KE
-      if ((ike.ne.0).and.(ivx.ne.0)) then
-         do j=1,ntoti
-            dat(j,ike,i) = 0.5*dot_product(dat(j,ivx:ivx+ndimV-1,i), &
-                                           dat(j,ivx:ivx+ndimV-1,i))
-         enddo
-      endif
-      if (ithermal.ne.0 .and. iutherm.ne.0 .and. irho.ne.0) then
-         dat(1:ntoti,ithermal,i) = dat(1:ntoti,irho,i)*dat(1:ntoti,iutherm,i)
-      endif
-      !!--volume - (m/rho)**(1/ndim)
-      if (ivol.ne.0 .and. ipmass.ne.0 .and. irho.ne.0 .and. ndim.gt.0) then
-         where (dat(1:ntoti,irho,i).gt.tiny(0.))
-            dat(1:ntoti,ivol,i) = (dat(1:ntoti,ipmass,i)/dat(1:ntoti,irho,i))**(1./real(ndim))    
-         elsewhere
-            dat(1:ntoti,ivol,i) = 0.
-         end where
-      endif
-      !!--delta rho for toy star
-      if ((ideltarho.ne.0).and.(irho.ne.0).and.(irad.ne.0)) then
-         do j=1,ntoti
-            dat(j,ideltarho,i) = dat(j,irho,i) - (1.-dat(j,irad,i)**2)
-         enddo
-      endif
-      !!--P(k)*k-2
-      if ((ipk.ne.0)) then
-         do j=1,ntoti
-            dat(j,ipk,i) = dat(j,2,i)*dat(j,1,i)**2
-         enddo
-      endif
-      !!--distance along the line with angle 30deg w.r.t. x axis
-      if (irad2.ne.0) then
-         angledeg = 30.
-         anglexy = angledeg*pi/180.
-         runit(1) = cos(anglexy)
-         if (ndim.ge.2) runit(2) = sin(anglexy)
-         do j=1,ntoti
-            dat(j,irad2,i) = dot_product(dat(j,ix(1:ndim),i),runit(1:ndim))
-         enddo
-         if (ivpar.ne.0) then
-            dat(1:ntoti,ivpar,i) = dat(1:ntoti,ivx+1,i)*SIN(anglexy) + dat(1:ntoti,ivx,i)*COS(anglexy)
-         endif
-         if (ivperp.ne.0) then
-            dat(1:ntoti,ivperp,i) = dat(1:ntoti,ivx+1,i)*COS(anglexy) - dat(1:ntoti,ivx,i)*SIN(anglexy)           
-         endif
-         if (iBpar.ne.0) then
-            dat(1:ntoti,iBpar,i) = dat(1:ntoti,iBfirst+1,i)*SIN(anglexy) + dat(1:ntoti,iBfirst,i)*COS(anglexy)
-         endif
-         if (iBperp.ne.0) then
-            dat(1:ntoti,iBperp,i) = dat(1:ntoti,iBfirst+1,i)*COS(anglexy) - dat(1:ntoti,iBfirst,i)*SIN(anglexy)
-         endif
-      endif
-      !
-      !--radiative transfer quantities
-      !
-      !!--gas temperature
-      if (itempgas.gt.0 .and. ndim.gt.0 .and. iutherm.gt.0) then
-         if (icv.gt.0) then
-            print*,' TEMP USES CV'
-            where(abs(dat(1:ntoti,icv,i)).gt.tiny(0.))
-               dat(1:ntoti,itempgas,i) = dat(1:ntoti,iutherm,i)/dat(1:ntoti,icv,i)
-            elsewhere  
-               dat(1:ntoti,itempgas,i) = 0.
-            endwhere
-         else
-            gmw = 4.0/(2.*0.7 + 0.28)
-            print*,' CALCULATING GAS TEMPERATURE USING ASSUMED MU=',gmw
-            print*,' PHYSICAL UNITS MUST BE ON TO GET A RESULT IN K'
-            dat(1:ntoti,itempgas,i) = 2./3.*gmw*mhonkb*dat(1:ntoti,iutherm,i)
-         endif
-      endif
-      !!--radiation temperature
-      if (itemprad.gt.0 .and. ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0) then
-         if (iRescale) then
-            dat(1:ntoti,itemprad,i) = abs(dat(1:ntoti,irho,i)*dat(1:ntoti,iradenergy,i)/radconst)**0.25
-         else ! if not using physical units, still give radiation temperature in physical units
-            dat(1:ntoti,itemprad,i) = abs(dat(1:ntoti,irho,i)*units(irho)*dat(1:ntoti,iradenergy,i) &
-                                      *units(iradenergy)/radconst)**0.25         
-         endif
-         if (idudtrad.gt.0) then
-            if (iRescale) then
-               where (dat(1:ntoti,icv,i).gt.tiny(0.))
-                  dat(1:ntoti,idudtrad,i) = lightspeed*dat(1:ntoti,iradenergy+1,i)* &
-                                         (abs(dat(1:ntoti,irho,i))*dat(1:ntoti,iradenergy,i) &
-                                          - radconst*(dat(1:ntoti,iutherm,i)/dat(1:ntoti,icv,i))**4)
-               elsewhere
-                  dat(1:ntoti,idudtrad,i) = 0.
-               endwhere
-            else
-               dat(1:ntoti,idudtrad,i) = 0.
-            endif
-         endif
-      endif
-      !
-      !--magnetic quantities
-      !
-      if (iBfirst.ne.0) then
-         !!--magnetic pressure
-         if (ipmag.ne.0) then
-            do j=1,ntoti
-               dat(j,ipmag,i) = 0.5*dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i), &
-                                                dat(j,iBfirst:iBfirst+ndimV-1,i))
-            enddo
-            !!--plasma beta
-            if (ibeta.ne.0) then
-               where(abs(dat(1:ntoti,ipmag,i)).gt.tiny(0.))
-                  dat(1:ntoti,ibeta,i) = dat(1:ntoti,ipr,i)/dat(1:ntoti,ipmag,i)
-               elsewhere  
-                  dat(1:ntoti,ibeta,i) = 0.
-               endwhere
-            endif
-         endif
-
-         !!--total pressure (gas + magnetic)     
-         if (itotpr.ne.0) then
-            dat(1:ntoti,itotpr,i) = dat(1:ntoti,ipr,i) + dat(1:ntoti,ipmag,i)
-         endif
-         !!--div B error        (h*divB / abs(B))
-         if (idivBerr.ne.0) then
-            do j=1,ntoti
-               Bmag = sqrt(dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i), &
-                                       dat(j,iBfirst:iBfirst+ndimV-1,i)))
-               if (Bmag.gt.tiny(Bmag)) then
-                  dat(j,idivBerr,i) = abs(dat(j,idivB,i))*dat(j,ih,i)/Bmag
-               else
-                  dat(j,idivBerr,i) = 0.
-               endif
-            enddo
-         endif
-         if (icrosshel.ne.0) then
-            do j=1,ntoti
-               dat(j,icrosshel,i) = dot_product(dat(j,iBfirst:iBfirst+ndimV-1,i),  &
-                    dat(j,ivx:ivx+ndimV-1,i))
-            enddo
-         endif
-         if (ivalfven.ne.0) then
-            where (dat(:,irho,i).gt.tiny(0.))
-               dat(:,ivalfven,i) = sqrt(dat(:,ipmag,i)/dat(:,irho,i))
-            elsewhere
-               dat(:,ivalfven,i) = 0.
-            end where
-         endif
-         if (imri.gt.0 .and. ivx.gt.0 .and. ndim.ge.2 .and. ndimV.ge.3) then
-            dat(:,imri,i) = dat(:,ivx+2,i) + 1.5*Omega0*dat(:,ix(1),i)
-         endif
-      endif
-      !
-      !--magnitudes of all vector quantities
-      !
-      do ivec=1,nveclist
-         inewcol = ivecmagcol(ivec)
-         ivecstart = iveclist(ivec)
-         do j=1,ntoti
-            dat(j,inewcol,i) = sqrt(dot_product(dat(j,ivecstart:ivecstart+ndimV-1,i), &
-                                                dat(j,ivecstart:ivecstart+ndimV-1,i)))
-         enddo
-      enddo
-
-   enddo
-   
-  endif  ! skip
+     call initf(ncalc)
+     !
+     !--compile each function into bytecode
+     !
+     icalc = 1
+     do i=1,maxcalc
+        if (icalc.le.ncalc) then
+           call parsef(icalc,shortlabel(calcstring(i)), &
+                (/(shortlabel(label(i),unitslabel(i)),i=1,ncolumns+icalc-1),extravars/),err=ierr,Verbose=.false.)
+           if (ierr.eq.0) then
+              icalc = icalc + 1
+           endif
+        endif
+     enddo
+     !
+     !--evaluate functions from particle data
+     !
+     do i=ifromstep,itostep
+        ntoti = SUM(npartoftype(:,i))
+        do icalc=1,ncalc
+           if (debugmode) print*,'DEBUG: ',icalc,' calculating '//trim(label(ncolumns+icalc))
+           !
+           !--additional settings allowed in function evaluations
+           !  i.e., time and gamma from dump file and current origin settings
+           !  make sure the number here aligns with the "nextravars" setting
+           !
+           vals(ncolumns+icalc)   = time(i)
+           vals(ncolumns+icalc+1) = gamma(i)
+           vals(ncolumns+icalc+2) = xorigin(1)
+           vals(ncolumns+icalc+3) = xorigin(2)
+           vals(ncolumns+icalc+4) = xorigin(3)
+           do j=1,ntoti
+              vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
+              dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
+           enddo
+           if (EvalErrType.ne.0) then
+              print "(a)",' ERRORS evaluating '//trim(calcstring(icalc))//': ' &
+                          //trim(EvalerrMsg())
+           endif
+        enddo
+     enddo
+     call endf
+  endif
+ 
   !
   !--override units of calculated quantities if necessary
   !
@@ -423,7 +413,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
       .and. .not.skip) then
      write(*,"(/a)") ' rescaling data...'
      do i=ncolumns+1,ncolumns+ncalc
-        if (abs(units(i)-1.0).gt.tiny(0.) .and. units(i).gt.tiny(0.)) then
+        if (abs(units(i)-1.0).gt.tiny(0.) .and. abs(units(i)).gt.tiny(0.)) then
            dat(:,i,ifromstep:itostep) = dat(:,i,ifromstep:itostep)*units(i)
         endif
         if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
@@ -437,8 +427,13 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   return
 end subroutine calc_quantities
 
+!-----------------------------------------------------------------
+!
+!  utility (private) to add a column (not currently used)
+!
+!-----------------------------------------------------------------
 subroutine addcolumn(inewcolumn,labelin)
- use labels, only:label
+ use labels,        only:label
  use settings_data, only:ncolumns,ncalc 
  implicit none
  integer, intent(out) :: inewcolumn
@@ -455,5 +450,47 @@ subroutine addcolumn(inewcolumn,labelin)
 
  return
 end subroutine addcolumn
+
+!-----------------------------------------------------------------
+!
+!  utility (private) to strip spaces, escape sequences and
+!  units labels from variable names
+!
+!-----------------------------------------------------------------
+elemental function shortlabel(string,unitslab)
+ use labels, only:lenlabel
+ implicit none
+ character(len=lenlabel), intent(in)  :: string
+ character(len=lenlabel) :: shortlabel
+ character(len=*), intent(in), optional :: unitslab
+ integer :: ipos
+
+ shortlabel = string
+ !--strip off the units label
+ if (present(unitslab)) then
+    if (len_trim(unitslab).gt.0) then
+    !--remove units label (only do this once)
+       ipos = index(trim(shortlabel),trim(unitslab))
+       if (ipos.ne.0) then
+          shortlabel = shortlabel(1:ipos-1)//&
+                       shortlabel(ipos+len_trim(unitslab)+1:len_trim(shortlabel))
+       endif
+    endif
+ endif
+
+ !--remove spaces
+ ipos = index(trim(shortlabel),' ')
+ do while (ipos.ne.0)
+    shortlabel = shortlabel(1:ipos-1)//shortlabel(ipos+1:len_trim(shortlabel))
+    ipos = index(trim(shortlabel),' ')
+ enddo
+ !--remove escape sequences (\d etc.)
+ ipos = index(trim(shortlabel),'\')
+ do while (ipos.ne.0)
+    shortlabel = shortlabel(1:ipos-1)//shortlabel(ipos+2:len_trim(shortlabel))
+    ipos = index(trim(shortlabel),'\')
+ enddo
+
+end function shortlabel
 
 end module calcquantities

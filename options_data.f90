@@ -81,7 +81,7 @@ subroutine submenu_data(ichoose)
  use settings_data,  only:istartatstep,iendatstep,nfreq,iUseStepList, &
                           isteplist,buffer_data,iCalcQuantities,iRescale, &
                           DataIsBuffered,numplot,ncalc,ncolumns
- use calcquantities, only:calc_quantities
+ use calcquantities, only:calc_quantities,setup_calculated_quantities
  use limits,         only:set_limits
  use labels,         only:label
  use settings_units, only:units,unitslabel,set_units,write_unitsfile, &
@@ -96,7 +96,7 @@ subroutine submenu_data(ichoose)
 
  print "(a)",'----------------- data read options -------------------'
  
- if (ians.le.0 .or. ians.gt.7) then
+ if (ians.le.0 .or. ians.gt.8) then
     if (iUseStepList) then
        print 10, iendatstep,print_logical(iUseStepList),print_logical(buffer_data), &
                  print_logical(iCalcQuantities),print_logical(iRescale)
@@ -112,9 +112,10 @@ subroutine submenu_data(ichoose)
            ' 3) plot selected steps only               (  ',a,' )',/, &
            ' 4) buffering of data on/off               (  ',a,' )',/, &
            ' 5) turn calculate extra quantities on/off (  ',a,' )',/, &
-           ' 6) use physical units                     (  ',a,' )',/,&
-           ' 7) change physical unit settings ')
-    call prompt('enter option',ians,0,7)
+           ' 6) edit list of calculated quantities               ',/, &
+           ' 7) use physical units                     (  ',a,' )',/,&
+           ' 8) change physical unit settings ')
+    call prompt('enter option',ians,0,8)
  endif
 !
 !--options
@@ -158,21 +159,25 @@ subroutine submenu_data(ichoose)
        endif
     endif
 !------------------------------------------------------------------------
- case(5)
-    iCalcQuantities = .not.iCalcQuantities
+ case(5,6)
+    if (ians.eq.5) iCalcQuantities = .not.iCalcQuantities
+ 
     if (iCalcQuantities) then
+       call setup_calculated_quantities(ncalc)
        if (DataIsBuffered) then
           call calc_quantities(1,nsteps)
           call set_limits(1,nsteps,ncolumns+1,ncolumns+ncalc)
        else
-          call calc_quantities(1,nstepsinfile(ifileopen))
-          call set_limits(1,nstepsinfile(ifileopen),ncolumns+1,ncolumns+ncalc)
+          if (ifileopen.gt.0) then
+             call calc_quantities(1,nstepsinfile(ifileopen))
+             call set_limits(1,nstepsinfile(ifileopen),ncolumns+1,ncolumns+ncalc)
+          endif
        endif
     else
-       print "(/a)",' Calculation of extra quantities = '//print_logical(iCalcQuantities)   
+       print "(/a)",' Calculation of extra quantities is '//print_logical(iCalcQuantities)   
     endif
 !------------------------------------------------------------------------
- case(6) 
+ case(7) 
     print "(a)",'current settings for conversion to physical units are:'
     call get_labels ! reset labels for printing
     do i=1,ncolumns
@@ -193,7 +198,7 @@ subroutine submenu_data(ichoose)
        endif
     endif
 !------------------------------------------------------------------------
- case(7)
+ case(8)
     UnitsHaveChanged = .false.
     call set_units(ncolumns,numplot,UnitsHaveChanged)
     
