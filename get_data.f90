@@ -48,7 +48,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use limits,         only:set_limits
   use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata, &
                       DataisBuffered,iCalcQuantities,ndim,       &
-                      iRescale,required,ipartialread,lowmemorymode
+                      iRescale,required,ipartialread,lowmemorymode,debugmode
   use settings_part,  only:iexact
   use particle_data,  only:dat,time,npartoftype,maxcol
   use prompting,      only:prompt
@@ -176,6 +176,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--do some basic sanity checks
      !
+     if (debugmode) print "(a,i3)",' DEBUG: ncolumns from data read = ',ncolumns
+     if (debugmode) print "(a,i3)",' DEBUG: nsteps read from file   = ',nstepsinfile(ireadfile)
      call check_data_read()
 
 !--try different endian if failed the first time
@@ -220,7 +222,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
            endif
            ncolumns = ncolumnsfirst
         endif
-     endif     
+     endif
+
      !
      !--assume there are the same number of steps in the other files
      !  which have not been read
