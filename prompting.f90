@@ -93,6 +93,13 @@
 ! 06/02/09: D. Price:
 ! Added optional "mask" argument to print_logical routine
 !
+! 27/01/10: D. Price:
+! Added optional "list" argument to string_prompt routine, now recursive
+!
+! 24/02/10: D. Price:
+! When noblank=.true., string prompt does not accept blank string
+! (e.g. where it is the default input) and gives an error message
+!
 module prompting
 
    private                     
@@ -479,6 +486,13 @@ contains
          string = ' '
       elseif ( len(trim(adjustl(newstring))) /= 0 ) then
          string = newstring
+      elseif ( .not.allowblank .and. len_trim(adjustl(string)).eq.0 ) then
+         print "(a)", "Error, cannot enter blank string"         
+         if (present(list)) then
+            call string_prompt(text,string,noblank=.not.allowblank,list=list)
+         else
+            call string_prompt(text,string,noblank=.not.allowblank)         
+         endif
       endif
       if (present(length)) length = len_trim(string)
          
