@@ -590,7 +590,6 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
     if (ndim.eq.3) then  !--Probability Density Function
        nextra = nextra + 1
        ipdf = ncolumns + ncalc + nextra
-       print*,'ipdf = ',ipdf,ncolumns,ncalc,nextra
        label(ipdf) = 'PDF'
     endif
 
