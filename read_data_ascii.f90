@@ -58,20 +58,20 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
+  use particle_data,  only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc
+  use settings_data,  only:ndim,ndimV,ncolumns,ncalc
   use mem_allocation, only:alloc
-  use asciiutils, only:get_ncolumns
-  use system_utils, only:ienvironment
+  use asciiutils,     only:get_ncolumns
+  use system_utils,   only:ienvironment
   implicit none
-  integer, intent(in) :: indexstart
-  integer, intent(out) :: nstepsread
+  integer, intent(in)          :: indexstart
+  integer, intent(out)         :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr
   integer :: nprint,npart_max,nstep_max,icol,nheaderlines,nheaderenv
   logical :: iexist,timeset,gammaset
-  real :: dummyreal
+  real    :: dummyreal
   character(len=len(rootname)+4) :: dumpfile
 
   nstepsread = 0
@@ -222,10 +222,10 @@ subroutine set_labels
   use system_commands, only:get_environment
   use filenames,       only:fileprefix
   implicit none
-  integer :: i,ierr,ndimVtemp
+  integer                 :: i,ierr,ndimVtemp
   character(len=120)      :: columnfile
   character(len=lenlabel) :: labeli
-  logical :: iexist
+  logical                 :: iexist
 !
 !--read column labels from the columns file if it exists
 !
