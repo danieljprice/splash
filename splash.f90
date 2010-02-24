@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
@@ -24,7 +24,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2009 Daniel Price 
+!     Copyright (C) 2005-2010 Daniel Price 
 !     daniel.price@sci.monash.edu.au
 !
 !     --------------------------------------------------------------------------
@@ -45,10 +45,13 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.13.0 : (xx/11/09)
-!             function parser incorporated; arbitrary function plotting implemented 
-!             as exact solution; command-line SPH->grid conversion ("splash to grid")
-!             implemented.
+!     1.13.0 : (25/02/10)
+!             function parser incorporated; calculated quantities can now be specified
+!             at runtime, arbitrary function plotting implemented as an exact
+!             solution; command-line SPH->grid conversion ("splash to grid")
+!             implemented; ctrl-t in interactive mode adds arbitrary text box; 
+!             better line style/colour changing; bug fix with tiling and y-axis labels;
+!             various other bug fixes.
 !     1.12.2 : (15/07/09)
 !             Variable marker sizes added, can plot particles as circles with
 !             size proportional to h; dark matter rendering with block-labelled
@@ -272,7 +275,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.13.0beta [3rd Nov. ''09]'
+  character(len=*), parameter :: version = 'v1.13.0 [25th Feb. ''10]'
 
   !
   ! initialise some basic code variables
@@ -597,7 +600,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2009 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2010 )'
  print 30 
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
@@ -617,7 +620,7 @@ subroutine print_usage(quit)
  logical :: ltemp
 
  print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
- print "(a)",'(c) 2005-2009 Daniel Price '
+ print "(a)",'(c) 2005-2010 Daniel Price '
  print "(a,/)",trim(version)
  print "(a,/)",'Usage: splash file1 file2 file3...'
  print "(a,/,a,/)",'Usage with flags: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] ', &
