@@ -123,6 +123,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
   ipmass = 4
   idivvcol = 0
   nhydroreal4 = 0
+  umass = 1.d0
+  utime = 1.d0
+  udist = 1.d0
+  umagfd = 1.d0
+  istartmhd = 0
+  istartrt  = 0
+  nmhd      = 0
+  phantomdump = .false.
+  smalldump   = .false.
+  mhddump     = .false.
+  rtdump      = .false.
+  usingvecp   = .false.
+  igotmass    = .false.
+  tfreefall   = 1.d0
 
   dumpfile = trim(rootname)   
   !
@@ -1239,8 +1253,10 @@ subroutine set_labels
 !   npower = int(log10(udist))
 !   udist = udist/10.**npower
 !   udistAU = udist/1.495979e13
-   units(1:3) = udist
-   unitslabel(1:3) = ' [cm]'
+   if (ndim.ge.3) then
+      units(1:3) = udist
+      unitslabel(1:3) = ' [cm]'
+   endif
 !   do i=1,3
 !      write(unitslabel(i),"('[ 10\u',i2,'\d cm]')") npower
 !   enddo
