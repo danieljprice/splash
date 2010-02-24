@@ -501,6 +501,7 @@ ascii: checksystem $(OBJECTS) read_data_ascii.o
    ifeq ($(SYSTEM), maccluster)
 	lipo -create asplash_ppc asplash_i386 -output asplash || cp asplash$(EXT) asplash
    endif
+	cp asplash splash
 
 mbatesph: checksystem $(OBJECTS) read_data_mbate.o
 	$(F90C) $(F90FLAGS) -o bsplash $(OBJECTS) read_data_mbate.o $(LDFLAGS)
@@ -531,7 +532,7 @@ kitp: checksystem $(OBJECTS) read_data_kitp.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ksplash $(OBJECTS) read_data_kitp.o
 
 ndspmhd: checksystem $(OBJECTS) read_data_dansph.o
-	$(F90C) $(F90FLAGS) -o splash $(OBJECTS) read_data_dansph.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o nsplash $(OBJECTS) read_data_dansph.o $(LDFLAGS)
 
 dansph: checksystem $(OBJECTS) read_data_dansph_old.o
 	$(F90C) $(F90FLAGS) -o dsplash $(OBJECTS) read_data_dansph_old.o $(LDFLAGS)
