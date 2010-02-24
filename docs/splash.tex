@@ -33,7 +33,7 @@
 \setlength{\evensidemargin}{-0.5cm}
 \setlength{\textwidth}{17cm}
 \def\thisyear{2009 }
-\newcommand{\splash}{\textsc{SPLASH }}
+\newcommand{\splash}{\textsc{splash }}
 
 \begin{titlepage}
 \title{Visualisation of SPH data using \splash - v\input{version}}
@@ -184,7 +184,7 @@ A standard ``make'' will create the following binaries (corresponding to data re
 \begin{tabular}{lllp{0.34\textwidth}}
 \splash binary & Formats read & read\_data file & Comments \\
 \hline
-asplash & ascii & \verb+read_data_ascii.f90+ & Generic data read for n-column ascii formats. Automatically determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use `asplash -e' to plot non-SPH data (e.g. energy vs time files).\\
+asplash \\splash & ascii & \verb+read_data_ascii.f90+ & Generic data read for n-column ascii formats. Automatically determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use `asplash -e' to plot non-SPH data (e.g. energy vs time files).\\
 dsplash & DRAGON & \verb+read_data_dragon.f90+ & see environment variable options. \\
 gsplash & GADGET, GADGET-2 &  \verb+read_data_gadget.f90+ & Handles both default and block-labelled formats (see environment variable options). \\
 rsplash & MAGMA & \verb+read_data_srosph.f90+  & Stephan Rosswog's code \\
@@ -210,7 +210,7 @@ Jamie Bolton GADGET format & gsplash\_jsb & \verb+read_data_gadget_jsb.f90+ & Re
 Old Matthew Bate code & bsplash & \verb+read_data_mbate.f90+  & similar to the original Benz SPH code format \\
 Foulkes/Haswell/Murray & fsplash & \verb+read_data_foulkes.f90+  & An ascii format \\
 Andrea Urban format & usplash & \verb+read_data_urban.f90+  & An ascii format \\
-ndspmhd & splash & \verb+read_data_dansph.f90+ & Format for the original code from which \splash was simply the plotter (and is now bigger than the code...). \\
+ndspmhd & nsplash & \verb+read_data_dansph.f90+ & Format for the original code from which \splash was simply the plotter (and is now bigger than the code...). \\
 
 \hline
 \end{tabular}
@@ -344,41 +344,62 @@ Command line options:
  -p fileprefix     : change prefix to ALL settings files read/written by splash 
  -d defaultsfile   : change name of defaults file read/written by splash
  -l limitsfile     : change name of limits file read/written by splash
- -e, -ev           : use default options best suited to ascii evolution files (i.e., energy vs time)
+ -e, -ev           : use default options best suited to ascii evolution files (ie. energy vs time)
  -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]
  -o pixformat      : dump pixel map in specified format (use just -o for list of formats)
 
 Command line plotting mode:
 
- -x column         : specify x plot on command line (i.e., do not prompt for x)
- -y column         : specify y plot on command line (i.e., do not prompt for y)
- -r[ender] column  : specify rendered quantity on command line (i.e., no render prompt)
+ -x column         : specify x plot on command line (ie. do not prompt for x)
+ -y column         : specify y plot on command line (ie. do not prompt for y)
+ -r[ender] column  : specify rendered quantity on command line (ie. no render prompt)
                      (will take columns 1 and 2 as x and y if -x and/or -y not specified)
- -vec[tor] column  : specify vector plot quantity on command line (i.e., no vector prompt)
- -c[ontour] column : specify contoured quantity on command line (i.e., no contour prompt)
- -dev device       : specify PGPLOT device on command line (i.e., do not prompt)
+ -vec[tor] column  : specify vector plot quantity on command line (ie. no vector prompt)
+ -c[ontour] column : specify contoured quantity on command line (ie. no contour prompt)
+ -dev device       : specify PGPLOT device on command line (ie. do not prompt)
 
  convert mode ("splash to X dumpfiles"): 
- splash to ascii  : convert SPH data to ascii file dumpfile.ascii
+ splash to ascii   : convert SPH data to ascii file dumpfile.ascii
 
-        to binary : convert SPH data to simple unformatted binary dumpfile.binary 
-                     write(1) time,npart,ncolumns
-                     do i=1,npart
-                        write(1) dat(1:ncolumns),itype
-                     enddo
+        to binary  : convert SPH data to simple unformatted binary dumpfile.binary 
+                      write(1) time,npart,ncolumns
+                      do i=1,npart
+                         write(1) dat(1:ncolumns),itype
+                      enddo
         to phantom : convert SPH data to binary dump file for PHANTOM
 
- analysis mode ("splash calc X dumpfiles") on a sequence of dump files: 
- splash calc energies     : calculate KE,PE,total energy vs time
-                            output to file called 'energy.out'
-        calc massaboverho : mass above a series of density thresholds vs time
-                            output to file called 'massaboverho.out'
-        calc max          : maximum of each column vs. time
-                            output to file called 'maxvals.out'
-        calc min          : minimum of each column vs. time
-                            output to file called 'minvals.out'
-        calc mean         : mean of each column vs. time
-                            output to file called 'meanvals.out'
+ grid conversion mode ("splash to X dumpfiles"): 
+    splash to grid         : interpolate basic SPH data (density, plus velocity if present in data)
+                             to 3D grid, write grid data to file (using default output=ascii)
+           to gridascii    : as above, grid data written in ascii format
+           to gridbinary   : as above, grid data in simple unformatted binary format
+        allto grid         : as above, interpolating *all* columns to the grid (and output file)
+        allto gridascii    : as above, with ascii output
+        allto gridbinary   : as above, with binary output
+
+ Analysis mode ("splash calc X dumpfiles") on a sequence of dump files: 
+  splash calc energies     : calculate KE,PE,total energy vs time
+                             output to file called 'energy.out'
+         calc massaboverho : mass above a series of density thresholds vs time
+                             output to file called 'massaboverho.out'
+         calc rhomach      : density variance and RMS velocity dispersion vs. time
+                             output to file called 'rhomach.out'
+         calc max          : maximum of each column vs. time
+                             output to file called 'maxvals.out'
+         calc min          : minimum of each column vs. time
+                             output to file called 'minvals.out'
+         calc mean         : mean of each column vs. time
+                             output to file called 'meanvals.out'
+         calc rms          : (mass weighted) root mean square of each column vs. time
+                             output to file called 'rmsvals.out'
+         calc vrms         : volume weighted root mean square of each column vs. time
+                             output to file called 'rmsvals-vw.out'
+
+  the above options all produce a small ascii file with one row per input file.
+  the following option produces a file equivalent in size to one input file (in ascii format):
+
+         calc timeaverage  : time average of *all* entries for every particle
+                             output to file called 'time_average.out'
 \end{verbatim}
 
  Command-line options can be entered in any order on the command line (even after the dump file names). For more information on the convert utility (`splash to ascii') see \S\ref{sec:convert}. For details of the \verb+-o ppm+ or \verb+-o ascii+ option see \S\ref{sec:writepixmap}. For details of the \verb+-ev+ option, see \S\ref{sec:evsplash}.
@@ -631,13 +652,27 @@ Note that only a limited number of steps can be selected in this way. An alterna
  For small data sets (or a small number of dump files) it is often useful to read all of the data into memory so that you can move rapidly forwards and backwards between dumps (e.g. in interactive mode, or where both dumps are plotted on the same page) without unnecessary re-reading of data from disk. This is achieved by turning ``buffering of data'' on in the d)ata menu (provided you have the memory of course!!). Non-buffered data means that only one file at a time is read.
 
 \subsubsection{ Calculating additional quantities not dumped}
-Turn ``calculate extra quantities'' on in the d)ata menu. This turns on the calculation of several additional quantities such as radius and the magnitude of all vector quantities. 
+Turn ``calculate extra quantities'' on in the d)ata menu. As of \splash version 1.13.0 it is possible to specify new columns of data as completely arbitrary functions of the data read from the SPH particles. Option d5 in the data menu leads, for a typical data read, to a prompt similar to the following:
+
+\begin{verbatim}
+ Specify a function to calculate from the data 
+ Valid variables are the column labels, 't', 'gamma', 'x0', 'y0' and 'z0' (origin setting) 
+ Spaces, escape sequences (\d) and units labels are removed from variable names
+ Note that previously calculated quantities can be used in subsequent calculations
+
+ Examples based on current data: 
+           r = sqrt((x-x0)**2 + (y-y0)**2 + (z-z0)**2)
+           pressure = (gamma-1)*density*u
+           |v| = sqrt(vx**2 + vy**2 + vz**2)
+           
+Enter function string to calculate (blank for none) (default=""):
+\end{verbatim}
+
+Thus, one can for example calculate the pressure from the density and thermal energy according by copying the second example given. Note that the function calculation is completely general and can use any of the columns read from the file, the time for each step (`\verb+t+'), the adiabatic index $\gamma$ (`\verb+gamma+') and the current origin setting (\verb+x0+,\verb+y0+ and \verb+z0+). Previously calculated quantities can also be used - e.g. in the above example we could further compute, say, an entropy variable using \verb+s=pressure/density^gamma+ after the pressure has been specified. The resultant quantities appear in the main splash menu as standard columns just as if they had been read from the original data file.
 
  Note that the origin for the calculation of radius can be changed via the ``rotation on/off/settings'' option in the x) submenu. If particle tracking limits are set (see \S\ref{sec:track}) the radius is calculated relative to the particle being tracked.
-
- At the moment it is not possible for the user to change the list of quantities from within \splash (although it is on my to-do list). However, additional quantities are calculated in the subroutine \verb+calc_quantities+ in the file \verb+calc_quantities.f90+, in which it is quite a simple matter to add your own by following those already implemented. 
- 
- What \emph{is} easy is if you simply want to multiply a column by a fixed number (e.g. say you have sound speed squared and you want to plot temperature) - this can be achieved by defining a unit for the column (i.e., a factor by which to multiply the column by) -- see \S\ref{sec:physicalunits} for details. The corresponding label can be changed by creating a \verb+splash.columns+ file (or for the ascii read just a file called `columns') containing labels which are used to override the default ones from the data read (one per line) -- see \S\ref{sec:columnsfile} for more details.
+  
+ Note that if you simply want to multiply a column by a fixed number (e.g. say you have sound speed squared and you want to plot temperature) - this can also be achieved by defining a unit for the column (i.e., a factor by which to multiply the column by) -- see \S\ref{sec:physicalunits} for details. The corresponding label can be changed by creating a \verb+splash.columns+ file (or for the ascii read just a file called `columns') containing labels which are used to override the default ones from the data read (one per line) -- see \S\ref{sec:columnsfile} for more details.
 
 See also \S\ref{sec:geom} for how to transform vectors (and positions) into different coordinate systems.
 
@@ -2247,7 +2282,7 @@ although check that this email address is current because I am still a postdoc!
 \section*{Acknowledgements}
  Several of the routines were developed from ideas used by Matthew Bate and \splash has been refined by many useful discussions with the aforementioned. The
 polytrope exact solution is from a routine by Joe Monaghan. I am indebted to one Thomas S. Ullrich at the University of Heidelberg who wrote the prompting module
-which is used throughout the program. Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve \splash, including, but not limited to: Giuseppe Lodato, John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Ir\v{s}i\v{c}, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika, Richard Alexander, Sigfried Vanaverbeke, Dave Rundle, Thomas Grief, Sky King, Florian Buerzle, Gabe Altay, David Madlener, Christoph Federrath, Andreas Bauswein, Laura Kreidberg, Ruben Martin, Cody Raskin, Shazrene Mohamed and Antonio Vazquez.
+which is used throughout the program and to Roland Schmehl who wrote the excellent function parser module (made available at \url{http://fparser.sourceforge.net}). Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve \splash, including, but not limited to: Giuseppe Lodato, John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Ir\v{s}i\v{c}, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika, Richard Alexander, Sigfried Vanaverbeke, Dave Rundle, Thomas Grief, Sky King, Florian Buerzle, Gabe Altay, David Madlener, Christoph Federrath, Andreas Bauswein, Laura Kreidberg, Ruben Martin, Cody Raskin, Shazrene Mohamed and Antonio Vazquez. And to everyone who has cited the \splash paper!
 
 \newpage
 \appendix
