@@ -94,6 +94,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   j = indexstart
   nstepsread = 0
   
+  print "(1x,a)",'reading Spyros Kitsonias'' format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
   !--open the (unformatted) binary file and read the number of particles

@@ -88,6 +88,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   j = indexstart
   nstepsread = 0
   
+  print "(1x,a)",'reading SNSPH format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
   !--read number of columns and number of particles

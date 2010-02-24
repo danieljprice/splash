@@ -137,6 +137,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   case('WD','hydro','HYDRO','ns_bh_v2')
      magfield = .false.
   end select
+
+  if (magfield) then
+     print "(1x,a)",'reading MAGMA code format (set RSPLASH_FORMAT=hydro for hydro format)'
+  else
+     print "(1x,a)",'reading Stephan Rosswog (hydro) code format (set RSPLASH_FORMAT=MHD for MAGMA)'  
+  endif
+
   !
   !--fix number of spatial dimensions
   !

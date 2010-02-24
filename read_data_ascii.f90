@@ -80,6 +80,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   iunit = 15  ! logical unit number for input
 
   dumpfile = trim(rootname)
+
+  print "(1x,a)",'reading ascii format'
+  print "(26('>'),1x,a,1x,26('<'))",trim(dumpfile)
   !
   !--check if first data file exists
   !
@@ -97,7 +100,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   j = indexstart
   nstepsread = 0
   
-  write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
   !--open the file and read the number of particles
   !

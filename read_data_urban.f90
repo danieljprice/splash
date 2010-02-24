@@ -90,7 +90,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   
   j = indexstart
   nstepsread = 0
-  print "(/,a)",' reading Andrea Urban ascii file format'
+  print "(a)",' reading Andrea Urban ascii file format'
   
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !

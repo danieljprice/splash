@@ -86,6 +86,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      return
   endif
 
+  print "(1x,a)",'reading old ndspmhd format'
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
   !
   !--open data file and read data

@@ -115,6 +115,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   j = indexstart
   nstepsread = 0
   
+  print "(1x,a)",'reading Stuart Whitehouse''s modified Bate-code format'
   do while (iexist)
      write(*,"(23('-'),1x,a,1x,23('-'))") trim(dumpfile)
      !

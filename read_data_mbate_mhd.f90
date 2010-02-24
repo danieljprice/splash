@@ -128,6 +128,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   j = indexstart
   nstepsread = 0
   
+  print "(1x,a)",'reading Matthew Bate''s/Willy Benz''s old SPH code format (MHD)'
   do while (iexist)
      write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
      !

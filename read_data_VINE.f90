@@ -163,12 +163,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nparti = 0
   ncolstep = 0
   
-  if (mhdread) then
-     print "(a,/)",' reading VINE MHD format'
-  else
-     print "(a,/)",' reading default VINE format (set VINE_MHD=yes for MHD)'  
-  endif
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
+  if (mhdread) then
+     print "(a)",' reading VINE MHD format'
+  else
+     print "(a)",' reading default VINE format (set VINE_MHD=yes for MHD)'  
+  endif
   !
   !--open the (unformatted) binary file and read the number of particles
   !

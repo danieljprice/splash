@@ -123,6 +123,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstepsread = 0
   doubleprec = .false.
   
+  print "(1x,a)",'reading oil-on-water code format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
    !
    !--open the (unformatted) binary file and read the number of particles
