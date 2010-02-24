@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
@@ -90,7 +90,7 @@
 ! String prompt accepts "blank" to set empty string, unless optional
 ! argument noblank is set to .true.
 !
-! 06/02/09: D. Price:
+! 06/02/09: D. Price, Monash University, daniel.price@sci.monash.edu.au
 ! Added optional "mask" argument to print_logical routine
 !
 ! 27/01/10: D. Price:
