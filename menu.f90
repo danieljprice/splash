@@ -560,7 +560,7 @@ end function allowrendering
 subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  use params,        only:maxplot
  use labels,        only:ipowerspec,iacplane,isurfdens,itoomre,iutherm,ipdf,label,icolpixmap
- use settings_data, only:ndim,icoordsnew,ivegotdata
+ use settings_data, only:ndim,icoordsnew,ivegotdata,debugmode
  use settings_part, only:iexact
  use write_pixmap,  only:ireadpixmap
  implicit none
@@ -569,56 +569,55 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  integer, intent(out)   :: nextra,numplot,ndataplots
 
  !
- !--do not add any extra columns if nothing read from file
+ !-add extra columns (but not if nothing read from file)
  !
- if (ncolumns.le.0) return
- 
- nextra = 0
- ipowerspec = 0
- iacplane = 0
- isurfdens = 0
- itoomre = 0
- if (ndim.eq.3 .and. icoordsnew.eq.2 .or. icoordsnew.eq.3) then
-    nextra = nextra + 1
-    isurfdens = ncolumns + ncalc + nextra
-    label(isurfdens) = 'Surface density'
-    if (iutherm.gt.0 .and. iutherm.le.ncolumns) then
-       nextra = nextra + 1
-       itoomre = ncolumns + ncalc + nextra
-       label(itoomre) = 'Toomre Q parameter'
-    endif
- endif
- if (ndim.eq.3) then  !--Probability Density Function
-    nextra = nextra + 1
-    ipdf = ncolumns + ncalc + nextra
-    print*,'ipdf = ',ipdf,ncolumns,ncalc,nextra
-    label(ipdf) = 'PDF'
- endif
-
- if (ndim.le.1) then !! .or. ndim.eq.3) then ! if 1D or no coord data (then prompts for which x)
-    nextra = nextra + 1      ! one extra plot = power spectrum
-    ipowerspec = ncolumns + ncalc + nextra
-    label(ipowerspec) = '1D power spectrum'
- else
+ if (ncolumns.gt.0) then
+    nextra = 0
     ipowerspec = 0
- endif
- if (iexact.eq.4) then       ! toy star plot a-c plane
-    nextra = nextra + 1
-    iacplane = ncolumns + ncalc + nextra
-    label(iacplane) = 'a-c plane'
- else
     iacplane = 0
- endif
- !nextra = nextra + 1
- !label(ncolumns+ncalc+nextra) = 'gwaves'
- if (ndim.ge.2) then
-    if (ireadpixmap) then
+    isurfdens = 0
+    itoomre = 0
+    if (ndim.eq.3 .and. icoordsnew.eq.2 .or. icoordsnew.eq.3) then
        nextra = nextra + 1
-       icolpixmap = ncolumns + ncalc + nextra
-       label(icolpixmap) = '2D pixel map'
+       isurfdens = ncolumns + ncalc + nextra
+       label(isurfdens) = 'Surface density'
+       if (iutherm.gt.0 .and. iutherm.le.ncolumns) then
+          nextra = nextra + 1
+          itoomre = ncolumns + ncalc + nextra
+          label(itoomre) = 'Toomre Q parameter'
+       endif
+    endif
+    if (ndim.eq.3) then  !--Probability Density Function
+       nextra = nextra + 1
+       ipdf = ncolumns + ncalc + nextra
+       print*,'ipdf = ',ipdf,ncolumns,ncalc,nextra
+       label(ipdf) = 'PDF'
+    endif
+
+    if (ndim.le.1) then !! .or. ndim.eq.3) then ! if 1D or no coord data (then prompts for which x)
+       nextra = nextra + 1      ! one extra plot = power spectrum
+       ipowerspec = ncolumns + ncalc + nextra
+       label(ipowerspec) = '1D power spectrum'
+    else
+       ipowerspec = 0
+    endif
+    if (iexact.eq.4) then       ! toy star plot a-c plane
+       nextra = nextra + 1
+       iacplane = ncolumns + ncalc + nextra
+       label(iacplane) = 'a-c plane'
+    else
+       iacplane = 0
+    endif
+    !nextra = nextra + 1
+    !label(ncolumns+ncalc+nextra) = 'gwaves'
+    if (ndim.ge.2) then
+       if (ireadpixmap) then
+          nextra = nextra + 1
+          icolpixmap = ncolumns + ncalc + nextra
+          label(icolpixmap) = '2D pixel map'
+       endif
     endif
  endif
-
 !
 !--now that we know nextra, set the total number of allowed plots (numplot).
 !
@@ -638,6 +637,8 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
     ndataplots = 0
     ncalc = 0
  endif
+ 
+ if (debugmode) print*,'DEBUG: numplot = ',numplot, ' ncalc = ',ncalc,' ndataplots = ',ndataplots
 
  return
 end subroutine set_extracols
