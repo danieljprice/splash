@@ -103,6 +103,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
   else
      call get_ncolumns(iunit,ncol,nheaderlines)
      ncol = max(ncol - 1,0)
+     if (ncol.le.0) then
+        print "(a,/)",' *** no data read from file ***'
+        return
+     endif
      !
      !--allocate memory initially
      !
