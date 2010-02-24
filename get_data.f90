@@ -322,7 +322,7 @@ subroutine get_labels
  use filenames,      only:fileprefix,unitsfile
  use labels,         only:label
  use settings_data,  only:ncolumns,iRescale
- use settings_units, only:read_unitsfile,units,unitslabel
+ use settings_units, only:read_unitsfile,unitslabel
  use particle_data,  only:maxcol
  implicit none
  logical :: iexist
@@ -501,17 +501,43 @@ end subroutine check_labels
 !
 !----------------------------------------------------------------
 subroutine check_data_read
- use settings_data, only:ncolumns
+ use params,        only:maxplot
+ use settings_data, only:ncolumns,ndim,ndimV,ntypes
+ use particle_data, only:npartoftype
+ use labels,        only:labeltype
  implicit none
+ integer :: i,j
  
  if (ncolumns.lt.0) then
-    print "(a)",' ERROR with ncolumns (< 0) in data read'
+    print "(a)",' ERROR: ncolumns < 0 in data read'
+    ncolumns = 0
+ elseif (ncolumns.gt.maxplot) then
+    print "(a,i3,a)",' ERROR: ncolumns > ',maxplot,' in data read'
     ncolumns = 0
  endif
  
+ if (ndim.gt.3) then; print "(a)",' ERROR: ndim  > 3 in data read, setting ndim = 3'; ndim = 3; endif
+ if (ndim.lt.0) then; print "(a)",' ERROR: ndim  < 0 in data read, setting ndim = 0'; ndim = 0; endif
+ if (ndimV.gt.3) then; print "(a)",' ERROR: ndimV > 3 in data read, setting ndimV = 3'; ndimV = 3; endif
+ if (ndimV.lt.0) then; print "(a)",' ERROR: ndimV < 0 in data read, setting ndimV = 0'; ndimV = 0; endif
+ if (ntypes.lt.0) then; print "(a)",' ERROR: ntypes < 0 in data read'; ntypes = 0; endif
+ 
+ if (allocated(npartoftype)) then
+    if (size(npartoftype(:,1)).lt.ntypes) then
+       print "(a)",' ERROR: too many particle types for allocated array size in data read'
+       ntypes = size(npartoftype(:,1))
+    endif
+    do i=1,ntypes
+       do j=1,size(npartoftype(i,:))
+          if (npartoftype(i,j).lt.0) then
+             print "(a)",' ERROR: number of '//trim(labeltype(i))//' particles < 0 in data read'
+             npartoftype(i,j) = 0
+          endif
+       enddo
+    enddo
+ endif
  
 end subroutine check_data_read
-
 
 !----------------------------------------------------
 !
