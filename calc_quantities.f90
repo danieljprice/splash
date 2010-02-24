@@ -425,8 +425,8 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      do i=ncolumns+1,ncolumns+ncalc
         if (abs(units(i)-1.0).gt.tiny(0.) .and. units(i).gt.tiny(0.)) then
            dat(:,i,ifromstep:itostep) = dat(:,i,ifromstep:itostep)*units(i)
-           if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
         endif
+        if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
      enddo
   elseif (iRescale) then
      do i=ncolumns+1,ncolumns+ncalc
