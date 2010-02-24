@@ -96,3 +96,6 @@ Can edit/delete text shapes interactively, also the colour bar label; can custom
 1.12.2:
 Variable marker sizes added, can plot particles as circles with size proportional to h; dark matter rendering with block-labelled GADGET format fixed; VINE read handles star particles; TIPSY read with ifort10.0.0 works; snsph read added; splash to phantom added; does not override labels for coords, vectors by default; bug fixes with contouring options; stability bug fixes with older compilers; more robust memory handling; bug fix with automatic pixel selection causing seg fault
  
+1.13.0:
+function parser incorporated; calculated quantities can now be specified at runtime; arbitrary function plotting implemented as an exact solution; command-line SPH->grid conversion ("splash to grid") implemented; ctrl-t in interactive mode adds arbitrary text box; better line style/colour changing; bug fix with tiling and y-axis labels; various other bug fixes
+ 
