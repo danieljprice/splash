@@ -25,10 +25,13 @@ MODULE fparser
   !------- -------- --------- --------- --------- --------- --------- --------- -------
   !
   ! Modifications by D, Price for integration in SPLASH:
-  ! 7th Aug 2009: added checkf interface routine to check syntax without compiling code
-  !               added endf routine to stop memory leaks, also called from initf if needed
-  !               bug fix with error message for sqrt(-ve)
-  ! 9th Aug 2009: added Mathematical constant recognition (pi)
+  !  7th Aug 2009: added checkf interface routine to check syntax without compiling code
+  !                added endf routine to stop memory leaks, also called from initf if needed
+  !                bug fix with error message for sqrt(-ve)
+  !
+  !  9th Aug 2009: added Mathematical constant recognition (pi)
+  !
+  ! 27th Jan 2010: check for -ve numbers to fractional powers and zero to negative power added
 
   IMPLICIT NONE
 !--modification here by D.Price: define type parameters here rather than in a separate module
@@ -46,6 +49,8 @@ MODULE fparser
   INTEGER, PUBLIC            :: EvalErrType ! =0: no error occured, >0: evaluation error
 !--modification by D. Price: add parseErr parameter (used in checkf)
   INTEGER, PRIVATE           :: ParseErrType ! =0: no error occured, >0: parse error
+!--modification by D. Price: add verboseness internal variable (used in checkf)
+  LOGICAL, PRIVATE           :: PrintErrors = .true. ! =0: no error occured, >0: parse error
   !------- -------- --------- --------- --------- --------- --------- --------- -------
   PRIVATE
   SAVE
@@ -139,7 +144,7 @@ CONTAINS
     ENDIF
   END SUBROUTINE endf
   !
-  SUBROUTINE parsef (i, FuncStr, Var, err)
+  SUBROUTINE parsef (i, FuncStr, Var, err, Verbose)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     ! Parse ith function string FuncStr and compile it into bytecode
     !----- -------- --------- --------- --------- --------- --------- --------- -------
@@ -149,6 +154,7 @@ CONTAINS
     CHARACTER (LEN=*), DIMENSION(:), INTENT(in) :: Var       ! Array with variable names
     CHARACTER (LEN=LEN(FuncStr))                :: Func      ! Function string, local use
     INTEGER, INTENT(OUT), OPTIONAL              :: err
+    LOGICAL, INTENT(IN), OPTIONAL               :: Verbose   ! Turn error messages on/off
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IF (i < 1 .OR. i > SIZE(Comp)) THEN
        WRITE(*,*) '*** Parser error: Function number ',i,' out of range'
@@ -157,6 +163,9 @@ CONTAINS
     END IF
     EvalErrType  = 0   ! D. Price : to prevent accidental misuse
     ParseErrType = 0
+    PrintErrors  = .true.
+    IF (present(Verbose)) PrintErrors = Verbose
+
     ALLOCATE (ipos(LEN(Func)))                       ! Char. positions in orig. string
     Func = FuncStr                                           ! Local copy of function string
     CALL Replace ('**','^ ',Func)                            ! Exponent into 1-Char. format
@@ -165,23 +174,30 @@ CONTAINS
     CALL CheckSyntax (Func,FuncStr,Var)
     DEALLOCATE (ipos)
     IF (present(err)) err = ParseErrType
+    PrintErrors = .true.                                     ! reset this to true
+
     !--D. Price: return after ParseErr here instead of stop inside CheckSyntax
     IF (ParseErrType /= 0) RETURN
     CALL Compile (i,Func,Var)                                ! Compile into bytecode
   END SUBROUTINE parsef
   !
-  INTEGER FUNCTION checkf(FuncStr, Var)
+  INTEGER FUNCTION checkf(FuncStr, Var, Verbose)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     ! Check syntax in a function string (added by D. Price) but do not compile it
     ! Returns an error code NOT related to ErrMsg
+    ! Optional variable "verbose" determines whether or not error messages are printed
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IMPLICIT NONE
-    CHARACTER (LEN=*),               INTENT(in) :: FuncStr   ! Function string
-    CHARACTER (LEN=*), DIMENSION(:), INTENT(in) :: Var       ! Array with variable names
+    CHARACTER (LEN=*),               INTENT(IN) :: FuncStr   ! Function string
+    CHARACTER (LEN=*), DIMENSION(:), INTENT(IN) :: Var       ! Array with variable names
+    LOGICAL, INTENT(IN), OPTIONAL               :: Verbose   ! Turn error messages on/off
     CHARACTER (LEN=LEN(FuncStr))                :: Func      ! Function string, local use
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     EvalErrType  = 0   ! D. Price : to prevent accidental misuse
     ParseErrType = 0
+    PrintErrors  = .true.
+    IF (present(Verbose)) PrintErrors = Verbose
+    
     ALLOCATE (ipos(LEN(Func)))                               ! Char. positions in orig. string
     Func = FuncStr                                           ! Local copy of function string
     CALL Replace ('**','^ ',Func)                            ! Exponent into 1-Char. format
@@ -189,6 +205,8 @@ CONTAINS
     !CALL GetConstants (Func)
     CALL CheckSyntax (Func,FuncStr,Var)
     DEALLOCATE (ipos)
+    
+    PrintErrors = .true.                                     ! reset this to true
     checkf = ParseErrType
   END FUNCTION checkf
   !
@@ -383,7 +401,8 @@ CONTAINS
   !
   SUBROUTINE ParseErrMsg (j, FuncStr, Msg)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
-    ! Print error message (modification by D.Price: do not terminate program)
+    ! Print error message (modification by D.Price: do not terminate program,
+    !                      also added option to not print error message)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IMPLICIT NONE
     INTEGER,                     INTENT(in) :: j
@@ -391,19 +410,22 @@ CONTAINS
     CHARACTER (LEN=*), OPTIONAL, INTENT(in) :: Msg
     INTEGER                                 :: k
     !----- -------- --------- --------- --------- --------- --------- --------- -------
-    IF (PRESENT(Msg)) THEN
-       WRITE(*,*) '*** Error in syntax of function string: '//Msg
-    ELSE
-       WRITE(*,*) '*** Error in syntax of function string:'
-    ENDIF
-    WRITE(*,*)
-    WRITE(*,'(A)') ' '//FuncStr
-    IF (ALLOCATED(ipos)) THEN                               ! Avoid out-of-bounds-errors
-       IF (SIZE(ipos).ge.j) THEN
-          DO k=1,ipos(j)
-             WRITE(*,'(A)',ADVANCE='NO') ' '                ! Advance to the jth position
-          END DO
-          WRITE(*,'(A)') '?'
+    
+    IF (PrintErrors) THEN
+       IF (PRESENT(Msg)) THEN
+          WRITE(*,*) '*** Error in syntax of function string: '//Msg
+       ELSE
+          WRITE(*,*) '*** Error in syntax of function string:'
+       ENDIF
+       WRITE(*,*)
+       WRITE(*,'(A)') ' '//FuncStr
+       IF (ALLOCATED(ipos)) THEN                               ! Avoid out-of-bounds-errors
+          IF (SIZE(ipos).ge.j) THEN
+             DO k=1,ipos(j)
+                WRITE(*,'(A)',ADVANCE='NO') ' '                ! Advance to the jth position
+             END DO
+             WRITE(*,'(A)') '?'
+          ENDIF
        ENDIF
     ENDIF
     ParseErrType = 1
