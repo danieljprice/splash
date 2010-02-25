@@ -46,6 +46,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                              iploterrorbars,hfacmarkers
   use interpolations2D, only:interpolate_part,interpolate_part1
   use transforms,       only:transform
+  use plotlib,          only:plot_qci,plot_bbuf,plot_ebuf,plot_sci,plot_sfs,plot_circ, &
+                             plot_pt,plot_numb,plot_text,plot_pt1,plot_qls,plot_sls, &
+                             plot_line,plot_qlw,plot_slw,plot_errb
   implicit none
   integer, intent(in)                           :: ntot,iplotx, iploty, itransx, itransy
   integer(kind=int1),  dimension(:), intent(in) :: iamtype
@@ -75,7 +78,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   
   !--query current character height and colour
 !  call pgqch(charheight)
-  call pgqci(icolourstart)
+  call plot_qci(icolourstart)
   !!print "(a,i8)",' entering particle plot, total particles = ',ntot
   !
   !--check for errors in input
@@ -113,7 +116,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   if (mixedtypes) nlooptypes = 1
   
   over_types: do ilooptype=1,nlooptypes
-     call pgbbuf !--buffer PGPLOT output until each particle type finished
+     call plot_bbuf !--buffer PGPLOT output until each particle type finished
      if (mixedtypes) then
         index1 = 1
         index2 = ntot
@@ -127,7 +130,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
         endif
         index2 = index1 + npartoftype(itype) - 1
         if (.not.iplotpartoftype(itype)) then
-           call pgebuf
+           call plot_ebuf
            cycle over_types
         endif
      endif
@@ -136,7 +139,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
         print "(a)",' WARNING: incomplete data'
      endif
      if (index2.lt.index1) then
-        call pgebuf
+        call plot_ebuf
         cycle over_types
      endif
 
@@ -155,16 +158,16 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                  if (icolourpart(j).ge.0) then
                     nplotted = nplotted + 1
                     nplottedtype(itype) = nplottedtype(itype) + 1
-                    call pgsci(icolourpart(j))
+                    call plot_sci(icolourpart(j))
                     select case(imarktype(itype))
                     case(33)
-                       call pgsfs(1)
-                       call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
+                       call plot_sfs(1)
+                       call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
                     case(32)
-                       call pgsfs(2)
-                       call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
+                       call plot_sfs(2)
+                       call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
                     case default
-                       call pgpt(1,xplot(j),yplot(j),imarktype(itype))                    
+!                       call plot_pt(1,xplot(j),yplot(j),imarktype(itype))                    
                     end select
 
                     if (present(datpix)) then
@@ -179,12 +182,12 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                  endif
                  !--plot circle of interaction if gas particle
                  if (itype.eq.1 .and. ncircpart.gt.0 .and. ANY(icircpart(1:ncircpart).eq.j)) then
-                    call pgcirc(xplot(j),yplot(j),2*h(j))
+                    call plot_circ(xplot(j),yplot(j),2*h(j))
                  endif
                  !!--plot particle label
                  if (ilabelpart) then
-                    call pgnumb(j,0,1,string,lenstring)
-                    call pgtext(xplot(j),yplot(j),string(1:lenstring))
+                    call plot_numb(j,0,1,string,lenstring)
+                    call plot_text(xplot(j),yplot(j),string(1:lenstring))
                  endif
               endif
            endif
@@ -206,7 +209,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
         !
         !--otherwise plot all particles of this type using appropriate marker and colour
         !
-        call pgqci(icolourindex)
+        call plot_qci(icolourindex)
         dxcell1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
         dycell1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
         !
@@ -214,7 +217,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
         !
         if (.not.mixedtypes .and. all(icolourpart(index1:index2).eq.icolourpart(index1)) &
             .and. icolourpart(index1).ge.0) then
-           call pgsci(icolourpart(index1))
+           call plot_sci(icolourpart(index1))
            if (fastparticleplot .and. (index2-index1).gt.100) then
               !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
               write(*,"(a,i8,1x,a)") &
@@ -231,11 +234,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                        nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
                        select case(imarktype(itype))
                        case(32:35)
-                          call pgsfs(imarktype(itype)-31)
-                          call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
-                          call pgsfs(1)
+                          call plot_sfs(imarktype(itype)-31)
+                          call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
+                          call plot_sfs(1)
                        case default
-                          call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                          call plot_pt1(xplot(j),yplot(j),imarktype(itype))
                        end select
 
                        if (present(datpix)) then
@@ -258,13 +261,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
               print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
               select case(imarktype(itype))
               case(32:35)
-                 call pgsfs(imarktype(itype)-31)
+                 call plot_sfs(imarktype(itype)-31)
                  do j=1,npartoftype(itype)
-                    call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
+                    call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
                  enddo
-                 call pgsfs(1)
+                 call plot_sfs(1)
               case default
-                 call pgpt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+                 call plot_pt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
               end select
               if (present(datpix)) then
                  if (present(brightness)) then
@@ -301,14 +304,14 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                        .and. icelly.gt.0 .and. icelly.le.ncelly) then
                        if (nincell(icellx,icelly).le.0) then
                           nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
-                          call pgsci(icolourpart(j))
+                          call plot_sci(icolourpart(j))
                           select case(imarktype(itype))
                           case(32:35)
-                             call pgsfs(imarktype(itype)-31)
-                             call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
-                             call pgsfs(1)
+                             call plot_sfs(imarktype(itype)-31)
+                             call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
+                             call plot_sfs(1)
                           case default
-                             call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                             call plot_pt1(xplot(j),yplot(j),imarktype(itype))
                           end select
                           if (present(datpix)) then
                              if (present(brightness)) then
@@ -324,14 +327,14 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                        endif
                     endif
                  else
-                    call pgsci(icolourpart(j))
+                    call plot_sci(icolourpart(j))
                     select case(imarktype(itype))
                     case(32:35)
-                       call pgsfs(imarktype(itype)-31)
-                       call pgcirc(xplot(j),yplot(j),hfacmarkers*h(j))
-                       call pgsfs(1)
+                       call plot_sfs(imarktype(itype)-31)
+                       call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
+                       call plot_sfs(1)
                     case default                    
-                       call pgpt1(xplot(j),yplot(j),imarktype(itype))
+                       call plot_pt1(xplot(j),yplot(j),imarktype(itype))
                     end select
                     if (present(datpix)) then
                        if (present(brightness)) then
@@ -363,33 +366,33 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
               endif
            endif
         endif
-        call pgsci(icolourindex)
+        call plot_sci(icolourindex)
 
         if (ilabelpart) then
            !!--plot particle labels
            print*,'plotting particle labels ',index1,':',index2
            do j=index1,index2
-              call pgnumb(j,0,1,string,lenstring)
-              call pgtext(xplot(j),yplot(j),string(1:lenstring))
+              call plot_numb(j,0,1,string,lenstring)
+              call plot_text(xplot(j),yplot(j),string(1:lenstring))
            enddo
         endif
      endif
      index1 = index2 + 1
-     call pgebuf !--flush PGPLOT buffer at end of each type
+     call plot_ebuf !--flush PGPLOT buffer at end of each type
   enddo over_types
 
   !
   !--plot lines joining particles if relevant
   !
-  call pgqci(icolourindex)
-  call pgsci(linecolourthisstep)
+  call plot_qci(icolourindex)
+  call plot_sci(linecolourthisstep)
 
   if (iplotline .and. .not.use_zrange) then
-     call pgqls(oldlinestyle)
-     call pgsls(linestylethisstep)
-     call pgline(npartoftype(1),xplot(1:npartoftype(1)), &
+     call plot_qls(oldlinestyle)
+     call plot_sls(linestylethisstep)
+     call plot_line(npartoftype(1),xplot(1:npartoftype(1)), &
                  yplot(1:npartoftype(1)))
-     call pgsls(oldlinestyle)! reset 
+     call plot_sls(oldlinestyle)! reset 
   endif
   !
   !--error bars follow line colour but not line style
@@ -402,7 +405,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
      endif
   endif
 
-  call pgsci(icolourindex)
+  call plot_sci(icolourindex)
   !
   !--plot circles of interaction (ie a circle of radius 2h)
   !  around all or selected particles. For plots with only one coordinate axis, 
@@ -414,11 +417,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
      !
      !--set fill area style and line width
      !
-     call pgqlw(linewidth)
-     call pgslw(2)
-     call pgqci(icolourindex)
-     call pgsci(2)
-     call pgsfs(2)
+     call plot_qlw(linewidth)
+     call plot_slw(2)
+     call plot_qci(icolourindex)
+     call plot_sci(2)
+     call plot_sfs(2)
      
      if (iploterrorbars.gt.0) then
 
@@ -440,7 +443,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                     call plot_kernel_gr(icoordsnew,icoords,xplot(icircpart(n)),  &
                          yplot(icircpart(n)),2*h(icircpart(n)))
                  else
-                    call pgcirc(xplot(icircpart(n)),  &
+                    call plot_circ(xplot(icircpart(n)),  &
                          yplot(icircpart(n)),2*h(icircpart(n)))
                  endif
               endif        
@@ -466,11 +469,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
            enddo         
            if (iplotx.le.ndim) then
               print*,'plotting ',ncircpart,' error bars x axis '
-              call pgerrb(5,ncircpart,xerrb(1:ncircpart), &
+              call plot_errb(5,ncircpart,xerrb(1:ncircpart), &
                    yerrb(1:ncircpart),herr(1:ncircpart),1.0)
            elseif (iploty.le.ndim) then
               print*,'plotting ',ncircpart,' error bars y axis'
-              call pgerrb(6,ncircpart,xerrb(1:ncircpart), &
+              call plot_errb(6,ncircpart,xerrb(1:ncircpart), &
                    yerrb(1:ncircpart),herr(1:ncircpart),1.0)
            endif
            if (allocated(herr)) deallocate(herr)
@@ -479,15 +482,15 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
         endif
      endif
 
-     call pgslw(linewidth)
-     call pgsci(icolourindex)
+     call plot_slw(linewidth)
+     call plot_sci(icolourindex)
      
   endif
 
 !
 !--reset colour
 !
-  call pgsci(icolourstart)
+  call plot_sci(icolourstart)
 
   return
      
@@ -508,6 +511,7 @@ end subroutine particleplot
 !--------------------------------------------------------------------------------
 subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
   use geometry, only:coord_transform,maxcoordsys,labelcoordsys
+  use plotlib,  only:plot_line
   implicit none
   integer, intent(in) :: igeom, igeomold
   real, intent(in) :: x,y,h
@@ -543,7 +547,7 @@ subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
 !
 !--now plot the circle using pgline
 !
-  call pgline(npts,xpts(1,:),xpts(2,:))
+  call plot_line(npts,xpts(1,:),xpts(2,:))
 
   return
 end subroutine plot_kernel_gr
@@ -557,6 +561,7 @@ end subroutine plot_kernel_gr
 !
 !--------------------------------------------------------------------------------
 subroutine plot_errorbarsy(npts,x,y,err,itrans)
+ use plotlib,    only:plot_bbuf,plot_ebuf,plot_err1,plot_errb
  use transforms, only:transform,transform_inverse,islogged
  implicit none
  integer, intent(in) :: npts,itrans
@@ -572,7 +577,7 @@ subroutine plot_errorbarsy(npts,x,y,err,itrans)
     else
        errval = 0.
     endif
-    call pgbbuf
+    call plot_bbuf
     do i=1,npts
        yval = y(i)
        call transform_inverse(yval,itrans)
@@ -581,12 +586,12 @@ subroutine plot_errorbarsy(npts,x,y,err,itrans)
        call transform(val,itrans,errval=errval)
        val(1) = val(1) - y(i)
        val(2) = y(i) - val(2)
-       call pgerr1(2,x(i),y(i),val(1),1.0)
-       call pgerr1(4,x(i),y(i),val(2),1.0)
+       call plot_err1(2,x(i),y(i),val(1),1.0)
+       call plot_err1(4,x(i),y(i),val(2),1.0)
     enddo
-    call pgebuf
+    call plot_ebuf
  else
-    call pgerrb(6,npts,x,y,err,1.0)
+    call plot_errb(6,npts,x,y,err,1.0)
  endif
 
 end subroutine plot_errorbarsy
@@ -601,6 +606,7 @@ end subroutine plot_errorbarsy
 !--------------------------------------------------------------------------------
 subroutine plot_errorbarsx(npts,x,y,err,itrans)
  use transforms, only:transform,transform_inverse,islogged
+ use plotlib,    only:plot_bbuf,plot_ebuf,plot_err1,plot_errb
  implicit none
  integer, intent(in) :: npts,itrans
  real, intent(in), dimension(:) :: x,y,err
@@ -615,7 +621,7 @@ subroutine plot_errorbarsx(npts,x,y,err,itrans)
     else
        errval = 0.
     endif
-    call pgbbuf
+    call plot_bbuf
     do i=1,npts
        xval = x(i)
        call transform_inverse(xval,itrans)
@@ -624,12 +630,12 @@ subroutine plot_errorbarsx(npts,x,y,err,itrans)
        call transform(val,itrans,errval=errval)
        val(1) = val(1) - x(i)
        val(2) = x(i) - val(2)
-       call pgerr1(1,x(i),y(i),val(1),1.0)
-       call pgerr1(3,x(i),y(i),val(2),1.0)
+       call plot_err1(1,x(i),y(i),val(1),1.0)
+       call plot_err1(3,x(i),y(i),val(2),1.0)
     enddo
-    call pgebuf
+    call plot_ebuf
  else
-    call pgerrb(5,npts,x,y,err,1.0)
+    call plot_errb(5,npts,x,y,err,1.0)
  endif
  
 end subroutine plot_errorbarsx

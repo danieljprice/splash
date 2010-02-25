@@ -38,6 +38,7 @@ contains
 
 subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
                            sigma,norder,xplot,yplot,npts,ierr)
+  use plotlib, only:plot_pt1
   implicit none
   integer, intent(in) :: iplot,norder,npts
   integer, intent(out) :: ierr
@@ -119,7 +120,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
      endif
 
      if (iplot.eq.7) then        ! plot current point on A-C plane
-        call PGPT(1,C0,A0*cos(omega*time),4)
+        call plot_pt1(C0,A0*cos(omega*time),4)
         ierr = 2 ! do not plot again
      else                        ! plot normal exact solution line
         ierr = 0
@@ -227,7 +228,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
      endif
 
      if (iplot.eq.7) then        ! plot current point on A-C plane
-        call PGPT(1,C,A,4)
+        call plot_pt1(C,A,4)
         ierr = 2 ! do not plot again
      else                        ! plot normal exact solution line
         ierr = 0
@@ -316,6 +317,7 @@ end function Pm
 !
 !----------------------------------------------------------------------
 subroutine exact_toystar_ACplane(astart,cstart,sigma,gamma)
+  use plotlib, only:plot_swin,plot_funx,plot_label,plot_box
   implicit none
   real, intent(in) :: astart,cstart,sigma,gamma
   real :: constk,gam1,gamm1,gamp1,fact
@@ -384,12 +386,12 @@ subroutine exact_toystar_ACplane(astart,cstart,sigma,gamma)
   ymax = 1.5*func(xcentre)
   ymin = 1.5*func2(xcentre)
 
-  call pgswin(xstart-extra,xend+extra,ymin,ymax,0,1)
-  call pgbox('bcnst',0.0,0,'1bvcnst',0.0,0)      
-  call pgfunx(func,10000,xstart,xend,1)
-  call pgfunx(func2,10000,xstart,xend,1)
+  call plot_swin(xstart-extra,xend+extra,ymin,ymax)
+  call plot_box('bcnst',0.0,0,'1bvcnst',0.0,0)      
+  call plot_funx(func,10000,xstart,xend,1)
+  call plot_funx(func2,10000,xstart,xend,1)
 
-  call pglabel ('c','a',' ')
+  call plot_label ('c','a',' ')
   return
 
 end subroutine exact_toystar_ACplane

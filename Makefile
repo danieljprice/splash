@@ -45,7 +45,7 @@ HDF5INCLUDE=
 #PGPLOTLIBS += -lg2c
 #
 # gfortran-compiled PGPLOT
-#PGPLOTLIBS += -lgfortran
+#PGPLOTLIBS += -L/usr/lib/gcc/i486-linux-gnu/4.1 -lgfortran
 #
 # g95-compiled PGPLOT
 #PGPLOTLIBS += -lg95
@@ -447,8 +447,8 @@ FFLAGS = $(F90FLAGS)
 
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
-
-SOURCESF90= globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
+PLOTLIB= plotlib_pgplot.f90
+SOURCESF90= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          prompting.f90 geometry.f90 interpolation.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 shapes.f90 units.f90 \
          write_data_phantom.f90 write_pixmap.f90 \

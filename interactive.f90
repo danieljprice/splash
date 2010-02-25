@@ -70,9 +70,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   zobserver,dscreen,use3Dopacity,taupartdepth,irerender,itrackpart,icolourscheme, &
   iColourBarStyle,labelrender,iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
   use settings_xsecrot, only:setsequenceend
-  use shapes, only:inshape,edit_shape,edit_textbox,delete_shape,add_textshape
-  use multiplot, only:itrans
-  use settings_render, only:projlabelformat,iapplyprojformat
+  use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,add_textshape
+  use multiplot,        only:itrans
+  use settings_render,  only:projlabelformat,iapplyprojformat
+  use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
+                             plot_rect,plot_band,plot_sfs,plot_qcur
   implicit none
   integer, intent(in) :: npart,irender,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
   integer, intent(inout) :: iColourBarStyle
@@ -89,7 +91,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   logical, intent(out) :: irerender,interactivereplot
   logical, intent(in) :: use3Dopacity
   real, parameter :: pi=3.141592653589
-  integer :: i,iclosest,nc,ierr,ixsec,ishape
+  integer :: i,iclosest,ierr,ixsec,ishape
   integer :: nmarked,ncircpart,itrackparttemp
   integer, dimension(1000) :: icircpart
   real :: xpt,ypt
@@ -100,11 +102,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   real :: dxlength,dylength,xmaxin,ymaxin
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
-  character(len=20) :: string
   logical :: iexit, rotation, verticalbar, iamincolourbar
 
-  call pgqinf('CURSOR',string,nc)
-  if (string(1:nc).eq.'YES') then
+  if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
   else
      !print*,'cannot enter interactive mode: device has no cursor'
@@ -117,7 +117,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   !--convert saved cursor position (saved in viewport coords)
   !  back to coordinates
   !
-  call pgqwin(xminwin,xmaxwin,yminwin,ymaxwin)
+  call plot_qwin(xminwin,xmaxwin,yminwin,ymaxwin)
   call get_posxy(xcursor,ycursor,xpt,ypt,xminwin,xmaxwin,yminwin,ymaxwin)
   
 !  xpt = 0.
@@ -127,7 +127,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   xmaxin = xmax
   ymaxin = ymax
   zoomfac = 1.0
-  nc = 0
   ncircpart = 0
   itrackparttemp = itrackpart
   iexit = .false.
@@ -147,7 +146,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   endif
  
   interactiveloop: do while (.not.iexit)
-     call pgcurs(xpt,ypt,char)
+     call plot_curs(xpt,ypt,char)
      !
      !--exit if the device is not interactive
      !
@@ -207,8 +206,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            else
               icircpart(ncircpart) = iclosest
            endif
-           call pgsfs(2)
-           call pgcirc(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
+           call plot_sfs(2)
+           call plot_circ(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
         else
            print*,'error: could not determine closest particle'
         endif
@@ -233,16 +232,16 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         xline(2) = xpt
         yline(2) = ypt
         !--mark first point
-        call pgpt1(xpt,ypt,4)
+        call plot_pt1(xpt,ypt,4)
         !--select second point
         print*,' select another point (using left click or g) to plot line '
-        call pgband(1,1,xline(2),yline(2),xline(3),yline(3),char2)
+        call plot_band(1,1,xline(2),yline(2),xline(3),yline(3),char2)
         !--draw line if left click or g
         select case(char2)
         case('A','g')
            print*
            !--mark second point
-           call pgpt1(xline(3),yline(3),4)
+           call plot_pt1(xline(3),yline(3),4)
            xlength = xline(3)-xline(2)
            if (abs(xlength).lt.tiny(xlength)) then
               xline(1) = xline(2)
@@ -270,7 +269,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               yline(4) = gradient*xline(4) + yint
            endif
            !--plot line joining the two points
-           call pgline(4,xline,yline)
+           call plot_line(4,xline,yline)
         case default
            print*,' action cancelled'       
         end select
@@ -421,9 +420,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            else
               print*,'click to set rendering limits'
               if (verticalbar) then
-                 call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
+                 call plot_band(3,1,xpt,ypt,xpt2,ypt2,char2)
               else
-                 call pgband(4,1,xpt,ypt,xpt2,ypt2,char2)           
+                 call plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)           
               endif
               if (char2 == 'A') then
                  if (verticalbar) then
@@ -456,7 +455,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            print*,'y = use particles within y parameter range only'
            print*,'r = use particles within x and y parameter range only'
            print*,'R = remove all range restrictions'
-           call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
+           call plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
            xptmin = min(xpt,xpt2)
            xptmax = max(xpt,xpt2)
            yptmin = min(ypt,ypt2)
@@ -468,8 +467,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            endif
            select case (char2)
            case('A')   ! zoom if another left click
-              call pgsfs(2)
-              call pgrect(xpt,xpt2,ypt,ypt2)
+              call plot_sfs(2)
+              call plot_rect(xpt,xpt2,ypt,ypt2)
               xmin = xptmin
               xmax = xptmax
               ymin = yptmin
@@ -528,8 +527,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                      if (ncircpart.lt.size(icircpart)) then
                         ncircpart = ncircpart + 1                        
                         icircpart(ncircpart) = i
-                        call pgsfs(2)
-                        call pgcirc(xcoords(i),ycoords(i),2.*hi(i))
+                        call plot_sfs(2)
+                        call plot_circ(xcoords(i),ycoords(i),2.*hi(i))
                      endif
                  endif
               enddo
@@ -893,12 +892,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               if (i.ne.iplotx .and. i.ne.iploty) ixsec = i
            enddo
            print*,' select cross section position (using left click or x)'
-           call pgband(1,1,xline(1),yline(1),xline(2),yline(2),char2)
+           call plot_band(1,1,xline(1),yline(1),xline(2),yline(2),char2)
            !--work out cross section if left click or x again
            select case(char2)
            case('A','x')
               !--plot the cross section line
-              call pgline(2,xline(1:2),yline(1:2))
+              call plot_line(2,xline(1:2),yline(1:2))
               !--work out angle with the x axis
               !  and offset of line from origin
               dx = xline(2) - xline(1)
@@ -1107,7 +1106,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      !--save cursor position relative to the viewport
      !
-     call pgqwin(xminwin,xmaxwin,yminwin,ymaxwin)
+     call plot_qwin(xminwin,xmaxwin,yminwin,ymaxwin)
      call get_vptxy(xpt,ypt,xcursor,ycursor)
 
      if (rotation) then
@@ -1154,20 +1153,19 @@ end subroutine interactive_part
 !  AND WILL BE REMOVED IN FUTURE VERSIONS
 !
 subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interactivereplot)
+ use plotlib, only:plot_qcur,plot_curs,plot_band,plot_rect
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(in) :: istep,ilaststep
  real, intent(inout) :: xmin,xmax,ymin,ymax
  logical, intent(out) :: interactivereplot
- integer :: nc,ierr
+ integer :: ierr
  real :: xpt,ypt,xpt2,ypt2
  real :: xlength, ylength, zoomfac
  character(len=1) :: char,char2
- character(len=5) :: string
  logical :: iexit
  
-  call pgqinf('CURSOR',string,nc)
-  if (string(1:nc).eq.'YES') then
+  if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
   else
      !print*,'cannot enter interactive mode: device has no cursor'
@@ -1181,7 +1179,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
   interactivereplot = .false.
   
   do while (.not.iexit)
-     call pgcurs(xpt,ypt,char)
+     call plot_curs(xpt,ypt,char)
      !
      !--exit if the device is not interactive
      !
@@ -1211,11 +1209,11 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
         !
         print*,'select area: '
         print*,'left click : zoom'
-        call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
+        call plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
         print*,xpt,ypt,xpt2,ypt2,char2
         select case (char2)
         case('A')   ! zoom if another left click
-           call pgrect(xpt,xpt2,ypt,ypt2)
+           call plot_rect(xpt,xpt2,ypt,ypt2)
            xmin = min(xpt,xpt2)
            xmax = max(xpt,xpt2)
            ymin = min(ypt,ypt2)
@@ -1351,6 +1349,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                              iColourBarStyle,interactivereplot)
  use multiplot, only:itrans
  use shapes, only:add_textshape,inshape,edit_shape,delete_shape
+ use plotlib, only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep,iframe,lastpanel,iColourBarStyle
@@ -1361,18 +1360,16 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  real, dimension(:), intent(inout) :: xmin,xmax,xminadapt,xmaxadapt
  real, intent(in), dimension(ndim) :: xorigin
  logical, intent(out) :: interactivereplot
- integer :: nc,ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape
+ integer :: ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape
  real :: xpt,ypt,xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
  real :: xlength,ylength,renderlength,drender,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
  real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen,gradient,dr,yint,xmaxin
  real, dimension(4) :: xline,yline
  character(len=1) :: char,char2
- character(len=5) :: string
  logical :: iexit,iamincolourbar,verticalbar
  
-  call pgqinf('CURSOR',string,nc)
-  if (string(1:nc).eq.'YES') then
+  if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
   else
      !print*,'cannot enter interactive mode: device has no cursor'
@@ -1387,7 +1384,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   !  back to world coordinates:
   !
   !--query window limits in world coords
-  call pgqwin(xmini,xmaxi,ymini,ymaxi)
+  call plot_qwin(xmini,xmaxi,ymini,ymaxi)
 
   !--determine which plot the cursor falls on
   !print*,' saved xcursor,ycursor = ',xcursor,ycursor,vptxmin,vptxmax,vptymin,vptymax
@@ -1414,7 +1411,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   verticalbar = barisvertical(iColourBarStyle)
   
   interactive_loop: do while (.not.iexit)
-     call pgcurs(xpt,ypt,char)
+     call plot_curs(xpt,ypt,char)
      !
      !--exit if the device is not interactive
      !
@@ -1487,16 +1484,16 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         yline(2) = ypti
         call set_panel(ipanel)
         !--mark first point
-        call pgpt1(xpti,ypti,4)
+        call plot_pt1(xpti,ypti,4)
         !--select second point
         print*,' select another point (using left click or g) to plot line '
-        call pgband(1,1,xline(2),yline(2),xline(3),yline(3),char2)
+        call plot_band(1,1,xline(2),yline(2),xline(3),yline(3),char2)
         !--draw line if left click or g
         select case(char2)
         case('A','g')
            print*
            !--mark second point
-           call pgpt1(xline(3),yline(3),4)
+           call plot_pt1(xline(3),yline(3),4)
            xlength = xline(3)-xline(2)
            if (abs(xlength).lt.tiny(xlength)) then
               xline(1) = xline(2)
@@ -1524,7 +1521,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               yline(4) = gradient*xline(4) + yint
            endif
            !--plot line joining the two points
-           call pgline(4,xline,yline)
+           call plot_line(4,xline,yline)
            call reset_panel
         case default
            print*,' action cancelled'       
@@ -1553,9 +1550,9 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         if (ipanel.gt.0 .and. iamincolourbar .and. irenderarr(ipanel).gt.0) then
            print*,'click to set rendering limits'
            if (verticalbar) then
-              call pgband(3,1,xpt,ypt,xpt2,ypt2,char2)
+              call plot_band(3,1,xpt,ypt,xpt2,ypt2,char2)
            else
-              call pgband(4,1,xpt,ypt,xpt2,ypt2,char2)           
+              call plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)           
            endif
            if (char2 == 'A') then
               call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
@@ -1591,7 +1588,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               iexit = .true.
            endif
         else
-           call pgband(2,1,xpt,ypt,xpt2,ypt2,char2)
+           call plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
            !call pgrect(xpt,xpt2,ypt,ypt2)
            call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
            !--use centre point of first click and current click to
@@ -2083,23 +2080,25 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
    !--------
     
     subroutine set_panel(ipanel)
+     use plotlib, only:plot_svp,plot_swin
      implicit none
      integer, intent(in) :: ipanel
      
      if (ipanel.gt.0) then
-        call pgswin(xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
+        call plot_swin(xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
         !--really should save viewport setting here, but doesn't matter 
         !  so long as interactive mode is the last thing called
-        call pgsvp(vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
+        call plot_svp(vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
      endif
      
      return   
     end subroutine set_panel
     
     subroutine reset_panel
+     use plotlib, only:plot_swin
      implicit none
      
-     call pgswin(xmini,xmaxi,ymini,ymaxi)
+     call plot_swin(xmini,xmaxi,ymini,ymaxi)
      
     end subroutine reset_panel
 
@@ -2110,14 +2109,15 @@ end subroutine interactive_multi
 ! and viewport co-ordinates (relative to the whole viewport)
 !------------------------------------------------------------
 subroutine get_vptxy(x,y,vptx,vpty)
+ use plotlib, only:plot_qvp,plot_qwin
  implicit none
  real, intent(in) :: x,y
  real, intent(out) :: vptx,vpty
  real :: xmini,xmaxi,ymini,ymaxi
  real :: vptxmini,vptxmaxi,vptymini,vptymaxi
 
- call pgqvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
- call pgqwin(xmini,xmaxi,ymini,ymaxi)
+ call plot_qvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
+ call plot_qwin(xmini,xmaxi,ymini,ymaxi)
  vptx = vptxmini + (x-xmini)/(xmaxi-xmini)*(vptxmaxi-vptxmini)
  vpty = vptymini + (y-ymini)/(ymaxi-ymini)*(vptymaxi-vptymini)
 
@@ -2128,13 +2128,14 @@ end subroutine get_vptxy
 ! (only works for single-panelled plots)
 !------------------------------------------------------------
 subroutine get_posxy(vptx,vpty,x,y,xmini,xmaxi,ymini,ymaxi)
+ use plotlib, only:plot_qvp
  implicit none
  real, intent(in) :: vptx,vpty
  real, intent(out) :: x,y
  real, intent(in) :: xmini,xmaxi,ymini,ymaxi
  real :: vptxmini,vptxmaxi,vptymini,vptymaxi
 
- call pgqvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
+ call plot_qvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
  x = xmini + (vptx-vptxmini)/(vptxmaxi-vptxmini)*(xmaxi-xmini)
  y = ymini + (vpty-vptymini)/(vptymaxi-vptymini)*(ymaxi-ymini)
 
@@ -2149,6 +2150,7 @@ end subroutine get_posxy
 !--plot a label showing the particle ID on the plot
 !
 subroutine plot_number(i,xi,yi)
+ use plotlib, only:plot_numb,plot_qch,plot_sch,plot_text
  implicit none
  integer, intent(in) :: i
  real, intent(in) :: xi,yi
@@ -2157,15 +2159,15 @@ subroutine plot_number(i,xi,yi)
  character(len=20) :: string
 
  !--convert number to text string
- call pgnumb(i,0,1,string,nc)
+ call plot_numb(i,0,1,string,nc)
  !--query and store character height
- call pgqch(charheight)
+ call plot_qch(charheight)
  !--change character height
- call pgsch(2.0)
+ call plot_sch(2.0)
  !--plot text string
- call pgtext(xi,yi,string(1:nc))
+ call plot_text(xi,yi,string(1:nc))
  !--reset character height
- call pgsch(charheight)
+ call plot_sch(charheight)
 
  return
 end subroutine plot_number
@@ -2208,6 +2210,7 @@ end subroutine deleteaxes
 !
 subroutine mvlegend(xi,yi,xmin,xmax,ymax,ipanel)
  use settings_page, only:hposlegend,vposlegend,fjustlegend,iPlotLegend,iPlotLegendOnlyOnPanel
+ use plotlib, only:plot_qcs
  implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  integer, intent(in), optional :: ipanel
@@ -2216,7 +2219,7 @@ subroutine mvlegend(xi,yi,xmin,xmax,ymax,ipanel)
  iPlotLegend = .true.
  hposlegend = (xi - xmin)/(xmax-xmin)
  !--query character height in world coordinates
- call pgqcs(4,xch,ych)
+ call plot_qcs(4,xch,ych)
  vposlegend = (ymax - yi)/ych
 ! !--automatically change justification
 ! if (hposlegend < 0.25) then
@@ -2238,6 +2241,7 @@ end subroutine mvlegend
 !
 subroutine mvlegendvec(xi,yi,xmin,xmax,ymax)
  use settings_vecplot, only:hposlegendvec,vposlegendvec,iVecplotLegend
+ use plotlib, only:plot_qcs
  implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  real :: xch,ych
@@ -2245,7 +2249,7 @@ subroutine mvlegendvec(xi,yi,xmin,xmax,ymax)
  iVecplotLegend = .true.
  hposlegendvec = (xi - xmin)/(xmax-xmin)
  !--query character height in world coordinates
- call pgqcs(4,xch,ych)
+ call plot_qcs(4,xch,ych)
  vposlegendvec = (ymax - yi)/ych
  print*,'hpos = ',hposlegendvec,' vpos = ',vposlegendvec
  
@@ -2256,6 +2260,7 @@ end subroutine mvlegendvec
 !
 subroutine mvtitle(xi,yi,xmin,xmax,ymax)
  use settings_page, only:hpostitle,vpostitle,fjusttitle,iPlotTitles
+ use plotlib, only:plot_qcs
  implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  real :: xch,ych
@@ -2263,7 +2268,7 @@ subroutine mvtitle(xi,yi,xmin,xmax,ymax)
  iPlotTitles = .true.
  hpostitle = (xi - xmin)/(xmax-xmin)
  !--query character height in world coordinates
- call pgqcs(4,xch,ych)
+ call plot_qcs(4,xch,ych)
  vpostitle = (yi - ymax)/ych
 
  !--automatically change justification

@@ -198,6 +198,8 @@ subroutine submenu_shapes()
 end subroutine submenu_shapes
 
 subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
+ use plotlib, only:plot_qci,plot_qls,plot_qlw,plot_qfs,plot_qwin,plot_sci,plot_sfs,plot_slw, &
+      plot_sci,plot_rect,plot_sls,plot_line,plot_arro,plot_circ,plot_ptxt
  implicit none
  integer, intent(in) :: ipanel,irow,icolumn,itransx,itransy
  integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle
@@ -208,14 +210,14 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
 !
 !--store current settings
 !
- call pgqci(icolourprev)
- call pgqls(linestyleprev)
- call pgqlw(linewidthprev)
- call pgqfs(ifillstyle)
+ call plot_qci(icolourprev)
+ call plot_qls(linestyleprev)
+ call plot_qlw(linewidthprev)
+ call plot_qfs(ifillstyle)
  !
 !--convert hpos and vpos to x, y to plot arrow
 !
- call pgqwin(xmin,xmax,ymin,ymax)
+ call plot_qwin(xmin,xmax,ymin,ymax)
  dxplot = xmax - xmin
  dyplot = ymax - ymin
 !
@@ -229,10 +231,10 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
        .or.(iplotonthispanel.eq.-1 .and. irow.eq.1) &
        .or.(iplotonthispanel.eq.-2 .and. icolumn.eq.1)) then
 
-       call pgsci(shape(i)%icolour)
-       call pgsls(shape(i)%linestyle)
-       call pgslw(shape(i)%linewidth)
-       call pgsfs(shape(i)%ifillstyle)
+       call plot_sci(shape(i)%icolour)
+       call plot_sls(shape(i)%linestyle)
+       call plot_slw(shape(i)%linewidth)
+       call plot_sfs(shape(i)%ifillstyle)
 
        anglerad = shape(i)%angle*(pi/180.)
 
@@ -245,7 +247,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
           if (xlen.gt.dxplot .or. ylen.gt.dyplot) then
              print "(2x,a)",'Error: shape size exceeds plot dimensions: not plotted'
           else
-             call pgrect(xpos-0.5*xlen,xpos+0.5*xlen,ypos-0.5*ylen,ypos + 0.5*ylen)   
+             call plot_rect(xpos-0.5*xlen,xpos+0.5*xlen,ypos-0.5*ylen,ypos + 0.5*ylen)   
           endif
        case(3) ! arrow
           dx = xlen*cos(anglerad)
@@ -254,34 +256,35 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
           if (dx.gt.dxplot .or. dy.gt.dyplot) then
              print "(2x,a)",'Error: arrow length exceeds plot dimensions: arrow not plotted'
           else
-             call pgarro(xpos-dx,ypos-dy,xpos,ypos)
+             call plot_arro(xpos-dx,ypos-dy,xpos,ypos)
           endif
        case(4) ! circle
           if (xlen.gt.dxplot .or. xlen.gt.dyplot) then
              print "(2x,a)",'Error: circle radius exceeds plot dimensions: circle not plotted'
           else
-             call pgcirc(xpos,ypos,xlen)
+             call plot_circ(xpos,ypos,xlen)
           endif
        case(5) ! line
           xline(1) = xpos
           yline(1) = ypos
           xline(2) = xpos + xlen*cos(anglerad)
           yline(2) = ypos + xlen*sin(anglerad)
-          call pgline(2,xline,yline)
+          call plot_line(2,xline,yline)
        case(6) ! text
-          call pgptext(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text))
+          call plot_ptxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text))
        end select
     endif
  enddo
  
- call pgsci(icolourprev)
- call pgsls(linestyleprev)
- call pgslw(linewidthprev)
- call pgsfs(ifillstyle)
+ call plot_sci(icolourprev)
+ call plot_sls(linestyleprev)
+ call plot_slw(linewidthprev)
+ call plot_sfs(ifillstyle)
  
 end subroutine plot_shapes
 
 integer function inshape(xpt,ypt,itransx,itransy)
+ use plotlib, only:plot_qwin,plot_qtxt
  implicit none
  real, intent(in) :: xpt,ypt
  integer, intent(in) :: itransx,itransy
@@ -290,7 +293,7 @@ integer function inshape(xpt,ypt,itransx,itransy)
  real :: xmin,ymin,xmax,ymax,dxplot,dyplot
  real, dimension(4) :: xbox,ybox
 
- call pgqwin(xmin,xmax,ymin,ymax)
+ call plot_qwin(xmin,xmax,ymin,ymax)
  dxplot = xmax - xmin
  dyplot = ymax - ymin
  
@@ -310,7 +313,7 @@ integer function inshape(xpt,ypt,itransx,itransy)
     case(5) ! line
     
     case(6) ! text
-       call pgqtxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text),xbox,ybox)
+       call plot_qtxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text),xbox,ybox)
        if (xpt.gt.minval(xbox) .and. xpt.le.maxval(xbox) &
           .and. ypt.gt.minval(ybox) .and. ypt.le.maxval(ybox)) then
           inshape = i
@@ -321,13 +324,14 @@ integer function inshape(xpt,ypt,itransx,itransy)
 end function inshape
 
 subroutine edit_shape(i,xpt,ypt,itransx,itransy)
+ use plotlib, only:plot_qwin
  implicit none
  integer, intent(in) :: i,itransx,itransy
  real, intent(in)    :: xpt,ypt
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot,xlen,ylen
  real :: xpos,ypos
 
- call pgqwin(xmin,xmax,ymin,ymax)
+ call plot_qwin(xmin,xmax,ymin,ymax)
  dxplot = xmax - xmin
  dyplot = ymax - ymin
 
@@ -359,6 +363,7 @@ subroutine delete_shape(ishape)
 end subroutine delete_shape
 
 subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel)
+ use plotlib, only:plot_qwin
  implicit none
  real, intent(in)    :: xpt,ypt
  integer, intent(in) :: itransx,itransy,ipanel
@@ -383,7 +388,7 @@ subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel)
 !--position text relative to viewport
 !
  shape(i)%iunits = 2
- call pgqwin(xmin,xmax,ymin,ymax)
+ call plot_qwin(xmin,xmax,ymin,ymax)
  xposi = (xpt - xmin)/(xmax-xmin)
  yposi = (ypt - ymin)/(ymax-ymin)
  shape(i)%xpos = xposi
@@ -436,6 +441,7 @@ end subroutine convert_units
 
 
 subroutine edit_textbox(xpt,ypt,angle,string)
+use plotlib, only:plot_stbg,plot_ptxt,plot_curs
  implicit none
  real, intent(in) :: xpt,ypt,angle
  character(len=1) :: mychar
@@ -445,29 +451,29 @@ subroutine edit_textbox(xpt,ypt,angle,string)
  integer :: i
  
  print*,'editing text box, esc or ctrl-c to quit'
- call pgstbg(0)
+ call plot_stbg(0)
  mychar = ' '
  oldstring = string
  i = max(len_trim(string)+1,1)
- call pgptxt(xpt,ypt,angle,0.,string(1:i)//'_')
+ call plot_ptxt(xpt,ypt,angle,0.,string(1:i)//'_')
  xpt2 = xpt
  ypt2 = ypt
- call pgcurs(xpt2,ypt2,mychar)
+ call plot_curs(xpt2,ypt2,mychar)
  do while (mychar.ne.achar(13) &   ! carriage return
      .and. mychar.ne.achar(27) &   ! ctrl-c
      .and. mychar.ne.achar(3))     ! esc
     if (mychar.eq.achar(8)) then   ! backspace
        i = max(i - 1,1)
        string(i:i) = '_'
-       call pgptxt(xpt,ypt,angle,0.,string(1:i))
+       call plot_ptxt(xpt,ypt,angle,0.,string(1:i))
        string(i:i) = ' '
     else
        string(i:i) = mychar
-       call pgptxt(xpt,ypt,angle,0.,string(1:i))
+       call plot_ptxt(xpt,ypt,angle,0.,string(1:i))
        i = min(i + 1,len(string))
        if (i.eq.len(string)) print*,' reached end of string'
     endif
-    call pgcurs(xpt2,ypt2,mychar)
+    call plot_curs(xpt2,ypt2,mychar)
  enddo
  
  !--if ctrl-c or esc, restore original string
@@ -477,7 +483,7 @@ subroutine edit_textbox(xpt,ypt,angle,string)
  else
     print*,'done: text = "'//trim(string)//'"'
  endif
- call pgstbg(-1)
+ call plot_stbg(-1)
  
 end subroutine edit_textbox
 

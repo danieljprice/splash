@@ -26,6 +26,7 @@ module colourparts
 contains
 
 subroutine colour_particles(dat,datmin,datmax,icolour,npart)
+ use plotlib, only: plot_qcir
  implicit none
  integer, intent(in) :: npart
  real, dimension(npart), intent(in) :: dat
@@ -34,7 +35,7 @@ subroutine colour_particles(dat,datmin,datmax,icolour,npart)
  integer :: i,icolourmin,icolourmax,icolourtemp
  real :: dx
  
- call pgqcir(icolourmin,icolourmax)
+ call plot_qcir(icolourmin,icolourmax)
  
  dx = (datmax - datmin)/real(icolourmax - icolourmin)
  

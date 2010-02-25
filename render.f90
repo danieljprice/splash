@@ -42,6 +42,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
                   xmin,ymin,dx,icolours,iplotcont,iColourBarStyle,nc,log, &
                   ilabelcont,contmin,contmax,blank)
  use plotutils, only:formatreal
+ use plotlib,   only:plot_imag,plot_conb,plot_cons,plot_qch,plot_sch,plot_qch,plot_sch,plot_conl
  implicit none
  integer, intent(in) :: npixx,npixy,nc,icolours
  real, intent(in) :: xmin,ymin,datmin,datmax,dx
@@ -73,7 +74,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  if (abs(icolours).gt.0) then        ! colour
     if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarstyle,icolours,datmin,datmax,trim(label),log,0.)
 !    call pgwedg('ri',2.0,4.0,datmin,datmax,' ')
-    call pgimag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
+    call plot_imag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
 !    call pghi2d(datpix,npixx,npixx,1,npixx,1,npixx,1,0.1,.true.,y) 
  endif
 !
@@ -113,11 +114,11 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
        print 10,nc,' contours (with blanking)',levels(1),levels(nc),dcont
        print 20,levels(1:nc)
        !print*,' blanking = ',blank,'min,max = ',datmin,datmax
-       call pgconb(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans,blank)
+       call plot_conb(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans,blank)
     else
        print 10,nc,' contours',levels(1),levels(nc),dcont
        print 20,levels(1:nc)
-       call pgcons(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
+       call plot_cons(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
     endif
 10  format(1x,'plotting ',i4,a,' between ',1pe10.2,' and ',1pe10.2,', every ',1pe10.2,':')
 20  format(10(6(1x,1pe9.2),/))
@@ -125,14 +126,14 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !--labelling of contour levels
 !
     if (ilabelcont) then
-       call pgqch(charheight)       ! query character height
-       call pgsch(0.75*charheight)   ! shrink character height
+       call plot_qch(charheight)       ! query character height
+       call plot_sch(0.75*charheight)   ! shrink character height
 
        do i=1,nc
           call formatreal(levels(i),string)
-          call pgconl(datpix,npixx,npixy,1,npixx,1,npixy,levels(i),trans,trim(string),npixx/2,30)
+          call plot_conl(datpix,npixx,npixy,1,npixx,1,npixy,levels(i),trans,trim(string),npixx/2,30)
        enddo
-       call pgsch(charheight) ! restore character height
+       call plot_sch(charheight) ! restore character height
     endif
 !
 !--this line prints the label inside the contour plot
@@ -152,9 +153,10 @@ end subroutine render_pix
  
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
                   xmin,ymin,dx,label,unitslabel) 
- use legends, only:legend_vec
+ use legends,          only:legend_vec
  use settings_vecplot, only:iVecplotLegend,hposlegendvec,vposlegendvec,iplotarrowheads,&
                             iallarrowssamelength
+ use plotlib,          only:plot_sah,plot_qch,plot_sch,plot_vect
  implicit none
  integer, intent(in) :: npixx,npixy
  real, intent(in) :: xmin,ymin,dx
@@ -178,12 +180,12 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  !!print*,'max(x component) = ',maxval(vecpixx),'max(y component) = ',maxval(vecpixy)
 
  if (iplotarrowheads) then
-    call pgsah(2,45.0,0.7)   ! arrow style
+    call plot_sah(2,45.0,0.7)   ! arrow style
  else
-    call pgsah(2,0.0,1.0)
+    call plot_sah(2,0.0,1.0)
  endif
- call pgqch(charheight)
- call pgsch(0.3)          ! size of arrow head
+ call plot_qch(charheight)
+ call plot_sch(0.3)          ! size of arrow head
  
  if (iallarrowssamelength) then
     !!if (vecmax.le.0.0) vecmax = 1.0 ! adaptive limits
@@ -196,7 +198,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
        dvmag(:,:) = 0.
     end where
     
-    call pgvect(vecpixx(:,:)*dvmag(:,:),vecpixy(:,:)*dvmag(:,:),npixx,npixy, &
+    call plot_vect(vecpixx(:,:)*dvmag(:,:),vecpixy(:,:)*dvmag(:,:),npixx,npixy, &
          1,npixx,1,npixy,scale,0,trans,0.0)
  else
     if (vecmax.le.0.0) then  ! adaptive limits
@@ -208,7 +210,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
     endif
     print*,trim(label),' max = ',vecmax
 
-    call pgvect(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
+    call plot_vect(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
          1,npixx,1,npixy,scale,0,trans,0.0)
 
     if (iVecplotLegend) then
@@ -216,7 +218,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
     endif
  endif
  
- call pgsch(charheight)
+ call plot_sch(charheight)
  
  return
  
@@ -228,6 +230,7 @@ end subroutine render_vec
 !
 subroutine render_opacity(rgbcolours,npixx,npixy,xmin,xmax,ymin,ymax, &
                           iColourBarStyle,icolours,datmin,datmax,label)
+ use plotlib, only:plot_qcol,plot_scr,plot_pixl
  implicit none
  integer, intent(in) :: npixx,npixy
  real, dimension(3,npixx,npixy), intent(in) :: rgbcolours
@@ -246,7 +249,7 @@ subroutine render_opacity(rgbcolours,npixx,npixy,xmin,xmax,ymin,ymax, &
 !--set the colour table corresponding to all possible combinations
 !  of red, green and blue
 !
- call pgqcol(indexmin,indexmax)
+ call plot_qcol(indexmin,indexmax)
  ncolours = indexmax - indexmin + 1
  nshades = int(ncolours**(1./3.))
  print*,'ncolours = ',ncolours,'nshades = ',nshades,nshades**3
@@ -261,7 +264,7 @@ subroutine render_opacity(rgbcolours,npixx,npixy,xmin,xmax,ymin,ymax, &
        do ib=1,nshades
           index = (ir-1)*nshades2 + (ig-1)*nshades + (ib-1) + indexmin
           blue = (ib-1)*denom
-          call pgscr(index,red,green,blue)
+          call plot_scr(index,red,green,blue)
        enddo
     enddo
  enddo
@@ -275,7 +278,7 @@ subroutine render_opacity(rgbcolours,npixx,npixy,xmin,xmax,ymin,ymax, &
     enddo
  enddo
  
- call pgpixl(icolourarray,npixx,npixy,1,npixx,1,npixy,xmin,xmax,ymin,ymax)
+ call plot_pixl(icolourarray,npixx,npixy,1,npixx,1,npixy,xmin,xmax,ymin,ymax)
 
 end subroutine render_opacity
 

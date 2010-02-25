@@ -233,6 +233,7 @@ end subroutine fieldlines2D
 
 subroutine trace2D(xstart,ystart,xmin,xmax,ymin,ymax,ymaxline, &
                    x,y,vecx,vecy,h,pmass,rho,npart)
+ use plotlib, only:plot_line
  implicit none
  integer, intent(in) :: npart
  real, intent(in) :: xstart,ystart,xmin,xmax,ymin,ymax
@@ -281,7 +282,7 @@ subroutine trace2D(xstart,ystart,xmin,xmax,ymin,ymax,ymaxline, &
     !
     !--plot line segment
     !
-    call pgline(2,xline,yline)
+    call plot_line(2,xline,yline)
     
     xline(1) = xline(2)
     yline(1) = yline(2)

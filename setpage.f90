@@ -22,7 +22,7 @@
 
 module pagesetup
  implicit none
- public :: setpage, redraw_axes, setpage2, set_exactpixelboundaries
+ public :: redraw_axes, setpage2
  real, parameter, public :: xlabeloffset = 3.0, ylabeloffset = 4.5
  
  private
@@ -44,143 +44,146 @@ contains
 !         colourbarwidth : colour bar width in character heights
 !         pagechange : change the physical page between plots
 !
-subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
-     just,axis,colourbarwidth,titleoffset,isamexaxis,ipagechange)
-  implicit none
-  integer, intent(in) :: iplot, nx, ny, just, axis
-  real, intent(in) :: xmin, xmax, ymin, ymax, colourbarwidth, titleoffset
-  character(len=*), intent(in) :: labelx, labely, title
-  character(len=10) :: xopts, yopts
-  logical, intent(in) :: ipagechange, isamexaxis
-  real :: vptxmin,vptxmax,vptymin,vptymax,xch,ych
-
-  if (ipagechange) then
-
-     call pgpage
-     !
-     !--query the character height as fraction of viewport
-     !
-     call pgqcs(0,xch,ych)
-     !
-     !--default is to use whole viewport
-     !
-     vptxmin = 0.001
-     vptxmax = 0.999
-     vptymin = 0.001
-     vptymax = 0.999
-     !
-     !--leave room for axes labels if necessary
-     !
-     if (axis.GE.0) then
-        !
-        !--leave a bit of buffer space if more than one plot on page
-        !
-        if (nx.gt.1) then
-           vptxmin = (ylabeloffset+1.5)*xch
-        else
-           vptxmin = (ylabeloffset+1.0)*xch
-        endif
-        if (ny.gt.1 .and. .not.isamexaxis) then
-           vptymin = (xlabeloffset+1.5)*ych
-        elseif (ny.gt.1) then
-           vptymin = (xlabeloffset+0.25)*ych
-        else
-           vptymin = (xlabeloffset+1.0)*ych
-        endif
-     endif
-     !--also leave room for title if necessary
-     vptymax = vptymax - titleoffset*ych
-     
-     !--also leave room for colour bar if necessary
-     if (colourbarwidth.GT.0.) then
-        vptxmax = vptxmax - (colourbarwidth + 1.6)*xch
-     endif
-
-     call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
-
-     if (just.eq.1) then
-        call pgwnad(xmin,xmax,ymin,ymax) ! pgwnad does equal aspect ratios
-     else
-        call pgswin(xmin,xmax,ymin,ymax)
-     endif
+!subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
+!     just,axis,colourbarwidth,titleoffset,isamexaxis,ipagechange)
+!  use plotlib,          only:plot_svp,plot_swin,plot_page,plot_wnad,plot_box
+!  use plotlib_settings, only:plot_chsx_norm,plot_chsy_norm
+!  implicit none
+!  integer, intent(in) :: iplot, nx, ny, just, axis
+!  real, intent(in) :: xmin, xmax, ymin, ymax, colourbarwidth, titleoffset
+!  character(len=*), intent(in) :: labelx, labely, title
+!  character(len=10) :: xopts, yopts
+!  logical, intent(in) :: ipagechange, isamexaxis
+!  real :: vptxmin,vptxmax,vptymin,vptymax,xch,ych
+!
+!  if (ipagechange) then
+!
+!     call plot_page
+!     !
+!     !--query the character height as fraction of viewport
+!     !
+!     xch = plot_chsx_norm
+!     ych = plot_chsy_norm
+!     !
+!     !--default is to use whole viewport
+!     !
+!     vptxmin = 0.001
+!     vptxmax = 0.999
+!     vptymin = 0.001
+!     vptymax = 0.999
+!     !
+!     !--leave room for axes labels if necessary
+!     !
+!     if (axis.GE.0) then
+!        !
+!        !--leave a bit of buffer space if more than one plot on page
+!        !
+!        if (nx.gt.1) then
+!           vptxmin = (ylabeloffset+1.5)*xch
+!        else
+!           vptxmin = (ylabeloffset+1.0)*xch
+!        endif
+!        if (ny.gt.1 .and. .not.isamexaxis) then
+!           vptymin = (xlabeloffset+1.5)*ych
+!        elseif (ny.gt.1) then
+!           vptymin = (xlabeloffset+0.25)*ych
+!        else
+!           vptymin = (xlabeloffset+1.0)*ych
+!        endif
+!     endif
+!     !--also leave room for title if necessary
+!     vptymax = vptymax - titleoffset*ych
+!     
+!     !--also leave room for colour bar if necessary
+!     if (colourbarwidth.GT.0.) then
+!        vptxmax = vptxmax - (colourbarwidth + 1.6)*xch
+!     endif
+!
+!     call plot_svp(vptxmin,vptxmax,vptymin,vptymax)
+!
+!     if (just.eq.1) then
+!        call plot_wnad(xmin,xmax,ymin,ymax) ! pgwnad does equal aspect ratios
+!      else
+!        call plot_swin(xmin,xmax,ymin,ymax)
+!     endif
 !
 !--set plot axes (options are exactly as in PGENV, with axis=-3 added)
 !
-     yopts = '*'
-     select case(axis)
-     case(-4)
-        xopts = 'BCT'
-     case(-3)
-        xopts = 'BCST'
-     case(-2)
-        xopts = ' '
-     case(-1)
-        xopts = 'BC'
-     case(0)
-        xopts = 'BCNST'
-     case(1)
-        xopts = 'ABCNST'
-     case(2)
-        xopts = 'ABCGNST'
-     case(3)
-        xopts = 'BCNST'
-     case(4)
-        xopts = 'ABCNST'
-     case(10)
-        xopts = 'BCNSTL'
-        yopts = 'BCNST'
-     case(20)
-        xopts = 'BCNST'
-        yopts = 'BCNSTL'
-     case(30)
-        xopts = 'BCNSTL'
-        yopts = 'BCNSTL'
-     case default
-        CALL GRWARN('PGENV: illegal AXIS argument.')
-        xopts = 'BCNST'
-     end select
-     if (yopts.eq.'*') yopts = xopts
+!     yopts = '*'
+!     select case(axis)
+!     case(-4)
+!        xopts = 'BCT'
+!     case(-3)
+!        xopts = 'BCST'
+!     case(-2)
+!        xopts = ' '
+!     case(-1)
+!        xopts = 'BC'
+!     case(0)
+!        xopts = 'BCNST'
+!     case(1)
+!        xopts = 'ABCNST'
+!     case(2)
+!        xopts = 'ABCGNST'
+!     case(3)
+!        xopts = 'BCNST'
+!     case(4)
+!        xopts = 'ABCNST'
+!     case(10)
+!        xopts = 'BCNSTL'
+!        yopts = 'BCNST'
+!     case(20)
+!        xopts = 'BCNST'
+!        yopts = 'BCNSTL'
+!     case(30)
+!        xopts = 'BCNSTL'
+!        yopts = 'BCNSTL'
+!     case default
+!        CALL GRWARN('PGENV: illegal AXIS argument.')
+!        xopts = 'BCNST'
+!     end select
+!     if (yopts.eq.'*') yopts = xopts
 
-     call pgbox(xopts,0.0,0,yopts,0.0,0)
+!     call plot_box(xopts,0.0,0,yopts,0.0,0)
 
-  elseif (iplot.eq.1) then ! if would be changing page, instead go back to
-     call pgpanl(1,1)      !                                   first panel
-  elseif (nx*ny.gt.1) then ! change to next panel, regardless of ipagechange
-     call pgpage
-  endif
+!  elseif (iplot.eq.1) then ! if would be changing page, instead go back to
+!     call pgpanl(1,1)      !                                   first panel
+!  elseif (nx*ny.gt.1) then ! change to next panel, regardless of ipagechange
+!     call plot_page
+!  endif
   
   !---------------------------------
   ! set plot limits and label plot
   !---------------------------------
     
-  if (just.eq.1) then
-     call pgwnad(xmin,xmax,ymin,ymax)  ! repeated for when not called above
-  else
-     call pgswin(xmin,xmax,ymin,ymax)
-  endif
+!  if (just.eq.1) then
+!     call plot_wnad(xmin,xmax,ymin,ymax)  ! repeated for when not called above
+!  else
+!     call plot_swin(xmin,xmax,ymin,ymax)
+!  endif
   
   !--label plot
-  if (axis.ge.0 .and. axis.ne.3 .and. axis.ne.4) then
+!  if (axis.ge.0 .and. axis.ne.3 .and. axis.ne.4) then
      !
      !--label x axis only if on last row
      !  or if x axis quantities are different
      !
-     if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis)) then
-        call pgmtxt('B',xlabeloffset,0.5,0.5,labelx)
-     endif
+!     if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis)) then
+!        call pgmtxt('B',xlabeloffset,0.5,0.5,labelx)
+!     endif
      !
      !--always label y axis
      !
-     call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
+!     call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
      !
      !--always plot title
      !
-     call pgmtxt('T',-titleoffset,0.5,0.5,title)
+!     call pgmtxt('T',-titleoffset,0.5,0.5,title)
 
-  endif
+!  endif
   
-  return
-end subroutine setpage
+!  return
+!end subroutine setpage
 
 !
 !--this subroutine is a cut down version of the above, which ONLY redraws the axes
@@ -191,6 +194,7 @@ end subroutine setpage
 !
 
 subroutine redraw_axes(iaxis)
+  use plotlib, only:plot_box
   implicit none
   integer, intent(in) :: iaxis
   character(len=10) :: xopts, yopts
@@ -228,7 +232,7 @@ subroutine redraw_axes(iaxis)
   end select
   if (yopts.eq.'*') yopts = xopts
 
-  call pgbox(xopts,0.0,0,yopts,0.0,0)
+  call plot_box(xopts,0.0,0,yopts,0.0,0)
 
   return
 end subroutine redraw_axes
@@ -277,10 +281,12 @@ end subroutine redraw_axes
   subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,axis, &
                       vmarginleftin,vmarginrightin,vmarginbottomin,vmargintopin, &
                       colourbarwidth,titleoffset,isamexaxis,tile) 
+  use plotlib,only:plot_svp,plot_swin,plot_box,plot_qvsz,plot_annotate, &
+                   plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries
   implicit none
   integer, intent(in) :: iplotin,nx,ny,just,axis
-  real, intent(in) :: xmin, xmax, ymin, ymax, colourbarwidth, titleoffset
-  real, intent(in) :: vmarginleftin,vmarginrightin,vmargintopin,vmarginbottomin
+  real, intent(in)    :: xmin, xmax, ymin, ymax, colourbarwidth, titleoffset
+  real, intent(in)    :: vmarginleftin,vmarginrightin,vmargintopin,vmarginbottomin
   character(len=*), intent(in) :: labelx,labely,title
   logical, intent(in) :: isamexaxis,tile
   integer iplot,ix,iy
@@ -295,7 +301,7 @@ end subroutine redraw_axes
 ! new page if iplot > number of plots on page
 !
   if (iplotin.gt.nx*ny) then
-     if (mod(iplotin,nx*ny).eq.1) call pgpage
+     if (mod(iplotin,nx*ny).eq.1)  call plot_page
      iplot = iplotin - (nx*ny)*((iplotin-1)/(nx*ny))
   elseif (iplotin.le.0) then
      return
@@ -317,7 +323,7 @@ end subroutine redraw_axes
 !
 ! query the current aspect ratio of the device and set aspect ratio appropriately
 !
-     call pgqvsz(3,x1,x2,y1,y2)
+     call plot_qvsz(3,x1,x2,y1,y2)
      devaspectratio = (x2-x1)/(y2-y1)
      aspectratio = ((xmax-xmin)*nx)/((ymax-ymin)*ny)/devaspectratio
   else
@@ -331,7 +337,7 @@ end subroutine redraw_axes
 !
 ! query the character height as fraction of viewport
 !
-  call pgqcs(0,xch,ych)
+  call plot_qcs(0,xch,ych)
 !
 ! set margin size in units of viewport dimensions
 ! allow enough room for the plot labels if they are drawn
@@ -428,19 +434,19 @@ end subroutine redraw_axes
 ! set viewport
 !
  !print*,'setting ',vptxmin,vptxmax,vptymin,vptymax
- call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
+ call plot_svp(vptxmin,vptxmax,vptymin,vptymax)
 !
 ! set axes
 !
  if (just.eq.1) then
-    call pgwnad(xmin,xmax,ymin,ymax)
+    call plot_wnad(xmin,xmax,ymin,ymax)
  else
-    call pgswin(xmin,xmax,ymin,ymax)
+    call plot_swin(xmin,xmax,ymin,ymax)
  endif
 !
 ! adjust viewport to lie exactly on pixel boundaries
 !
- if (useexactpixelboundaries) call set_exactpixelboundaries()
+ if (useexactpixelboundaries) call plot_set_exactpixelboundaries()
 !
 ! option to return before actually doing anything
 !      
@@ -488,7 +494,7 @@ end subroutine redraw_axes
      !      
      if (ix.eq.1 .and. axis.ge.0) then
         yopts = '1VN'//trim(yopts)
-        call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
+        call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
      elseif (axis.ge.0) then
         !yopts = trim(yopts)//'N'
      endif  
@@ -497,12 +503,12 @@ end subroutine redraw_axes
      !      
      if (iy.eq.ny .and. axis.ge.0) then
         xopts = 'N'//trim(xopts)
-        call pgmtxt('B',xlabeloffset,0.5,0.5,labelx)
+        call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
      endif
      !
      ! plot the title if inside the plot boundaries
      !
-     if (titleoffset.lt.0.) call pgmtxt('t',-titleoffset,0.96,1.0,title)
+     if (titleoffset.lt.0.) call plot_annotate('t',-titleoffset,0.96,1.0,title)
 
   elseif (axis.ge.0) then
      !
@@ -510,7 +516,7 @@ end subroutine redraw_axes
      !  or if x axis quantities are different
      !
      if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis)) then
-        call pgmtxt('B',xlabeloffset,0.5,0.5,labelx)
+       call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
      endif
      !--always plot numbers
      xopts = 'N'//trim(xopts)
@@ -518,67 +524,17 @@ end subroutine redraw_axes
      !--always label y axis
      !
      yopts = '1VN'//trim(yopts)
-     call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
+     call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
      !
      !--always plot title
      !
-     call pgmtxt('T',-titleoffset,0.5,0.5,title)
+     call plot_annotate('T',-titleoffset,0.5,0.5,title)
 
   endif
 
-  call pgbox(xopts,0.0,0,yopts,0.0,0)
+  call plot_box(xopts,0.0,0,yopts,0.0,0)
 
   return      
 end subroutine
-
-!
-!--this subroutine can be called after PGSVP to
-!  make sure that the viewport lies exactly on
-!  pixel boundaries.
-!
-!  Queries PGPLOT routines directly so no need
-!  for input/output
-!
-
-subroutine set_exactpixelboundaries()
- implicit none
- real :: xminpix,xmaxpix,yminpix,ymaxpix
- real :: vptxmin,vptxmax,vptymin,vptymax
- real :: dv
- real, parameter :: tol = 1.e-6
- !
- ! setting axes adjusts the viewport, so query to get adjusted settings
- !
- call pgqvp(0,vptxmin,vptxmax,vptymin,vptymax)
- !print*,'got ',vptxmin,vptxmax,vptymin,vptymax
- !
- ! adjust viewport on pixel devices so that 
- ! boundaries lie exactly on pixel boundaries
- !
- !  query viewport size in pixels
- call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
- !print*,' in pixels = ',xminpix,xmaxpix,yminpix,ymaxpix
-
- !  work out how many viewport coords/pixel
- dv = (vptymax - vptymin)/(ymaxpix-yminpix)
-
- !  adjust viewport min/max to lie on pixel boundaries
- vptymin = max((nint(yminpix)-tol)*dv,0.)
- vptymax = min((nint(ymaxpix)-tol)*dv,1.0-epsilon(1.0)) ! be careful of round-off errors
-
- !  same for x
- dv = (vptxmax - vptxmin)/(xmaxpix-xminpix)
- vptxmin = max((nint(xminpix)-tol)*dv,0.)
- vptxmax = min((nint(xmaxpix)-tol)*dv,1.0-epsilon(1.0)) ! be careful of round-off errors
-
- !  adjust viewport
- !print*,'adjusting ',vptxmin,vptxmax,vptymin,vptymax
- call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
-
- !call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
- !print*,' in pixels = ',xminpix,xmaxpix,yminpix,ymaxpix
-
- return
-end subroutine set_exactpixelboundaries
 
 end module pagesetup

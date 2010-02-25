@@ -180,9 +180,10 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,itran
 end subroutine disccalc
 
 subroutine discplot
+ use plotlib, only:plot_line
  implicit none
  
- call pgline(nbins,radius,sigma)
+ call plot_line(nbins,radius,sigma)
 
 end subroutine discplot
 

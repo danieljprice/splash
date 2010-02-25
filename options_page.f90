@@ -125,11 +125,12 @@ end subroutine defaults_set_page_ev
 ! submenu with options relating to page setup
 !----------------------------------------------------------------------
 subroutine submenu_page(ichoose)
- use params, only:maxplot
+ use params,    only:maxplot
  use prompting, only:prompt,print_logical
+ use plotlib,   only:plot_init,plot_scrn,plot_close
  implicit none
  integer, intent(in) :: ichoose
- integer :: iaction,ierr,ntries
+ integer :: iaction,ierr,ntries,dummy
  real :: papersizey
 
  iaction = ichoose
@@ -280,20 +281,20 @@ subroutine submenu_page(ichoose)
      ierr = 1
      ntries = 1
      !--open null device so that colours can be recognised
-     call pgopen('/null')
+     call plot_init('/null',dummy)
      do while (ierr /= 0 .and. ntries.le.3)
         call prompt('Enter background colour (by name, e.g. "black") ',colour_back)
-        call pgscrn(0,colour_back,ierr)
+        call plot_scrn(0,colour_back,ierr)
         ntries = ntries + 1
      enddo
      ierr = 1
      ntries = 1
      do while (ierr /= 0 .and. ntries.le.3)
         call prompt('Enter foreground colour (by name, e.g. "white") ',colour_fore)
-        call pgscrn(1,colour_fore,ierr)
+        call plot_scrn(1,colour_fore,ierr)
         ntries = ntries + 1
      enddo
-     call pgclos
+     call plot_close
 
      print "(4(/,a))",' Overlaid (that is, drawn inside the plot borders) axis ', &
                       ' ticks, legend text and titles are by default plotted in ', &

@@ -78,34 +78,36 @@ contains
 !
 subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot)
   use params
-  use colours, only:colour_set
-  use labels, only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,itoomre,iutherm,ipdf,ix,icolpixmap
-  use limits, only:lim,rangeset
-  use multiplot, only:multiplotx,multiploty,irendermulti,icontourmulti, &
-                 nyplotmulti,x_secmulti,ivecplotmulti
-  use prompting, only:prompt
-  use titles, only:read_titles,read_steplegend
-  use settings_data, only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required, &
-                     icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings
-  use settings_page, only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
-      colour_fore,colour_back,iadapt,iadaptcoords,linewidth,device,nomenu,interactive
-  use settings_part, only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact,iplotpartoftype
-  use settings_render, only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
-  use settings_xsecrot, only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
-                        xseclineX1,xseclineX2,xseclineY1,xseclineY2,xsecwidth, &
-                        use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth
+  use colours,            only:colour_set
+  use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,itoomre,iutherm,ipdf,ix,icolpixmap
+  use limits,             only:lim,rangeset
+  use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
+                               nyplotmulti,x_secmulti,ivecplotmulti
+  use prompting,          only:prompt
+  use titles,             only:read_titles,read_steplegend
+  use settings_data,      only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required, &
+                               icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings
+  use settings_page,      only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
+                               colour_fore,colour_back,iadapt,iadaptcoords,linewidth,device,nomenu,interactive
+  use settings_part,      only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact,iplotpartoftype
+  use settings_render,    only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
+  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
+                               xseclineX1,xseclineX2,xseclineY1,xseclineY2,xsecwidth, &
+                               use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth
   use settings_powerspec, only:options_powerspec
-  use particle_data, only:npartoftype,masstype
-  use projections3D, only:coltable
-  use pdfs, only:options_pdf
+  use particle_data,      only:npartoftype,masstype
+  use projections3D,      only:coltable
+  use pdfs,               only:options_pdf
+  use plotlib,            only:plot_init,plot_qcur,plot_pap,plot_scrn,plot_slw,plot_env,plot_curs,plot_band, &
+                               plot_close,plot_qinf
   implicit none
   real, parameter :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
-  integer :: i,j,ierr,ifirst,iplotzprev,ilen,pgopen
+  integer :: i,j,ierr,ifirst,iplotzprev,ilen
   logical :: iadapting,icoordplot,iallrendered,ians
   real :: hav,pmassav,dzsuggest
   character(len=1) :: char
-  character(len=20) :: string,devstring
+  character(len=20) :: devstring
   
   !------------------------------------------------------------------------
   ! initialisations
@@ -342,14 +344,14 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
        !
        !--set cross section position interactively
        !
-          call pgbegin(0,'/xw',1,1)
-          call pgenv(lim(1,1),lim(1,2),lim(2,1),lim(2,2),1,0)
-          call pgcurs(xseclineX1,xseclineY1,char)
+          call plot_init('/xw',ierr)
+          call plot_env(lim(1,1),lim(1,2),lim(2,1),lim(2,2),1,0)
+          call plot_curs(xseclineX1,xseclineY1,char)
           print*,'please select cross section line'
-          call pgband(1,1,xseclineX1,xseclineY1,xseclineX2,xseclineY2,char)
+          call plot_band(1,1,xseclineX1,xseclineY1,xseclineX2,xseclineY2,char)
           print*,'cross section line: xmin = ',xseclineX1,' xmax = ',xseclineX2
           print*,'                    ymin = ',xseclineY1,' ymax = ',xseclineY2
-          call pgend       
+          call plot_close       
        else
        !
        !--set position manually
@@ -485,9 +487,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 
   !!--start PGPLOT (prompt for device)
   if (len_trim(device).eq.0) then
-     call pgbegin(0,'?',1,1)
+     call plot_init('?',ierr)
   else
-     ierr = pgopen(trim(device))
+     call plot_init(trim(device),ierr)
      if (ierr.le.0) then  ! zero or negative indicates an error
         print "(a)",' ERROR: unknown PGPLOT device "'//trim(device)//'"'
         stop
@@ -495,9 +497,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   endif
   
   !--query whether or not device is interactive
-  call pgqinf('CURSOR',string,ilen)
-  
-  if (string(1:ilen).eq.'YES') then
+  if (plot_qcur()) then
      !--turn menu and interactive mode on if
      !  interactive device invoked from the command line
      if (nomenu) then
@@ -510,17 +510,17 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 
   !!--set paper size if necessary
   if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
-     call pgpaper(papersizex,aspectratio)
+     call plot_pap(papersizex,aspectratio)
   endif
   !!--turn off page prompting
-  call pgask(.false.)
+!  call pgask(.false.)
   !!if (.not. interactive) call pgbbuf !! start buffering output
   
   !!--set background/foreground colours
   ierr = 0
-  if (len_trim(colour_back).gt.0) call pgscrn(0,colour_back,ierr)
+  if (len_trim(colour_back).gt.0) call plot_scrn(0,colour_back,ierr)
   if (ierr /= 0) print 10,'background',trim(colour_back)
-  if (len_trim(colour_fore).gt.0) call pgscrn(1,colour_fore,ierr)
+  if (len_trim(colour_fore).gt.0) call plot_scrn(1,colour_fore,ierr)
   if (ierr /= 0) print 10,'foreground',trim(colour_fore)
 10 format(' error: ',a,' colour "',a,'" not found in table')
   
@@ -537,7 +537,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   !   this affects the choice of line with (if auto line width is used -- see below)
   !   and also the automatic resolution determination (should not apply to vector devices)
   !
-  call pgqinf('TYPE',devstring,ilen)
+  call plot_qinf('TYPE',devstring,ilen)
   select case(devstring(1:ilen))
   case('PS','CPS','VPS','VCPS','NULL','LATEX')
      vectordevice = .true.
@@ -549,13 +549,13 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   if (linewidth.le.0) then
      if (vectordevice) then
         print "(a)",' setting line width = 2 for '//devstring(1:ilen)//' device'
-        call pgslw(2)
+        call plot_slw(2)
      else
         print "(a)",' setting line width = 1 for '//devstring(1:ilen)//' device'
-        call pgslw(1)
+        call plot_slw(1)
      endif  
   else
-     call pgslw(linewidth)
+     call plot_slw(linewidth)
   endif
 
   linecolourthisstep = linecolour
@@ -600,23 +600,24 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 !--subroutines called from this routine
 !
   use colourparts
-  use transforms, only:transform,transform_limits,transform_label,transform_inverse,islogged
+  use transforms,            only:transform,transform_limits,transform_label,transform_inverse,islogged
   use interactive_routines
-  use particleplots, only:particleplot
-  use powerspectrums, only:powerspectrum,powerspec3D_sph
-  use interpolations1D, only:interpolate1D
-  use interpolations2D, only:interpolate2D, interpolate2D_xsec
-  use interpolations3D, only:interpolate3D
-  use projections3D, only:interpolate3D_projection
+  use particleplots,         only:particleplot
+  use powerspectrums,        only:powerspectrum,powerspec3D_sph
+  use interpolations1D,      only:interpolate1D
+  use interpolations2D,      only:interpolate2D, interpolate2D_xsec
+  use interpolations3D,      only:interpolate3D
+  use projections3D,         only:interpolate3D_projection
   use interpolate3D_opacity, only:interp3D_proj_opacity !,interp3D_proj_opacity_writeppm
-  use xsections3D, only:interpolate3D_fastxsec,interpolate3D_xsec_vec
-  use render, only:render_pix
-  use pagesetup, only:redraw_axes
-  use disc, only:disccalc,discplot
-  use exactfromfile, only:exact_fromfile
-  use write_pixmap, only:iwritepixmap,writepixmap,write_pixmap_ppm,readpixmap
-  use pdfs, only:pdfcalc,pdfplot,npdfbins
-
+  use xsections3D,           only:interpolate3D_fastxsec,interpolate3D_xsec_vec
+  use render,                only:render_pix
+  use pagesetup,             only:redraw_axes
+  use disc,                  only:disccalc,discplot
+  use exactfromfile,         only:exact_fromfile
+  use write_pixmap,          only:iwritepixmap,writepixmap,write_pixmap_ppm,readpixmap
+  use pdfs,                  only:pdfcalc,pdfplot,npdfbins
+  use plotlib,               only:plot_qvp,plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
+                                  plot_line,plot_pt1
   implicit none
   integer, intent(inout) :: ipos, istepsonpage
   integer, intent(in)    :: istep,irender_nomulti,icontour_nomulti,ivecplot
@@ -815,7 +816,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
      if (nyplot.gt.1 .or. iframe.gt.1) print 34 
      !--make sure character height is set correctly
-     call pgsch(charheight) ! in PGPLOT scaled units
+     call plot_sch(charheight) ! in PGPLOT scaled units
 
      iPlotColourBar = .false.   ! should be false by default until set to true
      iaxistemp = iaxis
@@ -1750,7 +1751,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  !---------------------------------------------------------------
                  ! plot 1D cross section through 2D data (contents of datpix) 
                  !---------------------------------------------------------------  
-                 call pgline(npixx,xgrid,datpix1D)
+                 call plot_line(npixx,xgrid,datpix1D)
               endif
            else
               !-----------------------
@@ -2092,12 +2093,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
            call page_setup
 
-           call pgqci(icolourprev)    ! query line style and colour
-           call pgqls(linestyleprev)
+           call plot_qci(icolourprev)    ! query line style and colour
+           call plot_qls(linestyleprev)
            ! set appropriate colour and style if multiple steps per page
            if (nstepsperpage.gt.1) then
-              call pgsci(linecolourthisstep)
-              call pgsls(linestylethisstep)
+              call plot_sci(linecolourthisstep)
+              call plot_sls(linestylethisstep)
            endif
            if (iploty.eq.itoomre .or. iploty.eq.isurfdens) then
               call discplot()
@@ -2106,8 +2107,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            endif
 
            !--restore line size and colour
-           call pgsci(icolourprev)
-           call pgsls(linestyleprev)
+           call plot_sci(icolourprev)
+           call plot_sls(linestyleprev)
 
            call redraw_axes(iaxis)
            call legends_and_title
@@ -2266,18 +2267,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            just = 0
            call page_setup
 
-           call pgqci(icolourprev)    ! query line style and colour
-           call pgqls(linestyleprev)
+           call plot_qci(icolourprev)    ! query line style and colour
+           call plot_qls(linestyleprev)
            if (nstepsperpage.gt.1) then
-              call pgsci(linecolourthisstep) ! set appropriate colour and style if multiple steps per page
-              call pgsls(linestylethisstep)
+              call plot_sci(linecolourthisstep) ! set appropriate colour and style if multiple steps per page
+              call plot_sls(linestylethisstep)
            endif
            
-           call pgline(nfreqpts,xplot(1:nfreqpts),yplot(1:nfreqpts))
+           call plot_line(nfreqpts,xplot(1:nfreqpts),yplot(1:nfreqpts))
            print*,' maximum power at '//trim(labelx)//' = ',xplot(maxloc(yplot(1:nfreqpts)))
 
-           call pgsci(icolourprev)
-           call pgsls(linestyleprev)
+           call plot_sci(icolourprev)
+           call plot_sls(linestyleprev)
            
            !
            !--redraw axes over what has been plotted
@@ -2395,8 +2396,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               if (xplot(i).le.timei .and. xplot(i+1).gt.timei) ipt = i
            enddo
            if (ipt.ne.0) then
-              call pgpt1(xplot(ipt),yplot(ipt),4)
-              call pgline(ipt,xplot(1:ipt),yplot(1:ipt))
+              call plot_pt1(xplot(ipt),yplot(ipt),4)
+              call plot_line(ipt,xplot(1:ipt),yplot(1:ipt))
            endif
            
            call redraw_axes(iaxis)
@@ -2422,7 +2423,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      else
         print*,' error in plotting : iplotx = ',iplotx,' iploty =',iploty, 'numplot =',numplot
-        call pgpage! just skip to next plot
+        call plot_page! just skip to next plot
 
      endif ! ploty = whatever
 
@@ -2481,6 +2482,7 @@ contains
     use pagesetup,     only:setpage2
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
                             vposlegend,iPlotLegend,usecolumnorder
+    use plotlib,       only:plot_qvp,plot_sci,plot_page
     implicit none
     integer :: iplotsave,ipanelsave,ipanelpos
     real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
@@ -2549,7 +2551,7 @@ contains
     ! set up pgplot page
     !--------------------------------------------------------------
     !--use foreground colour
-    if (.not.dum) call pgsci(1)
+    if (.not.dum) call plot_sci(1)
 
     !--page margins: zero if no box is drawn
     !if (iaxistemp.eq.-2) then
@@ -2577,7 +2579,7 @@ contains
 
     inewpage = ipanel.eq.1 .and. ipanelchange .and. ipagechange
     if (inewpage .and. .not.dum) then
-       call pgpage
+       call plot_page
        !--store ipos and nyplot positions for first on page 
        !  as starting point for interactive replotting
        nyplotfirstonpage = nyplot
@@ -2612,7 +2614,7 @@ contains
                      trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp, &
                      xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                      0.0,TitleOffset,isamexaxis,tile_plots)
-             call pgqvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+             call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
              npixx = nint(xmaxpix-xminpix)
              npixy = nint(ymaxpix-yminpix)
              if (vectordevice .and. npixx.gt.1024) then
@@ -2647,7 +2649,7 @@ contains
     endif
     
     !--query and save viewport co-ordinates set up for this panel
-    call pgqvp(0,vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
+    call plot_qvp(0,vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
 
     !--------------------------------------------------------------
     ! store current page setup for interactive mode on multiplots
@@ -2695,7 +2697,7 @@ contains
     !endif
     
     !--change to background colour index for overlaid text and axes
-    if (iUseBackGroundColourForAxes) call pgsci(0)
+    if (iUseBackGroundColourForAxes) call plot_sci(0)
     
     return
   end subroutine page_setup
@@ -2706,25 +2708,26 @@ contains
 !  will overwrite plot area)
 !------------------------------------------------------
   subroutine legends_and_title
-    use colourbar, only:plotcolourbar
-    use legends, only:legend,legend_markers,legend_scale
-    use titles, only:pagetitles,steplegend,lensteplegend
-    use filenames, only:nstepsinfile,nfiles,rootname
+    use colourbar,     only:plotcolourbar
+    use legends,       only:legend,legend_markers,legend_scale
+    use titles,        only:pagetitles,steplegend,lensteplegend
+    use filenames,     only:nstepsinfile,nfiles,rootname
     use settings_page, only:iPlotLegend,iPlotStepLegend, &
         hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnlyOnPanel, &
         iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext,iUseBackGroundColourForAxes
-    use shapes, only:nshapes,plot_shapes
-    use pagesetup, only:xlabeloffset
+    use shapes,        only:nshapes,plot_shapes
+    use pagesetup,     only:xlabeloffset
+    use plotlib,       only:plot_qci,plot_sci,plot_annotate
     implicit none
     integer :: icoloursave
     character(len=lensteplegend) :: steplegendtext
     real :: xlabeloffsettemp
     
     !--save colour index
-    call pgqci(icoloursave)
+    call plot_qci(icoloursave)
 
     !--use foreground colour by default for legends
-    call pgsci(1)
+    call plot_sci(1)
 
     !--------------------------------------------------------------
     ! plot colour bar for rendered plots (use currently set colour)
@@ -2763,7 +2766,7 @@ contains
         .and. timei.gt.-0.5*huge(timei)) then  ! but not if time has not been read from dump
 
        !--change to background colour index for legend text if overlaid
-       if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call pgsci(0)
+       if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call plot_sci(0)
 
        call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend)
     endif
@@ -2776,7 +2779,7 @@ contains
         .or.(iPlotLegendOnlyOnPanel.eq.-2 .and. icolumn.eq.1))) then
 
        !--change to background colour index for overlaid text and axes
-       if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call pgsci(0)
+       if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call plot_sci(0)
        !
        !--use filenames in legend if none set
        !
@@ -2799,28 +2802,28 @@ contains
     endif
     
     !--use foreground colour by default for title
-    call pgsci(1)
+    call plot_sci(1)
 
     !--print title if appropriate
     if (iPlotTitles .and. istepsonpage.eq.1 .and. ipanel.le.ntitles) then
        if (len_trim(pagetitles(ipanel)).gt.0) then
           
           !--change to background colour index if title is overlaid
-          if (iUseBackGroundColourForAxes .and. vpostitle.lt.0.) call pgsci(0)
+          if (iUseBackGroundColourForAxes .and. vpostitle.lt.0.) call plot_sci(0)
 
-          call pgmtxt('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
+          call plot_annotate('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
        endif
     endif
 
     !--use foreground colour by default for scale
-    call pgsci(1)
+    call plot_sci(1)
     
     !--scale on co-ordinate plots
     if (iPlotScale .and. (iscalepanel.eq.0 .or. ipanel.eq.iscalepanel) &
                    .and. any(ix(1:ndim).eq.iplotx) .and. any(ix(1:ndim).eq.iploty)) then
 
        !--change to background colour index if title is overlaid
-       if (iUseBackGroundColourForAxes .and. vposscale.gt.0.) call pgsci(0)
+       if (iUseBackGroundColourForAxes .and. vposscale.gt.0.) call plot_sci(0)
 
        call legend_scale(dxscale,hposscale,vposscale,scaletext)
     endif
@@ -2829,7 +2832,7 @@ contains
     if (nshapes.gt.0) call plot_shapes(ipanel,irow,icolumn,itrans(iplotx),itrans(iploty))
     
     !--restore colour index
-    call pgsci(icoloursave)
+    call plot_sci(icoloursave)
     
     return
   end subroutine legends_and_title
@@ -3021,11 +3024,12 @@ contains
        iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff, &
        ihidearrowswherenoparts,minpartforarrow
    use interpolations2D, only:interpolate2D_vec
-   use projections3D, only:interpolate3D_proj_vec,interp3D_proj_vec_synctron
-   use interpolate_vec, only:mask_vectors
-   use render, only:render_vec
-   use fieldlines, only:streamlines
-   use labels, only:iutherm
+   use projections3D,    only:interpolate3D_proj_vec,interp3D_proj_vec_synctron
+   use interpolate_vec,  only:mask_vectors
+   use render,           only:render_vec
+   use fieldlines,       only:streamlines
+   use labels,           only:iutherm
+   use plotlib,          only:plot_qci,plot_qlw,plot_sci,plot_slw
    implicit none
    integer, intent(in) :: ivecx,ivecy,numpixx,numpixy
    real, intent(in) :: pixwidthvec
@@ -3039,8 +3043,8 @@ contains
    logical :: usevecplot
    
    !--query colour index and line width
-   call pgqci(icoloursav)
-   call pgqlw(linewidthprev)
+   call plot_qci(icoloursav)
+   call plot_qlw(linewidthprev)
 
    !print*,'plotting vector field ',trim(label)
    if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
@@ -3049,9 +3053,9 @@ contains
    else
       !--plot arrows in either background or foreground colour
       if (UseBackgndColorVecplot) then
-         call pgsci(0)
+         call plot_sci(0)
       else
-         call pgsci(1)
+         call plot_sci(1)
       endif
       usevecplot = .false.
       if (irotate) then
@@ -3260,8 +3264,8 @@ contains
    endif
    
    !--restore colour index and line width
-   call pgsci(icoloursav)
-   call pgslw(linewidthprev)
+   call plot_sci(icoloursav)
+   call plot_slw(linewidthprev)
   
   end subroutine vector_plot
 

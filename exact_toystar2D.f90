@@ -423,6 +423,7 @@ end subroutine param_derivs
 !
 !----------------------------------------------------------------------
 subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
+  use plotlib, only:plot_swin,plot_box,plot_label,plot_line
   implicit none
   real, intent(in) :: astart,bstart,sigmain,gamma
   integer, parameter :: npts = 2000
@@ -465,9 +466,9 @@ subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
   ymax = 2.0
   ymin = -2.0
 
-  call pgswin(xstart-extra,xend+extra,ymin,ymax,0,1)
-  call pgbox('bcnst',0.0,0,'1bvcnst',0.0,0)      
-  call pglabel ('beta','alpha',' ')
+  call plot_swin(xstart-extra,xend+extra,ymin,ymax)
+  call plot_box('bcnst',0.0,0,'1bvcnst',0.0,0)      
+  call plot_label ('beta','alpha',' ')
   
   do i=1,npts
      xi = xstart + (i-1)*npts
@@ -479,7 +480,7 @@ subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
         yplot(i) = sqrt(term)
      endif 
   enddo
-  call pgline(npts,xplot,yplot)
+  call plot_line(npts,xplot,yplot)
   
   return
 

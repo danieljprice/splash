@@ -68,6 +68,7 @@ contains
 !      ** add your own here **
 ! ------------------------------------------------------------------------     
 subroutine colour_set(icolourscheme)
+  use plotlib, only:plot_qcol,plot_qcir,plot_scir,plot_ctab,plot_scr,plot_qcr
   implicit none
   integer, intent(in) :: icolourscheme
   integer :: i,icolmin,icolmax,ncolmax,nset,index
@@ -86,9 +87,9 @@ subroutine colour_set(icolourscheme)
 !--inquire as to colour range available on current device
 !  adjust ncolours if necessary
 !      
-  call PGQCOL(icolmin,icolmax)
+  call plot_qcol(icolmin,icolmax)
 !  print*,' from device = ',icolmin,icolmax
-  call PGQCIR(icolmin,icolmax)
+  call plot_qcir(icolmin,icolmax)
 !  print*,' other = ',icolmin,icolmax
   if (ifirstcolour.lt.icolmin) ifirstcolour = icolmin
   ncolmax = icolmax - ifirstcolour
@@ -99,7 +100,7 @@ subroutine colour_set(icolourscheme)
   !
   !--set this as the range of colour indices to use
   !
-  call PGSCIR(ifirstcolour,ifirstcolour+ncolours)  
+  call plot_scir(ifirstcolour,ifirstcolour+ncolours)  
 
   if (abs(icolourscheme).le.ncolourschemes) then
      brightness = 0.5
@@ -329,7 +330,7 @@ subroutine colour_set(icolourscheme)
      bluearr(1:nset) = (/0.000,0.000,0.000,0.588,0.608,0.737/)
      end select
 
-     call PGCTAB(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &
+     call plot_ctab(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &
                  nset,contrast,brightness)
   endif
 !
@@ -337,10 +338,10 @@ subroutine colour_set(icolourscheme)
 !  from the contents of the rgbtable array
 !
   if (abs(icolourscheme).eq.ncolourschemes+1) then
-     call PGSCIR(ifirstcolour,ifirstcolour+ncolourmax)
+     call plot_scir(ifirstcolour,ifirstcolour+ncolourmax)
      do i=1,ncolourmax
         index = ifirstcolour + (i-1)
-        call pgscr(index,rgbtable(1,i),rgbtable(2,i),rgbtable(3,i))
+        call plot_scr(index,rgbtable(1,i),rgbtable(2,i),rgbtable(3,i))
      enddo
      print "(1x,a)",'using colour scheme other'
 
@@ -350,7 +351,7 @@ subroutine colour_set(icolourscheme)
 !
      do i=1,ncolours+1
         index = ifirstcolour + (i-1)
-        call pgqcr(index,rgbtable(1,i),rgbtable(2,i),rgbtable(3,i))
+        call plot_qcr(index,rgbtable(1,i),rgbtable(2,i),rgbtable(3,i))
      enddo
 
      if (icolourscheme.lt.0) then
@@ -372,59 +373,59 @@ end subroutine colour_set
 !------------------------------------------------
 subroutine colour_demo
   implicit none
-  integer :: i,j,nc
+!  integer :: i,j,nc
   !
   !--npixx should be >= ncolours in setcolours.f
   !      
-  integer, parameter :: npixx = ncolourmax
-  integer, parameter :: npixy = npixx/10
-  real, dimension(npixx,npixy) :: sample
-  real :: xmin,xmax,ymin,ymax,dx,dy,trans(6)
-  character(len=10) :: string
+!  integer, parameter :: npixx = ncolourmax
+!  integer, parameter :: npixy = npixx/10
+!  real, dimension(npixx,npixy) :: sample
+!  real :: xmin,xmax,ymin,ymax,dx,dy,trans(6)
+!  character(len=10) :: string
 
-  call pgbegin(0,'?',1,ncolourschemes)
+!  call pgbegin(0,'?',1,ncolourschemes)
 !!  call pgpaper(6.0,8.0) !!!0.25/sqrt(2.))
 
-  xmin = 0.0
-  xmax = 1.0
-  ymin = 0.0
-  ymax = 0.1
-  dx = (xmax-xmin)/float(npixx)
-  dy = (ymax-ymin)/float(npixy)
-  trans(1) = xmin - 0.5*dx
-  trans(2) = dx
-  trans(3) = 0.0
-  trans(4) = ymin - 0.5*dy
-  trans(5) = 0.0
-  trans(6) = dy
+!  xmin = 0.0
+!  xmax = 1.0
+!  ymin = 0.0
+!  ymax = 0.1
+!  dx = (xmax-xmin)/float(npixx)
+!  dy = (ymax-ymin)/float(npixy)
+!  trans(1) = xmin - 0.5*dx
+!  trans(2) = dx
+!  trans(3) = 0.0
+!  trans(4) = ymin - 0.5*dy
+!  trans(5) = 0.0
+!  trans(6) = dy
 
-  do j=1,npixy
-     do i=1,npixx
-        sample(i,j) = (i-1)*dx
-     enddo
-  enddo
-!  call pgsch(2.0)
-!  call pgenv(xmin,xmax,ymin,ymax,0,-1)
+!  do j=1,npixy
+!     do i=1,npixx
+!        sample(i,j) = (i-1)*dx
+!     enddo
+!  enddo
+!!  call pgsch(2.0)
+!!  call pgenv(xmin,xmax,ymin,ymax,0,-1)
+!!  call pgsch(1.0)
+!!  call pggray(sample,npixx,npixy,1,npixx,1,npixy, &
+!!              minval(sample),maxval(sample),trans)
+!!  call pgnumb(1,0,0,string,nc)
+!!  call pgsch(7.0)
+!!  call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(1)))
+
+!  do i=1,ncolourschemes
+!     call pgsch(2.0)      
+!     call pgenv(xmin,xmax,ymin,ymax,0,-1) 
+!     call pgsch(7.0)
+!     call pgnumb(i,0,0,string,nc)
+!     call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(i)))     
+!     call colour_set(i)
+!     call pgimag(sample,npixx,npixy,1,npixx,1,npixy, &
+!                 minval(sample),maxval(sample),trans)
+!  enddo
+
 !  call pgsch(1.0)
-!  call pggray(sample,npixx,npixy,1,npixx,1,npixy, &
-!              minval(sample),maxval(sample),trans)
-!  call pgnumb(1,0,0,string,nc)
-!  call pgsch(7.0)
-!  call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(1)))
-
-  do i=1,ncolourschemes
-     call pgsch(2.0)      
-     call pgenv(xmin,xmax,ymin,ymax,0,-1) 
-     call pgsch(7.0)
-     call pgnumb(i,0,0,string,nc)
-     call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(i)))     
-     call colour_set(i)
-     call pgimag(sample,npixx,npixy,1,npixx,1,npixy, &
-                 minval(sample),maxval(sample),trans)
-  enddo
-
-  call pgsch(1.0)
-  call pgend 
+!  call pgend 
 
 end subroutine colour_demo
 

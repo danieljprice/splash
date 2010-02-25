@@ -354,8 +354,8 @@ contains
     implicit none
     
     call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
-    call prompt('enter PGPLOT line colour ',iExactLineColour,1,16)
-    call prompt('enter PGPLOT line style  ',iExactLineStyle,1,5)
+    call prompt('enter line colour ',iExactLineColour,1,16)
+    call prompt('enter line style  ',iExactLineStyle,1,5)
     call prompt('calculate error norms? ',iCalculateExactErrors)
     if (iCalculateExactErrors) then
        call prompt('plot residuals (as inset in main plot)?',iPlotResiduals)
@@ -553,23 +553,24 @@ contains
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot, &
                             pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
-    use labels, only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,irhorestframe
-    use prompting, only:prompt
-    use exactfromfile, only:exact_fromfile
-    use mhdshock, only:exact_mhdshock
-    use polytrope, only:exact_polytrope
-    use rhoh, only:exact_rhoh
-    use sedov, only:exact_sedov
-    use shock, only:exact_shock
-    use shock_sr, only:exact_shock_sr
-    use torus, only:exact_torus
-    use toystar1D, only:exact_toystar1D  !, exact_toystar_ACplane
-    use toystar2D, only:exact_toystar2D
-    use wave, only:exact_wave
+    use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,irhorestframe
+    use prompting,       only:prompt
+    use exactfromfile,   only:exact_fromfile
+    use mhdshock,        only:exact_mhdshock
+    use polytrope,       only:exact_polytrope
+    use rhoh,            only:exact_rhoh
+    use sedov,           only:exact_sedov
+    use shock,           only:exact_shock
+    use shock_sr,        only:exact_shock_sr
+    use torus,           only:exact_torus
+    use toystar1D,       only:exact_toystar1D  !, exact_toystar_ACplane
+    use toystar2D,       only:exact_toystar2D
+    use wave,            only:exact_wave
     use densityprofiles, only:exact_densityprofiles
-    use exactfunction, only:exact_function
-    use ringspread, only:exact_ringspread
-    use transforms, only:transform,transform_inverse
+    use exactfunction,   only:exact_function
+    use ringspread,      only:exact_ringspread
+    use transforms,      only:transform,transform_inverse
+    use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line
     implicit none
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
     integer, intent(in) :: ndim,ndimV,npart,imarker,iaxisy
@@ -587,10 +588,10 @@ contains
     !
     !--change line style and colour settings, but save old ones
     !
-    call pgqci(iCurrentColour)
-    call pgqls(iCurrentLineStyle)
-    call pgsci(iExactLineColour)
-    call pgsls(iExactLineStyle)
+    call plot_qci(iCurrentColour)
+    call plot_qls(iCurrentLineStyle)
+    call plot_sci(iExactLineColour)
+    call plot_sls(iExactLineStyle)
     !
     !--allocate memory
     !
@@ -801,7 +802,7 @@ contains
                 xtemp = xexact ! must not transform xexact as this is done again below
                 if (itransx.gt.0) call transform(xtemp,itransx)
                 if (itransy.gt.0) call transform(yexact,itransy)
-                call pgline(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
+                call plot_line(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
              endif
              !--leave this one to be plotted below  
              if (iplotx.eq.ih) then
@@ -875,7 +876,7 @@ contains
              if (i.ne.nfunc) then ! plot all except last line here
                 if (itransy.gt.0) call transform(yexact,itransy)
                 !--use xtemp, which is xexact but already transformed
-                call pgline(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
+                call plot_line(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
              endif
           enddo
        endif
@@ -884,7 +885,7 @@ contains
           call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
           if (ierr.le.0 .and. .not.iApplyTransExactFile) then
-             call pgline(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
+             call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
              ierr = 1
           endif
           !--change into physical units if appropriate
@@ -901,7 +902,7 @@ contains
     if (ierr.le.0) then
        if (itransx.gt.0) call transform(xexact(1:iexactpts),itransx)
        if (itransy.gt.0) call transform(yexact(1:iexactpts),itransy)
-       call pgline(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
+       call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
        !
        !--calculate errors
        !
@@ -923,8 +924,8 @@ contains
     !
     !--reset line and colour settings
     !   
-    call pgsci(iCurrentColour)
-    call pgsls(iCurrentLineStyle)
+    call plot_sci(iCurrentColour)
+    call plot_sls(iCurrentLineStyle)
     !
     !--deallocate memory
     !
@@ -1005,6 +1006,9 @@ contains
   end subroutine calculate_errors
   
   subroutine plot_residuals(xpts,residuals,imarker,iaxisy)
+   use plotlib, only:plot_qvp,plot_qwin,plot_svp,plot_qci,plot_qfs, &
+                     plot_qcs,plot_sci,plot_sfs,plot_svp,plot_box, &
+                     plot_pt,plot_swin,plot_rect
    implicit none
    real, dimension(:), intent(in) :: xpts,residuals
    integer, intent(in) :: imarker,iaxisy
@@ -1015,15 +1019,15 @@ contains
    integer :: ioldcolour,ioldfill
 
    !--query old viewport and window size
-   call pgqvp(0,vptxminold,vptxmaxold,vptyminold,vptymaxold)
-   call pgqwin(xminold,xmaxold,yminold,ymaxold)
+   call plot_qvp(0,vptxminold,vptxmaxold,vptyminold,vptymaxold)
+   call plot_qwin(xminold,xmaxold,yminold,ymaxold)
 
    !--use specified bottom % of viewport
    vptxmin = vptxminold
    vptxmax = vptxmaxold
    vptymin = vptyminold
    vptymax = vptyminold + FracinsetResiduals*(vptymaxold - vptyminold)
-   call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
+   call plot_svp(vptxmin,vptxmax,vptymin,vptymax)
  
    !--set window
    if (residualmax.lt.tiny(residualmax)) then
@@ -1035,35 +1039,35 @@ contains
    ymin = -ymax
 
    !--erase space for residual plot
-   call pgqci(ioldcolour)
-   call pgqfs(ioldfill)
-   call pgqcs(0,xch,ych)
-   call pgsci(0)
-   call pgsfs(1)
+   call plot_qci(ioldcolour)
+   call plot_qfs(ioldfill)
+   call plot_qcs(0,xch,ych)
+   call plot_sci(0)
+   call plot_sfs(1)
    if (iaxisy.lt.0) then
-      call pgsvp(vptxmin,vptxmax,vptymin,vptymax)   
+      call plot_svp(vptxmin,vptxmax,vptymin,vptymax)   
    else
-      call pgsvp(vptxmin - 3.*xch,vptxmax,vptymin,vptymax)
+      call plot_svp(vptxmin - 3.*xch,vptxmax,vptymin,vptymax)
    endif
-   call pgswin(xminold,xmaxold,ymin,ymax)
-   call pgrect(xminold,xmaxold,ymin,ymax)
-   call pgsci(ioldcolour)
-   call pgsfs(ioldfill)
+   call plot_swin(xminold,xmaxold,ymin,ymax)
+   call plot_rect(xminold,xmaxold,ymin,ymax)
+   call plot_sci(ioldcolour)
+   call plot_sfs(ioldfill)
    !--set window and draw axes
-   call pgsvp(vptxmin,vptxmax,vptymin,vptymax)
-   call pgswin(xminold,xmaxold,ymin,ymax)
+   call plot_svp(vptxmin,vptxmax,vptymin,vptymax)
+   call plot_swin(xminold,xmaxold,ymin,ymax)
    if (iaxisy.lt.0) then
-      call pgbox('ABCST',0.0,0,'BCST',0.0,0)   
+      call plot_box('ABCST',0.0,0,'BCST',0.0,0)   
    else
-      call pgbox('ABCST',0.0,0,'BVNCST',0.0,0)
+      call plot_box('ABCST',0.0,0,'BVNCST',0.0,0)
    endif
    
    !--plot residuals
-   call pgpt(size(xpts),xpts,residuals,imarker)
+   call plot_pt(size(xpts),xpts,residuals,imarker)
    
    !--restore old viewport and window
-   call pgsvp(vptxminold,vptxmaxold,vptyminold,vptymaxold)
-   call pgswin(xminold,xmaxold,yminold,ymaxold)
+   call plot_svp(vptxminold,vptxmaxold,vptyminold,vptymaxold)
+   call plot_swin(xminold,xmaxold,yminold,ymaxold)
    
   end subroutine plot_residuals
 

@@ -31,12 +31,13 @@ contains
 ! This subroutine drives the main plotting loop
 !
 subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
-  use filenames, only:nsteps,ifileopen
-  use particle_data, only:iamtype,npartoftype,masstype,time,gamma,dat
-  use settings_data, only:istartatstep,iendatstep,nfreq,DataIsBuffered, &
-                          iUsesteplist,isteplist,ncolumns,ipartialread
-  use settings_page, only:interactive,nstepsperpage,iColourEachStep,iChangeStyles,nomenu
+  use filenames,         only:nsteps,ifileopen
+  use particle_data,     only:iamtype,npartoftype,masstype,time,gamma,dat
+  use settings_data,     only:istartatstep,iendatstep,nfreq,DataIsBuffered, &
+                              iUsesteplist,isteplist,ncolumns,ipartialread
+  use settings_page,     only:interactive,nstepsperpage,iColourEachStep,iChangeStyles,nomenu
   use timestep_plotting, only:initialise_plotting,plotstep
+  use plotlib,           only:plot_close
   implicit none
   integer, intent(in) :: ipicky,ipickx,irender,icontourplot,ivecplot
   integer :: ipos, istep, ilocindat, iadvance, istepsonpage, istepprev
@@ -190,7 +191,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  call pgend
+  call plot_close
 
   return
 

@@ -42,6 +42,7 @@ contains
 !-----------------------------------------------------------------
 
 subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust)
+ use plotlib, only:plot_numb,plot_annotate
  implicit none
  real, intent(in) :: t,hpos,vpos,fjust
  character(len=*), intent(in) :: legendtext,unitslabel
@@ -63,10 +64,10 @@ subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust)
     pp=int(log10(tplot)-ndecimal)
 ! mm=nint(tplot*ndec)
 ! pp=nint(log10(tplot)-log10(tplot*ndec))
-    call pgnumb(mm,pp,1,string,nc)
+    call plot_numb(mm,pp,1,string,nc)
     if (t.lt.0.) string='-'//string(1:nc)
  endif
- call pgmtext('T',-vpos,hpos,fjust,trim(legendtext)//string(1:nc)//trim(unitslabel))
+ call plot_annotate('T',-vpos,hpos,fjust,trim(legendtext)//string(1:nc)//trim(unitslabel))
 
  return
 end subroutine legend
@@ -85,6 +86,9 @@ end subroutine legend
 !-----------------------------------------------------------------
 
 subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
+ use plotlib, only:plot_qwin,plot_qch,plot_sch,plot_qcs,plot_numb,plot_qtxt, &
+                   plot_qci,plot_sci,plot_sfs,plot_rect,plot_sci,plot_text, &
+                   plot_qvp,plot_svp,plot_swin,plot_arro
  implicit none
  real, intent(in) :: vecmax,dx,hpos,vpos,charheight
  character(len=*), intent(in) :: label,unitslabel
@@ -99,11 +103,11 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 !
 !--convert hpos and vpos to x, y to plot arrow
 !
- call pgqwin(xmin,xmax,ymin,ymax)
- call pgqch(charheightarrow)
- call pgsch(charheight)
+ call plot_qwin(xmin,xmax,ymin,ymax)
+ call plot_qch(charheightarrow)
+ call plot_sch(charheight)
  xpos = xmin + hpos*(xmax-xmin)
- call pgqcs(4,xch,ych) 
+ call plot_qcs(4,xch,ych) 
  ypos = ymax - (vpos + 1.)*ych
 !
 !--format string containing numerical value
@@ -120,19 +124,19 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  else
     mm=int(vecmaxnew/10.**(int(log10(vecmaxnew)-ndec)))
     pp=int(log10(vecmaxnew)-ndec)
-    call pgnumb(mm,pp,0,string,nc)
+    call plot_numb(mm,pp,0,string,nc)
  endif
  string = '='//trim(string)
 ! write(string,"('=',1pe7.1)") vecmax 
 !
 !--enquire size of label
 !
- call pgqtxt(xpos,ypos,0.0,0.0,trim(label),xbox,ybox)
+ call plot_qtxt(xpos,ypos,0.0,0.0,trim(label),xbox,ybox)
  dxlabel = xbox(3) - xbox(2) + 0.5*xch
 !
 !--enquire size of string
 !
- call pgqtxt(xpos,ypos,0.0,0.0,trim(string),xbox,ybox)
+ call plot_qtxt(xpos,ypos,0.0,0.0,trim(string),xbox,ybox)
  dxstring = xbox(3) - xbox(2)
 !
 !--set size of box in x direction
@@ -144,13 +148,13 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 !
 !--draw box around all of the legend
 !
- call pgqci(icolindex)
+ call plot_qci(icolindex)
 ! draw a rectangle in the background colour with solid fill style
- call pgsci(0)
- call pgsfs(1)
- call pgrect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
+ call plot_sci(0)
+ call plot_sfs(1)
+ call plot_rect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
 ! change to foreground colour index
- call pgsci(1)
+ call plot_sci(1)
 ! draw an outline around the box
 ! call pgsfs(2)
 ! call pgrect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
@@ -158,41 +162,41 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 !
 !--write label
 !
- call pgtext(xpos,ypos,trim(label))
+ call plot_text(xpos,ypos,trim(label))
  xpos = xpos + dxlabel
 !
 !--Draw arrow. Here we have to perform tricks to get the arrow 
 !  to appear even if outside the usual plotting area
 !
 !--save viewport settings
- call pgqvp(0,x1,x2,y1,y2)
+ call plot_qvp(0,x1,x2,y1,y2)
 !--now allow the whole screen to be the viewport...
- call pgsvp(0.0,1.0,0.0,1.0)
+ call plot_svp(0.0,1.0,0.0,1.0)
 !  ...but correspondingly adjust window so that x and y positions 
 !  are the same as in the old viewport 
  xminnew = xmin - x1*(xmax-xmin)/(x2-x1)
  xmaxnew = xmax + (1.-x2)*(xmax-xmin)/(x2-x1)
  yminnew = ymin - y1*(ymax-ymin)/(y2-y1)
  ymaxnew = ymax + (1.-y2)*(ymax-ymin)/(y2-y1)
- call pgswin(xminnew,xmaxnew,yminnew,ymaxnew)
+ call plot_swin(xminnew,xmaxnew,yminnew,ymaxnew)
 !--use character height original arrows were drawn with
 !  (this is to get the arrow head size right)
- call pgsch(charheightarrow)
+ call plot_sch(charheightarrow)
 !--draw arrow
- call pgarro(xpos,ypos,xpos + dx/sqrt(2.),ypos + ych)
+ call plot_arro(xpos,ypos,xpos + dx/sqrt(2.),ypos + ych)
 !--restore viewport settings
- call pgsvp(x1,x2,y1,y2)
- call pgswin(xmin,xmax,ymin,ymax)
+ call plot_svp(x1,x2,y1,y2)
+ call plot_swin(xmin,xmax,ymin,ymax)
  xpos = xpos + 1.1*dx/sqrt(2.)
 !
 !--write numerical value and units label
 !
- call pgsch(charheight)
+ call plot_sch(charheight)
 !! call pgmtext('t',-vpos,hpos+0.02,0.0,trim(string))
- call pgtext(xpos,ypos,trim(string)//trim(unitslabel))
+ call plot_text(xpos,ypos,trim(string)//trim(unitslabel))
 !
 !--restore colour index
- call pgsci(icolindex)
+ call plot_sci(icolindex)
 
  return
 end subroutine legend_vec
@@ -204,12 +208,14 @@ end subroutine legend_vec
 !-------------------------------------------------------------------------
 subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
            iplotpts,iplotline,text,hposlegend,vposlegend)
+  use plotlib, only:plot_qwin,plot_qcs,plot_qci,plot_qls,plot_sci,plot_sls, &
+                    plot_line,plot_pt,plot_text,plot_stbg,plot_slc,plot_qlc
   implicit none
   integer, intent(in) :: icall,icolour,imarkerstyle,ilinestyle
   logical, intent(in) :: iplotpts,iplotline
   character(len=*), intent(in) :: text
   real, intent(in) :: hposlegend,vposlegend
-  integer :: icolourprev, ilinestyleprev
+  integer :: icolourprev, ilinestyleprev,ilinecapprev
   real, dimension(3) :: xline,yline
   real :: xch, ych, xmin, xmax, ymin, ymax
   real :: vspace, vpos
@@ -225,42 +231,49 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
   vspace = 1.5  ! (in units of character heights)
   vpos = vposlegend + icall*vspace + 0.5 ! distance from top, in units of char height
 
-  call pgqwin(xmin,xmax,ymin,ymax) ! query xmax, ymax
-  call pgqcs(4,xch,ych) ! query character height in x and y units 
-  call pgqci(icolourprev)     ! save current colour index
-  call pgqls(ilinestyleprev)  ! save current line style
+  call plot_qwin(xmin,xmax,ymin,ymax) ! query xmax, ymax
+  call plot_qcs(4,xch,ych) ! query character height in x and y units 
+  call plot_qci(icolourprev)     ! save current colour index
+  call plot_qls(ilinestyleprev)  ! save current line style
+  call plot_qlc(ilinecapprev)    ! save the current line cap
+
 
   yline(:) = ymax - ((vpos - 0.5)*ych)
   xline(1) = xmin + hposlegend*(xmax-xmin)
   xline(2) = xline(1) + xch
   xline(3) = xline(1) + 2.*xch
 
-  call pgsci(icolour)
-  call pgsls(ilinestyle)
+  call plot_sci(icolour)
+  call plot_sls(ilinestyle)
+!
+!--set round caps
+!
+  call plot_slc(1)
 !
 !--draw a small line segment
 !
-  if (iplotline) call pgline(3,xline,yline)
+  if (iplotline) call plot_line(3,xline,yline)
 !
 !--draw points, only two if line is also plotted so that you can see the line
 !               three otherwise
 !
   if (iplotpts .and. iplotline) then
      xline(2) = xline(3)
-     call pgpt(2,xline(1:2),yline(1:2),imarkerstyle)
+     call plot_pt(2,xline(1:2),yline(1:2),imarkerstyle)
   elseif (iplotpts) then
-     call pgpt(3,xline,yline,imarkerstyle)
+     call plot_pt(3,xline,yline,imarkerstyle)
   endif
 !
 !--add text
 !
   if (iplotline .or. iplotpts .and. len_trim(text).gt.0) then
-     call pgtext(xline(3) + 0.75*xch,yline(1)-0.25*ych,trim(text))
+     call plot_text(xline(3) + 0.75*xch,yline(1)-0.25*ych,trim(text))
   endif
 
-  call pgsci(icolourprev)    ! reset colour index
-  call pgsls(ilinestyleprev) ! reset line style
-  call pgstbg(-1) ! reset text background to transparent
+  call plot_sci(icolourprev)    ! reset colour index
+  call plot_sls(ilinestyleprev) ! reset line style
+  call plot_stbg(-1) ! reset text background to transparent
+  call plot_slc(ilinecapprev)
 
 end subroutine legend_markers
 
@@ -280,23 +293,24 @@ end subroutine legend_markers
 !        text : label to print above scale
 !-----------------------------------------------------------------
 subroutine legend_scale(dxscale,hpos,vpos,text)
+  use plotlib, only:plot_qwin,plot_qcs,plot_err1,plot_annotate
   implicit none
   real, intent(in) :: dxscale,hpos,vpos
   character(len=*), intent(in) :: text
   real :: xmin,xmax,ymin,ymax,xch,ych,xpos,ypos
   
-  call pgqwin(xmin,xmax,ymin,ymax)
+  call plot_qwin(xmin,xmax,ymin,ymax)
   if (dxscale.gt.(xmax-xmin)) then
      print "(a)",'Error: scale size exceeds x dimensions: scale not plotted'
   else
-     call pgqcs(4,xch,ych)
+     call plot_qcs(4,xch,ych)
      !--draw horizontal "error bar" above text
      ypos = ymin + (vpos+1.25)*ych
      xpos = xmin + hpos*(xmax-xmin)
-     call pgerr1(5,xpos,ypos,0.5*dxscale,1.0)
+     call plot_err1(5,xpos,ypos,0.5*dxscale,1.0)
 
      !--write text at the position specified
-     call pgmtxt('B',-vpos,hpos,0.5,trim(text))
+     call plot_annotate('B',-vpos,hpos,0.5,trim(text))
   endif
   
 end subroutine legend_scale

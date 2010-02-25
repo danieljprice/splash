@@ -118,6 +118,7 @@ end subroutine rotate3D
 !--plots rotated plot axes
 !
 subroutine rotate_axes2D(ioption,xmin,xmax,xorigin,anglez)
+  use plotlib, only:plot_arro,plot_sfs,plot_poly
   implicit none
   integer, intent(in) :: ioption
   real, intent(in), dimension(2) :: xmin,xmax,xorigin
@@ -144,7 +145,7 @@ subroutine rotate_axes2D(ioption,xmin,xmax,xorigin,anglez)
            xpt(:,i) = xpttemp(:) + xorigin(:)
         enddo
         !--plot each axis as an arrow
-        call pgarro(xpt(1,1),xpt(2,1),xpt(1,2),xpt(2,2))
+        call plot_arro(xpt(1,1),xpt(2,1),xpt(1,2),xpt(2,2))
      enddo
 
   case default
@@ -173,8 +174,8 @@ subroutine rotate_axes2D(ioption,xmin,xmax,xorigin,anglez)
    !
    !--now plot box appropriately using points
    !
-     call pgsfs(2)
-     call pgpoly(4,xpt(1,1:4),xpt(2,1:4))
+     call plot_sfs(2)
+     call plot_poly(4,xpt(1,1:4),xpt(2,1:4))
   end select
   
   return
@@ -182,6 +183,7 @@ end subroutine rotate_axes2D
 
 subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
                          anglex,angley,anglez,zobs,dz1)
+  use plotlib, only:plot_poly,plot_sfs,plot_arro,plot_line
   implicit none
   integer, intent(in) :: ioption,iplotx,iploty
   real, intent(in), dimension(3) :: xmin,xmax,xorigin
@@ -214,7 +216,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
            xpt(:,i) = xpttemp(:) + xorigin(:)
         enddo
         !--plot each axis as an arrow
-        call pgarro(xpt(iplotx,1),xpt(iploty,1),xpt(iplotx,2),xpt(iploty,2))
+        call plot_arro(xpt(iplotx,1),xpt(iploty,1),xpt(iplotx,2),xpt(iploty,2))
 !!        call pgline(2,xpt(iplotx,1:2),xpt(iploty,1:2))
      enddo
   case(2)
@@ -251,18 +253,18 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
      !
      !--now draw lines appropriately through points
      !
-     call pgsfs(2)    
+     call plot_sfs(2)    
      !--front face
-     call pgpoly(4,xpt(iplotx,1:4),xpt(iploty,1:4))
+     call plot_poly(4,xpt(iplotx,1:4),xpt(iploty,1:4))
      !--back face
-     call pgpoly(4,xpt(iplotx,5:8),xpt(iploty,5:8))
+     call plot_poly(4,xpt(iplotx,5:8),xpt(iploty,5:8))
      !--connecting lines ( 1->5, 2->6, 3->7, 4->8 )
      do i=1,4
         xline(1) = xpt(iplotx,i)
         yline(1) = xpt(iploty,i)
         xline(2) = xpt(iplotx,i+4)
         yline(2) = xpt(iploty,i+4)
-        call pgline(2,xline,yline)
+        call plot_line(2,xline,yline)
      enddo
 
   case(3)
@@ -285,7 +287,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
            call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1)
            xpt(:,i) = xpttemp(:) + xorigin(:)
         enddo
-        call pgline(2,xpt(iplotx,1:2),xpt(iploty,1:2))
+        call plot_line(2,xpt(iplotx,1:2),xpt(iploty,1:2))
      enddo
      
      !--lines of constant y
@@ -303,7 +305,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
            call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1)
            xpt(:,i) = xpttemp(:) + xorigin(:)
         enddo
-        call pgline(2,xpt(iplotx,1:2),xpt(iploty,1:2))
+        call plot_line(2,xpt(iplotx,1:2),xpt(iploty,1:2))
      enddo     
   case default
   !--do nothing

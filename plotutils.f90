@@ -26,6 +26,7 @@
 ! eventually use it to be able to change backends more easily.
 !---------------------------------------------------------------------------
 module plotutils
+ use plotlib, only:plot_line,plot_bins
  implicit none
  public :: plotline,plotbins,formatreal
  
@@ -49,7 +50,7 @@ subroutine plotline(npts,xline,yline,blank)
     !--plot line in segments, leaving blank segments where y=blank
     do i=1,npts
        if (abs(yline(i)-blank).lt.tiny(yline) .or. i.eq.npts) then
-          if (nseg.gt.0) call pgline(nseg,xline(istart:istart+nseg),yline(istart:istart+nseg))
+          if (nseg.gt.0) call plot_line(nseg,xline(istart:istart+nseg),yline(istart:istart+nseg))
           istart = i+1
           nseg = 0
        else
@@ -57,7 +58,7 @@ subroutine plotline(npts,xline,yline,blank)
        endif
     enddo
  else
-    call pgline(npts,xline,yline) 
+    call plot_line(npts,xline,yline) 
  endif
 
  return
@@ -79,7 +80,7 @@ subroutine plotbins(nbins,xbins,ybins,blank)
     !--plot line in segments, leaving blank segments where y=blank
     do i=1,nbins
        if (abs(ybins(i)-blank).lt.tiny(ybins) .or. i.eq.nbins) then
-          if (nseg.gt.0) call pgbin(nseg,xbins(istart:istart+nseg),ybins(istart:istart+nseg),.true.)
+          if (nseg.gt.0) call plot_bins(nseg,xbins(istart:istart+nseg),ybins(istart:istart+nseg),.true.)
           istart = i+1
           nseg = 0
        else
@@ -87,7 +88,7 @@ subroutine plotbins(nbins,xbins,ybins,blank)
        endif
     enddo
  else
-    call pgbin(nbins,xbins,ybins,.true.)
+    call plot_bins(nbins,xbins,ybins,.true.)
  endif
  
  return
