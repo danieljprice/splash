@@ -450,7 +450,7 @@ FFLAGS = $(F90FLAGS)
 PLOTLIB= plotlib_pgplot.f90
 SOURCESF90= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          prompting.f90 geometry.f90 interpolation.f90 plotutils.f90 colourbar.f90 \
-         colours.f90 colourparts.f90 shapes.f90 units.f90 \
+         colours.f90 colourparts.f90 pagecolours.f90 shapes.f90 units.f90 \
          write_data_phantom.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \

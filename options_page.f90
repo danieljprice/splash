@@ -29,20 +29,21 @@ module settings_page
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
  integer :: iPlotLegendOnlyOnPanel,modlinestyle,modcolour,maxlinestyle,maxcolour
+ integer :: iPageColours
  logical :: iColourEachStep,iChangeStyles,tile,interactive,nomenu
  logical :: iPlotLegend,iPlotStepLegend,iPlotTitles,usecolumnorder
  logical :: iPlotScale,iUseBackgroundColourForAxes,usesquarexy
- real :: papersizex,aspectratio
- real :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
- real :: charheight
- real :: dxscale,hposscale,vposscale
- character(len=20) :: colour_fore, colour_back, legendtext, scaletext
+ real    :: papersizex,aspectratio
+ real    :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
+ real    :: charheight
+ real    :: dxscale,hposscale,vposscale
+ character(len=20) :: legendtext, scaletext
  character(len=60) :: device
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &
    iPlotLegend,iPlotStepLegend,hposlegend,vposlegend,iPlotTitles,hpostitle, &
-   vpostitle,fjusttitle,legendtext,colour_fore,colour_back,charheight,linewidth,&
+   vpostitle,fjusttitle,legendtext,iPageColours,charheight,linewidth,&
    fjustlegend,iPlotLegendOnlyOnPanel, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
    usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder
@@ -81,10 +82,9 @@ subroutine defaults_set_page
   hpostitle = 0.5       ! horizontal title position as fraction of viewport
   vpostitle = 1.0       ! vertical title position in character heights
   fjusttitle = 0.5      ! justification factor for title
-  colour_fore = ' '
-  colour_back = ' '
-  charheight = 1.0    ! PGPLOT character height
-  linewidth = 0       ! PGPLOT line width
+  iPageColours = 0
+  charheight = 1.0    ! character height
+  linewidth = 0       ! line width
 
   iPlotScale = .false.
   hposscale = 0.5
@@ -109,14 +109,14 @@ end subroutine defaults_set_page
 subroutine defaults_set_page_ev
   implicit none
 
-  nstepsperpage = 1000
-  iColourEachStep = .true. ! change colours if nstepsperpage > 1
-  iChangeStyles = .true.   ! change marker/ line styles if nstepsperpage > 1
-  iPlotLegend = .true.  ! whether or not to plot legend
-  iPlotStepLegend = .true. ! timestep legend
-  hposlegend = 0.1     ! horizontal legend position as fraction of viewport
-  vposlegend = 2.0      ! vertical legend position in character heights
-  fjustlegend = 0.0    ! justification factor for legend
+  nstepsperpage   = 1000
+  iColourEachStep = .true.   ! change colours if nstepsperpage > 1
+  iChangeStyles   = .true.   ! change marker/ line styles if nstepsperpage > 1
+  iPlotLegend     = .true.   ! whether or not to plot legend
+  iPlotStepLegend = .true.   ! timestep legend
+  hposlegend      = 0.1      ! horizontal legend position as fraction of viewport
+  vposlegend      = 2.0      ! vertical legend position in character heights
+  fjustlegend     = 0.0      ! justification factor for legend
   
   return
 end subroutine defaults_set_page_ev
@@ -125,13 +125,13 @@ end subroutine defaults_set_page_ev
 ! submenu with options relating to page setup
 !----------------------------------------------------------------------
 subroutine submenu_page(ichoose)
- use params,    only:maxplot
- use prompting, only:prompt,print_logical
- use plotlib,   only:plot_init,plot_scrn,plot_close
+ use params,      only:maxplot
+ use prompting,   only:prompt,print_logical
+ use pagecolours, only:pagecolourscheme,colour_fore,colour_back,maxpagecolours
  implicit none
  integer, intent(in) :: ichoose
- integer :: iaction,ierr,ntries,dummy
- real :: papersizey
+ integer             :: iaction,i
+ real                :: papersizey
 
  iaction = ichoose
  
@@ -140,7 +140,9 @@ subroutine submenu_page(ichoose)
  
  if (iaction.le.0 .or. iaction.gt.9) then
     print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,print_logical(tile), &
-             trim(print_logical(usesquarexy)),charheight,linewidth,trim(print_logical(interactive))
+             trim(print_logical(usesquarexy)),charheight,linewidth,&
+             trim(print_logical(interactive)), &
+             trim(pagecolourscheme(iPageColours,short=.true.))
 10 format( &
           ' 0) exit ',/,                   &
           ' 1) plot n steps on top of each other   (n =',i4,')',/, &
@@ -151,7 +153,7 @@ subroutine submenu_page(ichoose)
           ' 6) set character height                (',f4.1,')',/,&
           ' 7) adjust line width                   (',i2, ')',/,&
           ' 8) interactive mode on/off             ( ',a,' )',/,&
-          ' 9) set foreground/background colours ')
+          ' 9) set foreground/background colours   ( ',a,' )')
     call prompt('enter option ',iaction,0,9)
  endif
 
@@ -205,7 +207,7 @@ subroutine submenu_page(ichoose)
      return
 !------------------------------------------------------------------------
   case(3)
-     print*,' 0) PGPLOT default '
+     print*,' 0) plotting library default '
      print*,' 1) small square         :  2.92 x 2.92 inches'
      print*,' 2) medium square        :  5.85 x 5.85'
      print*,' 3) large square         :  8.00 x 8.00'
@@ -262,7 +264,7 @@ subroutine submenu_page(ichoose)
      print "(a)",' Same scale for spatial dimensions is '//print_logical(usesquarexy)
 !------------------------------------------------------------------------
   case(6)
-     call prompt('Enter PGPLOT character height ',charheight,0.1,10.)
+     call prompt('Enter character height ',charheight,0.1,10.)
      return
 !------------------------------------------------------------------------
   case(7)
@@ -270,7 +272,7 @@ subroutine submenu_page(ichoose)
                     ' This gives width = 2 for vector devices (/ps,/cps etc)', &
                     '        and width = 1 elsewhere (e.g. for pixel devices)'
      print*
-     call prompt('Enter PGPLOT line width (0=auto)',linewidth,0)
+     call prompt('Enter line width (0=auto)',linewidth,0)
      return
 !------------------------------------------------------------------------
   case(8)
@@ -278,32 +280,21 @@ subroutine submenu_page(ichoose)
      print "(a)",' Interactive mode is '//print_logical(interactive)
 !------------------------------------------------------------------------
   case(9)
-     ierr = 1
-     ntries = 1
-     !--open null device so that colours can be recognised
-     call plot_init('/null',dummy)
-     do while (ierr /= 0 .and. ntries.le.3)
-        call prompt('Enter background colour (by name, e.g. "black") ',colour_back)
-        call plot_scrn(0,colour_back,ierr)
-        ntries = ntries + 1
-     enddo
-     ierr = 1
-     ntries = 1
-     do while (ierr /= 0 .and. ntries.le.3)
-        call prompt('Enter foreground colour (by name, e.g. "white") ',colour_fore)
-        call plot_scrn(1,colour_fore,ierr)
-        ntries = ntries + 1
-     enddo
-     call plot_close
-
-     print "(4(/,a))",' Overlaid (that is, drawn inside the plot borders) axis ', &
-                      ' ticks, legend text and titles are by default plotted in ', &
-                      ' the foreground colour [ie. '//trim(colour_fore)//'].'
+     print "(3(/,i1,')',1x,a))",(i,pagecolourscheme(i),i=0,maxpagecolours)
+     call prompt(' Choose page colour scheme ',iPageColours,0,maxpagecolours)
      
-     if (len_trim(colour_back).gt.0 .and. len_trim(colour_fore).gt.0) then
-        call prompt('Do you want to plot these in background colour [ie. '//trim(colour_back)//'] instead ?',&
-                    iUseBackgroundColourForAxes)     
+     write(*,"(3(/,a))",advance='no') &
+       ' Overlaid (that is, drawn inside the plot borders) axis ',&
+       ' ticks, legend text and titles are by default plotted ', &
+       ' in the foreground colour'
+     
+     if (iPageColours.gt.0) then
+        print "(a,/)",' [i.e. '//trim(colour_fore(iPageColours))//'].'
+        call prompt('Do you want to plot these in background colour [i.e. '&
+                    //trim(colour_back(iPageColours))//'] instead?',&
+                    iUseBackgroundColourForAxes)
      else
+        print "(a,/)",'.'
         call prompt('Do you want to plot these in background colour instead? ',iUseBackgroundColourForAxes)
      endif
      
@@ -319,11 +310,11 @@ end subroutine submenu_page
 subroutine submenu_legend(ichoose)
  use filenames, only:fileprefix
  use prompting, only:prompt,print_logical
- use shapes, only:nshapes,labelshapetype,shape,submenu_shapes
+ use shapes,    only:nshapes,labelshapetype,shape,submenu_shapes
  implicit none
  integer, intent(in) :: ichoose
- integer :: iaction,i,ierr,i1,i2
- character(len=50) :: string
+ integer             :: iaction,i,ierr,i1,i2
+ character(len=50)   :: string
 
  iaction = ichoose
  print "(a)",'---------------- legend and title options -------------------'
