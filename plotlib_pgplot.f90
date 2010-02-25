@@ -122,8 +122,14 @@ end interface
 
 interface plot_swin
    subroutine pgswin(X1, X2, Y1, Y2)
-     REAL,intent(in) :: X1, X2, Y1, Y2
+     real,intent(in) :: X1, X2, Y1, Y2
    end subroutine pgswin
+end interface
+
+interface plot_wnad
+   subroutine pgwnad(X1, X2, Y1, Y2)
+     real,intent(in) :: X1, X2, Y1, Y2
+   end subroutine pgwnad
 end interface
 
 interface plot_qvsz
@@ -260,10 +266,12 @@ interface plot_stbg
 end interface
 
 interface plot_curs
-   subroutine pgcurs(x,y,ch)
-     real,intent(out)             :: x,y 
-     character(len=*),intent(out) :: ch
-   end subroutine pgcurs
+ !  integer function pgcurs(x,y,ch)
+ !    real,intent(inout)             :: x,y 
+ !    character*(*),intent(out) :: ch
+ !  end function pgcurs
+
+   module procedure pgcurs_sub
 end interface
 
 interface plot_pt
@@ -276,7 +284,7 @@ end interface
 
 interface plot_funx
    subroutine pgfunx(fx,n,ymin,ymax,pgflags)
-     real,external      :: fx
+     real,external :: fx
      integer,intent(in) :: n,pgflags
      real,intent(in)    :: ymin,ymax
    end subroutine pgfunx
@@ -428,6 +436,19 @@ end interface
 
 contains
 
+!---------------------------------------------
+! query whether or not the library is PGPLOT
+!---------------------------------------------
+logical function plot_lib_is_pgplot()
+ implicit none
+ 
+ plot_lib_is_pgplot = .true.
+
+end function plot_lib_is_pgplot
+
+!---------------------------------------------
+! initialise the plotting library
+!---------------------------------------------
 subroutine plot_init(devicein, ierr)
  implicit none
 
@@ -443,15 +464,6 @@ subroutine plot_init(devicein, ierr)
  endif
  !--check if there is an error 
  if (ierr.le.0) return  ! zero or negative indicates an error
-
-! !-- Check if the device is interactive  
-! call pgqinf('CURSOR',string,ilen)
-
-! if (string(1:ilen).eq.'YES') then
-!  plot_deviceisinteractive = .true.
-! else
-!  plot_deviceisinteractive = .false.
-! endif
 
  !-- Turn off promting
  call pgask(.false.)
@@ -492,6 +504,20 @@ logical function plot_qcur()
   end if
   
 end function plot_qcur
+
+!
+!--subroutine interface to pgcurs
+!
+subroutine pgcurs_sub(x,y,ch)
+  real,intent(inout)        :: x,y 
+  character*(*),intent(out) :: ch
+  integer :: ierr
+  integer, external :: pgcurs
+
+  ierr = pgcurs(x,y,ch)
+
+end subroutine pgcurs_sub
+
 
 !
 !--this subroutine can be called after PGSVP to
@@ -542,5 +568,7 @@ subroutine plot_set_exactpixelboundaries()
 
  return
 end subroutine plot_set_exactpixelboundaries
+
+
 
 end module plotlib

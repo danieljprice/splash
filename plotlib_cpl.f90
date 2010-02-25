@@ -48,6 +48,19 @@ public
 
 contains
 
+!---------------------------------------------
+! query whether or not the library is PGPLOT
+!---------------------------------------------
+logical function plot_lib_is_pgplot()
+ implicit none
+ 
+ plot_lib_is_pgplot = .false.
+
+end function plot_lib_is_pgplot
+
+!---------------------------------------------
+! initialise the plotting library
+!---------------------------------------------
 subroutine plot_init(devicein, ierr)
  implicit none
 

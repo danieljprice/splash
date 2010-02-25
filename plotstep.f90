@@ -2482,7 +2482,7 @@ contains
     use pagesetup,     only:setpage2
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
                             vposlegend,iPlotLegend,usecolumnorder
-    use plotlib,       only:plot_qvp,plot_sci,plot_page
+    use plotlib,       only:plot_qvp,plot_sci,plot_page,plot_lib_is_pgplot
     implicit none
     integer :: iplotsave,ipanelsave,ipanelpos
     real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
@@ -2615,8 +2615,8 @@ contains
                      xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                      0.0,TitleOffset,isamexaxis,tile_plots)
              call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
-             npixx = nint(xmaxpix-xminpix)
-             npixy = nint(ymaxpix-yminpix)
+             npixx = max(nint(xmaxpix-xminpix),1)
+             npixy = max(nint(ymaxpix-yminpix),1)
              if (vectordevice .and. npixx.gt.1024) then
                 npixx = 1024/nacross
                 dxpix = (xmax-xmin)/npixx
@@ -2625,13 +2625,18 @@ contains
                 print "(a)",' => set the number of pixels manually if you want more (or less) than this.'
              else
                 print "(a,i4,a,i4)",' auto-selecting device resolution = ',npixx,' x ',npixy
-                if ((xmaxpix-xminpix).gt.1024. .or. (ymaxpix-yminpix).gt.1024) then
-                   print "(/,75('*'))"
-                   print "(a)",'!! WARNING: PGPLOT will truncate image to 1024 pixels on pixel devices.'
-                   print "(a)",'!! To fix this, change line 18 of file grimg2.f in the PGPLOT source code:'
-                   print "(a)",'!!          REAL     BUFFER(1026)'
-                   print "(a)",'!! changing 1026 to something much bigger, then recompile PGPLOT.'
-                   print "(75('*'),/)"
+                !
+                !--warn about PGPLOT limitations
+                !
+                if (plot_lib_is_pgplot()) then
+                   if ((xmaxpix-xminpix).gt.1024. .or. (ymaxpix-yminpix).gt.1024) then
+                      print "(/,75('*'))"
+                      print "(a)",'!! WARNING: PGPLOT will truncate image to 1024 pixels on pixel devices.'
+                      print "(a)",'!! To fix this, change line 18 of file grimg2.f in the PGPLOT source code:'
+                      print "(a)",'!!          REAL     BUFFER(1026)'
+                      print "(a)",'!! changing 1026 to something much bigger, then recompile PGPLOT.'
+                      print "(75('*'),/)"
+                   endif
                 endif
              endif
              
