@@ -73,6 +73,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,add_textshape
   use multiplot,        only:itrans
   use settings_render,  only:projlabelformat,iapplyprojformat
+  use settings_data,    only:debugmode
   use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
                              plot_rect,plot_band,plot_sfs,plot_qcur
   implicit none
@@ -649,6 +650,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            iexit = .true.
         else
            xmaxin = xmax
+           ymaxin = ymax
            if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymaxin) then
               print*,'resetting x limits'
               xmin = minval(xcoords,mask=(icolourpart.ge.0))
@@ -1725,6 +1727,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            interactivereplot = .true.
            iexit = .true.
         else
+           !--save xmax before we go changing it so can check the y axis
+           xmaxin = xmax(iplotxarr(ipanel))
            if (xpti.ge.xmin(iplotxarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel)) &
               .and. ypti.le.xmax(iplotyarr(ipanel))) then
               print*,'adapting x limits ',xminadapt(iplotxarr(ipanel)),xmaxadapt(iplotxarr(ipanel))
@@ -1735,7 +1739,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               iexit = .true.
            endif
            if (ypti.ge.xmin(iplotyarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel)) &
-              .and. xpti.le.xmax(iplotxarr(ipanel))) then
+              .and. xpti.le.xmaxin) then
               print*,'adapting y limits ',xminadapt(iplotyarr(ipanel)),xmaxadapt(iplotyarr(ipanel))
               xmin(iplotyarr(ipanel)) = xminadapt(iplotyarr(ipanel))
               xmax(iplotyarr(ipanel)) = xmaxadapt(iplotyarr(ipanel))
