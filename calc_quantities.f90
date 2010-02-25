@@ -341,7 +341,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
         !  and set required information for the column
         !
         label(ncolumns+ncalc) = trim(calclabel(i))
-        if (iRescale) label(ncolumns+icalc) = trim(label(ncolumns+ncalc))//trim(calcunitslabel(i))
+        if (iRescale) label(ncolumns+ncalc) = trim(label(ncolumns+ncalc))//trim(calcunitslabel(i))
      else
         print "(a)",' error parsing function '//trim(calclabel(i))//' = '//trim(calcstring(i))
      endif
