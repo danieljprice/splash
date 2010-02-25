@@ -18,6 +18,9 @@
 !  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
+!  The plotting API in SPLASH 2.0 was written by James Wetter
+!  wetter.j@gmail.com
+!
 !-----------------------------------------------------------------
 
 program splash
