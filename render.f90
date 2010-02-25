@@ -27,7 +27,7 @@
 module render
  use colourbar, only:plotcolourbar
  implicit none
- public :: render_pix, render_vec, render_opacity
+ public :: render_pix, render_vec
  private
 
 contains
@@ -223,63 +223,5 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  return
  
 end subroutine render_vec
-
-!
-!--attempt to render an array of red, green and blue colours
-!  using PGPLOT
-!
-subroutine render_opacity(rgbcolours,npixx,npixy,xmin,xmax,ymin,ymax, &
-                          iColourBarStyle,icolours,datmin,datmax,label)
- use plotlib, only:plot_qcol,plot_scr,plot_pixl
- implicit none
- integer, intent(in) :: npixx,npixy
- real, dimension(3,npixx,npixy), intent(in) :: rgbcolours
- real, intent(in) :: xmin,xmax,ymin,ymax,datmin,datmax
- integer, intent(in) :: iColourBarStyle
- integer, intent(in) :: icolours
- character(len=*), intent(in) :: label
- 
- integer, dimension(npixx,npixy) :: icolourarray
- integer :: ncolours,ir,ig,ib,nshades,nshades2,index,ipix,jpix
- integer :: indexmax,indexmin
- real :: denom,red,green,blue
-
- if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarStyle,icolours,datmin,datmax,trim(label),.false.,0.) 
-!
-!--set the colour table corresponding to all possible combinations
-!  of red, green and blue
-!
- call plot_qcol(indexmin,indexmax)
- ncolours = indexmax - indexmin + 1
- nshades = int(ncolours**(1./3.))
- print*,'ncolours = ',ncolours,'nshades = ',nshades,nshades**3
- denom = 1./real(nshades-1)
- nshades2 = nshades*nshades
- !ncolours = nshades*nshades*nshades
-
- do ir=1,nshades
-    red = (ir-1)*denom
-    do ig=1,nshades
-       green = (ig-1)*denom
-       do ib=1,nshades
-          index = (ir-1)*nshades2 + (ig-1)*nshades + (ib-1) + indexmin
-          blue = (ib-1)*denom
-          call plot_scr(index,red,green,blue)
-       enddo
-    enddo
- enddo
-
- do jpix=1,npixy
-    do ipix=1,npixx
-       ir = int(rgbcolours(1,ipix,jpix)*nshades)
-       ig = int(rgbcolours(2,ipix,jpix)*nshades)
-       ib = int(rgbcolours(3,ipix,jpix)*nshades)
-       icolourarray(ipix,jpix) = (ir-1)*nshades2 + (ig-1)*nshades + (ib-1) + indexmin
-    enddo
- enddo
- 
- call plot_pixl(icolourarray,npixx,npixy,1,npixx,1,npixy,xmin,xmax,ymin,ymax)
-
-end subroutine render_opacity
 
 end module render
