@@ -88,7 +88,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use settings_data,      only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required, &
                                icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings
   use settings_page,      only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
-                               colour_fore,colour_back,iadapt,iadaptcoords,linewidth,device,nomenu,interactive
+                               iPageColours,iadapt,iadaptcoords,linewidth,device,nomenu,interactive
+  use pagecolours,        only:set_pagecolours
   use settings_part,      only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact,iplotpartoftype
   use settings_render,    only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
   use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
@@ -517,12 +518,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   !!if (.not. interactive) call pgbbuf !! start buffering output
   
   !!--set background/foreground colours
-  ierr = 0
-  if (len_trim(colour_back).gt.0) call plot_scrn(0,colour_back,ierr)
-  if (ierr /= 0) print 10,'background',trim(colour_back)
-  if (len_trim(colour_fore).gt.0) call plot_scrn(1,colour_fore,ierr)
-  if (ierr /= 0) print 10,'foreground',trim(colour_fore)
-10 format(' error: ',a,' colour "',a,'" not found in table')
+  call set_pagecolours(iPageColours)
   
   !!--set colour table
   !   do this regardless of whether rendering or not
