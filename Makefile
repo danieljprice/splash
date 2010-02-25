@@ -45,7 +45,7 @@ HDF5INCLUDE=
 #PGPLOTLIBS += -lg2c
 #
 # gfortran-compiled PGPLOT
-#PGPLOTLIBS += -L/usr/lib/gcc/i486-linux-gnu/4.1 -lgfortran
+#PGPLOTLIBS += -lgfortran
 #
 # g95-compiled PGPLOT
 #PGPLOTLIBS += -lg95
