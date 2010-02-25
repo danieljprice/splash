@@ -48,6 +48,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.xx.xx : (xx/xx/10)
+!             generic library interface implemented so backend can be changed easily
+!             bug fix with auto pixel selection
 !     1.13.0 : (25/02/10)
 !             function parser incorporated; calculated quantities can now be specified
 !             at runtime, arbitrary function plotting implemented as an exact
@@ -278,7 +281,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.13.0 [25th Feb. ''10]'
+  character(len=*), parameter :: version = 'v1.13.0-svn [26th Feb. ''10]'
 
   !
   ! initialise some basic code variables
