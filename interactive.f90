@@ -73,7 +73,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,add_textshape
   use multiplot,        only:itrans
   use settings_render,  only:projlabelformat,iapplyprojformat
-  use settings_data,    only:debugmode
   use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
                              plot_rect,plot_band,plot_sfs,plot_qcur
   implicit none
