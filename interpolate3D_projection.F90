@@ -174,7 +174,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpart
   integer :: iprintinterval, iprintnext, itmin,ipixi,jpixi,jpixcopy
-  integer :: nsubgrid,nfull
+  integer :: nsubgrid,nfull,nok
 #ifdef _OPENMP
   integer :: OMP_GET_NUM_THREADS
 #endif
@@ -182,7 +182,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
   real :: term,termnorm,dy,dy2,ypix,zfrac,hsmooth,horigi
   real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
-  real :: hmin,dhmin3,fac,hminall
+  real :: hmin,fac,hminall !,dhmin3
   real, dimension(npixx) :: xpix,dx2i
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress,use3Dperspective,accelerate
@@ -237,7 +237,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !  sure that particles contribute to at least one pixel
 !
   hmin = 0.5*pixwidth
-  dhmin3 = 1./(hmin*hmin*hmin)
+  !dhmin3 = 1./(hmin*hmin*hmin)
 !
 !--store x value for each pixel (for optimisation)
 !  
@@ -245,28 +245,29 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      xpix(ipix) = xminpix + ipix*pixwidth
   enddo
   nsubgrid = 0
+  nok = 0
   hminall = huge(hminall)
 
-!$OMP PARALLEL default(none) &
-!$OMP SHARED(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
-!$OMP SHARED(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidth) &
-!$OMP SHARED(npixx,npixy,dscreen,zobserver,use3Dperspective,useaccelerate) &
-!$OMP SHARED(datnorm,normalise) &
-!$OMP FIRSTPRIVATE(hmin,dhmin3) &
-!$OMP PRIVATE(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
-!$OMP PRIVATE(hsmooth,horigi,hi1,hi21,term,termnorm,npixpart,jpixi,ipixi) &
-!$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
-!$OMP PRIVATE(dx2i,row,q2,ypix,dy,dy2,wab) &
-!$OMP PRIVATE(i,ipix,jpix,jpixcopy,fac) &
-!$OMP REDUCTION(+:nsubgrid) &
-!$OMP REDUCTION(min:hminall)
-!$OMP MASTER
+!$omp parallel default(none) &
+!$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
+!$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidth) &
+!$omp shared(npixx,npixy,dscreen,zobserver,use3dperspective,useaccelerate) &
+!$omp shared(datnorm,normalise) &
+!$omp firstprivate(hmin) & !,dhmin3) &
+!$omp private(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
+!$omp private(hsmooth,horigi,hi1,hi21,term,termnorm,npixpart,jpixi,ipixi) &
+!$omp private(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
+!$omp private(dx2i,row,q2,ypix,dy,dy2,wab) &
+!$omp private(i,ipix,jpix,jpixcopy,fac) &
+!$omp reduction(+:nsubgrid,nok) &
+!$omp reduction(min:hminall)
+!$omp master
 #ifdef _OPENMP
   print "(1x,a,i3,a)",'Using ',OMP_GET_NUM_THREADS(),' cpus'
 #endif
-!$OMP END MASTER
+!$omp end master
 
-!$OMP DO SCHEDULE (guided, 2)
+!$omp do schedule (guided, 2)
   over_particles: do i=1,npart
      !
      !--report on progress
@@ -297,17 +298,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
         hi = hi*zfrac
      endif
      
-     !--take resolution length as max of h and 1/2 pixel width
-     if (hi.lt.hmin) then
-        hminall = min(hi,hminall)
-        nsubgrid = nsubgrid + 1
-        hsmooth = hmin
-        fac = 1. !(horigi*horigi*horigi)*dhmin3      ! factor by which to adjust the weight
-     else
-        hsmooth = hi
-        fac = 1.
-     endif
-     radkern = radkernel*hsmooth ! radius of the smoothing kernel
+     radkern = radkernel*hi ! radius of the smoothing kernel
 
      !--cycle as soon as we know the particle does not contribute
      xi = x(i)
@@ -322,6 +313,18 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      ypixmax = yi + radkern
      if (ypixmax.lt.ymin) cycle over_particles
 
+     !--take resolution length as max of h and 1/2 pixel width
+     if (hi.lt.hmin) then
+        hminall = min(hi,hminall)
+        nsubgrid = nsubgrid + 1
+        hsmooth = hmin
+        fac = 1. !(horigi*horigi*horigi)*dhmin3      ! factor by which to adjust the weight
+     else
+        fac = 1.
+        hsmooth = hi
+        nok = nok + 1
+     endif
+     radkern = radkernel*hsmooth
      !
      !--set kernel related quantities
      !
@@ -449,8 +452,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      endif
 
   enddo over_particles
-!$OMP END DO
-!$OMP END PARALLEL
+!$omp end do
+!$omp end parallel
 !
 !--normalise dat array
 !
@@ -464,8 +467,10 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !--warn about subgrid interpolation
 !
   if (nsubgrid.gt.1) then
-     nfull = int((xmax-xmin)/(2.*hminall)) + 1
-     print "(a,i9,a,i6,a)",' Warning: pixel size > 2h for ',nsubgrid,' particles, need ',nfull,' pixels for full resolution'
+     nfull = int((xmax-xmin)/(hminall)) + 1
+     if (nsubgrid.gt.0.1*nok) &
+     print "(a,i9,a,/,a,i6,a)",' Warning: pixel size > 2h for ',nsubgrid,' particles', &
+                               '          need',nfull,' pixels for full resolution'
   endif
 !
 !--get ending CPU time
@@ -538,17 +543,17 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   !
   !--loop over particles
   !      
-!$OMP PARALLEL default(none) &
-!$OMP SHARED(hh,z,x,y,weight,vecx,vecy,itype,vecsmoothx,vecsmoothy,npart) &
-!$OMP SHARED(xmin,ymin,pixwidth,zobserver,dscreen,datnorm) &
-!$OMP SHARED(npixx,npixy,normalise) &
-!$OMP PRIVATE(hi,radkern,const,zfrac,ypix,xpix) &
-!$OMP PRIVATE(hsmooth,hi1,hi21,termx,termy,termnorm) &
-!$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
-!$OMP PRIVATE(dy,dy2,dx,rab2,q2,wab) &
-!$OMP PRIVATE(i,ipix,jpix)
+!$omp parallel default(none) &
+!$omp shared(hh,z,x,y,weight,vecx,vecy,itype,vecsmoothx,vecsmoothy,npart) &
+!$omp shared(xmin,ymin,pixwidth,zobserver,dscreen,datnorm) &
+!$omp shared(npixx,npixy,normalise) &
+!$omp private(hi,radkern,const,zfrac,ypix,xpix) &
+!$omp private(hsmooth,hi1,hi21,termx,termy,termnorm) &
+!$omp private(ipixmin,ipixmax,jpixmin,jpixmax) &
+!$omp private(dy,dy2,dx,rab2,q2,wab) &
+!$omp private(i,ipix,jpix)
 
-!$OMP DO SCHEDULE(guided, 2)
+!$omp do schedule(guided, 2)
   over_particles: do i=1,npart
      !
      !--skip particles with itype < 0
@@ -622,8 +627,8 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      enddo
 
   enddo over_particles
-!$OMP END DO
-!$OMP END PARALLEL
+!$omp end do
+!$omp end parallel
 
   if (normalise .and. allocated(datnorm)) then
      !--normalise everywhere
@@ -718,18 +723,18 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   !
   !--loop over particles
   !      
-!$OMP PARALLEL default(none) &
-!$OMP SHARED(hh,z,x,y,weight,vecx,vecy,itype,stokesQ,stokesU,stokesI,npart) &
-!$OMP SHARED(xmin,ymin,pixwidth,rcrit,zcrit,alpha) &
-!$OMP SHARED(npixx,npixy,pintrinsic,qpixwidth,getIonly,utherm,uthermcutoff) &
-!$OMP PRIVATE(hi,xi,yi,zi,radkern,const) &
-!$OMP PRIVATE(hsmooth,hi1,hi21,term,termx,termy) &
-!$OMP PRIVATE(rcyl,crdens,Bperp,emissivity,angle) &
-!$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
-!$OMP PRIVATE(dy,dy2,dx2i,ypix,q2,wab) &
-!$OMP PRIVATE(i,ipix,jpix)
+!$omp parallel default(none) &
+!$omp shared(hh,z,x,y,weight,vecx,vecy,itype,stokesq,stokesu,stokesi,npart) &
+!$omp shared(xmin,ymin,pixwidth,rcrit,zcrit,alpha) &
+!$omp shared(npixx,npixy,pintrinsic,qpixwidth,getionly,utherm,uthermcutoff) &
+!$omp private(hi,xi,yi,zi,radkern,const) &
+!$omp private(hsmooth,hi1,hi21,term,termx,termy) &
+!$omp private(rcyl,crdens,bperp,emissivity,angle) &
+!$omp private(ipixmin,ipixmax,jpixmin,jpixmax) &
+!$omp private(dy,dy2,dx2i,ypix,q2,wab) &
+!$omp private(i,ipix,jpix)
 
-!$OMP DO SCHEDULE(guided, 2)
+!$omp do schedule(guided, 2)
   over_particles: do i=1,npart
      !
      !--skip particles with itype < 0
@@ -829,8 +834,8 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      enddo
 
   enddo over_particles
-!$OMP END DO
-!$OMP END PARALLEL
+!$omp end do
+!$omp end parallel
 
   return
 
