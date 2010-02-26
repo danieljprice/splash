@@ -99,3 +99,6 @@ Variable marker sizes added, can plot particles as circles with size proportiona
 1.13.0:
 function parser incorporated; calculated quantities can now be specified at runtime; arbitrary function plotting implemented as an exact solution; command-line SPH->grid conversion ("splash to grid") implemented; ctrl-t in interactive mode adds arbitrary text box; better line style/colour changing; bug fix with tiling and y-axis labels; various other bug fixes
  
+1.13.1:
+bugs with new calc_quantities module fixed; generic library interface implemented so backend can be changed easily; bug fix with auto pixel selection; simpler foreground/background colour setting; added subgrid interpolation warning
+ 
