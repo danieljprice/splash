@@ -51,7 +51,7 @@ program splash
 !     1.13.1 : (26/02/10)
 !             bugs with new calc_quantities module fixed; generic library interface
 !             implemented so backend can be changed easily; bug fix with auto pixel selection;
-!             simpler foreground/background colour setting
+!             simpler foreground/background colour setting; added subgrid interpolation warning
 !     1.13.0 : (25/02/10)
 !             function parser incorporated; calculated quantities can now be specified
 !             at runtime, arbitrary function plotting implemented as an exact
