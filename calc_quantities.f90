@@ -26,6 +26,7 @@
 !-----------------------------------------------------------------
 module calcquantities
  use labels, only:lenlabel,lenunitslabel
+ use params, only:maxplot
  implicit none
  public :: calc_quantities,setup_calculated_quantities
 
@@ -34,8 +35,9 @@ module calcquantities
  character(len=lenlabel),      dimension(maxcalc) :: calclabel = ' '
  character(len=lenunitslabel), dimension(maxcalc) :: calcunitslabel = ' '
 
+ integer, parameter, private :: lenvars = 20 ! max length for any variable
  integer, parameter, private :: nextravars = 5
- character(len=lenlabel), dimension(nextravars), parameter, private :: &
+ character(len=lenvars), dimension(nextravars), parameter, private :: &
           extravars=(/'t    ','gamma','x0   ','y0   ','z0   '/)
 
  namelist /calcopts/ calcstring,calclabel,calcunitslabel
@@ -107,15 +109,16 @@ end subroutine setup_calculated_quantities
 subroutine add_calculated_quantities(istart,iend,ncalc,printhelp)
  use prompting,     only:prompt
  use fparser,       only:checkf
- use labels,        only:label,lenlabel
+ use labels,        only:lenlabel
  use settings_data, only:ncolumns,iRescale
- use settings_units,only:unitslabel
  implicit none
  integer, intent(in)  :: istart,iend
  integer, intent(out) :: ncalc
  logical, intent(in)  :: printhelp
- integer :: i,j,ntries,ierr,iequal
+ integer :: i,j,ntries,ierr,iequal,nvars
  logical :: iask
+ character(len=120) :: string
+ character(len=lenvars), dimension(maxplot+nextravars) :: vars
 
  if (printhelp) then
     print "(/,a)",' Specify a function to calculate from the data '
@@ -131,8 +134,9 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp)
  ncalc = istart
  overfuncs: do while(ntries.lt.3 .and. i.le.iend)
     if (len_trim(calcstring(i)).ne.0 .or. ncalc.gt.istart) write(*,"(a,i2,a)") '[Column ',ncolumns+i,']'
-    call prompt('Enter function string to calculate (blank for none) ',calcstring(i))
-    if (len_trim(calcstring(i)).eq.0) then
+    string = trim(calcstring(i))
+    call prompt('Enter function string to calculate (blank for none) ',string)
+    if (len_trim(string).eq.0) then
        !
        !--if editing list and get blank string at prompt,
        !  remove the entry and shuffle the list appropriately
@@ -140,7 +144,7 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp)
        do j=i,maxcalc-1
           !print*,' shuffling ',j,' = '//trim(calcstring(j+1))
           calcstring(j) = trim(calcstring(j+1))
-          if (ncolumns+j+1.lt.size(label)) then
+          if (j+1.lt.size(calclabel)) then
              calclabel(j) = calclabel(j+1)
           endif
           if (len_trim(calcstring(j)).eq.0) then
@@ -154,17 +158,28 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp)
     else
        !
        !--set label from what lies to the left of the equal sign
+       !  and the calcstring from what lies to the right
+       !  (if no equals sign, then prompt later for the label)
        !
-       iequal = index(calcstring(i),'=')
+       iequal = index(string,'=')
        if (iequal.ne.0) then
-          calclabel(i) = calcstring(i)(1:iequal-1)
-          calcstring(i) = calcstring(i)(iequal+1:len_trim(calcstring(i)))
+          calclabel(i)  = string(1:iequal-1)
+          calcstring(i) = string(iequal+1:len_trim(string))
+       else
+          calcstring(i) = trim(string)
        endif
+
+       !--remove preceding spaces
+       calcstring(i) = trim(adjustl(calcstring(i)))
+       !
+       !--fill variable array with the list of valid variable
+       !  names for this column
+       !
+       call get_variables(ncolumns+i-1,nvars,vars)
        !
        !--check for errors parsing function
        !
-       ierr = checkf(shortlabel(calcstring(i)),&
-              (/(shortlabel(label(i),unitslabel(i)),i=1,ncolumns+i-1),extravars/))
+       ierr = checkf(shortlabel(calcstring(i)),vars(1:nvars))
        if (ierr.ne.0 ) then
           ntries = ntries + 1
           print "(a,i1,a)",' error parsing function string: try again (',ntries,' of 3)'
@@ -265,25 +280,38 @@ end subroutine print_example_quantities
 !
 !-----------------------------------------------------------------
 subroutine check_calculated_quantities(ncalcok,ncalctot)
- use labels,         only:label
  use settings_data,  only:ncolumns
- use settings_units, only:unitslabel
  use fparser,        only:checkf
+ use labels,         only:label
  implicit none
  integer, intent(out) :: ncalcok,ncalctot
- integer :: i,ierr
+ integer :: i,ierr,nvars
+ character(len=lenvars), dimension(maxplot+nextravars) :: vars
 
  ncalcok = 0
  ncalctot = 0
  i = 1
  print "(/,a)", ' Current list of calculated quantities:'
  do while(i.le.maxcalc .and. len_trim(calcstring(i)).ne.0)
-    ierr = checkf(shortlabel(calcstring(i)),&
-            (/(shortlabel(label(i),unitslabel(i)),i=1,ncolumns+ncalcok),extravars/),Verbose=.false.)
+    !
+    !--get the list of valid variable names for this column
+    !
+    call get_variables(ncolumns+ncalcok,nvars,vars)
+    !
+    !--check that the function parses
+    !
+    ierr = checkf(shortlabel(calcstring(i)),vars(1:nvars),Verbose=.false.)
 
     if (ierr.eq.0) then
        ncalcok = ncalcok + 1
        print "(1x,i2,') ',a50,' [OK]')",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i)
+       !
+       !--set the label for the proposed column here
+       !  so that subsequent calculations can use this variable
+       !  (note that we don't need to set the units label here 
+       !   as this is done in the actual calc_quantities call)
+       !
+       label(ncolumns+ncalcok) = trim(calclabel(i))
     else
        print "(1x,'XX) ',a50,' [INACTIVE]')",trim(calclabel(i))//' = '//calcstring(i)
     endif
@@ -310,12 +338,13 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
-  integer :: i,j,ncolsnew,ierr,icalc,ntoti
+  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars
   logical :: skip
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
 !  real, parameter :: lightspeed = 3.e10   ! in cm/s (cgs)
-  real(kind=rn), dimension(maxplot+nextravars) :: vals
+  real(kind=rn), dimension(maxplot+nextravars)          :: vals
+  character(len=lenvars), dimension(maxplot+nextravars) :: vars
   
   !
   !--allow dummy call to set labels without actually calculating stuff
@@ -331,8 +360,15 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   i = 1
   print*
   do while (i.le.maxcalc .and. len_trim(calcstring(i)).gt.0 .and.ncolumns+ncalc.lt.size(label))
-     ierr = checkf(shortlabel(calcstring(i)),&
-            (/(shortlabel(label(i),unitslabel(i)),i=1,ncolumns+ncalc),extravars/))
+     !
+     !--get the list of valid variable names for this column
+     !
+     call get_variables(ncolumns+ncalc,nvars,vars)
+     !
+     !--check that the function parses
+     !
+     ierr = checkf(shortlabel(calcstring(i)),vars(1:nvars))
+
      if (ierr.eq.0 ) then
         print "(a,a10,' = ',a)",' calculating ',trim(calclabel(i)),trim(calcstring(i))
         ncalc = ncalc + 1
@@ -341,7 +377,8 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
         !  and set required information for the column
         !
         label(ncolumns+ncalc) = trim(calclabel(i))
-        if (iRescale) label(ncolumns+ncalc) = trim(label(ncolumns+ncalc))//trim(calcunitslabel(i))
+        unitslabel(ncolumns+ncalc) = trim(calcunitslabel(i))
+        if (iRescale) label(ncolumns+ncalc) = trim(label(ncolumns+ncalc))//trim(unitslabel(ncolumns+ncalc))
      else
         print "(a)",' error parsing function '//trim(calclabel(i))//' = '//trim(calcstring(i))
      endif
@@ -369,8 +406,15 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      icalc = 1
      do i=1,maxcalc
         if (icalc.le.ncalc) then
-           call parsef(icalc,shortlabel(calcstring(i)), &
-                (/(shortlabel(label(i),unitslabel(i)),i=1,ncolumns+icalc-1),extravars/),err=ierr,Verbose=.false.)
+
+           !
+           !--get the list of valid variable names for this column
+           !
+           call get_variables(ncolumns+icalc-1,nvars,vars)
+           !
+           !--now actually parse the function
+           !
+           call parsef(icalc,shortlabel(calcstring(i)),vars(1:nvars),err=ierr,Verbose=.false.)
            if (ierr.eq.0) then
               icalc = icalc + 1
            endif
@@ -453,6 +497,34 @@ end subroutine addcolumn
 
 !-----------------------------------------------------------------
 !
+!  utility (private) to fill the array of variable names
+!
+!-----------------------------------------------------------------
+subroutine get_variables(maxlabel,nvars,variables)
+ use labels,         only:label
+ use settings_units, only:unitslabel
+ implicit none
+ integer,                        intent(in)  :: maxlabel
+ integer,                        intent(out) :: nvars
+ character(len=*), dimension(:), intent(out) :: variables
+ integer :: i
+ !
+ !--can use column labels up to the previous quantity calculated
+ !
+ variables(:) = ' '
+ nvars = maxlabel + nextravars
+
+ do i=1,maxlabel
+    variables(i) = trim(adjustl(shortlabel(label(i),unitslabel(i))))
+ enddo
+ do i=1,nextravars
+    variables(maxlabel+i) = trim(extravars(i))
+ enddo
+
+end subroutine get_variables
+
+!-----------------------------------------------------------------
+!
 !  utility (private) to strip spaces, escape sequences and
 !  units labels from variable names
 !
@@ -460,9 +532,9 @@ end subroutine addcolumn
 elemental function shortlabel(string,unitslab)
  use labels, only:lenlabel
  implicit none
- character(len=lenlabel), intent(in)  :: string
- character(len=lenlabel) :: shortlabel
- character(len=*), intent(in), optional :: unitslab
+ character(len=lenlabel), intent(in)           :: string
+ character(len=*),        intent(in), optional :: unitslab
+ character(len=lenlabel)                       :: shortlabel
  integer :: ipos
 
  shortlabel = string
