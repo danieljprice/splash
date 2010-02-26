@@ -18,7 +18,7 @@
 !  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
-!  The plotting API in SPLASH 2.0 was written by James Wetter
+!  The plotting API for SPLASH 2.0 was written by James Wetter
 !  wetter.j@gmail.com
 !
 !-----------------------------------------------------------------
@@ -48,9 +48,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.xx.xx : (xx/xx/10)
-!             generic library interface implemented so backend can be changed easily
-!             bug fix with auto pixel selection
+!     1.13.1 : (26/02/10)
+!             bugs with new calc_quantities module fixed; generic library interface
+!             implemented so backend can be changed easily; bug fix with auto pixel selection;
+!             simpler foreground/background colour setting
 !     1.13.0 : (25/02/10)
 !             function parser incorporated; calculated quantities can now be specified
 !             at runtime, arbitrary function plotting implemented as an exact
@@ -281,7 +282,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.13.0-svn [26th Feb. ''10]'
+  character(len=*), parameter :: version = 'v1.13.1 [26th Feb. ''10]'
 
   !
   ! initialise some basic code variables
