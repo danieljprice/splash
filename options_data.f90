@@ -161,16 +161,22 @@ subroutine submenu_data(ichoose)
 !------------------------------------------------------------------------
  case(5,6)
     if (ians.eq.5) iCalcQuantities = .not.iCalcQuantities
- 
-    if (iCalcQuantities) then
+     
+    if (iCalcQuantities .or. ians.eq.6) then
        call setup_calculated_quantities(ncalc)
-       if (DataIsBuffered) then
-          call calc_quantities(1,nsteps)
-          call set_limits(1,nsteps,ncolumns+1,ncolumns+ncalc)
-       else
-          if (ifileopen.gt.0) then
-             call calc_quantities(1,nstepsinfile(ifileopen))
-             call set_limits(1,nstepsinfile(ifileopen),ncolumns+1,ncolumns+ncalc)
+       
+       if (ians.eq.6 .and. .not.iCalcQuantities) then
+          if (ncalc.gt.0) iCalcQuantities = .true.
+       endif
+       if (iCalcQuantities) then
+          if (DataIsBuffered) then
+             call calc_quantities(1,nsteps)
+             call set_limits(1,nsteps,ncolumns+1,ncolumns+ncalc)
+          else
+             if (ifileopen.gt.0) then
+                call calc_quantities(1,nstepsinfile(ifileopen))
+                call set_limits(1,nstepsinfile(ifileopen),ncolumns+1,ncolumns+ncalc)
+             endif
           endif
        endif
     else
