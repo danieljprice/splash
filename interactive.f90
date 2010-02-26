@@ -387,7 +387,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               call save_perspective(zobserver,dscreen)
            endif
         endif
-        print*,'> plot settings saved (...but NOT to disk, use ''S'' from the main menu for that) <'
+        print*,'> interactively set limits saved <'
      !
      !--actions on left click
      !
@@ -1533,7 +1533,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            call save_limits(iplotyarr(i),xmin(iplotyarr(i)),xmax(iplotyarr(i)))
            if (irenderarr(i).gt.0) call save_limits(irenderarr(i),xmin(irenderarr(i)),xmax(irenderarr(i)))
         enddo
-        print*,'> plot settings saved <'
+        print*,'> interactively set limits saved <'
      case('A') ! left click
         !
         !--draw rectangle from the point and reset the limits
