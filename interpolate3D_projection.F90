@@ -174,6 +174,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpart
   integer :: iprintinterval, iprintnext, itmin,ipixi,jpixi,jpixcopy
+  integer :: nsubgrid,nfull
 #ifdef _OPENMP
   integer :: OMP_GET_NUM_THREADS
 #endif
@@ -181,6 +182,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
   real :: term,termnorm,dy,dy2,ypix,zfrac,hsmooth,horigi
   real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
+  real :: hmin,dhmin3,fac,hminall
   real, dimension(npixx) :: xpix,dx2i
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress,use3Dperspective,accelerate
@@ -231,22 +233,33 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   xmax = xmin + npixx*pixwidth
   ymax = ymin + npixy*pixwidth
 !
+!--use a minimum smoothing length on the grid to make
+!  sure that particles contribute to at least one pixel
+!
+  hmin = 0.5*pixwidth
+  dhmin3 = 1./(hmin*hmin*hmin)
+!
 !--store x value for each pixel (for optimisation)
 !  
   do ipix=1,npixx
      xpix(ipix) = xminpix + ipix*pixwidth
   enddo
+  nsubgrid = 0
+  hminall = huge(hminall)
 
 !$OMP PARALLEL default(none) &
 !$OMP SHARED(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
 !$OMP SHARED(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidth) &
 !$OMP SHARED(npixx,npixy,dscreen,zobserver,use3Dperspective,useaccelerate) &
 !$OMP SHARED(datnorm,normalise) &
+!$OMP FIRSTPRIVATE(hmin,dhmin3) &
 !$OMP PRIVATE(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
 !$OMP PRIVATE(hsmooth,horigi,hi1,hi21,term,termnorm,npixpart,jpixi,ipixi) &
 !$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
 !$OMP PRIVATE(dx2i,row,q2,ypix,dy,dy2,wab) &
-!$OMP PRIVATE(i,ipix,jpix,jpixcopy)
+!$OMP PRIVATE(i,ipix,jpix,jpixcopy,fac) &
+!$OMP REDUCTION(+:nsubgrid) &
+!$OMP REDUCTION(min:hminall)
 !$OMP MASTER
 #ifdef _OPENMP
   print "(1x,a,i3,a)",'Using ',OMP_GET_NUM_THREADS(),' cpus'
@@ -285,9 +298,17 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      endif
      
      !--take resolution length as max of h and 1/2 pixel width
-     hsmooth = max(hi,0.5*pixwidth)
-     radkern = radkernel*hsmooth  !radius of the smoothing kernel
-     
+     if (hi.lt.hmin) then
+        hminall = min(hi,hminall)
+        nsubgrid = nsubgrid + 1
+        hsmooth = hmin
+        fac = 1. !(horigi*horigi*horigi)*dhmin3      ! factor by which to adjust the weight
+     else
+        hsmooth = hi
+        fac = 1.
+     endif
+     radkern = radkernel*hsmooth ! radius of the smoothing kernel
+
      !--cycle as soon as we know the particle does not contribute
      xi = x(i)
      xpixmin = xi - radkern
@@ -306,7 +327,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !
      hi1 = 1./hsmooth
      hi21 = hi1*hi1
-     termnorm = weight(i)*horigi
+     termnorm = weight(i)*fac*horigi
      term = termnorm*dat(i) ! h gives the z length scale (NB: no perspective)
      !
      !--for each particle work out which pixels it contributes to
@@ -438,6 +459,13 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      where (datnorm > tiny(datnorm))
         datsmooth = datsmooth/datnorm
      end where
+  endif
+!
+!--warn about subgrid interpolation
+!
+  if (nsubgrid.gt.1) then
+     nfull = int((xmax-xmin)/(2.*hminall)) + 1
+     print "(a,i9,a,i6,a)",' Warning: pixel size > 2h for ',nsubgrid,' particles, need ',nfull,' pixels for full resolution'
   endif
 !
 !--get ending CPU time
