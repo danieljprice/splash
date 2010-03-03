@@ -9,9 +9,12 @@
 ##     see the INSTALL file for detailed installation instructions   ##
 ##-------------------------------------------------------------------##
 
-
 .KEEP_STATE:
+
 KNOWN_SYSTEM=no
+VPATH =../src
+BINDIR=../bin
+
 #
 # some default settings for unix systems
 #
@@ -496,52 +499,52 @@ all: ascii gadget vine sphNG srosph dragon tipsy
 	@echo; echo ' Use "sudo make install" to copy the binaries to $(DEST)'; echo;
 
 ascii: checksystem $(OBJECTS) read_data_ascii.o
-	$(F90C) $(F90FLAGS) -o asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS)
 #--build universal binary on mac cluster
    ifeq ($(SYSTEM), maccluster)
-	lipo -create asplash_ppc asplash_i386 -output asplash || cp asplash$(EXT) asplash
+	lipo -create $(BINDIR)/asplash_ppc $(BINDIR)/asplash_i386 -output $(BINDIR)/asplash || cp $(BINDIR)/asplash$(EXT) $(BINDIR)/asplash
    endif
-	cp asplash splash
+	cp $(BINDIR)/asplash $(BINDIR)/splash
 
 mbatesph: checksystem $(OBJECTS) read_data_mbate.o
-	$(F90C) $(F90FLAGS) -o bsplash $(OBJECTS) read_data_mbate.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_mbate.o $(LDFLAGS)
 
 gadget: checksystem $(OBJECTS) read_data_gadget.o
-	$(F90C) $(F90FLAGS) -o gsplash $(OBJECTS) read_data_gadget.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o $(LDFLAGS)
 
 gadgetdualendian: checksystem $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o
-	$(F90C) $(F90FLAGS) -o gsplash $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o $(LDFLAGS)
 
 read_data_gadget_otherendian.o: read_data_gadget.o
 	cat read_data_gadget.f90 | awk "/subroutine read_data/,/end subroutine read_data/ { print }" | sed 's/subroutine read_data/subroutine read_data_otherendian/' > read_data_gadget_otherendian.f90 
 	$(F90C) $(F90FLAGS) $(ENDIANFLAGBIG) -c read_data_gadget_otherendian.f90 -o read_data_gadget_otherendian.o
 
 gadget_jsb: checksystem $(OBJECTS) read_data_gadget_jsb.o
-	$(F90C) $(F90FLAGS) -o gsplash_jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash_jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
 
 bauswein: checksystem $(OBJECTS) read_data_bauswein.o
-	$(F90C) $(F90FLAGS) -o bsplash $(OBJECTS) read_data_bauswein.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_bauswein.o $(LDFLAGS)
 
 dragon: checksystem $(OBJECTS) read_data_dragon.o
-	$(F90C) $(F90FLAGS) -o dsplash $(OBJECTS) read_data_dragon.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_dragon.o $(LDFLAGS)
 
 vine: checksystem $(OBJECTS) read_data_VINE.o
-	$(F90C) $(F90FLAGS) -o vsplash $(OBJECTS) read_data_VINE.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/vsplash $(OBJECTS) read_data_VINE.o $(LDFLAGS)
 
 kitp: checksystem $(OBJECTS) read_data_kitp.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o ksplash $(OBJECTS) read_data_kitp.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/ksplash $(OBJECTS) read_data_kitp.o
 
 ndspmhd: checksystem $(OBJECTS) read_data_dansph.o
-	$(F90C) $(F90FLAGS) -o nsplash $(OBJECTS) read_data_dansph.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/nsplash $(OBJECTS) read_data_dansph.o $(LDFLAGS)
 
 dansph: checksystem $(OBJECTS) read_data_dansph_old.o
-	$(F90C) $(F90FLAGS) -o dsplash $(OBJECTS) read_data_dansph_old.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_dansph_old.o $(LDFLAGS)
 
 foulkes: checksystem $(OBJECTS) read_data_foulkes.o
-	$(F90C) $(F90FLAGS) -o fsplash $(OBJECTS) read_data_foulkes.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_foulkes.o $(LDFLAGS)
 
 flash_hdf5: checksystem $(OBJECTS) read_data_flash_hdf5.o read_data_flash_hdf5_utils.o
-	$(F90C) $(F90FLAGS) -o fsplash $(OBJECTS) read_data_flash_hdf5_utils.o read_data_flash_hdf5.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_flash_hdf5_utils.o read_data_flash_hdf5.o $(LDFLAGS)
 
 flashhdf5:
 	$(MAKE) flash_hdf5 HDF5=yes
@@ -549,57 +552,57 @@ flashhdf5:
 flash: flashhdf5
 
 jjm: checksystem $(OBJECTS) read_data_jjm.o
-	$(F90C) $(F90FLAGS) -o jsplash $(OBJECTS) read_data_jjm.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jjm.o $(LDFLAGS)
 
 jules: checksystem $(OBJECTS) read_data_jules.o
-	$(F90C) $(F90FLAGS) -o jsplash $(OBJECTS) read_data_jules.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jules.o $(LDFLAGS)
 
 oilonwater: checksystem $(OBJECTS) read_data_oilonwater.o
-	$(F90C) $(F90FLAGS) -o osplash $(OBJECTS) read_data_oilonwater.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/osplash $(OBJECTS) read_data_oilonwater.o $(LDFLAGS)
 
 RSPH: rsph
 
 rsph: checksystem $(OBJECTS) read_data_rsph.o
-	$(F90C) $(F90FLAGS) -o rsplash $(OBJECTS) read_data_rsph.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/rsplash $(OBJECTS) read_data_rsph.o $(LDFLAGS)
 
 scwsph: checksystem $(OBJECTS) read_data_scw.o
-	$(F90C) $(F90FLAGS) -o wsplash $(OBJECTS) read_data_scw.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/wsplash $(OBJECTS) read_data_scw.o $(LDFLAGS)
 
 snsplash: snsph
 snsph: $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o
-	$(FC) $(FFLAGS) -o snsplash $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o $(LDFLAGS) $(SNFLAGS) 
+	$(FC) $(FFLAGS) -o $(BINDIR)/snsplash $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o $(LDFLAGS) $(SNFLAGS) 
 
 srosph: checksystem $(OBJECTS) read_data_sro.o
-	$(F90C) $(F90FLAGS) -o rsplash $(OBJECTS) read_data_sro.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/rsplash $(OBJECTS) read_data_sro.o $(LDFLAGS)
 
 spyros: checksystem $(OBJECTS) read_data_spyros.o
-	$(F90C) $(F90FLAGS) -o ssplash $(OBJECTS) read_data_spyros.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/ssplash $(OBJECTS) read_data_spyros.o $(LDFLAGS)
 
 sphNG: checksystem $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o
-	$(F90C) $(F90FLAGS) -o ssplash$(EXT) $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/ssplash$(EXT) $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o $(LDFLAGS)
 #--build universal binary on mac cluster
    ifeq ($(SYSTEM), maccluster)
-	lipo -create ssplash_ppc ssplash_i386 -output ssplash || cp ssplash$(EXT) ssplash
+	lipo -create $(BINDIR)/ssplash_ppc $(BINDIR)/ssplash_i386 -output $(BINDIR)/ssplash || cp $(BINDIR)/ssplash$(EXT) $(BINDIR)/ssplash
    endif
 
 read_data_sphNG_otherendian.o: read_data_sphNG.o
 	cat read_data_sphNG.f90 | awk "/subroutine read_data/,/end subroutine read_data/ { print }" | sed 's/subroutine read_data/subroutine read_data_otherendian/' > read_data_sphNG_otherendian.f90 
 	$(F90C) $(F90FLAGS) $(ENDIANFLAGBIG) -c read_data_sphNG_otherendian.f90 -o read_data_sphNG_otherendian.o
 
-timli: checksystem $(OBJECTS) read_data_timli.o
-	$(F90C) $(F90FLAGS) -o jsplash $(OBJECTS) read_data_timli.o $(LDFLAGS)
+jjmmulti: checksystem $(OBJECTS) read_data_multiphase.o
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jjm_multiphase.o $(LDFLAGS)
 
 tipsy: checksystem $(OBJECTS) read_data_tipsy.o
-	$(F90C) $(F90FLAGS) -o tsplash $(OBJECTS) read_data_tipsy.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/tsplash $(OBJECTS) read_data_tipsy.o $(LDFLAGS)
 
 vanaverbeke: checksystem $(OBJECTS) read_data_vanaverbeke.o
-	$(F90C) $(F90FLAGS) -o vsplash $(OBJECTS) read_data_vanaverbeke.o $(LDFLAGS) 
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/vsplash $(OBJECTS) read_data_vanaverbeke.o $(LDFLAGS) 
 
 ucla: checksystem $(OBJECTS) read_data_UCLA.o
-	$(F90C) $(F90FLAGS) -o usplash $(OBJECTS) read_data_UCLA.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/usplash $(OBJECTS) read_data_UCLA.o $(LDFLAGS)
 
 urban: checksystem $(OBJECTS) read_data_urban.o
-	$(F90C) $(F90FLAGS) -o usplash $(OBJECTS) read_data_urban.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/usplash $(OBJECTS) read_data_urban.o $(LDFLAGS)
 
 sky: ucla
 
@@ -647,11 +650,11 @@ checksystem:
 # to do the two separately
 #
 install: destcheck installcheck
-	@for x in ?splash; do echo "copying $$x -> $(DEST)/$$x"; cp $$x $(DEST); done;
+	@for x in $(BINDIR)/?splash splash; do echo "copying $$x -> $(DEST)/$$x"; cp $$x $(DEST); done;
 	@echo; echo 'installation complete';
 
 installcheck:
-	@if test -e asplash && test -e gsplash; then echo; \
+	@if test -e $(BINDIR)/asplash && test -e $(BINDIR)/gsplash; then echo; \
         echo 'compiled binaries install to $(DEST)'; \
         echo '(use "sudo make install" if Permission denied)'; \
         echo; else echo;\
@@ -690,11 +693,11 @@ targz:
 tests: test1 test2 test3
 
 test1: interpolate3D_projection.o interpolate3D_xsec.o ./tests/test_interpolate3D.o 
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o test_interpolation3D ./tests/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_interpolation3D ./tests/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
 test2: transform.o ./tests/test_transform.o 
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o test_transform ./tests/test_transform.o transform.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_transform ./tests/test_transform.o transform.o
 test3: fieldlines.o ./tests/test_fieldlines.o 
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o test_fieldlines ./tests/test_fieldlines.o fieldlines.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_fieldlines ./tests/test_fieldlines.o fieldlines.o
 
 #
 #--code dependencies: MAY BE INCOMPLETE - I generate this automatically every so often
