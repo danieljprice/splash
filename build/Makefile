@@ -46,38 +46,8 @@ else
 # (some settings of the SYSTEM variable for specific machines overwrite this)
 #
    PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot -lpng
-#
-# If PGPLOT was compiled with a different compiler to the one used here,
-# need to link to the libraries for that compiler. We attempt to do this
-# automatically below by looking in the PGPLOT makefile.
-#
-# If the relevant library is not found, may also need -L/dir/ for the directory
-# where the corresponding library is located (e.g. -L/usr/local/gfortran/lib -lgfortran)
-#
-# (information about what is done here is printed via the checkpgplot target, below)
-#
-   ifdef PGPLOT_DIR
-
-      PGPLOT_COMP=${shell grep FCOMPL= $$PGPLOT_DIR/makefile | cut -d= -f2}
-
-      ifneq ($(PGPLOT_COMP),$(F90C))
-# g77-compiled PGPLOT
-        ifeq ($(PGPLOT_COMP), g77)
-           PGPLOTLIBS+=-lg2c
-        endif
-# gfortran-compiled PGPLOT
-        ifeq ($(PGPLOT_COMP), gfortran)
-           PGPLOTLIBS+=-lgfortran
-        endif
-# g95-compiled PGPLOT
-        ifeq ($(PGPLOT_COMP), g95)
-           PGPLOTLIBS+=-lg95
-        endif
-      endif
-   endif
 endif
 #--------------------------------------------------------------
-
 
 #
 # If you need the HDF5 libraries, edit the lines below
@@ -137,7 +107,7 @@ ifeq ($(SYSTEM),g95)
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
    PARALLEL= no
-   #CC = gcc
+   CC = gcc
    KNOWN_SYSTEM=yes
 endif
 
@@ -463,6 +433,41 @@ ifeq ($(MPI),yes)
     F90C= mpif90
 endif
 
+#
+# If PGPLOT was compiled with a different compiler to the one used here,
+# need to link to the libraries for that compiler. We attempt to do this
+# automatically below by looking in the PGPLOT makefile.
+#
+# If the relevant library is not found, may also need -L/dir/ for the directory
+# where the corresponding library is located (e.g. -L/usr/local/gfortran/lib -lgfortran)
+#
+# (information about what is done here is printed via the checkpgplot target, below)
+#
+ifneq ($(BACKEND),giza)
+   ifdef PGPLOT_DIR
+
+      PGPLOT_COMP=${shell grep 'FCOMPL=' $$PGPLOT_DIR/makefile | cut -d= -f2}
+
+      ifneq (X$(F90C), X)  # make sure it is not just accidentally blank
+      ifneq ($(PGPLOT_COMP), $(F90C))
+# g77-compiled PGPLOT
+        ifeq ($(PGPLOT_COMP), g77)
+           PGPLOTLIBS+=-lg2c
+        endif
+# gfortran-compiled PGPLOT
+        ifeq ($(PGPLOT_COMP), gfortran)
+           PGPLOTLIBS+=-lgfortran
+        endif
+# g95-compiled PGPLOT
+        ifeq ($(PGPLOT_COMP), g95)
+           PGPLOTLIBS+=-lg95
+        endif
+      endif
+      endif
+   endif
+endif
+
+
 # Fortran flags same as F90
 FC = $(F90C)
 FFLAGS = $(F90FLAGS)
@@ -532,7 +537,7 @@ all: ascii gadget vine sphNG srosph dragon tipsy
 	@echo; echo ' Use "sudo make install" to copy the binaries to $(DEST)'; echo;
 
 ascii: checksystem $(OBJECTS) read_data_ascii.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS) || ${MAKE} linkerror;
 #--build universal binary on mac cluster
    ifeq ($(SYSTEM), maccluster)
 	lipo -create $(BINDIR)/asplash_ppc $(BINDIR)/asplash_i386 -output $(BINDIR)/asplash || cp $(BINDIR)/asplash$(EXT) $(BINDIR)/asplash
@@ -690,10 +695,10 @@ checkpgplot:
    ifeq (X${PGPLOT_DIR}, X)
 	@echo; echo "ERROR: PGPLOT_DIR should be set before compiling splash"; echo; ${MAKE} err;
    else
-	@if [ -d $$PGPLOT_DIR ]; then echo; echo "PGPLOT_DIR=$$PGPLOT_DIR"; else echo; echo "ERROR: Directory given by PGPLOT_DIR=$$PGPLOT_DIR does not exist"; echo; ${MAKE} err; fi;
+	@if [ -d $$PGPLOT_DIR ]; then echo; echo "PGPLOT_DIR=$$PGPLOT_DIR"; echo; else echo; echo "ERROR: Directory given by PGPLOT_DIR=$$PGPLOT_DIR does not exist"; echo; ${MAKE} err; fi;
    endif
    ifneq ($(PGPLOT_COMP),$(F90C))
-	@echo; echo "*** WARNING: PGPLOT appears to have been compiled with a different Fortran"; echo "    compiler (${PGPLOT_COMP}) to the one you are using to compile SPLASH (${F90C}),"; echo "    so will need to link to the relevant compiler libraries ***";
+	@echo; echo "*** WARNING: PGPLOT appears to have been compiled with a different Fortran"; echo "    compiler (${PGPLOT_COMP}) to the one you are using to compile SPLASH (${F90C}),"; echo "    so may need to link to the relevant compiler libraries ***";
 # g77-compiled PGPLOT
 	@if [ "${PGPLOT_COMP}" = "g77" ]; then echo "    [Adding -lg2c to the link flags for g77-compiled PGPLOT]"; fi;
 # gfortran-compiled PGPLOT
@@ -701,7 +706,42 @@ checkpgplot:
 # g95-compiled PGPLOT
 	@if [ "${PGPLOT_COMP}" = "g95" ]; then echo "    [Adding -lg95 to the link flags for g95-compiled PGPLOT]"; fi;
 	@echo
+#   else
+#	@echo "PGPLOT was compiled with ${PGPLOT_COMP}";
    endif
+
+linkerror:
+	@echo;
+	@echo '------------- failed to link to relevant libraries required for SPLASH ------------------';
+	@echo " Here are some common problems:";
+	@echo;
+        ifneq ($(BACKEND),giza)
+	@echo " \"ld: library not found for -lpgplot\" ";
+	@echo "       => Your PGPLOT_DIR is not set correctly, or PGPLOT is not installed correctly";
+	@echo "          (linker needs to find one of libpgplot.a, libpgplot.so or libpgplot.dylib (OS/X) in PGPLOT_DIR)";
+	@echo "          (check your PGPLOT installation by running the demo programs pgdemo1, pgdemo2 etc.)";
+	@echo;
+	@echo " \"ld: library not found for -lpng\" ";
+	@echo "       => The png library was not found (most likely your PGPLOT does not use them either)";
+	@echo "          (try removing -lpng from the PGPLOTLIBS= variable in build/Makefile)";
+	@echo;
+        endif
+	@echo " \"ld: symbol(s) not found: "__g95_...", referenced from: blah.o \" ";
+	@echo "       => Either you have changed compiler and need to \"make clean\", then \"make\" again";
+	@echo "          or you need to add -lg95 to the PGPLOTLIBS= variable";
+	@echo;
+	@echo " \"ld: symbol(s) not found: "__gfortran_...", referenced from: blah.o \" ";
+	@echo "       => Either you have changed compiler and need to \"make clean\", then \"make\" again";
+	@echo "          or you need to add -lgfortran to the PGPLOTLIBS= variable";
+	@echo;
+	@echo " Undefined symbols:";
+	@echo "   \"_main\", referenced from:";
+	@echo "       start in crt1.10.5.o";
+	@echo "       => You are compiling with gfortran but -lgfortran has also been added to the link flags";
+	@echo "          (remove -lgfortran from the PGPLOTLIBS= variable)";
+	@echo;
+	@echo '-----------------------------------------------------------------------------------------';
+	@${MAKE} err;
 
 #
 # install option, copies any binaries compiled to /usr/local/bin/
