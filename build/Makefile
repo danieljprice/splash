@@ -12,8 +12,9 @@
 .KEEP_STATE:
 
 KNOWN_SYSTEM=no
-VPATH =../src
+VPATH =../src ../giza ../giza/src
 BINDIR=../bin
+SHELL=/bin/bash
 
 #
 # some default settings for unix systems
@@ -26,36 +27,68 @@ F90FLAGS=
 #
 # X11LIBS= -L/usr/X11R6/lib64 -lX11
 X11LIBS= -L/usr/X11R6/lib -lX11
+
+#--------------------------------------------------------------
+# here we choose the backend plotting library for splash
+# (default is PGPLOT for splash v1.x)
+#--------------------------------------------------------------
+ifeq ($(BACKEND), giza)
+#-- C A I R O --
+   PLOTLIB= ${GIZAOBJ} cpl.f90 plotlib_giza.f90
+   PGPLOTLIBS = -lcairo
+   CFLAGS=-g -Wall -Wextra -I../giza/src/ -I/usr/X11/include
+   CC = gcc
+else
+#-- P G P L O T --
+   PLOTLIB= plotlib_pgplot.f90
 #
 # change the line below depending on where/how you have installed PGPLOT
 # (some settings of the SYSTEM variable for specific machines overwrite this)
 #
-PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot -lpng
+   PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot -lpng
+#
+# If PGPLOT was compiled with a different compiler to the one used here,
+# need to link to the libraries for that compiler. We attempt to do this
+# automatically below by looking in the PGPLOT makefile.
+#
+# If the relevant library is not found, may also need -L/dir/ for the directory
+# where the corresponding library is located (e.g. -L/usr/local/gfortran/lib -lgfortran)
+#
+# (information about what is done here is printed via the checkpgplot target, below)
+#
+   ifdef PGPLOT_DIR
+
+      PGPLOT_COMP=${shell grep FCOMPL= $$PGPLOT_DIR/makefile | cut -d= -f2}
+
+      ifneq ($(PGPLOT_COMP),$(F90C))
+# g77-compiled PGPLOT
+        ifeq ($(PGPLOT_COMP), g77)
+           PGPLOTLIBS+=-lg2c
+        endif
+# gfortran-compiled PGPLOT
+        ifeq ($(PGPLOT_COMP), gfortran)
+           PGPLOTLIBS+=-lgfortran
+        endif
+# g95-compiled PGPLOT
+        ifeq ($(PGPLOT_COMP), g95)
+           PGPLOTLIBS+=-lg95
+        endif
+      endif
+   endif
+endif
+#--------------------------------------------------------------
+
+
 #
 # If you need the HDF5 libraries, edit the lines below
 # possibly adding a -L/libpath/ and a -I/includepath/
 #
-HDF5LIBS= -lhdf5
-HDF5INCLUDE=
-#HDF5LIBS= -L/opt/local/lib -lhdf5
-#HDF5INCLUDE= -I/opt/local/include
-#
-# add one of the lines below if PGPLOT was compiled with a different
-# compiler to the one you are using. May also need -L/dir/ for the directory
-# where the corresponding library is located (e.g. -L/usr/local/gfortran/lib -lgfortran)
-#
-# g77-compiled PGPLOT
-#PGPLOTLIBS += -lg2c
-#
-# gfortran-compiled PGPLOT
-#PGPLOTLIBS += -lgfortran
-#
-# g95-compiled PGPLOT
-#PGPLOTLIBS += -lg95
+HDF5LIBS   = -L$(HDF5_PATH)/lib -lhdf5
+HDF5INCLUDE= -I$(HDF5_PATH)/include
 #
 # this file contains system-dependent routines like getarg, iargc etc.
 #
-SYSTEMFILE= system_unix.f90
+SYSTEMFILE= system_f2003.f90
 #
 # this can be used to static link the pgplot libraries if all else fails
 #
@@ -104,7 +137,7 @@ ifeq ($(SYSTEM),g95)
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
    PARALLEL= no
-   CC = gcc
+   #CC = gcc
    KNOWN_SYSTEM=yes
 endif
 
@@ -450,7 +483,7 @@ FFLAGS = $(F90FLAGS)
 
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
-PLOTLIB= plotlib_pgplot.f90
+
 SOURCESF90= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          prompting.f90 geometry.f90 interpolation.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 pagecolours.f90 shapes.f90 units.f90 \
@@ -635,11 +668,39 @@ checksystem:
 	@echo " Makefile for splash by Daniel Price "
 	@echo " -- see INSTALL file for detailed instructions"
 	@echo ""
-	@echo " make: ERROR: value of SYSTEM = $(SYSTEM) not recognised..."
-	@echo " =>set the environment variable SYSTEM to one listed "
-	@echo "   in the Makefile and try again"
+	@echo " make: ERROR: value of SYSTEM=$(SYSTEM) not recognised..."
+	@echo " => set the environment variable SYSTEM to one listed "
+	@echo "    in build/Makefile and try again"
 	@echo ""
+	@${MAKE} compilers
 	@$(MAKE) err;
+   endif
+
+compilers:
+	@echo "I suggest one of the following, based on detected Fortran compilers..."; echo;
+	@if type -p ifort > /dev/null; then echo "make SYSTEM=ifort"; fi;
+	@if type -p pathf90 > /dev/null; then echo "make SYSTEM=pathf90"; fi;
+	@if type -p pgf90 > /dev/null; then echo "make SYSTEM=pgf90"; fi;
+	@if type -p xlf90_r > /dev/null; then echo "make SYSTEM=ukaff1a [uses xlf90_r]"; fi;
+	@if type -p gfortran > /dev/null; then echo "make SYSTEM=gfortran"; fi;
+	@if type -p g95 > /dev/null; then echo "make SYSTEM=g95"; fi;
+	@echo "(end of possible selections)"; echo;
+
+checkpgplot:
+   ifeq (X${PGPLOT_DIR}, X)
+	@echo; echo "ERROR: PGPLOT_DIR should be set before compiling splash"; echo; ${MAKE} err;
+   else
+	@if [ -d $$PGPLOT_DIR ]; then echo; echo "PGPLOT_DIR=$$PGPLOT_DIR"; else echo; echo "ERROR: Directory given by PGPLOT_DIR=$$PGPLOT_DIR does not exist"; echo; ${MAKE} err; fi;
+   endif
+   ifneq ($(PGPLOT_COMP),$(F90C))
+	@echo; echo "*** WARNING: PGPLOT appears to have been compiled with a different Fortran"; echo "    compiler (${PGPLOT_COMP}) to the one you are using to compile SPLASH (${F90C}),"; echo "    so will need to link to the relevant compiler libraries ***";
+# g77-compiled PGPLOT
+	@if [ "${PGPLOT_COMP}" = "g77" ]; then echo "    [Adding -lg2c to the link flags for g77-compiled PGPLOT]"; fi;
+# gfortran-compiled PGPLOT
+	@if [ "${PGPLOT_COMP}" = "gfortran" ]; then echo "    [Adding -lgfortran to the link flags for gfortran-compiled PGPLOT]"; fi;
+# g95-compiled PGPLOT
+	@if [ "${PGPLOT_COMP}" = "g95" ]; then echo "    [Adding -lg95 to the link flags for g95-compiled PGPLOT]"; fi;
+	@echo
    endif
 
 #
@@ -677,6 +738,54 @@ err:
 	$(error aborting);
 
 ## other stuff
+
+plotlib_pgplot.o: checkpgplot
+
+cpl.o : compilegiza
+
+GIZASRC= giza-annotate.c \
+         giza-arrow-style.c \
+         giza-arrow.c \
+         giza-box.c \
+         giza-buffering.c \
+         giza-character-size.c \
+         giza-circle.c \
+         giza-colour-index.c \
+         giza-colour-table.c \
+         giza-driver-null.c \
+         giza-driver-pdf.c \
+         giza-driver-png.c \
+         giza-driver-ps.c \
+         giza-driver-xw.c \
+         giza-drivers.c \
+         giza-environment.c \
+         giza-error-bars.c \
+         giza-fill.c \
+         giza-format-number.c \
+         giza-get-surface-size.c \
+         giza-interactive.c \
+         giza-io.c \
+         giza-line-cap.c \
+         giza-line-style.c \
+         giza-line-width.c \
+         giza-line.c \
+         giza-points.c \
+         giza-prompting.c \
+         giza-ptext.c \
+         giza-render.c \
+         giza-set-font.c \
+         giza-stroke.c \
+         giza-transforms.c \
+         giza-viewport.c \
+         giza-warnings.c \
+         giza-window.c \
+         giza.c \
+         lex.yy.c
+
+GIZAOBJ=${GIZASRC:.c=.o}
+
+compilegiza: ${GIZAOBJ}
+	@echo "Compiling giza... $<";
 
 doc:
 	cd docs; pdflatex splash; pdflatex splash
