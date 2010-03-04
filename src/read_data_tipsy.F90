@@ -445,7 +445,7 @@ subroutine set_labels
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV
-        label(ivx+i-1) = labelvec(ivx)//'\d'//labelcoord(i,1)
+        label(ivx+i-1) = trim(labelvec(ivx))//'\d'//trim(labelcoord(i,1))
      enddo
   endif
   !
