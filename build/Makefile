@@ -549,7 +549,7 @@ ascii: checksystem $(OBJECTS) read_data_ascii.o
 mbatesph: checksystem $(OBJECTS) read_data_mbate.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_mbate.o $(LDFLAGS)
 
-h5part: checksystem $(OBJECTS) read_data_h5part.o
+h5part: checksystem $(OBJECTS) H5Part.o read_data_h5part.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/h5splash $(OBJECTS) read_data_h5part.o $(LDFLAGS) $(H5PART_LIBS) $(HDF5LIBS)
 
 read_data_h5part.o: read_data_h5part.f90
