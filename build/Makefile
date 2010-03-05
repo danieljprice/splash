@@ -12,7 +12,7 @@
 .KEEP_STATE:
 
 KNOWN_SYSTEM=no
-VPATH =../src ../giza ../giza/src
+VPATH =../src ../giza/interface ../giza/src
 BINDIR=../bin
 SHELL=/bin/bash
 
@@ -34,7 +34,7 @@ X11LIBS= -L/usr/X11R6/lib -lX11
 #--------------------------------------------------------------
 ifeq ($(BACKEND), giza)
 #-- C A I R O --
-   PLOTLIB= ${GIZAOBJ} cpl.f90 plotlib_giza.f90
+   PLOTLIB= ${GIZAOBJ} giza-fortran.f90 plotlib_giza.f90
    PGPLOTLIBS = -lcairo
    CFLAGS=-g -Wall -Wextra -I../giza/src/ -I/usr/X11/include
    CC = gcc
@@ -53,8 +53,10 @@ endif
 # If you need the HDF5 libraries, edit the lines below
 # possibly adding a -L/libpath/ and a -I/includepath/
 #
-HDF5LIBS   = -L$(HDF5_PATH)/lib -lhdf5
-HDF5INCLUDE= -I$(HDF5_PATH)/include
+HDF5LIBS    = -L$(HDF5_PATH)/lib -lhdf5
+HDF5INCLUDE = -I$(HDF5_PATH)/include
+H5PART_LIBS     = -L$(H5PART_PATH)/lib -lH5PartF
+H5PART_INCLUDE = -I$(H5PART_PATH)/include
 #
 # this file contains system-dependent routines like getarg, iargc etc.
 #
@@ -416,7 +418,7 @@ endif
 
 # link with hdf5 libraries
 ifeq ($(HDF5),yes)
-    CFLAGS += $(HDF5INCLUDE)
+    CFLAGS  += $(HDF5INCLUDE)
     LDFLAGS += $(HDF5LIBS)
 endif
 
@@ -546,6 +548,12 @@ ascii: checksystem $(OBJECTS) read_data_ascii.o
 
 mbatesph: checksystem $(OBJECTS) read_data_mbate.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_mbate.o $(LDFLAGS)
+
+h5part: checksystem $(OBJECTS) read_data_h5part.o
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/h5splash $(OBJECTS) read_data_h5part.o $(LDFLAGS) $(H5PART_LIBS) $(HDF5LIBS)
+
+read_data_h5part.o: read_data_h5part.f90
+	$(F90C) $(F90FLAGS) $(H5PART_INCLUDE) -o $@ -c $<
 
 gadget: checksystem $(OBJECTS) read_data_gadget.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o $(LDFLAGS)
@@ -781,47 +789,9 @@ err:
 
 plotlib_pgplot.o: checkpgplot
 
-cpl.o : compilegiza
+giza-fortran.o : compilegiza
 
-GIZASRC= giza-annotate.c \
-         giza-arrow-style.c \
-         giza-arrow.c \
-         giza-box.c \
-         giza-buffering.c \
-         giza-character-size.c \
-         giza-circle.c \
-         giza-colour-index.c \
-         giza-colour-table.c \
-         giza-driver-null.c \
-         giza-driver-pdf.c \
-         giza-driver-png.c \
-         giza-driver-ps.c \
-         giza-driver-xw.c \
-         giza-drivers.c \
-         giza-environment.c \
-         giza-error-bars.c \
-         giza-fill.c \
-         giza-format-number.c \
-         giza-get-surface-size.c \
-         giza-interactive.c \
-         giza-io.c \
-         giza-line-cap.c \
-         giza-line-style.c \
-         giza-line-width.c \
-         giza-line.c \
-         giza-points.c \
-         giza-prompting.c \
-         giza-ptext.c \
-         giza-render.c \
-         giza-set-font.c \
-         giza-stroke.c \
-         giza-transforms.c \
-         giza-viewport.c \
-         giza-warnings.c \
-         giza-window.c \
-         giza.c \
-         lex.yy.c
-
+GIZASRC= ${shell cd ../giza/src/; ls *.c}
 GIZAOBJ=${GIZASRC:.c=.o}
 
 compilegiza: ${GIZAOBJ}
