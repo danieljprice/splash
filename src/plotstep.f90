@@ -227,6 +227,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         enddo
      endif
   endif
+  if (debugmode) print*,'DEBUG: iplotz = ',iplotz
 
   !
   !--work out whether or not to tile plots on the page
@@ -563,35 +564,37 @@ end subroutine initialise_plotting
 
 subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ivecplot, &
                     iamtype,npartoftype,masstype,dat,timei,gammai,ipagechange,iadvance)
-  use params,  only:doub_prec,int1,maxparttypes
-  use colours, only:colour_set
-  use filenames, only:nsteps,rootname,ifileopen
-  use exact, only:exact_solution,atstar,ctstar,sigma
-  use toystar1D, only:exact_toystar_ACplane
-  use toystar2D, only:exact_toystar_ACplane2D
-  use labels, only:label,labelvec,iamvec,lenlabel, &
-              ih,irho,ipmass,ix,iacplane,ipowerspec,isurfdens,itoomre,iutherm,ipdf,icolpixmap
-  use limits, only:lim,get_particle_subset,lim2,lim2set
-  use multiplot,only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
-                icontourmulti,x_secmulti,xsecposmulti
-  use particle_data, only:maxpart,maxcol,icolourme
-  use settings_data, only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
-                     iendatstep,ntypes,UseTypeInRenderings,itrackpart,required,ipartialread,xorigin,&
-                     lowmemorymode,debugmode
-  use settings_limits, only:iadapt,iadaptcoords,scalemax
-  use settings_part, only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
-                     iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
-                     iploterrorbars,ilocerrorbars
-  use settings_page, only:nacross,ndown,interactive,iaxis,usesquarexy, &
-                     charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
-  use settings_render, only:npix,ncontours,icolours, &
-      iColourBarStyle,icolour_particles,inormalise_interpolations,ifastrender,ilabelcont
-  use settings_vecplot, only:npixvec, iplotpartvec
-  use settings_xsecrot, only:nxsec,irotateaxes,xsec_nomulti,irotate,flythru,use3Dperspective, &
-      use3Dopacityrendering,writeppm,anglex,angley,anglez,zobserver,dzscreenfromobserver,taupartdepth, &
-      xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2,nseq,nframes,getsequencepos,insidesequence
+  use params,             only:doub_prec,int1,maxparttypes
+  use colours,            only:colour_set
+  use filenames,          only:nsteps,rootname,ifileopen
+  use exact,              only:exact_solution,atstar,ctstar,sigma
+  use toystar1D,          only:exact_toystar_ACplane
+  use toystar2D,          only:exact_toystar_ACplane2D
+  use labels,             only:label,labelvec,iamvec,lenlabel,ih,irho,ipmass,ix,iacplane, &
+                               ipowerspec,isurfdens,itoomre,iutherm,ipdf,icolpixmap
+  use limits,             only:lim,get_particle_subset,lim2,lim2set
+  use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
+                               icontourmulti,x_secmulti,xsecposmulti
+  use particle_data,      only:maxpart,maxcol,icolourme
+  use settings_data,      only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
+                               iendatstep,ntypes,UseTypeInRenderings,itrackpart,&
+                               required,ipartialread,xorigin,lowmemorymode,debugmode
+  use settings_limits,    only:iadapt,iadaptcoords,scalemax
+  use settings_part,      only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
+                               iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
+                               iploterrorbars,ilocerrorbars
+  use settings_page,      only:nacross,ndown,interactive,iaxis,usesquarexy, &
+                               charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
+  use settings_render,    only:npix,ncontours,icolours,iColourBarStyle,icolour_particles,&
+                               inormalise_interpolations,ifastrender,ilabelcont
+  use settings_vecplot,   only:npixvec,iplotpartvec
+  use settings_xsecrot,   only:nxsec,irotateaxes,xsec_nomulti,irotate,flythru,use3Dperspective, &
+                               use3Dopacityrendering,writeppm,anglex,angley,anglez,zobserver,&
+                               dzscreenfromobserver,taupartdepth,xsecpos_nomulti, &
+                               xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
+                               nseq,nframes,getsequencepos,insidesequence
   use settings_powerspec, only:nfreqspec,wavelengthmin,wavelengthmax,ipowerspecx,ipowerspecy,idisordered
-  use settings_units, only:units,unitslabel,unitzintegration
+  use settings_units,     only:units,unitslabel,unitzintegration
 !
 !--subroutines called from this routine
 !
@@ -1050,6 +1053,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            zplot(1:ntoti) = dat(1:ntoti,iplotz)
            labelz = label(iplotz)
         endif
+        if (debugmode) print*,'DEBUG: iplotz = ',iplotz
 
         if (.not.interactivereplot) then
            irerender = .false.
@@ -1754,6 +1758,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               ! particle plots
               !-----------------------
               if (iplotpart) then
+                 if (debugmode) print*,'DEBUG: starting particle plot with ',ntoti,' particles ',&
+                    zplot(1:10),icolourme(1:10),npartoftype(:),iplotpartoftype(:)
                  !!--plot all particle types
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
