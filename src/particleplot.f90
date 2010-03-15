@@ -167,7 +167,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                        call plot_sfs(2)
                        call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
                     case default
-!                       call plot_pt(1,xplot(j),yplot(j),imarktype(itype))                    
+                       call plot_pt1(xplot(j),yplot(j),imarktype(itype))                    
                     end select
 
                     if (present(datpix)) then
