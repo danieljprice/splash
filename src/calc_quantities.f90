@@ -30,7 +30,7 @@ module calcquantities
  implicit none
  public :: calc_quantities,setup_calculated_quantities
 
- integer, parameter, private :: maxcalc = 10
+ integer, parameter, private :: maxcalc = 35
  character(len=60),            dimension(maxcalc) :: calcstring = ' '
  character(len=lenlabel),      dimension(maxcalc) :: calclabel = ' '
  character(len=lenunitslabel), dimension(maxcalc) :: calcunitslabel = ' '
@@ -120,19 +120,26 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp)
  character(len=120) :: string
  character(len=lenvars), dimension(maxplot+nextravars) :: vars
 
+ i = istart + 1
+ ntries = 0
+ ncalc = istart
+ if (i.gt.maxcalc) then
+    print "(/,a,i2,a)",' *** Error, maximum number of calculated quantities (',maxcalc,') reached, cannot add any more.'
+    print "(a)",       ' *** If you hit this limit, *please email me* so I can change the default limits!'
+    print "(a)",       ' *** (and then edit calc_quantities.f90, changing the parameter "maxcalc" to something higher...)'
+    return
+ endif 
+
  if (printhelp) then
     print "(/,a)",' Specify a function to calculate from the data '
-    print "(10(a))",' Valid variables are the column labels',(', '''//trim(extravars(i))//'''',i=1,nextravars-1),&
+    print "(10(a))",' Valid variables are the column labels',(', '''//trim(extravars(j))//'''',j=1,nextravars-1),&
                 ' and '''//trim(extravars(nextravars))//''' (origin setting) '
     print "(a)",' Spaces, escape sequences (\d) and units labels are removed from variable names'
     print "(a)",' Note that previously calculated quantities can be used in subsequent calculations'
  endif
  call print_example_quantities()
- 
- i = istart + 1
- ntries = 0
- ncalc = istart
- overfuncs: do while(ntries.lt.3 .and. i.le.iend)
+  
+ overfuncs: do while(ntries.lt.3 .and. i.le.iend .and. i.le.maxcalc)
     if (len_trim(calcstring(i)).ne.0 .or. ncalc.gt.istart) write(*,"(a,i2,a)") '[Column ',ncolumns+i,']'
     string = trim(calcstring(i))
     call prompt('Enter function string to calculate (blank for none) ',string)
