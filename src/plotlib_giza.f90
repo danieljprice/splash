@@ -9,6 +9,7 @@ module plotlib
       plot_swin=>giza_set_window, &
       giza_get_surface_size, &
       plot_box=>giza_box, &
+      plot_circ=>giza_circle, &
       plot_line=>giza_line, &
       giza_open_device, &
       plot_close=>giza_close_device, &
@@ -16,6 +17,7 @@ module plotlib
       plot_slw=>giza_set_line_width, &
       giza_open_device, &
       plot_sch=>giza_set_character_height, &
+      plot_qch=>giza_get_character_height, &
       plot_scf=>giza_set_font, &
       plot_annotate=>giza_annotate, &
       giza_get_character_size, &
@@ -27,6 +29,8 @@ module plotlib
       plot_scr=>giza_set_colour_representation, &
       plot_qcr=>giza_get_colour_representation, &
       plot_qlw=>giza_get_line_width,&
+      plot_qls=>giza_get_line_style,&
+      plot_sls=>giza_set_line_style,&
       plot_qci=>giza_get_colour_index, &
       plot_end=>giza_close_device, &
       plot_ptxt=>giza_ptext, &
@@ -169,30 +173,25 @@ end subroutine plot_qcir
 subroutine plot_scir(icilo, icihi)
   integer,intent(in) :: icilo,icihi
 
+  print*,' WARNING: plot_scir not implemented in giza'
+
 end subroutine plot_scir
-
-subroutine plot_qls(ls)
-  implicit none
-  integer,intent(out) :: ls
-
-  ls = 0
-end subroutine plot_qls
 
 subroutine plot_qfs(fs)
   implicit none
   integer,intent(out) :: fs
 
+  print*,' WARNING: plot_qfs not implemented in giza'
   fs = 0
-end subroutine plot_qfs
 
-subroutine plot_sls(ls)
-  implicit none
-  integer,intent(in) :: ls
-end subroutine plot_sls
+end subroutine plot_qfs
 
 subroutine plot_sfs(fs)
   implicit none
   integer,intent(in) :: fs
+
+  print*,' WARNING: plot_sfs not implemented in giza'
+
 end subroutine plot_sfs
 
 subroutine plot_rect(x1,x2,y1,y2)
@@ -204,11 +203,6 @@ subroutine plot_arro(x1,y1,x2,y2)
   implicit none
   real,intent(in) :: x1,y1,x2,y2
 end subroutine plot_arro
-
-subroutine plot_circ(xcent,ycent,radius)
-  implicit none
-  real,intent(in) :: xcent,ycent,radius
-end subroutine plot_circ
 
 subroutine plot_qtxt(x,y,angle,fjust,text,xbox,ybox)
   implicit none
@@ -300,15 +294,6 @@ subroutine plot_numb(m,pp,form,string,nc)
   nc = 1
 
 end subroutine plot_numb
-
-subroutine plot_qch(ch)
-  implicit none
-  real,intent(out) :: ch
-  
-  ch = 1.0
-  print*,' WARNING: get_character_height not implemented in giza'
-  
-end subroutine plot_qch
 
 subroutine plot_text(x,y,text)
   implicit none
