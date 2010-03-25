@@ -131,7 +131,7 @@ contains
   !  Identification is used in exact solution
   !  plotting and calculation of additional quantities
   !
-  ix = 0
+  ix(:) = 0
   ivx = 0      ! vx
   irho = 0     ! density
   ipr = 0      ! pressure
@@ -155,6 +155,18 @@ contains
   
   return
  end subroutine reset_columnids
+
+ logical function is_coord(icol,ndim)
+  implicit none
+  integer, intent(in) :: icol,ndim
+  integer :: i
+  
+  is_coord = .false.
+  do i=1,ndim
+     if (ix(i).eq.icol) is_coord = .true.
+  enddo
+  
+ end function is_coord
 
 end module labels
 

@@ -33,7 +33,7 @@ contains
 
 subroutine menu
   use filenames,        only:defaultsfile,limitsfile,animfile,fileprefix,set_filenames
-  use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap
+  use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap,is_coord
   use limits,           only:write_limits,lim2,lim,reset_lim2,lim2set
   use options_data,     only:submenu_data
   use settings_data,    only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
@@ -203,7 +203,7 @@ subroutine menu
            !  to icoordsnew, or alternatively plot non-cartesian pixel shapes)
            ! -> also do not allow if transformations are applied
            !
-           if (ipicky.le.ndim .and. ipickx.le.ndim .and. iAllowRendering) then
+           if (is_coord(ipicky,ndim) .and. is_coord(ipickx,ndim) .and. iAllowRendering) then
               call prompt('(render) (0=none)',irender,0,numplot)
               if (irender.gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
                  call prompt('(contours) (0=none)',icontourplot,0,numplot)
@@ -381,9 +381,10 @@ subroutine menu
 ! multiplot setup
 !----------------------------------------------------
   subroutine options_multiplot
-   use settings_page, only: nacross, ndown
+   use settings_page,   only: nacross, ndown
    use settings_render, only: iplotcont_nomulti
-   use limits, only:lim,lim2,lim2set,reset_lim2
+   use limits,          only:lim,lim2,lim2set,reset_lim2
+   use labels,          only:is_coord
    implicit none
    integer :: ifac,ierr
    logical :: isamex, isamey, icoordplot, anycoordplot, imultisamepanel
@@ -433,7 +434,7 @@ subroutine menu
       !
       iAllowRendering = allowrendering(multiplotx(i),multiploty(i))
       
-      icoordplot = (multiplotx(i).le.ndim .and. multiploty(i).le.ndim)
+      icoordplot = (is_coord(multiplotx(i),ndim) .and. is_coord(multiploty(i),ndim))
       if (icoordplot) anycoordplot = icoordplot
       
       if (icoordplot .and.iAllowRendering) then
