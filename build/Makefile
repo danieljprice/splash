@@ -12,7 +12,7 @@
 .KEEP_STATE:
 
 KNOWN_SYSTEM=no
-VPATH =../src ../giza/interface ../giza/src
+VPATH =../src ../src/H5Part ../giza/interface ../giza/src
 BINDIR=../bin
 SHELL=/bin/bash
 
@@ -53,10 +53,10 @@ endif
 # If you need the HDF5 libraries, edit the lines below
 # possibly adding a -L/libpath/ and a -I/includepath/
 #
-HDF5LIBS    = -L$(HDF5_PATH)/lib -lhdf5
-HDF5INCLUDE = -I$(HDF5_PATH)/include
-H5PART_LIBS     = -L$(H5PART_PATH)/lib -lH5PartF
-H5PART_INCLUDE = -I$(H5PART_PATH)/include
+HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
+HDF5INCLUDE = -I$(HDF5ROOT)/include
+H5PART_LIBS    = -L$(H5PART_DIR)/build/lib -lH5Part
+H5PART_INCLUDE = -I$(H5PART_DIR)/build/include
 #
 # this file contains system-dependent routines like getarg, iargc etc.
 #
@@ -85,7 +85,10 @@ OMPFLAGS=
 # destination for installed binaries
 #
 DEST=/usr/local/bin
-
+#
+# default C compiler
+#
+CC = gcc
 #--------------------------------------------------------------
 #  the following are general settings for particular compilers
 #
@@ -549,11 +552,25 @@ ascii: checksystem $(OBJECTS) read_data_ascii.o
 mbatesph: checksystem $(OBJECTS) read_data_mbate.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_mbate.o $(LDFLAGS)
 
-h5part: checksystem $(OBJECTS) H5Part.o read_data_h5part.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/h5splash $(OBJECTS) read_data_h5part.o $(LDFLAGS) $(H5PART_LIBS) $(HDF5LIBS)
+
+#---h5part reader---
+H5PARTSRCC=H5PartF.c H5PartAttribF.c
+H5PARTSRCF90=H5Part.f90
+H5PARTOBJ=$(H5PARTSRCC:.c=.o) $(H5PARTSRCF90:.f90=.o)
+
+h5part: checksystem checkh5part $(OBJECTS) $(H5PARTOBJ) read_data_h5part.o
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/h5splash $(OBJECTS) $(H5PARTOBJ) read_data_h5part.o $(LDFLAGS) $(H5PART_LIBS) $(HDF5LIBS)
 
 read_data_h5part.o: read_data_h5part.f90
 	$(F90C) $(F90FLAGS) $(H5PART_INCLUDE) -o $@ -c $<
+
+H5PartF.o: H5PartF.c
+	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
+
+H5PartAttribF.o: H5PartAttribF.c
+	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
+
+#------------------
 
 gadget: checksystem $(OBJECTS) read_data_gadget.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o $(LDFLAGS)
@@ -716,6 +733,20 @@ checkpgplot:
 	@echo
 #   else
 #	@echo "PGPLOT was compiled with ${PGPLOT_COMP}";
+   endif
+
+checkh5part: checkhdf5
+   ifeq (X${H5PART_DIR}, X)
+	@echo; echo "ERROR: H5PART_DIR should be set before compiling splash with h5part read/write"; echo; ${MAKE} err;
+   else
+	@if [ -d $$H5PART_DIR ]; then echo; echo "H5PART_DIR=$$H5PART_DIR"; echo; else echo; echo "ERROR: Directory given by H5PART_DIR=$$H5PART_DIR does not exist"; echo; ${MAKE} err; fi;
+   endif
+
+checkhdf5:
+   ifeq (X${HDF5ROOT}, X)
+	@echo; echo "ERROR: HDF5ROOT should be set before compiling splash with HDF5 utilities"; echo; ${MAKE} err;
+   else
+	@if [ -d $$HDF5ROOT ]; then echo; echo "HDF5ROOT=$$HDF5ROOT"; echo; else echo; echo "ERROR: Directory given by HDF5ROOT=$$HDF5ROOT does not exist"; echo; ${MAKE} err; fi;
    endif
 
 linkerror:
