@@ -29,7 +29,10 @@
 ! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
 !  ENVIRONMENT VARIABLES:
 !
+!  H5SPLASH_NDIM=2     : number of spatial dimensions (overrides value inferred from data)
+!  H5SPLASH_HFAC=1.2   : factor to use in h= hfac*(m/rho)**(1/ndim) if h not present in data
 !  H5SPLASH_HSML=1.0   : value for global smoothing length if h not present in data
+!  H5SPLASH_TYPEID='MatID'  : name of dataset containing the particle types
 !
 ! the data is stored in the global array dat
 !
@@ -57,34 +60,40 @@ module h5partdataread
  use labels, only:lenlabel
  implicit none
  character(len=lenlabel), dimension(maxplot) :: datasetnames
+ logical :: warn_labels = .true.
+ integer :: itypeidcol
 
 end module h5partdataread
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data,  only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
+  use particle_data,   only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
-  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,debugmode
-  use mem_allocation, only:alloc
-  use iso_c_binding,  only:c_double,c_int64_t
-  use asciiutils,     only:lcase
-  use system_utils,   only:renvironment
-  use labels,         only:ih,ipmass,irho
+  use settings_data,   only:ndim,ndimV,ncolumns,ncalc,debugmode,ntypes
+  use mem_allocation,  only:alloc
+  use iso_c_binding,   only:c_double,c_int64_t
+  use asciiutils,      only:lcase
+  use system_utils,    only:renvironment
+  use system_commands, only:get_environment
+  use labels,          only:ih,ipmass,irho,ix
   use h5part
   use h5partdataread
   implicit none
-  integer, intent(in)          :: indexstart
-  integer, intent(out)         :: nstepsread
-  character(len=*), intent(in) :: rootname
-  integer :: j,ierr,ncolstep,nsteps,ncolsfile,nrealcols
-  integer(kind=c_int64_t) :: nattrib,iattrib,nelem,icol,idatasettype,k,icolsfile
-  integer :: nprint,npart_max,nstep_max,maxcolsfile
-  logical :: iexist
-  integer(kind=c_int64_t) :: ifile,istep
-  character(len=len(rootname)+5) :: dumpfile
-  character(len=64)              :: attribname
-  character(len=lenlabel)        :: datasetname
+  integer, intent(in)               :: indexstart
+  integer, intent(out)              :: nstepsread
+  character(len=*), intent(in)      :: rootname
+  integer                           :: i,j,ncolstep,nsteps,ncolsfile,icol
+  integer(kind=c_int64_t)           :: nattrib,iattrib,nelem,idatasettype,k,icolsfile,ierr
+  integer                           :: nprint,npart_max,nstep_max,maxcolsfile,itype
+  integer, dimension(maxplot)       :: iorder
+  integer, dimension(maxparttypes)  :: itypemap
+  integer, dimension(:),allocatable :: itypefile
+  logical                           :: iexist,typeiddefault
+  integer(kind=c_int64_t)           :: ifile,istep
+  character(len=len(rootname)+5)    :: dumpfile
+  character(len=64)                 :: attribname
+  character(len=lenlabel)           :: datasetname,type_datasetname
   real(kind=doub_prec),dimension(1) :: dtime
-  real :: hsmooth,hfac,dndim
+  real                              :: hsmooth,hfac,dndim
 
   nstepsread = 0
   nstep_max = 0
@@ -114,20 +123,29 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !--open the file and read the number of particles
   !
   ifile = h5pt_openr(trim(dumpfile))
-
-  !if (h5pt_isvalid(ifile).ne.1) then
   if (ifile.le.0) then
      print "(a)",'*** ERROR opening '//trim(dumpfile)//' ***'
      return
   endif
-  !print*,' ifile = ',ifile
   
   !
   !--get number of steps and particles in the file
   !
-  nsteps = h5pt_getnsteps(ifile)
+  nsteps = int(h5pt_getnsteps(ifile))
   if (debugmode) print*,'DEBUG: nsteps = ',nsteps
 
+  !
+  !--read environment variable giving the name of the dataset
+  !  containing the particle type ID
+  !  give default value if this is not set
+  !
+  call get_environment('H5SPLASH_TYPEID',type_datasetname)
+  if (len_trim(type_datasetname).le.0) then
+     typeiddefault = .true.
+     type_datasetname = 'MatID'
+  else
+     typeiddefault = .false.
+  endif
   !
   !--read "header" information from all steps in file:
   !  get maximum number of particles for all steps in file
@@ -136,11 +154,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
   npart_max = 0
   ncolstep  = 0
   maxcolsfile = 0
+  itypeidcol = 0
   do istep=1,nsteps
      ierr = h5pt_setstep(ifile,istep)
      if (ierr.eq.0) then
-        npart_max = max(npart_max,h5pt_getnpoints(ifile))
-        ncolsfile = h5pt_getndatasets(ifile)
+        npart_max = max(npart_max,int(h5pt_getnpoints(ifile)))
+        ncolsfile = int(h5pt_getndatasets(ifile))
         icol = 0
         if ((istep.eq.nsteps .and. ncolsfile.gt.0)) then
            do icolsfile=0,ncolsfile-1
@@ -158,8 +177,18 @@ subroutine read_data(rootname,indexstart,nstepsread)
                     icol = icol + 1
                     datasetnames(icol) = trim(adjustl(datasetname))
                     !print*,' data set info = ',icol,trim(datasetnames(icol)),idatasettype,nelem
+                 case(H5PART_INT32,H5PART_INT64)
+                    !
+                    !--try to recognise the dataset giving the particle types
+                    !
+                    if (trim(type_datasetname)==trim(datasetname)) then
+                       if (itypeidcol.le.0) itypeidcol = int(icolsfile) + 1
+                       print "(a)",' getting particle types from data set '//trim(type_datasetname)
+                    else
+                       print "(a)",' skipping data set '//trim(datasetname)//' of type '//h5pt_type(int(idatasettype))
+                    endif
                  case default
-                    print "(a)",' skipping data set '//trim(datasetname)//' of type '//h5pt_type(idatasettype)
+                    print "(a)",' skipping data set '//trim(datasetname)//' of type '//h5pt_type(int(idatasettype))
                  end select
               endif
            enddo
@@ -172,10 +201,57 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
   enddo
   nprint = npart_max
+  
   !
-  !--call the set_labels routine to get ix, ih etc. from labels
+  !--warn if no particle type data has been read
   !
-  call set_labels
+  if (itypeidcol.le.0) then
+     if (typeiddefault) then
+        print "(a)",' Particle type dataset not found in file: Use H5SPLASH_TYPEID to give dataset name'
+     else
+        print "(a)",' WARNING: Particle type dataset '//trim(type_datasetname)//' (from H5SPLASH_TYPEID) not found in file '
+     endif
+  endif
+  
+  !
+  !--call the set_labels routine to get the initial location of coords, smoothing length etc. given dataset labels
+  !
+  warn_labels = .false.
+  call set_labels()
+  warn_labels = .true.
+
+  !
+  !--set default ordering of columns
+  !
+  do i=1,size(iorder)
+     iorder(i) = i
+  enddo
+  !
+  !--if coordinates are not in the first 3 columns, shift data so that they are
+  !
+
+  if (ndim.gt.0 .and. ix(1).ne.1) then
+     do i=1,ndim
+        iorder(ix(i)) = i
+     enddo
+     !--preserve the order of things after the coordinates
+     icol = ndim
+     do i=ix(1)+1,ncolstep
+        if (.not.any(ix(1:ndim).eq.i)) then
+           icol = icol + 1
+           iorder(i) = icol
+        endif
+     enddo
+     !--shuffle things before the coordinates to the end
+     do i=1,ix(1)-1
+        if (.not.any(ix(1:ndim).eq.i)) then
+           icol = icol + 1
+           iorder(i) = icol
+        endif
+     enddo
+  endif
+  if (debugmode) print*,'DEBUG: iorder = ',iorder
+
   !
   !--if smoothing length has not been set, look for an environment variable
   !  giving the smoothing length value
@@ -206,10 +282,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--allocate memory for all data in the file
   !
-  nstep_max = max(nsteps,indexstart,1)
+  nstep_max = max(nsteps,indexstart,1,maxstep)
   npart_max = max(maxpart,npart_max)
   if (.not.allocated(dat) .or. (nprint.gt.maxpart) .or. (ncolstep+ncalc).gt.maxcol) then
-     call alloc(npart_max,nstep_max,ncolstep+ncalc)
+     if (itypeidcol.gt.0) then
+        call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=.true.)
+     else
+        call alloc(npart_max,nstep_max,ncolstep+ncalc)     
+     endif
   endif
 
 !
@@ -230,7 +310,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
            ierr = h5pt_getstepattribinfo(ifile,iattrib,attribname,nelem)
            !print*,' step attribute '//trim(attribname),' nelem = ',nelem
            if (ierr.eq.0) then
+              !
               !--match anything that looks vaguely like the time
+              !
               if (nelem.eq.1 .and. (index(lcase(attribname),'time').ne.0  &
                  .or. index(lcase(attribname),'t ').ne.0)) then
                  ierr =h5pt_readstepattrib_r8(ifile,attribname,dtime)
@@ -239,6 +321,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
                     print "(12x,a,1pe10.3,a)",'time   = ',time(j),' (from '//trim(attribname)//')'
                  else
                     print "(a,i2,a)",' ERROR could not read time from step ',istep,' (from '//trim(attribname)//')'
+                 endif
+              !
+              !--match gamma if possible
+              !
+              elseif (nelem.eq.1 .and. (index(lcase(attribname),'gamma').ne.0  &
+                 .or. index(lcase(attribname),'gam ').ne.0)) then
+                 ierr = h5pt_readstepattrib_r8(ifile,attribname,dtime)
+              
+                 if (ierr.eq.0) then
+                    gamma(j) = real(dtime(1))
+                    print "(12x,a,1pe10.3,a)",'gamma  = ',gamma(j),' (from '//trim(attribname)//')'
+                 else
+                    print "(a,i2,a)",' ERROR could not read ga,,a from step ',istep,' (from '//trim(attribname)//')'
                  endif
               else
                  print "(a)",' unknown attribute '//trim(attribname)
@@ -251,40 +346,113 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--now read the data for this step
 !
-    nrealcols = 0
     icol = 0
     do k=0,maxcolsfile-1
        ierr = h5pt_getdatasetinfo(ifile,k,datasetname,idatasettype,nelem)
        select case(idatasettype)
        case(H5PART_FLOAT32,H5PART_FLOAT64)
           icol = icol + 1
-          datasetnames(icol) = trim(datasetname)
-          !print "(a,i3,a)",' reading data set ',icol,': '//trim(datasetnames(icol))
-          ierr = h5pt_readdata_r4(ifile,datasetnames(icol),dat(:,icol,j))
+          datasetnames(iorder(icol)) = trim(datasetname)
+          if (debugmode) print "(a,i3,a,i3)",'DEBUG: reading data set ',icol,&
+                                             ': '//trim(datasetnames(iorder(icol)))//' into column ',iorder(icol)
+          ierr = h5pt_readdata_r4(ifile,datasetnames(iorder(icol)),dat(:,iorder(icol),j))
+          if (ierr.ne.0) print "(a)",' ERROR reading dataset '//trim(datasetnames(iorder(icol)))
        case default
-          !print "(a)",' skipping data set '//trim(datasetname)//' of type '//lcase(h5pt_type(idatasettype))
+          if (debugmode) print "(a)",' skipping data set '//trim(datasetname)//' of type '//lcase(h5pt_type(int(idatasettype)))
        end select
     enddo
+!
+!--read the particle types for this step from the typeid dataset (specified from the type_datasetname setting)
+!
+    npartoftype(:,j) = 0
+    if (itypeidcol.gt.0 .and. size(iamtype(:,1)).gt.1) then
+       if (debugmode) print "(a)",'DEBUG: reading particle types from '//trim(type_datasetname)
+       !
+       !--allocate temporary memory
+       !
+       if (allocated(itypefile)) deallocate(itypefile)
+       allocate(itypefile(nprint),stat=ierr)
+       if (ierr.ne.0) stop 'ERROR allocating temporary memory for particle types'
+       !
+       !--read type array from file
+       !
+       ierr = h5pt_readdata_i4(ifile,trim(type_datasetname),itypefile(:))
+       if (ierr.ne.0) then
+          print "(a)",' ERROR reading dataset '//trim(type_datasetname)
+       else
+       !
+       !--work out the number of unique particle types
+       !  and map these into SPLASH particle types (1->maxtypes)
+       !
+          if (j.eq.1 .and. istep.eq.1) then
+             ntypes      = 1
+             itypemap(1) = minval(itypefile)
+          endif
+          do i=1,nprint
+             !--increase the number of particle types if a particle of new type is found
+             if (.not.any(itypemap(1:ntypes).eq.itypefile(i))) then
+                ntypes = ntypes + 1
+                if (ntypes.le.size(itypemap)) then
+                   itypemap(ntypes) = itypefile(i)
+                   npartoftype(ntypes,j) = npartoftype(ntypes,j) + 1
+                   iamtype(i,j) = ntypes
+                endif
+             else
+                do itype=1,ntypes
+                   if (itypefile(i).eq.itypemap(itype)) then
+                      npartoftype(itype,j) = npartoftype(itype,j) + 1
+                      iamtype(i,j) = itype
+                   endif
+                enddo
+             endif
+          enddo
+          if (nprint.lt.1e6) then
+             print "(12x,a,10(i5,1x))",'npart (by type) = ',npartoftype(1:ntypes,j)          
+          else
+             print "(12x,a,10(i10,1x))",'npart (by type) = ',npartoftype(1:ntypes,j)
+          endif
+          !
+          !--warn if the number of types exceeds the current limit
+          !
+          if (ntypes.gt.maxparttypes) &
+             print "(/,2(a,i2),a/)", &
+              ' WARNING: too many particle types in dataset '//trim(type_datasetname)// &
+              ' (got ',ntypes,': maximum is currently ',maxparttypes,')'
+       endif
+       !
+       !--clean up
+       !
+       if (allocated(itypefile)) deallocate(itypefile)
+    else
+!--only one particle type
+       npartoftype(1,j) = nprint
+    endif
+!
+!--reset the labels now that the columns have been read in the correct order
+!
+    warn_labels = .false.
+    call set_labels()
+    warn_labels = .true.
+
 !
 !--if smoothing length set via environment variable, fill the extra column with the smoothing length value
 !
     if (hsmooth.ge.0.) then
-       dat(:,ih,j) = hsmooth
        datasetnames(ncolstep) = 'h'
+       ih = ncolstep
+       dat(:,ih,j) = hsmooth
     elseif (ipmass.gt.0 .and. irho.gt.0 .and. ndim.gt.0) then
+       ih = ncolstep
+       datasetnames(ncolstep) = 'h'
        dndim = 1./ndim
        where (dat(:,irho,j).gt.tiny(0.))
          dat(:,ih,j) = hfac*(dat(:,ipmass,j)/dat(:,irho,j))**dndim
        elsewhere
          dat(:,ih,j) = 0.
        end where
-       datasetnames(ncolstep) = 'h'
     endif
 !    read(iunit,*,iostat=ierr) (dat(i,icol,j),icol = 1,ncolstep)
     nstepsread = nstepsread + 1
-
-    npartoftype(:,j) = 0
-    npartoftype(1,j) = nprint
   enddo
 
   ierr = h5pt_close(ifile)
@@ -301,20 +469,18 @@ end subroutine read_data
 !!
 !!-------------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels()
   use asciiutils,      only:lcase
   use labels,          only:label,labeltype,ix,irho,ipmass,ih,iutherm, &
                             ipr,ivx,iBfirst,iamvec,labelvec,lenlabel
   !use params,          only:maxparttypes
-  use settings_data,   only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
+  use settings_data,   only:ndim,ndimV,UseTypeInRenderings
   use geometry,        only:labelcoord
   use system_utils,    only:ienvironment
   use h5partdataread
   implicit none
-  integer                 :: i,ierr,ndimVtemp,ndimset,ndim_max
-  character(len=120)      :: columnfile
+  integer                 :: i,ndimset,ndim_max
   character(len=lenlabel) :: labeli
-  logical                 :: iexist
   
   ndim = 0
   ndimV = 0
@@ -353,56 +519,67 @@ subroutine set_labels
   enddo
 
   if (ndim.lt.1) ndimV = 0
-  if (ndimset.gt.0) then
-     if (ndim.ne.ndimset) then
-        print "(2(a,i1))",' WARNING: ndim = ',ndimset, &
-                          ' from H5SPLASH_NDIM setting but coords not found in data: using ndim = ',ndim
+  if (warn_labels) then
+     if (ndimset.gt.0) then
+        if (ndim.ne.ndimset) then
+           print "(2(a,i1))",' WARNING: ndim = ',ndimset, &
+                             ' from H5SPLASH_NDIM setting but coords not found in data: using ndim = ',ndim
+        else
+           print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' from H5SPLASH_NDIM setting'     
+        endif
      else
-        print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' from H5SPLASH_NDIM setting'     
+        if (ndim.gt.0) print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' (set H5SPLASH_NDIM to override)'
      endif
-  else
-     if (ndim.gt.0) print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' (set H5SPLASH_NDIM to override)'
-  endif
-  if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
-  if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
-  if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
-  if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
-  if (iutherm.gt.0) print "(a,i2)",' Assuming thermal energy in column ',iutherm
-  if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
-  if (ivx.gt.0) then
-     if (ndimV.gt.1) then
-        print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1     
-     else
-        print "(a,i2)",' Assuming velocity in column ',ivx
+  
+     if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
+     if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
+     if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
+     if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
+     if (iutherm.gt.0) print "(a,i2)",' Assuming thermal energy in column ',iutherm
+     if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
+     if (ivx.gt.0) then
+        if (ndimV.gt.1) then
+           print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1     
+        else
+           print "(a,i2)",' Assuming velocity in column ',ivx
+        endif
      endif
-  endif
-  if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
-     print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
-                 '  until positions of density, smoothing length and particle', &
-                 '  mass are known (for the h5part read this means labelling ', &
-                 '  the dataset appropriately)'
-  endif
+     if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
+        print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
+                    '  until positions of density, smoothing length and particle', &
+                    '  mass are known (for the h5part read this means labelling ', &
+                    '  the dataset appropriately)'
+     endif
 
-  if (ivx.gt.0) then
-     iamvec(ivx:ivx+ndimV-1) = ivx
-     labelvec(ivx:ivx+ndimV-1) = 'v'
-     do i=1,ndimV
-       label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-     enddo
-  endif
-  if (iBfirst.gt.0) then
-     iamvec(iBfirst:iBfirst+ndimV-1) = ivx
-     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-     do i=1,ndimV
-       label(iBfirst+i-1) = 'B\d'//labelcoord(i,1)
-     enddo
+     !
+     !--assign vectors (don't do this on the first call otherwise it will remain assigned to the wrong columns)
+     !
+     if (ivx.gt.0) then
+        iamvec(ivx:ivx+ndimV-1) = ivx
+        labelvec(ivx:ivx+ndimV-1) = 'v'
+        do i=1,ndimV
+          label(ivx+i-1) = 'v\d'//labelcoord(i,1)
+        enddo
+     endif
+     if (iBfirst.gt.0) then
+        iamvec(iBfirst:iBfirst+ndimV-1) = ivx
+        labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
+        do i=1,ndimV
+          label(iBfirst+i-1) = 'B\d'//labelcoord(i,1)
+        enddo
+     endif
   endif
   !
   !--set labels for each particle type
-  !
-  ntypes = 1 !!maxparttypes
-  labeltype(1) = 'gas'
-  UseTypeInRenderings(1) = .true.
+  !  (for h5part this is done in the read_data routine)
+  !  
+  
+  !ntypes = 1 !!maxparttypes
+!  labeltype(1) = 'gas'
+!  labeltype(2) = 'gas'
+!  labeltype(3) = 'gas'
+!  labeltype(4) = 'gas'
+  UseTypeInRenderings(:) = .true.
   
  
 !-----------------------------------------------------------
