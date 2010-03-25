@@ -1,24 +1,4 @@
 #include "H5Part.h"
-#include "Underscore.h"
-
-#define F77NAME(a,b) b
-
-#ifdef CRAP
-#if defined(F77_SINGLE_UNDERSCORE)
-#define F77NAME(a,b) a
-#elif defined(F77_CRAY_UNDERSCORE)
-#define F77NAME(a,b) b
-#elif defined(F77_NO_UNDERSCORE)
-#else
-#error Error, no way to determine how to construct fortran bindings
-#endif
-#endif
-
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_writefileattrib_r8 F77NAME ( \
-	h5pt_writefileattrib_r8_, \
-	H5PT_WRITEFILEATTRIB_R8 )
-#endif
 
 h5part_int64_t
 h5pt_writefileattrib_r8 (
@@ -40,12 +20,6 @@ h5pt_writefileattrib_r8 (
 	return herr;
 }
 
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_readfileattrib_r8 F77NAME ( \
-	h5pt_readfileattrib_r8_, \
-	H5PT_READFILEATTRIB_R8 )
-#endif
-
 h5part_int64_t
 h5pt_readfileattrib_r8 (
 	h5part_int64_t *f,
@@ -64,12 +38,6 @@ h5pt_readfileattrib_r8 (
 	free ( name2 );
 	return herr;
 }
-
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_writefileattrib_r4 F77NAME ( \
-	h5pt_writefileattrib_r4_, \
-	H5PT_WRITEFILEATTRIB_R4 )
-#endif
 
 h5part_int64_t
 h5pt_writefileattrib_r4 (
@@ -91,12 +59,6 @@ h5pt_writefileattrib_r4 (
 	return herr;
 }
 
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_readfileattrib_r4 F77NAME ( \
-	h5pt_readfileattrib_r4_, \
-	H5PT_READFILEATTRIB_R4 )
-#endif
-
 h5part_int64_t
 h5pt_readfileattrib_r4 (
 	h5part_int64_t *f,
@@ -115,12 +77,6 @@ h5pt_readfileattrib_r4 (
 	free ( name2 );
 	return herr;
 }
-
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_writefileattrib_i8 F77NAME ( \
-	h5pt_writefileattrib_i8_, \
-	H5PT_WRITEFILEATTRIB_I8 )
-#endif
 
 h5part_int64_t
 h5pt_writefileattrib_i8 (
@@ -142,12 +98,6 @@ h5pt_writefileattrib_i8 (
 	return herr;
 }
 
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_readfileattrib_i8 F77NAME ( \
-	h5pt_readfileattrib_i8_, \
-	H5PT_READFILEATTRIB_I8 )
-#endif
-
 h5part_int64_t
 h5pt_readfileattrib_i8 (
 	h5part_int64_t *f,
@@ -166,12 +116,6 @@ h5pt_readfileattrib_i8 (
 	free ( name2 );
 	return herr;
 }
-
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_writefileattrib_i4 F77NAME ( \
-	h5pt_writefileattrib_i4_, \
-	H5PT_WRITEFILEATTRIB_I4 )
-#endif
 
 h5part_int64_t
 h5pt_writefileattrib_i4 (
@@ -193,12 +137,6 @@ h5pt_writefileattrib_i4 (
 	return herr;
 }
 
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_readfileattrib_i4 F77NAME ( \
-	h5pt_readfileattrib_i4_, \
-	H5PT_READFILEATTRIB_I4 )
-#endif
-
 h5part_int64_t
 h5pt_readfileattrib_i4 (
 	h5part_int64_t *f,
@@ -217,12 +155,6 @@ h5pt_readfileattrib_i4 (
 	free ( name2 );
 	return herr;
 }
-
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_writestepattrib_r8 F77NAME ( \
-	h5pt_writestepattrib_r8_, \
-	H5PT_WRITESTEPATTRIB_R8 )
-#endif
 
 h5part_int64_t
 h5pt_writestepattrib_r8 (
@@ -244,12 +176,6 @@ h5pt_writestepattrib_r8 (
 	return herr;
 }
 
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_readstepattrib_r8 F77NAME ( \
-	h5pt_readstepattrib_r8_, \
-	H5PT_READSTEPATTRIB_R8 )
-#endif
-
 h5part_int64_t
 h5pt_readstepattrib_r8 (
 	h5part_int64_t *f,
@@ -268,12 +194,6 @@ h5pt_readstepattrib_r8 (
 	free ( name2 );
 	return herr;
 }
-
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_writestepattrib_r4 F77NAME ( \
-	h5pt_writestepattrib_r4_, \
-	H5PT_WRITESTEPATTRIB_R4 )
-#endif
 
 h5part_int64_t
 h5pt_writestepattrib_r4 (
@@ -295,12 +215,6 @@ h5pt_writestepattrib_r4 (
 	return herr;
 }
 
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_readstepattrib_r4 F77NAME ( \
-	h5pt_readstepattrib_r4_, \
-	H5PT_READSTEPATTRIB_R4 )
-#endif
-
 h5part_int64_t
 h5pt_readstepattrib_r4 (
 	h5part_int64_t *f,
@@ -319,12 +233,6 @@ h5pt_readstepattrib_r4 (
 	free ( name2 );
 	return herr;
 }
-
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_writestepattrib_i8 F77NAME ( \
-	h5pt_writestepattrib_i8_, \
-	H5PT_WRITESTEPATTRIB_I8 )
-#endif
 
 h5part_int64_t
 h5pt_writestepattrib_i8 (
@@ -346,12 +254,6 @@ h5pt_writestepattrib_i8 (
 	return herr;
 }
 
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_readstepattrib_i8 F77NAME ( \
-	h5pt_readstepattrib_i8_, \
-	H5PT_READSTEPATTRIB_I8 )
-#endif
-
 h5part_int64_t
 h5pt_readstepattrib_i8 (
 	h5part_int64_t *f,
@@ -370,12 +272,6 @@ h5pt_readstepattrib_i8 (
 	free ( name2 );
 	return herr;
 }
-
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_writestepattrib_i4 F77NAME ( \
-	h5pt_writestepattrib_i4_, \
-	H5PT_WRITESTEPATTRIB_I4 )
-#endif
 
 h5part_int64_t
 h5pt_writestepattrib_i4 (
@@ -396,12 +292,6 @@ h5pt_writestepattrib_i4 (
 	free ( name2 );
 	return herr;
 }
-
-#if ! defined(F77_NO_UNDERSCORE)
-#define h5pt_readstepattrib_i4 F77NAME ( \
-	h5pt_readstepattrib_i4_, \
-	H5PT_READSTEPATTRIB_I4 )
-#endif
 
 h5part_int64_t
 h5pt_readstepattrib_i4 (
