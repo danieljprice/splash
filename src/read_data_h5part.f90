@@ -425,6 +425,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
        if (allocated(itypefile)) deallocate(itypefile)
     else
 !--only one particle type
+       ntypes = 1
        npartoftype(1,j) = nprint
     endif
 !
