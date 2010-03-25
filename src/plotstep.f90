@@ -22,9 +22,6 @@
 
 !------------------------------------------------------------------------
 !
-! This file is part of the SPLASH visualisation package for SPH.
-! (c) 2002-2009 Daniel Price
-!
 ! This is the core routine for the whole code.
 ! Drives the plotting pipeline, ie. calls all the routines which
 ! do the work.
@@ -79,7 +76,8 @@ contains
 subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot)
   use params
   use colours,            only:colour_set
-  use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,itoomre,iutherm,ipdf,ix,icolpixmap
+  use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,&
+                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap
   use limits,             only:lim,rangeset
   use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
                                nyplotmulti,x_secmulti,ivecplotmulti
@@ -102,13 +100,13 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use plotlib,            only:plot_init,plot_qcur,plot_pap,plot_scrn,plot_slw,plot_env,plot_curs,plot_band, &
                                plot_close,plot_qinf
   implicit none
-  real, parameter :: pi=3.1415926536
+  real, parameter     :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
-  integer :: i,j,ierr,ifirst,iplotzprev,ilen
-  logical :: iadapting,icoordplot,iallrendered,ians
-  real :: hav,pmassav,dzsuggest
-  character(len=1) :: char
-  character(len=20) :: devstring
+  integer             :: i,j,ierr,ifirst,iplotzprev,ilen
+  logical             :: iadapting,icoordplot,iallrendered,ians
+  real                :: hav,pmassav,dzsuggest
+  character(len=1)    :: char
+  character(len=20)   :: devstring
   
   !------------------------------------------------------------------------
   ! initialisations
@@ -178,7 +176,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
            enddo
         endif
      endif
-     if (any(irendermulti(1:nyplotmulti).gt.ndim)) iamrendering = .true.
+     if (any(irendermulti(1:nyplotmulti).gt.0)) iamrendering = .true.
      if (any(x_secmulti(1:nyplotmulti))) x_sec = .true.
   else
      !
@@ -188,29 +186,29 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      nyplots = 1 
      iploty = ipicky
      iplotx = ipickx
-     if (irender_nomulti.gt.ndim) iamrendering = .true.
+     if (irender_nomulti.gt.0) iamrendering = .true.
   endif
 
   !------------------------------------------------------------------------
   ! initialise options to be set before plotting
 
-  icoordplot = iploty.le.ndim .and. iplotx.le.ndim
+  icoordplot = is_coord(iploty,ndim) .and. is_coord(iplotx,ndim)
   iallrendered = iamrendering
   iplotz = 0
   if (imulti) then
      do i=1,nyplotmulti
-        if (multiplotx(i).le.ndim .and. multiploty(i).le.ndim) then
+        if (is_coord(multiplotx(i),ndim) .and. is_coord(multiploty(i),ndim)) then
            icoordplot = .true.
            !--this check is to see if any co-ordinate plots involve just particles
            !  (if so need to initialise the cross section slice width)
-           if (irendermulti(i).le.ndim) iallrendered = .false.
+           if (irendermulti(i).le.0) iallrendered = .false.
            iplotzprev = iplotz
            !!--work out coordinate that is not being plotted on cross-section/ 3D plots
            iplotz = 0
            if (ndim.ge.3 .and. (x_sec .or. use3Dperspective)) then
               do j=1,ndim
                  if ((multiplotx(i).ne.multiploty(i)).and. &
-                     (j.ne.multiplotx(i)).and.(j.ne.multiploty(i))) iplotz = j
+                     (ix(j).ne.multiplotx(i)).and.(ix(j).ne.multiploty(i))) iplotz = ix(j)
               enddo
               !--use only first iplotz in the case of multiple slices
               !  (only effect is on default values for slice thickness etc below)
@@ -223,7 +221,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      if (ndim.ge.3) then
         do j=1,ndim
            if ((iplotx.ne.iploty).and. &
-               (j.ne.iplotx).and.(j.ne.iploty)) iplotz = j
+               (ix(j).ne.iplotx).and.(ix(j).ne.iploty)) iplotz = ix(j)
         enddo
      endif
   endif
@@ -466,7 +464,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
    !!--if geometry is not default must read all coords 
    !!  and if we are plotting a vector component, all components
      if (icoordsnew.ne.icoords) then
-        required(1:ndim) = .true.
+        required(ix(1:ndim)) = .true.
         if (iplotx.gt.0 .and. iplotx.le.numplot) then
            if (iamvec(iplotx).gt.0) required(iamvec(iplotx):iamvec(iplotx)+ndimV-1) = .true.
         endif
@@ -485,15 +483,15 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   call read_titles(ntitles)
 
   !!------------------------------------------------------------------------
-  ! initialise PGPLOT
+  !! initialise the plotting library
 
-  !!--start PGPLOT (prompt for device)
-  if (len_trim(device).eq.0) then
+  !!--prompt for device
+  if (len_trim(device).le.0) then
      call plot_init('?',ierr)
   else
      call plot_init(trim(device),ierr)
      if (ierr.le.0) then  ! zero or negative indicates an error
-        print "(a)",' ERROR: unknown PGPLOT device "'//trim(device)//'"'
+        print "(a)",' ERROR: unknown device "'//trim(device)//'"'
         stop
      endif
   endif
@@ -504,7 +502,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      !  interactive device invoked from the command line
      if (nomenu) then
         interactive = .true.
-        nomenu=.false.
+        nomenu      = .false.
      endif
      !--smoothing length is required if interactive device and coordinate plot
      if (icoordplot) required(ih) = .true.
@@ -571,7 +569,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use toystar1D,          only:exact_toystar_ACplane
   use toystar2D,          only:exact_toystar_ACplane2D
   use labels,             only:label,labelvec,iamvec,lenlabel,ih,irho,ipmass,ix,iacplane, &
-                               ipowerspec,isurfdens,itoomre,iutherm,ipdf,icolpixmap
+                               ipowerspec,isurfdens,itoomre,iutherm,ipdf,icolpixmap,is_coord
   use limits,             only:lim,get_particle_subset,lim2,lim2set
   use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                                icontourmulti,x_secmulti,xsecposmulti
@@ -842,7 +840,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      !--if the contour plot is the same as the rendered plot,
      !  do not interpolate twice. Instead simply plot the contours
      !  of the rendered quantity when plotting the render plot.
-     if (irender.gt.ndim .and. irender.le.numplot) then
+     if (irender.gt.0 .and. irender.le.numplot) then
         if (icontourplot.eq.irender .and. isameweights) then
            icontourplot = 0
            iplotcont = .true.
@@ -900,7 +898,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      inity = (iploty.gt.0 .and. iploty.le.ndataplots)
      if (iplotx.gt.0 .and. iplotx.le.numplot) labelx = label(iplotx)
      if (iploty.gt.0 .and. iploty.le.numplot) labely = label(iploty)
-     iscoordplot = (iplotx.le.ndim .and. iploty.le.ndim)
+     iscoordplot = (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim))
 
      initdataplots: if (initx .or. inity) then
         if (debugmode) print*,'DEBUG: initialising data plots...',initx,inity,iplotx,iploty,ntoti,size(xplot)
@@ -961,7 +959,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--flag for whether or not we have raw particle plot or not
         !  (not allowed to use transformations on coords otherwise)
         !
-        rendering = (iscoordplot .and.(irenderplot.gt.ndim .or. ivectorplot.gt.0) &
+        rendering = (iscoordplot .and.(irenderplot.gt.0 .or. ivectorplot.gt.0) &
                      .and.(.not.icolour_particles))
         !
         !--change coordinate system if relevant
@@ -1045,7 +1043,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         if (ndim.ge.3) then
            do j=1,ndim
               if ((iplotx.ne.iploty).and. &
-                  (j.ne.iplotx).and.(j.ne.iploty)) iz = j
+                  (ix(j).ne.iplotx).and.(ix(j).ne.iploty)) iz = ix(j)
            enddo
         endif
         iplotz = iz ! this is used as cross sectioned quantity
@@ -1164,7 +1162,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy, &
                          pixwidth,inormalise)
                     !--also get contour plot data
-                    if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                    if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                        if (.not.isameweights) & ! set contouring weights as necessary
                           call set_weights(weight,dat,iamtype,UseTypeInContours)
  
@@ -1192,7 +1190,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dz, &
                          inormalise,isperiodic)
                     
-                    if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                    if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                        !!--allocate memory for 3D contouring array
                        if (allocated(datpixcont3D)) deallocate(datpixcont3D)
                        allocate ( datpixcont3D(npixx,npixy,npixz) )
@@ -1243,7 +1241,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            endif
 
            !------------take projections/cross sections through 3D data-----------------!
-           if (irenderplot.gt.ndim .and. ndim.eq.3) then
+           if (irenderplot.gt.0 .and. ndim.eq.3) then
 
               !!--allocate memory for 2D rendered array
               if (.not.interactivereplot) then
@@ -1287,7 +1285,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
                                ' : opacity-rendered cross section', xmin,ymin                    
                           if (ipmass.gt.0) then
-                             if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                             if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                                 if (.not.isameweights) & ! set contouring weights as necessary
                                    call set_weights(weight,dat,iamtype,UseTypeInContours)
 
@@ -1309,7 +1307,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos)
                           else
-                             if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                             if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                                 if (.not.isameweights) & ! set contouring weights as necessary
                                    call set_weights(weight,dat,iamtype,UseTypeInContours)
 
@@ -1345,7 +1343,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
                                inormalise)
                           !!--same but for contour plot
-                          if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                          if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                              if (.not.isameweights) & ! set contouring weights as necessary
                                 call set_weights(weight,dat,iamtype,UseTypeInContours)
 
@@ -1366,7 +1364,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           !!--do fast projection with opacity
                           if (ipmass.gt.0) then
                              !--contour plot first
-                             if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                             if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                                 if (.not.isameweights) & ! set contouring weights as necessary
                                    call set_weights(weight,dat,iamtype,UseTypeInContours)
 
@@ -1389,7 +1387,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                dzscreentemp,rkappa,huge(zslicepos))
                           else
                              !--do contour plot first so brightness corresponds to render plot
-                             if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                             if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                                 if (.not.isameweights) & ! set contouring weights as necessary
                                    call set_weights(weight,dat,iamtype,UseTypeInContours)
 
@@ -1419,7 +1417,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                inormalise,zobservertemp,dzscreentemp,ifastrender)
                           !!--same but for contour plot
-                          if (icontourplot.gt.ndim .and. icontourplot.le.numplot) then
+                          if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                              if (.not.isameweights) & ! set contouring weights as necessary
                                 call set_weights(weight,dat,iamtype,UseTypeInContours)
 
@@ -1447,7 +1445,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               endif ! whether 3D grid or fast renderings
 
               !-------------take cross sections through 2D data------------------!
-           elseif (irenderplot.gt.ndim .and. ndim.eq.2 .and. x_sec) then
+           elseif (irenderplot.gt.0 .and. ndim.eq.2 .and. x_sec) then
               !-------------------------------------------------------------------
               !  or do a fast cross section through 2D data to 1D array
               !-------------------------------------------------------------------
@@ -1700,7 +1698,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !------------------------------
            ! now actually plot the data
            !------------------------------
-           if (irenderplot.gt.ndim) then
+           if (irenderplot.gt.0) then
               if ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) then
 
                  !!--call subroutine to actually render the image
@@ -1890,8 +1888,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         ! not both coordinates - these are just particle plots
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-     elseif ((iploty.gt.ndim .or. iplotx.gt.ndim)  &
-          .and.(iploty.le.ndataplots .and. iplotx.le.ndataplots)) then
+     elseif ((.not.iscoordplot).and.(iploty.le.ndataplots .and. iplotx.le.ndataplots)) then
 
         if (debugmode) print*,'DEBUG: starting particle plot...'
         !
@@ -2725,6 +2722,7 @@ contains
     use shapes,        only:nshapes,plot_shapes
     use pagesetup,     only:xlabeloffset
     use plotlib,       only:plot_qci,plot_sci,plot_annotate
+    use labels,        only:is_coord
     implicit none
     integer :: icoloursave
     character(len=lensteplegend) :: steplegendtext
@@ -2827,7 +2825,7 @@ contains
     
     !--scale on co-ordinate plots
     if (iPlotScale .and. (iscalepanel.eq.0 .or. ipanel.eq.iscalepanel) &
-                   .and. any(ix(1:ndim).eq.iplotx) .and. any(ix(1:ndim).eq.iploty)) then
+                   .and. is_coord(iplotx,ndim) .and. is_coord(iploty,ndim)) then
 
        !--change to background colour index if title is overlaid
        if (iUseBackGroundColourForAxes .and. vposscale.gt.0.) call plot_sci(0)
@@ -3324,18 +3322,18 @@ end subroutine applytrans
 !-------------------------------------------------------------------
 subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,yploti,zploti, &
                                   ntot,iplotx,iploty,iplotz,dat,ivecstart,vecploti)
-  use labels, only:ix
-  use settings_data, only:ndim,xorigin,itrackpart
+  use labels,           only:ix
+  use settings_data,    only:ndim,xorigin,itrackpart
   use settings_xsecrot, only:use3Dperspective
-  use rotation, only:rotate2D,rotate3D
+  use rotation,         only:rotate2D,rotate3D
   implicit none
-  real, intent(in) :: anglexi,angleyi,anglezi,dzscreen,zobs
+  real,                 intent(in)  :: anglexi,angleyi,anglezi,dzscreen,zobs
   real, dimension(:), intent(inout) :: xploti,yploti,zploti
-  real, dimension(:,:), intent(in) :: dat
+  real, dimension(:,:), intent(in)  :: dat
   real, dimension(:,:), intent(out) :: vecploti
-  integer, intent(in) :: ntot,iplotx,iploty,iplotz,ivecstart
-  integer :: j
-  real :: angleradx,anglerady,angleradz
+  integer,              intent(in)  :: ntot,iplotx,iploty,iplotz,ivecstart
+  integer               :: j,iposx,iposy,iposz,i
+  real                  :: angleradx,anglerady,angleradz
   real, dimension(ndim) :: xcoords,veci
   !
   !--convert angles to radians
@@ -3362,10 +3360,31 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
   endif
 
   if (ivecstart.gt.0) print "(1x,a)",'(also rotating vector components)'
+  !
+  !--set location of x,y and z
+  !  such that:
+  !  ix(iposx) = iplotx 
+  !  ix(iposy) = iploty
+  !  ix(iposz) = iplotz
+  !
+  iposx = 1  ! this is "just in case"
+  iposy = 2
+  iposz = 3
+  do i=1,ndim
+     if (ix(i).eq.iplotx) then
+        iposx = i
+     elseif (ix(i).eq.iploty) then
+        iposy = i
+     elseif (ix(i).eq.iplotz) then
+        iposz = i
+     else
+        print "(a)",' WARNING: internal error in ix setting for rotation: ix = ',ix(:)
+     endif
+  enddo
 
 !$omp parallel default(none) &
 !$omp shared(dat,xorigin,ndim,angleradx,anglerady,angleradz,zobs,dzscreen) &
-!$omp shared(xploti,yploti,zploti,iplotx,iploty,iplotz,ntot,ix,itrackpart) &
+!$omp shared(xploti,yploti,zploti,iposx,iposy,iposz,ntot,ix,itrackpart) &
 !$omp shared(vecploti,ivecstart) &
 !$omp private(j,xcoords,veci)
 !$omp do
@@ -3381,16 +3400,16 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
         call rotate3D(xcoords(1:ndim),angleradx,anglerady,angleradz,zobs,dzscreen)
      endif
      if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
-        xploti(j) = xcoords(iplotx) + dat(itrackpart,ix(iplotx))
-        yploti(j) = xcoords(iploty) + dat(itrackpart,ix(iploty))
+        xploti(j) = xcoords(iposx) + dat(itrackpart,ix(iposx))
+        yploti(j) = xcoords(iposy) + dat(itrackpart,ix(iposy))
         if (iplotz.gt.0) then
-           zploti(j) = xcoords(iplotz) + dat(itrackpart,ix(iplotz))
+           zploti(j) = xcoords(iposz) + dat(itrackpart,ix(iposz))
         endif     
      else
-        xploti(j) = xcoords(iplotx) + xorigin(iplotx)
-        yploti(j) = xcoords(iploty) + xorigin(iploty)
+        xploti(j) = xcoords(iposx) + xorigin(iposx)
+        yploti(j) = xcoords(iposy) + xorigin(iposy)
         if (iplotz.gt.0) then
-           zploti(j) = xcoords(iplotz) + xorigin(iplotz)
+           zploti(j) = xcoords(iposz) + xorigin(iposz)
         endif
      endif
 !
@@ -3403,8 +3422,8 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
         elseif (ndim.eq.3) then
            call rotate3D(veci(1:ndim),angleradx,anglerady,angleradz,zobs,dzscreen)
         endif
-        vecploti(1,j) = veci(iplotx)
-        vecploti(2,j) = veci(iploty)
+        vecploti(1,j) = veci(iposx)
+        vecploti(2,j) = veci(iposy)
      endif
   enddo
 !$omp end do
