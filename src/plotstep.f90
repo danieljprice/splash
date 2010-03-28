@@ -3384,7 +3384,7 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
 
 !$omp parallel default(none) &
 !$omp shared(dat,xorigin,ndim,angleradx,anglerady,angleradz,zobs,dzscreen) &
-!$omp shared(xploti,yploti,zploti,iposx,iposy,iposz,ntot,ix,itrackpart) &
+!$omp shared(xploti,yploti,zploti,iposx,iposy,iposz,iplotz,ntot,ix,itrackpart) &
 !$omp shared(vecploti,ivecstart) &
 !$omp private(j,xcoords,veci)
 !$omp do
