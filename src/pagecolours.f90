@@ -70,11 +70,11 @@ subroutine set_pagecolours(ischeme)
 
  select case(ischeme)
  case(2) !--white-on-black
-    call plot_scr(0,1.,1.,1.)
-    call plot_scr(1,0.,0.,0.)
- case(1) !--black-on-white
     call plot_scr(0,0.,0.,0.)
     call plot_scr(1,1.,1.,1.)
+ case(1) !--black-on-white
+    call plot_scr(0,1.,1.,1.)
+    call plot_scr(1,0.,0.,0.)
  end select
 
 end subroutine set_pagecolours
