@@ -16,6 +16,7 @@ module plotlib
       plot_page=>giza_change_page, &
       plot_slw=>giza_set_line_width, &
       giza_open_device, &
+      giza_open_device_size, &
       plot_sch=>giza_set_character_height, &
       plot_qch=>giza_get_character_height, &
       plot_scf=>giza_set_font, &
@@ -65,17 +66,27 @@ end function plot_lib_is_pgplot
 !---------------------------------------------
 ! initialise the plotting library
 !---------------------------------------------
-subroutine plot_init(devicein, ierr)
+subroutine plot_init(devicein, ierr, papersizex, aspectratio)
  implicit none
 
  character(len=*),intent(in) :: devicein
  integer,intent(out)         :: ierr
+ real, intent(in), optional  :: papersizex,aspectratio
  integer                     :: ilen
  character(len=20)           :: string
+ real                        :: widthcm,heightcm
+ real, parameter             :: inch_to_cm = 2.54
 
  string = 'splash'
- if (devicein(1:1).eq.'?') then
-    ierr = giza_open_device(devicein,'splash')
+ 
+ if (present(papersizex)) then
+    widthcm = papersizex*inch_to_cm
+    if (present(aspectratio)) then
+       heightcm = widthcm*aspectratio
+    else
+       heightcm = widthcm/sqrt(2.)
+    endif
+    ierr = giza_open_device_size(devicein, 'splash', widthcm, heightcm)
  else
     ierr = giza_open_device(devicein,'splash')
  endif

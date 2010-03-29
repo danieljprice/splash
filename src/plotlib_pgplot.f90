@@ -449,12 +449,14 @@ end function plot_lib_is_pgplot
 !---------------------------------------------
 ! initialise the plotting library
 !---------------------------------------------
-subroutine plot_init(devicein, ierr)
+subroutine plot_init(devicein, ierr, papersizex, aspectratio)
  implicit none
 
  character*(*), intent(in)    :: devicein
  integer, intent(out)         :: ierr
+ real, intent(in), optional   :: papersizex,aspectratio
  integer                      :: pgopen
+ real :: aspect
 
  if (devicein(1:1).eq.'?') then
     call pgbegin(0,'?',1,1)
@@ -462,9 +464,14 @@ subroutine plot_init(devicein, ierr)
  else
     ierr = pgopen(devicein)
  endif
- !--check if there is an error 
- if (ierr.le.0) return  ! zero or negative indicates an error
-
+ !--check if there is an error
+ !  (be careful here: from PGPLOT zero or -ve indicates an error)
+ if (ierr.le.0) then
+    if (ierr.eq.0) ierr = -1   !--make sure we return an error
+    return
+ else
+    ierr = 0
+ endif
  !-- Turn off promting
  call pgask(.false.)
 
@@ -476,6 +483,16 @@ subroutine plot_init(devicein, ierr)
 !  case default
 !     plot_deviceisvector = .false.
 !  end select
+
+ !-- set paper size if given
+ if (present(papersizex)) then
+    if (present(aspectratio)) then
+       aspect = aspectratio
+    else
+       aspect = sqrt(2.)
+    endif
+    call plot_pap(papersizex,aspect)
+ endif
 
 end subroutine plot_init
 
