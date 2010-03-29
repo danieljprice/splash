@@ -485,15 +485,22 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   !!------------------------------------------------------------------------
   !! initialise the plotting library
 
-  !!--prompt for device
   if (len_trim(device).le.0) then
-     call plot_init('?',ierr)
+     devstring = '?'           ! prompt for device
   else
-     call plot_init(trim(device),ierr)
-     if (ierr.le.0) then  ! zero or negative indicates an error
-        print "(a)",' ERROR: unknown device "'//trim(device)//'"'
-        stop
-     endif
+     devstring = trim(device)  ! device specified on command line
+  endif
+  
+  if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
+     call plot_init(trim(devstring),ierr,papersizex,aspectratio)
+  else
+     call plot_init(trim(devstring),ierr)  ! use default paper size
+  endif
+  
+  !--abort if device specified on command line returns an error
+  if (len_trim(device).gt.0 .and. ierr.ne.0) then  ! -ve indicates an error
+     print "(a)",' ERROR: unknown device "'//trim(device)//'"'
+     stop
   endif
   
   !--query whether or not device is interactive
@@ -508,10 +515,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      if (icoordplot) required(ih) = .true.
   endif
 
-  !!--set paper size if necessary
-  if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
-     call plot_pap(papersizex,aspectratio)
-  endif
+  !!--set paper size if necessary (NOW OBSOLETE, see above)
+  !if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
+  !   call plot_pap(papersizex,aspectratio)
+  !endif
   !!--turn off page prompting
 !  call pgask(.false.)
   !!if (.not. interactive) call pgbbuf !! start buffering output
@@ -2644,6 +2651,12 @@ contains
           iplots = iplotsave
           ipanel = ipanelsave
           return
+       elseif (.not.ipagechange .and. .not.inewpage .and. .not.iplots.eq.1) then
+       !--if we are not changing page, do not reprint the axes
+          call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
+                  trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp, &
+                  xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
+                  0.0,TitleOffset,isamexaxis,tile_plots)       
        else
           call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
                   trim(labelx),trim(labely),' ',just,iaxistemp, &
