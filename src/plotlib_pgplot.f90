@@ -15,15 +15,21 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
 
 !---------------------------------------------------------------------------
-! module containing application programming interfaces for basic
-! plotting functions. The idea is to add more to this module to
-! eventually use it to be able to change backends more easily.
+!  The plotlib module in SPLASH provides a consistent api so that SPLASH
+!  can be compiled against different graphics libraries as the backend
+!
+!  This version provides an interface to Tim Pearson's PGPLOT, 
+!   which was the original backend used in SPLASH v1.x. Thus,
+!   the functions mostly translate directly to PGPLOT equivalents,
+!   and basically this is a Fortran 90 interface for PGPLOT. 
+!
+! Interface written by James Wetter and Daniel Price (2010)
 !---------------------------------------------------------------------------
 module plotlib 
   implicit none
@@ -31,77 +37,77 @@ module plotlib
 public
 
 interface plot_qci
-   SUBROUTINE PGQCI (CI)
-     INTEGER,intent(out) ::  CI
-   end SUBROUTINE PGQCI
+   subroutine PGQCI (CI)
+     integer,intent(out) ::  CI
+   end subroutine PGQCI
 end interface
 
 interface plot_qlw
-   SUBROUTINE PGQLW (LW)
-     INTEGER,intent(out) :: LW
-   end SUBROUTINE PGQLW
+   subroutine PGQLW (LW)
+     integer,intent(out) :: LW
+   end subroutine PGQLW
 end interface
 
 interface plot_qcr
-   SUBROUTINE PGQCR (CI, CR, CG, CB)
-      INTEGER,intent(in) :: CI
-      REAL,intent(out)   :: CR, CG, CB
-    end SUBROUTINE PGQCR
+   subroutine PGQCR (CI, CR, CG, CB)
+      integer,intent(in) :: CI
+      real,intent(out)   :: CR, CG, CB
+    end subroutine PGQCR
  end interface
 
 interface plot_qvp
-   SUBROUTINE PGQVP (UNITS, X1, X2, Y1, Y2)
-     INTEGER,intent(in) :: UNITS
-     REAL,intent(out)   :: X1, X2, Y1, Y2
-   end SUBROUTINE PGQVP
+   subroutine PGQVP (UNITS, X1, X2, Y1, Y2)
+     integer,intent(in) :: UNITS
+     real,intent(out)   :: X1, X2, Y1, Y2
+   end subroutine PGQVP
 end interface
 
 interface plot_qwin
-   SUBROUTINE PGQWIN (X1, X2, Y1, Y2)
-     REAL,intent(out) :: X1, X2, Y1, Y2
-   end SUBROUTINE PGQWIN
+   subroutine PGQWIN (X1, X2, Y1, Y2)
+     real,intent(out) :: X1, X2, Y1, Y2
+   end subroutine PGQWIN
 end interface
 
 interface plot_ebuf
-   SUBROUTINE PGEBUF
-   end SUBROUTINE PGEBUF
+   subroutine PGEBUF
+   end subroutine PGEBUF
 end interface
 
 interface plot_bbuf
-   SUBROUTINE PGBBUF
-   end SUBROUTINE PGBBUF
+   subroutine PGBBUF
+   end subroutine PGBBUF
 end interface
 
 interface plot_qcs
-   SUBROUTINE PGQCS(UNITS, XCH, YCH)
-     INTEGER,intent(in) :: UNITS
-     REAL,intent(out)   :: XCH, YCH
-   end SUBROUTINE PGQCS
+   subroutine PGQCS(UNITS, XCH, YCH)
+     integer,intent(in) :: UNITS
+     real,intent(out)   :: XCH, YCH
+   end subroutine PGQCS
 end interface
 
 interface plot_annotate
-   SUBROUTINE PGMTXT (SIDE, DISP, COORD, FJUST, TEXT)
-     CHARACTER(len=*),intent(in) :: SIDE, TEXT
-     REAL,intent(in)             :: DISP, COORD, FJUST
-   end SUBROUTINE PGMTXT
+   subroutine PGMTXT (SIDE, DISP, COORD, FJUST, TEXT)
+     character(len=*),intent(in) :: SIDE, TEXT
+     real,intent(in)             :: DISP, COORD, FJUST
+   end subroutine PGMTXT
 end interface
 
 interface plot_sch
-   SUBROUTINE PGSCH (SIZE)
-     REAL,intent(in) :: SIZE
-   end SUBROUTINE PGSCH
+   subroutine PGSCH (SIZE)
+     real,intent(in) :: SIZE
+   end subroutine PGSCH
 end interface
 
 interface plot_sci
-   SUBROUTINE PGSCI (CI)
-     INTEGER,intent(in) :: CI
-   end SUBROUTINE PGSCI
+   subroutine PGSCI (CI)
+     integer,intent(in) :: CI
+   end subroutine PGSCI
 end interface
 
 interface plot_slw
-   SUBROUTINE PGSLW (LW)
-     INTEGER,intent(in) :: lw
-   end SUBROUTINE PGSLW
+   subroutine PGSLW (LW)
+     integer,intent(in) :: lw
+   end subroutine PGSLW
 end interface
 
 interface plot_page
@@ -110,13 +116,13 @@ interface plot_page
 end interface
 
 interface plot_close
-   SUBROUTINE PGEND
-   end SUBROUTINE PGEND
+   subroutine PGEND
+   end subroutine PGEND
 end interface
 
 interface plot_svp
    subroutine pgsvp(XLEFT, XRIGHT, YBOT, YTOP)
-     REAL,intent(in) :: XLEFT, XRIGHT, YBOT, YTOP
+     real,intent(in) :: XLEFT, XRIGHT, YBOT, YTOP
    end subroutine pgsvp
 end interface
 
@@ -134,8 +140,8 @@ end interface
 
 interface plot_qvsz
    subroutine PGQVSZ (UNITS, X1, X2, Y1, Y2)
-     INTEGER,intent(in) :: UNITS
-     REAL,intent(out)   :: X1, X2, Y1, Y2
+     integer,intent(in) :: UNITS
+     real,intent(out)   :: X1, X2, Y1, Y2
    end subroutine PGQVSZ
 end interface
 
@@ -148,30 +154,29 @@ end interface
 
 interface plot_box
    subroutine pgbox(XOPT, XTICK, NXSUB, YOPT, YTICK, NYSUB)
-     CHARACTER*(*),intent(in) :: XOPT, YOPT
-     REAL,intent(in)          :: XTICK, YTICK
-     INTEGER,intent(in)       :: NXSUB, NYSUB
+     character*(*),intent(in) :: XOPT, YOPT
+     real,intent(in)          :: XTICK, YTICK
+     integer,intent(in)       :: NXSUB, NYSUB
    end subroutine pgbox
 end interface
 
 interface plot_scr
-   SUBROUTINE PGSCR (CI, CR, CG, CB)
-     INTEGER, intent(in) :: CI
-     REAL, intent(in)    :: CR, CG, CB
+   subroutine PGSCR (CI, CR, CG, CB)
+     integer, intent(in) :: CI
+     real, intent(in)    :: CR, CG, CB
    end subroutine pgscr
 end interface
 
 interface plot_bins
-   SUBROUTINE PGBIN (NBIN, X, DATA, CENTER)
-     INTEGER,intent(in) :: NBIN
-     REAL,intent(in)    :: X(*), DATA(*)
+   subroutine PGBIN (NBIN, X, DATA, CENTER)
+     integer,intent(in) :: NBIN
+     real,intent(in)    :: X(*), DATA(*)
      LOGICAL,intent(in) :: CENTER
-   end SUBROUTINE PGBIN
+   end subroutine PGBIN
 end interface
 
 interface plot_imag
-   subroutine pgimag(a, idim, jdim, i1, i2, j1, j2,&
-        a1, a2, tr)
+   subroutine pgimag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
      integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
      real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
    end subroutine pgimag
@@ -270,7 +275,6 @@ interface plot_curs
  !    real,intent(inout)             :: x,y 
  !    character*(*),intent(out) :: ch
  !  end function pgcurs
-
    module procedure pgcurs_sub
 end interface
 
@@ -330,7 +334,6 @@ end interface
 
 interface plot_pt1
    subroutine pgpt1(xpt,ypt,symbol)
- 
      real,intent(in)     :: xpt,ypt
      integer,intent(in)  :: symbol
    end subroutine pgpt1
@@ -374,8 +377,7 @@ interface plot_errb
 end interface
 
 interface plot_conb
-   subroutine pgconb(a,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
-     blank)
+   subroutine pgconb(a,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
      integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
      real,intent(in)    :: a(idim,jdim),c(*),tr(6),blank
    end subroutine pgconb
@@ -389,8 +391,7 @@ interface plot_cons
 end interface
 
 interface plot_conl
-   subroutine pgconl(a,idim,jdim,i1,i2,j1,j2,c,tr, &
-        label,intval,mininit)
+   subroutine pgconl(a,idim,jdim,i1,i2,j1,j2,c,tr,label,intval,mininit)
      integer,intent(in)          :: idim,jdim,i1,i2,j1,j2,intval,mininit
      real,intent(in)             :: a(idim,jdim),c,tr(6)
      character(len=*),intent(in) :: label
@@ -405,16 +406,14 @@ interface plot_sah
 end interface
 
 interface plot_vect
-   subroutine pgvect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
-        blank)
+   subroutine pgvect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
      integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
      real,intent(in)    :: a(idim,jdim),b(idim,jdim),tr(6),blank,c
    end subroutine pgvect
 end interface
 
 interface plot_pixl
-   subroutine pgpixl(ia,idim,jdim,i1,i2,j1,j2, &
-        x1,x2,y1,y2)
+   subroutine pgpixl(ia,idim,jdim,i1,i2,j1,j2,x1,x2,y1,y2)
      integer,intent(in) :: idim,jdim,i1,i2,j1,j2
      integer,intent(in) :: ia(idim,jdim)
      real,intent(in)    :: x1,x2,y1,y2
@@ -474,15 +473,6 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio)
  endif
  !-- Turn off promting
  call pgask(.false.)
-
- !-- Check if it is a vector device
-!  call pgqinf('TYPE',string,ilen)
-!  select case(string(1:ilen))
-!  case('PS','CPS','VPS','VCPS','NULL','LATEX')
-!     plot_deviceisvector = .true.
-!  case default
-!     plot_deviceisvector = .false.
-!  end select
 
  !-- set paper size if given
  if (present(papersizex)) then
