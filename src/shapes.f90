@@ -456,6 +456,7 @@ use plotlib, only:plot_stbg,plot_ptxt,plot_curs
  oldstring = string
  i = max(len_trim(string)+1,1)
  call plot_ptxt(xpt,ypt,angle,0.,string(1:i)//'_')
+
  xpt2 = xpt
  ypt2 = ypt
  call plot_curs(xpt2,ypt2,mychar)
@@ -468,6 +469,11 @@ use plotlib, only:plot_stbg,plot_ptxt,plot_curs
        call plot_ptxt(xpt,ypt,angle,0.,string(1:i))
        string(i:i) = ' '
     else
+       if (trim(string).eq.'click to edit') then
+          !print*,'erasing string'
+          string = ' '
+          i = 1
+       endif
        string(i:i) = mychar
        call plot_ptxt(xpt,ypt,angle,0.,string(1:i))
        i = min(i + 1,len(string))
