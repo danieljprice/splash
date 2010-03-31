@@ -2786,7 +2786,8 @@ contains
        !--change to background colour index for legend text if overlaid
        if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call plot_sci(0)
 
-       call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend)
+       if (istepsonpage.eq.1) &
+          call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend)
     endif
 
     !--line/marker style/colour legend for multiple timesteps on same page
@@ -2847,7 +2848,8 @@ contains
     endif
     
     !--plot shapes
-    if (nshapes.gt.0) call plot_shapes(ipanel,irow,icolumn,itrans(iplotx),itrans(iploty))
+    if (nshapes.gt.0 .and. istepsonpage.eq.1) &
+       call plot_shapes(ipanel,irow,icolumn,itrans(iplotx),itrans(iploty))
     
     !--restore colour index
     call plot_sci(icoloursave)
