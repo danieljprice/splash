@@ -170,6 +170,8 @@ subroutine plot_bins(nbin,x,data,centre)
   real, dimension(nbin) :: x, data
   logical :: centre
 
+  print*,' WARNING: plot_bins not implemented in giza'
+
 end subroutine plot_bins
 
 subroutine plot_qvp(units, x1, x2, y1, y2)
@@ -223,11 +225,17 @@ end subroutine plot_scir
 subroutine plot_rect(x1,x2,y1,y2)
   implicit none     
   real,intent(in) :: x1,x2,y1,y2
+
+  print*,' WARNING: plot_rect not implemented in giza'
+
 end subroutine plot_rect
 
 subroutine plot_arro(x1,y1,x2,y2)
   implicit none
   real,intent(in) :: x1,y1,x2,y2
+
+  print*,' WARNING: plot_arro not implemented in giza'
+
 end subroutine plot_arro
 
 subroutine plot_qtxt(x,y,angle,fjust,text,xbox,ybox)
@@ -245,6 +253,9 @@ end subroutine plot_qtxt
 subroutine plot_stbg(bg)
   implicit none
   integer,intent(in) :: bg
+
+  print*,' WARNING: plot_stbg not implemented in giza'
+
 end subroutine plot_stbg
 
 subroutine plot_funx(fx,n,ymin,ymax,pgflags)
