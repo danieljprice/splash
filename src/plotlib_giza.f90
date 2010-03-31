@@ -1,7 +1,36 @@
+!-----------------------------------------------------------------
+!
+!  This file is (or was) part of SPLASH, a visualisation tool 
+!  for Smoothed Particle Hydrodynamics written by Daniel Price:
+!
+!  http://users.monash.edu.au/~dprice/splash
+!
+!  SPLASH comes with ABSOLUTELY NO WARRANTY.
+!  This is free software; and you are welcome to redistribute
+!  it under the terms of the GNU General Public License
+!  (see LICENSE file for details) and the provision that
+!  this notice remains intact. If you modify this file, please
+!  note section 2a) of the GPLv2 states that:
+!
+!  a) You must cause the modified files to carry prominent notices
+!     stating that you changed the files and the date of any change.
+!
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
+!  Contact: daniel.price@sci.monash.edu.au
+!
+!-----------------------------------------------------------------
+
 !---------------------------------------------------------------------------
-! module containing application programming interfaces for basic
-! plotting functions. The idea is to add more to this module to
-! eventually use it to be able to change backends more easily.
+!  The plotlib module in SPLASH provides a consistent api so that SPLASH
+!  can be compiled against different graphics libraries as the backend
+!
+!  This version provides an interface to giza, a plotting
+!   library written by Daniel Price & James Wetter.
+!
+!  Giza implements basic 2D plotting functionality 
+!  on top of the cairo graphics library
+!
+! Interface written by James Wetter and Daniel Price (2010)
 !---------------------------------------------------------------------------
 module plotlib 
   use giza, only: &
@@ -45,7 +74,10 @@ module plotlib
       giza_render, &
       plot_wnad=>giza_set_window_equal_scale, &
       plot_pt1=>giza_single_point, &
-      plot_pt=>giza_points
+      plot_pt=>giza_points, &
+      plot_errb=>giza_error_bars, &
+      plot_sfs=>giza_set_fill, &
+      plot_qfs=>giza_get_fill
   implicit none
   character(len=1), parameter :: left_click = 'A'
   
@@ -188,23 +220,6 @@ subroutine plot_scir(icilo, icihi)
 
 end subroutine plot_scir
 
-subroutine plot_qfs(fs)
-  implicit none
-  integer,intent(out) :: fs
-
-  print*,' WARNING: plot_qfs not implemented in giza'
-  fs = 0
-
-end subroutine plot_qfs
-
-subroutine plot_sfs(fs)
-  implicit none
-  integer,intent(in) :: fs
-
-  print*,' WARNING: plot_sfs not implemented in giza'
-
-end subroutine plot_sfs
-
 subroutine plot_rect(x1,x2,y1,y2)
   implicit none     
   real,intent(in) :: x1,x2,y1,y2
@@ -312,6 +327,7 @@ subroutine plot_text(x,y,text)
   character(len=*),intent(in) :: text
 
   call plot_ptxt(x,y,0.,0.,text)
+
 end subroutine plot_text
 
 subroutine plot_err1(dir,x,y,e,t)
@@ -319,26 +335,32 @@ subroutine plot_err1(dir,x,y,e,t)
   integer,intent(in) :: dir
   real,intent(in)    :: x,y,e
   real,intent(in)    :: t
+  real, dimension(1) :: xi,yi,ei
+  
+  xi(1) = x
+  yi(1) = y
+  ei(1) = e
+  call plot_errb(dir,1,xi,yi,ei,t)
+  
 end subroutine plot_err1
-
-subroutine plot_errb(dir,n,x,y,e,t)
-  implicit none
-  integer,intent(in) :: dir,n
-  real,intent(in)    :: x(n),y(n),e(n)
-  real,intent(in)    :: t
-end subroutine plot_errb
 
 subroutine plot_conb(a,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
      blank)
   implicit none
   integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
   real,intent(in)    :: a(idim,jdim),c(*),tr(6),blank
+
+  print*,' WARNING: plot_conb not implemented in giza'
+
 end subroutine plot_conb
 
 subroutine plot_cons(a,idim,jdim,i1,i2,j1,j2,c,nc,tr)
   implicit none
   integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
   real,intent(in)    :: a(idim,jdim),c(*),tr(6)
+  
+  print*,' WARNING: plot_cons not implemented in giza'
+
 end subroutine plot_cons
 
 subroutine plot_conl(a,idim,jdim,i1,i2,j1,j2,c,tr, &
@@ -347,12 +369,18 @@ subroutine plot_conl(a,idim,jdim,i1,i2,j1,j2,c,tr, &
   integer,intent(in)          :: idim,jdim,i1,i2,j1,j2,intval,mininit
   real,intent(in)             :: a(idim,jdim),c,tr(6)
   character(len=*),intent(in) :: label
+
+  print*,' WARNING: plot_conl not implemented in giza'
+
 end subroutine plot_conl
 
 subroutine plot_sah(fs, angle, cutback)
   implicit none
   integer, intent(in) :: fs
   real, intent(in)    :: angle, cutback
+  
+  print*,' WARNING: plot_sah not implemented in giza'
+
 end subroutine plot_sah
 
 subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
@@ -360,6 +388,9 @@ subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
   implicit none
   integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
   real,intent(in)    :: a(idim,jdim),b(idim,jdim),tr(6),blank,c
+
+  print*,' WARNING: plot_vect not implemented in giza'
+
 end subroutine plot_vect
 
 subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2, &
@@ -368,17 +399,26 @@ subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2, &
   integer,intent(in) :: idim,jdim,i1,i2,j1,j2
   integer,intent(in) :: ia(idim,jdim)
   real,intent(in)    :: x1,x2,y1,y2
+
+  print*,' WARNING: plot_env not implemented in giza'
+
 end subroutine plot_pixl
 
 subroutine plot_env(xmin,xmax,ymin,ymax,just,axis)
   implicit none
   real,intent(in)    :: xmin,xmax,ymin,ymax
   integer,intent(in) :: just,axis
+
+  print*,' WARNING: plot_env not implemented in giza'
+
 end subroutine plot_env
 
 subroutine plot_pap(width,aspect)
   implicit none
   real,intent(in) :: width,aspect
+
+  print*,' WARNING: plot_pap not implemented in giza'
+
 end subroutine plot_pap
 
 !
