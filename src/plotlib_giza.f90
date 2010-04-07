@@ -138,8 +138,8 @@ subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2,&
   affine(2) = TR(3)
   affine(3) = TR(5)
   affine(4) = TR(6)
-  affine(5) = TR(1)
-  affine(6) = TR(4)
+  affine(5) = TR(1) + 0.5 * TR(2)
+  affine(6) = TR(4) + 0.5 * TR(2)
 
   !print *, idim, jdim, i1, i2
 
@@ -204,8 +204,8 @@ end subroutine plot_qcs
 subroutine plot_qcol(icolmin,icolmax)
   integer,intent(out) :: icolmin,icolmax
 
-  icolmax = 0
-  icolmin = 20
+  icolmin = 0
+  icolmax = 20
 end subroutine plot_qcol
 
 subroutine plot_qcir(icolmin,icolmax)
