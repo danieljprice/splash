@@ -34,7 +34,7 @@ X11LIBS= -L/usr/X11R6/lib -lX11
 #--------------------------------------------------------------
 ifeq ($(BACKEND), giza)
 #-- C A I R O --
-   PLOTLIB= ${GIZAOBJ} giza-fortran.f90 plotlib_giza.f90
+   PLOTLIB= ${GIZAOBJ} giza-fortran.F90 plotlib_giza.f90
    PGPLOTLIBS = -lcairo
    CFLAGS=-g -Wall -Wextra -I../giza/src/ -I/usr/X11/include
    CC = gcc

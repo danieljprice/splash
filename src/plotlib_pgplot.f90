@@ -36,6 +36,8 @@ module plotlib
   
 public
 
+character(len=1),parameter :: plot_left_click = 'A'
+
 interface plot_qci
    subroutine PGQCI (CI)
      integer,intent(out) ::  CI

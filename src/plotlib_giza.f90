@@ -77,10 +77,12 @@ module plotlib
       plot_pt=>giza_points, &
       plot_errb=>giza_error_bars, &
       plot_sfs=>giza_set_fill, &
-      plot_qfs=>giza_get_fill
+      plot_qfs=>giza_get_fill, &
+      giza_left_click_f, &
+      plot_band=>giza_band
   implicit none
-  character(len=1), parameter :: left_click = 'A'
   
+  character(len=1),parameter :: plot_left_click = giza_left_click_f
 public
 
 contains
@@ -307,18 +309,6 @@ subroutine plot_qinf(item,value,length)
   length = 0
 
 end subroutine plot_qinf
-
-subroutine plot_band(mode,posn,xref,yref,x,y,ch)
-  implicit none
-  integer,intent(in) :: mode,posn
-  real,intent(in)    :: xref,yref
-  real,intent(inout) :: x,y
-  character(len=*),intent(out) :: ch
-
-  print*,' WARNING: plot_band not implemented in giza'
-  ch = ' '
-
-end subroutine plot_band
 
 subroutine plot_numb(m,pp,form,string,nc)
   implicit none

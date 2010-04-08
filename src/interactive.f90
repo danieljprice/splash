@@ -74,7 +74,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use multiplot,        only:itrans
   use settings_render,  only:projlabelformat,iapplyprojformat
   use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
-                             plot_rect,plot_band,plot_sfs,plot_qcur
+                             plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click
   implicit none
   integer, intent(in) :: npart,irender,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
   integer, intent(inout) :: iColourBarStyle
@@ -106,6 +106,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
 
   if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
+     print*, plot_left_click
   else
      !print*,'cannot enter interactive mode: device has no cursor'
      return
@@ -238,7 +239,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         call plot_band(1,1,xline(2),yline(2),xline(3),yline(3),char2)
         !--draw line if left click or g
         select case(char2)
-        case('A','g')
+        case(plot_left_click,'g')
            print*
            !--mark second point
            call plot_pt1(xline(3),yline(3),4)
@@ -391,7 +392,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      !--actions on left click
      !
-     case('A') ! left click
+     case(plot_left_click) ! left click
         print*,'select area: '
         print*,'left click : zoom'
         !
@@ -424,7 +425,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               else
                  call plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)           
               endif
-              if (char2 == 'A') then
+              if (char2 == plot_left_click) then
                  if (verticalbar) then
                     drender = (rendermax-rendermin)/(ymax-ymin)
                     rendermax = rendermin + (max(ypt,ypt2)-ymin)*drender
@@ -466,7 +467,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               print*,'(zrange = ',zptmin,'->',zptmax,')'
            endif
            select case (char2)
-           case('A')   ! zoom if another left click
+           case(plot_left_click)   ! zoom if another left click
               call plot_sfs(2)
               call plot_rect(xpt,xpt2,ypt,ypt2)
               xmin = xptmin
@@ -896,7 +897,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            call plot_band(1,1,xline(1),yline(1),xline(2),yline(2),char2)
            !--work out cross section if left click or x again
            select case(char2)
-           case('A','x')
+           case(plot_left_click,'x')
               !--plot the cross section line
               call plot_line(2,xline(1:2),yline(1:2))
               !--work out angle with the x axis
@@ -1154,7 +1155,7 @@ end subroutine interactive_part
 !  AND WILL BE REMOVED IN FUTURE VERSIONS
 !
 subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interactivereplot)
- use plotlib, only:plot_qcur,plot_curs,plot_band,plot_rect
+ use plotlib, only:plot_qcur,plot_curs,plot_band,plot_rect,plot_left_click
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(in) :: istep,ilaststep
@@ -1204,7 +1205,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
         print*,' (q)uit plotting              : q, Q, esc'             
         print*,'-------------------------------------------------------'
 
-     case('A') ! left click
+     case(plot_left_click) ! left click
         !
         !--draw rectangle from the point and reset the limits
         !
@@ -1213,7 +1214,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
         call plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
         print*,xpt,ypt,xpt2,ypt2,char2
         select case (char2)
-        case('A')   ! zoom if another left click
+        case(plot_left_click)   ! zoom if another left click
            call plot_rect(xpt,xpt2,ypt,ypt2)
            xmin = min(xpt,xpt2)
            xmax = max(xpt,xpt2)
@@ -1350,7 +1351,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                              iColourBarStyle,interactivereplot)
  use multiplot, only:itrans
  use shapes, only:add_textshape,inshape,edit_shape,delete_shape
- use plotlib, only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line
+ use plotlib, only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line,plot_left_click
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep,iframe,lastpanel,iColourBarStyle
@@ -1491,7 +1492,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         call plot_band(1,1,xline(2),yline(2),xline(3),yline(3),char2)
         !--draw line if left click or g
         select case(char2)
-        case('A','g')
+        case(plot_left_click,'g')
            print*
            !--mark second point
            call plot_pt1(xline(3),yline(3),4)
@@ -1534,7 +1535,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            if (irenderarr(i).gt.0) call save_limits(irenderarr(i),xmin(irenderarr(i)),xmax(irenderarr(i)))
         enddo
         print*,'> interactively set limits saved <'
-     case('A') ! left click
+     case(plot_left_click) ! left click
         !
         !--draw rectangle from the point and reset the limits
         !
@@ -1555,7 +1556,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            else
               call plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)           
            endif
-           if (char2 == 'A') then
+           if (char2 == plot_left_click) then
               call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
               if (barwmulti(ipanel).gt.tiny(barwmulti)) then
                  if (verticalbar) then
@@ -1611,7 +1612,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            yptmax = max(ypti,ypt2)
               
            select case (char2)
-           case('A')   ! zoom if another left click
+           case(plot_left_click)   ! zoom if another left click
               xmin(iplotxarr(ipanel)) = xptmin
               xmax(iplotxarr(ipanel)) = xptmax
               xmin(iplotyarr(ipanel)) = yptmin
