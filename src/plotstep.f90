@@ -102,7 +102,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   implicit none
   real, parameter     :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
-  integer             :: i,j,ierr,ifirst,iplotzprev,ilen
+  integer             :: i,j,ifirst,iplotzprev,ilen,ierr
   logical             :: iadapting,icoordplot,iallrendered,ians
   real                :: hav,pmassav,dzsuggest
   character(len=1)    :: char
@@ -346,9 +346,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
        !
           call plot_init('/xw',ierr)
           call plot_env(lim(1,1),lim(1,2),lim(2,1),lim(2,2),1,0)
-          call plot_curs(xseclineX1,xseclineY1,char)
+          ierr = plot_curs(xseclineX1,xseclineY1,char)
           print*,'please select cross section line'
-          call plot_band(1,1,xseclineX1,xseclineY1,xseclineX2,xseclineY2,char)
+          ierr = plot_band(1,1,xseclineX1,xseclineY1,xseclineX2,xseclineY2,char)
           print*,'cross section line: xmin = ',xseclineX1,' xmax = ',xseclineX2
           print*,'                    ymin = ',xseclineY1,' ymax = ',xseclineY2
           call plot_close       

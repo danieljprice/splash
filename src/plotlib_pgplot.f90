@@ -326,12 +326,7 @@ interface plot_qinf
 end interface
 
 interface plot_band
-   subroutine pgband(mode,posn,xref,yref,x,y,ch)
-     integer,intent(in) :: mode,posn
-     real,intent(in)    :: xref,yref
-     real,intent(inout) :: x,y
-     character(len=*),intent(out) :: ch
-   end subroutine pgband
+   module procedure pgband_sub
 end interface
 
 interface plot_pt1
@@ -515,18 +510,43 @@ logical function plot_qcur()
 end function plot_qcur
 
 !
-!--subroutine interface to pgcurs
+!--inverts the return value of pgcurs
 !
-subroutine pgcurs_sub(x,y,ch)
+function pgcurs_sub(x,y,ch)
   real,intent(inout)        :: x,y 
   character*(*),intent(out) :: ch
-  integer :: ierr
+  integer :: pgcurs_sub,ierr
   integer, external :: pgcurs
 
   ierr = pgcurs(x,y,ch)
 
-end subroutine pgcurs_sub
+  if (ierr.eq.0) then
+    pgcurs_sub = 1
+  else
+    pgcurs_sub = 0
+  endif
 
+end function pgcurs_sub
+
+!
+!--inverts the return value of pgband
+!
+function pgband_sub(mode, posn, xref, yref, x, y, ch)
+  integer,intent(in) :: mode, posn
+  real,intent(in)    :: xref, yref
+  real,intent(inout) :: x, y
+  character*(*),intent(out) :: ch
+  integer :: ierr,pgband_sub
+  integer,external :: pgband
+
+  ierr = pgband(mode,posn,xref,yref,x,y,ch)
+
+  if(ierr.eq.1) then
+    pgband_sub = 0
+  else
+    pgband_sub = 1
+  endif
+end function pgband_sub
 
 !
 !--this subroutine can be called after PGSVP to

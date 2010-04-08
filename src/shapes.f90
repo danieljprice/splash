@@ -448,7 +448,7 @@ use plotlib, only:plot_stbg,plot_ptxt,plot_curs
  real :: xpt2,ypt2
  character(len=*), intent(inout) :: string
  character(len=len(string)) :: oldstring
- integer :: i
+ integer :: i,ierr
  
  print*,'editing text box, esc or ctrl-c to quit'
  call plot_stbg(0)
@@ -459,7 +459,7 @@ use plotlib, only:plot_stbg,plot_ptxt,plot_curs
 
  xpt2 = xpt
  ypt2 = ypt
- call plot_curs(xpt2,ypt2,mychar)
+ ierr = plot_curs(xpt2,ypt2,mychar)
  do while (mychar.ne.achar(13) &   ! carriage return
      .and. mychar.ne.achar(27) &   ! ctrl-c
      .and. mychar.ne.achar(3))     ! esc
@@ -479,7 +479,7 @@ use plotlib, only:plot_stbg,plot_ptxt,plot_curs
        i = min(i + 1,len(string))
        if (i.eq.len(string)) print*,' reached end of string'
     endif
-    call plot_curs(xpt2,ypt2,mychar)
+    ierr = plot_curs(xpt2,ypt2,mychar)
  enddo
  
  !--if ctrl-c or esc, restore original string

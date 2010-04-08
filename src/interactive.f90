@@ -147,11 +147,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   endif
  
   interactiveloop: do while (.not.iexit)
-     call plot_curs(xpt,ypt,char)
+     ierr = plot_curs(xpt,ypt,char)
      !
      !--exit if the device is not interactive
      !
-     if (char.eq.achar(0)) return
+     if (ierr.eq.1) return
   
      !
      !--find closest particle
@@ -236,7 +236,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         call plot_pt1(xpt,ypt,4)
         !--select second point
         print*,' select another point (using left click or g) to plot line '
-        call plot_band(1,1,xline(2),yline(2),xline(3),yline(3),char2)
+        ierr = plot_band(1,1,xline(2),yline(2),xline(3),yline(3),char2)
         !--draw line if left click or g
         select case(char2)
         case(plot_left_click,'g')
@@ -421,9 +421,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            else
               print*,'click to set rendering limits'
               if (verticalbar) then
-                 call plot_band(3,1,xpt,ypt,xpt2,ypt2,char2)
+                 ierr = plot_band(3,1,xpt,ypt,xpt2,ypt2,char2)
               else
-                 call plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)           
+                 ierr = plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)           
               endif
               if (char2 == plot_left_click) then
                  if (verticalbar) then
@@ -456,7 +456,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            print*,'y = use particles within y parameter range only'
            print*,'r = use particles within x and y parameter range only'
            print*,'R = remove all range restrictions'
-           call plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
+           ierr = plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
            xptmin = min(xpt,xpt2)
            xptmax = max(xpt,xpt2)
            yptmin = min(ypt,ypt2)
@@ -894,7 +894,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               if (i.ne.iplotx .and. i.ne.iploty) ixsec = i
            enddo
            print*,' select cross section position (using left click or x)'
-           call plot_band(1,1,xline(1),yline(1),xline(2),yline(2),char2)
+           ierr = plot_band(1,1,xline(1),yline(1),xline(2),yline(2),char2)
            !--work out cross section if left click or x again
            select case(char2)
            case(plot_left_click,'x')
@@ -1181,11 +1181,11 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
   interactivereplot = .false.
   
   do while (.not.iexit)
-     call plot_curs(xpt,ypt,char)
+     ierr = plot_curs(xpt,ypt,char)
      !
      !--exit if the device is not interactive
      !
-     if (char.eq.achar(0)) return
+     if (ierr.eq.1) return
   
      print*,'x, y = ',xpt,ypt,' function = ',char
      
@@ -1211,7 +1211,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
         !
         print*,'select area: '
         print*,'left click : zoom'
-        call plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
+        ierr = plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
         print*,xpt,ypt,xpt2,ypt2,char2
         select case (char2)
         case(plot_left_click)   ! zoom if another left click
@@ -1413,11 +1413,11 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   verticalbar = barisvertical(iColourBarStyle)
   
   interactive_loop: do while (.not.iexit)
-     call plot_curs(xpt,ypt,char)
+     ierr = plot_curs(xpt,ypt,char)
      !
      !--exit if the device is not interactive
      !
-     if (char.eq.achar(0)) return
+     if (ierr.eq.1) return
   
      !print*,'x, y = ',xpt,ypt,' function = ',char
      !
@@ -1489,7 +1489,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         call plot_pt1(xpti,ypti,4)
         !--select second point
         print*,' select another point (using left click or g) to plot line '
-        call plot_band(1,1,xline(2),yline(2),xline(3),yline(3),char2)
+        ierr = plot_band(1,1,xline(2),yline(2),xline(3),yline(3),char2)
         !--draw line if left click or g
         select case(char2)
         case(plot_left_click,'g')
@@ -1552,9 +1552,9 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         if (ipanel.gt.0 .and. iamincolourbar .and. irenderarr(ipanel).gt.0) then
            print*,'click to set rendering limits'
            if (verticalbar) then
-              call plot_band(3,1,xpt,ypt,xpt2,ypt2,char2)
+              ierr = plot_band(3,1,xpt,ypt,xpt2,ypt2,char2)
            else
-              call plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)           
+              ierr = plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)           
            endif
            if (char2 == plot_left_click) then
               call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
@@ -1590,7 +1590,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               iexit = .true.
            endif
         else
-           call plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
+           ierr = plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
            !call pgrect(xpt,xpt2,ypt,ypt2)
            call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
            !--use centre point of first click and current click to
