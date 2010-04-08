@@ -43,8 +43,8 @@ module timestep_plotting
   integer, private :: iframesave
   integer, private :: npixx,npixy,npixz
 
-  real, dimension(:), allocatable, private :: datpix1D, xgrid
-  real, dimension(:,:), allocatable, private :: datpix,datpixcont,brightness
+  real, dimension(:),     allocatable, private :: datpix1D, xgrid
+  real, dimension(:,:),   allocatable, private :: datpix,datpixcont,brightness
   real, dimension(:,:,:), allocatable, private :: datpix3D,datpixcont3D
   real, private :: xmin,xmax,ymin,ymax,zmin
   real, private :: rendermin,rendermax,vecmax,contmin,contmax
@@ -53,8 +53,8 @@ module timestep_plotting
   real, private :: angletempx, angletempy, angletempz
   !--buffer for interactive mode on multiplots
   integer, dimension(maxplot) :: iplotxtemp,iplotytemp,irendertemp,ivecplottemp
-  real, dimension(maxplot) :: xminmulti,xmaxmulti,xminadapt,xmaxadapt
-  real, dimension(maxplot) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
+  real,    dimension(maxplot) :: xminmulti,xmaxmulti,xminadapt,xmaxadapt
+  real,    dimension(maxplot) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
   real, private :: xminadapti,xmaxadapti,yminadapti,ymaxadapti,renderminadapt,rendermaxadapt
   real, private :: contminadapt,contmaxadapt
   real, parameter, private :: pi = 3.1415926536
@@ -2811,6 +2811,9 @@ contains
        else
           write(steplegendtext,"(a,i4)") 'step ',istep
        endif
+       if (debugmode) print "(a,i2,a)",&
+          ' DEBUG: plotting step legend (step ',istepsonpage,': "'//trim(steplegendtext)//'")'
+       
        if (iploty.gt.ndataplots) then
           call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
             .false.,.true.,trim(steplegendtext),hposlegend,vposlegend)           
