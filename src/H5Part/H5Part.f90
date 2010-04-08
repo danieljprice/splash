@@ -1,653 +1,608 @@
+!-------------------------------------------------------------
+!
+! Fortran 90 interface to H5Part, using
+! the Fortran 2003 C interoperability module (iso_c_binding)
+!
+! Written by Daniel Price 08/04/10
+!  daniel.price@sci.monash.edu.au
+!
+! We first specify the interfaces to the C interface routines
+! used to handle the H5partfile container object. However, all
+! string conversion is done in the Fortran, not in the C.
+!
+!-------------------------------------------------------------
 module h5part
+ use, intrinsic :: iso_c_binding, only:c_char,c_int,c_int64_t,c_double,c_float
  implicit none
- integer*8, parameter :: H5PART_INT64   = 1
- integer*8, parameter :: H5PART_INT32   = 2
- integer*8, parameter :: H5PART_FLOAT64 = 3
- integer*8, parameter :: H5PART_FLOAT32 = 4
- integer*8, parameter :: H5PART_CHAR    = 5
- integer*8, parameter :: H5PART_STRING  = 6
- character(len=7), dimension(6), parameter :: &
-    h5pt_type = (/'INT64  ',&
-                  'INT32  ',&
-                  'FLOAT64',&
-                  'FLOAT32',&
-                  'CHAR   ',&
-                  'STRING '/)
+ integer(kind=c_int64_t), parameter, public :: H5PART_INT64   = 1
+ integer(kind=c_int64_t), parameter, public :: H5PART_INT32   = 2
+ integer(kind=c_int64_t), parameter, public :: H5PART_FLOAT64 = 3
+ integer(kind=c_int64_t), parameter, public :: H5PART_FLOAT32 = 4
+ integer(kind=c_int64_t), parameter, public :: H5PART_CHAR    = 5
+ integer(kind=c_int64_t), parameter, public :: H5PART_STRING  = 6
+ character(len=7), dimension(6), parameter, public :: &
+    h5part_type = (/'INT64  ',&
+                    'INT32  ',&
+                    'FLOAT64',&
+                    'FLOAT32',&
+                    'CHAR   ',&
+                    'STRING '/)
+!
+! interfaces provided by this module
+!
+ public :: h5pt_openr,h5pt_openw,h5pt_opena,h5pt_close
+ public :: h5pt_openr_align,h5pt_openw_align,h5pt_opena_align
 
-interface
-
-INTEGER*8 FUNCTION h5pt_isvalid_( ihandle ) bind(C)
-    INTEGER*8, INTENT(IN) :: ihandle   !< the filename to open for reading
-END FUNCTION
-
-! Declaration of subroutines for Fortran Bindings
-
-!> \defgroup h5part_f90_api H5Part F90 API
-
-!> \ingroup h5part_f90_api
-!! \defgroup h5partf_open       File Opening and Closing
-!<
-
-!> \ingroup h5part_f90_api
-!! \defgroup h5partf_model      Setting up the Data Model
-!<
-
-!> \ingroup h5part_f90_api
-!! \defgroup h5partf_data       Reading and Writing Datasets
-!<
-
-!> \ingroup h5part_f90_api
-!! \defgroup h5partf_attrib     Reading and Writing Attributes
-!<
-
-
-!!!!!!!! File Opening and Closing !!!!!!!!
-
-!> \ingroup h5partf_open
-!! Opens a file for reading. See \ref H5PartOpenFile
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_openr( filename ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for reading
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! Opens a file for writing in truncate mode. See \ref H5PartOpenFile
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_openw ( filename ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for writing
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! Opens a file for writing in append mode. See \ref H5PartOpenFile
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_opena ( filename ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for appending
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! Opens a parallel file for reading.
-!! See \ref H5PartOpenFileParallel
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_openr_par ( filename, mpi_communicator ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for reading
-    INTEGER, INTENT(IN) :: mpi_communicator     !< the MPI communicator used by the program
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! Opens a parallel file for writing in truncate mode.
-!! See \ref H5PartOpenFileParallel
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_openw_par ( filename, mpi_communicator ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for writing
-    INTEGER, INTENT(IN) :: mpi_communicator     !< the MPI_Communicator used by the program
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! Opens a parallel file for writing in append mode.
-!! See \ref H5PartOpenFileParallel
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_opena_par ( filename, mpi_communicator ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for appending
-    INTEGER, INTENT(IN) :: mpi_communicator     !< the MPI_Communicator used by the program
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! Opens a file for reading and specifies an HDF5 alignment.
-!! See \ref H5PartOpenFileAlign
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_openr_align ( filename, align ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for reading
-    INTEGER*8, INTENT(IN) :: align              !< alignment value in bytes
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! Opens a file for writing in truncate mode and specifies an HDF5 alignment.
-!! See \ref H5PartOpenFileAlign
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_openw_align ( filename, align ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for writing
-    INTEGER*8, INTENT(IN) :: align              !< alignment value in bytes
-END FUNCTION
+#ifdef PARALLEL_IO
+ public :: h5pt_openr_par,h5pt_openw_par,h5pt_opena_par
+ public :: h5pt_openr_par_align,h5pt_openw_par_align,h5pt_opena_par_align
+#endif
  
-!> \ingroup h5partf_open
-!! Opens a file for writing in append mode and specifies an HDF5 alignment.
-!! See \ref H5PartOpenFileAlign
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_opena_align ( filename, align ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for appending
-    INTEGER*8, INTENT(IN) :: align              !< alignment value in bytes
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! Opens a parallel file for reading and specifies an HDF5 alignment.
-!! See \ref H5PartOpenFileParallelAlign
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_openr_par_align ( filename, mpi_communicator, align ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for reading
-    INTEGER, INTENT(IN) :: mpi_communicator     !< the MPI_Communicator used by the program
-    INTEGER*8, INTENT(IN) :: align              !< alignment value in bytes
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! Opens a parallel file for writing in truncate mode and specifies
-!! an HDF5 alignment.
-!! See \ref H5PartOpenFileParallelAlign
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_openw_par_align ( filename, mpi_communicator, align, flags ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for writing
-    INTEGER, INTENT(IN) :: mpi_communicator     !< the MPI_Communicator used by the program
-    INTEGER*8, INTENT(IN) :: align              !< alignment value in bytes
-    CHARACTER(LEN=*), INTENT(IN) :: flags       !< additional flags
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! Opens a parallel file for writing in append mode and specifies
-!! an HDF5 alignment.
-!! See \ref H5PartOpenFileParallelAlign
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_opena_par_align ( filename, mpi_communicator, align, flags ) bind(C)
-    CHARACTER(LEN=*), INTENT(IN) :: filename    !< the filename to open for appending
-    INTEGER, INTENT(IN) :: mpi_communicator     !< the MPI_Communicator used by the program
-    INTEGER*8, INTENT(IN) :: align              !< alignment value in bytes
-    CHARACTER(LEN=*), INTENT(IN) :: flags       !< additional flags
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! Closes a file. See \ref H5PartCloseFile
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_close ( filehandle ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned during file open
-END FUNCTION
-
-!> \ingroup h5partf_open
-!! See \ref H5PartSetVerbosityLevel
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_set_verbosity_level ( level ) bind(C)
-    INTEGER*8, INTENT(IN) :: level      !< the level from 0 (no output) to 5 (most detailed)
-END FUNCTION
-
-
-!!!!!!!! Setting up the Data Model !!!!!!!!
-
-!> \ingroup h5partf_model
-!! See \ref H5PartSetNumParticles
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_setnpoints ( filehandle, npoints ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned during file open
-    INTEGER*8, INTENT(IN) :: npoints    !< the number of particles on *this* processor
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartSetNumParticlesStrided
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_setnpoints_strided ( filehandle, npoints, stride ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned during file open
-    INTEGER*8, INTENT(IN) :: npoints    !< the number of particles on *this* processor
-    INTEGER*8, INTENT(IN) :: stride     !< the stride value (e.g. the number of fields in the particle data array)
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartSetStep
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_setstep (filehandle,step) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned during file open
-    INTEGER*8, INTENT(IN) :: step       !< a timestep value >= 1
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartGetNumSteps
-!! \return the number of steps or error code
-!<
-INTEGER*8 FUNCTION h5pt_getnsteps (filehandle) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartGetNumDatasets
-!! \return the number of datasets or error code
-!<
-INTEGER*8 FUNCTION h5pt_getndatasets (filehandle) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartGetNumParticles
-!! \return the number of particles or error code
-!<
-INTEGER*8 FUNCTION h5pt_getnpoints (filehandle) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartGetDatasetName
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_getdatasetname (filehandle,index,name) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    INTEGER*8, INTENT(IN) :: index              !< index of dataset to query (starting from 0)
-    CHARACTER(LEN=*), INTENT(OUT) :: name       !< buffer to read the dataset name into 
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartGetDatasetInfo
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_getdatasetinfo (filehandle,index,name,data_type,nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    INTEGER*8, INTENT(IN) :: index              !< index of dataset to query (starting from 0)
-    CHARACTER(LEN=*), INTENT(OUT) :: name       !< buffer to read the dataset name into 
-    INTEGER*8, INTENT(OUT) :: data_type         !< type of data in dataset
-    INTEGER*8, INTENT(OUT) :: nelem             !< number of elements
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartSetView
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_setview (filehandle,start,end) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned during file open
-    INTEGER*8, INTENT(IN) :: start      !< offset of the first particle in the view
-    INTEGER*8, INTENT(IN) :: end        !< offset of the last particle in the view (inclusive)
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartSetViewIndices
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_setview_indices (filehandle,indices,nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned during file open
-    INTEGER*8, INTENT(IN) :: indices(*) !< list of indicies to select in this view
-    INTEGER*8, INTENT(IN) :: nelem      !< number of particles in the list
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartResetView
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_resetview (filehandle) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned during file open
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartResetView
-!! \return 1 if true, 0 if false, or error code
-!<
-INTEGER*8 FUNCTION h5pt_hasview (filehandle) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned during file open
-END FUNCTION
-
-!> \ingroup h5partf_model
-!! See \ref H5PartGetView
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_getview (filehandle,start,end) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned during file open
-    INTEGER*8, INTENT(OUT) :: start     !< buffer to store the offset of the first particle in the view
-    INTEGER*8, INTENT(OUT) :: end       !< buffer to store the offset of the last particle in the view (inclusive)
-END FUNCTION
-
-
-!!!!!!!! Reading and Writing Datasets !!!!!!!!
-
-!> \ingroup h5partf_data
-!! See \ref H5PartWriteDataFloat64
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_writedata_r8 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the dataset
-    REAL*8, INTENT(IN) :: data(*)               !< the array of float64 data to write
-END FUNCTION
-
-!> \ingroup h5partf_data
-!! See \ref H5PartWriteDataFloat32
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_writedata_r4 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the dataset
-    REAL, INTENT(IN) :: data(*)                 !< the array of float32 data to write
-END FUNCTION
-
-!> \ingroup h5partf_data
-!! See \ref H5PartWriteDataInt64
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_writedata_i8 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the dataset
-    INTEGER*8, INTENT(IN) :: data(*)            !< the array of int64 data to write
-END FUNCTION
-
-!> \ingroup h5partf_data
-!! See \ref H5PartWriteDataInt32
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_writedata_i4 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the dataset
-    INTEGER, INTENT(IN) :: data(*)              !< the array of int32 data to write
-END FUNCTION
-
-
-!> \ingroup h5partf_data
-!! See \ref H5PartReadDataFloat64
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_readdata_r8 (filehandle,name,data) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the dataset
-    REAL*8, INTENT(OUT) :: data(*)              !< array to read float64 data into
-END FUNCTION
-
-!> \ingroup h5partf_data
-!! See \ref H5PartReadDataFloat32
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_readdata_r4 (filehandle,name,data) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the dataset
-    REAL, INTENT(OUT) :: data(*)                !< array to read float32 data into
-END FUNCTION
-
-!> \ingroup h5partf_data
-!! See \ref H5PartReadDataInt64
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_readdata_i8 (filehandle,name,data) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the dataset
-    INTEGER*8, INTENT(OUT) :: data(*)           !< array to read int64 data into
-END FUNCTION
-
-!> \ingroup h5partf_data
-!! See \ref H5PartReadDataInt32
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_readdata_i4 (filehandle,name,data) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the dataset
-    INTEGER, INTENT(OUT) :: data(*)             !< array to read int32 data into
-END FUNCTION
-
-
-!!!!!!!! Reading and Writing Attributes !!!!!!!!
-
-!> \ingroup h5partf_attrib
-!! See \ref H5PartWriteFileAttribString
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_writefilestring (filehandle,name,value) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the attribute
-    CHARACTER(LEN=*), INTENT(IN) :: value       !< the string value to store
-END FUNCTION
-
-!> \ingroup h5partf_attrib
-!! See \ref H5PartWriteStepAttribString
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_writestepstring (filehandle,name,value) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the attribute
-    CHARACTER(LEN=*), INTENT(IN) :: value       !< the string value to store
-END FUNCTION
-
-!> \ingroup h5partf_attrib
-!! Reads the attribute \c name in the file root ("/")
-!! into the string buffer \c value.
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_readfilestring (filehandle,name,value) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the attribute
-    CHARACTER(LEN=*), INTENT(OUT) :: value      !< buffer to read the string value into
-END FUNCTION
-
-!> \ingroup h5partf_attrib
-!! Reads the attribute \c name in the current step
-!! into the string buffer \c value.
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_readstepstring (filehandle,name,value) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    CHARACTER(LEN=*), INTENT(IN) :: name        !< the name of the attribute
-    CHARACTER(LEN=*), INTENT(OUT) :: value      !< buffer to read the string value into
-END FUNCTION
-
-!> \ingroup h5partf_attrib
-!! See \ref H5PartGetNumStepAttribs
-!! \return number of attributes or error code
-!<
-INTEGER*8 FUNCTION h5pt_getnstepattribs (filehandle) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-END FUNCTION
-
-!> \ingroup h5partf_attrib
-!! See \ref H5PartGetNumFileAttribs
-!! \return number of attributes or error code
-!<
-INTEGER*8 FUNCTION h5pt_getnfileattribs (filehandle) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-END FUNCTION
-
-!> \ingroup h5partf_attrib
-!! See \ref H5PartGetStepAttribInfo
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_getstepattribinfo (filehandle,idx,name,nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    INTEGER*8, INTENT(IN) :: idx              !< index of the attribute to query (starting from 0)
-    CHARACTER(LEN=*), INTENT(OUT) :: name       !< buffer to read the attribute name into
-    INTEGER*8, INTENT(OUT) :: nelem             !< number of elements in the attribute's array
-END FUNCTION
-
-!> \ingroup h5partf_attrib
-!! See \ref H5PartGetFileAttribInfo
-!! \return 0 on success or error code
-!<
-INTEGER*8 FUNCTION h5pt_getfileattribinfo (filehandle,idx,name,nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle         !< the handle returned during file open
-    INTEGER*8, INTENT(IN) :: idx              !< index of the attribute to query (starting from 0)
-    CHARACTER(LEN=*), INTENT(OUT) :: name       !< buffer to read the attribute name into
-    INTEGER*8, INTENT(OUT) :: nelem             !< number of elements in the attribute's array
-END FUNCTION
-
-end interface
+ public :: h5pt_setnpoints,h5pt_setnpoints_strided
+ public :: h5pt_getnpoints
+ public :: h5pt_setstep,h5pt_getnsteps,h5pt_getndatasets
+ public :: h5pt_getdatasetname,h5pt_getdatasetinfo
+ 
+ public :: h5pt_setview,h5pt_setview_indices
+ public :: h5pt_getview
+ public :: h5pt_resetview,h5pt_hasview
+ 
+ public :: h5pt_set_verbosity_level
+ 
+ public :: h5pt_writedata
+ public :: h5pt_readdata
+!
+! the type-specific routines are also public
+! (could make these private to allow only 
+!  the generic interface to be used)
+!
+ public :: h5pt_writedata_r8,h5pt_writedata_r4, &
+           h5pt_writedata_i8,h5pt_writedata_i4
+ public :: h5pt_readdata_r8,h5pt_readdata_r4, &
+           h5pt_readdata_i8,h5pt_readdata_i4
+ 
+ private
 
 !
-!
-!**** attributes interface starts here
-!
-!
+! generic interface for writing data of any type
+! 
+ interface h5pt_writedata
+    module procedure h5pt_writedata_i4,h5pt_writedata_i8, &
+                     h5pt_writedata_r4,h5pt_writedata_r8
+ end interface h5pt_writedata
 
+!
+! generic interface for reading data of any type
+! 
+ interface h5pt_readdata
+    module procedure h5pt_readdata_i4,h5pt_readdata_i8, &
+                     h5pt_readdata_r4,h5pt_readdata_r8
+ end interface h5pt_readdata
+
+!---------------------------
+!
+! interfaces to c routines
+!
+!---------------------------
 interface
 !
-!< \ingroup h5partf_attrib
-!! See \ref H5PartWritefileAttribFloat64
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_writefileattrib_r8 ( filehandle, name, data, nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name !< the name of the attribute
-    REAL*8, INTENT(IN) :: data(*) !< the array of data to write into the attribute
-    INTEGER*8, INTENT(IN) :: nelem !< the number of elements in the array
-END FUNCTION
+! Opening and closing files
+!
+integer(kind=c_int64_t) function h5ptc_openr( filename ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for reading
+end function
 
-!< \ingroup h5partf_attrib
-!! Read the attribute \c name into the buffer \c data.
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_readfileattrib_r8 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name   !< the name of the attribute
-    REAL*8, INTENT(OUT) :: data(*) !< buffer to read value into
-END FUNCTION
+integer(kind=c_int64_t) function h5ptc_openw ( filename ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for writing
+end function
 
-!< \ingroup h5partf_attrib
-!! See \ref H5PartWritefileAttribFloat32
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_writefileattrib_r4 ( filehandle, name, data, nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name !< the name of the attribute
-    REAL*4, INTENT(IN) :: data(*) !< the array of data to write into the attribute
-    INTEGER*8, INTENT(IN) :: nelem !< the number of elements in the array
-END FUNCTION
+integer(kind=c_int64_t) function h5ptc_opena ( filename ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for appending
+end function
 
-!< \ingroup h5partf_attrib
-!! Read the attribute \c name into the buffer \c data.
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_readfileattrib_r4 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name   !< the name of the attribute
-    REAL*4, INTENT(OUT) :: data(*) !< buffer to read value into
-END FUNCTION
+integer(kind=c_int64_t) function h5ptc_openr_align ( filename, align ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for reading
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+end function
 
-!< \ingroup h5partf_attrib
-!! See \ref H5PartWritefileAttribInt64
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_writefileattrib_i8 ( filehandle, name, data, nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name !< the name of the attribute
-    INTEGER*8, INTENT(IN) :: data(*) !< the array of data to write into the attribute
-    INTEGER*8, INTENT(IN) :: nelem !< the number of elements in the array
-END FUNCTION
+integer(kind=c_int64_t) function h5ptc_openw_align ( filename, align ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for writing
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+end function
+ 
+integer(kind=c_int64_t) function h5ptc_opena_align ( filename, align ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for appending
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+end function
 
-!< \ingroup h5partf_attrib
-!! Read the attribute \c name into the buffer \c data.
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_readfileattrib_i8 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name   !< the name of the attribute
-    INTEGER*8, INTENT(OUT) :: data(*) !< buffer to read value into
-END FUNCTION
+integer(kind=c_int64_t) function h5pt_close ( filehandle ) bind(C,name="h5ptc_close")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle !< the handle returned during file open
+end function
 
-!< \ingroup h5partf_attrib
-!! See \ref H5PartWritefileAttribInt32
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_writefileattrib_i4 ( filehandle, name, data, nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name !< the name of the attribute
-    INTEGER*4, INTENT(IN) :: data(*) !< the array of data to write into the attribute
-    INTEGER*8, INTENT(IN) :: nelem !< the number of elements in the array
-END FUNCTION
+#ifdef PARALLEL_IO
+!
+! Opening files (parallel I/O)
+!
+integer(kind=c_int64_t) function h5ptc_openr_par ( filename, mpi_communicator ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for reading
+    integer, intent(in) :: mpi_communicator     !< the MPI communicator used by the program
+end function
 
-!< \ingroup h5partf_attrib
-!! Read the attribute \c name into the buffer \c data.
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_readfileattrib_i4 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name   !< the name of the attribute
-    INTEGER*4, INTENT(OUT) :: data(*) !< buffer to read value into
-END FUNCTION
+integer(kind=c_int64_t) function h5ptc_openw_par ( filename, mpi_communicator ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for writing
+    integer, intent(in) :: mpi_communicator     !< the MPI_Communicator used by the program
+end function
 
-!< \ingroup h5partf_attrib
-!! See \ref H5PartWritestepAttribFloat64
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_writestepattrib_r8 ( filehandle, name, data, nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name !< the name of the attribute
-    REAL*8, INTENT(IN) :: data(*) !< the array of data to write into the attribute
-    INTEGER*8, INTENT(IN) :: nelem !< the number of elements in the array
-END FUNCTION
+integer(kind=c_int64_t) function h5ptc_opena_par ( filename, mpi_communicator ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for appending
+    integer, intent(in) :: mpi_communicator     !< the MPI_Communicator used by the program
+end function
 
-!< \ingroup h5partf_attrib
-!! Read the attribute \c name into the buffer \c data.
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_readstepattrib_r8 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name   !< the name of the attribute
-    REAL*8, INTENT(OUT) :: data(*) !< buffer to read value into
-END FUNCTION
+integer(kind=c_int64_t) function h5ptc_openr_par_align ( filename, mpi_communicator, align ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for reading
+    integer, intent(in) :: mpi_communicator     !< the MPI_Communicator used by the program
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+end function
 
-!< \ingroup h5partf_attrib
-!! See \ref H5PartWritestepAttribFloat32
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_writestepattrib_r4 ( filehandle, name, data, nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name !< the name of the attribute
-    REAL*4, INTENT(IN) :: data(*) !< the array of data to write into the attribute
-    INTEGER*8, INTENT(IN) :: nelem !< the number of elements in the array
-END FUNCTION
+integer(kind=c_int64_t) function h5ptc_openw_par_align ( filename, mpi_communicator, align, flags ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for writing
+    integer, intent(in) :: mpi_communicator     !< the MPI_Communicator used by the program
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+    character(kind=c_char), dimension(1), intent(in) :: flags       !< additional flags
+end function
 
-!< \ingroup h5partf_attrib
-!! Read the attribute \c name into the buffer \c data.
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_readstepattrib_r4 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name   !< the name of the attribute
-    REAL*4, INTENT(OUT) :: data(*) !< buffer to read value into
-END FUNCTION
+integer(kind=c_int64_t) function h5ptc_opena_par_align ( filename, mpi_communicator, align, flags ) bind(C)
+    import
+    character(kind=c_char), dimension(1), intent(in) :: filename    !< the filename to open for appending
+    integer, intent(in) :: mpi_communicator     !< the MPI_Communicator used by the program
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+    character(kind=c_char), dimension(1), intent(in) :: flags       !< additional flags
+end function
+#endif
 
-!< \ingroup h5partf_attrib
-!! See \ref H5PartWritestepAttribInt64
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_writestepattrib_i8 ( filehandle, name, data, nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name !< the name of the attribute
-    INTEGER*8, INTENT(IN) :: data(*) !< the array of data to write into the attribute
-    INTEGER*8, INTENT(IN) :: nelem !< the number of elements in the array
-END FUNCTION
+!
+! Setting up the data model
+! (where no strings are passed these are just interfaces to the c routines that convert the filehandle)
+!
+integer(kind=c_int64_t) function h5pt_setnpoints ( filehandle, npoints ) bind(C,name="h5ptc_setnpoints")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle !< the handle returned during file open
+    integer(kind=c_int64_t), intent(in) :: npoints    !< the number of particles on *this* processor
+end function
 
-!< \ingroup h5partf_attrib
-!! Read the attribute \c name into the buffer \c data.
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_readstepattrib_i8 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name   !< the name of the attribute
-    INTEGER*8, INTENT(OUT) :: data(*) !< buffer to read value into
-END FUNCTION
+integer(kind=c_int64_t) function h5pt_setnpoints_strided ( filehandle, npoints, stride ) &
+                                 bind(C,name="h5ptc_setnpoints_strided")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle !< the handle returned during file open
+    integer(kind=c_int64_t), intent(in) :: npoints    !< the number of particles on *this* processor
+    integer(kind=c_int64_t), intent(in) :: stride     !< the stride value (e.g. the number of fields in the particle data array)
+end function
 
-!< \ingroup h5partf_attrib
-!! See \ref H5PartWritestepAttribInt32
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_writestepattrib_i4 ( filehandle, name, data, nelem) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name !< the name of the attribute
-    INTEGER*4, INTENT(IN) :: data(*) !< the array of data to write into the attribute
-    INTEGER*8, INTENT(IN) :: nelem !< the number of elements in the array
-END FUNCTION
+integer(kind=c_int64_t) function h5pt_setstep (filehandle,step) bind(C,name="h5ptc_setstep")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle !< the handle returned during file open
+    integer(kind=c_int64_t), intent(in) :: step       !< a timestep value >= 1
+end function
 
-!< \ingroup h5partf_attrib
-!! Read the attribute \c name into the buffer \c data.
-!! \return 0 on success or error code
-!>
-INTEGER*8 FUNCTION h5pt_readstepattrib_i4 ( filehandle, name, data ) bind(C)
-    INTEGER*8, INTENT(IN) :: filehandle !< the handle returned at file open
-    CHARACTER(LEN=*), INTENT(IN) :: name   !< the name of the attribute
-    INTEGER*4, INTENT(OUT) :: data(*) !< buffer to read value into
-END FUNCTION
+integer(kind=c_int64_t) function h5pt_getnsteps (filehandle) bind(C,name="h5ptc_getnsteps")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+end function
+
+integer(kind=c_int64_t) function h5pt_getndatasets (filehandle) bind(C,name="h5ptc_getndatasets")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+end function
+
+integer(kind=c_int64_t) function h5pt_getnpoints (filehandle) bind(C,name="h5ptc_getnpoints")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+end function
+
+integer(kind=c_int64_t) function h5ptc_getdatasetname (filehandle,index,name,l_name) bind(C)
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    integer(kind=c_int64_t), intent(in) :: index              !< index of dataset to query (starting from 0)
+    character(kind=c_char), dimension(1), intent(out) :: name       !< buffer to read the dataset name into 
+    integer(kind=c_int64_t), intent(in) :: l_name             !< size of name
+end function
+
+integer(kind=c_int64_t) function h5ptc_getdatasetinfo (filehandle,index,name,data_type,nelem,l_name) bind(C)
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    integer(kind=c_int64_t), intent(in) :: index              !< index of dataset to query (starting from 0)
+    character(kind=c_char), dimension(1), intent(out) :: name       !< buffer to read the dataset name into 
+    integer(kind=c_int64_t), intent(out) :: data_type         !< type of data in dataset
+    integer(kind=c_int64_t), intent(out) :: nelem             !< number of elements
+    integer(kind=c_int64_t), intent(in) :: l_name             !< size of name
+end function
+
+!
+! Setting and getting views
+! (as no strings are passed these are just interfaces to the c routines that convert the filehandle)
+!
+integer(kind=c_int64_t) function h5pt_setview (filehandle,start,end) bind(C,name="h5ptc_setview")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle !< the handle returned during file open
+    integer(kind=c_int64_t), intent(in) :: start      !< offset of the first particle in the view
+    integer(kind=c_int64_t), intent(in) :: end        !< offset of the last particle in the view (inclusive)
+end function
+
+integer(kind=c_int64_t) function h5pt_setview_indices (filehandle,indices,nelem) bind(C,name="h5ptc_setview_indices")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle !< the handle returned during file open
+    integer(kind=c_int64_t), intent(in) :: indices(*) !< list of indicies to select in this view
+    integer(kind=c_int64_t), intent(in) :: nelem      !< number of particles in the list
+end function
+
+integer(kind=c_int64_t) function h5pt_resetview (filehandle) bind(C,name="h5ptc_resetview")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle !< the handle returned during file open
+end function
+
+integer(kind=c_int64_t) function h5pt_hasview (filehandle) bind(C,name="h5ptc_hasview")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle !< the handle returned during file open
+end function
+
+integer(kind=c_int64_t) function h5pt_getview (filehandle,start,end) bind(C,name="h5ptc_getview")
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle !< the handle returned during file open
+    integer(kind=c_int64_t), intent(out) :: start     !< buffer to store the offset of the first particle in the view
+    integer(kind=c_int64_t), intent(out) :: end       !< buffer to store the offset of the last particle in the view (inclusive)
+end function
+
+!
+! Reading and writing datasets
+!
+integer(kind=c_int64_t) function h5ptc_writedata_r8 ( filehandle, name, data ) bind(C)
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(kind=c_char), dimension(1), intent(in) :: name  !< the name of the dataset
+    real(kind=c_double), intent(in) :: data(*)                !< the array of float64 data to write
+end function
+
+integer(kind=c_int64_t) function h5ptc_readdata_r8 (filehandle,name,data) bind(C)
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(kind=c_char), dimension(1), intent(in) :: name  !< the name of the dataset
+    real(kind=c_double), intent(out) :: data(*)               !< array to read float64 data into
+end function
+
+integer(kind=c_int64_t) function h5ptc_writedata_r4 ( filehandle, name, data ) bind(C)
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(kind=c_char), dimension(1), intent(in) :: name  !< the name of the dataset
+    real(kind=c_float), intent(in) :: data(*)                 !< the array of float32 data to write
+end function
+
+integer(kind=c_int64_t) function h5ptc_readdata_r4 (filehandle,name,data) bind(C)
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(kind=c_char), dimension(1), intent(in) :: name  !< the name of the dataset
+    real(kind=c_float), intent(out) :: data(*)                !< array to read float32 data into
+end function
+
+integer(kind=c_int64_t) function h5ptc_writedata_i8 ( filehandle, name, data ) bind(C)
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(kind=c_char), dimension(1), intent(in) :: name  !< the name of the dataset
+    integer(kind=c_int64_t), intent(in) :: data(*)            !< the array of int64 data to write
+end function
+
+integer(kind=c_int64_t) function h5ptc_readdata_i8 (filehandle,name,data) bind(C)
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(kind=c_char), dimension(1), intent(in) :: name        !< the name of the dataset
+    integer(kind=c_int64_t), intent(out) :: data(*)           !< array to read int64 data into
+end function
+
+integer(kind=c_int64_t) function h5ptc_writedata_i4 ( filehandle, name, data ) bind(C)
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(kind=c_char), dimension(1), intent(in) :: name        !< the name of the dataset
+    integer(kind=c_int), intent(in) :: data(*)              !< the array of int32 data to write
+end function
+
+integer(kind=c_int64_t) function h5ptc_readdata_i4 (filehandle,name,data) bind(C)
+    import
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(kind=c_char), dimension(1), intent(in) :: name        !< the name of the dataset
+    integer(kind=c_int), intent(out) :: data(*)             !< array to read int32 data into
+end function
+
+!
+! routines where no conversion of anything is needed: i.e. just call H5Part C routines directly
+!
+integer(kind=c_int64_t) function h5pt_set_verbosity_level ( level ) bind(C,name="H5PartSetVerbosityLevel")
+    import
+    integer(kind=c_int64_t), intent(in) :: level      !< the level from 0 (no output) to 5 (most detailed)
+end function
 
 end interface
+
+contains
+!---------------------------------------------------------------------------
+!
+! wrappers for functions with string arguments: 
+! converts strings into C strings
+!
+!---------------------------------------------------------------------------
+integer(kind=c_int64_t) function h5pt_openr( filename )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for reading
+    
+    h5pt_openr = h5ptc_openr( cstring(filename) )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_openw ( filename )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for writing
+    
+    h5pt_openw = h5ptc_openw ( cstring(filename) )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_opena ( filename )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for appending
+
+    h5pt_opena = h5ptc_opena ( cstring(filename) )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_openr_align ( filename, align )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for reading
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+    
+    h5pt_openr_align = h5ptc_openr_align ( cstring(filename), align )
+    
+end function
+
+integer(kind=c_int64_t) function h5pt_openw_align ( filename, align )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for writing
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+
+    h5pt_openw_align = h5ptc_openw_align ( cstring(filename), align )
+
+end function
+ 
+integer(kind=c_int64_t) function h5pt_opena_align ( filename, align )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for appending
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+    
+    h5pt_opena_align = h5ptc_opena_align ( cstring(filename), align )
+    
+end function
+
+#ifdef PARALLEL_IO
+!
+! opening files (parallel I/O)
+!
+integer(kind=c_int64_t) function h5pt_openr_par ( filename, mpi_communicator )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for reading
+    integer, intent(in) :: mpi_communicator     !< the MPI communicator used by the program
+
+    h5pt_openr_par = h5ptc_openr_par ( cstring(filename), mpi_communicator )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_openw_par ( filename, mpi_communicator )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for writing
+    integer, intent(in) :: mpi_communicator     !< the MPI_Communicator used by the program
+
+    h5pt_openw_par = h5ptc_openw_par ( cstring(filename), mpi_communicator )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_opena_par ( filename, mpi_communicator )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for appending
+    integer, intent(in) :: mpi_communicator     !< the MPI_Communicator used by the program
+
+    h5pt_opena_par = h5ptc_opena_par ( cstring(filename), mpi_communicator )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_openr_par_align ( filename, mpi_communicator, align )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for reading
+    integer, intent(in) :: mpi_communicator     !< the MPI_Communicator used by the program
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+    
+    h5pt_openr_par_align = h5ptc_openr_par_align ( cstring(filename), mpi_communicator, align )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_openw_par_align ( filename, mpi_communicator, align, flags )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for writing
+    integer, intent(in) :: mpi_communicator     !< the MPI_Communicator used by the program
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+    character(len=*), intent(in) :: flags       !< additional flags
+    
+    h5pt_openw_par_align = h5ptc_openw_par_align ( cstring(filename), mpi_communicator, align, cstring(flags) )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_opena_par_align ( filename, mpi_communicator, align, flags )
+    implicit none
+    character(len=*), intent(in) :: filename    !< the filename to open for appending
+    integer, intent(in) :: mpi_communicator     !< the MPI_Communicator used by the program
+    integer(kind=c_int64_t), intent(in) :: align              !< alignment value in bytes
+    character(len=*), intent(in) :: flags       !< additional flags
+    
+    h5pt_opena_par_align = h5ptc_opena_par_align ( cstring(filename), mpi_communicator, align, cstring(flags) )
+    
+end function
+#endif
+
+!
+! Setting up the data model
+!
+integer(kind=c_int64_t) function h5pt_getdatasetname (filehandle,index,name)
+    implicit none
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    integer(kind=c_int64_t), intent(in) :: index              !< index of dataset to query (starting from 0)
+    character(len=*), intent(out) :: name       !< buffer to read the dataset name into 
+    integer(kind=c_int64_t) :: l_name
+    
+    l_name = len(name)
+    h5pt_getdatasetname = h5ptc_getdatasetname(filehandle,index,name,l_name)
+    name = fstring(name)
+
+end function h5pt_getdatasetname
+
+ integer(kind=c_int64_t) function h5pt_getdatasetinfo(filehandle,idx,name,data_type,nelem)
+    implicit none
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    integer(kind=c_int64_t), intent(in) :: idx              !< index of dataset to query (starting from 0)
+    character(len=*), intent(out) :: name       !< buffer to read the dataset name into 
+    integer(kind=c_int64_t), intent(out) :: data_type         !< type of data in dataset
+    integer(kind=c_int64_t), intent(out) :: nelem             !< number of elements
+    integer(kind=c_int64_t) :: l_name
+    
+    l_name = len(name)
+    h5pt_getdatasetinfo = h5ptc_getdatasetinfo(filehandle,idx,name,data_type,nelem,l_name)
+    name = fstring(name)
+    
+ end function h5pt_getdatasetinfo
+
+!
+! Reading and writing datasets
+!
+integer(kind=c_int64_t) function h5pt_writedata_r8 ( filehandle, name, data )
+    implicit none
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(len=*), intent(in) :: name  !< the name of the dataset
+    real(kind=c_double), intent(in) :: data(*)                !< the array of float64 data to write
+
+    h5pt_writedata_r8 = h5ptc_writedata_r8 ( filehandle, cstring(name), data )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_readdata_r8 ( filehandle, name, data)
+    implicit none
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(len=*), intent(in) :: name  !< the name of the dataset
+    real(kind=c_double), intent(out) :: data(*)               !< array to read float64 data into
+
+    h5pt_readdata_r8 = h5ptc_readdata_r8 ( filehandle, cstring(name), data)
+
+end function
+
+integer(kind=c_int64_t) function h5pt_writedata_r4 ( filehandle, name, data )
+    implicit none
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(len=*), intent(in) :: name  !< the name of the dataset
+    real(kind=c_float), intent(in) :: data(*)                 !< the array of float32 data to write
+
+    h5pt_writedata_r4 = h5ptc_writedata_r4 ( filehandle, cstring(name), data )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_readdata_r4 ( filehandle, name, data)
+    implicit none
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(len=*), intent(in) :: name  !< the name of the dataset
+    real(kind=c_float), intent(out) :: data(*)                !< array to read float32 data into
+
+    h5pt_readdata_r4 = h5ptc_readdata_r4 ( filehandle, cstring(name), data)
+
+end function
+
+integer(kind=c_int64_t) function h5pt_writedata_i8 ( filehandle, name, data )
+    implicit none
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(len=*), intent(in) :: name  !< the name of the dataset
+    integer(kind=c_int64_t), intent(in) :: data(*)            !< the array of int64 data to write
+
+    h5pt_writedata_i8 = h5ptc_writedata_i8 ( filehandle, cstring(name), data )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_readdata_i8 ( filehandle, name, data)
+    implicit none
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(len=*), intent(in) :: name        !< the name of the dataset
+    integer(kind=c_int64_t), intent(out) :: data(*)           !< array to read int64 data into
+
+    h5pt_readdata_i8 = h5ptc_readdata_i8 ( filehandle, cstring(name), data)
+
+end function
+
+integer(kind=c_int64_t) function h5pt_writedata_i4 ( filehandle, name, data )
+    implicit none
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(len=*), intent(in) :: name        !< the name of the dataset
+    integer(kind=c_int), intent(in) :: data(*)              !< the array of int32 data to write
+
+    h5pt_writedata_i4 = h5ptc_writedata_i4 ( filehandle, cstring(name), data )
+
+end function
+
+integer(kind=c_int64_t) function h5pt_readdata_i4 (filehandle,name,data)
+    implicit none
+    integer(kind=c_int64_t), intent(in) :: filehandle         !< the handle returned during file open
+    character(len=*), intent(in) :: name        !< the name of the dataset
+    integer(kind=c_int), intent(out) :: data(*)             !< array to read int32 data into
+
+    h5pt_readdata_i4 = h5ptc_readdata_i4 ( filehandle, cstring(name), data)
+
+end function
+
+!---------------------------------------------------------------------------
+!
+! function to safely convert a string to c format (ie. with a terminating
+! ascii null character)
+!
+!---------------------------------------------------------------------------
+ function cstring(string)
+  implicit none
+  character(len=*), intent(in) :: string
+  character(len=len(string)+1) :: cstring
+
+  cstring = trim(string)//char(0)
+
+ end function cstring
+
+!---------------------------------------------------------------------------
+!
+! function to safely convert a string from c format (ie. with a terminating
+! ascii null character) back to a normal Fortran string
+!
+!---------------------------------------------------------------------------
+ function fstring(string)
+  implicit none
+  character(len=*), intent(in) :: string  !< the name of the dataset
+  character(len=len(string)) :: fstring
+  integer :: idx
+
+  idx = index(string,char(0))
+  if (idx.gt.1) then
+     fstring = string(1:idx-1)
+  else
+     fstring = ''
+  endif
+
+ end function fstring
 
 end module h5part

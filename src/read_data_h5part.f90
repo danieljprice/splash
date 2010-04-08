@@ -61,7 +61,6 @@ module h5partdataread
  implicit none
  character(len=lenlabel), dimension(maxplot) :: datasetnames
  logical :: warn_labels = .true.
- integer :: itypeidcol
 
 end module h5partdataread
 
@@ -76,12 +75,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use system_commands, only:get_environment
   use labels,          only:ih,ipmass,irho,ix
   use h5part
+  use h5partattrib,    only:h5pt_readstepattrib,h5pt_getnstepattribs,h5pt_getstepattribinfo, &
+                            h5pt_readstepattrib_r8
   use h5partdataread
   implicit none
   integer, intent(in)               :: indexstart
   integer, intent(out)              :: nstepsread
   character(len=*), intent(in)      :: rootname
-  integer                           :: i,j,ncolstep,nsteps,ncolsfile,icol
+  integer                           :: i,j,ncolstep,nsteps,ncolsfile,icol,itypeidcol
   integer(kind=c_int64_t)           :: nattrib,iattrib,nelem,idatasettype,k,icolsfile,ierr
   integer                           :: nprint,npart_max,nstep_max,maxcolsfile,itype
   integer, dimension(maxplot)       :: iorder
@@ -122,11 +123,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   !--open the file and read the number of particles
   !
+  if (debugmode) print*,'DEBUG: opening '//trim(dumpfile)
+  !ierr = h5pt_set_verbosity_level(6_8)
+  
   ifile = h5pt_openr(trim(dumpfile))
   if (ifile.le.0) then
      print "(a)",'*** ERROR opening '//trim(dumpfile)//' ***'
      return
   endif
+  if (debugmode) print*,'DEBUG: file opened ok'
   
   !
   !--get number of steps and particles in the file
@@ -156,6 +161,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   maxcolsfile = 0
   itypeidcol = 0
   do istep=1,nsteps
+     if (debugmode) print "(a,i2)",'DEBUG: setting step ',istep
      ierr = h5pt_setstep(ifile,istep)
      if (ierr.eq.0) then
         npart_max = max(npart_max,int(h5pt_getnpoints(ifile)))
@@ -163,8 +169,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
         icol = 0
         if ((istep.eq.nsteps .and. ncolsfile.gt.0)) then
            do icolsfile=0,ncolsfile-1
-!              ierr = h5pt_getdatasetname(ifile,icol,datasetnames(icol+1))
-!              print*,' data set name = ',icol,trim(datasetnames(icol+1))
+              !ierr = h5pt_getdatasetname(ifile,icol,datasetnames(icol+1))
+              if (debugmode) print*,'DEBUG: getting datasetinfo'
               ierr = h5pt_getdatasetinfo(ifile,icolsfile,datasetname,idatasettype,nelem)
               if (ierr.ne.0) then
                  print "(a,i3)",' ERROR reading dataset name for column ',icolsfile+1
@@ -185,13 +191,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
                        if (itypeidcol.le.0) itypeidcol = int(icolsfile) + 1
                        print "(a)",' getting particle types from data set '//trim(type_datasetname)
                     else
-                       print "(a)",' skipping data set '//trim(datasetname)//' of type '//h5pt_type(int(idatasettype))
+                       print "(a)",' skipping data set '//trim(datasetname)//' of type '//h5part_type(int(idatasettype))
                     endif
                  case default
-                    print "(a)",' skipping data set '//trim(datasetname)//' of type '//h5pt_type(int(idatasettype))
+                    print "(a)",' skipping data set '//trim(datasetname)//' of type '//h5part_type(int(idatasettype))
                  end select
               endif
            enddo
+        elseif (ncolsfile.le.0) then
+           print*,'ERROR: number of datasets in step ',istep,' = ',ncolsfile
         endif
         ncolstep = max(ncolstep,icol)
         maxcolsfile = max(ncolsfile,maxcolsfile)
@@ -199,7 +207,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         print "(a,i3)",' ERROR, could not choose step ',istep
         return
      endif
-  enddo
+ enddo
   nprint = npart_max
   
   !
@@ -315,7 +323,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
               !
               if (nelem.eq.1 .and. (index(lcase(attribname),'time').ne.0  &
                  .or. index(lcase(attribname),'t ').ne.0)) then
-                 ierr =h5pt_readstepattrib_r8(ifile,attribname,dtime)
+                 ierr = h5pt_readstepattrib_r8(ifile,attribname,dtime)
                  if (ierr.eq.0) then
                     time(j) = real(dtime(1))
                     print "(12x,a,1pe10.3,a)",'time   = ',time(j),' (from '//trim(attribname)//')'
@@ -333,7 +341,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                     gamma(j) = real(dtime(1))
                     print "(12x,a,1pe10.3,a)",'gamma  = ',gamma(j),' (from '//trim(attribname)//')'
                  else
-                    print "(a,i2,a)",' ERROR could not read ga,,a from step ',istep,' (from '//trim(attribname)//')'
+                    print "(a,i2,a)",' ERROR could not read gamma from step ',istep,' (from '//trim(attribname)//')'
                  endif
               else
                  print "(a)",' unknown attribute '//trim(attribname)
@@ -355,10 +363,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
           datasetnames(iorder(icol)) = trim(datasetname)
           if (debugmode) print "(a,i3,a,i3)",'DEBUG: reading data set ',icol,&
                                              ': '//trim(datasetnames(iorder(icol)))//' into column ',iorder(icol)
-          ierr = h5pt_readdata_r4(ifile,datasetnames(iorder(icol)),dat(:,iorder(icol),j))
+          ierr = h5pt_readdata(ifile,datasetnames(iorder(icol)),dat(:,iorder(icol),j))
           if (ierr.ne.0) print "(a)",' ERROR reading dataset '//trim(datasetnames(iorder(icol)))
        case default
-          if (debugmode) print "(a)",' skipping data set '//trim(datasetname)//' of type '//lcase(h5pt_type(int(idatasettype)))
+          if (debugmode) print "(a)",' skipping data set '//trim(datasetname)//' of type '//lcase(h5part_type(int(idatasettype)))
        end select
     enddo
 !
@@ -376,7 +384,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
        !
        !--read type array from file
        !
-       ierr = h5pt_readdata_i4(ifile,trim(type_datasetname),itypefile(:))
+       ierr = h5pt_readdata(ifile,trim(type_datasetname),itypefile(:))
        if (ierr.ne.0) then
           print "(a)",' ERROR reading dataset '//trim(type_datasetname)
        else
@@ -472,8 +480,8 @@ end subroutine read_data
 
 subroutine set_labels()
   use asciiutils,      only:lcase
-  use labels,          only:label,labeltype,ix,irho,ipmass,ih,iutherm, &
-                            ipr,ivx,iBfirst,iamvec,labelvec,lenlabel
+  use labels,          only:label,ix,irho,ipmass,ih,iutherm, &
+                            ipr,ivx,iBfirst,iamvec,labelvec,lenlabel !,labeltype
   !use params,          only:maxparttypes
   use settings_data,   only:ndim,ndimV,UseTypeInRenderings
   use geometry,        only:labelcoord
