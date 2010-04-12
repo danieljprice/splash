@@ -836,7 +836,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         x_sec = x_secmulti(nyplot)
         zslicepos = xsecposmulti(nyplot)
      else
-        irender = irender_nomulti
+        if (.not.interactivereplot) irender = irender_nomulti
         ivectorplot = ivecplot
         icontourplot = icontour_nomulti
         iplotcont = .false. !iplotcont_nomulti

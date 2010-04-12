@@ -73,11 +73,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,add_textshape
   use multiplot,        only:itrans
   use settings_render,  only:projlabelformat,iapplyprojformat
+  use settings_data,    only:ndataplots
   use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
                              plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click
   implicit none
-  integer, intent(in) :: npart,irender,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
-  integer, intent(inout) :: iColourBarStyle
+  integer, intent(in) :: npart,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
+  integer, intent(inout) :: irender,iColourBarStyle
   integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
@@ -106,7 +107,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
 
   if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
-     print*, plot_left_click
+     !print*, plot_left_click
   else
      !print*,'cannot enter interactive mode: device has no cursor'
      return
@@ -1022,6 +1023,31 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         iadvance = 0
         interactivereplot = .true.
         iexit = .true.
+     case('f') ! change rendered quantity (next)
+        if (irender.ne.0) then
+           irender = irender + 1
+           if (irender.le.ndim) irender = ndim + 1
+           !if (irender.eq.ndataplots+1) irender = 0
+           if (irender.gt.ndataplots) irender = ndim + 1
+           iadvance = 0
+           interactivereplot = .true.
+           irerender = .true.
+           iexit = .true.
+        else
+           print*,'ERROR: f has no effect if not rendering'
+        endif
+     case('F') ! change rendered quantity (previous)
+        if (irender.ne.0) then
+           irender = irender - 1
+           if (irender.lt.ndim) irender = ndataplots
+           !if (irender.eq.ndim) irender = 0
+           iadvance = 0
+           interactivereplot = .true.
+           irerender = .true.
+           iexit = .true.
+        else
+           print*,'ERROR: F has no effect if not rendering'        
+        endif
      case('m') ! change colour map (next scheme)
         call change_colourmap(icolourscheme,1)
         iadvance = 0
