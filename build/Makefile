@@ -1,7 +1,10 @@
 ##-------------------------------------------------------------------##
-##     Makefile for compiling SPLASH and linking with PGPLOT         ##
-##     Written by Daniel Price					     ##
-##     University of Exeter, UK, 2006                    	     ##
+##     Makefile for compiling SPLASH and linking with                ##
+##      required libraries                                           ##
+##				                                     ##
+##     Written by Daniel Price                                       ##
+##     University of Exeter, UK,     2004-2008                       ##
+##     Monash University, Australia, 2008-                           ##
 ##                                                                   ##
 ##     requires GNU make (on some systems this is 'gmake' instead    ##
 ##                        of 'make')                                 ##
@@ -555,7 +558,7 @@ mbatesph: checksystem $(OBJECTS) read_data_mbate.o
 
 #---h5part reader---
 H5PARTSRCC=H5PartF.c H5PartAttribF.c
-H5PARTSRCF90=H5Part.f90
+H5PARTSRCF90=H5Part.f90 H5PartAttrib.f90
 H5PARTOBJ=$(H5PARTSRCC:.c=.o) $(H5PARTSRCF90:.f90=.o)
 
 h5part: checksystem checkh5part $(OBJECTS) $(H5PARTOBJ) read_data_h5part.o
