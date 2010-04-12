@@ -58,8 +58,8 @@ endif
 #
 HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
 HDF5INCLUDE = -I$(HDF5ROOT)/include
-H5PART_LIBS    = -L$(H5PART_DIR)/build/lib -lH5Part
-H5PART_INCLUDE = -I$(H5PART_DIR)/build/include
+H5PART_LIBS    = -L$(H5PART_DIR)/lib -lpH5Part
+H5PART_INCLUDE = -I$(H5PART_DIR)/include
 #
 # this file contains system-dependent routines like getarg, iargc etc.
 #
@@ -175,6 +175,7 @@ ifeq ($(SYSTEM),ifort)
    ENDIANFLAGLITTLE= -convert little_endian
 # or use setenv F_UFMTENDIAN=big or little at runtime
    KNOWN_SYSTEM=yes
+   CC=icc
 endif
 
 ifeq ($(SYSTEM),ifort8)
@@ -438,7 +439,8 @@ endif
 # if MPI is set to "yes"
 #
 ifeq ($(MPI),yes)
-    F90C= mpif90
+    F90C= mpif90 -DPARALLEL_IO
+    CC=mpicc -DPARALLEL_IO
 endif
 
 #
