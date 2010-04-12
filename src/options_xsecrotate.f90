@@ -212,7 +212,18 @@ subroutine submenu_xsecrotate(ichoose)
  case(3)
     use3Dperspective = .not.use3Dperspective
     call prompt(' Use 3D perspective? ',use3Dperspective)
-    if (.not.use3Dperspective) use3Dopacityrendering = .false.
+    if (use3Dperspective) then
+       if (.not.irotate) irotate = .true.
+       if (abs(anglez).lt.tiny(anglez) .and. &
+           abs(angley).lt.tiny(angley) .and. &
+           abs(anglex).lt.tiny(anglex)) then
+           anglez = 30.
+           anglex = 60.
+           print "(a)",' setting default rotation angles to 30,0,60'
+       endif
+    else ! turn off opacity rendering if 3D perspective has been turned off
+       use3Dopacityrendering = .false.
+    endif
 !------------------------------------------------------------------------
  case(4)
     use3Dopacityrendering = .not.use3Dopacityrendering
