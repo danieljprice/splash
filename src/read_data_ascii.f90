@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
@@ -28,6 +28,9 @@
 !
 ! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
 !  ENVIRONMENT VARIABLES:
+!
+! ASPLASH_COLUMNSFILE gives the location of the default 'columns' file
+! (overridden by the presence of a `columns' file in the working directory)
 !
 ! ASPLASH_NCOLUMNS can be used to override the automatic ncolumns choice
 !
