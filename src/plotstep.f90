@@ -34,7 +34,7 @@ module timestep_plotting
   implicit none
 
   integer, private :: ninterp
-  integer, private :: iplotx,iploty,iplotz,irenderplot,icontourplot
+  integer, private :: iplotx,iploty,iplotz,irender,irenderplot,icontourplot
   integer, private :: ivectorplot,ivecx,ivecy
   integer, private :: nyplots,npartdim,nyplotfirstonpage,ifirststeponpage    
   integer, private :: ngrid,nframefirstonpage
@@ -97,7 +97,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use particle_data,      only:npartoftype,masstype
   use projections3D,      only:coltable
   use pdfs,               only:options_pdf
-  use plotlib,            only:plot_init,plot_qcur,plot_pap,plot_scrn,plot_slw,plot_env,plot_curs,plot_band, &
+  use plotlib,            only:plot_init,plot_qcur,plot_slw,plot_env,plot_curs,plot_band, &
                                plot_close,plot_qinf
   implicit none
   real, parameter     :: pi=3.1415926536
@@ -118,6 +118,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   tile_plots = .false.
   iplots = 0 ! counter for how many plots have been plotted in total
   ipanel = 0  ! counter for which panel we are in on plotting page
+  irender     = 0
   irenderplot = 0
   ivectorplot = 0
   x_sec = xsec_nomulti
@@ -587,7 +588,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use settings_limits,    only:iadapt,iadaptcoords,scalemax
   use settings_part,      only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
                                iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
-                               iploterrorbars,ilocerrorbars
+                               iploterrbars,ilocerrbars
   use settings_page,      only:nacross,ndown,interactive,iaxis,usesquarexy, &
                                charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render,    only:npix,ncontours,icolours,iColourBarStyle,icolour_particles,&
@@ -606,7 +607,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use colourparts
   use transforms,            only:transform,transform_limits,transform_label,transform_inverse,islogged
   use interactive_routines
-  use particleplots,         only:particleplot
+  use particleplots,         only:particleplot,plot_errorbarsx,plot_errorbarsy
   use powerspectrums,        only:powerspectrum,powerspec3D_sph
   use interpolations1D,      only:interpolate1D
   use interpolations2D,      only:interpolate2D, interpolate2D_xsec
@@ -620,7 +621,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use exactfromfile,         only:exact_fromfile
   use write_pixmap,          only:iwritepixmap,writepixmap,write_pixmap_ppm,readpixmap
   use pdfs,                  only:pdfcalc,pdfplot,npdfbins
-  use plotlib,               only:plot_qvp,plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
+  use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
                                   plot_line,plot_pt1
   implicit none
   integer, intent(inout) :: ipos, istepsonpage
@@ -636,7 +637,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   integer :: ntoti,iz,iseqpos
   integer :: i,j,k,icolumn,irow
   integer :: nyplot,nframesloop
-  integer :: irender,irenderpart
+  integer :: irenderpart
   integer :: npixyvec,nfreqpts,ipixxsec
   integer :: icolourprev,linestyleprev
   integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp
@@ -668,6 +669,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   labelz = ' '
   labelrender = ' '
   labelvecplot = ' '
+
   !
   !--allocate temporary memory required for plotting
   !
@@ -1945,21 +1947,26 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--------------------------------
         ! now plot particles
         !--------------------------------
-        if ((iploterrorbars.gt.0) .and. &
-            (iploterrorbars.eq.iploty .or. iploterrorbars.eq.iplotx) .and. &
-            (ilocerrorbars.gt.0 .and. ilocerrorbars.le.ndataplots)) then
-            !
-            !--plot particles with error bars
-            !
-            call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-                zplot(1:ntoti),dat(1:ntoti,ilocerrorbars),ntoti,iplotx,iploty,itransx,itransy, &
-                icolourme(1:ntoti),iamtype,npartoftype(:),iplotpartoftype,.false., &
-                zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
-        else
-           call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-                zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
-                icolourme(1:ntoti),iamtype,npartoftype(:),iplotpartoftype,.false., &
-                zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
+        call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
+             zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
+             icolourme(1:ntoti),iamtype,npartoftype(:),iplotpartoftype,.false., &
+             zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
+
+        !--------------------------------
+        ! plot error bars
+        !--------------------------------
+        if (iploterrbars) then
+           call plot_qci(icolourprev)        ! query line style and colour
+           call plot_sci(linecolourthisstep) ! set colour to current line
+           !--y error bars
+           if (ilocerrbars(iploty).gt.0 .and. ilocerrbars(iploty).le.ndataplots) then
+              call plot_errorbarsy(ntoti,xplot,yplot,dat(:,ilocerrbars(iploty)),itransy)
+           endif
+           !--x error bars
+           if (ilocerrbars(iplotx).gt.0 .and. ilocerrbars(iplotx).le.ndataplots) then
+              call plot_errorbarsx(ntoti,xplot,yplot,dat(:,ilocerrbars(iplotx)),itransx)
+           endif
+           call plot_sci(icolourprev)        ! restore line colour
         endif
  
         !
@@ -2500,8 +2507,10 @@ contains
     !--------------------------------------------
     if (present(dummy)) then
        dum = dummy
+       if (debugmode) print*,'DEBUG: entering page setup (dummy)'
     else
        dum = .false.
+       if (debugmode) print*,'DEBUG: entering page setup'
     endif
 
     !---------------------
@@ -2613,6 +2622,7 @@ contains
           ymin = ymin - 1.0
        endif
     endif
+    if (debugmode) print*,'DEBUG: calling setpage...'
     if (nstepsperpage.ne.0 .or. inewpage) then
        if (dum) then !--fake the page setup, then return
           if (.not.(interactivereplot .and. .not.irerender)) then
@@ -2650,6 +2660,7 @@ contains
           !--restore saved attributes
           iplots = iplotsave
           ipanel = ipanelsave
+          if (debugmode) print*,'DEBUG: finished dummy page setup'
           return
        elseif (.not.ipagechange .and. .not.inewpage .and. .not.iplots.eq.1) then
        !--if we are not changing page, do not reprint the axes
@@ -2665,6 +2676,7 @@ contains
        endif
     endif
     
+    if (debugmode) print*,'DEBUG: setpage ok, querying and saving viewport...'
     !--query and save viewport co-ordinates set up for this panel
     call plot_qvp(0,vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
 
@@ -2684,7 +2696,7 @@ contains
     xmaxmulti(iplotx) = xmax
     xminmulti(iploty) = ymin
     xmaxmulti(iploty) = ymax
-    if (irender.gt.0) then
+    if (irender.gt.0 .and. irender.lt.size(xmaxmulti)) then
        xminmulti(irender) = rendermin
        xmaxmulti(irender) = rendermax
     endif
@@ -2715,6 +2727,7 @@ contains
     
     !--change to background colour index for overlaid text and axes
     if (iUseBackGroundColourForAxes) call plot_sci(0)
+    if (debugmode) print*,'DEBUG: finished page setup'
     
     return
   end subroutine page_setup

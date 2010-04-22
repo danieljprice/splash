@@ -29,17 +29,18 @@ module settings_part
  use settings_data, only:icoordsnew
  implicit none
  integer, dimension(maxparttypes) :: imarktype,idefaultcolourtype,itypeorder
- integer, dimension(100) :: icircpart
- integer :: ncircpart,iploterrorbars,ilocerrorbars
- integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
+ integer, dimension(100)          :: icircpart
+ integer, dimension(maxplot)      :: ilocerrbars
  logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings,UseTypeInContours
- logical :: iplotline,ilabelpart,ifastparticleplot
+ integer :: ncircpart
+ integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
+ logical :: iplotline,ilabelpart,ifastparticleplot,iploterrbars
  real    :: hfacmarkers
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
    iexact,icoordsnew,ifastparticleplot,idefaultcolourtype,&
-   itypeorder,UseTypeInContours,iploterrorbars,ilocerrorbars,hfacmarkers
+   itypeorder,UseTypeInContours,iploterrbars,ilocerrbars,hfacmarkers
 
 contains
 
@@ -75,8 +76,8 @@ subroutine defaults_set_part
      itypeorder(i) = i
   enddo
   UseTypeInContours(:) = iplotpartoftype(:)
-  iploterrorbars = 0    ! plot error bars for a particular column
-  ilocerrorbars = 0     ! location of data for error bars in dat array
+  iploterrbars = .false.    ! plot error bars for a particular column
+  ilocerrbars(:) = 0     ! location of data for error bars in dat array
   hfacmarkers = 1.0
 
   return
@@ -99,22 +100,22 @@ end subroutine defaults_set_part_ev
 ! submenu with options relating to particle plots
 !----------------------------------------------------------------------
 subroutine submenu_particleplots(ichoose)
-  use exact, only:options_exact,submenu_exact
-  use labels, only:labeltype,ih
-  use limits, only:lim
-  use settings_data, only:icoords,ntypes,ndim,UseTypeInRenderings,ndataplots
+  use exact,           only:options_exact,submenu_exact
+  use labels,          only:labeltype,ih,label
+  use limits,          only:lim
+  use settings_data,   only:icoords,ntypes,ndim,UseTypeInRenderings,ndataplots
   use settings_render, only:iplotcont_nomulti
-  use particle_data, only:npartoftype,iamtype
-  use prompting, only:prompt,print_logical
-  use geometry, only:maxcoordsys,labelcoordsys,coord_transform_limits
-  use multiplot, only:itrans
+  use particle_data,   only:npartoftype,iamtype
+  use prompting,       only:prompt,print_logical
+  use geometry,        only:maxcoordsys,labelcoordsys,coord_transform_limits
+  use multiplot,       only:itrans
   implicit none
   integer, intent(in) :: ichoose
-  integer :: i,iaction,n,itype,icoordsprev,ierr
-  character(len=2) :: charntypes
-  character(len=20) :: substring1,substring2
+  integer             :: i,iaction,n,itype,icoordsprev,ierr,icol
+  character(len=2)    :: charntypes
+  character(len=20)   :: substring1,substring2
   character(len=1000) :: fmtstring
-  character(len=120) :: contline
+  character(len=120)  :: contline
 
   iaction = ichoose
   
@@ -146,7 +147,7 @@ subroutine submenu_particleplots(ichoose)
          "' 3) set colour for each particle type   ( ',"//trim(substring2)//",' )',/,"//  &
          "' 4) change plotting order of types      ( ',"//trim(substring2)//",' )',/,"//  &
          "' 5) plot line joining particles         ( ',a,' ) ',/,"// &
-         "' 6) plot error bars/smoothing circles   ( ',i3,' ) ',/,"// &
+         "' 6) plot error bars/smoothing circles   ( ',a,' ) ',/,"// &
          "' 7) change coordinate systems           ( ',i2,' ) ',/,"// &
          "' 8) plot exact solution                 ( ',i2,' ) ',/,"// &
          "' 9) exact solution plot options ')"
@@ -157,11 +158,11 @@ subroutine submenu_particleplots(ichoose)
         print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
                  (trim(print_logical(UseTypeInContours(i),mask=UseTypeInRenderings(i))),i=1,ntypes), &
                  imarktype(1:ntypes),idefaultcolourtype(1:ntypes),itypeorder(1:ntypes), &
-                 print_logical(iplotline),ncircpart,icoordsnew,iexact     
+                 print_logical(iplotline),print_logical(ncircpart.gt.0 .or.iploterrbars),icoordsnew,iexact
      else
         print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
                  imarktype(1:ntypes),idefaultcolourtype(1:ntypes),itypeorder(1:ntypes), &
-                 print_logical(iplotline),ncircpart,icoordsnew,iexact
+                 print_logical(iplotline),print_logical(ncircpart.gt.0 .or.iploterrbars),icoordsnew,iexact
      endif
      call prompt('enter option',iaction,0,9)
   endif
@@ -272,12 +273,30 @@ subroutine submenu_particleplots(ichoose)
         print "(2(/,a))",'Note: Circles of interaction can only be plotted if we know the location',&
                       '         of h in the columns and the number of dimensions is >= 1', &
                       '  Instead, this option can be used to plot error bars for a particular quantity:'
-        call prompt('Enter column to plot error bars for (0=none)',iploterrorbars,0)
-        if (iploterrorbars.gt.0) then
-           call prompt('Enter location of error data for this column in the data',ilocerrorbars,1)
-           if (ilocerrorbars.eq.0 .or. ilocerrorbars.ge.ndataplots) &
-              print "(a,i2)",' WARNING: currently no data in column ',ilocerrorbars
+        icol = 0
+        do icol=1,ndataplots
+           if (ilocerrbars(icol).gt.0) print "(a,i2,a,i2,a)", &
+              'column ',ilocerrbars(icol),' contains errors for column ',icol,':'//label(icol)
+        enddo
+        if (any(ilocerrbars(1:ndataplots).gt.0)) then
+           call prompt('turn on plotting of error bars? ',iploterrbars)
+           if (.not.iploterrbars) return
+        else
+           iploterrbars = .false.
         endif
+        icol = 1
+        do while(icol.ne.0)
+           icol = 0
+           call prompt('Enter column to set location of error bars for (0=none)',icol,0,ndataplots)
+           if (icol.gt.0) then
+              call prompt('Enter location of error data for this column in the data',ilocerrbars(icol),0)
+              if (ilocerrbars(icol).eq.0 .or. ilocerrbars(icol).ge.ndataplots) &
+                 print "(a,i2)",' WARNING: currently no data in column ',ilocerrbars(icol)
+              if (all(ilocerrbars(1:ndataplots).le.0)) iploterrbars = .false.
+           else
+              if (all(ilocerrbars(1:ndataplots).le.0)) iploterrbars = .false.
+           endif
+        enddo
      else
         print*,'Note that circles of interaction can also be set interactively'
         call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))

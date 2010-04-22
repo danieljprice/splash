@@ -22,7 +22,7 @@
 
 module particleplots
  implicit none
- public :: particleplot
+ public :: particleplot,plot_errorbarsx,plot_errorbarsy
  private :: plot_kernel_gr
  
 contains
@@ -43,7 +43,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   use settings_data,    only:ndim,icoords,ntypes
   use settings_part,    only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
                              ilabelpart,iplotline,linestylethisstep,linecolourthisstep, &
-                             iploterrorbars,hfacmarkers
+                             hfacmarkers
   use interpolations2D, only:interpolate_part,interpolate_part1
   use transforms,       only:transform
   use plotlib,          only:plot_qci,plot_bbuf,plot_ebuf,plot_sci,plot_sfs,plot_circ, &
@@ -397,13 +397,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   !
   !--error bars follow line colour but not line style
   !
-  if (iploterrorbars.gt.0 .and. .not.use_zrange) then
-     if (iploty.eq.iploterrorbars) then
-        call plot_errorbarsy(ntot,xplot,yplot,h,itransy)
-     elseif (iplotx.eq.iploterrorbars) then
-        call plot_errorbarsx(ntot,xplot,yplot,h,itransx)
-     endif
-  endif
+  !if (iploterrorbars.gt.0 .and. .not.use_zrange) then
+  !   if (iploty.eq.iploterrorbars) then
+  !      call plot_errorbarsy(ntot,xplot,yplot,h,itransy)
+  !   elseif (iplotx.eq.iploterrorbars) then
+  !      call plot_errorbarsx(ntot,xplot,yplot,h,itransx)
+  !   endif
+  !endif
 
   call plot_sci(icolourindex)
   !
@@ -413,7 +413,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   !
   !--this bit is also used for error bar plotting on x or y axis.
   !
-  if (ncircpart.gt.0 .or. iploterrorbars.gt.0) then
+  if (ncircpart.gt.0) then
      !
      !--set fill area style and line width
      !
@@ -423,15 +423,15 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
      call plot_sci(2)
      call plot_sfs(2)
      
-     if (iploterrorbars.gt.0) then
+     !if (iploterrorbars.gt.0) then
 
      !   if (iploty.eq.iploterrorbars) then
      !      call plot_errorbarsy(ntot,xplot,yplot,h,itransy)
      !   elseif (iplotx.eq.iploterrorbars) then
      !      call plot_errorbarsx(ntot,xplot,yplot,h,itransx)
      !   endif
-     
-     elseif (ncircpart.gt.0) then
+     !else
+     if (ncircpart.gt.0) then
 
         if (iplotx.le.ndim .and. iploty.le.ndim .and. ncircpart.gt.0) then
            print*,'plotting ',ncircpart,' circles of interaction'
