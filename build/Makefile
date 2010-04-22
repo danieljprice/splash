@@ -39,8 +39,10 @@ ifeq ($(BACKEND), giza)
 #-- C A I R O --
    PLOTLIB= ${GIZAOBJ} giza-fortran.F90 plotlib_giza.f90
    PGPLOTLIBS = -lcairo
-   CFLAGS=-g -Wall -Wextra -I../giza/src/ -I/usr/X11/include
+   CFLAGS=-ggdb -Wall -Wextra -I../giza/src/ -I/usr/X11/include
    CC = gcc
+   GIZASRC=${shell cd ../giza/src/; ls *.c}
+   GIZAOBJ=${GIZASRC:.c=.o}
 else
 #-- P G P L O T --
    PLOTLIB= plotlib_pgplot.f90
@@ -826,9 +828,6 @@ err:
 plotlib_pgplot.o: checkpgplot
 
 giza-fortran.o : compilegiza
-
-GIZASRC= ${shell cd ../giza/src/; ls *.c}
-GIZAOBJ=${GIZASRC:.c=.o}
 
 compilegiza: ${GIZAOBJ}
 	@echo "Compiling giza... $<";
