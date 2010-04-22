@@ -184,7 +184,7 @@ A standard ``make'' will create the following binaries (corresponding to data re
 \begin{tabular}{lllp{0.34\textwidth}}
 \splash binary & Formats read & read\_data file & Comments \\
 \hline
-asplash \\splash & ascii & \verb+read_data_ascii.f90+ & Generic data read for n-column ascii formats. Automatically determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use `asplash -e' to plot non-SPH data (e.g. energy vs time files).\\
+asplash, splash & ascii & \verb+read_data_ascii.f90+ & Generic data read for n-column ascii formats. Automatically determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use `asplash -e' to plot non-SPH data (e.g. energy vs time files).\\
 dsplash & DRAGON & \verb+read_data_dragon.f90+ & see environment variable options. \\
 gsplash & GADGET, GADGET-2 &  \verb+read_data_gadget.f90+ & Handles both default and block-labelled formats (see environment variable options). \\
 rsplash & MAGMA & \verb+read_data_srosph.f90+  & Stephan Rosswog's code \\
@@ -201,6 +201,7 @@ Other data reads implemented (but not compiled by default) include the following
 \begin{tabular}{lllp{0.25\textwidth}}
 Format & Binary & read\_data file & Comments \\
 \hline
+h5part format & h5splash & \verb+read_data_h5part.f90+ & Reads general files written with the h5part library. Requires linking against H5PART and HDF5 libraries \\
 Andreas Bauswein's format & bsplash & \verb+read_data_bauswein.f90+  & \\
 Sigfried Vanaverbeke's format & vsplash & \verb+read_data_vanaverbeke.f90+  & \\
 Regularised SPH (Steinar Borve) & rsplash & \verb+read_data_rsph.f90+  & \\
@@ -225,41 +226,43 @@ you used to write it and I can then create a data read for your file format (I w
 
 \subsubsection{ PGPLOT}
  Several useful environment variables can be set for PGPLOT and several of them
-are very useful for \splash. Firstly, to get the basic installation working it is usually necessary to set the environment variable PGPLOT\_DIR to the location of the pgplot directory and possible also PGPLOT\_FONT to specify the location of the font file (see the online faq for font problems), i.e., add the appropriate modification of the following line(s) to your .cshrc (or equivalent) file:
+are very useful for \splash. Firstly, to get the basic installation working it is usually necessary to set the environment variable PGPLOT\_DIR to the location of the pgplot directory and possible also PGPLOT\_FONT to specify the location of the font file (see the online faq for font problems), i.e., add the appropriate modification of the following line(s) to your .bashrc (or equivalent) file:
 \begin{verbatim}
-setenv PGPLOT_DIR /mypgplotdir/pgplot
-setenv PGPLOT_FONT /mypgplotdir/pgplot/grfont.dat
+export PGPLOT_DIR=/mypgplotdir/pgplot
+export PGPLOT_FONT=/mypgplotdir/pgplot/grfont.dat
 \end{verbatim}
 
 Some other useful things to set which control the runtime behaviour of PGPLOT include:
 \begin{verbatim}
-setenv PGPLOT_DEV /xwin
-setenv PGPLOT_BACKGROUND white
-setenv PGPLOT_FOREGROUND black
+export PGPLOT_DEV=/xwin
+export PGPLOT_BACKGROUND=white
+export PGPLOT_FOREGROUND=black
 \end{verbatim}
 The first command sets the default device to the X-window, rather than the /null
 device. The latter two commands set the background and foreground colours of the
 plotting page. Note that these environment variables should be set \emph{before}
 invoking \splash (it is simplest to set them upon starting the shell by placing
-them in your .tcshrc or bash/sh equivalent file). For other environment
+them in your .bashrc or tcsh/csh equivalent file). For other environment
 variables which can be set, refer to the PGPLOT user guide.
 
 \subsubsection{ Endian changing}
- On some compilers, the endian-ness (byte order) of the file read for unformatted (binary) data files can also be changed at runtime. This is useful for looking at files on different systems to the one on which they were created (e.g. x86 machines create little-endian files by default, whereas IBM/powerpc machines create big-endian).
- 
-  Using g95, the relevant environment variable is
-\begin{verbatim}
-setenv G95_ENDIAN 'BIG'
-\end{verbatim}
-or 'LITTLE' as appropriate. With the ifort compiler, the equivalent is:
-\begin{verbatim}
-setenv F_UFMTENDIAN 'big'
-\end{verbatim}
-or 'little'. 
+ On some compilers, the endian-ness (byte order) of the file read for unformatted binary data files can also be changed at runtime. This is useful for looking at files on different systems to the one on which they were created (e.g. x86 machines create little-endian files by default, whereas IBM/powerpc machines create big-endian).
+
+Environment variables for changing the endian-ness of the data read for some common compilers are given below:
+\begin{table}[h!]
+\begin{tabular}{llll}
+Compiler & Environment variable & Setting for big endian & little endian \\
+\hline
+\verb+g95+ & \verb+G95_ENDIAN+ & \verb+BIG+ & \verb+LITTLE+  \\
+\verb+gfortran+ & \verb+GFORTRAN_CONVERT_UNIT+ & \verb+big_endian+ & \verb+little_endian+ \\
+\verb+ifort+ & \verb+F_UFMTENDIAN+ & \verb+big+ & \verb+little+ \\
+\hline
+\end{tabular}
+\end{table}
 
  For compilers without this feature, almost all can change the endian-ness at compile time, and the appropriate flags for doing so can be set using
 \begin{verbatim}
-setenv ENDIAN 'BIG'
+export ENDIAN='BIG'
 \end{verbatim}
 or LITTLE before \emph{compiling} \splash (this adds the appropriate compile-time flags for the compiler selected using the SYSTEM environment variable in the \splash Makefile). 
 
@@ -331,6 +334,16 @@ RSPLASH\_HFACT & can be changed to give correct parameter in $h=h_{fact}(m/\rho)
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 DSPLASH\_EXTRACOLS & specifies number of extra columns present in the file which are dumped after the itype array
+\end{tabular}
+
+\subsubsection{ H5Part data read}
+ For the H5PART read (`h5splash') the environment variable options are:\newline
+
+\begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+H5SPLASH\_NDIM & number of spatial dimensions $d$ (overrides value inferred from data) \\
+H5SPLASH\_HFAC & factor to use to compute h from $h = h_{fac} *(m/\rho)^{1/d}$ if smoothing length not present in data \\
+H5SPLASH\_HSML & value for global smoothing length h (if h not present in data) \\
+H5SPLASH\_TYPEID & name of the dataset containing the particle type identification (default is ``MatID'')
 \end{tabular}
 
 
@@ -1096,6 +1109,7 @@ See \S\ref{sec:geom}.
 \label{sec:exactsolns}
  The following exact solutions are provided
 \begin{itemize}
+\item Any arbitrary function y = f(x) (can be plotted on any or all of the plots)
 \item Hydrodynamic shock tubes (Riemann problem) -- a full solution is provided for all types of waves propagating in either direction.
 \item Spherically-symmetric 3D sedov blast wave problem.
 \item Polytropes (with arbitrary $\gamma$)
@@ -2093,17 +2107,23 @@ splash calc energies dump001 dump002 dump???
 \end{verbatim}
 Other options are given by typing 'splash calc', which currently has the following options:
 \begin{verbatim}
- splash calc energies     : calculate KE,PE,total energy vs time
-                            output to file called 'energy.out'
-        calc massaboverho : mass above a series of density thresholds vs time
-                            output to file called 'massaboverho.out'
-        calc max          : maximum of each column vs. time
-                            output to file called 'maxvals.out'
-        calc min          : minimum of each column vs. time
-                            output to file called 'minvals.out'
-        calc mean         : mean of each column vs. time
-                            output to file called 'meanvals.out'
-        calc timeaverage  : time average of *all* entries for every particle
+  splash calc energies     : calculate KE,PE,total energy vs time
+                             output to file called 'energy.out'
+         calc massaboverho : mass above a series of density thresholds vs time
+                             output to file called 'massaboverho.out'
+         calc rhomach      : density variance and RMS velocity dispersion vs. time
+                             output to file called 'rhomach.out'
+         calc max          : maximum of each column vs. time
+                             output to file called 'maxvals.out'
+         calc min          : minimum of each column vs. time
+                             output to file called 'minvals.out'
+         calc mean         : mean of each column vs. time
+                             output to file called 'meanvals.out'
+         calc rms          : (mass weighted) root mean square of each column vs. time
+                             output to file called 'rmsvals.out'
+         calc vrms         : volume weighted root mean square of each column vs. time
+                             output to file called 'rmsvals-vw.out'
+         calc timeaverage  : time average of *all* entries for every particle
                             output to file called 'time_average.out'
 \end{verbatim}
 For the `energies' and `massaboverho' options to be successful, \splash must be aware of the locations of the corresponding columns in the data (i.e., by the column identification given in the set\_labels routine corresponding to the data read). For the `massaboverho' option an input file is required specifying the density thresholds (a default version is written if the appropriate file is not already present).
