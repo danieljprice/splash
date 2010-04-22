@@ -483,16 +483,19 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio)
 
 end subroutine plot_init
 
-subroutine plot_slc(lw)
+subroutine plot_slc(lc)
   implicit none
-  integer,intent(in) :: lw
+  integer,intent(in) :: lc
+  
+  !--line cap has no effect in PGPLOT
+  
 end subroutine plot_slc
 
-subroutine plot_qlc(lw)
+subroutine plot_qlc(lc)
   implicit none
-  integer,intent(out) :: lw
+  integer,intent(out) :: lc
 
-  lw = 0
+  lc = 0
 end subroutine plot_qlc
 
 logical function plot_qcur()
