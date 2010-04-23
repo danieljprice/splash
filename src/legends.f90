@@ -248,11 +248,14 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
 !
 !--set round caps
 !
-  call plot_slc(1)
+  !call plot_slc(1)
 !
 !--draw a small line segment
 !
   if (iplotline) call plot_line(3,xline,yline)
+
+  call plot_slc(ilinecapprev)
+  call plot_sls(ilinestyleprev)
 !
 !--draw points, only two if line is also plotted so that you can see the line
 !               three otherwise
@@ -271,9 +274,7 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
   endif
 
   call plot_sci(icolourprev)    ! reset colour index
-  call plot_sls(ilinestyleprev) ! reset line style
   call plot_stbg(-1) ! reset text background to transparent
-  call plot_slc(ilinecapprev)
 
 end subroutine legend_markers
 
