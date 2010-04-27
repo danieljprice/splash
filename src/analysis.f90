@@ -668,6 +668,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     rhovarmw = 0.
     svarvw   = 0.
     svarmw   = 0.
+    totvol   = 0.
     do i=1,ntot
        itype  = igettype(i)
        pmassi = particlemass(i,itype)
@@ -679,6 +680,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           voli = 0.
           si   = 0.
        endif
+       totvol   = totvol + voli
        rhovarmw = rhovarmw + (rhoi - rhomeanmw)**2
        rhovarvw = rhovarvw + voli*(rhoi - rhomeanvw)**2
        svarmw   = svarmw   + (si - smeanmw)**2
