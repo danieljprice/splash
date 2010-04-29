@@ -114,7 +114,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: iheadlength
   integer :: i,j,ierr,nparti,ntoti,i1,icol
   integer :: npart_max,nstep_max,ncolstep,nptmass
-  logical :: iexist,mhdread
+  logical :: iexist,mhdread,useipindx
     
   character(len=len(rootname)+10)    :: dumpfile
   integer, parameter                 :: maxheadlength = 1000
@@ -207,6 +207,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
 
      ndimV   = ndim
+     if (ndim.ne.3) print "(a,i1)",' number of dimensions = ',ndim
      if (mhdread) then
         ncolstep = 2*ndim + 6 + ndim
      else
@@ -361,12 +362,24 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
        time(j)  = real(dheader(id_t    ))
        gamma(j) = real(dheader(id_gamma))
-       print "(a,f8.3,3(a,i8))",'t = ',time(j),' n(SPH) = ',ntoti,' n(Nbody) = ',ntoti-nparti,' n(star) = ',nptmass
+       print "(a,es10.3,3(a,i8))",'t = ',time(j),' n(SPH) = ',ntoti,' n(Nbody) = ',ntoti-nparti,' n(star) = ',nptmass
+!
+!--check sanity of ipindx array: do not sort particles if values not sensible
+!
+       useipindx = .true.
+       if (any(ipindx(1:ntoti).le.0 .or. ipindx(1:ntoti).gt.ntoti)) then
+          print*,'WARNING: ipindx array has values < 0 or > ntot: particles not sorted'
+          useipindx = .false.
+       endif
 !
 !--convert posm and velocity vectors to columns and double to single precision
 !
        do i=1,2*ndim+1
-          dat(ipindx(1:ntoti),i,j) = real(dattempvec(i,1:ntoti))
+          if (useipindx) then
+             dat(ipindx(1:ntoti),i,j) = real(dattempvec(i,1:ntoti))
+          else
+             dat(1:ntoti,i,j) = real(dattempvec(i,1:ntoti))
+          endif
        enddo
        if (nptmass.gt.0) then
           do i=1,2*ndim+1
@@ -380,13 +393,21 @@ subroutine read_data(rootname,indexstart,nstepsread)
           i1 = iBfirst - 1
           do i=ivx+ndimV,ivx+2*ndimV-1
              i1 = i1 + 1
-             dat(ipindx(1:nparti),i1,j) = real(dattempvec(i,1:nparti))
+             if (useipindx) then
+                dat(ipindx(1:nparti),i1,j) = real(dattempvec(i,1:nparti))             
+             else
+                dat(1:nparti,i1,j) = real(dattempvec(i,1:nparti))
+             endif
           enddo
        endif
 !
 !--now convert scalars
 !
-       dat(ipindx(1:ntoti),icol:ncolstep,j) = real(dattemp(1:ntoti,icol:ncolstep)) 
+       if (useipindx) then
+          dat(ipindx(1:ntoti),icol:ncolstep,j) = real(dattemp(1:ntoti,icol:ncolstep))
+       else
+          dat(1:ntoti,icol:ncolstep,j) = real(dattemp(1:ntoti,icol:ncolstep))
+       endif
        if (nptmass.gt.0) then
           dat(ntoti+1:ntoti+nptmass,icol,j) = real(dattemp(ntoti+1:ntoti+nptmass,icol))
        endif
@@ -398,8 +419,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
        
        if (nptmass.lt.10) then
           do i=1,nptmass
-             print "('| point mass ',i1,': pos = (',2(es10.2,','),es10.2,'), mass = ',es10.2)", &
+             if (ndim.eq.2) then
+                print "('| point mass ',i1,': pos = (',es10.2,',',es10.2,'), mass = ',es10.2)", &
                    i,dat(ntoti+i,1:ndim,j),dat(ntoti+i,ipmass,j)
+             else
+                print "('| point mass ',i1,': pos = (',2(es10.2,','),es10.2,'), mass = ',es10.2)", &
+                   i,dat(ntoti+i,1:ndim,j),dat(ntoti+i,ipmass,j)
+             endif
           enddo
        endif
        
