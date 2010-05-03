@@ -164,7 +164,7 @@ end subroutine exact_shock_sr
   integer         n, i, iloop 
 !  parameter      (mn = 400)
 
-  double precision tol, pmin, pmax, dvel1, dvel2, check, xmin
+  double precision tol, pmin, pmax, dvel1, dvel2, check !, xmin
   double precision, intent(in) :: rholin,rhorin,plin,prin,vlin,vrin,gamin,tin
 
   double precision ps, vels

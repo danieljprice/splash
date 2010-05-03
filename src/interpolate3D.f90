@@ -78,11 +78,11 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   integer :: iprintinterval,iprintnext,iprogress
   integer :: ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
   integer :: ipixi,jpixi,kpixi,nxpix,nwarn
-  real :: xminpix,yminpix,zminpix,hmin,dhmin3
+  real :: xminpix,yminpix,zminpix,hmin !,dhmin3
   real, dimension(npixx) :: dx2i
   real :: xi,yi,zi,hi,hi1,hi21,radkern,qq,wab,q2,const,dyz2,dz2
   real :: term,termnorm,dy,dz,ypix,zpix,xpixi
-  real :: t_start,t_end
+  !real :: t_start,t_end
   logical :: iprintprogress
   
   datsmooth = 0.
@@ -114,7 +114,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   !
   !--get starting CPU time
   !
-  call cpu_time(t_start)
+  !call cpu_time(t_start)
 
   xminpix = xmin - 0.5*pixwidth
   yminpix = ymin - 0.5*pixwidth
@@ -124,7 +124,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   !  sure that particles contribute to at least one pixel
   !
   hmin = 0.5*pixwidth
-  dhmin3 = 1./(hmin*hmin*hmin)
+  !dhmin3 = 1./(hmin*hmin*hmin)
 
   const = dpi  ! normalisation constant (3D)
   nwarn = 0
@@ -323,7 +323,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   real :: xi,yi,zi,hi,hi1,hi21,radkern,qq,wab,q2,const,dyz2,dz2
   real :: termnorm,dy,dz,ypix,zpix,xpixi,ddatnorm
   real, dimension(3) :: term
-  real :: t_start,t_end
+  !real :: t_start,t_end
   logical :: iprintprogress
   
   datsmooth = 0.
@@ -355,7 +355,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   !
   !--get starting CPU time
   !
-  call cpu_time(t_start)
+  !call cpu_time(t_start)
 
   xminpix = xmin - 0.5*pixwidth
   yminpix = ymin - 0.5*pixwidth

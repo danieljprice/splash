@@ -106,12 +106,8 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio)
  character(len=*),intent(in) :: devicein
  integer,intent(out)         :: ierr
  real, intent(in), optional  :: papersizex,aspectratio
- integer                     :: ilen
- character(len=20)           :: string
  real                        :: widthcm,heightcm
  real, parameter             :: inch_to_cm = 2.54
-
- string = 'splash'
  
  if (present(papersizex)) then
     widthcm = papersizex*inch_to_cm
@@ -168,9 +164,9 @@ subroutine plot_qvsz(units,x1,x2,y1,y2)
 end subroutine plot_qvsz
 
 subroutine plot_bins(nbin,x,data,centre)
-  integer :: nbin 
-  real, dimension(nbin) :: x, data
-  logical :: centre
+  integer, intent(in)               :: nbin 
+  real, dimension(nbin), intent(in) :: x, data
+  logical, intent(in)               :: centre
 
   print*,' WARNING: plot_bins not implemented in giza'
 
@@ -262,9 +258,9 @@ end subroutine plot_stbg
 
 subroutine plot_funx(fx,n,ymin,ymax,pgflags)
   implicit none      
-  real,external    :: fx
-  integer,intent(in) :: n,pgflags
-  real,intent(in)    :: ymin,ymax
+  real,external            :: fx
+  integer,intent(in)       :: n,pgflags
+  real,intent(in)          :: ymin,ymax
 
   print*,' WARNING: plot_funx not implemented in giza'
 

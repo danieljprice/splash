@@ -60,12 +60,6 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
  real(doub_prec)           :: udist,umass,utime,umagfd
  real                      :: r1,hfact
 !
-!--statement function defining conversion to a 4 byte real
-!
- real*4 :: real4
- real   :: dum
- real4(dum) = dum
-!
 !--define output file name
 !
  outfile=trim(filename)//'.init'
@@ -312,5 +306,18 @@ character(len=100) function fileident(firstchar,codestring)
  !endif
 
 end function fileident
+
+!--------------------------------------------------------------------
+!+
+! small function defining conversion to a 4 byte real
+!+
+!--------------------------------------------------------------------
+real*4 function real4(dum)
+ implicit none
+ real, intent(in) :: dum
+
+ real4 = dum
+
+end function real4
 
 end module write_data_phantom

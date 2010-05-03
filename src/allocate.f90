@@ -255,7 +255,7 @@ end subroutine alloc
 !
 !-----------------------------------------
 subroutine deallocate_all
- use particle_data
+ use particle_data, only:dat,icolourme,iamtype,npartoftype,masstype,time,gamma
  implicit none
  
  if (allocated(dat)) deallocate(dat)
