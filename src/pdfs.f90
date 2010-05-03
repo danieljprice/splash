@@ -28,7 +28,7 @@
 !----------------------------------------------------------------
 module pdfs
  implicit none
- public :: pdfcalc,pdfplot,write_pdf,options_pdf
+ public :: pdf_calc,pdf_write,options_pdf
  integer, public :: npdfbins = 0
 
 contains
@@ -61,25 +61,30 @@ end subroutine options_pdf
 ! calculates normalisation for PDF.
 !
 !-----------------------------------------------------------------
-subroutine pdfcalc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,itransx,itransy,labelx,usefixedbins,icolours,rhopart)
+subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
+                    itransx,usefixedbins,volweighted,ierr,icolours,rhopart,pmass)
  use transforms, only:transform,transform_inverse,transform_limits,convert_to_ln_fac
  implicit none
- integer, intent(in) :: npart,nbins
- real, dimension(:), intent(in) :: xpart
- real, intent(in) :: xminplot,xmaxplot
+ integer, intent(in)                 :: npart,nbins
+ real, dimension(:), intent(in)      :: xpart
+ real, intent(in)                    :: xminplot,xmaxplot
  real, intent(out), dimension(nbins) :: xbin,pdf
- real, intent(out) :: pdfmin,pdfmax
- integer, intent(in) :: itransx,itransy
- character(len=*), intent(in) :: labelx
- integer, intent(in), dimension(:) :: icolours
- logical, intent(in) :: usefixedbins
- real, intent(in), dimension(:), optional :: rhopart
+ real, intent(out)                   :: pdfmin,pdfmax
+ integer, intent(in)                 :: itransx
+ logical, intent(in)                 :: usefixedbins
+ logical, intent(out)                :: volweighted
+ integer, intent(out)                :: ierr
+ integer, intent(in), dimension(:), optional :: icolours
+ real, intent(in), dimension(:),    optional :: rhopart,pmass
  integer :: ibin,i
- real :: dx,totprob,fi,fprev,xbini,xbinprev,dxprev
- real :: xmin,xmax,xminpart,xmaxpart
- logical :: volweighted
+ real    :: dx,totprob,fi,xbinprev !xbini,dxprev
+ real    :: xmin,xmax,xminpart,xmaxpart,weighti,totvol
+ logical :: use_part
  
- if (present(rhopart)) then
+ ierr = 0
+ volweighted = .false.
+
+ if (present(rhopart) .and. present(pmass)) then
     print "(a,i3,a)",' calculating (volume weighted) PDF using ',nbins,' bins'
     volweighted = .true.
  else
@@ -117,114 +122,116 @@ subroutine pdfcalc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,it
 !--now calculate probability of finding a particle at each x
 !
  pdf(:) = 0.
+ totvol = 0.
  do i=1,npart
+    if (present(icolours)) then
+       use_part = (icolours(i).ge.0)
+    else
+       use_part = .true.
+    endif
     !--do not use hidden particles
-    if (icolours(i).ge.0) then
+    if (use_part) then
        ibin = int((xpart(i) - xmin)/dx) + 1
        if (ibin.lt.1) ibin = 1
        if (ibin.gt.nbins) ibin = nbins
 
        if (volweighted) then
-          pdf(ibin) = pdf(ibin) + 1./rhopart(i)
+          if (rhopart(i).gt.0.) then
+             weighti = pmass(i)/rhopart(i)
+          else
+             weighti = 0.
+          endif
        else
-          pdf(ibin) = pdf(ibin) + 1.
+          weighti = 1.
        endif
+       totvol = totvol + weighti
+       
+       !--take the PDF of ln(x) if quantity is logged
+       if (itransx.gt.0) then
+           weighti = weighti*convert_to_ln_fac(itransx)
+       endif
+       pdf(ibin) = pdf(ibin) + weighti
     endif
  enddo
+ print*,' sum of weights = ',totvol
 !
 !--get total area under pdf by trapezoidal rule
 !
  totprob = 0.
- fprev = 0.
+ !fprev = 0.
  xbinprev = xmin
  if (itransx.gt.0) call transform_inverse(xbinprev,itransx)
- dxprev = 0.
- 
+ !dxprev = 0.
+
  do ibin=1,nbins
     fi = pdf(ibin)
-    if (itransx.gt.0) then
-       fi = fi*convert_to_ln_fac(itransx)
-    endif
-  !  if (itransx.gt.0) then
-  !     xbini = xmin + ibin*dx
-  !     call transform_inverse(xbini,itransx)
-  !  ! == not used == \int pdf dx = ln(10)*\int x*pdf d(log_10 x)
-  !  ! instead just use \int pdf dx with dx varying
-  !     totprob = totprob + 0.5*((xbini - xbinprev)*fi + dxprev*fprev)
-  !  else
-       totprob = totprob + dx*fi !!0.5*dx*(fi + fprev)
-  !  endif
-    !dxprev = xbini - xbinprev
-    !fprev = fi
+    totprob = totprob + dx*fi !!0.5*dx*(fi + fprev)
  enddo
 !
 !--normalise pdf so total area is unity
 !
- print*,'normalisation factor = ',totprob ! =npart*dx for equispaced
+ print*,'normalisation factor = ',totprob,totvol*dx ! =npart*dx for mass-weighted, totvol*dx for volume weighted
+ totprob = totvol*dx
+ !totprob = dx
+ 
+ pdf(1:nbins) = pdf(1:nbins)
  if (totprob.le.0.) then
+    ierr = 1
     print "(a)",' error in normalisation factor: returning non-normalised PDF'
  else
     pdf(1:nbins) = pdf(1:nbins)/totprob
 
-    call write_pdf(nbins,xbin,pdf,labelx,itransx,volweighted)
+    !call pdf_write(nbins,xbin,pdf,labelx,itransx,volweighted)
    !
    !--return min and max for adaptive plot limit setting
    !  (exclude zero as min)
    ! 
     pdfmin = minval(pdf(1:nbins),mask=(pdf(1:nbins).gt.0.))
     pdfmax = maxval(pdf(1:nbins))
-   !
-   !--apply transformations to y data
-   !
-    if (itransy.gt.0) then
-       call transform(pdf,itransy)
-       call transform_limits(pdfmin,pdfmax,itransy)
-    endif
  endif
- 
-end subroutine pdfcalc
+
+end subroutine pdf_calc
 
 !-----------------------------------------------------------------
 ! interface which controls plotting of PDF
 ! (so can easily change properties of PDF plotting,
 !  e.g. histogram vs. line)
 !-----------------------------------------------------------------
-subroutine pdfplot(nbins,xbin,pb)
- use plotutils, only:plotline,plotbins
- implicit none
- integer, intent(in) :: nbins
- real, dimension(:), intent(in) :: xbin,pb
+!subroutine pdf_plot(nbins,xbin,pb)
+! use plotutils, only:plotline !,plotbins
+! implicit none
+! integer, intent(in) :: nbins
+! real, dimension(:), intent(in) :: xbin,pb
 
 !
 !--plot as line segment, with blanking at zero
 ! 
- call plotline(nbins,xbin,pb,blank=0.)
+! call plotline(nbins,xbin,pb,blank=0.)
 !
 !--plot as histogram, with blanking of zero
 !
 ! call plotbins(nbins,xbin,pb,blank=0.)
 
-end subroutine pdfplot
+!end subroutine pdf_plot
 
 !-----------------------------------------------------------------
 ! routine to write pdf to file
 !-----------------------------------------------------------------
-subroutine write_pdf(nbins,xbin,pb,labelx,itransx,volweighted)
- use filenames, only:rootname,ifileopen
+subroutine pdf_write(nbins,xbin,pb,labelx,itransx,volweighted,rootname,tagline)
  use transforms, only:transform_label,transform_inverse
  use asciiutils, only:safename
  implicit none
- character(len=*), intent(in) :: labelx
- integer, intent(in) :: nbins,itransx
+ character(len=*), intent(in)       :: labelx,rootname,tagline
+ integer, intent(in)                :: nbins,itransx
  real, intent(in), dimension(nbins) :: xbin,pb
- logical, intent(in) :: volweighted
+ logical, intent(in)                :: volweighted
  real, dimension(nbins) :: xbintemp
- integer :: i,ierr
- integer, parameter :: iunit = 86
- logical :: warned
+ integer                :: i,ierr
+ integer, parameter     :: iunit = 86
+ logical                :: warned
  
- print "(a)",' writing to '//trim(rootname(ifileopen))//'_pdf_'//trim(safename(labelx))//'.dat'
- open(unit=iunit,file=trim(rootname(ifileopen))//'_pdf_'//trim(safename(labelx))//'.dat', &
+ print "(a)",' writing to '//trim(rootname)//'_pdf_'//trim(safename(labelx))//'.dat'
+ open(unit=iunit,file=trim(rootname)//'_pdf_'//trim(safename(labelx))//'.dat', &
       form='formatted',status='replace',iostat=ierr)
  if (ierr /= 0) then
     print "(a)",'ERROR: could not open file: no output'
@@ -232,9 +239,9 @@ subroutine write_pdf(nbins,xbin,pb,labelx,itransx,volweighted)
  endif
  
  if (volweighted) then
-    write(iunit,"(a)",iostat=ierr) '# volume weighted PDF: calculated using SPLASH (c)2008 Daniel Price '
+    write(iunit,"(a)",iostat=ierr) '# volume weighted PDF, calculated using '//trim(tagline)
  else
-    write(iunit,"(a)",iostat=ierr) '# density weighted PDF: calculated using SPLASH (c)2008 Daniel Price '
+    write(iunit,"(a)",iostat=ierr) '# density weighted PDF, calculated using '//trim(tagline)
  endif
  if (ierr /= 0) print "(a)",' ERROR writing header line'
  write(iunit,"(a,i5,a)",iostat=ierr) '# ',nbins,' bins evenly spaced in '//trim(transform_label(labelx,itransx))
@@ -254,6 +261,6 @@ subroutine write_pdf(nbins,xbin,pb,labelx,itransx,volweighted)
  close(iunit)
  
  return
-end subroutine write_pdf
+end subroutine pdf_write
 
 end module pdfs

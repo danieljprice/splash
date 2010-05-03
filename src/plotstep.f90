@@ -572,7 +572,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     iamtype,npartoftype,masstype,dat,timei,gammai,ipagechange,iadvance)
   use params,             only:doub_prec,int1,maxparttypes
   use colours,            only:colour_set
-  use filenames,          only:nsteps,rootname,ifileopen
+  use filenames,          only:nsteps,rootname,ifileopen,tagline
   use exact,              only:exact_solution,atstar,ctstar,sigma
   use toystar1D,          only:exact_toystar_ACplane
   use toystar2D,          only:exact_toystar_ACplane2D
@@ -620,7 +620,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use disc,                  only:disccalc,discplot
   use exactfromfile,         only:exact_fromfile
   use write_pixmap,          only:iwritepixmap,writepixmap,write_pixmap_ppm,readpixmap
-  use pdfs,                  only:pdfcalc,pdfplot,npdfbins
+  use pdfs,                  only:pdf_calc,pdf_write,npdfbins
+  use plotutils,             only:plotline
   use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
                                   plot_line,plot_pt1
   implicit none
@@ -658,7 +659,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   
   logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
   logical :: dumxsec, isetrenderlimits, gotcontours, iscoordplot
-  logical :: ichangesize, initx, inity, isameweights
+  logical :: ichangesize, initx, inity, isameweights, volweightedpdf
   logical, parameter :: isperiodic = .false. ! feature not implemented
   
 34   format (25(' -'))
@@ -2088,13 +2089,28 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  endif
                  call set_grid1D(xmin,1.,ngrid)
               !--call routine which calculates pdf on the particles
-                 if (irho.gt.0 .and. irho.le.ndataplots) then
-                    call pdfcalc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
-                         yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),label(iplotx), &
-                         (npdfbins.gt.0),icolourme(1:ntoti),dat(1:ntoti,irho))          
+                 if (irho.gt.0 .and. irho.le.ndataplots .and. ipmass.gt.0 .and. ipmass.le.ndataplots) then
+                    call pdf_calc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
+                         yminadapti,ymaxadapti,itrans(iplotx),(npdfbins.gt.0),volweightedpdf, &
+                         ierr,icolourme(1:ntoti),dat(1:ntoti,irho),dat(1:ntoti,ipmass))          
                  else
-                    call pdfcalc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D,yminadapti,ymaxadapti, &
-                         itrans(iplotx),itrans(iploty),label(iplotx),(npdfbins.gt.0),icolourme(1:ntoti))
+                    call pdf_calc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
+                         yminadapti,ymaxadapti,itrans(iplotx),(npdfbins.gt.0),volweightedpdf, &
+                         ierr,icolourme(1:ntoti))
+                 endif
+                 !
+                 !--write PDF to file
+                 !
+                 if (ierr.eq.0) then
+                    call pdf_write(ngrid,xgrid,datpix1D,label(iplotx),itrans(iplotx),&
+                                   volweightedpdf,rootname(ifileopen),tagline)
+                 endif
+                 !
+                 !--apply transformations to PDF data
+                 !
+                 if (itrans(iploty).gt.0) then
+                    call transform(datpix1D,itrans(iploty))
+                    call transform_limits(yminadapti,ymaxadapti,itrans(iploty))
                  endif
               endif
            endif
@@ -2116,7 +2132,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            if (iploty.eq.itoomre .or. iploty.eq.isurfdens) then
               call discplot()
            elseif (iploty.eq.ipdf) then
-              call pdfplot(size(xgrid),xgrid,datpix1D)
+              !
+              !--plot PDF as line segment, with blanking at zero
+              !
+              call plotline(size(xgrid),xgrid,datpix1D,blank=0.)
            endif
 
            !--restore line size and colour
