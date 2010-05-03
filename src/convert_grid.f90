@@ -35,19 +35,19 @@ contains
 ! data output routines
 !-----------------------------------------------------------------
 subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncolumns,filename,outformat,&
-                           interpolateall)
- use labels,          only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst
- use limits,          only:lim
- use settings_units,  only:units
- use settings_data,   only:ndim,ndimV,UseTypeInRenderings,iRescale,required,lowmemorymode
- use settings_part,   only:iplotpartoftype
- use settings_render, only:npix,inormalise_interpolations,idensityweightedinterpolation
- use params,          only:int1
- use interpolation,   only:set_interpolation_weights
- use interpolations3D,only:interpolate3D,interpolate3D_vec
- use system_utils,    only:lenvironment,renvironment
- use write_griddata,  only:open_gridfile,write_grid
- use particle_data,   only:icolourme
+                           outformat,interpolateall)
+ use labels,             only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst
+ use limits,             only:lim
+ use settings_units,     only:units
+ use settings_data,      only:ndim,ndimV,UseTypeInRenderings,iRescale,required,lowmemorymode
+ use settings_part,      only:iplotpartoftype
+ use settings_render,    only:npix,inormalise_interpolations,idensityweightedinterpolation
+ use params,             only:int1
+ use interpolation,      only:set_interpolation_weights
+ use interpolations3D,   only:interpolate3D,interpolate3D_vec
+ use system_utils,       only:lenvironment,renvironment
+ use readwrite_griddata, only:open_gridfile_w,write_grid
+ use particle_data,      only:icolourme
  implicit none
  integer, intent(in)                          :: npart,ntypes,ncolumns
  integer, intent(in), dimension(:)            :: npartoftype
@@ -238,7 +238,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  !
  !--open grid file for output (also checks format is OK)
  !
- call open_gridfile(iunit,filename,outformat,npixels,ncolsgrid,time,ierr)
+ call open_gridfile_w(iunit,filename,outformat,npixels,ncolsgrid,time,ierr)
  if (ierr /= 0) then
     print "(a)",' ERROR: could not open grid file for output, skipping...'
     if (allocated(datgrid)) deallocate(datgrid)

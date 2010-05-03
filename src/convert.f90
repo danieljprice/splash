@@ -36,7 +36,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
  use settings_data, only:ncolumns,ncalc,required,ntypes,ndimV
  use filenames,     only:rootname,nstepsinfile,nfiles,limitsfile
  use write_sphdata, only:write_sphdump
- use write_griddata,only:isgridformat
+ use readwrite_griddata, only:isgridformat
  use analysis,      only:isanalysis,open_analysis,write_analysis,close_analysis
  use convert_grid,  only:convert_to_grid
  use getdata,       only:get_data

@@ -24,11 +24,21 @@
 ! Module implementing "splash to grid" operation, writing
 ! 3D gridded data in various output formats
 !-----------------------------------------------------------------
-module write_griddata
+module readwrite_griddata
  implicit none
 
  public :: isgridformat,print_gridformats
- public :: open_gridfile,write_grid
+ public :: open_gridfile_w,open_gridfile_r
+ public :: write_grid,read_gridcolumn
+ 
+ !
+ !--generic interface for reading grid column data
+ !  into 1D and 3D arrays
+ !
+ interface read_gridcolumn
+  module procedure read_gridcolumn3D,read_gridcolumn1D
+ end interface read_gridcolumn
+
  private
 
 contains
@@ -79,9 +89,9 @@ subroutine print_gridformats
 end subroutine print_gridformats
 
 !------------------------------------------------------
-! open grid file for output, write header
+! open grid file for (write) output, write header
 !------------------------------------------------------
-subroutine open_gridfile(iunit,filenamein,outformat,npixels,ncolumns,time,ierr)
+subroutine open_gridfile_w(iunit,filenamein,outformat,npixels,ncolumns,time,ierr)
  use asciiutils, only:lcase
  implicit none
  integer, intent(in)               :: iunit
@@ -135,7 +145,52 @@ subroutine open_gridfile(iunit,filenamein,outformat,npixels,ncolumns,time,ierr)
     return
  end select
  
-end subroutine open_gridfile
+end subroutine open_gridfile_w
+
+
+!------------------------------------------------------
+! open grid file for reading, read header
+!------------------------------------------------------
+subroutine open_gridfile_r(iunit,filename,informat,npixels,ncolumns,time,ierr)
+ use asciiutils, only:lcase
+ implicit none
+ integer, intent(in)                :: iunit
+ character(len=*), intent(in)       :: filename
+ character(len=*), intent(inout)    :: informat
+ integer, dimension(3), intent(out) :: npixels
+ integer, intent(out)               :: ncolumns
+ real, intent(out)                  :: time
+ integer, intent(out)               :: ierr
+!
+!--read only implemented for binary grid format at present
+!
+ ierr = 0
+ select case(trim(lcase(informat)))
+ case('gridbinary','gridbin')
+ !
+ !--simple unformatted binary format
+ !
+    print "(/,a,i2)",'----> READING '//trim(filename)//' on unit ',iunit
+    print "(a)",     '      (using unformatted binary format)'
+    open(unit=iunit,file=trim(filename),form='unformatted',status='old',iostat=ierr)
+    if (ierr /= 0) then
+       print "(a)",' ERROR opening '//trim(filename)//' for reading!'
+       return
+    endif
+
+    read(iunit,iostat=ierr) npixels(1:3),ncolumns,time
+    if (ierr /= 0) then
+       print "(a)",' ERROR reading header to file!'
+       return
+    endif
+ case default
+    ! return error if bad format
+    print "(a)",' ERROR: cannot read grid format '''//trim(informat)//''' in open_gridfile_r'
+    ierr = 1
+    return
+ end select
+ 
+end subroutine open_gridfile_r
 
 !------------------------------------------------------
 ! write a particular column to the grid output file
@@ -255,4 +310,36 @@ subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,&
 
 end subroutine write_grid
 
-end module write_griddata
+!------------------------------------------------------------------
+! read a particular column from the grid output file into 3D array
+!------------------------------------------------------------------
+subroutine read_gridcolumn3D(iunit,dat,npixels,ierr)
+ implicit none
+ integer, intent(in)                 :: iunit
+ real, dimension(:,:,:), intent(out) :: dat
+ integer, dimension(3), intent(in)   :: npixels
+ integer, intent(out)                :: ierr
+ integer :: i,j,k
+ 
+ print "(a,i4,'x',i4,'x',i4,a)",'-----> READING ',npixels(:),' data points'
+ read(iunit,iostat=ierr) (((dat(i,j,k),i=1,npixels(1)),j=1,npixels(2)),k=1,npixels(3))
+
+end subroutine read_gridcolumn3D
+
+!------------------------------------------------------------------
+! read a particular column from the grid output file into 1D array
+!------------------------------------------------------------------
+subroutine read_gridcolumn1D(iunit,dat,ngrid,ierr)
+ implicit none
+ integer, intent(in)                 :: iunit
+ real, dimension(:), intent(out)     :: dat
+ integer, intent(in)                 :: ngrid
+ integer, intent(out)                :: ierr
+ integer :: i
+ 
+ print "(a,i10,a)",'-----> READING ',ngrid,' data points'
+ read(iunit,iostat=ierr) (dat(i),i=1,ngrid)
+
+end subroutine read_gridcolumn1D
+
+end module readwrite_griddata
