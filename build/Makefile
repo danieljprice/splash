@@ -15,7 +15,7 @@
 .KEEP_STATE:
 
 KNOWN_SYSTEM=no
-VPATH =../src ../src/H5Part ../giza/interface ../giza/src
+VPATH =../src ../src/H5Part ../giza/interface ../giza/src ../utils
 BINDIR=../bin
 SHELL=/bin/bash
 
@@ -683,6 +683,13 @@ sigfried: vanaverbeke
 gasoline: tipsy
 
 myall: ndspmhd dansph sphNG srosph gadget mbatesph tipsy ascii
+
+SRCGRID2PDF= $(SYSTEMFILE) globaldata.f90 prompting.f90 transform.f90 \
+             asciiutils.f90 write_griddata.f90 pdfs.f90 grid2pdf.f90
+OBJGRID2PDF= ${SRCGRID2PDF:.f90=.o}
+grid2pdf: checksystem $(OBJGRID2PDF)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
+
 
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
