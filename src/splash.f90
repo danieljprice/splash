@@ -263,26 +263,26 @@ program splash
   use defaults,  only:defaults_set_initial,defaults_set,defaults_read
   use limits,    only:read_limits
   use mainmenu,  only:menu,allowrendering,set_extracols
-  use mem_allocation,   only:deallocate_all
-  use projections3D,    only:setup_integratedkernel
-  use settings_data,    only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots
-  use settings_xsecrot, only:read_animfile
-  use system_commands,  only:get_number_arguments,get_argument
-  use system_utils,  only:lenvironment
-  use asciiutils,    only:read_asciifile,basename
-  use write_pixmap,  only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
-  use convert,       only:convert_all
-  use write_sphdata, only:issphformat
-  use write_griddata,only:isgridformat,print_gridformats
-  use analysis,      only:isanalysis
-  use timestepping,  only:timestep_loop
-  use settings_page, only:interactive,device,nomenu
+  use mem_allocation,     only:deallocate_all
+  use projections3D,      only:setup_integratedkernel
+  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots
+  use settings_xsecrot,   only:read_animfile
+  use system_commands,    only:get_number_arguments,get_argument
+  use system_utils,       only:lenvironment
+  use asciiutils,         only:read_asciifile,basename
+  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
+  use convert,            only:convert_all
+  use write_sphdata,      only:issphformat
+  use readwrite_griddata, only:isgridformat,print_gridformats
+  use analysis,           only:isanalysis
+  use timestepping,       only:timestep_loop
+  use settings_page,      only:interactive,device,nomenu
   implicit none
   integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
   logical :: ihavereadfilenames,evsplash,doconvert,useall
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.13.1+ [12th Apr ''10]'
+  character(len=*), parameter :: version = 'v1.13.1+ [3rd May ''10]'
 
   !
   ! initialise some basic code variables
