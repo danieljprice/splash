@@ -70,6 +70,7 @@ subroutine setup_calculated_quantities(ncalc)
     iend = maxcalc
     if (i.gt.0 .or. .not.first) then
        charp='a'
+       if (.not.first) charp = 'q'
        print*
        call prompt(' a)dd to, e)dit, c)lear current list or q)uit/finish? ',&
                    charp,list=(/'a','e','c','q','s','S','Q'/),noblank=.true.)
