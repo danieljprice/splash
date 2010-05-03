@@ -34,7 +34,7 @@ contains
 ! interpolate 3D SPH data to grid and interface to grid
 ! data output routines
 !-----------------------------------------------------------------
-subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncolumns,filename,outformat,&
+subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncolumns,filename,&
                            outformat,interpolateall)
  use labels,             only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst
  use limits,             only:lim
@@ -173,7 +173,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
     hmin = partmin(1)
     if (hmin.gt.0.) then
        print*,'based on the minimum smoothing length of hmin = ',hmin
-       npixels(:) = int(xmax(:) - xmin(:))/hmin + 1
+       npixels(:) = int((xmax(:) - xmin(:))/hmin) + 1
        print "(a,i6,2(' x',i6),a)",' requires ',npixels(:),' pixels to capture the full resolution'
        if (product(npixels(:)).gt.1024**3 .or. product(npixels(:)).le.0) then
           npixx = 512
