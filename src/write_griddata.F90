@@ -65,11 +65,16 @@ subroutine print_gridformats
  print "(a)",'    splash to grid         : interpolate basic SPH data (density, plus velocity if present in data)'
  print "(a)",'                             to 3D grid, write grid data to file (using default output=ascii)'
  print "(a)",'           to gridascii    : as above, grid data written in ascii format'
- print "(a)",'           to gridbinary   : as above, grid data in simple unformatted binary format'
+ print "(a)",'           to gridbinary   : as above, grid data in simple unformatted binary format:'
+ print "(a)",'                                write(unit) nx,ny,nz,ncolumns,time                 [ 4 bytes each ]'
+ print "(a)",'                                write(unit) (((rho(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]'
+ print "(a)",'                                write(unit) (((vx(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]'
+ print "(a)",'                                write(unit) (((vy(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]'
+ print "(a)",'                                write(unit) (((...(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]'
  print "(a)",'        allto grid         : as above, interpolating *all* columns to the grid (and output file)'
  print "(a)",'        allto gridascii    : as above, with ascii output'
  print "(a)",'        allto gridbinary   : as above, with binary output'
- 
+
  return
 end subroutine print_gridformats
 
