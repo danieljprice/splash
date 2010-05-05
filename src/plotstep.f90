@@ -93,10 +93,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2,xsecwidth, &
                                use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth
-  use settings_powerspec, only:options_powerspec
+  use settings_powerspec, only:options_powerspec,options_pdf
   use particle_data,      only:npartoftype,masstype
   use projections3D,      only:coltable
-  use pdfs,               only:options_pdf
   use plotlib,            only:plot_init,plot_qcur,plot_slw,plot_env,plot_curs,plot_band, &
                                plot_close,plot_qinf
   implicit none
@@ -599,7 +598,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                dzscreenfromobserver,taupartdepth,xsecpos_nomulti, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
                                nseq,nframes,getsequencepos,insidesequence
-  use settings_powerspec, only:nfreqspec,wavelengthmin,wavelengthmax,ipowerspecx,ipowerspecy,idisordered
+  use settings_powerspec, only:nfreqspec,wavelengthmin,wavelengthmax,ipowerspecx,ipowerspecy,&
+                               idisordered,npdfbins
   use settings_units,     only:units,unitslabel,unitzintegration
 !
 !--subroutines called from this routine
@@ -620,7 +620,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use disc,                  only:disccalc,discplot
   use exactfromfile,         only:exact_fromfile
   use write_pixmap,          only:iwritepixmap,writepixmap,write_pixmap_ppm,readpixmap
-  use pdfs,                  only:pdf_calc,pdf_write,npdfbins
+  use pdfs,                  only:pdf_calc,pdf_write
   use plotutils,             only:plotline
   use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
                                   plot_line,plot_pt1
@@ -2053,7 +2053,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               label(iploty) = '\gS'
               labely = trim(label(iploty))
            elseif (iploty.eq.ipdf) then
-              label(iploty) = 'PDF '//trim(label(iplotx))
+              label(iploty) = 'PDF ('//trim(label(iplotx))//')'
               labely = trim(label(iploty))
            endif
 
@@ -2089,25 +2089,31 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  endif
                  call set_grid1D(xmin,1.,ngrid)
               !--call routine which calculates pdf on the particles
+                 !--compute PDF on raw (un-transformed) data
+                 xplot(1:ntoti) = dat(1:ntoti,iplotx)
                  if (irho.gt.0 .and. irho.le.ndataplots .and. ipmass.gt.0 .and. ipmass.le.ndataplots) then
                     call pdf_calc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
-                         yminadapti,ymaxadapti,itrans(iplotx),(npdfbins.gt.0),volweightedpdf, &
+                         yminadapti,ymaxadapti,(npdfbins.gt.0),volweightedpdf, &
                          ierr,icolourme(1:ntoti),dat(1:ntoti,irho),dat(1:ntoti,ipmass))          
                  else
                     call pdf_calc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
-                         yminadapti,ymaxadapti,itrans(iplotx),(npdfbins.gt.0),volweightedpdf, &
+                         yminadapti,ymaxadapti,(npdfbins.gt.0),volweightedpdf, &
                          ierr,icolourme(1:ntoti))
                  endif
                  !
                  !--write PDF to file
                  !
                  if (ierr.eq.0) then
-                    call pdf_write(ngrid,xgrid,datpix1D,label(iplotx),itrans(iplotx),&
+                    call pdf_write(ngrid,xgrid,datpix1D,label(iplotx), &
                                    volweightedpdf,rootname(ifileopen),tagline)
                  endif
                  !
                  !--apply transformations to PDF data
-                 !
+                 !                 
+                 if (itrans(iplotx).gt.0) then
+                    !--reapply the x transform
+                    call transform(xplot,itrans(iplotx))
+                 endif
                  if (itrans(iploty).gt.0) then
                     call transform(datpix1D,itrans(iploty))
                     call transform_limits(yminadapti,ymaxadapti,itrans(iploty))

@@ -28,33 +28,9 @@
 !----------------------------------------------------------------
 module pdfs
  implicit none
- public :: pdf_calc,pdf_write,options_pdf
- integer, public :: npdfbins = 0
+ public :: pdf_calc,pdf_write,mean_variance
 
 contains
-
-!-----------------------------------------------------------------
-!
-! settings for PDF calculation
-!
-!-----------------------------------------------------------------
-subroutine options_pdf
- use prompting, only:prompt
- implicit none
- logical :: usefixedpdfbins
- 
- if (npdfbins.eq.0) then
-    usefixedpdfbins = .false.
- else
-    usefixedpdfbins = .true.
- endif
- call prompt('Use fixed PDF bins? (default is adaptive)',usefixedpdfbins)
- if (usefixedpdfbins) then
-    call prompt(' Enter number of bins between min and max of plot (0=auto)',npdfbins,0)
- endif
- 
-end subroutine options_pdf
-
 !-----------------------------------------------------------------
 !
 ! subroutine bins particles into x, works out number in each bin,
@@ -62,22 +38,22 @@ end subroutine options_pdf
 !
 !-----------------------------------------------------------------
 subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
-                    itransx,usefixedbins,volweighted,ierr,icolours,rhopart,pmass)
- use transforms, only:transform,transform_inverse,transform_limits,convert_to_ln_fac
+                    usefixedbins,volweighted,ierr,icolours,rhopart,pmass)
+ !use transforms, only:transform,transform_inverse,transform_limits,convert_to_ln_fac
  implicit none
  integer, intent(in)                 :: npart,nbins
  real, dimension(:), intent(in)      :: xpart
  real, intent(in)                    :: xminplot,xmaxplot
  real, intent(out), dimension(nbins) :: xbin,pdf
  real, intent(out)                   :: pdfmin,pdfmax
- integer, intent(in)                 :: itransx
+! integer, intent(in)                 :: itransx
  logical, intent(in)                 :: usefixedbins
  logical, intent(out)                :: volweighted
  integer, intent(out)                :: ierr
  integer, intent(in), dimension(:), optional :: icolours
  real, intent(in), dimension(:),    optional :: rhopart,pmass
  integer :: ibin,i
- real    :: dx,totprob,fi,xbinprev !xbini,dxprev
+ real    :: dx,totprob,fi!,xbinprev !xbini,dxprev
  real    :: xmin,xmax,xminpart,xmaxpart,weighti,totvol
  logical :: use_part
  
@@ -88,7 +64,7 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
     print "(a,i3,a)",' calculating (volume weighted) PDF using ',nbins,' bins'
     volweighted = .true.
  else
-    print "(a,i3,a)",' calculating (density weighted) PDF using ',nbins,' bins'
+    print "(a,i3,a)",' calculating (mass weighted) PDF using ',nbins,' bins'
  endif
  !
  !--set bins in PDF: must always use all the particles
@@ -146,10 +122,10 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
        endif
        totvol = totvol + weighti
        
-       !--take the PDF of ln(x) if quantity is logged
-       if (itransx.gt.0) then
-           weighti = weighti*convert_to_ln_fac(itransx)
-       endif
+       !!--take the PDF of ln(x) if quantity is logged
+       !if (itransx.gt.0) then
+       !    weighti = weighti*convert_to_ln_fac(itransx)
+       !endif
        pdf(ibin) = pdf(ibin) + weighti
     endif
  enddo
@@ -158,11 +134,6 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
 !--get total area under pdf by trapezoidal rule
 !
  totprob = 0.
- !fprev = 0.
- xbinprev = xmin
- if (itransx.gt.0) call transform_inverse(xbinprev,itransx)
- !dxprev = 0.
-
  do ibin=1,nbins
     fi = pdf(ibin)
     totprob = totprob + dx*fi !!0.5*dx*(fi + fprev)
@@ -174,7 +145,7 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
  totprob = totvol*dx
  !totprob = dx
  
- pdf(1:nbins) = pdf(1:nbins)
+ !pdf(1:nbins) = pdf(1:nbins)
  if (totprob.le.0.) then
     ierr = 1
     print "(a)",' error in normalisation factor: returning non-normalised PDF'
@@ -217,15 +188,13 @@ end subroutine pdf_calc
 !-----------------------------------------------------------------
 ! routine to write pdf to file
 !-----------------------------------------------------------------
-subroutine pdf_write(nbins,xbin,pb,labelx,itransx,volweighted,rootname,tagline)
- use transforms, only:transform_label,transform_inverse
+subroutine pdf_write(nbins,xbin,pb,labelx,volweighted,rootname,tagline)
  use asciiutils, only:safename
  implicit none
  character(len=*), intent(in)       :: labelx,rootname,tagline
- integer, intent(in)                :: nbins,itransx
+ integer, intent(in)                :: nbins !,itransx
  real, intent(in), dimension(nbins) :: xbin,pb
  logical, intent(in)                :: volweighted
- real, dimension(nbins) :: xbintemp
  integer                :: i,ierr
  integer, parameter     :: iunit = 86
  logical                :: warned
@@ -244,15 +213,12 @@ subroutine pdf_write(nbins,xbin,pb,labelx,itransx,volweighted,rootname,tagline)
     write(iunit,"(a)",iostat=ierr) '# density weighted PDF, calculated using '//trim(tagline)
  endif
  if (ierr /= 0) print "(a)",' ERROR writing header line'
- write(iunit,"(a,i5,a)",iostat=ierr) '# ',nbins,' bins evenly spaced in '//trim(transform_label(labelx,itransx))
+ write(iunit,"(a,i5,a)",iostat=ierr) '# ',nbins,' bins evenly spaced in '//trim(labelx)
 
  warned = .false.
- !--output x bins in un-transformed space
- xbintemp = xbin
- if (itransx.gt.0) call transform_inverse(xbintemp,itransx)
  !--dump bins to file
  do i=1,nbins
-    write(iunit,*,iostat=ierr) xbintemp(i),pb(i)
+    write(iunit,*,iostat=ierr) xbin(i),pb(i)
     if (ierr /= 0 .and. .not.warned) then
        print "(a)",' ERRORS during write'
        warned = .true.
@@ -262,5 +228,49 @@ subroutine pdf_write(nbins,xbin,pb,labelx,itransx,volweighted,rootname,tagline)
  
  return
 end subroutine pdf_write
+
+!-------------------------------------------------
+! Subroutine to calculate the mean and variance
+! of a set of data points
+! Mean is trivial but variance uses a special
+! formula to reduce round-off error
+! see Press et al Numerical Recipes, section 14.2
+! this is similar to their subroutine avevar
+!-------------------------------------------------
+subroutine mean_variance(x,npts,xmean,xvariance)
+ implicit none
+ integer, intent(in) :: npts
+ real, intent(in), dimension(npts) :: x
+ real, intent(out) :: xmean, xvariance
+ real :: roundoff, delta
+ integer :: i
+!
+!--calculate average
+!
+ xmean = 0.
+ do i=1,npts
+    xmean = xmean + x(i)
+ enddo
+ xmean = xmean/real(npts)
+!
+!--calculate variance using the corrected two-pass formula
+!
+!    var = 1/(n-1)*( sum (x-\bar{x}) - 1/n * (sum(x-\bar{x}) )^2 )
+!  
+!  where the last term corrects for the roundoff error 
+!  in the first term
+!
+ xvariance = 0.
+ roundoff = 0.
+ 
+ do i=1,npts
+    delta = x(i) - xmean
+    roundoff = roundoff + delta
+    xvariance = xvariance + delta*delta
+ enddo
+ xvariance = (xvariance - roundoff**2/npts)/real(npts-1)
+ 
+ return
+end subroutine mean_variance
 
 end module pdfs

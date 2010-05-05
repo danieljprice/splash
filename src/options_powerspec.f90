@@ -15,23 +15,24 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
 
 !-------------------------------------------------------------------------
-! Module containing settings and options relating to power spectrum plots
+! Module containing settings and options relating to power spectrum
+!  and Probability Distribution Function plots
 ! includes default values of these options and submenu for changing them
 !-------------------------------------------------------------------------
 module settings_powerspec
  implicit none
  integer :: ipowerspecy, ipowerspecx, nfreqspec
- integer :: nwavelengths
+ integer :: nwavelengths,npdfbins
  logical :: idisordered
  real :: wavelengthmax, wavelengthmin
  
- namelist /powerspecopts/ ipowerspecy,idisordered,nwavelengths,nfreqspec
+ namelist /powerspecopts/ ipowerspecy,idisordered,nwavelengths,nfreqspec,npdfbins
 
 contains
 
@@ -49,6 +50,7 @@ subroutine defaults_set_powerspec
   wavelengthmax = 1.0 ! reset later
   wavelengthmin = wavelengthmax/nwavelengths
   nfreqspec = 1
+  npdfbins  = 0
 
   return
 end subroutine defaults_set_powerspec
@@ -99,5 +101,18 @@ subroutine options_powerspec
 
  return
 end subroutine options_powerspec
+
+!-----------------------------------------------------------------
+!
+! settings for PDF calculation
+!
+!-----------------------------------------------------------------
+subroutine options_pdf
+ use prompting, only:prompt
+ implicit none
+ 
+ call prompt(' Enter number of bins between min and max of plot (0=auto)',npdfbins,0)
+ 
+end subroutine options_pdf
 
 end module settings_powerspec
