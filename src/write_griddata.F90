@@ -71,7 +71,7 @@ end function isgridformat
 subroutine print_gridformats
  implicit none
 
- print "(/,a)",' grid conversion mode ("splash to X dumpfiles"): '
+ print "(/,a)",' Grid conversion mode ("splash to X dumpfiles"): '
  print "(a)",'    splash to grid         : interpolate basic SPH data (density, plus velocity if present in data)'
  print "(a)",'                             to 3D grid, write grid data to file (using default output=ascii)'
  print "(a)",'           to gridascii    : as above, grid data written in ascii format'
