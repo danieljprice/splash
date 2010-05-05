@@ -33,7 +33,7 @@ contains
 
 subroutine convert_all(outformat,igotfilenames,useall)
  use particle_data, only:time,gamma,dat,npartoftype,masstype,iamtype
- use settings_data, only:ncolumns,ncalc,required,ntypes,ndimV
+ use settings_data, only:ncolumns,ncalc,required,ntypes,ndimV,lowmemorymode
  use filenames,     only:rootname,nstepsinfile,nfiles,limitsfile
  use write_sphdata, only:write_sphdump
  use readwrite_griddata, only:isgridformat
@@ -54,6 +54,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
  required      = .true.  ! read whole dump file by default
  doanalysis    = isanalysis(outformat,noprint=.true.)
  converttogrid = isgridformat(outformat)
+ lowmemorymode = .false. ! must not be true for first file
  
  if (.not.doanalysis) then
  !
@@ -103,7 +104,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
                           npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
                           ncolumns+ncalc,ndimV,outformat)
        elseif (converttogrid) then
-          call convert_to_grid(time(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes,&
+          call convert_to_grid(time(idump),dat(:,:,idump),ntotal,ntypes,&
                                npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
                                ncolumns+ncalc,filename,outformat,useall)
        else
