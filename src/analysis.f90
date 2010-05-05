@@ -113,9 +113,9 @@ end function isanalysis
 !  over all dump files
 !----------------------------------------------------------------
 subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
- use labels, only:ivx,iBfirst,iutherm,irho,ipmass,label
+ use labels,     only:ivx,iBfirst,iutherm,irho,ipmass,label
  use asciiutils, only:read_asciifile
- use filenames, only:rootname,nfiles
+ use filenames,  only:rootname,nfiles,tagline
  implicit none
  integer, intent(in) :: ncolumns,ndimV
  character(len=*), intent(in) :: dumpfile,analysistype
@@ -317,7 +317,7 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
 !  (no header is written if headerline is blank)
 !
  if (len_trim(headerline).gt.0) then
-    write(iunit,"(a)") '# SPLASH: A visualisation tool for SPH data (c)2004-2009 Daniel Price'
+    write(iunit,"(a)") '# '//trim(tagline)
     write(iunit,"(a)") '# '//trim(fileout)//' produced using "splash calc '//trim(analysistype)// &
                        '" on dump files '//trim(rootname(1))//'->'//trim(rootname(nfiles))
     write(iunit,"(a)") '# use asplash -e '//trim(fileout)//' to plot the contents of this file '
