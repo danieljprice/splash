@@ -53,7 +53,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  integer, intent(in), dimension(:)            :: npartoftype
  integer(kind=int1), intent(in), dimension(:) :: itype
  real, intent(in)                             :: time
- real, intent(in), dimension(npart,ncolumns)  :: dat
+ real, intent(in), dimension(:,:)             :: dat
  real, intent(in), dimension(:)               :: masstype
  character(len=*), intent(in)                 :: filename,outformat
  logical, intent(in)                          :: interpolateall
@@ -330,12 +330,15 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
        endif
     enddo
 
- else
+ elseif (.not.lenvironment('SPLASH_TO_GRID_DENSITYONLY')) then
+
     if (.not.lowmem) then
        if (allocated(datgrid)) deallocate(datgrid)
     endif        
     
     if (nvec.gt.0) then
+       
+       print "(/,a)",' set SPLASH_TO_GRID_DENSITYONLY=yes to skip remaining quantities'
 
        if (.not.lowmem) then
           write(*,"(/,a,i5,2(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(:),' x 3 grid ...'
@@ -363,6 +366,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
              iloc = 0
              exit over_vec
           end select
+          if (iloc.le.0 .or. iloc.ge.ncolumns) cycle over_vec
           
           if (lowmem) then
              
@@ -421,7 +425,8 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
           print*
        enddo over_vec
     endif
-
+ else
+    print "(/,a)",' skipping remaining quantities (from SPLASH_TO_GRID_DENSITYONLY setting)'
  endif
 
  close(iunit)
