@@ -2658,6 +2658,8 @@ contains
              call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
              npixx = max(nint(xmaxpix-xminpix),1)
              npixy = max(nint(ymaxpix-yminpix),1)
+             if (debugmode) print*,'DEBUG: dx = ',xmax-xmin,' dy = ',ymax-ymin
+             if (debugmode) print*,'DEBUG: dxpix = ',xmaxpix-xminpix,' dypix = ',ymaxpix-yminpix
              if (vectordevice .and. npixx.gt.1024) then
                 npixx = 1024/nacross
                 dxpix = (xmax-xmin)/npixx
