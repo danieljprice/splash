@@ -79,7 +79,8 @@ module plotlib
       plot_sfs=>giza_set_fill, &
       plot_qfs=>giza_get_fill, &
       giza_left_click_f, &
-      plot_band=>giza_band
+      plot_band=>giza_band, &
+      giza_vector
   implicit none
   
   character(len=1),parameter :: plot_left_click = giza_left_click_f
@@ -385,8 +386,19 @@ subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
   implicit none
   integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
   real,intent(in)    :: a(idim,jdim),b(idim,jdim),tr(6),blank,c
+  real               :: affine(6)
 
-  print*,' WARNING: plot_vect not implemented in giza'
+  affine(1) = TR(2)
+  affine(2) = TR(3)
+  affine(3) = TR(5)
+  affine(4) = TR(6)
+  affine(5) = TR(1) + 0.5 * TR(2)
+  affine(6) = TR(4) + 0.5 * TR(2)
+
+  !print *, idim, jdim, i1, i2
+
+  call giza_vector(idim,jdim,a,b,i1-1,i2-1,j1-1,j2-1,c,nc,tr,blank)
+ 
 
 end subroutine plot_vect
 
