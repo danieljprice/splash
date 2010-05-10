@@ -397,7 +397,7 @@ subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
 
   !print *, idim, jdim, i1, i2
 
-  call giza_vector(idim,jdim,a,b,i1-1,i2-1,j1-1,j2-1,c,nc,tr,blank)
+  call giza_vector(idim,jdim,a,b,i1-1,i2-1,j1-1,j2-1,c,nc,affine,blank)
  
 
 end subroutine plot_vect
