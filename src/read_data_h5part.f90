@@ -326,7 +326,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                  ierr = h5pt_readstepattrib_r8(ifile,attribname,dtime)
                  if (ierr.eq.0) then
                     time(j) = real(dtime(1))
-                    print "(12x,a,1pe10.3,a)",'time   = ',time(j),' (from '//trim(attribname)//')'
+                    print "(12x,a,es10.3,a)",'time   = ',time(j),' (from '//trim(attribname)//')'
                  else
                     print "(a,i2,a)",' ERROR could not read time from step ',istep,' (from '//trim(attribname)//')'
                  endif
@@ -339,7 +339,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
               
                  if (ierr.eq.0) then
                     gamma(j) = real(dtime(1))
-                    print "(12x,a,1pe10.3,a)",'gamma  = ',gamma(j),' (from '//trim(attribname)//')'
+                    print "(12x,a,es10.3,a)",'gamma  = ',gamma(j),' (from '//trim(attribname)//')'
                  else
                     print "(a,i2,a)",' ERROR could not read gamma from step ',istep,' (from '//trim(attribname)//')'
                  endif
