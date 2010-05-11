@@ -142,10 +142,9 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
 !--normalise pdf so total area is unity
 !
  print*,'normalisation factor = ',totprob,totvol*dx ! =npart*dx for mass-weighted, totvol*dx for volume weighted
- totprob = totvol*dx
+ !totprob = totvol*dx
  !totprob = dx
  
- !pdf(1:nbins) = pdf(1:nbins)
  if (totprob.le.0.) then
     ierr = 1
     print "(a)",' error in normalisation factor: returning non-normalised PDF'
