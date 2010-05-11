@@ -45,8 +45,12 @@ program time_average_pdfs
           endif
        enddo
        if (ierr.eq.0) print "(a,i4,a,i4,a)",' ERROR! number of bins ',nbins,' exceeds maximum (',maxbins,')'
-       write(iprint,*) 'nbins = ',nbins
-       
+       if (all(pdfval(1:nbins,nfiles+1).lt.tiny(0.))) then
+          write(iprint,*) 'skipping '//trim(filename)//': PDF = 0'
+          cycle over_files
+       else
+          write(iprint,*) trim(filename)//' nbins = ',nbins
+       endif       
        !--error checks
        if (nbins.le.0) then
           print "(a)",' ERROR: no data read from file, skipping'
@@ -56,10 +60,15 @@ program time_average_pdfs
           if (nbins.ne.nbinsprev) then
              print "(a)",' ERROR: number of bins has changed between files, skipping file'
              cycle over_files
-          elseif(.not.all(xval(1:nbins).eq.xvalprev(1:nbins))) then
+          elseif(.not.all(abs(xval(1:nbins)-xvalprev(1:nbins)).lt.1.e-6)) then
+             do i=1,nbins
+                if (abs(xval(i)-xvalprev(i)).gt.1.e-6) print*,i,xval(i),xvalprev(i)
+             enddo
              print "(a)",' ERROR: location of bins has changed between files, skipping file'
              cycle over_files
           endif
+       else
+          nbinsprev = nbins
           xvalprev = xval
        endif
        nfiles = nfiles + 1
@@ -68,9 +77,14 @@ program time_average_pdfs
  enddo over_files
  
  !--compute average
- write(iprint,*) 'nfiles = ',nfiles
- ave(1:nbins) = ave(1:nbins)/real(nfiles)
-
+ if (nfiles.gt.0) then
+    write(iprint,*) 'last file: '//trim(filename)//' nfiles = ',nfiles
+    ave(1:nbins) = ave(1:nbins)/real(nfiles)
+ else
+    print*,' ERROR: nfiles = ',nfiles
+    stop
+ endif
+ 
  !--compute standard deviation
  var = 0.
  do iarg=1,nfiles
