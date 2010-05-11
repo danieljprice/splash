@@ -32,7 +32,7 @@
 \setlength{\oddsidemargin}{-0.5cm}
 \setlength{\evensidemargin}{-0.5cm}
 \setlength{\textwidth}{17cm}
-\def\thisyear{2009 }
+\def\thisyear{2010 }
 \newcommand{\splash}{\textsc{splash }}
 
 \begin{titlepage}
@@ -250,12 +250,12 @@ variables which can be set, refer to the PGPLOT user guide.
 
 Environment variables for changing the endian-ness of the data read for some common compilers are given below:
 \begin{table}[h!]
-\begin{tabular}{llll}
-Compiler & Environment variable & Setting for big endian & little endian \\
+\begin{tabular}{lllll}
+Compiler & Environment variable & Setting for big endian & Setting for little endian & Other options \\
 \hline
-\verb+g95+ & \verb+G95_ENDIAN+ & \verb+BIG+ & \verb+LITTLE+  \\
-\verb+gfortran+ & \verb+GFORTRAN_CONVERT_UNIT+ & \verb+big_endian+ & \verb+little_endian+ \\
-\verb+ifort+ & \verb+F_UFMTENDIAN+ & \verb+big+ & \verb+little+ \\
+\verb+g95+ & \verb+G95_ENDIAN+ & \verb+BIG+ & \verb+LITTLE+ &  \\
+\verb+gfortran+ & \verb+GFORTRAN_CONVERT_UNIT+ & \verb+big_endian+ & \verb+little_endian+  & \verb+swap+ \\
+\verb+ifort+ & \verb+F_UFMTENDIAN+ & \verb+big+ & \verb+little+ & \\
 \hline
 \end{tabular}
 \end{table}
@@ -271,6 +271,7 @@ Environment variables that affect all data reads are:\newline
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 SPLASH\_HMIN\_CODEUNITS & if given a value $>$0 enforces a minimum smoothing length, specified in code units as read from the dump file, on all the particles. This can be used to ``dumb-down'' the resolution of SPH simulations, e.g. to match observational resolution. If this variable is set it is \emph{highly} recommended that the ``use accelerated rendering'' option in the r)ender menu is also turned on as quite slow rendering can otherwise result. \\
+SPLASH\_VZERO\_CODEUNITS & if set to a comma separated list of vector components (e.g. \verb+export SPLASH_VZERO_CODEUNITS='0.0,1.0,0.0'+), can be used to subtract a mean velocity field from all particles --- specified in code units as read from the dump file. \\
 \end{tabular}
 
 \subsubsection{ Ascii data read}
@@ -2098,6 +2099,21 @@ splash to ascii dump001 dump002 dump???
 which will convert all of the dump files listed on the command line into ascii format (called \verb+dump001.ascii+, \verb+dump002.ascii+ etc.), with columns as would be listed in the main menu if you opened the dump file in \splash. Note that the output \emph{includes} calculated extra quantities such as the radius if these have been turned on [in the d) menu] and the settings saved to the \verb+splash.defaults+ file. Similarly the data will be output in physical units if a \verb+splash.units+ file is present.
 
   For other command line options, see \S\ref{sec:commandline}.
+
+\subsection{Converting SPH data files to 3D gridded data using \splash}
+\label{sec:convert}
+ \splash has a command line feature which can be used to read binary SPH dump files and output 3D gridded data in a variety of formats. The syntax is
+\begin{verbatim}
+splash to grid dump001 dump002 dump???
+\end{verbatim}
+which will interpolate the density, velocity (if present) and magnetic field (if present) onto a 3D grid and output the results to files (the default output format is ascii, with one file for each quantity interpolated). Other data columns in the SPH file can be interpolated using the ``allto'' option, which interpolates \emph{all} of the columns to the grid:
+\begin{verbatim}
+splash allto grid dump001 dump002 dump???
+\end{verbatim}
+
+ The grid interpolation uses the $x$, $y$, and $z$ limits --- as saved to the \verb+splash.limits+ file --- for the box, and the grid size is given by the ``set number of pixels'' option in the r)ender menu --- as saved to the \verb+splash.defaults+ file. Automatic pixel determination also works (if npixels = 0) but there is a sensible upper limit placed on the grid size determined in this manner to avoid ridiculous memory/disk usage. Various environment variable options are available (these are output at runtime) that can be used to change various aspects of the grid interpolation behaviour (e.g. setting \verb+SPLASH_TO_GRID_PERIODIC=yes+ enforces periodic boundary conditions).
+
+For all possible output formats, use \verb+splash --help+ or see the full list of command line options in \S\ref{sec:commandline}.
 
 \subsection{Using \splash to calculate global quantities as a function of time.}
 \label{sec:splashcalc}
