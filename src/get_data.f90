@@ -549,13 +549,20 @@ end subroutine check_data_read
 !
 !----------------------------------------------------
 subroutine adjust_data_codeunits
- use system_utils,  only:renvironment
- use labels,        only:ih
- use settings_data, only:ncolumns
+ use system_utils,  only:renvironment,envlist
+ use labels,        only:ih,ivx,label
+ use settings_data, only:ncolumns,ndimV,icoords
  use particle_data, only:dat
+ use geometry,      only:labelcoord
  implicit none
  real :: hmin
- 
+ real, dimension(3) :: vzero
+ character(len=20), dimension(3) :: list
+ integer :: i,nlist,nerr,ierr
+
+ !
+ !--environment variable setting to enforce a minimum h
+ ! 
  if (ih.gt.0 .and. ih.le.ncolumns) then
     hmin = renvironment('SPLASH_HMIN_CODEUNITS',errval=-1.)
     if (hmin.gt.0.) then
@@ -563,10 +570,47 @@ subroutine adjust_data_codeunits
           print*,' INTERNAL ERROR: dat not allocated in adjust_data_codeunits'
           return
        endif
-       print*,' >> SETTING MINIMUM H TO ',hmin
+       print "(/,a,es10.3)",' >> SETTING MINIMUM H TO ',hmin
        where (dat(:,ih,:) < hmin)
           dat(:,ih,:) = hmin
        end where
+    endif
+ endif
+
+ !
+ !--environment variable setting to subtract a mean velocity
+ !
+ if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) then
+    call envlist('SPLASH_VZERO_CODEUNITS',nlist,list)
+    nerr = 0
+    if (nlist.gt.0 .and. nlist.lt.ndimV) then
+       print "(/,2(a,i1))",' >> ERROR in SPLASH_VZERO_CODEUNITS setting: number of components = ',nlist,', needs to be ',ndimV
+       nerr = 1
+    elseif (nlist.gt.0) then
+       if (nlist.gt.ndimV) print "(a,i1,a,i1)",' >> WARNING! SPLASH_VZERO_CODEUNITS setting has ',nlist, &
+                                               ' components: using only first ',ndimV
+       nerr = 0
+       do i=1,ndimV
+          read(list(i),*,iostat=ierr) vzero(i)
+          if (ierr.ne.0) then
+             print "(a)",' >> ERROR reading v'//trim(labelcoord(i,icoords))//' component from SPLASH_VZERO_CODEUNITS setting'
+             nerr = ierr
+          endif
+       enddo
+       if (nerr.eq.0) then
+          print "(a)",' >> SUBTRACTING MEAN VELOCITY (from SPLASH_VZERO_CODEUNITS setting):'
+          if (.not.allocated(dat) .or. size(dat(1,:,1)).lt.ivx+ndimV-1) then
+             print*,' INTERNAL ERROR: dat not allocated in adjust_data_codeunits'
+             return
+          endif
+          do i=1,ndimV
+             print "(4x,a,es10.3)",trim(label(ivx+i-1))//' = '//trim(label(ivx+i-1))//' - ',vzero(i)
+             dat(:,ivx+i-1,:) = dat(:,ivx+i-1,:) - vzero(i)
+          enddo
+       endif
+    endif
+    if (nerr.ne.0) then
+       print "(4x,a)",'SPLASH_VZERO_CODEUNITS setting not used'
     endif
  endif
  
