@@ -39,7 +39,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  use labels,             only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst
  use limits,             only:lim
  use settings_units,     only:units
- use settings_data,      only:ndim,ndimV,UseTypeInRenderings,iRescale,required,lowmemorymode
+ use settings_data,      only:ndim,ndimV,UseTypeInRenderings,iRescale,required,lowmemorymode,debugmode
  use settings_part,      only:iplotpartoftype
  use settings_render,    only:npix,inormalise_interpolations,idensityweightedinterpolation
  use params,             only:int1
@@ -252,6 +252,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  !--interpolate density to the 3D grid
  !
  print "(/,a)",' interpolating density to 3D grid...'
+ if (debugmode) print*,'DEBUG: density in column ',irho,' vals = ',dat(1:10,irho)
 
  call minmaxmean_part(dat(1:ninterp,irho:irho),weight,ninterp,partmin,partmax,partmean)
  print fmtstring1,trim(label(irho))
@@ -543,9 +544,14 @@ subroutine minmaxmean_part(dat,weight,npart,partmin,partmax,partmean,nonzero)
  np          = 0
  jlen        = min(size(dat(1,:)),3)
 
- !$omp parallel do reduction(min:partmin) &
- !$omp reduction(max:partmax) reduction(+:partmean,np) &
- !$omp private(j,partval)
+ !--could do this in parallel but reduction on arrays
+ !  does not seem to work in ifort
+ !!$omp parallel do default(none) schedule(static) &
+ !!$omp shared(dat,weight,jlen,npart,usenonzero) &
+ !!$omp reduction(min:partmin) &
+ !!$omp reduction(max:partmax) &
+ !!$omp reduction(+:partmean,np) &
+ !!$omp private(i,j,partval)
  do i=1,npart
     !--only count particles used in the rendering
     if (weight(i).gt.tiny(0.)) then
@@ -562,6 +568,8 @@ subroutine minmaxmean_part(dat,weight,npart,partmin,partmax,partmean,nonzero)
        enddo
     endif
  enddo
+ !!$omp end parallel do
+ 
  if (np.gt.0) then
     partmean(:) = partmean(:)/real(np)
  endif
