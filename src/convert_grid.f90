@@ -58,7 +58,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  character(len=*), intent(in)                 :: filename,outformat
  logical, intent(in)                          :: interpolateall
  integer, parameter :: iunit = 89
- integer            :: ierr,i,k,ncolsgrid,ivec,nvec,iloc
+ integer            :: ierr,i,k,ncolsgrid,ivec,nvec,iloc,j,nzero
  integer            :: npixx,ntoti,ninterp
  character(len=40)  :: fmtstring
  character(len=64)  :: fmtstring1
@@ -282,12 +282,19 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  endif
  
  if (rhomin.gt.0.) then
-    !$omp parallel do private(k) schedule(static)
+    nzero = 0
+    !$omp parallel do private(k,j,i) reduction(+:nzero) schedule(static)
     do k=1,npixels(3)
-       where (datgrid(:,:,k).le.tiny(datgrid))
-          datgrid(:,:,k) = rhomin
-       end where
+       do j=1,npixels(2)
+          do i=1,npixels(1)
+             if (datgrid(i,j,k).le.tiny(datgrid)) then
+                datgrid(i,j,k) = rhomin
+                nzero = nzero + 1
+             endif
+          enddo
+       enddo
     enddo
+    print "(a,i8,a)",' minimum density enforced on ',nzero,' grid cells'
  else
     print*,'minimum density NOT enforced'
  endif
@@ -330,7 +337,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
        endif
     enddo
 
- elseif (.not.lenvironment('SPLASH_TO_GRID_DENSITYONLY')) then
+ elseif (.not.lenvironment('SPLASH_TO_GRID_DENSITY_ONLY')) then
 
     if (.not.lowmem) then
        if (allocated(datgrid)) deallocate(datgrid)
@@ -338,7 +345,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
     
     if (nvec.gt.0) then
        
-       print "(/,a)",' set SPLASH_TO_GRID_DENSITYONLY=yes to skip remaining quantities'
+       print "(/,a)",' set SPLASH_TO_GRID_DENSITY_ONLY=yes to skip remaining quantities'
 
        if (.not.lowmem) then
           write(*,"(/,a,i5,2(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(:),' x 3 grid ...'
@@ -426,7 +433,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
        enddo over_vec
     endif
  else
-    print "(/,a)",' skipping remaining quantities (from SPLASH_TO_GRID_DENSITYONLY setting)'
+    print "(/,a)",' skipping remaining quantities (from SPLASH_TO_GRID_DENSITY_ONLY setting)'
  endif
 
  close(iunit)
