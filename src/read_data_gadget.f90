@@ -76,6 +76,7 @@ module gadgetread
  implicit none
  real :: hsoft
  character(len=4), dimension(maxplot) :: blocklabelgas
+ logical :: havewarned = .false.
  
 end module gadgetread
 
@@ -245,13 +246,13 @@ subroutine read_data(rootname,istepstart,nstepsread)
      if (iFlagCool.gt.0 .and. .not.lenvironment('GSPLASH_IGNORE_IFLAGCOOL')) then
         iformat = 1
         ncolstep = 12 ! 3 x pos, 3 x vel, pmass, utherm, rho, Ne, Nh, h
-        print "(a)",' cooling flag on  : assuming Ne, Nh dumped before h'
+        if (ifile.eq.1) print "(a)",' cooling flag on  : assuming Ne, Nh dumped before h'
      else
         iformat = 0
         ncolstep = 10 ! 3 x pos, 3 x vel, pmass, utherm, rho, h
      endif
      if (iFlagSfr.gt.0) then
-        print "(a)",' star formation flag on: assuming star formation rate dumped '
+        if (ifile.eq.1) print "(a)",' star formation flag on: assuming star formation rate dumped '
         ncolstep = ncolstep + 1
         iformat = iformat + 10
      endif
@@ -793,7 +794,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !  (only works with equal mass particles because otherwise we need the number density estimate)
 !
   if (ih.gt.0 .and. required(ih) .and. ipmass.gt.0 .and. required(ipmass) &
-      .and. abs(massoftypei(1)).gt.tiny(0.) .and. ndim.eq.3) then
+      .and. abs(massoftypei(1)).gt.tiny(0.) .and. ndim.eq.3 .and. .not.havewarned) then
      nhfac = 100
      if (npartoftype(1,i).gt.nhfac) then
         hfactmean = 0.
@@ -802,6 +803,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            hfactmean = hfactmean + hfact
         enddo
         hfact = hfactmean/real(nhfac)
+        havewarned = .true.
         if (hfact.lt.1.15 .or. hfact.gt.1.45) then
            print "(/,a)",'** FRIENDLY NEIGHBOUR WARNING! **'
            print "(3x,a,f5.1,a,/,3x,a,f4.2,a,i1,a)", &
