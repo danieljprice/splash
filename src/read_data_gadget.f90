@@ -88,7 +88,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use mem_allocation, only:alloc
   use labels,         only:ih,irho,ipmass,labeltype
   use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
-  use gadgetread,     only:hsoft,blocklabelgas
+  use gadgetread,     only:hsoft,blocklabelgas,havewarned
   implicit none
   integer, intent(in)                :: istepstart
   integer, intent(out)               :: nstepsread
