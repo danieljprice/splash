@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
@@ -145,7 +145,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !
 !--set parameters which do not vary between timesteps
 !
-  ndim = 3
+  ndim  = 3
   ndimV = 3
   idumpformat = 0
   idumpformat = ienvironment('GSPLASH_FORMAT')
@@ -191,7 +191,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      read(iunit,iostat=ierr) blocklabel,lenblock
      !print*,ierr,blocklabel,lenblock
      if (ierr /= 0 .or. lenblock.ne.264) then
-        print "(a)",'*** ERROR READING HEADER: wrong endian? ***'
+        print "(/,a,/)",'*** ERROR READING HEADER: wrong endian? or wrong format? ***'
         close(iunit)
         if (ifile.eq.1) then
            return
@@ -210,23 +210,12 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
   if (nfiles.gt.1) then
      ntotall = int(sum(Nall(1:6)))
-     idot = len_trim(datfile)-1
-     if (ifile.eq.1 .and. datfile(idot:idot+1).ne.'.0') then
-        if (nfiles.lt.100) then
-           string = "(/,a,i2,a,/,a,/)"
-        else
-           string = "(/,a,i7,a,/,a,/)"
-        endif
-        print string,' ERROR: read is from multiple files (nfiles = ',nfiles,')',&
-                     '        but this is not the first file (does not end in .0): skipping...'
-        close(iunit)
-        return
-     endif
   else
      ntotall = ntoti
   endif
 
-  if (ierr /= 0 .or. ntoti.le.0 .or. ntotall.le.0 .or. any(npartoftypei.lt.0)) then
+  if (ierr /= 0 .or. ntoti.le.0 .or. ntotall.le.0 .or. any(npartoftypei.lt.0) .or. nfiles.le.0 &
+      .or. nfiles.gt.1e6) then
      print "(/,a)", '*** ERROR READING TIMESTEP HEADER: wrong endian? ***'
      print "(/,a)", '   (see splash userguide for compiler-dependent'
      print "(a)",   '    ways to change endianness on the command line)'
@@ -237,6 +226,30 @@ subroutine read_data(rootname,istepstart,nstepsread)
         return
      else
         exit over_files
+     endif
+  endif
+
+  !
+  !--if we are reading from multiple files,
+  !  check that the sequence starts from the correct file
+  !
+  if (nfiles.gt.1) then
+     idot = len_trim(datfile)-1
+     if (ifile.eq.1 .and. datfile(idot:idot+1).ne.'.0') then
+        if (nfiles.lt.100) then
+           string = "(/,a,i2,a,/,a,/)"
+        else
+           string = "(/,a,i7,a,/,a,/)"
+        endif
+        if (nfiles.gt.10000) then
+           !--this is the most likely scenario here
+           print "(a)",'*** ERROR reading timestep header: wrong endian? ***'
+        else
+           print string,' ERROR: read is from multiple files (nfiles = ',nfiles,')',&
+                     '        but this is not the first file (does not end in .0): skipping...'
+        endif
+        close(iunit)
+        return
      endif
   endif
 
@@ -756,8 +769,6 @@ subroutine read_data(rootname,istepstart,nstepsread)
                  !if (itype.gt.1) print*,' id -ve on non-gas particle ',itype,j
                  dat(i0(itype)+j,ih,i) = -abs(dat(i0(itype)+j,ih,i))
                  nacc = nacc + 1
-              else
-                 if (iamtemp(n).gt.ntoti .or. iamtemp(n).eq.0) print*,'ERROR: iamtemp = ',iamtemp(n),n
               endif
            enddo
            !enddo
