@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
@@ -202,8 +202,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   if (.not.useaccelerate) then
      print "(1x,a)",'(use accelerated rendering option to make this faster)'
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
-     print*,'interpolate3D_projection: warning: ignoring some or all particles with h < 0'
+  if (any(hh(1:npart).le.0.)) then
+     print*,'interpolate3D_projection: warning: ignoring some or all particles with h <= 0'
   endif
   !
   !--check column density table has actually been setup
