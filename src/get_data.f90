@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
@@ -571,7 +571,7 @@ subroutine adjust_data_codeunits
           return
        endif
        print "(/,a,es10.3)",' >> SETTING MINIMUM H TO ',hmin
-       where (dat(:,ih,:) < hmin)
+       where (dat(:,ih,:) < hmin .and. dat(:,ih,:).gt.0.)
           dat(:,ih,:) = hmin
        end where
     endif
