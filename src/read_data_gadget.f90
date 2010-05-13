@@ -727,20 +727,6 @@ subroutine read_data(rootname,istepstart,nstepsread)
            if (ierr /= 0) then
               print "(1x,a,i3)",'ERROR READING PARTICLE DATA from column ',icol
            endif
-        !
-        !--for some reason the smoothing length output by GADGET is
-        !  twice the usual SPH smoothing length
-        !
-        !   if (icol.eq.ih .and. required(icol)) then
-        !      if (nfiles.gt.1) then
-        !         do i=1,ntypes
-        !            dat(i0(itype)+1:i0(itype)+npartoftypei(itype),icol,i) = &
-        !        0.5*dat(i0(itype)+1:i0(itype)+npartoftypei(itype),icol,i)
-        !         enddo
-        !      else
-        !         dat(1:index2,icol,i) = 0.5*dat(1:index2,icol,i)
-        !      endif
-        !   endif
         endif
      enddo gas_properties
      
@@ -806,14 +792,6 @@ subroutine read_data(rootname,istepstart,nstepsread)
      else
         write(string,*) ifile
         write(datfile,"(a,i1)"),trim(datfile(1:idot))//trim(adjustl(string))
-        !
-        !--work out the new offset position of each type in the data array
-        !
-        !i0(1) = i0(1) + npartoftypei(1) ! = npartoftype(1,i)
-        !print*,' i0 (1) = ',i0(1),npartoftype(1,i)
-        !do itype=2,ntypes
-        !   i0(itype) = sum(Nall(1:itype-1)) + npartoftype(itype,i)
-        !enddo
         iexist = .false.
         inquire(file=datfile,exist=iexist)
      endif
