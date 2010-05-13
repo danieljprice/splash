@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
@@ -32,18 +32,18 @@ module settings_xsecrot
  integer, public :: nxsec,irotateaxes
  logical, public :: xsec_nomulti, irotate, flythru, use3Dperspective, use3Dopacityrendering
  logical, public :: writeppm
- real, public :: anglex, angley, anglez, zobserver, dzscreenfromobserver
- real, public :: taupartdepth,xsecwidth
- real, public :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
+ real, public    :: anglex, angley, anglez, zobserver, dzscreenfromobserver
+ real, public    :: taupartdepth,xsecwidth
+ real, public    :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
  real, public, dimension(3) :: xorigin,xminrotaxes,xmaxrotaxes
  
  !--private variables related to animation sequences
- integer, parameter, private :: maxseq = 6
+ integer, parameter, private         :: maxseq = 6
  integer, dimension(maxseq), private :: iseqstart,iseqend,iseqtype
  integer, private :: icolchange
- real, private :: xminseqend,xmaxseqend,yminseqend,ymaxseqend
- real, private :: anglezend,angleyend,anglexend,zobserverend,taupartdepthend
- real, private :: xmincolend,xmaxcolend,xsecpos_nomulti_end
+ real, private    :: xminseqend,xmaxseqend,yminseqend,ymaxseqend
+ real, private    :: anglezend,angleyend,anglexend,zobserverend,taupartdepthend
+ real, private    :: xmincolend,xmaxcolend,xsecpos_nomulti_end
  logical, private :: ihavesetsequence
  character(len=*), dimension(maxseq), parameter, private :: labelseqtype = &
     (/'steady zoom on x and y axes                       ', &
@@ -108,7 +108,8 @@ subroutine defaults_set_xsecrotate
   nseq = 0
   nframes = 0
   iseqstart(:) = 0
-  iseqend(:) = 0
+  iseqend(:)   = 0
+  iseqtype(:)  = 0
   xminseqend = 0.
   xmaxseqend = 0.
   yminseqend = 0.
@@ -131,11 +132,11 @@ end subroutine defaults_set_xsecrotate
 ! sets options relating to cross sectioning / rotation
 !----------------------------------------------------------------------
 subroutine submenu_xsecrotate(ichoose)
- use filenames, only:nsteps,nstepsinfile,ifileopen
- use labels, only:label,ix,irad
- use limits, only:lim
- use prompting, only:prompt,print_logical
- use settings_data, only:ndim,xorigin,iCalcQuantities,DataIsBuffered
+ use filenames,      only:nsteps,nstepsinfile,ifileopen
+ use labels,         only:label,ix,irad
+ use limits,         only:lim
+ use prompting,      only:prompt,print_logical
+ use settings_data,  only:ndim,xorigin,iCalcQuantities,DataIsBuffered
  use calcquantities, only:calc_quantities
  implicit none
  integer, intent(in) :: ichoose
@@ -257,8 +258,20 @@ subroutine submenu_xsecrotate(ichoose)
     endif
 !------------------------------------------------------------------------
  case(6)
-    print "(a,i1,a)",'Note: Up to ',maxseq,' sequences (1 of each type) can be set '
-    call prompt('Enter number of sequences to use (0=none)',nseq,0,maxseq)
+    if (nseq.gt.0) then
+       print "(/,a,i1,a)",'Available animation sequences (',nseq,' currently set):'    
+    else
+       print "(/,a)",'Available animation sequences (none currently set):'
+    endif
+    do i=1,maxseq
+       if (nseq.gt.0 .and. any(iseqtype(1:nseq).eq.i)) then
+          print "(1x,i1,' : ',a)",i,labelseqtype(i)//' [SET]'     
+       else
+          print "(1x,i1,' : ',a)",i,trim(labelseqtype(i))
+       endif
+    enddo
+    print "(/,a,i1,a)",'Up to ',maxseq,' sequences (1 of each type) can be set '
+    call prompt('Enter how many sequences to use (0=none)',nseq,0,maxseq)
 
     if (nseq.gt.0) then
        !--set sensible default value for number of frames
@@ -287,11 +300,11 @@ end subroutine submenu_xsecrotate
 ! sets up animation sequences
 !----------------------------------------------------------------------
 subroutine submenu_animation()
- use prompting, only:prompt
- use limits, only:lim
- use labels, only:ix
+ use prompting,     only:prompt
+ use limits,        only:lim
+ use labels,        only:ix
  use settings_data, only:ndim,istartatstep,iendatstep,numplot
- use filenames, only:nsteps,animfile
+ use filenames,     only:nsteps,animfile
  implicit none
  integer :: i,j,ierr
  logical :: ians
@@ -433,17 +446,17 @@ end subroutine submenu_animation
 subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
                           anglexi,angleyi,anglezi,zobserveri,use3Dopacity,taupartdepthi, &
                           x_sec,xsecposi,xmin,xmax,ymin,ymax,rendermin,rendermax)
- use limits, only:lim
- use multiplot, only:itrans
+ use limits,        only:lim
+ use multiplot,     only:itrans
  use settings_data, only:ndim,numplot
- use transforms, only:transform_limits,transform_limits_inverse,transform_label
+ use transforms,    only:transform_limits,transform_limits_inverse,transform_label
  implicit none
  integer, intent(in) :: ipos,iplotx,iploty,irender
- real, intent(in) :: anglexi,angleyi,anglezi,zobserveri,taupartdepthi,xsecposi
- real, intent(in) :: xmin,xmax,ymin,ymax,rendermin,rendermax
+ real, intent(in)    :: anglexi,angleyi,anglezi,zobserveri,taupartdepthi,xsecposi
+ real, intent(in)    :: xmin,xmax,ymin,ymax,rendermin,rendermax
  logical, intent(in) :: rotation, use3Dopacity,x_sec
  integer :: i
- real :: xminfixed,xmaxfixed,yminfixed,ymaxfixed,renderminfixed,rendermaxfixed
+ real    :: xminfixed,xmaxfixed,yminfixed,ymaxfixed,renderminfixed,rendermaxfixed
  
  nseq = 0
  iseqtype(:) = 0
@@ -596,17 +609,17 @@ end function insidesequence
 subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
                           anglexi,angleyi,anglezi,zobserveri,taupartdepthi, &
                           xsecposi,xmin,xmax,ymin,ymax,rendermin,rendermax,isetrenderlimits)
- use limits, only:lim
- use multiplot, only:itrans
+ use limits,     only:lim
+ use multiplot,  only:itrans
  use transforms, only:transform_limits
  implicit none
- integer, intent(in) :: ipos,iframe,iplotx,iploty,irender
- real, intent(out) :: anglexi,angleyi,anglezi,zobserveri,taupartdepthi,xsecposi
- real, intent(out) :: xmin,xmax,ymin,ymax,rendermin,rendermax
+ integer, intent(in)  :: ipos,iframe,iplotx,iploty,irender
+ real, intent(out)    :: anglexi,angleyi,anglezi,zobserveri,taupartdepthi,xsecposi
+ real, intent(out)    :: xmin,xmax,ymin,ymax,rendermin,rendermax
  logical, intent(out) :: isetrenderlimits
  logical :: logtaudepth
  integer :: i,iposinseq,iposend
- real :: xfrac,xminstart,xmaxstart,xminend,xmaxend,yminstart,ymaxstart,yminend,ymaxend
+ real    :: xfrac,xminstart,xmaxstart,xminend,xmaxend,yminstart,ymaxstart,yminend,ymaxend
  
  isetrenderlimits = .false.
  
