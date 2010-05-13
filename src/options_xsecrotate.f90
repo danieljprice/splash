@@ -259,13 +259,13 @@ subroutine submenu_xsecrotate(ichoose)
 !------------------------------------------------------------------------
  case(6)
     if (nseq.gt.0) then
-       print "(/,a,i1,a)",'Available animation sequences (',nseq,' currently set):'    
+       print "(/,a,i1,a)",'Available animation sequences (',nseq,' currently set):'
     else
        print "(/,a)",'Available animation sequences (none currently set):'
     endif
     do i=1,maxseq
        if (nseq.gt.0 .and. any(iseqtype(1:nseq).eq.i)) then
-          print "(1x,i1,' : ',a)",i,labelseqtype(i)//' [SET]'     
+          print "(1x,i1,' : ',a)",i,labelseqtype(i)//' [SET]'
        else
           print "(1x,i1,' : ',a)",i,trim(labelseqtype(i))
        endif
