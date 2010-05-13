@@ -511,28 +511,24 @@ subroutine read_data(rootname,istepstart,nstepsread)
         print*,'particle ID ',ntoti
         if (allocated(iamtemp)) deallocate(iamtemp)
         allocate(iamtemp(ntoti))
-        call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
-        if (iformat.eq.2 .and. blocklabel.ne.'ID  ') then
-           print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
-        endif
-        if (index2.gt.0) then
+     endif
+     
+     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
+     if (iformat.eq.2 .and. blocklabel.ne.'ID  ') then
+        print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
+     endif
+
+     if (index2.gt.0) then
+        if (checkids .and. required(ih)) then
            !--particle IDs are currently only used to set h -ve for accreted particles
            !  so do not read if h not required
-           if (required(ih)) then
-              read (iunit,iostat=ierr) iamtemp(1:index2)
-           else
-              read (iunit,iostat=ierr)           
-           endif
+           read (iunit,iostat=ierr) iamtemp(1:index2)
+        else
+           read (iunit,iostat=ierr) ! skip this line
         endif
-     else
-        call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
-        if (iformat.eq.2 .and. blocklabel.ne.'ID  ') then
-           print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
+        if (ierr /= 0) then
+           print "(a)",'error encountered whilst reading particle ID'
         endif
-        if (index2.gt.0) read (iunit,iostat=ierr) ! skip this line
-     endif
-     if (ierr /= 0) then
-        print "(a)",'error encountered whilst reading particle ID'
      endif
      !
      !--read particle masses
@@ -752,17 +748,22 @@ subroutine read_data(rootname,istepstart,nstepsread)
         !--only do this if the smoothing length is required in the data read
         if (required(ih)) then
            n = 0
-           do itype=1,ntypes
-              do j=1,npartoftypei(itype)
-                 n = n + 1
-                 if (iamtemp(n) < 0) then
-                    dat(i0(itype)+j,ih,i) = -abs(dat(i0(itype)+j,ih,i))
-                    nacc = nacc + 1
-                 endif
-              enddo
+           !do itype=1,ntypes
+           itype = 1
+           do j=1,npartoftypei(itype)
+              n = n + 1
+              if (iamtemp(n) < 0) then
+                 !if (itype.gt.1) print*,' id -ve on non-gas particle ',itype,j
+                 dat(i0(itype)+j,ih,i) = -abs(dat(i0(itype)+j,ih,i))
+                 nacc = nacc + 1
+              else
+                 if (iamtemp(n).gt.ntoti .or. iamtemp(n).eq.0) print*,'ERROR: iamtemp = ',iamtemp(n),n
+              endif
            enddo
+           !enddo
            if (nacc.gt.0) then
-              print "(a,i10,a,/,a)",' marking ',nacc,' particles with negative ID as accreted/dead', &
+              print "(a,i10,a,/,a)",' marking ',nacc,' '//trim(labeltype(1))// &
+                ' particles with negative ID as accreted/dead', &
                 ' (giving them a negative smoothing length so they will be ignored in renderings)'        
            else
               print "(a)",' no particles with negative ID (i.e. accreted particles) found'
@@ -805,7 +806,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   if (required(ih) .and. size(dat(1,:,:)).ge.ih .and. npartoftype(1,i).gt.0) then
      print "(a)",' converting GADGET smoothing length on gas particles to usual SPH definition (x 0.5)'
-     dat(1:npartoftype(1,i),icol,i) = 0.5*dat(1:npartoftype(1,i),icol,i)
+     dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
   endif
 
   if (nfiles.gt.1. .and. any(npartoftype(:,i).ne.Nall(:))) then
