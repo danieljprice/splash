@@ -931,7 +931,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !  (only works with equal mass particles because otherwise we need the number density estimate)
 !
   if (ih.gt.0 .and. required(ih) .and. ipmass.gt.0 .and. required(ipmass) &
-      .and. abs(massoftypei(1)).gt.tiny(0.) .and. ndim.eq.3 .and. .not.havewarned) then
+      .and. abs(massoftypei(1)).lt.tiny(0.) .and. ndim.eq.3 .and. .not.havewarned) then
      nhfac = 100
      if (npartoftype(1,i).gt.nhfac) then
         hfactmean = 0.
@@ -944,7 +944,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         if (hfact.lt.1.15 .or. hfact.gt.1.45) then
            print "(/,a)",'** FRIENDLY NEIGHBOUR WARNING! **'
            print "(3x,a,f5.1,a,/,3x,a,f4.2,a,i1,a)", &
-                 'It looks like you are using around ',4./3.*pi*(2.*hfact)**3,' neighbours', &
+                 'It looks like you are using around ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
                  'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D:'
         
            if (hfact.lt.1.15) then
@@ -965,8 +965,14 @@ subroutine read_data(rootname,istepstart,nstepsread)
            print "(/,3x,a,/,3x,a,/)", &
               'A good default range is h = 1.2-1.3 (m/rho)^1/ndim ', &
               'corresponding to around 58-75 neighbours in 3D.'
+        else
+           print "(/,1x,a,f5.1,a,/,1x,a,f4.2,a,i1,a,/)", &
+                'Simulations employ ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
+                'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D'       
         endif
      endif
+  else
+    print*,'not true'
   endif
 !
 !--cover the special case where no particles have been read
