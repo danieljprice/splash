@@ -319,6 +319,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   !--call set labels to get ih, ipmass, irho for use in the read routine
   !
+     hsoft = 0. ! to avoid unset variable
      call set_labels
   endif
   
@@ -1177,6 +1178,8 @@ subroutine set_labels
            label(icol) = 'Energy jump'
         case('CRDE')
            label(icol) = 'Cosmic Ray injection'        
+        case('PRES')
+           label(icol) = 'pressure'
         case('ID  ')
            icol = icol - 1
         case default
