@@ -80,7 +80,8 @@ module plotlib
       plot_qfs=>giza_get_fill, &
       giza_left_click_f, &
       plot_band=>giza_band, &
-      giza_vector
+      giza_vector, &
+      giza_arrow
   implicit none
   
   character(len=1),parameter :: plot_left_click = giza_left_click_f
@@ -233,7 +234,7 @@ subroutine plot_arro(x1,y1,x2,y2)
   implicit none
   real,intent(in) :: x1,y1,x2,y2
 
-  print*,' WARNING: plot_arro not implemented in giza'
+  call giza_arrow(x1,y1,x2,y2)
 
 end subroutine plot_arro
 
