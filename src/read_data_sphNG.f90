@@ -85,7 +85,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer, parameter :: maxarrsizes = 10, maxreal = 50
-  real, parameter :: pi=3.141592653589
+  integer, parameter :: ilocbinarymass = 24
+  real,    parameter :: pi=3.141592653589
   integer :: i,j,ierr,iunit
   integer :: intg1,int2,int3
   integer :: i1,iarr,i2,iptmass1,iptmass2,ilocpmassinitial
@@ -97,8 +98,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
   integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype
   integer, dimension(maxparttypes) :: npartoftypei
-  real, dimension(maxparttypes) :: massoftypei
-  logical :: iexist, doubleprec,imadepmasscolumn
+  real,    dimension(maxparttypes) :: massoftypei
+  logical :: iexist, doubleprec,imadepmasscolumn,gotbinary
   logical :: debug
 
   character(len=len(rootname)+10) :: dumpfile
@@ -137,6 +138,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   usingvecp   = .false.
   igotmass    = .false.
   tfreefall   = 1.d0
+  gotbinary   = .false.
 
   dumpfile = trim(rootname)   
   !
@@ -499,9 +501,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
    if (npart_max.gt.maxpart .or. j.gt.maxstep .or. ncolumns.gt.maxcol) then
       if (lowmemorymode) then
-         call alloc(max(npart_max,maxpart),j,ilastrequired)
+         call alloc(max(npart_max+2,maxpart),j,ilastrequired)
       else
-         call alloc(max(npart_max,maxpart),j,ncolumns,mixedtypes=.true.)
+         call alloc(max(npart_max+2,maxpart),j,ncolumns,mixedtypes=.true.)
       endif
    endif
    
@@ -525,6 +527,40 @@ subroutine read_data(rootname,indexstart,nstepsread)
             print "(a)",' setting ngas=npart for MPI code '
             npartoftype(1,j) = npart
             npartoftype(2:,j) = 0
+         endif
+         !
+         !--if Phantom calculation uses the binary potential
+         !  then read this as two point mass particles
+         !
+         if (nreals.ge.ilocbinarymass + 14) then
+            if (dummyreal(ilocbinarymass).gt.0.) then 
+               gotbinary = .true.
+               npartoftype(3,j) = 2
+               ntotal = ntotal + 2
+               ipos = ilocbinarymass
+               dat(npart+1,ix(1),j) = dummyreal(ipos+1)
+               dat(npart+1,ix(2),j) = dummyreal(ipos+2)
+               dat(npart+1,ix(3),j) = dummyreal(ipos+3)
+               dat(npart+1,ih,j)    = dummyreal(ipos+4)
+               dat(npart+2,ix(1),j) = dummyreal(ipos+5)
+               dat(npart+2,ix(2),j) = dummyreal(ipos+6)
+               dat(npart+2,ix(3),j) = dummyreal(ipos+7)
+               dat(npart+2,ih,j)    = dummyreal(ipos+8)
+               print *,npart+1,npart+2
+               print *,'binary position:   primary: ',dummyreal(ipos+1:ipos+4)
+               print *,'                 secondary: ',dummyreal(ipos+5:ipos+8)
+               if (ivx.gt.0) then
+                  dat(npart+1,ivx,j)      = dummyreal(ipos+9)
+                  dat(npart+1,ivx+1,j)    = dummyreal(ipos+10)
+                  if (ndimV.eq.3) &
+                     dat(npart+1,ivx+2,j) = dummyreal(ipos+11)
+                  dat(npart+2,ivx,j)      = dummyreal(ipos+12)
+                  dat(npart+2,ivx+1,j)    = dummyreal(ipos+13)
+                  if (ndimV.eq.3) &
+                     dat(npart+2,ivx+2,j) = dummyreal(ipos+14)
+               endif
+               npart  = npart  + 2
+            endif
          endif
       else
          npartoftype(1,j) = npart
@@ -554,6 +590,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
       if (allocated(iphase)) deallocate(iphase)
       allocate(iphase(npart_max))
       iphase(:) = 0
+
+      if (gotbinary) then
+         iphase(npart-1) = 1
+         iphase(npart)   = 1
+      endif
+
    endif ! iblock = 1
 !
 !--Arrays
@@ -969,7 +1011,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
      
      if (phantomdump) then
-        print*,' n(gas) = ',npartoftype(1,j),' n(dust) = ',npartoftype(2,j)
+        print*,' n(gas) = ',npartoftype(1,j),' n(dust) = ',npartoftype(2,j),' n(sink) = ',npartoftype(3,j)
      else
         if (npartoftype(2,j).ne.0) then
            print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j), &
@@ -1294,11 +1336,13 @@ subroutine set_labels
   !--set labels for each particle type
   !
   if (ntypes.eq.2) then  ! phantom
-     ntypes = 2
+     ntypes = 3
      labeltype(1) = 'gas'
      labeltype(2) = 'dust'
+     labeltype(3) = 'sink'
      UseTypeInRenderings(1) = .true.
      UseTypeInRenderings(2) = .false.  
+     UseTypeInRenderings(3) = .false.  
   else
      ntypes = 5
      labeltype(1) = 'gas'
