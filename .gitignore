@@ -1,3 +1,10 @@
 *.mod
 *.o
 ?splash
+docs/splash.aux
+docs/splash.log
+docs/splash.toc
+docs/splash.out
+bin
+ref
+*otherendian.f90
