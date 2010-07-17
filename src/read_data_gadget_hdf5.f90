@@ -1178,8 +1178,10 @@ subroutine set_labels
   ntypes = 6
   labeltype(1) = 'gas'
   labeltype(2) = 'dark matter'
+  labeltype(3) = 'boundary 1'
+  labeltype(4) = 'boundary 2'
   labeltype(5) = 'star'
-  labeltype(6) = 'sink'
+  labeltype(6) = 'sink / black hole'
   UseTypeInRenderings(1) = .true.
   !
   !--dark matter particles are of non-SPH type (ie. cannot be used in renderings)

@@ -354,12 +354,15 @@ subroutine set_labels
   
   !--set labels for each particle type
   !
-  ntypes = 5
+  ntypes = 6
   labeltype(1) = 'gas'
   labeltype(2) = 'dark matter'
+  labeltype(3) = 'boundary 1'
+  labeltype(4) = 'boundary 2'
   labeltype(5) = 'star'
+  labeltype(6) = 'sink / black hole'
   UseTypeInRenderings(1) = .true.
-  UseTypeInRenderings(2:5) = .false.
+  UseTypeInRenderings(2:6) = .false.
 
 !-----------------------------------------------------------
   return
