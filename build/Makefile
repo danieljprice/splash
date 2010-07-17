@@ -17,7 +17,7 @@
 KNOWN_SYSTEM=no
 SRCDIR=../src
 BINDIR=../bin
-VPATH=$(SRCDIR) $(SRCDIR)/H5Part ../giza/interface ../giza/src ../utils
+VPATH=$(SRCDIR) $(SRCDIR)/H5Part ../giza/interface ../giza/src ../utils ../tests
 SHELL=/bin/bash
 
 #
@@ -591,7 +591,18 @@ read_data_gadget_otherendian.o: read_data_gadget.o
 	$(F90C) $(F90FLAGS) $(ENDIANFLAGBIG) -c read_data_gadget_otherendian.f90 -o read_data_gadget_otherendian.o
 
 gadget_jsb: checksystem $(OBJECTS) read_data_gadget_jsb.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash_jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash-jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
+
+#---HDF5 gadget read ---
+gadgethdf5: gadget_hdf5
+
+gadget_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read_data_gadget_hdf5.o
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash-hdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read_data_gadget_hdf5.o $(LDFLAGS) $(HDF5LIBS)
+
+read_data_gadget_hdf5_utils.o: read_data_gadget_hdf5_utils.c
+	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
+
+#------------------
 
 bauswein: checksystem $(OBJECTS) read_data_bauswein.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_bauswein.o $(LDFLAGS)
@@ -614,11 +625,14 @@ dansph: checksystem $(OBJECTS) read_data_dansph_old.o
 foulkes: checksystem $(OBJECTS) read_data_foulkes.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_foulkes.o $(LDFLAGS)
 
-flash_hdf5: checksystem $(OBJECTS) read_data_flash_hdf5.o read_data_flash_hdf5_utils.o
+flash_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_flash_hdf5.o read_data_flash_hdf5_utils.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_flash_hdf5_utils.o read_data_flash_hdf5.o $(LDFLAGS)
 
 flashhdf5:
 	$(MAKE) flash_hdf5 HDF5=yes
+
+read_data_flash_hdf5_utils.o: read_data_flash_hdf5_utils.c
+	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
 
 flash: flashhdf5
 
@@ -855,8 +869,8 @@ targz:
 
 tests: test1 test2 test3
 
-test1: interpolate3D_projection.o interpolate3D_xsec.o ./tests/test_interpolate3D.o 
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_interpolation3D ./tests/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
+test1: interpolate3D_projection.o interpolate3D_xsec.o test_interpolate3D.o 
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_interpolation3D test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
 test2: transform.o ./tests/test_transform.o 
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_transform ./tests/test_transform.o transform.o
 test3: fieldlines.o ./tests/test_fieldlines.o 
