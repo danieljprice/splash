@@ -82,7 +82,8 @@ module plotlib
       plot_band=>giza_band, &
       giza_vector, &
       giza_arrow,  &
-      giza_format_number
+      giza_format_number, &
+      giza_query_device
   implicit none
   
   character(len=1),parameter :: plot_left_click = giza_left_click_f
@@ -302,10 +303,46 @@ subroutine plot_qinf(item,value,length)
   character(len=*),intent(in)  :: item
   character(len=*),intent(out) :: value
   integer,intent(out)          :: length
+  character(len=10) :: datestring,timestring
 
-  print*,' WARNING: plot_qinf not implemented in giza'
-  value = ' '
-  length = 0
+  select case(item)
+  case('VERSION','version')
+     value = 'giza-0.1'
+  case('STATE','state')
+     print*,' WARNING: query for STATE not yet implemented in giza'
+  case('USER','user')
+     print*,' WARNING: query for USER not yet implemented in giza'
+  case('NOW','now')
+     call date_and_time(datestring,timestring)
+     value = datestring(7:8)//'-'//datestring(5:6)//'-'//datestring(1:4)// &
+             ' '//timestring(1:2)//':'//timestring(3:4)
+   case('DEVICE','device')
+     print*,' WARNING: query for DEVICE not yet implemented in giza'
+  case('FILE','file')
+     print*,' WARNING: query for FILE not yet implemented in giza'
+  case('TYPE','type')
+     call giza_query_device('type',value)
+  case('DEV/TYPE','dev/type')
+     print*,' WARNING: query for DEV/TYPE not yet implemented in giza'
+  case('HARDCOPY','hardcopy')
+     call giza_query_device('hardcopy',value)
+  case('TERMINAL','terminal')
+     !--in giza the current device is never the terminal
+     value = 'NO'
+  case('CURSOR','cursor')
+     call giza_query_device('cursor',value)
+!     if (plot_qcur()) then
+!        value = 'YES'
+!     else
+!        value = 'NO'
+!     endif
+  case('SCROLL','scroll')
+     !--no scroll capability in any current giza devices
+     value = 'NO'
+  case default
+     value = ' '
+  end select
+  length = len_trim(value)
 
 end subroutine plot_qinf
 
