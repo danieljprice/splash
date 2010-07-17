@@ -81,7 +81,8 @@ module plotlib
       giza_left_click_f, &
       plot_band=>giza_band, &
       giza_vector, &
-      giza_arrow
+      giza_arrow,  &
+      giza_format_number
   implicit none
   
   character(len=1),parameter :: plot_left_click = giza_left_click_f
@@ -313,10 +314,12 @@ subroutine plot_numb(m,pp,form,string,nc)
   integer,intent(in)           :: m,pp,form
   character(len=*),intent(out) :: string
   integer,intent(out)          :: nc
+  real :: x
   
-  print*,' WARNING: plot_numb not implemented in giza'
-  string = ' '
-  nc = 1
+  x = m*10.**pp
+!  print*,'pp = ',pp,' m = ',m
+  call giza_format_number(x,3,string)
+  nc = len_trim(string)
 
 end subroutine plot_numb
 
