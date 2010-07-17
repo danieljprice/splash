@@ -292,7 +292,7 @@ int checkfordataset(hid_t file_id, char *datasetname)
     
     int i;
     char name[256];
-    for (i=0;i<ndatasets[0]-1;i++) {
+    for (i=0;i<ndatasets[0];i++) {
         H5Gget_objname_by_idx(file_id, i, name, 256);
         if (strcmp(name,datasetname)==0) {
            //printf(" %s in file \n",datasetname);
