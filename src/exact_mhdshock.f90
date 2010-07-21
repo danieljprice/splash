@@ -44,7 +44,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
   real, dimension(size(xpts)), intent(out) :: ypts
   
   real, dimension(16) :: rho,pr,vx,vy,vz,By,Bz
-  real :: const, Bxzero
+  real :: const, Bxzero,tfac
 
   print*,' Plotting exact mhd shock #',ishk,' at t = ',time
   !
@@ -58,19 +58,20 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      !
      !--Brio & Wu problem with gamma = 2
      !
+     tfac = time/0.1
      vz = 0.
      Bz = 0.
      Bxzero = 0.75
      npts = 14
      xpts(1) = xmin
-     xpts(2) = -0.18
-     xpts(3) = -0.08
-     xpts(4:6) = -0.03
-     xpts(7) = -0.005
-     xpts(8:9) = 0.06
-     xpts(10:11) = 0.147
-     xpts(12) = 0.33
-     xpts(13) = 0.36
+     xpts(2) = -0.18*tfac
+     xpts(3) = -0.08*tfac
+     xpts(4:6) = -0.03*tfac
+     xpts(7) = -0.005*tfac
+     xpts(8:9) = 0.06*tfac
+     xpts(10:11) = 0.147*tfac
+     xpts(12) = 0.33*tfac
+     xpts(13) = 0.36*tfac
      xpts(14) = xmax
 
      rho(1:2) = 1.0
