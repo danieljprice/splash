@@ -187,7 +187,7 @@ contains
          ' 9) torus ',/, &
          '10) ring spreading ',/, &
          '11) special relativistic shock tube',/, &
-         '12) ANY function f(x)',/, &
+         '12) ANY function f(x,t)',/, &
          '13) read from file ')
     call prompt('enter exact solution to plot',iexact,0,13)
     print "(a,i2)",'plotting exact solution number ',iexact
@@ -872,7 +872,7 @@ contains
     case(12) ! arbitrary function parsing
        if ((iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) .or. iexactploty.eq.0) then
           do i=1,nfunc
-             call exact_function(funcstring(i),xexact,yexact,ierr)
+             call exact_function(funcstring(i),xexact,yexact,time,ierr)
              if (i.ne.nfunc) then ! plot all except last line here
                 if (itransy.gt.0) call transform(yexact,itransy)
                 !--use xtemp, which is xexact but already transformed

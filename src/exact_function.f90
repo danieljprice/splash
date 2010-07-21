@@ -29,11 +29,12 @@ module exactfunction
 
 contains
 
-subroutine exact_function(string,xplot,yplot,ierr)
+subroutine exact_function(string,xplot,yplot,time,ierr)
   use fparser, only:initf,evalf,endf,EvalErrType,EvalErrMsg,rn
   implicit none
   character(len=*), intent(in) :: string
   real, intent(in), dimension(:) :: xplot
+  real, intent(in)               :: time
   real, intent(out), dimension(size(xplot)) :: yplot
   integer, intent(out) :: ierr
   integer :: i,j,nfunc
@@ -67,9 +68,10 @@ subroutine exact_function(string,xplot,yplot,ierr)
   else
      do i=1,size(xplot)
         val(1) = xplot(i)                 ! type conversion here
+        val(2) = time                     ! type conversion here
         
         !--evaluate sub-functions in order of dependency
-        do j=2,nfunc
+        do j=3,nfunc
            val(j) = evalf(j,val(1:j-1))
         enddo
         yplot(i) = real(evalf(1,val(1:nfunc)))  ! type conversion back
@@ -123,14 +125,16 @@ subroutine parse_subfunctions(string,nfunc,check,ierr,verbose)
  logical, intent(in), optional :: verbose
  
  character(len=len(string)), dimension(nfunc) :: var
- integer :: ieq,ivars,lstr,j,icommaprev
+ integer :: ieq,ivars,ivarsinit,lstr,j,icommaprev
  logical :: iverb
 
  iverb = .true.
  if (present(verbose)) iverb = verbose
 
  var(1) = 'x'
- ivars = 1
+ var(2) = 't'
+ ivarsinit = 2
+ ivars = ivarsinit
  lstr = len_trim(string)
  icommaprev = lstr+1
  do j=lstr,1,-1
@@ -156,7 +160,7 @@ subroutine parse_subfunctions(string,nfunc,check,ierr,verbose)
        !--function is what lies to right of equals sign
        if (check) then
           if (iverb) then
-             if (ivars.eq.2) print "(a)",'Evaluating sub-functions in the order:'
+             if (ivars.eq.ivarsinit+1) print "(a)",'Evaluating sub-functions in the order:'
              print "(a)",trim(var(ivars))//' = '//string(ieq+1:icommaprev-1)
           endif
           ierr = checkf(string(ieq+1:icommaprev-1),var(1:ivars-1))
@@ -180,7 +184,7 @@ subroutine parse_subfunctions(string,nfunc,check,ierr,verbose)
 !--finally, check/parse combined function
 !
  if (check) then
-    if (ivars.ge.2 .and. iverb) print "(1x,a)",'f('//trim(var(1))//') = '//string(1:icommaprev-1)
+    if (ivars.ge.ivarsinit .and. iverb) print "(1x,a)",'f('//trim(var(1))//') = '//string(1:icommaprev-1)
     ierr = checkf(string(1:icommaprev-1),var(1:ivars))
  else
     call parsef(1,string(1:icommaprev-1),var(1:ivars))
