@@ -37,7 +37,7 @@ subroutine exact_function(string,xplot,yplot,time,ierr)
   real, intent(in)               :: time
   real, intent(out), dimension(size(xplot)) :: yplot
   integer, intent(out) :: ierr
-  integer :: i,j,nfunc
+  integer :: i,j,nvars
   real(kind=rn), dimension(:), allocatable     :: val
   
   print "(a)",' Plotting function f(x) = '//trim(string)
@@ -51,16 +51,16 @@ subroutine exact_function(string,xplot,yplot,time,ierr)
   !--work out how many subfunctions the string contains 
   !  and allocate memory for the sub function values appropriately
   !
-  call get_nfunc(string,nfunc)
-  allocate(val(nfunc),stat=ierr)
+  call get_nvars(string,nvars)
+  allocate(val(nvars),stat=ierr)
   if (ierr /= 0) then
-     print "(a)",' ERROR allocating memory for ',nfunc,' sub-functions in exact_function'
+     print "(a)",' ERROR allocating memory for ',nvars,' sub-functions in exact_function'
      if (allocated(val)) deallocate(val)
      return
   endif
 
-  call initf(nfunc)
-  call parse_subfunctions(string,nfunc,.false.,ierr)
+  call initf(nvars)
+  call parse_subfunctions(string,nvars,.false.,ierr)
   
   if (EvalErrType.ne.0) then
      print "(a)",' *** ERROR parsing function: '//trim(EvalerrMsg())//' ***'
@@ -71,10 +71,10 @@ subroutine exact_function(string,xplot,yplot,time,ierr)
         val(2) = time                     ! type conversion here
         
         !--evaluate sub-functions in order of dependency
-        do j=3,nfunc
+        do j=3,nvars
            val(j) = evalf(j,val(1:j-1))
         enddo
-        yplot(i) = real(evalf(1,val(1:nfunc)))  ! type conversion back
+        yplot(i) = real(evalf(1,val(1:nvars)))  ! type conversion back
         if (EvalErrType /= 0) ierr = EvalErrType
      enddo
      if (ierr.ne.0) then
@@ -100,13 +100,13 @@ subroutine check_function(string,ierr,verbose)
  character(len=*), intent(in)  :: string
  integer, intent(out)          :: ierr
  logical, intent(in), optional :: verbose
- integer :: nfunc
+ integer :: nvars
  
- call get_nfunc(string,nfunc)
+ call get_nvars(string,nvars)
  if (present(verbose)) then
-    call parse_subfunctions(string,nfunc,.true.,ierr,verbose=verbose) 
+    call parse_subfunctions(string,nvars,.true.,ierr,verbose=verbose) 
  else
-    call parse_subfunctions(string,nfunc,.true.,ierr)
+    call parse_subfunctions(string,nvars,.true.,ierr)
  endif
 ! ierr = checkf(string,(/'x'/))
 
@@ -115,16 +115,16 @@ end subroutine check_function
 !----------------------------------------------------------------
 ! allow sub-function syntax (f(x) = y, y = 24*x)
 !----------------------------------------------------------------
-subroutine parse_subfunctions(string,nfunc,check,ierr,verbose)
+subroutine parse_subfunctions(string,nvars,check,ierr,verbose)
  use fparser, only:checkf,parsef,EvalErrMsg,EvalErrType
  implicit none
  character(len=*), intent(in) :: string
- integer, intent(in)          :: nfunc
+ integer, intent(in)          :: nvars
  logical, intent(in)          :: check
  integer, intent(out)         :: ierr
  logical, intent(in), optional :: verbose
  
- character(len=len(string)), dimension(nfunc) :: var
+ character(len=len(string)), dimension(nvars) :: var
  integer :: ieq,ivars,ivarsinit,lstr,j,icommaprev
  logical :: iverb
 
@@ -176,9 +176,9 @@ subroutine parse_subfunctions(string,nfunc,check,ierr,verbose)
        icommaprev = j
     endif
  enddo
- if (ivars.ne.nfunc) then
+ if (ivars.ne.nvars) then
     print "(a)",' Internal consistency error in parse_subfunctions:'
-    print*,' nsubfunctions ',ivars,' not equal to that obtained in get_nfunc, ',nfunc
+    print*,' nvars ',ivars,' not equal to that obtained in get_nvars, ',nvars
  endif
 !
 !--finally, check/parse combined function
@@ -199,17 +199,17 @@ end subroutine parse_subfunctions
 !----------------------------------------------------------------
 ! query the number of sub-functions (number of commas)
 !----------------------------------------------------------------
-subroutine get_nfunc(string,nfunc)
+subroutine get_nvars(string,nvars)
  implicit none
  character(len=*), intent(in) :: string
- integer, intent(out) :: nfunc
+ integer, intent(out) :: nvars
  integer :: j
  
- nfunc = 2
+ nvars = 2
  do j=1,len_trim(string)
-    if (string(j:j)==',') nfunc = nfunc + 1
+    if (string(j:j)==',') nvars = nvars + 1
  enddo
 
-end subroutine get_nfunc
+end subroutine get_nvars
 
 end module exactfunction
