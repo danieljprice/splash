@@ -378,12 +378,13 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      !
      Bxzero = 5.*const
      npts = 12
+     tfac = time/0.08
      xpts(1) = xmin
-     xpts(2:3) = -0.386
-     xpts(4:5) = -0.01
-     xpts(6:7) = 0.0505
-     xpts(8:9) = 0.12
-     xpts(10:11) = 0.37
+     xpts(2:3) = -0.386*tfac
+     xpts(4:5) = -0.01*tfac
+     xpts(6:7) = 0.0505*tfac
+     xpts(8:9) = 0.12*tfac
+     xpts(10:11) = 0.37*tfac
      xpts(12) = xmax
      
      rho(1:2) = 1.0
