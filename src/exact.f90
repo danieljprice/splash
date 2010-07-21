@@ -294,14 +294,14 @@ contains
        call prompt('enter viscosity parameter nu',viscnu,0.)
     case(12)
        call prompt('enter number of functions to plot ',nfunc,1,size(funcstring))
-       print "(/,a,6(/,11x,a))",' Examples: sin(2*pi*x)','sqrt(0.5*x)','x^2', &
-             'exp(-2*x**2)','log10(x/2)','exp(y),y=sin(pi*x)','cos(z/y),z=acos(y),y=x^2'
+       print "(/,a,6(/,11x,a))",' Examples: sin(2*pi*x - 0.1*t)','sqrt(0.5*x)','x^2', &
+             'exp(-2*x**2 + 0.1*t)','log10(x/2)','exp(y),y=sin(pi*x)','cos(z/y),z=acos(y),y=x^2'
        overfunc: do i=1,nfunc
           ierr = 1
           itry = 0
           do while(ierr /= 0 .and. itry.lt.10)
              if (nfunc.gt.1) print "(/,a,i2,/,11('-'),/)",'Function ',i
-             call prompt('enter function f(x) to plot ',funcstring(i),noblank=.true.)
+             call prompt('enter function f(x,t) to plot ',funcstring(i),noblank=.true.)
              call check_function(funcstring(i),ierr)
              if (ierr /= 0 .and. len(funcstring(i)).eq.len_trim(funcstring(i))) then
                 print "(a,i3,a)",&
