@@ -205,7 +205,7 @@ subroutine get_nfunc(string,nfunc)
  integer, intent(out) :: nfunc
  integer :: j
  
- nfunc = 1
+ nfunc = 2
  do j=1,len_trim(string)
     if (string(j:j)==',') nfunc = nfunc + 1
  enddo
