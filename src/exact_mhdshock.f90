@@ -32,6 +32,16 @@
 module mhdshock
  implicit none
  public :: exact_mhdshock
+ integer, parameter, public :: nmhdshocksolns = 7
+ character(len=23), dimension(nmhdshocksolns), parameter, public :: mhdprob = &
+    (/'Brio/Wu (gamma=2)      ', &
+      'fast/slow shock  (RJ95)', &
+      '7 jump shock     (RJ95)', &
+      'isothermal shock (B98) ', &
+      'rarefaction wave (RJ95)', &
+      'Mach 25 shock    (DW94)', &
+      'Toth shock   (RJ95/T00)'/)
+
  
 contains
 
@@ -118,19 +128,20 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
   case(2)
      !
      !--fast/slow shock from RJ95
-     !    
+     !
+     tfac = time/0.15
      vz = 0.
      Bz = 0.
      Bxzero = 1.0
      npts = 12
      xpts(1) = xmin
-     xpts(2) = -0.27
-     xpts(3) = -0.09
-     xpts(4) = -0.03
-     xpts(5) = -0.01
-     xpts(6:7) = 0.135
-     xpts(8:9) = 0.25
-     xpts(10:11) = 0.35
+     xpts(2) = -0.27*tfac
+     xpts(3) = -0.09*tfac
+     xpts(4) = -0.03*tfac
+     xpts(5) = -0.01*tfac
+     xpts(6:7) = 0.135*tfac
+     xpts(8:9) = 0.25*tfac
+     xpts(10:11) = 0.35*tfac
      xpts(12) = xmax
 
      rho(1:2) = 1.0
@@ -167,17 +178,18 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
   case(3)
      !
      !--problem with 7 discontinuities from RJ95
-     !    
+     !
+     tfac = time/0.2
      Bxzero = 2.*const
      npts = 16
      xpts(1) = xmin
-     xpts(2:3) = -0.19
-     xpts(4:5) = 0.03
-     xpts(6:7) = 0.051
-     xpts(8:9) = 0.12     ! contact discontinuity
-     xpts(10:11) = 0.18 
-     xpts(12:13) = 0.205 
-     xpts(14:15) = 0.45
+     xpts(2:3) = -0.19*tfac
+     xpts(4:5) = 0.03*tfac
+     xpts(6:7) = 0.051*tfac
+     xpts(8:9) = 0.12*tfac    ! contact discontinuity
+     xpts(10:11) = 0.18*tfac 
+     xpts(12:13) = 0.205*tfac 
+     xpts(14:15) = 0.45*tfac
      xpts(16) = xmax
 
      rho(1:2) = 1.08
@@ -235,16 +247,17 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
   case(4)
      !
      !--isothermal MHD problem from Balsara (1998)
-     !    
+     !
+     tfac = time/0.2
      Bxzero = 2.*const
      npts = 14
      xpts(1) = xmin
-     xpts(2:3) = -0.15
-     xpts(4:5) = 0.035
-     xpts(6:7) = 0.07
-     xpts(8:9) = 0.17 
-     xpts(10:11) = 0.2 
-     xpts(12:13) = 0.41
+     xpts(2:3) = -0.15*tfac
+     xpts(4:5) = 0.035*tfac
+     xpts(6:7) = 0.07*tfac
+     xpts(8:9) = 0.17*tfac
+     xpts(10:11) = 0.2*tfac
+     xpts(12:13) = 0.41*tfac
      xpts(14) = xmax
 
      rho(1:2) = 1.08
@@ -297,16 +310,17 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      !
      !--rarefaction from RJ95
      !
+     tfac = time/0.1
      npts = 6
      vy = 0.
      vz = 0.
      Bz = 0.
      Bxzero = 0.
      xpts(1) = xmin
-     xpts(2) = -0.27
-     xpts(3) = -0.12
-     xpts(4) = 0.12
-     xpts(5) = 0.27
+     xpts(2) = -0.27*tfac
+     xpts(3) = -0.12*tfac
+     xpts(4) = 0.12*tfac
+     xpts(5) = 0.27*tfac
      xpts(6) = xmax
 
      rho(1:2) = 1.0
@@ -329,6 +343,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      !
      !--mach 25 shocks from Dai and Woodward (1994)
      !
+     tfac = time/0.03
      Bxzero = 4.*const
      npts = 6
      rho(1:2) = 1.0
@@ -339,18 +354,13 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      pr(3:4) = 1806.0
      pr(5:6) = 1.0
 
-     !       machno = 0.5*25.5       
+     !       machno = 0.5*25.5
      !       vs = SQRT(gamma*pr(1)/rho(1))
      !
-     !      in this case we know the positions at all times
-     !      because of the Mach #
-     !
      xpts(1) = xmin
-     xpts(2:3) = -0.35!-machno*vs*time
-     xpts(4:5) = 0.35!machno*vs*time
+     xpts(2:3) = -0.35*tfac
+     xpts(4:5) = 0.35*tfac
      xpts(6) = xmax
-
-     !       PRINT*,'speed, pos = ',vs*machno,vs,machno*vs*time,0.33/time
 
      vx(1:2) = 36.87
      vx(3:4) = 0.0
@@ -430,6 +440,30 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      return
 
   end select
+
+  !
+  !--plot just the initial conditions at t=0
+  !
+  if (abs(time).le.0.) then
+     rho(1:2) = rho(1)
+     pr(1:2)  = pr(1)
+     vx(1:2)  = vx(1)
+     vy(1:2)  = vy(1)
+     vz(1:2)  = vz(1)
+     By(1:2)  = By(1)
+     Bz(1:2)  = Bz(1)
+     xpts(3)  = 0.
+     xpts(4)  = xpts(npts)
+     rho(3:4) = rho(npts)
+     pr(3:4)  = pr(npts)
+     vx(3:4)  = vx(npts)
+     vy(3:4)  = vy(npts)
+     vz(3:4)  = vz(npts)
+     By(3:4)  = By(npts)
+     Bz(3:4)  = Bz(npts)
+     npts   = 4
+  endif
+  
   !
   !--determine which parameter to plot
   !

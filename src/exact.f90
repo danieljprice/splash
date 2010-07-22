@@ -166,9 +166,10 @@ contains
   !----------------------------------------------------------------------
   subroutine submenu_exact(iexact)
     use settings_data, only:ndim
-    use prompting, only:prompt
-    use filenames, only:rootname
+    use prompting,     only:prompt
+    use filenames,     only:rootname
     use exactfunction, only:check_function
+    use mhdshock,      only:nmhdshocksolns,mhdprob
     implicit none
     integer, intent(inout) :: iexact
     integer :: ierr,itry,i
@@ -263,6 +264,9 @@ contains
     case(6)
        print "(a)",' MHD shock tube tables: '
        if (ishk.le.0) ishk = 1
+       do i=1,nmhdshocksolns
+          print "(i2,') ',a)",i,trim(mhdprob(i))
+       enddo
        call prompt('enter solution to plot ',ishk,1,7)
     case(7)
        call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
