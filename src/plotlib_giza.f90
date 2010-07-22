@@ -136,15 +136,7 @@ subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2,&
   real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
   real               :: affine(6)
 
-  affine(1) = TR(2)
-  affine(2) = TR(3)
-  affine(3) = TR(5)
-  affine(4) = TR(6)
-  affine(5) = TR(1) + 0.5 * TR(2)
-  affine(6) = TR(4) + 0.5 * TR(2)
-
-  !print *, idim, jdim, i1, i2
-
+  call convert_tr_to_affine(tr,affine)
   call giza_render(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,affine)
   
 end subroutine plot_imag
@@ -429,17 +421,8 @@ subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
   real,intent(in)    :: a(idim,jdim),b(idim,jdim),tr(6),blank,c
   real               :: affine(6)
 
-  affine(1) = TR(2)
-  affine(2) = TR(3)
-  affine(3) = TR(5)
-  affine(4) = TR(6)
-  affine(5) = TR(1) + 0.5 * TR(2)
-  affine(6) = TR(4) + 0.5 * TR(2)
-
-  !print *, idim, jdim, i1, i2
-
+  call convert_tr_to_affine(tr,affine)
   call giza_vector(idim,jdim,a,b,i1-1,i2-1,j1-1,j2-1,c,nc,affine,blank)
- 
 
 end subroutine plot_vect
 
@@ -482,6 +465,20 @@ subroutine plot_set_exactpixelboundaries()
  implicit none
 
 end subroutine plot_set_exactpixelboundaries
+
+subroutine convert_tr_to_affine(tr,affine)
+ implicit none
+ real, dimension(6), intent(in)  :: tr
+ real, dimension(6), intent(out) :: affine
+
+ affine(1) = TR(2)
+ affine(2) = TR(3)
+ affine(3) = TR(5)
+ affine(4) = TR(6)
+ affine(5) = TR(1) + 0.5 * TR(2)
+ affine(6) = TR(4) + 0.5 * TR(6)
+
+end subroutine convert_tr_to_affine
 
 end module plotlib
 
