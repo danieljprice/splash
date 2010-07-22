@@ -126,12 +126,12 @@ contains
    !  Integer prompting routine 
    !
    
-   recursive subroutine integer_prompt(text, value, min, max)
+   recursive subroutine integer_prompt(text, value, min, max, min2, max2)
       character(len=*), intent(in)  :: text
       integer, intent(inout)        :: value
       integer                       :: newvalue
       character(len=64)             :: string
-      character(len=16)             :: chmin, chmax
+      character(len=16)             :: chmin, chmax, chmin2, chmax2
       integer                       :: ios
       integer, optional, intent(in) :: min, max
       logical                       :: error
@@ -139,6 +139,8 @@ contains
       
       chmin = ''                        
       chmax = ''
+      chmin2 = ''
+      chmax2 = ''
       error = .false.
       
       !
@@ -148,14 +150,23 @@ contains
       write(string,*) value                
       if (present(min)) write(chmin,"(g10.0)") min
       if (present(max)) write(chmax,"(g10.0)") max     
+      if (present(min2)) write(chmin2,"(g10.0)") min2
+      if (present(max2)) write(chmax2,"(g10.0)") max2
       !
       !  Write prompt string to terminal
       !
       
       if (present(min).or.present(max)) then
-         write(*,"(a,1x,'([',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
-                 trim(adjustl(text)), trim(adjustl(chmin)), &
-                 trim(adjustl(chmax)), trim(adjustl(string))
+         if (present(min2).or.present(max2)) then
+            write(*,"(a,1x,'([',a,':',a,'],[',a,':',a,']',1x,'default=',a,'):',1x)",advance='no') &
+                    trim(adjustl(text)), trim(adjustl(chmin)), &
+                    trim(adjustl(chmax)),trim(adjustl(chmin2)),&
+                    trim(adjustl(chmax2)),trim(adjustl(string))         
+         else
+            write(*,"(a,1x,'([',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
+                    trim(adjustl(text)), trim(adjustl(chmin)), &
+                    trim(adjustl(chmax)), trim(adjustl(string))
+         endif
       else
          write(*,"(a,1x,'(default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(string))
