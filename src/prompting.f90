@@ -133,7 +133,7 @@ contains
       character(len=64)             :: string
       character(len=16)             :: chmin, chmax, chmin2, chmax2
       integer                       :: ios
-      integer, optional, intent(in) :: min, max
+      integer, optional, intent(in) :: min, max, min2, max2
       logical                       :: error
       
       
