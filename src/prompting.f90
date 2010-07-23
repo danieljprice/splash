@@ -52,7 +52,8 @@
 ! Syntax:    prompt(text, value, [min], [max]) 
 !                text      character string
 !                value     integer, real or double 
-!                min, max  allowed range of same type as value (optional)
+!                min, max   allowed range of same type as value (optional)
+! [DJP]          min2, max2 allowed 2nd range of same type as value (optional)
 !
 !            prompt(text, string, [length], [case])
 !                text      character string
@@ -99,6 +100,9 @@
 ! 24/02/10: D. Price:
 ! When noblank=.true., string prompt does not accept blank string
 ! (e.g. where it is the default input) and gives an error message
+!
+! 23/07/10: D. Price:
+! Integer prompt accepts 2nd sub-range [min:max] [min2:max2]
 !
 module prompting
 
@@ -158,7 +162,7 @@ contains
       
       if (present(min).or.present(max)) then
          if (present(min2).or.present(max2)) then
-            write(*,"(a,1x,'([',a,':',a,'],[',a,':',a,']',1x,'default=',a,'):',1x)",advance='no') &
+            write(*,"(a,1x,'([',a,':',a,',',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
                     trim(adjustl(text)), trim(adjustl(chmin)), &
                     trim(adjustl(chmax)),trim(adjustl(chmin2)),&
                     trim(adjustl(chmax2)),trim(adjustl(string))         
@@ -190,14 +194,34 @@ contains
       else
          if (present(min)) then
             if (newvalue < min) then
-               print "(a)", "Error, value out of range"
-               error = .true.
+               if (present(max2)) then
+                  if (newvalue > max2) then
+                     print "(a)", "Error, value out of range"
+                     error = .true.
+                  elseif (newvalue < min2) then
+                     print "(a)", "Error, value out of range"
+                     error = .true.
+                  endif
+               else
+                  print "(a)", "Error, value out of range"
+                  error = .true.
+               endif
             endif
          endif
          if (present(max)) then
             if (newvalue > max) then
-               print "(a)", "Error, value out of range"
-               error = .true.
+               if (present(min2)) then
+                  if (newvalue < min2) then
+                     print "(a)", "Error, value out of range"
+                     error = .true.
+                  elseif (newvalue > max2) then
+                     print "(a)", "Error, value out of range"
+                     error = .true.
+                  endif
+               else
+                  print "(a)", "Error, value out of range"
+                  error = .true.
+               endif
             endif
          endif
       endif
@@ -207,7 +231,7 @@ contains
       !
       
       if (error) then
-         call integer_prompt(text, value, min, max)
+         call integer_prompt(text, value, min, max, min2, max2)
       else         
          value = newvalue
       endif
