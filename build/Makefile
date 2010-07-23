@@ -867,7 +867,7 @@ targz:
 
 ## unit tests of various modules as I write them
 
-tests: test1 test2 test3
+tests: test1 test2 test3 test_slicer test_prompt
 
 test1: interpolate3D_projection.o interpolate3D_xsec.o test_interpolate3D.o 
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_interpolation3D test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
@@ -875,6 +875,10 @@ test2: transform.o ./tests/test_transform.o
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_transform ./tests/test_transform.o transform.o
 test3: fieldlines.o ./tests/test_fieldlines.o 
 	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_fieldlines ./tests/test_fieldlines.o fieldlines.o
+test_slicer: interpolate3D_projection.o interpolate3D_xsec.o test_slicer3D.o 
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_slicer3D test_slicer3D.o interpolate3D_projection.o interpolate3D_xsec.o
+test_prompt: prompting.o test_prompting.o
+	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_prompt prompting.o test_prompting.o
 
 #
 #--code dependencies: MAY BE INCOMPLETE - I generate this automatically every so often
