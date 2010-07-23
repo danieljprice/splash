@@ -54,21 +54,24 @@ contains
 !
 !-----------------------------------------------------------------
 subroutine setup_calculated_quantities(ncalc)
+  use settings_data, only:ncolumns
  use prompting,     only:prompt
  implicit none
  integer, intent(out) :: ncalc
- integer              :: i,istart,iend
+ integer              :: ncalctot,istart,iend, ipick, ninactive
  logical              :: done,first
  character(len=1)     :: charp
- 
+ ipick = ncolumns + 1
+
  done = .false.
  first = .true.
  charp = 'a'
  calcmenu: do while (.not.done)
-    call check_calculated_quantities(ncalc,i)
+    call check_calculated_quantities(ncalc,ncalctot)
+    ninactive = ncalctot - ncalc   
 
     iend = maxcalc
-    if (i.gt.0 .or. .not.first) then
+    if (ncalctot.gt.0 .or. .not.first) then
        charp='a'
        if (.not.first) charp = 'q'
        print*
@@ -76,8 +79,21 @@ subroutine setup_calculated_quantities(ncalc)
                    charp,list=(/'a','e','c','q','s','S','Q'/),noblank=.true.)
        select case(charp)
        case('a')
-          istart = i
-          iend   = i+1
+          istart = ncalctot
+          iend   = ncalctot+1
+       case('e')
+!          pickloop: do
+          if (ninactive.gt.1) then
+             call prompt(' pick a function to edit: ',ipick,-ninactive,-1,ncolumns+1,ncolumns+ncalc)
+          else
+             call prompt(' pick a function to edit: ',ipick,ncolumns+1,ncolumns+ncalc)
+          endif
+!             print "(a)", ' the index is out of range, please try again '
+!             if  (ipick.ge.-ninactive .and. ipick.lt.0 .and. &
+!                  ipick.ge.ncolumns+1 .and. ipick.le.ncolumns+ncalc) exit pickloop
+ !         enddo pickloop
+          istart = ipick - ncolumns - 1
+          iend   = istart + 1
        case('c')
            calcstring(:) = ' '
            calclabel(:) = ' '
@@ -93,7 +109,7 @@ subroutine setup_calculated_quantities(ncalc)
        istart = 0
        iend   = 1
     endif
-
+    
     if (.not.done) call add_calculated_quantities(istart,iend,ncalc,first)
     first = .false.
  enddo calcmenu
@@ -293,11 +309,12 @@ subroutine check_calculated_quantities(ncalcok,ncalctot)
  use labels,         only:label
  implicit none
  integer, intent(out) :: ncalcok,ncalctot
- integer :: i,ierr,nvars
+ integer :: i,ierr,nvars,indexinactive
  character(len=lenvars), dimension(maxplot+nextravars) :: vars
 
  ncalcok = 0
  ncalctot = 0
+ indexinactive = 0
  i = 1
  print "(/,a)", ' Current list of calculated quantities:'
  do while(i.le.maxcalc .and. len_trim(calcstring(i)).ne.0)
@@ -321,7 +338,8 @@ subroutine check_calculated_quantities(ncalcok,ncalctot)
        !
        label(ncolumns+ncalcok) = trim(calclabel(i))
     else
-       print "(1x,'XX) ',a50,' [INACTIVE]')",trim(calclabel(i))//' = '//calcstring(i)
+       indexinactive = indexinactive - 1
+       print "(i3') ',a50,' [INACTIVE]')",indexinactive,trim(calclabel(i))//' = '//calcstring(i)
     endif
     ncalctot = i
     i = i + 1
