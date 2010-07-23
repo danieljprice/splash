@@ -58,16 +58,17 @@ subroutine setup_calculated_quantities(ncalc)
  use prompting,     only:prompt
  implicit none
  integer, intent(out) :: ncalc
- integer              :: ncalctot,istart,iend, ipick, ninactive
+ integer              :: ncalctot,istart,iend, ipick, ninactive, i
  logical              :: done,first
  character(len=1)     :: charp
+ integer, dimension(maxcalc) :: incolumn
  ipick = ncolumns + 1
 
  done = .false.
  first = .true.
  charp = 'a'
  calcmenu: do while (.not.done)
-    call check_calculated_quantities(ncalc,ncalctot)
+    call check_calculated_quantities(ncalc,ncalctot,incolumn)
     ninactive = ncalctot - ncalc   
 
     iend = maxcalc
@@ -82,18 +83,16 @@ subroutine setup_calculated_quantities(ncalc)
           istart = ncalctot
           iend   = ncalctot+1
        case('e')
-!          pickloop: do
-          if (ninactive.gt.1) then
-             call prompt(' pick a function to edit: ',ipick,-ninactive,-1,ncolumns+1,ncolumns+ncalc)
+          if (ninactive.gt.0) then
+             call prompt(' pick a function to edit ',ipick,-ninactive,-1,ncolumns+1,ncolumns+ncalc)
           else
-             call prompt(' pick a function to edit: ',ipick,ncolumns+1,ncolumns+ncalc)
+             call prompt(' pick a function to edit ',ipick,ncolumns+1,ncolumns+ncalc)
           endif
-!             print "(a)", ' the index is out of range, please try again '
-!             if  (ipick.ge.-ninactive .and. ipick.lt.0 .and. &
-!                  ipick.ge.ncolumns+1 .and. ipick.le.ncolumns+ncalc) exit pickloop
- !         enddo pickloop
-          istart = ipick - ncolumns - 1
-          iend   = istart + 1
+          istart = 0
+          do i=1,ncalctot
+             if (incolumn(i).eq.ipick) istart = i - 1
+          enddo
+          iend = istart + 1
        case('c')
            calcstring(:) = ' '
            calclabel(:) = ' '
@@ -110,7 +109,7 @@ subroutine setup_calculated_quantities(ncalc)
        iend   = 1
     endif
     
-    if (.not.done) call add_calculated_quantities(istart,iend,ncalc,first)
+    if (.not.done) call add_calculated_quantities(istart,iend,ncalc,first,incolumn)
     first = .false.
  enddo calcmenu
  print*,' setup ',ncalc,' additional quantities'
@@ -123,7 +122,7 @@ end subroutine setup_calculated_quantities
 !  to the current list and/or edit previous settings
 !
 !-----------------------------------------------------------------
-subroutine add_calculated_quantities(istart,iend,ncalc,printhelp)
+subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
  use prompting,     only:prompt
  use fparser,       only:checkf
  use labels,        only:lenlabel
@@ -132,6 +131,7 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp)
  integer, intent(in)  :: istart,iend
  integer, intent(out) :: ncalc
  logical, intent(in)  :: printhelp
+ integer, dimension(maxcalc), intent(in) :: incolumn
  integer :: i,j,ntries,ierr,iequal,nvars
  logical :: iask
  character(len=120) :: string
@@ -157,8 +157,19 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp)
  call print_example_quantities()
   
  overfuncs: do while(ntries.lt.3 .and. i.le.iend .and. i.le.maxcalc)
-    if (len_trim(calcstring(i)).ne.0 .or. ncalc.gt.istart) write(*,"(a,i2,a)") '[Column ',ncolumns+i,']'
-    string = trim(calcstring(i))
+    if (len_trim(calcstring(i)).ne.0 .or. ncalc.gt.istart) then
+       if (incolumn(i).gt.0) then
+          write(*,"(a,i2,a)") '[Column ',incolumn(i),']'       
+       else
+          write(*,"(a)") '[Currently inactive]'
+       endif
+    endif
+
+    if (len_trim(calclabel(i)).gt.0) then
+       string = trim(calclabel(i))//' = '//trim(calcstring(i))    
+    else
+       string = trim(calcstring(i))
+    endif
     call prompt('Enter function string to calculate (blank for none) ',string)
     if (len_trim(string).eq.0) then
        !
@@ -303,12 +314,14 @@ end subroutine print_example_quantities
 !  quantities, checking that they parse correctly
 !
 !-----------------------------------------------------------------
-subroutine check_calculated_quantities(ncalcok,ncalctot)
- use settings_data,  only:ncolumns
+subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn)
+ use settings_data,  only:ncolumns,iRescale
  use fparser,        only:checkf
  use labels,         only:label
+ use settings_units, only:unitslabel
  implicit none
  integer, intent(out) :: ncalcok,ncalctot
+ integer, dimension(maxcalc), intent(out), optional :: incolumn
  integer :: i,ierr,nvars,indexinactive
  character(len=lenvars), dimension(maxplot+nextravars) :: vars
 
@@ -316,6 +329,7 @@ subroutine check_calculated_quantities(ncalcok,ncalctot)
  ncalctot = 0
  indexinactive = 0
  i = 1
+ if (present(incolumn)) incolumn(:) = 0
  print "(/,a)", ' Current list of calculated quantities:'
  do while(i.le.maxcalc .and. len_trim(calcstring(i)).ne.0)
     !
@@ -330,6 +344,7 @@ subroutine check_calculated_quantities(ncalcok,ncalctot)
     if (ierr.eq.0) then
        ncalcok = ncalcok + 1
        print "(1x,i2,') ',a50,' [OK]')",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i)
+       if (present(incolumn)) incolumn(i) = ncolumns + ncalcok
        !
        !--set the label for the proposed column here
        !  so that subsequent calculations can use this variable
@@ -337,9 +352,12 @@ subroutine check_calculated_quantities(ncalcok,ncalctot)
        !   as this is done in the actual calc_quantities call)
        !
        label(ncolumns+ncalcok) = trim(calclabel(i))
+       unitslabel(ncolumns+ncalcok) = trim(calcunitslabel(i))
+       if (iRescale) label(ncolumns+ncalcok) = trim(label(ncolumns+ncalcok))//trim(unitslabel(ncolumns+ncalcok))
     else
        indexinactive = indexinactive - 1
        print "(i3') ',a50,' [INACTIVE]')",indexinactive,trim(calclabel(i))//' = '//calcstring(i)
+       if (present(incolumn)) incolumn(i) = indexinactive
     endif
     ncalctot = i
     i = i + 1
@@ -364,7 +382,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
-  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars
+  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot
   logical :: skip
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
@@ -383,35 +401,9 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   
   ierr = 0
   ncalc = 0
-  i = 1
-  print*
-  do while (i.le.maxcalc .and. len_trim(calcstring(i)).gt.0 .and.ncolumns+ncalc.lt.size(label))
-     !
-     !--get the list of valid variable names for this column
-     !
-     call get_variables(ncolumns+ncalc,nvars,vars)
-     !
-     !--check that the function parses
-     !
-     ierr = checkf(shortlabel(calcstring(i)),vars(1:nvars))
-
-     if (ierr.eq.0 ) then
-        print "(a,a10,' = ',a)",' calculating ',trim(calclabel(i)),trim(calcstring(i))
-        ncalc = ncalc + 1
-        !
-        !--now actually assign the calculated quantity to a particular column
-        !  and set required information for the column
-        !
-        label(ncolumns+ncalc) = trim(calclabel(i))
-        unitslabel(ncolumns+ncalc) = trim(calcunitslabel(i))
-        if (iRescale) label(ncolumns+ncalc) = trim(label(ncolumns+ncalc))//trim(unitslabel(ncolumns+ncalc))
-     else
-        print "(a)",' error parsing function '//trim(calclabel(i))//' = '//trim(calcstring(i))
-     endif
-     i = i + 1
-  enddo
+  call check_calculated_quantities(ncalc,ncalctot)
   
-  if (.not.skip) print*,'calculating ',ncalc,' additional quantities...'
+  if (.not.skip) print "(2(a,i2),a,/)",' Calculating ',ncalc,' of ',ncalctot,' additional quantities...'
   ncolsnew = ncolumns + ncalc
   if (ncolsnew.gt.maxcol) call alloc(maxpart,maxstep,ncolsnew) 
 
