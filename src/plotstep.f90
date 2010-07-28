@@ -2944,6 +2944,7 @@ contains
 !---------------------------------------------------
   
   subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,labeli)
+    use labels, only:is_coord
     implicit none
     integer, intent(in) :: iplot
     real, dimension(:), intent(in) :: xploti
@@ -2968,8 +2969,8 @@ contains
     
     !--set these as limits if adaptive limits are on
     if (.not.interactivereplot) then
-       if ((iplot.le.ndim .and. iadaptcoords) &
-       .or.(iplot.gt.ndim .and. iadapt) .and. ipagechange) then
+       if ((is_coord(iplot,ndim) .and. iadaptcoords) &
+       .or.(.not.is_coord(iplot,ndim) .and. iadapt) .and. ipagechange) then
           print "(1x,a)",'adapting '//trim(labeli)//' limits'
           xmini = xminadaptive
           xmaxi = xmaxadaptive
@@ -2983,15 +2984,16 @@ contains
 ! interface to coordinate-system transformations
 !-------------------------------------------------------------------
   subroutine changecoords(iplotx,iploty,xplot,yplot,ntot)
-   use geometry, only:coord_transform,labelcoordsys
+   use geometry,      only:coord_transform,labelcoordsys
    use settings_data, only:xorigin
+   use labels,        only:is_coord
    implicit none
    integer, intent(in) :: iplotx,iploty,ntot
    real, dimension(:), intent(inout) :: xplot,yplot
    real, dimension(ndim) :: xcoords,xcoordsnew
    integer :: j
 
-   if (iplotx.le.ndim .or. iploty.le.ndim) then
+   if (is_coord(iplotx,ndim) .or. is_coord(iploty,ndim)) then
       print*,'changing coords from ',trim(labelcoordsys(icoords)), &
              ' to ',trim(labelcoordsys(icoordsnew))
       if (itrackpart.gt.0) print*,' (relative to particle ',itrackpart,')'
@@ -3005,8 +3007,8 @@ contains
 
          call coord_transform(xcoords(1:ndim),ndim,icoords, &
                               xcoordsnew(1:ndim),ndim,icoordsnew)
-         if (iplotx.le.ndim) xplot(j) = xcoordsnew(iplotx)
-         if (iploty.le.ndim) yplot(j) = xcoordsnew(iploty)
+         if (is_coord(iplotx,ndim)) xplot(j) = xcoordsnew(iplotx)
+         if (is_coord(iploty,ndim)) yplot(j) = xcoordsnew(iploty)
       enddo
    endif
    
@@ -3058,6 +3060,7 @@ contains
 ! interface for setting limits when using particle tracking limits
 !-------------------------------------------------------------------
   subroutine settrackinglimits(itrackpart,iplot,xploti,xmini,xmaxi)
+    use labels,          only:is_coord
     use settings_limits, only:xminoffset_track,xmaxoffset_track
     implicit none
     integer, intent(in) :: itrackpart,iplot
@@ -3065,7 +3068,7 @@ contains
     real, intent(inout) :: xmini,xmaxi
     
     !--particle tracking limits only apply to co-ordinate axes
-    if (iplot.le.ndim) then
+    if (is_coord(iplot,ndim)) then
        xmini = xploti(itrackpart) - xminoffset_track(iplot)
        xmaxi = xploti(itrackpart) + xmaxoffset_track(iplot)
     endif
@@ -3108,18 +3111,18 @@ contains
    use interpolate_vec,  only:mask_vectors
    use render,           only:render_vec
    use fieldlines,       only:streamlines
-   use labels,           only:iutherm
+   use labels,           only:iutherm,is_coord
    use plotlib,          only:plot_qci,plot_qlw,plot_sci,plot_slw
    implicit none
-   integer, intent(in) :: ivecx,ivecy,numpixx,numpixy
-   real, intent(in) :: pixwidthvec,pixwidthvecy
-   real, intent(inout) :: vmax
+   integer, intent(in)    :: ivecx,ivecy,numpixx,numpixy
+   real,    intent(in)    :: pixwidthvec,pixwidthvecy
+   real,    intent(inout) :: vmax
    character(len=*), intent(in) :: label
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
    real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpixvec
    integer :: i,j,icoloursav,linewidthprev
-   real :: vmag
-   real :: blankval,datmax
+   real    :: vmag
+   real    :: blankval,datmax
    logical :: usevecplot
    
    !--query colour index and line width
@@ -3127,8 +3130,8 @@ contains
    call plot_qlw(linewidthprev)
 
    !print*,'plotting vector field ',trim(label)
-   if ((ivecx.le.ndim).or.(ivecx.gt.ndataplots) &
-        .or.(ivecy.le.ndim).or.(ivecy.gt.ndataplots)) then
+   if ((is_coord(ivecx,ndim) .or. ivecx.lt.0 .or.(ivecx.gt.ndataplots)) .or. &
+       (is_coord(ivecy,ndim) .or. ivecy.lt.0 .or.(ivecy.gt.ndataplots))) then
       print*,'error finding location of vector plot in array'
    else
       !--plot arrows in either background or foreground colour
