@@ -72,6 +72,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use settings_xsecrot, only:setsequenceend
   use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,add_textshape
   use multiplot,        only:itrans
+  use labels,           only:is_coord,ix
   use settings_render,  only:projlabelformat,iapplyprojformat
   use settings_data,    only:ndataplots
   use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
@@ -135,7 +136,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   rotation = .false.
   irerender = .false.
   interactivereplot = .false.
-  if (iplotx.le.ndim .and. iploty.le.ndim .and. ndim.ge.2) rotation = .true.
+  if (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. ndim.ge.2) rotation = .true.
   verticalbar = barisvertical(iColourBarStyle)
   
   if (iplotz.gt.0 .and. x_sec) then
@@ -357,8 +358,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            call save_limits(iploty,ymin,ymax)
         else
            print*,'tracking particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
-           if (iplotx.le.ndim) call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
-           if (iploty.le.ndim) call save_limits_track(iploty,ymin,ymax,ycoords(itrackpart))
+           if (is_coord(iplotx,ndim)) call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
+           if (is_coord(iploty,ndim)) call save_limits_track(iploty,ymin,ymax,ycoords(itrackpart))
            call save_itrackpart_recalcradius()
         endif
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
@@ -593,12 +594,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                xcen = xcoords(itrackpart)
                ycen = ycoords(itrackpart)
            else
-              if (iplotx.le.ndim) then
+              if (is_coord(iplotx,ndim)) then
                  xcen = xorigin(iplotx)
               else
                  xcen = 0.
               endif
-              if (iploty.le.ndim) then
+              if (is_coord(iploty,ndim)) then
                  ycen = xorigin(iploty)
               else
                  ycen = 0.
@@ -739,7 +740,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            irerender = .true.
            iexit = .true.
         elseif (xpt.lt.xmin) then
-           if (iploty.le.ndim .and. irender.gt.0) then
+           if (is_coord(iploty,ndim) .and. irender.gt.0) then
               print "(a)",'error: cannot log coordinate axes with rendering'
            else
               call change_itrans(iploty,ymin,ymax)
@@ -748,7 +749,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               iexit = .true.
            endif
         elseif (ypt.lt.ymin) then
-           if (iplotx.le.ndim .and. irender.gt.0) then
+           if (is_coord(iplotx,ndim) .and. irender.gt.0) then
               print "(a)",'error: cannot log coordinate axes with rendering'
            else
               call change_itrans(iplotx,xmin,xmax)
@@ -1024,11 +1025,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         interactivereplot = .true.
         iexit = .true.
      case('f') ! change rendered quantity (next)
-        if (irender.ne.0) then
+        if (irender.ne.0 .and. ndim.gt.0) then
            irender = irender + 1
-           if (irender.le.ndim) irender = ndim + 1
+           if (irender.gt.ndataplots) irender = 1
+           if (is_coord(irender,ndim)) irender = ix(ndim) + 1
            !if (irender.eq.ndataplots+1) irender = 0
-           if (irender.gt.ndataplots) irender = ndim + 1
            iadvance = 0
            interactivereplot = .true.
            irerender = .true.
@@ -1375,9 +1376,10 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                              lastpanel,iplotxarr,iplotyarr,irenderarr,ivecarr,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
                              barwmulti,xminadapt,xmaxadapt,nacross,ndim,xorigin,icolourscheme, &
                              iColourBarStyle,interactivereplot)
+ use labels,    only:is_coord
  use multiplot, only:itrans
- use shapes, only:add_textshape,inshape,edit_shape,delete_shape
- use plotlib, only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line,plot_left_click
+ use shapes,    only:add_textshape,inshape,edit_shape,delete_shape
+ use plotlib,   only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line,plot_left_click
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep,iframe,lastpanel,iColourBarStyle
@@ -1700,12 +1702,12 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            ylength = 0.9/zoomfac*ylength
            renderlength = 0.9/zoomfac*renderlength
         case('o')
-           if (iplotxarr(ipanel).le.ndim) then
+           if (is_coord(iplotxarr(ipanel),ndim)) then
               xcen = xorigin(iplotxarr(ipanel))
            else
               xcen = 0.
            endif
-           if (iplotyarr(ipanel).le.ndim) then
+           if (is_coord(iplotyarr(ipanel),ndim)) then
               ycen = xorigin(iplotyarr(ipanel))
            else
               ycen = 0.
@@ -1815,7 +1817,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            interactivereplot = .true.
            iexit = .true.
         elseif (xpti.lt.xmin(iplotxarr(ipanel))) then
-           if (iplotyarr(ipanel).le.ndim .and. irenderarr(ipanel).gt.0) then
+           if (is_coord(iplotyarr(ipanel),ndim) .and. irenderarr(ipanel).gt.0) then
               print "(a)",'error: cannot log coordinate axes with rendering'
            else
               call change_itrans2(iplotyarr(ipanel),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)),&
@@ -1825,7 +1827,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               iexit = .true.
            endif
         elseif (ypti.lt.xmin(iplotyarr(ipanel))) then
-           if (iplotxarr(ipanel).le.ndim .and. irenderarr(ipanel).gt.0) then
+           if (is_coord(iplotxarr(ipanel),ndim) .and. irenderarr(ipanel).gt.0) then
               print "(a)",'error: cannot log coordinate axes with rendering'
            else
               call change_itrans2(iplotxarr(ipanel),xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),&
@@ -2318,17 +2320,18 @@ end subroutine mvtitle
 !--saves current plot limits
 !
 subroutine save_limits(iplot,xmin,xmax,setlim2)
- use limits, only:lim,lim2
- use multiplot, only:itrans
- use settings_data, only:ndim
+ use limits,          only:lim,lim2
+ use labels,          only:is_coord
+ use multiplot,       only:itrans
+ use settings_data,   only:ndim
  use settings_limits, only:iadapt,iadaptcoords
- use transforms, only:transform_limits_inverse
+ use transforms,      only:transform_limits_inverse
  implicit none
  integer, intent(in) :: iplot
- real, intent(in) :: xmin,xmax
+ real,    intent(in) :: xmin,xmax
  logical, intent(in), optional :: setlim2
  logical :: uselim2
- real :: xmintemp,xmaxtemp
+ real    :: xmintemp,xmaxtemp
  
  uselim2 = .false.
  if (present(setlim2)) uselim2 = setlim2
@@ -2356,7 +2359,7 @@ subroutine save_limits(iplot,xmin,xmax,setlim2)
  !
  !--change appropriate plot limits to fixed (not adaptive)
  !
- if (iplot.le.ndim) then
+ if (is_coord(iplot,ndim)) then
     iadaptcoords = .false.
  else
     iadapt = .false.
