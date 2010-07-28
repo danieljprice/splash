@@ -336,10 +336,11 @@ end subroutine open_analysis
 !  analysis file. Called once for each dump file.
 !----------------------------------------------------------------
 subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,ncolumns,ndimV,analysistype)
- use labels,       only:ivx,iBfirst,iutherm,irho,ipmass,labeltype,label
- use params,       only:int1,doub_prec,maxplot
- use asciiutils,   only:ucase
- use system_utils, only:renvironment
+ use labels,        only:ivx,iBfirst,iutherm,irho,ipmass,labeltype,label
+ use params,        only:int1,doub_prec,maxplot
+ use asciiutils,    only:ucase
+ use system_utils,  only:renvironment
+ use settings_part, only:iplotpartoftype
  implicit none
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndimV
  integer, intent(in), dimension(:) :: npartoftype
@@ -349,7 +350,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real, intent(in), dimension(:,:)  :: dat
  character(len=*), intent(in)      :: analysistype
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
- integer              :: itype,i,j,ierr,ntot1,ncol1
+ integer              :: itype,i,j,ierr,ntot1,ncol1,nused
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi
  real(kind=doub_prec) :: rmsval,totvol,voli,rhoi,rmsvmw,v2i
  real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
@@ -378,24 +379,29 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     epot = 0.
     etherm = 0.
     etot = 0.
+    nused = 0
     do i=1,ntot
        itype = igettype(i)
-       pmassi = particlemass(i,itype)
-       
-       !--kinetic energy
-       if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) then
-          ekin = ekin + pmassi*dot_product(dat(i,ivx:ivx+ndimV-1),dat(i,ivx:ivx+ndimV-1))
-          xmom(1:ndimV) = xmom(1:ndimV) + dat(i,ivx:ivx+ndimV-1)
-       endif
-       
-       !--thermal energy
-       if (iutherm.gt.0 .and. iutherm.le.ncolumns) then
-          etherm = etherm + pmassi*dat(i,iutherm)
-       endif
-       
-       !--magnetic energy
-       if (iBfirst.gt.0 .and. iBfirst+ndimV-1.le.ncolumns) then
-          emag = emag + pmassi*dot_product(dat(i,iBfirst:iBfirst+ndimV-1),dat(i,iBfirst:iBfirst+ndimV-1))/dat(i,irho)
+       if (iplotpartoftype(itype)) then
+          pmassi = particlemass(i,itype)
+
+          !--kinetic energy
+          if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) then
+             ekin = ekin + pmassi*dot_product(dat(i,ivx:ivx+ndimV-1),dat(i,ivx:ivx+ndimV-1))
+             xmom(1:ndimV) = xmom(1:ndimV) + dat(i,ivx:ivx+ndimV-1)
+          endif
+
+          !--thermal energy
+          if (iutherm.gt.0 .and. iutherm.le.ncolumns) then
+             etherm = etherm + pmassi*dat(i,iutherm)
+          endif
+
+          !--magnetic energy
+          if (iBfirst.gt.0 .and. iBfirst+ndimV-1.le.ncolumns) then
+             emag = emag + pmassi*dot_product(dat(i,iBfirst:iBfirst+ndimV-1),&
+                                              dat(i,iBfirst:iBfirst+ndimV-1))/dat(i,irho)
+          endif
+          nused = nused + 1
        endif
     enddo
     ekin = 0.5*ekin
@@ -408,6 +414,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write line to output file
     !
     write(iunit,"(64(es18.10,1x))") time,ekin,etherm,emag,epot,etot,totmom
+    if (nused.ne.ntot) print*,'energies calculated using ',nused,' of ',ntot,' particles'
 
  case('massaboverho')
     massaboverho(:) = 0.
