@@ -158,21 +158,21 @@ end function wfromtable
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidth,normalise,zobserver,dscreen, &
+     xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,zobserver,dscreen, &
      useaccelerate)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreen
+  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreen
   real, intent(out), dimension(npixx,npixy) :: datsmooth
   logical, intent(in) :: normalise
   real, dimension(npixx,npixy) :: datnorm
   logical, intent(in) :: useaccelerate
   real :: row(npixx)
 
-  integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpart
+  integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpartx,npixparty
   integer :: iprintinterval, iprintnext, itmin,ipixi,jpixi,jpixcopy
   integer :: nsubgrid,nfull,nok
 #ifdef _OPENMP
@@ -195,7 +195,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   else
      print "(1x,a)",'projecting from particles to pixels...'  
   endif
-  if (pixwidth.le.0.) then
+  if (pixwidthx.le.0. .or. pixwidthy.le.0) then
      print "(1x,a)",'interpolate3D_proj: error: pixel width <= 0'
      return
   endif
@@ -228,21 +228,22 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !
   call cpu_time(t_start)
 
-  xminpix = xmin - 0.5*pixwidth
-  yminpix = ymin - 0.5*pixwidth
-  xmax = xmin + npixx*pixwidth
-  ymax = ymin + npixy*pixwidth
+  xminpix = xmin - 0.5*pixwidthx
+  yminpix = ymin - 0.5*pixwidthy
+  xmax = xmin + npixx*pixwidthx
+  ymax = ymin + npixy*pixwidthy
 !
 !--use a minimum smoothing length on the grid to make
 !  sure that particles contribute to at least one pixel
 !
-  hmin = 0.5*pixwidth
+  hmin = 0.5*max(pixwidthx,pixwidthy)
+  print*,'npix = ',npixx,npixy,pixwidthx,pixwidthy
   !dhmin3 = 1./(hmin*hmin*hmin)
 !
 !--store x value for each pixel (for optimisation)
 !  
   do ipix=1,npixx
-     xpix(ipix) = xminpix + ipix*pixwidth
+     xpix(ipix) = xminpix + ipix*pixwidthx
   enddo
   nsubgrid = 0
   nok = 0
@@ -250,12 +251,12 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
-!$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidth) &
+!$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,dscreen,zobserver,use3dperspective,useaccelerate) &
 !$omp shared(datnorm,normalise) &
 !$omp firstprivate(hmin) & !,dhmin3) &
 !$omp private(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
-!$omp private(hsmooth,horigi,hi1,hi21,term,termnorm,npixpart,jpixi,ipixi) &
+!$omp private(hsmooth,horigi,hi1,hi21,term,termnorm,npixpartx,npixparty,jpixi,ipixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
 !$omp private(dx2i,row,q2,ypix,dy,dy2,wab) &
 !$omp private(i,ipix,jpix,jpixcopy,fac) &
@@ -335,13 +336,14 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !
      !--for each particle work out which pixels it contributes to
      !
-     npixpart = int(radkern/pixwidth) + 1
-     jpixi = int((yi-ymin)/pixwidth) + 1
-     ipixi = int((xi-xmin)/pixwidth) + 1
-     ipixmin = ipixi - npixpart
-     ipixmax = ipixi + npixpart
-     jpixmin = jpixi - npixpart
-     jpixmax = jpixi + npixpart
+     npixpartx = int(radkern/pixwidthx) + 1
+     npixparty = int(radkern/pixwidthy) + 1
+     jpixi = int((yi-ymin)/pixwidthy) + 1
+     ipixi = int((xi-xmin)/pixwidthx) + 1
+     ipixmin = ipixi - npixpartx
+     ipixmax = ipixi + npixpartx
+     jpixmin = jpixi - npixparty
+     jpixmax = jpixi + npixparty
 
 !     ipixmin = int((xi - radkern - xmin)/pixwidth)
 !     jpixmin = int((yi - radkern - ymin)/pixwidth)
@@ -351,14 +353,15 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !--loop over pixels, adding the contribution from this particle
      !  copy by quarters if all pixels within domain
      !
-     accelerate = useaccelerate .and. (.not.normalise) .and. npixpart.gt.5 &
+     accelerate = useaccelerate .and. (.not.normalise) &
+                 .and. npixpartx.gt.5 .and. npixparty.gt.5 &
                  .and. ipixmin.ge.1 .and. ipixmax.le.npixx &
                  .and. jpixmin.ge.1 .and. jpixmax.le.npixy
      
      if (accelerate) then
         !--adjust xi, yi to centre of pixel
-        xi = xminpix + ipixi*pixwidth
-        yi = yminpix + jpixi*pixwidth
+        xi = xminpix + ipixi*pixwidthx
+        yi = yminpix + jpixi*pixwidthy
         !
         !--precalculate an array of dx2 for this particle (optimisation)
         !
@@ -366,7 +369,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
            dx2i(ipix) = ((xpix(ipix) - xi)**2)*hi21
         enddo
         do jpix = jpixi,jpixmax
-           ypix = yminpix + jpix*pixwidth
+           ypix = yminpix + jpix*pixwidthy
            dy = ypix - yi
            dy2 = dy*dy*hi21
            do ipix = ipixi,ipixmax
@@ -405,10 +408,10 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
         enddo
           
      else
-        ipixmin = int((xi - radkern - xmin)/pixwidth)
-        jpixmin = int((yi - radkern - ymin)/pixwidth)
-        ipixmax = int((xi + radkern - xmin)/pixwidth)
-        jpixmax = int((yi + radkern - ymin)/pixwidth)
+        ipixmin = int((xi - radkern - xmin)/pixwidthx)
+        ipixmax = int((xi + radkern - xmin)/pixwidthx)
+        jpixmin = int((yi - radkern - ymin)/pixwidthy)
+        jpixmax = int((yi + radkern - ymin)/pixwidthy)
 
         if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
         if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
@@ -422,13 +425,13 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
         enddo
 
         do jpix = jpixmin,jpixmax
-           ypix = yminpix + jpix*pixwidth
+           ypix = yminpix + jpix*pixwidthy
            dy = ypix - yi
            dy2 = dy*dy*hi21
            do ipix = ipixmin,ipixmax
-              !xpix = xminpix + ipix*pixwidth
+              !xpix = xminpix + ipix*pixwidthx
               !dx = xpix - xi
-              !rab2 = (xminpix + ipix*pixwidth - xi)**2 + dy2
+              !rab2 = (xminpix + ipix*pixwidthx - xi)**2 + dy2
               q2 = dx2i(ipix) + dy2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
               !
               !--SPH kernel - integral through cubic spline
@@ -506,13 +509,13 @@ end subroutine interpolate3D_projection
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
-     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth,normalise,zobserver,dscreen)
+     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,normalise,zobserver,dscreen)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreen
+  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreen
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
   logical, intent(in) :: normalise
   real, dimension(:,:), allocatable :: datnorm
@@ -536,7 +539,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   else
      print "(1x,a)",'projecting vector from particles to pixels...'  
   endif
-  if (pixwidth.le.0.) then
+  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
      print "(a)",'interpolate3D_proj_vec: error: pixel width <= 0'
      return
   endif
@@ -545,7 +548,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   !      
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,vecx,vecy,itype,vecsmoothx,vecsmoothy,npart) &
-!$omp shared(xmin,ymin,pixwidth,zobserver,dscreen,datnorm) &
+!$omp shared(xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreen,datnorm) &
 !$omp shared(npixx,npixy,normalise) &
 !$omp private(hi,radkern,const,zfrac,ypix,xpix) &
 !$omp private(hsmooth,hi1,hi21,termx,termy,termnorm) &
@@ -573,7 +576,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      endif
 
      !--take resolution length as max of h and 1/2 pixel width
-     hsmooth = max(hi,0.5*pixwidth)
+     hsmooth = max(hi,0.5*min(pixwidthx,pixwidthy))
 
      radkern = radkernel*hsmooth    ! radius of the smoothing kernel
      hi1 = 1./hsmooth
@@ -585,10 +588,10 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      !
      !--for each particle work out which pixels it contributes to
      !               
-     ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-     jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-     ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
-     jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
+     ipixmin = int((x(i) - radkern - xmin)/pixwidthx)
+     jpixmin = int((y(i) - radkern - ymin)/pixwidthy)
+     ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
+     jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
 
      ! PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
      ! PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
@@ -601,11 +604,11 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      !--loop over pixels, adding the contribution from this particle
      !
      do jpix = jpixmin,jpixmax
-        ypix = ymin + (jpix-0.5)*pixwidth
+        ypix = ymin + (jpix-0.5)*pixwidthy
         dy = ypix - y(i)
         dy2 = dy*dy
         do ipix = ipixmin,ipixmax
-           xpix = xmin + (ipix-0.5)*pixwidth
+           xpix = xmin + (ipix-0.5)*pixwidthx
            dx = xpix - x(i)
            rab2 = dx**2 + dy2
            q2 = rab2*hi21

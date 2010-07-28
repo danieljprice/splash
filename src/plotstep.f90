@@ -504,6 +504,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   endif
   
   !--query whether or not device is interactive
+  !call plot_qinf('CURSOR',devstring,ilen)
+  !if (devstring(1:ilen).eq.'YES') then
   if (plot_qcur()) then
      !--turn menu and interactive mode on if
      !  interactive device invoked from the command line
@@ -652,7 +654,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   real, dimension(:,:), allocatable  :: vecplot
   real :: rkappa
   real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax,pmassav(1)
-  real :: pixwidth,pixwidthvec,dxfreq
+  real :: pixwidth,pixwidthy,pixwidthvec,pixwidthvecy,dxfreq
 
   character(len=lenlabel+20) :: labelx,labely,labelz,labelrender,labelvecplot,labelcont
   character(len=20) :: labeltimeunits
@@ -1118,15 +1120,21 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            
            !!--determine number of pixels in rendered image (npix = pixels in x direction)
            if (npix.gt.0) then
-              pixwidth = (xmax-xmin)/real(npix)
+              pixwidth  = (xmax-xmin)/real(npix)
+              pixwidthy = pixwidth
               npixx = max(int(0.999*(xmax-xmin)/pixwidth) + 1,1)
               npixy = max(int(0.999*(ymax-ymin)/pixwidth) + 1,1)
            else
            !!--automatically reset the pixel number to match the device
               call page_setup(dummy=.true.)
               pixwidth = (xmax-xmin)/real(npixx)
-              npixy = max(int(0.999*(ymax-ymin)/pixwidth) + 1,1)
               npixx = max(int(0.999*(xmax-xmin)/pixwidth) + 1,1)
+              if (just.eq.1) then
+                 pixwidthy = pixwidth
+              else
+                 pixwidthy = (ymax-ymin)/real(npixy)
+              endif
+              npixy = max(int(0.999*(ymax-ymin)/pixwidthy) + 1,1)
            endif
 
            !!--only need z pixels if working with interpolation to 3D grid
@@ -1301,7 +1309,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                                 call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,icontourplot), &
+                                  dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),weight(1:ninterp),&
+                                  dat(1:ninterp,icontourplot), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                   dzscreentemp,rkappa,zslicepos)
@@ -1312,7 +1321,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                              endif
                              call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),weight(1:ninterp), &
+                               dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos)
@@ -1323,7 +1333,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                                 call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  pmassav,1,hh(1:ninterp),dat(1:ninterp,icontourplot), &
+                                  pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                   dzscreentemp,rkappa,zslicepos)
@@ -1334,7 +1344,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                              endif
                              call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               pmassav,1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos)                          
@@ -1380,7 +1390,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                                 call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,icontourplot), &
+                                  dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),weight(1:ninterp),&
+                                  dat(1:ninterp,icontourplot), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                   dzscreentemp,rkappa,huge(zslicepos))
@@ -1391,7 +1402,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                              endif
                              call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),&
+                               weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,huge(zslicepos))
@@ -1403,7 +1415,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                                 call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  pmassav,1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                                  pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                   dzscreentemp,rkappa,huge(zslicepos))
@@ -1414,7 +1426,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                              endif
                              call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               pmassav,1,hh(1:ninterp),dat(1:ninterp,irenderplot), &
+                               pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,huge(zslicepos))
@@ -1425,7 +1437,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
-                               inormalise,zobservertemp,dzscreentemp,ifastrender)
+                               pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender)
                           !!--same but for contour plot
                           if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                              if (.not.isameweights) & ! set contouring weights as necessary
@@ -1435,7 +1447,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
-                                  inormalise,zobservertemp,dzscreentemp,ifastrender)
+                                  pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender)
                              gotcontours = .true.
 
                              if (.not.isameweights) & ! reset weights
@@ -1713,13 +1725,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                  !!--call subroutine to actually render the image
                  call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                   npixx,npixy,xmin,ymin,pixwidth,    &
+                   npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
                    icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
 
                  !!--contour plot of different quantity on top of rendering
                  if (gotcontours) then
                     call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
-                         npixx,npixy,xmin,ymin,pixwidth,0,.true.,0,ncontours,.false.,ilabelcont)
+                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,.false.,ilabelcont)
                  endif
                               
                  !!--write ppm if interpolate3D_opacity
@@ -1803,8 +1815,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
                  endif
               endif
-              pixwidthvec = (xmax-xmin)/real(npixvec)
-              npixyvec = int(0.999*(ymax-ymin)/pixwidthvec) + 1
+              pixwidthvec  = (xmax-xmin)/real(npixvec)
+              if (just.eq.1) then
+                 pixwidthvecy = pixwidthvec !(xmax-xmin)/real(npixvec)
+              else
+                 pixwidthvecy = pixwidthvec              
+              endif
+              npixyvec = int(0.999*(ymax-ymin)/pixwidthvecy) + 1
               pixwidth = (xmax-xmin)/real(npixx) ! used in synchrotron plots
 
               if (.not.ihavesetweights) then
@@ -1812,7 +1829,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                                 (iplotpartoftype .and. UseTypeInRenderings))
               endif
               
-              call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,vecmax,labelvecplot)
+              call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,pixwidthvecy,vecmax,labelvecplot)
 
               !--vecmax is returned with the adaptive value if sent in -ve
               !  store this for use in interactive_multi
@@ -2394,7 +2411,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            if (ierr.eq.0 .and. allocated(datpix)) then
               !!--call subroutine to actually render the image
               call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                npixx,npixy,xmin,ymin,pixwidth,    &
+                npixx,npixy,xmin,ymin,pixwidth,pixwidth,    &
                 icolours,iplotcont,0,0,.false.,.false.)
            endif
            !
@@ -3082,7 +3099,7 @@ contains
 ! interface to vector plotting routines
 ! so that pixel arrays are allocated appropriately
 !-------------------------------------------------------------------
-  subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,vmax,label)
+  subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,pixwidthvecy,vmax,label)
    use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines,iplotarrowheads, &
        iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff, &
        ihidearrowswherenoparts,minpartforarrow
@@ -3095,7 +3112,7 @@ contains
    use plotlib,          only:plot_qci,plot_qlw,plot_sci,plot_slw
    implicit none
    integer, intent(in) :: ivecx,ivecy,numpixx,numpixy
-   real, intent(in) :: pixwidthvec
+   real, intent(in) :: pixwidthvec,pixwidthvecy
    real, intent(inout) :: vmax
    character(len=*), intent(in) :: label
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
@@ -3195,13 +3212,15 @@ contains
                     yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                     weight(1:ninterp),vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
                     icolourme(1:ninterp),ninterp,xmin,ymin, &
-                    vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,.false.,zobservertemp,dzscreentemp)
+                    vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,&
+                    .false.,zobservertemp,dzscreentemp)
                else
                   call interpolate3D_proj_vec(xplot(1:ninterp), &
                     yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                     weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                     icolourme(1:ninterp),ninterp,xmin,ymin, &
-                    vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,.false.,zobservertemp,dzscreentemp)               
+                    vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy, &
+                    .false.,zobservertemp,dzscreentemp)               
                endif
             endif
             
@@ -3271,13 +3290,13 @@ contains
             call render_pix(datpixvec(1:numpixx,1:numpixy), &
                          minval(datpixvec(1:numpixx,1:numpixy)), &
                          datmax, &
-                         'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,    &
+                         'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,    &
                          0,.true.,0,ncontours,.false.,ilabelcont,blank=blankval)
          else
             call render_pix(datpixvec(1:numpixx,1:numpixy), &
                          minval(datpixvec(1:numpixx,1:numpixy)), &
                          maxval(datpixvec(1:numpixx,1:numpixy)), &
-                         'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,    &
+                         'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,    &
                          0,.true.,0,ncontours,.false.,ilabelcont)
          endif
 
@@ -3288,7 +3307,7 @@ contains
          endif
       
          call render_vec(vecpixx,vecpixy,vmax, &
-              numpixx,numpixy,xmin,ymin,pixwidthvec,trim(label),' ')
+              numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,trim(label),' ')
          
          if (iplotsynchrotron .and. .not. iplotarrowheads) then
             !--get synchrotron polarisation intensity using more pixels
@@ -3319,7 +3338,7 @@ contains
             !--plot contours of synchrotron intensity
             call render_pix(datpixvec(1:npixx,1:npixy),minval(datpixvec(1:npixx,1:npixy)), &
               maxval(datpixvec(1:npixx,1:npixy)),'crap', &
-              npixx,npixy,xmin,ymin,pixwidth,0,.true.,0,ncontours,.false.,ilabelcont)
+              npixx,npixy,xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,.false.,ilabelcont)
          endif
 
       endif

@@ -59,6 +59,7 @@ contains
 !     Input: particle coordinates  : x,y,z (npart) - note that z is only required for perspective
 !            particle masses       : pmass (npmass)
 !            smoothing lengths     : hh    (npart)
+!            weight                : m/(h^3 rho) (not used, but skips particles with w <= 0)
 !            scalar data to smooth : dat   (npart)
 !
 !     Particle masses can be sent in as either a single scalar (npmass = 1)
@@ -76,14 +77,14 @@ contains
 !     (c) 2005-2007 Daniel Price
 !--------------------------------------------------------------------------
 
-subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npart, &
+subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,npart, &
      xmin,ymin,datsmooth,brightness,npixx,npixy,pixwidth,zobserver,dscreenfromobserver, &
      rkappa,zcut)
 
   implicit none
   real, parameter :: pi=3.1415926536
   integer, intent(in) :: npart,npixx,npixy,npmass
-  real, intent(in), dimension(npart) :: x,y,z,hh,dat,zorig
+  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat,zorig
   real, intent(in), dimension(npmass) :: pmass
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidth,zobserver,dscreenfromobserver, &
@@ -219,7 +220,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,dat,zorig,itype,npart, &
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_particles
+     if (itype(i).lt.0 .or. weight(i).le.0.) cycle over_particles
      !
      !--allow slicing [take only particles with z(unrotated) < zcut]
      !
