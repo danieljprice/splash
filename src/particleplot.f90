@@ -39,7 +39,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                         use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
                         fastparticleplot,datpix,npixx,npixy,dval,brightness)
   use params,           only:int1
-  use labels,           only:labeltype, maxparttypes
+  use labels,           only:labeltype, maxparttypes,is_coord
   use settings_data,    only:ndim,icoords,ntypes
   use settings_part,    only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
                              ilabelpart,iplotline,linestylethisstep,linecolourthisstep, &
@@ -52,29 +52,28 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   implicit none
   integer, intent(in)                           :: ntot,iplotx, iploty, itransx, itransy
   integer(kind=int1),  dimension(:), intent(in) :: iamtype
-  integer, dimension(:), intent(in)             :: icolourpart
-  integer, dimension(maxparttypes), intent(in)  :: npartoftype
-  real, dimension(:), intent(in)                :: xplot, yplot, zplot, h
-  real, intent(in)                              :: zmin,zmax,xmin,xmax,ymin,ymax
-  logical, intent(in)                           :: use_zrange,fastparticleplot
-  logical, dimension(maxparttypes), intent(in)  :: iplotpartoftype
-  character(len=*), intent(in)                  :: labelz
+  integer,             dimension(:), intent(in) :: icolourpart
+  integer, dimension(maxparttypes),  intent(in) :: npartoftype
+  real,                dimension(:), intent(in) :: xplot, yplot, zplot, h
+  real,                              intent(in) :: zmin,zmax,xmin,xmax,ymin,ymax
+  logical,                           intent(in) :: use_zrange,fastparticleplot
+  logical, dimension(maxparttypes),  intent(in) :: iplotpartoftype
+  character(len=*),                  intent(in) :: labelz
   
-  integer, intent(in), optional                 :: npixx,npixy
-  real, dimension(:,:), intent(inout), optional :: datpix,brightness
-  real, intent(in), optional                    :: dval
+  integer,                           intent(in),    optional :: npixx,npixy
+  real, dimension(:,:),              intent(inout), optional :: datpix,brightness
+  real,                              intent(in),    optional :: dval
   
   integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle,ierr
   integer :: lenstring,index1,index2,ntotplot,icolourstart,nlooptypes,ilooptype
-  integer, dimension(maxparttypes) :: nplottedtype
-!  real :: charheight
-  character(len=20) :: string
-  integer, parameter :: ncellx = 500, ncelly = 500 ! for crowded field reduction
+  integer, dimension(maxparttypes)             :: nplottedtype
+  character(len=20)                            :: string
+  integer, parameter                           :: ncellx = 500, ncelly = 500 ! for crowded field reduction
   integer(kind=int1), dimension(ncellx,ncelly) :: nincell
-  integer :: icellx,icelly,maxz !,notplotted
-  real :: dxcell1,dycell1,dxpix
-  real, dimension(:), allocatable :: xerrb, yerrb, herr
-  logical :: mixedtypes
+  integer                                      :: icellx,icelly,maxz !,notplotted
+  real                                         :: dxcell1,dycell1,dxpix
+  logical                                      :: mixedtypes
+  real, dimension(:), allocatable              :: xerrb, yerrb, herr
   
   !--query current character height and colour
 !  call pgqch(charheight)
