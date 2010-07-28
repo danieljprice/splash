@@ -442,7 +442,7 @@ subroutine check_labels
  use labels,        only:ix,irho,ih,ipmass
  use particle_data, only:masstype
  implicit none
- integer :: i
+ integer :: i,ndimset
 
  if (ndim.ne.0 .and. ncolumns.gt.0) then
     if (ndim.lt.0 .or. ndim.gt.3) then
@@ -467,6 +467,14 @@ subroutine check_labels
              print "(a)",' WARNING: ndim > 0 but zero ix setting in set_labels: fixing '
           endif
        enddo
+    endif
+    ndimset = 0
+    do i=1,3
+       if (ix(i).ne.0) ndimset = ndimset + 1
+    enddo
+    if (ndimset.ne.ndim) then
+       print "(2(a,i2))",' ERROR: labels for ',ndimset,&
+                         ' coordinates set but got ndim = ',ndim
     endif
     if (irho.gt.ncolumns .or. irho.lt.0) then
        print "(a)",' ERROR with irho setting in data read'
