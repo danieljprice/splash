@@ -563,6 +563,7 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  use labels,        only:ipowerspec,iacplane,isurfdens,itoomre,iutherm,ipdf,label,icolpixmap
  use settings_data, only:ndim,icoordsnew,ivegotdata,debugmode
  use settings_part, only:iexact
+ use system_utils,  only:lenvironment
  use write_pixmap,  only:ireadpixmap
  implicit none
  integer, intent(in)    :: ncolumns
@@ -588,7 +589,7 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
           label(itoomre) = 'Toomre Q parameter'
        endif
     endif
-    if (ndim.eq.3) then  !--Probability Density Function
+    if (ndim.eq.3 .and. lenvironment('SPLASH_TURB')) then  !--Probability Density Function
        nextra = nextra + 1
        ipdf = ncolumns + ncalc + nextra
        label(ipdf) = 'PDF'
