@@ -39,13 +39,13 @@ contains
 !------------------------------------------------------------------------
  
 subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
-                  xmin,ymin,dx,icolours,iplotcont,iColourBarStyle,nc,log, &
+                  xmin,ymin,dx,dy,icolours,iplotcont,iColourBarStyle,nc,log, &
                   ilabelcont,contmin,contmax,blank)
  use plotutils, only:formatreal
  use plotlib,   only:plot_imag,plot_conb,plot_cons,plot_qch,plot_sch,plot_qch,plot_sch,plot_conl
  implicit none
  integer, intent(in) :: npixx,npixy,nc,icolours
- real, intent(in) :: xmin,ymin,datmin,datmax,dx
+ real, intent(in) :: xmin,ymin,datmin,datmax,dx,dy
  real, dimension(npixx,npixy), intent(in) :: datpix
  logical, intent(in) :: iplotcont,log,ilabelcont
  integer, intent(in) :: iColourBarStyle
@@ -61,9 +61,9 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  trans(1) = xmin - 0.5*dx                ! this is for the pgimag call
  trans(2) = dx                        ! see help for pgimag/pggray/pgcont
  trans(3) = 0.0
- trans(4) = ymin - 0.5*dx
+ trans(4) = ymin - 0.5*dy
  trans(5) = 0.0
- trans(6) = dx
+ trans(6) = dy
 
  print*,'rendering...',npixx,'x',npixy,'=',size(datpix),' pixels'
 
@@ -120,8 +120,8 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
        print 20,levels(1:nc)
        call plot_cons(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
     endif
-10  format(1x,'plotting ',i4,a,' between ',1pe10.2,' and ',1pe10.2,', every ',1pe10.2,':')
-20  format(10(6(1x,1pe9.2),/))
+10  format(1x,'plotting ',i4,a,' between ',es10.2,' and ',es10.2,', every ',es10.2,':')
+20  format(10(6(1x,es9.2),/))
 !
 !--labelling of contour levels
 !
@@ -152,14 +152,14 @@ end subroutine render_pix
 !--------------------------------------------------------------------------
  
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
-                  xmin,ymin,dx,label,unitslabel) 
+                  xmin,ymin,dx,dy,label,unitslabel) 
  use legends,          only:legend_vec
  use settings_vecplot, only:iVecplotLegend,hposlegendvec,vposlegendvec,iplotarrowheads,&
                             iallarrowssamelength
  use plotlib,          only:plot_sah,plot_qch,plot_sch,plot_vect
  implicit none
  integer, intent(in) :: npixx,npixy
- real, intent(in) :: xmin,ymin,dx
+ real, intent(in) :: xmin,ymin,dx,dy
  real, intent(inout) :: vecmax
  real, dimension(npixx,npixy), intent(in) :: vecpixx,vecpixy
  real, dimension(npixx,npixy) :: dvmag
@@ -172,9 +172,9 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
  trans(1) = xmin - 0.5*dx                ! this is for the pgimag call
  trans(2) = dx                        ! see help for pgimag/pggray/pgcont
  trans(3) = 0.0
- trans(4) = ymin - 0.5*dx
+ trans(4) = ymin - 0.5*dy
  trans(5) = 0.0
- trans(6) = dx
+ trans(6) = dy
 
  print*,'vector plot..',npixx,'x',npixy,'=',size(vecpixx),' pixels'
  !!print*,'max(x component) = ',maxval(vecpixx),'max(y component) = ',maxval(vecpixy)
