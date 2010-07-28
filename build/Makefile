@@ -508,7 +508,7 @@ SOURCESF90= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          write_data_phantom.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \
-         analysis.f90 discplot.f90 \
+         discplot.f90 \
          fparser.f90 exact_function.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 \
@@ -527,7 +527,7 @@ SOURCESF90= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          interpolate3D.f90 interpolate3D_xsec.f90 \
          interpolate3D_projection.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
-         interactive.f90 \
+         interactive.f90 analysis.f90 \
          convert_grid.f90 convert.f90 \
          fieldlines.f90 legends.f90 particleplot.f90 \
          powerspectrums.f90 render.f90 \
