@@ -16,7 +16,7 @@
 !     stating that you changed the files and the date of any change.
 !
 !  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
 !  wetter.j@gmail.com
@@ -28,7 +28,7 @@ program splash
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
 !     Copyright (C) 2005-2010 Daniel Price 
-!     daniel.price@sci.monash.edu.au
+!     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
 !
@@ -53,9 +53,12 @@ program splash
 !             SPLASH_DEFAULTS variable can be set for system-wide defaults;
 !             can plot arbitrary functions of x,t as exact solution; asplash better
 !             handles blank lines in header and can specify time, gamma location with
-!             env. variables; added data read for the H5PART format and GADGET read
-!             across multiple files; new directory layout and more helpful
-!             error messages during build; PGPLOT linking is easier to get right.
+!             env. variables; added data read for the H5PART format; GADGET read
+!             across multiple files implemented; VINE read works with particle injection;
+!             error bars can be plotted for both x and y axis simultaneously;
+!             default rotation angles are set if 3D perspective turned on;
+!             new directory layout and more helpful error messages during build;
+!             PGPLOT linking is easier to get right.
 !     1.13.1 : (26/02/10)
 !             bugs with new calc_quantities module fixed; generic library interface
 !             implemented so backend can be changed easily; bug fix with auto pixel selection;
@@ -643,7 +646,7 @@ subroutine print_header
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
    '   This is free software; and you are welcome to redistribute it ',/, &
    '   under certain conditions (see LICENSE file for details). *',/,/, &
-   ' Comments, bugs, suggestions and queries to: daniel.price@sci.monash.edu.au ',/, &
+   ' Comments, bugs, suggestions and queries to: daniel.price@monash.edu',/, &
    ' Check for updates at: http://users.monash.edu.au/~dprice/splash ',/, &
    ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
    ' use SPLASH for scientific work and if you plot something beautiful,',/, &
