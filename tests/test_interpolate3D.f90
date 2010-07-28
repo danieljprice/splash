@@ -30,7 +30,7 @@ program test_interpolation
  itype = 0
  ifastrender = .true.
  print*,'accelerated rendering = ',ifastrender
- call pgopen('/xw')
+ call pgopen('?')
 ! call pgenv(xmin,xmax,ymin,ymax,0,0)
 ! call pglabel('x','y',' ')
 ! call pgpt(npart,x,y,1)
@@ -75,6 +75,7 @@ program test_interpolation
 ! call pgsci(2)
 ! call pgline(maxcoltable,q,coltable)
  call pgsci(1)
+ !call pgpage
 !
 !--setup one particle
 !
@@ -92,9 +93,10 @@ program test_interpolation
  dat(1) = rho(1)
  dxpix = (xmax-xmin)/real(npixx)
  normalise = .false.
+ datpix = 0.
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,.false.)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,dxpix,normalise,0.,0.,.false.)
  call pgenv(xmin,xmax,ymin,ymax,1,0)
  trans = 0.
  trans(1) = xmin - 0.5*dxpix
@@ -113,7 +115,7 @@ program test_interpolation
  print*,'TEST WITH ACCELERATION'
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,.true.)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,dxpix,normalise,0.,0.,.true.)
  call pgenv(xmin,xmax,ymin,ymax,1,0)
  trans = 0.
  trans(1) = xmin - 0.5*dxpix
@@ -147,7 +149,7 @@ program test_interpolation
  dxpix = (xmax-xmin)/real(npixx)
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,ifastrender)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,dxpix,normalise,0.,0.,ifastrender)
  call pgenv(xmin,xmax,ymin,ymax,1,0)
  trans = 0.
  trans(1) = xmin - 0.5*dxpix
@@ -176,7 +178,7 @@ program test_interpolation
 !
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,ifastrender)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,dxpix,normalise,0.,0.,ifastrender)
 !
 !--check output
 !
@@ -205,7 +207,7 @@ program test_interpolation
  normalise = .true.
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,ifastrender)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,dxpix,normalise,0.,0.,ifastrender)
 !
 !--check output
 !
@@ -280,7 +282,7 @@ program test_interpolation
  dxpix = (xmax-xmin)/real(npixx)
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,ifastrender)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,dxpix,normalise,0.,0.,ifastrender)
  
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,columndens,err)
  print*,'average error in projection = ',err
@@ -296,7 +298,7 @@ program test_interpolation
  dxpix = (xmax-xmin)/real(npixx)
  call interpolate3D_projection(x(1:npart),y(1:npart),z(1:npart),h(1:npart), &
                                weight(1:npart),dat(1:npart),itype(1:npart),npart,xmin,ymin, &
-                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,normalise,0.,0.,ifastrender)
+                               datpix(1:npixx,1:npixy),npixx,npixy,dxpix,dxpix,normalise,0.,0.,ifastrender)
  
  call geterr(datpix(1:npixx,1:npixy),npixx,npixy,columndens,err)
  print*,'average error in projection = ',err
