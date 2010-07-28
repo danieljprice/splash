@@ -432,7 +432,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
      !else
      if (ncircpart.gt.0) then
 
-        if (iplotx.le.ndim .and. iploty.le.ndim .and. ncircpart.gt.0) then
+        if (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. ncircpart.gt.0) then
            print*,'plotting ',ncircpart,' circles of interaction'
            do n = 1,ncircpart
               if (icircpart(n).gt.ntot) then 
@@ -466,11 +466,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                  herr(n) = 2.*h(icircpart(n))
               endif
            enddo         
-           if (iplotx.le.ndim) then
+           if (is_coord(iplotx,ndim)) then
               print*,'plotting ',ncircpart,' error bars x axis '
               call plot_errb(5,ncircpart,xerrb(1:ncircpart), &
                    yerrb(1:ncircpart),herr(1:ncircpart),1.0)
-           elseif (iploty.le.ndim) then
+           elseif (is_coord(iploty,ndim)) then
               print*,'plotting ',ncircpart,' error bars y axis'
               call plot_errb(6,ncircpart,xerrb(1:ncircpart), &
                    yerrb(1:ncircpart),herr(1:ncircpart),1.0)
