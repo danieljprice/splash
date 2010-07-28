@@ -81,6 +81,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   logical :: iexist,timeset,gammaset
   real    :: dummyreal
   character(len=len(rootname)+4) :: dumpfile
+  character(len=20)  :: line
   integer, parameter :: notset = -66
 
   nstepsread = 0
@@ -178,7 +179,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
   if (nheaderlines.gt.0) print*,'skipping ',nheaderlines,' header lines'
 
   do i=1,nheaderlines
-     read(iunit,*,iostat=ierr) dummyreal
+     !--read header lines as character strings
+     !  so that blank lines are counted in nheaderlines
+     read(iunit,"(a)",iostat=ierr) line
+     read(line,*,iostat=ierr) dummyreal
      
      if (i.eq.iheader_time .and. .not.timeset) then
         if (ierr.eq.0) then

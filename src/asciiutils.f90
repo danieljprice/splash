@@ -208,9 +208,13 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
     read(lunit,"(a)",iostat=ierr) line
     if (index(line,'NaN').gt.0) nansinfile = .true.
     if (index(line,'Inf').gt.0) infsinfile = .true.
-    if (ierr.eq.0) ncolsthisline = ncolumnsline(line)
-    if (ncolsthisline.ge.0) nheaderlines = nheaderlines + 1
-    ncolumns = ncolsthisline
+    if (len_trim(line).eq.0) then
+       ncolsthisline = -1
+    else
+       if (ierr.eq.0) ncolsthisline = ncolumnsline(line)
+       ncolumns = ncolsthisline
+    endif
+    nheaderlines = nheaderlines + 1
  enddo
  !--subtract 2 from the header line count (the last two lines which were the same)
  nheaderlines = max(nheaderlines - 2,0)
