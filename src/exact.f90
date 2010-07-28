@@ -557,7 +557,8 @@ contains
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot, &
                             pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
-    use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,irhorestframe
+    use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,&
+                              irhorestframe,is_coord
     use prompting,       only:prompt
     use exactfromfile,   only:exact_fromfile
     use mhdshock,        only:exact_mhdshock
@@ -664,7 +665,7 @@ contains
           elseif (iploty.eq.ike) then
              call exact_sedov(4,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           endif
-       !elseif (igeom.le.1 .and. iplotx.le.ndim .and. iploty.le.ndim) then
+       !elseif (igeom.le.1 .and. is_coord(iplotx,ndim) .and. is_coord(iploty,ndim)) then
        !   call exact_sedov(0,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
        endif
 
@@ -744,7 +745,7 @@ contains
                      atstar,htstar,ctstar,norder,morder, &
                      alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
              endif
-          elseif (iplotx.le.ndim .and. iploty.le.ndim .and. igeom.eq.1) then
+          elseif (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. igeom.eq.1) then
              call exact_toystar2D(0,time,gamma,polyk,totmass, &
                   atstar,htstar,ctstar,norder,morder, &
                   alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
