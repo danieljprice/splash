@@ -27,7 +27,7 @@
 module settings_limits
  implicit none
  logical :: iadapt, iadaptcoords
- real :: scalemax
+ real    :: scalemax
  real, dimension(3) :: xminoffset_track, xmaxoffset_track
  
 contains
@@ -39,12 +39,12 @@ subroutine defaults_set_limits
   use multiplot, only:itrans
   implicit none
 
-  iadapt = .true.      ! adaptive plot limits
-  iadaptcoords = .false.
-  scalemax = 1.0       ! for rescaling adaptive limits
-  itrans(:) = 0        ! no transformations (log10 etc)
-  xminoffset_track = 0.5 ! offset of limits from tracked particle
-  xmaxoffset_track = 0.5 !
+  iadapt           = .true.  ! adaptive plot limits
+  iadaptcoords     = .false.
+  scalemax         = 1.0     ! for rescaling adaptive limits
+  itrans(:)        = 0       ! no transformations (log10 etc)
+  xminoffset_track = 0.5     ! offset of limits from tracked particle
+  xmaxoffset_track = 0.5     !
  
   return
 end subroutine defaults_set_limits
@@ -53,22 +53,22 @@ end subroutine defaults_set_limits
 ! submenu with options relating to plot limits
 !----------------------------------------------------------------------
 subroutine submenu_limits(ichoose)
- use filenames, only:nsteps,nstepsinfile,ifileopen
- use settings_data, only:ndataplots,numplot,ndim,ivegotdata,iCalcQuantities, &
-                    DataIsBuffered,itrackpart
+ use filenames,      only:nsteps,nstepsinfile,ifileopen
+ use settings_data,  only:ndataplots,numplot,ndim,ivegotdata,iCalcQuantities, &
+                          DataIsBuffered,itrackpart
  use calcquantities, only:calc_quantities
- !!use settings_page, only:nstepsperpage
- use multiplot, only:itrans
- use prompting, only:prompt,print_logical
- use limits, only:lim,set_limits,range,rangeset,anyrangeset,print_rangeinfo
- use labels, only:label,ix,irad
- use transforms, only:ntrans,transform_label
+ !use settings_page, only:nstepsperpage
+ use multiplot,      only:itrans
+ use prompting,      only:prompt,print_logical
+ use limits,         only:lim,set_limits,range,rangeset,anyrangeset,print_rangeinfo
+ use labels,         only:label,ix,irad,is_coord
+ use transforms,     only:ntrans,transform_label
  implicit none
  integer, intent(in) :: ichoose
- integer :: iaction,ipick,i,index,itrackpartprev
- real :: diff, mid, zoom
- character(len=120) :: transprompt
- character(len=5) :: string,string2
+ integer             :: iaction,ipick,i,index,itrackpartprev
+ real                :: diff, mid, zoom
+ character(len=120)  :: transprompt
+ character(len=5)    :: string,string2
  
  zoom = 1.0
 
@@ -132,7 +132,7 @@ subroutine submenu_limits(ichoose)
           call prompt(trim(label(ipick))//' min ',lim(ipick,1))
           call prompt(trim(label(ipick))//' max ',lim(ipick,2))
           print*,'>> '//trim(label(ipick))//' limits set (min,max) = ',lim(ipick,1),lim(ipick,2)
-          if (ipick.le.ndim) then
+          if (is_coord(ipick,ndim)) then
              iadaptcoords = .false.
           elseif (ipick.le.numplot) then
              iadapt = .false.
