@@ -1038,9 +1038,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            print*,'ERROR: f has no effect if not rendering'
         endif
      case('F') ! change rendered quantity (previous)
-        if (irender.ne.0) then
+        if (irender.ne.0 .and. ndim.gt.0) then
            irender = irender - 1
-           if (irender.lt.ndim) irender = ndataplots
+           if (is_coord(irender,ndim)) irender = ix(1) - 1
+           if (irender.lt.1) irender = ndataplots
            !if (irender.eq.ndim) irender = 0
            iadvance = 0
            interactivereplot = .true.
