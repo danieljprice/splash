@@ -270,6 +270,7 @@ or LITTLE before \emph{compiling} \splash (this adds the appropriate compile-tim
 Environment variables that affect all data reads are:\newline
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+SPLASH\_DEFAULTS & gives the name of a system-wide \verb+splash.defaults+ file (and splash.limits etc.) that will be used if there is none in the current directory. e.g. \verb+export SPLASH_DEFAULTS=/home/me/splash.defaults+ \\
 SPLASH\_HMIN\_CODEUNITS & if given a value $>$0 enforces a minimum smoothing length, specified in code units as read from the dump file, on all the particles. This can be used to ``dumb-down'' the resolution of SPH simulations, e.g. to match observational resolution. If this variable is set it is \emph{highly} recommended that the ``use accelerated rendering'' option in the r)ender menu is also turned on as quite slow rendering can otherwise result. \\
 SPLASH\_VZERO\_CODEUNITS & if set to a comma separated list of vector components (e.g. \verb+export SPLASH_VZERO_CODEUNITS='0.0,1.0,0.0'+), can be used to subtract a mean velocity field from all particles --- specified in code units as read from the dump file. \\
 \end{tabular}
