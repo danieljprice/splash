@@ -40,6 +40,11 @@
 !
 ! e.g. setenv ASPLASH_NHEADERLINES=1
 !
+! ASPLASH_TIMEVAL can be used to set the time (fixed for all files)
+! ASPLASH_GAMMAVAL can be used to set gamma (fixed for all files)
+! ASPLASH_HEADERLINE_TIME can be used to set the header line where the time is listed
+! ASPLASH_HEADERLINE_GAMMA can be used to set the header line where gamma is listed
+!
 ! the data is stored in the global array dat
 !
 ! >> this subroutine must return values for the following: <<
@@ -66,16 +71,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc
   use mem_allocation, only:alloc
   use asciiutils,     only:get_ncolumns
-  use system_utils,   only:ienvironment
+  use system_utils,   only:ienvironment,renvironment
   implicit none
   integer, intent(in)          :: indexstart
   integer, intent(out)         :: nstepsread
   character(len=*), intent(in) :: rootname
-  integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr
+  integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr,iheader_time,iheader_gamma
   integer :: nprint,npart_max,nstep_max,icol,nheaderlines,nheaderenv
   logical :: iexist,timeset,gammaset
   real    :: dummyreal
   character(len=len(rootname)+4) :: dumpfile
+  integer, parameter :: notset = -66
 
   nstepsread = 0
   nstep_max = 0
@@ -146,22 +152,60 @@ subroutine read_data(rootname,indexstart,nstepsread)
   if (j.gt.maxstep) then
      call alloc(maxpart,j+1,maxcol)
   endif
+
 !
-!--read header lines, try to use it to set time
+!--can set either set the time and gamma explicitly
+!  using environment variables (fixed for all files)
+!  or can specify on which header line the time appears
 !
   timeset = .false.
   gammaset = .false.
+  dummyreal = renvironment('ASPLASH_TIMEVAL',errval=-1.)
+  if (dummyreal.gt.0.) then
+     time(j) = dummyreal
+     timeset = .true.
+  endif
+  dummyreal = renvironment('ASPLASH_GAMMAVAL',errval=-1.)
+  if (dummyreal.gt.0.) then
+     gamma(j) = dummyreal
+     gammaset = .true.
+  endif
+  iheader_time  = ienvironment('ASPLASH_HEADERLINE_TIME',errval=notset)
+  iheader_gamma = ienvironment('ASPLASH_HEADERLINE_GAMMA',errval=notset)
+!
+!--read header lines, try to use it to set time
+!  
   if (nheaderlines.gt.0) print*,'skipping ',nheaderlines,' header lines'
 
   do i=1,nheaderlines
      read(iunit,*,iostat=ierr) dummyreal
-     if (timeset .and. .not.gammaset .and. ierr.eq.0 &
+     
+     if (i.eq.iheader_time .and. .not.timeset) then
+        if (ierr.eq.0) then
+           time(j) = dummyreal
+           timeset = .true.
+           print*,'setting time = ',dummyreal,' from header line ',i
+           print*,'(determined from ASPLASH_HEADERLINE_TIME setting)'
+        else
+           print "(a,i2,a)",' ** ERROR reading time from header line ',i, &
+                            ' (using ASPLASH_HEADERLINE_TIME)'
+        endif
+     elseif (i.eq.iheader_gamma .and. .not.gammaset) then
+        if (ierr.eq.0) then
+           gamma(j) = dummyreal
+           gammaset = .true.
+           print*,'setting gamma = ',dummyreal,' from header line ',i
+           print*,'(determined from ASPLASH_HEADERLINE_GAMMA setting)'
+        else
+           print "(a,i2,a)",' ** ERROR reading gamma from header line ',i, &
+                            ' (using ASPLASH_HEADERLINE_GAMMA)'
+        endif     
+     elseif (timeset .and. .not.gammaset .and. ierr.eq.0 .and. iheader_gamma.eq.notset &
         .and. dummyreal.gt.0.999999 .and. dummyreal.lt.2.000001) then
         print*,'setting gamma = ',dummyreal,' from header line ',i
         gamma(j) = dummyreal
         gammaset = .true.
-     endif
-     if (ierr.eq.0 .and. .not. timeset) then
+     elseif (ierr.eq.0 .and. .not. timeset .and. iheader_time.eq.notset) then
         time(j) = dummyreal
         timeset = .true.
         print*,'setting time = ',dummyreal,' from header line ',i
