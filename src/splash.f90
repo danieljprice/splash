@@ -48,6 +48,14 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.14.0 : (xx/xx/10)
+!             Can flip between rendered quantities in interactive mode using 'f';
+!             SPLASH_DEFAULTS variable can be set for system-wide defaults;
+!             can plot arbitrary functions of x,t as exact solution; asplash better
+!             handles blank lines in header and can specify time, gamma location with
+!             env. variables; added data read for the H5PART format and GADGET read
+!             across multiple files; new directory layout and more helpful
+!             error messages during build; PGPLOT linking is easier to get right.
 !     1.13.1 : (26/02/10)
 !             bugs with new calc_quantities module fixed; generic library interface
 !             implemented so backend can be changed easily; bug fix with auto pixel selection;
@@ -267,7 +275,7 @@ program splash
   use projections3D,      only:setup_integratedkernel
   use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots
   use settings_xsecrot,   only:read_animfile
-  use system_commands,    only:get_number_arguments,get_argument
+  use system_commands,    only:get_number_arguments,get_argument,get_environment
   use system_utils,       only:lenvironment
   use asciiutils,         only:read_asciifile,basename
   use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
@@ -279,10 +287,10 @@ program splash
   use settings_page,      only:interactive,device,nomenu
   implicit none
   integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
-  logical :: ihavereadfilenames,evsplash,doconvert,useall
+  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.13.1+ [11th May ''10]'
+  character(len=*), parameter :: version = 'v1.14.0alpha [26th Jul ''10]'
 
   !
   ! initialise some basic code variables
@@ -450,6 +458,28 @@ program splash
   ! set default options (used if defaults file does not exist)
   !
   call defaults_set(evsplash)
+
+  !
+  ! look for a system-wide defaults file if the environment
+  ! variable SPLASH_DEFAULTS is set, no local file is present
+  ! and no alternative prefix has been set.
+  !
+  inquire(file=defaultsfile,exist=iexist)
+  if (.not.iexist .and. trim(fileprefix).eq.'splash') then
+     call get_environment('SPLASH_DEFAULTS',string)
+     if (len_trim(string).ne.0) then
+        i = index(string,'.defaults')
+        if (i.gt.0) then
+           defaultsfile = trim(string)//'.defaults'
+           fileprefix   = trim(string)
+        else
+           defaultsfile = trim(string)        
+           fileprefix = string(1:i-1)
+        endif
+        print "(a)",' Using SPLASH_DEFAULTS='//trim(defaultsfile)
+        call set_filenames(trim(fileprefix))
+     endif
+  endif
 
   !
   ! read default options from file if it exists
