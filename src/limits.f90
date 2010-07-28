@@ -40,8 +40,8 @@ contains
 ! NB: does not differentiate between particle types at the moment
 !----------------------------------------------------------
 subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
-  use labels, only:label
-  use geometry, only:coord_transform_limits
+  use labels,        only:label,ix
+  use geometry,      only:coord_transform_limits
   use particle_data, only:npartoftype,dat,maxcol
   use settings_data, only:ndim,icoords,icoordsnew
   implicit none
@@ -88,9 +88,11 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   !
   !--transform coord limits into new coordinate system if coord transform is applied
   !
-  if (icoordsnew.ne.icoords .and. ndim.gt.0 .and. ifromcol.le.ndim) then
-     call coord_transform_limits(lim(1:ndim,1),lim(1:ndim,2), &
-                                 icoords,icoordsnew,ndim)
+  if (icoordsnew.ne.icoords .and. ndim.gt.0) then
+     if (ifromcol.le.ix(ndim)) then ! separate if is to avoid referencing ix(0) if ndim=0
+        call coord_transform_limits(lim(ix(1):ix(ndim),1),lim(ix(1):ix(ndim),2), &
+                                    icoords,icoordsnew,ndim)
+     endif
   endif
   
   return
@@ -137,14 +139,14 @@ end subroutine write_limits
 ! read plot limits for all columns from a file
 !----------------------------------------------------------
 subroutine read_limits(limitsfile,ierr)
-  use labels, only:label
+  use labels,        only:label
   use settings_data, only:numplot,ncolumns,ncalc
-  use asciiutils, only:ncolumnsline
+  use asciiutils,    only:ncolumnsline
   implicit none
   character(len=*), intent(in) :: limitsfile
   integer, intent(out) :: ierr
-  integer :: i,ncolsline
-  character(len=120) :: line
+  integer              :: i,ncolsline
+  character(len=120)   :: line
 
   ierr = 0
 
@@ -204,9 +206,9 @@ end subroutine read_limits
 subroutine get_particle_subset(icolours,datstep,ncolumns)
  use labels, only:label
  implicit none
- integer, intent(inout), dimension(:) :: icolours
- real, intent(in), dimension(:,:) :: datstep
- integer, intent(in) :: ncolumns
+ integer, dimension(:), intent(inout) :: icolours
+ real, dimension(:,:),  intent(in)    :: datstep
+ integer,               intent(in)    :: ncolumns
  integer :: icol
  
  if (anyrangeset()) then
@@ -322,7 +324,7 @@ end function anyrangeset
 !----------------------------------------------------------
 subroutine print_rangeinfo()
  use settings_data, only:ndataplots
- use labels, only:label
+ use labels,        only:label
  implicit none
  integer :: i
  
@@ -347,7 +349,7 @@ end subroutine print_rangeinfo
 !----------------------------------------------------------
 subroutine print_lim2info()
  use settings_data, only:ndataplots
- use labels, only:label
+ use labels,        only:label
  implicit none
  integer :: i
  
@@ -366,7 +368,7 @@ end subroutine print_lim2info
 subroutine warn_minmax(labelx,xmin,xmax)
  implicit none
  character(len=*), intent(in) :: labelx
- real, intent(in) :: xmin,xmax
+ real,             intent(in) :: xmin,xmax
  
  if (abs(xmin-xmax).lt.tiny(xmax)) then
     print "(a,a20,a,1pe9.2)",'  warning: ',labelx,' min = max = ',xmin
