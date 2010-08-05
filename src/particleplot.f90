@@ -385,8 +385,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   !
   call plot_qci(icolourindex)
   call plot_sci(linecolourthisstep)
-
-  if (iplotline .and. .not.use_zrange) then
+  !  i.e., don't plot a line for cross section plots (would plot all particles)
+  !        but do if there is 3D perspective --> in which case zmin = -huge(x)
+  if (iplotline .and. .not.(use_zrange .and. abs(zmax-zmin).lt.0.5*huge(0.))) then
      call plot_qls(oldlinestyle)
      call plot_sls(linestylethisstep)
      call plot_line(npartoftype(1),xplot(1:npartoftype(1)), &
