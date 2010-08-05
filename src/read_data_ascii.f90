@@ -323,6 +323,18 @@ subroutine set_labels
 !
 !--guess positions of various quantities from the column labels
 !
+        if (ndim.le.0 .and. (labeli(1:1).eq.'x' .or. labeli(1:1).eq.'r')) then
+           ndim = 1
+           ix(1) = i
+        endif
+        if (ndim.eq.1 .and. i.eq.ix(1)+1 .and. (labeli(1:1).eq.'y' .or. labeli(1:1).eq.'z')) then
+           ndim = 2
+           ix(2) = i
+        endif
+        if (ndim.eq.2 .and. i.eq.ix(2)+1 .and. labeli(1:1).eq.'z') then
+           ndim = 3
+           ix(3) = i
+        endif
         if (labeli(1:3).eq.'den' .or. labeli(1:3).eq.'rho') then
            irho = i
         elseif (labeli(1:5).eq.'pmass' .or. labeli(1:13).eq.'particle mass' &
@@ -369,21 +381,11 @@ subroutine set_labels
      close(unit=51)
   endif
   
-  if (label(1)(1:1).eq.'x' .or. label(1)(1:1).eq.'r') then
-     ndim = 1
-     ix(1) = 1
-     if (label(2)(1:1).eq.'y' .or. label(2)(1:1).eq.'z') then
-        ndim = 2
-        ix(2) = 2
-        if (label(3)(1:1).eq.'z') then
-           ndim = 3
-           ix(3) = 3
-        endif
-     endif
-  endif
   if (ndim.lt.1) ndimV = 0
   
   if (ndim.gt.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
+  if (ndim.gt.0) print "(a,i2,a,i2)",' Assuming positions in columns ',ix(1),' to ',ix(ndim)     
+
   if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
   if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
   if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
