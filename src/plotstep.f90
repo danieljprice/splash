@@ -379,9 +379,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 !
        !--set default values if none set
        if (abs(zobserver).lt.tiny(zobserver)) zobserver = 10.*lim(iplotz,2)
-       if (abs(dzscreenfromobserver).lt.tiny(dzscreenfromobserver)) dzscreenfromobserver = lim(iplotz,2)
+       if (abs(dzscreenfromobserver).lt.tiny(dzscreenfromobserver)) dzscreenfromobserver = zobserver
        call prompt('enter z coordinate of observer ',zobserver)
-       call prompt('enter distance for unit magnification ',dzscreenfromobserver,0.)
+       !dzscreenfromobserver = zobserver
+!       call prompt('enter distance for unit magnification ',dzscreenfromobserver,0.)
 !
 !--initialise opacity for 3D opacity rendering
 !       
@@ -3403,7 +3404,7 @@ end subroutine applytrans
 subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,yploti,zploti, &
                                   ntot,iplotx,iploty,iplotz,dat,ivecstart,vecploti)
   use labels,           only:ix
-  use settings_data,    only:ndim,xorigin,itrackpart
+  use settings_data,    only:ndim,xorigin,itrackpart,debugmode
   use settings_xsecrot, only:use3Dperspective
   use rotation,         only:rotate2D,rotate3D
   implicit none
@@ -3461,6 +3462,7 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
         print "(a)",' WARNING: internal error in ix setting for rotation: ix = ',ix(:)
      endif
   enddo
+  if (debugmode) print*,'DEBUG: in rotation, iplotz = ',iplotz,' iposz = ',iposz, xorigin(:)
 
 !$omp parallel default(none) &
 !$omp shared(dat,xorigin,ndim,angleradx,anglerady,angleradz,zobs,dzscreen) &
@@ -3516,6 +3518,7 @@ end subroutine rotationandperspective
 ! interface for plotting rotated axes
 !-------------------------------------------------------------------
 subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscreen,zobs)
+  use labels,   only:ix
   use rotation, only:rotate_axes3D,rotate_axes2D
   use settings_data, only:ndim,xorigin
   use settings_xsecrot, only:xminrotaxes,xmaxrotaxes,use3Dperspective
@@ -3537,7 +3540,7 @@ subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscree
         zobs = 0.
         dzscreen = 0.       
      endif
-     call rotate_axes3D(irotateaxes,iplotx,iploty, &
+     call rotate_axes3D(irotateaxes,iplotx-ix(1)+1,iploty-ix(1)+1, &
           xminrotaxes(1:ndim),xmaxrotaxes(1:ndim),xorigin(1:ndim), &
           angleradx,anglerady,angleradz,zobs,dzscreen)
   elseif (ndim.eq.2) then
