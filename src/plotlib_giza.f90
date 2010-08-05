@@ -34,55 +34,62 @@
 !---------------------------------------------------------------------------
 module plotlib 
   use giza, only: &
-      plot_svp=>giza_set_viewport, &
-      plot_swin=>giza_set_window, &
-      giza_get_surface_size, &
+      plot_arro=>giza_arrow, &
+      plot_annotate=>giza_annotate, &
+      plot_band=>giza_band, &
+      plot_bbuf=>giza_begin_buffer,&
       plot_box=>giza_box, &
       plot_circ=>giza_circle, &
-      plot_line=>giza_line, &
-      giza_open_device, &
       plot_close=>giza_close_device, &
-      plot_page=>giza_change_page, &
-      plot_slw=>giza_set_line_width, &
-      giza_open_device, &
-      giza_open_device_size, &
-      plot_sch=>giza_set_character_height, &
-      plot_qch=>giza_get_character_height, &
-      plot_scf=>giza_set_font, &
-      plot_annotate=>giza_annotate, &
-      giza_get_character_size, &
-      plot_bbuf=>giza_begin_buffer,&
-      plot_ebuf=>giza_end_buffer, &
-      plot_qwin=>giza_get_window, &
-      giza_get_viewport, &
-      plot_sci=>giza_set_colour_index, &
-      plot_scr=>giza_set_colour_representation, &
-      plot_qcr=>giza_get_colour_representation, &
-      plot_qlw=>giza_get_line_width,&
-      plot_qls=>giza_get_line_style,&
-      plot_sls=>giza_set_line_style,&
-      plot_qci=>giza_get_colour_index, &
-      plot_end=>giza_close_device, &
-      plot_ptxt=>giza_ptext, &
-      plot_slc=>giza_set_line_cap, &
-      plot_qlc=>giza_get_line_cap, &
-      giza_stop_prompting, &
-      giza_start_prompting, &
       plot_curs=>giza_get_key_press, &
-      plot_qcur=>giza_device_has_cursor, &
-      giza_set_colour_table, &
-      giza_render, &
-      plot_wnad=>giza_set_window_equal_scale, &
+      plot_ebuf=>giza_end_buffer, &
+      plot_end=>giza_close_device, &
+      plot_env=>giza_set_environment, &
+      plot_errb=>giza_error_bars, &
+      plot_funx=>giza_function_x, &
+      plot_label=>giza_label, &
+      plot_line=>giza_line, &
+      plot_page=>giza_change_page, &
+      plot_poly=>giza_polygon, &
       plot_pt1=>giza_single_point, &
       plot_pt=>giza_points, &
-      plot_errb=>giza_error_bars, &
-      plot_sfs=>giza_set_fill, &
+      plot_ptxt=>giza_ptext, &
+      plot_qch=>giza_get_character_height, &
+      plot_qci=>giza_get_colour_index, &
+      plot_qcr=>giza_get_colour_representation, &
       plot_qfs=>giza_get_fill, &
-      giza_left_click_f, &
-      plot_band=>giza_band, &
-      giza_vector, &
-      giza_arrow,  &
-      giza_format_number, &
+      plot_qlw=>giza_get_line_width,&
+      plot_qls=>giza_get_line_style,&
+      plot_qlc=>giza_get_line_cap, &
+      plot_qtxt=>giza_qtext, &
+      plot_qwin=>giza_get_window, &
+      plot_rect=>giza_rectangle, &
+      plot_sah=>giza_set_arrow_style, &
+      plot_scf=>giza_set_font, &
+      plot_sch=>giza_set_character_height, &
+      plot_sci=>giza_set_colour_index, &
+      plot_scr=>giza_set_colour_representation, &
+      plot_sfs=>giza_set_fill, &
+      plot_slc=>giza_set_line_cap, &
+      plot_sls=>giza_set_line_style,&
+      plot_slw=>giza_set_line_width, &
+      plot_svp=>giza_set_viewport, &
+      plot_swin=>giza_set_window, &
+      plot_text=>giza_text, &
+      plot_wnad=>giza_set_window_equal_scale, &
+      plot_qcur=>giza_device_has_cursor, &
+      giza_get_character_size, &
+      giza_get_surface_size,   &
+      giza_get_viewport,       &
+      giza_open_device,        &
+      giza_open_device_size,   &
+      giza_render,             &
+      giza_set_colour_table,   &
+      giza_stop_prompting,     &
+      giza_start_prompting,    &
+      giza_left_click_f,       &
+      giza_vector,             &
+      giza_format_number,      &
       giza_query_device
   implicit none
   
@@ -216,34 +223,6 @@ subroutine plot_scir(icilo, icihi)
 
 end subroutine plot_scir
 
-subroutine plot_rect(x1,x2,y1,y2)
-  implicit none     
-  real,intent(in) :: x1,x2,y1,y2
-
-  print*,' WARNING: plot_rect not implemented in giza'
-
-end subroutine plot_rect
-
-subroutine plot_arro(x1,y1,x2,y2)
-  implicit none
-  real,intent(in) :: x1,y1,x2,y2
-
-  call giza_arrow(x1,y1,x2,y2)
-
-end subroutine plot_arro
-
-subroutine plot_qtxt(x,y,angle,fjust,text,xbox,ybox)
-  implicit none
-  real,intent(in)               :: x, y, angle, fjust
-  character(len=*),intent(in)   :: text
-  real,intent(out),dimension(4) :: xbox,ybox
-  
-  print*,' WARNING: plot_qtxt not implemented in giza'
-  xbox = 0.
-  ybox = 0.
-  
-end subroutine plot_qtxt
-
 subroutine plot_stbg(bg)
   implicit none
   integer,intent(in) :: bg
@@ -251,24 +230,6 @@ subroutine plot_stbg(bg)
   print*,' WARNING: plot_stbg not implemented in giza'
 
 end subroutine plot_stbg
-
-subroutine plot_funx(fx,n,ymin,ymax,pgflags)
-  implicit none      
-  real,external            :: fx
-  integer,intent(in)       :: n,pgflags
-  real,intent(in)          :: ymin,ymax
-
-  print*,' WARNING: plot_funx not implemented in giza'
-
-end subroutine plot_funx
-
-subroutine plot_label(xlbl,ylbl,toplbl)
-  implicit none
-  character(len=*),intent(in) :: xlbl,ylbl,toplbl
-
-  print*,' WARNING: plot_label not implemented in giza'
-
-end subroutine plot_label
 
 subroutine plot_scrn(ci,name,ier)
   implicit none
@@ -280,15 +241,6 @@ subroutine plot_scrn(ci,name,ier)
   ier = 1
 
 end subroutine plot_scrn
-
-subroutine plot_poly(n,xpts,ypts)
-  implicit none
-  integer,intent(in) :: n
-  real,intent(in)    :: xpts(*),ypts(*)
-
-  print*,' WARNING: plot_poly not implemented in giza'
-
-end subroutine plot_poly
 
 subroutine plot_qinf(item,value,length)
   implicit none
@@ -352,15 +304,6 @@ subroutine plot_numb(m,pp,form,string,nc)
 
 end subroutine plot_numb
 
-subroutine plot_text(x,y,text)
-  implicit none
-  real,intent(in)             :: x,y
-  character(len=*),intent(in) :: text
-
-  call plot_ptxt(x,y,0.,0.,text)
-
-end subroutine plot_text
-
 subroutine plot_err1(dir,x,y,e,t)
   implicit none
   integer,intent(in) :: dir
@@ -405,15 +348,6 @@ subroutine plot_conl(a,idim,jdim,i1,i2,j1,j2,c,tr, &
 
 end subroutine plot_conl
 
-subroutine plot_sah(fs, angle, cutback)
-  implicit none
-  integer, intent(in) :: fs
-  real, intent(in)    :: angle, cutback
-  
-  print*,' WARNING: plot_sah not implemented in giza'
-
-end subroutine plot_sah
-
 subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
      blank)
   implicit none
@@ -436,15 +370,6 @@ subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2, &
   print*,' WARNING: plot_env not implemented in giza'
 
 end subroutine plot_pixl
-
-subroutine plot_env(xmin,xmax,ymin,ymax,just,axis)
-  implicit none
-  real,intent(in)    :: xmin,xmax,ymin,ymax
-  integer,intent(in) :: just,axis
-
-  print*,' WARNING: plot_env not implemented in giza'
-
-end subroutine plot_env
 
 subroutine plot_pap(width,aspect)
   implicit none
