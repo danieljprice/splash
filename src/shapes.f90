@@ -28,7 +28,7 @@
 module shapes
  implicit none
  integer, parameter, private :: maxshapes = 10
- integer, parameter, private :: maxshapetype = 6
+ integer, parameter, private :: maxshapetype = 7
  integer :: nshapes
  
  type shapedef
@@ -54,7 +54,8 @@ module shapes
       'arrow    ', &
       'circle   ', &
       'line     ', &
-      'text     '/)
+      'text     ', &
+      'f(x)     '/)
  namelist /shapeopts/ nshapes,shape
 
  real, parameter, private :: pi = 3.1415926536
@@ -89,12 +90,13 @@ end subroutine defaults_set_shapes
 ! shape submenu
 !-----------------------------------------------------------------
 subroutine submenu_shapes()
- use params, only:maxplot
- use prompting, only:prompt
+ use params,        only:maxplot
+ use prompting,     only:prompt
+ use exactfunction, only:check_function
  implicit none
- integer :: i,ishape,itype,indexi,iunits
- character(len=8) :: poslabel
- character(len=80) :: string
+ integer            :: i,ishape,itype,indexi,iunits,ierr,itry
+ character(len=8)   :: poslabel
+ character(len=80)  :: string
  integer, parameter :: maxunits = 2
  character(len=20), dimension(maxunits), &
     parameter :: labelunits = &
@@ -106,7 +108,7 @@ subroutine submenu_shapes()
 
  itype = 1
  ishape = 0
- do while (itype.ne.0)
+ over_shapes: do while (itype.ne.0)
     indexi = 1
     do i=1,maxshapetype
        if (i.lt.10) then
@@ -124,11 +126,15 @@ subroutine submenu_shapes()
     if (itype.gt.0) then
        print "(a,i1,a,/)",'shape ',ishape,': type = '//trim(labelshapetype(itype))
        
-       !--choose units
-       do i=1,maxunits
-          print "(i1,')',1x,a)",i,trim(labelunits(i))
-       enddo
-       call prompt('enter units to use for plotting shape',shape(ishape)%iunits,0,maxunits)
+       if (itype.eq.7) then
+          shape(ishape)%iunits = 1
+       else
+          !--choose units
+          do i=1,maxunits
+             print "(i1,')',1x,a)",i,trim(labelunits(i))
+          enddo
+          call prompt('enter units to use for plotting shape',shape(ishape)%iunits,0,maxunits)
+       endif
        iunits = shape(ishape)%iunits
 
        select case(itype)
@@ -156,19 +162,41 @@ subroutine submenu_shapes()
           call prompt('enter angle for text in degrees (0 = horizontal) ',shape(ishape)%angle)
           call prompt('enter justification factor (0.0=left 1.0=right)',shape(ishape)%fjust)
           poslabel = 'starting'
+       case(7) ! arbitrary function
+          ierr = 1
+          itry = 1
+          do while(ierr /= 0 .and. itry.le.3)
+             if (itry.gt.1) print "(a,i1,a)",'attempt ',itry,' of 3:'
+             print "(a,6(/,11x,a),/)",' Examples: sin(2*pi*x)','sqrt(0.5*x)','x^2', &
+             'exp(-2*x**2)','log10(x/2)','exp(p),p=sin(pi*x)','cos(z/d),z=acos(d),d=x^2'
+             call prompt('enter function f(x) to plot ',shape(ishape)%text)
+             call check_function(shape(ishape)%text,ierr)
+             if (ierr /= 0 .and. len(shape(ishape)%text).eq.len_trim(shape(ishape)%text)) then
+                print "(a,i3,a)",' (errors are probably because string is too long, max length = ',len(shape(ishape)%text),')'
+             endif
+             itry = itry + 1
+          enddo
+          if (ierr.ne.0) then 
+             print "(a)",' *** too many tries, aborting ***'
+             ishape = ishape - 1
+             cycle over_shapes
+          endif
+          poslabel = 'starting'
        end select
-       call prompt('enter '//trim(poslabel)//' x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)
-       call prompt('enter '//trim(poslabel)//' y position (in '//trim(labelunits(iunits))//') ',shape(ishape)%ypos)
+       if (itype.ne.7) then
+          call prompt('enter '//trim(poslabel)//' x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)
+          call prompt('enter '//trim(poslabel)//' y position (in '//trim(labelunits(iunits))//') ',shape(ishape)%ypos)
+       endif
        if (itype.eq.1 .or. itype.eq.2 .or. itype.eq.4) then
-          call prompt('enter PGPLOT fill style (1=solid,2=outline,3=hatch,4=crosshatch) for '// &
+          call prompt('enter fill style (1=solid,2=outline,3=hatch,4=crosshatch) for '// &
                       trim(labelshapetype(itype)),shape(ishape)%ifillstyle,0,5)       
        endif
        if (itype.ne.6) then
-          call prompt('enter PGPLOT line style (1=solid,2=dash,3=dotdash,4=dot,5=dashdot) for '// &
+          call prompt('enter line style (1=solid,2=dash,3=dotdash,4=dot,5=dashdot) for '// &
                       trim(labelshapetype(itype)),shape(ishape)%linestyle,0,5)
        endif
        if (itype.ne.6) then
-          call prompt('enter PGPLOT line width for '//trim(labelshapetype(itype)),shape(ishape)%linewidth,0)
+          call prompt('enter line width for '//trim(labelshapetype(itype)),shape(ishape)%linewidth,0)
        endif
        call prompt('enter '//trim(labelshapetype(itype))//' colour (0=background, 1=foreground, 2-16=pgplot colour indices)', &
                    shape(ishape)%icolour,0,16)
@@ -184,7 +212,7 @@ subroutine submenu_shapes()
 
        call prompt('Enter selection ',shape(ishape)%iplotonpanel,-2,maxplot)
     endif
- enddo
+ enddo over_shapes
  nshapes = ishape - 1
  if (nshapes.gt.0) then
     print "(/,a,/,15('-'),10(/,i2,')',1x,a10,' (x,y) = (',1pe10.2,',',1pe10.2,') [',a,']'))",' SHAPES SET: ', &
@@ -198,15 +226,19 @@ subroutine submenu_shapes()
 end subroutine submenu_shapes
 
 subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
+ use exactfunction, only:exact_function
+ use transforms,    only:transform_inverse,transform
  use plotlib, only:plot_qci,plot_qls,plot_qlw,plot_qfs,plot_qwin,plot_sci,plot_sfs,plot_slw, &
       plot_sci,plot_rect,plot_sls,plot_line,plot_arro,plot_circ,plot_ptxt
  implicit none
  integer, intent(in) :: ipanel,irow,icolumn,itransx,itransy
  integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle
- integer :: i,iplotonthispanel
+ integer :: i,j,ierr,iplotonthispanel
+ integer, parameter :: maxfuncpts = 1000
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot
  real :: xpos,ypos,xlen,ylen,anglerad,dx,dy
  real, dimension(2) :: xline,yline
+ real, dimension(maxfuncpts) :: xfunc,yfunc
 !
 !--store current settings
 !
@@ -272,6 +304,25 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
           call plot_line(2,xline,yline)
        case(6) ! text
           call plot_ptxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text))
+       case(7) ! arbitrary function
+          !--set x to be evenly spaced in transformed (plot) coordinates
+          dx = (xmax-xmin)/real(maxfuncpts - 1)
+          do j=1,maxfuncpts
+             xfunc(j) = xmin + (j-1)*dx
+          enddo
+          !--transform x array back to untransformed space to evaluate f(x)
+          if (itransx.gt.0) call transform_inverse(xfunc,itransx)
+          call exact_function(shape(i)%text,xfunc,yfunc,0.,ierr)
+          if (ierr.eq.0) then
+             !--reset x values
+             do j=1,maxfuncpts
+                xfunc(j) = xmin + (j-1)*dx
+             enddo
+             !--transform y if necessary
+             if (itransy.gt.0) call transform(yfunc,itransy)
+             !--plot the line
+             call plot_line(maxfuncpts,xfunc,yfunc)
+          endif
        end select
     endif
  enddo
