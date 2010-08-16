@@ -43,7 +43,7 @@ module shapes
    real :: ypos
    real :: xlen,ylen
    real :: angle,fjust
-   character(len=40) :: text
+   character(len=120) :: text
  end type
  type(shapedef), dimension(maxshapes), public :: shape
 
