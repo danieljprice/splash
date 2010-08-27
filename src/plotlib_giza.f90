@@ -176,30 +176,21 @@ subroutine plot_bins(nbin,x,data,centre)
 end subroutine plot_bins
 
 subroutine plot_qvp(units, x1, x2, y1, y2)
-  integer,intent(in) :: units
-  real,intent(out)   :: x1, x2, y1, y2
+ implicit none
+ integer,intent(in) :: units
+ real,intent(out)   :: x1, x2, y1, y2
 
-  if(units.eq.0) then
-     call giza_get_viewport(units,x1,x2,y1,y2)
-  else if(units.eq.3) then
-     call giza_get_viewport(1,x1,x2,y1,y2)
-  else
-     call giza_get_viewport(units,x1,x2,y1,y2)
-  end if
-
+ call giza_get_viewport(units_giza(units),x1,x2,y1,y2)
+ 
 end subroutine plot_qvp
 
 subroutine plot_qcs(units,xch,ych)
-  integer,intent(in) :: units
-  real,intent(out)   :: xch,ych
+ implicit none
+ integer,intent(in) :: units
+ real,intent(out)   :: xch,ych
 
-  if(units.eq.0) then
-     call giza_get_character_size(0,xch,ych)
-  else if(units.eq.4) then
-     call giza_get_character_size(1,xch,ych)
-  else
-     call giza_get_character_size(units,xch,ych)
-  endif
+ call giza_get_character_size(units_giza(units),xch,ych)
+
 end subroutine plot_qcs
 
 subroutine plot_qcol(icolmin,icolmax)
@@ -390,6 +381,32 @@ subroutine plot_set_exactpixelboundaries()
  implicit none
 
 end subroutine plot_set_exactpixelboundaries
+
+!------------------------------------------------------------
+! Function to convert PGPLOT units value to giza units value
+!------------------------------------------------------------
+ integer function units_giza(pgplotunits)
+  use giza, only:giza_units_normalized,giza_units_inches, &
+                 giza_units_mm,giza_units_device,giza_units_world
+  implicit none
+  integer, intent(in) :: pgplotunits
+  
+  select case(pgplotunits)
+  case(0)
+     units_giza = giza_units_normalized
+  case(1)
+     units_giza = giza_units_inches
+  case(2)
+     units_giza = giza_units_mm
+  case(3)
+     units_giza = giza_units_device
+  case(4)
+     units_giza = giza_units_world
+  case default  ! giza will give an error
+     units_giza = pgplotunits
+  end select
+
+ end function units_giza
 
 subroutine convert_tr_to_affine(tr,affine)
  implicit none
