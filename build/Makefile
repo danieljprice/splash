@@ -545,7 +545,7 @@ OBJECTS= $(OBJECTS1:.F90=.o)
 # Now compile with the appropriate data read file
 # (move yours to the top so that you can simply type "make")
 #
-all: ascii gadget vine sphNG srosph dragon tipsy
+all: ascii gadget vine sphNG ndspmhd srosph dragon tipsy
 	@echo; echo ' SPLASH successfully compiled! ';
 	@echo; echo ' Use "sudo make install" to copy the binaries to $(DEST)'; echo;
 
