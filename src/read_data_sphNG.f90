@@ -247,8 +247,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
             ntypes = nints - 1
             read(iunit,iostat=ierr) npart,npartoftypei(1:ntypes)
          else
-            ntypes = 1
+            ntypes = 5
             read(iunit,iostat=ierr) npart,npartoftypei(1:5),nblocks
+         endif
+         if (debug) then
+            print*,'DEBUG: ntypes = ',ntypes,' npartoftype = ',npartoftypei(:)
          endif
          n1 = npartoftypei(1)
          n2 = 0
