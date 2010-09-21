@@ -796,6 +796,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                if (required(irho)) then
                   if (any(npartoftypei(2:).gt.0)) then
                      !--need masses for each type if not all gas
+                     if (debug) print*,'debug: phantom: setting h for multiple types ',i1,i2
                      do k=i1,i2
                         itype = iphase(k)
                         pmassi = massoftypei(itype)
@@ -826,7 +827,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   endif
                endif
                    
-               if (debug) print*,'making density ',icolumn
+               if (debug) print*,'debug: making density ',icolumn
             endif
          enddo
          icolumn = imaxcolumnread
