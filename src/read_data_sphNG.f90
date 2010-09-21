@@ -87,7 +87,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, parameter :: maxarrsizes = 10, maxreal = 50
   integer, parameter :: ilocbinarymass = 24
   real,    parameter :: pi=3.141592653589
-  integer :: i,j,ierr,iunit
+  integer :: i,j,k,ierr,iunit
   integer :: intg1,int2,int3
   integer :: i1,iarr,i2,iptmass1,iptmass2,ilocpmassinitial
   integer :: npart_max,nstep_max,ncolstep,icolumn,nptmasstot
@@ -99,6 +99,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype
   integer, dimension(maxparttypes) :: npartoftypei
   real,    dimension(maxparttypes) :: massoftypei
+  real    :: pmassi,hi
   logical :: iexist, doubleprec,imadepmasscolumn,gotbinary
   logical :: debug
 
@@ -633,7 +634,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
             read(iunit,end=33,iostat=ierr)
          enddo
          if (nint1(iarr).lt.1) then
-            if (.not.phantomdump) print "(a)",'ERROR: can''t locate iphase in dump'
+            if (.not.phantomdump .or. any(npartoftypei(2:).gt.0)) then
+               print "(a)",'ERROR: can''t locate iphase in dump'
+            endif
             !--skip remaining integer arrays
             nskip = nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
          else
@@ -789,19 +792,38 @@ subroutine read_data(rootname,indexstart,nstepsread)
                !
                !--dead particles have -ve smoothing lengths in phantom
                !  so use abs(h) for these particles and hide them
-               !
+               !               
                if (required(irho)) then
-                  where (dat(i1:i2,ih,j).gt.0.)
-                     dat(i1:i2,irho,j) = &
-                        massoftypei(1)*(hfact/dat(i1:i2,ih,j))**3
-                  elsewhere (dat(i1:i2,ih,j).lt.0.)
-                     dat(i1:i2,irho,j) = &
-                        massoftypei(1)*(hfact/abs(dat(i1:i2,ih,j)))**3
-                     icolourme(i1:i2) = -1
-                  elsewhere ! if h = 0.
-                     dat(i1:i2,irho,j) = 0.
-                     icolourme(i1:i2) = -1
-                  end where
+                  if (any(npartoftypei(2:).gt.0)) then
+                     !--need masses for each type if not all gas
+                     do k=i1,i2
+                        itype = iphase(k)
+                        pmassi = massoftypei(itype)
+                        hi = dat(k,ih,j)
+                        if (hi.gt.0) then
+                           dat(k,irho,j) = pmassi*(hfact/hi)**3
+                        elseif (hi.lt.0.) then
+                           dat(k,irho,j) = pmassi*(hfact/abs(hi))**3
+                           icolourme(k) = -1
+                        else
+                           dat(k,irho,j) = 0.
+                           icolourme(k) = -1
+                        endif
+                     enddo
+                  else
+                     !--assume all particles are gas particles
+                     where (dat(i1:i2,ih,j).gt.0.)
+                        dat(i1:i2,irho,j) = &
+                           massoftypei(1)*(hfact/dat(i1:i2,ih,j))**3
+                     elsewhere (dat(i1:i2,ih,j).lt.0.)
+                        dat(i1:i2,irho,j) = &
+                           massoftypei(1)*(hfact/abs(dat(i1:i2,ih,j)))**3
+                        icolourme(i1:i2) = -1
+                     elsewhere ! if h = 0.
+                        dat(i1:i2,irho,j) = 0.
+                        icolourme(i1:i2) = -1
+                     end where
+                  endif
                endif
                    
                if (debug) print*,'making density ',icolumn
@@ -908,28 +930,43 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--translate iphase into particle types (mixed type storage)
 !
     if (size(iamtype(:,j)).gt.1) then
-       do i=1,npart
-          select case(int(iphase(i)))
-          case(0)
-            iamtype(i,j) = 1
-            ngas = ngas + 1
-          case(1:9)
-            iamtype(i,j) = 3
-            nptmassi = nptmassi + 1
-          case(10:)
-            iamtype(i,j) = 4
-            nstar = nstar + 1
-          case default
-            iamtype(i,j) = 5
-            nunknown = nunknown + 1
-          end select
-       enddo
-       do i=npart+1,ntotal
-          iamtype(i,j) = 2
-       enddo 
+       if (phantomdump) then
+       !
+       !--phantom: iphase IS the particle type (1->5)
+       !
+          do i=1,npart
+             iamtype(i,j) = iphase(i)
+          enddo
+       else
+       !
+       !--sphNG: translate iphase to splash types
+       !
+          do i=1,npart
+             select case(int(iphase(i)))
+             case(0)
+               iamtype(i,j) = 1
+               ngas = ngas + 1
+             case(1:9)
+               iamtype(i,j) = 3
+               nptmassi = nptmassi + 1
+             case(10:)
+               iamtype(i,j) = 4
+               nstar = nstar + 1
+             case default
+               iamtype(i,j) = 5
+               nunknown = nunknown + 1
+             end select
+          enddo
+          do i=npart+1,ntotal
+             iamtype(i,j) = 2
+          enddo
+       endif
        !print*,'mixed types: ngas = ',ngas,nptmassi,nunknown
 
     elseif (any(iphase(1:ntotal).ne.0)) then
+       if (phantomdump) then
+          print*,'ERROR: low memory mode will not work with phantom + multiple types'
+       endif
 !
 !--place point masses after normal particles
 !  if not storing the iamtype array
@@ -1338,13 +1375,13 @@ subroutine set_labels
   !
   !--set labels for each particle type
   !
-  if (ntypes.eq.2) then  ! phantom
+  if (phantomdump) then  ! phantom
      ntypes = 3
      labeltype(1) = 'gas'
      labeltype(2) = 'dust'
      labeltype(3) = 'sink'
      UseTypeInRenderings(1) = .true.
-     UseTypeInRenderings(2) = .false.  
+     UseTypeInRenderings(2) = .true.  
      UseTypeInRenderings(3) = .false.  
   else
      ntypes = 5
