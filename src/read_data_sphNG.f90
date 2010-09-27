@@ -1171,9 +1171,12 @@ subroutine set_labels
   use geometry, only:labelcoord
   use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
   use sphNGread
+  use asciiutils, only:lcase
+  use system_commands, only:get_environment
   implicit none
   integer :: i
   real(doub_prec) :: uergg
+  character(len=20) :: string
   
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -1365,8 +1368,22 @@ subroutine set_labels
    endif
    
    !--use the following two lines for time in years
-   units(0) = utime/3.1536e7
-   unitslabel(0) = ' yrs'
+   call get_environment('SSPLASH_TIMEUNITS',string)
+   select case(trim(lcase(string)))
+   case('s','seconds')
+      units(0) = utime
+      unitslabel(0) = ' s'
+   case('h','hours','hour')
+      units(0) = utime/3600.
+      unitslabel(0) = ' hrs'
+   case('tff','freefall','tfreefall')
+   !--or use these two lines for time in free-fall times
+      units(0) = 1./tfreefall
+      unitslabel(0) = ' '
+   case default
+      units(0) = utime/3.1536e7
+      unitslabel(0) = ' yrs'
+   end select
    !--or use these two lines for time in free-fall times
    !units(0) = 1./tfreefall
    !unitslabel(0) = ' '
