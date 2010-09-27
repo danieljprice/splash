@@ -78,6 +78,7 @@ module plotlib
       plot_text=>giza_text, &
       plot_wnad=>giza_set_window_equal_scale, &
       plot_qcur=>giza_device_has_cursor, &
+      giza_contour,            &
       giza_get_character_size, &
       giza_get_surface_size,   &
       giza_get_viewport,       &
@@ -137,8 +138,7 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio)
  endif
 end subroutine plot_init
 
-subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2,&
-                     a1, a2, tr)
+subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
   integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
   real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
   real               :: affine(6)
@@ -309,13 +309,15 @@ subroutine plot_err1(dir,x,y,e,t)
   
 end subroutine plot_err1
 
-subroutine plot_conb(a,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
-     blank)
+subroutine plot_conb(a,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
   implicit none
   integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
   real,intent(in)    :: a(idim,jdim),c(*),tr(6),blank
+  real               :: affine(6)
 
-  print*,' WARNING: plot_conb not implemented in giza'
+  print*,' WARNING: blanking in coutouring not implemented in giza'
+  call convert_tr_to_affine(tr,affine)
+  call giza_contour(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,nc,c,affine)
 
 end subroutine plot_conb
 
@@ -323,24 +325,31 @@ subroutine plot_cons(a,idim,jdim,i1,i2,j1,j2,c,nc,tr)
   implicit none
   integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
   real,intent(in)    :: a(idim,jdim),c(*),tr(6)
-  
-  print*,' WARNING: plot_cons not implemented in giza'
+  real               :: affine(6)
+
+  call convert_tr_to_affine(tr,affine)
+  call giza_contour(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,nc,c,affine)
 
 end subroutine plot_cons
 
-subroutine plot_conl(a,idim,jdim,i1,i2,j1,j2,c,tr, &
-     label,intval,mininit)
+subroutine plot_conl(a,idim,jdim,i1,i2,j1,j2,c,tr,label,intval,mininit)
   implicit none
   integer,intent(in)          :: idim,jdim,i1,i2,j1,j2,intval,mininit
   real,intent(in)             :: a(idim,jdim),c,tr(6)
   character(len=*),intent(in) :: label
+  real               :: affine(6)
+  integer, parameter :: nc = 1
+  real, dimension(nc) :: clevel
 
-  print*,' WARNING: plot_conl not implemented in giza'
+  clevel(1) = c
+  print*,' WARNING: labelled coutouring not implemented in giza'
+  call convert_tr_to_affine(tr,affine)
+  call giza_contour(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,nc,clevel,affine)
+  print*,'nc = ',nc
 
 end subroutine plot_conl
 
-subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
-     blank)
+subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
   implicit none
   integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
   real,intent(in)    :: a(idim,jdim),b(idim,jdim),tr(6),blank,c
@@ -351,14 +360,13 @@ subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr, &
 
 end subroutine plot_vect
 
-subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2, &
-     x1,x2,y1,y2)
+subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2,x1,x2,y1,y2)
   implicit none
   integer,intent(in) :: idim,jdim,i1,i2,j1,j2
   integer,intent(in) :: ia(idim,jdim)
   real,intent(in)    :: x1,x2,y1,y2
 
-  print*,' WARNING: plot_env not implemented in giza'
+  print*,' WARNING: plot_pixl not implemented in giza'
 
 end subroutine plot_pixl
 
