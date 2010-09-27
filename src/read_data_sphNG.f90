@@ -37,6 +37,7 @@
 ! SSPLASH_RESET_CM if 'YES' then centre of mass is reset to origin
 ! SSPLASH_OMEGA if non-zero subtracts corotating velocities with omega as set
 ! SSPLASH_OMEGAT if non-zero subtracts corotating positions and velocities with omega as set
+! SSPLASH_TIMEUNITS sets default time units, either 's','min','hrs','yrs' or 'tfreefall'
 !
 ! the data is stored in the global array dat
 !
@@ -1369,13 +1370,22 @@ subroutine set_labels
    
    !--use the following two lines for time in years
    call get_environment('SSPLASH_TIMEUNITS',string)
-   select case(trim(lcase(string)))
+   select case(trim(lcase(adjustl(string))))
    case('s','seconds')
       units(0) = utime
-      unitslabel(0) = ' s'
-   case('h','hours','hour')
+      unitslabel(0) = trim(string)
+   case('min','minutes','mins')
+      units(0) = utime/60.
+      unitslabel(0) = trim(string)
+   case('h','hr','hrs','hours','hour')
       units(0) = utime/3600.
-      unitslabel(0) = ' hrs'
+      unitslabel(0) = trim(string)
+   case('y','yr','yrs','years','year')
+      units(0) = utime/3.1536e7
+      unitslabel(0) = trim(string)
+   case('d','day','days')
+      units(0) = utime/(3600.*24.)
+      unitslabel(0) = trim(string)
    case('tff','freefall','tfreefall')
    !--or use these two lines for time in free-fall times
       units(0) = 1./tfreefall

@@ -321,7 +321,10 @@ VSPLASH\_MHD & if `YES' or `TRUE' reads VINE dumps containing MHD arrays (note t
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 SSPLASH\_CENTRE\_ON\_SINK & if `YES' or `TRUE' resets the positions such that the sink particle is positioned at the origin (applies only where there is one, and only one, sink particle present)\\
-SSPLASH\_RESET\_CM & if `YES' or `TRUE' resets the positions such that the centre of mass is exactly at the origin.
+SSPLASH\_RESET\_CM & if `YES' or `TRUE' resets the positions such that the centre of mass is exactly at the origin. \\
+SSPLASH\_OMEGA & if non-zero, subtracts solid body rotation with omega as specified to give velocities in co-rotating frame. \\
+SSPLASH\_OMEGAT & if non-zero, subtracts solid body rotation with omega as specified to give positions and velocities in co-rotating frame. \\
+SSPLASH\_TIMEUNITS & sets default time units, either 's', 'min', 'hrs', 'days', 'yrs' or 'tfreefall' (NB: text is used verbatim in legend).
 \end{tabular}
 
 \subsubsection{ Stephan Rosswog data read}
