@@ -101,7 +101,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, dimension(maxparttypes) :: npartoftypei
   real,    dimension(maxparttypes) :: massoftypei
   real    :: pmassi,hi
-  logical :: iexist, doubleprec,imadepmasscolumn,gotbinary
+  logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
   logical :: debug
 
   character(len=len(rootname)+10) :: dumpfile
@@ -141,6 +141,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   igotmass    = .false.
   tfreefall   = 1.d0
   gotbinary   = .false.
+  gotiphase   = .false.
 
   dumpfile = trim(rootname)   
   !
@@ -594,11 +595,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
       if (allocated(iphase)) deallocate(iphase)
       allocate(iphase(npart_max))
-      iphase(:) = 0
+      if (phantomdump) then
+         iphase(:) = 1
+      else
+         iphase(:) = 0
+      endif
 
       if (gotbinary) then
-         iphase(npart-1) = 1
-         iphase(npart)   = 1
+         iphase(npart-1) = 3
+         iphase(npart)   = 3
       endif
 
    endif ! iblock = 1
@@ -636,11 +641,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
          enddo
          if (nint1(iarr).lt.1) then
             if (.not.phantomdump .or. any(npartoftypei(2:).gt.0)) then
-               print "(a)",'ERROR: can''t locate iphase in dump'
+               print "(a)",' ERROR: can''t locate iphase in dump'
+            elseif (phantomdump) then
+               print "(a)",' WARNING: can''t locate iphase in dump'
             endif
+            gotiphase = .false.
             !--skip remaining integer arrays
             nskip = nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
          else
+            gotiphase = .true.
             read(iunit,end=33,iostat=ierr) iphase(i1:i2)
             !--skip remaining integer arrays
             nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
@@ -793,8 +802,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                !
                !--dead particles have -ve smoothing lengths in phantom
                !  so use abs(h) for these particles and hide them
-               !               
-               if (required(irho)) then
+               !
+               !if (required(irho)) then
                   if (any(npartoftypei(2:).gt.0)) then
                      !--need masses for each type if not all gas
                      if (debug) print*,'debug: phantom: setting h for multiple types ',i1,i2
@@ -805,14 +814,17 @@ subroutine read_data(rootname,indexstart,nstepsread)
                         if (hi.gt.0) then
                            dat(k,irho,j) = pmassi*(hfact/hi)**3
                         elseif (hi.lt.0.) then
+                           npartoftype(itype,j) = npartoftype(itype,j) - 1
+                           npartoftype(5,j) = npartoftype(5,j) + 1
                            dat(k,irho,j) = pmassi*(hfact/abs(hi))**3
-                           icolourme(k) = -1
+!                           icolourme(k) = -1
                         else
                            dat(k,irho,j) = 0.
                            icolourme(k) = -1
                         endif
                      enddo
                   else
+                     if (debug) print*,'debug: phantom: setting rho for all types'
                      !--assume all particles are gas particles
                      where (dat(i1:i2,ih,j).gt.0.)
                         dat(i1:i2,irho,j) = &
@@ -820,6 +832,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      elsewhere (dat(i1:i2,ih,j).lt.0.)
                         dat(i1:i2,irho,j) = &
                            massoftypei(1)*(hfact/abs(dat(i1:i2,ih,j)))**3
+                        iphase(i1:i2) = -1
                         icolourme(i1:i2) = -1
                      elsewhere ! if h = 0.
                         dat(i1:i2,irho,j) = 0.
@@ -829,7 +842,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                endif
                    
                if (debug) print*,'debug: making density ',icolumn
-            endif
+            !endif
          enddo
          icolumn = imaxcolumnread
 !        real 8's need converting
@@ -937,7 +950,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
        !--phantom: iphase IS the particle type (1->5)
        !
           do i=1,npart
-             iamtype(i,j) = iphase(i)
+             select case(iphase(i))
+             case(1:4)
+               iamtype(i,j) = iphase(i)
+             case default
+               iamtype(i,j) = 5
+               nunknown = nunknown + 1
+             end select
           enddo
        else
        !
@@ -1050,10 +1069,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
         npartoftype(3,j) = nptmassi
         npartoftype(4,j) = nstar
         npartoftype(5,j) = nunknown
+     else
+        npartoftype(1,j) = npartoftype(1,j) - nunknown
+        npartoftype(5,j) = npartoftype(5,j) + nunknown
      endif
      
      if (phantomdump) then
-        print*,' n(gas) = ',npartoftype(1,j),' n(dust) = ',npartoftype(2,j),' n(sink) = ',npartoftype(3,j)
+        print*,' n(gas) = ',npartoftype(1,j),' n(dust) = ',npartoftype(2,j),' n(sink) = ',npartoftype(3,j),' n(unknown) = ',nunknown
      else
         if (npartoftype(2,j).ne.0) then
            print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j), &
@@ -1404,13 +1426,15 @@ subroutine set_labels
   !--set labels for each particle type
   !
   if (phantomdump) then  ! phantom
-     ntypes = 3
+     ntypes = 5
      labeltype(1) = 'gas'
      labeltype(2) = 'dust'
      labeltype(3) = 'sink'
-     UseTypeInRenderings(1) = .true.
-     UseTypeInRenderings(2) = .true.  
-     UseTypeInRenderings(3) = .false.  
+     labeltype(4) = 'type 4'
+     labeltype(5) = 'unknown/dead'
+     UseTypeInRenderings(1:2) = .true.
+     UseTypeInRenderings(3:4) = .true.
+     UseTypeInRenderings(5) = .true.  
   else
      ntypes = 5
      labeltype(1) = 'gas'
