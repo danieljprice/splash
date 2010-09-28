@@ -409,6 +409,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          endif
          if (nreals.ge.ilocpmassinitial) then
             massoftypei(1) = dummyreal(ilocpmassinitial)
+            if (debug) print*,'DEBUG: got massoftype(gas) = ',massoftypei(1)
             if (massoftypei(1).gt.tiny(0.) .and. .not.lowmemorymode) then
                ncolstep = ncolstep + 1  ! make an extra column to contain particle mass
                imadepmasscolumn = .true.
@@ -431,6 +432,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             igotmass = .false.
          endif
       endif
+      if (debug) print*,'DEBUG: gotmass = ',igotmass
 !
 !--   to handle both small and full dumps, we need to place the quantities dumped
 !     in both small and full dumps at the start of the dat array
@@ -715,7 +717,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
             read(iunit,end=33,iostat=ierr)
          enddo
       else
-!--otherwise read them      
+!
+!--read all real arrays defined on all the particles (same size arrays as block 1)
+!
          if ((doubleprec.and.nreal(iarr).gt.0).or.nreal8(iarr).gt.0) then
             if (allocated(dattemp)) deallocate(dattemp)
             allocate(dattemp(isize(iarr)),stat=ierr)
@@ -747,17 +751,26 @@ subroutine read_data(rootname,indexstart,nstepsread)
                read(iunit,end=33,iostat=ierr)
             endif
          enddo
+!
 !        set masses for equal mass particles (not dumped in small dump)
+!
          if (((smalldump.and.nreal(1).lt.ipmass).or.phantomdump).and. iarr.eq.1) then
             if (abs(massoftypei(1)).gt.tiny(massoftypei)) then
                icolumn = ipmass
                if (required(ipmass) .and. ipmass.gt.0) then
-                  where (iphase(i1:i2).eq.0) dat(i1:i2,icolumn,j) = massoftypei(1)
+                  if (phantomdump) then
+                     where (iphase(i1:i2).gt.0 .and. iphase(i1:i2).le.ntypes)
+                        dat(i1:i2,ipmass,j) = massoftypei(iphase(i1:i2))
+                     elsewhere
+                        dat(i1:i2,ipmass,j) = massoftypei(1)
+                     end where
+                  else
+                     where (iphase(i1:i2).eq.0) dat(i1:i2,icolumn,j) = massoftypei(1)
+                  endif
                endif
                !--dust mass for phantom particles
                if (phantomdump .and. npartoftypei(2).gt.0 .and. ipmass.gt.0) then
                   print *,' dust particle mass = ',massoftypei(2),' ratio dust/gas = ',massoftypei(2)/massoftypei(1)
-                  dat(npartoftypei(1)+1:npartoftypei(1)+npartoftypei(2),icolumn,j) = massoftypei(2)
                endif
                if (debug) print*,'mass ',icolumn
             elseif (phantomdump) then
@@ -806,7 +819,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                !if (required(irho)) then
                   if (any(npartoftypei(2:).gt.0)) then
                      !--need masses for each type if not all gas
-                     if (debug) print*,'debug: phantom: setting h for multiple types ',i1,i2
+                     if (debug) print*,'DEBUG: phantom: setting h for multiple types ',i1,i2
+                     if (debug) print*,'DEBUG: massoftype = ',massoftypei(:)
                      do k=i1,i2
                         itype = iphase(k)
                         pmassi = massoftypei(itype)
