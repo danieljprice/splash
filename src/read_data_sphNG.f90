@@ -847,7 +847,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                         dat(i1:i2,irho,j) = &
                            massoftypei(1)*(hfact/abs(dat(i1:i2,ih,j)))**3
                         iphase(i1:i2) = -1
-                        icolourme(i1:i2) = -1
+                        !icolourme(i1:i2) = -1
                      elsewhere ! if h = 0.
                         dat(i1:i2,irho,j) = 0.
                         icolourme(i1:i2) = -1
