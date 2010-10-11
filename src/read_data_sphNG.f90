@@ -1447,7 +1447,8 @@ subroutine set_labels
      labeltype(4) = 'type 4'
      labeltype(5) = 'unknown/dead'
      UseTypeInRenderings(1:2) = .true.
-     UseTypeInRenderings(3:4) = .true.
+     UseTypeInRenderings(3) = .false.
+     UseTypeInRenderings(4) = .false.
      UseTypeInRenderings(5) = .true.  
   else
      ntypes = 5
