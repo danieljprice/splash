@@ -72,7 +72,7 @@ module sphNGread
 end module sphNGread
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data, only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,icolourme,masstype
+  use particle_data, only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
                      lowmemorymode,ntypes
@@ -897,10 +897,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                            npartoftype(itype,j) = npartoftype(itype,j) - 1
                            npartoftype(5,j) = npartoftype(5,j) + 1
                            dat(k,irho,j) = pmassi*(hfact/abs(hi))**3
-!                           icolourme(k) = -1
+                           !icolourme(k) = -1
                         else
                            dat(k,irho,j) = 0.
-                           icolourme(k) = -1
+                           !icolourme(k) = -1
                         endif
                      enddo
                   else
