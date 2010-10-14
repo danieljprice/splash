@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
@@ -97,7 +97,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: nreassign,naccrete,nkill,iblock,nblocks,ntotblock,ncolcopy
   integer :: ipos,nptmass,nptmassi,nstar,nunknown,isink,ilastrequired
   integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
-  integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype
+  integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc
   integer, dimension(maxparttypes) :: npartoftypei
   real,    dimension(maxparttypes) :: massoftypei
   real    :: pmassi,hi
@@ -684,14 +684,80 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--real arrays
 !
       if (isize(iarr).ne.isize(1)) then
-         if (smalldump .and. iarr.eq.2 .and. allocated(listpm)) then
-!--read sink particle masses from block 2 for small dumps
+!--read sink particles from phantom dumps
+         if (phantomdump .and. iarr.eq.2 .and. isize(iarr).gt.0) then
+            if (nreal(iarr).lt.5) then
+               print "(a)",'ERROR: not enough arrays written for sink particles in phantom dump'
+               nskip = nreal(iarr)
+            else
+               npartoftype(3,j) = npartoftype(3,j) + isize(iarr)
+               iphase(npart+1:npart+isize(iarr)) = 3
+               if (doubleprec) then
+                  !--convert default real to single precision where necessary
+                  if (debug) print*,'DEBUG: reading sink data, converting from double precision ',isize(iarr)
+                  if (allocated(dattemp)) deallocate(dattemp)
+                  allocate(dattemp(isize(iarr)),stat=ierr)
+                  if (ierr /= 0) then
+                     print "(a)",'ERROR in memory allocation'
+                     return
+                  endif
+                  do k=1,nreal(iarr)
+                     read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
+                     if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
+                     select case(k)
+                     case(1:3)
+                        iloc = ix(k)
+                     case(4)
+                        iloc = ipmass
+                     case(5)
+                        iloc = ih
+                     case(7:9)
+                        iloc = ivx + k-7
+                     case default
+                        iloc = 0
+                     end select
+                     if (iloc.gt.0) then
+                        do i=1,isize(iarr)
+                           dat(npart+i,iloc,j) = real(dattemp(i))
+                        enddo
+                     else
+                        print*,' skipping sink particle array ',k
+                     endif
+                  enddo
+               else
+                  if (debug) print*,'DEBUG: reading sink data, directly into array ',isize(iarr)
+                  do k=1,nreal(iarr)
+                     select case(k)
+                     case(1:3)
+                        iloc = ix(k)
+                     case(4)
+                        iloc = ipmass
+                     case(5)
+                        iloc = ih
+                     case(7:9)
+                        iloc = ivx + k - 7
+                     case default
+                        iloc = 0
+                     end select
+                     if (iloc.gt.0) then
+                        read(iunit,end=33,iostat=ierr) dat(npart+1:npart+isize(iarr),iloc,j)
+                        if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
+                     else
+                        print*,' skipping sink particle array ',k
+                        read(iunit,end=33,iostat=ierr)                  
+                     endif
+                  enddo
+               endif
+               npart  = npart + isize(iarr)
+            endif
+         elseif (smalldump .and. iarr.eq.2 .and. allocated(listpm)) then
+!--for sphNG, read sink particle masses from block 2 for small dumps
             if (nreal(iarr).lt.1) then
                if (isize(iarr).gt.0) print "(a)",'ERROR: sink masses not present in small dump'
                nskip = nreal(iarr) + nreal4(iarr) + nreal8(iarr)
             else
                if (doubleprec) then
-                  !--convert default real to single precision where necessart
+                  !--convert default real to single precision where necessary
                   if (allocated(dattemp)) deallocate(dattemp)
                   allocate(dattemp(isize(iarr)),stat=ierr)
                   if (ierr /=0) print "(a)",'ERROR in memory allocation'
@@ -850,7 +916,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                         !icolourme(i1:i2) = -1
                      elsewhere ! if h = 0.
                         dat(i1:i2,irho,j) = 0.
-                        icolourme(i1:i2) = -1
+                        iphase(i1:i2) = -2
                      end where
                   endif
                endif
@@ -903,12 +969,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
  !--centre on sink if "SSPLASH_CENTRE_ON_SINK" is set
  !
     if (lenvironment('SSPLASH_CENTRE_ON_SINK')) then
-       if (nptmass.EQ.1) then
+       if (nptmass.GE.1) then
           isink = 0
           xyzsink = 0.
           if (allocated(iphase)) then
              do i=1,ntotal
-                if (iphase(i).GE.1) then
+                if (iphase(i).GE.1 .and. isink.eq.0) then
                    isink = i
                    xyzsink(1:3) = dat(isink,1:3,j)
                 endif
