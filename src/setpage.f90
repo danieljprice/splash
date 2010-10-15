@@ -23,7 +23,7 @@
 module pagesetup
  implicit none
  public :: redraw_axes, setpage2
- real, parameter, public :: xlabeloffset = 3.0, ylabeloffset = 4.5
+ real, parameter, public :: xlabeloffset = 2.5, ylabeloffset = 4.5
  
  private
 
@@ -354,7 +354,7 @@ end subroutine redraw_axes
   vmargintop = vmargintopin
   vmarginright = vmarginrightin
   if (axis.ge.0) then
-     vmarginleft = vmarginleftin + (ylabeloffset+1.0)*xch
+     vmarginleft = vmarginleftin + (ylabeloffset+1.5)*xch
      vmarginbottom = vmarginbottomin + (xlabeloffset+1.0)*ych
 
      if (.not.tile) then
@@ -377,7 +377,7 @@ end subroutine redraw_axes
   if (tile) then
      !--also leave room for title if necessary
      if (titleoffset.ge.0.) then
-        vmargintop = vmargintop + (titleoffset+0.75)*ych
+        vmargintop = vmargintop + (titleoffset+1.)*ych
      endif
 
      !
@@ -424,7 +424,7 @@ end subroutine redraw_axes
 
      !--also leave room for title if necessary
      if (titleoffset.ge.0.) then
-        vptymax = vptymax - (titleoffset+0.75)*ych
+        vptymax = vptymax - (titleoffset+1.)*ych
      endif
      
      !--also leave room for colour bar if necessary
