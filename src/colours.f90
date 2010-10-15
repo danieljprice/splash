@@ -27,7 +27,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 25
+ integer, parameter :: ncolourschemes = 28
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
@@ -53,7 +53,10 @@ module colours
       'fire             ', &
       'blue-red         ', &
       'menacing         ', &
-      'rt               '/)
+      'rt               ', &
+      'Dolag I          ', &
+      'Dolag II         ', &
+      'Dolag III        '/)
 !
 !--rgb colours of the colour table are stored in the array below
 !  this is used for colour blending (opacity rendering)
@@ -205,25 +208,6 @@ subroutine colour_set(icolourscheme)
      redarr(1:nset) =  (/0.0,0.0,0.0,1.0/)
      greenarr(1:nset)= (/0.0,0.0,1.0,1.0/)
      bluearr(1:nset) = (/0.0,1.0,1.0,0.0/)
-!     !--these are Klaus Dolag colour schemes
-!     nset = 3
-!     !--blue-green-red ("highlight")
-!     lumarr(1:nset) =   (/0.0,0.5,1.0/)
-!     redarr(1:nset) =   (/0.0,0.5,1.0/)
-!     greenarr(1:nset) = (/0.0,1.0,0.0/)
-!     bluearr(1:nset) =  (/1.0,0.5,0.0/)
-!     nset = 3
-!     !--red-greeny-blue
-!     lumarr(1:nset) =   (/0.0,0.5,1.0/)
-!     redarr(1:nset) =   (/1.0,0.66,0.0/)
-!     greenarr(1:nset) = (/0.0,0.66,0.0/)
-!     bluearr(1:nset) =  (/0.0,0.66,1.0/)
-!     nset = 5
-     !--dolag other
-!     lumarr(1:nset) =   (/0.0,0.33,0.5,0.66,1.0/)
-!     redarr(1:nset) =   (/0.0,1.00,0.5,0.00,1.0/)
-!     greenarr(1:nset) = (/0.0,0.66,1.0,0.66,0.0/)
-!     bluearr(1:nset) =  (/1.0,0.66,0.5,0.33,0.0/)
      case(14)
      !--rainbow II (as used in NS merger I)
      nset = 10
@@ -328,6 +312,28 @@ subroutine colour_set(icolourscheme)
      redarr(1:nset)  = (/0.220,1.000,1.000,1.000,1.000,1.000/)
      greenarr(1:nset)= (/0.000,0.000,0.478,0.980,1.000,1.000/)
      bluearr(1:nset) = (/0.000,0.000,0.000,0.588,0.608,0.737/)
+     case(26)
+!     !--these are Klaus Dolag colour schemes
+     nset = 3
+     !--blue-green-red ("highlight")
+     lumarr(1:nset) =   (/0.0,0.5,1.0/)
+     redarr(1:nset) =   (/0.0,0.5,1.0/)
+     greenarr(1:nset) = (/0.0,1.0,0.0/)
+     bluearr(1:nset) =  (/1.0,0.5,0.0/)
+     case(27)
+     nset = 3
+     !--red-greeny-blue
+     lumarr(1:nset) =   (/0.0,0.5,1.0/)
+     redarr(1:nset) =   (/1.0,0.66,0.0/)
+     greenarr(1:nset) = (/0.0,0.66,0.0/)
+     bluearr(1:nset) =  (/0.0,0.66,1.0/)
+     case(28)
+     nset = 5
+     !--dolag other
+     lumarr(1:nset) =   (/0.0,0.33,0.5,0.66,1.0/)
+     redarr(1:nset) =   (/0.0,1.00,0.5,0.00,1.0/)
+     greenarr(1:nset) = (/0.0,0.66,1.0,0.66,0.0/)
+     bluearr(1:nset) =  (/1.0,0.66,0.5,0.33,0.0/)
      end select
 
      call plot_ctab(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &
