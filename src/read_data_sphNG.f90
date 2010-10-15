@@ -384,6 +384,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          ncolstep = ncolstep + nreal(iarr) + nreal4(iarr) + nreal8(iarr)
       endif
    enddo 
+   if (debug) print*,'DEBUG: ncolstep=',ncolstep,' from file header' 
 !
 !--this is a bug fix for a corrupt version of wdump outputting bad
 !  small dump files
@@ -415,6 +416,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                imadepmasscolumn = .true.
             elseif (lowmemorymode) then
                igotmass = .false.
+            else
+               igotmass = .false.
             endif
             !--read dust mass from phantom dumps
             if (phantomdump .and. nreals.ge.ilocpmassinitial+1) then
@@ -432,7 +435,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             igotmass = .false.
          endif
       endif
-      if (debug) print*,'DEBUG: gotmass = ',igotmass
+      if (debug) print*,'DEBUG: gotmass = ',igotmass, ' ncolstep = ',ncolstep
 !
 !--   to handle both small and full dumps, we need to place the quantities dumped
 !     in both small and full dumps at the start of the dat array
@@ -609,6 +612,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
 
    endif ! iblock = 1
+
 !
 !--Arrays
 !
@@ -656,7 +660,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             !--skip remaining integer arrays
             nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
          endif
-      elseif (smalldump .and. iarr.eq.2 .and. isize(iarr).gt.0) then
+      elseif (smalldump .and. iarr.eq.2 .and. isize(iarr).gt.0 .and. .not.phantomdump) then
 !--read listpm from array block 2 for small dumps (needed here to extract sink masses)
          if (allocated(listpm)) deallocate(listpm)
          allocate(listpm(isize(iarr)))
@@ -716,6 +720,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      case default
                         iloc = 0
                      end select
+                     if (iloc.gt.size(dat(1,:,j))) then; print*,' error iloc = ',iloc,ivx; stop; endif
                      if (iloc.gt.0) then
                         do i=1,isize(iarr)
                            dat(npart+i,iloc,j) = real(dattemp(i))
@@ -839,7 +844,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   print *,' dust particle mass = ',massoftypei(2),' ratio dust/gas = ',massoftypei(2)/massoftypei(1)
                endif
                if (debug) print*,'mass ',icolumn
-            elseif (phantomdump) then
+            elseif (phantomdump .and. npartoftypei(1).gt.0) then
                print*,' ERROR: particle mass zero in Phantom dump file!'
             endif
          endif
@@ -897,10 +902,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                            npartoftype(itype,j) = npartoftype(itype,j) - 1
                            npartoftype(5,j) = npartoftype(5,j) + 1
                            dat(k,irho,j) = pmassi*(hfact/abs(hi))**3
-                           !icolourme(k) = -1
                         else
                            dat(k,irho,j) = 0.
-                           !icolourme(k) = -1
                         endif
                      enddo
                   else
@@ -913,7 +916,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
                         dat(i1:i2,irho,j) = &
                            massoftypei(1)*(hfact/abs(dat(i1:i2,ih,j)))**3
                         iphase(i1:i2) = -1
-                        !icolourme(i1:i2) = -1
                      elsewhere ! if h = 0.
                         dat(i1:i2,irho,j) = 0.
                         iphase(i1:i2) = -2
@@ -1167,7 +1169,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
      
      close(15)
-     
+
      return
 
 55 continue
