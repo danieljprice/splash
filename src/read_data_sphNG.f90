@@ -72,13 +72,13 @@ module sphNGread
 end module sphNGread
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data, only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
+  use particle_data,  only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
-                     lowmemorymode,ntypes
+  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
+                      lowmemorymode,ntypes
   use mem_allocation, only:alloc
-  use system_utils, only:lenvironment,renvironment
-  use labels, only:ipmass,irho,ih,ix,ivx
+  use system_utils,   only:lenvironment,renvironment
+  use labels,         only:ipmass,irho,ih,ix,ivx
   use calcquantities, only:calc_quantities
   use sphNGread
   implicit none
@@ -373,18 +373,18 @@ subroutine read_data(rootname,indexstart,nstepsread)
       elseif (iarr.eq.2) then
          nptmasstot = nptmasstot + isize(iarr)
       endif
-      
+      if (debug) print*,'DEBUG: array size ',iarr,' size = ',isize(iarr)
       if (isize(iarr).gt.0 .and. iblock.eq.1) then
          print "(1x,a,i1,a,i12,a,5(i2,1x),a,3(i2,1x))", &
             'block ',iarr,' dim = ',isize(iarr),' nint =',nint(iarr),nint1(iarr), &
             nint2(iarr),nint4(iarr),nint8(iarr),'nreal =',nreal(iarr),nreal4(iarr),nreal8(iarr)
       endif
 !--we are going to read all real arrays but need to convert them all to default real
-      if (isize(iarr).eq.isize(1) .and. iblock.eq.1) then
+      if (iarr.ne.2 .and. isize(iarr).eq.isize(1) .and. iblock.eq.1) then
          ncolstep = ncolstep + nreal(iarr) + nreal4(iarr) + nreal8(iarr)
       endif
    enddo 
-   if (debug) print*,'DEBUG: ncolstep=',ncolstep,' from file header' 
+   if (debug) print*,'DEBUG: ncolstep=',ncolstep,' from file header, also nptmasstot = ',nptmasstot 
 !
 !--this is a bug fix for a corrupt version of wdump outputting bad
 !  small dump files
@@ -687,7 +687,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !      
 !--real arrays
 !
-      if (isize(iarr).ne.isize(1)) then
+      if (iarr.eq.2) then
 !--read sink particles from phantom dumps
          if (phantomdump .and. iarr.eq.2 .and. isize(iarr).gt.0) then
             if (nreal(iarr).lt.5) then
@@ -706,6 +706,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      return
                   endif
                   do k=1,nreal(iarr)
+                     if (debug) print*,'DEBUG: reading sink array ',k,isize(iarr)
                      read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                      if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
                      select case(k)
@@ -787,7 +788,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          do i=1,nskip
             read(iunit,end=33,iostat=ierr)
          enddo
-      else
+      elseif (isize(iarr).eq.isize(1)) then
 !
 !--read all real arrays defined on all the particles (same size arrays as block 1)
 !
@@ -1170,13 +1171,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
      
      close(15)
 
+print*,' finished data read, npart = ',npart, ntotal, npartoftype(:,j)
+
      return
 
 55 continue
    print "(a)", ' *** ERROR: end of file during header read ***'
 
 close(15)
-   
+
 return
 
 contains
