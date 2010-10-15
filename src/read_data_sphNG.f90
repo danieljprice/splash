@@ -396,7 +396,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
    
    npart_max = maxval(isize(1:narrsizes))
-   npart_max = max(npart_max,npart,ntotal)
+   npart_max = max(npart_max,npart+nptmasstot,ntotal)
 !
 !--work out from array header what sort of dump this is and where things should lie
 !
