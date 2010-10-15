@@ -127,6 +127,18 @@ ifeq ($(SYSTEM), gfortran)
    F90C= gfortran
    F90FLAGS= -O3 -Wall -frecord-marker=4
    SYSTEMFILE= system_f2003.f90
+   DEBUGFLAG= -g -frange-check -fcheck=all -fbacktrace
+   OMPFLAGS= -fopenmp
+   ENDIANFLAGBIG= -fconvert=big-endian
+   ENDIANFLAGLITTLE= -fconvert=little-endian
+   KNOWN_SYSTEM=yes
+endif
+
+ifeq ($(SYSTEM), gfortran43)
+#  gfortran compiler (part of gcc 4.x.x)
+   F90C= gfortran
+   F90FLAGS= -O3 -Wall -frecord-marker=4
+   SYSTEMFILE= system_f2003.f90
    DEBUGFLAG= -g -frange-check -fbacktrace
    OMPFLAGS= -fopenmp
    ENDIANFLAGBIG= -fconvert=big-endian
