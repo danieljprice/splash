@@ -1779,8 +1779,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               ! particle plots
               !-----------------------
               if (iplotpart) then
-                 if (debugmode) print*,'DEBUG: starting particle plot with ',ntoti,' particles ',&
-                    zplot(1:10),icolourme(1:10),npartoftype(:),iplotpartoftype(:)
+                 if (debugmode .and. size(icolourme).ge.10) &
+                    print*,'DEBUG: starting particle plot with ',ntoti,' particles ',&
+                           zplot(1:10),icolourme(1:10),npartoftype(:),iplotpartoftype(:)
                  !!--plot all particle types
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
