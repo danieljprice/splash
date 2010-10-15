@@ -509,12 +509,13 @@ end subroutine check_labels
 !
 !----------------------------------------------------------------
 subroutine check_data_read
- use params,        only:maxplot
- use settings_data, only:ncolumns,ndim,ndimV,ntypes
- use particle_data, only:npartoftype
+ use params,        only:maxplot,maxparttypes
+ use settings_data, only:ncolumns,ndim,ndimV,ntypes,debugmode
+ use particle_data, only:npartoftype,iamtype
  use labels,        only:labeltype
  implicit none
- integer :: i,j
+ integer :: i,j,ntoti,nunknown,itype
+ integer, dimension(maxparttypes) :: noftype
  
  if (ncolumns.lt.0) then
     print "(a)",' ERROR: ncolumns < 0 in data read'
@@ -543,6 +544,35 @@ subroutine check_data_read
           endif
        enddo
     enddo
+    !if (debugmode) then
+       !
+       !--for mixed type storage, check that the number of particles
+       !  of each type adds up to npartoftype
+       !
+       ntoti = sum(npartoftype(:,1))
+       noftype(:) = 0
+       nunknown   = 0
+       if (size(iamtype(:,1)).ge.ntoti) then
+          do i=1,ntoti
+             itype = iamtype(i,1)
+             if (itype.gt.0 .and. itype.le.ntypes) then
+                noftype(itype) = noftype(itype) + 1
+             else
+                nunknown = nunknown + 1
+             endif
+          enddo
+          do itype=1,ntypes
+             if (npartoftype(itype,1).ne.noftype(itype)) then
+                print "(a,i10,a,i10)",' ERROR in data read: got ',noftype(itype),' '//trim(labeltype(itype))// &
+                                      ' particles from iamtype, but npartoftype = ',npartoftype(itype,1)
+             endif
+          enddo
+          if (nunknown.gt.0) then
+             print "(a,i10,a)",' ERROR in data read: got ',nunknown, &
+                               ' particles of unknown type in iamtype array from data read'          
+          endif
+       endif
+    !endif
  endif
  
 end subroutine check_data_read
