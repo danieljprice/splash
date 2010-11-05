@@ -599,7 +599,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       if (ilastrequired.eq.0) exit over_MPIblocks
 
       if (allocated(iphase)) deallocate(iphase)
-      allocate(iphase(npart_max))
+      allocate(iphase(npart_max+2))
       if (phantomdump) then
          iphase(:) = 1
       else
