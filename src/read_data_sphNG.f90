@@ -86,7 +86,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer, parameter :: maxarrsizes = 10, maxreal = 50
-  integer, parameter :: ilocbinarymass = 24
+  integer, parameter :: ilocbinary = 24
   real,    parameter :: pi=3.141592653589
   integer :: i,j,k,ierr,iunit
   integer :: intg1,int2,int3
@@ -543,32 +543,53 @@ subroutine read_data(rootname,indexstart,nstepsread)
          !--if Phantom calculation uses the binary potential
          !  then read this as two point mass particles
          !
-         if (nreals.ge.ilocbinarymass + 14) then
-            if (dummyreal(ilocbinarymass).gt.0.) then 
+         if (nreals.ge.ilocbinary + 14) then
+            if (nreals.ge.ilocbinary + 15) then
+               ipos = ilocbinary
+            else
+               print*,'*** WARNING: obsolete header format for external binary information ***'
+               ipos = ilocbinary + 1
+            endif            
+            if (debug) print*,'debug: reading binary information from header ',ilocbinary
+            if (any(dummyreal(ilocbinary:ilocbinary+14).ne.0.)) then 
                gotbinary = .true.
                npartoftype(3,j) = 2
                ntotal = ntotal + 2
-               ipos = ilocbinarymass
-               dat(npart+1,ix(1),j) = dummyreal(ipos+1)
-               dat(npart+1,ix(2),j) = dummyreal(ipos+2)
-               dat(npart+1,ix(3),j) = dummyreal(ipos+3)
-               dat(npart+1,ih,j)    = dummyreal(ipos+4)
-               dat(npart+2,ix(1),j) = dummyreal(ipos+5)
-               dat(npart+2,ix(2),j) = dummyreal(ipos+6)
-               dat(npart+2,ix(3),j) = dummyreal(ipos+7)
-               dat(npart+2,ih,j)    = dummyreal(ipos+8)
-               print *,npart+1,npart+2
-               print *,'binary position:   primary: ',dummyreal(ipos+1:ipos+4)
-               print *,'                 secondary: ',dummyreal(ipos+5:ipos+8)
+               dat(npart+1,ix(1),j) = dummyreal(ipos)
+               dat(npart+1,ix(2),j) = dummyreal(ipos+1)
+               dat(npart+1,ix(3),j) = dummyreal(ipos+2)
+               if (debug) print *,npart+1,npart+2
+               print *,'binary position:   primary: ',dummyreal(ipos:ipos+2)
+               if (nreals.ge.ilocbinary+15) then
+                  if (ipmass.gt.0) dat(npart+1,ipmass,j) = dummyreal(ipos+3)
+                  dat(npart+1,ih,j)     = dummyreal(ipos+4)
+                  dat(npart+2,ix(1),j)  = dummyreal(ipos+5)
+                  dat(npart+2,ix(2),j)  = dummyreal(ipos+6)
+                  dat(npart+2,ix(3),j)  = dummyreal(ipos+7)
+                  if (ipmass.gt.0) dat(npart+2,ipmass,j) = dummyreal(ipos+8)
+                  dat(npart+2,ih,j)     = dummyreal(ipos+9)
+                  print *,'                 secondary: ',dummyreal(ipos+5:ipos+7)
+                  print *,' m1: ',dummyreal(ipos+3),' m2:',dummyreal(ipos+8),&
+                          ' h1: ',dummyreal(ipos+4),' h2:',dummyreal(ipos+9)
+                  ipos = ipos + 10
+               else
+                  dat(npart+1,ih,j)    = dummyreal(ipos+3)
+                  dat(npart+2,ix(1),j) = dummyreal(ipos+4)
+                  dat(npart+2,ix(2),j) = dummyreal(ipos+5)
+                  dat(npart+2,ix(3),j) = dummyreal(ipos+6)
+                  dat(npart+2,ih,j)    = dummyreal(ipos+7)
+                  print *,'                 secondary: ',dummyreal(ipos+4:ipos+6)
+                  ipos = ipos + 8             
+               endif
                if (ivx.gt.0) then
-                  dat(npart+1,ivx,j)      = dummyreal(ipos+9)
-                  dat(npart+1,ivx+1,j)    = dummyreal(ipos+10)
+                  dat(npart+1,ivx,j)      = dummyreal(ipos)
+                  dat(npart+1,ivx+1,j)    = dummyreal(ipos+1)
                   if (ndimV.eq.3) &
-                     dat(npart+1,ivx+2,j) = dummyreal(ipos+11)
-                  dat(npart+2,ivx,j)      = dummyreal(ipos+12)
-                  dat(npart+2,ivx+1,j)    = dummyreal(ipos+13)
+                     dat(npart+1,ivx+2,j) = dummyreal(ipos+2)
+                  dat(npart+2,ivx,j)      = dummyreal(ipos+3)
+                  dat(npart+2,ivx+1,j)    = dummyreal(ipos+4)
                   if (ndimV.eq.3) &
-                     dat(npart+2,ivx+2,j) = dummyreal(ipos+14)
+                     dat(npart+2,ivx+2,j) = dummyreal(ipos+5)
                endif
                npart  = npart  + 2
             endif
