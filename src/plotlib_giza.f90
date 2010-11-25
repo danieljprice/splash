@@ -288,9 +288,7 @@ subroutine plot_numb(m,pp,form,string,nc)
   integer,intent(out)          :: nc
   real :: x
   
-  x = m*10.**pp
-!  print*,'pp = ',pp,' m = ',m
-  call giza_format_number(x,3,string)
+  call giza_format_number(m,pp,form,string)
   nc = len_trim(string)
 
 end subroutine plot_numb
