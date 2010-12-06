@@ -48,8 +48,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.14.0 : (xx/xx/10)
-!             Can flip between rendered quantities in interactive mode using 'f';
+!     1.14.0 : (06/12/10)
+!             Can flip between rendered quantities in interactive mode using 'f/F';
 !             SPLASH_DEFAULTS variable can be set for system-wide defaults;
 !             can plot arbitrary functions of x,t as exact solution; asplash better
 !             handles blank lines in header and can specify time, gamma location with
@@ -293,7 +293,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.14.0alpha [26th Jul ''10]'
+  character(len=*), parameter :: version = 'v1.14.0 [6th Dec ''10]'
 
   !
   ! initialise some basic code variables
