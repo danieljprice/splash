@@ -271,8 +271,13 @@ Environment variables that affect all data reads are:\newline
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 SPLASH\_DEFAULTS & gives the name of a system-wide \verb+splash.defaults+ file (and splash.limits etc.) that will be used if there is none in the current directory. e.g. \verb+export SPLASH_DEFAULTS=/home/me/splash.defaults+ \\
+SPLASH\_DEBUG & if set to `yes' or `true', turns on very verbose debugging output. Useful to trace code crashes (but of course, this never happens\ldots).\\
 SPLASH\_HMIN\_CODEUNITS & if given a value $>$0 enforces a minimum smoothing length, specified in code units as read from the dump file, on all the particles. This can be used to ``dumb-down'' the resolution of SPH simulations, e.g. to match observational resolution. If this variable is set it is \emph{highly} recommended that the ``use accelerated rendering'' option in the r)ender menu is also turned on as quite slow rendering can otherwise result. \\
 SPLASH\_VZERO\_CODEUNITS & if set to a comma separated list of vector components (e.g. \verb+export SPLASH_VZERO_CODEUNITS='0.0,1.0,0.0'+), can be used to subtract a mean velocity field from all particles --- specified in code units as read from the dump file. \\
+SPLASH\_MARGIN\_XMIN & can be used to manually adjust the left horizontal page margin (set to fraction of viewport, negative values are allowed). \\
+SPLASH\_MARGIN\_XMAX & right horizontal page margin (set to fraction of viewport). \\
+SPLASH\_MARGIN\_YMIN & bottom (vertical) page margin (set to fraction of viewport). \\
+SPLASH\_MARGIN\_YMAX & top (vertical) page margin (set to fraction of viewport).
 \end{tabular}
 
 \subsubsection{ Ascii data read}
@@ -769,6 +774,9 @@ the interactive mode, limited only by your imagination. Please send me your sugg
 
 \subsubsection{ Making the axes logarithmic}
  Press 'l' in interactive mode with the mouse over either the x or y axis or the colour bar to use a logarithmic axis. Pressing 'l' again changes back to linear axes. To use logarithmic labels as well as logarithmic axes, see \S\ref{sec:loglabels}.
+
+\subsubsection{Cycling through data columns interactively}
+ Use `f' in interactive mode on a rendered plot to interactively `flip' forwards to the next quantity in the data columns (e.g. thermal energy instead of density). Use 'F' to flip backwards (added in v1.14.0).
 
 \subsubsection{ Colouring a subset of the particles and retaining this colour through other timesteps}
 \label{sec:colourparts}
@@ -2321,14 +2329,44 @@ splash-users@googlegroups.com
 \end{verbatim}
 or
 \begin{verbatim}
-daniel.price@sci.monash.edu.au
+daniel.price@monash.edu
 \end{verbatim}
 although check that this email address is current because I am still a postdoc!
 
 \section*{Acknowledgements}
- Several of the routines were developed from ideas used by Matthew Bate and \splash has been refined by many useful discussions with the aforementioned. The
+ Several of the routines were developed from ideas used by Matthew Bate and \splash has been refined by many useful discussions with Matthew. The
 polytrope exact solution is from a routine by Joe Monaghan. I am indebted to one Thomas S. Ullrich at the University of Heidelberg who wrote the prompting module
-which is used throughout the program and to Roland Schmehl who wrote the excellent function parser module (made available at \url{http://fparser.sourceforge.net}). Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve \splash, including, but not limited to: Giuseppe Lodato, John Mansour, Johnny Hitti, Clare Dobbs, Ben Ayliffe, Craig Agnor, John Regan, Vid Ir\v{s}i\v{c}, Laure Fouchet, Andrew McLeod, Sumedh Anathpindika, Richard Alexander, Sigfried Vanaverbeke, Dave Rundle, Thomas Grief, Sky King, Florian Buerzle, Gabe Altay, David Madlener, Christoph Federrath, Andreas Bauswein, Laura Kreidberg, Ruben Martin, Cody Raskin, Shazrene Mohamed, Enrique Vazquez-Semadeni and Antonio Vazquez. And to everyone who has cited the \splash paper!
+which is used throughout the program and to Roland Schmehl who wrote the excellent function parser module (made available at \url{http://fparser.sourceforge.net}). Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve \splash, including, but not limited to: 
+ Craig Agnor,
+ Richard Alexander, 
+ Gabe Altay,
+ Sumedh Anathpindika,
+ Ben Ayliffe,
+ Andreas Bauswein,
+ Florian Buerzle,
+ Clare Dobbs,
+ Claude-Andr\'e Faucher-Gigu\`ere,
+ Christoph Federrath,
+ Laure Fouchet,
+ Thomas Grief,
+ Johnny Hitti,
+ Vid Ir\v{s}i\v{c},
+ John Jones,
+ Sky King,
+ Laura Kreidberg,
+ Giuseppe Lodato,
+ David Madlener,
+ John Mansour,
+ Ruben Martin,
+ Andrew McLeod,
+ Shazrene Mohamed,
+ Cody Raskin,
+ John Regan,
+ Dave Rundle,
+ Sigfried Vanaverbeke,
+ Enrique Vazquez-Semadeni
+ and Antonio Vazquez.
+And to everyone who has cited the \splash paper!
 
 \newpage
 \appendix
