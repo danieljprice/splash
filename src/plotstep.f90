@@ -1578,6 +1578,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                        renderminadapt = minval(datpix)
                     endif
                     rendermaxadapt = maxval(datpix)
+                    !--fix case where no limits are set due to NaNs etc.
+                    if (renderminadapt.gt.rendermaxadapt) then
+                       print "(a)",' WARNING: NaNs in rendered quantity'
+                       renderminadapt = 0.
+                       rendermaxadapt = 0.
+                    endif
+                    
                     if (gotcontours) then
                        if (loggedcont) then
                           contminadapt = minval(datpixcont,mask=abs(datpixcont+666.).gt.tiny(datpixcont))
@@ -1585,6 +1592,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           contminadapt = minval(datpixcont)
                        endif
                        contmaxadapt = maxval(datpixcont)
+                       !--fix case where no limits are set due to NaNs etc.
+                       if (contminadapt.gt.contmaxadapt) then
+                          print "(a)",' WARNING: NaNs in contoured quantity'
+                          contminadapt = 0.
+                          contmaxadapt = 1.
+                       endif
                     endif
 
                     if (.not.interactivereplot .and. .not.isetrenderlimits) then
@@ -2668,6 +2681,15 @@ contains
           ymin = max(ymin - 1.0,ymin,0.)
        else
           ymin = ymin - 1.0
+       endif
+    endif
+    if (irender.gt.0 .and. abs(rendermax-rendermin).lt.tiny(rendermax) .or.rendermax.ne.rendermax) then
+       if (.not.dum) print "(a)",' WARNING: '//trim(labelrender)//'min='//trim(labelrender)//'max '
+       rendermax = rendermax + 1.0
+       if (rendermin.gt.0.) then
+          rendermin = max(rendermin - 1.0,rendermin,0.)
+       else
+          rendermin = rendermin - 1.0
        endif
     endif
     if (debugmode) print*,'DEBUG: calling setpage...'
