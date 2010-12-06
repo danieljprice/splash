@@ -73,6 +73,7 @@ module plotlib
       plot_slc=>giza_set_line_cap, &
       plot_sls=>giza_set_line_style,&
       plot_slw=>giza_set_line_width, &
+      plot_stbg=>giza_set_text_background, &
       plot_svp=>giza_set_viewport, &
       plot_swin=>giza_set_window, &
       plot_text=>giza_text, &
@@ -213,14 +214,6 @@ subroutine plot_scir(icilo, icihi)
   print*,' WARNING: plot_scir not implemented in giza'
 
 end subroutine plot_scir
-
-subroutine plot_stbg(bg)
-  implicit none
-  integer,intent(in) :: bg
-
-  print*,' WARNING: plot_stbg not implemented in giza'
-
-end subroutine plot_stbg
 
 subroutine plot_scrn(ci,name,ier)
   implicit none
