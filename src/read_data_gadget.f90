@@ -1008,7 +1008,8 @@ contains
         ndumped = 0
         return
      endif
-     if (blklabel.eq.'POS ' .OR. blklabel.eq.'VEL ' .OR. blklabel.eq.'ACCE' .OR. blklabel.eq.'BFLD') then
+     if (blklabel.eq.'POS ' .OR. blklabel.eq.'VEL ' .OR. blklabel.eq.'ACCE' .OR. blklabel.eq.'BFLD' .OR. &
+         blklabel.eq.'BPOL' .OR. blklabel.eq.'BTOR') then
         ndumped = (lenblk-8)/12
         nvec = 3
      else
@@ -1036,7 +1037,7 @@ end subroutine read_data
 
 subroutine set_labels
   use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
-                          ih,irho,ipr,iutherm,iBfirst,idivB,iax
+                          ih,irho,ipr,iutherm,iBfirst,iBpol,iBtor,idivB,iax
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry,      only:labelcoord
@@ -1071,6 +1072,10 @@ subroutine set_labels
            iax = icol
         case('BFLD')
            iBfirst = icol
+        case('BPOL')
+           iBpol = icol
+        case('BTOR')
+           iBtor = icol
         case('MASS')
            ipmass = icol
         case('U   ')
@@ -1254,7 +1259,23 @@ subroutine set_labels
         label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
      enddo
   endif
-  
+ 
+  if (iBpol.gt.0) then
+     iamvec(iBpol:iBpol+ndimV-1) = iBpol
+     labelvec(iBpol:iBpol+ndimV-1) = 'B\dpol'
+     do i=1,ndimV
+        label(iBpol+i-1) = trim(labelvec(iBpol))//'\d'//labelcoord(i,1)
+     enddo
+   endif 
+
+  if (iBtor.gt.0) then
+     iamvec(iBtor:iBtor+ndimV-1) = iBtor
+     labelvec(iBtor:iBtor+ndimV-1) = 'B\dtor'
+     do i=1,ndimV
+        label(iBtor+i-1) = trim(labelvec(iBtor))//'\d'//labelcoord(i,1)
+     enddo
+   endif 
+
   !--set labels for each particle type
   !
   ntypes = 6

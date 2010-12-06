@@ -111,7 +111,7 @@ module labels
  character(len=6), parameter :: labeldefault = 'column'
  integer, dimension(3) :: ix
  integer, dimension(maxplot) :: iamvec
- integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst,iax
+ integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst,iBpol,iBtor,iax
  integer :: ipmass,ike
  integer :: idivb,iJfirst,irhostar
  integer :: iacplane,ipowerspec
@@ -144,6 +144,8 @@ contains
   ipowerspec = 0 ! power spectrum
   iBfirst = 0  ! Bx
   iax = 0      ! ax (acceleration)
+  iBpol = 0    ! B_polx
+  iBtor = 0    ! B_torx
   iacplane = 0
   ike = 0
   idivB = 0
