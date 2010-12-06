@@ -57,6 +57,7 @@ module timestep_plotting
   real,    dimension(maxplot) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
   real, private :: xminadapti,xmaxadapti,yminadapti,ymaxadapti,renderminadapt,rendermaxadapt
   real, private :: contminadapt,contmaxadapt
+  real, private :: xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
   real, parameter, private :: pi = 3.1415926536
 
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis,iamrendering
@@ -98,6 +99,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use projections3D,      only:coltable
   use plotlib,            only:plot_init,plot_qcur,plot_slw,plot_env,plot_curs,plot_band, &
                                plot_close,plot_qinf
+  use system_utils,       only:renvironment
   implicit none
   real, parameter     :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
@@ -150,6 +152,11 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   rendermaxadapt = -huge(rendermaxadapt)
   contminadapt   = huge(contminadapt)
   contmaxadapt   = -huge(contmaxadapt)
+  
+  xminpagemargin = renvironment('SPLASH_MARGIN_XMIN')
+  xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX')
+  yminpagemargin = renvironment('SPLASH_MARGIN_YMIN')
+  ymaxpagemargin = renvironment('SPLASH_MARGIN_YMAX')
 
   if (ndim.eq.1) x_sec = .false. ! can't have xsec in 1D
   nxsec = 1
@@ -2613,17 +2620,14 @@ contains
     if (.not.dum) call plot_sci(1)
 
     !--page margins: zero if no box is drawn
-    !if (iaxistemp.eq.-2) then
-       xminmargin = 0.0
-       xmaxmargin = 0.0
-       yminmargin = 0.0
-       ymaxmargin = 0.0
-    !else ! leave a small buffer to allow for line width changes
-    !   xminmargin = 0.001
-    !   xmaxmargin = 0.001
-    !   yminmargin = 0.001
-    !   ymaxmargin = 0.001
-    !endif
+   ! xminmargin = 0.0
+   ! xmaxmargin = 0.0
+   ! yminmargin = 0.0
+   ! ymaxmargin = 0.0
+    xminmargin = xminpagemargin
+    xmaxmargin = xmaxpagemargin
+    yminmargin = yminpagemargin
+    ymaxmargin = ymaxpagemargin
     
     !--leave space for colour bar if necessary (at end of row only on tiled plots)
     if ((tile_plots .and. iAllowspaceforcolourbar).or.(.not.tile_plots.and.iPlotColourBar)) then
