@@ -5,6 +5,10 @@ docs/splash.aux
 docs/splash.log
 docs/splash.toc
 docs/splash.out
+docs/splash.blg
+docs/html/*.png
+docs/html/*.html
+docs/html/splash.css
 bin
 ref
 *otherendian.f90

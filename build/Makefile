@@ -867,8 +867,31 @@ giza-fortran.o : compilegiza
 compilegiza: ${GIZAOBJ}
 	@echo "Compiling giza... $<";
 
+docs: doc
+
 doc:
-	cd docs; pdflatex splash; pdflatex splash
+	cd ../docs; pdflatex splash; pdflatex splash
+
+htmldocs: htmldoc
+
+htmldoc: doc cleanhtmldocs
+	cd ../docs;  \
+        hevea png.hva splash.tex -o html/splash.html; \
+        hevea png.hva splash.tex -o html/splash.html; \
+        bibhva html/splash; \
+        sed 's/et~al./et al./g' html/splash.hbbl > html/tmp.hbbl; \
+        mv html/tmp.hbbl html/splash.hbbl; \
+        hevea png.hva splash.tex -o html/splash.html; \
+        hevea png.hva splash.tex -o html/splash.html; \
+        imagen -png -pdf -mag 2000 html/splash; \
+	cd html; hacha -tocbis splash.html; \
+        rm *.gif splash.h{tml,aux,toc,bbl} splash.blg splash.image.tex ../splash.image.out;
+
+cleanhtmldocs:
+	rm -f ../docs/html/*.h{tml,toc,bbl,aux} \
+           ../docs/html/*.image* ../docs/html/*.gif \
+           ../docs/html/splash*.{png,css,blg};
+	rm -f ../docs/splash.image.out ../docs/splash.out
 
 tar:
 	tar cf splash.tar Makefile $(SOURCESF90) $(SOURCESF) read_data*.f90

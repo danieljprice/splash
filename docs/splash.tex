@@ -1,3 +1,5 @@
+%&program=pdflatex
+
 \documentclass[a4paper,10pt]{article}
 \usepackage{natbib,rotating,longtable,url,amsmath,nameref}
 %% font
@@ -10,6 +12,10 @@
  linkcolor=blue,
  urlcolor=blue
 }
+%HEVEA\usepackage{hevea}
+%HEVEA\htmlfoot{\textsc{SPLASH}: A visualisation tool for SPH data \copyright   2004--2010 Daniel Price. \newline \url{http://users.monash.edu.au/~dprice/splash/}}
+%HEVEA\setlinkstext{\imgsrc[ALT="Previous"]{arrow-left.png}}{\imgsrc[ALT="Up"]{arrow-up.png}}{\imgsrc[ALT="Next"]{arrow-right.png}}
+
 % Now we redefine certain commands of hyperref.sty 
 % 
 \makeatletter 
@@ -41,16 +47,19 @@
 \end{titlepage}
 
 \begin{document}
+% html div style
+%\begin{divstyle}{wrap}
+
 \begin{figure}
 \begin{center}
 \includegraphics[width=\textwidth]{hyperbolic.pdf}
 \end{center}
 \end{figure}
 \maketitle
-\tableofcontents
+\tableofcontents%HEVEA\cutname{contents.html}
 \newpage
 
-\section{Introduction}
+\section{Introduction}%HEVEA\cutname{intro.html}
  Whilst many wonderful commercial software packages exist for visualising scientific
 data (such as the widely used Interactive Data Language), I found that such packages
 could be somewhat cumbersome for the manipulation and visualisation of my SPH data. The
@@ -131,7 +140,7 @@ Thus it may not be particularly useful for things like water and solids etc. in 
 \splash - a visualisation tool for SPH data \copyright 2004-\thisyear  Daniel Price.
  This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-\section{Getting started}
+\section{Getting started}%HEVEA\cutname{gettingstarted.html}
 \subsection{Compiling the code}
 The basic steps for installation are as follows:
 \begin{enumerate}
@@ -181,16 +190,17 @@ output.
 A standard ``make'' will create the following binaries (corresponding to data reads as listed):
 
 \begin{table}[h!]
-\begin{tabular}{lllp{0.34\textwidth}}
+\begin{tabular}{lp{0.2\textwidth}lp{0.34\textwidth}}
 \splash binary & Formats read & read\_data file & Comments \\
 \hline
 asplash, splash & ascii & \verb+read_data_ascii.f90+ & Generic data read for n-column ascii formats. Automatically determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use `asplash -e' to plot non-SPH data (e.g. energy vs time files).\\
-dsplash & DRAGON & \verb+read_data_dragon.f90+ & see environment variable options. \\
-gsplash & GADGET, GADGET-2 &  \verb+read_data_gadget.f90+ & Handles both default and block-labelled formats (see environment variable options). \\
-rsplash & MAGMA & \verb+read_data_srosph.f90+  & Stephan Rosswog's code \\
-ssplash & sphNG, PHANTOM & \verb+read_data_sphNG.f90+ & sphNG is Matthew Bate's SPH code. \\
-tsplash & GASOLINE, TIPSY  &  \verb+read_data_tipsy.f90+ & Reads both binary and ascii TIPSY files (determined automatically). \\
-vsplash & VINE & \verb+read_data_VINE.f90+ & see environment variable options. \\
+dsplash & \textsc{dragon} & \verb+read_data_dragon.f90+ & see environment variable options. \\
+gsplash & \textsc{gadget},  \textsc{gadget-2},  \textsc{gadget-3} &  \verb+read_data_gadget.f90+ & Handles both default and block-labelled formats (see environment variable options). \\
+nsplash & \textsc{ndspmhd} & \verb+read_data_dansph.f90+ & Format for the \textsc{ndspmhd} SPH/SPMHD code (publicly available from my website). \\
+rsplash & \textsc{magma} & \verb+read_data_srosph.f90+  & Stephan Rosswog's code \\
+ssplash & sphNG, \textsc{phantom} & \verb+read_data_sphNG.f90+ & sphNG is Matthew Bate's SPH code. \\
+tsplash & \textsc{gasoline}, \textsc{tipsy}  &  \verb+read_data_tipsy.f90+ & Reads both binary and ascii TIPSY files (determined automatically). \\
+vsplash & \textsc{vine} & \verb+read_data_VINE.f90+ & see environment variable options. \\
 \hline
 \end{tabular} 
 \end{table}
@@ -211,8 +221,6 @@ Jamie Bolton GADGET format & gsplash\_jsb & \verb+read_data_gadget_jsb.f90+ & Re
 Old Matthew Bate code & bsplash & \verb+read_data_mbate.f90+  & similar to the original Benz SPH code format \\
 Foulkes/Haswell/Murray & fsplash & \verb+read_data_foulkes.f90+  & An ascii format \\
 Andrea Urban format & usplash & \verb+read_data_urban.f90+  & An ascii format \\
-ndspmhd & nsplash & \verb+read_data_dansph.f90+ & Format for the original code from which \splash was simply the plotter (and is now bigger than the code...). \\
-
 \hline
 \end{tabular}
 \end{table}
@@ -296,7 +304,7 @@ ASPLASH\_HEADERLINE\_TIME & sets the integer line number where the time appears 
 ASPLASH\_HEADERLINE\_GAMMA & sets the integer line number where gamma appears in the header \\
 \end{tabular}
 
-\subsubsection{ GADGET-2 data read}
+\subsubsection{ GADGET data read}
 \label{sec:gsplash}
  For the GADGET read (`gsplash') the environment variable options are:\newline
 
@@ -430,7 +438,7 @@ Command line plotting mode:
 
  Command-line options can be entered in any order on the command line (even after the dump file names). For more information on the convert utility (`splash to ascii') see \S\ref{sec:convert}. For details of the \verb+-o ppm+ or \verb+-o ascii+ option see \S\ref{sec:writepixmap}. For details of the \verb+-ev+ option, see \S\ref{sec:evsplash}.
 
-\section{Basic \splash usage}
+\section{Basic \splash usage}%HEVEA\cutname{basics.html}
 \label{sec:basic}
 
 \subsection{Simple two column plot}
@@ -615,21 +623,22 @@ In this section I have listed ten quick suggestions for simple changes to settin
 \item {\bf Save settings to disk!} Don't waste your effort without being able to reproduce the plot you have been working on. Pressing `s' in interactive mode only saves the current settings for subsequent timesteps. Pressing `s' from the main menu saves these settings to disk. Pressing `S' from the main menu saves both the plot options \emph{and} the plot limits, so that the current plot can be reproduced exactly when \splash is next invoked. Adding an ``a'', as in ``SA'', ``SA'' or ``sa'' to the save options gives a prompt for a different prefix to the filenames (e.g. \verb+splash.defaults+ becomes \verb+myplot.defaults+), which \splash can be invoked to use via the \verb+-p+ command line option (e.g. \verb+splash -p myplot file1 file2...+).
 \end{enumerate}
 
-\section{Changing plot settings}
+\section{Changing plot settings}%HEVEA\cutname{settings.html}
+%HEVEA\cutdef{subsection}
  The plot settings may be changed in a series of submenus. The options set using
 the submenus can be saved using the (s)ave option from the menu. This saves all of
 the current options to a file called \verb+splash.defaults+ in the current directory, which is
 automatically read upon starting \splash the next time. To revert to default options, simply delete this file.
 Pressing `S' from the main menu saves both the \verb+splash.defaults+ file and also saves the plot limits to a file called \verb+splash.limits+. This file is a simple two-column ascii file corresponding to the minimum and maximum plot limits for each column of data. Thus saving using 'S' means that exactly the same plot can be plotted next time \splash is invoked, where saving using 's' means that the plot settings will be the same although the limits will be different. To reset the plot limits either adjust the limits and press 'S' again or simply delete the splash.limits file.
 
-\subsection{set (m)ultiplot}
+\subsection{set (m)ultiplot}%HEVEA\cutname{multiplot.html}
 \label{sec:multiplot}
 \subsubsection{ Plotting more than one column from the same file on the same page (multiplot)}
  Press 'm'  (``set multiplot'') from the main menu to set up a multiplot. Note that a ``multiplot'' (multiple columns plotted from the same file) is different to plotting ``multiple plots per page'' (divide the plotting page up into panels). The number of panels across and down on a page can be changed (see \ref{sec:nacrossndown}) irrespective of whether or not you are also plotting multiple columns from the same file.
 
 Once you have gone through the options to set up a multiplot, to actually plot what you have set simply type the number of the column corresponding to ``multiplot'' at the $y-$axis prompt.
 
-\subsection{(d)ata options}
+\subsection{(d)ata options}%HEVEA\cutname{dmenu.html}
 The following can all be achieved from the d)ata options menu:
 
 \subsubsection{ Re-reading the initial data / changing the dump file}
@@ -694,7 +703,7 @@ Turn ``calculate extra quantities'' on in the d)ata menu. As of \splash version 
 Enter function string to calculate (blank for none) (default=""):
 \end{verbatim}
 
-Thus, one can for example calculate the pressure from the density and thermal energy according by copying the second example given. Note that the function calculation is completely general and can use any of the columns read from the file, the time for each step (`\verb+t+'), the adiabatic index $\gamma$ (`\verb+gamma+') and the current origin setting (\verb+x0+,\verb+y0+ and \verb+z0+). Previously calculated quantities can also be used - e.g. in the above example we could further compute, say, an entropy variable using \verb+s=pressure/density^gamma+ after the pressure has been specified. The resultant quantities appear in the main splash menu as standard columns just as if they had been read from the original data file.
+Thus, one can for example calculate the pressure from the density and thermal energy according by copying the second example given. Note that the function calculation is completely general and can use any of the columns read from the file, the time for each step (`\verb+t+'), the adiabatic index $\gamma$ (`\verb+gamma+') and the current origin setting (\verb+x0+, \verb+y0+ and \verb+z0+). Previously calculated quantities can also be used - e.g. in the above example we could further compute, say, an entropy variable using \verb+s=pressure/density^gamma+ after the pressure has been specified. The resultant quantities appear in the main splash menu as standard columns just as if they had been read from the original data file.
 
  Note that the origin for the calculation of radius can be changed via the ``rotation on/off/settings'' option in the x) submenu. If particle tracking limits are set (see \S\ref{sec:track}) the radius is calculated relative to the particle being tracked.
   
@@ -748,7 +757,7 @@ See \S\ref{sec:changingunits}.
 \label{sec:timeunits}
 Units for the time used in the legend can be changed using the ``change physical unit settings'' in the d)ata menu. Changing the units of column zero corresponds to the time (appears as the first row in the `splash.units' file). 
 
-\subsection{(i)nteractive mode}
+\subsection{(i)nteractive mode}%HEVEA\cutname{interactive.html}
 \label{sec:interactive}
  The menu option i) turns on/off interactive mode (alternatively use ``interactive mode on/off'' in the p)age submenu). With this option turned on (the default) and
 an appropriate device selected (i.e., the X-window, not /gif or /ps), after
@@ -829,7 +838,7 @@ This can be achieved by selecting and colouring particles at a particular timest
  \label{sec:obliquexsec}
  It is possible to take an oblique cross section through 3D data using a combination of rotation and cross section slice plotting. To set the position interactively, press 'x' in interactive mode to draw the position of the cross section line (e.g. on an x-y plot this then produces a z-x plot with the appropriate amount of rotation to give the cross section slice in the position selected). Note that this will work even if the current plot is a 3D column integrated projection (in this case the setting ``projection or cross section'' changes to ``cross section'' in order to plot the slice). 
 
-\subsection{(p)age options}
+\subsection{(p)age options}%HEVEA\cutname{pmenu.html}
 \label{sec:optionspage}
  Options related to the page setup are changed in the p)age submenu.
 
@@ -924,7 +933,7 @@ Do you want to plot these in background colour [i.e., white] instead ? (default=
 \end{verbatim}
  In the above I have selected a background colour of white, a foreground colour of black. Answering yes to the last question means that those parts of the axes which lie on top of the viewing surface (and any labels) will be plotted in white (the background colour) instead of the foreground colour (black). 
  
-\subsection{le(g)end and title options}
+\subsection{le(g)end and title options}%HEVEA\cutname{gmenu.html}
 
 \subsubsection{ Adding titles to plots / repositioning titles}
 \label{sec:title}
@@ -968,7 +977,7 @@ on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the ph
  
  An option to plot length scales (\verb+|---|+) on coordinate plots is implemented separately via the ``plot scale on coordinate plots'' option in the le(g)end menu.
  
-\subsection{particle plot (o)ptions}
+\subsection{particle plot (o)ptions}%HEVEA\cutname{omenu.html}
 \label{sec:opts}
  The following are tasks which can be achieved via options in the o) menu [particle plot o)ptions].
  
@@ -1168,7 +1177,7 @@ The number of points used in an exact solution calculation can be changed via th
 \subsubsection{ Plotting an inset plot of residual errors from an exact solution}
  An inset plot of residual errors between the plotted points and an exact solution calculation can be turned on via the ``exact solution plot options'' option in the o) submenu.
 
-\subsection{plot (l)imits}
+\subsection{plot (l)imits}%HEVEA\cutname{lmenu.html}
 
 \subsubsection{ Using plot limits which adapt automatically for each new plot}
 \label{sec:adapt}
@@ -1231,7 +1240,7 @@ or more usually:
  Plotting a subset of the particles restricted by a parameter can be achieved by setting a parameter range restriction (which does not change between timesteps -- see \S\ref{sec:rangerestrict}), or alternatively by an interactive selection based on particle identity (see \S\ref{sec:rendersubset}).
 
 
-\subsection{(r)endering options}
+\subsection{(r)endering options}%HEVEA\cutname{rmenu.html}
 \subsubsection{ Changing the number of pixels in a rendered image}
  The number of pixels in a rendered image can be set manually using the r)ender menu, option 1 (or simply type ``r1'' from the main menu). The number set is the number of pixels along the $x-$axis. The number of pixels along the $y-$axis is determined by the aspect ratio of the plot.
 
@@ -1329,7 +1338,7 @@ The labelling scheme used to determine the colour bar label can be changed via t
 \subsubsection{ Changing ``column density'' to ``surface density'' on 3D plots}
 See \S\ref{sec:setprojlabel}.
 
-\subsection{(v)ector plot options}
+\subsection{(v)ector plot options}%HEVEA\cutname{vmenu.html}
 \label{sec:vectorplots}
 
 \subsubsection{ Changing the number of arrows on vector plots}
@@ -1368,7 +1377,7 @@ See \S\ref{sec:setprojlabel}.
 \subsubsection{ Making all arrow the same length (i.e., showing direction only, not magnitude)}
  An option to plot all vector arrows of the same length (instead of the default option where the length of the arrow is proportional to the vector magnitude) can be set from the v) menu.
 
-\subsection{(x) cross section/3D plotting options}
+\subsection{(x) cross section/3D plotting options}%HEVEA\cutname{xmenu.html}
 
 \subsubsection{ Plotting a cross section slice through 3D data}
  When plotting a rendered plot of 3D data, the default option is to plot a column-integrated plot. To change this to a cross section slice, use option 1) in the x) menu (``switch between cross section/projection''). See \S\ref{sec:basic} for examples of how this works. An oblique cross section slice can be set interactively using the 'x' key, see \S\ref{sec:obliquexsec} which works by setting a combination of rotation and a cross section slice position. 
@@ -1463,7 +1472,7 @@ This can be achieved by setting an animation sequence with a steady change of ro
 \label{sec:move3Dobserver}
  The position of the 3D observer can be steadily changed over several dump files (or several frames produced of the same dump file) by setting up an animation sequence.  See \S\ref{sec:animseq} for details.
 
-\subsection{Miscellaneous other useful things}
+\subsection{Miscellaneous other useful things}%HEVEA\cutname{misc.html}
 
 \subsubsection{ Saving plot settings / plot limits to disk}
  The (s)ave option saves the default options to a file called `splash.defaults' in the
@@ -1489,8 +1498,8 @@ Menu options which normally require two keystrokes (e.g. x menu, option 1) can b
  (q)uit, unsurprisingly, quits. Typing a number greater than the number of
 data columns also exits the program (e.g. I often simply type 99 to exit).
 
-
-\section{Advanced plotting examples}
+%HEVEA\cutend
+\section{Advanced plotting examples}%HEVEA\cutname{tutorials.html}
 
 \subsection{Rendered plot of star formation data}
  This is an example using data provided by Paul Clark. The data is from an SPH simulation of star formation in sphNG format. We read the dump file as follows:
@@ -2103,7 +2112,7 @@ c_{s,i}^{2} = \left\{ \begin{array}{ll}
 from which the RMS sound speed is calculated as the square root of the average of $c_{s}^{2}$ on the particles in the annulus.
 
 
-\section{Other useful information}
+\section{Other useful information}%HEVEA\cutname{other.html}
 
 \subsection{Converting binary dump files to ascii using \splash}
 \label{sec:convert}
@@ -2304,7 +2313,7 @@ See \S\ref{sec:movies} and the online FAQ (\url{http://users.monash.edu.au/~dpri
  
   For other command line options, see \S\ref{sec:commandline}.
 
-\section{User contributions / Wishlist for future improvements}
+\section{User contributions / Wishlist for future improvements}%HEVEA\cutname{wishlist.html}
  Please contribute!! Any user contributions and/or suggestions would be greatly
 appreciated. The following in particular would be very useful:
 \begin{itemize}
@@ -2333,10 +2342,10 @@ daniel.price@monash.edu
 \end{verbatim}
 although check that this email address is current because I am still a postdoc!
 
-\section*{Acknowledgements}
+\section*{Acknowledgements}%HEVEA\cutname{thanks.html}
  Several of the routines were developed from ideas used by Matthew Bate and \splash has been refined by many useful discussions with Matthew. The
 polytrope exact solution is from a routine by Joe Monaghan. I am indebted to one Thomas S. Ullrich at the University of Heidelberg who wrote the prompting module
-which is used throughout the program and to Roland Schmehl who wrote the excellent function parser module (made available at \url{http://fparser.sourceforge.net}). Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve \splash, including, but not limited to: 
+which is used throughout the program and to Roland Schmehl who wrote the excellent function parser module (made available at \url{http://fparser.sourceforge.net}). Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve \splash including, but not limited to: 
  Craig Agnor,
  Richard Alexander, 
  Gabe Altay,
@@ -2371,7 +2380,7 @@ And to everyone who has cited the \splash paper!
 \newpage
 \appendix
 
-\section{Source code overview}
+\section{Source code overview}%HEVEA\cutname{sourcecode.html}
 Here is a brief description of all the files making up the code:
 \begin{longtable}{|lp{0.7\textwidth}|}
 \hline
@@ -2430,7 +2439,7 @@ Filename & Description \\
      transform.f90	 	 & applies various transformations to data (log10, 1/x, etc) \\
 \end{longtable}
 
-\section{Coordinate transformation details}
+\section{Coordinate transformation details}%HEVEA\cutname{geometry.html}
 \label{sec:coordtransforms}
 Particle positions and vectors defined on the particles can be plotted in non-cartesian coordinate
 systems. The coordinate system can be set via the particle plot o)ptions menu, via the ``change coordinate
@@ -2499,7 +2508,7 @@ r_{cyl} = \sqrt{x^{2} + y^{2}} = r\cos\theta + R. \nonumber
 The torus radius $R$ is a parameter in the \verb+geometry+ module and is set to $1$ by default.
 
 
-\section{Exact solution details}
+\section{Exact solution details}%HEVEA\cutname{exactsolutions.html}
 \label{sec:exact}
 \subsection{Errors}
 The error norms calculated when exact solutions are plotted are as follows: The
@@ -2703,7 +2712,7 @@ masses, a different curve is plotted for each different mass value.
 
 \newpage
 
-\section{Writing your own read\_data subroutine}
+\section{Writing your own read\_data subroutine}%HEVEA\cutname{readdata.html}
 \label{sec:writeyourown}
 The first \verb+ndim+ columns in the main data array \emph{must} contain the particle coordinates.
 After these columns the ordering of data is not important, although vector quantities should
@@ -2727,6 +2736,6 @@ is a vector quantity (say ${\bf v}$ in 3D), then \verb+iamvec(4) = 4+, \verb+iam
 \verb+iamvec(6) = 4+. Similarly the string \verb+labelvec+ should be set, i.e., \verb+labelvec = 'v'+ for these columns.
 
 \bibliographystyle{bibstyle}
-\bibliography{sph,mhd}
-
+\bibliography{sph,mhd}%HEVEA\cutname{refs.html}
+%\end{divstyle}
 \end{document}
