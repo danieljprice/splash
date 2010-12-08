@@ -239,6 +239,18 @@ endif
 #
 #--------------------------------------------------------------
 
+ifeq ($(SYSTEM), macports)
+#  installation via macports
+   F90C= $(FC)
+   F90FLAGS= $(FFLAGS) #-O3 -Wall -frecord-marker=4
+   SYSTEMFILE= system_f2003.f90
+   DEBUGFLAG= -g -frange-check -fcheck=all -fbacktrace
+   OMPFLAGS= -fopenmp
+   ENDIANFLAGBIG= -fconvert=big-endian
+   ENDIANFLAGLITTLE= -fconvert=little-endian
+   KNOWN_SYSTEM=yes
+endif
+
 ifeq ($(SYSTEM),ukaff1a)
 #  this is for ukaff1a
    F90C= xlf90_r #-Wl,-t
