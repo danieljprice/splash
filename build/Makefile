@@ -88,9 +88,9 @@ OMPFLAGS=
 #ENDIAN='BIG'
 #ENDIAN='LITTLE'
 #
-# destination for installed binaries
+# DESTDIRination for installed binaries
 #
-DEST=/usr/local/bin
+DESTDIR=/usr/local/bin
 #
 # default C compiler
 #
@@ -238,18 +238,6 @@ endif
 #      installation of pgplot)
 #
 #--------------------------------------------------------------
-
-ifeq ($(SYSTEM), macports)
-#  installation via macports
-   F90C= $(FC)
-   F90FLAGS= $(FFLAGS) #-O3 -Wall -frecord-marker=4
-   SYSTEMFILE= system_f2003.f90
-   DEBUGFLAG= -g -frange-check -fcheck=all -fbacktrace
-   OMPFLAGS= -fopenmp
-   ENDIANFLAGBIG= -fconvert=big-endian
-   ENDIANFLAGLITTLE= -fconvert=little-endian
-   KNOWN_SYSTEM=yes
-endif
 
 ifeq ($(SYSTEM),ukaff1a)
 #  this is for ukaff1a
@@ -571,7 +559,7 @@ OBJECTS= $(OBJECTS1:.F90=.o)
 #
 all: ascii gadget vine sphNG ndspmhd srosph dragon tipsy
 	@echo; echo ' SPLASH successfully compiled! ';
-	@echo; echo ' Use "sudo make install" to copy the binaries to $(DEST)'; echo;
+	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)'; echo;
 
 ascii: checksystem $(OBJECTS) read_data_ascii.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS) || ${MAKE} linkerror;
@@ -843,25 +831,25 @@ linkerror:
 # will not be defined if "make" is run using sudo, so better
 # to do the two separately
 #
-install: destcheck installcheck
-	@for x in $(BINDIR)/?splash splash; do echo "copying $$x -> $(DEST)/$$x"; cp $$x $(DEST); done;
+install: DESTDIRcheck installcheck
+	@for x in $(BINDIR)/?splash splash; do echo "copying $$x -> $(DESTDIR)/$$x"; cp $$x $(DESTDIR); done;
 	@echo; echo 'installation complete';
 
 installcheck:
 	@if test -e $(BINDIR)/asplash && test -e $(BINDIR)/gsplash; then echo; \
-        echo 'compiled binaries install to $(DEST)'; \
+        echo 'compiled binaries install to $(DESTDIR)'; \
         echo '(use "sudo make install" if Permission denied)'; \
         echo; else echo;\
         echo 'run "make" first, followed by "sudo make install"'; echo;\
         $(MAKE) err; fi
 
-destcheck: installcheck
-	@if test -d $(DEST); then echo $(DEST) exists and is a directory; else \
-        echo; echo "*** ERROR in make install ***"; echo "$(DEST) is not a valid directory"; echo;\
+DESTDIRcheck: installcheck
+	@if test -d $(DESTDIR); then echo $(DESTDIR) exists and is a directory; else \
+        echo; echo "*** ERROR in make install ***"; echo "$(DESTDIR) is not a valid directory"; echo;\
         $(MAKE) err; fi;
 
-installclean: destcheck
-	@for x in $(DEST)/?splash; do rm $$x; done;
+installclean: DESTDIRcheck
+	@for x in $(DESTDIR)/?splash; do rm $$x; done;
 
 distclean: installclean
 
