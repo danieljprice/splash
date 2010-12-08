@@ -506,14 +506,14 @@ endif
 
 
 # Fortran flags same as F90
-FC = $(F90C)
-FFLAGS = $(F90FLAGS)
+#FC = $(F90C)
+#FFLAGS = $(F90FLAGS)
 
 # define the implicit rule to make a .o file from a .f90/.f95 file
 # (some Make versions don't know this)
 
-%.o : %.f
-	$(FC) $(FFLAGS) -c $< -o $@
+#%.o : %.f
+#	$(FC) $(FFLAGS) -c $< -o $@
 %.o : %.f90
 	$(F90C) $(F90FLAGS) -c $< -o $@
 %.o : %.F90
@@ -679,7 +679,7 @@ scwsph: checksystem $(OBJECTS) read_data_scw.o
 
 snsplash: snsph
 snsph: $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/snsplash $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o $(LDFLAGS) $(SNFLAGS) 
+	$(FC) $(F90FLAGS) -o $(BINDIR)/snsplash $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o $(LDFLAGS) $(SNFLAGS) 
 
 srosph: checksystem $(OBJECTS) read_data_sro.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/rsplash $(OBJECTS) read_data_sro.o $(LDFLAGS)
