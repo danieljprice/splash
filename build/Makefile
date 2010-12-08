@@ -472,7 +472,7 @@ endif
 ifneq ($(BACKEND),giza)
    ifdef PGPLOT_DIR
 
-      PGPLOT_COMP=${shell grep 'FCOMPL=' $$PGPLOT_DIR/makefile | cut -d= -f2}
+      PGPLOT_COMP=${shell if [ -e $$PGPLOT_DIR/makefile ]; then grep 'FCOMPL=' $$PGPLOT_DIR/makefile | cut -d= -f2; else echo unknown; fi}
 
       ifneq (X$(F90C), X)  # make sure it is not just accidentally blank
       ifneq ($(PGPLOT_COMP), $(F90C))
