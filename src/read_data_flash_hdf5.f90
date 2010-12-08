@@ -46,20 +46,22 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 module flash_hdf5read
-
+  use, intrinsic :: iso_c_binding, only:c_int,c_float,c_char
  !interface to the c versions
  interface
    subroutine read_flash_hdf5_header(filename,time,npart,ncol,ierr) bind(c)
-    character(len=*), intent(in) :: filename
-    real, intent(out) :: time
-    integer, intent(out) :: npart,ncol,ierr
+    import
+    character(kind=c_char,len=1), intent(in) :: filename
+    real(kind=c_float), intent(out) :: time
+    integer(kind=c_int), intent(out) :: npart,ncol,ierr
    end subroutine read_flash_hdf5_header
 
    subroutine read_flash_hdf5_data(filename,npart,ncol,isrequired,ierr) bind(c)
-    character(len=*), intent(in) :: filename
-    integer, dimension(ncol), intent(in) :: isrequired
-    integer, intent(in) :: npart,ncol
-    integer, intent(out) :: ierr
+    import
+    character(kind=c_char,len=1), intent(in) :: filename
+    integer(kind=c_int), intent(in) :: npart,ncol
+    integer(kind=c_int), dimension(ncol), intent(in) :: isrequired
+    integer(kind=c_int), intent(out) :: ierr
    end subroutine read_flash_hdf5_data
  end interface
 
@@ -137,7 +139,7 @@ subroutine read_data(dumpfile,indexstart,nstepsread)
   
   call read_flash_hdf5_header(cstring(dumpfile),tread,nprint,ncolstep,ierr)
   ncolstep = ncolstep - 1   ! subtract particle ID column
-  print "(a,i10,a,1pe10.3,a,0pi2)",' npart = ',nprint,' time = ',tread
+  print "(a,i10,a,es10.3,a,i2)",' npart = ',nprint,' time = ',tread
   
   call set_labels
   if (ih.gt.0 .and. required(ih)) required(irho) = .true.
@@ -211,14 +213,15 @@ return
 end subroutine read_data
 
 subroutine receive_data_fromc(icol,npart,temparr,id) bind(c)
-  use particle_data, only:dat
+  use, intrinsic :: iso_c_binding, only:c_int,c_double
+  use particle_data,  only:dat
   use flash_hdf5read, only:icolshuffle
-  use labels, only:label
+  use labels,         only:label
   implicit none
-  integer, intent(in) :: icol,npart
-  double precision, dimension(npart), intent(in) :: temparr
-  integer, dimension(npart), intent(in) :: id
-  integer :: i,icolput
+  integer(kind=c_int), intent(in) :: icol,npart
+  real(kind=c_double), dimension(npart), intent(in) :: temparr
+  integer(kind=c_int), dimension(npart), intent(in) :: id
+  integer(kind=c_int) :: i,icolput
   
   icolput = icolshuffle(icol)
   if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then

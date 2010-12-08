@@ -638,7 +638,7 @@ dansph: checksystem $(OBJECTS) read_data_dansph_old.o
 foulkes: checksystem $(OBJECTS) read_data_foulkes.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_foulkes.o $(LDFLAGS)
 
-flash_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_flash_hdf5.o read_data_flash_hdf5_utils.o
+flash_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_flash_hdf5_utils.o read_data_flash_hdf5.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_flash_hdf5_utils.o read_data_flash_hdf5.o $(LDFLAGS)
 
 flashhdf5:
