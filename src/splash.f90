@@ -293,7 +293,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.14.0 [6th Dec ''10]'
+  character(len=*), parameter :: version = 'v1.14.0 [8th Dec ''10]'
 
   !
   ! initialise some basic code variables
