@@ -7,11 +7,17 @@
 #
 #----------------------------------------------------------------
 
-.PHONY: splash
+.PHONY: splash install docs
 splash:
 	@cd build; ${MAKE} ${MAKECMDGOALS}
 
 %::
+	@cd build; ${MAKE} ${MAKECMDGOALS}
+
+install:
+	@cd build; ${MAKE} ${MAKECMDGOALS}
+
+docs:
 	@cd build; ${MAKE} ${MAKECMDGOALS}
 
 clean:

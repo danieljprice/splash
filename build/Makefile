@@ -88,7 +88,7 @@ OMPFLAGS=
 #ENDIAN='BIG'
 #ENDIAN='LITTLE'
 #
-# DESTDIRination for installed binaries
+# default destination for installed binaries
 #
 DESTDIR=/usr/local/bin
 #
@@ -831,8 +831,8 @@ linkerror:
 # will not be defined if "make" is run using sudo, so better
 # to do the two separately
 #
-install: DESTDIRcheck installcheck
-	@for x in $(BINDIR)/?splash splash; do echo "copying $$x -> $(DESTDIR)/$$x"; cp $$x $(DESTDIR); done;
+install: destdircheck installcheck
+	@cd $(BINDIR); for x in ?splash splash; do echo "copying $$x -> $(DESTDIR)/$$x"; cp $$x $(DESTDIR); done;
 	@echo; echo 'installation complete';
 
 installcheck:
@@ -843,12 +843,12 @@ installcheck:
         echo 'run "make" first, followed by "sudo make install"'; echo;\
         $(MAKE) err; fi
 
-DESTDIRcheck: installcheck
+destdircheck: installcheck
 	@if test -d $(DESTDIR); then echo $(DESTDIR) exists and is a directory; else \
         echo; echo "*** ERROR in make install ***"; echo "$(DESTDIR) is not a valid directory"; echo;\
         $(MAKE) err; fi;
 
-installclean: DESTDIRcheck
+installclean: destdircheck
 	@for x in $(DESTDIR)/?splash; do rm $$x; done;
 
 distclean: installclean
