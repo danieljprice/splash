@@ -816,7 +816,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !  twice the usual SPH smoothing length
   !  (do this after we have read data from all of the files)
   !
-  if (required(ih) .and. size(dat(1,:,:)).ge.ih .and. npartoftype(1,i).gt.0) then
+  if (required(ih) .and. ih.gt.0 .and. size(dat(1,:,:)).ge.ih .and. npartoftype(1,i).gt.0) then
      print "(a)",' converting GADGET smoothing length on gas particles to usual SPH definition (x 0.5)'
      dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
   endif
@@ -973,7 +973,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         endif
      endif
   else
-    print*,'not true'
+     !print*,'not true'
   endif
 !
 !--cover the special case where no particles have been read
