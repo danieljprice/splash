@@ -145,6 +145,7 @@ contains
     Mring = 1.0
     Rring = 1.0
     viscnu = 1.e-3
+
 !   arbitrary function
     nfunc = 1
     funcstring = ' '
@@ -177,26 +178,75 @@ contains
 
     print 10
 10  format(' 0) none ',/,               &
-         ' 1) shock tube ',/,           &
-         ' 2) sedov blast wave ',/,     &
-         ' 3) polytrope ',/,            &
-         ' 4) toy star ',/,             &
-         ' 5) linear wave ',/,          &
-         ' 6) mhd shock tubes (tabulated) ',/,  &
-         ' 7) h vs rho ',/, &
-         ' 8) Plummer/Hernquist spheres ',/, &
-         ' 9) torus ',/, &
-         '10) ring spreading ',/, &
-         '11) special relativistic shock tube',/, &
-         '12) ANY function f(x,t)',/, &
-         '13) read from file ')
+           ' 1) ANY function f(x,t)',/, &
+         ' 2) read from file ',/,       &
+         ' 3) shock tube ',/,           &
+         ' 4) sedov blast wave ',/,     &
+         ' 5) polytrope ',/,            &
+         ' 6) toy star ',/,             &
+         ' 7) linear wave ',/,          &
+         ' 8) mhd shock tubes (tabulated) ',/,  &
+         ' 9) h vs rho ',/, &
+         '10) Plummer/Hernquist spheres ',/, &
+         '11) torus ',/, &
+         '12) ring spreading ',/, &
+         '13) special relativistic shock tube')
     call prompt('enter exact solution to plot',iexact,0,13)
     print "(a,i2)",'plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
     !
     select case(iexact)
-    case(1,11)
+    case(1)
+       call prompt('enter number of functions to plot ',nfunc,1,size(funcstring))
+       print "(/,a,6(/,11x,a))",' Examples: sin(2*pi*x - 0.1*t)','sqrt(0.5*x)','x^2', &
+             'exp(-2*x**2 + 0.1*t)','log10(x/2)','exp(y),y=sin(pi*x)','cos(z/y),z=acos(y),y=x^2'
+       overfunc: do i=1,nfunc
+          ierr = 1
+          itry = 0
+          do while(ierr /= 0 .and. itry.lt.10)
+             if (nfunc.gt.1) print "(/,a,i2,/,11('-'),/)",'Function ',i
+             call prompt('enter function f(x,t) to plot ',funcstring(i),noblank=.true.)
+             call check_function(funcstring(i),ierr)
+             if (ierr /= 0 .and. len(funcstring(i)).eq.len_trim(funcstring(i))) then
+                print "(a,i3,a)",&
+                     ' (errors are probably because string is too long, max length = ',&
+                     len(funcstring(i)),')'
+             endif
+             itry = itry + 1
+          enddo
+          if (itry.ge.10) then
+             print "(a)",' *** too many tries, aborting ***'
+             ierr = i-1
+             exit overfunc
+          endif
+       enddo overfunc
+       if (ierr /= 0) nfunc = ierr
+       if (nfunc.gt.0) then
+          print*
+          call prompt('enter y axis of exact solution (0=all plots)',iexactploty,0)
+          if (iexactploty.gt.0) then
+             call prompt('enter x axis of exact solution ',iexactplotx,1)
+          endif
+       endif
+    case(2)
+       iexist = .false.
+       do while(.not.iexist)
+          call prompt('enter filename ',filename_exact)
+          inquire(file=filename_exact,exist=iexist)
+          if (iexist) then
+             print "(a)",'file seems OK'
+          else
+             ians = .true.
+             call prompt('file does not exist: try again? ',ians)
+             if (.not.ians) return
+          endif
+       enddo
+       call prompt('enter x axis of exact solution ',iexactplotx,1)
+       call prompt('enter y axis of exact solution ',iexactploty,1)
+       print "(a)",'apply column transformations to exact solution?'
+       call prompt(' (no if file contains e.g. log y vs log x)',iApplyTransExactFile)
+    case(3,13)
        !
        !--read shock parameters from the .shk file
        !
@@ -214,12 +264,12 @@ contains
              call prompt('enter velocity to right of shock ',v_R)
           endif
        endif
-    case(2)
+    case(4)
        call prompt('enter density of ambient medium ',rhosedov,0.0)
        call prompt('enter blast wave energy E ',esedov,0.0)
-    case(3)
+    case(5)
        call prompt('enter polytropic k ',polyk) 
-    case(4)
+    case(6)
        print "(a)",' toy star: '
        call read_exactparams(iexact,trim(rootname(1)),ierr)
        call prompt('enter polytropic k ',polyk)
@@ -254,23 +304,23 @@ contains
              call prompt('enter vyx amplitude ',ctstar2)
           endif
        endif
-    case(5)
+    case(7)
        call prompt('enter y-plot to place sine wave on',iwaveploty,1)
        call prompt('enter x-plot to place sine wave on',iwaveplotx,1)
        call prompt('enter starting x position',xzero)
        call prompt('enter wavelength lambda ',lambda,0.0)
        call prompt('enter amplitude ',ampl,0.0)
        call prompt('enter period ',period)
-    case(6)
+    case(8)
        print "(a)",' MHD shock tube tables: '
        if (ishk.le.0) ishk = 1
        do i=1,nmhdshocksolns
           print "(i2,') ',a)",i,trim(mhdprob(i))
        enddo
        call prompt('enter solution to plot ',ishk,1,7)
-    case(7)
+    case(9)
        call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
-    case(8)
+    case(10)
        print 20
 20     format(' 1) Plummer sphere  [ rho = 3M r_s**2 /(4 pi (r**2 + r_s**2)**5/2) ]',/, &
               ' 2) Hernquist model [ rho =     M r_s /(2 pi r (r_s + r)**3        ]')
@@ -286,65 +336,16 @@ contains
        endif
        call prompt('enter mass of 2nd component',Msphere(2),0.)
        call prompt('enter scale length r_s for 2nd component,',rsoft(2),0.)
-    case(9)
+    case(11)
        call prompt('enter mass of central object',Mstar,0.)
        call prompt('enter radius of torus centre',Rtorus,0.)
        call prompt('enter distortion parameter ',distortion,1.,2.)
        if (abs(polyk-1.0).lt.tiny(polyk)) polyk = 0.0764
        call prompt('enter K in P= K*rho^gamma',polyk,0.)
-    case(10)
+    case(12)
        call prompt('enter mass of ring',Mring,0.)
        call prompt('enter radius of ring centre R0',Rring,0.)
        call prompt('enter viscosity parameter nu',viscnu,0.)
-    case(12)
-       call prompt('enter number of functions to plot ',nfunc,1,size(funcstring))
-       print "(/,a,6(/,11x,a))",' Examples: sin(2*pi*x - 0.1*t)','sqrt(0.5*x)','x^2', &
-             'exp(-2*x**2 + 0.1*t)','log10(x/2)','exp(y),y=sin(pi*x)','cos(z/y),z=acos(y),y=x^2'
-       overfunc: do i=1,nfunc
-          ierr = 1
-          itry = 0
-          do while(ierr /= 0 .and. itry.lt.10)
-             if (nfunc.gt.1) print "(/,a,i2,/,11('-'),/)",'Function ',i
-             call prompt('enter function f(x,t) to plot ',funcstring(i),noblank=.true.)
-             call check_function(funcstring(i),ierr)
-             if (ierr /= 0 .and. len(funcstring(i)).eq.len_trim(funcstring(i))) then
-                print "(a,i3,a)",&
-                     ' (errors are probably because string is too long, max length = ',&
-                     len(funcstring(i)),')'
-             endif
-             itry = itry + 1
-          enddo
-          if (itry.ge.10) then
-             print "(a)",' *** too many tries, aborting ***'
-             ierr = i-1
-             exit overfunc
-          endif
-       enddo overfunc
-       if (ierr /= 0) nfunc = ierr
-       if (nfunc.gt.0) then
-          print*
-          call prompt('enter y axis of exact solution (0=all plots)',iexactploty,0)
-          if (iexactploty.gt.0) then
-             call prompt('enter x axis of exact solution ',iexactplotx,1)
-          endif
-       endif
-    case(13)
-       iexist = .false.
-       do while(.not.iexist)
-          call prompt('enter filename ',filename_exact)
-          inquire(file=filename_exact,exist=iexist)
-          if (iexist) then
-             print "(a)",'file seems OK'
-          else
-             ians = .true.
-             call prompt('file does not exist: try again? ',ians)
-             if (.not.ians) return
-          endif
-       enddo
-       call prompt('enter x axis of exact solution ',iexactplotx,1)
-       call prompt('enter y axis of exact solution ',iexactploty,1)
-       print "(a)",'apply column transformations to exact solution?'
-       call prompt(' (no if file contains e.g. log y vs log x)',iApplyTransExactFile)
     end select
 
     return
@@ -397,7 +398,46 @@ contains
     if (idash.eq.0) idash = len_trim(rootname)+1
 
     select case(iexact)
-    case(1,11)
+    case(1)
+       !
+       !--read functions from file
+       !
+       !
+       filename=trim(rootname)//'.func'
+       call read_asciifile(trim(filename),nf,funcstring,ierr)
+       if (ierr.eq.-1) then
+          print "(a)",' no file '//trim(filename)
+          filename = trim(fileprefix)//'.func'
+          call read_asciifile(trim(filename),nf,funcstring,ierr)
+          if (ierr.eq.-1) then
+             print "(a)",' no file '//trim(filename)
+             return
+          endif
+       endif
+       
+       if (nf.gt.0) then
+          i = 0
+          do while(i.lt.nf)
+             i = i + 1
+             call check_function(funcstring(i),ierr,verbose=.false.)
+             if (ierr /= 0) then
+                print "(a)",' error parsing function '//trim(funcstring(i))//', skipping...'
+                do j=i+1,nf
+                   funcstring(j-1) = funcstring(j)
+                enddo
+                funcstring(nf) = ' '
+                nf = nf - 1
+                i = i - 1
+             endif
+          enddo
+          nfunc = nf
+          print "(a,i2,a)",' read ',nfunc,' functions from '//trim(filename)
+       else
+          print "(a)",' *** NO FUNCTIONS READ: none will be plotted ***'
+          ierr = 2
+       endif
+
+    case(3,13)
        !
        !--shock tube parameters from .shk file
        !
@@ -420,7 +460,7 @@ contains
        ierr = 2
        return
 
-    case(4)
+    case(6)
        !
        !--read toy star file for toy star solution
        !
@@ -469,7 +509,7 @@ contains
           ierr = 2
           return
        end select
-    case(6)
+    case(8)
        !
        !--attempt to guess which MHD shock tube has been done from filename
        !
@@ -483,45 +523,6 @@ contains
           call prompt('enter shock solution to plot',ishk,1,7)
        endif
        return
-    case(12)
-       !
-       !--read functions from file
-       !
-       !
-       filename=trim(rootname)//'.func'
-       call read_asciifile(trim(filename),nf,funcstring,ierr)
-       if (ierr.eq.-1) then
-          print "(a)",' no file '//trim(filename)
-          filename = trim(fileprefix)//'.func'
-          call read_asciifile(trim(filename),nf,funcstring,ierr)
-          if (ierr.eq.-1) then
-             print "(a)",' no file '//trim(filename)
-             return
-          endif
-       endif
-       
-       if (nf.gt.0) then
-          i = 0
-          do while(i.lt.nf)
-             i = i + 1
-             call check_function(funcstring(i),ierr,verbose=.false.)
-             if (ierr /= 0) then
-                print "(a)",' error parsing function '//trim(funcstring(i))//', skipping...'
-                do j=i+1,nf
-                   funcstring(j-1) = funcstring(j)
-                enddo
-                funcstring(nf) = ' '
-                nf = nf - 1
-                i = i - 1
-             endif
-          enddo
-          nfunc = nf
-          print "(a,i2,a)",' read ',nfunc,' functions from '//trim(filename)
-       else
-          print "(a)",' *** NO FUNCTIONS READ: none will be plotted ***'
-          ierr = 2
-       endif
-
     end select
 
     return
@@ -640,7 +641,32 @@ contains
     ierr = 666
 
     select case(iexact)
-    case(1)! shock tube
+    case(1) ! arbitrary function parsing
+       if ((iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) .or. iexactploty.eq.0) then
+          do i=1,nfunc
+             call exact_function(funcstring(i),xexact,yexact,time,ierr)
+             if (i.ne.nfunc) then ! plot all except last line here
+                if (itransy.gt.0) call transform(yexact,itransy)
+                !--use xtemp, which is xexact but already transformed
+                call plot_line(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
+             endif
+          enddo
+       endif
+    case(2) ! exact solution read from file
+       if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
+          call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
+          !--plot this untransformed (as may already be in log space)
+          if (ierr.le.0 .and. .not.iApplyTransExactFile) then
+             call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
+             ierr = 1
+          endif
+          !--change into physical units if appropriate
+          if (iRescale .and. iApplyTransExactFile) then
+             xexact(1:iexactpts) = xexact(1:iexactpts)*unitsx
+             yexact(1:iexactpts) = yexact(1:iexactpts)*unitsy
+          endif
+       endif
+    case(3)! shock tube
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irho) then
              call exact_shock(1,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
@@ -653,7 +679,7 @@ contains
           endif
        endif
 
-    case(2)! sedov blast wave
+    case(4)! sedov blast wave
        ! this subroutine does change xexact
        if (iplotx.eq.irad .or. (igeom.eq.3 .and. iplotx.eq.ix(1))) then
           if (iploty.eq.irho) then
@@ -669,12 +695,12 @@ contains
        !   call exact_sedov(0,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
        endif
 
-    case(3)! polytrope
+    case(5)! polytrope
        if (iploty.eq.irho .and. (iplotx.eq.irad .or.(igeom.eq.3 .and. iplotx.eq.ix(1)))) then
           call exact_polytrope(gamma,polyk,xexact,yexact,iexactpts,ierr)
        endif
 
-    case(4)! toy star
+    case(6)! toy star
        if (iBfirst.ne.0) then
           sigma = sigma0
        else
@@ -752,13 +778,13 @@ contains
           endif
        endif
 
-    case(5)! linear wave
+    case(7)! linear wave
        if ((iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then
           ymean = SUM(yplot(1:npart))/REAL(npart)
           call exact_wave(time,ampl,period,lambda,xzero,ymean,xexact,yexact,ierr)
        endif
 
-    case(6) ! mhd shock tubes
+    case(8) ! mhd shock tubes
        ! this subroutine modifies xexact
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irho) then
@@ -790,7 +816,7 @@ contains
                                  xexact,yexact,iexactpts,ierr)
           endif
        endif
-    case(7) 
+    case(9) 
        !--h = (1/rho)^(1/ndim)
        if (((iploty.eq.ih).and.(iplotx.eq.irho)) .or. &
            ((iplotx.eq.ih).and.(iploty.eq.irho))) then
@@ -817,7 +843,7 @@ contains
              endif
           endif
        endif
-    case(8) ! density profiles
+    case(10) ! density profiles
        if (iplotx.eq.irad .or.(igeom.eq.3 .and. iplotx.eq.ix(1))) then
           if (iploty.eq.irho) then
              call exact_densityprofiles(1,iprofile,Msphere,rsoft,xexact,yexact,ierr)
@@ -827,7 +853,7 @@ contains
              call exact_densityprofiles(3,iprofile,Msphere,rsoft,xexact,yexact,ierr)          
           endif
        endif
-    case(9) ! torus
+    case(11) ! torus
        if (iplotx.eq.irad .or.(igeom.eq.3 .and. iplotx.eq.ix(1))) then
           if (iploty.eq.irho) then
              call exact_torus(1,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
@@ -854,13 +880,13 @@ contains
              call exact_torus(5,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)          
           endif
        endif
-    case(10)
+    case(12)
        if (iplotx.eq.irad .or.((igeom.eq.3 .or. igeom.eq.2) .and. iplotx.eq.ix(1))) then
           if (iploty.eq.irho) then
              call exact_ringspread(1,time,Mring,Rring,viscnu,xexact,yexact,ierr)
           endif
        endif
-    case(11) ! special relativistic shock tube
+    case(13) ! special relativistic shock tube
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irhorestframe) then
              call exact_shock_sr(1,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
@@ -872,31 +898,6 @@ contains
              call exact_shock_sr(4,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.irho) then
              call exact_shock_sr(5,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
-          endif
-       endif
-    case(12) ! arbitrary function parsing
-       if ((iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) .or. iexactploty.eq.0) then
-          do i=1,nfunc
-             call exact_function(funcstring(i),xexact,yexact,time,ierr)
-             if (i.ne.nfunc) then ! plot all except last line here
-                if (itransy.gt.0) call transform(yexact,itransy)
-                !--use xtemp, which is xexact but already transformed
-                call plot_line(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
-             endif
-          enddo
-       endif
-    case(13) ! exact solution read from file
-       if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
-          call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
-          !--plot this untransformed (as may already be in log space)
-          if (ierr.le.0 .and. .not.iApplyTransExactFile) then
-             call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
-             ierr = 1
-          endif
-          !--change into physical units if appropriate
-          if (iRescale .and. iApplyTransExactFile) then
-             xexact(1:iexactpts) = xexact(1:iexactpts)*unitsx
-             yexact(1:iexactpts) = yexact(1:iexactpts)*unitsy
           endif
        endif
     end select
