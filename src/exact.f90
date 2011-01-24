@@ -69,6 +69,8 @@ module exact
   real :: Mstar,Rtorus,distortion
   !--ring spreading
   real :: Mring,Rring,viscnu
+  !--dusty waves
+  real :: cs,Kdrag,rhodust
   !--arbitrary function
   integer :: nfunc
   character(len=120), dimension(10) :: funcstring
@@ -84,7 +86,7 @@ module exact
        polyk,sigma0,norder,morder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
-       Mring,Rring,viscnu,nfunc,funcstring
+       Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhodust
        
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -145,6 +147,10 @@ contains
     Mring = 1.0
     Rring = 1.0
     viscnu = 1.e-3
+!   dusty waves
+    Kdrag = 1.0
+    cs    = 1.0
+    rhodust = 1.0
 
 !   arbitrary function
     nfunc = 1
@@ -190,8 +196,9 @@ contains
          '10) Plummer/Hernquist spheres ',/, &
          '11) torus ',/, &
          '12) ring spreading ',/, &
-         '13) special relativistic shock tube')
-    call prompt('enter exact solution to plot',iexact,0,13)
+         '13) special relativistic shock tube', /, &
+         '14) dusty waves ')
+    call prompt('enter exact solution to plot',iexact,0,14)
     print "(a,i2)",'plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
@@ -346,6 +353,13 @@ contains
        call prompt('enter mass of ring',Mring,0.)
        call prompt('enter radius of ring centre R0',Rring,0.)
        call prompt('enter viscosity parameter nu',viscnu,0.)
+    case(14)
+       call prompt('enter starting x position',xzero)
+       call prompt('enter wavelength lambda ',lambda,0.)
+       call prompt('enter amplitude of perturbation',ampl,0.)
+       call prompt('enter sound speed in gas ',cs,0.)
+       call prompt('enter initial density in both gas and dust ',rhodust,0.)
+       call prompt('enter drag coefficient K ',Kdrag,0.)
     end select
 
     return
@@ -575,6 +589,7 @@ contains
     use densityprofiles, only:exact_densityprofiles
     use exactfunction,   only:exact_function
     use ringspread,      only:exact_ringspread
+    use dustywaves,      only:exact_dustywave
     use transforms,      only:transform,transform_inverse
     use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line
     implicit none
@@ -898,6 +913,14 @@ contains
              call exact_shock_sr(4,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.irho) then
              call exact_shock_sr(5,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+          endif
+       endif
+    case(14) ! dusty wave exact solution
+       if (iplotx.eq.ix(1) .and. igeom.le.1) then
+          if (iploty.eq.irho) then
+             call exact_dustywave(1,time,ampl,cs,Kdrag,lambda,xzero,rhodust,xexact,yexact,ierr)
+          elseif (iploty.eq.ivx) then
+             call exact_dustywave(2,time,ampl,cs,Kdrag,lambda,xzero,rhodust,xexact,yexact,ierr)
           endif
        endif
     end select
