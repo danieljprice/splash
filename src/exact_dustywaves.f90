@@ -29,14 +29,14 @@ module dustywaves
 
 contains
 
-subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,ymean,xplot,yplot,ierr)
+subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplot,yplot,ierr)
   use cubic,   only:cubicsolve_complex
   use plotlib, only:plot_line,plot_sls
   implicit none
   integer :: i
   real, parameter :: pi = 3.1415926536
   integer, intent(in) :: iplot
-  real, intent(in)    :: time, ampl, cs, Kdragin, lambda, x0, ymean 
+  real, intent(in)    :: time, ampl, cs, Kdragin, lambda, x0, rhog0, rhod0
   real, intent(in), dimension(:) :: xplot
   real, intent(out), dimension(size(xplot)) :: yplot
   integer, intent(out) :: ierr
@@ -74,8 +74,13 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,ymean,xplot,yplo
      ierr = 3
      return
   endif
-  if (ymean <= 0) then
-     print*,'error: mean density <= 0 on input'
+  if (rhog0 < 0) then
+     print*,'error: gas density < 0 on input'
+     ierr = 4
+     return
+  endif
+  if (rhod0 < 0) then
+     print*,'error: dust density < 0 on input'
      ierr = 4
      return
   endif
@@ -88,9 +93,9 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,ymean,xplot,yplo
      Kdrag = 0.
   endif
 
-  rhodeq  = ymean ! initial dust density
-  rhogeq  = ymean ! initial gas density
-  print*,' rho(dust),0 = ',ymean,' rho(gas),0 = ',ymean
+  rhodeq  = rhod0 ! initial dust density
+  rhogeq  = rhog0 ! initial gas density
+  print*,' rho(dust),0 = ',rhod0,' rho(gas),0 = ',rhog0
   rhodsol = ampl  ! amplitude of dust density perturbation
   rhogsol = ampl  ! amplitude of gas density perturbation
   vdeq    = 0.
