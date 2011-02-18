@@ -28,6 +28,7 @@ module settings_units
  implicit none
  real, dimension(0:maxplot), public :: units
  real, public :: unitzintegration
+ real(doub_prec), public :: unit_interp
  character(len=20), dimension(0:maxplot), public :: unitslabel
  character(len=20), public :: labelzintegration
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
@@ -43,6 +44,7 @@ subroutine defaults_set_units
 
  units(:) = 1.0
  unitzintegration = 1.0
+ unit_interp      = 1.0d0
  unitslabel(:) = ' '
  labelzintegration = ' '
 

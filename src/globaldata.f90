@@ -104,8 +104,8 @@ end module filenames
 module labels
  use params
  implicit none
- integer, parameter :: lenlabel = 60
- integer, parameter :: lenunitslabel = 20  ! length of units label
+ integer, parameter :: lenlabel = 80
+ integer, parameter :: lenunitslabel = 40  ! length of units label
  character(len=lenlabel), dimension(maxplot+2) :: label,labelvec
  character(len=20), dimension(maxparttypes) :: labeltype
  character(len=6), parameter :: labeldefault = 'column'

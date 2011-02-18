@@ -38,7 +38,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
                            outformat,interpolateall)
  use labels,             only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst
  use limits,             only:lim
- use settings_units,     only:units
+ use settings_units,     only:units,unit_interp
  use settings_data,      only:ndim,ndimV,UseTypeInRenderings,iRescale,required,lowmemorymode,debugmode
  use settings_part,      only:iplotpartoftype
  use settings_render,    only:npix,inormalise_interpolations,idensityweightedinterpolation
@@ -156,7 +156,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  inormalise = inormalise_interpolations
  call set_interpolation_weights(weight,dat,itype,(iplotpartoftype .and. UseTypeInRenderings),&
       ninterp,npartoftype,masstype,ntypes,ncolumns,irho,ipmass,ih,ndim,iRescale,&
-      idensityweightedinterpolation,inormalise,units,required)
+      idensityweightedinterpolation,inormalise,units,unit_interp,required)
  !
  !--set colours (just in case)
  !
