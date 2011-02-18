@@ -2816,10 +2816,11 @@ contains
     use filenames,     only:nstepsinfile,nfiles,rootname
     use settings_page, only:iPlotLegend,iPlotStepLegend, &
         hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnlyOnPanel, &
-        iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext,iUseBackGroundColourForAxes
+        iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext,&
+        alphalegend,iUseBackGroundColourForAxes
     use shapes,        only:nshapes,plot_shapes
     use pagesetup,     only:xlabeloffset
-    use plotlib,       only:plot_qci,plot_sci,plot_annotate
+    use plotlib,       only:plot_qci,plot_sci,plot_annotate,plot_set_opacity
     use labels,        only:is_coord
     implicit none
     integer :: icoloursave
@@ -2869,8 +2870,10 @@ contains
         .and. timei.gt.-0.5*huge(timei)) then  ! but not if time has not been read from dump
 
        !--change to background colour index for legend text if overlaid
-       if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call plot_sci(0)
-
+       if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) then
+          call plot_sci(0)
+          call plot_set_opacity(alphalegend)
+       endif
        if (istepsonpage.eq.1) &
           call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend)
     endif
@@ -2901,10 +2904,10 @@ contains
        
        if (iploty.gt.ndataplots) then
           call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
-            .false.,.true.,trim(steplegendtext),hposlegend,vposlegend)           
+            .false.,.true.,trim(steplegendtext),hposlegend,vposlegend,1.0)           
        else
           call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
-            iplotpartoftype(1),iplotline,trim(steplegendtext),hposlegend,vposlegend)
+            iplotpartoftype(1),iplotline,trim(steplegendtext),hposlegend,vposlegend,1.0)
        endif
     endif
     
@@ -2916,7 +2919,10 @@ contains
        if (len_trim(pagetitles(ipanel)).gt.0) then
           
           !--change to background colour index if title is overlaid
-          if (iUseBackGroundColourForAxes .and. vpostitle.lt.0.) call plot_sci(0)
+          if (iUseBackGroundColourForAxes .and. vpostitle.lt.0.) then
+             call plot_sci(0)
+             call plot_set_opacity(alphalegend)
+          endif
 
           call plot_annotate('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
        endif
@@ -2930,8 +2936,10 @@ contains
                    .and. is_coord(iplotx,ndim) .and. is_coord(iploty,ndim)) then
 
        !--change to background colour index if title is overlaid
-       if (iUseBackGroundColourForAxes .and. vposscale.gt.0.) call plot_sci(0)
-
+       if (iUseBackGroundColourForAxes .and. vposscale.gt.0.) then
+          call plot_sci(0)
+          call plot_set_opacity(alphalegend)
+       endif
        call legend_scale(dxscale,hposscale,vposscale,scaletext)
     endif
     
@@ -2941,6 +2949,7 @@ contains
     
     !--restore colour index
     call plot_sci(icoloursave)
+    call plot_set_opacity(1.0)
     
     return
   end subroutine legends_and_title
@@ -3111,6 +3120,7 @@ contains
   subroutine set_weights(weighti,dati,iamtypei,usetype)
     use settings_render, only:idensityweightedinterpolation
     use interpolation,   only:set_interpolation_weights
+    use settings_units,  only:unit_interp
     implicit none
     real, dimension(:), intent(out) :: weighti
     real, dimension(:,:), intent(in) :: dati
@@ -3121,7 +3131,7 @@ contains
     inormalise = inormalise_interpolations
     call set_interpolation_weights(weighti,dati,iamtypei,usetype,&
          ninterp,npartoftype,masstype,ntypes,ndataplots,irho,ipmass,ih,ndim,&
-         iRescale,idensityweightedinterpolation,inormalise,units,required)
+         iRescale,idensityweightedinterpolation,inormalise,units,unit_interp,required)
 
     return
  end subroutine set_weights

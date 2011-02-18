@@ -207,14 +207,14 @@ end subroutine legend_vec
 !  plots this below the time legend
 !-------------------------------------------------------------------------
 subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
-           iplotpts,iplotline,text,hposlegend,vposlegend)
+           iplotpts,iplotline,text,hposlegend,vposlegend,alphalegend)
   use plotlib, only:plot_qwin,plot_qcs,plot_qci,plot_qls,plot_sci,plot_sls, &
-                    plot_line,plot_pt,plot_text,plot_stbg,plot_slc,plot_qlc
+                    plot_line,plot_pt,plot_text,plot_stbg,plot_slc,plot_qlc,plot_set_opacity
   implicit none
   integer, intent(in) :: icall,icolour,imarkerstyle,ilinestyle
   logical, intent(in) :: iplotpts,iplotline
   character(len=*), intent(in) :: text
-  real, intent(in) :: hposlegend,vposlegend
+  real, intent(in) :: hposlegend,vposlegend,alphalegend
   integer :: icolourprev, ilinestyleprev,ilinecapprev
   real, dimension(3) :: xline,yline
   real :: xch, ych, xmin, xmax, ymin, ymax
@@ -244,6 +244,7 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
   xline(3) = xline(1) + 2.*xch
 
   call plot_sci(icolour)
+  call plot_set_opacity(alphalegend)
   call plot_sls(ilinestyle)
 !
 !--set round caps
@@ -274,6 +275,7 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
   endif
 
   call plot_sci(icolourprev)    ! reset colour index
+  call plot_set_opacity(1.0)
   call plot_stbg(-1) ! reset text background to transparent
 
 end subroutine legend_markers

@@ -35,7 +35,7 @@ module settings_page
  logical :: iPlotScale,iUseBackgroundColourForAxes,usesquarexy
  real    :: papersizex,aspectratio
  real    :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
- real    :: charheight
+ real    :: charheight,alphalegend
  real    :: dxscale,hposscale,vposscale
  character(len=20) :: legendtext, scaletext
  character(len=60) :: device
@@ -75,6 +75,7 @@ subroutine defaults_set_page
   hposlegend = 0.95     ! horizontal legend position as fraction of viewport
   vposlegend = 2.0      ! vertical legend position in character heights
   fjustlegend = 1.0    ! justification factor for legend
+  alphalegend = 0.5    ! transparency of overlaid annotation
   legendtext = 't='
   iPlotLegendOnlyOnPanel = 0
   
@@ -128,6 +129,7 @@ subroutine submenu_page(ichoose)
  use params,      only:maxplot
  use prompting,   only:prompt,print_logical
  use pagecolours, only:pagecolourscheme,colour_fore,colour_back,maxpagecolours
+ use plotlib,     only:plot_lib_supports_alpha
  implicit none
  integer, intent(in) :: ichoose
  integer             :: iaction,i
@@ -282,7 +284,7 @@ subroutine submenu_page(ichoose)
   case(9)
      print "(3(/,i1,')',1x,a))",(i,pagecolourscheme(i),i=0,maxpagecolours)
      call prompt(' Choose page colour scheme ',iPageColours,0,maxpagecolours)
-     
+
      write(*,"(3(/,a))",advance='no') &
        ' Overlaid (that is, drawn inside the plot borders) axis ',&
        ' ticks, legend text and titles are by default plotted ', &
@@ -295,7 +297,10 @@ subroutine submenu_page(ichoose)
                     iUseBackgroundColourForAxes)
      else
         print "(a,/)",'.'
-        call prompt('Do you want to plot these in background colour instead? ',iUseBackgroundColourForAxes)
+        call prompt('Use background colour for these? ',iUseBackgroundColourForAxes)
+     endif
+     if (iUseBackgroundColourForAxes .and. plot_lib_supports_alpha()) then
+        call prompt('Enter opacity for overlaid text and annotation ',alphalegend,0.0,1.0)
      endif
      
      return

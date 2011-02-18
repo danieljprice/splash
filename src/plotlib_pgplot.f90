@@ -443,6 +443,16 @@ logical function plot_lib_is_pgplot()
 end function plot_lib_is_pgplot
 
 !---------------------------------------------
+! query whether or not the library supports transparency
+!---------------------------------------------
+logical function plot_lib_supports_alpha()
+ implicit none
+ 
+ plot_lib_supports_alpha = .false.
+
+end function plot_lib_supports_alpha
+
+!---------------------------------------------
 ! initialise the plotting library
 !---------------------------------------------
 subroutine plot_init(devicein, ierr, papersizex, aspectratio)
@@ -490,6 +500,14 @@ subroutine plot_slc(lc)
   !--line cap has no effect in PGPLOT
   
 end subroutine plot_slc
+
+subroutine plot_set_opacity(alpha)
+  implicit none
+  real, intent(in)           :: alpha
+
+  !--opacity has no effect in PGPLOT
+
+end subroutine plot_set_opacity
 
 subroutine plot_qlc(lc)
   implicit none

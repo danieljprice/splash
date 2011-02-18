@@ -80,6 +80,8 @@ module plotlib
       plot_wnad=>giza_set_window_equal_scale, &
       plot_qcur=>giza_device_has_cursor, &
       giza_contour,            &
+      giza_get_colour_representation, &
+      giza_set_colour_representation_alpha, &
       giza_get_character_size, &
       giza_get_surface_size,   &
       giza_get_viewport,       &
@@ -109,6 +111,16 @@ logical function plot_lib_is_pgplot()
  plot_lib_is_pgplot = .false.
 
 end function plot_lib_is_pgplot
+
+!---------------------------------------------
+! query whether or not the library supports transparency
+!---------------------------------------------
+logical function plot_lib_supports_alpha()
+ implicit none
+ 
+ plot_lib_supports_alpha = .true.
+
+end function plot_lib_supports_alpha
 
 !---------------------------------------------
 ! initialise the plotting library
@@ -159,12 +171,16 @@ subroutine plot_ctab(l,r,g,b,nc,contra,bright)
 end subroutine plot_ctab
 
 subroutine plot_qvsz(units,x1,x2,y1,y2)
+  use giza, only:giza_get_paper_size,giza_units_device
   implicit none
 
   real, intent(out)   :: x1,x2,y1,y2
   integer, intent(in) :: units
 
-  call giza_get_surface_size(x1,x2,y1,y2)
+  x1 = 0.
+  y1 = 0.
+  call giza_get_paper_size(units,x2,y2)
+
 end subroutine plot_qvsz
 
 subroutine plot_bins(nbin,x,data,centre)
@@ -198,14 +214,16 @@ subroutine plot_qcol(icolmin,icolmax)
   integer,intent(out) :: icolmin,icolmax
 
   icolmin = 0
-  icolmax = 20
+  icolmax = 256
+
 end subroutine plot_qcol
 
 subroutine plot_qcir(icolmin,icolmax)
   integer,intent(out) :: icolmin,icolmax
 
   icolmin = 0
-  icolmax = 19
+  icolmax = 256
+
 end subroutine plot_qcir
 
 subroutine plot_scir(icilo, icihi)
@@ -286,6 +304,19 @@ subroutine plot_numb(m,pp,form,string,nc)
 
 end subroutine plot_numb
 
+subroutine plot_set_opacity(alpha)
+  implicit none
+  real, intent(in)           :: alpha
+  integer :: ci
+  real    :: red,green,blue
+
+  call plot_qci(ci)
+  call giza_get_colour_representation(ci,red,green,blue)
+  call giza_set_colour_representation_alpha(ci,red,green,blue,alpha)
+
+end subroutine plot_set_opacity
+
+
 subroutine plot_err1(dir,x,y,e,t)
   implicit none
   integer,intent(in) :: dir
@@ -306,7 +337,7 @@ subroutine plot_conb(a,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
   real,intent(in)    :: a(idim,jdim),c(*),tr(6),blank
   real               :: affine(6)
 
-  print*,' WARNING: blanking in coutouring not implemented in giza'
+  print*,' WARNING: blanking in contouring not implemented in giza'
   call convert_tr_to_affine(tr,affine)
   call giza_contour(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,nc,c,affine)
 
