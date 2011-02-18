@@ -48,7 +48,7 @@ module colourbar
  logical, public :: iplotcolourbarlabel = .true.
 
  public :: plotcolourbar,incolourbar,incolourbarlabel,barisvertical,get_colourbarmargins
- real, private :: xlabeloffsetsave = 0.
+ real, private, save :: xlabeloffsetsave = 0.
  real, parameter, private :: dispall = 0.25
  private
  
