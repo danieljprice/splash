@@ -3152,9 +3152,9 @@ contains
    use labels,           only:iutherm,is_coord
    use plotlib,          only:plot_qci,plot_qlw,plot_sci,plot_slw
    implicit none
-   integer, intent(in) :: ivecx,ivecy,numpixx,numpixy
-   real, intent(in) :: pixwidthvec,pixwidthvecy
-   real, intent(inout) :: vmax
+   integer,          intent(in) :: ivecx,ivecy,numpixx,numpixy
+   real,             intent(in) :: pixwidthvec,pixwidthvecy
+   real,          intent(inout) :: vmax
    character(len=*), intent(in) :: label
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
    real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpixvec
