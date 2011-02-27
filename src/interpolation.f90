@@ -75,7 +75,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
   !   units read from the read_data routine
   !   are inconsistent (this is the case for the SEREN read)
   !
-  dunitspmass = 1.d0*unit_interp
+  dunitspmass = 1.d0
   dunitsrho = 1.d0
   dunitsh = 1.d0
   if (iRescale) then
@@ -83,6 +83,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
      if (ih.gt.0) dunitsh = 1.d0/units(ih)
      if (irho.gt.0) dunitsrho = 1.d0/units(irho)
   endif
+  dunitspmass = dunitspmass * unit_interp
 
   if (ipmass.gt.0 .and. ipmass.le.ndataplots .and. &
       irho.gt.0 .and. irho.le.ndataplots .and. &
