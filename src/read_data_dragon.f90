@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
@@ -44,20 +44,42 @@
 ! npartoftype(maxstep): number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !                      (used in calc_quantities for calculating the pressure)
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !
 ! Partial data read implemented means that columns with
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
 
+module unit_constants
+  integer, parameter :: DP = selected_real_kind(p=15) ! double precision
+
+  ! Length units in metres
+  real(kind=DP),parameter :: r_pc    = 3.08568E16_DP     ! parsec
+  real(kind=DP),parameter :: r_au    = 1.49597870E11_DP  ! astronomical unit
+  real(kind=DP),parameter :: r_sun   = 6.96E8_DP         ! solar radius
+  real(kind=DP),parameter :: r_earth = 6.371E6_DP        ! Earth radius
+
+  ! Mass units in kilograms
+  real(kind=DP),parameter :: m_sun   = 1.98892E30_DP     ! solar mass
+  real(kind=DP),parameter :: m_jup   = 1.8986E27_DP      ! Jupiter mass
+  real(kind=DP),parameter :: m_earth = 5.9736E24_DP      ! Earth mass
+
+  ! Time units in seconds
+  real(kind=DP),parameter :: myr = 3.1556952E13_DP       ! megayear
+  real(kind=DP),parameter :: yr  = 3.1556952E7_DP        ! year
+  real(kind=DP),parameter :: day = 8.64E4_DP             ! day
+
+end module unit_constants
+
 subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,ntypes
+  use settings_units, only:labelzintegration, unitzintegration, unit_interp
   use mem_allocation, only:alloc
   use labels, only:label,labeltype
   use system_utils, only:ienvironment
@@ -70,9 +92,9 @@ subroutine read_data(rootname,istepstart,nstepsread)
   integer :: i,j,icol,ierr,iambinaryfile,itype
   integer :: ncolstep,npart_max,nstep_max,ntoti,nlastcol,nextracols
   logical :: iexist,reallocate,doubleprec
-  character(len=11) :: fmt 
+  character(len=11) :: fmt
   character(len=50) :: string
-  
+
   integer :: nei_want,nei_min,nmax
   integer, dimension(:), allocatable :: iparttype
   integer, dimension(20) :: idata
@@ -84,7 +106,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   if (len_trim(rootname).gt.0) then
      datfile = trim(rootname)
   else
-     print*,' **** no data read **** ' 
+     print*,' **** no data read **** '
      return
   endif
 !
@@ -92,7 +114,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(datfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(datfile)//': file not found ***'
      return
   endif
 !
@@ -113,7 +135,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   call set_labels
 !
 !--read data from snapshots
-!  
+!
   j = istepstart
 
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
@@ -125,19 +147,21 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   inquire(file=datfile,form=fmt)
   !print*,'fmt = ',fmt
-  
-  select case(trim(adjustl(fmt)))
-  case('UNFORMATTED')
-     iambinaryfile = 1
-     open(unit=iunit,file=datfile,status='old',form='unformatted',iostat=ierr)
-  case('FORMATTED')
-     iambinaryfile = 0
-     open(unit=iunit,file=datfile,status='old',form='formatted',iostat=ierr)
-  case default
-     !--if compiler cannot distinguish the two, try ascii first, then binary
+
+!   select case(trim(adjustl(fmt)))
+!   case('UNFORMATTED')
+!      iambinaryfile = 1
+!      open(unit=iunit,file=datfile,status='old',form='unformatted',iostat=ierr)
+!      write (6,*) "Compiler identified as UNFORMATTED"
+!   case('FORMATTED')
+!      iambinaryfile = 0
+!      open(unit=iunit,file=datfile,status='old',form='formatted',iostat=ierr)
+!      write (6,*) "Compiler identified as FORMATTED"
+!   case default
+     !--if compiler cannot distinguish the two, try binary first, then ascii
      iambinaryfile = -1
-     open(unit=iunit,file=datfile,status='old',form='formatted',iostat=ierr)  
-  end select
+     open(unit=iunit,file=datfile,status='old',form='unformatted',iostat=ierr)
+!   end select
 
   if (ierr /= 0) then
      print "(a)",'*** ERROR OPENING '//trim(datfile)//' ***'
@@ -145,28 +169,46 @@ subroutine read_data(rootname,istepstart,nstepsread)
   endif
   !
   !--read the file header
-  !  try ascii format first, and if unsuccessful try binary
+  !  try binary format first, and if unsuccessful try ascii
   !
-  doubleprec = .false.
+  doubleprec = .true.
   if (iambinaryfile.eq.1) then
      print "(a)",' reading binary dragon format '
      call read_dragonheader_binary(iunit,ierr)
-  else
-     if (iambinaryfile.eq.0) print "(a)",' reading ascii dragon format '
+  else if (iambinaryfile.eq.0) then
+     print "(a)",' reading ascii dragon format '
      call read_dragonheader_ascii(iunit,ierr,iambinaryfile)
-     if (iambinaryfile.lt.0) then
+  else
+     call read_dragonheader_binary(iunit,ierr)
+     if (ierr.eq.0) then
+        !--if successful binary header read, file is doubleprec binary
+        iambinaryfile = 1
+        print "(a)",' reading binary dragon format '
+        print "(a)",' Double precision file'
+     else
+        !--otherwise, close binary file, and assume file is single precision binary
+        doubleprec = .false.
+        close(unit=iunit)
+        iambinaryfile = 1
+        open(unit=iunit,file=datfile,status='old',form='unformatted',iostat=ierr)
+        call read_dragonheader_binary(iunit,ierr)
         if (ierr.eq.0) then
-           !--if successful ascii header read, file is ascii
-           iambinaryfile = 0
-           print "(a)",' reading ascii dragon format '   
-        else
-           !--otherwise, close ascii file, and assume file is binary
-           close(unit=iunit)
-           iambinaryfile = 1
-           open(unit=iunit,file=datfile,status='old',form='unformatted',iostat=ierr)  
            print "(a)",' reading binary dragon format '
-           call read_dragonheader_binary(iunit,ierr)
-        endif
+           print "(a)",' Single precision file'
+        else
+           print "(a)",' reading ascii dragon format '
+           iambinaryfile = 0
+           close(unit=iunit)
+           open(unit=iunit,file=datfile,status='old',form='formatted',iostat=ierr)
+           call read_dragonheader_ascii(iunit,ierr,iambinaryfile)
+           if (ierr/=0) then
+              print "(a)",' ERROR reading ascii file header: wrong endian binary? '
+              close (iunit)
+              ndim = 0
+              ncolumns = 0
+              return
+           end if
+        end if
      endif
   endif
   !
@@ -183,43 +225,52 @@ subroutine read_data(rootname,istepstart,nstepsread)
      if (iambinaryfile.eq.1) then
         print "(a)",' ERROR reading binary file header: wrong endian? '
      else
-        print "(a)",' ERROR reading ascii file header '     
+        print "(a)",' ERROR reading ascii file header '
      endif
      ndim = 0
      ncolumns = 0
      close(unit=iunit)
      return
   endif
-  
-  timetemp = rdata(1)
-  runit = rdata(21)
-  massunit = rdata(22)
-  gammatemp = rdata(26)
-  sinksoft = rdata(27)
-  sinkrad = rdata(38)
-  
+
+  if (doubleprec) then
+    timetemp = rdatadb(1)
+    runit = rdatadb(21)
+    massunit = rdatadb(22)
+    gammatemp = rdatadb(26)
+    sinksoft = rdatadb(27)
+    sinkrad = rdatadb(38)
+  else
+    timetemp = rdata(1)
+    runit = rdata(21)
+    massunit = rdata(22)
+    gammatemp = rdata(26)
+    sinksoft = rdata(27)
+    sinkrad = rdata(38)
+  end if
+
   !--assume first that the file is single precision, check values are sensible, if not try double
-  if (iambinaryfile.eq.1) then
-     if (timetemp.lt.0. .or. runit.lt.0. .or. massunit.lt.0. .or. gammatemp.lt.0. &
-      .or. gammatemp.gt.6.) then
-        print "(a)",' double precision file'
-        doubleprec = .true.
-        rewind(iunit)
-        call read_dragonheader_binary(iunit,ierr)  
-     else
-        print "(a)",' single precision file'
-     endif
-  endif
+!   if (iambinaryfile.eq.1) then
+!      if (timetemp.lt.0. .or. runit.lt.0. .or. massunit.lt.0. .or. gammatemp.lt.0. &
+!       .or. gammatemp.gt.6.) then
+!         print "(a)",' double precision file'
+!         doubleprec = .true.
+!         rewind(iunit)
+!         call read_dragonheader_binary(iunit,ierr)
+!      else
+!         print "(a)",' single precision file'
+!      endif
+!   endif
 
   print*,'time             : ',timetemp
   print*,'gamma            : ',gammatemp
   print*,'n_total          : ',ntoti
-   
+
   if (ierr /= 0) then
      if (iambinaryfile.eq.1) then
         print "(a)",' ERROR reading real part of binary file header '
      else
-        print "(a)",' ERROR reading real part of ascii file header '     
+        print "(a)",' ERROR reading real part of ascii file header '
      endif
      ndim = 0
      ncolumns = 0
@@ -230,6 +281,10 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !--if successfully read header, increment the nstepsread counter
   !
   nstepsread = nstepsread + 1
+  !
+  !-- now work out dimensionless weight unit and z integration unit
+  !
+  call find_weights(unit_interp,unitzintegration,labelzintegration)
   !
   !--now read data
   !
@@ -266,19 +321,19 @@ subroutine read_data(rootname,istepstart,nstepsread)
   gamma(j) = gammatemp
   !
   !--read particle data
-  !  
+  !
   if (ntoti.gt.0) then
      if (iambinaryfile.eq.1) then
         call read_dragonbody_binary(iunit,ierr)
      else
-        call read_dragonbody_ascii(iunit,ierr)     
+        call read_dragonbody_ascii(iunit,ierr)
      endif
   else
      ntoti = 0
      npartoftype(1,i) = 0
      dat(:,:,i) = 0.
   endif
-  
+
   if (allocated(iamtype)) then
      !--relabel particle types
      call set_types(iamtype(:,j),ntoti,npartoftype(:,j))
@@ -292,9 +347,9 @@ subroutine read_data(rootname,istepstart,nstepsread)
            print*,trim(string),' ',npartoftype(itype,j)
         endif
      enddo
-  endif        
+  endif
 !
-!--set flag to indicate that only part of this file has been read 
+!--set flag to indicate that only part of this file has been read
 !
   if (.not.all(required(1:ncolstep))) ipartialread = .true.
 !
@@ -304,7 +359,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   close(unit=iunit)
 
   return
-  
+
 contains
 
 !----------------------------------------------------
@@ -319,13 +374,13 @@ subroutine read_dragonheader_binary(iunitb,ierr)
  if (doubleprec) then
     read(iunitb,end=55,iostat=ierr) rdatadb
  else
-    read(iunitb,end=55,iostat=ierr) rdata 
+    read(iunitb,end=55,iostat=ierr) rdata
  endif
- 
+
  return
 
 55 continue
- print "(a)",' ERROR: end of file in binary header read'
+ !print "(a)",' ERROR: end of file in binary header read'
  ierr = -1
  return
 
@@ -389,7 +444,7 @@ subroutine read_dragonbody_binary(iunitb,ierr)
     if (ierr /= 0) print*,' WARNING: errors reading positions '
  else
     read(iunitb,end=55,iostat=ierr)
-    if (ierr /= 0) print*,' WARNING: error skipping positions ' 
+    if (ierr /= 0) print*,' WARNING: error skipping positions '
  endif
 
  !--velocities
@@ -406,7 +461,7 @@ subroutine read_dragonbody_binary(iunitb,ierr)
  else
     read(iunitb,end=55,iostat=ierr)
     if (ierr /= 0) print*,' WARNING: error skipping velocities '
- endif 
+ endif
 
  if (doubleprec .and. any(required(ndim+ndimV+1:ncolstep))) then
     allocate(dummy(ntoti),stat=ierr)
@@ -415,7 +470,7 @@ subroutine read_dragonbody_binary(iunitb,ierr)
        goto 56
     endif
  endif
- 
+
  !--the rest
  do icol = ndim+ndimV+1,nlastcol
     if (required(icol)) then
@@ -444,7 +499,7 @@ subroutine read_dragonbody_binary(iunitb,ierr)
     deallocate(idumtype)
     if (ierr /= 0) print*,' WARNING: error reading itype'
  endif
- 
+
  !--extra columns beyond itype
  do icol = nlastcol+1,nlastcol+nextracols
     if (required(icol)) then
@@ -460,7 +515,7 @@ subroutine read_dragonbody_binary(iunitb,ierr)
        if (ierr /= 0) print*,' WARNING: error skipping '//trim(label(icol))
     endif
  enddo
- 
+
  if (allocated(dummyx)) deallocate(dummyx)
  if (allocated(dummy)) deallocate(dummy)
  return
@@ -500,7 +555,7 @@ subroutine read_dragonbody_ascii(iunita,ierr)
     if (ierr /= 0) nerr = nerr + 1
  enddo
  if (nerr.gt.0) print*,' WARNING: ',nerr,' errors reading velocities '
- 
+
  !--the rest
  if (any(required(ndim+ndimV+1:nlastcol))) then
     do icol = ndim+ndimV+1,nlastcol
@@ -512,9 +567,9 @@ subroutine read_dragonbody_ascii(iunita,ierr)
        if (nerr.gt.0) print*,' WARNING: ',nerr,' errors reading '//trim(label(icol))
     enddo
  endif
- 
+
  !--particle type
- if (size(iamtype(:,j)).gt.1) then 
+ if (size(iamtype(:,j)).gt.1) then
     nerr = 0
     do i=1,ntoti
        read(iunita,*,end=55,iostat=ierr) idumtype
@@ -553,11 +608,12 @@ subroutine set_types(itypei,ntotal,noftype)
  integer(kind=int1), dimension(:), intent(inout) :: itypei
  integer, intent(in) :: ntotal
  integer, dimension(:), intent(out) :: noftype
- integer :: ngas,nsink,nbnd,ncloud,nsplit,nunknown
+ integer :: ngas,nsink,nbnd,ncloud,nsplit,nunknown,nstar
 
 !--types
 !  1 gas
 ! -1 sink
+! -2 star
 !  6 boundary (fixed)
 !  9 intercloud (hydro only)
 !  4 split particle (obsolete?)
@@ -569,6 +625,7 @@ subroutine set_types(itypei,ntotal,noftype)
 !  4 intercloud
 !  5 split
 !  6 unknown / the rest
+!  7 star
 !
  ngas = 0
  nsink = 0
@@ -576,6 +633,7 @@ subroutine set_types(itypei,ntotal,noftype)
  ncloud = 0
  nsplit = 0
  nunknown = 0
+ nstar = 0
  do i=1,ntotal
     select case(itypei(i))
     case(1)
@@ -593,22 +651,27 @@ subroutine set_types(itypei,ntotal,noftype)
     case(4)
        nsplit = nsplit + 1
        itypei(i) = 5
+    case(-2)
+       nstar = nstar + 1
+       itypei(i) = 6
     case default
        nunknown = nunknown + 1
-       itypei(i) = 6
+!        itypei(i) = 6
+       write (6,*) "Unknown particle type ", itypei(i), "!!"
+       stop
     end select
  enddo
- 
+
  noftype(1) = ngas
  noftype(2) = nbnd
  noftype(3) = nsink
  noftype(4) = ncloud
  noftype(5) = nsplit
- noftype(6) = nunknown
+ noftype(6) = nstar
  if (sum(noftype(1:6)).ne.ntotal) then
     print "(a)",' INTERNAL ERROR setting number in each type in dragon read'
  endif
- 
+
  return
 end subroutine set_types
 
@@ -659,7 +722,7 @@ subroutine set_labels
   do i=1,ndimV
      label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
   enddo
-  
+
   !--set labels for each particle type
   !
   ntypes = 6
@@ -668,14 +731,192 @@ subroutine set_labels
   labeltype(3) = 'sink'
   labeltype(4) = 'cloud'
   labeltype(5) = 'split'
-  labeltype(6) = 'unknown'
+  labeltype(6) = 'star'
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .true.
   UseTypeInRenderings(3) = .false.
   UseTypeInRenderings(4) = .true.
   UseTypeInRenderings(5) = .true.
-  UseTypeInRenderings(6) = .true.
+  UseTypeInRenderings(6) = .false.
 
 !-----------------------------------------------------------
   return
 end subroutine set_labels
+
+subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegration)
+   use labels, only:ipmass,ih,irho
+   use params
+   use settings_data, only:ndim
+   use unit_constants
+   use system_commands, only:get_environment
+   implicit none
+
+   real(doub_prec), intent(out)      :: out_unit_interp
+   real, intent(out)                 :: out_unitzintegration
+   character(len=20), intent(out)    :: out_labelzintegration
+   real(doub_prec)                   :: dm_unit, dh_unit, drho_unit, dr_unit
+   logical                           :: do_dimweight, do_zintegration
+   character(len=20)                 :: rho_length_label
+   real(doub_prec)                   :: rho_length
+   character(len=20) :: r_unit                  ! length unit
+   character(len=20) :: m_unit                  ! mass unit
+   character(len=20) :: rho_unit                ! density unit
+   character(len=20) :: h_unit                  ! smoothing length unit
+
+   call get_environment("DRAGON_R_UNIT",r_unit)
+   call get_environment("DRAGON_M_UNIT",m_unit)
+   call get_environment("DRAGON_RHO_UNIT",rho_unit)
+   call get_environment("DRAGON_H_UNIT",H_unit)
+
+   out_unit_interp = 1.0
+   out_unitzintegration = 1.0
+   out_labelzintegration = ""
+
+   do_dimweight = .TRUE.
+   do_zintegration = .TRUE.
+
+! Length unit in S.I. units (m)
+   if (r_unit=="") then
+      print*,'No positions or no position units!'
+      print*,'Set environment variable DRAGON_R_UNIT to:'
+      print*,'  pc, au, r_sun, r_earth, km, m, cm or 1 (dimensionless)'
+      do_zintegration = .FALSE.
+      dr_unit = 1._DP
+   else if (r_unit=="pc") then
+      dr_unit = r_pc
+   else if (r_unit=="au") then
+      dr_unit = r_au
+   else if (r_unit=="r_sun") then
+      dr_unit = r_sun
+   else if (r_unit=="r_earth") then
+      dr_unit = r_earth
+   else if (r_unit=="km") then
+      dr_unit = 1000.0_DP
+   else if (r_unit=="m") then
+      dr_unit = 1.0_DP
+   else if (r_unit=="cm") then
+      dr_unit = 0.01_DP
+   else if (r_unit=="1") then
+      dr_unit = 1._DP
+   else
+      print*,'Unknown position unit ', r_unit, '!'
+      do_zintegration = .FALSE.
+      dr_unit = 1._DP
+   end if
+
+! Length unit in S.I. units (m)
+   if (h_unit=="") then
+      print*,'No smoothing lengths or no smoothing length units!'
+      print*,'Set environment variable DRAGON_H_UNIT to: '
+      print*,'  pc, au, r_sun, r_earth, km, m, cm or 1 (dimensionless)'
+      do_dimweight = .FALSE.
+      dh_unit = 1._DP
+   else if (h_unit=="pc") then
+      dh_unit = r_pc
+   else if (h_unit=="au") then
+      dh_unit = r_au
+   else if (h_unit=="r_sun") then
+      dh_unit = r_sun
+   else if (h_unit=="r_earth") then
+      dh_unit = r_earth
+   else if (h_unit=="km") then
+      dh_unit = 1000.0_DP
+   else if (h_unit=="m") then
+      dh_unit = 1.0_DP
+   else if (h_unit=="cm") then
+      dh_unit = 0.01_DP
+   else if (h_unit=="1") then
+      dh_unit = 1._DP
+   else
+      print*,'Unknown smoothing length unit ', h_unit, '!'
+      do_dimweight = .FALSE.
+      dh_unit = 1._DP
+   end if
+
+! Mass units in S.I. units (kg)
+   if (m_unit=="") then
+      print*,'No masses or no mass units!'
+      print*,'Set environment variable DRAGON_M_UNIT to:'
+      print*,'  m_sun, m_jup, m_earth, kg, g or 1 (dimensionless)'
+      do_dimweight = .FALSE.
+      dm_unit = 1._DP
+   else if (m_unit=="m_sun") then
+      dm_unit = m_sun
+   else if (m_unit=="m_jup") then
+      dm_unit = m_jup
+   else if (m_unit=="m_earth") then
+      dm_unit = m_earth
+   else if (m_unit=="kg") then
+      dm_unit = 1._DP
+   else if (m_unit=="g") then
+      dm_unit = 1.0E-3_DP
+   else if (m_unit=="1") then
+      dm_unit = 1._DP
+   else
+      print*,'Unknown mass unit ', m_unit, '!'
+      do_dimweight = .FALSE.
+      dm_unit = 1._DP
+   end if
+
+ ! Density units in S.I. units (i.e. kg/m^3)
+   if (rho_unit=="") then
+      print*,'No densities or no density units!'
+      print*,'Set environment variable DRAGON_RHO_UNIT to:'
+      if (ndim==3) print*,'  m_sun_pc3, kg_m3, g_cm3 or 1 (dimensionless)'
+      if (ndim==2) print*,'  m_sun_pc2, kg_m2, g_cm2 or 1 (dimensionless)'
+      if (ndim==1) print*,'  1 (dimensionless)'
+      do_dimweight = .FALSE.
+      do_zintegration = .FALSE.
+      rho_length = 1._DP
+   else if (rho_unit=="m_sun_pc3") then
+      drho_unit = m_sun / (r_pc**3)
+      rho_length = r_pc
+      rho_length_label = "pc"
+   else if (rho_unit=="m_sun_pc2") then
+      drho_unit = m_sun / (r_pc**2)
+      rho_length = r_pc
+      rho_length_label = "pc"
+   else if (rho_unit=="kg_m3") then
+      drho_unit = 1.0_DP
+      rho_length = 1.0_DP
+      rho_length_label = "m"
+   else if (rho_unit=="kg_m2") then
+      drho_unit = 1.0_DP
+      rho_length = 1.0_DP
+      rho_length_label = "m"
+   else if (rho_unit=="g_cm3") then
+      drho_unit = 1.0E3_DP
+      rho_length = 0.01_DP
+      rho_length_label = "cm"
+   else if (rho_unit=="g_cm2") then
+      drho_unit = 10.0_DP
+      rho_length = 0.01_DP
+      rho_length_label = "cm"
+   else if (rho_unit=="1") then
+      drho_unit = 1._DP
+      rho_length = 1._DP
+      rho_length_label = ""
+   else
+      print*,'Unknown density unit ', rho_unit, '!'
+      do_dimweight = .FALSE.
+      do_zintegration = .FALSE.
+      rho_length = 1._DP
+   end if
+
+   if (do_dimweight) then
+      out_unit_interp = dm_unit/(drho_unit*dh_unit**ndim)
+   else
+      print*,'Cannot create dimensionless weight'
+      print*,'(unnormalised rendered plots may be incorrect)'
+   end if
+
+   if (do_zintegration) then
+      out_unitzintegration = dr_unit / rho_length
+      out_labelzintegration = rho_length_label
+   else
+      print*,'Cannot set unitzintegration'
+      print*,'(column density plots may be incorrect)'
+   end if
+
+   return
+end subroutine find_weights
