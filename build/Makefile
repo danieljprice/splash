@@ -558,7 +558,7 @@ OBJECTS= $(OBJECTS1:.F90=.o)
 # Now compile with the appropriate data read file
 # (move yours to the top so that you can simply type "make")
 #
-all: ascii gadget vine sphNG ndspmhd srosph dragon tipsy
+all: ascii gadget vine sphNG ndspmhd srosph dragon seren tipsy
 	@echo; echo ' SPLASH successfully compiled! ';
 	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
@@ -622,6 +622,9 @@ bauswein: checksystem $(OBJECTS) read_data_bauswein.o
 
 dragon: checksystem $(OBJECTS) read_data_dragon.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_dragon.o $(LDFLAGS)
+
+seren: checksystem $(OBJECTS) read_data_seren.o
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/srsplash $(OBJECTS) read_data_seren.o $(LDFLAGS)
 
 vine: checksystem $(OBJECTS) read_data_VINE.o
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/vsplash $(OBJECTS) read_data_VINE.o $(LDFLAGS)
