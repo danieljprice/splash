@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
 !  Contact: daniel.price@sci.monash.edu.au
 !
 !-----------------------------------------------------------------
@@ -31,7 +31,7 @@ module calcquantities
  public :: calc_quantities,setup_calculated_quantities
 
  integer, parameter, private :: maxcalc = 35
- character(len=60),            dimension(maxcalc) :: calcstring = ' '
+ character(len=lenlabel),      dimension(maxcalc) :: calcstring = ' '
  character(len=lenlabel),      dimension(maxcalc) :: calclabel = ' '
  character(len=lenunitslabel), dimension(maxcalc) :: calcunitslabel = ' '
 
