@@ -1345,7 +1345,14 @@ subroutine set_labels
                  do i=1,ndimV
                     label(istartmhd+i-1) = trim(labelvec(istartmhd))//'\d'//labelcoord(i,1)
                  enddo
-                 idivB = istartmhd+ndimV
+                 if (nmhd.ge.7) then
+                    label(istartmhd+3) = 'Euler beta\dx'
+                    label(istartmhd+4) = 'Euler beta\dy'
+                    label(istartmhd+5) = 'Euler beta\dz'
+                    idivB = istartmhd+2*ndimV
+                 else
+                    idivB = istartmhd+ndimV
+                 endif
               elseif (nmhd.ge.3) then
                  label(istartmhd) = 'Euler alpha'
                  label(istartmhd+1) = 'Euler beta'
