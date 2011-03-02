@@ -94,7 +94,10 @@ module plotlib
       giza_left_click_f,       &
       giza_vector,             &
       giza_format_number,      &
-      giza_query_device
+      giza_query_device,       &
+      giza_draw_pixels, &
+      giza_colour_index_min,&
+      giza_colour_index_max
   implicit none
   
   character(len=1),parameter :: plot_left_click = giza_left_click_f
@@ -213,8 +216,8 @@ end subroutine plot_qcs
 subroutine plot_qcol(icolmin,icolmax)
   integer,intent(out) :: icolmin,icolmax
 
-  icolmin = 0
-  icolmax = 256
+  icolmin = giza_colour_index_min
+  icolmax = giza_colour_index_max
 
 end subroutine plot_qcol
 
@@ -222,7 +225,7 @@ subroutine plot_qcir(icolmin,icolmax)
   integer,intent(out) :: icolmin,icolmax
 
   icolmin = 0
-  icolmax = 256
+  icolmax = giza_colour_index_max
 
 end subroutine plot_qcir
 
@@ -297,7 +300,6 @@ subroutine plot_numb(m,pp,form,string,nc)
   integer,intent(in)           :: m,pp,form
   character(len=*),intent(out) :: string
   integer,intent(out)          :: nc
-  real :: x
   
   call giza_format_number(m,pp,form,string)
   nc = len_trim(string)
@@ -383,21 +385,25 @@ subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
 end subroutine plot_vect
 
 subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2,x1,x2,y1,y2)
+  use giza, only:giza_draw_pixels
   implicit none
   integer,intent(in) :: idim,jdim,i1,i2,j1,j2
   integer,intent(in) :: ia(idim,jdim)
   real,intent(in)    :: x1,x2,y1,y2
 
-  print*,' WARNING: plot_pixl not implemented in giza'
+  call giza_draw_pixels(IDIM, JDIM, IA, I1-1, I2-1, J1-1, J2-1, X1, X2, Y1, Y2)
 
 end subroutine plot_pixl
 
 subroutine plot_pap(width,aspect)
+  use giza, only:giza_set_paper_size
   implicit none
   real,intent(in) :: width,aspect
-
-  print*,' WARNING: plot_pap not implemented in giza'
-
+  real :: widthCM
+  
+  widthCM = width*2.54
+  call giza_set_paper_size(widthCM,aspect)
+ 
 end subroutine plot_pap
 
 !
