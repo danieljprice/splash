@@ -56,6 +56,7 @@ module plotlib
       plot_ptxt=>giza_ptext, &
       plot_qch=>giza_get_character_height, &
       plot_qci=>giza_get_colour_index, &
+      plot_qcir=>giza_get_colour_index_range, &
       plot_qcr=>giza_get_colour_representation, &
       plot_qfs=>giza_get_fill, &
       plot_qlw=>giza_get_line_width,&
@@ -68,6 +69,7 @@ module plotlib
       plot_scf=>giza_set_font, &
       plot_sch=>giza_set_character_height, &
       plot_sci=>giza_set_colour_index, &
+      plot_scir=>giza_set_colour_index_range, &
       plot_scr=>giza_set_colour_representation, &
       plot_sfs=>giza_set_fill, &
       plot_slc=>giza_set_line_cap, &
@@ -220,21 +222,6 @@ subroutine plot_qcol(icolmin,icolmax)
   icolmax = giza_colour_index_max
 
 end subroutine plot_qcol
-
-subroutine plot_qcir(icolmin,icolmax)
-  integer,intent(out) :: icolmin,icolmax
-
-  icolmin = 0
-  icolmax = giza_colour_index_max
-
-end subroutine plot_qcir
-
-subroutine plot_scir(icilo, icihi)
-  integer,intent(in) :: icilo,icihi
-
-  print*,' WARNING: plot_scir not implemented in giza'
-
-end subroutine plot_scir
 
 subroutine plot_scrn(ci,name,ier)
   implicit none
