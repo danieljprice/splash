@@ -258,12 +258,12 @@ end subroutine add_calculated_quantities
 !
 !---------------------------------------------------------------------
 subroutine print_example_quantities
- use labels,        only:label,lenlabel,irho,iutherm,ivx,ix,icv,iradenergy
+ use labels,        only:label,lenlabel,irho,iutherm,iBfirst,ix,icv,iradenergy,iamvec,labelvec
  use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
  use settings_units,only:unitslabel
  use geometry,      only:labelcoord
  implicit none
- integer :: i
+ integer :: i,j,ivecstart
 
  print "(/,a)",' Examples based on current data: '
  !--radius
@@ -282,14 +282,33 @@ subroutine print_example_quantities
  endif
  !--pressure
  if (irho.gt.0 .and. iutherm.gt.0) then
-    print "(a)",'           pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
+    print "(11x,a)",'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
                 '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
  endif
- !--magnitude of v
- if (ndim.gt.0 .and. ndimV.gt.0 .and. ivx.gt.0 .and. icoordsnew.eq.1) then
-    write(*,"(11x,a)",ADVANCE='NO') '|v| = sqrt('//trim(shortlabel(label(ivx),unitslabel(ivx)))//'**2'
+ !
+ !--magnitudes of all vector quantities (only if cartesian coords are set)
+ !
+ ivecstart = 0
+ if (icoordsnew.eq.1 .and. ndim.gt.0 .and. ndimV.gt.0) then
+    do i=1,ncolumns
+       if (iamvec(i).gt.0 .and. iamvec(i).le.ncolumns .and. iamvec(i).ne.ivecstart) then
+          ivecstart = iamvec(i)
+          write(*,"(11x,a)",ADVANCE='NO') '|'//trim(labelvec(ivecstart))//'| '// &
+            '= sqrt('//trim(shortlabel(label(ivecstart),unitslabel(ivecstart)))//'**2'
+          if (ndimV.gt.1) then
+             write(*,"(a,a,a)") (' + '//trim(shortlabel(label(j),unitslabel(j)))//'**2',&
+                                 j=ivecstart+1,ivecstart+ndimV-1),')'
+          else
+             write(*,"(a)") ')'
+          endif
+       endif
+    enddo
+ endif
+ !--magnetic pressure
+ if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. icoordsnew.eq.1) then
+    write(*,"(11x,a)",ADVANCE='NO') 'P\dmag = 0.5*('//trim(shortlabel(label(iBfirst),unitslabel(iBfirst)))//'**2'
     if (ndimV.gt.1) then
-       write(*,"(a,a,a)") (' + '//trim(shortlabel(label(i),unitslabel(i)))//'**2',i=ivx+1,ivx+ndimV-1),')'
+       write(*,"(a,a,a)") (' + '//trim(shortlabel(label(i),unitslabel(i)))//'**2',i=iBfirst+1,iBfirst+ndimV-1),')'
     else
        write(*,"(a)") ')'
     endif
