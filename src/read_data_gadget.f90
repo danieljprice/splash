@@ -205,7 +205,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
   npartoftypei(:) = 0.
   Nall(:) = 0.
-  read(iunit,iostat=ierr) npartoftypei(1:6),massoftypei,timetemp,ztemp, &
+  massoftypei(:) = 0.
+  read(iunit,iostat=ierr) npartoftypei(1:6),massoftypei(1:6),timetemp,ztemp, &
       iFlagSfr,iFlagFeedback,Nall(1:6),iFlagCool,nfiles
   
   ntoti = int(sum(npartoftypei(1:6)))  ! int here is unnecessary, but avoids compiler warnings

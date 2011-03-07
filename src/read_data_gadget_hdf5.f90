@@ -194,6 +194,9 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   !--open file and read header information
   !
+  npartoftypei(:) = 0.
+  Nall(:) = 0.
+  massoftypei(:) = 0.
   call read_gadget_hdf5_header(trim(datfile)//achar(0),maxtypes, &
        npartoftypei,massoftypei,timetemp,ztemp,iFlagSfr,iFlagFeedback,Nall,&
        iFlagCool,ndim,ndimV,nfiles,ncolstep,maxplot,blocklabelgas,ierr)
