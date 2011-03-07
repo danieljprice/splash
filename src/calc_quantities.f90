@@ -112,8 +112,12 @@ subroutine setup_calculated_quantities(ncalc)
     if (.not.done) call add_calculated_quantities(istart,iend,ncalc,first,incolumn)
     first = .false.
  enddo calcmenu
- print*,' setup ',ncalc,' additional quantities'
- 
+ if (ncalc.lt.10) then
+    print "(a,i1,a)",' setup ',ncalc,' additional quantities'
+ else
+    print "(a,i2,a)",' setup ',ncalc,' additional quantities'
+ endif
+
 end subroutine setup_calculated_quantities
 
 !-----------------------------------------------------------------
