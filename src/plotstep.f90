@@ -585,7 +585,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use exact,              only:exact_solution,atstar,ctstar,sigma
   use toystar1D,          only:exact_toystar_ACplane
   use toystar2D,          only:exact_toystar_ACplane2D
-  use labels,             only:label,labelvec,iamvec,lenlabel,ih,irho,ipmass,ix,iacplane, &
+  use labels,             only:label,labelvec,iamvec,lenlabel,lenunitslabel,ih,irho,ipmass,ix,iacplane, &
                                ipowerspec,isurfdens,itoomre,iutherm,ipdf,icolpixmap,is_coord
   use limits,             only:lim,get_particle_subset,lim2,lim2set
   use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
@@ -664,8 +664,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax,pmassav(1)
   real :: pixwidth,pixwidthy,pixwidthvec,pixwidthvecy,dxfreq
 
-  character(len=lenlabel+20) :: labelx,labely,labelz,labelrender,labelvecplot,labelcont
-  character(len=20) :: labeltimeunits
+  character(len=lenlabel+lenunitslabel) :: labelx,labely,labelz,labelrender,labelvecplot,labelcont
+  character(len=lenunitslabel) :: labeltimeunits
   
   logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
   logical :: dumxsec, isetrenderlimits, gotcontours, iscoordplot
