@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -27,7 +27,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2010 Daniel Price 
+!     Copyright (C) 2005-2011 Daniel Price 
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -48,6 +48,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.14.1 : (28/02/11)
+!             Seren data read added; dragon read updated; build follows Gnu conventions 
+!             on DEST and DESTDIR (needed for macports build); can have up to 12 particle types;
+!             exact solutions re-ordered; dusty wave exact solution added
 !     1.14.0 : (06/12/10)
 !             Can flip between rendered quantities in interactive mode using 'f/F';
 !             SPLASH_DEFAULTS variable can be set for system-wide defaults;
@@ -293,7 +297,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.14.0 [8th Dec ''10]'
+  character(len=*), parameter :: version = 'v1.14.1 [28th Feb ''11]'
 
   !
   ! initialise some basic code variables
