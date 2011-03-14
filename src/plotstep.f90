@@ -63,7 +63,7 @@ module timestep_plotting
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis,iamrendering
   logical, private :: inewpage, tile_plots, lastplot
   logical, private :: imulti,irerender,iAllowspaceforcolourbar,ihavesetweights
-  logical, private :: interactivereplot,ihavesetcolours,vectordevice
+  logical, private :: interactivereplot,ihavesetcolours,vectordevice,gotcontours
   
   public :: initialise_plotting, plotstep
   private
@@ -668,7 +668,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   character(len=lenunitslabel) :: labeltimeunits
   
   logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
-  logical :: dumxsec, isetrenderlimits, gotcontours, iscoordplot
+  logical :: dumxsec, isetrenderlimits, iscoordplot
   logical :: ichangesize, initx, inity, isameweights, volweightedpdf
   logical, parameter :: isperiodic = .false. ! feature not implemented
   
