@@ -48,8 +48,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.14.1 : (28/02/11)
-!             Seren data read added; dragon read updated; build follows Gnu conventions 
+!     1.14.1 : (17/03/11)
+!             SEREN data read added; dragon read updated; build follows Gnu conventions 
 !             on DEST and DESTDIR (needed for macports build); can have up to 12 particle types;
 !             exact solutions re-ordered; dusty wave exact solution added
 !     1.14.0 : (06/12/10)
@@ -644,7 +644,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2010 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2011 )'
  print 30 
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
@@ -664,7 +664,7 @@ subroutine print_usage(quit)
  logical :: ltemp
 
  print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
- print "(a)",'(c) 2005-2010 Daniel Price '
+ print "(a)",'(c) 2005-2011 Daniel Price '
  print "(a,/)",trim(version)
  print "(a,/)",'Usage: splash file1 file2 file3...'
  print "(a,/,a,/)",'Usage with flags: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] ', &
