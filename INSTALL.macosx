@@ -4,7 +4,7 @@ are freely available:
 - A Fortran 95 compiler
 
 The basic steps for installation are:
-1) make sure you have a Fortran 90/95 compiler (such as g95).
+1) make sure you have a Fortran 90/95 compiler (such as gfortran).
 2) make sure you have the PGPLOT libraries installed.
 3) compile SPLASH and link with PGPLOT.
 4) if desired/necessary write a read_data subroutine so that SPLASH can read
@@ -15,38 +15,55 @@ For troubleshooting of some common installation problems,
  have a look at the online FAQ.
 
 All of the above steps can be done "by hand" - to do so follow the detailed
-instructions in the INSTALL file. However on Mac OS/X there are several tools
-which make installation easier, so the steps are the following:
+instructions in the INSTALL file. However on Mac OS/X you can use either the Macports 
+or Fink package managers (download either from the web as a simple disk image file)
+to make things easier. As of OS/X 10.6 I recommend Macports over Fink.
 
-1) install Fink (preferably including the GUI fink commander) 
-   if you haven't already (a simple download as a disk image file)
+1-3) -------- getting a Fortran compiler, installing PGPLOT, compiling splash -------------
 
-2) use Fink to install PGPLOT (either by typing "fink install pgplot" or using
-   Fink commander) if pgplot does not appear in the package list, you may need
-   to turn on "Use unstable packages" in the fink preferences. If you do not
-   have g77/gfortran installing PGPLOT will trigger this install also (and maybe
-   also the libpng libraries). Instructions for installing PGPLOT manually are
-   given in the INSTALL file.
+Using Macports (recommended):
+-----------------------------
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/opt/local/lib  (also put this in your ~/.profile)
+sudo port -v install pgplot
+export PGPLOT_DIR=/opt/local/lib
 
-3) set the PGPLOT_DIR environment variable to the PGPLOT directory
-   (e.g. for Fink, use setenv PGPLOT_DIR /sw/lib/pgplot).
+(It is also a good idea at this stage to add the setting of PGPLOT_DIR into your 
+ .profile/.bashrc or .tcshrc file along with a setting for PGPLOT_DEV (e.g. to "/xw"
+ which sets the default device to be the X-windows device).
 
-   It is also a good idea at this stage to add the setting of PGPLOT_DIR into your 
-   .profile/.bashrc or .tcshrc file along with a setting for PGPLOT_DEV (e.g. to "/xw"
-   which sets the default device to be the X-windows device).
+Then compile splash as follows:
+make SYSTEM=gfortran
 
-3) install g95 or gfortran (either by again using Fink or by simply downloading a binary from www.g95.org)
+Using Fink:
+-----------
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/sw/lib  (and make sure this is in your ~/.profile) 
+fink install pgplot  (or do this using the Fink commander GUI)
 
-4) set the environment variable SYSTEM to 'mymac', e.g.
-   export SYSTEM='mymac'
+(For Fink, if pgplot does not appear in the package list, you may need
+ to turn on "Use unstable packages" in the fink preferences. If you do not
+ have g77/gfortran installing PGPLOT will trigger this install also (and maybe
+ also the libpng libraries). 
+ 
+export PGPLOT_DIR=/sw/lib/pgplot
 
-at this point, type 'make' and SPLASH should compile and link successfully.
-Alternatively try the SYSTEM='intelmac' option for more recent MacBooks.
-If you are unsuccessful at this point, refer to the more detailed instructions
-in the INSTALL file.
+(It is also a good idea at this stage to add the setting of PGPLOT_DIR into your 
+ .profile/.bashrc or .tcshrc file along with a setting for PGPLOT_DEV (e.g. to "/xw"
+ which sets the default device to be the X-windows device).
 
-You may at this point try using the ascii data read to read some of your files.
-The next step is to read your own data format (see below).
+Then compile splash using one of the following:
+make SYSTEM=gfortran_osx  (OS/X 10.5 with pgplot installed via Fink using gfortran)
+make SYSTEM=intelmac  (OS/X 10.4 with pgplot installed via Fink using gfortran)
+make SYSTEM=mymac     (settings for a Mac G4 with pgplot installed with Fink+g95) 
+
+If none of these work, try just
+make SYSTEM=gfortran
+make SYSTEM=g95
+and adjust the linker flags by hand (e.g. make SYSTEM=g95 LDFLAGS="-L/sw/lib/pgplot -lpgplot")
+
+Other
+-----
+Step-by-step instructions for installing PGPLOT manually are given in the INSTALL file.
+The only requirement is a working Fortran compiler.
 
 4) -------------- reading your data format -------------------
 
@@ -92,16 +109,6 @@ customised version.
 
 5) ----- running splash/ making pretty pictures -----
 
-In general it is a good idea to set:
-
-limit stacksize unlimited
-
-(csh), or in bash:
-
-ulimit -s unlimited
-
-before running splash.
-
 For detailed help on how to use SPLASH, refer to the (quite extensive) userguide
 in the /docs directory or on the splash web page.
 
@@ -109,4 +116,4 @@ Have fun! And remember, if you get stuck you can always email me...
 (it doesn't hurt).
 
 Daniel Price
-daniel.price@sci.monash.edu.au
+daniel.price@monash.edu
