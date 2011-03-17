@@ -40,7 +40,7 @@
 \setlength{\oddsidemargin}{-0.5cm}
 \setlength{\evensidemargin}{-0.5cm}
 \setlength{\textwidth}{17cm}
-\def\thisyear{2010 }
+\def\thisyear{2011 }
 \newcommand{\splash}{\textsc{splash }}
 
 \begin{titlepage}
@@ -114,7 +114,7 @@ polytropes).
 \item Transformation to different coordinate systems (for both coordinates and
 vector components) and rescaling of data into physical units.
 \item Straightforward production of GIF, png and Postscript images which can then be
-converted into animations or inserted into \LaTeX documents.
+converted into animations or inserted into \LaTeX  documents.
 \end{itemize}
 
 \subsection{What it doesn't do}
@@ -126,7 +126,7 @@ Thus it may not be particularly useful for things like water and solids etc. in 
 \subsection{\splash, the paper}
  The algorithms implemented in \splash are not described here, but instead described in a paper \citep{splashpaper} (Publications of the Astronomical Society of Australia, 24, 159-173), available from:
 
-\url{http://arxiv.org/abs/0709.0832}
+\url{http://www.publish.csiro.au/?paper=AS07022}
 
 \noindent This paper should be cited whenever you use \splash for scientific purposes, and please do so because it is my only form of thanks!
 
@@ -153,11 +153,16 @@ The basic steps for installation are as follows:
 \end{enumerate}
 
 \subsubsection{ Fortran 90/95 compilers}
- By now, many Fortran 90/95 compilers exist. In terms of free ones, the g95 compiler, downloadable from:
-\begin{quote}
-\url{http://www.g95.org}
-\end{quote}
-successfully compiles \splash and if necessary the PGPLOT libraries.
+ By now, many Fortran 90/95 compilers exist. The most widely available are:
+ \begin{itemize}
+\item gfortran, the free Gnu Fortran Compiler \\\url{http://gcc.gnu.org/wiki/GFortran}
+\item g95, the other free gcc-based f90 compiler\\ \url{http://www.g95.org}
+\item Oracle Solaris Studio (formerly Sun studio), which contains an excellent free Fortran compiler for Linux and Solaris \\
+\url{http://www.oracle.com/us/products/tools/050872.html}
+\item ifort, one of the most widely available commercial compilers (and is very good) with (limited) free licence for Linux.
+\url{http://software.intel.com/en-us/articles/intel-compilers/}
+\end{itemize}
+All of these successfully compile \splash and if necessary the PGPLOT libraries.
 
 \subsubsection{ PGPLOT}
  The PGPLOT graphics subroutine library is freely downloadable from
@@ -201,6 +206,7 @@ gsplash & \textsc{gadget},  \textsc{gadget-2},  \textsc{gadget-3} &  \verb+read_
 nsplash & \textsc{ndspmhd} & \verb+read_data_dansph.f90+ & Format for the \textsc{ndspmhd} SPH/SPMHD code (publicly available from my website). \\
 rsplash & \textsc{magma} & \verb+read_data_srosph.f90+  & Stephan Rosswog's code \\
 ssplash & sphNG, \textsc{phantom} & \verb+read_data_sphNG.f90+ & sphNG is Matthew Bate's SPH code. \\
+srsplash & \textsc{seren} & \verb+read_data_seren.f90+ & The \textsc{SEREN} SPH code (Hubber, McLeod et al.) \\
 tsplash & \textsc{gasoline}, \textsc{tipsy}  &  \verb+read_data_tipsy.f90+ & Reads both binary and ascii TIPSY files (determined automatically). \\
 vsplash & \textsc{vine} & \verb+read_data_VINE.f90+ & see environment variable options. \\
 \hline
@@ -2374,6 +2380,7 @@ which is used throughout the program and to Roland Schmehl who wrote the excelle
  Cody Raskin,
  John Regan,
  Dave Rundle,
+ Yusuke Tsukamoto,
  Sigfried Vanaverbeke,
  Enrique Vazquez-Semadeni
  and Antonio Vazquez.
