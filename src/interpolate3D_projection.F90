@@ -237,7 +237,6 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !  sure that particles contribute to at least one pixel
 !
   hmin = 0.5*max(pixwidthx,pixwidthy)
-  print*,'npix = ',npixx,npixy,pixwidthx,pixwidthy
   !dhmin3 = 1./(hmin*hmin*hmin)
 !
 !--store x value for each pixel (for optimisation)
