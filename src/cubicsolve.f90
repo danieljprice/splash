@@ -112,7 +112,7 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
        nreal = 1
        y1 = u + v
     !--if det=0, 3 real roots, but at least 2 equal, so max of 2 unique roots)
-       if (abs(det).lt.eps) then
+       if (abs(det).lt.tiny(det)) then
           nreal = 2
           y2 = -(u + v)/2.
        endif
@@ -148,7 +148,7 @@ end subroutine cubicsolve
 ! this subroutine returns both the real and complex
 ! solutions to a cubic equation of the form
 !
-! x^3 + a*x^2 + b*x + c
+! x^3 + b*x^2 + c*x + d
 !
 ! input  : b,c,d : coefficients of cubic polynomial
 ! output : x(3)  : array of 3 COMPLEX solutions
@@ -161,80 +161,83 @@ end subroutine cubicsolve
 ! Daniel Price, daniel.price@monash.edu 21/01/2011
 !
 !-------------------------------------------------------------
-subroutine cubicsolve_complex(a,b,c,x,nreal,check)
+subroutine cubicsolve_complex(b,c,d,x,nreal,check)
  implicit none
- real,    intent(in) :: a,b,c
+ real,    intent(in) :: b,c,d
  complex, intent(out), dimension(3) :: x
  integer, intent(out), optional :: nreal
  logical, intent(in), optional :: check
- real :: p,q,det,sqrtdet,sqrtp
- real :: a2,p3,t,sinht,u,v,term,termr,termi,termc
+ double precision :: p,q,q2,xi
+ double precision :: b2,term,termA,det,phi
+ real :: termr,termi
+ double precision :: fx,dfx
  real, parameter :: eps = 1000.*epsilon(0.)
- real, parameter :: pi = 3.14159265358979323846
- integer :: i
+ double precision, parameter :: pi = 3.14159265358979323846d0
+ integer :: i,j
  
  x = (0.,0.)
 !
 !--preliminaries
 !
- a2 = a*a
- p = (a2 - 3.*b)/9.
- q = a*b/6. - 0.5*c - a2*a/27.
- p3 = p*p*p
- det = p3 - q*q
-!
-!--cubic solution
-!
- if (p < 0) then
- !--one real, two complex roots irrespective of the value of D
-    sqrtp = sqrt(-p)
-    t = 1./3.*asinh(q/sqrtp**3)
-    sinht = sinh(t)
-    x(1) = -a/3. + 2.*sqrtp*sinht ! real root
-    termr = -a/3. - sqrtp*sinht
-    termi = sqrt(-3.*p)*cosh(t)
+ b2 = b*b
+ p = (c - b2/3.)
+ q = (2.*b2*b - 9.*b*c + 27.*d)/27.
+ q2 = q*q
+ det = (p*p*p)/27. + 0.25*q2
+ 
+ if (det < 0) then
+ !--3 distinct real roots
+    nreal = 3
+    term = sqrt(abs(p)/3.)
+    phi = ACOS(-0.5*q*term**(-3))
+
+    !--these are the solutions to the reduced cubic
+    !  y^3 + py + q = 0    
+    x(1) = real(2.d0*term*COS(phi/3.d0))
+    x(2) = real(-2.d0*term*COS((phi + pi)/3.d0))
+    x(3) = real(-2.d0*term*COS((phi - pi)/3.d0))
+ else
+ !--1 real, two complex
+    nreal = 1
+    if (abs(det).lt.tiny(det)) nreal = 2
+    term = -0.5*q + sqrt(det)
+    termA = (abs(term))**(1.d0/3.d0)*SIGN(1.0d0,term)
+
+    x(1) = real(termA - p/(3.*termA))
+    termr = real(-0.5*termA + p/(6.*termA)) ! convert from double prec.
+    termi = real(0.5*sqrt(3.d0)*(termA + p/(3.d0*termA)))
     x(2) = cmplx(termr,termi)
     x(3) = cmplx(termr,-termi)
-    if (present(nreal)) nreal = 1
- elseif (det > 0) then ! p > 0
- !--three real roots
-    sqrtp = sqrt(p)
-    term = acos(q/sqrt(p3))
-    x(1) = -a/3. + 2.*sqrtp*cos(term/3.) ! real
-    x(2) = -a/3. + 2.*sqrtp*cos((-2.*pi + term)/3.)
-    x(3) = -a/3. + 2.*sqrtp*cos((2.*pi + term)/3.)
-    if (present(nreal)) nreal = 3
- else ! p < 0 and d < 0
- !--one real, two complex roots
-    sqrtdet = sqrt(-det)
-    term = q - sqrtdet
- !--must take cube root of positive quantity, then give sign later
- !  (otherwise gives NaNs)
-    u = (abs(term))**(1./3.)*SIGN(1.0,term)
-    term = q + sqrtdet
-    v = (abs(term))**(1./3.)*SIGN(1.0,term)
-    x(1) = -a/3. + u + v  ! real
-    termr = -a/3. - 0.5*(u + v)
-    termi = sqrt(3.)*0.5*(u - v)
-    x(2) = cmplx(termr,termi)
-    x(3) = cmplx(termr,-termi)
-    if (present(nreal)) then
-       nreal = 1
-       if (abs(det).lt.eps) nreal = 2
-    endif
+ endif
+
+ !--return solutions to original cubic, not reduced cubic
+ x(:) = x(:) - b/3.
+
+ !--if determinant is small, take a couple of Newton-Raphson iterations
+ !  to beat down the error
+ if (abs(det).lt.eps) then
+    do i=1,nreal
+       xi = dble(x(i))
+       do j=1,3
+          fx = xi*(xi*(xi + b) + c) + d
+          dfx = xi*(3.d0*xi + 2.d0*b) + c
+          if (abs(dfx).gt.0.) xi = xi - fx/dfx
+       enddo
+       x(i) = real(xi)
+    enddo
  endif
 
  !--the following lines can be used for debugging
  if (present(check)) then
     if (check) then
        !--verify the cubic solution
-       print*,'verifying: x^3 + ',a,'x^2 + ',b,'x + ',c
+       print*,'verifying: x^3 + ',b,'x^2 + ',c,'x + ',d
        do i=1,3
-          termc = x(i)**3 + a*x(i)**2 + b*x(i) + c
-          if (abs(termc).lt.eps) then
-             print*,'root ',i,':',x(i),'f=',termc,': OK'
+          term = real(x(i)**3 + b*x(i)**2 + c*x(i) + d)
+          if (abs(term).lt.eps) then
+             print*,'root ',i,':',x(i),'f=',term,': OK'
           else
-             print*,'root ',i,':',x(i),'f=',termc,': FAILED',eps    
+             print*,'root ',i,':',x(i),'f=',term,': FAILED',eps    
           endif
        enddo
     endif
