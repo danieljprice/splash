@@ -967,7 +967,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
    goto 34
 33 continue
-   print "(1x,a)",'WARNING: end of file during read'
+   print "(/,1x,a,/)",'*** WARNING: END OF FILE DURING READ ***'
+   print*,'Press any key to continue (but there is likely something wrong with the file...)'
+   read*
 34 continue
  !
  !--read .divv file for phantom dumps
@@ -1192,7 +1194,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      
      close(15)
 
-print*,' finished data read, npart = ',npart, ntotal, npartoftype(:,j)
+     print*,' finished data read, npart = ',npart, ntotal, npartoftype(1:ntypes,j)
 
      return
 
