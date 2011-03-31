@@ -72,6 +72,7 @@ contains
 ! ------------------------------------------------------------------------     
 subroutine colour_set(icolourscheme)
   use plotlib, only:plot_qcol,plot_qcir,plot_scir,plot_ctab,plot_scr,plot_qcr
+  use settings_data, only:debugmode
   implicit none
   integer, intent(in) :: icolourscheme
   integer :: i,icolmin,icolmax,ncolmax,nset,index
@@ -103,6 +104,7 @@ subroutine colour_set(icolourscheme)
   !
   !--set this as the range of colour indices to use
   !
+  if (debugmode) print*,'DEBUG: querying colour index range'
   call plot_scir(ifirstcolour,ifirstcolour+ncolours)  
 
   if (abs(icolourscheme).le.ncolourschemes) then
@@ -336,6 +338,7 @@ subroutine colour_set(icolourscheme)
      bluearr(1:nset) =  (/1.0,0.66,0.5,0.33,0.0/)
      end select
 
+     if (debugmode) print*,'DEBUG: setting colour table'
      call plot_ctab(lumarr(1:nset),redarr(1:nset),greenarr(1:nset),bluearr(1:nset), &
                  nset,contrast,brightness)
   endif
@@ -355,6 +358,7 @@ subroutine colour_set(icolourscheme)
 !
 !--also store the colour table as a list of r,g,b values
 !
+     if (debugmode) print*,'DEBUG: querying colour table'
      do i=1,ncolours+1
         index = ifirstcolour + (i-1)
         call plot_qcr(index,rgbtable(1,i),rgbtable(2,i),rgbtable(3,i))
@@ -369,6 +373,7 @@ subroutine colour_set(icolourscheme)
      print "(1x,a)",'warning: unknown colour scheme - uses default greyscale'
 
   endif
+  if (debugmode) print*,'DEBUG: finished colour_set'
   
   return
   
