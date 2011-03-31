@@ -2454,17 +2454,19 @@ end subroutine save_limits_track
 !
 subroutine save_itrackpart_recalcradius()
  use filenames, only:nsteps,nstepsinfile,ifileopen
- use settings_data, only:numplot,DataIsBuffered,iCalcQuantities
- use calcquantities, only:calc_quantities
+ use settings_data, only:numplot,ncalc,DataIsBuffered,iCalcQuantities
+ use calcquantities, only:calc_quantities,calc_quantities_use_x0
  use labels, only:irad
  implicit none
 
- if (iCalcQuantities .and. irad.gt.0 .and. irad.le.numplot) then
-    print "(a)",' Recalculating radius relative to tracked particle'
-    if (DataIsBuffered) then
-       call calc_quantities(1,nsteps)
-    else
-       call calc_quantities(1,nstepsinfile(ifileopen))
+ if (iCalcQuantities) then
+    if (ncalc.gt.0 .and. calc_quantities_use_x0()) then
+       print "(a)",' Recalculating radius relative to tracked particle'
+       if (DataIsBuffered) then
+          call calc_quantities(1,nsteps)
+       else
+          call calc_quantities(1,nstepsinfile(ifileopen))
+       endif
     endif
  endif
   

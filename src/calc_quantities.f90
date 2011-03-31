@@ -29,6 +29,7 @@ module calcquantities
  use params, only:maxplot
  implicit none
  public :: calc_quantities,setup_calculated_quantities
+ public :: calc_quantities_use_x0
 
  integer, parameter, private :: maxcalc = 35
  character(len=lenlabel),      dimension(maxcalc) :: calcstring = ' '
@@ -395,9 +396,9 @@ end subroutine check_calculated_quantities
 !
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
-  use labels,         only:label,labelvec,iamvec
+  use labels,         only:label,labelvec,iamvec,ix
   use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol
-  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode !,itrackpart
+  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,itrackpart,ndim
   use mem_allocation, only:alloc
   use settings_units, only:unitslabel,units
   use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
@@ -412,6 +413,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
 !  real, parameter :: lightspeed = 3.e10   ! in cm/s (cgs)
   real(kind=rn), dimension(maxplot+nextravars)          :: vals
   character(len=lenvars), dimension(maxplot+nextravars) :: vars
+  real, dimension(3) :: x0
   
   !
   !--allow dummy call to set labels without actually calculating stuff
@@ -466,6 +468,26 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      !
      do i=ifromstep,itostep
         ntoti = SUM(npartoftype(:,i))
+        !
+        !--set origin position
+        !
+        if (itrackpart.gt.0 .and. itrackpart.le.ntoti) then
+           x0(:) = 0.
+           if (ix(1).gt.0 .and. ix(1).le.ncolumns) then
+              x0(1) = dat(itrackpart,ix(1),i)
+           else
+              print*,'** internal error: tracking particle set but cannot locate x coordinate'
+           endif
+           if (ix(2).gt.0 .and. ix(2).le.ncolumns) x0(2) = dat(itrackpart,ix(2),i)
+           if (ix(3).gt.0 .and. ix(3).le.ncolumns) x0(3) = dat(itrackpart,ix(3),i)
+           if (i.eq.ifromstep) then
+              print "(a,i10)",' using position of tracked particle ',itrackpart
+              print "(a,3(e11.3),/)",' (x0,y0,z0) = ',dat(itrackpart,ix(1:ndim),i)
+           endif
+        else
+           x0(:) = xorigin(:)
+        endif
+        
         do icalc=1,ncalc
            if (debugmode) print*,'DEBUG: ',icalc,' calculating '//trim(label(ncolumns+icalc))
            !
@@ -475,9 +497,9 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
            !
            vals(ncolumns+icalc)   = time(i)
            vals(ncolumns+icalc+1) = gamma(i)
-           vals(ncolumns+icalc+2) = xorigin(1)
-           vals(ncolumns+icalc+3) = xorigin(2)
-           vals(ncolumns+icalc+4) = xorigin(3)
+           vals(ncolumns+icalc+2) = x0(1)
+           vals(ncolumns+icalc+3) = x0(2)
+           vals(ncolumns+icalc+4) = x0(3)
            do j=1,ntoti
               vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
               dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
@@ -605,5 +627,24 @@ elemental function shortlabel(string,unitslab)
  enddo
 
 end function shortlabel
+
+!-----------------------------------------------------------------
+!
+!  utility (public) to query whether or not the origin position
+!  is actually used in the currently set quantities
+!
+!-----------------------------------------------------------------
+logical function calc_quantities_use_x0()
+ implicit none
+ integer :: i
+
+ calc_quantities_use_x0 = .false.
+ do i=1,maxcalc
+    if (index(calcstring(i),trim(extravars(3))).gt.0) calc_quantities_use_x0 = .true.
+    if (index(calcstring(i),trim(extravars(4))).gt.0) calc_quantities_use_x0 = .true.
+    if (index(calcstring(i),trim(extravars(5))).gt.0) calc_quantities_use_x0 = .true.
+ enddo
+
+end function calc_quantities_use_x0
 
 end module calcquantities
