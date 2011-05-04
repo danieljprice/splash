@@ -173,7 +173,7 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
  double precision :: fx,dfx
  real, parameter :: eps = 1000.*epsilon(0.)
  double precision, parameter :: pi = 3.14159265358979323846d0
- integer :: i,j
+ integer :: i,j,nroots
  
  x = (0.,0.)
 !
@@ -184,10 +184,9 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
  q = (2.*b2*b - 9.*b*c + 27.*d)/27.
  q2 = q*q
  det = (p*p*p)/27. + 0.25*q2
- 
  if (det < 0) then
  !--3 distinct real roots
-    nreal = 3
+    nroots = 3
     term = sqrt(abs(p)/3.)
     phi = ACOS(-0.5*q*term**(-3))
 
@@ -198,8 +197,8 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
     x(3) = real(-2.d0*term*COS((phi - pi)/3.d0))
  else
  !--1 real, two complex
-    nreal = 1
-    if (abs(det).lt.tiny(det)) nreal = 2
+    nroots = 1
+    if (abs(det).lt.tiny(det)) nroots = 2
     term = -0.5*q + sqrt(det)
     termA = (abs(term))**(1.d0/3.d0)*SIGN(1.0d0,term)
 
@@ -216,7 +215,7 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
  !--if determinant is small, take a couple of Newton-Raphson iterations
  !  to beat down the error
  if (abs(det).lt.eps) then
-    do i=1,nreal
+    do i=1,nroots
        xi = dble(x(i))
        do j=1,3
           fx = xi*(xi*(xi + b) + c) + d
@@ -226,6 +225,8 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
        x(i) = real(xi)
     enddo
  endif
+ 
+ if (present(nreal)) nreal = nroots
 
  !--the following lines can be used for debugging
  if (present(check)) then
