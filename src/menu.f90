@@ -381,13 +381,16 @@ subroutine menu
 ! multiplot setup
 !----------------------------------------------------
   subroutine options_multiplot
-   use settings_page,   only: nacross, ndown
-   use settings_render, only: iplotcont_nomulti
+   use settings_page,   only:nacross, ndown
+   use settings_render, only:iplotcont_nomulti
    use limits,          only:lim,lim2,lim2set,reset_lim2
-   use labels,          only:is_coord
+   use labels,          only:is_coord,labeltype
+   use params,          only:maxparttypes
+   use settings_data,   only:UseTypeInRenderings,ntypes
    implicit none
-   integer :: ifac,ierr
+   integer :: ifac,ierr,itype,nvalues
    logical :: isamex, isamey, icoordplot, anycoordplot, imultisamepanel
+   integer, dimension(maxparttypes)   :: itypelist
    
    call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
 
@@ -490,7 +493,59 @@ subroutine menu
             call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
          endif
       endif
-      
+      !
+      !--prompt for selection of different particle types
+      !  if more than one SPH particle type is present
+      !
+      itypelist = 0
+      if (ntypes.ge.2) then
+         call prompt('use all active particle types?',iusealltypesmulti(i))
+
+         if (iusealltypesmulti(i)) then
+            nvalues = 0
+            itypelist(:) = 0
+         else
+         !
+         !--prepare list of types based on current iplotpartoftypemulti
+         !
+            nvalues = 0
+            do itype=1,ntypes
+               if (iplotpartoftypemulti(itype,i)) then
+                  nvalues = nvalues + 1
+                  itypelist(nvalues) = itype
+               endif
+            enddo
+            if (nvalues.eq.0) then
+               print*,'warning: internal error in type list'
+               itypelist(:) = 0
+               nvalues = 1
+            endif
+         !
+         !--prompt for list of types to use
+         !
+            do itype=1,ntypes
+               print "(i2,':',1x,a)",itype,'use '//trim(labeltype(itype))//' particles'
+            enddo
+            !if (ntypes.gt.9) then
+            !   print "(20(i2,'=',a,', '))",(itype,trim(labeltype(itype)),itype=1,ntypes)
+            !else
+            !   print "(9(i1,'=',a,', '))",(itype,trim(labeltype(itype)),itype=1,ntypes)
+            !endif
+
+            call prompt('Enter type or list of types to use',itypelist,nvalues,1,ntypes)
+         !
+         !--set which particle types to plot
+         !
+            iplotpartoftypemulti(:,i) = .false.
+            iplotpartoftypemulti(itypelist(1:nvalues),i) = .true.
+
+         endif
+      else
+         !
+         !--if ntypes < 2 always use the (only) particle type
+         !
+         iusealltypesmulti(i) = .true.
+      endif      
    enddo
    
    if (isamex .and. .not.anycoordplot) then

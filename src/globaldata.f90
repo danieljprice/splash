@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -215,12 +215,15 @@ module multiplot
  integer, dimension(maxplot) :: itrans,icontourmulti
  logical, dimension(maxplot) :: x_secmulti
  real, dimension(maxplot) :: xsecposmulti
+ logical, dimension(maxplot) :: iusealltypesmulti
+ logical, dimension(maxparttypes,maxplot) :: iplotpartoftypemulti
 !
 !--sort these into a namelist for input/output
 !
- namelist /multi/ nyplotmulti,                                  &
-    itrans,multiplotx,multiploty,irendermulti,                  &
-    ivecplotmulti,icontourmulti,x_secmulti,xsecposmulti
+ namelist /multi/ nyplotmulti,                           &
+    itrans,multiplotx,multiploty,irendermulti,           &
+    ivecplotmulti,icontourmulti,x_secmulti,xsecposmulti, &
+    iusealltypesmulti,iplotpartoftypemulti
 
  public
 

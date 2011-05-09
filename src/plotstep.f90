@@ -589,7 +589,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                ipowerspec,isurfdens,itoomre,iutherm,ipdf,icolpixmap,is_coord
   use limits,             only:lim,get_particle_subset,lim2,lim2set
   use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
-                               icontourmulti,x_secmulti,xsecposmulti
+                               icontourmulti,x_secmulti,xsecposmulti,iusealltypesmulti,iplotpartoftypemulti
   use particle_data,      only:maxpart,maxcol,icolourme
   use settings_data,      only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
                                iendatstep,ntypes,UseTypeInRenderings,itrackpart,&
@@ -644,6 +644,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   real,       intent(in) :: timei,gammai
   logical,    intent(in) :: ipagechange
   integer, intent(inout) :: iadvance
+
+  logical, dimension(maxparttypes) :: iusetype
   
   integer :: ntoti,iz,iseqpos
   integer :: i,j,k,icolumn,irow
@@ -765,9 +767,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      if (UseTypeInRenderings(i) .and. &
         .not.(iplotpartoftype(i).eqv.UseTypeInContours(i))) isameweights = .false.
   enddo
-  
-  !--set the colour table if it has not been set and particles have been coloured previously
-  if (any(icolourme(1:ntoti).gt.16) .and. .not.ihavesetcolours) call colour_set(icolours)
   !
   !--set weight factor for interpolation routines
   !
@@ -778,6 +777,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   else
      if (debugmode) print*,'DEBUG: interpolation weights not set because no rendering...'
   endif
+
+  !--set the colour table if it has not been set and particles have been coloured previously
+  if (any(icolourme(1:ntoti).gt.16) .and. .not.ihavesetcolours) call colour_set(icolours)
+
   !
   !--exclude subset of particles if parameter range restrictions are set
   !
@@ -848,6 +851,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         iplotcont = .false. !iplotcontmulti(nyplot)
         x_sec = x_secmulti(nyplot)
         zslicepos = xsecposmulti(nyplot)
+        if (iusealltypesmulti(nyplot)) then
+           iusetype(:) = iplotpartoftype(:)
+        else
+           iusetype(:) = iplotpartoftypemulti(:,nyplot)
+        endif
+        if (irender.gt.0 .or. icontourplot.gt.0 .or. ivectorplot.gt.0) then
+           if (debugmode) print*,'DEBUG: resetting interpolation weights for multiplot...'
+           call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
+        endif
      else
         if (.not.interactivereplot) irender = irender_nomulti
         ivectorplot = ivecplot
@@ -855,6 +867,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         iplotcont = .false. !iplotcont_nomulti
         if (.not.interactivereplot) x_sec = xsec_nomulti
         if (.not.interactivereplot .and. x_sec) zslicepos = xsecpos_nomulti
+        iusetype(:) = iplotpartoftype(:)
      endif
      
      !--if the contour plot is the same as the rendered plot,
@@ -1801,11 +1814,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               if (iplotpart) then
                  if (debugmode .and. size(icolourme).ge.10) &
                     print*,'DEBUG: starting particle plot with ',ntoti,' particles ',&
-                           zplot(1:10),icolourme(1:10),npartoftype(:),iplotpartoftype(:)
+                           zplot(1:10),icolourme(1:10),npartoftype(:),iusetype(:)
                  !!--plot all particle types
                  call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
-                   icolourme(1:ntoti),iamtype,npartoftype(:),iplotpartoftype(:), &
+                   icolourme(1:ntoti),iamtype,npartoftype(:),iusetype(:), &
                    (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                    xmin,xmax,ymin,ymax,ifastparticleplot)
               else
@@ -1848,7 +1861,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
               if (.not.ihavesetweights) then
                  call set_weights(weight,dat,iamtype, &
-                                                (iplotpartoftype .and. UseTypeInRenderings))
+                                                (iusetype .and. UseTypeInRenderings))
               endif
               
               call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,pixwidthvecy,vecmax,labelvecplot)
@@ -1989,7 +2002,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--------------------------------
         call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
              zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
-             icolourme(1:ntoti),iamtype,npartoftype(:),iplotpartoftype,.false., &
+             icolourme(1:ntoti),iamtype,npartoftype(:),iusetype,.false., &
              zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
 
         !--------------------------------
@@ -2233,7 +2246,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !
            if (ndim.eq.3) then
               if (.not.ihavesetweights) then
-                 call set_weights(weight,dat,iamtype,iplotpartoftype)
+                 call set_weights(weight,dat,iamtype,iusetype)
               endif
 
               call powerspec3D_sph(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
@@ -2286,7 +2299,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  ninterp = ntoti
                  !!--interpolate to 1D grid  
                  if (.not.ihavesetweights) then
-                    call set_weights(weight,dat,iamtype,iplotpartoftype)
+                    call set_weights(weight,dat,iamtype,iusetype)
                  endif
 
                  call interpolate1D(dat(1:ninterp,ipowerspecx),hh(1:ninterp), &
@@ -2907,7 +2920,7 @@ contains
             .false.,.true.,trim(steplegendtext),hposlegend,vposlegend,1.0)           
        else
           call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
-            iplotpartoftype(1),iplotline,trim(steplegendtext),hposlegend,vposlegend,1.0)
+            iusetype(1),iplotline,trim(steplegendtext),hposlegend,vposlegend,1.0)
        endif
     endif
     
@@ -2994,7 +3007,7 @@ contains
     index1 = 1
     do itype=1,maxparttypes
        index2 = index1 + npartoftype(itype) - 1
-       if (iplotpartoftype(itype).and.npartoftype(itype).gt.0 &
+       if (iusetype(itype).and.npartoftype(itype).gt.0 &
           .or. (iplotline.and.itype.eq.1)) then
           xminadaptive = min(xminadaptive,minval(xploti(index1:index2)))
           xmaxadaptive = max(xmaxadaptive,maxval(xploti(index1:index2))*scalemax)

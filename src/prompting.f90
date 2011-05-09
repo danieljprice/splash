@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -104,6 +104,9 @@
 ! 23/07/10: D. Price:
 ! Integer prompt accepts 2nd sub-range [min:max] [min2:max2]
 !
+! 06/05/11: D. Price:
+! Added prompt for integer arrays
+!
 module prompting
 
    private                     
@@ -120,7 +123,7 @@ module prompting
    
    interface prompt
       module procedure &
-      integer_prompt, real_prompt, string_prompt, double_prompt, logical_prompt
+      integer_prompt, real_prompt, string_prompt, double_prompt, logical_prompt, intarr_prompt
    end interface
    public :: prompt,print_logical
     
@@ -564,6 +567,107 @@ contains
       endif
       
    end subroutine string_prompt
+
+   ! 
+   !  Integer array prompting routine (D. Price)
+   !
+   
+   recursive subroutine intarr_prompt(text, value, nvalues, min, max)
+      character(len=*), intent(in)         :: text
+      integer, dimension(:), intent(inout) :: value
+      integer, intent(inout)               :: nvalues
+      integer, dimension(size(value))      :: newvalue
+      character(len=64)             :: valstring
+      character(len=120)            :: string
+      character(len=16)             :: chmin, chmax
+      integer                       :: ios
+      integer, optional, intent(in) :: min, max
+      logical                       :: error
+      integer                       :: ival,nvaluesnew
+      
+      chmin = ''                        
+      chmax = ''
+      error = .false.
+      
+      !
+      !  Pack arguments in strings for compact and nicer prompt
+      !
+      string = ' '
+      do ival=1,nvalues-1
+         write(valstring,*,iostat=ios) value(ival)
+         string = trim(string)//trim(adjustl(valstring))//','
+      enddo
+      if (nvalues.gt.0) then
+         write(valstring,*,iostat=ios) value(nvalues)
+      endif
+      string = trim(string)//trim(adjustl(valstring))
+
+      if (present(min)) write(chmin,"(g10.0)") min
+      if (present(max)) write(chmax,"(g10.0)") max
+      !
+      !  Write prompt string to terminal
+      !
+      
+      if (present(min).or.present(max)) then
+         write(*,"(a,1x,'([',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
+                 trim(adjustl(text)), trim(adjustl(chmin)), &
+                 trim(adjustl(chmax)), trim(adjustl(string))
+      else
+         write(*,"(a,1x,'(default=',a,'):',1x)",advance='no') &
+                 trim(adjustl(text)), trim(adjustl(string))
+      endif
+      
+      !
+      !  Read new value, quit and keep old value if zero sized string
+      !
+      
+      read(*,"(a)") string
+      if (len(trim(adjustl(string))) == 0) return
+      !
+      !--register how many new values read
+      !
+      newvalue = -huge(0)
+      read(string,*,iostat=ios) newvalue(:)
+      nvaluesnew = 0
+      do ival=1,size(newvalue)
+         if (newvalue(ival).ne.-huge(0)) nvaluesnew = nvaluesnew + 1
+      enddo
+
+      !
+      !  Check if new string is of right type and within given range
+      !
+      
+      if (nvaluesnew <= 0) then
+         print "(a)", "Error, no integer numbers could be read"
+         error = .true.
+      else
+         if (present(min)) then
+            if (any(newvalue(1:nvaluesnew) < min)) then
+               print "(a)", "Error, value(s) out of range (min)"
+               error = .true.
+            endif
+         endif
+         if (present(max)) then
+            if (any(newvalue(1:nvaluesnew) > max)) then
+               print "(a)", "Error, value(s) out of range (max)"
+               error = .true.
+            endif
+         endif
+      endif
+       
+      !
+      !  Assign new value if everything is ok, else prompt again
+      !
+      
+      if (error) then
+         call intarr_prompt(text, value, nvalues, min, max)
+      else         
+         value = newvalue
+         nvalues = nvaluesnew
+      endif
+                  
+   end subroutine intarr_prompt
+
    ! 
    !  Routine added by D.Price (31/10/06)
    !  Takes in a logical variable and returns a string 'on' or 'off' as appropriate
