@@ -165,6 +165,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   if (ipicky.eq.numplot+1) then   ! multiplot
      imulti = .true.
      nyplots = nyplotmulti
+     iplotx = 0  ! set these to zero by default for multiplots
+     iploty = 0  ! (they should not be used in that case)
      !
      !--if doing multiplot can only take a single cross section slice      
      !
@@ -199,6 +201,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   !------------------------------------------------------------------------
   ! initialise options to be set before plotting
 
+  !
+  !--determine z coordinate for 3D plots
+  !
   icoordplot = is_coord(iploty,ndim) .and. is_coord(iplotx,ndim)
   iallrendered = iamrendering
   iplotz = 0
@@ -432,6 +437,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   !!--for fast data read, set which columns are required from the file
   !   (note that required(0)= whatever is a valid statement, just has no effect)
   required = .false.  ! by default, no columns required
+  if (debugmode) print*,'DEBUG: imulti = ',imulti,' iamrendering = ',iamrendering
 !  if (fastdataread) then
      if (imulti) then
         required(multiplotx(1:nyplotmulti)) = .true.
@@ -443,7 +449,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         required(iploty) = .true.
      endif
      required(iplotz) = .true.
-     if (iamrendering .and. iploty.ne.icolpixmap) then
+     if (iamrendering .and. &
+        (iploty.ne.icolpixmap .or. imulti .or. iploty.eq.0)) then
         required(ipmass) = .true.
         required(irho) = .true.
         required(ih) = .true.
@@ -456,7 +463,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      enddo
   !!--need mass for some exact solutions
      if (iexact.eq.7 .or. iploty.eq.isurfdens) required(ipmass) = .true.
-     if (iploty.eq.itoomre) required(iutherm) = .true.
+     if (iploty.eq.itoomre .and. iploty.gt.0) required(iutherm) = .true.
   !!--must read everything if we are plotting a calculated quantity
      if (any(required(ncolumns+1:ncolumns+ncalc))) required = .true.
   !!--vectors
