@@ -707,6 +707,8 @@ contains
              call exact_sedov(3,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           elseif (iploty.eq.ike) then
              call exact_sedov(4,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
+          elseif (iploty.eq.ivx .and. igeom.eq.3) then
+             call exact_sedov(5,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           endif
        !elseif (igeom.le.1 .and. is_coord(iplotx,ndim) .and. is_coord(iploty,ndim)) then
        !   call exact_sedov(0,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)

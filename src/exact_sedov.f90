@@ -129,6 +129,8 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
                 ((gam-1.)*rhoshock*rhou(ubar,gam))
         case(4)  ! 1/2 v^2
            yplot(i) = 0.5*(4./(5.*(gam+1.))*rplot(i)/time*ubar)**2
+        case(5)
+           yplot(i) = (4./(5.*(gam+1.))*rplot(i)/time*ubar)
         end select
         !print*,'u,r, rho = ',ubar,rplot(i),rhoplot(i)
         
