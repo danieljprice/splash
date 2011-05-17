@@ -48,6 +48,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     1.15.0 : (xx/05/11)
+!             Multiplot with different particle types implemented;
 !     1.14.1 : (17/03/11)
 !             SEREN data read added; dragon read updated; build follows Gnu conventions 
 !             on DEST and DESTDIR (needed for macports build); can have up to 12 particle types;
@@ -297,7 +299,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.14.1 [17th Mar ''11]'
+  character(len=*), parameter :: version = 'v1.14.1+ [17th May ''11]'
 
   !
   ! initialise some basic code variables
@@ -467,6 +469,10 @@ program splash
   call defaults_set(evsplash)
 
   !
+  ! read default options from file if it exists
+  !
+  call defaults_read(defaultsfile)
+  !
   ! look for a system-wide defaults file if the environment
   ! variable SPLASH_DEFAULTS is set, no local file is present
   ! and no alternative prefix has been set.
@@ -477,21 +483,15 @@ program splash
      if (len_trim(string).ne.0) then
         i = index(string,'.defaults')
         if (i.gt.0) then
-           defaultsfile = trim(string)//'.defaults'
-           fileprefix   = trim(string)
+           defaultsfile = trim(string)
         else
-           defaultsfile = trim(string)        
-           fileprefix = string(1:i-1)
+           defaultsfile = trim(string)//'.defaults'
         endif
         print "(a)",' Using SPLASH_DEFAULTS='//trim(defaultsfile)
+        call defaults_read(defaultsfile)
         call set_filenames(trim(fileprefix))
      endif
   endif
-
-  !
-  ! read default options from file if it exists
-  !
-  call defaults_read(defaultsfile)
   
   !
   ! check that we have got filenames
