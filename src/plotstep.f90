@@ -1917,7 +1917,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
 
            if (interactive) then
-              if (nacross*ndown.eq.1 .and. nstepsperpage.eq.1) then
+              if (nacross*ndown.eq.1 .and. (nstepsperpage.eq.1 .or. nsteps.eq.1)) then
                  iadvance = nfreq
                  call interactive_part(ninterp,iplotx,iploty,iplotz,irender,icontourplot,ivecx,ivecy, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
@@ -2059,7 +2059,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         if (lastplot) istepsonpage = nstepsperpage
 
         if (interactive) then
-           if (nacross*ndown.eq.1 .and. nstepsperpage.eq.1) then
+           if (nacross*ndown.eq.1 .and. (nstepsperpage.eq.1 .or. nsteps.eq.1)) then
               iadvance = nfreq
               call interactive_part(ntoti,iplotx,iploty,0,irenderpart,0,0,0, &
                    xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
@@ -2621,7 +2621,7 @@ contains
        ipanelpos = ipanel
     endif
     !--if we are in interactive mode, use the currently buffered plot limits
-    if (interactivereplot .and. (nacross*ndown.gt.1 .or. nstepsperpage.gt.1)) then
+    if (interactivereplot .and. (nacross*ndown.gt.1 .or. (nstepsperpage.gt.1 .and. nsteps.gt.1))) then
        xmin = xminmulti(iplotx)
        xmax = xmaxmulti(iplotx)
        ymin = xminmulti(iploty)
@@ -2713,7 +2713,7 @@ contains
        endif
     endif
     if (debugmode) print*,'DEBUG: calling setpage...'
-    if (nstepsperpage.ne.0 .or. inewpage) then
+    if (nstepsperpage.gt.0 .or. inewpage) then
        if (dum) then !--fake the page setup, then return
           if (.not.(interactivereplot .and. .not.irerender)) then
              call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
