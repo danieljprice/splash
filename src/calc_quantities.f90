@@ -16,7 +16,7 @@
 !     stating that you changed the files and the date of any change.
 !
 !  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 !
@@ -55,7 +55,7 @@ contains
 !
 !-----------------------------------------------------------------
 subroutine setup_calculated_quantities(ncalc)
-  use settings_data, only:ncolumns
+ use settings_data, only:ncolumns
  use prompting,     only:prompt
  implicit none
  integer, intent(out) :: ncalc
@@ -63,10 +63,17 @@ subroutine setup_calculated_quantities(ncalc)
  logical              :: done,first
  character(len=1)     :: charp
  integer, dimension(maxcalc) :: incolumn
+ logical, save :: firstcall = .true.
  ipick = ncolumns + 1
 
  done = .false.
  first = .true.
+!
+!--on the first call to setup, prefill the list of calculated
+!  quantities with ALL of the valid examples.
+!
+ if (ncalc.eq.0 .and. firstcall) call print_example_quantities(ncalc)
+ firstcall = .false.
  charp = 'a'
  calcmenu: do while (.not.done)
     call check_calculated_quantities(ncalc,ncalctot,incolumn)
@@ -74,7 +81,7 @@ subroutine setup_calculated_quantities(ncalc)
 
     iend = maxcalc
     if (ncalctot.gt.0 .or. .not.first) then
-       charp='a'
+       charp='q' !'a'
        if (.not.first) charp = 'q'
        print*
        call prompt(' a)dd to, e)dit, c)lear current list or q)uit/finish? ',&
@@ -84,9 +91,9 @@ subroutine setup_calculated_quantities(ncalc)
           istart = ncalctot
           iend   = ncalctot+1
        case('e')
-          if (ninactive.gt.0) then
+          if (ninactive.gt.0 .and. ncalc.gt.0) then
              call prompt(' pick a function to edit ',ipick,-ninactive,-1,ncolumns+1,ncolumns+ncalc)
-          else
+          elseif (ncalc.gt.0) then
              call prompt(' pick a function to edit ',ipick,ncolumns+1,ncolumns+ncalc)
           endif
           istart = 0
@@ -98,6 +105,7 @@ subroutine setup_calculated_quantities(ncalc)
            calcstring(:) = ' '
            calclabel(:) = ' '
            calcunitslabel(:) = ' '
+           first = .false.
            cycle calcmenu
        case('q','Q','s','S')
           done = .true.
@@ -145,6 +153,8 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
  i = istart + 1
  ntries = 0
  ncalc = istart
+ !if (ncalc.eq.0) call print_example_quantities(ncalc)
+ 
  if (i.gt.maxcalc) then
     print "(/,a,i2,a)",' *** Error, maximum number of calculated quantities (',maxcalc,') reached, cannot add any more.'
     print "(a)",       ' *** If you hit this limit, *please email me* so I can change the default limits!'
@@ -202,15 +212,7 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
        !  (if no equals sign, then prompt later for the label)
        !
        iequal = index(string,'=')
-       if (iequal.ne.0) then
-          calclabel(i)  = string(1:iequal-1)
-          calcstring(i) = string(iequal+1:len_trim(string))
-       else
-          calcstring(i) = trim(string)
-       endif
-
-       !--remove preceding spaces
-       calcstring(i) = trim(adjustl(calcstring(i)))
+       call splitstring(string,calclabel(i),calcstring(i))
        !
        !--fill variable array with the list of valid variable
        !  names for this column
@@ -257,38 +259,92 @@ end subroutine add_calculated_quantities
 
 !---------------------------------------------------------------------
 !
+!  utility to split input string into label and function at the
+!  equals sign
+!
+!---------------------------------------------------------------------
+subroutine splitstring(string,calclabel,calcstring)
+ implicit none
+ character(len=*), intent(in)    :: string
+ character(len=*), intent(inout) :: calclabel
+ character(len=*), intent(out)   :: calcstring
+ integer :: iequal
+
+ iequal = index(string,'=')
+ if (iequal.ne.0) then
+    calclabel  = string(1:iequal-1)
+    calcstring = string(iequal+1:len_trim(string))
+ else
+    calcstring = trim(string)
+ endif
+
+ !--remove preceding spaces
+ calcstring = trim(adjustl(calcstring))
+
+end subroutine splitstring
+
+!---------------------------------------------------------------------
+!
 !  utility to give a nice list of examples to follow / cut and paste
 !  [ this basically replaces what was hardwired into the
 !    old calc_quantities routine ]
 !
 !---------------------------------------------------------------------
-subroutine print_example_quantities
+subroutine print_example_quantities(ncalc)
  use labels,        only:label,lenlabel,irho,iutherm,iBfirst,ix,icv,iradenergy,iamvec,labelvec
  use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
  use settings_units,only:unitslabel
  use geometry,      only:labelcoord
  implicit none
- integer :: i,j,ivecstart
+ integer, intent(inout), optional :: ncalc
+ logical :: prefill
+ character(len=lenlabel) :: string
+ integer :: i,j,ivecstart,ierr,ilen
 
- print "(/,a)",' Examples based on current data: '
+ prefill = .false.
+ if (present(ncalc)) prefill = .true.
+
+ if (prefill) then
+    print "(/,a)",' Prefilling list with useful quantities from current data...'
+ else
+    print "(/,a)",' Examples based on current data: '
+ endif
  !--radius
+ string = ' '
  if (ndim.gt.0 .and. icoordsnew.eq.1 .and. ncolumns.ge.ndim) then
-    write(*,"(11x,a)",ADVANCE='NO') 'r = sqrt(('// &
+    write(string,"(a)") 'r = sqrt(('// &
           trim(shortlabel(label(ix(1)),unitslabel(ix(1))))//'-'//trim(labelcoord(1,1))//'0)**2'
+    ilen = len_trim(string)
     if (ndim.gt.1) then
-       write(*,"(a,a,a)") (' + ('//trim(shortlabel(label(ix(i)),unitslabel(ix(i))))// &
-                                                 '-'//trim(labelcoord(i,1))//'0)**2',i=2,ndim),')'
+       write(string(ilen+1:),"(a,a,a)",iostat=ierr) &
+             (' + ('//trim(shortlabel(label(ix(i)),unitslabel(ix(i))))// &
+              '-'//trim(labelcoord(i,1))//'0)**2',i=2,ndim),')'
     else
-       write(*,"(a)") ')'
+       write(string(ilen+1:),"(a)") ')'
     endif
- elseif (ncolumns.ge.2) then
+    if (prefill) then
+       ncalc = ncalc + 1
+       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+    else
+       print "(11x,a)",trim(string)
+    endif
+ elseif (ncolumns.ge.2 .and. .not.prefill) then
  !--if ndim=0 give random example to give at least one
     print "(11x,a)",trim(shortlabel(label(1)))//'*'//trim(shortlabel(label(2)))
  endif
+
  !--pressure
+ string = ' '
  if (irho.gt.0 .and. iutherm.gt.0) then
-    print "(11x,a)",'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
-                '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    write(string,"(a)",iostat=ierr) &
+         'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
+         '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    if (prefill) then
+       ncalc = ncalc + 1
+       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+    else
+       print "(11x,a)",trim(string)
+    endif
  endif
  !
  !--magnitudes of all vector quantities (only if cartesian coords are set)
@@ -298,37 +354,70 @@ subroutine print_example_quantities
     do i=1,ncolumns
        if (iamvec(i).gt.0 .and. iamvec(i).le.ncolumns .and. iamvec(i).ne.ivecstart) then
           ivecstart = iamvec(i)
-          write(*,"(11x,a)",ADVANCE='NO') '|'//trim(labelvec(ivecstart))//'| '// &
+          string = ' '
+          write(string,"(a)",iostat=ierr) '|'//trim(labelvec(ivecstart))//'| '// &
             '= sqrt('//trim(shortlabel(label(ivecstart),unitslabel(ivecstart)))//'**2'
+          ilen = len_trim(string)
           if (ndimV.gt.1) then
-             write(*,"(a,a,a)") (' + '//trim(shortlabel(label(j),unitslabel(j)))//'**2',&
+             write(string(ilen+1:),"(a,a,a)",iostat=ierr) &
+                  (' + '//trim(shortlabel(label(j),unitslabel(j)))//'**2',&
                                  j=ivecstart+1,ivecstart+ndimV-1),')'
           else
-             write(*,"(a)") ')'
+             write(string(ilen+1:),"(a)",iostat=ierr) ')'
+          endif
+          if (prefill) then
+             ncalc = ncalc + 1
+             call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+          else
+             print "(11x,a)",trim(string)
           endif
        endif
     enddo
  endif
  !--magnetic pressure
+ string = ' '
  if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. icoordsnew.eq.1) then
-    write(*,"(11x,a)",ADVANCE='NO') 'P\dmag = 0.5*('//trim(shortlabel(label(iBfirst),unitslabel(iBfirst)))//'**2'
+    write(string,"(a)",iostat=ierr) &
+        'P\dmag = 0.5*('//trim(shortlabel(label(iBfirst),unitslabel(iBfirst)))//'**2'
+    ilen = len_trim(string)
     if (ndimV.gt.1) then
-       write(*,"(a,a,a)") (' + '//trim(shortlabel(label(i),unitslabel(i)))//'**2',i=iBfirst+1,iBfirst+ndimV-1),')'
+       write(string(ilen+1:),"(a,a,a)",iostat=ierr) &
+            (' + '//trim(shortlabel(label(i),unitslabel(i)))//'**2',i=iBfirst+1,iBfirst+ndimV-1),')'
     else
-       write(*,"(a)") ')'
+       write(string(ilen+1:),"(a)",iostat=ierr) ')'
+    endif
+    if (prefill) then
+       ncalc = ncalc + 1
+       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+    else
+       print "(11x,a)",trim(string)
     endif
  endif
  !--gas temperature if cv present
  if (ndim.gt.0 .and. iutherm.gt.0 .and. icv.gt.0) then
-    print "(6x,a)",'T\dgas\u = '//trim(shortlabel(label(iutherm),unitslabel(iutherm)))//'/' &
+    string = ' '
+    write(string,"(a)",iostat=ierr) 'T\dgas\u = '//trim(shortlabel(label(iutherm),unitslabel(iutherm)))//'/' &
                     //trim(shortlabel(label(icv),unitslabel(icv)))
+    if (prefill) then
+       ncalc = ncalc + 1
+       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+    else
+       print "(6x,a)",trim(string)
+    endif
  endif
  !--radiation temperature
  if (ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0) then
-    print "(6x,a)",'T\drad\u = ('//trim(shortlabel(label(irho),unitslabel(irho)))//'*' &
+    string = ' '
+    write(string,"(a)",iostat=ierr) 'T\drad\u = ('//trim(shortlabel(label(irho),unitslabel(irho)))//'*' &
                     //trim(shortlabel(label(iradenergy),unitslabel(iradenergy)))//'/7.5646e-15)**0.25)'
+    if (prefill) then
+       ncalc = ncalc + 1
+       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+    else
+       print "(6x,a)",trim(string)
+    endif
  endif
- print "(a)"
+ if (.not.prefill) print "(a)"
 
 end subroutine print_example_quantities
 
@@ -428,7 +517,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   ncalc = 0
   call check_calculated_quantities(ncalc,ncalctot)
   
-  if (.not.skip) print "(2(a,i2),a,/)",' Calculating ',ncalc,' of ',ncalctot,' additional quantities...'
+  if (.not.skip .and. ncalc.gt.0) print "(2(a,i2),a,/)",' Calculating ',ncalc,' of ',ncalctot,' additional quantities...'
   ncolsnew = ncolumns + ncalc
   if (ncolsnew.gt.maxcol) call alloc(maxpart,maxstep,ncolsnew) 
 
