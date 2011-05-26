@@ -165,9 +165,10 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
  if (printhelp) then
     print "(/,a)",' Specify a function to calculate from the data '
     print "(10(a))",' Valid variables are the column labels',(', '''//trim(extravars(j))//'''',j=1,nextravars-1),&
-                ' and '''//trim(extravars(nextravars))//''' (origin setting) '
-    print "(a)",' Spaces, escape sequences (\d) and units labels are removed from variable names'
-    print "(a)",' Note that previously calculated quantities can be used in subsequent calculations'
+                ' and '''//trim(extravars(nextravars))//''''
+    print "(a)",' Spaces, escape sequences (\d), arithmetic operators and units labels'
+    print "(a)",' are removed from variable names. Note that previously calculated'
+    print "(a)",' quantities can be used in subsequent calculations.'
  endif
  call print_example_quantities()
   
@@ -221,7 +222,7 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
        !
        !--check for errors parsing function
        !
-       ierr = checkf(shortlabel(calcstring(i)),vars(1:nvars))
+       ierr = checkf(shortstring(calcstring(i)),vars(1:nvars))
        if (ierr.ne.0 ) then
           ntries = ntries + 1
           print "(a,i1,a)",' error parsing function string: try again (',ntries,' of 3)'
@@ -452,7 +453,7 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn)
     !
     !--check that the function parses
     !
-    ierr = checkf(shortlabel(calcstring(i)),vars(1:nvars),Verbose=.false.)
+    ierr = checkf(shortstring(calcstring(i)),vars(1:nvars),Verbose=.false.)
 
     if (ierr.eq.0) then
        ncalcok = ncalcok + 1
@@ -546,7 +547,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
            !
            !--now actually parse the function
            !
-           call parsef(icalc,shortlabel(calcstring(i)),vars(1:nvars),err=ierr,Verbose=.false.)
+           call parsef(icalc,shortstring(calcstring(i)),vars(1:nvars),err=ierr,Verbose=.false.)
            if (ierr.eq.0) then
               icalc = icalc + 1
            endif
@@ -678,7 +679,45 @@ end subroutine get_variables
 !-----------------------------------------------------------------
 !
 !  utility (private) to strip spaces, escape sequences and
-!  units labels from variable names
+!  units labels from strings (this can be called for both
+!  function strings and variable labels)
+!
+!-----------------------------------------------------------------
+elemental function shortstring(string,unitslab)
+ use labels, only:lenlabel
+ implicit none
+ character(len=lenlabel), intent(in)           :: string
+ character(len=*),        intent(in), optional :: unitslab
+ character(len=lenlabel)                       :: shortstring
+ integer :: ipos
+
+ shortstring = string
+ !--strip off the units label
+ if (present(unitslab)) then
+    if (len_trim(unitslab).gt.0) then
+    !--remove units label (only do this once)
+       ipos = index(trim(shortstring),trim(unitslab))
+       if (ipos.ne.0) then
+          shortstring = shortstring(1:ipos-1)//&
+                        shortstring(ipos+len_trim(unitslab)+1:len_trim(shortstring))
+       endif
+    endif
+ endif
+
+ !--remove spaces
+ call removesubstr(shortstring,' ')
+ !--remove escape sequences (\d etc.)
+ call removesubstr(shortstring,'\d')
+ call removesubstr(shortstring,'\u')
+ call removesubstr(shortstring,'\g')
+
+end function shortstring
+
+!------------------------------------------------------------------
+!
+! Same as shortstring, but also strips any arithmetic operators
+! should be applied to variable names, but not function strings
+! (private utility)
 !
 !-----------------------------------------------------------------
 elemental function shortlabel(string,unitslab)
@@ -687,35 +726,44 @@ elemental function shortlabel(string,unitslab)
  character(len=lenlabel), intent(in)           :: string
  character(len=*),        intent(in), optional :: unitslab
  character(len=lenlabel)                       :: shortlabel
- integer :: ipos
 
- shortlabel = string
- !--strip off the units label
  if (present(unitslab)) then
-    if (len_trim(unitslab).gt.0) then
-    !--remove units label (only do this once)
-       ipos = index(trim(shortlabel),trim(unitslab))
-       if (ipos.ne.0) then
-          shortlabel = shortlabel(1:ipos-1)//&
-                       shortlabel(ipos+len_trim(unitslab)+1:len_trim(shortlabel))
-       endif
-    endif
+    shortlabel = shortstring(string,unitslab)
+ else
+    shortlabel = shortstring(string) 
  endif
-
- !--remove spaces
- ipos = index(trim(shortlabel),' ')
- do while (ipos.ne.0)
-    shortlabel = shortlabel(1:ipos-1)//shortlabel(ipos+1:len_trim(shortlabel))
-    ipos = index(trim(shortlabel),' ')
- enddo
- !--remove escape sequences (\d etc.)
- ipos = index(trim(shortlabel),'\')
- do while (ipos.ne.0)
-    shortlabel = shortlabel(1:ipos-1)//shortlabel(ipos+2:len_trim(shortlabel))
-    ipos = index(trim(shortlabel),'\')
- enddo
+ !--remove arithmetic operators from labels
+ call removesubstr(shortlabel,'**')
+ call removesubstr(shortlabel,'/')
+ call removesubstr(shortlabel,'*')
+ call removesubstr(shortlabel,'+')
+ call removesubstr(shortlabel,'-')
+ call removesubstr(shortlabel,'^')
+ call removesubstr(shortlabel,'(')
+ call removesubstr(shortlabel,')')
 
 end function shortlabel
+
+!-----------------------------------------------------------------
+!
+!  utility (private) to remove all instances of a character
+!  from an input string
+!
+!-----------------------------------------------------------------
+pure subroutine removesubstr(string,substr)
+ implicit none
+ character(len=*), intent(in) :: substr
+ character(len=*), intent(inout) :: string
+ integer :: ipos,lensub
+
+ ipos = index(trim(string),substr)
+ lensub = len(substr)
+ do while (ipos.ne.0)
+    string = string(1:ipos-1)//string(ipos+lensub:len_trim(string))
+    ipos = index(trim(string),substr)
+ enddo
+
+end subroutine removesubstr
 
 !-----------------------------------------------------------------
 !
