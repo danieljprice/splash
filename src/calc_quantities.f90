@@ -153,7 +153,6 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
  i = istart + 1
  ntries = 0
  ncalc = istart
- !if (ncalc.eq.0) call print_example_quantities(ncalc)
  
  if (i.gt.maxcalc) then
     print "(/,a,i2,a)",' *** Error, maximum number of calculated quantities (',maxcalc,') reached, cannot add any more.'
@@ -292,7 +291,8 @@ end subroutine splitstring
 !
 !---------------------------------------------------------------------
 subroutine print_example_quantities(ncalc)
- use labels,        only:label,lenlabel,irho,iutherm,iBfirst,ix,icv,iradenergy,iamvec,labelvec
+ use labels,        only:label,lenlabel,irho,iutherm,iBfirst,ix,icv,idivB,&
+                         ih,iradenergy,iamvec,labelvec
  use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
  use settings_units,only:unitslabel
  use geometry,      only:labelcoord
@@ -301,7 +301,10 @@ subroutine print_example_quantities(ncalc)
  logical :: prefill
  character(len=lenlabel) :: string
  integer :: i,j,ivecstart,ierr,ilen
+ logical :: gotpmag,gotpressure
 
+ gotpmag = .false.
+ gotpressure = .false.
  prefill = .false.
  if (present(ncalc)) prefill = .true.
 
@@ -337,6 +340,7 @@ subroutine print_example_quantities(ncalc)
  !--pressure
  string = ' '
  if (irho.gt.0 .and. iutherm.gt.0) then
+    gotpressure = .true.
     write(string,"(a)",iostat=ierr) &
          'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
          '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
@@ -378,6 +382,7 @@ subroutine print_example_quantities(ncalc)
  !--magnetic pressure
  string = ' '
  if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. icoordsnew.eq.1) then
+    gotpmag = .true.
     write(string,"(a)",iostat=ierr) &
         'P\dmag = 0.5*('//trim(shortlabel(label(iBfirst),unitslabel(iBfirst)))//'**2'
     ilen = len_trim(string)
@@ -394,6 +399,38 @@ subroutine print_example_quantities(ncalc)
        print "(11x,a)",trim(string)
     endif
  endif
+ !--h*div B / B
+ if (ndim.gt.0 .and. ndimV.gt.0 .and. ih.gt.0 .and. iBfirst.gt.0 .and. &
+     icoordsnew.eq.1 .and. idivB.gt.0) then
+    write(string,"(a)",iostat=ierr) &
+        'h|div B|/|B| = '//trim(shortlabel(label(ih),unitslabel(ih)))//'*abs(' &
+                         //trim(shortlabel(label(idivB),unitslabel(idivB)))//')/' &
+                         //'sqrt(('//trim(shortlabel(label(iBfirst),unitslabel(iBfirst)))//'^2'
+    ilen = len_trim(string)
+    if (ndimV.gt.1) then
+       write(string(ilen+1:),"(a,a,a)",iostat=ierr) &
+            (' + '//trim(shortlabel(label(i),unitslabel(i)))//'^2',i=iBfirst+1,iBfirst+ndimV-1),'))'
+    else
+       write(string(ilen+1:),"(a)",iostat=ierr) '))'
+    endif
+    if (prefill) then
+       ncalc = ncalc + 1
+       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+    else
+       print "(11x,a)",trim(string)
+    endif 
+ endif
+ !--Plasma beta
+ if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. gotpmag .and. gotpressure) then
+    write(string,"(a)",iostat=ierr) 'plasma \gb = pressure/P\dmag'
+    if (prefill) then
+       ncalc = ncalc + 1
+       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+    else
+       print "(11x,a)",trim(string)//'    [ assuming pressure and Pmag calculated ]' 
+    endif 
+ endif
+ 
  !--gas temperature if cv present
  if (ndim.gt.0 .and. iutherm.gt.0 .and. icv.gt.0) then
     string = ' '
