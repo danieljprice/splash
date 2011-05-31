@@ -2721,6 +2721,8 @@ contains
                      xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                      0.0,TitleOffset,isamexaxis,tile_plots)
              call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+             if (debugmode) print*,'DEBUG: viewport xpix=',xminpix,'->',xmaxpix,' ypix=',yminpix,'->',ymaxpix
+
              npixx = max(nint(xmaxpix-xminpix),1)
              npixy = max(nint(ymaxpix-yminpix),1)
              if (debugmode) print*,'DEBUG: dx = ',xmax-xmin,' dy = ',ymax-ymin
