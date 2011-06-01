@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -63,7 +63,7 @@ contains
 !-------------------------------------------------------
 subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
            xlabeloffset,vptxminfull,vptxmaxfull,vptyminfull,vptymaxfull)
- use plotlib,   only:plot_set_exactpixelboundaries
+ use plotlib,   only:plot_set_exactpixelboundaries,plot_lib_is_pgplot
  use plotlib,   only:plot_bbuf,plot_ebuf,plot_qwin,plot_qvp,plot_qcs,&
                      plot_svp,plot_swin,plot_imag,plot_box,plot_annotate
  implicit none
@@ -148,7 +148,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    
    if (abs(icolours).gt.0) then        ! colour
    !--check if the colour bar will be more than 1024 pixels
-       if ((xmaxpix-xminpix).le.1024) then
+       if ((xmaxpix-xminpix).le.1024 .or. .not.plot_lib_is_pgplot()) then
     !   
     !--the standard way is to use the default line below
     !
@@ -190,7 +190,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !  (0.25 space + 1 character height for numeric labels + 0.25 space
    !   + 1 character height for actual label = 2.5 character heights)
    !
-    if (label.ne.' ' .and. iplotcolourbarlabel) then
+    if (len_trim(label).gt.0 .and. iplotcolourbarlabel) then
        call plot_annotate('B',2.5,0.5,0.5,trim(label))
     endif
 
@@ -235,7 +235,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !  We allow the user to adjust this parameter to bring the label
    !  closer where the numeric labels are smaller (e.g. "-5").
    !
-    if (label.ne.' ' .and. iplotcolourbarlabel) then
+    if (len_trim(label).gt.0 .and. iplotcolourbarlabel) then
        call plot_annotate('R',ColourBarDisp+0.75,1.0,1.0,trim(label))
     endif
  end select
@@ -305,7 +305,6 @@ logical function incolourbarlabel(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
  incolourbarlabel = .false.
  if (iplotcolourbarlabel) then
     call plot_qcs(4,xch,ych)
-    print*,'checking colourbar label ',xpt,ypt,ymin-2.5*ych,ych
     disp = dispall
     if (istyle.eq.3 .or. istyle.eq.4) disp = 0.
     select case(istyle)
