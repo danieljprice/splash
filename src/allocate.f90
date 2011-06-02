@@ -171,6 +171,8 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
   if (reallocate) then
      dat(1:maxpartold,1:maxcolold,1:maxstepold) = dattemp(1:maxpartold,1:maxcolold,1:maxstepold)
      deallocate(dattemp)
+  else
+     dat = 0.
   endif
 !
 !--type array if necessary
