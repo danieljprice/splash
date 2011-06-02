@@ -206,10 +206,16 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
   integer, intent(out) :: ierr
   character(len=2*len(unitslabel)+40) :: line
   integer :: i,itemp,isemicolon,isemicolon2,isemicolon3
-  logical :: ierrzunits
+  logical :: ierrzunits,iexist
 
   ierr = 0
   ierrzunits = .false.
+  inquire(file=unitsfile,exist=iexist)
+  if (.not.iexist) then
+     print*,trim(unitsfile),' not found'
+     ierr = 1
+     return  
+  endif
 
   open(unit=78,file=unitsfile,status='old',form='formatted',err=997)
   print "(/,a)",' reading units from file '//trim(unitsfile)

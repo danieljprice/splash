@@ -147,9 +147,17 @@ subroutine read_limits(limitsfile,ierr)
   integer, intent(out) :: ierr
   integer              :: i,ncolsline
   character(len=120)   :: line
+  logical :: iexist
 
   ierr = 0
 
+  inquire(file=limitsfile,exist=iexist)
+  if (.not.iexist) then
+     print "(1x,a)",trim(limitsfile)//' not found'
+     ierr = 1
+     return
+  endif
+  
   open(unit=54,file=limitsfile,status='old',form='formatted',err=997)
   print*,'reading plot limits from file ',trim(limitsfile)
   do i=1,numplot
@@ -170,7 +178,6 @@ subroutine read_limits(limitsfile,ierr)
      call warn_minmax(label(i),lim(i,1),lim(i,2))
   enddo
   close(unit=54)
-
   return
 
 997 continue
