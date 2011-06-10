@@ -2643,7 +2643,7 @@ contains
           if (gotcontours) then
              print*,trim(labelcont),' min, max = ',contmin,contmax
           endif
-       endif 
+       endif
     endif
 
     !--------------------------------------------------------------
