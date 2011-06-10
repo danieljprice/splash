@@ -354,6 +354,14 @@ end subroutine redraw_axes
   vmargintop = vmargintopin
   vmarginright = vmarginrightin
   if (axis.ge.0) then
+     !--if we are drawing an axis
+     !  leave a minimum of half a character
+     !  spacing (or 0.7 for antialiasing)
+     !  so that axis numbers are not chopped
+     !  in half at the edges of the viewport
+     vmargintop = max(vmargintop,0.7*ych)
+     vmarginright = max(vmarginright,0.7*xch)
+     !--leave space for labels
      vmarginleft = vmarginleftin + (ylabeloffset+1.5)*xch
      vmarginbottom = vmarginbottomin + (xlabeloffset+1.0)*ych
 
