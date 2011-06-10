@@ -176,30 +176,31 @@ subroutine defaults_write(filename)
  implicit none
  character(len=*), intent(in) :: filename
  integer :: i,ierr
+ integer, parameter :: iunit = 1
        
- open(unit=1,file=trim(adjustl(filename)),status='replace',form='formatted', &
+ open(unit=iunit,file=trim(adjustl(filename)),status='replace',form='formatted', &
       delim='apostrophe',iostat=ierr) ! without delim namelists may not be readable
     if (ierr /= 0) then 
        print*,'ERROR: cannot write file '//trim(filename)
-       close(unit=1)
+       close(unit=iunit)
        return
     endif
-    write(1,NML=dataopts)
-    write(1,NML=plotopts)
-    write(1,NML=pageopts)
-    write(1,NML=renderopts)
-    write(1,NML=vectoropts)
-    write(1,NML=xsecrotopts)
-    write(1,NML=powerspecopts)
-    write(1,NML=exactopts)
-    write(1,NML=exactparams)
-    write(1,NML=multi)
-    write(1,NML=shapeopts)
-    write(1,NML=calcopts)
+    write(iunit,NML=dataopts)
+    write(iunit,NML=plotopts)
+    write(iunit,NML=pageopts)
+    write(iunit,NML=renderopts)
+    write(iunit,NML=vectoropts)
+    write(iunit,NML=xsecrotopts)
+    write(iunit,NML=powerspecopts)
+    write(iunit,NML=exactopts)
+    write(iunit,NML=exactparams)
+    write(iunit,NML=multi)
+    write(iunit,NML=shapeopts)
+    write(iunit,NML=calcopts)
     do i=1,nfiles
-       write(1,"(a)") trim(rootname(i))
+       write(iunit,"(a)") trim(rootname(i))
     enddo
- close(unit=1)
+ close(unit=iunit)
  print "(a)",'default options saved to file '//trim(filename)
     
  return              
@@ -226,67 +227,68 @@ subroutine defaults_read(filename)
  character(len=*), intent(in) :: filename
  logical :: iexist
  integer :: ierr,i
- 
+ integer, parameter :: iunit = 1
+
  inquire (exist=iexist, file=filename)
  if (iexist) then
-    open(unit=1,file=filename,status='old',form='formatted',delim='apostrophe',err=88)
-    
+    open(unit=iunit,file=filename,status='old',form='formatted',delim='apostrophe',err=88)
+
     ierr = 0
-    read(1,NML=dataopts,iostat=ierr)
+    read(iunit,NML=dataopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading data options from '//trim(filename)    
-    
+
     ierr = 0
-    read(1,NML=plotopts,iostat=ierr)
+    read(iunit,NML=plotopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading plot options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=pageopts,iostat=ierr)
+    read(iunit,NML=pageopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading page options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=renderopts,iostat=ierr)
+    read(iunit,NML=renderopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading render options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=vectoropts,iostat=ierr)
+    read(iunit,NML=vectoropts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading vector plot options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=xsecrotopts,iostat=ierr)
+    read(iunit,NML=xsecrotopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading xsec/rotation options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=powerspecopts,iostat=ierr)
+    read(iunit,NML=powerspecopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading power spectrum options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=exactopts,iostat=ierr)
+    read(iunit,NML=exactopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading exact solution options from '//trim(filename)    
 
     ierr = 0
-    read(1,NML=exactparams,iostat=ierr)
+    read(iunit,NML=exactparams,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading exact solution parameters from '//trim(filename)    
-  
+
     ierr = 0
-    read(1,NML=multi,iostat=ierr)
+    read(iunit,NML=multi,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading multiplot options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=shapeopts,iostat=ierr)
+    read(iunit,NML=shapeopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading shape options from '//trim(filename)
 
     ierr = 0
-    read(1,NML=calcopts,iostat=ierr)
+    read(iunit,NML=calcopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading calculated quantity settings from '//trim(filename)
 
     if (len_trim(rootname(1)).eq.0) then
        do i=1,maxfile
-          read(1,*,end=66,iostat=ierr) rootname(i)
+          read(iunit,*,end=66,iostat=ierr) rootname(i)
        enddo
     endif
 66  continue
 
-    close(unit=1)
+    close(unit=iunit)
     print*,'read default options from '//trim(filename)
     return
  else
