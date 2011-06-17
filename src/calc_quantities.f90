@@ -676,8 +676,9 @@ end subroutine calc_quantities
 !
 !-----------------------------------------------------------------
 subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
- use asciiutils, only:lcase
- use labels,     only:irad,ike,ipr
+ use asciiutils,    only:lcase
+ use labels,        only:irad,ike,ipr
+ use settings_data, only:debugmode
  implicit none
  character(len=*), intent(in) :: labelcol
  integer, intent(in) :: ncolumns,icolumn
@@ -690,13 +691,13 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  select case(lcase(trim(labelcol)))
  case('r','radius','rad')
     if (irad.le.0 .or. irad.gt.ncolumns) irad = icolumn
-    print "(1x,a,i2,a)",'identifying column ',icolumn,' as the radius'
+    if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the radius'
  case('kinetic energy','ke','1/2 v^2','v^2/2')
     if (ike.le.0 .or. irad.gt.ncolumns) ike = icolumn
-    print "(1x,a,i2,a)",'identifying column ',icolumn,' as the kinetic energy'
+    if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the kinetic energy'
  case('pressure','pr','p')
     if (ipr.le.0 .or. ipr.gt.ncolumns) ipr = icolumn
-    print "(1x,a,i2,a)",'identifying column ',icolumn,' as the pressure'
+    if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the pressure'
  end select
  
 end subroutine identify_calculated_quantity
