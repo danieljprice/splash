@@ -635,6 +635,12 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
               print "(a)",' ERRORS evaluating '//trim(calcstring(icalc))//': ' &
                           //trim(EvalerrMsg())
            endif
+           !
+           !--identify calculated quantities based on the label
+           !
+           if (i.eq.ifromstep) then
+              call identify_calculated_quantity(label(ncolumns+icalc),ncolumns,ncolumns+icalc)
+           endif
         enddo
      enddo
      call endf
@@ -660,6 +666,40 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   
   return
 end subroutine calc_quantities
+
+!-----------------------------------------------------------------
+!
+!  utility (private) to identify a calculated quantity so
+!  that it relevant exact solutions can be plotted for the
+!  quantity. This is mainly just the radius, but can include
+!  other things also.
+!
+!-----------------------------------------------------------------
+subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
+ use asciiutils, only:lcase
+ use labels,     only:irad,ike,ipr
+ implicit none
+ character(len=*), intent(in) :: labelcol
+ integer, intent(in) :: ncolumns,icolumn
+ !
+ !--identify quantities based on the label
+ !  only do this if the location flags are not already set
+ !  (e.g. in the data read) - but DO overwrite if they
+ !  are calculated quantities as the locations can change
+ !
+ select case(lcase(trim(labelcol)))
+ case('r','radius','rad')
+    if (irad.le.0 .or. irad.gt.ncolumns) irad = icolumn
+    print "(1x,a,i2,a)",'identifying column ',icolumn,' as the radius'
+ case('kinetic energy','ke','1/2 v^2','v^2/2')
+    if (ike.le.0 .or. irad.gt.ncolumns) ike = icolumn
+    print "(1x,a,i2,a)",'identifying column ',icolumn,' as the kinetic energy'
+ case('pressure','pr','p')
+    if (ipr.le.0 .or. ipr.gt.ncolumns) ipr = icolumn
+    print "(1x,a,i2,a)",'identifying column ',icolumn,' as the pressure'
+ end select
+ 
+end subroutine identify_calculated_quantity
 
 !-----------------------------------------------------------------
 !
