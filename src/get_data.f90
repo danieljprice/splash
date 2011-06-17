@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -152,6 +152,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         time(1:nsteps) = time(1:nsteps)*units(0)
      endif     
      !
+     !--reset coordinate and vector labels (depending on coordinate system)
+     !  Need to do this BEFORE calculating quantities
+     !
+     call set_coordlabels(ncolumns)
+     !
      !--calculate various additional quantities
      !
      if (nsteps.ge.1 .and. iCalcQuantities) then
@@ -254,6 +259,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         time(1:nstepsinfile(ireadfile)) = time(1:nstepsinfile(ireadfile))*units(0)
      endif
      !
+     !--reset coordinate and vector labels (depending on coordinate system)
+     !  Need to do this BEFORE calculating quantities
+     !
+     call set_coordlabels(ncolumns)
+
+     !
      !--calculate various additional quantities
      !
      if (nstepsinfile(ireadfile).gt.0 .and. iCalcQuantities) then
@@ -291,10 +302,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
                            '  types is turned on via the o)ptions menu'
      endif
   endif
-  !
-  !--reset coordinate and vector labels (depending on coordinate system)
-  !
-  call set_coordlabels(ncolumns+ncalc)
 
   !
   !--read exact solution parameters from files if present
