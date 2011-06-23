@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -56,13 +56,13 @@ contains
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
-     xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidth,normalise)
+     xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,pixwidth,zslice
+  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zslice
   real, intent(out), dimension(npixx,npixy) :: datsmooth
   logical, intent(in) :: normalise
   real, dimension(npixx,npixy) :: datnorm
@@ -79,7 +79,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
   else
      print*,'taking fast cross section (non-normalised)...',zslice
   endif
-  if (pixwidth.le.0.) then
+  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
      print*,'interpolate3D_xsec: error: pixel width <= 0'
      return
   elseif (npart.le.0) then
@@ -132,10 +132,10 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
         !
         !--for each particle work out which pixels it contributes to
         !               
-        ipixmin = int((xi - radkern - xmin)/pixwidth)
-        jpixmin = int((yi - radkern - ymin)/pixwidth)
-        ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
-        jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
+        ipixmin = int((xi - radkern - xmin)/pixwidthx)
+        jpixmin = int((yi - radkern - ymin)/pixwidthy)
+        ipixmax = int((xi + radkern - xmin)/pixwidthx) + 1
+        jpixmax = int((yi + radkern - ymin)/pixwidthy) + 1
 
         if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
         if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
@@ -145,13 +145,13 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
         !--precalculate an array of dx2 for this particle (optimisation)
         !
         do ipix=ipixmin,ipixmax
-           dx2i(ipix) = ((xmin + (ipix-0.5)*pixwidth - xi)**2)*hi21 + dz2
+           dx2i(ipix) = ((xmin + (ipix-0.5)*pixwidthx - xi)**2)*hi21 + dz2
         enddo
         !
         !--loop over pixels, adding the contribution from this particle
         !
         do jpix = jpixmin,jpixmax
-           ypix = ymin + (jpix-0.5)*pixwidth
+           ypix = ymin + (jpix-0.5)*pixwidthy
            dy = ypix - yi
            dy2 = dy*dy*hi21
            do ipix = ipixmin,ipixmax
@@ -227,13 +227,13 @@ end subroutine interpolate3D_fastxsec
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
-     xmin,ymin,zslice,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth,normalise)
+     xmin,ymin,zslice,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,pixwidth,zslice
+  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zslice
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
   logical, intent(in) :: normalise
   real, dimension(npixx,npixy) :: datnorm
@@ -250,7 +250,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   else
      print*,'taking fast cross section (non-normalised)...',zslice
   endif
-  if (pixwidth.le.0.) then
+  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
      print*,'interpolate3D_xsec_vec: error: pixel width <= 0'
      return
   endif
@@ -289,10 +289,10 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
         !
         !--for each particle work out which pixels it contributes to
         !               
-        ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-        jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-        ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
-        jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
+        ipixmin = int((x(i) - radkern - xmin)/pixwidthx)
+        jpixmin = int((y(i) - radkern - ymin)/pixwidthy)
+        ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
+        jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
 
         if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
         if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
@@ -302,10 +302,10 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
         !--loop over pixels, adding the contribution from this particle
         !
         do jpix = jpixmin,jpixmax
-           ypix = ymin + (jpix-0.5)*pixwidth
+           ypix = ymin + (jpix-0.5)*pixwidthy
            dy = ypix - y(i)
            do ipix = ipixmin,ipixmax
-              xpix = xmin + (ipix-0.5)*pixwidth
+              xpix = xmin + (ipix-0.5)*pixwidthx
               dx = xpix - x(i)
               rab = sqrt(dx**2 + dy**2 + dz2)
               qq = rab*hi1

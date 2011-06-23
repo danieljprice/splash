@@ -1389,7 +1389,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                zplot(1:ninterp),hh(1:ninterp), &
                                weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
-                               inormalise)
+                               pixwidthy,inormalise)
                           !!--same but for contour plot
                           if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                              if (.not.isameweights) & ! set contouring weights as necessary
@@ -1400,7 +1400,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   zplot(1:ninterp),hh(1:ninterp), &
                                   weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
-                                  inormalise)
+                                  pixwidthy,inormalise)
                              gotcontours = .true.
 
                              if (.not.isameweights) & ! reset weights
@@ -3217,14 +3217,14 @@ contains
                  hh(1:ninterp),weight(1:ninterp), &
                  vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
                  icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
-                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)            
+                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise)            
             else
                call interpolate3D_xsec_vec(xplot(1:ninterp), &
                  yplot(1:ninterp),zplot(1:ninterp), &
                  hh(1:ninterp),weight(1:ninterp), &
                  dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                  icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
-                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)
+                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise)
             endif
          else
             if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then               
