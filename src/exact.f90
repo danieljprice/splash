@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -74,6 +74,8 @@ module exact
   !--arbitrary function
   integer :: nfunc
   character(len=120), dimension(10) :: funcstring
+  !--Roche potential
+  real :: semi,ecc,mprim,msec
   !
   !--sort these into a namelist for input/output
   !
@@ -86,7 +88,8 @@ module exact
        polyk,sigma0,norder,morder,rhosedov,esedov, &
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
-       Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas
+       Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
+       semi,ecc,mprim,msec
        
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -152,6 +155,11 @@ contains
     cs    = 1.0
     rhozero = 1.0
     rdust_to_gas = 1.0
+!   Roche lobes
+    semi  = 1.
+    ecc   = 0.
+    mprim = 1.
+    msec  = 1.
 
 !   arbitrary function
     nfunc = 1
@@ -198,8 +206,9 @@ contains
          '11) torus ',/, &
          '12) ring spreading ',/, &
          '13) special relativistic shock tube', /, &
-         '14) dusty waves ')
-    call prompt('enter exact solution to plot',iexact,0,14)
+         '14) dusty waves', /, &
+         '15) Roche lobes/potential ')
+    call prompt('enter exact solution to plot',iexact,0,15)
     print "(a,i2)",'plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
@@ -362,6 +371,10 @@ contains
        call prompt('enter initial gas density ',rhozero,0.)
        call prompt('enter dust-to-gas ratio ',rdust_to_gas,0.)
        call prompt('enter drag coefficient K ',Kdrag,0.)
+    case(15)
+       call prompt('enter semi-major axis of binary',semi,0.)
+       call prompt('enter mass of primary star ',mprim,0.)
+       call prompt('enter mass of secondary star ',msec,0.,mprim)       
     end select
 
     return
@@ -592,6 +605,7 @@ contains
     use exactfunction,   only:exact_function
     use ringspread,      only:exact_ringspread
     use dustywaves,      only:exact_dustywave
+    use rochelobe,       only:exact_rochelobe
     use transforms,      only:transform,transform_inverse
     use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line
     implicit none
@@ -926,6 +940,10 @@ contains
           elseif (iploty.eq.ivx) then
              call exact_dustywave(2,time,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
           endif
+       endif
+    case(15) ! Roche potential
+       if (igeom.eq.1 .and. ndim.ge.2 .and. iplotx.eq.ix(1) .and. iploty.eq.ix(2)) then
+          call exact_rochelobe(time,semi,mprim,msec,xexact,yexact,ierr)
        endif
     end select
     

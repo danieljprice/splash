@@ -119,7 +119,7 @@ ifeq ($(SYSTEM),g95)
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
    PARALLEL= no
-   CC = gcc
+   CC = gcc -m32
    KNOWN_SYSTEM=yes
 endif
 
@@ -128,7 +128,8 @@ ifeq ($(SYSTEM), gfortran)
    F90C= gfortran
    F90FLAGS= -O3 -Wall -frecord-marker=4
    SYSTEMFILE= system_f2003.f90
-   DEBUGFLAG= -g -frange-check -fcheck=all -fbacktrace
+   DEBUGFLAG= -g -frange-check -fcheck=all -fbacktrace \
+              -finit-real=NaN -ffpe-trap=invalid,zero,overflow,denormal
    OMPFLAGS= -fopenmp
    ENDIANFLAGBIG= -fconvert=big-endian
    ENDIANFLAGLITTLE= -fconvert=little-endian
@@ -524,7 +525,7 @@ SOURCESF90= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          cubicsolve.f90 discplot.f90 \
          fparser.f90 exact_function.f90 exact_dustywaves.f90 \
          exact_fromfile.f90 exact_mhdshock.f90 \
-         exact_polytrope.f90 exact_rhoh.f90 \
+         exact_polytrope.f90 exact_rhoh.f90 exact_rochelobe.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 \
          exact_densityprofiles.f90 exact_torus.f90 \
