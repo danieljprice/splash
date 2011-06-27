@@ -106,25 +106,10 @@ subroutine rlimit(q, L, x, f, df, dummy)
 
 end subroutine rlimit
 
-real function left_limit(q, L)
- implicit none
- real, intent(in) :: q,L
-
- left_limit = rtsafe(rlimit,q,L,-0.5*L,-L,0., roche_accuracy);
-
-end function left_limit
-
-real function right_limit(q, L)
- implicit none
- real, intent(in) :: q,L
- 
- right_limit = rtsafe(rlimit,q,L,1.5-0.5*L,2.0-L,0., roche_accuracy);
-
-end function right_limit
-
 real function rtsafe(func,q,L,x1,x2,xll,xacc)
  implicit none
  real, intent(in) :: q,L,x1,x2,xll,xacc
+ external :: func
  integer :: j
  real :: df,dx,dxold,f,fh,fl
  real :: temp,xh,xl,rts
@@ -198,6 +183,22 @@ real function rtsafe(func,q,L,x1,x2,xll,xacc)
  rtsafe = 0.
  return
 end function rtsafe
+
+real function left_limit(q, L)
+ implicit none
+ real, intent(in) :: q,L
+
+ left_limit = rtsafe(rlimit,q,L,-0.5*L,-L,0., roche_accuracy);
+
+end function left_limit
+
+real function right_limit(q, L)
+ implicit none
+ real, intent(in) :: q,L
+ 
+ right_limit = rtsafe(rlimit,q,L,1.5-0.5*L,2.0-L,0., roche_accuracy);
+
+end function right_limit
 
 !
 ! return roche radius as fraction of the semi-major axis.
