@@ -175,7 +175,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
        print*,'based on the minimum smoothing length of hmin = ',hmin
        npixels(:) = int((xmax(:) - xmin(:))/hmin) + 1
        print "(a,i6,2(' x',i6),a)",' requires ',npixels(:),' pixels to capture the full resolution'
-       if (product(npixels(:)).gt.1024**3 .or. product(npixels(:)).le.0) then
+       if (product(npixels(:)).gt.512**3 .or. product(npixels(:)).le.0) then
           npixx = 512
           print "(a,i4)",' but this is ridiculous, so instead we choose ',npixx
        else
