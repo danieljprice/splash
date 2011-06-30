@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -36,12 +36,14 @@ module disc
 
 contains
 
-subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,itransx,itransy,gamma,utherm)
+subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
+                    itransx,itransy,itype,gamma,utherm)
  use transforms, only:transform_limits_inverse,transform_inverse,transform
  implicit none
  integer, intent(in) :: iplot,npart,npmass,itransx,itransy
  real, dimension(npart), intent(in) :: rpart
  real, dimension(npmass), intent(in) :: pmass
+ integer, dimension(npart), intent(in) :: itype
  real, dimension(npart), intent(in), optional :: utherm
  real, intent(in) :: rminin,rmaxin,gamma
  real, intent(out) :: ymin,ymax
@@ -100,11 +102,14 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,itran
 !--calculate surface density in each radial bin
 !
 !$omp parallel default(none) &
-!$omp shared(npart,rpart,sigma,npmass,pmass,itransx,rmin,deltar) &
+!$omp shared(npart,rpart,sigma,npmass,pmass,itransx,itype,rmin,deltar) &
 !$omp shared(ninbin,spsound,gamma,utherm) &
 !$omp private(i,rad,pmassi,ibin,rbin,area)
 !$omp do
- do i=1,npart
+ over_parts: do i=1,npart
+    !--skip particles with itype < 0
+    if (itype(i) < 0) cycle over_parts
+
     if (itransx.eq.0) then
        rad(1) = rpart(i)
     else
@@ -135,7 +140,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,itran
           ninbin(ibin) = ninbin(ibin) + 1
        endif
     endif
- enddo
+ enddo over_parts
 !$omp end do
 !$omp end parallel
 
