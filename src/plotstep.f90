@@ -608,7 +608,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use settings_page,      only:nacross,ndown,interactive,iaxis,usesquarexy, &
                                charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render,    only:npix,ncontours,icolours,iColourBarStyle,icolour_particles,&
-                               inormalise_interpolations,ifastrender,ilabelcont
+                               inormalise_interpolations,ifastrender,ilabelcont,double_rendering
   use settings_vecplot,   only:npixvec,iplotpartvec
   use settings_xsecrot,   only:nxsec,irotateaxes,xsec_nomulti,irotate,flythru,use3Dperspective, &
                                use3Dopacityrendering,writeppm,anglex,angley,anglez,zobserver,&
@@ -680,7 +680,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   logical :: dumxsec, isetrenderlimits, iscoordplot
   logical :: ichangesize, initx, inity, isameweights, volweightedpdf
   logical, parameter :: isperiodic = .false. ! feature not implemented
-  logical, parameter :: doublerender = .false.
   
 34   format (25(' -'))
 
@@ -1766,7 +1765,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               if ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) then
 
                  !!--call subroutine to actually render the image
-                 if (doublerender) then
+                 if (gotcontours .and. double_rendering) then
                     !--if double rendering, plot first image in greyscale
                     call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                       npixx,npixy,xmin,ymin,pixwidth,pixwidthy, &
@@ -1779,7 +1778,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                  !!--contour/2nd render plot of different quantity on top of 1st rendering
                  if (gotcontours) then
-                    if (doublerender) then
+                    if (double_rendering) then
                        call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
                             npixx,npixy,xmin,ymin,pixwidth,pixwidthy,icolours,.false.,&
                             0,ncontours,.false.,ilabelcont,transparent=.true.)                    

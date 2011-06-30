@@ -32,7 +32,7 @@ module settings_render
  logical :: iplotcont_nomulti,ilabelcont
  logical :: icolour_particles,inormalise_interpolations
  logical :: ifastrender,idensityweightedinterpolation
- logical :: idouble_rendering
+ logical :: double_rendering
  character(len=lenlabel+20) :: projlabelformat
  integer :: iapplyprojformat
 
@@ -40,7 +40,7 @@ module settings_render
    icolour_particles,ColourBarDisp,inormalise_interpolations, &
    ifastrender,idensityweightedinterpolation,iColourBarStyle, &
    iplotcolourbarlabel,ilabelcont,projlabelformat,iapplyprojformat, &
-   idouble_rendering
+   double_rendering
 
 contains
 
@@ -64,7 +64,7 @@ subroutine defaults_set_render
   ilabelcont = .false.   ! print numeric labels on contours
   projlabelformat = ' '
   iapplyprojformat = 0
-  idouble_rendering = .false.
+  double_rendering = .false.
 
   return
 end subroutine defaults_set_render
@@ -80,7 +80,7 @@ subroutine submenu_render(ichoose)
   use plotlib,   only:plotlib_supports_alpha
   implicit none
   integer, intent(in) :: ichoose
-  character(len=5) :: string
+  character(len=5)  :: string
   integer :: ians,i,ierr,icolourprev
 !
 !--rendering options
@@ -102,7 +102,7 @@ subroutine submenu_render(ichoose)
           ' 0) exit ',/,                      &
           ' 1) set number of pixels               ( ',a,' )',/, &
           ' 2) change colour scheme               (',i2,' )',/,    &
-          ' 3) contouring/double rendering prompt on/off ( ',a,' )',/, &
+          ' 3) 2nd render/contour prompt          ( ',a,' )',/, &
           ' 4) change number of contours          (',i3,' )',/, &
           ' 5) colour bar options                 ( ',i2,' )',/,&
           ' 6) use particle colours not pixels    ( ',a,' )',/,& 
@@ -150,19 +150,28 @@ subroutine submenu_render(ichoose)
                              '          (cannot plot contours on top of contours)'
        endif
        if (plotlib_supports_alpha) then
-          call prompt(' allow contour/double render prompt?',iplotcont_nomulti)       
+          call prompt(' allow contour/double render prompt?',iplotcont_nomulti)
+          print "(3(/,a),/)",' Double rendering renders the first quantity in black and white', &
+                             ' and the second in colour with a transparent background ', &
+                             ' (such that data below the colour bar minimum appears transparent)'
+          call prompt('use double rendering instead of contours?',double_rendering)       
        else
-          call prompt(' allow contour plotting prompt?',iplotcont_nomulti)
+          call prompt('allow contour plotting prompt?',iplotcont_nomulti)
        endif
-       print "(a)",' Contour plotting prompt is '//trim(print_logical(iplotcont_nomulti))
-       if (iplotcont_nomulti .or. icolours.eq.0) then
-          call prompt(' enter number of contours between min,max',ncontours,0,500)
-          call prompt(' plot numeric labels on contours? ',ilabelcont)
+       
+       if (double_rendering) then
+          print "(a)",' Second render prompt is '//trim(print_logical(iplotcont_nomulti))       
+       else
+          print "(a)",' Contour plotting prompt is '//trim(print_logical(iplotcont_nomulti))
+       endif
+       if ((iplotcont_nomulti .or. icolours.eq.0) .and. .not.double_rendering) then
+          call prompt('enter number of contours between min,max',ncontours,0,500)
+          call prompt('plot numeric labels on contours?',ilabelcont)
        endif
 !------------------------------------------------------------------------
     case(4)
-       call prompt(' enter number of contours between min,max',ncontours,0,500)
-       call prompt(' plot numeric labels on contours? ',ilabelcont)
+       call prompt('enter number of contours between min,max',ncontours,0,500)
+       call prompt('plot numeric labels on contours?',ilabelcont)
 !------------------------------------------------------------------------
     case(5)
        do i=0,maxcolourbarstyles

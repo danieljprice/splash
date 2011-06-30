@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -41,7 +41,7 @@ subroutine menu
   use settings_limits,  only:submenu_limits,iadapt
   use settings_part,    only:submenu_particleplots
   use settings_page,    only:submenu_page,submenu_legend,interactive
-  use settings_render,  only:submenu_render,iplotcont_nomulti,icolours
+  use settings_render,  only:submenu_render,iplotcont_nomulti,icolours,double_rendering
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
   use settings_xsecrot, only:submenu_xsecrotate,write_animfile
   use multiplot
@@ -57,6 +57,7 @@ subroutine menu
   integer            :: iamvecprev, ivecplottemp,ichoose
   character(len=2)   :: ioption
   character(len=100) :: vecprompt
+  character(len=20)  :: rprompt
   logical            :: iAllowRendering
 
   irender = 0
@@ -206,14 +207,19 @@ subroutine menu
            if (is_coord(ipicky,ndim) .and. is_coord(ipickx,ndim) .and. iAllowRendering) then
               call prompt('(render) (0=none)',irender,0,numplot)
               if (irender.gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
-                 call prompt('(contours) (0=none)',icontourplot,0,numplot)
+                 if (double_rendering) then
+                    rprompt = '2nd render'
+                 else
+                    rprompt = 'contours'
+                 endif
+                 call prompt('('//trim(rprompt)//') (0=none)',icontourplot,0,numplot)
                  if (icontourplot.eq.irender) then
                     if (iadapt) then
-                       print "(a)",' contour limits are adaptive '
+                       print "(a)",' limits for '//trim(rprompt)//' are adaptive'
                     else
                        if (.not.lim2set(icontourplot)) lim2(icontourplot,:) = lim(icontourplot,:)
-                       call prompt(' enter min for contours:',lim2(icontourplot,1))
-                       call prompt(' enter max for contours:',lim2(icontourplot,2))
+                       call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourplot,1))
+                       call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourplot,2))
                        if (all(lim2(icontourplot,:).eq.lim(icontourplot,:))) call reset_lim2(icontourplot)
                     endif
                  endif
@@ -443,14 +449,19 @@ subroutine menu
       if (icoordplot .and.iAllowRendering) then
          call prompt('(render) (0=none)',irendermulti(i),0,numplot)
          if (irendermulti(i).gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
-            call prompt('(contours) (0=none)',icontourmulti(i),0,numplot)
+            if (double_rendering) then
+               rprompt = '2nd render'
+            else
+               rprompt = 'contours'
+            endif
+            call prompt('('//trim(rprompt)//') (0=none)',icontourmulti(i),0,numplot)
             if (icontourmulti(i).eq.irendermulti(i)) then
                if (iadapt) then
-                  print "(a)",' contour limits are adaptive '
+                  print "(a)",' limits for '//trim(rprompt)//' are adaptive '
                else
                   if (.not.lim2set(icontourmulti(i))) lim2(icontourmulti(i),:) = lim(icontourmulti(i),:)
-                  call prompt(' enter min for contours:',lim2(icontourmulti(i),1))
-                  call prompt(' enter max for contours:',lim2(icontourmulti(i),2))
+                  call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourmulti(i),1))
+                  call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourmulti(i),2))
                   if (all(lim2(icontourmulti(i),:).eq.lim(icontourmulti(i),:))) call reset_lim2(icontourmulti(i))
                endif
             endif

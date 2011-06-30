@@ -48,8 +48,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     1.15.0 : (xx/05/11)
-!             Multiplot with different particle types implemented;
+!   2.0.beta : (xx/xx/11)
+!             Double rendering (with transparent background) implemented.
+!     1.15.0 : (xx/xx/11)
+!             Multiplot with different particle types implemented; calculated quantities
+!             list is now pre-filled automatically;
 !     1.14.1 : (17/03/11)
 !             SEREN data read added; dragon read updated; build follows Gnu conventions 
 !             on DEST and DESTDIR (needed for macports build); can have up to 12 particle types;
@@ -299,7 +302,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.14.1+ [17th May ''11]'
+  character(len=*), parameter :: version = 'v1.15.0beta [30th Jun ''11]'
 
   !
   ! initialise some basic code variables
