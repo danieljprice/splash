@@ -33,6 +33,8 @@
 !---------------------------------------------------------------------------
 module plotlib 
   implicit none
+  logical, parameter :: plotlib_is_pgplot = .true.
+  logical, parameter :: plotlib_supports_alpha = .false.
   
 public
 
@@ -448,26 +450,6 @@ interface plot_pap
 end interface
 
 contains
-
-!---------------------------------------------
-! query whether or not the library is PGPLOT
-!---------------------------------------------
-logical function plot_lib_is_pgplot()
- implicit none
- 
- plot_lib_is_pgplot = .true.
-
-end function plot_lib_is_pgplot
-
-!---------------------------------------------
-! query whether or not the library supports transparency
-!---------------------------------------------
-logical function plot_lib_supports_alpha()
- implicit none
- 
- plot_lib_supports_alpha = .false.
-
-end function plot_lib_supports_alpha
 
 !---------------------------------------------
 ! initialise the plotting library

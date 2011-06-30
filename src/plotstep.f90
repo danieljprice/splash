@@ -2593,7 +2593,7 @@ contains
     use pagesetup,     only:setpage2
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
                             vposlegend,iPlotLegend,usecolumnorder
-    use plotlib,       only:plot_qvp,plot_sci,plot_page,plot_lib_is_pgplot
+    use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot
     implicit none
     integer :: iplotsave,ipanelsave,ipanelpos
     real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
@@ -2752,7 +2752,7 @@ contains
                 !
                 !--warn about PGPLOT limitations
                 !
-                if (plot_lib_is_pgplot()) then
+                if (plotlib_is_pgplot) then
                    if ((xmaxpix-xminpix).gt.1024. .or. (ymaxpix-yminpix).gt.1024) then
                       print "(/,75('*'))"
                       print "(a)",'!! WARNING: PGPLOT will truncate image to 1024 pixels on pixel devices.'

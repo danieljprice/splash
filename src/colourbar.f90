@@ -23,10 +23,6 @@
 !------------------------------------------------------------------------
 !  Module containing routines related to plotting the colour bar
 !  in various styles
-!
-!  DJP 16/10/2007
-!
-!  Distributed as part of SPLASH: a visualisation tool for SPH data
 !------------------------------------------------------------------------
 module colourbar
  implicit none
@@ -63,7 +59,7 @@ contains
 !-------------------------------------------------------
 subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
            xlabeloffset,vptxminfull,vptxmaxfull,vptyminfull,vptymaxfull)
- use plotlib,   only:plot_set_exactpixelboundaries,plot_lib_is_pgplot
+ use plotlib,   only:plot_set_exactpixelboundaries,plotlib_is_pgplot
  use plotlib,   only:plot_bbuf,plot_ebuf,plot_qwin,plot_qvp,plot_qcs,&
                      plot_svp,plot_swin,plot_imag,plot_box,plot_annotate
  implicit none
@@ -148,7 +144,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    
    if (abs(icolours).gt.0) then        ! colour
    !--check if the colour bar will be more than 1024 pixels
-       if ((xmaxpix-xminpix).le.1024 .or. .not.plot_lib_is_pgplot()) then
+       if ((xmaxpix-xminpix).le.1024 .or. .not.plotlib_is_pgplot) then
     !   
     !--the standard way is to use the default line below
     !

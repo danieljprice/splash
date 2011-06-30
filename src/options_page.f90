@@ -129,7 +129,7 @@ subroutine submenu_page(ichoose)
  use params,      only:maxplot
  use prompting,   only:prompt,print_logical
  use pagecolours, only:pagecolourscheme,colour_fore,colour_back,maxpagecolours
- use plotlib,     only:plot_lib_supports_alpha
+ use plotlib,     only:plotlib_supports_alpha
  implicit none
  integer, intent(in) :: ichoose
  integer             :: iaction,i
@@ -299,7 +299,7 @@ subroutine submenu_page(ichoose)
         print "(a,/)",'.'
         call prompt('Use background colour for these? ',iUseBackgroundColourForAxes)
      endif
-     if (iUseBackgroundColourForAxes .and. plot_lib_supports_alpha()) then
+     if (iUseBackgroundColourForAxes .and. plotlib_supports_alpha) then
         call prompt('Enter opacity for overlaid text and annotation ',alphalegend,0.0,1.0)
      endif
      

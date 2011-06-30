@@ -103,31 +103,13 @@ module plotlib
       giza_colour_index_min,&
       giza_colour_index_max
   implicit none
+  logical, parameter :: plotlib_is_pgplot = .false.
+  logical, parameter :: plotlib_supports_alpha = .true.
   
   character(len=1),parameter :: plot_left_click = giza_left_click_f
 public
 
 contains
-
-!---------------------------------------------
-! query whether or not the library is PGPLOT
-!---------------------------------------------
-logical function plot_lib_is_pgplot()
- implicit none
- 
- plot_lib_is_pgplot = .false.
-
-end function plot_lib_is_pgplot
-
-!---------------------------------------------
-! query whether or not the library supports transparency
-!---------------------------------------------
-logical function plot_lib_supports_alpha()
- implicit none
- 
- plot_lib_supports_alpha = .true.
-
-end function plot_lib_supports_alpha
 
 !---------------------------------------------
 ! initialise the plotting library
