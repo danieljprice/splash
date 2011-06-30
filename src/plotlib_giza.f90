@@ -90,6 +90,8 @@ module plotlib
       giza_open_device,        &
       giza_open_device_size,   &
       giza_render,             &
+      giza_render_gray,        &
+      giza_render_transparent, &
       giza_set_colour_table,   &
       giza_stop_prompting,     &
       giza_start_prompting,    &
@@ -156,6 +158,16 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio)
  endif
 end subroutine plot_init
 
+subroutine plot_gray(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
+  integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
+  real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
+  real               :: affine(6)
+
+  call convert_tr_to_affine(tr,affine)
+  call giza_render_gray(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,affine)
+  
+end subroutine plot_gray
+
 subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
   integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
   real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
@@ -165,6 +177,16 @@ subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
   call giza_render(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,affine)
   
 end subroutine plot_imag
+
+subroutine plot_imag_transparent(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
+  integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
+  real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
+  real               :: affine(6)
+
+  call convert_tr_to_affine(tr,affine)
+  call giza_render_transparent(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,affine)
+  
+end subroutine plot_imag_transparent
 
 subroutine plot_ctab(l,r,g,b,nc,contra,bright)
   implicit none

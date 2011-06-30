@@ -15,14 +15,14 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
 !------------------------------------------------------------------------
 !  Module containing "interface" routines between the calculated
-!  pixel arrays and the PGPLOT routines which do the actual rendering
+!  pixel arrays and the plot library routines which do the actual rendering
 !------------------------------------------------------------------------
 module render
  use colourbar, only:plotcolourbar
@@ -33,28 +33,33 @@ module render
 contains
 
 !------------------------------------------------------------------------
-!  this subroutine takes a 2D grid of data and renders it using pgplot
-!  rendering is either greyscale (icolours = 1) or colour (icolours>1)
-!  also plots nc contours between datmin and datmax.
+!  this subroutine takes a 2D grid of data and renders it via the 
+!  plotting library. Rendering is either:
+!  - contours (icolouropt = 0)
+!  - greyscale (icolouropt = 1)
+!  - colour (icolouropt>1)
+!  contouring plots nc contours between datmin and datmax.
 !------------------------------------------------------------------------
- 
 subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
-                  xmin,ymin,dx,dy,icolours,iplotcont,iColourBarStyle,nc,log, &
-                  ilabelcont,contmin,contmax,blank)
+                  xmin,ymin,dx,dy,icolouropt,iplotcont,iColourBarStyle,nc,log, &
+                  ilabelcont,contmin,contmax,blank,transparent)
  use plotutils, only:formatreal
- use plotlib,   only:plot_imag,plot_conb,plot_cons,plot_qch,plot_sch,plot_qch,plot_sch,plot_conl
+ use plotlib,   only:plot_imag,plot_conb,plot_cons,plot_qch,plot_sch,&
+                     plot_qch,plot_sch,plot_conl,plot_gray,plot_imag_transparent
  implicit none
- integer, intent(in) :: npixx,npixy,nc,icolours
+ integer, intent(in) :: npixx,npixy,nc,icolouropt
  real, intent(in) :: xmin,ymin,datmin,datmax,dx,dy
  real, dimension(npixx,npixy), intent(in) :: datpix
  logical, intent(in) :: iplotcont,log,ilabelcont
  integer, intent(in) :: iColourBarStyle
  character(len=*), intent(in) :: label
  real, intent(in), optional :: contmin,contmax,blank
+ logical, intent(in), optional :: transparent
  
  integer :: i
  real :: trans(6),levels(nc),dcont,charheight,cmin,cmax
  character(len=12) :: string
+ logical :: iuse_transparent
 ! 
 !--set up grid for rendering 
 !
@@ -64,18 +69,30 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  trans(4) = ymin - 0.5*dy
  trans(5) = 0.0
  trans(6) = dy
+ 
+ iuse_transparent = .false.
+ if (present(transparent)) iuse_transparent = transparent
 
  print*,'rendering...',npixx,'x',npixy,'=',size(datpix),' pixels'
 
-! if (abs(icolours).eq.1) then        ! greyscale
-!    if (iPlotColourBar) call colourbar(icolours,datmin,datmax,trim(label),log)
-!    call pggray(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
+ if (abs(icolouropt).eq.1) then        ! greyscale
 
- if (abs(icolours).gt.0) then        ! colour
-    if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarstyle,icolours,datmin,datmax,trim(label),log,0.)
-!    call pgwedg('ri',2.0,4.0,datmin,datmax,' ')
-    call plot_imag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
-!    call pghi2d(datpix,npixx,npixx,1,npixx,1,npixx,1,0.1,.true.,y) 
+    if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarstyle,icolouropt,datmin,datmax,trim(label),log,0.)
+    call plot_gray(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
+
+ elseif (abs(icolouropt).gt.0) then        ! colour
+    !
+    !--plot colour bar
+    !
+    if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarstyle,icolouropt,datmin,datmax,trim(label),log,0.)
+    !
+    !--plot pixel map
+    !
+    if (iuse_transparent) then
+       call plot_imag_transparent(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans) 
+    else
+       call plot_imag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
+   endif
  endif
 !
 !--contours
@@ -150,12 +167,12 @@ end subroutine render_pix
 !  this subroutine takes a 2D grid of vector data (ie. x and y components)
 !  and plots an arrow map of it
 !--------------------------------------------------------------------------
- 
-subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy,        &
-                  xmin,ymin,dx,dy,label,unitslabel) 
+
+subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
+                      xmin,ymin,dx,dy,label,unitslabel) 
  use legends,          only:legend_vec
- use settings_vecplot, only:iVecplotLegend,hposlegendvec,vposlegendvec,iplotarrowheads,&
-                            iallarrowssamelength
+ use settings_vecplot, only:iVecplotLegend,hposlegendvec,vposlegendvec,&
+                            iplotarrowheads,iallarrowssamelength
  use plotlib,          only:plot_sah,plot_qch,plot_sch,plot_vect
  implicit none
  integer, intent(in) :: npixx,npixy

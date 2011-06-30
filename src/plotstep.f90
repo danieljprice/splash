@@ -680,6 +680,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   logical :: dumxsec, isetrenderlimits, iscoordplot
   logical :: ichangesize, initx, inity, isameweights, volweightedpdf
   logical, parameter :: isperiodic = .false. ! feature not implemented
+  logical, parameter :: doublerender = .false.
   
 34   format (25(' -'))
 
@@ -1765,16 +1766,29 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               if ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) then
 
                  !!--call subroutine to actually render the image
-                 call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                   npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
-                   icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
-
-                 !!--contour plot of different quantity on top of rendering
-                 if (gotcontours) then
-                    call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
-                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,.false.,ilabelcont)
+                 if (doublerender) then
+                    !--if double rendering, plot first image in greyscale
+                    call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
+                      npixx,npixy,xmin,ymin,pixwidth,pixwidthy, &
+                      1,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
+                 else
+                    call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
+                      npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
+                      icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)                 
                  endif
-                              
+
+                 !!--contour/2nd render plot of different quantity on top of 1st rendering
+                 if (gotcontours) then
+                    if (doublerender) then
+                       call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
+                            npixx,npixy,xmin,ymin,pixwidth,pixwidthy,icolours,.false.,&
+                            0,ncontours,.false.,ilabelcont,transparent=.true.)                    
+                    else
+                       call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
+                            npixx,npixy,xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,.false.,ilabelcont)
+                    endif
+                 endif
+
                  !!--write ppm if interpolate3D_opacity
                  if (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm) then
                     !!--plot non-gas particle types (e.g. sink particles) on top (and to ppm)

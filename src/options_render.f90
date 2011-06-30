@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -32,13 +32,15 @@ module settings_render
  logical :: iplotcont_nomulti,ilabelcont
  logical :: icolour_particles,inormalise_interpolations
  logical :: ifastrender,idensityweightedinterpolation
+ logical :: idouble_rendering
  character(len=lenlabel+20) :: projlabelformat
  integer :: iapplyprojformat
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
    icolour_particles,ColourBarDisp,inormalise_interpolations, &
    ifastrender,idensityweightedinterpolation,iColourBarStyle, &
-   iplotcolourbarlabel,ilabelcont,projlabelformat,iapplyprojformat
+   iplotcolourbarlabel,ilabelcont,projlabelformat,iapplyprojformat, &
+   idouble_rendering
 
 contains
 
@@ -62,6 +64,7 @@ subroutine defaults_set_render
   ilabelcont = .false.   ! print numeric labels on contours
   projlabelformat = ' '
   iapplyprojformat = 0
+  idouble_rendering = .false.
 
   return
 end subroutine defaults_set_render
@@ -71,9 +74,10 @@ end subroutine defaults_set_render
 !-----------------------------------------------------------------------------
 subroutine submenu_render(ichoose)
   use colourbar, only:maxcolourbarstyles,labelcolourbarstyles,barisvertical
-  use colours, only:schemename,ncolourschemes,colour_demo
+  use colours,   only:schemename,ncolourschemes,colour_demo
   use prompting, only:prompt,print_logical
-  use params, only:maxplot
+  use params,    only:maxplot
+  use plotlib,   only:plotlib_supports_alpha
   implicit none
   integer, intent(in) :: ichoose
   character(len=5) :: string
@@ -98,7 +102,7 @@ subroutine submenu_render(ichoose)
           ' 0) exit ',/,                      &
           ' 1) set number of pixels               ( ',a,' )',/, &
           ' 2) change colour scheme               (',i2,' )',/,    &
-          ' 3) contour plotting prompt on/off     ( ',a,' )',/, &
+          ' 3) contouring/double rendering prompt on/off ( ',a,' )',/, &
           ' 4) change number of contours          (',i3,' )',/, &
           ' 5) colour bar options                 ( ',i2,' )',/,&
           ' 6) use particle colours not pixels    ( ',a,' )',/,& 
@@ -145,7 +149,11 @@ subroutine submenu_render(ichoose)
           print "(2(/,a),/)",' Warning: this option has no effect if colour scheme 0 is set', &
                              '          (cannot plot contours on top of contours)'
        endif
-       call prompt(' allow contour plotting prompt?',iplotcont_nomulti)
+       if (plotlib_supports_alpha) then
+          call prompt(' allow contour/double render prompt?',iplotcont_nomulti)       
+       else
+          call prompt(' allow contour plotting prompt?',iplotcont_nomulti)
+       endif
        print "(a)",' Contour plotting prompt is '//trim(print_logical(iplotcont_nomulti))
        if (iplotcont_nomulti .or. icolours.eq.0) then
           call prompt(' enter number of contours between min,max',ncontours,0,500)

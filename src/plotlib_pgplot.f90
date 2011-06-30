@@ -184,6 +184,23 @@ interface plot_imag
    end subroutine pgimag
 end interface
 
+!--transparent rendering does not work in PGPLOT, but
+!  we give it an interface anyway
+interface plot_imag_transparent
+   subroutine pgimag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
+     integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
+     real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
+   end subroutine pgimag
+end interface
+
+interface plot_gray
+   subroutine pggray(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
+     integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
+     real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
+   end subroutine pggray
+end interface
+
+
 interface plot_qcol
    subroutine pgqcol(icolmin,icolmax)
      integer,intent(out) :: icolmin,icolmax
