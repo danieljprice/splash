@@ -414,7 +414,7 @@ end subroutine plot_set_exactpixelboundaries
 !------------------------------------------------------------
  integer function units_giza(pgplotunits)
   use giza, only:giza_units_normalized,giza_units_inches, &
-                 giza_units_mm,giza_units_device,giza_units_world
+                 giza_units_mm,giza_units_pixels,giza_units_world
   implicit none
   integer, intent(in) :: pgplotunits
   
@@ -426,7 +426,7 @@ end subroutine plot_set_exactpixelboundaries
   case(2)
      units_giza = giza_units_mm
   case(3)
-     units_giza = giza_units_device
+     units_giza = giza_units_pixels
   case(4)
      units_giza = giza_units_world
   case default  ! giza will give an error
