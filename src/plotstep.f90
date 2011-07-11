@@ -1784,7 +1784,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             0,ncontours,.false.,ilabelcont,transparent=.true.)                    
                     else
                        call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
-                            npixx,npixy,xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,.false.,ilabelcont)
+                            npixx,npixy,xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,&
+                            .false.,ilabelcont)
                     endif
                  endif
 
@@ -2887,14 +2888,27 @@ contains
           !--for tiled plots only on last plot in first row,
           !  and use full viewport size in the y direction
           if (tile_plots) then
-             call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
-                  trim(labelrender),.false.,xlabeloffsettemp, &
-                  minval(vptxmin(1:ipanel)),maxval(vptxmax(1:ipanel)), &
-                  minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
+             if (double_rendering .and. gotcontours) then
+                call plotcolourbar(iColourBarStyle,icolours,contmin,contmax, &
+                     trim(labelcont),.false.,xlabeloffsettemp, &
+                     minval(vptxmin(1:ipanel)),maxval(vptxmax(1:ipanel)), &
+                     minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
+             else
+                call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
+                     trim(labelrender),.false.,xlabeloffsettemp, &
+                     minval(vptxmin(1:ipanel)),maxval(vptxmax(1:ipanel)), &
+                     minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
+             endif
           else
              !!--plot colour bar, but only if last in row
-             call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
-                            trim(labelrender),.false.,xlabeloffsettemp)
+             if (double_rendering .and. gotcontours) then
+                !--for double rendering, plot the colour bar in the 2nd quantity
+                call plotcolourbar(iColourBarStyle,icolours,contmin,contmax, &
+                               trim(labelcont),.false.,xlabeloffsettemp)
+             else
+                call plotcolourbar(iColourBarStyle,icolours,rendermin,rendermax, &
+                               trim(labelrender),.false.,xlabeloffsettemp)
+             endif
           endif
        endif
     endif
