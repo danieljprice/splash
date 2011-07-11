@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -66,8 +66,8 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
- integer :: istartmhd,istartrt,nmhd,idivvcol,nhydroreal4
- logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass
+ integer :: istartmhd,istartrt,nmhd,idivvcol,nhydroreal4,istart_extra_real4
+ logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem
  
 end module sphNGread
 
@@ -132,12 +132,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   umagfd = 1.d0
   istartmhd = 0
   istartrt  = 0
+  istart_extra_real4 = 100
   nmhd      = 0
   phantomdump = .false.
   smalldump   = .false.
   mhddump     = .false.
   rtdump      = .false.
   usingvecp   = .false.
+  h2chem      = .false.
   igotmass    = .false.
   tfreefall   = 1.d0
   gotbinary   = .false.
@@ -228,6 +230,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
    if (index(fileident,'vecp').ne.0) then
       usingvecp = .true.
+   endif
+   if (index(fileident,'H2chem').ne.0) then
+      h2chem = .true.
    endif
 !
 !--read global dump header
@@ -882,6 +887,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   icolumn = nhydroarrays + i
                else
                   icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
+                  if (iarr.eq.1) then
+                     istart_extra_real4 = min(istart_extra_real4,icolumn)
+                     if (debug) print*,' istart_extra_real4 = ',istart_extra_real4
+                  endif
                endif
             else
                if (iarr.eq.1 .and. i.eq.1) then
@@ -893,6 +902,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                !   icolumn = nhydroarrays + i
                else
                   icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
+                  if (iarr.eq.1) then
+                     istart_extra_real4 = min(istart_extra_real4,icolumn)
+                     if (debug) print*,' istart_extra_real4 = ',istart_extra_real4
+                  endif
                endif
             endif
             imaxcolumnread = max(imaxcolumnread,icolumn)
@@ -1399,12 +1412,23 @@ subroutine set_labels
         ivx = irho+1
         iutherm = ivx + ndimV
         if (phantomdump) then
-           label(iutherm+1) = 'alpha'
-           label(iutherm+2) = 'alphau'
+           if (h2chem) then
+              label(iutherm+1) = 'H_2 ratio'
+              label(iutherm+2) = 'HI abundance'
+              label(iutherm+3) = 'proton abundance'
+              label(iutherm+4) = 'e^- abundance'
+              label(iutherm+5) = 'CO abundance'
+           endif
+           if (istart_extra_real4.gt.0 .and. istart_extra_real4.lt.100) then
+              label(istart_extra_real4) = 'alpha'
+              label(istart_extra_real4+1) = 'alphau'           
+           endif
         else
-           label(iutherm+1) = 'grad h'
-           label(iutherm+2) = 'grad soft'
-           label(iutherm+3) = 'alpha'
+           if (istart_extra_real4.gt.0 .and. istart_extra_real4.lt.100) then
+              label(istart_extra_real4) = 'grad h'
+              label(istart_extra_real4+1) = 'grad soft'
+              label(istart_extra_real4+2) = 'alpha'
+           endif
         endif
      endif 
 
