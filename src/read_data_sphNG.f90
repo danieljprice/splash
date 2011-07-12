@@ -67,7 +67,7 @@ module sphNGread
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
  integer :: istartmhd,istartrt,nmhd,idivvcol,nhydroreal4,istart_extra_real4
- logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem
+ logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
  
 end module sphNGread
 
@@ -106,6 +106,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   character(len=len(rootname)+10) :: dumpfile
   character(len=100) :: fileident
+  character(len=10) :: string
   
   integer*8, dimension(maxarrsizes) :: isize
   integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
@@ -117,6 +118,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real, dimension(:,:), allocatable :: dattemp2
   real, dimension(3) :: xyzsink
   real :: rhozero,hfact,omega,r4,tff
+  logical :: skip_corrupted_block_3
 
   nstepsread = 0
   nstep_max = 0
@@ -138,12 +140,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
   smalldump   = .false.
   mhddump     = .false.
   rtdump      = .false.
+  rt_in_header = .false.
   usingvecp   = .false.
   h2chem      = .false.
   igotmass    = .false.
   tfreefall   = 1.d0
   gotbinary   = .false.
   gotiphase   = .false.
+  skip_corrupted_block_3 = .false.
 
   dumpfile = trim(rootname)   
   !
@@ -233,6 +237,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
    if (index(fileident,'H2chem').ne.0) then
       h2chem = .true.
+   endif
+   if (index(fileident,'RT=on').ne.0) then
+      rt_in_header = .true.
    endif
 !
 !--read global dump header
@@ -380,9 +387,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
       if (debug) print*,'DEBUG: array size ',iarr,' size = ',isize(iarr)
       if (isize(iarr).gt.0 .and. iblock.eq.1) then
-         print "(1x,a,i1,a,i12,a,5(i2,1x),a,3(i2,1x))", &
+         string = ''
+         if (iarr.eq.3 .and. (.not. phantomdump .and. (.not.rt_in_header))) then
+            string = '[CORRUPT]'
+            skip_corrupted_block_3 = .true.
+         endif
+         print "(1x,a,i1,a,i12,a,5(i2,1x),a,3(i2,1x),a)", &
             'block ',iarr,' dim = ',isize(iarr),' nint =',nint(iarr),nint1(iarr), &
-            nint2(iarr),nint4(iarr),nint8(iarr),'nreal =',nreal(iarr),nreal4(iarr),nreal8(iarr)
+            nint2(iarr),nint4(iarr),nint8(iarr),'nreal =',nreal(iarr),nreal4(iarr),nreal8(iarr),trim(string)
+         if (iarr.eq.3 .and. skip_corrupted_block_3) then
+            nreal(iarr) = 0
+            nreal4(iarr) = 0
+            nreal8(iarr) = 0
+         endif
       endif
 !--we are going to read all real arrays but need to convert them all to default real
       if (iarr.ne.2 .and. isize(iarr).eq.isize(1) .and. iblock.eq.1) then
@@ -659,7 +676,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          if (iarr.eq.4) then
             istartmhd = imaxcolumnread + 1
             if (debug) print*,' istartmhd = ',istartmhd
-         elseif (iarr.eq.3) then
+         elseif (iarr.eq.3 .and. rtdump) then
             istartrt = max(nhydroarrays+nmhdarrays+1,imaxcolumnread + 1)
             if (debug) print*,' istartrt = ',istartrt
          endif
@@ -956,10 +973,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                         iphase(i1:i2) = -2
                      end where
                   endif
-               endif
+               !endif
                    
                if (debug) print*,'debug: making density ',icolumn
-            !endif
+            endif
          enddo
          icolumn = imaxcolumnread
 !        real 8's need converting
@@ -1432,7 +1449,7 @@ subroutine set_labels
         endif
      endif 
 
-     if (istartrt.gt.0 .and. istartrt.le.ncolumns) then ! radiative transfer dump
+     if (istartrt.gt.0 .and. istartrt.le.ncolumns .and. rtdump) then ! radiative transfer dump
         iradenergy = istartrt
         label(iradenergy) = 'radiation energy'
         uergg = (udist/utime)**2
