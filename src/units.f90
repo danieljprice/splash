@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -174,17 +174,17 @@ subroutine write_unitsfile(unitsfile,ncolumns)
   integer, intent(in) :: ncolumns
   integer :: i,ierr
 
-  print*,'saving plot limits to file ',trim(unitsfile)
+  print "(1x,a)",'saving units to '//trim(unitsfile)
 
   open(unit=77,file=unitsfile,status='replace',form='formatted',iostat=ierr)
   if (ierr /=0) then
-     print*,'ERROR: cannot write units file'
+     print "(1x,a)",'ERROR: cannot write units file'
   else
-     write(77,*,iostat=ierr) units(0),';',unitslabel(0),';',unitzintegration,';',labelzintegration
+     write(77,*,iostat=ierr) units(0),';',trim(unitslabel(0)),' ;',unitzintegration,';',trim(labelzintegration)
      do i=1,ncolumns
-        write(77,*,iostat=ierr) units(i),';',unitslabel(i)
+        write(77,*,iostat=ierr) units(i),';',trim(unitslabel(i))
         if (ierr /= 0) then
-           print*,'ERROR whilst writing units file'
+           print "(1x,a)",'ERROR whilst writing units file'
            close(unit=77)
            return
         endif
@@ -212,7 +212,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
   ierrzunits = .false.
   inquire(file=unitsfile,exist=iexist)
   if (.not.iexist) then
-     print*,trim(unitsfile),' not found'
+     print "(1x,a)",trim(unitsfile)//' not found'
      ierr = 1
      return  
   endif
