@@ -1429,13 +1429,6 @@ subroutine set_labels
         ivx = irho+1
         iutherm = ivx + ndimV
         if (phantomdump) then
-           if (h2chem) then
-              label(iutherm+1) = 'H_2 ratio'
-              label(iutherm+2) = 'HI abundance'
-              label(iutherm+3) = 'proton abundance'
-              label(iutherm+4) = 'e^- abundance'
-              label(iutherm+5) = 'CO abundance'
-           endif
            if (istart_extra_real4.gt.0 .and. istart_extra_real4.lt.100) then
               label(istart_extra_real4) = 'alpha'
               label(istart_extra_real4+1) = 'alphau'           
@@ -1447,7 +1440,17 @@ subroutine set_labels
               label(istart_extra_real4+2) = 'alpha'
            endif
         endif
-     endif 
+     endif
+
+     if (phantomdump .and. h2chem .and. iutherm.gt.0) then
+        label(iutherm+1) = 'H_2 ratio'
+        if (.not.smalldump) then
+           label(iutherm+2) = 'HI abundance'
+           label(iutherm+3) = 'proton abundance'
+           label(iutherm+4) = 'e^- abundance'
+           label(iutherm+5) = 'CO abundance'
+        endif
+     endif
 
      if (istartrt.gt.0 .and. istartrt.le.ncolumns .and. rtdump) then ! radiative transfer dump
         iradenergy = istartrt
