@@ -67,6 +67,7 @@ module sphNGread
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
  integer :: istartmhd,istartrt,nmhd,idivvcol,nhydroreal4,istart_extra_real4
+ integer :: nhydroarrays,nmhdarrays
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
  
 end module sphNGread
@@ -82,7 +83,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use calcquantities, only:calc_quantities
   use sphNGread
   implicit none
-  integer, intent(in) :: indexstart
+  integer, intent(in)  :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer, parameter :: maxarrsizes = 10, maxreal = 50
@@ -96,7 +97,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: nskip,ntotal,npart,n1,n2,ninttypes,ngas
   integer :: nreassign,naccrete,nkill,iblock,nblocks,ntotblock,ncolcopy
   integer :: ipos,nptmass,nptmassi,nstar,nunknown,isink,ilastrequired
-  integer :: nhydroarrays,nmhdarrays,imaxcolumnread,nhydroarraysinfile
+  integer :: imaxcolumnread,nhydroarraysinfile
   integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc
   integer, dimension(maxparttypes) :: npartoftypei
   real,    dimension(maxparttypes) :: massoftypei
@@ -106,7 +107,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   character(len=len(rootname)+10) :: dumpfile
   character(len=100) :: fileident
-  character(len=10) :: string
+  character(len=10)  :: string
   
   integer*8, dimension(maxarrsizes) :: isize
   integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
@@ -1328,15 +1329,15 @@ subroutine set_labels
   use labels, only:label,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy
   use params
-  use settings_data, only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings
-  use geometry, only:labelcoord
-  use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
+  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings
+  use geometry,        only:labelcoord
+  use settings_units,  only:units,unitslabel,unitzintegration,labelzintegration
   use sphNGread
-  use asciiutils, only:lcase
+  use asciiutils,      only:lcase
   use system_commands, only:get_environment
   implicit none
   integer :: i
-  real(doub_prec) :: uergg
+  real(doub_prec)   :: uergg
   character(len=20) :: string
   
   if (ndim.le.0 .or. ndim.gt.3) then
@@ -1442,9 +1443,11 @@ subroutine set_labels
         endif
      endif
 
-     if (phantomdump .and. h2chem .and. iutherm.gt.0) then
-        label(iutherm+1) = 'H_2 ratio'
-        if (.not.smalldump) then
+     if (phantomdump .and. h2chem) then
+        if (smalldump) then
+           label(nhydroarrays+nmhdarrays+1) = 'H_2 ratio'
+        elseif (.not.smalldump .and. iutherm.gt.0) then
+           label(iutherm+1) = 'H_2 ratio'
            label(iutherm+2) = 'HI abundance'
            label(iutherm+3) = 'proton abundance'
            label(iutherm+4) = 'e^- abundance'
