@@ -601,7 +601,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use settings_data,      only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
                                iendatstep,ntypes,UseTypeInRenderings,itrackpart,&
                                required,ipartialread,xorigin,lowmemorymode,debugmode
-  use settings_limits,    only:iadapt,iadaptcoords,scalemax
+  use settings_limits,    only:iadapt
   use settings_part,      only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
                                iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
                                iploterrbars,ilocerrbars
@@ -1025,8 +1025,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !  (find minimum/maximum only on particle types actually plotted)
         !
         if (itrackpart.le.0 .and. .not.(iscoordplot .and. irotate)) then
-           if (initx) call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x')
-           if (inity) call adapt_limits(iploty,yplot,ymin,ymax,yminadapti,ymaxadapti,'y')
+           if (initx) call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x',&
+                                        iamtype,ntoti,npartoftype,iusetype,ipagechange)
+           if (inity) call adapt_limits(iploty,yplot,ymin,ymax,yminadapti,ymaxadapti,'y',&
+                                        iamtype,ntoti,npartoftype,iusetype,ipagechange)
         endif
 
         !!-reset co-ordinate plot limits if particle tracking           
@@ -1129,8 +1131,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                        xplot,yplot,zplot,ntoti,iplotx,iploty,iplotz,dat,ivectemp,vecplot)
            !--adapt plot limits after rotations have been done
            if (.not.interactivereplot) then
-              call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x')
-              call adapt_limits(iploty,yplot,ymin,ymax,yminadapti,ymaxadapti,'y')
+              call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x',&
+                                iamtype,ntoti,npartoftype,iusetype,ipagechange)
+              call adapt_limits(iploty,yplot,ymin,ymax,yminadapti,ymaxadapti,'y',&
+                                iamtype,ntoti,npartoftype,iusetype,ipagechange)
            endif
            !!-reset co-ordinate plot limits if particle tracking           
            if (itrackpart.gt.0 .and. .not.interactivereplot) then
@@ -1695,7 +1699,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               labelrender = transform_label(labelrender,itrans(irenderpart))
               
               call adapt_limits(irenderpart,renderplot(1:ntoti),rendermin,rendermax, &
-                                renderminadapt,rendermaxadapt,trim(labelrender))
+                                renderminadapt,rendermaxadapt,trim(labelrender),&
+                                iamtype,ntoti,npartoftype,iusetype,ipagechange)
               
               !!--limits for rendered quantity
               if (.not.interactivereplot .and. .not.isetrenderlimits) then
@@ -1995,7 +2000,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            if (.not.interactivereplot) then
               !--find (adaptive) limits of rendered array
               call adapt_limits(irenderpart,renderplot(1:ntoti),rendermin,rendermax, &
-                                renderminadapt,rendermaxadapt,trim(labelrender))
+                                renderminadapt,rendermaxadapt,trim(labelrender),&
+                                iamtype,ntoti,npartoftype,iusetype,ipagechange)
               if (.not.iadapt) then
                  !!--use fixed limits and apply transformations
                  rendermin = lim(irenderpart,1)
@@ -3026,48 +3032,6 @@ contains
 
   end subroutine set_grid1D
 
-!----------------------------------------------------
-! adapt the (particle plot) limits to include all
-! particles which are to be plotted on the page
-!---------------------------------------------------
-  
-  subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,labeli)
-    use labels, only:is_coord
-    implicit none
-    integer, intent(in) :: iplot
-    real, dimension(:), intent(in) :: xploti
-    real, intent(inout) :: xmini,xmaxi,xminadaptive,xmaxadaptive
-    character(len=*), intent(in) :: labeli
-    integer :: index1,index2,itype    
-    !--calculate adaptive limits for this quantity
-    xminadaptive = huge(xminadaptive)
-    xmaxadaptive = -huge(xmaxadaptive)
-    index1 = 1
-    do itype=1,maxparttypes
-       index2 = index1 + npartoftype(itype) - 1
-       if (iusetype(itype).and.npartoftype(itype).gt.0 &
-          .or. (iplotline.and.itype.eq.1)) then
-          xminadaptive = min(xminadaptive,minval(xploti(index1:index2)))
-          xmaxadaptive = max(xmaxadaptive,maxval(xploti(index1:index2))*scalemax)
-       endif
-       index1 = index2 + 1
-    enddo
-    if (debugmode) print*,'DEBUG: ',iplot,': '//trim(labeli)// &
-                   'min,max adaptive = ',xminadaptive,xmaxadaptive
-    
-    !--set these as limits if adaptive limits are on
-    if (.not.interactivereplot) then
-       if ((is_coord(iplot,ndim) .and. iadaptcoords) &
-       .or.(.not.is_coord(iplot,ndim) .and. iadapt) .and. ipagechange) then
-          print "(1x,a)",'adapting '//trim(labeli)//' limits'
-          xmini = xminadaptive
-          xmaxi = xmaxadaptive
-       endif
-    endif
-    
-  end subroutine adapt_limits
-
-
 !-------------------------------------------------------------------
 ! interface to coordinate-system transformations
 !-------------------------------------------------------------------
@@ -3444,6 +3408,71 @@ contains
   end subroutine vector_plot
 
 end subroutine plotstep
+
+!----------------------------------------------------
+! adapt the (particle plot) limits to include all
+! particles which are to be plotted on the page
+!----------------------------------------------------
+subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,labeli,&
+                        iamtype,ntoti,npartoftype,iusetype,ipagechange)
+  use params,          only:int1,maxparttypes
+  use labels,          only:is_coord
+  use settings_limits, only:scalemax,iadapt,iadaptcoords
+  use settings_data,   only:debugmode,ndim
+  use settings_part,   only:iplotline
+  implicit none
+  integer,            intent(in)    :: iplot
+  real, dimension(:), intent(in)    :: xploti
+  real,               intent(inout) :: xmini,xmaxi,xminadaptive,xmaxadaptive
+  character(len=*),   intent(in)    :: labeli
+  integer(kind=int1), dimension(:), intent(in) :: iamtype
+  integer, intent(in)               :: ntoti
+  integer, dimension(:), intent(in) :: npartoftype
+  logical, dimension(:), intent(in) :: iusetype
+  logical,               intent(in) :: ipagechange
+  integer :: index1,index2,itype,i
+  logical :: mixedtypes
+
+  !--calculate adaptive limits for this quantity
+  xminadaptive = huge(xminadaptive)
+  xmaxadaptive = -huge(xmaxadaptive)
+
+  mixedtypes = size(iamtype).gt.1
+  if (mixedtypes) then
+     do i=1,ntoti
+        itype = iamtype(i)
+        if (iusetype(itype) .or. (iplotline.and.itype.eq.1)) then
+           xminadaptive = min(xminadaptive,xploti(i))
+           xmaxadaptive = max(xmaxadaptive,xploti(i))*scalemax
+        endif
+        index1 = index2 + 1
+     enddo    
+  else
+     index1 = 1
+     do itype=1,maxparttypes
+        index2 = index1 + npartoftype(itype) - 1
+        if (iusetype(itype).and.npartoftype(itype).gt.0 &
+           .or. (iplotline.and.itype.eq.1)) then
+           xminadaptive = min(xminadaptive,minval(xploti(index1:index2)))
+           xmaxadaptive = max(xmaxadaptive,maxval(xploti(index1:index2))*scalemax)
+        endif
+        index1 = index2 + 1
+     enddo
+  endif
+  if (debugmode) print*,'DEBUG: ',iplot,': '//trim(labeli)// &
+                 'min,max adaptive = ',xminadaptive,xmaxadaptive
+
+  !--set these as limits if adaptive limits are on
+  if (.not.interactivereplot) then
+     if ((is_coord(iplot,ndim) .and. iadaptcoords) &
+     .or.(.not.is_coord(iplot,ndim) .and. iadapt) .and. ipagechange) then
+        print "(1x,a)",'adapting '//trim(labeli)//' limits'
+        xmini = xminadaptive
+        xmaxi = xmaxadaptive
+     endif
+  endif
+
+end subroutine adapt_limits
 
 !-------------------------------------------------------------------
 ! interface to log, inverse transformations:
