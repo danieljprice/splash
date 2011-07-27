@@ -1089,7 +1089,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
           do i=1,npart
              select case(iphase(i))
              case(1:4)
-               iamtype(i,j) = iphase(i)
+               if (ih.gt.0 .and. required(ih)) then
+                  if (dat(i,ih,j).gt.0.) then
+                     iamtype(i,j) = iphase(i)               
+                  else
+                     iamtype(i,j) = 5
+                     !nunknown = nunknown + 1
+                  endif
+               else
+                  iamtype(i,j) = iphase(i)
+               endif
              case default
                iamtype(i,j) = 5
                nunknown = nunknown + 1
