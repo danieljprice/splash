@@ -37,13 +37,17 @@ module disc
 contains
 
 subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
-                    itransx,itransy,itype,gamma,utherm)
+                    itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,utherm)
  use transforms, only:transform_limits_inverse,transform_inverse,transform
+ use params,     only:int1,maxparttypes
  implicit none
  integer, intent(in) :: iplot,npart,npmass,itransx,itransy
  real, dimension(npart), intent(in) :: rpart
  real, dimension(npmass), intent(in) :: pmass
- integer, dimension(npart), intent(in) :: itype
+ integer, dimension(npart), intent(in) :: icolourpart
+ integer(kind=int1), dimension(:), intent(in) :: iamtype
+ logical, dimension(maxparttypes), intent(in) :: usetype
+ integer, dimension(maxparttypes), intent(in) :: noftype
  real, dimension(npart), intent(in), optional :: utherm
  real, intent(in) :: rminin,rmaxin,gamma
  real, intent(out) :: ymin,ymax
@@ -52,6 +56,8 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
  real :: pmassi,rbin,deltar,area,rmin,rmax
  real :: sigmai,toomreq,epicyclic,Omegai,spsoundi
  real, dimension(1) :: rad
+ logical :: mixedtypes
+ integer :: itype,np
 
  ninbin(:) = 0
  sigma(:) = 0.
@@ -67,7 +73,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
 !
  select case(iplot)
  case(1)
-    print "(a,i10,a,i4)",' calculating disc surface density profile: npart = ',npart, ' nbins = ',nbins
+    print "(a,i4,a)",' calculating disc surface density profile using',nbins,' bins'
  case(2)
     if (present(utherm)) then
        print "(a)",' calculating Toomre Q parameter (assuming Mstar=1 and a Keplerian rotation profile)'
@@ -82,6 +88,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
     endif
  case default
     print "(a)",' ERROR: unknown plot in discplot. '
+    return
  end select
 !
 !--if transformations (e.g. log) are applied to r, then limits
@@ -98,17 +105,26 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
  do ibin=1,nbins
     radius(ibin) = rmin + (ibin-0.5)*deltar
  enddo
+ mixedtypes = size(iamtype).ge.npart
 !
 !--calculate surface density in each radial bin
 !
-!$omp parallel default(none) &
-!$omp shared(npart,rpart,sigma,npmass,pmass,itransx,itype,rmin,deltar) &
-!$omp shared(ninbin,spsound,gamma,utherm) &
-!$omp private(i,rad,pmassi,ibin,rbin,area)
-!$omp do
+ np = 0
+!$omp parallel do default(none) &
+!$omp shared(npart,rpart,sigma,npmass,pmass,itransx,icolourpart,rmin,deltar) &
+!$omp shared(ninbin,spsound,gamma,utherm,iamtype,mixedtypes,usetype,noftype) &
+!$omp private(i,rad,pmassi,ibin,rbin,area,itype) &
+!$omp reduction(+:np)
  over_parts: do i=1,npart
     !--skip particles with itype < 0
-    if (itype(i) < 0) cycle over_parts
+    if (icolourpart(i) < 0) cycle over_parts
+    if (mixedtypes) then
+       itype = int(iamtype(i))
+    else
+       itype = igettype(i,noftype)
+    endif
+    if (.not.usetype(itype)) cycle over_parts
+    np = np + 1
 
     if (itransx.eq.0) then
        rad(1) = rpart(i)
@@ -141,8 +157,9 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
        endif
     endif
  enddo over_parts
-!$omp end do
-!$omp end parallel
+!$omp end parallel do
+
+ print "(1x,a,i10,a,i10,a)",'used ',np,' of ',npart,' particles'
 
 !
 !--calculate Toomre Q parameter in each bin using surface density
@@ -183,7 +200,36 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
 
  return
 end subroutine disccalc
+!---------------------------------------------------
+!
+! utility returning the type of particle i
+! when particles are ordered by type
+!
+!---------------------------------------------------
+integer function igettype(i,npartoftype)
+ use params, only:maxparttypes
+ implicit none
+ integer, intent(in) :: i
+ integer, dimension(maxparttypes), intent(in) :: npartoftype
+ integer :: ntot,jtype
+ 
+ ntot     = 0
+ igettype = 1 ! so even if in error, will not lead to seg fault
+ over_types: do jtype=1,maxparttypes
+    ntot = ntot + npartoftype(jtype)
+    if (i <= ntot) then
+       igettype = i
+       exit over_types
+    endif
+ enddo over_types
+ 
+end function igettype
 
+!---------------------------------------------------
+!
+! subroutine to actually perform the disc plotting
+!
+!---------------------------------------------------
 subroutine discplot
  use plotlib, only:plot_line
  implicit none
