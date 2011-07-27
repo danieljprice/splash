@@ -76,12 +76,12 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
   !   are inconsistent (this is the case for the SEREN read)
   !
   dunitspmass = 1.d0
-  dunitsrho = 1.d0
-  dunitsh = 1.d0
+  dunitsrho   = 1.d0
+  dunitsh     = 1.d0
   if (iRescale) then
      if (ipmass.gt.0) dunitspmass = 1.d0/units(ipmass)
-     if (ih.gt.0) dunitsh = 1.d0/units(ih)
-     if (irho.gt.0) dunitsrho = 1.d0/units(irho)
+     if (ih.gt.0)     dunitsh     = 1.d0/units(ih)
+     if (irho.gt.0)   dunitsrho   = 1.d0/units(irho)
   endif
   dunitspmass = dunitspmass * unit_interp
 
@@ -94,6 +94,11 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
         !
         !--particles with mixed types
         !
+        !$omp parallel do default(none) &
+        !$omp shared(ninterp,iamtypei,weighti,dati) &
+        !$omp shared(idensityweighted,dunitsrho)    &
+        !$omp shared(ipmass,ih,irho,dunitspmass,dunitsh,ndim) &
+        !$omp private(ipart,itype)
         do ipart=1,ninterp
            itype = iamtypei(ipart)
            if (.not.usetype(itype)) then
@@ -114,6 +119,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
               endif
            endif
         enddo
+        !$omp end parallel do
      else
         !
         !--particles ordered by type
@@ -159,6 +165,11 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
         !
         !--particles with mixed types
         !
+        !$omp parallel do default(none) &
+        !$omp shared(ninterp,iamtypei,weighti,dati)       &
+        !$omp shared(idensityweighted,dunitsrho,masstype) &
+        !$omp shared(ih,irho,dunitspmass,dunitsh,ndim)    &
+        !$omp private(ipart,itype)
         do ipart=1,ninterp
            itype = iamtypei(ipart)
            if (.not.usetype(itype)) then
@@ -179,6 +190,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
               endif
            endif
         enddo
+        !$omp end parallel do
      else
         !
         !--particles ordered by type
