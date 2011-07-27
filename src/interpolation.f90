@@ -96,7 +96,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
         !
         !$omp parallel do default(none) &
         !$omp shared(ninterp,iamtypei,weighti,dati) &
-        !$omp shared(idensityweighted,dunitsrho)    &
+        !$omp shared(usetype,idensityweighted,dunitsrho)    &
         !$omp shared(ipmass,ih,irho,dunitspmass,dunitsh,ndim) &
         !$omp private(ipart,itype)
         do ipart=1,ninterp
@@ -167,7 +167,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
         !
         !$omp parallel do default(none) &
         !$omp shared(ninterp,iamtypei,weighti,dati)       &
-        !$omp shared(idensityweighted,dunitsrho,masstype) &
+        !$omp shared(usetype,idensityweighted,dunitsrho,masstype) &
         !$omp shared(ih,irho,dunitspmass,dunitsh,ndim)    &
         !$omp private(ipart,itype)
         do ipart=1,ninterp
