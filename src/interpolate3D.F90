@@ -75,7 +75,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   real, dimension(npixx,npixy,npixz) :: datnorm
 
   integer :: i,ipix,jpix,kpix
-  integer :: iprintinterval,iprintnext,iprogress
+  integer :: iprintinterval,iprintnext
   integer :: ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
   integer :: ipixi,jpixi,kpixi,nxpix,nwarn
   real :: xminpix,yminpix,zminpix,hmin !,dhmin3
@@ -84,7 +84,12 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   real :: term,termnorm,dy,dz,ypix,zpix,xpixi
   !real :: t_start,t_end
   logical :: iprintprogress
-  
+#ifdef _OPENMP
+  integer :: omp_get_num_threads
+#else
+  integer(kind=selected_int_kind(10)) :: iprogress  ! up to 10 digits
+#endif
+
   datsmooth = 0.
   datnorm = 0.
   if (normalise) then
@@ -130,15 +135,32 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   nwarn = 0
   !
   !--loop over particles
-  !      
+  !
+!$omp parallel default(none) &
+!$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
+!$omp shared(xmin,ymin,zmin) &
+!$omp shared(xminpix,yminpix,zminpix,pixwidth,zpixwidth) &
+!$omp shared(npixx,npixy,npixz,const) &
+!$omp shared(datnorm,normalise,periodic) &
+!$omp firstprivate(hmin) & !,dhmin3) &
+!$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
+!$omp private(term,termnorm,xpixi) &
+!$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
+!$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
+!$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,qq,wab) &
+!$omp reduction(+:nwarn)
+!$omp master
+#ifdef _OPENMP
+  print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
+#endif
+!$omp end master
+
+!$omp do schedule (guided, 2)
   over_parts: do i=1,npart
      !
      !--report on progress
      !
-     !if (mod(i,10000).eq.0) then
-     !   call cpu_time(t_end)
-     !   print*,i,t_end-t_start
-     !endif
+#ifndef _OPENMP
      if (iprintprogress) then
         iprogress = 100*i/npart
         if (iprogress.ge.iprintnext) then
@@ -146,6 +168,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
            iprintnext = iprintnext + iprintinterval
         endif
      endif
+#endif
      !
      !--skip particles with itype < 0
      !
@@ -275,14 +298,20 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
                  endif
                  !
                  !--calculate data value at this pixel using the summation interpolant
-                 !  
-                 datsmooth(ipixi,jpixi,kpixi) = datsmooth(ipixi,jpixi,kpixi) + term*wab          
-                 if (normalise) datnorm(ipixi,jpixi,kpixi) = datnorm(ipixi,jpixi,kpixi) + termnorm*wab          
+                 !
+                 !$omp atomic
+                 datsmooth(ipixi,jpixi,kpixi) = datsmooth(ipixi,jpixi,kpixi) + term*wab       
+                 if (normalise) then
+                    !$omp atomic
+                    datnorm(ipixi,jpixi,kpixi) = datnorm(ipixi,jpixi,kpixi) + termnorm*wab
+                 endif
               endif
            enddo
         enddo
      enddo
   enddo over_parts
+!$omp end do
+!$omp end parallel
 
   if (nwarn.gt.0) then
      print "(a,i11,a,/,a)",' interpolate3D: WARNING: contributions truncated from ',nwarn,' particles',&
