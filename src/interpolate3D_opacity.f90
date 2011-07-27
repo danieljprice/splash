@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -322,12 +322,12 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !
   call cpu_time(t_end)
   t_used = t_end - t_start
-  if (t_used.gt.60) then
-     itmin = int(t_used/60)
-     tsec = t_used - (itmin*60)
-     print*,'completed in ',itmin,' min ',tsec,'s'
+  if (t_used.gt.60.) then
+     itmin = int(t_used/60.)
+     tsec = t_used - (itmin*60.)
+     print "(1x,a,i4,a,f5.2,1x,a)",'completed in',itmin,' min ',tsec,'s'
   else
-     print*,'completed in ',t_used,'s'
+     print "(1x,a,f5.2,1x,a)",'completed in ',t_used,'s'
   endif
   if (zcut.lt.huge(zcut)) print*,'slice contains ',nused,' of ',npart,' particles'
   

@@ -485,9 +485,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !
   call cpu_time(t_end)
   t_used = t_end - t_start
-  if (t_used.gt.60) then
-     itmin = int(t_used/60)
-     tsec = t_used - (itmin*60)
+  if (t_used.gt.60.) then
+     itmin = int(t_used/60.)
+     tsec = t_used - (itmin*60.)
      print "(1x,a,i4,a,f5.2,1x,a)",'completed in',itmin,' min ',tsec,trim(str)
   else
      print "(1x,a,f5.2,1x,a)",'completed in ',t_used,trim(str)
