@@ -182,9 +182,10 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   integer :: iprintinterval, iprintnext, itmin,ipixi,jpixi,jpixcopy
   integer :: nsubgrid,nfull,nok
 #ifdef _OPENMP
-  integer :: omp_get_num_threads
-#endif
+  integer :: omp_get_num_threads,i
+#else
   integer(kind=selected_int_kind(10)) :: iprogress,i  ! up to 10 digits
+#endif
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
   real :: term,termnorm,dy,dy2,ypix,zfrac,hsmooth,horigi
   real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
@@ -781,8 +782,11 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      emissivity = crdens*Bperp**(1. + alpha)
      
      if (getIonly) then
-        term = emissivity*const    
+        term = emissivity*const
+        termx = 0.
+        termy = 0.
      else
+        term = 0.
         !--faraday rotation would change angle here
         angle = atan2(vecy(i),vecx(i))     
         termx = pintrinsic*emissivity*const*COS(angle)
