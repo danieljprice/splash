@@ -538,7 +538,7 @@ SOURCESF90= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
 	 options_powerspec.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
          rotate.f90 interpolate1D.f90 interpolate2D.f90 \
-         interpolate3D.f90 interpolate3D_xsec.f90 \
+         interpolate3D.F90 interpolate3D_xsec.f90 \
          interpolate3D_projection.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
          interactive.f90 analysis.f90 \
@@ -973,7 +973,7 @@ pdfs.o pdfs.mod: asciiutils.mod filenames.mod plotutils.mod transforms.mod promp
 rotate.o rotation.mod: rotate.f90
 interpolate1D.o interpolations1d.mod: interpolate1D.f90
 interpolate2D.o interpolations2d.mod: interpolate2D.f90
-interpolate3D.o interpolations3d.mod: interpolate3D.f90
+interpolate3D.o interpolations3d.mod: interpolate3D.F90
 interpolate3D_xsec.o xsections3d.mod: interpolate3D_xsec.f90
 interpolate3D_projection.o projections3d.mod: interpolate3D_projection.F90
 interpolate3D_opacity.o interpolate3d_opacity.mod: colours.mod projections3d.mod interpolate3D_opacity.f90
