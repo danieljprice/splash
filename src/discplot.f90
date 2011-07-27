@@ -40,6 +40,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
                     itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,utherm)
  use transforms, only:transform_limits_inverse,transform_inverse,transform
  use params,     only:int1,maxparttypes
+ use part_utils, only:igettype
  implicit none
  integer, intent(in) :: iplot,npart,npmass,itransx,itransy
  real, dimension(npart), intent(in) :: rpart
@@ -200,30 +201,6 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
 
  return
 end subroutine disccalc
-!---------------------------------------------------
-!
-! utility returning the type of particle i
-! when particles are ordered by type
-!
-!---------------------------------------------------
-integer function igettype(i,npartoftype)
- use params, only:maxparttypes
- implicit none
- integer, intent(in) :: i
- integer, dimension(maxparttypes), intent(in) :: npartoftype
- integer :: ntot,jtype
- 
- ntot     = 0
- igettype = 1 ! so even if in error, will not lead to seg fault
- over_types: do jtype=1,maxparttypes
-    ntot = ntot + npartoftype(jtype)
-    if (i <= ntot) then
-       igettype = i
-       exit over_types
-    endif
- enddo over_types
- 
-end function igettype
 
 !---------------------------------------------------
 !

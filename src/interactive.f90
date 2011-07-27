@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -64,7 +64,7 @@ contains
 !               to be recalculated must set this
 !
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,ivecy, &
-  xcoords,ycoords,zcoords,hi,icolourpart,iamtype,usetype,xmin,xmax,ymin,ymax, &
+  xcoords,ycoords,zcoords,hi,icolourpart,iamtype,usetype,npartoftype,xmin,xmax,ymin,ymax, &
   rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,vecmax, &
   anglex,angley,anglez,ndim,xorigin,x_sec,zslicepos,dzslice, &
   zobserver,dscreen,use3Dopacity,taupartdepth,irerender,itrackpart,icolourscheme, &
@@ -74,10 +74,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use multiplot,        only:itrans
   use labels,           only:is_coord,ix
   use settings_render,  only:projlabelformat,iapplyprojformat
-  use settings_data,    only:ndataplots
+  use settings_data,    only:ndataplots,ntypes
   use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
                              plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click
-  use params,           only:int1
+  use params,           only:int1,maxparttypes
+  use part_utils,       only:igettype
   implicit none
   integer, intent(in) :: npart,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
   integer, intent(inout) :: irender,iColourBarStyle
@@ -86,7 +87,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   integer, dimension(npart), intent(inout) :: icolourpart
   real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
   integer(kind=int1), dimension(:), intent(in) :: iamtype
-  logical, dimension(:), intent(in)            :: usetype
+  logical, dimension(maxparttypes), intent(in) :: usetype
+  integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax,contmin,contmax,taupartdepth
   real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
   real, intent(in) :: renderminadapt,rendermaxadapt
@@ -96,7 +98,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   logical, intent(out) :: irerender,interactivereplot
   logical, intent(in) :: use3Dopacity
   real, parameter :: pi=3.141592653589
-  integer :: i,iclosest,ierr,ixsec,ishape
+  integer :: i,iclosest,ierr,ixsec,ishape,itype
   integer :: nmarked,ncircpart,itrackparttemp
   integer, dimension(1000) :: icircpart
   real :: xpt,ypt
@@ -107,7 +109,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   real :: dxlength,dylength,xmaxin,ymaxin
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
-  logical :: iexit, rotation, verticalbar, iamincolourbar
+  logical :: iexit, rotation, verticalbar, iamincolourbar, mixedtypes
 
   if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
@@ -116,6 +118,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !print*,'cannot enter interactive mode: device has no cursor'
      return
   endif
+  
+  mixedtypes = size(iamtype).ge.npart
   
   char = 'A'
   xline = 0.
@@ -176,16 +180,22 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      else
         dylength = 0.
      endif
-          
-     do i=1,npart
-        !rr = (xcoords(i)-xpt)**2 + (ycoords(i)-ypt)**2
+     over_npart: do i=1,npart
+        if (ntypes.gt.1) then
+           if (mixedtypes) then
+              itype = int(iamtype(i))
+           else
+              itype = igettype(i,npartoftype)
+           endif
+           if (.not.usetype(itype)) cycle over_npart
+        endif
         !--use distance normalised on screen
         rr = ((xcoords(i)-xpt)*dxlength)**2 + ((ycoords(i)-ypt)*dylength)**2
         if (rr.lt.rmin) then
            iclosest = i
            rmin = rr
         endif
-     enddo
+     enddo over_npart
 
      !--query the position of the colour bar
      iamincolourbar = incolourbar(iColourBarStyle,xpt,ypt,xmin,xmax,ymin,ymax)

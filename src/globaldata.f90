@@ -66,6 +66,38 @@ module particle_data
  public
 
 end module particle_data
+
+module part_utils
+ implicit none
+ 
+ public :: igettype
+ private
+
+contains
+ !
+ !--utility returning the type of particle i
+ !  when particles are ordered by type
+ !
+ integer function igettype(i,noftype)
+  use params, only:maxparttypes
+  implicit none
+  integer, intent(in) :: i
+  integer, dimension(maxparttypes), intent(in) :: noftype
+  integer :: ntot,jtype
+
+  ntot     = 0
+  igettype = 1 ! so even if in error, will not lead to seg fault
+  over_types: do jtype=1,maxparttypes
+     ntot = ntot + noftype(jtype)
+     if (i <= ntot) then
+        igettype = i
+        exit over_types
+     endif
+  enddo over_types
+
+ end function igettype
+
+end module part_utils
 !
 !--filenames
 !
