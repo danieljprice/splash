@@ -64,7 +64,7 @@ contains
 !               to be recalculated must set this
 !
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,ivecy, &
-  xcoords,ycoords,zcoords,hi,icolourpart,xmin,xmax,ymin,ymax, &
+  xcoords,ycoords,zcoords,hi,icolourpart,iamtype,usetype,xmin,xmax,ymin,ymax, &
   rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,vecmax, &
   anglex,angley,anglez,ndim,xorigin,x_sec,zslicepos,dzslice, &
   zobserver,dscreen,use3Dopacity,taupartdepth,irerender,itrackpart,icolourscheme, &
@@ -77,6 +77,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use settings_data,    only:ndataplots
   use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
                              plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click
+  use params,           only:int1
   implicit none
   integer, intent(in) :: npart,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
   integer, intent(inout) :: irender,iColourBarStyle
@@ -84,6 +85,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   integer, intent(out) :: iadvance
   integer, dimension(npart), intent(inout) :: icolourpart
   real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
+  integer(kind=int1), dimension(:), intent(in) :: iamtype
+  logical, dimension(:), intent(in)            :: usetype
   real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax,contmin,contmax,taupartdepth
   real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
   real, intent(in) :: renderminadapt,rendermaxadapt
@@ -113,6 +116,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !print*,'cannot enter interactive mode: device has no cursor'
      return
   endif
+  
   char = 'A'
   xline = 0.
   yline = 0.
@@ -654,18 +658,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            xmaxin = xmax
            ymaxin = ymax
            if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymaxin) then
-              print*,'resetting x limits'
-              xmin = minval(xcoords,mask=(icolourpart.ge.0))
-              xmax = maxval(xcoords,mask=(icolourpart.ge.0))
+              call adapt_limits_interactive('x',npart,xcoords,xmin,xmax,icolourpart,iamtype,usetype)
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
               iexit = .true.
            endif
            if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmaxin) then
-              print*,'resetting y limits'
-              ymin = minval(ycoords,mask=(icolourpart.ge.0))
-              ymax = maxval(ycoords,mask=(icolourpart.ge.0))
+              call adapt_limits_interactive('y',npart,ycoords,ymin,ymax,icolourpart,iamtype,usetype)
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
@@ -2136,6 +2136,44 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
     end subroutine reset_panel
 
 end subroutine interactive_multi
+
+!------------------------------------------------------------
+! utility which adapts plot limits based only on the 
+! particles being plotted
+!------------------------------------------------------------
+subroutine adapt_limits_interactive(labeli,np,xarr,xmin,xmax,icolourpart,iamtype,iusetype)
+ use params, only:int1
+ implicit none
+ character(len=*), intent(in)    :: labeli
+ integer, intent(in)             :: np
+ real, dimension(np), intent(in) :: xarr
+ real, intent(out)               :: xmin,xmax
+ integer(kind=int1), dimension(:) , intent(in) :: iamtype
+ integer,            dimension(np), intent(in) :: icolourpart
+ logical,            dimension(:),  intent(in) :: iusetype
+ integer :: itype,i
+ logical :: mixedtypes
+
+ xmin =  huge(xmin)
+ xmax = -huge(xmax)
+ mixedtypes = size(iamtype).ge.np
+ 
+ if (mixedtypes) then
+    do i=1,np
+       itype = int(iamtype(i))
+       if (iusetype(itype) .and. icolourpart(i).gt.0) then
+          xmin = min(xmin,xarr(i))
+          xmax = max(xmax,xarr(i))
+       endif
+    enddo
+ else
+    xmin = minval(xarr,mask=(icolourpart.ge.0))
+    xmax = maxval(xarr,mask=(icolourpart.ge.0))
+ endif
+ 
+ print "(1x,a)",' resetting '//trim(labeli)//' limits'
+
+end subroutine adapt_limits_interactive
 
 !------------------------------------------------------------
 ! utility which translates between world co-ordinates (x,y)

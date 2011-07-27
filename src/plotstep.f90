@@ -1886,8 +1886,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               pixwidth = (xmax-xmin)/real(npixx) ! used in synchrotron plots
 
               if (.not.ihavesetweights) then
-                 call set_weights(weight,dat,iamtype, &
-                                                (iusetype .and. UseTypeInRenderings))
+                 call set_weights(weight,dat,iamtype,(iusetype.and.UseTypeInRenderings))
               endif
               
               call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,pixwidthvecy,vecmax,labelvecplot)
@@ -1940,7 +1939,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  iadvance = nfreq
                  call interactive_part(ninterp,iplotx,iploty,iplotz,irender,icontourplot,ivecx,ivecy, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                      hh(1:ninterp),icolourme(1:ninterp), &
+                      hh(1:ninterp),icolourme(1:ninterp),iamtype,iusetype, &
                       xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,vecmax, &
                       angletempx,angletempy,angletempz,ndim,xorigin(1:ndim),x_sec,zslicepos,dz, &
                       zobservertemp,dzscreentemp,use3Dopacityrendering,taupartdepthtemp,irerender, &
@@ -2083,7 +2082,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               iadvance = nfreq
               call interactive_part(ntoti,iplotx,iploty,0,irenderpart,0,0,0, &
                    xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
-                   hh(1:ntoti),icolourme(1:ntoti), &
+                   hh(1:ntoti),icolourme(1:ntoti),iamtype,iusetype, &
                    xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,vecmax, &
                    angletempx,angletempy,angletempz,ndim,xorigin(1:ndim), &
                    dumxsec,dummy,dummy,dummy,dummy,.false.,dummy,irerender, &
@@ -3445,8 +3444,7 @@ subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,label
            xminadaptive = min(xminadaptive,xploti(i))
            xmaxadaptive = max(xmaxadaptive,xploti(i))*scalemax
         endif
-        index1 = index2 + 1
-     enddo    
+     enddo
   else
      index1 = 1
      do itype=1,maxparttypes
