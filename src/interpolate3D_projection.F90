@@ -43,6 +43,12 @@ module projections3D
  public :: interpolate3D_proj_vec,interp3D_proj_vec_synctron
  public :: wfromtable
 
+#ifdef _OPENMP
+ character(len=5), parameter :: str = 'cpu s'
+#else
+ character(len=1), parameter :: str = 's'
+#endif
+
 contains
 
 subroutine setup_integratedkernel
@@ -176,7 +182,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   integer :: iprintinterval, iprintnext, itmin,ipixi,jpixi,jpixcopy
   integer :: nsubgrid,nfull,nok
 #ifdef _OPENMP
-  integer :: OMP_GET_NUM_THREADS
+  integer :: omp_get_num_threads
 #endif
   integer(kind=selected_int_kind(10)) :: iprogress,i  ! up to 10 digits
   real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
@@ -263,7 +269,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$omp reduction(min:hminall)
 !$omp master
 #ifdef _OPENMP
-  print "(1x,a,i3,a)",'Using ',OMP_GET_NUM_THREADS(),' cpus'
+  print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 #endif
 !$omp end master
 
@@ -482,9 +488,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   if (t_used.gt.60) then
      itmin = int(t_used/60)
      tsec = t_used - (itmin*60)
-     print*,'completed in ',itmin,' min ',tsec,'s'
+     print "(1x,a,i4,a,f5.2,1x,a)",'completed in',itmin,' min ',tsec,trim(str)
   else
-     print*,'completed in ',t_used,'s'
+     print "(1x,a,f5.2,1x,a)",'completed in ',t_used,trim(str)
   endif
   
   return
