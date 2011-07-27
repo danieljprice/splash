@@ -55,6 +55,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use labels,         only:labeltype
   use calcquantities, only:calc_quantities
   use settings_units, only:units
+  use timing,         only:wall_time,print_time
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
@@ -176,7 +177,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      nstepsinfile(ireadfile) = 0
      print "(/a)",' reading single dumpfile'
      !call endian_info()
-     if (timing) call cpu_time(t1)
+     if (timing) call wall_time(t1)
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
      !
      !--do some basic sanity checks
@@ -191,13 +192,13 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !   call read_data_otherendian(rootname(ireadfile),istart,nstepsinfile(ireadfile))    
      !endif
      if (timing) then
-        call cpu_time(t2)
+        call wall_time(t2)
         if (t2-t1.gt.1.) then
            if (ipartialread) then
-              print*,'time for (partial) data read = ',t2-t1,'s'
+              call print_time(t2-t1,'time for (partial) data read = ')
               print*
            else
-              print*,'time for data read = ',t2-t1,'s'
+              call print_time(t2-t1,'time for data read = ')
               print*
            endif
         endif
