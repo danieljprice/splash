@@ -142,7 +142,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$omp shared(xminpix,yminpix,zminpix,pixwidth,zpixwidth) &
 !$omp shared(npixx,npixy,npixz,const) &
 !$omp shared(datnorm,normalise,periodic) &
-!$omp firstprivate(hmin) & !,dhmin3) &
+!$omp shared(hmin) & !,dhmin3) &
 !$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
 !$omp private(term,termnorm,xpixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
