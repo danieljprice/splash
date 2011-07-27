@@ -61,7 +61,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   logical, intent(in) :: gotfilenames
   logical, intent(in), optional :: firsttime
   logical :: setlimits,isfirsttime
-  logical, parameter  :: timing = .true.
+  logical, parameter  :: dotiming = .true.
   integer :: i,istart,ierr
   real    :: t1,t2
 
@@ -176,8 +176,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      nstepsinfile(ireadfile) = 0
      print "(/a)",' reading single dumpfile'
-     !call endian_info()
-     if (timing) call wall_time(t1)
+
+     if (dotiming) call wall_time(t1)
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
      !
      !--do some basic sanity checks
@@ -191,7 +191,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !   print "(a)",' trying different endian'
      !   call read_data_otherendian(rootname(ireadfile),istart,nstepsinfile(ireadfile))    
      !endif
-     if (timing) then
+     if (dotiming) then
         call wall_time(t2)
         if (t2-t1.gt.1.) then
            if (ipartialread) then
