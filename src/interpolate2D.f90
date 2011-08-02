@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -66,13 +66,13 @@ contains
 !--------------------------------------------------------------------------
 
 subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidth,normalise)
+     xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,pixwidth
+  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy
   real, intent(out), dimension(npixx,npixy) :: datsmooth
   logical, intent(in) :: normalise
   real, dimension(npixx,npixy) :: datnorm
@@ -88,7 +88,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
   else
      print "(1x,a)",'interpolating from particles to 2D grid (non-normalised)...'  
   endif
-  if (pixwidth.le.0.) then
+  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
      print "(1x,a)",'interpolate2D: error: pixel width <= 0'
      return
   endif
@@ -123,10 +123,10 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      !
      !--for each particle work out which pixels it contributes to
      !               
-     ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-     jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-     ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
-     jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
+     ipixmin = int((x(i) - radkern - xmin)/pixwidthx)
+     jpixmin = int((y(i) - radkern - ymin)/pixwidthy)
+     ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
+     jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
 
      if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
      if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
@@ -136,10 +136,10 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      !--loop over pixels, adding the contribution from this particle
      !
      do jpix = jpixmin,jpixmax
-        ypix = ymin + (jpix-0.5)*pixwidth
+        ypix = ymin + (jpix-0.5)*pixwidthy
         dy = ypix - y(i)
         do ipix = ipixmin,ipixmax
-           xpix = xmin + (ipix-0.5)*pixwidth
+           xpix = xmin + (ipix-0.5)*pixwidthx
            dx = xpix - x(i)
            rab = sqrt(dx**2 + dy**2)
            qq = rab*hi1
@@ -193,13 +193,13 @@ end subroutine interpolate2D
 !--------------------------------------------------------------------------
 
 subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
-     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidth,normalise)
+     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,normalise)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,hh,weight,vecx,vecy
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,pixwidth
+  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx,vecsmoothy
   logical, intent(in) :: normalise
   real, dimension(npixx,npixy) :: datnorm
@@ -216,7 +216,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
   else
      print "(1x,a)",'interpolating vector field from particles to 2D grid (non-normalised)...'  
   endif
-  if (pixwidth.le.0.) then
+  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
      print*,'interpolate2D_vec: error: pixel width <= 0'
      return
   endif
@@ -252,10 +252,10 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
      !
      !--for each particle work out which pixels it contributes to
      !               
-     ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-     jpixmin = int((y(i) - radkern - ymin)/pixwidth)
-     ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
-     jpixmax = int((y(i) + radkern - ymin)/pixwidth) + 1
+     ipixmin = int((x(i) - radkern - xmin)/pixwidthx)
+     jpixmin = int((y(i) - radkern - ymin)/pixwidthy)
+     ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
+     jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
 
      if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
      if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
@@ -265,10 +265,10 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
      !--loop over pixels, adding the contribution from this particle
      !
      do jpix = jpixmin,jpixmax
-        ypix = ymin + (jpix-0.5)*pixwidth
+        ypix = ymin + (jpix-0.5)*pixwidthy
         dy = ypix - y(i)
         do ipix = ipixmin,ipixmax
-           xpix = xmin + (ipix-0.5)*pixwidth
+           xpix = xmin + (ipix-0.5)*pixwidthx
            dx = xpix - x(i)
            rab = sqrt(dx**2 + dy**2)
            qq = rab*hi1
