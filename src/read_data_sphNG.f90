@@ -101,7 +101,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc
   integer, dimension(maxparttypes) :: npartoftypei
   real,    dimension(maxparttypes) :: massoftypei
-  real    :: pmassi,hi
+  real    :: pmassi,hi,rhoi
   logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
   logical :: debug
 
@@ -940,41 +940,41 @@ subroutine read_data(rootname,indexstart,nstepsread)
                !--dead particles have -ve smoothing lengths in phantom
                !  so use abs(h) for these particles and hide them
                !
-               !if (required(irho)) then
-                  if (any(npartoftypei(2:).gt.0)) then
-                     !--need masses for each type if not all gas
-                     if (debug) print*,'DEBUG: phantom: setting h for multiple types ',i1,i2
-                     if (debug) print*,'DEBUG: massoftype = ',massoftypei(:)
-                     do k=i1,i2
-                        itype = iphase(k)
-                        pmassi = massoftypei(itype)
-                        hi = dat(k,ih,j)
-                        if (hi.gt.0) then
-                           dat(k,irho,j) = pmassi*(hfact/hi)**3
-                        elseif (hi.lt.0.) then
-                           npartoftype(itype,j) = npartoftype(itype,j) - 1
-                           npartoftype(5,j) = npartoftype(5,j) + 1
-                           dat(k,irho,j) = pmassi*(hfact/abs(hi))**3
-                        else
-                           dat(k,irho,j) = 0.
-                        endif
-                     enddo
-                  else
-                     if (debug) print*,'debug: phantom: setting rho for all types'
-                     !--assume all particles are gas particles
-                     where (dat(i1:i2,ih,j).gt.0.)
-                        dat(i1:i2,irho,j) = &
-                           massoftypei(1)*(hfact/dat(i1:i2,ih,j))**3
-                     elsewhere (dat(i1:i2,ih,j).lt.0.)
-                        dat(i1:i2,irho,j) = &
-                           massoftypei(1)*(hfact/abs(dat(i1:i2,ih,j)))**3
-                        iphase(i1:i2) = -1
-                     elsewhere ! if h = 0.
-                        dat(i1:i2,irho,j) = 0.
-                        iphase(i1:i2) = -2
-                     end where
-                  endif
-               !endif
+               if (any(npartoftypei(2:).gt.0)) then
+                  !--need masses for each type if not all gas
+                  if (debug) print*,'DEBUG: phantom: setting h for multiple types ',i1,i2
+                  if (debug) print*,'DEBUG: massoftype = ',massoftypei(:)
+                  do k=i1,i2
+                     itype = iphase(k)
+                     pmassi = massoftypei(itype)
+                     hi = dat(k,ih,j)
+                     if (hi.gt.0) then
+                        if (required(irho))dat(k,irho,j) = pmassi*(hfact/hi)**3
+                     elseif (hi.lt.0.) then
+                        npartoftype(itype,j) = npartoftype(itype,j) - 1
+                        npartoftype(5,j) = npartoftype(5,j) + 1
+                        if (required(irho)) dat(k,irho,j) = pmassi*(hfact/abs(hi))**3
+                     else
+                        if (required(irho)) dat(k,irho,j) = 0.
+                     endif
+                  enddo
+               else
+                  if (debug) print*,'debug: phantom: setting rho for all types'
+                  !--assume all particles are gas particles
+                  do k=i1,i2
+                     hi = dat(k,ih,j)
+                     if (hi.gt.0.) then
+                        rhoi = massoftypei(1)*(hfact/hi)**3
+                     elseif (hi.lt.0.) then
+                        rhoi = massoftypei(1)*(hfact/abs(hi))**3
+                        iphase(k) = -1
+                     else ! if h = 0.
+                        rhoi = 0.
+                        iphase(k) = -2
+                     endif
+                     if (required(irho)) dat(k,irho,j) = rhoi
+                  enddo
+               endif
                    
                if (debug) print*,'debug: making density ',icolumn
             endif
