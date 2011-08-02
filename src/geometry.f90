@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -38,12 +38,16 @@
 !  spherical polar -> cartesian
 !  toroidal r,theta,phi <-> cartesian
 !
-! written by Daniel Price 2004-2007
+! written by Daniel Price 2004-2011
 ! as part of the SPLASH SPH visualisation package
 !-----------------------------------------------------------------
 module geometry
  implicit none
  integer, parameter, public :: maxcoordsys = 4
+ integer, parameter, public :: igeom_cartesian   = 1
+ integer, parameter, public :: igeom_cylindrical = 2
+ integer, parameter, public :: igeom_spherical   = 3
+ integer, parameter, public :: igeom_toroidal    = 4
 
  character(len=24), dimension(maxcoordsys), parameter, public :: labelcoordsys = &
     (/'cartesian   x,y,z      ', &
