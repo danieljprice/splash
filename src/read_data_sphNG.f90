@@ -1132,7 +1132,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
     elseif (any(iphase(1:ntotal).ne.0)) then
        if (phantomdump) then
-          print*,'ERROR: low memory mode will not work with phantom + multiple types'
+          print*,'ERROR: low memory mode will not work correctly with phantom + multiple types'
+          print*,'press any key to ignore this and continue anyway (at your own risk...)'
+          read*
        endif
 !
 !--place point masses after normal particles
