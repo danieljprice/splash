@@ -640,7 +640,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use pdfs,                  only:pdf_calc,pdf_write
   use plotutils,             only:plotline
   use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
-                                  plot_line,plot_pt1
+                                  plot_line,plot_pt1,plotlib_is_pgplot
   implicit none
   integer, intent(inout) :: ipos, istepsonpage
   integer, intent(in)    :: istep,irender_nomulti,icontour_nomulti,ivecplot
@@ -1210,7 +1210,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                          hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                          icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy, &
-                         pixwidth,inormalise)
+                         pixwidth,pixwidthy,inormalise)
                     !--also get contour plot data
                     if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                        if (.not.isameweights) & ! set contouring weights as necessary
@@ -1219,7 +1219,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                        call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                             hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
                             icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy, &
-                            pixwidth,inormalise)
+                            pixwidth,pixwidthy,inormalise)
                        gotcontours = .true.
 
                        if (.not.isameweights) & ! reset weights
@@ -1906,7 +1906,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            !--redraw axes over what has been plotted
            !
-           call redraw_axes(iaxistemp)
+           if (irenderplot.gt.0 .or. plotlib_is_pgplot) then
+              call redraw_axes(iaxistemp)
+           endif
            !
            !--annotate with time / marker legend and title
            !
@@ -2051,7 +2053,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !
         !--redraw axes over what has been plotted
         !
-        call redraw_axes(iaxis)
+        if (plotlib_is_pgplot) call redraw_axes(iaxis)
         !
         !--annotate with time / marker legend and title
         !
@@ -2228,7 +2230,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            call plot_sci(icolourprev)
            call plot_sls(linestyleprev)
 
-           call redraw_axes(iaxis)
+           if (plotlib_is_pgplot) call redraw_axes(iaxis)
            call legends_and_title
 
            lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) .and. nyplot.eq.nyplots)
@@ -2401,7 +2403,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            !--redraw axes over what has been plotted
            !
-           call redraw_axes(iaxis)           
+           if (plotlib_is_pgplot) call redraw_axes(iaxis)           
            !
            !--annotate with time / marker legend and title
            !
@@ -2480,7 +2482,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            !--redraw axes over what has been plotted
            !
-           call redraw_axes(iaxis)
+           if ((allocated(datpix) .and. ierr.eq.0) .or. plotlib_is_pgplot) then
+              call redraw_axes(iaxis)
+           endif
            !
            !--annotate with time / marker legend and title
            !
@@ -2518,7 +2522,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               call plot_line(ipt,xplot(1:ipt),yplot(1:ipt))
            endif
            
-           call redraw_axes(iaxis)
+           if (plotlib_is_pgplot) call redraw_axes(iaxis)
            call legends_and_title
         
         endif
@@ -3303,12 +3307,12 @@ contains
             call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
               hh(1:ninterp),weight(1:ninterp),vecplot(2,1:ninterp), &
               vecplot(2,1:ninterp),icolourme(1:ninterp),ninterp,xmin,ymin, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)         
+              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise)         
          else
             call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
               hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ivecx), &
               dat(1:ninterp,ivecy),icolourme(1:ninterp),ninterp,xmin,ymin, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,inormalise)
+              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise)
          endif
       
       case default

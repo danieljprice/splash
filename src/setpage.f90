@@ -194,14 +194,10 @@ contains
 !
 
 subroutine redraw_axes(iaxis)
-  use plotlib, only:plot_box,plotlib_is_pgplot
+  use plotlib, only:plot_box
   implicit none
   integer, intent(in) :: iaxis
   character(len=10) :: xopts, yopts
-!
-!--only call this routine if we are using PGPLOT
-!
-  if (.not.plotlib_is_pgplot) return
 !
 !--set plot axes (options are exactly as in PGENV, with axis=-3 added)
 !
