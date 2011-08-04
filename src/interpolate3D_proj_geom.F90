@@ -78,7 +78,7 @@ contains
 
 subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,igeom,&
-     iplotx,iploty,ix)
+     iplotx,iploty,iplotz,ix)
 
   use geometry, only:igeom_cartesian,coord_transform,coord_is_length
   implicit none
@@ -88,11 +88,11 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   real,    intent(in) :: xmin,ymin,pixwidthx,pixwidthy
   real,    intent(out), dimension(npixx,npixy) :: datsmooth
   logical, intent(in) :: normalise
-  integer, intent(in) :: igeom,iplotx,iploty
+  integer, intent(in) :: igeom,iplotx,iploty,iplotz
   integer, dimension(3), intent(in) :: ix
   real, dimension(npixx,npixy) :: datnorm
 
-  integer :: ipix,jpix,ixcoord,iycoord
+  integer :: ipix,jpix,ixcoord,iycoord,izcoord
   integer :: iprintinterval, iprintnext, itmin
 #ifdef _OPENMP
   integer :: omp_get_num_threads,i
@@ -104,7 +104,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   real :: term,termnorm,dx,dx2,dy,dy2
   real :: xmax,ymax
   real :: t_start,t_end,t_used,tsec
-  logical :: iprintprogress,islengthx,islengthy
+  logical :: iprintprogress,islengthx,islengthy,islengthz
   
   datsmooth = 0.
   term = 0.
@@ -126,6 +126,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   !
   ixcoord = iplotx - ix(1) + 1
   iycoord = iploty - ix(1) + 1
+  izcoord = iplotz - ix(1) + 1
   if (ixcoord.le.0 .or. ixcoord.gt.3) then
      print*,' ERROR finding x coordinate offset, cannot render'
      return
@@ -134,11 +135,16 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      print*,' ERROR finding y coordinate offset, cannot render'
      return
   endif
+  if (izcoord.le.0 .or. izcoord.gt.3) then
+     print*,' ERROR finding y coordinate offset, cannot render'
+     return
+  endif
   !
   !--check if coordinate is a length (i.e., not an angle)
   !
   islengthx = coord_is_length(ixcoord,igeom)
   islengthy = coord_is_length(iycoord,igeom)
+  islengthz = coord_is_length(izcoord,igeom)
   !
   !--check column density table has actually been setup
   !
@@ -173,12 +179,12 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
-!$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy) &
-!$omp shared(npixx,npixy) &
+!$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,pixwidthx,pixwidthy) &
+!$omp shared(npixx,npixy,ixcoord,iycoord,izcoord,islengthx,islengthy,islengthz,igeom) &
 !$omp shared(datnorm,normalise) &
 !$omp private(hi,xi,yi,radkern) &
 !$omp private(hi1,hi21,term,termnorm) &
-!$omp private(q2,ypix,dy,dy2,wab) &
+!$omp private(q2,dx,dx2,dy,dy2,wab,xcoord,xpix) &
 !$omp private(i,ipix,jpix)
 !$omp master
 #ifdef _OPENMP
@@ -219,8 +225,14 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      !
      hi1 = 1./hi
      hi21 = hi1*hi1
-     termnorm = weight(i)*hi
-     term = termnorm*dat(i) ! h gives the z length scale (NB: no perspective)
+
+     ! h gives the z length scale (NB: no perspective)
+     if (islengthz) then
+        termnorm = weight(i)*hi
+     else
+        termnorm = weight(i)
+     endif
+     term = termnorm*dat(i)
 
      !
      !--loop over pixels, adding the contribution from this particle
@@ -232,8 +244,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
            xcoord(ixcoord) = xminpix + ipix*pixwidthx
            call coord_transform(xcoord(:),3,igeom,xpix(:),3,igeom_cartesian)
            
-           dy   = xpix(2) - yi
-           dx   = xpix(1) - xi
+           dy   = xpix(iycoord) - yi
+           dx   = xpix(ixcoord) - xi
 
            dx2  = dx*dx
            dy2  = dy*dy
