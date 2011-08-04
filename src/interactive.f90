@@ -74,11 +74,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use multiplot,        only:itrans
   use labels,           only:is_coord,ix
   use settings_render,  only:projlabelformat,iapplyprojformat
-  use settings_data,    only:ndataplots,ntypes
+  use settings_data,    only:ndataplots,ntypes,icoords,icoordsnew
   use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
                              plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click
   use params,           only:int1,maxparttypes
   use part_utils,       only:igettype
+  use particleplots,    only:plot_kernel_gr
   implicit none
   integer, intent(in) :: npart,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
   integer, intent(inout) :: irender,iColourBarStyle
@@ -224,7 +225,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               icircpart(ncircpart) = iclosest
            endif
            call plot_sfs(2)
-           call plot_circ(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
+           if (icoordsnew.ne.icoords) then
+              call plot_kernel_gr(icoordsnew,icoords,xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
+           else
+              call plot_circ(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
+           endif
         else
            print*,'error: could not determine closest particle'
         endif
@@ -2252,7 +2257,6 @@ subroutine plot_number(i,xi,yi)
 
  return
 end subroutine plot_number
-
 
 subroutine deleteaxes()
  use settings_page, only:iaxis,iPlotLegend,& !iPlotStepLegend, &

@@ -541,9 +541,9 @@ SOURCESF90= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          interpolate3D.F90 interpolate3D_xsec.f90 \
          interpolate3D_projection.F90 interpolate3D_proj_geom.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
-         interactive.f90 analysis.f90 \
+         particleplot.f90 interactive.f90 analysis.f90 \
          convert_grid.f90 convert.f90 \
-         fieldlines.f90 legends.f90 particleplot.f90 \
+         fieldlines.f90 legends.f90 \
          powerspectrums.f90 render.f90 \
          plotstep.f90 timestepping.f90 \
          defaults.f90 menu.f90 \

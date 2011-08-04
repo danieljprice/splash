@@ -23,7 +23,7 @@
 module particleplots
  implicit none
  public :: particleplot,plot_errorbarsx,plot_errorbarsy
- private :: plot_kernel_gr
+ public :: plot_kernel_gr
  
 contains
 !
@@ -521,7 +521,7 @@ subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
   integer :: i
   real, dimension(2) :: xtemp
   real, dimension(2,npts) :: xpts
-  real :: angle, dangle  
+  real :: angle, dangle, xi, yi
 
   if (igeom.gt.1 .and. igeom.le.maxcoordsys) then
      print 10,labelcoordsys(igeom) 
@@ -529,7 +529,13 @@ subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
      print 10,labelcoordsys(1)
   endif
 10 format('coordinate system = ',a)
-  
+
+  xtemp(1) = x
+  xtemp(2) = y
+  !--e.g. from cylindricals TO cartesians
+  call coord_transform(xtemp,2,igeom,xpts(:,1),2,igeomold)
+  xi = xpts(1,1)
+  yi = xpts(2,1)
 !
 !--step around a circle in co-ordinate space of radius h and store the 
 !  location of the points in cartesian space in the 2D array xpts
@@ -537,8 +543,8 @@ subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
   dangle = 2.*pi/REAL(npts-1)
   do i=1,npts
      angle = (i-1)*dangle
-     xtemp(1) = x + h*COS(angle) 
-     xtemp(2) = y + h*SIN(angle)
+     xtemp(1) = xi + h*COS(angle) 
+     xtemp(2) = yi + h*SIN(angle)
 !
 !--translate back to actual coordinate system plotted
 !
