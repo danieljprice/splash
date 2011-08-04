@@ -1007,7 +1007,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !        
         if (icoordsnew.ne.icoords) then
            !--do this if one is a coord but not if rendering
-           if (.not.rendering) call changecoords(iplotx,iploty,xplot,yplot,ntoti)
+           call changecoords(iplotx,iploty,xplot,yplot,ntoti)
            if (iamvecx.gt.0) call changeveccoords(iplotx,xplot,ntoti)
            if (iamvecy.gt.0) call changeveccoords(iploty,yplot,ntoti)
         endif

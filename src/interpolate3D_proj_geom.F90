@@ -100,7 +100,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   integer(kind=selected_int_kind(10)) :: iprogress,i  ! up to 10 digits
 #endif
   real, dimension(3) :: xcoord, xpix
-  real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
+  real :: hi,hi1,hi21,radkern,wab,q2,xi(3),xci(3),xminpix,yminpix
   real :: term,termnorm,dx,dx2,dy,dy2
   real :: xmax,ymax
   real :: t_start,t_end,t_used,tsec
@@ -145,6 +145,9 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   islengthx = coord_is_length(ixcoord,igeom)
   islengthy = coord_is_length(iycoord,igeom)
   islengthz = coord_is_length(izcoord,igeom)
+  !print*,' islength = ',islengthx,islengthy,islengthz
+  !print*,' y axis is ',iycoord
+  !print*,' x axis is ',ixcoord
   !
   !--check column density table has actually been setup
   !
@@ -182,7 +185,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,ixcoord,iycoord,izcoord,islengthx,islengthy,islengthz,igeom) &
 !$omp shared(datnorm,normalise) &
-!$omp private(hi,xi,yi,radkern) &
+!$omp private(hi,xi,xci,radkern) &
 !$omp private(hi1,hi21,term,termnorm) &
 !$omp private(q2,dx,dx2,dy,dy2,wab,xcoord,xpix) &
 !$omp private(i,ipix,jpix)
@@ -218,8 +221,11 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 
      radkern = radkernel*hi ! radius of the smoothing kernel
 
-     xi = x(i)
-     yi = y(i)
+     xci(1) = x(i)
+     xci(2) = y(i)
+     xci(3) = z(i)
+     !--get particle coords in new coord system
+     !call coord_transform(xci(:),3,igeom_cartesian,xi(:),3,igeom)
      !
      !--set kernel related quantities
      !
@@ -237,15 +243,20 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      !
      !--loop over pixels, adding the contribution from this particle
      !
-     xcoord(:) = 0.
+     if (islengthz) then
+        xcoord(izcoord) = 1. !xci(3)     
+     else
+        xcoord(izcoord) = 0. ! use phi=0 so get x = r cos(phi) = r
+     endif
      do jpix = 1,npixy
         xcoord(iycoord) = yminpix + jpix*pixwidthy
         do ipix = 1,npixx
            xcoord(ixcoord) = xminpix + ipix*pixwidthx
            call coord_transform(xcoord(:),3,igeom,xpix(:),3,igeom_cartesian)
            
-           dy   = xpix(iycoord) - yi
-           dx   = xpix(ixcoord) - xi
+!           !--this is in cartesians
+           dy   = xpix(iycoord) - xci(2)
+           dx   = xpix(ixcoord) - xci(1)
 
            dx2  = dx*dx
            dy2  = dy*dy
