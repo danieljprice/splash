@@ -537,11 +537,6 @@ subroutine menu
             do itype=1,ntypes
                print "(i2,':',1x,a)",itype,'use '//trim(labeltype(itype))//' particles'
             enddo
-            !if (ntypes.gt.9) then
-            !   print "(20(i2,'=',a,', '))",(itype,trim(labeltype(itype)),itype=1,ntypes)
-            !else
-            !   print "(9(i1,'=',a,', '))",(itype,trim(labeltype(itype)),itype=1,ntypes)
-            !endif
 
             call prompt('Enter type or list of types to use',itypelist,nvalues,1,ntypes)
          !
@@ -609,7 +604,7 @@ logical function allowrendering(iplotx,iploty)
 !
  if ((ih.gt.0 .and. ih.le.ndataplots) &
     .and.(irho.gt.0 .and. irho.le.ndataplots) &
-    .and.(icoords.eq.icoordsnew .or. icolour_particles) &
+    !.and.(icoords.eq.icoordsnew .or. icolour_particles) &
     .and.((itrans(iplotx).eq.0 .and. itrans(iploty).eq.0).or.icolour_particles)) then
  
     allowrendering = .true.
