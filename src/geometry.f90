@@ -61,6 +61,7 @@ module geometry
               'r_tor','theta','phi  '/),shape=(/3,maxcoordsys/))
 
  public :: coord_transform, vector_transform, coord_transform_limits
+ public :: coord_is_length
 
  real, parameter, private :: pi = 3.1415926536
  real, parameter, private :: Rtorus = 1.0
@@ -68,6 +69,26 @@ module geometry
  private
  
 contains
+!-----------------------------------------------------------------
+! utility that returns whether or not a particular coordinate
+! in a given coordinate system has dimensions of length or not
+!-----------------------------------------------------------------
+logical function coord_is_length(ix,igeom)
+  implicit none
+  integer, intent(in) :: ix,igeom
+  
+  coord_is_length = .false.
+  select case(igeom)
+  case(igeom_toroidal, igeom_spherical)
+     if (ix.eq.1) coord_is_length = .true.
+  case(igeom_cylindrical)
+     if (ix.eq.1 .or. ix.eq.3) coord_is_length = .true.
+  case(igeom_cartesian)
+     coord_is_length = .true.
+  end select
+
+end function coord_is_length
+
 !-----------------------------------------------------------------
 ! Subroutine to transform between different co-ordinate systems
 ! (e.g. from cartesian to cylindrical polar and vice versa)

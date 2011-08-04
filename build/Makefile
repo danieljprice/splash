@@ -539,7 +539,7 @@ SOURCESF90= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
 	 options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
          rotate.f90 interpolate1D.f90 interpolate2D.f90 \
          interpolate3D.F90 interpolate3D_xsec.f90 \
-         interpolate3D_projection.F90 \
+         interpolate3D_projection.F90 interpolate3D_proj_geom.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
          interactive.f90 analysis.f90 \
          convert_grid.f90 convert.f90 \

@@ -630,6 +630,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use interpolations2D,      only:interpolate2D, interpolate2D_xsec
   use interpolations3D,      only:interpolate3D
   use projections3D,         only:interpolate3D_projection
+  use projections3Dgeom,     only:interpolate3D_proj_geom
   use interpolate3D_opacity, only:interp3D_proj_opacity !,interp3D_proj_opacity_writeppm
   use xsections3D,           only:interpolate3D_fastxsec,interpolate3D_xsec_vec
   use render,                only:render_pix
@@ -1465,11 +1466,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           endif
                        else
                           !!--do fast projection of z integrated data (e.g. column density)
-                          call interpolate3D_projection( &
-                               xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
-                               icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
-                               pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender)
+                          if (icoordsnew.ne.icoords) then                          
+                             call interpolate3D_proj_geom( &
+                                  dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
+                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                                  icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
+                                  pixwidthy,inormalise,icoordsnew,iplotx,iploty,ix)
+                          else
+                             call interpolate3D_projection( &
+                                  xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                                  icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
+                                  pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender)
+                          endif
                           !!--same but for contour plot
                           if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                              if (.not.isameweights) & ! set contouring weights as necessary
@@ -3046,12 +3055,28 @@ contains
    integer, intent(in) :: iplotx,iploty,ntot
    real, dimension(:), intent(inout) :: xplot,yplot
    real, dimension(ndim) :: xcoords,xcoordsnew
-   integer :: j
+   integer :: j,ixcoord,iycoord
+   logical :: iscoordx,iscoordy
 
-   if (is_coord(iplotx,ndim) .or. is_coord(iploty,ndim)) then
+   iscoordx = is_coord(iplotx,ndim)
+   iscoordy = is_coord(iploty,ndim)
+   if (iscoordx .or. iscoordy) then
       print*,'changing coords from ',trim(labelcoordsys(icoords)), &
              ' to ',trim(labelcoordsys(icoordsnew))
       if (itrackpart.gt.0) print*,' (relative to particle ',itrackpart,')'
+      
+      !--get offsets in range 1->ndim for the case where particle
+      !  coords are not first in plot arrays
+      ixcoord = iplotx - ix(1) + 1
+      if (iscoordx .and. (ixcoord.le.0 .or. ixcoord.gt.ndim)) then
+         print*,'ERROR in x coordinate offset in arrays: cannot change coordinate system'
+         return
+      endif
+      iycoord = iploty - ix(1) + 1
+      if (iscoordy .and. (iycoord.le.0 .or. iycoord.gt.ndim)) then
+         print*,'ERROR in y coordinate offset in arrays: cannot change coordinate system'
+         return
+      endif
 
       do j=1,ntot
          if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
@@ -3062,8 +3087,8 @@ contains
 
          call coord_transform(xcoords(1:ndim),ndim,icoords, &
                               xcoordsnew(1:ndim),ndim,icoordsnew)
-         if (is_coord(iplotx,ndim)) xplot(j) = xcoordsnew(iplotx)
-         if (is_coord(iploty,ndim)) yplot(j) = xcoordsnew(iploty)
+         if (iscoordx) xplot(j) = xcoordsnew(ixcoord)
+         if (iscoordy) yplot(j) = xcoordsnew(iycoord)
       enddo
    endif
    
