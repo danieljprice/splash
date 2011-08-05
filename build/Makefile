@@ -40,7 +40,8 @@ ifeq ($(BACKEND), giza)
 #-- C A I R O --
    PLOTLIB= ${GIZAOBJ} giza-fortran.F90 plotlib_giza.f90
    PGPLOTLIBS = -lcairo
-   CFLAGS=-ggdb -Wall -Wextra -I../giza/src/ -I/usr/X11/include
+   INCLUDES=-I../giza/src/ -I/usr/X11/include -I/usr/include/cairo
+   CFLAGS=-ggdb -Wall
    CC = gcc
    GIZASRC=${shell cd ../giza/src/; ls *.c}
    GIZAOBJ=${GIZASRC:.c=.o}
@@ -192,7 +193,8 @@ ifeq ($(SYSTEM),ifort)
    ENDIANFLAGLITTLE= -convert little_endian
 # or use setenv F_UFMTENDIAN=big or little at runtime
    KNOWN_SYSTEM=yes
-   CC=icc
+   CC=icc -C
+   CFLAGS=-Wall
 endif
 
 ifeq ($(SYSTEM),ifort8)
@@ -511,7 +513,7 @@ endif
 %.o : %.f95
 	$(F90C) $(F90FLAGS) -c $< -o $@
 %.o : %.c
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $(INCLUDES) $< -o $@
 
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
