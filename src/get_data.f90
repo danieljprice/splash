@@ -113,10 +113,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      
      do i=1,nfiles
         call read_data(rootname(i),istart,nstepsinfile(i))
-        !
-        !--do some basic sanity checks
-        !
-        call check_data_read()
         
         istart = istart + nstepsinfile(i) ! number of next step in data array
         if (nstepsinfile(i).gt.0 .and. ncolumnsfirst.eq.0 .and. ncolumns.gt.0) then
@@ -137,14 +133,18 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--set labels (and units) for each column of data
      !
-     print "(/a)",' setting plot labels...'
+     !print "(/a)",' setting plot labels...'
      if (ivegotdata .and. ncolumns.gt.0) then
         call get_labels
         call adjust_data_codeunits
+        !
+        !--do some basic sanity checks
+        !
+        call check_data_read()
      endif
      
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
-        write(*,"(/a)") ' rescaling data...'
+        !write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
            if (abs(units(i)-1.0).gt.tiny(units) .and. abs(units(i)).gt.tiny(units)) then
               dat(:,i,1:nsteps) = dat(:,i,1:nsteps)*units(i)
@@ -175,7 +175,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--read from a single file only
      !
      nstepsinfile(ireadfile) = 0
-     print "(/a)",' reading single dumpfile'
+     if (isfirsttime) print "(/a)",' reading single dumpfile'
 
      if (dotiming) call wall_time(t1)
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
@@ -184,7 +184,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      if (debugmode) print "(a,i3)",' DEBUG: ncolumns from data read = ',ncolumns
      if (debugmode) print "(a,i3)",' DEBUG: nsteps read from file   = ',nstepsinfile(ireadfile)
-     call check_data_read()
 
 !--try different endian if failed the first time
      !if (nstepsinfile(ireadfile).eq.0) then
@@ -248,10 +247,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      if (ivegotdata .and. ncolumns.gt.0) then
         call get_labels
         call adjust_data_codeunits
+        call check_data_read()
      endif
      
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
-        write(*,"(/a)") ' rescaling data...'
+        if (isfirsttime) write(*,"(/a)") ' rescaling data...'
         do i=1,min(ncolumns,maxcol)
            if (abs(units(i)-1.0).gt.tiny(units) .and. abs(units(i)).gt.tiny(units)) then
               dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)

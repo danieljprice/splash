@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -48,21 +48,21 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use exact, only:hfact
-  use particle_data, only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol
+  use exact,          only:hfact
+  use particle_data,  only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol,iamtype
   use params
 !  use labels
-  use filenames, only:nfiles
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,icoords,iformat, &
+  use filenames,      only:nfiles
+  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,icoords,iformat, &
                           buffer_data
   use mem_allocation, only:alloc
-  use geometry, only:labelcoordsys
+  use geometry,       only:labelcoordsys
   implicit none
-  integer, intent(in) :: indexstart
-  integer, intent(out) :: nstepsread
-  character(len=*), intent(in) :: rootname
+  integer,          intent(in)  :: indexstart
+  integer,          intent(out) :: nstepsread
+  character(len=*), intent(in)  :: rootname
   character(len=len(rootname)+4) :: datfile
-  integer :: i,icol,ierr,iunit,ilen
+  integer :: i,icol,ierr,iunit,ilen,j
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin,ncolstep,nparti,ntoti
   integer, dimension(3) :: ibound
@@ -73,6 +73,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real(doub_prec) :: timeind,gammaind,hfactind
   real(doub_prec), dimension(3) :: xmind, xmaxd
   real(doub_prec), dimension(:), allocatable :: dattempd
+  integer, dimension(:), allocatable :: itype
   character(len=20) :: geomfile
 
   iunit = 11 ! file unit number
@@ -140,7 +141,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   npart_max = max(int(1.5*ntotin),maxpart)
   if (.not.allocated(dat) .or. ntotin.gt.maxpart  &
        .or. nstep_max.gt.maxstep .or. ncol_max.gt.maxcol) then
-     call alloc(npart_max,nstep_max,ncol_max+ncalc)
+     call alloc(npart_max,nstep_max,ncol_max+ncalc,mixedtypes=.true.)
   endif
 !
 !--rewind file
@@ -185,7 +186,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      gamma(i) = gammain
      hfact = hfactin
      npartoftype(1,i) = nparti
-     npartoftype(2,i) = ntoti - nparti
+     npartoftype(3,i) = ntoti - nparti
      print "(/a14,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
      print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolstep,'gamma',gamma(i),'hfact',hfact
      print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
@@ -243,7 +244,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !--reallocate memory for main data array
      !
      if (reallocate) then
-        call alloc(npart_max,nstep_max,ncol_max+ncalc)
+        call alloc(npart_max,nstep_max,ncol_max+ncalc,mixedtypes=.true.)
      endif
 
   
@@ -259,9 +260,33 @@ subroutine read_data(rootname,indexstart,nstepsread)
            if (ierr /= 0) print "(a,i2,a)",'*** error reading column ',icol,' ***'
         enddo
         if (allocated(dattempd)) deallocate(dattempd)
+        
+        allocate(itype(ntoti))
+        read(iunit,iostat=ierr) itype(1:ntoti)
+        if (ierr.ne.0) then
+           print "(a)",' itype not found in dump file'
+        else
+           !
+           !--assign SPLASH types from ndspmhd types
+           !
+           npartoftype(:,i) = 0
+           do j=1,ntoti
+              if (j.gt.nparti) then
+                 iamtype(j,i) = 3
+                 npartoftype(3,i) = npartoftype(3,i) + 1
+              elseif (itype(j).eq.2) then
+                 iamtype(j,i) = 2
+                 npartoftype(2,i) = npartoftype(2,i) + 1
+              else
+                 iamtype(j,i) = 1
+                 npartoftype(1,i) = npartoftype(1,i) + 1
+              endif
+           enddo
+        endif
+        if (allocated(itype)) deallocate(itype)
      else
         npartoftype(1,i) = 1
-        npartoftype(2,i) = 0
+        npartoftype(2:3,i) = 0
         dat(:,:,i) = 0.
      endif
 
@@ -277,6 +302,7 @@ close(unit=11)
 ncolumns = ncol_max
 ndim = ndim_max
 ndimV = ndimV_max
+print*,' ngas = ',npartoftype(1,i),' ndust = ',npartoftype(2,i),' nghost = ',npartoftype(3,i)
 
 print*,'> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
        ' last step ntot = ',sum(npartoftype(:,indexstart+nstepsread-1))
@@ -412,18 +438,20 @@ subroutine set_labels
     iamvec(icol+1:icol+ndimV) = icol + 1
     labelvec(icol+1:icol+ndimV) = 'pmom'
     do i=1,ndimV
-       label(icol+i) = labelvec(icol+i)//labelcoord(i,1)
+       label(icol+i) = trim(labelvec(icol+i))//labelcoord(i,1)
     enddo
     icol = icol + ndimV
  endif
 !
 !--set labels for each type of particles
 !
- ntypes = 2
+ ntypes = 3
  labeltype(1) = 'gas'
- labeltype(2) = 'ghost'
+ labeltype(2) = 'dust'
+ labeltype(3) = 'ghost'
  UseTypeInRenderings(1) = .true.
  UseTypeInRenderings(2) = .true.
+ UseTypeInRenderings(3) = .true.
  
 !-----------------------------------------------------------
 
