@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -29,7 +29,7 @@ module settings_limits
  logical :: iadapt, iadaptcoords
  real    :: scalemax
  real, dimension(3) :: xminoffset_track, xmaxoffset_track
- 
+
 contains
 
 !---------------------------------------------
@@ -45,7 +45,7 @@ subroutine defaults_set_limits
   itrans(:)        = 0       ! no transformations (log10 etc)
   xminoffset_track = 0.5     ! offset of limits from tracked particle
   xmaxoffset_track = 0.5     !
- 
+
   return
 end subroutine defaults_set_limits
 
@@ -69,7 +69,7 @@ subroutine submenu_limits(ichoose)
  real                :: diff, mid, zoom
  character(len=120)  :: transprompt
  character(len=5)    :: string,string2
- 
+
  zoom = 1.0
 
  iaction = ichoose
@@ -83,7 +83,7 @@ subroutine submenu_limits(ichoose)
  else
     string2 = 'FIXED'
  endif
- 
+
  print "(a)",'------------------ limits options ---------------------'
 10 format( &
         ' 0) exit ',/,                 &
@@ -214,7 +214,7 @@ subroutine submenu_limits(ichoose)
      return
 !------------------------------------------------------------------------
   case(6)
-  
+
 !+ Resets plot limits using all data currently in memory
 !+ Note that these limits will only apply when fixed limits are used
 
@@ -231,7 +231,7 @@ subroutine submenu_limits(ichoose)
  case(7)
 
 !+ Plot subset of data by restricting parameter range
-    
+
     ipick = 1
     do while (ipick.gt.0)
        ipick = 0
@@ -253,7 +253,7 @@ subroutine submenu_limits(ichoose)
     enddo
     return
   end select
- 
+
  return
 end subroutine submenu_limits
 

@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -26,7 +26,7 @@
 module mainmenu
  implicit none
  public :: menu,allowrendering,set_extracols
- 
+
  private
 
 contains
@@ -85,7 +85,7 @@ subroutine menu
   !
   call set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
 !
-!--set the coordinate and vector labels 
+!--set the coordinate and vector labels
 !  if working in a different coordinate system
 !
   call set_coordlabels(numplot)
@@ -101,12 +101,12 @@ subroutine menu
            write(vecprompt(indexi:),"(',',1x,i2,'=',a)") &
                  iamvec(icol),trim(labelvec(icol))
         else
-           write(vecprompt(indexi:),"(',',1x,i1,'=',a)") &        
+           write(vecprompt(indexi:),"(',',1x,i1,'=',a)") &
                  iamvec(icol),trim(labelvec(icol))
         endif
         indexi = len_trim(vecprompt) + 1
      endif
-  enddo 
+  enddo
 
   ichoose = 0
 
@@ -128,10 +128,10 @@ subroutine menu
      if (iadjust.ne.0) then
         print 13, ihalf + iadjust,transform_label(label(ihalf + iadjust), &
              itrans(ihalf+iadjust))
-     endif 
+     endif
 !
 !--multiplot
-!  
+!
      print 12
      print 18,numplot+1,'multiplot ',nyplotmulti,'m','set multiplot '
   else
@@ -140,18 +140,18 @@ subroutine menu
 !
      print "(/a)",' No data: You may choose from the options below '
   endif
-  
+
 11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a20)
 12 format(55('-'))
 13 format(1x,i2,')',1x,a20)
 18 format(1x,i2,')',1x,a,'[ ',i2,' ]',5x,a2,') ',a)
 
 !
-!--options 
-! 
+!--options
+!
   print 12
   if (ndim.le.1) then
-     print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end s,S(ave) q(uit)'  
+     print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end s,S(ave) q(uit)'
   else
      print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end h(elp)'
      print "(a)",' r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)'
@@ -164,7 +164,7 @@ subroutine menu
   write(*,"(a)",ADVANCE='NO') 'Please enter your selection now (y axis or option):'
   read(*,*,iostat=ierr) ioption
   if (ierr < 0) stop 'reached end of input' ! end of input (e.g. in script)
-  if (ierr > 0) stop !'error reading input' 
+  if (ierr > 0) stop !'error reading input'
 
 !------------------------------------------------------------
 !  if input is an integer and within range, plot data
@@ -173,7 +173,7 @@ subroutine menu
   if (ierr /= 0) ipicky = -1
 
   if (ipicky.gt.0 .and. ipicky.le.numplot+1) then
-     
+
      if (.not.ivegotdata) then
         !
         !--do not allow plotting if no data - instead try to read data
@@ -184,7 +184,7 @@ subroutine menu
         else
            call get_data(1,.false.,firsttime=.true.)
         endif
-     else        
+     else
         !
         !--if needed prompt for x axis selection
         !
@@ -198,7 +198,7 @@ subroutine menu
            !
            iAllowRendering = allowrendering(ipickx,ipicky)
            !
-           !--prompt for render and vector plots 
+           !--prompt for render and vector plots
            ! -> only allow if in "natural" coord system, otherwise h's would be wrong)
            ! (a future feature might be to interpolate in icoord then translate the pixels
            !  to icoordsnew, or alternatively plot non-cartesian pixel shapes)
@@ -372,15 +372,15 @@ subroutine menu
         return
 !------------------------------------------------------------------------
      case DEFAULT
-        print "(a)",'unknown option '//trim(ioption) 
+        print "(a)",'unknown option '//trim(ioption)
      end select
-     
+
   endif
 
   enddo menuloop
 
   return
-  
+
  contains
 
 !----------------------------------------------------
@@ -397,7 +397,7 @@ subroutine menu
    integer :: ifac,ierr,itype,nvalues
    logical :: isamex, isamey, icoordplot, anycoordplot, imultisamepanel
    integer, dimension(maxparttypes)   :: itypelist
-   
+
    call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
 
    isamey = all(multiploty(1:nyplotmulti).eq.multiploty(1))
@@ -406,14 +406,14 @@ subroutine menu
       call prompt('Enter y axis for all plots',multiploty(1),1,numplot)
       multiploty(2:nyplotmulti) = multiploty(1)
    endif
-   
+
    isamex = all(multiplotx(1:nyplotmulti).eq.multiplotx(1))
    call prompt('Same x axis for all?',isamex)
    if (isamex) then
       call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
       multiplotx(2:nyplotmulti) = multiplotx(1)
    endif
-   
+
    anycoordplot = .false.
    do i=1,nyplotmulti
       print*,'-------------- Plot number ',i,' --------------'
@@ -430,7 +430,7 @@ subroutine menu
             print "(a)",' setting x axis to r for Toomre Q plot'
             multiplotx(i) = 1
          elseif (multiploty(i).eq.ipdf) then
-            call prompt(' enter x axis for PDF calculation ',multiplotx(i),1,ndataplots)         
+            call prompt(' enter x axis for PDF calculation ',multiplotx(i),1,ndataplots)
          elseif (multiploty(i).eq.icolpixmap) then
             call prompt(' enter corresponding SPH column for particle data ',irendermulti(i),0,ndataplots)
             multiplotx(i) = 0
@@ -442,10 +442,10 @@ subroutine menu
       !--work out whether rendering is allowed
       !
       iAllowRendering = allowrendering(multiplotx(i),multiploty(i))
-      
+
       icoordplot = (is_coord(multiplotx(i),ndim) .and. is_coord(multiploty(i),ndim))
       if (icoordplot) anycoordplot = icoordplot
-      
+
       if (icoordplot .and.iAllowRendering) then
          call prompt('(render) (0=none)',irendermulti(i),0,numplot)
          if (irendermulti(i).gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
@@ -551,9 +551,9 @@ subroutine menu
          !--if ntypes < 2 always use the (only) particle type
          !
          iusealltypesmulti(i) = .true.
-      endif      
+      endif
    enddo
-   
+
    if (isamex .and. .not.anycoordplot) then
       imultisamepanel = .false.
       !call prompt('plot all plots in same panel? (default is different panels)',imultisamepanel)
@@ -564,7 +564,7 @@ subroutine menu
    if (nyplotmulti.eq.1 .or. imultisamepanel) then
       nacross = 1
       ndown = 1
-      print*,'setting nacross,ndown = ',nacross,ndown 
+      print*,'setting nacross,ndown = ',nacross,ndown
    elseif (nyplotmulti.ne.nacross*ndown) then
       !--guess nacross,ndown based on largest factor
       ifac = nyplotmulti/2
@@ -578,11 +578,11 @@ subroutine menu
       endif
       if (nacross.le.0) nacross = 1
       ndown = nyplotmulti/nacross
-      print*,'setting nacross,ndown = ',nacross,ndown 
+      print*,'setting nacross,ndown = ',nacross,ndown
    else
       print*,'nacross = ',nacross,' ndown = ',ndown
    endif
-   
+
    return
    end subroutine options_multiplot
 end subroutine menu
@@ -606,7 +606,7 @@ logical function allowrendering(iplotx,iploty)
     .and.(irho.gt.0 .and. irho.le.ndataplots) &
     !.and.(icoords.eq.icoordsnew .or. icolour_particles) &
     .and.((itrans(iplotx).eq.0 .and. itrans(iploty).eq.0).or.icolour_particles)) then
- 
+
     allowrendering = .true.
  else
     allowrendering = .false.
@@ -699,7 +699,7 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
     ndataplots = 0
     ncalc = 0
  endif
- 
+
  if (debugmode) print*,'DEBUG: numplot = ',numplot, ' ncalc = ',ncalc,' ndataplots = ',ndataplots
 
  return

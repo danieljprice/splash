@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -31,7 +31,7 @@ module settings_powerspec
  integer :: nwavelengths,npdfbins
  logical :: idisordered
  real :: wavelengthmax, wavelengthmin
- 
+
  namelist /powerspecopts/ ipowerspecy,idisordered,nwavelengths,nfreqspec,npdfbins
 
 contains
@@ -72,7 +72,7 @@ subroutine options_powerspec
  if (ipowerspecx.ne.1) then
     if (ipowerspecx.lt.1) ipowerspecx = 1
     if (ipowerspecx.gt.ndataplots) ipowerspecx = ndataplots
-    call prompt('enter column to use as "time" or "space"',ipowerspecx,1,ndataplots) 
+    call prompt('enter column to use as "time" or "space"',ipowerspecx,1,ndataplots)
  endif
 !
 !--if box size has not been set then use x limits
@@ -84,7 +84,7 @@ subroutine options_powerspec
  call prompt('enter box size (max wavelength)',wavelengthmax,0.0)
  call prompt('enter number of wavelengths to sample ',nwavelengths,1)
  wavelengthmin = wavelengthmax/nwavelengths
- 
+
  if (ipowerspec.le.ndataplots .or. ipowerspec.gt.numplot) then
     !--this should never happen
     print*,'*** ERROR: something wrong in powerspectrum limit setting'
@@ -110,9 +110,9 @@ end subroutine options_powerspec
 subroutine options_pdf
  use prompting, only:prompt
  implicit none
- 
+
  call prompt(' Enter number of bins between min and max of plot (0=auto)',npdfbins,0)
- 
+
 end subroutine options_pdf
 
 end module settings_powerspec

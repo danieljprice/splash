@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -34,8 +34,8 @@
 !        the variable VAR stays untouched.
 !
 !In addition there are a few optional parameter to the routine like
-!setting defaults or limits etc... 
-!         
+!setting defaults or limits etc...
+!
 !In principle three f90 features are used which are not available
 !in f77:  recursion, non-advancing I/O and overloading.
 !
@@ -45,21 +45,21 @@
 !---------------------------- please cut here -------------------------------------
 
 !
-! f90 Module 'prompting'                                     
+! f90 Module 'prompting'
 !
 ! Definition of Generic Subroutine: prompt
 !
-! Syntax:    prompt(text, value, [min], [max]) 
+! Syntax:    prompt(text, value, [min], [max])
 !                text      character string
-!                value     integer, real or double 
+!                value     integer, real or double
 !                min, max   allowed range of same type as value (optional)
 ! [DJP]          min2, max2 allowed 2nd range of same type as value (optional)
 !
 !            prompt(text, string, [length], [case])
 !                text      character string
-!                string    character string 
+!                string    character string
 !                length    length of string (optional on return)
-!                case      option 
+!                case      option
 !                          1 -> convert string to lower case
 !                          2 -> convert string to upper case
 !                          lower=1, upper=2 are defined public
@@ -67,8 +67,8 @@
 !
 !            prompt(text, value, [default])
 !                text      character string
-!                value     logical 
-!                default   logical (optional) 
+!                value     logical
+!                default   logical (optional)
 !                          will always overwrite the current value
 !
 ! Author: Th. S. Ullrich, University Heidelberg
@@ -109,30 +109,30 @@
 !
 module prompting
 
-   private                     
+   private
 
    !
    ! Options for string prompting routine
    !
 
    integer, parameter, public :: lower = 1, upper = 2
-   
-   ! 
-   !  Create generic name 'prompt' 
+
    !
-   
+   !  Create generic name 'prompt'
+   !
+
    interface prompt
       module procedure &
       integer_prompt, real_prompt, string_prompt, double_prompt, logical_prompt, intarr_prompt
    end interface
    public :: prompt,print_logical
-    
+
 contains
 
-   ! 
-   !  Integer prompting routine 
    !
-   
+   !  Integer prompting routine
+   !
+
    recursive subroutine integer_prompt(text, value, min, max, min2, max2)
       character(len=*), intent(in)  :: text
       integer, intent(inout)        :: value
@@ -142,33 +142,33 @@ contains
       integer                       :: ios
       integer, optional, intent(in) :: min, max, min2, max2
       logical                       :: error
-      
-      
-      chmin = ''                        
+
+
+      chmin = ''
       chmax = ''
       chmin2 = ''
       chmax2 = ''
       error = .false.
-      
+
       !
       !  Pack arguments in strings for compact and nicer prompt
       !
-      
-      write(string,*) value                
+
+      write(string,*) value
       if (present(min)) write(chmin,"(g10.0)") min
-      if (present(max)) write(chmax,"(g10.0)") max     
+      if (present(max)) write(chmax,"(g10.0)") max
       if (present(min2)) write(chmin2,"(g10.0)") min2
       if (present(max2)) write(chmax2,"(g10.0)") max2
       !
       !  Write prompt string to terminal
       !
-      
+
       if (present(min).or.present(max)) then
          if (present(min2).or.present(max2)) then
             write(*,"(a,1x,'([',a,':',a,',',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
                     trim(adjustl(text)), trim(adjustl(chmin)), &
                     trim(adjustl(chmax)),trim(adjustl(chmin2)),&
-                    trim(adjustl(chmax2)),trim(adjustl(string))         
+                    trim(adjustl(chmax2)),trim(adjustl(string))
          else
             write(*,"(a,1x,'([',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
                     trim(adjustl(text)), trim(adjustl(chmin)), &
@@ -178,19 +178,19 @@ contains
          write(*,"(a,1x,'(default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(string))
       endif
-      
+
       !
       !  Read new value, quit and keep old value if zero sized string
       !
-      
+
       read(*,"(a)") string
-      if (len(trim(adjustl(string))) == 0) return      
+      if (len(trim(adjustl(string))) == 0) return
       read(string,"(g10.0)",iostat=ios) newvalue
 
       !
       !  Check if new string is of right type and within given range
       !
-      
+
       if (ios /= 0) then
          print "(a)", "Error, not an integer number"
          error = .true.
@@ -228,24 +228,24 @@ contains
             endif
          endif
       endif
-       
+
       !
       !  Assign new value if everything is ok, else prompt again
       !
-      
+
       if (error) then
          call integer_prompt(text, value, min, max, min2, max2)
-      else         
+      else
          value = newvalue
       endif
-            
+
    end subroutine integer_prompt
-   
-   
-   ! 
-   !  Real prompting routine 
+
+
    !
-   
+   !  Real prompting routine
+   !
+
    recursive subroutine real_prompt(text, value, min, max)
       character(len=*), intent(in) :: text
       real, intent(inout)          :: value
@@ -255,24 +255,24 @@ contains
       integer                      :: ios
       real, optional, intent(in)   :: min, max
       logical                      :: error
-      
-      
-      chmin = ''                        
+
+
+      chmin = ''
       chmax = ''
       error = .false.
-      
+
       !
       !  Pack arguments in strings for compact and nicer prompt
       !
-      
-      write(string,"(g13.4)") value                
+
+      write(string,"(g13.4)") value
       if (present(min)) write(chmin,"(g13.4)") min
-      if (present(max)) write(chmax,"(g13.4)") max     
-      
+      if (present(max)) write(chmax,"(g13.4)") max
+
       !
       !  Write prompt string to terminal
       !
-      
+
       if (present(min).or.present(max)) then
          write(*,"(a,1x,'([',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(chmin)), &
@@ -281,19 +281,19 @@ contains
          write(*,"(a,1x,'(default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(string))
       endif
-      
+
       !
       !  Read new value, quit and keep old value if zero sized string
       !
-      
+
       read(*,"(a)") string
-      if (len(trim(adjustl(string))) == 0) return      
+      if (len(trim(adjustl(string))) == 0) return
       read(string,*,iostat=ios) newvalue
 
       !
       !  Check if new string is of right type and within given range
       !
-      
+
       if (ios /= 0) then
          print "(a)", "Error, not a real number"
          error = .true.
@@ -311,24 +311,24 @@ contains
             endif
          endif
       endif
-       
+
       !
       !  Assign new value if everything is ok, else prompt again
       !
-      
+
       if (error) then
          call real_prompt(text, value, min, max)
-      else         
+      else
          value = newvalue
       endif
-            
+
    end subroutine real_prompt
-         
-   
-   ! 
-   !  Double precision prompting routine 
+
+
    !
-   
+   !  Double precision prompting routine
+   !
+
    recursive subroutine double_prompt(text, value, min, max)
       integer, parameter                  :: db = kind(0.d0)
       character(len=*), intent(in)        :: text
@@ -339,24 +339,24 @@ contains
       integer                             :: ios
       real(kind=db), optional, intent(in) :: min, max
       logical                             :: error
-      
-      
-      chmin = ''                        
+
+
+      chmin = ''
       chmax = ''
       error = .false.
-      
+
       !
       !  Pack arguments in strings for compact and nicer prompt
       !
-      
-      write(string,"(g13.4)") value                
+
+      write(string,"(g13.4)") value
       if (present(min)) write(chmin,"(g13.4)") min
-      if (present(max)) write(chmax,"(g13.4)") max     
-      
+      if (present(max)) write(chmax,"(g13.4)") max
+
       !
       !  Write prompt string to terminal
       !
-      
+
       if (present(min).or.present(max)) then
          write(*,"(a,1x,'([',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(chmin)), &
@@ -365,19 +365,19 @@ contains
          write(*,"(a,1x,'(default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(string))
       endif
-      
+
       !
       !  Read new value, quit and keep old value if zero sized string
       !
-      
-      read(*,"(a)") string      
+
+      read(*,"(a)") string
       if (len(trim(adjustl(string))) == 0) return
       read(string,*,iostat=ios) newvalue
 
       !
       !  Check if new string is of right type and within given range
       !
-      
+
       if (ios /= 0) then
          print "(a)", "Error, not a real number"
          error = .true.
@@ -395,66 +395,66 @@ contains
             endif
          endif
       endif
-       
+
       !
       !  Assign new value if everything is ok, else prompt again
       !
-      
+
       if (error) then
          call double_prompt(text, value, min, max)
-      else         
+      else
          value = newvalue
       endif
-                  
+
    end subroutine double_prompt
 
-   
-   
-   ! 
-   !  Logical prompting routine 
+
+
    !
-   
+   !  Logical prompting routine
+   !
+
    recursive subroutine logical_prompt(text, lvalue, default)
       character(len=*), intent(in)  :: text
       logical, intent(inout)        :: lvalue
       logical, optional, intent(in) :: default
       character(len=32)             :: string
-      
+
       !
-      !  If present, set default 
+      !  If present, set default
       !
-      
-      if (present(default)) lvalue = default 
-      
+
+      if (present(default)) lvalue = default
+
       !
       !  Default answer yes/no
       !
-      
+
       if (lvalue) then
          string='yes'
       else
          string='no'
       endif
-      
-      
+
+
       !
       !  Write prompt string to terminal
       !
-      
+
       write(*,"(a,1x,'(default=',a,'):',1x)",advance='no') &
            trim(adjustl(text)), trim(adjustl(string))
-           
+
       !
       !  Read new value, quit and keep old value if zero sized string
       !
-      
-      read(*,"(a)") string     
+
+      read(*,"(a)") string
       if (len(trim(adjustl(string))) == 0) return
-      
+
       !
       !  Translate answer in .true./.false., if invalid prompt again
       !
-      
+
       select case (adjustl(string))
       case ('y')
            lvalue = .true.
@@ -480,14 +480,14 @@ contains
          print "(a)", "Error, answer y(es)/t(rue)/on or n(o)/f(alse)/off"
          call logical_prompt(text, lvalue, default)
       end select
-      
+
    end subroutine logical_prompt
-      
-   
-   ! 
-   !  String prompting routine 
+
+
    !
-   
+   !  String prompting routine
+   !
+
    recursive subroutine string_prompt(text, string, length, case, noblank, list)
       character(len=*), intent(in)    :: text
       character(len=*), intent(inout) :: string
@@ -499,7 +499,7 @@ contains
       integer, parameter              :: aoffset = 32
       logical                         :: allowblank,inlist
       character(len=*), dimension(:), intent(in), optional :: list
-      
+
       !
       !  Write prompt string to terminal
       !
@@ -510,34 +510,34 @@ contains
       endif
       if (allowblank .and. len_trim(adjustl(string)).gt.0) then
          write(*,"(a,1x,'(blank=""blank"",default=""',a,'""):',1x)",advance='no') &
-              trim(adjustl(text)), trim(adjustl(string))      
+              trim(adjustl(text)), trim(adjustl(string))
       else
          write(*,"(a,1x,'(default=""',a,'""):',1x)",advance='no') &
               trim(adjustl(text)), trim(adjustl(string))
-      endif 
+      endif
       !
       !  Read new value, quit and keep old value if zero sized string
       !
-      
+
       read(*,"(a)") newstring
       if (allowblank .and. trim(adjustl(newstring)).eq.'blank') then
          string = ' '
       elseif ( len(trim(adjustl(newstring))) /= 0 ) then
          string = newstring
       elseif ( .not.allowblank .and. len_trim(adjustl(string)).eq.0 ) then
-         print "(a)", "Error, cannot enter blank string"         
+         print "(a)", "Error, cannot enter blank string"
          if (present(list)) then
             call string_prompt(text,string,noblank=.not.allowblank,list=list)
          else
-            call string_prompt(text,string,noblank=.not.allowblank)         
+            call string_prompt(text,string,noblank=.not.allowblank)
          endif
       endif
       if (present(length)) length = len_trim(string)
-         
+
       !
       !  Convert string to upper/lower case if requested
       !
-      
+
       if (present(case)) then
          if (case == upper) then
             do is = 1, len(string)
@@ -554,7 +554,7 @@ contains
             enddo
          endif
       endif
-      
+
       if (present(list)) then
          inlist = .false.
          do i=1,size(list)
@@ -565,13 +565,13 @@ contains
             call string_prompt(text,string,noblank=.not.allowblank,list=list)
          endif
       endif
-      
+
    end subroutine string_prompt
 
-   ! 
+   !
    !  Integer array prompting routine (D. Price)
    !
-   
+
    recursive subroutine intarr_prompt(text, value, nvalues, min, max)
       character(len=*), intent(in)         :: text
       integer, dimension(:), intent(inout) :: value
@@ -584,11 +584,11 @@ contains
       integer, optional, intent(in) :: min, max
       logical                       :: error
       integer                       :: ival,nvaluesnew
-      
-      chmin = ''                        
+
+      chmin = ''
       chmax = ''
       error = .false.
-      
+
       !
       !  Pack arguments in strings for compact and nicer prompt
       !
@@ -607,7 +607,7 @@ contains
       !
       !  Write prompt string to terminal
       !
-      
+
       if (present(min).or.present(max)) then
          write(*,"(a,1x,'([',a,':',a,'],',1x,'default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(chmin)), &
@@ -616,11 +616,11 @@ contains
          write(*,"(a,1x,'(default=',a,'):',1x)",advance='no') &
                  trim(adjustl(text)), trim(adjustl(string))
       endif
-      
+
       !
       !  Read new value, quit and keep old value if zero sized string
       !
-      
+
       read(*,"(a)") string
       if (len(trim(adjustl(string))) == 0) return
       !
@@ -636,7 +636,7 @@ contains
       !
       !  Check if new string is of right type and within given range
       !
-      
+
       if (nvaluesnew <= 0) then
          print "(a)", "Error, no integer numbers could be read"
          error = .true.
@@ -654,35 +654,35 @@ contains
             endif
          endif
       endif
-       
+
       !
       !  Assign new value if everything is ok, else prompt again
       !
-      
+
       if (error) then
          call intarr_prompt(text, value, nvalues, min, max)
-      else         
+      else
          value = newvalue
          nvalues = nvaluesnew
       endif
-                  
+
    end subroutine intarr_prompt
 
-   ! 
+   !
    !  Routine added by D.Price (31/10/06)
    !  Takes in a logical variable and returns a string 'on' or 'off' as appropriate
    !
-   
+
    function print_logical(lvalue,mask)
       implicit none
       logical, intent(in) :: lvalue
       logical, intent(in), optional :: mask
       character(len=3) :: print_logical
       logical :: maskval
-      
+
       maskval = .true.
       if (present(mask)) maskval = mask
-      
+
       if (maskval) then
          if (lvalue) then
             print_logical = 'ON'

@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -92,7 +92,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   !  then these files are corrected as they are read. By initialising nstepsinfile
   !  to negative, this means that if we get dud files (with nstepsinfile=0) we
   !  know that this is really the file contents (not just an initialised value of nstepsinfile)
-  !  and can skip the file on the second encounter (see timestepping.f90) 
+  !  and can skip the file on the second encounter (see timestepping.f90)
   !
   if (isfirsttime) then
      nstepsinfile(:) = -1
@@ -110,10 +110,10 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      required = .true.
      print "(/a)",' reading from all dumpfiles...'
      !call endian_info()
-     
+
      do i=1,nfiles
         call read_data(rootname(i),istart,nstepsinfile(i))
-        
+
         istart = istart + nstepsinfile(i) ! number of next step in data array
         if (nstepsinfile(i).gt.0 .and. ncolumnsfirst.eq.0 .and. ncolumns.gt.0) then
            ncolumnsfirst = ncolumns
@@ -142,7 +142,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         !
         call check_data_read()
      endif
-     
+
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         !write(*,"(/a)") ' rescaling data...'
         do i=1,ncolumns
@@ -151,7 +151,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
            endif
         enddo
         time(1:nsteps) = time(1:nsteps)*units(0)
-     endif     
+     endif
      !
      !--reset coordinate and vector labels (depending on coordinate system)
      !  Need to do this BEFORE calculating quantities
@@ -169,7 +169,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      if (ierr.gt.0 .and. ivegotdata .and. nstepsinfile(1).ge.1) then
         call set_limits(1,nsteps,1,ncolumns+ncalc)
      endif
-     
+
   elseif (ireadfile.gt.0) then
      !
      !--read from a single file only
@@ -188,7 +188,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
 !--try different endian if failed the first time
      !if (nstepsinfile(ireadfile).eq.0) then
      !   print "(a)",' trying different endian'
-     !   call read_data_otherendian(rootname(ireadfile),istart,nstepsinfile(ireadfile))    
+     !   call read_data_otherendian(rootname(ireadfile),istart,nstepsinfile(ireadfile))
      !endif
      if (dotiming) then
         call wall_time(t2)
@@ -249,7 +249,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         call adjust_data_codeunits
         call check_data_read()
      endif
-     
+
      if (iRescale .and. any(abs(units(0:ncolumns)-1.0).gt.tiny(units))) then
         if (isfirsttime) write(*,"(/a)") ' rescaling data...'
         do i=1,min(ncolumns,maxcol)
@@ -270,7 +270,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      if (nstepsinfile(ireadfile).gt.0 .and. iCalcQuantities) then
         if (ipartialread .and. .not.any(required(ncolumns+1:ncolumns+ncalc))) then
-           !--for partial data reads do a "pretend" call to calc quantities 
+           !--for partial data reads do a "pretend" call to calc quantities
            !  just to get ncalc and column labels right
            call calc_quantities(1,nstepsinfile(ireadfile),dontcalculate=.true.)
         else
@@ -279,14 +279,14 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      endif
      !
      !--only set limits if reading the first file for the first time
-     !  
-     setlimits = (ireadfile.eq.1 .and. ivegotdata .and. nstepsinfile(1).ge.1)     
+     !
+     setlimits = (ireadfile.eq.1 .and. ivegotdata .and. nstepsinfile(1).ge.1)
      if (.not.present(firsttime)) then
         setlimits = .false.
      elseif (.not.firsttime) then
         setlimits = .false.
      endif
-       
+
      if (setlimits) then
         call set_limits(1,nstepsinfile(ireadfile),1,ncolumns+ncalc)
         !--also set iendatstep the first time around
@@ -335,13 +335,13 @@ subroutine get_labels
  implicit none
  logical :: iexist
  integer :: nlabelsread,ierr,i
- 
+
  call set_labels
  !
  !--check that label settings are sensible, fix where possible
  !
  call check_labels
- 
+
  !
  !--look for a .columns file to override the default column labelling
  !
@@ -422,7 +422,7 @@ subroutine set_coordlabels(numplot)
  endif
 !
 !--set vector labels if iamvec is set and the labels are the default
-! 
+!
  if (icoordsnew.gt.0) then
     do i=1,numplot
        if (iamvec(i).ne.0 .and. &
@@ -436,7 +436,7 @@ subroutine set_coordlabels(numplot)
     enddo
  endif
  icoordsprev = icoordsnew
- 
+
  return
 end subroutine set_coordlabels
 
@@ -524,7 +524,7 @@ subroutine check_data_read
  implicit none
  integer :: i,j,ntoti,nunknown,itype
  integer, dimension(maxparttypes) :: noftype
- 
+
  if (ncolumns.lt.0) then
     print "(a)",' ERROR: ncolumns < 0 in data read'
     ncolumns = 0
@@ -532,13 +532,13 @@ subroutine check_data_read
     print "(a,i3,a)",' ERROR: ncolumns > ',maxplot,' in data read'
     ncolumns = 0
  endif
- 
+
  if (ndim.gt.3) then; print "(a)",' ERROR: ndim  > 3 in data read, setting ndim = 3'; ndim = 3; endif
  if (ndim.lt.0) then; print "(a)",' ERROR: ndim  < 0 in data read, setting ndim = 0'; ndim = 0; endif
  if (ndimV.gt.3) then; print "(a)",' ERROR: ndimV > 3 in data read, setting ndimV = 3'; ndimV = 3; endif
  if (ndimV.lt.0) then; print "(a)",' ERROR: ndimV < 0 in data read, setting ndimV = 0'; ndimV = 0; endif
  if (ntypes.lt.0) then; print "(a)",' ERROR: ntypes < 0 in data read'; ntypes = 0; endif
- 
+
  if (allocated(npartoftype)) then
     if (size(npartoftype(:,1)).lt.ntypes) then
        print "(a)",' ERROR: too many particle types for allocated array size in data read'
@@ -577,12 +577,12 @@ subroutine check_data_read
           enddo
           if (nunknown.gt.0) then
              print "(a,i10,a)",' ERROR in data read: got ',nunknown, &
-                               ' particles of unknown type in iamtype array from data read'          
+                               ' particles of unknown type in iamtype array from data read'
           endif
        endif
     !endif
  endif
- 
+
 end subroutine check_data_read
 
 !----------------------------------------------------
@@ -608,7 +608,7 @@ subroutine adjust_data_codeunits
 
  !
  !--environment variable setting to enforce a minimum h
- ! 
+ !
  if (ih.gt.0 .and. ih.le.ncolumns) then
     hmin = renvironment('SPLASH_HMIN_CODEUNITS',errval=-1.)
     if (hmin.gt.0.) then
@@ -659,7 +659,7 @@ subroutine adjust_data_codeunits
        print "(4x,a)",'SPLASH_VZERO_CODEUNITS setting not used'
     endif
  endif
- 
+
 end subroutine adjust_data_codeunits
 
 !-------------------------------------
@@ -672,7 +672,7 @@ end subroutine adjust_data_codeunits
 subroutine endian_info
  implicit none
  logical :: bigendian
- 
+
  bigendian = IACHAR(TRANSFER(1,"a")) == 0
 
  if (bigendian) then

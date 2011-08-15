@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -55,8 +55,8 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
   real, intent(in) :: C0, ampl, denscentre     ! parameters for toy star
   real, intent(in) :: V11,V22,V12,V21
   real, dimension(:), intent(inout) :: xplot
-  real, dimension(:), intent(out) :: yplot  
-  
+  real, dimension(:), intent(out) :: yplot
+
   real, parameter :: pi = 3.141592653589
   integer :: i,npts,nsteps
   integer :: jmode,smode
@@ -71,7 +71,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
 
   ierr = 1
   npts = size(xplot)
-  
+
   linear = (jorder.ge.0 .and. morder.ge.0)
   gamm1 = gamma - 1.
   if (gamm1.lt.1.e-3) then
@@ -99,7 +99,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
      print*,' Plotting 2D toy star: linear solution r mode = ',jorder,' phi mode = ',morder
      jmode = jorder   ! radial mode
      smode = morder        ! non-axisymmetric modes (theta)
-     
+
      ! sigma is the frequency of oscillation
      nu2 = (jmode + smode)*(jmode+smode + 2./gamm1) - smode**2
      if (nu2.le.0.) then
@@ -126,7 +126,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
         deltarho = etar(jmode,smode,xplot(i)/radstar,gamma)  ! functional form of rho(r)
         !!print*,'deltarho = ',rhoplot,deltarho,xplot(i)
         rhoplot = (rhoplot + deltarho*ampl*SIN(sigma*time))**gam1
-        
+
         deltav = ampl*detadr(jmode,smode,xplot(i)/radstar,gamma)
         vplot = deltav*COS(sigma*time)
 
@@ -144,7 +144,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
         end select
 
      enddo
-     
+
 !---------------------------------------------------------------------------
 !  non-linear solution
 !
@@ -163,7 +163,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
      H = denscentre
 !
 !--this is the static solution, determined from the total mass, polyk, gamma and omega
-!     
+!
      radstar = sqrt(gamma*totmass/(pi*gamm1))
      H = omegasq*gamm1*radstar**2/(2.*polyk*gamma)
      C = 0.5*gamm1*omegasq/(gamma*polyk)
@@ -183,7 +183,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
      params(7)= D
      params(8)= B
      fac= 2.*gamma*polyk*gam1
-     
+
      massbefore = pi*gamm1/gamma*H**(gamma*gam1)/(sqrt(C*D - B**2))
 !
 !--get frequency to determine timestep
@@ -199,7 +199,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
      endif
 !
 !--solve ODE's
-!     
+!
      period = 2.*pi/sigma
      dt = 0.001*period
      nsteps = int(time/dt)
@@ -208,13 +208,13 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
      do i=1,nsteps
         t = t + dt
         call param_derivs(params,dparams,fac,gamm1,omegasq)
-        paramsp(:)= params(:) + 0.5*dt*dparams(:) 
+        paramsp(:)= params(:) + 0.5*dt*dparams(:)
         call param_derivs(paramsp,dparams,fac,gamm1,omegasq)
         params(:)= params(:) + dt*dparams(:)
      enddo
 !
 !--have now got solution at current time
-!     
+!
      H= params(5)
      C= params(6)
      D= params(7)
@@ -224,7 +224,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
      massafter = pi*gamm1/gamma*H**(gamma*gam1)/(sqrt(C*D - B**2))
      print*,' conserved mass before = ',massbefore,' after =',massafter
 
-     if (C.le.0.) then 
+     if (C.le.0.) then
         radstar = 0.5
         stop '*** C = 0 = illegal'
      !!elseif (A.le.1.e-5) then
@@ -255,7 +255,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
      enddo
 !
 !------------------------------------------------------------------------
-!      
+!
   endif
 
   if (iplot.gt.0 .and. iplot.le.5) then
@@ -279,7 +279,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
      ierr = 0
 !     call pgsfs(2)
 !     call pgcirc(0.0,0.0,radstar)
-!     ierr = 3  
+!     ierr = 3
   endif
 
   return
@@ -291,7 +291,7 @@ end subroutine exact_toystar2D
 !
 !  rad = r/r_star
 !  j = radial (axisymmetric) mode
-!  m = theta mode 
+!  m = theta mode
 !
 !  solution is for delta(rho**(gamma-1))
 !  ie. rho**(gamma-1) = rho_0**(gamma-1) + etar
@@ -301,9 +301,9 @@ end subroutine exact_toystar2D
 !  etar = rad**m sum_k a_k rad**k
 !
 real function etar(j,m,rad,gamma)
-  implicit none 
+  implicit none
   integer, intent(in) :: j,m ! j is the radial mode, m is the theta mode
-  integer :: k,kprev  
+  integer :: k,kprev
   real, intent(in) :: rad,gamma
   real :: denom,ak,akprev,gamm1,freqsq
 !
@@ -319,7 +319,7 @@ real function etar(j,m,rad,gamma)
 !--the solution is of the form
 !  drhor = a_0 + a_2 (r/re)**2 + a_4 (r/re)**4 + ...
 !  where for j = k, coefficients >= a_k+2 are zero
-!  
+!
   freqsq = (j+m)*(j+m + 2./gamm1) - m**2
 
   akprev = 1.0  ! this is a_0 which is the amplitude
@@ -337,7 +337,7 @@ real function etar(j,m,rad,gamma)
      etar = etar + ak*rad**k
      akprev = ak
   enddo
-  
+
   etar = etar * rad**m
 
 end function etar
@@ -349,7 +349,7 @@ end function etar
 real function detadr(j,m,rad,gamma)
   implicit none
   integer, intent(in) :: j, m  ! j is the radial mode, m is the theta mode
-  integer :: k,kprev 
+  integer :: k,kprev
   real, intent(in) :: rad,gamma
   real :: denom,term1,term2
   real :: ak,akprev,gamm1,freqsq
@@ -366,7 +366,7 @@ real function detadr(j,m,rad,gamma)
 !--the solution is of the form
 !  drhor = a_0 + a_2 (r/re)**2 + a_4 (r/re)**4 + ...
 !  where for j = k, coefficients >= a_k+2 are zero
-!  
+!
   freqsq = (j+m)*(j+m + 2./gamm1) - m**2
 
   detadr = 0.
@@ -387,13 +387,13 @@ real function detadr(j,m,rad,gamma)
      term2 = term2 + k*ak*rad**(k-1)
      akprev = ak
   enddo
-  
+
   if (m.eq.0) then
      detadr = term2
   else
      detadr = m*rad**(m-1)*term1 + rad**m*term2
   endif
-  
+
 end function detadr
 
 subroutine param_derivs(func,dfunc,fac,gamm1,omegasq)
@@ -446,9 +446,9 @@ subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
   !
   constk = (astart**2 + bstart**2 + Omega2 &
             + 2.*polyk*gamma*(sigma*bstart**gamma)*gam1**2)/bstart
-  
+
   print*,' integration constant = ',constk
-  
+
   !
   !--find limits of plot (ie. where alpha = 0)
   !
@@ -467,9 +467,9 @@ subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
   ymin = -2.0
 
   call plot_swin(xstart-extra,xend+extra,ymin,ymax)
-  call plot_box('bcnst',0.0,0,'1bvcnst',0.0,0)      
+  call plot_box('bcnst',0.0,0,'1bvcnst',0.0,0)
   call plot_label ('beta','alpha',' ')
-  
+
   do i=1,npts
      xi = xstart + (i-1)*npts
      xplot(i) = xi
@@ -478,10 +478,10 @@ subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
         yplot(i) = 0.
      else
         yplot(i) = sqrt(term)
-     endif 
+     endif
   enddo
   call plot_line(npts,xplot,yplot)
-  
+
   return
 
 end subroutine exact_toystar_ACplane2D

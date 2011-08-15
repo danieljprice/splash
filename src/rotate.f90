@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -36,12 +36,12 @@ subroutine rotate2D(xcoords,anglez)
   real, intent(inout) :: xcoords(2)
   real, intent(in) :: anglez
   real :: x, y, r, phi
-  
+
   x = xcoords(1)
   y = xcoords(2)
 !
 !--rotate about z
-! 
+!
   r = sqrt(x**2 + y**2)
   phi = ATAN2(y,x)
   phi = phi - anglez
@@ -50,8 +50,8 @@ subroutine rotate2D(xcoords,anglez)
 
   xcoords(1) = x
   xcoords(2) = y
-  
-  return 
+
+  return
 end subroutine rotate2D
 
 !
@@ -63,13 +63,13 @@ subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
   real, intent(inout) :: xcoords(3)
   real, intent(in) :: anglex, angley, anglez, zobs, dz1
   real :: x, y, z, r, phi, zfrac
-  
+
   x = xcoords(1)
   y = xcoords(2)
   z = xcoords(3)
 !
 !--rotate about z
-! 
+!
   if (abs(anglez).gt.tiny(anglez)) then
      r = sqrt(x**2 + y**2)
      phi = ATAN2(y,x)
@@ -93,7 +93,7 @@ subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
   if (abs(anglex).gt.tiny(anglex)) then
      r = sqrt(y**2 + z**2)
      phi = ATAN2(z,y)
-     phi = phi - anglex  
+     phi = phi - anglex
      y = r*COS(phi)
      z = r*SIN(phi)
   endif
@@ -110,7 +110,7 @@ subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
   xcoords(1) = x*zfrac
   xcoords(2) = y*zfrac
   xcoords(3) = z
-  
+
   return
 end subroutine rotate3D
 
@@ -151,7 +151,7 @@ subroutine rotate_axes2D(ioption,xmin,xmax,xorigin,anglez)
   case default
 
      print*,'plotting rotated (2D) box...'
-  
+
      !--front face (pts 1->4)
      xpt(:,1) = xmin(:)  ! xmin, ymin
 
@@ -177,7 +177,7 @@ subroutine rotate_axes2D(ioption,xmin,xmax,xorigin,anglez)
      call plot_sfs(2)
      call plot_poly(4,xpt(1,1:4),xpt(2,1:4))
   end select
-  
+
   return
 end subroutine rotate_axes2D
 
@@ -205,7 +205,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
      xpt = 0.
      !--origin
      xpt(1:3,1) = 0.
-     
+
      do idim=1,3
         !--plot to max of each axis
         xpt(:,2) = 0.
@@ -222,7 +222,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
   case(2)
   !--rotated box
      print*,'plotting rotated 3D box...',iplotx,iploty
-     
+
      !--front face (pts 1->4)
      xpt(:,1) = xmin(:)  ! xmin, ymin
 
@@ -234,14 +234,14 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
 
      xpt(1,4) = xmax(1)  ! xmax
      xpt(2,4) = xmin(2)  ! ymin
-     
+
      xpt(3,1:4) = xmin(3) ! zmin
-   
+
      !--back face (pts 5->8)
      do i=1,4
         xpt(1:2,i+4) = xpt(1:2,i)
      enddo
-     xpt(3,5:8) = xmax(3)  
+     xpt(3,5:8) = xmax(3)
      !
      !--now rotate each of these coordinates
      !
@@ -253,7 +253,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
      !
      !--now draw lines appropriately through points
      !
-     call plot_sfs(2)    
+     call plot_sfs(2)
      !--front face
      call plot_poly(4,xpt(iplotx,1:4),xpt(iploty,1:4))
      !--back face
@@ -289,7 +289,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
         enddo
         call plot_line(2,xpt(iplotx,1:2),xpt(iploty,1:2))
      enddo
-     
+
      !--lines of constant y
      dx = (xmax(2) - xmin(2))/real(nlines-1)
      do iline=1,nlines
@@ -306,11 +306,11 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
            xpt(:,i) = xpttemp(:) + xorigin(:)
         enddo
         call plot_line(2,xpt(iplotx,1:2),xpt(iploty,1:2))
-     enddo     
+     enddo
   case default
   !--do nothing
   end select
-  
+
   return
 end subroutine rotate_axes3D
 

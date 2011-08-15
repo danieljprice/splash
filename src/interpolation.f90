@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -27,7 +27,7 @@ module interpolation
  implicit none
  public :: set_interpolation_weights
  private
- 
+
 contains
 !-------------------------------------------------------------------
 ! Set interpolation weights for the particles. The weights are
@@ -37,7 +37,7 @@ contains
 !
 ! where we need to handle a few special scenarios:
 !
-! 1) Firstly, the weight should be calculated in a consistent 
+! 1) Firstly, the weight should be calculated in a consistent
 !    set of units. Safest way is to use the data as originally
 !    read from the dump file, before any unit scaling was applied.
 !
@@ -227,5 +227,5 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
   endif
 
 end subroutine set_interpolation_weights
- 
+
 end module interpolation

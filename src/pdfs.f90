@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -56,7 +56,7 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
  real    :: dx,totprob,fi!,xbinprev !xbini,dxprev
  real    :: xmin,xmax,xminpart,xmaxpart,weighti,totvol
  logical :: use_part
- 
+
  ierr = 0
  volweighted = .false.
 
@@ -121,7 +121,7 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
           weighti = 1.
        endif
        totvol = totvol + weighti
-       
+
        !!--take the PDF of ln(x) if quantity is logged
        !if (itransx.gt.0) then
        !    weighti = weighti*convert_to_ln_fac(itransx)
@@ -144,7 +144,7 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
  print*,'normalisation factor = ',totprob,totvol*dx ! =npart*dx for mass-weighted, totvol*dx for volume weighted
  !totprob = totvol*dx
  !totprob = dx
- 
+
  if (totprob.le.0.) then
     ierr = 1
     print "(a)",' error in normalisation factor: returning non-normalised PDF'
@@ -155,7 +155,7 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
    !
    !--return min and max for adaptive plot limit setting
    !  (exclude zero as min)
-   ! 
+   !
     pdfmin = minval(pdf(1:nbins),mask=(pdf(1:nbins).gt.0.))
     pdfmax = maxval(pdf(1:nbins))
  endif
@@ -175,7 +175,7 @@ end subroutine pdf_calc
 
 !
 !--plot as line segment, with blanking at zero
-! 
+!
 ! call plotline(nbins,xbin,pb,blank=0.)
 !
 !--plot as histogram, with blanking of zero
@@ -197,7 +197,7 @@ subroutine pdf_write(nbins,xbin,pb,labelx,volweighted,rootname,tagline)
  integer                :: i,ierr
  integer, parameter     :: iunit = 86
  logical                :: warned
- 
+
  print "(a)",' writing to '//trim(rootname)//'_pdf_'//trim(safename(labelx))//'.dat'
  open(unit=iunit,file=trim(rootname)//'_pdf_'//trim(safename(labelx))//'.dat', &
       form='formatted',status='replace',iostat=ierr)
@@ -205,7 +205,7 @@ subroutine pdf_write(nbins,xbin,pb,labelx,volweighted,rootname,tagline)
     print "(a)",'ERROR: could not open file: no output'
     return
  endif
- 
+
  if (volweighted) then
     write(iunit,"(a)",iostat=ierr) '# volume weighted PDF, calculated using '//trim(tagline)
  else
@@ -224,7 +224,7 @@ subroutine pdf_write(nbins,xbin,pb,labelx,volweighted,rootname,tagline)
     endif
  enddo
  close(iunit)
- 
+
  return
 end subroutine pdf_write
 
@@ -255,20 +255,20 @@ subroutine mean_variance(x,npts,xmean,xvariance)
 !--calculate variance using the corrected two-pass formula
 !
 !    var = 1/(n-1)*( sum (x-\bar{x}) - 1/n * (sum(x-\bar{x}) )^2 )
-!  
-!  where the last term corrects for the roundoff error 
+!
+!  where the last term corrects for the roundoff error
 !  in the first term
 !
  xvariance = 0.
  roundoff = 0.
- 
+
  do i=1,npts
     delta = x(i) - xmean
     roundoff = roundoff + delta
     xvariance = xvariance + delta*delta
  enddo
  xvariance = (xvariance - roundoff**2/npts)/real(npts-1)
- 
+
  return
 end subroutine mean_variance
 

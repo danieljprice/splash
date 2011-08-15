@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -27,7 +27,7 @@
 module pagecolours
  implicit none
  integer, parameter :: maxpagecolours = 2
- 
+
 contains
 
 !----------------------------------------------------------
@@ -39,10 +39,10 @@ function pagecolourscheme(ischeme,short)
  character(len=21)              :: pagecolourscheme
  logical, intent(in), optional  :: short
  logical :: use_short
- 
+
  use_short = .false.
  if (present(short)) use_short = short
- 
+
  select case(ischeme)
  case(2)
     pagecolourscheme = 'white-on-black'
@@ -50,7 +50,7 @@ function pagecolourscheme(ischeme,short)
     pagecolourscheme = 'black-on-white'
  case default
     if (use_short) then
-       pagecolourscheme = 'default'    
+       pagecolourscheme = 'default'
     else
        pagecolourscheme = 'plot library default'
     endif
@@ -105,7 +105,7 @@ function colour_back(ischeme)
  implicit none
  integer, intent(in) :: ischeme
  character(len=5)    :: colour_back
- 
+
  select case(ischeme)
  case(2)
     colour_back = 'black'

@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -53,9 +53,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !
 ! Partial data read implemented Nov 2006 means that columns with
@@ -69,7 +69,7 @@ module sphNGread
  integer :: istartmhd,istartrt,nmhd,idivvcol,nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
- 
+
 end module sphNGread
 
 subroutine read_data(rootname,indexstart,nstepsread)
@@ -108,7 +108,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(len=len(rootname)+10) :: dumpfile
   character(len=100) :: fileident
   character(len=10)  :: string
-  
+
   integer*8, dimension(maxarrsizes) :: isize
   integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
   integer*1, dimension(:), allocatable :: iphase
@@ -150,13 +150,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   gotiphase   = .false.
   skip_corrupted_block_3 = .false.
 
-  dumpfile = trim(rootname)   
+  dumpfile = trim(rootname)
   !
   !--check if data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -172,7 +172,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   do i=1,size(required)-1
      if (required(i)) ilastrequired = i
   enddo
-  
+
   print "(1x,a)",'reading sphNG format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
 
@@ -211,7 +211,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
 !
 !--read file ID
-!     
+!
    read(iunit,iostat=ierr) fileident
    if (ierr /=0) then
       print "(a)",'*** ERROR READING FILE ID ***'
@@ -244,7 +244,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
 !
 !--read global dump header
-!   
+!
    nblocks = 1 ! number of MPI blocks
    npartoftypei(:) = 0
    read(iunit,iostat=ierr) nints
@@ -274,7 +274,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       elseif (nints.ge.7) then
          read(iunit,iostat=ierr) npart,n1,n2,nreassign,naccrete,nkill,nblocks
       else
-         print "(a)",'warning: nblocks not read from file (assuming non-MPI dump)'         
+         print "(a)",'warning: nblocks not read from file (assuming non-MPI dump)'
          read(iunit,iostat=ierr) npart,n1,n2
       endif
       if (ierr /=0) then
@@ -320,13 +320,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--real*4, real*8
    read(iunit,end=55,iostat=ierr) nreal4s
 !   print "(a,i3)",' nreal4s = ',nreal4s
-   if (nreal4s.gt.0) read(iunit,end=55,iostat=ierr) 
+   if (nreal4s.gt.0) read(iunit,end=55,iostat=ierr)
 
    read(iunit,end=55,iostat=ierr) nreal8s
 !   print "(a,i3)",' ndoubles = ',nreal8s
    print "(4(a,i3))",' header contains ',nreals,' reals,',nreal4s,' real4s, ',nreal8s,' doubles'
    if (nreal8s.ge.4) then
-      read(iunit,end=55,iostat=ierr) udist,umass,utime,umagfd   
+      read(iunit,end=55,iostat=ierr) udist,umass,utime,umagfd
    elseif (nreal8s.ge.3) then
       read(iunit,end=55,iostat=ierr) udist,umass,utime
       umagfd = 1.0
@@ -346,7 +346,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    read(iunit,end=55,iostat=ierr) narrsizes
    if (debug) print*,' nblocks(total)=',narrsizes
    narrsizes = narrsizes/nblocks
-   if (ierr /= 0) then 
+   if (ierr /= 0) then
       print "(a)",'*** error reading number of array sizes ***'
       close(iunit)
       return
@@ -370,11 +370,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
    massoftypei(:) = 0.
 
    over_MPIblocks: do iblock=1,nblocks
-      
+
       !if (nblocks.gt.1) print "(10('-'),' MPI block ',i4,1x,10('-'))",iblock
 !
 !--read array header from this block
-!  
+!
    if (iblock.eq.1) ncolstep = 0
    do iarr=1,narrsizes
       read(iunit,end=55,iostat=ierr) isize(iarr),nint(iarr),nint1(iarr),nint2(iarr), &
@@ -406,8 +406,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
       if (iarr.ne.2 .and. isize(iarr).eq.isize(1) .and. iblock.eq.1) then
          ncolstep = ncolstep + nreal(iarr) + nreal4(iarr) + nreal8(iarr)
       endif
-   enddo 
-   if (debug) print*,'DEBUG: ncolstep=',ncolstep,' from file header, also nptmasstot = ',nptmasstot 
+   enddo
+   if (debug) print*,'DEBUG: ncolstep=',ncolstep,' from file header, also nptmasstot = ',nptmasstot
 !
 !--this is a bug fix for a corrupt version of wdump outputting bad
 !  small dump files
@@ -417,7 +417,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       nreal(1) = 3
       ncolstep = ncolstep - 2
    endif
-   
+
    npart_max = maxval(isize(1:narrsizes))
    npart_max = max(npart_max,npart+nptmasstot,ntotal)
 !
@@ -469,7 +469,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       ix(1) = 1
       ix(2) = 2
       ix(3) = 3
-      if (igotmass) then  
+      if (igotmass) then
          ipmass = 4
          ih = 5
          irho = 6
@@ -478,7 +478,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          ipmass = 0
          ih = 4
          irho = 5
-         nhydroarrays = 5 ! x,y,z,h,rho      
+         nhydroarrays = 5 ! x,y,z,h,rho
       endif
       nhydroarraysinfile = nreal(1) + nreal4(1) + nreal8(1)
       nhydroreal4 = nreal4(1)
@@ -495,7 +495,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       else
          nmhdarrays = 0
       endif
- 
+
       !--radiative transfer dump?
       if (narrsizes.ge.3 .and. isize(3).eq.isize(1)) rtdump = .true.
       !--mhd dump?
@@ -510,7 +510,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
       !--need to force read of velocities e.g. for corotating frame subtraction
       if (any(required(ivx:ivx+ndimV-1))) required(ivx:ivx+ndimV-1) = .true.
-      
+
       !--for phantom dumps, also make a column for density
       !  and divv, if a .divv file exists
       if (phantomdump) then
@@ -540,7 +540,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          call alloc(max(npart_max+2,maxpart),j,ncolumns,mixedtypes=.true.)
       endif
    endif
-   
+
    if (iblock.eq.1) then
 !--extract required information from the first block header
       time(j) = dummyreal(1)
@@ -572,9 +572,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
             else
                print*,'*** WARNING: obsolete header format for external binary information ***'
                ipos = ilocbinary + 1
-            endif            
+            endif
             if (debug) print*,'debug: reading binary information from header ',ilocbinary
-            if (any(dummyreal(ilocbinary:ilocbinary+14).ne.0.)) then 
+            if (any(dummyreal(ilocbinary:ilocbinary+14).ne.0.)) then
                gotbinary = .true.
                npartoftype(3,j) = 2
                ntotal = ntotal + 2
@@ -602,7 +602,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   dat(npart+2,ix(3),j) = dummyreal(ipos+6)
                   dat(npart+2,ih,j)    = dummyreal(ipos+7)
                   print *,'                 secondary: ',dummyreal(ipos+4:ipos+6)
-                  ipos = ipos + 8             
+                  ipos = ipos + 8
                endif
                if (ivx.gt.0) then
                   dat(npart+1,ivx,j)      = dummyreal(ipos)
@@ -681,7 +681,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             istartrt = max(nhydroarrays+nmhdarrays+1,imaxcolumnread + 1)
             if (debug) print*,' istartrt = ',istartrt
          endif
-      endif 
+      endif
 !--read iphase from array block 1
       if (iarr.eq.1) then
          !--skip default int
@@ -708,7 +708,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--read listpm from array block 2 for small dumps (needed here to extract sink masses)
          if (allocated(listpm)) deallocate(listpm)
          allocate(listpm(isize(iarr)))
-         if (nint(iarr).lt.1) then      
+         if (nint(iarr).lt.1) then
             print "(a)",'ERROR: can''t locate listpm in dump'
             nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
          else
@@ -719,7 +719,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--otherwise skip all integer arrays (not needed for plotting)
          nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
       endif
-      
+
       if (iarr.eq.3 .and. lenvironment('SSPLASH_BEN_HACKED')) then
          nskip = nskip - 1
          print*,' FIXING HACKED DUMP FILE'
@@ -728,7 +728,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       do i=1,nskip
          read(iunit,end=33,iostat=ierr)
       enddo
-!      
+!
 !--real arrays
 !
       if (iarr.eq.2) then
@@ -794,7 +794,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                         if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
                      else
                         print*,' skipping sink particle array ',k
-                        read(iunit,end=33,iostat=ierr)                  
+                        read(iunit,end=33,iostat=ierr)
                      endif
                   enddo
                endif
@@ -818,11 +818,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
                         dat(listpm(iptmass1+i-1),ipmass,j) = real(dattemp(i))
                      enddo
                   else
-                     print*,'WARNING: sink particle masses not read because no mass array allocated' 
+                     print*,'WARNING: sink particle masses not read because no mass array allocated'
                   endif
                else
                   read(iunit,end=33,iostat=ierr) (dat(listpm(i),ipmass,j),i=iptmass1,iptmass2)
-               endif 
+               endif
                nskip = nreal(iarr) - 1 + nreal4(iarr) + nreal8(iarr)
             endif
          else
@@ -975,14 +975,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      if (required(irho)) dat(k,irho,j) = rhoi
                   enddo
                endif
-                   
+
                if (debug) print*,'debug: making density ',icolumn
             endif
          enddo
          icolumn = imaxcolumnread
 !        real 8's need converting
          do i=1,nreal8(iarr)
-            icolumn = icolumn + 1 !!nextcolumn(icolumn,iarr,nhydroarrays,nmhdarrays,imaxcolumnread) 
+            icolumn = icolumn + 1 !!nextcolumn(icolumn,iarr,nhydroarrays,nmhdarrays,imaxcolumnread)
             if (required(icolumn)) then
                read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                dat(i1:i2,icolumn,j) = real(dattemp(1:isize(iarr)))
@@ -1068,10 +1068,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
        endif
     endif
 
-    !--set flag to indicate that only part of this file has been read 
+    !--set flag to indicate that only part of this file has been read
     if (.not.all(required(1:ncolstep))) ipartialread = .true.
-    
-    
+
+
     nptmassi = 0
     nunknown = 0
     ngas = 0
@@ -1091,7 +1091,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              case(1:4)
                if (ih.gt.0 .and. required(ih)) then
                   if (dat(i,ih,j).gt.0.) then
-                     iamtype(i,j) = iphase(i)               
+                     iamtype(i,j) = iphase(i)
                   else
                      iamtype(i,j) = 5
                      !nunknown = nunknown + 1
@@ -1139,7 +1139,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--place point masses after normal particles
 !  if not storing the iamtype array
-!     
+!
        print "(a)",' sorting particles by type...'
        nunknown = 0
        do i=1,npart
@@ -1148,7 +1148,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
        ncolcopy = min(ncolstep,maxcol)
        allocate(dattemp2(nunknown,ncolcopy))
 
-       do itype=1,3       
+       do itype=1,3
           nthistype = 0
           ipos = 0
           select case(itype)
@@ -1184,7 +1184,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
           !--append this type to end of dat array
           do i=1,nthistype
-             ipos = ipos + 1             
+             ipos = ipos + 1
    !          print*,ipos,' appended', dattemp2(i,1:3)
              dat(ipos,1:ncolcopy,j) = dattemp2(i,1:ncolcopy)
              !--we make iphase = 1 for point masses (could save iphase and copy across but no reason to)
@@ -1199,7 +1199,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              nstar = nthistype
           case(3)
              nunknown = nthistype
-          end select          
+          end select
        enddo
 
      endif
@@ -1221,19 +1221,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
         npartoftype(1,j) = npartoftype(1,j) - nunknown
         npartoftype(5,j) = npartoftype(5,j) + nunknown
      endif
-     
+
      if (phantomdump) then
         print*,' n(gas) = ',npartoftype(1,j),' n(dust) = ',npartoftype(2,j),' n(sink) = ',npartoftype(3,j),' n(unknown) = ',nunknown
      else
         if (npartoftype(2,j).ne.0) then
            print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j), &
-                  ' n(sinks) = ',nptmassi,' n(stars) = ',nstar,' n(unknown) = ',nunknown        
+                  ' n(sinks) = ',nptmassi,' n(stars) = ',nstar,' n(unknown) = ',nunknown
         else
            print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(sinks) = ',nptmassi, &
                               ' n(stars) = ',nstar,' n(unknown) = ',nunknown
         endif
      endif
-     
+
      close(15)
 
      print*,' finished data read, npart = ',npart, ntotal, npartoftype(1:ntypes,j)
@@ -1261,7 +1261,7 @@ contains
   real :: masstot,pmassi
   real, dimension(3) :: xcm
   integer :: i
-  
+
   !
   !--get centre of mass
   !
@@ -1276,11 +1276,11 @@ contains
   enddo
   xcm(:) = xcm(:)/masstot
   print*,'RESETTING CENTRE OF MASS (',pack(xcm,required(1:3)),') TO ZERO '
-  
+
   if (required(1)) xyz(1:np,1) = xyz(1:np,1) - xcm(1)
   if (required(2)) xyz(1:np,2) = xyz(1:np,2) - xcm(2)
   if (required(3)) xyz(1:np,3) = xyz(1:np,3) - xcm(3)
-  
+
   return
  end subroutine reset_centre_of_mass
 
@@ -1291,7 +1291,7 @@ contains
   real, dimension(np,2), intent(inout) :: velxy
   real, intent(in) :: omeg
   integer :: ip
-  
+
   print*,'SUBTRACTING COROTATING VELOCITIES, OMEGA = ',omeg
   do ip=1,np
      velxy(ip,1) = velxy(ip,1) + xy(ip,2)*omeg
@@ -1299,7 +1299,7 @@ contains
   do ip=1,np
      velxy(ip,2) = velxy(ip,2) - xy(ip,1)*omeg
   enddo
-  
+
   return
  end subroutine reset_corotating_velocities
 
@@ -1310,7 +1310,7 @@ contains
   real, intent(in) :: omeg,t
   real :: phii,phinew,r
   integer :: ip
-  
+
   print*,'SUBTRACTING COROTATING POSITIONS, OMEGA = ',omeg,' t = ',t
 !$omp parallel default(none) &
 !$omp shared(xy,np) &
@@ -1350,7 +1350,7 @@ subroutine set_labels
   integer :: i
   real(doub_prec)   :: uergg
   character(len=20) :: string
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -1359,7 +1359,7 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-!--all formats read the following columns    
+!--all formats read the following columns
   do i=1,ndim
      ix(i) = i
   enddo
@@ -1372,7 +1372,7 @@ subroutine set_labels
   endif
   irho = ih + 1     !  density
   if (smalldump .and. nhydroreal4.ge.3) iutherm = irho+1
-  
+
 !--the following only for mhd small dumps or full dumps
   if (ncolumns.ge.7) then
      if (mhddump) then
@@ -1443,7 +1443,7 @@ subroutine set_labels
         if (phantomdump) then
            if (istart_extra_real4.gt.0 .and. istart_extra_real4.lt.100) then
               label(istart_extra_real4) = 'alpha'
-              label(istart_extra_real4+1) = 'alphau'           
+              label(istart_extra_real4+1) = 'alphau'
            endif
         else
            if (istart_extra_real4.gt.0 .and. istart_extra_real4.lt.100) then
@@ -1502,12 +1502,12 @@ subroutine set_labels
     endif
   endif
 
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   if (irho.gt.0) label(irho) = 'density'
   if (iutherm.gt.0) label(iutherm) = 'u'
   if (ih.gt.0) label(ih) = 'h       '
-  if (ipmass.gt.0) label(ipmass) = 'particle mass'     
+  if (ipmass.gt.0) label(ipmass) = 'particle mass'
   if (idivB.gt.0) label(idivB) = 'div B'
   if (idivvcol.gt.0) label(idivvcol) = 'div v'
 
@@ -1527,7 +1527,7 @@ subroutine set_labels
   endif
   if (iJfirst.gt.0) then
      iamvec(iJfirst:iJfirst+ndimV-1) = iJfirst
-     labelvec(iJfirst:iJfirst+ndimV-1) = 'J'  
+     labelvec(iJfirst:iJfirst+ndimV-1) = 'J'
   endif
   !
   !--set units for plot data
@@ -1562,7 +1562,7 @@ subroutine set_labels
       units(iBfirst:iBfirst+ndimV-1) = umagfd
       unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
    endif
-   
+
    !--use the following two lines for time in years
    call get_environment('SSPLASH_TIMEUNITS',string)
    select case(trim(lcase(adjustl(string))))
@@ -1592,7 +1592,7 @@ subroutine set_labels
    !--or use these two lines for time in free-fall times
    !units(0) = 1./tfreefall
    !unitslabel(0) = ' '
-  
+
   unitzintegration = udist
   labelzintegration = ' [cm]'
   !
@@ -1608,7 +1608,7 @@ subroutine set_labels
      UseTypeInRenderings(1:2) = .true.
      UseTypeInRenderings(3) = .false.
      UseTypeInRenderings(4) = .false.
-     UseTypeInRenderings(5) = .true.  
+     UseTypeInRenderings(5) = .true.
   else
      ntypes = 5
      labeltype(1) = 'gas'
@@ -1625,5 +1625,5 @@ subroutine set_labels
 
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

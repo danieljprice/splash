@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -43,9 +43,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -62,9 +62,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: j,ierr,ntoti,irec
   integer :: npart_max,nstep_max,ncolstep
   logical :: iexist
-    
+
   character(len=len(rootname)+10) :: dumpfile
-  
+
   !--we are assuming dump is double precision
   real(doub_prec) :: variable1,variable2
   real(doub_prec), dimension(:), allocatable :: dattemp
@@ -72,13 +72,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstepsread = 0
   npart_max = maxpart
 
-  dumpfile = trim(rootname)   
+  dumpfile = trim(rootname)
   !
   !--check if first data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -93,7 +93,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   j = indexstart
   nstepsread = 0
-  
+
   print "(1x,a)",'reading Spyros Kitsonias'' format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
@@ -121,7 +121,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      ntoti = int(variable1)
      ncolstep = int(variable2)
      ncolumns = ncolstep
-    
+
      if (.not.allocated(dat) .or. ntoti.gt.npart_max) then
         npart_max = max(npart_max,INT(1.1*ntoti))
         call alloc(npart_max,nstep_max,ncolstep+ncalc)
@@ -161,7 +161,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !--read all records
 !
   overcolumns: do irec=1,ncolstep
-     read(15,rec=irec,iostat=ierr) variable1,variable2,dattemp(1:ntoti)     
+     read(15,rec=irec,iostat=ierr) variable1,variable2,dattemp(1:ntoti)
      if (ierr < 0) then
         print "(a)",'*** END OF FILE IN READ DATA (CHECK PRECISION) ***'
         exit overcolumns
@@ -192,9 +192,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
     print*,'>> end of dump file: ntotal = ',sum(npartoftype(:,j))
  endif
 
-   
+
 return
-                    
+
 end subroutine read_data
 
 !!------------------------------------------------------------
@@ -208,7 +208,7 @@ subroutine set_labels
   use geometry, only:labelcoord
   implicit none
   integer :: i
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -217,16 +217,16 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
   ivx = 4
   ih = 10        !  smoothing length
   iutherm = 9  !  thermal energy
-  ipmass = 8   !  particle mass      
+  ipmass = 8   !  particle mass
   irho = 7    ! location of rho in data array
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(irho) = 'density'
   label(iutherm) = 'temperature'
@@ -246,8 +246,8 @@ subroutine set_labels
   ntypes = 1
   labeltype(1) = 'gas'
   UseTypeInRenderings(1) = .true.
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

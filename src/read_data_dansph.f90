@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -41,9 +41,9 @@
 ! npartoftype(maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -67,9 +67,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: npartin,ntotin,ncolstep,nparti,ntoti
   integer, dimension(3) :: ibound
   logical :: reallocate, singleprecision
-  
+
   real :: timein, gammain, hfactin
-  real, dimension(3) :: xmin, xmax  
+  real, dimension(3) :: xmin, xmax
   real(doub_prec) :: timeind,gammaind,hfactind
   real(doub_prec), dimension(3) :: xmind, xmaxd
   real(doub_prec), dimension(:), allocatable :: dattempd
@@ -150,7 +150,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   i = indexstart
   nstepsread = 0
-  
+
      reallocate = .false.
      npart_max = maxpart
      nstep_max = maxstep
@@ -176,12 +176,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
      if (ierr /= 0) then
         print*,'*** error reading timestep header ***'
-        close(iunit)     
+        close(iunit)
         return
      else ! count this as a successfully read timestep, even if data is partial
         nstepsread = nstepsread + 1
      endif
-          
+
      time(i) = timein
      gamma(i) = gammain
      hfact = hfactin
@@ -232,7 +232,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
 
      if (ntoti.gt.maxpart) then
-        !print*, 'ntot greater than array limits!!'    
+        !print*, 'ntot greater than array limits!!'
         reallocate = .true.
         npart_max = int(1.5*ntoti)
      endif
@@ -247,7 +247,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         call alloc(npart_max,nstep_max,ncol_max+ncalc,mixedtypes=.true.)
      endif
 
-  
+
      if (ntoti.gt.0) then
         if (.not.singleprecision) allocate(dattempd(ntoti))
         do icol=1,ncolstep
@@ -260,7 +260,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            if (ierr /= 0) print "(a,i2,a)",'*** error reading column ',icol,' ***'
         enddo
         if (allocated(dattempd)) deallocate(dattempd)
-        
+
         allocate(itype(ntoti))
         read(iunit,iostat=ierr) itype(1:ntoti)
         if (ierr.ne.0) then
@@ -296,7 +296,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 68 continue
   !
   !--close data file and return
-  !                    
+  !
 close(unit=11)
 
 ncolumns = ncol_max
@@ -311,7 +311,7 @@ return
 80 continue
 print*,' *** data file empty : no timesteps ***'
 return
- 
+
 end subroutine read_data
 
 !!------------------------------------------------------------
@@ -344,7 +344,7 @@ subroutine set_labels
  ih = ndim + ndimV + 1        !  smoothing length
  irho = ndim + ndimV + 2      ! location of rho in data array
  iutherm = ndim + ndimV + 3   !  thermal energy
- ipmass = ndim + ndimV + 4    !  particle mass     
+ ipmass = ndim + ndimV + 4    !  particle mass
 
  label(ix(1:ndim)) = labelcoord(1:ndim,1)
  !
@@ -355,7 +355,7 @@ subroutine set_labels
  do i=1,ndimV
     label(ivx+i-1) = trim(labelvec(ivx+i-1))//'\d'//labelcoord(i,1)
  enddo
- 
+
  label(irho) = '\gr'
  label(iutherm) = 'u'
  label(ih) = 'h       '
@@ -380,11 +380,11 @@ subroutine set_labels
     !
     icol = icol + 1
     label(icol) = 'psi'
-    
+
     icol = icol + 1
     ipr = icol !  pressure
     label(ipr) = 'P'
-    
+
     icol = icol + 1
     label(icol) = 'div v'
 
@@ -398,14 +398,14 @@ subroutine set_labels
     iamvec(icol+1:icol+ndimV) = icol + 1
     labelvec(icol+1:icol+ndimV) = 'J'
     icol = icol + ndimV
-    
+
     icol = icol + 1
     label(icol) = 'grad h'
-    
+
     iamvec(icol+1:icol+ndimV) = icol + 1
     labelvec(icol+1:icol+ndimV) = 'force'
     icol = icol + ndimV
-    
+
     iamvec(icol+1:icol+ndimV) = icol + 1
     labelvec(icol+1:icol+ndimV) = 'A'
     icol = icol + ndimV
@@ -415,7 +415,7 @@ subroutine set_labels
     label(ipr) = 'P'
     icol = icol + 1
     label(icol) = 'div v'
-    icol = icol + 1    
+    icol = icol + 1
     label(icol) = 'grad h'
 
     iamvec(icol+1:icol+ndimV) = icol + 1
@@ -452,8 +452,8 @@ subroutine set_labels
  UseTypeInRenderings(1) = .true.
  UseTypeInRenderings(2) = .true.
  UseTypeInRenderings(3) = .true.
- 
+
 !-----------------------------------------------------------
 
- return 
+ return
 end subroutine set_labels

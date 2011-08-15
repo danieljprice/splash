@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -43,9 +43,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ module oilonwaterread
  use params
  implicit none
  real(doub_prec) :: udisti,umassi,utimei
- 
+
 end module oilonwaterread
 
 
@@ -79,7 +79,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: nprint, n1, n2, nptmass, nstepsalloc
   integer :: npartoil, npartwater
   integer, dimension(:), allocatable :: isteps, iphase
-  
+
   !--use these lines if dump is double precision
   real(doub_prec), dimension(:,:), allocatable :: dattemp
   real(doub_prec) :: timei, gammai
@@ -98,13 +98,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   npart_max = maxpart
   ifile = 1
 
-  dumpfile = trim(rootname)   
+  dumpfile = trim(rootname)
   !
   !--check if data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -122,7 +122,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   j = indexstart
   nstepsread = 0
   doubleprec = .false.
-  
+
   print "(1x,a)",'reading oil-on-water code format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
    !
@@ -151,15 +151,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
       rewind(15)
    endif
-   
+
    call set_labels
-   
+
    if (ierr /= 0) then
       print "(a)",'*** ERROR READING TIMESTEP HEADER ***'
    else
 !
 !--loop over the timesteps in this file
-!     
+!
    over_steps_in_file: do
      npart_max = max(npart_max,nprint)
 !
@@ -236,7 +236,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         time(j) = real(timei)
      else
         gamma(j) = gammasi
-        time(j) = timesi   
+        time(j) = timesi
      endif
      print*,' time = ',time(j),' gamma = ',gamma(j)
 
@@ -246,7 +246,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
      if (doubleprec) then
         dat(1:npart,1:ncolstep,j) = real(dattemp(1:npart,1:ncolstep))
-     endif     
+     endif
 !
 !--set particle types using iphase
 !
@@ -260,7 +260,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            npartoil = npartoil + 1
            iamtype(i,j) = 1
         case(1)
-           npartwater = npartwater + 1        
+           npartwater = npartwater + 1
            iamtype(i,j) = 2
         case default
            nunknown = nunknown + 1
@@ -274,7 +274,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         iamtype(nprint+1:nprint+nptmass,j) = 3
      endif
 
-     if (nunknown.gt.0) print *,nunknown,' particles of unknown type (probably dead)' 
+     if (nunknown.gt.0) print *,nunknown,' particles of unknown type (probably dead)'
 
      if (allocated(dattemp)) deallocate(dattemp)
      if (allocated(isteps)) deallocate(isteps)
@@ -307,9 +307,9 @@ close(15)
 if (j-1 .gt. 0) then
    print*,'>> end of dump file: nsteps =',j-1
 endif
-   
+
 return
-                    
+
 end subroutine read_data
 
 !!------------------------------------------------------------
@@ -326,7 +326,7 @@ subroutine set_labels
   use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
   implicit none
   integer :: i
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -335,14 +335,14 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
   ivx = 4
   ih = 7        !  smoothing length
   iutherm = 8  !  thermal energy
-  ipmass = 9   !  particle mass      
+  ipmass = 9   !  particle mass
   irho = 10     ! location of rho in data array
   if (ncolumns.gt.10) then
      label(11) = 'dgrav'
@@ -354,7 +354,7 @@ subroutine set_labels
      label(17) = 'hecomp'
      label(18) = 'potential energy'
   endif
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   do i=1,ndimV
      label(ivx+i-1) = 'v\d'//labelcoord(i,1)
@@ -362,7 +362,7 @@ subroutine set_labels
   label(irho) = 'density'
   label(iutherm) = 'u'
   label(ih) = 'h'
-  label(ipmass) = 'particle mass'     
+  label(ipmass) = 'particle mass'
 
   !
   !--set labels for vector quantities
@@ -381,7 +381,7 @@ subroutine set_labels
   units(4:6) = udisti/utimei
   unitslabel(4:6) = ' [cm/s]'
   units(ih) = units(1)
-  unitslabel(ih) = unitslabel(1) 
+  unitslabel(ih) = unitslabel(1)
   units(iutherm) = (udisti/utimei)**2
   unitslabel(iutherm) = ' [erg/g]'
   units(ipmass) = umassi/solarmcgs
@@ -392,7 +392,7 @@ subroutine set_labels
   !--unit for z integration - leave this as cm to get g/cm^2 in column density
   unitzintegration = udisti
   labelzintegration = ' [cm]'
-  
+
   !--time units for legend
   units(0) = utimei/3.1536e7
   unitslabel(0) = ' yrs'
@@ -409,8 +409,8 @@ subroutine set_labels
   UseTypeInRenderings(2) = .true.
   UseTypeInRenderings(3) = .false.
   UseTypeInRenderings(4) = .true.
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

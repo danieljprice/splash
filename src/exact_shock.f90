@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -24,7 +24,7 @@
 ! compute exact solution for the one dimensional Riemann problem
 ! (hydrodynamic shock)
 !
-! input parameters are initial left and right states of 
+! input parameters are initial left and right states of
 ! density, pressure and velocity
 !
 ! Computes shock profile at time t
@@ -43,7 +43,7 @@ module shock
  implicit none
  public :: exact_shock
  private :: get_pstar, get_pstar_isothermal, f_and_df
- 
+
 contains
 
 subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,ierr)
@@ -54,7 +54,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
   real, intent(in) :: rho_L,rho_R,p_L,p_R,v_L,v_R
   real, dimension(:), intent(in) :: xplot
   real, dimension(size(xplot)), intent(out) :: yplot
-  
+
   integer :: i
   real, dimension(size(xplot)) :: dens, pr, vel
   real :: cs_L,cs_R, gamfac
@@ -75,14 +75,14 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
      print*,'error: pr <= 0 on input ',p_L, p_R
      ierr = 2
      return
-  endif  
+  endif
 !
 !  xzero is the position of the shock at t=0
 !
   xzero = 0.
 !
 !  define sound speeds to left and right of shock tube
-!      
+!
   cs_L = sqrt(gamma*p_L/rho_L)
   cs_R = sqrt(gamma*p_R/rho_R)
   gamfac = (gamma-1.)/(gamma + 1.)
@@ -103,7 +103,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
   endif
 
 !------------------------------------------------------------
-!  using this, calculate various speeds needed in order to 
+!  using this, calculate various speeds needed in order to
 !  reconstruct the shock profile
 !------------------------------------------------------------
 
@@ -123,12 +123,12 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
   if (leftisshock) then
      print*,' left-going wave is a shock '
   else
-     print*,' left-going wave is a rarefaction'  
+     print*,' left-going wave is a rarefaction'
   endif
   if (rightisshock) then
      print*,' right-going wave is a shock '
   else
-     print*,' right-going wave is a rarefaction'  
+     print*,' right-going wave is a rarefaction'
   endif
 
   if (rightisshock) then ! right hand wave is a shock
@@ -140,7 +140,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
   !
   !  speed at which the right end of rarefaction fan moves
   !
-     vright = cs_R + 0.5*(gamma+1.)*vpost - 0.5*(gamma-1.)*v_R 
+     vright = cs_R + 0.5*(gamma+1.)*vpost - 0.5*(gamma-1.)*v_R
   endif
   !
   !  repeat for left-going wave
@@ -185,7 +185,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
 !
      xrightright = xzero + (cs_R + v_R)*time
   endif
-  
+
 !--------------------------------------------------------------
 ! reconstruct the shock profile for all x
 !--------------------------------------------------------------
@@ -205,7 +205,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
            vel(i) = vpost
         else
 !       inside expansion fan
-           if (useisothermal) then ! this is a bit of a guess 
+           if (useisothermal) then ! this is a bit of a guess
               dens(i) = rho_L*exp((xleftleft-xplot(i))/(cs_L*time) + v_L/cs_L)
            else
               dens(i) = rho_L*(gamfac*(xzero-xplot(i))/(cs_L*time) + gamfac*v_L/cs_L + (1.-gamfac))**(2./(gamma-1.))
@@ -229,7 +229,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
         if (rightisshock) then
            dens(i) = rho_R*(gamfac+ppost/p_R)/(1+gamfac*ppost/p_R)
         else
-              dens(i) = rho_R*(ppost/p_R)**(1./gamma)        
+              dens(i) = rho_R*(ppost/p_R)**(1./gamma)
         endif
         vel(i) = vpost
      elseif (xplot(i) < xrightright) then
@@ -237,7 +237,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
 !       irrelevant as in this case xrightright = xright
         else
 !        inside expansion fan to right
-           if (useisothermal) then ! this is a bit of a guess 
+           if (useisothermal) then ! this is a bit of a guess
               dens(i) = rho_R*exp(-(xrightright-xplot(i))/(cs_R*time) - v_R/cs_R)
            else
               dens(i) = rho_R*(gamfac*(xplot(i)-xzero)/(cs_R*time) - gamfac*v_R/cs_R + (1.-gamfac))**(2./(gamma-1.))
@@ -251,7 +251,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
         dens(i) = rho_R
         vel(i) = v_R
      endif
-  enddo  
+  enddo
 
 !--this is the beautiful, f95 version (which won't compile on pgf90)
 !  where(xplot <= xleft)  ! <= otherwise problems at t=0
@@ -351,10 +351,10 @@ subroutine get_pstar(gamma,p_L,p_R,v_L,v_R,c_L,c_R,pr,vstar)
      df = dfdp_L + dfdp_R
 !
 !--Newton-Raphson iterations
-!     
+!
      dp =  -f/df
      prnew = pr + dp
-     
+
   enddo
 
   if (its.eq.maxits) print*,'WARNING: its not converged in riemann solver'
@@ -377,24 +377,24 @@ subroutine f_and_df(prstar,pr,cs,gam,fp,dfdp)
 
   H = prstar/pr
   gamm1 = gam - 1.
-  
+
   if (H.gt.1.) then  ! shock
      denom = gam*((gam+1.)*H + gamm1)
      term = sqrt(2./denom)
      fp = (H - 1.)*cs*term
-         
+
      dfdp = cs*term/pr + (H - 1.)*cs/term*(-1./denom**2)*gam*(gam+1.)/pr
   else               ! rarefaction
      power = gamm1/(2.*gam)
      fp = (H**power - 1.)*(2.*cs/gamm1)
-  
+
      dfdp = 2.*cs/gamm1*power*H**(power-1.)/pr
   endif
-  
+
 end subroutine f_and_df
 
 !-------------------------------------------------------------
-! Non-iterative isothermal Riemann solver 
+! Non-iterative isothermal Riemann solver
 ! from Balsara (1994), ApJ 420, 197-212
 !
 ! See also Cha & Whitworth (2003), MNRAS 340, 73-90
@@ -407,16 +407,16 @@ subroutine get_pstar_isothermal(cs2,v_L,v_R,rho_L,rho_R,pstar,vstar)
 
   sqrtrho_L = sqrt(rho_L)
   sqrtrho_R = sqrt(rho_R)
-  
+
   X = sqrtrho_L*sqrtrho_R/(sqrtrho_L + sqrtrho_R)
   vdiff = v_L - v_R
   determinant = (X*vdiff)**2 + 4.*cs2*X*(sqrtrho_L + sqrtrho_R)
-  
-  pstar = 0.25*(X*vdiff + sqrt(determinant))**2  
+
+  pstar = 0.25*(X*vdiff + sqrt(determinant))**2
   vstar = v_L - (pstar - cs2*rho_L)/(sqrt(pstar*rho_L))
   vstar2 = v_R + (pstar - cs2*rho_R)/(sqrt(pstar*rho_R))
   print*,' pstar = ',pstar,' vstar = ',vstar,vstar2
-  
+
 end subroutine get_pstar_isothermal
 
 end module shock

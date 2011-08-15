@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -63,7 +63,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
      print "(a,i3,a)",' *** warning: set_limits: only setting limits up to column ',maxcol,' ***'
      itocoli = maxcol
   endif
-  !!--find limits of particle properties	  
+  !!--find limits of particle properties
   lim(ifromcol:itocol,1) = huge(lim)
   lim(ifromcol:itocol,2) = -huge(lim)
   do i=ifromstep,itostep
@@ -77,14 +77,14 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   enddo
   !
   !--warn if limits are the same
-  ! 
+  !
   do j=ifromcol,itocol
      call warn_minmax(label(j),lim(j,1),lim(j,2))
   enddo
   print "(a/)",' plot limits set'
 
   lim2(ifromcol:itocol,:) = 0.
-  
+
   !
   !--transform coord limits into new coordinate system if coord transform is applied
   !
@@ -94,7 +94,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
                                     icoords,icoordsnew,ndim)
      endif
   endif
-  
+
   return
 end subroutine set_limits
 
@@ -116,7 +116,7 @@ subroutine write_limits(limitsfile)
      elseif (lim2set(i) .and. i.lt.ndataplots) then
         write(55,"(6(1x,1pe14.6))",err=999) lim(i,1),lim(i,2),0.,0.,lim2(i,1),lim2(i,2)
      elseif (rangeset(i) .and. i.lt.ndataplots) then
-        write(55,"(4(1x,1pe14.6))",err=999) lim(i,1),lim(i,2),range(i,1),range(i,2)     
+        write(55,"(4(1x,1pe14.6))",err=999) lim(i,1),lim(i,2),range(i,1),range(i,2)
      else
         write(55,"(2(1x,1pe14.6))",err=999) lim(i,1),lim(i,2)
      endif
@@ -157,7 +157,7 @@ subroutine read_limits(limitsfile,ierr)
      ierr = 1
      return
   endif
-  
+
   open(unit=54,file=limitsfile,status='old',form='formatted',err=997)
   print*,'reading plot limits from file ',trim(limitsfile)
   do i=1,numplot
@@ -198,7 +198,7 @@ subroutine read_limits(limitsfile,ierr)
      print "(a,i3)",' end of file in '//trim(limitsfile)//': limits read to column ',i
      ierr = -1
   endif
-  
+
   !--print info about range restrictions read from file
   call print_rangeinfo()
   call print_lim2info()
@@ -217,7 +217,7 @@ subroutine get_particle_subset(icolours,datstep,ncolumns)
  real, dimension(:,:),  intent(in)    :: datstep
  integer,               intent(in)    :: ncolumns
  integer :: icol
- 
+
  if (anyrangeset()) then
     !--reset colours of all particles (to not hidden) if using range restriction
     where (icolours(:).eq.-1000)
@@ -246,7 +246,7 @@ subroutine get_particle_subset(icolours,datstep,ncolumns)
     enddo
  endif
 
- return  
+ return
 end subroutine get_particle_subset
 
 !----------------------------------------------------------
@@ -255,7 +255,7 @@ end subroutine get_particle_subset
 subroutine reset_all_ranges()
  use particle_data, only:icolourme
  implicit none
- 
+
  print "(a)",' removing all range restrictions '
  where (icolourme(:).eq.-1000)
     icolourme(:) = 0
@@ -264,7 +264,7 @@ subroutine reset_all_ranges()
  endwhere
  range(:,:) = 0.
 
- return 
+ return
 end subroutine reset_all_ranges
 
 !----------------------------------------------------------
@@ -274,7 +274,7 @@ end subroutine reset_all_ranges
 logical function rangeset(icol)
  implicit none
  integer, intent(in) :: icol
- 
+
  rangeset = .false.
  if (abs(range(icol,2)-range(icol,1)).gt.tiny(range)) rangeset = .true.
 
@@ -288,7 +288,7 @@ end function rangeset
 logical function lim2set(icol)
  implicit none
  integer, intent(in) :: icol
- 
+
  lim2set = .false.
  if (abs(lim2(icol,2)).gt.tiny(lim2) .or. abs(lim2(icol,1)).gt.tiny(lim2)) lim2set = .true.
 
@@ -301,11 +301,11 @@ end function lim2set
 subroutine reset_lim2(icol)
  implicit none
  integer, intent(in) :: icol
- 
+
  print "(a)",' contour limits same as render limits'
  if (icol.gt.0 .and. icol.le.maxplot) lim2(icol,:) = 0
 
- return 
+ return
 end subroutine reset_lim2
 
 
@@ -317,7 +317,7 @@ logical function anyrangeset()
  use settings_data, only:ndataplots
  implicit none
  integer :: i
- 
+
  anyrangeset = .false.
  do i=1,ndataplots
     if (rangeset(i)) anyrangeset = .true.
@@ -334,7 +334,7 @@ subroutine print_rangeinfo()
  use labels,        only:label
  implicit none
  integer :: i
- 
+
  if (anyrangeset()) then
     print "(/,a,/)",'>> current range restrictions set: '
     do i=1,ndataplots
@@ -346,7 +346,7 @@ subroutine print_rangeinfo()
     print "(/,2(a,/))",'>> only particles within this range will be plotted ', &
                      '   and/or used in interpolation routines'
  else
-    print "(/,a,/)",'>> no current parameter range restrictions set ' 
+    print "(/,a,/)",'>> no current parameter range restrictions set '
  endif
 
 end subroutine print_rangeinfo
@@ -359,7 +359,7 @@ subroutine print_lim2info()
  use labels,        only:label
  implicit none
  integer :: i
- 
+
  do i=1,ndataplots
     if (lim2set(i)) then
        print "(a,1pe10.3,a,1pe10.3,a)", &
@@ -376,12 +376,12 @@ subroutine warn_minmax(labelx,xmin,xmax)
  implicit none
  character(len=*), intent(in) :: labelx
  real,             intent(in) :: xmin,xmax
- 
+
  if (abs(xmin-xmax).lt.tiny(xmax)) then
     print "(a,a20,a,1pe9.2)",'  warning: ',labelx,' min = max = ',xmin
  endif
- 
- return 
+
+ return
 end subroutine warn_minmax
 
 end module limits

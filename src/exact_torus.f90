@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -67,7 +67,7 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
      ierr = 5
      return
   endif
-  
+
   do i=1,size(xplot)
      ra2 = xplot(i)**2/atorus**2
      if (nu.eq.1) then
@@ -98,10 +98,10 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
      !--Jphi current
         yplot(i) = currj0*(1. - ra2)**nu
      end select
-  enddo    
+  enddo
 !
 !--Papaloizou & Pringle equilibrium torus
-!  
+!
   case default
      if ((gamma-1.).le.1e-4) then
         print*,'error: exact solution not valid for isothermal eos'

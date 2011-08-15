@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -90,7 +90,7 @@ module exact
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        semi,ecc,mprim,msec
-       
+
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
   public :: exactopts,exactparams
@@ -173,7 +173,7 @@ contains
     iPlotResiduals = .false.
     fracinsetResiduals = 0.15
     residualmax = 0.0
-    
+
     return
   end subroutine defaults_set_exact
 
@@ -270,12 +270,12 @@ contains
        call read_exactparams(iexact,trim(rootname(1)),ierr)
        if (ierr.ne.0) then
           call prompt('enter density to left of shock   ',rho_L,0.0)
-          call prompt('enter density to right of shock  ',rho_R,0.0)   
+          call prompt('enter density to right of shock  ',rho_R,0.0)
           call prompt('enter pressure to left of shock  ',pr_L,0.0)
           call prompt('enter pressure to right of shock ',pr_R,0.0)
           if (iexact.eq.11) then
              call prompt('enter velocity to left of shock  ',v_L,max=1.0)
-             call prompt('enter velocity to right of shock ',v_R,max=1.0)        
+             call prompt('enter velocity to right of shock ',v_R,max=1.0)
           else
              call prompt('enter velocity to left of shock  ',v_L)
              call prompt('enter velocity to right of shock ',v_R)
@@ -285,7 +285,7 @@ contains
        call prompt('enter density of ambient medium ',rhosedov,0.0)
        call prompt('enter blast wave energy E ',esedov,0.0)
     case(5)
-       call prompt('enter polytropic k ',polyk) 
+       call prompt('enter polytropic k ',polyk)
     case(6)
        print "(a)",' toy star: '
        call read_exactparams(iexact,trim(rootname(1)),ierr)
@@ -374,19 +374,19 @@ contains
     case(15)
        call prompt('enter semi-major axis of binary',semi,0.)
        call prompt('enter mass of primary star ',mprim,0.)
-       call prompt('enter mass of secondary star ',msec,0.,mprim)       
+       call prompt('enter mass of secondary star ',msec,0.,mprim)
     end select
 
     return
   end subroutine submenu_exact
-  
+
   !---------------------------------------------------
   ! sets options relating to exact solution plotting
   !---------------------------------------------------
   subroutine options_exact
     use prompting, only:prompt
     implicit none
-    
+
     call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
     call prompt('enter line colour ',iExactLineColour,1,16)
     call prompt('enter line style  ',iExactLineStyle,1,5)
@@ -399,7 +399,7 @@ contains
           call prompt('enter max residual (0 for adaptive)',residualmax,0.)
        endif
     endif
-  
+
     return
   end subroutine options_exact
 
@@ -419,7 +419,7 @@ contains
     integer, intent(in) :: iexact
     character(len=*), intent(in) :: rootname
     integer, intent(out) :: ierr
-    
+
     integer :: idash,nf,i,j
     character(len=len_trim(rootname)+8) :: filename
 
@@ -443,7 +443,7 @@ contains
              return
           endif
        endif
-       
+
        if (nf.gt.0) then
           i = 0
           do while(i.lt.nf)
@@ -521,7 +521,7 @@ contains
           close(UNIT=20)
           print*,' >> read ',filename
           print*,' j,m = ',norder,morder
-          print*,' rho_0 = ',Htstar,' - ',Ctstar,' r^2' 
+          print*,' rho_0 = ',Htstar,' - ',Ctstar,' r^2'
           if (norder.ge.0 .and. morder.ge.0) then
              print*,' v = ',Atstar,' r'
           else
@@ -545,7 +545,7 @@ contains
           !read(rootname(5:5),*,iostat=ios) ishk
           !if (ios.ne.0) ishk = 1
        !
-       !--prompt for shock type if not set  
+       !--prompt for shock type if not set
        !
        if (ishk.le.0) then ! prompt
           ishk = 1
@@ -577,8 +577,8 @@ contains
   ! to poor sampling in some regions (e.g. an evenly spaced array will become
   ! highly uneven in logarithmic space).
   !
-  ! Note that any subroutine could in principle do its own plotting, 
-  ! provided that it returns ierr > 0 which means that the generic line 
+  ! Note that any subroutine could in principle do its own plotting,
+  ! provided that it returns ierr > 0 which means that the generic line
   ! is not plotted. Obviously transformations could not be applied in
   ! this case.
   !
@@ -616,7 +616,7 @@ contains
     real, intent(in), dimension(npart) :: xplot,yplot
     logical, intent(in) :: irescale
     real, dimension(npart) :: residuals,ypart
-    
+
     real, parameter :: zero = 1.e-10
     integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle
     real, dimension(:), allocatable :: xexact,yexact,xtemp
@@ -653,7 +653,7 @@ contains
     !  overwritten the resulting array can still be transformed into log space
     !  but spacing will not be even
     !
-    
+
     !--note that xmin and xmax will already have been transformed prior to input
     !  as these were the limits used for plotting the particles
     !
@@ -663,7 +663,7 @@ contains
     enddo
     xtemp = xexact
     if (itransx.gt.0) call transform_inverse(xexact,itransx)
-    
+
     iexactpts = maxexactpts
     !
     !--exact solution plots must return a zero or negative value of ierr to be plotted
@@ -684,7 +684,7 @@ contains
           enddo
        endif
     case(2) ! exact solution read from file
-       if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then   
+       if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then
           call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
           if (ierr.le.0 .and. .not.iApplyTransExactFile) then
@@ -749,13 +749,13 @@ contains
                                    xexact,yexact,iexactpts,ierr)
              elseif (iploty.eq.ipr) then
                 call exact_toystar1D(2,time,gamma,htstar,atstar,ctstar,sigma,norder, &
-                                   xexact,yexact,iexactpts,ierr)       
+                                   xexact,yexact,iexactpts,ierr)
              elseif (iploty.eq.iutherm) then
                 call exact_toystar1D(3,time,gamma,htstar,atstar,ctstar,sigma,norder, &
-                                   xexact,yexact,iexactpts,ierr)       
+                                   xexact,yexact,iexactpts,ierr)
              elseif (iploty.eq.ivx) then
                 call exact_toystar1D(4,time,gamma,htstar,atstar,ctstar,sigma,norder, &
-                                   xexact,yexact,iexactpts,ierr)       
+                                   xexact,yexact,iexactpts,ierr)
              elseif (iploty.eq.iBfirst+1) then
                 call exact_toystar1D(5,time,gamma,htstar,atstar,ctstar,sigma,norder, &
                                    xexact,yexact,iexactpts,ierr)
@@ -763,7 +763,7 @@ contains
           elseif (iplotx.eq.irho) then
              if (iploty.eq.iBfirst+1) then
                 call exact_toystar1D(6,time,gamma,htstar,atstar,ctstar,sigma,norder, &
-                                   xexact,yexact,iexactpts,ierr)       
+                                   xexact,yexact,iexactpts,ierr)
              endif
           endif
 
@@ -849,12 +849,12 @@ contains
                                  xexact,yexact,iexactpts,ierr)
           endif
        endif
-    case(9) 
+    case(9)
        !--h = (1/rho)^(1/ndim)
        if (((iploty.eq.ih).and.(iplotx.eq.irho)) .or. &
            ((iplotx.eq.ih).and.(iploty.eq.irho))) then
           if (iplotx.eq.ih) then
-             call exact_rhoh(2,ndim,hfact,pmassmin,xexact,yexact,ierr)       
+             call exact_rhoh(2,ndim,hfact,pmassmin,xexact,yexact,ierr)
           else
              call exact_rhoh(1,ndim,hfact,pmassmin,xexact,yexact,ierr)
           endif
@@ -868,9 +868,9 @@ contains
                 if (itransy.gt.0) call transform(yexact,itransy)
                 call plot_line(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
              endif
-             !--leave this one to be plotted below  
+             !--leave this one to be plotted below
              if (iplotx.eq.ih) then
-                call exact_rhoh(2,ndim,hfact,pmassmax,xexact,yexact,ierr)       
+                call exact_rhoh(2,ndim,hfact,pmassmax,xexact,yexact,ierr)
              else
                 call exact_rhoh(1,ndim,hfact,pmassmax,xexact,yexact,ierr)
              endif
@@ -883,7 +883,7 @@ contains
           elseif (iploty.eq.icolpoten) then
              call exact_densityprofiles(2,iprofile,Msphere,rsoft,xexact,yexact,ierr)
           elseif (iploty.eq.icolfgrav) then
-             call exact_densityprofiles(3,iprofile,Msphere,rsoft,xexact,yexact,ierr)          
+             call exact_densityprofiles(3,iprofile,Msphere,rsoft,xexact,yexact,ierr)
           endif
        endif
     case(11) ! torus
@@ -891,26 +891,26 @@ contains
           if (iploty.eq.irho) then
              call exact_torus(1,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_torus(2,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+             call exact_torus(2,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm) then
-             call exact_torus(3,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+             call exact_torus(3,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
           endif
        !--pr vs z at r=Rtorus
        elseif (igeom.eq.2 .and. iplotx.eq.ix(3) .and.iploty.eq.ipr) then
-          call exact_torus(4,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+          call exact_torus(4,1,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
        endif
        !--solutions for tokamak torus
        if (igeom.eq.4 .and. iplotx.eq.ix(1)) then
           if (iploty.eq.irho) then
              call exact_torus(1,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_torus(2,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+             call exact_torus(2,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm) then
-             call exact_torus(3,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)      
+             call exact_torus(3,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
           elseif (iploty.eq.iBfirst+1 .and. iBfirst.gt.0) then
-             call exact_torus(4,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)          
+             call exact_torus(4,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
           elseif (iploty.eq.iJfirst+2 .and. iJfirst.gt.0) then
-             call exact_torus(5,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)          
+             call exact_torus(5,2,Mstar,Rtorus,polyk,distortion,gamma,xexact,yexact,ierr)
           endif
        endif
     case(12)
@@ -946,7 +946,7 @@ contains
           call exact_rochelobe(time,semi,mprim,msec,xexact,yexact,ierr)
        endif
     end select
-    
+
     !----------------------------------------------------------
     !  plot this as a line on the current graph using PGPLOT
     !----------------------------------------------------------
@@ -962,7 +962,7 @@ contains
           if (itransy.gt.0) call transform_inverse(yexact(1:iexactpts),itransy)
           !--untransform particle y axis also
           ypart(1:npart) = yplot(1:npart)
-          if (itransy.gt.0) call transform_inverse(ypart(1:npart),itransy)          
+          if (itransy.gt.0) call transform_inverse(ypart(1:npart),itransy)
           !--calculate errors
           call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts), &
                                 xplot(1:npart),ypart(1:npart),residuals(1:npart), &
@@ -974,7 +974,7 @@ contains
     endif
     !
     !--reset line and colour settings
-    !   
+    !
     call plot_sci(iCurrentColour)
     call plot_sls(iCurrentLineStyle)
     !
@@ -1004,7 +1004,7 @@ contains
    iused = 0
    ymax = -huge(ymax)
    nerr = 0
-   
+
    do i=1,npart
       xi = xpts(i)
       yexacti = 0.
@@ -1052,10 +1052,10 @@ contains
    endif
    if (nerr.gt.0) print*,'WARNING: ',nerr,' errors in residual calculation'
    if (iused.ne.npart) print*,'errors calculated using ',iused,' of ',npart, 'particles'
-   
+
    return
   end subroutine calculate_errors
-  
+
   subroutine plot_residuals(xpts,residuals,imarker,iaxisy)
    use plotlib, only:plot_qvp,plot_qwin,plot_svp,plot_qci,plot_qfs, &
                      plot_qcs,plot_sci,plot_sfs,plot_svp,plot_box, &
@@ -1079,7 +1079,7 @@ contains
    vptymin = vptyminold
    vptymax = vptyminold + FracinsetResiduals*(vptymaxold - vptyminold)
    call plot_svp(vptxmin,vptxmax,vptymin,vptymax)
- 
+
    !--set window
    if (residualmax.lt.tiny(residualmax)) then
       ymax = maxval(abs(residuals))
@@ -1096,7 +1096,7 @@ contains
    call plot_sci(0)
    call plot_sfs(1)
    if (iaxisy.lt.0) then
-      call plot_svp(vptxmin,vptxmax,vptymin,vptymax)   
+      call plot_svp(vptxmin,vptxmax,vptymin,vptymax)
    else
       call plot_svp(vptxmin - 3.*xch,vptxmax,vptymin,vptymax)
    endif
@@ -1108,18 +1108,18 @@ contains
    call plot_svp(vptxmin,vptxmax,vptymin,vptymax)
    call plot_swin(xminold,xmaxold,ymin,ymax)
    if (iaxisy.lt.0) then
-      call plot_box('ABCST',0.0,0,'BCST',0.0,0)   
+      call plot_box('ABCST',0.0,0,'BCST',0.0,0)
    else
       call plot_box('ABCST',0.0,0,'BVNCST',0.0,0)
    endif
-   
+
    !--plot residuals
    call plot_pt(size(xpts),xpts,residuals,imarker)
-   
+
    !--restore old viewport and window
    call plot_svp(vptxminold,vptxmaxold,vptyminold,vptymaxold)
    call plot_swin(xminold,xmaxold,yminold,ymaxold)
-   
+
   end subroutine plot_residuals
 
 end module exact

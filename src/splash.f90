@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -27,7 +27,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2011 Daniel Price 
+!     Copyright (C) 2005-2011 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -54,7 +54,7 @@ program splash
 !             Multiplot with different particle types implemented; calculated quantities
 !             list is now pre-filled automatically;
 !     1.14.1 : (17/03/11)
-!             SEREN data read added; dragon read updated; build follows Gnu conventions 
+!             SEREN data read added; dragon read updated; build follows Gnu conventions
 !             on DEST and DESTDIR (needed for macports build); can have up to 12 particle types;
 !             exact solutions re-ordered; dusty wave exact solution added
 !     1.14.0 : (06/12/10)
@@ -76,7 +76,7 @@ program splash
 !             function parser incorporated; calculated quantities can now be specified
 !             at runtime, arbitrary function plotting implemented as an exact
 !             solution; command-line SPH->grid conversion ("splash to grid")
-!             implemented; ctrl-t in interactive mode adds arbitrary text box; 
+!             implemented; ctrl-t in interactive mode adds arbitrary text box;
 !             better line style/colour changing; bug fix with tiling and y-axis labels;
 !             various other bug fixes.
 !     1.12.2 : (15/07/09)
@@ -96,7 +96,7 @@ program splash
 !     1.12.0 : (22/12/08)
 !             Command-line plotting implemented; ln transform added; bug fixes in GADGET read;
 !             Backspace over annotation (legends,titles,axes,colour bar) in interactive mode
-!             removes it; "splash calc" command line utility calculates time sequences of 
+!             removes it; "splash calc" command line utility calculates time sequences of
 !             global quantities from a sequence of dump files; bug fix causing seg fault.
 !     1.11.1 : (13/10/08)
 !             automatic number of pixels and exact pixel boundaries implemented;
@@ -117,16 +117,16 @@ program splash
 !     1.10.1 : (11/03/08)
 !             "splash to" command line option converts binary dumps to ascii format;
 !             vector plots + rotation now implemented; block labelled GADGET format read;
-!             ring-spreading exact solution added.      
+!             ring-spreading exact solution added.
 !     1.10.0 : (28/11/07)
 !             horizontal colour bars implemented; -p, -o command line options;
 !             can have mixed types in data reads; TIPSY and DRAGON data reads;
-!             density weighted rendering; normalisation applies to column 
-!             density plots; improved particle tracking; save as option; various bug fixes       
+!             density weighted rendering; normalisation applies to column
+!             density plots; improved particle tracking; save as option; various bug fixes
 !     1.9.2 : (12/09/07)
 !             improvements to ascii read including asplash -e option;
 !             smarter foreground/background colour changing for titles;
-!             min=max problem fixed (caught by splash not pgplot); 
+!             min=max problem fixed (caught by splash not pgplot);
 !             fixed vector arrow length option; other minor changes and bug fixes
 !     1.9.1 : (11/07/07)
 !             environment variables + improvements to gadget data read; better
@@ -135,8 +135,8 @@ program splash
 !     1.9.0 : (21/05/07)
 !             animation sequences implemented; origin settings now affect radius
 !             calculation and are relative to tracked particle; automatic line
-!             width choice for postscript devices; w key adapts vector arrows; 
-!             vastly improved userguide 
+!             width choice for postscript devices; w key adapts vector arrows;
+!             vastly improved userguide
 !     1.8.1 : (28/03/07)
 !             option to hide vector arrows where there are no particles added;
 !             smoother 3D plotting at low pixel numbers;
@@ -146,20 +146,20 @@ program splash
 !             hidden particles not used in rendering; units for z integration added;
 !             a) & g) implemented in interactive mode for multiple-plots-per-page;
 !             improved cross section using x in interactive mode
-!     1.7.2 : (19/02/07) 
+!     1.7.2 : (19/02/07)
 !             Menu shortcuts implemented; bug fix/ more sensible transformation
 !             of angular vector components in different co-ordinate systems;
 !             improvements to interactive zoom and origin recentreing;
 !             improved colour-by-type option; restrictions on page size removed;
 !             minor bug fixes
 !     1.7.1 : (04/01/07)
-!             command line options for defaults and limits files added; 
+!             command line options for defaults and limits files added;
 !             minor bug fixes
 !     1.7.0 : (13/12/06)
 !             renamed SPLASH instead of SUPERSPHPLOT; much faster data read
-!             for gadget and sphNG reads (only required columns read); 
+!             for gadget and sphNG reads (only required columns read);
 !             physical units can be saved to file; new menu formats; various
-!             other bug fixes. 
+!             other bug fixes.
 !     1.6.2   (24/10/06)
 !           : fast particle plotting and streamline plotting implemented;
 !             more bug fixes with interactive mode on multiplots; various other bug fixes.
@@ -185,10 +185,10 @@ program splash
 !             behaviour, speed enhancements, physical unit rescaling
 !     1.0.5 (28/9/05)
 !           : error calculation for exact solutions, legend for plot markers,
-!             exact_densityprofiles added, more colour schemes, 
+!             exact_densityprofiles added, more colour schemes,
 !             unit rescaling improved, other minor changes + bug fixes
-!     1.0.4 (17/8/05) 
-!           : better colour schemes; interactive colour scheme changing; 
+!     1.0.4 (17/8/05)
+!           : better colour schemes; interactive colour scheme changing;
 !             various minor changes and bug fixes
 !     1.0.3 (5/7/05)
 !           : rescale data option; better page setup; improved zooming;
@@ -213,7 +213,7 @@ program splash
 !     defaults           : writes/reads default options to/from file
 !     exact              : module handling exact solution settings
 !     exact_fromfile     : reads an exact solution tabulated in a file
-!     exact_mhdshock     : some tabulated solutions for mhd shocks 
+!     exact_mhdshock     : some tabulated solutions for mhd shocks
 !     exact_polytrope    : exact solution for a polytrope
 !     exact_rhoh	 : exact relation between density and smoothing length
 !     exact_sedov        : exact solution for sedov blast wave
@@ -227,7 +227,7 @@ program splash
 !     globaldata         : various modules containing "global" variables
 !     interactive        : drives interactive mode
 !     interpolate1D	 : interpolation of 1D SPH data to grid using kernel
-!     interpolate2D	 : interpolation of 2D SPH data to grid     
+!     interpolate2D	 : interpolation of 2D SPH data to grid
 !     interpolate3D_xsec : 3D cross section interpolations
 !     interpolate3D_projection	 : 3D interpolation integrated through domain
 !     legends		       : plots (time) legend on plot
@@ -254,7 +254,7 @@ program splash
 !     titles             : reads a list of titles to be used to label each timestep
 !     transform	 	 : applies various transformations to data (log10, 1/x, etc)
 !
-!     File format is specified in the subroutine read_data   
+!     File format is specified in the subroutine read_data
 !
 !     See the CVS logs for a full ChangeLog
 !
@@ -262,12 +262,12 @@ program splash
 !
 !      1) Co-ordinate plots have co-ordinates as x and y axis
 !         these plots can be rendered with any scalar or vector array.
-!         
+!
 !         The rendering routines interpolate from the particles to either
 !         a 2D or 3D grid. In 3D you can either render to a 3D grid and take
 !         cross sections, or render to a 2D grid using a table of the integrated
 !         SPH kernel. This 2D rendering results in a map of the quantity
-!         integrated through the third co-ordinate. 
+!         integrated through the third co-ordinate.
 !         Rendering to a full 3D grid can be quite slow - it is used only
 !         if many cross sections are taken all at once from the same data.
 !
@@ -308,7 +308,7 @@ program splash
   ! initialise some basic code variables
   !
   call defaults_set_initial
-  
+
   !
   !  default names for defaults file and limits file
   !
@@ -337,7 +337,7 @@ program splash
   irender = 0
   icontour = 0
   ivecplot = 0
-  
+
   do while (i < nargs)
      i = i + 1
      call get_argument(i,string)
@@ -454,7 +454,7 @@ program splash
            else
               stop
            endif
-     elseif (len_trim(string).gt.0) then 
+     elseif (len_trim(string).gt.0) then
         nfiles = nfiles + 1
         if (nfiles.le.maxfile) then
            rootname(nfiles) = trim(string)
@@ -495,16 +495,16 @@ program splash
         call set_filenames(trim(fileprefix))
      endif
   endif
-  
+
   !
   ! check that we have got filenames
-  !  
+  !
   if (nfiles.gt.0) then
      if (nfiles.gt.maxfile) then
-        print*,' WARNING: number of files >= array size: setting nfiles = ',maxfile     
+        print*,' WARNING: number of files >= array size: setting nfiles = ',maxfile
         nfiles = maxfile
      endif
-  endif   
+  endif
   if (nfiles.ge.1 .and. rootname(1)(1:1).ne.' ') then
      ihavereadfilenames = .true.
      if (nfiles.gt.1) print*,nfiles,' filenames read from command line'
@@ -535,7 +535,7 @@ program splash
      ! batch convert all dump files into the output format
      !
      call convert_all(convertformat,ihavereadfilenames,useall)
-  
+
   else
      !
      ! read data from file
@@ -571,7 +571,7 @@ program splash
      !
      ! check command line plot invocation
      !
-        
+
         if (ipicky.gt.0 .and. ipicky.le.numplot+1) then
            if (ipicky.le.numplot .and. (ipickx.eq.0 .or. ipickx.gt.numplot)) then
               print "(a)",' ERROR: x plot not set or out of bounds (use -x col)'
@@ -584,7 +584,7 @@ program splash
               endif
               if (icontour.gt.numplot .or. icontour.lt.0) then
                  print "(a)",' ERROR: contour plot choice out of bounds'
-                 stop 
+                 stop
               endif
            elseif (icontour.gt.0) then
               print "(a)",' ERROR: -cont also requires -render setting'
@@ -620,12 +620,12 @@ program splash
         call menu
      endif
   endif
-  
+
   !
   ! deallocate all memory (not strictly necessary)
   !
   call deallocate_all
-  
+
 contains
 
 !------------------------------------------------------
@@ -633,7 +633,7 @@ contains
 !------------------------------------------------------
 subroutine print_header
  implicit none
-      
+
  print 10
 10 format( &
    "    _                                                 _  ",/, &
@@ -642,13 +642,13 @@ subroutine print_header
    "   _ (_)  _   / __| '_ \| |/ _` / __| '_ \       _ (_)    ",/, &
    "  (_)  _ (_)  \__ \ |_) | | (_| \__ \ | | |  _  (_) _    ",/, &
    "      (_)  _  |___/ .__/|_|\__,_|___/_| |_| (_)  _ (_)   ",/, &
-   "          (_)  (_)|_| (_) (_)  (_)(_) (_)(_) (_)(_)     ")        
+   "          (_)  (_)|_| (_) (_)  (_)(_) (_)(_) (_)(_)     ")
  print 20
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
  print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2011 )'
- print 30 
+ print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
    '   This is free software; and you are welcome to redistribute it ',/, &
@@ -658,7 +658,7 @@ subroutine print_header
    ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
    ' use SPLASH for scientific work and if you plot something beautiful,',/, &
    ' why not send me a copy for the gallery? ',/)
-      
+
 end subroutine print_header
 
 subroutine print_usage(quit)

@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 
 !----------------------------------------------------------------------
-! Plots Lynden-Bell & Pringle (1978) solution for viscous 
+! Plots Lynden-Bell & Pringle (1978) solution for viscous
 ! ring spreading in an accretion disk.
 !
 ! Input: radius in disk
@@ -85,7 +85,7 @@ subroutine exact_ringspread(iplot,time,Mdisk,Rdisk,viscnu,xplot,yplot,ierr)
     !--pressure
        yplot(i) = 0.
     end select
- enddo    
+ enddo
 
  return
 end subroutine exact_ringspread
@@ -103,7 +103,7 @@ double precision function ringspreadfunc(x,tau)
  else
     xfunc = 2.*x/tau
     term = exp(-(1.+x*x)/tau)
-    
+
     !--prevent blowups at t=0: no point evaluating
     !  the Bessel function if the exp term is zero.
     if (term.gt.tiny(term)) then
@@ -146,12 +146,12 @@ subroutine bessik(x,xnu,ri,rk,rip,rkp)
  double precision :: a,a1,b,c,d,del,del1,delh,dels,e,f,fact,fact2, &
   ff,gam1,gam2,gammi,gampl,h,p,pimu,q,q1,q2,qnew,ril,ril1,rimu,rip1,ripl, &
   ritemp,rk1,rkmu,rkmup,rktemp,s,sum,sum1,x2,xi,xi2,xmu,xmu2
-  
+
  if (x <= 0. .or. xnu < 0.) then
     print*,' bad arguments in bessik ',x,xnu
 !    return
  endif
- 
+
  nl = int(xnu+0.5d0) ! nl is the number of downward recurrences of the I's
  xmu = xnu - nl      ! and upward recurrences of K's. xmu lies between
  xmu2 = xmu*xmu      ! -1/2 and 1/2
@@ -300,7 +300,7 @@ subroutine beschb(x,gam1,gam2,gampl,gammi)
  gam2 = chebev(-1.d0,1.d0,c2,NUSE2,xx)  ! evaluating even Chebyshev series
  gampl = gam2 - x*gam1
  gammi = gam2 + x*gam1
- 
+
  return
 end subroutine beschb
 
@@ -321,7 +321,7 @@ double precision function chebev(a,b,c,m,x)
 !
  integer :: j
  double precision :: d, dd, sv, y, y2
- 
+
  if ((x-a)*(x-b).gt.0.) then
     print*,'error: x not in range in chebev'
     chebev = 0.

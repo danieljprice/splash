@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -47,11 +47,11 @@ module colourbar
  real, private, save :: xlabeloffsetsave = 0.
  real, parameter, private :: dispall = 0.25
  private
- 
+
 contains
 
 !-------------------------------------------------------
-! this subroutine plots the colour bar 
+! this subroutine plots the colour bar
 ! (similar to PGWEDG: differences are that
 ! text is written vertically, txtsep is a
 ! changeable parameter and the character height
@@ -141,21 +141,21 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
 
    !--check number of pixels in colour bar
    call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
-   
+
    if (abs(icolours).gt.0) then        ! colour
    !--check if the colour bar will be more than 1024 pixels
        if ((xmaxpix-xminpix).le.1024 .or. .not.plotlib_is_pgplot) then
-    !   
+    !
     !--the standard way is to use the default line below
     !
           if (abs(icolours).eq.1) then
-             call plot_gray(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans)          
+             call plot_gray(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans)
           else
              call plot_imag(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans)
           endif
        else
     !
-    !--if > 1024 pixels, we instead use the following: 
+    !--if > 1024 pixels, we instead use the following:
     !  this is a workaround for a PGPLOT bug with large colour bars
     !  (> 1024 device pixels long) - plot colour bar in two halves.
     !  this works up to 2048 pixels, really should divide by n.
@@ -179,14 +179,14 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
     if (istyle.eq.4 .or. istyle.eq.6) then
        call plot_box('BNST',0.0,0,'BC',0.0,0)
-       if (istyle.eq.6) call plot_box('C',0.0,0,' ',0.0,0)    
+       if (istyle.eq.6) call plot_box('C',0.0,0,' ',0.0,0)
     else
        call plot_box('BCNST',0.0,0,'BC',0.0,0)
     endif
    !
-   !--write the units label: the position is relative to the bottom of 
-   !  the wedge because of the way we have defined the viewport. 
-   !  For the horizontal colour bar this never needs to change 
+   !--write the units label: the position is relative to the bottom of
+   !  the wedge because of the way we have defined the viewport.
+   !  For the horizontal colour bar this never needs to change
    !  (0.25 space + 1 character height for numeric labels + 0.25 space
    !   + 1 character height for actual label = 2.5 character heights)
    !
@@ -198,7 +198,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  ! vertical colour bar (default)
  !-------------------------------
  case default
-    
+
     if (istyle.eq.3) disp = 0. ! plot-hugging
    !
    !--set viewport for the wedge
@@ -227,8 +227,8 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
        call plot_box('BC',0.0,0,'BCMSTV',0.0,0)
     endif
    !
-   !--write the units label: the position is relative to the edge of 
-   !  the wedge because of the way we have defined the viewport. 
+   !--write the units label: the position is relative to the edge of
+   !  the wedge because of the way we have defined the viewport.
    !  For the vertical colour bar ColourBarDisp is a set by default to
    !  the maximum size for the numeric label (written horizontally) -
    !  this is about 4 character heights for something like "-5 x 10^10"
@@ -257,9 +257,9 @@ logical function barisvertical(istyle)
  implicit none
  integer, intent(in) :: istyle
 
- barisvertical = .true. 
+ barisvertical = .true.
  if (istyle.le.0) return
- 
+
  select case(istyle)
  case(2,4,6)
     barisvertical = .false.
@@ -277,17 +277,17 @@ logical function incolourbar(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
  implicit none
  integer, intent(in) :: istyle
  real, intent(in) :: xpt,ypt,xmin,xmax,ymin,ymax
- 
+
  incolourbar = .false.
  if (istyle.le.0) return
- 
+
  select case(istyle)
  case(2,4,6)
     if (ypt.lt.ymin) incolourbar = .true.
  case default
     if (xpt.gt.xmax) incolourbar = .true.
  end select
- 
+
  return
 end function incolourbar
 
@@ -301,7 +301,7 @@ logical function incolourbarlabel(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
  integer, intent(in) :: istyle
  real, intent(in) :: xpt,ypt,xmin,xmax,ymin,ymax
  real :: xch,ych,disp
- 
+
  incolourbarlabel = .false.
  if (iplotcolourbarlabel) then
     call plot_qcs(4,xch,ych)
@@ -316,7 +316,7 @@ logical function incolourbarlabel(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
            xpt.lt.(xmax+(disp + ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch)) incolourbarlabel = .true.
     end select
  endif
- 
+
  return
 end function incolourbarlabel
 
@@ -353,7 +353,7 @@ subroutine get_colourbarmargins(istyle,xmaxmargin,yminmargin,barwidth)
     endif
     xmaxmargin = xmaxmargin + barwidth
  end select
- 
+
  return
 end subroutine get_colourbarmargins
 

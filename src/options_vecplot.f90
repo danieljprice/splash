@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -77,7 +77,7 @@ subroutine submenu_vecplot(ichoose)
  implicit none
  integer, intent(in) :: ichoose
  integer :: ians
-  
+
  ians = ichoose
  print "(a)",'--------------- vector plot options -------------------'
 
@@ -104,7 +104,7 @@ subroutine submenu_vecplot(ichoose)
  select case(ians)
 !------------------------------------------------------------------------
  case(1)
-    call prompt('enter number of pixels',npixvec,1,1000) 
+    call prompt('enter number of pixels',npixvec,1,1000)
 !------------------------------------------------------------------------
  case(2)
     UseBackgndColorVecplot = .not.UseBackgndColorVecplot
@@ -134,7 +134,7 @@ subroutine submenu_vecplot(ichoose)
        call prompt(' plot synchrotron map? ',iplotsynchrotron)
        if (iplotsynchrotron) then
           if (iutherm.lt.0 .or. iutherm.gt.numplot) then
-             print "(a)",' Warning: cannot use thermal energy cutoff in synchrotron plots' 
+             print "(a)",' Warning: cannot use thermal energy cutoff in synchrotron plots'
              print "(a)",' (could not locate thermal energy in data columns)'
           endif
           call prompt(' enter rcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',rcrit,0.)
@@ -145,7 +145,7 @@ subroutine submenu_vecplot(ichoose)
              if (uthermcutoff.lt.-tiny(uthermcutoff)) then
                 uthermcutoff = 0.5*(lim(iutherm,1) + lim(iutherm,2))
              endif
-             call prompt(' enter threshold thermal energy in current units (u < utherm not used) ',uthermcutoff,0.) 
+             call prompt(' enter threshold thermal energy in current units (u < utherm not used) ',uthermcutoff,0.)
           endif
        endif
     endif
@@ -158,7 +158,7 @@ subroutine submenu_vecplot(ichoose)
 !------------------------------------------------------------------------
  case(7)
     iallarrowssamelength = .not.iallarrowssamelength
-    call prompt('make all arrows same length (ie. only show direction, not magnitude) ?',iallarrowssamelength)    
+    call prompt('make all arrows same length (ie. only show direction, not magnitude) ?',iallarrowssamelength)
  end select
 
  return

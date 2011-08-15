@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -27,12 +27,12 @@
 !  This version provides an interface to giza, a plotting
 !   library written by Daniel Price & James Wetter.
 !
-!  Giza implements basic 2D plotting functionality 
+!  Giza implements basic 2D plotting functionality
 !  on top of the cairo graphics library
 !
 ! Interface written by James Wetter and Daniel Price (2010)
 !---------------------------------------------------------------------------
-module plotlib 
+module plotlib
   use giza, only: &
       plot_arro=>giza_arrow, &
       plot_annotate=>giza_annotate, &
@@ -105,7 +105,7 @@ module plotlib
   implicit none
   logical, parameter :: plotlib_is_pgplot = .false.
   logical, parameter :: plotlib_supports_alpha = .true.
-  
+
   character(len=1),parameter :: plot_left_click = giza_left_click_f
 public
 
@@ -122,7 +122,7 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio)
  real, intent(in), optional  :: papersizex,aspectratio
  real                        :: widthcm,heightcm
  real, parameter             :: inch_to_cm = 2.54
- 
+
  if (present(papersizex)) then
     widthcm = papersizex*inch_to_cm
     if (present(aspectratio)) then
@@ -147,7 +147,7 @@ subroutine plot_gray(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
 
   call convert_tr_to_affine(tr,affine)
   call giza_render_gray(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,affine)
-  
+
 end subroutine plot_gray
 
 subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
@@ -157,7 +157,7 @@ subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
 
   call convert_tr_to_affine(tr,affine)
   call giza_render(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,affine)
-  
+
 end subroutine plot_imag
 
 subroutine plot_imag_transparent(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
@@ -167,7 +167,7 @@ subroutine plot_imag_transparent(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
 
   call convert_tr_to_affine(tr,affine)
   call giza_render_transparent(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,affine)
-  
+
 end subroutine plot_imag_transparent
 
 subroutine plot_ctab(l,r,g,b,nc,contra,bright)
@@ -193,7 +193,7 @@ subroutine plot_qvsz(units,x1,x2,y1,y2)
 end subroutine plot_qvsz
 
 subroutine plot_bins(nbin,x,data,centre)
-  integer, intent(in)               :: nbin 
+  integer, intent(in)               :: nbin
   real, dimension(nbin), intent(in) :: x, data
   logical, intent(in)               :: centre
 
@@ -207,7 +207,7 @@ subroutine plot_qvp(units, x1, x2, y1, y2)
  real,intent(out)   :: x1, x2, y1, y2
 
  call giza_get_viewport(units_giza(units),x1,x2,y1,y2)
- 
+
 end subroutine plot_qvp
 
 subroutine plot_qcs(units,xch,ych)
@@ -291,7 +291,7 @@ subroutine plot_numb(m,pp,form,string,nc)
   integer,intent(in)           :: m,pp,form
   character(len=*),intent(out) :: string
   integer,intent(out)          :: nc
-  
+
   call giza_format_number(m,pp,form,string)
   nc = len_trim(string)
 
@@ -316,12 +316,12 @@ subroutine plot_err1(dir,x,y,e,t)
   real,intent(in)    :: x,y,e
   real,intent(in)    :: t
   real, dimension(1) :: xi,yi,ei
-  
+
   xi(1) = x
   yi(1) = y
   ei(1) = e
   call plot_errb(dir,1,xi,yi,ei,t)
-  
+
 end subroutine plot_err1
 
 subroutine plot_conb(a,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
@@ -391,10 +391,10 @@ subroutine plot_pap(width,aspect)
   implicit none
   real,intent(in) :: width,aspect
   real :: widthCM
-  
+
   widthCM = width*2.54
   call giza_set_paper_size(widthCM,aspect)
- 
+
 end subroutine plot_pap
 
 !
@@ -417,7 +417,7 @@ end subroutine plot_set_exactpixelboundaries
                  giza_units_mm,giza_units_pixels,giza_units_world
   implicit none
   integer, intent(in) :: pgplotunits
-  
+
   select case(pgplotunits)
   case(0)
      units_giza = giza_units_normalized

@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -30,11 +30,11 @@
 !  1) log10(x)
 !  2) |x|
 !  3) 1/x
-!  4) sqrt(x)     
+!  4) sqrt(x)
 !  5) x^2
 !  6) ln(x)
 !
-! * combinations of transformations are done when the 
+! * combinations of transformations are done when the
 !   input number is > 10 (e.g. 321 means 1/x, then abs, then log10)
 !
 ! subroutines contained within this module are the following:
@@ -63,7 +63,7 @@ module transforms
  interface transform
    module procedure transform,transform_limits,transform2,transforma
  end interface transform
- 
+
  !--function interface
  interface trans
    module procedure transformarray
@@ -79,7 +79,7 @@ contains
 !  subroutine returns log, 1/x of a given array
 !
 !  * can specify up to 9 individual operations to perform
-!  * combinations of transformations are done when the 
+!  * combinations of transformations are done when the
 !    input number is > 10 (e.g. 321 means 1/x, then abs, then log10)
 !
 !------------------------------------------------------------------------
@@ -99,12 +99,12 @@ subroutine transform(array,itrans,errval)
   if (present(errval)) then
      errvali = errval
   else
-     errvali = 0. 
+     errvali = 0.
   endif
   !
-  !--extract the digits from the input number 
+  !--extract the digits from the input number
   !
-  if (itrans.gt.0) then      
+  if (itrans.gt.0) then
 
      write(string,*) itrans
      !
@@ -114,7 +114,7 @@ subroutine transform(array,itrans,errval)
 
      do i=1,len_trim(string)
         !
-        !--perform transformation appropriate to this digit     
+        !--perform transformation appropriate to this digit
         !
         select case(string(i:i))
         case('1')
@@ -126,14 +126,14 @@ subroutine transform(array,itrans,errval)
         case('2')
            where (arraytemp.ne.errvali)
               arraytemp = abs(arraytemp)
-           end where   
+           end where
         case('3')
            where (arraytemp .ne. 0. .and. arraytemp.ne.errvali)
               arraytemp = 1./arraytemp
            elsewhere
               arraytemp = errvali
            end where
-        case('4') 
+        case('4')
            where (arraytemp .gt. 0. .and. arraytemp.ne.errvali)
               arraytemp = sqrt(arraytemp)
            elsewhere
@@ -141,8 +141,8 @@ subroutine transform(array,itrans,errval)
            end where
         case('5')
            where (arraytemp.ne.errvali)
-              arraytemp = arraytemp**2   
-           end where          
+              arraytemp = arraytemp**2
+           end where
         case('6')
            where (arraytemp > 0. .and. arraytemp.ne.errvali)
               arraytemp = log(arraytemp)
@@ -173,7 +173,7 @@ subroutine transforma(aa,itrans,errval)
   if (present(errval)) then
      call transform(array,itrans,errval=errval)
   else
-     call transform(array,itrans)  
+     call transform(array,itrans)
   endif
   aa = array(1)
 
@@ -223,12 +223,12 @@ subroutine transform_inverse(array,itrans,errval)
   if (present(errval)) then
      errvali = errval
   else
-     errvali = 0. 
+     errvali = 0.
   endif
   !
-  !--extract the digits from the input number 
+  !--extract the digits from the input number
   !
-  if (itrans.gt.0) then      
+  if (itrans.gt.0) then
 
      write(string,*) itrans
      !
@@ -238,7 +238,7 @@ subroutine transform_inverse(array,itrans,errval)
 
      do i=len_trim(string),1,-1
         !
-        !--perform transformation appropriate to this digit     
+        !--perform transformation appropriate to this digit
         !
         select case(string(i:i))
         case('1')
@@ -251,7 +251,7 @@ subroutine transform_inverse(array,itrans,errval)
            elsewhere
               arraytemp = errvali
            end where
-        case('4') 
+        case('4')
            where (arraytemp.ne.errvali)
               arraytemp = arraytemp**2
            end where
@@ -290,7 +290,7 @@ subroutine transforma_inverse(aa,itrans,errval)
   if (present(errval)) then
      call transform_inverse(array,itrans,errval=errval)
   else
-     call transform_inverse(array,itrans)  
+     call transform_inverse(array,itrans)
   endif
   aa = array(1)
 
@@ -319,22 +319,22 @@ subroutine transform2(array,itrans,errval)
   if (present(errval)) then
      errvali = errval
   else
-     errvali = 0. 
+     errvali = 0.
   endif
   !
-  !--extract the digits from the input number 
+  !--extract the digits from the input number
   !
-  if (itrans.gt.0) then      
+  if (itrans.gt.0) then
 
      write(string,*) itrans
      !
-     !--do a transformation for each digit     
+     !--do a transformation for each digit
      !
      arraytemp = array
 
      do i=1,len_trim(string)
         !
-        !--perform transformation appropriate to this digit     
+        !--perform transformation appropriate to this digit
         !
         select case(string(i:i))
         case('1')
@@ -346,14 +346,14 @@ subroutine transform2(array,itrans,errval)
         case('2')
            where (arraytemp.ne.errvali)
               arraytemp = abs(arraytemp)
-           end where  
+           end where
         case('3')
            where (arraytemp .ne. 0. .and. arraytemp.ne.errvali)
               arraytemp = 1./arraytemp
            elsewhere
               arraytemp = errvali
            end where
-        case('4') 
+        case('4')
            where (arraytemp .gt. 0. .and. arraytemp.ne.errvali)
               arraytemp = sqrt(arraytemp)
            elsewhere
@@ -362,7 +362,7 @@ subroutine transform2(array,itrans,errval)
         case('5')
            where (arraytemp.ne.errvali)
               arraytemp = arraytemp**2
-           end where     
+           end where
         case('6')
            where (arraytemp > 0. .and. arraytemp.ne.errvali)
               arraytemp = log(arraytemp)
@@ -373,7 +373,7 @@ subroutine transform2(array,itrans,errval)
      enddo
 
      array = arraytemp
- 
+
   endif
 
 end subroutine transform2
@@ -392,20 +392,20 @@ subroutine transform_limits(xmin,xmax,itrans)
   character(len=20) :: string
   integer :: i
   !
-  !--extract the digits from the input number 
+  !--extract the digits from the input number
   !
-  if (itrans.gt.0) then      
+  if (itrans.gt.0) then
 
      write(string,*) itrans
      !
-     !--do a transformation for each digit     
+     !--do a transformation for each digit
      !
      xmintemp = xmin
      xmaxtemp = xmax
 
      do i=1,len_trim(string)
         !
-        !--perform transformation appropriate to this digit     
+        !--perform transformation appropriate to this digit
         !
         select case(string(i:i))
         case('1')
@@ -445,9 +445,9 @@ subroutine transform_limits(xmin,xmax,itrans)
            if (xmaxtemp .ne. 0) then
               xmaxtemp = 1./xmaxtemp
            else
-              xmaxtemp = 0.             
+              xmaxtemp = 0.
            endif
-        case('4') 
+        case('4')
            if (xmintemp .ge. 0) then
               xmintemp = sqrt(xmintemp)
            else
@@ -456,7 +456,7 @@ subroutine transform_limits(xmin,xmax,itrans)
            if (xmaxtemp .ge. 0) then
               xmaxtemp = sqrt(xmaxtemp)
            else
-              xmaxtemp = 0.             
+              xmaxtemp = 0.
            endif
         case('5')
            xmintemp = xmintemp**2
@@ -501,18 +501,18 @@ subroutine transform_limits_inverse(xmin,xmax,itrans)
   !
   !--extract the digits from the input number
   !
-  if (itrans.gt.0) then      
+  if (itrans.gt.0) then
 
      write(string,*) itrans
      !
-     !--do a transformation for each digit     
+     !--do a transformation for each digit
      !
      xmintemp = xmin
      xmaxtemp = xmax
 
      do i=len_trim(string),1,-1  ! do digits in reverse
         !
-        !--perform transformation appropriate to this digit     
+        !--perform transformation appropriate to this digit
         !
         select case(string(i:i))
         case('1')
@@ -537,9 +537,9 @@ subroutine transform_limits_inverse(xmin,xmax,itrans)
            if (xmaxtemp .ne. 0) then
               xmaxtemp = 1./xmaxtemp
            else
-              xmaxtemp = 0.             
+              xmaxtemp = 0.
            endif
-        case('4') 
+        case('4')
            xmintemp = xmintemp**2
            xmaxtemp = xmaxtemp**2
         case('5')
@@ -573,7 +573,7 @@ end subroutine transform_limits_inverse
 !  Note: *cannot* put print or write statements into this function
 !        as it is used in the middle of write or print statements
 !        this means that finding the digits is a bit trickier
-!      
+!
 !------------------------------------------------------------------------
 function transform_label(label,itrans)
   implicit none
@@ -582,20 +582,20 @@ function transform_label(label,itrans)
   integer :: itransmulti,i,ndigits
   integer, dimension(5) :: digit
   character(len=len(label)+20) :: transform_label
-  character(len=len(label)+20) :: temp_label      
+  character(len=len(label)+20) :: temp_label
   !
-  !--extract the digits from the input number 
-  !            
-  if (itrans.gt.0) then      
-     call get_digits(itrans,digit,ndigits)         
-     temp_label = label      
+  !--extract the digits from the input number
+  !
+  if (itrans.gt.0) then
+     call get_digits(itrans,digit,ndigits)
+     temp_label = label
      !
-     !--do a transformation for each digit     
+     !--do a transformation for each digit
      !
      do i=1,ndigits
         itransmulti = digit(i)
         !
-        !--perform transformation appropriate to this digit     
+        !--perform transformation appropriate to this digit
         !
         select case(itransmulti)
         case(1)
@@ -617,7 +617,7 @@ function transform_label(label,itrans)
 
      transform_label = temp_label
   else
-     transform_label = label     
+     transform_label = label
   endif
 
 end function transform_label
@@ -640,11 +640,11 @@ subroutine get_digits(i,digits,ndigits)
   integer :: j,isubtract,idigit
 
   ndigits = 0
-  
-  isubtract = 0      
+
+  isubtract = 0
 
   do j=size(digits),0,-1
-     if (i.ge.10**j) then 
+     if (i.ge.10**j) then
         ndigits = ndigits + 1
         idigit = (i - isubtract)/10**j
         digits(ndigits) = idigit
@@ -672,11 +672,11 @@ real function convert_to_ln_fac(itrans)
   !
   !--extract the digits from the input number
   !
-  if (itrans.gt.0) then      
+  if (itrans.gt.0) then
      write(string,*) itrans
      do i=len_trim(string),1,-1  ! do digits in reverse
         !
-        !--perform transformation appropriate to this digit     
+        !--perform transformation appropriate to this digit
         !
         select case(string(i:i))
         !
@@ -699,7 +699,7 @@ real function convert_to_ln_fac(itrans)
         end select
      enddo
   endif
-  
+
   convert_to_ln_fac = xtemp
 
 end function convert_to_ln_fac

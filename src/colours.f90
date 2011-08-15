@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 
 !
-! This module contains subroutines and variables for setting the 
+! This module contains subroutines and variables for setting the
 ! colour schemes for rendered plots
 !
 module colours
@@ -63,13 +63,13 @@ module colours
 !
   integer :: ifirstcolour, ncolours
   real, dimension(3,ncolourmax) :: rgbtable
-  
+
 contains
 
 ! ------------------------------------------------------------------------
 !      defines colour schemes for rendering
 !      ** add your own here **
-! ------------------------------------------------------------------------     
+! ------------------------------------------------------------------------
 subroutine colour_set(icolourscheme)
   use plotlib, only:plot_qcol,plot_qcir,plot_scir,plot_ctab,plot_scr,plot_qcr
   use settings_data, only:debugmode
@@ -90,14 +90,14 @@ subroutine colour_set(icolourscheme)
 !
 !--inquire as to colour range available on current device
 !  adjust ncolours if necessary
-!      
+!
   call plot_qcol(icolmin,icolmax)
 !  print*,' from device = ',icolmin,icolmax
   call plot_qcir(icolmin,icolmax)
 !  print*,' other = ',icolmin,icolmax
   if (ifirstcolour.lt.icolmin) ifirstcolour = icolmin
   ncolmax = icolmax - ifirstcolour
-  if (ncolours.gt.ncolmax) then  
+  if (ncolours.gt.ncolmax) then
      ncolours = ncolmax
      print*,'Warning: Device allows only ',ncolours+1,' colours'
   endif
@@ -105,14 +105,14 @@ subroutine colour_set(icolourscheme)
   !--set this as the range of colour indices to use
   !
   if (debugmode) print*,'DEBUG: querying colour index range'
-  call plot_scir(ifirstcolour,ifirstcolour+ncolours)  
+  call plot_scir(ifirstcolour,ifirstcolour+ncolours)
 
   if (abs(icolourscheme).le.ncolourschemes) then
      brightness = 0.5
      contrast = 1.0
      !--invert colour table for negative values
      if (icolourscheme.lt.0) contrast = -1.0
-     
+
      select case(abs(icolourscheme))
      case(1)
      !--greyscale
@@ -230,13 +230,13 @@ subroutine colour_set(icolourscheme)
 !     lumarr(1:nset)  = (/0.000,0.008,0.016,0.486,0.494,0.502,0.514,0.953,0.961,0.996,1.000/)
 !     redarr(1:nset)  = (/0.655,1.000,0.976,0.047,0.031,0.016,0.027,0.898,0.914,0.984,0.984/)
 !     greenarr(1:nset)= (/0.439,0.835,0.824,0.161,0.149,0.137,0.122,0.706,0.718,0.765,0.765/)
-!     bluearr(1:nset) = (/1.000,0.996,0.980,0.510,0.502,0.494,0.482,0.043,0.035,0.000,0.000/)     
+!     bluearr(1:nset) = (/1.000,0.996,0.980,0.510,0.502,0.494,0.482,0.043,0.035,0.000,0.000/)
      !--without the bottom colour
      nset = 11
      lumarr(1:nset)  = (/0.000,0.008,0.016,0.486,0.494,0.502,0.514,0.953,0.961,0.996,1.000/)
      redarr(1:nset)  = (/1.000,1.000,0.976,0.047,0.031,0.016,0.027,0.898,0.914,0.984,0.984/)
      greenarr(1:nset)= (/0.835,0.835,0.824,0.161,0.149,0.137,0.122,0.706,0.718,0.765,0.765/)
-     bluearr(1:nset) = (/1.000,0.996,0.980,0.510,0.502,0.494,0.482,0.043,0.035,0.000,0.000/)     
+     bluearr(1:nset) = (/1.000,0.996,0.980,0.510,0.502,0.494,0.482,0.043,0.035,0.000,0.000/)
      case(17)
      !--huesatval
      nset = 11
@@ -343,7 +343,7 @@ subroutine colour_set(icolourscheme)
                  nset,contrast,brightness)
   endif
 !
-!--if icolourscheme = ncolourschemes+1 set the PGPLOT colour indices 
+!--if icolourscheme = ncolourschemes+1 set the PGPLOT colour indices
 !  from the contents of the rgbtable array
 !
   if (abs(icolourscheme).eq.ncolourschemes+1) then
@@ -374,9 +374,9 @@ subroutine colour_set(icolourscheme)
 
   endif
   if (debugmode) print*,'DEBUG: finished colour_set'
-  
+
   return
-  
+
 end subroutine colour_set
 
 !------------------------------------------------
@@ -387,7 +387,7 @@ subroutine colour_demo
 !  integer :: i,j,nc
   !
   !--npixx should be >= ncolours in setcolours.f
-  !      
+  !
 !  integer, parameter :: npixx = ncolourmax
 !  integer, parameter :: npixy = npixx/10
 !  real, dimension(npixx,npixy) :: sample
@@ -425,18 +425,18 @@ subroutine colour_demo
 !!  call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(1)))
 
 !  do i=1,ncolourschemes
-!     call pgsch(2.0)      
-!     call pgenv(xmin,xmax,ymin,ymax,0,-1) 
+!     call pgsch(2.0)
+!     call pgenv(xmin,xmax,ymin,ymax,0,-1)
 !     call pgsch(7.0)
 !     call pgnumb(i,0,0,string,nc)
-!     call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(i)))     
+!     call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(i)))
 !     call colour_set(i)
 !     call pgimag(sample,npixx,npixy,1,npixx,1,npixy, &
 !                 minval(sample),maxval(sample),trans)
 !  enddo
 
 !  call pgsch(1.0)
-!  call pgend 
+!  call pgend
 
 end subroutine colour_demo
 

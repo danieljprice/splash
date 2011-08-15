@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -51,9 +51,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -88,7 +88,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer,parameter::id_npoim   =34, id_ndt_ana=35, id_maxbuild =36
   integer,parameter::id_fullextrap=37,id_revise=38, id_n_dtmax  =39
   integer,parameter::id_n_ana    =40
-  integer,parameter::id_lastint1=41  !1 after last id for integers 
+  integer,parameter::id_lastint1=41  !1 after last id for integers
 
   integer, parameter::id_t       = 1,id_dtmax   = 2,id_deltnew  = 3
   integer, parameter::id_gamma   = 4,id_ekin    = 5,id_egrav    = 6
@@ -115,12 +115,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: i,j,ierr,nparti,ntoti,i1,icol
   integer :: npart_max,nstep_max,ncolstep,nptmass
   logical :: iexist,mhdread,useipindx
-    
+
   character(len=len(rootname)+10)    :: dumpfile
   integer, parameter                 :: maxheadlength = 1000
   integer, dimension(maxheadlength)  :: iheader
   integer, dimension(:), allocatable :: ipindx,itstepbin
-  
+
   !--we are assuming dump is double precision
   real(doub_prec), dimension(maxheadlength)    :: dheader
   real(doub_prec), dimension(:,:), allocatable :: dattemp, dattempvec
@@ -133,13 +133,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !--this is the default header length
   iheadlength = maxheadlength
 
-  dumpfile = trim(rootname)   
+  dumpfile = trim(rootname)
   !
   !--check if first data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -155,19 +155,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
      hfactor = 2.8
   else
      hfactor = 1.0
-  endif 
+  endif
   nstep_max = max(indexstart,1)
 
   j = indexstart
   nstepsread = 0
   nparti = 0
   ncolstep = 0
-  
+
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   if (mhdread) then
      print "(a)",' reading VINE MHD format'
   else
-     print "(a)",' reading default VINE format (set VINE_MHD=yes for MHD)'  
+     print "(a)",' reading default VINE format (set VINE_MHD=yes for MHD)'
   endif
   !
   !--open the (unformatted) binary file and read the number of particles
@@ -256,7 +256,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
        if (mhdread) then
           allocate(dattempvec(3*ndim+1,npart_max),stat=ierr)
        else
-          allocate(dattempvec(2*ndim+1,npart_max),stat=ierr)       
+          allocate(dattempvec(2*ndim+1,npart_max),stat=ierr)
        endif
        dattempvec = 0.
        if (ierr /= 0) print*,'not enough memory in read_data (dattempvec)'
@@ -304,7 +304,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                (dattemp(i,icol+4), i=1,ntoti), &
                (ipindx(i), i=1,ntoti), &
                (itstepbin(i),i=1,ntoti), &
-               (dattempvec(ivx+ndimV:ivx+2*ndimV-1,i),i=1,nparti)       
+               (dattempvec(ivx+ndimV:ivx+2*ndimV-1,i),i=1,nparti)
        else
           if (nptmass.gt.0) then
              !
@@ -349,7 +349,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
           print "(a)",'*** END OF FILE IN READ DATA ***'
        elseif (ierr /= 0) then
           if (mhdread) then
-             print "(a)",'*** ERROR READING DATA: MAYBE NOT AN MHD FILE?? ***'          
+             print "(a)",'*** ERROR READING DATA: MAYBE NOT AN MHD FILE?? ***'
           else
              print "(a)",'*** ERROR READING DATA ***'
              print "(/,a)", '   (set environment variable VINE_MHD to yes or TRUE '
@@ -394,7 +394,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
           do i=ivx+ndimV,ivx+2*ndimV-1
              i1 = i1 + 1
              if (useipindx) then
-                dat(ipindx(1:nparti),i1,j) = real(dattempvec(i,1:nparti))             
+                dat(ipindx(1:nparti),i1,j) = real(dattempvec(i,1:nparti))
              else
                 dat(1:nparti,i1,j) = real(dattempvec(i,1:nparti))
              endif
@@ -416,7 +416,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
        if (ih.gt.0 .and. hfactor.gt.1.0) then
           dat(1:ntoti+nptmass,ih,j) = hfactor*dat(1:ntoti+nptmass,ih,j)
        endif
-       
+
        if (nptmass.lt.10) then
           do i=1,nptmass
              if (ndim.eq.2) then
@@ -428,7 +428,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              endif
           enddo
        endif
-       
+
 !
 !--set particle numbers
 !
@@ -453,9 +453,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
     print*,'>> end of dump file: ntotal = ',sum(npartoftype(:,j))
  endif
 
-   
+
 return
-                    
+
 end subroutine read_data
 
 !!------------------------------------------------------------
@@ -470,7 +470,7 @@ subroutine set_labels
   use geometry, only:labelcoord
   implicit none
   integer :: i
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -479,17 +479,17 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
-  ipmass = ndim+1   !  particle mass      
+  ipmass = ndim+1   !  particle mass
   ivx = ndim+2
-  
+
   ih = ndim + 1 + ndimV + 1       !  smoothing length
   iutherm = ih+1  !  thermal energy
   irho = iutherm+1     ! location of rho in data array
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(irho) = 'density'
   label(iutherm) = 'u'
@@ -522,8 +522,8 @@ subroutine set_labels
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .false.
   UseTypeInRenderings(3) = .false.
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

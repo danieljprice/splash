@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -24,7 +24,7 @@
 ! Plot exact solution for a magnetohydrodynamic shock
 ! (ie. one dimensional MHD Riemann problem)
 !
-! At the moment these are just taken from the tables in 
+! At the moment these are just taken from the tables in
 ! Ryu & Jones (1995), ApJ 442, 228 or from ruler and pencil
 ! on the results in Balsara (1998)
 !
@@ -48,7 +48,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
  INTEGER :: i,j,npts
  CHARACTER(LEN=20) :: filename
  LOGICAL :: iexist
-      
+
  PRINT*,' Plotting exact mhd shock #',ishk,' at t = ',time
 !
 !--read parameters from .shk file
@@ -76,7 +76,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
            '           vx  L: ',f8.3,' R: ',f8.3,/,   &
            '           vy  L: ',f8.3,' R: ',f8.3,/,   &
            '           vz  L: ',f8.3,' R: ',f8.3,/,   &
-           '           Bx   : ',f8.3,/,   &	   	   	   
+           '           Bx   : ',f8.3,/,   &
            '           By  L: ',f8.3,' R: ',f8.3,/,   &
            '           Bz  L: ',f8.3,' R: ',f8.3,/)
 
@@ -87,7 +87,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
     PRINT*,' Error: rho zero ',rho_L,rho_R
     RETURN
  ENDIF
- 
+
  vsound2_L = gamma*pr_L/rho_L
  vsound2_R = gamma*pr_R/rho_R
  vs_L = SQRT(vsound2_L)
@@ -120,7 +120,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
  PRINT*, 'xplot 1-9 = ',xplot(1:12)
 !
 !--set up grid for exact solution
-!          
+!
  const = 1./SQRT(4.*3.1415926536)
 
  SELECT CASE(ishk)	! which solution to plot
@@ -151,7 +151,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
        rho(9:10) = 0.234
        rho(11:12) = 0.115
        rho(13:14) = 0.125
-       
+
        pr(1:2) = 1.0
        pr(3:4) = 0.45
        pr(5) = 0.7
@@ -159,7 +159,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
        pr(7:10) = 0.52
        pr(11:12) = 0.08
        pr(13:14) = 0.1
-       
+
        vx(1:2) = 0.0
        vx(3:4) = 0.635
        vx(5) = 0.48
@@ -167,7 +167,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
        vx(7:10) = 0.595
        vx(11:12) = -0.24
        vx(13:14) = 0.0
-       
+
        vy(1:2) = 0.0
        vy(3:4) = -0.23
        vy(5) = -1.3
@@ -175,7 +175,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
        vy(7:10) = -1.58
        vy(11:12) = -0.165
        vy(13:14) = 0.
-       
+
        By(1:2) = 1.0
        By(3:4) = 2.1*const
        By(5) = -1.2*const
@@ -187,29 +187,29 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
     CASE(4)
 !
 !--isothermal MHD problem from Balsara (1998)
-!    
+!
        npts = 14
        xplot(1) = xmin
        xplot(2:3) = -0.15
        xplot(4:5) = 0.035
        xplot(6:7) = 0.07
-       xplot(8:9) = 0.17 
-       xplot(10:11) = 0.2 
+       xplot(8:9) = 0.17
+       xplot(10:11) = 0.2
        xplot(12:13) = 0.41
        xplot(14) = xmax
-              
+
        rho(1:2) = 1.08
        rho(3:6) = 1.515
        rho(7:8) = 1.745
        rho(9:12) = 1.36
        rho(13:14) = 1.0
-              
-       vx(1:2) = 1.2 
+
+       vx(1:2) = 1.2
        vx(3:6) = 0.65
        vx(7:8) = 0.62
        vx(9:12) = 0.54
        vx(13:14) = 0.0
-       
+
        vy(1:2) = 0.01
        vy(3:4) = 0.13
        vy(5:6) = 0.24
@@ -217,7 +217,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
        vy(9:10) = -0.215
        vy(11:12) = -0.125
        vy(13:14) = 0.0
-       
+
        vz(1:2) = 0.5
        vz(3:4) = 0.57
        vz(5:6) = 0.31
@@ -225,7 +225,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
        vz(9:10) = 0.165
        vz(11:12) = -0.06
        vz(13:14) = 0.0
-       
+
        By(1:2) = 3.6*const
        By(3:4) = 5.2*const
        By(5:6) = 5.7*const
@@ -233,7 +233,7 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
        By(9:10) = 5.96*const
        By(11:12) = 5.58*const
        By(13:14) = 4.0*const
-       
+
        Bz(1:2) = 2.0*const
        Bz(3:4) = 2.885*const
        Bz(5:6) = 1.76*const
@@ -241,9 +241,9 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
        Bz(9:10) = 1.85*const
        Bz(11:12) = 2.79*const
        Bz(13:14) = 2.0*const
-       
+
        pr = rho
-       
+
  END SELECT
 !
 !--determine which parameter to plot
@@ -271,13 +271,13 @@ SUBROUTINE exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax)
 	  END WHERE
        ELSE
           PRINT*,' ***isothermal: utherm solution not valid'
-          yplot = 0.	  
+          yplot = 0.
        ENDIF
-  END SELECT     
+  END SELECT
 !
 !--plot exact line using PGPLOT
 !
  CALL PGLINE(npts,xplot(1:npts),yplot(1:npts))
-            
+
  RETURN
 END SUBROUTINE exact_mhdshock

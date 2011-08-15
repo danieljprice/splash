@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -40,9 +40,9 @@
 ! ntot(maxstep)       : total number of particles in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 module flash_hdf5read
@@ -71,7 +71,7 @@ contains
 ! function which maps from the order in which columns
 ! are read from the HDF5 file to the order in which they
 ! are stored in SPLASH. Differs because there are a couple
-! of useless arrays that we do not read/store (ie. first column 
+! of useless arrays that we do not read/store (ie. first column
 ! is on/off tag, 5th column is particle ID which we use to order
 ! the particles)
 !
@@ -107,7 +107,7 @@ subroutine read_data(dumpfile,indexstart,nstepsread)
   integer, intent(in) :: indexstart
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: dumpfile
-  
+
   integer :: i,j,ncolstep,ilastrequired
   integer :: nprint,npart_max,nstep_max,ierr
   integer, dimension(0:maxplot) :: isrequired
@@ -122,7 +122,7 @@ subroutine read_data(dumpfile,indexstart,nstepsread)
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -134,13 +134,13 @@ subroutine read_data(dumpfile,indexstart,nstepsread)
   j = indexstart
   nstepsread = 0
   print "(a)",' reading FLASH tracer particles (HDF5) data format '
-  
+
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
-  
+
   call read_flash_hdf5_header(cstring(dumpfile),tread,nprint,ncolstep,ierr)
   ncolstep = ncolstep - 1   ! subtract particle ID column
   print "(a,i10,a,es10.3,a,i2)",' npart = ',nprint,' time = ',tread
-  
+
   call set_labels
   if (ih.gt.0 .and. required(ih)) required(irho) = .true.
 !
@@ -169,7 +169,7 @@ subroutine read_data(dumpfile,indexstart,nstepsread)
 
   totmass = renvironment('FSPLASH_TOTMASS',-1.0)
   if (totmass.gt.0.) then
-     print "(a,1pe10.3)",' setting total mass for all particles using FSPLASH_TOTMASS=',totmass 
+     print "(a,1pe10.3)",' setting total mass for all particles using FSPLASH_TOTMASS=',totmass
   else
      print "(a)",' FSPLASH_TOTMASS not set, assuming total mass of all particles is 1.0'
      totmass = 1.0
@@ -201,14 +201,14 @@ subroutine read_data(dumpfile,indexstart,nstepsread)
 !   "call back" to fill the dat array, below)
 !
   call read_flash_hdf5_data(cstring(dumpfile),nprint,ncolstep+1,isrequired(1:ncolstep+1),ierr)
-  
+
   if (required(ih)) then
      hfact = 1.2
      hfact = renvironment('FSPLASH_HFACT',1.2)
      print "(a,i2,a,f5.2,a)",' creating smoothing length in column ',ih,' using h =',hfact,'(m/rho)^(1/3)'
      dat(1:nprint,ih,j) = hfact*(masstype(1,j)/dat(1:nprint,irho,j))**(1./3.)
   endif
-     
+
 return
 end subroutine read_data
 
@@ -222,7 +222,7 @@ subroutine receive_data_fromc(icol,npart,temparr,id) bind(c)
   real(kind=c_double), dimension(npart), intent(in) :: temparr
   integer(kind=c_int), dimension(npart), intent(in) :: id
   integer(kind=c_int) :: i,icolput
-  
+
   icolput = icolshuffle(icol)
   if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
@@ -274,7 +274,7 @@ subroutine set_labels
   else
      irho = 4
   endif
-  
+
   if (ivx.gt.0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
@@ -291,5 +291,5 @@ subroutine set_labels
 
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -29,7 +29,7 @@ module sedov
   implicit none
   public :: exact_sedov
   private :: etau,rhou,pru,dudlneta,eta0
-  
+
 contains
 
 subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
@@ -52,13 +52,13 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
 
   ierr = 0
   print*,' Plotting 3D Sedov similarity solution at t = ',time
-  print*,' rhozero = ',rhozero,' energy = ',energy, ' rmax = ',rmax    
+  print*,' rhozero = ',rhozero,' energy = ',energy, ' rmax = ',rmax
   if (abs(time).lt.1.e-10) then
      print*,'nothing at t=0, returning'
      ierr = 1
      return
   endif
-  
+
   npts = size(rplot)
   eta_0  = eta0(gam,ndim)
   print*,' eta0 = ',eta_0
@@ -98,7 +98,7 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
   case default
      yplot(1) = 0.0
   end select
- 
+
   ishock = INT((rshock - rplot(1))/dr)
 
   if (ishock.gt.0) then
@@ -115,11 +115,11 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
 !  (I really want to start from ubar = ubarzero, but am having problems)
 !
      do i=2,ishock
-        
+
         ubar = ubarzero + (i-1)*dubar ! again need to check this
         rplot(i) = etau(ubar,gam,ndim)*rshock
 
-        select case(iplot)           
+        select case(iplot)
         case(1)  ! rho
            yplot(i) = rhoshock*rhou(ubar,gam)
         case(2)  ! pr
@@ -133,13 +133,13 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
            yplot(i) = (4./(5.*(gam+1.))*rplot(i)/time*ubar)
         end select
         !print*,'u,r, rho = ',ubar,rplot(i),rhoplot(i)
-        
+
      enddo
-     
+
   endif
 !
 !--solution ahead of shock front
-! 
+!
   ishock = max(ishock,1)
   if (ishock.lt.npts) then
      do i=ishock,npts
@@ -209,12 +209,12 @@ real function dudlneta(u,gamma)
   implicit none
   real, intent(in) :: u,gamma
   real :: term1,term2
-   
+
   term1 = u*(5.+5.*gamma + 2.*u - 6.*gamma*u)*(-1.-gamma+2.*gamma*u)
   term2 = 2.*(1.+gamma)*(1.+gamma - 2.*u - 2.*gamma*u + 2.*gamma*u**2)
 
   dudlneta = term1/term2
-  
+
 end function dudlneta
 
 !
@@ -258,12 +258,12 @@ real function eta0(gamma,ndim)
 
   if (ndim.eq.3) then
      factor = 4.*pi
-  elseif (ndim.eq.2) then 
+  elseif (ndim.eq.2) then
      factor = 2.*pi
   else
      factor = 1.
   endif
-  
+
   eta0 = (factor*8.*sum/(25.*(gamma**2 - 1.)))**(-1./REAL(ndim+2))
 
 end function eta0

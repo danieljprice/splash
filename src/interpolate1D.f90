@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -29,7 +29,7 @@
 module interpolations1D
  implicit none
  public :: interpolate1D
- 
+
 contains
 
 !--------------------------------------------------------------------------
@@ -39,7 +39,7 @@ contains
 !     that is, we compute the smoothed array according to
 !
 !     datsmooth(pixel) = sum_j w_j W(r-r_j, h_j)
-! 
+!
 !     where _j is the quantity at the neighbouring particle j and
 !     W is the smoothing kernel, for which we use the usual cubic spline.
 !     For an SPH interpolation the weight for each particle should be
@@ -97,7 +97,7 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
   const = 2./3.  ! normalisation constant
   !
   !--loop over particles
-  !      
+  !
   over_parts: do i=1,npart
      !
      !--skip particles with itype < 0
@@ -121,7 +121,7 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
      term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to
-     !               
+     !
      ipixmin = int((x(i) - radkern - xmin)/pixwidth)
      ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
 
@@ -137,7 +137,7 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
         qq = rab*hi1
         !
         !--SPH kernel - standard cubic spline
-        !     
+        !
         if (qq.lt.1.0) then
            wab = (1.-1.5*qq**2 + 0.75*qq**3)
         elseif (qq.lt.2.0) then
@@ -147,8 +147,8 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
         endif
         !
         !--calculate data value at this pixel using the summation interpolant
-        !  
-        datsmooth(ipix) = datsmooth(ipix) + term*wab          
+        !
+        datsmooth(ipix) = datsmooth(ipix) + term*wab
         if (normalise) datnorm(ipix) = datnorm(ipix) + termnorm*wab
      enddo
 

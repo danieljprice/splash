@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -34,11 +34,11 @@ subroutine colour_particles(dat,datmin,datmax,icolour,npart)
  integer, dimension(npart), intent(out) :: icolour
  integer :: i,icolourmin,icolourmax,icolourtemp
  real :: dx
- 
+
  call plot_qcir(icolourmin,icolourmax)
- 
+
  dx = (datmax - datmin)/real(icolourmax - icolourmin)
- 
+
  do i=1,npart
     icolourtemp = int((dat(i) - datmin)/dx) + icolourmin
     if (icolourtemp.gt.icolourmax) icolourtemp = icolourmax

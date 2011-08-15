@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -49,10 +49,10 @@
 ! npartoftype(maxstep): number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !                      (used in calc_quantities for calculating the pressure)
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !
 ! Partial data read implemented Nov 2006 means that columns with
@@ -137,11 +137,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
      print*,' *** you need to edit splash parameters and recompile ***'
      stop
   endif
-  
+
   if (len_trim(rootname).gt.0) then
      datfile = trim(rootname)
   else
-     print*,' **** no data read **** ' 
+     print*,' **** no data read **** '
      return
   endif
 !
@@ -156,7 +156,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      datfile=trim(rootname)//'.0'
      inquire(file=datfile,exist=iexist)
      if (.not.iexist) then
-        print "(a)",' *** error: '//trim(rootname)//': file not found ***'    
+        print "(a)",' *** error: '//trim(rootname)//': file not found ***'
         return
      endif
   endif
@@ -171,7 +171,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   usez        = lenvironment('GSPLASH_USE_Z')
 !
 !--read data from snapshots
-!  
+!
   i = istepstart
 !
 !--i0 is the offset used to read the data into the arrays
@@ -187,7 +187,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   ifile = 0
   ntotall = 0
   over_files: do while(iexist)
- 
+
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
   ifile = ifile + 1
 
@@ -210,7 +210,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
  ! read(iunit,iostat=ierr) npartoftypei(1:6),massoftypei,timetemp,ztemp, &
  !     iFlagSfr,iFlagFeedback,Nall(1:6),iFlagCool,nfiles
-  
+
   ntoti = int(sum(npartoftypei(1:6)))  ! int here is unnecessary, but avoids compiler warnings
 
   if (nfiles.gt.1) then
@@ -237,7 +237,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      endif
   endif
 
-  iformat = 0  
+  iformat = 0
   if (ifile.eq.1) then
      ncolumns = ncolstep
   !
@@ -246,10 +246,10 @@ subroutine read_data(rootname,istepstart,nstepsread)
      hsoft = 0. ! to avoid unset variable
      call set_labels
   endif
-  
+
   if (ifile.eq.1) then
      print*,'time            : ',timetemp
-     if (usez) then     
+     if (usez) then
         print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (using in legend from GSPLASH_USE_Z setting)'
      else
         print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (set GSPLASH_USE_Z=yes to use in legend)'
@@ -298,7 +298,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            call set_labels
         endif
      endif
-  
+
   !
   !--if successfully read header, increment the nstepsread counter
   !
@@ -333,7 +333,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   endif
 
   !
-  !--copy npartoftypei into allocated header arrays 
+  !--copy npartoftypei into allocated header arrays
   !  and set the offset position of particle types in the main data arrays
   !
   if (nfiles.eq.1 .or. ifile.eq.1) then
@@ -342,7 +342,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         if (nfiles.eq.1) then
            i0(itype) = sum(npartoftypei(1:itype-1)) ! this is avoid depending on Nall at all for single file read
         else
-           i0(itype) = sum(Nall(1:itype-1))        
+           i0(itype) = sum(Nall(1:itype-1))
         endif
      enddo
      npartoftype(:,i) = npartoftypei
@@ -364,11 +364,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
         time(i) = real(ztemp)
      else
         !--use this line for code time
-        time(i) = real(timetemp) 
+        time(i) = real(timetemp)
      endif
   else
      if (usez) then
-        if (abs(ztemp-time(i)).gt.tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'     
+        if (abs(ztemp-time(i)).gt.tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
      else
         if (abs(timetemp-time(i)).gt.tiny(0.)) print*,'ERROR: time different between files in multiple-file read'
      endif
@@ -396,7 +396,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            if (sum(npartoftypei).ne.index2) print*,' ERROR: number of positions .ne. sum of types'
            read (iunit, iostat=ierr) ((dat(j,1:3,i),j=i0(itype)+1,i0(itype)+npartoftypei(itype)),itype=1,ntypes)
         else
-           read (iunit, iostat=ierr) (dat(j,1:3,i),j=1,index2)        
+           read (iunit, iostat=ierr) (dat(j,1:3,i),j=1,index2)
         endif
         if (ierr /= 0) then
            print "(a)",'error encountered whilst reading positions '
@@ -447,7 +447,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         if (allocated(iamtemp)) deallocate(iamtemp)
         allocate(iamtemp(ntoti))
      endif
-     
+
      call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
      if (iformat.eq.2 .and. blocklabel.ne.'ID  ') then
         print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
@@ -468,14 +468,14 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      !--read particle masses
      !
-     !--work out total number of masses dumped 
+     !--work out total number of masses dumped
      nmassesdumped = 0
      do itype = 1,6
         if (abs(massoftypei(itype)).lt.tiny(massoftypei)) then
            nmassesdumped = nmassesdumped + npartoftypei(itype)
         endif
      enddo
-     
+
      if (ipmass.eq.0) then
         masstype(1:6,i) = real(massoftypei(1:6))
      else
@@ -508,20 +508,20 @@ subroutine read_data(rootname,istepstart,nstepsread)
                  !--work out the appropriate section of the dat array for this particle type
                  index1 = i0(itype) + 1
                  index2 = i0(itype) + npartoftypei(itype)
-                 
+
                  if (abs(massoftypei(itype)).lt.tiny(massoftypei)) then ! masses dumped
                     indexend = indexstart + npartoftypei(itype) - 1
                     if (debugmode) &
                        print*,' read ',npartoftypei(itype),' masses for '//trim(labeltype(itype))// &
                               ' particles',index1,'->',index2,indexstart,'->',indexend
-                    
+
                     dat(index1:index2,ipmass,i) = dattemp1(indexstart:indexend)
                     indexstart = indexend + 1
                  else  ! masses not dumped
                     if (debugmode) print "(a,es10.3,i10,a,i10)",&
                       ' setting masses for '//trim(labeltype(itype))//' particles = ', &
                        real(massoftypei(itype)),index1,'->',index2
-                    
+
                     dat(index1:index2,ipmass,i) = real(massoftypei(itype))
                  endif
                  !index1 = index2 + 1
@@ -550,7 +550,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         i3 = 0
         i4 = 0
         ireadtype(:) = .false.
-        
+
         if (idumpformat.eq.2) then
            if (icol+1.le.ih) then
               call read_blockheader(idumpformat,iunit,npartoftypei(1),index2,blocklabel,lenblock,nvec)
@@ -626,7 +626,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
               i1all(ntypesused) = i0(itype) + 1
               i2all(ntypesused) = i0(itype) + npartoftypei(itype)
            endif
-        enddo        
+        enddo
 
         if (npartoftypei(1).gt.0) then
            if (required(icol)) then
@@ -660,19 +660,19 @@ subroutine read_data(rootname,istepstart,nstepsread)
            endif
         endif
      enddo gas_properties
-     
+
      !if (nextraveccols.gt.0) then
      !   print*,'chemical species ',index2
      !   read (iunit, iostat=ierr) (dat(j,4:6,i),j=1,index2)
      !   if (ierr /= 0) then
      !      print "(a)",'error encountered whilst reading velocities'
      !   endif
-     !endif   
+     !endif
 !
 !--close data file now that we have finished reading data
-!                    
+!
      close(unit=iunit)
-     
+
      !
      !--DEAL WITH ACCRETED PARTICLES (in this file only)
      !  if particle ID is less than zero, treat this as an accreted particle
@@ -697,7 +697,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            if (nacc.gt.0) then
               print "(a,i10,a,/,a)",' marking ',nacc,' '//trim(labeltype(1))// &
                 ' particles with negative ID as accreted/dead', &
-                ' (giving them a negative smoothing length so they will be ignored in renderings)'        
+                ' (giving them a negative smoothing length so they will be ignored in renderings)'
            else
               print "(a)",' no particles with negative ID (i.e. accreted particles) found'
            endif
@@ -711,7 +711,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !
   gamma = 5./3.
 !
-!--set flag to indicate that only part of this file has been read 
+!--set flag to indicate that only part of this file has been read
 !
   if (.not.all(required(1:ncolstep))) ipartialread = .true.
 !
@@ -868,7 +868,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            print "(3x,a,f5.1,a,/,3x,a,f4.2,a,i1,a)", &
                  'It looks like you are using around ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
                  'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D:'
-        
+
            if (hfact.lt.1.15) then
               print "(4(/,3x,a))",'This is a quite a low number of neighbours for the cubic spline and ', &
                                   'may result in increased noise and inaccurate wave propagation speeds', &
@@ -890,7 +890,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         else
            print "(/,1x,a,f5.1,a,/,1x,a,f4.2,a,i1,a,/)", &
                 'Simulations employ ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
-                'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D'       
+                'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D'
         endif
      endif
   else
@@ -908,7 +908,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      print*,'>> last step ntot =',sum(npartoftype(:,istepstart+nstepsread-1))
   endif
   return
-  
+
 contains
 
 !!-----------------------------------------------------------------
@@ -921,7 +921,7 @@ contains
   character(len=4), intent(out) :: blklabel
   integer, intent(out) :: lenblk
   integer, intent(out) :: nvec
-  
+
   blklabel = '    '
   if (idumpformat.eq.2) then
      read(lun, iostat=ierr) blklabel,lenblk
@@ -945,7 +945,7 @@ contains
   else
      ndumped = nexpected
   endif
-  
+
   return
  end subroutine read_blockheader
 
@@ -1098,7 +1098,7 @@ subroutine set_labels
         case('EJMP')
            label(icol) = 'Energy jump'
         case('CRDE')
-           label(icol) = 'Cosmic Ray injection'        
+           label(icol) = 'Cosmic Ray injection'
         case('PRES')
            label(icol) = 'pressure'
         case('ID  ')
@@ -1159,15 +1159,15 @@ subroutine set_labels
         label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
      enddo
   endif
-  
+
   if (iax.gt.0) then
      iamvec(iax:iax+ndimV-1) = iax
      labelvec(iax:iax+ndimV-1) = 'a'
      do i=1,ndimV
         label(iax+i-1) = trim(labelvec(iax))//'\d'//labelcoord(i,1)
      enddo
-   endif 
- 
+   endif
+
   if (iBfirst.gt.0) then
      iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
      labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
@@ -1175,7 +1175,7 @@ subroutine set_labels
         label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
      enddo
   endif
-  
+
   !--set labels for each particle type
   !
   ntypes = 6
@@ -1193,7 +1193,7 @@ subroutine set_labels
   if (hsoft.gt.tiny(hsoft)) then
      UseTypeInRenderings(2) = .true.
   else
-     UseTypeInRenderings(2) = .false.  
+     UseTypeInRenderings(2) = .false.
   endif
   UseTypeInRenderings(3:6) = .false.
 
@@ -1208,7 +1208,7 @@ subroutine set_blocklabel(icol,name) bind(c)
  integer(kind=c_int), intent(in) :: icol
  character(len=256), intent(in) :: name
  integer :: inull
- 
+
  inull = index(name,achar(0))
  if (inull.gt.0) then
     blocklabelgas(icol+1) = name(1:inull)
@@ -1216,5 +1216,5 @@ subroutine set_blocklabel(icol,name) bind(c)
     blocklabelgas(icol+1) = ' '
  endif
  print*,icol,' name = ',trim(blocklabelgas(icol+1))
- 
+
 end subroutine set_blocklabel

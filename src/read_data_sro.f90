@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -52,9 +52,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -90,13 +90,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   hfact = 1.5
   dhfact3 = 1./hfact**3
 
-  dumpfile = trim(rootname)   
+  dumpfile = trim(rootname)
   !
   !--check if first data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -141,7 +141,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   if (magfield) then
      print "(1x,a)",'reading MAGMA code format (set RSPLASH_FORMAT=hydro for hydro format)'
   else
-     print "(1x,a)",'reading Stephan Rosswog (hydro) code format (set RSPLASH_FORMAT=MHD for MAGMA)'  
+     print "(1x,a)",'reading Stephan Rosswog (hydro) code format (set RSPLASH_FORMAT=MHD for MAGMA)'
   endif
 
   !
@@ -164,7 +164,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      else
         ncol = 16
         iformat = 4
-     endif 
+     endif
   endif
   n1 = 0
   n2 = 0
@@ -175,7 +175,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   j = indexstart
   nstepsread = 0
-  
+
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
   !--open the (unformatted) binary file and read the number of particles
@@ -202,7 +202,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            if (magfield) then
               print "(a)",' single precision MHD minidump'
            else
-              print "(a)",' single precision hydro minidump'              
+              print "(a)",' single precision hydro minidump'
            endif
         else
            if (magfield) then
@@ -224,7 +224,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
                 nptmass,timei
            if (magfield) then
-              print "(a)",' single precision full MHD dump'              
+              print "(a)",' single precision full MHD dump'
            else
               print "(a)",' single precision full hydro dump'
            endif
@@ -232,9 +232,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
            if (magfield) then
               print "(a)",' double precision full MHD dump'
            else
-              print "(a)",' double precision full hydro dump'              
+              print "(a)",' double precision full hydro dump'
            endif
-           timei = real(timedb)           
+           timei = real(timedb)
         endif
      endif
      print "(a,f10.2,a,i9,a,i6)",' time: ',timei,' npart: ',nprint,' nptmass: ',nptmass
@@ -254,7 +254,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !--extract dump number from filename (last 5 characters)
         read(dumpfile(len_trim(dumpfile)-4:len_trim(dumpfile)),*,iostat=ierr1) idump
         if (ierr1 /= 0) then
-           print "(a)",' error extracting dump number from filename' 
+           print "(a)",' error extracting dump number from filename'
         else
            write(abunfile,"(a,'.',i5.5)") 'abun_a7',idump
            inquire(file=abunfile,exist=iexist)
@@ -283,7 +283,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   else
 !
 !--loop over the timesteps in this file
-!     
+!
      npart_max = max(npart_max,nprint)
 !
 !--allocate/reallocate memory if j > maxstep
@@ -335,7 +335,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            dat(:,:,j) = 0. ! because ptmasses don't have all quantities
         !
         !--read full dump
-        !              
+        !
            if (doubleprec) then
               allocate(datdb(maxpart,27),stat=ierr)
               if (ierr /= 0) then
@@ -371,7 +371,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                 if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
                 if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
 
-           endif  
+           endif
         endif
      else
      !
@@ -449,7 +449,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                 if (ierr < 0) print "(a)",'*** WARNING: END OF FILE DURING READ ***'
                 if (ierr > 0) print "(a)",'*** WARNING: ERRORS DURING READ ***'
 
-           endif             
+           endif
         endif
      endif
 
@@ -474,7 +474,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         if (ierr1 /= 0) then
            print "(a)",' *** ERROR READING ABUNDANCE FILE ***'
         elseif (nprint.ne.npartoftype(1,j)) then
-           print "(a)",' *** ERROR: npart in abundance file differs from full dump ***'        
+           print "(a)",' *** ERROR: npart in abundance file differs from full dump ***'
         else
            rewind(41)
            if (doubleprec) then
@@ -490,7 +490,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            elseif (ierr1 > 0) then
               print "(a)",' *** ERRORS DURING ABUNDANCE FILE READ ***'
            elseif (nprint.ne.npartoftype(1,j)) then
-              print "(a)",' *** ERROR: npart in abundance file differs from full dump ***'        
+              print "(a)",' *** ERROR: npart in abundance file differs from full dump ***'
            endif
         endif
         close(unit=41)
@@ -518,7 +518,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         call reset_centre_of_mass(dat(1:nprint,1:3,j-1),dat(1:nprint,9,j-1),nprint)
      endif
   endif
-  
+
   !
   !--transform velocities to corotating frame
   !
@@ -544,7 +544,7 @@ contains
   real, dimension(npart,3), intent(inout) :: xyz
   real, dimension(npart) :: pmass
   real :: masstot,xcm,ycm,zcm
-  
+
   !
   !--get centre of mass
   !
@@ -552,13 +552,13 @@ contains
   xcm = SUM(pmass(1:npart)*xyz(1:npart,1))/masstot
   ycm = SUM(pmass(1:npart)*xyz(1:npart,2))/masstot
   zcm = SUM(pmass(1:npart)*xyz(1:npart,3))/masstot
-  
+
   print*,' centre of mass is at ',xcm,ycm,zcm
   print*,' resetting to zero...'
   xyz(1:npart,1) = xyz(1:npart,1) - xcm
   xyz(1:npart,2) = xyz(1:npart,2) - ycm
   xyz(1:npart,3) = xyz(1:npart,3) - zcm
-  
+
   return
  end subroutine reset_centre_of_mass
 
@@ -572,14 +572,14 @@ contains
   real, dimension(npart) :: pmass
   real :: mass1,mass2 !,xcm1,ycm1,xcm2,ycm2
   real :: vxcm1,vycm1,vxcm2,vycm2
-  
+
   !
   !--get centre of mass of star 1 and star 2
   !
   mass1 = SUM(pmass(1:n1))
 !  xcm1 = SUM(pmass(1:n1)*xy(1:n1,1))/mass1
 !  ycm1 = SUM(pmass(1:n1)*xy(1:n1,2))/mass1
-  
+
   mass2 = SUM(pmass(n1+1:npart))
 !  xcm2 = SUM(pmass(n1+1:npart)*xy(n1+1:npart,1))/mass2
 !  ycm2 = SUM(pmass(n1+1:npart)*xy(n1+1:npart,2))/mass2
@@ -591,7 +591,7 @@ contains
 
   vxcm2 = SUM(pmass(n1+1:npart)*vxy(n1+1:npart,1))/mass2
   vycm2 = SUM(pmass(n1+1:npart)*vxy(n1+1:npart,2))/mass2
-  
+
   !
   !--subtract centre of mass velocities appropriately
   !
@@ -599,9 +599,9 @@ contains
   vxy(1:n1,2) = vxy(1:n1,2) - vycm1
   vxy(n1+1:npart,1) = vxy(n1+1:npart,1) - vxcm2
   vxy(n1+1:npart,2) = vxy(n1+1:npart,2) - vycm2
- 
+
  end subroutine set_corotating_vels
-                     
+
 end subroutine read_data
 
 !!------------------------------------------------------------
@@ -622,7 +622,7 @@ subroutine set_labels
 
   minidump = .false.
   if (index(rootname(1),'minidump').ne.0) minidump = .true.
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -631,7 +631,7 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
@@ -644,7 +644,7 @@ subroutine set_labels
      label(6) = 'T'
      if (ncolumns.gt.7) then
         iBfirst = 8
-        idivB = 11 
+        idivB = 11
      endif
      if (ncolumns.gt.11) then
         label(12) = 'grad h'
@@ -672,11 +672,11 @@ subroutine set_labels
         units(idivB) = units(iBfirst)/udistcm
         unitslabel(idivB) = ' [G/cm]'
      endif
-              
+
   else !--full dump
      ivx = ndim+1
      ih = 7
-     iutherm = 8 
+     iutherm = 8
      ipmass = 9
      irho = 10
      label(11) = 'temperature [ MeV ]'
@@ -789,9 +789,9 @@ subroutine set_labels
      enddo
      label(idivB) = 'div B'
   endif
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  label(irho) = '\gr'      
+  label(irho) = '\gr'
   if (iutherm.gt.0) label(iutherm) = 'u'
   label(ih) = 'h       '
   label(ipmass) = 'particle mass'
@@ -803,8 +803,8 @@ subroutine set_labels
   labeltype(2) = 'point mass'
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .false.
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

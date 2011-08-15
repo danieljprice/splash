@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 
 !-----------------------------------------------------------------
-! Standalone module containing subroutines to transform between 
+! Standalone module containing subroutines to transform between
 ! different co-ordinate systems, for co-ordinates and vectors
 ! (e.g. from cartesian to cylindrical polar and vice versa)
 !
@@ -65,9 +65,9 @@ module geometry
 
  real, parameter, private :: pi = 3.1415926536
  real, parameter, private :: Rtorus = 1.0
- 
+
  private
- 
+
 contains
 !-----------------------------------------------------------------
 ! utility that returns whether or not a particular coordinate
@@ -76,7 +76,7 @@ contains
 logical function coord_is_length(ix,igeom)
   implicit none
   integer, intent(in) :: ix,igeom
-  
+
   coord_is_length = .false.
   select case(igeom)
   case(igeom_toroidal, igeom_spherical)
@@ -139,7 +139,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
   case(2)
      select case(itypeout)
      case default
-        !        
+        !
         ! output is cartesian (default)
         !
         if (itypeout.ne.1) print*,'warning: using default cartesian output'
@@ -157,7 +157,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
   case(3)
      select case(itypeout)
      case default
-        !        
+        !
         ! output is cartesian (default)
         !
         if (itypeout.ne.1) print*,'warning: using default cartesian output'
@@ -179,7 +179,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
   case(4)
      select case(itypeout)
      case default
-        !        
+        !
         ! output is cartesian (default)
         !
         if (itypeout.ne.1) print*,'warning: using default cartesian output'
@@ -212,7 +212,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         !
         !--output is spherical
         !
-        xout(1) = SQRT(DOT_PRODUCT(xin,xin))! r  
+        xout(1) = SQRT(DOT_PRODUCT(xin,xin))! r
         if (ndimout.ge.2) xout(2) = ATAN2(xin(2),xin(1)) ! phi
         if (ndimout.ge.3) then
            ! theta = ACOS(z/r)
@@ -243,7 +243,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
 end subroutine coord_transform
 
 !-----------------------------------------------------------------
-! Subroutine to transform vector components 
+! Subroutine to transform vector components
 !  between different co-ordinate systems
 ! (e.g. from cartesian to cylindrical polar and vice versa)
 !
@@ -310,7 +310,7 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
 !
   case(4)
      select case(itypeout)
-     case default  
+     case default
         dxdx(1,1) = COS(xin(2))*COS(xin(3))         ! dx/dr
         dxdx(1,2) = -SIN(xin(2))*COS(xin(3))        ! 1/r dx/dtheta
         dxdx(1,3) = SIN(xin(3))                     ! 1/rcyl dx/dphi
@@ -327,7 +327,7 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
   case(3)
      select case(itypeout)
      case default
-        !        
+        !
         ! output is cartesian (default)
         !
         dxdx(1,1) = COS(xin(2))*SIN(xin(3))         ! dx/dr
@@ -345,7 +345,7 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
   case(2)
      select case(itypeout)
      case default
-        !        
+        !
         ! output is cartesian (default)
         !
         sinphi = SIN(xin(2))
@@ -398,7 +398,7 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         endif
         dxdx(1,1) = xin(1)*rr1  ! dr/dx
         if (ndimin.ge.2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
-        if (ndimin.eq.3) dxdx(1,3) = xin(3)*rr1  ! dr/dz 
+        if (ndimin.eq.3) dxdx(1,3) = xin(3)*rr1  ! dr/dz
         if (ndimin.ge.2) then
            rcyl2 = dot_product(xin(1:2),xin(1:2))
            rcyl = sqrt(rcyl2)
@@ -425,13 +425,13 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
            rr1 = 1./rr
         else
            rr1 = 0.
-        endif        
+        endif
         dxdx(1,1) = xin(1)*rr1  ! dr/dx
         if (ndimin.ge.2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
         if (ndimout.ge.2) then
            dxdx(2,1) = -xin(2)*rr1 ! r*dphi/dx
            dxdx(2,2) = xin(1)*rr1  ! r*dphi/dy
-           if (ndimout.eq.3) dxdx(3,3) = 1.  ! dz/dz 
+           if (ndimout.eq.3) dxdx(3,3) = 1.  ! dz/dz
         endif
      case default
         print*,'coord transform: invalid co-ordinate type on output'
@@ -450,7 +450,7 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
 end subroutine vector_transform
 
 !------------------------------------------------------------------
-! this subroutine attempts to switch plot limits / boundaries 
+! this subroutine attempts to switch plot limits / boundaries
 ! between various co-ordinate systems.
 !------------------------------------------------------------------
 subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
@@ -464,7 +464,7 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
  if (ndim.lt.1 .or. ndim.gt.3) then
     print*,'Error: limits coord transform: ndim invalid on input'
     return
- endif 
+ endif
  print*,'modifying plot limits for new coordinate system'
 !
 !--by default do nothing
@@ -488,7 +488,7 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
        xmintemp(3) = -xmax(1)
        xmaxtemp(3) = xmax(1)
     endif
-    
+
     end select
 !
 !--input is spherical
@@ -514,7 +514,7 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
     !
     xmintemp(1:max(ndim,2)) = -xmax(1)
     xmaxtemp(1:max(ndim,2)) = xmax(1)
-        
+
     end select
 !
 !--input is cartesian
@@ -571,7 +571,7 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
 
  xmin(:) = min(xmintemp(:),xmaxtemp(:))
  xmax(:) = max(xmintemp(:),xmaxtemp(:))
- 
+
  return
 end subroutine coord_transform_limits
 

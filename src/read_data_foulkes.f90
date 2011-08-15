@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -40,9 +40,9 @@
 ! ntot(maxstep)       : total number of particles in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -76,7 +76,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -191,7 +191,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   xorigin(2) = yptmass(1)
   xorigin(3) = 0.
 
-     
+
 return
 end subroutine read_data
 
@@ -237,7 +237,7 @@ subroutine set_labels
   if (irho.gt.0) label(irho) = 'density'
   if (ih.gt.0) label(ih) = 'smoothing length'
   if (ipmass.gt.0) label(ipmass) = 'particle mass'
-  
+
   if (ivx.gt.0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
@@ -263,5 +263,5 @@ subroutine set_labels
 
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

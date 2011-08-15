@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -50,19 +50,19 @@ subroutine convert_all(outformat,igotfilenames,useall)
  integer :: ifile,idump,ntotal,ierr
  character(len=len(rootname)+4) :: filename
  character(len=10) :: string
- 
+
  required      = .true.  ! read whole dump file by default
  doanalysis    = isanalysis(outformat,noprint=.true.)
  converttogrid = isgridformat(outformat)
  lowmemorymode = .false. ! must not be true for first file
- 
+
  if (.not.doanalysis) then
  !
  !--for format conversion each dump file is independent
  !
     print "(/,5('-'),a,/)",'> CONVERTING DUMPFILES TO '//trim(ucase(outformat))//' FORMAT '
  endif
- 
+
  !
  !--if nfiles = 0 (ie. no files read from command line), then call get_data here
  !  to also get nfiles correctly prior to the loop
@@ -71,7 +71,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
     call get_data(1,igotfilenames)
     igotfilenames = .true.
  endif
- 
+
  do ifile=1,nfiles
     !--read data from dump file + calculate extra columns
     if (ifile.eq.1) then

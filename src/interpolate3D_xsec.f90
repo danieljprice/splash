@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -29,9 +29,9 @@
 
 module xsections3D
  implicit none
- real, parameter, private :: dpi = 1./3.1415926536      
+ real, parameter, private :: dpi = 1./3.1415926536
  public :: interpolate3D_fastxsec, interpolate3D_xsec_vec
- 
+
 contains
 
 !--------------------------------------------------------------------------
@@ -100,7 +100,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
   endif
   !
   !--loop over particles
-  !      
+  !
   over_parts: do i=1,npart
      !
      !--skip particles with itype < 0
@@ -131,7 +131,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
         term = termnorm*dat(i)/rescalefac
         !
         !--for each particle work out which pixels it contributes to
-        !               
+        !
         ipixmin = int((xi - radkern - xmin)/pixwidthx)
         jpixmin = int((yi - radkern - ymin)/pixwidthy)
         ipixmax = int((xi + radkern - xmin)/pixwidthx) + 1
@@ -158,7 +158,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
               qq2 = dx2i(ipix) + dy2
               !
               !--SPH kernel - standard cubic spline
-              !     
+              !
               if (qq2.lt.4.0) then
                  qq = sqrt(qq2)
                  if (qq.lt.1.0) then
@@ -168,7 +168,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
                  endif
                  !
                  !--calculate data value at this pixel using the summation interpolant
-                 !  
+                 !
                  datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
                  if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
 
@@ -189,7 +189,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
      end where
   endif
   datsmooth = datsmooth*rescalefac
-  
+
   return
 
 end subroutine interpolate3D_fastxsec
@@ -201,7 +201,7 @@ end subroutine interpolate3D_fastxsec
 !     that is, we compute the smoothed array according to
 !
 !     datsmooth(pixel) = sum_b m_b dat_b/rho_b W(r-r_b, h_b)
-! 
+!
 !     where _b is the quantity at the neighbouring particle b and
 !     W is the smoothing kernel, for which we use the usual cubic spline
 !
@@ -260,7 +260,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   const = dpi ! normalisation constant (3D)
   !
   !--loop over particles
-  !      
+  !
   over_parts: do i=1,npart
      !
      !--skip particles with itype < 0
@@ -288,7 +288,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
         termy = termnorm*vecy(i)
         !
         !--for each particle work out which pixels it contributes to
-        !               
+        !
         ipixmin = int((x(i) - radkern - xmin)/pixwidthx)
         jpixmin = int((y(i) - radkern - ymin)/pixwidthy)
         ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
@@ -311,7 +311,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
               qq = rab*hi1
               !
               !--SPH kernel - standard cubic spline
-              !     
+              !
               if (qq.lt.2.0) then
                  if (qq.lt.1.0) then
                     wab = (1.-1.5*qq**2 + 0.75*qq**3)
@@ -320,10 +320,10 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
                  endif
                  !
                  !--calculate data value at this pixel using the summation interpolant
-                 !  
-                 vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab          
-                 vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab          
-                 if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab      
+                 !
+                 vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab
+                 vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab
+                 if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
 
               endif
 

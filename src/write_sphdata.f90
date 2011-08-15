@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -50,7 +50,7 @@ logical function issphformat(string)
  case('phantom','PHANTOM')
      issphformat = .true.
  end select
- 
+
  if (.not.issphformat) then
     print "(a)",' convert mode ("splash to X dumpfiles"): '
     print "(a,/)",' splash to ascii   : convert SPH data to ascii file dumpfile.ascii'
@@ -61,7 +61,7 @@ logical function issphformat(string)
     print "(a)",  '                      enddo'
     print "(a)",  '        to phantom : convert SPH data to binary dump file for PHANTOM'
  endif
- 
+
  return
 end function issphformat
 
@@ -89,7 +89,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  case ('ascii','ASCII')
     print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.ascii WITH ',ncolumns,' COLUMNS'
 
-    !--format the header lines to go in the ascii file 
+    !--format the header lines to go in the ascii file
     write(fmtstring,"(i10,a)") ncolumns,'(1pe15.7,1x)'
     fmtstring2 = '('//trim(adjustl(fmtstring))//',i1)'
     fmtstring = '('//trim(adjustl(fmtstring))//')'
@@ -125,7 +125,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
           write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns)
           do i=1,npart
              write(iunit,fmtstring,err=100) dat(i,1:ncolumns)
-          enddo       
+          enddo
        endif
     close(iunit)
 
@@ -160,7 +160,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
        else
           do i=1,npart
              write(iunit,err=200) dat(i,1:ncolumns)
-          enddo       
+          enddo
        endif
     close(iunit)
 
@@ -244,7 +244,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     enddo
     close(unit=iunit)
 
- case('phantom','PHANTOM')  
+ case('phantom','PHANTOM')
      if (size(itype).gt.1 .and. sum(npartoftype(2:)).gt.0) then
         print "(a)",' ERROR: writing of PHANTOM dumps not implemented with mixed types'
      else
@@ -255,7 +255,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     print "(a)",' ERROR: unknown output format '''//trim(outformat)//''' in write_sphdump'
     return
  end select
- 
+
 end subroutine write_sphdump
 
 end module write_sphdata

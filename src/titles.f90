@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -29,9 +29,9 @@ module titles
  character(len=lenpagetitles), dimension(maxtitles), public :: pagetitles
  character(len=lensteplegend), dimension(maxsteplegend), public :: steplegend
  public :: read_titles, read_steplegend
- 
+
  private
- 
+
 contains
 !
 !--reads a list of titles (one per line), to be used to label each plot on page
@@ -54,7 +54,7 @@ subroutine read_titles(ntitles)
  ntitles = 0
 
  call read_asciifile(titlefile,ntitles,pagetitles)
- if (ntitles.gt.0) print "(a)",'read plot titles from file '//trim(titlefile)  
+ if (ntitles.gt.0) print "(a)",'read plot titles from file '//trim(titlefile)
 
  return
 end subroutine read_titles

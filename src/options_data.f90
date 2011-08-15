@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -66,7 +66,7 @@ subroutine defaults_set_data
   xorigin = 0.
   itrackpart = 0 ! particle tracking limits (none)
   ipartialread = .false.  ! strictly unnecessary as set in get_data
-  
+
   return
 end subroutine defaults_set_data
 
@@ -91,11 +91,11 @@ subroutine submenu_data(ichoose)
  integer             :: ians, i
  character(len=30)   :: fmtstring
  logical             :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile
- 
+
  ians = ichoose
 
  print "(a)",'----------------- data read options -------------------'
- 
+
  if (ians.le.0 .or. ians.gt.8) then
     if (iUseStepList) then
        print 10, iendatstep,print_logical(iUseStepList),print_logical(buffer_data), &
@@ -161,10 +161,10 @@ subroutine submenu_data(ichoose)
 !------------------------------------------------------------------------
  case(5,6)
     if (ians.eq.5) iCalcQuantities = .not.iCalcQuantities
-     
+
     if (iCalcQuantities .or. ians.eq.6) then
        call setup_calculated_quantities(ncalc)
-       
+
        if (ians.eq.6 .and. .not.iCalcQuantities) then
           if (ncalc.gt.0) iCalcQuantities = .true.
        endif
@@ -180,10 +180,10 @@ subroutine submenu_data(ichoose)
           endif
        endif
     else
-       print "(/a)",' Calculation of extra quantities is '//print_logical(iCalcQuantities)   
+       print "(/a)",' Calculation of extra quantities is '//print_logical(iCalcQuantities)
     endif
 !------------------------------------------------------------------------
- case(7) 
+ case(7)
     print "(a)",'current settings for conversion to physical units are:'
     call get_labels ! reset labels for printing
     do i=1,ncolumns
@@ -191,11 +191,11 @@ subroutine submenu_data(ichoose)
     enddo
     print "(a,a3,a,a3,es8.2)",'time'//trim(unitslabel(0)),' = ','time',' x ',units(0)
     print "(a,a3,a,a3,es8.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration
-    
+
     iRescaleprev = iRescale
     iRescale = .not.iRescale
     call prompt('Use physical units?',iRescale)
-    
+
     if ((iRescale .and..not. iRescaleprev) .or. (iRescaleprev .and..not.iRescale)) then
        if (buffer_data) then
           call get_data(-1,.true.)
@@ -207,13 +207,13 @@ subroutine submenu_data(ichoose)
  case(8)
     UnitsHaveChanged = .false.
     call set_units(ncolumns,numplot,UnitsHaveChanged)
-    
+
     iwriteunitsfile = .true.
     call prompt(' save units to file? ',iwriteunitsfile)
     if (iwriteunitsfile) call write_unitsfile(trim(unitsfile),numplot)
-    
+
     if (.not.iRescale .and. UnitsHaveChanged) call prompt('Apply physical units to data?',iRescale)
-    
+
     !
     !--re-read/rescale data if units have changed
     !

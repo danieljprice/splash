@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -24,7 +24,7 @@ module pagesetup
  implicit none
  public :: redraw_axes, setpage2
  real, parameter, public :: xlabeloffset = 2.5, ylabeloffset = 4.5
- 
+
  private
 
 contains
@@ -93,7 +93,7 @@ contains
 !     endif
 !     !--also leave room for title if necessary
 !     vptymax = vptymax - titleoffset*ych
-!     
+!
 !     !--also leave room for colour bar if necessary
 !     if (colourbarwidth.GT.0.) then
 !        vptxmax = vptxmax - (colourbarwidth + 1.6)*xch
@@ -151,17 +151,17 @@ contains
 !  elseif (nx*ny.gt.1) then ! change to next panel, regardless of ipagechange
 !     call plot_page
 !  endif
-  
+
   !---------------------------------
   ! set plot limits and label plot
   !---------------------------------
-    
+
 !  if (just.eq.1) then
 !     call plot_wnad(xmin,xmax,ymin,ymax)  ! repeated for when not called above
 !  else
 !     call plot_swin(xmin,xmax,ymin,ymax)
 !  endif
-  
+
   !--label plot
 !  if (axis.ge.0 .and. axis.ne.3 .and. axis.ne.4) then
      !
@@ -181,7 +181,7 @@ contains
 !     call pgmtxt('T',-titleoffset,0.5,0.5,title)
 
 !  endif
-  
+
 !  return
 !end subroutine setpage
 
@@ -241,9 +241,9 @@ end subroutine redraw_axes
 !--this subroutine determines the setup of the PGPLOT page
 !  sorts out labelling of axes, positioning of windows etc
 !  can be used as a replacement for PGENV and PGLABEL
-!  
+!
 !  divides up a single page into subpanels
-!  
+!
 !
 !  option to tile graphs appropriately on a page in pgplot
 !  divides up a single panel into subpanels, with a margin at the edge
@@ -251,7 +251,7 @@ end subroutine redraw_axes
 !
 !  for tiled plots the page setup looks like this:
 !
-!    |   |   |   | 
+!    |   |   |   |
 !  --+---+---+---+--
 !    | 1 | 2 | 3 |
 !  --+---+---+---+--
@@ -280,7 +280,7 @@ end subroutine redraw_axes
 !
   subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,axis, &
                       vmarginleftin,vmarginrightin,vmarginbottomin,vmargintopin, &
-                      colourbarwidth,titleoffset,isamexaxis,tile) 
+                      colourbarwidth,titleoffset,isamexaxis,tile)
   use plotlib,only:plot_svp,plot_swin,plot_box,plot_qvsz,plot_annotate, &
                    plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries
   implicit none
@@ -310,11 +310,11 @@ end subroutine redraw_axes
   endif
 !
 ! check for errors in input
-!      
+!
   if (nx.le.0 .or. ny.le.0) return
 !
 ! for tiled plots, adjust effective viewport size if just=1 and graphs are not square
-!      
+!
   if (tile .and. just.eq.1) then
      if (ymax.eq.ymin) then
         print*,'setpage: error tiling plots: ymax=ymin'
@@ -399,7 +399,7 @@ end subroutine redraw_axes
         endif
      elseif (aspectratio.gt.1.0) then
         if (vptsizeeffx/aspectratio.lt.vptsizeeffy) then
-           vptsizeeffy = vptsizeeffx/aspectratio     
+           vptsizeeffy = vptsizeeffx/aspectratio
         !  but this could still be bigger than the margins allow...
         else
            vptsizeeffx = vptsizeeffy*aspectratio
@@ -407,7 +407,7 @@ end subroutine redraw_axes
      endif
 
      panelsizex = vptsizeeffx/nx
-     panelsizey = vptsizeeffy/ny 
+     panelsizey = vptsizeeffy/ny
 !         print*,ix,iy,nx,ny
 !         print*,panelsizex,panelsizey,vptsizeeffx,vptsizeeffy
 
@@ -430,7 +430,7 @@ end subroutine redraw_axes
      if (titleoffset.ge.0.) then
         vptymax = vptymax - (titleoffset+1.)*ych
      endif
-     
+
      !--also leave room for colour bar if necessary
      if (colourbarwidth.GT.0.) then
         vptxmax = vptxmax - (colourbarwidth + 1.6)*xch
@@ -457,7 +457,7 @@ end subroutine redraw_axes
  if (useexactpixelboundaries) call plot_set_exactpixelboundaries()
 !
 ! option to return before actually doing anything
-!      
+!
   if (trim(title).eq.'NOPGBOX') return
 !
 ! set options for call to pgbox (draws axes) and label axes where appropriate
@@ -499,16 +499,16 @@ end subroutine redraw_axes
   if (tile) then
      !
      ! decide whether to number and label the y axis
-     !      
+     !
      if (ix.eq.1 .and. axis.ge.0) then
         yopts = '1VN'//trim(yopts)
         call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
      elseif (axis.ge.0) then
         !yopts = trim(yopts)//'N'
-     endif  
+     endif
      !
      ! decide whether to number and label the x axis
-     !      
+     !
      if (iy.eq.ny .and. axis.ge.0) then
         xopts = 'N'//trim(xopts)
         call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
@@ -542,7 +542,7 @@ end subroutine redraw_axes
 
   call plot_box(xopts,0.0,0,yopts,0.0,0)
 
-  return      
+  return
 end subroutine
 
 end module pagesetup

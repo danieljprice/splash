@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -81,7 +81,7 @@ end subroutine legend
 !  charheight : this is the text character height
 !               (legend_vec is called directly after plotting the arrows,
 !                which may use a different character size - so we plot
-!                the arrow here in the same way, but then revert to 
+!                the arrow here in the same way, but then revert to
 !                the text character height to write the text)
 !-----------------------------------------------------------------
 
@@ -99,7 +99,7 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  real :: xminnew,xmaxnew,yminnew,ymaxnew,x1,x2,y1,y2
  integer :: icolindex,mm,pp,nc,ndec
  character(len=len(label)+20) :: string
- 
+
 !
 !--convert hpos and vpos to x, y to plot arrow
 !
@@ -107,7 +107,7 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  call plot_qch(charheightarrow)
  call plot_sch(charheight)
  xpos = xmin + hpos*(xmax-xmin)
- call plot_qcs(4,xch,ych) 
+ call plot_qcs(4,xch,ych)
  ypos = ymax - (vpos + 1.)*ych
 !
 !--format string containing numerical value
@@ -127,7 +127,7 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
     call plot_numb(mm,pp,0,string,nc)
  endif
  string = '='//trim(string)
-! write(string,"('=',1pe7.1)") vecmax 
+! write(string,"('=',1pe7.1)") vecmax
 !
 !--enquire size of label
 !
@@ -165,15 +165,15 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  call plot_text(xpos,ypos,trim(label))
  xpos = xpos + dxlabel
 !
-!--Draw arrow. Here we have to perform tricks to get the arrow 
+!--Draw arrow. Here we have to perform tricks to get the arrow
 !  to appear even if outside the usual plotting area
 !
 !--save viewport settings
  call plot_qvp(0,x1,x2,y1,y2)
 !--now allow the whole screen to be the viewport...
  call plot_svp(0.0,1.0,0.0,1.0)
-!  ...but correspondingly adjust window so that x and y positions 
-!  are the same as in the old viewport 
+!  ...but correspondingly adjust window so that x and y positions
+!  are the same as in the old viewport
  xminnew = xmin - x1*(xmax-xmin)/(x2-x1)
  xmaxnew = xmax + (1.-x2)*(xmax-xmin)/(x2-x1)
  yminnew = ymin - y1*(ymax-ymin)/(y2-y1)
@@ -232,7 +232,7 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
   vpos = vposlegend + icall*vspace + 0.5 ! distance from top, in units of char height
 
   call plot_qwin(xmin,xmax,ymin,ymax) ! query xmax, ymax
-  call plot_qcs(4,xch,ych) ! query character height in x and y units 
+  call plot_qcs(4,xch,ych) ! query character height in x and y units
   call plot_qci(icolourprev)     ! save current colour index
   call plot_qls(ilinestyleprev)  ! save current line style
   call plot_qlc(ilinecapprev)    ! save the current line cap
@@ -301,7 +301,7 @@ subroutine legend_scale(dxscale,hpos,vpos,text)
   real, intent(in) :: dxscale,hpos,vpos
   character(len=*), intent(in) :: text
   real :: xmin,xmax,ymin,ymax,xch,ych,xpos,ypos
-  
+
   call plot_qwin(xmin,xmax,ymin,ymax)
   if (dxscale.gt.(xmax-xmin)) then
      print "(a)",'Error: scale size exceeds x dimensions: scale not plotted'
@@ -315,7 +315,7 @@ subroutine legend_scale(dxscale,hpos,vpos,text)
      !--write text at the position specified
      call plot_annotate('B',-vpos,hpos,0.5,trim(text))
   endif
-  
+
 end subroutine legend_scale
 
 end module legends

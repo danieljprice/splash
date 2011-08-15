@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -28,9 +28,9 @@ module interactive_routines
  private :: get_vptxy
  real, private :: xcursor = 0.5
  real, private :: ycursor = 0.5
- 
+
  private
- 
+
 contains
 !
 !--interactive tools on particle plots
@@ -41,7 +41,7 @@ contains
 !  INPUT:
 !   npart   : number of particles plotted
 !   iplotx  : quantity plotted as x axis
-!   iploty  : quantity plotted as y axis 
+!   iploty  : quantity plotted as y axis
 !   iplotz  : quantity to use in selecting particles
 !   irender : quantity rendered
 !   xcoords(npart) : x coordinates of particles
@@ -119,9 +119,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !print*,'cannot enter interactive mode: device has no cursor'
      return
   endif
-  
+
   mixedtypes = size(iamtype).ge.npart
-  
+
   char = 'A'
   xline = 0.
   yline = 0.
@@ -131,7 +131,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   !
   call plot_qwin(xminwin,xmaxwin,yminwin,ymaxwin)
   call get_posxy(xcursor,ycursor,xpt,ypt,xminwin,xmaxwin,yminwin,ymaxwin)
-  
+
 !  xpt = 0.
 !  ypt = 0.
   xpt2 = 0.
@@ -147,7 +147,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   interactivereplot = .false.
   if (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. ndim.ge.2) rotation = .true.
   verticalbar = barisvertical(iColourBarStyle)
-  
+
   if (iplotz.gt.0 .and. x_sec) then
      zptmin = zslicepos - 0.5*dzslice
      zptmax = zslicepos + 0.5*dzslice
@@ -156,17 +156,17 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      zptmin = -huge(zptmin)
      zptmax = huge(zptmax)
   endif
- 
+
   interactiveloop: do while (.not.iexit)
      ierr = plot_curs(xpt,ypt,char)
      !
      !--exit if the device is not interactive
      !
      if (ierr.eq.1) return
-  
+
      !
      !--find closest particle
-     !  
+     !
      rmin = 1.e6
      iclosest = 0
      xlength = xmax - xmin
@@ -271,13 +271,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               yline(1) = ymin
               yline(4) = ymax
               print*,' error: gradient = infinite'
-           elseif (xline(2).lt.xline(3)) then 
+           elseif (xline(2).lt.xline(3)) then
               xline(1) = xmin
               xline(4) = xmax
            else
               xline(1) = xmax
               xline(4) = xmin
-           endif           
+           endif
            ylength = yline(3)-yline(2)
            dr = sqrt(xlength**2 + ylength**2)
            print*,' (x1,y1) = (',xline(2),',',yline(2),')'
@@ -293,7 +293,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            !--plot line joining the two points
            call plot_line(4,xline,yline)
         case default
-           print*,' action cancelled'       
+           print*,' action cancelled'
         end select
      !
      !--help
@@ -312,7 +312,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         if (irender.ne.0) then
            print*,'     (applies to colour bar if mouse is over colour bar)'
         endif
-        print*,' l: (l)og / unlog axis (with cursor over the axis to change)'  
+        print*,' l: (l)og / unlog axis (with cursor over the axis to change)'
         if (irender.ne.0) then
            print*,'  (applies to colour bar if mouse is over colour bar)'
         endif
@@ -368,7 +368,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         print*,' q,Q,esc: (q)uit plotting'
         print*
         print*,' z,Z(oom) : timstepping, zoom and limits-changing options '
-        print*,'          are multiplied by a factor of 10'        
+        print*,'          are multiplied by a factor of 10'
         print*,'-------------------------------------------------------'
      case('s','S')
         itrackpart = itrackparttemp
@@ -444,7 +444,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               if (verticalbar) then
                  ierr = plot_band(3,1,xpt,ypt,xpt2,ypt2,char2)
               else
-                 ierr = plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)           
+                 ierr = plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)
               endif
               if (char2 == plot_left_click) then
                  if (verticalbar) then
@@ -454,7 +454,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                  else
                     drender = (rendermax-rendermin)/(xmax-xmin)
                     rendermax = rendermin + (max(xpt,xpt2)-xmin)*drender
-                    rendermin = rendermin + (min(xpt,xpt2)-xmin)*drender              
+                    rendermin = rendermin + (min(xpt,xpt2)-xmin)*drender
                  endif
                  print*,'setting render min = ',rendermin
                  print*,'setting render max = ',rendermax
@@ -508,7 +508,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                     .and.(zcoords(i).ge.zptmin .and. zcoords(i).le.zptmax)) then
                         read(char2,*,iostat=ierr) icolourpart(i)
                         if (ierr /=0) then
-                           print*,'*** error marking particle' 
+                           print*,'*** error marking particle'
                            icolourpart(i) = 1
                         !--translate 0 to icolourpart = -1 for non-plotted particles
                         elseif (icolourpart(i).eq.0) then
@@ -539,7 +539,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               iadvance = 0
               irerender = .true.
               interactivereplot = .true.
-              iexit = .true.           
+              iexit = .true.
            case('c') ! set circles of interaction in marked region
               ncircpart = 0
               do i=1,npart
@@ -547,7 +547,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                  .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax) &
                  .and.(zcoords(i).ge.zptmin .and. zcoords(i).le.zptmax)) then
                      if (ncircpart.lt.size(icircpart)) then
-                        ncircpart = ncircpart + 1                        
+                        ncircpart = ncircpart + 1
                         icircpart(ncircpart) = i
                         call plot_sfs(2)
                         call plot_circ(xcoords(i),ycoords(i),2.*hi(i))
@@ -583,8 +583,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               iexit = .true.
            case default
               print*,' action cancelled'
-           end select 
-        endif   
+           end select
+        endif
      !
      !--zooming
      !
@@ -967,7 +967,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
-              iexit = .true.           
+              iexit = .true.
            endif
         endif
      case('U') ! move cross section up by 2*dxsec
@@ -985,7 +985,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
-              iexit = .true.           
+              iexit = .true.
            endif
         endif
      case('d') ! move cross section down by dxsec
@@ -1000,8 +1000,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            iadvance = 0
            interactivereplot = .true.
            irerender = .true.
-           iexit = .true.           
-        endif     
+           iexit = .true.
+        endif
      case('D') ! move cross section down by 2*dxsec
         if (iplotz.gt.0 .and. ndim.eq.3) then
            if (x_sec) then
@@ -1063,7 +1063,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            irerender = .true.
            iexit = .true.
         else
-           print*,'ERROR: F has no effect if not rendering'        
+           print*,'ERROR: F has no effect if not rendering'
         endif
      case('m') ! change colour map (next scheme)
         call change_colourmap(icolourscheme,1)
@@ -1124,7 +1124,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      case('0','1','2','3','4','5','6','7','8','9')
         read(char,*,iostat=ierr) iadvance
         if (ierr /=0) then
-           print*,'*** internal error setting timestep jump' 
+           print*,'*** internal error setting timestep jump'
            iadvance = 1
         endif
         iadvance = int(zoomfac*iadvance)
@@ -1133,7 +1133,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         iadvance = int(zoomfac*10)
         print*,' setting timestep jump = ',iadvance
      !
-     !--multiply everything by a factor of 10     
+     !--multiply everything by a factor of 10
      !
      case('z','Z')
         zoomfac = 10.*zoomfac
@@ -1147,7 +1147,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      case default
         print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '" ',iachar(char)
      end select
-     
+
      !
      !--save cursor position relative to the viewport
      !
@@ -1161,7 +1161,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            if (angley.ge.360.) angley = angley - 360.
            if (angley.lt.0.) angley = angley + 360.
            if (anglex.ge.360.) anglex = anglex - 360.
-           if (anglex.lt.0.) anglex = anglex + 360.        
+           if (anglex.lt.0.) anglex = anglex + 360.
         endif
      endif
      !
@@ -1209,7 +1209,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
  real :: xlength, ylength, zoomfac
  character(len=1) :: char,char2
  logical :: iexit
- 
+
   if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
   else
@@ -1222,16 +1222,16 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
   zoomfac = 1.0
   iexit = .false.
   interactivereplot = .false.
-  
+
   do while (.not.iexit)
      ierr = plot_curs(xpt,ypt,char)
      !
      !--exit if the device is not interactive
      !
      if (ierr.eq.1) return
-  
+
      print*,'x, y = ',xpt,ypt,' function = ',char
-     
+
      select case(char)
      case('h')
         print*,'-------------- interactive mode commands --------------'
@@ -1245,7 +1245,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
         print*,' G : move legend to current position'
         print*,' T : move title to current position'
         print*,' (h)elp                       : h'
-        print*,' (q)uit plotting              : q, Q, esc'             
+        print*,' (q)uit plotting              : q, Q, esc'
         print*,'-------------------------------------------------------'
 
      case(plot_left_click) ! left click
@@ -1268,7 +1268,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
            iexit = .true.
         case default
            print*,' action cancelled'
-        end select    
+        end select
      !
      !--zooming
      !
@@ -1334,7 +1334,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
      case('0','1','2','3','4','5','6','7','8','9')
         read(char,*,iostat=ierr) iadvance
         if (ierr /=0) then
-           print*,'*** internal error setting timestep jump' 
+           print*,'*** internal error setting timestep jump'
            iadvance = 1
         endif
         iadvance = int(zoomfac*iadvance)
@@ -1343,7 +1343,7 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
         iadvance = int(zoomfac*10)
         print*,' setting timestep jump = ',iadvance
      !
-     !--multiply everything by a factor of 10     
+     !--multiply everything by a factor of 10
      !
      case('z','Z')
         zoomfac = 10.*zoomfac
@@ -1414,7 +1414,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  real, dimension(4) :: xline,yline
  character(len=1) :: char,char2
  logical :: iexit,iamincolourbar,verticalbar
- 
+
   if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
   else
@@ -1455,14 +1455,14 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
 !  print*,'istep = ',istepnew
 !  print*,'steps on page = ',istepsonpage
   verticalbar = barisvertical(iColourBarStyle)
-  
+
   interactive_loop: do while (.not.iexit)
      ierr = plot_curs(xpt,ypt,char)
      !
      !--exit if the device is not interactive
      !
      if (ierr.eq.1) return
-  
+
      !print*,'x, y = ',xpt,ypt,' function = ',char
      !
      !--determine which plot the cursor falls on
@@ -1495,10 +1495,10 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         print*,'      NB for these options cursor inside the plot changes both x and y,'
         print*,'       whereas cursor over a specific axis zooms on that axis only'
         print*,'       (applies to colour bar if mouse is over colour bar)'
-        print*,' l: (l)og / unlog axis (with cursor over the axis to change)'  
+        print*,' l: (l)og / unlog axis (with cursor over the axis to change)'
         print*,'    (applies to colour bar if mouse is over colour bar)'
         print*,' o: re-centre plot on (o)rigin'
-        print*,' C: centre plot on (C)ursor position (keeping aspect ratio)'        
+        print*,' C: centre plot on (C)ursor position (keeping aspect ratio)'
         print*,' backspace: delete annotation - over axes       : removes axes'
         print*,'                              - once no axes    : removes legends'
         print*,'                              - once no legend  : removes titles'
@@ -1523,7 +1523,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         print*,' q,Q: (q)uit plotting'
         print*
         print*,' z,Z(oom) : timstepping, zoom and limits-changing options '
-        print*,'          are multiplied by a factor of 10'        
+        print*,'          are multiplied by a factor of 10'
         print*,'---------------------------------------------------------------'
      case('g')   ! draw a line between two points
         xline(2) = xpti
@@ -1547,13 +1547,13 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               yline(1) = xmin(iplotyarr(ipanel))
               yline(4) = xmax(iplotyarr(ipanel))
               print*,' error: gradient = infinite'
-           elseif (xline(2).lt.xline(3)) then 
+           elseif (xline(2).lt.xline(3)) then
               xline(1) = xmin(iplotxarr(ipanel))
               xline(4) = xmax(iplotxarr(ipanel))
            else
               xline(1) = xmax(iplotxarr(ipanel))
               xline(4) = xmin(iplotxarr(ipanel))
-           endif           
+           endif
            ylength = yline(3)-yline(2)
            dr = sqrt(xlength**2 + ylength**2)
            print*,' (x1,y1) = (',xline(2),',',yline(2),')'
@@ -1570,7 +1570,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            call plot_line(4,xline,yline)
            call reset_panel
         case default
-           print*,' action cancelled'       
+           print*,' action cancelled'
         end select
      case('s','S')
         do i=1,size(vptxmin)
@@ -1598,7 +1598,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            if (verticalbar) then
               ierr = plot_band(3,1,xpt,ypt,xpt2,ypt2,char2)
            else
-              ierr = plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)           
+              ierr = plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)
            endif
            if (char2 == plot_left_click) then
               call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
@@ -1607,7 +1607,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                     drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
                               (vptymax(ipanel) -vptymin(ipanel))
                     xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptyi,vpty2i)-vptymin(ipanel))*drender
-                    xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptyi,vpty2i)-vptymin(ipanel))*drender               
+                    xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptyi,vpty2i)-vptymin(ipanel))*drender
                  else
                     drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
                               (vptxmax(ipanel) -vptxmin(ipanel))
@@ -1626,7 +1626,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                               (maxval(vptxmax) - minval(vptxmin))
                     xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptxi,vptx2i)-minval(vptxmin))*drender
                     xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptxi,vptx2i)-minval(vptxmin))*drender
-                 endif             
+                 endif
               endif
               print*,'setting render min, max = ',xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel))
               istep = istepnew
@@ -1654,7 +1654,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            xptmax = max(xpti,xpt2)
            yptmin = min(ypti,ypt2)
            yptmax = max(ypti,ypt2)
-              
+
            select case (char2)
            case(plot_left_click)   ! zoom if another left click
               xmin(iplotxarr(ipanel)) = xptmin
@@ -1958,7 +1958,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      case('0','1','2','3','4','5','6','7','8','9')
         read(char,*,iostat=ierr) istepjump
         if (ierr /=0) then
-           print*,'*** internal error setting timestep jump' 
+           print*,'*** internal error setting timestep jump'
            istepjump = 1
         endif
         istepjump = int(zoomfac*istepjump)
@@ -1967,7 +1967,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         istepjump = int(zoomfac*10)
         print*,' setting timestep jump = ',istepjump
      !
-     !--multiply everything by a factor of 10     
+     !--multiply everything by a factor of 10
      !
      case('z','Z')
         zoomfac = 10.*zoomfac
@@ -2014,9 +2014,9 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      endif
   enddo interactive_loop
   return
-  
+
   contains
-  
+
    !--------
    ! utility to return which panel we are in given a point on the viewport
    ! and the viewport limits for each panel.
@@ -2026,7 +2026,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
     real, intent(in) :: vptx,vpty
     real :: vptxmini,vptxmaxi,vptymini,vptymaxi
     integer :: i,icol
-    
+
     getpanel = 0
     icol = 0
     do i=1,size(vptxmin)
@@ -2046,7 +2046,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        else
           vptxmaxi = vptxmax(i)
        endif
-       
+
        !--if first row extend ymax to top of page
        if (i.le.nacross) then
           vptymaxi = 1.1
@@ -2077,17 +2077,17 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
     endif
 
     end function getpanel
-    
+
    !--------
    ! utility to return x,y coordinates in a given panel given viewport coords
    !--------
-    
+
     subroutine getxy(vptx,vpty,x,y,ipanel)
      implicit none
      real, intent(in) :: vptx,vpty
      real, intent(out) :: x,y
      integer, intent(in) :: ipanel
-     
+
      if (ipanel.gt.0) then
         x = xmin(iplotxarr(ipanel)) + (vptx-vptxmin(ipanel))/(vptxmax(ipanel)-vptxmin(ipanel)) &
                           *(xmax(iplotxarr(ipanel))-xmin(iplotxarr(ipanel)))
@@ -2097,8 +2097,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         x = 0.
         y = 0.
      endif
-     
-     return   
+
+     return
     end subroutine getxy
 
    !---
@@ -2126,34 +2126,34 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
    !--------
    ! utility to reset the drawing surface so we can draw in a panel
    !--------
-    
+
     subroutine set_panel(ipanel)
      use plotlib, only:plot_svp,plot_swin
      implicit none
      integer, intent(in) :: ipanel
-     
+
      if (ipanel.gt.0) then
         call plot_swin(xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
-        !--really should save viewport setting here, but doesn't matter 
+        !--really should save viewport setting here, but doesn't matter
         !  so long as interactive mode is the last thing called
         call plot_svp(vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel))
      endif
-     
-     return   
+
+     return
     end subroutine set_panel
-    
+
     subroutine reset_panel
      use plotlib, only:plot_swin
      implicit none
-     
+
      call plot_swin(xmini,xmaxi,ymini,ymaxi)
-     
+
     end subroutine reset_panel
 
 end subroutine interactive_multi
 
 !------------------------------------------------------------
-! utility which adapts plot limits based only on the 
+! utility which adapts plot limits based only on the
 ! particles being plotted
 !------------------------------------------------------------
 subroutine adapt_limits_interactive(labeli,np,xarr,xmin,xmax,icolourpart,iamtype,iusetype)
@@ -2172,7 +2172,7 @@ subroutine adapt_limits_interactive(labeli,np,xarr,xmin,xmax,icolourpart,iamtype
  xmin =  huge(xmin)
  xmax = -huge(xmax)
  mixedtypes = size(iamtype).ge.np
- 
+
  if (mixedtypes) then
     do i=1,np
        itype = int(iamtype(i))
@@ -2185,7 +2185,7 @@ subroutine adapt_limits_interactive(labeli,np,xarr,xmin,xmax,icolourpart,iamtype
     xmin = minval(xarr,mask=(icolourpart.ge.0))
     xmax = maxval(xarr,mask=(icolourpart.ge.0))
  endif
- 
+
  print "(1x,a)",' resetting '//trim(labeli)//' limits'
 
 end subroutine adapt_limits_interactive
@@ -2225,7 +2225,7 @@ subroutine get_posxy(vptx,vpty,x,y,xmini,xmaxi,ymini,ymaxi)
  x = xmini + (vptx-vptxmini)/(vptxmaxi-vptxmini)*(xmaxi-xmini)
  y = ymini + (vpty-vptymini)/(vptymaxi-vptymini)*(ymaxi-ymini)
 
- return   
+ return
 end subroutine get_posxy
 
 !-----------------------------------------------------------
@@ -2260,7 +2260,7 @@ end subroutine plot_number
 
 subroutine deleteaxes()
  use settings_page, only:iaxis,iPlotLegend,& !iPlotStepLegend, &
-                    iPlotTitles,iPlotScale 
+                    iPlotTitles,iPlotScale
  use settings_vecplot, only:iVecplotLegend
  implicit none
 
@@ -2300,7 +2300,7 @@ subroutine mvlegend(xi,yi,xmin,xmax,ymax,ipanel)
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  integer, intent(in), optional :: ipanel
  real :: xch,ych
- 
+
  iPlotLegend = .true.
  hposlegend = (xi - xmin)/(xmax-xmin)
  !--query character height in world coordinates
@@ -2318,7 +2318,7 @@ subroutine mvlegend(xi,yi,xmin,xmax,ymax,ipanel)
     if (ipanel.gt.0 .and. iPlotLegendOnlyOnPanel.gt.0) iPlotLegendOnlyOnPanel = ipanel
  endif
  print*,'hpos = ',hposlegend,' vpos = ',vposlegend,' just = ',fjustlegend
- 
+
  return
 end subroutine mvlegend
 !
@@ -2330,14 +2330,14 @@ subroutine mvlegendvec(xi,yi,xmin,xmax,ymax)
  implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  real :: xch,ych
- 
+
  iVecplotLegend = .true.
  hposlegendvec = (xi - xmin)/(xmax-xmin)
  !--query character height in world coordinates
  call plot_qcs(4,xch,ych)
  vposlegendvec = (ymax - yi)/ych
  print*,'hpos = ',hposlegendvec,' vpos = ',vposlegendvec
- 
+
  return
 end subroutine mvlegendvec
 !
@@ -2349,7 +2349,7 @@ subroutine mvtitle(xi,yi,xmin,xmax,ymax)
  implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  real :: xch,ych
- 
+
  iPlotTitles = .true.
  hpostitle = (xi - xmin)/(xmax-xmin)
  !--query character height in world coordinates
@@ -2365,7 +2365,7 @@ subroutine mvtitle(xi,yi,xmin,xmax,ymax)
     fjusttitle = 0.5
  endif
  print*,'hpos = ',hpostitle,' vpos = ',vpostitle,' just = ',fjusttitle
- 
+
  return
 end subroutine mvtitle
 
@@ -2385,10 +2385,10 @@ subroutine save_limits(iplot,xmin,xmax,setlim2)
  logical, intent(in), optional :: setlim2
  logical :: uselim2
  real    :: xmintemp,xmaxtemp
- 
+
  uselim2 = .false.
  if (present(setlim2)) uselim2 = setlim2
- 
+
  if (itrans(iplot).ne.0) then
     xmintemp = xmin
     xmaxtemp = xmax
@@ -2417,7 +2417,7 @@ subroutine save_limits(iplot,xmin,xmax,setlim2)
  else
     iadapt = .false.
  endif
- 
+
  return
 end subroutine save_limits
 
@@ -2432,7 +2432,7 @@ subroutine restrict_range(iplot,xmin,xmax)
  integer, intent(in) :: iplot
  real, intent(in) :: xmin,xmax
  real :: xmintemp,xmaxtemp
- 
+
  if (itrans(iplot).ne.0) then
     xmintemp = xmin
     xmaxtemp = xmax
@@ -2443,7 +2443,7 @@ subroutine restrict_range(iplot,xmin,xmax)
     range(iplot,1) = xmin
     range(iplot,2) = xmax
  endif
- 
+
  return
 end subroutine restrict_range
 
@@ -2453,9 +2453,9 @@ end subroutine restrict_range
 subroutine reset_ranges()
  use limits, only:reset_all_ranges
  implicit none
- 
+
  call reset_all_ranges()
- 
+
  return
 end subroutine reset_ranges
 
@@ -2466,9 +2466,9 @@ subroutine reset_limits2(icol)
  use limits, only:reset_lim2
  implicit none
  integer, intent(in) :: icol
- 
+
  call reset_lim2(icol)
- 
+
  return
 end subroutine reset_limits2
 
@@ -2484,7 +2484,7 @@ subroutine save_limits_track(iplot,xmin,xmax,xi)
  integer, intent(in) :: iplot
  real, intent(in) :: xmin,xmax,xi
  real :: xmintemp,xmaxtemp
- 
+
  if (iplot.gt.ndim) then
     print*,'ERROR in save_limits_track: iplot>ndim'
     return
@@ -2498,7 +2498,7 @@ subroutine save_limits_track(iplot,xmin,xmax,xi)
     xminoffset_track(iplot) = abs(xi - xmin)
     xmaxoffset_track(iplot) = abs(xmax - xi)
  endif
- 
+
  return
 end subroutine save_limits_track
 !
@@ -2521,7 +2521,7 @@ subroutine save_itrackpart_recalcradius()
        endif
     endif
  endif
-  
+
  return
 end subroutine save_itrackpart_recalcradius
 !
@@ -2535,7 +2535,7 @@ subroutine change_itrans(iplot,xmin,xmax)
  implicit none
  integer, intent(in) :: iplot
  real, intent(inout) :: xmin, xmax
- 
+
  if (iplot.le.numplot) then
     if (itrans(iplot).eq.1) then
        itrans(iplot) = 0
@@ -2547,7 +2547,7 @@ subroutine change_itrans(iplot,xmin,xmax)
        call transform_limits(xmin,xmax,itrans(iplot))
     endif
  endif
- 
+
 end subroutine change_itrans
 
 subroutine change_itrans2(iplot,xmin,xmax,xmina,xmaxa)
@@ -2557,7 +2557,7 @@ subroutine change_itrans2(iplot,xmin,xmax,xmina,xmaxa)
  implicit none
  integer, intent(in) :: iplot
  real, intent(inout) :: xmin, xmax, xmina, xmaxa
- 
+
  if (iplot.le.numplot) then
     if (itrans(iplot).eq.1) then
        itrans(iplot) = 0
@@ -2571,7 +2571,7 @@ subroutine change_itrans2(iplot,xmin,xmax,xmina,xmaxa)
        call transform_limits(xmina,xmaxa,itrans(iplot))
     endif
  endif
- 
+
 end subroutine change_itrans2
 
 !
@@ -2582,13 +2582,13 @@ subroutine save_rotation(ndim,anglexi,angleyi,anglezi)
  implicit none
  integer, intent(in) :: ndim
  real, intent(in) :: anglexi,angleyi,anglezi
- 
+
  anglez = anglezi
  if (ndim.ge.3) then
     anglex = anglexi
     angley = angleyi
  endif
- 
+
  return
 end subroutine save_rotation
 
@@ -2600,10 +2600,10 @@ subroutine save_xsecpos(xsecpos,xsec)
  implicit none
  real, intent(in) :: xsecpos
  logical, intent(in) :: xsec
- 
+
  xsecpos_nomulti = xsecpos
  xsec_nomulti = xsec
- 
+
  return
 end subroutine save_xsecpos
 
@@ -2614,10 +2614,10 @@ subroutine save_perspective(zpos,dz)
  use settings_xsecrot, only:zobserver,dzscreenfromobserver
  implicit none
  real, intent(in) :: zpos,dz
- 
+
  zobserver = zpos
  dzscreenfromobserver = dz
- 
+
  return
 end subroutine save_perspective
 !
@@ -2627,9 +2627,9 @@ subroutine save_opacity(taupartdepthi)
  use settings_xsecrot, only:taupartdepth
  implicit none
  real, intent(in) :: taupartdepthi
- 
+
  taupartdepth = taupartdepthi
- 
+
  return
 end subroutine save_opacity
 !
@@ -2641,12 +2641,12 @@ subroutine save_circles(ncircpartset,icircpartset)
  integer, intent(in) :: ncircpartset
  integer, intent(in), dimension(:) :: icircpartset
  integer :: imax
- 
+
  imax = min(size(icircpartset),size(icircpart),ncircpartset)
  ncircpart = imax
  icircpart(1:imax) = icircpartset(1:imax)
  print*,'saving ',imax,' circles of interaction only'
- 
+
 end subroutine save_circles
 !
 !--change colour map
@@ -2656,12 +2656,12 @@ subroutine change_colourmap(imap,istep)
  implicit none
  integer, intent(inout) :: imap
  integer, intent(in) :: istep
- 
+
  imap = imap + istep
  if (abs(imap).gt.ncolourschemes) imap = 1
  if (abs(imap).lt.1) imap = ncolourschemes
  call colour_set(imap)
- 
+
 end subroutine change_colourmap
 
 end module interactive_routines

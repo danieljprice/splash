@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -69,7 +69,7 @@ end module particle_data
 
 module part_utils
  implicit none
- 
+
  public :: igettype
  private
 
@@ -112,7 +112,7 @@ module filenames
  integer, dimension(maxfile) :: nstepsinfile
  character(len=68)  :: tagline = &
   'SPLASH: A visualisation tool for SPH data (c)2004-2011 Daniel Price'
- 
+
  public
 
 contains
@@ -126,7 +126,7 @@ contains
   animfile     = trim(adjustl(prefix))//'.anim'
   unitsfile    = trim(adjustl(prefix))//'.units'
   fileprefix   = trim(adjustl(prefix))
-  
+
   return
  end subroutine set_filenames
 
@@ -152,7 +152,7 @@ module labels
  integer :: isurfdens,itoomre
  integer :: ipdf,icolpixmap
  integer :: irhorestframe
- 
+
  public
 
 contains
@@ -187,7 +187,7 @@ contains
   iradenergy = 0
   icolpixmap = 0
   irhorestframe = 0
-  
+
   return
  end subroutine reset_columnids
 
@@ -195,12 +195,12 @@ contains
   implicit none
   integer, intent(in) :: icol,ndim
   integer :: i
-  
+
   is_coord = .false.
   do i=1,ndim
      if (ix(i).eq.icol) is_coord = .true.
   enddo
-  
+
  end function is_coord
 
 end module labels
@@ -216,7 +216,7 @@ module settings_data
  implicit none
  integer :: numplot,ncalc,ncolumns,nextra
  integer :: ndataplots
- integer :: ndim, ndimv 
+ integer :: ndim, ndimv
  integer :: icoords,icoordsnew,iformat,ntypes
  integer :: istartatstep,iendatstep,nfreq
  integer :: itrackpart
@@ -242,7 +242,7 @@ end module settings_data
 module multiplot
  use params
  implicit none
- integer :: nyplotmulti 
+ integer :: nyplotmulti
  integer, dimension(maxplot) :: multiplotx,multiploty
  integer, dimension(maxplot) :: irendermulti,ivecplotmulti
  integer, dimension(maxplot) :: itrans,icontourmulti

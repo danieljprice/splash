@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -44,25 +44,25 @@ contains
     character(len=5) :: fmtstring
     integer, intent(in), optional :: errval
     integer :: ierr
-    
+
     call get_environment(variable,string)
-    if (len_trim(string).gt.0) then  
+    if (len_trim(string).gt.0) then
     !--use a formatted read - this is to avoid a compiler bug
     !  should in general be more robust anyway
        write(fmtstring,"(a,i2,a)",iostat=ierr) '(i',len_trim(string),')'
        read(string,fmtstring,iostat=ierr) ienvironment
     else
        ierr = 1
-    endif    
+    endif
 
     if (ierr /= 0) then
        if (present(errval)) then
-          ienvironment = errval 
+          ienvironment = errval
        else
           ienvironment = 0
        endif
     endif
- 
+
  end function ienvironment
 
  !
@@ -78,17 +78,17 @@ contains
     character(len=30) :: string
     real, intent(in), optional :: errval
     integer :: ierr
-    
+
     call get_environment(variable,string)
     read(string,*,iostat=ierr) renvironment
     if (ierr /= 0) then
        if (present(errval)) then
-          renvironment = errval 
+          renvironment = errval
        else
           renvironment = 0.
        endif
     endif
- 
+
  end function renvironment
 
  !
@@ -98,7 +98,7 @@ contains
  logical function lenvironment(variable)
     character(len=*), intent(in) :: variable
     character(len=30) :: string
-    
+
     call get_environment(variable,string)
     if (string(1:1).eq.'y'.or.string(1:1).eq.'Y' &
     .or.string(1:1).eq.'t'.or.string(1:1).eq.'T' &
@@ -108,11 +108,11 @@ contains
     else
        lenvironment = .false.
     endif
- 
+
  end function lenvironment
 
  !
- !--this routine returns an arbitrary number of 
+ !--this routine returns an arbitrary number of
  !  comma separated strings
  !
  subroutine envlist(variable,nlist,list)
@@ -124,15 +124,15 @@ contains
     character(len=10) :: dummy
     integer :: i1,i2,ierr
     logical :: notlistfull
-    
+
     !--set list to blank strings if argument is present
     if (present(list)) then
        list = ' '
     endif
-    
+
     !--get envlist from the environment
     call get_environment(variable,string)
-    
+
     !--split the string on commas
     i1 = 1
     i2 = index(string,',')-1
@@ -160,8 +160,8 @@ contains
           i2 = i2 + i1 - 2
        endif
     enddo
-    
+
     return
  end subroutine envlist
- 
+
 end module system_utils

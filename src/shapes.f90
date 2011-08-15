@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -30,7 +30,7 @@ module shapes
  integer, parameter, private :: maxshapes = 10
  integer, parameter, private :: maxshapetype = 7
  integer :: nshapes
- 
+
  type shapedef
    integer :: itype
    integer :: icolour
@@ -59,14 +59,14 @@ module shapes
  namelist /shapeopts/ nshapes,shape
 
  real, parameter, private :: pi = 3.1415926536
- 
+
 contains
 !-----------------------------------------------------------------
 ! shape default settings
 !-----------------------------------------------------------------
 subroutine defaults_set_shapes
  implicit none
- 
+
  nshapes = 0
  shape(:)%itype = 0
  shape(:)%icolour = 1
@@ -82,7 +82,7 @@ subroutine defaults_set_shapes
  shape(:)%angle = 0.
  shape(:)%text = ' '
  shape(:)%fjust = 0.
- 
+
  return
 end subroutine defaults_set_shapes
 
@@ -125,7 +125,7 @@ subroutine submenu_shapes()
     itype = shape(ishape)%itype
     if (itype.gt.0) then
        print "(a,i1,a,/)",'shape ',ishape,': type = '//trim(labelshapetype(itype))
-       
+
        if (itype.eq.7) then
           shape(ishape)%iunits = 1
        else
@@ -176,7 +176,7 @@ subroutine submenu_shapes()
              endif
              itry = itry + 1
           enddo
-          if (ierr.ne.0) then 
+          if (ierr.ne.0) then
              print "(a)",' *** too many tries, aborting ***'
              ishape = ishape - 1
              cycle over_shapes
@@ -189,7 +189,7 @@ subroutine submenu_shapes()
        endif
        if (itype.eq.1 .or. itype.eq.2 .or. itype.eq.4) then
           call prompt('enter fill style (1=solid,2=outline,3=hatch,4=crosshatch) for '// &
-                      trim(labelshapetype(itype)),shape(ishape)%ifillstyle,0,5)       
+                      trim(labelshapetype(itype)),shape(ishape)%ifillstyle,0,5)
        endif
        if (itype.ne.6) then
           call prompt('enter line style (1=solid,2=dash,3=dotdash,4=dot,5=dashdot) for '// &
@@ -221,7 +221,7 @@ subroutine submenu_shapes()
  else
     print "(a)",' NO SHAPES SET '
  endif
- 
+
  return
 end subroutine submenu_shapes
 
@@ -279,7 +279,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
           if (xlen.gt.dxplot .or. ylen.gt.dyplot) then
              print "(2x,a)",'Error: shape size exceeds plot dimensions: not plotted'
           else
-             call plot_rect(xpos-0.5*xlen,xpos+0.5*xlen,ypos-0.5*ylen,ypos + 0.5*ylen)   
+             call plot_rect(xpos-0.5*xlen,xpos+0.5*xlen,ypos-0.5*ylen,ypos + 0.5*ylen)
           endif
        case(3) ! arrow
           dx = xlen*cos(anglerad)
@@ -326,12 +326,12 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
        end select
     endif
  enddo
- 
+
  call plot_sci(icolourprev)
  call plot_sls(linestyleprev)
  call plot_slw(linewidthprev)
  call plot_sfs(ifillstyle)
- 
+
 end subroutine plot_shapes
 
 integer function inshape(xpt,ypt,itransx,itransy)
@@ -347,7 +347,7 @@ integer function inshape(xpt,ypt,itransx,itransy)
  call plot_qwin(xmin,xmax,ymin,ymax)
  dxplot = xmax - xmin
  dyplot = ymax - ymin
- 
+
  inshape = 0
  do i=1,nshapes
 
@@ -356,13 +356,13 @@ integer function inshape(xpt,ypt,itransx,itransy)
 
     select case(shape(i)%itype)
     case(1,2)  ! square, rectangle
-    
+
     case(3) ! arrow
-    
+
     case(4) ! circle
-    
+
     case(5) ! line
-    
+
     case(6) ! text
        call plot_qtxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text),xbox,ybox)
        if (xpt.gt.minval(xbox) .and. xpt.le.maxval(xbox) &
@@ -371,7 +371,7 @@ integer function inshape(xpt,ypt,itransx,itransy)
        endif
     end select
  enddo
- 
+
 end function inshape
 
 subroutine edit_shape(i,xpt,ypt,itransx,itransy)
@@ -393,7 +393,7 @@ subroutine edit_shape(i,xpt,ypt,itransx,itransy)
  case(6)
     call edit_textbox(xpos,ypos,shape(i)%angle,shape(i)%text)
  case default
- 
+
  end select
 
 end subroutine edit_shape
@@ -500,7 +500,7 @@ use plotlib, only:plot_stbg,plot_ptxt,plot_curs
  character(len=*), intent(inout) :: string
  character(len=len(string)) :: oldstring
  integer :: i,ierr
- 
+
  print*,'editing text box, esc or ctrl-c to quit'
  call plot_stbg(0)
  mychar = ' '
@@ -532,7 +532,7 @@ use plotlib, only:plot_stbg,plot_ptxt,plot_curs
     endif
     ierr = plot_curs(xpt2,ypt2,mychar)
  enddo
- 
+
  !--if ctrl-c or esc, restore original string
  if (mychar.eq.achar(3) .or. mychar.eq.achar(27)) then
     string = oldstring
@@ -541,7 +541,7 @@ use plotlib, only:plot_stbg,plot_ptxt,plot_curs
     print*,'done: text = "'//trim(string)//'"'
  endif
  call plot_stbg(-1)
- 
+
 end subroutine edit_textbox
 
 

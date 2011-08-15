@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -29,9 +29,9 @@ module interpolate_vec
  implicit none
  public :: interpolate_vec_average
  public :: mask_vectors
- 
+
  private
- 
+
 contains
 
 !--------------------------------------------------------------------------
@@ -57,7 +57,7 @@ subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
  integer :: icellx,icelly,j
  real :: dxcell1,dycell1
  character(len=16) :: chmin
- 
+
  !--write nice, neat information line
  write(chmin,"(g10.0)") minincell
  print "(2x,a)",'(hiding arrows where there are < '//trim(adjustl(chmin))//' particles in pixel cell)'
@@ -86,7 +86,7 @@ subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
     vecpixx = blankval
     vecpixy = blankval
  end where
- 
+
  return
 end subroutine mask_vectors
 
@@ -129,8 +129,8 @@ subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
   endif
   !
   !--interpolation is to a coarser grid, so just average
-  !  bin particles into cells using a link list 
-  !     
+  !  bin particles into cells using a link list
+  !
   ihoc(:,:) = -1   ! head of chain
   numcell(:,:) = 0
   do i=1,npart
@@ -166,12 +166,12 @@ subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
      do i=1,npixx
         if (numcell(i,j).ne.0) then
            vecpixx(i,j) = vecpixx(i,j)/float(numcell(i,j))
-           vecpixy(i,j) = vecpixy(i,j)/float(numcell(i,j))         
+           vecpixy(i,j) = vecpixy(i,j)/float(numcell(i,j))
         endif
      enddo
   enddo
   return
-  
+
 end subroutine interpolate_vec_average
 
 end module interpolate_vec

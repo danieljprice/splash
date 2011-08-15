@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -69,7 +69,7 @@ subroutine defaults_set_page
   ipapersize = 0        ! paper size option
   papersizex = 0.0      ! size of x paper (no call to PGPAP if zero)
   aspectratio = 0.0     ! aspect ratio of paper (no call to PGPAP if zero)
-  
+
   iPlotLegend = .true.  ! whether or not to plot legend
   iPlotStepLegend = .false. ! timestep legend
   hposlegend = 0.95     ! horizontal legend position as fraction of viewport
@@ -78,7 +78,7 @@ subroutine defaults_set_page
   alphalegend = 0.5    ! transparency of overlaid annotation
   legendtext = 't='
   iPlotLegendOnlyOnPanel = 0
-  
+
   iPlotTitles = .false.  ! whether or not to plot titles
   hpostitle = 0.5       ! horizontal title position as fraction of viewport
   vpostitle = 1.0       ! vertical title position in character heights
@@ -97,7 +97,7 @@ subroutine defaults_set_page
   modlinestyle = 1
   modcolour = 1
   maxcolour = 16
-  
+
   usesquarexy = .true. ! spatial dimensions have same scale
   call defaults_set_shapes
 
@@ -118,7 +118,7 @@ subroutine defaults_set_page_ev
   hposlegend      = 0.1      ! horizontal legend position as fraction of viewport
   vposlegend      = 2.0      ! vertical legend position in character heights
   fjustlegend     = 0.0      ! justification factor for legend
-  
+
   return
 end subroutine defaults_set_page_ev
 
@@ -136,10 +136,10 @@ subroutine submenu_page(ichoose)
  real                :: papersizey
 
  iaction = ichoose
- 
+
  papersizey = papersizex*aspectratio
  print "(a)",'---------------- page setup options -------------------'
- 
+
  if (iaction.le.0 .or. iaction.gt.9) then
     print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,print_logical(tile), &
              trim(print_logical(usesquarexy)),charheight,linewidth,&
@@ -184,14 +184,14 @@ subroutine submenu_page(ichoose)
            call prompt('How often to change line style (1=every step, 2=every 2nd step etc.)',modlinestyle,1)
            call prompt('Enter max number of line styles to cycle through before repeating (5=PGPLOT max)',maxlinestyle,1,5)
         endif
-        
+
         if (iColourEachStep .or. iChangeStyles) then
            print "(/,a,/,a)",' (to change the legend text, create a file called', &
                        '  ''legend'' in the working directory, with one label per line)'
            call prompt('Plot legend of marker styles/colours?',iPlotStepLegend)
         endif
      endif
-     return          
+     return
 !------------------------------------------------------------------------
   case(2)
      print*,'-4 : draw box and major tick marks only;'
@@ -219,7 +219,7 @@ subroutine submenu_page(ichoose)
      print*,' 7) Custom size '
      call prompt(' Enter option for paper size ',ipapersize,0,7)
      select case(ipapersize)
-     case(1) 
+     case(1)
         papersizex = 0.25*11.7
         aspectratio = 1.0
      case(2)
@@ -227,13 +227,13 @@ subroutine submenu_page(ichoose)
         aspectratio = 1.0
      case(3)
         papersizex = 8.0
-        aspectratio = 1.0     
-     case(4) 
-        papersizex = 0.5*11.7 
+        aspectratio = 1.0
+     case(4)
+        papersizex = 0.5*11.7
         aspectratio = 1./sqrt(2.)
      case(5)
         papersizex = 11.7
-        aspectratio = 0.5/sqrt(2.)         
+        aspectratio = 0.5/sqrt(2.)
      case(6)
         papersizex = 11.7
          papersizey = 6.0
@@ -248,9 +248,9 @@ subroutine submenu_page(ichoose)
         endif
      case DEFAULT
         papersizex = 0.0         ! no call to PGPAP if they are zero
-        aspectratio = 0.0         
+        aspectratio = 0.0
      end select
-     return            
+     return
 !------------------------------------------------------------------------
   case(4)
      call prompt('Enter number of plots across (columns):',nacross,1,maxplot)
@@ -289,7 +289,7 @@ subroutine submenu_page(ichoose)
        ' Overlaid (that is, drawn inside the plot borders) axis ',&
        ' ticks, legend text and titles are by default plotted ', &
        ' in the foreground colour'
-     
+
      if (iPageColours.gt.0) then
         print "(a,/)",' [i.e. '//trim(colour_fore(iPageColours))//'].'
         call prompt('Do you want to plot these in background colour [i.e. '&
@@ -302,10 +302,10 @@ subroutine submenu_page(ichoose)
      if (iUseBackgroundColourForAxes .and. plotlib_supports_alpha) then
         call prompt('Enter opacity for overlaid text and annotation ',alphalegend,0.0,1.0)
      endif
-     
+
      return
   end select
- 
+
  return
 end subroutine submenu_page
 
@@ -333,7 +333,7 @@ subroutine submenu_legend(ichoose)
     print "(a,/,a,/)",' To set the plot titles, create a file called', &
              '  '''//trim(fileprefix)//'.titles'' in the working directory, with one title per line'
  endif
-  
+
  if (iaction.le.0 .or. iaction.gt.6) then
     !--format shape settings string
     if (nshapes.gt.0) then
@@ -381,14 +381,14 @@ subroutine submenu_legend(ichoose)
        call prompt('Enter horizontal position as fraction of viewport', &
             hposlegend,0.0,1.0)
        call prompt('Enter vertical position in character heights from top',vposlegend)
-       call prompt('Enter justification factor (0.0=left 1.0=right)',fjustlegend,0.0,1.0)         
+       call prompt('Enter justification factor (0.0=left 1.0=right)',fjustlegend,0.0,1.0)
 
     endif
  case(2)
     print "(/,a,/,a,/)",' To set the plot titles, create a file called', &
              '  '''//trim(fileprefix)//'.titles'' in the working directory, with one title per line'
     call prompt('Use plot titles? ',iPlotTitles)
-    print "(a)",'Titles are '//print_logical(iPlotTitles) 
+    print "(a)",'Titles are '//print_logical(iPlotTitles)
     if (iPlotTitles) then
        print "(a)",'------ set title position (can also be done interactively) --------'
        call prompt('Enter horizontal position as fraction of viewport', &

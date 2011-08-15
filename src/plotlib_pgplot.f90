@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -24,18 +24,18 @@
 !  The plotlib module in SPLASH provides a consistent api so that SPLASH
 !  can be compiled against different graphics libraries as the backend
 !
-!  This version provides an interface to Tim Pearson's PGPLOT, 
+!  This version provides an interface to Tim Pearson's PGPLOT,
 !   which was the original backend used in SPLASH v1.x. Thus,
 !   the functions mostly translate directly to PGPLOT equivalents,
-!   and basically this is a Fortran 90 interface for PGPLOT. 
+!   and basically this is a Fortran 90 interface for PGPLOT.
 !
 ! Interface written by James Wetter and Daniel Price (2010)
 !---------------------------------------------------------------------------
-module plotlib 
+module plotlib
   implicit none
   logical, parameter :: plotlib_is_pgplot = .true.
   logical, parameter :: plotlib_supports_alpha = .false.
-  
+
 public
 
 character(len=1),parameter :: plot_left_click = 'A'
@@ -284,7 +284,7 @@ end interface
 
 interface plot_curs
  !  integer function pgcurs(x,y,ch)
- !    real,intent(inout)             :: x,y 
+ !    real,intent(inout)             :: x,y
  !    character*(*),intent(out) :: ch
  !  end function pgcurs
    module procedure pgcurs_sub
@@ -486,9 +486,9 @@ end subroutine plot_init
 subroutine plot_slc(lc)
   implicit none
   integer,intent(in) :: lc
-  
+
   !--line cap has no effect in PGPLOT
-  
+
 end subroutine plot_slc
 
 subroutine plot_set_opacity(alpha)
@@ -511,20 +511,20 @@ logical function plot_qcur()
   character(len=10) :: string
   integer           :: nc
   call pgqinf('CURSOR',string,nc)
-  
+
   if(string(1:nc).eq.'YES') then
      plot_qcur = .true.
   else
      plot_qcur = .false.
   end if
-  
+
 end function plot_qcur
 
 !
 !--inverts the return value of pgcurs
 !
 function pgcurs_sub(x,y,ch)
-  real,intent(inout)        :: x,y 
+  real,intent(inout)        :: x,y
   character*(*),intent(out) :: ch
   integer :: pgcurs_sub,ierr
   integer, external :: pgcurs
@@ -591,7 +591,7 @@ subroutine plot_set_exactpixelboundaries()
  call pgqvp(0,vptxmin,vptxmax,vptymin,vptymax)
  !print*,'got ',vptxmin,vptxmax,vptymin,vptymax
  !
- ! adjust viewport on pixel devices so that 
+ ! adjust viewport on pixel devices so that
  ! boundaries lie exactly on pixel boundaries
  !
  !  query viewport size in pixels

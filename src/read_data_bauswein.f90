@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -33,7 +33,7 @@
 !  ENVIRONMENT VARIABLES:
 !
 ! BSPLASH_R8 if 'YES' or 'TRUE' then assumes data is double precision
-! BSPLASH_NCOL to change the number of columns read from the file, 
+! BSPLASH_NCOL to change the number of columns read from the file,
 ! e.g. setenv BSPLASH_NCOL=22
 !
 ! the data is stored in the global array dat
@@ -50,9 +50,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -78,13 +78,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstepsread = 0
   nstep_max = 0
   npart_max = maxpart
-  dumpfile = trim(rootname)   
+  dumpfile = trim(rootname)
   !
   !--check if first data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -92,11 +92,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  
+
   !--number of columns to read from file
   ncol = 21
   doubleprec = .false.
-  
+
   !--can override these settings with environment variables
   if (lenvironment('BSPLASH_R8')) doubleprec = .true.
   ncoltemp = ienvironment('BSPLASH_NCOL')
@@ -107,7 +107,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstep_max = max(nstep_max,indexstart,1)
   j = indexstart
   nstepsread = 0
-  
+
   print "(1x,a)",'reading Andreas Bauswein format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
@@ -124,7 +124,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (doubleprec) then
         read(15,end=55,iostat=ierr) nprint,n1,timedb,dtdb
         timei = real(timedb)
-        dti = real(dtdb)    
+        dti = real(dtdb)
      else
         read(15,end=55,iostat=ierr) nprint,n1,timei,dti
      endif
@@ -135,7 +135,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         close(15)
         return
      elseif (ierr /= 0) then
-        print "(a)",'*** WARNING: ERRORS READING HEADER ***'  
+        print "(a)",'*** WARNING: ERRORS READING HEADER ***'
      endif
      if (timei.lt.0. .or. dti.lt.0.) print "(a)",'*** ERROR: t < 0: use setenv BSPLASH_R8=TRUE for double precision'
      ncolumns = ncol
@@ -173,7 +173,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
 44   continue
      if (nerr.gt.0) print *,'*** WARNING: ERRORS DURING READ ON ',nerr,' LINES'
-     
+
      if (nread.lt.nprint) then
         print "(a)",' WARNING: END OF FILE: read to particle ',nread
         nprint = nread
@@ -211,7 +211,7 @@ subroutine set_labels
   !use settings_units, only:units,unitslabel
   implicit none
   integer :: i,ipmom
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -220,7 +220,7 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
@@ -230,7 +230,7 @@ subroutine set_labels
   iutherm = 11
   ipmass = 14
   irho = 17
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(ih) = 'h'
   if (iutherm.gt.0) label(iutherm) = 'u'
@@ -266,8 +266,8 @@ subroutine set_labels
   ntypes = 1
   labeltype(1) = 'gas'
   UseTypeInRenderings(1) = .true.
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

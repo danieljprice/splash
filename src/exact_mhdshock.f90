@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -24,7 +24,7 @@
 ! Plot exact solution for a magnetohydrodynamic shock
 ! (ie. one dimensional MHD Riemann problem)
 !
-! For want of a better solution these are just taken from the tables in 
+! For want of a better solution these are just taken from the tables in
 ! Ryu & Jones (1995), ApJ 442, 228 or from ruler and pencil
 ! on the results in Balsara (1998)
 !
@@ -42,7 +42,7 @@ module mhdshock
       'Mach 25 shock    (DW94)', &
       'Toth shock   (RJ95/T00)'/)
 
- 
+
 contains
 
 subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
@@ -52,14 +52,14 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
   real, intent(in) :: time,gamma,xmin,xmax
   real, dimension(:), intent(inout) :: xpts
   real, dimension(size(xpts)), intent(out) :: ypts
-  
+
   real, dimension(16) :: rho,pr,vx,vy,vz,By,Bz
   real :: const, Bxzero,tfac
 
   print*,' Plotting exact mhd shock #',ishk,' at t = ',time
   !
   !--set up grid for exact solution
-  !          
+  !
   const = 1./SQRT(4.*3.1415926536)
   ierr = 0
 
@@ -187,8 +187,8 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      xpts(4:5) = 0.03*tfac
      xpts(6:7) = 0.051*tfac
      xpts(8:9) = 0.12*tfac    ! contact discontinuity
-     xpts(10:11) = 0.18*tfac 
-     xpts(12:13) = 0.205*tfac 
+     xpts(10:11) = 0.18*tfac
+     xpts(12:13) = 0.205*tfac
      xpts(14:15) = 0.45*tfac
      xpts(16) = xmax
 
@@ -205,7 +205,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      pr(11:14) = 1.5844
      pr(15:16) = 1.0
 
-     vx(1:2) = 1.2 
+     vx(1:2) = 1.2
      vx(3:5) = 0.60588
      vx(6:11) = 0.57538
      vx(12:14) = 0.53432
@@ -266,7 +266,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      rho(9:12) = 1.36
      rho(13:14) = 1.0
 
-     vx(1:2) = 1.2 
+     vx(1:2) = 1.2
      vx(3:6) = 0.65
      vx(7:8) = 0.62
      vx(9:12) = 0.54
@@ -396,14 +396,14 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      xpts(8:9) = 0.12*tfac
      xpts(10:11) = 0.37*tfac
      xpts(12) = xmax
-     
+
      rho(1:2) = 1.0
      rho(3:4) = 2.6797
      rho(5:6) = 2.6713
      rho(7:8) = 3.8508
      rho(9:10) = 3.7481
      rho(11:12) = 1.0
-     
+
      pr(1:2) = 20.0
      pr(3:4) = 150.98
      pr(5:8) = 150.19
@@ -463,7 +463,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      Bz(3:4)  = Bz(npts)
      npts   = 4
   endif
-  
+
   !
   !--determine which parameter to plot
   !
@@ -490,14 +490,14 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
         end where
      else
         print*,' ***isothermal: utherm solution not valid'
-        ypts(1:npts) = 0.  
+        ypts(1:npts) = 0.
      endif
   case(9)
      ypts(1:npts) = Bxzero
   case default
      print*,'error: unknown solution to plot'
   end select
-  
+
   return
 end subroutine exact_mhdshock
 

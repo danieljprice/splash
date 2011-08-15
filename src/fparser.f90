@@ -10,9 +10,9 @@ MODULE fparser
   !------- -------- --------- --------- --------- --------- --------- --------- -------
   !
   ! This function parser module is intended for applications where a set of mathematical
-  ! fortran-style expressions is specified at runtime and is then evaluated for a large 
-  ! number of variable values. This is done by compiling the set of function strings 
-  ! into byte code, which is interpreted efficiently for the various variable values. 
+  ! fortran-style expressions is specified at runtime and is then evaluated for a large
+  ! number of variable values. This is done by compiling the set of function strings
+  ! into byte code, which is interpreted efficiently for the various variable values.
   !
   ! The source code is available from http://fparser.sourceforge.net
   !
@@ -20,7 +20,7 @@ MODULE fparser
   ! Roland Schmehl <roland.schmehl@alumni.uni-karlsruhe.de>
   !
   !------- -------- --------- --------- --------- --------- --------- --------- -------
-  ! The function parser concept is based on a C++ class library written by  Juha 
+  ! The function parser concept is based on a C++ class library written by  Juha
   ! Nieminen <warp@iki.fi> available from http://warp.povusers.org/FunctionParser/
   !------- -------- --------- --------- --------- --------- --------- --------- -------
   !
@@ -56,11 +56,11 @@ MODULE fparser
   SAVE
   INTEGER(is),                              PARAMETER :: cImmed   = 1,          &
                                                          cNeg     = 2,          &
-                                                         cAdd     = 3,          & 
-                                                         cSub     = 4,          & 
-                                                         cMul     = 5,          & 
-                                                         cDiv     = 6,          & 
-                                                         cPow     = 7,          & 
+                                                         cAdd     = 3,          &
+                                                         cSub     = 4,          &
+                                                         cMul     = 5,          &
+                                                         cDiv     = 6,          &
+                                                         cPow     = 7,          &
                                                          cAbs     = 8,          &
                                                          cExp     = 9,          &
                                                          cLog10   = 10,         &
@@ -197,7 +197,7 @@ CONTAINS
     ParseErrType = 0
     PrintErrors  = .true.
     IF (present(Verbose)) PrintErrors = Verbose
-    
+
     ALLOCATE (ipos(LEN(Func)))                               ! Char. positions in orig. string
     Func = FuncStr                                           ! Local copy of function string
     CALL Replace ('**','^ ',Func)                            ! Exponent into 1-Char. format
@@ -205,7 +205,7 @@ CONTAINS
     !CALL GetConstants (Func)
     CALL CheckSyntax (Func,FuncStr,Var)
     DEALLOCATE (ipos)
-    
+
     PrintErrors = .true.                                     ! reset this to true
     checkf = ParseErrType
   END FUNCTION checkf
@@ -287,7 +287,7 @@ CONTAINS
     j = 1
     ParCnt = 0
     lFunc = LEN_TRIM(Func)
-    
+
     step: DO
        IF (j > lFunc) THEN
           CALL ParseErrMsg (j, FuncStr)
@@ -372,7 +372,7 @@ CONTAINS
           CALL ParseErrMsg (j, FuncStr, 'Missing operator')
        END IF
        !-- -------- --------- --------- --------- --------- --------- --------- -------
-       ! Now, we have an operand and an operator: the next loop will check for another 
+       ! Now, we have an operand and an operator: the next loop will check for another
        ! operand (must appear)
        !-- -------- --------- --------- --------- --------- --------- --------- -------
        j = j+1
@@ -410,7 +410,7 @@ CONTAINS
     CHARACTER (LEN=*), OPTIONAL, INTENT(in) :: Msg
     INTEGER                                 :: k
     !----- -------- --------- --------- --------- --------- --------- --------- -------
-    
+
     IF (PrintErrors) THEN
        IF (PRESENT(Msg)) THEN
           WRITE(*,*) '*** Error in syntax of function string: '//Msg
@@ -429,7 +429,7 @@ CONTAINS
        ENDIF
     ENDIF
     ParseErrType = 1
-    
+
   END SUBROUTINE ParseErrMsg
   !
   FUNCTION OperatorIndex (c) RESULT (n)
@@ -461,7 +461,7 @@ CONTAINS
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     n = 0
     DO j=cAbs,cAtan                                          ! Check all math functions
-       k = MIN(LEN_TRIM(Funcs(j)), LEN(str))   
+       k = MIN(LEN_TRIM(Funcs(j)), LEN(str))
        CALL LowCase (str(1:k), fun)
        IF (fun == Funcs(j)) THEN                             ! Compare lower case letters
           n = j                                              ! Found a matching function
@@ -492,7 +492,7 @@ CONTAINS
           IF (SCAN(str(in:in),'+-*/^) ') > 0) EXIT
        END DO
        DO j=1,SIZE(Var)
-          IF (str(ib:in-1) == Var(j)) THEN                     
+          IF (str(ib:in-1) == Var(j)) THEN
              n = j                                           ! Variable name found
              EXIT
           END IF
@@ -560,7 +560,7 @@ CONTAINS
 !    CHARACTER (LEN=*),    INTENT(inout) :: string
 !    INTEGER, INTENT(OUT)                :: ierr
 !    INTEGER                             :: j,lstr,k
-!    !----- -------- --------- --------- --------- --------- --------- --------- -------   
+!    !----- -------- --------- --------- --------- --------- --------- --------- -------
 !    ierr = 0
 !    j = index(string,ca)
 !    lstr = len(string)
@@ -592,10 +592,10 @@ CONTAINS
 !    IMPLICIT NONE
 !    CHARACTER(LEN=*), INTENT(INOUT) :: string
 !    INTEGER :: ierr
-!    
+!
 !    CALL Substitute('pi','3.1415926536d0',string,ierr)
 !    if (ierr /= 0) ParseErrType = 2
-! 
+!
 !  END SUBROUTINE GetConstants
   !
   SUBROUTINE Compile (i, F, Var)
@@ -616,7 +616,7 @@ CONTAINS
     Comp(i)%StackSize    = 0
     Comp(i)%StackPtr     = 0
     CALL CompileSubstr (i,F,1,LEN_TRIM(F),Var)               ! Compile string to determine size
-    ALLOCATE ( Comp(i)%ByteCode(Comp(i)%ByteCodeSize), & 
+    ALLOCATE ( Comp(i)%ByteCode(Comp(i)%ByteCodeSize), &
                Comp(i)%Immed(Comp(i)%ImmedSize),       &
                Comp(i)%Stack(Comp(i)%StackSize),       &
                STAT = istat                            )
@@ -638,7 +638,7 @@ CONTAINS
     ! Add compiled byte to bytecode
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IMPLICIT NONE
-    INTEGER,     INTENT(in) :: i                             ! Function identifier  
+    INTEGER,     INTENT(in) :: i                             ! Function identifier
     INTEGER(is), INTENT(in) :: b                             ! Value of byte to be added
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     Comp(i)%ByteCodeSize = Comp(i)%ByteCodeSize + 1
@@ -650,7 +650,7 @@ CONTAINS
     ! Return math item index, if item is real number, enter it into Comp-structure
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IMPLICIT NONE
-    INTEGER,                         INTENT(in) :: i         ! Function identifier  
+    INTEGER,                         INTENT(in) :: i         ! Function identifier
     CHARACTER (LEN=*),               INTENT(in) :: F         ! Function substring
     CHARACTER (LEN=*), DIMENSION(:), INTENT(in) :: Var       ! Array with variable names
     INTEGER(is)                                 :: n         ! Byte value of math item
@@ -676,7 +676,7 @@ CONTAINS
     ! Substitute values for Mathematical Constants (e.g. pi)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IMPLICIT NONE
-    INTEGER,                         INTENT(in) :: i         ! Function identifier  
+    INTEGER,                         INTENT(in) :: i         ! Function identifier
     CHARACTER (LEN=*),               INTENT(in) :: F         ! Function substring
     INTEGER, OPTIONAL,              INTENT(out) :: ibegin, & ! Start position of real number
                                                    inext     ! 1st character after real number
@@ -697,7 +697,7 @@ CONTAINS
     END IF
     IF (PRESENT(ibegin)) ibegin = ib
     IF (PRESENT(inext))  inext  = in
-    
+
   END FUNCTION MathConstIndex
   !
   FUNCTION CompletelyEnclosed (F, b, e) RESULT (res)
@@ -730,7 +730,7 @@ CONTAINS
     ! Compile i-th function string F into bytecode
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IMPLICIT NONE
-    INTEGER,                         INTENT(in) :: i         ! Function identifier  
+    INTEGER,                         INTENT(in) :: i         ! Function identifier
     CHARACTER (LEN=*),               INTENT(in) :: F         ! Function substring
     INTEGER,                         INTENT(in) :: b,e       ! Begin and end position substring
     CHARACTER (LEN=*), DIMENSION(:), INTENT(in) :: Var       ! Array with variable names
@@ -749,7 +749,7 @@ CONTAINS
 !      WRITE(*,*)'2. F(b:e) = "(...)"'
        CALL CompileSubstr (i, F, b+1, e-1, Var)
        RETURN
-    ELSEIF (SCAN(F(b:b),calpha) > 0) THEN        
+    ELSEIF (SCAN(F(b:b),calpha) > 0) THEN
        n = MathFunctionIndex (F(b:e))
        IF (n > 0) THEN
           b2 = b+INDEX(F(b:e),'(')-1
@@ -782,7 +782,7 @@ CONTAINS
     END IF
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     ! Check for operator in substring: check only base level (k=0), exclude expr. in ()
-    !----- -------- --------- --------- --------- --------- --------- --------- -------    
+    !----- -------- --------- --------- --------- --------- --------- --------- -------
     DO io=cAdd,cPow                                          ! Increasing priority +-*/^
        k = 0
        DO j=e,b,-1
@@ -796,7 +796,7 @@ CONTAINS
 !               WRITE(*,*)'6. F(b:e) = "-...Op..." with Op > -'
                 CALL CompileSubstr (i, F, b+1, e, Var)
                 CALL AddCompiledByte (i, cNeg)
-                RETURN                 
+                RETURN
              ELSE                                                        ! Case 7: F(b:e) = '...BinOp...'
 !               WRITE(*,*)'7. Binary operator',F(j:j)
                 CALL CompileSubstr (i, F, b, j-1, Var)
@@ -844,7 +844,7 @@ CONTAINS
                SCAN(F(j-1:j-1),'eEdD')       > 0) THEN
           Dflag=.false.; Pflag=.false.
           k = j-1
-          DO WHILE (k > 1)                                   !   step to the left in mantissa 
+          DO WHILE (k > 1)                                   !   step to the left in mantissa
              k = k-1
              IF     (SCAN(F(k:k),'0123456789') > 0) THEN
                 Dflag=.true.
@@ -893,17 +893,17 @@ CONTAINS
           ib = ib+1
           IF (InMan .OR. Eflag .OR. InExp) EXIT
        CASE ('+','-')                                        ! Permitted only
-          IF     (Bflag) THEN           
+          IF     (Bflag) THEN
              InMan=.true.; Bflag=.false.                     ! - at beginning of mantissa
-          ELSEIF (Eflag) THEN               
+          ELSEIF (Eflag) THEN
              InExp=.true.; Eflag=.false.                     ! - at beginning of exponent
           ELSE
              EXIT                                            ! - otherwise STOP
           ENDIF
        CASE ('0':'9')                                        ! Mark
-          IF     (Bflag) THEN           
+          IF     (Bflag) THEN
              InMan=.true.; Bflag=.false.                     ! - beginning of mantissa
-          ELSEIF (Eflag) THEN               
+          ELSEIF (Eflag) THEN
              InExp=.true.; Eflag=.false.                     ! - beginning of exponent
           ENDIF
           IF (InMan) DInMan=.true.                           ! Mantissa contains digit
@@ -971,7 +971,7 @@ CONTAINS
 
   END FUNCTION MathConst
 
-  !  
+  !
   SUBROUTINE LowCase (str1, str2)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     ! Transform upper case letters in str1 into lower case letters, result is str2

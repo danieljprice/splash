@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -41,9 +41,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -65,13 +65,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   nstepsread = 0
   nstep_max = 0
-  dumpfile = trim(rootname)   
+  dumpfile = trim(rootname)
   !
   !--check if first data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -79,7 +79,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  
+
   !--number of columns to read from file
   ncol = 7
   !
@@ -88,7 +88,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstep_max = max(nstep_max,indexstart,1)
   j = indexstart
   nstepsread = 0
-  
+
   print "(1x,a)",'reading KITP SPH format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
@@ -134,7 +134,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      enddo
 
 44   continue
-     
+
      if (nread.lt.ncol) then
         print "(a)",' WARNING: END OF FILE: read to column ',nread
      endif
@@ -166,7 +166,7 @@ subroutine set_labels
   use geometry, only:labelcoord
   implicit none
   integer :: i
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -175,7 +175,7 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
@@ -196,8 +196,8 @@ subroutine set_labels
   ntypes = 1
   labeltype(1) = 'gas'
   UseTypeInRenderings(1) = .true.
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

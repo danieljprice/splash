@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -42,9 +42,9 @@
 ! npartoftype(maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -68,9 +68,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: npartin,ntotin,ncolstep,nparti,ntoti
   integer, dimension(3) :: ibound
   logical :: reallocate, singleprecision
-  
+
   real :: timein, gammain, hfactin
-  real, dimension(3) :: xmin, xmax  
+  real, dimension(3) :: xmin, xmax
   real(doub_prec) :: timeind,gammaind,hfactind
   real(doub_prec), dimension(3) :: xmind, xmaxd
 
@@ -116,7 +116,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      read(iunit,iostat=ierr,end=80) timein,npartin,ntotin,gammain, &
          hfactin,ndim_max,ndimV_max,ncol_max,icoords
      singleprecision = .true.
-     
+
      if (ierr /= 0) then
         print "(a)",'*** Error reading first header ***'
         print*,' time = ',timein,' hfact = ',hfactin,' ndim=',ndim_max,'ncol=',ncol_max
@@ -144,7 +144,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   i = indexstart
   nstepsread = 0
-  
+
   overstepsinfile: do while (i <= maxstep)
      !!print*,' reading step ',i
      reallocate = .false.
@@ -171,12 +171,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
      if (ierr /= 0) then
         print*,'*** error reading timestep header ***'
-        close(iunit)     
+        close(iunit)
         return
      else ! count this as a successfully read timestep, even if data is partial
         nstepsread = nstepsread + 1
      endif
-          
+
      time(i) = timein
      gamma(i) = gammain
      hfact = hfactin
@@ -219,7 +219,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
 
      if (ntoti.gt.maxpart) then
-        !print*, 'ntot greater than array limits!!'    
+        !print*, 'ntot greater than array limits!!'
         reallocate = .true.
         npart_max = int(1.5*ntoti)
      endif
@@ -234,7 +234,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         call alloc(npart_max,nstep_max,ncol_max+ncalc)
      endif
 
-  
+
      if (ntoti.gt.0) then
         !
         !--read position vector
@@ -279,12 +279,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
         !
         !--pr, div v, gradh
-        !          
+        !
            do j=icol,ncolstep
               call readcol(dat(1:ntoti,j,i),ntoti,singleprecision,ierr)
               if (ierr /= 0) print "(a)",'*** error reading column data ***'
            enddo
-        
+
         else
         !
         !--MHD output
@@ -324,7 +324,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
               exit overstepsinfile
            endif
            icol = icol + ndimV
-           
+
         endif
         !!print*,'columns read = ',icol,' should be = ',ncolumns
 
@@ -341,7 +341,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    !!!print "(a)",' > end of file <'
   !
   !--close data file and return
-  !                    
+  !
 close(unit=11)
 
 ncolumns = ncol_max
@@ -350,7 +350,7 @@ ndimV = ndimV_max
 
 print*,'> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
        ' last step ntot = ',sum(npartoftype(:,indexstart+nstepsread-1))
-return    
+return
 !
 !--errors
 !
@@ -366,7 +366,7 @@ contains
    integer, intent(out) :: ierr
    real, intent(out), dimension(ntotal,ndims) :: datin
    logical, intent(in) :: singleprec
-   
+
    integer :: ipos
    real, dimension(ndims,ntotal) :: datvec
    real(doub_prec), dimension(ndims,ntotal) :: datvecd
@@ -382,9 +382,9 @@ contains
       read (iunit,iostat=ierr) datvecd(1:ndims,1:ntotal)
       do ipos = 1,ndims
          datin(1:ntotal,ipos) = real(datvecd(ipos,1:ntotal))
-      enddo           
+      enddo
    endif
-   
+
  end subroutine readvec
 !
 !--read scalar quantity and convert to single precision
@@ -395,7 +395,7 @@ contains
    integer, intent(out) :: ierr
    real, intent(out), dimension(ntotal) :: datin
    logical, intent(in) :: singleprec
-   
+
    real(doub_prec), dimension(ntotal) :: dattempd
 !
 !--read several scalar quantities
@@ -406,9 +406,9 @@ contains
       read (iunit,iostat=ierr) dattempd(1:ntotal)
       datin(1:ntotal) = real(dattempd(1:ntotal))
    endif
-   
+
  end subroutine readcol
- 
+
 end subroutine read_data
 
 !!------------------------------------------------------------
@@ -440,7 +440,7 @@ subroutine set_labels
  ih = ndim + ndimV + 1        !  smoothing length
  irho = ndim + ndimV + 2      ! location of rho in data array
  iutherm = ndim + ndimV + 3   !  thermal energy
- ipmass = ndim + ndimV + 4    !  particle mass     
+ ipmass = ndim + ndimV + 4    !  particle mass
 
  label(ix(1:ndim)) = labelcoord(1:ndim,1)
  !
@@ -451,7 +451,7 @@ subroutine set_labels
  do i=1,ndimV
     label(ivx+i-1) = trim(labelvec(ivx+i-1))//'\d'//labelcoord(i,1)
  enddo
- 
+
  label(irho) = '\gr'
  label(iutherm) = 'u'
  label(ih) = 'h       '
@@ -474,7 +474,7 @@ subroutine set_labels
     !--more scalars
     !
     label(ndim+2*ndimV+8) = 'psi'
-    
+
     ipr = ndim + 2*ndimV + 9 !  pressure
     label(ipr) = 'P'
     label(ndim+2*ndimV+10) = 'div v'
@@ -511,14 +511,14 @@ subroutine set_labels
     endif
     iBfirst = 0
  endif
- 
+
  if (ncolumns.gt.ndim+3*ndimV+11) then
     label(ndim+3*ndimV+12) = 'f_visc_x'
     label(ndim+3*ndimV+13) = 'f_visc_y'
     label(ndim+3*ndimV+14) = 'f_x'
     label(ndim+3*ndimV+15) = 'f_y'
  endif
-! 
+!
 !--these are here for backwards compatibility -- could be removed
 !  if (ncolumns.gt.ndim+3*ndimV+7) then
 !     label(ndim + 3*ndimV+8) = 'v_parallel'
@@ -535,8 +535,8 @@ subroutine set_labels
  labeltype(2) = 'ghost'
  UseTypeInRenderings(1) = .true.
  UseTypeInRenderings(2) = .true.
- 
+
 !-----------------------------------------------------------
 
- return 
+ return
 end subroutine set_labels

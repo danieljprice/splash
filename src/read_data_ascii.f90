@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -59,9 +59,9 @@
 ! ntot(maxstep)       : total number of particles in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -98,7 +98,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -109,7 +109,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   j = indexstart
   nstepsread = 0
-  
+
   !
   !--open the file and read the number of particles
   !
@@ -175,7 +175,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   iheader_gamma = ienvironment('ASPLASH_HEADERLINE_GAMMA',errval=notset)
 !
 !--read header lines, try to use it to set time
-!  
+!
   if (nheaderlines.gt.0) print*,'skipping ',nheaderlines,' header lines'
 
   do i=1,nheaderlines
@@ -183,7 +183,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !  so that blank lines are counted in nheaderlines
      read(iunit,"(a)",iostat=ierr) line
      read(line,*,iostat=ierr) dummyreal
-     
+
      if (i.eq.iheader_time .and. .not.timeset) then
         if (ierr.eq.0) then
            time(j) = dummyreal
@@ -203,7 +203,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         else
            print "(a,i2,a)",' ** ERROR reading gamma from header line ',i, &
                             ' (using ASPLASH_HEADERLINE_GAMMA)'
-        endif     
+        endif
      elseif (timeset .and. .not.gammaset .and. ierr.eq.0 .and. iheader_gamma.eq.notset &
         .and. dummyreal.gt.0.999999 .and. dummyreal.lt.2.000001) then
         print*,'setting gamma = ',dummyreal,' from header line ',i
@@ -250,7 +250,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   npartoftype(1,j) = nprint
 
   close(iunit)
-     
+
 return
 end subroutine read_data
 
@@ -307,7 +307,7 @@ subroutine set_labels
         columnfile = 'columns'
      endif
   endif
-  
+
   open(unit=51,file=trim(columnfile),status='old',iostat=ierr)
   if (ierr /=0) then
      print "(3(/,a))",' WARNING: columns file not found: using default labels',&
@@ -369,7 +369,7 @@ subroutine set_labels
                  ndimV = ndimVtemp
               endif
            endif
-        endif        
+        endif
         if (ierr < 0) then
            print "(a,i3)",' ERROR: end of file in columns file: read to column ',i-1
            exit overcols
@@ -380,11 +380,11 @@ subroutine set_labels
      enddo overcols
      close(unit=51)
   endif
-  
+
   if (ndim.lt.1) ndimV = 0
-  
+
   if (ndim.gt.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
-  if (ndim.gt.0) print "(a,i2,a,i2)",' Assuming positions in columns ',ix(1),' to ',ix(ndim)     
+  if (ndim.gt.0) print "(a,i2,a,i2)",' Assuming positions in columns ',ix(1),' to ',ix(ndim)
 
   if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
   if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
@@ -394,7 +394,7 @@ subroutine set_labels
   if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
   if (ivx.gt.0) then
      if (ndimV.gt.1) then
-        print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1     
+        print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1
      else
         print "(a,i2)",' Assuming velocity in column ',ivx
      endif
@@ -405,7 +405,7 @@ subroutine set_labels
                  '  mass are known (for the ascii read the simplest way is to ', &
                  '  label the relevant columns appropriately in the columns file)'
   endif
-  
+
   if (ivx.gt.0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
@@ -426,9 +426,9 @@ subroutine set_labels
   ntypes = 1 !!maxparttypes
   labeltype(1) = 'gas'
   UseTypeInRenderings(1) = .true.
-  
- 
+
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

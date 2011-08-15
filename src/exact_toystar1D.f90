@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -77,11 +77,11 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
      print*,' Plotting toy star oscills: time, norder, omega = ', &
           time,norder,omega,H0,C0,A0
 
-     if (C0.le.0.) then 
+     if (C0.le.0.) then
         print*,'*** C = 0 = illegal in input'
         ierr = 1
         return
-     else         
+     else
         radstar = sqrt(H0/C0)
      endif
      xplot(1) = -radstar
@@ -152,11 +152,11 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
      tnow = 0.
      do i = 1,nsteps
         tnow = tnow + dt
-        ! integrate using improved Euler         
+        ! integrate using improved Euler
         fprevC = -Cprev*Aprev*gamp1
         fprevA = fact*Cprev -1.-Aprev**2
         fprevH = -Aprev*Hprev*gamm1
-        ! predictor         
+        ! predictor
         Ctemp = Cprev + dt*(-Cprev*Aprev*gamp1)
         Atemp = Aprev + dt*(fact*Cprev-1.-Aprev**2)
         Htemp = Hprev + dt*(-Aprev*Hprev*gamm1)
@@ -164,7 +164,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
         ftempC = -Ctemp*Atemp*gamp1
         ftempA = fact*Ctemp -1. -Aprev**2
         ftempH = -Atemp*Htemp*gamm1
-        ! corrector         
+        ! corrector
         C = Cprev + 0.5*dt*(fprevC + ftempC)
         A = Aprev + 0.5*dt*(fprevA + ftempA)
         H = Hprev + 0.5*dt*(fprevH + ftempH)
@@ -185,12 +185,12 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
 
      print*,' C, A, H, k = ',C,A,H,const
 
-     if (C.le.0.) then 
+     if (C.le.0.) then
         radstar = 0.5
         print*,'*** C = 0 = illegal'
         ierr = 1
         return
-     else         
+     else
         radstar = sqrt(H/C)
      endif
      xplot(1) = -radstar
@@ -235,7 +235,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
      endif
 !
 !------------------------------------------------------------------------
-!      
+!
   endif
 
   return
@@ -263,7 +263,7 @@ real function Gn(x,n)
   !--use recurrence relation to calculate the rest
   !
   select case (n)
-  case (0) 
+  case (0)
      Gn = Gnminus2
   case (1)
      Gn = Gnminus1
@@ -275,7 +275,7 @@ real function Gn(x,n)
      enddo
   end select
 
-  Gn = Gn/fnorm    
+  Gn = Gn/fnorm
 
 end function Gn
 
@@ -286,7 +286,7 @@ real function Pm(x,m)
   implicit none
   integer, intent(in) :: m
   real, intent(in) :: x
-  integer :: i      
+  integer :: i
   real :: Pmminus1,Pmminus2
   !
   !--specify first two Legendre polynomials
@@ -355,7 +355,7 @@ subroutine exact_toystar_ACplane(astart,cstart,sigma,gamma)
 
      if (cnew.lt.0.) print*,'eek c < 0'
 
-  enddo         
+  enddo
 
   xstart = cnew
 
@@ -367,11 +367,11 @@ subroutine exact_toystar_ACplane(astart,cstart,sigma,gamma)
      c = cnew
 
      funct = k*c**(2./gamp1) - 2.*fact*c*gam1 - 1.
-     fderiv = 2.*k/gamp1*c**(-gamm1/gamp1) - 2.*fact*gam1        
+     fderiv = 2.*k/gamp1*c**(-gamm1/gamp1) - 2.*fact*gam1
 
      cnew = c - funct/fderiv
 
-  enddo               
+  enddo
 
   xend = cnew
 
@@ -387,7 +387,7 @@ subroutine exact_toystar_ACplane(astart,cstart,sigma,gamma)
   ymin = 1.5*func2(xcentre)
 
   call plot_swin(xstart-extra,xend+extra,ymin,ymax)
-  call plot_box('bcnst',0.0,0,'1bvcnst',0.0,0)      
+  call plot_box('bcnst',0.0,0,'1bvcnst',0.0,0)
   call plot_funx(func,10000,xstart,xend,1)
   call plot_funx(func2,10000,xstart,xend,1)
 
@@ -414,9 +414,9 @@ real function func(x)
   if (term.le.0.) then
   !         print*,' warning: func < 0 ',term
      func = 0.
-  else         
+  else
      func = sqrt(term)
-  endif         
+  endif
 
 end function func
 
@@ -433,6 +433,6 @@ real function func2(x)
      func2 = 0.
   else
      func2 = -sqrt(term)
-  endif 
+  endif
 
 end function func2

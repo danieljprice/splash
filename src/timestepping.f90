@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -23,9 +23,9 @@
 module timestepping
  implicit none
  public :: timestep_loop
- 
+
  private
- 
+
 contains
 !
 ! This subroutine drives the main plotting loop
@@ -42,10 +42,10 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
   integer, intent(in) :: ipicky,ipickx,irender,icontourplot,ivecplot
   integer :: ipos, istep, ilocindat, iadvance, istepsonpage, istepprev
   logical :: ipagechange
-  
+
   call initialise_plotting(ipicky,ipickx,irender,icontourplot,ivecplot)
 
-  !----------------------------------------------------------------------------  
+  !----------------------------------------------------------------------------
   ! loop over timesteps (flexible to allow going forwards/backwards in
   !                      interactive mode)
   !
@@ -53,7 +53,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
   !         ipos : current step number or position in steplist array
   !    ilocindat : current or requested location in the dat array
   !                (usually 1, but can be > 1 if more than one step per file
-  !                 or data is buffered to memory) 
+  !                 or data is buffered to memory)
   !                (requested location is sent to get_nextstep which skips files
   !                or steps appropriately and sets actual location)
   !       istep :  current step number
@@ -62,20 +62,20 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
   !                this is used because steps are coloured/marked differently
   !                from this routine (call to colour_timestep)
   !
-  !----------------------------------------------------------------------------         
+  !----------------------------------------------------------------------------
   ipos = istartatstep
   iadvance = nfreq   ! amount to increment timestep by (changed in interactive)
   istepsonpage = 0
   istep = istartatstep
   istepprev = 0
-  !--if the current file has only been partially read, 
+  !--if the current file has only been partially read,
   !  make sure we read the file again now that we may have different plotting options
   if (ipartialread) ifileopen = 0
 
   over_timesteps: do while (ipos.le.iendatstep)
-     
+
      ipos = max(ipos,1) !--can't go further back than ipos=1
-     
+
      if (iUseStepList) then
         istep = isteplist(ipos)
         if (istep.gt.nsteps) then
@@ -83,7 +83,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
            istep = nsteps
         elseif (istep.le.0) then
         !--this should never happen
-           stop 'internal error: corrupted step list: please send bug report'        
+           stop 'internal error: corrupted step list: please send bug report'
         endif
      else
         istep = ipos
@@ -93,7 +93,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
            ipos = min(ipos,iendatstep)
         endif
      endif
-     
+
      !
      !--make sure we have data for this timestep
      !
@@ -104,7 +104,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
            istep = nsteps
         endif
         ilocindat = istep
-     else    
+     else
         !--otherwise read file containing this step into memory and get position in dat array
         !  (note that nsteps can change in get_nextstep, so may need to re-evaluate
         !   whether we are on the last step or not, and adjust iendatstep to last step)
@@ -118,7 +118,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
            !--use interactive halt at last step (ie. set position = last position)
            if (interactive) then
               ipos = min(ipos,iendatstep)
-              !--if istep has changed, may need to re-read step 
+              !--if istep has changed, may need to re-read step
               !  (get_nextstep does nothing if istep is the same)
               call get_nextstep(istep,ilocindat)
            endif
@@ -129,7 +129,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
            exit over_timesteps
         endif
      endif
-     
+
      !
      !--write timestepping log
      !
@@ -137,7 +137,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
         print 32, istep
      elseif (time(ilocindat).lt.1.e-2 .or. time(ilocindat).gt.1.e2) then
         print 33, time(ilocindat),istep
-     else     
+     else
         print 34, time(ilocindat),istep
      endif
 32   format (5('-'),' t = (not read), dump #',i5,1x,18('-'))
@@ -210,7 +210,7 @@ recursive subroutine get_nextstep(istep,iposinfile)
 
  !
  !--request is for step istep
- !  need to determine which file step i is in, 
+ !  need to determine which file step i is in,
  !  whether or not it is already in memory (and read it if not)
  !  and finally determine position of requested step in dat array
  !
@@ -223,7 +223,7 @@ recursive subroutine get_nextstep(istep,iposinfile)
     nstepsprev = nstepstotal
     nstepstotal = nstepstotal + nstepsinfile(ifile)
  enddo
- 
+
  if (nstepstotal.ge.istep) then
  !--set position in dat array depending on how many steps are in the file
     iposinfile = istep - nstepsprev
@@ -246,7 +246,7 @@ recursive subroutine get_nextstep(istep,iposinfile)
  !--if data is not stored in memory, read next step from file
  !  At the moment assumes number of steps in each file are the same
  !
- 
+
  !--neither or these two error conditions should occur
  if (ifile.gt.nfiles) then
     print*,'*** get_nextstep: error: ifile > nfiles'
@@ -259,7 +259,7 @@ recursive subroutine get_nextstep(istep,iposinfile)
     call get_data(ifile,.true.)
  !
  !--because nstepsinfile is predicted for files which have
- !  not been opened, we may have the situation where 
+ !  not been opened, we may have the situation where
  !  iposinfile does not point to a real timestep (ie. iposinfile > nstepsinfile).
  !  In this case we query the step again with our better knowledge of nstepsinfile.
  !
@@ -268,9 +268,9 @@ recursive subroutine get_nextstep(istep,iposinfile)
        call get_nextstep(istep,iposinfile)
     endif
  endif
- 
+
  return
-end subroutine get_nextstep     
+end subroutine get_nextstep
 
 !-------------------------------------------------------------
 ! colours all the particles a given colour for this timestep
@@ -284,7 +284,7 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
   integer, intent(in) :: istep
   logical, intent(in) :: iChangeColours, iChangeStyles
   integer :: icolour,imarkernumber
-  
+
   if (iChangeColours) then
      if (allocated(icolourme)) then
         icolour = istep + 1
@@ -337,7 +337,7 @@ subroutine colourparts_default(npartoftype,iamtype)
   integer, dimension(:), intent(in) :: npartoftype
   integer(kind=int1), dimension(:), intent(in) :: iamtype
   integer :: i,index1,index2,itype
-  
+
   if (size(iamtype).gt.1) then
      do i=1,sum(npartoftype(1:ntypes))
         itype = iamtype(i)

@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -43,9 +43,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -63,13 +63,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: i,j,ifile,ierr
   integer :: npart_max,nstep_max,ncolstep
   logical :: iexist
-    
+
   character(len=3) :: fileno
   character(len=len(rootname)+10) :: dumpfile
   integer :: nprint, nghosti, n1, n2, nptmass
   integer, dimension(:), allocatable :: isteps, iphase
   integer, dimension(maxptmass) :: listpm
-  
+
 !  real(doub_prec), dimension(:,:), allocatable :: dattemp
 !  real(doub_prec), dimension(:), allocatable :: dummy
 !  real(doub_prec) :: udisti,umassi,utimei, umagfdi
@@ -97,20 +97,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
      ifile = 1
      if (len_trim(rootname).eq.4) then
         write(fileno,"(i1,i1,i1)") ifile/100,mod(ifile,100)/10,mod(ifile,10)
-        dumpfile = rootname(1:4)//fileno 
+        dumpfile = rootname(1:4)//fileno
      elseif (len_trim(rootname).eq.5) then
         write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
-        dumpfile = rootname(1:5)//trim(fileno)     
+        dumpfile = rootname(1:5)//trim(fileno)
      endif
   else
-     dumpfile = trim(rootname)   
+     dumpfile = trim(rootname)
   endif
   !
   !--check if first data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -119,7 +119,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   ndim = 3
   ndimV = 3
   ncolstep = 19
-  ncolumns = ncolstep !!max(19,maxcol)  ! number of columns in file  
+  ncolumns = ncolstep !!max(19,maxcol)  ! number of columns in file
   !
   !--allocate memory initially
   !
@@ -127,7 +127,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   j = indexstart
   nstepsread = 0
-  
+
   print "(1x,a)",'reading Matthew Bate''s/Willy Benz''s old SPH code format (MHD)'
   do while (iexist)
      write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
@@ -142,7 +142,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !--read the number of particles in the first step,
         !  allocate memory and rewind
         !
-        read(15,end=55,iostat=ierr) udisti,umassi,utimei,umagfdi,nprint 
+        read(15,end=55,iostat=ierr) udisti,umassi,utimei,umagfdi,nprint
         if (.not.allocated(dat) .or. nprint.gt.npart_max) then
            npart_max = max(npart_max,INT(1.1*nprint))
            call alloc(npart_max,nstep_max,ncolstep+ncalc)
@@ -154,8 +154,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
      else
 !
 !--loop over the timesteps in this file
-!     
-     over_steps_in_file: do     
+!
+     over_steps_in_file: do
         npart_max = max(npart_max,nprint)
 !
 !--allocate/reallocate memory if j > maxstep
@@ -197,14 +197,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
              (dattemp(i,3), i=1, nprint), (dattemp(i,4), i=1, nprint), &
              (dattemp(i,5), i=1, nprint), (dattemp(i,6), i=1, nprint), &
              (dattemp(i,9), i=1, nprint), (dattemp(i,10), i=1, nprint), &
-             (dattemp(i,11), i=1, nprint), (dattemp(i,12), i=1, nprint), &  
+             (dattemp(i,11), i=1, nprint), (dattemp(i,12), i=1, nprint), &
              (dattemp(i,13), i=1, nprint), (dattemp(i,14), i=1, nprint), &
              (dattemp(i,15), i=1, nprint), (dattemp(i,16), i=1, nprint), &
              (dattemp(i,17), i=1, nprint), (dattemp(i,18), i=1, nprint), &
              (dattemp(i,19), i=1, nprint), (dummy(i),i=1,nprint), &
              dtmax, (isteps(i), i=1,nprint), (iphase(i),i=1,nprint), &
              nptmass, (listpm(i), i=1,nptmass)
-        
+
         if (ierr /= 0) then
            print "(a)",'*** INCOMPLETE DATA (CHECK PRECISION) ***'
            exit over_steps_in_file
@@ -232,7 +232,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         j = j + 1
 
      enddo over_steps_in_file
-     
+
      endif
 
 55 continue
@@ -246,25 +246,25 @@ subroutine read_data(rootname,indexstart,nstepsread)
      print*,'ntot = ',sum(npartoftype(:,j-1)),'nghost=',npartoftype(2,j-1)
   endif
      !
-     !--if just the rootname has been input, 
+     !--if just the rootname has been input,
      !  set next filename and see if it exists
      !
   ifile = ifile + 1
   if (len_trim(rootname).eq.4) then
      write(fileno,"(i1,i1,i1)") ifile/100,mod(ifile,100)/10,mod(ifile,10)
-     dumpfile = rootname(1:4)//fileno 
+     dumpfile = rootname(1:4)//fileno
      inquire(file=dumpfile,exist=iexist)
      elseif (len_trim(rootname).eq.5) then
      write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
-     dumpfile = rootname(1:5)//trim(fileno)     
+     dumpfile = rootname(1:5)//trim(fileno)
      inquire(file=dumpfile,exist=iexist)
   else
      iexist = .false. ! exit loop
   endif
 enddo
-   
+
 return
-                    
+
 end subroutine read_data
 
 !!------------------------------------------------------------
@@ -278,7 +278,7 @@ subroutine set_labels
   use geometry, only:labelcoord
   implicit none
   integer :: i
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -287,7 +287,7 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
@@ -295,19 +295,19 @@ subroutine set_labels
   irho = 18     ! location of rho in data array
   iutherm = 16  !  thermal energy
   ih = 7        !  smoothing length
-  ipmass = 17   !  particle mass      
-  
+  ipmass = 17   !  particle mass
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   do i=1,ndimV
      label(ivx+i-1) = 'v\d'//labelcoord(i,1)
   enddo
-  label(irho) = '\gr'      
+  label(irho) = '\gr'
   label(iutherm) = 'u'
   label(ih) = 'h       '
-  label(ipmass) = 'particle mass'     
+  label(ipmass) = 'particle mass'
   label(8) = 'alpha'
-  label(19) = 'psi' 
-  
+  label(19) = 'psi'
+
   label(ndim + ndimV+5) = '\ga'
   if (ncolumns.gt.11) then
      iBfirst = 9    ! location of Bx
@@ -344,7 +344,7 @@ subroutine set_labels
   do i=1,ndimV
      label(13+i-1) = trim(labelvec(13))//'\d'//labelcoord(i,1)
   enddo
-  
+
   !
   !--set labels for each particle type
   !
@@ -355,8 +355,8 @@ subroutine set_labels
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .true.
   UseTypeInRenderings(3) = .true.
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -28,10 +28,10 @@
 
 module interpolations2D
  implicit none
- real, parameter, private :: pi = 3.1415926536      
+ real, parameter, private :: pi = 3.1415926536
  public :: interpolate2D, interpolate2D_xsec, interpolate2D_vec
  public :: interpolate_part, interpolate_part1
- 
+
 contains
 !--------------------------------------------------------------------------
 !     subroutine to interpolate from particle data to even grid of pixels
@@ -40,7 +40,7 @@ contains
 !     that is, we compute the smoothed array according to
 !
 !     datsmooth(pixel) = sum_j w_j dat_j W(r-r_j, h_j)
-! 
+!
 !     where _j is the quantity at the neighbouring particle j and
 !     W is the smoothing kernel, for which we use the usual cubic spline.
 !     For an SPH interpolation the weight for each particle should be
@@ -86,7 +86,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
   if (normalise) then
      print "(1x,a)",'interpolating from particles to 2D grid (normalised)...'
   else
-     print "(1x,a)",'interpolating from particles to 2D grid (non-normalised)...'  
+     print "(1x,a)",'interpolating from particles to 2D grid (non-normalised)...'
   endif
   if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
      print "(1x,a)",'interpolate2D: error: pixel width <= 0'
@@ -98,7 +98,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
   const = 10./(7.*pi)  ! normalisation constant
   !
   !--loop over particles
-  !      
+  !
   over_parts: do i=1,npart
      !
      !--skip particles with itype < 0
@@ -122,7 +122,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to
-     !               
+     !
      ipixmin = int((x(i) - radkern - xmin)/pixwidthx)
      jpixmin = int((y(i) - radkern - ymin)/pixwidthy)
      ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
@@ -145,7 +145,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
            qq = rab*hi1
            !
            !--SPH kernel - standard cubic spline
-           !                     
+           !
            if (qq.lt.1.0) then
               wab = (1.-1.5*qq**2 + 0.75*qq**3)
            elseif (qq.lt.2.0) then
@@ -155,7 +155,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
            endif
            !
            !--calculate data value at this pixel using the summation interpolant
-           !  
+           !
            datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
            if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
 
@@ -177,7 +177,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
 end subroutine interpolate2D
 
 !--------------------------------------------------------------------------
-!     
+!
 !     ** this version does vector quantities
 !
 !     Input: particle coordinates  : x,y   (npart)
@@ -214,7 +214,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
   if (normalise) then
      print "(1x,a)",'interpolating vector field from particles to 2D grid (normalised)...'
   else
-     print "(1x,a)",'interpolating vector field from particles to 2D grid (non-normalised)...'  
+     print "(1x,a)",'interpolating vector field from particles to 2D grid (non-normalised)...'
   endif
   if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
      print*,'interpolate2D_vec: error: pixel width <= 0'
@@ -226,7 +226,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
   const = 10./(7.*pi)  ! normalisation constant
   !
   !--loop over particles
-  !      
+  !
   over_parts: do i=1,npart
      !
      !--skip particles with itype < 0
@@ -251,7 +251,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
      termy = termnorm*vecy(i)
      !
      !--for each particle work out which pixels it contributes to
-     !               
+     !
      ipixmin = int((x(i) - radkern - xmin)/pixwidthx)
      jpixmin = int((y(i) - radkern - ymin)/pixwidthy)
      ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
@@ -274,7 +274,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
            qq = rab*hi1
            !
            !--SPH kernel - standard cubic spline
-           !                     
+           !
            if (qq.lt.1.0) then
               wab = (1.-1.5*qq**2 + 0.75*qq**3)
            elseif (qq.lt.2.0) then
@@ -284,7 +284,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
            endif
            !
            !--calculate data value at this pixel using the summation interpolant
-           !  
+           !
            vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab
            vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab
            if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
@@ -309,7 +309,7 @@ end subroutine interpolate2D_vec
 
 !--------------------------------------------------------------------------
 !     subroutine to interpolate from particle data to even grid of pixels
-!     
+!
 !     this version takes any 1D cross section through a 2D data set
 !     the 1D line is specified by two points, (x1,y1) and (x2,y2)
 !     (ie. this is for arbitrary oblique cross sections)
@@ -349,7 +349,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
   real :: xstart,xend,ystart,yend,rstart,rend
   real :: tol
   logical :: xsame, ysame, debug
-  
+
   debug = .false.
   !
   !--check for errors in input
@@ -391,7 +391,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
   const = 10./(7.*pi)   ! normalisation constant
   !
   !--loop over particles
-  !      
+  !
   over_parts: do i=1,npart
      !
      !--skip particles with itype < 0
@@ -417,7 +417,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
      !--for each particle work out which pixels it contributes to
      !  to do this we need to work out the two points at which the line
      !  intersects the particles smoothing circle
-     !  given by the equation (x-xi)^2 + (y-yi)^2 = (2h)^2.             
+     !  given by the equation (x-xi)^2 + (y-yi)^2 = (2h)^2.
      !  The x co-ordinates of these points are the solutions to a
      !  quadratic with co-efficients:
 
@@ -430,7 +430,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
      !
      determinant = bb**2 - 4.*aa*cc
      if (determinant < 0) then
-        !!print*,' particle ',i,': does not contribute ',x(i),y(i) 
+        !!print*,' particle ',i,': does not contribute ',x(i),y(i)
      else
         det = sqrt(determinant)
         xstart = (-bb - det)/(2.*aa)
@@ -457,7 +457,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
                !
         !--loop over pixels, adding the contribution from this particle
         !
-        !if (debug) print*,' particle ',i,': ',ipixmin,ipixmax,xstart,x(i),xend 
+        !if (debug) print*,' particle ',i,': ',ipixmin,ipixmax,xstart,x(i),xend
         do ipix = ipixmin,ipixmax
 
            xpix = x1 + (ipix-0.5)*xpixwidth
@@ -468,7 +468,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
            qq = rab*hi1
            !
            !--SPH kernel - standard cubic spline in 2D
-           !     
+           !
            if (qq.lt.1.0) then
               wab = (1.-1.5*qq**2 + 0.75*qq**3)
            elseif (qq.lt.2.0) then
@@ -478,9 +478,9 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
            endif
            !
            !--calculate data value at this pixel using the summation interpolant
-           !  
+           !
            datsmooth(ipix) = datsmooth(ipix) + term*wab
-           if (normalise) datnorm(ipix) = datnorm(ipix) + termnorm*wab      
+           if (normalise) datnorm(ipix) = datnorm(ipix) + termnorm*wab
 
         enddo
 
@@ -501,7 +501,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
 end subroutine interpolate2D_xsec
 
 !--------------------------------------------------------------------------
-!     subroutine to render particles onto a pixel array 
+!     subroutine to render particles onto a pixel array
 !     at the maximum or minimum colour
 !
 !     Written by Daniel Price 21/7/2008
@@ -525,14 +525,14 @@ subroutine interpolate_part(x,y,hh,npart,xmin,ymin,datsmooth,npixx,npixy,pixwidt
   !
   !--loop over particles
   !
-  if (present(brightness)) then  
+  if (present(brightness)) then
      do i=1,npart
         call interpolate_part1(x(i),y(i),hh(i),xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval)
      enddo
   else
      do i=1,npart
         call interpolate_part1(x(i),y(i),hh(i),xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval,brightness)
-     enddo  
+     enddo
   endif
   return
 
@@ -564,7 +564,7 @@ subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,d
   radkern2 = radkern*radkern  ! radius of the smoothing kernel
   !
   !--for each particle work out which pixels it contributes to
-  !               
+  !
   ipixmin = int((xi - radkern - xmin)/pixwidth)
   jpixmin = int((yi - radkern - ymin)/pixwidth)
   ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
@@ -595,7 +595,7 @@ subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,d
         endif
      enddo
   enddo
-  
+
   return
 end subroutine interpolate_part1
 

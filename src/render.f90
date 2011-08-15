@@ -56,7 +56,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  character(len=*), intent(in) :: label
  real, intent(in), optional :: contmin,contmax,blank
  logical, intent(in), optional :: transparent
- 
+
  integer :: i,ierr,nc
  real :: trans(6),levels(ncontours),dcont,charheight,cmin,cmax
  character(len=12) :: string
@@ -73,7 +73,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 
  iuse_transparent = .false.
  if (present(transparent)) iuse_transparent = transparent
- 
+
  print*,'rendering...',npixx,'x',npixy,'=',size(datpix),' pixels'
 
  if (abs(icolouropt).eq.1) then        ! greyscale
@@ -122,7 +122,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
        nc = ncontours
        ifixed_contours = .false.
     endif
-    
+
     if (ifixed_contours) then
        do i=1,min(nc,ncontours)
           print*,"contour @ ", contours_list(i), ": ", trim(contourtitles(i))

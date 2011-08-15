@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -36,7 +36,7 @@ module settings_xsecrot
  real, public    :: taupartdepth,xsecwidth
  real, public    :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
  real, public, dimension(3) :: xorigin,xminrotaxes,xmaxrotaxes
- 
+
  !--private variables related to animation sequences
  integer, parameter, private         :: maxseq = 6
  integer, dimension(maxseq), private :: iseqstart,iseqend,iseqtype
@@ -71,7 +71,7 @@ module settings_xsecrot
  !--public procedure names
  public :: defaults_set_xsecrotate,submenu_xsecrotate,getsequencepos,insidesequence
  public :: write_animfile,read_animfile,setsequenceend
- 
+
  private
 
 contains
@@ -144,7 +144,7 @@ subroutine submenu_xsecrotate(ichoose)
  logical :: iyes,ichangedorigin
  character(len=4) :: text
  real, dimension(3) :: xorigintemp
- 
+
  print "(a)",'---------- cross section / 3D plotting options --------'
  if (ndim.eq.1) print*,' WARNING: none of these options have any effect in 1D'
  ians = ichoose
@@ -153,7 +153,7 @@ subroutine submenu_xsecrotate(ichoose)
  else
     text = 'proj'
  endif
- 
+
  if (ians.le.0 .or. ians.gt.6) then
     print 10,text,print_logical(irotate),anglex,angley,anglez, &
              print_logical(use3Dperspective),print_logical(use3Dopacityrendering), &
@@ -174,7 +174,7 @@ subroutine submenu_xsecrotate(ichoose)
  select case(ians)
 !------------------------------------------------------------------------
  case(1)
-    xsec_nomulti = .not.xsec_nomulti 
+    xsec_nomulti = .not.xsec_nomulti
     print *,' Cross section = ',xsec_nomulti
 !------------------------------------------------------------------------
  case(2)
@@ -190,7 +190,7 @@ subroutine submenu_xsecrotate(ichoose)
           call prompt('enter rotation angle about x axis (deg)',anglex,0.,360.)
        endif
     endif
-    
+
     !xorigin(1:ndim) = 0.5*(lim(1:ndim,1) + lim(1:ndim,2))
     xorigintemp(1:ndim) = xorigin(1:ndim)
     ichangedorigin = .false.
@@ -289,7 +289,7 @@ subroutine submenu_xsecrotate(ichoose)
        if (iyes) call submenu_animation()
 
        !call prompt('Use same sequence position for all plots on the page?',imultiframeseq)
-    endif    
+    endif
 
  end select
 
@@ -338,17 +338,17 @@ subroutine submenu_animation()
     case(1)
        print "(a)",'Note: zoom sequence starts using current fixed x,y plot limits'
        if (abs(xminseqend).lt.tiny(xminseqend) .and. abs(xmaxseqend).lt.tiny(xmaxseqend)) then
-          xminseqend = lim(1,1) 
+          xminseqend = lim(1,1)
           xmaxseqend = lim(1,2)
        endif
        call prompt(' Enter finishing xmin ',xminseqend)
        call prompt(' Enter finishing xmax ',xmaxseqend)
        if (abs(yminseqend).lt.tiny(yminseqend) .and. abs(ymaxseqend).lt.tiny(ymaxseqend)) then
-          yminseqend = lim(2,1) 
+          yminseqend = lim(2,1)
           ymaxseqend = lim(2,2)
        endif
        call prompt(' Enter finishing ymin ',yminseqend)
-       call prompt(' Enter finishing ymax ',ymaxseqend)       
+       call prompt(' Enter finishing ymax ',ymaxseqend)
     case(2)
        if (ndim.lt.2) then
           print "(a)",' ERROR: cannot use this sequence in 1D'
@@ -366,7 +366,7 @@ subroutine submenu_animation()
        call prompt(' Enter column to change limits ',icolchange,1,numplot)
        print "(a)",'Note: limits start from current fixed plot limits for this column'
        if (abs(xmincolend).lt.tiny(xmincolend) .and. abs(xmaxcolend).lt.tiny(xmaxcolend)) then
-          xmincolend = lim(icolchange,1) 
+          xmincolend = lim(icolchange,1)
           xmaxcolend = lim(icolchange,2)
        endif
        call prompt(' Enter finishing minimum value ',xmincolend)
@@ -433,7 +433,7 @@ subroutine submenu_animation()
     call prompt(' save sequences to '//trim(animfile)//' file now? ',ians)
     if (ians) call write_animfile(animfile)
  endif
- 
+
  return
 end subroutine submenu_animation
 
@@ -457,7 +457,7 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
  logical, intent(in) :: rotation, use3Dopacity,x_sec
  integer :: i
  real    :: xminfixed,xmaxfixed,yminfixed,ymaxfixed,renderminfixed,rendermaxfixed
- 
+
  nseq = 0
  iseqtype(:) = 0
 !
@@ -466,11 +466,11 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
  xminfixed = lim(iplotx,1)
  xmaxfixed = lim(iplotx,2)
  call transform_limits(xminfixed,xmaxfixed,itrans(iplotx))
- 
+
  yminfixed = lim(iploty,1)
  ymaxfixed = lim(iploty,2)
  call transform_limits(yminfixed,ymaxfixed,itrans(iploty))
- 
+
  if (irender.gt.0 .and. irender.le.numplot) then
     renderminfixed = lim(irender,1)
     rendermaxfixed = lim(irender,2)
@@ -478,7 +478,7 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
  endif
 
 !--set however many sequences are required to capture the change in parameters
-! 
+!
  !--change of x-y limits
  if (  notequal(xmin,xminfixed) .or. notequal(xmax,xmaxfixed) &
    .or.notequal(ymin,yminfixed) .or. notequal(ymax,ymaxfixed)) then
@@ -540,11 +540,11 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
     iseqtype(nseq) = 6
     taupartdepthend = taupartdepthi
  endif
- 
+
  !--all sequences start from 1 and end at current dump position
  iseqstart(1:nseq) = 1
  iseqend(1:nseq) = ipos
- 
+
  if (nseq.gt.0) then
     print "(1x,a,i1,a)",'total of ',nseq,' sequences set:'
     do i=1,nseq
@@ -562,7 +562,7 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
  else
     print "(a)",' no sequences set (no change in parameters)'
  endif
- 
+
  return
 end subroutine setsequenceend
 
@@ -572,13 +572,13 @@ end subroutine setsequenceend
 logical function notequal(r1,r2)
  implicit none
  real, intent(in) :: r1,r2
- 
+
  if (abs(r1-r2).gt.epsilon(r1)) then
     notequal = .true.
  else
     notequal = .false.
  endif
- 
+
 end function notequal
 
 !----------------------------------------------------------------------
@@ -590,20 +590,20 @@ logical function insidesequence(ipos)
  implicit none
  integer, intent(in) :: ipos
  integer :: i
- 
+
  insidesequence = .false.
  do i=1,nseq
     if (iseqtype(i).gt.0 .and. iseqstart(i).le.ipos .and. iseqend(i).ge.ipos) then
        insidesequence = .true.
     endif
  enddo
- 
+
  return
 end function insidesequence
 
 !----------------------------------------------------------------------
 ! query function which returns the current plot parameters
-! based on the position in each sequence 
+! based on the position in each sequence
 ! (given the current frame & dump position)
 !----------------------------------------------------------------------
 subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
@@ -620,9 +620,9 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
  logical :: logtaudepth
  integer :: i,iposinseq,iposend
  real    :: xfrac,xminstart,xmaxstart,xminend,xmaxend,yminstart,ymaxstart,yminend,ymaxend
- 
+
  isetrenderlimits = .false.
- 
+
  do i=1,nseq
     !--set starting values based on first position
     if (ipos.ge.iseqstart(i)) then
@@ -630,7 +630,7 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
        iposend = (iseqend(i)-iseqstart(i))*nframes + nframes
        xfrac = (iposinseq-1)/real(iposend-1)
        xfrac = min(xfrac,1.0)
-       
+
        if (iposinseq.gt.iposend) then
           print "(1x,a)",'-->  '//trim(labelseqtype(iseqtype(i)))//' finished : frac = 1.0'
        else
@@ -663,7 +663,7 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
           anglezi = anglez + xfrac*(anglezend - anglez)
        case(3)
           !--steps are linear in the transformed space
-          !  and limits returned are *already transformed*         
+          !  and limits returned are *already transformed*
           if (iplotx.eq.icolchange) then
              xminstart = lim(iplotx,1)
              xmaxstart = lim(iplotx,2)
@@ -685,7 +685,7 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
           elseif (irender.eq.icolchange) then
              xminstart = lim(irender,1)
              xmaxstart = lim(irender,2)
-             call transform_limits(xminstart,xmaxstart,itrans(irender))             
+             call transform_limits(xminstart,xmaxstart,itrans(irender))
              xminend = xmincolend
              xmaxend = xmaxcolend
              call transform_limits(xminend,xmaxend,itrans(irender))
@@ -709,12 +709,12 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
        end select
     endif
  enddo
- 
+
  return
 end subroutine getsequencepos
 
 !-----------------------------------------------
-! writes animation sequence options to file 
+! writes animation sequence options to file
 ! (should match read_animfile)
 !-----------------------------------------------
 subroutine write_animfile(filename)
@@ -723,11 +723,11 @@ subroutine write_animfile(filename)
  character(len=*), intent(in) :: filename
  integer :: ierr
  logical :: iexist, idelete
- 
+
  if (nseq.gt.0) then
     open(unit=15,file=filename,status='replace',form='formatted', &
          delim='apostrophe',iostat=ierr) ! without delim namelists may not be readable
-       if (ierr /= 0) then 
+       if (ierr /= 0) then
           print*,'ERROR: cannot write file '//trim(filename)
           close(unit=15)
           return
@@ -751,12 +751,12 @@ subroutine write_animfile(filename)
        endif
     endif
  endif
-    
- return              
+
+ return
 end subroutine write_animfile
 
 !-----------------------------------------------
-! reads animation sequence options from file 
+! reads animation sequence options from file
 ! (should match write_animfile)
 !-----------------------------------------------
 subroutine read_animfile(filename)
@@ -765,7 +765,7 @@ subroutine read_animfile(filename)
  character(len=*), intent(in) :: filename
  logical :: iexist
  integer :: ierr
- 
+
  inquire (exist=iexist, file=filename)
  if (iexist) then
     open(unit=15,file=filename,status='old',form='formatted')
@@ -781,11 +781,11 @@ subroutine read_animfile(filename)
  else
     return
  endif
- 
+
 77 continue
  print*,'**** warning: end of file in '//trim(filename)//' ****'
  close(unit=15)
- 
+
  if (nseq.gt.0 .and. all(iseqstart(1:nseq).gt.nsteps)) then
     print "(a)",' WARNING: animation sequences have no effect!! (not enough dumps)'
  endif

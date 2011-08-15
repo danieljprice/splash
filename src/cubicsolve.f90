@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 module cubic
  implicit none
- 
+
 contains
 !-------------------------------------------------------------
 ! this subroutine finds the real solutions to
@@ -51,7 +51,7 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
  real, parameter :: eps = 1000.*epsilon(0.)
  real, parameter :: pi = 3.14159265358979323846
  integer :: i
- 
+
  x = 0.
 !
 !--handle all trivial cases (quadratic, linear, all zero)
@@ -95,9 +95,9 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
        nreal = 3
        term = sqrt(abs(p)/3.)
        phi = ACOS(-0.5*q*term**(-3))
-       
+
        !--these are the solutions to the reduced cubic
-       !  y^3 + py + q = 0    
+       !  y^3 + py + q = 0
        y1 = 2.*term*COS(phi/3.)
        y2 = -2.*term*COS((phi + pi)/3.)
        y3 = -2.*term*COS((phi - pi)/3.)
@@ -123,7 +123,7 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
     if (nreal.ge.1) x(1) = y1 - term
     if (nreal.ge.2) x(2) = y2 - term
     if (nreal.ge.3) x(3) = y3 - term
-       
+
  endif
 
  if (present(check)) then
@@ -135,13 +135,13 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
           if (abs(term).lt.eps) then
              print*,'root ',i,':',x(i),'f=',term,': OK'
           else
-             print*,'root ',i,':',x(i),'f=',term,': FAILED',eps    
+             print*,'root ',i,':',x(i),'f=',term,': FAILED',eps
           endif
        enddo
     endif
  endif
  return
-  
+
 end subroutine cubicsolve
 
 !-------------------------------------------------------------
@@ -154,7 +154,7 @@ end subroutine cubicsolve
 ! output : x(3)  : array of 3 COMPLEX solutions
 !          nreal : number of real solutions
 !
-! The form of the equation above means that we 
+! The form of the equation above means that we
 ! do not need to handle trivial cases (quadratic, etc.)
 ! and that there will always be 3 solutions.
 !
@@ -174,7 +174,7 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
  real, parameter :: eps = 1000.*epsilon(0.)
  double precision, parameter :: pi = 3.14159265358979323846d0
  integer :: i,j,nroots
- 
+
  x = (0.,0.)
 !
 !--preliminaries
@@ -191,7 +191,7 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
     phi = ACOS(-0.5*q*term**(-3))
 
     !--these are the solutions to the reduced cubic
-    !  y^3 + py + q = 0    
+    !  y^3 + py + q = 0
     x(1) = real(2.d0*term*COS(phi/3.d0))
     x(2) = real(-2.d0*term*COS((phi + pi)/3.d0))
     x(3) = real(-2.d0*term*COS((phi - pi)/3.d0))
@@ -225,7 +225,7 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
        x(i) = real(xi)
     enddo
  endif
- 
+
  if (present(nreal)) nreal = nroots
 
  !--the following lines can be used for debugging
@@ -238,7 +238,7 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
           if (abs(term).lt.eps) then
              print*,'root ',i,':',x(i),'f=',term,': OK'
           else
-             print*,'root ',i,':',x(i),'f=',term,': FAILED',eps    
+             print*,'root ',i,':',x(i),'f=',term,': FAILED',eps
           endif
        enddo
     endif

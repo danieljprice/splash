@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -33,7 +33,7 @@ subroutine exact_wave(time,ampl,period,lambda,x0,ymean,xplot,yplot,ierr)
   implicit none
   integer :: i
   real, parameter :: pi = 3.1415926536
-  real, intent(in) :: time, ampl, period, lambda, x0, ymean 
+  real, intent(in) :: time, ampl, period, lambda, x0, ymean
   real, intent(in), dimension(:) :: xplot
   real, intent(out), dimension(size(xplot)) :: yplot
   integer, intent(out) :: ierr
@@ -64,7 +64,7 @@ subroutine exact_wave(time,ampl,period,lambda,x0,ymean,xplot,yplot,ierr)
         yplot(i) = ymean*(1. + ampl*sin(2.*pi/lambda*(xplot(i)-x0) - omega*time))
      endif
   enddo
-    
+
   return
 end subroutine exact_wave
 

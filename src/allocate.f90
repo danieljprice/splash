@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -22,13 +22,13 @@
 
 module mem_allocation
  implicit none
- 
+
 contains
 !----------------------------------------------------------------------------
 !
 !  memory allocation/reallocation for main data arrays
 !
-!  the global parameters maxpart, maxstep and maxcol are set to 
+!  the global parameters maxpart, maxstep and maxcol are set to
 !  the dimensions allocated
 !
 !----------------------------------------------------------------------------
@@ -84,7 +84,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
   maxpartold = min(maxpart,npartin)
   maxstepold = min(maxstep,nstep)
   maxcolold = min(maxcol,ncolumns)
-  
+
   reallocate = .false.
   reallocate_part = .false.
   reallocate_step = .false.
@@ -97,12 +97,12 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
      reallocate = .true.
      if (maxpart.ne.npartin) reallocate_part = .true.
      if (maxstep.ne.nstep) reallocate_step = .true.
-     
+
      print 10,'> reallocating memory:',npartin,nstep,ncolumns
 10   format (a,' parts = ',i10,' steps = ',i6,' cols = ',i4)
      allocate(dattemp(maxpartold,maxcolold,maxstepold), stat=ierr)
      if (ierr /= 0) stop 'error allocating memory (dattemp)'
-     
+
      if (reallocate_part) then
         allocate(icolourmetemp(maxpartold),stat=ierr)
         if (ierr /= 0) stop 'error allocating memory (icolourmetemp)'
@@ -112,7 +112,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
 
      dattemp = dat
      deallocate(dat)
-     
+
      if (allocated(iamtype)) then ! should always be true
         !--if iamtype has meaningful contents and reallocation is necessary
         reallocate_itype = (reallocate_part .or. reallocate_step) .and. (size(iamtype(:,1)).eq.maxpartold)
@@ -121,7 +121,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
            if (ierr /= 0) stop 'error allocating memory (iamtypetemp)'
            iamtypetemp(1:maxpartold,1:maxstepold) = iamtype(1:maxpartold,1:maxstepold)
            deallocate(iamtype)
-        
+
         elseif (present(mixedtypes)) then
         !--if iamtype has size 1 or 0 but should be allocated here,
         !  deallocate so we can give it correct size
@@ -167,7 +167,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
      print*,' parts = ',maxpart,' columns = ',maxcol,' steps = ',maxstep
      stop 'error allocating memory for dat array'
   endif
-    
+
   if (reallocate) then
      dat(1:maxpartold,1:maxcolold,1:maxstepold) = dattemp(1:maxpartold,1:maxcolold,1:maxstepold)
      deallocate(dattemp)
@@ -204,7 +204,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
   if (.not.allocated(iamtype)) then
      allocate(iamtype(1,maxstep),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory for type array (1)'
-  endif  
+  endif
 !
 !--particle arrays
 !
@@ -212,7 +212,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
      allocate(icolourme(maxpart),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory for icolourme array'
      icolourme = 1
-     
+
      if (reallocate_part) then
         icolourme(1:maxpartold) = icolourmetemp(1:maxpartold)
         deallocate(icolourmetemp)
@@ -246,7 +246,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
      endif
   endif
 
-  return 
+  return
 end subroutine alloc
 
 
@@ -259,7 +259,7 @@ end subroutine alloc
 subroutine deallocate_all
  use particle_data, only:dat,icolourme,iamtype,npartoftype,masstype,time,gamma
  implicit none
- 
+
  if (allocated(dat)) deallocate(dat)
  if (allocated(icolourme)) deallocate(icolourme)
  if (allocated(iamtype)) deallocate(iamtype)
@@ -267,7 +267,7 @@ subroutine deallocate_all
  if (allocated(masstype)) deallocate(masstype)
  if (allocated(time)) deallocate(time)
  if (allocated(gamma)) deallocate(gamma)
- 
+
  return
 end subroutine deallocate_all
 

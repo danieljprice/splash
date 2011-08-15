@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -29,7 +29,7 @@ module fieldlines
  private :: trace2D,interpolate_pt
 
  private
- 
+
 contains
 
 !---------------------------------------------------------------------------
@@ -81,7 +81,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
     datpix = 0.
     return
  endif
- 
+
  fyj = 0.
  fyjhalf = 0.
  !
@@ -131,7 +131,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
              term = term + 4./3.*fxprevi - 1./3.*fxhalf(i) + termi
           endif
        endif
-       
+
        datpix(i,j) = real(term)
     enddo
  enddo
@@ -183,16 +183,16 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
              term = term + 4./3.*fxprevi - 1./3.*fxhalf(i) - termi
           endif
        endif
-       
+
        datpix2(i,j) = real(term)
     enddo
  enddo
- 
+
  !
  !--average the two
  !
  datpix = 0.5*(datpix + datpix2)
- 
+
  return
 end subroutine streamlines
 
@@ -249,10 +249,10 @@ subroutine trace2D(xstart,ystart,xmin,xmax,ymin,ymax,ymaxline, &
  pixwidth = (xmax - xmin)/npix
  ipt = 0
  sign = 1.0
-  
+
  do while ((xline(1).ge.xmin .and. xline(1).le.xmax) .and. &
            (yline(1).ge.ymin .and. yline(1).le.ymax) .and. ipt.lt.10*npix)
-    
+
     ipt = ipt + 1
     !
     !--get dx and dy from interpolation of vector field from particles
@@ -271,9 +271,9 @@ subroutine trace2D(xstart,ystart,xmin,xmax,ymin,ymax,ymaxline, &
        dx = 0.
        dy = 0.
     endif
-    
+
     if (ipt.eq.1 .and. dy.lt.0.) sign = -1.0
-    
+
     xline(2) = xline(1) + sign*dx
     yline(2) = yline(1) + sign*dy
 
@@ -283,12 +283,12 @@ subroutine trace2D(xstart,ystart,xmin,xmax,ymin,ymax,ymaxline, &
     !--plot line segment
     !
     call plot_line(2,xline,yline)
-    
+
     xline(1) = xline(2)
     yline(1) = yline(2)
-    
+
  enddo
- 
+
  if (ipt.ge.10*npix) print*,'WARNING: infinite field line'
 
 end subroutine trace2D
@@ -331,7 +331,7 @@ subroutine interpolate_pt(xpt,ypt,vxpt,vypt,x,y,vecx,vecy,h,pmass,rho,npart)
        else
           wab = 0.25*(2.-qq)**3
        endif
-       
+
        vxpt = vxpt + term*vecx(i)*wab
        vypt = vypt + term*vecy(i)*wab
     endif

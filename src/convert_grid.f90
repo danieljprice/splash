@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -72,7 +72,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  integer, dimension(3) :: npixels
  real    :: hmin,pixwidth,rhominset,rhomin,gridmin,gridmax,gridmean
  logical :: isperiodic,inormalise,lowmem
- 
+
  !
  !--check for errors in input settings
  !
@@ -114,7 +114,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
        ierr = 1
     endif
  enddo
- 
+
  if (irho.le.0 .or. irho.gt.ncolumns) then
     print "(a)",' ERROR: density not found in data read.'
     ierr = 2
@@ -129,13 +129,13 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
        ierr = 4
     endif
  endif
- 
+
  if (ierr /= 0) then
     print "(a)",' cannot perform SPH interpolation to 3D grid, skipping file...'
     return
  endif
  ierr = 0
- 
+
  !
  !--set number of particles to use in the interpolation routines
  !  (by default, only the gas particles)
@@ -210,7 +210,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
     endif
     ncolsgrid = 1 + ndimV*nvec
  endif
- 
+
  !
  !--use low memory mode for large grids
  !
@@ -223,7 +223,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
     print "(a,/)",' [doing velocity field components separately (low memory mode)]'
  !
  !--allocate memory for the grid
- ! 
+ !
  if (allocated(datgrid)) deallocate(datgrid)
 
  write(*,"(a,i5,2(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(:),' grid ...'
@@ -281,7 +281,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
     print*,'enforcing minimum density on grid = ',rhomin
     print*,'set SPLASH_TO_GRID_RHOMIN=minval to manually set this (e.g. to zero)'
  endif
- 
+
  if (rhomin.gt.0.) then
     nzero = 0
     !$omp parallel do private(k,j,i) reduction(+:nzero) schedule(static)
@@ -313,7 +313,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  if (interpolateall) then
     do i=1,ncolumns
        if (.not.any(ix(:).eq.i) .and. i.ne.ih .and. i.ne.ipmass .and. i.ne.irho) then
- 
+
           print "(/,a)",' interpolating '//trim(label(i))
           print fmtstring1,trim(label(i))
           call minmaxmean_part(dat(1:ninterp,i:i),weight,ninterp,partmin,partmax,partmean)
@@ -342,10 +342,10 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
 
     if (.not.lowmem) then
        if (allocated(datgrid)) deallocate(datgrid)
-    endif        
-    
+    endif
+
     if (nvec.gt.0) then
-       
+
        print "(/,a)",' set SPLASH_TO_GRID_DENSITY_ONLY=yes to skip remaining quantities'
 
        if (.not.lowmem) then
@@ -375,15 +375,15 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
              exit over_vec
           end select
           if (iloc.le.0 .or. iloc.ge.ncolumns) cycle over_vec
-          
+
           if (lowmem) then
-             
-             do i=iloc,iloc+ndimV-1         
+
+             do i=iloc,iloc+ndimV-1
                 print "(/,a)",' interpolating '//trim(label(i))
                 print fmtstring1,trim(label(i))
                 call minmaxmean_part(dat(1:ninterp,i:i),weight,ninterp,partmin,partmax,partmean)
                 print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
-                
+
                 if (iszero(partmin,partmax,1)) then
                    datgrid = 0.
                 else
@@ -399,10 +399,10 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
                 !--write gridded data to file
                 !
                 call write_grid(iunit,filename,outformat,datgrid,npixels,trim(label(i)),&
-                     time,pixwidth,xmin,ierr)          
+                     time,pixwidth,xmin,ierr)
              enddo
           else
-          
+
              print fmtstring1,trim(labelvec(iloc))
              call minmaxmean_part(dat(1:ninterp,iloc:iloc+ndimV-1),weight,ninterp,partmin,partmax,partmean)
              do i=1,ndimV
@@ -534,7 +534,7 @@ subroutine minmaxmean_part(dat,weight,npart,partmin,partmax,partmean,nonzero)
  real    :: partval
  integer :: np,jlen,i,j
  logical :: usenonzero
- 
+
  usenonzero = .false.
  if (present(nonzero)) usenonzero = nonzero
 
@@ -569,7 +569,7 @@ subroutine minmaxmean_part(dat,weight,npart,partmin,partmax,partmean,nonzero)
     endif
  enddo
  !!$omp end parallel do
- 
+
  if (np.gt.0) then
     partmean(:) = partmean(:)/real(np)
  endif
@@ -584,11 +584,11 @@ logical function iszero(partmin,partmax,ndim)
  implicit none
  real, dimension(:), intent(in) :: partmin,partmax
  integer, intent(in)            :: ndim
- 
+
  if (all(abs(partmin(1:ndim)).lt.tiny(0.)) .and. &
      all(abs(partmax(1:ndim)).lt.tiny(0.))) then
     iszero = .true.
-    print "(a)",' min=max=0 on particles: skipping pointless interpolation and setting dat = 0.' 
+    print "(a)",' min=max=0 on particles: skipping pointless interpolation and setting dat = 0.'
  else
     iszero = .false.
  endif

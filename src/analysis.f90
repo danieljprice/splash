@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -74,13 +74,13 @@ logical function isanalysis(string,noprint)
  case('timeaverage','timeav')
      isanalysis = .true.
  end select
- 
+
  if (present(noprint)) then
     doprint = .not.noprint
  else
     doprint = .true.
  endif
- 
+
  if (.not.isanalysis .and. doprint) then
     print "(a)",' Analysis mode ("splash calc X dumpfiles") on a sequence of dump files: '
     print "(a)",'  splash calc energies     : calculate KE,PE,total energy vs time'
@@ -104,12 +104,12 @@ logical function isanalysis(string,noprint)
     print "(/,a)",'         calc timeaverage  : time average of *all* entries for every particle'
     print "(a)",'                             output to file called ''time_average.out'''
  endif
- 
+
  return
 end function isanalysis
 
 !----------------------------------------------------------------
-!  open output file/ initialise quantities needed for analysis 
+!  open output file/ initialise quantities needed for analysis
 !  over all dump files
 !----------------------------------------------------------------
 subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
@@ -147,7 +147,7 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     !
     required(ivx:ivx+ndimV-1) = .true.
     required(iBfirst:iBfirst+ndimV-1) = .true.
-    required(iutherm) = .true. 
+    required(iutherm) = .true.
     required(ipmass) = .true.
     if (iBfirst.gt.0) required(irho) = .true.
     !
@@ -293,7 +293,7 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) ncolumns+1
     write(headerline,fmtstring) 1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
  endif
- 
+
 !
 !--do not replace the file if it already exists
 !
@@ -371,7 +371,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     print "(/,5('-'),a,', FILE #',i4,' (TIME NOT READ)'/)",&
           '> CALCULATING '//trim(ucase(analysistype)),nfilesread
  endif
- 
+
  select case(trim(analysistype))
  case('energy','energies')
     ekin = 0.
@@ -448,7 +448,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
              massaboverho(1:nlevels) = massaboverho(1:nlevels) + pmassi
           endif
        enddo
-       
+
        !
        !--write output to screen/terminal
        !
@@ -460,7 +460,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        !
        write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) nlevels+1
        write(iunit,fmtstring) time,massaboverho(1:nlevels)
-       
+
     else
        print "(a)",' ERROR in massaboverho analysis!'// &
                    ' either mass or density not found in dump file'
@@ -570,7 +570,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           else
              voli = 0.
           endif
-          
+
           rmsval = rmsval + voli*dat(i,j)**2
           totvol = totvol + voli
        enddo
@@ -646,7 +646,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--use the computed volume for velocity, otherwise won't be normalised correctly
     !
     rmsval = sqrt(rmsval/totvol)
-    rmsvmw = sqrt(rmsvmw/dble(ntot))   
+    rmsvmw = sqrt(rmsvmw/dble(ntot))
 
     !
     !--option to override volume from sum with environment variable
@@ -721,7 +721,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        bvalmw = sqrt(svarmw)/rmsvmw
     else
        bvalmw = 0.
-    endif    
+    endif
     print "(1x,'sqrt(sigma^2/v^2)(vol. weighted) = ',f11.3)",bval
     print "(1x,'sqrt(sigma^2/v^2)(mass weighted) = ',f11.3)",bvalmw
     !
@@ -760,7 +760,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     endif
     ntot1 = min(ntot1,ntot)
     ncol1 = min(ncol1,ncolumns)
-    
+
     dn = 1./real(nfilesread)
     !
     !--compute the mean and variance using Knuth/Welford's compensated
@@ -780,7 +780,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
 
  case default
     print "(a)",' ERROR: unknown analysis type in write_analysis routine'
-    return 
+    return
  end select
 
  print "(/,1x,'>>> ',a,' <<<')",'written to '//trim(fileout)
@@ -806,7 +806,7 @@ integer function igettype(i)
        igettype = igettype + 1
        np = np + npartoftype(igettype)
     enddo
- endif       
+ endif
 
 end function igettype
 !

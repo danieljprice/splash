@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -40,7 +40,7 @@ subroutine exact_rochelobe(time,semi,m1,m2,xplot,yplot,ierr)
  real    :: roche_radius1,roche_radius2,q,L1
  real    :: rlimit,llimit,xmax,xmin,ymax,xtmp
  integer :: i,npts
- 
+
  npts = size(xplot)/2
  if (npts < 1) return
  print "(a,es10.3,a,es10.3)",' plotting Roche potential, m1 = ',m1,' m2 = ',m2
@@ -81,7 +81,7 @@ subroutine exact_rochelobe(time,semi,m1,m2,xplot,yplot,ierr)
 
  call plot_line(2*npts+1,xplot,yplot)
  call plot_line(2*npts+1,xplot,-yplot)
- 
+
  !--return non-zero ierr value as we do the plotting here
  ierr = 1
 
@@ -195,7 +195,7 @@ end function left_limit
 real function right_limit(q, L)
  implicit none
  real, intent(in) :: q,L
- 
+
  right_limit = rtsafe(rlimit,q,L,1.5-0.5*L,2.0-L,0., roche_accuracy);
 
 end function right_limit

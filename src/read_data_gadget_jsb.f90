@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -41,10 +41,10 @@
 ! npartoftype(maxstep): number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !                      (used in calc_quantities for calculating the pressure)
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -71,11 +71,11 @@ subroutine read_data(rootname,istart,nstepsread)
   real, dimension(:,:), allocatable :: dattemp
 
   nstepsread = 0
-  
+
   if (len_trim(rootname).gt.0) then
      datfile = trim(rootname)
   else
-     print*,' **** no data read **** ' 
+     print*,' **** no data read **** '
      return
   endif
 !
@@ -83,7 +83,7 @@ subroutine read_data(rootname,istart,nstepsread)
 !
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: ',trim(datfile),' file not found ***'    
+     print "(a)",' *** error: ',trim(datfile),' file not found ***'
      return
   endif
 !
@@ -94,7 +94,7 @@ subroutine read_data(rootname,istart,nstepsread)
   ncol_max = 15 ! 3 x pos, 3 x vel, utherm, rho, Ne, h, pmass
 !
 !--read data from snapshots
-!  
+!
   i = istart
 
   print "(1x,a)",'reading Jamie Bolton''s modified GADGET format'
@@ -106,7 +106,7 @@ subroutine read_data(rootname,istart,nstepsread)
   !
   !--read header for this timestep
   !
-  read(11,ERR=70,end=80) npartoftypei,Massoftype,timetemp 
+  read(11,ERR=70,end=80) npartoftypei,Massoftype,timetemp
   ntoti = int(sum(npartoftypei))
   print*,'time             : ',timetemp
   print*,'Npart (by type)  : ',npartoftypei
@@ -144,7 +144,7 @@ subroutine read_data(rootname,istart,nstepsread)
   !
   npartoftype(:,i) = npartoftypei
   time(i) = real(timetemp)
-  
+
 
   if (ntoti.gt.0) then
      if (allocated(dattemp)) deallocate(dattemp)
@@ -153,7 +153,7 @@ subroutine read_data(rootname,istart,nstepsread)
      !--read positions of all particles
      !
      print*,'positions ',ntoti
-     read (11, iostat=ierr) dattemp(1:3,1:ntoti)        
+     read (11, iostat=ierr) dattemp(1:3,1:ntoti)
      if (ierr /= 0) then
         print "(a)",'error encountered whilst reading positions '
         return
@@ -169,7 +169,7 @@ subroutine read_data(rootname,istart,nstepsread)
      read (11, iostat=ierr) dattemp(1:3,1:ntoti)
      if (ierr /= 0) then
         print "(a)",'error encountered whilst reading velocities'
-     else        
+     else
         do icol=4,6
            dat(1:ntoti,icol,i) = dattemp(icol-3,1:ntoti)
         enddo
@@ -185,7 +185,7 @@ subroutine read_data(rootname,istart,nstepsread)
      !
      !--read particle masses
      !
-     !--work out total number of masses dumped 
+     !--work out total number of masses dumped
      Nmassesdumped = 0
      do itype = 1,6
         if (abs(Massoftype(itype)).lt.1.e-8) then
@@ -260,7 +260,7 @@ subroutine read_data(rootname,istart,nstepsread)
 68 continue
   !
   !--close data file and return
-  !                    
+  !
   close(unit=11)
 
   ncolumns = ncol_max
@@ -268,7 +268,7 @@ subroutine read_data(rootname,istart,nstepsread)
 
   print*,'>> Finished reading: steps =',nstepsread-istart+1, &
          'last step ntot =',sum(npartoftype(:,istart+nstepsread-1))
-  return    
+  return
 !
 !--errors
 !
@@ -351,7 +351,7 @@ subroutine set_labels
   do i=1,ndimV
      label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
   enddo
-  
+
   !--set labels for each particle type
   !
   ntypes = 6

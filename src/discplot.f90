@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -164,7 +164,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
 
 !
 !--calculate Toomre Q parameter in each bin using surface density
-! 
+!
  if (iplot.eq.2) then
     epicyclic = 0.
     do ibin=1,nbins
@@ -190,7 +190,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
        sigma(ibin) = toomreq
     enddo
  endif
- 
+
  if (itransx.gt.0) call transform(radius,itransx)
  if (itransy.gt.0) call transform(sigma,itransy)
 !
@@ -210,7 +210,7 @@ end subroutine disccalc
 subroutine discplot
  use plotlib, only:plot_line
  implicit none
- 
+
  call plot_line(nbins,radius,sigma)
 
 end subroutine discplot

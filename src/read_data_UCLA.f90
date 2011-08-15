@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -40,9 +40,9 @@
 ! ntot(maxstep)       : total number of particles in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -74,7 +74,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -88,7 +88,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   j = indexstart
   nstepsread = 0
   print "(a)",' reading Sky King/Mark Morris (UCLA) ascii data format '
-  
+
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
   !--open the file and read the number of particles
@@ -154,7 +154,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      dat(i,6,j) = 0.
   enddo
 
-     
+
 return
 end subroutine read_data
 
@@ -187,7 +187,7 @@ subroutine set_labels
   label(ipr) = 'pressure'
   label(ih) = 'smoothing length'
   label(ipmass) = 'particle mass'
-  
+
   if (ivx.gt.0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
@@ -206,5 +206,5 @@ subroutine set_labels
 
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

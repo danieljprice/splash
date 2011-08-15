@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -29,7 +29,7 @@ module plotutils
  use plotlib, only:plot_line,plot_bins
  implicit none
  public :: plotline,plotbins,formatreal
- 
+
  private
 
 contains
@@ -43,7 +43,7 @@ subroutine plotline(npts,xline,yline,blank)
  real, intent(in), dimension(:) :: xline,yline
  real, intent(in), optional :: blank
  integer :: i,nseg,istart
- 
+
  if (present(blank)) then
     nseg = 0
     istart = 1
@@ -58,7 +58,7 @@ subroutine plotline(npts,xline,yline,blank)
        endif
     enddo
  else
-    call plot_line(npts,xline,yline) 
+    call plot_line(npts,xline,yline)
  endif
 
  return
@@ -73,7 +73,7 @@ subroutine plotbins(nbins,xbins,ybins,blank)
  real, intent(in), dimension(:) :: xbins,ybins
  real, intent(in), optional :: blank
  integer :: i,nseg,istart
- 
+
  if (present(blank)) then
     nseg = 0
     istart = 1
@@ -90,7 +90,7 @@ subroutine plotbins(nbins,xbins,ybins,blank)
  else
     call plot_bins(nbins,xbins,ybins,.true.)
  endif
- 
+
  return
 end subroutine plotbins
 
@@ -113,7 +113,7 @@ subroutine formatreal(val,string,ierror)
     write(string,"(f8.3)",iostat=ierr) val
  elseif (abs(val).ge.100.) then
     write(string,"(f8.0)",iostat=ierr) val
- else 
+ else
     write(string,"(f8.2)",iostat=ierr) val
  endif
  string = adjustl(trim(string))

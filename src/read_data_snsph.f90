@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -40,9 +40,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -60,19 +60,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: npart_max,nstep_max,ncolstep
   real    :: timei, gammai
   logical :: iexist
-    
+
   character(len=len(rootname)+10) :: dumpfile
-  
+
   nstepsread = 0
   npart_max = maxpart
 
-  dumpfile = trim(rootname)   
+  dumpfile = trim(rootname)
   !
   !--check if first data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: ',trim(dumpfile),' file not found ***'    
+     print "(a)",' *** error: ',trim(dumpfile),' file not found ***'
      return
   endif
   !
@@ -87,7 +87,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   j = indexstart
   nstepsread = 0
-  
+
   print "(1x,a)",'reading SNSPH format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
@@ -101,7 +101,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ntoti = npart_max
   ncolumns = ncolstep
- 
+
   if (.not.allocated(dat) .or. ntoti.gt.npart_max) then
      npart_max = max(npart_max,INT(1.1*ntoti))
      call alloc(npart_max,nstep_max,ncolstep+ncalc)
@@ -137,7 +137,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   endif
 
   return
-                    
+
 end subroutine read_data
 
 !!------------------------------------------------------------
@@ -151,7 +151,7 @@ subroutine set_labels
   use geometry, only:labelcoord
   implicit none
   integer :: i
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -160,16 +160,16 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
   ivx = 4
   ih = 10        !  smoothing length
   iutherm = 8  !  thermal energy
-  ipmass = 7   !  particle mass      
+  ipmass = 7   !  particle mass
   irho = 9    ! location of rho in data array
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(irho) = 'density'
   label(iutherm) = 'temperature'
@@ -188,8 +188,8 @@ subroutine set_labels
   !
   ntypes = 1
   labeltype(1) = 'gas'
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

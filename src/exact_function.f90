@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -39,7 +39,7 @@ subroutine exact_function(string,xplot,yplot,time,ierr)
   integer, intent(out) :: ierr
   integer :: i,j,nvars
   real(kind=rn), dimension(:), allocatable     :: val
-  
+
   print "(a)",' Plotting function f(x) = '//trim(string)
   if (len_trim(string).le.0) then
      print "(a)",' *** ERROR: blank function string in exact_function call'
@@ -48,7 +48,7 @@ subroutine exact_function(string,xplot,yplot,time,ierr)
   endif
   ierr = 0
   !
-  !--work out how many subfunctions the string contains 
+  !--work out how many subfunctions the string contains
   !  and allocate memory for the sub function values appropriately
   !
   call get_nvars(string,nvars)
@@ -61,7 +61,7 @@ subroutine exact_function(string,xplot,yplot,time,ierr)
 
   call initf(nvars)
   call parse_subfunctions(string,nvars,.false.,ierr)
-  
+
   if (EvalErrType.ne.0) then
      print "(a)",' *** ERROR parsing function: '//trim(EvalerrMsg())//' ***'
      ierr = EvalErrType
@@ -69,7 +69,7 @@ subroutine exact_function(string,xplot,yplot,time,ierr)
      do i=1,size(xplot)
         val(1) = xplot(i)                 ! type conversion here
         val(2) = time                     ! type conversion here
-        
+
         !--evaluate sub-functions in order of dependency
         do j=3,nvars
            val(j) = evalf(j,val(1:j-1))
@@ -86,12 +86,12 @@ subroutine exact_function(string,xplot,yplot,time,ierr)
 
   call endf
   if (allocated(val)) deallocate(val)
-    
+
   return
 end subroutine exact_function
 
 !----------------------------------------------------------------
-! check syntax in the function string - this subroutine 
+! check syntax in the function string - this subroutine
 ! mainly just an interface to checking routines in fparser
 !----------------------------------------------------------------
 subroutine check_function(string,ierr,verbose)
@@ -101,10 +101,10 @@ subroutine check_function(string,ierr,verbose)
  integer, intent(out)          :: ierr
  logical, intent(in), optional :: verbose
  integer :: nvars
- 
+
  call get_nvars(string,nvars)
  if (present(verbose)) then
-    call parse_subfunctions(string,nvars,.true.,ierr,verbose=verbose) 
+    call parse_subfunctions(string,nvars,.true.,ierr,verbose=verbose)
  else
     call parse_subfunctions(string,nvars,.true.,ierr)
  endif
@@ -123,7 +123,7 @@ subroutine parse_subfunctions(string,nvars,check,ierr,verbose)
  logical, intent(in)          :: check
  integer, intent(out)         :: ierr
  logical, intent(in), optional :: verbose
- 
+
  character(len=len(string)), dimension(nvars) :: var
  integer :: ieq,ivars,ivarsinit,lstr,j,icommaprev
  logical :: iverb
@@ -193,7 +193,7 @@ subroutine parse_subfunctions(string,nvars,check,ierr,verbose)
        ierr = EvalErrType
     endif
  endif
- 
+
 end subroutine parse_subfunctions
 
 !----------------------------------------------------------------
@@ -204,7 +204,7 @@ subroutine get_nvars(string,nvars)
  character(len=*), intent(in) :: string
  integer, intent(out) :: nvars
  integer :: j
- 
+
  nvars = 2
  do j=1,len_trim(string)
     if (string(j:j)==',') nvars = nvars + 1

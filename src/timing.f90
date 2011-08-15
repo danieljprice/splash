@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -31,9 +31,9 @@ module timing
  real,    private :: starttime
 
  data starttime/-1./
- 
+
  public :: wall_time,print_time
- 
+
  private
 
 contains
@@ -48,7 +48,7 @@ contains
   character(len=8)  :: date
   character(len=5)  :: zone
   character(len=10) :: time
-  
+
   call date_and_time(date,time,zone,ivalues)
   iyear  = ivalues(1)
   imonth = ivalues(2)
@@ -56,7 +56,7 @@ contains
   ihour  = ivalues(5)
   imin   = ivalues(6)
   isec   = ivalues(7)
-  imsec  = ivalues(8) 
+  imsec  = ivalues(8)
   istarttime(1) = iyear
   istarttime(2) = imonth
   istarttime(3) = iday
@@ -65,7 +65,7 @@ contains
   istarttime(6) = isec
   !istarttime(7) = imsec
   starttime = iday*86400. + ihour*3600. + imin*60. + isec + imsec*0.001
- 
+
   return
  end subroutine initialise_timing
 
@@ -81,10 +81,10 @@ contains
   character(len=8)  :: date
   character(len=5)  :: zone
   character(len=10) :: time
-  
+
   !--do self-initialisation the first time it is called
   if (starttime.lt.0.) call initialise_timing
-  
+
   call date_and_time(date,time,zone,ivalues)
   iday   = ivalues(3)
   ihour  = ivalues(5)
@@ -123,14 +123,14 @@ contains
   character(len=64) :: newstring
   integer :: nhr,nmin,lunit
   real :: trem
-  
+
   trem = time
   nhr = int(trem/3600.)
   if (nhr.gt.0) trem = trem - nhr*3600.
 
   nmin = int(trem/60.)
   if (nmin.gt.0) trem = trem - nmin*60.
-  
+
   if (present(string)) then
      newstring = trim(string(1:min(len(newstring),len_trim(string))))
   else
@@ -142,7 +142,7 @@ contains
   else
      lunit = 6
   endif
-  
+
   if (nhr.gt.0) then
      write(lunit,"(1x,a,1x,i3,a,i2,a,f6.2,a,1pe12.4,a)") &
           trim(newstring),nhr,' hr, ',nmin,' min, ',trem,' s (=',time,'s)'
@@ -152,7 +152,7 @@ contains
   else
      write(lunit,"(1x,a,1x,f6.2,a)") trim(newstring),trem,' s'
   endif
-  
+
   return
  end subroutine print_time
 

@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -62,7 +62,7 @@ subroutine defaults_set_part
   ilabelpart = .false.    ! plot particle numbers
   icoordsnew = icoords
   icircpart(:) = 0
-  
+
   iplotpartoftype(1) = .true. ! whether or not to plot particles of certain types
   iplotpartoftype(2:maxparttypes) = .false.
   PlotOnRenderings = .false.
@@ -118,14 +118,14 @@ subroutine submenu_particleplots(ichoose)
   character(len=120)  :: contline
 
   iaction = ichoose
-  
+
   !--we require some tricks with the format string to print only the actual number of
   !  particle types rather than the whole array
   !
   if (ntypes.gt.100) print*,'WARNING: Internal error: ntypes too large for formatting in particle plot menu'
   if (ntypes.le.0) then
      substring1 = "no types specified"
-     substring2 = "not applicable" 
+     substring2 = "not applicable"
   elseif (ntypes.eq.1) then
      substring1 = "a"
      substring2 = "i2"
@@ -139,7 +139,7 @@ subroutine submenu_particleplots(ichoose)
   else
      contline = ' '
   endif
-  
+
   fmtstring="("// &
          "' 0) exit ',/,"// &
          "' 1) turn on/off particles by type       ( ',"//trim(substring1)//",' )',/,"//trim(contline)// &
@@ -191,7 +191,7 @@ subroutine submenu_particleplots(ichoose)
            PlotonRenderings(itype) = .false.
         endif
      enddo
-     return           
+     return
 !------------------------------------------------------------------------
   case(2)
      print "(/,' Marker options (for all from -8->31, see PGPLOT userguide):',11(/,i2,') ',a))", &
@@ -199,7 +199,7 @@ subroutine submenu_particleplots(ichoose)
            32,'solid circle, size proportional to h', &
            33,'open circle,  size proportional to h', &
            34,'outlined solid circle, size prop. to h'
-           
+
      !print*,'(0 Square) (1 .) (2 +) (3 *) (4 o) (5 x) (17 bold circle) (-8 bigger bold circle)'
      do itype=1,ntypes
         call prompt(' Enter marker to use for '//trim(labeltype(itype)) &
@@ -210,7 +210,7 @@ subroutine submenu_particleplots(ichoose)
         call prompt(' Enter proportionality factor for scalable markers (radius = fac*h)',hfacmarkers)
      endif
 
-     return   
+     return
 !------------------------------------------------------------------------
   case(3)
      print "(2(a,/),/,4(a,/))", &
@@ -224,7 +224,7 @@ subroutine submenu_particleplots(ichoose)
         call prompt(' Enter default colour for '//trim(labeltype(itype)) &
              //' particles:',idefaultcolourtype(itype),-1,14)
      enddo
-     return   
+     return
 !------------------------------------------------------------------------
   case(4)
      if (size(iamtype(:,1)).gt.1) then
@@ -233,7 +233,7 @@ subroutine submenu_particleplots(ichoose)
           '          when particle types are mixed in the dump file', &
           '          (for sphNG read disable this using -lowmem on the command line)'
      endif
-     
+
      print "(9(i1,'=',a,', '))",(i,trim(labeltype(i)),i=1,ntypes)
      call prompt('enter first particle type to plot',itypeorder(1),1,ntypes)
      do i=2,ntypes
@@ -252,23 +252,23 @@ subroutine submenu_particleplots(ichoose)
      enddo
 
      print "(/,a,/,a,/)",' Fast particle plotting excludes particles in crowded regions', &
-                         ' Turn this option off to always plot every particle'  
+                         ' Turn this option off to always plot every particle'
      call prompt('Allow fast particle plotting?',ifastparticleplot)
-     return 
+     return
 !------------------------------------------------------------------------
   case(5)
      call prompt('plot line joining particles?',iplotline)
-     if (iplotline) then     
+     if (iplotline) then
         call prompt('Enter PGPLOT line style to use ',linestyle,0,5)
         call prompt('Enter PGPLOT colour for line ',linecolour,0,15)
      endif
-     return 
+     return
 !!-----------------------------------------------------------------------
 !!  case(5)
 !     !          label particles with particle numbers
 !     ilabelpart=.not.ilabelpart
 !     print*,' label particles = ',ilabelpart
-!     return           
+!     return
 !------------------------------------------------------------------------
   case(6)
      if (ndim.le.1 .or. ih.le.0) then
@@ -316,7 +316,7 @@ subroutine submenu_particleplots(ichoose)
            enddo
         endif
      endif
-     return           
+     return
 !------------------------------------------------------------------------
   case(7)
      print 20,icoords
@@ -342,14 +342,14 @@ subroutine submenu_particleplots(ichoose)
 !------------------------------------------------------------------------
   case(9)
      call options_exact
-     return     
+     return
 !------------------------------------------------------------------------
   case default
      return
 
   end select
 
-  return      
+  return
 end subroutine submenu_particleplots
 
 end module settings_part

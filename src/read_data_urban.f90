@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -41,9 +41,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -83,15 +83,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  
+
   !--number of columns to read from file
   !  this is determined automatically
   !ncol = 13
-  
+
   j = indexstart
   nstepsread = 0
   print "(a)",' reading Andrea Urban ascii file format'
-  
+
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
   !--open the file and read the number of particles
@@ -117,8 +117,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
         call alloc(npart_max,nstep_max,ncol+ncalc)
      endif
   endif
-  
-  npart_max = max(npart_max,nprint) 
+
+  npart_max = max(npart_max,nprint)
   ncolumns = ncol
 !
 !--allocate/reallocate memory if j > maxstep
@@ -126,7 +126,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   if (j.gt.maxstep) then
      call alloc(maxpart,j+1,maxcol)
   endif
- 
+
 !
 !--read header lines, try to use it to set time
 !
@@ -190,7 +190,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   npartoftype(:,j) = 0
   npartoftype(1,j) = nprint
-  
+
 !
 !--now open the sink particle file and read it
 !
@@ -263,7 +263,7 @@ subroutine set_labels
   !use settings_units, only:units,unitslabel
   implicit none
   integer :: i
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -272,7 +272,7 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
@@ -281,7 +281,7 @@ subroutine set_labels
   ih      = 8
   irho    = 9
   iutherm = 10
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(ipmass) = 'particle mass'
   label(ih)     = 'h'
@@ -306,8 +306,8 @@ subroutine set_labels
   labeltype(2) = 'sink'
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .false.
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

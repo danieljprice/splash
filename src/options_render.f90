@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -88,7 +88,7 @@ subroutine submenu_render(ichoose)
 !
   ians = ichoose
   print "(a)",'----------------- rendering options -------------------'
-  
+
   if (ians.le.0 .or. ians.gt.8) then
      if (npix.gt.0) then
         write(string,"(i5)") npix
@@ -106,7 +106,7 @@ subroutine submenu_render(ichoose)
           ' 3) 2nd render/contour prompt          ( ',a,' )',/, &
           ' 4) change number of contours          (',i3,' )',/, &
           ' 5) colour bar options                 ( ',i2,' )',/,&
-          ' 6) use particle colours not pixels    ( ',a,' )',/,& 
+          ' 6) use particle colours not pixels    ( ',a,' )',/,&
           ' 7) normalise interpolations           ( ',a,' )',/,&
           ' 8) use accelerated rendering          ( ',a,' )',/,&
           ' 9) use density weighted interpolation ( ',a,' )',/, &
@@ -136,7 +136,7 @@ subroutine submenu_render(ichoose)
           call prompt('enter colour scheme for rendering ',icolours,-ncolourschemes,ncolourschemes+1)
           !
           ! demonstration plot of all colour schemes
-          !      
+          !
           ierr = 0
           if (abs(icolours).eq.ncolourschemes+1) then
              call colour_demo
@@ -155,13 +155,13 @@ subroutine submenu_render(ichoose)
           print "(3(/,a),/)",' Double rendering renders the first quantity in black and white', &
                              ' and the second in colour with a transparent background ', &
                              ' (such that data below the colour bar minimum appears transparent)'
-          call prompt('use double rendering instead of contours?',double_rendering)       
+          call prompt('use double rendering instead of contours?',double_rendering)
        else
           call prompt('allow contour plotting prompt?',iplotcont_nomulti)
        endif
-       
+
        if (double_rendering) then
-          print "(a)",' Second render prompt is '//trim(print_logical(iplotcont_nomulti))       
+          print "(a)",' Second render prompt is '//trim(print_logical(iplotcont_nomulti))
        else
           print "(a)",' Contour plotting prompt is '//trim(print_logical(iplotcont_nomulti))
        endif
@@ -186,7 +186,7 @@ subroutine submenu_render(ichoose)
        enddo
        call prompt(' enter colour bar style to use ',iColourBarStyle,0,maxcolourbarstyles)
        print "(a,/)",'colour bar style = '//trim(labelcolourbarstyles(iColourBarStyle))
-       
+
        if (iColourBarStyle.gt.0) then
           call prompt(' plot colour bar label?',iplotcolourbarlabel)
           if (barisvertical(iColourBarStyle) .and. iplotcolourbarlabel) then
@@ -229,11 +229,11 @@ subroutine submenu_render(ichoose)
                         ' %l  : label for rendered quantity ', &
                         ' %z  : label for ''z'' ', &
                         ' %uz : units label for z (only if physical units applied)'
-                        
+
        call prompt(' enter label format for projection plots: ',projlabelformat)
        call prompt(' enter which column to apply format to (0=all) ',iapplyprojformat,0,maxplot)
   end select
-    
+
  return
 end subroutine submenu_render
 

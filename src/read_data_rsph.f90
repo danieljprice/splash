@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -40,9 +40,9 @@
 ! npartoftype(maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -143,8 +143,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
   print "(1x,a,20(1x,i6))",'iheader = ',iheader(1:isizeheader)
 
   ntoti = sum(iheader(1:ntypes))
-  
-  read(iunit,iostat=ierr,end=80) lheader(1:isizeheader)  
+
+  read(iunit,iostat=ierr,end=80) lheader(1:isizeheader)
   if (ierr /= 0) then
      print*,'WARNING: errors during lheader read'
   endif
@@ -213,7 +213,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--read data arrays
 !
-  if (singleprecision) then     
+  if (singleprecision) then
      if (allocated(dattemp)) deallocate(dattemp)
      allocate(dattemp(ndim,ntoti))
      !
@@ -257,14 +257,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
         !--convert to single precision
         dat(1:ntoti,icol,i) = real(dattempd(1,1:ntoti))
      enddo
-     
+
   endif
-  
+
   if (allocated(dattemp)) deallocate(dattemp)
   if (allocated(dattempd)) deallocate(dattempd)
   !
   !--close data file and return
-  !                    
+  !
 close(unit=iunit)
 
 print "(a)",' finished data read '
@@ -274,7 +274,7 @@ return
 80 continue
 print*,' *** data file empty : no timesteps ***'
 return
- 
+
 end subroutine read_data
 
 !!------------------------------------------------------------
@@ -358,8 +358,8 @@ subroutine set_labels
     labeltype(3) = 'mirror'
     UseTypeInRenderings(3) = .true.
  endif
- 
+
 !-----------------------------------------------------------
 
- return 
+ return
 end subroutine set_labels

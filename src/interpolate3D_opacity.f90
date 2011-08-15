@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -51,7 +51,7 @@ contains
 !     where \int W dz is the SPH kernel integrated along one spatial dimension.
 !     This is interpolated from a pre-calculated table (see module projections3D for this).
 !
-!     kappa is the monochromatic mass extinction coefficient 
+!     kappa is the monochromatic mass extinction coefficient
 !     (particle cross section per unit mass) and is a constant for all particles
 !     which must be given as input (although see below for calculations of a
 !     meaningful values for kappa in terms of "surface depth in units of smoothing lengths")
@@ -128,7 +128,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
   if (npmass.ne.1 .and. npmass.ne.npart) then
      print*,'WARNING: interpolate3D_opacity: number of particle masses input =',npmass
   endif
-  
+
   if (abs(dscreenfromobserver).gt.tiny(dscreenfromobserver)) then
      adjustzperspective = .true.
      zcutoff = zobserver
@@ -151,7 +151,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
   pmassav = sum(pmass(1:npmass))/real(npmass)
   rkappatemp = pi*hav*hav/(pmassav*coltable(0))
   print*,'average h = ',hav,' average mass = ',pmassav
-  print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'  
+  print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'
   !
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
@@ -173,13 +173,13 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
   call indexx(npart,z,iorder)
 !
 !--store x value for each pixel (for optimisation)
-!  
+!
   xminpix = xmin - 0.5*pixwidth
   yminpix = ymin - 0.5*pixwidth
   do ipix=1,npixx
      xpix(ipix) = xminpix + ipix*pixwidth
   enddo
-  
+
   nused = 0
 
 !!$OMP PARALLEL default(none) &
@@ -225,7 +225,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      !--allow slicing [take only particles with z(unrotated) < zcut]
      !
      particle_within_zcut: if (zorig(i).lt.zcut .and. z(i).lt.zcutoff) then
-    
+
      !  count particles within slice
      nused = nused + 1
      !
@@ -242,7 +242,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
         zfrac = abs(dscreenfromobserver/(z(i)-zobserver))
         hi = hi*zfrac
      endif
-     
+
      !--these are the quantities used in the kernel r^2/h^2
      radkern = 2.*hi
      hi1 = 1./hi
@@ -263,7 +263,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      termi = dat(i)
      !
      !--for each particle work out which pixels it contributes to
-     !               
+     !
      ipixmin = int((xi - radkern - xmin)/pixwidth)
      jpixmin = int((yi - radkern - ymin)/pixwidth)
      ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
@@ -310,14 +310,14 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 
         enddo
      enddo
-     
+
      endif particle_within_zcut
 
   enddo over_particles
 !!$OMP END DO
 !!$OMP END PARALLEL
 
-! 
+!
 !--get ending CPU time
 !
   call cpu_time(t_end)
@@ -330,7 +330,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      print "(1x,a,f5.2,1x,a)",'completed in ',t_used,'s'
   endif
   if (zcut.lt.huge(zcut)) print*,'slice contains ',nused,' of ',npart,' particles'
-  
+
   return
 
 end subroutine interp3D_proj_opacity
@@ -358,14 +358,14 @@ subroutine interp3D_proj_opacity_writeppm(datsmooth,brightness,npixx,npixy,datmi
   endif
 !
 !--write PPM--
-!  
-  write(filename,"(a,i5.5,a)") 'splash_',istep,'.ppm' 
+!
+  write(filename,"(a,i5.5,a)") 'splash_',istep,'.ppm'
   open(unit=78,file=filename,status='replace',form='formatted',iostat=ierr)
   if (ierr /=0) then
      print*,'error opening ppm file'
      return
   endif
-  print "(a)", 'writing to file '//trim(filename) 
+  print "(a)", 'writing to file '//trim(filename)
 !
 !--PPM header
 !
@@ -401,7 +401,7 @@ subroutine interp3D_proj_opacity_writeppm(datsmooth,brightness,npixx,npixy,datmi
      enddo
   enddo
   close(unit=78)
-  
+
   return
 end subroutine interp3D_proj_opacity_writeppm
 

@@ -28,10 +28,10 @@
 ! npartoftype(maxstep): number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !                      (used in calc_quantities for calculating the pressure)
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !
 ! Partial data read implemented Nov 2006 means that columns with
@@ -69,7 +69,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !   real(doub_prec) :: rscale, mscale
 
 !!!!!!!!!!!!!!!!
-  
+
   integer         :: proc, nread
 
   integer         :: myproc, nproc, npx, npy, npz;
@@ -92,11 +92,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
   nstepsread = 0
   npart_max = maxpart
-  
+
   if (len_trim(rootname).gt.0) then
      datfile = trim(rootname)
   else
-     print*,' **** no data read **** ' 
+     print*,' **** no data read **** '
      return
   endif
 
@@ -105,7 +105,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(datfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(datfile)//': file not found ***'
      STOP
   endif
 
@@ -117,7 +117,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
 !
 !--read data from snapshots
-!  
+!
   i = istepstart
 
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
@@ -150,8 +150,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
   iformat = 0
   ncolstep = 30
-  ncolumns = ncolstep  
-  
+  ncolumns = ncolstep
+
   print*,'nproc            : ',nproc
   print*,'npx, npy, npz    : ',npx, npy, npz
   print*,'time             : ',t_global
@@ -195,9 +195,9 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
   npartoftype(:,i) = 0
   npartoftype(1,i) = global_n
-  
+
   !--use this line for code time
-  time(i) = real(t_global) 
+  time(i) = real(t_global)
 
   !
   !--read particle data
@@ -230,16 +230,16 @@ subroutine read_data(rootname,istepstart,nstepsread)
         dat(j + nread, 8,  i) = pres
         dat(j + nread, 9,  i) = pmag
         dat(j + nread, 10, i) = vabs
-        
+
         dat(j + nread, 11, i) = Bx
         dat(j + nread, 12, i) = By
         dat(j + nread, 13, i) = Bz
         if (pmag > 0) then
-           dat(j + nread, 14, i) = abs(divB/sqrt(pmag*2.0)) 
+           dat(j + nread, 14, i) = abs(divB/sqrt(pmag*2.0))
         else
            dat(j + nread, 14, i) = 0.0;
         end  if
-        
+
         dat(j + nread, 15, i) = Bpsi
         dat(j + nread, 16, i) = hsml*2
         dat(j + nread, 17, i) = wght
@@ -248,7 +248,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         dat(j + nread, 19, i) = pvely
         dat(j + nread, 20, i) = pvelz
         dat(j + nread, 21, i) = abs(divB)
-        
+
         dat(j + nread, 22, i) = dens*wght
         dat(j + nread, 23, i) = pres/dens/(gamma_gas - 1.0)   ! uthermal
         dat(j + nread, 24, i) = sqrt(pmag*2.0)
@@ -280,8 +280,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
      print "(a)", ' *** SOMETHING WENT WRONG ***'
      STOP
   end if
-  
-!!!!!!!!!!!!!!!!!!!!!  
+
+!!!!!!!!!!!!!!!!!!!!!
   gamma = gamma_gas
 
 
@@ -289,13 +289,13 @@ subroutine read_data(rootname,istepstart,nstepsread)
   ih   = 16
 
 !
-!--set flag to indicate that only part of this file has been read 
+!--set flag to indicate that only part of this file has been read
 !
   if (.not.all(required(1:ncolstep))) ipartialread = .true.
 
 !
 !--close data file and return
-!                    
+!
   close(unit=11)
 
   if (nstepsread.gt.0) then
@@ -339,7 +339,7 @@ subroutine set_labels
   iBfirst = 11
   ipmass = 22
   idivb  = 14
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(irho) = 'density'
   label(iutherm) = 'cs'

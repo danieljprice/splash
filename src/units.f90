@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -33,7 +33,7 @@ module settings_units
  character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel
  character(len=lenunitslabel), public :: labelzintegration
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
- 
+
  private
 
 contains
@@ -88,7 +88,7 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
               if (dunits.gt.100 .or. dunits.lt.1.e-1) then
                  write(unitslabel(icol),"(1pe8.1)") dunits
               else
-                 write(unitslabel(icol),"(f5.1)") dunits                  
+                 write(unitslabel(icol),"(f5.1)") dunits
               endif
               unitslabel(icol) = ' [ x '//trim(adjustl(unitslabel(icol)))//' ]'
            endif
@@ -108,12 +108,12 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
               !--try to make prompts apply to whichever situation we have
               if (ndim.eq.1) then
                  if (icol.eq.ix(1) .and. ih.gt.0) then
-                    call prompt(' Apply these units to h?',applytoall)                                  
+                    call prompt(' Apply these units to h?',applytoall)
                  else
-                    call prompt(' Apply these units to '//trim(label(ix(1)))//'?',applytoall)              
+                    call prompt(' Apply these units to '//trim(label(ix(1)))//'?',applytoall)
                  endif
               elseif (any(ix(1:ndim).eq.icol) .and. ih.gt.0) then
-                 call prompt(' Apply these units to all coordinates and h?',applytoall)              
+                 call prompt(' Apply these units to all coordinates and h?',applytoall)
               else
                  call prompt(' Apply these units to all coordinates?',applytoall)
               endif
@@ -214,7 +214,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
   if (.not.iexist) then
      print "(1x,a)",trim(unitsfile)//' not found'
      ierr = 1
-     return  
+     return
   endif
 
   open(unit=78,file=unitsfile,status='old',form='formatted',err=997)
@@ -254,7 +254,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
               unitslabel(i) = trim(line(isemicolon+1:))
            else
               print*,'error reading units label for column ',i
-           endif       
+           endif
         endif
      else
         if (isemicolon.gt.0) then
@@ -269,7 +269,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
      unitzintegration = units(3)
      labelzintegration = unitslabel(3)
   endif
-  
+
   close(unit=78)
 
   return

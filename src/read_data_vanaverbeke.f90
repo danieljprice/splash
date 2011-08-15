@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -32,7 +32,7 @@
 !  ENVIRONMENT VARIABLES:
 !
 ! VSPLASH_SINGLEPREC if 'YES' or 'TRUE' then assumes data is single precision
-! VSPLASH_NCOL to change the number of columns read from the file, 
+! VSPLASH_NCOL to change the number of columns read from the file,
 ! e.g. setenv VSPLASH_NCOL=13
 !
 ! the data is stored in the global array dat
@@ -49,9 +49,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -78,13 +78,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
   nstepsread = 0
   nstep_max = 0
   npart_max = maxpart
-  dumpfile = trim(rootname)   
+  dumpfile = trim(rootname)
   !
   !--check if first data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -92,12 +92,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 3
   ndimV = 3
-  
+
   !--number of columns to read from file
   ncol = 10
   nsinkcol = 7
   doubleprec = .true.
-  
+
   !--can override these settings with environment variables
   if (lenvironment('VSPLASH_SINGLEPREC')) doubleprec = .false.
   ncoltemp = ienvironment('VSPLASH_NCOL')
@@ -109,7 +109,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   j = indexstart
   nstepsread = 0
   print "(a)",' reading Vanaverbeke format...'
-  
+
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
   !--open the (unformatted) binary file and read the number of particles
@@ -127,7 +127,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         timei = real(timedb)
         gammai = real(gammadb)
      else
-        read(iunit,iostat=ierr) timei,gammai     
+        read(iunit,iostat=ierr) timei,gammai
      endif
      print "(2(a,1pe12.3))",'time:',timei,' gamma:',gammai
 
@@ -177,7 +177,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
               nerr = nerr + 1
            else
               dat(i,1:nsinkcol,j) = real(datdb(1:nsinkcol))
-           endif        
+           endif
         enddo
      else
         nerr = 0
@@ -229,7 +229,7 @@ subroutine set_labels
   !use settings_units, only:units,unitslabel
   implicit none
   integer :: i
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -238,7 +238,7 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
@@ -247,13 +247,13 @@ subroutine set_labels
   ih = ipmass + 1
   iutherm = ih + 1
   irho = iutherm + 1
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(ih) = 'h'
   if (irho.gt.0) label(irho) = '\gr'
   if (ipmass.gt.0) label(ipmass) = 'particle mass'
   if (iutherm.gt.0) label(iutherm) = 'u'
- 
+
   if (ivx.ne.0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
@@ -271,8 +271,8 @@ subroutine set_labels
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .true.
   UseTypeInRenderings(3) = .false.
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

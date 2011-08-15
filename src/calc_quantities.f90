@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -42,10 +42,10 @@ module calcquantities
           extravars=(/'t    ','gamma','x0   ','y0   ','z0   '/)
 
  namelist /calcopts/ calcstring,calclabel,calcunitslabel
- 
+
  public :: calcopts,calcstring,calclabel,calcunitslabel
  private
- 
+
 contains
 
 !-----------------------------------------------------------------
@@ -77,7 +77,7 @@ subroutine setup_calculated_quantities(ncalc)
  charp = 'a'
  calcmenu: do while (.not.done)
     call check_calculated_quantities(ncalc,ncalctot,incolumn)
-    ninactive = ncalctot - ncalc   
+    ninactive = ncalctot - ncalc
 
     iend = maxcalc
     if (ncalctot.gt.0 .or. .not.first) then
@@ -117,7 +117,7 @@ subroutine setup_calculated_quantities(ncalc)
        istart = 0
        iend   = 1
     endif
-    
+
     if (.not.done) call add_calculated_quantities(istart,iend,ncalc,first,incolumn)
     first = .false.
  enddo calcmenu
@@ -153,13 +153,13 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
  i = istart + 1
  ntries = 0
  ncalc = istart
- 
+
  if (i.gt.maxcalc) then
     print "(/,a,i2,a)",' *** Error, maximum number of calculated quantities (',maxcalc,') reached, cannot add any more.'
     print "(a)",       ' *** If you hit this limit, *please email me* so I can change the default limits!'
     print "(a)",       ' *** (and then edit calc_quantities.f90, changing the parameter "maxcalc" to something higher...)'
     return
- endif 
+ endif
 
  if (printhelp) then
     print "(/,a)",' Specify a function to calculate from the data '
@@ -170,18 +170,18 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
     print "(a)",' quantities can be used in subsequent calculations.'
  endif
  call print_example_quantities()
-  
+
  overfuncs: do while(ntries.lt.3 .and. i.le.iend .and. i.le.maxcalc)
     if (len_trim(calcstring(i)).ne.0 .or. ncalc.gt.istart) then
        if (incolumn(i).gt.0) then
-          write(*,"(a,i2,a)") '[Column ',incolumn(i),']'       
+          write(*,"(a,i2,a)") '[Column ',incolumn(i),']'
        else
           write(*,"(a)") '[Currently inactive]'
        endif
     endif
 
     if (len_trim(calclabel(i)).gt.0) then
-       string = trim(calclabel(i))//' = '//trim(calcstring(i))    
+       string = trim(calclabel(i))//' = '//trim(calcstring(i))
     else
        string = trim(calcstring(i))
     endif
@@ -418,7 +418,7 @@ subroutine print_example_quantities(ncalc)
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
     else
        print "(11x,a)",trim(string)
-    endif 
+    endif
  endif
  !--Plasma beta
  if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. gotpmag .and. gotpressure) then
@@ -427,10 +427,10 @@ subroutine print_example_quantities(ncalc)
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
     else
-       print "(11x,a)",trim(string)//'    [ assuming pressure and Pmag calculated ]' 
-    endif 
+       print "(11x,a)",trim(string)//'    [ assuming pressure and Pmag calculated ]'
+    endif
  endif
- 
+
  !--gas temperature if cv present
  if (ndim.gt.0 .and. iutherm.gt.0 .and. icv.gt.0) then
     string = ' '
@@ -499,7 +499,7 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn)
        !
        !--set the label for the proposed column here
        !  so that subsequent calculations can use this variable
-       !  (note that we don't need to set the units label here 
+       !  (note that we don't need to set the units label here
        !   as this is done in the actual calc_quantities call)
        !
        label(ncolumns+ncalcok) = trim(calclabel(i))
@@ -541,7 +541,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   real(kind=rn), dimension(maxplot+nextravars)          :: vals
   character(len=lenvars), dimension(maxplot+nextravars) :: vars
   real, dimension(3) :: x0
-  
+
   !
   !--allow dummy call to set labels without actually calculating stuff
   !
@@ -550,14 +550,14 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   else
      skip = .false.
   endif
-  
+
   ierr = 0
   ncalc = 0
   call check_calculated_quantities(ncalc,ncalctot)
-  
+
   if (.not.skip .and. ncalc.gt.0) print "(2(a,i2),a,/)",' Calculating ',ncalc,' of ',ncalctot,' additional quantities...'
   ncolsnew = ncolumns + ncalc
-  if (ncolsnew.gt.maxcol) call alloc(maxpart,maxstep,ncolsnew) 
+  if (ncolsnew.gt.maxcol) call alloc(maxpart,maxstep,ncolsnew)
 
   !
   !--reset iamvec to zero for calculated columns
@@ -614,7 +614,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
         else
            x0(:) = xorigin(:)
         endif
-        
+
         do icalc=1,ncalc
            if (debugmode) print*,'DEBUG: ',icalc,' calculating '//trim(label(ncolumns+icalc))
            !
@@ -645,7 +645,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      enddo
      call endf
   endif
- 
+
   !
   !--override units of calculated quantities if necessary
   !
@@ -663,7 +663,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
         if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
      enddo
   endif
-  
+
   return
 end subroutine calc_quantities
 
@@ -699,7 +699,7 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
     if (ipr.le.0 .or. ipr.gt.ncolumns) ipr = icolumn
     if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the pressure'
  end select
- 
+
 end subroutine identify_calculated_quantity
 
 !-----------------------------------------------------------------
@@ -709,7 +709,7 @@ end subroutine identify_calculated_quantity
 !-----------------------------------------------------------------
 subroutine addcolumn(inewcolumn,labelin)
  use labels,        only:label
- use settings_data, only:ncolumns,ncalc 
+ use settings_data, only:ncolumns,ncalc
  implicit none
  integer, intent(out) :: inewcolumn
  character(len=*), intent(in) :: labelin
@@ -808,7 +808,7 @@ elemental function shortlabel(string,unitslab)
  if (present(unitslab)) then
     shortlabel = shortstring(string,unitslab)
  else
-    shortlabel = shortstring(string) 
+    shortlabel = shortstring(string)
  endif
  !--remove arithmetic operators from labels
  call removesubstr(shortlabel,'**')

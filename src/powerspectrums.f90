@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -28,7 +28,7 @@ module powerspectrums
  real, parameter, private :: pi = 3.141592653589
  real, parameter, private :: twopi = 2.*pi
  public :: powerspectrum,powerspec3D_sph
- 
+
  private
 
 contains
@@ -43,14 +43,14 @@ subroutine powerspectrum(npts,x,dat,nfreqpts,freq,power,idisordered)
  logical, intent(in) :: idisordered
  integer :: ifreq
  real :: datmean, datvar, omega
- 
+
  if (.not.idisordered) then
     print*,' evaluating fourier transform'
     do ifreq=1,nfreqpts
        omega = twopi*freq(ifreq)
        !--get power at this frequency
        call power_fourier(npts,x,dat,omega,power(ifreq))
-    enddo 
+    enddo
  else
     print*,'evaluating lomb periodogram...'
 !
@@ -58,22 +58,22 @@ subroutine powerspectrum(npts,x,dat,nfreqpts,freq,power,idisordered)
 !
     call mean_variance(dat,npts,datmean,datvar)
     print*,'data mean = ',datmean,' std. dev = ',sqrt(datvar)
-    if (datvar.le.0.) then 
+    if (datvar.le.0.) then
        print*,'error: variance = 0'
        power = 0.
        return
-    endif 
+    endif
     do ifreq=1,nfreqpts
        omega = twopi*freq(ifreq)
        call power_lomb(npts,x,dat,datmean,datvar,omega,power(ifreq))
     enddo
- 
+
  endif
- 
+
 end subroutine powerspectrum
 
 !-------------------------------------------------------
-! subroutine to compute the power spectrum 
+! subroutine to compute the power spectrum
 ! of evenly sampled data via a (slow) fourier transform
 !--------------------------------------------------------
 
@@ -90,11 +90,11 @@ subroutine power_fourier(npts,x,dat,omega,power)
  sum1 = 0.
  sum2 = 0.
  do i=1,npts
-    sum1 = sum1 + dat(i)*COS(-omega*x(i)) 
-    sum2 = sum2 + dat(i)*SIN(-omega*x(i)) 
+    sum1 = sum1 + dat(i)*COS(-omega*x(i))
+    sum2 = sum2 + dat(i)*SIN(-omega*x(i))
  enddo
  power= sqrt(sum1**2 + sum2**2)/REAL(npts)
- 
+
  return
 end subroutine power_fourier
 
@@ -103,7 +103,7 @@ end subroutine power_fourier
 ! of unevenly sampled data via the Lomb (1976) method
 ! (algorithm described in Press et al, Numerical Recipes, sec 13.8, p569)
 !
-! Given the data (dat) on a set of points (x), 
+! Given the data (dat) on a set of points (x),
 ! returns an array of nfreq frequencies (freq) between freqmin and freqmax
 ! together with the power at each frequency (power)
 !----------------------------------------------------------
@@ -131,7 +131,7 @@ subroutine power_lomb(npts,x,dat,datmean,datvar,omega,power)
  tau = ATAN(tau_numerator/tau_denominator)/(2.*omega)
 !
 !--calculate the terms in the power
-! 
+!
  term1_numerator = 0.
  term1_denominator = 0.
  term2_numerator = 0.
@@ -148,10 +148,10 @@ subroutine power_lomb(npts,x,dat,datmean,datvar,omega,power)
  enddo
 !
 !--calculate the power at this frequency
-!    
+!
  power = 1./(2.*datvar)*(term1_numerator**2/term1_denominator + &
                          term2_numerator**2/term2_denominator)
-                            
+
  return
 end subroutine power_lomb
 
@@ -182,20 +182,20 @@ subroutine mean_variance(x,npts,xmean,xvariance)
 !--calculate variance using the corrected two-pass formula
 !
 !    var = 1/(n-1)*( sum (x-\bar{x}) - 1/n * (sum(x-\bar{x}) )^2 )
-!  
-!  where the last term corrects for the roundoff error 
+!
+!  where the last term corrects for the roundoff error
 !  in the first term
 !
  xvariance = 0.
  roundoff = 0.
- 
+
  do i=1,npts
     delta = x(i) - xmean
     roundoff = roundoff + delta
     xvariance = xvariance + delta*delta
  enddo
  xvariance = (xvariance - roundoff**2/npts)/real(npts-1)
- 
+
  return
 end subroutine mean_variance
 
@@ -224,7 +224,7 @@ subroutine powerspec3D_sph(x,y,z,dat,hh,weight,icolours,npart, &
  if (2**logngrid.ne.ngrid) then
     print*,' ERROR: ngrid not a power of 2 in powerspectrum interpolation ',2**logngrid,ngrid
  endif
- 
+
  dx = (xmax - xmin)/real(ngrid)
 !
 !--interpolate (normalised) from particles to 3D grid suitable for FFT
@@ -309,7 +309,7 @@ subroutine power3d_fft(dat,nx,ny,nz,power,freq,nk)
        enddo
     enddo
  enddo
- 
+
  ddenom = 1./(real(nx)*real(ny)*real(nz))
  power = power*ddenom**2
  ptot =  sum(power)
@@ -322,7 +322,7 @@ subroutine power3d_fft(dat,nx,ny,nz,power,freq,nk)
  enddo
 !--rescale so that it has the same total power as before
  power = power*ptot/sum(power)
- 
+
  return
 end subroutine power3d_fft
 

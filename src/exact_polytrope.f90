@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -43,7 +43,7 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
   real, intent(in) :: gamma,polyk
   real, dimension(:), intent(inout) :: rplot
   real, dimension(size(rplot)), intent(out) :: denplot
-  
+
   integer :: i,j
   real, parameter :: pi = 3.1415926536
   real, dimension(size(rplot)) :: r,v,den
@@ -60,7 +60,7 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
   r(1) = 0.
   r(2) = dr
 
-  do while (v(i).ge.0.)         
+  do while (v(i).ge.0.)
     r(i) = (i - 1)*dr
     rhs = - r(i)*(v(i)/r(i))**an
     v(i+1) = 2*v(i) - v(i-1) + dr*dr*rhs
@@ -122,5 +122,5 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
 
   return
 end subroutine exact_polytrope
-       
+
 end module polytrope

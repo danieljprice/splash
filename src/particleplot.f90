@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -24,7 +24,7 @@ module particleplots
  implicit none
  public :: particleplot,plot_errorbarsx,plot_errorbarsy
  public :: plot_kernel_gr
- 
+
 contains
 !
 !  Drives raw particle plots
@@ -59,11 +59,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   logical,                           intent(in) :: use_zrange,fastparticleplot
   logical, dimension(maxparttypes),  intent(in) :: iplotpartoftype
   character(len=*),                  intent(in) :: labelz
-  
+
   integer,                           intent(in),    optional :: npixx,npixy
   real, dimension(:,:),              intent(inout), optional :: datpix,brightness
   real,                              intent(in),    optional :: dval
-  
+
   integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle,ierr
   integer :: lenstring,index1,index2,ntotplot,icolourstart,nlooptypes,ilooptype
   integer, dimension(maxparttypes)             :: nplottedtype
@@ -74,7 +74,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   real                                         :: dxcell1,dycell1,dxpix
   logical                                      :: mixedtypes
   real, dimension(:), allocatable              :: xerrb, yerrb, herr
-  
+
   !--query current character height and colour
 !  call pgqch(charheight)
   call plot_qci(icolourstart)
@@ -104,7 +104,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
         dxpix = (xmax - xmin)/real(npixx)
      endif
   endif
-  
+
   !
   !--loop over all particle types
   !
@@ -113,7 +113,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   nlooptypes = ntypes
   mixedtypes = size(iamtype).gt.1
   if (mixedtypes) nlooptypes = 1
-  
+
   over_types: do ilooptype=1,nlooptypes
      call plot_bbuf !--buffer PGPLOT output until each particle type finished
      if (mixedtypes) then
@@ -133,7 +133,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
            cycle over_types
         endif
      endif
-     if (index2.gt.ntot) then 
+     if (index2.gt.ntot) then
         index2 = ntot
         print "(a)",' WARNING: incomplete data'
      endif
@@ -162,13 +162,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                     case(32:35)
                        call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
                     case default
-                       call plot_pt1(xplot(j),yplot(j),imarktype(itype))                    
+                       call plot_pt1(xplot(j),yplot(j),imarktype(itype))
                     end select
 
                     if (present(datpix)) then
                        if (present(brightness)) then
                           call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                 npixx,npixy,dxpix,dval,brightness)                    
+                                                 npixx,npixy,dxpix,dval,brightness)
                        else
                           call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
                                                  npixx,npixy,dxpix,dval)
@@ -194,7 +194,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                    npartoftype(itype),trim(labeltype(itype))//' particles in range ', &
                    trim(labelz),' = ',zmin,' -> ',zmax
               endif
-           enddo          
+           enddo
         else
            print*,' plotted ',nplotted,' of ', &
              index2-index1+1,trim(labeltype(itype))//' particles in range ', &
@@ -237,7 +237,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                        if (present(datpix)) then
                           if (present(brightness)) then
                              call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                    npixx,npixy,dxpix,dval,brightness)                          
+                                                    npixx,npixy,dxpix,dval,brightness)
                           else
                              call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
                                                     npixx,npixy,dxpix,dval)
@@ -265,7 +265,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
               if (present(datpix)) then
                  if (present(brightness)) then
                     call interpolate_part(xplot(index1:index2),yplot(index1:index2),h(index1:index2), &
-                                          npartoftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval,brightness)                 
+                                          npartoftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval,brightness)
                  else
                     call interpolate_part(xplot(index1:index2),yplot(index1:index2),h(index1:index2), &
                                           npartoftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
@@ -307,7 +307,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                           if (present(datpix)) then
                              if (present(brightness)) then
                                 call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                       npixx,npixy,dxpix,dval,brightness)                             
+                                                       npixx,npixy,dxpix,dval,brightness)
                              else
                                 call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
                                                        npixx,npixy,dxpix,dval)
@@ -322,13 +322,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                     select case(imarktype(itype))
                     case(32:35)
                        call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
-                    case default                    
+                    case default
                        call plot_pt1(xplot(j),yplot(j),imarktype(itype))
                     end select
                     if (present(datpix)) then
                        if (present(brightness)) then
                           call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                 npixx,npixy,dxpix,dval,brightness)                       
+                                                 npixx,npixy,dxpix,dval,brightness)
                        else
                           call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
                                                  npixx,npixy,dxpix,dval)
@@ -346,7 +346,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                        print*,' plotted ',nplottedtype(itype),' of ',npartoftype(itype),trim(labeltype(itype))//' particles'
                     endif
                  endif
-              enddo     
+              enddo
            else
               if (fastparticleplot .and. npartoftype(itype).gt.100) then
                  print*,' fast-plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
@@ -382,7 +382,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
      call plot_sls(linestylethisstep)
      call plot_line(npartoftype(1),xplot(1:npartoftype(1)), &
                  yplot(1:npartoftype(1)))
-     call plot_sls(oldlinestyle)! reset 
+     call plot_sls(oldlinestyle)! reset
   endif
   !
   !--error bars follow line colour but not line style
@@ -398,7 +398,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   call plot_sci(icolourindex)
   !
   !--plot circles of interaction (ie a circle of radius 2h)
-  !  around all or selected particles. For plots with only one coordinate axis, 
+  !  around all or selected particles. For plots with only one coordinate axis,
   !  these are plotted as error bars in the coordinate direction.
   !
   !--this bit is also used for error bar plotting on x or y axis.
@@ -412,7 +412,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
      call plot_qci(icolourindex)
      call plot_sci(2)
      call plot_sfs(2)
-     
+
      !if (iploterrorbars.gt.0) then
 
      !   if (iploty.eq.iploterrorbars) then
@@ -426,18 +426,18 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
         if (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. ncircpart.gt.0) then
            print*,'plotting ',ncircpart,' circles of interaction'
            do n = 1,ncircpart
-              if (icircpart(n).gt.ntot) then 
+              if (icircpart(n).gt.ntot) then
                  print*,'error: particle index > number of particles'
               else
-                 if (icoordsnew.ne.icoords) then   
+                 if (icoordsnew.ne.icoords) then
                     call plot_kernel_gr(icoordsnew,icoords,xplot(icircpart(n)),  &
                          yplot(icircpart(n)),2*h(icircpart(n)))
                  else
                     call plot_circ(xplot(icircpart(n)),  &
                          yplot(icircpart(n)),2*h(icircpart(n)))
                  endif
-              endif        
-           enddo        
+              endif
+           enddo
         else
            if (.not.allocated(herr)) then
               allocate(xerrb(ncircpart),yerrb(ncircpart),herr(ncircpart),stat=ierr)
@@ -456,7 +456,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                  yerrb(n) = yplot(icircpart(n))
                  herr(n) = 2.*h(icircpart(n))
               endif
-           enddo         
+           enddo
            if (is_coord(iplotx,ndim)) then
               print*,'plotting ',ncircpart,' error bars x axis '
               call plot_errb(5,ncircpart,xerrb(1:ncircpart), &
@@ -474,7 +474,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
 
      call plot_slw(linewidth)
      call plot_sci(icolourindex)
-     
+
   endif
 
 !
@@ -483,7 +483,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   call plot_sci(icolourstart)
 
   return
-     
+
 end subroutine particleplot
 !--------------------------------------------------------------------------------
 !
@@ -527,7 +527,7 @@ end subroutine plot_scalable
 !
 ! input:  igeom : coordinate system (0,1=cartesian, 2=cylindrical, 3=spherical)
 !         x,y   : particle location in cartesian space
-!         h     : size of smoothing sphere 
+!         h     : size of smoothing sphere
 !                 (assumed isotropic in coordinate space)
 !
 ! PGPLOT page must already be set up - this just draws the "circle"
@@ -539,7 +539,7 @@ subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
   implicit none
   integer, intent(in) :: igeom, igeomold
   real, intent(in) :: x,y,h
-  
+
   integer, parameter :: npts = 100 ! big enough to give a smooth circle
   real, parameter :: pi = 3.1415926536
   integer :: i
@@ -548,7 +548,7 @@ subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
   real :: angle, dangle, xi, yi
 
   if (igeom.gt.1 .and. igeom.le.maxcoordsys) then
-     print 10,labelcoordsys(igeom) 
+     print 10,labelcoordsys(igeom)
   else
      print 10,labelcoordsys(1)
   endif
@@ -561,13 +561,13 @@ subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
   xi = xpts(1,1)
   yi = xpts(2,1)
 !
-!--step around a circle in co-ordinate space of radius h and store the 
+!--step around a circle in co-ordinate space of radius h and store the
 !  location of the points in cartesian space in the 2D array xpts
 !
   dangle = 2.*pi/REAL(npts-1)
   do i=1,npts
      angle = (i-1)*dangle
-     xtemp(1) = xi + h*COS(angle) 
+     xtemp(1) = xi + h*COS(angle)
      xtemp(2) = yi + h*SIN(angle)
 !
 !--translate back to actual coordinate system plotted
@@ -599,7 +599,7 @@ subroutine plot_errorbarsy(npts,x,y,err,itrans)
  real :: yval,errval
  real, dimension(2) :: val
  integer :: i
- 
+
  print*,'plotting ',npts,' error bars y axis'
  if (itrans.ne.0) then
     if (islogged(itrans)) then
@@ -643,7 +643,7 @@ subroutine plot_errorbarsx(npts,x,y,err,itrans)
  real :: xval,errval
  real, dimension(2) :: val
  integer :: i
- 
+
  print*,'plotting ',npts,' error bars x axis '
  if (itrans.ne.0) then
     if (islogged(itrans)) then
@@ -667,7 +667,7 @@ subroutine plot_errorbarsx(npts,x,y,err,itrans)
  else
     call plot_errb(5,npts,x,y,err,1.0)
  endif
- 
+
 end subroutine plot_errorbarsx
 
 end module particleplots

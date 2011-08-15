@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -42,16 +42,16 @@
 ! iam(maxpart,maxstep): integer identification of particle type
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings_data, only:ndim,ndimV,ncolumns  
+  use settings_data, only:ndim,ndimV,ncolumns
   use mem_allocation
   implicit none
   integer, intent(IN) :: indexstart
@@ -75,7 +75,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: ',trim(dumpfile),' file not found ***'    
+     print "(a)",' *** error: ',trim(dumpfile),' file not found ***'
      return
   endif
   !
@@ -83,7 +83,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   ndim = 2
   ndimV = 2
-  ncolumns = 7  ! number of columns in file  
+  ncolumns = 7  ! number of columns in file
   !
   !--allocate memory initially
   !
@@ -91,7 +91,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   j = indexstart
   nstepsread = 0
-  
+
   print "(1x,a)",'reading Joe Monaghan ascii format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
@@ -120,7 +120,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         oversteps: do
     !
     !--loop over the timesteps in this file
-    !     
+    !
            npart_max = max(npart_max,nprint)
     !
     !--allocate/reallocate memory if j > maxstep
@@ -161,9 +161,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   print*,'nstepsread = ',nstepsread
   print*,'>> end of dump file: nsteps =',j-1,'ntot = ',npartoftype(1,j-1),'nptmass=',npartoftype(2,j-1)
-   
+
 return
-                    
+
 end subroutine read_data
 
 !!------------------------------------------------------------
@@ -177,7 +177,7 @@ subroutine set_labels
   use geometry, only:labelcoord
   implicit none
   integer :: i
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -186,7 +186,7 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
@@ -195,13 +195,13 @@ subroutine set_labels
   ih = ndim+ndimV+2        !  smoothing length
   label(ih) = 'h'
   irho = ndim+ndimV+1     ! location of rho in data array
-  label(irho) = 'density'      
+  label(irho) = 'density'
   label(ndim+ndimV+3) = 'dfunc/dx'
   iutherm = 0  !  thermal energy
 !  label(iutherm) = 'u'
   ipmass = 0  !  particle mass
 !  label(ipmass) = 'particle mass'
-  
+
   iamvec(ivx:ivx+ndimV-1) = ivx
   labelvec(ivx:ivx+ndimV-1) = 'v'
   do i=1,ndimV
@@ -213,8 +213,8 @@ subroutine set_labels
   ntypes = 1 !!maxparttypes
   labeltype(1) = 'gas'
   UseTypeInRenderings(1) = .true.
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

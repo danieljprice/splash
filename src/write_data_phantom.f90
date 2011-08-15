@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -123,7 +123,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
  r1 = real(intval2)
  write (idump, err=100) intval1,r1,intval2,i1,intval1
  write (idump, err=100) fileident('F','Phantom')
- 
+
  npart = npartoftype(1)
  npartoftypetot(:) = 0
  do i=2,ntypes
@@ -138,7 +138,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
           print*,' WARNING! WARNING! mass of '//trim(labeltype(i))// &
                 ' particles differs from '//trim(labeltype(1))//' particles'
           print*,' Assuming all particles have '//trim(labeltype(1))//' particle mass'
-       endif          
+       endif
     endif
  enddo
  npartoftypetot(1) = npart
@@ -155,7 +155,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
  do i = 1, 3
     write (idump, err=100) number
  end do
-!--int*8 
+!--int*8
  number = 1 + ntypes
  write (idump, err=100) number
  write (idump, err=100) nparttot,npartoftypetot(1:ntypes)
@@ -250,7 +250,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
  do j = 1, 3
     write (idump, err=100) (dat(i,ix(j)), i=1, npart)
  end do
- 
+
  do j = 1, 3
     write (idump, err=100) (dat(i,ivx+j), i=1, npart)
  end do
@@ -265,9 +265,9 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
 
  close(unit=idump)
  return
- 
-100 continue 
- write(*,*) 'error whilst writing dumpfile '//trim(outfile) 
+
+100 continue
+ write(*,*) 'error whilst writing dumpfile '//trim(outfile)
  close(unit=idump)
 
 end subroutine write_sphdata_phantom

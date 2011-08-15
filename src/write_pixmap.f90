@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -36,7 +36,7 @@ module write_pixmap
  character(len=5), public :: readpixformat = ' '
  public :: isoutputformat,writepixmap,write_pixmap_ppm
  public :: isinputformat,readpixmap
- 
+
  private
 
 contains
@@ -53,14 +53,14 @@ logical function isoutputformat(string)
  case('ascii','ppm')
      isoutputformat = .true.
  end select
- 
+
  if (.not.isoutputformat) then
     print "(a)",' possible formats for -o option: '
     print "(a)",' -o ppm   : dump pixel map to ppm file'
     print "(a)",' -o ascii : dump pixel map to ascii file'
     print "(a)",' use -p to change the prefix for the filenames'
  endif
- 
+
  return
 end function isoutputformat
 
@@ -76,14 +76,14 @@ logical function isinputformat(string)
  case('ascii','ftn','ftn512','chf')
      isinputformat = .true.
  end select
- 
+
  if (.not.isinputformat) then
     print "(a)",' possible formats for -readpix option: '
     print "(a)",' -readpix ascii  : read pixel maps from ascii file'
     print "(a)",' -readpix ftn    : read pixel maps from unformatted fortran file "read(1) dat(:,:)"'
     print "(a)",' -readpix ftn512 : read pixel maps from unformatted fortran file "read(1) dat(1:512,1:512)"'
  endif
- 
+
  return
 end function isinputformat
 
@@ -97,7 +97,7 @@ subroutine writepixmap(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep
  real, intent(in) :: xmin,ymin,dx,datmin,datmax
  character(len=*), intent(in) :: label
  integer, intent(in) :: istep
- 
+
  select case(trim(pixmapformat))
  case('ascii')
     call write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep)
@@ -147,12 +147,12 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
  write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy))
- 
+
  write(fmtstring,"(a,i6,a)",iostat=ierr) '(',npixx,'(1pe14.6))'
  if (ierr /= 0) then
     do j=1,npixy
        write(iunit,*,err=66) datpix(1:npixx,j)
-    enddo 
+    enddo
  else
     do j=1,npixy
        write(iunit,fmtstring,err=66) datpix(1:npixx,j)
@@ -197,7 +197,7 @@ subroutine write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,
  endif
 !
 !--write PPM--
-!  
+!
  write(filename,"(a,i5.5,a)") trim(fileprefix)//'_',istep,'.ppm'
  open(unit=iunit,file=filename,status='replace',form='formatted',iostat=ierr)
  if (ierr /=0) then
@@ -273,7 +273,7 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,icol,time,istep,xsec,ier
  character(len=128) :: filename
  character(len=len(dumpfile)) :: dumpfilei
  logical :: iexist,printinfo
- 
+
  ierr = 0
  select case(trim(adjustl(readpixformat)))
  case('ascii') ! splash pixmap output files
@@ -349,7 +349,7 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,icol,time,istep,xsec,ier
        ierr = 1
        return
     endif
-    
+
     open(unit=iunit,file=filename,status='old',form='unformatted',iostat=ierr)
     if (ierr /= 0) then
        print "(a)",' ERROR: cannot open '//trim(filename)

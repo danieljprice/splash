@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 
 ! ----------------------------------------------------------------------
-!  Plots various analytic density profiles 
+!  Plots various analytic density profiles
 !
 !  Currently implemented:
 !
@@ -39,7 +39,7 @@ subroutine exact_densityprofiles(iplot,iprofile,Msphere,rsoft,xplot,yplot,ierr)
   implicit none
   real, parameter :: pi = 3.1415926536
   integer, intent(in) :: iplot,iprofile
-  real, intent(in), dimension(2) :: Msphere,rsoft 
+  real, intent(in), dimension(2) :: Msphere,rsoft
   real, intent(in), dimension(:) :: xplot
   real, intent(out), dimension(size(xplot)) :: yplot
   integer, intent(out) :: ierr
@@ -83,7 +83,7 @@ subroutine exact_densityprofiles(iplot,iprofile,Msphere,rsoft,xplot,yplot,ierr)
           yplot(i) = 3.*Msphere(1)*rsoft(1)**2/(4.*pi*(rsoft(1)**2 + xplot(i)**2)**2.5) &
                    + 3.*Msphere(2)*rsoft(2)**2/(4.*pi*(rsoft(2)**2 + xplot(i)**2)**2.5)
        enddo
-    end select    
+    end select
 
   case(2)
 !
@@ -101,7 +101,7 @@ subroutine exact_densityprofiles(iplot,iprofile,Msphere,rsoft,xplot,yplot,ierr)
        do i=1,size(xplot)
           yplot(i) = Msphere(1)/(rsoft(1) + xplot(i))**2 &
                    + Msphere(2)/(rsoft(2) + xplot(i))**2
-       enddo 
+       enddo
 !--density
     case default
        do i=1,size(xplot)
@@ -113,9 +113,9 @@ subroutine exact_densityprofiles(iplot,iprofile,Msphere,rsoft,xplot,yplot,ierr)
     end select
 
   case default
-     ierr = 1  
+     ierr = 1
   end select
-    
+
   return
 end subroutine exact_densityprofiles
 

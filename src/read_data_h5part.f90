@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -48,9 +48,9 @@
 ! ntot(maxstep)       : total number of particles in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -109,7 +109,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
   !
@@ -119,20 +119,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
   ndimV = 0
   j = indexstart
   nstepsread = 0
-  
+
   !
   !--open the file and read the number of particles
   !
   if (debugmode) print*,'DEBUG: opening '//trim(dumpfile)
   !ierr = h5pt_set_verbosity_level(6_8)
-  
+
   ifile = h5pt_openr(trim(dumpfile))
   if (ifile.le.0) then
      print "(a)",'*** ERROR opening '//trim(dumpfile)//' ***'
      return
   endif
   if (debugmode) print*,'DEBUG: file opened ok'
-  
+
   !
   !--get number of steps and particles in the file
   !
@@ -209,7 +209,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
  enddo
   nprint = npart_max
-  
+
   !
   !--warn if no particle type data has been read
   !
@@ -220,7 +220,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         print "(a)",' WARNING: Particle type dataset '//trim(type_datasetname)//' (from H5SPLASH_TYPEID) not found in file '
      endif
   endif
-  
+
   !
   !--call the set_labels routine to get the initial location of coords, smoothing length etc. given dataset labels
   !
@@ -273,7 +273,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         hfac = renvironment('H5SPLASH_HFAC',errval=-1.)
         if (hfac.gt.0.) then
            print "(/,a,f6.2,a,/)",' Setting smoothing length using h = ',hfac,&
-                                  '*(m/rho)**(1/ndim) (from H5SPLASH_HFAC setting)'       
+                                  '*(m/rho)**(1/ndim) (from H5SPLASH_HFAC setting)'
         else
            hfac = 1.2
            print "(/,a)",' WARNING: Smoothing length not found in data: using h = hfac*(m/rho)**(1/ndim)'
@@ -296,7 +296,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (itypeidcol.gt.0) then
         call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=.true.)
      else
-        call alloc(npart_max,nstep_max,ncolstep+ncalc)     
+        call alloc(npart_max,nstep_max,ncolstep+ncalc)
      endif
   endif
 
@@ -308,7 +308,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      istep = istep + 1
      print "(a,i4,a,i10)",' step ',istep,': ntotal = ',nprint
      ierr = h5pt_setstep(ifile,istep)
-     nprint = int(h5pt_getnpoints(ifile))  ! use int() to avoid compiler warning about type conversion     
+     nprint = int(h5pt_getnpoints(ifile))  ! use int() to avoid compiler warning about type conversion
 !
 !--get the time from the step attributes
 !
@@ -336,7 +336,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
               elseif (nelem.eq.1 .and. (index(lcase(attribname),'gamma').ne.0  &
                  .or. index(lcase(attribname),'gam ').ne.0)) then
                  ierr = h5pt_readstepattrib_r8(ifile,attribname,dtime)
-              
+
                  if (ierr.eq.0) then
                     gamma(j) = real(dtime(1))
                     print "(12x,a,es10.3,a)",'gamma  = ',gamma(j),' (from '//trim(attribname)//')'
@@ -347,7 +347,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                  print "(a)",' unknown attribute '//trim(attribname)
               endif
            else
-              print "(a,i3,a,i2)",' ERROR reading attribute info for step ',istep,', attribute #',iattrib          
+              print "(a,i3,a,i2)",' ERROR reading attribute info for step ',istep,', attribute #',iattrib
            endif
         enddo
      endif
@@ -415,7 +415,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              endif
           enddo
           if (nprint.lt.1e6) then
-             print "(12x,a,10(i5,1x))",'npart (by type) = ',npartoftype(1:ntypes,j)          
+             print "(12x,a,10(i5,1x))",'npart (by type) = ',npartoftype(1:ntypes,j)
           else
              print "(12x,a,10(i10,1x))",'npart (by type) = ',npartoftype(1:ntypes,j)
           endif
@@ -465,7 +465,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   enddo
 
   ierr = h5pt_close(ifile)
-     
+
 return
 end subroutine read_data
 
@@ -490,13 +490,13 @@ subroutine set_labels()
   implicit none
   integer                 :: i,ndimset,ndim_max
   character(len=lenlabel) :: labeli
-  
+
   ndim = 0
   ndimV = 0
   ndimset = ienvironment('H5SPLASH_NDIM',errval=-1)
   ndim_max = 3
   if (ndimset.ge.0) ndim_max = ndimset
-  
+
   do i=1,size(datasetnames)
      if (len_trim(datasetnames(i)).gt.0) then
         label(i) = trim(datasetnames(i))
@@ -534,12 +534,12 @@ subroutine set_labels()
            print "(2(a,i1))",' WARNING: ndim = ',ndimset, &
                              ' from H5SPLASH_NDIM setting but coords not found in data: using ndim = ',ndim
         else
-           print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' from H5SPLASH_NDIM setting'     
+           print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' from H5SPLASH_NDIM setting'
         endif
      else
         if (ndim.gt.0) print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' (set H5SPLASH_NDIM to override)'
      endif
-  
+
      if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
      if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
      if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
@@ -548,7 +548,7 @@ subroutine set_labels()
      if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
      if (ivx.gt.0) then
         if (ndimV.gt.1) then
-           print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1     
+           print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1
         else
            print "(a,i2)",' Assuming velocity in column ',ivx
         endif
@@ -581,17 +581,17 @@ subroutine set_labels()
   !
   !--set labels for each particle type
   !  (for h5part this is done in the read_data routine)
-  !  
-  
+  !
+
   !ntypes = 1 !!maxparttypes
 !  labeltype(1) = 'gas'
 !  labeltype(2) = 'gas'
 !  labeltype(3) = 'gas'
 !  labeltype(4) = 'gas'
   UseTypeInRenderings(:) = .true.
-  
- 
+
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

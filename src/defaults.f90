@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -22,13 +22,13 @@
 
 !-------------------------------------------------
 !
-! Module containing subroutines relating to 
+! Module containing subroutines relating to
 ! setting/saving default options
 !
 !-------------------------------------------------
 module defaults
  implicit none
- 
+
 contains
 
 !!
@@ -75,12 +75,12 @@ subroutine defaults_set_initial
      write(labeltype(i),"(a,1x,i1)") 'type',i
   enddo
   UseTypeInRenderings(:) = .false.
-  UseTypeInRenderings(1) = .true.  
-  
+  UseTypeInRenderings(1) = .true.
+
   !  vector labels
   iamvec(:) = 0
   labelvec = ' '
-  
+
   !  device from command line
   device = ' '
 
@@ -154,8 +154,8 @@ subroutine defaults_set(use_evdefaults)
   !
   pagetitles = ' '
   steplegend = ' '
-  
-  return    
+
+  return
 end subroutine defaults_set
 !
 !     writes default options to file (should match defaults_read)
@@ -177,10 +177,10 @@ subroutine defaults_write(filename)
  character(len=*), intent(in) :: filename
  integer :: i,ierr
  integer, parameter :: iunit = 1
-       
+
  open(unit=iunit,file=trim(adjustl(filename)),status='replace',form='formatted', &
       delim='apostrophe',iostat=ierr) ! without delim namelists may not be readable
-    if (ierr /= 0) then 
+    if (ierr /= 0) then
        print*,'ERROR: cannot write file '//trim(filename)
        close(unit=iunit)
        return
@@ -202,8 +202,8 @@ subroutine defaults_write(filename)
     enddo
  close(unit=iunit)
  print "(a)",'default options saved to file '//trim(filename)
-    
- return              
+
+ return
 end subroutine defaults_write
 !-----------------------------------------------
 ! reads default options from file
@@ -235,7 +235,7 @@ subroutine defaults_read(filename)
 
     ierr = 0
     read(iunit,NML=dataopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading data options from '//trim(filename)    
+    if (ierr /= 0) print "(a)",'error reading data options from '//trim(filename)
 
     ierr = 0
     read(iunit,NML=plotopts,iostat=ierr)
@@ -263,11 +263,11 @@ subroutine defaults_read(filename)
 
     ierr = 0
     read(iunit,NML=exactopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading exact solution options from '//trim(filename)    
+    if (ierr /= 0) print "(a)",'error reading exact solution options from '//trim(filename)
 
     ierr = 0
     read(iunit,NML=exactparams,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading exact solution parameters from '//trim(filename)    
+    if (ierr /= 0) print "(a)",'error reading exact solution parameters from '//trim(filename)
 
     ierr = 0
     read(iunit,NML=multi,iostat=ierr)
