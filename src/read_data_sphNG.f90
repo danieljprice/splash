@@ -357,7 +357,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    if (narrsizes.ge.4 .and. nreal8s.lt.4) then
       print "(a)",' WARNING: could not read magnetic units from dump file'
    endif
-   print*,' number of array sizes = ',narrsizes
+   if (debug) print*,' number of array sizes = ',narrsizes
 !
 !--Attempt to read all MPI blocks
 !
