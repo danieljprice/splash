@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 
 !---------------------------------------------------------------------------
-! module containing various utility subroutines 
+! module containing various utility subroutines
 ! related to reading from ascii files and dealing with string variables
 !
 ! written by Daniel Price, University of Exeter 2007 24th April '07
@@ -35,7 +35,7 @@ module asciiutils
  public :: read_asciifile,get_ncolumns,ncolumnsline,safename,basename,cstring
  public :: string_replace
  public :: ucase,lcase
- 
+
  private
 
 !--------------------------------------------------
@@ -44,7 +44,8 @@ module asciiutils
 ! or an array of real numbers
 !--------------------------------------------------
  interface read_asciifile
-   module procedure read_asciifile_char, read_asciifile_real
+   module procedure read_asciifile_char, read_asciifile_real,&
+                    read_asciifile_real_string
  end interface read_asciifile
 
 contains
@@ -63,7 +64,7 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
  integer, parameter :: iunit = 66 ! logical unit number for read operation
  integer :: ierr,i,maxlines
  logical :: iexist
- 
+
  nlinesread = 0
  if (present(ierror)) ierror = 0
 
@@ -81,7 +82,7 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
     if (present(ierror)) ierror = ierr
     return
  endif
- 
+
  maxlines = size(charline)
  do i=1,maxlines
     read(iunit,"(a)",err=66,end=99) charline(i)
@@ -126,7 +127,7 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
  integer, parameter :: iunit = 66 ! logical unit number for read operation
  integer :: ierr,i,maxlines
  logical :: iexist
- 
+
  nlinesread = 0
  if (present(ierror)) ierror = 0
 
@@ -146,7 +147,7 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
     endif
     return
  endif
- 
+
  realarr(:) = -666.
  maxlines = size(realarr)
  read(iunit,*,err=66,end=99) (realarr(i),i=1,maxlines)
@@ -162,7 +163,7 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
   print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
   if (present(ierror)) ierror = 1
   do i=1,maxlines
-     if (abs(realarr(i)+666.).lt.tiny(0.)) nlinesread = nlinesread + 1
+     if (abs(realarr(i)+666.).gt.tiny(0.)) nlinesread = nlinesread + 1
   enddo
   close(unit=iunit)
   return
@@ -170,12 +171,83 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
  !--reached end of file (the expected behaviour)
 99 continue
   do i=1,maxlines
-     if (abs(realarr(i)+666.).lt.tiny(0.)) nlinesread = nlinesread + 1
+     if (abs(realarr(i)+666.).gt.tiny(0.)) nlinesread = nlinesread + 1
   enddo
   close(unit=iunit)
   return
 
 end subroutine read_asciifile_real
+
+!---------------------------------------------------------------------------
+! Generic subroutine to read all lines of an ascii file
+! returns array of real numbers and corresponding string
+! up to a maximum corresponding to the size of the array
+!---------------------------------------------------------------------------
+subroutine read_asciifile_real_string(filename,nlinesread,realarr,charline,ierror)
+ implicit none
+ character(len=*), intent(in) :: filename
+ integer, intent(out) :: nlinesread
+ real, dimension(:), intent(out) :: realarr
+ character(len=*), dimension(:), intent(out) :: charline
+ integer, intent(out), optional :: ierror
+ integer, parameter :: iunit = 66 ! logical unit number for read operation
+ integer :: ierr,i,maxlines
+ logical :: iexist
+
+ nlinesread = 0
+ if (present(ierror)) ierror = 0
+
+ !--if file does not exist, do nothing and return
+ inquire(file=filename,exist=iexist)
+ if (.not.iexist) then
+    if (present(ierror)) ierror = -1
+    return
+ endif
+
+ open(unit=iunit,file=filename,status='old',form='formatted',iostat=ierr)
+ !--error opening file (but file does exist)
+ if (ierr /= 0) then
+    print "(a)",' ERROR opening '//trim(filename)
+    if (present(ierror)) then
+       ierror = ierr
+    endif
+    return
+ endif
+
+ if (size(realarr) /= size(charline)) then
+    print "(a)",' WARNING: array size mismatch in call to read_asciifile'
+ endif
+
+ realarr(:) = -666.
+ maxlines = min(size(realarr),size(charline))
+ read(iunit,*,err=66,end=99) (realarr(i),charline(i),i=1,maxlines)
+
+ !--end of array limits
+ print "(a,i6)",' WARNING: array limits reached reading '//trim(filename)//', max = ',maxlines
+ nlinesread = maxlines
+ close(unit=iunit)
+ return
+
+ !--error encountered
+66 continue
+  print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
+  if (present(ierror)) ierror = 1
+  do i=1,maxlines
+     if (abs(realarr(i)+666.).gt.tiny(0.)) nlinesread = nlinesread + 1
+  enddo
+  close(unit=iunit)
+  return
+
+ !--reached end of file (the expected behaviour)
+99 continue
+  do i=1,maxlines
+     if (abs(realarr(i)+666.).gt.tiny(0.)) nlinesread = nlinesread + 1
+  enddo
+
+  close(unit=iunit)
+  return
+
+end subroutine read_asciifile_real_string
 
 !---------------------------------------------------------------------------
 ! utility to work out number of columns of real numbers
@@ -232,7 +304,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
  else
     print "(a,i3)",' number of data columns = ',ncolumns
  endif
- 
+
 end subroutine get_ncolumns
 
 !---------------------------------------------------------------------------
@@ -247,7 +319,7 @@ integer function ncolumnsline(line)
  integer :: ierr,i
 
  dummyreal = -666.0
- 
+
  ierr = 0
  read(line,*,iostat=ierr) (dummyreal(i),i=1,size(dummyreal))
  !if (ierr .gt. 0) then
@@ -279,7 +351,7 @@ function safename(string)
  character(len=*), intent(in) :: string
  character(len=len(string)) :: safename
  integer :: ipos
- 
+
  safename = string
 
  !--remove forward slashes which can be mistaken for directories: replace with '_'
@@ -288,14 +360,14 @@ function safename(string)
     safename = safename(1:ipos-1)//'_'//safename(ipos+1:len_trim(safename))
     ipos = index(safename,'/')
  enddo
- 
+
  !--remove spaces: replace with '_'
  ipos = index(trim(safename),' ')
  do while (ipos.ne.0)
     safename = safename(1:ipos-1)//'_'//safename(ipos+1:len_trim(safename))
     ipos = index(trim(safename),' ')
  enddo
- 
+
  !--remove escape sequences: remove '\' and position following
  ipos = index(trim(safename),'\')
  do while (ipos.ne.0)
@@ -315,9 +387,9 @@ function basename(string)
  character(len=*), intent(in) :: string
  character(len=len(string)) :: basename
  integer :: i,iposmax
- 
+
  basename = string
- 
+
  !--find the last forward slash
  iposmax = 0
  i = len_trim(string)
@@ -347,7 +419,7 @@ end function cstring
 !---------------------------------------------------------------------------
 !
 ! subroutine to replace a matching section of a string with another
-! string, possibly of differing length 
+! string, possibly of differing length
 !
 !---------------------------------------------------------------------------
 subroutine string_replace(string,skey,sreplacewith)
