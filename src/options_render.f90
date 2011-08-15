@@ -78,6 +78,7 @@ subroutine submenu_render(ichoose)
   use prompting, only:prompt,print_logical
   use params,    only:maxplot
   use plotlib,   only:plotlib_supports_alpha
+  use filenames, only:fileprefix
   implicit none
   integer, intent(in) :: ichoose
   character(len=5)  :: string
@@ -166,12 +167,18 @@ subroutine submenu_render(ichoose)
        endif
        if ((iplotcont_nomulti .or. icolours.eq.0) .and. .not.double_rendering) then
           call prompt('enter number of contours between min,max',ncontours,0,500)
-          call prompt('plot numeric labels on contours?',ilabelcont)
+          call prompt('plot contour labels?',ilabelcont)
        endif
 !------------------------------------------------------------------------
     case(4)
-       call prompt('enter number of contours between min,max',ncontours,0,500)
-       call prompt('plot numeric labels on contours?',ilabelcont)
+       print "(5(/,a),/)",&
+             ' To set contour levels and level labels manually, create a file called', &
+             '  '''//trim(fileprefix)//'.contours'' in the working directory, with the following format:',&
+             '  1.0   label1 ', &
+             '  2.0   label2 ', &
+             '  ...'
+       call prompt('otherwise, enter number of contours between min,max',ncontours,0,500)
+       call prompt('plot contour labels?',ilabelcont)
 !------------------------------------------------------------------------
     case(5)
        do i=0,maxcolourbarstyles

@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -33,7 +33,7 @@ module render
 contains
 
 !------------------------------------------------------------------------
-!  this subroutine takes a 2D grid of data and renders it via the 
+!  this subroutine takes a 2D grid of data and renders it via the
 !  plotting library. Rendering is either:
 !  - contours (icolouropt = 0)
 !  - greyscale (icolouropt = 1)
@@ -41,13 +41,14 @@ contains
 !  contouring plots nc contours between datmin and datmax.
 !------------------------------------------------------------------------
 subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
-                  xmin,ymin,dx,dy,icolouropt,iplotcont,iColourBarStyle,nc,log, &
+                  xmin,ymin,dx,dy,icolouropt,iplotcont,iColourBarStyle,ncontours,log, &
                   ilabelcont,contmin,contmax,blank,transparent)
- use plotutils, only:formatreal
- use plotlib,   only:plot_imag,plot_conb,plot_cons,plot_qch,plot_sch,&
-                     plot_qch,plot_sch,plot_conl,plot_gray,plot_imag_transparent
+ use plotutils,       only:formatreal
+ use plotlib,         only:plot_imag,plot_conb,plot_cons,plot_qch,plot_sch,&
+                           plot_qch,plot_sch,plot_conl,plot_gray,plot_imag_transparent
+ use contours_module, only:read_contours,contours_list,contourtitles
  implicit none
- integer, intent(in) :: npixx,npixy,nc,icolouropt
+ integer, intent(in) :: npixx,npixy,ncontours,icolouropt
  real, intent(in) :: xmin,ymin,datmin,datmax,dx,dy
  real, dimension(npixx,npixy), intent(in) :: datpix
  logical, intent(in) :: iplotcont,log,ilabelcont
@@ -56,12 +57,12 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  real, intent(in), optional :: contmin,contmax,blank
  logical, intent(in), optional :: transparent
  
- integer :: i
- real :: trans(6),levels(nc),dcont,charheight,cmin,cmax
+ integer :: i,ierr,nc
+ real :: trans(6),levels(ncontours),dcont,charheight,cmin,cmax
  character(len=12) :: string
- logical :: iuse_transparent
-! 
-!--set up grid for rendering 
+ logical :: iuse_transparent,ifixed_contours
+!
+!--set up grid for rendering
 !
  trans(1) = xmin - 0.5*dx      ! this is for the pgimag call
  trans(2) = dx                 ! see help for pgimag/pggray/pgcont
@@ -69,10 +70,10 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  trans(4) = ymin - 0.5*dy
  trans(5) = 0.0
  trans(6) = dy
- 
+
  iuse_transparent = .false.
  if (present(transparent)) iuse_transparent = transparent
-
+ 
  print*,'rendering...',npixx,'x',npixy,'=',size(datpix),' pixels'
 
  if (abs(icolouropt).eq.1) then        ! greyscale
@@ -89,7 +90,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
     !--plot pixel map
     !
     if (iuse_transparent) then
-       call plot_imag_transparent(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans) 
+       call plot_imag_transparent(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
     else
        call plot_imag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
    endif
@@ -98,6 +99,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !--contours
 !
  if (iplotcont) then
+    nc = ncontours
     if (present(contmin)) then
        cmin = contmin
     else
@@ -109,9 +111,25 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
        cmax = datmax
     endif
 !
-!--set contour levels
-! 
-    if (nc.le.0) then
+!--set contour levels: first attempt to read these
+!  from a file. If file does not exist or errors during read
+!  then we construct the default levels as usual.
+!
+    call read_contours(nc,ierr)
+    if (ierr.eq.0 .and. nc.gt.0) then
+       ifixed_contours = .true.
+    else
+       nc = ncontours
+       ifixed_contours = .false.
+    endif
+    
+    if (ifixed_contours) then
+       do i=1,min(nc,ncontours)
+          print*,"contour @ ", contours_list(i), ": ", trim(contourtitles(i))
+          levels(i) = contours_list(i)
+       enddo
+       dcont = 0.
+    elseif (nc.le.0) then
        print*,'ERROR: cannot plot contours with ',nc,' levels'
        return
     elseif (nc.eq.1) then
@@ -128,13 +146,17 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !  with blanking if blank is input
 !
     if (present(blank)) then
-       print 10,nc,' contours (with blanking)',levels(1),levels(nc),dcont
-       print 20,levels(1:nc)
+       if (.not.ifixed_contours) then
+          print 10,nc,' contours (with blanking)',levels(1),levels(nc),dcont
+          print 20,levels(1:nc)
+       endif
        !print*,' blanking = ',blank,'min,max = ',datmin,datmax
        call plot_conb(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans,blank)
     else
-       print 10,nc,' contours',levels(1),levels(nc),dcont
-       print 20,levels(1:nc)
+       if (.not.ifixed_contours) then
+          print 10,nc,' contours',levels(1),levels(nc),dcont
+          print 20,levels(1:nc)
+       endif
        call plot_cons(datpix,npixx,npixy,1,npixx,1,npixy,levels,nc,trans)
     endif
 10  format(1x,'plotting ',i4,a,' between ',es10.2,' and ',es10.2,', every ',es10.2,':')
@@ -147,7 +169,11 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
        call plot_sch(0.75*charheight)   ! shrink character height
 
        do i=1,nc
-          call formatreal(levels(i),string)
+          if (ifixed_contours) then
+             string=adjustl(contourtitles(i))
+          else
+             call formatreal(levels(i),string)
+          endif
           call plot_conl(datpix,npixx,npixy,1,npixx,1,npixy,levels(i),trans,trim(string),npixx/2,30)
        enddo
        call plot_sch(charheight) ! restore character height
@@ -158,9 +184,9 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !    call pgmtxt('T',-2.0,0.05,0.0,trim(label))
 
  endif
- 
+
  return
- 
+
 end subroutine render_pix
 
 !--------------------------------------------------------------------------
@@ -169,7 +195,7 @@ end subroutine render_pix
 !--------------------------------------------------------------------------
 
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
-                      xmin,ymin,dx,dy,label,unitslabel) 
+                      xmin,ymin,dx,dy,label,unitslabel)
  use legends,          only:legend_vec
  use settings_vecplot, only:iVecplotLegend,hposlegendvec,vposlegendvec,&
                             iplotarrowheads,iallarrowssamelength
@@ -183,8 +209,8 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
  character(len=*), intent(in) :: label,unitslabel
  real :: trans(6),scale
  real :: charheight
- 
-!set up grid for rendering 
+
+!set up grid for rendering
 
  trans(1) = xmin - 0.5*dx                ! this is for the pgimag call
  trans(2) = dx                        ! see help for pgimag/pggray/pgcont
@@ -203,18 +229,18 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
  endif
  call plot_qch(charheight)
  call plot_sch(0.3)          ! size of arrow head
- 
+
  if (iallarrowssamelength) then
     !!if (vecmax.le.0.0) vecmax = 1.0 ! adaptive limits
     scale=0.9*dx !!/vecmax
     print*,trim(label),' showing direction only: max = ',vecmax
 
-    where (abs(vecpixx).gt.tiny(vecpixx) .and. abs(vecpixy).gt.tiny(vecpixy)) 
+    where (abs(vecpixx).gt.tiny(vecpixx) .and. abs(vecpixy).gt.tiny(vecpixy))
        dvmag(:,:) = 1./sqrt(vecpixx**2 + vecpixy**2)
     elsewhere
        dvmag(:,:) = 0.
     end where
-    
+
     call plot_vect(vecpixx(:,:)*dvmag(:,:),vecpixy(:,:)*dvmag(:,:),npixx,npixy, &
          1,npixx,1,npixy,scale,0,trans,0.0)
  else
@@ -234,11 +260,11 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
        call legend_vec(label,unitslabel,vecmax,dx,hposlegendvec,vposlegendvec,charheight)
     endif
  endif
- 
+
  call plot_sch(charheight)
- 
+
  return
- 
+
 end subroutine render_vec
 
 end module render
