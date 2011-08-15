@@ -96,7 +96,9 @@ PREFIX=/usr/local/
 #
 # default C compiler
 #
+ifndef CC
 CC = gcc
+endif
 #--------------------------------------------------------------
 #  the following are general settings for particular compilers
 #
