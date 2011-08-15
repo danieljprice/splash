@@ -194,10 +194,12 @@ subroutine submenu_particleplots(ichoose)
      return           
 !------------------------------------------------------------------------
   case(2)
-     print "(/,' Marker options (for all from -8->31, see PGPLOT userguide):',10(/,i2,') ',a))", &
+     print "(/,' Marker options (for all from -8->31, see PGPLOT userguide):',11(/,i2,') ',a))", &
            0,'square',1,'.',2,'+',3,'*',4,'o',5,'x',17,'bold circle',-8,'large bold circle', &
            32,'solid circle, size proportional to h', &
-           33,'open circle,  size proportional to h'
+           33,'open circle,  size proportional to h', &
+           34,'outlined solid circle, size prop. to h'
+           
      !print*,'(0 Square) (1 .) (2 +) (3 *) (4 o) (5 x) (17 bold circle) (-8 bigger bold circle)'
      do itype=1,ntypes
         call prompt(' Enter marker to use for '//trim(labeltype(itype)) &

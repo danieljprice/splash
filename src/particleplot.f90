@@ -159,12 +159,8 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                     nplottedtype(itype) = nplottedtype(itype) + 1
                     call plot_sci(icolourpart(j))
                     select case(imarktype(itype))
-                    case(33)
-                       call plot_sfs(1)
-                       call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
-                    case(32)
-                       call plot_sfs(2)
-                       call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
+                    case(32:35)
+                       call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
                     case default
                        call plot_pt1(xplot(j),yplot(j),imarktype(itype))                    
                     end select
@@ -233,9 +229,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                        nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
                        select case(imarktype(itype))
                        case(32:35)
-                          call plot_sfs(imarktype(itype)-31)
-                          call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
-                          call plot_sfs(1)
+                          call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
                        case default
                           call plot_pt1(xplot(j),yplot(j),imarktype(itype))
                        end select
@@ -260,9 +254,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
               print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
               select case(imarktype(itype))
               case(32:35)
-                 call plot_sfs(imarktype(itype)-31)
+                 !call plot_sfs(imarktype(itype)-31)
                  do j=1,npartoftype(itype)
-                    call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
+                    call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
                  enddo
                  call plot_sfs(1)
               case default
@@ -306,9 +300,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                           call plot_sci(icolourpart(j))
                           select case(imarktype(itype))
                           case(32:35)
-                             call plot_sfs(imarktype(itype)-31)
-                             call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
-                             call plot_sfs(1)
+                             call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
                           case default
                              call plot_pt1(xplot(j),yplot(j),imarktype(itype))
                           end select
@@ -329,9 +321,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                     call plot_sci(icolourpart(j))
                     select case(imarktype(itype))
                     case(32:35)
-                       call plot_sfs(imarktype(itype)-31)
-                       call plot_circ(xplot(j),yplot(j),hfacmarkers*h(j))
-                       call plot_sfs(1)
+                       call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
                     case default                    
                        call plot_pt1(xplot(j),yplot(j),imarktype(itype))
                     end select
@@ -495,6 +485,40 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   return
      
 end subroutine particleplot
+!--------------------------------------------------------------------------------
+!
+! subroutine implementing scalable markers
+!
+!--------------------------------------------------------------------------------
+subroutine plot_scalable(imarker,x,y,size)
+ use plotlib, only:plot_circ,plot_sfs,plot_sci
+ implicit none
+ integer, intent(in) :: imarker
+ real,    intent(in) :: x,y,size
+
+ if (imarker.le.2) then
+    call plot_sfs(imarker)
+    call plot_circ(x,y,size)
+    call plot_sfs(1)
+ elseif (imarker.eq.3) then
+    call plot_sfs(1)
+    call plot_circ(x,y,size)
+    call plot_sfs(2)
+    call plot_sci(0)
+    call plot_circ(x,y,size)
+    call plot_sfs(1)
+ elseif (imarker.eq.4) then
+    call plot_sfs(1)
+    call plot_circ(x,y,size)
+    call plot_sfs(2)
+    call plot_sci(1)
+    call plot_circ(x,y,size)
+    call plot_sfs(1)
+ else
+    call plot_circ(x,y,size)
+ endif
+
+end subroutine plot_scalable
 
 !--------------------------------------------------------------------------------
 !
