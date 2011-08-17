@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -80,7 +80,12 @@ contains
     integer :: ierr
 
     call get_environment(variable,string)
-    read(string,*,iostat=ierr) renvironment
+    if (len_trim(string).gt.0) then
+       read(string,*,iostat=ierr) renvironment
+    else
+       ierr = 1
+    endif
+
     if (ierr /= 0) then
        if (present(errval)) then
           renvironment = errval
