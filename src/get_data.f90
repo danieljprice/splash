@@ -156,7 +156,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--reset coordinate and vector labels (depending on coordinate system)
      !  Need to do this BEFORE calculating quantities
      !
-     call set_coordlabels(ncolumns)
+     if (ivegotdata) call set_coordlabels(ncolumns)
      !
      !--calculate various additional quantities
      !
@@ -263,7 +263,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--reset coordinate and vector labels (depending on coordinate system)
      !  Need to do this BEFORE calculating quantities
      !
-     call set_coordlabels(ncolumns)
+     if (ivegotdata) call set_coordlabels(ncolumns)
 
      !
      !--calculate various additional quantities
@@ -408,9 +408,11 @@ subroutine set_coordlabels(numplot)
 !
     print*,' changing coordinate labels ...'
     do i=1,ndim
-       label(ix(i)) = labelcoord(i,icoordsnew)
-       if (iRescale .and. icoords.eq.icoordsnew) then
-          label(ix(i)) = trim(label(ix(i)))//trim(unitslabel(ix(i)))
+       if (ix(i).gt.0) then
+          label(ix(i)) = labelcoord(i,icoordsnew)
+          if (iRescale .and. icoords.eq.icoordsnew) then
+             label(ix(i)) = trim(label(ix(i)))//trim(unitslabel(ix(i)))
+          endif
        endif
     enddo
  elseif (icoordsnew.ne.icoordsprev) then
