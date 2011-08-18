@@ -14,7 +14,8 @@ if ($#ARGV < 1 ) {
 #---------------------------------------------------------
 #  set farming method options are ssh, xgrid
 #---------------------------------------------------------
-my $farmusing='ssh';
+#my $farmusing='ssh';
+my $farmusing='none';
 #my $farmusing='xgrid';
 my $delay=3;
 #---------------------------------------------------------
@@ -22,7 +23,7 @@ my $delay=3;
 #---------------------------------------------------------
 my $home=`cd; pwd -P`;
 chomp ($home);
-my $exe="$home/ndspmhd/plot/ssplash";
+my $exe="$home/splash/bin/ssplash -readpix chf";
 my $pwd = `pwd`;
 chomp($pwd);
 #---------------------------------------------------------
@@ -105,8 +106,10 @@ for ($run=1;$run<=$nruns;$run++) {
     open(RUNSCR,"> $tempdir/run$run.csh") || die("can't write run script");
     print RUNSCR "#!/bin/tcsh \n";
     print RUNSCR "setenv PGPLOT_DIR $pgplotdir \n";
-    print RUNSCR "source $home/.cshrc \n";
+#    print RUNSCR "source $home/.cshrc \n";
 #    print RUNSCR "setenv LD_LIBRARY_PATH $ldpath \n";
+    print RUNSCR "setenv F_UFMTENDIAN 'big;little:168' \n";
+    print RUNSCR "setenv PGPLOT_FONT $home/pgplot/grfont.dat_big \n";
     print RUNSCR "cd $pwd \n";
     print RUNSCR "$exe @argsn < $tempdir/input$run >& $outfile \n";
     close(RUNSCR);
@@ -121,6 +124,8 @@ for ($run=1;$run<=$nruns;$run++) {
          sleep $delay;    
       } elsif ($farmusing eq 'xgrid') {
          farmjob_xgrid( $commandline );
+      } elsif ($farmusing eq 'none') {
+         print "no job farmed: using farming method \'none\' \n";
       } else {
          die "unknown farming method \n";
       }
