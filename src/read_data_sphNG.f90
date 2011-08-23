@@ -69,6 +69,7 @@ module sphNGread
  integer :: istartmhd,istartrt,nmhd,idivvcol,nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
+ logical :: batcode
 
 end module sphNGread
 
@@ -97,11 +98,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: nskip,ntotal,npart,n1,n2,ninttypes,ngas
   integer :: nreassign,naccrete,nkill,iblock,nblocks,ntotblock,ncolcopy
   integer :: ipos,nptmass,nptmassi,nstar,nunknown,isink,ilastrequired
-  integer :: imaxcolumnread,nhydroarraysinfile
+  integer :: imaxcolumnread,nhydroarraysinfile,nremoved
   integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc
   integer, dimension(maxparttypes) :: npartoftypei
   real,    dimension(maxparttypes) :: massoftypei
-  real    :: pmassi,hi,rhoi
+  real    :: pmassi,hi,rhoi,hrlim,rad2d
   logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
   logical :: debug
 
@@ -148,6 +149,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   tfreefall   = 1.d0
   gotbinary   = .false.
   gotiphase   = .false.
+  batcode     = .false.
   skip_corrupted_block_3 = .false.
 
   dumpfile = trim(rootname)
@@ -242,13 +244,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
    if (index(fileident,'RT=on').ne.0) then
       rt_in_header = .true.
    endif
+   if (index(fileident,'This is a test').ne.0) then
+      batcode = .true.
+   endif
 !
 !--read global dump header
 !
    nblocks = 1 ! number of MPI blocks
    npartoftypei(:) = 0
    read(iunit,iostat=ierr) nints
-   if (debug) print*,' nints = ',nints
    if (ierr /=0) then
       print "(a)",'error reading nints'
       close(iunit)
@@ -324,7 +328,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
    read(iunit,end=55,iostat=ierr) nreal8s
 !   print "(a,i3)",' ndoubles = ',nreal8s
-   print "(4(a,i3))",' header contains ',nreals,' reals,',nreal4s,' real4s, ',nreal8s,' doubles'
+   print "(4(a,i3),a)",' header contains ',nints,' ints, ',nreals,' reals,',nreal4s,' real4s, ',nreal8s,' doubles'
    if (nreal8s.ge.4) then
       read(iunit,end=55,iostat=ierr) udist,umass,utime,umagfd
    elseif (nreal8s.ge.3) then
@@ -628,11 +632,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
          else
             hfact = dummyreal(6)
          endif
-         print "(a,1pe12.4,a,0pf6.3,a,0pf5.2,a,1pe7.1)", &
+         print "(a,es12.4,a,f6.3,a,f5.2,a,es7.1)", &
                ' time = ',time(j),' gamma = ',gamma(j), &
                ' hfact = ',hfact,' tolh = ',dummyreal(7)
+      elseif (batcode) then
+         print "(a,es12.4,a,f9.5,a,f8.4,/,a,es12.4,a,es9.2,a,es10.2)", &
+               '   time: ',time(j),  '   gamma: ',gamma(j), '   tsph: ',dummyreal(2), &
+               '  radL1: ',dummyreal(4),'   PhiL1: ',dummyreal(5),'     Er: ',dummyreal(15)      
       else
-         print "(a,1pe12.4,a,0pf9.5,a,f8.4,/,a,1pe12.4,a,1pe9.2,a,1pe10.2)", &
+         print "(a,es12.4,a,f9.5,a,f8.4,/,a,es12.4,a,es9.2,a,es10.2)", &
                '   time: ',time(j),  '   gamma: ',gamma(j), '   RK2: ',dummyreal(5), &
                ' t/t_ff: ',tff,' rhozero: ',rhozero,' dtmax: ',dummyreal(2)
       endif
@@ -894,7 +902,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
             endif
          endif
 !        real4's go straight into dat
-         imaxcolumnread = max(imaxcolumnread,icolumn,6)
+         imaxcolumnread = max(imaxcolumnread,icolumn)
+         if ((nreal(iarr)+nreal4(iarr)).gt.6) imaxcolumnread = max(imaxcolumnread,6)
          do i=1,nreal4(iarr)
             if (phantomdump) then
                if (iarr.eq.1 .and. i.eq.1) then
@@ -982,7 +991,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
          icolumn = imaxcolumnread
 !        real 8's need converting
          do i=1,nreal8(iarr)
-            icolumn = icolumn + 1 !!nextcolumn(icolumn,iarr,nhydroarrays,nmhdarrays,imaxcolumnread)
+            icolumn = icolumn + 1
+            if (debug) print*,'reading real8 ',icolumn
             if (required(icolumn)) then
                read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                dat(i1:i2,icolumn,j) = real(dattemp(1:isize(iarr)))
@@ -1046,6 +1056,27 @@ subroutine read_data(rootname,indexstart,nstepsread)
              enddo
           endif
        endif
+    endif
+ ! 
+ !--remove particles at large H/R is "SSPLASH_REMOVE_LARGE_HR" is set
+ !
+    if (lenvironment('SSPLASH_REMOVE_LARGE_HR')) then
+       hrlim = renvironment('SSPLASH_HR_LIMIT')
+       print "(a)", 'SSPLASH_REMOVE_LARGE_HR set:'
+       print "(a)", 'Removing particles at large H/R values'
+       print "(a,F7.4)", 'H/R limit set to ',hrlim
+       
+       nremoved = 0
+       do i = 1,npart
+          if (int(iphase(i)) == 0) then
+             rad2d = sqrt(dat(i,1,j)**2 + dat(i,2,j)**2)
+             if (abs(dat(i,3,j) / rad2d) >= hrlim) then
+                iphase(i) = -1
+                nremoved  = nremoved + 1
+             endif
+          endif
+       enddo
+       print "(I5,a)", nremoved, ' particles removed at large H/R'
     endif
  !
  !--reset corotating frame velocities if environment variable "SSPLASH_OMEGA" is set
