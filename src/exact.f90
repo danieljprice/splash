@@ -279,8 +279,9 @@ contains
           else
              call prompt('enter velocity to left of shock  ',v_L)
              call prompt('enter velocity to right of shock ',v_R)
+             call prompt('enter dust-to-gas ratio ',rdust_to_gas,0.)             
           endif
-       endif
+       endif      
     case(4)
        call prompt('enter density of ambient medium ',rhosedov,0.0)
        call prompt('enter blast wave energy E ',esedov,0.0)
@@ -420,7 +421,7 @@ contains
     character(len=*), intent(in) :: rootname
     integer, intent(out) :: ierr
 
-    integer :: idash,nf,i,j
+    integer :: idash,nf,i,j,idrag
     character(len=len_trim(rootname)+8) :: filename
 
     idash = index(rootname,'_')
@@ -552,6 +553,26 @@ contains
           call prompt('enter shock solution to plot',ishk,1,7)
        endif
        return
+    case(14)
+       !
+       !--dustywave parameters from ndspmhd input file
+       !
+       filename = trim(rootname(1:idash-1))//'.in'
+       open(unit=19,file=filename,status='old',iostat=ierr)
+       if (ierr.eq.0) then
+          do i=1,23
+             read(19,*,iostat=ierr)
+          enddo
+          if (ierr.eq.0) then
+             read(19,*,iostat=ierr) idrag, Kdrag
+             print*,'>> read Kdrag = ',Kdrag,' from '//trim(filename)
+          else
+             print*,'>> error reading Kdrag from '//trim(filename)
+          endif
+       endif
+       close(unit=19)
+       return
+
     end select
 
     return
@@ -700,13 +721,17 @@ contains
     case(3)! shock tube
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irho) then
-             call exact_shock(1,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+             call exact_shock(1,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                              rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_shock(2,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+             call exact_shock(2,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                              rdust_to_gas,xexact,yexact,ierr)   
           elseif (iploty.eq.ivx) then
-             call exact_shock(3,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+              call exact_shock(3,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                              rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm) then
-             call exact_shock(4,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+              call exact_shock(4,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                              rdust_to_gas,xexact,yexact,ierr)
           endif
        endif
 

@@ -46,12 +46,12 @@ module shock
 
 contains
 
-subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,ierr)
+subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas,xplot,yplot,ierr)
   implicit none
   integer, intent(in) :: iplot
   integer, intent(out) :: ierr
   real, intent(in) :: time,gamma
-  real, intent(in) :: rho_L,rho_R,p_L,p_R,v_L,v_R
+  real, intent(in) :: rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas
   real, dimension(:), intent(in) :: xplot
   real, dimension(size(xplot)), intent(out) :: yplot
 
@@ -85,6 +85,10 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,
 !
   cs_L = sqrt(gamma*p_L/rho_L)
   cs_R = sqrt(gamma*p_R/rho_R)
+  if (rdust_to_gas .gt.epsilon(rdust_to_gas)) then
+  cs_L = cs_L*sqrt(1./(1.+rdust_to_gas))
+  cs_R = cs_R*sqrt(1./(1.+rdust_to_gas))   
+  endif
   gamfac = (gamma-1.)/(gamma + 1.)
 
 !------------------------------------------------------------
