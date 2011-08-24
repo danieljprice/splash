@@ -96,8 +96,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
   rhodeq  = rhod0 ! initial dust density
   rhogeq  = rhog0 ! initial gas density
   print*,' rho(dust),0 = ',rhod0,' rho(gas),0 = ',rhog0
-  rhodsol = ampl  ! amplitude of dust density perturbation
-  rhogsol = ampl  ! amplitude of gas density perturbation
+  rhodsol = ampl*rhod0  ! amplitude of dust density perturbation
+  rhogsol = ampl*rhog0  ! amplitude of gas density perturbation
   vdeq    = 0.
   vgeq    = 0.
   vgsol   = ampl  ! amplitude of gas velocity perturbation
