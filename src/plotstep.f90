@@ -1295,19 +1295,29 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            if (irenderplot.gt.0 .and. ndim.eq.3) then
 
               !!--allocate memory for 2D rendered array
+              
               if (.not.interactivereplot) then
                  if (allocated(datpix)) then
                     if (npixx.ne.size(datpix(:,1)) .or. npixy.ne.size(datpix(1,:))) then
                        deallocate(datpix)
-                       if (allocated(datpixcont)) deallocate(datpixcont)
-                       print*,'reallocating...'
+                       if (debugmode) print*,'reallocating datpix...'
                        allocate ( datpix(npixx,npixy) )
-                       if (icontourplot.gt.ndim) allocate ( datpixcont(npixx,npixy) )
                     endif
                  else
-                    print*,'allocating...'
+                    if (debugmode) print*,'allocating datpix...'
                     allocate ( datpix(npixx,npixy) )
-                    if (icontourplot.gt.ndim) allocate ( datpixcont(npixx,npixy) )
+                 endif
+                 if (icontourplot.gt.ndim) then
+                    if (allocated(datpixcont)) then
+                       if (npixx.ne.size(datpixcont(:,1)) .or. npixy.ne.size(datpixcont(1,:))) then
+                          deallocate(datpixcont)
+                          if (debugmode) print*,'reallocating datpixcont...'
+                          allocate ( datpixcont(npixx,npixy) )
+                       endif
+                    else
+                       if (debugmode) print*,'allocating datpixcont...'
+                       allocate ( datpixcont(npixx,npixy) )                    
+                    endif
                  endif
               endif
 
