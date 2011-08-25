@@ -1429,7 +1429,7 @@ end subroutine interactive_step
 !
 subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,ifirstframeonpage,nframes, &
                              lastpanel,iplotxarr,iplotyarr,irenderarr,icontourarr,ivecarr,&
-                             xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
+                             use_double_rendering,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
                              barwmulti,xminadapt,xmaxadapt,nacross,ndim,xorigin,icolourscheme, &
                              iColourBarStyle,interactivereplot)
  use labels,    only:is_coord
@@ -1445,15 +1445,16 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
  real, dimension(:), intent(inout) :: xmin,xmax,xminadapt,xmaxadapt
  real, intent(in), dimension(ndim) :: xorigin
+ logical, intent(in)  :: use_double_rendering
  logical, intent(out) :: interactivereplot
  integer :: ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape
  real :: xpt,ypt,xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
- real :: xlength,ylength,renderlength,drender,zoomfac
+ real :: xlength,ylength,renderlength,contlength,drender,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
  real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen,gradient,dr,yint,xmaxin
  real, dimension(4) :: xline,yline
  character(len=1) :: char,char2
- logical :: iexit,iamincolourbar,verticalbar
+ logical :: iexit,iamincolourbar,verticalbar,double_render
 
   if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
@@ -1465,6 +1466,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   zoomfac = 1.0
   xpt2 = 0.
   ypt2 = 0.
+  
   !
   !--convert saved cursor position (saved in viewport coords)
   !  back to world coordinates:
@@ -1522,6 +1524,9 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      else
         iamincolourbar = .false.
      endif
+     
+     !--work out if this plot is double rendered or not
+     double_render = (icontourarr(ipanel).gt.0 .and. use_double_rendering)
 
      select case(char)
      case('h')
@@ -1617,6 +1622,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            call save_limits(iplotxarr(i),xmin(iplotxarr(i)),xmax(iplotxarr(i)))
            call save_limits(iplotyarr(i),xmin(iplotyarr(i)),xmax(iplotyarr(i)))
            if (irenderarr(i).gt.0) call save_limits(irenderarr(i),xmin(irenderarr(i)),xmax(irenderarr(i)))
+           if (icontourarr(i).gt.0) call save_limits(icontourarr(i),xmin(icontourarr(i)),xmax(icontourarr(i)))
         enddo
         print*,'> interactively set limits saved <'
      case(plot_left_click) ! left click
@@ -1642,33 +1648,95 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            endif
            if (char2 == plot_left_click) then
               call get_vptxy(xpt2,ypt2,vptx2i,vpty2i)
+              !--use centre point of first click and current click to
+              !  better determine panel
+              vptxceni = 0.5*(vptxi + vptx2i)
+              vptyceni = 0.5*(vptyi + vpty2i)
+              ipanel2 = getpanel(vptxceni,vptyceni)
+              if (ipanel2.gt.0 .and. ipanel2.ne.ipanel) then
+                 print*,'panel = ',ipanel2,' was ',ipanel
+                 ipanel = ipanel2
+              endif
+              call getxy(vptx2i,vpty2i,xpt2,ypt2,ipanel)
+              !--reset first point according to current panel
+              call getxy(vptxi,vptyi,xpti,ypti,ipanel)
+              double_render = (icontourarr(ipanel).gt.0 .and. use_double_rendering)
+
               if (barwmulti(ipanel).gt.tiny(barwmulti)) then
                  if (verticalbar) then
-                    drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                              (vptymax(ipanel) -vptymin(ipanel))
-                    xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptyi,vpty2i)-vptymin(ipanel))*drender
-                    xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptyi,vpty2i)-vptymin(ipanel))*drender
+                    if (double_render) then
+                       drender = (xmax(icontourarr(ipanel))-xmin(icontourarr(ipanel)))/ &
+                                 (vptymax(ipanel) -vptymin(ipanel))
+                       xmax(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
+                                                 + (max(vptyi,vpty2i)-vptymin(ipanel))*drender
+                       xmin(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
+                                                 + (min(vptyi,vpty2i)-vptymin(ipanel))*drender
+                    else
+                       drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
+                                 (vptymax(ipanel) -vptymin(ipanel))
+                       xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
+                                                + (max(vptyi,vpty2i)-vptymin(ipanel))*drender
+                       xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
+                                                + (min(vptyi,vpty2i)-vptymin(ipanel))*drender
+                    endif
                  else
-                    drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                              (vptxmax(ipanel) -vptxmin(ipanel))
-                    xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptxi,vptx2i)-vptxmin(ipanel))*drender
-                    xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptxi,vptx2i)-vptxmin(ipanel))*drender
+                    if (double_render) then
+                       drender = (xmax(icontourarr(ipanel))-xmin(icontourarr(ipanel)))/ &
+                                 (vptxmax(ipanel) -vptxmin(ipanel))
+                       xmax(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
+                                                + (max(vptxi,vptx2i)-vptxmin(ipanel))*drender
+                       xmin(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
+                                                + (min(vptxi,vptx2i)-vptxmin(ipanel))*drender                    
+                    else
+                       drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
+                                 (vptxmax(ipanel) -vptxmin(ipanel))
+                       xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
+                                                + (max(vptxi,vptx2i)-vptxmin(ipanel))*drender
+                       xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
+                                                + (min(vptxi,vptx2i)-vptxmin(ipanel))*drender
+                    endif
                  endif
               else
               !--for global colour bars (ie. on tiled plots) use viewport co-ordinates to set render limits
                  if (verticalbar) then
-                    drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                              (maxval(vptymax) - minval(vptymin))
-                    xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptyi,vpty2i)-minval(vptymin))*drender
-                    xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptyi,vpty2i)-minval(vptymin))*drender
+                    if (double_render) then
+                       drender = (xmax(icontourarr(ipanel))-xmin(icontourarr(ipanel)))/ &
+                                 (maxval(vptymax) - minval(vptymin))
+                       xmax(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
+                                                 + (max(vptyi,vpty2i)-minval(vptymin))*drender
+                       xmin(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
+                                                 + (min(vptyi,vpty2i)-minval(vptymin))*drender
+                    else
+                       drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
+                                 (maxval(vptymax) - minval(vptymin))
+                       xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
+                                                + (max(vptyi,vpty2i)-minval(vptymin))*drender
+                       xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
+                                                + (min(vptyi,vpty2i)-minval(vptymin))*drender
+                    endif
                  else
-                    drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                              (maxval(vptxmax) - minval(vptxmin))
-                    xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (max(vptxi,vptx2i)-minval(vptxmin))*drender
-                    xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) + (min(vptxi,vptx2i)-minval(vptxmin))*drender
+                    if (double_render) then
+                       drender = (xmax(icontourarr(ipanel))-xmin(icontourarr(ipanel)))/ &
+                                 (maxval(vptxmax) - minval(vptxmin))
+                       xmax(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
+                                                + (max(vptxi,vptx2i)-minval(vptxmin))*drender
+                       xmin(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
+                                                + (min(vptxi,vptx2i)-minval(vptxmin))*drender                    
+                    else
+                       drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
+                                 (maxval(vptxmax) - minval(vptxmin))
+                       xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
+                                                + (max(vptxi,vptx2i)-minval(vptxmin))*drender
+                       xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
+                                                + (min(vptxi,vptx2i)-minval(vptxmin))*drender
+                    endif
                  endif
               endif
-              print*,'setting render min, max = ',xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel))
+              if (double_render) then
+                 print*,'setting double-render min, max = ',xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel))
+              else
+                 print*,'setting render min, max = ',xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel))
+              endif
               istep = istepnew
               interactivereplot = .true.
               iexit = .true.
@@ -1744,19 +1812,27 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         else
            renderlength = 0.
         endif
+        if (icontourarr(ipanel).gt.0) then
+           contlength = xmax(icontourarr(ipanel)) - xmin(icontourarr(ipanel))
+        else
+           contlength = 0.
+        endif
         select case(char)
         case('-')
            xlength = 1.1*zoomfac*xlength
            ylength = 1.1*zoomfac*ylength
            renderlength = 1.1*zoomfac*renderlength
+           contlength = 1.1*zoomfac*contlength
         case('_')
            xlength = 1.2*zoomfac*xlength
            ylength = 1.2*zoomfac*ylength
            renderlength = 1.2*zoomfac*renderlength
+           contlength = 1.2*zoomfac*contlength
         case('+')
-           xlength = 0.9/zoomfac*xlength
-           ylength = 0.9/zoomfac*ylength
-           renderlength = 0.9/zoomfac*renderlength
+           xlength = xlength/(1.1*zoomfac)
+           ylength = ylength/(1.1*zoomfac)
+           renderlength = renderlength/(1.1*zoomfac)
+           contlength = contlength/(1.1*zoomfac)
         case('o')
            if (is_coord(iplotxarr(ipanel),ndim)) then
               xcen = xorigin(iplotxarr(ipanel))
@@ -1775,11 +1851,19 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         end select
         xmaxin = xmax(iplotxarr(ipanel))
         if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
-           !--rendering zoom does not allow pan - renderpt is always centre of axis
-           renderpt = 0.5*(xmin(irenderarr(ipanel)) + xmax(irenderarr(ipanel)))
-           xmin(irenderarr(ipanel)) = renderpt - 0.5*renderlength
-           xmax(irenderarr(ipanel)) = renderpt + 0.5*renderlength
-           print*,'zooming on colour bar: min, max = ',xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel))
+           if (double_render) then
+              !--rendering zoom does not allow pan - renderpt is always centre of axis
+              renderpt = 0.5*(xmin(icontourarr(ipanel)) + xmax(icontourarr(ipanel)))
+              xmin(icontourarr(ipanel)) = renderpt - 0.5*contlength
+              xmax(icontourarr(ipanel)) = renderpt + 0.5*contlength
+              print*,'zooming on colour bar: min, max = ',xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel))
+           else
+              !--rendering zoom does not allow pan - renderpt is always centre of axis
+              renderpt = 0.5*(xmin(irenderarr(ipanel)) + xmax(irenderarr(ipanel)))
+              xmin(irenderarr(ipanel)) = renderpt - 0.5*renderlength
+              xmax(irenderarr(ipanel)) = renderpt + 0.5*renderlength
+              print*,'zooming on colour bar: min, max = ',xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel))
+           endif
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
@@ -1804,9 +1888,15 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
 
      case('a') ! adapt plot limits
         if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
-           print*,'adapting render limits ',xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel))
-           xmin(irenderarr(ipanel)) = xminadapt(irenderarr(ipanel))
-           xmax(irenderarr(ipanel)) = xmaxadapt(irenderarr(ipanel))
+           if (double_render) then
+              print*,'adapting double-render limits ',xminadapt(icontourarr(ipanel)),xmaxadapt(icontourarr(ipanel))
+              xmin(icontourarr(ipanel)) = xminadapt(icontourarr(ipanel))
+              xmax(icontourarr(ipanel)) = xmaxadapt(icontourarr(ipanel))           
+           else
+              print*,'adapting render limits ',xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel))
+              xmin(irenderarr(ipanel)) = xminadapt(irenderarr(ipanel))
+              xmax(irenderarr(ipanel)) = xmaxadapt(irenderarr(ipanel))
+           endif
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
@@ -1867,8 +1957,13 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         !--change colour bar, y and x itrans between log / not logged
         !
         if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
-           call change_itrans2(irenderarr(ipanel),xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)),&
+           if (double_render) then
+              call change_itrans2(icontourarr(ipanel),xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel)),&
+                               xminadapt(icontourarr(ipanel)),xmaxadapt(icontourarr(ipanel)))           
+           else
+              call change_itrans2(irenderarr(ipanel),xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)),&
                                xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel)))
+           endif
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.

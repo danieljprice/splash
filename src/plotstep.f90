@@ -1982,7 +1982,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  irerender = .true.
                  call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
                       nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
-                      icontourtemp(1:nplots),ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),&
+                      icontourtemp(1:nplots),ivecplottemp(1:nplots),double_rendering,xminmulti(:),xmaxmulti(:),&
                       vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                       xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
                  if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
@@ -2122,7 +2122,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               irerender = .true.
               call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
                    nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
-                   icontourtemp(1:nplots),ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),&
+                   icontourtemp(1:nplots),ivecplottemp(1:nplots),.false.,xminmulti(:),xmaxmulti(:),&
                    vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                    xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
@@ -2263,7 +2263,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               irerender = .true.
               call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
                    nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
-                   icontourtemp(1:nplots),ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),&
+                   icontourtemp(1:nplots),ivecplottemp(1:nplots),.false.,xminmulti(:),xmaxmulti(:),&
                    vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                    xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
