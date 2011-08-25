@@ -382,6 +382,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
      call plot_sls(linestylethisstep)
      call plot_line(npartoftype(1),xplot(1:npartoftype(1)), &
                  yplot(1:npartoftype(1)))
+     call plot_sls(mod(linestylethisstep+2,5))
+     call plot_line(npartoftype(2),xplot(npartoftype(1)+1:sum(npartoftype(1:2))), &
+                 yplot(npartoftype(1)+1:sum(npartoftype(1:2))))
      call plot_sls(oldlinestyle)! reset
   endif
   !
