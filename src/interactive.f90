@@ -65,9 +65,10 @@ contains
 !
 subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,ivecy, &
   xcoords,ycoords,zcoords,hi,icolourpart,iamtype,usetype,npartoftype,xmin,xmax,ymin,ymax, &
-  rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,vecmax, &
+  rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,&
+  contminadapt,contmaxadapt,vecmax, &
   anglex,angley,anglez,ndim,xorigin,x_sec,zslicepos,dzslice, &
-  zobserver,dscreen,use3Dopacity,taupartdepth,irerender,itrackpart,icolourscheme, &
+  zobserver,dscreen,use3Dopacity,taupartdepth,double_rendering,irerender,itrackpart,icolourscheme, &
   iColourBarStyle,labelrender,iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
   use settings_xsecrot, only:setsequenceend
   use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,add_textshape
@@ -92,12 +93,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   integer, dimension(maxparttypes), intent(in) :: npartoftype
   real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax,contmin,contmax,taupartdepth
   real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
-  real, intent(in) :: renderminadapt,rendermaxadapt
+  real, intent(in) :: renderminadapt,rendermaxadapt,contminadapt,contmaxadapt
   real, intent(in), dimension(ndim) :: xorigin
   character(len=*), intent(inout) :: labelrender
   logical, intent(inout) :: x_sec
   logical, intent(out) :: irerender,interactivereplot
-  logical, intent(in) :: use3Dopacity
+  logical, intent(in) :: use3Dopacity, double_rendering
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,ierr,ixsec,ishape,itype
   integer :: nmarked,ncircpart,itrackparttemp
@@ -107,7 +108,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
   real :: xlength,ylength,renderlength,renderpt,drender,zoomfac
-  real :: dxlength,dylength,xmaxin,ymaxin
+  real :: dxlength,dylength,xmaxin,ymaxin,contlength
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
   logical :: iexit, rotation, verticalbar, iamincolourbar, mixedtypes
@@ -387,7 +388,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                .and. abs(rendermin-contmin).le.tiny(0.) &
                .and. abs(rendermax-contmax).le.tiny(0.)) then
               call reset_limits2(icontour)
-           elseif (icontour.eq.irender) then
+           elseif (icontour.eq.irender .and. .not.double_rendering) then
               call save_limits(icontour,contmin,contmax,setlim2=.true.)
            else
               call save_limits(icontour,contmin,contmax)
@@ -448,16 +449,33 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               endif
               if (char2 == plot_left_click) then
                  if (verticalbar) then
-                    drender = (rendermax-rendermin)/(ymax-ymin)
-                    rendermax = rendermin + (max(ypt,ypt2)-ymin)*drender
-                    rendermin = rendermin + (min(ypt,ypt2)-ymin)*drender
+                    if (double_rendering) then
+                       drender = (contmax-contmin)/(ymax-ymin)
+                       contmax = contmin + (max(ypt,ypt2)-ymin)*drender
+                       contmin = contmin + (min(ypt,ypt2)-ymin)*drender                    
+                    else
+                       drender = (rendermax-rendermin)/(ymax-ymin)
+                       rendermax = rendermin + (max(ypt,ypt2)-ymin)*drender
+                       rendermin = rendermin + (min(ypt,ypt2)-ymin)*drender
+                    endif
                  else
-                    drender = (rendermax-rendermin)/(xmax-xmin)
-                    rendermax = rendermin + (max(xpt,xpt2)-xmin)*drender
-                    rendermin = rendermin + (min(xpt,xpt2)-xmin)*drender
+                    if (double_rendering) then
+                       drender = (contmax-contmin)/(xmax-xmin)
+                       contmax = contmin + (max(xpt,xpt2)-xmin)*drender
+                       contmin = contmin + (min(xpt,xpt2)-xmin)*drender                    
+                    else
+                       drender = (rendermax-rendermin)/(xmax-xmin)
+                       rendermax = rendermin + (max(xpt,xpt2)-xmin)*drender
+                       rendermin = rendermin + (min(xpt,xpt2)-xmin)*drender
+                    endif
                  endif
-                 print*,'setting render min = ',rendermin
-                 print*,'setting render max = ',rendermax
+                 if (double_rendering) then
+                    print*,'setting doublerender min = ',contmin
+                    print*,'setting doublerender max = ',contmax                 
+                 else
+                    print*,'setting render min = ',rendermin
+                    print*,'setting render max = ',rendermax
+                 endif
                  iadvance = 0
                  interactivereplot = .true.
                  iexit = .true.
@@ -594,19 +612,23 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         xcen = 0.5*(xmax + xmin)
         ycen = 0.5*(ymax + ymin)
         renderlength = rendermax - rendermin
+        contlength = contmin - contmax
         select case(char)
         case('-')
            xlength = 1.1*zoomfac*xlength
            ylength = 1.1*zoomfac*ylength
            renderlength = 1.1*zoomfac*renderlength
+           contlength = 1.1*zoomfac*contlength
         case('_')
            xlength = 1.2*zoomfac*xlength
            ylength = 1.2*zoomfac*ylength
            renderlength = 1.2*zoomfac*renderlength
+           contlength = 1.2*zoomfac*contlength
         case('+')
-           xlength = 0.9/zoomfac*xlength
-           ylength = 0.9/zoomfac*ylength
-           renderlength = 0.9/zoomfac*renderlength
+           xlength = xlength/(1.1*zoomfac)
+           ylength = ylength/(1.1*zoomfac)
+           renderlength = renderlength/(1.1*zoomfac)
+           contlength = contlength/(1.1*zoomfac)
         case('o')
            if (itrackpart.gt.0) then
                print*,'centreing limits on tracked particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
@@ -631,10 +653,17 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         end select
         if (iamincolourbar .and. irender.gt.0) then
            !--rendering zoom does not allow pan - renderpt is always centre of axis
-           renderpt = 0.5*(rendermin + rendermax)
-           rendermin = renderpt - 0.5*renderlength
-           rendermax = renderpt + 0.5*renderlength
-           print*,'zooming on colour bar: min, max = ',rendermin,rendermax
+           if (double_rendering) then
+              renderpt = 0.5*(contmin + contmax)
+              contmin = renderpt - 0.5*contlength
+              contmax = renderpt + 0.5*contlength
+              print*,'zooming on colour bar: min, max = ',contmin,contmax           
+           else
+              renderpt = 0.5*(rendermin + rendermax)
+              rendermin = renderpt - 0.5*renderlength
+              rendermax = renderpt + 0.5*renderlength
+              print*,'zooming on colour bar: min, max = ',rendermin,rendermax
+           endif
            iadvance = 0
            interactivereplot = .true.
            iexit = .true.
@@ -664,8 +693,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('a') ! reset plot limits
         if (iamincolourbar .and. irender.gt.0) then
-           rendermin = renderminadapt
-           rendermax = rendermaxadapt
+           if (double_rendering) then
+              contmin = contminadapt
+              contmax = contmaxadapt           
+           else
+              rendermin = renderminadapt
+              rendermax = rendermaxadapt
+           endif
            iadvance = 0              ! that it should change the render limits
            interactivereplot = .true.
            iexit = .true.
@@ -745,10 +779,15 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         !--change colour bar, y and x itrans between log / not logged
         !
         if (iamincolourbar .and. irender.gt.0) then
-           if (icontour.eq.irender) then
-              call change_itrans2(irender,rendermin,rendermax,contmin,contmax)
+           if (double_rendering) then
+              !call change_itrans(irender,rendermin,rendermax)
+              call change_itrans(icontour,contmin,contmax)
            else
-              call change_itrans(irender,rendermin,rendermax)
+              if (icontour.eq.irender) then
+                 call change_itrans2(irender,rendermin,rendermax,contmin,contmax)
+              else
+                 call change_itrans(irender,rendermin,rendermax)
+              endif
            endif
            iadvance = 0
            interactivereplot = .true.

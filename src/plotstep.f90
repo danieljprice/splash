@@ -1951,10 +1951,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  call interactive_part(ninterp,iplotx,iploty,iplotz,irender,icontourplot,ivecx,ivecy, &
                       xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                       hh(1:ninterp),icolourme(1:ninterp),iamtype,iusetype,npartoftype, &
-                      xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,vecmax, &
+                      xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,&
+                      contminadapt,contmaxadapt,vecmax, &
                       angletempx,angletempy,angletempz,ndim,xorigin(1:ndim),x_sec,zslicepos,dz, &
-                      zobservertemp,dzscreentemp,use3Dopacityrendering,taupartdepthtemp,irerender, &
-                      itrackpart,icolours,iColourBarStyle,labelrender,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
+                      zobservertemp,dzscreentemp,use3Dopacityrendering,taupartdepthtemp,&
+                      (double_rendering .and. gotcontours),irerender,itrackpart,icolours,&
+                      iColourBarStyle,labelrender,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
                  !--turn rotation on if necessary
                  if (abs(angletempx-anglex).gt.tol) irotate = .true.
                  if (abs(angletempy-angley).gt.tol) irotate = .true.
@@ -2094,9 +2096,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               call interactive_part(ntoti,iplotx,iploty,0,irenderpart,0,0,0, &
                    xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
                    hh(1:ntoti),icolourme(1:ntoti),iamtype,iusetype,npartoftype, &
-                   xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,vecmax, &
+                   xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,&
+                   contmin,contmax,contminadapt,contmaxadapt,vecmax, &
                    angletempx,angletempy,angletempz,ndim,xorigin(1:ndim), &
-                   dumxsec,dummy,dummy,dummy,dummy,.false.,dummy,irerender, &
+                   dumxsec,dummy,dummy,dummy,dummy,.false.,dummy,.false.,irerender, &
                    itrackpart,icolours,iColourBarStyle,labelrender,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames ! this should be unnecessary
            elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
