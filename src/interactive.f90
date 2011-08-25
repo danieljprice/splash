@@ -1428,7 +1428,8 @@ end subroutine interactive_step
 ! (this could be made into the only subroutine required)
 !
 subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,ifirstframeonpage,nframes, &
-                             lastpanel,iplotxarr,iplotyarr,irenderarr,ivecarr,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
+                             lastpanel,iplotxarr,iplotyarr,irenderarr,icontourarr,ivecarr,&
+                             xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
                              barwmulti,xminadapt,xmaxadapt,nacross,ndim,xorigin,icolourscheme, &
                              iColourBarStyle,interactivereplot)
  use labels,    only:is_coord
@@ -1440,7 +1441,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  integer, intent(inout) :: istep,iframe,lastpanel,iColourBarStyle
  integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim,ifirstframeonpage,nframes
  integer, intent(inout) :: icolourscheme
- integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr,ivecarr
+ integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr,icontourarr,ivecarr
  real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
  real, dimension(:), intent(inout) :: xmin,xmax,xminadapt,xmaxadapt
  real, intent(in), dimension(ndim) :: xorigin

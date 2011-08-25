@@ -52,7 +52,7 @@ module timestep_plotting
   real, private :: dxgrid,xmingrid,xmaxgrid
   real, private :: angletempx, angletempy, angletempz
   !--buffer for interactive mode on multiplots
-  integer, dimension(maxplot) :: iplotxtemp,iplotytemp,irendertemp,ivecplottemp
+  integer, dimension(maxplot) :: iplotxtemp,iplotytemp,irendertemp,icontourtemp,ivecplottemp
   real,    dimension(maxplot) :: xminmulti,xmaxmulti,xminadapt,xmaxadapt
   real,    dimension(maxplot) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
   real, private :: xminadapti,xmaxadapti,yminadapti,ymaxadapti,renderminadapt,rendermaxadapt
@@ -1972,8 +1972,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  irerender = .true.
                  call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
                       nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
-                      ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
-                      vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
+                      icontourtemp(1:nplots),ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),&
+                      vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                       xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
                  if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
               endif
@@ -2112,8 +2112,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               irerender = .true.
               call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
                    nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
-                   ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
-                   vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
+                   icontourtemp(1:nplots),ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),&
+                   vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                    xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
            endif
@@ -2253,8 +2253,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               irerender = .true.
               call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
                    nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
-                   ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),vptxmin(1:nplots),vptxmax(1:nplots), &
-                   vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
+                   icontourtemp(1:nplots),ivecplottemp(1:nplots),xminmulti(:),xmaxmulti(:),&
+                   vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                    xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
            endif
@@ -2822,14 +2822,19 @@ contains
     iplotxtemp(ipanel) = iplotx
     iplotytemp(ipanel) = iploty
     irendertemp(ipanel) = irender
+    icontourtemp(ipanel) = icontourplot
     ivecplottemp(ipanel) = ivectorplot
     xminmulti(iplotx) = xmin
     xmaxmulti(iplotx) = xmax
     xminmulti(iploty) = ymin
     xmaxmulti(iploty) = ymax
-    if (irender.gt.0 .and. irender.lt.size(xmaxmulti)) then
+    if (irender.gt.0 .and. irender.le.size(xmaxmulti)) then
        xminmulti(irender) = rendermin
        xmaxmulti(irender) = rendermax
+       if (icontourplot.gt.0 .and. gotcontours .and. icontourplot.le.size(xmaxmulti)) then
+          xminmulti(icontourplot) = contmin
+          xmaxmulti(icontourplot) = contmax
+       endif
     endif
     if (ivectorplot.gt.0 .and. ivectorplot.le.numplot) then
        xmaxmulti(ivectorplot) = vecmax
@@ -2853,6 +2858,10 @@ contains
        if (irender.gt.0) then
           xminadapt(irender) = min(xminadapt(irender),renderminadapt)
           xmaxadapt(irender) = max(xmaxadapt(irender),rendermaxadapt)
+          if (icontourplot.gt.0) then
+             xminadapt(icontourplot) = min(xminadapt(icontourplot),contminadapt)
+             xmaxadapt(icontourplot) = max(xmaxadapt(icontourplot),contmaxadapt)
+          endif
        endif
     !endif
 
