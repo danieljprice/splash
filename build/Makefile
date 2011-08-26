@@ -39,12 +39,11 @@ X11LIBS= -L/usr/X11R6/lib -lX11
 ifeq ($(BACKEND), giza)
 #-- C A I R O --
    GIZADIR= ../giza
+   VPATH+= $(GIZADIR)/interface/
    PLOTLIB= $(GIZADIR)/lib/libgiza.a giza-fortran.F90 plotlib_giza.f90
    PGPLOTLIBS = -lcairo
-   INCLUDES=-I$(GIZADIR)/src/ -I/usr/X11/include -I/usr/include/cairo
    CFLAGS=-ggdb -Wall
    CC = gcc
-   VPATH+= $(GIZADIR)/interface/ $(GIZADIR)/lib/
 else
 #-- P G P L O T --
    PLOTLIB= plotlib_pgplot.f90
