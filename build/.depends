@@ -1,0 +1,67 @@
+globaldata.o multiplot.mod settings_data.mod labels.mod filenames.mod particle_data.mod params.mod: globaldata.f90
+asciiutils.o asciiutils.mod: asciiutils.f90
+setpage.o pagesetup.mod: setpage.f90
+transform.o transforms.mod: transform.f90
+prompting.o prompting.mod: prompting.f90
+geometry.o geometry.mod: geometry.f90
+plotutils.o plotutils.mod: plotutils.f90
+colourbar.o colourbar.mod: pagesetup.mod colourbar.f90
+colours.o colours.mod: colours.f90
+colourparts.o colourparts.mod: colourparts.f90
+shapes.o shapes.mod: transforms.mod prompting.mod params.mod shapes.f90
+units.o settings_units.mod: settings_data.mod labels.mod prompting.mod params.mod units.f90
+write_pixmap.o write_pixmap.mod: colours.mod filenames.mod write_pixmap.f90
+write_sphdata.o write_sphdata.mod: params.mod settings_units.mod labels.mod write_sphdata.f90
+analysis.o analysis.mod: prompting.mod params.mod filenames.mod asciiutils.mod labels.mod analysis.f90
+discplot.o disc.mod: transforms.mod discplot.f90
+exact_fromfile.o exactfromfile.mod: exact_fromfile.f90
+exact_mhdshock.o mhdshock.mod: exact_mhdshock.f90
+exact_polytrope.o polytrope.mod: exact_polytrope.f90
+exact_rhoh.o rhoh.mod: exact_rhoh.f90
+exact_sedov.o sedov.mod: exact_sedov.f90
+exact_shock.o shock.mod: exact_shock.f90
+exact_shock_sr.o shock_sr.mod: exact_shock_sr.f90
+exact_wave.o wave.mod: exact_wave.f90
+exact_toystar1D.o toystar1d.mod: exact_toystar1D.f90
+exact_toystar2D.o toystar2d.mod: exact_toystar2D.f90
+exact_densityprofiles.o densityprofiles.mod: exact_densityprofiles.f90
+exact_torus.o torus.mod: exact_torus.f90
+exact_ringspread.o ringspread.mod: exact_ringspread.f90
+exact.o exact.mod: transforms.mod ringspread.mod densityprofiles.mod wave.mod toystar2d.mod toystar1d.mod torus.mod shock_sr.mod shock.mod sedov.mod rhoh.mod polytrope.mod mhdshock.mod exactfromfile.mod labels.mod filenames.mod prompting.mod settings_data.mod exact.f90
+limits.o limits.mod: asciiutils.mod settings_data.mod particle_data.mod geometry.mod labels.mod params.mod limits.f90
+allocate.o mem_allocation.mod: particle_data.mod allocate.f90
+titles.o titles.mod: filenames.mod asciiutils.mod titles.f90
+system_f2003.o system_commands.mod: system_f2003.f90
+system_utils.o system_utils.mod: system_commands.mod system_utils.f90
+options_render.o settings_render.mod: params.mod prompting.mod colours.mod labels.mod colourbar.mod options_render.f90
+options_particleplots.o settings_part.mod: multiplot.mod geometry.mod prompting.mod particle_data.mod settings_render.mod limits.mod labels.mod exact.mod settings_data.mod params.mod options_particleplots.f90
+calc_quantities.o calcquantities.mod: settings_units.mod mem_allocation.mod settings_part.mod settings_data.mod particle_data.mod labels.mod calc_quantities.f90
+get_data.o getdata.mod: system_utils.mod asciiutils.mod settings_units.mod calcquantities.mod geometry.mod labels.mod prompting.mod particle_data.mod settings_part.mod settings_data.mod limits.mod filenames.mod exact.mod get_data.f90
+convert.o convert.mod: prompting.mod getdata.mod analysis.mod write_sphdata.mod filenames.mod settings_data.mod particle_data.mod convert.f90
+options_data.o options_data.mod: settings_units.mod labels.mod limits.mod calcquantities.mod getdata.mod prompting.mod filenames.mod params.mod settings_data.mod options_data.f90
+options_limits.o settings_limits.mod: transforms.mod labels.mod limits.mod prompting.mod calcquantities.mod settings_data.mod filenames.mod multiplot.mod options_limits.f90
+options_page.o settings_page.mod: filenames.mod prompting.mod params.mod shapes.mod settings_limits.mod options_page.f90
+options_powerspec.o settings_powerspec.mod: prompting.mod labels.mod limits.mod settings_data.mod options_powerspec.f90
+options_vecplot.o settings_vecplot.mod: limits.mod labels.mod settings_data.mod prompting.mod options_vecplot.f90
+options_xsecrotate.o settings_xsecrot.mod: transforms.mod multiplot.mod calcquantities.mod settings_data.mod prompting.mod limits.mod labels.mod filenames.mod options_xsecrotate.f90
+pdfs.o pdfs.mod: asciiutils.mod filenames.mod plotutils.mod transforms.mod prompting.mod pdfs.f90
+rotate.o rotation.mod: rotate.f90
+interpolate1D.o interpolations1d.mod: interpolate1D.f90
+interpolate2D.o interpolations2d.mod: interpolate2D.f90
+interpolate3D.o interpolations3d.mod: interpolate3D.F90
+interpolate3D_xsec.o xsections3d.mod: interpolate3D_xsec.f90
+interpolate3D_projection.o projections3d.mod: interpolate3D_projection.F90
+interpolate3D_opacity.o interpolate3d_opacity.mod: colours.mod projections3d.mod interpolate3D_opacity.f90
+interpolate_vec.o interpolate_vec.mod: interpolate_vec.f90
+interactive.o interactive_routines.mod: colours.mod settings_part.mod labels.mod calcquantities.mod filenames.mod transforms.mod settings_limits.mod settings_data.mod limits.mod settings_vecplot.mod settings_page.mod multiplot.mod shapes.mod settings_xsecrot.mod colourbar.mod interactive.f90
+fieldlines.o fieldlines.mod: fieldlines.f90
+legends.o legends.mod: legends.f90
+particleplot.o particleplots.mod: geometry.mod interpolations2d.mod settings_part.mod settings_data.mod labels.mod params.mod particleplot.f90
+powerspectrums.o powerspectrums.mod: interpolations3d.mod powerspectrums.f90
+render.o render.mod: settings_vecplot.mod legends.mod plotutils.mod colourbar.mod render.f90
+plotstep.o timestep_plotting.mod: asciiutils.mod rotation.mod fieldlines.mod interpolate_vec.mod geometry.mod shapes.mod legends.mod colourbar.mod write_pixmap.mod exactfromfile.mod disc.mod pagesetup.mod render.mod xsections3d.mod interpolate3d_opacity.mod interpolations3d.mod interpolations2d.mod interpolations1d.mod powerspectrums.mod particleplots.mod interactive_routines.mod transforms.mod colourparts.mod settings_units.mod settings_vecplot.mod settings_limits.mod toystar2d.mod toystar1d.mod exact.mod filenames.mod pdfs.mod projections3d.mod particle_data.mod settings_powerspec.mod settings_xsecrot.mod settings_render.mod settings_part.mod settings_page.mod settings_data.mod titles.mod prompting.mod multiplot.mod limits.mod labels.mod colours.mod params.mod plotstep.f90
+timestepping.o timestepping.mod: params.mod settings_part.mod getdata.mod timestep_plotting.mod settings_page.mod settings_data.mod particle_data.mod filenames.mod timestepping.f90
+defaults.o defaults.mod: shapes.mod titles.mod settings_units.mod settings_powerspec.mod settings_xsecrot.mod settings_vecplot.mod settings_render.mod settings_part.mod options_data.mod settings_limits.mod multiplot.mod exact.mod settings_page.mod settings_data.mod particle_data.mod limits.mod labels.mod filenames.mod defaults.f90
+menu.o mainmenu.mod: settings_units.mod params.mod timestepping.mod getdata.mod geometry.mod defaults.mod transforms.mod prompting.mod multiplot.mod settings_xsecrot.mod settings_vecplot.mod settings_render.mod settings_page.mod settings_part.mod settings_limits.mod settings_data.mod options_data.mod limits.mod labels.mod filenames.mod menu.f90
+splash.o: settings_page.mod timestepping.mod analysis.mod write_sphdata.mod convert.mod write_pixmap.mod asciiutils.mod system_utils.mod system_commands.mod settings_xsecrot.mod settings_data.mod projections3d.mod mem_allocation.mod mainmenu.mod limits.mod defaults.mod getdata.mod filenames.mod splash.f90
+read_data_sphNG.o sphngread.mod: settings_units.mod geometry.mod calcquantities.mod labels.mod system_utils.mod mem_allocation.mod settings_data.mod particle_data.mod params.mod read_data_sphNG.f90
