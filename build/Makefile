@@ -17,7 +17,7 @@
 KNOWN_SYSTEM=no
 SRCDIR=../src
 BINDIR=../bin
-VPATH=$(SRCDIR) $(SRCDIR)/H5Part ../giza/interface ../giza/src ../utils ../tests
+VPATH=$(SRCDIR) $(SRCDIR)/H5Part
 SHELL=/bin/bash
 
 #
@@ -38,13 +38,13 @@ X11LIBS= -L/usr/X11R6/lib -lX11
 #--------------------------------------------------------------
 ifeq ($(BACKEND), giza)
 #-- C A I R O --
-   PLOTLIB= ${GIZAOBJ} giza-fortran.F90 plotlib_giza.f90
+   GIZADIR= ../giza
+   PLOTLIB= $(GIZADIR)/lib/libgiza.a giza-fortran.F90 plotlib_giza.f90
    PGPLOTLIBS = -lcairo
-   INCLUDES=-I../giza/src/ -I/usr/X11/include -I/usr/include/cairo
+   INCLUDES=-I$(GIZADIR)/src/ -I/usr/X11/include -I/usr/include/cairo
    CFLAGS=-ggdb -Wall
    CC = gcc
-   GIZASRC=${shell cd ../giza/src/; ls *.c}
-   GIZAOBJ=${GIZASRC:.c=.o}
+   VPATH+= $(GIZADIR)/interface/ $(GIZADIR)/lib/
 else
 #-- P G P L O T --
    PLOTLIB= plotlib_pgplot.f90
@@ -871,10 +871,14 @@ err:
 
 plotlib_pgplot.o: checkpgplot
 
-giza-fortran.o : compilegiza
+plotlib_giza.o : giza-fortran.o
 
-compilegiza: ${GIZAOBJ}
-	@echo "Compiling giza... $<";
+giza-fortran.o : giza-fortran.F90
+	$(F90C) $(F90FLAGS) -I$(GIZADIR)/include/ -c $< -o $@
+
+$(GIZADIR)/lib/libgiza.a:
+	@echo "Compiling giza..."
+	$(MAKE) -C $(GIZADIR) libgiza
 
 docs: doc
 
@@ -998,3 +1002,6 @@ read_data_sphNG.o sphngread.mod: settings_units.mod geometry.mod calcquantities.
 
 clean:
 	rm -f *.o *.mod
+ifeq ($(BACKEND),giza)
+	${MAKE} -C ../giza clean 
+endif
