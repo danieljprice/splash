@@ -42,7 +42,7 @@ ifeq ($(BACKEND), giza)
    VPATH+= $(GIZADIR)/interface/
    PLOTLIB= $(GIZADIR)/lib/libgiza.a giza-fortran.F90 plotlib_giza.f90
    PGPLOTLIBS = -lcairo
-   CFLAGS=-ggdb -Wall
+   CFLAGS= -fPIC -Wall -Wextra -O3
    CC = gcc
 else
 #-- P G P L O T --
@@ -195,7 +195,7 @@ ifeq ($(SYSTEM),ifort)
 # or use setenv F_UFMTENDIAN=big or little at runtime
    KNOWN_SYSTEM=yes
    CC=icc -C
-   CFLAGS=-Wall
+   CFLAGS=-Wall -O3
 endif
 
 ifeq ($(SYSTEM),ifort8)
@@ -873,7 +873,7 @@ $(GIZADIR)/lib/libgiza.a: gizabuild
 
 gizabuild: 
 	@echo "Compiling giza..."
-	$(MAKE) $(MAKECMDFLAGS) -C $(GIZADIR) libgiza
+	$(MAKE) $(MAKECMDFLAGS) -C $(GIZADIR) libgiza CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 docs: doc
 
@@ -933,5 +933,5 @@ clean:
 
 cleangiza:
 ifeq ($(BACKEND),giza)
-	${MAKE} -C $(GIZADIR) clean 
+	${MAKE} -C $(GIZADIR) clean
 endif
