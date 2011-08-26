@@ -865,7 +865,13 @@ plotlib_giza.o : giza-fortran.o
 giza-fortran.o : giza-fortran.F90
 	$(F90C) $(F90FLAGS) -I$(GIZADIR)/include/ -c $< -o $@
 
-$(GIZADIR)/lib/libgiza.a:
+.PHONY: gizabuild libgiza
+
+libgiza: gizabuild
+
+$(GIZADIR)/lib/libgiza.a: gizabuild
+
+gizabuild: 
 	@echo "Compiling giza..."
 	$(MAKE) $(MAKECMDFLAGS) -C $(GIZADIR) libgiza
 
