@@ -49,10 +49,16 @@ program splash
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
 !   2.0.beta : (xx/xx/11)
+!             new giza backend - antialiased lines; real fonts; pdf, eps and svg drivers;
+!             fewer build dependencies (only cairo, X11);
+!             support for semi-transparent text;
 !             Double rendering (with transparent background) implemented.
-!     1.15.0 : (xx/xx/11)
+!     1.15.0 : (29/08/11)
 !             Multiplot with different particle types implemented; calculated quantities
-!             list is now pre-filled automatically;
+!             list is now pre-filled automatically; preliminary support for r-phi and r-z
+!             rendering; outlined solid markers implemented; better handling of multiple types;
+!             manual contour levels can be specified in splash.contours; parallel splash to grid;
+!             better support for non-square pixels; clipping of numbers at edge of viewport fixed
 !     1.14.1 : (17/03/11)
 !             SEREN data read added; dragon read updated; build follows Gnu conventions
 !             on DEST and DESTDIR (needed for macports build); can have up to 12 particle types;
@@ -302,7 +308,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.15.0beta [30th Jun ''11]'
+  character(len=*), parameter :: version = 'v1.15.0 [29th Aug ''11]'
 
   !
   ! initialise some basic code variables
