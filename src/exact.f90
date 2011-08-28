@@ -386,11 +386,12 @@ contains
   !---------------------------------------------------
   subroutine options_exact
     use prompting, only:prompt
+    use plotlib,   only:plotlib_maxlinestyle,plotlib_maxlinecolour
     implicit none
 
     call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
-    call prompt('enter line colour ',iExactLineColour,1,16)
-    call prompt('enter line style  ',iExactLineStyle,1,5)
+    call prompt('enter line colour ',iExactLineColour,1,plotlib_maxlinecolour)
+    call prompt('enter line style  ',iExactLineStyle,1,plotlib_maxlinestyle)
     call prompt('calculate error norms? ',iCalculateExactErrors)
     if (iCalculateExactErrors) then
        call prompt('plot residuals (as inset in main plot)?',iPlotResiduals)

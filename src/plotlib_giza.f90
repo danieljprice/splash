@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -105,6 +105,9 @@ module plotlib
   implicit none
   logical, parameter :: plotlib_is_pgplot = .false.
   logical, parameter :: plotlib_supports_alpha = .true.
+  integer, parameter :: plotlib_maxlinestyle = 5
+  integer, parameter :: plotlib_maxfillstyle = 5
+  integer, parameter :: plotlib_maxlinecolour = 16
 
   character(len=1),parameter :: plot_left_click = giza_left_click_f
 public

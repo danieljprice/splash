@@ -109,6 +109,7 @@ subroutine submenu_particleplots(ichoose)
   use prompting,       only:prompt,print_logical
   use geometry,        only:maxcoordsys,labelcoordsys,coord_transform_limits
   use multiplot,       only:itrans
+  use plotlib,         only:plotlib_maxlinestyle,plotlib_maxlinecolour
   implicit none
   integer, intent(in) :: ichoose
   integer             :: i,iaction,n,itype,icoordsprev,ierr,icol
@@ -259,8 +260,8 @@ subroutine submenu_particleplots(ichoose)
   case(5)
      call prompt('plot line joining particles?',iplotline)
      if (iplotline) then
-        call prompt('Enter PGPLOT line style to use ',linestyle,0,5)
-        call prompt('Enter PGPLOT colour for line ',linecolour,0,15)
+        call prompt('Enter line style to use ',linestyle,0,plotlib_maxlinestyle)
+        call prompt('Enter colour for line ',linecolour,0,plotlib_maxlinecolour)
      endif
      return
 !!-----------------------------------------------------------------------

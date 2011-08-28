@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -54,7 +54,8 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_page
-  use shapes, only:defaults_set_shapes
+  use shapes,  only:defaults_set_shapes
+  use plotlib, only:plotlib_maxlinecolour
   implicit none
 
   interactive = .true.     ! default for interactive mode
@@ -96,7 +97,7 @@ subroutine defaults_set_page
   maxlinestyle = 5
   modlinestyle = 1
   modcolour = 1
-  maxcolour = 16
+  maxcolour = plotlib_maxlinecolour
 
   usesquarexy = .true. ! spatial dimensions have same scale
   call defaults_set_shapes
@@ -129,7 +130,7 @@ subroutine submenu_page(ichoose)
  use params,      only:maxplot
  use prompting,   only:prompt,print_logical
  use pagecolours, only:pagecolourscheme,colour_fore,colour_back,maxpagecolours
- use plotlib,     only:plotlib_supports_alpha
+ use plotlib,     only:plotlib_supports_alpha,plotlib_maxlinecolour,plotlib_maxlinestyle
  implicit none
  integer, intent(in) :: ichoose
  integer             :: iaction,i
@@ -176,13 +177,15 @@ subroutine submenu_page(ichoose)
         call prompt('Use different colours for each step?',iColourEachStep)
         if (iColourEachStep) then
            call prompt('How often to change colour? (1=every step, 2=every 2nd step etc.)',modcolour,1)
-           call prompt('Enter max number of colours to use before repeating (16=PGPLOT max)',maxcolour,1,16)
+           call prompt('Enter max number of colours to use before repeating (16=plot lib max)',&
+                       maxcolour,1,plotlib_maxlinecolour)
         endif
 !!        if (.not.iColourEachStep) icolourthisstep = 1
         call prompt('Use different markers/line style for each step? ',iChangeStyles)
         if (iChangeStyles) then
            call prompt('How often to change line style (1=every step, 2=every 2nd step etc.)',modlinestyle,1)
-           call prompt('Enter max number of line styles to cycle through before repeating (5=PGPLOT max)',maxlinestyle,1,5)
+           call prompt('Enter max number of line styles to cycle through before repeating (5=plot lib max)',&
+                        maxlinestyle,1,plotlib_maxlinestyle)
         endif
 
         if (iColourEachStep .or. iChangeStyles) then

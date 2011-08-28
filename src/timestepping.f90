@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -280,6 +280,7 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
   use particle_data, only:icolourme
   use settings_part, only:linecolourthisstep,linestylethisstep,imarktype
   use settings_page, only:maxlinestyle,modlinestyle,maxcolour,modcolour
+  use plotlib,       only:plotlib_maxlinestyle,plotlib_maxlinecolour
   implicit none
   integer, intent(in) :: istep
   logical, intent(in) :: iChangeColours, iChangeStyles
@@ -289,11 +290,11 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
      if (allocated(icolourme)) then
         icolour = istep + 1
         icolour = (icolour-2)/modcolour + 1
-        if (icolour.gt.16) then
-           print "(a)",'warning: step colour > 16: re-using colours'
-           icolour = mod(icolour-1,16) + 1
+        if (icolour.gt.plotlib_maxlinecolour) then
+           print "(a,i2,a)",'warning: step colour > ',plotlib_maxlinecolour,': re-using colours'
+           icolour = mod(icolour-1,plotlib_maxlinecolour) + 1
         endif
-        icolour = mod(icolour-1,min(maxcolour,16)) + 1
+        icolour = mod(icolour-1,min(maxcolour,plotlib_maxlinecolour)) + 1
         icolourme = icolour
         linecolourthisstep = icolour
      else
@@ -301,10 +302,8 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
      endif
   endif
   if (iChangeStyles) then
-     !--PGPLOT only has 5 line styles, so if modlinestyle should
-     !  not be greater than this
-     linestylethisstep = mod((istep-1)/modlinestyle,min(maxlinestyle,5)) + 1
-     !linestylethisstep = mod(istep-1,min(maxlinestyle,5)) + 1
+     !--modlinestyle should not be greater than max line styles in plotting library
+     linestylethisstep = mod((istep-1)/modlinestyle,min(maxlinestyle,plotlib_maxlinestyle)) + 1
      imarkernumber = istep
      select case(imarkernumber)
      case(1)

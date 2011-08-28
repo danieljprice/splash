@@ -48,7 +48,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   use transforms,       only:transform
   use plotlib,          only:plot_qci,plot_bbuf,plot_ebuf,plot_sci,plot_sfs,plot_circ, &
                              plot_pt,plot_numb,plot_text,plot_pt1,plot_qls,plot_sls, &
-                             plot_line,plot_qlw,plot_slw,plot_errb
+                             plot_line,plot_qlw,plot_slw,plot_errb,plotlib_maxlinestyle
   implicit none
   integer, intent(in)                           :: ntot,iplotx, iploty, itransx, itransy
   integer(kind=int1),  dimension(:), intent(in) :: iamtype
@@ -382,7 +382,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
      call plot_sls(linestylethisstep)
      call plot_line(npartoftype(1),xplot(1:npartoftype(1)), &
                  yplot(1:npartoftype(1)))
-     call plot_sls(mod(linestylethisstep+2,5))
+     call plot_sls(mod(linestylethisstep+2,plotlib_maxlinestyle))
      call plot_line(npartoftype(2),xplot(npartoftype(1)+1:sum(npartoftype(1:2))), &
                  yplot(npartoftype(1)+1:sum(npartoftype(1:2))))
      call plot_sls(oldlinestyle)! reset

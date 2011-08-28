@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -93,6 +93,7 @@ subroutine submenu_shapes()
  use params,        only:maxplot
  use prompting,     only:prompt
  use exactfunction, only:check_function
+ use plotlib,       only:plotlib_maxlinestyle,plotlib_maxlinecolour,plotlib_maxfillstyle
  implicit none
  integer            :: i,ishape,itype,indexi,iunits,ierr,itry
  character(len=8)   :: poslabel
@@ -189,17 +190,17 @@ subroutine submenu_shapes()
        endif
        if (itype.eq.1 .or. itype.eq.2 .or. itype.eq.4) then
           call prompt('enter fill style (1=solid,2=outline,3=hatch,4=crosshatch) for '// &
-                      trim(labelshapetype(itype)),shape(ishape)%ifillstyle,0,5)
+                      trim(labelshapetype(itype)),shape(ishape)%ifillstyle,0,plotlib_maxfillstyle)
        endif
        if (itype.ne.6) then
           call prompt('enter line style (1=solid,2=dash,3=dotdash,4=dot,5=dashdot) for '// &
-                      trim(labelshapetype(itype)),shape(ishape)%linestyle,0,5)
+                      trim(labelshapetype(itype)),shape(ishape)%linestyle,0,plotlib_maxlinestyle)
        endif
        if (itype.ne.6) then
           call prompt('enter line width for '//trim(labelshapetype(itype)),shape(ishape)%linewidth,0)
        endif
-       call prompt('enter '//trim(labelshapetype(itype))//' colour (0=background, 1=foreground, 2-16=pgplot colour indices)', &
-                   shape(ishape)%icolour,0,16)
+       call prompt('enter '//trim(labelshapetype(itype))//' colour (0=background, 1=foreground, 2-16=plot lib colour indices)', &
+                   shape(ishape)%icolour,0,plotlib_maxlinecolour)
 
        print "(/,'  0 : plot on every panel ',/,"// &
               "' -1 : plot on first row only ',/,"// &
