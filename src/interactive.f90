@@ -612,7 +612,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         xcen = 0.5*(xmax + xmin)
         ycen = 0.5*(ymax + ymin)
         renderlength = rendermax - rendermin
-        contlength = contmin - contmax
+        contlength = contmax - contmin
         select case(char)
         case('-')
            xlength = 1.1*zoomfac*xlength
