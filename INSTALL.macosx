@@ -1,89 +1,35 @@
-To compile SPLASH you will need the following on your system, both of which
-are freely available:
-- The PGPLOT graphics subroutine library
-- A Fortran 95 compiler
+On OS/X, the last stable version of SPLASH is available as a MacPorts package.
 
-The basic steps for installation are:
-1) make sure you have a Fortran 90/95 compiler (such as gfortran).
-2) make sure you have the PGPLOT libraries installed.
-3) compile SPLASH and link with PGPLOT.
-4) if desired/necessary write a read_data subroutine so that SPLASH can read
-   your data format.
-5) make pretty pictures.
+Get MacPorts from:
+http://www.macports.org/
+
+Then SPLASH can be installed using:
+
+sudo port install splash
 
 For troubleshooting of some common installation problems,
  have a look at the online FAQ.
-
-All of the above steps can be done "by hand" - to do so follow the detailed
-instructions in the INSTALL file. However on Mac OS/X you can use either the Macports 
-or Fink package managers (download either from the web as a simple disk image file)
-to make things easier. As of OS/X 10.6 I recommend Macports over Fink.
-
-1-3) -------- getting a Fortran compiler, installing PGPLOT, compiling splash -------------
-
-Using Macports (recommended):
------------------------------
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/opt/local/lib  (also put this in your ~/.profile)
-sudo port -v install pgplot
-export PGPLOT_DIR=/opt/local/lib
-
-(It is also a good idea at this stage to add the setting of PGPLOT_DIR into your 
- .profile/.bashrc or .tcshrc file along with a setting for PGPLOT_DEV (e.g. to "/xw"
- which sets the default device to be the X-windows device).
-
-Then compile splash as follows:
-make SYSTEM=gfortran
-
-Using Fink:
------------
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/sw/lib  (and make sure this is in your ~/.profile) 
-fink install pgplot  (or do this using the Fink commander GUI)
-
-(For Fink, if pgplot does not appear in the package list, you may need
- to turn on "Use unstable packages" in the fink preferences. If you do not
- have g77/gfortran installing PGPLOT will trigger this install also (and maybe
- also the libpng libraries). 
  
-export PGPLOT_DIR=/sw/lib/pgplot
+To install splash manually (recommended if you plan on modifying the source code)
+refer to the general INSTALL instructions.
 
-(It is also a good idea at this stage to add the setting of PGPLOT_DIR into your 
- .profile/.bashrc or .tcshrc file along with a setting for PGPLOT_DEV (e.g. to "/xw"
- which sets the default device to be the X-windows device).
+-------------- reading your data format -------------------
 
-Then compile splash using one of the following:
-make SYSTEM=gfortran_osx  (OS/X 10.5 with pgplot installed via Fink using gfortran)
-make SYSTEM=intelmac  (OS/X 10.4 with pgplot installed via Fink using gfortran)
-make SYSTEM=mymac     (settings for a Mac G4 with pgplot installed with Fink+g95) 
-
-If none of these work, try just
-make SYSTEM=gfortran
-make SYSTEM=g95
-and adjust the linker flags by hand (e.g. make SYSTEM=g95 LDFLAGS="-L/sw/lib/pgplot -lpgplot")
-
-Other
------
-Step-by-step instructions for installing PGPLOT manually are given in the INSTALL file.
-The only requirement is a working Fortran compiler.
-
-4) -------------- reading your data format -------------------
-
-The final step is to get SPLASH to read the dump files from your SPH code
-directly. If you are using a widely used SPH code (e.g. GADGET, GASOLINE, VINE,
-DRAGON), it is reasonably  likely that I have already written a read data
-subroutine which will read your dumps. Alternatively, the ascii read ('asplash')
-is quite general and will read any data where columns correspond to different
-quantities and rows correspond to each particle (actually I use asplash to plot
-graphs for nearly all data in this form, whether SPH or not) -- it will also
-sensibly skip header lines which do not have the same number of columns.
+The basic "splash" binary is quite general and will read any data where columns 
+correspond to different quantities and rows correspond to each particle (actually
+I use splash to plot graphs for nearly all data in this form, whether SPH or not)
+-- it will also sensibly skip header lines which do not have the same number of columns.
 
 However, it is ultimately desirable to use SPLASH to directly visualise the
-output of your code If your format is not amongst those distributed, then BEFORE
-you start writing your own routine, please consider whether or not a routine to read
-your format would be of more general use (e.g. to other users of your code). If
-so, PLEASE email me to request a new read_data routine for your format, by
-sending an email attaching:
+(binary) output of your code. If you are using a widely used SPH code (e.g. GADGET,
+GASOLINE, VINE, DRAGON), it is reasonably  likely that I have already written a 
+read data subroutine which will read your dumps. If your format is not amongst those 
+distributed, then BEFORE you start writing your own routine, please consider whether 
+or not a routine to read your format would be of more general use (e.g. to other users
+of your code). If so, PLEASE email me to request a new read_data routine for your 
+format, by sending an email attaching:
 a) an example dump 
-and 
+and
 b) the source code from the routine which wrote the dump file.
 
 Then I can write a read for your format that can be added to the SPLASH repository
