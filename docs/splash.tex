@@ -72,8 +72,7 @@ particularly fast and whilst interactive gizmos are handy, it can prove more dif
 same tasks non-interactively, as required for the production of animations. 
 In fact I have found that the major work in the visualisation of SPH data is not the image production itself but the
 manipulation of data prior to plotting. Much of this manipulation makes sense
-within an SPH framework (for example the interpolation provided by the kernel
-and rotation of the particles for perspective).
+within an SPH framework.
 
  \splash is designed for this specific task - to use SPH tools to analyse SPH data and to make this a
 straightforward task such that publishable images and animations can be obtained
@@ -113,15 +112,17 @@ polytropes).
 \item Conversion of binary dump files to ascii format.
 \item Transformation to different coordinate systems (for both coordinates and
 vector components) and rescaling of data into physical units.
-\item Straightforward production of GIF, png and Postscript images which can then be
+\item Straightforward production of both bitmap (png) and vector (Postscript, PDF) images which can then be
 converted into animations or inserted into \LaTeX  documents.
 \end{itemize}
 
 \subsection{What it doesn't do}
-At the moment \splash is geared towards gas dynamics simulations with SPH and has basically grown out of my visualisation needs.
+ \splash is geared towards gas dynamics simulations with SPH and has basically grown out of my visualisation needs.
 Thus it may not be particularly useful for things like water and solids etc. in SPH. An SPH visualisation tool geared towards the non-gaseous side of things you may want to have a look at is {\it pv-meshless}, by John Biddiscombe:
 
 \url{https://twiki.cscs.ch/twiki/bin/view/ParaViewMeshless}
+
+ \splash also doesn't make coffee.
 
 \subsection{\splash, the paper}
  The algorithms implemented in \splash are not described here, but instead described in a paper \citep{splashpaper} (Publications of the Astronomical Society of Australia, 24, 159-173), available from:
@@ -642,9 +643,30 @@ Pressing `S' from the main menu saves both the \verb+splash.defaults+ file and a
 \subsection{set (m)ultiplot}%HEVEA\cutname{multiplot.html}
 \label{sec:multiplot}
 \subsubsection{ Plotting more than one column from the same file on the same page (multiplot)}
+\label{sec:multiplotsetup}
  Press 'm'  (``set multiplot'') from the main menu to set up a multiplot. Note that a ``multiplot'' (multiple columns plotted from the same file) is different to plotting ``multiple plots per page'' (divide the plotting page up into panels). The number of panels across and down on a page can be changed (see \ref{sec:nacrossndown}) irrespective of whether or not you are also plotting multiple columns from the same file.
 
 Once you have gone through the options to set up a multiplot, to actually plot what you have set simply type the number of the column corresponding to ``multiplot'' at the $y-$axis prompt.
+
+\subsubsection{ Plotting each particle type in a different panel (multiplot)}
+ To make a plot using different particle types in each panel (e.g. gas density in one panel, dust or dark matter density in another), use 'm' (``set multiplot'') from the main menu. If multiple types are present in the data read, the option appears to specify the particular types you want to use for each plot.
+ 
+ For example, after pressing `m' at the main menu we eventually arrive at the question:
+\begin{verbatim}
+use all active particle types? (default=yes): n
+\end{verbatim}
+Answering ``no'' brings up a possible list of types:
+\begin{verbatim}
+ 1: use gas particles
+ 2: use ghost particles
+ 3: use sink particles
+ 4: use star particles
+ 5: use unknown/dead particles
+Enter type or list of types to use ([1:5], default=1): 1,3
+\end{verbatim}
+Thus entering e.g. ``1,3'' specifies that only gas and sink particles should be used for this plot.
+
+Note that this is more specific than simply turning particle types on and off for \emph{all} plots, which can be achieved via the ``turn on/off particles by type'' option in the o) menu (see \S\ref{sec:plotparticlesbytype}).
 
 \subsection{(d)ata options}%HEVEA\cutname{dmenu.html}
 The following can all be achieved from the d)ata options menu:
@@ -1036,6 +1058,8 @@ Actually, none of this should be necessary, as the gravity for dark matter shoul
  Sink particles will be plotted on particle plots once turned on via the ``turn on/off particles by type'' option in the particle plot o)ptions submenu. Setting this option also gives a prompt for whether or not to plot sink particles on top of rendered plots (to which the answer should be yes).  See \ref{sec:plotparticlesbytype} for more details.
  
   To plot sink particles as a circle scaled to the sink radius, select the appropriate marker type (32-35) in the ``change graph markers for each type'' option in the o) menu. This allows plotting of particles of a given type with circles, filled or open, proportional to their smoothing lengths. Thus, the smoothing length for sink particles needs to be set to their accretion radius (or at least proportional to it).
+  
+   A good option for sinks (v1.15 onwards) is to print ``outlined'' filled circles (marker 34) --- these show up on both black or white backgrounds.
 
 \subsubsection{ Plotting sink particles with size proportional to the sink radius}
 See \ref{sec:plotsinks}.
@@ -1142,7 +1166,7 @@ See \S\ref{sec:geom}.
 \label{sec:exactsolns}
  The following exact solutions are provided
 \begin{itemize}
-\item Any arbitrary function y = f(x) (can be plotted on any or all of the plots)
+\item Any arbitrary function y = f(x,t) (can be plotted on any or all of the plots). The functions to be plotted can also be specified by creating a \verb+splash.func+ file with one function per line.
 \item Hydrodynamic shock tubes (Riemann problem) -- a full solution is provided for all types of waves propagating in either direction.
 \item Spherically-symmetric 3D sedov blast wave problem.
 \item Polytropes (with arbitrary $\gamma$)
@@ -1252,7 +1276,7 @@ or more usually:
 \subsubsection{ Changing the number of pixels in a rendered image}
  The number of pixels in a rendered image can be set manually using the r)ender menu, option 1 (or simply type ``r1'' from the main menu). The number set is the number of pixels along the $x-$axis. The number of pixels along the $y-$axis is determined by the aspect ratio of the plot.
 
- As of version 1.11.1, the number of pixels used in an image is, by default, automatically determined by the actual number of pixels available on the PGPLOT device, which depends in turn on the size of the PGPLOT page (the page size can be set manually in the p)age menu -- see \S\ref{sec:papersize}). For pixel devices use of the automatic pixel number determination is \emph{highly} recommended (hence why it is the default) to avoid interpolation artefacts in the image. For non-pixel devices (i.e., postscript), the number of pixels is set to $1024/nacross$, where $nacross$ is the number of panels across the page. 
+ As of version 1.11.1, the number of pixels used in an image is, by default, automatically determined by the actual number of pixels available on the PGPLOT device, which depends in turn on the size of the PGPLOT page (the page size can be set manually in the p)age menu -- see \S\ref{sec:papersize}). For pixel devices use of the automatic pixel number determination is \emph{highly} recommended (hence why it is the default) to avoid interpolation artefacts in the image. For non-pixel devices (i.e., postscript), the number of pixels is set to $1024/\textrm{n}$, where n is the number of panels across the page. 
 
 \subsubsection{ Changing the colour scheme}
  The colour scheme used for rendered plots can be changed either by pressing `m' or `M' in interactive mode to cycle through the available schemes or manually by using the ``change colour scheme'' option in the r)ender menu.
@@ -1281,10 +1305,23 @@ schemes available are shown in Figure~\ref{fig:colourschemes}.
 To plot contours instead of the rendered image, use the ``change colour scheme'' option from the r)ender menu and choose colour scheme 0 (contours only). 
 
 \subsubsection{ Changing the number of contour levels}
- The number of contour levels used whenever contours are drawn can be set via the ``change number of contours'' option in the r)ender menu.
+ The number of contour levels used whenever contours are drawn can be set via the ``change number of contours'' option in the r)ender menu. The contour levels can also be manually specified (see \S\ref{sec:contoursmanual}).
+
+\subsubsection{ Setting the contour levels manually}
+\label{sec:contoursmanual}
+ As of v1.15.0, contour levels can be set manually by creating a file called \verb+splash.contours+ in the current directory (or \verb+prefix.contours+ if the \verb+splash -p prefix+ is specified on the command line). This file should contain one contour level per line, optionally with a label for each contour, e.g.
+\begin{verbatim}
+1.e-2  level 1
+1.e-1  level 2
+0.1    my really great contour
+1.0    hi mum
+\end{verbatim}
 
 \subsubsection{ Adding numeric labels to contours}
  An option to write numeric labels on contours appears as part of the ``change number of contours'' option in the r)ender menu.
+
+\subsubsection{ Adding arbitrary contour labels}
+ Contours can also be labelled manually by creating a \verb+splash.contours+ file. See \S\ref{sec:contoursmanual}.
 
 \subsubsection{ Turning the colour bar off/ moving the colour bar label}
  The colour bar can be turned on or off and the style chosen (e.g. horizontal vs vertical) and for the vertical bar, the label moved closer to the bar itself, via the ``colour bar options'' option in the r)ender menu.
