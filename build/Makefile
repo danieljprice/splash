@@ -128,9 +128,9 @@ endif
 ifeq ($(SYSTEM), gfortran)
 #  gfortran compiler (part of gcc 4.x.x)
    F90C= gfortran
-   F90FLAGS= -O3 -Wall -frecord-marker=4
+   F90FLAGS= -O3 -frecord-marker=4
    SYSTEMFILE= system_f2003.f90
-   DEBUGFLAG= -g -frange-check -fcheck=all -fbacktrace \
+   DEBUGFLAG= -Wall -g -frange-check -fcheck=all -fbacktrace \
               -finit-real=NaN -ffpe-trap=invalid,zero,overflow,denormal
    OMPFLAGS= -fopenmp
    ENDIANFLAGBIG= -fconvert=big-endian
