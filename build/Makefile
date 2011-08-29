@@ -41,8 +41,8 @@ ifneq ($(BACKEND), pgplot)
 #-- C A I R O --
    GIZADIR= ../giza
    VPATH+= $(GIZADIR)/interface/
-   PLOTLIB= $(GIZADIR)/lib/libgiza.a giza-fortran.F90 plotlib_giza.f90
-   PGPLOTLIBS = -lcairo
+   PLOTLIB= giza-fortran.F90 plotlib_giza.f90
+   PGPLOTLIBS = -L$(GIZADIR)/lib -lgiza -lcairo
    CFLAGS= -fPIC -Wall -Wextra -O3
    CC = gcc
 else
@@ -195,8 +195,8 @@ ifeq ($(SYSTEM),ifort)
    ENDIANFLAGLITTLE= -convert little_endian
 # or use setenv F_UFMTENDIAN=big or little at runtime
    KNOWN_SYSTEM=yes
-   CC=icc -C
-   CFLAGS=-Wall -O3
+   CC=icc
+   CFLAGS=-Wall -O3 -fPIC
 endif
 
 ifeq ($(SYSTEM),ifort8)
@@ -474,7 +474,7 @@ endif
 #
 # (information about what is done here is printed via the checkpgplot target, below)
 #
-ifneq ($(BACKEND),giza)
+ifeq ($(BACKEND),pgplot)
    ifdef PGPLOT_DIR
 
       PGPLOT_COMP=${shell if [ -e $$PGPLOT_DIR/makefile ]; then grep 'FCOMPL=' $$PGPLOT_DIR/makefile | cut -d= -f2; else echo unknown; fi}
@@ -799,7 +799,7 @@ linkerror:
 	@echo '------------- failed to link to relevant libraries required for SPLASH ------------------';
 	@echo " Here are some common problems:";
 	@echo;
-        ifneq ($(BACKEND),giza)
+        ifeq ($(BACKEND),pgplot)
 	@echo " \"ld: library not found for -lpgplot\" ";
 	@echo "       => Your PGPLOT_DIR is not set correctly, or PGPLOT is not installed correctly";
 	@echo "          (linker needs to find one of libpgplot.a, libpgplot.so or libpgplot.dylib (OS/X) in PGPLOT_DIR)";
@@ -856,7 +856,7 @@ installclean: destdircheck
 
 distclean: installclean
 
-cleanall: clean installclean cleangiza
+cleanall: clean cleangiza installclean
 
 err:
 	$(error aborting);
@@ -867,7 +867,7 @@ plotlib_pgplot.o: checkpgplot
 
 plotlib_giza.o : giza-fortran.o
 
-giza-fortran.o : giza-fortran.F90
+giza-fortran.o : giza-fortran.F90 $(GIZADIR)/lib/libgiza.a 
 	$(F90C) $(F90FLAGS) -I$(GIZADIR)/include/ -c $< -o $@
 
 .PHONY: gizabuild libgiza
@@ -937,6 +937,6 @@ clean:
 	rm -f *.o *.mod
 
 cleangiza:
-ifeq ($(BACKEND),giza)
+ifneq ($(BACKEND),pgplot)
 	${MAKE} -C $(GIZADIR) clean
 endif
