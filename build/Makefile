@@ -34,9 +34,10 @@ X11LIBS= -L/usr/X11R6/lib -lX11
 
 #--------------------------------------------------------------
 # here we choose the backend plotting library for splash
-# (default is PGPLOT for splash v1.x)
+# (giza is the default backend for splash v2.x, but can
+#  still be compiled with PGPLOT, just with disabled features)
 #--------------------------------------------------------------
-ifeq ($(BACKEND), giza)
+ifneq ($(BACKEND), pgplot)
 #-- C A I R O --
    GIZADIR= ../giza
    VPATH+= $(GIZADIR)/interface/
@@ -112,19 +113,6 @@ endif
 #
 #--------------------------------------------------------------
 
-ifeq ($(SYSTEM),g95)
-#  using the g95 compiler
-   F90C= g95
-   F90FLAGS= -O3 -ffast-math
-   SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
-   DEBUGFLAG= -Wall -Wextra -Wno=165 -g -fbounds-check -ftrace=full -freal=NaN
-   ENDIANFLAGBIG= -fendian='BIG'
-   ENDIANFLAGLITTLE= -fendian='LITTLE'
-   PARALLEL= no
-   CC = gcc -m32
-   KNOWN_SYSTEM=yes
-endif
-
 ifeq ($(SYSTEM), gfortran)
 #  gfortran compiler (part of gcc 4.x.x)
    F90C= gfortran
@@ -135,6 +123,19 @@ ifeq ($(SYSTEM), gfortran)
    OMPFLAGS= -fopenmp
    ENDIANFLAGBIG= -fconvert=big-endian
    ENDIANFLAGLITTLE= -fconvert=little-endian
+   KNOWN_SYSTEM=yes
+endif
+
+ifeq ($(SYSTEM),g95)
+#  using the g95 compiler
+   F90C= g95
+   F90FLAGS= -O3 -ffast-math
+   SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
+   DEBUGFLAG= -Wall -Wextra -Wno=165 -g -fbounds-check -ftrace=full -freal=NaN
+   ENDIANFLAGBIG= -fendian='BIG'
+   ENDIANFLAGLITTLE= -fendian='LITTLE'
+   PARALLEL= no
+   CC = gcc -m32
    KNOWN_SYSTEM=yes
 endif
 
@@ -607,7 +608,7 @@ gadget_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read
 	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash-hdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read_data_gadget_hdf5.o $(LDFLAGS) $(HDF5LIBS)
 
 read_data_gadget_hdf5_utils.o: read_data_gadget_hdf5_utils.c
-	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
 
 #------------------
 
@@ -731,7 +732,11 @@ checksystem:
         ifeq ($(PARALLEL), yes)
 	     @echo "Compiling the PARALLEL code"
         else
-	     @echo "Compiling the SERIAL code"
+           ifeq ($(OPENMP), yes)
+		@echo "Compiling the PARALLEL code"
+           else
+		@echo "Compiling the SERIAL code"
+           endif
         endif
    else
 	@echo ""
