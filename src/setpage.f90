@@ -29,7 +29,7 @@ module pagesetup
 
 contains
 !
-!--this subroutine determines the setup of the PGPLOT page
+!--this subroutine determines the setup of the plotting page
 !  sorts out labelling of axes, positioning of windows etc
 !  can be used as a replacement for PGENV and PGLABEL
 !
@@ -238,14 +238,14 @@ subroutine redraw_axes(iaxis)
 end subroutine redraw_axes
 
 !
-!--this subroutine determines the setup of the PGPLOT page
+!--this subroutine determines the setup of the plotting page
 !  sorts out labelling of axes, positioning of windows etc
 !  can be used as a replacement for PGENV and PGLABEL
 !
 !  divides up a single page into subpanels
 !
 !
-!  option to tile graphs appropriately on a page in pgplot
+!  option to tile graphs appropriately on a page:
 !  divides up a single panel into subpanels, with a margin at the edge
 !  should replace the call to pgenv and pglabel
 !

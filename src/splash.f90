@@ -48,7 +48,7 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!   2.0.beta : (xx/xx/11)
+!   2.0.beta : (29/08/11)
 !             new giza backend - antialiased lines; real fonts; pdf, eps and svg drivers;
 !             fewer build dependencies (only cairo, X11);
 !             support for semi-transparent text;
@@ -308,7 +308,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v1.15.0 [29th Aug ''11]'
+  character(len=*), parameter :: version = 'v2.0beta [29th Aug ''11]'
 
   !
   ! initialise some basic code variables
@@ -693,7 +693,7 @@ subroutine print_usage(quit)
  print "(a)",'                     (will take columns 1 and 2 as x and y if -x and/or -y not specified)'
  print "(a)",' -vec[tor] column  : specify vector plot quantity on command line (ie. no vector prompt)'
  print "(a)",' -c[ontour] column : specify contoured quantity on command line (ie. no contour prompt)'
- print "(a)",' -dev device       : specify PGPLOT device on command line (ie. do not prompt)'
+ print "(a)",' -dev device       : specify plotting device on command line (ie. do not prompt)'
  print "(a)"
  ltemp = issphformat('none')
  call print_gridformats()

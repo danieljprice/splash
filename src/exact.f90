@@ -974,7 +974,7 @@ contains
     end select
 
     !----------------------------------------------------------
-    !  plot this as a line on the current graph using PGPLOT
+    !  plot this as a line on the current graph
     !----------------------------------------------------------
     if (ierr.le.0) then
        if (itransx.gt.0) call transform(xexact(1:iexactpts),itransx)

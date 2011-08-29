@@ -54,7 +54,7 @@ subroutine defaults_set_part
 
   ncircpart = 0
   iplotline = .false.     ! plot line joining the particles
-  linestyle = 1           ! PGPLOT line style for above
+  linestyle = 1           ! line style for above
   linecolour = 1
   linestylethisstep = 1
   linecolourthisstep = 1
@@ -66,10 +66,10 @@ subroutine defaults_set_part
   iplotpartoftype(1) = .true. ! whether or not to plot particles of certain types
   iplotpartoftype(2:maxparttypes) = .false.
   PlotOnRenderings = .false.
-  imarktype = 1              ! PGPLOT marker for all particles
-  imarktype(2) = 4           ! PGPLOT marker for ghost/dark matter particles
-  imarktype(3) = 17          ! PGPLOT marker for sink particles
-  imarktype(5) = 3           ! PGPLOT marker for star particles (gadget)
+  imarktype = 1              ! marker type for all particles
+  imarktype(2) = 4           ! marker type for ghost/dark matter particles
+  imarktype(3) = 17          ! marker type for sink particles
+  imarktype(5) = 3           ! marker type for star particles (gadget)
   idefaultcolourtype = -1     ! default colour for each particle type
   ifastparticleplot = .true. ! allow crowded-field elimination on particle plots
   do i=1,maxparttypes
@@ -195,7 +195,7 @@ subroutine submenu_particleplots(ichoose)
      return
 !------------------------------------------------------------------------
   case(2)
-     print "(/,' Marker options (for all from -8->31, see PGPLOT userguide):',11(/,i2,') ',a))", &
+     print "(/,' Marker options (for all from -8->31, see plot library userguide):',11(/,i2,') ',a))", &
            0,'square',1,'.',2,'+',3,'*',4,'o',5,'x',17,'bold circle',-8,'large bold circle', &
            32,'solid circle, size proportional to h', &
            33,'open circle,  size proportional to h', &
@@ -220,7 +220,7 @@ subroutine submenu_particleplots(ichoose)
            ' -1 = retain interactively set colours between timesteps', &
            '  0 = background ',&
            '  1 = foreground ',&
-           '  2->10 = various colours (see PGPLOT default colour indices)'
+           '  2->10 = various colours (see default colour indices for plot library)'
      do itype=1,ntypes
         call prompt(' Enter default colour for '//trim(labeltype(itype)) &
              //' particles:',idefaultcolourtype(itype),-1,14)
