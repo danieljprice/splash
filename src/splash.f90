@@ -207,9 +207,6 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !
-!     Uses PGPLOT routines to plot graphs and utilises the rendering
-!     tools to plot density renderings and vector plots of 2D and 3D data.
-!
 !     Modules/subroutines as follows (in alphabetical order):
 !
 !     allocate           : allocates memory for main arrays
@@ -262,7 +259,7 @@ program splash
 !
 !     File format is specified in the subroutine read_data
 !
-!     See the CVS logs for a full ChangeLog
+!     See the svn logs for a full ChangeLog
 !
 !      Plots can be of two types: co-ordinate plots or not
 !
