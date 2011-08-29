@@ -1,3 +1,6 @@
+1.15.0:
+Multiplot with different particle types implemented; calculated quantities list is now pre-filled automatically; preliminary support for r-phi and r-z rendering; outlined solid markers implemented; better handling of multiple types; manual contour levels can be specified in splash.contours; parallel splash to grid; better support for non-square pixels; clipping of numbers at edge of viewport fixed
+ 
 1.14.1:
 SEREN data read added; dragon read updated; build follows Gnu conventions on DEST and DESTDIR (for macports build); can have up to 12 particle types; exact solutions re-ordered; dusty wave exact solution added
  
