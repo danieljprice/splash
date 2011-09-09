@@ -118,22 +118,22 @@ contains
 ! initialise the plotting library
 !---------------------------------------------
 subroutine plot_init(devicein, ierr, papersizex, aspectratio)
+ use giza, only:giza_units_inches
  implicit none
 
  character(len=*),intent(in) :: devicein
  integer,intent(out)         :: ierr
  real, intent(in), optional  :: papersizex,aspectratio
- real                        :: widthcm,heightcm
- real, parameter             :: inch_to_cm = 2.54
+ real                        :: width,height
 
  if (present(papersizex)) then
-    widthcm = papersizex*inch_to_cm
+    width = papersizex
     if (present(aspectratio)) then
-       heightcm = widthcm*aspectratio
+       height = width*aspectratio
     else
-       heightcm = widthcm/sqrt(2.)
+       height = width/sqrt(2.)
     endif
-    ierr = giza_open_device_size(devicein, 'splash', widthcm, heightcm)
+    ierr = giza_open_device_size(devicein, 'splash', width, height,giza_units_inches)
  else
     ierr = giza_open_device(devicein,'splash')
  endif
@@ -390,13 +390,11 @@ subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2,x1,x2,y1,y2)
 end subroutine plot_pixl
 
 subroutine plot_pap(width,aspect)
-  use giza, only:giza_set_paper_size
+  use giza, only:giza_set_paper_size,giza_units_inches
   implicit none
   real,intent(in) :: width,aspect
-  real :: widthCM
 
-  widthCM = width*2.54
-  call giza_set_paper_size(widthCM,aspect)
+  call giza_set_paper_size(giza_units_inches,width,width*aspect)
 
 end subroutine plot_pap
 
