@@ -117,14 +117,16 @@ contains
 !---------------------------------------------
 ! initialise the plotting library
 !---------------------------------------------
-subroutine plot_init(devicein, ierr, papersizex, aspectratio)
- use giza, only:giza_units_inches
+subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
+ use giza, only:giza_units_inches,giza_units_pixels,giza_units_mm
  implicit none
 
- character(len=*),intent(in) :: devicein
- integer,intent(out)         :: ierr
- real, intent(in), optional  :: papersizex,aspectratio
- real                        :: width,height
+ character(len=*),intent(in)   :: devicein
+ integer,intent(out)           :: ierr
+ real, intent(in), optional    :: papersizex,aspectratio
+ integer, intent(in), optional :: paperunits
+ real                          :: width,height
+ integer                       :: units
 
  if (present(papersizex)) then
     width = papersizex
@@ -133,7 +135,21 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio)
     else
        height = width/sqrt(2.)
     endif
-    ierr = giza_open_device_size(devicein, 'splash', width, height,giza_units_inches)
+    if (present(paperunits)) then
+       select case(paperunits)
+       case(0)
+          units = giza_units_pixels
+       case(1)
+          units = giza_units_inches
+       case(2)
+          units = giza_units_mm
+          width = 0.1*width
+          height = 0.1*height
+       end select
+    else
+       units = giza_units_inches
+    endif
+    ierr = giza_open_device_size(devicein, 'splash', width, height, units)
  else
     ierr = giza_open_device(devicein,'splash')
  endif

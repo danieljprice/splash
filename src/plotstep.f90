@@ -87,7 +87,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use settings_data,      only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required, &
                                icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings
   use settings_page,      only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
-                               iPageColours,iadapt,iadaptcoords,linewidth,device,nomenu,interactive
+                               iPageColours,iadapt,iadaptcoords,linewidth,device,nomenu,&
+                               interactive,ipapersizeunits
   use pagecolours,        only:set_pagecolours
   use settings_part,      only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact,iplotpartoftype
   use settings_render,    only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
@@ -507,7 +508,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   endif
 
   if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
-     call plot_init(trim(devstring),ierr,papersizex,aspectratio)
+     call plot_init(trim(devstring),ierr,papersizex,aspectratio,ipapersizeunits)
   else
      call plot_init(trim(devstring),ierr)  ! use default paper size
   endif

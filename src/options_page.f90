@@ -29,7 +29,7 @@ module settings_page
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
  integer :: iPlotLegendOnlyOnPanel,modlinestyle,modcolour,maxlinestyle,maxcolour
- integer :: iPageColours
+ integer :: iPageColours,ipapersizeunits
  logical :: iColourEachStep,iChangeStyles,tile,interactive,nomenu
  logical :: iPlotLegend,iPlotStepLegend,iPlotTitles,usecolumnorder
  logical :: iPlotScale,iUseBackgroundColourForAxes,usesquarexy
@@ -46,7 +46,7 @@ module settings_page
    vpostitle,fjusttitle,legendtext,iPageColours,charheight,linewidth,&
    fjustlegend,iPlotLegendOnlyOnPanel, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
-   usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder
+   usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder,ipapersizeunits
 
 contains
 
@@ -70,6 +70,7 @@ subroutine defaults_set_page
   ipapersize = 0        ! paper size option
   papersizex = 0.0      ! size of x paper (no call to PGPAP if zero)
   aspectratio = 0.0     ! aspect ratio of paper (no call to PGPAP if zero)
+  ipapersizeunits = 1   ! units in which the paper size is set
 
   iPlotLegend = .true.  ! whether or not to plot legend
   iPlotStepLegend = .false. ! timestep legend
@@ -130,33 +131,41 @@ subroutine submenu_page(ichoose)
  use params,      only:maxplot
  use prompting,   only:prompt,print_logical
  use pagecolours, only:pagecolourscheme,colour_fore,colour_back,maxpagecolours
- use plotlib,     only:plotlib_supports_alpha,plotlib_maxlinecolour,plotlib_maxlinestyle
+ use plotlib,     only:plotlib_supports_alpha,plotlib_maxlinecolour,plotlib_maxlinestyle,plotlib_is_pgplot
  implicit none
  integer, intent(in) :: ichoose
- integer             :: iaction,i
+ integer             :: iaction,i,iunitsprev
  real                :: papersizey
+ character(len=15)   :: paperfmtstr
 
  iaction = ichoose
-
+ 
  papersizey = papersizex*aspectratio
+ if (ipapersizeunits.gt.0) then
+    write(paperfmtstr,"(f5.2,1x,f5.2)") papersizex,papersizey
+ else
+    write(paperfmtstr,"(i5,' x ',i4)") nint(papersizex),nint(papersizey)
+ endif
+
  print "(a)",'---------------- page setup options -------------------'
 
  if (iaction.le.0 .or. iaction.gt.9) then
-    print 10,nstepsperpage,iaxis,papersizex,papersizey,nacross,ndown,print_logical(tile), &
-             trim(print_logical(usesquarexy)),charheight,linewidth,&
-             trim(print_logical(interactive)), &
-             trim(pagecolourscheme(iPageColours,short=.true.))
-10 format( &
-          ' 0) exit ',/,                   &
-          ' 1) plot n steps on top of each other   (n =',i4,')',/, &
-          ' 2) axes options                        (',i2,')',/, &
-          ' 3) change paper size                   (',f5.2,1x,f5.2,')',/, &
-          ' 4) subdivide page into panels          (',i2,1x,'x',1x,i2,', tiling is ',a,')',/, &
-          ' 5) spatial dimensions have same scale  ( ',a,' )',/,&
-          ' 6) set character height                (',f4.1,')',/,&
-          ' 7) adjust line width                   (',i2, ')',/,&
-          ' 8) interactive mode on/off             ( ',a,' )',/,&
-          ' 9) set foreground/background colours   ( ',a,' )')
+    print "( "// &
+          "' 0) exit ',/, "// &
+          "' 1) plot n steps on top of each other   (n =',i4,')',/, "// &
+          "' 2) axes options                        (',i2,')',/, "// &
+          "' 3) change paper size                   ("//trim(paperfmtstr)//" )',/, "// &
+          "' 4) subdivide page into panels          (',i2,1x,'x',1x,i2,', tiling is ',a,')',/, "// &
+          "' 5) spatial dimensions have same scale  ( ',a,' )',/,"// &
+          "' 6) set character height                (',f4.1,')',/,"// &
+          "' 7) adjust line width                   (',i2, ')',/,"// &
+          "' 8) interactive mode on/off             ( ',a,' )',/,"// &
+          "' 9) set foreground/background colours   ( ',a,' )')", &
+          nstepsperpage,iaxis,nacross,ndown,print_logical(tile), &
+          trim(print_logical(usesquarexy)),charheight,linewidth,&
+          trim(print_logical(interactive)), &
+          trim(pagecolourscheme(iPageColours,short=.true.))
+
     call prompt('enter option ',iaction,0,9)
  endif
 
@@ -214,42 +223,126 @@ subroutine submenu_page(ichoose)
   case(3)
      print*,' 0) plotting library default '
      print*,' 1) small square         :  2.92 x 2.92 inches'
-     print*,' 2) medium square        :  5.85 x 5.85'
-     print*,' 3) large square         :  8.00 x 8.00'
-     print*,' 4) single small graph   :  5.85 x 4.13'
-     print*,' 5) duo small graph      : 11.70 x 4.13'
-     print*,' 6) duo graph            : 11.70 x 6.00'
-     print*,' 7) Custom size '
-     call prompt(' Enter option for paper size ',ipapersize,0,7)
+     print*,' 2) medium square        :  5.85 x 5.85 inches'
+     print*,' 3) large square         :  8.00 x 8.00 inches'
+     print*,' 4) single small graph   :  5.85 x 4.13 inches'
+     print*,' 5) duo small graph      : 11.70 x 4.13 inches'
+     print*,' 6) duo graph            : 11.70 x 6.00 inches'
+     if (plotlib_is_pgplot) then
+        print*,'  7) Custom size '
+        call prompt(' Enter option for paper size ',ipapersize,0,7)
+     else
+        print*,' 7) 800  x 600  pixels'
+        print*,' 8) 640  x 360  pixels (360p)'
+        print*,' 9) 1280 x 720  pixels (720p)'
+        print*,'10) 1920 x 1080 pixels (1080p)'
+        print*,'11) 1024 x 768  pixels'
+        print*,'12) 1440 x 900  pixels'
+        print*,'13) 2560 x 1440 pixels'
+        print*,'14) 2560 x 1600 pixels'
+        print*,'15) Custom size '
+        call prompt(' Enter option for paper size ',ipapersize,0,15)
+     endif
+     
      select case(ipapersize)
      case(1)
+        ipapersizeunits = 1
         papersizex = 0.25*11.7
         aspectratio = 1.0
      case(2)
+        ipapersizeunits = 1
         papersizex = 0.5*11.7
         aspectratio = 1.0
      case(3)
+        ipapersizeunits = 1
         papersizex = 8.0
         aspectratio = 1.0
      case(4)
+        ipapersizeunits = 1
         papersizex = 0.5*11.7
         aspectratio = 1./sqrt(2.)
      case(5)
+        ipapersizeunits = 1
         papersizex = 11.7
         aspectratio = 0.5/sqrt(2.)
      case(6)
+        ipapersizeunits = 1
         papersizex = 11.7
-         papersizey = 6.0
+        papersizey = 6.0
         aspectratio = papersizey/papersizex
      case(7)
-        call prompt(' x size (inches) ',papersizex,0.0)
-        call prompt(' y size (inches) or aspect ratio (-ve)',papersizey)
-        if (papersizey.lt.0.0) then
-           aspectratio = abs(papersizey)
+        if (plotlib_is_pgplot) then
+           ipapersizeunits = 1
+           call prompt(' x size (inches) ',papersizex,0.0)
+           call prompt(' y size (inches) or aspect ratio (-ve)',papersizey)
+           if (papersizey.lt.0.0) then
+              aspectratio = abs(papersizey)
+           else
+              aspectratio = papersizey/papersizex
+           endif
         else
+           ipapersizeunits = 0
+           papersizex = 800.
+           papersizey = 600.
            aspectratio = papersizey/papersizex
         endif
-     case DEFAULT
+     case(8:14)
+        if (plotlib_is_pgplot) then
+           ipapersizeunits = 1
+           papersizex  = 0.  ! use PGPLOT default
+           aspectratio = 0.
+        else
+           ipapersizeunits = 0
+           select case(ipapersize)
+           case(8)
+              papersizex = 640.
+              papersizey = 360.
+           case(9)
+              papersizex = 1280.
+              papersizey = 720.
+           case(10)
+              papersizex = 1920.
+              papersizey = 1080.
+           case(11)
+              papersizex = 1024.
+              papersizey = 768.
+           case(12)
+              papersizex = 1440.
+              papersizey = 900.
+           case(13)
+              papersizex = 2560.
+              papersizey = 1440.
+           case(14)
+              papersizex = 2560.
+              papersizey = 1600.
+           end select
+           aspectratio = papersizey/papersizex
+        endif
+     case(15)
+        if (plotlib_is_pgplot) then
+           ipapersizeunits = 1
+           papersizex  = 0.  ! use PGPLOT default
+           aspectratio = 0.
+        else
+           iunitsprev = ipapersizeunits
+           print*,' 0) pixels '
+           print*,' 1) inches '
+           print*,' 2) cm '
+           call prompt(' choose units for paper size',ipapersizeunits,0,2)
+           if (ipapersizeunits.ne.iunitsprev) then
+              papersizex = 0.
+              papersizey = 0.
+           endif
+           call prompt(' x size in above units ',papersizex,0.0)
+           call prompt(' y size or aspect ratio (-ve)',papersizey)
+           if (papersizey.lt.0.0) then
+              aspectratio = abs(papersizey)
+           else
+              aspectratio = papersizey/papersizex
+           endif
+       endif 
+     case default
+        ipapersizeunits = 1
         papersizex = 0.0         ! no call to PGPAP if they are zero
         aspectratio = 0.0
      end select

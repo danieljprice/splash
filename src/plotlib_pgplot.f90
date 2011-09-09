@@ -448,12 +448,13 @@ contains
 !---------------------------------------------
 ! initialise the plotting library
 !---------------------------------------------
-subroutine plot_init(devicein, ierr, papersizex, aspectratio)
+subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  implicit none
 
  character*(*), intent(in)    :: devicein
  integer, intent(out)         :: ierr
  real, intent(in), optional   :: papersizex,aspectratio
+ integer, intent(in), optional :: paperunits
  integer                      :: pgopen
  real :: aspect
 
@@ -480,6 +481,10 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio)
        aspect = aspectratio
     else
        aspect = sqrt(2.)
+    endif
+    if (present(paperunits)) then
+    !--make sure that the units are in inches for PGPLOT
+       if (paperunits.ne.1) return
     endif
     call plot_pap(papersizex,aspect)
  endif
