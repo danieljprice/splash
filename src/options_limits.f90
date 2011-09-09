@@ -41,7 +41,7 @@ subroutine defaults_set_limits
 
   iadapt           = .true.  ! adaptive plot limits
   iadaptcoords     = .false.
-  adjustlimitstodevice = .false.
+  adjustlimitstodevice = .true.
   scalemax         = 1.0     ! for rescaling adaptive limits
   itrans(:)        = 0       ! no transformations (log10 etc)
   xminoffset_track = 0.5     ! offset of limits from tracked particle
