@@ -2627,6 +2627,7 @@ contains
     use pagesetup,     only:setpage2
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
                             vposlegend,iPlotLegend,usecolumnorder
+    use settings_limits, only:adjustlimitstodevice
     use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot
     implicit none
     integer :: iplotsave,ipanelsave,ipanelpos
@@ -2767,7 +2768,7 @@ contains
              call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
                      trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp, &
                      xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
-                     0.0,TitleOffset,isamexaxis,tile_plots)
+                     0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice)
              call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
              if (debugmode) print*,'DEBUG: viewport xpix=',xminpix,'->',xmaxpix,' ypix=',yminpix,'->',ymaxpix
 
@@ -2809,12 +2810,12 @@ contains
           call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
                   trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp, &
                   xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
-                  0.0,TitleOffset,isamexaxis,tile_plots)
+                  0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice)
        else
           call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
                   trim(labelx),trim(labely),' ',just,iaxistemp, &
                   xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
-                  0.0,TitleOffset,isamexaxis,tile_plots)
+                  0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice)
        endif
     endif
 

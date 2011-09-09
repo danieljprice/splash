@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -26,7 +26,7 @@
 !-------------------------------------------------------------------------
 module settings_limits
  implicit none
- logical :: iadapt, iadaptcoords
+ logical :: iadapt, iadaptcoords, adjustlimitstodevice
  real    :: scalemax
  real, dimension(3) :: xminoffset_track, xmaxoffset_track
 
@@ -41,6 +41,7 @@ subroutine defaults_set_limits
 
   iadapt           = .true.  ! adaptive plot limits
   iadaptcoords     = .false.
+  adjustlimitstodevice = .false.
   scalemax         = 1.0     ! for rescaling adaptive limits
   itrans(:)        = 0       ! no transformations (log10 etc)
   xminoffset_track = 0.5     ! offset of limits from tracked particle
@@ -113,6 +114,7 @@ subroutine submenu_limits(ichoose)
 
     call prompt('Use adaptive plot limits?',iadapt)
     call prompt('Use adaptive plot limits on coordinate axes?',iadaptcoords)
+    call prompt('Adjust limits to aspect ratio of device?',adjustlimitstodevice)
     print "(a)",'adaptive plot limits = '//print_logical(iadapt)// &
                 ' on coords = '//print_logical(iadaptcoords)
     !if (nstepsperpage.gt.1 .and. (iadapt .or. iadaptcoords)) then

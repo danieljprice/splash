@@ -25,7 +25,7 @@
 ! includes default values of these options and submenu for changing them
 !-------------------------------------------------------------------------
 module settings_page
- use settings_limits, only:iadapt,iadaptcoords
+ use settings_limits, only:iadapt,iadaptcoords,adjustlimitstodevice
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
  integer :: iPlotLegendOnlyOnPanel,modlinestyle,modcolour,maxlinestyle,maxcolour
@@ -46,7 +46,8 @@ module settings_page
    vpostitle,fjusttitle,legendtext,iPageColours,charheight,linewidth,&
    fjustlegend,iPlotLegendOnlyOnPanel, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
-   usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder,ipapersizeunits
+   usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder,ipapersizeunits,&
+   adjustlimitstodevice
 
 contains
 

@@ -280,21 +280,23 @@ end subroutine redraw_axes
 !
   subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,axis, &
                       vmarginleftin,vmarginrightin,vmarginbottomin,vmargintopin, &
-                      colourbarwidth,titleoffset,isamexaxis,tile)
+                      colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits)
   use plotlib,only:plot_svp,plot_swin,plot_box,plot_qvsz,plot_annotate, &
-                   plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries
+                   plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries, &
+                   plot_qvp
   implicit none
   integer, intent(in) :: iplotin,nx,ny,just,axis
-  real, intent(in)    :: xmin, xmax, ymin, ymax, colourbarwidth, titleoffset
+  real, intent(inout) :: xmin, xmax, ymin, ymax
+  real, intent(in)    :: colourbarwidth, titleoffset
   real, intent(in)    :: vmarginleftin,vmarginrightin,vmargintopin,vmarginbottomin
   character(len=*), intent(in) :: labelx,labely,title
-  logical, intent(in) :: isamexaxis,tile
+  logical, intent(in) :: isamexaxis,tile,adjustlimits
   integer iplot,ix,iy
   real vptsizeeffx,vptsizeeffy,panelsizex,panelsizey
   real vmargintop,vmarginbottom,vmarginleft,vmarginright
   real vptxmin,vptxmax,vptymin,vptymax
   real aspectratio,devaspectratio,x1,x2,y1,y2
-  real xch,ych
+  real xch,ych,dvx,dvy,dx,dy,xcen,ycen
   character(len=10)  :: xopts, yopts
   logical, parameter :: useexactpixelboundaries = .true.
 !
@@ -447,6 +449,26 @@ end subroutine redraw_axes
 ! set axes
 !
  if (just.eq.1) then
+    if (nx*ny.eq.1 .and. adjustlimits) then
+       !--query viewport aspect ratio
+       call plot_qvp(3,x1,x2,y1,y2)
+       devaspectratio = (x2-x1)/(y2-y1)
+       
+       !--adjust limits to match viewport aspect ratio
+       dx = xmax - xmin
+       dy = ymax - ymin
+       if (devaspectratio*dy/dx.ge.1.) then
+          xcen = 0.5*(xmin + xmax)
+          xmin = xcen - 0.5*devaspectratio*dy
+          xmax = xcen + 0.5*devaspectratio*dy
+          print*,' auto-adjusting xmin = ',xmin,' xmax = ',xmax
+       else
+          ycen = 0.5*(ymin + ymax)
+          ymin = ycen - 0.5*dx/devaspectratio
+          ymax = ycen + 0.5*dx/devaspectratio
+          print*,' auto-adjusting ymin = ',ymin,' ymax = ',ymax
+       endif
+    endif
     call plot_wnad(xmin,xmax,ymin,ymax)
  else
     call plot_swin(xmin,xmax,ymin,ymax)
