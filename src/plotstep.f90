@@ -1156,19 +1156,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            if (npix.gt.0) then
               pixwidth  = (xmax-xmin)/real(npix)
               pixwidthy = pixwidth
-              npixx = max(int(0.999*(xmax-xmin)/pixwidth) + 1,1)
-              npixy = max(int(0.999*(ymax-ymin)/pixwidth) + 1,1)
+              npixx = max(int((1. - epsilon(0.))*(xmax-xmin)/pixwidth) + 1,1)
+              npixy = max(int((1. - epsilon(0.))*(ymax-ymin)/pixwidth) + 1,1)
            else
            !!--automatically reset the pixel number to match the device
               call page_setup(dummy=.true.)
               pixwidth = (xmax-xmin)/real(npixx)
-              npixx = max(int(0.999*(xmax-xmin)/pixwidth) + 1,1)
+              npixx = max(int((1. - epsilon(0.))*(xmax-xmin)/pixwidth) + 1,1)
               if (just.eq.1) then
                  pixwidthy = pixwidth
               else
                  pixwidthy = (ymax-ymin)/real(npixy)
               endif
-              npixy = max(int(0.999*(ymax-ymin)/pixwidthy) + 1,1)
+              npixy = max(int((1. - epsilon(0.))*(ymax-ymin)/pixwidthy) + 1,1)
            endif
 
            !!--only need z pixels if working with interpolation to 3D grid
