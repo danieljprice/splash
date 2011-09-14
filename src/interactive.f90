@@ -518,8 +518,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               irerender = .true.
               iexit = .true.
            case('0','1','2','3','4','5','6','7','8','9') ! mark particles
+              nmarked = 0
               if (irender.le.0 .or. char2.eq.'0' .or. char2.eq.'1') then
-                 nmarked = 0
                  do i=1,npart
                     if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
                     .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax) &
