@@ -1466,6 +1466,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   zoomfac = 1.0
   xpt2 = 0.
   ypt2 = 0.
+  verticalbar = barisvertical(iColourBarStyle)
   
   !
   !--convert saved cursor position (saved in viewport coords)
@@ -1496,7 +1497,6 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   istepjump = 1
 !  print*,'istep = ',istepnew
 !  print*,'steps on page = ',istepsonpage
-  verticalbar = barisvertical(iColourBarStyle)
 
   interactive_loop: do while (.not.iexit)
      ierr = plot_curs(xpt,ypt,char)
