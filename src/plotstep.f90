@@ -641,6 +641,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use write_pixmap,          only:iwritepixmap,writepixmap,write_pixmap_ppm,readpixmap
   use pdfs,                  only:pdf_calc,pdf_write
   use plotutils,             only:plotline
+  use geometry,              only:coord_is_length
   use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
                                   plot_line,plot_pt1,plotlib_is_pgplot
   implicit none
@@ -1070,7 +1071,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            just = 1  ! x and y axis have same scale
            ! unless 1D xsec through 2D data or non-cartesian
            if ((irender.gt.ndim .and. ndim.eq.2 .and. x_sec) &
-               .or.(icoordsnew.gt.1)) then
+               .or.(icoordsnew.gt.1 .and. .not.(coord_is_length(iplotx,icoordsnew) &
+                                          .and. coord_is_length(iploty,icoordsnew)))) then
               just = 0
            endif
         else
@@ -1154,6 +1156,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
            !!--determine number of pixels in rendered image (npix = pixels in x direction)
            if (npix.gt.0) then
+              npixx = npix
+              call page_setup(dummy=.true.) ! do this here in case limits are auto-adjusted
               pixwidth  = (xmax-xmin)/real(npix)
               pixwidthy = pixwidth
               npixx = max(int((1. - epsilon(0.))*(xmax-xmin)/pixwidth) + 1,1)
@@ -2783,7 +2787,7 @@ contains
                 print "(a,i4,a,i4,a)",' auto-selecting resolution of ',npixx,' x ',npixy,' for vector device'
                 print "(a)",' => set the number of pixels manually if you want more (or less) than this.'
              else
-                print "(a,i4,a,i4)",' auto-selecting device resolution = ',npixx,' x ',npixy
+                if (npix.eq.0) print "(a,i4,a,i4)",' auto-selecting device resolution = ',npixx,' x ',npixy
                 !
                 !--warn about PGPLOT limitations
                 !
