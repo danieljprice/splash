@@ -590,7 +590,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use params,             only:doub_prec,int1,maxparttypes
   use colours,            only:colour_set
   use filenames,          only:nsteps,rootname,ifileopen,tagline
-  use exact,              only:exact_solution,atstar,ctstar,sigma
+  use exact,              only:exact_solution,atstar,ctstar,sigma,iPlotExactOnlyOnPanel
   use toystar1D,          only:exact_toystar_ACplane
   use toystar2D,          only:exact_toystar_ACplane2D
   use labels,             only:label,labelvec,iamvec,lenlabel,lenunitslabel,ih,irho,ipmass,ix,iacplane, &
@@ -1159,21 +1159,23 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               npixx = npix
               call page_setup(dummy=.true.) ! do this here in case limits are auto-adjusted
               pixwidth  = (xmax-xmin)/real(npix)
-              pixwidthy = pixwidth
-              npixx = max(int((1. - epsilon(0.))*(xmax-xmin)/pixwidth) + 1,1)
-              npixy = max(int((1. - epsilon(0.))*(ymax-ymin)/pixwidth) + 1,1)
+              if (just.eq.1) then
+                 pixwidthy = pixwidth
+              else
+                 pixwidthy = pixwidth*(ymax-ymin)/(xmax - xmin)
+              endif
            else
            !!--automatically reset the pixel number to match the device
-              call page_setup(dummy=.true.)
+              call page_setup(dummy=.true.) !--npixx and npixy are determined here
               pixwidth = (xmax-xmin)/real(npixx)
-              npixx = max(int((1. - epsilon(0.))*(xmax-xmin)/pixwidth) + 1,1)
               if (just.eq.1) then
                  pixwidthy = pixwidth
               else
                  pixwidthy = (ymax-ymin)/real(npixy)
               endif
-              npixy = max(int((1. - epsilon(0.))*(ymax-ymin)/pixwidthy) + 1,1)
            endif
+           npixx = max(int((1. - epsilon(0.))*(xmax-xmin)/pixwidth) + 1,1)
+           npixy = max(int((1. - epsilon(0.))*(ymax-ymin)/pixwidthy) + 1,1)
 
            !!--only need z pixels if working with interpolation to 3D grid
            !  (then number of z pixels is equal to number of cross sections)
@@ -1940,7 +1942,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            !--plot exact solution if relevant (before going interactive)
            !
-           if (iexact.ne.0) then
+           if (iexact.ne.0 &
+          .and.((nyplot.eq.1 .and. iPlotExactOnlyOnPanel.eq.0) &
+           .or.(iPlotExactOnlyOnPanel.gt.0 .and. ipanel.eq.iPlotExactOnlyOnPanel) &
+           .or.(iPlotExactOnlyOnPanel.eq.-1 .and. irow.eq.1) &
+           .or.(iPlotExactOnlyOnPanel.eq.-2 .and. icolumn.eq.1))) then
               iaxisy = iaxis
               if (tile_plots .and. icolumn.ne.1) iaxisy = -1
               call exact_solution(iexact,iplotx,iploty, &
@@ -2087,7 +2093,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !
         !--plot exact solution (after redrawn axis for residual plots)
         !
-        if (iexact.ne.0) then
+        if (iexact.ne.0 &
+       .and.((nyplot.eq.1 .and. iPlotExactOnlyOnPanel.eq.0) &
+        .or.(iPlotExactOnlyOnPanel.gt.0 .and. ipanel.eq.iPlotExactOnlyOnPanel) &
+        .or.(iPlotExactOnlyOnPanel.eq.-1 .and. irow.eq.1) &
+        .or.(iPlotExactOnlyOnPanel.eq.-2 .and. icolumn.eq.1))) then
            iaxisy = iaxis
            if (tile_plots .and. icolumn.ne.1) iaxisy = -1
            call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &

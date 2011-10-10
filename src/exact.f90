@@ -34,7 +34,7 @@ module exact
   !
   !--options used to plot the exact solution line
   !
-  integer :: maxexactpts, iExactLineColour, iExactLineStyle
+  integer :: maxexactpts, iExactLineColour, iExactLineStyle,iPlotExactOnlyOnPanel
   logical :: iApplyTransExactFile,iCalculateExactErrors,iPlotResiduals
   real :: fracinsetResiduals,residualmax
   !
@@ -81,7 +81,7 @@ module exact
   !
   namelist /exactopts/ iexactplotx,iexactploty,filename_exact,maxexactpts, &
        iExactLineColour,iExactLineStyle,iApplyTransExactFile,iCalculateExactErrors, &
-       iPlotResiduals,fracinsetResiduals,residualmax
+       iPlotResiduals,fracinsetResiduals,residualmax,iPlotExactOnlyOnPanel
 
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
@@ -173,6 +173,7 @@ contains
     iPlotResiduals = .false.
     fracinsetResiduals = 0.15
     residualmax = 0.0
+    iPlotExactOnlyOnPanel = 0
 
     return
   end subroutine defaults_set_exact
@@ -401,6 +402,13 @@ contains
           call prompt('enter max residual (0 for adaptive)',residualmax,0.)
        endif
     endif
+    print "(/,'  0 : plot exact solution (where available) on every panel ',/,"// &
+           "' -1 : plot exact solution on first row only ',/,"// &
+           "' -2 : plot exact solution on first column only ',/,"// &
+           "'  n : plot exact solution on nth panel only ')"
+
+    call prompt('Enter selection ',iPlotExactOnlyOnPanel,-2)
+
 
     return
   end subroutine options_exact
