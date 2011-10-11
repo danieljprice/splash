@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -334,8 +334,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
         print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (set GSPLASH_USE_Z=yes to use in legend)'
      endif
   endif
-  print*,'Npart (by type) : ',npartoftypei
-  if (ifile.eq.1) print*,'Mass  (by type) : ',massoftypei
+  print*,'Npart (by type) : ',npartoftypei(1:6)
+  if (ifile.eq.1) print*,'Mass  (by type) : ',massoftypei(1:6)
 !  print "(10x,'|',6(1x,a12,'|'))",   (labeltype(itype),itype=1,ntypes)
 !  print "(a10,'|',6(i11,2x,'|'))",   'Npart  : ',npartoftypei
 !  print "(a10,'|',6(es11.3,2x,'|'))",'Mass   : ',massoftypei
@@ -343,7 +343,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   print*,'N_total         : ',ntoti
   if (ifile.eq.1) print*,'N data columns  : ',ncolstep
   if (nfiles.gt.1 .and. ifile.eq.1) then
-     print*,'Nall            : ',Nall
+     print*,'Nall            : ',Nall(1:6)
   endif
 
   if (nfiles.gt.1) then
