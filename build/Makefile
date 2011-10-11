@@ -43,7 +43,7 @@ ifneq ($(BACKEND), pgplot)
    VPATH+= $(GIZADIR)/interface/
    PLOTLIB= giza-fortran.F90 plotlib_giza.f90
    PGPLOTLIBS = -L$(GIZADIR)/lib -lgiza -lcairo
-   CFLAGS= -fPIC -Wall -Wextra -O3
+   CFLAGS= -fPIC -Wall -Wextra -O3 -g
    CC = gcc
 else
 #-- P G P L O T --
@@ -934,7 +934,7 @@ test_prompt: prompting.o test_prompting.o
 include .depends
 
 clean:
-	rm -f *.o *.mod
+	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash
 
 cleangiza:
 ifneq ($(BACKEND),pgplot)
