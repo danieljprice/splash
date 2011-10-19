@@ -465,7 +465,7 @@ end subroutine print_example_quantities
 !  quantities, checking that they parse correctly
 !
 !-----------------------------------------------------------------
-subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn)
+subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
  use settings_data,  only:ncolumns,iRescale
  use fparser,        only:checkf
  use labels,         only:label
@@ -473,15 +473,23 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn)
  implicit none
  integer, intent(out) :: ncalcok,ncalctot
  integer, dimension(maxcalc), intent(out), optional :: incolumn
+ logical, intent(in), optional :: verbose
  integer :: i,ierr,nvars,indexinactive
  character(len=lenvars), dimension(maxplot+nextravars) :: vars
+ logical :: isverbose
+
+ if (present(verbose)) then
+    isverbose = verbose
+ else
+    isverbose = .true.
+ endif
 
  ncalcok = 0
  ncalctot = 0
  indexinactive = 0
  i = 1
  if (present(incolumn)) incolumn(:) = 0
- print "(/,a)", ' Current list of calculated quantities:'
+ if (isverbose) print "(/,a)", ' Current list of calculated quantities:'
  do while(i.le.maxcalc .and. len_trim(calcstring(i)).ne.0)
     !
     !--get the list of valid variable names for this column
@@ -494,7 +502,9 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn)
 
     if (ierr.eq.0) then
        ncalcok = ncalcok + 1
-       print "(1x,i2,') ',a50,' [OK]')",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i)
+       if (isverbose) then
+          print "(1x,i2,') ',a50,' [OK]')",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i)
+       endif
        if (present(incolumn)) incolumn(i) = ncolumns + ncalcok
        !
        !--set the label for the proposed column here
@@ -507,7 +517,9 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn)
        if (iRescale) label(ncolumns+ncalcok) = trim(label(ncolumns+ncalcok))//trim(unitslabel(ncolumns+ncalcok))
     else
        indexinactive = indexinactive - 1
-       print "(i3') ',a50,' [INACTIVE]')",indexinactive,trim(calclabel(i))//' = '//calcstring(i)
+       if (isverbose) then
+          print "(i3') ',a50,' [INACTIVE]')",indexinactive,trim(calclabel(i))//' = '//calcstring(i)
+       endif
        if (present(incolumn)) incolumn(i) = indexinactive
     endif
     ncalctot = i
@@ -553,7 +565,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
 
   ierr = 0
   ncalc = 0
-  call check_calculated_quantities(ncalc,ncalctot)
+  call check_calculated_quantities(ncalc,ncalctot,verbose=.not.skip)
 
   if (.not.skip .and. ncalc.gt.0) print "(2(a,i2),a,/)",' Calculating ',ncalc,' of ',ncalctot,' additional quantities...'
   ncolsnew = ncolumns + ncalc
@@ -669,8 +681,8 @@ end subroutine calc_quantities
 
 !-----------------------------------------------------------------
 !
-!  utility (private) to identify a calculated quantity so
-!  that it relevant exact solutions can be plotted for the
+!  utility (private) to internally identify a calculated quantity
+!  so that the relevant exact solutions can be plotted for that
 !  quantity. This is mainly just the radius, but can include
 !  other things also.
 !
