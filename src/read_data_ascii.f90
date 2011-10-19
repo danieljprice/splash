@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -68,7 +68,7 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data,  only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
-  use settings_data,  only:ndim,ndimV,ncolumns,ncalc
+  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose
   use mem_allocation, only:alloc
   use asciiutils,     only:get_ncolumns
   use system_utils,   only:ienvironment,renvironment
@@ -121,13 +121,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !--override header lines setting
      nheaderenv = ienvironment('ASPLASH_NHEADERLINES',-1)
      if (nheaderenv.ge.0) then
-        print*,' setting nheader lines = ',nheaderenv,' from ASPLASH_NHEADERLINES environment variable'
+        if (iverbose.gt.0) print*,' setting nheader lines = ',nheaderenv,' from ASPLASH_NHEADERLINES environment variable'
         nheaderlines = nheaderenv
      endif
      !--override columns setting with environment variable
      ncolenv = ienvironment('ASPLASH_NCOLUMNS',-1)
      if (ncolenv.gt.0) then
-        print "(a,i3,a)",' setting ncolumns = ',ncolenv,' from ASPLASH_NCOLUMNS environment variable'
+        if (iverbose.gt.0) print "(a,i3,a)",' setting ncolumns = ',ncolenv,' from ASPLASH_NCOLUMNS environment variable'
         ncolstep = ncolenv
      endif
      if (ncolstep.le.0) then
@@ -176,7 +176,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--read header lines, try to use it to set time
 !
-  if (nheaderlines.gt.0) print*,'skipping ',nheaderlines,' header lines'
+  if (nheaderlines.gt.0 .and. iverbose.gt.0) print*,'skipping ',nheaderlines,' header lines'
 
   do i=1,nheaderlines
      !--read header lines as character strings
@@ -242,7 +242,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      print "(a,i8,a)",' *** WARNING: errors whilst reading file on ',nerr,' lines: skipped these ***'
   endif
   if (ierr < 0) then
-     print*,'end of file: npts = ',nprint
+     print*,'read npts = ',nprint
   endif
 
 
@@ -268,7 +268,7 @@ subroutine set_labels
   use labels,          only:label,labeltype,ix,irho,ipmass,ih,iutherm, &
                             ipr,ivx,iBfirst,iamvec,labelvec,lenlabel
   !use params,          only:maxparttypes
-  use settings_data,   only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
+  use settings_data,   only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings,iverbose
   use geometry,        only:labelcoord
   use system_commands, only:get_environment
   use filenames,       only:fileprefix
@@ -309,7 +309,7 @@ subroutine set_labels
   endif
 
   open(unit=51,file=trim(columnfile),status='old',iostat=ierr)
-  if (ierr /=0) then
+  if (ierr /=0 .and. iverbose.gt.0) then
      print "(3(/,a))",' WARNING: columns file not found: using default labels',&
                     ' To change the labels, create a file called ''columns'' ',&
                     '  in the current directory with one label per line'
@@ -399,7 +399,7 @@ subroutine set_labels
         print "(a,i2)",' Assuming velocity in column ',ivx
      endif
   endif
-  if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
+  if ((ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) .and. iverbose.gt.0) then
      print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
                  '  until positions of density, smoothing length and particle', &
                  '  mass are known (for the ascii read the simplest way is to ', &

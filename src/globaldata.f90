@@ -219,7 +219,7 @@ module settings_data
  integer :: ndim, ndimv
  integer :: icoords,icoordsnew,iformat,ntypes
  integer :: istartatstep,iendatstep,nfreq
- integer :: itrackpart
+ integer :: itrackpart,iverbose
  integer, dimension(10) :: isteplist
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale

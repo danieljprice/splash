@@ -198,27 +198,34 @@ end subroutine write_unitsfile
 !
 !--read units for all columns from a file
 !
-subroutine read_unitsfile(unitsfile,ncolumns,ierr)
+subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
   use settings_data, only:ndim
   implicit none
   character(len=*), intent(in) :: unitsfile
   integer, intent(in) :: ncolumns
   integer, intent(out) :: ierr
+  integer, intent(in), optional :: iverbose
   character(len=2*len(unitslabel)+40) :: line
   integer :: i,itemp,isemicolon,isemicolon2,isemicolon3
-  logical :: ierrzunits,iexist
+  logical :: ierrzunits,iexist,verbose
+  
+  if (present(iverbose)) then
+     verbose= (iverbose.gt.0)
+  else
+     verbose = .true.
+  endif
 
   ierr = 0
   ierrzunits = .false.
   inquire(file=unitsfile,exist=iexist)
   if (.not.iexist) then
-     print "(1x,a)",trim(unitsfile)//' not found'
+     if (verbose) print "(1x,a)",trim(unitsfile)//' not found'
      ierr = 1
      return
   endif
 
   open(unit=78,file=unitsfile,status='old',form='formatted',err=997)
-  print "(/,a)",' reading units from file '//trim(unitsfile)
+  if (verbose) print "(/,a)",' reading units from file '//trim(unitsfile)
   do i=0,maxplot  ! read all units possibly present in file
 !
 !    read a line from the file
@@ -275,11 +282,11 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr)
   return
 
 997 continue
-  print*,trim(unitsfile),' not found'
+  if (verbose) print*,trim(unitsfile),' not found'
   ierr = 1
   return
 998 continue
-  print*,'*** error reading units from file '
+  print*,'*** error reading units from '//trim(unitsfile)
   ierr = 2
   if (ierrzunits .and. ndim.eq.3) then
      unitzintegration = units(3)

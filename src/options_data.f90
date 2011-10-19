@@ -66,6 +66,7 @@ subroutine defaults_set_data
   xorigin = 0.
   itrackpart = 0 ! particle tracking limits (none)
   ipartialread = .false.  ! strictly unnecessary as set in get_data
+  iverbose = 1
 
   return
 end subroutine defaults_set_data

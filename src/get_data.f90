@@ -46,8 +46,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use exact,          only:read_exactparams
   use filenames,      only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
   use limits,         only:set_limits
-  use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata, &
-                      DataisBuffered,iCalcQuantities,ndim,       &
+  use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata,    &
+                      DataisBuffered,iCalcQuantities,ndim,iverbose, &
                       iRescale,required,ipartialread,lowmemorymode,debugmode
   use settings_part,  only:iexact
   use particle_data,  only:dat,time,npartoftype,maxcol
@@ -85,6 +85,11 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   ipartialread = .false.
   isfirsttime = .false.
   if (present(firsttime)) isfirsttime = firsttime
+  if (isfirsttime) then
+     iverbose = 1
+  else
+     iverbose = 0
+  endif
   !
   !--nstepsinfile is initialised to negative
   !  this is set progressively as files are read
@@ -329,7 +334,7 @@ subroutine get_labels
  use asciiutils,     only:read_asciifile
  use filenames,      only:fileprefix,unitsfile
  use labels,         only:label
- use settings_data,  only:ncolumns,iRescale
+ use settings_data,  only:ncolumns,iRescale,iverbose
  use settings_units, only:read_unitsfile,unitslabel
  use particle_data,  only:maxcol
  implicit none
@@ -355,7 +360,7 @@ subroutine get_labels
  !
  !--read units file and change units if necessary
  !
- call read_unitsfile(trim(unitsfile),ncolumns,ierr)
+ call read_unitsfile(trim(unitsfile),ncolumns,ierr,iverbose)
  !
  !--add units labels to labels
  !
