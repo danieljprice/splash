@@ -29,7 +29,7 @@ module calcquantities
  use params, only:maxplot
  implicit none
  public :: calc_quantities,setup_calculated_quantities
- public :: calc_quantities_use_x0
+ public :: calc_quantities_use_x0,get_calc_data_dependencies
 
  integer, parameter, private :: maxcalc = 35
  character(len=lenlabel),      dimension(maxcalc) :: calcstring = ' '
@@ -531,21 +531,68 @@ end subroutine check_calculated_quantities
 
 !-----------------------------------------------------------------
 !
+!  utility (private) to print the current list of calculated
+!  quantities, checking that they parse correctly
+!
+!-----------------------------------------------------------------
+subroutine get_calc_data_dependencies(required)
+ use params,         only:maxplot
+ use settings_data,  only:ncolumns,debugmode
+ use fparser,        only:checkf
+ use labels,         only:label
+ logical, dimension(0:maxplot), intent(inout) :: required
+ character(len=lenvars), dimension(maxplot+nextravars) :: vars
+ integer :: ncalcok,nvars,i,j,ierr
+
+ ncalcok = 0
+ i = 1
+ do while(i.le.maxcalc .and. len_trim(calcstring(i)).ne.0)
+    !
+    !--get the list of valid variable names for this column
+    !
+    call get_variables(ncolumns+ncalcok,nvars,vars)
+    !
+    !--check that the function parses
+    !
+    ierr = checkf(shortstring(calcstring(i)),vars(1:nvars),Verbose=.false.)
+
+    if (ierr.eq.0) then
+       ncalcok = ncalcok + 1
+       if (required(ncolumns+ncalcok)) then
+          if (debugmode) then
+             print*,'DEBUG: computing dependencies for '//trim(label(ncolumns+ncalcok))//&
+                    ' = '//trim(shortstring(calcstring(i)))
+          endif
+          do j=1,ncolumns
+             if (index(shortstring(calcstring(i)),trim(vars(j))).ne.0) then
+                if (debugmode) print*,'DEBUG: -> depends on '//trim(label(j))
+                required(j) = .true.
+             endif
+          enddo
+       endif
+    endif
+    i = i + 1
+ enddo
+end subroutine get_calc_data_dependencies
+
+!-----------------------------------------------------------------
+!
 !  actually compute the extra quantities from the particle data
 !
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels,         only:label,labelvec,iamvec,ix
   use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol
-  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,itrackpart,ndim
+  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,itrackpart,ndim,required,iverbose
   use mem_allocation, only:alloc
   use settings_units, only:unitslabel,units
   use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
   use params,         only:maxplot
+  use timing,         only:wall_time,print_time
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
-  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot
+  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused
   logical :: skip
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
@@ -553,6 +600,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   real(kind=rn), dimension(maxplot+nextravars)          :: vals
   character(len=lenvars), dimension(maxplot+nextravars) :: vars
   real, dimension(3) :: x0
+  real :: t1,t2
 
   !
   !--allow dummy call to set labels without actually calculating stuff
@@ -565,9 +613,14 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
 
   ierr = 0
   ncalc = 0
-  call check_calculated_quantities(ncalc,ncalctot,verbose=.not.skip)
+  call check_calculated_quantities(ncalc,ncalctot,verbose=(.not.skip .and. iverbose.gt.0))
 
-  if (.not.skip .and. ncalc.gt.0) print "(2(a,i2),a,/)",' Calculating ',ncalc,' of ',ncalctot,' additional quantities...'
+  if (.not.skip .and. ncalc.gt.0) then
+     do i=1,ncalc
+        if (required(ncolumns+i)) nused = nused + 1
+     enddo
+     print "(2(a,i2),a,/)",' Calculating ',nused,' of ',ncalctot,' additional quantities...'
+  endif
   ncolsnew = ncolumns + ncalc
   if (ncolsnew.gt.maxcol) call alloc(maxpart,maxstep,ncolsnew)
 
@@ -605,6 +658,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      !
      !--evaluate functions from particle data
      !
+     call wall_time(t1)
      do i=ifromstep,itostep
         ntoti = SUM(npartoftype(:,i))
         !
@@ -628,34 +682,42 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
         endif
 
         do icalc=1,ncalc
-           if (debugmode) print*,'DEBUG: ',icalc,' calculating '//trim(label(ncolumns+icalc))
-           !
-           !--additional settings allowed in function evaluations
-           !  i.e., time and gamma from dump file and current origin settings
-           !  make sure the number here aligns with the "nextravars" setting
-           !
-           vals(ncolumns+icalc)   = time(i)
-           vals(ncolumns+icalc+1) = gamma(i)
-           vals(ncolumns+icalc+2) = x0(1)
-           vals(ncolumns+icalc+3) = x0(2)
-           vals(ncolumns+icalc+4) = x0(3)
-           do j=1,ntoti
-              vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
-              dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
-           enddo
-           if (EvalErrType.ne.0) then
-              print "(a)",' ERRORS evaluating '//trim(calcstring(icalc))//': ' &
-                          //trim(EvalerrMsg())
-           endif
-           !
-           !--identify calculated quantities based on the label
-           !
-           if (i.eq.ifromstep) then
-              call identify_calculated_quantity(label(ncolumns+icalc),ncolumns,ncolumns+icalc)
+           if (required(ncolumns+icalc)) then
+              if (debugmode) print*,'DEBUG: ',icalc,' calculating '//trim(label(ncolumns+icalc))
+              !
+              !--additional settings allowed in function evaluations
+              !  i.e., time and gamma from dump file and current origin settings
+              !  make sure the number here aligns with the "nextravars" setting
+              !
+              vals(ncolumns+icalc)   = time(i)
+              vals(ncolumns+icalc+1) = gamma(i)
+              vals(ncolumns+icalc+2) = x0(1)
+              vals(ncolumns+icalc+3) = x0(2)
+              vals(ncolumns+icalc+4) = x0(3)
+              !!$omp parallel do default(none) private(j,vals) shared(dat,i,icalc,ncolumns)
+              do j=1,ntoti
+                 vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
+                 dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
+              enddo
+              !!$omp end parallel do
+              if (EvalErrType.ne.0) then
+                 print "(a)",' ERRORS evaluating '//trim(calcstring(icalc))//': ' &
+                             //trim(EvalerrMsg())
+              endif
+              !
+              !--identify calculated quantities based on the label
+              !
+              if (i.eq.ifromstep) then
+                 call identify_calculated_quantity(label(ncolumns+icalc),ncolumns,ncolumns+icalc)
+              endif
+           else
+              if (debugmode) print*,'DEBUG: ',icalc,' skipping '//trim(label(ncolumns+icalc))//' (not required)'
            endif
         enddo
      enddo
      call endf
+     call wall_time(t2)
+     if (t2-t1.gt.1.) call print_time(t2-t1)
   endif
 
   !

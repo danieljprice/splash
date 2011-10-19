@@ -101,6 +101,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use plotlib,            only:plot_init,plot_qcur,plot_slw,plot_env,plot_curs,plot_band, &
                                plot_close,plot_qinf
   use system_utils,       only:renvironment
+  use calcquantities,     only:get_calc_data_dependencies
   implicit none
   real, parameter     :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
@@ -465,8 +466,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   !!--need mass for some exact solutions
      if (iexact.eq.7 .or. iploty.eq.isurfdens) required(ipmass) = .true.
      if (iploty.eq.itoomre .and. iploty.gt.0) required(iutherm) = .true.
-  !!--must read everything if we are plotting a calculated quantity
-     if (any(required(ncolumns+1:ncolumns+ncalc))) required = .true.
+  !!--only require actual dependencies of calculated quantities
+     if (any(required(ncolumns+1:ncolumns+ncalc))) call get_calc_data_dependencies(required)
+     !if (any(required(ncolumns+1:ncolumns+ncalc))) required = .true.
   !!--vectors
      if (imulti) then
         do i=1,nyplotmulti
@@ -489,7 +491,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         endif
      endif
 !  endif
-  if (debugmode) print*,'DEBUG: required(1:ncolumns) = ',required(1:)
+  if (debugmode) print*,'DEBUG: required(1:ncolumns) = ',required(1:ncolumns+ncalc)
 
   !!--read step titles (don't need to store ntitles for this)
   nsteplegendlines = 0

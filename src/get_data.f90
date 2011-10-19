@@ -274,7 +274,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--calculate various additional quantities
      !
      if (nstepsinfile(ireadfile).gt.0 .and. iCalcQuantities) then
-        if (ipartialread .and. .not.any(required(ncolumns+1:ncolumns+ncalc))) then
+        if (ipartialread .and. .not.any(required(ncolumns+1:))) then
            !--for partial data reads do a "pretend" call to calc quantities
            !  just to get ncalc and column labels right
            call calc_quantities(1,nstepsinfile(ireadfile),dontcalculate=.true.)
