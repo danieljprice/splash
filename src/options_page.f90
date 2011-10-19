@@ -47,7 +47,7 @@ module settings_page
    fjustlegend,iPlotLegendOnlyOnPanel, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
    usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder,ipapersizeunits,&
-   adjustlimitstodevice
+   adjustlimitstodevice,alphalegend
 
 contains
 
