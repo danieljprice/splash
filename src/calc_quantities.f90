@@ -542,37 +542,41 @@ subroutine get_calc_data_dependencies(required)
  use labels,         only:label
  logical, dimension(0:maxplot), intent(inout) :: required
  character(len=lenvars), dimension(maxplot+nextravars) :: vars
- integer :: ncalcok,nvars,i,j,ierr
+ integer, dimension(maxcalc) :: incolumn
+ integer :: ncalcok,ncalctot,nvars,i,j,ierr
 
- ncalcok = 0
- i = 1
- do while(i.le.maxcalc .and. len_trim(calcstring(i)).ne.0)
-    !
-    !--get the list of valid variable names for this column
-    !
-    call get_variables(ncolumns+ncalcok,nvars,vars)
-    !
-    !--check that the function parses
-    !
-    ierr = checkf(shortstring(calcstring(i)),vars(1:nvars),Verbose=.false.)
+ call check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose=.false.)
 
-    if (ierr.eq.0) then
-       ncalcok = ncalcok + 1
-       if (required(ncolumns+ncalcok)) then
+ do i=ncalctot,1,-1   ! go in REVERSE order to get recursive dependencies properly
+    if (incolumn(i).gt.0) then
+       if (required(incolumn(i))) then
           if (debugmode) then
-             print*,'DEBUG: computing dependencies for '//trim(label(ncolumns+ncalcok))//&
+             print*,'DEBUG: computing dependencies for '//trim(label(incolumn(i)))//&
                     ' = '//trim(shortstring(calcstring(i)))
           endif
-          do j=1,ncolumns
-             if (index(shortstring(calcstring(i)),trim(vars(j))).ne.0) then
+          !
+          !--get the list of valid variable names for this column
+          !
+          call get_variables(incolumn(i),nvars,vars)
+          !
+          !--check if the string contains any preceding variables
+          !
+          do j=1,incolumn(i)-1
+             !
+             !--this could be smarter here (at the moment we just check for
+             !  matching substrings, but we should check for the use of the
+             !  string as an actual variable -- this is mainly an issue for
+             !  single letter variables like x,y,z etc)
+             !
+             if (index(shortlabel(calcstring(i)),trim(vars(j))).ne.0) then
                 if (debugmode) print*,'DEBUG: -> depends on '//trim(label(j))
                 required(j) = .true.
              endif
           enddo
        endif
     endif
-    i = i + 1
  enddo
+
 end subroutine get_calc_data_dependencies
 
 !-----------------------------------------------------------------
@@ -891,6 +895,7 @@ elemental function shortlabel(string,unitslab)
  call removesubstr(shortlabel,'+')
  call removesubstr(shortlabel,'-')
  call removesubstr(shortlabel,'^')
+ call removesubstr(shortlabel,'sqrt(')
  call removesubstr(shortlabel,'(')
  call removesubstr(shortlabel,')')
 
