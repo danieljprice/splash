@@ -66,7 +66,8 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
- integer :: istartmhd,istartrt,nmhd,idivvcol,nhydroreal4,istart_extra_real4
+ integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol
+ integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
  logical :: batcode
@@ -129,6 +130,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   iunit = 15
   ipmass = 4
   idivvcol = 0
+  icurlvxcol = 0
+  icurlvycol = 0
+  icurlvzcol = 0
   nhydroreal4 = 0
   umass = 1.d0
   utime = 1.d0
@@ -521,8 +525,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
          ncolstep = ncolstep + 1
          inquire(file=trim(dumpfile)//'.divv',exist=iexist)
          if (iexist) then
-            ncolstep = ncolstep + 1
-            idivvcol = ncolstep
+            idivvcol   = ncolstep + 1
+            icurlvxcol = ncolstep + 2
+            icurlvycol = ncolstep + 3
+            icurlvzcol = ncolstep + 4
+            ncolstep   = ncolstep + 4
          endif
       endif
    endif
@@ -1015,14 +1022,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
  !
  !--read .divv file for phantom dumps
  !
-    if (phantomdump .and. idivvcol.ne.0 .and. required(idivvcol)) then
+    if (phantomdump .and. idivvcol.ne.0 .and. any(required(idivvcol:icurlvzcol))) then
        print "(a)",' reading divv from '//trim(dumpfile)//'.divv'
        open(unit=66,file=trim(dumpfile)//'.divv',form='unformatted',status='old',iostat=ierr)
        if (ierr /= 0) then
           print "(a)",' ERROR opening '//trim(dumpfile)//'.divv'
        else
           read(66,iostat=ierr) dat(1:ntotal,idivvcol,j)
-          if (ierr /= 0) print "(a)",' WARNING: ERRORS reading file'
+          if (ierr /= 0) print "(a)",' WARNING: ERRORS reading divv from file'
+          if (any(required(icurlvxcol:icurlvzcol))) then
+             read(66,iostat=ierr) dat(1:ntotal,icurlvxcol,j)
+             read(66,iostat=ierr) dat(1:ntotal,icurlvycol,j)
+             read(66,iostat=ierr) dat(1:ntotal,icurlvzcol,j)
+          endif
+          if (ierr /= 0) print "(a)",' WARNING: ERRORS reading curlv from file'
           close(66)
        endif
     endif
@@ -1541,6 +1554,13 @@ subroutine set_labels
   if (ipmass.gt.0) label(ipmass) = 'particle mass'
   if (idivB.gt.0) label(idivB) = 'div B'
   if (idivvcol.gt.0) label(idivvcol) = 'div v'
+  if (icurlvxcol.gt.0) label(icurlvxcol) = 'curl v\dx'
+  if (icurlvycol.gt.0) label(icurlvycol) = 'curl v\dy'
+  if (icurlvzcol.gt.0) label(icurlvzcol) = 'curl v\dz'
+  if (icurlvxcol.gt.0 .and. icurlvycol.gt.0 .and. icurlvzcol.gt.0) then
+     iamvec(icurlvxcol:icurlvzcol) = icurlvxcol
+     labelvec(icurlvxcol:icurlvzcol) = 'curl v'
+  endif
 
   !
   !--set labels for vector quantities
