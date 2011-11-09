@@ -71,6 +71,8 @@ logical function isanalysis(string,noprint)
      isanalysis = .true.
  case('rhovar','rhomach')
      isanalysis = .true.
+ case('kh')
+     isanalysis = .true.
  case('timeaverage','timeav')
      isanalysis = .true.
  end select
@@ -271,6 +273,20 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
           6,'stddevrho(vw)',7,'stddevrho(mw)',8,'rms v (vw)',9,'rms v (mw)',10,'b (vw)',11,'b (mw)',&
           12,'s mean(vw)',13,'s mean(mw)',14,'s var(vw)',15,'s var(mw)',16,'s stddev(vw)',17,'s stddev(mw)'
 
+ case('kh')
+    !
+    !--read all columns from dump file
+    !
+    required(irho) = .true.
+    required(ivx:ivx+ndimV-1) = .true.
+    !
+    !--set filename and header line
+    !
+    fileout = 'kh.out'
+    standardheader = .true.
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) 2
+    write(headerline,fmtstring) 1,'time',2,'max(ekiny)'
+
  case('timeaverage','timeav')
     !
     !--read all columns from dump file
@@ -354,7 +370,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi
  real(kind=doub_prec) :: rmsval,totvol,voli,rhoi,rmsvmw,v2i
  real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
- real(kind=doub_prec) :: smeanmw,smeanvw,svarmw,svarvw,si
+ real(kind=doub_prec) :: smeanmw,smeanvw,svarmw,svarvw,si,ekiny,ekinymax
  real(kind=doub_prec), dimension(3) :: xmom
  real                 :: delta,dn
  character(len=20)    :: fmtstring
@@ -730,6 +746,27 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) 17
     write(iunit,fmtstring) time,rhomeanvw,rhomeanmw,rhovarvw,rhovarmw,sqrt(rhovarvw),sqrt(rhovarmw),&
                            rmsval,rmsvmw,bval,bvalmw,smeanvw,smeanmw,svarvw,svarmw,sqrt(svarvw),sqrt(svarmw)
+ case('kh')
+ 
+    if (irho.le.0 .or. irho.gt.ncolumns) then
+       print "(a)",' ERROR in kh calculation!'// &
+                   ' density not present / not labelled in dump file, skipping...'
+       return
+    endif
+    if (ivx.le.0 .or. ivx.gt.ncolumns) then
+       print "(a)",' WARNING in kh calculation!'// &
+                   ' velocities not present / not labelled in dump file'
+    endif
+    !
+    !--calculate volume-weighted RMS for each column
+    !
+    ekinymax = 0.
+    do i=1,ntot
+       ekiny    = 0.5*dat(i,irho)*dat(i,ivx+1)**2
+       ekinymax = max(ekiny,ekinymax)
+    enddo
+    print "(1x,a,es9.2)",'ekiny(max) = ',ekinymax
+    write(iunit,"(2(es18.10,1x))") time,ekinymax
 
  case('timeaverage','timeav')
     if (.not.allocated(datmean)) then
