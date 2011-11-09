@@ -78,7 +78,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data,  only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
   use params
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
-                      lowmemorymode,ntypes
+                      lowmemorymode,ntypes,iverbose
   use mem_allocation, only:alloc
   use system_utils,   only:lenvironment,renvironment
   use labels,         only:ipmass,irho,ih,ix,ivx
@@ -183,6 +183,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
 
   debug = lenvironment('SSPLASH_DEBUG')
+  if (debug) iverbose = 1
 !
 !--open the (unformatted) binary file
 !
@@ -294,7 +295,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          nblocks = 1
          print*,' corrupt number of MPI blocks, assuming 1 '
       else
-         print *,'npart = ',npart,' MPI blocks = ',nblocks
+         if (iverbose.ge.1) print *,'npart = ',npart,' MPI blocks = ',nblocks
       endif
    endif
 !--int*1, int*2, int*4, int*8
@@ -332,7 +333,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
    read(iunit,end=55,iostat=ierr) nreal8s
 !   print "(a,i3)",' ndoubles = ',nreal8s
-   print "(4(a,i3),a)",' header contains ',nints,' ints, ',nreals,' reals,',nreal4s,' real4s, ',nreal8s,' doubles'
+   if (iverbose.ge.1) print "(4(a,i3),a)",' header contains ',nints,' ints, ',&
+                            nreals,' reals,',nreal4s,' real4s, ',nreal8s,' doubles'
    if (nreal8s.ge.4) then
       read(iunit,end=55,iostat=ierr) udist,umass,utime,umagfd
    elseif (nreal8s.ge.3) then
@@ -401,7 +403,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             string = '[CORRUPT]'
             skip_corrupted_block_3 = .true.
          endif
-         print "(1x,a,i1,a,i12,a,5(i2,1x),a,3(i2,1x),a)", &
+         if (iverbose.ge.1) print "(1x,a,i1,a,i12,a,5(i2,1x),a,3(i2,1x),a)", &
             'block ',iarr,' dim = ',isize(iarr),' nint =',nint(iarr),nint1(iarr), &
             nint2(iarr),nint4(iarr),nint8(iarr),'nreal =',nreal(iarr),nreal4(iarr),nreal8(iarr),trim(string)
          if (iarr.eq.3 .and. skip_corrupted_block_3) then
@@ -593,7 +595,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                dat(npart+1,ix(2),j) = dummyreal(ipos+1)
                dat(npart+1,ix(3),j) = dummyreal(ipos+2)
                if (debug) print *,npart+1,npart+2
-               print *,'binary position:   primary: ',dummyreal(ipos:ipos+2)
+               if (iverbose.ge.1) print *,'binary position:   primary: ',dummyreal(ipos:ipos+2)
                if (nreals.ge.ilocbinary+15) then
                   if (ipmass.gt.0) dat(npart+1,ipmass,j) = dummyreal(ipos+3)
                   dat(npart+1,ih,j)     = dummyreal(ipos+4)
@@ -602,9 +604,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   dat(npart+2,ix(3),j)  = dummyreal(ipos+7)
                   if (ipmass.gt.0) dat(npart+2,ipmass,j) = dummyreal(ipos+8)
                   dat(npart+2,ih,j)     = dummyreal(ipos+9)
-                  print *,'                 secondary: ',dummyreal(ipos+5:ipos+7)
-                  print *,' m1: ',dummyreal(ipos+3),' m2:',dummyreal(ipos+8),&
-                          ' h1: ',dummyreal(ipos+4),' h2:',dummyreal(ipos+9)
+                  if (iverbose.ge.1) then
+                     print *,'                 secondary: ',dummyreal(ipos+5:ipos+7)
+                     print *,' m1: ',dummyreal(ipos+3),' m2:',dummyreal(ipos+8),&
+                             ' h1: ',dummyreal(ipos+4),' h2:',dummyreal(ipos+9)
+                  endif
                   ipos = ipos + 10
                else
                   dat(npart+1,ih,j)    = dummyreal(ipos+3)
