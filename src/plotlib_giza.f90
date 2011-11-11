@@ -194,7 +194,7 @@ subroutine plot_ctab(l,r,g,b,nc,contra,bright)
   integer,intent(in) :: nc
   real,intent(in)    :: l(nc),r(nc),g(nc),b(nc),contra,bright
 
-  call giza_set_colour_table(l,r,g,b,nc)
+  call giza_set_colour_table(l,r,g,b,nc,contra,bright)
 
 end subroutine plot_ctab
 
