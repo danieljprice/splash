@@ -421,7 +421,7 @@ subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2,x1,x2,y1,y2)
   integer,intent(in) :: ia(idim,jdim)
   real,intent(in)    :: x1,x2,y1,y2
 
-  call giza_draw_pixels(IDIM, JDIM, IA, I1-1, I2-1, J1-1, J2-1, X1, X2, Y1, Y2)
+  call giza_draw_pixels(IDIM, JDIM, IA, I1-1, I2-1, J1-1, J2-1, X1, X2, Y1, Y2, 0)
 
 end subroutine plot_pixl
 
