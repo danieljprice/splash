@@ -38,6 +38,10 @@ module plotlib
   integer, parameter :: plotlib_maxlinestyle = 5
   integer, parameter :: plotlib_maxfillstyle = 5
   integer, parameter :: plotlib_maxlinecolour = 16
+  integer, parameter :: plotlib_extend_pad = 1     ! not implemented in PGPLOT
+  integer, parameter :: plotlib_extend_repeat = 2  ! not implemented in PGPLOT
+  integer, parameter :: plotlib_extend_reflect = 3 ! not implemented in PGPLOT
+  integer, parameter :: plotlib_extend_none = 0    ! not implemented in PGPLOT
 
 public
 
@@ -183,19 +187,8 @@ interface plot_bins
 end interface
 
 interface plot_imag
-   subroutine pgimag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
-     integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
-     real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
-   end subroutine pgimag
+   module procedure plot_imag_transparent
 end interface
-
-interface plot_gray
-   subroutine pggray(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
-     integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
-     real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
-   end subroutine pggray
-end interface
-
 
 interface plot_qcol
    subroutine pgqcol(icolmin,icolmax)
@@ -549,14 +542,26 @@ end function pgcurs_sub
 
 !--transparent rendering does not work in PGPLOT, but
 !  we give it an interface anyway
-subroutine plot_imag_transparent(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
+subroutine plot_imag_transparent(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
  implicit none
  integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
  real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
+ integer, intent(in), optional :: iextend
 
  call pgimag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
 
 end subroutine plot_imag_transparent
+
+!--giza version of plot_gray takes additional arguments
+subroutine plot_gray(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
+ implicit none
+ integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
+ real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
+ integer, intent(in), optional :: iextend
+
+ call pggray(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
+
+end subroutine plot_gray
 
 !
 !--inverts the return value of pgband

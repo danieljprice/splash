@@ -79,8 +79,12 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  if (abs(icolouropt).eq.1) then        ! greyscale
 
     if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarstyle,icolouropt,datmin,datmax,trim(label),log,0.)
-    call plot_gray(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
 
+    if (icolouropt.eq.1) then
+       call plot_gray(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
+    else !--allow inverse greyscale
+       call plot_imag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
+    endif
  elseif (abs(icolouropt).gt.0) then        ! colour
     !
     !--plot colour bar

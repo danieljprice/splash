@@ -61,7 +61,8 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
            xlabeloffset,vptxminfull,vptxmaxfull,vptyminfull,vptymaxfull)
  use plotlib,   only:plot_set_exactpixelboundaries,plotlib_is_pgplot
  use plotlib,   only:plot_bbuf,plot_ebuf,plot_qwin,plot_qvp,plot_qcs,&
-                     plot_svp,plot_swin,plot_imag,plot_box,plot_annotate,plot_gray
+                     plot_svp,plot_swin,plot_imag,plot_box,plot_annotate,plot_gray,&
+                     plotlib_extend_pad
  implicit none
  integer, intent(in) :: istyle,icolours
  real, intent(in) :: datmin,datmax,xlabeloffset
@@ -148,10 +149,10 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
     !
     !--the standard way is to use the default line below
     !
-          if (abs(icolours).eq.1) then
-             call plot_gray(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans)
+          if (icolours.eq.1) then
+             call plot_gray(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans,iextend=plotlib_extend_pad)
           else
-             call plot_imag(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans)
+             call plot_imag(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans,iextend=plotlib_extend_pad)
           endif
        else
     !
@@ -211,10 +212,10 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !--draw colour bar, by cleverly setting window size
    !
     call plot_swin(0.0,1.0,1.0,real(npixwedg))
-    if (abs(icolours).eq.1) then        ! greyscale
-       call plot_gray(sampley,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans)
+    if (icolours.eq.1) then        ! greyscale
+       call plot_gray(sampley,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans,iextend=plotlib_extend_pad)
     elseif (abs(icolours).gt.0) then        ! colour
-       call plot_imag(sampley,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans)
+       call plot_imag(sampley,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans,iextend=plotlib_extend_pad)
     endif
     call plot_swin(0.0,1.0,datmin,datmax)
    !
