@@ -1394,6 +1394,7 @@ subroutine set_labels
   use sphNGread
   use asciiutils,      only:lcase
   use system_commands, only:get_environment
+  use system_utils,    only:lenvironment
   implicit none
   integer :: i
   real(doub_prec)   :: uergg
@@ -1661,6 +1662,9 @@ subroutine set_labels
      labeltype(4) = 'type 4'
      labeltype(5) = 'unknown/dead'
      UseTypeInRenderings(1:2) = .true.
+     if (lenvironment('SSPLASH_USE_DUST_PARTICLES')) then
+        UseTypeInRenderings(2) = .false.
+     endif
      UseTypeInRenderings(3) = .false.
      UseTypeInRenderings(4) = .false.
      UseTypeInRenderings(5) = .true.
