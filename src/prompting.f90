@@ -139,7 +139,7 @@ contains
       integer                       :: newvalue
       character(len=64)             :: string
       character(len=16)             :: chmin, chmax, chmin2, chmax2
-      integer                       :: ios
+      integer                       :: ios, ierr
       integer, optional, intent(in) :: min, max, min2, max2
       logical                       :: error
 
@@ -183,7 +183,7 @@ contains
       !  Read new value, quit and keep old value if zero sized string
       !
 
-      read(*,"(a)") string
+      read(*,"(a)",iostat=ierr) string
       if (len(trim(adjustl(string))) == 0) return
       read(string,"(g10.0)",iostat=ios) newvalue
 
