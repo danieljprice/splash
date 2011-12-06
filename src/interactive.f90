@@ -1623,6 +1623,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            call save_limits(iplotyarr(i),xmin(iplotyarr(i)),xmax(iplotyarr(i)))
            if (irenderarr(i).gt.0) call save_limits(irenderarr(i),xmin(irenderarr(i)),xmax(irenderarr(i)))
            if (icontourarr(i).gt.0) call save_limits(icontourarr(i),xmin(icontourarr(i)),xmax(icontourarr(i)))
+           if (ivecarr(i).gt.0) call save_limits(ivecarr(i),-xmax(ivecarr(i)),xmax(ivecarr(i)))
         enddo
         print*,'> interactively set limits saved <'
      case(plot_left_click) ! left click
