@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -33,7 +33,7 @@ contains
 
 subroutine convert_all(outformat,igotfilenames,useall)
  use particle_data, only:time,gamma,dat,npartoftype,masstype,iamtype
- use settings_data, only:ncolumns,ncalc,required,ntypes,ndimV,lowmemorymode
+ use settings_data, only:ncolumns,ncalc,required,ntypes,ndim,ndimV,lowmemorymode
  use filenames,     only:rootname,nstepsinfile,nfiles,limitsfile
  use write_sphdata, only:write_sphdump
  use readwrite_griddata, only:isgridformat
@@ -86,7 +86,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
  !  the first filename and ndimV, labels etc.
  !
        if (doanalysis) then
-          call open_analysis(rootname(1),outformat,required,ncolumns+ncalc,ndimV)
+          call open_analysis(rootname(1),outformat,required,ncolumns+ncalc,ndim,ndimV)
        endif
     else
        call get_data(ifile,.true.)
@@ -102,7 +102,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
        if (doanalysis) then
           call write_analysis(time(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes, &
                           npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
-                          ncolumns+ncalc,ndimV,outformat)
+                          ncolumns+ncalc,ndim,ndimV,outformat)
        elseif (converttogrid) then
           call convert_to_grid(time(idump),dat(:,:,idump),ntotal,ntypes,&
                                npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
