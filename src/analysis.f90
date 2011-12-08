@@ -114,12 +114,12 @@ end function isanalysis
 !  open output file/ initialise quantities needed for analysis
 !  over all dump files
 !----------------------------------------------------------------
-subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
- use labels,     only:ivx,iBfirst,iutherm,irho,ipmass,label
+subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndim,ndimV)
+ use labels,     only:ix,ivx,iBfirst,iutherm,irho,ipmass,label
  use asciiutils, only:read_asciifile
  use filenames,  only:rootname,nfiles,tagline
  implicit none
- integer, intent(in) :: ncolumns,ndimV
+ integer, intent(in) :: ncolumns,ndim,ndimV
  character(len=*), intent(in) :: dumpfile,analysistype
  logical, dimension(0:ncolumns), intent(out) :: required
  character(len=1170) :: headerline   ! len=64 x 18 characters
@@ -152,12 +152,13 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndimV)
     required(iutherm) = .true.
     required(ipmass) = .true.
     if (iBfirst.gt.0) required(irho) = .true.
+    required(ix(1:ndim)) = .true.
     !
     !--set filename and header line
     !
     fileout = 'energy.out'
-    write(headerline,"('#',7(1x,'[',i2.2,1x,a11,']',2x))") &
-          1,'time',2,'ekin',3,'etherm',4,'emag',5,'epot',6,'etot',7,'totmom'
+    write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
+          1,'time',2,'ekin',3,'etherm',4,'emag',5,'epot',6,'etot',7,'totmom',8,'totang'
 
  case('massaboverho')
     !
@@ -351,14 +352,14 @@ end subroutine open_analysis
 !  required from each dump file and spits out a line to the
 !  analysis file. Called once for each dump file.
 !----------------------------------------------------------------
-subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,ncolumns,ndimV,analysistype)
- use labels,        only:ivx,iBfirst,iutherm,irho,ipmass,labeltype,label
+subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,ncolumns,ndim,ndimV,analysistype)
+ use labels,        only:ix,ivx,iBfirst,iutherm,irho,ipmass,labeltype,label
  use params,        only:int1,doub_prec,maxplot
  use asciiutils,    only:ucase
  use system_utils,  only:renvironment
  use settings_part, only:iplotpartoftype
  implicit none
- integer, intent(in)               :: ntot,ntypes,ncolumns,ndimV
+ integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
  integer, intent(in), dimension(:) :: npartoftype
  real, intent(in), dimension(:)    :: massoftype
  integer(kind=int1), intent(in), dimension(:) :: iamtype
@@ -367,17 +368,17 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  character(len=*), intent(in)      :: analysistype
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
  integer              :: itype,i,j,ierr,ntot1,ncol1,nused
- real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi
+ real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi,totang
  real(kind=doub_prec) :: rmsval,totvol,voli,rhoi,rmsvmw,v2i
  real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
  real(kind=doub_prec) :: smeanmw,smeanvw,svarmw,svarvw,si,ekiny,ekinymax
- real(kind=doub_prec), dimension(3) :: xmom
+ real(kind=doub_prec), dimension(3) :: xmom,angmom,angmomi,ri,vi
  real                 :: delta,dn
  character(len=20)    :: fmtstring
 !
 ! array with one value for each column
 !
- real, dimension(maxplot) :: coltemp
+ real(kind=doub_prec), dimension(maxplot) :: coltemp
 
  nfilesread = nfilesread + 1
  if (time.ge.0.) then
@@ -395,6 +396,8 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     epot = 0.
     etherm = 0.
     etot = 0.
+    xmom = 0.
+    angmom = 0.
     nused = 0
     do i=1,ntot
        itype = igettype(i)
@@ -403,8 +406,21 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
 
           !--kinetic energy
           if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) then
-             ekin = ekin + pmassi*dot_product(dat(i,ivx:ivx+ndimV-1),dat(i,ivx:ivx+ndimV-1))
-             xmom(1:ndimV) = xmom(1:ndimV) + pmassi*dat(i,ivx:ivx+ndimV-1)
+             vi(:) = 0.
+             vi(1:ndimV) = dat(i,ivx:ivx+ndimV-1)
+
+             ekin = ekin + pmassi*dot_product(vi,vi)
+             
+             !--linear momentum
+             xmom = xmom + pmassi*vi
+             
+             !--angular momentum
+             if (ndim.ge.1 .and. all(ix(1:ndim).gt.0)) then
+                ri(:) = 0.
+                ri(1:ndim) = dat(i,ix(1):ix(ndim))
+                call cross_product3D(ri,vi,angmomi)
+                angmom(:) = angmom(:) + pmassi*angmomi(:)
+             endif
           endif
 
           !--thermal energy
@@ -424,12 +440,13 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     emag = 0.5*emag
     etot = ekin + etherm + epot + emag
     totmom = sqrt(dot_product(xmom(1:ndimV),xmom(1:ndimV)))
+    totang = sqrt(dot_product(angmom,angmom))
 
-    print "(6(/,1x,a6,' = ',es8.2))",'etot',etot,'ekin',ekin,'etherm',etherm,'epot',epot,'emag',emag,'totmom',totmom
+    print "(7(/,1x,a6,' = ',es8.2))",'etot',etot,'ekin',ekin,'etherm',etherm,'epot',epot,'emag',emag,'totmom',totmom,'totang',totang
     !
     !--write line to output file
     !
-    write(iunit,"(64(es18.10,1x))") time,ekin,etherm,emag,epot,etot,totmom
+    write(iunit,"(64(es18.10,1x))") time,ekin,etherm,emag,epot,etot,totmom,totang
     if (nused.ne.ntot) print*,'energies calculated using ',nused,' of ',ntot,' particles'
 
  case('massaboverho')
@@ -487,7 +504,16 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--calculate maximum for each column
     !
     do i=1,ncolumns
-       coltemp(i) = maxval(dat(1:ntot,i))
+       coltemp(i) = -huge(0.d0) !maxval(dat(1:ntot,i))
+       nused = 0
+       do j=1,ntot
+          itype = igettype(j)
+          if (iplotpartoftype(itype)) then
+             nused = nused + 1
+             coltemp(i) = max(coltemp(i),dat(j,i))
+          endif
+       enddo
+       if (coltemp(i) < -0.5*huge(0.)) coltemp(i) = 0.
     enddo
     !
     !--write output to screen/terminal
@@ -500,13 +526,22 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) time,coltemp(1:ncolumns)
+    if (nused.ne.ntot) print*,'max calculated using ',nused,' of ',ntot,' particles'
 
  case('min','minvals')
     !
     !--calculate minimum for each column
     !
     do i=1,ncolumns
-       coltemp(i) = minval(dat(1:ntot,i))
+       coltemp(i) = huge(0.d0) !minval(dat(1:ntot,i))
+       nused = 0
+       do j=1,ntot
+          itype = igettype(j)
+          if (iplotpartoftype(itype)) then
+             coltemp(i) = min(coltemp(i),dat(j,i))
+             nused = nused + 1
+          endif
+       enddo
     enddo
     !
     !--write output to screen/terminal
@@ -519,13 +554,27 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) time,coltemp(1:ncolumns)
+    if (nused.ne.ntot) print*,'min calculated using ',nused,' of ',ntot,' particles'
 
  case('mean','meanvals')
     !
     !--calculate mean for each column
     !
     do i=1,ncolumns
-       coltemp(i) = sum(dat(1:ntot,i))/real(ntot)
+       coltemp(i) = 0.
+       nused = 0
+       do j=1,ntot
+          itype = igettype(j)
+          if (iplotpartoftype(itype)) then
+             coltemp(i) = coltemp(i) + dat(j,i)
+             nused = nused + 1
+          endif
+       enddo
+       if (nused.gt.0) then
+          coltemp(i) = coltemp(i)/real(nused)       
+       else
+          coltemp(i) = 0.
+       endif
     enddo
     !
     !--write output to screen/terminal
@@ -538,13 +587,27 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) time,coltemp(1:ncolumns)
+    if (nused.ne.ntot) print*,'mean calculated using ',nused,' of ',ntot,' particles'
 
  case('rms','rmsvals')
     !
     !--calculate RMS for each column
     !
     do i=1,ncolumns
-       coltemp(i) = sqrt(sum(dat(1:ntot,i)**2)/real(ntot))
+       coltemp(i) = 0. !sqrt(sum(dat(1:ntot,i)**2)/real(ntot))
+       nused = 0
+       do j=1,ntot
+          itype = igettype(j)
+          if (iplotpartoftype(itype)) then
+             coltemp(i) = coltemp(i) + dat(j,i)**2
+             nused = nused + 1
+          endif
+       enddo
+       if (nused.gt.0) then
+          coltemp(i) = sqrt(coltemp(i)/real(nused))  
+       else
+          coltemp(i) = 0.
+       endif
     enddo
     !
     !--write output to screen/terminal
@@ -557,6 +620,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) time,coltemp(1:ncolumns)
+    if (nused.ne.ntot) print*,'rms calculated using ',nused,' of ',ntot,' particles'
 
  case('vrms','vrmsvals','vwrms','rmsvw')
     if (irho.le.0 .or. irho.gt.ncolumns) then
@@ -864,6 +928,18 @@ real function particlemass(i,iparttype)
 end function particlemass
 
 end subroutine write_analysis
+
+subroutine cross_product3D(veca,vecb,vecc)
+ use params, only:doub_prec
+ implicit none
+ real(kind=doub_prec), dimension(3), intent(in) :: veca,vecb
+ real(kind=doub_prec), dimension(3), intent(out) :: vecc
+ 
+ vecc(1) = veca(2)*vecb(3) - veca(3)*vecb(2)
+ vecc(2) = veca(3)*vecb(1) - veca(1)*vecb(3)
+ vecc(3) = veca(1)*vecb(2) - veca(2)*vecb(1)
+
+end subroutine cross_product3D
 
 !---------------------
 ! close output file
