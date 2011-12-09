@@ -1148,7 +1148,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               endif
               if (.not.allocated(vecplot) .or. ichangesize) then
                  if (allocated(vecplot)) deallocate(vecplot)
-                 allocate(vecplot(2,ninterp),stat=ierr)
+                 allocate(vecplot(ndim,ninterp),stat=ierr)
                  if (ierr /= 0) then
                     print "(a)",' ERROR allocating memory for vector plot + rotation '
                     stop
@@ -3255,9 +3255,10 @@ contains
    use projections3D,    only:interpolate3D_proj_vec,interp3D_proj_vec_synctron
    use interpolate_vec,  only:mask_vectors
    use render,           only:render_vec
-   use fieldlines,       only:streamlines
+   use fieldlines,       only:streamlines,vecplot3D_proj
    use labels,           only:iutherm,is_coord
    use plotlib,          only:plot_qci,plot_qlw,plot_sci,plot_slw
+   use system_utils,     only:lenvironment
    implicit none
    integer,          intent(in) :: ivecx,ivecy,numpixx,numpixy
    real,             intent(in) :: pixwidthvec,pixwidthvecy
@@ -3265,10 +3266,10 @@ contains
    character(len=*), intent(in) :: label
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
    real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpixvec
-   integer :: i,j,icoloursav,linewidthprev
+   integer :: i,j,icoloursav,linewidthprev,ivecz
    real    :: vmag
    real    :: blankval,datmax
-   logical :: usevecplot
+   logical :: usevecplot,use3Dstreamlines
 
    !--query colour index and line width
    call plot_qci(icoloursav)
@@ -3288,7 +3289,7 @@ contains
       usevecplot = .false.
       if (irotate) then
          if (allocated(vecplot)) usevecplot = .true.
-         print*,'using vecplot' ! this is to indicate (to me) that extra memory is in use
+         if (debugmode) print*,'DEBUG: using vecplot' ! this is to indicate (to me) that extra memory is in use
       endif
       !
       !--interpolate using appropriate routine for number of dimensions
@@ -3340,7 +3341,7 @@ contains
                        icolourme(1:ninterp),ninterp,xmin,ymin, &
                        vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
                        rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)
-                  else
+                  elseif (.not.iplotstreamlines) then
                      call interp3D_proj_vec_synctron(xplot(1:ninterp), &
                        yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                        weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
@@ -3356,6 +3357,7 @@ contains
             !     ninterp,numpixx,numpixy)
 
                if (usevecplot) then
+                  if (.not.allocated(vecplot)) stop 'vecplot not allocated'
                   call interpolate3D_proj_vec(xplot(1:ninterp), &
                     yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                     weight(1:ninterp),vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
@@ -3394,7 +3396,7 @@ contains
 
          if (usevecplot) then
             call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
-              hh(1:ninterp),weight(1:ninterp),vecplot(2,1:ninterp), &
+              hh(1:ninterp),weight(1:ninterp),vecplot(1,1:ninterp), &
               vecplot(2,1:ninterp),icolourme(1:ninterp),ninterp,xmin,ymin, &
               vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise)
          else
@@ -3424,28 +3426,46 @@ contains
               enddo
             enddo
          endif
+         use3Dstreamlines = lenvironment('SPLASH_3DSTREAMLINES')
 
-         call streamlines(vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec)
+         if (ndim.eq.3 .and. use3Dstreamlines .and. .not.x_sec) then
+            if (usevecplot) then
+               if (.not.allocated(vecplot)) stop 'vecplot not allocated'
+               call vecplot3D_proj(xplot(1:ninterp), &
+                       yplot(1:ninterp),zplot(1:ninterp), &
+                       vecplot(1,1:ninterp),vecplot(2,1:ninterp),vecplot(3,1:ninterp),vmax, &
+                       weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp)            
+            else
+               ivecz = ivecx + (iplotz - ix(1))
+               call vecplot3D_proj(xplot(1:ninterp), &
+                       yplot(1:ninterp),zplot(1:ninterp), &
+                       dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),dat(1:ninterp,ivecz),vmax, &
+                       weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp)
 
-         if (ihidearrowswherenoparts) then
-            datmax = maxval(datpixvec(1:numpixx,1:numpixy))
-            blankval = 2.*datmax
-            call mask_vectors(xplot(1:ninterp),yplot(1:ninterp),icolourme(1:ninterp),ninterp, &
-                              xmin,xmax,ymin,ymax,datpixvec(1:numpixx,1:numpixy), &
-                              datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,minpartforarrow,blankval)
-
-            !--use blanking for values of zero
-            call render_pix(datpixvec(1:numpixx,1:numpixy), &
-                         minval(datpixvec(1:numpixx,1:numpixy)), &
-                         datmax, &
-                         'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,    &
-                         0,.true.,0,ncontours,.false.,ilabelcont,blank=blankval)
+            endif
          else
-            call render_pix(datpixvec(1:numpixx,1:numpixy), &
-                         minval(datpixvec(1:numpixx,1:numpixy)), &
-                         maxval(datpixvec(1:numpixx,1:numpixy)), &
-                         'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,    &
-                         0,.true.,0,ncontours,.false.,ilabelcont)
+            call streamlines(vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec)
+
+            if (ihidearrowswherenoparts) then
+               datmax = maxval(datpixvec(1:numpixx,1:numpixy))
+               blankval = 2.*datmax
+               call mask_vectors(xplot(1:ninterp),yplot(1:ninterp),icolourme(1:ninterp),ninterp, &
+                                 xmin,xmax,ymin,ymax,datpixvec(1:numpixx,1:numpixy), &
+                                 datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,minpartforarrow,blankval)
+
+               !--use blanking for values of zero
+               call render_pix(datpixvec(1:numpixx,1:numpixy), &
+                            minval(datpixvec(1:numpixx,1:numpixy)), &
+                            datmax, &
+                            'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,    &
+                            0,.true.,0,ncontours,.false.,ilabelcont,blank=blankval)
+            else
+               call render_pix(datpixvec(1:numpixx,1:numpixy), &
+                            minval(datpixvec(1:numpixx,1:numpixy)), &
+                            maxval(datpixvec(1:numpixx,1:numpixy)), &
+                            'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,    &
+                            0,.true.,0,ncontours,.false.,ilabelcont)
+            endif
          endif
 
       else
@@ -3714,6 +3734,7 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
         endif
         vecploti(1,j) = veci(iposx)
         vecploti(2,j) = veci(iposy)
+        if (ndim.ge.3) vecploti(3,j) = veci(iposz)
      endif
   enddo
 !$omp end do

@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 
 !---------------------------------------------------------------------------
-!  The plotlib module in SPLASH provides a consistent api so that SPLASH
+!  The plotlib module in SPLASH provides a consistent API so that SPLASH
 !  can be compiled against different graphics libraries as the backend
 !
 !  This version provides an interface to Tim Pearson's PGPLOT,
@@ -119,6 +119,8 @@ interface plot_slw
    subroutine PGSLW (LW)
      integer,intent(in) :: lw
    end subroutine PGSLW
+   
+   module procedure plot_slw_float
 end interface
 
 interface plot_page
@@ -176,6 +178,8 @@ interface plot_scr
      integer, intent(in) :: CI
      real, intent(in)    :: CR, CG, CB
    end subroutine pgscr
+   
+   module procedure pgscra
 end interface
 
 interface plot_bins
@@ -492,6 +496,13 @@ subroutine plot_slc(lc)
 
 end subroutine plot_slc
 
+subroutine plot_qlc(lc)
+  implicit none
+  integer,intent(out) :: lc
+
+  lc = 0
+end subroutine plot_qlc
+
 subroutine plot_set_opacity(alpha)
   implicit none
   real, intent(in)           :: alpha
@@ -500,12 +511,34 @@ subroutine plot_set_opacity(alpha)
 
 end subroutine plot_set_opacity
 
-subroutine plot_qlc(lc)
-  implicit none
-  integer,intent(out) :: lc
+!--interface to set transparent colour
+!  (not implemented in PGPLOT)
+subroutine pgscra (CI, CR, CG, CB, CA)
+  integer, intent(in) :: CI
+  real, intent(in)    :: CR, CG, CB, CA
+  
+  !--just throw away the alpha value
+  call PGSCR(CI,CR,CG,CB)
 
-  lc = 0
-end subroutine plot_qlc
+end subroutine pgscra
+
+!--floating point line widths
+!  (not implemented in PGPLOT)
+subroutine plot_slw_float (LW)
+  real,intent(in) :: lw
+  
+  call PGSLW(nint(lw))
+  
+end subroutine plot_slw_float
+
+subroutine plot_rgb_from_table(frac,r,g,b)
+  implicit none
+  real, intent(in) :: frac
+  real, intent(out) :: r,g,b
+
+  !--rgb from table not implemented in PGPLOT
+
+end subroutine plot_rgb_from_table
 
 logical function plot_qcur()
   implicit none

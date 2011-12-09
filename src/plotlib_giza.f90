@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 
 !---------------------------------------------------------------------------
-!  The plotlib module in SPLASH provides a consistent api so that SPLASH
+!  The plotlib module in SPLASH provides a consistent API so that SPLASH
 !  can be compiled against different graphics libraries as the backend
 !
 !  This version provides an interface to giza, a plotting
@@ -81,9 +81,8 @@ module plotlib
       plot_text=>giza_text, &
       plot_wnad=>giza_set_window_equal_scale, &
       plot_qcur=>giza_device_has_cursor, &
+      plot_rgb_from_table=>giza_rgb_from_table, &
       giza_contour,            &
-      giza_get_colour_representation, &
-      giza_set_colour_representation_alpha, &
       giza_get_character_size, &
       giza_get_surface_size,   &
       giza_get_viewport,       &
@@ -343,8 +342,8 @@ subroutine plot_set_opacity(alpha)
   real    :: red,green,blue
 
   call plot_qci(ci)
-  call giza_get_colour_representation(ci,red,green,blue)
-  call giza_set_colour_representation_alpha(ci,red,green,blue,alpha)
+  call plot_qcr(ci,red,green,blue)
+  call plot_scr(ci,red,green,blue,alpha)
 
 end subroutine plot_set_opacity
 

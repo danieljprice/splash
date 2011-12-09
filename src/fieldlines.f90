@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -25,7 +25,7 @@
 !
 module fieldlines
  implicit none
- public :: streamlines
+ public :: streamlines,vecplot3D_proj
  private :: trace2D,interpolate_pt
 
  private
@@ -338,5 +338,212 @@ subroutine interpolate_pt(xpt,ypt,vxpt,vypt,x,y,vecx,vecy,h,pmass,rho,npart)
  enddo
 
 end subroutine interpolate_pt
+
+subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
+ use plotlib, only:plot_line,plot_bbuf,plot_ebuf,plot_slw,plot_sci,plot_set_opacity
+ use plotlib, only:plot_qcr,plot_scr
+ implicit none
+ integer, intent(in) :: n
+ real, dimension(n), intent(in) :: x,y,z,vx,vy,vz,weight
+ integer, dimension(n), intent(in) :: itype
+ real, intent(inout) :: vecmax
+ real, intent(in) :: dx,zobs,dscreen
+ integer, dimension(n) :: iorder
+ integer :: i,ipart
+ real, dimension(2) :: xpts,ypts
+ real :: vxi,vyi,vzi,dvmag,zfrac,vmax,vmag,frac,r,g,b,ri,gi,bi
+ real :: toti,fambient,diffuse,specular,fdiff,fspec,ldotn,vdotr,ldott,vdott
+ integer :: iseed,pdiff,nspec
+ real, dimension(3) :: vunit,lighting,viewangle
+ logical :: white_bg
+
+ if (vecmax.le.0. .or. vecmax.gt.0.5*huge(vecmax)) then
+    vmax = 0.
+    do i=1,n
+       if (itype(i).ge.0) then
+          vmax = max(vx(i)**2 + vy(i)**2 + vz(i)**2,vmax)
+       endif
+    enddo
+    vmax = sqrt(vmax)
+    vecmax = vmax
+ else
+    vmax = vecmax
+ endif
+ 
+ call plot_qcr(0,ri,gi,bi)
+ white_bg = (ri + gi + bi > 1.5)
+ 
+ if (white_bg) then
+    fambient = 0.
+    fdiff = 0.1
+    fspec = 0.5
+ else
+    fambient = 0.4
+    fdiff = 0.6
+    fspec = 0.8
+ endif
+ pdiff = 4
+ nspec = 78
+ viewangle = (/0.,0.,1./)
+ lighting = (/0.,0.,1./)
+ 
+ lighting = lighting/sqrt(dot_product(lighting,lighting))
+ 
+ iseed = -6878
+ print*,'plotting 3D field structure, vmax = ',vmax !,lighting
+!
+!--first sort the particles in z so that we do the opacity in the correct order
+!
+ call indexx(n,z,iorder)
+ call plot_bbuf
+
+ !call colour_set(icolours)
+ call plot_qcr(1,ri,gi,bi)
+
+ over_particles: do ipart=1,n
+    i = iorder(ipart)
+    if (itype(i).ge.0 .and. weight(i).gt.0.) then
+       zfrac = 1. !abs(dscreen/(z(i)-zobs))
+       vxi = vx(i)
+       vyi = vy(i)
+       vzi = vz(i)
+       !
+       !--we draw lines on each particle with an 
+       !  opacity proportional to the field strength
+       !
+       vmag = sqrt(vxi**2 + vyi**2 + vzi**2)
+       dvmag = 1./vmag
+       vunit = abs((/vxi,vyi,vzi/)*dvmag)
+       frac = min(vmag/vmax,1.0)
+       xpts(1) = x(i)
+       xpts(2) = x(i) + 1.5*dx*vxi*dvmag*zfrac
+       ypts(1) = y(i)
+       ypts(2) = y(i) + 1.5*dx*vyi*dvmag*zfrac
+       call plot_slw(2.0*zfrac)
+       call plot_sci(0)
+       call plot_set_opacity(frac)
+       call plot_line(2,xpts,ypts)
+
+       ldott = dot_product(lighting,vunit)
+       ldotn = sqrt(1. - ldott**2)
+       diffuse = fdiff*(ldotn)**pdiff
+
+       vdott = dot_product(viewangle,vunit)
+       vdotr = ldotn*sqrt(1. - vdott**2) - ldott*vdott
+       specular = fspec*(vdotr)**nspec
+       toti = fambient + diffuse + specular
+
+       call plot_scr(1,toti,toti,toti,frac)
+       call plot_sci(1)
+       call plot_slw(1.0*zfrac)
+       call plot_line(2,xpts,ypts)
+    endif
+ enddo over_particles
+ !--reset opacity for both foreground and background colour indices
+ call plot_sci(0)
+ call plot_set_opacity(1.0)
+ call plot_sci(1)
+ call plot_scr(1,ri,gi,bi)
+ call plot_set_opacity(1.0)
+ call plot_ebuf
+
+end subroutine vecplot3D_proj
+
+subroutine indexx(n, arr, indx)
+!************************************************************
+!                                                           *
+!  This is INDEXX using the quicksort algorithm.            *
+!                                                           *
+!************************************************************
+ implicit none
+ integer, parameter :: m=7, nstack=500
+ integer, intent(in) :: n
+ real, dimension(n), intent(in) :: arr
+ integer, dimension(n), intent(out) :: indx
+
+ integer :: i,j,k,l,ir,jstack,indxt,itemp
+ integer, dimension(nstack) :: istack
+ real :: a
+
+ do j = 1, n
+    indx(j) = j
+ enddo
+ jstack = 0
+ l = 1
+ ir = n
+
+1 if (ir - l.lt.m) then
+   do j = l + 1, ir
+      indxt = indx(j)
+      a = arr(indxt)
+      do i = j - 1, 1, -1
+         if (arr(indx(i)).le.a) goto 2
+         indx(i + 1) = indx(i)
+      end do
+      i = 0
+2     indx(i + 1) = indxt
+   end do
+   if (jstack.eq.0) return
+   ir = istack(jstack)
+   l = istack(jstack - 1)
+   jstack = jstack - 2
+  else
+   k = (l + ir)/2
+   itemp = indx(k)
+   indx(k) = indx(l + 1)
+   indx(l + 1) = itemp
+   if (arr(indx(l + 1)).gt.arr(indx(ir))) then
+      itemp = indx(l + 1)
+      indx(l + 1) = indx(ir)
+      indx(ir) = itemp
+   endif
+   if (arr(indx(l)).gt.arr(indx(ir))) then
+      itemp = indx(l)
+      indx(l) = indx(ir)
+      indx(ir) = itemp
+   endif
+   if (arr(indx(l + 1)).gt.arr(indx(l))) then
+      itemp = indx(l + 1)
+      indx(l + 1) = indx(l)
+      indx(l) = itemp
+   endif
+   i = l + 1
+   j = ir
+   indxt = indx(l)
+   a = arr(indxt)
+
+3  continue
+   i = i + 1
+   if (arr(indx(i)).lt.a) goto 3
+4  continue
+   j = j - 1
+   if (arr(indx(j)).gt.a) goto 4
+   if (j.lt.i) goto 5
+   itemp = indx(i)
+   indx(i) = indx(j)
+   indx(j) = itemp
+   goto 3
+
+5  indx(l) = indx(j)
+   indx(j) = indxt
+   jstack = jstack + 2
+   if (jstack.gt.nstack) then
+      print*,'fatal error!!! stacksize exceeded in sort'
+      print*,'(need to set parameter nstack higher in subroutine indexx '
+      stop
+   endif
+   if (ir - i + 1.ge.j - l) then
+      istack(jstack) = ir
+      istack(jstack - 1) = i
+      ir = j - 1
+   else
+      istack(jstack) = j - 1
+      istack(jstack - 1) = l
+      l = i
+   endif
+ endif
+
+goto 1
+end subroutine indexx
 
 end module fieldlines
