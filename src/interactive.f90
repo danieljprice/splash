@@ -111,7 +111,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   real :: dxlength,dylength,xmaxin,ymaxin,contlength
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
-  logical :: iexit, rotation, verticalbar, iamincolourbar, mixedtypes
+  logical :: iexit, rotation, verticalbar, iamincolourbar, mixedtypes, use3Dperspective
 
   if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
@@ -122,6 +122,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   endif
 
   mixedtypes = size(iamtype).ge.npart
+  use3Dperspective = abs(dscreen).gt.tiny(0.)
 
   char = 'A'
   xline = 0.
@@ -735,7 +736,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      case('V')
         if (ivecx.gt.0 .and. ivecy.gt.0) then
            print*,'increasing vector arrow size'
-           vecmax = 0.8/zoomfac*vecmax
+           vecmax = vecmax/(1.2*zoomfac)
            iadvance = 0
            interactivereplot = .true.
            iexit = .true.
@@ -1000,9 +1001,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               interactivereplot = .true.
               irerender = .true.
               iexit = .true.
-           else
-              print*,'shifting perspective position up ',dscreen
-              zobserver = zobserver + dscreen
+           elseif (use3Dperspective) then
+              if (abs(zobserver).lt.tiny(0.)) then
+                 print*,'resetting z position'
+                 zobserver = 1.
+              else
+                 print*,'shifting perspective position up by 20%'
+                 zobserver = 1.2*zobserver
+              endif
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
@@ -1018,9 +1024,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               interactivereplot = .true.
               irerender = .true.
               iexit = .true.
-           else
-              print*,'shifting perspective position up by ',2.*dscreen
-              zobserver = zobserver + 2.*dscreen
+           elseif (use3Dperspective) then
+              if (abs(zobserver).lt.tiny(0.)) then
+                 print*,'resetting z position'
+                 zobserver = 1.
+              else
+                 print*,'shifting perspective position up by factor of 2'
+                 zobserver = 2.*zobserver
+              endif
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
@@ -1032,9 +1043,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            if (x_sec) then
               print*,'shifting cross section position down by ',dzslice
               zslicepos = zslicepos - dzslice
-           else
-              print*,'shifting perspective position down by ',dscreen
-              zobserver = zobserver - dscreen
+           elseif (use3Dperspective) then
+              if (abs(zobserver).lt.tiny(0.)) then
+                 print*,'resetting z position'
+                 zobserver = 1.
+              else
+                 print*,'shifting perspective position down by 20%'
+                 zobserver = zobserver/1.2
+              endif
            endif
            iadvance = 0
            interactivereplot = .true.
@@ -1046,9 +1062,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            if (x_sec) then
               print*,'shifting cross section position down by ',2.*dzslice
               zslicepos = zslicepos - 2.*dzslice
-           else
-              print*,'shifting perspective position down by ',2.*dscreen
-              zobserver = zobserver - 2.*dscreen
+           elseif (use3Dperspective) then
+              if (abs(zobserver).lt.tiny(0.)) then
+                 print*,'resetting z position'
+                 zobserver = 1.
+              else
+                 print*,'shifting perspective position down by factor of 2'
+                 zobserver = zobserver/2.
+              endif
            endif
            iadvance = 0
            interactivereplot = .true.
@@ -1937,7 +1958,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      case('V')
         if (ivecarr(ipanel).gt.0) then
            print*,'increasing vector arrow size'
-           xmax(ivecarr(ipanel)) = 0.8/zoomfac*xmax(ivecarr(ipanel))
+           xmax(ivecarr(ipanel)) = xmax(ivecarr(ipanel))/(1.2*zoomfac)
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
