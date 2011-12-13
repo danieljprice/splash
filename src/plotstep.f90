@@ -60,7 +60,7 @@ module timestep_plotting
   real, private :: xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
   real, parameter, private :: pi = 3.1415926536
 
-  logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis,iamrendering
+  logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis,iamrendering,idoingvecplot
   logical, private :: inewpage, tile_plots, lastplot
   logical, private :: imulti,irerender,iAllowspaceforcolourbar,ihavesetweights
   logical, private :: interactivereplot,ihavesetcolours,vectordevice,gotcontours
@@ -166,6 +166,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   nxsec = 1
 
   iamrendering = .false.
+  idoingvecplot = .false.
   if (ipicky.eq.numplot+1) then   ! multiplot
      imulti = .true.
      nyplots = nyplotmulti
@@ -191,6 +192,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      endif
      if (any(irendermulti(1:nyplotmulti).gt.0)) iamrendering = .true.
      if (any(x_secmulti(1:nyplotmulti))) x_sec = .true.
+     if (any(ivecplotmulti(1:nyplotmulti).gt.0)) idoingvecplot = .true.
   else
      !
      !--or else set number of plots = 1 and use ipicky and ipickx
@@ -200,6 +202,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      iploty = ipicky
      iplotx = ipickx
      if (irender_nomulti.gt.0) iamrendering = .true.
+     if (ivecplot.gt.0) idoingvecplot = .true.
   endif
 
   !------------------------------------------------------------------------
@@ -418,12 +421,12 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
        if (abs(zobserver).lt.tiny(zobserver)) zobserver = 10.*lim(iplotz,2)
        if (abs(dzscreenfromobserver).lt.tiny(dzscreenfromobserver)) dzscreenfromobserver = zobserver
        call prompt('enter z coordinate of observer ',zobserver)
-       !dzscreenfromobserver = zobserver
+       dzscreenfromobserver = zobserver
 !       call prompt('enter distance for unit magnification ',dzscreenfromobserver,0.)
 !
 !--initialise opacity for 3D opacity rendering
 !
-       if (use3Dopacityrendering .and. iamrendering) then
+       if (use3Dopacityrendering .and. (iamrendering .or. idoingvecplot)) then
           hav = lim(ih,1) !! 0.5*(lim(ih,2) + lim(ih,1))
           if (hav.le.epsilon(hav)) hav = 0.5*lim(ih,2) ! take 0.5*max if min is zero
           if (ipmass.gt.0) then
@@ -474,7 +477,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         required(iploty) = .true.
      endif
      required(iplotz) = .true.
-     if (iamrendering .and. &
+     if ((iamrendering .or. idoingvecplot) .and. &
         (iploty.ne.icolpixmap .or. imulti .or. iploty.eq.0)) then
         required(ipmass) = .true.
         required(irho) = .true.
@@ -806,7 +809,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   !--set weight factor for interpolation routines
   !
   ihavesetweights = .false.
-  if (iamrendering) then
+  if (iamrendering .or. idoingvecplot) then
      if (debugmode) print*,'DEBUG: setting interpolation weights...'
      call set_weights(weight,dat,iamtype,(iplotpartoftype .and. UseTypeInRenderings))
   else
@@ -1022,6 +1025,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               zobservertemp = 0.
               taupartdepthtemp = 0.
            endif
+        else
+           if (ndim.eq.3 .and. use3Dperspective) dzscreentemp = zobservertemp
         endif
         !
         !--flag for whether or not we have raw particle plot or not
@@ -1073,6 +1078,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         endif
         !--for 3D perspective, do not plot particles behind the observer
         if (ndim.eq.3.and.use3Dperspective) then
+           dzscreenfromobserver = zobserver
            zslicemax = zobservertemp
            if (use3Dopacityrendering) rkappa = rkappafac/taupartdepthtemp
         endif
@@ -3280,6 +3286,8 @@ contains
        (is_coord(ivecy,ndim) .or. ivecy.lt.0 .or.(ivecy.gt.ndataplots))) then
       print*,'error finding location of vector plot in array'
    else
+      use3Dstreamlines = (ndim.eq.3) .and. .not.x_sec !lenvironment('SPLASH_3DSTREAMLINES')
+
       !--plot arrows in either background or foreground colour
       if (UseBackgndColorVecplot) then
          call plot_sci(0)
@@ -3350,7 +3358,7 @@ contains
                        rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)
                   endif
                endif
-            else
+            elseif (.not.(iplotstreamlines .and. use3Dstreamlines)) then
             !   call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
             !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
             !     xmin,ymin,pixwidth,vecpixx,vecpixy, &
@@ -3426,7 +3434,6 @@ contains
               enddo
             enddo
          endif
-         use3Dstreamlines = lenvironment('SPLASH_3DSTREAMLINES')
 
          if (ndim.eq.3 .and. use3Dstreamlines .and. .not.x_sec) then
             if (usevecplot) then
