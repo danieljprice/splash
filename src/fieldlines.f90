@@ -339,6 +339,20 @@ subroutine interpolate_pt(xpt,ypt,vxpt,vypt,x,y,vecx,vecy,h,pmass,rho,npart)
 
 end subroutine interpolate_pt
 
+!--------------------------------------------------------------------------
+!   Visualisation of a 3D vector field in projection
+!   by means of "iron filings" drawn on particles
+!
+!   We draw a line on each particle in the direction of the vector field
+!   This line is illuminated by reflections from a lighting source, and
+!   is drawn with an opacity proportional to the field strength, such that
+!   strong field regions are highlighted.
+!
+!   For details of the lighting algorithm, see e.g.
+!   Stalling, Zoeckler and Hege, 1997, IEEE Trans. Viz. Comp. Graphics, 3, 118-128
+!   
+!   Added by D. Price, Dec 2011
+!--------------------------------------------------------------------------
 subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  use plotlib, only:plot_line,plot_bbuf,plot_ebuf,plot_slw,plot_sci,plot_set_opacity
  use plotlib, only:plot_qcr,plot_scr
@@ -349,18 +363,21 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  real, intent(inout) :: vecmax
  real, intent(in) :: dx,zobs,dscreen
  integer, dimension(n) :: iorder
- integer :: i,ipart
+ integer :: i,ipart,np
  real, dimension(2) :: xpts,ypts
- real :: vxi,vyi,vzi,dvmag,zfrac,vmax,vmag,frac,r,g,b,ri,gi,bi
+ real :: vxi,vyi,vzi,dvmag,zfrac,vmax,vmag,frac,r,g,b,ri,gi,bi,term
  real :: toti,fambient,diffuse,specular,fdiff,fspec,ldotn,vdotr,ldott,vdott
- integer :: iseed,pdiff,nspec
+ integer :: pdiff,nspec
  real, dimension(3) :: vunit,lighting,viewangle
- logical :: white_bg
+ logical :: white_bg,use3Dperspective
 
+ !
+ !--get the max adaptively if it is not already set
+ !
  if (vecmax.le.0. .or. vecmax.gt.0.5*huge(vecmax)) then
     vmax = 0.
     do i=1,n
-       if (itype(i).ge.0) then
+       if (itype(i).ge.0 .and. weight(i).gt.0.) then
           vmax = max(vx(i)**2 + vy(i)**2 + vz(i)**2,vmax)
        endif
     enddo
@@ -370,40 +387,57 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
     vmax = vecmax
  endif
  
+ use3Dperspective = abs(dscreen).gt.tiny(dscreen)
+ 
+ !
+ !--work out whether or not we have a white or black
+ !  background colour
+ !
  call plot_qcr(0,ri,gi,bi)
  white_bg = (ri + gi + bi > 1.5)
- 
+ !
+ !--specify the parameters in the lighting algorithm
+ !  these should differ depending on whether we are drawing
+ !  on a white or black background
+ ! 
  if (white_bg) then
     fambient = 0.
     fdiff = 0.1
     fspec = 0.5
  else
-    fambient = 0.4
-    fdiff = 0.6
-    fspec = 0.8
+    fambient = 0.1
+    fdiff = 0.9
+    fspec = 0.9
  endif
  pdiff = 4
  nspec = 78
+ !
+ !--specify the viewing and lighting angles
+ ! 
  viewangle = (/0.,0.,1./)
  lighting = (/0.,0.,1./)
  
- lighting = lighting/sqrt(dot_product(lighting,lighting))
- 
- iseed = -6878
- print*,'plotting 3D field structure, vmax = ',vmax !,lighting
+ !--make sure these are normalised
+ !lighting = lighting/sqrt(dot_product(lighting,lighting))
+
+ print*,'plotting 3D field structure, vmax = ',vmax
 !
 !--first sort the particles in z so that we do the opacity in the correct order
 !
  call indexx(n,z,iorder)
  call plot_bbuf
-
- !call colour_set(icolours)
  call plot_qcr(1,ri,gi,bi)
 
+ np = 0
+ zfrac = 1.
  over_particles: do ipart=1,n
     i = iorder(ipart)
     if (itype(i).ge.0 .and. weight(i).gt.0.) then
-       zfrac = 1. !abs(dscreen/(z(i)-zobs))
+       if (use3Dperspective) then
+          if (z(i).gt.zobs) cycle over_particles
+          zfrac = abs(dscreen/(z(i)-zobs))
+       endif
+       
        vxi = vx(i)
        vyi = vy(i)
        vzi = vz(i)
@@ -415,28 +449,40 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
        dvmag = 1./vmag
        vunit = abs((/vxi,vyi,vzi/)*dvmag)
        frac = min(vmag/vmax,1.0)
-       xpts(1) = x(i)
-       xpts(2) = x(i) + 1.5*dx*vxi*dvmag*zfrac
-       ypts(1) = y(i)
-       ypts(2) = y(i) + 1.5*dx*vyi*dvmag*zfrac
-       call plot_slw(2.0*zfrac)
-       call plot_sci(0)
-       call plot_set_opacity(frac)
-       call plot_line(2,xpts,ypts)
 
-       ldott = dot_product(lighting,vunit)
-       ldotn = sqrt(1. - ldott**2)
-       diffuse = fdiff*(ldotn)**pdiff
+       if (frac.ge.1.e-3) then
+          !--specify the length of line to draw
+          term = 0.75*dx*dvmag*zfrac
+          xpts(1) = x(i) - vxi*term
+          xpts(2) = x(i) + vxi*term
+          ypts(1) = y(i) - vyi*term
+          ypts(2) = y(i) + vyi*term
+          
+          !--draw "halo" in background colour with
+          !  twice the thickness, same opacity
+          call plot_slw(min(2.0*zfrac,5.))
+          call plot_sci(0)
+          call plot_set_opacity(frac)
+          call plot_line(2,xpts,ypts)
 
-       vdott = dot_product(viewangle,vunit)
-       vdotr = ldotn*sqrt(1. - vdott**2) - ldott*vdott
-       specular = fspec*(vdotr)**nspec
-       toti = fambient + diffuse + specular
+          !--Phong lighting
+          ldott = dot_product(lighting,vunit)
+          ldotn = sqrt(1. - ldott**2)
+          diffuse = fdiff*(ldotn)**pdiff
 
-       call plot_scr(1,toti,toti,toti,frac)
-       call plot_sci(1)
-       call plot_slw(1.0*zfrac)
-       call plot_line(2,xpts,ypts)
+          vdott = dot_product(viewangle,vunit)
+          vdotr = ldotn*sqrt(1. - vdott**2) - ldott*vdott
+          specular = fspec*(vdotr)**nspec
+          toti = fambient + diffuse + specular
+
+          !--draw line with intensity proportional
+          !  to the amount of lighting
+          call plot_scr(1,toti,toti,toti,frac)
+          call plot_sci(1)
+          call plot_slw(min(1.0*zfrac,2.5))
+          call plot_line(2,xpts,ypts)
+          np = np + 1
+       endif
     endif
  enddo over_particles
  !--reset opacity for both foreground and background colour indices
@@ -446,6 +492,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  call plot_scr(1,ri,gi,bi)
  call plot_set_opacity(1.0)
  call plot_ebuf
+ print*,' plotted ',np,' of ',n,' particles'
 
 end subroutine vecplot3D_proj
 
