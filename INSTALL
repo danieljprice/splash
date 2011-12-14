@@ -9,8 +9,8 @@ To compile SPLASH v2.x you will need simply:
 
 The basic steps for installation are:
 1) make sure you have a Fortran 90/95 compiler (such as gfortran).
-2) make sure you have libcairo on your system
-3) compile SPLASH and link with cairo.
+2) make sure you have cairo on your system
+3) compile SPLASH/giza and link with cairo.
 4) if desired/necessary write a read_data subroutine so that SPLASH can read
    your data format.
 5) make pretty pictures.
@@ -37,50 +37,43 @@ http://gcc.gnu.org/wiki/GFortran
 I strongly recommend downloading a more recent version of gfortran rather than
 relying on any pre-installed version (use gfortran -v to check the version number).
 In particular versions 4.2.0 and lower *do not* compile SPLASH2. Later versions also
-have openMP, so you can compile and run SPLASH in parallel.
+have openMP, so you can compile and run SPLASH in parallel ("make PARALLEL=yes")
 
 2) ----------------- The Cairo Graphics Library --------------------
+
  Cairo is a low-level system library used in many applications. Thus it is highly
 likely that you already have a copy on your system and already in your library path.
-Look for a file called libcairo, e.g. using
+Look for the header file cairo.h, e.g. using
 
-"locate libcairo"
+"locate cairo.h"
 
-or have a look in the usual places (e.g. /usr/lib/, /usr/X11/lib). If not, you
-can download a copy of cairo (and pixman, which it depends on) from:
+or have a look in the usual places (e.g. /usr/include/cairo, /usr/X11/include). If not,
+you can usually use your inbuilt package manager to install cairo as follows:
 
-http://cairographics.org/releases/
+   Debian/Ubuntu:
+      sudo apt-get install libcairo2-dev
+   Fedora/Red Hat/CentOS:
+      sudo yum install cairo-devel
+   OpenSUSE:
+      zypper install cairo-devel
+   MacPorts:
+      sudo port install cairo
 
-For example, using the wget utility to download these:
-wget http://cairographics.org/releases/pixman-0.22.2.tar.gz
-wget http://cairographics.org/releases/cairo-1.10.0.tar.gz
+Alternatively, use the script provided in the root-level splash directory:
 
-...then follow the instructions to compile pixman and in turn cairo. To install in
-your home directory (i.e. without superuser permissions), use (for both pixman and cairo):
+  ./install-cairo.sh
 
-./configure --prefix=/home/me/dir/
-make
-make install
+which downloads and installs both pixman and cairo into the giza/ subdirectory.
+Unlike the methods above, this does not require any admin/superuser permissions.
 
-where /home/me/dir is the location you want to install cairo and pixman to. If you
-install libraries to such a location, set your LD_LIBARY_PATH to point to this.
+3) ----------------- Compiling SPLASH with the GIZA backend  ----------------
 
-e.g. add the following lines to your .profile (or equivalent if using csh instead of bash)
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/me/dir/lib
-
-or, for Mac OS/X, use:
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/home/me/dir/lib
-
-3) ----------------- Compiling SPLASH ----------------
-
-With cairo and a Fortran compiler in place, preset options for the most common Fortran
-compilers are given in the Makefile provided the variable SYSTEM is set appropriately
-(either on the command line or as an environment variable). On the command line, type
+Type:
 
 "make SYSTEM=xxx"
 
-Where the SYSTEM corresponds to one of those listed in the Makefile, some of the most
-commonly used of which are:
+Where xxx corresponds to a SYSTEM setting in build/Makefile. These are presets
+for most of the common Fortran compilers, the most useful of which are: 
 
 gfortran -- settings for the gfortran/gcc compilers
 g95 -- settings for the g95/gcc compilers
@@ -89,28 +82,41 @@ sunf95 -- settings for the Sun f95 compiler
 ifort -- settings for the Intel Fortran/C Compilers
 pgf90 -- settings for the Portland Group Fortran 90 compiler
 
---- linking against locally installed cairo ----
-If you have installed cairo locally, you will need to specify the include path locally, i.e.:
-
-export C_INCLUDE_PATH=$C_INCLUDE_PATH:/home/me/dir/include
-
 4) -------------- reading your data format -------------------
 
-The basic "splash" binary is quite general and will read any data where columns 
-correspond to different quantities and rows correspond to each particle (actually
+The default binaries installed are as follows:
+
+splash  : alias for asplash
+asplash : reads ascii formatted data files
+gsplash : reads data files from GADGET code (http://www.mpa-garching.mpg.de/galform/gadget/)
+dsplash : reads data files from DRAGON code
+nsplash : reads data files from NDSPMHD code (http://users.monash.edu.au/~dprice/ndspmhd/)
+tsplash : reads TIPSY files (ascii and binary) as used in GASOLINE
+rsplash : reads data files from MAGMA code
+ssplash : reads data files from sphNG code
+srsplash : reads data files from SEREN code
+vsplash : reads data files from VINE code
+
+Other formats implemented but not compiled by default include:
+h5splash : reads h5part formatted files
+bsplash  : old Matthew Bate/Benz code format
+(see the userguide for a full list)
+
+The basic "splash" binary is quite general and will read any ascii or csv data file where
+columns correspond to different quantities and rows correspond to each particle (actually
 I use splash to plot graphs for nearly all data in this form, whether SPH or not)
 -- it will also sensibly skip header lines which do not have the same number of columns.
 
 However, it is ultimately desirable to use SPLASH to directly visualise the
-(binary) output of your code. If you are using a widely used SPH code (e.g. GADGET,
-GASOLINE, VINE, DRAGON), it is reasonably  likely that I have already written a 
-read data subroutine which will read your dumps. If your format is not amongst those 
-distributed, then BEFORE you start writing your own routine, please consider whether 
-or not a routine to read your format would be of more general use (e.g. to other users
-of your code). If so, PLEASE email me to request a new read_data routine for your 
-format, by sending an email attaching:
+(binary) output of your code. If your format is not amongst those distributed,
+then BEFORE you start writing your own routine, please consider whether or not a routine
+to read your format would be of more general use (e.g. to other users of your code).
+If so, PLEASE email me to request a new read_data routine for your format, by sending an email attaching:
+
 a) an example dump 
+
 and
+
 b) the source code from the routine which wrote the dump file.
 
 Then I can write a read for your format that can be added to the SPLASH repository
@@ -123,11 +129,7 @@ file, rather than the whole file).
 If you *really* want to hack one yourself it is best to look at some of the
 other examples and change the  necessary parts to suit your data files. Note
 that reading directly from unformatted data files is *much* faster than reading
-from formatted (ascii) output. Just to get started you can use the
-read_data_ascii.f90 which reads from ascii files, but this will not enable the
-full rendering capabilities until you specify the location of the density, h and
-particle mass in the arrays (via the parameters ih, irho and ipmass in the
-set_labels subroutine which is part of the read_data file). 
+from formatted (ascii) data.
 
 If you do end up writing your own, again, please email me the end result so I
 can add it to the officially supported data reads. This also makes it much
