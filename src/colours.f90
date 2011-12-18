@@ -27,7 +27,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 28
+ integer, parameter :: ncolourschemes = 29
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
@@ -56,7 +56,8 @@ module colours
       'rt               ', &
       'Dolag I          ', &
       'Dolag II         ', &
-      'Dolag III        '/)
+      'Dolag III        ', &
+      'Alice WBYR       '/)
 !
 !--rgb colours of the colour table are stored in the array below
 !  this is used for colour blending (opacity rendering)
@@ -336,6 +337,12 @@ subroutine colour_set(icolourscheme)
      redarr(1:nset) =   (/0.0,1.00,0.5,0.00,1.0/)
      greenarr(1:nset) = (/0.0,0.66,1.0,0.66,0.0/)
      bluearr(1:nset) =  (/1.0,0.66,0.5,0.33,0.0/)
+     case(29)
+     nset = 12
+     lumarr(1:nset) = (/0.0,0.002,0.00672,0.01344,0.40824,0.41496,0.42168,0.43176,0.80052,0.80724,0.84,1.0/)
+     redarr(1:nset) = (/1.0,1.0,1.0,0.976,0.047,0.031,0.016,0.027,0.898,0.914,0.984,0.996/)
+     greenarr(1:nset) = (/1.0,0.835,0.835,0.824,0.161,0.149,0.137,0.122,0.706,0.718,0.765,0.055/)
+     bluearr(1:nset) = (/1.0,1.0,0.996,0.980,0.510,0.502,0.494,0.482,0.043,0.035,0.0,0.0/)
      end select
 
      if (debugmode) print*,'DEBUG: setting colour table'
