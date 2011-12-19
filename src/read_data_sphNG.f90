@@ -70,6 +70,7 @@ module sphNGread
  integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
+ logical :: usingeulr
  logical :: batcode
 
 end module sphNGread
@@ -148,6 +149,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   rtdump      = .false.
   rt_in_header = .false.
   usingvecp   = .false.
+  usingeulr   = .false.
   h2chem      = .false.
   igotmass    = .false.
   tfreefall   = 1.d0
@@ -242,6 +244,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
    if (index(fileident,'vecp').ne.0) then
       usingvecp = .true.
+   endif
+   if (index(fileident,'eulr').ne.0) then
+      usingeulr = .true.
    endif
    if (index(fileident,'H2chem').ne.0) then
       h2chem = .true.
@@ -1470,10 +1475,30 @@ subroutine set_labels
                     label(istartmhd+i-1) = trim(labelvec(16))//'\d'//labelcoord(i,1)
                  enddo
                  idivB = istartmhd+ndimV
-              elseif (nmhd.ge.6) then
+              elseif (nmhd.ge.6 .and. usingeulr) then
                  label(istartmhd) = 'Euler alpha'
                  label(istartmhd+1) = 'Euler beta'
                  idivB = istartmhd + 2
+              elseif (nmhd.ge.6) then
+                 label(istartmhd) = 'psi'
+                 idivB = istartmhd + 1
+                 if (nmhd.ge.9) then
+                    print*,'NMHD = ',nmhd
+                    label(istartmhd+2+ndimV+1) = '\eta_{real}'
+                    label(istartmhd+2+ndimV+2) = '\eta_{art}'
+                 endif
+                 if (nmhd.ge.14) then
+                    label(istartmhd+2+ndimV+3) = 'fsym\dx'
+                    label(istartmhd+2+ndimV+4) = 'fsym\dy'
+                    label(istartmhd+2+ndimV+5) = 'fsym\dz'
+                    labelvec(istartmhd+ndimV+5:istartmhd+ndimV+7) = 'fsym'
+                    iamvec(istartmhd+ndimV+5:istartmhd+ndimV+7) = istartmhd+ndimV+5
+                    label(istartmhd+2+ndimV+6) = 'faniso\dx'
+                    label(istartmhd+2+ndimV+7) = 'faniso\dy'
+                    label(istartmhd+2+ndimV+8) = 'faniso\dz'
+                    labelvec(istartmhd+ndimV+8:istartmhd+ndimV+10) = 'faniso'
+                    iamvec(istartmhd+ndimV+8:istartmhd+ndimV+10) = istartmhd+ndimV+8
+                 endif
               elseif (nmhd.ge.1) then
                  idivB = istartmhd
               endif
