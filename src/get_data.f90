@@ -684,8 +684,9 @@ subroutine endian_info
 
  if (bigendian) then
     print "(a)",' native byte order on this machine is BIG endian'
- else
-    print "(a)",' native byte order on this machine is LITTLE endian'
+ !--we no longer warn for little endian, as this is now most common
+ !else
+ !   print "(a)",' native byte order on this machine is LITTLE endian'
  endif
 
 end subroutine endian_info
