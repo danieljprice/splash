@@ -1483,9 +1483,10 @@ subroutine set_labels
                  label(istartmhd) = 'psi'
                  idivB = istartmhd + 1
                  if (nmhd.ge.9) then
-                    print*,'NMHD = ',nmhd
                     label(istartmhd+2+ndimV+1) = '\eta_{real}'
                     label(istartmhd+2+ndimV+2) = '\eta_{art}'
+                    units(istartmhd+2+ndimV+1:istartmhd+2+ndimV+2) = udist*udist/utime
+                    unitslabel(istartmhd+2+ndimV+1:istartmhd+2+ndimV+2) = ' [cm\u2\d/s]'
                  endif
                  if (nmhd.ge.14) then
                     label(istartmhd+2+ndimV+3) = 'fsym\dx'
