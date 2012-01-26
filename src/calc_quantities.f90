@@ -768,14 +768,20 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  !
  select case(lcase(trim(labelcol)))
  case('r','radius','rad')
-    if (irad.le.0 .or. irad.gt.ncolumns) irad = icolumn
-    if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the radius'
+    if (irad.le.0 .or. irad.gt.ncolumns) then
+       irad = icolumn
+       if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the radius'
+    endif
  case('kinetic energy','ke','1/2 v^2','v^2/2')
-    if (ike.le.0 .or. irad.gt.ncolumns) ike = icolumn
-    if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the kinetic energy'
+    if (ike.le.0 .or. irad.gt.ncolumns) then
+       ike = icolumn
+       if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the kinetic energy'
+    endif
  case('pressure','pr','p')
-    if (ipr.le.0 .or. ipr.gt.ncolumns) ipr = icolumn
-    if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the pressure'
+    if (ipr.le.0 .or. ipr.gt.ncolumns) then
+       ipr = icolumn
+       if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the pressure'
+    endif
  end select
 
 end subroutine identify_calculated_quantity
