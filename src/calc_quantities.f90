@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -531,13 +531,14 @@ end subroutine check_calculated_quantities
 
 !-----------------------------------------------------------------
 !
-!  utility (private) to print the current list of calculated
-!  quantities, checking that they parse correctly
+!  utility (private) to check dependencies of calculated
+!  quantities, so that we only read what is necessary
+!  from the dump file
 !
 !-----------------------------------------------------------------
 subroutine get_calc_data_dependencies(required)
  use params,         only:maxplot
- use settings_data,  only:ncolumns,debugmode
+ use settings_data,  only:ncolumns,debugmode,icoords,icoordsnew
  use fparser,        only:checkf
  use labels,         only:label
  logical, dimension(0:maxplot), intent(inout) :: required
@@ -576,7 +577,7 @@ subroutine get_calc_data_dependencies(required)
        endif
     endif
  enddo
-
+ 
 end subroutine get_calc_data_dependencies
 
 !-----------------------------------------------------------------
@@ -587,23 +588,25 @@ end subroutine get_calc_data_dependencies
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels,         only:label,labelvec,iamvec,ix
   use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol
-  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,itrackpart,ndim,required,iverbose
+  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,itrackpart,ndim,required,iverbose, &
+                           icoords,icoordsnew
   use mem_allocation, only:alloc
   use settings_units, only:unitslabel,units
   use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
   use params,         only:maxplot
   use timing,         only:wall_time,print_time
+  use geometry,       only:coord_transform,vector_transform
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
-  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused
+  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,iamvecprev,icol
   logical :: skip
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
 !  real, parameter :: lightspeed = 3.e10   ! in cm/s (cgs)
   real(kind=rn), dimension(maxplot+nextravars)          :: vals
   character(len=lenvars), dimension(maxplot+nextravars) :: vars
-  real, dimension(3) :: x0
+  real, dimension(3) :: x0,xcoords,xcoordsnew,vecnew
   real :: t1,t2
 
   !
@@ -620,6 +623,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   call check_calculated_quantities(ncalc,ncalctot,verbose=(.not.skip .and. iverbose.gt.0))
 
   if (.not.skip .and. ncalc.gt.0) then
+     nused = 0
      do i=1,ncalc
         if (required(ncolumns+i)) nused = nused + 1
      enddo
@@ -698,12 +702,42 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
               vals(ncolumns+icalc+2) = x0(1)
               vals(ncolumns+icalc+3) = x0(2)
               vals(ncolumns+icalc+4) = x0(3)
-              !!$omp parallel do default(none) private(j,vals) shared(dat,i,icalc,ncolumns)
-              do j=1,ntoti
-                 vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
-                 dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
-              enddo
-              !!$omp end parallel do
+              if (icoordsnew.ne.icoords .and. ndim.gt.0 .and. all(ix(1:ndim).gt.0)) then
+                 !
+                 !--if alternative coordinate system is in use, then we need to apply
+                 !  the coordinate transformations to the data BEFORE using it
+                 !  to calculate additional quantities
+                 !
+                 do j=1,ntoti
+                    vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
+
+                    !--perform transformations on coordinates
+                    xcoords(1:ndim) = dat(j,ix(1:ndim),i) - x0(1:ndim)
+                    call coord_transform(xcoords(1:ndim),ndim,icoords,xcoordsnew(1:ndim),ndim,icoordsnew)
+                    vals(ix(1:ndim)) = xcoordsnew(1:ndim)
+                    
+                    !--transform all vector quantities to new coord system
+                    iamvecprev = 0
+                    do icol=1,ncolumns+icalc-ndim
+                       if (iamvec(icol).gt.0 .and. iamvec(icol).ne.iamvecprev) then                          
+                          iamvecprev = iamvec(icol)
+                          call vector_transform(xcoords(1:ndim),dat(j,iamvec(icol):iamvec(icol)+ndim-1,i), &
+                                      ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
+                          vals(iamvec(icol):iamvec(icol)+ndim-1) = vecnew(1:ndim)
+                       endif
+                    enddo
+                    
+                    !--evaluate function with transformed values
+                    dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
+                 enddo              
+              else
+                 !!$omp parallel do default(none) private(j,vals) shared(dat,i,icalc,ncolumns)
+                 do j=1,ntoti
+                    vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
+                    dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
+                 enddo
+                 !!$omp end parallel do
+              endif
               if (EvalErrType.ne.0) then
                  print "(a)",' ERRORS evaluating '//trim(calcstring(icalc))//': ' &
                              //trim(EvalerrMsg())
