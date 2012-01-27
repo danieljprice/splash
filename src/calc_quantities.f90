@@ -139,7 +139,7 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
  use prompting,     only:prompt
  use fparser,       only:checkf
  use labels,        only:lenlabel
- use settings_data, only:ncolumns,iRescale
+ use settings_data, only:ncolumns,iRescale,required
  implicit none
  integer, intent(in)  :: istart,iend
  integer, intent(out) :: ncalc
@@ -236,6 +236,7 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
           endif
        else
           write(*,"(a)",advance='no') 'Function parses OK: '
+          required(ncolumns+i) = .true.
        endif
        if (ierr.eq.0) then
           !
