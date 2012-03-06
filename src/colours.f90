@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -27,7 +27,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 29
+ integer, parameter :: ncolourschemes = 32
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
@@ -57,7 +57,10 @@ module colours
       'Dolag I          ', &
       'Dolag II         ', &
       'Dolag III        ', &
-      'Alice WBYR       '/)
+      'Alice WBYR       ', &
+      'light blue       ', &
+      'light green      ', &
+      'light red        '/)
 !
 !--rgb colours of the colour table are stored in the array below
 !  this is used for colour blending (opacity rendering)
@@ -338,11 +341,33 @@ subroutine colour_set(icolourscheme)
      greenarr(1:nset) = (/0.0,0.66,1.0,0.66,0.0/)
      bluearr(1:nset) =  (/1.0,0.66,0.5,0.33,0.0/)
      case(29)
+     !--Alice WBYR
      nset = 12
      lumarr(1:nset) = (/0.0,0.002,0.00672,0.01344,0.40824,0.41496,0.42168,0.43176,0.80052,0.80724,0.84,1.0/)
      redarr(1:nset) = (/1.0,1.0,1.0,0.976,0.047,0.031,0.016,0.027,0.898,0.914,0.984,0.996/)
      greenarr(1:nset) = (/1.0,0.835,0.835,0.824,0.161,0.149,0.137,0.122,0.706,0.718,0.765,0.055/)
      bluearr(1:nset) = (/1.0,1.0,0.996,0.980,0.510,0.502,0.494,0.482,0.043,0.035,0.0,0.0/)
+     case(30)
+     nset = 6
+     !--light blue
+     lumarr(1:nset) =   (/0.0,0.125,0.25,0.5,0.75,1.0/)
+     redarr(1:nset) =   (/0.000,0.00,0.00,0.300,0.700,1.000/)
+     greenarr(1:nset) = (/0.145,0.25,0.36,0.612,0.816,1.000/)
+     bluearr(1:nset) =  (/0.350,0.54,0.65,0.800,0.918,1.000/)
+     case(31)
+     nset = 6
+     !--light green
+     lumarr(1:nset) =   (/0.0,0.125,0.25,0.5,0.75,1.0/)
+     redarr(1:nset) =   (/0.00,0.0,0.075,0.37,0.73,1.000/)
+     greenarr(1:nset) = (/0.20,0.353,0.471,  0.718,0.895,1.000/)
+     bluearr(1:nset) =  (/0.082,0.13,0.21,   0.384,0.700,1.000/)
+     case(32)
+     !--light red
+     nset =  7
+     lumarr(1:nset)  = (/0.00,0.13,0.25,0.4,0.50,0.75,1.00/)
+     redarr(1:nset)  = (/0.44,0.60,0.84,1.0,1.00,1.00,1.00/)
+     greenarr(1:nset)= (/0.11,0.15,0.21,0.35,0.50,0.75,1.00/)
+     bluearr(1:nset) = (/0.00,0.00,0.00,0.00,0.15,0.55,1.00/)
      end select
 
      if (debugmode) print*,'DEBUG: setting colour table'
