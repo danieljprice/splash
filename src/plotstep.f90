@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -2566,7 +2566,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !  plot the contents of an extra two-column ascii file
         !--------------------------------------------------------------
 
-           call exact_fromfile('gwaves1.dat',xplot,yplot,nfreqpts,ierr)
+           call exact_fromfile('gwaves1.dat',xplot,yplot,1,2,nfreqpts,ierr)
            just = 0
            labelx = 't [ms]'
            labely = 'h'

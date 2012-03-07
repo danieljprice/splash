@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -64,6 +64,8 @@ module exact
   real :: rho_L, rho_R, pr_L, pr_R, v_L, v_R
   !--rho vs h
   real :: hfact
+  !--read from file
+  integer :: ixcolfile,iycolfile
   character(len=120) :: filename_exact
   !--equilibrium torus
   real :: Mstar,Rtorus,distortion
@@ -89,7 +91,7 @@ module exact
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
-       semi,ecc,mprim,msec
+       semi,ecc,mprim,msec,ixcolfile,iycolfile
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -134,6 +136,8 @@ contains
     ishk = 1
     hfact = 1.2
     filename_exact = ' '
+    ixcolfile = 1
+    iycolfile = 2
 !   density profile parameters
     iprofile = 1
     rsoft(1) = 1.0
@@ -154,7 +158,7 @@ contains
     Kdrag = 1.0
     cs    = 1.0
     rhozero = 1.0
-    rdust_to_gas = 1.0
+    rdust_to_gas = 0.0
 !   Roche lobes
     semi  = 1.
     ecc   = 0.
@@ -184,31 +188,33 @@ contains
   subroutine submenu_exact(iexact)
     use settings_data, only:ndim
     use prompting,     only:prompt
-    use filenames,     only:rootname
+    use filenames,     only:rootname,ifileopen
     use exactfunction, only:check_function
     use mhdshock,      only:nmhdshocksolns,mhdprob
+    use asciiutils,    only:get_ncolumns,string_replace
     implicit none
     integer, intent(inout) :: iexact
-    integer :: ierr,itry,i
+    integer :: ierr,itry,i,ncols,nheaderlines
     logical :: ians,iexist
+    character(len=len(filename_exact)) :: filename_tmp
 
     print 10
 10  format(' 0) none ',/,               &
            ' 1) ANY function f(x,t)',/, &
-         ' 2) read from file ',/,       &
-         ' 3) shock tube ',/,           &
-         ' 4) sedov blast wave ',/,     &
-         ' 5) polytrope ',/,            &
-         ' 6) toy star ',/,             &
-         ' 7) linear wave ',/,          &
-         ' 8) mhd shock tubes (tabulated) ',/,  &
-         ' 9) h vs rho ',/, &
-         '10) Plummer/Hernquist spheres ',/, &
-         '11) torus ',/, &
-         '12) ring spreading ',/, &
-         '13) special relativistic shock tube', /, &
-         '14) dusty waves', /, &
-         '15) Roche lobes/potential ')
+           ' 2) read from file ',/,       &
+           ' 3) shock tube ',/,           &
+           ' 4) sedov blast wave ',/,     &
+           ' 5) polytrope ',/,            &
+           ' 6) toy star ',/,             &
+           ' 7) linear wave ',/,          &
+           ' 8) mhd shock tubes (tabulated) ',/,  &
+           ' 9) h vs rho ',/, &
+           '10) Plummer/Hernquist spheres ',/, &
+           '11) torus ',/, &
+           '12) ring spreading ',/, &
+           '13) special relativistic shock tube', /, &
+           '14) dusty waves', /, &
+           '15) Roche lobes/potential ')
     call prompt('enter exact solution to plot',iexact,0,15)
     print "(a,i2)",'plotting exact solution number ',iexact
     !
@@ -250,10 +256,34 @@ contains
     case(2)
        iexist = .false.
        do while(.not.iexist)
+          print "(a)",'Use %f to represent current dump file, e.g. %f.exact looks for dump_000.exact'
           call prompt('enter filename ',filename_exact)
-          inquire(file=filename_exact,exist=iexist)
+          !--substitute %f for filename
+          filename_tmp = filename_exact
+          call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
+          !--check the first file for errors
+          inquire(file=filename_tmp,exist=iexist)
           if (iexist) then
-             print "(a)",'file seems OK'
+             open(unit=33,file=filename_tmp,status='old',iostat=ierr)
+             if (ierr.eq.0) then
+                call get_ncolumns(33,ncols,nheaderlines)
+                if (ncols.gt.2) then
+                   print "(a,i2,a)",' File '//trim(filename_tmp)//' contains ',ncols,' columns of data'
+                   call prompt('Enter column containing x data ',ixcolfile,1,ncols)
+                   call prompt('Enter column containing y data ',iycolfile,1,ncols)
+                elseif (ncols.eq.2) then
+                   print "(a,i2,a)",' OK: got ',ncols,' columns from '//trim(filename_tmp)
+                else
+                   iexist = .false.
+                   call prompt('Error: file contains < 2 readable columns: try again?',ians)
+                   if (.not.ians) return
+                endif
+                close(33)
+             else
+                iexist = .false.
+                call prompt('Error opening '//trim(filename_tmp)//': try again?',ians)
+                if (.not.ians) return
+             endif
           else
              ians = .true.
              call prompt('file does not exist: try again? ',ians)
@@ -274,7 +304,7 @@ contains
           call prompt('enter density to right of shock  ',rho_R,0.0)
           call prompt('enter pressure to left of shock  ',pr_L,0.0)
           call prompt('enter pressure to right of shock ',pr_R,0.0)
-          if (iexact.eq.11) then
+          if (iexact.eq.13) then
              call prompt('enter velocity to left of shock  ',v_L,max=1.0)
              call prompt('enter velocity to right of shock ',v_R,max=1.0)
           else
@@ -619,6 +649,8 @@ contains
                             pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
     use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,&
                               irhorestframe,is_coord
+    use filenames,       only:ifileopen,rootname
+    use asciiutils,      only:string_replace
     use prompting,       only:prompt
     use exactfromfile,   only:exact_fromfile
     use mhdshock,        only:exact_mhdshock
@@ -651,6 +683,7 @@ contains
     integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle
     real, dimension(:), allocatable :: xexact,yexact,xtemp
     real :: dx,ymean,errL1,errL2,errLinf
+    character(len=len(filename_exact)) :: filename_tmp
 
     !
     !--change line style and colour settings, but save old ones
@@ -715,7 +748,11 @@ contains
        endif
     case(2) ! exact solution read from file
        if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then
-          call exact_fromfile(filename_exact,xexact,yexact,iexactpts,ierr)
+          !--substitute %f for filename
+          filename_tmp = filename_exact
+          call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
+          !--read exact solution from file
+          call exact_fromfile(filename_tmp,xexact,yexact,ixcolfile,iycolfile,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
           if (ierr.le.0 .and. .not.iApplyTransExactFile) then
              call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
