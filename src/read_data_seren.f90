@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -1169,6 +1169,7 @@ subroutine set_labels
            ! Velocities
            ivx = ncolumns + 1
            iamvec(ivx:ivx+VDIMtemp-1) = ivx
+           labelvec(ivx:ivx+VDIMtemp-1) = 'v'
            do j=1,VDIMtemp
               label(ivx+j-1) = 'v\d'//labelcoord(j,1)
               units(ivx+j-1) = unit_coeff(ivx+j-1)
@@ -1201,6 +1202,7 @@ subroutine set_labels
            ! Magnetic fields
            iBfirst = ncolumns + 1
            iamvec(iBfirst:iBfirst+BDIMtemp-1) = iBfirst
+           labelvec(iBfirst:iBfirst+BDIMtemp-1) = 'B'
            do j=1,BDIMtemp
               label(iBfirst+j-1) = 'B\d'//labelcoord(j,1)
               units(iBfirst+j-1) = unit_coeff(iBfirst+j-1)
