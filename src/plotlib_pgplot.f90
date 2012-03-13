@@ -585,6 +585,16 @@ subroutine plot_imag_transparent(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iext
 
 end subroutine plot_imag_transparent
 
+subroutine plot_imag_alpha(dat, alpha, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
+  integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
+  real,intent(in)    :: dat(IDIM,JDIM), alpha(IDIM,JDIM), A1, A2, TR(6)
+  real               :: affine(6)
+  integer, intent(in), optional :: iextend
+
+  call pgimag(dat, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
+
+end subroutine plot_imag_alpha
+
 !--giza version of plot_gray takes additional arguments
 subroutine plot_gray(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
  implicit none

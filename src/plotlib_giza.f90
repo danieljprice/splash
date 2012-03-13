@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -197,6 +197,22 @@ subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
   endif
 
 end subroutine plot_imag
+
+subroutine plot_imag_alpha(dat, alpha, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
+  integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
+  real,intent(in)    :: dat(IDIM,JDIM), alpha(IDIM,JDIM), A1, A2, TR(6)
+  real               :: affine(6)
+  integer, intent(in), optional :: iextend
+
+  call convert_tr_to_affine(tr,affine)
+  
+  if (present(iextend)) then
+     call giza_render(idim,jdim,dat,alpha,i1-1,i2-1,j1-1,j2-1,a1,a2,iextend,affine)
+  else
+     call giza_render(idim,jdim,dat,alpha,i1-1,i2-1,j1-1,j2-1,a1,a2,0,affine)
+  endif
+
+end subroutine plot_imag_alpha
 
 subroutine plot_imag_transparent(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
   integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2

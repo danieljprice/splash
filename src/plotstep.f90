@@ -671,7 +671,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use plotutils,             only:plotline
   use geometry,              only:coord_is_length
   use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
-                                  plot_line,plot_pt1,plotlib_is_pgplot
+                                  plot_line,plot_pt1,plotlib_is_pgplot,plotlib_supports_alpha
   implicit none
   integer, intent(inout) :: ipos, istepsonpage
   integer, intent(in)    :: istep,irender_nomulti,icontour_nomulti,ivecplot
@@ -1833,9 +1833,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       npixx,npixy,xmin,ymin,pixwidth,pixwidthy, &
                       1,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
                  else
-                    call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                      npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
-                      icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
+                    if (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm) then
+                       call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
+                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
+                         icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax,alpha=brightness)                    
+                    else
+                       call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
+                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
+                         icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
+                    endif
                  endif
 
                  !!--contour/2nd render plot of different quantity on top of 1st rendering
@@ -1852,7 +1858,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  endif
 
                  !!--write ppm if interpolate3D_opacity
-                 if (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm) then
+                 if ((.not. plotlib_supports_alpha) .and. &
+                     (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm)) then
                     !!--plot non-gas particle types (e.g. sink particles) on top (and to ppm)
                     call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty,itransx,itransy, &
@@ -1861,7 +1868,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax,brightness)
 
                     call write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax, &
-                                          trim(labelrender),((istep-1)*nframesloop + iframe),brightness)
+                                       trim(labelrender),((istep-1)*nframesloop + iframe),brightness)
                  !!--dump pixmap to file if option set
                  elseif (iwritepixmap) then
 

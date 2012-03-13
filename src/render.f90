@@ -42,10 +42,11 @@ contains
 !------------------------------------------------------------------------
 subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
                   xmin,ymin,dx,dy,icolouropt,iplotcont,iColourBarStyle,ncontours,log, &
-                  ilabelcont,contmin,contmax,blank,transparent)
+                  ilabelcont,contmin,contmax,blank,transparent,alpha)
  use plotutils,       only:formatreal
  use plotlib,         only:plot_imag,plot_conb,plot_cons,plot_qch,plot_sch,&
-                           plot_qch,plot_sch,plot_conl,plot_gray,plot_imag_transparent
+                           plot_qch,plot_sch,plot_conl,plot_gray,plot_imag_transparent,&
+                           plot_imag_alpha
  use contours_module, only:read_contours,contours_list,contourtitles
  implicit none
  integer, intent(in) :: npixx,npixy,ncontours,icolouropt
@@ -56,6 +57,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  character(len=*), intent(in) :: label
  real, intent(in), optional :: contmin,contmax,blank
  logical, intent(in), optional :: transparent
+ real, dimension(npixx,npixy), intent(in), optional :: alpha
 
  integer :: i,ierr,nc
  real :: trans(6),levels(ncontours),dcont,charheight,cmin,cmax
@@ -96,7 +98,11 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
     if (iuse_transparent) then
        call plot_imag_transparent(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
     else
-       call plot_imag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
+       if (present(alpha)) then
+          call plot_imag_alpha(datpix,alpha,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
+       else
+          call plot_imag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
+       endif
    endif
  endif
 !

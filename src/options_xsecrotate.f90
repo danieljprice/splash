@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -138,6 +138,7 @@ subroutine submenu_xsecrotate(ichoose)
  use prompting,      only:prompt,print_logical
  use settings_data,  only:ndim,xorigin,iCalcQuantities,DataIsBuffered
  use calcquantities, only:calc_quantities
+ use plotlib,        only:plotlib_supports_alpha
  implicit none
  integer, intent(in) :: ichoose
  integer :: ians,i
@@ -234,9 +235,13 @@ subroutine submenu_xsecrotate(ichoose)
        use3Dperspective = .true.
     endif
     if (use3Dopacityrendering) then
-       print "(/,a)",' Warning: 3D opacity rendering sends only an approximate version '
-       print "(a,/)",' to the PGPLOT device (not corrected for brightness) '
-       call prompt(' Do you want to write a ppm file in addition to PGPLOT output?',writeppm)
+       if (.not.plotlib_supports_alpha) then
+          print "(/,a)",' Warning: 3D opacity rendering sends only an approximate version '
+          print "(a,/)",' to the PGPLOT device (not corrected for brightness) '
+          call prompt(' Do you want to write a ppm file in addition to PGPLOT output?',writeppm)
+       else
+          call prompt(' Do you want to apply the brightness correction?',writeppm)
+       endif
     endif
 !------------------------------------------------------------------------
  case(5)
