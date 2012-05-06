@@ -180,7 +180,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !--read from a single file only
      !
      nstepsinfile(ireadfile) = 0
-     if (isfirsttime) print "(/a)",' reading single dumpfile'
+     !if (isfirsttime) print "(/a)",' reading single dumpfile'
 
      if (dotiming) call wall_time(t1)
      call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
