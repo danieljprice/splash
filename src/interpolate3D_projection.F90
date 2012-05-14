@@ -209,9 +209,10 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   if (.not.useaccelerate) then
      print "(1x,a)",'(use accelerated rendering option to make this faster)'
   endif
-  if (any(hh(1:npart).le.0.)) then
-     print*,'interpolate3D_projection: warning: ignoring some or all particles with h <= 0'
-  endif
+  !nout = count(hh(1:npart).le.0.)
+  !if (nout.gt.0) then
+  !   print*,'interpolate3D_projection: warning: ignoring ',nout,' particles with h <= 0'
+  !endif
   !
   !--check column density table has actually been setup
   !
