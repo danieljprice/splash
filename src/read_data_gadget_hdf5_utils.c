@@ -12,6 +12,17 @@
 #include <assert.h>
 #include <string.h>
 #include <hdf5.h>
+static int debug = 0;
+
+int checkfordataset(hid_t file_id, char *datasetname);
+int read_gadgethdf5_dataset(hid_t group_id, char *datasetname, int itype, int maxtypes, int npartoftype[maxtypes],
+                            int i0[maxtypes], int ncol, int isrequired[ncol], int   *j);
+int get_rank(hid_t dataspace_id);
+int get_rank_by_name(hid_t group_id, char *name);
+void set_blocklabel(int *icol, int *irank, char *name);
+void read_gadgethdf5_data_fromc(int *icol, int *npartoftypei, double temparr[*npartoftypei],
+                                int *itype, int *i0);
+
 void read_gadget_hdf5_header(char   *filename,
                              int    maxtypes,
                              int    *npartoftype[maxtypes],
@@ -26,8 +37,6 @@ void read_gadget_hdf5_header(char   *filename,
                              int *ndimV,
                              int *nfiles,
                              int *ncol,
-                             int nlabels,
-                             char *label[nlabels],
                              int *ierr)
    {
    hid_t     file_id;
@@ -38,7 +47,7 @@ void read_gadget_hdf5_header(char   *filename,
 
    *ierr = 0;
 
-   printf(" opening %s \n",filename);
+   if (debug) printf("DEBUG: opening %s \n",filename);
    file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
    if (file_id == HDF5_error)
       { printf("ERROR opening %s \n",filename); *ierr = 1; return; }
@@ -47,7 +56,6 @@ void read_gadget_hdf5_header(char   *filename,
     * Open the "Header" dataset and read the header information
     *
     */
-   
    if (!checkfordataset(file_id,"Header"))
       {
          printf(" ERROR: \"Header\" dataset not found in GADGET HDF5 file\n");
@@ -68,6 +76,8 @@ void read_gadget_hdf5_header(char   *filename,
     * Read through all of the attributes in the header, so we
     * can still spit out the values even if they are not used by SPLASH
     */
+   double BoxSize,HubbleParam,Omega0,OmegaLambda;
+   int iFlagStellarAge,iFlagMetals;
    for(i=0; i < nattrib; i++) {
       attrib_id = H5Aopen_idx(group_id,i);
       ssize_t  attr_status;
@@ -81,8 +91,6 @@ void read_gadget_hdf5_header(char   *filename,
       } else if (strcmp(name,"MassTable")==0) {
          status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,massoftype);
          //printf(" Masses = %i %f \n",maxtypes,*massoftype); // %f %f %f\n",massoftype[0]);
-      } else if (strcmp(name,"MassTable")==0) {
-         status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,massoftype);
       } else if (strcmp(name,"NumPart_ThisFile")==0) {
          status = H5Aread(attrib_id,H5T_NATIVE_INT,npartoftype);
       } else if (strcmp(name,"NumPart_Total")==0) {
@@ -97,8 +105,20 @@ void read_gadget_hdf5_header(char   *filename,
          status = H5Aread(attrib_id,H5T_NATIVE_INT,iFlagCool);
       } else if (strcmp(name,"Flag_Feedback")==0) {
          status = H5Aread(attrib_id,H5T_NATIVE_INT,iFlagFeedback);
+      } else if (strcmp(name,"BoxSize")==0) {
+         status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,&BoxSize);
+      } else if (strcmp(name,"HubbleParam")==0) {
+         status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,&HubbleParam);
+      } else if (strcmp(name,"Omega0")==0) {
+         status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,&Omega0);
+      } else if (strcmp(name,"OmegaLambda")==0) {
+         status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,&OmegaLambda);
+      } else if (strcmp(name,"Flag_StellarAge")==0) {
+         status = H5Aread(attrib_id,H5T_NATIVE_INT,&iFlagStellarAge);
+      } else if (strcmp(name,"Flag_Metals")==0) {
+         status = H5Aread(attrib_id,H5T_NATIVE_INT,&iFlagMetals);
       } else {
-         printf(" unknown attribute %s \n",name);
+         if (debug) printf("DEBUG: unknown attribute %s \n",name);
       }
 
       if (status==HDF5_error) {
@@ -123,44 +143,53 @@ void read_gadget_hdf5_header(char   *filename,
    
    hsize_t ndatasets;
    status = H5Gget_num_objs(group_id, &ndatasets);
-   printf(" number of datasets = %i \n",(int)ndatasets);
+   if (debug) printf("DEBUG: number of datasets = %i \n",(int)ndatasets);
 
    *ncol  = 0;
    *ndim  = 0;
    *ndimV = 0;
-   for(i=0; i < ndatasets; i++) {
+   int rank = 0;
+   int j = 0;
+
+   *ndim = get_rank_by_name(group_id,"Coordinates");
+   set_blocklabel(&j,ndim,"Coordinates");
+   *ncol = *ncol + *ndim;
+   if (*ndim > 0) j++;
+
+   *ndimV = get_rank_by_name(group_id,"Velocities");
+   set_blocklabel(&j,ndimV,"Velocities");
+   *ncol = *ncol + *ndimV;
+   if (*ndimV > 0) j++;
+
+   rank = get_rank_by_name(group_id,"Masses");
+   set_blocklabel(&j,&rank,"Masses");
+   *ncol = *ncol + rank;
+   if (rank > 0) j++;
+   
+   for(i=0; i < (int)ndatasets; i++) {
        status       = H5Gget_objname_by_idx(group_id, i, name, 256);
        dataset_id   = H5Dopen(group_id,name);
        dataspace_id = H5Dget_space(dataset_id);
-       int nrank    = H5Sget_simple_extent_ndims(dataspace_id);
-       
-       hsize_t dims[nrank], maxdims[nrank];
-       nrank        = H5Sget_simple_extent_dims(dataspace_id,dims,maxdims);
-       int ngas     = dims[0];
-       int rank;
-       if(nrank>1)
-         {
-           rank = dims[1];
-         } else {
-           rank = 1;
-         }
-       if (strcmp(name,"Coordinates")==0) { *ndim = rank; }
-       if (strcmp(name,"Velocities" )==0) { *ndimV = rank; }
-       if (strcmp(name,"ParticleIDs")==0) 
-          { 
-            printf(" ignoring %s \n",name);
+       rank         = get_rank(dataspace_id);
+
+       if (strcmp(name,"ParticleIDs")&&
+           strcmp(name,"Coordinates")&&
+           strcmp(name,"Velocities")&&
+           strcmp(name,"Masses"))
+          {
+            if (debug) printf("DEBUG: %s x %i \n",name,rank);
+            /* Send the dataset names back to Fortran 
+             * one by one, so they can be filled into 
+             * the array as appropriate */
+            set_blocklabel(&j,&rank,name);
+            *ncol = *ncol + rank;
+            if (rank > 0) j++;
           } else {
-            printf(" %s x %i \n",name,rank);
-            *ncol = *ncol + rank;       
+            if (debug) printf("DEBUG: ignoring %s \n",name);
           }
-       status       = H5Dclose(dataset_id);
-       //for (int j=0; j < rank; j++) {
-          set_blocklabel(&i,&name);
-       //}
-       //label[i] = *name;
-   }
-   //printf(" number of columns = %i \n",*ncol);
-   
+       status       = H5Dclose(dataset_id);       
+   } 
+  
    status = H5Gclose(group_id);
 
    status = H5Fclose( file_id );
@@ -168,129 +197,153 @@ void read_gadget_hdf5_header(char   *filename,
    
    }
 
-void read_gadget_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired, int *ierr)
+void read_gadget_hdf5_data(char *filename,
+                           int maxtypes,
+                           int    npartoftype[maxtypes],
+                           double massoftype[maxtypes],
+                           int ncol,
+                           int isrequired[ncol],
+                           int i0[maxtypes],
+                           int *ierr)
    {
    hid_t     file_id;
-   hid_t     dataset_id, SPHdataset_id;
-   hid_t     dataspace_id, SPHdataspace_id;
-   hid_t     memspace_id;
+   hid_t     group_id;
    herr_t    status;
    herr_t    HDF5_error = -1;
+   char      groupname[12];
+   char      datasetname[256];
+   
+   int i;
 
-   //printf(" re-opening %s \n",filename);
+   if (debug) printf("DEBUG: re-opening %s \n",filename);
    file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
    if (file_id == HDF5_error)
       { printf("ERROR re-opening %s \n",filename); *ierr = 1; return; }
    
-   // re-open tracer particle dataspace
-   
-   dataset_id = H5Dopen(file_id,"tracer particles");
-   if (dataset_id == HDF5_error) 
-      { printf("ERROR opening tracer particle data set \n"); *ierr = 2; return; }
+   /* read dataset for each particle type present in dump file */
+   int itype;
+   for (itype=0;itype<maxtypes;itype++) {
+      if (npartoftype[itype] > 0) {
+         /* If npartoftype[N] > 0 in header, look for dataset of the form PartTypeN */
+         sprintf(groupname,"PartType%i",itype);
+         if (debug) printf("DEBUG: opening group %s\n",groupname);
+         group_id = H5Gopen(file_id,groupname);
+         if (group_id == HDF5_error)
+            { printf("ERROR opening %s group \n",groupname); *ierr = 2; }
+         else {
+            hsize_t ndatasets;
+            status = H5Gget_num_objs(group_id, &ndatasets);
+            if (debug) printf("DEBUG: number of datasets = %i \n",(int)ndatasets);
 
-   dataspace_id = H5Dget_space(dataset_id);
-
-   // Additionally check if an SPH_density data set is present
-    
-   int ncolloop;
-   int gotSPHdata = checkfordataset(file_id,"SPH_density");
-   if (gotSPHdata==0) {
-      //printf(" file does not contain SPH_density data set \n");
-      ncolloop = *ncol;
-   } else {
-      //printf(" file contains SPH-calculated densities \n");
-      ncolloop = *ncol - 1;
+            int j = 0;
+            /* read datasets common to all particle types first */
+            *ierr = read_gadgethdf5_dataset(group_id,"Coordinates",itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
+            *ierr = read_gadgethdf5_dataset(group_id,"Velocities",itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
+            *ierr = read_gadgethdf5_dataset(group_id,"Masses",itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
+/*          *ierr = read_gadgethdf5_dataset(group_id,"SmoothingLength",itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
+            *ierr = read_gadgethdf5_dataset(group_id,"Density",itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
+*/          
+            /* read remaining datasets in the order they appear in the file */
+            for(i=0; i < (int)ndatasets; i++) {
+                status       = H5Gget_objname_by_idx(group_id, i, datasetname, 256);
+                if (strcmp(datasetname,"ParticleIDs")&&
+                    strcmp(datasetname,"Coordinates")&&
+                    strcmp(datasetname,"Velocities")&&
+                    strcmp(datasetname,"Masses")) {
+                   *ierr = read_gadgethdf5_dataset(group_id,datasetname,itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
+                }
+            }
+            H5Gclose(group_id);
+         }
+      }
    }
-
-   // make a temporary space to put each column as we read it
-   hsize_t nparth[1];
-   nparth[0] = *npart;
-   memspace_id = H5Screate_simple(1,nparth,NULL);
-   
-   // dynamically allocate a temporary double array to store one column
-   double* temp = 0;
-   temp = malloc(*npart*sizeof(double));
-
-   // read particle information into one column
-   hsize_t offset[2], count[2];
-   
-   int i;
-   count[0] = *npart;
-   count[1] = 1;
-   /* 
-    * read particle IDs first so we can sort into ID order
-    */
-   offset[0] = 0;
-   offset[1] = 5;  // ID in column 5: should check this but this is for the future
-   status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-   if (status == HDF5_error) { printf("ERROR creating hyperslab \n"); *ierr = 4; }
-   if (!H5Sselect_valid(dataspace_id)) { printf("ERROR selecting hyperslab \n"); *ierr = 5; }
-   // read ID
-   H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
-   int* tempid = 0;
-   tempid = malloc(*npart*sizeof(int));
-   
-   // convert temp (double) into integer array
-   for (i=0;i<*npart;i++) {
-       tempid[i] = (int)temp[i];
-   }
-
-   /* 
-    * start loop from 1 because first array is a useless "tag" array that
-    * we don't need to read.
-    *
-    */
-   for (i=1;i<ncolloop;i++) {
-       if (i != 5 && isrequired[i-1]==1) {  // skip column 5 which is the particle ID, above
-          offset[0] = 0;
-          offset[1] = i;
-          //printf(" getting column %i offset %i \n",i,offset[0]);
-          //printf(" getting column %i count %i \n",i,count[0]);
-
-          status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-          if (status == HDF5_error) { printf("ERROR creating hyperslab \n"); *ierr = 4; }
-
-          if (!H5Sselect_valid(dataspace_id)) { printf("ERROR selecting hyperslab \n"); *ierr = 5; }
-          //printf(" getting column %i count %i \n",i,count[0]);
-
-          H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
-
-          // call Fortran back, sending values in temp array to fill into the main splash dat array
-
-          //receive_data_fromc(&i,&*npart,temp,tempid);
-       }
-   }
-
-   status = H5Sclose(dataspace_id);
-   if (status == HDF5_error) { printf("ERROR closing dataspace \n"); *ierr = 4; }
-   
-   status = H5Dclose(dataset_id);
-   if (status == HDF5_error) { printf("ERROR closing dataset \n"); *ierr = 4; }
-   
-   // Additionally read SPH_density data set if it is present
-   if (gotSPHdata==1) {
-      SPHdataset_id = H5Dopen(file_id,"SPH_density");
-
-      printf(" reading SPH_density data set \n");
-
-      status = H5Dread(SPHdataset_id,H5T_NATIVE_DOUBLE,H5S_ALL,H5S_ALL,H5P_DEFAULT,temp);
-      if (status == HDF5_error) { printf("ERROR reading SPH_density dataspace \n"); *ierr = 3; }
-
-      // call Fortran back, sending values in temp array to fill into the main splash dat array
-      //receive_data_fromc(&ncolloop,&*npart,temp,tempid);
-
-      status = H5Dclose(SPHdataset_id);
-      if (status == HDF5_error) { printf("ERROR closing SPH_density dataset \n"); *ierr = 4; }
-   }
-   
-   // deallocate memory
-   free(tempid);
-   free(temp);
 
    status = H5Fclose( file_id );
    if (status == HDF5_error) { printf("ERROR closing file \n"); *ierr = 7; }
 
    }
+
+int read_gadgethdf5_dataset(hid_t group_id,
+                            char  *datasetname,
+                            int   itype,
+                            int   maxtypes,
+                            int   npartoftype[maxtypes],
+                            int   i0[maxtypes],
+                            int   ncol,
+                            int   isrequired[ncol],
+                            int   *j) 
+{
+   hid_t dataset_id, dataspace_id, memspace_id;
+   herr_t    status;
+   herr_t    HDF5_error = -1;
+   int       ierr;
+   
+   if (!checkfordataset(group_id,datasetname)) { ierr = 1; return ierr; }
+
+   dataset_id   = H5Dopen(group_id,datasetname);
+   dataspace_id = H5Dget_space(dataset_id);
+   int rank     = get_rank(dataspace_id);
+   int k, flag;
+
+   /* do nothing if none of the columns are required */
+   flag = 0;
+   for (k=0;k<rank;k++) {
+      if (isrequired[k]) flag = 1;
+   }
+   if (!flag) {
+      if (debug) printf("DEBUG: skipping %s : not required\n",datasetname);
+      H5Dclose(dataset_id);
+      return 0;
+   }
+
+   if (debug) printf("DEBUG: got %s rank %i \n",datasetname,rank);
+   /* make a temporary array to put each column as we read it */
+   hsize_t nparttmp[1];
+   nparttmp[0] = npartoftype[itype];
+   memspace_id = H5Screate_simple(1,nparttmp,NULL);
+   double *temp = 0;
+   temp = malloc(npartoftype[itype]*sizeof(double));
+
+   if (rank==1) {
+      *j = *j + 1;
+
+      /* read column from file */
+      H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
+
+      /* call Fortran back, sending values in temp array to fill into the main splash dat array */
+      read_gadgethdf5_data_fromc(j,&npartoftype[itype],temp,&itype,&i0[itype]);
+
+   } else {
+      hsize_t offset[2], count[2];
+
+      for (k=1;k<=rank;k++) {
+         *j = *j + 1;
+         count[0] = npartoftype[itype];
+         count[1] = 1;
+         offset[0] = 0;
+         offset[1] = k-1; /* rank */
+         status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+         if (status == HDF5_error) { printf("ERROR creating hyperslab \n"); ierr = 4; }
+         if (!H5Sselect_valid(dataspace_id)) { printf("ERROR selecting hyperslab \n"); ierr = 5; }
+
+         /* read column from file */
+         if (isrequired[*j]) {
+            H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
+
+            /* call Fortran back, sending values in temp array to fill into the main splash dat array */
+            read_gadgethdf5_data_fromc(j,&npartoftype[itype],temp,&itype,&i0[itype]);
+         }
+      }
+   }
+   free(temp);
+
+   status = H5Sclose(dataspace_id);
+   if (status == HDF5_error) { printf("ERROR closing dataspace \n"); ierr = 4; }
+
+   H5Dclose(dataset_id);
+   if (status == HDF5_error) { printf("ERROR closing dataset \n"); ierr = 7; }
+   return ierr;
+}
 
 /*
  *  utility function which checks whether a particular dataset
@@ -298,28 +351,53 @@ void read_gadget_hdf5_data(char *filename, int *npart, int *ncol, int *isrequire
  */
 int checkfordataset(hid_t file_id, char *datasetname)
 {
-    // default is zero
+  /* default is zero */
+  int ispresent=0;
 
-    int ispresent=0;
-    
-    // get number of datasets in file
-    
-    hsize_t ndatasets[1];
-    H5Gget_num_objs(file_id, ndatasets);
-    
-    // loop over all datasets looking for the "SPH_density" dataset
-    // set function value to true (1) if it is present
-    
-    int i;
-    char name[256];
-    for (i=0;i<ndatasets[0];i++) {
-        H5Gget_objname_by_idx(file_id, i, name, 256);
-        printf(" dataset %s in file \n",name);
-        if (strcmp(name,datasetname)==0) {
-           //printf(" %s in file \n",datasetname);
-           ispresent = 1;
-        }
-    }
-    return ispresent;
+  /* get number of datasets in file */
+  hsize_t ndatasets[1];
+  H5Gget_num_objs(file_id, ndatasets);
+
+  /* loop over all datasets looking for dataset matching datasetname
+     set function value to true (1) if it is present  */
+  int i;
+  char name[256];
+  for (i=0;i<(int)ndatasets[0];i++) {
+      H5Gget_objname_by_idx(file_id, i, name, 256);
+      /* printf(" dataset %s in file \n",name); */
+      if (strcmp(name,datasetname)==0) {
+         //printf(" %s in file \n",datasetname);
+         ispresent = 1;
+      }
+  }
+  return ispresent;
 }
 
+/*
+ *  utility function to get dimensionality of a dataset
+ */
+int get_rank(hid_t dataspace_id)
+{
+  int nrank    = H5Sget_simple_extent_ndims(dataspace_id);
+  hsize_t dims[nrank], maxdims[nrank];
+  nrank        = H5Sget_simple_extent_dims(dataspace_id,dims,maxdims);
+  int rank;
+  if(nrank>1)
+    {
+      rank = dims[1];
+    } else {
+      rank = 1;
+    }
+  return rank;
+}
+/*
+ *  utility function to get dimensionality of a dataset
+ */
+int get_rank_by_name(hid_t group_id, char *name)
+{
+  hid_t dataset_id   = H5Dopen(group_id,name);
+  hid_t dataspace_id = H5Dget_space(dataset_id);
+  int rank           = get_rank(dataspace_id);
+  H5Dclose(dataset_id);
+  return rank;
+}

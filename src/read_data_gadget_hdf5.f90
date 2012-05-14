@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -33,8 +33,6 @@
 ! GSPLASH_DARKMATTER_HSOFT if given a value > 0.0 will assign a
 !  smoothing length to dark matter particles which can then be
 !  used in the rendering
-! GSPLASH_CHECKIDS if 'YES','yes','TRUE' or 'true' then reads and checks
-!  particle IDs for negative values and flags these as accreted particles
 !
 ! the data is stored in the global array dat
 !
@@ -58,44 +56,80 @@
 ! Partial data read implemented Nov 2006 means that columns with
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
+!
+!  The module below contains interface routines to c functions
+!  that perform the actual calls to the HDF5 libs
+!
+!-------------------------------------------------------------------------
 module gadgethdf5read
  use params, only:maxplot,doub_prec
  use labels, only:lenlabel
+ use, intrinsic :: iso_c_binding, only:c_int,c_double,c_char
  implicit none
  real :: hsoft
  character(len=lenlabel), dimension(maxplot) :: blocklabelgas
+ integer, dimension(maxplot) :: blocksize
  logical :: havewarned = .false.
  integer, parameter :: maxtypes = 6
 
  interface
    subroutine read_gadget_hdf5_header(filename,maxtypes,npartoftypei,massoftypei,&
                                       timeh,zh,iFlagSfr,iFlagFeedback,Nall,iFlagCool, &
-                                      ndim,ndimV,nfiles,ncol,nlabels,labels,ierr) bind(c)
-    use, intrinsic :: iso_c_binding, only:C_INT,C_DOUBLE,c_char
+                                      ndim,ndimV,nfiles,ncol,ierr) bind(c)
     import
     implicit none
-    character(kind=c_char), dimension(1), intent(in) :: filename
-    integer(kind=c_int), intent(in), value :: maxtypes,nlabels
+    character(kind=c_char), dimension(*), intent(in) :: filename
+    integer(kind=c_int), intent(in), value :: maxtypes
     integer(kind=c_int), intent(out) :: iFlagSfr,iFlagFeedback,iFlagCool
     integer(kind=c_int), dimension(6), intent(out) :: npartoftypei,Nall
     real(kind=c_double), dimension(6), intent(out) :: massoftypei
     real(kind=c_double), intent(out) :: timeh,zh
     integer(kind=c_int), intent(out) :: ndim,ndimV,nfiles,ncol,ierr
-    character(kind=c_char), dimension(nlabels), intent(out) :: labels
    end subroutine read_gadget_hdf5_header
 
-   subroutine read_gadget_hdf5_data(filename,npart,ncol,isrequired,ierr) bind(c)
+   subroutine read_gadget_hdf5_data(filename,maxtypes,npartoftypei,massoftypei,&
+                                    ncol,isrequired,i0,ierr) bind(c)
     import
     implicit none
-    character(len=*),         intent(in)  :: filename
-    integer, dimension(ncol), intent(in)  :: isrequired
-    integer,                  intent(in)  :: npart,ncol
-    integer,                  intent(out) :: ierr
+    character(kind=c_char), dimension(*), intent(in)  :: filename
+    integer(kind=c_int), intent(in), value :: maxtypes
+    integer(kind=c_int), dimension(6), intent(in) :: npartoftypei
+    real(kind=c_double), dimension(6), intent(in) :: massoftypei
+    integer(kind=c_int), intent(in), value  :: ncol
+    integer(kind=c_int), intent(out) :: ierr
+    integer(kind=c_int), dimension(ncol), intent(in)  :: isrequired
+    integer(kind=c_int), dimension(maxtypes), intent(in) :: i0
    end subroutine read_gadget_hdf5_data
  end interface
 
+contains
+ !---------------------------------------------------------------------------
+ !
+ ! function to safely convert a string from c format (ie. with a terminating
+ ! ascii null character) back to a normal Fortran string
+ !
+ !---------------------------------------------------------------------------
+  function fstring(array)
+   implicit none
+   character(kind=c_char), dimension(:), intent(in) :: array
+   character(len=size(array)-1) :: fstring
+   integer :: i
+
+   fstring = ''
+   do i=1,size(array)
+      if (array(i).eq.achar(0)) exit
+      fstring(i:i) = array(i)
+   enddo
+
+  end function fstring
+
 end module gadgethdf5read
 
+!-------------------------------------------------------------------------
+!
+!  The routine that reads the data into splash's internal arrays
+!
+!-------------------------------------------------------------------------
 subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
   use params,         only:doub_prec,maxparttypes,maxplot
@@ -105,6 +139,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use mem_allocation, only:alloc
   use labels,         only:ih,irho,ipmass,labeltype
   use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
+  use asciiutils,     only:cstring
   use gadgethdf5read, only:hsoft,blocklabelgas,havewarned,read_gadget_hdf5_header, &
                            read_gadget_hdf5_data,maxtypes
   implicit none
@@ -112,24 +147,20 @@ subroutine read_data(rootname,istepstart,nstepsread)
   integer, intent(out)               :: nstepsread
   character(len=*), intent(in)       :: rootname
   character(len=len(rootname)+10)    :: datfile,densfile,hfile
-  character(len=4)                   :: blocklabel
   character(len=20)                  :: string
   integer, dimension(maxparttypes)   :: npartoftypei,Nall
-  integer, dimension(:), allocatable :: iamtemp
-  integer               :: i,j,k,n,itype,icol,ierr,ierrh,ierrrho,nhset,nvec,ifile
-  integer               :: index1,index2,indexstart,indexend,nmassesdumped,ntypesused
-  integer               :: ncolstep,npart_max,nstep_max,ntoti,nacc,ntotall,idot
-  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles,istart,nhfac
-  integer               :: nextracols,nstarcols,i1,i2,i3,i4,lenblock,idumpformat,inull
-  integer, dimension(6) :: i0,i1all,i2all
+  integer               :: i,j,itype,ierr,ierrh,ierrrho,nhset,ifile
+  integer               :: index1,index2
+  integer               :: ncolstep,npart_max,nstep_max,ntoti,ntotall,idot
+  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles,nhfac
+  integer, dimension(6) :: i0
   integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
-  logical               :: iexist,reallocate,checkids,usez
-  logical, dimension(6) :: ireadtype
+  logical               :: iexist,reallocate,usez
   real(doub_prec)                    :: timetemp,ztemp
   real(doub_prec), dimension(6)      :: massoftypei
-  real, dimension(:), allocatable    :: dattemp1
   real :: hfact,hfactmean
   real, parameter :: pi = 3.1415926536
+  integer, dimension(maxplot) :: isrequired
 
   nstepsread = 0
   if (maxparttypes.lt.6) then
@@ -165,9 +196,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !
   ndim  = 0
   ndimV = 0
-  idumpformat = 0
-  idumpformat = ienvironment('GSPLASH_FORMAT')
-  checkids    = lenvironment('GSPLASH_CHECKIDS')
+!  idumpformat = ienvironment('GSPLASH_FORMAT')
+!  checkids    = lenvironment('GSPLASH_CHECKIDS')
   usez        = lenvironment('GSPLASH_USE_Z')
 !
 !--read data from snapshots
@@ -197,16 +227,13 @@ subroutine read_data(rootname,istepstart,nstepsread)
   npartoftypei(:) = 0.
   Nall(:) = 0.
   massoftypei(:) = 0.
-  call read_gadget_hdf5_header(trim(datfile)//achar(0),maxtypes, &
+  call read_gadget_hdf5_header(cstring(datfile),maxtypes, &
        npartoftypei,massoftypei,timetemp,ztemp,iFlagSfr,iFlagFeedback,Nall,&
-       iFlagCool,ndim,ndimV,nfiles,ncolstep,maxplot,blocklabelgas,ierr)
+       iFlagCool,ndim,ndimV,nfiles,ncolstep,ierr)
   if (ierr /= 0) then
      print "(a)", '*** ERROR READING HEADER ***'
      return
   endif
-  do i=1,ncolstep
-     print*,i,' blocklabelgas = ',blocklabelgas(i)
-  enddo
 
  ! read(iunit,iostat=ierr) npartoftypei(1:6),massoftypei,timetemp,ztemp, &
  !     iFlagSfr,iFlagFeedback,Nall(1:6),iFlagCool,nfiles
@@ -223,7 +250,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !  check that the sequence starts from the correct file
   !
   if (nfiles.gt.1) then
-     idot = len_trim(datfile)-1
+     idot = index(datfile,'.hdf5')-2 !len_trim(datfile)-1
      if (ifile.eq.1 .and. datfile(idot:idot+1).ne.'.0') then
         if (nfiles.lt.100) then
            string = "(/,a,i2,a,/,a,/)"
@@ -231,13 +258,12 @@ subroutine read_data(rootname,istepstart,nstepsread)
            string = "(/,a,i7,a,/,a,/)"
         endif
         print string,' ERROR: read is from multiple files (nfiles = ',nfiles,')',&
-                  '        but this is not the first file (does not end in .0): skipping...'
+                  '        but this is not the first file (does not end in .0.hdf5): skipping...'
         close(iunit)
         return
      endif
   endif
 
-  iformat = 0
   if (ifile.eq.1) then
      ncolumns = ncolstep
   !
@@ -255,8 +281,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
         print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (set GSPLASH_USE_Z=yes to use in legend)'
      endif
   endif
-  print*,'Npart (by type) : ',npartoftypei
-  if (ifile.eq.1) print*,'Mass  (by type) : ',massoftypei
+  print*,'Npart (by type) : ',npartoftypei(1:6)
+  if (ifile.eq.1 .and. any(massoftypei.gt.0.)) print*,'Mass  (by type) : ',massoftypei
   print*,'N_gas           : ',npartoftypei(1)
   print*,'N_total         : ',ntoti
   if (ifile.eq.1) print*,'N data columns  : ',ncolstep
@@ -283,22 +309,6 @@ subroutine read_data(rootname,istepstart,nstepsread)
      hfact = 1.2 ! related to the analytic neighbour number (hfact=1.2 gives 58 neighbours in 3D)
      open(unit=iunitd,file=densfile,iostat=ierrrho,status='old',form='formatted')
      open(unit=iunith,file=hfile,iostat=ierrh,status='old',form='formatted')
-
-     if (idumpformat.eq.2) then
-        if (ih.eq.0 .and. (hsoft.gt.tiny(hsoft) .or. ierrrho.eq.0 .or. ierrh.eq.0)) then
-           ncolumns = ncolumns + 1
-           blocklabelgas(ncolumns) = 'HSML'
-           ih = ncolumns
-           call set_labels
-        endif
-        if (irho.eq.0 .and. (hsoft.gt.tiny(hsoft) .or. ierrrho.eq.0 .or. ierrh.eq.0)) then
-           ncolumns = ncolumns + 1
-           blocklabelgas(ncolumns) = 'RHO '
-           irho = ncolumns
-           call set_labels
-        endif
-     endif
-
   !
   !--if successfully read header, increment the nstepsread counter
   !
@@ -378,332 +388,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !--read particle data
   !
   got_particles: if (ntoti.gt.0) then
-     !
-     !--read positions of all particles
-     !  (note that errors on position read are fatal)
-     !
-     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
-     if (iformat.eq.2 .and. blocklabel.ne.'POS ')  then
-        print "(a)",' WARNING: expecting positions, got '//blocklabel//' in data read'
-     endif
-     if (any(required(1:3))) then
-        print*,'positions ',index2
-        if (nfiles.gt.1) then
-           !
-           !--read data into type order if multiple files are present:
-           !  this means the offset position is different for each type
-           !
-           if (sum(npartoftypei).ne.index2) print*,' ERROR: number of positions .ne. sum of types'
-           read (iunit, iostat=ierr) ((dat(j,1:3,i),j=i0(itype)+1,i0(itype)+npartoftypei(itype)),itype=1,ntypes)
-        else
-           read (iunit, iostat=ierr) (dat(j,1:3,i),j=1,index2)
-        endif
-        if (ierr /= 0) then
-           print "(a)",'error encountered whilst reading positions '
-           return
-        endif
-     else
-        read(iunit, iostat=ierr)
-        if (ierr /= 0) then
-           print "(a)",'error skipping positions '
-           return
-        endif
-     endif
-     !
-     !--same for velocities
-     !
-     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
-     if (iformat.eq.2 .and. blocklabel.ne.'VEL ')  then
-        print "(a)",' WARNING: expecting velocity, got '//blocklabel//' in data read'
-     endif
-     if (any(required(4:6))) then
-        print*,'velocities ',index2
-        if (nfiles.gt.1) then
-           !--see above re: type order
-           if (sum(npartoftypei).ne.index2) print*,' ERROR: number of velocities .ne. sum of types'
-           read (iunit, iostat=ierr) ((dat(j,4:6,i),j=i0(itype)+1,i0(itype)+npartoftypei(itype)),itype=1,ntypes)
-        else
-           read (iunit, iostat=ierr) (dat(j,4:6,i),j=1,index2)
-        endif
-        if (ierr /= 0) then
-           print "(a)",'error encountered whilst reading velocities'
-        endif
-     else
-        read(iunit, iostat=ierr)
-        if (ierr /= 0) then
-           print "(a)",'error skipping velocities '
-           return
-        endif
-     endif
-     !
-     !--skip read of particle ID (only required if we sort the particles
-     !  back into their correct order, which is not implemented at present)
-     !  OR if using particle ID to flag dead particles
-     !
-     !  For multiple files we only allocate and read the IDs for one file
-     !
-     if (checkids) then
-        print*,'particle ID ',ntoti
-        if (allocated(iamtemp)) deallocate(iamtemp)
-        allocate(iamtemp(ntoti))
-     endif
-
-     call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
-     if (iformat.eq.2 .and. blocklabel.ne.'ID  ') then
-        print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
-     endif
-
-     if (index2.gt.0) then
-        if (checkids .and. required(ih)) then
-           !--particle IDs are currently only used to set h -ve for accreted particles
-           !  so do not read if h not required
-           read (iunit,iostat=ierr) iamtemp(1:index2)
-        else
-           read (iunit,iostat=ierr) ! skip this line
-        endif
-        if (ierr /= 0) then
-           print "(a)",'error encountered whilst reading particle ID'
-        endif
-     endif
-     !
-     !--read particle masses
-     !
-     !--work out total number of masses dumped
-     nmassesdumped = 0
-     do itype = 1,6
-        if (abs(massoftypei(itype)).lt.tiny(massoftypei)) then
-           nmassesdumped = nmassesdumped + npartoftypei(itype)
-        endif
-     enddo
-
-     if (ipmass.eq.0) then
-        masstype(1:6,i) = real(massoftypei(1:6))
-     else
-        if (required(ipmass)) then
-           print*,'particle masses ',nmassesdumped
-           !--read this number of entries
-           if (nmassesdumped.gt.0) then
-              if (allocated(dattemp1)) deallocate(dattemp1)
-              allocate(dattemp1(nmassesdumped))
-              call read_blockheader(idumpformat,iunit,nmassesdumped,index2,blocklabel,lenblock,nvec)
-              if (iformat.eq.2 .and. blocklabel.ne.'MASS')  then
-                 print "(a)",' WARNING: expecting particle masses, got '//blocklabel//' in data read'
-              endif
-           else
-              index2 = 0
-           endif
-
-           if (index2.gt.0) then
-              read(iunit,iostat=ierr) dattemp1(1:index2)
-           endif
-           if (ierr /= 0) then
-              print "(a)",'error reading particle masses'
-           endif
-           !--now copy to the appropriate sections of the dat array
-           indexstart = 1
-           !index1 = 1
-
-           do itype=1,6
-              if (npartoftypei(itype).ne.0) then
-                 !--work out the appropriate section of the dat array for this particle type
-                 index1 = i0(itype) + 1
-                 index2 = i0(itype) + npartoftypei(itype)
-
-                 if (abs(massoftypei(itype)).lt.tiny(massoftypei)) then ! masses dumped
-                    indexend = indexstart + npartoftypei(itype) - 1
-                    if (debugmode) &
-                       print*,' read ',npartoftypei(itype),' masses for '//trim(labeltype(itype))// &
-                              ' particles',index1,'->',index2,indexstart,'->',indexend
-
-                    dat(index1:index2,ipmass,i) = dattemp1(indexstart:indexend)
-                    indexstart = indexend + 1
-                 else  ! masses not dumped
-                    if (debugmode) print "(a,es10.3,i10,a,i10)",&
-                      ' setting masses for '//trim(labeltype(itype))//' particles = ', &
-                       real(massoftypei(itype)),index1,'->',index2
-
-                    dat(index1:index2,ipmass,i) = real(massoftypei(itype))
-                 endif
-                 !index1 = index2 + 1
-              endif
-           enddo
-           if (allocated(dattemp1)) deallocate(dattemp1)
-        elseif (nmassesdumped.gt.0) then
-           read(iunit,iostat=ierr)
-           if (ierr /= 0) then
-              print "(a)",'error reading particle masses'
-           endif
-        endif
-     endif
-     !
-     !--read other quantities for rest of particles
-     !
-     print*,'gas properties ',npartoftypei(1)
-     if (ipmass.eq.0) then
-        istart = 7
-     else
-        istart = 8
-     endif
-     icol = istart-1
-     gas_properties: do while (icol.lt.ncolstep) !icol=istart,ncolstep !-nextraveccols
-        !!print*,icol
-        i3 = 0
-        i4 = 0
-        ireadtype(:) = .false.
-
-        if (idumpformat.eq.2) then
-           if (icol+1.le.ih) then
-              call read_blockheader(idumpformat,iunit,npartoftypei(1),index2,blocklabel,lenblock,nvec)
-           else
-              call read_blockheader(idumpformat,iunit,0,index2,blocklabel,lenblock,nvec)
-           endif
-           icol = icol + nvec
-           !
-           !--work out from the number of entries what mix of particle types
-           !  the quantity is defined on
-           !
-           if (index2.eq.ntoti) then
-              i1 = i0(1) + 1
-              i2 = i1 + ntoti - 1
-              print*,blocklabel//' (',index2,': all particles)'
-              ireadtype(:) = .true.
-           elseif (index2.eq.npartoftypei(1)) then
-              i1 = i0(1) + 1
-              i2 = i1 + index2 - 1
-              print*,blocklabel//' (',index2,': gas particles only)'
-              ireadtype(1) = .true.
-           elseif (index2.eq.npartoftypei(2)) then
-              i1 = i0(2) + 1
-              i2 = i1 + index2 - 1
-              print*,blocklabel//' (',index2,': dark matter particles only)'
-              ireadtype(2) = .true.
-           elseif (index2.eq.npartoftypei(1)+npartoftypei(2)) then
-              i1 = i0(1) + 1
-              i2 = i1 + index2 - 1
-              print*,blocklabel//' (',index2,': gas+dark matter particles only)'
-              ireadtype(1:2) = .true.
-           elseif (index2.eq.npartoftypei(5)) then
-              i1 = i0(5) + 1
-              i2 = i1 + index2 - 1
-              print*,blocklabel//' (',index2,': star particles only)'
-              ireadtype(5) = .true.
-           elseif (index2.eq.npartoftypei(1)+npartoftypei(5)) then
-              i1 = i0(1) + 1
-              i2 = i1 + npartoftypei(1) - 1
-              i3 = i0(5) + 1
-              i4 = i3 + npartoftypei(5) - 1
-              print*,blocklabel//' (',index2,': gas+star particles only)'
-              ireadtype(1) = .true.
-              ireadtype(5) = .true.
-           else
-              print*,blocklabel//': ERROR in block length/quantity defined on unknown mix of types n = (',index2,')'
-              i1 = i0(1)+1
-              i2 = i0(1)+index2
-           endif
-        else
-           nvec = 1
-           icol = icol + nvec
-           if (icol.gt.ncolstep-nstarcols) then
-              i1 = i0(5) + 1
-              i2 = i1 + npartoftypei(5) - 1
-              print*,'star particle properties ',icol,i1,i2
-              ireadtype(5) = .true.
-           else
-              !--default is a quantity defined only on gas particles
-              i1 = i0(1) + 1
-              i2 = i1 + npartoftypei(1) - 1
-              ireadtype(1) = .true.
-           endif
-        endif
-
-        !
-        !--construct the array offsets required when reading from multiple files
-        !
-        ntypesused = 0
-        do itype=1,6
-           if (ireadtype(itype) .and. npartoftypei(itype).gt.0) then
-              ntypesused = ntypesused + 1
-              i1all(ntypesused) = i0(itype) + 1
-              i2all(ntypesused) = i0(itype) + npartoftypei(itype)
-           endif
-        enddo
-
-        if (npartoftypei(1).gt.0) then
-           if (required(icol)) then
-              if (i3.gt.0) then
-                 if (nfiles.gt.1) then
-                    read (iunit,iostat=ierr) (dat(i1all(itype):i2all(itype),icol,i),itype=1,ntypesused)
-                 else
-                    read (iunit,iostat=ierr) dat(i1:i2,icol,i),dat(i3:i4,icol,i)
-                 endif
-              else
-                 if (nvec.gt.1) then
-                    if (nfiles.gt.1) then
-                       read (iunit,iostat=ierr) &
-                        (((dat(k,j,i),j=icol-nvec+1,icol),k=i1all(itype),i2all(itype)),itype=1,ntypesused)
-                    else
-                       read (iunit,iostat=ierr) ((dat(k,j,i),j=icol-nvec+1,icol),k=i1,i2)
-                    endif
-                 else
-                    if (nfiles.gt.1) then
-                       read (iunit,iostat=ierr) (dat(i1all(itype):i2all(itype),icol,i),itype=1,ntypesused)
-                    else
-                       read (iunit,iostat=ierr) dat(i1:i2,icol,i)
-                    endif
-                 endif
-              endif
-           else
-              read (iunit,iostat=ierr)
-           endif
-           if (ierr /= 0) then
-              print "(1x,a,i3)",'ERROR READING PARTICLE DATA from column ',icol
-           endif
-        endif
-     enddo gas_properties
-
-     !if (nextraveccols.gt.0) then
-     !   print*,'chemical species ',index2
-     !   read (iunit, iostat=ierr) (dat(j,4:6,i),j=1,index2)
-     !   if (ierr /= 0) then
-     !      print "(a)",'error encountered whilst reading velocities'
-     !   endif
-     !endif
-!
-!--close data file now that we have finished reading data
-!
-     close(unit=iunit)
-
-     !
-     !--DEAL WITH ACCRETED PARTICLES (in this file only)
-     !  if particle ID is less than zero, treat this as an accreted particle
-     !  (give it a negative smoothing length)
-     !
-     if (checkids) then
-        nacc = 0
-        !--only do this if the smoothing length is required in the data read
-        if (required(ih)) then
-           n = 0
-           !do itype=1,ntypes
-           itype = 1
-           do j=1,npartoftypei(itype)
-              n = n + 1
-              if (iamtemp(n) < 0) then
-                 !if (itype.gt.1) print*,' id -ve on non-gas particle ',itype,j
-                 dat(i0(itype)+j,ih,i) = -abs(dat(i0(itype)+j,ih,i))
-                 nacc = nacc + 1
-              endif
-           enddo
-           !enddo
-           if (nacc.gt.0) then
-              print "(a,i10,a,/,a)",' marking ',nacc,' '//trim(labeltype(1))// &
-                ' particles with negative ID as accreted/dead', &
-                ' (giving them a negative smoothing length so they will be ignored in renderings)'
-           else
-              print "(a)",' no particles with negative ID (i.e. accreted particles) found'
-           endif
-        endif
-        if (allocated(iamtemp)) deallocate(iamtemp)
-     endif
+     
+     isrequired(:) = 0
+     where (required(1:ncolumns)) isrequired(1:ncolumns) = 1
+     
+     call read_gadget_hdf5_data(cstring(datfile),maxtypes,npartoftypei,massoftypei,ncolumns,isrequired,i0,ierr)
 
   endif got_particles
 !
@@ -882,11 +571,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
               print "(4(/,3x,a))",'If you are attempting to perform a "resolution study" by increasing the', &
                                 'neighbour number, this is a *bad idea*, as you are also increasing h.',      &
                                 '(a better way is to increase the smoothness of the integrals without changing h',   &
-                                ' by adopting a smoother kernel such as the M5 Quintic that goes to 3h).'
+                                ' by adopting a smoother kernel such as the M6 Quintic that goes to 3h).'
            endif
            print "(/,3x,a,/,3x,a,/)", &
-              'A good default range is h = 1.2-1.3 (m/rho)^1/ndim ', &
-              'corresponding to around 58-75 neighbours in 3D.'
+              'A good default is h = 1.2 (m/rho)^1/ndim ', &
+              'corresponding to around 58 neighbours in 3D.'
         else
            print "(/,1x,a,f5.1,a,/,1x,a,f4.2,a,i1,a,/)", &
                 'Simulations employ ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
@@ -905,51 +594,52 @@ subroutine read_data(rootname,istepstart,nstepsread)
   endif
 
   if (nstepsread.gt.0) then
-     print*,'>> last step ntot =',sum(npartoftype(:,istepstart+nstepsread-1))
+     print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart+nstepsread-1)),' particles'
   endif
   return
-
-contains
-
-!!-----------------------------------------------------------------
-!! small utility to transparently handle block labelled data read
-!!-----------------------------------------------------------------
- subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec)
-  implicit none
-  integer, intent(in) :: idumpfmt,lun,nexpected
-  integer, intent(out) :: ndumped
-  character(len=4), intent(out) :: blklabel
-  integer, intent(out) :: lenblk
-  integer, intent(out) :: nvec
-
-  blklabel = '    '
-  if (idumpformat.eq.2) then
-     read(lun, iostat=ierr) blklabel,lenblk
-     if (ierr /= 0) then
-        ndumped = 0
-        return
-     endif
-     if (blklabel.eq.'POS ' .OR. blklabel.eq.'VEL ' .OR. blklabel.eq.'ACCE' .OR. blklabel.eq.'BFLD') then
-        ndumped = (lenblk-8)/12
-        nvec = 3
-     else
-        ndumped = (lenblk-8)/4
-        nvec = 1
-     endif
-     !print*,blklabel,lenblk,ndumped
-     !if (nexpected.gt.0) then
-     !   if (ndumped.ne.nexpected) then
-     !      !print*,'warning: number of '//blklabel//' dumped (',ndumped,') /= expected (',nexpected,')'
-     !   endif
-     !endif
-  else
-     ndumped = nexpected
-  endif
-
-  return
- end subroutine read_blockheader
 
 end subroutine read_data
+
+subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,itype,i0) bind(c)
+  use, intrinsic :: iso_c_binding, only:c_int,c_double
+  use particle_data,  only:dat
+  use settings_data,  only:debugmode
+  use labels,         only:label
+  implicit none
+  integer(kind=c_int), intent(in) :: icol,npartoftypei,itype,i0
+  real(kind=c_double), dimension(npartoftypei), intent(in) :: temparr
+  !integer(kind=c_int), dimension(npart), intent(in) :: id
+  integer(kind=c_int) :: i,icolput
+  integer :: nmax
+
+  icolput = icol
+  if (debugmode) print "(a,i2,a,i2,a,i8)",'DEBUG: reading column ',icol,' type ',itype,' -> '//trim(label(icolput))//', offset ',i0
+  if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
+     print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
+     return
+  endif
+  nmax = size(dat(:,1,1))
+  if (i0.lt.0) then
+     print*,'ERROR: i0 = ',i0,' but should be positive: SOMETHING IS VERY WRONG...'
+     return
+  elseif (i0+npartoftypei.gt.nmax) then
+     print "(a,i8,a)",' ERROR: offset = ',i0,': read will exceed array dimensions in receive_data_fromc'
+     nmax = nmax - i0
+  else
+     nmax = npartoftypei
+  endif
+
+  do i=1,nmax
+    ! if (id(i).lt.1 .or. id(i).gt.npartoftype(i)) then
+    !    print*,' ERROR in particle id = ',id(i)
+    ! else
+    !    dat(id(i),icolput,1) = real(temparr(i))
+    ! endif
+    dat(i0+i,icolput,1) = real(temparr(i))
+  enddo
+
+  return
+end subroutine read_gadgethdf5_data_fromc
 
 !!------------------------------------------------------------
 !! set labels for each column of data
@@ -962,11 +652,10 @@ subroutine set_labels
   use settings_data,  only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry,       only:labelcoord
   use system_utils,   only:envlist,ienvironment
-  use gadgethdf5read, only:hsoft,blocklabelgas
+  use gadgethdf5read, only:hsoft,blocklabelgas,blocksize
   use asciiutils,     only:lcase
   implicit none
-  integer :: i,nextracols,nstarcols,icol,ihset
-  character(len=30), dimension(10) :: labelextra
+  integer :: i,j,icol,irank
 
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -977,170 +666,42 @@ subroutine set_labels
      return
   endif
 
-  if (iformat.eq.2) then
-     icol = 0
-     do i=1,size(blocklabelgas)
-        icol = icol + 1
+  icol = 1
+  ix = 0
+  do i=1,size(blocklabelgas)
+     irank = blocksize(i)
+     if (irank.gt.0 .and. (len_trim(blocklabelgas(i)).gt.0)) then
         select case(blocklabelgas(i))
-        case('POS ')
+        case('Coordinates')
            ix(1) = icol
-           ix(2) = icol+1
-           ix(3) = icol+2
-        case('VEL ')
+           ix(2) = icol + 1
+           if (irank.ge.3) ix(3) = icol + 2
+        case('Velocities')
            ivx = icol
-        case('ACCE')
-           iax = icol
-        case('BFLD')
-           iBfirst = icol
-        case('MASS')
-           ipmass = icol
-        case('U   ')
-           iutherm = icol
-        case('RHO ')
-           irho = icol
-        case('NE  ')
-           label(icol) = 'N\de\u'
-        case('NH  ')
-           label(icol) = 'N\dH\u'
-        case('HSML')
+        case('SmoothingLength')
            ih = icol
-        case('NHP ')
-           label(icol) = 'N\dH+\u'
-        case('NHE ')
-           label(icol) = 'N\dHe\u'
-        case('NHEP')
-           label(icol) = 'N\dHe+\u'
-        case('elec')
-           label(icol) = 'N\de\u'
-        case('HI  ')
-           label(icol) = 'HI'
-        case('HII ')
-           label(icol) = 'HII'
-        case('HeI ')
-           label(icol) = 'HeI'
-        case('HeII')
-           label(icol) = 'HeII'
-        case('H2I ')
-           label(icol) = 'H\d2\uI'
-        case('H2II')
-           label(icol) = 'H\d2\uII'
-        case('HM  ')
-           label(icol) = 'HM'
-        case('SFR ')
-           label(icol) = 'Star formation rate'
-        case('TEMP')
-           label(icol) = 'temperature'
-        case('POT ')
-           label(icol) = 'potential'
-        case('AGE ')
-           label(icol) = 'Stellar formation time'
-        case('Z   ')
-           label(icol) = 'Metallicity'
-        case('ENDT')
-           label(icol) = 'd(Entropy)/dt'
-        case('STRD')
-           label(icol) = 'Stress (diagonal)'
-        case('STRO')
-           label(icol) = 'Stress (off-diagonal)'
-        case('STRB')
-           label(icol) = 'Stress (bulk)'
-        case('SHCO')
-           label(icol) = 'Shear coefficient'
-        case('TSTP')
-           label(icol) = 'Time step'
-        case('DBDT')
-           label(icol) = 'dB/dt'
-        case('DIVB')
-           label(icol) = 'div B'
-           idivB = icol
-        case('ABVC')
-           label(icol) = 'alpha\dvisc\u'
-        case('AMDC')
-           label(icol) = 'alpha\dresist\u'
-        case('PHI ')
-           label(icol) = 'div B cleaning function'
-        case('COOR')
-           label(icol) = 'Cooling Rate'
-        case('CONR')
-           label(icol) = 'Conduction Rate'
-        case('BFSM')
-           label(icol) = 'B\dsmooth\u'
-        case('DENN')
-           label(icol) = 'Denn'
-        case('CRC0')
-           label(icol) = 'Cosmic Ray C0'
-        case('CRP0')
-           label(icol) = 'Cosmic Ray P0'
-        case('CRE0')
-           label(icol) = 'Cosmic Ray E0'
-        case('CRn0')
-           label(icol) = 'Cosmic Ray n0'
-        case('CRco')
-           label(icol) = 'Cosmic Ray Thermalization Time'
-        case('CRdi')
-           label(icol) = 'Cosmic Ray Dissipation Time'
-        case('BHMA')
-           label(icol) = 'Black hole mass'
-        case('BHMD')
-           label(icol) = 'black hole mass accretion rate'
-        case('MACH')
-           label(icol) = 'Mach number'
-        case('DTEG')
-           label(icol) = 'dt (energy)'
-        case('PSDE')
-           label(icol) = 'Pre-shock density'
-        case('PSEN')
-           label(icol) = 'Pre-shock energy'
-        case('PSXC')
-           label(icol) = 'Pre-shock X\d\u'
-        case('DJMP')
-           label(icol) = 'Density jump'
-        case('EJMP')
-           label(icol) = 'Energy jump'
-        case('CRDE')
-           label(icol) = 'Cosmic Ray injection'
-        case('PRES')
-           label(icol) = 'pressure'
-        case('ID  ')
-           icol = icol - 1
+        case('Masses')
+           ipmass = icol
+        case('InternalEnergy')
+           iutherm = icol
+        case('Density')
+           irho = icol
+        case('MagneticField')
+           iBfirst = icol
         case default
-           label(icol) = trim(lcase(blocklabelgas(i)))
+           label(icol:icol+irank-1) = trim(lcase(blocklabelgas(i)))
         end select
-     enddo
-  else
-     do i=1,ndim
-        ix(i) = i
-     enddo
-     ivx = 4
-     ipmass = 7
-     irho = 9        ! location of rho in data array
-     ipr = 0
-     iutherm = 8     !  thermal energy
-     if (iformat.eq.1 .or. iformat.eq.11 .and. ncolumns.gt.10) then
-        label(10) = 'Ne'
-        label(11) = 'Nh'
-        ih = 12        !  smoothing length
-        if (iformat.eq.11) label(13) = 'Star formation rate'
-     else
-        ih = 10
-        if (iformat.eq.1) label(11) = 'Star formation rate'
+        
+        if (irank.eq.ndimV) then
+           iamvec(icol:icol+ndimV-1)   = icol
+           labelvec(icol:icol+ndimV-1) = label(icol)
+           do j=1,ndimV
+              label(icol+j-1) = trim(labelvec(icol))//'\d'//labelcoord(j,1)
+           enddo
+        endif
+        icol = icol + irank
      endif
-     ihset = ienvironment('GSPLASH_HSML_COLUMN',errval=-1)
-     if (ihset.gt.0) ih = ihset
-     !
-     !--deal with extra columns
-     !
-     if (ncolumns.gt.ih) then
-        call envlist('GSPLASH_EXTRACOLS',nextracols,labelextra)
-        do i=ih+1,ih+nextracols
-           label(i) = trim(labelextra(i-ih))
-        enddo
-        call envlist('GSPLASH_STARPARTCOLS',nstarcols,labelextra)
-        do i=ih+nextracols+1,ih+nextracols+nstarcols
-           label(i) = trim(labelextra(i-ih-nextracols))
-        enddo
-     endif
-  endif
+  enddo
   !
   !--set labels of the quantities read in
   !
@@ -1201,20 +762,15 @@ subroutine set_labels
   return
 end subroutine set_labels
 
-subroutine set_blocklabel(icol,name) bind(c)
- use, intrinsic :: iso_c_binding, only:c_int
- use gadgethdf5read, only:blocklabelgas
+subroutine set_blocklabel(icol,irank,name) bind(c)
+ use, intrinsic :: iso_c_binding, only:c_int, c_char
+ use gadgethdf5read, only:blocklabelgas,blocksize,fstring
  implicit none
- integer(kind=c_int), intent(in) :: icol
- character(len=256), intent(in) :: name
- integer :: inull
+ integer(kind=c_int), intent(in) :: icol,irank
+ character(kind=c_char), dimension(256), intent(in) :: name
 
- inull = index(name,achar(0))
- if (inull.gt.0) then
-    blocklabelgas(icol+1) = name(1:inull)
- else
-    blocklabelgas(icol+1) = ' '
- endif
- print*,icol,' name = ',trim(blocklabelgas(icol+1))
+ blocklabelgas(icol+1) = fstring(name)
+ blocksize(icol+1) = irank
+ !print*,icol+1,' name = ',trim(blocklabelgas(icol+1)),' x ',irank
 
 end subroutine set_blocklabel
