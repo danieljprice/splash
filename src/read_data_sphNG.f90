@@ -70,7 +70,7 @@ module sphNGread
  integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
- logical :: usingeulr
+ logical :: usingeulr,cleaning
  logical :: batcode
 
 end module sphNGread
@@ -234,6 +234,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
    usingvecp = .false.
    rtdump = .false.
    imadepmasscolumn = .false.
+   cleaning = .false.
    if (fileident(1:1).eq.'S') then
       smalldump = .true.
    endif
@@ -247,6 +248,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
    endif
    if (index(fileident,'eulr').ne.0) then
       usingeulr = .true.
+   endif
+   if (index(fileident,'clean').ne.0) then
+      cleaning = .true.
    endif
    if (index(fileident,'H2chem').ne.0) then
       h2chem = .true.
@@ -507,6 +511,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       if (narrsizes.ge.4) then
          nmhdarrays = 3 ! Bx,By,Bz
          nmhd = nreal(4) + nreal4(4) + nreal8(4) - nmhdarrays ! how many "extra" mhd arrays
+         if (debug) print*,'DEBUG: ',nmhd,' extra MHD arrays'
       else
          nmhdarrays = 0
       endif
@@ -1455,6 +1460,9 @@ subroutine set_labels
                  label(istartmhd) = 'Euler alpha'
                  label(istartmhd+1) = 'Euler beta'
                  idivB = istartmhd + 2
+              elseif (nmhd.ge.2) then
+                 label(istartmhd) = 'Psi'
+                 idivB = istartmhd + 1
               elseif (nmhd.ge.1) then
                  idivB = istartmhd
               endif
