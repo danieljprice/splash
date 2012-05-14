@@ -16,12 +16,12 @@ static int debug = 0;
 
 int checkfordataset(hid_t file_id, char *datasetname);
 int read_gadgethdf5_dataset(hid_t group_id, char *datasetname, int itype, int maxtypes, int npartoftype[maxtypes],
-                            int i0[maxtypes], int ncol, int isrequired[ncol], int   *j);
+                            int i0[maxtypes], int ncol, int isrequired[ncol], int *id, int   *j);
 int get_rank(hid_t dataspace_id);
 int get_rank_by_name(hid_t group_id, char *name);
 void set_blocklabel(int *icol, int *irank, char *name);
 void read_gadgethdf5_data_fromc(int *icol, int *npartoftypei, double temparr[*npartoftypei],
-                                int *itype, int *i0);
+                                int id[*npartoftypei], int *itype, int *i0);
 
 void read_gadget_hdf5_header(char   *filename,
                              int    maxtypes,
@@ -33,6 +33,7 @@ void read_gadget_hdf5_header(char   *filename,
                              int *iFlagFeedback,
                              int *Nall[maxtypes],
                              int *iFlagCool,
+                             int *igotids,
                              int *ndim,
                              int *ndimV,
                              int *nfiles,
@@ -46,6 +47,7 @@ void read_gadget_hdf5_header(char   *filename,
    herr_t    HDF5_error = -1;
 
    *ierr = 0;
+   *igotids = 0;
 
    if (debug) printf("DEBUG: opening %s \n",filename);
    file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
@@ -85,7 +87,7 @@ void read_gadget_hdf5_header(char   *filename,
       
       hid_t  type_id;
       type_id = H5Aget_type(attrib_id);
-      //type_class = H5Tget_native_type(type_id,H5T_DIR_ASCEND);
+      /*type_class = H5Tget_native_type(type_id,H5T_DIR_ASCEND);*/
       if (strcmp(name,"Time")==0) {
          status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,time);
       } else if (strcmp(name,"MassTable")==0) {
@@ -151,6 +153,10 @@ void read_gadget_hdf5_header(char   *filename,
    int rank = 0;
    int j = 0;
 
+   rank = get_rank_by_name(group_id,"ParticleIDs");
+   if (rank == 1) *igotids = 1;
+   if (debug) printf("DEBUG: got IDs = %i\n",*igotids);
+
    *ndim = get_rank_by_name(group_id,"Coordinates");
    set_blocklabel(&j,ndim,"Coordinates");
    *ncol = *ncol + *ndim;
@@ -214,6 +220,7 @@ void read_gadget_hdf5_data(char *filename,
    char      datasetname[256];
    
    int i;
+   int *id;
 
    if (debug) printf("DEBUG: re-opening %s \n",filename);
    file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
@@ -235,14 +242,24 @@ void read_gadget_hdf5_data(char *filename,
             status = H5Gget_num_objs(group_id, &ndatasets);
             if (debug) printf("DEBUG: number of datasets = %i \n",(int)ndatasets);
 
+            /* read particle ID */
+            int k = 0;
+            id = malloc(npartoftype[itype]*sizeof(int));
+            *ierr = read_gadgethdf5_dataset(group_id,"ParticleIDs",itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&k);
+            /* set all IDs to zero if not read */
+            if (debug) printf("DEBUG: error from ID read = %i, rank = %i \n",*ierr,k);
+            if (*ierr != 0 || k != 1) {
+               for(k=0;k<npartoftype[itype];k++) {
+                  id[k] = 0;
+               }
+            };
+
             int j = 0;
             /* read datasets common to all particle types first */
-            *ierr = read_gadgethdf5_dataset(group_id,"Coordinates",itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
-            *ierr = read_gadgethdf5_dataset(group_id,"Velocities",itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
-            *ierr = read_gadgethdf5_dataset(group_id,"Masses",itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
-/*          *ierr = read_gadgethdf5_dataset(group_id,"SmoothingLength",itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
-            *ierr = read_gadgethdf5_dataset(group_id,"Density",itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
-*/          
+            *ierr = read_gadgethdf5_dataset(group_id,"Coordinates",itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&j);
+            *ierr = read_gadgethdf5_dataset(group_id,"Velocities",itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&j);
+            *ierr = read_gadgethdf5_dataset(group_id,"Masses",itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&j);
+
             /* read remaining datasets in the order they appear in the file */
             for(i=0; i < (int)ndatasets; i++) {
                 status       = H5Gget_objname_by_idx(group_id, i, datasetname, 256);
@@ -250,9 +267,11 @@ void read_gadget_hdf5_data(char *filename,
                     strcmp(datasetname,"Coordinates")&&
                     strcmp(datasetname,"Velocities")&&
                     strcmp(datasetname,"Masses")) {
-                   *ierr = read_gadgethdf5_dataset(group_id,datasetname,itype,maxtypes,npartoftype,i0,ncol,isrequired,&j);
+                   *ierr = read_gadgethdf5_dataset(group_id,datasetname,itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&j);
                 }
             }
+            
+            free(id);
             H5Gclose(group_id);
          }
       }
@@ -271,12 +290,13 @@ int read_gadgethdf5_dataset(hid_t group_id,
                             int   i0[maxtypes],
                             int   ncol,
                             int   isrequired[ncol],
+                            int   *id,
                             int   *j) 
 {
    hid_t dataset_id, dataspace_id, memspace_id;
    herr_t    status;
    herr_t    HDF5_error = -1;
-   int       ierr;
+   int       ierr = 0;
    
    if (!checkfordataset(group_id,datasetname)) { ierr = 1; return ierr; }
 
@@ -307,12 +327,17 @@ int read_gadgethdf5_dataset(hid_t group_id,
    if (rank==1) {
       *j = *j + 1;
 
-      /* read column from file */
-      H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
+      if (!strcmp(datasetname,"ParticleIDs")) {
+         /* read particle IDs from file */
+         H5Dread(dataset_id,H5T_NATIVE_INT,memspace_id,dataspace_id,H5P_DEFAULT,id);
+      
+      } else {
+         /* read column from file */
+         H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
 
-      /* call Fortran back, sending values in temp array to fill into the main splash dat array */
-      read_gadgethdf5_data_fromc(j,&npartoftype[itype],temp,&itype,&i0[itype]);
-
+         /* call Fortran back, sending values in temp array to fill into the main splash dat array */
+         read_gadgethdf5_data_fromc(j,&npartoftype[itype],temp,id,&itype,&i0[itype]);
+      }
    } else {
       hsize_t offset[2], count[2];
 
@@ -331,7 +356,7 @@ int read_gadgethdf5_dataset(hid_t group_id,
             H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
 
             /* call Fortran back, sending values in temp array to fill into the main splash dat array */
-            read_gadgethdf5_data_fromc(j,&npartoftype[itype],temp,&itype,&i0[itype]);
+            read_gadgethdf5_data_fromc(j,&npartoftype[itype],temp,id,&itype,&i0[itype]);
          }
       }
    }
@@ -366,7 +391,7 @@ int checkfordataset(hid_t file_id, char *datasetname)
       H5Gget_objname_by_idx(file_id, i, name, 256);
       /* printf(" dataset %s in file \n",name); */
       if (strcmp(name,datasetname)==0) {
-         //printf(" %s in file \n",datasetname);
+         /*printf(" %s in file \n",datasetname);*/
          ispresent = 1;
       }
   }

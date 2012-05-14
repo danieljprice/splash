@@ -75,12 +75,12 @@ module gadgethdf5read
  interface
    subroutine read_gadget_hdf5_header(filename,maxtypes,npartoftypei,massoftypei,&
                                       timeh,zh,iFlagSfr,iFlagFeedback,Nall,iFlagCool, &
-                                      ndim,ndimV,nfiles,ncol,ierr) bind(c)
+                                      igotids,ndim,ndimV,nfiles,ncol,ierr) bind(c)
     import
     implicit none
     character(kind=c_char), dimension(*), intent(in) :: filename
     integer(kind=c_int), intent(in), value :: maxtypes
-    integer(kind=c_int), intent(out) :: iFlagSfr,iFlagFeedback,iFlagCool
+    integer(kind=c_int), intent(out) :: iFlagSfr,iFlagFeedback,iFlagCool,igotids
     integer(kind=c_int), dimension(6), intent(out) :: npartoftypei,Nall
     real(kind=c_double), dimension(6), intent(out) :: massoftypei
     real(kind=c_double), intent(out) :: timeh,zh
@@ -152,7 +152,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   integer               :: i,j,itype,ierr,ierrh,ierrrho,nhset,ifile
   integer               :: index1,index2
   integer               :: ncolstep,npart_max,nstep_max,ntoti,ntotall,idot
-  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles,nhfac
+  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,igotids,nfiles,nhfac
   integer, dimension(6) :: i0
   integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
   logical               :: iexist,reallocate,usez
@@ -229,7 +229,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   massoftypei(:) = 0.
   call read_gadget_hdf5_header(cstring(datfile),maxtypes, &
        npartoftypei,massoftypei,timetemp,ztemp,iFlagSfr,iFlagFeedback,Nall,&
-       iFlagCool,ndim,ndimV,nfiles,ncolstep,ierr)
+       iFlagCool,igotids,ndim,ndimV,nfiles,ncolstep,ierr)
   if (ierr /= 0) then
      print "(a)", '*** ERROR READING HEADER ***'
      return
@@ -339,7 +339,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !--reallocate memory for main data array
   !
   if (reallocate .or. .not.(allocated(dat))) then
-     call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol))
+     if (igotids.eq.1) then
+        call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol),mixedtypes=.true.)     
+     else
+        call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol))
+     endif
   endif
 
   !
@@ -600,17 +604,18 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
 end subroutine read_data
 
-subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,itype,i0) bind(c)
+subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bind(c)
   use, intrinsic :: iso_c_binding, only:c_int,c_double
-  use particle_data,  only:dat
+  use particle_data,  only:dat,iamtype
   use settings_data,  only:debugmode
-  use labels,         only:label
+  use labels,         only:label,ih
   implicit none
   integer(kind=c_int), intent(in) :: icol,npartoftypei,itype,i0
   real(kind=c_double), dimension(npartoftypei), intent(in) :: temparr
-  !integer(kind=c_int), dimension(npart), intent(in) :: id
+  integer(kind=c_int), dimension(npartoftypei), intent(in) :: id
   integer(kind=c_int) :: i,icolput
-  integer :: nmax
+  integer :: nmax,nerr
+  logical :: useids
 
   icolput = icol
   if (debugmode) print "(a,i2,a,i2,a,i8)",'DEBUG: reading column ',icol,' type ',itype,' -> '//trim(label(icolput))//', offset ',i0
@@ -618,25 +623,38 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,itype,i0) bind(c
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
      return
   endif
-  nmax = size(dat(:,1,1))
-  if (i0.lt.0) then
-     print*,'ERROR: i0 = ',i0,' but should be positive: SOMETHING IS VERY WRONG...'
-     return
-  elseif (i0+npartoftypei.gt.nmax) then
-     print "(a,i8,a)",' ERROR: offset = ',i0,': read will exceed array dimensions in receive_data_fromc'
-     nmax = nmax - i0
-  else
-     nmax = npartoftypei
-  endif
 
-  do i=1,nmax
-    ! if (id(i).lt.1 .or. id(i).gt.npartoftype(i)) then
-    !    print*,' ERROR in particle id = ',id(i)
-    ! else
-    !    dat(id(i),icolput,1) = real(temparr(i))
-    ! endif
-    dat(i0+i,icolput,1) = real(temparr(i))
-  enddo
+  useids = .true.
+  if (all(id.le.0) .or. size(iamtype(:,1)).le.1) useids = .false.
+  if (debugmode) print*,'DEBUG: using particle IDs = ',useids
+
+  nmax = size(dat(:,1,1))
+  if (useids) then
+     nerr = 0
+     !print*,' id range is ',minval(id),' to ',maxval(id),' type ',itype+1,' column = ',trim(label(icolput))
+     do i=1,npartoftypei
+        if (id(i).lt.1 .or. id(i).gt.nmax) then
+           nerr = nerr + 1
+        else
+           dat(id(i),icolput,1) = real(temparr(i))
+           iamtype(id(i),1) = itype + 1
+        endif
+     enddo
+     if (nerr.gt.0) print*,'ERROR: got particle ids outside array dimensions ',nerr,' times'
+  else
+     if (i0.lt.0) then
+        print*,'ERROR: i0 = ',i0,' but should be positive: SOMETHING IS VERY WRONG...'
+        return
+     elseif (i0+npartoftypei.gt.nmax) then
+        print "(a,i8,a)",' ERROR: offset = ',i0,': read will exceed array dimensions in receive_data_fromc'
+        nmax = nmax - i0
+     else
+        nmax = npartoftypei
+     endif
+     do i=1,nmax
+        dat(i0+i,icolput,1) = real(temparr(i))
+     enddo
+  endif
 
   return
 end subroutine read_gadgethdf5_data_fromc
