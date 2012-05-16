@@ -835,7 +835,7 @@ linkerror:
 # to do the two separately
 #
 install: destdircheck installcheck
-	@cd $(BINDIR); for x in ?splash splash; do echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; done;
+	@cd $(BINDIR); for x in *splash*; do echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; done;
 	@echo; echo 'installation complete';
 
 installcheck:
