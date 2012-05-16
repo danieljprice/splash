@@ -18,8 +18,8 @@
 #   MacPorts:
 #      sudo port install cairo
 #
-cairodist=cairo-1.10.2.tar.gz;
-pixmandist=pixman-0.24.0.tar.gz;
+cairodist=cairo-1.12.2.tar.gz;
+pixmandist=pixman-0.24.4.tar.gz;
 installprefix=$PWD/giza;
 url="http://cairographics.org/releases";
 #
