@@ -48,7 +48,15 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!   2.0.beta : (29/08/11)
+!     2.1.0  : (16/05/12)
+!             3D vector field visualisation added; 
+!             GADGET HDF5 read implemented;
+!             page sizes can be specified in pixels;
+!             limits can auto-adapt to device aspect ratio;
+!             more general exact solution from file option;
+!             tiling works with one colour bar per row;
+!             splash calc handles different particle types
+!       2.0  : (29/08/11)
 !             new giza backend - antialiased lines; real fonts; pdf, eps and svg drivers;
 !             fewer build dependencies (only cairo, X11);
 !             support for semi-transparent text;
@@ -305,7 +313,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.0beta [7th Mar ''12]'
+  character(len=*), parameter :: version = 'v2.1.0 [16th May 2012]'
 
   !
   ! initialise some basic code variables
