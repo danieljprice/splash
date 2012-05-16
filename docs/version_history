@@ -1,3 +1,6 @@
+2.1.0:
+3D vector field visualisation added; GADGET HDF5 read implemented; page sizes can be specified in pixels; limits can auto-adapt to device aspect ratio; more general exact solution from file option; tiling works with one colour bar per row; splash calc handles different particle types
+ 
 1.15.0:
 Multiplot with different particle types implemented; calculated quantities list is now pre-filled automatically; preliminary support for r-phi and r-z rendering; outlined solid markers implemented; better handling of multiple types; manual contour levels can be specified in splash.contours; parallel splash to grid; better support for non-square pixels; clipping of numbers at edge of viewport fixed
  
