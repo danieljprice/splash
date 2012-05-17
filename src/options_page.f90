@@ -214,6 +214,7 @@ subroutine submenu_page(ichoose)
      print*,' 0 : draw box and label it with coordinates;'
      print*,' 1 : same as AXIS=0, but also draw the coordinate axes (X=0, Y=0);'
      print*,' 2 : same as AXIS=1, but also draw grid lines at major increments of the coordinates;'
+     print*,' 3 : draw box, ticks and numbers but no axes labels;'
      print*,'10 : draw box and label X-axis logarithmically;'
      print*,'20 : draw box and label Y-axis logarithmically;'
      print*,'30 : draw box and label both axes logarithmically.'

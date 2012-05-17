@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -28,215 +28,6 @@ module pagesetup
  private
 
 contains
-!
-!--this subroutine determines the setup of the plotting page
-!  sorts out labelling of axes, positioning of windows etc
-!  can be used as a replacement for PGENV and PGLABEL
-!
-!  inputs:
-!         iplot  : position of current plot on page
-!         nx     : number of plots across page
-!         ny     : number of plots down page
-!         xmin, xmax, ymin, ymax : plot limits
-!         labelx, labely, title  : axes labels, plot title
-!         just   : just=1 gives equal aspect ratios (same as in PGENV)
-!         axis   : axes options (same as in PGENV)
-!         colourbarwidth : colour bar width in character heights
-!         pagechange : change the physical page between plots
-!
-!subroutine setpage(iplot,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,  &
-!     just,axis,colourbarwidth,titleoffset,isamexaxis,ipagechange)
-!  use plotlib,          only:plot_svp,plot_swin,plot_page,plot_wnad,plot_box
-!  use plotlib_settings, only:plot_chsx_norm,plot_chsy_norm
-!  implicit none
-!  integer, intent(in) :: iplot, nx, ny, just, axis
-!  real, intent(in) :: xmin, xmax, ymin, ymax, colourbarwidth, titleoffset
-!  character(len=*), intent(in) :: labelx, labely, title
-!  character(len=10) :: xopts, yopts
-!  logical, intent(in) :: ipagechange, isamexaxis
-!  real :: vptxmin,vptxmax,vptymin,vptymax,xch,ych
-!
-!  if (ipagechange) then
-!
-!     call plot_page
-!     !
-!     !--query the character height as fraction of viewport
-!     !
-!     xch = plot_chsx_norm
-!     ych = plot_chsy_norm
-!     !
-!     !--default is to use whole viewport
-!     !
-!     vptxmin = 0.001
-!     vptxmax = 0.999
-!     vptymin = 0.001
-!     vptymax = 0.999
-!     !
-!     !--leave room for axes labels if necessary
-!     !
-!     if (axis.GE.0) then
-!        !
-!        !--leave a bit of buffer space if more than one plot on page
-!        !
-!        if (nx.gt.1) then
-!           vptxmin = (ylabeloffset+1.5)*xch
-!        else
-!           vptxmin = (ylabeloffset+1.0)*xch
-!        endif
-!        if (ny.gt.1 .and. .not.isamexaxis) then
-!           vptymin = (xlabeloffset+1.5)*ych
-!        elseif (ny.gt.1) then
-!           vptymin = (xlabeloffset+0.25)*ych
-!        else
-!           vptymin = (xlabeloffset+1.0)*ych
-!        endif
-!     endif
-!     !--also leave room for title if necessary
-!     vptymax = vptymax - titleoffset*ych
-!
-!     !--also leave room for colour bar if necessary
-!     if (colourbarwidth.GT.0.) then
-!        vptxmax = vptxmax - (colourbarwidth + 1.6)*xch
-!     endif
-!
-!     call plot_svp(vptxmin,vptxmax,vptymin,vptymax)
-!
-!     if (just.eq.1) then
-!        call plot_wnad(xmin,xmax,ymin,ymax) ! pgwnad does equal aspect ratios
-!      else
-!        call plot_swin(xmin,xmax,ymin,ymax)
-!     endif
-!
-!--set plot axes (options are exactly as in PGENV, with axis=-3 added)
-!
-!     yopts = '*'
-!     select case(axis)
-!     case(-4)
-!        xopts = 'BCT'
-!     case(-3)
-!        xopts = 'BCST'
-!     case(-2)
-!        xopts = ' '
-!     case(-1)
-!        xopts = 'BC'
-!     case(0)
-!        xopts = 'BCNST'
-!     case(1)
-!        xopts = 'ABCNST'
-!     case(2)
-!        xopts = 'ABCGNST'
-!     case(3)
-!        xopts = 'BCNST'
-!     case(4)
-!        xopts = 'ABCNST'
-!     case(10)
-!        xopts = 'BCNSTL'
-!        yopts = 'BCNST'
-!     case(20)
-!        xopts = 'BCNST'
-!        yopts = 'BCNSTL'
-!     case(30)
-!        xopts = 'BCNSTL'
-!        yopts = 'BCNSTL'
-!     case default
-!        CALL GRWARN('PGENV: illegal AXIS argument.')
-!        xopts = 'BCNST'
-!     end select
-!     if (yopts.eq.'*') yopts = xopts
-
-!     call plot_box(xopts,0.0,0,yopts,0.0,0)
-
-!  elseif (iplot.eq.1) then ! if would be changing page, instead go back to
-!     call pgpanl(1,1)      !                                   first panel
-!  elseif (nx*ny.gt.1) then ! change to next panel, regardless of ipagechange
-!     call plot_page
-!  endif
-
-  !---------------------------------
-  ! set plot limits and label plot
-  !---------------------------------
-
-!  if (just.eq.1) then
-!     call plot_wnad(xmin,xmax,ymin,ymax)  ! repeated for when not called above
-!  else
-!     call plot_swin(xmin,xmax,ymin,ymax)
-!  endif
-
-  !--label plot
-!  if (axis.ge.0 .and. axis.ne.3 .and. axis.ne.4) then
-     !
-     !--label x axis only if on last row
-     !  or if x axis quantities are different
-     !
-!     if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis)) then
-!        call pgmtxt('B',xlabeloffset,0.5,0.5,labelx)
-!     endif
-     !
-     !--always label y axis
-     !
-!     call pgmtxt('L',ylabeloffset,0.5,0.5,labely)
-     !
-     !--always plot title
-     !
-!     call pgmtxt('T',-titleoffset,0.5,0.5,title)
-
-!  endif
-
-!  return
-!end subroutine setpage
-
-!
-!--this subroutine is a cut down version of the above, which ONLY redraws the axes
-!  (so that axes can be redrawn on *top* of what has been plotted).
-!
-!  inputs:
-!         axis   : axes options (same as in PGENV, with axis=-3 added)
-!
-
-subroutine redraw_axes(iaxis)
-  use plotlib, only:plot_box
-  implicit none
-  integer, intent(in) :: iaxis
-  character(len=10) :: xopts, yopts
-!
-!--set plot axes (options are exactly as in PGENV, with axis=-3 added)
-!
-  yopts = '*'
-  select case(iaxis)
-  case(-4)
-     xopts = 'BCT'
-  case(-3)
-     xopts = 'BCST'
-  case(-2)
-     xopts = ' '
-  case(-1)
-     xopts = 'BC'
-  case(0)
-     xopts = 'BCST'
-  case(1)
-     xopts = 'ABCST'
-  case(2)
-     xopts = 'ABCGST'
-  case(10)
-     xopts = 'BCSTL'
-     yopts = 'BCST'
-  case(20)
-     xopts = 'BCST'
-     yopts = 'BCSTL'
-  case(30)
-     xopts = 'BCSTL'
-     yopts = 'BCSTL'
-  case default
-     print*,'redraw_axes: illegal AXIS argument.'
-     xopts = 'BCST'
-  end select
-  if (yopts.eq.'*') yopts = xopts
-
-  call plot_box(xopts,0.0,0,yopts,0.0,0)
-
-  return
-end subroutine redraw_axes
-
 !
 !--this subroutine determines the setup of the plotting page
 !  sorts out labelling of axes, positioning of windows etc
@@ -278,9 +69,9 @@ end subroutine redraw_axes
 !
 !  This version by Daniel Price, July 2006
 !
-  subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,axis, &
-                      vmarginleftin,vmarginrightin,vmarginbottomin,vmargintopin, &
-                      colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits)
+subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,axis, &
+                    vmarginleftin,vmarginrightin,vmarginbottomin,vmargintopin, &
+                    colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits)
   use plotlib,only:plot_svp,plot_swin,plot_box,plot_qvsz,plot_annotate, &
                    plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries, &
                    plot_qvp
@@ -360,8 +151,13 @@ end subroutine redraw_axes
      vmargintop = max(vmargintop,0.7*ych)
      vmarginright = max(vmarginright,0.7*xch)
      !--leave space for labels
-     vmarginleft = vmarginleftin + (ylabeloffset+1.5)*xch
-     vmarginbottom = vmarginbottomin + (xlabeloffset+1.0)*ych
+     if (axis.ne.3) then
+        vmarginleft = vmarginleftin + (ylabeloffset+1.5)*xch
+        vmarginbottom = vmarginbottomin + (xlabeloffset+1.0)*ych
+     else
+        vmarginleft = vmarginleftin + 2.0*xch
+        vmarginbottom = vmarginbottomin + 1.5*ych
+     endif
 
      if (.not.tile) then
         if (ny.gt.1 .and. .not.isamexaxis) then
@@ -501,6 +297,8 @@ end subroutine redraw_axes
     xopts = 'ABCST'
   case(2)
     xopts = 'ABCGST'
+  case(3)
+    xopts = 'BCST'
   case(10)
     xopts = 'BCSTL'
     yopts = 'BCST'
@@ -523,8 +321,12 @@ end subroutine redraw_axes
      ! decide whether to number and label the y axis
      !
      if (ix.eq.1 .and. axis.ge.0) then
-        yopts = '1VN'//trim(yopts)
-        call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
+        if (axis.eq.3) then
+           yopts = '1N'//trim(yopts)
+        else
+           yopts = '1VN'//trim(yopts)
+           call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
+        endif
      elseif (axis.ge.0) then
         !yopts = trim(yopts)//'N'
      endif
@@ -533,7 +335,7 @@ end subroutine redraw_axes
      !
      if (iy.eq.ny .and. axis.ge.0) then
         xopts = 'N'//trim(xopts)
-        call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
+        if (axis.ne.3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
      endif
      !
      ! plot the title if inside the plot boundaries
@@ -546,15 +348,19 @@ end subroutine redraw_axes
      !  or if x axis quantities are different
      !
      if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis)) then
-       call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
+       if (axis.ne.3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
      endif
      !--always plot numbers
      xopts = 'N'//trim(xopts)
      !
      !--always label y axis
      !
-     yopts = '1VN'//trim(yopts)
-     call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
+     if (axis.eq.3) then
+        yopts = '1N'//trim(yopts)
+     else
+        yopts = '1VN'//trim(yopts)
+        call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
+     endif
      !
      !--always plot title
      !
@@ -566,5 +372,59 @@ end subroutine redraw_axes
 
   return
 end subroutine
+
+!
+!--this subroutine is a cut down version of the above, which ONLY redraws the axes
+!  (so that axes can be redrawn on *top* of what has been plotted).
+!
+!  inputs:
+!         axis   : axes options (same as in PGENV, with axis=-4,-3,+3 added)
+!
+
+subroutine redraw_axes(iaxis)
+  use plotlib, only:plot_box
+  implicit none
+  integer, intent(in) :: iaxis
+  character(len=10) :: xopts, yopts
+!
+!--set plot axes (options are exactly as in PGENV, with axis=-4,-3,+3 added)
+!
+  yopts = '*'
+  select case(iaxis)
+  case(-4)
+     xopts = 'BCT'
+  case(-3)
+     xopts = 'BCST'
+  case(-2)
+     xopts = ' '
+  case(-1)
+     xopts = 'BC'
+  case(0)
+     xopts = 'BCST'
+  case(1)
+     xopts = 'ABCST'
+  case(2)
+     xopts = 'ABCGST'
+  case(3)
+     xopts = 'BCST'
+  case(10)
+     xopts = 'BCSTL'
+     yopts = 'BCST'
+  case(20)
+     xopts = 'BCST'
+     yopts = 'BCSTL'
+  case(30)
+     xopts = 'BCSTL'
+     yopts = 'BCSTL'
+  case default
+     print*,'redraw_axes: illegal AXIS argument.'
+     xopts = 'BCST'
+  end select
+  if (yopts.eq.'*') yopts = xopts
+
+  call plot_box(xopts,0.0,0,yopts,0.0,0)
+
+  return
+end subroutine redraw_axes
 
 end module pagesetup
