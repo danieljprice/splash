@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -101,7 +101,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   logical, intent(in) :: use3Dopacity, double_rendering
   real, parameter :: pi=3.141592653589
   integer :: i,iclosest,ierr,ixsec,ishape,itype
-  integer :: nmarked,ncircpart,itrackparttemp
+  integer :: nmarked,ncircpart,itrackparttemp,iadvancenew
   integer, dimension(1000) :: icircpart
   real :: xpt,ypt
   real :: xpt2,ypt2,xcen,ycen,xminwin,xmaxwin,yminwin,ymaxwin
@@ -112,6 +112,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   real, dimension(4) :: xline,yline
   character(len=1) :: char,char2
   logical :: iexit, rotation, verticalbar, iamincolourbar, mixedtypes, use3Dperspective
+  logical :: iadvanceset
 
   if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
@@ -123,6 +124,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
 
   mixedtypes = size(iamtype).ge.npart
   use3Dperspective = abs(dscreen).gt.tiny(0.)
+  iadvanceset = .false.
 
   char = 'A'
   xline = 0.
@@ -1182,13 +1184,22 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         iadvance = abs(iadvance)
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
-        read(char,*,iostat=ierr) iadvance
+        read(char,*,iostat=ierr) iadvancenew
         if (ierr /=0) then
            print*,'*** internal error setting timestep jump'
-           iadvance = 1
+           iadvancenew = 1
+        endif
+        if ((iadvance.gt.1 .or. iadvanceset) .and. iadvance.le.9999) then
+           iadvance = 10*iadvance + iadvancenew
+           if (iadvance.gt.9999) iadvance = 1
+        elseif (iadvancenew.eq.0) then
+           iadvance = 10
+        else
+           iadvance = iadvancenew
         endif
         iadvance = int(zoomfac*iadvance)
         print*,' setting timestep jump = ',iadvance
+        iadvanceset = .true.
      case(')')
         iadvance = int(zoomfac*10)
         print*,' setting timestep jump = ',iadvance
@@ -1469,13 +1480,14 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  logical, intent(in)  :: use_double_rendering
  logical, intent(out) :: interactivereplot
  integer :: ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape
+ integer :: istepjumpnew
  real :: xpt,ypt,xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
  real :: xlength,ylength,renderlength,contlength,drender,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
  real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen,gradient,dr,yint,xmaxin
  real, dimension(4) :: xline,yline
  character(len=1) :: char,char2
- logical :: iexit,iamincolourbar,verticalbar,double_render
+ logical :: iexit,iamincolourbar,verticalbar,double_render,istepjumpset
 
   if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
@@ -1516,6 +1528,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   istepnew = ifirststeponpage - iadvance
   istepsonpage = abs(istep - ifirststeponpage)/iadvance + 1
   istepjump = 1
+  istepjumpset = .false.
 !  print*,'istep = ',istepnew
 !  print*,'steps on page = ',istepsonpage
 
@@ -2113,13 +2126,22 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         lastpanel = 0
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
-        read(char,*,iostat=ierr) istepjump
+        read(char,*,iostat=ierr) istepjumpnew
         if (ierr /=0) then
            print*,'*** internal error setting timestep jump'
-           istepjump = 1
+           istepjumpnew = 1
+        endif
+        if ((istepjump.gt.1 .or. istepjumpset) .and. istepjump.le.9999) then
+           istepjump = 10*istepjump + istepjumpnew
+           if (istepjump.gt.9999) istepjump = 1
+        elseif (istepjumpnew.eq.0) then
+           istepjump = 10
+        else
+           istepjump = istepjumpnew
         endif
         istepjump = int(zoomfac*istepjump)
         print*,' setting timestep jump = ',istepjump
+        istepjumpset = .true.
      case(')')
         istepjump = int(zoomfac*10)
         print*,' setting timestep jump = ',istepjump
