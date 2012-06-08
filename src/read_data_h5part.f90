@@ -67,7 +67,7 @@ end module h5partdataread
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data,   only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
-  use settings_data,   only:ndim,ndimV,ncolumns,ncalc,debugmode,ntypes
+  use settings_data,   only:ndim,ndimV,ncolumns,ncalc,debugmode,ntypes,iverbose
   use mem_allocation,  only:alloc
   use iso_c_binding,   only:c_double,c_int64_t
   use asciiutils,      only:lcase
@@ -102,7 +102,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   dumpfile = trim(rootname)
 
-  print "(1x,a)",'reading h5part format'
+  if (iverbose.ge.1) print "(1x,a)",'reading h5part format'
   print "(26('>'),1x,a,1x,26('<'))",trim(dumpfile)
   !
   !--check if first data file exists
@@ -190,12 +190,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
                     if (trim(type_datasetname)==trim(datasetname) .or. trim(datasetname)=='Phase') then
                        type_datasetname = trim(datasetname)
                        if (itypeidcol.le.0) itypeidcol = int(icolsfile) + 1
-                       print "(a)",' getting particle types from data set '//trim(type_datasetname)
+                       if (iverbose.ge.1) print "(a)",' getting particle types from data set '//trim(type_datasetname)
                     else
-                       print "(a)",' skipping data set '//trim(datasetname)//' of type '//h5part_type(int(idatasettype))
+                       if (iverbose.ge.1) print "(a)",' skipping data set '//trim(datasetname)// &
+                                                      ' of type '//h5part_type(int(idatasettype))
                     endif
                  case default
-                    print "(a)",' skipping data set '//trim(datasetname)//' of type '//h5part_type(int(idatasettype))
+                    if (iverbose.ge.1) print "(a)",' skipping data set '//trim(datasetname)//&
+                                                   ' of type '//h5part_type(int(idatasettype))
                  end select
               endif
            enddo
@@ -216,7 +218,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   if (itypeidcol.le.0) then
      if (typeiddefault) then
-        print "(a)",' Particle type dataset not found in file: Use H5SPLASH_TYPEID to give dataset name'
+        if (iverbose.ge.1) print "(a)",' Particle type dataset not found in file: Use H5SPLASH_TYPEID to give dataset name'
      else
         print "(a)",' WARNING: Particle type dataset '//trim(type_datasetname)//' (from H5SPLASH_TYPEID) not found in file '
      endif
@@ -273,17 +275,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
      elseif (ipmass.gt.0. .and. irho.gt.0 .and. ndim.gt.0) then
         hfac = renvironment('H5SPLASH_HFAC',errval=-1.)
         if (hfac.gt.0.) then
-           print "(/,a,f6.2,a,/)",' Setting smoothing length using h = ',hfac,&
+           if (iverbose.ge.1) print "(/,a,f6.2,a,/)",' Setting smoothing length using h = ',hfac,&
                                   '*(m/rho)**(1/ndim) (from H5SPLASH_HFAC setting)'
         else
            hfac = 1.2
-           print "(/,a)",' WARNING: Smoothing length not found in data: using h = hfac*(m/rho)**(1/ndim)'
-           print "(a)",  '          (hfac = 1.2 by default, set H5SPLASH_HFAC to change this)'
-           print "(a,/)",'          (set constant h with H5SPLASH_HSML to give a global value)'
+           if (iverbose.ge.1) then
+              print "(/,a)",' WARNING: Smoothing length not found in data: using h = hfac*(m/rho)**(1/ndim)'
+              print "(a)",  '          (hfac = 1.2 by default, set H5SPLASH_HFAC to change this)'
+              print "(a,/)",'          (set constant h with H5SPLASH_HSML to give a global value)'
+           endif
         endif
         ncolstep = ncolstep + 1
      else
-        print "(/,a,/)",' WARNING: Smoothing length not found in data: Set H5SPLASH_HSML to give a global value'
+        if (iverbose.ge.1) print "(/,a,/)",' WARNING: Smoothing length not found in data: Set H5SPLASH_HSML to give a global value'
      endif
   endif
   ncolumns = ncolstep
@@ -535,7 +539,9 @@ subroutine set_labels()
   enddo
 
   if (ndim.lt.1) ndimV = 0
-  if (warn_labels) then
+  if (ndimV.gt.ndim) ndimV = ndim
+
+  if (warn_labels .and. iverbose.ge.1) then
      if (ndimset.gt.0) then
         if (ndim.ne.ndimset) then
            print "(2(a,i1))",' WARNING: ndim = ',ndimset, &
@@ -543,24 +549,21 @@ subroutine set_labels()
         else
            print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' from H5SPLASH_NDIM setting'
         endif
-        if (ndimV.gt.ndim) ndimV = ndim
      else
         if (ndim.gt.0) print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' (set H5SPLASH_NDIM to override)'
      endif
 
-     if (iverbose.ge.1) then
-        if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
-        if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
-        if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
-        if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
-        if (iutherm.gt.0) print "(a,i2)",' Assuming thermal energy in column ',iutherm
-        if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
-        if (ivx.gt.0) then
-           if (ndimV.gt.1) then
-              print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1
-           else
-              print "(a,i2)",' Assuming velocity in column ',ivx
-           endif
+     if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
+     if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
+     if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
+     if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
+     if (iutherm.gt.0) print "(a,i2)",' Assuming thermal energy in column ',iutherm
+     if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
+     if (ivx.gt.0) then
+        if (ndimV.gt.1) then
+           print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1
+        else
+           print "(a,i2)",' Assuming velocity in column ',ivx
         endif
      endif
      if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
