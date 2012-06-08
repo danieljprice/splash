@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2010 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -439,26 +439,29 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--reset the labels now that the columns have been read in the correct order
 !
-    warn_labels = .false.
-    call set_labels()
-    warn_labels = .true.
-
+    if (j.eq.indexstart) then ! set labels based on the first step read from the file
+       warn_labels = .false.
+       call set_labels()
+       warn_labels = .true.
+    endif
 !
 !--if smoothing length set via environment variable, fill the extra column with the smoothing length value
 !
-    if (hsmooth.ge.0.) then
-       datasetnames(ncolstep) = 'h'
-       ih = ncolstep
-       dat(:,ih,j) = hsmooth
-    elseif (ipmass.gt.0 .and. irho.gt.0 .and. ndim.gt.0) then
-       ih = ncolstep
-       datasetnames(ncolstep) = 'h'
-       dndim = 1./ndim
-       where (dat(:,irho,j).gt.tiny(0.))
-         dat(:,ih,j) = hfac*(dat(:,ipmass,j)/dat(:,irho,j))**dndim
-       elsewhere
-         dat(:,ih,j) = 0.
-       end where
+    if (ih.eq.0) then
+       if (hsmooth.ge.0.) then
+          datasetnames(ncolstep) = 'h'
+          ih = ncolstep
+          dat(:,ih,j) = hsmooth
+       elseif (ipmass.gt.0 .and. irho.gt.0 .and. ndim.gt.0) then
+          ih = ncolstep
+          datasetnames(ncolstep) = 'h'
+          dndim = 1./ndim
+          where (dat(:,irho,j).gt.tiny(0.))
+            dat(:,ih,j) = hfac*(dat(:,ipmass,j)/dat(:,irho,j))**dndim
+          elsewhere
+            dat(:,ih,j) = 0.
+          end where
+       endif
     endif
 !    read(iunit,*,iostat=ierr) (dat(i,icol,j),icol = 1,ncolstep)
     nstepsread = nstepsread + 1
@@ -466,7 +469,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   ierr = h5pt_close(ifile)
 
-return
+return 
 end subroutine read_data
 
 !!-------------------------------------------------------------------
@@ -483,7 +486,7 @@ subroutine set_labels()
   use labels,          only:label,ix,irho,ipmass,ih,iutherm, &
                             ipr,ivx,iBfirst,iamvec,labelvec,lenlabel !,labeltype
   !use params,          only:maxparttypes
-  use settings_data,   only:ndim,ndimV,UseTypeInRenderings
+  use settings_data,   only:ndim,ndimV,UseTypeInRenderings,iverbose
   use geometry,        only:labelcoord
   use system_utils,    only:ienvironment
   use h5partdataread
@@ -496,6 +499,9 @@ subroutine set_labels()
   ndimset = ienvironment('H5SPLASH_NDIM',errval=-1)
   ndim_max = 3
   if (ndimset.ge.0) ndim_max = ndimset
+  irho = 0
+  ih = 0
+  ipmass = 0
 
   do i=1,size(datasetnames)
      if (len_trim(datasetnames(i)).gt.0) then
@@ -514,13 +520,13 @@ subroutine set_labels()
            label(ix(ndim)) = labelcoord(ndim,1)
         endif
      elseif ((index(labeli,'vel').ne.0 .or. labeli(1:1).eq.'v') .and. index(labeli,'_').ne.0) then
-        if (ndimV.le.3) ndimV = ndimV + 1
+        if (ndimV.lt.3) ndimV = ndimV + 1
         if (index(labeli,'_0').ne.0) ivx = i
-     elseif (index(labeli,'dens').ne.0) then
+     elseif (index(labeli,'dens').ne.0 .and. irho.eq.0) then
         irho = i
-     elseif (index(labeli,'mass').ne.0) then
+     elseif (index(labeli,'mass').ne.0 .and. ipmass.eq.0) then
         ipmass = i
-     elseif (index(labeli,'smoothing').ne.0 .or. labeli(1:1).eq.'h') then
+     elseif (ih.eq.0 .and. (index(labeli,'smoothing').ne.0 .or. labeli(1:1).eq.'h')) then
         ih = i
      elseif (labeli(1:1).eq.'u') then
         iutherm = i
@@ -536,21 +542,24 @@ subroutine set_labels()
         else
            print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' from H5SPLASH_NDIM setting'
         endif
+        if (ndimV.gt.ndim) ndimV = ndim
      else
         if (ndim.gt.0) print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' (set H5SPLASH_NDIM to override)'
      endif
 
-     if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
-     if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
-     if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
-     if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
-     if (iutherm.gt.0) print "(a,i2)",' Assuming thermal energy in column ',iutherm
-     if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
-     if (ivx.gt.0) then
-        if (ndimV.gt.1) then
-           print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1
-        else
-           print "(a,i2)",' Assuming velocity in column ',ivx
+     if (iverbose.ge.1) then
+        if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
+        if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
+        if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
+        if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
+        if (iutherm.gt.0) print "(a,i2)",' Assuming thermal energy in column ',iutherm
+        if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
+        if (ivx.gt.0) then
+           if (ndimV.gt.1) then
+              print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1
+           else
+              print "(a,i2)",' Assuming velocity in column ',ivx
+           endif
         endif
      endif
      if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
