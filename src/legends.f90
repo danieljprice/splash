@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -88,7 +88,7 @@ end subroutine legend
 subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  use plotlib, only:plot_qwin,plot_qch,plot_sch,plot_qcs,plot_numb,plot_qtxt, &
                    plot_qci,plot_sci,plot_sfs,plot_rect,plot_sci,plot_text, &
-                   plot_qvp,plot_svp,plot_swin,plot_arro
+                   plot_qvp,plot_svp,plot_swin,plot_arro,plot_set_opacity
  implicit none
  real, intent(in) :: vecmax,dx,hpos,vpos,charheight
  character(len=*), intent(in) :: label,unitslabel
@@ -152,7 +152,9 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 ! draw a rectangle in the background colour with solid fill style
  call plot_sci(0)
  call plot_sfs(1)
+ call plot_set_opacity(0.66)
  call plot_rect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
+ call plot_set_opacity(1.0)
 ! change to foreground colour index
  call plot_sci(1)
 ! draw an outline around the box
