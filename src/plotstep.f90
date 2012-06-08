@@ -1981,7 +1981,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !--plot exact solution if relevant (before going interactive)
            !
            if (iexact.ne.0 &
-          .and.((nyplot.eq.1 .and. iPlotExactOnlyOnPanel.eq.0) &
+          .and.((nyplot.le.nacross*ndown .and. iPlotExactOnlyOnPanel.eq.0) &
            .or.(iPlotExactOnlyOnPanel.gt.0 .and. ipanel.eq.iPlotExactOnlyOnPanel) &
            .or.(iPlotExactOnlyOnPanel.eq.-1 .and. irow.eq.1) &
            .or.(iPlotExactOnlyOnPanel.eq.-2 .and. icolumn.eq.1))) then
@@ -2132,7 +2132,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--plot exact solution (after redrawn axis for residual plots)
         !
         if (iexact.ne.0 &
-       .and.((nyplot.eq.1 .and. iPlotExactOnlyOnPanel.eq.0) &
+       .and.((nyplot.le.nacross*ndown .and. iPlotExactOnlyOnPanel.eq.0) &
         .or.(iPlotExactOnlyOnPanel.gt.0 .and. ipanel.eq.iPlotExactOnlyOnPanel) &
         .or.(iPlotExactOnlyOnPanel.eq.-1 .and. irow.eq.1) &
         .or.(iPlotExactOnlyOnPanel.eq.-2 .and. icolumn.eq.1))) then
