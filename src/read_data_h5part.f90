@@ -187,7 +187,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                     !
                     !--try to recognise the dataset giving the particle types
                     !
-                    if (trim(type_datasetname)==trim(datasetname)) then
+                    if (trim(type_datasetname)==trim(datasetname) .or. trim(datasetname)=='Phase') then
+                       type_datasetname = trim(datasetname)
                        if (itypeidcol.le.0) itypeidcol = int(icolsfile) + 1
                        print "(a)",' getting particle types from data set '//trim(type_datasetname)
                     else
