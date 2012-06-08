@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -54,7 +54,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !  use labels
   use filenames,      only:nfiles
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,icoords,iformat, &
-                          buffer_data
+                          buffer_data,iverbose,debugmode
   use mem_allocation, only:alloc
   use geometry,       only:labelcoordsys
   implicit none
@@ -88,7 +88,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      return
   endif
 
-  print "(1x,a)",'reading ndspmhd format'
+  if (iverbose.ge.1) print "(1x,a)",'reading ndspmhd format'
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
   !
   !--open data file and read data
@@ -159,12 +159,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
      !--read header line for this timestep
      !
      if (singleprecision) then
-        print "(a)",'single precision dump'
+        if (debugmode) print "(a)",'DEBUG: single precision dump'
         read(iunit,iostat=ierr) timein,nparti,ntoti,gammain, &
           hfactin,ndim,ndimV,ncolstep,iformat,ibound(1:ndim), &
           xmin(1:ndim),xmax(1:ndim),ilen,geomfile(1:ilen)
      else
-        print "(a)",'double precision dump'
+        if (debugmode) print "(a)",'DEBUG: double precision dump'
         read(iunit,iostat=ierr) timeind,nparti,ntoti,gammaind, &
           hfactind,ndim,ndimV,ncolstep,iformat,ibound(1:ndim), &
           xmind(1:ndim),xmaxd(1:ndim),ilen,geomfile(1:ilen)
@@ -187,9 +187,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
      hfact = hfactin
      npartoftype(1,i) = nparti
      npartoftype(3,i) = ntoti - nparti
-     print "(/a14,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
-     print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolstep,'gamma',gamma(i),'hfact',hfact
-     print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
+     if (iverbose.ge.1) then
+        print "(a14,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
+        print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolstep,'gamma',gamma(i),'hfact',hfact
+        print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
+     else
+        print "(1x,a,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
+     endif
      select case(geomfile(1:6))
      case('cylrpz')
         icoords = 2
@@ -198,8 +202,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
      case default
         icoords = 1
      end select
-     print "(a14,a)",' geometry: ',trim(geomfile)//' ('//trim(labelcoordsys(icoords))//')'
-     if (any(ibound(1:ndim).ne.0)) then
+     if (icoords.ne.1) print "(a14,a)",' geometry: ',trim(geomfile)//' ('//trim(labelcoordsys(icoords))//')'
+     if (iverbose.ge.1 .and. any(ibound(1:ndim).ne.0)) then
         print "(a14,':',a15,' =',3(f8.4))",'boundaries','xmin',xmin(1:ndim)
         print "(15x,a15,' =',3(f8.4))",'xmax',xmax(1:ndim)
      endif
@@ -220,7 +224,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (ncolstep.ne.ncol_max) then
         print*,'*** Warning number of columns not equal for timesteps'
         ncolumns = ncolstep
-        print*,'ncolumns = ',ncolumns,ncol_max
+        if (iverbose.ge.1) print*,'ncolumns = ',ncolumns,ncol_max
         if (ncolumns.gt.ncol_max) ncol_max = ncolumns
      endif
      if (ncolstep.gt.maxcol) then
@@ -264,7 +268,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
         allocate(itype(ntoti))
         read(iunit,iostat=ierr) itype(1:ntoti)
         if (ierr.ne.0) then
-           print "(a)",' itype not found in dump file'
+           if (debugmode) print "(a)",'DEBUG: itype not found in dump file'
+           iamtype(1:nparti,i) = 1
+           iamtype(nparti+1:ntoti,i) = 3
         else
            !
            !--assign SPLASH types from ndspmhd types
@@ -302,9 +308,10 @@ close(unit=11)
 ncolumns = ncol_max
 ndim = ndim_max
 ndimV = ndimV_max
-print*,' ngas = ',npartoftype(1,i),' ndust = ',npartoftype(2,i),' nghost = ',npartoftype(3,i)
-
-print*,'> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
+if (npartoftype(2,i).gt.0) then
+   print*,' ngas = ',npartoftype(1,i),' ndust = ',npartoftype(2,i),' nghost = ',npartoftype(3,i)
+endif
+if (debugmode) print*,'DEBUG> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
        ' last step ntot = ',sum(npartoftype(:,indexstart+nstepsread-1))
 return
 
