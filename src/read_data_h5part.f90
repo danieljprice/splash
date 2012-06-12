@@ -524,7 +524,7 @@ subroutine set_labels()
            ix(ndim) = i
            label(ix(ndim)) = labelcoord(ndim,1)
         endif
-     elseif ((index(labeli,'vel').ne.0 .or. labeli(1:1).eq.'v') .and. index(labeli,'_').ne.0) then
+     elseif (index(labeli,'vel_').ne.0 .and. (ivx.eq.0 .or. i.le.ivx+ndim)) then
         if (ndimV.lt.3) ndimV = ndimV + 1
         if (index(labeli,'_0').ne.0) ivx = i
      elseif (index(labeli,'dens').ne.0 .and. irho.eq.0) then
@@ -535,6 +535,21 @@ subroutine set_labels()
         ih = i
      elseif (labeli(1:1).eq.'u') then
         iutherm = i
+     !--identify vector quantities based on _0, _1, _2 labelling
+     elseif (index(labeli,'_0').ne.0) then
+        !print*,'labelling ',labeli(1:index(labeli,'_0')-1),' as vector, column ',i
+        iamvec(i) = i
+        labelvec(i) = labeli(1:index(labeli,'_0')-1)
+     elseif (index(labeli,'_1').ne.0 .and. i.gt.1 .and. ndim.ge.2) then
+        if (iamvec(i-1).gt.0) then
+           iamvec(i) = i-1
+           labelvec(i) = labelvec(i-1)
+        endif
+     elseif (index(labeli,'_2').ne.0 .and. i.gt.2 .and. ndim.ge.3) then
+        if (iamvec(i-2).gt.0) then
+           iamvec(i) = i-2
+           labelvec(i) = labelvec(i-2)
+        endif
      endif
   enddo
 
@@ -579,17 +594,20 @@ subroutine set_labels()
      if (ivx.gt.0) then
         iamvec(ivx:ivx+ndimV-1) = ivx
         labelvec(ivx:ivx+ndimV-1) = 'v'
-        do i=1,ndimV
-          label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-        enddo
      endif
      if (iBfirst.gt.0) then
         iamvec(iBfirst:iBfirst+ndimV-1) = ivx
         labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-        do i=1,ndimV
-          label(iBfirst+i-1) = 'B\d'//labelcoord(i,1)
-        enddo
      endif
+
+     !
+     !--set labels for vector quantities
+     !
+     do i=1,size(datasetnames)
+        if (iamvec(i).ne.0) then
+           label(i) = trim(labelvec(iamvec(i)))//'_'//trim(labelcoord(i-iamvec(i)+1,1))
+        endif
+     enddo
   endif
   !
   !--set labels for each particle type
