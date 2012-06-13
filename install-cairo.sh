@@ -18,7 +18,7 @@
 #   MacPorts:
 #      sudo port install cairo
 #
-cairodist=cairo-1.12.2.tar.gz;
+cairodist=cairo-1.12.2.tar.xz;
 pixmandist=pixman-0.24.4.tar.gz;
 installprefix=$PWD/giza;
 url="http://cairographics.org/releases";
@@ -66,9 +66,9 @@ else
    echo "unpacking pixman...";
    tar xfz $pixmandist;
    echo "unpacking cairo...";
-   tar xfz $cairodist;
+   tar -Jxf $cairodist;
    pixmandir=${pixmandist/.tar.gz/};
-   cairodir=${cairodist/.tar.gz/};
+   cairodir=${cairodist/.tar.xz/};
    if [ ! -d $pixmandir ]; then
       echo; echo "ERROR: pixman failed to unpack (no directory $pixmandir)"; echo;
       exit $?;
@@ -104,7 +104,11 @@ else
    echo; echo "cairo and pixman installation successful";
    echo "type \"make\" to compile SPLASH"; echo;
    echo "You should also add the following line to your .bashrc or equivalent:"; echo;
-   echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$installprefix";
+   if [[ `uname` =~ Darwin ]]; then
+      echo "export DYLD_LIBRARY_PATH=\$DYLD_LIBRARY_PATH:$installprefix";   
+   else
+      echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$installprefix";
+   fi
    echo
 fi
 
