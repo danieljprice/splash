@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -96,7 +96,7 @@ subroutine submenu_shapes()
  use plotlib,       only:plotlib_maxlinestyle,plotlib_maxlinecolour,plotlib_maxfillstyle
  implicit none
  integer            :: i,ishape,itype,indexi,iunits,ierr,itry
- character(len=8)   :: poslabel
+ character(len=10)  :: poslabel
  character(len=80)  :: string
  integer, parameter :: maxunits = 2
  character(len=20), dimension(maxunits), &
@@ -142,27 +142,28 @@ subroutine submenu_shapes()
        case(1) ! square
           call prompt('enter length of side (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           shape(ishape)%ylen = shape(ishape)%xlen
-          poslabel = 'centre'
+          poslabel = ' centre'
        case(2) ! rectangle
           call prompt('enter x length of side (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           call prompt('enter y length of side (in '//trim(labelunits(iunits))//')',shape(ishape)%ylen,0.)
-          poslabel = 'centre'
+          poslabel = ' centre'
        case(3) ! arrow
           call prompt('enter arrow length (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           call prompt('enter angle in degrees (0 = horizontal) ',shape(ishape)%angle)
-          poslabel = 'head'
+          call prompt('enter justification factor (0.0=tail at x,y 1.0=head at x,y)',shape(ishape)%fjust)
+          poslabel = ''
        case(4) ! circle
           call prompt('enter radius (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
-          poslabel = 'centre'
+          poslabel = ' centre'
        case(5) ! line
           call prompt('enter line length (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           call prompt('enter angle of line in degrees (0.0 = horizontal) ',shape(ishape)%angle)
-          poslabel = 'starting'
+          poslabel = ' starting'
        case(6) ! text
           call prompt('enter text string ',shape(ishape)%text)
           call prompt('enter angle for text in degrees (0 = horizontal) ',shape(ishape)%angle)
           call prompt('enter justification factor (0.0=left 1.0=right)',shape(ishape)%fjust)
-          poslabel = 'starting'
+          poslabel = ' starting'
        case(7) ! arbitrary function
           ierr = 1
           itry = 1
@@ -182,11 +183,11 @@ subroutine submenu_shapes()
              ishape = ishape - 1
              cycle over_shapes
           endif
-          poslabel = 'starting'
+          poslabel = ' starting'
        end select
        if (itype.ne.7) then
-          call prompt('enter '//trim(poslabel)//' x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)
-          call prompt('enter '//trim(poslabel)//' y position (in '//trim(labelunits(iunits))//') ',shape(ishape)%ypos)
+          call prompt('enter'//trim(poslabel)//' x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)
+          call prompt('enter'//trim(poslabel)//' y position (in '//trim(labelunits(iunits))//') ',shape(ishape)%ypos)
        endif
        if (itype.eq.1 .or. itype.eq.2 .or. itype.eq.4) then
           call prompt('enter fill style (1=solid,2=outline,3=hatch,4=crosshatch) for '// &
@@ -237,7 +238,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
  integer :: i,j,ierr,iplotonthispanel
  integer, parameter :: maxfuncpts = 1000
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot
- real :: xpos,ypos,xlen,ylen,anglerad,dx,dy
+ real :: xpos,ypos,xlen,ylen,anglerad,dx,dy,fjust
  real, dimension(2) :: xline,yline
  real, dimension(maxfuncpts) :: xfunc,yfunc
 !
@@ -289,7 +290,8 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
           if (dx.gt.dxplot .or. dy.gt.dyplot) then
              print "(2x,a)",'Error: arrow length exceeds plot dimensions: arrow not plotted'
           else
-             call plot_arro(xpos-dx,ypos-dy,xpos,ypos)
+             fjust = shape(i)%fjust
+             call plot_arro(xpos-fjust*dx,ypos-fjust*dy,xpos+(1.-fjust)*dx,ypos+(1.-fjust)*dy)
           endif
        case(4) ! circle
           if (xlen.gt.dxplot .or. xlen.gt.dyplot) then
