@@ -149,11 +149,11 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 !--draw box around all of the legend
 !
  call plot_qci(icolindex)
-! draw a rectangle in the background colour with solid fill style
+! draw a (rounded) rectangle in the background colour with solid fill style
  call plot_sci(0)
  call plot_sfs(1)
  call plot_set_opacity(0.66)
- call plot_rect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
+ call plot_rect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox,0.33*ych)
  call plot_set_opacity(1.0)
 ! change to foreground colour index
  call plot_sci(1)

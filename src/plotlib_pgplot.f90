@@ -254,6 +254,8 @@ interface plot_rect
    subroutine pgrect(x1,x2,y1,y2)
      real,intent(in) :: x1,x2,y1,y2
    end subroutine pgrect
+   
+   module procedure plot_rect_rounded
 end interface
 
 interface plot_arro
@@ -656,6 +658,16 @@ subroutine plot_clcur(maxpt, npt, x, y, ch)
  ch = 'A'
  
 end subroutine plot_clcur
+
+!--rounded rectangle plotting
+!  (not implemented -- just calls pgrect)
+subroutine plot_rect_rounded(x1,x2,y1,y2,r)
+ implicit none
+ real,intent(in) :: x1,x2,y1,y2,r
+
+ call pgrect(x1,x2,y1,y2)
+
+end subroutine plot_rect_rounded
 !
 !--inverts the return value of pgband
 !
