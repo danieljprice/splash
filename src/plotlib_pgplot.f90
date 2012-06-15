@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -46,6 +46,13 @@ module plotlib
 public
 
 character(len=1),parameter :: plot_left_click = 'A'
+character(len=1),parameter :: plot_right_click = 'X'
+character(len=1),parameter :: plot_middle_click = 'D'
+character(len=1),parameter :: plot_shift_click = achar(15)
+character(len=1),parameter :: plot_scroll_up = achar(21)
+character(len=1),parameter :: plot_scroll_down = achar(4)
+character(len=1),parameter :: plot_scroll_left = achar(12)
+character(len=1),parameter :: plot_scroll_right = achar(18)
 
 interface plot_qci
    subroutine PGQCI (CI)
@@ -260,6 +267,37 @@ interface plot_circ
      real,intent(in) :: xcent,ycent,radius
    end subroutine pgcirc
 end interface
+
+interface plot_lcur
+  subroutine pglcur (maxpt, npt, x, y)
+    implicit none
+    integer, intent(in) :: maxpt
+    integer, intent(inout) :: npt
+    real,    intent(inout) :: x(*), y(*)
+  end subroutine pglcur
+
+  module procedure plot_clcur
+end interface plot_lcur
+
+interface plot_olin
+   subroutine pgolin (maxpt, npt, x, y, symbol)
+     implicit none
+     integer, intent(in)    :: maxpt
+     integer, intent(inout) :: npt
+     real,    intent(inout) :: x(*), y(*)
+     integer, intent(in)    :: symbol
+   end subroutine pgolin
+end interface plot_olin
+
+interface plot_ncur
+  subroutine pgncur(maxpt, npt, x, y, symbol)
+    implicit none
+    integer, intent(in)    :: maxpt
+    integer, intent(inout) :: npt
+    real,    intent(inout) :: x(*), y(*)
+    integer, intent(in)    :: symbol
+ end subroutine pgncur
+end interface plot_ncur
 
 interface plot_qtxt
    subroutine pgqtxt(x,y,angle,fjust,text,xbox,ybox)
@@ -606,6 +644,18 @@ subroutine plot_gray(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
 
 end subroutine plot_gray
 
+!--version of lcur that returns last character pressed
+subroutine plot_clcur(maxpt, npt, x, y, ch)
+ implicit none
+ integer, intent(in) :: maxpt
+ integer, intent(inout) :: npt
+ real,    intent(inout) :: x(*), y(*)
+ character*(*),intent(out) :: ch
+
+ call pglcur (maxpt, npt, x, y)
+ ch = 'A'
+ 
+end subroutine plot_clcur
 !
 !--inverts the return value of pgband
 !

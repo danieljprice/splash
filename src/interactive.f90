@@ -77,7 +77,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use settings_render,  only:projlabelformat,iapplyprojformat
   use settings_data,    only:ndataplots,ntypes,icoords,icoordsnew
   use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
-                             plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click
+                             plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click,plot_right_click,&
+                             plot_middle_click,plot_scroll_left,plot_scroll_right,plotlib_is_pgplot,&
+                             plot_shift_click,plot_lcur,plot_poly
   use params,           only:int1,maxparttypes
   use part_utils,       only:igettype
   use particleplots,    only:plot_kernel_gr
@@ -99,20 +101,22 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   logical, intent(inout) :: x_sec
   logical, intent(out) :: irerender,interactivereplot
   logical, intent(in) :: use3Dopacity, double_rendering
-  real, parameter :: pi=3.141592653589
-  integer :: i,iclosest,ierr,ixsec,ishape,itype
+  real,    parameter :: pi=3.141592653589
+  integer, parameter :: maxpts = 64
+  integer :: i,iclosest,ierr,ixsec,ishape,itype,npts
   integer :: nmarked,ncircpart,itrackparttemp,iadvancenew
   integer, dimension(1000) :: icircpart
   real :: xpt,ypt
   real :: xpt2,ypt2,xcen,ycen,xminwin,xmaxwin,yminwin,ymaxwin
-  real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax
+  real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax,rptmax2
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
   real :: xlength,ylength,renderlength,renderpt,drender,zoomfac
   real :: dxlength,dylength,xmaxin,ymaxin,contlength
-  real, dimension(4) :: xline,yline
+  real, dimension(4)      :: xline,yline
+  real, dimension(maxpts) :: xpts,ypts
   character(len=1) :: char,char2
   logical :: iexit, rotation, verticalbar, iamincolourbar, mixedtypes, use3Dperspective
-  logical :: iadvanceset
+  logical :: iadvanceset, leftclick, iselectpoly, iselectcircle
 
   if (plot_qcur()) then
      print*,'entering interactive mode...press h in plot window for help'
@@ -167,6 +171,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !--exit if the device is not interactive
      !
      if (ierr.eq.1) return
+     !print*,'x,y = ',xpt,ypt,' function = ',char,iachar(char)
 
      !
      !--find closest particle
@@ -417,19 +422,18 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      !--actions on left click
      !
-     case(plot_left_click) ! left click
-        print*,'select area: '
-        print*,'left click : zoom'
+     case(plot_left_click,plot_right_click,plot_shift_click) ! left click
         !
         !--change colour bar limits
         !
+        leftclick = (char == plot_left_click)
         ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty))
         if (ishape.gt.0) then
            call edit_shape(ishape,xpt,ypt,itrans(iplotx),itrans(iploty))
            iadvance = 0
            interactivereplot = .true.
            iexit = .true.
-        elseif (iamincolourbar .and. irender.gt.0) then
+        elseif (iamincolourbar .and. irender.gt.0 .and. leftclick) then
            if (incolourbarlabel(iColourBarStyle,xpt,ypt,xmin,xmax,ymin,ymax)) then
               if (verticalbar) then
                  call edit_textbox(xpt,ypt,90.,labelrender)
@@ -488,30 +492,85 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         !--zoom or mark particles
         !
         else
-           if (irender.le.0) then
-              print*,'1-9 = mark selected particles with colours 1-9'
+           print*,'select area: '
+           !--Note: circle selection is not implemented in PGPLOT
+           iselectpoly = (char==plot_shift_click .or.((.not.leftclick).and.plotlib_is_pgplot))
+           iselectcircle = (char==plot_right_click .and. .not.plotlib_is_pgplot)
+           if (iselectpoly) then
+              if (plotlib_is_pgplot) then
+                 print*,'left click/a)dd points; middle click/d)elete points; X/x)finish'              
+              else
+                 print*,'left click/a)dd points; middle click/d)elete points; q)uit/abort'
+                 if (irender.le.0) print*,'1-9 = close polygon and mark particles with colours 1-9'
+                 print*,'0 = close polygon and hide selected particles'
+                 print*,'p = close polygon and plot selected particles only'
+                 print*,'c = close polygon and plot circles of interaction on selected parts'
+              endif
+           else
+              print*,'left click : zoom'
+              if (irender.le.0) print*,'1-9 = mark selected particles with colours 1-9'
+              print*,'0 = hide selected particles'
+              print*,'p = plot selected particles only'
+              print*,'c = plot circles of interaction on selected parts'
            endif
-           print*,'0 = hide selected particles'
-           print*,'p = plot selected particles only'
-           print*,'c = plot circles of interaction on selected parts'
-           print*,'x = use particles within x parameter range only'
-           print*,'y = use particles within y parameter range only'
-           print*,'r = use particles within x and y parameter range only'
-           print*,'R = remove all range restrictions'
-           ierr = plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
-           xptmin = min(xpt,xpt2)
-           xptmax = max(xpt,xpt2)
-           yptmin = min(ypt,ypt2)
-           yptmax = max(ypt,ypt2)
-           print*,'xrange = ',xptmin,'->',xptmax
-           print*,'yrange = ',yptmin,'->',yptmax
-           if (iplotz.ne.0 .and. x_sec) then
-              print*,'(zrange = ',zptmin,'->',zptmax,')'
+           if (leftclick .or. iselectcircle) then
+              print*,'x = use particles within x parameter range only'
+              print*,'y = use particles within y parameter range only'
+              print*,'r = use particles within x and y parameter range only'
+              print*,'R = remove all range restrictions'
            endif
+           
+           if (iselectpoly) then
+              xpts(1) = xpt
+              ypts(1) = ypt
+              npts = 1
+              call plot_lcur(maxpts,npts,xpts,ypts,char2)
+              if (plotlib_is_pgplot) then
+                 if (irender.le.0) print*,'1-9 = close polygon and mark particles with colours 1-9'
+                 print*,'0 = close polygon and hide selected particles'
+                 print*,'p = close polygon and plot selected particles only'
+                 print*,'c = close polygon and plot circles of interaction on selected parts'
+                 ierr = plot_band(0,1,xpt,ypt,xpt2,ypt2,char2)
+              endif
+              xptmin = minval(xpts(1:npts))
+              xptmax = maxval(xpts(1:npts))
+              yptmin = minval(ypts(1:npts))
+              yptmax = maxval(ypts(1:npts))
+           elseif (iselectcircle) then
+              ierr = plot_band(8,1,xpt,ypt,xpt2,ypt2,char2)
+              rptmax2 = (xpt2-xpt)**2 + (ypt2-ypt)**2
+              rr = sqrt(rptmax2)
+              xptmin = xpt - rr !*ylength*dxlength
+              xptmax = xpt + rr !*ylength*dxlength
+              yptmin = ypt - rr !*xlength*dylength
+              yptmax = ypt + rr !*xlength*dylength
+           else ! left click: rectangle selection
+              ierr = plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
+              xptmin = min(xpt,xpt2)
+              xptmax = max(xpt,xpt2)
+              yptmin = min(ypt,ypt2)
+              yptmax = max(ypt,ypt2)
+           endif
+           if (.not.(iselectcircle.or.iselectpoly) .or. char2==plot_left_click) then ! rectangle selection
+              print*,'xrange = ',xptmin,'->',xptmax
+              print*,'yrange = ',yptmin,'->',yptmax
+              if (iplotz.ne.0 .and. x_sec) then
+                 print*,'(zrange = ',zptmin,'->',zptmax,')'
+              endif
+           endif
+
            select case (char2)
-           case(plot_left_click)   ! zoom if another left click
+           case(plot_left_click) ! zoom if another left click
               call plot_sfs(2)
-              call plot_rect(xpt,xpt2,ypt,ypt2)
+              !--draw the selected shape in case zooming is slow
+              if (iselectpoly) then
+                 call plot_poly(npts,xpts,ypts)
+              elseif (iselectcircle) then
+                 call plot_circ(xpt,ypt,sqrt(rptmax2))
+              else
+                 call plot_rect(xpt,xpt2,ypt,ypt2)
+              endif
+              !--zoom is identical for rectangle, poly and circle selection
               xmin = xptmin
               xmax = xptmax
               ymin = yptmin
@@ -524,9 +583,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               nmarked = 0
               if (irender.le.0 .or. char2.eq.'0' .or. char2.eq.'1') then
                  do i=1,npart
-                    if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
-                    .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax) &
-                    .and.(zcoords(i).ge.zptmin .and. zcoords(i).le.zptmax)) then
+                    if (inslice(zcoords(i),zptmin,zptmax) .and. &
+                        (leftclick .and. inrectangle(xcoords(i),ycoords(i),xptmin,xptmax,yptmin,yptmax) &
+                    .or.(iselectcircle .and. incircle(xcoords(i)-xpt,ycoords(i)-ypt,rptmax2)) &
+                    .or.(iselectpoly .and. inpoly(xcoords(i),ycoords(i),xpts,ypts,npts)))) then
                         read(char2,*,iostat=ierr) icolourpart(i)
                         if (ierr /=0) then
                            print*,'*** error marking particle'
@@ -547,9 +607,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            case('p') ! plot selected particles only
               nmarked = 0
               do i=1,npart
-                 if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
-                 .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax) &
-                 .and.(zcoords(i).ge.zptmin .and. zcoords(i).le.zptmax)) then
+                 if (inslice(zcoords(i),zptmin,zptmax) .and. &
+                     (leftclick .and. inrectangle(xcoords(i),ycoords(i),xptmin,xptmax,yptmin,yptmax) &
+                 .or.(iselectcircle .and. incircle(xcoords(i)-xpt,ycoords(i)-ypt,rptmax2)) &
+                 .or.(iselectpoly .and. inpoly(xcoords(i),ycoords(i),xpts,ypts,npts)))) then
                     nmarked = nmarked + 1
                     if (icolourpart(i).le.0) icolourpart(i) = 1
                  else
@@ -564,9 +625,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            case('c') ! set circles of interaction in marked region
               ncircpart = 0
               do i=1,npart
-                 if ((xcoords(i).ge.xptmin .and. xcoords(i).le.xptmax) &
-                 .and.(ycoords(i).ge.yptmin .and. ycoords(i).le.yptmax) &
-                 .and.(zcoords(i).ge.zptmin .and. zcoords(i).le.zptmax)) then
+                 if (inslice(zcoords(i),zptmin,zptmax) .and. &
+                     (leftclick .and. inrectangle(xcoords(i),ycoords(i),xptmin,xptmax,yptmin,yptmax) &
+                 .or.(iselectcircle .and. incircle(xcoords(i)-xpt,ycoords(i)-ypt,rptmax2)) &
+                 .or.(iselectpoly .and. inpoly(xcoords(i),ycoords(i),xpts,ypts,npts)))) then
                      if (ncircpart.lt.size(icircpart)) then
                         ncircpart = ncircpart + 1
                         icircpart(ncircpart) = i
@@ -1172,7 +1234,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         iadvance = -666
         print*,'quitting...'
         iexit = .true.
-     case('X','b','B') ! right click -> go back
+     case('b','B',plot_scroll_left) ! right click -> go back
         iadvance = -abs(iadvance)
         iexit = .true.
      case('r') ! replot
@@ -1180,7 +1242,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         interactivereplot = .true.
         irerender = .true.
         iexit = .true.
-     case(' ','n','N') ! space
+     case(' ','n','N',plot_scroll_right) ! space
         iadvance = abs(iadvance)
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
@@ -1216,7 +1278,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !--unknown
      !
      case default
-        print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '" ',iachar(char)
+        if (iachar(char).ge.iachar('a')) then
+           print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '" ',iachar(char)
+        endif
      end select
 
      !
@@ -1596,7 +1660,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         print*,' w: adapt vector arrow size to maximum value'
         print*,' next timestep/plot   : space, n'
         print*,' previous timestep    : right click (or X), b'
-        print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then left (right) click'
+        print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then space(forward), b(back)'
         print*,' h: (h)elp'
         print*,' s: (s)ave current settings for all steps'
         print*,' q,Q: (q)uit plotting'
@@ -2330,6 +2394,56 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
     end subroutine reset_panel
 
 end subroutine interactive_multi
+
+!--------------------------------------------------------------------
+! utilities to determine whether a point is in or out of a selection
+!--------------------------------------------------------------------
+logical function inslice(x,xmin,xmax)
+ implicit none
+ real, intent(in) :: x,xmin,xmax
+ 
+ inslice = (x.ge.xmin .and. x.le.xmax)
+ 
+end function inslice
+
+logical function inrectangle(x,y,xmin,xmax,ymin,ymax)
+ implicit none
+ real, intent(in) :: x,y,xmin,xmax,ymin,ymax
+ 
+ inrectangle = (x.ge.xmin .and. x.le.xmax .and. y.ge.ymin .and. y.le.ymax)
+ 
+end function inrectangle
+
+logical function incircle(x,y,r2)
+ implicit none
+ real, intent(in) :: x,y,r2
+ 
+ incircle = ((x*x + y*y) <= r2)
+ 
+end function incircle
+
+!
+! Point in polygon
+! See: http://en.wikipedia.org/wiki/Even-odd_rule
+!
+logical function inpoly(x,y,xpts,ypts,npts)
+ implicit none
+ real, intent(in) :: x,y
+ real, dimension(:), intent(in) :: xpts,ypts
+ integer, intent(in) :: npts
+ integer :: i,j
+ 
+ inpoly = .false.
+ j = npts
+ do i=1,npts
+    if (((ypts(i) > y) .neqv. (ypts(j) > y)) .and. &
+        (x < (xpts(j) - xpts(i))*(y-ypts(i))/(ypts(j) - ypts(i)) + xpts(i))) then
+       inpoly = .not. inpoly
+    endif
+    j = i
+ enddo
+
+end function inpoly
 
 !------------------------------------------------------------
 ! utility which adapts plot limits based only on the

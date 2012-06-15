@@ -49,6 +49,9 @@ module plotlib
       plot_funx=>giza_function_x, &
       plot_label=>giza_label, &
       plot_line=>giza_line, &
+      plot_lcur=>giza_mark_line, &
+      plot_olin=>giza_mark_points, &
+      plot_ncur=>giza_mark_points_ordered, &
       plot_page=>giza_change_page, &
       plot_poly=>giza_polygon, &
       plot_pt1=>giza_single_point, &
@@ -94,7 +97,14 @@ module plotlib
       giza_set_colour_table,   &
       giza_stop_prompting,     &
       giza_start_prompting,    &
-      giza_left_click_f,       &
+      plot_left_click=>giza_left_click_f,     &
+      plot_right_click=>giza_right_click_f,   &
+      plot_middle_click=>giza_middle_click_f, &
+      plot_shift_click=>giza_shift_click_f,   &
+      plot_scroll_up=>giza_scroll_up_f,       &
+      plot_scroll_down=>giza_scroll_down_f,   &
+      plot_scroll_left=>giza_scroll_left_f,   &
+      plot_scroll_right=>giza_scroll_right_f, &
       giza_vector,             &
       giza_format_number,      &
       giza_query_device,       &
@@ -116,7 +126,13 @@ module plotlib
   integer, parameter :: plotlib_extend_reflect = giza_extend_reflect
   integer, parameter :: plotlib_extend_none = giza_extend_none
 
-  character(len=1),parameter :: plot_left_click = giza_left_click_f
+!  character(len=1),parameter :: plot_left_click = giza_left_click_f
+!  character(len=1),parameter :: plot_right_click = giza_right_click_f
+!  character(len=1),parameter :: plot_middle_click = giza_middle_click_f
+!  character(len=1),parameter :: plot_scroll_up = giza_scroll_up_f
+!  character(len=1),parameter :: plot_scroll_down = giza_scroll_down_f
+!  character(len=1),parameter :: plot_scroll_left = giza_scroll_left_f
+!  character(len=1),parameter :: plot_scroll_right = giza_scroll_right_f
 public
 
 contains
