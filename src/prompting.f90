@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -106,6 +106,9 @@
 !
 ! 06/05/11: D. Price:
 ! Added prompt for integer arrays
+!
+! 21/08/12: D. Price:
+! Real/double prompting interfaces compile and work with -r8
 !
 module prompting
 
@@ -254,7 +257,7 @@ contains
       character(len=64)            :: string
       character(len=16)            :: chmin, chmax
       integer                      :: ios
-      real, optional, intent(in)   :: min, max
+      real(kind=sp), optional, intent(in)   :: min, max
       logical                      :: error
 
 
