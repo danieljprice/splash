@@ -247,9 +247,10 @@ contains
    !
 
    recursive subroutine real_prompt(text, value, min, max)
+      integer, parameter           :: sp = selected_real_kind(p=6)
       character(len=*), intent(in) :: text
-      real(kind=4), intent(inout)  :: value
-      real(kind=4)                 :: newvalue
+      real(kind=sp), intent(inout) :: value
+      real(kind=sp)                :: newvalue
       character(len=64)            :: string
       character(len=16)            :: chmin, chmax
       integer                      :: ios
