@@ -76,7 +76,7 @@ contains
 !--------------------------------------------------------------------
  subroutine wall_time(t)
   implicit none
-  real(kind=4), intent(out) :: t
+  real, intent(out) :: t
   integer :: i,iday,imonth,ihour,imin,isec,imsec,ivalues(8)
   character(len=8)  :: date
   character(len=5)  :: zone

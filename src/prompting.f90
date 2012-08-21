@@ -248,8 +248,8 @@ contains
 
    recursive subroutine real_prompt(text, value, min, max)
       character(len=*), intent(in) :: text
-      real, intent(inout)          :: value
-      real                         :: newvalue
+      real(kind=4), intent(inout)  :: value
+      real(kind=4)                 :: newvalue
       character(len=64)            :: string
       character(len=16)            :: chmin, chmax
       integer                      :: ios
