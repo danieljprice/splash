@@ -117,6 +117,7 @@ ifeq ($(SYSTEM), gfortran)
 #  gfortran compiler (part of gcc 4.x.x)
    F90C= gfortran
    F90FLAGS= -O3 -frecord-marker=4
+   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
    SYSTEMFILE= system_f2003.f90
    DEBUGFLAG= -Wall -g -frange-check -fcheck=all -fbacktrace \
               -finit-real=NaN -ffpe-trap=invalid,zero,overflow,denormal
@@ -130,6 +131,7 @@ ifeq ($(SYSTEM),g95)
 #  using the g95 compiler
    F90C= g95
    F90FLAGS= -O3 -ffast-math
+   DBLFLAGS= -r8
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
    DEBUGFLAG= -Wall -Wextra -Wno=165 -g -fbounds-check -ftrace=full -freal=NaN
    ENDIANFLAGBIG= -fendian='BIG'
@@ -144,6 +146,7 @@ ifeq ($(SYSTEM), gfortran43)
    F90C= gfortran
    F90FLAGS= -O3 -Wall -frecord-marker=4
    SYSTEMFILE= system_f2003.f90
+   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
    DEBUGFLAG= -g -frange-check -fbacktrace
    OMPFLAGS= -fopenmp
    ENDIANFLAGBIG= -fconvert=big-endian
@@ -155,6 +158,7 @@ ifeq ($(SYSTEM), gfortran41)
 #  gfortran compiler (v4.1)
    F90C= gfortran
    F90FLAGS= -O3 -Wall -frecord-marker=4
+   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
    SYSTEMFILE= system_unix.f90
    DEBUGFLAG= -g -frange-check
    OMPFLAGS=
@@ -167,6 +171,7 @@ ifeq ($(SYSTEM),nagf95)
 #  NAG f95 compiler
    F90C= f95
    F90FLAGS= -O3
+   DBLFLAGS= -r8
    SYSTEMFILE= system_unix_NAG.f90
    PARALLEL= no
    KNOWN_SYSTEM=yes
@@ -177,6 +182,7 @@ ifeq ($(SYSTEM),sunf95)
    F90C= sunf95
    F90FLAGS= -fast -ftrap=%none
    OMPFLAGS= -openmp
+   DBLFLAGS= -xtypemap=real:64,double:64
    DEBUGFLAG= -g -C -w4 -errtags -erroff=COMMENT_1582,COMMENT_1744 -ftrap=%all
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -xfilebyteorder=big16:%all
@@ -189,6 +195,7 @@ ifeq ($(SYSTEM),ifort)
    F90C= ifort
    F90FLAGS= -O3 -nbs -i_dynamic
    OMPFLAGS= -openmp
+   DBLFLAGS= -r8
    DEBUGFLAG= -C -g
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -convert big_endian
@@ -204,6 +211,7 @@ ifeq ($(SYSTEM),ifort8)
    F90C= ifort
    F90FLAGS= -O3 -Vaxlib -nbs
    OMPFLAGS= -openmp
+   DBLFLAGS= -r8
    DEBUGFLAG= -C -g
    SYSTEMFILE= system_unix.f90
    ENDIANFLAGBIG= -convert big_endian
@@ -216,6 +224,7 @@ ifeq ($(SYSTEM),pgf90)
 #  this is for the Portland Group Fortran 90 compiler (tested with version 7.2-5)
    F90C= pgf90
    F90FLAGS= -fast -mcmodel=medium -Mbackslash -Ktrap=none
+   DBLFLAGS= -r8
    DEBUGFLAG= -C -g -gopt -Mbounds -Mchkfpstk -Mchkptr -Mchkstk -Mcoff \
               -Mdwarf1 -Mdwarf2 -Melf -Mpgicoff -traceback
    OMPFLAGS= -mp
@@ -229,6 +238,7 @@ ifeq ($(SYSTEM),pathf95)
 #  this is for the Pathscale f95 compiler
    F90C= pathf95
    F90FLAGS= -Ofast -mcmodel=medium
+   DBLFLAGS= -r8
    DEBUGFLAG= -C -g
    OMPFLAGS= -openmp
    SYSTEMFILE= system_f2003.f90
@@ -340,6 +350,7 @@ ifeq ($(SYSTEM),myg95)
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
+   DBLFLAGS= -r8
    PARALLEL= no
    KNOWN_SYSTEM=yes
 endif
@@ -376,6 +387,7 @@ ifeq ($(SYSTEM),astromac)
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -fendian='BIG'
    ENDIANFLAGLITTLE= -fendian='LITTLE'
+   DBLFLAGS= -r8
    DEBUGFLAG=-fbounds-check -ftrace=full
    PARALLEL= no
    KNOWN_SYSTEM=yes
@@ -386,6 +398,7 @@ ifeq ($(SYSTEM),spectrum)
    F90C= f95
    F90FLAGS= -fast -ftrap=%none
    OMPFLAGS= -openmp
+   DBLFLAGS= -xtypemap=real:64,double:64
    DEBUGFLAG= -g -C -w4 -errtags -erroff=COMMENT_1582,COMMENT_1744 -ftrap=%all
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -xfilebyteorder=big16:%all
@@ -398,6 +411,7 @@ ifeq ($(SYSTEM),cody)
     F90C= gfortran
     F90FLAGS= -O3 -Wall
     SYSTEMFILE= system_f2003.f90
+    DBLFLAGS= -fdefault-real-8 -fdefault-double-8
     DEBUGFLAG= -g -frange-check
     OMPFLAGS= -fopenmp
     ENDIANFLAGBIG= -fconvert=big-endian
@@ -432,6 +446,11 @@ else
    ifeq ($(OPENMP),yes)
       F90FLAGS += $(OMPFLAGS)
    endif
+endif
+
+# compile in double precision
+ifeq ($(DOUBLEPRECISION), yes)
+    F90FLAGS += ${DBLFLAGS}
 endif
 
 # add debugging flags at compile time
