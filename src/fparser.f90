@@ -491,7 +491,7 @@ CONTAINS
        DO in=ib,lstr                                         ! Search for name terminators
           IF (SCAN(str(in:in),'+-*/^) ') > 0) EXIT
        END DO
-       DO j=1,SIZE(Var)
+       DO j=1,SIZE(Var,kind=is)
           IF (str(ib:in-1) == Var(j)) THEN
              n = j                                           ! Variable name found
              EXIT

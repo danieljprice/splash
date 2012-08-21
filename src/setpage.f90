@@ -87,7 +87,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
   real vmargintop,vmarginbottom,vmarginleft,vmarginright
   real vptxmin,vptxmax,vptymin,vptymax
   real aspectratio,devaspectratio,x1,x2,y1,y2
-  real xch,ych,dvx,dvy,dx,dy,xcen,ycen
+  real xch,ych,dx,dy,xcen,ycen
   character(len=10)  :: xopts, yopts
   logical, parameter :: useexactpixelboundaries = .true.
 !
