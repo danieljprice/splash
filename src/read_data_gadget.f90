@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -84,7 +84,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
   use params,         only:doub_prec,maxparttypes
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
-                           ntypes,debugmode
+                           ntypes,debugmode,iverbose
   use settings_page,  only:legendtext
   use mem_allocation, only:alloc
   use labels,         only:ih,irho,ipmass,labeltype
@@ -106,7 +106,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   integer               :: nextracols,nstarcols,i1,i2,i3,i4,lenblock,idumpformat
   integer, dimension(6) :: i0,i1all,i2all
   integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
-  logical               :: iexist,reallocate,checkids,usez
+  logical               :: iexist,reallocate,checkids,usez,goterrors
   logical, dimension(6) :: ireadtype
   real(doub_prec)                    :: timetemp,ztemp
   real(doub_prec), dimension(6)      :: massoftypei
@@ -115,6 +115,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   real, parameter :: pi = 3.1415926536
 
   nstepsread = 0
+  goterrors  = .false.
   if (maxparttypes.lt.6) then
      print*,' *** ERROR: not enough particle types for GADGET data read ***'
      print*,' *** you need to edit splash parameters and recompile ***'
@@ -450,11 +451,14 @@ subroutine read_data(rootname,istepstart,nstepsread)
      endif
   else
      if (usez) then
-        if (abs(ztemp-time(i)).gt.tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
+        if (abs(real(ztemp)-time(i)).gt.tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
      else
-        if (abs(timetemp-time(i)).gt.tiny(0.)) print*,'ERROR: time different between files in multiple-file read'
+        if (abs(real(timetemp)-time(i)).gt.tiny(0.)) print*,'ERROR: time different between files in multiple-file read'
      endif
-     if (sum(Nall).ne.ntotall) print*,' ERROR: Nall differs between files'
+     if (sum(Nall).ne.ntotall) then
+        print*,' ERROR: Nall differs between files'
+        goterrors = .true.
+     endif
   endif
   !
   !--read particle data
@@ -509,6 +513,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         endif
         if (ierr /= 0) then
            print "(a)",'error encountered whilst reading velocities'
+           goterrors = .true.
         endif
      else
         read(iunit, iostat=ierr)
@@ -545,6 +550,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         endif
         if (ierr /= 0) then
            print "(a)",'error encountered whilst reading particle ID'
+           goterrors = .true.
         endif
      endif
      !
@@ -580,6 +586,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            endif
            if (ierr /= 0) then
               print "(a)",'error reading particle masses'
+              goterrors = .true.
            endif
            !--now copy to the appropriate sections of the dat array
            indexstart = 1
@@ -614,6 +621,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            read(iunit,iostat=ierr)
            if (ierr /= 0) then
               print "(a)",'error reading particle masses'
+              goterrors = .true.
            endif
         endif
      endif
@@ -739,6 +747,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            endif
            if (ierr /= 0) then
               print "(1x,a,i3)",'ERROR READING PARTICLE DATA from column ',icol
+              goterrors = .true.
            endif
         endif
      enddo gas_properties
@@ -805,11 +814,17 @@ subroutine read_data(rootname,istepstart,nstepsread)
      idot = index(datfile,'.',back=.true.)
      if (idot.le.0) then
         print "(a)",' ERROR: read from multiple files but could not determine next file in sequence'
+        goterrors = .true.
      else
         write(string,*) ifile
         write(datfile,"(a,i1)"),trim(datfile(1:idot))//trim(adjustl(string))
         iexist = .false.
         inquire(file=datfile,exist=iexist)
+        if (.not.iexist) then
+           print "(a)",' ERROR: read from multiple files '// &
+           'but could not find '//trim(datfile)//': next in sequence'
+           goterrors = .true.
+        endif
      endif
   endif
 
@@ -828,6 +843,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      print*,'ERROR: sum of Npart across multiple files .ne. Nall in data read '
      print*,'Npart = ',npartoftype(:,i)
      print*,'Nall  = ',Nall(:)
+     goterrors = .true.
   endif
   !
   !--look for dark matter smoothing length/density files
@@ -848,6 +864,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            print "(a,i10,a,/)",' *** END-OF-FILE: GOT ',nhset,' SMOOTHING LENGTHS ***'
         elseif (ierr.gt.0) then
            print "(a)", ' *** ERROR reading smoothing lengths from file'
+           goterrors = .true.
         else
            print "(a,i10,a)",' SMOOTHING LENGTHS READ OK for ',index2-index1+1,' dark matter / star particles '
         endif
@@ -869,6 +886,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            print "(a,i10,a,/)",' *** END-OF-FILE: GOT ',nhset,' DENSITIES ***'
         elseif (ierr.gt.0) then
            print "(a)", ' *** ERROR reading dark matter densities from file'
+           goterrors = .true.
         else
            print "(a,i10,a)",' DENSITY READ OK for ',index2-index1+1,' dark matter / star particles '
         endif
@@ -899,6 +917,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
               dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),ih,i) = hsoft
            else
               print*,' ERROR: smoothing length not found in data arrays'
+              goterrors = .true.
            endif
         endif
         if (required(irho)) then
@@ -906,6 +925,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
               dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),irho,i) = 1.0
            else
               print*,' ERROR: place for density not found in data arrays'
+              goterrors = .true.
            endif
         endif
      else
@@ -931,6 +951,18 @@ subroutine read_data(rootname,istepstart,nstepsread)
      endif
   endif
 !
+!--pause with fatal errors
+!
+  if (goterrors .and. .not.lenvironment('GSPLASH_IGNORE_ERRORS')) then
+     print "(/,a)",'*** ERRORS detected during data read: data will be corrupted'
+     print "(a,/)",'    Please REPORT this and/or fix your file ***'
+     print "(a)",'     (set GSPLASH_IGNORE_ERRORS=yes to skip this message)'
+     if (iverbose.ge.1) then
+        print "(a)",'    > Press any key to bravely proceed anyway  <'
+        read*
+     endif
+  endif
+!
 !--give a friendly warning about using too few or too many neighbours
 !  (only works with equal mass particles because otherwise we need the number density estimate)
 !
@@ -945,7 +977,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         enddo
         hfact = hfactmean/real(nhfac)
         havewarned = .true.
-        if (hfact.lt.1.15 .or. hfact.gt.1.45) then
+        if (hfact.lt.1.125 .or. hfact.gt.1.45) then
            print "(/,a)",'** FRIENDLY NEIGHBOUR WARNING! **'
            print "(3x,a,f5.1,a,/,3x,a,f4.2,a,i1,a)", &
                  'It looks like you are using around ',4./3.*pi*(2.*hfact)**3,' neighbours,', &

@@ -30,6 +30,7 @@
 !  ENVIRONMENT VARIABLES:
 !
 ! GSPLASH_USE_Z if 'YES' uses redshift in the legend instead of time
+! GSPLASH_USE_IDS if 'YES' resorts particles according to their ParticleIDs
 ! GSPLASH_DARKMATTER_HSOFT if given a value > 0.0 will assign a
 !  smoothing length to dark matter particles which can then be
 !  used in the rendering
@@ -123,6 +124,33 @@ contains
 
   end function fstring
 
+ !---------------------------------------------------------------------------
+ !
+ ! function to reformat the HDF5 label into the splash column label
+ ! by inserting a space whereever a capital letter occurs
+ !
+ !---------------------------------------------------------------------------  
+  function reformatlabel(label)
+   implicit none
+   character(len=*), intent(in) :: label
+   character(len=2*len(label)) :: reformatlabel
+   integer :: is,ia,ib,ip
+   
+   reformatlabel = label
+   ip = 1
+   do is = 2, len_trim(label)
+      ip = ip + 1
+      ia = iachar(reformatlabel(ip:ip))
+      ib = iachar(reformatlabel(ip-1:ip-1))
+      if ((ia >= iachar('A').and.ia <= iachar('Z')) .and. .not. &
+          (ib >= iachar('A').and.ib <= iachar('Z'))) then
+         reformatlabel = reformatlabel(1:ip-1)//' '//reformatlabel(ip:)
+         ip = ip + 1
+      endif
+   enddo
+   
+  end function reformatlabel
+
 end module gadgethdf5read
 
 !-------------------------------------------------------------------------
@@ -134,7 +162,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
   use params,         only:doub_prec,maxparttypes,maxplot
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
-                           ntypes,debugmode
+                           ntypes,debugmode,iverbose
   use settings_page,  only:legendtext
   use mem_allocation, only:alloc
   use labels,         only:ih,irho,ipmass,labeltype
@@ -155,14 +183,15 @@ subroutine read_data(rootname,istepstart,nstepsread)
   integer               :: iFlagSfr,iFlagFeedback,iFlagCool,igotids,nfiles,nhfac
   integer, dimension(6) :: i0
   integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
-  logical               :: iexist,reallocate,usez
+  logical               :: iexist,reallocate,usez,debug,goterrors
   real(doub_prec)                    :: timetemp,ztemp
   real(doub_prec), dimension(6)      :: massoftypei
-  real :: hfact,hfactmean
+  real :: hfact,hfactmean,pmassi
   real, parameter :: pi = 3.1415926536
   integer, dimension(maxplot) :: isrequired
 
   nstepsread = 0
+  goterrors  = .false.
   if (maxparttypes.lt.6) then
      print*,' *** ERROR: not enough particle types for GADGET data read ***'
      print*,' *** you need to edit splash parameters and recompile ***'
@@ -184,7 +213,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !
      !--look for a file with .0 on the end for multiple-file reads
      !
-     datfile=trim(rootname)//'.0'
+     datfile=trim(rootname)//'.0.hdf5'
      inquire(file=datfile,exist=iexist)
      if (.not.iexist) then
         print "(a)",' *** error: '//trim(rootname)//': file not found ***'
@@ -199,7 +228,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !  idumpformat = ienvironment('GSPLASH_FORMAT')
 !  checkids    = lenvironment('GSPLASH_CHECKIDS')
   usez        = lenvironment('GSPLASH_USE_Z')
-!
+  debug       = lenvironment('GSPLASH_DEBUG') .or. debugmode
+! 
 !--read data from snapshots
 !
   i = istepstart
@@ -227,6 +257,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   npartoftypei(:) = 0.
   Nall(:) = 0.
   massoftypei(:) = 0.
+  if (debug) print*,'DEBUG: reading header...'
   call read_gadget_hdf5_header(cstring(datfile),maxtypes, &
        npartoftypei,massoftypei,timetemp,ztemp,iFlagSfr,iFlagFeedback,Nall,&
        iFlagCool,igotids,ndim,ndimV,nfiles,ncolstep,ierr)
@@ -250,7 +281,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !  check that the sequence starts from the correct file
   !
   if (nfiles.gt.1) then
-     idot = index(datfile,'.hdf5')-2 !len_trim(datfile)-1
+     idot = index(datfile,'.hdf5')
+     idot = index(datfile(1:idot-1),'.',back=.true.)
      if (ifile.eq.1 .and. datfile(idot:idot+1).ne.'.0') then
         if (nfiles.lt.100) then
            string = "(/,a,i2,a,/,a,/)"
@@ -382,11 +414,14 @@ subroutine read_data(rootname,istepstart,nstepsread)
      endif
   else
      if (usez) then
-        if (abs(ztemp-time(i)).gt.tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
+        if (abs(real(ztemp)-time(i)).gt.tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
      else
-        if (abs(timetemp-time(i)).gt.tiny(0.)) print*,'ERROR: time different between files in multiple-file read'
+        if (abs(real(timetemp)-time(i)).gt.tiny(0.)) print*,'ERROR: time different between files in multiple-file read '
      endif
-     if (sum(Nall).ne.ntotall) print*,' ERROR: Nall differs between files'
+     if (sum(Nall).ne.ntotall) then
+        print*,' ERROR: Nall differs between files'
+        goterrors = .true.
+     endif
   endif
   !
   !--read particle data
@@ -413,14 +448,27 @@ subroutine read_data(rootname,istepstart,nstepsread)
   iexist = .false.
   if (nfiles.gt.1 .and. ifile.lt.nfiles) then
      !--see if the next file exists
-     idot = index(datfile,'.',back=.true.)
+     idot = index(datfile,'.hdf5')
+     idot = index(datfile(1:idot-1),'.',back=.true.)
      if (idot.le.0) then
         print "(a)",' ERROR: read from multiple files but could not determine next file in sequence'
+        goterrors = .true.
      else
         write(string,*) ifile
-        write(datfile,"(a,i1)"),trim(datfile(1:idot))//trim(adjustl(string))
+        if (ifile.lt.10) then
+           write(datfile,"(a,i1)"),trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
+        elseif (ifile.lt.100) then
+           write(datfile,"(a,i2)"),trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
+        else
+           write(datfile,"(a,i3)"),trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
+        endif
         iexist = .false.
         inquire(file=datfile,exist=iexist)
+        if (.not.iexist) then
+           print "(a)",' ERROR: read from multiple files '// &
+           'but could not find '//trim(datfile)//': next in sequence'
+           goterrors = .true.
+        endif
      endif
   endif
 
@@ -439,6 +487,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      print*,'ERROR: sum of Npart across multiple files .ne. Nall in data read '
      print*,'Npart = ',npartoftype(:,i)
      print*,'Nall  = ',Nall(:)
+     goterrors = .true.
   endif
   !
   !--look for dark matter smoothing length/density files
@@ -459,6 +508,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            print "(a,i10,a,/)",' *** END-OF-FILE: GOT ',nhset,' SMOOTHING LENGTHS ***'
         elseif (ierr.gt.0) then
            print "(a)", ' *** ERROR reading smoothing lengths from file'
+           goterrors = .true.
         else
            print "(a,i10,a)",' SMOOTHING LENGTHS READ OK for ',index2-index1+1,' dark matter / star particles '
         endif
@@ -480,6 +530,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
            print "(a,i10,a,/)",' *** END-OF-FILE: GOT ',nhset,' DENSITIES ***'
         elseif (ierr.gt.0) then
            print "(a)", ' *** ERROR reading dark matter densities from file'
+           goterrors = .true.
         else
            print "(a,i10,a)",' DENSITY READ OK for ',index2-index1+1,' dark matter / star particles '
         endif
@@ -510,6 +561,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
               dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),ih,i) = hsoft
            else
               print*,' ERROR: smoothing length not found in data arrays'
+              goterrors = .true.
            endif
         endif
         if (required(irho)) then
@@ -517,6 +569,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
               dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),irho,i) = 1.0
            else
               print*,' ERROR: place for density not found in data arrays'
+              goterrors = .true.
            endif
         endif
      else
@@ -542,6 +595,18 @@ subroutine read_data(rootname,istepstart,nstepsread)
      endif
   endif
 !
+!--pause with fatal errors
+!
+  if (goterrors .and. .not.lenvironment('GSPLASH_IGNORE_ERRORS')) then
+     print "(/,a)",'*** ERRORS detected during data read: data will be corrupted'
+     print "(a,/)",'    Please REPORT this and/or fix your file ***'
+     print "(a)",'     (set GSPLASH_IGNORE_ERRORS=yes to skip this message)'
+     if (iverbose.ge.1) then
+        print "(a)",'    > Press any key to bravely proceed anyway  <'
+        read*
+     endif
+  endif  
+!
 !--give a friendly warning about using too few or too many neighbours
 !  (only works with equal mass particles because otherwise we need the number density estimate)
 !
@@ -551,12 +616,18 @@ subroutine read_data(rootname,istepstart,nstepsread)
      if (npartoftype(1,i).gt.nhfac) then
         hfactmean = 0.
         do j=1,nhfac
-           hfact = dat(j,ih,i)*(dat(j,irho,i)/(dat(j,ipmass,i)))**(1./ndim)
+           pmassi = dat(j,ipmass,i)
+           if (pmassi.gt.0.) then
+              pmassi = 1./pmassi
+           else
+              pmassi = 0.
+           endif
+           hfact = dat(j,ih,i)*(dat(j,irho,i)*pmassi)**(1./ndim)
            hfactmean = hfactmean + hfact
         enddo
         hfact = hfactmean/real(nhfac)
         havewarned = .true.
-        if (hfact.lt.1.15 .or. hfact.gt.1.45) then
+        if (hfact.lt.1.125 .or. hfact.gt.1.45) then
            print "(/,a)",'** FRIENDLY NEIGHBOUR WARNING! **'
            print "(3x,a,f5.1,a,/,3x,a,f4.2,a,i1,a)", &
                  'It looks like you are using around ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
@@ -587,7 +658,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         endif
      endif
   else
-    print*,'not true'
+     !print*,'not true'
   endif
 !
 !--cover the special case where no particles have been read
@@ -609,12 +680,13 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
   use particle_data,  only:dat,iamtype
   use settings_data,  only:debugmode
   use labels,         only:label,ih
+  use system_utils,   only:lenvironment
   implicit none
   integer(kind=c_int), intent(in) :: icol,npartoftypei,itype,i0
   real(kind=c_double), dimension(npartoftypei), intent(in) :: temparr
   integer(kind=c_int), dimension(npartoftypei), intent(in) :: id
   integer(kind=c_int) :: i,icolput
-  integer :: nmax,nerr
+  integer :: nmax,nerr,idi
   logical :: useids
 
   icolput = icol
@@ -623,18 +695,34 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
      return
   endif
-
-  useids = .true.
-  if (all(id.le.0) .or. size(iamtype(:,1)).le.1) useids = .false.
-  if (debugmode) print*,'DEBUG: using particle IDs = ',useids
-
   nmax = size(dat(:,1,1))
+
+  useids = lenvironment('GSPLASH_USE_IDS') .or. lenvironment('GSPLASH_CHECKIDS')
+  if (all(id.le.0) .or. size(iamtype(:,1)).le.1) useids = .false.
+  if (debugmode) print*,'DEBUG: using particle IDs = ',useids,' max = ',nmax
+
   if (useids) then
      nerr = 0
      !print*,' id range is ',minval(id),' to ',maxval(id),' type ',itype+1,' column = ',trim(label(icolput))
      do i=1,npartoftypei
         if (id(i).lt.1 .or. id(i).gt.nmax) then
-           nerr = nerr + 1
+           idi = id(i)
+           !
+           !--correct for particle IDs > 1e9 (used to represent recycled particles?)
+           !
+           if (idi.gt.1000000000) then
+              idi = idi - 1000000000
+              if (idi.le.nmax .or. idi.le.0) then
+                 dat(idi,icolput,1) = real(temparr(i))
+                 iamtype(idi,1) = itype + 1
+              else
+                 nerr = nerr + 1
+                 if (debugmode .and. nerr.le.10) print*,i,'fixed id = ',idi
+              endif
+           else
+              nerr = nerr + 1
+              if (debugmode .and. nerr.le.10) print*,i,' id = ',idi,idi-1000000000
+           endif
         else
            dat(id(i),icolput,1) = real(temparr(i))
            iamtype(id(i),1) = itype + 1
@@ -654,6 +742,11 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
      do i=1,nmax
         dat(i0+i,icolput,1) = real(temparr(i))
      enddo
+     if (size(iamtype(:,1)).gt.1) then
+        do i=1,nmax
+           iamtype(i0+i,1) = itype + 1
+        enddo
+     endif
   endif
 
   return
@@ -670,7 +763,7 @@ subroutine set_labels
   use settings_data,  only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry,       only:labelcoord
   use system_utils,   only:envlist,ienvironment
-  use gadgethdf5read, only:hsoft,blocklabelgas,blocksize
+  use gadgethdf5read, only:hsoft,blocklabelgas,blocksize,reformatlabel
   use asciiutils,     only:lcase
   implicit none
   integer :: i,j,icol,irank
@@ -694,11 +787,11 @@ subroutine set_labels
            ix(1) = icol
            ix(2) = icol + 1
            if (irank.ge.3) ix(3) = icol + 2
-        case('Velocities')
+        case('Velocities','Velocity')
            ivx = icol
         case('SmoothingLength')
            ih = icol
-        case('Masses')
+        case('Masses','Mass')
            ipmass = icol
         case('InternalEnergy')
            iutherm = icol
@@ -707,7 +800,7 @@ subroutine set_labels
         case('MagneticField')
            iBfirst = icol
         case default
-           label(icol:icol+irank-1) = trim(lcase(blocklabelgas(i)))
+           label(icol:icol+irank-1) = reformatlabel(blocklabelgas(i))
         end select
         
         if (irank.eq.ndimV) then

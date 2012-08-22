@@ -22,6 +22,8 @@ int get_rank_by_name(hid_t group_id, char *name);
 void set_blocklabel(int *icol, int *irank, char *name);
 void read_gadgethdf5_data_fromc(int *icol, int *npartoftypei, double temparr[*npartoftypei],
                                 int id[*npartoftypei], int *itype, int *i0);
+void get_vel_info(hid_t group_id, char *name, int *ndimV);
+void get_mass_info(hid_t group_id, char *name, int *rank);
 
 void read_gadget_hdf5_header(char   *filename,
                              int    maxtypes,
@@ -76,6 +78,7 @@ void read_gadget_hdf5_header(char   *filename,
    int nattrib;
    int i;
    char name[256];
+   char namevels[256],namemass[256];
    nattrib = H5Aget_num_attrs(group_id);
 
    /*
@@ -123,6 +126,8 @@ void read_gadget_hdf5_header(char   *filename,
          status = H5Aread(attrib_id,H5T_NATIVE_INT,&iFlagStellarAge);
       } else if (strcmp(name,"Flag_Metals")==0) {
          status = H5Aread(attrib_id,H5T_NATIVE_INT,&iFlagMetals);
+      } else if (strcmp(name,"Time_GYR")==0) {
+         status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,time);
       } else {
          if (debug) printf("DEBUG: unknown attribute %s \n",name);
       }
@@ -165,53 +170,78 @@ void read_gadget_hdf5_header(char   *filename,
    if (rank == 1) *igotids = 1;
    if (debug) printf("DEBUG: got IDs = %i\n",*igotids);
 
-   *ndim = get_rank_by_name(group_id,"Coordinates");
-   set_blocklabel(&j,ndim,"Coordinates");
+   strcpy(name,"Coordinates");
+   *ndim = get_rank_by_name(group_id,name);
+   set_blocklabel(&j,ndim,name);
    *ncol = *ncol + *ndim;
-   if (*ndim > 0) j++;
+   if (*ndim > 0) {
+     j++;
+   } else {
+     printf("ERROR: %s dataset not found\n",name);
+     *ierr = 3;
+     return;
+   }
 
-   *ndimV = get_rank_by_name(group_id,"Velocities");
+   get_vel_info(group_id,namevels,ndimV);
    set_blocklabel(&j,ndimV,"Velocities");
    *ncol = *ncol + *ndimV;
-   if (*ndimV > 0) j++;
+   if (*ndimV > 0) {
+     j++;
+   } else {
+     printf("ERROR: Velocities not found in file\n");
+     *ierr = 3;
+     return;
+   }
 
-   rank = get_rank_by_name(group_id,"Masses");
+   get_mass_info(group_id,namemass,&rank);
+   if (rank == 0) { printf("ERROR: Particle masses not found in file\n"); *ierr = 3; return; }
    set_blocklabel(&j,&rank,"Masses");
    *ncol = *ncol + rank;
    if (rank > 0) j++;
    
+   if (*ndim == 0 || *ndimV == 0) { printf("ERROR: got ndim = %i, ndimV = %i\n",*ndim,*ndimV); *ierr = 3; return; }
+   
+   int itype;
    for(i=0; i < (int)ndatasets; i++) {
        status       = H5Gget_objname_by_idx(group_id, i, name, 256);
+       itype        = H5Gget_objtype_by_idx(group_id, i);
+       /*if (debug) printf("DEBUG: checking %s\n",name);*/
+       /* Should not try to open it if object is not a dataset */
+       if (itype == H5G_DATASET) {
 #if H5_VERSION_GE(1,8,0)
-       dataset_id   = H5Dopen2(group_id,name,H5P_DEFAULT);
+          dataset_id   = H5Dopen2(group_id,name,H5P_DEFAULT);
 #else
-       dataset_id   = H5Dopen(group_id,name);
+          dataset_id   = H5Dopen(group_id,name);
 #endif
-       dataspace_id = H5Dget_space(dataset_id);
-       rank         = get_rank(dataspace_id);
+          dataspace_id = H5Dget_space(dataset_id);
+          rank         = get_rank(dataspace_id);
 
-       if (strcmp(name,"ParticleIDs")&&
-           strcmp(name,"Coordinates")&&
-           strcmp(name,"Velocities")&&
-           strcmp(name,"Masses"))
-          {
-            if (debug) printf("DEBUG: %s x %i \n",name,rank);
-            /* Send the dataset names back to Fortran 
-             * one by one, so they can be filled into 
-             * the array as appropriate */
-            set_blocklabel(&j,&rank,name);
-            *ncol = *ncol + rank;
-            if (rank > 0) j++;
-          } else {
-            if (debug) printf("DEBUG: ignoring %s \n",name);
-          }
-       status       = H5Dclose(dataset_id);       
+          if (strcmp(name,"ParticleIDs")&&
+              strcmp(name,"Coordinates")&&
+              strcmp(name,namevels)&&
+              strcmp(name,namemass))
+             {
+               if (debug) printf("DEBUG: storing %s x %i \n",name,rank);
+               /* Send the dataset names back to Fortran 
+                * one by one, so they can be filled into 
+                * the array as appropriate */
+               set_blocklabel(&j,&rank,name);
+               *ncol = *ncol + rank;
+               if (rank > 0) j++;
+             } else {
+               if (debug) printf("DEBUG: ignoring %s \n",name);
+             }
+          status       = H5Dclose(dataset_id);
+       } else {
+          if (debug) printf("DEBUG: skipping %s as it is not a dataset\n",name);
+       }
    } 
   
    status = H5Gclose(group_id);
 
    status = H5Fclose( file_id );
    if (status == HDF5_error) { printf("ERROR closing file \n"); *ierr = 7; }
+   if (debug) printf("DEBUG: finished header read \n");
    
    }
 
@@ -229,9 +259,9 @@ void read_gadget_hdf5_data(char *filename,
    herr_t    status;
    herr_t    HDF5_error = -1;
    char      groupname[12];
-   char      datasetname[256];
+   char      datasetname[256],namevels[256],namemass[256];
    
-   int i;
+   int i,ndimV,rank;
    int *id;
 
    if (debug) printf("DEBUG: re-opening %s \n",filename);
@@ -240,7 +270,7 @@ void read_gadget_hdf5_data(char *filename,
       { printf("ERROR re-opening %s \n",filename); *ierr = 1; return; }
    
    /* read dataset for each particle type present in dump file */
-   int itype;
+   int itype,iobjtype;
    for (itype=0;itype<maxtypes;itype++) {
       if (npartoftype[itype] > 0) {
          /* If npartoftype[N] > 0 in header, look for dataset of the form PartTypeN */
@@ -258,12 +288,16 @@ void read_gadget_hdf5_data(char *filename,
             status = H5Gget_num_objs(group_id, &ndatasets);
             if (debug) printf("DEBUG: number of datasets = %i \n",(int)ndatasets);
 
+            /* get names of velocity and particle mass datasets */
+            get_vel_info(group_id,namevels,&ndimV);
+            get_mass_info(group_id,namemass,&rank);
+
             /* read particle ID */
             int k = 0;
             id = malloc(npartoftype[itype]*sizeof(int));
             *ierr = read_gadgethdf5_dataset(group_id,"ParticleIDs",itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&k);
             /* set all IDs to zero if not read */
-            if (debug) printf("DEBUG: error from ID read = %i, rank = %i \n",*ierr,k);
+            if (*ierr != 0) printf("DEBUG: error from ID read = %i, rank = %i \n",*ierr,k);
             if (*ierr != 0 || k != 1) {
                for(k=0;k<npartoftype[itype];k++) {
                   id[k] = 0;
@@ -273,16 +307,17 @@ void read_gadget_hdf5_data(char *filename,
             int j = 0;
             /* read datasets common to all particle types first */
             *ierr = read_gadgethdf5_dataset(group_id,"Coordinates",itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&j);
-            *ierr = read_gadgethdf5_dataset(group_id,"Velocities",itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&j);
-            *ierr = read_gadgethdf5_dataset(group_id,"Masses",itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&j);
+            *ierr = read_gadgethdf5_dataset(group_id,namevels,itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&j);
+            *ierr = read_gadgethdf5_dataset(group_id,namemass,itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&j);
 
             /* read remaining datasets in the order they appear in the file */
             for(i=0; i < (int)ndatasets; i++) {
                 status       = H5Gget_objname_by_idx(group_id, i, datasetname, 256);
+                iobjtype     = H5Gget_objtype_by_idx(group_id, i);
                 if (strcmp(datasetname,"ParticleIDs")&&
                     strcmp(datasetname,"Coordinates")&&
-                    strcmp(datasetname,"Velocities")&&
-                    strcmp(datasetname,"Masses")) {
+                    strcmp(datasetname,namevels)&&
+                    strcmp(datasetname,namemass)&& (iobjtype == H5G_DATASET)) {
                    *ierr = read_gadgethdf5_dataset(group_id,datasetname,itype,maxtypes,npartoftype,i0,ncol,isrequired,id,&j);
                 }
             }
@@ -440,13 +475,49 @@ int get_rank(hid_t dataspace_id)
  */
 int get_rank_by_name(hid_t group_id, char *name)
 {
+
+  if (!checkfordataset(group_id,name)) { return 0; }
+
+  herr_t HDF5_error = -1;
 #if H5_VERSION_GE(1,8,0)
   hid_t dataset_id   = H5Dopen2(group_id,name,H5P_DEFAULT);
 #else
   hid_t dataset_id   = H5Dopen(group_id,name);
 #endif
+  if (dataset_id == HDF5_error) 
+     { printf("ERROR opening %s data set \n",name); return 0; }
+
   hid_t dataspace_id = H5Dget_space(dataset_id);
   int rank           = get_rank(dataspace_id);
   H5Dclose(dataset_id);
   return rank;
+}
+
+/*
+ *  utility function to find velocity dataset and ndimV
+ */
+void get_vel_info(hid_t group_id, char *name, int *ndimV)
+{
+   strcpy(name,"Velocities");
+   *ndimV = get_rank_by_name(group_id,name);
+   /* If "Velocities" not found, try "Velocity" */
+   if (*ndimV <= 0) {
+      strcpy(name,"Velocity");
+      *ndimV = get_rank_by_name(group_id,name);
+   }
+   return;
+}
+/*
+ *  utility function to find particle mass dataset and rank
+ */
+void get_mass_info(hid_t group_id, char *name, int *rank)
+{
+   strcpy(name,"Masses");
+   *rank = get_rank_by_name(group_id,name);
+   /* If "Masses" not found, try "Mass" */
+   if (*rank <= 0) {
+      strcpy(name,"Mass");
+      *rank = get_rank_by_name(group_id,name);
+   }
+   return;
 }
