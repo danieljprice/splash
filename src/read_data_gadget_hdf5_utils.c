@@ -65,7 +65,11 @@ void read_gadget_hdf5_header(char   *filename,
          return;
       }
 
+#if H5_VERSION_GE(1,8,0)
+   group_id = H5Gopen2(file_id,"Header",H5P_DEFAULT);
+#else
    group_id = H5Gopen(file_id,"Header");
+#endif
    if (group_id == HDF5_error) 
       { printf("ERROR opening Header data set \n"); *ierr = 2; return; }
 
@@ -139,7 +143,11 @@ void read_gadget_hdf5_header(char   *filename,
     * (from the number of datasets in the "PartType0" group)
     */
     
+#if H5_VERSION_GE(1,8,0)
+   group_id = H5Gopen2(file_id,"PartType0",H5P_DEFAULT);
+#else
    group_id = H5Gopen(file_id,"PartType0");
+#endif
    if (group_id == HDF5_error) 
       { printf("ERROR opening PartType0 data set \n"); *ierr = 2; return; }
    
@@ -174,7 +182,11 @@ void read_gadget_hdf5_header(char   *filename,
    
    for(i=0; i < (int)ndatasets; i++) {
        status       = H5Gget_objname_by_idx(group_id, i, name, 256);
+#if H5_VERSION_GE(1,8,0)
+       dataset_id   = H5Dopen2(group_id,name,H5P_DEFAULT);
+#else
        dataset_id   = H5Dopen(group_id,name);
+#endif
        dataspace_id = H5Dget_space(dataset_id);
        rank         = get_rank(dataspace_id);
 
@@ -234,7 +246,11 @@ void read_gadget_hdf5_data(char *filename,
          /* If npartoftype[N] > 0 in header, look for dataset of the form PartTypeN */
          sprintf(groupname,"PartType%i",itype);
          if (debug) printf("DEBUG: opening group %s\n",groupname);
+#if H5_VERSION_GE(1,8,0)
+         group_id = H5Gopen2(file_id,groupname,H5P_DEFAULT);
+#else
          group_id = H5Gopen(file_id,groupname);
+#endif
          if (group_id == HDF5_error)
             { printf("ERROR opening %s group \n",groupname); *ierr = 2; }
          else {
@@ -300,7 +316,11 @@ int read_gadgethdf5_dataset(hid_t group_id,
    
    if (!checkfordataset(group_id,datasetname)) { ierr = 1; return ierr; }
 
+#if H5_VERSION_GE(1,8,0)
+   dataset_id   = H5Dopen2(group_id,datasetname,H5P_DEFAULT);
+#else
    dataset_id   = H5Dopen(group_id,datasetname);
+#endif
    dataspace_id = H5Dget_space(dataset_id);
    int rank     = get_rank(dataspace_id);
    int k, flag;
@@ -420,7 +440,11 @@ int get_rank(hid_t dataspace_id)
  */
 int get_rank_by_name(hid_t group_id, char *name)
 {
+#if H5_VERSION_GE(1,8,0)
+  hid_t dataset_id   = H5Dopen2(group_id,name,H5P_DEFAULT);
+#else
   hid_t dataset_id   = H5Dopen(group_id,name);
+#endif
   hid_t dataspace_id = H5Dget_space(dataset_id);
   int rank           = get_rank(dataspace_id);
   H5Dclose(dataset_id);
