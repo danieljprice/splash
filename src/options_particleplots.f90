@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -110,6 +110,10 @@ subroutine submenu_particleplots(ichoose)
   use geometry,        only:maxcoordsys,labelcoordsys,coord_transform_limits
   use multiplot,       only:itrans
   use plotlib,         only:plotlib_maxlinestyle,plotlib_maxlinecolour
+  use calcquantities,  only:calc_quantities
+  use settings_data,   only:iCalcQuantities,DataIsBuffered,numplot
+  use filenames,       only:nsteps,nstepsinfile,ifileopen
+  use getdata,         only:set_coordlabels
   implicit none
   integer, intent(in) :: ichoose
   integer             :: i,iaction,n,itype,icoordsprev,ierr,icol
@@ -264,12 +268,6 @@ subroutine submenu_particleplots(ichoose)
         call prompt('Enter colour for line ',linecolour,0,plotlib_maxlinecolour)
      endif
      return
-!!-----------------------------------------------------------------------
-!!  case(5)
-!     !          label particles with particle numbers
-!     ilabelpart=.not.ilabelpart
-!     print*,' label particles = ',ilabelpart
-!     return
 !------------------------------------------------------------------------
   case(6)
      if (ndim.le.1 .or. ih.le.0) then
@@ -334,6 +332,12 @@ subroutine submenu_particleplots(ichoose)
         itrans(1:ndim) = 0
         call coord_transform_limits(lim(1:ndim,1),lim(1:ndim,2), &
                                     icoordsprev,icoordsnew,ndim)
+        call set_coordlabels(numplot)
+        if (DataIsBuffered) then
+           call calc_quantities(1,nsteps)
+        else
+           call calc_quantities(1,nstepsinfile(ifileopen))
+        endif
      endif
      return
 !------------------------------------------------------------------------

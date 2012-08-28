@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -381,7 +381,7 @@ end subroutine get_labels
 subroutine set_coordlabels(numplot)
  use geometry,       only:labelcoord
  use labels,         only:label,iamvec,labelvec,ix,labeldefault
- use settings_data,  only:icoords,icoordsnew,ndim,iRescale
+ use settings_data,  only:icoords,icoordsnew,ndim,iRescale,debugmode
  use settings_units, only:unitslabel
  implicit none
  integer, intent(in) :: numplot
@@ -402,7 +402,6 @@ subroutine set_coordlabels(numplot)
 !  last time we adjusted the labels
 !
  if (icoordsprev.lt.0) icoordsprev = icoordsnew
-
 !
 !--set coordinate and vector labels (depends on coordinate system)
 !
@@ -411,7 +410,7 @@ subroutine set_coordlabels(numplot)
 !--here we are using a coordinate system that differs from the original
 !  one read from the code (must change labels appropriately)
 !
-    print*,' changing coordinate labels ...'
+    if (debugmode) print*,'DEBUG: changing coordinate labels ...'
     do i=1,ndim
        if (ix(i).gt.0) then
           label(ix(i)) = labelcoord(i,icoordsnew)

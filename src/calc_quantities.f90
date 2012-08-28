@@ -590,7 +590,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels,         only:label,labelvec,iamvec,ix
   use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol
   use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,itrackpart,ndim,required,iverbose, &
-                           icoords,icoordsnew
+                           icoords,icoordsnew,ipartialread
   use mem_allocation, only:alloc
   use settings_units, only:unitslabel,units
   use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
@@ -625,6 +625,15 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
 
   if (.not.skip .and. ncalc.gt.0) then
      nused = 0
+     if (.not.ipartialread) then
+        !
+        !--need to be careful if data file has been read fully
+        !  as in this case we also assume all calculated quantities
+        !  have been done. So need to make sure that all quantities
+        !  *are* actually calculated in this case.
+        !
+        required(:) = .true.
+     endif
      do i=1,ncalc
         if (required(ncolumns+i)) nused = nused + 1
      enddo
