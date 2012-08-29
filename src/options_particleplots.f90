@@ -26,14 +26,14 @@
 !-------------------------------------------------------------------------
 module settings_part
  use params
- use settings_data, only:icoordsnew
+ use settings_data, only:icoordsnew,iexact
  implicit none
  integer, dimension(maxparttypes) :: imarktype,idefaultcolourtype,itypeorder
  integer, dimension(100)          :: icircpart
  integer, dimension(maxplot)      :: ilocerrbars
  logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings,UseTypeInContours
  integer :: ncircpart
- integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep, iexact
+ integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep
  logical :: iplotline,ilabelpart,ifastparticleplot,iploterrbars
  real    :: hfacmarkers
 

@@ -545,7 +545,7 @@ subroutine get_calc_data_dependencies(required)
  logical, dimension(0:maxplot), intent(inout) :: required
  character(len=lenvars), dimension(maxplot+nextravars) :: vars
  integer, dimension(maxcalc) :: incolumn
- integer :: ncalcok,ncalctot,nvars,i,j,ierr
+ integer :: ncalcok,ncalctot,nvars,i,j
 
  call check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose=.false.)
 

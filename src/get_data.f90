@@ -49,7 +49,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata,    &
                       DataisBuffered,iCalcQuantities,ndim,iverbose, &
                       iRescale,required,ipartialread,lowmemorymode,debugmode
-  use settings_part,  only:iexact
+  use settings_data,  only:iexact
   use particle_data,  only:dat,time,npartoftype,maxcol
   use prompting,      only:prompt
   use labels,         only:labeltype
