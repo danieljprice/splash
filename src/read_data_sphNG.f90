@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -653,7 +653,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          else
             hfact = dummyreal(6)
          endif
-         print "(a,es12.4,a,f6.3,a,f5.2,a,es7.1)", &
+         print "(a,es12.4,a,f6.3,a,f5.2,a,es8.1)", &
                ' time = ',time(j),' gamma = ',gamma(j), &
                ' hfact = ',hfact,' tolh = ',dummyreal(7)
       elseif (batcode) then

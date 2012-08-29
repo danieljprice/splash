@@ -979,7 +979,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         havewarned = .true.
         if (hfact.lt.1.125 .or. hfact.gt.1.45) then
            print "(/,a)",'** FRIENDLY NEIGHBOUR WARNING! **'
-           print "(3x,a,f5.1,a,/,3x,a,f4.2,a,i1,a)", &
+           print "(3x,a,f5.1,a,/,3x,a,f5.2,a,i1,a)", &
                  'It looks like you are using around ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
                  'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D:'
 
@@ -1002,7 +1002,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
               'A good default range is h = 1.2-1.3 (m/rho)^1/ndim ', &
               'corresponding to around 58-75 neighbours in 3D.'
         else
-           print "(/,1x,a,f5.1,a,/,1x,a,f4.2,a,i1,a,/)", &
+           print "(/,1x,a,f5.1,a,/,1x,a,f5.2,a,i1,a,/)", &
                 'Simulations employ ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
                 'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D'
         endif

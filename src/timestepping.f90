@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -141,7 +141,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
         print 34, time(ilocindat),istep
      endif
 32   format (5('-'),' t = (not read), dump #',i5,1x,18('-'))
-33   format (5('-'),' t = ',1pe8.2,', dump #',i5,1x,18('-'))
+33   format (5('-'),' t = ',es9.2,', dump #',i5,1x,18('-'))
 34   format (5('-'),' t = ',f8.2,', dump #',i5,1x,18('-'))
 
      istepsonpage = istepsonpage + 1

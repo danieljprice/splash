@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -177,7 +177,7 @@ subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndim,ndimV)
        call read_asciifile(trim(levelsfile),nlevels,rholevels)
        print "(a)",' read '//trim(levelsfile)//':'
        do i=1,nlevels
-          print "(a,i2,a,es8.2)",' level ',i,': rho > ',rholevels(i)
+          print "(a,i2,a,es9.2)",' level ',i,': rho > ',rholevels(i)
        enddo
        print*
     else
@@ -382,7 +382,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
 
  nfilesread = nfilesread + 1
  if (time.ge.0.) then
-    print "(/,5('-'),a,', TIME=',es8.2,' FILE #',i4,/)",&
+    print "(/,5('-'),a,', TIME=',es9.2,' FILE #',i4,/)",&
           '> CALCULATING '//trim(ucase(analysistype)),time,nfilesread
  else
     print "(/,5('-'),a,', FILE #',i4,' (TIME NOT READ)'/)",&
@@ -442,7 +442,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     totmom = sqrt(dot_product(xmom(1:ndimV),xmom(1:ndimV)))
     totang = sqrt(dot_product(angmom,angmom))
 
-    print "(7(/,1x,a6,' = ',es8.2))",'etot',etot,'ekin',ekin,'etherm',etherm,'epot',epot,'emag',emag,'totmom',totmom,'totang',totang
+    print "(7(/,1x,a6,' = ',es9.2))",'etot',etot,'ekin',ekin,'etherm',etherm,'epot',epot,'emag',emag,'totmom',totmom,'totang',totang
     !
     !--write line to output file
     !
@@ -486,7 +486,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        !--write output to screen/terminal
        !
        do i=1,nlevels
-          print "(1x,'M(rho > ',es8.2,') = ',es8.2)",rholevels(i),massaboverho(i)
+          print "(1x,'M(rho > ',es9.2,') = ',es9.2)",rholevels(i),massaboverho(i)
        enddo
        !
        !--write line to output file

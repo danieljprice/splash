@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -328,7 +328,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            !  from density and h (only strictly true for grad h code)
            !
            dat(1:nprint,7,j) = dat(1:nprint,4,j)**3*dat(1:nprint,5,j)*dhfact3
-           print "(a,f3.1,a)", &
+           print "(a,f5.2,a)", &
             ' WARNING: setting particle masses assuming h = ',hfact,'*(m/rho)^(1/3)'
         else
 
@@ -406,7 +406,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
            !  from density and h (only strictly true for grad h code)
            !
            dat(1:nprint,7,j) = dat(1:nprint,4,j)**3*dat(1:nprint,5,j)*dhfact3
-           print "(a,f3.1,a)", &
+           print "(a,f5.2,a)", &
             ' WARNING: setting particle masses assuming h = ',hfact,'*(m/rho)^(1/3)'
         else
      !

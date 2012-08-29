@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -204,7 +204,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   if (ngas.ge.0 .and. nread.ge.irho .and. all(abs(dat(1:ngas,ih,j)-dat(1,ih,j)).le.tiny(dat))) then
      print "(a)",'WARNING: fixed softening lengths detected: simulation may contain artificial fragmentation!'
-     print "(a,f4.2,a,i1,a)",'       : creating SPH smoothing lengths using h = ',hfact,'*(m/rho)**(1/',ndim,')'
+     print "(a,f5.2,a,i1,a)",'       : creating SPH smoothing lengths using h = ',hfact,'*(m/rho)**(1/',ndim,')'
      dat(1:ngas,ih,j) = hfact*(dat(1:ngas,ipmass,j)/(dat(1:ngas,irho,j) + tiny(dat)))**(1./ndim)
   endif
 
