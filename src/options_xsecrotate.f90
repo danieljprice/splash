@@ -639,7 +639,7 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
        if (iposinseq.gt.iposend) then
           print "(1x,a)",'-->  '//trim(labelseqtype(iseqtype(i)))//' finished : frac = 1.0'
        else
-          print "(1x,a,i3,a,i3,a,f4.2)",'-->  frame ', &
+          print "(1x,a,i3,a,i3,a,f5.2)",'-->  frame ', &
                  iposinseq,' / ',iposend,' of '//trim(labelseqtype(iseqtype(i)))//': frac = ',xfrac
        endif
        select case(iseqtype(i))
