@@ -365,7 +365,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  integer, dimension(n) :: iorder
  integer :: i,ipart,np
  real, dimension(2) :: xpts,ypts
- real :: vxi,vyi,vzi,dvmag,zfrac,vmax,vmag,frac,r,g,b,ri,gi,bi,term,lw
+ real :: vxi,vyi,vzi,dvmag,zfrac,vmax,vmag,frac,ri,gi,bi,term,lw
  real :: toti,fambient,diffuse,specular,fdiff,fspec,ldotn,vdotr,ldott,vdott
  integer :: pdiff,nspec
  real, dimension(3) :: vunit,lighting,viewangle
