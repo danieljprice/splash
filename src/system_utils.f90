@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -27,7 +27,7 @@
 module system_utils
  use system_commands, only:get_environment
  implicit none
- public :: ienvironment,lenvironment,renvironment
+ public :: ienvironment,lenvironment,renvironment,lenvstring
 
 contains
  !
@@ -39,6 +39,7 @@ contains
  !  (default is zero)
  !
  integer function ienvironment(variable,errval)
+    implicit none
     character(len=*), intent(in) :: variable
     character(len=30) :: string
     character(len=5) :: fmtstring
@@ -74,6 +75,7 @@ contains
  !  (default is zero)
  !
  real function renvironment(variable,errval)
+    implicit none
     character(len=*), intent(in) :: variable
     character(len=30) :: string
     real, intent(in), optional :: errval
@@ -101,20 +103,33 @@ contains
  !  from an environment variable setting
  !
  logical function lenvironment(variable)
+    implicit none
     character(len=*), intent(in) :: variable
     character(len=30) :: string
 
     call get_environment(variable,string)
+    lenvironment = lenvstring(string)
+
+ end function lenvironment
+
+ !
+ !--utility routine to determine whether a string
+ !  should be interpreted as true or false
+ !
+ logical function lenvstring(string)
+    implicit none
+    character(len=*), intent(in) :: string
+
     if (string(1:1).eq.'y'.or.string(1:1).eq.'Y' &
     .or.string(1:1).eq.'t'.or.string(1:1).eq.'T' &
     .or.trim(string).eq.'on'.or.trim(string).eq.'ON' &
     .or.trim(string).eq.'1') then
-       lenvironment = .true.
+       lenvstring = .true.
     else
-       lenvironment = .false.
+       lenvstring = .false.
     endif
 
- end function lenvironment
+ end function lenvstring
 
  !
  !--this routine returns an arbitrary number of

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -59,19 +59,19 @@ contains
 !     Output: smoothed data            : datsmooth (npixx,npixy,npixz)
 !
 !     Daniel Price, Institute of Astronomy, Cambridge 16/7/03
-!     Revised for splash to grid, Monash University   02/11/09
+!     Revised for "splash to grid", Monash University 02/11/09
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidth,zpixwidth,&
-     normalise,periodic)
+     normalise,periodicx,periodicy,periodicz)
   implicit none
   integer, intent(in) :: npart,npixx,npixy,npixz
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,zmin,pixwidth,zpixwidth
   real, intent(out), dimension(npixx,npixy,npixz) :: datsmooth
-  logical, intent(in) :: normalise,periodic
+  logical, intent(in) :: normalise,periodicx,periodicy,periodicz
   real, dimension(npixx,npixy,npixz) :: datnorm
 
   integer :: i,ipix,jpix,kpix
@@ -141,7 +141,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$omp shared(xmin,ymin,zmin) &
 !$omp shared(xminpix,yminpix,zminpix,pixwidth,zpixwidth) &
 !$omp shared(npixx,npixy,npixz,const) &
-!$omp shared(datnorm,normalise,periodic) &
+!$omp shared(datnorm,normalise,periodicx,periodicy,periodicz) &
 !$omp shared(hmin) & !,dhmin3) &
 !$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
 !$omp private(term,termnorm,xpixi) &
@@ -210,12 +210,16 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
      kpixmax = int((zi + radkern - zmin)/zpixwidth) + 1
 
-     if (.not.periodic) then
-        if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
-        if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-        if (kpixmin.lt.1) kpixmin = 1
-        if (ipixmax.gt.npixx) ipixmax = npixx
+     if (.not.periodicx) then
+        if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
+        if (ipixmax.gt.npixx) ipixmax = npixx  ! to pixels in the image
+     endif
+     if (.not.periodicy) then
+        if (jpixmin.lt.1)     jpixmin = 1
         if (jpixmax.gt.npixy) jpixmax = npixy
+     endif
+     if (.not.periodicz) then
+        if (kpixmin.lt.1)     kpixmin = 1
         if (kpixmax.gt.npixz) kpixmax = npixz
      endif
      !
@@ -225,9 +229,9 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      do ipix=ipixmin,ipixmax
         nxpix = nxpix + 1
         ipixi = ipix
-        if (periodic) then
-           if (ipixi.lt.1)     ipixi = ipixi + npixx
-           if (ipixi.gt.npixx) ipixi = ipixi - npixx
+        if (periodicx) then
+           if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
+           if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
         endif
         xpixi = xminpix + ipix*pixwidth
         !--watch out for errors with perioic wrapping...
@@ -248,9 +252,9 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      !
      do kpix = kpixmin,kpixmax
         kpixi = kpix
-        if (periodic) then
-           if (kpixi.lt.1)     kpixi = kpixi + npixz
-           if (kpixi.gt.npixz) kpixi = kpixi - npixz
+        if (periodicz) then
+           if (kpixi.lt.1)     kpixi = mod(kpixi,npixz) + npixz
+           if (kpixi.gt.npixz) kpixi = mod(kpixi-1,npixz) + 1
         endif
         zpix = zminpix + kpix*zpixwidth
         dz = zpix - zi
@@ -258,9 +262,9 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
         
         do jpix = jpixmin,jpixmax
            jpixi = jpix
-           if (periodic) then
-              if (jpixi.lt.1)     jpixi = jpixi + npixy
-              if (jpixi.gt.npixy) jpixi = jpixi - npixy
+           if (periodicy) then
+              if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
+              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
            endif
            ypix = yminpix + jpix*pixwidth
            dy = ypix - yi
@@ -270,9 +274,9 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
            do ipix = ipixmin,ipixmax
               nxpix = nxpix + 1
               ipixi = ipix
-              if (periodic) then
-                 if (ipixi.lt.1)     ipixi = ipixi + npixx
-                 if (ipixi.gt.npixx) ipixi = ipixi - npixx
+              if (periodicx) then
+                 if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
+                 if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
               endif
               q2 = dx2i(nxpix) + dyz2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
               !
@@ -332,7 +336,7 @@ end subroutine interpolate3D
 
 subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidth,zpixwidth,&
-     normalise,periodic)
+     normalise,periodicx,periodicy,periodicz)
   implicit none
   integer, intent(in) :: npart,npixx,npixy,npixz
   real, intent(in), dimension(npart)    :: x,y,z,hh,weight
@@ -340,7 +344,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,zmin,pixwidth,zpixwidth
   real, intent(out), dimension(3,npixx,npixy,npixz) :: datsmooth
-  logical, intent(in) :: normalise,periodic
+  logical, intent(in) :: normalise,periodicx,periodicy,periodicz
   real, dimension(npixx,npixy,npixz) :: datnorm
 
   integer :: i,ipix,jpix,kpix
@@ -464,12 +468,16 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
      kpixmax = int((zi + radkern - zmin)/zpixwidth) + 1
 
-     if (.not.periodic) then
-        if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
-        if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-        if (kpixmin.lt.1) kpixmin = 1
-        if (ipixmax.gt.npixx) ipixmax = npixx
+     if (.not.periodicx) then
+        if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
+        if (ipixmax.gt.npixx) ipixmax = npixx  ! to pixels in the image
+     endif
+     if (.not.periodicy) then
+        if (jpixmin.lt.1)     jpixmin = 1
         if (jpixmax.gt.npixy) jpixmax = npixy
+     endif
+     if (.not.periodicz) then
+        if (kpixmin.lt.1)     kpixmin = 1
         if (kpixmax.gt.npixz) kpixmax = npixz
      endif
      !
@@ -479,9 +487,9 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      do ipix=ipixmin,ipixmax
         nxpix = nxpix + 1
         ipixi = ipix
-        if (periodic) then
-           if (ipixi.lt.1)     ipixi = ipixi + npixx
-           if (ipixi.gt.npixx) ipixi = ipixi - npixx
+        if (periodicx) then
+           if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
+           if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
         endif
         xpixi = xminpix + ipix*pixwidth
         !--watch out for errors with perioic wrapping...
@@ -502,9 +510,9 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      !
      do kpix = kpixmin,kpixmax
         kpixi = kpix
-        if (periodic) then
-           if (kpixi.lt.1)     kpixi = kpixi + npixz
-           if (kpixi.gt.npixz) kpixi = kpixi - npixz
+        if (periodicz) then
+           if (kpixi.lt.1)     kpixi = mod(kpixi,npixz) + npixz
+           if (kpixi.gt.npixz) kpixi = mod(kpixi-1,npixz) + 1
         endif
         zpix = zminpix + kpix*zpixwidth
         dz = zpix - zi
@@ -512,9 +520,9 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
         
         do jpix = jpixmin,jpixmax
            jpixi = jpix
-           if (periodic) then
-              if (jpixi.lt.1)     jpixi = jpixi + npixy
-              if (jpixi.gt.npixy) jpixi = jpixi - npixy
+           if (periodicy) then
+              if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
+              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
            endif
            ypix = yminpix + jpix*pixwidth
            dy = ypix - yi
@@ -523,9 +531,9 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
            nxpix = 0
            do ipix = ipixmin,ipixmax
               ipixi = ipix
-              if (periodic) then
-                 if (ipixi.lt.1)     ipixi = ipixi + npixx
-                 if (ipixi.gt.npixx) ipixi = ipixi - npixx
+              if (periodicx) then
+                 if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
+                 if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
               endif
               nxpix = nxpix + 1
               q2 = dx2i(nxpix) + dyz2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21

@@ -710,7 +710,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
   logical :: dumxsec, isetrenderlimits, iscoordplot
   logical :: ichangesize, initx, inity, isameweights, volweightedpdf
-  logical, parameter :: isperiodic = .false. ! feature not implemented
+  logical, parameter :: isperiodicx = .false. ! feature not implemented
+  logical, parameter :: isperiodicy = .false. ! feature not implemented
+  logical, parameter :: isperiodicz = .false. ! feature not implemented
 
 34   format (25(' -'))
 
@@ -1277,7 +1279,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
                          dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
                          ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dz, &
-                         inormalise,isperiodic)
+                         inormalise,isperiodicx,isperiodicy,isperiodicz)
 
                     if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                        !!--allocate memory for 3D contouring array
@@ -1292,7 +1294,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
                             dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
                             ninterp,xmin,ymin,zmin,datpixcont3D,npixx,npixy,npixz,pixwidth,dz, &
-                            inormalise,isperiodic)
+                            inormalise,isperiodicx,isperiodicy,isperiodicz)
                        gotcontours = .true.
 
                        if (.not.isameweights) & ! reset weights

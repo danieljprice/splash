@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -45,7 +45,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  use params,             only:int1
  use interpolation,      only:set_interpolation_weights
  use interpolations3D,   only:interpolate3D,interpolate3D_vec
- use system_utils,       only:lenvironment,renvironment
+ use system_utils,       only:lenvironment,renvironment,envlist,lenvstring
  use readwrite_griddata, only:open_gridfile_w,write_grid
  use particle_data,      only:icolourme
  implicit none
@@ -59,7 +59,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  logical, intent(in)                          :: interpolateall
  integer, parameter :: iunit = 89
  integer            :: ierr,i,k,ncolsgrid,ivec,nvec,iloc,j,nzero
- integer            :: npixx,ntoti,ninterp
+ integer            :: npixx,ntoti,ninterp,nstring
  character(len=40)  :: fmtstring
  character(len=64)  :: fmtstring1
 
@@ -71,7 +71,10 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  real, dimension(3)    :: datmin,datmax,datmean
  integer, dimension(3) :: npixels
  real    :: hmin,pixwidth,rhominset,rhomin,gridmin,gridmax,gridmean
- logical :: isperiodic,inormalise,lowmem
+ logical :: inormalise,lowmem
+ logical, dimension(3) :: isperiodic
+ character(len=30), dimension(3) :: strings
+ character(len=1), dimension(3), parameter :: xlab = (/'x','y','z'/)
 
  !
  !--check for errors in input settings
@@ -98,12 +101,32 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  !
  !--whether or not to wrap particle contributions across boundaries
  !
- isperiodic = lenvironment('SPLASH_TO_GRID_PERIODIC')
- if (isperiodic) then
+ isperiodic(:) = .false.
+ call envlist('SPLASH_TO_GRID_PERIODIC',nstring,strings)
+ if (nstring.gt.3) then
+    print "(a)",' ERROR in SPLASH_TO_GRID_PERIODIC setting'
+    nstring = 3
+ endif
+ do i=1,nstring
+    isperiodic(i) = lenvstring(strings(i))
+ enddo
+ if (nstring.eq.1) isperiodic(2:3) = isperiodic(1)
+
+ if (isperiodic(1) .and. isperiodic(2) .and. isperiodic(3)) then
     print "(/,a)",' using PERIODIC boundaries (from SPLASH_TO_GRID_PERIODIC setting)'
+ elseif (isperiodic(1) .or. isperiodic(2) .or. isperiodic(3)) then
+    print*
+    do i=1,3
+       if (isperiodic(i)) then
+          print "(a)",' using PERIODIC boundaries in '//xlab(i)//' (from SPLASH_TO_GRID_PERIODIC setting)'
+       else
+          print "(a)",' using NON-PERIODIC bounds in '//xlab(i)//' (from SPLASH_TO_GRID_PERIODIC setting)'    
+       endif
+    enddo
  else
     print "(/,a)",' using NON-PERIODIC boundaries'
-    print "(a)",' (set SPLASH_TO_GRID_PERIODIC=yes for periodic)'
+    print "(a)",' (set SPLASH_TO_GRID_PERIODIC=yes for periodic'
+    print "(a)",'   or SPLASH_TO_GRID_PERIODIC=yes,no,yes for mixed)'
  endif
 
  ierr = 0
@@ -261,7 +284,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
       dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
       xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-      pixwidth,pixwidth,inormalise,isperiodic)
+      pixwidth,pixwidth,inormalise,isperiodic(1),isperiodic(2),isperiodic(3))
  !
  !--set minimum density on the grid
  !
@@ -325,7 +348,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
              call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                   dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                   xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-                  pixwidth,pixwidth,.true.,isperiodic)
+                  pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
           endif
 
           call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
@@ -390,7 +413,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
                    call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                         xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-                        pixwidth,pixwidth,.true.,isperiodic)
+                        pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
                 endif
 
                 call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
@@ -415,7 +438,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
                 call interpolate3D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                      dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc:iloc+ndimV-1),icolourme,ninterp,&
                      xmin(1),xmin(2),xmin(3),datgridvec,npixels(1),npixels(2),npixels(3),&
-                     pixwidth,pixwidth,.true.,isperiodic)
+                     pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
              endif
 
              call minmaxmean_gridvec(datgridvec,npixels,ndimV,datmin,datmax,datmean)

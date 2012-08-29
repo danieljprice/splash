@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -216,7 +216,7 @@ subroutine powerspec3D_sph(x,y,z,dat,hh,weight,icolours,npart, &
  real, dimension(ngrid,ngrid,ngrid) :: dat3D
  real :: dx
  integer :: logngrid,ik
- logical :: periodic
+ logical :: periodicx,periodicy,periodicz
 !
 !--make sure than ngrid is a factor of 2
 !
@@ -230,9 +230,12 @@ subroutine powerspec3D_sph(x,y,z,dat,hh,weight,icolours,npart, &
 !--interpolate (normalised) from particles to 3D grid suitable for FFT
 !
  print*,'ngrid = ',ngrid
- periodic = .false.
+ periodicx = .false.
+ periodicy = .false.
+ periodicz = .false.
  call interpolate3D(x,y,z,hh,weight,dat,icolours,npart, &
-      xmin,xmin,xmin,dat3D,ngrid,ngrid,ngrid,dx,dx,normalise,periodic)
+      xmin,xmin,xmin,dat3D,ngrid,ngrid,ngrid,dx,dx,normalise,&
+      periodicx,periodicy,periodicz)
 !
 !--setup grid of frequencies for plotting
 !
