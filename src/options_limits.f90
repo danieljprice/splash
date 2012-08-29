@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -90,13 +90,14 @@ subroutine submenu_limits(ichoose)
         ' 0) exit ',/,                 &
         ' 1) use adaptive/fixed limits                  ( ',a,', ',a,' )   ',/,  &
         ' 2) set limits manually ',/,     &
-        ' 3) xy limits/radius relative to particle          ( ',i8,' )',/,   &
-        ' 4) zoom in/out                                        ( ',f4.2,' )',/, &
+        ' 3) xy limits/radius relative to particle           ( ',i8,' )',/,   &
+        ' 4) auto-adjust limits to match device aspect ratio ( ',a,' )',/, &
         ' 5) apply log/other transformations to columns ',/, &
         ' 6) reset limits for all columns  ',/, &
         ' 7) use subset of data restricted by parameter range     ( ',a,')')
  if (iaction.le.0 .or. iaction.gt.7) then
-    print 10,trim(string),trim(string2),itrackpart,zoom,print_logical(anyrangeset())
+    print 10,trim(string),trim(string2),itrackpart,&
+             print_logical(adjustlimitstodevice),print_logical(anyrangeset())
     call prompt('enter option ',iaction,0,7)
  endif
 !
@@ -173,19 +174,23 @@ subroutine submenu_limits(ichoose)
 !------------------------------------------------------------------------
  case(4)
 
-!+ Zooms in/out (alternatively do this in interactive mode)
+!+ Adjust plot limits to match device aspect ratio
 
-    if (.not.iadapt) then
-       call prompt('Enter zoom factor for fixed limits',zoom,0.0)
-       do i=1,numplot
-          diff = lim(i,2)- lim(i,1)
-          mid = 0.5*(lim(i,1) + lim(i,2))
-          lim(i,1) = mid - 0.5*zoom*diff
-          lim(i,2) = mid + 0.5*zoom*diff
-       enddo
-    else
-       call prompt('Enter scale factor (adaptive limits)',scalemax,0.0)
-    endif
+    call prompt('Adjust limits to aspect ratio of device?',adjustlimitstodevice)
+
+!!+ Zooms in/out (alternatively do this in interactive mode)
+!
+!    if (.not.iadapt) then
+!       call prompt('Enter zoom factor for fixed limits',zoom,0.0)
+!       do i=1,numplot
+!          diff = lim(i,2)- lim(i,1)
+!          mid = 0.5*(lim(i,1) + lim(i,2))
+!          lim(i,1) = mid - 0.5*zoom*diff
+!          lim(i,2) = mid + 0.5*zoom*diff
+!       enddo
+!    else
+!       call prompt('Enter scale factor (adaptive limits)',scalemax,0.0)
+!    endif
 !------------------------------------------------------------------------
   case(5)
 

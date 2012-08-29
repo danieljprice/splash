@@ -348,6 +348,9 @@ subroutine submenu_page(ichoose)
         papersizex = 0.0         ! no call to PGPAP if they are zero
         aspectratio = 0.0
      end select
+     
+     call prompt('Adjust plot limits to match device aspect ratio?',adjustlimitstodevice)
+
      return
 !------------------------------------------------------------------------
   case(4)
