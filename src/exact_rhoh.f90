@@ -56,7 +56,7 @@ subroutine exact_rhoh(iplot,ndim,hfact,pmassval,xplot,yplot,ierr)
          yplot(:) = huge(yplot)
        end where
     endif
-    write(*,"(a,f5.2,a,1pe8.2,a,i1,a)") ' plotting h = ',hfact, &
+    write(*,"(a,f5.2,a,es9.2,a,i1,a)") ' plotting h = ',hfact, &
                                '*(',pmassval,'/rho)**(1/',ndim,')'
  else
     print "(a)",'error: hfact = 0: can''t plot h vs rho exact solution'
