@@ -546,9 +546,8 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 \
          exact_densityprofiles.f90 exact_torus.f90 \
          exact_ringspread.f90 exact.f90 limits.f90 shapes.f90 \
-         allocate.f90 titles.f90 contours.f90 \
-         options_render.f90 options_particleplots.f90 \
-         calc_quantities.f90 get_data.f90 \
+         allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
+         options_render.f90 get_data.f90 options_particleplots.f90 \
          options_data.f90 \
          options_limits.f90 options_page.f90 \
 	 options_powerspec.f90 \
