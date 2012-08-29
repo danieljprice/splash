@@ -190,8 +190,8 @@ subroutine submenu_data(ichoose)
     do i=1,ncolumns
        print "(a,a3,a,a3,es10.3)",trim(label(i))//trim(unitslabel(i)),' = ',trim(label(i)),' x ',units(i)
     enddo
-    print "(a,a3,a,a3,es8.2)",'time'//trim(unitslabel(0)),' = ','time',' x ',units(0)
-    print "(a,a3,a,a3,es8.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration
+    print "(a,a3,a,a3,es9.2)",'time'//trim(unitslabel(0)),' = ','time',' x ',units(0)
+    print "(a,a3,a,a3,es9.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration
 
     iRescaleprev = iRescale
     iRescale = .not.iRescale
