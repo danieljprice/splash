@@ -409,7 +409,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 !$omp shared(xmin,ymin,zmin) &
 !$omp shared(xminpix,yminpix,zminpix,pixwidth,zpixwidth) &
 !$omp shared(npixx,npixy,npixz,const) &
-!$omp shared(datnorm,normalise,periodic) &
+!$omp shared(datnorm,normalise,periodicx,periodicy,periodicz) &
 !$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
 !$omp private(term,termnorm,xpixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
