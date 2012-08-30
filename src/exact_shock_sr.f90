@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -35,7 +35,7 @@
 !               University of Exeter 2004-2008
 !               Monash University 2008-
 !
-! daniel.price@sci.monash.edu.au
+! daniel.price@monash.edu
 !-----------------------------------------------------------------------
 module shock_sr
  implicit none
@@ -51,8 +51,8 @@ subroutine exact_shock_sr(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,ypl
   real, intent(in) :: rho_L,rho_R,p_L,p_R,v_L,v_R
   real, dimension(:), intent(inout) :: xplot
   real, dimension(size(xplot)), intent(out) :: yplot
-  real*8, dimension(size(xplot)) :: rad,dens,pr,vel,uu
-  real*8 :: rhol,rhor,pl,prr,vl,vr,gam,t
+  double precision, dimension(size(xplot)) :: rad,dens,pr,vel,uu
+  double precision :: rhol,rhor,pl,prr,vl,vr,gam,t
 
   print*,'Plotting Special Relativistic Riemann solution at t = ',time,' gamma = ',gamma
 !
@@ -334,7 +334,7 @@ end subroutine exact_shock_sr
 
       xi = (rad(i) - x0)/t
 
-      call raref(xi, rhol,    pl,    ul,    csl,  vell,  'l', &
+      call raref(xi, rhol,  csl,  vell,  'l', &
                      rhoa(i), pa(i), ua(i),       vela(i))
 
     else if (rad(i).le.x3) then
@@ -355,7 +355,7 @@ end subroutine exact_shock_sr
 
       xi = (rad(i) - x0)/t
 
-      call raref(xi, rhor,    pr,    ur,    csr,  velr,  'r', &
+      call raref(xi, rhor, csr,  velr,  'r', &
                      rhoa(i), pa(i), ua(i),       vela(i))
 
     else
@@ -430,14 +430,14 @@ end subroutine exact_shock_sr
 ! left wave
 ! -----
 
-  call getvel(p, rhol, pl, ul,  hl,  csl,  vell,  wl, 'l', &
+  call getvel(p, rhol, pl, hl,  csl,  vell,  wl, 'l', &
                  rhols,    uls, hls, csls, vells, vshockl )
 
 ! -----
 ! right wave
 ! -----
 
-  call getvel(p, rhor, pr, ur,  hr,  csr,  velr,  wr, 'r', &
+  call getvel(p, rhor, pr, hr,  csr,  velr,  wr, 'r', &
                  rhors,    urs, hrs, csrs, velrs, vshockr )
 
   dvel = vells - velrs
@@ -626,7 +626,7 @@ end subroutine exact_shock_sr
 !c    this routine closely follows the expressions in Marti and Mueller,
 !c    J. fluid mech., (1994)
 
-  subroutine getvel( p, rhoa, pa, ua, ha, csa, vela, wa, s,  &
+  subroutine getvel( p, rhoa, pa, ha, csa, vela, wa, s,  &
                      rho, u,  h,  cs,  vel,  vshock )
 
   implicit none
@@ -635,8 +635,8 @@ end subroutine exact_shock_sr
 ! arguments
 ! -----
 
-  double precision, intent(in) :: p, rhoa, pa, ua, ha, csa, vela, wa
-  character*1, intent(in) :: s
+  double precision, intent(in) :: p, rhoa, pa, ha, csa, vela, wa
+  character(len=1), intent(in) :: s
   double precision, intent(out) :: rho, u, h, cs, vel, vshock
 
 ! -------
@@ -798,7 +798,7 @@ end subroutine exact_shock_sr
 !c    this routine closely follows the expressions in marti and mueller,
 !c    j. fluid mech., (1994)
 
-  subroutine raref( xi, rhoa, pa, ua, csa, vela, s, rho, p, u, vel )
+  subroutine raref( xi, rhoa, csa, vela, s, rho, p, u, vel )
 
   implicit none
 
@@ -808,7 +808,7 @@ end subroutine exact_shock_sr
 
   double precision, intent(in) :: xi
 
-  double precision, intent(in) :: rhoa, pa, ua, csa, vela
+  double precision, intent(in) :: rhoa, csa, vela
 
   character, intent(in) ::  s
 
