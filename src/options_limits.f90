@@ -67,11 +67,11 @@ subroutine submenu_limits(ichoose)
  implicit none
  integer, intent(in) :: ichoose
  integer             :: iaction,ipick,i,index,itrackpartprev
- real                :: diff, mid, zoom
+! real                :: diff, mid, zoom
  character(len=120)  :: transprompt
  character(len=5)    :: string,string2
 
- zoom = 1.0
+! zoom = 1.0
 
  iaction = ichoose
  if (iadapt) then
