@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -257,15 +257,13 @@ end subroutine write_pixmap_ppm
 !-----------------------------------------------------------------
 !  read in pixels from file
 !-----------------------------------------------------------------
-subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,icol,time,istep,xsec,ierr)
+subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,istep,xsec,ierr)
  use asciiutils, only:safename,basename
  implicit none
  real, intent(out), dimension(:,:), allocatable :: datpix
  integer, intent(out)            :: npixx,npixy,ierr
  character(len=*), intent(in)    :: dumpfile
  character(len=*), intent(inout) :: label
- integer,          intent(in)    :: icol
- real,             intent(in)    :: time
  integer,          intent(in)    :: istep
  logical,          intent(in)    :: xsec
  integer            :: i,maxnames

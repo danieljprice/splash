@@ -2501,7 +2501,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !--datpix is allocated inside the readpixmap routine
            if (allocated(datpix)) deallocate(datpix)
            labelrender = label(irender)
-           call readpixmap(datpix,npixx,npixy,rootname(ifileopen),labelrender,irender,timei,istep,x_sec,ierr)
+           call readpixmap(datpix,npixx,npixy,rootname(ifileopen),labelrender,istep,x_sec,ierr)
 
            if (.not.interactivereplot) then
               if (ndim.ge.1) then
