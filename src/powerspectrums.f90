@@ -246,7 +246,7 @@ subroutine powerspec3D_sph(x,y,z,dat,hh,weight,icolours,npart, &
 !
 !--calculate powerspectrum using fft
 !
- call power3d_fft(dat3D,ngrid,ngrid,ngrid,power,freq,ngrid)
+ call power3d_fft(dat3D,ngrid,ngrid,ngrid,power,ngrid)
 
  return
 end subroutine powerspec3D_sph
@@ -254,12 +254,11 @@ end subroutine powerspec3D_sph
 !
 !--power spectrum routine using Fast Fourier Transform
 !
-subroutine power3d_fft(dat,nx,ny,nz,power,freq,nk)
+subroutine power3d_fft(dat,nx,ny,nz,power,nk)
  implicit none
 ! include 'fftw3.f'
  integer, intent(in) :: nx,ny,nz,nk
- real, intent(in), dimension(nx,ny,nz) :: dat
- real, intent(in), dimension(nk) :: freq
+ real, intent(in),  dimension(nx,ny,nz) :: dat
  real, intent(out), dimension(nk) :: power
  integer, dimension(nk) :: numk
  complex :: dati(nx,ny,nz)
