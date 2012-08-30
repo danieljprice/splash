@@ -817,7 +817,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         goterrors = .true.
      else
         write(string,*) ifile
-        write(datfile,"(a,i1)"),trim(datfile(1:idot))//trim(adjustl(string))
+        write(datfile,"(a,i1)") trim(datfile(1:idot))//trim(adjustl(string))
         iexist = .false.
         inquire(file=datfile,exist=iexist)
         if (.not.iexist) then
