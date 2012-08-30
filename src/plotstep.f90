@@ -615,7 +615,7 @@ end subroutine initialise_plotting
 
 subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ivecplot, &
                     iamtype,npartoftype,masstype,dat,timei,gammai,ipagechange,iadvance)
-  use params,             only:doub_prec,int1,maxparttypes
+  use params,             only:int1,maxparttypes
   use colours,            only:colour_set
   use filenames,          only:nsteps,rootname,ifileopen,tagline
   use exact,              only:exact_solution,atstar,ctstar,sigma,iPlotExactOnlyOnPanel

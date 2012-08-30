@@ -101,12 +101,11 @@ end module seren_data_store
 subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
-                          &ntypes,iRescale
+  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread,ntypes
   use settings_units, only:labelzintegration, unitzintegration, unit_interp
   use mem_allocation, only:alloc
-  use labels, only:label,labeltype
-  use system_utils, only:ienvironment
+  use labels,         only:labeltype
+  use system_utils,   only:ienvironment
   use seren_data_store
   implicit none
   integer, intent(in) :: istepstart
@@ -131,6 +130,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   rho_unit = ""
   h_unit = ""
   !iRescale = .TRUE.
+  ipartialread = .false. ! we always read full data file
 
   seren_maxparttypes = min(maxparttypes,7)
 
@@ -1097,7 +1097,7 @@ subroutine set_labels
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
   use geometry, only:labelcoord
-  use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
+  use settings_units, only:units,unitslabel !,unitzintegration,labelzintegration
   use seren_data_store
   implicit none
   integer :: i, j, width, unit_no
@@ -1261,9 +1261,8 @@ subroutine set_labels
 end subroutine set_labels
 
 subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegration)
-   use labels, only:ipmass,ih,irho,lenunitslabel
+   use labels, only:lenunitslabel
    use params
-   use settings_data, only:ndim
    use seren_data_store
    implicit none
 

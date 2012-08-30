@@ -138,7 +138,6 @@ end subroutine setup_calculated_quantities
 subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
  use prompting,     only:prompt
  use fparser,       only:checkf
- use labels,        only:lenlabel
  use settings_data, only:ncolumns,iRescale,required
  implicit none
  integer, intent(in)  :: istart,iend
@@ -539,7 +538,7 @@ end subroutine check_calculated_quantities
 !-----------------------------------------------------------------
 subroutine get_calc_data_dependencies(required)
  use params,         only:maxplot
- use settings_data,  only:ncolumns,debugmode,icoords,icoordsnew
+ use settings_data,  only:debugmode
  use fparser,        only:checkf
  use labels,         only:label
  logical, dimension(0:maxplot), intent(inout) :: required

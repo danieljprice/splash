@@ -204,8 +204,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
      if (ifile.eq.1) print "(a)",' >> reading default Gadget format <<'
   endif
 
-  npartoftypei(:) = 0.
-  Nall(:) = 0.
+  npartoftypei(:) = 0
+  Nall(:) = 0
   massoftypei(:) = 0.
   read(iunit,iostat=ierr) npartoftypei(1:6),massoftypei(1:6),timetemp,ztemp, &
       iFlagSfr,iFlagFeedback,Nall(1:6),iFlagCool,nfiles

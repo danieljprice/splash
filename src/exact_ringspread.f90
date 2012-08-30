@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -74,7 +74,7 @@ subroutine exact_ringspread(iplot,time,Mdisk,Rdisk,viscnu,xplot,yplot,ierr)
 
  do i=1,size(xplot)
     x = xplot(i)/Rdisk
-    sigma = Mdisk/(pi*R2)*ringspreadfunc(x,tau)
+    sigma = Mdisk/real((pi*R2)*ringspreadfunc(x,tau))
     !print*,'x = ',xplot(i),Rdisk,tau,sigma
 
     select case(iplot)

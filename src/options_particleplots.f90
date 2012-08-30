@@ -111,7 +111,7 @@ subroutine submenu_particleplots(ichoose)
   use multiplot,       only:itrans
   use plotlib,         only:plotlib_maxlinestyle,plotlib_maxlinecolour
   use calcquantities,  only:calc_quantities
-  use settings_data,   only:iCalcQuantities,DataIsBuffered,numplot
+  use settings_data,   only:DataIsBuffered,numplot
   use filenames,       only:nsteps,nstepsinfile,ifileopen
   use getdata,         only:set_coordlabels
   implicit none

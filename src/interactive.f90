@@ -78,7 +78,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use settings_data,    only:ndataplots,ntypes,icoords,icoordsnew
   use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
                              plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click,plot_right_click,&
-                             plot_middle_click,plot_scroll_left,plot_scroll_right,plotlib_is_pgplot,&
+                             plot_scroll_left,plot_scroll_right,plotlib_is_pgplot,&
                              plot_shift_click,plot_lcur,plot_poly
   use params,           only:int1,maxparttypes
   use part_utils,       only:igettype
@@ -2798,10 +2798,9 @@ end subroutine save_limits_track
 !--recalculates radius
 !
 subroutine save_itrackpart_recalcradius()
- use filenames, only:nsteps,nstepsinfile,ifileopen
- use settings_data, only:numplot,ncalc,DataIsBuffered,iCalcQuantities
+ use filenames,      only:nsteps,nstepsinfile,ifileopen
+ use settings_data,  only:ncalc,DataIsBuffered,iCalcQuantities
  use calcquantities, only:calc_quantities,calc_quantities_use_x0
- use labels, only:irad
  implicit none
 
  if (iCalcQuantities) then

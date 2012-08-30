@@ -38,7 +38,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
  use labels,         only:labeltype,ih,ivx,iBfirst,ipmass,ix,iutherm
  use settings_units, only:units
  use settings_data,  only:ndim,UseTypeInRenderings
- use params,         only:int1,int8,doub_prec,sing_prec
+ use params,         only:int8,doub_prec,sing_prec
  implicit none
  integer, intent(in)                          :: ntotal,ntypes,ncolumns
  integer, intent(in), dimension(:)            :: npartoftype

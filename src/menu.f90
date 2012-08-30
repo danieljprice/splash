@@ -48,7 +48,6 @@ subroutine menu
   use prompting,        only:prompt,print_logical
   use transforms,       only:transform_label
   use defaults,         only:defaults_write
-  use geometry,         only:labelcoord
   use getdata,          only:get_data,set_coordlabels
   use timestepping
   implicit none
@@ -392,7 +391,7 @@ subroutine menu
    use limits,          only:lim,lim2,lim2set,reset_lim2
    use labels,          only:is_coord,labeltype
    use params,          only:maxparttypes
-   use settings_data,   only:UseTypeInRenderings,ntypes
+   use settings_data,   only:ntypes
    implicit none
    integer :: ifac,ierr,itype,nvalues
    logical :: isamex, isamey, icoordplot, anycoordplot, imultisamepanel
@@ -594,7 +593,7 @@ end subroutine menu
 logical function allowrendering(iplotx,iploty)
  use labels,          only:ih,irho !,ipmass
  use multiplot,       only:itrans
- use settings_data,   only:icoords,icoordsnew,ndataplots
+ use settings_data,   only:ndataplots
  use settings_render, only:icolour_particles
  implicit none
  integer, intent(in) :: iplotx,iploty

@@ -524,7 +524,7 @@ end subroutine check_labels
 !----------------------------------------------------------------
 subroutine check_data_read
  use params,        only:maxplot,maxparttypes
- use settings_data, only:ncolumns,ndim,ndimV,ntypes,debugmode
+ use settings_data, only:ncolumns,ndim,ndimV,ntypes
  use particle_data, only:npartoftype,iamtype
  use labels,        only:labeltype
  implicit none
