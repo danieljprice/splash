@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -43,7 +43,7 @@ subroutine exact_rochelobe(time,semi,m1,m2,xplot,yplot,ierr)
 
  npts = size(xplot)/2
  if (npts < 1) return
- print "(a,es10.3,a,es10.3)",' plotting Roche potential, m1 = ',m1,' m2 = ',m2
+ print "(4(a,es10.3))",' plotting Roche potential, m1 = ',m1,' m2 = ',m2,' t = ',time,' a = ',semi
 
  roche_radius1 = roche_radius(m1, m2)
  roche_radius2 = roche_radius(m2, m1)
@@ -75,8 +75,8 @@ subroutine exact_rochelobe(time,semi,m1,m2,xplot,yplot,ierr)
  enddo
 
  !--some tedious fiddling for q>1 case
- if(m1<m2) then
-   xplot(:) = 1. - xplot(:)
+ if (m1 < m2) then
+    xplot(:) = 1. - xplot(:)
  endif
 
  call plot_line(2*npts+1,xplot,yplot)
