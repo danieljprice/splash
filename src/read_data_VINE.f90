@@ -56,18 +56,8 @@
 ! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
-
-subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data,  only:npartoftype,dat,time,gamma,maxcol,maxpart,maxstep
-  use params,         only:doub_prec
-  use settings_data,  only:ndim,ndimV,ncolumns,ncalc
-  use labels,         only:ivx, iBfirst,ih,ipmass
-  use mem_allocation, only:alloc
-  use system_utils,   only:lenvironment
+module vineread
   implicit none
-  integer, intent(in)          :: indexstart
-  integer, intent(out)         :: nstepsread
-  character(len=*), intent(in) :: rootname
 !
 ! These are the indices of various values saved in
 ! the header part of the dump file.
@@ -111,11 +101,25 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, parameter::id_taucool =53
   integer, parameter::id_lastreal1=54 !1 after last id for real numbers
 
+end module vineread
+
+subroutine read_data(rootname,indexstart,nstepsread)
+  use particle_data,  only:npartoftype,dat,time,gamma,maxcol,maxpart,maxstep
+  use params,         only:doub_prec
+  use settings_data,  only:ndim,ndimV,ncolumns,ncalc
+  use labels,         only:ivx, iBfirst,ih,ipmass
+  use mem_allocation, only:alloc
+  use system_utils,   only:lenvironment
+  use vineread,       only:id_gamma,id_iheadlen,id_ndim,id_npart,id_npart_sph,&
+                           id_npoim,id_t
+  implicit none
+  integer, intent(in)          :: indexstart
+  integer, intent(out)         :: nstepsread
+  character(len=*), intent(in) :: rootname
   integer :: iheadlength
   integer :: i,j,ierr,nparti,ntoti,i1,icol
   integer :: npart_max,nstep_max,ncolstep,nptmass
   logical :: iexist,mhdread,useipindx
-
   character(len=len(rootname)+10)    :: dumpfile
   integer, parameter                 :: maxheadlength = 1000
   integer, dimension(maxheadlength)  :: iheader
