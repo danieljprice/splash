@@ -132,6 +132,8 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      if (nsteps.gt.0) then
         ivegotdata = .true.
         DataIsBuffered = .true.
+     else
+        ncolumns = 0
      endif
      print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nsteps,' ncolumns = ',ncolumns
 
@@ -212,6 +214,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      endif
      !!print*,'nsteps in file = ',nstepsinfile(ireadfile)
      if (ANY(nstepsinfile(1:ireadfile).gt.0)) ivegotdata = .true.
+     if (.not.ivegotdata) ncolumns = 0
      !
      !--set ncolumns on first step only
      !
