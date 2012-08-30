@@ -1037,7 +1037,7 @@ contains
   integer, intent(out) :: nvec
 
   blklabel = '    '
-  if (idumpformat.eq.2) then
+  if (idumpfmt.eq.2) then
      read(lun, iostat=ierr) blklabel,lenblk
      if (ierr /= 0) then
         ndumped = 0

@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -38,7 +38,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
  use labels,         only:labeltype,ih,ivx,iBfirst,ipmass,ix,iutherm
  use settings_units, only:units
  use settings_data,  only:ndim,UseTypeInRenderings
- use params,         only:int1,int8,doub_prec
+ use params,         only:int1,int8,doub_prec,sing_prec
  implicit none
  integer, intent(in)                          :: ntotal,ntypes,ncolumns
  integer, intent(in), dimension(:)            :: npartoftype
@@ -261,7 +261,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
 
 !--real*4
 !   dump smoothing length as a real*4 to save space
-  write (idump, err=100) (real4(dat(i,ih)), i=1, npart)
+  write (idump, err=100) (real(dat(i,ih),kind=sing_prec), i=1, npart)
 
  close(unit=idump)
  return
@@ -306,18 +306,5 @@ character(len=100) function fileident(firstchar,codestring)
  !endif
 
 end function fileident
-
-!--------------------------------------------------------------------
-!+
-! small function defining conversion to a 4 byte real
-!+
-!--------------------------------------------------------------------
-real*4 function real4(dum)
- implicit none
- real, intent(in) :: dum
-
- real4 = dum
-
-end function real4
 
 end module write_data_phantom
