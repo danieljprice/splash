@@ -1148,7 +1148,7 @@ subroutine set_labels
 !            labelzintegration = ' ['//trim(adjustl(unit_string))//']'
            label(ix(1:ndim)) = labelcoord(1:ndim,1)
            ncolumns = ncolumns + NDIMtemp
-           r_unit = unit_base
+           r_unit = trim(adjustl(unit_base))
         case ("h")
            ! Smoothing lengths
            ih = ncolumns + 1
@@ -1156,7 +1156,7 @@ subroutine set_labels
            unitslabel(ih) = unit_string
            label(ih) = 'h'
            ncolumns = ncolumns + 1
-           h_unit = unit_base
+           h_unit = trim(adjustl(unit_base))
         case ("m")
            ! Mass
            ipmass = ncolumns + 1
@@ -1164,7 +1164,7 @@ subroutine set_labels
            unitslabel(ipmass) = unit_string
            label(ipmass) = 'particle mass'
            ncolumns = ncolumns + 1
-           m_unit = unit_base
+           m_unit = trim(adjustl(unit_base))
         case ("v")
            ! Velocities
            ivx = ncolumns + 1
@@ -1183,7 +1183,7 @@ subroutine set_labels
            unitslabel(irho) = unit_string
            label(irho) = 'density'
            ncolumns = ncolumns + 1
-           rho_unit = unit_base
+           rho_unit = trim(adjustl(unit_base))
         case ("temp")
            ! Temperatures
            itemp = ncolumns + 1 ! NOT A PROPER SPLASH i_quantity
