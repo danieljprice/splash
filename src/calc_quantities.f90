@@ -519,7 +519,7 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
     else
        indexinactive = indexinactive - 1
        if (isverbose) then
-          print "(i3') ',a50,' [INACTIVE]')",indexinactive,trim(calclabel(i))//' = '//calcstring(i)
+          print "(i3,') ',a50,' [INACTIVE]')",indexinactive,trim(calclabel(i))//' = '//calcstring(i)
        endif
        if (present(incolumn)) incolumn(i) = indexinactive
     endif
