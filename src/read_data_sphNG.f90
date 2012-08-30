@@ -77,7 +77,7 @@ end module sphNGread
 
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data,  only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
-  use params
+  use params,         only:int1,int8
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
                       lowmemorymode,ntypes,iverbose
   use mem_allocation, only:alloc
@@ -112,9 +112,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(len=100) :: fileident
   character(len=10)  :: string
 
-  integer*8, dimension(maxarrsizes) :: isize
+  integer(kind=int8), dimension(maxarrsizes) :: isize
   integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
-  integer*1, dimension(:), allocatable :: iphase
+  integer(kind=int1), dimension(:), allocatable :: iphase
   integer, dimension(:), allocatable :: listpm
   real(doub_prec), dimension(:), allocatable :: dattemp
   real(doub_prec) :: r8
@@ -1206,6 +1206,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
        ncolcopy = min(ncolstep,maxcol)
        allocate(dattemp2(nunknown,ncolcopy))
 
+       iphaseminthistype = 0  ! to avoid compiler warnings
+       iphasemaxthistype = 0
        do itype=1,3
           nthistype = 0
           ipos = 0
@@ -1315,7 +1317,7 @@ contains
   integer, intent(in) :: np
   real, dimension(np,3), intent(inout) :: xyz
   real, dimension(np), intent(in) :: pmass
-  integer*1, dimension(np), intent(in) :: iphase
+  integer(kind=int1), dimension(np), intent(in) :: iphase
   real :: masstot,pmassi
   real, dimension(3) :: xcm
   integer :: i
