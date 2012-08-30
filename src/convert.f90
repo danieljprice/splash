@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -86,7 +86,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
  !  the first filename and ndimV, labels etc.
  !
        if (doanalysis) then
-          call open_analysis(rootname(1),outformat,required,ncolumns+ncalc,ndim,ndimV)
+          call open_analysis(outformat,required,ncolumns+ncalc,ndim,ndimV)
        endif
     else
        call get_data(ifile,.true.)

@@ -114,13 +114,13 @@ end function isanalysis
 !  open output file/ initialise quantities needed for analysis
 !  over all dump files
 !----------------------------------------------------------------
-subroutine open_analysis(dumpfile,analysistype,required,ncolumns,ndim,ndimV)
+subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
  use labels,     only:ix,ivx,iBfirst,iutherm,irho,ipmass,label
  use asciiutils, only:read_asciifile
  use filenames,  only:rootname,nfiles,tagline
  implicit none
  integer, intent(in) :: ncolumns,ndim,ndimV
- character(len=*), intent(in) :: dumpfile,analysistype
+ character(len=*), intent(in) :: analysistype
  logical, dimension(0:ncolumns), intent(out) :: required
  character(len=1170) :: headerline   ! len=64 x 18 characters
  character(len=64) :: levelsfile
@@ -510,7 +510,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           itype = igettype(j)
           if (iplotpartoftype(itype)) then
              nused = nused + 1
-             coltemp(i) = max(coltemp(i),dat(j,i))
+             coltemp(i) = max(coltemp(i),real(dat(j,i),kind=doub_prec))
           endif
        enddo
        if (coltemp(i) < -0.5*huge(0.)) coltemp(i) = 0.
@@ -538,7 +538,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        do j=1,ntot
           itype = igettype(j)
           if (iplotpartoftype(itype)) then
-             coltemp(i) = min(coltemp(i),dat(j,i))
+             coltemp(i) = min(coltemp(i),real(dat(j,i),kind=doub_prec))
              nused = nused + 1
           endif
        enddo
