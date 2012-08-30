@@ -550,6 +550,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
    if (iblock.eq.1) then
       ncolumns = ncolstep + ncalc
+      if (ncolumns.gt.maxplot) then
+         print*,' ERROR with ncolumns = ',ncolumns,' in data read'
+         return
+      endif
       ilastrequired = 0
       do i=1,ncolumns
          if (required(i)) ilastrequired = i
