@@ -524,7 +524,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
   if (.not.minidump .and. allocated(dat) .and. lenvironment('RSPLASH_COROTATING')) then
      print*,'TRANSFORMING VELOCITIES TO CORORATING FRAME'
-     call set_corotating_vels(dat(1:nprint,1:2,j-1),dat(1:nprint,9,j-1),dat(1:nprint,4:5,j-1),n1,nprint)
+     call set_corotating_vels(dat(1:nprint,9,j-1),dat(1:nprint,4:5,j-1),n1,nprint)
   endif
 
   if (allocated(npartoftype)) then
@@ -565,10 +565,10 @@ contains
 !
 !--adjust velocities to corotating frame
 !
- subroutine set_corotating_vels(xy,pmass,vxy,n1,npart)
+ subroutine set_corotating_vels(pmass,vxy,n1,npart)
   implicit none
   integer, intent(in) :: n1,npart
-  real, dimension(npart,2), intent(inout) :: xy,vxy
+  real, dimension(npart,2), intent(inout) :: vxy !, xy
   real, dimension(npart) :: pmass
   real :: mass1,mass2 !,xcm1,ycm1,xcm2,ycm2
   real :: vxcm1,vycm1,vxcm2,vycm2
