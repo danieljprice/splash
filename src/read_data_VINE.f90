@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -292,7 +292,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              print "(a)",' *** Please email a copy of io.F so I can fix this ***  '
           endif
           iBfirst = icol+5
-          read(15,iostat=ierr), &
+          read(15,iostat=ierr) &
                (iheader(i),i=1,iheadlength), &
                (dheader(i),i=1,iheadlength), &
                (dattempvec(1:ndim+1,i),i=1,ntoti), &
@@ -310,7 +310,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              !
              !--read point mass information at the end of the dump file
              !
-             read(15,iostat=ierr), &
+             read(15,iostat=ierr) &
                   (iheader(i),i=1,iheadlength), &
                   (dheader(i),i=1,iheadlength), &
                   (dattempvec(1:ndim+1,i),i=1,ntoti), &
@@ -331,7 +331,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
              !
              !--no point masses, so shorter read
              !
-             read(15,iostat=ierr), &
+             read(15,iostat=ierr) &
                   (iheader(i),i=1,iheadlength), &
                   (dheader(i),i=1,iheadlength), &
                   (dattempvec(1:ndim+1,i),i=1,ntoti), &
