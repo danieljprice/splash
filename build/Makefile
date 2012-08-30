@@ -119,7 +119,7 @@ ifeq ($(SYSTEM), gfortran)
    F90FLAGS= -O3 -frecord-marker=4
    DBLFLAGS= -fdefault-real-8 -fdefault-double-8
    SYSTEMFILE= system_f2003.f90
-   DEBUGFLAG= -Wall -g -frange-check -fcheck=all -fbacktrace \
+   DEBUGFLAG= -Wall -Wextra -pedantic -g -frange-check -fcheck=all -fbacktrace \
               -finit-real=NaN -ffpe-trap=invalid,zero,overflow,denormal
    OMPFLAGS= -fopenmp
    ENDIANFLAGBIG= -fconvert=big-endian
