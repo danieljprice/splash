@@ -104,7 +104,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
                           npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
                           ncolumns+ncalc,ndim,ndimV,outformat)
        elseif (converttogrid) then
-          call convert_to_grid(time(idump),dat(:,:,idump),ntotal,ntypes,&
+          call convert_to_grid(time(idump),dat(:,:,idump),ntypes,&
                                npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
                                ncolumns+ncalc,filename,outformat,useall)
        else

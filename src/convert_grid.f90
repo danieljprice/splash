@@ -34,7 +34,7 @@ contains
 ! interpolate 3D SPH data to grid and interface to grid
 ! data output routines
 !-----------------------------------------------------------------
-subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncolumns,filename,&
+subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,filename,&
                            outformat,interpolateall)
  use labels,             only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst
  use limits,             only:lim
@@ -49,7 +49,7 @@ subroutine convert_to_grid(time,dat,npart,ntypes,npartoftype,masstype,itype,ncol
  use readwrite_griddata, only:open_gridfile_w,write_grid
  use particle_data,      only:icolourme
  implicit none
- integer, intent(in)                          :: npart,ntypes,ncolumns
+ integer, intent(in)                          :: ntypes,ncolumns
  integer, intent(in), dimension(:)            :: npartoftype
  integer(kind=int1), intent(in), dimension(:) :: itype
  real, intent(in)                             :: time
