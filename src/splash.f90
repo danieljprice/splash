@@ -48,6 +48,12 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.1.1  : (31/08/12)
+!             irregular/circular particle selection using shift-left/middle click;
+!             improved h5part and GADGET HDF5 data reads;
+!             splash can be compiled in double precision;
+!             bug fixes with calculated quantities + change of coordinate systems;
+!             improved vector plot legend; option for box+numbers but no labels added
 !     2.1.0  : (16/05/12)
 !             3D vector field visualisation added; 
 !             GADGET HDF5 read implemented;
@@ -313,7 +319,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.1.0 [16th May 2012]'
+  character(len=*), parameter :: version = 'v2.1.1 [31st Aug 2012]'
 
   !
   ! initialise some basic code variables
