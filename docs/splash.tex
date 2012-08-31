@@ -40,8 +40,9 @@
 \setlength{\oddsidemargin}{-0.5cm}
 \setlength{\evensidemargin}{-0.5cm}
 \setlength{\textwidth}{17cm}
-\def\thisyear{2011 }
+\def\thisyear{2012 }
 \newcommand{\splash}{\textsc{splash }}
+\newcommand{\giza}{\textsc{giza }}
 
 \begin{titlepage}
 \title{Visualisation of SPH data using \splash - v\input{version}}
@@ -86,7 +87,7 @@ difference between a raw particle plot and a rendered image can be substantial).
 \subsection{What it does}
 \splash is a utility for visualisation of output from (astrophysical) simulations using the
 Smoothed Particle Hydrodynamics (SPH) method in one, two and three dimensions.
-It is written in Fortran 90/95 and utilises the PGPLOT library to do the actual plotting. In particular the following
+It is written in Fortran 90/95 and utilises \giza, a custom-build backend graphics library to do the actual plotting. In particular the following
 features are included:
 \begin{itemize}
 \item Rendering of particle data to an array of pixels using the SPH kernel
@@ -112,7 +113,7 @@ polytropes).
 \item Conversion of binary dump files to ascii format.
 \item Transformation to different coordinate systems (for both coordinates and
 vector components) and rescaling of data into physical units.
-\item Straightforward production of both bitmap (png) and vector (Postscript, PDF) images which can then be
+\item Straightforward production of both bitmap (png) and vector (eps, pdf) images which can then be
 converted into animations or inserted into \LaTeX  documents.
 \end{itemize}
 
@@ -147,14 +148,13 @@ Thus it may not be particularly useful for things like water and solids etc. in 
 \subsection{Compiling the code}
 The basic steps for installation are as follows:
 \begin{enumerate}
-\item make sure you have a Fortran 95 compiler (such as g95)
-\item make sure you have the PGPLOT libraries installed
-\item compile \splash and link with PGPLOT
+\item make sure you have a recent Fortran compiler (such as gfortran)
+\item compile \splash and \giza
 \item write a read\_data subroutine so that \splash can read your data format
 \end{enumerate}
 
-\subsubsection{ Fortran 90/95 compilers}
- By now, many Fortran 90/95 compilers exist. The most widely available are:
+\subsubsection{ Fortran compilers}
+ By now, many Fortran 90/95/2003 compilers exist. The most widely available are:
  \begin{itemize}
 \item gfortran, the free Gnu Fortran Compiler \\\url{http://gcc.gnu.org/wiki/GFortran}
 \item g95, the other free gcc-based f90 compiler\\ \url{http://www.g95.org}
@@ -163,26 +163,34 @@ The basic steps for installation are as follows:
 \item ifort, one of the most widely available commercial compilers (and is very good) with (limited) free licence for Linux.
 \url{http://software.intel.com/en-us/articles/intel-compilers/}
 \end{itemize}
-All of these successfully compile \splash and if necessary the PGPLOT libraries.
+All of these successfully compile \splash and the \giza library.
 
-\subsubsection{ PGPLOT}
- The PGPLOT graphics subroutine library is freely downloadable from
+%\subsubsection{\giza}
+ %The PGPLOT graphics subroutine library is freely downloadable from
+%\begin{quote}
+%\url{http://www.astro.caltech.edu/~tjp/pgplot/}
+%\end{quote}
+%or by ftp from
+%\begin{quote}
+%\url{ftp://ftp.astro.caltech.edu/pub/pgplot/pgplot5.2.tar.gz}
+%\end{quote}
+%however check to see if it is already installed on your system (if so, the libraries are
+%usually located in /usr/local/pgplot). For details of the actual plotting subroutines
+%used by the \splash source code, you may want to refer to the PGPLOT userguide:
+%\begin{quote}
+%\url{http://www.astro.caltech.edu/~tjp/pgplot/contents.html}
+%\end{quote}
+
+\subsubsection{ Compiling and linking with \giza}
+A copy of \giza is included in the \splash distribution and is compiled automatically along with \splash. \giza is also available as a standalone project at:
 \begin{quote}
-\url{http://www.astro.caltech.edu/~tjp/pgplot/}
-\end{quote}
-or by ftp from
-\begin{quote}
-\url{ftp://ftp.astro.caltech.edu/pub/pgplot/pgplot5.2.tar.gz}
-\end{quote}
-however check to see if it is already installed on your system (if so, the libraries are
-usually located in /usr/local/pgplot). For details of the actual plotting subroutines
-used by the \splash source code, you may want to refer to the PGPLOT userguide:
-\begin{quote}
-\url{http://www.astro.caltech.edu/~tjp/pgplot/contents.html}
+\url{http://giza.sourceforge.net/}
 \end{quote}
 
-\subsubsection{ Compiling and linking with PGPLOT}
-For detailed instructions on compiling and linking with PGPLOT, refer to the INSTALL file in the root directory of the \splash distribution (or \url{http://users.monash.edu.au/~dprice/splash/download/INSTALL}).
+For detailed instructions on compiling and linking with \giza (or the older \textsc{pgplot} library used in \splash v1.x), refer to the INSTALL file in the root directory of the \splash distribution, or at:
+\begin{quote}
+ \url{http://users.monash.edu.au/~dprice/splash/download/INSTALL}.
+\end{quote}
 
 A successful `make' will produce a binary for each of the main supported SPH data formats -- for example for ascii formats the binary is called `asplash' (by convention the first letter refers to the data format for which \splash has been compiled). Details of these are given below.
 
@@ -195,7 +203,7 @@ necessary parts to suit your data files. Note that reading directly from
 unformatted data files is *much* faster than reading from formatted (ascii)
 output.   
 
-A standard ``make'' will create the following binaries (corresponding to data reads as listed):
+A standard ``make'' will create the binaries listed in Table~\ref{tab:defaultreads} which read the corresponding data formats listed in the third column. Table~\ref{tab:otherreads} lists other data reads implemented but not compiled by default.
 
 \begin{table}[h!]
 \begin{tabular}{lp{0.2\textwidth}lp{0.34\textwidth}}
@@ -211,16 +219,17 @@ srsplash & \textsc{seren} & \verb+read_data_seren.f90+ & The \textsc{SEREN} SPH 
 tsplash & \textsc{gasoline}, \textsc{tipsy}  &  \verb+read_data_tipsy.f90+ & Reads both binary and ascii TIPSY files (determined automatically). \\
 vsplash & \textsc{vine} & \verb+read_data_VINE.f90+ & see environment variable options. \\
 \hline
-\end{tabular} 
+\end{tabular}
+\caption{Binaries and data reads compiled by default}
+\label{tab:defaultreads}
 \end{table}
-
-Other data reads implemented (but not compiled by default) include the following:
 
 \begin{table}[h!]
 \begin{tabular}{lllp{0.25\textwidth}}
 Format & Binary & read\_data file & Comments \\
 \hline
 h5part format & h5splash & \verb+read_data_h5part.f90+ & Reads general files written with the h5part library. Requires linking against H5PART and HDF5 libraries \\
+\textsc{gadget} HDF5 format & gsplash-hdf5 & \verb+read_data_gadget_hdf5.f90+ & Reads HDF5 format from the \textsc{gadget} code. Requires linking against HDF5 libraries \\
 Andreas Bauswein's format & bsplash & \verb+read_data_bauswein.f90+  & \\
 Sigfried Vanaverbeke's format & vsplash & \verb+read_data_vanaverbeke.f90+  & \\
 Regularised SPH (Steinar Borve) & rsplash & \verb+read_data_rsph.f90+  & \\
@@ -232,35 +241,53 @@ Foulkes/Haswell/Murray & fsplash & \verb+read_data_foulkes.f90+  & An ascii form
 Andrea Urban format & usplash & \verb+read_data_urban.f90+  & An ascii format \\
 \hline
 \end{tabular}
+\caption{Other data reads implemented but not compiled by default}
+\label{tab:otherreads}
 \end{table}
 
 Further details on writing your own subroutine are given in
-appendix~\ref{sec:writeyourown}. The *easiest* way is to email me a sample data file and the subroutine
-you used to write it and I can then create a data read for your file format (I won't mind).
+appendix~\ref{sec:writeyourown}. The *easiest* way is to i) email me a sample data file and ii) the subroutine
+you used to write it, and I will happily create a data read for your file format.
 
 \subsection{Environment variables}
 \label{sec:envvariables}
-
-\subsubsection{ PGPLOT}
- Several useful environment variables can be set for PGPLOT and several of them
-are very useful for \splash. Firstly, to get the basic installation working it is usually necessary to set the environment variable PGPLOT\_DIR to the location of the pgplot directory and possible also PGPLOT\_FONT to specify the location of the font file (see the online faq for font problems), i.e., add the appropriate modification of the following line(s) to your .bashrc (or equivalent) file:
+Several runtime options for \splash can be set using environment variables. These are variables set from your unix shell. In the bash shell, environment variables are set from the command line using
 \begin{verbatim}
-export PGPLOT_DIR=/mypgplotdir/pgplot
-export PGPLOT_FONT=/mypgplotdir/pgplot/grfont.dat
+export VAR='blah'
 \end{verbatim}
-
-Some other useful things to set which control the runtime behaviour of PGPLOT include:
+or by putting this command in your \verb+.bash_profile+/\verb+.bashrc+. In csh, the equivalent is
 \begin{verbatim}
-export PGPLOT_DEV=/xwin
-export PGPLOT_BACKGROUND=white
-export PGPLOT_FOREGROUND=black
+setenv VAR 'blah'
 \end{verbatim}
-The first command sets the default device to the X-window, rather than the /null
-device. The latter two commands set the background and foreground colours of the
-plotting page. Note that these environment variables should be set \emph{before}
-invoking \splash (it is simplest to set them upon starting the shell by placing
-them in your .bashrc or tcsh/csh equivalent file). For other environment
-variables which can be set, refer to the PGPLOT user guide.
+or by putting the above in your \verb+.cshrc+ file.
+
+%\subsubsection{ PGPLOT}
+% Several useful environment variables can be set for PGPLOT and several of them
+%are very useful for \splash. Firstly, to get the basic installation working it is usually necessary to set the environment variable PGPLOT\_DIR to the location of the pgplot directory and possible also PGPLOT\_FONT to specify the location of the font file (see the online faq for font problems), i.e., add the appropriate modification of the following line(s) to your .bashrc (or equivalent) file:
+%\begin{verbatim}
+%export PGPLOT_DIR=/mypgplotdir/pgplot
+%export PGPLOT_FONT=/mypgplotdir/pgplot/grfont.dat
+%\end{verbatim}
+%
+%Some other useful things to set which control the runtime behaviour of PGPLOT include:
+%\begin{verbatim}
+%export PGPLOT_DEV=/xwin
+%export PGPLOT_BACKGROUND=white
+%export PGPLOT_FOREGROUND=black
+%\end{verbatim}
+%The first command sets the default device to the X-window, rather than the /null
+%device. The latter two commands set the background and foreground colours of the
+%plotting page. Note that these environment variables should be set \emph{before}
+%invoking \splash (it is simplest to set them upon starting the shell by placing
+%them in your .bashrc or tcsh/csh equivalent file). For other environment
+%variables which can be set, refer to the PGPLOT user guide.
+
+\subsection{\giza}
+Several environment variables affect the backend plotting library. Probably the most useful is the ability to change font:
+\begin{verbatim}
+export GIZA_FONT='Helvetica'
+\end{verbatim}
+where the name is a reasonable guess as to the font you want to use (the default is `Times'). In particular, if you are having trouble displaying unicode characters such as greek letters, you can just change the font until you find one that works.
 
 \subsubsection{ Endian changing}
  On some compilers, the endian-ness (byte order) of the file read for unformatted binary data files can also be changed at runtime. This is useful for looking at files on different systems to the one on which they were created (e.g. x86 machines create little-endian files by default, whereas IBM/powerpc machines create big-endian).
@@ -399,7 +426,7 @@ Command line plotting mode:
                      (will take columns 1 and 2 as x and y if -x and/or -y not specified)
  -vec[tor] column  : specify vector plot quantity on command line (ie. no vector prompt)
  -c[ontour] column : specify contoured quantity on command line (ie. no contour prompt)
- -dev device       : specify PGPLOT device on command line (ie. do not prompt)
+ -dev device       : specify plotting device on command line (ie. do not prompt)
 
  convert mode ("splash to X dumpfiles"): 
  splash to ascii   : convert SPH data to ascii file dumpfile.ascii
@@ -411,11 +438,16 @@ Command line plotting mode:
                       enddo
         to phantom : convert SPH data to binary dump file for PHANTOM
 
- grid conversion mode ("splash to X dumpfiles"): 
+ Grid conversion mode ("splash to X dumpfiles"): 
     splash to grid         : interpolate basic SPH data (density, plus velocity if present in data)
                              to 3D grid, write grid data to file (using default output=ascii)
            to gridascii    : as above, grid data written in ascii format
-           to gridbinary   : as above, grid data in simple unformatted binary format
+           to gridbinary   : as above, grid data in simple unformatted binary format:
+                                write(unit) nx,ny,nz,ncolumns,time                 [ 4 bytes each ]
+                                write(unit) (((rho(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]
+                                write(unit) (((vx(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]
+                                write(unit) (((vy(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]
+                                write(unit) (((...(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]
         allto grid         : as above, interpolating *all* columns to the grid (and output file)
         allto gridascii    : as above, with ascii output
         allto gridbinary   : as above, with binary output
@@ -425,8 +457,6 @@ Command line plotting mode:
                              output to file called 'energy.out'
          calc massaboverho : mass above a series of density thresholds vs time
                              output to file called 'massaboverho.out'
-         calc rhomach      : density variance and RMS velocity dispersion vs. time
-                             output to file called 'rhomach.out'
          calc max          : maximum of each column vs. time
                              output to file called 'maxvals.out'
          calc min          : minimum of each column vs. time
@@ -435,8 +465,6 @@ Command line plotting mode:
                              output to file called 'meanvals.out'
          calc rms          : (mass weighted) root mean square of each column vs. time
                              output to file called 'rmsvals.out'
-         calc vrms         : volume weighted root mean square of each column vs. time
-                             output to file called 'rmsvals-vw.out'
 
   the above options all produce a small ascii file with one row per input file.
   the following option produces a file equivalent in size to one input file (in ascii format):
@@ -501,7 +529,7 @@ Please enter your selection now (y axis or option): 5
 (x axis) (default=1): 4
  Graphics device/type (? to see list, default /xwin): /xw
 \end{verbatim}
- The \verb+default=+ refers to the default value assigned if you just press the return key. The last prompt asks for the PGPLOT device to which output should be directed. A full list of available graphics devices is given in the PGPLOT user guide. Some of the most useful devices are given in table \ref{tab:devices}. In the
+ The \verb+default=+ refers to the default value assigned if you just press the return key. The last prompt asks for the device to which output should be directed. A full list of available graphics devices is given by typing `?' at the prompt. Some of the most useful devices are given in table \ref{tab:devices}. In the
 above we have selected the X-window driver which means that the output is sent to the
 screen (provided X-windows is running), as demonstrated in the screenshot shown in Figure \ref{fig:rhoh}. 
 
@@ -520,13 +548,13 @@ To exit the plot, move the mouse to the plot window and press 'q' (quit). To exi
 \centering
 \begin{tabular}{|l|l|l|l|}
 \hline
-\verb+/xw+, \verb+/xwin+ & X-Window (interactive) & \verb+/gif+ & GIF \\
-\verb+/ps+ & Postscript (landscape) & \verb+/png+ & PNG (if installed) \\
-\verb+/vps+ & Postscript (portrait) & \verb+/null+ & null device (no output) \\
-\verb+/cps+ & Colour Postscript & & \\
+\verb+/xw+, \verb+/xwin+ & X-Window (interactive) & \verb+/png+ & Portable Network Graphics (bitmap) \\
+\verb+/eps+ & Encapsulated postscript (one file per page) & \verb+/svg+ & Scalable Vector Graphics \\
+\verb+/pdf+ & PDF & \verb+/null+ & null device (no output) \\
+\verb+/ps+ & Postscript (all pages in one file) & & \\
 \hline
 \end{tabular}
-\caption{Commonly used graphics devices available in PGPLOT}
+\caption{Commonly used graphics devices available in \giza}
 \label{tab:devices}
 \end{table}
 
@@ -596,23 +624,27 @@ Entering the same quantity used in the rendering at this prompt (e.g. column 5 i
  
  These tasks can also be achieved non-interactively by a series of drop-down submenus invoked from the main menu by typing a single character. For example limits changing options are contained in the l)imits submenu, so to manually set plot limits we would type ``l'' from the main menu, then ``2'' for option 2 (set manual limits) and follow the prompts to set the limits for a particular data column. 
 
-\subsection{Producing a postscript figure for a paper}
+\subsection{Producing an encapsulated postscript figure for a paper}
 \label{sec:postscript}
- Producing a postscript plot suitable for inclusion in a \LaTeX  file is simple: at the PGPLOT device prompt, 
+ Producing a postscript plot suitable for inclusion in a \LaTeX  file is simple: at the device prompt, type
 \begin{verbatim}
- Graphics device/type (? to see list, default /xwin):
+ Graphics device/type (? to see list, default /xw): /eps
 \end{verbatim}
-instead of ``/xw'' (for an X-window), simply type ``/ps'' to use the postscript driver. This produces a file which by default is called pgplot.ps. To specify both the device and filename, type ``myfile.ps/ps'' as the device. Files produced in this way can be directly incorporated into \LaTeX  using standard packages such as graphicx, psfig or epsfig (note that there are only very minor differences between a .eps file and a .ps file -- an eps file can be generated from a .ps file using ``ps2epsf'' if you really care). Options you may wish to change for postscript plots are the line width (generally 2-3 is better for visible axes in papers) and/or the character height (which sets the size of the axes labels). Both can be changed via the p)age options submenu (i.e., type ``p'' from the main menu). The reason the line width is only 1 by default is that thicker line widths can look poor on output to pixel devices such as gif and png.
+that is, instead of ``/xw'' (for an X-window), simply type ``/eps'' or ``.eps'' to use the encapsulated postscript driver. This produces a file which by default is called \verb+splash.eps+, or if multiple files have been read, a sequence of files called \verb+splash_0000.eps+, \verb+splash_0001.eps+, etc. To specify both the device and filename, type the full filename (e.g. \verb+myfile.eps+) as the device. Files produced in this way can be directly incorporated into \LaTeX  using standard packages such as graphicx, psfig or epsfig.
 
  Note that postscript devices do not have a `background' colour, so plots with a `black' background and `white' foreground will have invisible axes labels when viewed in (e.g.) gv (actually, they are there in white but the background is transparent - try inserting the figure into Keynote or Powerpoint with a dark background). For plots in papers you will therefore need to use a `black' or similarly dark foreground colour (set via the p)age submenu). When setting the foreground and background colours an option appears such that annotation drawn over the rendered region can be drawn in the opposite colour - thus enabling black axes labels (off the plot) but white text in the legend (over the rendered area).
 
 \subsection{Producing a sequence of plots for a movie}
 \label{sec:movies} 
- In order to produce a movie of a simulation, the first step is to generate a sequence of plots corresponding to different times in the simulation. To achieve this in \splash, simply invoke \splash with all of the filenames on the command line (e.g. \verb+splash dump*+), adjust until it looks right (either interactively or using the menu options), if in interactive mode type 's' to save the current settings, then plot the same thing again but to a non-interactive device. For a movie it is best to use a pixel device such as gif or png. To do this, at the PGPLOT device prompt:
+ To make a movie of your simulation, first specify all of the files you want to use on the command line:
 \begin{verbatim}
- Graphics device/type (? to see list, default /xwin):
+> splash dump_*
 \end{verbatim}
-type /gif or /png (depending on which drivers have been installed in your PGPLOT installation -- typing ``?'' at this prompt shows you the list). This will generate a series of plots with names such as \verb+pgplot.gif+, \verb+pgplot.gif_2+, \verb+pgplot.gif_3+ corresponding to each new plotting page generated. To change these into more sensible names use the script provided in the splash/scripts directory (see \S\ref{sec:fixpgplotnames}). 
+and use an interactive device to adjust options until it looks right (hint: for the nicest movies, best thing is to delete nearly all of the annotation, e.g. using the backspace key in interactive mode). If in interactive mode type 's' to save the current settings, then plot the same thing again but to a non-interactive device. For example, to generate a sequence of png files:
+\begin{verbatim}
+ Graphics device/type (? to see list, default /xw): /png
+\end{verbatim}
+This will generate a series of images named \verb+splash_0000.png+, \verb+splash_0001.png+, \verb+splash_0002.png+ corresponding to each new plotting page generated (or enter ``\verb+myfile.png+'' at the device prompt to generate \verb+myfile_0000.png+, \verb+myfile_0001.png+, \verb+myfile_0002.png+\ldots).
  
  Having obtained a sequence of images there are a variety of ways to make these into an animation using both free and commercial software. Suggestions on software packages to use for Mac, Linux and Windows can be found in the online faq (\url{http://users.monash.edu.au/~dprice/splash/faqs.html}). I generally use the application ``graphic converter'' on Mac OS/X which makes quicktime movies from a sequence of images.
  
@@ -620,13 +652,13 @@ type /gif or /png (depending on which drivers have been installed in your PGPLOT
 \subsection{Ten quick hints for producing good-looking plots}
 In this section I have listed ten quick suggestions for simple changes to settings which can improve the look of a visualisation substantially compared to the default options. These are as follows:
 \begin{enumerate}
-\item {\bf Log the colour bar.} This is often the reason why your first rendered plot may look somewhat blank, especially if the simulation is dominated by a few high density objects. To do this simply move the cursor over the colour bar and hit ``l'' (for log). Alternatively log transformations can be applied to columns non-interactively via the ``apply log or inverse transformations to columns'' option in the l)imits menu.
-\item {\bf Adjust the colour bar limits}. Position the mouse over the colour bar and click to set the minimum and maximum limit on the colour bar. To revert to the widest max/min possible for the data plotted, press `a' with the cursor positioned over the colour bar. Note that limits can also be set manually in the l)imits submenu.
+\item {\bf Log the colour bar.} To do this simply move the cursor over the colour bar and hit ``l'' (for log). Or non-interactively via the ``apply log or inverse transformations to columns'' option in the l)imits menu.
+\item {\bf Adjust the colour bar limits}. Position the mouse over the colour bar and left-click. To revert to the widest max/min possible for the data plotted, press `a' with the cursor positioned over the colour bar. Limits can also be set manually in the l)imits submenu.
 \item {\bf Try changing the colour scheme}. Press `m' or `M' in interactive mode to cycle forwards or backwards through the available colour schemes.
-\item {\bf Increase the number of pixels}. This advice is largely obsolete for later \splash versions, where the pixel number is automatically set to match the output device. In this case the pixel number is determined in effect by the paper size (changeable in the p)age setup menu). For vector devices such as postscript it can still be useful to adjust the pixel setting manually via the ``set number of pixels'' option in the r)ender menu.
+\item {\bf Change the paper size}. To produce high-resolution images/movies, use the ``change paper size'' option in the p)age menu to set the paper size in pixels.
 \item {\bf Try using normalised interpolations}. If your simulation does \emph{not} involve free surfaces (or alternatively if the free surfaces are not visible in the figure), turning the ``normalise interpolations'' option on (in the r)ender submenu) may improve the smoothness of the rendering. This is turned off by default because it leads to funny-looking edges.
 \item {\bf Remove annotation/axes}. For movies, often axes are unnecessary and detract from the visual appeal. Axes, the colour bar and the various legends can be turned off in interactive mode by positioning the cursor appropriately and pressing backspace. Alternatively each can be turned off manually -- axes via the ``axes options'' option in the p)age submenu; the colour bar by the ``colour bar options'' entry in the r)ender menu and the legends via options in the leg)end menu.
-\item {\bf Change axes/page colours}. The background colour (colour of the page) and foreground colour (used for axes etc) can be changed vie the ``set foreground/background colours'' option in the p)age submenu. Alternatively these can be changed prior to invoking \splash by setting the PGPLOT\_FOREGROUND and PGPLOT\_BACKGROUND environment variables (see \S\ref{sec:envvariables}).
+\item {\bf Change axes/page colours}. The background colour (colour of the page) and foreground colour (used for axes etc) can be changed vie the ``set foreground/background colours'' option in the p)age submenu. 
 \item {\bf Move the legend or turn it off}. The time legend can be moved by positioning the mouse and pressing `G' in interactive mode. The legend can be turned off in the le(g)end submenu or by pressing backspace in interactive mode. Similarly the vector plot legend can be turned on/off in the v)ector submenu and moved by positioning the cursor and pressing `H'.
 \item {\bf Use physical units on the axes}. These can be set via the d)ata submenu. See \S\ref{sec:changingunits} for more details.
 \item {\bf Save settings to disk!} Don't waste your effort without being able to reproduce the plot you have been working on. Pressing `s' in interactive mode only saves the current settings for subsequent timesteps. Pressing `s' from the main menu saves these settings to disk. Pressing `S' from the main menu saves both the plot options \emph{and} the plot limits, so that the current plot can be reproduced exactly when \splash is next invoked. Adding an ``a'', as in ``SA'', ``SA'' or ``sa'' to the save options gives a prompt for a different prefix to the filenames (e.g. \verb+splash.defaults+ becomes \verb+myplot.defaults+), which \splash can be invoked to use via the \verb+-p+ command line option (e.g. \verb+splash -p myplot file1 file2...+).
@@ -691,13 +723,13 @@ so that the beginning, end and frequency (e.g. 2 would mean read every second st
 
  Of course, another way to achieve the same thing is to explicitly order the files on the command line. A method I often use is to write all filenames to a file, e.g. 
 \begin{verbatim}
-ls DUMP* > filelist
+> ls DUMP* > splash.filenames
 \end{verbatim}
-then edit the file to list only the files I want to use, then invoke \splash using
+then edit the file to list only the files I want to use, then invoke \splash with no files on the command line:
 \begin{verbatim}
-splash `cat filelist`
+> splash
 \end{verbatim}
-(note the direction of the quotes which is unix-speak for ``use the result of this command''). 
+which will use the list of files specified in the \verb+splash.filenames+ file.
 
 \subsubsection{ Plotting a subset of data files in non-sequential order}
 \label{sec:selectedstepsonly}
@@ -735,7 +767,7 @@ Enter function string to calculate (blank for none) (default=""):
 
 Thus, one can for example calculate the pressure from the density and thermal energy according by copying the second example given. Note that the function calculation is completely general and can use any of the columns read from the file, the time for each step (`\verb+t+'), the adiabatic index $\gamma$ (`\verb+gamma+') and the current origin setting (\verb+x0+, \verb+y0+ and \verb+z0+). Previously calculated quantities can also be used - e.g. in the above example we could further compute, say, an entropy variable using \verb+s=pressure/density^gamma+ after the pressure has been specified. The resultant quantities appear in the main splash menu as standard columns just as if they had been read from the original data file.
 
- Note that the origin for the calculation of radius can be changed via the ``rotation on/off/settings'' option in the x) submenu. If particle tracking limits are set (see \S\ref{sec:track}) the radius is calculated relative to the particle being tracked.
+ The origin for the calculation of radius can be changed via the ``rotation on/off/settings'' option in the x) submenu. If particle tracking limits are set (see \S\ref{sec:track}) the radius is calculated relative to the particle being tracked.
   
  Note that if you simply want to multiply a column by a fixed number (e.g. say you have sound speed squared and you want to plot temperature) - this can also be achieved by defining a unit for the column (i.e., a factor by which to multiply the column by) -- see \S\ref{sec:physicalunits} for details. The corresponding label can be changed by creating a \verb+splash.columns+ file (or for the ascii read just a file called `columns') containing labels which are used to override the default ones from the data read (one per line) -- see \S\ref{sec:columnsfile} for more details.
 
@@ -794,7 +826,7 @@ an appropriate device selected (i.e., the X-window, not /gif or /ps), after
 each plot the program waits for specific commands from the user. With the cursor
 positioned anywhere in the plot window (but not outside it!), many different
 commands can be invoked. Some functions you may find useful are: Move through timesteps by pressing the space bar (press
- `b' to go back); zoom in by selecting an area with the mouse; rotate the
+ `b' to go back); zoom/select particles by selecting an area with the mouse; rotate the
 particles by using the $<$, $>$,[, ] and $\backslash$, / keys; log the axes by holding the cursor
 over the appropriate axis and pressing the `l' key. Press `q' in the plot window
 to quit interactive mode.
@@ -815,7 +847,7 @@ the interactive mode, limited only by your imagination. Please send me your sugg
  Press 'l' in interactive mode with the mouse over either the x or y axis or the colour bar to use a logarithmic axis. Pressing 'l' again changes back to linear axes. To use logarithmic labels as well as logarithmic axes, see \S\ref{sec:loglabels}.
 
 \subsubsection{Cycling through data columns interactively}
- Use `f' in interactive mode on a rendered plot to interactively `flip' forwards to the next quantity in the data columns (e.g. thermal energy instead of density). Use 'F' to flip backwards (added in v1.14.0).
+ Use `f' in interactive mode on a rendered plot to interactively `flip' forwards to the next quantity in the data columns (e.g. thermal energy instead of density). Use 'F' to flip backwards.
 
 \subsubsection{ Colouring a subset of the particles and retaining this colour through other timesteps}
 \label{sec:colourparts}
@@ -831,7 +863,7 @@ the interactive mode, limited only by your imagination. Please send me your sugg
 \label{fig:colourparts}
 \end{figure}
 
- In interactive mode, select a subset of the particles using the mouse (that is left click and resize the box until it contains the region you require), then press either 1-9 to colour the selected particles with colours corresponding to PGPLOT colour indices 1-9, press 'p' to plot only those particles selected (hiding all other particles), or 'h' to hide the selected particles. An example is shown in the left panel of Figure~\ref{fig:colourparts}.  Particles retain these colours between timesteps and even between plots. This feature can therefore be used to find particles within a certain parameter range (e.g. by plotting density with x, selecting/colouring particles in a given density range, then plotting x vs y in which the particles will appear as previously selected/coloured). An example of this feature is shown in the right panel of Figure~\ref{fig:colourparts} where I have plotted an intermediate plot of density vs x on which I selected a subset of particles and hit 'p' (to plot only that subset), then re-plotted x vs y with the new particle selections.
+ In interactive mode, select a subset of the particles using the mouse (that is left click and resize the box until it contains the region you require), then press either 1-9 to colour the selected particles with colours corresponding to plotting library colour indices 1-9, press 'p' to plot only those particles selected (hiding all other particles), or 'h' to hide the selected particles. An example is shown in the left panel of Figure~\ref{fig:colourparts}.  Particles retain these colours between timesteps and even between plots. This feature can therefore be used to find particles within a certain parameter range (e.g. by plotting density with x, selecting/colouring particles in a given density range, then plotting x vs y in which the particles will appear as previously selected/coloured). An example of this feature is shown in the right panel of Figure~\ref{fig:colourparts} where I have plotted an intermediate plot of density vs x on which I selected a subset of particles and hit 'p' (to plot only that subset), then re-plotted x vs y with the new particle selections.
  
  To ``un-hide'' or ``de-colour'' particles, simply select the entire plotting area and press ``1'' to restore all particles to the foreground colour index.
  
@@ -898,16 +930,17 @@ To change the legend text, create a file called \verb+legend+ in the working dir
   0 : draw box and label it with coordinates;
   1 : same as AXIS=0, but also draw the coordinate axes (X=0, Y=0);
   2 : same as AXIS=1, but also draw grid lines at major increments of the coordinates;
+  3 : draw box, ticks and numbers but no axes labels;
  10 : draw box and label X-axis logarithmically;
  20 : draw box and label Y-axis logarithmically;
  30 : draw box and label both axes logarithmically.
 \end{verbatim}
 
 \subsubsection{ Turning axes off}
- Plot axes can be turned off by choosing ``axes options'' in the p)age submenu. See \S\ref{sec:axessettings} for more details. 
+ Plot axes can be turned off by choosing ``axes options'' in the p)age submenu or by deleting them using the backspace key in interactive mode. See \S\ref{sec:axessettings} for more details. 
 
 \subsubsection{ Turning axes labels off}
- Axes labels and numbering can be turned off via the ``axes options'' option in the p)age submenu. See \S\ref{sec:axessettings} for more details. 
+ Axes labels and numbering can be turned off via the ``axes options'' option in the p)age submenu or by deleting them using the backspace key in interactive mode. See \S\ref{sec:axessettings} for more details. 
 
 \subsubsection{ Using logarithmic axes labels}
 \label{sec:loglabels}
@@ -915,7 +948,7 @@ To change the legend text, create a file called \verb+legend+ in the working dir
 
 \subsubsection{ Changing the size of the plotting surface}
 \label{sec:papersize}
- The physical size of the viewing surface used for plotting can be changed via the ``change paper size'' option in the p)age submenu. This affects the size of the X-window (if plotted to the screen) and the size of .png or .gif images generated (if plotted to these devices). Several preset options are provided or the paper size in x and y can be explicitly specified (in inches).
+ The physical size of the viewing surface used for plotting can be changed via the ``change paper size'' option in the p)age submenu. This affects the size of the X-window (if plotted to the screen) and the size of .png or images generated (if plotted to these devices). Several preset options are provided or the paper size in x and y can be explicitly specified in inches or pixels.
 
 \subsubsection{ Dividing the plotting page into panels}
 \label{sec:nacrossndown}
@@ -937,8 +970,8 @@ option from the (p)age options menu (\S\ref{sec:optionspage}) is set. Tiling mea
  The character height used for axes, labels and legends can be changed via the p)age setup options submenu. Note that the character height is relative to the paper size (which can also be changed -- see \S\ref{sec:papersize}).
 
 \subsubsection{ Using a thicker line width on plots}
- The line width used for axes and text can be changed via the p)age submenu. Note that line width changes are not always obvious when plotting to an interactive device (e.g. an X-window) but influence non-interactive devices strongly. The default line width is 1 which in my experience looks best for pixel-based devices such as .gif and .png (e.g. when making movies). For vector devices such as postscript (e.g. to use in a paper) plots look better with a thicker line width (like 2 or 3). 
-
+ The line width used for axes and text can be changed via the p)age submenu. Note that line width changes are not always obvious when plotting to an interactive device (e.g. an X-window) but influence non-interactive devices strongly.
+ 
 \subsubsection{ Changing the foreground and background colours}
 \label{sec:pagecolours}
  The background and foreground colour of a plot can be changed vie the ``set foreground/background colours'' option in the p)age submenu. Note that the background colour setting has no effect on postscript devices (see \S\ref{sec:postscript} for more details).
@@ -978,8 +1011,7 @@ plot one
 plot two
 plot three
 \end{verbatim}
-and positioning the title using the default options, produces the titles shown
-on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the physical page).
+and positioning the title using the default options, will produce a plot with one of these titles on each panel.
 
 \subsubsection{ Turning off/moving the time legend}
 \label{sec:legendoff}
@@ -1001,11 +1033,14 @@ on the graph in Figure~\ref{fig:titleexample} (where there are 6 plots on the ph
  An option to plot a length scale (i.e., \verb+|---|+ with a label below it indicating the length) on coordinate plots (i.e., plots where both $x-$ and $y-$axes refer to particle coordinates) is provided in the le(g)end submenu.
 
 \subsubsection{ Annotating a plot with squares, rectangles, arrows, circles and text}
- The ability to annotate plots with a range of geometric objects (squares, rectangles, arrows, circles and text) with full control over attributes such as line width, line style, colour, angle and fill style is provided via the ``annotate plot'' option in the le(g)end submenu.
+ Use the ``annotate plot'' option in the le(g)end submenu to annotate plots with a range of geometric objects (squares, rectangles, arrows, circles and text) with full control over attributes such as line width, line style, colour, angle and fill style. 
  
- Note that text can also be added to plots by adding titles (\S\ref{sec:title}) which can be different in different panels. Text labels added using shape annotation differ from titles by the fact that they must appear the same in each panel and are positioned according to the world co-ordinates of the plot (rather than relative to the viewport). Shape text can also be displayed at arbitrary angles.
+ Text annotation can also be added/deleted in interactive mode using \verb+ctrl-t+ (to add) and the backspace key (to delete). Text can also be added to plots by adding titles (\S\ref{sec:title}) which can be different in different panels. Text labels added using shape annotation differ from titles by the fact that they must appear the same in each panel and are positioned according to the world co-ordinates of the plot (rather than relative to the viewport). Shape text can also be displayed at arbitrary angles.
  
  An option to plot length scales (\verb+|---|+) on coordinate plots is implemented separately via the ``plot scale on coordinate plots'' option in the le(g)end menu.
+ 
+\subsubsection{ Adding your name to a plot/movie}
+ Arbitrary text annotation can be added/removed in interactive mode using \verb+ctrl-t+ (to add) and the backspace key (to delete) or via the ``annotate plot'' option in the le(g)end menu.
  
 \subsection{particle plot (o)ptions}%HEVEA\cutname{omenu.html}
 \label{sec:opts}
@@ -1068,7 +1103,7 @@ See \ref{sec:plotsinks}.
 See \ref{sec:plotsinks}.
 
 \subsubsection{ Changing graph markers for each particle type}
- The graph markers used to plot each particle type can be changed via the ``change graph markers for each type'' option in the particle plot o)ptions submenu. The full list of available markers is given in the PGPLOT user guide. 
+ The graph markers used to plot each particle type can be changed via the ``change graph markers for each type'' option in the particle plot o)ptions submenu. The full list of available markers is given in the documentation for \giza (also similar to the markers used in \textsc{pgplot}). 
  
   SPLASH also allows the particles to be marked by a circle proportional to the smoothing length for that particle, implemented as marker types 32-35 under the ``change graph markers for each type'' option in the o) menu.
 
@@ -1196,7 +1231,7 @@ Details of the calculation of the exact solutions are given in Appendix~\ref{sec
 
 
 \subsubsection{ Plotting an exact solution from a file}
- See \S\ref{sec:exactsolns}. One of the options for exact solution plotting is to read a two column ascii file and plot the results. The filename can be specified by the user and will be saved to the `splash.defaults' file so that the solution will be read and plotted on subsequent invocations of \splash.
+ See \S\ref{sec:exactsolns}. One of the options for exact solution plotting is to read the exact solution from either one or a sequence of ascii files, such that the results are plotted alongside the particle data. The filename(s) can be specified by the user and will be saved to the `splash.defaults' file so that the solution(s) will be read and plotted on subsequent invocations of \splash.
 
 \subsubsection{ Changing the exact solution line style \& colour}
  The line style and colour of the exact solution line can be changed via the ``exact solution plot options'' option in the o) submenu. This option can also be used to turn on/off calculation of various error norms
@@ -1232,8 +1267,8 @@ effectively gives the `Lagrangian' perspective. See \S\ref{sec:track} for more d
 \subsubsection{ Setting the origin to correspond to a particular particle}
  See \S\ref{sec:track}.
 
-\subsubsection{ Scaling plot limits by a fixed amount}
- A once-off scaling of the plot limits by a multiplication factor can be applied via the ``zoom in/out'' option in the l)imits menu.
+\subsubsection{ Automatically adapting plot limits to match aspect ratio of output device}
+ An option to automatically adjust the plot limits to match the aspect ratio of the output device is given in the l)imits menu, and is also prompted for whenever the paper size is changed (via the ``change paper size'' option in the p)age menu, see \S\ref{sec:papersize}).
 
 \subsubsection{ Plotting with log axes.}
  Log axes can be set either interactively (by pressing 'l' with the cursor over the desired axis) or manually via the ``apply log or inverse transformations to columns'' option in the l)imits menu. To use logarithmic axes labels as well, see \S\ref{sec:loglabels}.
@@ -1276,7 +1311,7 @@ or more usually:
 \subsubsection{ Changing the number of pixels in a rendered image}
  The number of pixels in a rendered image can be set manually using the r)ender menu, option 1 (or simply type ``r1'' from the main menu). The number set is the number of pixels along the $x-$axis. The number of pixels along the $y-$axis is determined by the aspect ratio of the plot.
 
- As of version 1.11.1, the number of pixels used in an image is, by default, automatically determined by the actual number of pixels available on the PGPLOT device, which depends in turn on the size of the PGPLOT page (the page size can be set manually in the p)age menu -- see \S\ref{sec:papersize}). For pixel devices use of the automatic pixel number determination is \emph{highly} recommended (hence why it is the default) to avoid interpolation artefacts in the image. For non-pixel devices (i.e., postscript), the number of pixels is set to $1024/\textrm{n}$, where n is the number of panels across the page. 
+ As of version 1.11.1, the number of pixels used in an image is, by default, automatically determined by the actual number of pixels available on the graphics device, which depends in turn on the size of the page (the page size can be set manually in the p)age menu -- see \S\ref{sec:papersize}). For pixel devices use of the automatic pixel number determination is \emph{highly} recommended (hence why it is the default) to avoid interpolation artefacts in the image. For vector (non-pixel) devices such as postscript, svg or pdf, the number of pixels is set to $1024/\textrm{n}$, where n is the number of panels across the page. 
 
 \subsubsection{ Changing the colour scheme}
  The colour scheme used for rendered plots can be changed either by pressing `m' or `M' in interactive mode to cycle through the available schemes or manually by using the ``change colour scheme'' option in the r)ender menu.
@@ -1468,13 +1503,15 @@ converge). The situation could be beautifully illustrated if I could be bothered
 \subsubsection{ Using 3D surface rendering}
  3D surface rendering (turned on using the ``3D surface rendering on/off'' option in the x) menu) performs a ray-trace through the particle data, thus visualising the "last scattering surface". When set, the user is prompted for an "optical depth" before plotting which determines the position of the surface. Only applies to 3D data. When set with cross-section (instead of projection), particles at or below the z value of the slice are used.
 
-The one caveat is that the rendering algorithm needs to use more than 256 colours (for example, if we have a colour map with 256 colours, we need to then have all 256 colours at varying levels of intensity), at present this is implemented by
-(optionally) writing the pixel map directly to a .ppm file (called splash\_\#\#\#\#\#.ppm where the number is the number of the current dumpfile) and the approximate version (i.e., without the background fade)
-is given to the PGPLOT device (e.g. the /xw screen). The .ppm files are uncompressed and therefore somewhat large but can be converted easily to any
-other format (e.g. png, ps) using netpbm tools (\url{http://netpbm.sourceforge.net/}) such as
-ppmtopng, ppmtops.
-
- For examples of the 3D surface rendering in \splash, have a look at my movies of neutron star mergers at \url{http://users.monash.edu.au/~dprice/research/nsmag}.
+%The one caveat is that the rendering algorithm needs to use more than 256 colours (for example, if we have a colour map with 256 colours, we need to then have all 256 colours at varying levels of intensity), at present this is implemented by
+%(optionally) writing the pixel map directly to a .ppm file (called splash\_\#\#\#\#\#.ppm where the number is the number of the current dumpfile) and the approximate version (i.e., without the background fade)
+%is given to the graphics device (e.g. the /xw screen). The .ppm files are uncompressed and therefore somewhat large but can be converted easily to any
+%other format (e.g. png, ps) using netpbm tools (\url{http://netpbm.sourceforge.net/}) such as
+%ppmtopng, ppmtops.
+For examples of the 3D surface rendering in \splash, have a look at my movies of neutron star mergers:
+\begin{quote}
+  \url{http://users.monash.edu.au/~dprice/research/nsmag}.
+\end{quote}
 
 \subsubsection{ Plotting 3D box / 3D axes}
 Rotated axes or boxes can be plotted using the ``set axes for rotated/3D plots'' option in the x) menu.
@@ -2068,7 +2105,7 @@ enter approximate surface depth (number of smoothing lengths): ([0.000:], defaul
 \begin{verbatim}
 ssplash warp???
 \end{verbatim}
-then plotting the same plot as previously to a non-interactive device will cycle through all dump files producing a sequence of plots with names like \verb+pgplot.png+, \verb+pgplot.png_2+ etc. (see \S\ref{sec:fixpgplotnames} for details of how to fix the file naming scheme).
+then plotting the same plot as previously to a non-interactive device will cycle through all dump files producing a sequence of plots with names like \verb+splash_0000.png+, \verb+splash_0001.png+ etc. These can be easily converted into an animation.
 
 \subsection{Using asplash to plot energy vs time plots}
 \label{sec:evsplash}
@@ -2170,7 +2207,7 @@ which will convert all of the dump files listed on the command line into ascii f
   For other command line options, see \S\ref{sec:commandline}.
 
 \subsection{Converting SPH data files to 3D gridded data using \splash}
-\label{sec:convert}
+\label{sec:converttogrid}
  \splash has a command line feature which can be used to read binary SPH dump files and output 3D gridded data in a variety of formats. The syntax is
 \begin{verbatim}
 splash to grid dump001 dump002 dump???
@@ -2196,8 +2233,6 @@ Other options are given by typing 'splash calc', which currently has the followi
                              output to file called 'energy.out'
          calc massaboverho : mass above a series of density thresholds vs time
                              output to file called 'massaboverho.out'
-         calc rhomach      : density variance and RMS velocity dispersion vs. time
-                             output to file called 'rhomach.out'
          calc max          : maximum of each column vs. time
                              output to file called 'maxvals.out'
          calc min          : minimum of each column vs. time
@@ -2206,8 +2241,6 @@ Other options are given by typing 'splash calc', which currently has the followi
                              output to file called 'meanvals.out'
          calc rms          : (mass weighted) root mean square of each column vs. time
                              output to file called 'rmsvals.out'
-         calc vrms         : volume weighted root mean square of each column vs. time
-                             output to file called 'rmsvals-vw.out'
          calc timeaverage  : time average of *all* entries for every particle
                             output to file called 'time_average.out'
 \end{verbatim}
@@ -2216,42 +2249,42 @@ For the `energies' and `massaboverho' options to be successful, \splash must be 
 \subsection{Using \splash to time average a series of files}
  The `splash calc timeaverage' command line option (see \S\ref{sec:splashcalc}) can be used to produce a time average of a series of files from any splash-readable format. This computes the time-average of every individual entry in the file as represented in \splash as a table of rows (or `particles') and columns (or `quantities defined on particles'). The output is an ascii file with the same rows and columns, averaged over all the snapshots on the command line. The number of columns is doubled in the output, giving the standard deviation for each quantity in the corresponding column (e.g., the standard deviation for column 1 is output in column $N + 1$).
  
- Examples of how this could be use might be to produce the time-averaged power spectrum from a series of ascii files containing power spectra for individual output times, or the time averaged probability distribution function (PDF) from PDFs produced by \splash.
+ Examples of how this could be use might be to produce the time-averaged power spectrum from a series of ascii files containing power spectra for individual output times, or the time averaged probability density function (PDF) from PDFs produced by \splash.
  
  The resulting ascii file, called \verb+time_average.out+ can be plotted using the ascii splash binary (asplash).
 
  For other command line options, see \S\ref{sec:commandline}.
 
-\subsection{Fixing the PGPLOT file naming system} 
-\label{sec:fixpgplotnames}
-
-When you run \splash to make a series of plots it generate files with names..
-\begin{verbatim}
-pgplot.gif
-pgplot.gif_1
-pgplot.gif_2
-...
-pgplot.gif_10
-pgplot.gif_11
-pgplot.gif_12
-..
-pgplot.gif_200
-pgplot.gif_201
-\end{verbatim}
-The annoying thing is that the numeric indices on these files are out of order and, when using
-standard programs to make animations, results in frames out of sequence.
-
- The problem is related to PGPLOT file naming conventions. The fix is that, included in the splash/scripts directory is a script called 'fixpgplotnames.bash'. If you run this in the directory where your files are located, i.e.,
-\begin{verbatim}
-cd mydir
-~/splash/scripts/fixpgplotnames.bash
-\end{verbatim}
-will rename all of the files sensibly. If you run it with a number as the argument
-\begin{verbatim}
-~/splash/scripts/fixpgplotnames.bash 10
-\end{verbatim}
-it will rename filenames adding 10 to the number (actually 11 because it starts from 1). This is
-useful if you run \splash multiple times to get different parts of an animation. 
+%\subsection{Fixing the PGPLOT file naming system} 
+%\label{sec:fixpgplotnames}
+%
+%When you run \splash to make a series of plots it generate files with names..
+%\begin{verbatim}
+%pgplot.gif
+%pgplot.gif_1
+%pgplot.gif_2
+%...
+%pgplot.gif_10
+%pgplot.gif_11
+%pgplot.gif_12
+%..
+%pgplot.gif_200
+%pgplot.gif_201
+%\end{verbatim}
+%The annoying thing is that the numeric indices on these files are out of order and, when using
+%standard programs to make animations, results in frames out of sequence.
+%
+% The problem is related to PGPLOT file naming conventions. The fix is that, included in the splash/scripts directory is a script called 'fixpgplotnames.bash'. If you run this in the directory where your files are located, i.e.,
+%\begin{verbatim}
+%cd mydir
+%~/splash/scripts/fixpgplotnames.bash
+%\end{verbatim}
+%will rename all of the files sensibly. If you run it with a number as the argument
+%\begin{verbatim}
+%~/splash/scripts/fixpgplotnames.bash 10
+%\end{verbatim}
+%it will rename filenames adding 10 to the number (actually 11 because it starts from 1). This is
+%useful if you run \splash multiple times to get different parts of an animation. 
 
 \subsection{Reading/processing data into images without having to answer prompts}
 \label{sec:batchmode}
@@ -2266,7 +2299,7 @@ splash myrun* << ENDINPUT
 1
 8
 0
-mypostcript.ps/ps
+/png
 q
 ENDINPUT
 \end{verbatim}
@@ -2274,16 +2307,16 @@ which would plot the data in columns 2 and 1 and render the data in column 8 wit
 output to file \verb+mypostscript.ps+.
 
  However, in more recent versions \splash can be invoked with plot options on the command line.  Thus to achieve the same as in the example given above we would simply use
- \begin{verbatim}
- splash myrun* -x 1 -y 2 -render 8 -dev mypostscript.ps/ps
- \end{verbatim}
- or simply
- \begin{verbatim}
- splash myrun* -render 8 -dev mypostscript.ps/ps
- \end{verbatim}
+\begin{verbatim}
+splash myrun* -x 1 -y 2 -render 8 -dev /png
+\end{verbatim}
+or simply
+\begin{verbatim}
+splash myrun* -r 8 -dev /png
+\end{verbatim}
 which will assume sensible default values (2 and 1 respectively) for the y and x axes. Similarly a vector plot can be specified with \verb+-vec+ and a contour plot with \verb+-cont+. The full list of command-line flags is given in \S\ref{sec:commandline}.
 
- If plotting options have been only partially specified on the command line, then prompts will appear for only the remaining options. This can be used for example to specify the PGPLOT device via the \verb+-dev+ command line option, which means that only the device selection prompt does not appear.
+ If plotting options have been only partially specified on the command line, then prompts will appear for only the remaining options. This can be used for example to specify the graphics device via the \verb+-dev+ command line option, which means that only the device selection prompt does not appear.
 
 
 \subsection{Making frames across multiple processors}
@@ -2323,26 +2356,35 @@ lengths read. Non-SPH particle types (e.g. sink particles) can be optionally plo
 
 \subsection{Using special characters in the plot labels}
  Several of the examples shown in this manual use special characters (such as
-the $\int$ character) in the plot labels. The PGPLOT user guide explains how to do
-this, but the basic idea is that PGPLOT uses escape sequences to plot special
-characters. For example to plot the greek letter $\rho$ we would use
+the $\int$ character) in the plot labels. In \giza these can be specified using \TeX-like escape sequences, or with the escape sequences used in \textsc{pgplot}. For example to plot the greek letter $\rho$ we would use
+\begin{verbatim}
+label = 'this would print the greek letter \rho'
+\end{verbatim}
+or, in \textsc{pgplot}-style:
 \begin{verbatim}
 label = 'this would print the greek letter \gr'
 \end{verbatim}
-where \verb+\gr+ is the PGPLOT escape sequence for $\rho$. For other
-characters the escape sequence is given by a number. For example for the integral 
+where \verb+\gr+ is the \textsc{pgplot} escape sequence for $\rho$.
+\begin{quote}
+ In \giza, which uses real fonts rather than the bitmapped characters used in \textsc{pgplot}, special characters are implemented with unicode characters. Thus, you need to select a font that has the appropriate characters included. The font can be changed using the \verb+GIZA_FONT+ environment variable.
+\end{quote}
+For other characters the procedure is similar. For example for the integral 
 \begin{equation}
 \int v_x \mathrm{dx}
 \end{equation}
-we would use
+we would use the \TeX-like expression
+\begin{verbatim}
+label = '\int v_x dx'
+\end{verbatim}
+or equivalently, in \textsc{pgplot}-style
 \begin{verbatim}
 label = '\(2268) v\d x \u dx'
 \end{verbatim}
-where \verb+\(2268)+ is the escape sequence for the integral sign. The
+where \verb+\(2268)+ is the \textsc{pgplot} escape sequence for the integral sign. The
 \verb+\d+ indicates that what follows should be printed as subscript and
 \verb+\u+ correspondingly indicates a return to normal script (or from normal script to
 superscript). All of the escape sequences for special characters are listed in
-the appendix to the PGPLOT user guide.
+the appendix to the \textsc{pgplot} user guide.
 \begin{quote}
  WARNING: Note that the use of escape characters can be compiler dependent and
  may not therefore work on all compilers (for example the intel compiler needs
@@ -2354,27 +2396,22 @@ See \S\ref{sec:movies} and the online FAQ (\url{http://users.monash.edu.au/~dpri
 
 \subsection{Outputting the raw pixel map to a file}
 \label{sec:writepixmap}
- The actual pixel map rendered to the graphics device (i.e., when a quantity is rendered to pixels, not for particle plots) can be output directly to a file, or series of files by using the \verb+-o+ command line option when you invoke \splash. Invoking \splash with \verb+-o+ produces a list of currently implemented formats (at the moment these are an ascii dump file and ppm format). This is useful if you need to compare the image to the output from another code (e.g. using a different visualisation tool) or if you wish to have a ``raw'' rendering, that is without annotation on the plots, but which (in the ppm case) uses more colours. The files are given default names such as ``splash\_00001.dat'' or ``splash\_00001.ppm'' where the number corresponds to the frame number as would be rendered to the PGPLOT graphics device.
+ The actual pixel map rendered to the graphics device (i.e., when a quantity is rendered to pixels, not for particle plots) can be output directly to a file, or series of files by using the \verb+-o+ command line option when you invoke \splash. Invoking \splash with \verb+-o+ produces a list of currently implemented formats (at the moment these are an ascii dump file and ppm format). This is useful if you need to compare the image to the output from another code (e.g. using a different visualisation tool) or if you wish to have a ``raw'' rendering, that is without annotation on the plots, but which (in the ppm case) uses more colours. The files are given default names such as ``splash\_00001.dat'' or ``splash\_00001.ppm'' where the number corresponds to the frame number as would be rendered to the graphics device.
  
   For other command line options, see \S\ref{sec:commandline}.
 
 \section{User contributions / Wishlist for future improvements}%HEVEA\cutname{wishlist.html}
- Please contribute!! Any user contributions and/or suggestions would be greatly
-appreciated. The following in particular would be very useful:
+ Please contribute! Any user contributions and/or suggestions would be greatly
+appreciated. In particular, please send:
 \begin{itemize}
-\item Suggestions, suggestions, suggestions! I am always on the lookout for what users other than me actually want to do.
 \item Bugs!
-\item Pretty pictures! If you happen to plot some of your data and spend the
-next several minutes marvelling at how astoundingly beautiful it all looks, please send
-me a copy (either ps, gif or a movie) to add to the gallery and a few lines
-describing the simulation.
+\item Feature requests/suggestions.
+\item Pretty pictures for the gallery.
 \end{itemize}
 If you are *really* keen, you may also like to consider:
 \begin{itemize}
-\item Exact solutions for your favourite test problem(s). Even just an analytic description which I can write the code for, or a subroutine if you're brave.
-\item Data analysis tools (e.g. fourier transforms / statistical analysis /
-algorithms for finding binary stars etc) which could be incorporated.
-\item New visualisation techniques (e.g. an isosurfacing routine for SPH, 3D stream line tracing).
+\item Exact solution routines for test problem(s). Even just an analytic description from which I can write the code.
+\item Suggestions/tips on possible visualisation techniques
 \item More colour schemes (simply email me a table of the rgb colour indices, or failing that simply an image of the colour scheme and I will add it).
 \end{itemize}
 Contributions, comments and inevitable bugs should be sent to:
@@ -2385,12 +2422,12 @@ or
 \begin{verbatim}
 daniel.price@monash.edu
 \end{verbatim}
-although check that this email address is current because I am still a postdoc!
 
 \section*{Acknowledgements}%HEVEA\cutname{thanks.html}
  Several of the routines were developed from ideas used by Matthew Bate and \splash has been refined by many useful discussions with Matthew. The
 polytrope exact solution is from a routine by Joe Monaghan. I am indebted to one Thomas S. Ullrich at the University of Heidelberg who wrote the prompting module
-which is used throughout the program and to Roland Schmehl who wrote the excellent function parser module (made available at \url{http://fparser.sourceforge.net}). Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve \splash including, but not limited to: 
+which is used throughout the program and to Roland Schmehl who wrote the excellent function parser module (made available at \url{http://fparser.sourceforge.net}). Last but not least, a huge thanks especially to all the users who have given feedback which has helped to improve \splash including, but not limited to:
+ Stefan Adami, 
  Craig Agnor,
  Richard Alexander, 
  Gabe Altay,
@@ -2398,6 +2435,7 @@ which is used throughout the program and to Roland Schmehl who wrote the excelle
  Ben Ayliffe,
  Andreas Bauswein,
  Florian Buerzle,
+ Alan Duffy,
  Clare Dobbs,
  Claude-Andr\'e Faucher-Gigu\`ere,
  Christoph Federrath,
@@ -2408,15 +2446,20 @@ which is used throughout the program and to Roland Schmehl who wrote the excelle
  John Jones,
  Sky King,
  Laura Kreidberg,
+ Guillaume Laibe,
  Giuseppe Lodato,
  David Madlener,
  John Mansour,
  Ruben Martin,
+ Farzana Meru,
  Andrew McLeod,
  Shazrene Mohamed,
+ Chris Nixon,
  Cody Raskin,
  John Regan,
  Dave Rundle,
+ Alison Sills,
+ Terry Tricco,
  Yusuke Tsukamoto,
  Sigfried Vanaverbeke,
  Enrique Vazquez-Semadeni
@@ -2601,6 +2644,14 @@ a rarefaction fan, contact discontinuity and shock, summarised in Figure
 \ref{fig:shocktube}), given the post-shock values of pressure and
 velocity. 
 
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{figs/sodshock.pdf}
+\caption{Example of exact solution for one-dimensional shock tube problem (red line) compared to the SPH solution (black line/particles), utilising the exact solutions incorporated in \splash}
+\label{fig:shocktube}
+\end{center}
+\end{figure}
+
  The speed at which the shock travels into the `right' fluid can be computed from the post shock
 velocity using the relation
 \begin{equation}
@@ -2760,15 +2811,9 @@ masses, a different curve is plotted for each different mass value.
 
 \section{Writing your own read\_data subroutine}%HEVEA\cutname{readdata.html}
 \label{sec:writeyourown}
-The first \verb+ndim+ columns in the main data array \emph{must} contain the particle coordinates.
-After these columns the ordering of data is not important, although vector quantities should
-always be listed with components in the correct order (e.g. $(\nabla\times {\bf v})_x$,
-followed by the $y-$ and $z-$ components) for both vector plotting and for the
-correct coordinate transformation of the vector quantities. Note that the coordinates and velocities can have different
-numbers of dimensions (specified by \verb+ndim+ and \verb+ndimV+) since this can occur, for example, in MHD simulations.
+Essentially, this is not recommended. The best way is just to email me a sample data file and a copy of the routine that wrote it. I am very happy to do this, will mean that your read is officially supported, will appear in the development repository, and will be updated with new features as necessary. It doesn't matter if your code only has one user, I am still happy to do this as it makes \splash more widely useable and saves trouble later.
 
-Most important is that, for the rendering routines to work, the density, particle
-masses and smoothing lengths for \emph{all} of the (gas) particles \emph{must} be read in from
+ The second best way is to attempt to modify one of the existing data reads. Even then, there are some things to note: Most important is that, for the rendering routines to work, the density, particle masses and smoothing lengths for \emph{all} of the (gas) particles \emph{must} be read in from
 the data file and their locations in the main data array labelled using the integer
 parameters \verb+irho+, \verb+ipmass+ and \verb+ih+. Labelling of the location of other particle
 quantities (e.g. \verb+iutherm+ for the thermal energy) is used in
