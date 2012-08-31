@@ -1,3 +1,6 @@
+2.1.1:
+irregular/circular particle selection using shift-left click/middle click; improved h5part and GADGET HDF5 data reads; splash can be compiled in double precision; bug fixes with calculated quantities + change of coordinate systems; improved vector plot legend; option for box+numbers but no labels added
+ 
 2.1.0:
 3D vector field visualisation added; GADGET HDF5 read implemented; page sizes can be specified in pixels; limits can auto-adapt to device aspect ratio; more general exact solution from file option; tiling works with one colour bar per row; splash calc handles different particle types
  
