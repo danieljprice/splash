@@ -304,7 +304,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   !
   !--check for errors in data read / print warnings
   !
-  if (ndim.ne.0 .and. ncolumns.gt.0 .and. nsteps.gt.0) then
+  if (ndim.ne.0 .and. ncolumns.gt.0 .and. nsteps.gt.0 .and. iverbose.eq.1) then
      if (sum(npartoftype(:,1)).gt.0 .and. npartoftype(1,1).eq.0) then
         print "(3(/,a),/)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES:', &
                            '  nothing will appear unless plotting of other particle ', &
