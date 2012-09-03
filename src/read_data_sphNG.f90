@@ -818,15 +818,20 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      case(5)
                         iloc = ih
                      case(7:9)
-                        iloc = ivx + k - 7
+                        if (ivx.gt.0) then
+                           iloc = ivx + k - 7
+                        else
+                           iloc = 0
+                        endif
                      case default
                         iloc = 0
                      end select
                      if (iloc.gt.0) then
+                        if (debug) print*,'DEBUG: reading sinks into ',npart+1,'->',npart+isize(iarr),iloc
                         read(iunit,end=33,iostat=ierr) dat(npart+1:npart+isize(iarr),iloc,j)
                         if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
                      else
-                        print*,' skipping sink particle array ',k
+                        if (debug) print*,'DEBUG: skipping sink particle array ',k
                         read(iunit,end=33,iostat=ierr)
                      endif
                   enddo
