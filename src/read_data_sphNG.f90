@@ -77,7 +77,7 @@ end module sphNGread
 
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data,  only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
-  use params,         only:int1,int8
+  !use params,         only:int1,int8
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
                       lowmemorymode,ntypes,iverbose
   use mem_allocation, only:alloc
@@ -112,9 +112,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
   character(len=100) :: fileident
   character(len=10)  :: string
 
-  integer(kind=int8), dimension(maxarrsizes) :: isize
+  integer*8, dimension(maxarrsizes) :: isize
   integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
-  integer(kind=int1), dimension(:), allocatable :: iphase
+  integer*1, dimension(:), allocatable :: iphase
   integer, dimension(:), allocatable :: listpm
   real(doub_prec), dimension(:), allocatable :: dattemp
   real(doub_prec) :: r8
