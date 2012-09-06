@@ -437,7 +437,12 @@ subroutine set_coordlabels(numplot)
        if (iamvec(i).ne.0 .and. &
           (icoordsnew.ne.icoords .or. icoordsnew.ne.icoordsprev &
            .or. index(label(i),trim(labeldefault)).ne.0)) then
-          label(i) = trim(labelvec(iamvec(i)))//'\d'//trim(labelcoord(i-iamvec(i)+1,icoordsnew))
+          if (i-iamvec(i)+1 .gt. 0) then
+             label(i) = trim(labelvec(iamvec(i)))//'\d'//trim(labelcoord(i-iamvec(i)+1,icoordsnew))
+          else
+             print "(a,i2,a,i2)",' ERROR with vector labels, referencing '// &
+                   trim(labelvec(iamvec(i)))//' in column ',i,' iamvec = ',iamvec(i)
+          endif
           if (iRescale) then
              label(i) = trim(label(i))//'\u'//trim(unitslabel(i))
           endif
