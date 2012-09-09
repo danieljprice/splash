@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -49,6 +49,8 @@ logical function issphformat(string)
      issphformat = .true.
  case('phantom','PHANTOM')
      issphformat = .true.
+ case('gadget','GADGET')
+     issphformat = .true.
  end select
 
  if (.not.issphformat) then
@@ -60,6 +62,7 @@ logical function issphformat(string)
     print "(a)",  '                         write(1) dat(1:ncolumns),itype'
     print "(a)",  '                      enddo'
     print "(a)",  '        to phantom : convert SPH data to binary dump file for PHANTOM'
+    print "(a)",  '        to gadget  : convert SPH data to default GADGET snapshot file format'
  endif
 
  return
@@ -71,6 +74,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  use settings_data,  only:ndim
  use params,         only:int1
  use write_data_phantom, only:write_sphdata_phantom
+ use write_data_gadget,  only:write_sphdata_gadget
  use filenames,      only:tagline
  implicit none
  integer, intent(in)                          :: npart,ntypes,ncolumns
@@ -251,6 +255,9 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
         call write_sphdata_phantom(time,gamma,dat,npart,ntypes,npartoftype,&
                                    masstype,ncolumns,filename)
      endif
+ case('gadget','GADGET')
+     call write_sphdata_gadget(time,dat,itype,npart,ntypes,npartoftype,&
+                               masstype,ncolumns,filename)
  case default
     print "(a)",' ERROR: unknown output format '''//trim(outformat)//''' in write_sphdump'
     return
