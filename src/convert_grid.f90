@@ -45,6 +45,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use params,             only:int1
  use interpolation,      only:set_interpolation_weights
  use interpolations3D,   only:interpolate3D,interpolate3D_vec
+ use interpolations2D,   only:interpolate2D,interpolate2D_vec
  use system_utils,       only:lenvironment,renvironment,envlist,lenvstring
  use readwrite_griddata, only:open_gridfile_w,write_grid
  use particle_data,      only:icolourme
@@ -64,7 +65,9 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  character(len=64)  :: fmtstring1
 
  real, dimension(:,:,:), allocatable   :: datgrid
+ real, dimension(:,:),   allocatable   :: datgrid2D
  real, dimension(:,:,:,:), allocatable :: datgridvec
+ real, dimension(:,:,:),   allocatable :: datgridvec2D
  real, dimension(:), allocatable       :: weight
  real, dimension(3)    :: xmin,xmax
  real, dimension(3)    :: partmin,partmax,partmean
@@ -79,19 +82,19 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--check for errors in input settings
  !
- if (ndim.ne.3) then
-    print "(/,a,/)",' ERROR: SPH data has < 3 spatial dimensions: cannot convert to 3D grid'
+ if (ndim.lt.2 .or. ndim.gt.3) then
+    print "(/,a,i2,a,/)",' ERROR: SPH data has ',ndim,' spatial dimensions: cannot convert to 3D grid'
     return
  endif
 
- print "(/,'----->',1x,a,/)",'CONVERTING SPH DATA -> 3D GRID'
- xmin(:) = lim(ix(:),1)
- xmax(:) = lim(ix(:),2)
+ print "(/,'----->',1x,a,i1,a,/)",'CONVERTING SPH DATA -> ',ndim,'D GRID'
+ xmin(1:ndim) = lim(ix(1:ndim),1)
+ xmax(1:ndim) = lim(ix(1:ndim),2)
  !
  !--print limits information
  !
  print "(a)",' grid dimensions:'
- do i=1,3
+ do i=1,ndim
     if (maxval(abs(xmax)).lt.1.e7) then
        print "(1x,a,': ',f14.6,' -> ',f14.6)",trim(label(ix(i))),xmin(i),xmax(i)
     else
@@ -103,20 +106,20 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  isperiodic(:) = .false.
  call envlist('SPLASH_TO_GRID_PERIODIC',nstring,strings)
- if (nstring.gt.3) then
+ if (nstring.gt.ndim) then
     print "(a)",' ERROR in SPLASH_TO_GRID_PERIODIC setting'
-    nstring = 3
+    nstring = ndim
  endif
  do i=1,nstring
     isperiodic(i) = lenvstring(strings(i))
  enddo
- if (nstring.eq.1) isperiodic(2:3) = isperiodic(1)
+ if (nstring.eq.1) isperiodic(2:ndim) = isperiodic(1)
 
- if (isperiodic(1) .and. isperiodic(2) .and. isperiodic(3)) then
+ if (all(isperiodic(1:ndim))) then
     print "(/,a)",' using PERIODIC boundaries (from SPLASH_TO_GRID_PERIODIC setting)'
  elseif (isperiodic(1) .or. isperiodic(2) .or. isperiodic(3)) then
     print*
-    do i=1,3
+    do i=1,ndim
        if (isperiodic(i)) then
           print "(a)",' using PERIODIC boundaries in '//xlab(i)//' (from SPLASH_TO_GRID_PERIODIC setting)'
        else
@@ -126,7 +129,11 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  else
     print "(/,a)",' using NON-PERIODIC boundaries'
     print "(a)",' (set SPLASH_TO_GRID_PERIODIC=yes for periodic'
-    print "(a)",'   or SPLASH_TO_GRID_PERIODIC=yes,no,yes for mixed)'
+    if (ndim.eq.3) then
+       print "(a)",'   or SPLASH_TO_GRID_PERIODIC=yes,no,yes for mixed)'    
+    else
+       print "(a)",'   or SPLASH_TO_GRID_PERIODIC=yes,no for mixed)'
+    endif
  endif
 
  ierr = 0
@@ -154,7 +161,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  endif
 
  if (ierr /= 0) then
-    print "(a)",' cannot perform SPH interpolation to 3D grid, skipping file...'
+    print "(a,i1,a)",' cannot perform SPH interpolation to ',ndim,'D grid, skipping file...'
     return
  endif
  ierr = 0
@@ -196,13 +203,23 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     hmin = partmin(1)
     if (hmin.gt.0.) then
        print*,'based on the minimum smoothing length of hmin = ',hmin
-       npixels(:) = int((xmax(:) - xmin(:))/hmin) + 1
-       print "(a,i6,2(' x',i6),a)",' requires ',npixels(:),' pixels to capture the full resolution'
-       if (product(npixels(:)).gt.512**3 .or. product(npixels(:)).le.0) then
-          npixx = 512
-          print "(a,i4)",' but this is ridiculous, so instead we choose ',npixx
+       npixels(1:ndim) = int((xmax(1:ndim) - xmin(1:ndim))/hmin) + 1
+       if (ndim.eq.3) then
+          print "(a,i6,2(' x',i6),a)",' requires ',npixels(1:ndim),' pixels to capture the full resolution'       
+          if (product(npixels(1:ndim)).gt.512**3 .or. product(npixels(1:ndim)).le.0) then
+             npixx = 512
+             print "(a,i4)",' but this is ridiculous, so instead we choose ',npixx
+          else
+             npixx = npixels(1)
+          endif
        else
-          npixx = npixels(1)
+          print "(a,i6,1(' x',i6),a)",' requires ',npixels(1:ndim),' pixels to capture the full resolution'
+          if (product(npixels(1:ndim)).gt.1024**ndim .or. product(npixels(1:ndim)).le.0) then
+             npixx = 1024
+             print "(a,i4)",' but this is very large, so instead we choose ',npixx
+          else
+             npixx = npixels(1)
+          endif
        endif
     else
        npixx = 512
@@ -211,8 +228,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     endif
  endif
  print*
- pixwidth    = (xmax(1)-xmin(1))/npixx
- npixels(:)  = int((xmax(:)-xmin(:) - 0.5*pixwidth)/pixwidth) + 1
+ pixwidth        = (xmax(1)-xmin(1))/npixx
+ npixels(1:ndim) = int((xmax(1:ndim)-xmin(1:ndim) - 0.5*pixwidth)/pixwidth) + 1
 
  !
  !--work out how many columns will be written to file
@@ -220,14 +237,14 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (interpolateall) then
     ncolsgrid = 0
     do i=1,ncolumns
-       if (.not.any(ix(:).eq.i) .and. i.ne.ih .and. i.ne.ipmass) then
+       if (.not.any(ix(1:ndim).eq.i) .and. i.ne.ih .and. i.ne.ipmass) then
           ncolsgrid = ncolsgrid + 1
        endif
     enddo
     nvec = 0
  else
     nvec = 0
-    if (ndimV.eq.3) then
+    if (ndimV.eq.ndim) then
        if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) nvec = nvec + 1
        if (iBfirst.gt.0 .and. iBfirst+ndimV-1.le.ncolumns) nvec = nvec + 1
     endif
@@ -237,7 +254,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--use low memory mode for large grids
  !
- if (product(npixels).gt.256**3) then
+ if ((ndim.eq.3 .and. product(npixels).gt.256**3)) then
     lowmem = .true.
  else
     lowmem = lowmemorymode
@@ -247,10 +264,16 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--allocate memory for the grid
  !
- if (allocated(datgrid)) deallocate(datgrid)
+ if (allocated(datgrid))   deallocate(datgrid)
+ if (allocated(datgrid2D)) deallocate(datgrid2D)
 
- write(*,"(a,i5,2(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(:),' grid ...'
- allocate(datgrid(npixels(1),npixels(2),npixels(3)),stat=ierr)
+ if (ndim.eq.3) then
+    write(*,"(a,i5,2(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(1:ndim),' grid ...'
+    allocate(datgrid(npixels(1),npixels(2),npixels(3)),stat=ierr)
+ elseif (ndim.eq.2) then
+    write(*,"(a,i5,1(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(1:ndim),' grid ...'
+    allocate(datgrid2D(npixels(1),npixels(2)),stat=ierr)
+ endif
  if (ierr /= 0) then
     write(*,*) 'FAILED: NOT ENOUGH MEMORY'
     if (allocated(weight)) deallocate(weight)
@@ -261,10 +284,11 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--open grid file for output (also checks format is OK)
  !
- call open_gridfile_w(iunit,filename,outformat,npixels,ncolsgrid,time,ierr)
+ call open_gridfile_w(iunit,filename,outformat,ndim,ncolsgrid,npixels(1:ndim),time,ierr)
  if (ierr /= 0) then
     print "(a)",' ERROR: could not open grid file for output, skipping...'
     if (allocated(datgrid)) deallocate(datgrid)
+    if (allocated(datgrid)) deallocate(datgrid2D)
     if (allocated(weight)) deallocate(weight)
     return
  endif
@@ -274,21 +298,33 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--interpolate density to the 3D grid
  !
- print "(/,a)",' interpolating density to 3D grid...'
+ print "(/,a,i1,a)",' interpolating density to ',ndim,'D grid...'
  if (debugmode) print*,'DEBUG: density in column ',irho,' vals = ',dat(1:10,irho)
 
  call minmaxmean_part(dat(1:ninterp,irho:irho),weight,ninterp,partmin,partmax,partmean)
  print fmtstring1,trim(label(irho))
  print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
 
- call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
-      dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
-      xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-      pixwidth,pixwidth,inormalise,isperiodic(1),isperiodic(2),isperiodic(3))
- !
- !--set minimum density on the grid
- !
- call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,nonzero=.true.)
+ if (ndim.eq.3) then
+    call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
+         xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
+         pixwidth,pixwidth,inormalise,isperiodic(1),isperiodic(2),isperiodic(3))
+    !
+    !--set minimum density on the grid
+    !
+    call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,nonzero=.true.)
+ else
+    call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
+         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
+         xmin(1),xmin(2),datgrid2D,npixels(1),npixels(2),&
+         pixwidth,pixwidth,inormalise,isperiodic(1),isperiodic(2))
+    !
+    !--set minimum density on the grid
+    !
+    call minmaxmean_grid2D(datgrid2D,npixels,gridmin,gridmax,gridmean,nonzero=.true.) 
+ endif
+
  print fmtstring1,trim(label(irho))
  print fmtstring,' on grid :',gridmin,gridmax,gridmean
 
@@ -307,17 +343,29 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
  if (rhomin.gt.0.) then
     nzero = 0
-    !$omp parallel do private(k,j,i) reduction(+:nzero) schedule(static)
-    do k=1,npixels(3)
+    if (ndim.eq.3) then
+       !$omp parallel do private(k,j,i) reduction(+:nzero) schedule(static)
+       do k=1,npixels(3)
+          do j=1,npixels(2)
+             do i=1,npixels(1)
+                if (datgrid(i,j,k).le.tiny(datgrid)) then
+                   datgrid(i,j,k) = rhomin
+                   nzero = nzero + 1
+                endif
+             enddo
+          enddo
+       enddo
+    else
+       !$omp parallel do private(j,i) reduction(+:nzero) schedule(static)
        do j=1,npixels(2)
           do i=1,npixels(1)
-             if (datgrid(i,j,k).le.tiny(datgrid)) then
-                datgrid(i,j,k) = rhomin
+             if (datgrid2D(i,j).le.tiny(datgrid2D)) then
+                datgrid2D(i,j) = rhomin
                 nzero = nzero + 1
              endif
           enddo
        enddo
-    enddo
+    endif
     print "(a,i8,a)",' minimum density enforced on ',nzero,' grid cells'
  else
     print*,'minimum density NOT enforced'
@@ -327,9 +375,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !--write density to grid data file
  !
  print*
- call write_grid(iunit,filename,outformat,datgrid,npixels,trim(label(irho)),&
-                 time,pixwidth,xmin,ierr)
-
+ if (ndim.eq.3) then
+    call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(irho)),&
+                    time,pixwidth,xmin,ierr,dat3D=datgrid)
+ else
+    call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(irho)),&
+                    time,pixwidth,xmin,ierr,dat2D=datgrid2D)
+ endif
  !
  !--interpolate remaining quantities to the 3D grid
  !
@@ -345,19 +397,33 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           if (iszero(partmin,partmax,1)) then
              datgrid = 0.
           else
-             call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
-                  dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
-                  xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-                  pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
+             if (ndim.eq.3) then
+                call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                     dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
+                     xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
+                     pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))             
+             else
+                call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
+                     dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
+                     xmin(1),xmin(2),datgrid2D,npixels(1),npixels(2),&
+                     pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2))
+             endif
           endif
 
-          call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
-          print fmtstring,' on grid :',gridmin,gridmax,gridmean
           !
           !--write gridded data to file
           !
-          call write_grid(iunit,filename,outformat,datgrid,npixels,trim(label(i)),&
-               time,pixwidth,xmin,ierr)
+          if (ndim.eq.3) then
+             call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
+             print fmtstring,' on grid :',gridmin,gridmax,gridmean
+             call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(i)),&
+                  time,pixwidth,xmin,ierr,dat3D=datgrid)
+          else
+             call minmaxmean_grid2D(datgrid2D,npixels,gridmin,gridmax,gridmean,.false.)          
+             print fmtstring,' on grid :',gridmin,gridmax,gridmean
+             call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(i)),&
+                  time,pixwidth,xmin,ierr,dat2D=datgrid2D)
+          endif
        endif
     enddo
 
@@ -372,8 +438,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
        print "(/,a)",' set SPLASH_TO_GRID_DENSITY_ONLY=yes to skip remaining quantities'
 
        if (.not.lowmem) then
-          write(*,"(/,a,i5,2(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(:),' x 3 grid ...'
-          allocate(datgridvec(3,npixels(1),npixels(2),npixels(3)),stat=ierr)
+          if (ndim.eq.3) then
+             write(*,"(/,a,i5,2(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(1:ndim),' x 3 grid ...'
+             allocate(datgridvec(3,npixels(1),npixels(2),npixels(3)),stat=ierr)
+          else
+             write(*,"(/,a,i5,1(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(1:ndim),' x 3 grid ...'
+             allocate(datgridvec2D(2,npixels(1),npixels(2)),stat=ierr)
+          endif
           if (ierr /= 0) then
              write(*,*) 'FAILED: NOT ENOUGH MEMORY'
              return
@@ -389,10 +460,10 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           select case(ivec)
           case(1)
              iloc = ivx
-             print "(a)",' interpolating velocity field to 3D grid...'
+             print "(a,i1,a)",' interpolating velocity field to ',ndim,'D grid...'
           case(2)
              iloc = iBfirst
-             print "(a)",' interpolating magnetic field to 3D grid...'
+             print "(a,i1,a)",' interpolating magnetic field to ',ndim,'D grid...'
           case default
              iloc = 0
              exit over_vec
@@ -410,19 +481,33 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                 if (iszero(partmin,partmax,1)) then
                    datgrid = 0.
                 else
-                   call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
-                        dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
-                        xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-                        pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
+                   if (ndim.eq.3) then
+                      call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                           dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
+                           xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
+                           pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
+                   else
+                      call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
+                           dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
+                           xmin(1),xmin(2),datgrid2D,npixels(1),npixels(2),&
+                           pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2))
+                   endif
                 endif
 
-                call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
-                print fmtstring,' on grid :',gridmin,gridmax,gridmean
                 !
                 !--write gridded data to file
                 !
-                call write_grid(iunit,filename,outformat,datgrid,npixels,trim(label(i)),&
-                     time,pixwidth,xmin,ierr)
+                if (ndim.eq.3) then
+                   call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
+                   print fmtstring,' on grid :',gridmin,gridmax,gridmean
+                   call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(i)),&
+                        time,pixwidth,xmin,ierr,dat3D=datgrid)
+                else
+                   call minmaxmean_grid2D(datgrid2D,npixels,gridmin,gridmax,gridmean,.false.)                
+                   print fmtstring,' on grid :',gridmin,gridmax,gridmean
+                   call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(i)),&
+                        time,pixwidth,xmin,ierr,dat2D=datgrid2D)
+                endif
              enddo
           else
 
@@ -435,13 +520,24 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              if (iszero(partmin,partmax,ndimV)) then
                 datgridvec = 0.
              else
-                call interpolate3D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
-                     dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc:iloc+ndimV-1),icolourme,ninterp,&
-                     xmin(1),xmin(2),xmin(3),datgridvec,npixels(1),npixels(2),npixels(3),&
-                     pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
+                if (ndim.eq.3) then
+                   call interpolate3D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                        dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc:iloc+ndimV-1),icolourme,ninterp,&
+                        xmin(1),xmin(2),xmin(3),datgridvec,npixels(1),npixels(2),npixels(3),&
+                        pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))                
+                else
+                   call interpolate2D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
+                        dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc),dat(1:ninterp,iloc+1), &
+                        icolourme,ninterp,xmin(1),xmin(2),datgridvec2D(1,:,:),datgridvec2D(2,:,:), &
+                        npixels(1),npixels(2),pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2))
+                endif
              endif
 
-             call minmaxmean_gridvec(datgridvec,npixels,ndimV,datmin,datmax,datmean)
+             if (ndim.eq.3) then
+                call minmaxmean_gridvec(datgridvec,npixels,ndimV,datmin,datmax,datmean)
+             else
+                call minmaxmean_gridvec2D(datgridvec2D,npixels,ndimV,datmin,datmax,datmean)             
+             endif
              do i=1,ndimV
                 print fmtstring,' on grid :',datmin(i),datmax(i),datmean(i)
              enddo
@@ -449,8 +545,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              !--write result to grid file
              !
              do i=1,ndimV
-                call write_grid(iunit,filename,outformat,datgridvec(i,:,:,:),npixels,&
-                                trim(label(iloc+i-1)),time,pixwidth,xmin,ierr)
+                if (ndim.eq.3) then
+                   call write_grid(iunit,filename,outformat,ndim,npixels,&
+                                   trim(label(iloc+i-1)),time,pixwidth,xmin,ierr,dat3D=datgridvec(i,:,:,:))                
+                else
+                   call write_grid(iunit,filename,outformat,ndim,npixels,&
+                                   trim(label(iloc+i-1)),time,pixwidth,xmin,ierr,dat2D=datgridvec2D(i,:,:))
+                endif
              enddo
           endif
           print*
@@ -462,8 +563,10 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
  close(iunit)
 
- if (allocated(datgrid)) deallocate(datgrid)
- if (allocated(datgridvec)) deallocate(datgridvec)
+ if (allocated(datgrid))      deallocate(datgrid)
+ if (allocated(datgrid2D))    deallocate(datgrid2D)
+ if (allocated(datgridvec))   deallocate(datgridvec)
+ if (allocated(datgridvec2D)) deallocate(datgridvec2D)
  if (allocated(weight)) deallocate(weight)
 
  return
@@ -507,6 +610,42 @@ subroutine minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,nonzero)
  return
 end subroutine minmaxmean_grid
 
+!----------------------------------------------------
+! calculate max and min and mean values on grid (2D)
+!----------------------------------------------------
+subroutine minmaxmean_grid2D(datgrid,npixels,gridmin,gridmax,gridmean,nonzero)
+ implicit none
+ real, dimension(:,:), intent(in)   :: datgrid
+ integer, dimension(2), intent(in)  :: npixels
+ real, intent(out)                  :: gridmin,gridmax,gridmean
+ logical, intent(in)                :: nonzero
+ real    :: dati
+ integer :: i,j
+
+ gridmax = -huge(gridmax)
+ gridmin = huge(gridmin)
+ gridmean = 0.
+ !$omp parallel do schedule(static) &
+ !$omp reduction(min:gridmin) &
+ !$omp reduction(max:gridmax) reduction(+:gridmean) &
+ !$omp private(j,i,dati)
+ do j=1,npixels(2)
+    do i=1,npixels(1)
+       dati = datgrid(i,j)
+       gridmax  = max(gridmax,dati)
+       if (nonzero) then
+          if (dati.gt.tiny(0.)) gridmin  = min(gridmin,dati)
+       else
+          gridmin  = min(gridmin,dati)
+       endif
+       gridmean = gridmean + dati
+    enddo
+ enddo
+ gridmean = gridmean/product(npixels(1:2))
+
+ return
+end subroutine minmaxmean_grid2D
+
 !-----------------------------------------------
 ! calculate max and min and mean values on grid
 ! (for vector quantities)
@@ -543,6 +682,41 @@ subroutine minmaxmean_gridvec(datgridvec,npixels,jlen,gridmin,gridmax,gridmean)
 
  return
 end subroutine minmaxmean_gridvec
+
+!-----------------------------------------------
+! calculate max and min and mean values on grid
+! (for vector quantities)
+!-----------------------------------------------
+subroutine minmaxmean_gridvec2D(datgridvec,npixels,jlen,gridmin,gridmax,gridmean)
+ implicit none
+ real, dimension(:,:,:), intent(in) :: datgridvec
+ integer, dimension(2), intent(in)  :: npixels
+ integer, intent(in)                :: jlen
+ real, dimension(jlen), intent(out) :: gridmin,gridmax,gridmean
+ real    :: dati
+ integer :: ivec,i,j
+
+ gridmax(:)  = -huge(gridmax)
+ gridmin(:)  = huge(gridmin)
+ gridmean(:) = 0.
+ !$omp parallel do schedule(static) &
+ !$omp reduction(min:gridmin) &
+ !$omp reduction(max:gridmax) reduction(+:gridmean) &
+ !$omp private(j,i,dati)
+ do j=1,npixels(2)
+    do i=1,npixels(1)
+       do ivec=1,jlen
+          dati = datgridvec(ivec,i,j)
+          gridmax(ivec)  = max(gridmax(ivec),dati)
+          gridmin(ivec)  = min(gridmin(ivec),dati)
+          gridmean(ivec) = gridmean(ivec) + dati
+       enddo
+    enddo
+ enddo
+ gridmean(1:jlen) = gridmean(1:jlen)/real(product(npixels(1:2)))
+
+ return
+end subroutine minmaxmean_gridvec2D
 
 !----------------------------------------------------
 ! calculate max and min and mean values on particles

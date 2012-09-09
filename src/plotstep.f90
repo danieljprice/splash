@@ -1251,7 +1251,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                          hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                          icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy, &
-                         pixwidth,pixwidthy,inormalise)
+                         pixwidth,pixwidthy,inormalise,isperiodicx,isperiodicy)
                     !--also get contour plot data
                     if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                        if (.not.isameweights) & ! set contouring weights as necessary
@@ -1260,7 +1260,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                        call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                             hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
                             icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy, &
-                            pixwidth,pixwidthy,inormalise)
+                            pixwidth,pixwidthy,inormalise,isperiodicx,isperiodicy)
                        gotcontours = .true.
 
                        if (.not.isameweights) & ! reset weights
@@ -3417,12 +3417,14 @@ contains
             call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
               hh(1:ninterp),weight(1:ninterp),vecplot(1,1:ninterp), &
               vecplot(2,1:ninterp),icolourme(1:ninterp),ninterp,xmin,ymin, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise)
+              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise,&
+              isperiodicx,isperiodicy)
          else
             call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
               hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ivecx), &
               dat(1:ninterp,ivecy),icolourme(1:ninterp),ninterp,xmin,ymin, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise)
+              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise,&
+              isperiodicx,isperiodicy)
          endif
 
       case default

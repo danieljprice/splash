@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -73,7 +73,7 @@ subroutine print_gridformats
 
  print "(/,a)",' Grid conversion mode ("splash to X dumpfiles"): '
  print "(a)",'    splash to grid         : interpolate basic SPH data (density, plus velocity if present in data)'
- print "(a)",'                             to 3D grid, write grid data to file (using default output=ascii)'
+ print "(a)",'                             to 2D or 3D grid, write grid data to file (using default output=ascii)'
  print "(a)",'           to gridascii    : as above, grid data written in ascii format'
  print "(a)",'           to gridbinary   : as above, grid data in simple unformatted binary format:'
  print "(a)",'                                write(unit) nx,ny,nz,ncolumns,time                 [ 4 bytes each ]'
@@ -91,16 +91,16 @@ end subroutine print_gridformats
 !------------------------------------------------------
 ! open grid file for (write) output, write header
 !------------------------------------------------------
-subroutine open_gridfile_w(iunit,filenamein,outformat,npixels,ncolumns,time,ierr)
+subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time,ierr)
  use asciiutils, only:lcase
  implicit none
  integer, intent(in)               :: iunit
  character(len=*), intent(in)      :: filenamein,outformat
  character(len=len(filenamein)+10) :: filename
- integer, dimension(3), intent(in) :: npixels
- integer, intent(in)               :: ncolumns
- real, intent(in)                  :: time
- integer, intent(out)              :: ierr
+ integer, intent(in)                  :: ndim,ncolumns
+ integer, dimension(ndim), intent(in) :: npixels
+ real, intent(in)                     :: time
+ integer, intent(out)                 :: ierr
 !  
 !--Only have to do something here for formats
 !  that have all columns in the same file
@@ -126,7 +126,7 @@ subroutine open_gridfile_w(iunit,filenamein,outformat,npixels,ncolumns,time,ierr
        return
     endif
 
-    write(iunit,iostat=ierr) npixels(1:3),ncolumns,time
+    write(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time
     if (ierr /= 0) then
        print "(a)",' ERROR writing header to file!'
        return
@@ -151,16 +151,16 @@ end subroutine open_gridfile_w
 !------------------------------------------------------
 ! open grid file for reading, read header
 !------------------------------------------------------
-subroutine open_gridfile_r(iunit,filename,informat,npixels,ncolumns,time,ierr)
+subroutine open_gridfile_r(iunit,filename,informat,ndim,ncolumns,npixels,time,ierr)
  use asciiutils, only:lcase
  implicit none
- integer, intent(in)                :: iunit
+ integer, intent(in)                :: iunit,ndim
  character(len=*), intent(in)       :: filename
  character(len=*), intent(inout)    :: informat
- integer, dimension(3), intent(out) :: npixels
  integer, intent(out)               :: ncolumns
- real, intent(out)                  :: time
- integer, intent(out)               :: ierr
+ integer, dimension(ndim), intent(out) :: npixels
+ real, intent(out)                     :: time
+ integer, intent(out)                  :: ierr
 !
 !--read only implemented for binary grid format at present
 !
@@ -178,7 +178,7 @@ subroutine open_gridfile_r(iunit,filename,informat,npixels,ncolumns,time,ierr)
        return
     endif
 
-    read(iunit,iostat=ierr) npixels(1:3),ncolumns,time
+    read(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time
     if (ierr /= 0) then
        print "(a)",' ERROR reading header to file!'
        return
@@ -195,24 +195,38 @@ end subroutine open_gridfile_r
 !------------------------------------------------------
 ! write a particular column to the grid output file
 !------------------------------------------------------
-subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,&
-                      pixwidth,xmin,ierr)
+subroutine write_grid(iunit,filenamein,outformat,ndim,npixels,label,time,&
+                      pixwidth,xmin,ierr,dat3D,dat2D)
  use asciiutils, only:ucase,lcase,safename
  use filenames,  only:tagline
  implicit none
  integer, intent(in)                :: iunit
  character(len=*), intent(in)       :: filenamein,outformat
- real, dimension(:,:,:), intent(in) :: dat
- integer, dimension(3), intent(in)  :: npixels
- character(len=*), intent(in)       :: label
- real, intent(in)                   :: time,pixwidth
- real, dimension(3), intent(in)     :: xmin
- integer, intent(out)               :: ierr
- character(len=len(filenamein)+20)  :: filename
+ integer, intent(in)                  :: ndim
+ integer, dimension(ndim), intent(in) :: npixels
+ character(len=*), intent(in)         :: label
+ real, intent(in)                     :: time,pixwidth
+ real, dimension(3), intent(in)       :: xmin
+ integer, intent(out)                 :: ierr
+ character(len=len(filenamein)+20)    :: filename
+ real, dimension(:,:,:), intent(in), optional :: dat3D
+ real, dimension(:,:),   intent(in), optional :: dat2D
  integer :: i,j,k
  real    :: xi,yi,zi
  
  ierr = 0
+ if (ndim.eq.3 .and. .not.present(dat3D)) then
+    print "(a)",' ERROR in call to write_grid: ndim=3 but 3D grid not passed'
+    ierr = 1
+ elseif (ndim.eq.2 .and. .not.present(dat2D)) then
+    print "(a)",' ERROR in call to write_grid: ndim=2 but 2D grid not passed'
+    ierr = 1
+ elseif (.not.(ndim.eq.2 .or. ndim.eq.3)) then
+    print "(a,i2,a)",' ERROR in call to write_grid: cannot write grid for ',ndim,' dimensions'
+    ierr = 2
+ endif
+ if (ierr /= 0) return
+ 
  select case(trim(lcase(outformat)))
  case('gridascii','grid')
     filename = trim(filenamein)//'_'//trim(safename(label))//'_grid.dat'
@@ -235,30 +249,47 @@ subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,&
     write(iunit,"(a,es15.7)",iostat=ierr) '# ',time
     write(iunit,"(a)",err=100) '#'
     write(iunit,"(a)",err=100) '# file contains:'
-    write(iunit,"(a)",err=100) '# '//trim(label)//' interpolated to 3D grid '
+    write(iunit,"(a,i1,a)",err=100) '# '//trim(label)//' interpolated to ',ndim,'D grid '
     write(iunit,"(a)",err=100) '#'
     write(iunit,"(a)",err=100) '# written in the form: '
-    write(iunit,"(a)",err=100) '#   do k=1,nz'
-    write(iunit,"(a)",err=100) '#      do j=1,ny'
-    write(iunit,"(a)",err=100) '#         write(*,*) (dat(i,j,k),i=1,nx)'
-    write(iunit,"(a)",err=100) '#      enddo'
-    write(iunit,"(a)",err=100) '#   enddo'
+    if (ndim.eq.3) then
+       write(iunit,"(a)",err=100) '#   do k=1,nz'
+       write(iunit,"(a)",err=100) '#      do j=1,ny'
+       write(iunit,"(a)",err=100) '#         write(*,*) (dat(i,j,k),i=1,nx)'
+       write(iunit,"(a)",err=100) '#      enddo'
+       write(iunit,"(a)",err=100) '#   enddo'
+    else
+       write(iunit,"(a)",err=100) '#   do j=1,ny'
+       write(iunit,"(a)",err=100) '#      write(*,*) (dat(i,j),i=1,nx)'
+       write(iunit,"(a)",err=100) '#   enddo'
+    endif
     write(iunit,"(a)",err=100) '#'
     write(iunit,"(a)",err=100) '# grid dimensions:'
-    write(iunit,"(a)",err=100) '# nx    ny    nz'
-    write(iunit,*,err=100) npixels(1:3)
-    do k=1,npixels(3)
-       do j=1,npixels(2)
-          write(iunit,"(2048(es14.6,1x))",err=100) (dat(i,j,k),i=1,npixels(1))
+    if (present(dat3D)) then
+       write(iunit,"(a)",err=100) '# nx    ny    nz'
+       write(iunit,*,err=100) npixels(1:ndim)
+       do k=1,npixels(3)
+          do j=1,npixels(2)
+             write(iunit,"(2048(es14.6,1x))",err=100) (dat3D(i,j,k),i=1,npixels(1))
+          enddo
        enddo
-    enddo
+    elseif (present(dat2D)) then
+       write(iunit,"(a)",err=100) '# nx    ny'
+       write(iunit,*,err=100) npixels(1:ndim)
+       do j=1,npixels(2)
+          write(iunit,"(2048(es14.6,1x))",err=100) (dat2D(i,j),i=1,npixels(1))
+       enddo
+    endif
     close(unit=iunit)
     return
 
  case('gridbinary','gridbin')
     print "(a)",'-----> WRITING '//trim(ucase(label))
-    write(iunit,iostat=ierr) (((dat(i,j,k),i=1,npixels(1)),j=1,npixels(2)),k=1,npixels(3))
- 
+    if (present(dat3D)) then
+       write(iunit,iostat=ierr) (((dat3D(i,j,k),i=1,npixels(1)),j=1,npixels(2)),k=1,npixels(3))
+    elseif (present(dat2D)) then
+       write(iunit,iostat=ierr) ((dat2D(i,j),i=1,npixels(1)),j=1,npixels(2))    
+    endif
  case('gridtest')
     filename = trim(filenamein)//'_'//trim(safename(label))//'_grid.dat'
     print "(a)",'-----> WRITING '//trim(ucase(label))//' to '//trim(filename)
@@ -276,20 +307,34 @@ subroutine write_grid(iunit,filenamein,outformat,dat,npixels,label,time,&
       '# '//trim(filename)//' produced using "splash to '//trim(outformat)// &
       '" on file '//trim(filenamein)
     write(iunit,"(a)",err=100) '# grid dimensions:'
-    write(iunit,"(a)",err=100) '# nx    ny    nz'
-    write(iunit,"(a,3(i5,1x))",err=100) '# ',npixels(1:3)
-    write(iunit,"('#',4('[',a13,']'))",err=100) 'x','y','z',trim(label)
-    do k=1,npixels(3)
-       write(*,"('.')",ADVANCE='NO')
-       zi = xmin(3) + (k-0.5)*pixwidth
+    if (present(dat3D)) then
+       write(iunit,"(a)",err=100) '# nx    ny    nz'
+       write(iunit,"(a,3(i5,1x))",err=100) '# ',npixels(1:3)
+       write(iunit,"('#',4('[',a13,']'))",err=100) 'x','y','z',trim(label)
+       do k=1,npixels(3)
+          write(*,"('.')",ADVANCE='NO')
+          zi = xmin(3) + (k-0.5)*pixwidth
+          do j=1,npixels(2)
+             yi = xmin(2) + (j-0.5)*pixwidth
+             do i=1,npixels(1)
+                xi = xmin(1) + (i-0.5)*pixwidth
+                write(iunit,"(4(es14.6,1x))") xi,yi,zi,dat3D(i,j,k)
+             enddo
+          enddo
+       enddo
+    elseif (present(dat2D)) then
+       write(iunit,"(a)",err=100) '# nx    ny '
+       write(iunit,"(a,2(i5,1x))",err=100) '# ',npixels(1:2)
+       write(iunit,"('#',3('[',a13,']'))",err=100) 'x','y',trim(label)
        do j=1,npixels(2)
+          write(*,"('.')",ADVANCE='NO')
           yi = xmin(2) + (j-0.5)*pixwidth
           do i=1,npixels(1)
              xi = xmin(1) + (i-0.5)*pixwidth
-             write(iunit,"(4(es14.6,1x))") xi,yi,zi,dat(i,j,k)
+             write(iunit,"(3(es14.6,1x))") xi,yi,dat2D(i,j)
           enddo
        enddo
-    enddo
+    endif
     write(*,*)
 
  case('hdf5')

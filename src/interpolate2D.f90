@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -62,11 +62,12 @@ contains
 !
 !     Output: smoothed data            : datsmooth (npixx,npixy)
 !
-!     Written by Daniel Price 2003-2006
+!     Written by Daniel Price 2003-2012
 !--------------------------------------------------------------------------
 
 subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise)
+     xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,&
+     normalise,periodicx,periodicy)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
@@ -74,10 +75,11 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy
   real, intent(out), dimension(npixx,npixy) :: datsmooth
-  logical, intent(in) :: normalise
+  logical, intent(in) :: normalise,periodicx,periodicy
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  integer :: ipixi,jpixi
   real :: hi,hi1,radkern,qq,wab,rab,const
   real :: term,termnorm,dx,dy,xpix,ypix
 
@@ -128,17 +130,31 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
      jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
 
-     if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-     if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
-     if (ipixmax.gt.npixx) ipixmax = npixx
-     if (jpixmax.gt.npixy) jpixmax = npixy
+     if (.not.periodicx) then
+        if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
+        if (ipixmax.gt.npixx) ipixmax = npixx  ! to pixels in the image
+     endif
+     if (.not.periodicy) then
+        if (jpixmin.lt.1)     jpixmin = 1
+        if (jpixmax.gt.npixy) jpixmax = npixy
+     endif
      !
      !--loop over pixels, adding the contribution from this particle
      !
      do jpix = jpixmin,jpixmax
+        jpixi = jpix
+        if (periodicy) then
+           if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
+           if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+        endif
         ypix = ymin + (jpix-0.5)*pixwidthy
         dy = ypix - y(i)
         do ipix = ipixmin,ipixmax
+           ipixi = ipix
+           if (periodicx) then
+              if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
+              if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
+           endif
            xpix = xmin + (ipix-0.5)*pixwidthx
            dx = xpix - x(i)
            rab = sqrt(dx**2 + dy**2)
@@ -156,8 +172,8 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
            !
            !--calculate data value at this pixel using the summation interpolant
            !
-           datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
-           if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+           datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
+           if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
 
         enddo
      enddo
@@ -193,7 +209,8 @@ end subroutine interpolate2D
 !--------------------------------------------------------------------------
 
 subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
-     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,normalise)
+     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,&
+     normalise,periodicx,periodicy)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
@@ -201,10 +218,11 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx,vecsmoothy
-  logical, intent(in) :: normalise
+  logical, intent(in) :: normalise,periodicx,periodicy
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  integer :: ipixi,jpixi
   real :: hi,hi1,radkern,qq,wab,rab,const
   real :: termnorm,termx,termy,dx,dy,xpix,ypix
 
@@ -257,17 +275,31 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
      ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
      jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
 
-     if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-     if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
-     if (ipixmax.gt.npixx) ipixmax = npixx
-     if (jpixmax.gt.npixy) jpixmax = npixy
+     if (.not.periodicx) then
+        if (ipixmin.lt.1)     ipixmin = 1
+        if (ipixmax.gt.npixx) ipixmax = npixx  
+     endif
+     if (.not.periodicy) then
+        if (jpixmin.lt.1)     jpixmin = 1
+        if (jpixmax.gt.npixy) jpixmax = npixy
+     endif
      !
      !--loop over pixels, adding the contribution from this particle
      !
      do jpix = jpixmin,jpixmax
+        jpixi = jpix
+        if (periodicy) then
+           if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
+           if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+        endif
         ypix = ymin + (jpix-0.5)*pixwidthy
         dy = ypix - y(i)
         do ipix = ipixmin,ipixmax
+           ipixi = ipix
+           if (periodicx) then
+              if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
+              if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
+           endif
            xpix = xmin + (ipix-0.5)*pixwidthx
            dx = xpix - x(i)
            rab = sqrt(dx**2 + dy**2)
@@ -285,9 +317,9 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
            !
            !--calculate data value at this pixel using the summation interpolant
            !
-           vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab
-           vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab
-           if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+           vecsmoothx(ipixi,jpixi) = vecsmoothx(ipixi,jpixi) + termx*wab
+           vecsmoothy(ipixi,jpixi) = vecsmoothy(ipixi,jpixi) + termy*wab
+           if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
 
         enddo
      enddo
