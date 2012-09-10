@@ -535,7 +535,7 @@ endif
 SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          prompting.f90 geometry.f90 interpolation.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 units.f90 \
-         write_data_gadget.f90 write_data_phantom.f90 write_pixmap.f90 \
+         limits.f90 write_data_gadget.f90 write_data_phantom.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \
          cubicsolve.f90 discplot.f90 \
@@ -545,7 +545,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 \
          exact_densityprofiles.f90 exact_torus.f90 \
-         exact_ringspread.f90 exact.f90 limits.f90 shapes.f90 \
+         exact_ringspread.f90 exact.f90 shapes.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
          options_render.f90 get_data.f90 options_particleplots.f90 \
          options_data.f90 \
