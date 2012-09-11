@@ -576,7 +576,7 @@ all: ascii gadget vine sphNG ndspmhd srosph dragon seren tipsy
 	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
 ascii: checksystem $(OBJECTS) read_data_ascii.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS) || ${MAKE} linkerror;
+	$(F90C) $(F90FLAGS) -o $(BINDIR)/asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS)
 #--build universal binary on mac cluster
    ifeq ($(SYSTEM), maccluster)
 	lipo -create $(BINDIR)/asplash_ppc $(BINDIR)/asplash_i386 -output $(BINDIR)/asplash || cp $(BINDIR)/asplash$(EXT) $(BINDIR)/asplash
@@ -811,40 +811,6 @@ checkhdf5:
    else
 	@if [ -d $$HDF5ROOT ]; then echo; echo "HDF5ROOT=$$HDF5ROOT"; echo; else echo; echo "ERROR: Directory given by HDF5ROOT=$$HDF5ROOT does not exist"; echo; ${MAKE} err; fi;
    endif
-
-linkerror:
-	@echo;
-	@echo '------------- failed to link to relevant libraries required for SPLASH ------------------';
-	@echo " Here are some common problems:";
-	@echo;
-        ifeq ($(BACKEND),pgplot)
-	@echo " \"ld: library not found for -lpgplot\" ";
-	@echo "       => Your PGPLOT_DIR is not set correctly, or PGPLOT is not installed correctly";
-	@echo "          (linker needs to find one of libpgplot.a, libpgplot.so or libpgplot.dylib (OS/X) in PGPLOT_DIR)";
-	@echo "          (check your PGPLOT installation by running the demo programs pgdemo1, pgdemo2 etc.)";
-	@echo;
-	@echo " \"ld: library not found for -lpng\" ";
-	@echo "       => The png library was not found (most likely your PGPLOT does not use them either)";
-	@echo "          (try removing -lpng from the PGPLOTLIBS= variable in build/Makefile)";
-	@echo;
-        endif
-	@echo " \"ld: symbol(s) not found: "__g95_...", referenced from: blah.o \" ";
-	@echo "       => Either you have changed compiler and need to \"make clean\", then \"make\" again";
-	@echo "          or you need to add -lg95 to the PGPLOTLIBS= variable";
-	@echo;
-	@echo " \"ld: symbol(s) not found: "__gfortran_...", referenced from: blah.o \" ";
-	@echo "       => Either you have changed compiler and need to \"make clean\", then \"make\" again";
-	@echo "          or you need to add -lgfortran to the PGPLOTLIBS= variable";
-	@echo;
-	@echo " Undefined symbols:";
-	@echo "   \"_main\", referenced from:";
-	@echo "       start in crt1.10.5.o";
-	@echo "       => You are compiling with gfortran but -lgfortran has also been added to the link flags";
-	@echo "          (remove -lgfortran from the PGPLOTLIBS= variable)";
-	@echo;
-	@echo '-----------------------------------------------------------------------------------------';
-	@${MAKE} err;
-
 #
 # install option, copies any binaries compiled to /usr/local/bin/
 # run `make' first, then `make install'. Could in principle
