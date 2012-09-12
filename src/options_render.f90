@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -26,7 +26,8 @@
 !-------------------------------------------------------------------------
 module settings_render
  use colourbar, only:ColourBarDisp,iplotcolourbarlabel
- use labels, only:lenlabel
+ use labels,    only:lenlabel
+ use kernels,   only:ikernel
  implicit none
  integer :: ncontours,npix,icolours,iColourBarStyle
  logical :: iplotcont_nomulti,ilabelcont
@@ -40,7 +41,7 @@ module settings_render
    icolour_particles,ColourBarDisp,inormalise_interpolations, &
    ifastrender,idensityweightedinterpolation,iColourBarStyle, &
    iplotcolourbarlabel,ilabelcont,projlabelformat,iapplyprojformat, &
-   double_rendering
+   double_rendering,ikernel
 
 contains
 
@@ -65,6 +66,7 @@ subroutine defaults_set_render
   projlabelformat = ' '
   iapplyprojformat = 0
   double_rendering = .false.
+  ikernel = 0 ! just take default kernel
 
   return
 end subroutine defaults_set_render
@@ -79,9 +81,11 @@ subroutine submenu_render(ichoose)
   use params,    only:maxplot
   use plotlib,   only:plotlib_supports_alpha
   use filenames, only:fileprefix
+  use kernels,   only:select_kernel,kernelname,nkernels
   implicit none
   integer, intent(in) :: ichoose
   character(len=5)  :: string
+  character(len=20) :: kname
   integer :: ians,i,ierr,icolourprev
 !
 !--rendering options
@@ -95,10 +99,13 @@ subroutine submenu_render(ichoose)
      else
         string = 'AUTO'
      endif
+     kname = ''
+     if (ikernel.ge.0 .and. ikernel.le.nkernels) kname = kernelname(ikernel)
      print 10,trim(string),icolours,print_logical(iplotcont_nomulti),ncontours, &
            iColourBarStyle,print_logical(icolour_particles), &
            print_logical(inormalise_interpolations),print_logical(ifastrender),&
-           print_logical(idensityweightedinterpolation),trim(projlabelformat)
+           print_logical(idensityweightedinterpolation),trim(projlabelformat),&
+           trim(kernelname(ikernel))
 10   format( &
           ' 0) exit ',/,                      &
           ' 1) set number of pixels               ( ',a,' )',/, &
@@ -110,8 +117,9 @@ subroutine submenu_render(ichoose)
           ' 7) normalise interpolations           ( ',a,' )',/,&
           ' 8) use accelerated rendering          ( ',a,' )',/,&
           ' 9) use density weighted interpolation ( ',a,' )',/, &
-          ' 10) customize label on projection plots ( ',a,' )')
-     call prompt('enter option',ians,0,10)
+          ' 10) customize label on projection plots ( ',a,' )',/,&
+          ' 11) change kernel         ( ',a,' )')
+     call prompt('enter option',ians,0,11)
   endif
 !
 !--options
@@ -232,6 +240,13 @@ subroutine submenu_render(ichoose)
 
        call prompt(' enter label format for projection plots: ',projlabelformat)
        call prompt(' enter which column to apply format to (0=all) ',iapplyprojformat,0,maxplot)
+!------------------------------------------------------------------------
+    case(11)
+       do i=0,nkernels
+          print "(1x,i1,')',1x,a)",i,trim(kernelname(i))
+       enddo
+       call prompt(' enter kernel to use for interpolations (0=default)',ikernel,0,nkernels)
+       call select_kernel(ikernel)
   end select
 
  return
