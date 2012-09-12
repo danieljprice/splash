@@ -31,12 +31,9 @@ module projections3D
  implicit none
 
  integer, parameter :: maxcoltable = 1000
- real, parameter, private :: dpi = 1./3.1415926536
- real, parameter :: radkernel = 2.0
- real, parameter :: radkernel2 = radkernel*radkernel
  real, dimension(0:maxcoltable) :: coltable
- real, parameter, private :: dq2table = radkernel*radkernel/maxcoltable
- real, parameter, private :: ddq2table = 1./dq2table
+ real, private :: dq2table = 4./maxcoltable
+ real, private :: ddq2table = maxcoltable/4.
 
  public :: setup_integratedkernel
  public :: interpolate3D_projection
@@ -56,12 +53,15 @@ subroutine setup_integratedkernel
 !     tabulates the integral through the cubic spline kernel
 !     tabulated in (r/h)**2 so that sqrt is not necessary
 !-------------------------------------------------------------
+ use kernels, only:wfunc,radkernel2,cnormk3D
  implicit none
  integer :: i,j
- real :: rxy2,deltaz,dz,z,q2,q,wkern,coldens
+ real :: rxy2,deltaz,dz,z,q2,wkern,coldens
  integer, parameter :: npts = 100
 
  print "(1x,a)",'setting up integrated kernel table...'
+ dq2table = radkernel2/maxcoltable
+ ddq2table = 1./dq2table
 
  do i=0,maxcoltable-1
 !
@@ -78,21 +78,14 @@ subroutine setup_integratedkernel
     do j=1,npts
        z = (j-1)*dz
        q2 = rxy2 + z*z
-       q = sqrt(q2)
-       if (q.le.1.0) then
-          wkern = 1. - 1.5*q2 + 0.75*q2*q
-       elseif(q.lt.2.0) then
-          wkern = 0.25*(2.-q)**3
-       else
-          wkern = 0.
-       endif
+       wkern = wfunc(q2)
        if (j.eq.1 .or. j.eq.npts) then
           coldens = coldens + 0.5*wkern*dz ! trapezoidal rule
        else
           coldens = coldens + wkern*dz
        endif
     enddo
-    coltable(i)=2.0*coldens*dpi
+    coltable(i)=2.0*coldens*cnormk3D
  end do
  coltable(maxcoltable) = 0.
  
@@ -167,6 +160,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,zobserver,dscreen, &
      useaccelerate)
 
+  use kernels, only:radkernel,radkernel2
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
@@ -518,6 +512,7 @@ end subroutine interpolate3D_projection
 subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,normalise,zobserver,dscreen)
 
+  use kernels, only:radkernel,radkernel2
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
@@ -687,6 +682,7 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      xmin,ymin,stokesQ,stokesU,stokesI,npixx,npixy,pixwidth,rcrit,zcrit,alpha, &
      qpixwidth,getIonly,utherm,uthermcutoff)
 
+  use kernels, only:radkernel,radkernel2
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy

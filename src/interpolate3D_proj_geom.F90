@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -29,10 +29,8 @@
 
 module projections3Dgeom
  use projections3D, only:setup_integratedkernel,wfromtable,coltable
+ use kernels,       only:radkernel,radkernel2
  implicit none
-
- real, parameter :: radkernel = 2.0
- real, parameter :: radkernel2 = radkernel*radkernel
 
  public :: interpolate3D_proj_geom
 ! public :: interpolate3D_proj_geom_vec
@@ -100,7 +98,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   integer(kind=selected_int_kind(10)) :: iprogress,i  ! up to 10 digits
 #endif
   real, dimension(3) :: xcoord, xpix
-  real :: hi,hi1,hi21,radkern,wab,q2,xi(3),xci(3),xminpix,yminpix
+  real :: hi,hi1,hi21,radkern,wab,q2,xci(3),xminpix,yminpix
   real :: term,termnorm,dx,dx2,dy,dy2
   real :: xmax,ymax
   real :: t_start,t_end,t_used,tsec
@@ -190,9 +188,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp private(q2,dx,dx2,dy,dy2,wab,xcoord,xpix) &
 !$omp private(i,ipix,jpix)
 !$omp master
-#ifdef _OPENMP
-  print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
-#endif
+!$    print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 !$omp end master
 
 !$omp do schedule (guided, 2)
@@ -221,7 +217,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 
      radkern = radkernel*hi ! radius of the smoothing kernel
 
-     xci(1) = x(i)
+     xci(1) = sqrt(x(i)**2 + z(i)**2)
+     if (xci(1).lt.0.) print*,'error r < 0',xci(1)
      xci(2) = y(i)
      xci(3) = z(i)
      !--get particle coords in new coord system
@@ -252,7 +249,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
         xcoord(iycoord) = yminpix + jpix*pixwidthy
         do ipix = 1,npixx
            xcoord(ixcoord) = xminpix + ipix*pixwidthx
-           call coord_transform(xcoord(:),3,igeom,xpix(:),3,igeom_cartesian)
+           xpix(:) = xcoord(:)
+           !call coord_transform(xcoord(:),3,igeom,xpix(:),3,igeom_cartesian)
            
 !           !--this is in cartesians
            dy   = xpix(iycoord) - xci(2)
@@ -260,7 +258,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 
            dx2  = dx*dx
            dy2  = dy*dy
-           q2   = (dx2 + dy2)*hi21              
+           q2   = (dx2 + dy2)*hi21
            !
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table

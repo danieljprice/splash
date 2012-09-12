@@ -21,7 +21,8 @@
 !-----------------------------------------------------------------
 
 module interpolate3D_opacity
- use projections3D, only:wfromtable,radkernel2,coltable
+ use projections3D, only:wfromtable,coltable
+ use kernels,       only:radkernel2
  implicit none
  private :: indexx
 

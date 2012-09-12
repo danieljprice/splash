@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -67,6 +67,7 @@ contains
 subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
      xmin,datsmooth,npixx,pixwidth,normalise)
 
+  use kernels, only:cnormk1D,radkernel,wfunc
   implicit none
   integer, intent(in) :: npart,npixx
   real, intent(in), dimension(npart) :: x,hh,weight,dat
@@ -77,7 +78,7 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
   real, dimension(npixx) :: datnorm
 
   integer :: i,ipix,ipixmin,ipixmax
-  real :: hi,hi1,radkern,qq,wab,rab,const
+  real :: hi,hi1,radkern,q2,wab,const
   real :: term,termnorm,dx,xpix
 
   datsmooth = 0.
@@ -94,7 +95,7 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
   if (any(hh(1:npart).le.tiny(hh))) then
      print*,'interpolate1D: warning: ignoring some or all particles with h < 0'
   endif
-  const = 2./3.  ! normalisation constant
+  const = cnormk1D  ! normalisation constant
   !
   !--loop over particles
   !
@@ -117,7 +118,7 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
      !--set kernel related quantities
      !
      hi1 = 1./hi
-     radkern = 2.*hi   ! radius of the smoothing kernel
+     radkern = radkernel*hi   ! radius of the smoothing kernel
      term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to
@@ -133,18 +134,11 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
      do ipix = ipixmin,ipixmax
         xpix = xmin + (ipix-0.5)*pixwidth
         dx = xpix - x(i)
-        rab = abs(dx)
-        qq = rab*hi1
+        q2 = dx*dx*hi1*hi1
         !
         !--SPH kernel - standard cubic spline
         !
-        if (qq.lt.1.0) then
-           wab = (1.-1.5*qq**2 + 0.75*qq**3)
-        elseif (qq.lt.2.0) then
-           wab = 0.25*(2.-qq)**3
-        else
-           wab = 0.
-        endif
+        wab = wfunc(q2)
         !
         !--calculate data value at this pixel using the summation interpolant
         !

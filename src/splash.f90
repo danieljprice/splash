@@ -299,6 +299,7 @@ program splash
   use getdata,   only:get_data,set_coordlabels
   use defaults,  only:defaults_set_initial,defaults_set,defaults_read
   use limits,    only:read_limits
+  use kernels,   only:ikernel,select_kernel_by_name,select_kernel
   use mainmenu,  only:menu,allowrendering,set_extracols
   use mem_allocation,     only:deallocate_all
   use projections3D,      only:setup_integratedkernel
@@ -545,6 +546,17 @@ program splash
   endif
   if (lowmemorymode) print "(a)",' << running in low memory mode >>'
 
+  if (ikernel.eq.0) then
+     !--if no kernel has been set
+     call get_environment('SPLASH_KERNEL',string)
+     if (len_trim(string).gt.0) then
+        call select_kernel_by_name(string)
+     else
+        call select_kernel(0)
+     endif
+  else
+     call select_kernel(ikernel)
+  endif
 
   if (doconvert) then
 

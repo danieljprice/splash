@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -28,8 +28,8 @@
 !----------------------------------------------------------------------
 
 module xsections3D
+ use kernels, only:cnormk3D,radkernel,radkernel2,wfunc
  implicit none
- real, parameter, private :: dpi = 1./3.1415926536
  public :: interpolate3D_fastxsec, interpolate3D_xsec_vec
 
 contains
@@ -68,7 +68,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,radkern,qq,qq2,wab,const,xi,yi,hi21
+  real :: hi,hi1,radkern,q2,wab,const,xi,yi,hi21
   real :: termnorm,term,dy,dy2,dz,dz2,ypix,rescalefac
   real, dimension(npixx) :: dx2i
 
@@ -89,7 +89,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
   if (any(hh(1:npart).le.tiny(hh))) then
      print*,'interpolate3D_xsec: WARNING: ignoring some or all particles with h < 0'
   endif
-  const = dpi
+  const = cnormk3D
   !
   !--renormalise dat array by first element to speed things up
   !
@@ -113,7 +113,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
      if (hi.le.0.) cycle over_parts
      hi1 = 1./hi
      hi21 = hi1*hi1
-     radkern = 2.*hi    ! radius of the smoothing kernel
+     radkern = radkernel*hi    ! radius of the smoothing kernel
      !
      !--for each particle, work out distance from the cross section slice.
      !
@@ -123,7 +123,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
      !--if this is < 2h then add the particle's contribution to the pixels
      !  otherwise skip all this and start on the next particle
      !
-     if (dz2 .lt. 4.0) then
+     if (dz2 .lt. radkernel2) then
 
         xi = x(i)
         yi = y(i)
@@ -155,17 +155,12 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
            dy = ypix - yi
            dy2 = dy*dy*hi21
            do ipix = ipixmin,ipixmax
-              qq2 = dx2i(ipix) + dy2
+              q2 = dx2i(ipix) + dy2
               !
               !--SPH kernel - standard cubic spline
               !
-              if (qq2.lt.4.0) then
-                 qq = sqrt(qq2)
-                 if (qq.lt.1.0) then
-                    wab = (1.-1.5*qq2 + 0.75*qq*qq2)
-                 else
-                    wab = 0.25*(2.-qq)**3
-                 endif
+              if (q2.lt.radkernel2) then
+                 wab = wfunc(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
                  !
@@ -239,7 +234,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,radkern,qq,wab,rab,const
+  real :: hi,hi1,radkern,q2,wab,const
   real :: termx,termy,termnorm,dx,dy,dz,dz2,xpix,ypix
 
   vecsmoothx = 0.
@@ -257,7 +252,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   if (any(hh(1:npart).le.tiny(hh))) then
      print*,'interpolate3D_xsec_vec: WARNING: ignoring some or all particles with h < 0'
   endif
-  const = dpi ! normalisation constant (3D)
+  const = cnormk3D ! normalisation constant (3D)
   !
   !--loop over particles
   !
@@ -272,7 +267,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      hi = hh(i)
      if (hi.le.0.) cycle over_parts
      hi1 = 1./hi
-     radkern = 2.*hi    ! radius of the smoothing kernel
+     radkern = radkernel*hi    ! radius of the smoothing kernel
      !
      !--for each particle, work out distance from the cross section slice.
      !
@@ -307,24 +302,18 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
            do ipix = ipixmin,ipixmax
               xpix = xmin + (ipix-0.5)*pixwidthx
               dx = xpix - x(i)
-              rab = sqrt(dx**2 + dy**2 + dz2)
-              qq = rab*hi1
+              q2 = (dx*dx + dy*dy + dz2)*hi1*hi1
               !
               !--SPH kernel - standard cubic spline
               !
-              if (qq.lt.2.0) then
-                 if (qq.lt.1.0) then
-                    wab = (1.-1.5*qq**2 + 0.75*qq**3)
-                 else
-                    wab = 0.25*(2.-qq)**3
-                 endif
+              if (q2.lt.radkernel2) then
+                 wab = wfunc(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
                  !
                  vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab
                  vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab
                  if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
-
               endif
 
            enddo

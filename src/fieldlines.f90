@@ -298,39 +298,35 @@ end subroutine trace2D
 !  would be nice to know neighbours
 !
 subroutine interpolate_pt(xpt,ypt,vxpt,vypt,x,y,vecx,vecy,h,pmass,rho,npart)
+ use kernels, only:radkernel2,wfunc,cnormk2D
  implicit none
  integer, intent(in) :: npart
  real, dimension(npart), intent(in) :: x,y,vecx,vecy,h,pmass,rho
  real, intent(in) :: xpt, ypt
  real, intent(out) :: vxpt, vypt
- real, parameter :: pi = 3.141592653589
- real :: rho1i,term,const,dx,dy,rr,qq,wab
+ real :: rho1i,term,const,dx,dy,hi1,q2,wab
  integer :: i
 
  vxpt = 0.
  vypt = 0.
+ const = cnormk2D
 
  do i=1,npart
-    dx = xpt - x(i)
-    dy = ypt - y(i)
-    rr = sqrt(dx**2 + dy**2)
-    qq = rr/h(i)
+    dx  = xpt - x(i)
+    dy  = ypt - y(i)
+    hi1 = 1./h(i)
+    q2  = (dx*dx + dy*dy)*hi1*hi1
     !
     !--if particles are within range, calculate contribution to this pt
     !
-    if (qq.lt.2.0) then
-       const = 10./(7.*pi*h(i)**2)
+    if (q2.lt.radkernel2) then
        if (rho(i).ne.0.) then
           rho1i = 1./rho(i)
        else
           rho1i = 0.
        endif
        term = const*pmass(i)*rho1i
-       if (qq.lt.1.0) then
-          wab = (1.-1.5*qq**2 + 0.75*qq**3)
-       else
-          wab = 0.25*(2.-qq)**3
-       endif
+       wab = wfunc(q2)
 
        vxpt = vxpt + term*vecx(i)*wab
        vypt = vypt + term*vecy(i)*wab

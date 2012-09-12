@@ -27,8 +27,8 @@
 !----------------------------------------------------------------------
 
 module interpolations2D
+ use kernels, only:radkernel2,radkernel,cnormk2D,wfunc
  implicit none
- real, parameter, private :: pi = 3.1415926536
  public :: interpolate2D, interpolate2D_xsec, interpolate2D_vec
  public :: interpolate_part, interpolate_part1
 
@@ -80,7 +80,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   integer :: ipixi,jpixi
-  real :: hi,hi1,radkern,qq,wab,rab,const
+  real :: hi,hi1,radkern,q2,wab,const
   real :: term,termnorm,dx,dy,xpix,ypix
 
   datsmooth = 0.
@@ -97,7 +97,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
   if (any(hh(1:npart).le.tiny(hh))) then
      print*,'interpolate2D: warning: ignoring some or all particles with h < 0'
   endif
-  const = 10./(7.*pi)  ! normalisation constant
+  const = cnormk2D  ! normalisation constant
   !
   !--loop over particles
   !
@@ -120,7 +120,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      !--set kernel related quantities
      !
      hi1 = 1./hi
-     radkern = 2.*hi  ! radius of the smoothing kernel
+     radkern = radkernel*hi  ! radius of the smoothing kernel
      term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to
@@ -156,19 +156,12 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
               if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
            endif
            xpix = xmin + (ipix-0.5)*pixwidthx
-           dx = xpix - x(i)
-           rab = sqrt(dx**2 + dy**2)
-           qq = rab*hi1
+           dx = xpix - x(i)         
+           q2 = (dx*dx + dy*dy)*hi1*hi1
            !
-           !--SPH kernel - standard cubic spline
+           !--SPH kernel
            !
-           if (qq.lt.1.0) then
-              wab = (1.-1.5*qq**2 + 0.75*qq**3)
-           elseif (qq.lt.2.0) then
-              wab = 0.25*(2.-qq)**3
-           else
-              wab = 0.
-           endif
+           wab = wfunc(q2)
            !
            !--calculate data value at this pixel using the summation interpolant
            !
@@ -223,7 +216,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   integer :: ipixi,jpixi
-  real :: hi,hi1,radkern,qq,wab,rab,const
+  real :: hi,hi1,radkern,q2,wab,const
   real :: termnorm,termx,termy,dx,dy,xpix,ypix
 
   vecsmoothx = 0.
@@ -241,7 +234,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
   if (any(hh(1:npart).le.tiny(hh))) then
      print*,'interpolate2D_vec: warning: ignoring some or all particles with h < 0'
   endif
-  const = 10./(7.*pi)  ! normalisation constant
+  const = cnormk2D  ! normalisation constant
   !
   !--loop over particles
   !
@@ -264,7 +257,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
      !--set kernel related quantities
      !
      hi1 = 1./hi
-     radkern = 2.*hi  ! radius of the smoothing kernel
+     radkern = radkernel*hi  ! radius of the smoothing kernel
      termx = termnorm*vecx(i)
      termy = termnorm*vecy(i)
      !
@@ -302,18 +295,11 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
            endif
            xpix = xmin + (ipix-0.5)*pixwidthx
            dx = xpix - x(i)
-           rab = sqrt(dx**2 + dy**2)
-           qq = rab*hi1
+           q2 = (dx*dx + dy*dy)*hi1*hi1
            !
-           !--SPH kernel - standard cubic spline
+           !--SPH kernel
            !
-           if (qq.lt.1.0) then
-              wab = (1.-1.5*qq**2 + 0.75*qq**3)
-           elseif (qq.lt.2.0) then
-              wab = 0.25*(2.-qq)**3
-           else
-              wab = 0.
-           endif
+           wab = wfunc(q2)
            !
            !--calculate data value at this pixel using the summation interpolant
            !
@@ -375,7 +361,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
   real, dimension(npixx) :: datnorm
 
   integer :: i,ipix,ipixmin,ipixmax
-  real :: hi,hi1,radkern,qq,wab,rab,const
+  real :: hi,hi1,radkern,q2,wab,const
   real :: term,termnorm,dx,dy,xpix,ypix,pixwidth,xpixwidth,xlength
   real :: gradient,yintercept,aa,bb,cc,determinant,det
   real :: xstart,xend,ystart,yend,rstart,rend
@@ -420,7 +406,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
   !
   datsmooth = 0.
   datnorm = 0.
-  const = 10./(7.*pi)   ! normalisation constant
+  const = cnormk2D   ! normalisation constant
   !
   !--loop over particles
   !
@@ -443,7 +429,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
      !--set kernel related quantities
      !
      hi1 = 1./hi
-     radkern = 2.*hi    ! radius of the smoothing kernel
+     radkern = radkernel*hi    ! radius of the smoothing kernel
      term = termnorm*dat(i)
      !
      !--for each particle work out which pixels it contributes to
@@ -496,18 +482,11 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
            ypix = gradient*xpix + yintercept
            dy = ypix - y(i)
            dx = xpix - x(i)
-           rab = sqrt(dx**2 + dy**2)
-           qq = rab*hi1
+           q2 = (dx*dx + dy*dy)*hi1*hi1
            !
-           !--SPH kernel - standard cubic spline in 2D
+           !--SPH kernel
            !
-           if (qq.lt.1.0) then
-              wab = (1.-1.5*qq**2 + 0.75*qq**3)
-           elseif (qq.lt.2.0) then
-              wab = 0.25*(2.-qq)**3
-           else
-              wab = 0.
-           endif
+           wab = wfunc(q2)
            !
            !--calculate data value at this pixel using the summation interpolant
            !

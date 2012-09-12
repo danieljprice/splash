@@ -28,8 +28,8 @@
 !----------------------------------------------------------------------
 
 module interpolations3D
+ use kernels, only:radkernel2,radkernel,cnormk3D,wfunc
  implicit none
- real, parameter, private :: dpi = 1./3.1415926536      
  public :: interpolate3D,interpolate3D_vec
 
 contains
@@ -80,7 +80,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   integer :: ipixi,jpixi,kpixi,nxpix,nwarn
   real :: xminpix,yminpix,zminpix,hmin !,dhmin3
   real, dimension(npixx) :: dx2i
-  real :: xi,yi,zi,hi,hi1,hi21,radkern,qq,wab,q2,const,dyz2,dz2
+  real :: xi,yi,zi,hi,hi1,hi21,radkern,wab,q2,const,dyz2,dz2
   real :: term,termnorm,dy,dz,ypix,zpix,xpixi
   !real :: t_start,t_end
   logical :: iprintprogress
@@ -131,7 +131,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   hmin = 0.5*pixwidth
   !dhmin3 = 1./(hmin*hmin*hmin)
 
-  const = dpi  ! normalisation constant (3D)
+  const = cnormk3D  ! normalisation constant (3D)
   nwarn = 0
   !
   !--loop over particles
@@ -147,7 +147,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$omp private(term,termnorm,xpixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
-!$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,qq,wab) &
+!$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &
 !$omp reduction(+:nwarn)
 !$omp master
 #ifdef _OPENMP
@@ -197,7 +197,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 
      hi1 = 1./hi
      hi21 = hi1*hi1
-     radkern = 2.*hi   ! radius of the smoothing kernel
+     radkern = radkernel*hi   ! radius of the smoothing kernel
      !termnorm = const*weight(i)
      term = termnorm*dat(i)
      !
@@ -282,24 +282,8 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
               !
               !--SPH kernel - standard cubic spline
               !
-              if (q2.lt.4.0) then                  
-                 if (q2.lt.1.0) then
-                    qq = sqrt(q2)
-                    wab = 1.-1.5*q2 + 0.75*q2*qq
-!
-!-- the following lines use a fast inverse sqrt function
-!
-!                    if (q2.gt.epsilon(q2)) then
-!                       qq = q2*finvsqrt(q2)
-!                       wab = 1.-1.5*q2 + 0.75*q2*qq
-!                    else
-!                       wab = 1.
-!                    endif
-                 else
-                    qq = sqrt(q2)
-!                    qq = q2*finvsqrt(q2)
-                    wab = 0.25*(2.-qq)**3
-                 endif
+              if (q2.lt.radkernel2) then                  
+                 wab = wfunc(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
                  !
@@ -353,7 +337,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   integer :: ipixi,jpixi,kpixi,nxpix,nwarn
   real :: xminpix,yminpix,zminpix
   real, dimension(npixx) :: dx2i
-  real :: xi,yi,zi,hi,hi1,hi21,radkern,qq,wab,q2,const,dyz2,dz2
+  real :: xi,yi,zi,hi,hi1,hi21,radkern,wab,q2,const,dyz2,dz2
   real :: termnorm,dy,dz,ypix,zpix,xpixi,ddatnorm
   real, dimension(3) :: term
   !real :: t_start,t_end
@@ -401,7 +385,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 !  xmax = xmin + npixx*pixwidth
 !  ymax = ymin + npixy*pixwidth
 
-  const = dpi  ! normalisation constant (3D)
+  const = cnormk3D  ! normalisation constant (3D)
   nwarn = 0
 
 !$omp parallel default(none) &
@@ -414,7 +398,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 !$omp private(term,termnorm,xpixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
-!$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,qq,wab) &
+!$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &
 !$omp reduction(+:nwarn)
 !$omp master
 #ifdef _OPENMP
@@ -455,7 +439,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 
      hi1 = 1./hi
      hi21 = hi1*hi1
-     radkern = 2.*hi   ! radius of the smoothing kernel
+     radkern = radkernel*hi   ! radius of the smoothing kernel
      termnorm = const*weight(i)
      term(:) = termnorm*datvec(i,:)
      !
@@ -540,14 +524,8 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
               !
               !--SPH kernel - standard cubic spline
               !
-              if (q2.lt.4.0) then                  
-                 if (q2.lt.1.0) then
-                    qq = sqrt(q2)
-                    wab = 1.-1.5*q2 + 0.75*q2*qq
-                 else
-                    qq = sqrt(q2)
-                    wab = 0.25*(2.-qq)**3
-                 endif
+              if (q2.lt.radkernel2) then                  
+                 wab = wfunc(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
                  !
