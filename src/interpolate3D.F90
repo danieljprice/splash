@@ -28,7 +28,7 @@
 !----------------------------------------------------------------------
 
 module interpolations3D
- use kernels, only:radkernel2,radkernel,cnormk3D,wfunc
+ use kernels, only:radkernel2,radkernel,cnormk3D
  implicit none
  public :: interpolate3D,interpolate3D_vec
 
@@ -144,7 +144,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$omp shared(datnorm,normalise,periodicx,periodicy,periodicz) &
 !$omp shared(hmin) & !,dhmin3) &
 !$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
-!$omp private(term,termnorm,xpixi,wfunc) &
+!$omp private(term,termnorm,xpixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &
@@ -283,7 +283,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
               !--SPH kernel - standard cubic spline
               !
               if (q2.lt.radkernel2) then                  
-                 wab = wfunc(q2)
+                 wab = wkernel(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
                  !
@@ -395,7 +395,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 !$omp shared(npixx,npixy,npixz,const) &
 !$omp shared(datnorm,normalise,periodicx,periodicy,periodicz) &
 !$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
-!$omp private(term,termnorm,xpixi,wfunc) &
+!$omp private(term,termnorm,xpixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &
@@ -525,7 +525,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
               !--SPH kernel - standard cubic spline
               !
               if (q2.lt.radkernel2) then                  
-                 wab = wfunc(q2)
+                 wab = wkernel(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
                  !
@@ -576,5 +576,17 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   return
 
 end subroutine interpolate3D_vec
+
+!------------------------------------------------------------
+! interface to kernel routine to avoid problems with openMP
+!-----------------------------------------------------------
+real function wkernel(q2)
+ use kernels, only:wfunc
+ implicit none
+ real, intent(in) :: q2
+
+ wkernel = wfunc(q2)
+
+end function wkernel
 
 end module interpolations3D
