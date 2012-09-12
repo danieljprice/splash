@@ -49,6 +49,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use system_utils,       only:lenvironment,renvironment,envlist,lenvstring
  use readwrite_griddata, only:open_gridfile_w,write_grid
  use particle_data,      only:icolourme
+ use params,             only:int8
  implicit none
  integer, intent(in)                          :: ntypes,ncolumns
  integer, intent(in), dimension(:)            :: npartoftype
@@ -73,6 +74,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  real, dimension(3)    :: partmin,partmax,partmean
  real, dimension(3)    :: datmin,datmax,datmean
  integer, dimension(3) :: npixels
+ integer(kind=int8), dimension(3) :: npixels8
  real    :: hmin,pixwidth,rhominset,rhomin,gridmin,gridmax,gridmean
  logical :: inormalise,lowmem
  logical, dimension(3) :: isperiodic
@@ -203,22 +205,22 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     hmin = partmin(1)
     if (hmin.gt.0.) then
        print*,'based on the minimum smoothing length of hmin = ',hmin
-       npixels(1:ndim) = int((xmax(1:ndim) - xmin(1:ndim))/hmin) + 1
+       npixels8(1:ndim) = int((xmax(1:ndim) - xmin(1:ndim))/hmin,kind=int8) + 1
        if (ndim.eq.3) then
-          print "(a,i6,2(' x',i6),a)",' requires ',npixels(1:ndim),' pixels to capture the full resolution'       
-          if (product(npixels(1:ndim)).gt.512**3 .or. product(npixels(1:ndim)).le.0) then
+          print "(a,i6,2(' x',i6),a)",' requires ',npixels8(1:ndim),' pixels to capture the full resolution'       
+          if (product(npixels8(1:ndim)).gt.512**3 .or. product(npixels8(1:ndim)).le.0) then
              npixx = 512
              print "(a,i4)",' but this is ridiculous, so instead we choose ',npixx
           else
-             npixx = npixels(1)
+             npixx = npixels8(1)
           endif
        else
-          print "(a,i6,1(' x',i6),a)",' requires ',npixels(1:ndim),' pixels to capture the full resolution'
-          if (product(npixels(1:ndim)).gt.1024**ndim .or. product(npixels(1:ndim)).le.0) then
+          print "(a,i6,1(' x',i6),a)",' requires ',npixels8(1:ndim),' pixels to capture the full resolution'
+          if (product(npixels8(1:ndim)).gt.1024**ndim .or. product(npixels8(1:ndim)).le.0) then
              npixx = 1024
              print "(a,i4)",' but this is very large, so instead we choose ',npixx
           else
-             npixx = npixels(1)
+             npixx = npixels8(1)
           endif
        endif
     else
