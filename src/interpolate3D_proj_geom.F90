@@ -182,8 +182,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,ixcoord,iycoord,izcoord,islengthx,islengthy,islengthz,igeom) &
-!$omp shared(datnorm,normalise) &
-!$omp private(hi,xi,xci,radkern) &
+!$omp shared(datnorm,normalise,radkernel,radkernel2) &
+!$omp private(hi,xci,radkern) &
 !$omp private(hi1,hi21,term,termnorm) &
 !$omp private(q2,dx,dx2,dy,dy2,wab,xcoord,xpix) &
 !$omp private(i,ipix,jpix)

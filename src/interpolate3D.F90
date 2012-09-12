@@ -138,13 +138,13 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   !
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
-!$omp shared(xmin,ymin,zmin) &
+!$omp shared(xmin,ymin,zmin,radkernel,radkernel2) &
 !$omp shared(xminpix,yminpix,zminpix,pixwidth,zpixwidth) &
 !$omp shared(npixx,npixy,npixz,const) &
 !$omp shared(datnorm,normalise,periodicx,periodicy,periodicz) &
 !$omp shared(hmin) & !,dhmin3) &
 !$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
-!$omp private(term,termnorm,xpixi) &
+!$omp private(term,termnorm,xpixi,wfunc) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &
@@ -390,12 +390,12 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,datvec,itype,datsmooth,npart) &
-!$omp shared(xmin,ymin,zmin) &
+!$omp shared(xmin,ymin,zmin,radkernel,radkernel2) &
 !$omp shared(xminpix,yminpix,zminpix,pixwidth,zpixwidth) &
 !$omp shared(npixx,npixy,npixz,const) &
 !$omp shared(datnorm,normalise,periodicx,periodicy,periodicz) &
 !$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
-!$omp private(term,termnorm,xpixi) &
+!$omp private(term,termnorm,xpixi,wfunc) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &

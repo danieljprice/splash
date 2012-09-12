@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -254,7 +254,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,dscreen,zobserver,use3dperspective,useaccelerate) &
-!$omp shared(datnorm,normalise) &
+!$omp shared(datnorm,normalise,radkernel,radkernel2) &
 !$omp firstprivate(hmin) & !,dhmin3) &
 !$omp private(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
 !$omp private(hsmooth,horigi,hi1,hi21,term,termnorm,npixpartx,npixparty,jpixi,ipixi) &
@@ -551,7 +551,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,vecx,vecy,itype,vecsmoothx,vecsmoothy,npart) &
 !$omp shared(xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreen,datnorm) &
-!$omp shared(npixx,npixy,normalise) &
+!$omp shared(npixx,npixy,normalise,radkernel,radkernel2) &
 !$omp private(hi,radkern,const,zfrac,ypix,xpix) &
 !$omp private(hsmooth,hi1,hi21,termx,termy,termnorm) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax) &
@@ -731,7 +731,7 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   !      
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,vecx,vecy,itype,stokesq,stokesu,stokesi,npart) &
-!$omp shared(xmin,ymin,pixwidth,rcrit,zcrit,alpha) &
+!$omp shared(xmin,ymin,pixwidth,rcrit,zcrit,alpha,radkernel,radkernel2) &
 !$omp shared(npixx,npixy,pintrinsic,qpixwidth,getionly,utherm,uthermcutoff) &
 !$omp private(hi,xi,yi,zi,radkern,const) &
 !$omp private(hsmooth,hi1,hi21,term,termx,termy) &
