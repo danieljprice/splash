@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 
 module interactive_routines
- use colourbar, only:barisvertical,incolourbar,incolourbarlabel
+ use colourbar, only:barisvertical,incolourbar,incolourbarlabel,adjustcolourbar
  implicit none
  public :: interactive_part,interactive_step,interactive_multi
  private :: mvlegend,mvtitle,save_limits,save_rotation
@@ -215,7 +215,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      enddo over_npart
 
      !--query the position of the colour bar
-     iamincolourbar = incolourbar(iColourBarStyle,xpt,ypt,xmin,xmax,ymin,ymax)
+     iamincolourbar = incolourbar(iColourBarStyle,4,xpt,ypt,xmin,xmax,ymin,ymax)
 
      select case(char)
      !
@@ -410,7 +410,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            interactivereplot = .true.
            iexit = .true.
         elseif (iamincolourbar .and. irender.gt.0 .and. leftclick) then
-           if (incolourbarlabel(iColourBarStyle,xpt,ypt,xmin,xmax,ymin,ymax)) then
+           if (incolourbarlabel(iColourBarStyle,4,xpt,ypt,xmin,xmax,ymin,ymax)) then
               if (verticalbar) then
                  call edit_textbox(xpt,ypt,90.,labelrender)
                  projlabelformat = trim(labelrender)
@@ -431,31 +431,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                  ierr = plot_band(4,1,xpt,ypt,xpt2,ypt2,char2)
               endif
               if (char2 == plot_left_click) then
-                 if (verticalbar) then
-                    if (double_rendering) then
-                       drender = (contmax-contmin)/(ymax-ymin)
-                       contmax = contmin + (max(ypt,ypt2)-ymin)*drender
-                       contmin = contmin + (min(ypt,ypt2)-ymin)*drender                    
-                    else
-                       drender = (rendermax-rendermin)/(ymax-ymin)
-                       rendermax = rendermin + (max(ypt,ypt2)-ymin)*drender
-                       rendermin = rendermin + (min(ypt,ypt2)-ymin)*drender
-                    endif
-                 else
-                    if (double_rendering) then
-                       drender = (contmax-contmin)/(xmax-xmin)
-                       contmax = contmin + (max(xpt,xpt2)-xmin)*drender
-                       contmin = contmin + (min(xpt,xpt2)-xmin)*drender                    
-                    else
-                       drender = (rendermax-rendermin)/(xmax-xmin)
-                       rendermax = rendermin + (max(xpt,xpt2)-xmin)*drender
-                       rendermin = rendermin + (min(xpt,xpt2)-xmin)*drender
-                    endif
-                 endif
                  if (double_rendering) then
+                    call adjustcolourbar(iColourBarStyle,xpt,ypt,xpt2,ypt2,&
+                                         xmin,xmax,ymin,ymax,contmin,contmax)
                     print*,'setting doublerender min = ',contmin
                     print*,'setting doublerender max = ',contmax                 
                  else
+                    call adjustcolourbar(iColourBarStyle,xpt,ypt,xpt2,ypt2,&
+                                         xmin,xmax,ymin,ymax,rendermin,rendermax)                 
                     print*,'setting render min = ',rendermin
                     print*,'setting render max = ',rendermax
                  endif
@@ -516,10 +499,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               ierr = plot_band(8,1,xpt,ypt,xpt2,ypt2,char2)
               rptmax2 = (xpt2-xpt)**2 + (ypt2-ypt)**2
               rr = sqrt(rptmax2)
-              xptmin = xpt - rr !*ylength*dxlength
-              xptmax = xpt + rr !*ylength*dxlength
-              yptmin = ypt - rr !*xlength*dylength
-              yptmax = ypt + rr !*xlength*dylength
+              xptmin = xpt - rr
+              xptmax = xpt + rr
+              yptmin = ypt - rr
+              yptmax = ypt + rr
            else ! left click: rectangle selection
               ierr = plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
               xptmin = min(xpt,xpt2)
@@ -1600,8 +1583,14 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !print*,'vptx,y = ',xpti,ypti,vptxi,vptyi,ipanel
      !--query the position of the colour bar
      if (ipanel.gt.0) then
-        iamincolourbar = incolourbar(iColourBarStyle,xpti,ypti,xmin(iplotxarr(ipanel)), &
-                         xmax(iplotxarr(ipanel)),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
+        if (barwmulti(ipanel).gt.tiny(barwmulti)) then
+           iamincolourbar = incolourbar(iColourBarStyle,4,xpti,ypti,xmin(iplotxarr(ipanel)), &
+                            xmax(iplotxarr(ipanel)),xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
+        else
+        !--for colour bars on tiled plots, use viewport coords
+           iamincolourbar = incolourbar(iColourBarStyle,0,vptxi,vptyi,&
+                            minval(vptxmin),maxval(vptxmax),minval(vptymin),maxval(vptymax))
+        endif
      else
         iamincolourbar = .false.
      endif
@@ -1727,73 +1716,25 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               double_render = (icontourarr(ipanel).gt.0 .and. use_double_rendering)
 
               if (barwmulti(ipanel).gt.tiny(barwmulti)) then
-                 if (verticalbar) then
-                    if (double_render) then
-                       drender = (xmax(icontourarr(ipanel))-xmin(icontourarr(ipanel)))/ &
-                                 (vptymax(ipanel) -vptymin(ipanel))
-                       xmax(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
-                                                 + (max(vptyi,vpty2i)-vptymin(ipanel))*drender
-                       xmin(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
-                                                 + (min(vptyi,vpty2i)-vptymin(ipanel))*drender
-                    else
-                       drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                                 (vptymax(ipanel) -vptymin(ipanel))
-                       xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
-                                                + (max(vptyi,vpty2i)-vptymin(ipanel))*drender
-                       xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
-                                                + (min(vptyi,vpty2i)-vptymin(ipanel))*drender
-                    endif
+                 if (double_render) then
+                    call adjustcolourbar(iColourBarStyle,vptxi,vptyi,vptx2i,vpty2i,&
+                         vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel),&
+                         xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel)))
                  else
-                    if (double_render) then
-                       drender = (xmax(icontourarr(ipanel))-xmin(icontourarr(ipanel)))/ &
-                                 (vptxmax(ipanel) -vptxmin(ipanel))
-                       xmax(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
-                                                + (max(vptxi,vptx2i)-vptxmin(ipanel))*drender
-                       xmin(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
-                                                + (min(vptxi,vptx2i)-vptxmin(ipanel))*drender                    
-                    else
-                       drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                                 (vptxmax(ipanel) -vptxmin(ipanel))
-                       xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
-                                                + (max(vptxi,vptx2i)-vptxmin(ipanel))*drender
-                       xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
-                                                + (min(vptxi,vptx2i)-vptxmin(ipanel))*drender
-                    endif
+                    call adjustcolourbar(iColourBarStyle,vptxi,vptyi,vptx2i,vpty2i,&
+                         vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel),&
+                         xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)))                 
                  endif
               else
               !--for global colour bars (ie. on tiled plots) use viewport co-ordinates to set render limits
-                 if (verticalbar) then
-                    if (double_render) then
-                       drender = (xmax(icontourarr(ipanel))-xmin(icontourarr(ipanel)))/ &
-                                 (maxval(vptymax) - minval(vptymin))
-                       xmax(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
-                                                 + (max(vptyi,vpty2i)-minval(vptymin))*drender
-                       xmin(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
-                                                 + (min(vptyi,vpty2i)-minval(vptymin))*drender
-                    else
-                       drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                                 (maxval(vptymax) - minval(vptymin))
-                       xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
-                                                + (max(vptyi,vpty2i)-minval(vptymin))*drender
-                       xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
-                                                + (min(vptyi,vpty2i)-minval(vptymin))*drender
-                    endif
+                 if (double_render) then
+                    call adjustcolourbar(iColourBarStyle,vptxi,vptyi,vptx2i,vpty2i,&
+                         minval(vptxmin),maxval(vptxmax),minval(vptymin),maxval(vptymax),&
+                         xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel)))
                  else
-                    if (double_render) then
-                       drender = (xmax(icontourarr(ipanel))-xmin(icontourarr(ipanel)))/ &
-                                 (maxval(vptxmax) - minval(vptxmin))
-                       xmax(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
-                                                + (max(vptxi,vptx2i)-minval(vptxmin))*drender
-                       xmin(icontourarr(ipanel)) = xmin(icontourarr(ipanel)) &
-                                                + (min(vptxi,vptx2i)-minval(vptxmin))*drender                    
-                    else
-                       drender = (xmax(irenderarr(ipanel))-xmin(irenderarr(ipanel)))/ &
-                                 (maxval(vptxmax) - minval(vptxmin))
-                       xmax(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
-                                                + (max(vptxi,vptx2i)-minval(vptxmin))*drender
-                       xmin(irenderarr(ipanel)) = xmin(irenderarr(ipanel)) &
-                                                + (min(vptxi,vptx2i)-minval(vptxmin))*drender
-                    endif
+                    call adjustcolourbar(iColourBarStyle,vptxi,vptyi,vptx2i,vpty2i,&
+                         minval(vptxmin),maxval(vptxmax),minval(vptymin),maxval(vptymax),&
+                         xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)))
                  endif
               endif
               if (double_render) then

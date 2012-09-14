@@ -25,7 +25,8 @@
 ! includes default values of these options and submenu for changing them
 !-------------------------------------------------------------------------
 module settings_render
- use colourbar, only:ColourBarDisp,iplotcolourbarlabel
+ use colourbar, only:ColourBarDisp,iplotcolourbarlabel,ColourBarPosx,ColourBarPosy,&
+                     ColourBarLen,ColourBarFmtStr,ColourBarWidth
  use labels,    only:lenlabel
  use kernels,   only:ikernel
  implicit none
@@ -41,7 +42,8 @@ module settings_render
    icolour_particles,ColourBarDisp,inormalise_interpolations, &
    ifastrender,idensityweightedinterpolation,iColourBarStyle, &
    iplotcolourbarlabel,ilabelcont,projlabelformat,iapplyprojformat, &
-   double_rendering,ikernel
+   double_rendering,ikernel,ColourBarPosx,ColourBarPosy,ColourBarLen,&
+   ColourBarFmtStr,ColourBarWidth
 
 contains
 
@@ -67,6 +69,11 @@ subroutine defaults_set_render
   iapplyprojformat = 0
   double_rendering = .false.
   ikernel = 0 ! just take default kernel
+  ColourBarPosx = 0.75 ! default values used for floating colour bars
+  ColourBarPosy = 0.7 
+  ColourBarLen  = 0.25
+  ColourBarWidth = 2.
+  ColourBarFmtStr = 'BCMSTV'
 
   return
 end subroutine defaults_set_render
@@ -75,7 +82,8 @@ end subroutine defaults_set_render
 ! options for rendered plots
 !-----------------------------------------------------------------------------
 subroutine submenu_render(ichoose)
-  use colourbar, only:maxcolourbarstyles,labelcolourbarstyles,barisvertical
+  use colourbar, only:maxcolourbarstyles,labelcolourbarstyles,barisvertical,&
+                      isfloating,iscustombar
   use colours,   only:schemename,ncolourschemes,colour_demo
   use prompting, only:prompt,print_logical
   use params,    only:maxplot
@@ -190,16 +198,33 @@ subroutine submenu_render(ichoose)
 !------------------------------------------------------------------------
     case(5)
        do i=0,maxcolourbarstyles
-          print "(1x,i1,')',1x,a)",i,trim(labelcolourbarstyles(i))
+          print "(i2,')',1x,a)",i,trim(labelcolourbarstyles(i))
        enddo
-       call prompt(' enter colour bar style to use ',iColourBarStyle,0,maxcolourbarstyles)
+       call prompt('enter colour bar style to use ',iColourBarStyle,0,maxcolourbarstyles)
        print "(a,/)",'colour bar style = '//trim(labelcolourbarstyles(iColourBarStyle))
 
        if (iColourBarStyle.gt.0) then
-          call prompt(' plot colour bar label?',iplotcolourbarlabel)
+          if (isfloating(iColourBarStyle)) then
+             call prompt('enter x position of colour bar as fraction of viewport',ColourBarPosx,-1.,1.5)          
+             call prompt('enter y position of colour bar as fraction of viewport',ColourBarPosy,-1.,1.5)          
+             call prompt('enter length of colour bar as fraction of viewport',ColourBarLen,0.,1.)
+          endif
+          call prompt('plot colour bar label?',iplotcolourbarlabel)
           if (barisvertical(iColourBarStyle) .and. iplotcolourbarlabel) then
-             call prompt(' enter displacement of text from edge (character heights) ', &
+             call prompt('enter displacement of text from edge (character heights) ', &
                          ColourBarDisp)
+          endif
+          if (iscustombar(iColourBarStyle)) then
+             call prompt('enter width of colour bar in character heights',ColourBarWidth,0.,20.)
+             if (barisvertical(iColourBarstyle)) then
+                print "(a)",' A=axis,B=bottom,C=top,T=major ticks,S=minor ticks,N=labels,V=vertical,L=log,M=labels above'
+             else
+                print "(a)",' B=left,C=right,T=major ticks,S=minor ticks,N=labels,L=log,M=labels to left'
+                if (ColourBarFmtStr.eq.'BCMSTV') then
+                   ColourBarFmtStr='BCNST' ! use default string for horizontal bars instead
+                endif
+             endif
+             call prompt('enter format code string for colour bar ticks/numbering',ColourBarFmtStr)
           endif
        endif
 !------------------------------------------------------------------------

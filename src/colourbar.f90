@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -26,7 +26,7 @@
 !------------------------------------------------------------------------
 module colourbar
  implicit none
- integer, parameter, public :: maxcolourbarstyles = 6
+ integer, parameter, public :: maxcolourbarstyles = 10
  character(len=28), dimension(0:maxcolourbarstyles), parameter, public :: &
    labelcolourbarstyles = (/'no colour bar               ', &
                             'vertical (right hand side)  ', &
@@ -34,29 +34,34 @@ module colourbar
                             'plot-hugging vertical       ', &
                             'plot-hugging horizontal     ', &
                             'one-sided vertical          ', &
-                            'one-sided horizontal        '/)
+                            'one-sided horizontal        ', &
+                            'floating/inset vertical     ', &
+                            'floating/inset horizontal   ', &
+                            'custom vertical             ', &
+                            'custom horizontal           '/)
  !
  !--these are settings that have default values but can
  !  be changed if required
  !
  real, public :: ColourBarDisp = 5.0
- real, parameter, public :: ColourBarWidth = 2. ! width in character heights
+ real, public :: ColourBarWidth = 2. ! width in character heights
  logical, public :: iplotcolourbarlabel = .true.
 
- public :: plotcolourbar,incolourbar,incolourbarlabel,barisvertical,get_colourbarmargins
+ public :: plotcolourbar,incolourbar,incolourbarlabel,barisvertical
+ public :: get_colourbarmargins,isfloating,adjustcolourbar,iscustombar
  real, private, save :: xlabeloffsetsave = 0.
  real, parameter, private :: dispall = 0.25
+ real, public :: ColourBarPosx = 0.75   ! default x pos of short/fat bars
+ real, public :: ColourBarPosy = 0.5    ! default y pos of short/fat bars
+ real, public :: ColourBarLen = 0.25    ! default length of short/fat bars
+ character(len=10), public :: ColourBarFmtStr = 'BCMSTV    '
  private
 
 contains
 
-!-------------------------------------------------------
-! this subroutine plots the colour bar
-! (similar to PGWEDG: differences are that
-! text is written vertically, txtsep is a
-! changeable parameter and the character height
-! is not changed)
-!-------------------------------------------------------
+!--------------------------------------------------------
+! this subroutine plots the colour bar in various styles
+!--------------------------------------------------------
 subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
            xlabeloffset,vptxminfull,vptxmaxfull,vptyminfull,vptymaxfull)
  use plotlib,   only:plot_set_exactpixelboundaries,plotlib_is_pgplot
@@ -76,7 +81,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  integer :: i
  real :: disp,width,xch,ych,dx
  real :: xmin,xmax,ymin,ymax,vptxmin,vptxmax,vptymin,vptymax
- real :: vptxmini,vptxmaxi,vptymini,vptymaxi
+ real :: vptxmini,vptxmaxi,vptymini,vptymaxi,vptleni
  real :: xmaxpix,xminpix,yminpix,ymaxpix
 !
 !--return on style 0
@@ -125,14 +130,24 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  !------------------------
  ! horizontal colour bar
  !------------------------
- case(2,4,6)
+ case(2,4,6,8,10)
 
    if (istyle.eq.4) disp = 0. ! plot-hugging
    !
    !--set viewport for the wedge
    !
-   vptymaxi = vptymini - (disp + xlabeloffset)*ych
-   vptymini = vptymaxi - width*ych
+   if (istyle.eq.8 .or. istyle.eq.10) then
+      call barlimits(vptxmini,vptxmaxi,vptxmini,vptxmaxi,ColourBarPosx,ColourBarLen)
+      call barlimits(vptymini,vptymaxi,vptymini,vptymaxi,ColourBarPosy,ColourBarLen)
+      if (istyle.eq.8) then
+         vptymaxi = vptymini + 2.*width*ych
+      else
+         vptymaxi = vptymini + width*ych
+      endif
+   else
+      vptymaxi = vptymini - (disp + xlabeloffset)*ych
+      vptymini = vptymaxi - width*ych
+   endif
    call plot_svp(vptxmini,vptxmaxi,vptymini,vptymaxi)
    call plot_set_exactpixelboundaries()
    !
@@ -178,7 +193,9 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
    !--draw labelled frame around the wedge
    !
-    if (istyle.eq.4 .or. istyle.eq.6) then
+    if (istyle.eq.10) then
+       call plot_box(ColourBarFmtStr,0.0,0,'BC',0.0,0)
+    elseif (istyle.eq.4 .or. istyle.eq.6) then
        call plot_box('BNST',0.0,0,'BC',0.0,0)
        if (istyle.eq.6) call plot_box('C',0.0,0,' ',0.0,0)
     else
@@ -204,8 +221,18 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
    !--set viewport for the wedge
    !
-    vptxmini = vptxmaxi + disp*xch
-    vptxmaxi = vptxmini + width*xch
+    if (istyle.eq.7 .or. istyle.eq.9) then
+       call barlimits(vptxmini,vptxmaxi,vptxmini,vptxmaxi,ColourBarPosx,ColourBarLen)
+       call barlimits(vptymini,vptymaxi,vptymini,vptymaxi,ColourBarPosy,ColourBarLen)
+       if (istyle.eq.9) then
+          vptxmaxi = vptxmini + width*xch       
+       else
+          vptxmaxi = vptxmini + 2.*width*xch
+       endif
+    else
+       vptxmini = vptxmaxi + disp*xch
+       vptxmaxi = vptxmini + width*xch
+    endif
     call plot_svp(vptxmini,vptxmaxi,vptymini,vptymaxi)
     call plot_set_exactpixelboundaries()
    !
@@ -221,7 +248,9 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
    !--draw labelled frame around the wedge
    !
-    if (istyle.eq.3 .or. istyle.eq.5) then
+    if (istyle.eq.9) then
+       call plot_box('BC',0.0,0,ColourBarFmtStr,0.0,0)
+    elseif (istyle.eq.3 .or. istyle.eq.5) then
        call plot_box('BC',0.0,0,'CMSTV',0.0,0)
        if (istyle.eq.5) call plot_box(' ',0.0,0,'B',0.0,0)
     else
@@ -262,7 +291,7 @@ logical function barisvertical(istyle)
  if (istyle.le.0) return
 
  select case(istyle)
- case(2,4,6)
+ case(2,4,6,8,10)
     barisvertical = .false.
  case default
     barisvertical = .true.
@@ -274,15 +303,45 @@ end function barisvertical
 ! query function to see if a given position on
 ! the plot should lie within the colour bar or not
 !-------------------------------------------------------
-logical function incolourbar(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
+logical function incolourbar(istyle,iunits,xpt,ypt,xmin,xmax,ymin,ymax)
+ use plotlib, only:plot_qcs
  implicit none
- integer, intent(in) :: istyle
+ integer, intent(in) :: istyle,iunits
  real, intent(in) :: xpt,ypt,xmin,xmax,ymin,ymax
+ real :: xminbar,xmaxbar,yminbar,ymaxbar,xch,ych,barwidth
 
  incolourbar = .false.
  if (istyle.le.0) return
 
  select case(istyle)
+ case(8,10)
+    call barlimits(xminbar,xmaxbar,xmin,xmax,ColourBarPosx,ColourBarLen)
+    call barlimits(yminbar,ymaxbar,ymin,ymax,ColourBarPosy,ColourBarLen)
+    call plot_qcs(iunits,xch,ych)
+    ymaxbar = yminbar + 2.*ColourBarWidth*ych
+    if (iplotcolourbarlabel) then
+       yminbar = yminbar - 3.0*ych
+    else
+       yminbar = yminbar - 2.0*ych
+    endif
+    if ((xpt.ge.xminbar .and. xpt.le.xmaxbar) .and. &
+        (ypt.ge.yminbar .and. ypt.le.ymaxbar)) then
+       incolourbar = .true.
+    endif
+ case(7,9)
+    call barlimits(xminbar,xmaxbar,xmin,xmax,ColourBarPosx,ColourBarLen)
+    call barlimits(yminbar,ymaxbar,ymin,ymax,ColourBarPosy,ColourBarLen)
+    call plot_qcs(iunits,xch,ych)
+    if (iplotcolourbarlabel) then
+       barwidth = (2.*ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch
+    else
+       barwidth = (2.*ColourBarWidth+0.75 + 5.0)*xch
+    endif
+    xmaxbar = xminbar + barwidth
+    if ((xpt.ge.xminbar .and. xpt.le.xmaxbar) .and. &
+        (ypt.ge.yminbar .and. ypt.le.ymaxbar)) then
+       incolourbar = .true.
+    endif
  case(2,4,6)
     if (ypt.lt.ymin) incolourbar = .true.
  case default
@@ -294,21 +353,31 @@ end function incolourbar
 
 !-------------------------------------------------------
 ! query function to see if a given position on
-! the plot should lie within the colour bar or not
+! the plot should lie within the colour bar label or not
 !-------------------------------------------------------
-logical function incolourbarlabel(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
+logical function incolourbarlabel(istyle,iunits,xpt,ypt,xmin,xmax,ymin,ymax)
  use plotlib, only:plot_qcs
  implicit none
- integer, intent(in) :: istyle
+ integer, intent(in) :: istyle,iunits
  real, intent(in) :: xpt,ypt,xmin,xmax,ymin,ymax
- real :: xch,ych,disp
+ real :: xch,ych,disp,xminbar,xmaxbar,yminbar,ymaxbar
 
  incolourbarlabel = .false.
  if (iplotcolourbarlabel) then
-    call plot_qcs(4,xch,ych)
+    call plot_qcs(iunits,xch,ych)
     disp = dispall
     if (istyle.eq.3 .or. istyle.eq.4) disp = 0.
     select case(istyle)
+    case(8,10)
+       call barlimits(xminbar,xmaxbar,xmin,xmax,ColourBarPosx,ColourBarLen)
+       if (ypt.lt.(ymin-(disp + xlabeloffsetsave + ColourBarWidth+2.0)*ych) .and. &
+           ypt.gt.(ymin-(disp + xlabeloffsetsave + ColourBarWidth+3.0)*ych) .and. &
+           xpt.gt.xminbar .and. xpt.lt.xmaxbar) incolourbarlabel = .true.
+    case(7,9)
+       call barlimits(yminbar,ymaxbar,ymin,ymax,ColourBarPosy,ColourBarLen)
+       if (xpt.gt.(xmax+(disp + ColourBarWidth-0.25 + max(ColourBarDisp-0.25,0.0))*xch) .and. &
+           xpt.lt.(xmax+(disp + ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch) .and. &
+           ypt.gt.yminbar .and. ypt.lt.ymaxbar) incolourbarlabel = .true.
     case(2,4,6)
        if (ypt.lt.(ymin-(disp + xlabeloffsetsave + ColourBarWidth+2.0)*ych) .and. &
            ypt.gt.(ymin-(disp + xlabeloffsetsave + ColourBarWidth+3.0)*ych)) incolourbarlabel = .true.
@@ -321,41 +390,139 @@ logical function incolourbarlabel(istyle,xpt,ypt,xmin,xmax,ymin,ymax)
  return
 end function incolourbarlabel
 
+!------------------------------------------
+! utility function to avoid repeated code
+!------------------------------------------
+subroutine barlimits(barmin,barmax,posmin,posmax,pos,barlen)
+ implicit none
+ real, intent(out) :: barmin,barmax
+ real, intent(in)  :: posmin,posmax,pos,barlen
+ real :: dpos
+ 
+ dpos = (posmax - posmin) ! in case posmin and barmin are same variable
+ barmin = posmin +    pos*dpos
+ barmax = barmin + barlen*dpos
+
+end subroutine barlimits
+
 !-------------------------------------------------------
 ! query function to get margins which should
 ! be allowed on the page in order to later plot
 ! the colour bar
 !-------------------------------------------------------
 subroutine get_colourbarmargins(istyle,xmaxmargin,yminmargin,barwidth)
- use plotlib, only:plot_qcs
+ use plotlib, only:plot_qcs,plot_qvp
  implicit none
  integer, intent(in) :: istyle
  real, intent(inout) :: xmaxmargin,yminmargin
  real, intent(out) :: barwidth
- real :: xch,ych
+ real :: xch,ych,vptxmin,vptxmax,vptymin,vptymax
 
  barwidth = 0.
  if (istyle.le.0) return
  call plot_qcs(0,xch,ych)
+ call plot_qvp(0,vptxmin,vptxmax,vptymin,vptymax)
 
- select case(istyle)
- case(2,4,6)
-    if (iplotcolourbarlabel) then
-       barwidth = (ColourBarWidth+3.0)*ych  ! ie. width + 2.5 + 0.5 margin
-    else
-       barwidth = (ColourBarWidth+2.0)*ych  ! ie. width + 1.5 + 0.5 margin
-    endif
-    yminmargin = yminmargin + barwidth
- case default
+ if (barisvertical(istyle)) then
     if (iplotcolourbarlabel) then
        barwidth = (ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch
     else
        barwidth = (ColourBarWidth+0.75 + 5.0)*xch
     endif
+    if (isfloating(istyle)) then
+       barwidth = max((ColourBarPosx-1.) + barwidth,0.)
+    endif
     xmaxmargin = xmaxmargin + barwidth
- end select
+ else
+    if (iplotcolourbarlabel) then
+       barwidth = (ColourBarWidth+3.0)*ych  ! ie. width + 2.5 + 0.5 margin
+    else
+       barwidth = (ColourBarWidth+2.0)*ych  ! ie. width + 1.5 + 0.5 margin
+    endif
+    if (isfloating(istyle)) then
+       barwidth = max(-(ColourBarPosy - (barwidth - ColourBarWidth*ych)),0.)
+    endif
+    yminmargin = yminmargin + barwidth
+ endif
 
  return
 end subroutine get_colourbarmargins
+
+!-------------------------------------------------------
+! query function for floating colour bar styles
+!-------------------------------------------------------
+logical function isfloating(istyle)
+ integer, intent(in) :: istyle
+
+ select case(istyle)
+ case(7,8,9,10)
+   isfloating = .true.
+ case default
+   isfloating = .false.
+ end select
+
+end function isfloating
+
+!-------------------------------------------------------
+! query function for custom colour bar styles
+!-------------------------------------------------------
+logical function iscustombar(istyle)
+ integer, intent(in) :: istyle
+
+ if (istyle.eq.10 .or. istyle.eq.9) then
+    iscustombar = .true.
+ else
+    iscustombar = .false.
+ endif
+
+end function iscustombar
+
+!---------------------------------------------------------------------
+! utility function used when interactively changing colour bar limits
+!---------------------------------------------------------------------
+subroutine adjustcolourbar(istyle,xpt1,ypt1,xpt2,ypt2,&
+                           xmin,xmax,ymin,ymax,barmin,barmax)
+ implicit none
+ integer, intent(in)    :: istyle
+ real,    intent(in)    :: xpt1,ypt1,xpt2,ypt2,xmin,xmax,ymin,ymax
+ real,    intent(inout) :: barmin,barmax
+ real :: dbar,xminbar,xmaxbar,yminbar,ymaxbar
+
+ if (istyle.eq.8 .or. istyle.eq.10) then
+    !--floating horizontal bar
+    xminbar = xmin    + ColourBarPosx*(xmax - xmin)
+    xmaxbar = xminbar + ColourBarLen*(xmax - xmin)
+ else
+    xminbar = xmin
+    xmaxbar = xmax
+ endif
+ if (istyle.eq.7 .or. istyle.eq.9) then
+    !--floating vertical bar
+    yminbar = ymin    + ColourBarPosy*(ymax - ymin)
+    ymaxbar = yminbar + ColourBarLen*(ymax - ymin) 
+ else
+    yminbar = ymin
+    ymaxbar = ymax
+ endif
+
+ if (barisvertical(istyle)) then
+    if ((ymaxbar-yminbar).gt.0.) then
+       dbar = (barmax-barmin)/(ymaxbar-yminbar)
+    else
+       dbar = 0.
+    endif
+    barmax = barmin + (max(ypt1,ypt2)-yminbar)*dbar
+    barmin = barmin + (min(ypt1,ypt2)-yminbar)*dbar
+ else
+    if ((xmaxbar-xminbar).gt.0.) then
+       dbar = (barmax-barmin)/(xmaxbar-xminbar)
+    else
+       dbar = 0.
+    endif
+    barmax = barmin + (max(xpt1,xpt2)-xminbar)*dbar
+    barmin = barmin + (min(xpt1,xpt2)-xminbar)*dbar  
+ endif
+
+end subroutine adjustcolourbar
 
 end module colourbar
