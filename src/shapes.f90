@@ -616,18 +616,21 @@ end subroutine edit_shape
 !--------------------------------------------------------
 ! utility routine to add a new text shape interactively
 !--------------------------------------------------------
-subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel)
+subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel,ierr)
  use plotlib, only:plot_qwin
  implicit none
- real, intent(in)    :: xpt,ypt
- integer, intent(in) :: itransx,itransy,ipanel
+ real, intent(in)     :: xpt,ypt
+ integer, intent(in)  :: itransx,itransy,ipanel
+ integer, intent(out) :: ierr
  integer :: i
  real :: xmin,xmax,ymin,ymax,xposi,yposi
 
+ ierr = 0
  nshapes = nshapes + 1
  if (nshapes.gt.maxshapes) then
     print*,' *** cannot add shape: array limits reached, delete some shapes first ***'
     nshapes = maxshapes
+    ierr = 1
     return
  endif
  i = nshapes

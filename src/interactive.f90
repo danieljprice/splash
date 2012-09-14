@@ -1165,7 +1165,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         interactivereplot = .true.
         iexit = .true.
      case(achar(20)) ! add text shape
-        call add_textshape(xpt,ypt,itrans(iplotx),itrans(iploty),0)
+        call add_textshape(xpt,ypt,itrans(iplotx),itrans(iploty),0,ierr)
+        if (ierr.eq.0) then
+           iadvance = 0
+           interactivereplot = .true.
+           iexit = .true.
+        endif
      case(achar(8)) ! delete plot annotation / colour bar (backspace)
         ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty))
         if (ishape.gt.0) then
@@ -2048,10 +2053,12 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         iexit = .true.
      case(achar(20)) ! add text shape
         print*,' adding text in panel ',ipanel
-        call add_textshape(xpti,ypti,itrans(iplotxarr(ipanel)),itrans(iplotyarr(ipanel)),ipanel)
-        istep = istepnew
-        interactivereplot = .true.
-        iexit = .true.
+        call add_textshape(xpti,ypti,itrans(iplotxarr(ipanel)),itrans(iplotyarr(ipanel)),ipanel,ierr)
+        if (ierr.eq.0) then
+           istep = istepnew
+           interactivereplot = .true.
+           iexit = .true.
+        endif
      case(achar(8)) ! delete plot annotation / colour bar (backspace)
         ishape = inshape(xpti,ypti,itrans(iplotxarr(ipanel)),itrans(iplotxarr(ipanel)))
         if (ishape.gt.0) then
