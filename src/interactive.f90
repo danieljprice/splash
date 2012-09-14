@@ -117,9 +117,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   character(len=1) :: char,char2
   logical :: iexit, rotation, verticalbar, iamincolourbar, mixedtypes, use3Dperspective
   logical :: iadvanceset, leftclick, iselectpoly, iselectcircle
+  logical, save :: print_help = .true.
 
   if (plot_qcur()) then
-     print*,'entering interactive mode...press h in plot window for help'
+     if (.not.print_help) print*,'entering interactive mode...press h in plot window for help'
      !print*, plot_left_click
   else
      !print*,'cannot enter interactive mode: device has no cursor'
@@ -166,7 +167,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   endif
 
   interactiveloop: do while (.not.iexit)
-     ierr = plot_curs(xpt,ypt,char)
+     if (print_help) then
+        char = 'h'
+        ierr = 0
+        print_help = .false.
+     else
+        ierr = plot_curs(xpt,ypt,char)
+     endif
      !
      !--exit if the device is not interactive
      !
@@ -308,21 +315,24 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !--help
      !
      case('h')
-        print*,'-------------- interactive mode commands ---------------------------'
+        print*,'-------------- interactive mode commands -----------------------------'
+        print*,' SPACE BAR (or n)         : skip to next timestep/file'
+        print*,' 0,1,2,3..9 and click     : go forward/back n timesteps (back=r.click)'
         print*,' left click (or A)        : zoom/select'
+        print*,' right click (or X or b)  : previous timestep'
         print*,' shift+left click         : IRREGULAR particle selection'
         print*,' left click on colour bar : change rendering limits'
         print*,' +/-      : zoom IN/OUT (_ for out by 20%) '
-        print*,' a        : (a)dapt plot limits (inside box, over axes/colour bar)'
+        print*,' a        : (a)dapt plot limits (inside box, over axes or colour bar)'
         print*,' l        : (l)og / unlog axis  (over x/y axis or colour bar)'
         print*,' o/C      : re-centre plot on (o)rigin/(C)ursor position'
-        print*,' backspace: delete annotation  (over axes/legend/title/colour bar)'
+        print*,' backspace: delete annotation  (over axes, legend, title or colour bar)'
         print*,' r        : (r)eplot current plot'
         print*,' R        : (R)eset/remove all range restrictions'
         print*,' p/c      : label closest (p)article/plot (c)ircle of interaction'
         print*,' t        : t)rack closest particle/turn tracking off (coord plots only)'
         print*,' g        : plot a line and find its g)radient'
-        print*,' ctrl-t   : add text at current position'
+        print*,' ctrl-t   : add text annotation at current position'
         print*,' G/T/H    : move le(G)end, (T)itle or (H) vector legend to current position'
         print*,' m/M/i    : change colour map (m=next,M=previous,i=invert) (rendered plots only)'
         print*,' v/V/w    : decrease/increase/adapt arrow size on vector plots (Z for x10)'
@@ -341,13 +351,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               endif
            endif
         endif
-        print*,' next timestep/plot   : space, n'
-        print*,' previous timestep    : right click (or X), b'
-        print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then left (right) click'
         print*,' s        : (s)ave current settings for all steps'
         print*,' q/Q/esc  : (q)uit plotting'
         print*,' z/Z(oom) : timestepping, zoom and limits-changing multiplied by 10'
-        print*,'--------------------------------------------------------------------'
+        print*,'----------------------------------------------------------------------'
      case('s','S')
         itrackpart = itrackparttemp
         if (itrackpart.eq.0) then
@@ -1521,9 +1528,10 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  real, dimension(4) :: xline,yline
  character(len=1) :: char,char2
  logical :: iexit,iamincolourbar,verticalbar,double_render,istepjumpset
+ logical, save :: print_help = .true.
 
   if (plot_qcur()) then
-     print*,'entering interactive mode...press h in plot window for help'
+     if (.not.print_help) print*,'entering interactive mode...press h in plot window for help'
   else
      !print*,'cannot enter interactive mode: device has no cursor'
      return
@@ -1566,7 +1574,13 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
 !  print*,'steps on page = ',istepsonpage
 
   interactive_loop: do while (.not.iexit)
-     ierr = plot_curs(xpt,ypt,char)
+     if (print_help) then
+        print_help = .false.
+        char = 'h'
+        ierr = 0
+     else
+        ierr = plot_curs(xpt,ypt,char)
+     endif
      !
      !--exit if the device is not interactive
      !
@@ -1598,7 +1612,10 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      select case(char)
      case('h')
         print*,'------- interactive mode commands (multiple plots per page) --------'
+        print*,' SPACE BAR (or n)         : skip to next timestep/file'
+        print*,' 0,1,2,3..9 and click     : go forward/back n timesteps (back=r.click)'
         print*,' left click (or A)        : zoom/select'
+        print*,' right click (or X or b)  : previous timestep'
         print*,' left click on colour bar : change rendering limits'
         print*,' +/-      : zoom IN/OUT (_ for out by 20%) '
         print*,' a        : (a)dapt plot limits (inside box, over axes/colour bar)'
@@ -1612,9 +1629,6 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         print*,' G/T/H    : move le(G)end, (T)itle or (H) vector legend to current position'
         print*,' m/M/i    : change colour map (m=next,M=previous,i=invert) (rendered plots only)'
         print*,' v/V/w    : decrease/increase/adapt arrow size on vector plots (Z for x10)'
-        print*,' next timestep/plot   : space, n'
-        print*,' previous timestep    : right click (or X), b'
-        print*,' jump forward (back) by n timesteps  : 0,1,2,3..9 then left (right) click'
         print*,' s        : (s)ave current settings for all steps'
         print*,' q/Q/esc  : (q)uit plotting'
         print*,' z/Z(oom) : timestepping, zoom and limits-changing multiplied by 10'
