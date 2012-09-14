@@ -58,6 +58,15 @@ module shapes
       'f(x)     '/)
  namelist /shapeopts/ nshapes,shape
 
+ integer, parameter, private :: maxunits = 2
+ character(len=20), dimension(maxunits), &
+    parameter, private :: labelunits = &
+    (/'units of plot       ', &
+      'viewport coordinates'/)
+!      'inches             ', &
+!      'millimeters        ', &
+!      'pixels             '/)
+
  real, parameter, private :: pi = 3.1415926536
 
 contains
@@ -90,42 +99,224 @@ end subroutine defaults_set_shapes
 ! shape submenu
 !-----------------------------------------------------------------
 subroutine submenu_shapes()
+ use prompting, only:prompt
+ implicit none
+ character(len=1) :: charp
+ logical          :: done,first
+ integer          :: istart,iend,ipick
+ 
+ ipick = nshapes + 1
+ done  = .false.
+ first = .true.
+ charp = 'a'
+ shapesmenu: do while(.not.done)
+    call check_shapes()
+    iend = maxshapes
+    if (nshapes.gt.0 .or. .not.first) then
+       charp='q'
+       print*
+       call prompt(' a)dd to, e)dit, d)elete, c)lear all or q)uit/finish?',&
+                   charp,list=(/'a','e','d','c','q','s','S','Q'/),noblank=.true.)
+       select case(charp)
+       case('a')
+          istart = nshapes
+          iend = nshapes + 1
+       case('e')
+          if (nshapes.gt.0) then
+             ipick = 0
+             call prompt(' pick a shape to edit ',ipick,0,nshapes)
+             if (ipick.gt.0) then
+                istart = ipick - 1
+                iend   = istart + 1
+             else
+                istart = 0
+                iend = 1
+                first = .false.
+                cycle shapesmenu             
+             endif
+          else
+             istart = 0
+             iend   = 1
+          endif
+          first = .false.
+       case('d')
+          if (nshapes.gt.0) then
+             ipick = 0
+             call prompt(' pick a shape to delete ',ipick,0,nshapes)
+             call delete_shape(ipick)
+             first = .false.
+             cycle shapesmenu
+          endif
+       case('c')
+          nshapes = 0
+          first = .false.
+          cycle shapesmenu
+       case('q','Q','s','S')
+          done = .true.
+       case default
+          istart = 0
+          iend = maxshapes
+       end select
+    else
+       istart = 0
+       iend   = 1
+    endif
+    if (.not.done) call add_shape(istart,iend)
+    first = .false.
+ enddo shapesmenu
+
+ return
+end subroutine submenu_shapes
+
+!-----------------------------------
+! print the current list of shapes
+!-----------------------------------
+subroutine check_shapes()
+ implicit none
+ integer :: ishape
+
+ print "(/,a)", ' Current list of plot annotations:'
+ if (nshapes.gt.0) then
+    do ishape=1,nshapes
+       call print_shapeinfo(ishape,shape(ishape)%itype,shape(ishape))
+    enddo
+ else
+    print "(a)",' (none)'
+ endif
+
+end subroutine check_shapes
+
+!----------------------------------------
+! pretty-print information about a shape
+!----------------------------------------
+subroutine print_shapeinfo(inum,itype,shapein)
+ implicit none
+ integer, intent(in) :: inum,itype
+ type(shapedef), intent(in), optional :: shapein
+ character(len=20), parameter :: fmtstring = "('Shape ',i2,': ',a)"
+
+ select case(itype)
+ case(1)
+    print "(10x,a)",'    --'
+    write(*,fmtstring,advance='no') inum,'   |  |   '//labelshapetype(itype)
+    if (present(shapein)) then
+       print "(5x,es10.2,' x ',es10.2)",shapein%xlen,shapein%ylen
+    else
+       print*
+    endif
+    print "(10x,a)",'    --'
+ case(2)
+    print "(10x,a)",'  -----'
+    write(*,fmtstring,advance='no') inum,' |     |  '//labelshapetype(itype)
+    if (present(shapein)) then
+       print "(5x,es10.2,' x ',es10.2)",shapein%xlen,shapein%ylen
+    else
+       print*
+    endif
+    print "(10x,a)",'  -----'
+ case(3)
+    print "(10x,a)"
+    write(*,fmtstring,advance='no') inum,' ------>  '//labelshapetype(itype)
+    if (present(shapein)) then
+       print "(6x,'length = ',es8.2,', angle = ',f5.1,' deg.')",&
+             shapein%xlen,shapein%angle
+    else
+       print*
+    endif
+    print "(10x,a)"
+ case(4)
+    print "(10x,a)",'   ___ '
+    print "(10x,a)",'  /   \ '
+    write(*,fmtstring,advance='no') inum,' (     )  '//labelshapetype(itype)
+    if (present(shapein)) then
+       print "(6x,'radius = ',es8.2)",&
+             shapein%xlen
+    else
+       print*
+    endif
+    print "(10x,a)",'  \___/ '
+ case(5)
+    print "(10x,a)"
+    write(*,fmtstring,advance='no') inum,' -------- '//labelshapetype(itype)
+    if (present(shapein)) then
+       print "(6x,'length = ',es8.2)",shapein%xlen
+    else
+       print*
+    endif
+    print "(10x,a)"
+ case(6)
+    print "(10x,a)",                  '        '
+    write(*,fmtstring,advance='no') inum,'   TEXT   '
+    if (present(shapein)) then
+       print "('""',a,'""')",trim(shapein%text)
+    else
+       print*
+    endif
+    print "(10x,a)",                  '        '
+ case(7)
+    print "(10x,a)",'  _     / '
+    write(*,fmtstring,advance='no') inum,' / \   /  '//trim(labelshapetype(itype))
+    if (present(shapein)) then
+       print "(' = ',a)",trim(shapein%text)
+    else
+       print*
+    endif
+    print "(10x,a)",'/   \_/     '
+ case default
+    print "(a)"
+    write(*,fmtstring,advance='no') inum,'   '//labelshapetype(itype)
+    print "(a)"
+ end select
+
+end subroutine print_shapeinfo
+
+!------------------------------------------
+! utility routine to add new shape object
+!------------------------------------------
+subroutine add_shape(istart,iend)
  use params,        only:maxplot
  use prompting,     only:prompt
  use exactfunction, only:check_function
  use plotlib,       only:plotlib_maxlinestyle,plotlib_maxlinecolour,plotlib_maxfillstyle
  implicit none
+ integer, intent(in) :: istart,iend
  integer            :: i,ishape,itype,indexi,iunits,ierr,itry
  character(len=10)  :: poslabel
  character(len=80)  :: string
- integer, parameter :: maxunits = 2
- character(len=20), dimension(maxunits), &
-    parameter :: labelunits = &
-    (/'units of plot       ', &
-      'viewport coordinates'/)
-!      'inches             ', &
-!      'millimeters        ', &
-!      'pixels             '/)
 
- itype = 1
- ishape = 0
- over_shapes: do while (itype.ne.0)
-    indexi = 1
-    do i=1,maxshapetype
-       if (i.lt.10) then
-          write(string(indexi:),"(1x,i1,') ',a)") i,trim(labelshapetype(i))
-       else
-          write(string(indexi:),"(1x,i2,') ',a)") i,trim(labelshapetype(i))
-       endif
-       indexi = len_trim(string) + 1
-    enddo
-    print "(/,a)",trim(string)
-    !print "(i2,a)",(i,') '//trim(labelshapetype(i)),i=1,maxshapetype)
-    ishape = ishape + 1
-    call prompt('enter shape to plot (0 = finish) ',shape(ishape)%itype,0,maxshapetype)
+ itype   = 1
+ ishape  = istart + 1
+ if (ishape.gt.maxshapes) then
+    print "(/,a,i2,a)",' *** Error, maximum number of shapes (',maxshapes,') reached, cannot add any more.'
+    print "(a)",       ' *** If you hit this limit, *please email me* so I can change the default limits!'
+    print "(a)",       ' *** (and then edit shapes.f90, changing the parameter "maxshapes" to something higher...)'
+    return
+ endif
+ !
+ !--fill prompt string with list of shapes
+ !
+ indexi = 1
+ do i=1,maxshapetype
+    if (i.lt.10) then
+       write(string(indexi:),"(1x,i1,') ',a)") i,trim(labelshapetype(i))
+    else
+       write(string(indexi:),"(1x,i2,') ',a)") i,trim(labelshapetype(i))
+    endif
+    indexi = len_trim(string) + 1
+ enddo
+ print "(/,a)",trim(string)
+ !print "(i2,a)",(i,') '//trim(labelshapetype(i)),i=1,maxshapetype)
+ 
+ over_shapes: do while(ishape.le.iend .and. i.le.maxshapes)
+    if (istart.eq.0 .or. shape(ishape)%itype.le.0 .or. shape(ishape)%itype.gt.maxshapetype) then
+       call prompt('choose an object type (0=none) ',shape(ishape)%itype,0,maxshapetype)
+    endif
     itype = shape(ishape)%itype
-    if (itype.gt.0) then
-       print "(a,i1,a,/)",'shape ',ishape,': type = '//trim(labelshapetype(itype))
+    if (itype.eq.0) then
+       call delete_shape(ishape)
+       exit over_shapes
+    else
+       call print_shapeinfo(ishape,itype)
 
        if (itype.eq.7) then
           shape(ishape)%iunits = 1
@@ -213,20 +404,34 @@ subroutine submenu_shapes()
            shape(ishape)%iplotonpanel.gt.maxplot) shape(:)%iplotonpanel = 0
 
        call prompt('Enter selection ',shape(ishape)%iplotonpanel,-2,maxplot)
+       if (ishape.gt.nshapes) nshapes = ishape
+       ishape = ishape + 1
     endif
  enddo over_shapes
- nshapes = ishape - 1
- if (nshapes.gt.0) then
-    print "(/,a,/,15('-'),10(/,i2,')',1x,a10,' (x,y) = (',1pe10.2,',',1pe10.2,') [',a,']'))",' SHAPES SET: ', &
-           (ishape,labelshapetype(shape(ishape)%itype),shape(ishape)%ypos,shape(ishape)%ypos, &
-           trim(labelunits(shape(ishape)%iunits)),ishape=1,nshapes)
- else
-    print "(a)",' NO SHAPES SET '
+
+end subroutine add_shape
+
+!------------------------------------------
+! utility routine to delete a shape object
+!------------------------------------------
+subroutine delete_shape(ishape)
+ implicit none
+ integer, intent(in) :: ishape
+ integer :: i
+
+ if (ishape.gt.0 .and. nshapes.gt.0 .and. ishape.le.maxshapes) then
+    do i=ishape+1,nshapes
+       shape(i-1) = shape(i)
+    enddo
+    print "(a)",'> deleted shape: '//trim(labelshapetype(shape(ishape)%itype))
+    nshapes = nshapes - 1
  endif
 
- return
-end subroutine submenu_shapes
+end subroutine delete_shape
 
+!------------------------------------------------------------
+! actual routine that implements plotting of various shapes
+!------------------------------------------------------------
 subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
  use exactfunction, only:exact_function
  use transforms,    only:transform_inverse,transform
@@ -337,6 +542,10 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
 
 end subroutine plot_shapes
 
+!------------------------------------------------------------
+! query function asking whether or not a point falls within
+! a shape object
+!------------------------------------------------------------
 integer function inshape(xpt,ypt,itransx,itransy)
  use plotlib, only:plot_qwin,plot_qtxt
  implicit none
@@ -377,6 +586,9 @@ integer function inshape(xpt,ypt,itransx,itransy)
 
 end function inshape
 
+!---------------------------------------
+! routine to edit shapes interactively
+!---------------------------------------
 subroutine edit_shape(i,xpt,ypt,itransx,itransy)
  use plotlib, only:plot_qwin
  implicit none
@@ -401,21 +613,9 @@ subroutine edit_shape(i,xpt,ypt,itransx,itransy)
 
 end subroutine edit_shape
 
-subroutine delete_shape(ishape)
- implicit none
- integer, intent(in) :: ishape
- integer :: i
-
- if (ishape.gt.0) then
-    do i=ishape+1,nshapes
-       shape(i-1) = shape(i)
-    enddo
-    print "(a)",'> deleted shape: '//trim(labelshapetype(shape(ishape)%itype))
-    nshapes = nshapes - 1
- endif
-
-end subroutine delete_shape
-
+!--------------------------------------------------------
+! utility routine to add a new text shape interactively
+!--------------------------------------------------------
 subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel)
  use plotlib, only:plot_qwin
  implicit none
@@ -457,7 +657,9 @@ subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel)
 
 end subroutine add_textshape
 
-
+!-----------------------------------------------------------------
+! utility routine to convert between units used in shape plotting
+!-----------------------------------------------------------------
 subroutine convert_units(shape,xpos,ypos,xlen,ylen,xmin,ymin,dxplot,dyplot,itransx,itransy)
  use transforms, only:transform
  implicit none
@@ -493,7 +695,9 @@ subroutine convert_units(shape,xpos,ypos,xlen,ylen,xmin,ymin,dxplot,dyplot,itran
 
 end subroutine convert_units
 
-
+!--------------------------------------------------------
+! utility routine to edit a text object interactively
+!--------------------------------------------------------
 subroutine edit_textbox(xpt,ypt,angle,string)
 use plotlib, only:plot_stbg,plot_ptxt,plot_curs
  implicit none
@@ -546,6 +750,5 @@ use plotlib, only:plot_stbg,plot_ptxt,plot_curs
  call plot_stbg(-1)
 
 end subroutine edit_textbox
-
 
 end module shapes
