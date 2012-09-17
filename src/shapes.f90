@@ -443,7 +443,8 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
        call convert_units(shape(i),xpos,ypos,xlen,ylen, &
                           xmin,ymin,dxplot,dyplot,itransx,itransy)
 
-       print "(a)",'> plotting shape: '//trim(labelshapetype(shape(i)%itype))
+       call print_shapeinfo(i,shape(i)%itype,shape(i))
+       !print "(a)",'> plotting shape: '//trim(labelshapetype(shape(i)%itype))
        select case(shape(i)%itype)
        case(1,2) ! square, rectangle
           if (xlen.gt.dxplot .or. ylen.gt.dyplot) then
