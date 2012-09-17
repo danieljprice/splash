@@ -110,7 +110,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   real :: xpt2,ypt2,xcen,ycen,xminwin,xmaxwin,yminwin,ymaxwin
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax,rptmax2
   real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
-  real :: xlength,ylength,renderlength,renderpt,drender,zoomfac
+  real :: xlength,ylength,renderlength,renderpt,zoomfac
   real :: dxlength,dylength,xmaxin,ymaxin,contlength
   real, dimension(4)      :: xline,yline
   real, dimension(maxpts) :: xpts,ypts
@@ -1510,7 +1510,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  integer :: ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape
  integer :: istepjumpnew
  real :: xpt,ypt,xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
- real :: xlength,ylength,renderlength,contlength,drender,zoomfac
+ real :: xlength,ylength,renderlength,contlength,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
  real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen,gradient,dr,yint,xmaxin
  real, dimension(4) :: xline,yline
