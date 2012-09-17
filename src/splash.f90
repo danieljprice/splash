@@ -48,6 +48,12 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.2.0  : (xx/xx/12)
+!             option to use different kernels for interpolation;
+!             floating/inset colour bars added;
+!             splash to gadget conversion implemented;
+!             splash to grid works in 2D;
+!             improved interfaces to shapes and animation sequences
 !     2.1.1  : (31/08/12)
 !             irregular/circular particle selection using shift-left/middle click;
 !             improved h5part and GADGET HDF5 data reads;
@@ -320,7 +326,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.1.1 [31st Aug 2012]'
+  character(len=*), parameter :: version = 'v2.2.0beta [18th Sep 2012]'
 
   !
   ! initialise some basic code variables
