@@ -71,6 +71,10 @@ module settings_xsecrot
  !--public procedure names
  public :: defaults_set_xsecrotate,submenu_xsecrotate,getsequencepos,insidesequence
  public :: write_animfile,read_animfile,setsequenceend
+ 
+ procedure(add_sequence), pointer :: addseq => null()
+ procedure(delete_sequence), pointer :: delseq => null()
+ procedure(check_sequences), pointer :: checkseq => null()
 
  private
 
@@ -136,13 +140,14 @@ subroutine submenu_xsecrotate(ichoose)
  use labels,         only:label,ix,irad
  use limits,         only:lim
  use prompting,      only:prompt,print_logical
+ use promptlist,     only:prompt_list
  use settings_data,  only:ndim,xorigin,iCalcQuantities,DataIsBuffered
  use calcquantities, only:calc_quantities
  use plotlib,        only:plotlib_supports_alpha
  implicit none
  integer, intent(in) :: ichoose
  integer :: ians,i
- logical :: iyes,ichangedorigin
+ logical :: ichangedorigin
  character(len=4) :: text
  real, dimension(3) :: xorigintemp
 
@@ -263,38 +268,7 @@ subroutine submenu_xsecrotate(ichoose)
     endif
 !------------------------------------------------------------------------
  case(6)
-    if (nseq.gt.0) then
-       print "(/,a,i1,a)",'Available animation sequences (',nseq,' currently set):'
-    else
-       print "(/,a)",'Available animation sequences (none currently set):'
-    endif
-    do i=1,maxseq
-       if (nseq.gt.0 .and. any(iseqtype(1:nseq).eq.i)) then
-          print "(1x,i1,' : ',a)",i,labelseqtype(i)//' [SET]'
-       else
-          print "(1x,i1,' : ',a)",i,trim(labelseqtype(i))
-       endif
-    enddo
-    print "(/,a,i1,a)",'Up to ',maxseq,' sequences (1 of each type) can be set '
-    call prompt('Enter how many sequences to use (0=none)',nseq,0,maxseq)
-
-    if (nseq.gt.0) then
-       !--set sensible default value for number of frames
-       if (nframes.eq.0) then
-          if (nsteps.gt.1) then
-             nframes = 1
-          else
-             nframes = 10
-          endif
-       endif
-       call prompt('Enter number of frames generated between dumps (applies to all sequences)',nframes,1,500)
-
-       iyes = .true.
-       if (ihavesetsequence) call prompt('Change sequence settings?',iyes)
-       if (iyes) call submenu_animation()
-
-       !call prompt('Use same sequence position for all plots on the page?',imultiframeseq)
-    endif
+    call submenu_animseq()
 
  end select
 
@@ -304,17 +278,92 @@ end subroutine submenu_xsecrotate
 !----------------------------------------------------------------------
 ! sets up animation sequences
 !----------------------------------------------------------------------
-subroutine submenu_animation()
- use prompting,     only:prompt
- use limits,        only:lim
- use labels,        only:ix
- use settings_data, only:ndim,istartatstep,iendatstep,numplot
- use filenames,     only:nsteps,animfile
- implicit none
- integer :: i,j,ierr
+subroutine submenu_animseq()
+ use promptlist, only:prompt_list
+ use prompting,  only:prompt
+ use filenames,  only:animfile
  logical :: ians
 
- do i = 1, nseq
+ addseq => add_sequence
+ checkseq => check_sequences
+ delseq => delete_sequence
+ call prompt_list(nseq,maxseq,'sequence',checkseq,addseq,delseq)
+
+ if (nseq.gt.0) then
+    ians = .true.
+    print "(/,a)",'Note: sequences can also be saved later using S) from the main menu'
+    call prompt(' save sequences to '//trim(animfile)//' file now? ',ians)
+    if (ians) call write_animfile(animfile)
+ endif
+
+end subroutine submenu_animseq
+
+!-----------------------------------
+! print the current list of shapes
+!-----------------------------------
+subroutine check_sequences(n)
+ implicit none
+ integer, intent(in) :: n
+ integer :: iseq
+
+ print "(/,a)", ' Current list of animation sequences:'
+ if (n.gt.0) then
+    do iseq=1,n
+       print "(i2,') ',a)",iseq,labelseqtype(iseqtype(iseq))
+    enddo
+ else
+    print "(a)",' (none)'
+ endif
+
+end subroutine check_sequences
+
+subroutine delete_sequence(iseq,n)
+ implicit none
+ integer, intent(in)    :: iseq
+ integer, intent(inout) :: n
+ integer :: i
+ 
+ if (iseq.gt.0 .and. n.gt.0 .and. iseq.le.maxseq) then
+    if (iseqtype(iseq).gt.0 .and. iseqtype(iseq).le.maxseq) then
+       print "(a,i1,': ',a)",' deleting sequence ',iseq,trim(labelseqtype(iseqtype(iseq)))
+    endif
+    iseqtype(iseq) = 0
+    do i=iseq+1,n
+       iseqtype(i-1) = iseqtype(i)
+    enddo
+    n = n - 1
+ endif
+
+end subroutine delete_sequence
+
+subroutine add_sequence(istart,iend,n)
+ use prompting,     only:prompt
+ use limits,        only:lim
+ use labels,        only:ix,irho
+ use settings_data, only:ndim,istartatstep,iendatstep,numplot
+ use filenames,     only:nsteps
+ implicit none
+ integer, intent(in)    :: istart,iend
+ integer, intent(inout) :: n
+ integer :: i,j,ierr
+
+ i = istart + 1
+ over_sequences: do while (i.le.iend .and. i.le.maxseq)
+
+    if (i.gt.n) n = i
+    if (n.gt.0) then
+       !--set sensible default value for number of frames
+       if (nframes.eq.0) then
+          if (nsteps.gt.1) then
+             nframes = 1
+          else
+             nframes = 10
+          endif
+       endif
+       call prompt('Enter number of frames generated between dumps (applies to all sequences)',nframes,1,500)
+       !call prompt('Use same sequence position for all plots on the page?',imultiframeseq)
+    endif
+
     print "(a,i2,a)",'----------------- sequence ',i,' ----------------------'
     if (iseqstart(i).eq.0) iseqstart(i) = max(istartatstep,1)
     if (iseqend(i).eq.0) iseqend(i) = max(1,iendatstep,istartatstep)
@@ -331,14 +380,13 @@ subroutine submenu_animation()
        call prompt('Enter type of sequence ',iseqtype(i),0,maxseq)
        !--allow only one sequence of each type
        ierr = 0
-       if (i.gt.1) then
-          if (any(iseqtype(1:i-1).eq.iseqtype(i)).and.iseqtype(i).gt.0) then
-             print "(a)",' Error: can only have one sequence of each type '
-             ierr = 2
-          endif
+       if (i.gt.0) then
+          do j=1,n
+             if (i.ne.j .and. (iseqtype(j).eq.iseqtype(i)) .and. (iseqtype(i).gt.0)) ierr = 2
+          enddo
+          if (ierr.eq.2) print "(/,a)",' Error: can only have one sequence of each type '
        endif
     end do
-
     select case(iseqtype(i))
     case(1)
        print "(a)",'Note: zoom sequence starts using current fixed x,y plot limits'
@@ -368,6 +416,13 @@ subroutine submenu_animation()
        call prompt(' Enter finishing rotation angle (y axis) ',angleyend)
        call prompt(' Enter finishing rotation angle (x axis) ',anglexend)
     case(3)
+       if (icolchange.le.0 .or. icolchange.gt.numplot) then
+          if (irho.gt.0 .and. irho.le.numplot) then
+             icolchange = irho
+          else
+             icolchange = 1
+          endif
+       endif
        call prompt(' Enter column to change limits ',icolchange,1,numplot)
        print "(a)",'Note: limits start from current fixed plot limits for this column'
        if (abs(xmincolend).lt.tiny(xmincolend) .and. abs(xmaxcolend).lt.tiny(xmaxcolend)) then
@@ -425,22 +480,21 @@ subroutine submenu_animation()
                       '      and that logarithmic steps are used if finishing value is', &
                       '      set to more than 1000 times the starting value (or vice-versa) '
        call prompt('Enter finishing opacity in units of average smoothing length ',taupartdepthend)
+    case default
+       call delete_sequence(i,n)
+       exit over_sequences
     end select
- enddo
+    i = i + 1
+ enddo over_sequences
 
- if (all(iseqtype(1:nseq).eq.0)) then
-    print "(a)",' No sequences set!'
-    nseq = 0
+ if (all(iseqtype(1:n).eq.0)) then
+    n = 0
  else
     ihavesetsequence = .true.
-    ians = .true.
-    print "(/,a)",'Note: sequences can also be saved later using S) from the main menu'
-    call prompt(' save sequences to '//trim(animfile)//' file now? ',ians)
-    if (ians) call write_animfile(animfile)
  endif
 
  return
-end subroutine submenu_animation
+end subroutine add_sequence
 
 !----------------------------------------------------------------------
 !
