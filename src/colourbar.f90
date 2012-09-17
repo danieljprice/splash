@@ -81,7 +81,8 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  integer :: i
  real :: disp,width,xch,ych,dx
  real :: xmin,xmax,ymin,ymax,vptxmin,vptxmax,vptymin,vptymax
- real :: vptxmini,vptxmaxi,vptymini,vptymaxi,vptleni
+ real :: vptxmini,vptxmaxi,vptymini,vptymaxi
+ real :: vptxminp,vptxmaxp,vptyminp,vptymaxp
  real :: xmaxpix,xminpix,yminpix,ymaxpix
 !
 !--return on style 0
@@ -137,8 +138,12 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !--set viewport for the wedge
    !
    if (istyle.eq.8 .or. istyle.eq.10) then
-      call barlimits(vptxmini,vptxmaxi,vptxmini,vptxmaxi,ColourBarPosx,ColourBarLen)
-      call barlimits(vptymini,vptymaxi,vptymini,vptymaxi,ColourBarPosy,ColourBarLen)
+      vptxminp = vptxmini  ! to
+      vptxmaxp = vptxmaxi  ! avoid
+      vptyminp = vptymini  ! compiler
+      vptymaxp = vptymaxi  ! warnings
+      call barlimits(vptxmini,vptxmaxi,vptxminp,vptxmaxp,ColourBarPosx,ColourBarLen)
+      call barlimits(vptymini,vptymaxi,vptyminp,vptymaxp,ColourBarPosy,ColourBarLen)
       if (istyle.eq.8) then
          vptymaxi = vptymini + 2.*width*ych
       else
@@ -222,8 +227,12 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !--set viewport for the wedge
    !
     if (istyle.eq.7 .or. istyle.eq.9) then
-       call barlimits(vptxmini,vptxmaxi,vptxmini,vptxmaxi,ColourBarPosx,ColourBarLen)
-       call barlimits(vptymini,vptymaxi,vptymini,vptymaxi,ColourBarPosy,ColourBarLen)
+       vptxminp = vptxmini  ! to
+       vptxmaxp = vptxmaxi  ! avoid
+       vptyminp = vptymini  ! compiler
+       vptymaxp = vptymaxi  ! warnings
+       call barlimits(vptxmini,vptxmaxi,vptxminp,vptxmaxp,ColourBarPosx,ColourBarLen)
+       call barlimits(vptymini,vptymaxi,vptyminp,vptymaxp,ColourBarPosy,ColourBarLen)
        if (istyle.eq.9) then
           vptxmaxi = vptxmini + width*xch       
        else
