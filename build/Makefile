@@ -141,32 +141,6 @@ ifeq ($(SYSTEM),g95)
    KNOWN_SYSTEM=yes
 endif
 
-ifeq ($(SYSTEM), gfortran43)
-#  gfortran compiler (part of gcc 4.x.x)
-   F90C= gfortran
-   F90FLAGS= -O3 -Wall -frecord-marker=4
-   SYSTEMFILE= system_f2003.f90
-   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
-   DEBUGFLAG= -g -frange-check -fbacktrace
-   OMPFLAGS= -fopenmp
-   ENDIANFLAGBIG= -fconvert=big-endian
-   ENDIANFLAGLITTLE= -fconvert=little-endian
-   KNOWN_SYSTEM=yes
-endif
-
-ifeq ($(SYSTEM), gfortran41)
-#  gfortran compiler (v4.1)
-   F90C= gfortran
-   F90FLAGS= -O3 -Wall -frecord-marker=4
-   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
-   SYSTEMFILE= system_unix.f90
-   DEBUGFLAG= -g -frange-check
-   OMPFLAGS=
-   ENDIANFLAGBIG= -fconvert=big-endian
-   ENDIANFLAGLITTLE= -fconvert=little-endian
-   KNOWN_SYSTEM=yes
-endif
-
 ifeq ($(SYSTEM),nagf95)
 #  NAG f95 compiler
    F90C= f95
@@ -533,7 +507,7 @@ endif
 # really should include all dependencies but I am lazy
 
 SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
-         prompting.f90 geometry.f90 kernels.f90 interpolation.f90 plotutils.f90 colourbar.f90 \
+         prompting.f90 promptlist.f90 geometry.f90 kernels.f90 interpolation.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 units.f90 \
          limits.f90 write_data_gadget.f90 write_data_phantom.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
