@@ -67,6 +67,10 @@ module shapes
 !      'millimeters        ', &
 !      'pixels             '/)
 
+ procedure(check_shapes), pointer, private :: checkshapes => null()
+ procedure(add_shape), pointer, private :: addshape => null()
+ procedure(delete_shape), pointer, private :: delshape => null()
+
  real, parameter, private :: pi = 3.1415926536
 
 contains
@@ -99,85 +103,27 @@ end subroutine defaults_set_shapes
 ! shape submenu
 !-----------------------------------------------------------------
 subroutine submenu_shapes()
- use prompting, only:prompt
+ use promptlist, only:prompt_list
  implicit none
- character(len=1) :: charp
- logical          :: done,first
- integer          :: istart,iend,ipick
  
- ipick = nshapes + 1
- done  = .false.
- first = .true.
- charp = 'a'
- shapesmenu: do while(.not.done)
-    call check_shapes()
-    iend = maxshapes
-    if (nshapes.gt.0 .or. .not.first) then
-       charp='q'
-       print*
-       call prompt(' a)dd to, e)dit, d)elete, c)lear all or q)uit/finish?',&
-                   charp,list=(/'a','e','d','c','q','s','S','Q'/),noblank=.true.)
-       select case(charp)
-       case('a')
-          istart = nshapes
-          iend = nshapes + 1
-       case('e')
-          if (nshapes.gt.0) then
-             ipick = 0
-             call prompt(' pick a shape to edit ',ipick,0,nshapes)
-             if (ipick.gt.0) then
-                istart = ipick - 1
-                iend   = istart + 1
-             else
-                istart = 0
-                iend = 1
-                first = .false.
-                cycle shapesmenu             
-             endif
-          else
-             istart = 0
-             iend   = 1
-          endif
-          first = .false.
-       case('d')
-          if (nshapes.gt.0) then
-             ipick = 0
-             call prompt(' pick a shape to delete ',ipick,0,nshapes)
-             call delete_shape(ipick)
-             first = .false.
-             cycle shapesmenu
-          endif
-       case('c')
-          nshapes = 0
-          first = .false.
-          cycle shapesmenu
-       case('q','Q','s','S')
-          done = .true.
-       case default
-          istart = 0
-          iend = maxshapes
-       end select
-    else
-       istart = 0
-       iend   = 1
-    endif
-    if (.not.done) call add_shape(istart,iend)
-    first = .false.
- enddo shapesmenu
-
- return
+ checkshapes => check_shapes
+ addshape => add_shape
+ delshape => delete_shape
+ call prompt_list(nshapes,maxshapes,'shape',checkshapes,addshape,delshape)
+ 
 end subroutine submenu_shapes
 
 !-----------------------------------
 ! print the current list of shapes
 !-----------------------------------
-subroutine check_shapes()
+subroutine check_shapes(nshape)
  implicit none
+ integer, intent(in) :: nshape
  integer :: ishape
 
  print "(/,a)", ' Current list of plot annotations:'
- if (nshapes.gt.0) then
-    do ishape=1,nshapes
+ if (nshape.gt.0) then
+    do ishape=1,nshape
        call print_shapeinfo(ishape,shape(ishape)%itype,shape(ishape))
     enddo
  else
@@ -273,13 +219,14 @@ end subroutine print_shapeinfo
 !------------------------------------------
 ! utility routine to add new shape object
 !------------------------------------------
-subroutine add_shape(istart,iend)
+subroutine add_shape(istart,iend,nshape)
  use params,        only:maxplot
  use prompting,     only:prompt
  use exactfunction, only:check_function
  use plotlib,       only:plotlib_maxlinestyle,plotlib_maxlinecolour,plotlib_maxfillstyle
  implicit none
  integer, intent(in) :: istart,iend
+ integer, intent(inout) :: nshape
  integer            :: i,ishape,itype,indexi,iunits,ierr,itry
  character(len=10)  :: poslabel
  character(len=80)  :: string
@@ -313,7 +260,7 @@ subroutine add_shape(istart,iend)
     endif
     itype = shape(ishape)%itype
     if (itype.eq.0) then
-       call delete_shape(ishape)
+       call delete_shape(ishape,nshape)
        exit over_shapes
     else
        call print_shapeinfo(ishape,itype)
@@ -404,7 +351,7 @@ subroutine add_shape(istart,iend)
            shape(ishape)%iplotonpanel.gt.maxplot) shape(:)%iplotonpanel = 0
 
        call prompt('Enter selection ',shape(ishape)%iplotonpanel,-2,maxplot)
-       if (ishape.gt.nshapes) nshapes = ishape
+       if (ishape.gt.nshape) nshape = ishape
        ishape = ishape + 1
     endif
  enddo over_shapes
@@ -414,17 +361,33 @@ end subroutine add_shape
 !------------------------------------------
 ! utility routine to delete a shape object
 !------------------------------------------
-subroutine delete_shape(ishape)
+subroutine delete_shape(ishape,nshape)
  implicit none
- integer, intent(in) :: ishape
+ integer, intent(in)    :: ishape
+ integer, intent(inout) :: nshape
  integer :: i
 
- if (ishape.gt.0 .and. nshapes.gt.0 .and. ishape.le.maxshapes) then
-    do i=ishape+1,nshapes
+ if (ishape.gt.0 .and. nshape.gt.0 .and. ishape.le.maxshapes) then
+    do i=ishape+1,nshape
        shape(i-1) = shape(i)
     enddo
+    !--restore defaults
+    shape(nshape)%itype = 0
+    shape(nshape)%icolour = 1
+    shape(nshape)%linestyle = 1
+    shape(nshape)%linewidth = 1
+    shape(nshape)%ifillstyle = 2
+    shape(nshape)%iunits = 1
+    shape(nshape)%iplotonpanel = 0
+    shape(nshape)%xpos = 0.5
+    shape(nshape)%ypos = 0.5
+    shape(nshape)%xlen = 1.
+    shape(nshape)%ylen = 1.
+    shape(nshape)%angle = 0.
+    shape(nshape)%text = ' '
+    shape(nshape)%fjust = 0.
     print "(a)",'> deleted shape: '//trim(labelshapetype(shape(ishape)%itype))
-    nshapes = nshapes - 1
+    nshape = nshape - 1
  endif
 
 end subroutine delete_shape

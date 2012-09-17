@@ -71,7 +71,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   zobserver,dscreen,use3Dopacity,taupartdepth,double_rendering,irerender,itrackpart,icolourscheme, &
   iColourBarStyle,labelrender,iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
   use settings_xsecrot, only:setsequenceend
-  use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,add_textshape
+  use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,nshapes,add_textshape
   use multiplot,        only:itrans
   use labels,           only:is_coord,ix
   use settings_render,  only:projlabelformat,iapplyprojformat
@@ -1174,7 +1174,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      case(achar(8)) ! delete plot annotation / colour bar (backspace)
         ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty))
         if (ishape.gt.0) then
-           call delete_shape(ishape)
+           call delete_shape(ishape,nshapes)
            iadvance = 0
            interactivereplot = .true.
            iexit = .true.
@@ -1494,7 +1494,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                              iColourBarStyle,interactivereplot)
  use labels,    only:is_coord
  use multiplot, only:itrans
- use shapes,    only:add_textshape,inshape,edit_shape,delete_shape
+ use shapes,    only:add_textshape,inshape,edit_shape,delete_shape,nshapes
  use plotlib,   only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line,plot_left_click
  implicit none
  integer, intent(inout) :: iadvance
@@ -2062,7 +2062,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      case(achar(8)) ! delete plot annotation / colour bar (backspace)
         ishape = inshape(xpti,ypti,itrans(iplotxarr(ipanel)),itrans(iplotxarr(ipanel)))
         if (ishape.gt.0) then
-           call delete_shape(ishape)
+           call delete_shape(ishape,nshapes)
            istep = istepnew
            interactivereplot = .true.
            iexit = .true.
