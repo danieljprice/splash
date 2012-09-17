@@ -39,11 +39,11 @@ module settings_xsecrot
 
  !--private variables related to animation sequences
  integer, parameter, private         :: maxseq = 6
- integer, dimension(maxseq), private :: iseqstart,iseqend,iseqtype
- integer, private :: icolchange
- real, private    :: xminseqend,xmaxseqend,yminseqend,ymaxseqend
- real, private    :: anglezend,angleyend,anglexend,zobserverend,taupartdepthend
- real, private    :: xmincolend,xmaxcolend,xsecpos_nomulti_end
+ integer, dimension(maxseq), public :: iseqstart,iseqend,iseqtype
+ integer, public :: icolchange
+ real, public    :: xminseqend,xmaxseqend,yminseqend,ymaxseqend
+ real, public    :: anglezend,angleyend,anglexend,zobserverend,taupartdepthend
+ real, public    :: xmincolend,xmaxcolend,xsecpos_nomulti_end
  logical, private :: ihavesetsequence
  character(len=*), dimension(maxseq), parameter, private :: labelseqtype = &
     (/'steady zoom on x and y axes                       ', &
@@ -62,7 +62,7 @@ module settings_xsecrot
           use3Dopacityrendering,zobserver,dzscreenfromobserver, &
           taupartdepth,writeppm,xsecwidth
 
- private :: animopts
+ public :: animopts
  namelist /animopts/ nseq,nframes,iseqstart,iseqend,iseqtype, &
           xminseqend,xmaxseqend,yminseqend,ymaxseqend, &
           anglezend,angleyend,anglexend,zobserverend,taupartdepthend, &
@@ -70,7 +70,7 @@ module settings_xsecrot
 
  !--public procedure names
  public :: defaults_set_xsecrotate,submenu_xsecrotate,getsequencepos,insidesequence
- public :: write_animfile,read_animfile,setsequenceend
+ public :: setsequenceend
  
  procedure(add_sequence), pointer :: addseq => null()
  procedure(delete_sequence), pointer :: delseq => null()
@@ -281,20 +281,11 @@ end subroutine submenu_xsecrotate
 subroutine submenu_animseq()
  use promptlist, only:prompt_list
  use prompting,  only:prompt
- use filenames,  only:animfile
- logical :: ians
 
  addseq => add_sequence
  checkseq => check_sequences
  delseq => delete_sequence
  call prompt_list(nseq,maxseq,'sequence',checkseq,addseq,delseq)
-
- if (nseq.gt.0) then
-    ians = .true.
-    print "(/,a)",'Note: sequences can also be saved later using S) from the main menu'
-    call prompt(' save sequences to '//trim(animfile)//' file now? ',ians)
-    if (ians) call write_animfile(animfile)
- endif
 
 end subroutine submenu_animseq
 
@@ -771,85 +762,5 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
 
  return
 end subroutine getsequencepos
-
-!-----------------------------------------------
-! writes animation sequence options to file
-! (should match read_animfile)
-!-----------------------------------------------
-subroutine write_animfile(filename)
- use prompting, only:prompt
- implicit none
- character(len=*), intent(in) :: filename
- integer :: ierr
- logical :: iexist, idelete
-
- if (nseq.gt.0) then
-    open(unit=15,file=filename,status='replace',form='formatted', &
-         delim='apostrophe',iostat=ierr) ! without delim namelists may not be readable
-       if (ierr /= 0) then
-          print*,'ERROR: cannot write file '//trim(filename)
-          close(unit=15)
-          return
-       endif
-       write(15,NML=animopts)
-    close(unit=15)
-    print*,'animation sequences saved to file '//trim(filename)
- elseif (nseq.eq.0) then
-    inquire(file=trim(filename),exist=iexist)
-    if (iexist) then
-       idelete = .true.
-       call prompt(' delete '//trim(filename)//' file? ',idelete)
-       if (idelete) then
-          open(unit=15,status='replace',file=filename,iostat=ierr)
-          close(unit=15,status='delete',iostat=ierr)
-          if (ierr /= 0) then
-             print "(a)",' Error deleting '//trim(filename)
-          else
-             print "(a)",trim(filename)//' deleted'
-          endif
-       endif
-    endif
- endif
-
- return
-end subroutine write_animfile
-
-!-----------------------------------------------
-! reads animation sequence options from file
-! (should match write_animfile)
-!-----------------------------------------------
-subroutine read_animfile(filename)
- use filenames, only:nsteps
- implicit none
- character(len=*), intent(in) :: filename
- logical :: iexist
- integer :: ierr
-
- inquire (exist=iexist, file=filename)
- if (iexist) then
-    open(unit=15,file=filename,status='old',form='formatted')
-
-    ierr = 0
-    read(15,NML=animopts,end=77,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading animation sequences from '//trim(filename)
-
-    close(unit=15)
-    print "(1x,a)",'read animation sequences from '//trim(filename)
-    ihavesetsequence = .true.
-    return
- else
-    return
- endif
-
-77 continue
- print*,'**** warning: end of file in '//trim(filename)//' ****'
- close(unit=15)
-
- if (nseq.gt.0 .and. all(iseqstart(1:nseq).gt.nsteps)) then
-    print "(a)",' WARNING: animation sequences have no effect!! (not enough dumps)'
- endif
-
- return
-end subroutine read_animfile
 
 end module settings_xsecrot

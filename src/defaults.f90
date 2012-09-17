@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -168,7 +168,7 @@ subroutine defaults_write(filename)
  use settings_page,      only:pageopts
  use settings_render,    only:renderopts
  use settings_vecplot,   only:vectoropts
- use settings_xsecrot,   only:xsecrotopts
+ use settings_xsecrot,   only:xsecrotopts,animopts
  use settings_powerspec, only:powerspecopts
  use multiplot,          only:multi
  use shapes,             only:shapeopts
@@ -197,6 +197,7 @@ subroutine defaults_write(filename)
     write(iunit,NML=multi)
     write(iunit,NML=shapeopts)
     write(iunit,NML=calcopts)
+    write(iunit,NML=animopts)
     do i=1,nfiles
        write(iunit,"(a)") trim(rootname(i))
     enddo
@@ -218,7 +219,7 @@ subroutine defaults_read(filename)
  use settings_page,      only:pageopts
  use settings_render,    only:renderopts
  use settings_vecplot,   only:vectoropts
- use settings_xsecrot,   only:xsecrotopts
+ use settings_xsecrot,   only:xsecrotopts,animopts
  use settings_powerspec, only:powerspecopts
  use exact,              only:exactopts,exactparams
  use shapes,             only:shapeopts
@@ -280,6 +281,10 @@ subroutine defaults_read(filename)
     ierr = 0
     read(iunit,NML=calcopts,iostat=ierr)
     if (ierr /= 0) print "(a)",'error reading calculated quantity settings from '//trim(filename)
+
+    ierr = 0
+    read(iunit,NML=animopts,iostat=ierr)
+    if (ierr /= 0) print "(a)",'error reading animation sequence settings from '//trim(filename)
 
     if (len_trim(rootname(1)).eq.0) then
        do i=1,maxfile

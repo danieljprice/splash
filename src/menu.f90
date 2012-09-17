@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -32,7 +32,7 @@ module mainmenu
 contains
 
 subroutine menu
-  use filenames,        only:defaultsfile,limitsfile,animfile,fileprefix,set_filenames
+  use filenames,        only:defaultsfile,limitsfile,fileprefix,set_filenames
   use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap,is_coord
   use limits,           only:write_limits,lim2,lim,reset_lim2,lim2set
   use options_data,     only:submenu_data
@@ -43,7 +43,7 @@ subroutine menu
   use settings_page,    only:submenu_page,submenu_legend,interactive
   use settings_render,  only:submenu_render,iplotcont_nomulti,icolours,double_rendering
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
-  use settings_xsecrot, only:submenu_xsecrotate,write_animfile
+  use settings_xsecrot, only:submenu_xsecrotate
   use multiplot
   use prompting,        only:prompt,print_logical
   use transforms,       only:transform_label
@@ -352,7 +352,6 @@ subroutine menu
         endif
         call defaults_write(defaultsfile)
         call write_limits(limitsfile)
-        call write_animfile(animfile)
 !------------------------------------------------------------------------
 !+ Slightly obsolete: prints whatever help may be helpful
      case('h','H')

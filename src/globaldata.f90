@@ -108,7 +108,7 @@ module filenames
  integer :: nfiles,nsteps,ifileopen
  character(len=120), dimension(maxfile) :: rootname
  character(len=100) :: fileprefix
- character(len=120) :: defaultsfile,limitsfile,animfile,unitsfile
+ character(len=120) :: defaultsfile,limitsfile,unitsfile
  integer, dimension(maxfile) :: nstepsinfile
  character(len=68)  :: tagline = &
   'SPLASH: A visualisation tool for SPH data (c)2004-2012 Daniel Price'
@@ -123,7 +123,6 @@ contains
 
   defaultsfile = trim(adjustl(prefix))//'.defaults'
   limitsfile   = trim(adjustl(prefix))//'.limits'
-  animfile     = trim(adjustl(prefix))//'.anim'
   unitsfile    = trim(adjustl(prefix))//'.units'
   fileprefix   = trim(adjustl(prefix))
 
