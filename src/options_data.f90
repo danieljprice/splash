@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -154,7 +154,7 @@ subroutine submenu_data(ichoose)
     buffer_data = .not.buffer_data
     print "(/a)",' Buffering of data = '//print_logical(buffer_data)
     if (buffer_data) then
-       call prompt('Do you want to read all data into memory now?',ireadnow)
+       call prompt('Do you want to read all files into memory now?',ireadnow)
        if (ireadnow) then
           call get_data(-1,.true.)
        endif
