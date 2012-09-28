@@ -315,7 +315,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !--help
      !
      case('h')
-        print*,'-------------- interactive mode commands -----------------------------'
+        print "(/,a)",' -------------- interactive mode commands -----------------------------'
         print*,' SPACE BAR (or n)         : skip to next timestep/file'
         print*,' 0,1,2,3..9 and click     : go forward/back n timesteps (back=r.click)'
         print*,' left click (or A)        : zoom/select'
@@ -1605,7 +1605,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
 
      select case(char)
      case('h')
-        print*,'------- interactive mode commands (multiple plots per page) --------'
+        print "(/,a)",' ------- interactive mode commands (multiple plots per page) --------'
         print*,' SPACE BAR (or n)         : skip to next timestep/file'
         print*,' 0,1,2,3..9 and click     : go forward/back n timesteps (back=r.click)'
         print*,' left click (or A)        : zoom/select'
