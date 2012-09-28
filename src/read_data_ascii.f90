@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -242,7 +242,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      print "(a,i8,a)",' *** WARNING: errors whilst reading file on ',nerr,' lines: skipped these ***'
   endif
   if (ierr < 0) then
-     print*,'read npts = ',nprint
+     print "(2(a,i10))",' read npts = ',nprint,' ncolumns = ',ncolstep
   endif
 
 
@@ -298,7 +298,7 @@ subroutine set_labels
      if (len_trim(columnfile).gt.0) then
         inquire(file=trim(columnfile),exist=iexist)
         if (iexist) then
-           print "(a)",' using ASPLASH_COLUMNSFILE='//trim(columnfile)
+           if (iverbose.gt.0) print "(a)",' using ASPLASH_COLUMNSFILE='//trim(columnfile)
         else
            print "(a)",' ERROR: ASPLASH_COLUMNSFILE='//trim(columnfile)//' DOES NOT EXIST'
            columnfile = 'columns'
@@ -382,28 +382,29 @@ subroutine set_labels
   endif
 
   if (ndim.lt.1) ndimV = 0
+  if (iverbose.gt.0) then
+     if (ndim.gt.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
+     if (ndim.gt.0) print "(a,i2,a,i2)",' Assuming positions in columns ',ix(1),' to ',ix(ndim)
 
-  if (ndim.gt.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
-  if (ndim.gt.0) print "(a,i2,a,i2)",' Assuming positions in columns ',ix(1),' to ',ix(ndim)
-
-  if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
-  if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
-  if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
-  if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
-  if (iutherm.gt.0) print "(a,i2)",' Assuming thermal energy in column ',iutherm
-  if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
-  if (ivx.gt.0) then
-     if (ndimV.gt.1) then
-        print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1
-     else
-        print "(a,i2)",' Assuming velocity in column ',ivx
+     if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
+     if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
+     if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
+     if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
+     if (iutherm.gt.0) print "(a,i2)",' Assuming thermal energy in column ',iutherm
+     if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
+     if (ivx.gt.0) then
+        if (ndimV.gt.1) then
+           print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1
+        else
+           print "(a,i2)",' Assuming velocity in column ',ivx
+        endif
      endif
-  endif
-  if ((ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) .and. iverbose.gt.0) then
-     print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
-                 '  until positions of density, smoothing length and particle', &
-                 '  mass are known (for the ascii read the simplest way is to ', &
-                 '  label the relevant columns appropriately in the columns file)'
+     if ((ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) .and. iverbose.gt.0) then
+        print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
+                    '  until positions of density, smoothing length and particle', &
+                    '  mass are known (for the ascii read the simplest way is to ', &
+                    '  label the relevant columns appropriately in the columns file)'
+     endif
   endif
 
   if (ivx.gt.0) then
