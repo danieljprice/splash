@@ -599,7 +599,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         print "(a)",' setting line width = 2 for '//devstring(1:ilen)//' device'
         call plot_slw(2)
      else
-        print "(a)",' setting line width = 1 for '//devstring(1:ilen)//' device'
+        !print "(a)",' setting line width = 1 for '//devstring(1:ilen)//' device'
         call plot_slw(1)
      endif
   else
@@ -1815,9 +1815,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
            call page_setup
 
-           lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
-                       .and. nyplot.eq.nyplots .and. k.eq.nxsec)
-
            !--add to log
            if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),zslicemin,label(iplotz),zslicemax
 35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
@@ -2148,8 +2145,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         endif
         !
         !--enter interactive mode
-        !
-        lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) .and. nyplot.eq.nyplots)
         !--the following line sets the number of steps on page to nstepsonpage
         !  in the case where we reach the last timestep before nstepsonpage is reached
         !  (makes interactive replotting behave better)
@@ -2310,7 +2305,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            if (plotlib_is_pgplot) call redraw_axes(iaxis)
            call legends_and_title
 
-           lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) .and. nyplot.eq.nyplots)
            if (lastplot) istepsonpage = nstepsperpage
            if (interactive .and. ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot)) then
               iadvance = nfreq
@@ -2604,7 +2598,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
         endif
 
-        lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) .and. nyplot.eq.nyplots)
         !--the following line sets the number of steps on page to nstepsonpage
         !  in the case where we reach the last timestep before nstepsonpage is reached
         !  (makes interactive replotting behave better)
@@ -2734,11 +2727,14 @@ contains
        endif
     endif
 
+    lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
+                .and. nyplot.eq.nyplots .and. k.eq.nxsec)
+
     !--------------------------------------------------------------
     ! output some muff to the screen
     !--------------------------------------------------------------
-
-    if ((interactive .or. iplots.eq.1 .or. iadapt) .and. .not.dum) then
+    if (((interactive .and. ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot)) &
+        .or. (iadapt .and. (istepsonpage.eq.nstepsperpage .or. lastplot))) .and. .not.dum) then
        print*,trim(labelx),' min, max = ',xmin,xmax
        print*,trim(labely),' min, max = ',ymin,ymax
        if (irender.gt.0 .and. .not.(ndim.eq.2 .and. x_sec)) then
@@ -2974,8 +2970,6 @@ contains
     ! do this here so it always appears OVERLAID on the renderings
     !--------------------------------------------------------------
     if (irender.gt.0) then
-       lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
-                          .and. nyplot.eq.nyplots .and. k.eq.nxsec)
        !--only plot colour bar at the end of first row on tiled plots
        if (tile_plots .and..not.(ipanel.eq.nacross*ndown .or. lastplot .or. &
            (OneColourBarPerRow.and.icolumn.eq.nacross))) iPlotColourBar = .false.
