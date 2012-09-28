@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -301,8 +301,8 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
 
  if (ncolumns.eq.0) then
     print "(a)",' ERROR: no columns of real numbers found'
- else
-    print "(a,i3)",' number of data columns = ',ncolumns
+ !else
+    !print "(a,i3)",' number of data columns = ',ncolumns
  endif
 
 end subroutine get_ncolumns
