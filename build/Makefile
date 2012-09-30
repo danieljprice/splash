@@ -23,8 +23,8 @@ SHELL=/bin/bash
 #
 # some default settings for unix systems
 #
-F90C= 
-F90FLAGS=
+FC= 
+FFLAGS=
 #
 # change the line below if SPLASH does not find the X11 libraries
 # (some settings of the SYSTEM variable for specific machines overwrite this)
@@ -115,8 +115,8 @@ endif
 
 ifeq ($(SYSTEM), gfortran)
 #  gfortran compiler (part of gcc 4.x.x)
-   F90C= gfortran
-   F90FLAGS= -O3 -frecord-marker=4
+   FC= gfortran
+   FFLAGS= -O3 -frecord-marker=4
    DBLFLAGS= -fdefault-real-8 -fdefault-double-8
    SYSTEMFILE= system_f2003.f90
    DEBUGFLAG= -Wall -Wextra -pedantic -g -frange-check -fcheck=all -fbacktrace \
@@ -129,8 +129,8 @@ endif
 
 ifeq ($(SYSTEM),g95)
 #  using the g95 compiler
-   F90C= g95
-   F90FLAGS= -O3 -ffast-math
+   FC= g95
+   FFLAGS= -O3 -ffast-math
    DBLFLAGS= -r8
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
    DEBUGFLAG= -Wall -Wextra -Wno=165 -g -fbounds-check -ftrace=full -freal=NaN
@@ -143,8 +143,8 @@ endif
 
 ifeq ($(SYSTEM),nagf95)
 #  NAG f95 compiler
-   F90C= f95
-   F90FLAGS= -O3
+   FC= f95
+   FFLAGS= -O3
    DBLFLAGS= -r8
    SYSTEMFILE= system_unix_NAG.f90
    PARALLEL= no
@@ -153,8 +153,8 @@ endif
 
 ifeq ($(SYSTEM),sunf95)
 #  sun f95 compiler on linux
-   F90C= sunf95
-   F90FLAGS= -fast -ftrap=%none
+   FC= sunf95
+   FFLAGS= -fast -ftrap=%none
    OMPFLAGS= -openmp
    DBLFLAGS= -xtypemap=real:64,double:64
    DEBUGFLAG= -g -C -w4 -errtags -erroff=COMMENT_1582,COMMENT_1744 -ftrap=%all
@@ -166,8 +166,8 @@ endif
 
 ifeq ($(SYSTEM),ifort)
 #  this is for the intel fortran compiler (version 10)
-   F90C= ifort
-   F90FLAGS= -O3 -nbs -i_dynamic
+   FC= ifort
+   FFLAGS= -O3 -nbs -i_dynamic
    OMPFLAGS= -openmp
    DBLFLAGS= -r8
    DEBUGFLAG= -C -g
@@ -182,8 +182,8 @@ endif
 
 ifeq ($(SYSTEM),ifort8)
 #  this is for the intel fortran compiler (version 8)
-   F90C= ifort
-   F90FLAGS= -O3 -Vaxlib -nbs
+   FC= ifort
+   FFLAGS= -O3 -Vaxlib -nbs
    OMPFLAGS= -openmp
    DBLFLAGS= -r8
    DEBUGFLAG= -C -g
@@ -196,8 +196,8 @@ endif
 
 ifeq ($(SYSTEM),pgf90)
 #  this is for the Portland Group Fortran 90 compiler (tested with version 7.2-5)
-   F90C= pgf90
-   F90FLAGS= -fast -mcmodel=medium -Mbackslash -Ktrap=none
+   FC= pgf90
+   FFLAGS= -fast -mcmodel=medium -Mbackslash -Ktrap=none
    DBLFLAGS= -r8
    DEBUGFLAG= -C -g -gopt -Mbounds -Mchkfpstk -Mchkptr -Mchkstk -Mcoff \
               -Mdwarf1 -Mdwarf2 -Melf -Mpgicoff -traceback
@@ -210,8 +210,8 @@ endif
 
 ifeq ($(SYSTEM),pathf95)
 #  this is for the Pathscale f95 compiler
-   F90C= pathf95
-   F90FLAGS= -Ofast -mcmodel=medium
+   FC= pathf95
+   FFLAGS= -Ofast -mcmodel=medium
    DBLFLAGS= -r8
    DEBUGFLAG= -C -g
    OMPFLAGS= -openmp
@@ -231,8 +231,8 @@ endif
 
 ifeq ($(SYSTEM),ukaff1a)
 #  this is for ukaff1a
-   F90C= xlf90_r #-Wl,-t
-   F90FLAGS= -O3 -qnoescape -qsuffix=f=f90 -qextname 
+   FC= xlf90_r #-Wl,-t
+   FFLAGS= -O3 -qnoescape -qsuffix=f=f90 -qextname 
    OMPFLAGS= -qsmp=omp
    DEBUGFLAG= -C -g
    SYSTEMFILE= system_f2003.f90
@@ -245,8 +245,8 @@ endif
 
 ifeq ($(SYSTEM),ukaff1b)
 #  this is for the new nodes on ukaff 
-   F90C= pathf95
-   F90FLAGS= -Ofast -mcmodel=medium
+   FC= pathf95
+   FFLAGS= -Ofast -mcmodel=medium
    DEBUGFLAG= -C -g
    OMPFLAGS= -openmp
    SYSTEMFILE= system_f2003.f90
@@ -260,8 +260,8 @@ endif
 
 ifeq ($(SYSTEM),zen)
 #  this is for the intel fortran compiler
-   F90C= ifort
-   F90FLAGS= -O3 -mcmodel=medium -axT -warn all #-ipo #-assume nounderscore
+   FC= ifort
+   FFLAGS= -O3 -mcmodel=medium -axT -warn all #-ipo #-assume nounderscore
    OMPFLAGS= -openmp
    DEBUGFLAG= -check all -traceback -g
    SYSTEMFILE= system_f2003.f90
@@ -278,8 +278,8 @@ endif
 ifeq ($(SYSTEM),mymac)
 #  these are the settings for a Mac G4 running Panther 
 #  using g95 with pgplot installed via fink
-   F90C= g95
-   F90FLAGS= -O3 -ffast-math
+   FC= g95
+   FFLAGS= -O3 -ffast-math
    DEBUGFLAG= -Wall -Wextra -Wno=165 -g -fbounds-check -ftrace=full
    PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
@@ -291,8 +291,8 @@ endif
 ifeq ($(SYSTEM),intelmac)
 #  these are the settings for an Intel Macbook running Tiger
 #  using gfortran with pgplot installed via fink
-   F90C= gfortran
-   F90FLAGS= -O3 -ffast-math
+   FC= gfortran
+   FFLAGS= -O3 -ffast-math
    DEBUGFLAG= -Wall -Wextra -Wno=165 -g -frange-check
    PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -L/sw/lib -lpng \
           -laquaterm -Wl,-framework -Wl,Foundation -lSystemStubs
@@ -303,8 +303,8 @@ endif
 
 ifeq ($(SYSTEM), gfortran_macosx)
 #   gfortran with pgplot installed via fink
-    F90C= gfortran
-    F90FLAGS= -O3 -Wall
+    FC= gfortran
+    FFLAGS= -O3 -Wall
     PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
           -laquaterm # -lSystemStubs use this on OS/X Tiger
     SYSTEMFILE= system_unix.f90
@@ -317,8 +317,8 @@ endif
 
 ifeq ($(SYSTEM),myg95)
 #  using the g95 compiler
-   F90C= myg95
-   F90FLAGS= -O3 -ffast-math
+   FC= myg95
+   FFLAGS= -O3 -ffast-math
    X11LIBS= -L/usr/X11R6/lib64 -lX11
    PGPLOTLIBS = -L/usr/local64/pgplot -lpgplot -lpng -lg2c
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
@@ -333,13 +333,13 @@ ifeq ($(SYSTEM),maccluster)
 #  using the g95 compiler on the iMac cluster in Exeter
    ifeq ($(MACHTYPE),i386)
    #  this stuff is for building universal binaries across intel/ppc macs
-      F90C= myg95
+      FC= myg95
       EXT= _i386
    else
-      F90C= g95
+      FC= g95
       EXT= _ppc
    endif
-   F90FLAGS= -O3 -ffast-math -Wall -Wextra -Wno=165 
+   FFLAGS= -O3 -ffast-math -Wall -Wextra -Wno=165 
    X11LIBS= -L/usr/X11R6/lib -lX11
    PGPLOTLIBS= -lSystemStubs
    STATICLIBS= /AstroUsers/djp212/pgplot/libpgplot.a
@@ -353,8 +353,8 @@ endif
 
 ifeq ($(SYSTEM),astromac)
 #  using the g95 compiler on the Astrophysics cluster in Exeter
-   F90C= g95
-   F90FLAGS= -O3 -ffast-math -Wall -Wextra -Wno=165
+   FC= g95
+   FFLAGS= -O3 -ffast-math -Wall -Wextra -Wno=165
    X11LIBS= -L/usr/X11R6/lib -lX11
    PGPLOTLIBS= -L/opt/local/lib -lpng -lg2c
    STATICLIBS= /usr/local/pgplot/libpgplot.a
@@ -369,8 +369,8 @@ endif
 
 ifeq ($(SYSTEM),spectrum)
 #  sun f95 compiler on linux
-   F90C= f95
-   F90FLAGS= -fast -ftrap=%none
+   FC= f95
+   FFLAGS= -fast -ftrap=%none
    OMPFLAGS= -openmp
    DBLFLAGS= -xtypemap=real:64,double:64
    DEBUGFLAG= -g -C -w4 -errtags -erroff=COMMENT_1582,COMMENT_1744 -ftrap=%all
@@ -382,8 +382,8 @@ ifeq ($(SYSTEM),spectrum)
 endif
 
 ifeq ($(SYSTEM),cody)
-    F90C= gfortran
-    F90FLAGS= -O3 -Wall
+    FC= gfortran
+    FFLAGS= -O3 -Wall
     SYSTEMFILE= system_f2003.f90
     DBLFLAGS= -fdefault-real-8 -fdefault-double-8
     DEBUGFLAG= -g -frange-check
@@ -406,30 +406,30 @@ LDFLAGS= $(X11LIBS) $(PGPLOTLIBS)
 # (provided the appropriate flags are specified for the compiler)
 #
 ifeq ($(ENDIAN), BIG)
-    F90FLAGS += ${ENDIANFLAGBIG}
+    FFLAGS += ${ENDIANFLAGBIG}
 endif
 
 ifeq ($(ENDIAN), LITTLE)
-    F90FLAGS += ${ENDIANFLAGLITTLE}
+    FFLAGS += ${ENDIANFLAGLITTLE}
 endif
 
 # compile in parallel
 ifeq ($(PARALLEL),yes)
-    F90FLAGS += $(OMPFLAGS)
+    FFLAGS += $(OMPFLAGS)
 else
    ifeq ($(OPENMP),yes)
-      F90FLAGS += $(OMPFLAGS)
+      FFLAGS += $(OMPFLAGS)
    endif
 endif
 
 # compile in double precision
 ifeq ($(DOUBLEPRECISION), yes)
-    F90FLAGS += ${DBLFLAGS}
+    FFLAGS += ${DBLFLAGS}
 endif
 
 # add debugging flags at compile time
 ifeq ($(DEBUG),yes)
-    F90FLAGS += $(DEBUGFLAG)
+    FFLAGS += $(DEBUGFLAG)
 endif
 
 # rename the executable for development work
@@ -453,7 +453,7 @@ endif
 # if MPI is set to "yes"
 #
 ifeq ($(MPI),yes)
-    F90C= mpif90 -DPARALLEL_IO
+    FC= mpif90 -DPARALLEL_IO
     CC=mpicc -DPARALLEL_IO
 endif
 
@@ -472,8 +472,8 @@ ifeq ($(BACKEND),pgplot)
 
       PGPLOT_COMP=${shell if [ -e $$PGPLOT_DIR/makefile ]; then grep 'FCOMPL=' $$PGPLOT_DIR/makefile | cut -d= -f2; else echo unknown; fi}
 
-      ifneq (X$(F90C), X)  # make sure it is not just accidentally blank
-      ifneq ($(PGPLOT_COMP), $(F90C))
+      ifneq (X$(FC), X)  # make sure it is not just accidentally blank
+      ifneq ($(PGPLOT_COMP), $(FC))
 # g77-compiled PGPLOT
         ifeq ($(PGPLOT_COMP), g77)
            PGPLOTLIBS+=-lg2c
@@ -491,15 +491,24 @@ ifeq ($(BACKEND),pgplot)
    endif
 endif
 
+ifeq ($(FC),gfortran)
+  GFORTRAN_VERSION=${shell $(FC) -dumpversion | head -1 | awk '{print $$NF}'}
+  GFORTRAN_VMAJOR:=${shell echo "$(GFORTRAN_VERSION)" | cut -f1 -d.}
+  GFORTRAN_VMINOR:=${shell echo "$(GFORTRAN_VERSION)" | cut -f2 -d.}
+  GFORTRAN_GE_4_4:=$(shell [ $(GFORTRAN_VMAJOR) -gt 4 -o \( $(GFORTRAN_VMAJOR) -eq 4 -a $(GFORTRAN_VMINOR) -ge 4 \) ] && echo true)
+else
+  GFORTRAN_GE_4_4:=true
+endif
+
 # define the implicit rule to make a .o file from a .f90/.f95 file
 # (some Make versions don't know this)
 
 %.o : %.f90
-	$(F90C) $(F90FLAGS) -c $< -o $@
+	$(FC) $(FFLAGS) -c $< -o $@
 %.o : %.F90
-	$(F90C) $(FPPFLAGS) $(F90FLAGS) -c $< -o $@
+	$(FC) $(FPPFLAGS) $(FFLAGS) -c $< -o $@
 %.o : %.f95
-	$(F90C) $(F90FLAGS) -c $< -o $@
+	$(FC) $(FFLAGS) -c $< -o $@
 %.o : %.c
 	$(CC) -c $(CFLAGS) $(INCLUDES) $< -o $@
 
@@ -550,7 +559,7 @@ all: ascii gadget vine sphNG ndspmhd srosph dragon seren tipsy
 	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
 ascii: checksystem $(OBJECTS) read_data_ascii.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS)
 #--build universal binary on mac cluster
    ifeq ($(SYSTEM), maccluster)
 	lipo -create $(BINDIR)/asplash_ppc $(BINDIR)/asplash_i386 -output $(BINDIR)/asplash || cp $(BINDIR)/asplash$(EXT) $(BINDIR)/asplash
@@ -558,7 +567,7 @@ ascii: checksystem $(OBJECTS) read_data_ascii.o
 	cp $(BINDIR)/asplash $(BINDIR)/splash
 
 mbatesph: checksystem $(OBJECTS) read_data_mbate.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_mbate.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_mbate.o $(LDFLAGS)
 
 
 #---h5part reader---
@@ -567,10 +576,10 @@ H5PARTSRCF90=H5Part.f90 H5PartAttrib.f90
 H5PARTOBJ=$(H5PARTSRCC:.c=.o) $(H5PARTSRCF90:.f90=.o)
 
 h5part: checksystem checkh5part $(OBJECTS) $(H5PARTOBJ) read_data_h5part.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/h5splash $(OBJECTS) $(H5PARTOBJ) read_data_h5part.o $(LDFLAGS) $(H5PART_LIBS) $(HDF5LIBS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/h5splash $(OBJECTS) $(H5PARTOBJ) read_data_h5part.o $(LDFLAGS) $(H5PART_LIBS) $(HDF5LIBS)
 
 read_data_h5part.o: read_data_h5part.f90
-	$(F90C) $(F90FLAGS) $(H5PART_INCLUDE) -o $@ -c $<
+	$(FC) $(FFLAGS) $(H5PART_INCLUDE) -o $@ -c $<
 
 H5PartF.o: H5PartF.c
 	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
@@ -581,23 +590,23 @@ H5PartAttribF.o: H5PartAttribF.c
 #------------------
 
 gadget: checksystem $(OBJECTS) read_data_gadget.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o $(LDFLAGS)
 
 gadgetdualendian: checksystem $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o $(LDFLAGS)
 
 read_data_gadget_otherendian.o: read_data_gadget.o
 	cat read_data_gadget.f90 | awk "/subroutine read_data/,/end subroutine read_data/ { print }" | sed 's/subroutine read_data/subroutine read_data_otherendian/' > read_data_gadget_otherendian.f90 
-	$(F90C) $(F90FLAGS) $(ENDIANFLAGBIG) -c read_data_gadget_otherendian.f90 -o read_data_gadget_otherendian.o
+	$(FC) $(FFLAGS) $(ENDIANFLAGBIG) -c read_data_gadget_otherendian.f90 -o read_data_gadget_otherendian.o
 
 gadget_jsb: checksystem $(OBJECTS) read_data_gadget_jsb.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash-jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash-jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
 
 #---HDF5 gadget read ---
 gadgethdf5: gadget_hdf5
 
 gadget_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read_data_gadget_hdf5.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/gsplash-hdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read_data_gadget_hdf5.o $(LDFLAGS) $(HDF5LIBS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash-hdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read_data_gadget_hdf5.o $(LDFLAGS) $(HDF5LIBS)
 
 read_data_gadget_hdf5_utils.o: read_data_gadget_hdf5_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
@@ -605,31 +614,31 @@ read_data_gadget_hdf5_utils.o: read_data_gadget_hdf5_utils.c
 #------------------
 
 bauswein: checksystem $(OBJECTS) read_data_bauswein.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_bauswein.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_bauswein.o $(LDFLAGS)
 
 dragon: checksystem $(OBJECTS) read_data_dragon.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_dragon.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_dragon.o $(LDFLAGS)
 
 seren: checksystem $(OBJECTS) read_data_seren.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/srsplash $(OBJECTS) read_data_seren.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/srsplash $(OBJECTS) read_data_seren.o $(LDFLAGS)
 
 vine: checksystem $(OBJECTS) read_data_VINE.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/vsplash $(OBJECTS) read_data_VINE.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/vsplash $(OBJECTS) read_data_VINE.o $(LDFLAGS)
 
 kitp: checksystem $(OBJECTS) read_data_kitp.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/ksplash $(OBJECTS) read_data_kitp.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/ksplash $(OBJECTS) read_data_kitp.o
 
 ndspmhd: checksystem $(OBJECTS) read_data_dansph.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/nsplash $(OBJECTS) read_data_dansph.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/nsplash $(OBJECTS) read_data_dansph.o $(LDFLAGS)
 
 dansph: checksystem $(OBJECTS) read_data_dansph_old.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_dansph_old.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_dansph_old.o $(LDFLAGS)
 
 foulkes: checksystem $(OBJECTS) read_data_foulkes.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_foulkes.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_foulkes.o $(LDFLAGS)
 
 flash_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_flash_hdf5_utils.o read_data_flash_hdf5.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_flash_hdf5_utils.o read_data_flash_hdf5.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_flash_hdf5_utils.o read_data_flash_hdf5.o $(LDFLAGS)
 
 flashhdf5:
 	$(MAKE) flash_hdf5 HDF5=yes
@@ -640,34 +649,34 @@ read_data_flash_hdf5_utils.o: read_data_flash_hdf5_utils.c
 flash: flashhdf5
 
 jjm: checksystem $(OBJECTS) read_data_jjm.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jjm.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jjm.o $(LDFLAGS)
 
 jules: checksystem $(OBJECTS) read_data_jules.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jules.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jules.o $(LDFLAGS)
 
 oilonwater: checksystem $(OBJECTS) read_data_oilonwater.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/osplash $(OBJECTS) read_data_oilonwater.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/osplash $(OBJECTS) read_data_oilonwater.o $(LDFLAGS)
 
 RSPH: rsph
 
 rsph: checksystem $(OBJECTS) read_data_rsph.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/rsplash $(OBJECTS) read_data_rsph.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/rsplash $(OBJECTS) read_data_rsph.o $(LDFLAGS)
 
 scwsph: checksystem $(OBJECTS) read_data_scw.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/wsplash $(OBJECTS) read_data_scw.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/wsplash $(OBJECTS) read_data_scw.o $(LDFLAGS)
 
 snsplash: snsph
 snsph: $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o
-	$(FC) $(F90FLAGS) -o $(BINDIR)/snsplash $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o $(LDFLAGS) $(SNFLAGS) 
+	$(FC) $(FFLAGS) -o $(BINDIR)/snsplash $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o $(LDFLAGS) $(SNFLAGS) 
 
 srosph: checksystem $(OBJECTS) read_data_sro.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/rsplash $(OBJECTS) read_data_sro.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/rsplash $(OBJECTS) read_data_sro.o $(LDFLAGS)
 
 spyros: checksystem $(OBJECTS) read_data_spyros.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/ssplash $(OBJECTS) read_data_spyros.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/ssplash $(OBJECTS) read_data_spyros.o $(LDFLAGS)
 
 sphNG: checksystem $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/ssplash$(EXT) $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/ssplash$(EXT) $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o $(LDFLAGS)
 #--build universal binary on mac cluster
    ifeq ($(SYSTEM), maccluster)
 	lipo -create $(BINDIR)/ssplash_ppc $(BINDIR)/ssplash_i386 -output $(BINDIR)/ssplash || cp $(BINDIR)/ssplash$(EXT) $(BINDIR)/ssplash
@@ -676,22 +685,22 @@ sphNG: checksystem $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o
 read_data_sphNG_otherendian.o: read_data_sphNG.o
 	@echo "!--This file is automatically generated during the make: do not edit" > $(SRCDIR)/${@:.o=.f90}
 	cat $(SRCDIR)/read_data_sphNG.f90 | awk "/subroutine read_data/,/end subroutine read_data/ { print }" | sed 's/subroutine read_data/subroutine read_data_otherendian/' >> $(SRCDIR)/${@:.o=.f90}
-	$(F90C) $(F90FLAGS) $(ENDIANFLAGBIG) -c $(SRCDIR)/${@:.o=.f90} -o $@
+	$(FC) $(FFLAGS) $(ENDIANFLAGBIG) -c $(SRCDIR)/${@:.o=.f90} -o $@
 
 jjmmulti: checksystem $(OBJECTS) read_data_multiphase.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jjm_multiphase.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jjm_multiphase.o $(LDFLAGS)
 
 tipsy: checksystem $(OBJECTS) read_data_tipsy.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/tsplash $(OBJECTS) read_data_tipsy.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/tsplash $(OBJECTS) read_data_tipsy.o $(LDFLAGS)
 
 vanaverbeke: checksystem $(OBJECTS) read_data_vanaverbeke.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/vsplash $(OBJECTS) read_data_vanaverbeke.o $(LDFLAGS) 
+	$(FC) $(FFLAGS) -o $(BINDIR)/vsplash $(OBJECTS) read_data_vanaverbeke.o $(LDFLAGS) 
 
 ucla: checksystem $(OBJECTS) read_data_UCLA.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/usplash $(OBJECTS) read_data_UCLA.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/usplash $(OBJECTS) read_data_UCLA.o $(LDFLAGS)
 
 urban: checksystem $(OBJECTS) read_data_urban.o
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/usplash $(OBJECTS) read_data_urban.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/usplash $(OBJECTS) read_data_urban.o $(LDFLAGS)
 
 sky: ucla
 
@@ -707,7 +716,7 @@ SRCGRID2PDF= $(SYSTEMFILE) globaldata.f90 prompting.f90 transform.f90 \
              asciiutils.f90 write_griddata.f90 pdfs.f90 grid2pdf.f90
 OBJGRID2PDF= ${SRCGRID2PDF:.f90=.o}
 grid2pdf: checksystem $(OBJGRID2PDF)
-	$(F90C) $(F90FLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
 
 
 checksystem:
@@ -729,6 +738,13 @@ checksystem:
            else
 		@echo "Compiling the SERIAL code"
            endif
+        endif
+        ifeq ($(FC),gfortran)
+            ifeq ($(GFORTRAN_GE_4_4),true)
+		@echo "compiling with gfortran v$(GFORTRAN_VERSION) (OK)"
+            else
+		${error gfortran v$(GFORTRAN_VERSION) is too old to compile this version of splash: please upgrade your gfortran}
+            endif
         endif
    else
 	@echo ""
@@ -759,8 +775,8 @@ checkpgplot:
    else
 	@if [ -d $$PGPLOT_DIR ]; then echo; echo "PGPLOT_DIR=$$PGPLOT_DIR"; echo; else echo; echo "ERROR: Directory given by PGPLOT_DIR=$$PGPLOT_DIR does not exist"; echo; ${MAKE} err; fi;
    endif
-   ifneq ($(PGPLOT_COMP),$(F90C))
-	@echo; echo "*** WARNING: PGPLOT appears to have been compiled with a different Fortran"; echo "    compiler (${PGPLOT_COMP}) to the one you are using to compile SPLASH (${F90C}),"; echo "    so may need to link to the relevant compiler libraries ***";
+   ifneq ($(PGPLOT_COMP),$(FC))
+	@echo; echo "*** WARNING: PGPLOT appears to have been compiled with a different Fortran"; echo "    compiler (${PGPLOT_COMP}) to the one you are using to compile SPLASH (${FC}),"; echo "    so may need to link to the relevant compiler libraries ***";
 # g77-compiled PGPLOT
 	@if [ "${PGPLOT_COMP}" = "g77" ]; then echo "    [Adding -lg2c to the link flags for g77-compiled PGPLOT]"; fi;
 # gfortran-compiled PGPLOT
@@ -826,7 +842,7 @@ plotlib_pgplot.o: checkpgplot
 plotlib_giza.o : giza-fortran.o
 
 giza-fortran.o : giza-fortran.F90 $(GIZADIR)/lib/libgiza.a 
-	$(F90C) $(F90FLAGS) -I$(GIZADIR)/include/ -c $< -o $@
+	$(FC) $(FFLAGS) -I$(GIZADIR)/include/ -c $< -o $@
 
 .PHONY: gizabuild libgiza
 
@@ -876,15 +892,15 @@ targz:
 tests: test1 test2 test3 test_slicer test_prompt
 
 test1: interpolate3D_projection.o interpolate3D_xsec.o test_interpolate3D.o 
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_interpolation3D test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_interpolation3D test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
 test2: transform.o ./tests/test_transform.o 
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_transform ./tests/test_transform.o transform.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_transform ./tests/test_transform.o transform.o
 test3: fieldlines.o ./tests/test_fieldlines.o 
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_fieldlines ./tests/test_fieldlines.o fieldlines.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_fieldlines ./tests/test_fieldlines.o fieldlines.o
 test_slicer: interpolate3D_projection.o interpolate3D_xsec.o test_slicer3D.o 
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_slicer3D test_slicer3D.o interpolate3D_projection.o interpolate3D_xsec.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_slicer3D test_slicer3D.o interpolate3D_projection.o interpolate3D_xsec.o
 test_prompt: prompting.o test_prompting.o
-	$(F90C) $(F90FLAGS) $(LDFLAGS) -o $(BINDIR)/test_prompt prompting.o test_prompting.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_prompt prompting.o test_prompting.o
 
 #
 #--code dependencies: MAY BE INCOMPLETE - I generate this automatically every so often
