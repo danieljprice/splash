@@ -448,7 +448,7 @@ subroutine submenu_legend(ichoose)
        i1 = i2 + 1
        i2 = min(i1 + len_trim(labelshapetype(shape(i)%itype)),len(string))
        write(string(i1:i2),"(a)",iostat=ierr) trim(labelshapetype(shape(i)%itype)(1:i2-i1))
-       if (i.lt.nshapes) then
+       if (i.lt.nshapes .and. i2.lt.len(string)) then
           write(string(i2:i2+1),"(', ')",iostat=ierr)
           i2 = i2 + 1
        endif
