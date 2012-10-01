@@ -108,12 +108,12 @@ subroutine submenu_render(ichoose)
         string = 'AUTO'
      endif
      kname = ''
-     if (ikernel.ge.0 .and. ikernel.le.nkernels) kname = kernelname(ikernel)
+     if (ikernel.ge.0 .and. ikernel.le.nkernels) kname = trim(kernelname(ikernel))
      print 10,trim(string),icolours,print_logical(iplotcont_nomulti),ncontours, &
            iColourBarStyle,print_logical(icolour_particles), &
            print_logical(inormalise_interpolations),print_logical(ifastrender),&
            print_logical(idensityweightedinterpolation),trim(projlabelformat),&
-           trim(kernelname(ikernel))
+           trim(kname)
 10   format( &
           ' 0) exit ',/,                      &
           ' 1) set number of pixels               ( ',a,' )',/, &
