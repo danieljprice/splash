@@ -516,7 +516,8 @@ endif
 # really should include all dependencies but I am lazy
 
 SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 setpage.f90 transform.f90 \
-         prompting.f90 promptlist.f90 geometry.f90 kernels.f90 interpolation.f90 plotutils.f90 colourbar.f90 \
+         prompting.f90 promptlist.f90 geometry.f90 geomutils.f90 kernels.f90 \
+         interpolation.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 units.f90 \
          limits.f90 write_data_gadget.f90 write_data_phantom.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \

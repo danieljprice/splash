@@ -71,11 +71,12 @@ end function issphformat
 subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,ncolumns,filename,outformat)
  use labels,         only:labeltype,label,irho,ipmass,ix
  use settings_units, only:unitslabel,units
- use settings_data,  only:ndim
- use params,         only:int1
+ use settings_data,  only:ndim,icoords,icoordsnew
+ use params,         only:int1,maxplot,doub_prec
  use write_data_phantom, only:write_sphdata_phantom
  use write_data_gadget,  only:write_sphdata_gadget
  use filenames,      only:tagline
+ use geomutils,      only:change_coords
  implicit none
  integer, intent(in)                          :: npart,ntypes,ncolumns
  integer, intent(in), dimension(:)            :: npartoftype
@@ -88,6 +89,9 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  integer, parameter :: maxline = 1000
  integer            :: ierr,i,idim,i1,i2
  character(len=40)  :: fmtstring,fmtstring2,fmtstringlab,outfile
+ real(kind=doub_prec), dimension(maxplot) :: vals
+ real, dimension(3) :: x0
+ logical :: change_coordsys
 
  select case(trim(outformat))
  case ('ascii','ASCII')
@@ -120,16 +124,29 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
        !
        !--write body
        !
+       change_coordsys = (icoordsnew.ne.icoords .and. ndim.gt.0 .and. all(ix(1:ndim).gt.0))
+       x0 = 0.
+       
        if (size(itype).gt.1) then
           write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns),'itype'
           do i=1,npart
-             write(iunit,fmtstring2,err=100) dat(i,1:ncolumns),itype(i)
+             vals(1:ncolumns) = dat(i,1:ncolumns)
+             if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0)
+             write(iunit,fmtstring2,err=100) vals(1:ncolumns),itype(i)
           enddo
        else
           write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns)
-          do i=1,npart
-             write(iunit,fmtstring,err=100) dat(i,1:ncolumns)
-          enddo
+          if (change_coordsys) then
+             do i=1,npart
+                vals(1:ncolumns) = dat(i,1:ncolumns)
+                call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0)
+                write(iunit,fmtstring,err=100) vals(1:ncolumns)
+             enddo
+          else
+             do i=1,npart
+                write(iunit,fmtstring,err=100) dat(i,1:ncolumns)
+             enddo
+          endif
        endif
     close(iunit)
 

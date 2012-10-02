@@ -595,18 +595,18 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
   use params,         only:maxplot
   use timing,         only:wall_time,print_time
-  use geometry,       only:coord_transform,vector_transform
+  use geomutils,      only:change_coords
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
-  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,iamvecprev,icol
+  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused
   logical :: skip
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
 !  real, parameter :: lightspeed = 3.e10   ! in cm/s (cgs)
   real(kind=rn), dimension(maxplot+nextravars)          :: vals
   character(len=lenvars), dimension(maxplot+nextravars) :: vars
-  real, dimension(3) :: x0,xcoords,xcoordsnew,vecnew
+  real, dimension(3) :: x0
   real :: t1,t2
 
   !
@@ -719,26 +719,10 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                  !
                  do j=1,ntoti
                     vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
-
-                    !--perform transformations on coordinates
-                    xcoords(1:ndim) = dat(j,ix(1:ndim),i) - x0(1:ndim)
-                    call coord_transform(xcoords(1:ndim),ndim,icoords,xcoordsnew(1:ndim),ndim,icoordsnew)
-                    vals(ix(1:ndim)) = xcoordsnew(1:ndim)
-                    
-                    !--transform all vector quantities to new coord system
-                    iamvecprev = 0
-                    do icol=1,ncolumns+icalc-ndim
-                       if (iamvec(icol).gt.0 .and. iamvec(icol).ne.iamvecprev) then                          
-                          iamvecprev = iamvec(icol)
-                          call vector_transform(xcoords(1:ndim),dat(j,iamvec(icol):iamvec(icol)+ndim-1,i), &
-                                      ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
-                          vals(iamvec(icol):iamvec(icol)+ndim-1) = vecnew(1:ndim)
-                       endif
-                    enddo
-                    
+                    call change_coords(vals(1:ncolumns+icalc-1),ncolumns+icalc-1,ndim,icoords,icoordsnew,x0)
                     !--evaluate function with transformed values
                     dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
-                 enddo              
+                 enddo
               else
                  !!$omp parallel do default(none) private(j,vals) shared(dat,i,icalc,ncolumns)
                  do j=1,ntoti
