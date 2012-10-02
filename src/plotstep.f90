@@ -670,6 +670,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use pdfs,                  only:pdf_calc,pdf_write
   use plotutils,             only:plotline
   use geometry,              only:coord_is_length
+  use geomutils,             only:changecoords,changeveccoords
   use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
                                   plot_line,plot_pt1,plotlib_is_pgplot,plotlib_supports_alpha
   implicit none
@@ -1041,9 +1042,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !
         if (icoordsnew.ne.icoords) then
            !--do this if one is a coord but not if rendering
-           call changecoords(iplotx,iploty,xplot,yplot,ntoti)
-           if (iamvecx.gt.0) call changeveccoords(iplotx,xplot,ntoti)
-           if (iamvecy.gt.0) call changeveccoords(iploty,yplot,ntoti)
+           call changecoords(iplotx,iploty,xplot,yplot,ntoti,ndim,dat)
+           if (iamvecx.gt.0) call changeveccoords(iplotx,xplot,ntoti,ndim,dat)
+           if (iamvecy.gt.0) call changeveccoords(iploty,yplot,ntoti,ndim,dat)
         endif
 
         !--apply transformations (log, 1/x etc) if appropriate
@@ -3118,98 +3119,6 @@ contains
     enddo
 
   end subroutine set_grid1D
-
-!-------------------------------------------------------------------
-! interface to coordinate-system transformations
-!-------------------------------------------------------------------
-  subroutine changecoords(iplotx,iploty,xplot,yplot,ntot)
-   use geometry,      only:coord_transform,labelcoordsys
-   use settings_data, only:xorigin
-   use labels,        only:is_coord
-   implicit none
-   integer, intent(in) :: iplotx,iploty,ntot
-   real, dimension(:), intent(inout) :: xplot,yplot
-   real, dimension(ndim) :: xcoords,xcoordsnew
-   integer :: j,ixcoord,iycoord
-   logical :: iscoordx,iscoordy
-
-   iscoordx = is_coord(iplotx,ndim)
-   iscoordy = is_coord(iploty,ndim)
-   if (iscoordx .or. iscoordy) then
-      print*,'changing coords from ',trim(labelcoordsys(icoords)), &
-             ' to ',trim(labelcoordsys(icoordsnew))
-      if (itrackpart.gt.0) print*,' (relative to particle ',itrackpart,')'
-
-      !--get offsets in range 1->ndim for the case where particle
-      !  coords are not first in plot arrays
-      ixcoord = iplotx - ix(1) + 1
-      if (iscoordx .and. (ixcoord.le.0 .or. ixcoord.gt.ndim)) then
-         print*,'ERROR in x coordinate offset in arrays: cannot change coordinate system'
-         return
-      endif
-      iycoord = iploty - ix(1) + 1
-      if (iscoordy .and. (iycoord.le.0 .or. iycoord.gt.ndim)) then
-         print*,'ERROR in y coordinate offset in arrays: cannot change coordinate system'
-         return
-      endif
-
-      do j=1,ntot
-         if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
-            xcoords(1:ndim) = dat(j,ix(1:ndim)) - dat(itrackpart,ix(1:ndim))
-         else
-            xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
-         endif
-
-         call coord_transform(xcoords(1:ndim),ndim,icoords, &
-                              xcoordsnew(1:ndim),ndim,icoordsnew)
-         if (iscoordx) xplot(j) = xcoordsnew(ixcoord)
-         if (iscoordy) yplot(j) = xcoordsnew(iycoord)
-      enddo
-   endif
-
-  end subroutine changecoords
-
-!-------------------------------------------------------------------
-! interface to coordinate-system transformations for vectors
-!-------------------------------------------------------------------
-  subroutine changeveccoords(iplot,xploti,ntot)
-   use geometry, only:vector_transform,labelcoordsys
-   use settings_data, only:xorigin
-   use labels, only:ivx
-   implicit none
-   integer, intent(in) :: iplot,ntot
-   real, dimension(:), intent(inout) :: xploti
-   integer :: j
-   real, dimension(ndim) :: xcoords,vecnew,vecin
-
-   if (iamvec(iplot).gt.0) then
-      if (iplot-iamvec(iplot)+1 .le. ndim) then
-         print*,'changing vector component from ', &
-          trim(labelcoordsys(icoords)),' to ',trim(labelcoordsys(icoordsnew))
-         if (itrackpart.gt.0 .and. iamvec(iplot).eq.ivx) print*,' (velocities relative to particle ',itrackpart,')'
-         do j=1,ntot
-            if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
-               xcoords(1:ndim) = dat(j,ix(1:ndim)) - dat(itrackpart,ix(1:ndim))
-               if (iamvec(iplot).eq.ivx) then
-                  vecin(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1) - dat(itrackpart,iamvec(iplot):iamvec(iplot)+ndim-1)
-               else
-                  vecin(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1)
-               endif
-            else
-               xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
-               vecin(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1)
-            endif
-            call vector_transform(xcoords(1:ndim),vecin(1:ndim), &
-                 ndim,icoords,vecnew(1:ndim),ndim,icoordsnew)
-            xploti(j) = vecnew(iplot-iamvec(iplot)+1)
-         enddo
-      else
-         print*,'error: can''t convert vector components with ndimV > ndim'
-      endif
-   endif
-
-   return
-  end subroutine changeveccoords
 
 !-------------------------------------------------------------------
 ! interface for setting limits when using particle tracking limits
