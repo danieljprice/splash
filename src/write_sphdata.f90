@@ -71,7 +71,7 @@ end function issphformat
 subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,ncolumns,filename,outformat)
  use labels,         only:labeltype,label,irho,ipmass,ix
  use settings_units, only:unitslabel,units
- use settings_data,  only:ndim,icoords,icoordsnew
+ use settings_data,  only:ndim,icoords,icoordsnew,xorigin
  use params,         only:int1,maxplot,doub_prec
  use write_data_phantom, only:write_sphdata_phantom
  use write_data_gadget,  only:write_sphdata_gadget
@@ -125,9 +125,9 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
        !--write body
        !
        change_coordsys = (icoordsnew.ne.icoords .and. ndim.gt.0 .and. all(ix(1:ndim).gt.0))
-       x0 = 0.
-       v0 = 0.
-       
+       x0 = xorigin(:)  ! note that it is not currently possible to do splash to ascii
+       v0 = 0.          ! with coords set relative to a tracked particle, so just use xorigin
+
        if (size(itype).gt.1) then
           write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns),'itype'
           do i=1,npart
