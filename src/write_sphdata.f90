@@ -90,7 +90,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  integer            :: ierr,i,idim,i1,i2
  character(len=40)  :: fmtstring,fmtstring2,fmtstringlab,outfile
  real(kind=doub_prec), dimension(maxplot) :: vals
- real, dimension(3) :: x0
+ real, dimension(3) :: x0,v0
  logical :: change_coordsys
 
  select case(trim(outformat))
@@ -126,12 +126,13 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
        !
        change_coordsys = (icoordsnew.ne.icoords .and. ndim.gt.0 .and. all(ix(1:ndim).gt.0))
        x0 = 0.
+       v0 = 0.
        
        if (size(itype).gt.1) then
           write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns),'itype'
           do i=1,npart
              vals(1:ncolumns) = dat(i,1:ncolumns)
-             if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0)
+             if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
              write(iunit,fmtstring2,err=100) vals(1:ncolumns),itype(i)
           enddo
        else
@@ -139,7 +140,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
           if (change_coordsys) then
              do i=1,npart
                 vals(1:ncolumns) = dat(i,1:ncolumns)
-                call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0)
+                call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
                 write(iunit,fmtstring,err=100) vals(1:ncolumns)
              enddo
           else

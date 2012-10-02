@@ -39,14 +39,14 @@ contains
 ! and components of vectors)
 ! this version uses DOUBLE PRECISION for vals
 !-----------------------------------------------------------------
-subroutine change_coords(vals,ncols,ndim,icoords,icoordsnew,x0)
+subroutine change_coords(vals,ncols,ndim,icoords,icoordsnew,x0,v0)
  use params,        only:doub_prec
  use geometry,      only:coord_transform,vector_transform
- use labels,        only:ix,iamvec
+ use labels,        only:ix,iamvec,ivx
  implicit none
  integer,                intent(in)    :: ncols,ndim,icoords,icoordsnew
  real(kind=doub_prec), dimension(ncols), intent(inout) :: vals
- real, dimension(ndim),  intent(in)    :: x0
+ real, dimension(ndim),  intent(in)    :: x0,v0
  real, dimension(ndim) :: xcoords,xcoordsnew,vec,vecnew
  integer :: iamvecprev,icol
 
@@ -60,7 +60,11 @@ subroutine change_coords(vals,ncols,ndim,icoords,icoordsnew,x0)
  do icol=1,ncols - ndim + 1
     if (iamvec(icol).gt.0 .and. iamvec(icol).ne.iamvecprev) then                          
        iamvecprev = iamvec(icol)
-       vec(1:ndim) = vals(iamvec(icol):iamvec(icol)+ndim-1)
+       if (icol.eq.ivx) then
+          vec(1:ndim) = vals(iamvec(icol):iamvec(icol)+ndim-1) - v0(1:ndim)       
+       else
+          vec(1:ndim) = vals(iamvec(icol):iamvec(icol)+ndim-1)
+       endif
        call vector_transform(xcoords,vec,ndim,icoords,vecnew,ndim,icoordsnew)
        vals(iamvec(icol):iamvec(icol)+ndim-1) = vecnew(1:ndim)
     endif
@@ -137,12 +141,15 @@ subroutine changeveccoords(iplot,xploti,ntot,ndim,dat)
     if (iplot-iamvec(iplot)+1 .le. ndim) then
        print*,'changing vector component from ', &
         trim(labelcoordsys(icoords)),' to ',trim(labelcoordsys(icoordsnew))
-       if (itrackpart.gt.0 .and. iamvec(iplot).eq.ivx) print*,' (velocities relative to particle ',itrackpart,')'
+       if (itrackpart.gt.0 .and. iamvec(iplot).eq.ivx) then
+          print*,' (velocities relative to particle ',itrackpart,')'
+       endif
        do j=1,ntot
           if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
              xcoords(1:ndim) = dat(j,ix(1:ndim)) - dat(itrackpart,ix(1:ndim))
              if (iamvec(iplot).eq.ivx) then
-                vecin(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1) - dat(itrackpart,iamvec(iplot):iamvec(iplot)+ndim-1)
+                vecin(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1) &
+                                - dat(itrackpart,iamvec(iplot):iamvec(iplot)+ndim-1)
              else
                 vecin(1:ndim) = dat(j,iamvec(iplot):iamvec(iplot)+ndim-1)
              endif

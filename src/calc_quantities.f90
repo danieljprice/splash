@@ -586,7 +586,7 @@ end subroutine get_calc_data_dependencies
 !
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
-  use labels,         only:label,labelvec,iamvec,ix
+  use labels,         only:label,labelvec,iamvec,ix,ivx
   use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol
   use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,itrackpart,ndim,required,iverbose, &
                            icoords,icoordsnew,ipartialread
@@ -606,7 +606,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
 !  real, parameter :: lightspeed = 3.e10   ! in cm/s (cgs)
   real(kind=rn), dimension(maxplot+nextravars)          :: vals
   character(len=lenvars), dimension(maxplot+nextravars) :: vars
-  real, dimension(3) :: x0
+  real, dimension(3) :: x0,v0
   real :: t1,t2
 
   !
@@ -681,6 +681,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
         !
         !--set origin position
         !
+        v0(:) = 0.
         if (itrackpart.gt.0 .and. itrackpart.le.ntoti) then
            x0(:) = 0.
            if (ix(1).gt.0 .and. ix(1).le.ncolumns) then
@@ -693,6 +694,9 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
            if (i.eq.ifromstep) then
               print "(a,i10)",' using position of tracked particle ',itrackpart
               print "(a,3(e11.3),/)",' (x0,y0,z0) = ',dat(itrackpart,ix(1:ndim),i)
+           endif
+           if (ivx.gt.0 .and. ivx+ndim-1.le.ncolumns) then
+              v0(1:ndim) = dat(itrackpart,ivx:ivx+ndim-1,i)
            endif
         else
            x0(:) = xorigin(:)
@@ -719,7 +723,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                  !
                  do j=1,ntoti
                     vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
-                    call change_coords(vals(1:ncolumns+icalc-1),ncolumns+icalc-1,ndim,icoords,icoordsnew,x0)
+                    call change_coords(vals(1:ncolumns+icalc-1),ncolumns+icalc-1,ndim,icoords,icoordsnew,x0(1:ndim),v0(1:ndim))
                     !--evaluate function with transformed values
                     dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
                  enddo
