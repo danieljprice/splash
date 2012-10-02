@@ -546,58 +546,6 @@ CONTAINS
     END DO
   END SUBROUTINE Replace
   !
-!  SUBROUTINE Substitute (ca,cb,string,ierr)
-!    !----- -------- --------- --------- --------- --------- --------- --------- -------
-!    ! Routine added by D. Price:
-!    ! Replace ALL appearances of character set ca in string str by character set cb
-!    ! This version accepts replacement strings of differing lengths
-!    ! Returns an error if string is too short for the replacement to happen
-!    ! Adjusts the ipos array appropriately (must be called AFTER a call to RemoveSpaces)
-!    !----- -------- --------- --------- --------- --------- --------- --------- -------
-!    IMPLICIT NONE
-!    CHARACTER (LEN=*),       INTENT(in) :: ca
-!    CHARACTER (LEN=*),       INTENT(in) :: cb   ! LEN(ca) can be different to LEN(cb)
-!    CHARACTER (LEN=*),    INTENT(inout) :: string
-!    INTEGER, INTENT(OUT)                :: ierr
-!    INTEGER                             :: j,lstr,k
-!    !----- -------- --------- --------- --------- --------- --------- --------- -------
-!    ierr = 0
-!    j = index(string,ca)
-!    lstr = len(string)
-!    do while(j.gt.0)
-!       if ((j+len(ca)).gt.lstr .or. &
-!            j+len_trim(cb).gt.lstr) ierr = 1  ! return error about string truncation
-!
-!       if (len(cb).gt.len(ca)) then
-!          do k=min(len_trim(string)+len(cb)-len(ca),lstr),j+len(cb),-1
-!             ipos(k) = ipos(max(k-(len(cb)-len(ca)),1))
-!          enddo
-!          ipos(j:min(j+len(cb)-1,lstr)) = ipos(j)
-!       elseif (len(cb).lt.len(ca)) then
-!          do k = j+len(cb),len_trim(string)
-!             ipos(k) = ipos(min(k+(len(ca)-len(cb)),lstr))
-!          enddo
-!       endif
-!       string = string(1:j-1)//cb//string(j+len(ca):lstr)
-!       j = index(string,ca)
-!    enddo
-!
-!  END SUBROUTINE Substitute
-!  !
-!  SUBROUTINE GetConstants(string)
-!    !----- -------- --------- --------- --------- --------- --------- --------- -------
-!    ! Routine added by D. Price:
-!    ! substitutes for Mathematical constants (e.g. pi)
-!    !----- -------- --------- --------- --------- --------- --------- --------- -------
-!    IMPLICIT NONE
-!    CHARACTER(LEN=*), INTENT(INOUT) :: string
-!    INTEGER :: ierr
-!
-!    CALL Substitute('pi','3.1415926536d0',string,ierr)
-!    if (ierr /= 0) ParseErrType = 2
-!
-!  END SUBROUTINE GetConstants
-  !
   SUBROUTINE Compile (i, F, Var)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     ! Compile i-th function string F into bytecode
