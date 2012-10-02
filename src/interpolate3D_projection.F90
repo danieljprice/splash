@@ -59,7 +59,7 @@ subroutine setup_integratedkernel
  real :: rxy2,deltaz,dz,z,q2,wkern,coldens
  integer, parameter :: npts = 100
 
- print "(1x,a)",'setting up integrated kernel table...'
+ !print "(1x,a)",'setting up integrated kernel table...'
  dq2table = radkernel2/maxcoltable
  ddq2table = 1./dq2table
 
