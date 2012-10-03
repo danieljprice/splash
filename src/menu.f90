@@ -204,14 +204,14 @@ subroutine menu
            ! -> also do not allow if transformations are applied
            !
            if (is_coord(ipicky,ndim) .and. is_coord(ipickx,ndim) .and. iAllowRendering) then
-              call prompt('(render) (0=none)',irender,0,numplot)
+              call prompt('(render) (0=none)',irender,0,(numplot-nextra))
               if (irender.gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
                  if (double_rendering) then
                     rprompt = '2nd render'
                  else
                     rprompt = 'contours'
                  endif
-                 call prompt('('//trim(rprompt)//') (0=none)',icontourplot,0,numplot)
+                 call prompt('('//trim(rprompt)//') (0=none)',icontourplot,0,(numplot-nextra))
                  if (icontourplot.eq.irender) then
                     if (iadapt) then
                        print "(a)",' limits for '//trim(rprompt)//' are adaptive'
@@ -445,14 +445,14 @@ subroutine menu
       if (icoordplot) anycoordplot = icoordplot
 
       if (icoordplot .and.iAllowRendering) then
-         call prompt('(render) (0=none)',irendermulti(i),0,numplot)
+         call prompt('(render) (0=none)',irendermulti(i),0,numplot-nextra)
          if (irendermulti(i).gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
             if (double_rendering) then
                rprompt = '2nd render'
             else
                rprompt = 'contours'
             endif
-            call prompt('('//trim(rprompt)//') (0=none)',icontourmulti(i),0,numplot)
+            call prompt('('//trim(rprompt)//') (0=none)',icontourmulti(i),0,numplot-nextra)
             if (icontourmulti(i).eq.irendermulti(i)) then
                if (iadapt) then
                   print "(a)",' limits for '//trim(rprompt)//' are adaptive '
