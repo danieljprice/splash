@@ -1519,7 +1519,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           !!--do fast projection of z integrated data (e.g. column density)
                           if (icoordsnew.ne.icoords) then
                              call interpolate3D_proj_geom( &
-                                  dat(1:ninterp,iplotx),dat(1:ninterp,iploty),dat(1:ninterp,iplotz), &
+                                  dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
                                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix)

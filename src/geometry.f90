@@ -465,7 +465,7 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
     print*,'Error: limits coord transform: ndim invalid on input'
     return
  endif
- print*,'modifying plot limits for new coordinate system'
+ !print*,'modifying plot limits for new coordinate system'
 !
 !--by default do nothing
 !
@@ -559,8 +559,8 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
        !--rmin, rmax
        xmintemp(1) = 0.
        if (ndim.ge.2) then
-          xmaxtemp(1) = max(maxval(abs(xmin(1:max(2,ndim)))), &
-                         maxval(abs(xmax(1:max(2,ndim)))))
+          xmaxtemp(1) = sqrt(max((xmin(1)**2 + xmin(2)**2), &
+                                 (xmax(1)**2 + xmax(2)**2)))
           xmintemp(2) = -pi
           xmaxtemp(2) = pi
        else

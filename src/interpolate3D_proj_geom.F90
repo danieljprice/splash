@@ -78,7 +78,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,igeom,&
      iplotx,iploty,iplotz,ix)
 
-  use geometry, only:igeom_cartesian,coord_transform,coord_is_length
+  use geometry, only:igeom_cartesian,coord_transform,coord_is_length, &
+                     coord_transform_limits
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real,    intent(in), dimension(npart) :: x,y,z,hh,weight,dat
@@ -90,7 +91,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   integer, dimension(3), intent(in) :: ix
   real, dimension(npixx,npixy) :: datnorm
 
-  integer :: ipix,jpix,ixcoord,iycoord,izcoord
+  integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  integer :: ixcoord,iycoord,izcoord
   integer :: iprintinterval, iprintnext, itmin
 #ifdef _OPENMP
   integer :: omp_get_num_threads,i
@@ -98,7 +100,9 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   integer(kind=selected_int_kind(10)) :: iprogress,i  ! up to 10 digits
 #endif
   real, dimension(3) :: xcoord, xpix
-  real :: hi,hi1,hi21,radkern,wab,q2,xci(3),xminpix,yminpix
+  real, dimension(3), save :: xpixmin, xpixmax, xci
+!$omp threadprivate(xpixmin,xpixmax,xci)
+  real :: hi,hi1,hi21,radkern,wab,q2,xminpix,yminpix
   real :: term,termnorm,dx,dx2,dy,dy2
   real :: xmax,ymax
   real :: t_start,t_end,t_used,tsec
@@ -183,10 +187,10 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,ixcoord,iycoord,izcoord,islengthx,islengthy,islengthz,igeom) &
 !$omp shared(datnorm,normalise,radkernel,radkernel2) &
-!$omp private(hi,xci,radkern) &
+!$omp private(hi,radkern) &
 !$omp private(hi1,hi21,term,termnorm) &
 !$omp private(q2,dx,dx2,dy,dy2,wab,xcoord,xpix) &
-!$omp private(i,ipix,jpix)
+!$omp private(i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax)
 !$omp master
 !$    print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 !$omp end master
@@ -216,13 +220,42 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      if (hi.le.0.) cycle over_particles
 
      radkern = radkernel*hi ! radius of the smoothing kernel
-
-     xci(1) = sqrt(x(i)**2 + z(i)**2)
-     if (xci(1).lt.0.) print*,'error r < 0',xci(1)
+     
+     !
+     !--get limits of contribution from particle in cartesian space
+     !
+     xci(1) = x(i)
      xci(2) = y(i)
      xci(3) = z(i)
-     !--get particle coords in new coord system
-     !call coord_transform(xci(:),3,igeom_cartesian,xi(:),3,igeom)
+     xpixmin(:) = xci(:) - radkern
+     xpixmax(:) = xci(:) + radkern
+     !
+     !--transform these into limits of the contributions 
+     !  in the new coordinate system
+     !
+     !print*,' limits in cart = ',(xpixmin(ipix),xpixmax(ipix),ipix=1,3)
+     call coord_transform_limits(xpixmin,xpixmax,igeom_cartesian,igeom,3)
+     !print*,' limits in cyl  = ',(xpixmin(ipix),xpixmax(ipix),ipix=1,3)
+     !read*
+     !
+     !--now work out contributions to pixels in the the transformed space
+     !
+     ipixmax = int((xpixmax(ixcoord) - xmin)/pixwidthx)
+     if (ipixmax.lt.1) cycle over_particles
+     jpixmax = int((xpixmax(iycoord) - ymin)/pixwidthy)
+     if (jpixmax.lt.1) cycle over_particles
+
+     ipixmin = int((xpixmin(ixcoord) - xmin)/pixwidthx)
+     if (ipixmin.gt.npixx) cycle over_particles
+     jpixmin = int((xpixmin(iycoord) - ymin)/pixwidthy)
+     if (jpixmin.gt.npixy) cycle over_particles
+     
+     if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
+     if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
+     if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
+     if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
+     !print*,i,' contributing to ',ipixmin,ipixmax,jpixmin,jpixmax
+     !read*
      !
      !--set kernel related quantities
      !
@@ -241,20 +274,21 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      !--loop over pixels, adding the contribution from this particle
      !
      if (islengthz) then
-        xcoord(izcoord) = 1. !xci(3)     
+        xcoord(izcoord) = 1. !xci(izcoord)     
      else
         xcoord(izcoord) = 0. ! use phi=0 so get x = r cos(phi) = r
      endif
-     do jpix = 1,npixy
+     do jpix = jpixmin,jpixmax
         xcoord(iycoord) = yminpix + jpix*pixwidthy
-        do ipix = 1,npixx
+        do ipix = ipixmin,ipixmax
            xcoord(ixcoord) = xminpix + ipix*pixwidthx
-           xpix(:) = xcoord(:)
-           !call coord_transform(xcoord(:),3,igeom,xpix(:),3,igeom_cartesian)
            
-!           !--this is in cartesians
-           dy   = xpix(iycoord) - xci(2)
-           dx   = xpix(ixcoord) - xci(1)
+           !--now transform to get location of pixel in cartesians
+           call coord_transform(xcoord,3,igeom,xpix,3,igeom_cartesian)
+           
+           !--find distances using cartesians and perform interpolation
+           dy   = xpix(iycoord) - xci(iycoord)
+           dx   = xpix(ixcoord) - xci(ixcoord)
 
            dx2  = dx*dx
            dy2  = dy*dy
