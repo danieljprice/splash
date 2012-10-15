@@ -302,7 +302,8 @@ program splash
 !----------------------------------------------------------------------------------
   use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile, &
                       fileprefix,set_filenames
-  use getdata,   only:get_data,set_coordlabels
+  use getdata,   only:get_data
+  use geomutils, only:set_coordlabels
   use defaults,  only:defaults_set_initial,defaults_set,defaults_read
   use limits,    only:read_limits
   use kernels,   only:ikernel,select_kernel_by_name,select_kernel

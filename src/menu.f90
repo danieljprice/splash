@@ -48,7 +48,8 @@ subroutine menu
   use prompting,        only:prompt,print_logical
   use transforms,       only:transform_label
   use defaults,         only:defaults_write
-  use getdata,          only:get_data,set_coordlabels
+  use getdata,          only:get_data
+  use geomutils,        only:set_coordlabels
   use timestepping
   implicit none
   integer            :: i,icol,ihalf,iadjust,indexi,ierr

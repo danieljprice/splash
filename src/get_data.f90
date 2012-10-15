@@ -33,9 +33,8 @@
 !
 module getdata
  implicit none
- public           :: get_data, get_labels, set_coordlabels
+ public           :: get_data, get_labels
  integer, private :: ncolumnsfirst
- integer, private :: icoordsprev = -1
 
  private
 
@@ -47,7 +46,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use filenames,      only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
   use limits,         only:set_limits
   use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata,    &
-                      DataisBuffered,iCalcQuantities,ndim,iverbose, &
+                      DataisBuffered,iCalcQuantities,ndim,iverbose,ntypes, &
                       iRescale,required,ipartialread,lowmemorymode,debugmode
   use settings_data,  only:iexact
   use particle_data,  only:dat,time,npartoftype,maxcol
@@ -56,13 +55,15 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use calcquantities, only:calc_quantities
   use settings_units, only:units
   use timing,         only:wall_time,print_time
+  use settings_part,  only:iplotpartoftype
+  use geomutils,      only:set_coordlabels
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
   logical, intent(in), optional :: firsttime
   logical :: setlimits,isfirsttime
   logical, parameter  :: dotiming = .true.
-  integer :: i,istart,ierr
+  integer :: i,istart,ierr,itype,nplot
   real    :: t1,t2
 
   if (.not.gotfilenames) then
@@ -306,9 +307,18 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   !
   if (ndim.ne.0 .and. ncolumns.gt.0 .and. nsteps.gt.0 .and. iverbose.eq.1) then
      if (sum(npartoftype(:,1)).gt.0 .and. npartoftype(1,1).eq.0) then
-        print "(3(/,a),/)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES:', &
-                           '  nothing will appear unless plotting of other particle ', &
-                           '  types is turned on via the o)ptions menu'
+        print "(a)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES'
+        itype = 0
+        nplot = 0
+        do while (nplot.eq.0 .and. itype < ntypes)
+           itype = itype + 1
+           if (npartoftype(itype,1).gt.0) then
+              iplotpartoftype(itype) = .true.
+              nplot = nplot + npartoftype(itype,1)
+              print "(a)",' (plotting of '//trim(labeltype(itype))//' particles turned ON)'
+           endif
+        enddo
+        print*
      endif
   endif
 
@@ -374,85 +384,6 @@ subroutine get_labels
  endif
 
 end subroutine get_labels
-
-!----------------------------------------------------------------
-!
-!  routine to set labels for vector quantities and spatial
-!  coordinates depending on the coordinate system used.
-!
-!----------------------------------------------------------------
-subroutine set_coordlabels(numplot)
- use geometry,       only:labelcoord
- use labels,         only:label,iamvec,labelvec,ix,labeldefault
- use settings_data,  only:icoords,icoordsnew,ndim,iRescale,debugmode
- use settings_units, only:unitslabel
- implicit none
- integer, intent(in) :: numplot
- integer             :: i
-!
-!--sanity check on icoordsnew...
-!  (should not be zero)
-!
- if (icoordsnew.le.0) then
-    if (icoords.gt.0) then
-       icoordsnew = icoords
-    else
-       icoordsnew = 1
-    endif
- endif
-!
-!--store the previous value of icoordsnew that was used
-!  last time we adjusted the labels
-!
- if (icoordsprev.lt.0) icoordsprev = icoordsnew
-!
-!--set coordinate and vector labels (depends on coordinate system)
-!
- if (icoordsnew.ne.icoords) then
-!
-!--here we are using a coordinate system that differs from the original
-!  one read from the code (must change labels appropriately)
-!
-    if (debugmode) print*,'DEBUG: changing coordinate labels ...'
-    do i=1,ndim
-       if (ix(i).gt.0) then
-          label(ix(i)) = labelcoord(i,icoordsnew)
-          if (iRescale .and. icoords.eq.icoordsnew) then
-             label(ix(i)) = trim(label(ix(i)))//trim(unitslabel(ix(i)))
-          endif
-       endif
-    enddo
- elseif (icoordsnew.ne.icoordsprev) then
-!
-!--here we are reverting back to the original coordinate system
-!  so we have to re-read the original labels from the data read
-!
-    call get_labels
- endif
-!
-!--set vector labels if iamvec is set and the labels are the default
-!
- if (icoordsnew.gt.0) then
-    do i=1,numplot
-       if (iamvec(i).ne.0 .and. &
-          (icoordsnew.ne.icoords .or. icoordsnew.ne.icoordsprev &
-           .or. index(label(i),trim(labeldefault)).ne.0)) then
-          if (i-iamvec(i)+1 .gt. 0) then
-             label(i) = trim(labelvec(iamvec(i)))//'\d'//trim(labelcoord(i-iamvec(i)+1,icoordsnew))
-          else
-             print "(a,i2,a,i2)",' ERROR with vector labels, referencing '// &
-                   trim(labelvec(iamvec(i)))//' in column ',i,' iamvec = ',iamvec(i)
-          endif
-          if (iRescale) then
-             label(i) = trim(label(i))//'\u'//trim(unitslabel(i))
-          endif
-       endif
-    enddo
- endif
- icoordsprev = icoordsnew
-
- return
-end subroutine set_coordlabels
 
 !----------------------------------------------------------------
 !
