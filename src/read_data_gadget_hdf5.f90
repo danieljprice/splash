@@ -341,6 +341,18 @@ subroutine read_data(rootname,istepstart,nstepsread)
      hfact = 1.2 ! related to the analytic neighbour number (hfact=1.2 gives 58 neighbours in 3D)
      open(unit=iunitd,file=densfile,iostat=ierrrho,status='old',form='formatted')
      open(unit=iunith,file=hfile,iostat=ierrh,status='old',form='formatted')
+     if (ih.eq.0 .and. (hsoft.gt.tiny(hsoft) .or. ierrrho.eq.0 .or. ierrh.eq.0)) then
+        ncolumns = ncolumns + 1
+        blocklabelgas(ncolumns) = 'SmoothingLength'
+        ih = ncolumns
+        call set_labels
+     endif
+     if (irho.eq.0 .and. (hsoft.gt.tiny(hsoft) .or. ierrrho.eq.0 .or. ierrh.eq.0)) then
+        ncolumns = ncolumns + 1
+        blocklabelgas(ncolumns) = 'Density'
+        irho = ncolumns
+        call set_labels
+     endif
   !
   !--if successfully read header, increment the nstepsread counter
   !
@@ -456,11 +468,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
      else
         write(string,*) ifile
         if (ifile.lt.10) then
-           write(datfile,"(a,i1)"),trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
+           write(datfile,"(a,i1)") trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
         elseif (ifile.lt.100) then
-           write(datfile,"(a,i2)"),trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
+           write(datfile,"(a,i2)") trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
         else
-           write(datfile,"(a,i3)"),trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
+           write(datfile,"(a,i3)") trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
         endif
         iexist = .false.
         inquire(file=datfile,exist=iexist)
