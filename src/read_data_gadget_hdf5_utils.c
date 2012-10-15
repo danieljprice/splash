@@ -77,7 +77,7 @@ void read_gadget_hdf5_header(char   *filename,
 
    int nattrib;
    int i;
-   char name[256];
+   char name[256],maindataset[256];
    char namevels[256],namemass[256];
    nattrib = H5Aget_num_attrs(group_id);
 
@@ -99,7 +99,7 @@ void read_gadget_hdf5_header(char   *filename,
          status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,time);
       } else if (strcmp(name,"MassTable")==0) {
          status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,massoftype);
-         //printf(" Masses = %i %f \n",maxtypes,*massoftype); // %f %f %f\n",massoftype[0]);
+         /*printf(" Masses = %i %f \n",maxtypes,massoftype[1]);*/
       } else if (strcmp(name,"NumPart_ThisFile")==0) {
          status = H5Aread(attrib_id,H5T_NATIVE_INT,npartoftype);
       } else if (strcmp(name,"NumPart_Total")==0) {
@@ -142,19 +142,40 @@ void read_gadget_hdf5_header(char   *filename,
    status = H5Gclose(group_id);
    if (status == HDF5_error) 
       { printf("ERROR closing Header data set \n"); *ierr = 3; return; }
-      
+
+   i = -1;
+   int got = 0;
+   while (!got && i < 5) {
+       i++;
+       sprintf(maindataset,"PartType%i",i);
+       got = checkfordataset(file_id,maindataset);
+       if (!got)
+          {
+             if (i==0) {
+               printf(" WARNING: no gas particles found in GADGET HDF5 file\n");             
+             } else {
+               printf(" WARNING: \"%s\" dataset not found in GADGET HDF5 file\n",maindataset);
+             }
+          }
+    }
+    if (!got) { 
+       printf(" ERROR: No PartType dataset found in GADGET HDF5 file\n");
+       *ierr = 2;
+       return; 
+    }
+    if (debug) printf("DEBUG: main dataset= %s \n",maindataset);
+
    /*
     * Now we need to get the number of data columns in the file
     * (from the number of datasets in the "PartType0" group)
     */
-    
 #if H5_VERSION_GE(1,8,0)
-   group_id = H5Gopen2(file_id,"PartType0",H5P_DEFAULT);
+   group_id = H5Gopen2(file_id,maindataset,H5P_DEFAULT);
 #else
-   group_id = H5Gopen(file_id,"PartType0");
+   group_id = H5Gopen(file_id,maindataset);
 #endif
    if (group_id == HDF5_error) 
-      { printf("ERROR opening PartType0 data set \n"); *ierr = 2; return; }
+      { printf("ERROR opening %s data set \n",maindataset); *ierr = 2; return; }
    
    hsize_t ndatasets;
    status = H5Gget_num_objs(group_id, &ndatasets);
@@ -194,10 +215,13 @@ void read_gadget_hdf5_header(char   *filename,
    }
 
    get_mass_info(group_id,namemass,&rank);
-   if (rank == 0) { printf("ERROR: Particle masses not found in file\n"); *ierr = 3; return; }
-   set_blocklabel(&j,&rank,"Masses");
-   *ncol = *ncol + rank;
-   if (rank > 0) j++;
+   if (rank == 0) { 
+      printf(" WARNING: Particle mass array not found in file\n");
+   } else {
+      set_blocklabel(&j,&rank,"Masses");
+      *ncol = *ncol + rank;
+      if (rank > 0) j++;
+   }
    
    if (*ndim == 0 || *ndimV == 0) { printf("ERROR: got ndim = %i, ndimV = %i\n",*ndim,*ndimV); *ierr = 3; return; }
    

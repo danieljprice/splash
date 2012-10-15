@@ -313,13 +313,13 @@ subroutine read_data(rootname,istepstart,nstepsread)
         print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (set GSPLASH_USE_Z=yes to use in legend)'
      endif
   endif
-  print*,'Npart (by type) : ',npartoftypei(1:6)
-  if (ifile.eq.1 .and. any(massoftypei.gt.0.)) print*,'Mass  (by type) : ',massoftypei
-  print*,'N_gas           : ',npartoftypei(1)
-  print*,'N_total         : ',ntoti
-  if (ifile.eq.1) print*,'N data columns  : ',ncolstep
+  print "(a,6(1x,i10))",' Npart (by type) : ',npartoftypei(1:6)
+  if (any(massoftypei.gt.0.)) print "(a,6(1x,es10.3))",' Mass  (by type) : ',massoftypei
+  print "(a,6(1x,i10))",' N_gas           : ',npartoftypei(1)
+  print "(a,1x,i10)",' N_total         : ',ntoti
+  if (ifile.eq.1) print "(a,1x,i10)",' N data columns  : ',ncolstep
   if (nfiles.gt.1 .and. ifile.eq.1) then
-     print*,'Nall            : ',Nall
+     print "(a,6(1x,i10))",' Nall            : ',Nall(1:6)
   endif
 
   if (nfiles.gt.1) then
@@ -377,7 +377,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol))
      endif
   endif
-
+  masstype(1:6,i) = massoftypei(1:6)
   !
   !--copy npartoftypei into allocated header arrays
   !  and set the offset position of particle types in the main data arrays
