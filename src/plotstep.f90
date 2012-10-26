@@ -2856,7 +2856,8 @@ contains
           ipanel = ipanelsave
           if (debugmode) print*,'DEBUG: finished dummy page setup'
           return
-       elseif (.not.ipagechange .and. .not.inewpage .and. .not.(iplots.le.nacross*ndown)) then
+       elseif (.not.ipagechange .and. .not.inewpage .and. &
+               .not.(iplots.le.nacross*ndown .and. nyplot.eq.1 .and. istepsonpage.eq.1)) then
           if (debugmode) print*,'DEBUG: not printing axes ',ipagechange,inewpage,iplots
        !--if we are not changing page, do not reprint the axes
           call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
@@ -2864,7 +2865,7 @@ contains
                   xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                   0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice)
        else
-          if (debugmode) print*,'DEBUG: printing axes'
+          if (debugmode) print*,'DEBUG: printing axes ',ipagechange,inewpage,iplots
           call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
                   trim(labelx),trim(labely),' ',just,iaxistemp, &
                   xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
