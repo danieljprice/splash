@@ -1173,8 +1173,10 @@ contains
    endif
    call plot_swin(xminold,xmaxold,ymin,ymax)
    call plot_rect(xminold,xmaxold,ymin,ymax)
-   call plot_sci(ioldcolour)
+   !--restore fill style
    call plot_sfs(ioldfill)
+   call plot_sci(1)
+
    !--set window and draw axes
    call plot_svp(vptxmin,vptxmax,vptymin,vptymax)
    call plot_swin(xminold,xmaxold,ymin,ymax)
@@ -1185,9 +1187,10 @@ contains
    endif
 
    !--plot residuals
+   call plot_sci(ioldcolour)
    call plot_pt(size(xpts),xpts,residuals,imarker)
 
-   !--restore old viewport and window
+   !--restore old viewport, window and colour index
    call plot_svp(vptxminold,vptxmaxold,vptyminold,vptymaxold)
    call plot_swin(xminold,xmaxold,yminold,ymaxold)
 
