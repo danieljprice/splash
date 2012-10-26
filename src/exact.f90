@@ -206,7 +206,7 @@ contains
            ' 4) sedov blast wave ',/,     &
            ' 5) polytrope ',/,            &
            ' 6) toy star ',/,             &
-           ' 7) linear wave ',/,          &
+           ' 7) gresho vortex ',/,          &
            ' 8) mhd shock tubes (tabulated) ',/,  &
            ' 9) h vs rho ',/, &
            '10) Plummer/Hernquist spheres ',/, &
@@ -353,13 +353,13 @@ contains
              call prompt('enter vyx amplitude ',ctstar2)
           endif
        endif
-    case(7)
-       call prompt('enter y-plot to place sine wave on',iwaveploty,1)
-       call prompt('enter x-plot to place sine wave on',iwaveplotx,1)
-       call prompt('enter starting x position',xzero)
-       call prompt('enter wavelength lambda ',lambda,0.0)
-       call prompt('enter amplitude ',ampl,0.0)
-       call prompt('enter period ',period)
+    !case(7)
+    !   call prompt('enter y-plot to place sine wave on',iwaveploty,1)
+    !   call prompt('enter x-plot to place sine wave on',iwaveplotx,1)
+    !   call prompt('enter starting x position',xzero)
+    !   call prompt('enter wavelength lambda ',lambda,0.0)
+    !   call prompt('enter amplitude ',ampl,0.0)
+    !   call prompt('enter period ',period)
     case(8)
        print "(a)",' MHD shock tube tables: '
        if (ishk.le.0) ishk = 1
@@ -668,6 +668,7 @@ contains
     use ringspread,      only:exact_ringspread
     use dustywaves,      only:exact_dustywave
     use rochelobe,       only:exact_rochelobe
+    use gresho,          only:exact_gresho
     use transforms,      only:transform,transform_inverse
     use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line
     implicit none
@@ -883,11 +884,17 @@ contains
        endif
 
     case(7)! linear wave
-       if ((iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then
-          ymean = SUM(yplot(1:npart))/REAL(npart)
-          call exact_wave(time,ampl,period,lambda,xzero,ymean,xexact,yexact,ierr)
+       !if ((iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then
+       !   ymean = SUM(yplot(1:npart))/REAL(npart)
+       !   call exact_wave(time,ampl,period,lambda,xzero,ymean,xexact,yexact,ierr)
+       !endif
+       if (igeom.eq.2 .and. ndim.ge.2) then
+          if (iploty.eq.ivx+1) then
+             call exact_gresho(1,xexact,yexact,ierr)          
+          elseif (iploty.eq.ipr) then
+             call exact_gresho(2,xexact,yexact,ierr)
+          endif
        endif
-
     case(8) ! mhd shock tubes
        ! this subroutine modifies xexact
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
