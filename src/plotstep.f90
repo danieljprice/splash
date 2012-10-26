@@ -2959,6 +2959,7 @@ contains
     integer :: icoloursave
     character(len=lensteplegend) :: steplegendtext
     real :: xlabeloffsettemp
+    integer :: ititle
 
     !--save colour index
     call plot_qci(icoloursave)
@@ -3061,7 +3062,14 @@ contains
 
     !--print title if appropriate
     if (iPlotTitles .and. istepsonpage.eq.1 .and. ipanel.le.ntitles) then
-       if (len_trim(pagetitles(ipanel)).gt.0) then
+       if (ntitles.gt.nacross*ndown) then
+          ititle = (ipos - 1)/nstepsperpage + 1
+          if (ititle.gt.ntitles) ititle = ipanel
+       else
+          ititle = ipanel
+       endif
+       
+       if (len_trim(pagetitles(ititle)).gt.0) then
 
           !--change to background colour index if title is overlaid
           if (iUseBackGroundColourForAxes .and. vpostitle.lt.0.) then
@@ -3069,7 +3077,7 @@ contains
              call plot_set_opacity(alphalegend)
           endif
 
-          call plot_annotate('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ipanel)))
+          call plot_annotate('T',vpostitle,hpostitle,fjusttitle,trim(pagetitles(ititle)))
        endif
     endif
 
