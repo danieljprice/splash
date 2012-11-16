@@ -48,12 +48,14 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.2.0  : (xx/xx/12)
+!     2.2.0  : (16/11/12)
 !             option to use different kernels for interpolation;
 !             floating/inset colour bars added;
 !             splash to gadget conversion implemented;
 !             splash to grid works in 2D;
 !             improved interfaces to shapes and animation sequences
+!             automatically turns on dark matter particle plotting if no gas
+!             interactive mode help displayed automatically
 !     2.1.1  : (31/08/12)
 !             irregular/circular particle selection using shift-left/middle click;
 !             improved h5part and GADGET HDF5 data reads;
