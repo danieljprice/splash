@@ -79,17 +79,18 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      iplotx,iploty,iplotz,ix)
 
   use geometry, only:igeom_cartesian,coord_transform,coord_is_length, &
-                     coord_transform_limits
+                     coord_transform_limits,igeom_cylindrical
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real,    intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
   real,    intent(in) :: xmin,ymin,pixwidthx,pixwidthy
   real,    intent(out), dimension(npixx,npixy) :: datsmooth
-  logical, intent(in) :: normalise
+  logical, intent(inout) :: normalise
   integer, intent(in) :: igeom,iplotx,iploty,iplotz
   integer, dimension(3), intent(in) :: ix
   real, dimension(npixx,npixy) :: datnorm
+  real, parameter :: pi = 3.1415926536
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   integer :: ixcoord,iycoord,izcoord
@@ -100,8 +101,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   integer(kind=selected_int_kind(10)) :: iprogress,i  ! up to 10 digits
 #endif
   real, dimension(3) :: xcoord, xpix
-  real, dimension(3), save :: xpixmin, xpixmax, xci
-!$omp threadprivate(xpixmin,xpixmax,xci)
+  real, dimension(3), save :: xpixmin, xpixmax, xci, xi
+!$omp threadprivate(xpixmin,xpixmax,xci,xi)
   real :: hi,hi1,hi21,radkern,wab,q2,xminpix,yminpix
   real :: term,termnorm,dx,dx2,dy,dy2
   real :: xmax,ymax
@@ -150,6 +151,11 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   !print*,' islength = ',islengthx,islengthy,islengthz
   !print*,' y axis is ',iycoord
   !print*,' x axis is ',ixcoord
+  !
+  !--if z coordinate is not a length, use normalised interpolation
+  !  (e.g. azimuthally averaged density)
+  !
+  if (.not.islengthz) normalise = .true.
   !
   !--check column density table has actually been setup
   !
@@ -235,6 +241,9 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      !
      !print*,' limits in cart = ',(xpixmin(ipix),xpixmax(ipix),ipix=1,3)
      call coord_transform_limits(xpixmin,xpixmax,igeom_cartesian,igeom,3)
+
+     !--get particle coordinates in transformed space
+     call coord_transform(xci,3,igeom_cartesian,xi,3,igeom)
      !print*,' limits in cyl  = ',(xpixmin(ipix),xpixmax(ipix),ipix=1,3)
      !read*
      !
@@ -265,6 +274,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      ! h gives the z length scale (NB: no perspective)
      if (islengthz) then
         termnorm = weight(i)*hi
+     elseif (igeom.eq.igeom_cylindrical) then
+        termnorm = weight(i)*atan(radkern/xi(ixcoord))/pi
      else
         termnorm = weight(i)
      endif
