@@ -27,7 +27,7 @@
 !-----------------------------------------------------------------
 module shapes
  implicit none
- integer, parameter, private :: maxshapes = 10
+ integer, parameter, private :: maxshapes = 32
  integer, parameter, private :: maxshapetype = 7
  integer :: nshapes
 
