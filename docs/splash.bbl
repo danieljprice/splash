@@ -19,6 +19,11 @@
   Particle Hydrodynamics Simulations}'.
 \newblock {\em Publ. Astron. Soc. Aust.} {\bf 24}, 159--173.
 
+\bibitem[\protect\citeauthoryear{{Price}}{2012}]{price12}
+{Price}, D.~J.: 2012, `{Smoothed Particle Hydrodynamics and
+  Magnetohydrodynamics}'.
+\newblock {\em J. Comp. Phys.} {\bf 231}, 759--794.
+
 \bibitem[\protect\citeauthoryear{{Price} and {Bate}}{2007}]{pb07}
 {Price}, D.~J. and M.~R. {Bate}: 2007, `{The impact of magnetic fields on
   single and binary star formation}'.

@@ -316,6 +316,7 @@ Environment variables that affect all data reads are:\newline
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
 SPLASH\_DEFAULTS & gives the name of a system-wide \verb+splash.defaults+ file (and splash.limits etc.) that will be used if there is none in the current directory. e.g. \verb+export SPLASH_DEFAULTS=/home/me/splash.defaults+ \\
+SPLASH\_KERNEL & changes the smoothing kernel used in the interpolations (e.g. `cubic' or `quintic'). Can also be changed in the r)ender menu. \\
 SPLASH\_DEBUG & if set to `yes' or `true', turns on very verbose debugging output. Useful to trace code crashes (but of course, this never happens\ldots).\\
 SPLASH\_HMIN\_CODEUNITS & if given a value $>$0 enforces a minimum smoothing length, specified in code units as read from the dump file, on all the particles. This can be used to ``dumb-down'' the resolution of SPH simulations, e.g. to match observational resolution. If this variable is set it is \emph{highly} recommended that the ``use accelerated rendering'' option in the r)ender menu is also turned on as quite slow rendering can otherwise result. \\
 SPLASH\_VZERO\_CODEUNITS & if set to a comma separated list of vector components (e.g. \verb+export SPLASH_VZERO_CODEUNITS='0.0,1.0,0.0'+), can be used to subtract a mean velocity field from all particles --- specified in code units as read from the dump file. \\
@@ -438,10 +439,11 @@ Command line plotting mode:
                          write(1) dat(1:ncolumns),itype
                       enddo
         to phantom : convert SPH data to binary dump file for PHANTOM
+        to gadget  : convert SPH data to default GADGET snapshot file format
 
  Grid conversion mode ("splash to X dumpfiles"): 
     splash to grid         : interpolate basic SPH data (density, plus velocity if present in data)
-                             to 3D grid, write grid data to file (using default output=ascii)
+                             to 2D or 3D grid, write grid data to file (using default output=ascii)
            to gridascii    : as above, grid data written in ascii format
            to gridbinary   : as above, grid data in simple unformatted binary format:
                                 write(unit) nx,ny,nz,ncolumns,time                 [ 4 bytes each ]
@@ -1366,12 +1368,15 @@ To plot contours instead of the rendered image, use the ``change colour scheme''
 
 \subsubsection{ Changing the style of the colour bar}
 \label{sec:colourbarstyle}
- The colour bar style (i.e., vertical vs. horizontal, plot-hugging vs. non plot-hugging, one-sided vs. two-sided) can be changed via the ``colour bar options'' option in the r)ender submenu. If you want a different style implemented, email me!
+ The colour bar style (i.e., vertical vs. horizontal, plot-hugging vs. non plot-hugging, one-sided vs. two-sided, floating vs. fixed) can be changed via the ``colour bar options'' option in the r)ender submenu. If you want a different style implemented, email me!
 
 \subsubsection{ Using a horizontal colour bar}
  An option to use a horizontal colour bar instead of the default vertical arrangement is given in the ``colour bar options'' option in the r)ender submenu.
 
 \subsubsection{ Using `plot-hugging' colour bars}
+ See \S\ref{sec:colourbarstyle}.
+
+\subsubsection{ Using floating/inset colour bars}
  See \S\ref{sec:colourbarstyle}.
 
 \subsubsection{ Plotting ticks on only one side of the colour bar}
@@ -1418,6 +1423,9 @@ The labelling scheme used to determine the colour bar label can be changed via t
 
 \subsubsection{ Changing ``column density'' to ``surface density'' on 3D plots}
 See \S\ref{sec:setprojlabel}.
+
+\subsubsection{ Changing the interpolation kernel}
+The kernel used for the interpolations is by default the M$_{4}$ cubic B-spline, which has been standard in SPH calculations since the mid-1980's. Other kernels can be selected via the ``change kernel'' option in the r)ender menu. The kernel can also be changed by setting the \verb+SPLASH_KERNEL+ environment variable to either the kernel name as listed in the render menu option, or something sensible resembling it. At present only a few kernels are implemented, with `cubic' , `quartic' and `quintic' referring to the M$_{4}$, M$_{5}$ and M$_{6}$ B-splines with support of 2h and 3h, respectively. See \citet{price12} for more details.
 
 \subsection{(v)ector plot options}%HEVEA\cutname{vmenu.html}
 \label{sec:vectorplots}
@@ -2435,13 +2443,18 @@ which is used throughout the program and to Roland Schmehl who wrote the excelle
  Sumedh Anathpindika,
  Ben Ayliffe,
  Andreas Bauswein,
+ Mark Bennett,
  Florian Buerzle,
+ Paul Cornwall,
+ Carlos Cuesta,
  Alan Duffy,
  Clare Dobbs,
  Claude-Andr\'e Faucher-Gigu\`ere,
  Christoph Federrath,
  Laure Fouchet,
+ Sergio Gelato,
  Thomas Grief,
+ Doron Grossman,
  Johnny Hitti,
  Vid Ir\v{s}i\v{c},
  John Jones,
@@ -2454,6 +2467,7 @@ which is used throughout the program and to Roland Schmehl who wrote the excelle
  Ruben Martin,
  Farzana Meru,
  Andrew McLeod,
+ Nick Moeckel,
  Shazrene Mohamed,
  Chris Nixon,
  Cody Raskin,
