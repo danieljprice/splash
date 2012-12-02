@@ -63,6 +63,8 @@ logical function isanalysis(string,noprint)
      isanalysis = .true.
  case('min','minvals')
      isanalysis = .true.
+ case('diff','diffvals')
+     isanalysis = .true.
  case('mean','meanvals')
      isanalysis = .true.
  case('rms','rmsvals')
@@ -95,6 +97,8 @@ logical function isanalysis(string,noprint)
     print "(a)",'                             output to file called ''maxvals.out'''
     print "(a)",'         calc min          : minimum of each column vs. time'
     print "(a)",'                             output to file called ''minvals.out'''
+    print "(a)",'         calc diff          : (max - min) of each column vs. time'
+    print "(a)",'                             output to file called ''diffvals.out'''
     print "(a)",'         calc mean         : mean of each column vs. time'
     print "(a)",'                             output to file called ''meanvals.out'''
     print "(a)",'         calc rms          : (mass weighted) root mean square of each column vs. time'
@@ -223,6 +227,17 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !--set filename and header line
     !
     fileout = 'minvals.out'
+    standardheader = .true.
+
+ case('diff','diffvals')
+    !
+    !--read all columns from dump file
+    !
+    required(:) = .true.
+    !
+    !--set filename and header line
+    !
+    fileout = 'diffvals.out'
     standardheader = .true.
 
  case('mean','meanvals')
@@ -372,6 +387,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real(kind=doub_prec) :: rmsval,totvol,voli,rhoi,rmsvmw,v2i
  real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
  real(kind=doub_prec) :: smeanmw,smeanvw,svarmw,svarvw,si,ekiny,ekinymax
+ real(kind=doub_prec) :: lmin, lmax
  real(kind=doub_prec), dimension(3) :: xmom,angmom,angmomi,ri,vi
  real                 :: delta,dn
  character(len=20)    :: fmtstring
@@ -555,6 +571,38 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) time,coltemp(1:ncolumns)
     if (nused.ne.ntot) print*,'min calculated using ',nused,' of ',ntot,' particles'
+
+ case('diff','diffvals')
+    !
+    !--calculate minimum for each column
+    !
+    do i=1,ncolumns
+       coltemp(i) = huge(0.d0) !minval(dat(1:ntot,i))
+       lmin = huge(0.d0)
+       lmax = -huge(0.d0)
+       nused = 0
+       do j=1,ntot
+          itype = igettype(j)
+          if (iplotpartoftype(itype)) then
+             lmin = min(lmin, dat(j,i))
+             lmax = max(lmax, dat(j,i))
+             nused = nused + 1
+          endif
+       enddo
+       coltemp(i) = lmax - lmin
+    enddo
+    !
+    !--write output to screen/terminal
+    !
+    do i=1,ncolumns
+       print "(1x,a20,'min = ',es9.2)",label(i),coltemp(i)
+    enddo
+    !
+    !--write line to output file
+    !
+    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
+    write(iunit,fmtstring) time,coltemp(1:ncolumns)
+    if (nused.ne.ntot) print*,'diff calculated using ',nused,' of ',ntot,' particles'
 
  case('mean','meanvals')
     !
