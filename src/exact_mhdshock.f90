@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -26,7 +26,8 @@
 !
 ! For want of a better solution these are just taken from the tables in
 ! Ryu & Jones (1995), ApJ 442, 228 or from ruler and pencil
-! on the results in Balsara (1998)
+! on the results in Balsara (1998), or from running the Athena code via
+! http://rainman.astro.illinois.edu/ddr/oned/cgi-bin/athena.pl
 !
 ! ----------------------------------------------------------------------
 module mhdshock
@@ -45,11 +46,11 @@ module mhdshock
 
 contains
 
-subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
+subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xshock,xpts,ypts,npts,ierr)
   implicit none
   integer, intent(in) :: iplot,ishk
   integer, intent(out) :: npts,ierr
-  real, intent(in) :: time,gamma,xmin,xmax
+  real, intent(in) :: time,gamma,xmin,xmax,xshock
   real, dimension(:), intent(inout) :: xpts
   real, dimension(size(xpts)), intent(out) :: ypts
 
@@ -85,36 +86,36 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      xpts(14) = xmax
 
      rho(1:2) = 1.0
-     rho(3:4) = 0.675
-     rho(5) = 0.815
+     rho(3:4) = 0.67623
+     rho(5) = 0.827
      rho(6) = 0.775
-     rho(7:8) = 0.7
-     rho(9:10) = 0.234
-     rho(11:12) = 0.115
+     rho(7:8) = 0.6962
+     rho(9:10) = 0.2352
+     rho(11:12) = 0.117
      rho(13:14) = 0.125
 
      pr(1:2) = 1.0
-     pr(3:4) = 0.45
-     pr(5) = 0.7
-     pr(6) = 0.64
-     pr(7:10) = 0.52
-     pr(11:12) = 0.08
+     pr(3:4) = 0.447
+     pr(5) = 0.727219
+     pr(6) = 0.6
+     pr(7:10) = 0.5160
+     pr(11:12) = 0.0876
      pr(13:14) = 0.1
 
      vx(1:2) = 0.0
-     vx(3:4) = 0.635
+     vx(3:4) = 0.63721
      vx(5) = 0.48
      vx(6) = 0.52
-     vx(7:10) = 0.595
+     vx(7:10) = 0.600
      vx(11:12) = -0.24
      vx(13:14) = 0.0
 
      vy(1:2) = 0.0
-     vy(3:4) = -0.23
+     vy(3:4) = -0.23345
      vy(5) = -1.3
      vy(6) = -1.4
-     vy(7:10) = -1.58
-     vy(11:12) = -0.165
+     vy(7:10) = -1.584
+     vy(11:12) = -0.166
      vy(13:14) = 0.
 
      By(1:2) = 1.0
@@ -463,6 +464,11 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xpts,ypts,npts,ierr)
      Bz(3:4)  = Bz(npts)
      npts   = 4
   endif
+
+  !
+  !--translate positions if shock is not at x=0
+  !
+  xpts(:) = xpts(:) + xshock
 
   !
   !--determine which parameter to plot
