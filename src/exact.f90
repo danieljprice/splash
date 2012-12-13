@@ -55,6 +55,7 @@ module exact
   real :: polyk
   !--mhd shock solutions
   integer :: ishk
+  real :: xshock
   !--density profiles
   integer :: iprofile,icolpoten,icolfgrav
   real, dimension(2) :: Msphere,rsoft
@@ -91,7 +92,7 @@ module exact
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
-       semi,ecc,mprim,msec,ixcolfile,iycolfile
+       semi,ecc,mprim,msec,ixcolfile,iycolfile,xshock
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -134,6 +135,7 @@ contains
     iexactplotx = 0
     iexactploty = 0
     ishk = 1
+    xshock = 0.
     hfact = 1.2
     filename_exact = ' '
     ixcolfile = 1
@@ -367,6 +369,7 @@ contains
           print "(i2,') ',a)",i,trim(mhdprob(i))
        enddo
        call prompt('enter solution to plot ',ishk,1,7)
+       call prompt('enter initial x position of shock ',xshock)
     case(9)
        call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
     case(10)
@@ -683,7 +686,7 @@ contains
     real, parameter :: zero = 1.e-10
     integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle
     real, dimension(:), allocatable :: xexact,yexact,xtemp
-    real :: dx,ymean,errL1,errL2,errLinf
+    real :: dx,ymean,errL1,errL2,errLinf,timei
     character(len=len(filename_exact)) :: filename_tmp
 
     !
@@ -734,12 +737,21 @@ contains
     !  (-ve ierr indicates a partial solution)
     !
     ierr = 666
+    
+    !
+    !--use time=0 if time has not been read from dump file (indicated by t < 0)
+    !
+    if (time > 0) then
+       timei = time
+    else
+       timei = 0.
+    endif
 
     select case(iexact)
     case(1) ! arbitrary function parsing
        if ((iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) .or. iexactploty.eq.0) then
           do i=1,nfunc
-             call exact_function(funcstring(i),xexact,yexact,time,ierr)
+             call exact_function(funcstring(i),xexact,yexact,timei,ierr)
              if (i.ne.nfunc) then ! plot all except last line here
                 if (itransy.gt.0) call transform(yexact,itransy)
                 !--use xtemp, which is xexact but already transformed
@@ -768,16 +780,16 @@ contains
     case(3)! shock tube
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irho) then
-             call exact_shock(1,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+             call exact_shock(1,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_shock(2,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+             call exact_shock(2,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)   
           elseif (iploty.eq.ivx) then
-              call exact_shock(3,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+              call exact_shock(3,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm) then
-              call exact_shock(4,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+              call exact_shock(4,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)
           endif
        endif
@@ -786,18 +798,18 @@ contains
        ! this subroutine does change xexact
        if (iplotx.eq.irad .or. (igeom.eq.3 .and. iplotx.eq.ix(1))) then
           if (iploty.eq.irho) then
-             call exact_sedov(1,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
+             call exact_sedov(1,timei,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_sedov(2,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
+             call exact_sedov(2,timei,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm) then
-             call exact_sedov(3,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
+             call exact_sedov(3,timei,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           elseif (iploty.eq.ike) then
-             call exact_sedov(4,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
+             call exact_sedov(4,timei,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           elseif (iploty.eq.ivx .and. igeom.eq.3) then
-             call exact_sedov(5,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
+             call exact_sedov(5,timei,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           endif
        !elseif (igeom.le.1 .and. is_coord(iplotx,ndim) .and. is_coord(iploty,ndim)) then
-       !   call exact_sedov(0,time,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
+       !   call exact_sedov(0,timei,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
        endif
 
     case(5)! polytrope
@@ -817,30 +829,30 @@ contains
           !
           if (iplotx.eq.ix(1) .or. iplotx.eq.irad) then! if x axis is x or r
              if (iploty.eq.irho) then
-                call exact_toystar1D(1,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                call exact_toystar1D(1,timei,gamma,htstar,atstar,ctstar,sigma,norder, &
                                    xexact,yexact,iexactpts,ierr)
              elseif (iploty.eq.ipr) then
-                call exact_toystar1D(2,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                call exact_toystar1D(2,timei,gamma,htstar,atstar,ctstar,sigma,norder, &
                                    xexact,yexact,iexactpts,ierr)
              elseif (iploty.eq.iutherm) then
-                call exact_toystar1D(3,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                call exact_toystar1D(3,timei,gamma,htstar,atstar,ctstar,sigma,norder, &
                                    xexact,yexact,iexactpts,ierr)
              elseif (iploty.eq.ivx) then
-                call exact_toystar1D(4,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                call exact_toystar1D(4,timei,gamma,htstar,atstar,ctstar,sigma,norder, &
                                    xexact,yexact,iexactpts,ierr)
              elseif (iploty.eq.iBfirst+1) then
-                call exact_toystar1D(5,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                call exact_toystar1D(5,timei,gamma,htstar,atstar,ctstar,sigma,norder, &
                                    xexact,yexact,iexactpts,ierr)
              endif
           elseif (iplotx.eq.irho) then
              if (iploty.eq.iBfirst+1) then
-                call exact_toystar1D(6,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+                call exact_toystar1D(6,timei,gamma,htstar,atstar,ctstar,sigma,norder, &
                                    xexact,yexact,iexactpts,ierr)
              endif
           endif
 
           if (iploty.eq.iacplane) then! plot point on a-c plane
-             call exact_toystar1D(7,time,gamma,htstar,atstar,ctstar,sigma,norder, &
+             call exact_toystar1D(7,timei,gamma,htstar,atstar,ctstar,sigma,norder, &
                                 xexact,yexact,iexactpts,ierr)
           endif
        else
@@ -850,34 +862,34 @@ contains
           !
           if (igeom.eq.1 .and.((iplotx.eq.ix(1) .and. iploty.eq.ivx) &
                .or. (iplotx.eq.ix(2) .and. iploty.eq.ivx+1))) then
-             call exact_toystar2D(4,time,gamma,polyk,totmass, &
+             call exact_toystar2D(4,timei,gamma,polyk,totmass, &
                   atstar,htstar,ctstar,norder,morder, &
                   alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
           endif
           if (iplotx.eq.irad .or. (igeom.eq.2 .and. iplotx.eq.ix(1))) then
              if (iploty.eq.irho) then
-                call exact_toystar2D(1,time,gamma,polyk,totmass, &
+                call exact_toystar2D(1,timei,gamma,polyk,totmass, &
                      atstar,htstar,ctstar,norder,morder, &
                      alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
              elseif (iploty.eq.ipr) then
-                call exact_toystar2D(2,time,gamma,polyk,totmass, &
+                call exact_toystar2D(2,timei,gamma,polyk,totmass, &
                      atstar,htstar,ctstar,norder,morder, &
                      alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
              elseif (iploty.eq.iutherm) then
-                call exact_toystar2D(3,time,gamma,polyk,totmass, &
+                call exact_toystar2D(3,timei,gamma,polyk,totmass, &
                      atstar,htstar,ctstar,norder,morder, &
                      alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
              elseif (igeom.eq.2 .and. iploty.eq.ivx) then
-                call exact_toystar2D(4,time,gamma,polyk,totmass, &
+                call exact_toystar2D(4,timei,gamma,polyk,totmass, &
                      atstar,htstar,ctstar,norder,morder, &
                      alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
              elseif (iploty.eq.ike) then
-                call exact_toystar2D(5,time,gamma,polyk,totmass, &
+                call exact_toystar2D(5,timei,gamma,polyk,totmass, &
                      atstar,htstar,ctstar,norder,morder, &
                      alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
              endif
           elseif (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. igeom.eq.1) then
-             call exact_toystar2D(0,time,gamma,polyk,totmass, &
+             call exact_toystar2D(0,timei,gamma,polyk,totmass, &
                   atstar,htstar,ctstar,norder,morder, &
                   alphatstar,betatstar,ctstar1,ctstar2,xexact,yexact,ierr)
           endif
@@ -886,7 +898,7 @@ contains
     case(7)! linear wave
        !if ((iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then
        !   ymean = SUM(yplot(1:npart))/REAL(npart)
-       !   call exact_wave(time,ampl,period,lambda,xzero,ymean,xexact,yexact,ierr)
+       !   call exact_wave(timei,ampl,period,lambda,xzero,ymean,xexact,yexact,ierr)
        !endif
        if (igeom.eq.2 .and. ndim.ge.2) then
           if (iploty.eq.ivx+1) then
@@ -899,31 +911,31 @@ contains
        ! this subroutine modifies xexact
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irho) then
-             call exact_mhdshock(1,ishk,time,gamma,xmin,xmax, &
+             call exact_mhdshock(1,ishk,timei,gamma,xmin,xmax,xshock, &
                                  xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_mhdshock(2,ishk,time,gamma,xmin,xmax, &
+             call exact_mhdshock(2,ishk,timei,gamma,xmin,xmax,xshock, &
                                  xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.ivx) then
-             call exact_mhdshock(3,ishk,time,gamma,xmin,xmax, &
+             call exact_mhdshock(3,ishk,timei,gamma,xmin,xmax,xshock, &
                                  xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.ivx+1 .and. ndimV.gt.1) then
-             call exact_mhdshock(4,ishk,time,gamma,xmin,xmax, &
+             call exact_mhdshock(4,ishk,timei,gamma,xmin,xmax,xshock, &
                                  xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.ivx+ndimV-1 .and. ndimV.gt.2) then
-             call exact_mhdshock(5,ishk,time,gamma,xmin,xmax, &
+             call exact_mhdshock(5,ishk,timei,gamma,xmin,xmax,xshock, &
                                  xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.iBfirst+1 .and. ndimV.gt.1) then
-             call exact_mhdshock(6,ishk,time,gamma,xmin,xmax, &
+             call exact_mhdshock(6,ishk,timei,gamma,xmin,xmax,xshock, &
                                  xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.iBfirst+ndimV-1 .and. ndimV.gt.2) then
-             call exact_mhdshock(7,ishk,time,gamma,xmin,xmax, &
+             call exact_mhdshock(7,ishk,timei,gamma,xmin,xmax,xshock, &
                                  xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.iutherm) then
-             call exact_mhdshock(8,ishk,time,gamma,xmin,xmax, &
+             call exact_mhdshock(8,ishk,timei,gamma,xmin,xmax,xshock, &
                                  xexact,yexact,iexactpts,ierr)
           elseif (iploty.eq.iBfirst) then
-             call exact_mhdshock(9,ishk,time,gamma,xmin,xmax, &
+             call exact_mhdshock(9,ishk,timei,gamma,xmin,xmax,xshock, &
                                  xexact,yexact,iexactpts,ierr)
           endif
        endif
@@ -994,34 +1006,34 @@ contains
     case(12)
        if (iplotx.eq.irad .or.((igeom.eq.3 .or. igeom.eq.2) .and. iplotx.eq.ix(1))) then
           if (iploty.eq.irho) then
-             call exact_ringspread(1,time,Mring,Rring,viscnu,xexact,yexact,ierr)
+             call exact_ringspread(1,timei,Mring,Rring,viscnu,xexact,yexact,ierr)
           endif
        endif
     case(13) ! special relativistic shock tube
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irhorestframe) then
-             call exact_shock_sr(1,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+             call exact_shock_sr(1,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_shock_sr(2,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+             call exact_shock_sr(2,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.ivx) then
-             call exact_shock_sr(3,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+             call exact_shock_sr(3,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm) then
-             call exact_shock_sr(4,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+             call exact_shock_sr(4,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           elseif (iploty.eq.irho) then
-             call exact_shock_sr(5,time,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
+             call exact_shock_sr(5,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R,xexact,yexact,ierr)
           endif
        endif
     case(14) ! dusty wave exact solution
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irho) then
-             call exact_dustywave(1,time,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
+             call exact_dustywave(1,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.ivx) then
-             call exact_dustywave(2,time,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
+             call exact_dustywave(2,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
           endif
        endif
     case(15) ! Roche potential
        if (igeom.eq.1 .and. ndim.ge.2 .and. iplotx.eq.ix(1) .and. iploty.eq.ix(2)) then
-          call exact_rochelobe(time,semi,mprim,msec,xexact,yexact,ierr)
+          call exact_rochelobe(timei,semi,mprim,msec,xexact,yexact,ierr)
        endif
     end select
 
@@ -1091,7 +1103,7 @@ contains
       !
       do j=1,size(xexact)-1
          if (xexact(j).lt.xi .and. xexact(j+1).gt.xi) then
-            if (abs(residual(i)).gt.tiny(residual)) print*,'already used ',i
+            if (abs(residual(i)).gt.tiny(residual)) nerr = nerr + 1
             !--linear interpolation from tabulated exact solution
             dy = yexact(j+1) - yexact(j)
             dx = xexact(j+1) - xexact(j)
