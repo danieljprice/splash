@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -2209,6 +2209,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               label(iploty) = 'PDF ('//trim(label(iplotx))//')'
               labely = trim(label(iploty))
            endif
+           yplot(:) = 0.
 
            if (itrans(iploty).ne.0) labely = trim(transform_label(label(iploty),itrans(iploty)))
 
@@ -2305,6 +2306,23 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
            if (plotlib_is_pgplot) call redraw_axes(iaxis)
            call legends_and_title
+
+           !
+           !--plot exact solution (after redrawn axis for residual plots)
+           !
+           if (iexact.ne.0 &
+          .and.((nyplot.le.nacross*ndown .and. iPlotExactOnlyOnPanel.eq.0) &
+           .or.(iPlotExactOnlyOnPanel.gt.0 .and. ipanel.eq.iPlotExactOnlyOnPanel) &
+           .or.(iPlotExactOnlyOnPanel.eq.-1 .and. irow.eq.1) &
+           .or.(iPlotExactOnlyOnPanel.eq.-2 .and. icolumn.eq.1))) then
+              iaxisy = iaxis
+              if (tile_plots .and. icolumn.ne.1) iaxisy = -1
+              call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
+                   icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
+                   xplot(1:ntoti),yplot(1:ntoti), &
+                   pmassmin,pmassmax,ntoti,imarktype(1), &
+                   units(iplotx),units(iploty),irescale,iaxisy)
+           endif
 
            if (lastplot) istepsonpage = nstepsperpage
            if (interactive .and. ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot)) then
