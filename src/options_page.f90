@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -242,8 +242,9 @@ subroutine submenu_page(ichoose)
         print*,'12) 1440 x 900  pixels'
         print*,'13) 2560 x 1440 pixels'
         print*,'14) 2560 x 1600 pixels'
-        print*,'15) Custom size '
-        call prompt(' Enter option for paper size ',ipapersize,0,15)
+        print*,'15) 3840 x 2160 pixels (4KTV/Ultra HD)'
+        print*,'16) Custom size '
+        call prompt(' Enter option for paper size ',ipapersize,0,16)
      endif
      
      select case(ipapersize)
@@ -288,7 +289,7 @@ subroutine submenu_page(ichoose)
            papersizey = 600.
            aspectratio = papersizey/papersizex
         endif
-     case(8:14)
+     case(8:15)
         if (plotlib_is_pgplot) then
            ipapersizeunits = 1
            papersizex  = 0.  ! use PGPLOT default
@@ -317,10 +318,13 @@ subroutine submenu_page(ichoose)
            case(14)
               papersizex = 2560.
               papersizey = 1600.
+           case(15)
+              papersizex = 3840.
+              papersizey = 2160.
            end select
            aspectratio = papersizey/papersizex
         endif
-     case(15)
+     case(16)
         if (plotlib_is_pgplot) then
            ipapersizeunits = 1
            papersizex  = 0.  ! use PGPLOT default
