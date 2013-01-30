@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -27,12 +27,15 @@
 !-------------------------------------------------------------
 module kernels
  implicit none
- integer, parameter, public :: nkernels = 3
- character(len=22), dimension(0:nkernels), parameter, public :: kernelname = &
-    (/'default [cubic]       ', &
-      'M4 cubic spline   (2h)', &
-      'M5 quartic        (2h)', &
-      'M6 quintic spline (3h)'/)
+ integer, parameter, public :: nkernels = 6
+ character(len=24), dimension(0:nkernels), parameter, public :: kernelname = &
+    (/'default [cubic]         ', &
+      'M4 cubic spline   (2h)  ', &
+      'M5 quartic        (2.5h)', &
+      'M6 quintic spline (3h)  ', &
+      'Wendland C2       (2h)  ', &
+      'Wendland C4       (2h)  ', &
+      'Wendland C6       (2h)  '/)
 
  real, parameter :: pi = 3.14159236
  integer, public :: ikernel = 0
@@ -65,20 +68,41 @@ subroutine select_kernel(j)
  endif
 
  select case(j)
- case(3) ! M6 quintic
+ case(6) ! Wendland 3D C6
+    ikernel = 6
+    radkernel = 2.
+    cnormk1D = 15./16.
+    cnormk2D = 39./(14.*pi)
+    cnormk3D = 1365./(512.*pi)
+    wfunc => w_wendlandc6
+ case(5) ! Wendland 3D C4
+    ikernel = 5
+    radkernel = 2.
+    cnormk1D = 27./32.
+    cnormk2D = 9./(4.*pi)
+    cnormk3D = 495./(256.*pi)
+    wfunc => w_wendlandc4
+ case(4) ! Wendland 3D C2
+    ikernel = 4
+    radkernel = 2.
+    cnormk1D = 0.75
+    cnormk2D = 7./(4.*pi)
+    cnormk3D = 21./(16.*pi)
+    wfunc => w_wendlandc2
+ case(3) ! M6 quintic, 3h
     ikernel = 3
     radkernel = 3.0
     cnormk1D = 1./120.
     cnormk2D = 7./(478*pi)
     cnormk3D = 1./(120.*pi)
     wfunc => w_quintic
- case(2) ! M5 quintic, squashed to 2h
+ case(2) ! M5 quartic, 2.5h
     ikernel = 2
-    radkernel = 2.0
-    cnormk1D = 3125./24576.
-    cnormk2D = 46875./(153472.*pi)
-    cnormk3D = 15625./(65536.*pi)
-    wfunc => w_quartic2h
+    radkernel = 2.5
+    cnormk1D = 1./24.
+    cnormk2D = 96./(1199.*pi)
+    cnormk3D = 1./(20.*pi)
+    wfunc => w_quartic
  case default  !-- cubic spline kernel
     if (j.eq.1) then
        ikernel = 1 ! deliberately chose cubic spline
@@ -119,11 +143,17 @@ subroutine select_kernel_by_name(string)
  !
  if (ikernel.eq.0) then
     select case(trim(adjustl(lcase(string))))
-    case('quintic','quintic spline','m6')
+    case('wendlandc6','wendland c6','6th order wendland','wendland 3d c6','w6','wendland6')
+       jkern = 6
+    case('wendlandc4','wendland c4','4th order wendland','wendland 3d c4','w4','wendland4')
+       jkern = 5
+    case('wendlandc2','wendland c2','2nd order wendland','wendland 3d c2','w2','wendland2')
+       jkern = 4
+    case('quintic','quintic spline','m6','quintic b-spline')
        jkern = 3
-    case('quartic','quartic2h','m5','squashed quartic','quartic spline')
+    case('quartic','quartic spline','m5','quartic b-spline')
        jkern = 2
-    case('cubic','cubic spline','m4')
+    case('cubic','cubic spline','m4','cubic b-spline')
        jkern = 1
     end select
  endif
@@ -153,6 +183,24 @@ pure real function w_cubic(q2)
  endif
 
 end function w_cubic
+
+pure real function w_quartic(q2)
+ implicit none
+ real, intent(in) :: q2
+ real :: q
+
+ q = sqrt(q2)
+ if (q.lt.0.5) then
+    w_quartic = (2.5-q)**4 - 5.*(1.5-q)**4 + 10.*(0.5-q)**4
+ elseif (q.lt.1.5) then
+    w_quartic = (2.5-q)**4 - 5.*(1.5-q)**4
+ elseif (q.lt.2.5) then
+    w_quartic = (2.5-q)**4
+ else
+    w_quartic = 0.
+ endif
+
+end function w_quartic
 
 pure real function w_quintic(q2)
  implicit none
@@ -192,5 +240,47 @@ pure real function w_quartic2h(q2)
  endif
 
 end function w_quartic2h
+
+pure real function w_wendlandc2(q2)
+ implicit none
+ real, intent(in) :: q2
+ real :: q
+
+ if (q2.lt.4.) then
+    q = sqrt(q2)
+    w_wendlandc2 = (1. - 0.5*q)**4*(2.*q + 1.)
+ else
+    w_wendlandc2 = 0.
+ endif
+
+end function w_wendlandc2
+
+pure real function w_wendlandc4(q2)
+ implicit none
+ real, intent(in) :: q2
+ real :: q
+
+ if (q2.lt.4.) then
+    q = sqrt(q2)
+    w_wendlandc4 = (1. - 0.5*q)**6*(35./12.*q2 + 3.*q + 1.)
+ else
+    w_wendlandc4 = 0.
+ endif
+
+end function w_wendlandc4
+
+pure real function w_wendlandc6(q2)
+ implicit none
+ real, intent(in) :: q2
+ real :: q
+
+ if (q2.lt.4.) then
+    q = sqrt(q2)
+    w_wendlandc6 = (1. - 0.5*q)**8*(4.*q2*q + 25./4.*q2 + 4.*q + 1.)
+ else
+    w_wendlandc6 = 0.
+ endif
+
+end function w_wendlandc6
 
 end module kernels
