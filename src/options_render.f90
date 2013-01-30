@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -90,6 +90,7 @@ subroutine submenu_render(ichoose)
   use plotlib,   only:plotlib_supports_alpha
   use filenames, only:fileprefix
   use kernels,   only:select_kernel,kernelname,nkernels
+  use projections3D, only:setup_integratedkernel
   implicit none
   integer, intent(in) :: ichoose
   character(len=5)  :: string
@@ -272,6 +273,7 @@ subroutine submenu_render(ichoose)
        enddo
        call prompt(' enter kernel to use for interpolations (0=default)',ikernel,0,nkernels)
        call select_kernel(ikernel)
+       call setup_integratedkernel  ! need to redo the kernel table if kernel has changed
   end select
 
  return
