@@ -456,7 +456,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      call options_powerspec
   endif
 
-  !!--prompt for options if plotting power spectrum
+  !!--prompt for options if plotting PDFs
   if (iploty.eq.ipdf .and. .not. imulti &
      .or. (imulti.and.any(multiploty(1:nyplotmulti).eq.ipdf))) then
      call options_pdf
