@@ -2699,8 +2699,9 @@ contains
     integer :: iplotsave,ipanelsave,ipanelpos
     real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
     real    :: xminpix,xmaxpix,yminpix,ymaxpix,dxpix
-    logical :: ipanelchange,dum
+    logical :: ipanelchange,dum,iprint_axes
     logical, intent(in), optional :: dummy
+    character(len=7) :: string
     !--------------------------------------------
     ! whether or not this is a dummy call or not
     !--------------------------------------------
@@ -2874,18 +2875,21 @@ contains
           ipanel = ipanelsave
           if (debugmode) print*,'DEBUG: finished dummy page setup'
           return
-       elseif (.not.ipagechange .and. .not.inewpage .and. &
-               .not.(iplots.le.nacross*ndown .and. nyplot.eq.1 .and. istepsonpage.eq.1)) then
-          if (debugmode) print*,'DEBUG: not printing axes ',ipagechange,inewpage,iplots
-       !--if we are not changing page, do not reprint the axes
-          call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
-                  trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp, &
-                  xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
-                  0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice)
        else
-          if (debugmode) print*,'DEBUG: printing axes ',ipagechange,inewpage,iplots
+       
+          !--if we are not changing page, do not reprint the axes
+          iprint_axes = ipagechange .or. inewpage .or. &
+                        ((iplots.le.nacross*ndown) .and. (nyplot.le.nacross*ndown .or. istepsonpage.eq.1))
+         
+          if (iprint_axes) then
+             if (debugmode) print*,'DEBUG: printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
+             string = ' '
+          else
+             if (debugmode) print*,'DEBUG: not printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
+             string = 'NOPGBOX'
+          endif
           call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
-                  trim(labelx),trim(labely),' ',just,iaxistemp, &
+                  trim(labelx),trim(labely),string,just,iaxistemp, &
                   xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                   0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice)
        endif
