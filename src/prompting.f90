@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -110,6 +110,9 @@
 ! 21/08/12: D. Price:
 ! Real/double prompting interfaces compile and work with -r8
 !
+! 08/02/13: D. Price
+! Integer prompt enforces default value to be between min and max
+!
 module prompting
 
    private
@@ -154,9 +157,18 @@ contains
       error = .false.
 
       !
+      !  Make sure default argument is within range!
+      !
+      if (present(min)) then
+         if (value < min) value = min
+      endif
+      if (present(max)) then
+         if (value > max) value = max
+      endif
+
+      !
       !  Pack arguments in strings for compact and nicer prompt
       !
-
       write(string,*) value
       if (present(min)) write(chmin,"(g10.0)") min
       if (present(max)) write(chmax,"(g10.0)") max

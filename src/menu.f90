@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -261,6 +261,18 @@ subroutine menu
             call prompt(' enter corresponding SPH column for particle data ',irender,0,ndataplots)
             ipickx = 0
             ivecplot = 0
+        elseif (ipicky.eq.numplot+1) then
+        !
+        !--for multiplots, check that options are valid. If not, re-prompt for multiplot
+        !  settings
+        !
+            if (any(multiploty(1:nyplotmulti).le.0) .or. &
+                any(multiploty(1:nyplotmulti).gt.numplot) .or. &
+                any(multiplotx(1:nyplotmulti).le.0) .or. &
+                any(multiplotx(1:nyplotmulti).gt.numplot)) then
+               print "(/,a,/)",'ERROR: multiplot settings out of range, please re-enter these'
+               call options_multiplot
+            endif
         endif
         !
         !--call main plotting routine
