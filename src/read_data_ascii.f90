@@ -335,7 +335,7 @@ subroutine set_labels
            ndim = 3
            ix(3) = i
         endif
-        if (labeli(1:3).eq.'den' .or. labeli(1:3).eq.'rho') then
+        if (labeli(1:3).eq.'den' .or. index(labeli,'rho').ne.0 .or. labeli(1:3).eq.'\gr') then
            irho = i
         elseif (labeli(1:5).eq.'pmass' .or. labeli(1:13).eq.'particle mass' &
                 .or. index(labeli,'mass').ne.0) then
@@ -347,7 +347,7 @@ subroutine set_labels
         elseif (trim(labeli).eq.'u'.or.labeli(1:6).eq.'utherm' &
             .or.trim(labeli).eq.'internal energy') then
            iutherm = i
-        elseif (labeli(1:2).eq.'pr') then
+        elseif (labeli(1:2).eq.'pr' .or. trim(labeli).eq.'p') then
            ipr = i
         elseif (ivx.eq.0 .and. labeli(1:1).eq.'v') then
            ivx = i
