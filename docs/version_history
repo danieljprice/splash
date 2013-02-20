@@ -1,3 +1,6 @@
+2.2.1:
+minor bug with axes plotting fixed; Wendland kernels added; bugs with exact solution plotting fixed; bug fix with tracking of dark matter particles
+ 
 2.2.0:
 option to use different kernels for interpolation; floating/inset colour bars added; splash to gadget conversion implemented; splash to grid works in 2D; improved interfaces to shapes and animation sequences; automatically turns on dark matter particle plotting if no gas; interactive mode help displayed automatically
  
