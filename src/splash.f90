@@ -48,7 +48,7 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.2.1  : (20/02/13)
+!     2.2.1  : (21/02/13)
 !             minor bug with axes plotting fixed;
 !             Wendland kernels added; bugs with exact solution plotting fixed;
 !             bug fix with tracking of dark matter particles
@@ -332,7 +332,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.2.1 [20th Feb 2013]'
+  character(len=*), parameter :: version = 'v2.2.1 [21st Feb 2013]'
 
   !
   ! initialise some basic code variables
