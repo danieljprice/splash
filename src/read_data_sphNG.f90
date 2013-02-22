@@ -117,6 +117,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer*1, dimension(:), allocatable :: iphase
   integer, dimension(:), allocatable :: listpm
   real(doub_prec), dimension(:), allocatable :: dattemp
+  real*4, dimension(:), allocatable :: dattempsingle
   real(doub_prec) :: r8
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
@@ -879,7 +880,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
             allocate(dattemp(isize(iarr)),stat=ierr)
             if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattemp)'
          endif
-
 !        default reals may need converting
          do i=1,nreal(iarr)
             if (iarr.eq.1.and.((phantomdump.and.i.eq.4) &
@@ -968,7 +968,15 @@ subroutine read_data(rootname,indexstart,nstepsread)
             imaxcolumnread = max(imaxcolumnread,icolumn)
             if (debug) print*,'reading real4 ',icolumn
             if (required(icolumn)) then
-               read(iunit,end=33,iostat=ierr) dat(i1:i2,icolumn,j)
+               IF (icolumn.EQ.6) THEN
+                  if (allocated(dattempsingle)) deallocate(dattempsingle)
+                  allocate(dattempsingle(isize(iarr)),stat=ierr)
+                  if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattemp)'
+                  read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
+                  dat(i1:i2,icolumn,j) = dattempsingle(1:isize(iarr))
+               ELSE
+                  read(iunit,end=33,iostat=ierr) dat(i1:i2,icolumn,j)
+               ENDIF
             else
                read(iunit,end=33,iostat=ierr)
             endif
@@ -1276,6 +1284,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif iphasealloc
 
      if (allocated(dattemp)) deallocate(dattemp)
+     if (allocated(dattempsingle)) deallocate(dattempsingle)
      if (allocated(dattemp2)) deallocate(dattemp2)
      if (allocated(iphase)) deallocate(iphase)
      if (allocated(listpm)) deallocate(listpm)
