@@ -931,7 +931,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
                print*,' ERROR: particle mass zero in Phantom dump file!'
             endif
          endif
-!        real4's go straight into dat
+!
+!        real4 arrays (may need converting if splash is compiled in double precision)
+! 
+         if (nreal4(iarr).gt.0 .and. kind(dat).eq.doub_prec) then
+            if (allocated(dattempsingle)) deallocate(dattempsingle)
+            allocate(dattempsingle(isize(iarr)),stat=ierr)
+            if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattempsingle)'
+         endif
+
+!        real4s may need converting
          imaxcolumnread = max(imaxcolumnread,icolumn)
          if ((nreal(iarr)+nreal4(iarr)).gt.6) imaxcolumnread = max(imaxcolumnread,6)
          do i=1,nreal4(iarr)
@@ -968,15 +977,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
             imaxcolumnread = max(imaxcolumnread,icolumn)
             if (debug) print*,'reading real4 ',icolumn
             if (required(icolumn)) then
-               IF (icolumn.EQ.6) THEN
-                  if (allocated(dattempsingle)) deallocate(dattempsingle)
-                  allocate(dattempsingle(isize(iarr)),stat=ierr)
-                  if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattemp)'
+               if (allocated(dattempsingle)) THEN
                   read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
-                  dat(i1:i2,icolumn,j) = dattempsingle(1:isize(iarr))
-               ELSE
+                  dat(i1:i2,icolumn,j) = real(dattempsingle(1:isize(iarr)))
+               else
                   read(iunit,end=33,iostat=ierr) dat(i1:i2,icolumn,j)
-               ENDIF
+               endif
             else
                read(iunit,end=33,iostat=ierr)
             endif
