@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -359,9 +359,6 @@ subroutine set_labels
  !
  iamvec(ivx:ivx+ndimV-1) = ivx
  labelvec(ivx:ivx+ndimV-1) = 'v'
- do i=1,ndimV
-    label(ivx+i-1) = trim(labelvec(ivx+i-1))//'\d'//labelcoord(i,1)
- enddo
 
  label(irho) = '\gr'
  label(iutherm) = 'u'
@@ -378,9 +375,6 @@ subroutine set_labels
     iBfirst = icol+1        ! location of Bx
     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-    do i=1,ndimV
-       label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1) !' (x10\u-3\d)' !//'/rho'
-    enddo
     icol = icol + ndimV
     !
     !--more scalars
@@ -428,13 +422,16 @@ subroutine set_labels
     iamvec(icol+1:icol+ndimV) = icol + 1
     labelvec(icol+1:icol+ndimV) = 'force'
     icol = icol + ndimV
-!    do i=1,ndimV
-!       label(ndim+ndimV+9+i) = labelvec(ndim+2*ndimV+ndimV)//labelcoord(i,1)
-!    enddo
-
     iBfirst = 0
  endif
- if (iformat.gt.2) then
+ print*,' GOT iformat = ',iformat
+ if (iformat.eq.5) then
+    icol = icol + 1
+    label(icol) = 'dust to gas ratio'
+    iamvec(icol+1:icol+ndimV) = icol + 1
+    labelvec(icol+1:icol+ndimV) = 'deltav'
+    icol = icol + ndimV
+ elseif (iformat.gt.2) then
     irhorestframe = irho
     icol = icol + 1
     irho = icol
@@ -444,9 +441,6 @@ subroutine set_labels
     label(icol) = 'sqrt g'
     iamvec(icol+1:icol+ndimV) = icol + 1
     labelvec(icol+1:icol+ndimV) = 'pmom'
-    do i=1,ndimV
-       label(icol+i) = trim(labelvec(icol+i))//labelcoord(i,1)
-    enddo
     icol = icol + ndimV
  endif
 !
