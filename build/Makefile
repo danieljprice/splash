@@ -630,8 +630,8 @@ vine: checksystem $(OBJECTS) read_data_VINE.o
 kitp: checksystem $(OBJECTS) read_data_kitp.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/ksplash $(OBJECTS) read_data_kitp.o
 
-ndspmhd: checksystem $(OBJECTS) read_data_dansph.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/nsplash $(OBJECTS) read_data_dansph.o $(LDFLAGS)
+ndspmhd: checksystem $(OBJECTS) read_data_ndspmhd.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/nsplash $(OBJECTS) read_data_ndspmhd.o $(LDFLAGS)
 
 dansph: checksystem $(OBJECTS) read_data_dansph_old.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_dansph_old.o $(LDFLAGS)
