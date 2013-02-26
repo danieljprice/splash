@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -35,7 +35,8 @@
 ! Handles all cases of left and right-going shocks and rarefactions
 !
 ! Daniel Price, Institute of Astronomy, Cambridge, 2004
-!               University of Exeter 2004-2006
+!               University of Exeter 2004-2008
+!               Monash University 2008-
 !
 ! dprice@astro.ex.ac.uk
 !-----------------------------------------------------------------------
@@ -86,8 +87,8 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas
   cs_L = sqrt(gamma*p_L/rho_L)
   cs_R = sqrt(gamma*p_R/rho_R)
   if (rdust_to_gas .gt.epsilon(rdust_to_gas)) then
-  cs_L = cs_L*sqrt(1./(1.+rdust_to_gas))
-  cs_R = cs_R*sqrt(1./(1.+rdust_to_gas))   
+     cs_L = cs_L*sqrt(1./(1.+rdust_to_gas))
+     cs_R = cs_R*sqrt(1./(1.+rdust_to_gas))   
   endif
   gamfac = (gamma-1.)/(gamma + 1.)
 
@@ -103,7 +104,7 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas
   else
      print*,'using isothermal solver...',p_L/rho_L, p_R/rho_R
      useisothermal = .true.
-     call get_pstar_isothermal(p_L/rho_L,v_L,v_R,rho_L,rho_R,ppost,vpost)
+     call get_pstar_isothermal(cs_L*cs_L,v_L,v_R,rho_L,rho_R,ppost,vpost)
   endif
 
 !------------------------------------------------------------
