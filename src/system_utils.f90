@@ -27,7 +27,7 @@
 module system_utils
  use system_commands, only:get_environment
  implicit none
- public :: ienvironment,lenvironment,renvironment,lenvstring
+ public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
 
 contains
  !
@@ -42,26 +42,13 @@ contains
     implicit none
     character(len=*), intent(in) :: variable
     character(len=30) :: string
-    character(len=5) :: fmtstring
     integer, intent(in), optional :: errval
-    integer :: ierr
 
     call get_environment(variable,string)
-    if (len_trim(string).gt.0) then
-    !--use a formatted read - this is to avoid a compiler bug
-    !  should in general be more robust anyway
-       write(fmtstring,"(a,i2,a)",iostat=ierr) '(i',len_trim(string),')'
-       read(string,fmtstring,iostat=ierr) ienvironment
+    if (present(errval)) then
+       ienvironment = ienvstring(string,errval)
     else
-       ierr = 1
-    endif
-
-    if (ierr /= 0) then
-       if (present(errval)) then
-          ienvironment = errval
-       else
-          ienvironment = 0
-       endif
+       ienvironment = ienvstring(string)
     endif
 
  end function ienvironment
@@ -131,6 +118,31 @@ contains
 
  end function lenvstring
 
+ integer function ienvstring(string,errval)
+    implicit none
+    character(len=*), intent(in)  :: string
+    integer, intent(in), optional :: errval
+    character(len=5) :: fmtstring
+    integer :: ierr
+
+    if (len_trim(string).gt.0) then
+    !--use a formatted read - this is to avoid a compiler bug
+    !  should in general be more robust anyway
+       write(fmtstring,"(a,i2,a)",iostat=ierr) '(i',len_trim(string),')'
+       read(string,fmtstring,iostat=ierr) ienvstring
+    else
+       ierr = 1
+    endif
+
+    if (ierr /= 0) then
+       if (present(errval)) then
+          ienvstring = errval
+       else
+          ienvstring = 0
+       endif
+    endif
+
+ end function ienvstring
  !
  !--this routine returns an arbitrary number of
  !  comma separated strings

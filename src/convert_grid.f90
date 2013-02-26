@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -46,7 +46,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use interpolation,      only:set_interpolation_weights
  use interpolations3D,   only:interpolate3D,interpolate3D_vec
  use interpolations2D,   only:interpolate2D,interpolate2D_vec
- use system_utils,       only:lenvironment,renvironment,envlist,lenvstring
+ use system_utils,       only:lenvironment,renvironment,envlist,lenvstring,ienvstring
  use readwrite_griddata, only:open_gridfile_w,write_grid
  use particle_data,      only:icolourme
  use params,             only:int8
@@ -75,10 +75,12 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  real, dimension(3)    :: datmin,datmax,datmean
  integer, dimension(3) :: npixels
  integer(kind=int8), dimension(3) :: npixels8
+ integer, dimension(12) :: icoltogrid
+ integer :: ncolstogrid,icol
  real    :: hmin,pixwidth,rhominset,rhomin,gridmin,gridmax,gridmean
  logical :: inormalise,lowmem
  logical, dimension(3) :: isperiodic
- character(len=30), dimension(3) :: strings
+ character(len=30), dimension(12) :: strings
  character(len=1), dimension(3), parameter :: xlab = (/'x','y','z'/)
 
  !
@@ -103,6 +105,32 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
        print "(1x,a,': ',es14.6,' -> ',es14.6)",trim(label(ix(i))),xmin(i),xmax(i)
     endif
  enddo
+
+ !
+ !--SPLASH_TO_GRID can be set to comma separated list of columns
+ !  in order to select particular quantities for interpolation to grid
+ !
+ ncolstogrid   = 0
+ icoltogrid(:) = 0
+ call envlist('SPLASH_TO_GRID',nstring,strings)
+ if (nstring.gt.0) then
+    do i=1,nstring
+       icol = ienvstring(strings(i))
+       if (ienvstring(strings(i)).gt.0) then
+          ncolstogrid = ncolstogrid + 1
+          icoltogrid(ncolstogrid) = icol
+       endif
+    enddo
+ endif
+ !
+ !--for backwards compatibility, support the SPLASH_TO_GRID_DENSITY_ONLY option
+ !  but only if SPLASH_TO_GRID is not set
+ !
+ if (ncolstogrid.eq.0 .and. lenvironment('SPLASH_TO_GRID_DENSITY_ONLY')) then
+    ncolstogrid = 1
+    icoltogrid(1) = irho
+ endif
+ 
  !
  !--whether or not to wrap particle contributions across boundaries
  !
@@ -236,16 +264,17 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--work out how many columns will be written to file
  !
- if (interpolateall) then
+ nvec = 0
+ if (ncolstogrid.gt.0) then
+    ncolsgrid = ncolstogrid
+ elseif (interpolateall) then
     ncolsgrid = 0
     do i=1,ncolumns
        if (.not.any(ix(1:ndim).eq.i) .and. i.ne.ih .and. i.ne.ipmass) then
           ncolsgrid = ncolsgrid + 1
        endif
     enddo
-    nvec = 0
  else
-    nvec = 0
     if (ndimV.eq.ndim) then
        if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) nvec = nvec + 1
        if (iBfirst.gt.0 .and. iBfirst+ndimV-1.le.ncolumns) nvec = nvec + 1
@@ -387,9 +416,16 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--interpolate remaining quantities to the 3D grid
  !
- if (interpolateall) then
+ if (interpolateall .or. ncolstogrid.gt.0) then
+    if (ncolstogrid.gt.0) then
+       print "(/,a,i2,a)",' Interpolating ',ncolstogrid,' columns to grid from SPLASH_TO_GRID setting:'
+       print "(' got SPLASH_TO_GRID=',10(i2,1x))",icoltogrid(1:ncolstogrid)
+    endif
+
     do i=1,ncolumns
-       if (.not.any(ix(:).eq.i) .and. i.ne.ih .and. i.ne.ipmass .and. i.ne.irho) then
+       if ((ncolstogrid.gt.0 .and. any(icoltogrid.eq.i) .and. i.ne.irho) .or.  &
+           (interpolateall .and. &
+            .not.any(ix(:).eq.i) .and. i.ne.ih .and. i.ne.ipmass .and. i.ne.irho)) then
 
           print "(/,a)",' interpolating '//trim(label(i))
           print fmtstring1,trim(label(i))
@@ -429,7 +465,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
        endif
     enddo
 
- elseif (.not.lenvironment('SPLASH_TO_GRID_DENSITY_ONLY')) then
+ else
 
     if (.not.lowmem) then
        if (allocated(datgrid)) deallocate(datgrid)
@@ -437,7 +473,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
     if (nvec.gt.0) then
 
-       print "(/,a)",' set SPLASH_TO_GRID_DENSITY_ONLY=yes to skip remaining quantities'
+       print "(/,a,i2,a)",' set SPLASH_TO_GRID=',irho,' to interpolate density ONLY and skip remaining columns'
+       print "(a,i2,a)",  '     SPLASH_TO_GRID=6,8,10 to select particular columns'
 
        if (.not.lowmem) then
           if (ndim.eq.3) then
@@ -559,8 +596,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           print*
        enddo over_vec
     endif
- else
-    print "(/,a)",' skipping remaining quantities (from SPLASH_TO_GRID_DENSITY_ONLY setting)'
+! else
+!    print "(/,a)",' skipping remaining quantities (from SPLASH_TO_GRID_DENSITY_ONLY setting)'
  endif
 
  close(iunit)
