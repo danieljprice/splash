@@ -318,6 +318,7 @@ Environment variables that affect all data reads are:\newline
 SPLASH\_DEFAULTS & gives the name of a system-wide \verb+splash.defaults+ file (and splash.limits etc.) that will be used if there is none in the current directory. e.g. \verb+export SPLASH_DEFAULTS=/home/me/splash.defaults+ \\
 SPLASH\_KERNEL & changes the smoothing kernel used in the interpolations (e.g. `cubic' or `quintic'). Can also be changed in the r)ender menu. \\
 SPLASH\_DEBUG & if set to `yes' or `true', turns on very verbose debugging output. Useful to trace code crashes (but of course, this never happens\ldots).\\
+SPLASH\_CENTRE\_ON\_SINK & if set to a number n, centres coordinates and velocities on the n{\it th} sink/star particle (e.g. \verb+export SPLASH_CENTRE_ON_SINK=2+). \\
 SPLASH\_HMIN\_CODEUNITS & if given a value $>$0 enforces a minimum smoothing length, specified in code units as read from the dump file, on all the particles. This can be used to ``dumb-down'' the resolution of SPH simulations, e.g. to match observational resolution. If this variable is set it is \emph{highly} recommended that the ``use accelerated rendering'' option in the r)ender menu is also turned on as quite slow rendering can otherwise result. \\
 SPLASH\_VZERO\_CODEUNITS & if set to a comma separated list of vector components (e.g. \verb+export SPLASH_VZERO_CODEUNITS='0.0,1.0,0.0'+), can be used to subtract a mean velocity field from all particles --- specified in code units as read from the dump file. \\
 SPLASH\_MARGIN\_XMIN & can be used to manually adjust the left horizontal page margin (set to fraction of viewport, negative values are allowed). \\
@@ -371,7 +372,7 @@ VSPLASH\_MHD & if `YES' or `TRUE' reads VINE dumps containing MHD arrays (note t
  For the sphNG and PHANTOM read (`ssplash') the environment variable options are:\newline
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
-SSPLASH\_CENTRE\_ON\_SINK & if `YES' or `TRUE' resets the positions such that the sink particle is positioned at the origin (applies only where there is one, and only one, sink particle present)\\
+SSPLASH\_CENTRE\_ON\_SINK  \newline(**obsolete**) & if `YES' or `TRUE' resets the positions such that the sink particle is positioned at the origin (applies only where there is one, and only one, sink particle present). This option is obsolete: use SPLASH\_CENTRE\_ON\_SINK instead.\\
 SSPLASH\_RESET\_CM & if `YES' or `TRUE' resets the positions such that the centre of mass is exactly at the origin. \\
 SSPLASH\_OMEGA & if non-zero, subtracts solid body rotation with omega as specified to give velocities in co-rotating frame. \\
 SSPLASH\_OMEGAT & if non-zero, subtracts solid body rotation with omega as specified to give positions and velocities in co-rotating frame. \\
@@ -464,6 +465,8 @@ Command line plotting mode:
                              output to file called 'maxvals.out'
          calc min          : minimum of each column vs. time
                              output to file called 'minvals.out'
+         calc diff           : (max - min) of each column vs. time
+                             output to file called 'diffvals.out'
          calc mean         : mean of each column vs. time
                              output to file called 'meanvals.out'
          calc rms          : (mass weighted) root mean square of each column vs. time
