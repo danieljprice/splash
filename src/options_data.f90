@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -64,7 +64,8 @@ subroutine defaults_set_data
   ivegotdata = .false.
   ntypes = 1
   xorigin = 0.
-  itrackpart = 0 ! particle tracking limits (none)
+  itracktype = 0 ! particle tracking limits (none)
+  itrackoffset = 0
   ipartialread = .false.  ! strictly unnecessary as set in get_data
   iverbose = 1
 

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -76,12 +76,12 @@ end subroutine change_coords
 !-------------------------------------------------------------------
 ! interface to coordinate-system transformations
 !-------------------------------------------------------------------
-subroutine changecoords(iplotx,iploty,xplot,yplot,ntot,ndim,dat)
+subroutine changecoords(iplotx,iploty,xplot,yplot,ntot,ndim,itrackpart,dat)
  use geometry,      only:coord_transform,labelcoordsys
- use settings_data, only:xorigin,itrackpart,icoords,icoordsnew
+ use settings_data, only:xorigin,icoords,icoordsnew
  use labels,        only:is_coord,ix
  implicit none
- integer, intent(in) :: iplotx,iploty,ntot,ndim
+ integer, intent(in) :: iplotx,iploty,ntot,ndim,itrackpart
  real, dimension(:), intent(inout) :: xplot,yplot
  real, dimension(:,:), intent(in)  :: dat
  real, dimension(ndim) :: xcoords,xcoordsnew
@@ -127,12 +127,12 @@ end subroutine changecoords
 !-------------------------------------------------------------------
 ! interface to coordinate-system transformations for vectors
 !-------------------------------------------------------------------
-subroutine changeveccoords(iplot,xploti,ntot,ndim,dat)
+subroutine changeveccoords(iplot,xploti,ntot,ndim,itrackpart,dat)
  use geometry,      only:vector_transform,labelcoordsys
- use settings_data, only:xorigin,itrackpart,icoords,icoordsnew
+ use settings_data, only:xorigin,icoords,icoordsnew
  use labels,        only:ivx,iamvec,ix
  implicit none
- integer, intent(in) :: iplot,ntot,ndim
+ integer, intent(in) :: iplot,ntot,ndim,itrackpart
  real, dimension(:), intent(inout) :: xploti
  real, dimension(ndim) :: xcoords,vecnew,vecin
  real, dimension(:,:), intent(in)  :: dat

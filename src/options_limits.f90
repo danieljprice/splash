@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -56,20 +56,22 @@ end subroutine defaults_set_limits
 subroutine submenu_limits(ichoose)
  use filenames,      only:nsteps,nstepsinfile,ifileopen
  use settings_data,  only:ndataplots,numplot,ndim,ivegotdata,iCalcQuantities, &
-                          DataIsBuffered,itrackpart
+                          DataIsBuffered,itracktype,itrackoffset,ntypes
  use calcquantities, only:calc_quantities
  !use settings_page, only:nstepsperpage
  use multiplot,      only:itrans
  use prompting,      only:prompt,print_logical
  use limits,         only:lim,set_limits,range,rangeset,anyrangeset,print_rangeinfo
- use labels,         only:label,ix,irad,is_coord
+ use labels,         only:label,ix,irad,is_coord,labeltype
  use transforms,     only:ntrans,transform_label
  implicit none
  integer, intent(in) :: ichoose
- integer             :: iaction,ipick,i,index,itrackpartprev
+ integer             :: iaction,ipick,i,index,ierr
+ integer             :: itracktypeprev,itrackoffsetprev
 ! real                :: diff, mid, zoom
  character(len=120)  :: transprompt
- character(len=5)    :: string,string2
+ character(len=12)   :: string,string2
+ character(len=20)   :: pstring,pstring2
 
 ! zoom = 1.0
 
@@ -84,19 +86,27 @@ subroutine submenu_limits(ichoose)
  else
     string2 = 'FIXED'
  endif
+ write(pstring,"(i12)") itrackoffset
+ pstring = adjustl(pstring)
+ if (itracktype.gt.0) then
+    write(pstring2,"(i12)") itracktype
+    pstring=trim(adjustl(pstring2))//':'//trim(pstring)
+ else
+    pstring=trim(pstring)
+ endif
 
  print "(a)",'------------------ limits options ---------------------'
 10 format( &
         ' 0) exit ',/,                 &
         ' 1) use adaptive/fixed limits                  ( ',a,', ',a,' )   ',/,  &
         ' 2) set limits manually ',/,     &
-        ' 3) xy limits/radius relative to particle           ( ',i8,' )',/,   &
+        ' 3) xy limits/radius relative to particle           ( ',a,' )',/,   &
         ' 4) auto-adjust limits to match device aspect ratio ( ',a,' )',/, &
         ' 5) apply log/other transformations to columns ',/, &
         ' 6) reset limits for all columns  ',/, &
         ' 7) use subset of data restricted by parameter range     ( ',a,')')
  if (iaction.le.0 .or. iaction.gt.7) then
-    print 10,trim(string),trim(string2),itrackpart,&
+    print 10,trim(string),trim(string2),trim(pstring),&
              print_logical(adjustlimitstodevice),print_logical(anyrangeset())
     call prompt('enter option ',iaction,0,7)
  endif
@@ -150,18 +160,42 @@ subroutine submenu_limits(ichoose)
 !+ particle for all timesteps, with offsets as input by the user.
 !+ This effectively gives the `Lagrangian' perspective.
 
-    itrackpartprev = itrackpart
-    call prompt('Enter particle to track: ',itrackpart,0)
-    print*,'tracking particle ',itrackpart
-    if (itrackpart.gt.0) then
+    itrackoffsetprev = itrackoffset
+    itracktypeprev   = itracktype
+    print "(a,/,a,/)",'To track particle 4923, enter 4923', &
+                      'To track the 43rd particle of type 3, enter 3:43'
+    
+    call prompt('Enter particle to track: ',pstring,noblank=.true.)
+    call get_itrackpart(pstring,itracktype,itrackoffset,ierr)
+    do while (ierr.ne.0 .or. itracktype.lt.0 .or. itracktype.gt.ntypes .or. itrackoffset.lt.0)
+       if (itracktype.lt.0 .or. itracktype.gt.ntypes) print "(a)",'invalid particle type'
+       if (itrackoffset.lt.0)                         print "(a)",'invalid particle index'
+       if (ierr.ne.0)                                 print "(a)",'syntax error in string'
+       pstring = '0'
+       call prompt('Enter particle to track: ',pstring,noblank=.true.)
+       call get_itrackpart(pstring,itracktype,itrackoffset,ierr)
+    enddo
+    if (itracktype.gt.0) then
+       write(string,"(i12)") itrackoffset
+       string = adjustl(string)
+       print "(a)",'=> tracking '//trim(labeltype(itracktype))//' particle #'//trim(string)
+    elseif (itrackoffset.gt.0) then
+       write(string,"(i12)") itrackoffset
+       string = adjustl(string)
+       print "(a)",'=> tracking particle '//trim(string)
+    else
+       print "(a)",'=> particle tracking limits OFF'
+    endif
+
+    if (itrackoffset.gt.0) then
        do i=1,ndim
           call prompt('Enter offset for '//trim(label(ix(i)))//'min:', &
                       xminoffset_track(i))
           call prompt('Enter offset for '//trim(label(ix(i)))//'max :', &
                       xmaxoffset_track(i))
        enddo
-       if (itrackpart.ne.itrackpartprev .and. iCalcQuantities  &
-           .and. irad.gt.0 .and. irad.le.numplot) then
+       if ((itrackoffset.ne.itrackoffsetprev .or. itracktype.ne.itracktypeprev) &
+           .and. iCalcQuantities .and. irad.gt.0 .and. irad.le.numplot) then
        !--radius calculation is relative to tracked particle
           print "(a)",' recalculating radius relative to tracked particle '
           if (DataIsBuffered) then
@@ -263,5 +297,23 @@ subroutine submenu_limits(ichoose)
 
  return
 end subroutine submenu_limits
+
+subroutine get_itrackpart(string,itracktype,itrackpart,ierr)
+ implicit none
+ character(len=*), intent(in)  :: string
+ integer,          intent(out) :: itracktype,itrackpart,ierr
+ integer :: ic
+
+ ic = index(string,':')
+ if (ic.gt.0) then
+    read(string(1:ic-1),*,iostat=ierr) itracktype
+    read(string(ic+1:),*,iostat=ierr) itrackpart
+    if (itrackpart.eq.0) itracktype = 0
+ else
+    itracktype = 0
+    read(string,*,iostat=ierr) itrackpart 
+ endif
+
+end subroutine get_itrackpart
 
 end module settings_limits

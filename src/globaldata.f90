@@ -70,7 +70,7 @@ end module particle_data
 module part_utils
  implicit none
 
- public :: igettype
+ public :: igettype,get_tracked_particle
  private
 
 contains
@@ -97,6 +97,35 @@ contains
   enddo over_types
 
  end function igettype
+ 
+ integer function get_tracked_particle(itype,ioffset,noftype,iamtype)
+  use params, only:int1,maxparttypes
+  implicit none
+  integer, intent(in) :: itype,ioffset
+  integer, dimension(maxparttypes), intent(in) :: noftype
+  integer(kind=int1), dimension(:), intent(in) :: iamtype
+  integer :: i,n
+  
+  if (itype.le.0 .or. itype.gt.size(noftype)) then
+     !--type not set, itrackpart = itrackoffset
+     get_tracked_particle = ioffset
+  else
+     !--want to select nth particle of a particular type
+     if (size(iamtype(:)).eq.1) then
+        get_tracked_particle = sum(noftype(1:itype-1)) + ioffset
+     else
+        get_tracked_particle = 0
+        i = 0
+        n = 0
+        do while (get_tracked_particle.eq.0 .and. i.lt.size(iamtype))
+           i = i + 1
+           if (iamtype(i).eq.itype) n = n + 1
+           if (n.eq.ioffset) get_tracked_particle = i
+        enddo
+     endif
+  endif
+
+ end function get_tracked_particle
 
 end module part_utils
 !
@@ -218,7 +247,7 @@ module settings_data
  integer :: ndim, ndimv
  integer :: icoords,icoordsnew,iformat,ntypes,iexact
  integer :: istartatstep,iendatstep,nfreq
- integer :: itrackpart,iverbose
+ integer :: itracktype,itrackoffset,iverbose
  integer, dimension(10) :: isteplist
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
@@ -230,7 +259,7 @@ module settings_data
  logical, dimension(maxparttypes) :: UseTypeInRenderings
  real, dimension(3) :: xorigin
 
- namelist /dataopts/ buffer_data,iCalcQuantities,iRescale,xorigin
+ namelist /dataopts/ buffer_data,iCalcQuantities,iRescale,xorigin,itracktype,itrackoffset
 
  public
 

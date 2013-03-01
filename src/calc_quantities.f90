@@ -587,19 +587,20 @@ end subroutine get_calc_data_dependencies
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels,         only:label,labelvec,iamvec,ix,ivx
-  use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol
-  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,itrackpart,ndim,required,iverbose, &
-                           icoords,icoordsnew,ipartialread
+  use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol,iamtype
+  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
+                           icoords,icoordsnew,ipartialread,itracktype,itrackoffset
   use mem_allocation, only:alloc
   use settings_units, only:unitslabel,units
   use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
   use params,         only:maxplot
   use timing,         only:wall_time,print_time
   use geomutils,      only:change_coords
+  use part_utils,     only:get_tracked_particle
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
-  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused
+  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,itrackpart
   logical :: skip
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
@@ -682,6 +683,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
         !--set origin position
         !
         v0(:) = 0.
+        itrackpart = get_tracked_particle(itracktype,itrackoffset,npartoftype(:,i),iamtype(:,i))
         if (itrackpart.gt.0 .and. itrackpart.le.ntoti) then
            x0(:) = 0.
            if (ix(1).gt.0 .and. ix(1).le.ncolumns) then

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -360,11 +360,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         if (itrackpart.eq.0) then
            call save_limits(iplotx,xmin,xmax)
            call save_limits(iploty,ymin,ymax)
+           call save_itrackpart_recalcradius(itrackpart) ! set saved value to zero
         else
            print*,'tracking particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
            if (is_coord(iplotx,ndim)) call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
            if (is_coord(iploty,ndim)) call save_limits_track(iploty,ymin,ymax,ycoords(itrackpart))
-           call save_itrackpart_recalcradius()
+           call save_itrackpart_recalcradius(itrackpart)
         endif
         if (irender.gt.0) call save_limits(irender,rendermin,rendermax)
         if (icontour.gt.0) then
@@ -2710,13 +2711,18 @@ end subroutine save_limits_track
 !
 !--recalculates radius
 !
-subroutine save_itrackpart_recalcradius()
+subroutine save_itrackpart_recalcradius(itrackpart)
  use filenames,      only:nsteps,nstepsinfile,ifileopen
- use settings_data,  only:ncalc,DataIsBuffered,iCalcQuantities
+ use settings_data,  only:ncalc,DataIsBuffered,iCalcQuantities, &
+                          itracktype,itrackoffset
  use calcquantities, only:calc_quantities,calc_quantities_use_x0
  implicit none
+ integer, intent(in) :: itrackpart
+ 
+ itracktype   = 0  ! cannot interactively track by type
+ itrackoffset = itrackpart
 
- if (iCalcQuantities) then
+ if (iCalcQuantities .and. itrackpart.gt.0) then
     if (ncalc.gt.0 .and. calc_quantities_use_x0()) then
        print "(a)",' Recalculating radius relative to tracked particle'
        if (DataIsBuffered) then

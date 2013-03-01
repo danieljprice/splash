@@ -622,13 +622,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use toystar1D,          only:exact_toystar_ACplane
   use toystar2D,          only:exact_toystar_ACplane2D
   use labels,             only:label,labelvec,iamvec,lenlabel,lenunitslabel,ih,irho,ipmass,ix,iacplane, &
-                               ipowerspec,isurfdens,itoomre,iutherm,ipdf,icolpixmap,is_coord
+                               ipowerspec,isurfdens,itoomre,iutherm,ipdf,icolpixmap,is_coord,labeltype
   use limits,             only:lim,get_particle_subset,lim2,lim2set
   use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                                icontourmulti,x_secmulti,xsecposmulti,iusealltypesmulti,iplotpartoftypemulti
   use particle_data,      only:maxpart,maxcol,icolourme
   use settings_data,      only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
-                               iendatstep,ntypes,UseTypeInRenderings,itrackpart,&
+                               iendatstep,ntypes,UseTypeInRenderings,itracktype,itrackoffset,&
                                required,ipartialread,xorigin,lowmemorymode,debugmode
   use settings_limits,    only:iadapt
   use settings_part,      only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
@@ -653,6 +653,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use colourparts
   use transforms,            only:transform,transform_limits,transform_label,transform_inverse,islogged
   use interactive_routines
+  use part_utils,            only:get_tracked_particle
   use particleplots,         only:particleplot,plot_errorbarsx,plot_errorbarsy
   use powerspectrums,        only:powerspectrum,powerspec3D_sph
   use interpolations1D,      only:interpolate1D
@@ -686,7 +687,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
   logical, dimension(maxparttypes) :: iusetype
 
-  integer :: ntoti,iz,iseqpos
+  integer :: ntoti,iz,iseqpos,itrackpart
   integer :: i,j,k,icolumn,irow
   integer :: nyplot,nframesloop
   integer :: irenderpart
@@ -707,6 +708,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
   character(len=lenlabel+lenunitslabel) :: labelx,labely,labelz,labelrender,labelvecplot,labelcont
   character(len=lenunitslabel) :: labeltimeunits
+  character(len=12) :: string
 
   logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
   logical :: dumxsec, isetrenderlimits, iscoordplot
@@ -788,6 +790,22 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   ninterp = npartoftype(1)
   if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes)) &
       .or. size(iamtype).gt.1) ninterp = ntoti
+
+  !--work out the identity of a particle being tracked
+  if (debugmode) print*,'DEBUG: itracktype = ',itracktype,' itrackoffset = ',itrackoffset
+  itrackpart = get_tracked_particle(itracktype,itrackoffset,npartoftype,iamtype)
+  if (itrackpart.eq.0) then
+     write(string,"(i12)") itrackoffset
+     string = adjustl(string)
+     if (itracktype.gt.0 .and. itracktype.le.ntypes) then
+        print "(/,a,/)",' WARNING: tracked '//trim(labeltype(itracktype))//' particle #'//trim(string)//' not found in data'
+     elseif (itrackoffset.gt.0) then
+        print "(/,a,/)",' WARNING: tracked particle #'//trim(string)//' not found in data'
+     endif
+  else
+     write(string,"(i12)") itrackpart
+     print "(/,a,/)",' Tracking particle #'//trim(adjustl(string))
+  endif
 
   !--non-SPH particle types cannot be used in contours
   where (.not.UseTypeInRenderings(:))
@@ -1042,9 +1060,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !
         if (icoordsnew.ne.icoords) then
            !--do this if one is a coord but not if rendering
-           call changecoords(iplotx,iploty,xplot,yplot,ntoti,ndim,dat)
-           if (iamvecx.gt.0) call changeveccoords(iplotx,xplot,ntoti,ndim,dat)
-           if (iamvecy.gt.0) call changeveccoords(iploty,yplot,ntoti,ndim,dat)
+           call changecoords(iplotx,iploty,xplot,yplot,ntoti,ndim,itrackpart,dat)
+           if (iamvecx.gt.0) call changeveccoords(iplotx,xplot,ntoti,ndim,itrackpart,dat)
+           if (iamvecy.gt.0) call changeveccoords(iploty,yplot,ntoti,ndim,itrackpart,dat)
         endif
 
         !--apply transformations (log, 1/x etc) if appropriate
@@ -1166,7 +1184,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               ivectemp = ivectorplot
            endif
            call rotationandperspective(angletempx,angletempy,angletempz,dzscreentemp,zobservertemp, &
-                                       xplot,yplot,zplot,ntoti,iplotx,iploty,iplotz,dat,ivectemp,vecplot)
+                xplot,yplot,zplot,ntoti,iplotx,iploty,iplotz,dat,ivectemp,vecplot,itrackpart)
            !--adapt plot limits after rotations have been done
            if (.not.interactivereplot) then
               call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x',&
@@ -3584,9 +3602,9 @@ end subroutine applytrans
 ! (completely independent)
 !-------------------------------------------------------------------
 subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,yploti,zploti, &
-                                  ntot,iplotx,iploty,iplotz,dat,ivecstart,vecploti)
+                                  ntot,iplotx,iploty,iplotz,dat,ivecstart,vecploti,itrackpart)
   use labels,           only:ix
-  use settings_data,    only:ndim,xorigin,itrackpart,debugmode
+  use settings_data,    only:ndim,xorigin,debugmode
   use settings_xsecrot, only:use3Dperspective
   use rotation,         only:rotate2D,rotate3D
   implicit none
@@ -3594,7 +3612,7 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
   real, dimension(:), intent(inout) :: xploti,yploti,zploti
   real, dimension(:,:), intent(in)  :: dat
   real, dimension(:,:), intent(out) :: vecploti
-  integer,              intent(in)  :: ntot,iplotx,iploty,iplotz,ivecstart
+  integer,              intent(in)  :: ntot,iplotx,iploty,iplotz,ivecstart,itrackpart
   integer               :: j,iposx,iposy,iposz,i
   real                  :: angleradx,anglerady,angleradz
   real, dimension(ndim) :: xcoords,veci
