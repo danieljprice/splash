@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -540,16 +540,19 @@ end subroutine check_data_read
 !
 !----------------------------------------------------
 subroutine adjust_data_codeunits
- use system_utils,  only:renvironment,envlist
- use labels,        only:ih,ivx,label
- use settings_data, only:ncolumns,ndimV,icoords
- use particle_data, only:dat
+ use system_utils,  only:renvironment,envlist,ienvironment,lenvironment
+ use labels,        only:ih,ivx,label,ix
+ use settings_data, only:ncolumns,ndimV,icoords,ndim,debugmode
+ 
+ use particle_data, only:dat,npartoftype,iamtype
  use geometry,      only:labelcoord
+ use filenames,     only:ifileopen,nstepsinfile
  implicit none
  real :: hmin
- real, dimension(3) :: vzero
+ real, dimension(3) :: vzero,xyzsink
  character(len=20), dimension(3) :: list
- integer :: i,nlist,nerr,ierr
+ integer :: i,j,n,icol,nlist,nerr,ierr,isink,isinkpos,itype
+ logical :: centreonsink
 
  !
  !--environment variable setting to enforce a minimum h
@@ -604,6 +607,61 @@ subroutine adjust_data_codeunits
        print "(4x,a)",'SPLASH_VZERO_CODEUNITS setting not used'
     endif
  endif
+ !
+ !--environment variable setting to centre plots on a selected sink particle
+ !
+ if (ndim.gt.0) then
+    !--can specify either just "true" for sink #1, or specify a number for a particular sink
+    centreonsink = lenvironment('SPLASH_CENTRE_ON_SINK')
+    isink        = ienvironment('SPLASH_CENTRE_ON_SINK')
+    if (isink.gt.0 .or. centreonsink) then
+       if (isink.eq.0) isink = 1
+       itype = get_sink_type()
+       if (itype.gt.0) then
+          if (all(npartoftype(itype,:).lt.isink)) then
+             print "(a)",' ERROR: SPLASH_CENTRE_ON_SINK set but not enough sink particles'
+          else
+             print "(/,a,i3,a)",' :: CENTREING ON SINK ',isink,' (from SPLASH_CENTRE_ON_SINK setting)'
+             do j=1,nstepsinfile(ifileopen)
+                if (size(iamtype(:,j)).eq.1) then
+                   isinkpos = sum(npartoftype(1:itype-1,j)) + isink             
+                else
+                   isinkpos = 0
+                   i = 0
+                   n = 0
+                   do while (isinkpos.eq.0)
+                      i = i + 1
+                      if (iamtype(i,j).eq.itype) n = n + 1
+                      if (n.eq.isink) isinkpos = i
+                   enddo
+                endif
+                if (isinkpos.eq.0) then
+                   print "(a)",' ERROR: could not locate sink particle in dat array'
+                else
+                   if (debugmode) print*,' SINK POSITION = ',isinkpos,npartoftype(1:itype,j)
+                   !--make positions relative to sink particle
+                   xyzsink(1:ndim) = dat(isinkpos,ix(1:ndim),j)
+                   print "(a,3(1x,es10.3))",' :: sink position =',xyzsink(1:ndim)
+                   do icol=1,ndim
+                      dat(:,ix(icol),j) = dat(:,ix(icol),j) - xyzsink(icol)
+                   enddo
+                   !--make velocities relative to sink particle
+                   if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) then
+                      vzero(1:ndimV) = dat(isinkpos,ivx:ivx+ndimV-1,j)
+                      print "(a,3(1x,es10.3))",' :: sink velocity =',vzero(1:ndimV)
+                      do icol=1,ndimV
+                         dat(:,ivx+icol-1,j) = dat(:,ivx+icol-1,j) - vzero(icol)
+                      enddo
+                   endif
+                endif
+             enddo
+          endif
+       else
+          print "(a,/,a)",' ERROR: SPLASH_CENTRE_ON_SINK set but could not determine type ', &
+                          '        corresponding to sink particles'
+       endif
+    endif
+ endif
 
 end subroutine adjust_data_codeunits
 
@@ -628,5 +686,23 @@ subroutine endian_info
  endif
 
 end subroutine endian_info
+
+!-----------------------------------------------------------------
+!
+! utility to "guess" which particle type contains sink particles
+!
+!-----------------------------------------------------------------
+integer function get_sink_type()
+ use settings_data, only:ntypes
+ use labels,        only:labeltype
+ implicit none
+ integer :: i
+
+ get_sink_type = 0
+ do i=1,ntypes
+    if (get_sink_type.eq.0 .and. index(labeltype(i),'sink').ne.0) get_sink_type = i
+ enddo
+
+end function get_sink_type
 
 end module getdata
