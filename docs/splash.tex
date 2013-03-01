@@ -1265,10 +1265,12 @@ The number of points used in an exact solution calculation can be changed via th
 \subsubsection{ Making plot limits relative to a particular particle}
 \label{sec:track}
  Particle tracking limits (i.e., where a chosen particle is always at the centre of the plot and limits are set relative to that position) can be set via the ``make xy limits relative to particle'' option in the l)imits menu. Alternatively particle tracking limits can be set interactively by pressing 't' in interactive mode with the cursor over the particle you wish to track. Note that this option only works if particle identities are preserved between timesteps. Also note that, with particle tracking limits set, the radius calculated via the ``calculate extra quantities'' option in the d)ata submenu is calculated relative to the tracked particle.
+ 
+Centreing on a sink particle can also be achieved using the SPLASH\_CENTRE\_ON\_SINK environment variable.
 
 \subsubsection{ Plotting in a comoving reference frame}
  A co-moving reference frame can be set using the ``make xy limits relative to particle'' option in the l)imits menu. Coordinate limits are then centred on the selected particle for all timesteps, with offsets as input by the user. This
-effectively gives the `Lagrangian' perspective. See \S\ref{sec:track} for more details.
+effectively gives the `Lagrangian' perspective. See \S\ref{sec:track} for more details. Centreing on a sink particle can also be achieved using the SPLASH\_CENTRE\_ON\_SINK environment variable.
 
 \subsubsection{ Setting the origin to correspond to a particular particle}
  See \S\ref{sec:track}.
