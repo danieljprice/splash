@@ -584,8 +584,8 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        do j=1,ntot
           itype = igettype(j)
           if (iplotpartoftype(itype)) then
-             lmin = min(lmin, dat(j,i))
-             lmax = max(lmax, dat(j,i))
+             lmin = min(lmin, real(dat(j,i),kind=doub_prec))
+             lmax = max(lmax, real(dat(j,i),kind=doub_prec))
              nused = nused + 1
           endif
        enddo
