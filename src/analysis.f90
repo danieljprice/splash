@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -97,7 +97,7 @@ logical function isanalysis(string,noprint)
     print "(a)",'                             output to file called ''maxvals.out'''
     print "(a)",'         calc min          : minimum of each column vs. time'
     print "(a)",'                             output to file called ''minvals.out'''
-    print "(a)",'         calc diff          : (max - min) of each column vs. time'
+    print "(a)",'         calc diff         : (max - min) of each column vs. time'
     print "(a)",'                             output to file called ''diffvals.out'''
     print "(a)",'         calc mean         : mean of each column vs. time'
     print "(a)",'                             output to file called ''meanvals.out'''
