@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -456,12 +456,31 @@ subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2,x1,x2,y1,y2)
 
 end subroutine plot_pixl
 
-subroutine plot_pap(width,aspect)
-  use giza, only:giza_set_paper_size,giza_units_inches
+subroutine plot_pap(widthin,aspect,paperunits)
+  use giza, only:giza_set_paper_size
+  use giza, only:giza_units_inches,giza_units_pixels,giza_units_mm
   implicit none
-  real,intent(in) :: width,aspect
+  real,intent(in) :: widthin,aspect
+  integer, intent(in), optional :: paperunits
+  integer :: units
+  real    :: width
+  
+  width = widthin
+  units = giza_units_inches
 
-  call giza_set_paper_size(giza_units_inches,width,width*aspect)
+  if (present(paperunits)) then
+     select case(paperunits)
+     case(0)
+        units = giza_units_pixels
+     case(1)
+        units = giza_units_inches
+     case(2)
+        units = giza_units_mm
+        width = 0.1*width
+     end select
+  endif
+  
+  call giza_set_paper_size(units,width,width*aspect)  
 
 end subroutine plot_pap
 

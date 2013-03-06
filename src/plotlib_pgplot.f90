@@ -474,12 +474,6 @@ interface plot_env
    end subroutine pgenv
 end interface
 
-interface plot_pap
-   subroutine pgpap(width,aspect)
-     real,intent(in) :: width,aspect
-   end subroutine pgpap
-end interface
-
 contains
 
 !---------------------------------------------
@@ -535,6 +529,17 @@ subroutine plot_slc(lc)
   !--line cap has no effect in PGPLOT
 
 end subroutine plot_slc
+
+subroutine plot_pap(width,aspect,paperunits)
+  real,intent(in) :: width,aspect
+  integer, intent(in), optional :: paperunits
+
+  if (present(paperunits)) then
+     if (paperunits.ne.1) print "(a)",' WARNING: units not valid for PGPLOT'
+  endif
+  call pgpap(papersizex,aspect)
+
+end subroutine plot_pap
 
 subroutine plot_qlc(lc)
   implicit none
