@@ -463,7 +463,7 @@ contains
     character(len=*), intent(in) :: rootname
     integer, intent(out) :: ierr
 
-    integer :: idash,nf,i,j,idrag
+    integer :: idash,nf,i,j,idrag,idum
     character(len=len_trim(rootname)+8) :: filename
 
     idash = index(rootname,'_')
@@ -606,7 +606,7 @@ contains
              read(19,*,iostat=ierr)
           enddo
           if (ierr.eq.0) then
-             read(19,*,iostat=ierr) idrag, Kdrag
+             read(19,*,iostat=ierr) idrag, idum, idum, Kdrag
              print*,'>> read Kdrag = ',Kdrag,' from '//trim(filename)
           else
              print*,'>> error reading Kdrag from '//trim(filename)
