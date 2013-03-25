@@ -179,7 +179,7 @@ module labels
  integer :: icv,iradenergy
  integer :: isurfdens,itoomre
  integer :: ipdf,icolpixmap
- integer :: irhorestframe
+ integer :: irhorestframe,idusttogas,ideltav
 
  public
 

@@ -327,7 +327,8 @@ end subroutine read_data
 
 subroutine set_labels
  use labels, only:ix,ivx,ih,irho,iutherm,ipmass,ipr,iBfirst, &
-             idivB,iJfirst,iamvec,labelvec,label,labeltype,irhorestframe
+             idivB,iJfirst,iamvec,labelvec,label,labeltype, &
+             irhorestframe,idusttogas,ideltav
  use params
  use settings_data, only:ndim,ndimV,iformat,ntypes, &
                     UseTypeInRenderings
@@ -428,8 +429,10 @@ subroutine set_labels
  if (iformat.eq.5) then
     icol = icol + 1
     label(icol) = 'dust to gas ratio'
+    idusttogas = icol
     iamvec(icol+1:icol+ndimV) = icol + 1
     labelvec(icol+1:icol+ndimV) = 'deltav'
+    ideltav = icol + 1
     icol = icol + ndimV
  elseif (iformat.gt.2) then
     irhorestframe = irho

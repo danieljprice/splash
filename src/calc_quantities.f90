@@ -292,15 +292,15 @@ end subroutine splitstring
 !---------------------------------------------------------------------
 subroutine print_example_quantities(ncalc)
  use labels,        only:label,lenlabel,irho,iutherm,iBfirst,ix,icv,idivB,&
-                         ih,iradenergy,iamvec,labelvec
+                         ih,iradenergy,iamvec,labelvec,idusttogas,ideltav,ivx
  use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
  use settings_units,only:unitslabel
  use geometry,      only:labelcoord
  implicit none
  integer, intent(inout), optional :: ncalc
  logical :: prefill
- character(len=lenlabel) :: string
- integer :: i,j,ivecstart,ierr,ilen
+ character(len=lenlabel) :: string,ldtg,temp,labelprev
+ integer :: i,j,ivecstart,ierr,ilen,ncalcok,ncalctot
  logical :: gotpmag,gotpressure
 
  gotpmag = .false.
@@ -351,6 +351,68 @@ subroutine print_example_quantities(ncalc)
        print "(11x,a)",trim(string)
     endif
  endif
+
+ !
+ !--one-fluid dust stuff
+ !
+ if (idusttogas.gt.0 .and. irho.gt.0) then
+    string = ' '
+    ldtg = shortlabel(label(idusttogas),unitslabel(idusttogas))    
+    !--gas density
+    write(string,"(a)",iostat=ierr) trim(label(irho))//'_{gas} = ' &
+                    //trim(shortlabel(label(irho),unitslabel(irho))) &
+                    //'/(1 + '//trim(ldtg)//')'
+    if (prefill) then
+       ncalc = ncalc + 1
+       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+       labelprev = calclabel(ncalc)
+    else
+       print "(11x,a)",trim(string)
+       call splitstring(string,labelprev,temp)
+    endif
+    !--dust density
+    write(string,"(a)",iostat=ierr) trim(label(irho))//'_{dust} = ' &
+                    //trim(ldtg)//'*'//trim(shortlabel(labelprev,unitslabel(irho)))
+    if (prefill) then
+       ncalc = ncalc + 1
+       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+    else
+       print "(11x,a)",trim(string)
+    endif
+    if (ideltav.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0) then
+       !--gas velocities
+       do i=1,ndimV
+          write(string,"(a)",iostat=ierr) trim(labelvec(ivx))//'_{gas,'//trim(labelcoord(i,icoordsnew))//'} = ' &
+                          //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
+                          //' - r_{dust}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
+                          //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
+          if (prefill) then
+             ncalc = ncalc + 1
+             !if (i.eq.1) labelvec(ncalc) = 'v_{gas}'
+             !iamvec(ncalc) = ncolumns + ncalc - i + 1
+             call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+          else
+             print "(11x,a)",trim(string)
+          endif       
+       enddo
+       !--dust velocities
+       do i=1,ndimV
+          write(string,"(a)",iostat=ierr) trim(labelvec(ivx))//'_{dust,'//trim(labelcoord(i,icoordsnew))//'} = ' &
+                          //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
+                          //' + r_{gas}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
+                          //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
+          if (prefill) then
+             ncalc = ncalc + 1
+             !if (i.eq.1) labelvec(ncalc) = 'v_{dust}'
+             !iamvec(ncalc) = ncolumns + ncalc - i + 1
+             call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+          else
+             print "(11x,a)",trim(string)
+          endif       
+       enddo
+    endif
+ endif 
+
  !
  !--magnitudes of all vector quantities (only if cartesian coords are set)
  !
@@ -455,6 +517,7 @@ subroutine print_example_quantities(ncalc)
        print "(6x,a)",trim(string)
     endif
  endif
+ 
  if (.not.prefill) print "(a)"
 
 end subroutine print_example_quantities
@@ -525,7 +588,7 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
     ncalctot = i
     i = i + 1
  enddo
- if (ncalcok.eq.0) print "(a)",' (none)'
+ if (ncalcok.eq.0 .and. isverbose) print "(a)",' (none)'
 
 end subroutine check_calculated_quantities
 
