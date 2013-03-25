@@ -51,18 +51,18 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use exact,          only:hfact
   use particle_data,  only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol,iamtype
   use params
-!  use labels
   use filenames,      only:nfiles
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,icoords,iformat, &
                           buffer_data,iverbose,debugmode
   use mem_allocation, only:alloc
   use geometry,       only:labelcoordsys
+  use system_utils,   only:lenvironment
   implicit none
   integer,          intent(in)  :: indexstart
   integer,          intent(out) :: nstepsread
   character(len=*), intent(in)  :: rootname
   character(len=len(rootname)+4) :: datfile
-  integer :: i,icol,ierr,iunit,ilen,j
+  integer :: i,icol,ierr,iunit,ilen,j,ilast
   integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
   integer :: npartin,ntotin,ncolstep,nparti,ntoti
   integer, dimension(3) :: ibound
@@ -305,11 +305,22 @@ subroutine read_data(rootname,indexstart,nstepsread)
   !
 close(unit=11)
 
+ilast = i
+!
+!--ONE FLUID DUST: FAKE IT AS IF IT IS TWO FLUIDS
+!  (copy the particles, then copy gas properties onto first lot, then dust properties onto second lot)
+!
 ncolumns = ncol_max
 ndim = ndim_max
 ndimV = ndimV_max
-if (npartoftype(2,i).gt.0) then
-   print*,' ngas = ',npartoftype(1,i),' ndust = ',npartoftype(2,i),' nghost = ',npartoftype(3,i)
+
+if (iformat.eq.5 .and. lenvironment('NSPLASH_TWOFLUID')) then
+   call fake_twofluids
+   iformat = 1
+endif
+
+if (npartoftype(2,ilast).gt.0) then
+   print*,' ngas = ',npartoftype(1,ilast),' ndust = ',npartoftype(2,ilast),' nghost = ',npartoftype(3,ilast)
 endif
 if (debugmode) print*,'DEBUG> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
        ' last step ntot = ',sum(npartoftype(:,indexstart+nstepsread-1))
@@ -318,6 +329,68 @@ return
 80 continue
 print*,' *** data file empty : no timesteps ***'
 return
+
+contains
+
+subroutine fake_twofluids
+ use labels, only:idusttogas,irho,ix,ih,iutherm,ipmass,ivx,ideltav
+ implicit none
+ integer :: ndust,jdust
+ real    :: rhodust,rhogas,rhotot,dusttogasi,pmassgas,pmassdust
+ real, dimension(ndimV) :: veli,vgas,vdust,deltav
+
+ call set_labels
+ if (idusttogas.gt.0 .and. irho.gt.0) then
+    do i=indexstart,indexstart+nstepsread-1
+       ntoti = sum(npartoftype(:,i))
+       if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)).gt.maxpart) then
+          call alloc(ntoti + npartoftype(1,i),maxstep,maxcol,mixedtypes=.true.)
+       endif
+       ndust = 0
+       do j=1,ntoti
+          if (iamtype(j,i).eq.1) then
+             ndust = ndust + 1 ! one dust particle for every gas particle
+             rhotot  = dat(j,irho,i)
+             dusttogasi = dat(j,idusttogas,i)
+             rhogas  = rhotot/(1. + dusttogasi)
+             rhodust = rhogas*dusttogasi
+             !--replace global properties with gas-only stuff
+             dat(j,irho,i) = rhogas
+             !--copy x, smoothing length onto dust particle
+             jdust = ntoti + ndust
+             !--fill in dust properties
+             if (ndim.gt.0) dat(jdust,ix(1:ndim),i) = dat(j,ix(1:ndim),i)
+             if (ih.gt.0)   dat(jdust,ih,i)         = dat(j,ih,i)
+             if (irho.gt.0) dat(jdust,irho,i)       = rhodust
+             iamtype(ntoti + ndust,i) = 2 
+
+             !--particle masses
+             if (ipmass.gt.0) then
+                pmassgas  = dat(j,ipmass,i)/(1. + dusttogasi)
+                pmassdust = pmassgas*dusttogasi
+                dat(j,ipmass,i)     = pmassgas
+                dat(jdust,ipmass,i) = pmassdust
+             endif
+
+             !--velocities
+             if (ideltav.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0) then
+                veli(:)   = dat(j,ivx:ivx+ndimV-1,i)
+                deltav(:) = dat(j,ideltav:ideltav+ndimV-1,i)
+                vgas(:)   = veli(:) - rhodust/rhotot*deltav(:)
+                vdust(:)  = veli(:) + rhogas/rhotot*deltav(:)
+                dat(j,ivx:ivx+ndimV-1,i)     = vgas(:)
+                dat(jdust,ivx:ivx+ndimV-1,i) = vdust(:)
+             endif
+          endif
+       enddo
+       print "(a,i10,a)",' Creating ',ndust,' fictional dust particles...'
+       npartoftype(2,i) = npartoftype(2,i) + ndust
+    enddo
+ else
+    print "(a)",' ERROR: could not locate dust-to-gas ratio and/or density'
+ endif
+
+end subroutine fake_twofluids
 
 end subroutine read_data
 
@@ -425,7 +498,6 @@ subroutine set_labels
     icol = icol + ndimV
     iBfirst = 0
  endif
- print*,' GOT iformat = ',iformat
  if (iformat.eq.5) then
     icol = icol + 1
     label(icol) = 'dust to gas ratio'
