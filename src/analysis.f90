@@ -65,6 +65,8 @@ logical function isanalysis(string,noprint)
      isanalysis = .true.
  case('diff','diffvals')
      isanalysis = .true.
+ case('amp','ampvals')
+     isanalysis = .true.
  case('mean','meanvals')
      isanalysis = .true.
  case('rms','rmsvals')
@@ -99,6 +101,8 @@ logical function isanalysis(string,noprint)
     print "(a)",'                             output to file called ''minvals.out'''
     print "(a)",'         calc diff         : (max - min) of each column vs. time'
     print "(a)",'                             output to file called ''diffvals.out'''
+    print "(a)",'         calc amp          : 0.5*(max - min) of each column vs. time'
+    print "(a)",'                             output to file called ''ampvals.out'''
     print "(a)",'         calc mean         : mean of each column vs. time'
     print "(a)",'                             output to file called ''meanvals.out'''
     print "(a)",'         calc rms          : (mass weighted) root mean square of each column vs. time'
@@ -238,6 +242,17 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !--set filename and header line
     !
     fileout = 'diffvals.out'
+    standardheader = .true.
+
+ case('amp','ampvals')
+    !
+    !--read all columns from dump file
+    !
+    required(:) = .true.
+    !
+    !--set filename and header line
+    !
+    fileout = 'ampvals.out'
     standardheader = .true.
 
  case('mean','meanvals')
@@ -572,7 +587,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     write(iunit,fmtstring) time,coltemp(1:ncolumns)
     if (nused.ne.ntot) print*,'min calculated using ',nused,' of ',ntot,' particles'
 
- case('diff','diffvals')
+ case('diff','diffvals','amp','ampvals')
     !
     !--calculate minimum for each column
     !
@@ -590,6 +605,9 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           endif
        enddo
        coltemp(i) = lmax - lmin
+       if (trim(analysistype).eq.'amp' .or. trim(analysistype).eq.'ampvals') then
+          coltemp(i) = coltemp(i)/2.
+       endif
     enddo
     !
     !--write output to screen/terminal
@@ -602,7 +620,15 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) time,coltemp(1:ncolumns)
-    if (nused.ne.ntot) print*,'diff calculated using ',nused,' of ',ntot,' particles'
+
+    if (nused.ne.ntot) then
+       select case(trim(analysistype))
+       case('diff', 'diffvals')
+          print*,'diff calculated using ',nused,' of ',ntot,' particles'
+       case('amp','ampvals')
+          print*,'amp calculated using ',nused,' of ',ntot,' particles'
+       end select
+    endif
 
  case('mean','meanvals')
     !
