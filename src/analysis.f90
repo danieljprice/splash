@@ -535,7 +535,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write output to screen/terminal
     !
     do i=1,ncolumns
-       print "(1x,a20,'max = ',es9.2)",label(i),coltemp(i)
+       print "(1x,a20,'max = ',es18.10)",label(i),coltemp(i)
     enddo
     !
     !--write line to output file
@@ -563,7 +563,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write output to screen/terminal
     !
     do i=1,ncolumns
-       print "(1x,a20,'min = ',es9.2)",label(i),coltemp(i)
+       print "(1x,a20,'min = ',es18.10)",label(i),coltemp(i)
     enddo
     !
     !--write line to output file
@@ -595,7 +595,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write output to screen/terminal
     !
     do i=1,ncolumns
-       print "(1x,a20,'min = ',es9.2)",label(i),coltemp(i)
+       print "(1x,a20,'(max - min) = ',es18.10)",label(i),coltemp(i)
     enddo
     !
     !--write line to output file
@@ -628,7 +628,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write output to screen/terminal
     !
     do i=1,ncolumns
-       print "(1x,a20,'mean = ',es9.2)",label(i),coltemp(i)
+       print "(1x,a20,'mean = ',es18.10)",label(i),coltemp(i)
     enddo
     !
     !--write line to output file
@@ -661,7 +661,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write output to screen/terminal
     !
     do i=1,ncolumns
-       print "(1x,a20,'rms (mass weighted) = ',es9.2)",label(i),coltemp(i)
+       print "(1x,a20,'rms (mass weighted) = ',es18.10)",label(i),coltemp(i)
     enddo
     !
     !--write line to output file
@@ -709,7 +709,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write output to screen/terminal
     !
     do i=1,ncolumns
-       print "(1x,a20,'rms (volume weighted) = ',es9.2)",label(i),coltemp(i)
+       print "(1x,a20,'rms (volume weighted) = ',es18.10)",label(i),coltemp(i)
     enddo
     !
     !--write line to output file
