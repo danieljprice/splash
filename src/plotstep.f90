@@ -2712,9 +2712,9 @@ contains
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
                             vposlegend,iPlotLegend,usecolumnorder
     use settings_limits, only:adjustlimitstodevice
-    use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot
+    use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot,plot_set_opacity
     implicit none
-    integer :: iplotsave,ipanelsave,ipanelpos
+    integer :: iplotsave,ipanelsave,ipanelpos,icrap
     real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
     real    :: xminpix,xmaxpix,yminpix,ymaxpix,dxpix
     logical :: ipanelchange,dum,iprint_axes
@@ -2972,7 +2972,10 @@ contains
     !endif
 
     !--change to background colour index for overlaid text and axes
-    if (iUseBackGroundColourForAxes) call plot_sci(0)
+    if (iUseBackGroundColourForAxes) then
+       call plot_sci(0)
+       call plot_set_opacity(1.) ! ensure background colour is opaque
+    endif
     if (debugmode) print*,'DEBUG: finished page setup'
 
     return
