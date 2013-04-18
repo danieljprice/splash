@@ -207,6 +207,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
   npartoftypei(:) = 0
   Nall(:) = 0
   massoftypei(:) = 0.
+  iFlagCool = 0
+  nfiles = 0
   read(iunit,iostat=ierr) npartoftypei(1:6),massoftypei(1:6),timetemp,ztemp, &
       iFlagSfr,iFlagFeedback,Nall(1:6),iFlagCool,nfiles
 
@@ -217,8 +219,15 @@ subroutine read_data(rootname,istepstart,nstepsread)
   else
      ntotall = ntoti
   endif
+  if (debugmode) then
+     print*,'DEBUG: ierr = ',ierr
+     print*,'DEBUG: ntoti = ',ntoti,' ntotall = ',ntotall,' nfiles = ',nfiles
+     print*,'DEBUG: npartoftype = ',npartoftypei(1:6),' Nall = ',Nall(1:6)
+     print*,'DEBUG: iFlagSfr = ',iFlagSfr,' iFlagFeedback = ',iFlagFeedback,' iFlagCool = ',iFlagCool
+     print*,'DEBUG: time = ',timetemp,' z = ',ztemp
+  endif
 
-  if (ierr /= 0 .or. ntoti.le.0 .or. ntotall.le.0 .or. any(npartoftypei.lt.0) .or. nfiles.le.0 &
+  if (ierr /= 0 .or. ntoti.le.0 .or. ntotall.le.0 .or. any(npartoftypei.lt.0) .or. nfiles.lt.0 &
       .or. nfiles.gt.1e6) then
      print "(/,a)", '*** ERROR READING TIMESTEP HEADER: wrong endian? ***'
      print "(/,a)", '   (see splash userguide for compiler-dependent'
@@ -287,7 +296,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   else
 
      iformat = 0
-     if (iFlagCool.gt.0 .and. .not.lenvironment('GSPLASH_IGNORE_IFLAGCOOL')) then
+     if (iFlagCool.eq.1 .and. .not.lenvironment('GSPLASH_IGNORE_IFLAGCOOL')) then
         iformat = 1
         ncolstep = 12 ! 3 x pos, 3 x vel, pmass, utherm, rho, Ne, Nh, h
         if (ifile.eq.1) print "(a)",' cooling flag on : assuming Ne, Nh dumped before h'
@@ -295,7 +304,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
         iformat = 0
         ncolstep = 10 ! 3 x pos, 3 x vel, pmass, utherm, rho, h
      endif
-     if (iFlagSfr.gt.0) then
+     if (iFlagSfr.eq.1) then
         if (ifile.eq.1) print "(a)",' star formation flag on: assuming star formation rate dumped '
         ncolstep = ncolstep + 1
         iformat = iformat + 10
@@ -349,7 +358,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
   if (nfiles.gt.1) then
      if (ifile.eq.1) print "(a,i4,a)",' reading from ',nfiles,' files'
-  elseif (nfiles.le.0) then
+  elseif (nfiles.lt.0) then
      print*,'*** ERROR: nfiles = ',nfiles,' in file header: aborting'
      return
   endif
