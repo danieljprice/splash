@@ -704,6 +704,9 @@ ucla: checksystem $(OBJECTS) read_data_UCLA.o
 urban: checksystem $(OBJECTS) read_data_urban.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/usplash $(OBJECTS) read_data_urban.o $(LDFLAGS)
 
+aly: checksystem $(OBJECTS) read_data_aly.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/splash-aly $(OBJECTS) read_data_aly.o $(LDFLAGS) 
+
 sky: ucla
 
 steve: foulkes
