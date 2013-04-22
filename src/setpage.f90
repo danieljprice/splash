@@ -76,6 +76,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
                    plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries, &
                    plot_qvp
   use asciiutils, only:string_delete
+  use labels,     only:lenlabel
   implicit none
   integer, intent(in) :: iplotin,nx,ny,just,axis
   real, intent(inout) :: xmin, xmax, ymin, ymax
@@ -91,7 +92,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
   real xch,ych,dx,dy,xcen,ycen
   real :: yscale
   character(len=10)  :: xopts, yopts
-  character(len=len(labely)) :: labelyalt
+  character(len=lenlabel) :: labelyalt
   logical, parameter :: useexactpixelboundaries = .true.
   logical :: plot_alt_y_axis
 
