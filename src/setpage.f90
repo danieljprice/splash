@@ -75,6 +75,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
   use plotlib,only:plot_svp,plot_swin,plot_box,plot_qvsz,plot_annotate, &
                    plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries, &
                    plot_qvp
+  use asciiutils, only:string_delete
   implicit none
   integer, intent(in) :: iplotin,nx,ny,just,axis
   real, intent(inout) :: xmin, xmax, ymin, ymax
@@ -88,8 +89,14 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
   real vptxmin,vptxmax,vptymin,vptymax
   real aspectratio,devaspectratio,x1,x2,y1,y2
   real xch,ych,dx,dy,xcen,ycen
-  character(len=10)  :: xopts, yopts
+  real :: yscale
+  character(len=10)  :: xopts, yopts,labelyalt
   logical, parameter :: useexactpixelboundaries = .true.
+  logical :: plot_alt_y_axis
+
+  plot_alt_y_axis = .false.
+  !yscale = 1.
+  !labelyalt = 'test'
 !
 ! new page if iplot > number of plots on page
 !
@@ -158,6 +165,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
         vmarginleft = vmarginleftin + 2.0*xch
         vmarginbottom = vmarginbottomin + 1.5*ych
      endif
+     if (plot_alt_y_axis) vmarginright = vmarginleft
 
      if (.not.tile) then
         if (ny.gt.1 .and. .not.isamexaxis) then
@@ -313,6 +321,8 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
     xopts = 'BCNST'
   end select
   if (yopts.eq.'*') yopts = xopts
+  
+  if (plot_alt_y_axis) call string_delete(yopts,'C')
 !
 ! label plot
 !
@@ -320,7 +330,18 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      !
      ! decide whether to number and label the y axis
      !
+     if (ix.eq.nx .and. axis.ge.0) then
+        !
+        !--apply label to right hand side axis if used
+        !
+        if (plot_alt_y_axis) then
+           call plot_second_y_axis(xopts,yopts,just,axis,yscale,ylabeloffset,labelyalt)
+        endif
+     endif
      if (ix.eq.1 .and. axis.ge.0) then
+        !
+        !--label "normal" y axis
+        !
         if (axis.eq.3) then
            yopts = '1N'//trim(yopts)
         else
@@ -352,6 +373,12 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      endif
      !--always plot numbers
      xopts = 'N'//trim(xopts)
+     !
+     !--apply label to right hand side axis if used
+     !
+     if (plot_alt_y_axis) then
+        call plot_second_y_axis(xopts,yopts,just,axis,yscale,ylabeloffset,labelyalt)
+     endif
      !
      !--always label y axis
      !
@@ -426,5 +453,45 @@ subroutine redraw_axes(iaxis)
 
   return
 end subroutine redraw_axes
+
+subroutine plot_second_y_axis(yopts,xopts,just,iaxis,yscale,ylabeloffset,labely)
+ use plotlib, only:plot_box,plot_annotate,plot_qwin,plot_swin,plot_wnad
+ use asciiutils, only:string_delete
+ implicit none
+ character(len=*), intent(in) :: xopts,yopts
+ character(len=*), intent(in) :: labely
+ real,             intent(in) :: yscale,ylabeloffset
+ integer,          intent(in) :: just,iaxis
+ character(len=10) :: yoptsi
+ real :: xmin,xmax,ymin,ymax
+ 
+ yoptsi = yopts
+ call string_delete(yoptsi,'B')
+
+ !--save plot window settings
+ call plot_qwin(xmin,xmax,ymin,ymax)
+
+ !--set plot window to new scaled y axis
+ if (just.eq.1) then
+    call plot_wnad(xmin,xmax,ymin*yscale,ymax*yscale)
+ else
+    call plot_swin(xmin,xmax,ymin*yscale,ymax*yscale)
+ endif
+ !--draw axes and label on right hand side of box
+ if (iaxis.eq.3) then
+    call plot_box(' ',0.0,0,'1M'//trim(yoptsi),0.0,0) 
+ else
+    call plot_box(' ',0.0,0,'1VM'//trim(yoptsi),0.0,0)
+ endif
+ call plot_annotate('R',ylabeloffset,0.5,0.5,labely)
+
+ !--reset plot window
+ if (just.eq.1) then
+    call plot_wnad(xmin,xmax,ymin,ymax)
+ else
+    call plot_swin(xmin,xmax,ymin,ymax)
+ endif
+
+end subroutine plot_second_y_axis
 
 end module pagesetup

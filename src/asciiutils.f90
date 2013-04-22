@@ -33,7 +33,7 @@
 module asciiutils
  implicit none
  public :: read_asciifile,get_ncolumns,ncolumnsline,safename,basename,cstring
- public :: string_replace
+ public :: string_replace, string_delete
  public :: ucase,lcase
 
  private
@@ -435,6 +435,25 @@ subroutine string_replace(string,skey,sreplacewith)
  enddo
 
 end subroutine string_replace
+
+!---------------------------------------------------------------------------
+!
+! subroutine to delete all matching occurrences of key from string
+!
+!---------------------------------------------------------------------------
+subroutine string_delete(string,skey)
+ implicit none
+ character(len=*), intent(inout) :: string
+ character(len=*), intent(in) :: skey
+ integer :: ipos
+
+ ipos = index(string,skey)
+ do while(ipos.gt.0)
+    string = string(1:ipos-1)//string(ipos+len(skey):len(string))
+    ipos = index(string,skey)
+ enddo
+
+end subroutine string_delete
 
 !---------------------------------------------------------------------------
 !
