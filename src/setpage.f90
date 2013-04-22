@@ -90,13 +90,14 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
   real aspectratio,devaspectratio,x1,x2,y1,y2
   real xch,ych,dx,dy,xcen,ycen
   real :: yscale
-  character(len=10)  :: xopts, yopts,labelyalt
+  character(len=10)  :: xopts, yopts
+  character(len=len(labely)) :: labelyalt
   logical, parameter :: useexactpixelboundaries = .true.
   logical :: plot_alt_y_axis
 
   plot_alt_y_axis = .false.
-  !yscale = 1.
-  !labelyalt = 'test'
+  yscale = 3.33
+  labelyalt = 'accretion rate in Mdot/yr'
 !
 ! new page if iplot > number of plots on page
 !
@@ -467,6 +468,7 @@ subroutine plot_second_y_axis(yopts,xopts,just,iaxis,yscale,ylabeloffset,labely)
  
  yoptsi = yopts
  call string_delete(yoptsi,'B')
+ call string_delete(yoptsi,'N')
 
  !--save plot window settings
  call plot_qwin(xmin,xmax,ymin,ymax)
