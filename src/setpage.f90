@@ -71,7 +71,7 @@ contains
 !
 subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,axis, &
                     vmarginleftin,vmarginrightin,vmarginbottomin,vmargintopin, &
-                    colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits)
+                    colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits,yscale,labelyalt)
   use plotlib,only:plot_svp,plot_swin,plot_box,plot_qvsz,plot_annotate, &
                    plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries, &
                    plot_qvp
@@ -82,7 +82,8 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
   real, intent(inout) :: xmin, xmax, ymin, ymax
   real, intent(in)    :: colourbarwidth, titleoffset
   real, intent(in)    :: vmarginleftin,vmarginrightin,vmargintopin,vmarginbottomin
-  character(len=*), intent(in) :: labelx,labely,title
+  real, intent(in)    :: yscale
+  character(len=*), intent(in) :: labelx,labely,title,labelyalt
   logical, intent(in) :: isamexaxis,tile,adjustlimits
   integer iplot,ix,iy
   real vptsizeeffx,vptsizeeffy,panelsizex,panelsizey
@@ -90,15 +91,15 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
   real vptxmin,vptxmax,vptymin,vptymax
   real aspectratio,devaspectratio,x1,x2,y1,y2
   real xch,ych,dx,dy,xcen,ycen
-  real :: yscale
   character(len=10)  :: xopts, yopts
-  character(len=lenlabel) :: labelyalt
   logical, parameter :: useexactpixelboundaries = .true.
   logical :: plot_alt_y_axis
 
-  plot_alt_y_axis = .false.
-  yscale = 3.33
-  labelyalt = 'accretion rate in Mdot/yr'
+  if (axis.eq.4) then
+     plot_alt_y_axis = .true.
+  else
+     plot_alt_y_axis = .false.
+  endif
 !
 ! new page if iplot > number of plots on page
 !
@@ -301,7 +302,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      xopts = ' '
   case(-1)
     xopts = 'BC'
-  case(0)
+  case(0,4)
     xopts = 'BCST'
   case(1)
     xopts = 'ABCST'
@@ -337,7 +338,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
         !--apply label to right hand side axis if used
         !
         if (plot_alt_y_axis) then
-           call plot_second_y_axis(xopts,yopts,just,axis,yscale,ylabeloffset,labelyalt)
+           call plot_second_y_axis(yopts,just,axis,yscale,ylabeloffset,labelyalt)
         endif
      endif
      if (ix.eq.1 .and. axis.ge.0) then
@@ -379,7 +380,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      !--apply label to right hand side axis if used
      !
      if (plot_alt_y_axis) then
-        call plot_second_y_axis(xopts,yopts,just,axis,yscale,ylabeloffset,labelyalt)
+        call plot_second_y_axis(yopts,just,axis,yscale,ylabeloffset,labelyalt)
      endif
      !
      !--always label y axis
@@ -410,11 +411,12 @@ end subroutine
 !         axis   : axes options (same as in PGENV, with axis=-4,-3,+3 added)
 !
 
-subroutine redraw_axes(iaxis)
+subroutine redraw_axes(iaxis,just,yscale)
   use plotlib, only:plot_box
   implicit none
-  integer, intent(in) :: iaxis
+  integer, intent(in) :: iaxis,just
   character(len=10) :: xopts, yopts
+  real, intent(in)  :: yscale
 !
 !--set plot axes (options are exactly as in PGENV, with axis=-4,-3,+3 added)
 !
@@ -436,6 +438,9 @@ subroutine redraw_axes(iaxis)
      xopts = 'ABCGST'
   case(3)
      xopts = 'BCST'
+  case(4)
+     xopts = 'BCST'
+     yopts = 'BST'
   case(10)
      xopts = 'BCSTL'
      yopts = 'BCST'
@@ -451,18 +456,20 @@ subroutine redraw_axes(iaxis)
   end select
   if (yopts.eq.'*') yopts = xopts
 
+  if (iaxis.eq.4) call plot_second_y_axis(yopts,just,iaxis,yscale)
   call plot_box(xopts,0.0,0,yopts,0.0,0)
 
   return
 end subroutine redraw_axes
 
-subroutine plot_second_y_axis(yopts,xopts,just,iaxis,yscale,ylabeloffset,labely)
+subroutine plot_second_y_axis(yopts,just,iaxis,yscale,ylabeloffset,labely)
  use plotlib, only:plot_box,plot_annotate,plot_qwin,plot_swin,plot_wnad
  use asciiutils, only:string_delete
  implicit none
- character(len=*), intent(in) :: xopts,yopts
- character(len=*), intent(in) :: labely
- real,             intent(in) :: yscale,ylabeloffset
+ character(len=*), intent(in) :: yopts
+ real,             intent(in) :: yscale
+ real,             intent(in), optional :: ylabeloffset
+ character(len=*), intent(in), optional :: labely
  integer,          intent(in) :: just,iaxis
  character(len=10) :: yoptsi
  real :: xmin,xmax,ymin,ymax
@@ -482,11 +489,13 @@ subroutine plot_second_y_axis(yopts,xopts,just,iaxis,yscale,ylabeloffset,labely)
  endif
  !--draw axes and label on right hand side of box
  if (iaxis.eq.3) then
-    call plot_box(' ',0.0,0,'1M'//trim(yoptsi),0.0,0) 
+    call plot_box(' ',0.0,0,'1MC'//trim(yoptsi),0.0,0) 
  else
-    call plot_box(' ',0.0,0,'1VM'//trim(yoptsi),0.0,0)
+    call plot_box(' ',0.0,0,'1VMC'//trim(yoptsi),0.0,0)
  endif
- call plot_annotate('R',ylabeloffset,0.5,0.5,labely)
+ if (present(labely) .and. present(ylabeloffset)) then
+    call plot_annotate('R',ylabeloffset,0.5,0.5,labely)
+ endif
 
  !--reset plot window
  if (just.eq.1) then

@@ -634,7 +634,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use settings_part,      only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
                                iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
                                iploterrbars,ilocerrbars
-  use settings_page,      only:nacross,ndown,interactive,iaxis,usesquarexy, &
+  use settings_page,      only:nacross,ndown,interactive,iaxis,usesquarexy,yscalealt, &
                                charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render,    only:npix,ncontours,icolours,iColourBarStyle,icolour_particles,&
                                inormalise_interpolations,ifastrender,ilabelcont,double_rendering
@@ -1989,7 +1989,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !--redraw axes over what has been plotted
            !
            if (irenderplot.gt.0 .or. plotlib_is_pgplot) then
-              call redraw_axes(iaxistemp)
+              call redraw_axes(iaxistemp,just,yscalealt)
            endif
            !
            !--annotate with time / marker legend and title
@@ -2141,7 +2141,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !
         !--redraw axes over what has been plotted
         !
-        if (plotlib_is_pgplot) call redraw_axes(iaxis)
+        if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt)
         !
         !--annotate with time / marker legend and title
         !
@@ -2322,7 +2322,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            call plot_sci(icolourprev)
            call plot_sls(linestyleprev)
 
-           if (plotlib_is_pgplot) call redraw_axes(iaxis)
+           if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt)
            call legends_and_title
 
            !
@@ -2511,7 +2511,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            !--redraw axes over what has been plotted
            !
-           if (plotlib_is_pgplot) call redraw_axes(iaxis)
+           if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt)
            !
            !--annotate with time / marker legend and title
            !
@@ -2591,7 +2591,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !--redraw axes over what has been plotted
            !
            if ((allocated(datpix) .and. ierr.eq.0) .or. plotlib_is_pgplot) then
-              call redraw_axes(iaxis)
+              call redraw_axes(iaxis,just,yscalealt)
            endif
            !
            !--annotate with time / marker legend and title
@@ -2630,7 +2630,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               call plot_line(ipt,xplot(1:ipt),yplot(1:ipt))
            endif
 
-           if (plotlib_is_pgplot) call redraw_axes(iaxis)
+           if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt)
            call legends_and_title
 
         endif
@@ -2710,7 +2710,7 @@ contains
     use colourbar,     only:get_colourbarmargins
     use pagesetup,     only:setpage2
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
-                            vposlegend,iPlotLegend,usecolumnorder
+                       vposlegend,iPlotLegend,usecolumnorder,yscalealt,labelyalt
     use settings_limits, only:adjustlimitstodevice
     use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot,plot_set_opacity
     implicit none
@@ -2856,7 +2856,8 @@ contains
              call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
                      trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp, &
                      xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
-                     0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice)
+                     0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice, &
+                     yscalealt,labelyalt)
              call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
              if (debugmode) print*,'DEBUG: viewport xpix=',xminpix,'->',xmaxpix,' ypix=',yminpix,'->',ymaxpix
 
@@ -2909,7 +2910,8 @@ contains
           call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
                   trim(labelx),trim(labely),string,just,iaxistemp, &
                   xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
-                  0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice)
+                  0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice, &
+                  yscalealt,labelyalt)
        endif
     endif
 

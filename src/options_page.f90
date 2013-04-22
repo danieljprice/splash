@@ -26,6 +26,7 @@
 !-------------------------------------------------------------------------
 module settings_page
  use settings_limits, only:iadapt,iadaptcoords,adjustlimitstodevice
+ use labels,          only:lenlabel
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
  integer :: iPlotLegendOnlyOnPanel,modlinestyle,modcolour,maxlinestyle,maxcolour
@@ -36,9 +37,10 @@ module settings_page
  real    :: papersizex,aspectratio
  real    :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
  real    :: charheight,alphalegend
- real    :: dxscale,hposscale,vposscale
+ real    :: dxscale,hposscale,vposscale,yscalealt
  character(len=20) :: legendtext, scaletext
  character(len=60) :: device
+ character(len=lenlabel) :: labelyalt
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &
@@ -47,7 +49,7 @@ module settings_page
    fjustlegend,iPlotLegendOnlyOnPanel, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
    usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder,ipapersizeunits,&
-   adjustlimitstodevice,alphalegend
+   adjustlimitstodevice,alphalegend,yscalealt,labelyalt
 
 contains
 
@@ -100,6 +102,9 @@ subroutine defaults_set_page
   modlinestyle = 1
   modcolour = 1
   maxcolour = plotlib_maxlinecolour
+  
+  yscalealt = 1.
+  labelyalt = ' '
 
   usesquarexy = .true. ! spatial dimensions have same scale
   call defaults_set_shapes
@@ -215,10 +220,15 @@ subroutine submenu_page(ichoose)
      print*,' 1 : same as AXIS=0, but also draw the coordinate axes (X=0, Y=0);'
      print*,' 2 : same as AXIS=1, but also draw grid lines at major increments of the coordinates;'
      print*,' 3 : draw box, ticks and numbers but no axes labels;'
+     print*,' 4 : same as AXIS=0, but with a second y-axis scaled and labelled differently'
      print*,'10 : draw box and label X-axis logarithmically;'
      print*,'20 : draw box and label Y-axis logarithmically;'
      print*,'30 : draw box and label both axes logarithmically.'
      call prompt('enter axis option ',iaxis,-4,30)
+     if (iaxis.eq.4) then
+        call prompt('enter scale factor for alternative y axis',yscalealt,0.)
+        call prompt('enter label for alternative y axis',labelyalt)
+     endif
      print *,' axis = ',iaxis
      return
 !------------------------------------------------------------------------
