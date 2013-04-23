@@ -42,7 +42,7 @@ ifneq ($(BACKEND), pgplot)
    GIZADIR= ../giza
    VPATH+= $(GIZADIR)/interface/
    PLOTLIB= giza-fortran.F90 plotlib_giza.f90
-   PGPLOTLIBS = -L$(GIZADIR)/lib -lgiza -lcairo
+   PGPLOTLIBS = -L$(GIZADIR)/lib -lgiza -lcairo -lX11
    CFLAGS= -fPIC -Wall -Wextra -O3 -g
    CC = gcc
 else
