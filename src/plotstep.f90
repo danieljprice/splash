@@ -634,7 +634,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use settings_part,      only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
                                iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
                                iploterrbars,ilocerrbars
-  use settings_page,      only:nacross,ndown,interactive,iaxis,usesquarexy,yscalealt, &
+  use settings_page,      only:nacross,ndown,interactive,iaxis,usesquarexy,yscalealt,labelyalt, &
                                charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render,    only:npix,ncontours,icolours,iColourBarStyle,icolour_particles,&
                                inormalise_interpolations,ifastrender,ilabelcont,double_rendering
@@ -1105,7 +1105,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         endif
 
      endif initdataplots
-
+     
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      ! plots with co-ordinates as x and y axis
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1989,7 +1989,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !--redraw axes over what has been plotted
            !
            if (irenderplot.gt.0 .or. plotlib_is_pgplot) then
-              call redraw_axes(iaxistemp,just,yscalealt)
+              call redraw_axes(iaxistemp,just,yscalealt,itransy)
            endif
            !
            !--annotate with time / marker legend and title
@@ -2141,7 +2141,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !
         !--redraw axes over what has been plotted
         !
-        if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt)
+        if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt,itransy)
         !
         !--annotate with time / marker legend and title
         !
@@ -2229,7 +2229,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            endif
            yplot(:) = 0.
 
-           if (itrans(iploty).ne.0) labely = trim(transform_label(label(iploty),itrans(iploty)))
+           if (itrans(iploty).ne.0) then
+              labely = trim(transform_label(label(iploty),itrans(iploty)))
+           endif
 
            if ((.not.interactivereplot) .or. irerender) then
               !--call routines which actually calculate disc properties from the particles
@@ -2322,7 +2324,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            call plot_sci(icolourprev)
            call plot_sls(linestyleprev)
 
-           if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt)
+           if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt,itransy)
            call legends_and_title
 
            !
@@ -2485,7 +2487,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               labelx = transform_label(labelx,itrans(iploty))
 
               call transform(yplot(1:nfreqpts),itrans(iploty))
-              labely = transform_label(labely,itrans(iploty))
+              labely     = transform_label(labely,itrans(iploty))
               if (.not.interactivereplot) then
                  call transform_limits(xmin,xmax,itrans(iploty))
                  call transform_limits(ymin,ymax,itrans(iploty))
@@ -2511,7 +2513,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            !--redraw axes over what has been plotted
            !
-           if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt)
+           if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt,itransy)
            !
            !--annotate with time / marker legend and title
            !
@@ -2591,7 +2593,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !--redraw axes over what has been plotted
            !
            if ((allocated(datpix) .and. ierr.eq.0) .or. plotlib_is_pgplot) then
-              call redraw_axes(iaxis,just,yscalealt)
+              call redraw_axes(iaxis,just,yscalealt,itransy)
            endif
            !
            !--annotate with time / marker legend and title
@@ -2630,7 +2632,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               call plot_line(ipt,xplot(1:ipt),yplot(1:ipt))
            endif
 
-           if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt)
+           if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt,itransy)
            call legends_and_title
 
         endif
@@ -2710,11 +2712,11 @@ contains
     use colourbar,     only:get_colourbarmargins
     use pagesetup,     only:setpage2
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
-                       vposlegend,iPlotLegend,usecolumnorder,yscalealt,labelyalt
+                       vposlegend,iPlotLegend,usecolumnorder
     use settings_limits, only:adjustlimitstodevice
     use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot,plot_set_opacity
     implicit none
-    integer :: iplotsave,ipanelsave,ipanelpos,icrap
+    integer :: iplotsave,ipanelsave,ipanelpos
     real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
     real    :: xminpix,xmaxpix,yminpix,ymaxpix,dxpix
     logical :: ipanelchange,dum,iprint_axes
@@ -2857,7 +2859,7 @@ contains
                      trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp, &
                      xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                      0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice, &
-                     yscalealt,labelyalt)
+                     yscalealt,labelyalt,itransy)
              call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
              if (debugmode) print*,'DEBUG: viewport xpix=',xminpix,'->',xmaxpix,' ypix=',yminpix,'->',ymaxpix
 
@@ -2911,7 +2913,7 @@ contains
                   trim(labelx),trim(labely),string,just,iaxistemp, &
                   xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                   0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice, &
-                  yscalealt,labelyalt)
+                  yscalealt,labelyalt,itransy)
        endif
     endif
 
@@ -3582,24 +3584,24 @@ subroutine applytrans(xploti,xmini,xmaxi,labelxi,itransxi,chaxis,iplotxi,iaxis,i
   character(len=20) :: string
 
   if (itransxi.ne.0) then
-      if (iplotxi.gt.0 .and. iplotxi.le.numplot) call transform(xploti(:),itransxi)
-      if ((chaxis.eq.'x' .and. (iaxis.eq.10 .or. iaxis.eq.30)).or. &
-          (chaxis.eq.'y' .and. (iaxis.eq.20 .or. iaxis.eq.30))) then ! logarithmic axes
-         write(string,*) itransxi
-         string = adjustl(string)
-         itranstemp = 0
-         lstr = len_trim(string)
-         if (string(lstr:lstr).eq.'1') then
-            if (lstr.gt.1) read(string(1:lstr-1),*) itranstemp
-            labelxi = transform_label(labelxi,itranstemp)
-         else
-            labelxi = transform_label(labelxi,itransxi)
-         endif
-      else
-         labelxi = transform_label(labelxi,itransxi)
-      endif
-      if (.not.intreplot) call transform_limits(xmini,xmaxi,itransxi)
-   endif
+     if (iplotxi.gt.0 .and. iplotxi.le.numplot) call transform(xploti(:),itransxi)
+     if ((chaxis.eq.'x' .and. (iaxis.eq.10 .or. iaxis.eq.30)).or. &
+         (chaxis.eq.'y' .and. (iaxis.eq.20 .or. iaxis.eq.30))) then ! logarithmic axes
+        write(string,*) itransxi
+        string = adjustl(string)
+        itranstemp = 0
+        lstr = len_trim(string)
+        if (string(lstr:lstr).eq.'1') then
+           if (lstr.gt.1) read(string(1:lstr-1),*) itranstemp
+           labelxi = transform_label(labelxi,itranstemp)
+        else
+           labelxi = transform_label(labelxi,itransxi)
+        endif
+     else
+        labelxi = transform_label(labelxi,itransxi)
+     endif
+     if (.not.intreplot) call transform_limits(xmini,xmaxi,itransxi)
+  endif
 end subroutine applytrans
 
 !-------------------------------------------------------------------

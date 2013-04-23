@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -71,14 +71,13 @@ contains
 !
 subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,axis, &
                     vmarginleftin,vmarginrightin,vmarginbottomin,vmargintopin, &
-                    colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits,yscale,labelyalt)
+                    colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits,yscale,labelyalt,itransy)
   use plotlib,only:plot_svp,plot_swin,plot_box,plot_qvsz,plot_annotate, &
                    plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries, &
                    plot_qvp
   use asciiutils, only:string_delete
-  use labels,     only:lenlabel
   implicit none
-  integer, intent(in) :: iplotin,nx,ny,just,axis
+  integer, intent(in) :: iplotin,nx,ny,just,axis,itransy
   real, intent(inout) :: xmin, xmax, ymin, ymax
   real, intent(in)    :: colourbarwidth, titleoffset
   real, intent(in)    :: vmarginleftin,vmarginrightin,vmargintopin,vmarginbottomin
@@ -338,7 +337,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
         !--apply label to right hand side axis if used
         !
         if (plot_alt_y_axis) then
-           call plot_second_y_axis(yopts,just,axis,yscale,ylabeloffset,labelyalt)
+           call plot_second_y_axis(yopts,just,axis,itransy,yscale,ylabeloffset,labelyalt)
         endif
      endif
      if (ix.eq.1 .and. axis.ge.0) then
@@ -380,7 +379,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      !--apply label to right hand side axis if used
      !
      if (plot_alt_y_axis) then
-        call plot_second_y_axis(yopts,just,axis,yscale,ylabeloffset,labelyalt)
+        call plot_second_y_axis(yopts,just,axis,itransy,yscale,ylabeloffset,labelyalt)
      endif
      !
      !--always label y axis
@@ -411,10 +410,10 @@ end subroutine
 !         axis   : axes options (same as in PGENV, with axis=-4,-3,+3 added)
 !
 
-subroutine redraw_axes(iaxis,just,yscale)
+subroutine redraw_axes(iaxis,just,yscale,itransy)
   use plotlib, only:plot_box
   implicit none
-  integer, intent(in) :: iaxis,just
+  integer, intent(in) :: iaxis,just,itransy
   character(len=10) :: xopts, yopts
   real, intent(in)  :: yscale
 !
@@ -456,23 +455,25 @@ subroutine redraw_axes(iaxis,just,yscale)
   end select
   if (yopts.eq.'*') yopts = xopts
 
-  if (iaxis.eq.4) call plot_second_y_axis(yopts,just,iaxis,yscale)
+  if (iaxis.eq.4) call plot_second_y_axis(yopts,just,iaxis,itransy,yscale)
   call plot_box(xopts,0.0,0,yopts,0.0,0)
 
   return
 end subroutine redraw_axes
 
-subroutine plot_second_y_axis(yopts,just,iaxis,yscale,ylabeloffset,labely)
- use plotlib, only:plot_box,plot_annotate,plot_qwin,plot_swin,plot_wnad
+subroutine plot_second_y_axis(yopts,just,iaxis,itransy,yscale,ylabeloffset,labely)
+ use plotlib,    only:plot_box,plot_annotate,plot_qwin,plot_swin,plot_wnad
  use asciiutils, only:string_delete
+ use transforms, only:transform,transform_inverse,transform_label
  implicit none
  character(len=*), intent(in) :: yopts
  real,             intent(in) :: yscale
  real,             intent(in), optional :: ylabeloffset
  character(len=*), intent(in), optional :: labely
- integer,          intent(in) :: just,iaxis
+ integer,          intent(in) :: just,iaxis,itransy
  character(len=10) :: yoptsi
- real :: xmin,xmax,ymin,ymax
+ character(len=len(labely)+10) :: labelyalt
+ real :: xmin,xmax,ymin,ymax,yminalt,ymaxalt
  
  yoptsi = yopts
  call string_delete(yoptsi,'B')
@@ -481,11 +482,19 @@ subroutine plot_second_y_axis(yopts,just,iaxis,yscale,ylabeloffset,labely)
  !--save plot window settings
  call plot_qwin(xmin,xmax,ymin,ymax)
 
+ !--scaling of y axis: multiplication in un-transformed space
+ yminalt = ymin
+ ymaxalt = ymax
+ if (itransy.gt.0) call transform_inverse(yminalt,ymaxalt,itransy)
+ yminalt = yminalt*yscale
+ ymaxalt = ymaxalt*yscale
+ if (itransy.gt.0) call transform(yminalt,ymaxalt,itransy)
+ 
  !--set plot window to new scaled y axis
  if (just.eq.1) then
-    call plot_wnad(xmin,xmax,ymin*yscale,ymax*yscale)
+    call plot_wnad(xmin,xmax,yminalt,ymaxalt)
  else
-    call plot_swin(xmin,xmax,ymin*yscale,ymax*yscale)
+    call plot_swin(xmin,xmax,yminalt,ymaxalt)
  endif
  !--draw axes and label on right hand side of box
  if (iaxis.eq.3) then
@@ -494,7 +503,9 @@ subroutine plot_second_y_axis(yopts,just,iaxis,yscale,ylabeloffset,labely)
     call plot_box(' ',0.0,0,'1VMC'//trim(yoptsi),0.0,0)
  endif
  if (present(labely) .and. present(ylabeloffset)) then
-    call plot_annotate('R',ylabeloffset,0.5,0.5,labely)
+    labelyalt = labely
+    if (itransy.gt.0) labelyalt = transform_label(labely,itransy)
+    call plot_annotate('R',ylabeloffset,0.5,0.5,labelyalt)
  endif
 
  !--reset plot window
