@@ -1150,6 +1150,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            print*,'ERROR: F has no effect if not rendering'
         endif
      case('m') ! change colour map (next scheme)
+        !call set_movie_mode()
         call change_colourmap(icolourscheme,1)
         iadvance = 0
         interactivereplot = .true.
@@ -2874,5 +2875,55 @@ subroutine change_colourmap(imap,istep)
  call colour_set(imap)
 
 end subroutine change_colourmap
+
+!
+!--set movie mode
+!
+subroutine set_movie_mode()
+ use settings_page,   only:iaxis,papersizex,aspectratio,ipapersize,ipapersizeunits,iPageColours
+ use settings_limits, only:adjustlimitstodevice
+ use settings_render, only:iColourBarStyle
+ use pagecolours,     only:set_pagecolours
+ use plotlib,         only:plotlib_is_pgplot,plot_pap
+ implicit none
+
+ iaxis = -1
+ iPageColours = 2
+ if (.not.plotlib_is_pgplot) then
+    ipapersize      = 9
+    ipapersizeunits = 0
+    papersizex      = 1280.
+    aspectratio     = 0.5625
+    call plot_pap(papersizex,aspectratio,ipapersizeunits)
+    iColourBarStyle = 3
+    call set_pagecolours(iPageColours)
+    adjustlimitstodevice = .true.
+ endif
+
+end subroutine set_movie_mode
+
+!
+!--unset movie mode
+!
+subroutine unset_movie_mode()
+ use settings_page,   only:iaxis,papersizex,aspectratio,ipapersize,iPageColours
+ use settings_limits, only:adjustlimitstodevice
+ use settings_render, only:iColourBarStyle
+ use pagecolours,     only:set_pagecolours
+ use plotlib,         only:plotlib_is_pgplot
+ implicit none
+
+ iaxis = 0
+ iPageColours = 0
+ if (.not.plotlib_is_pgplot) then
+    ipapersize   = 0
+    papersizex   = 0.
+    aspectratio  = 0.
+    iColourBarStyle   = 1
+    call set_pagecolours(iPageColours)
+    adjustlimitstodevice = .false.
+ endif
+
+end subroutine unset_movie_mode
 
 end module interactive_routines
