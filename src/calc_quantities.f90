@@ -292,14 +292,14 @@ end subroutine splitstring
 !---------------------------------------------------------------------
 subroutine print_example_quantities(ncalc)
  use labels,        only:label,lenlabel,irho,iutherm,iBfirst,ix,icv,idivB,&
-                         ih,iradenergy,iamvec,labelvec,idusttogas,ideltav,ivx
+                         ih,iradenergy,iamvec,labelvec,idustfrac,ideltav,ivx
  use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
  use settings_units,only:unitslabel
  use geometry,      only:labelcoord
  implicit none
  integer, intent(inout), optional :: ncalc
  logical :: prefill
- character(len=lenlabel) :: string,ldtg,temp,labelprev
+ character(len=lenlabel) :: string,ldfrac,temp,labelprev
  integer :: i,j,ivecstart,ierr,ilen,ncalcok,ncalctot
  logical :: gotpmag,gotpressure
 
@@ -355,13 +355,13 @@ subroutine print_example_quantities(ncalc)
  !
  !--one-fluid dust stuff
  !
- if (idusttogas.gt.0 .and. irho.gt.0) then
+ if (idustfrac.gt.0 .and. irho.gt.0) then
     string = ' '
-    ldtg = shortlabel(label(idusttogas),unitslabel(idusttogas))    
+    ldfrac = shortlabel(label(idustfrac),unitslabel(idustfrac))    
     !--gas density
     write(string,"(a)",iostat=ierr) trim(label(irho))//'_{gas} = ' &
                     //trim(shortlabel(label(irho),unitslabel(irho))) &
-                    //'/(1 + '//trim(ldtg)//')'
+                    //'*(1 - '//trim(ldfrac)//')'
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
@@ -372,7 +372,7 @@ subroutine print_example_quantities(ncalc)
     endif
     !--dust density
     write(string,"(a)",iostat=ierr) trim(label(irho))//'_{dust} = ' &
-                    //trim(ldtg)//'*'//trim(shortlabel(labelprev,unitslabel(irho)))
+                    //trim(ldfrac)//'*'//trim(shortlabel(label(irho),unitslabel(irho)))
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))

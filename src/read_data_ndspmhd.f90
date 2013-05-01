@@ -333,14 +333,14 @@ return
 contains
 
 subroutine fake_twofluids
- use labels, only:idusttogas,irho,ix,ih,iutherm,ipmass,ivx,ideltav
+ use labels, only:idustfrac,irho,ix,ih,iutherm,ipmass,ivx,ideltav
  implicit none
  integer :: ndust,jdust
- real    :: rhodust,rhogas,rhotot,dusttogasi,pmassgas,pmassdust
+ real    :: rhodust,rhogas,rhotot,dustfraci,pmassgas,pmassdust,pmassj
  real, dimension(ndimV) :: veli,vgas,vdust,deltav
 
  call set_labels
- if (idusttogas.gt.0 .and. irho.gt.0) then
+ if (idustfrac.gt.0 .and. irho.gt.0) then
     do i=indexstart,indexstart+nstepsread-1
        ntoti = sum(npartoftype(:,i))
        if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)).gt.maxpart) then
@@ -351,9 +351,9 @@ subroutine fake_twofluids
           if (iamtype(j,i).eq.1) then
              ndust = ndust + 1 ! one dust particle for every gas particle
              rhotot  = dat(j,irho,i)
-             dusttogasi = dat(j,idusttogas,i)
-             rhogas  = rhotot/(1. + dusttogasi)
-             rhodust = rhogas*dusttogasi
+             dustfraci = dat(j,idustfrac,i)
+             rhogas  = rhotot*(1. - dustfraci)
+             rhodust = rhotot*dustfraci
              !--replace global properties with gas-only stuff
              dat(j,irho,i) = rhogas
              !--copy x, smoothing length onto dust particle
@@ -366,8 +366,9 @@ subroutine fake_twofluids
 
              !--particle masses
              if (ipmass.gt.0) then
-                pmassgas  = dat(j,ipmass,i)/(1. + dusttogasi)
-                pmassdust = pmassgas*dusttogasi
+                pmassj    = dat(j,ipmass,i)
+                pmassgas  = pmassj*(1. - dustfraci)
+                pmassdust = pmassj*dustfraci
                 dat(j,ipmass,i)     = pmassgas
                 dat(jdust,ipmass,i) = pmassdust
              endif
@@ -401,7 +402,7 @@ end subroutine read_data
 subroutine set_labels
  use labels, only:ix,ivx,ih,irho,iutherm,ipmass,ipr,iBfirst, &
              idivB,iJfirst,iamvec,labelvec,label,labeltype, &
-             irhorestframe,idusttogas,ideltav
+             irhorestframe,idustfrac,ideltav
  use params
  use settings_data, only:ndim,ndimV,iformat,ntypes, &
                     UseTypeInRenderings
@@ -500,8 +501,8 @@ subroutine set_labels
  endif
  if (iformat.eq.5) then
     icol = icol + 1
-    label(icol) = 'dust to gas ratio'
-    idusttogas = icol
+    label(icol) = 'dust fraction'
+    idustfrac = icol
     iamvec(icol+1:icol+ndimV) = icol + 1
     labelvec(icol+1:icol+ndimV) = 'deltav'
     ideltav = icol + 1
