@@ -245,7 +245,8 @@ subroutine submenu_xsecrotate(ichoose)
           print "(a,/)",' to the PGPLOT device (not corrected for brightness) '
           call prompt(' Do you want to write a ppm file in addition to PGPLOT output?',writeppm)
        else
-          call prompt(' Do you want to apply the brightness correction?',writeppm)
+          writeppm = .false.
+          !call prompt(' Do you want to apply the brightness correction?',writeppm)
        endif
     endif
 !------------------------------------------------------------------------
