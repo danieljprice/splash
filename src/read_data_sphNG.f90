@@ -805,7 +805,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                            dat(npart+i,iloc,j) = real(dattemp(i))
                         enddo
                      else
-                        print*,' skipping sink particle array ',k
+                        if (debug) print*,'DEBUG: skipping sink particle array ',k
                      endif
                   enddo
                else
@@ -1320,7 +1320,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
      close(15)
 
-     print*,' finished data read, npart = ',npart, ntotal, npartoftype(1:ntypes,j)
+     if (debug) print*,' finished data read, npart = ',npart, ntotal, npartoftype(1:ntypes,j)
 
      return
 
