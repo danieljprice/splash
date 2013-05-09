@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -223,7 +223,7 @@ end subroutine read_data
 
 subroutine set_labels
   use labels, only:label,labelvec,labeltype,iamvec,&
-              ix,ivx,ih,irho,iutherm,ipmass
+              ix,ivx,ih,irho,iutherm,ipmass,ispsound
   use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
   use geometry, only:labelcoord
   !use settings_units, only:units,unitslabel
@@ -247,12 +247,14 @@ subroutine set_labels
   ih = ipmass + 1
   iutherm = ih + 1
   irho = iutherm + 1
+  ispsound = 0
 
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(ih) = 'h'
   if (irho.gt.0) label(irho) = '\gr'
   if (ipmass.gt.0) label(ipmass) = 'particle mass'
   if (iutherm.gt.0) label(iutherm) = 'u'
+  if (ispsound.gt.0) label(ispsound) = 'c_s'
 
   if (ivx.ne.0) then
      iamvec(ivx:ivx+ndimV-1) = ivx

@@ -622,7 +622,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use toystar1D,          only:exact_toystar_ACplane
   use toystar2D,          only:exact_toystar_ACplane2D
   use labels,             only:label,labelvec,iamvec,lenlabel,lenunitslabel,ih,irho,ipmass,ix,iacplane, &
-                               ipowerspec,isurfdens,itoomre,iutherm,ipdf,icolpixmap,is_coord,labeltype
+                               ipowerspec,isurfdens,itoomre,ispsound,iutherm,ipdf,icolpixmap,is_coord,labeltype
   use limits,             only:lim,get_particle_subset,lim2,lim2set
   use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                                icontourmulti,x_secmulti,xsecposmulti,iusealltypesmulti,iplotpartoftypemulti
@@ -693,7 +693,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   integer :: irenderpart
   integer :: npixyvec,nfreqpts,ipixxsec
   integer :: icolourprev,linestyleprev
-  integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp
+  integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp,icol
   integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
   integer :: iframe,isize
 
@@ -2236,21 +2236,28 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            if ((.not.interactivereplot) .or. irerender) then
               !--call routines which actually calculate disc properties from the particles
               if (iploty.eq.isurfdens .or. iploty.eq.itoomre) then
+                 if (ispsound.gt.0 .and. ispsound.le.ndataplots) then
+                    icol = ispsound   ! sound speed is present in data
+                 elseif (iutherm.gt.0 .and. iutherm.le.ndataplots) then
+                    icol = iutherm    ! use thermal energy if spsound not present
+                 else
+                    icol = 0
+                 endif
                  if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
-                    if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
+                    if (icol.gt.0) then
                        call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
-                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,dat(1:ntoti,iutherm))
+                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,dat(1:ntoti,icol),icol.eq.iutherm)
                     else
                        call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
                             icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai)
                     endif
                  else
-                    if (iutherm.gt.0 .and. iutherm.le.ndataplots) then
+                    if (icol.gt.0) then
                        call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
-                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,dat(1:ntoti,iutherm))
+                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,dat(1:ntoti,icol),icol.eq.iutherm)
                     else
                        call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),&

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -37,27 +37,29 @@ module disc
 contains
 
 subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
-                    itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,utherm)
+                    itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,u,u_is_spsound)
  use transforms, only:transform_limits_inverse,transform_inverse,transform
  use params,     only:int1,maxparttypes
  use part_utils, only:igettype
  implicit none
- integer, intent(in) :: iplot,npart,npmass,itransx,itransy
- real, dimension(npart), intent(in) :: rpart
- real, dimension(npmass), intent(in) :: pmass
- integer, dimension(npart), intent(in) :: icolourpart
- integer(kind=int1), dimension(:), intent(in) :: iamtype
- logical, dimension(maxparttypes), intent(in) :: usetype
- integer, dimension(maxparttypes), intent(in) :: noftype
- real, dimension(npart), intent(in), optional :: utherm
- real, intent(in) :: rminin,rmaxin,gamma
- real, intent(out) :: ymin,ymax
+ integer,                          intent(in)  :: iplot,npart,npmass,itransx,itransy
+ real, dimension(npart),           intent(in)  :: rpart
+ real, dimension(npmass),          intent(in)  :: pmass
+ real,                             intent(in)  :: rminin,rmaxin,gamma
+ real,                             intent(out) :: ymin,ymax
+ integer, dimension(npart),        intent(in)  :: icolourpart
+ integer(kind=int1), dimension(:), intent(in)  :: iamtype
+ logical, dimension(maxparttypes), intent(in)  :: usetype
+ integer, dimension(maxparttypes), intent(in)  :: noftype
+ real, dimension(npart),           intent(in), optional :: u
+ logical,                          intent(in), optional :: u_is_spsound
+
  integer :: i,ibin
  real, parameter :: pi = 3.1415926536
  real :: pmassi,rbin,deltar,area,rmin,rmax
  real :: sigmai,toomreq,epicyclic,Omegai,spsoundi
  real, dimension(1) :: rad
- logical :: mixedtypes
+ logical :: mixedtypes,gotspsound
  integer :: itype,np
 
  ninbin(:) = 0
@@ -69,6 +71,8 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
     print*,' INTERNAL ERROR in discplot: dimension of mass array <= 0'
     return
  endif
+ gotspsound = .false.
+ if (present(u_is_spsound)) gotspsound = u_is_spsound
 !
 !--print info
 !
@@ -76,15 +80,17 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
  case(1)
     print "(a,i4,a)",' calculating disc surface density profile using',nbins,' bins'
  case(2)
-    if (present(utherm)) then
+    if (present(u)) then
        print "(a)",' calculating Toomre Q parameter (assuming Mstar=1 and a Keplerian rotation profile)'
-       if (gamma.lt.1.00001) then
-          print "(a)",' isothermal equation of state: using cs^2 = 2/3*utherm'
-       else
-          print "(a,f6.3,a,f6.3,a)",' ideal gas equation of state: using cs^2 = ',gamma*(gamma-1),'*u (gamma = ',gamma,')'
+       if (.not.gotspsound) then
+          if (gamma.lt.1.00001) then
+             print "(a)",' isothermal equation of state: using cs^2 = 2/3*utherm'
+          else
+             print "(a,f6.3,a,f6.3,a)",' ideal gas equation of state: using cs^2 = ',gamma*(gamma-1),'*u (gamma = ',gamma,')'
+          endif
        endif
     else
-       print "(a)",' ERROR: cannot calculate Toomre Q parameter: thermal energy not present in dump file'
+       print "(a)",' ERROR: cannot calculate Toomre Q parameter: thermal energy/sound speed not present in dump file'
        return
     endif
  case default
@@ -113,7 +119,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
  np = 0
 !$omp parallel do default(none) &
 !$omp shared(npart,rpart,sigma,npmass,pmass,itransx,icolourpart,rmin,deltar) &
-!$omp shared(ninbin,spsound,gamma,utherm,iamtype,mixedtypes,usetype,noftype) &
+!$omp shared(ninbin,spsound,gamma,u,iamtype,mixedtypes,usetype,noftype,gotspsound) &
 !$omp private(i,rad,pmassi,ibin,rbin,area,itype) &
 !$omp reduction(+:np)
  over_parts: do i=1,npart
@@ -143,17 +149,22 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
        rbin = rmin + (ibin-0.5)*deltar
 
        area = pi*((rbin + 0.5*deltar)**2 - (rbin - 0.5*deltar)**2)
-!$omp atomic
+       !$omp atomic
        sigma(ibin) = sigma(ibin) + pmassi/area
-       if (present(utherm)) then
-          if (gamma.lt.1.00001) then
-!$omp atomic
-             spsound(ibin) = spsound(ibin) + 2./3.*utherm(i)
+       if (present(u)) then
+          if (gotspsound) then
+             !$omp atomic
+             spsound(ibin) = spsound(ibin) + u(i)
           else
-!$omp atomic
-             spsound(ibin) = spsound(ibin) + gamma*(gamma-1.)*utherm(i)
+             if (gamma.lt.1.00001) then
+                !$omp atomic
+                spsound(ibin) = spsound(ibin) + 2./3.*u(i)
+             else
+                !$omp atomic
+                spsound(ibin) = spsound(ibin) + gamma*(gamma-1.)*u(i)
+             endif
           endif
-!$omp atomic
+          !$omp atomic
           ninbin(ibin) = ninbin(ibin) + 1
        endif
     endif

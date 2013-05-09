@@ -173,7 +173,7 @@ module labels
  integer, dimension(3) :: ix
  integer, dimension(maxplot) :: iamvec
  integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst,iBpol,iBtor,iax
- integer :: ipmass,ike
+ integer :: ipmass,ike,ispsound
  integer :: idivb,iJfirst,irhostar
  integer :: iacplane,ipowerspec
  integer :: icv,iradenergy
