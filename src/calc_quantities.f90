@@ -300,7 +300,7 @@ subroutine print_example_quantities(ncalc)
  integer, intent(inout), optional :: ncalc
  logical :: prefill
  character(len=lenlabel) :: string,ldfrac,temp,labelprev
- integer :: i,j,ivecstart,ierr,ilen,ncalcok,ncalctot
+ integer :: i,j,ivecstart,ierr,ilen
  logical :: gotpmag,gotpressure
 
  gotpmag = .false.
