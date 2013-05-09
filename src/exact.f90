@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -686,7 +686,7 @@ contains
     real, parameter :: zero = 1.e-10
     integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle
     real, dimension(:), allocatable :: xexact,yexact,xtemp
-    real :: dx,ymean,errL1,errL2,errLinf,timei
+    real :: dx,errL1,errL2,errLinf,timei
     character(len=len(filename_exact)) :: filename_tmp
 
     !
