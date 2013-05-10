@@ -1,5 +1,5 @@
 2.2.2:
-particle tracking by type implemented; can interpolate specific columns in splash to grid; SPLASH_CENTRE_ON_SINK option generic to all data reads; Aly Reheam format added; option for 2nd y axis on plots; bug fix with X11 linking on Ubuntu; can read gadget ICs files
+particle tracking by type implemented; can interpolate specific columns in splash to grid; SPLASH\_CENTRE\_ON\_SINK option generic to all data reads; Aly Reheam format added; option for 2nd y axis on plots; bug fix with X11 linking on Ubuntu; can read gadget ICs files
  
 2.2.1:
 minor bug with axes plotting fixed; Wendland kernels added; bugs with exact solution plotting fixed; bug fix with tracking of dark matter particles
