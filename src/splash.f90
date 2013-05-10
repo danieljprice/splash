@@ -48,6 +48,12 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.2.2  : (10/05/13)
+!             particle tracking by type implemented;
+!             can interpolate specific columns in splash to grid;
+!             SPLASH_CENTRE_ON_SINK option generic to all data reads;
+!             Aly Reheam format added; option for 2nd y axis on plots;
+!             bug fix with X11 linking on Ubuntu; can read gadget ICs files
 !     2.2.1  : (21/02/13)
 !             minor bug with axes plotting fixed;
 !             Wendland kernels added; bugs with exact solution plotting fixed;
@@ -332,7 +338,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.2.1 [21st Feb 2013]'
+  character(len=*), parameter :: version = 'v2.2.2 [10th May 2013]'
 
   !
   ! initialise some basic code variables
