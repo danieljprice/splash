@@ -46,7 +46,7 @@
 \newcommand{\giza}{\textsc{giza }}
 
 \begin{titlepage}
-\title{Visualisation of SPH data using \splash - v\input{version}}
+\title{Visualisation of Smoothed Particle Hydrodynamics data using \splash - v\input{version}}
 \author{Daniel Price}
 \end{titlepage}
 
@@ -66,13 +66,13 @@
 \section{Introduction}%HEVEA\cutname{intro.html}
  Whilst many wonderful commercial software packages exist for visualising scientific
 data (such as the widely used Interactive Data Language), I found that such packages
-could be somewhat cumbersome for the manipulation and visualisation of my SPH data. The
+could be somewhat cumbersome for the manipulation and visualisation of particle-based data. The
 main problem was that much of what I wanted to do was fairly specific to SPH (such as
-interpolation to an array of pixels using the kernel) and whilst generic routines exist
+interpolation to an array of pixels using the kernel) and while generic routines exist
 for such tasks, I could not explain how they worked, nor were they
-particularly fast and whilst interactive gizmos are handy, it can prove more difficult to perform the
+particularly fast. Also, while interactive gizmos are handy, it can prove more difficult to perform the
 same tasks non-interactively, as required for the production of animations. 
-In fact I have found that the major work in the visualisation of SPH data is not the image production itself but the
+The major work in the visualisation of SPH data is not the image production itself but the
 manipulation of data prior to plotting. Much of this manipulation makes sense
 within an SPH framework.
 
@@ -81,8 +81,8 @@ straightforward task such that publishable images and animations can be obtained
 as efficiently as possible from the raw data with a minimum amount of effort
 from the user. I have found in the process that the development of powerful
 visualisation tools has enabled me to pick up on effects present in my
-simulation results that I would not otherwise have noticed (in particular the
-difference between a raw particle plot and a rendered image can be substantial). Part of the goal of
+simulation results that I would not otherwise have noticed --- the
+difference between a raw particle plot and a rendered image can be substantial. A key goal of
 \splash is to eliminate the use of crap-looking particle plots as a means of representing SPH data!
 
 \subsection{What it does}
@@ -102,16 +102,15 @@ plots in a cross section slice in 3D.
 \item Rotation and animation sequence generation for 3D data.
 \item Automatic stepping through timesteps, making animations simple to produce.
 \item Interactive mode for detailed examination of timestep data (e.g. zooming,
-rotating, plotting particle labels, working out the gradient of a line, stepping forwards/backwards
-through timesteps).
+rotating, stepping forwards/backwards, log axes, adapting limits).
+\item Remote visualisation via simple X-Windows forwarding
 \item Multiple plots on page, including option to automatically tile plots if $y-$ and $x-$ limits
 are the same.
-\item Plot limits can be fixed, adaptive or particle tracking. Also simple to change
-axes to log, invert, square root or absolute of a quantity.
-\item Exact solutions for common SPH test problems (e.g. hydrodynamic shock tubes,
-polytropes).
+\item Plot limits can be fixed, adaptive or particle tracking.
+\item Exact solutions for common SPH test problems (e.g. shock tubes, sedov blast wave).
 \item Calculation of quantities not dumped (e.g. pressure, entropy)
 \item Conversion of binary dump files to ascii format.
+\item Interpolation of SPH data to 2D and 3D grids.
 \item Transformation to different coordinate systems (for both coordinates and
 vector components) and rescaling of data into physical units.
 \item Straightforward production of both bitmap (png) and vector (eps, pdf) images which can then be
@@ -131,7 +130,7 @@ Thus it may not be particularly useful for things like water and solids etc. in 
 
 \url{http://www.publish.csiro.au/?paper=AS07022}
 
-\noindent This paper should be cited whenever you use \splash for scientific purposes, and please do so because it is my only form of thanks!
+\noindent This paper should be cited if you use \splash for scientific purposes, and please do so as it is my only form of thanks!
 
 \subsection{Version History}
 
@@ -314,7 +313,7 @@ or LITTLE before \emph{compiling} \splash (this adds the appropriate compile-tim
 \subsubsection{ Variables affecting all data reads}
 Environment variables that affect all data reads are:\newline
 
-\begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+\begin{longtable}{p{0.35\textwidth}p{0.55\textwidth}}
 SPLASH\_DEFAULTS & gives the name of a system-wide \verb+splash.defaults+ file (and splash.limits etc.) that will be used if there is none in the current directory. e.g. \verb+export SPLASH_DEFAULTS=/home/me/splash.defaults+ \\
 SPLASH\_KERNEL & changes the smoothing kernel used in the interpolations (e.g. `cubic' or `quintic'). Can also be changed in the r)ender menu. \\
 SPLASH\_DEBUG & if set to `yes' or `true', turns on very verbose debugging output. Useful to trace code crashes (but of course, this never happens\ldots).\\
@@ -325,7 +324,7 @@ SPLASH\_MARGIN\_XMIN & can be used to manually adjust the left horizontal page m
 SPLASH\_MARGIN\_XMAX & right horizontal page margin (set to fraction of viewport). \\
 SPLASH\_MARGIN\_YMIN & bottom (vertical) page margin (set to fraction of viewport). \\
 SPLASH\_MARGIN\_YMAX & top (vertical) page margin (set to fraction of viewport).
-\end{tabular}
+\end{longtable}
 
 \subsubsection{ Ascii data read}
 \label{sec:asplash}
@@ -363,21 +362,21 @@ GSPLASH\_IGNORE\_IFLAGCOOL & if set to 'YES' or `TRUE', does not assume that ext
 \subsubsection{ VINE data read}
  For the VINE read (`vsplash') the environment variable options are:\newline
 
-\begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+\begin{longtable}{p{0.35\textwidth}p{0.55\textwidth}}
 VSPLASH\_HFAC & if `YES' or `TRUE' multiplies the smoothing length read from the dump file by a factor of 2.8 (for use with older VINE dumps where the smoothing length is defined as in a Plummer kernel rather than as the usual SPH smoothing length). \\
 VSPLASH\_MHD & if `YES' or `TRUE' reads VINE dumps containing MHD arrays (note that setting VINE\_MHD also works). \\
-\end{tabular}
+\end{longtable}
 
 \subsubsection{ sphNG data read}
  For the sphNG and PHANTOM read (`ssplash') the environment variable options are:\newline
 
-\begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+\begin{longtable}{p{0.35\textwidth}p{0.55\textwidth}}
 SSPLASH\_CENTRE\_ON\_SINK  \newline(**obsolete**) & if `YES' or `TRUE' resets the positions such that the sink particle is positioned at the origin (applies only where there is one, and only one, sink particle present). This option is obsolete: use SPLASH\_CENTRE\_ON\_SINK instead.\\
 SSPLASH\_RESET\_CM & if `YES' or `TRUE' resets the positions such that the centre of mass is exactly at the origin. \\
 SSPLASH\_OMEGA & if non-zero, subtracts solid body rotation with omega as specified to give velocities in co-rotating frame. \\
 SSPLASH\_OMEGAT & if non-zero, subtracts solid body rotation with omega as specified to give positions and velocities in co-rotating frame. \\
 SSPLASH\_TIMEUNITS & sets default time units, either 's', 'min', 'hrs', 'days', 'yrs' or 'tfreefall' (NB: text is used verbatim in legend).
-\end{tabular}
+\end{longtable}
 
 \subsubsection{ Stephan Rosswog data read}
  For the srosph read (`rsplash') the environment variable options are:\newline
@@ -467,6 +466,8 @@ Command line plotting mode:
                              output to file called 'minvals.out'
          calc diff           : (max - min) of each column vs. time
                              output to file called 'diffvals.out'
+         calc amp          : 0.5*(max - min) of each column vs. time
+                             output to file called 'ampvals.out'
          calc mean         : mean of each column vs. time
                              output to file called 'meanvals.out'
          calc rms          : (mass weighted) root mean square of each column vs. time
@@ -937,6 +938,7 @@ To change the legend text, create a file called \verb+legend+ in the working dir
   1 : same as AXIS=0, but also draw the coordinate axes (X=0, Y=0);
   2 : same as AXIS=1, but also draw grid lines at major increments of the coordinates;
   3 : draw box, ticks and numbers but no axes labels;
+  4 : same as AXIS=0, but with a second y-axis scaled and labelled differently
  10 : draw box and label X-axis logarithmically;
  20 : draw box and label Y-axis logarithmically;
  30 : draw box and label both axes logarithmically.
@@ -951,6 +953,14 @@ To change the legend text, create a file called \verb+legend+ in the working dir
 \subsubsection{ Using logarithmic axes labels}
 \label{sec:loglabels}
  Logarithmic axes (that is where the quantity plotted is logged) can be set via the ``apply log or inverse transformations'' option in the l)imits submenu or simply by pressing 'l' with the cursor over the desired axis (or the colour bar) in interactive mode. By default the axes labels reads $log(x)$ and the number next to the axis is $-4$ when $x$ is 10$^{-4}$. Logarithmic axes labels (i.e., where the label reads $x$ and the number next to the axis is $10^{-4}$ with a logarithmic scale) can be specified by choosing the ``axes options'' option in the p)age submenu and setting the axes option to 10, 20 or 30 as necessary (see \S\ref{sec:axessettings} for more details). 
+
+\subsubsection{ Plotting a second, rescaled y-axis on the right hand side of a plot}
+ A second y axis can be added by selecting the axis=4 option in the ``axes option'' in the p)age submenu (see \S\ref{sec:axes settings}).  This will prompt for the scaling and alternative label:
+\begin{verbatim} 
+enter axis option ([-4:30], default=0): 4
+enter scale factor for alternative y axis ([0.000:], default=1.000): 10.0
+enter label for alternative y axis (default=""): y [other units]
+\end{verbatim}
 
 \subsubsection{ Changing the size of the plotting surface}
 \label{sec:papersize}
@@ -1274,6 +1284,25 @@ effectively gives the `Lagrangian' perspective. See \S\ref{sec:track} for more d
 
 \subsubsection{ Setting the origin to correspond to a particular particle}
  See \S\ref{sec:track}.
+ 
+\subsubsection{ Tracking a particle}
+See \S\ref{sec:track}.
+
+\subsubsection{ Setting the origin to the position of the $n$th sink particle}
+\label{sec:tracksink}
+This can be achieved using the ``make xy limits relative to particle'' option in the l)imits menu. For example, to track the first sink particle we would proceed as follows:
+\begin{verbatim}
+Please enter your selection now (y axis or option):l3
+------------------ limits options ---------------------
+To track particle 4923, enter 4923
+To track the 43rd particle of type 3, enter 3:43
+
+Enter particle to track: (default="0"): 3:1
+\end{verbatim}
+where 3:1 indicates the first particle of type 3. The origin is set to the position of this particle and limits are relative to its position. See \S\ref{sec:track} for more details.
+
+\subsubsection{ Plotting radial plots around sink particles}
+First, set the origin to the location of the sink, as described above. Then simply change to spherical coordinates using the ``change coordinate systems'' option in the o) menu. Alternatively, compute the radius using the ``calculate extra quantities'' option in the d)ata menu.
 
 \subsubsection{ Automatically adapting plot limits to match aspect ratio of output device}
  An option to automatically adjust the plot limits to match the aspect ratio of the output device is given in the l)imits menu, and is also prompted for whenever the paper size is changed (via the ``change paper size'' option in the p)age menu, see \S\ref{sec:papersize}).
@@ -2445,12 +2474,14 @@ which is used throughout the program and to Roland Schmehl who wrote the excelle
  Craig Agnor,
  Richard Alexander, 
  Gabe Altay,
+ Pau Amaro-Seoane,
  Sumedh Anathpindika,
  Ben Ayliffe,
  Andreas Bauswein,
  Mark Bennett,
  Florian Buerzle,
  Paul Cornwall,
+ Jared Coughlin,
  Carlos Cuesta,
  Alan Duffy,
  Clare Dobbs,
@@ -2479,11 +2510,13 @@ which is used throughout the program and to Roland Schmehl who wrote the excelle
  John Regan,
  Dave Rundle,
  Alison Sills,
+ Kevin Sooley,
  Terry Tricco,
  Yusuke Tsukamoto,
  Sigfried Vanaverbeke,
  Enrique Vazquez-Semadeni
- and Antonio Vazquez.
+ Antonio Vazquez,
+ and Matt Young.
 And to everyone who has cited the \splash paper!
 
 \newpage
