@@ -61,7 +61,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: istep,nprint,npart_max,nstep_max,icol
   logical :: iexist
   character(LEN=LEN(rootname)+4) :: dumpfile
-  real :: timei,dti
+  real :: timei,dti,hi
 
   nstepsread = 0
   nstep_max = 0
@@ -69,7 +69,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   ifile = 1
 
   dumpfile = trim(rootname)
-  if (index(dumpfile,'.plt').eq.0) dumpfile = trim(rootname)//'.plt'
+!  if (index(dumpfile,'.plt').eq.0) dumpfile = trim(rootname)//'.plt'
   !
   !--check if first data file exists
   !
@@ -126,15 +126,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
     !--allocate/reallocate memory if j > maxstep
     !
            if (j.gt.maxstep) then
-              call alloc(maxpart,j+1,maxcol)
+              call alloc(maxpart,2*j,maxcol)
            endif
     !
     !--now read the timestep data in the dumpfile
     !
-           read(15,*,end=55,iostat=ierr) istep,nprint,time(j),dti
+           read(15,*,end=55,iostat=ierr) istep,nprint,hi,time(j),dti
            do i=1,nprint
               read(15,*,end=55,iostat=ierr) (dat(i,icol,j),icol = 1,ncolumns)
            enddo
+           masstype(1,j) = 1. 
 
            if (ierr /= 0) then
               print "(a)",'|*** ERROR READING TIMESTEP ***'
@@ -192,11 +193,12 @@ subroutine set_labels
   enddo
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   ivx = ndim+1
-  ih = ndim+ndimV+2        !  smoothing length
+  ipr = ndim+ndimV+2
+  ih = ndim+ndimV+3        !  smoothing length
   label(ih) = 'h'
   irho = ndim+ndimV+1     ! location of rho in data array
   label(irho) = 'density'
-  label(ndim+ndimV+3) = 'dfunc/dx'
+  if (ipr.gt.0) label(ipr) = 'pressure'
   iutherm = 0  !  thermal energy
 !  label(iutherm) = 'u'
   ipmass = 0  !  particle mass
