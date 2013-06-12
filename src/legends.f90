@@ -42,10 +42,12 @@ contains
 !-----------------------------------------------------------------
 
 subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust)
- use plotlib, only:plot_numb,plot_annotate
+ use plotlib,    only:plot_numb,plot_annotate
+ use asciiutils, only:string_replace
  implicit none
  real, intent(in) :: t,hpos,vpos,fjust
  character(len=*), intent(in) :: legendtext,unitslabel
+ character(len=len(legendtext)+len(unitslabel)+20) :: label
  integer :: mm,pp,nc,ndecimal
  real :: tplot
  character(len=30) :: string
@@ -67,7 +69,22 @@ subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust)
     call plot_numb(mm,pp,1,string,nc)
     if (t.lt.0.) string='-'//string(1:nc)
  endif
- call plot_annotate('T',-vpos,hpos,fjust,trim(legendtext)//string(1:nc)//trim(unitslabel))
+!
+!--handle format strings in legend text
+!
+ label = trim(legendtext)
+ if (index(label,'%t').gt.0) then
+    call string_replace(label,'%t',string(1:nc))
+ else
+    label = trim(label)//string(1:nc)
+ endif
+ if (index(label,'%ut').gt.0) then
+    call string_replace(label,'%ut',trim(unitslabel))
+ else
+    label = trim(label)//trim(unitslabel)
+ endif
+ 
+ call plot_annotate('T',-vpos,hpos,fjust,trim(label))
 
  return
 end subroutine legend

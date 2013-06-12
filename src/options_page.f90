@@ -431,6 +431,7 @@ subroutine submenu_legend(ichoose)
  use filenames, only:fileprefix
  use prompting, only:prompt,print_logical
  use shapes,    only:nshapes,labelshapetype,shape,submenu_shapes
+ use legends,   only:prompt_panelselect
  implicit none
  integer, intent(in) :: ichoose
  integer             :: iaction,i,ierr,i1,i2
@@ -490,6 +491,11 @@ subroutine submenu_legend(ichoose)
     call prompt('Plot time legend? ',iPlotLegend)
     print "(a)",'Time legend is '//print_logical(iPlotLegend)
     if (iPlotLegend) then
+       print "(3(/,a),/)", &
+       ' Example format strings: ', &
+       '  t =              : this is the default format "t = 0.1 years"', &
+       '  Time: %t dog-%ut : gives "Time: 0.1 dog-years"'
+
        call prompt('Enter legend text ',legendtext)
 
        print "(a)",'------ set legend position (can also be done interactively) --------'
@@ -497,7 +503,7 @@ subroutine submenu_legend(ichoose)
             hposlegend,0.0,1.0)
        call prompt('Enter vertical position in character heights from top',vposlegend)
        call prompt('Enter justification factor (0.0=left 1.0=right)',fjustlegend,0.0,1.0)
-
+       call prompt_panelselect('legend',iPlotLegendOnlyOnPanel)
     endif
  case(2)
     print "(/,a,/,a,/)",' To set the plot titles, create a file called', &
@@ -534,12 +540,7 @@ subroutine submenu_legend(ichoose)
        endif
     endif
  case(5)
-    print "(/,'  0 : plot legend on every panel ',/,"// &
-           "' -1 : plot legend on first row only ',/,"// &
-           "' -2 : plot legend on first column only ',/,"// &
-           "'  n : plot legend on nth panel only ')"
-
-    call prompt('Enter selection ',iPlotLegendOnlyOnPanel,-2)
+    call prompt_panelselect('legend',iPlotLegendOnlyOnPanel)
  case(6)
     call submenu_shapes()
  end select

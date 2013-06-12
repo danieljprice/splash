@@ -3768,11 +3768,11 @@ end subroutine rotatedaxes
 ! interface for adjusting the label for column-integrated plots
 !---------------------------------------------------------------
 function integrate_label(labelin,iplot,izcol,normalise)
-  use settings_data, only:iRescale
-  use settings_units, only:labelzintegration,unitslabel
+  use settings_data,   only:iRescale
+  use settings_units,  only:labelzintegration,unitslabel
   use settings_render, only:projlabelformat,iapplyprojformat
-  use labels, only:irho,label
-  use asciiutils, only:string_replace
+  use labels,          only:irho,label
+  use asciiutils,      only:string_replace
   implicit none
   character(len=*), intent(in) :: labelin
   integer, intent(in) :: iplot,izcol
