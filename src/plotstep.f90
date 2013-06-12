@@ -3457,7 +3457,6 @@ contains
                               xmin,xmax,ymin,ymax,vecpixx,vecpixy,numpixx,numpixy,minpartforarrow,0.)
          endif
 
-         print*,' DEBUG: ',iVecplotLegend,ipanelselect(iVecLegendOnPanel,ipanel,irow,icolumn)
          plotlegend = iVecplotLegend .and. ipanelselect(iVecLegendOnPanel,ipanel,irow,icolumn)
          call render_vec(vecpixx,vecpixy,vmax, &
               numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,trim(label),' ',plotlegend)
