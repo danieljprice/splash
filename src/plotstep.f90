@@ -2999,7 +2999,7 @@ contains
 !------------------------------------------------------
   subroutine legends_and_title
     use colourbar,     only:plotcolourbar
-    use legends,       only:legend,legend_markers,legend_scale
+    use legends,       only:legend,legend_markers,legend_scale,ipanelselect
     use titles,        only:pagetitles,steplegend,lensteplegend
     use filenames,     only:nstepsinfile,nfiles,rootname
     use settings_page, only:iPlotLegend,iPlotStepLegend, &
@@ -3065,9 +3065,7 @@ contains
 
     !--plot time on plot
     if (iPlotLegend .and. nyplot.eq.1 &
-        .and..not.(iPlotLegendOnlyOnPanel.gt.0 .and. ipanel.ne.iPlotLegendOnlyOnPanel) &
-        .and..not.(iPlotLegendOnlyOnPanel.eq.-1 .and. irow.gt.1) &
-        .and..not.(iPlotLegendOnlyOnPanel.eq.-2 .and. icolumn.gt.1) &
+        .and. ipanelselect(iPlotLegendOnlyOnPanel,ipanel,irow,icolumn) &
         .and. timei.gt.-0.5*huge(timei)) then  ! but not if time has not been read from dump
 
        !--change to background colour index for legend text if overlaid
@@ -3082,9 +3080,7 @@ contains
     !--line/marker style/colour legend for multiple timesteps on same page
     if (iPlotStepLegend .and. istepsonpage.gt.0 &
         .and.((nyplot.eq.1 .and. iPlotLegendOnlyOnPanel.eq.0) &
-        .or.(iPlotLegendOnlyOnPanel.gt.0 .and. ipanel.eq.iPlotLegendOnlyOnPanel) &
-        .or.(iPlotLegendOnlyOnPanel.eq.-1 .and. irow.eq.1) &
-        .or.(iPlotLegendOnlyOnPanel.eq.-2 .and. icolumn.eq.1))) then
+        .or. ipanelselect(iPlotLegendOnlyOnPanel,ipanel,irow,icolumn))) then
 
        !--change to background colour index for overlaid text and axes
        if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call plot_sci(0)
@@ -3233,7 +3229,7 @@ contains
   subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,pixwidthvecy,vmax,label)
    use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines,iplotarrowheads, &
        iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff, &
-       ihidearrowswherenoparts,minpartforarrow
+       ihidearrowswherenoparts,minpartforarrow,iVecplotLegend,iVecLegendOnPanel
    use interpolations2D, only:interpolate2D_vec
    use projections3D,    only:interpolate3D_proj_vec,interp3D_proj_vec_synctron
    use interpolate_vec,  only:mask_vectors
@@ -3242,6 +3238,7 @@ contains
    use labels,           only:iutherm,is_coord
    use plotlib,          only:plot_qci,plot_qlw,plot_sci,plot_slw
    use system_utils,     only:lenvironment
+   use legends,          only:ipanelselect
    implicit none
    integer,          intent(in) :: ivecx,ivecy,numpixx,numpixy
    real,             intent(in) :: pixwidthvec,pixwidthvecy
@@ -3252,7 +3249,7 @@ contains
    integer :: i,j,icoloursav,linewidthprev,ivecz
    real    :: vmag
    real    :: blankval,datmax
-   logical :: usevecplot,use3Dstreamlines
+   logical :: usevecplot,use3Dstreamlines,plotlegend
 
    !--query colour index and line width
    call plot_qci(icoloursav)
@@ -3460,8 +3457,10 @@ contains
                               xmin,xmax,ymin,ymax,vecpixx,vecpixy,numpixx,numpixy,minpartforarrow,0.)
          endif
 
+         print*,' DEBUG: ',iVecplotLegend,ipanelselect(iVecLegendOnPanel,ipanel,irow,icolumn)
+         plotlegend = iVecplotLegend .and. ipanelselect(iVecLegendOnPanel,ipanel,irow,icolumn)
          call render_vec(vecpixx,vecpixy,vmax, &
-              numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,trim(label),' ')
+              numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,trim(label),' ',plotlegend)
 
          if (iplotsynchrotron .and. .not. iplotarrowheads) then
             !--get synchrotron polarisation intensity using more pixels

@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -26,7 +26,7 @@
 !-------------------------------------------------------------------------
 module settings_vecplot
  implicit none
- integer :: npixvec,minpartforarrow
+ integer :: npixvec,minpartforarrow,iVecLegendOnPanel
  logical :: UseBackgndColorVecplot, iplotpartvec
  logical :: iVecplotLegend,iplotstreamlines,iplotarrowheads
  logical :: iplotsynchrotron,ihidearrowswherenoparts,iallarrowssamelength
@@ -36,7 +36,8 @@ module settings_vecplot
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot,iplotpartvec,&
           iVecplotLegend,hposlegendvec,vposlegendvec,iplotstreamlines, &
           iplotarrowheads,iplotsynchrotron,rcrit,zcrit,synchrotronspecindex, &
-          uthermcutoff,ihidearrowswherenoparts,minpartforarrow,iallarrowssamelength
+          uthermcutoff,ihidearrowswherenoparts,minpartforarrow,iallarrowssamelength,&
+          iVecLegendOnPanel
 
 contains
 
@@ -50,6 +51,7 @@ subroutine defaults_set_vecplot
   UseBackgndColorVecplot = .false. ! plot vector plot using black/white
   iplotpartvec = .true.   ! whether to plot particles on vector plot
   iVecplotLegend = .true.
+  iVecLegendOnPanel = 0   ! all panels
   hposlegendvec = 0.02
   vposlegendvec = -1.5
   iplotstreamlines = .false. ! plot stream lines instead of arrows
@@ -70,10 +72,11 @@ end subroutine defaults_set_vecplot
 ! sets options relating to vector plots
 !----------------------------------------------------------------------
 subroutine submenu_vecplot(ichoose)
- use prompting, only:prompt,print_logical
+ use prompting,     only:prompt,print_logical
  use settings_data, only:ndim,numplot
- use labels, only:iutherm
- use limits, only:lim
+ use labels,        only:iutherm
+ use limits,        only:lim
+ use legends,       only:prompt_panelselect
  implicit none
  integer, intent(in) :: ichoose
  integer :: ians
@@ -114,11 +117,12 @@ subroutine submenu_vecplot(ichoose)
  case(3)
     call prompt('plot vector legend?',iVecplotLegend)
     if (iVecplotLegend) then
-       print*,'note that the following settings can also be changed interactively'
+       print*,'note: H key in interactive mode can also be used to set positions'
        call prompt('Enter horizontal position as fraction of viewport', &
                    hposlegendvec,0.0,1.0)
        call prompt('Enter vertical position in character heights from top', &
                     vposlegendvec)
+       call prompt_panelselect('vector legend',iVecLegendOnPanel)
     endif
 !------------------------------------------------------------------------
  case(4)

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -319,5 +319,40 @@ subroutine legend_scale(dxscale,hpos,vpos,text)
   endif
 
 end subroutine legend_scale
+
+!-------------------------------------------------------------------
+!  The following subroutines handle the plotting of annotation
+!  and legends only on particular panels
+!-------------------------------------------------------------------
+subroutine prompt_panelselect(string,iselect)
+ use prompting, only:prompt
+ implicit none
+ character(len=*), intent(in) :: string
+ integer,       intent(inout) :: iselect
+ 
+ print "(4(/,a))", &
+   '  0 : plot '//trim(string)//' on every panel ', &
+   '  n : plot '//trim(string)//' on nth panel only ', &
+   ' -1 : plot '//trim(string)//' on first row only ', &
+   ' -2 : plot '//trim(string)//' on first column only '
+ call prompt('Enter selection ',iselect,-2)
+
+end subroutine prompt_panelselect
+
+!-------------------------------------------------------------------
+!  Function that evaluates the logic required to determine
+!  whether the annotation should be plotted on the current panel
+!  as per the prompts in prompt_panelselect
+!-------------------------------------------------------------------
+logical function ipanelselect(iselect,ipanel,irow,icolumn)
+ implicit none
+ integer,       intent(in) :: iselect,ipanel,irow,icolumn
+
+ ipanelselect = ((iselect.gt.0 .and. ipanel.eq.iselect) &
+              .or.(iselect.eq.-1 .and. irow.eq.1) &
+              .or.(iselect.eq.-2 .and. icolumn.eq.1) &
+              .or.(iselect.eq.0))
+
+end function ipanelselect
 
 end module legends

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -205,9 +205,9 @@ end subroutine render_pix
 !--------------------------------------------------------------------------
 
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
-                      xmin,ymin,dx,dy,label,unitslabel)
+                      xmin,ymin,dx,dy,label,unitslabel,plotlegend)
  use legends,          only:legend_vec
- use settings_vecplot, only:iVecplotLegend,hposlegendvec,vposlegendvec,&
+ use settings_vecplot, only:hposlegendvec,vposlegendvec,&
                             iplotarrowheads,iallarrowssamelength
  use plotlib,          only:plot_sah,plot_qch,plot_sch,plot_vect
  implicit none
@@ -217,6 +217,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
  real, dimension(npixx,npixy), intent(in) :: vecpixx,vecpixy
  real, dimension(npixx,npixy) :: dvmag
  character(len=*), intent(in) :: label,unitslabel
+ logical,          intent(in) :: plotlegend
  real :: trans(6),scale
  real :: charheight
 
@@ -266,7 +267,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
     call plot_vect(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
          1,npixx,1,npixy,scale,0,trans,0.0)
 
-    if (iVecplotLegend) then
+    if (plotlegend) then
        call legend_vec(label,unitslabel,vecmax,dx,hposlegendvec,vposlegendvec,charheight)
     endif
  endif
