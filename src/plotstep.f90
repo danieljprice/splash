@@ -3015,6 +3015,7 @@ contains
     character(len=lensteplegend) :: steplegendtext
     real :: xlabeloffsettemp
     integer :: ititle
+    logical :: usebox
 
     !--save colour index
     call plot_qci(icoloursave)
@@ -3073,8 +3074,9 @@ contains
           call plot_sci(0)
           call plot_set_opacity(alphalegend)
        endif
+       usebox = (ivectorplot.gt.0)
        if (istepsonpage.eq.1) &
-          call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend)
+          call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend,usebox)
     endif
 
     !--line/marker style/colour legend for multiple timesteps on same page

@@ -30,6 +30,11 @@
 !-----------------------------------------------------------------
 module legends
  implicit none
+ 
+ public :: legend, legend_vec, legend_markers, legend_scale
+ public :: prompt_panelselect, ipanelselect
+ 
+ private
 
 contains
 
@@ -41,12 +46,13 @@ contains
 !        vpos : vertical position in character heights from top
 !-----------------------------------------------------------------
 
-subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust)
+subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust,usebox)
  use plotlib,    only:plot_numb,plot_annotate
  use asciiutils, only:string_replace
  implicit none
  real, intent(in) :: t,hpos,vpos,fjust
  character(len=*), intent(in) :: legendtext,unitslabel
+ logical,          intent(in) :: usebox
  character(len=len(legendtext)+len(unitslabel)+20) :: label
  integer :: mm,pp,nc,ndecimal
  real :: tplot
@@ -84,10 +90,57 @@ subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust)
     label = trim(label)//trim(unitslabel)
  endif
  
+ if (usebox) call plot_box_around_text(trim(label),hpos,vpos,fjust)
  call plot_annotate('T',-vpos,hpos,fjust,trim(label))
 
  return
 end subroutine legend
+
+!-----------------------------------------------------------------
+!  utility routine for plotting translucent box in legends
+!-----------------------------------------------------------------
+subroutine plot_box_around_text(string,hpos,vpos,fjust)
+ use plotlib, only:plot_qwin,plot_qcs,plot_qtxt,plot_qci,plot_sci,plot_sfs, &
+              plot_set_opacity, plot_rect
+ implicit none
+ character(len=*), intent(in) :: string
+ real, intent(in) :: hpos,vpos,fjust
+ real :: xmin,xmax,ymin,ymax,xpos,ypos
+ real :: xbuf,ybuf,dx,dy,xch,ych,x1,x2,y1,y2
+ real, dimension(4) :: xbox,ybox
+ integer :: ic
+!
+!--convert hpos and vpos to x, y to plot arrow
+!
+ call plot_qwin(xmin,xmax,ymin,ymax)
+ xpos = xmin + hpos*(xmax-xmin)
+ call plot_qcs(4,xch,ych)
+ ypos = ymax - (vpos + 1.)*ych
+!
+!--enquire bounding box of string
+!
+ call plot_qtxt(xpos,ypos,0.0,0.0,trim(string),xbox,ybox)
+
+ xbuf = 0.25*xch
+ ybuf = 0.5*ych
+ dx = xbox(3) - xbox(1)
+ dy = ybox(3) - ybox(1) + 0.25*ych
+ x1 = xpos - fjust*dx - xbuf
+ x2 = x1 + dx + 2.*xbuf
+ y1 = ypos
+ y2 = y1 + dy + ybuf
+!
+!--draw box around the string
+!
+ call plot_qci(ic) ! query colour index
+ call plot_sci(0)  ! background colour
+ call plot_sfs(1)  ! solid fill style
+ call plot_set_opacity(0.5)
+ call plot_rect(x1,x2,y1,y2,0.2*ych) ! draw a (rounded) rectangle
+ call plot_set_opacity(1.0)
+ call plot_sci(ic) ! restore colour index
+
+end subroutine plot_box_around_text
 
 !-----------------------------------------------------------------
 !     plots vector plot legend
