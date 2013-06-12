@@ -30,6 +30,7 @@ module shapes
  integer, parameter, private :: maxshapes = 32
  integer, parameter, private :: maxshapetype = 7
  integer :: nshapes
+ integer, parameter, private :: lentext = 120
 
  type shapedef
    integer :: itype
@@ -43,7 +44,7 @@ module shapes
    real :: ypos
    real :: xlen,ylen
    real :: angle,fjust
-   character(len=120) :: text
+   character(len=lentext) :: text
  end type
  type(shapedef), dimension(maxshapes), public :: shape
 
@@ -395,20 +396,24 @@ end subroutine delete_shape
 !------------------------------------------------------------
 ! actual routine that implements plotting of various shapes
 !------------------------------------------------------------
-subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
+subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
  use exactfunction, only:exact_function
  use transforms,    only:transform_inverse,transform
+ use asciiutils,    only:string_replace
  use plotlib, only:plot_qci,plot_qls,plot_qlw,plot_qfs,plot_qwin,plot_sci,plot_sfs,plot_slw, &
-      plot_sci,plot_rect,plot_sls,plot_line,plot_arro,plot_circ,plot_ptxt
+      plot_sci,plot_rect,plot_sls,plot_line,plot_arro,plot_circ,plot_ptxt,plot_numb
  implicit none
  integer, intent(in) :: ipanel,irow,icolumn,itransx,itransy
+ real,    intent(in) :: time
  integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle
- integer :: i,j,ierr,iplotonthispanel
+ integer :: i,j,ierr,iplotonthispanel,ndec,nc
  integer, parameter :: maxfuncpts = 1000
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot
  real :: xpos,ypos,xlen,ylen,anglerad,dx,dy,fjust
  real, dimension(2) :: xline,yline
  real, dimension(maxfuncpts) :: xfunc,yfunc
+ character(len=lentext) :: text
+ character(len=30)      :: string
 !
 !--store current settings
 !
@@ -475,7 +480,14 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy)
           yline(2) = ypos + xlen*sin(anglerad)
           call plot_line(2,xline,yline)
        case(6) ! text
-          call plot_ptxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text))
+          text = trim(shape(i)%text)
+          !--handle special characters in text strings (e.g. replace %t with time)
+          if (index(text,'%t').ne.0) then
+             ndec = 3
+             call plot_numb(nint(time/10.**(int(log10(time)-ndec))),int(log10(time)-ndec),1,string,nc)
+             call string_replace(text,'%t',string(1:nc))
+          endif
+          call plot_ptxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(text))
        case(7) ! arbitrary function
           !--set x to be evenly spaced in transformed (plot) coordinates
           dx = (xmax-xmin)/real(maxfuncpts - 1)

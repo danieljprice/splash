@@ -3152,7 +3152,7 @@ contains
 
     !--plot shapes
     if (nshapes.gt.0 .and. istepsonpage.eq.1) &
-       call plot_shapes(ipanel,irow,icolumn,itrans(iplotx),itrans(iploty))
+       call plot_shapes(ipanel,irow,icolumn,itrans(iplotx),itrans(iploty),timei)
 
     !--restore colour index
     call plot_sci(icoloursave)
