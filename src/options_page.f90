@@ -491,9 +491,10 @@ subroutine submenu_legend(ichoose)
     call prompt('Plot time legend? ',iPlotLegend)
     print "(a)",'Time legend is '//print_logical(iPlotLegend)
     if (iPlotLegend) then
-       print "(3(/,a),/)", &
+       print "(4(/,a),/)", &
        ' Example format strings: ', &
        '  t =              : this is the default format "t = 0.1 years"', &
+       '  t = %t.5         : with time to 5 significant figures', &
        '  Time: %t dog-%ut : gives "Time: 0.1 dog-years"'
 
        call prompt('Enter legend text ',legendtext)

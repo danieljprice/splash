@@ -3075,8 +3075,9 @@ contains
           call plot_set_opacity(alphalegend)
        endif
        usebox = (ivectorplot.gt.0)
-       if (istepsonpage.eq.1) &
+       if (istepsonpage.eq.1) then
           call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend,usebox)
+       endif
     endif
 
     !--line/marker style/colour legend for multiple timesteps on same page

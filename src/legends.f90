@@ -54,15 +54,27 @@ subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust,usebox)
  character(len=*), intent(in) :: legendtext,unitslabel
  logical,          intent(in) :: usebox
  character(len=len(legendtext)+len(unitslabel)+20) :: label
- integer :: mm,pp,nc,ndecimal
+ integer :: mm,pp,nc,ipos,ndecimal,ierr
  real :: tplot
  character(len=30) :: string
+ character(len=4)  :: tmp
 
- if (t.lt.1.0) then
-    ndecimal = 2
+ label = trim(legendtext)
+ ipos  = index(label,'%t.')
+ if (ipos.gt.0 .and. ipos+4.le.len(label)) then
+    read(label(ipos+3:ipos+4),"(i1)",iostat=ierr) ndecimal
+    if (ierr.ne.0) ndecimal = 3
+    !--replace %t.nq with %t for further replacement below
+    tmp = label(ipos:ipos+4)
+    call string_replace(label,tmp,'%t')
  else
-    ndecimal = 3        ! number of decimal places to display
+    if (t.lt.1.0) then
+       ndecimal = 2
+    else
+       ndecimal = 3        ! number of decimal places to display
+    endif
  endif
+
  if (t.lt.tiny(t)) then
     string = '0'
     nc = 1
@@ -78,7 +90,6 @@ subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust,usebox)
 !
 !--handle format strings in legend text
 !
- label = trim(legendtext)
  if (index(label,'%t').gt.0) then
     call string_replace(label,'%t',string(1:nc))
  else
