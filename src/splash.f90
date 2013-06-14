@@ -692,9 +692,9 @@ subroutine print_header
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
    '   This is free software; and you are welcome to redistribute it ',/, &
-   '   under certain conditions (see LICENSE file for details). *',/,/, &
-   ' Comments, bugs, suggestions and queries to: daniel.price@monash.edu',/, &
-   ' Updates at: http://users.monash.edu.au/~dprice/splash ',/, &
+   '   under certain conditions (see LICENCE file for details). *',/,/, &
+   ' Updates/userguide: http://users.monash.edu.au/~dprice/splash ',/, &
+   ' Feedback: daniel.price@monash.edu or splash-users@googlegroups.com',/, &
    ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
    ' use SPLASH for scientific work and if you plot something beautiful,',/, &
    ' why not send me a copy for the gallery? ',/)

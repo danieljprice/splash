@@ -216,7 +216,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       elseif (int3.ne.690706) then
          print "(a)",'*** WARNING: default int appears to be int*8: not implemented'
       else
-         print "(a)",'double precision dump'
+         if (debug) print "(a)",'double precision dump' ! no need to print this
       endif
    endif
 !

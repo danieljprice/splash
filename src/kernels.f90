@@ -62,9 +62,8 @@ subroutine select_kernel(j)
  integer, intent(in) :: j
 
  if (j.ge.1 .and. j.le.nkernels) then
+    !--print only if NOT using the default kernel
     print "(a,/)",' Using '//trim(kernelname(j))//' kernel' 
- else
-    print "(a,/)",' Using default '//trim(kernelname(1))//' kernel'
  endif
 
  select case(j)
