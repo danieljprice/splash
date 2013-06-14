@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -345,8 +345,8 @@ subroutine print_rangeinfo()
     enddo
     print "(/,2(a,/))",'>> only particles within this range will be plotted ', &
                      '   and/or used in interpolation routines'
- else
-    print "(/,a,/)",'>> no current parameter range restrictions set '
+ !else
+    !print "(/,a,/)",'>> no current parameter range restrictions set '
  endif
 
 end subroutine print_rangeinfo

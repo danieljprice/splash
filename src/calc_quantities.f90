@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -825,7 +825,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   !
   if (iRescale .and. any(abs(units(ncolumns+1:ncolumns+ncalc)-1.0).gt.tiny(0.)) &
       .and. .not.skip) then
-     write(*,"(/a)") ' rescaling data...'
+     !write(*,"(/a)") ' rescaling data...'
      do i=ncolumns+1,ncolumns+ncalc
         if (abs(units(i)-1.0).gt.tiny(0.) .and. abs(units(i)).gt.tiny(0.)) then
            dat(:,i,ifromstep:itostep) = dat(:,i,ifromstep:itostep)*units(i)
