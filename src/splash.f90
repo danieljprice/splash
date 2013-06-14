@@ -548,19 +548,16 @@ program splash
      if (nfiles.gt.1) print*,nfiles,' filenames read from command line'
   else
      ihavereadfilenames = .false.
-     print "(a)",' no filenames read from command line'
+     !print "(a)",' no filenames read from command line'
      call read_asciifile(trim(fileprefix)//'.filenames',nfiles,rootname)
-     print*,nfiles,' filenames read from '//trim(fileprefix)//'.filenames file'
-     print*
+     !print*,nfiles,' filenames read from '//trim(fileprefix)//'.filenames file'
      if (nfiles.gt.0) then
         ihavereadfilenames = .true.
      else
         call get_argument(0,string)
-        print "(a/,/,5x,a,/)",' Basic usage: ',trim(basename(string))//' dumpfile(s)'
-        print "(a/,/,5x,a,/)",' e.g.: ',trim(basename(string))//' snap_0*'
-        print "(a)",' Or write the filenames one per line in a file called ''splash.filenames'''
-        print "(a)",' For a full list of command-line options, use splash --help'
-        print "(a,/)",' For help on basic splash usage, consult the userguide: splash/docs/splash.pdf'
+        print "(/,a/,/,5x,a)",' Usage: ',trim(basename(string))//' snap_0*  (or use '&
+                                //trim(fileprefix)//'.filenames to list files)'
+        print "(5x,a,/)",trim(basename(string))//' --help   (for all command line options)'
         stop
      endif
   endif
@@ -680,13 +677,12 @@ subroutine print_header
 
  print 10
 10 format( &
-   "    _                                                 _  ",/, &
-   "   (_)   _               _           _         _     (_)_",/, &
-   "      _ (_)    ___ _ __ | | __ _ ___| |__     (_)   _  (_)",/, &
-   "   _ (_)  _   / __| '_ \| |/ _` / __| '_ \       _ (_)    ",/, &
-   "  (_)  _ (_)  \__ \ |_) | | (_| \__ \ | | |  _  (_) _    ",/, &
+   "        _                _           _       _         _ ",/, &
+   "      _(_)     ___ _ __ | | __ _ ___| |__   (_)     _ (_)",/, &
+   "   _ (_)  _   / __| '_ \| |/ _` / __| '_ \      _  (_)   ",/, &
+   "  (_)  _ (_)  \__ \ |_) | | (_| \__ \ | | |  _ (_)  _    ",/, &
    "      (_)  _  |___/ .__/|_|\__,_|___/_| |_| (_)  _ (_)   ",/, &
-   "          (_)  (_)|_| (_) (_)  (_)(_) (_)(_) (_)(_)     ")
+   "          (_)  (_)|_| (_) (_)  (_)(_) (_)(_) (_)(_)      ")
  print 20
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
@@ -698,7 +694,7 @@ subroutine print_header
    '   This is free software; and you are welcome to redistribute it ',/, &
    '   under certain conditions (see LICENSE file for details). *',/,/, &
    ' Comments, bugs, suggestions and queries to: daniel.price@monash.edu',/, &
-   ' Check for updates at: http://users.monash.edu.au/~dprice/splash ',/, &
+   ' Updates at: http://users.monash.edu.au/~dprice/splash ',/, &
    ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
    ' use SPLASH for scientific work and if you plot something beautiful,',/, &
    ' why not send me a copy for the gallery? ',/)

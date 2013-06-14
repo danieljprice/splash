@@ -294,15 +294,15 @@ subroutine defaults_read(filename)
 66  continue
 
     close(unit=iunit)
-    print*,'read default options from '//trim(filename)
+    print*,'read '//trim(filename)
     return
  else
-    print*,trim(filename)//': file not found: using program settings'
+    print*,trim(filename)//' not found: using default settings'
     return
  endif
 
 88 continue
- print "(a)",' *** error opening defaults file '//trim(filename)//': using program settings'
+ print "(a)",' *** error opening defaults file '//trim(filename)//': using default settings'
 
  return
 end subroutine defaults_read
