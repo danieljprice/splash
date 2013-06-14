@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -225,7 +225,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
   endif
 
   open(unit=78,file=unitsfile,status='old',form='formatted',err=997)
-  if (verbose) print "(/,a)",' reading units from file '//trim(unitsfile)
+  if (verbose) print "(a)",' read '//trim(unitsfile)
   do i=0,maxplot  ! read all units possibly present in file
 !
 !    read a line from the file
