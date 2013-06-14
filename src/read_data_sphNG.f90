@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -700,11 +700,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
    istartrt = 0
    i1 = i2 + 1
    i2 = i1 + isize(1) - 1
-   print "(1x,a10,i4,3(a,i12))",'MPI block ',iblock,':  particles: ',i1,' to ',i2,' of ',npart
+   if (debug) then
+      print "(1x,a10,i4,3(a,i12))",'MPI block ',iblock,':  particles: ',i1,' to ',i2,' of ',npart
+   elseif (nblocks.gt.1) then
+      if (iblock.eq.1) write(*,"(a,i1,a)",ADVANCE="no") ' reading MPI blocks: .'
+      write(*,"('.')",ADVANCE="no")
+   endif
    iptmass1 = iptmass2 + 1
    iptmass2 = iptmass1 + isize(2) - 1
    nptmass = nptmasstot
-   if (nptmass.gt.0) print "(15x,3(a,i12))",'  pt. masses: ',iptmass1,' to ',iptmass2,' of ',nptmass
+   if (nptmass.gt.0 .and. debug) print "(15x,3(a,i12))",'  pt. masses: ',iptmass1,' to ',iptmass2,' of ',nptmass
 
    do iarr=1,narrsizes
       if (nreal(iarr) + nreal4(iarr) + nreal8(iarr).gt.0) then
@@ -1047,6 +1052,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
    enddo ! over array sizes
    enddo over_MPIblocks
+   write(*,*)
 !
 !--reached end of file (during data read)
 !
