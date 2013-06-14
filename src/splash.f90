@@ -48,6 +48,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.2.3  : (xx/xx/xx)
+!             can customise time formatting in legend; improvements to legends
 !     2.2.2  : (10/05/13)
 !             particle tracking by type implemented;
 !             can interpolate specific columns in splash to grid;
@@ -338,7 +340,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.2.2 [10th May 2013]'
+  character(len=*), parameter :: version = 'v2.2.2+ [14th June 2013]'
 
   !
   ! initialise some basic code variables
