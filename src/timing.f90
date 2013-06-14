@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -144,11 +144,11 @@ contains
   endif
 
   if (nhr.gt.0) then
-     write(lunit,"(1x,a,1x,i3,a,i2,a,f6.2,a,1pe12.4,a)") &
-          trim(newstring),nhr,' hr, ',nmin,' min, ',trem,' s (=',time,'s)'
+     write(lunit,"(1x,a,1x,i3,a,i2,a,f6.2,a)") &
+          trim(newstring),nhr,' hr, ',nmin,' min, ',trem,' s'
   elseif (nmin.gt.0) then
-     write(lunit,"(1x,a,1x,i2,a,f6.2,a,1pe12.4,a)") &
-          trim(newstring),nmin,' min, ',trem,' s (=',time,'s)'
+     write(lunit,"(1x,a,1x,i2,a,f6.2,a)") &
+          trim(newstring),nmin,' min, ',trem,' s'
   else
      write(lunit,"(1x,a,1x,f6.2,a)") trim(newstring),trem,' s'
   endif
