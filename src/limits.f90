@@ -81,7 +81,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   do j=ifromcol,itocol
      call warn_minmax(label(j),lim(j,1),lim(j,2))
   enddo
-  print "(a/)",' plot limits set'
+  !print "(a/)",' plot limits set'
 
   lim2(ifromcol:itocol,:) = 0.
 
@@ -159,7 +159,7 @@ subroutine read_limits(limitsfile,ierr)
   endif
 
   open(unit=54,file=limitsfile,status='old',form='formatted',err=997)
-  print*,'reading plot limits from file ',trim(limitsfile)
+  print "(a)",' read '//trim(limitsfile)
   do i=1,numplot
      read(54,"(a)",err=998,end=999) line
      ncolsline = ncolumnsline(line)
