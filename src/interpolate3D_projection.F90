@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -39,12 +39,6 @@ module projections3D
  public :: interpolate3D_projection
  public :: interpolate3D_proj_vec,interp3D_proj_vec_synctron
  public :: wfromtable
-
-#ifdef _OPENMP
- character(len=5), parameter :: str = 'cpu s'
-#else
- character(len=1), parameter :: str = 's'
-#endif
 
 contains
 
@@ -161,6 +155,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      useaccelerate)
 
   use kernels, only:radkernel,radkernel2
+  use timing,  only:wall_time,print_time
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
@@ -193,15 +188,14 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   if (normalise) then
      print "(1x,a)",'projecting (normalised) from particles to pixels...'
      datnorm = 0.
+  elseif (useaccelerate) then
+     print "(1x,a)",'projecting (fast) from particles to pixels...'    
   else
      print "(1x,a)",'projecting from particles to pixels...'  
   endif
   if (pixwidthx.le.0. .or. pixwidthy.le.0) then
      print "(1x,a)",'interpolate3D_proj: error: pixel width <= 0'
      return
-  endif
-  if (.not.useaccelerate) then
-     print "(1x,a)",'(use accelerated rendering option to make this faster)'
   endif
   !nout = count(hh(1:npart).le.0.)
   !if (nout.gt.0) then
@@ -228,7 +222,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !
 !--get starting CPU time
 !
-  call cpu_time(t_start)
+  call wall_time(t_start)
 
   xminpix = xmin - 0.5*pixwidthx
   yminpix = ymin - 0.5*pixwidthy
@@ -477,17 +471,11 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
                                '          need',nfull,' pixels for full resolution'
   endif
 !
-!--get ending CPU time
+!--get/print timings
 !
-  call cpu_time(t_end)
+  call wall_time(t_end)
   t_used = t_end - t_start
-  if (t_used.gt.60.) then
-     itmin = int(t_used/60.)
-     tsec = t_used - (itmin*60.)
-     print "(1x,a,i4,a,f5.2,1x,a)",'completed in',itmin,' min ',tsec,trim(str)
-  else
-     print "(1x,a,f5.2,1x,a)",'completed in ',t_used,trim(str)
-  endif
+  if (t_used.gt.10.) call print_time(t_used)
   
   return
 
