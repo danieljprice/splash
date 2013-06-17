@@ -448,7 +448,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
        call convert_units(shape(i),xpos,ypos,xlen,ylen, &
                           xmin,ymin,dxplot,dyplot,itransx,itransy)
 
-       call print_shapeinfo(i,shape(i)%itype,shape(i))
+       !call print_shapeinfo(i,shape(i)%itype,shape(i))
        !print "(a)",'> plotting shape: '//trim(labelshapetype(shape(i)%itype))
        select case(shape(i)%itype)
        case(1,2) ! square, rectangle
