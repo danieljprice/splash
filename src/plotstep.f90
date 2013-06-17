@@ -3637,10 +3637,10 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
   angleradz = anglezi*pi/180.
   anglerady = angleyi*pi/180.
   angleradx = anglexi*pi/180.
-  print "(1x,a,f6.2)",'rotating particles about z by ',anglezi
   if (ndim.eq.3) then
-     print "(1x,a,f6.2)",'rotating particles about y by ',angleyi
-     print "(1x,a,f6.2)",'rotating particles about x by ',anglexi
+     print "(1x,a,2(f6.2,1x),f6.2,a)",'rotation: (z, y, x) = (',anglezi,angleyi,anglexi,')'
+  else
+     print "(1x,a,f6.2)",'rotating particles about z by ',anglezi
   endif
   if (ndim.eq.3 .and. use3Dperspective) then
      print*,' observer height = ',zobs,', screen at ',zobs-dzscreen
@@ -3655,7 +3655,7 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
      print*,'rotating about x,y,z = ',xorigin(1:ndim)
   endif
 
-  if (ivecstart.gt.0) print "(1x,a)",'(also rotating vector components)'
+  if (debugmode .and. ivecstart.gt.0) print "(1x,a)",'(also rotating vector components)'
   !
   !--set location of x,y and z
   !  such that:
