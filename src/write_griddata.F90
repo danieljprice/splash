@@ -59,7 +59,7 @@ logical function isgridformat(string)
      isgridformat = .true.
  case('gridbinary','gridbin')
      isgridformat = .true.
- case('gridtest')
+ case('gridascii2')
      isgridformat = .true.
  end select
 
@@ -75,6 +75,7 @@ subroutine print_gridformats
  print "(a)",'    splash to grid         : interpolate basic SPH data (density, plus velocity if present in data)'
  print "(a)",'                             to 2D or 3D grid, write grid data to file (using default output=ascii)'
  print "(a)",'           to gridascii    : as above, grid data written in ascii format'
+ print "(a)",'           to gridascii2   : grid data written in ascii format, all in one file'
  print "(a)",'           to gridbinary   : as above, grid data in simple unformatted binary format:'
  print "(a)",'                                write(unit) nx,ny,nz,ncolumns,time                 [ 4 bytes each ]'
  print "(a)",'                                write(unit) (((rho(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]'
@@ -132,9 +133,9 @@ subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time
        return
     endif
 
- case('gridtest')
+ case('gridascii2')
 
-    print "(/,a,i2)",'-----> WRITING TO ASCII OUTPUT (TEST) FILES'
+    print "(/,a,i2)",'-----> WRITING TO ASCII OUTPUT FILES (WITH X, Y, Z, COL)'
      
  case('hdf5')
 
@@ -290,7 +291,7 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,npixels,label,time,&
     elseif (present(dat2D)) then
        write(iunit,iostat=ierr) ((dat2D(i,j),i=1,npixels(1)),j=1,npixels(2))    
     endif
- case('gridtest')
+ case('gridascii2')
     filename = trim(filenamein)//'_'//trim(safename(label))//'_grid.dat'
     print "(a)",'-----> WRITING '//trim(ucase(label))//' to '//trim(filename)
     
