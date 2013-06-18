@@ -114,7 +114,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      nstepsinfile(1:nfiles) = 0
      required = .true.
-     print "(/a)",' reading from ALL dumpfiles'
+     print "(/a)",' reading ALL dumpfiles into memory'
      !call endian_info()
 
      do i=1,nfiles
