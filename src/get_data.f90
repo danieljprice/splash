@@ -266,7 +266,9 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
               dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)
            endif
         enddo
-        time(1:nstepsinfile(ireadfile)) = time(1:nstepsinfile(ireadfile))*units(0)
+        do i=1,nstepsinfile(ireadfile)
+           if (time(i).gt.-0.5*huge(0.)) time(i) = time(i)*units(0)        
+        enddo
      endif
      !
      !--reset coordinate and vector labels (depending on coordinate system)
@@ -350,6 +352,7 @@ subroutine get_labels
  use settings_data,  only:ncolumns,iRescale,iverbose
  use settings_units, only:read_unitsfile,unitslabel
  use particle_data,  only:maxcol
+ use params,         only:maxplot
  implicit none
  logical :: iexist
  integer :: nlabelsread,ierr,i
@@ -366,9 +369,9 @@ subroutine get_labels
  inquire(file=trim(fileprefix)//'.columns',exist=iexist)
  nlabelsread = 0
  if (iexist) then
-    call read_asciifile(trim(fileprefix)//'.columns',nlabelsread,label(1:ncolumns))
+    call read_asciifile(trim(fileprefix)//'.columns',nlabelsread,label(1:min(ncolumns,maxcol,maxplot)))
     if (nlabelsread.lt.ncolumns) &
-       print "(a,i3)",' WARNING: end of file in '//trim(fileprefix)//'.columns file: labels read to column ',nlabelsread
+       print "(a,i3)",' end of file in '//trim(fileprefix)//'.columns file: labels read to column ',nlabelsread
  endif
  !
  !--read units file and change units if necessary
@@ -378,7 +381,7 @@ subroutine get_labels
  !--add units labels to labels
  !
  if (iRescale) then
-    do i=1,min(ncolumns,maxcol)
+    do i=1,min(ncolumns,maxcol,maxplot)
        if (index(label(i),trim(unitslabel(i))).eq.0) label(i) = trim(label(i))//trim(unitslabel(i))
     enddo
  endif
@@ -474,8 +477,9 @@ subroutine check_data_read
     print "(a)",' ERROR: ncolumns < 0 in data read'
     ncolumns = 0
  elseif (ncolumns.gt.maxplot) then
-    print "(a,i3,a)",' ERROR: ncolumns > ',maxplot,' in data read'
-    ncolumns = 0
+    print "(/,71('*'),/,'*',a,i3,a,'*',/,71('*'))",&
+          ' ERROR: ncolumns > ',maxplot,' in data read: cannot list all columns in menu '
+    ncolumns = maxplot
  endif
 
  if (ndim.gt.3) then; print "(a)",' ERROR: ndim  > 3 in data read, setting ndim = 3'; ndim = 3; endif
