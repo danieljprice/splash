@@ -2873,7 +2873,8 @@ contains
                 print "(a,i4,a,i4,a)",' auto-selecting resolution of ',npixx,' x ',npixy,' for vector device'
                 print "(a)",' => set the number of pixels manually if you want more (or less) than this.'
              else
-                if (npix.eq.0) print "(a,i4,a,i4)",' auto-selecting device resolution = ',npixx,' x ',npixy
+                if (npix.eq.0 .and. debugmode) &
+                   print "(a,i4,a,i4)",' auto-selecting device resolution = ',npixx,' x ',npixy
                 !
                 !--warn about PGPLOT limitations
                 !
