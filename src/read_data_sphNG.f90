@@ -1522,7 +1522,7 @@ subroutine set_labels
               elseif (nmhd.ge.6) then
                  label(istartmhd) = 'psi'
                  idivB = istartmhd + 1
-                 if (nmhd.ge.9) then
+                 if (nmhd.ge.8) then
                     label(istartmhd+2+ndimV+1) = '\eta_{real}'
                     label(istartmhd+2+ndimV+2) = '\eta_{art}'
                     units(istartmhd+2+ndimV+1:istartmhd+2+ndimV+2) = udist*udist/utime
