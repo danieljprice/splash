@@ -672,6 +672,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use plotutils,             only:plotline
   use geometry,              only:coord_is_length
   use geomutils,             only:changecoords,changeveccoords
+  use legends,               only:ipanelselect
   use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
                                   plot_line,plot_pt1,plotlib_is_pgplot,plotlib_supports_alpha
   implicit none
@@ -1998,11 +1999,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            !--plot exact solution if relevant (before going interactive)
            !
-           if (iexact.ne.0 &
-          .and.((nyplot.le.nacross*ndown .and. iPlotExactOnlyOnPanel.eq.0) &
-           .or.(iPlotExactOnlyOnPanel.gt.0 .and. ipanel.eq.iPlotExactOnlyOnPanel) &
-           .or.(iPlotExactOnlyOnPanel.eq.-1 .and. irow.eq.1) &
-           .or.(iPlotExactOnlyOnPanel.eq.-2 .and. icolumn.eq.1))) then
+           if (iexact.ne.0 .and.nyplot.le.nacross*ndown .and. &
+               ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn)) then
               iaxisy = iaxis
               if (tile_plots .and. icolumn.ne.1) iaxisy = -1
               call exact_solution(iexact,iplotx,iploty, &
@@ -2149,11 +2147,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !
         !--plot exact solution (after redrawn axis for residual plots)
         !
-        if (iexact.ne.0 &
-       .and.((nyplot.le.nacross*ndown .and. iPlotExactOnlyOnPanel.eq.0) &
-        .or.(iPlotExactOnlyOnPanel.gt.0 .and. ipanel.eq.iPlotExactOnlyOnPanel) &
-        .or.(iPlotExactOnlyOnPanel.eq.-1 .and. irow.eq.1) &
-        .or.(iPlotExactOnlyOnPanel.eq.-2 .and. icolumn.eq.1))) then
+        if (iexact.ne.0 .and.nyplot.le.nacross*ndown .and. &
+            ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn)) then
            iaxisy = iaxis
            if (tile_plots .and. icolumn.ne.1) iaxisy = -1
            call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
@@ -2337,11 +2332,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            !--plot exact solution (after redrawn axis for residual plots)
            !
-           if (iexact.ne.0 &
-          .and.((nyplot.le.nacross*ndown .and. iPlotExactOnlyOnPanel.eq.0) &
-           .or.(iPlotExactOnlyOnPanel.gt.0 .and. ipanel.eq.iPlotExactOnlyOnPanel) &
-           .or.(iPlotExactOnlyOnPanel.eq.-1 .and. irow.eq.1) &
-           .or.(iPlotExactOnlyOnPanel.eq.-2 .and. icolumn.eq.1))) then
+           if (iexact.ne.0 .and.nyplot.le.nacross*ndown .and. &
+               ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn)) then
               iaxisy = iaxis
               if (tile_plots .and. icolumn.ne.1) iaxisy = -1
               call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
