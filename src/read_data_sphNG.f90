@@ -182,7 +182,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (required(i)) ilastrequired = i
   enddo
 
-  print "(1x,a)",'reading sphNG format'
+  if (iverbose.ge.1) print "(1x,a)",'reading sphNG format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
 
   debug = lenvironment('SSPLASH_DEBUG')
