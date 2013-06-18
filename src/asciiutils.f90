@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -261,7 +261,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
  integer, intent(in) :: lunit
  integer, intent(out) :: ncolumns,nheaderlines
  integer :: ierr,ncolprev,ncolsthisline
- character(len=2000) :: line
+ character(len=5000) :: line
  logical :: nansinfile,infsinfile
 
  nheaderlines = 0
@@ -311,7 +311,7 @@ end subroutine get_ncolumns
 integer function ncolumnsline(line)
  implicit none
  character(len=*), intent(in) :: line
- real :: dummyreal(100)
+ real :: dummyreal(1000)
  integer :: ierr,i
 
  dummyreal = -666.0
