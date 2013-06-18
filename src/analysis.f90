@@ -79,6 +79,8 @@ logical function isanalysis(string,noprint)
      isanalysis = .true.
  case('timeaverage','timeav')
      isanalysis = .true.
+ case('ratio')
+     isanalysis = .true.
  end select
 
  if (present(noprint)) then
@@ -113,6 +115,8 @@ logical function isanalysis(string,noprint)
     print "(a)",'  the following option produces a file equivalent in size to one input file (in ascii format):'
     print "(/,a)",'         calc timeaverage  : time average of *all* entries for every particle'
     print "(a)",'                             output to file called ''time_average.out'''
+    print "(/,a)",'         calc ratio        : ratio of *all* entries in each file compared to first'
+    print "(a)",'                             output to file called ''ratio.out'''
  endif
 
  return
@@ -126,6 +130,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
  use labels,     only:ix,ivx,iBfirst,iutherm,irho,ipmass,label
  use asciiutils, only:read_asciifile
  use filenames,  only:rootname,nfiles,tagline
+ use params,     only:maxplot
  implicit none
  integer, intent(in) :: ncolumns,ndim,ndimV
  character(len=*), intent(in) :: analysistype
@@ -327,9 +332,25 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !--set filename and header line
     !
     fileout = 'time_average.out'
-    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']''))')",iostat=ierr) 2*ncolumns
-    write(headerline,fmtstring) (i,label(i)(1:12),i=1,ncolumns),&
-                                (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
+    if (ncolumns.gt.0) then
+       write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']''))')",iostat=ierr) 2*ncolumns
+       write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
+                                               (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
+    endif
+ case('ratio')
+    !
+    !--read all columns from dump file
+    !
+    required(:) = .true.
+    !
+    !--set filename and header line
+    !
+    fileout = 'ratio.out'
+    if (ncolumns.gt.0 .and. ncolumns.ne.maxplot) then
+       write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']''))')",iostat=ierr) 2*ncolumns
+       write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
+                                               (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
+    endif
  end select
 
  if (standardheader) then
@@ -358,7 +379,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     print "(a)",' ERROR opening file '//trim(fileout)//' for output'
     stop
  endif
- print "(a)",' WRITING '//trim(analysistype)//' vs time '//' TO FILE '//trim(fileout)
+ print "(a)",' WRITING '//trim(analysistype)//' vs time to file '//trim(fileout)
 !
 !--write header if the headerline is set
 !  (no header is written if headerline is blank)
@@ -404,7 +425,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real(kind=doub_prec) :: smeanmw,smeanvw,svarmw,svarvw,si,ekiny,ekinymax
  real(kind=doub_prec) :: lmin, lmax
  real(kind=doub_prec), dimension(3) :: xmom,angmom,angmomi,ri,vi
- real                 :: delta,dn
+ real                 :: delta,dn,valmin,valmax,valmean
  character(len=20)    :: fmtstring
 !
 ! array with one value for each column
@@ -952,6 +973,74 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     return
     !sum1(:,:) = sum1(:,:) + dat(1:ntot1,1:ncol1)
     !sum2(:,:) = sum2(:,:) + dat(1:ntot1,1:ncol1)**2
+
+ case('ratio')
+    if (.not.allocated(datmean)) then
+       allocate(datmean(size(dat(:,1)),size(dat(1,:))),stat=ierr)
+       if (ierr /= 0) stop 'error allocating temporary memory in calc'
+       datmean = 0.
+    endif
+    if (.not.allocated(datvar)) then
+       allocate(datvar(size(dat(:,1)),size(dat(1,:))),stat=ierr)
+       if (ierr /= 0) stop 'error allocating memory in calc'
+       datvar = 0.
+    endif
+    ntot1 = size(datmean(:,1))
+    if (ntot.gt.ntot1) then
+       print*,' WARNING: nrows = ',ntot,' > nrows from previous dumpfile =',ntot1
+       print*,'          ignoring all rows/particles greater than ',ntot1
+    elseif (ntot.lt.ntot1) then
+       print*,' WARNING: nrows = ',ntot,' < nrows from previous dumpfile =',ntot1
+       print*,'          assuming zeros for rows/particles greater than ',ntot
+    endif
+    ncol1 = size(datmean(1,:))
+    if (size(dat(1,:)).gt.ncol1) then
+       print*,' WARNING: ncolumns = ',ncolumns,' > ncolumns from previous dumpfile =',ncol1
+       print*,'          ignoring all rows/particles greater than ',ncol1
+    elseif (ncolumns.lt.ncol1) then
+       print*,' WARNING: ncolumns = ',ntot,' < ncolumns from previous dumpfile =',ncol1
+       print*,'          assuming zeros for columns greater than ',ncolumns
+    endif
+    ntot1 = min(ntot1,ntot)
+    ncol1 = min(ncol1,size(dat(1,:)))
+    if (ntot1.le.0 .or. ncol1.le.0) then
+       print "(a,i2,a,i2,a)",' ERROR: nrows = ',ntot1,' ncolumns = ',ncol1,' aborting...'
+       return
+    endif
+
+    if (nfilesread.le.1) then
+       !--store first dump
+       datmean(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)
+    else
+       where (dat(1:ntot1,1:ncol1).ne.0.)
+          datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/datmean(1:ntot1,1:ncol1)    ! ratio of current data to first step
+       elsewhere
+          datvar = 0.
+       end where
+       valmin = datvar(1,1)
+       valmax = datvar(1,1)
+       valmean = 0.
+       do j=1,ncol1
+          do i=1,ntot1
+             valmin = min(datvar(i,j),valmin)
+             valmax = min(datvar(i,j),valmin)
+             valmean = valmean + datvar(i,j)
+          enddo
+       enddo
+       valmean = valmean/real(ntot1*ncol1)
+       print "(/,a,es10.3)",' max  ratio = ',valmax
+       print "(a,es10.3)",' min  ratio = ',valmin
+       print "(a,es10.3,/)",' mean ratio = ',valmean
+       print "(a)",'----> WRITING ratio.out ...'
+       if (allocated(datmean) .and. allocated(datvar)) then
+          write(iunit,"('# ',i4,1x,i4)") ntot1,ncol1
+          write(fmtstring,"(a,i6,a)",iostat=ierr) '(',ncol1,'(es14.6,1x,))'
+          do i=1,ntot1
+             write(iunit,fmtstring) datvar(i,:)
+          enddo
+       endif
+    endif
+    return
 
  case default
     print "(a)",' ERROR: unknown analysis type in write_analysis routine'
