@@ -33,7 +33,7 @@
 module asciiutils
  implicit none
  public :: read_asciifile,get_ncolumns,ncolumnsline,safename,basename,cstring
- public :: string_replace, string_delete
+ public :: string_replace, string_delete, nheaderlines
  public :: ucase,lcase
 
  private
@@ -299,11 +299,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
  if (infsinfile) print "(a)",' WARNING!! Infs in file!!'
  rewind(lunit)
 
- if (ncolumns.eq.0) then
-    print "(a)",' ERROR: no columns of real numbers found'
- !else
-    !print "(a,i3)",' number of data columns = ',ncolumns
- endif
+ if (ncolumns.eq.0) print "(a)",' ERROR: no columns of real numbers found'
 
 end subroutine get_ncolumns
 
@@ -322,10 +318,6 @@ integer function ncolumnsline(line)
 
  ierr = 0
  read(line,*,iostat=ierr) (dummyreal(i),i=1,size(dummyreal))
- !if (ierr .gt. 0) then
- !   ncolumnsline = -1
- !   return
- !endif
 
  i = 1
  ncolumnsline = 0
@@ -340,6 +332,34 @@ integer function ncolumnsline(line)
  enddo
 
 end function ncolumnsline
+
+!----------------------------------------------------------------------
+!
+! Small utility to return the number of comment lines in an ascii
+! file. These are lines that do not begin with a number.
+! 
+! This is slightly different to what is done in the get_ncolumns
+! routine, where header lines are any lines not having the same number
+! of columns. Here we do not attempt to evaluate the number of data
+! columns.
+!
+! File must be open and at the desired starting position
+!----------------------------------------------------------------------
+integer function nheaderlines(lunit)
+ integer, intent(in) :: lunit
+ real    :: dum
+ integer :: ierr
+
+ dum = -666.
+ nheaderlines = 0
+ ierr = -1
+ do while (abs(dum+666.).lt.tiny(0.) .or. ierr.ne.0)
+    nheaderlines = nheaderlines + 1
+    read(lunit,*,iostat=ierr) dum
+ enddo
+ nheaderlines = nheaderlines - 1
+
+end function nheaderlines
 
 !---------------------------------------------------------------------------
 !

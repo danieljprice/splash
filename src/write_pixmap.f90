@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -258,7 +258,7 @@ end subroutine write_pixmap_ppm
 !  read in pixels from file
 !-----------------------------------------------------------------
 subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,istep,xsec,ierr)
- use asciiutils, only:safename,basename
+ use asciiutils, only:safename,basename,nheaderlines
  implicit none
  real, intent(out), dimension(:,:), allocatable :: datpix
  integer, intent(out)            :: npixx,npixy,ierr
@@ -266,9 +266,10 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,istep,xsec,ierr)
  character(len=*), intent(inout) :: label
  integer,          intent(in)    :: istep
  logical,          intent(in)    :: xsec
- integer            :: i,maxnames
+ integer            :: i,j,maxnames,ncols,nheader,nerr
  integer, parameter :: iunit = 168
  character(len=128) :: filename
+ character(len=2)   :: char
  character(len=len(dumpfile)) :: dumpfilei
  logical :: iexist,printinfo
 
@@ -282,6 +283,33 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,istep,xsec,ierr)
        print*,'error opening '//trim(filename)
        return
     else
+       npixx = 0
+       npixy = 0
+       nheader = nheaderlines(iunit)
+       rewind(iunit)
+       do i=1,nheader-1
+          read(iunit,*,iostat=ierr)
+       enddo
+       read(iunit,*,iostat=ierr) char,npixx,npixy
+       if (ierr /= 0 .or. npixx.le.0 .or. npixy.le.0) then
+          print*,'ERROR reading size of pixel map, got nx = ',npixx,' ny = ',npixy,&
+                 ', skipped ',nheader,' header lines'
+       else
+          print "(a,i5,a,i5,a)",' reading',npixx,' x',npixy,' pixel map from '//trim(filename)
+       endif
+       allocate(datpix(npixx,npixy),stat=ierr)
+       if (ierr /= 0) then
+          print "(a)",' ERROR allocating memory for pixel map'
+          close(iunit)
+          return
+       endif
+       nerr = 0
+       do j=1,npixy
+          read(iunit,*,iostat=ierr) datpix(1:npixx,j)
+          if (ierr /= 0) nerr = nerr + 1
+       enddo
+       if (nerr /= 0) print "(a,i3,a,i3)",' WARNING: ',nerr,' errors reading pixel map from '//trim(filename)//' on unit ',iunit
+
        close(iunit)
     endif
 
