@@ -450,7 +450,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
 
        if (frac.ge.1.e-3) then
           !--specify the length of line to draw
-          term = 0.75*dx*dvmag*zfrac
+          term = 1.5*dx*dvmag*zfrac
           xpts(1) = x(i) - vxi*term
           xpts(2) = x(i) + vxi*term
           ypts(1) = y(i) - vyi*term
