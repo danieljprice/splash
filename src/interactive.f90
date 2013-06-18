@@ -1494,7 +1494,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                              use_double_rendering,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
                              barwmulti,xminadapt,xmaxadapt,nacross,ndim,xorigin,icolourscheme, &
                              iColourBarStyle,interactivereplot)
- use labels,    only:is_coord
+ use labels,    only:is_coord,iamvec
  use multiplot, only:itrans
  use shapes,    only:add_textshape,inshape,edit_shape,delete_shape,nshapes
  use plotlib,   only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line,plot_left_click
@@ -1510,7 +1510,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  logical, intent(in)  :: use_double_rendering
  logical, intent(out) :: interactivereplot
  integer :: ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape
- integer :: istepjumpnew
+ integer :: istepjumpnew,ivecx,ivecy
  real :: xpt,ypt,xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
  real :: xlength,ylength,renderlength,contlength,zoomfac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
@@ -1682,7 +1682,12 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            call save_limits(iplotyarr(i),xmin(iplotyarr(i)),xmax(iplotyarr(i)))
            if (irenderarr(i).gt.0) call save_limits(irenderarr(i),xmin(irenderarr(i)),xmax(irenderarr(i)))
            if (icontourarr(i).gt.0) call save_limits(icontourarr(i),xmin(icontourarr(i)),xmax(icontourarr(i)))
-           if (ivecarr(i).gt.0) call save_limits(ivecarr(i),-xmax(ivecarr(i)),xmax(ivecarr(i)))
+           if (ivecarr(i).gt.0) then
+              ivecx = iamvec(ivecarr(i)) + iplotxarr(i) - 1
+              ivecy = iamvec(ivecarr(i)) + iplotyarr(i) - 1
+              if (ivecx.gt.0) call save_limits(ivecx,-xmax(ivecx),xmax(ivecx))
+              if (ivecy.gt.0) call save_limits(ivecy,-xmax(ivecy),xmax(ivecy))
+           endif
         enddo
         print*,'> interactively set limits saved <'
      case(plot_left_click) ! left click
