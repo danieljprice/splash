@@ -375,18 +375,25 @@ function safename(string)
  safename = string
 
  !--remove forward slashes which can be mistaken for directories: replace with '_'
- ipos = index(safename,'/')
- do while (ipos.ne.0)
-    safename = safename(1:ipos-1)//'_'//safename(ipos+1:len_trim(safename))
-    ipos = index(safename,'/')
- enddo
-
- !--remove spaces: replace with '_'
- ipos = index(trim(safename),' ')
- do while (ipos.ne.0)
-    safename = safename(1:ipos-1)//'_'//safename(ipos+1:len_trim(safename))
-    ipos = index(trim(safename),' ')
- enddo
+ call string_replace(safename,'/','_')
+ call string_replace(safename,' ','_')
+ 
+ !--delete brackets and operators of all kinds
+ call string_delete(safename,'{')
+ call string_delete(safename,'}')
+ call string_delete(safename,'(')
+ call string_delete(safename,')')
+ call string_delete(safename,'[')
+ call string_delete(safename,']')
+ call string_delete(safename,'<')
+ call string_delete(safename,'>')
+ call string_delete(safename,'*')
+ call string_delete(safename,'?')
+ call string_delete(safename,'^')
+ call string_delete(safename,'''')
+ call string_delete(safename,'"')
+ call string_delete(safename,'&')
+ call string_delete(safename,'#')
 
  !--remove escape sequences: remove '\' and position following
  ipos = index(trim(safename),'\')
@@ -445,13 +452,14 @@ end function cstring
 subroutine string_replace(string,skey,sreplacewith)
  implicit none
  character(len=*), intent(inout) :: string
- character(len=*), intent(in) :: skey,sreplacewith
- integer :: ipos
+ character(len=*), intent(in)    :: skey,sreplacewith
+ integer :: ipos,lensub
 
- ipos = index(string,skey)
+ ipos = index(trim(string),skey)
+ lensub = len(skey)
  do while(ipos.gt.0)
-    string = string(1:ipos-1)//sreplacewith//string(ipos+len(skey):len(string))
-    ipos = index(string,skey)
+    string = string(1:ipos-1)//sreplacewith//string(ipos+lensub:len_trim(string))
+    ipos = index(trim(string),skey)
  enddo
 
 end subroutine string_replace
@@ -464,13 +472,14 @@ end subroutine string_replace
 subroutine string_delete(string,skey)
  implicit none
  character(len=*), intent(inout) :: string
- character(len=*), intent(in) :: skey
- integer :: ipos
+ character(len=*), intent(in)    :: skey
+ integer :: ipos,lensub
 
- ipos = index(string,skey)
+ ipos = index(trim(string),skey)
+ lensub = len(skey)
  do while(ipos.gt.0)
-    string = string(1:ipos-1)//string(ipos+len(skey):len(string))
-    ipos = index(string,skey)
+    string = string(1:ipos-1)//string(ipos+lensub:len_trim(string))
+    ipos = index(trim(string),skey)
  enddo
 
 end subroutine string_delete
