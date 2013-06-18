@@ -266,7 +266,7 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,istep,xsec,ierr)
  character(len=*), intent(inout) :: label
  integer,          intent(in)    :: istep
  logical,          intent(in)    :: xsec
- integer            :: i,j,maxnames,ncols,nheader,nerr
+ integer            :: i,j,maxnames,nheader,nerr
  integer, parameter :: iunit = 168
  character(len=128) :: filename
  character(len=2)   :: char
