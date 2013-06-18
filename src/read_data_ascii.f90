@@ -371,7 +371,7 @@ subroutine set_labels
            endif
         endif
         if (ierr < 0) then
-           print "(a,i3)",' ERROR: end of file in columns file: read to column ',i-1
+           print "(a,i3)",' end of file in columns file: read to column ',i-1
            exit overcols
         elseif (ierr > 0) then
            print "(a)",' *** error reading from columns file ***'
