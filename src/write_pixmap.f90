@@ -28,7 +28,7 @@
 !     Added read routines June 2009
 !-----------------------------------------------------------------
 module write_pixmap
- use filenames, only:fileprefix
+ use filenames, only:fileprefix,tagline
  implicit none
  logical, public :: iwritepixmap = .false.
  logical, public :: ireadpixmap = .false.
@@ -138,7 +138,7 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
 
  write(stringx,"(i10)") npixx
  write(stringy,"(i10)") npixy
- write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by splash (c) 2005-2009 Daniel Price'
+ write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by '//trim(tagline)
  write(iunit,"(a)",err=66) '# Contains 2D pixel array '//trim(adjustl(stringx))//' x '//trim(adjustl(stringy))//' written as '
  write(iunit,"(a)",err=66) '#   do j=1,'//trim(adjustl(stringy))
  write(iunit,"(a)",err=66) '#      write(*,*) dat(1:'//trim(adjustl(stringx))//',j)'
@@ -210,7 +210,7 @@ subroutine write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,
 !
  maxcolour = 255
  write(iunit,"(a)",err=66) 'P3'
- write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by splash (c) 2005-2009 Daniel Price'
+ write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by '//trim(tagline)
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
