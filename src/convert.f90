@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -100,7 +100,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
        endif
        ntotal = sum(npartoftype(1:ntypes,idump))
        if (doanalysis) then
-          call write_analysis(time(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes, &
+          call write_analysis(time(idump),dat(1:ntotal,:,idump),ntotal,ntypes, &
                           npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
                           ncolumns+ncalc,ndim,ndimV,outformat)
        elseif (converttogrid) then
