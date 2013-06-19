@@ -609,6 +609,12 @@ logical function allowrendering(iplotx,iploty)
  use settings_render, only:icolour_particles
  implicit none
  integer, intent(in) :: iplotx,iploty
+ integer :: itransx,itransy
+
+ itransx = 0
+ itransy = 0
+ if (iplotx.gt.0) itransx = itrans(iplotx)
+ if (iploty.gt.0) itransy = itrans(iploty)
 !
 !--work out whether rendering is allowed based on presence of rho, h & m in data read
 !  also must be in base coordinate system and no transformations applied
@@ -616,7 +622,7 @@ logical function allowrendering(iplotx,iploty)
  if ((ih.gt.0 .and. ih.le.ndataplots) &
     .and.(irho.gt.0 .and. irho.le.ndataplots) &
     !.and.(icoords.eq.icoordsnew .or. icolour_particles) &
-    .and.((itrans(iplotx).eq.0 .and. itrans(iploty).eq.0).or.icolour_particles)) then
+    .and.((itransx.eq.0 .and. itransy.eq.0).or.icolour_particles)) then
 
     allowrendering = .true.
  else
