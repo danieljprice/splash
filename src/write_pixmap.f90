@@ -90,17 +90,18 @@ end function isinputformat
 !-----------------------------------------------------------------
 !  wrapper routine for all output formats
 !-----------------------------------------------------------------
-subroutine writepixmap(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep)
+subroutine writepixmap(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile)
  implicit none
  integer, intent(in) :: npixx,npixy
- real, intent(in), dimension(npixx,npixy) :: datpix
- real, intent(in) :: xmin,ymin,dx,datmin,datmax
- character(len=*), intent(in) :: label
+ real,    intent(in), dimension(npixx,npixy) :: datpix
+ real,    intent(in) :: xmin,ymin,dx,datmin,datmax
+ logical, intent(in) :: xsec
+ character(len=*), intent(in) :: label,labu,dumpfile
  integer, intent(in) :: istep
 
  select case(trim(pixmapformat))
  case('ascii')
-    call write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep)
+    call write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile)
  case('ppm')
     call write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep)
 ! case('fits')
@@ -114,21 +115,24 @@ end subroutine writepixmap
 !-----------------------------------------------------------------
 !   output pixmap as an ascii file
 !-----------------------------------------------------------------
-subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep)
+subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile)
+ use labels, only:shortlabel
  implicit none
  integer, intent(in) :: npixx,npixy,istep
- real, intent(in), dimension(npixx,npixy) :: datpix
- real, intent(in) :: xmin,ymin,dx,datmin,datmax
- character(len=*), intent(in) :: label
+ real,    intent(in), dimension(npixx,npixy) :: datpix
+ real,    intent(in) :: xmin,ymin,dx,datmin,datmax
+ logical, intent(in) :: xsec
+ character(len=*), intent(in) :: label,labu,dumpfile
  character(len=10) :: stringx,stringy
  character(len=30) :: fmtstring
- character(len=len_trim(fileprefix)+10) :: filename
+ character(len=len(dumpfile)+10) :: filename
  integer :: ierr,j
  integer, parameter :: iunit = 166
 !
 !--write ascii file
 !
- write(filename,"(a,i5.5,a)") trim(fileprefix)//'_',istep,'.dat'
+ !write(filename,"(a,i5.5,a)") trim(fileprefix)//'_',istep,'.dat'
+ call get_pixmap_filename(filename,dumpfile,shortlabel(label,labu),'.pix',xsec)
  open(unit=iunit,file=filename,status='replace',form='formatted',iostat=ierr)
  if (ierr /=0) then
     print*,'error opening '//trim(filename)
@@ -258,25 +262,29 @@ end subroutine write_pixmap_ppm
 !  read in pixels from file
 !-----------------------------------------------------------------
 subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,istep,xsec,ierr)
- use asciiutils, only:safename,basename,nheaderlines
+ use asciiutils, only:nheaderlines
  implicit none
  real, intent(out), dimension(:,:), allocatable :: datpix
  integer, intent(out)            :: npixx,npixy,ierr
  character(len=*), intent(in)    :: dumpfile
- character(len=*), intent(inout) :: label
+ character(len=*), intent(in)    :: label
  integer,          intent(in)    :: istep
  logical,          intent(in)    :: xsec
- integer            :: i,j,maxnames,nheader,nerr
+ integer            :: i,j,nheader,nerr
  integer, parameter :: iunit = 168
  character(len=128) :: filename
  character(len=2)   :: char
- character(len=len(dumpfile)) :: dumpfilei
- logical :: iexist,printinfo
+ logical :: iexist
 
  ierr = 0
  select case(trim(adjustl(readpixformat)))
  case('ascii') ! splash pixmap output files
-    write(filename,"(a,i5.5,a)") trim(fileprefix)//'_',istep,'.dat'
+    call check_for_pixmap_files(filename,dumpfile,label,'.pix',istep,xsec,iexist)
+    if (.not.iexist) then
+       print "('*',a,'*',/,72('*'))",' Create a file with one of these names (or a soft link) and try again '
+       ierr = 1
+       return
+    endif
 
     open(unit=iunit,file=filename,status='old',form='formatted',iostat=ierr)
     if (ierr /=0) then
@@ -319,57 +327,7 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,istep,xsec,ierr)
     !
     !--cycle through possible filenames
     !
-    dumpfilei = dumpfile
-    iexist = .false.
-    i = 0
-    maxnames = 4
-    printinfo = .false.
-    do while (.not.iexist .and. i.lt.maxnames)
-       i = i + 1
-       select case(i)
-       case(1)
-          if (xsec) then
-             filename = trim(dumpfilei)//'_'//trim(safename(label))//'_slice.pix'
-          else
-             filename = trim(dumpfilei)//'_'//trim(safename(label))//'_proj.pix'
-          endif
-       case(2)
-          filename = trim(dumpfilei)//'_'//trim(safename(label))//'.pix'
-       case(3)
-          if (xsec) then
-             filename = trim(dumpfilei)//'_slice.pix'
-          else
-             filename = trim(dumpfilei)//'_proj.pix'
-          endif
-       case(4)
-          filename = trim(dumpfilei)//'.pix'
-       end select
-       !
-       !--query to see if file exists
-       !
-       if (printinfo) then
-          print "('*',a,'*')",'  no file '//filename(1:60)//''
-       else
-          inquire(file=filename,exist=iexist)
-       endif
-       if (.not.iexist) then
-          !
-          !--try the same files again but in the current directory
-          !  instead of the directory in which the dump files are located
-          !
-          if (i.eq.maxnames) then
-             if (len_trim(dumpfilei).ne.len_trim(basename(dumpfile))) then
-                i = 0
-                dumpfilei = basename(dumpfile)
-             elseif (.not.printinfo) then
-                print "(72('*'),/,'*',a,12x,'*')",' ERROR: could not find any .pix files with matching names:'
-                dumpfilei = dumpfile
-                printinfo = .true.
-                i = 0
-             endif
-          endif
-       endif
-    enddo
+    call check_for_pixmap_files(filename,dumpfile,label,'.pix',istep,xsec,iexist)
     if (.not.iexist) then
        print "('*',a,'*',/,72('*'))",' Create a file with one of these names (or a soft link) and try again '
        ierr = 1
@@ -399,5 +357,94 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,istep,xsec,ierr)
 
 end subroutine readpixmap
 
+!-----------------------------------------------------------------
+!  look for pixel map files matching a variety of naming schemes
+!-----------------------------------------------------------------
+subroutine get_pixmap_filename(filename,dumpfile,label,ext,xsec)
+ use asciiutils, only:basename,safename
+ character(len=*), intent(out) :: filename
+ character(len=*), intent(in)  :: dumpfile,label,ext
+ logical,          intent(in)  :: xsec
+
+ if (xsec) then
+    filename = trim(basename(dumpfile))//'_'//trim(safename(label))//'_slice'//trim(ext)
+ else
+    filename = trim(basename(dumpfile))//'_'//trim(safename(label))//'_proj'//trim(ext)
+ endif
+
+end subroutine get_pixmap_filename
+
+!-----------------------------------------------------------------
+!  look for pixel map files matching a variety of naming schemes
+!-----------------------------------------------------------------
+subroutine check_for_pixmap_files(filename,dumpfile,label,ext,istep,xsec,iexist)
+ use asciiutils, only:safename,basename
+ implicit none
+ character(len=*), intent(out) :: filename
+ character(len=*), intent(in)  :: dumpfile,label,ext
+ integer,          intent(in)  :: istep
+ logical,          intent(in)  :: xsec
+ logical,          intent(out) :: iexist
+ character(len=len(dumpfile))  :: dumpfilei
+ integer :: i,maxnames
+ logical :: printinfo
+
+ dumpfilei = dumpfile
+ iexist = .false.
+ i = 0
+ maxnames = 5
+ printinfo = .false.
+
+ do while (.not.iexist .and. i.lt.maxnames)
+    i = i + 1
+    select case(i)
+    case(1)
+       if (xsec) then
+          filename = trim(dumpfilei)//'_'//trim(safename(label))//'_slice'//trim(ext)
+       else
+          filename = trim(dumpfilei)//'_'//trim(safename(label))//'_proj'//trim(ext)
+       endif
+    case(2)
+       filename = trim(dumpfilei)//'_'//trim(safename(label))//trim(ext)
+    case(3)
+       if (xsec) then
+          filename = trim(dumpfilei)//'_slice'//trim(ext)
+       else
+          filename = trim(dumpfilei)//'_proj'//trim(ext)
+       endif
+    case(4)
+       filename = trim(dumpfilei)//trim(ext)
+    case(5)
+       write(filename,"(a,i5.5,a)") trim(fileprefix)//'_',istep,trim(ext)
+    end select
+    !
+    !--query to see if file exists
+    !
+    if (printinfo) then
+       print "('*',a,'*')",'  no file '//filename(1:60)//''
+    else
+       inquire(file=filename,exist=iexist)
+    endif
+    if (.not.iexist) then
+       !
+       !--try the same files again but in the current directory
+       !  instead of the directory in which the dump files are located
+       !
+       if (i.eq.maxnames) then
+          if (len_trim(dumpfilei).ne.len_trim(basename(dumpfile))) then
+             i = 0
+             dumpfilei = basename(dumpfile)
+          elseif (.not.printinfo) then
+             print "(72('*'),/,'*',a,12x,'*')", &
+                   ' ERROR: could not find any '//trim(ext)//' files with matching names:'
+             dumpfilei = dumpfile
+             printinfo = .true.
+             i = 0
+          endif
+       endif
+    endif
+ enddo
+ 
+end subroutine check_for_pixmap_files
 
 end module write_pixmap

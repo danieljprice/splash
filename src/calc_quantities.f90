@@ -139,6 +139,7 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
  use prompting,     only:prompt
  use fparser,       only:checkf
  use settings_data, only:ncolumns,iRescale,required
+ use labels,        only:shortstring
  implicit none
  integer, intent(in)  :: istart,iend
  integer, intent(out) :: ncalc
@@ -291,7 +292,7 @@ end subroutine splitstring
 !
 !---------------------------------------------------------------------
 subroutine print_example_quantities(ncalc)
- use labels,        only:label,lenlabel,irho,iutherm,iBfirst,ix,icv,idivB,&
+ use labels,        only:label,shortlabel,lenlabel,irho,iutherm,iBfirst,ix,icv,idivB,&
                          ih,iradenergy,iamvec,labelvec,idustfrac,ideltav,ivx
  use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
  use settings_units,only:unitslabel
@@ -531,7 +532,7 @@ end subroutine print_example_quantities
 subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
  use settings_data,  only:ncolumns,iRescale
  use fparser,        only:checkf
- use labels,         only:label
+ use labels,         only:label,shortstring
  use settings_units, only:unitslabel
  implicit none
  integer, intent(out) :: ncalcok,ncalctot
@@ -603,7 +604,7 @@ subroutine get_calc_data_dependencies(required)
  use params,         only:maxplot
  use settings_data,  only:debugmode
  use fparser,        only:checkf
- use labels,         only:label
+ use labels,         only:label,shortlabel,shortstring
  logical, dimension(0:maxplot), intent(inout) :: required
  character(len=lenvars), dimension(maxplot+nextravars) :: vars
  integer, dimension(maxcalc) :: incolumn
@@ -649,7 +650,7 @@ end subroutine get_calc_data_dependencies
 !
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
-  use labels,         only:label,labelvec,iamvec,ix,ivx
+  use labels,         only:label,labelvec,iamvec,ix,ivx,shortstring
   use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol,iamtype
   use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
                            icoords,icoordsnew,ipartialread,itracktype,itrackoffset
@@ -912,7 +913,7 @@ end subroutine addcolumn
 !
 !-----------------------------------------------------------------
 subroutine get_variables(maxlabel,nvars,variables)
- use labels,         only:label
+ use labels,         only:label,shortlabel
  use settings_units, only:unitslabel
  implicit none
  integer,                        intent(in)  :: maxlabel
@@ -933,96 +934,6 @@ subroutine get_variables(maxlabel,nvars,variables)
  enddo
 
 end subroutine get_variables
-
-!-----------------------------------------------------------------
-!
-!  utility (private) to strip spaces, escape sequences and
-!  units labels from strings (this can be called for both
-!  function strings and variable labels)
-!
-!-----------------------------------------------------------------
-elemental function shortstring(string,unitslab)
- use labels, only:lenlabel
- implicit none
- character(len=lenlabel), intent(in)           :: string
- character(len=*),        intent(in), optional :: unitslab
- character(len=lenlabel)                       :: shortstring
- integer :: ipos
-
- shortstring = string
- !--strip off the units label
- if (present(unitslab)) then
-    if (len_trim(unitslab).gt.0) then
-    !--remove units label (only do this once)
-       ipos = index(trim(shortstring),trim(unitslab))
-       if (ipos.ne.0) then
-          shortstring = shortstring(1:ipos-1)//&
-                        shortstring(ipos+len_trim(unitslab)+1:len_trim(shortstring))
-       endif
-    endif
- endif
-
- !--remove spaces
- call removesubstr(shortstring,' ')
- !--remove escape sequences (\d etc.)
- call removesubstr(shortstring,'\d')
- call removesubstr(shortstring,'\u')
- call removesubstr(shortstring,'\g')
-
-end function shortstring
-
-!------------------------------------------------------------------
-!
-! Same as shortstring, but also strips any arithmetic operators
-! should be applied to variable names, but not function strings
-! (private utility)
-!
-!-----------------------------------------------------------------
-elemental function shortlabel(string,unitslab)
- use labels, only:lenlabel
- implicit none
- character(len=lenlabel), intent(in)           :: string
- character(len=*),        intent(in), optional :: unitslab
- character(len=lenlabel)                       :: shortlabel
-
- if (present(unitslab)) then
-    shortlabel = shortstring(string,unitslab)
- else
-    shortlabel = shortstring(string)
- endif
- !--remove arithmetic operators from labels
- call removesubstr(shortlabel,'**')
- call removesubstr(shortlabel,'/')
- call removesubstr(shortlabel,'*')
- call removesubstr(shortlabel,'+')
- call removesubstr(shortlabel,'-')
- call removesubstr(shortlabel,'^')
- call removesubstr(shortlabel,'sqrt(')
- call removesubstr(shortlabel,'(')
- call removesubstr(shortlabel,')')
-
-end function shortlabel
-
-!-----------------------------------------------------------------
-!
-!  utility (private) to remove all instances of a character
-!  from an input string
-!
-!-----------------------------------------------------------------
-pure subroutine removesubstr(string,substr)
- implicit none
- character(len=*), intent(in) :: substr
- character(len=*), intent(inout) :: string
- integer :: ipos,lensub
-
- ipos = index(trim(string),substr)
- lensub = len(substr)
- do while (ipos.ne.0)
-    string = string(1:ipos-1)//string(ipos+lensub:len_trim(string))
-    ipos = index(trim(string),substr)
- enddo
-
-end subroutine removesubstr
 
 !-----------------------------------------------------------------
 !

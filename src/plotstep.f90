@@ -621,7 +621,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use exact,              only:exact_solution,atstar,ctstar,sigma,iPlotExactOnlyOnPanel
   use toystar1D,          only:exact_toystar_ACplane
   use toystar2D,          only:exact_toystar_ACplane2D
-  use labels,             only:label,labelvec,iamvec,lenlabel,lenunitslabel,ih,irho,ipmass,ix,iacplane, &
+  use labels,             only:label,shortlabel,labelvec,iamvec,lenlabel,lenunitslabel,ih,irho,ipmass,ix,iacplane, &
                                ipowerspec,isurfdens,itoomre,ispsound,iutherm,ipdf,icolpixmap,is_coord,labeltype
   use limits,             only:lim,get_particle_subset,lim2,lim2set
   use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
@@ -1898,8 +1898,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                       xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax)
 
-                    call writepixmap(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax,trim(labelrender),&
-                                     ((istep-1)*nframesloop + iframe))
+                    call writepixmap(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax,label(irenderplot),&
+                                     unitslabel(irenderplot),((istep-1)*nframesloop + iframe),x_sec,rootname(ifileopen))
                  !!--no ppm write
                  else
                     !!--plot non-gas particle types (e.g. sink particles) on top
@@ -2533,7 +2533,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !--datpix is allocated inside the readpixmap routine
            if (allocated(datpix)) deallocate(datpix)
            labelrender = label(irender)
-           call readpixmap(datpix,npixx,npixy,rootname(ifileopen),labelrender,istep,x_sec,ierr)
+           call readpixmap(datpix,npixx,npixy,rootname(ifileopen),&
+                shortlabel(labelrender,unitslabel(irender)),istep,x_sec,ierr)
 
            if (.not.interactivereplot) then
               if (ndim.ge.1) then
