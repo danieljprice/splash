@@ -79,9 +79,9 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,ntypes
-  use settings_units, only:labelzintegration, unitzintegration, unit_interp
+  use settings_units, only:unitzintegration, unit_interp
   use mem_allocation, only:alloc
-  use labels, only:label,labeltype
+  use labels, only:label,labeltype,labelzintegration
   use system_utils, only:ienvironment
   implicit none
   integer, intent(in) :: istepstart

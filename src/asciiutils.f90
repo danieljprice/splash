@@ -469,7 +469,7 @@ end subroutine string_replace
 ! subroutine to delete all matching occurrences of key from string
 !
 !---------------------------------------------------------------------------
-subroutine string_delete(string,skey)
+pure subroutine string_delete(string,skey)
  implicit none
  character(len=*), intent(inout) :: string
  character(len=*), intent(in)    :: skey

@@ -348,9 +348,9 @@ end subroutine get_data
 subroutine get_labels
  use asciiutils,     only:read_asciifile
  use filenames,      only:fileprefix,unitsfile
- use labels,         only:label
+ use labels,         only:label,unitslabel
  use settings_data,  only:ncolumns,iRescale,iverbose
- use settings_units, only:read_unitsfile,unitslabel
+ use settings_units, only:read_unitsfile
  use particle_data,  only:maxcol
  use params,         only:maxplot
  implicit none

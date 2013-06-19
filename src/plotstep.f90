@@ -622,7 +622,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use toystar1D,          only:exact_toystar_ACplane
   use toystar2D,          only:exact_toystar_ACplane2D
   use labels,             only:label,shortlabel,labelvec,iamvec,lenlabel,lenunitslabel,ih,irho,ipmass,ix,iacplane, &
-                               ipowerspec,isurfdens,itoomre,ispsound,iutherm,ipdf,icolpixmap,is_coord,labeltype
+                               ipowerspec,isurfdens,itoomre,ispsound,iutherm,ipdf,icolpixmap,is_coord,labeltype,&
+                               labelzintegration,unitslabel,integrate_label
   use limits,             only:lim,get_particle_subset,lim2,lim2set
   use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                                icontourmulti,x_secmulti,xsecposmulti,iusealltypesmulti,iplotpartoftypemulti
@@ -637,7 +638,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use settings_page,      only:nacross,ndown,interactive,iaxis,usesquarexy,yscalealt,labelyalt, &
                                charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render,    only:npix,ncontours,icolours,iColourBarStyle,icolour_particles,&
-                               inormalise_interpolations,ifastrender,ilabelcont,double_rendering
+                               inormalise_interpolations,ifastrender,ilabelcont,double_rendering,&
+                               projlabelformat,iapplyprojformat
   use settings_vecplot,   only:npixvec,iplotpartvec
   use settings_xsecrot,   only:nxsec,irotateaxes,xsec_nomulti,irotate,flythru,use3Dperspective, &
                                use3Dopacityrendering,writeppm,anglex,angley,anglez,zobserver,&
@@ -646,7 +648,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                nseq,nframes,getsequencepos,insidesequence
   use settings_powerspec, only:nfreqspec,wavelengthmin,wavelengthmax,ipowerspecx,ipowerspecy,&
                                idisordered,npdfbins
-  use settings_units,     only:units,unitslabel,unitzintegration
+  use settings_units,     only:units,unitzintegration
 !
 !--subroutines called from this routine
 !
@@ -1664,8 +1666,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                  !!--set label for column density (projection) plots
                  if (ndim.eq.3 .and..not. x_sec .and..not.(use3Dperspective.and.use3Dopacityrendering)) then
-                    labelrender = integrate_label(labelrender,irender,ix(iz),inormalise)
-                    if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,ix(iz),inormalise)
+                    labelrender = integrate_label(labelrender,irender,ix(iz),inormalise,iRescale,&
+                                                  labelzintegration,projlabelformat,iapplyprojformat)
+                    if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,ix(iz),inormalise,&
+                                                 iRescale,labelzintegration,projlabelformat,iapplyprojformat)
                  endif
                  !!--apply transformations to the label(s) for the rendered and contoured quantit(y,ies)
                  labelrender = transform_label(labelrender,itrans(irenderplot))
@@ -3760,52 +3764,5 @@ subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscree
 
   return
 end subroutine rotatedaxes
-
-!---------------------------------------------------------------
-! interface for adjusting the label for column-integrated plots
-!---------------------------------------------------------------
-function integrate_label(labelin,iplot,izcol,normalise)
-  use settings_data,   only:iRescale
-  use settings_units,  only:labelzintegration,unitslabel
-  use settings_render, only:projlabelformat,iapplyprojformat
-  use labels,          only:irho,label
-  use asciiutils,      only:string_replace
-  implicit none
-  character(len=*), intent(in) :: labelin
-  integer, intent(in) :: iplot,izcol
-  logical, intent(in) :: normalise
-  character(len=len(label)+20) :: integrate_label
-
-  if (len_trim(projlabelformat).ne.0 .and. (iapplyprojformat.eq.0 .or. iapplyprojformat.eq.iplot)) then
-     integrate_label = projlabelformat
-     call string_replace(integrate_label,'%l',trim(labelin))
-     if (iRescale) then
-        call string_replace(integrate_label,'%z',trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1)))
-        call string_replace(integrate_label,'%uz',trim(unitslabel(izcol)))
-     else
-        call string_replace(integrate_label,'%z',trim(label(izcol)))
-     endif
-  else
-     if (normalise) then
-        integrate_label = '< '//trim(labelin)//' >'
-     else
-        if (iRescale) then
-           integrate_label = '\(2268) '//trim(labelin)//' d'// &
-              trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))//trim(labelzintegration)
-        else
-           integrate_label = '\(2268) '//trim(labelin)//' d'//trim(label(izcol))
-        endif
-        if (iplot.eq.irho .and. (index(labelin,'density').ne.0 .or. index(labelin,'rho').ne.0)) then
-           integrate_label = 'column density'
-           !--try to get units label right for column density
-           !  would be nice to have a more robust way of knowing what the units mean
-           if (iRescale .and. index(labelzintegration,'cm').gt.0  &
-                        .and. trim(adjustl(unitslabel(irho))).eq.'[g/cm\u3\d]') then
-              integrate_label = trim(integrate_label)//' [g/cm\u2\d]'
-           endif
-        endif
-     endif
-  endif
-end function integrate_label
 
 end module timestep_plotting

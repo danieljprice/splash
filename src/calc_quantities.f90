@@ -292,10 +292,9 @@ end subroutine splitstring
 !
 !---------------------------------------------------------------------
 subroutine print_example_quantities(ncalc)
- use labels,        only:label,shortlabel,lenlabel,irho,iutherm,iBfirst,ix,icv,idivB,&
-                         ih,iradenergy,iamvec,labelvec,idustfrac,ideltav,ivx
+ use labels,        only:label,unitslabel,shortlabel,lenlabel,irho,iutherm,iBfirst,&
+                         ix,icv,idivB,ih,iradenergy,iamvec,labelvec,idustfrac,ideltav,ivx
  use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
- use settings_units,only:unitslabel
  use geometry,      only:labelcoord
  implicit none
  integer, intent(inout), optional :: ncalc
@@ -532,8 +531,7 @@ end subroutine print_example_quantities
 subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
  use settings_data,  only:ncolumns,iRescale
  use fparser,        only:checkf
- use labels,         only:label,shortstring
- use settings_units, only:unitslabel
+ use labels,         only:label,unitslabel,shortstring
  implicit none
  integer, intent(out) :: ncalcok,ncalctot
  integer, dimension(maxcalc), intent(out), optional :: incolumn
@@ -650,12 +648,12 @@ end subroutine get_calc_data_dependencies
 !
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
-  use labels,         only:label,labelvec,iamvec,ix,ivx,shortstring
+  use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring
   use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol,iamtype
   use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
                            icoords,icoordsnew,ipartialread,itracktype,itrackoffset
   use mem_allocation, only:alloc
-  use settings_units, only:unitslabel,units
+  use settings_units, only:units
   use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
   use params,         only:maxplot
   use timing,         only:wall_time,print_time
@@ -913,8 +911,7 @@ end subroutine addcolumn
 !
 !-----------------------------------------------------------------
 subroutine get_variables(maxlabel,nvars,variables)
- use labels,         only:label,shortlabel
- use settings_units, only:unitslabel
+ use labels,         only:label,shortlabel,unitslabel
  implicit none
  integer,                        intent(in)  :: maxlabel
  integer,                        intent(out) :: nvars

@@ -33,7 +33,9 @@ module labels
  character(len=lenlabel), dimension(maxplot+2) :: label,labelvec
  character(len=20), dimension(maxparttypes) :: labeltype
  character(len=6), parameter :: labeldefault = 'column'
- integer, dimension(3) :: ix
+ character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel
+ character(len=lenunitslabel), public :: labelzintegration
+ integer, dimension(3)       :: ix
  integer, dimension(maxplot) :: iamvec
  integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst,iBpol,iBtor,iax
  integer :: ipmass,ike,ispsound
@@ -45,7 +47,6 @@ module labels
  integer :: irhorestframe,idustfrac,ideltav
 
  public
- private :: removesubstr
 
 contains
 
@@ -113,6 +114,7 @@ end function is_coord
 !
 !-----------------------------------------------------------------
 elemental function shortstring(string,unitslab)
+ use asciiutils, only:string_delete
  implicit none
  character(len=lenlabel), intent(in)           :: string
  character(len=*),        intent(in), optional :: unitslab
@@ -133,11 +135,11 @@ elemental function shortstring(string,unitslab)
  endif
 
  !--remove spaces
- call removesubstr(shortstring,' ')
+ call string_delete(shortstring,' ')
  !--remove escape sequences (\d etc.)
- call removesubstr(shortstring,'\d')
- call removesubstr(shortstring,'\u')
- call removesubstr(shortstring,'\g')
+ call string_delete(shortstring,'\d')
+ call string_delete(shortstring,'\u')
+ call string_delete(shortstring,'\g')
 
 end function shortstring
 
@@ -148,6 +150,7 @@ end function shortstring
 !
 !-----------------------------------------------------------------
 elemental function shortlabel(string,unitslab)
+ use asciiutils, only:string_delete
  implicit none
  character(len=lenlabel), intent(in)           :: string
  character(len=*),        intent(in), optional :: unitslab
@@ -159,44 +162,67 @@ elemental function shortlabel(string,unitslab)
     shortlabel = shortstring(string)
  endif
  !--remove arithmetic operators from labels
- call removesubstr(shortlabel,'**')
- call removesubstr(shortlabel,'/')
- call removesubstr(shortlabel,'*')
- call removesubstr(shortlabel,'+')
- call removesubstr(shortlabel,'-')
- call removesubstr(shortlabel,'^')
- call removesubstr(shortlabel,'sqrt(')
- call removesubstr(shortlabel,'(')
- call removesubstr(shortlabel,')')
- call removesubstr(shortlabel,'{')
- call removesubstr(shortlabel,'}')
- call removesubstr(shortlabel,'[')
- call removesubstr(shortlabel,']')
- call removesubstr(shortlabel,'<')
- call removesubstr(shortlabel,'>')
- call removesubstr(shortlabel,'\(2268)')
+ call string_delete(shortlabel,'**')
+ call string_delete(shortlabel,'/')
+ call string_delete(shortlabel,'*')
+ call string_delete(shortlabel,'+')
+ call string_delete(shortlabel,'-')
+ call string_delete(shortlabel,'^')
+ call string_delete(shortlabel,'sqrt(')
+ call string_delete(shortlabel,'(')
+ call string_delete(shortlabel,')')
+ call string_delete(shortlabel,'{')
+ call string_delete(shortlabel,'}')
+ call string_delete(shortlabel,'[')
+ call string_delete(shortlabel,']')
+ call string_delete(shortlabel,'<')
+ call string_delete(shortlabel,'>')
+ call string_delete(shortlabel,'\(2268)')
 
 end function shortlabel
 
-!-----------------------------------------------------------------
-!
-!  utility (private) to remove all instances of a character
-!  from an input string
-!
-!-----------------------------------------------------------------
-pure subroutine removesubstr(string,substr)
- implicit none
- character(len=*), intent(in) :: substr
- character(len=*), intent(inout) :: string
- integer :: ipos,lensub
+!---------------------------------------------------------------
+! interface for adjusting the label for column-integrated plots
+!---------------------------------------------------------------
+function integrate_label(labelin,iplot,izcol,normalise,iRescale,labelzint,&
+                         projlabelformat,iapplyprojformat)
+  use asciiutils,      only:string_replace
+  implicit none
+  character(len=*), intent(in) :: labelin,labelzint,projlabelformat
+  integer, intent(in) :: iplot,izcol,iapplyprojformat
+  logical, intent(in) :: normalise,iRescale
+  character(len=len(label)+20) :: integrate_label
 
- ipos = index(trim(string),substr)
- lensub = len(substr)
- do while (ipos.ne.0)
-    string = string(1:ipos-1)//string(ipos+lensub:len_trim(string))
-    ipos = index(trim(string),substr)
- enddo
-
-end subroutine removesubstr
+  if (len_trim(projlabelformat).ne.0 .and. (iapplyprojformat.eq.0 .or. iapplyprojformat.eq.iplot)) then
+     integrate_label = projlabelformat
+     call string_replace(integrate_label,'%l',trim(labelin))
+     if (iRescale) then
+        call string_replace(integrate_label,'%z',trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1)))
+        call string_replace(integrate_label,'%uz',trim(unitslabel(izcol)))
+     else
+        call string_replace(integrate_label,'%z',trim(label(izcol)))
+     endif
+  else
+     if (normalise) then
+        integrate_label = '< '//trim(labelin)//' >'
+     else
+        if (iRescale) then
+           integrate_label = '\(2268) '//trim(labelin)//' d'// &
+              trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))//trim(labelzint)
+        else
+           integrate_label = '\(2268) '//trim(labelin)//' d'//trim(label(izcol))
+        endif
+        if (iplot.eq.irho .and. (index(labelin,'density').ne.0 .or. index(labelin,'rho').ne.0)) then
+           integrate_label = 'column density'
+           !--try to get units label right for column density
+           !  would be nice to have a more robust way of knowing what the units mean
+           if (iRescale .and. index(labelzint,'cm').gt.0  &
+                        .and. trim(adjustl(unitslabel(irho))).eq.'[g/cm\u3\d]') then
+              integrate_label = trim(integrate_label)//' [g/cm\u2\d]'
+           endif
+        endif
+     endif
+  endif
+end function integrate_label
 
 end module labels

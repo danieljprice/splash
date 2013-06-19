@@ -69,8 +69,8 @@ logical function issphformat(string)
 end function issphformat
 
 subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,ncolumns,filename,outformat)
- use labels,         only:labeltype,label,irho,ipmass,ix
- use settings_units, only:unitslabel,units
+ use labels,         only:labeltype,label,unitslabel,irho,ipmass,ix
+ use settings_units, only:units
  use settings_data,  only:ndim,icoords,icoordsnew,xorigin
  use params,         only:int1,maxplot,doub_prec
  use write_data_phantom, only:write_sphdata_phantom

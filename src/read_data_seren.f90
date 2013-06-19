@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -102,9 +102,9 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread,ntypes
-  use settings_units, only:labelzintegration, unitzintegration, unit_interp
+  use settings_units, only:unitzintegration, unit_interp
   use mem_allocation, only:alloc
-  use labels,         only:labeltype
+  use labels,         only:labeltype,labelzintegration
   use system_utils,   only:ienvironment
   use seren_data_store
   implicit none
@@ -1092,12 +1092,12 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,iamvec,labelvec,labeltype,&
+  use labels, only:label,iamvec,labelvec,labeltype,unitslabel,&
      &ix,ivx,ipmass,ih,irho,iBfirst,iutherm,lenlabel,lenunitslabel
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
   use geometry, only:labelcoord
-  use settings_units, only:units,unitslabel !,unitzintegration,labelzintegration
+  use settings_units, only:units
   use seren_data_store
   implicit none
   integer :: i, j, width, unit_no

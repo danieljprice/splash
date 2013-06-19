@@ -85,9 +85,8 @@ subroutine submenu_data(ichoose)
                           DataIsBuffered,numplot,ncalc,ncolumns
  use calcquantities, only:calc_quantities,setup_calculated_quantities
  use limits,         only:set_limits
- use labels,         only:label
- use settings_units, only:units,unitslabel,set_units,write_unitsfile, &
-                          unitzintegration,labelzintegration
+ use labels,         only:label,unitslabel,labelzintegration
+ use settings_units, only:units,set_units,write_unitsfile,unitzintegration
  implicit none
  integer, intent(in) :: ichoose
  integer             :: ians, i

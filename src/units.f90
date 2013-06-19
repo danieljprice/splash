@@ -25,13 +25,11 @@
 !--------------------------------------------------------------------
 module settings_units
  use params
- use labels, only:lenunitslabel
+ use labels, only:unitslabel,labelzintegration
  implicit none
  real, dimension(0:maxplot), public :: units
  real, public :: unitzintegration
  real(doub_prec), public :: unit_interp
- character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel
- character(len=lenunitslabel), public :: labelzintegration
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
 
  private

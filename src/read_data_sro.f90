@@ -610,11 +610,11 @@ end subroutine read_data
 
 subroutine set_labels
   use filenames, only:rootname
-  use labels, only:label,labelvec,labeltype,iamvec,&
+  use labels, only:label,unitslabel,labelvec,labeltype,iamvec,&
               ix,ivx,ih,irho,iutherm,ipmass,iBfirst,idivB
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry, only:labelcoord
-  use settings_units, only:units,unitslabel
+  use settings_units, only:units
   implicit none
   integer :: i
   logical :: minidump
