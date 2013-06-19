@@ -1427,12 +1427,12 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,labeltype,labelvec,iamvec, &
+  use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy
   use params
   use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings
   use geometry,        only:labelcoord
-  use settings_units,  only:units,unitslabel,unitzintegration,labelzintegration
+  use settings_units,  only:units,unitzintegration
   use sphNGread
   use asciiutils,      only:lcase
   use system_commands, only:get_environment

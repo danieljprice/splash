@@ -178,9 +178,8 @@ end subroutine changeveccoords
 !----------------------------------------------------------------
 subroutine set_coordlabels(numplot)
  use geometry,       only:labelcoord
- use labels,         only:label,iamvec,labelvec,ix,labeldefault
+ use labels,         only:label,unitslabel,iamvec,labelvec,ix,labeldefault
  use settings_data,  only:icoords,icoordsnew,ndim,iRescale,debugmode
- use settings_units, only:unitslabel
  implicit none
  integer, intent(in) :: numplot
  integer             :: i
