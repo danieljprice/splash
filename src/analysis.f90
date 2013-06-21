@@ -1012,10 +1012,10 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        !--store first dump
        datmean(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)
     else
-       where (dat(1:ntot1,1:ncol1).ne.0.)
+       where (datmean(1:ntot1,1:ncol1).ne.0.)
           datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/datmean(1:ntot1,1:ncol1)    ! ratio of current data to first step
        elsewhere
-          datvar = 0.
+          datvar = 1.e12
        end where
        valmin = datvar(1,1)
        valmax = datvar(1,1)
@@ -1023,7 +1023,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        do j=1,ncol1
           do i=1,ntot1
              valmin = min(datvar(i,j),valmin)
-             valmax = min(datvar(i,j),valmin)
+             valmax = max(datvar(i,j),valmin)
              valmean = valmean + datvar(i,j)
           enddo
        enddo
