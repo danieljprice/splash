@@ -394,6 +394,7 @@ function safename(string)
  call string_delete(safename,'"')
  call string_delete(safename,'&')
  call string_delete(safename,'#')
+ call string_delete(safename,'|')
 
  !--remove escape sequences: remove '\' and position following
  ipos = index(trim(safename),'\')
