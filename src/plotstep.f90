@@ -2536,7 +2536,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
            !--datpix is allocated inside the readpixmap routine
            if (allocated(datpix)) deallocate(datpix)
-           labelrender = '|B_\phi|/|B_p|'
+           
+           if (irender.eq.icolpixmap) then
+              labelrender = '|B_\phi|/|B_p|'
+           else
+              labelrender = label(irender)
+           endif
            call readpixmap(datpix,npixx,npixy,rootname(ifileopen),&
                 shortlabel(labelrender,unitslabel(irender)),istep,x_sec,ierr)
 
