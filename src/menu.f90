@@ -444,7 +444,7 @@ subroutine menu
             call prompt(' enter x axis for PDF calculation ',multiplotx(i),1,ndataplots)
          elseif (multiploty(i).eq.icolpixmap) then
             call prompt(' enter corresponding SPH column for particle data ',irendermulti(i),0,ndataplots)
-            multiplotx(i) = 0
+            multiplotx(i) = 1
          elseif(.not.isamex) then
             multiplotx(i) = multiploty(i)
          endif
