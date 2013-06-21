@@ -186,7 +186,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         if (any(multiploty(1:nyplotmulti).eq.icolpixmap)) then
            isameyaxis = .true.
            do i=1,nyplotmulti
-              if (.not.(multiploty(i).eq.icolpixmap .or. multiploty(i).eq.ix(2))) isameyaxis = .false.
+              if (.not.(multiploty(i).eq.icolpixmap .or. multiploty(i).eq.multiploty(1))) isameyaxis = .false.
            enddo
         endif
      endif
@@ -2536,7 +2536,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
            !--datpix is allocated inside the readpixmap routine
            if (allocated(datpix)) deallocate(datpix)
-           labelrender = label(irender)
+           labelrender = '|B_\phi|/|B_p|'
            call readpixmap(datpix,npixx,npixy,rootname(ifileopen),&
                 shortlabel(labelrender,unitslabel(irender)),istep,x_sec,ierr)
 
@@ -2549,8 +2549,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  xmax = 1.
               endif
               if (ndim.ge.2) then
-                 ymin = lim(ix(2),1)
-                 ymax = lim(ix(2),2)
+                 ymin = lim(ix(3),1)
+                 ymax = lim(ix(3),2)
               else
                  ymin = 0.
                  ymax = 1.
@@ -2558,8 +2558,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            endif
            if (ndim.ge.1) iplotx = ix(1)
            if (ndim.ge.2) then
-              iploty = ix(2)
-              labely = label(ix(2))
+              iploty = ix(3)
+              labely = label(ix(3))
            endif
            pixwidth = (xmax-xmin)/real(npixx)
 
