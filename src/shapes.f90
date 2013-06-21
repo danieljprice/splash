@@ -165,7 +165,7 @@ subroutine print_shapeinfo(inum,itype,shapein)
     print "(10x,a)"
     write(*,fmtstring,advance='no') inum,' ------>  '//labelshapetype(itype)
     if (present(shapein)) then
-       print "(6x,'length = ',es8.2,', angle = ',f5.1,' deg.')",&
+       print "(6x,'length = ',es10.2,', angle = ',f5.1,' deg.')",&
              shapein%xlen,shapein%angle
     else
        print*
@@ -176,7 +176,7 @@ subroutine print_shapeinfo(inum,itype,shapein)
     print "(10x,a)",'  /   \ '
     write(*,fmtstring,advance='no') inum,' (     )  '//labelshapetype(itype)
     if (present(shapein)) then
-       print "(6x,'radius = ',es8.2)",&
+       print "(6x,'radius = ',es10.2)",&
              shapein%xlen
     else
        print*
@@ -186,7 +186,7 @@ subroutine print_shapeinfo(inum,itype,shapein)
     print "(10x,a)"
     write(*,fmtstring,advance='no') inum,' -------- '//labelshapetype(itype)
     if (present(shapein)) then
-       print "(6x,'length = ',es8.2)",shapein%xlen
+       print "(6x,'length = ',es10.2)",shapein%xlen
     else
        print*
     endif
