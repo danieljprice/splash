@@ -93,7 +93,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use pagecolours,        only:set_pagecolours
   use settings_part,      only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact,iplotpartoftype
   use settings_render,    only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
-  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec, &
+  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec,irotate, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2,xsecwidth, &
                                use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth
   use settings_powerspec, only:options_powerspec,options_pdf
@@ -224,7 +224,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
            iplotzprev = iplotz
            !!--work out coordinate that is not being plotted on cross-section/ 3D plots
            iplotz = 0
-           if (ndim.ge.3 .and. (x_sec .or. use3Dperspective)) then
+           if (ndim.ge.3 .and. (x_sec .or. use3Dperspective .or. irotate)) then
               do j=1,ndim
                  if ((multiplotx(i).ne.multiploty(i)).and. &
                      (ix(j).ne.multiplotx(i)).and.(ix(j).ne.multiploty(i))) iplotz = ix(j)
