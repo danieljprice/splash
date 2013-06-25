@@ -144,11 +144,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
       vptymaxp = vptymaxi  ! warnings
       call barlimits(vptxmini,vptxmaxi,vptxminp,vptxmaxp,ColourBarPosx,ColourBarLen)
       call barlimits(vptymini,vptymaxi,vptyminp,vptymaxp,ColourBarPosy,ColourBarLen)
-      if (istyle.eq.8) then
-         vptymaxi = vptymini + 2.*width*ych
-      else
-         vptymaxi = vptymini + width*ych
-      endif
+      vptymaxi = vptymini + width*ych
    else
       vptymaxi = vptymini - (disp + xlabeloffset)*ych
       vptymini = vptymaxi - width*ych
@@ -200,9 +196,9 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
     if (istyle.eq.10) then
        call plot_box(ColourBarFmtStr,0.0,0,'BC',0.0,0)
-    elseif (istyle.eq.4 .or. istyle.eq.6) then
+    elseif (istyle.eq.4 .or. istyle.eq.6 .or. istyle.eq.8) then
        call plot_box('BNST',0.0,0,'BC',0.0,0)
-       if (istyle.eq.6) call plot_box('C',0.0,0,' ',0.0,0)
+       if (istyle.eq.6 .or. istyle.eq.8) call plot_box('C',0.0,0,' ',0.0,0)
     else
        call plot_box('BCNST',0.0,0,'BC',0.0,0)
     endif
@@ -233,11 +229,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
        vptymaxp = vptymaxi  ! warnings
        call barlimits(vptxmini,vptxmaxi,vptxminp,vptxmaxp,ColourBarPosx,ColourBarLen)
        call barlimits(vptymini,vptymaxi,vptyminp,vptymaxp,ColourBarPosy,ColourBarLen)
-       if (istyle.eq.9) then
-          vptxmaxi = vptxmini + width*xch       
-       else
-          vptxmaxi = vptxmini + 2.*width*xch
-       endif
+       vptxmaxi = vptxmini + width*xch
     else
        vptxmini = vptxmaxi + disp*xch
        vptxmaxi = vptxmini + width*xch
@@ -259,9 +251,9 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    !
     if (istyle.eq.9) then
        call plot_box('BC',0.0,0,ColourBarFmtStr,0.0,0)
-    elseif (istyle.eq.3 .or. istyle.eq.5) then
+    elseif (istyle.eq.3 .or. istyle.eq.5 .or. istyle.eq.7) then
        call plot_box('BC',0.0,0,'CMSTV',0.0,0)
-       if (istyle.eq.5) call plot_box(' ',0.0,0,'B',0.0,0)
+       if (istyle.eq.5 .or. istyle.eq.7) call plot_box(' ',0.0,0,'B',0.0,0)
     else
        call plot_box('BC',0.0,0,'BCMSTV',0.0,0)
     endif
