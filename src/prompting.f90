@@ -91,7 +91,7 @@
 ! String prompt accepts "blank" to set empty string, unless optional
 ! argument noblank is set to .true.
 !
-! 06/02/09: D. Price, Monash University, daniel.price@sci.monash.edu.au
+! 06/02/09: D. Price, Monash University, daniel.price@monash.edu
 ! Added optional "mask" argument to print_logical routine
 !
 ! 27/01/10: D. Price:
@@ -112,6 +112,9 @@
 !
 ! 08/02/13: D. Price
 ! Integer prompt enforces default value to be between min and max
+!
+! 25/06/13: D. Price
+! Real and double prompts print values using scientific notation 1.e8 instead of 0.1e9
 !
 module prompting
 
@@ -281,7 +284,11 @@ contains
       !  Pack arguments in strings for compact and nicer prompt
       !
 
-      write(string,"(g13.4)") value
+      if (abs(value) < 0.1 .or. abs(value) >= 1.d4) then
+         write(string,"(es13.4)") value
+      else
+         write(string,"(g13.4)") value
+      endif
       if (present(min)) write(chmin,"(g13.4)") min
       if (present(max)) write(chmax,"(g13.4)") max
 
@@ -365,7 +372,11 @@ contains
       !  Pack arguments in strings for compact and nicer prompt
       !
 
-      write(string,"(g13.4)") value
+      if (abs(value) < 0.1d0 .or. abs(value) >= 1.d4) then
+         write(string,"(es13.4)") value
+      else
+         write(string,"(g13.4)") value
+      endif
       if (present(min)) write(chmin,"(g13.4)") min
       if (present(max)) write(chmax,"(g13.4)") max
 
