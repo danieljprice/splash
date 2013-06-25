@@ -382,9 +382,12 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
      call plot_sls(linestylethisstep)
      call plot_line(npartoftype(1),xplot(1:npartoftype(1)), &
                  yplot(1:npartoftype(1)))
-     call plot_sls(mod(linestylethisstep+2,plotlib_maxlinestyle))
-     call plot_line(npartoftype(2),xplot(npartoftype(1)+1:sum(npartoftype(1:2))), &
+
+     if (npartoftype(2).gt.0 .and. iplotpartoftype(2)) then
+        call plot_sls(mod(linestylethisstep+1,plotlib_maxlinestyle) + 1)
+        call plot_line(npartoftype(2),xplot(npartoftype(1)+1:sum(npartoftype(1:2))), &
                  yplot(npartoftype(1)+1:sum(npartoftype(1:2))))
+     endif
      call plot_sls(oldlinestyle)! reset
   endif
   !
@@ -601,30 +604,35 @@ subroutine plot_errorbarsy(npts,x,y,err,itrans)
  real, intent(in), dimension(:) :: x,y,err
  real :: yval,errval
  real, dimension(2) :: val
+ real, dimension(npts) :: errp,errm
  integer :: i
 
  print*,'plotting ',npts,' error bars y axis'
  if (itrans.ne.0) then
     if (islogged(itrans)) then
-       errval = -300.
+       errval = 0. !-300.
     else
        errval = 0.
     endif
-    call plot_bbuf
+    !call plot_bbuf
     do i=1,npts
        yval = y(i)
        call transform_inverse(yval,itrans)
        val(1) = yval + err(i)
        val(2) = yval - err(i)
        call transform(val,itrans,errval=errval)
+       errp(i) = val(1) - y(i)
+       errm(i) = y(i) - val(2)
        val(1) = val(1) - y(i)
        val(2) = y(i) - val(2)
-       call plot_err1(2,x(i),y(i),val(1),1.0)
-       call plot_err1(4,x(i),y(i),val(2),1.0)
+       !call plot_err1(2,x(i),y(i),val(1),1.0)
+       !call plot_err1(4,x(i),y(i),val(2),1.0)
     enddo
-    call plot_ebuf
+    call plot_errb(7,npts,x,y,errp,1.0)
+    call plot_errb(8,npts,x,y,errm,1.0)
+    !call plot_ebuf
  else
-    call plot_errb(6,npts,x,y,err,1.0)
+    call plot_errb(9,npts,x,y,err,1.0)
  endif
 
 end subroutine plot_errorbarsy
