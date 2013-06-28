@@ -403,10 +403,10 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  else
     fambient = 0.3
     fdiff = 0.7
-    fspec = 0.9
+    fspec = 0.8
  endif
  pdiff = 4
- nspec = 78
+ nspec = 12
  !
  !--specify the viewing and lighting angles
  ! 
@@ -416,7 +416,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  !--make sure these are normalised
  !lighting = lighting/sqrt(dot_product(lighting,lighting))
 
- print*,'plotting 3D field structure, vmax = ',vmax
+ print*,'plotting 3D field structure: min,max = ',1.e-3*vmax,vmax
 !
 !--first sort the particles in z so that we do the opacity in the correct order
 !
@@ -472,12 +472,10 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
           vdotr = ldotn*sqrt(1. - vdott**2) - ldott*vdott
           specular = fspec*(vdotr)**nspec
           toti = (fambient + diffuse + specular)
-          frac = (1.- toti)*frac
-          toti = 0.
 
           !--draw line with intensity proportional
           !  to the amount of lighting
-          call plot_scr(1,toti,toti,toti,frac)
+          call plot_scr(1,toti,toti,toti,max(frac,0.05))
           call plot_sci(1)
           call plot_slw(lw)
           call plot_line(2,xpts,ypts)
