@@ -166,7 +166,7 @@ end subroutine select_kernel_by_name
 !  Functional forms of various kernels
 !
 !--------------------------------------
-pure real function w_cubic(q2)
+real function w_cubic(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
@@ -183,7 +183,7 @@ pure real function w_cubic(q2)
 
 end function w_cubic
 
-pure real function w_quartic(q2)
+real function w_quartic(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
@@ -201,7 +201,7 @@ pure real function w_quartic(q2)
 
 end function w_quartic
 
-pure real function w_quintic(q2)
+real function w_quintic(q2)
  implicit none
  real, intent(in) :: q2
  real :: q,q4
@@ -222,7 +222,7 @@ pure real function w_quintic(q2)
 
 end function w_quintic
 
-pure real function w_quartic2h(q2)
+real function w_quartic2h(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
@@ -240,7 +240,7 @@ pure real function w_quartic2h(q2)
 
 end function w_quartic2h
 
-pure real function w_wendlandc2(q2)
+real function w_wendlandc2(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
@@ -254,7 +254,7 @@ pure real function w_wendlandc2(q2)
 
 end function w_wendlandc2
 
-pure real function w_wendlandc4(q2)
+real function w_wendlandc4(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
@@ -268,7 +268,7 @@ pure real function w_wendlandc4(q2)
 
 end function w_wendlandc4
 
-pure real function w_wendlandc6(q2)
+real function w_wendlandc6(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
