@@ -1,3 +1,6 @@
+2.3.0:
+can customise time formatting in legend; improvements to legends; less verboseness; splash can read and plot pixel maps produced with -o ascii; 3D vector field plotting improved; bug fix with gfortran 4.8
+ 
 2.2.2:
 particle tracking by type implemented; can interpolate specific columns in splash to grid; SPLASH\_CENTRE\_ON\_SINK option generic to all data reads; Aly Reheam format added; option for 2nd y axis on plots; bug fix with X11 linking on Ubuntu; can read gadget ICs files
  
