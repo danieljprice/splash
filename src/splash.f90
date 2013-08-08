@@ -48,8 +48,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.2.3  : (xx/xx/xx)
-!             can customise time formatting in legend; improvements to legends
+!     2.3.0  : (09/08/13)
+!             can customise time formatting in legend; improvements to legends;
+!             less verboseness; splash can read and plot pixel maps produced with -o ascii;
+!             3D vector field plotting improved; bug fix with gfortran 4.8
 !     2.2.2  : (10/05/13)
 !             particle tracking by type implemented;
 !             can interpolate specific columns in splash to grid;
@@ -340,7 +342,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.2.3svn [20th June 2013]'
+  character(len=*), parameter :: version = 'v2.3.0 [9th Aug. 2013]'
 
   !
   ! initialise some basic code variables
