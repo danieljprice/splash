@@ -351,7 +351,7 @@ end subroutine interpolate_pt
 !--------------------------------------------------------------------------
 subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  use plotlib, only:plot_line,plot_bbuf,plot_ebuf,plot_slw,plot_sci,plot_set_opacity
- use plotlib, only:plot_qcr,plot_scr
+ use plotlib, only:plot_qcr,plot_scr,plot_qlw
  implicit none
  integer, intent(in) :: n
  real, dimension(n), intent(in) :: x,y,z,vx,vy,vz,weight
@@ -363,7 +363,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  real, dimension(2) :: xpts,ypts
  real :: vxi,vyi,vzi,dvmag,zfrac,vmax,vmag,frac,ri,gi,bi,term,lw
  real :: toti,fambient,diffuse,specular,fdiff,fspec,ldotn,vdotr,ldott,vdott
- integer :: pdiff,nspec
+ integer :: pdiff,nspec,lwold
  real, dimension(3) :: vunit,lighting,viewangle
  logical :: white_bg,use3Dperspective
 
@@ -426,7 +426,8 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
 
  np = 0
  zfrac = 1.
- lw = 2.
+ call plot_qlw(lwold)
+ lw = 2.*lwold
  over_particles: do ipart=1,n
     i = iorder(ipart)
     if (itype(i).ge.0 .and. weight(i).gt.0.) then
@@ -490,6 +491,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  call plot_scr(1,ri,gi,bi)
  call plot_set_opacity(1.0)
  call plot_ebuf
+ call plot_slw(lwold)
  print*,' plotted ',np,' of ',n,' particles'
 
 end subroutine vecplot3D_proj
