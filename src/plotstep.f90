@@ -535,9 +535,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      devstring = trim(device)  ! device specified on command line
   endif
 
-  ierr = 0
+  ierr = 1
   ntries = 0
-  do while(ierr.eq.0)
+  do while(ierr.ne.0)
      ntries = ntries + 1
      if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
         call plot_init(trim(devstring),ierr,papersizex,aspectratio,ipapersizeunits)
