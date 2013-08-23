@@ -106,7 +106,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   implicit none
   real, parameter     :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
-  integer             :: i,j,ifirst,iplotzprev,ilen,ierr,irow
+  integer             :: i,j,ifirst,iplotzprev,ilen,ierr,irow,ntries
   logical             :: iadapting,icoordplot,iallrendered,ians
   real                :: hav,pmassav,dzsuggest
   integer, dimension(:), allocatable :: ifirstinrow
@@ -535,17 +535,23 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      devstring = trim(device)  ! device specified on command line
   endif
 
-  if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
-     call plot_init(trim(devstring),ierr,papersizex,aspectratio,ipapersizeunits)
-  else
-     call plot_init(trim(devstring),ierr)  ! use default paper size
-  endif
-
-  !--abort if device specified on command line returns an error
-  if (len_trim(device).gt.0 .and. ierr.ne.0) then  ! -ve indicates an error
-     print "(a)",' ERROR: unknown device "'//trim(device)//'"'
-     stop
-  endif
+  ierr = 0
+  ntries = 0
+  do while(ierr.eq.0)
+     ntries = ntries + 1
+     if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
+        call plot_init(trim(devstring),ierr,papersizex,aspectratio,ipapersizeunits)
+     else
+        call plot_init(trim(devstring),ierr)  ! use default paper size
+     endif
+     !--abort if device specified on command line returns an error
+     if (len_trim(device).gt.0 .and. ierr.ne.0) then  ! -ve indicates an error
+        print "(a)",' ERROR: unknown device "'//trim(device)//'"'
+        stop
+     endif
+     if (ierr.ne.0) print "(a)",' ERROR opening plotting device'
+     if (ntries.gt.10) stop
+  enddo
 
   !--query whether or not device is interactive
   !call plot_qinf('CURSOR',devstring,ilen)
