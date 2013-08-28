@@ -1908,7 +1908,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                       xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax)
 
-                    call writepixmap(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax,label(irenderplot),&
+                    call writepixmap(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax,labelrender,&
                                      unitslabel(irenderplot),((istep-1)*nframesloop + iframe),x_sec,rootname(ifileopen))
                  !!--no ppm write
                  else
