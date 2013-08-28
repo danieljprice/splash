@@ -1015,7 +1015,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        where (datmean(1:ntot1,1:ncol1).ne.0.)
           datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/datmean(1:ntot1,1:ncol1)    ! ratio of current data to first step
        elsewhere
-          datvar = 1.e12
+          datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/(datmean(1:ntot1,1:ncol1) + epsilon(0.))
        end where
        valmin = datvar(1,1)
        valmax = datvar(1,1)
