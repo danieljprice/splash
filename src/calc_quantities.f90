@@ -446,7 +446,7 @@ subroutine print_example_quantities(ncalc)
  if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. icoordsnew.eq.1) then
     gotpmag = .true.
     write(string,"(a)",iostat=ierr) &
-        'P\dmag = 0.5*('//trim(shortlabel(label(iBfirst),unitslabel(iBfirst)))//'**2'
+        'P_{mag} = 0.5*('//trim(shortlabel(label(iBfirst),unitslabel(iBfirst)))//'**2'
     ilen = len_trim(string)
     if (ndimV.gt.1) then
        write(string(ilen+1:),"(a,a,a)",iostat=ierr) &
@@ -484,7 +484,7 @@ subroutine print_example_quantities(ncalc)
  endif
  !--Plasma beta
  if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. gotpmag .and. gotpressure) then
-    write(string,"(a)",iostat=ierr) 'plasma \gb = pressure/P\dmag'
+    write(string,"(a)",iostat=ierr) 'plasma \gb = pressure/Pmag'
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
@@ -496,25 +496,25 @@ subroutine print_example_quantities(ncalc)
  !--gas temperature if cv present
  if (ndim.gt.0 .and. iutherm.gt.0 .and. icv.gt.0) then
     string = ' '
-    write(string,"(a)",iostat=ierr) 'T\dgas\u = '//trim(shortlabel(label(iutherm),unitslabel(iutherm)))//'/' &
+    write(string,"(a)",iostat=ierr) 'T_{gas} = '//trim(shortlabel(label(iutherm),unitslabel(iutherm)))//'/' &
                     //trim(shortlabel(label(icv),unitslabel(icv)))
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
     else
-       print "(6x,a)",trim(string)
+       print "(11x,a)",trim(string)
     endif
  endif
  !--radiation temperature
  if (ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0) then
     string = ' '
-    write(string,"(a)",iostat=ierr) 'T\drad\u = ('//trim(shortlabel(label(irho),unitslabel(irho)))//'*' &
+    write(string,"(a)",iostat=ierr) 'T_{rad} = ('//trim(shortlabel(label(irho),unitslabel(irho)))//'*' &
                     //trim(shortlabel(label(iradenergy),unitslabel(iradenergy)))//'/7.5646e-15)**0.25)'
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
     else
-       print "(6x,a)",trim(string)
+       print "(11x,a)",trim(string)
     endif
  endif
  
