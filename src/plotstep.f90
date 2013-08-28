@@ -707,6 +707,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   integer :: iframe,isize
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
+  real, parameter :: error_in_log = -666. ! magic number used to flag error with log(0.)
   real, dimension(:), allocatable    :: xplot,yplot,zplot
   real, dimension(:), allocatable    :: hh,weight
   real, dimension(:), allocatable    :: renderplot
@@ -1653,13 +1654,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     if (logged) then
                        !!--if log, then set zero values to some large negative number
                        !   but exclude this value from adaptive limits determination
-                       call transform(datpix,itrans(irenderplot),errval=-666.)
+                       call transform(datpix,itrans(irenderplot),errval=error_in_log)
                     else
                        call transform(datpix,itrans(irenderplot))
                     endif
                     if (gotcontours) then
                        if (loggedcont) then
-                          call transform(datpixcont,itrans(icontourplot),errval=-666.)
+                          call transform(datpixcont,itrans(icontourplot),errval=error_in_log)
                        else
                           call transform(datpixcont,itrans(icontourplot))
                        endif
@@ -1685,8 +1686,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  if (.not.interactivereplot .or. irerender) then
                     !!--find (adaptive) limits of rendered array
                     if (logged) then
-!                          rendermin = minval(datpix,mask=datpix.ne.-666.) ! see above
-                       renderminadapt = minval(datpix,mask=abs(datpix+666.).gt.tiny(datpix)) ! see above
+                       renderminadapt = minval(datpix,mask=abs(datpix-error_in_log).gt.tiny(datpix)) ! see above
                     else
                        renderminadapt = minval(datpix)
                     endif
@@ -2575,13 +2575,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            pixwidth = (xmax-xmin)/real(npixx)
 
            if (itrans(irender).ne.0 .and. allocated(datpix)) then
-              call transform(datpix,itrans(irender))
+              call transform(datpix,itrans(irender),errval=error_in_log)
            endif
            labelrender = transform_label(labelrender,itrans(irender))
 
            !--find (adaptive) limits of rendered array
            if (allocated(datpix)) then
-              renderminadapt = minval(datpix)
+              renderminadapt = minval(datpix,mask=abs(datpix-error_in_log).gt.tiny(datpix))
               rendermaxadapt = maxval(datpix)
            endif
            !--limits for rendered quantity
