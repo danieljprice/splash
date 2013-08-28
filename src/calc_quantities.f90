@@ -484,7 +484,7 @@ subroutine print_example_quantities(ncalc)
  endif
  !--Plasma beta
  if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. gotpmag .and. gotpressure) then
-    write(string,"(a)",iostat=ierr) 'plasma \gb = pressure/Pmag'
+    write(string,"(a)",iostat=ierr) 'plasma \beta = pressure/Pmag'
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
