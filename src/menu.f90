@@ -576,7 +576,7 @@ subroutine menu
       nacross = 1
       ndown = 1
       print*,'setting nacross,ndown = ',nacross,ndown
-   elseif (nyplotmulti.ne.nacross*ndown) then
+   elseif (mod(nacross*ndown,nyplotmulti).ne.0) then
       !--guess nacross,ndown based on largest factor
       ifac = nyplotmulti/2
       do while (mod(nyplotmulti,ifac).ne.0 .and. ifac.gt.1)
