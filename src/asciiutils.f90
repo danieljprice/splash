@@ -268,7 +268,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
  line = ' '
  ierr = 0
  ncolumns = 0
- ncolprev = 666
+ ncolprev = -100
  ncolsthisline = 0
  nansinfile = .false.
  infsinfile = .false.
@@ -287,6 +287,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
        ncolumns = ncolsthisline
     endif
     nheaderlines = nheaderlines + 1
+    !print*,'DEBUG: header line ',nheaderlines,' ncols = ',ncolsthisline,'"'//trim(line)//'"'
  enddo
  !--subtract 2 from the header line count (the last two lines which were the same)
  nheaderlines = max(nheaderlines - 2,0)
@@ -314,14 +315,14 @@ integer function ncolumnsline(line)
  real :: dummyreal(1000)
  integer :: ierr,i
 
- dummyreal = -666.0
+ dummyreal = -666666.0
 
  ierr = 0
  read(line,*,iostat=ierr) (dummyreal(i),i=1,size(dummyreal))
 
  i = 1
  ncolumnsline = 0
- do while(abs(dummyreal(i)+666.).gt.tiny(0.))
+ do while(abs(dummyreal(i)+666666.).gt.tiny(0.))
     ncolumnsline = ncolumnsline + 1
     i = i + 1
     if (i.gt.size(dummyreal)) then
