@@ -309,10 +309,12 @@ subroutine set_labels
   endif
 
   open(unit=51,file=trim(columnfile),status='old',iostat=ierr)
-  if (ierr /=0 .and. iverbose.gt.0) then
-     print "(3(/,a))",' WARNING: columns file not found: using default labels',&
-                    ' To change the labels, create a file called ''columns'' ',&
-                    '  in the current directory with one label per line'
+  if (ierr /=0) then
+     if (iverbose > 0) then
+        print "(3(/,a))",' WARNING: columns file not found: using default labels',&
+                         ' To change the labels, create a file called ''columns'' ',&
+                         '  in the current directory with one label per line'
+     endif
   else
      overcols: do i=1,ncolumns
         read(51,"(a)",iostat=ierr) label(i)
@@ -365,16 +367,16 @@ subroutine set_labels
            if (labeli(1:1).eq.'b') then
               ndimVtemp = i - iBfirst + 1
               if (ndimV.gt.0 .and. ndimVtemp.gt.ndimV) then
-                 print "(a)",' WARNING: possible confusion with vector dimensions'
+                 if (iverbose > 0) print "(a)",' WARNING: possible confusion with vector dimensions'
                  ndimV = ndimVtemp
               endif
            endif
         endif
         if (ierr < 0) then
-           print "(a,i3)",' end of file in columns file: read to column ',i-1
+           if (iverbose > 0) print "(a,i3)",' end of file in columns file: read to column ',i-1
            exit overcols
         elseif (ierr > 0) then
-           print "(a)",' *** error reading from columns file ***'
+           if (iverbose > 0) print "(a)",' *** error reading from columns file ***'
            exit overcols
         endif
      enddo overcols
@@ -382,7 +384,7 @@ subroutine set_labels
   endif
 
   if (ndim.lt.1) ndimV = 0
-  if (iverbose.gt.0) then
+  if (iverbose > 0) then
      if (ndim.gt.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
      if (ndim.gt.0) print "(a,i2,a,i2)",' Assuming positions in columns ',ix(1),' to ',ix(ndim)
 
@@ -399,7 +401,7 @@ subroutine set_labels
            print "(a,i2)",' Assuming velocity in column ',ivx
         endif
      endif
-     if ((ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) .and. iverbose.gt.0) then
+     if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
         print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
                     '  until positions of density, smoothing length and particle', &
                     '  mass are known (for the ascii read the simplest way is to ', &

@@ -394,7 +394,7 @@ end subroutine get_labels
 !
 !----------------------------------------------------------------
 subroutine check_labels
- use settings_data, only:ndim,ndimV,ncolumns
+ use settings_data, only:ndim,ndimV,ncolumns,iverbose
  use labels,        only:ix,irho,ih,ipmass
  use particle_data, only:masstype
  implicit none
@@ -444,16 +444,18 @@ subroutine check_labels
        print "(a)",' ERROR with ipmass setting in data read'
        ipmass = 0
     endif
-    if (irho.eq.0 .or. ih.eq.0) then
-       print "(4(/,a))",' WARNING: Rendering capabilities cannot be enabled', &
-                '  until positions of density, smoothing length and particle', &
-                '  masses are known (specified using the integer variables ', &
-                '  irho,ih and ipmass in the read_data routine)'
-    elseif (irho.gt.0 .and. ih.gt.0 .and. ipmass.eq.0 .and. all(masstype(:,:).lt.tiny(0.))) then
-       print "(2(/,a))",' WARNING: Particle masses not read as array but mass not set:', &
-                        '          RENDERING WILL NOT WORK! '
+    if (iverbose.ge.1) then
+       if (irho.eq.0 .or. ih.eq.0) then
+          print "(4(/,a))",' WARNING: Rendering capabilities cannot be enabled', &
+                   '  until positions of density, smoothing length and particle', &
+                   '  masses are known (specified using the integer variables ', &
+                   '  irho,ih and ipmass in the read_data routine)'
+       elseif (irho.gt.0 .and. ih.gt.0 .and. ipmass.eq.0 .and. all(masstype(:,:).lt.tiny(0.))) then
+          print "(2(/,a))",' WARNING: Particle masses not read as array but mass not set:', &
+                           '          RENDERING WILL NOT WORK! '
 
 
+       endif
     endif
  endif
 
