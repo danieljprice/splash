@@ -97,11 +97,11 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
            units(icol) = 1.0
            unitslabel(icol) = ' '
         endif
-        if (UnitsHaveChanged) then
+        if (UnitsHaveChanged .and. icol.gt.0) then
            !
            !--prompt to apply same units to coordinates and h for consistency
            !
-           if (any(ix(1:ndim).eq.icol) .or. icol.eq.ih) then
+           if (any(ix(1:ndim).eq.icol) .or. (icol.eq.ih .and. ih.gt.0)) then
               applytoall = .true.
               !--try to make prompts apply to whichever situation we have
               if (ndim.eq.1) then
@@ -139,16 +139,14 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
            !
            !--also sensible to apply same units to all components of a vector
            !
-           if (icol.gt.0) then
-              if (ndimV.gt.1 .and. iamvec(icol).gt.0) then
-                 applytoall = .true.
-                 call prompt(' Apply these units to all components of '//trim(labelvec(icol))//'?',applytoall)
-                 if (applytoall) then
-                    where (iamvec(1:ncolumns).eq.iamvec(icol))
-                       units(1:ncolumns) = units(icol)
-                       unitslabel(1:ncolumns) = unitslabel(icol)
-                    end where
-                 endif
+           if (ndimV.gt.1 .and. iamvec(icol).gt.0) then
+              applytoall = .true.
+              call prompt(' Apply these units to all components of '//trim(labelvec(icol))//'?',applytoall)
+              if (applytoall) then
+                 where (iamvec(1:ncolumns).eq.iamvec(icol))
+                    units(1:ncolumns) = units(icol)
+                    unitslabel(1:ncolumns) = unitslabel(icol)
+                 end where
               endif
            endif
         endif
