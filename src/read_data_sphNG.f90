@@ -731,7 +731,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          enddo
          if (nint1(iarr).lt.1) then
             if (.not.phantomdump .or. any(npartoftypei(2:).gt.0)) then
-               print "(a)",' ERROR: can''t locate iphase in dump'
+               print "(a)",' WARNING: can''t locate iphase in dump'
             elseif (phantomdump) then
                print "(a)",' WARNING: can''t locate iphase in dump'
             endif
@@ -1054,7 +1054,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
    enddo ! over array sizes
    enddo over_MPIblocks
-   write(*,*)
 !
 !--reached end of file (during data read)
 !
@@ -1315,11 +1314,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
      endif
 
      if (phantomdump) then
-        print*,' n(gas) = ',npartoftype(1,j),' n(dust) = ',npartoftype(2,j),' n(sink) = ',npartoftype(3,j),' n(unknown) = ',nunknown
+        print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(dust) = ',npartoftype(2,j),&
+                           ' n(sink) = ',npartoftype(3,j),' n(unknown) = ',npartoftype(5,j)
      else
         if (npartoftype(2,j).ne.0) then
            print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j), &
-                  ' n(sinks) = ',nptmassi,' n(stars) = ',nstar,' n(unknown) = ',nunknown
+                  ' n(sinks) = ',nptmassi,' n(stars) = ',nstar,' n(unknown) = ',npartoftype(5,j)
         else
            print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(sinks) = ',nptmassi, &
                               ' n(stars) = ',nstar,' n(unknown) = ',nunknown
