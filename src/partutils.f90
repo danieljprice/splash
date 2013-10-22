@@ -26,63 +26,114 @@
 !
 !-----------------------------------------------------------
 module part_utils
+ use params, only:int1
  implicit none
 
  public :: igettype,get_tracked_particle
+ public :: locate_nth_particle_of_type
+ public :: locate_first_two_of_type
  private
 
 contains
- !
- !--utility returning the type of particle i
- !  when particles are ordered by type
- !
- pure integer function igettype(i,noftype)
-  use params, only:maxparttypes
-  implicit none
-  integer, intent(in) :: i
-  integer, dimension(maxparttypes), intent(in) :: noftype
-  integer :: ntot,ntot1,jtype
 
-  ntot     = 0
-  igettype = 1 ! so even if in error, will not lead to seg fault
-  over_types: do jtype=1,maxparttypes
-     ntot1 = ntot + noftype(jtype)
-     if (i.gt.ntot .and. i.le.ntot1) then
-        igettype = jtype
-        exit over_types
-     endif
-     ntot = ntot1
-  enddo over_types
+!---------------------------------------------
+!  utility returning the type of particle i
+!  when particles are ordered by type
+!---------------------------------------------
+pure integer function igettype(i,noftype)
+ use params, only:maxparttypes
+ integer, intent(in) :: i
+ integer, dimension(maxparttypes), intent(in) :: noftype
+ integer :: ntot,ntot1,jtype
 
- end function igettype
+ ntot     = 0
+ igettype = 1 ! so even if in error, will not lead to seg fault
+ over_types: do jtype=1,maxparttypes
+    ntot1 = ntot + noftype(jtype)
+    if (i.gt.ntot .and. i.le.ntot1) then
+       igettype = jtype
+       exit over_types
+    endif
+    ntot = ntot1
+ enddo over_types
+
+end function igettype
+
+!-------------------------------------------------------------------
+! routine to find which particle is being tracked, when it is
+! given in the form of type:offset
+!-------------------------------------------------------------------
+integer function get_tracked_particle(itype,ioffset,noftype,iamtype)
+ use params, only:maxparttypes
+ integer, intent(in) :: itype,ioffset
+ integer, dimension(:), intent(in) :: noftype
+ integer(kind=int1), dimension(:), intent(in) :: iamtype
+
+ if (itype.le.0 .or. itype.gt.size(noftype)) then
+    !--type not set, itrackpart = itrackoffset
+    get_tracked_particle = ioffset
+ else
+    !--want to select nth particle of a particular type
+    call locate_nth_particle_of_type(ioffset,get_tracked_particle, &
+         itype,iamtype,noftype)
+ endif
+
+end function get_tracked_particle
+
+!-------------------------------------------------------------------
+! routine to locate first two particles of a given type in the data
+!-------------------------------------------------------------------
+subroutine locate_first_two_of_type(i1,i2,itype,iamtype,noftype,ntot)
+ integer, intent(out) :: i1,i2,ntot
+ integer, intent(in)  :: itype
+ integer(kind=int1), dimension(:), intent(in) :: iamtype
+ integer, dimension(:), intent(in) :: noftype
+ integer :: i,nfound
  
- integer function get_tracked_particle(itype,ioffset,noftype,iamtype)
-  use params, only:int1,maxparttypes
-  implicit none
-  integer, intent(in) :: itype,ioffset
-  integer, dimension(maxparttypes), intent(in) :: noftype
-  integer(kind=int1), dimension(:), intent(in) :: iamtype
-  integer :: i,n
-  
-  if (itype.le.0 .or. itype.gt.size(noftype)) then
-     !--type not set, itrackpart = itrackoffset
-     get_tracked_particle = ioffset
-  else
-     !--want to select nth particle of a particular type
-     if (size(iamtype(:)).eq.1) then
-        get_tracked_particle = sum(noftype(1:itype-1)) + ioffset
-     else
-        get_tracked_particle = 0
-        i = 0
-        n = 0
-        do while (get_tracked_particle.eq.0 .and. i.lt.size(iamtype))
-           i = i + 1
-           if (iamtype(i).eq.itype) n = n + 1
-           if (n.eq.ioffset) get_tracked_particle = i
-        enddo
-     endif
-  endif
+ !--locate first two sink particles in the data
+ if (size(iamtype(:)).eq.1) then
+    i1 = sum(noftype(1:itype-1)) + 1
+    i2 = i1 + 1
+ else
+    i1 = 0
+    i2 = 0
+    i = 0
+    nfound = 0
+    ntot = sum(noftype)
+    do while ((i1.eq.0 .or. i2.eq.0) .and. i.le.ntot)
+       i = i + 1
+       if (iamtype(i).eq.itype) nfound = nfound + 1
+       if (nfound.eq.1) i1 = i
+       if (nfound.eq.2) i2 = i
+    enddo
+ endif
 
- end function get_tracked_particle
+end subroutine locate_first_two_of_type
+
+!-------------------------------------------------------------
+! routine to locate nth particle of a given type in the data
+!-------------------------------------------------------------
+pure subroutine locate_nth_particle_of_type(n,ipos,itype,iamtype,noftype)
+ integer, intent(out) :: ipos
+ integer, intent(in)  :: n,itype
+ integer(kind=int1), dimension(:), intent(in) :: iamtype
+ integer, dimension(:), intent(in) :: noftype
+ integer :: i,nfound,ntot
+
+ if (size(iamtype(:)).eq.1) then
+    ipos = sum(noftype(1:itype-1)) + n
+ else
+    ipos = 0
+    i = 0
+    nfound = 0
+    ntot = sum(noftype)
+    do while (ipos.eq.0 .and. i.le.ntot)
+       i = i + 1
+       if (iamtype(i).eq.itype) nfound = nfound + 1
+       if (nfound.eq.n) ipos = i
+    enddo
+ endif
+
+end subroutine locate_nth_particle_of_type
 
 end module part_utils
