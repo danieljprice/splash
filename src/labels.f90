@@ -225,4 +225,22 @@ function integrate_label(labelin,iplot,izcol,normalise,iRescale,labelzint,&
   endif
 end function integrate_label
 
+!-----------------------------------------------------------------
+!
+! utility to "guess" which particle type contains sink particles
+! from the label
+!
+!-----------------------------------------------------------------
+integer function get_sink_type(ntypes)
+ implicit none
+ integer, intent(in) :: ntypes
+ integer :: i
+
+ get_sink_type = 0
+ do i=1,ntypes
+    if (get_sink_type.eq.0 .and. index(labeltype(i),'sink').ne.0) get_sink_type = i
+ enddo
+
+end function get_sink_type
+
 end module labels

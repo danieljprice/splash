@@ -57,6 +57,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use timing,         only:wall_time,print_time
   use settings_part,  only:iplotpartoftype
   use geomutils,      only:set_coordlabels
+  use adjustdata,     only:adjust_data_codeunits
   implicit none
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
@@ -536,141 +537,6 @@ subroutine check_data_read
 
 end subroutine check_data_read
 
-!----------------------------------------------------
-!
-!  amend data after the data read based on
-!  various environment variable settings
-!
-!  must be called AFTER the data has been read
-!  but BEFORE rescaling to physical units is applied
-!
-!----------------------------------------------------
-subroutine adjust_data_codeunits
- use system_utils,  only:renvironment,envlist,ienvironment,lenvironment
- use labels,        only:ih,ivx,label,ix
- use settings_data, only:ncolumns,ndimV,icoords,ndim,debugmode
- 
- use particle_data, only:dat,npartoftype,iamtype
- use geometry,      only:labelcoord
- use filenames,     only:ifileopen,nstepsinfile
- implicit none
- real :: hmin
- real, dimension(3) :: vzero,xyzsink
- character(len=20), dimension(3) :: list
- integer :: i,j,n,icol,nlist,nerr,ierr,isink,isinkpos,itype
- logical :: centreonsink
-
- !
- !--environment variable setting to enforce a minimum h
- !
- if (ih.gt.0 .and. ih.le.ncolumns) then
-    hmin = renvironment('SPLASH_HMIN_CODEUNITS',errval=-1.)
-    if (hmin.gt.0.) then
-       if (.not.allocated(dat)) then
-          print*,' INTERNAL ERROR: dat not allocated in adjust_data_codeunits'
-          return
-       endif
-       print "(/,a,es10.3)",' >> SETTING MINIMUM H TO ',hmin
-       where (dat(:,ih,:) < hmin .and. dat(:,ih,:).gt.0.)
-          dat(:,ih,:) = hmin
-       end where
-    endif
- endif
-
- !
- !--environment variable setting to subtract a mean velocity
- !
- if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) then
-    call envlist('SPLASH_VZERO_CODEUNITS',nlist,list)
-    nerr = 0
-    if (nlist.gt.0 .and. nlist.lt.ndimV) then
-       print "(/,2(a,i1))",' >> ERROR in SPLASH_VZERO_CODEUNITS setting: number of components = ',nlist,', needs to be ',ndimV
-       nerr = 1
-    elseif (nlist.gt.0) then
-       if (nlist.gt.ndimV) print "(a,i1,a,i1)",' >> WARNING! SPLASH_VZERO_CODEUNITS setting has ',nlist, &
-                                               ' components: using only first ',ndimV
-       nerr = 0
-       do i=1,ndimV
-          read(list(i),*,iostat=ierr) vzero(i)
-          if (ierr.ne.0) then
-             print "(a)",' >> ERROR reading v'//trim(labelcoord(i,icoords))//' component from SPLASH_VZERO_CODEUNITS setting'
-             nerr = ierr
-          endif
-       enddo
-       if (nerr.eq.0) then
-          print "(a)",' >> SUBTRACTING MEAN VELOCITY (from SPLASH_VZERO_CODEUNITS setting):'
-          if (.not.allocated(dat) .or. size(dat(1,:,1)).lt.ivx+ndimV-1) then
-             print*,' INTERNAL ERROR: dat not allocated in adjust_data_codeunits'
-             return
-          endif
-          do i=1,ndimV
-             print "(4x,a,es10.3)",trim(label(ivx+i-1))//' = '//trim(label(ivx+i-1))//' - ',vzero(i)
-             dat(:,ivx+i-1,:) = dat(:,ivx+i-1,:) - vzero(i)
-          enddo
-       endif
-    endif
-    if (nerr.ne.0) then
-       print "(4x,a)",'SPLASH_VZERO_CODEUNITS setting not used'
-    endif
- endif
- !
- !--environment variable setting to centre plots on a selected sink particle
- !
- if (ndim.gt.0) then
-    !--can specify either just "true" for sink #1, or specify a number for a particular sink
-    centreonsink = lenvironment('SPLASH_CENTRE_ON_SINK')
-    isink        = ienvironment('SPLASH_CENTRE_ON_SINK')
-    if (isink.gt.0 .or. centreonsink) then
-       if (isink.eq.0) isink = 1
-       itype = get_sink_type()
-       if (itype.gt.0) then
-          if (all(npartoftype(itype,:).lt.isink)) then
-             print "(a)",' ERROR: SPLASH_CENTRE_ON_SINK set but not enough sink particles'
-          else
-             print "(/,a,i3,a)",' :: CENTREING ON SINK ',isink,' (from SPLASH_CENTRE_ON_SINK setting)'
-             do j=1,nstepsinfile(ifileopen)
-                if (size(iamtype(:,j)).eq.1) then
-                   isinkpos = sum(npartoftype(1:itype-1,j)) + isink             
-                else
-                   isinkpos = 0
-                   i = 0
-                   n = 0
-                   do while (isinkpos.eq.0)
-                      i = i + 1
-                      if (iamtype(i,j).eq.itype) n = n + 1
-                      if (n.eq.isink) isinkpos = i
-                   enddo
-                endif
-                if (isinkpos.eq.0) then
-                   print "(a)",' ERROR: could not locate sink particle in dat array'
-                else
-                   if (debugmode) print*,' SINK POSITION = ',isinkpos,npartoftype(1:itype,j)
-                   !--make positions relative to sink particle
-                   xyzsink(1:ndim) = dat(isinkpos,ix(1:ndim),j)
-                   print "(a,3(1x,es10.3))",' :: sink position =',xyzsink(1:ndim)
-                   do icol=1,ndim
-                      dat(:,ix(icol),j) = dat(:,ix(icol),j) - xyzsink(icol)
-                   enddo
-                   !--make velocities relative to sink particle
-                   if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) then
-                      vzero(1:ndimV) = dat(isinkpos,ivx:ivx+ndimV-1,j)
-                      print "(a,3(1x,es10.3))",' :: sink velocity =',vzero(1:ndimV)
-                      do icol=1,ndimV
-                         dat(:,ivx+icol-1,j) = dat(:,ivx+icol-1,j) - vzero(icol)
-                      enddo
-                   endif
-                endif
-             enddo
-          endif
-       else
-          print "(a,/,a)",' ERROR: SPLASH_CENTRE_ON_SINK set but could not determine type ', &
-                          '        corresponding to sink particles'
-       endif
-    endif
- endif
-
-end subroutine adjust_data_codeunits
-
 !-------------------------------------
 !
 ! simple utility to spit out native
@@ -692,23 +558,5 @@ subroutine endian_info
  endif
 
 end subroutine endian_info
-
-!-----------------------------------------------------------------
-!
-! utility to "guess" which particle type contains sink particles
-!
-!-----------------------------------------------------------------
-integer function get_sink_type()
- use settings_data, only:ntypes
- use labels,        only:labeltype
- implicit none
- integer :: i
-
- get_sink_type = 0
- do i=1,ntypes
-    if (get_sink_type.eq.0 .and. index(labeltype(i),'sink').ne.0) get_sink_type = i
- enddo
-
-end function get_sink_type
 
 end module getdata
