@@ -405,6 +405,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          ntotal = ntotal + ntotblock
       elseif (iarr.eq.2) then
          nptmasstot = nptmasstot + isize(iarr)
+         if (phantomdump) npartoftypei(3) = npartoftypei(3) + isize(iarr)
       endif
       if (debug) print*,'DEBUG: array size ',iarr,' size = ',isize(iarr)
       if (isize(iarr).gt.0 .and. iblock.eq.1) then
@@ -777,7 +778,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
                print "(a)",'ERROR: not enough arrays written for sink particles in phantom dump'
                nskip = nreal(iarr)
             else
-               npartoftype(3,j) = npartoftype(3,j) + isize(iarr)
                iphase(npart+1:npart+isize(iarr)) = 3
                if (doubleprec) then
                   !--convert default real to single precision where necessary
@@ -954,6 +954,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   icolumn = ih ! h is always first real4 in phantom dumps
                   !--density depends on h being read
                   if (required(irho)) required(ih) = .true.
+                  if (any(npartoftypei(2:).gt.0)) required(ih) = .true.
                elseif (iarr.eq.4 .and. i.le.3) then
                   icolumn = nhydroarrays + i
                else
@@ -999,6 +1000,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                !  so use abs(h) for these particles and hide them
                !
                if (any(npartoftypei(2:).gt.0)) then
+                  if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
                   !--need masses for each type if not all gas
                   if (debug) print*,'DEBUG: phantom: setting h for multiple types ',i1,i2
                   if (debug) print*,'DEBUG: massoftype = ',massoftypei(:)
@@ -1007,7 +1009,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      pmassi = massoftypei(itype)
                      hi = dat(k,ih,j)
                      if (hi.gt.0) then
-                        if (required(irho))dat(k,irho,j) = pmassi*(hfact/hi)**3
+                        if (required(irho)) dat(k,irho,j) = pmassi*(hfact/hi)**3
                      elseif (hi.lt.0.) then
                         npartoftype(itype,j) = npartoftype(itype,j) - 1
                         npartoftype(5,j) = npartoftype(5,j) + 1
