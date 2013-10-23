@@ -41,7 +41,7 @@ subroutine adjust_data_codeunits
  use filenames,     only:ifileopen,nstepsinfile
  use part_utils,    only:locate_first_two_of_type,locate_nth_particle_of_type
  implicit none
- real :: hmin,m1,m2,dmtot,dphi,omega
+ real :: hmin,m1,m2,dmtot,dphi
  real, dimension(3) :: vsink,xyzsink,xyzsink1,xyzsink2,x0,dx,v0,v1,v2
  character(len=20), dimension(3) :: list
  integer :: i,j,nlist,nerr,ierr,isink,isinkpos,itype
@@ -139,7 +139,7 @@ subroutine adjust_data_codeunits
                    if (iverbose >= 1) then
                       print "(a,3(1x,es10.3),a,es10.3)",' :: sink 1 pos =',xyzsink1(1:ndim),' m = ',m1
                       print "(a,3(1x,es10.3),a,es10.3)",' :: sink 2 pos =',xyzsink2(1:ndim),' m = ',m2
-                      print "(a,3(1x,es10.3))",' :: c. of mass =',x0(1:ndim)               
+                      print "(a,3(1x,es10.3))",' :: c. of mass =',x0(1:ndim)
                    endif
                    !--work out angle needed to rotate into corotating frame
                    dx   = xyzsink1 - x0
@@ -150,16 +150,11 @@ subroutine adjust_data_codeunits
                       v1 = dat(isink1,ivx:ivx+ndimV-1,j)
                       v2 = dat(isink2,ivx:ivx+ndimV-1,j)
                       v0 = (m1*v1 + m2*v2)*dmtot
-                      !print "(a,3(1x,es10.3))",' :: vel c of m =',vcofm(1:ndimV)
-                      !print "(a,3(1x,es10.3))",' :: v1 =',v1
-                      !print "(a,3(1x,es10.3))",' :: v2 =',v2
-                      !print*,'dv = ',v1 - v2
-                      omega = 0. !-dv(1)*dx(2)/r + dv(2)*dx(1)/r
+                      if (iverbose >= 1) print "(a,3(1x,es10.3))",' :: vel c of m =',v0(1:ndimV)
                    else
                       v0 = 0.
                    endif
-                   omega = 0.
-                   call rotate_particles(dat(:,:,j),ntot,dphi,x0(1:ndim),ndim,ndimV,omega,v0)
+                   call rotate_particles(dat(:,:,j),ntot,dphi,x0(1:ndim),ndim,ndimV,v0)
                 endif
              enddo
           endif
@@ -220,15 +215,16 @@ end subroutine adjust_data_codeunits
 !-----------------------------------------------------------------
 ! routine to rotate particles with a given cylindrical angle dphi
 !-----------------------------------------------------------------
-pure subroutine rotate_particles(dat,np,dphi,x0,ndim,ndimV,omega,v0)
+pure subroutine rotate_particles(dat,np,dphi,x0,ndim,ndimV,v0)
  use labels, only:ix,ivx
  integer, intent(in) :: np,ndim,ndimV
- real,    intent(in) :: dphi,omega
+ real,    intent(in) :: dphi
  real,    dimension(:,:), intent(inout) :: dat
  real, dimension(ndim), intent(in) :: x0
  real, dimension(ndimV), intent(in) :: v0
- real, dimension(ndim) :: xi
- real :: r,phi
+ real, dimension(ndim)  :: xi
+ real, dimension(ndimV) :: vi
+ real :: r,phi,xnew,ynew,cosp,sinp,vr,vphi
  integer :: i
 
  !--rotate positions
@@ -237,12 +233,19 @@ pure subroutine rotate_particles(dat,np,dphi,x0,ndim,ndimV,omega,v0)
     r   = sqrt(xi(1)**2 + xi(2)**2)
     phi = atan2(xi(2),xi(1))
     phi = phi - dphi
-    dat(i,ix(1)) = r*cos(phi)
-    dat(i,ix(2)) = r*sin(phi)
+    cosp = cos(phi)
+    sinp = sin(phi)
+    xnew = r*cosp
+    ynew = r*sinp
+    dat(i,ix(1)) = xnew
+    dat(i,ix(2)) = ynew
     !--rotate velocities, if present
-    if (ivx > 0 .and. omega > 0.) then
-       dat(i,ivx)   = dat(i,ivx)   - v0(1) + omega*r*sin(phi)
-       dat(i,ivx+1) = dat(i,ivx+1) - v0(2) - omega*r*cos(phi)
+    if (ivx > 0) then
+       vi = dat(i,ivx:ivx+ndimV-1) - v0
+       vr = vi(1)*xi(1)/r + vi(2)*xi(2)/r
+       vphi = vi(1)*(-xi(2)/r) + vi(2)*xi(1)/r !- r*omega
+       dat(i,ivx)   = vr*cosp - vphi*sinp
+       dat(i,ivx+1) = vr*sinp + vphi*cosp
     endif
  enddo
 
