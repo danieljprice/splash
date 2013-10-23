@@ -243,7 +243,7 @@ pure subroutine rotate_particles(dat,np,dphi,x0,ndim,ndimV,v0)
     if (ivx > 0) then
        vi = dat(i,ivx:ivx+ndimV-1) - v0
        vr = vi(1)*xi(1)/r + vi(2)*xi(2)/r
-       vphi = vi(1)*(-xi(2)/r) + vi(2)*xi(1)/r !- r*omega
+       vphi = vi(1)*(-xi(2)/r) + vi(2)*xi(1)/r
        dat(i,ivx)   = vr*cosp - vphi*sinp
        dat(i,ivx+1) = vr*sinp + vphi*cosp
     endif
