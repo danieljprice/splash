@@ -68,6 +68,7 @@ integer function get_tracked_particle(itype,ioffset,noftype,iamtype)
  integer, intent(in) :: itype,ioffset
  integer, dimension(:), intent(in) :: noftype
  integer(kind=int1), dimension(:), intent(in) :: iamtype
+ integer :: ntot
 
  if (itype.le.0 .or. itype.gt.size(noftype)) then
     !--type not set, itrackpart = itrackoffset
@@ -75,7 +76,7 @@ integer function get_tracked_particle(itype,ioffset,noftype,iamtype)
  else
     !--want to select nth particle of a particular type
     call locate_nth_particle_of_type(ioffset,get_tracked_particle, &
-         itype,iamtype,noftype)
+         itype,iamtype,noftype,ntot)
  endif
 
 end function get_tracked_particle
@@ -91,6 +92,7 @@ subroutine locate_first_two_of_type(i1,i2,itype,iamtype,noftype,ntot)
  integer :: i,nfound
  
  !--locate first two sink particles in the data
+ ntot = sum(noftype)
  if (size(iamtype(:)).eq.1) then
     i1 = sum(noftype(1:itype-1)) + 1
     i2 = i1 + 1
@@ -99,7 +101,6 @@ subroutine locate_first_two_of_type(i1,i2,itype,iamtype,noftype,ntot)
     i2 = 0
     i = 0
     nfound = 0
-    ntot = sum(noftype)
     do while ((i1.eq.0 .or. i2.eq.0) .and. i.le.ntot)
        i = i + 1
        if (iamtype(i).eq.itype) nfound = nfound + 1
@@ -113,20 +114,20 @@ end subroutine locate_first_two_of_type
 !-------------------------------------------------------------
 ! routine to locate nth particle of a given type in the data
 !-------------------------------------------------------------
-pure subroutine locate_nth_particle_of_type(n,ipos,itype,iamtype,noftype)
- integer, intent(out) :: ipos
+pure subroutine locate_nth_particle_of_type(n,ipos,itype,iamtype,noftype,ntot)
+ integer, intent(out) :: ipos,ntot
  integer, intent(in)  :: n,itype
  integer(kind=int1), dimension(:), intent(in) :: iamtype
  integer, dimension(:), intent(in) :: noftype
- integer :: i,nfound,ntot
+ integer :: i,nfound
 
+ ntot = sum(noftype)
  if (size(iamtype(:)).eq.1) then
     ipos = sum(noftype(1:itype-1)) + n
  else
     ipos = 0
     i = 0
     nfound = 0
-    ntot = sum(noftype)
     do while (ipos.eq.0 .and. i.le.ntot)
        i = i + 1
        if (iamtype(i).eq.itype) nfound = nfound + 1
