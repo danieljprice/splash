@@ -34,7 +34,7 @@ contains
 !  Arguments:
 !
 !
-subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, &
+subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                         icolourpart,iamtype,noftype,iplot_type, &
                         use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
                         fast,datpix,npixx,npixy,dval,brightness)
@@ -50,7 +50,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                              plot_pt,plot_numb,plot_text,plot_pt1,plot_qls,plot_sls, &
                              plot_line,plot_qlw,plot_slw,plot_errb,plotlib_maxlinestyle
   implicit none
-  integer, intent(in)                           :: ntot,iplotx, iploty, itransx, itransy
+  integer, intent(in)                           :: ntot,iplotx, iploty
   integer(kind=int1),  dimension(:), intent(in) :: iamtype
   integer,             dimension(:), intent(in) :: icolourpart
   integer, dimension(maxparttypes),  intent(in) :: noftype
