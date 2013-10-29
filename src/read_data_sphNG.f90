@@ -82,7 +82,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                       lowmemorymode,ntypes,iverbose
   use mem_allocation, only:alloc
   use system_utils,   only:lenvironment,renvironment
-  use labels,         only:ipmass,irho,ih,ix,ivx
+  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types
   use calcquantities, only:calc_quantities
   use sphNGread
   implicit none
@@ -206,7 +206,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          return
       endif
       if (int2.ne.780806) then
-         print "(a)",'single precision dump'
+         print "(a)",' single precision dump'
          rewind(iunit)
          read(iunit,iostat=ierr) intg1,r4,int2,i1,int3
          if (int2.ne.780806) then
@@ -216,7 +216,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       elseif (int3.ne.690706) then
          print "(a)",'*** WARNING: default int appears to be int*8: not implemented'
       else
-         if (debug) print "(a)",'double precision dump' ! no need to print this
+         if (debug) print "(a)",' double precision dump' ! no need to print this
       endif
    endif
 !
@@ -228,7 +228,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
       close(iunit)
       return
    else
-      print "(a)",'File ID: '//trim(fileident)
+      print "(a)",' File ID: '//trim(fileident)
    endif
    smalldump = .false.
    mhddump = .false.
@@ -586,6 +586,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
       if (phantomdump) then
          npartoftype(1:ntypes,j) = npartoftypei(1:ntypes)
+         npartoftype(3,j) = 0  ! sink particles
+         npartoftype(4,j) = npartoftype(4,j) + npartoftypei(3)  ! phantom type 3 -> splash type 4
          if (nblocks.gt.1) then
             print "(a)",' setting ngas=npart for MPI code '
             npartoftype(1,j) = npart
@@ -1176,20 +1178,22 @@ subroutine read_data(rootname,indexstart,nstepsread)
        !
           do i=1,npart
              select case(iphase(i))
-             case(1:4)
-               if (ih.gt.0 .and. required(ih)) then
-                  if (dat(i,ih,j).gt.0.) then
-                     iamtype(i,j) = iphase(i)
-                  else
-                     iamtype(i,j) = 5
-                     !nunknown = nunknown + 1
-                  endif
-               else
-                  iamtype(i,j) = iphase(i)
-               endif
+             case(3)
+                iamtype(i,j) = 4
+             case(1:2,4)
+                if (ih.gt.0 .and. required(ih)) then
+                   if (dat(i,ih,j).gt.0.) then
+                      iamtype(i,j) = iphase(i)
+                   else
+                      iamtype(i,j) = 5
+                      !nunknown = nunknown + 1
+                   endif
+                else
+                   iamtype(i,j) = iphase(i)
+                endif
              case default
-               iamtype(i,j) = 5
-               nunknown = nunknown + 1
+                iamtype(i,j) = 5
+                nunknown = nunknown + 1
              end select
           enddo
        else
@@ -1302,6 +1306,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
      if (allocated(iphase)) deallocate(iphase)
      if (allocated(listpm)) deallocate(listpm)
 
+     call set_labels
      if (.not.phantomdump) then
         npartoftype(1,j) = npart - nptmassi - nstar - nunknown
         npartoftype(2,j) = ntotal - npart
@@ -1313,21 +1318,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
         npartoftype(5,j) = npartoftype(5,j) + nunknown
      endif
 
-     if (phantomdump) then
-        print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(dust) = ',npartoftype(2,j),&
-                           ' n(sink) = ',npartoftype(3,j),' n(unknown) = ',npartoftype(5,j)
-     else
-        if (npartoftype(2,j).ne.0) then
-           print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(ghost) = ',npartoftype(2,j), &
-                  ' n(sinks) = ',nptmassi,' n(stars) = ',nstar,' n(unknown) = ',npartoftype(5,j)
-        else
-           print "(5(a,i10))",' n(gas) = ',npartoftype(1,j),' n(sinks) = ',nptmassi, &
-                              ' n(stars) = ',nstar,' n(unknown) = ',nunknown
-        endif
-     endif
+     call print_types(npartoftype(:,j),labeltype)
 
      close(15)
-
      if (debug) print*,' finished data read, npart = ',npart, ntotal, npartoftype(1:ntypes,j)
 
      return
@@ -1727,14 +1720,14 @@ subroutine set_labels
      labeltype(1) = 'gas'
      labeltype(2) = 'dust'
      labeltype(3) = 'sink'
-     labeltype(4) = 'type 4'
+     labeltype(4) = 'boundary'
      labeltype(5) = 'unknown/dead'
      UseTypeInRenderings(1:2) = .true.
      if (lenvironment('SSPLASH_USE_DUST_PARTICLES')) then
         UseTypeInRenderings(2) = .false.
      endif
      UseTypeInRenderings(3) = .false.
-     UseTypeInRenderings(4) = .false.
+     UseTypeInRenderings(4) = .true.
      UseTypeInRenderings(5) = .true.
   else
      ntypes = 5

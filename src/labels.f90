@@ -243,4 +243,35 @@ integer function get_sink_type(ntypes)
 
 end function get_sink_type
 
+!-----------------------------------------------------------------
+!
+!  utility to neatly print number of particles by type
+!
+!-----------------------------------------------------------------
+subroutine print_types(noftype,ltype)
+ integer,          dimension(:), intent(in) :: noftype
+ character(len=*), dimension(:), intent(in) :: ltype
+ integer :: itype,n,i
+ character(len=1) :: sp
+
+ i = 0
+ sp = ' '
+ do itype=1,size(noftype)
+    n = noftype(itype)
+    if (n > 0) then
+       i = i + 1
+       if (i > 1) sp = ','
+       if (n < 10000) then
+          write(*,"(a,i4)",advance='no') trim(sp)//' n('//trim(ltype(itype))//') = ',n
+       elseif (n < 10000000) then
+          write(*,"(a,i6)",advance='no') trim(sp)//' n('//trim(ltype(itype))//') = ',n
+       else
+          write(*,"(a,i10)",advance='no') trim(sp)//' n('//trim(ltype(itype))//') = ',n
+       endif
+    endif
+ enddo
+ write(*,*)
+
+end subroutine print_types
+
 end module labels
