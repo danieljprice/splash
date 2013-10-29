@@ -42,8 +42,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   use labels,           only:labeltype, maxparttypes,is_coord
   use settings_data,    only:ndim,icoords,ntypes
   use settings_part,    only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
-                             ilabelpart,iplotline,linestylethisstep,linecolourthisstep, &
-                             hfacmarkers
+                             ilabelpart,iplotline,linestylethisstep,linecolourthisstep
   use interpolations2D, only:interpolate_part,interpolate_part1
   use transforms,       only:transform
   use plotlib,          only:plot_qci,plot_bbuf,plot_ebuf,plot_sci,plot_sfs,plot_circ, &
@@ -155,13 +154,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  if (icolourpart(j).ge.0) then
                     nplotted = nplotted + 1
                     nplottedtype(itype) = nplottedtype(itype) + 1
+
                     call plot_sci(icolourpart(j))
-                    select case(imarktype(itype))
-                    case(32:35)
-                       call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
-                    case default
-                       call plot_pt1(xplot(j),yplot(j),imarktype(itype))
-                    end select
+                    call plot_particle(imarktype(itype),xplot(j),yplot(j),h(j))
 
                     if (present(datpix)) then
                        if (present(brightness)) then
@@ -224,12 +219,8 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                     .and. icelly.gt.0 .and. icelly.le.ncelly) then
                     if (nincell(icellx,icelly).eq.0) then
                        nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
-                       select case(imarktype(itype))
-                       case(32:35)
-                          call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
-                       case default
-                          call plot_pt1(xplot(j),yplot(j),imarktype(itype))
-                       end select
+
+                       call plot_particle(imarktype(itype),xplot(j),yplot(j),h(j))
 
                        if (present(datpix)) then
                           if (present(brightness)) then
@@ -248,9 +239,8 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
               print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
               select case(imarktype(itype))
               case(32:35)
-                 !call plot_sfs(imarktype(itype)-31)
                  do j=1,noftype(itype)
-                    call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
+                    call plot_particle(imarktype(itype),xplot(j),yplot(j),h(j))
                  enddo
                  call plot_sfs(1)
               case default
@@ -291,13 +281,10 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                        .and. icelly.gt.0 .and. icelly.le.ncelly) then
                        if (nincell(icellx,icelly).le.0) then
                           nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
+                          
                           call plot_sci(icolourpart(j))
-                          select case(imarktype(itype))
-                          case(32:35)
-                             call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
-                          case default
-                             call plot_pt1(xplot(j),yplot(j),imarktype(itype))
-                          end select
+                          call plot_particle(imarktype(itype),xplot(j),yplot(j),h(j))
+
                           if (present(datpix)) then
                              if (present(brightness)) then
                                 call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
@@ -311,12 +298,8 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                     endif
                  else
                     call plot_sci(icolourpart(j))
-                    select case(imarktype(itype))
-                    case(32:35)
-                       call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
-                    case default
-                       call plot_pt1(xplot(j),yplot(j),imarktype(itype))
-                    end select
+                    call plot_particle(imarktype(itype),xplot(j),yplot(j),h(j))
+
                     if (present(datpix)) then
                        if (present(brightness)) then
                           call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
@@ -468,37 +451,48 @@ end subroutine particleplot
 !--------------------------------------------------------------------------------
 !
 ! subroutine implementing scalable markers
+! default case is just an interface to usual particle plotting routine
 !
 !--------------------------------------------------------------------------------
-subroutine plot_scalable(imarker,x,y,size)
- use plotlib, only:plot_circ,plot_sfs,plot_sci
+subroutine plot_particle(imarktype,x,y,h)
+ use plotlib,       only:plot_circ,plot_sfs,plot_sci,plot_pt1
+ use settings_part, only:hfacmarkers
  implicit none
- integer, intent(in) :: imarker
- real,    intent(in) :: x,y,size
+ integer, intent(in) :: imarktype
+ real,    intent(in) :: x,y,h
+ integer :: imarker
+ real    :: size
 
- if (imarker.le.2) then
-    call plot_sfs(imarker)
-    call plot_circ(x,y,size)
-    call plot_sfs(1)
- elseif (imarker.eq.3) then
-    call plot_sfs(1)
-    call plot_circ(x,y,size)
-    call plot_sfs(2)
-    call plot_sci(0)
-    call plot_circ(x,y,size)
-    call plot_sfs(1)
- elseif (imarker.eq.4) then
-    call plot_sfs(1)
-    call plot_circ(x,y,size)
-    call plot_sfs(2)
-    call plot_sci(1)
-    call plot_circ(x,y,size)
-    call plot_sfs(1)
- else
-    call plot_circ(x,y,size)
- endif
+ select case(imarktype)
+ case(32:35)
+    imarker = imarktype - 31
+    size = hfacmarkers*h
+    if (imarker.le.2) then
+       call plot_sfs(imarker)
+       call plot_circ(x,y,size)
+       call plot_sfs(1)
+    elseif (imarker.eq.3) then
+       call plot_sfs(1)
+       call plot_circ(x,y,size)
+       call plot_sfs(2)
+       call plot_sci(0)
+       call plot_circ(x,y,size)
+       call plot_sfs(1)
+    elseif (imarker.eq.4) then
+       call plot_sfs(1)
+       call plot_circ(x,y,size)
+       call plot_sfs(2)
+       call plot_sci(1)
+       call plot_circ(x,y,size)
+       call plot_sfs(1)
+    else
+       call plot_circ(x,y,size)
+    endif
+ case default
+    call plot_pt1(x,y,imarktype)
+ end select
 
-end subroutine plot_scalable
+end subroutine plot_particle
 
 !--------------------------------------------------------------------------------
 !
