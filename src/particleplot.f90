@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -35,9 +35,9 @@ contains
 !
 !
 subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, &
-                        icolourpart,iamtype,npartoftype,iplotpartoftype, &
+                        icolourpart,iamtype,noftype,iplot_type, &
                         use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
-                        fastparticleplot,datpix,npixx,npixy,dval,brightness)
+                        fast,datpix,npixx,npixy,dval,brightness)
   use params,           only:int1
   use labels,           only:labeltype, maxparttypes,is_coord
   use settings_data,    only:ndim,icoords,ntypes
@@ -53,11 +53,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   integer, intent(in)                           :: ntot,iplotx, iploty, itransx, itransy
   integer(kind=int1),  dimension(:), intent(in) :: iamtype
   integer,             dimension(:), intent(in) :: icolourpart
-  integer, dimension(maxparttypes),  intent(in) :: npartoftype
+  integer, dimension(maxparttypes),  intent(in) :: noftype
   real,                dimension(:), intent(in) :: xplot, yplot, zplot, h
   real,                              intent(in) :: zmin,zmax,xmin,xmax,ymin,ymax
-  logical,                           intent(in) :: use_zrange,fastparticleplot
-  logical, dimension(maxparttypes),  intent(in) :: iplotpartoftype
+  logical,                           intent(in) :: use_zrange,fast
+  logical, dimension(maxparttypes),  intent(in) :: iplot_type
   character(len=*),                  intent(in) :: labelz
 
   integer,                           intent(in),    optional :: npixx,npixy
@@ -70,22 +70,20 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   character(len=20)                            :: string
   integer, parameter                           :: ncellx = 500, ncelly = 500 ! for crowded field reduction
   integer(kind=int1), dimension(ncellx,ncelly) :: nincell
-  integer                                      :: icellx,icelly,maxz !,notplotted
+  integer                                      :: icellx,icelly,maxz
   real                                         :: dxcell1,dycell1,dxpix
   logical                                      :: mixedtypes
   real, dimension(:), allocatable              :: xerrb, yerrb, herr
 
   !--query current character height and colour
-!  call pgqch(charheight)
   call plot_qci(icolourstart)
-  !!print "(a,i8)",' entering particle plot, total particles = ',ntot
   !
   !--check for errors in input
   !
-  ntotplot = sum(npartoftype(1:ntypes))
+  ntotplot = sum(noftype(1:ntypes))
   if (ntot.lt.ntotplot) then
      print "(a)",' ERROR: number of particles input < number of each type '
-     print*,ntot,npartoftype(1:ntypes)
+     print*,ntot,noftype(1:ntypes)
      return
   elseif (ntot.ne.ntotplot) then
      print "(a)",' WARNING: particleplot: total not equal to sum of types on input'
@@ -125,10 +123,10 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
         if (itype.eq.1) then
            index1 = 1
         else
-           index1 = sum(npartoftype(1:itype-1))+1
+           index1 = sum(noftype(1:itype-1))+1
         endif
-        index2 = index1 + npartoftype(itype) - 1
-        if (.not.iplotpartoftype(itype)) then
+        index2 = index1 + noftype(itype) - 1
+        if (.not.iplot_type(itype)) then
            call plot_ebuf
            cycle over_types
         endif
@@ -150,7 +148,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
         overj: do j=index1,index2
            if (mixedtypes) then
               itype = min(max(int(iamtype(j)),1),maxparttypes)
-              if (.not.iplotpartoftype(itype)) cycle overj
+              if (.not.iplot_type(itype)) cycle overj
            endif
            if (j.le.maxz) then
               if (zplot(j).lt.zmax .and. zplot(j).gt.zmin) then
@@ -189,9 +187,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
         enddo overj
         if (mixedtypes) then
            do itype=1,ntypes
-              if (iplotpartoftype(itype) .and. nplottedtype(itype).gt.0) then
+              if (iplot_type(itype) .and. nplottedtype(itype).gt.0) then
                  print*,' plotted ',nplottedtype(itype),' of ', &
-                   npartoftype(itype),trim(labeltype(itype))//' particles in range ', &
+                   noftype(itype),trim(labeltype(itype))//' particles in range ', &
                    trim(labelz),' = ',zmin,' -> ',zmax
               endif
            enddo
@@ -213,12 +211,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
         if (.not.mixedtypes .and. all(icolourpart(index1:index2).eq.icolourpart(index1)) &
             .and. icolourpart(index1).ge.0) then
            call plot_sci(icolourpart(index1))
-           if (fastparticleplot .and. (index2-index1).gt.100) then
+           if (fast .and. (index2-index1).gt.100) then
               !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
               write(*,"(a,i8,1x,a)") &
                    ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
               nincell(1:ncellx,1:ncelly) = 0
-!                 notplotted = 0
               do j=index1,index2
                  icellx = int((xplot(j) - xmin)*dxcell1) + 1
                  icelly = int((yplot(j) - ymin)*dycell1) + 1
@@ -243,32 +240,29 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                                                     npixx,npixy,dxpix,dval)
                           endif
                        endif
-!                       else
-!                         notplotted = notplotted + 1
                     endif
                  endif
               enddo
-!                 write(*,"(a,i7,a)") ' (minus ',notplotted,' in crowded fields)'
            else
               !--plot all particles of this type
               print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
               select case(imarktype(itype))
               case(32:35)
                  !call plot_sfs(imarktype(itype)-31)
-                 do j=1,npartoftype(itype)
+                 do j=1,noftype(itype)
                     call plot_scalable(imarktype(itype)-31,xplot(j),yplot(j),hfacmarkers*h(j))
                  enddo
                  call plot_sfs(1)
               case default
-                 call plot_pt(npartoftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+                 call plot_pt(noftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
               end select
               if (present(datpix)) then
                  if (present(brightness)) then
                     call interpolate_part(xplot(index1:index2),yplot(index1:index2),h(index1:index2), &
-                                          npartoftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval,brightness)
+                                          noftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval,brightness)
                  else
                     call interpolate_part(xplot(index1:index2),yplot(index1:index2),h(index1:index2), &
-                                          npartoftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                                          noftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
                  endif
               endif
            endif
@@ -284,11 +278,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
               if (icolourpart(j).ge.0) then
                  if (mixedtypes) then
                     itype = int(iamtype(j))
-                    if (.not.iplotpartoftype(itype)) cycle overj2
+                    if (.not.iplot_type(itype)) cycle overj2
                     nplottedtype(itype) = nplottedtype(itype) + 1
                  endif
                  nplotted = nplotted + 1
-                 if (fastparticleplot .and. npartoftype(itype).gt.100) then
+                 if (fast .and. noftype(itype).gt.100) then
                     icellx = int((xplot(j) - xmin)*dxcell1) + 1
                     icelly = int((yplot(j) - ymin)*dycell1) + 1
                     !--exclude particles if there are more than 2 particles per cell
@@ -313,8 +307,6 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
                                                        npixx,npixy,dxpix,dval)
                              endif
                           endif
-!                       else
-!                         notplotted = notplotted + 1
                        endif
                     endif
                  else
@@ -339,16 +331,16 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
            enddo overj2
            if (mixedtypes) then
               do itype=1,ntypes
-                 if (iplotpartoftype(itype)) then
-                    if (fastparticleplot .and. npartoftype(itype).gt.100) then
-                       print*,' fast-plotted ',nplottedtype(itype),' of ',npartoftype(itype),trim(labeltype(itype))//' particles'
-                    elseif (npartoftype(itype).gt.0) then
-                       print*,' plotted ',nplottedtype(itype),' of ',npartoftype(itype),trim(labeltype(itype))//' particles'
+                 if (iplot_type(itype)) then
+                    if (fast .and. noftype(itype).gt.100) then
+                       print*,' fast-plotted ',nplottedtype(itype),' of ',noftype(itype),trim(labeltype(itype))//' particles'
+                    elseif (noftype(itype).gt.0) then
+                       print*,' plotted ',nplottedtype(itype),' of ',noftype(itype),trim(labeltype(itype))//' particles'
                     endif
                  endif
               enddo
            else
-              if (fastparticleplot .and. npartoftype(itype).gt.100) then
+              if (fast .and. noftype(itype).gt.100) then
                  print*,' fast-plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
               else
                  print*,' plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
@@ -380,26 +372,16 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
   if (iplotline .and. .not.(use_zrange .and. abs(zmax-zmin).lt.0.5*huge(0.))) then
      call plot_qls(oldlinestyle)
      call plot_sls(linestylethisstep)
-     call plot_line(npartoftype(1),xplot(1:npartoftype(1)), &
-                 yplot(1:npartoftype(1)))
+     call plot_line(noftype(1),xplot(1:noftype(1)), &
+                 yplot(1:noftype(1)))
 
-     if (npartoftype(2).gt.0 .and. iplotpartoftype(2)) then
+     if (noftype(2).gt.0 .and. iplot_type(2)) then
         call plot_sls(mod(linestylethisstep+1,plotlib_maxlinestyle) + 1)
-        call plot_line(npartoftype(2),xplot(npartoftype(1)+1:sum(npartoftype(1:2))), &
-                 yplot(npartoftype(1)+1:sum(npartoftype(1:2))))
+        call plot_line(noftype(2),xplot(noftype(1)+1:sum(noftype(1:2))), &
+                 yplot(noftype(1)+1:sum(noftype(1:2))))
      endif
      call plot_sls(oldlinestyle)! reset
   endif
-  !
-  !--error bars follow line colour but not line style
-  !
-  !if (iploterrorbars.gt.0 .and. .not.use_zrange) then
-  !   if (iploty.eq.iploterrorbars) then
-  !      call plot_errorbarsy(ntot,xplot,yplot,h,itransy)
-  !   elseif (iplotx.eq.iploterrorbars) then
-  !      call plot_errorbarsx(ntot,xplot,yplot,h,itransx)
-  !   endif
-  !endif
 
   call plot_sci(icolourindex)
   !
@@ -419,14 +401,6 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty,itransx,itransy, 
      call plot_sci(2)
      call plot_sfs(2)
 
-     !if (iploterrorbars.gt.0) then
-
-     !   if (iploty.eq.iploterrorbars) then
-     !      call plot_errorbarsy(ntot,xplot,yplot,h,itransy)
-     !   elseif (iplotx.eq.iploterrorbars) then
-     !      call plot_errorbarsx(ntot,xplot,yplot,h,itransx)
-     !   endif
-     !else
      if (ncircpart.gt.0) then
 
         if (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. ncircpart.gt.0) then
