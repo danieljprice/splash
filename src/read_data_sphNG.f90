@@ -72,6 +72,48 @@ module sphNGread
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
  logical :: usingeulr,cleaning
  logical :: batcode
+ 
+contains
+
+ !-------------------------------------------------------------------
+ ! function mapping iphase setting in sphNG to splash particle types
+ !-------------------------------------------------------------------
+ elemental integer function itypemap_sphNG(iphase)
+  integer*1, intent(in) :: iphase
+
+  select case(int(iphase))
+  case(0)
+    itypemap_sphNG = 1
+  case(1:9)
+    itypemap_sphNG = 3
+  case(10:)
+    itypemap_sphNG = 4
+  case default
+    itypemap_sphNG = 5
+  end select  
+  
+ end function itypemap_sphNG
+
+ !---------------------------------------------------------------------
+ ! function mapping iphase setting in Phantom to splash particle types
+ !---------------------------------------------------------------------
+ elemental integer function itypemap_phantom(iphase)
+  integer*1, intent(in) :: iphase
+  
+  select case(int(iphase))
+  case(1,2)
+    itypemap_phantom = iphase
+  case(3)
+    itypemap_phantom = 4
+  case(4)
+    itypemap_phantom = 6
+  case(-3)
+    itypemap_phantom = 3
+  case default
+    itypemap_phantom = 5
+  end select
+  
+ end function itypemap_phantom
 
 end module sphNGread
 
@@ -99,7 +141,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
   integer :: nskip,ntotal,npart,n1,n2,ninttypes,ngas
   integer :: nreassign,naccrete,nkill,iblock,nblocks,ntotblock,ncolcopy
-  integer :: ipos,nptmass,nptmassi,nstar,nunknown,isink,ilastrequired
+  integer :: ipos,nptmass,nptmassi,nstar,nunknown,ilastrequired
   integer :: imaxcolumnread,nhydroarraysinfile,nremoved
   integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc
   integer, dimension(maxparttypes) :: npartoftypei
@@ -121,7 +163,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real(doub_prec) :: r8
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
-  real, dimension(3) :: xyzsink
   real :: rhozero,hfact,omega,r4,tff
   logical :: skip_corrupted_block_3
 
@@ -405,7 +446,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
          ntotal = ntotal + ntotblock
       elseif (iarr.eq.2) then
          nptmasstot = nptmasstot + isize(iarr)
-         if (phantomdump) npartoftypei(3) = npartoftypei(3) + isize(iarr)
       endif
       if (debug) print*,'DEBUG: array size ',iarr,' size = ',isize(iarr)
       if (isize(iarr).gt.0 .and. iblock.eq.1) then
@@ -585,9 +625,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
          tff = 0.
       endif
       if (phantomdump) then
-         npartoftype(1:ntypes,j) = npartoftypei(1:ntypes)
-         npartoftype(3,j) = 0  ! sink particles
-         npartoftype(4,j) = npartoftype(4,j) + npartoftypei(3)  ! phantom type 3 -> splash type 4
+         npartoftype(:,j) = 0.
+         do i=1,ntypes !--map from phantom types to splash types
+            itype = itypemap_phantom(int(i,kind=1))
+            if (debug) print*,'DEBUG: npart of type ',itype,' += ',npartoftypei(i)
+            npartoftype(itype,j) = npartoftype(itype,j) + npartoftypei(i)
+         enddo
+         npartoftype(3,j) = nptmasstot  ! sink particles
          if (nblocks.gt.1) then
             print "(a)",' setting ngas=npart for MPI code '
             npartoftype(1,j) = npart
@@ -604,7 +648,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                print*,'*** WARNING: obsolete header format for external binary information ***'
                ipos = ilocbinary + 1
             endif
-            if (debug) print*,'debug: reading binary information from header ',ilocbinary
+            if (debug) print*,'DEBUG: reading binary information from header ',ilocbinary
             if (any(dummyreal(ilocbinary:ilocbinary+14).ne.0.)) then
                gotbinary = .true.
                npartoftype(3,j) = 2
@@ -688,8 +732,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
       endif
 
       if (gotbinary) then
-         iphase(npart-1) = 3
-         iphase(npart)   = 3
+         iphase(npart-1) = -3
+         iphase(npart)   = -3
       endif
 
    endif ! iblock = 1
@@ -780,7 +824,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                print "(a)",'ERROR: not enough arrays written for sink particles in phantom dump'
                nskip = nreal(iarr)
             else
-               iphase(npart+1:npart+isize(iarr)) = 3
+               iphase(npart+1:npart+isize(iarr)) = -3
                if (doubleprec) then
                   !--convert default real to single precision where necessary
                   if (debug) print*,'DEBUG: reading sink data, converting from double precision ',isize(iarr)
@@ -913,18 +957,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
             endif
          enddo
 !
-!        set masses for equal mass particles (not dumped in small dump)
+!        set masses for equal mass particles (not dumped in small dump or in phantom)
 !
          if (((smalldump.and.nreal(1).lt.ipmass).or.phantomdump).and. iarr.eq.1) then
             if (abs(massoftypei(1)).gt.tiny(massoftypei)) then
                icolumn = ipmass
                if (required(ipmass) .and. ipmass.gt.0) then
                   if (phantomdump) then
-                     where (iphase(i1:i2).gt.0 .and. iphase(i1:i2).le.ntypes)
-                        dat(i1:i2,ipmass,j) = massoftypei(iphase(i1:i2))
-                     elsewhere
-                        dat(i1:i2,ipmass,j) = massoftypei(1)
-                     end where
+                     dat(i1:i2,ipmass,j) = massoftypei(itypemap_phantom(iphase(i1:i2)))
                   else
                      where (iphase(i1:i2).eq.0) dat(i1:i2,icolumn,j) = massoftypei(1)
                   endif
@@ -1007,12 +1047,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   if (debug) print*,'DEBUG: phantom: setting h for multiple types ',i1,i2
                   if (debug) print*,'DEBUG: massoftype = ',massoftypei(:)
                   do k=i1,i2
-                     itype = iphase(k)
+                     itype = itypemap_phantom(iphase(k))
                      pmassi = massoftypei(itype)
                      hi = dat(k,ih,j)
-                     if (hi.gt.0) then
+                     if (hi > 0.) then
                         if (required(irho)) dat(k,irho,j) = pmassi*(hfact/hi)**3
-                     elseif (hi.lt.0.) then
+                     elseif (hi < 0.) then
                         npartoftype(itype,j) = npartoftype(itype,j) - 1
                         npartoftype(5,j) = npartoftype(5,j) + 1
                         if (required(irho)) dat(k,irho,j) = pmassi*(hfact/abs(hi))**3
@@ -1091,31 +1131,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
     if (allocated(dat) .and. n1.GT.0 .and. lenvironment('SSPLASH_RESET_CM') .and. allocated(iphase)) then
        call reset_centre_of_mass(dat(1:n1,1:3,j),dat(1:n1,4,j),iphase(1:n1),n1)
     endif
- !
- !--centre on sink if "SSPLASH_CENTRE_ON_SINK" is set
- !
-    if (lenvironment('SSPLASH_CENTRE_ON_SINK')) then
-       if (nptmass.GE.1) then
-          isink = 0
-          xyzsink = 0.
-          if (allocated(iphase)) then
-             do i=1,ntotal
-                if (iphase(i).GE.1 .and. isink.eq.0) then
-                   isink = i
-                   xyzsink(1:3) = dat(isink,1:3,j)
-                endif
-             enddo
-          endif
-          if (isink.EQ.0) then
-             print "(a)",'WARNING: SSPLASH_CENTRE_ON_SINK set but cannot find sink'
-          else
-             print "(a,3(1pe10.3,1x))",' CENTREING ON SINK PARTICLE ',PACK(xyzsink(1:3),required(1:3))
-             do i=1,3
-                dat(1:ntotal,i,j) = dat(1:ntotal,i,j) - xyzsink(i)
-             enddo
-          endif
-       endif
-    endif
  ! 
  !--remove particles at large H/R is "SSPLASH_REMOVE_LARGE_HR" is set
  !
@@ -1174,25 +1189,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
     if (size(iamtype(:,j)).gt.1) then
        if (phantomdump) then
        !
-       !--phantom: iphase IS the particle type (1->5)
+       !--phantom: translate iphase to splash types
        !
           do i=1,npart
-             select case(iphase(i))
-             case(3)
-                iamtype(i,j) = 4
-             case(1:2,4)
+             itype = itypemap_phantom(iphase(i))
+             iamtype(i,j) = itype
+             select case(itype)
+             case(1,2,4) ! remove accreted particles
                 if (ih.gt.0 .and. required(ih)) then
-                   if (dat(i,ih,j).gt.0.) then
-                      iamtype(i,j) = iphase(i)
-                   else
+                   if (dat(i,ih,j) <= 0.) then
                       iamtype(i,j) = 5
-                      !nunknown = nunknown + 1
                    endif
-                else
-                   iamtype(i,j) = iphase(i)
                 endif
-             case default
-                iamtype(i,j) = 5
+             case(5)
                 nunknown = nunknown + 1
              end select
           enddo
@@ -1201,18 +1210,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
        !--sphNG: translate iphase to splash types
        !
           do i=1,npart
-             select case(int(iphase(i)))
-             case(0)
-               iamtype(i,j) = 1
+             itype = itypemap_sphNG(iphase(i))
+             iamtype(i,j) = itype
+             select case(itype)
+             case(1)
                ngas = ngas + 1
-             case(1:9)
-               iamtype(i,j) = 3
+             case(3)
                nptmassi = nptmassi + 1
-             case(10:)
-               iamtype(i,j) = 4
+             case(4)
                nstar = nstar + 1
              case default
-               iamtype(i,j) = 5
                nunknown = nunknown + 1
              end select
           enddo
