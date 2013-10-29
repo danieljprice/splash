@@ -34,10 +34,9 @@ contains
 !  Arguments:
 !
 !
-subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
-                        icolourpart,iamtype,noftype,iplot_type, &
+subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,iplot_type, &
                         use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
-                        fast,datpix,npixx,npixy,dval,brightness)
+                        fast,datpix,nx,ny,dval,brightness)
   use params,           only:int1
   use labels,           only:labeltype, maxparttypes,is_coord
   use settings_data,    only:ndim,icoords,ntypes
@@ -53,13 +52,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   integer(kind=int1),  dimension(:), intent(in) :: iamtype
   integer,             dimension(:), intent(in) :: icolourpart
   integer, dimension(maxparttypes),  intent(in) :: noftype
-  real,                dimension(:), intent(in) :: xplot, yplot, zplot, h
+  real,                dimension(:), intent(in) :: x, y, z, h
   real,                              intent(in) :: zmin,zmax,xmin,xmax,ymin,ymax
   logical,                           intent(in) :: use_zrange,fast
   logical, dimension(maxparttypes),  intent(in) :: iplot_type
   character(len=*),                  intent(in) :: labelz
 
-  integer,                           intent(in),    optional :: npixx,npixy
+  integer,                           intent(in),    optional :: nx,ny
   real, dimension(:,:),              intent(inout), optional :: datpix,brightness
   real,                              intent(in),    optional :: dval
 
@@ -88,17 +87,17 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
      print "(a)",' WARNING: particleplot: total not equal to sum of types on input'
      print*,' ntotal = ',ntot,' sum of types = ',ntotplot
   endif
-  maxz = size(zplot)
+  maxz = size(z)
   if (use_zrange .and. maxz.lt.ntot) then
      print "(a)",' WARNING: particleplot: slice plot but z array too small - excluding particles > z array size'
   endif
   dxpix = 0.
   if (present(datpix)) then
-     if (.not.(present(npixx).and.present(npixy).and.present(dval))) then
+     if (.not.(present(nx).and.present(ny).and.present(dval))) then
         print "(a)",' INTERNAL ERROR in call to particleplot: optional args not present'
         return
      else
-        dxpix = (xmax - xmin)/real(npixx)
+        dxpix = (xmax - xmin)/real(nx)
      endif
   endif
 
@@ -150,32 +149,30 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
               if (.not.iplot_type(itype)) cycle overj
            endif
            if (j.le.maxz) then
-              if (zplot(j).lt.zmax .and. zplot(j).gt.zmin) then
+              if (z(j).lt.zmax .and. z(j).gt.zmin) then
                  if (icolourpart(j).ge.0) then
                     nplotted = nplotted + 1
                     nplottedtype(itype) = nplottedtype(itype) + 1
 
                     call plot_sci(icolourpart(j))
-                    call plot_particle(imarktype(itype),xplot(j),yplot(j),h(j))
+                    call plot_particle(imarktype(itype),x(j),y(j),h(j))
 
                     if (present(datpix)) then
                        if (present(brightness)) then
-                          call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                 npixx,npixy,dxpix,dval,brightness)
+                          call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
                        else
-                          call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                 npixx,npixy,dxpix,dval)
+                          call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
                        endif
                     endif
                  endif
                  !--plot circle of interaction if gas particle
                  if (itype.eq.1 .and. ncircpart.gt.0 .and. ANY(icircpart(1:ncircpart).eq.j)) then
-                    call plot_circ(xplot(j),yplot(j),2*h(j))
+                    call plot_circ(x(j),y(j),2*h(j))
                  endif
                  !!--plot particle label
                  if (ilabelpart) then
                     call plot_numb(j,0,1,string,lenstring)
-                    call plot_text(xplot(j),yplot(j),string(1:lenstring))
+                    call plot_text(x(j),y(j),string(1:lenstring))
                  endif
               endif
            endif
@@ -183,15 +180,13 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
         if (mixedtypes) then
            do itype=1,ntypes
               if (iplot_type(itype) .and. nplottedtype(itype).gt.0) then
-                 print*,' plotted ',nplottedtype(itype),' of ', &
-                   noftype(itype),trim(labeltype(itype))//' particles in range ', &
-                   trim(labelz),' = ',zmin,' -> ',zmax
+                 print*,' plotted ',nplottedtype(itype),' of ',noftype(itype), &
+                  trim(labeltype(itype))//' particles in range ', trim(labelz),' = ',zmin,' -> ',zmax
               endif
            enddo
         else
-           print*,' plotted ',nplotted,' of ', &
-             index2-index1+1,trim(labeltype(itype))//' particles in range ', &
-             trim(labelz),' = ',zmin,' -> ',zmax
+           print*,' plotted ',nplotted,' of ',index2-index1+1, &
+            trim(labeltype(itype))//' particles in range ',trim(labelz),' = ',zmin,' -> ',zmax
         endif
      else
         !
@@ -208,27 +203,24 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            call plot_sci(icolourpart(index1))
            if (fast .and. (index2-index1).gt.100) then
               !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
-              write(*,"(a,i8,1x,a)") &
-                   ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
+              write(*,"(a,i8,1x,a)") ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
               nincell(1:ncellx,1:ncelly) = 0
               do j=index1,index2
-                 icellx = int((xplot(j) - xmin)*dxcell1) + 1
-                 icelly = int((yplot(j) - ymin)*dycell1) + 1
+                 icellx = int((x(j) - xmin)*dxcell1) + 1
+                 icelly = int((y(j) - ymin)*dycell1) + 1
                  !--exclude particles if there are more than one particle per cell
                  if (icellx.gt.0 .and. icellx.le.ncellx &
                     .and. icelly.gt.0 .and. icelly.le.ncelly) then
                     if (nincell(icellx,icelly).eq.0) then
                        nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
 
-                       call plot_particle(imarktype(itype),xplot(j),yplot(j),h(j))
+                       call plot_particle(imarktype(itype),x(j),y(j),h(j))
 
                        if (present(datpix)) then
                           if (present(brightness)) then
-                             call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                    npixx,npixy,dxpix,dval,brightness)
+                             call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
                           else
-                             call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                    npixx,npixy,dxpix,dval)
+                             call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
                           endif
                        endif
                     endif
@@ -240,19 +232,19 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
               select case(imarktype(itype))
               case(32:35)
                  do j=1,noftype(itype)
-                    call plot_particle(imarktype(itype),xplot(j),yplot(j),h(j))
+                    call plot_particle(imarktype(itype),x(j),y(j),h(j))
                  enddo
                  call plot_sfs(1)
               case default
-                 call plot_pt(noftype(itype),xplot(index1:index2),yplot(index1:index2),imarktype(itype))
+                 call plot_pt(noftype(itype),x(index1:index2),y(index1:index2),imarktype(itype))
               end select
               if (present(datpix)) then
                  if (present(brightness)) then
-                    call interpolate_part(xplot(index1:index2),yplot(index1:index2),h(index1:index2), &
-                                          noftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval,brightness)
+                    call interpolate_part(x(index1:index2),y(index1:index2),h(index1:index2), &
+                                          noftype(itype),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
                  else
-                    call interpolate_part(xplot(index1:index2),yplot(index1:index2),h(index1:index2), &
-                                          noftype(itype),xmin,ymin,datpix,npixx,npixy,dxpix,dval)
+                    call interpolate_part(x(index1:index2),y(index1:index2),h(index1:index2), &
+                                          noftype(itype),xmin,ymin,datpix,nx,ny,dxpix,dval)
                  endif
               endif
            endif
@@ -273,8 +265,8 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  endif
                  nplotted = nplotted + 1
                  if (fast .and. noftype(itype).gt.100) then
-                    icellx = int((xplot(j) - xmin)*dxcell1) + 1
-                    icelly = int((yplot(j) - ymin)*dycell1) + 1
+                    icellx = int((x(j) - xmin)*dxcell1) + 1
+                    icelly = int((y(j) - ymin)*dycell1) + 1
                     !--exclude particles if there are more than 2 particles per cell
                     !  (two here because particles can have different colours)
                     if (icellx.gt.0 .and. icellx.le.ncellx &
@@ -283,30 +275,26 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                           nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
                           
                           call plot_sci(icolourpart(j))
-                          call plot_particle(imarktype(itype),xplot(j),yplot(j),h(j))
+                          call plot_particle(imarktype(itype),x(j),y(j),h(j))
 
                           if (present(datpix)) then
                              if (present(brightness)) then
-                                call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                       npixx,npixy,dxpix,dval,brightness)
+                                call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
                              else
-                                call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                       npixx,npixy,dxpix,dval)
+                                call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
                              endif
                           endif
                        endif
                     endif
                  else
                     call plot_sci(icolourpart(j))
-                    call plot_particle(imarktype(itype),xplot(j),yplot(j),h(j))
+                    call plot_particle(imarktype(itype),x(j),y(j),h(j))
 
                     if (present(datpix)) then
                        if (present(brightness)) then
-                          call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                 npixx,npixy,dxpix,dval,brightness)
+                          call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
                        else
-                          call interpolate_part1(xplot(j),yplot(j),h(j),xmin,ymin,datpix, &
-                                                 npixx,npixy,dxpix,dval)
+                          call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
                        endif
                     endif
                  endif
@@ -337,7 +325,7 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
            print*,'plotting particle labels ',index1,':',index2
            do j=index1,index2
               call plot_numb(j,0,1,string,lenstring)
-              call plot_text(xplot(j),yplot(j),string(1:lenstring))
+              call plot_text(x(j),y(j),string(1:lenstring))
            enddo
         endif
      endif
@@ -355,13 +343,11 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
   if (iplotline .and. .not.(use_zrange .and. abs(zmax-zmin).lt.0.5*huge(0.))) then
      call plot_qls(oldlinestyle)
      call plot_sls(linestylethisstep)
-     call plot_line(noftype(1),xplot(1:noftype(1)), &
-                 yplot(1:noftype(1)))
+     call plot_line(noftype(1),x(1:noftype(1)),y(1:noftype(1)))
 
      if (noftype(2).gt.0 .and. iplot_type(2)) then
         call plot_sls(mod(linestylethisstep+1,plotlib_maxlinestyle) + 1)
-        call plot_line(noftype(2),xplot(noftype(1)+1:sum(noftype(1:2))), &
-                 yplot(noftype(1)+1:sum(noftype(1:2))))
+        call plot_line(noftype(2),x(noftype(1)+1:sum(noftype(1:2))),y(noftype(1)+1:sum(noftype(1:2))))
      endif
      call plot_sls(oldlinestyle)! reset
   endif
@@ -393,11 +379,9 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  print*,'error: particle index > number of particles'
               else
                  if (icoordsnew.ne.icoords) then
-                    call plot_kernel_gr(icoordsnew,icoords,xplot(icircpart(n)),  &
-                         yplot(icircpart(n)),2*h(icircpart(n)))
+                    call plot_kernel_gr(icoordsnew,icoords,x(icircpart(n)),y(icircpart(n)),2*h(icircpart(n)))
                  else
-                    call plot_circ(xplot(icircpart(n)),  &
-                         yplot(icircpart(n)),2*h(icircpart(n)))
+                    call plot_circ(x(icircpart(n)),y(icircpart(n)),2*h(icircpart(n)))
                  endif
               endif
            enddo
@@ -415,19 +399,17 @@ subroutine particleplot(xplot,yplot,zplot,h,ntot,iplotx,iploty, &
                  yerrb(n) = 0.
                  herr(n) = 0.
               else
-                 xerrb(n) = xplot(icircpart(n))
-                 yerrb(n) = yplot(icircpart(n))
+                 xerrb(n) = x(icircpart(n))
+                 yerrb(n) = y(icircpart(n))
                  herr(n) = 2.*h(icircpart(n))
               endif
            enddo
            if (is_coord(iplotx,ndim)) then
               print*,'plotting ',ncircpart,' error bars x axis '
-              call plot_errb(5,ncircpart,xerrb(1:ncircpart), &
-                   yerrb(1:ncircpart),herr(1:ncircpart),1.0)
+              call plot_errb(5,ncircpart,xerrb(1:ncircpart),yerrb(1:ncircpart),herr(1:ncircpart),1.0)
            elseif (is_coord(iploty,ndim)) then
               print*,'plotting ',ncircpart,' error bars y axis'
-              call plot_errb(6,ncircpart,xerrb(1:ncircpart), &
-                   yerrb(1:ncircpart),herr(1:ncircpart),1.0)
+              call plot_errb(6,ncircpart,xerrb(1:ncircpart),yerrb(1:ncircpart),herr(1:ncircpart),1.0)
            endif
            if (allocated(herr)) deallocate(herr)
            if (allocated(xerrb)) deallocate(xerrb)
