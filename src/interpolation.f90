@@ -125,9 +125,11 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
         !--particles ordered by type
         !
         i2 = 0
-        do itype=1,ntypes
+        over_types: do itype=1,ntypes
            i1 = i2 + 1
            i2 = i2 + npartoftype(itype)
+           i2 = min(i2,ninterp)
+           if (i1 > i2) exit over_types
            !--set weights to zero for particle types not used in the rendering
            if (.not.usetype(itype)) then
               weighti(i1:i2) = 0.
@@ -148,7 +150,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
                  weighti(i1:i2) = 0.
               endwhere
            endif
-        enddo
+        enddo over_types
      endif
 
      if (idensityweighted) then
@@ -196,9 +198,11 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
         !--particles ordered by type
         !
         i2 = 0
-        do itype=1,ntypes
+        over_types2: do itype=1,ntypes
            i1 = i2 + 1
            i2 = i2 + npartoftype(itype)
+           i2 = min(i2,ninterp)
+           if (i1 > i2) exit over_types2
            !--set weights to zero for particle types not used in the rendering
            if (.not.usetype(itype)) then
               weighti(i1:i2) = 0.
@@ -210,7 +214,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
                  weighti(i1:i2) = 0.
               endwhere
            endif
-        enddo
+        enddo over_types2
      endif
 
      if (idensityweighted) then
