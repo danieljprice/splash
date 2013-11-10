@@ -116,7 +116,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
   dy1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
 
   over_types: do ilooptype=1,nlooptypes
-     call plot_bbuf !--buffer PGPLOT output until each particle type finished
+     call plot_bbuf !--buffer plot output until each particle type finished
      if (mixedtypes .or. use_zrange) then
         index1 = 1
         index2 = ntot
@@ -163,7 +163,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
                     nplotted = nplotted + 1
                     nplottedtype(itype) = nplottedtype(itype) + 1
 
-                    if (fast) then
+                    if (fast .and. noftype(itype) > 100) then
                        if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
                           if (nincell(icellx,icelly).eq.0) then
                              nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
