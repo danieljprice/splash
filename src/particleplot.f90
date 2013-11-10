@@ -44,6 +44,8 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
                              ilabelpart,iplotline,linestylethisstep,linecolourthisstep
   use interpolations2D, only:interpolate_part,interpolate_part1
   use transforms,       only:transform
+  use part_utils,       only:igettype
+  use sort,             only:indexx
   use plotlib,          only:plot_qci,plot_bbuf,plot_ebuf,plot_sci,plot_sfs,plot_circ, &
                              plot_pt,plot_numb,plot_text,plot_pt1,plot_qls,plot_sls, &
                              plot_line,plot_qlw,plot_slw,plot_errb,plotlib_maxlinestyle
@@ -69,7 +71,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
   integer, parameter                           :: ncellx = 500, ncelly = 500 ! for crowded field reduction
   integer(kind=int1), dimension(ncellx,ncelly) :: nincell
   integer                                      :: icellx,icelly,maxz
-  real                                         :: dxcell1,dycell1,dxpix
+  real                                         :: dx1,dy1,dxpix
   logical                                      :: mixedtypes
   real, dimension(:), allocatable              :: xerrb, yerrb, herr
 
@@ -88,6 +90,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
      print*,' ntotal = ',ntot,' sum of types = ',ntotplot
   endif
   maxz = size(z)
+  if (maxz > ntot) maxz = ntot
   if (use_zrange .and. maxz.lt.ntot) then
      print "(a)",' WARNING: particleplot: slice plot but z array too small - excluding particles > z array size'
   endif
@@ -108,11 +111,13 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
   nplottedtype = 0
   nlooptypes = ntypes
   mixedtypes = size(iamtype).gt.1
-  if (mixedtypes) nlooptypes = 1
+  if (mixedtypes .or. use_zrange) nlooptypes = 1
+  dx1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
+  dy1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
 
   over_types: do ilooptype=1,nlooptypes
      call plot_bbuf !--buffer PGPLOT output until each particle type finished
-     if (mixedtypes) then
+     if (mixedtypes .or. use_zrange) then
         index1 = 1
         index2 = ntot
         itype = 0
@@ -143,19 +148,33 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
         !--if particle cross section, plot particles only in a defined (z) coordinate range
         !
         nplotted = 0
-        overj: do j=index1,index2
+        nincell = 0
+        
+        overj: do j=1,ntot
            if (mixedtypes) then
               itype = min(max(int(iamtype(j)),1),maxparttypes)
-              if (.not.iplot_type(itype)) cycle overj
+           else
+              itype = igettype(j,noftype)
            endif
+           if (.not. iplot_type(itype)) cycle overj
            if (j.le.maxz) then
-              if (z(j).lt.zmax .and. z(j).gt.zmin) then
+              if (z(j) > zmin .and. z(j) < zmax) then
                  if (icolourpart(j).ge.0) then
                     nplotted = nplotted + 1
                     nplottedtype(itype) = nplottedtype(itype) + 1
 
-                    call plot_sci(icolourpart(j))
-                    call plot_particle(imarktype(itype),x(j),y(j),h(j))
+                    if (fast) then
+                       if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
+                          if (nincell(icellx,icelly).eq.0) then
+                             nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
+                             call plot_sci(icolourpart(j))
+                             call plot_particle(imarktype(itype),x(j),y(j),h(j))
+                          endif
+                       endif
+                    else
+                       call plot_sci(icolourpart(j))
+                       call plot_particle(imarktype(itype),x(j),y(j),h(j))
+                    endif
 
                     if (present(datpix)) then
                        if (present(brightness)) then
@@ -177,24 +196,23 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
               endif
            endif
         enddo overj
-        if (mixedtypes) then
-           do itype=1,ntypes
-              if (iplot_type(itype) .and. nplottedtype(itype).gt.0) then
-                 print*,' plotted ',nplottedtype(itype),' of ',noftype(itype), &
-                  trim(labeltype(itype))//' particles in range ', trim(labelz),' = ',zmin,' -> ',zmax
+
+        do itype=1,ntypes
+           if (iplot_type(itype) .and. nplottedtype(itype).gt.0) then
+              if (zmin < -0.1*huge(zmin)) then
+                 print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
+                  trim(labeltype(itype))//' particles with ', trim(labelz),' < ',zmax
+              else
+                 print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
+                  trim(labeltype(itype))//' particles in range ', trim(labelz),' = ',zmin,' -> ',zmax                 
               endif
-           enddo
-        else
-           print*,' plotted ',nplotted,' of ',index2-index1+1, &
-            trim(labeltype(itype))//' particles in range ',trim(labelz),' = ',zmin,' -> ',zmax
-        endif
+           endif
+        enddo
      else
         !
         !--otherwise plot all particles of this type using appropriate marker and colour
         !
         call plot_qci(icolourindex)
-        dxcell1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
-        dycell1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
         !
         !--all particles in range have same colour and type
         !
@@ -204,13 +222,9 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
            if (fast .and. (index2-index1).gt.100) then
               !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
               write(*,"(a,i8,1x,a)") ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
-              nincell(1:ncellx,1:ncelly) = 0
+              nincell = 0
               do j=index1,index2
-                 icellx = int((x(j) - xmin)*dxcell1) + 1
-                 icelly = int((y(j) - ymin)*dycell1) + 1
-                 !--exclude particles if there are more than one particle per cell
-                 if (icellx.gt.0 .and. icellx.le.ncellx &
-                    .and. icelly.gt.0 .and. icelly.le.ncelly) then
+                 if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
                     if (nincell(icellx,icelly).eq.0) then
                        nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
 
@@ -254,7 +268,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
         !
            nplotted = 0
            nplottedtype = 0
-           nincell(1:ncellx,1:ncelly) = 0
+           nincell = 0
 
            overj2: do j=index1,index2
               if (icolourpart(j).ge.0) then
@@ -265,12 +279,9 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
                  endif
                  nplotted = nplotted + 1
                  if (fast .and. noftype(itype).gt.100) then
-                    icellx = int((x(j) - xmin)*dxcell1) + 1
-                    icelly = int((y(j) - ymin)*dycell1) + 1
+                    if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
                     !--exclude particles if there are more than 2 particles per cell
                     !  (two here because particles can have different colours)
-                    if (icellx.gt.0 .and. icellx.le.ncellx &
-                       .and. icelly.gt.0 .and. icelly.le.ncelly) then
                        if (nincell(icellx,icelly).le.0) then
                           nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
                           
@@ -475,6 +486,24 @@ subroutine plot_particle(imarktype,x,y,h)
  end select
 
 end subroutine plot_particle
+!------------------------------------------------------------
+!
+! function used to determine which cell a particle lies in
+! returns TRUE if within allowed limits, FALSE if not
+!
+!------------------------------------------------------------
+logical function in_cell(ix,iy,x,y,xmin,ymin,dx1,dy1,nx,ny)
+ integer, intent(out) :: ix,iy
+ real,    intent(in)  :: x,y,xmin,ymin,dx1,dy1
+ integer, intent(in)  :: nx,ny
+
+ ix = int((x - xmin)*dx1) + 1
+ iy = int((y - ymin)*dy1) + 1
+ !--exclude particles if there are more than 2 particles per cell
+ !  (two here because particles can have different colours)
+ in_cell = (ix.gt.0 .and. ix.le.nx .and. iy.gt.0 .and. iy.le.ny)
+
+end function in_cell
 
 !--------------------------------------------------------------------------------
 !
