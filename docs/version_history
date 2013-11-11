@@ -1,5 +1,5 @@
 2.3.1:
-SPLASH_COROTATE option to plot in frame corotating with sinks; bug fixes with handling of dead/accreted/boundary particles in sphNG/phantom; various other bugs fixed
+SPLASH\_COROTATE option to plot in frame corotating with sinks; bug fixes with handling of dead/accreted/boundary particles in sphNG/phantom; various other bugs fixed
  
 2.3.0:
 can customise time formatting in legend; improvements to legends; less verboseness; splash can read and plot pixel maps produced with -o ascii; 3D vector field plotting improved; bug fix with gfortran 4.8
