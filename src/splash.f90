@@ -48,6 +48,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.3.1  : (11/11/13)
+!             SPLASH_COROTATE option to plot in frame corotating with sinks;
+!             bug fixes with handling of dead/accreted/boundary particles in sphNG/phantom;
+!             various other bugs fixed.
 !     2.3.0  : (09/08/13)
 !             can customise time formatting in legend; improvements to legends;
 !             less verboseness; splash can read and plot pixel maps produced with -o ascii;
@@ -342,7 +346,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.3.0+svn [23rd Aug. 2013]'
+  character(len=*), parameter :: version = 'v2.3.1 [11th Nov. 2013]'
 
   !
   ! initialise some basic code variables
