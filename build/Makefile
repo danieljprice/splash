@@ -661,6 +661,9 @@ jules: checksystem $(OBJECTS) read_data_jules.o
 oilonwater: checksystem $(OBJECTS) read_data_oilonwater.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/osplash $(OBJECTS) read_data_oilonwater.o $(LDFLAGS)
 
+maddison: checksystem $(OBJECTS) read_data_maddison.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/msplash $(OBJECTS) read_data_maddison.o $(LDFLAGS)
+
 RSPH: rsph
 
 rsph: checksystem $(OBJECTS) read_data_rsph.o
