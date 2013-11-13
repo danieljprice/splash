@@ -3,11 +3,11 @@
 #   This file is just a wrapper for the sub-make in the build
 #   directory. Refer to build/Makefile for more details.
 #
-#   (c) 2007-2010 Daniel Price
+#   (c) 2007-2013 Daniel Price
 #
 #----------------------------------------------------------------
 
-.PHONY: splash install docs
+.PHONY: splash install docs tests src bin
 splash:
 	@cd build; ${MAKE} ${MAKECMDGOALS}
 
