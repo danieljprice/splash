@@ -507,7 +507,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        !
        !--warn if particle masses not found
        !
-       if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype.eq.0)) then
+       if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype < tiny(massoftype))) then
           print "(a)",' WARNING in massaboverho analysis!'// &
                       ' masses not read or are zero from dump file'
        endif
@@ -726,7 +726,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--warn if particle masses not found
     !
-    if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype.eq.0)) then
+    if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype < tiny(massoftype))) then
        print "(a)",' WARNING in volume weighted rms calculation!'// &
                    ' masses not read or are zero from dump file'
     endif
@@ -773,7 +773,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--warn if particle masses not found
     !
-    if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype.eq.0)) then
+    if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype < tiny(massoftype))) then
        print "(a)",' WARNING in volume weighted rms calculation!'// &
                    ' masses not read or are zero from dump file'
     endif
@@ -1012,7 +1012,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        !--store first dump
        datmean(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)
     else
-       where (datmean(1:ntot1,1:ncol1).ne.0.)
+       where (abs(datmean(1:ntot1,1:ncol1)) > epsilon(0.))
           datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/datmean(1:ntot1,1:ncol1)    ! ratio of current data to first step
        elsewhere
           datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/(datmean(1:ntot1,1:ncol1) + epsilon(0.))
