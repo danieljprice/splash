@@ -547,9 +547,12 @@ contains
       !
 
       read(*,"(a)") newstring
+      if (len_trim(newstring) > len(string)) then
+         print "(a)", "Warning: string too long, will be truncated"
+      endif
       if (allowblank .and. trim(adjustl(newstring)).eq.'blank') then
          string = ' '
-      elseif ( len(trim(adjustl(newstring))) /= 0 ) then
+      elseif ( len_trim(adjustl(newstring)) /= 0 ) then
          string = newstring
       elseif ( .not.allowblank .and. len_trim(adjustl(string)).eq.0 ) then
          print "(a)", "Error, cannot enter blank string"
