@@ -39,6 +39,7 @@
 !     plot_numb from the plotting library
 !-----------------------------------------------------------------
 module parsetext
+ use fparser, only:rn
  implicit none
 
 contains
@@ -46,7 +47,7 @@ contains
 subroutine parse_text(string,vars,vals)
  use asciiutils, only:string_replace,string_sub,lcase
  character(len=*), intent(inout) :: string
- real(kind=8), dimension(:), intent(in) :: vals
+ real(kind=rn),    dimension(:), intent(in) :: vals
  character(len=*), dimension(:), intent(in) :: vars
  character(len=1) :: ch
  character(len=len(string)+128) :: newstring
@@ -181,7 +182,7 @@ end subroutine parse_text
 !---------------------------------------------------------------------------
 subroutine get_varstring(r,ndec,string)
  use plotlib, only:plot_numb
- real, intent(in) :: r
+ real,    intent(in) :: r
  integer, intent(in)  :: ndec
  character(len=*), intent(out) :: string
  real :: rtmp
@@ -215,7 +216,7 @@ real function parse_formula(string,vars,vals,ierr)
  use fparser, only:initf,evalf,endf,checkf,parsef
  character(len=*), intent(in) :: string
  character(len=*), dimension(:), intent(in) :: vars
- real(kind=8), dimension(:), intent(in) :: vals
+ real(kind=rn),    dimension(:), intent(in) :: vals
  integer, intent(out) :: ierr
  
  call initf(1)

@@ -38,8 +38,8 @@ module settings_page
  real    :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
  real    :: charheight,alphalegend
  real    :: dxscale,hposscale,vposscale,yscalealt
- character(len=20) :: legendtext, scaletext
- character(len=60) :: device
+ character(len=lenlabel) :: legendtext, scaletext
+ character(len=60)       :: device
  character(len=lenlabel) :: labelyalt
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
@@ -491,11 +491,14 @@ subroutine submenu_legend(ichoose)
     call prompt('Plot time legend? ',iPlotLegend)
     print "(a)",'Time legend is '//print_logical(iPlotLegend)
     if (iPlotLegend) then
-       print "(4(/,a),/)", &
+       print "(7(/,a),/)", &
        ' Example format strings: ', &
        '  t =              : this is the default format "t = 0.1 years"', &
        '  t = %t.5         : with time to 5 significant figures', &
-       '  Time: %t dog-%ut : gives "Time: 0.1 dog-years"'
+       '  Time: %t dog-%ut : gives "Time: 0.1 dog-years"', &
+       '  %(t + 2013)      : prints time offset by 2013', &
+       '  %(t + 2013).5    : as above, to 5 sig. figs.', &
+       '  %(t*100)         : multiplied by 100'
 
        call prompt('Enter legend text ',legendtext)
 

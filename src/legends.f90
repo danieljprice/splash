@@ -47,54 +47,39 @@ contains
 !-----------------------------------------------------------------
 
 subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust,usebox)
- use plotlib,    only:plot_numb,plot_annotate
+ use plotlib,    only:plot_annotate
  use asciiutils, only:string_replace
+ use parsetext,  only:parse_text,rn
  implicit none
  real, intent(in) :: t,hpos,vpos,fjust
  character(len=*), intent(in) :: legendtext,unitslabel
  logical,          intent(in) :: usebox
  character(len=len(legendtext)+len(unitslabel)+20) :: label
- integer :: mm,pp,nc,ipos,ndecimal,ierr
- real :: tplot
- character(len=30) :: string
- character(len=4)  :: tmp
-
+ integer, parameter :: nvars = 1
+ real(kind=rn),    dimension(nvars) :: vals
+ character(len=1), dimension(nvars) :: vars
+ 
  label = trim(legendtext)
- ipos  = index(label,'%t.')
- if (ipos.gt.0 .and. ipos+4.le.len(label)) then
-    read(label(ipos+3:ipos+4),"(i1)",iostat=ierr) ndecimal
-    if (ierr.ne.0) ndecimal = 3
-    !--replace %t.nq with %t for further replacement below
-    tmp = label(ipos:ipos+4)
-    call string_replace(label,tmp,'%t')
- else
-    if (t.lt.1.0) then
-       ndecimal = 2
+
+ !
+ !  if string does not contain any formatting
+ !  append the time variable to it
+ !
+ if (index(label,'%') <= 0) then
+    if (t < 1.) then
+       label = trim(label)//'%t.2'
     else
-       ndecimal = 3        ! number of decimal places to display
+       label = trim(label)//'%t.3'    
     endif
  endif
+ !
+ !  parse string for functions of time and formatting
+ !  i.e. %t.5
+ !
+ vars = (/'t'/)
+ vals(1) = real(t,kind=rn)
+ call parse_text(label,vars,vals)
 
- if (t.lt.tiny(t)) then
-    string = '0'
-    nc = 1
- else
-    tplot = abs(t)    !/(2.*3.1415926536)
-    mm=nint(tplot/10.**(int(log10(tplot)-ndecimal)))
-    pp=int(log10(tplot)-ndecimal)
-! mm=nint(tplot*ndec)
-! pp=nint(log10(tplot)-log10(tplot*ndec))
-    call plot_numb(mm,pp,1,string,nc)
-    if (t.lt.0.) string='-'//string(1:nc)
- endif
-!
-!--handle format strings in legend text
-!
- if (index(label,'%t').gt.0) then
-    call string_replace(label,'%t',string(1:nc))
- else
-    label = trim(label)//string(1:nc)
- endif
  if (index(label,'%ut').gt.0) then
     call string_replace(label,'%ut',trim(unitslabel))
  else
