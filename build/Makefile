@@ -17,6 +17,7 @@
 KNOWN_SYSTEM=no
 SRCDIR=../src
 BINDIR=../bin
+TESTDIR=../tests
 VPATH=$(SRCDIR) $(SRCDIR)/H5Part
 SHELL=/bin/bash
 
@@ -901,19 +902,22 @@ targz:
 	gzip splash.tar
 
 ## unit tests of various modules as I write them
+.PHONY: tests
 
-tests: test1 test2 test3 test_slicer test_prompt
+test: test1 test2 test3 test_slicer test_prompt test-parse
 
 test1: interpolate3D_projection.o interpolate3D_xsec.o test_interpolate3D.o 
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_interpolation3D test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
-test2: transform.o ./tests/test_transform.o 
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_transform ./tests/test_transform.o transform.o
-test3: fieldlines.o ./tests/test_fieldlines.o 
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_fieldlines ./tests/test_fieldlines.o fieldlines.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_interpolation3D $(TESTDIR)/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
+test2: transform.o $(TESTDIR)//test_transform.o 
+	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_transform $(TESTDIR)/test_transform.o transform.o
+test3: fieldlines.o $(TESTDIR)//test_fieldlines.o 
+	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_fieldlines $(TESTDIR)/test_fieldlines.o fieldlines.o
 test_slicer: interpolate3D_projection.o interpolate3D_xsec.o test_slicer3D.o 
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_slicer3D test_slicer3D.o interpolate3D_projection.o interpolate3D_xsec.o
+	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_slicer3D $(TESTDIR)/test_slicer3D.o interpolate3D_projection.o interpolate3D_xsec.o
 test_prompt: prompting.o test_prompting.o
 	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_prompt prompting.o test_prompting.o
+test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parsetext.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/test-parse giza-fortran.o plotlib_giza.o fparser.o asciiutils.o parsetext.o $(TESTDIR)/test-parsetext.o $(LDFLAGS)
 
 #
 #--code dependencies: MAY BE INCOMPLETE - I generate this automatically every so often
