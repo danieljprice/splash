@@ -33,7 +33,7 @@
 module asciiutils
  implicit none
  public :: read_asciifile,get_ncolumns,ncolumnsline,safename,basename,cstring
- public :: string_replace, string_delete, nheaderlines
+ public :: string_replace, string_delete, nheaderlines, string_sub
  public :: ucase,lcase
 
  private
@@ -465,6 +465,28 @@ subroutine string_replace(string,skey,sreplacewith)
  enddo
 
 end subroutine string_replace
+
+!---------------------------------------------------------------------------
+!
+! subroutine to replace a specified section of a string with a
+! replacement string, possibly of differing length
+!
+!---------------------------------------------------------------------------
+subroutine string_sub(string,i1,i2,sreplacewith)
+ implicit none
+ character(len=*), intent(inout) :: string
+ integer, intent(in)             :: i1,i2
+ character(len=*), intent(in)    :: sreplacewith
+ character(len=len(string))      :: oldstring
+
+ oldstring = string
+ if (i2 < len_trim(string)) then
+    string = oldstring(1:i1-1)//sreplacewith//oldstring(i2+1:len_trim(oldstring))
+ else
+    string = oldstring(1:i1-1)//sreplacewith
+ endif
+
+end subroutine string_sub
 
 !---------------------------------------------------------------------------
 !
