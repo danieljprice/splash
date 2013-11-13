@@ -333,7 +333,7 @@ return
 contains
 
 subroutine fake_twofluids
- use labels, only:idustfrac,irho,ix,ih,iutherm,ipmass,ivx,ideltav
+ use labels, only:idustfrac,irho,ix,ih,ipmass,ivx,ideltav
  implicit none
  integer :: ndust,jdust
  real    :: rhodust,rhogas,rhotot,dustfraci,pmassgas,pmassdust,pmassj
