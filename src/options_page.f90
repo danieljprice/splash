@@ -253,8 +253,9 @@ subroutine submenu_page(ichoose)
         print*,'13) 2560 x 1440 pixels'
         print*,'14) 2560 x 1600 pixels'
         print*,'15) 3840 x 2160 pixels (4KTV/Ultra HD)'
-        print*,'16) Custom size '
-        call prompt(' Enter option for paper size ',ipapersize,0,16)
+        print*,'16) 27000 x 3000 pixels (CAVE-2)'
+        print*,'17) Custom size '
+        call prompt(' Enter option for paper size ',ipapersize,0,17)
      endif
      
      select case(ipapersize)
@@ -299,7 +300,7 @@ subroutine submenu_page(ichoose)
            papersizey = 600.
            aspectratio = papersizey/papersizex
         endif
-     case(8:15)
+     case(8:16)
         if (plotlib_is_pgplot) then
            ipapersizeunits = 1
            papersizex  = 0.  ! use PGPLOT default
@@ -331,10 +332,13 @@ subroutine submenu_page(ichoose)
            case(15)
               papersizex = 3840.
               papersizey = 2160.
+           case(16)
+              papersizex = 27000.
+              papersizey = 3000.
            end select
            aspectratio = papersizey/papersizex
         endif
-     case(16)
+     case(17)
         if (plotlib_is_pgplot) then
            ipapersizeunits = 1
            papersizex  = 0.  ! use PGPLOT default
@@ -346,10 +350,22 @@ subroutine submenu_page(ichoose)
            print*,' 2) cm '
            call prompt(' choose units for paper size',ipapersizeunits,0,2)
            if (ipapersizeunits.ne.iunitsprev) then
-              papersizex = 0.
-              papersizey = 0.
+              select case(ipapersizeunits)
+              case(2)
+                 papersizex = 29.7
+                 papersizey = 21.0
+              case(1)
+                 papersizex = 11.0
+                 papersizey = 8.5
+              case(0)
+                 papersizex = 800.
+                 papersizey = -0.75
+              case default
+                 papersizex = 0.
+                 papersizey = 0.              
+              end select
            endif
-           call prompt(' x size in above units ',papersizex,0.0)
+           call prompt(' x size in above units ',papersizex,1.)
            call prompt(' y size or aspect ratio (-ve)',papersizey)
            if (papersizey.lt.0.0) then
               aspectratio = abs(papersizey)
