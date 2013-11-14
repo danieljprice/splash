@@ -126,13 +126,6 @@ module plotlib
   integer, parameter :: plotlib_extend_reflect = giza_extend_reflect
   integer, parameter :: plotlib_extend_none = giza_extend_none
 
-!  character(len=1),parameter :: plot_left_click = giza_left_click_f
-!  character(len=1),parameter :: plot_right_click = giza_right_click_f
-!  character(len=1),parameter :: plot_middle_click = giza_middle_click_f
-!  character(len=1),parameter :: plot_scroll_up = giza_scroll_up_f
-!  character(len=1),parameter :: plot_scroll_down = giza_scroll_down_f
-!  character(len=1),parameter :: plot_scroll_left = giza_scroll_left_f
-!  character(len=1),parameter :: plot_scroll_right = giza_scroll_right_f
 public
 
 contains
@@ -149,7 +142,7 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  real, intent(in), optional    :: papersizex,aspectratio
  integer, intent(in), optional :: paperunits
  real                          :: width,height
- integer                       :: units
+ integer                       :: units, id
 
  if (present(papersizex)) then
     width = papersizex
@@ -172,10 +165,17 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
     else
        units = giza_units_inches
     endif
-    ierr = giza_open_device_size(devicein, 'splash', width, height, units)
+    id = giza_open_device_size(devicein, 'splash', width, height, units)
  else
-    ierr = giza_open_device(devicein,'splash')
+    id = giza_open_device(devicein,'splash')
  endif
+ ! id<0 should return an error, but +ve id is OK
+ select case(id)
+ case(:-1)
+    ierr = id
+ case default
+    ierr = 0
+ end select
 
  if(ierr.eq.0) then
     call giza_stop_prompting
@@ -341,11 +341,6 @@ subroutine plot_qinf(item,value,length)
      value = 'NO'
   case('CURSOR','cursor')
      call giza_query_device('cursor',value)
-!     if (plot_qcur()) then
-!        value = 'YES'
-!     else
-!        value = 'NO'
-!     endif
   case('SCROLL','scroll')
      !--no scroll capability in any current giza devices
      value = 'NO'
