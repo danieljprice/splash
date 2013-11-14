@@ -48,6 +48,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.4.0  : (xx/xx/xx)
+!             time formatting in legend can include general functions like %(t + 1000);
+!             option to include sinks in opacity rendering;
 !     2.3.1  : (11/11/13)
 !             SPLASH_COROTATE option to plot in frame corotating with sinks;
 !             bug fixes with handling of dead/accreted/boundary particles in sphNG/phantom;
