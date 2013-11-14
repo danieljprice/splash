@@ -362,7 +362,7 @@ subroutine submenu_page(ichoose)
                  papersizey = -0.75
               case default
                  papersizex = 0.
-                 papersizey = 0.              
+                 papersizey = 0.
               end select
            endif
            call prompt(' x size in above units ',papersizex,1.)
