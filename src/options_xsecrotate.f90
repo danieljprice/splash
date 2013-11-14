@@ -31,7 +31,7 @@ module settings_xsecrot
  integer, public :: nframes,nseq
  integer, public :: nxsec,irotateaxes
  logical, public :: xsec_nomulti, irotate, flythru, use3Dperspective, use3Dopacityrendering
- logical, public :: writeppm
+ logical, public :: writeppm, rendersinks
  real, public    :: anglex, angley, anglez, zobserver, dzscreenfromobserver
  real, public    :: taupartdepth,xsecwidth
  real, public    :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
@@ -60,7 +60,7 @@ module settings_xsecrot
           irotate,irotateaxes,anglex, angley, anglez, &
           xminrotaxes,xmaxrotaxes,use3Dperspective, &
           use3Dopacityrendering,zobserver,dzscreenfromobserver, &
-          taupartdepth,writeppm,xsecwidth
+          taupartdepth,writeppm,xsecwidth,rendersinks
 
  public :: animopts
  namelist /animopts/ nseq,nframes,iseqstart,iseqend,iseqtype, &
@@ -128,6 +128,7 @@ subroutine defaults_set_xsecrotate
   taupartdepthend = 2000.0
   xsecpos_nomulti_end = 0.
   ihavesetsequence = .false.
+  rendersinks = .false.
 
   return
 end subroutine defaults_set_xsecrotate
@@ -137,11 +138,11 @@ end subroutine defaults_set_xsecrotate
 !----------------------------------------------------------------------
 subroutine submenu_xsecrotate(ichoose)
  use filenames,      only:nsteps,nstepsinfile,ifileopen
- use labels,         only:label,ix,irad
+ use labels,         only:label,ix,irad,get_sink_type
  use limits,         only:lim
  use prompting,      only:prompt,print_logical
  use promptlist,     only:prompt_list
- use settings_data,  only:ndim,xorigin,iCalcQuantities,DataIsBuffered
+ use settings_data,  only:ndim,xorigin,iCalcQuantities,DataIsBuffered,ntypes
  use calcquantities, only:calc_quantities
  use plotlib,        only:plotlib_supports_alpha
  implicit none
@@ -217,7 +218,6 @@ subroutine submenu_xsecrotate(ichoose)
     endif
 !------------------------------------------------------------------------
  case(3)
-    use3Dperspective = .not.use3Dperspective
     call prompt(' Use 3D perspective? ',use3Dperspective)
     if (use3Dperspective) then
        if (.not.irotate) irotate = .true.
@@ -233,7 +233,6 @@ subroutine submenu_xsecrotate(ichoose)
     endif
 !------------------------------------------------------------------------
  case(4)
-    use3Dopacityrendering = .not.use3Dopacityrendering
     call prompt(' Use 3D opacity rendering? ',use3Dopacityrendering)
     if (use3Dopacityrendering .and..not.use3Dperspective) then
        print "(a)",' also turning on 3D perspective (which must be set for this to work)'
@@ -248,6 +247,9 @@ subroutine submenu_xsecrotate(ichoose)
           writeppm = .false.
           !call prompt(' Do you want to apply the brightness correction?',writeppm)
        endif
+    endif
+    if (use3Dopacityrendering .and. get_sink_type(ntypes) > 0) then
+       call prompt('Include sinks in opacity rendering (no=plot on top)?',rendersinks)
     endif
 !------------------------------------------------------------------------
  case(5)

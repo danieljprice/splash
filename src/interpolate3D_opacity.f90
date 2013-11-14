@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -24,6 +24,7 @@ module interpolate3D_opacity
  use projections3D, only:wfromtable,coltable
  use kernels,       only:radkernel2
  use sort,          only:indexx
+ use interpolation, only:weight_sink
  implicit none
 
 contains
@@ -72,10 +73,6 @@ contains
 !     Output: smoothed data            : datsmooth (npixx,npixy)
 !             brightness array         : brightness (npixx,npixy)
 !
-!     NB: AT PRESENT WE WRITE A PPM FILE DIRECTLY WITH THE RGB COLOURS
-!         AND OUTPUT JUST THE MONOCHROMATIC VERSION TO SPLASH.
-!
-!     (c) 2005-2007 Daniel Price
 !--------------------------------------------------------------------------
 
 subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,npart, &
@@ -92,7 +89,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                       zcut,rkappa
   real, dimension(npixx,npixy), intent(out) :: datsmooth, brightness
 
-  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused
+  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused,nsink
   integer :: iprintinterval, iprintnext,itmin
   integer, dimension(npart) :: iorder
   integer(kind=selected_int_kind(12)) :: ipart
@@ -100,7 +97,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
   real :: term,dy,dy2,ypix,zfrac,hav,zcutoff
   real :: fopacity,tau,rkappatemp,termi,xi,yi
   real :: t_start,t_end,t_used,tsec
-  logical :: iprintprogress,adjustzperspective
+  logical :: iprintprogress,adjustzperspective,rendersink
   real, dimension(npixx) :: xpix,dx2i
   real :: xminpix,yminpix
 !#ifdef _OPENMP
@@ -182,6 +179,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
   enddo
 
   nused = 0
+  nsink = 0
 
 !!$OMP PARALLEL default(none) &
 !!$OMP SHARED(hh,z,x,y,zorig,pmass,dat,itype,datsmooth,npmass,npart) &
@@ -221,7 +219,19 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0 .or. weight(i).le.0.) cycle over_particles
+     if (itype(i) < 0) cycle over_particles
+
+     !
+     !--skip particles with weight < 0
+     !  but not if weight == weight_sink (=-1)
+     !
+     rendersink = .false.
+     if (abs(weight(i) - weight_sink) < tiny(0.)) then
+        rendersink = .true.
+     elseif (weight(i) <= 0.) then
+        cycle over_particles
+     endif
+
      !
      !--allow slicing [take only particles with z(unrotated) < zcut]
      !
@@ -262,6 +272,14 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      xi = x(i)
      yi = y(i)
      termi = dat(i)
+     !
+     !--sink particles can have weight set to -1
+     !  indicating that we should include them in the rendering
+     !
+     if (rendersink) then
+        termi = pmass(i)/(4./3.*pi*hh(i)**3)  ! define "density" of a sink
+        nsink = nsink + 1
+     endif
      !
      !--for each particle work out which pixels it contributes to
      !
@@ -321,6 +339,11 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !
 !--get ending CPU time
 !
+  if (nsink > 99) then
+     print*,'rendered ',nsink,' sink particles'
+  elseif (nsink > 0) then
+     print "(1x,a,i2,a)",'rendered ',nsink,' sink particles'
+  endif
   call cpu_time(t_end)
   t_used = t_end - t_start
   if (t_used.gt.60.) then

@@ -629,7 +629,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use toystar2D,          only:exact_toystar_ACplane2D
   use labels,             only:label,shortlabel,labelvec,iamvec,lenlabel,lenunitslabel,ih,irho,ipmass,ix,iacplane, &
                                ipowerspec,isurfdens,itoomre,ispsound,iutherm,ipdf,icolpixmap,is_coord,labeltype,&
-                               labelzintegration,unitslabel,integrate_label
+                               labelzintegration,unitslabel,integrate_label,get_sink_type
   use limits,             only:lim,get_particle_subset,lim2,lim2set
   use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                                icontourmulti,x_secmulti,xsecposmulti,iusealltypesmulti,iplotpartoftypemulti
@@ -651,7 +651,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                use3Dopacityrendering,writeppm,anglex,angley,anglez,zobserver,&
                                dzscreenfromobserver,taupartdepth,xsecpos_nomulti, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
-                               nseq,nframes,getsequencepos,insidesequence
+                               nseq,nframes,getsequencepos,insidesequence,rendersinks
   use settings_powerspec, only:nfreqspec,wavelengthmin,wavelengthmax,ipowerspecx,ipowerspecy,&
                                idisordered,npdfbins
   use settings_units,     only:units,unitzintegration
@@ -704,7 +704,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   integer :: icolourprev,linestyleprev
   integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp,icol
   integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
-  integer :: iframe,isize
+  integer :: iframe,isize,isinktype
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, parameter :: error_in_log = -666. ! magic number used to flag error with log(0.)
@@ -726,6 +726,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   logical, parameter :: isperiodicx = .false. ! feature not implemented
   logical, parameter :: isperiodicy = .false. ! feature not implemented
   logical, parameter :: isperiodicz = .false. ! feature not implemented
+  logical, dimension(maxparttypes) :: PlotonRender_tmp
 
 34   format (25(' -'))
 
@@ -799,7 +800,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   ntoti = sum(npartoftype)
   ninterp = npartoftype(1)
   if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes)) &
-      .or. size(iamtype).gt.1) ninterp = ntoti
+      .or. size(iamtype).gt.1 .or. (use3Dopacityrendering .and. rendersinks)) ninterp = ntoti
 
   !--work out the identity of a particle being tracked
   if (debugmode) print*,'DEBUG: itracktype = ',itracktype,' itrackoffset = ',itrackoffset
@@ -1886,13 +1887,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     endif
                  endif
 
+                 PlotOnRender_tmp(:) = PlotOnRenderings(:)
+                 isinktype = get_sink_type(ntypes)
+                 if (use3Dperspective .and. use3Dopacityrendering .and. rendersinks .and. isinktype > 0) then
+                    PlotOnRender_tmp(isinktype) = .false.
+                 endif
+                 
                  !!--write ppm if interpolate3D_opacity
                  if ((.not. plotlib_supports_alpha) .and. &
                      (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm)) then
                     !!--plot non-gas particle types (e.g. sink particles) on top (and to ppm)
                     call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-                      icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
+                      icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRender_tmp(:), &
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                       xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax,brightness)
 
@@ -1904,7 +1911,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     !!--plot non-gas particle types (e.g. sink particles) on top (and to ppm)
                     call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-                      icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
+                      icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRender_tmp(:), &
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                       xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax)
 
@@ -1915,7 +1922,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     !!--plot non-gas particle types (e.g. sink particles) on top
                     call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-                      icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
+                      icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRender_tmp(:), &
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                       xmin,xmax,ymin,ymax,ifastparticleplot)
                  endif
@@ -3216,9 +3223,10 @@ contains
 ! (to make calls above neater)
 !-------------------------------------------------------------------
   subroutine set_weights(weighti,dati,iamtypei,usetype)
-    use settings_render, only:idensityweightedinterpolation
-    use interpolation,   only:set_interpolation_weights
-    use settings_units,  only:unit_interp
+    use settings_render,  only:idensityweightedinterpolation
+    use interpolation,    only:set_interpolation_weights
+    use settings_units,   only:unit_interp
+    use settings_xsecrot, only:rendersinks,use3Dopacityrendering
     implicit none
     real, dimension(:), intent(out) :: weighti
     real, dimension(:,:), intent(in) :: dati
@@ -3229,7 +3237,8 @@ contains
     inormalise = inormalise_interpolations
     call set_interpolation_weights(weighti,dati,iamtypei,usetype,&
          ninterp,npartoftype,masstype,ntypes,ndataplots,irho,ipmass,ih,ndim,&
-         iRescale,idensityweightedinterpolation,inormalise,units,unit_interp,required)
+         iRescale,idensityweightedinterpolation,inormalise,units,unit_interp,required,&
+         (use3Dopacityrendering .and. rendersinks))
 
     return
  end subroutine set_weights
