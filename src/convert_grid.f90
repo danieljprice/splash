@@ -216,7 +216,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  inormalise = inormalise_interpolations
  call set_interpolation_weights(weight,dat,itype,(iplotpartoftype .and. UseTypeInRenderings),&
       ninterp,npartoftype,masstype,ntypes,ncolumns,irho,ipmass,ih,ndim,iRescale,&
-      idensityweightedinterpolation,inormalise,units,unit_interp,required)
+      idensityweightedinterpolation,inormalise,units,unit_interp,required,.false.)
  !
  !--set colours (just in case)
  !
