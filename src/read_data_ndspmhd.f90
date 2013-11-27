@@ -507,7 +507,7 @@ subroutine set_labels
     label(icol) = 'dust fraction'
     idustfrac = icol
     iamvec(icol+1:icol+ndimV) = icol + 1
-    labelvec(icol+1:icol+ndimV) = 'deltav'
+    labelvec(icol+1:icol+ndimV) = '\Deltav'
     ideltav = icol + 1
     icol = icol + ndimV
  elseif (iformat.gt.2) then
