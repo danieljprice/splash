@@ -347,6 +347,8 @@ subroutine fake_twofluids
           call alloc(ntoti + npartoftype(1,i),maxstep,maxcol,mixedtypes=.true.)
        endif
        ndust = 0
+       !--zero the properties of newly created dust particles
+       dat(ntoti+1:ntoti+npartoftype(1,i),:,i) = 0.
        do j=1,ntoti
           if (iamtype(j,i).eq.1) then
              ndust = ndust + 1 ! one dust particle for every gas particle
@@ -358,6 +360,7 @@ subroutine fake_twofluids
              dat(j,irho,i) = rhogas
              !--copy x, smoothing length onto dust particle
              jdust = ntoti + ndust
+             
              !--fill in dust properties
              if (ndim.gt.0) dat(jdust,ix(1:ndim),i) = dat(j,ix(1:ndim),i)
              if (ih.gt.0)   dat(jdust,ih,i)         = dat(j,ih,i)
