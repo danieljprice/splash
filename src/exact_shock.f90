@@ -47,11 +47,11 @@ module shock
 
 contains
 
-subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas,xplot,yplot,ierr)
+subroutine exact_shock(iplot,time,gammain,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas,xplot,yplot,ierr)
   implicit none
   integer, intent(in) :: iplot
   integer, intent(out) :: ierr
-  real, intent(in) :: time,gamma
+  real, intent(in) :: time,gammain
   real, intent(in) :: rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas
   real, dimension(:), intent(in) :: xplot
   real, dimension(size(xplot)), intent(out) :: yplot
@@ -59,10 +59,11 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas
   integer :: i
   real, dimension(size(xplot)) :: dens, pr, vel
   real :: cs_L,cs_R, gamfac
-  real :: ppost, vpost, vleft, vright
+  real :: ppost, vpost, vleft, vright, gamma
   real :: xzero,xleft,xleftleft,xcontact,xright,xrightright
   logical :: useisothermal,leftisshock,rightisshock
 
+  gamma = gammain
   print*,'Plotting exact Riemann solution at t = ',time,' gamma = ',gamma
 !
 ! check for errors in input
@@ -76,6 +77,10 @@ subroutine exact_shock(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas
      print*,'error: pr <= 0 on input ',p_L, p_R
      ierr = 2
      return
+  endif
+  if (gamma < 1.) then
+     print*,'Error: gamma = ',gamma,' setting to 5/3'
+     gamma = 5./3.
   endif
 !
 !  xzero is the position of the shock at t=0
