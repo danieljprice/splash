@@ -116,6 +116,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   open(unit=iunit,iostat=ierr,file=dumpfile,status='old',form='formatted')
   if (ierr /= 0) then
      print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
+     return
   else
      call get_ncolumns(iunit,ncolstep,nheaderlines)
      !--override header lines setting
