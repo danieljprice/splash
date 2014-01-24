@@ -263,8 +263,10 @@ subroutine print_types(noftype,ltype)
        if (i > 1) sp = ','
        if (n < 10000) then
           write(*,"(a,i4)",advance='no') trim(sp)//' n('//trim(ltype(itype))//') = ',n
-       elseif (n < 10000000) then
+       elseif (n < 1000000) then
           write(*,"(a,i6)",advance='no') trim(sp)//' n('//trim(ltype(itype))//') = ',n
+       elseif (n < 100000000) then
+          write(*,"(a,i8)",advance='no') trim(sp)//' n('//trim(ltype(itype))//') = ',n
        else
           write(*,"(a,i10)",advance='no') trim(sp)//' n('//trim(ltype(itype))//') = ',n
        endif
