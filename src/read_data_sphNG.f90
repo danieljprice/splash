@@ -995,8 +995,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
                if (iarr.eq.1 .and. i.eq.1) then
                   icolumn = ih ! h is always first real4 in phantom dumps
                   !--density depends on h being read
-                  if (required(irho)) required(ih) = .true.
-                  if (any(npartoftypei(2:).gt.0)) required(ih) = .true.
+                  required(ih) = .true.
+                  !if (required(irho)) required(ih) = .true.
+                  !if (any(npartoftypei(2:).gt.0)) required(ih) = .true.
                elseif (iarr.eq.4 .and. i.le.3) then
                   icolumn = nhydroarrays + i
                else
@@ -1061,6 +1062,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      endif
                   enddo
                else
+                  if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
                   if (debug) print*,'debug: phantom: setting rho for all types'
                   !--assume all particles are gas particles
                   do k=i1,i2
