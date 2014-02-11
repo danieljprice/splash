@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -24,11 +24,8 @@
  ! numerically integrate a polytrope
  ! with the density = 1 at the centre
  ! This uses scaled variables (no sigma in the equation)
- ! then the radius is scaled to unity and the central
- ! density is calculated to get unit mass.
- ! Finally the polytropic K is calculated
- !
- ! This subroutine came from Joe Monaghan
+ ! then the radius is scaled to give the correct mass
+ ! Based on an old subroutine from Joe Monaghan
  !-----------------------------------------
 
 module polytrope
@@ -37,31 +34,32 @@ module polytrope
 
 contains
 
-subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
+subroutine exact_polytrope(gamma,polyk,totmass,rplot,denplot,npts,ierr)
   implicit none
-  integer, intent(out) :: npts, ierr
-  real, intent(in) :: gamma,polyk
+  integer, intent(out) :: npts,ierr
+  real, intent(in)     :: gamma
+  real, intent(in)     :: polyk,totmass
   real, dimension(:), intent(inout) :: rplot
   real, dimension(size(rplot)), intent(out) :: denplot
 
   integer :: i,j
   real, parameter :: pi = 3.1415926536
   real, dimension(size(rplot)) :: r,v,den
-  real :: dr,an,rhs,radv,sigma,totmassf,totmass,akf
-  real :: realden, realrad, rhocentre
-
-  dr=0.001
+  real :: dr,an,rhs,rstar,totmassf
+  real :: rhocentre,fac,rfac,G
+  
+  ierr = 0
   print*,' gamma           :',gamma
+  dr = 0.001
+  G = 1.
   an = 1./(gamma-1.)
   v(1) = 0.0
   v(2) = dr*(1.0 - dr*dr/6. )
-
-  i = 2
   r(1) = 0.
-  r(2) = dr
-
+ 
+  i = 2
   do while (v(i).ge.0.)
-    r(i) = (i - 1)*dr
+    r(i) = (i-1)*dr
     rhs = - r(i)*(v(i)/r(i))**an
     v(i+1) = 2*v(i) - v(i-1) + dr*dr*rhs
     i = i + 1
@@ -72,14 +70,8 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
        i = 2
     endif
   enddo
-  !----------------------------------
-  ! now scale the radius
-  !----------------------------------
-  radv = r(i-1)
-  !print*,' unscaled r, v   :',r(i-1),v(i-1)
-
-  sigma = radv
-  !print *,' sigma ',sigma
+  npts = i-1
+  rstar = r(npts)
 
   !--------------------------------------
   ! calculate the mass out to radius r
@@ -90,35 +82,25 @@ subroutine exact_polytrope(gamma,polyk,rplot,denplot,npts,ierr)
 
   den(1) = 1.0
   totmassf = 0.
-  do j = 2,(i-1)
+  do j = 2,npts
     den(j) = (v(j)/r(j))**an
     totmassf = totmassf + 4.*pi*r(j)*r(j)*den(j)*dr
   enddo
 
-  !-------------------------------------
-  ! calculate sigma to give unit radius
-  ! calculate the central density
-  !-------------------------------------
-
-  rhocentre = sigma**3/totmassf
-  totmass = rhocentre*totmassf/sigma**3
+  !---------------------------------------------------
+  ! rescale the central density to give desired massq
+  ! then rescale the radius to match this
+  !---------------------------------------------------
+  fac = (gamma*polyk)/(4.*pi*G*(gamma - 1.))
+  rhocentre = ((totmass/totmassf)/fac**1.5)**(2./(3.*gamma - 4.))
+  rfac = sqrt(fac*rhocentre**(gamma - 2.))
+  
+  print*,' Rstar = ',rstar*rfac
   print*,' central density :',rhocentre
   print*,' total mass      :',totmass
 
-  akf = 4.*pi*rhocentre**(1.-1./an)/((an+1)*sigma**2)
-  print *,' polytropic K required for unit radius = ',akf
-
-  do j = 2,(i-1)
-    if(r(j).gt.0.0)then
-      realden = rhocentre*den(j)
-      realrad = r(j)/sigma
-      denplot(j-1) = realden
-      rplot(j-1) = realrad
-    endif
-  enddo
-
-  npts = j-2
-  ierr = 0
+  rplot = r * rfac
+  denplot = rhocentre * den
 
   return
 end subroutine exact_polytrope

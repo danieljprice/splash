@@ -92,7 +92,7 @@ module exact
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
-       semi,ecc,mprim,msec,ixcolfile,iycolfile,xshock
+       semi,ecc,mprim,msec,ixcolfile,iycolfile,xshock,totmass
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -320,6 +320,7 @@ contains
        call prompt('enter blast wave energy E ',esedov,0.0)
     case(5)
        call prompt('enter polytropic k ',polyk)
+       call prompt('enter total mass ',totmass)
     case(6)
        print "(a)",' toy star: '
        call read_exactparams(iexact,trim(rootname(1)),ierr)
@@ -814,7 +815,7 @@ contains
 
     case(5)! polytrope
        if (iploty.eq.irho .and. (iplotx.eq.irad .or.(igeom.eq.3 .and. iplotx.eq.ix(1)))) then
-          call exact_polytrope(gamma,polyk,xexact,yexact,iexactpts,ierr)
+          call exact_polytrope(gamma,polyk,totmass,xexact,yexact,iexactpts,ierr)
        endif
 
     case(6)! toy star
