@@ -79,6 +79,8 @@ module exact
   character(len=120), dimension(10) :: funcstring
   !--Roche potential
   real :: semi,ecc,mprim,msec
+  !--C-shock
+  real :: machs,macha
   !
   !--sort these into a namelist for input/output
   !
@@ -92,7 +94,7 @@ module exact
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
-       semi,ecc,mprim,msec,ixcolfile,iycolfile,xshock,totmass
+       semi,ecc,mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -166,6 +168,9 @@ contains
     ecc   = 0.
     mprim = 1.
     msec  = 1.
+!   C-shock
+    machs = 50. ! sonic Mach number
+    macha = 5.  ! Alfvenic Mach number
 
 !   arbitrary function
     nfunc = 1
@@ -412,6 +417,9 @@ contains
        call prompt('enter semi-major axis of binary',semi,0.)
        call prompt('enter mass of primary star ',mprim,0.)
        call prompt('enter mass of secondary star ',msec,0.,mprim)
+    case(16)
+       call prompt('enter sonic Mach number',machs,0.)
+       call prompt('enter Alfvenic Mach number ',macha,0.)
     end select
 
     return
@@ -1047,9 +1055,9 @@ contains
     case(16) ! C-shock
        if (ndim.ge.1 .and. iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irho) then
-             call exact_Cshock(1,timei,gamma,xmin,xmax,xexact,yexact,ierr)
+             call exact_Cshock(1,timei,gamma,machs,macha,xmin,xmax,xexact,yexact,ierr)
           elseif (iploty.eq.iBfirst+1 .and. iBfirst.gt.0) then
-             call exact_Cshock(2,timei,gamma,xmin,xmax,xexact,yexact,ierr)
+             call exact_Cshock(2,timei,gamma,machs,macha,xmin,xmax,xexact,yexact,ierr)
           endif
        endif
     end select

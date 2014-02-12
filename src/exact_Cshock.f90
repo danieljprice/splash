@@ -34,21 +34,19 @@ module Cshock
 
 contains
 
-subroutine exact_Cshock(iplot,time,gamma,xmin,xmax,xpts,ypts,ierr)
+subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
  integer, intent(in) :: iplot
  integer, intent(out) :: ierr
- real, intent(in) :: time,gamma,xmin,xmax !,mach_sonic,mach_alfven,theta
+ real, intent(in) :: time,gamma,machs,macha,xmin,xmax
  real, dimension(:), intent(inout) :: xpts
  real, dimension(size(xpts)), intent(out) :: ypts
  real, dimension(size(xpts)) :: D
  real, parameter :: pi = 3.1415926536
- real :: machs,macha,theta,xshock
+ real :: theta,xshock
  real :: rhoi,cs,rhon0,Bfield0,b0,shockl,vs
  integer :: npts,i
  
  npts = size(xpts)
- machs = 50. ! sonic Mach number
- macha = 5.  ! Alfvenic Mach number
  theta = pi/4.
  D(npts) = 1. + 1.e-4 ! upstream
  rhoi    = 1.e-5
