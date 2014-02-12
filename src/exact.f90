@@ -216,8 +216,9 @@ contains
            '12) ring spreading ',/, &
            '13) special relativistic shock tube', /, &
            '14) dusty waves', /, &
-           '15) Roche lobes/potential ')
-    call prompt('enter exact solution to plot',iexact,0,15)
+           '15) Roche lobes/potential ',/, &
+           '16) C-shock ')
+    call prompt('enter exact solution to plot',iexact,0,16)
     print "(a,i2)",'plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
@@ -673,6 +674,7 @@ contains
     use dustywaves,      only:exact_dustywave
     use rochelobe,       only:exact_rochelobe
     use gresho,          only:exact_gresho
+    use Cshock,          only:exact_Cshock
     use transforms,      only:transform,transform_inverse
     use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line
     implicit none
@@ -1041,6 +1043,14 @@ contains
     case(15) ! Roche potential
        if (igeom.eq.1 .and. ndim.ge.2 .and. iplotx.eq.ix(1) .and. iploty.eq.ix(2)) then
           call exact_rochelobe(timei,semi,mprim,msec,xexact,yexact,ierr)
+       endif
+    case(16) ! C-shock
+       if (ndim.ge.1 .and. iplotx.eq.ix(1) .and. igeom.le.1) then
+          if (iploty.eq.irho) then
+             call exact_Cshock(1,timei,gamma,xmin,xmax,xexact,yexact,ierr)
+          elseif (iploty.eq.iBfirst+1 .and. iBfirst.gt.0) then
+             call exact_Cshock(2,timei,gamma,xmin,xmax,xexact,yexact,ierr)
+          endif
        endif
     end select
 
