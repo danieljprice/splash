@@ -652,7 +652,7 @@ contains
                             ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot, &
                             pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
     use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,&
-                              irhorestframe,is_coord
+                              irhorestframe,is_coord,ideltav,idustfrac
     use filenames,       only:ifileopen,rootname
     use asciiutils,      only:string_replace
     use prompting,       only:prompt
@@ -791,6 +791,12 @@ contains
                               rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm) then
               call exact_shock(4,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                              rdust_to_gas,xexact,yexact,ierr)
+          elseif (iploty.eq.ideltav) then
+              call exact_shock(5,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                              rdust_to_gas,xexact,yexact,ierr)
+          elseif (iploty.eq.idustfrac) then
+              call exact_shock(6,timei,gamma,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)
           endif
        endif

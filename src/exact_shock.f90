@@ -307,6 +307,10 @@ subroutine exact_shock(iplot,time,gammain,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_g
      else
         yplot = pr/dens
      endif
+  case(5) ! deltav, where vd = 0
+     yplot = -vel
+  case(6) ! eps, where rhod = const
+     yplot = rho_R/(dens + rho_R)
   end select
 
   return
