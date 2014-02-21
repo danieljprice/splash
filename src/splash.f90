@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -27,7 +27,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2013 Daniel Price
+!     Copyright (C) 2005-2014 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -48,9 +48,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.4.0  : (xx/xx/xx)
+!     2.4.0  : (21/02/14)
 !             time formatting in legend can include general functions like %(t + 1000);
 !             option to include sinks in opacity rendering;
+!             supports one-fluid dust visualisation;
+!             C-shock exact solution; better polytrope solution
 !     2.3.1  : (11/11/13)
 !             SPLASH_COROTATE option to plot in frame corotating with sinks;
 !             bug fixes with handling of dead/accreted/boundary particles in sphNG/phantom;
@@ -349,7 +351,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.3.1+svn [14th Nov. 2013]'
+  character(len=*), parameter :: version = 'v2.4.0 [21st Feb. 2014]'
 
   !
   ! initialise some basic code variables
