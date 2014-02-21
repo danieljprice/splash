@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -467,13 +467,13 @@ contains
     use prompting,      only:prompt
     use exactfunction,  only:check_function
     use filenames,      only:fileprefix
-    use asciiutils,     only:read_asciifile
+    use asciiutils,     only:read_asciifile,get_line_containing
     implicit none
     integer, intent(in) :: iexact
     character(len=*), intent(in) :: rootname
     integer, intent(out) :: ierr
 
-    integer :: idash,nf,i,j,idrag,idum
+    integer :: idash,nf,i,j,idrag,idum,linenum
     character(len=len_trim(rootname)+8) :: filename
 
     idash = index(rootname,'_')
@@ -610,9 +610,10 @@ contains
        !--dustywave parameters from ndspmhd input file
        !
        filename = trim(rootname(1:idash-1))//'.in'
+       linenum = get_line_containing(filename,'Kdrag')
        open(unit=19,file=filename,status='old',iostat=ierr)
        if (ierr.eq.0) then
-          do i=1,23
+          do i=1,linenum-1
              read(19,*,iostat=ierr)
           enddo
           if (ierr.eq.0) then
@@ -825,8 +826,8 @@ contains
           elseif (iploty.eq.ivx .and. igeom.eq.3) then
              call exact_sedov(5,timei,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
           endif
-       !elseif (igeom.le.1 .and. is_coord(iplotx,ndim) .and. is_coord(iploty,ndim)) then
-       !   call exact_sedov(0,timei,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
+       elseif (igeom.le.1 .and. is_coord(iplotx,ndim) .and. is_coord(iploty,ndim)) then
+          call exact_sedov(0,timei,gamma,rhosedov,esedov,xmax,xexact,yexact,ierr)
        endif
 
     case(5)! polytrope
