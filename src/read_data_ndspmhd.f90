@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -314,7 +314,7 @@ ncolumns = ncol_max
 ndim = ndim_max
 ndimV = ndimV_max
 
-if (iformat.eq.5 .and. lenvironment('NSPLASH_TWOFLUID')) then
+if (iformat.eq.5 .and. .not.lenvironment('NSPLASH_ONEFLUID_RAW')) then
    call fake_twofluids
    iformat = 1
 endif
@@ -388,6 +388,7 @@ subroutine fake_twofluids
           endif
        enddo
        print "(a,i10,a)",' Creating ',ndust,' fictional dust particles...'
+       print "(a)",' (set NSPLASH_BARYCENTRIC=yes to plot barycentric values)'
        npartoftype(2,i) = npartoftype(2,i) + ndust
     enddo
  else
