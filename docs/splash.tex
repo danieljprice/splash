@@ -12,7 +12,7 @@
  linkcolor=blue,
  urlcolor=blue
 }
-\def\thisyear{2012 }
+\def\thisyear{2014 }
 
 %HEVEA\usepackage{hevea}
 %HEVEA\htmlfoot{\@hr{\textwidth}{1pt}\textsc{SPLASH}: A visualisation tool for SPH data \copyright   2004--\thisyear Daniel Price. \newline \url{http://users.monash.edu.au/~dprice/splash/}}
@@ -378,6 +378,14 @@ SSPLASH\_OMEGAT & if non-zero, subtracts solid body rotation with omega as speci
 SSPLASH\_TIMEUNITS & sets default time units, either 's', 'min', 'hrs', 'days', 'yrs' or 'tfreefall' (NB: text is used verbatim in legend).
 \end{longtable}
 
+\subsubsection{ \textsc{dragon} data read}
+ For the \textsc{dragon} read (`dsplash') the environment variable options are:\newline
+
+\begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
+DSPLASH\_EXTRACOLS & specifies number of extra columns present in the file which are dumped after the itype array
+\end{tabular}
+
+
 \subsubsection{ Stephan Rosswog data read}
  For the srosph read (`rsplash') the environment variable options are:\newline
 
@@ -388,11 +396,11 @@ RSPLASH\_COROTATING & if `YES' or `TRUE' then velocities are transformed to coro
 RSPLASH\_HFACT & can be changed to give correct parameter in $h=h_{fact}(m/\rho)^{1/3}$ used to set the particle masses when rendering minidumps (i.e., when the mass is not dumped). Default is RSPLASH\_HFACT=1.5
 \end{tabular}
 
-\subsubsection{ Dragon data read}
- For the DRAGON read (`dsplash') the environment variable options are:\newline
+\subsubsection{ \textsc{ndspmhd} data read}
+ For the \textsc{ndspmhd} read (`nsplash') the environment variable options are:\newline
 
 \begin{tabular}{p{0.35\textwidth}p{0.55\textwidth}}
-DSPLASH\_EXTRACOLS & specifies number of extra columns present in the file which are dumped after the itype array
+NSPLASH\_BARYCENTRIC & plots barycentric quantities for one-fluid dust instead of creating fake second set of particles
 \end{tabular}
 
 \subsubsection{ H5Part data read}
