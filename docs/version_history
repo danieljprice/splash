@@ -1,3 +1,6 @@
+2.4.0:
+time formatting in legend can include general functions; option to include sinks in opacity rendering; supports one-fluid dust visualisation; C-shock exact solution; better polytrope solution
+ 
 2.3.1:
 SPLASH\_COROTATE option to plot in frame corotating with sinks; bug fixes with handling of dead/accreted/boundary particles in sphNG/phantom; various other bugs fixed
  
