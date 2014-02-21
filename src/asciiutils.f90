@@ -35,6 +35,7 @@ module asciiutils
  public :: read_asciifile,get_ncolumns,ncolumnsline,safename,basename,cstring
  public :: string_replace, string_delete, nheaderlines, string_sub
  public :: ucase,lcase
+ public :: get_line_containing
 
  private
 
@@ -549,5 +550,27 @@ function lcase(string)
  enddo
 
 end function lcase
+
+!---------------------------------------------------------------------------
+!
+! Converts a string to lower case
+!
+!---------------------------------------------------------------------------
+integer function get_line_containing(filename,string)
+ character(len=*), intent(in) :: filename, string
+ character(len=130) :: line
+ integer :: lu,i,ierr
+ 
+ get_line_containing = 0
+ open(newunit=lu,file=filename,status='old',iostat=ierr)
+ i = 0
+ do while(ierr.eq.0)
+    i = i + 1
+    read(lu,"(a)",iostat=ierr) line
+    if (index(line,string).ne.0) get_line_containing = i
+ enddo
+ close(lu)
+ 
+end function get_line_containing
 
 end module asciiutils
