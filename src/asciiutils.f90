@@ -559,10 +559,11 @@ end function lcase
 integer function get_line_containing(filename,string)
  character(len=*), intent(in) :: filename, string
  character(len=130) :: line
- integer :: lu,i,ierr
+ integer :: i,ierr
+ integer, parameter :: lu=95
  
  get_line_containing = 0
- open(newunit=lu,file=filename,status='old',iostat=ierr)
+ open(unit=lu,file=filename,status='old',iostat=ierr)
  i = 0
  do while(ierr.eq.0)
     i = i + 1
