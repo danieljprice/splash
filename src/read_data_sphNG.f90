@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -135,7 +135,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   integer, parameter :: ilocbinary = 24
   real,    parameter :: pi=3.141592653589
   integer :: i,j,k,ierr,iunit
-  integer :: intg1,int2,int3
+  integer :: intg1,int2,int3,ilocvx
   integer :: i1,iarr,i2,iptmass1,iptmass2,ilocpmassinitial
   integer :: npart_max,nstep_max,ncolstep,icolumn,nptmasstot
   integer :: narrsizes,nints,nreals,nreal4s,nreal8s
@@ -625,7 +625,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          tff = 0.
       endif
       if (phantomdump) then
-         npartoftype(:,j) = 0.
+         npartoftype(:,j) = 0
          do i=1,ntypes !--map from phantom types to splash types
             itype = itypemap_phantom(int(i,kind=1))
             if (debug) print*,'DEBUG: npart of type ',itype,' += ',npartoftypei(i)
@@ -825,6 +825,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                nskip = nreal(iarr)
             else
                iphase(npart+1:npart+isize(iarr)) = -3
+               ilocvx = nreal(iarr)-2 ! velocity is always last 3 numbers for phantom sinks
                if (doubleprec) then
                   !--convert default real to single precision where necessary
                   if (debug) print*,'DEBUG: reading sink data, converting from double precision ',isize(iarr)
@@ -838,6 +839,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      if (debug) print*,'DEBUG: reading sink array ',k,isize(iarr)
                      read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                      if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
+                     
                      select case(k)
                      case(1:3)
                         iloc = ix(k)
@@ -845,10 +847,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
                         iloc = ipmass
                      case(5)
                         iloc = ih
-                     case(7:9)
-                        iloc = ivx + k-7
                      case default
-                        iloc = 0
+                        if (k >= ilocvx .and. k < ilocvx+3 .and. ivx > 0) then
+                           iloc = ivx + k-ilocvx ! put velocity into correct arrays
+                        else
+                           iloc = 0
+                        endif
                      end select
                      if (iloc.gt.size(dat(1,:,j))) then; print*,' error iloc = ',iloc,ivx; stop; endif
                      if (iloc.gt.0) then
@@ -869,14 +873,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
                         iloc = ipmass
                      case(5)
                         iloc = ih
-                     case(7:9)
-                        if (ivx.gt.0) then
-                           iloc = ivx + k - 7
+                     case default
+                        if (k >= ilocvx .and. k < ilocvx+3 .and. ivx > 0) then
+                           iloc = ivx + k-ilocvx ! put velocity into correct arrays
                         else
                            iloc = 0
                         endif
-                     case default
-                        iloc = 0
                      end select
                      if (iloc.gt.0) then
                         if (debug) print*,'DEBUG: reading sinks into ',npart+1,'->',npart+isize(iarr),iloc
