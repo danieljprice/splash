@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -323,7 +323,7 @@ subroutine set_labels
   use settings_data
   use geometry, only:labelcoord
   use oilonwaterread, only:udisti,umassi,utimei
-  use settings_units, only:units,unitslabel,unitzintegration,labelzintegration
+  use settings_units, only:units,unitzintegration
   implicit none
   integer :: i
 

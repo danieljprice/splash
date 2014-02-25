@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -52,8 +52,9 @@
 subroutine read_data(rootname,indexstart,nstepsread)
   use particle_data
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc
-  use settings_units, only:units,unitslabel
+  use settings_data,  only:ndim,ndimV,ncolumns,ncalc
+  use settings_units, only:units
+  use labels,         only:unitslabel
   use mem_allocation
   implicit none
   integer, intent(in) :: indexstart
