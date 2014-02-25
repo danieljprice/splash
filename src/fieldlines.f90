@@ -320,7 +320,7 @@ subroutine interpolate_pt(xpt,ypt,vxpt,vypt,x,y,vecx,vecy,h,pmass,rho,npart)
     !--if particles are within range, calculate contribution to this pt
     !
     if (q2.lt.radkernel2) then
-       if (rho(i).ne.0.) then
+       if (rho(i) > 0.) then
           rho1i = 1./rho(i)
        else
           rho1i = 0.

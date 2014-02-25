@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -35,9 +35,8 @@ contains
 
 subroutine write_sphdata_gadget(time,dat,iamtype,ntotal,ntypes,npartoftype, &
                                  masstype,ncolumns,filename)
- use labels,         only:labeltype,ih,ivx,ix,iutherm,irho,ipmass
- use settings_units, only:units
- use settings_data,  only:ndim,UseTypeInRenderings
+ use labels,         only:ih,ivx,ix,iutherm,irho,ipmass
+ use settings_data,  only:ndim
  use limits,         only:lim
  use params,         only:int1
  implicit none
