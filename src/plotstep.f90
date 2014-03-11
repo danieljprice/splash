@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -554,8 +554,6 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   enddo
 
   !--query whether or not device is interactive
-  !call plot_qinf('CURSOR',devstring,ilen)
-  !if (devstring(1:ilen).eq.'YES') then
   if (plot_qcur()) then
      !--turn menu and interactive mode on if
      !  interactive device invoked from the command line
@@ -566,14 +564,6 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      !--smoothing length is required if interactive device and coordinate plot
      if (icoordplot) required(ih) = .true.
   endif
-
-  !!--set paper size if necessary (NOW OBSOLETE, see above)
-  !if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
-  !   call plot_pap(papersizex,aspectratio)
-  !endif
-  !!--turn off page prompting
-!  call pgask(.false.)
-  !!if (.not. interactive) call pgbbuf !! start buffering output
 
   !!--set background/foreground colours
   call set_pagecolours(iPageColours)
@@ -605,7 +595,6 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         print "(a)",' setting line width = 2 for '//devstring(1:ilen)//' device'
         call plot_slw(2)
      else
-        !print "(a)",' setting line width = 1 for '//devstring(1:ilen)//' device'
         call plot_slw(1)
      endif
   else
@@ -661,7 +650,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use colourparts
   use transforms,            only:transform,transform_limits,transform_label,transform_inverse,islogged
   use interactive_routines
-  use part_utils,            only:get_tracked_particle
+  use part_utils,            only:get_tracked_particle,locate_first_two_of_type,get_binary
   use particleplots,         only:particleplot,plot_errorbarsx,plot_errorbarsy
   use powerspectrums,        only:powerspectrum,powerspec3D_sph
   use interpolations1D,      only:interpolate1D
@@ -675,6 +664,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use pagesetup,             only:redraw_axes
   use disc,                  only:disccalc,discplot
   use exactfromfile,         only:exact_fromfile
+  use exact,                 only:iexact_rochelobe,use_sink_data,mprim,msec,xprim,xsec
   use write_pixmap,          only:iwritepixmap,writepixmap,write_pixmap_ppm,readpixmap
   use pdfs,                  only:pdf_calc,pdf_write
   use plotutils,             only:plotline
@@ -704,7 +694,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   integer :: icolourprev,linestyleprev
   integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp,icol
   integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
-  integer :: iframe,isize,isinktype
+  integer :: iframe,isize,isinktype,isink1,isink2
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, parameter :: error_in_log = -666. ! magic number used to flag error with log(0.)
@@ -2020,6 +2010,16 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn)) then
               iaxisy = iaxis
               if (tile_plots .and. icolumn.ne.1) iaxisy = -1
+              if (iexact.eq.iexact_rochelobe .and. use_sink_data .and. ipmass > 0 .and. ndim >= 2) then
+                 isinktype = get_sink_type(ntypes)
+                 call locate_first_two_of_type(isink1,isink2,isinktype,iamtype,npartoftype,ntoti)
+                 mprim = dat(isink1,ipmass)
+                 msec  = dat(isink2,ipmass)
+                 xprim(1) = xplot(isink1)
+                 xprim(2) = yplot(isink1)
+                 xsec(1) = xplot(isink2)
+                 xsec(2) = yplot(isink2)
+              endif
               call exact_solution(iexact,iplotx,iploty, &
                    itrans(iplotx),itrans(iploty),icoordsnew, &
                    ndim,ndimV,timei,xmin,xmax,gammai, &

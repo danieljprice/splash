@@ -15,14 +15,14 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
 !-----------------------------------------------------------------------
 ! Plots Roche Lobes (equipotential surface) for a binary system
-! Adapted from an original C routine by Simon Portugies Zwart
+! Guts of it adapted from an original C routine by Simon Portugies-Zwart
 !-----------------------------------------------------------------------
 module rochelobe
  implicit none
@@ -31,29 +31,43 @@ module rochelobe
 
 contains
 
-subroutine exact_rochelobe(time,semi,m1,m2,xplot,yplot,ierr)
+!-----------------------------------------------------------------------
+! Plot Roche Lobe
+!
+! INPUT:
+!   x1, y1 : position of primary
+!   x2, y2 : position of secondary
+!   m1, m2 : masses of components
+!
+! OUTPUT:
+!   xplot, yplot: contains (half of) the Roche lobe solution
+!   ierr : error condition to splash indicating plotting was done here
+!-----------------------------------------------------------------------
+subroutine exact_rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
  use plotlib, only:plot_line
- implicit none
- real, intent(in) :: time,semi,m1,m2
+ real, intent(in) :: x1,y1,x2,y2,m1,m2
  real, dimension(:), intent(inout) :: xplot,yplot
  integer, intent(out) :: ierr
  real    :: roche_radius1,roche_radius2,q,L1
  real    :: rlimit,llimit,xmax,xmin,ymax,xtmp
+ real    :: angle,cosangle,sinangle,dx,dy,sep
  integer :: i,npts
 
- npts = size(xplot)/2
+ npts = (size(xplot)-1)/2
  if (npts < 1) return
- print "(4(a,es10.3))",' plotting Roche potential, m1 = ',m1,' m2 = ',m2,' t = ',time,' a = ',semi
+ 
+ sep = sqrt((x2 - x1)**2 + (y2 - y1)**2)
+ print "(4(a,es10.3))",' plotting Roche potential, m1 = ',m1,' m2 = ',m2,' sep = ',sep
 
  roche_radius1 = roche_radius(m1, m2)
  roche_radius2 = roche_radius(m2, m1)
- q = m2/m1
+ q  = m2/m1
  L1 = first_Lagrangian_point(1./q)
 
- !--We assume primary on the left
- if ( m1 < m2) then
-   q = 1/q
-   L1 = first_Lagrangian_point(1./q)
+ ! We assume primary on the left
+ if (m1 < m2) then
+    q = 1/q
+    L1 = first_Lagrangian_point(1./q)
  endif
 
  rlimit = right_limit(q, L1)
@@ -63,10 +77,10 @@ subroutine exact_rochelobe(time,semi,m1,m2,xplot,yplot,ierr)
 
  xmin = xplot(1)
  xmax = xplot(2*npts)
- if (m1<m2) then
-   xtmp = xmin
-   xmin = 1.-xmax
-   xmax = 1.-xtmp
+ if (m1 < m2) then
+    xtmp = xmin
+    xmin = 1.-xmax
+    xmax = 1.-xtmp
  endif
 
  ymax = -1000.
@@ -74,40 +88,53 @@ subroutine exact_rochelobe(time,semi,m1,m2,xplot,yplot,ierr)
     ymax = max(ymax,yplot(i))
  enddo
 
- !--some tedious fiddling for q>1 case
+ ! some tedious fiddling for q>1 case
  if (m1 < m2) then
     xplot(:) = 1. - xplot(:)
  endif
+ 
+ ! scale to actual separation
+ xplot = xplot*sep
+ yplot = yplot*sep
 
- call plot_line(2*npts+1,xplot,yplot)
- call plot_line(2*npts+1,xplot,-yplot)
+ ! work out angle needed to rotate into corotating frame
+ dx   = x2 - x1
+ dy   = y2 - y1
+ angle = -atan2(dy,dx)
+ cosangle = cos(angle)
+ sinangle = sin(angle)
+ 
+ ! lobes are computed assuming primary is at the origin, so shift to xprim,yprim
+ ! unrotated, this is just plot_line(xplot,yplot) and plot_line(xplot,-yplot)
+ call plot_line(2*npts+1,xplot*cosangle + yplot*sinangle + x1,-xplot*sinangle + yplot*cosangle + y1)
+ call plot_line(2*npts+1,xplot*cosangle - yplot*sinangle + x1,-xplot*sinangle - yplot*cosangle + y1)
 
  !--return non-zero ierr value as we do the plotting here
  ierr = 1
 
 end subroutine exact_rochelobe
-
-!--calculates outer limit of roche-lobe
+!
+! calculates outer limit of roche-lobe
+!
 subroutine rlimit(q, L, x, f, df, dummy)
  real, intent(in) :: q,L,x,dummy
  real, intent(out) :: f,df
  real :: qi,q11,cnst,r1,r2,r3
 
  qi = 1./q
- q11=1./(1.+qi)
- cnst =qi/L+1./(1.-L)+0.5*(1.+qi)*(L-q11)**2
+ q11 = 1./(1.+qi)
+ cnst = qi/L+1./(1.-L)+0.5*(1.+qi)*(L-q11)**2
 
- r1=abs(x)
- r2=abs(1-x)
- r3=abs(x-q11)
+ r1 = abs(x)
+ r2 = abs(1-x)
+ r3 = abs(x-q11)
 
- f=qi/r1+1./r2+0.5*(1.+qi)*r3**2 - cnst
- df=-qi*x/r1**3 +(1.-x)/r2**3 + (1.+qi)*(x-q11)
+ f = qi/r1+1./r2+0.5*(1.+qi)*r3**2 - cnst
+ df = -qi*x/r1**3 +(1.-x)/r2**3 + (1.+qi)*(x-q11)
 
 end subroutine rlimit
 
 real function rtsafe(func,q,L,x1,x2,xll,xacc)
- implicit none
  real, intent(in) :: q,L,x1,x2,xll,xacc
  external :: func
  integer :: j
@@ -118,17 +145,17 @@ real function rtsafe(func,q,L,x1,x2,xll,xacc)
  call func(q,L,x2,fh,df,xll)
 
  if ((fl > 0.0 .and. fh > 0.0) .or. (fl < 0.0 .and. fh < 0.0)) then
-   print*,'Error occured in rtsafe, exiting...'
+   !print*,'Error occured in rtsafe, exiting...',q,L,x1,x2,fl,fh
    rtsafe = 0.
    return
  endif
 
- if (fl == 0.0) then
+ if (abs(fl) < tiny(fl)) then
     rtsafe = x1
     return
  endif
 
- if (fh == 0.0) then
+ if (abs(fh) < tiny(fh)) then
     rtsafe = x2
     return
  endif
@@ -154,7 +181,7 @@ real function rtsafe(func,q,L,x1,x2,xll,xacc)
        dxold = dx
        dx = 0.5*(xh-xl)
        rts = xl+dx
-       if (xl == rts) then
+       if (abs(xl-rts) < tiny(rts)) then
           rtsafe = rts
           return
        endif
@@ -163,7 +190,7 @@ real function rtsafe(func,q,L,x1,x2,xll,xacc)
        dx = f/df
        temp = rts
        rts = rts - dx
-       if (temp.eq.rts) then
+       if (abs(temp-rts) < tiny(rts)) then
           rtsafe = rts
           return
        endif
@@ -185,7 +212,6 @@ real function rtsafe(func,q,L,x1,x2,xll,xacc)
 end function rtsafe
 
 real function left_limit(q, L)
- implicit none
  real, intent(in) :: q,L
 
  left_limit = rtsafe(rlimit,q,L,-0.5*L,-L,0., roche_accuracy);
@@ -193,7 +219,6 @@ real function left_limit(q, L)
 end function left_limit
 
 real function right_limit(q, L)
- implicit none
  real, intent(in) :: q,L
 
  right_limit = rtsafe(rlimit,q,L,1.5-0.5*L,2.0-L,0., roche_accuracy);
@@ -207,7 +232,6 @@ end function right_limit
 ! Eggleton PP., ApJ, 1983, 268, 368.
 !
 real function roche_radius(mthis, mother)
- implicit none
  real, intent(in) :: mthis,mother
  real :: mr,q1_3,q2_3
 
@@ -220,7 +244,6 @@ real function roche_radius(mthis, mother)
 end function roche_radius
 
 real function first_Lagrangian_point(qinv)
- implicit none
  real, intent(in) :: qinv
  real :: fL, dfL, dL, L, q11
 
@@ -262,7 +285,7 @@ end subroutine rline
 subroutine compute_lobes(q, L, npts, xplot, yplot)
  real, intent(in) :: q, L
  integer, intent(in) :: npts
- real, intent(out), dimension(2*npts) :: xplot,yplot
+ real, intent(out), dimension(2*npts+1) :: xplot,yplot
  real :: qi,q11,cnst,lrl,rrl,y1,y2,ysq,dxl,dxr
  integer :: i
 
@@ -288,16 +311,16 @@ subroutine compute_lobes(q, L, npts, xplot, yplot)
  dxl = (xplot(npts+1)-xplot(1))/real(npts)
  do i=1,npts
     xplot(i+1) = xplot(1) + i*dxl
-    ysq = rtsafe(rline,qi,L,y1,y2,xplot(i),roche_accuracy)
+    ysq = rtsafe(rline,qi,L,y1,y2,xplot(i+1),roche_accuracy)
     yplot(i+1) = sqrt(ysq)
  enddo
 
  !--right lobe
  dxr = (xplot(2*npts)-xplot(npts+1))/real(npts)
  do i=1,npts
-    xplot(npts+1+i) = xplot(npts+1) + i*dxr
-    ysq = rtsafe(rline,qi,L,y1,y2,xplot(npts+1+i),roche_accuracy)
-    yplot(npts+1+i) = sqrt(ysq)
+    xplot(npts+i+1) = xplot(npts+1) + i*dxr
+    ysq = rtsafe(rline,qi,L,y1,y2,xplot(npts+i+1),roche_accuracy)
+    yplot(npts+i+1) = sqrt(ysq)
  enddo
 
 end subroutine compute_lobes

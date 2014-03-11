@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -32,6 +32,7 @@ module part_utils
  public :: igettype,get_tracked_particle
  public :: locate_nth_particle_of_type
  public :: locate_first_two_of_type
+ public :: get_binary
  private
 
 contains
@@ -64,7 +65,6 @@ end function igettype
 ! given in the form of type:offset
 !-------------------------------------------------------------------
 integer function get_tracked_particle(itype,ioffset,noftype,iamtype)
- use params, only:maxparttypes
  integer, intent(in) :: itype,ioffset
  integer, dimension(:), intent(in) :: noftype
  integer(kind=int1), dimension(:), intent(in) :: iamtype
@@ -136,5 +136,73 @@ pure subroutine locate_nth_particle_of_type(n,ipos,itype,iamtype,noftype,ntot)
  endif
 
 end subroutine locate_nth_particle_of_type
+
+!----------------------------------------------------------
+! routine to get properties of particle binary system
+! INPUT:
+!   i1, i2 : indexes of two particles to use
+!   dat(npart,ncolumns) : particle data
+!   ix(ndim) : columns containing positions
+!   ivx      : column of first velocity component
+!   ipmass   : column containing mass
+! OUTPUT:
+!   x0 : centre of mass position
+!   v0 : velocity of centre of mass
+!   angle : angle of binary about centre of mass (radians)
+!----------------------------------------------------------
+subroutine get_binary(i1,i2,dat,x0,v0,angle,ndim,ndimV,ncolumns,ix,ivx,ipmass,iverbose,ierr)
+ integer,                  intent(in)  :: i1,i2,ndim,ndimV,ncolumns,ivx,ipmass,iverbose
+ integer, dimension(ndim), intent(in)  :: ix
+ real, dimension(:,:),     intent(in)  :: dat
+ real, dimension(ndim),    intent(out) :: x0,v0
+ real,                     intent(out) :: angle
+ integer,                  intent(out) :: ierr
+ integer               :: max
+ real, dimension(ndim) :: x1,x2,v1,v2,dx
+ real                  :: m1,m2,dmtot
+
+ ierr = 0
+ max = size(dat(:,1))
+ if (i1 <= 0 .or. i2 <= 0 .or. i1 > max .or. i2 > max) then
+    if (iverbose >= 2) print*,' star 1 = ',i1,' star 2 = ',i2
+    print "(a)",' ERROR locating sink particles in the data'
+    ierr = 1
+    return
+ endif
+
+ x1 = 0.
+ x2 = 0.
+ x1(1:ndim) = dat(i1,ix(1:ndim))
+ x2(1:ndim) = dat(i2,ix(1:ndim))
+ !--get centre of mass
+ if (ipmass > 0 .and. ipmass <= ncolumns) then
+    m1 = dat(i1,ipmass)
+    m2 = dat(i2,ipmass)
+ else
+    m1 = 1.
+    m2 = 1.
+ endif
+ dmtot = 1./(m1 + m2)
+ x0 = (m1*x1 + m2*x2)*dmtot
+ if (iverbose >= 1) then
+    print "(a,3(1x,es10.3),a,es10.3)",' :: star 1 pos =',x1(1:ndim),' m = ',m1
+    print "(a,3(1x,es10.3),a,es10.3)",' :: star 2 pos =',x2(1:ndim),' m = ',m2
+    print "(a,3(1x,es10.3))",' :: c. of mass =',x0(1:ndim)
+ endif
+ !--work out angle needed to rotate into corotating frame
+ dx   = x0 - x1
+ angle = -atan2(dx(2),dx(1))
+ 
+ !--get velocities
+ if (ivx > 0 .and. ivx + ndimV <= ncolumns) then
+    v1 = dat(i1,ivx:ivx+ndimV-1)
+    v2 = dat(i2,ivx:ivx+ndimV-1)
+    v0 = (m1*v1 + m2*v2)*dmtot
+    if (iverbose >= 1) print "(a,3(1x,es10.3))",' :: vel c of m =',v0(1:ndimV)
+ else
+    v0 = 0.
+ endif
+
+end subroutine get_binary
 
 end module part_utils

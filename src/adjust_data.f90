@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -34,15 +34,15 @@ contains
 !----------------------------------------------------
 subroutine adjust_data_codeunits
  use system_utils,  only:renvironment,envlist,ienvironment,lenvironment
- use labels,        only:ih,ivx,label,ix,get_sink_type,ipmass
+ use labels,        only:ih,ix,ivx,label,get_sink_type,ipmass
  use settings_data, only:ncolumns,ndimV,icoords,ndim,debugmode,ntypes,iverbose
  use particle_data, only:dat,npartoftype,iamtype
  use geometry,      only:labelcoord
  use filenames,     only:ifileopen,nstepsinfile
- use part_utils,    only:locate_first_two_of_type,locate_nth_particle_of_type
+ use part_utils,    only:locate_first_two_of_type,locate_nth_particle_of_type,get_binary
  implicit none
- real :: hmin,m1,m2,dmtot,dphi
- real, dimension(3) :: vsink,xyzsink,xyzsink1,xyzsink2,x0,dx,v0,v1,v2
+ real :: hmin,dphi
+ real, dimension(3) :: vsink,xyzsink,x0,v0
  character(len=20), dimension(3) :: list
  integer :: i,j,nlist,nerr,ierr,isink,isinkpos,itype
  integer :: isink1,isink2,ntot
@@ -115,47 +115,12 @@ subroutine adjust_data_codeunits
              if (iverbose.ge.1) print*
              print "(a,i3,a)",' :: COROTATING FRAME WITH FIRST 2 SINKS from SPLASH_COROTATE setting'
              do j=1,nstepsinfile(ifileopen)
-                !--find first two sink particles in the data
+                !  find first two sink particles in the data
                 call locate_first_two_of_type(isink1,isink2,itype,iamtype(:,j),npartoftype(:,j),ntot)
-
-                if (isink1 <= 0 .or. isink2 <= 0) then
-                   if (debugmode) print*,' sink1 = ',isink1,' sink2 = ',isink2
-                   print "(a)",' ERROR locating sink particles in the data'
-                else
-                   xyzsink1  = 0.
-                   xyzsink2 = 0.
-                   xyzsink1(1:ndim) = dat(isink1,ix(1:ndim),j)
-                   xyzsink2(1:ndim) = dat(isink2,ix(1:ndim),j)
-                   !--get centre of mass
-                   if (ipmass > 0 .and. ipmass <= ncolumns) then
-                      m1 = dat(isink1,ipmass,j)
-                      m2 = dat(isink2,ipmass,j)
-                   else
-                      m1 = 1.
-                      m2 = 1.
-                   endif
-                   dmtot = 1./(m1 + m2)
-                   x0 = (m1*xyzsink1 + m2*xyzsink2)*dmtot
-                   if (iverbose >= 1) then
-                      print "(a,3(1x,es10.3),a,es10.3)",' :: sink 1 pos =',xyzsink1(1:ndim),' m = ',m1
-                      print "(a,3(1x,es10.3),a,es10.3)",' :: sink 2 pos =',xyzsink2(1:ndim),' m = ',m2
-                      print "(a,3(1x,es10.3))",' :: c. of mass =',x0(1:ndim)
-                   endif
-                   !--work out angle needed to rotate into corotating frame
-                   dx   = xyzsink1 - x0
-                   dphi = atan2(dx(2),dx(1))
-
-                   !--get velocities
-                   if (ivx > 0 .and. ivx + ndimV <= ncolumns) then
-                      v1 = dat(isink1,ivx:ivx+ndimV-1,j)
-                      v2 = dat(isink2,ivx:ivx+ndimV-1,j)
-                      v0 = (m1*v1 + m2*v2)*dmtot
-                      if (iverbose >= 1) print "(a,3(1x,es10.3))",' :: vel c of m =',v0(1:ndimV)
-                   else
-                      v0 = 0.
-                   endif
-                   call rotate_particles(dat(:,:,j),ntot,dphi,x0(1:ndim),ndim,ndimV,v0)
-                endif
+                !  get properties of the binary
+                call get_binary(isink1,isink2,dat(:,:,j),x0,v0,dphi,ndim,ndimV,ncolumns,ix,ivx,ipmass,iverbose,ierr)
+                !  rotate all the particles into this frame
+                if (ierr.eq.0) call rotate_particles(dat(:,:,j),ntot,dphi,x0(1:ndim),ndim,ndimV,v0)
              enddo
           endif
        else
@@ -232,7 +197,7 @@ pure subroutine rotate_particles(dat,np,dphi,x0,ndim,ndimV,v0)
     xi  = dat(i,ix(1:ndim)) - x0(1:ndim)
     r   = sqrt(xi(1)**2 + xi(2)**2)
     phi = atan2(xi(2),xi(1))
-    phi = phi - dphi
+    phi = phi + dphi
     cosp = cos(phi)
     sinp = sin(phi)
     xnew = r*cosp
@@ -284,10 +249,10 @@ pure subroutine shift_positions(dat,np,ndim,x0)
 end subroutine shift_positions
 
 !------------------------------------------------------
-! routine to shift particle positions to new location
+! routine to shift particle velocities by constant
 !------------------------------------------------------
 pure subroutine shift_velocities(dat,np,ndimV,ncol,v0)
- use labels, only:ix,ivx
+ use labels, only:ivx
  integer, intent(in) :: np,ndimV,ncol
  real,    dimension(:,:), intent(inout) :: dat
  real, dimension(ndimV), intent(in) :: v0

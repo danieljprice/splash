@@ -78,7 +78,10 @@ module exact
   integer :: nfunc
   character(len=120), dimension(10) :: funcstring
   !--Roche potential
-  real :: semi,ecc,mprim,msec
+  real :: mprim,msec
+  real, dimension(3) :: xprim,xsec
+  logical :: use_sink_data
+  integer, parameter :: iexact_rochelobe = 15
   !--C-shock
   real :: machs,macha
   !
@@ -94,7 +97,8 @@ module exact
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
-       semi,ecc,mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha
+       mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
+       use_sink_data,xprim,xsec
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -164,10 +168,12 @@ contains
     rhozero = 1.0
     rdust_to_gas = 0.0
 !   Roche lobes
-    semi  = 1.
-    ecc   = 0.
+    use_sink_data = .true.
     mprim = 1.
     msec  = 1.
+    xprim = 0.
+    xsec  = 0.
+    xsec(1) = 1.
 !   C-shock
     machs = 50. ! sonic Mach number
     macha = 5.  ! Alfvenic Mach number
@@ -414,9 +420,15 @@ contains
        call prompt('enter dust-to-gas ratio ',rdust_to_gas,0.)
        call prompt('enter drag coefficient K ',Kdrag,0.)
     case(15)
-       call prompt('enter semi-major axis of binary',semi,0.)
-       call prompt('enter mass of primary star ',mprim,0.)
-       call prompt('enter mass of secondary star ',msec,0.,mprim)
+       call prompt('use data from sink particles?',use_sink_data)
+       if (.not.use_sink_data) then
+          call prompt('enter mass of primary star ',mprim,0.)
+          call prompt('enter mass of secondary star ',msec,0.,mprim)
+          call prompt('enter x position of primary',xprim(1))
+          call prompt('enter y position of primary',xprim(2))
+          call prompt('enter x position of secondary',xsec(1))
+          call prompt('enter y position of secondary',xsec(2))
+       endif
     case(16)
        call prompt('enter sonic Mach number',machs,0.)
        call prompt('enter Alfvenic Mach number ',macha,0.)
@@ -1051,7 +1063,7 @@ contains
        endif
     case(15) ! Roche potential
        if (igeom.eq.1 .and. ndim.ge.2 .and. iplotx.eq.ix(1) .and. iploty.eq.ix(2)) then
-          call exact_rochelobe(timei,semi,mprim,msec,xexact,yexact,ierr)
+          call exact_rochelobe(xprim(1),xprim(2),xsec(1),xsec(2),mprim,msec,xexact,yexact,ierr)
        endif
     case(16) ! C-shock
        if (ndim.ge.1 .and. iplotx.eq.ix(1) .and. igeom.le.1) then
