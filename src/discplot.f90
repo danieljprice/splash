@@ -26,9 +26,10 @@
 !-----------------------------------------------------------------
 module disc
  implicit none
- integer, parameter, private :: nbins = 350
- integer, dimension(nbins), private :: ninbin
- real, dimension(nbins), private :: radius,sigma,spsound
+ integer, parameter, private :: maxbins = 1001
+ integer, dimension(maxbins), private :: ninbin
+ real, dimension(maxbins), private :: radius,sigma,spsound
+ integer, private :: nbins
 
  public :: disccalc,discplot
 
@@ -106,6 +107,10 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
  rmax = rmaxin
  if (itransx.gt.0) call transform_limits_inverse(rmin,rmax,itransx)
 !
+!--try to get appropriate value for nbins
+!
+ nbins = min(4*int(npart**(1./3.)) + 1,maxbins)
+!
 !--set array of radius values for plotting
 !
  deltar = (rmax - rmin)/(nbins - 1)
@@ -118,7 +123,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
 !
  np = 0
 !$omp parallel do default(none) &
-!$omp shared(npart,rpart,sigma,npmass,pmass,itransx,icolourpart,rmin,deltar) &
+!$omp shared(npart,rpart,sigma,npmass,pmass,itransx,icolourpart,rmin,deltar,nbins) &
 !$omp shared(ninbin,spsound,gamma,u,iamtype,mixedtypes,usetype,noftype,gotspsound) &
 !$omp private(i,rad,pmassi,ibin,rbin,area,itype) &
 !$omp reduction(+:np)
@@ -171,7 +176,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
  enddo over_parts
 !$omp end parallel do
 
- print "(1x,a,i10,a,i10,a)",'used ',np,' of ',npart,' particles'
+ print "(1x,a,i10,a,i10,a,i4,a)",'used ',np,' of ',npart,' particles in ',nbins,' bins'
 
 !
 !--calculate Toomre Q parameter in each bin using surface density
