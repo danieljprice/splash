@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -95,7 +95,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
       ih .gt. 0 .and. ih.le.ndataplots .and. &
       required(ipmass) .and. required(irho) .and. required(ih)) then
 
-     if (size(iamtypei).gt.1) then
+     if (size(iamtypei) > 1) then
         !
         !--particles with mixed types
         !
@@ -138,7 +138,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
            i1 = i2 + 1
            i2 = i2 + npartoftype(itype)
            i2 = min(i2,ninterp)
-           if (i1 > i2) exit over_types
+           if (i1 > i2) cycle over_types
            !--set weights to zero for particle types not used in the rendering
            if (.not.usetype(itype)) then
               if (rendersinks .and. itype.eq.isinktype) then
@@ -176,7 +176,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
           ih .gt. 0 .and. ih.le.ndataplots .and. &
           required(irho) .and. required(ih)) then
 
-     if (size(iamtypei).gt.1) then
+     if (size(iamtypei) > 1) then
         !
         !--particles with mixed types
         !
@@ -219,7 +219,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
            i1 = i2 + 1
            i2 = i2 + npartoftype(itype)
            i2 = min(i2,ninterp)
-           if (i1 > i2) exit over_types2
+           if (i1 > i2) cycle over_types2
            !--set weights to zero for particle types not used in the rendering
            if (.not.usetype(itype)) then
               if (rendersinks .and. itype.eq.isinktype) then
