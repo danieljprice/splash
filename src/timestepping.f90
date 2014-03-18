@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -32,7 +32,7 @@ contains
 !
 subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
   use filenames,         only:nsteps,ifileopen
-  use particle_data,     only:iamtype,npartoftype,masstype,time,gamma,dat
+  use particle_data,     only:iamtype,npartoftype,masstype,time,gamma,dat,time_was_read
   use settings_data,     only:istartatstep,iendatstep,nfreq,DataIsBuffered, &
                               iUsesteplist,isteplist,ncolumns,ipartialread
   use settings_page,     only:interactive,nstepsperpage,iColourEachStep,iChangeStyles,nomenu
@@ -133,7 +133,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
      !
      !--write timestepping log
      !
-     if (time(ilocindat).lt.-0.5*huge(1.)) then
+     if (.not.time_was_read(time(ilocindat))) then
         print 32, istep
      elseif (time(ilocindat).lt.1.e-2 .or. time(ilocindat).gt.1.e2) then
         print 33, time(ilocindat),istep

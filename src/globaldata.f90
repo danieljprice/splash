@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -62,8 +62,19 @@ module particle_data
  real, allocatable, dimension(:,:)    :: masstype
  real, allocatable, dimension(:)      :: time, gamma
  real, allocatable, dimension(:,:,:)  :: dat
+ real, parameter :: time_not_read_val = -0.5*huge(0.)
 
  public
+
+contains
+
+ logical function time_was_read(t)
+  real, intent(in) :: t
+  
+  time_was_read = .true.
+  if (t <= time_not_read_val) time_was_read = .false.
+  
+ end function time_was_read
 
 end module particle_data
 !
@@ -78,7 +89,7 @@ module filenames
  character(len=120) :: defaultsfile,limitsfile,unitsfile
  integer, dimension(maxfile) :: nstepsinfile
  character(len=68)  :: tagline = &
-  'SPLASH: A visualisation tool for SPH data (c)2004-2013 Daniel Price'
+  'SPLASH: A visualisation tool for SPH data (c)2004-2014 Daniel Price'
 
  public
 

@@ -233,7 +233,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
 
      npartoftype = 0
      masstype = 0.
-     time = -huge(time) ! initialise like this so we know if has not been read
+     time = time_not_read_val ! initialise like this so we know if has not been read
      gamma = 0.
 
      if (reallocate_step) then

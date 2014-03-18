@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -409,6 +409,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  use asciiutils,    only:ucase
  use system_utils,  only:renvironment
  use settings_part, only:iplotpartoftype
+ use particle_data, only:time_was_read
  implicit none
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
  integer, intent(in), dimension(:) :: npartoftype
@@ -425,7 +426,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real(kind=doub_prec) :: smeanmw,smeanvw,svarmw,svarvw,si,ekiny,ekinymax
  real(kind=doub_prec) :: lmin, lmax
  real(kind=doub_prec), dimension(3) :: xmom,angmom,angmomi,ri,vi
- real                 :: delta,dn,valmin,valmax,valmean
+ real                 :: delta,dn,valmin,valmax,valmean,timei
  character(len=20)    :: fmtstring
 !
 ! array with one value for each column
@@ -433,10 +434,12 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real(kind=doub_prec), dimension(maxplot) :: coltemp
 
  nfilesread = nfilesread + 1
- if (time.ge.0.) then
+ if (time_was_read(time)) then
+    timei = time
     print "(/,5('-'),a,', TIME=',es9.2,' FILE #',i4,/)",&
           '> CALCULATING '//trim(ucase(analysistype)),time,nfilesread
  else
+    timei = 0.
     print "(/,5('-'),a,', FILE #',i4,' (TIME NOT READ)'/)",&
           '> CALCULATING '//trim(ucase(analysistype)),nfilesread
  endif
@@ -498,7 +501,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--write line to output file
     !
-    write(iunit,"(64(es18.10,1x))") time,ekin,etherm,emag,epot,etot,totmom,totang
+    write(iunit,"(64(es18.10,1x))") timei,ekin,etherm,emag,epot,etot,totmom,totang
     if (nused.ne.ntot) print*,'energies calculated using ',nused,' of ',ntot,' particles'
 
  case('massaboverho')
@@ -544,7 +547,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        !--write line to output file
        !
        write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) nlevels+1
-       write(iunit,fmtstring) time,massaboverho(1:nlevels)
+       write(iunit,fmtstring) timei,massaboverho(1:nlevels)
 
     else
        print "(a)",' ERROR in massaboverho analysis!'// &
@@ -577,7 +580,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write line to output file
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
-    write(iunit,fmtstring) time,coltemp(1:ncolumns)
+    write(iunit,fmtstring) timei,coltemp(1:ncolumns)
     if (nused.ne.ntot) print*,'max calculated using ',nused,' of ',ntot,' particles'
 
  case('min','minvals')
@@ -605,7 +608,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write line to output file
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
-    write(iunit,fmtstring) time,coltemp(1:ncolumns)
+    write(iunit,fmtstring) timei,coltemp(1:ncolumns)
     if (nused.ne.ntot) print*,'min calculated using ',nused,' of ',ntot,' particles'
 
  case('diff','diffvals','amp','ampvals')
@@ -640,7 +643,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write line to output file
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
-    write(iunit,fmtstring) time,coltemp(1:ncolumns)
+    write(iunit,fmtstring) timei,coltemp(1:ncolumns)
 
     if (nused.ne.ntot) then
        select case(trim(analysistype))
@@ -681,7 +684,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write line to output file
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
-    write(iunit,fmtstring) time,coltemp(1:ncolumns)
+    write(iunit,fmtstring) timei,coltemp(1:ncolumns)
     if (nused.ne.ntot) print*,'mean calculated using ',nused,' of ',ntot,' particles'
 
  case('rms','rmsvals')
@@ -714,7 +717,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write line to output file
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
-    write(iunit,fmtstring) time,coltemp(1:ncolumns)
+    write(iunit,fmtstring) timei,coltemp(1:ncolumns)
     if (nused.ne.ntot) print*,'rms calculated using ',nused,' of ',ntot,' particles'
 
  case('vrms','vrmsvals','vwrms','rmsvw')
@@ -762,7 +765,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write line to output file
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
-    write(iunit,fmtstring) time,coltemp(1:ncolumns)
+    write(iunit,fmtstring) timei,coltemp(1:ncolumns)
 
  case('rhovar','rhomach')
     if (irho.le.0 .or. irho.gt.ncolumns) then
@@ -903,7 +906,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write line to output file
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) 17
-    write(iunit,fmtstring) time,rhomeanvw,rhomeanmw,rhovarvw,rhovarmw,sqrt(rhovarvw),sqrt(rhovarmw),&
+    write(iunit,fmtstring) timei,rhomeanvw,rhomeanmw,rhovarvw,rhovarmw,sqrt(rhovarvw),sqrt(rhovarmw),&
                            rmsval,rmsvmw,bval,bvalmw,smeanvw,smeanmw,svarvw,svarmw,sqrt(svarvw),sqrt(svarmw)
  case('kh')
  
@@ -925,7 +928,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        ekinymax = max(ekiny,ekinymax)
     enddo
     print "(1x,a,es9.2)",'ekiny(max) = ',ekinymax
-    write(iunit,"(2(es18.10,1x))") time,ekinymax
+    write(iunit,"(2(es18.10,1x))") timei,ekinymax
 
  case('timeaverage','timeav')
     if (.not.allocated(datmean)) then
