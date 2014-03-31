@@ -188,11 +188,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
      npartoftype(1,i) = nparti
      npartoftype(3,i) = ntoti - nparti
      if (iverbose.ge.1) then
-        print "(a14,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
+        print "(a14,':',es10.3,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
         print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolstep,'gamma',gamma(i),'hfact',hfact
         print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
      else
-        print "(1x,a,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
+        print "(1x,a,':',es10.3,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
      endif
      select case(geomfile(1:6))
      case('cylrpz')

@@ -42,23 +42,26 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
  real, dimension(size(xpts)), intent(out) :: ypts
  real, dimension(size(xpts)) :: D
  real, parameter :: pi = 3.1415926536
- real :: theta,xshock
- real :: rhoi,cs,rhon0,Bfield0,b0,shockl,vs
+ real :: theta,xshock,ambi_gamma,ambi_rhoi
+ real :: cs,rhon0,Bfield0,b0,shockl,vs,va
  integer :: npts,i
  
  npts = size(xpts)
  theta = pi/4.
- D(npts) = 1. + 1.e-4 ! upstream
- rhoi    = 1.e-5
+ D(npts) = 1. + 1.e-6 ! upstream
  cs      = 0.1
  rhon0   = 1.
  Bfield0 = 1.
+ ambi_gamma = 1.
+ ambi_rhoi  = 1.e-5
  b0      = sin(theta)
- shockl  = Bfield0/(gamma*rhoi*sqrt(rhon0))
+ shockl  = Bfield0/(ambi_gamma*ambi_rhoi*sqrt(rhon0))
  vs      = cs*machs
- xshock  = vs*time
+ va      = Bfield0/sqrt(rhon0)
+ xshock  = 6./8.*va*time
+ print*,' vs = ',vs*time,' va = ',va*time,macha*va*time,sqrt(va**2 + cs**2)*time
 
- print "(4(a,f6.2))",&
+ print "(4(a,g8.2))",&
   ' Plotting exact C-shock at t = ',time,' M = ',machs,' M_A = ',macha,' theta = ',theta
  print "(4(a,es10.3))",' shock length L = ',shockL,' shock is at x = ',xshock
 
