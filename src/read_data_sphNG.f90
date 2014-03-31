@@ -161,9 +161,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real(doub_prec), dimension(:), allocatable :: dattemp
   real*4, dimension(:), allocatable :: dattempsingle
   real(doub_prec) :: r8
+  real(sing_prec) :: r4
   real, dimension(maxreal) :: dummyreal
   real, dimension(:,:), allocatable :: dattemp2
-  real :: rhozero,hfact,omega,r4,tff
+  real :: rhozero,hfact,omega,tff
   logical :: skip_corrupted_block_3
 
   nstepsread = 0
@@ -374,7 +375,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
          read(iunit,end=55,iostat=ierr) dattemp(1:nreals)
          dummyreal(1:nreals) = real(dattemp(1:nreals))
       else
-         read(iunit,end=55,iostat=ierr) dummyreal(1:nreals)
+         if (allocated(dattempsingle)) deallocate(dattempsingle)
+         allocate(dattempsingle(nreals),stat=ierr)
+         if (ierr /=0) print*,'ERROR in memory allocation'
+         read(iunit,end=55,iostat=ierr) dattempsingle(1:nreals)
+         dummyreal(1:nreals) = real(dattempsingle(1:nreals))
+         deallocate(dattempsingle)
       endif
    endif
 !--real*4, real*8
@@ -864,7 +870,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      endif
                   enddo
                else
-                  if (debug) print*,'DEBUG: reading sink data, directly into array ',isize(iarr)
+                  if (debug) print*,'DEBUG: reading sink data, converting from single precision ',isize(iarr)
+                  if (allocated(dattempsingle)) deallocate(dattempsingle)
+                  allocate(dattempsingle(isize(iarr)),stat=ierr)
+                  if (ierr /= 0) then
+                     print "(a)",'ERROR in memory allocation'
+                     return
+                  endif
                   do k=1,nreal(iarr)
                      select case(k)
                      case(1:3)
@@ -882,7 +894,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      end select
                      if (iloc.gt.0) then
                         if (debug) print*,'DEBUG: reading sinks into ',npart+1,'->',npart+isize(iarr),iloc
-                        read(iunit,end=33,iostat=ierr) dat(npart+1:npart+isize(iarr),iloc,j)
+                        read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
+                        do i=1,isize(ierr)
+                           dat(npart+i,iloc,j) = real(dattempsingle(i))
+                        enddo
                         if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
                      else
                         if (debug) print*,'DEBUG: skipping sink particle array ',k
@@ -913,7 +928,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      print*,'WARNING: sink particle masses not read because no mass array allocated'
                   endif
                else
-                  read(iunit,end=33,iostat=ierr) (dat(listpm(i),ipmass,j),i=iptmass1,iptmass2)
+                  !--convert default real to double precision where necessary
+                  if (allocated(dattempsingle)) deallocate(dattempsingle)
+                  allocate(dattempsingle(isize(iarr)),stat=ierr)
+                  if (ierr /=0) print "(a)",'ERROR in memory allocation'
+                  read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
+                  if (nptmass.ne.isize(iarr)) print "(a)",'ERROR: nptmass.ne.block size'
+                  if (ipmass.gt.0) then
+                     do i=1,isize(iarr)
+                        dat(listpm(iptmass1+i-1),ipmass,j) = real(dattempsingle(i))
+                     enddo
+                  else
+                     print*,'WARNING: sink particle masses not read because no mass array allocated'
+                  endif
                endif
                nskip = nreal(iarr) - 1 + nreal4(iarr) + nreal8(iarr)
             endif
@@ -932,6 +959,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
             if (allocated(dattemp)) deallocate(dattemp)
             allocate(dattemp(isize(iarr)),stat=ierr)
             if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattemp)'
+         elseif (nreal(iarr).gt.0 .or. nreal8(iarr).gt.0) then
+            if (allocated(dattempsingle)) deallocate(dattempsingle)
+            allocate(dattempsingle(isize(iarr)),stat=ierr)
+            if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattempsingle)'
          endif
 !        default reals may need converting
          do i=1,nreal(iarr)
@@ -952,7 +983,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                   dat(i1:i2,icolumn,j) = real(dattemp(1:isize(iarr)))
                else
-                  read(iunit,end=33,iostat=ierr) dat(i1:i2,icolumn,j)
+                  read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
+                  dat(i1:i2,icolumn,j) = real(dattempsingle(1:isize(iarr)))
                endif
             else
                read(iunit,end=33,iostat=ierr)
