@@ -1,3 +1,6 @@
+2.4.1:
+Roche-lobe plotting vastly improved; newunit= issue fixed; bug fix with reading sink velocities from Phantom; other minor bug fixes
+ 
 2.4.0:
 time formatting in legend can include general functions; option to include sinks in opacity rendering; supports one-fluid dust visualisation; C-shock exact solution; better polytrope solution
  
