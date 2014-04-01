@@ -895,7 +895,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      if (iloc.gt.0) then
                         if (debug) print*,'DEBUG: reading sinks into ',npart+1,'->',npart+isize(iarr),iloc
                         read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
-                        do i=1,isize(ierr)
+                        do i=1,isize(iarr)
                            dat(npart+i,iloc,j) = real(dattempsingle(i))
                         enddo
                         if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
