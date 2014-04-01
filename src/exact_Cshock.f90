@@ -79,8 +79,9 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
        ypts(i) = Bfield0*get_b(b0,macha,machs,D(i))
     enddo
  case(3) ! vx (neutrals)
-    ypts(1:npts) = vs/D(1:npts)
- !case(4)
+    ypts(1:npts) = -vs/D(1:npts)
+ case(4)
+    ypts(1:npts) = 0.
     !do i=1,npts   ! vy (neutrals)
     !   ypts(i) = Bfield0*get_b(b0,macha,machs,D(i))
     !enddo

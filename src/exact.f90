@@ -1071,6 +1071,12 @@ contains
              call exact_Cshock(1,timei,gamma,machs,macha,xmin,xmax,xexact,yexact,ierr)
           elseif (iploty.eq.iBfirst+1 .and. iBfirst.gt.0) then
              call exact_Cshock(2,timei,gamma,machs,macha,xmin,xmax,xexact,yexact,ierr)
+          elseif (iploty.eq.ivx) then
+             call exact_Cshock(3,timei,gamma,machs,macha,xmin,xmax,xexact,yexact,ierr)
+          elseif (iploty.eq.ivx+1 .and. ndimV > 1) then
+             call exact_Cshock(4,timei,gamma,machs,macha,xmin,xmax,xexact,yexact,ierr)
+          elseif (iploty.eq.iBfirst .and. iBfirst.gt.0) then
+             call exact_Cshock(5,timei,gamma,machs,macha,xmin,xmax,xexact,yexact,ierr)
           endif
        endif
     end select
