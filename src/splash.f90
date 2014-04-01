@@ -48,8 +48,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.4.1  : (xx/xx/14)
-!             Roche-lobe plotting vastly improved;
+!     2.4.1  : (01/04/14)
+!             Roche-lobe plotting vastly improved; newunit= issue fixed;
+!             bug fix with reading sink velocities from Phantom; other minor bug fixes.
 !     2.4.0  : (21/02/14)
 !             time formatting in legend can include general functions like %(t + 1000);
 !             option to include sinks in opacity rendering;
@@ -353,7 +354,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.4.0+ [11th Mar. 2014]'
+  character(len=*), parameter :: version = 'v2.4.1 [1st Apr. 2014 - no joke]'
 
   !
   ! initialise some basic code variables
