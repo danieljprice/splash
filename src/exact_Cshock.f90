@@ -43,7 +43,7 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
  real, dimension(size(xpts)) :: D
  real, parameter :: pi = 3.1415926536
  real :: theta,xshock,ambi_gamma,ambi_rhoi
- real :: cs,rhon0,Bfield0,b0,shockl,vs,va
+ real :: cs,rhon0,Bfield0,b0,shockl,vs,va,K1
  integer :: npts,i
  
  npts = size(xpts)
@@ -56,16 +56,25 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
  ambi_rhoi  = 1.e-5
  b0      = sin(theta)
  shockl  = Bfield0/(ambi_gamma*ambi_rhoi*sqrt(rhon0))
- vs      = cs*machs
  va      = Bfield0/sqrt(rhon0)
  xshock  = 6./8.*va*time
- print*,' vs = ',vs*time,' va = ',va*time,macha*va*time,sqrt(va**2 + cs**2)*time
 
  print "(4(a,g8.2))",&
   ' Plotting exact C-shock at t = ',time,' M = ',machs,' M_A = ',macha,' theta = ',theta
  print "(4(a,es10.3))",' shock length L = ',shockL,' shock is at x = ',xshock
 
  call integrate(xmin,xmax,xshock,xpts,macha,machs,theta,shockl,D,npts)
+ !
+ !  compute vs: See Mac-Low et al. (1995). This is the difference 
+ !  in the velocity across the shock front since we assume that the
+ !  post-shock gas is at rest
+ !
+ !--post-shock, assume vx = 0
+ K1 = D(1)*rhon0*cs**2 + 0.5*(Bfield0*get_b(b0,macha,machs,D(1)))**2
+ !--work out jump in v across shock
+ vs = sqrt((K1 - 0.5*(Bfield0*sin(theta))**2 - rhon0*cs**2)/rhon0)
+ print*,' vs = ',vs
+! print*,' vs = ',vs*time,' va = ',va*time,macha*va*time,sqrt(va**2 + cs**2)*time
 
  !
  !--determine which parameter to plot
@@ -143,7 +152,7 @@ subroutine integrate(xmin,xmax,xshock,xpts,macha,machs,theta,shockl,D,npts)
     else
        !--mid-point rule
        Dhalf = D(i+1) - 0.5*dx*rhs(D(i+1),macha,machs,theta,-shockl)
-       D(i)  = D(i+1) - 0.5*dx*rhs(Dhalf,macha,machs,theta,-shockl)
+       D(i)  = D(i+1) - dx*rhs(Dhalf,macha,machs,theta,-shockl)
     endif
  enddo
 
