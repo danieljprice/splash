@@ -57,6 +57,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use mem_allocation, only:alloc
   use geometry,       only:labelcoordsys
   use system_utils,   only:lenvironment
+  use labels,         only:labeltype,print_types
   implicit none
   integer,          intent(in)  :: indexstart
   integer,          intent(out) :: nstepsread
@@ -188,11 +189,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
      npartoftype(1,i) = nparti
      npartoftype(3,i) = ntoti - nparti
      if (iverbose.ge.1) then
-        print "(a14,':',es10.3,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
+        print "(a14,':',es10.3,a6,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
         print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolstep,'gamma',gamma(i),'hfact',hfact
         print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
      else
-        print "(1x,a,':',es10.3,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
+        print "(1x,a,':',es10.3,a8,':',i8,a8,':',i8)",'time',time(i),'npart',nparti,'ntotal',ntoti
      endif
      select case(geomfile(1:6))
      case('cylrpz')
@@ -314,14 +315,15 @@ ncolumns = ncol_max
 ndim = ndim_max
 ndimV = ndimV_max
 
+call set_labels
+
 if (iformat.eq.5 .and. .not.lenvironment('NSPLASH_ONEFLUID_RAW')) then
    call fake_twofluids
    iformat = 1
 endif
 
-if (npartoftype(2,ilast).gt.0) then
-   print*,' ngas = ',npartoftype(1,ilast),' ndust = ',npartoftype(2,ilast),' nghost = ',npartoftype(3,ilast)
-endif
+if (any(npartoftype(2:,ilast) > 0)) call print_types(npartoftype(:,ilast),labeltype)
+
 if (debugmode) print*,'DEBUG> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
        ' last step ntot = ',sum(npartoftype(:,indexstart+nstepsread-1))
 return
@@ -339,7 +341,6 @@ subroutine fake_twofluids
  real    :: rhodust,rhogas,rhotot,dustfraci,pmassgas,pmassdust,pmassj
  real, dimension(ndimV) :: veli,vgas,vdust,deltav
 
- call set_labels
  if (idustfrac.gt.0 .and. irho.gt.0) then
     do i=indexstart,indexstart+nstepsread-1
        ntoti = sum(npartoftype(:,i))
@@ -387,8 +388,10 @@ subroutine fake_twofluids
              endif
           endif
        enddo
-       print "(a,i10,a)",' Creating ',ndust,' fictional dust particles...'
-       print "(a)",' (set NSPLASH_BARYCENTRIC=yes to plot barycentric values)'
+       if (iverbose.ge.1) then
+          print "(a,i10,a)",' Creating ',ndust,' fictional dust particles...'
+          print "(a)",' (set NSPLASH_BARYCENTRIC=yes to plot barycentric values)'
+       endif
        npartoftype(2,i) = npartoftype(2,i) + ndust
     enddo
  else
