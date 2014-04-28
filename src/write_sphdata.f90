@@ -267,12 +267,8 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     close(unit=iunit)
 
  case('phantom','PHANTOM')
-     if (size(itype).gt.1 .and. sum(npartoftype(2:)).gt.0) then
-        print "(a)",' ERROR: writing of PHANTOM dumps not implemented with mixed types'
-     else
-        call write_sphdata_phantom(time,gamma,dat,npart,ntypes,npartoftype,&
-                                   masstype,ncolumns,filename)
-     endif
+    call write_sphdata_phantom(time,gamma,dat,npart,1,npartoftype(1:1),&
+                               masstype,ncolumns,filename)
  case('gadget','GADGET')
      call write_sphdata_gadget(time,dat,itype,npart,ntypes,npartoftype,&
                                masstype,ncolumns,filename)
