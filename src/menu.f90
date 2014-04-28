@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -673,14 +673,14 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
        label(ipdf) = 'PDF'
     endif
 
-    if (ndim.le.1) then !! .or. ndim.eq.3) then ! if 1D or no coord data (then prompts for which x)
+    if (ndim.le.1 .and. lenvironment('SPLASH_TURB')) then !! .or. ndim.eq.3) then ! if 1D or no coord data (then prompts for which x)
        nextra = nextra + 1      ! one extra plot = power spectrum
        ipowerspec = ncolumns + ncalc + nextra
        label(ipowerspec) = '1D power spectrum'
     else
        ipowerspec = 0
     endif
-    if (iexact.eq.4) then       ! toy star plot a-c plane
+    if (iexact.eq.6) then       ! toy star plot a-c plane
        nextra = nextra + 1
        iacplane = ncolumns + ncalc + nextra
        label(iacplane) = 'a-c plane'
