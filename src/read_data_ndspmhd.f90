@@ -317,7 +317,7 @@ ndimV = ndimV_max
 
 call set_labels
 
-if (iformat.eq.5 .and. .not.lenvironment('NSPLASH_ONEFLUID_RAW')) then
+if (iformat.eq.5 .and. .not.lenvironment('NSPLASH_BARYCENTRIC')) then
    call fake_twofluids
    iformat = 1
 endif
