@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -40,29 +40,38 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
  use settings_data,  only:ndim,UseTypeInRenderings
  use params,         only:int8,doub_prec,sing_prec
  implicit none
- integer, intent(in)                          :: ntotal,ntypes,ncolumns
- integer, intent(in), dimension(:)            :: npartoftype
- real, intent(in)                             :: time,gamma
- real, intent(in), dimension(ntotal,ncolumns) :: dat
- real, intent(in), dimension(:)               :: masstype
- character(len=*), intent(in)                 :: filename
+ integer, intent(in)          :: ntotal,ntypes,ncolumns
+ integer, intent(in)          :: npartoftype(:)
+ real, intent(in)             :: time,gamma
+ real, intent(in)             :: dat(ntotal,ncolumns)
+ real, intent(in)             :: masstype(:)
+ character(len=*), intent(in) :: filename
 
+ integer, parameter    :: i_int   = 1, &
+                          i_int1  = 2, &
+                          i_int2  = 3, &
+                          i_int4  = 4, &
+                          i_int8  = 5, &
+                          i_real  = 6, &
+                          i_real4 = 7, &
+                          i_real8 = 8
  integer, parameter    :: idump = 83
  character(len=len(filename)+10) :: outfile
 
- integer, parameter    :: intval1=690706,intval2=780806
- integer, parameter    :: idimhead = 22
- integer(kind=int8)    :: nparttot,npartoftypetot(5),number8
- integer, dimension(8) :: nums
- integer               :: narraylengths,nblocks,nblockarrays
- integer               :: i,j,ierr,i1,index1,number,npart
- real, dimension(idimhead) :: rheader
- real(doub_prec)           :: udist,umass,utime,umagfd
- real                      :: r1,hfact
+ integer, parameter :: intval1=690706,intval2=780806
+ integer, parameter :: idimhead = 22
+ integer(kind=int8) :: nparttot,npartoftypetot(5),number8
+ integer            :: nums(8)
+ integer            :: narraylengths,nblocks,nblockarrays
+ integer            :: i,j,ierr,i1,index1,number,npart
+ real               :: rheader(idimhead)
+ real(doub_prec)    :: udist,umass,utime,umagfd
+ real               :: r1,hfact
+ logical            :: mhd
 !
 !--define output file name
 !
- outfile=trim(filename)//'.init'
+ outfile=trim(filename)//'.tmp'
  narraylengths = 2
  nblocks = 1          ! not parallel dump
  hfact   = 1.2        ! must be specified in phantom dumps
@@ -70,28 +79,33 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
 !
 !--check if we have enough data to write a PHANTOM dump
 !
- if (ndim.lt.3) then
+ if (ndim < 3) then
     print "(a)",' ERROR: ndim < 3 but must be 3 for PHANTOM data -- cannot write PHANTOM dump, skipping...'
     return
  endif
- if (any(ix(:).le.0)) then
+ if (any(ix(:) <= 0)) then
     print "(a)",' ERROR: position labels not set -- cannot write PHANTOM dump, skipping...'
     return
  endif
- if (ivx.le.0) then
+ if (ivx <= 0) then
     print "(a)",' ERROR: velocity not found in data -- cannot write PHANTOM dump, skipping...'
     return
  endif
- if (ih.le.0) then
+ if (ih <= 0) then
     print "(a)",' ERROR: smoothing length not found in data -- cannot write PHANTOM dump, skipping...'
     return
+ endif
+ mhd = .false.
+ if (iBfirst > 0) then
+    mhd = .true.
+    narraylengths = 4
  endif
 !--fill rheader and check that we have equal mass particles
  rheader(:) = 0.
  rheader(1) = time
  rheader(3) = gamma
  rheader(6) = hfact
- if (ipmass.gt.0) then
+ if (ipmass > 0) then
     index1 = 1
     do i=1,ntypes
        rheader(14+i) = dat(index1,ipmass)
@@ -122,19 +136,19 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
  i1 = intval1
  r1 = real(intval2)
  write (idump, err=100) intval1,r1,intval2,i1,intval1
- write (idump, err=100) fileident('F','Phantom')
+ write (idump, err=100) fileident('F','Phantom',mhd=mhd)
 
  npart = npartoftype(1)
  npartoftypetot(:) = 0
  do i=2,ntypes
     if (all(UseTypeInRenderings(1:i))) then
        npart = npart + npartoftype(i)
-       if (npartoftype(i).gt.0) print "(a)",' WARNING: assuming '// &
+       if (npartoftype(i) > 0) print "(a)",' WARNING: assuming '// &
           trim(labeltype(i))//' particles are same as gas particles'
-       if (rheader(15).le.0.) then
+       if (rheader(15) <= 0.) then
           rheader(15) = masstype(i)
           rheader(15+i) = 0.
-       elseif (masstype(i).ne.rheader(15)) then
+       elseif (abs(masstype(i)-rheader(15)) < tiny(masstype)) then
           print*,' WARNING! WARNING! mass of '//trim(labeltype(i))// &
                 ' particles differs from '//trim(labeltype(1))//' particles'
           print*,' Assuming all particles have '//trim(labeltype(1))//' particle mass'
@@ -171,13 +185,13 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
 !--real*8
  udist = units(ix(1))
  utime = units(0)
- if (ipmass.gt.0) then
+ if (ipmass > 0) then
     umass = units(ipmass)
  else
     print "(a)",' WARNING: units for mass unknown, written as 1.0'
     umass = 1.0d0
  endif
- if (iBfirst.gt.0) then
+ if (iBfirst > 0) then
     umagfd = units(iBfirst)
     number = 4
     write (idump, err=100) number
@@ -196,11 +210,11 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
  number8 = npart
  nums(:) = 0
  if (iutherm.gt.0) then
-    nums(6) = 7
+    nums(i_real) = 7
  else
-    nums(6) = 6
+    nums(i_real) = 6
  endif
- nums(7) = 1
+ nums(i_real4) = 1
  write (idump, err=100) number8, (nums(i), i=1,8)
 !
 !--array length 2 header
@@ -211,7 +225,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
 !
 !--array length 3 header
 !
- if (narraylengths.ge.3) then
+ if (narraylengths >= 3) then
     number8 = 0
     nums(1:8) = 0
     write (idump, err=100) number8, (nums(i), i=1,8)
@@ -219,22 +233,14 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
 !
 !--array length 4 header
 !
- if (narraylengths.ge.4) then
-    !if (imhd.eq.idim) then
-    !   number8 = npart
-    !else
+ if (narraylengths >= 4) then
+    if (mhd) then
+       number8 = npart
+    else
        number8 = 0
-    !endif
+    endif
     nums(:) = 0
-!    if (imhd.eq.idim) then
-!       if (ivecp.eq.idim) then
-!          nums(6) = 0
-!          nums(7) = 3 + iBevol + 1
-!       else
-!          nums(6) = 0
-!          nums(7) = 4
-!       endif
-!    endif
+    if (mhd) nums(i_real4) = 3
     write (idump, err=100) number8, (nums(i), i=1,8)
  endif
 
@@ -252,7 +258,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
  end do
 
  do j = 1, 3
-    write (idump, err=100) (dat(i,ivx+j), i=1, npart)
+    write (idump, err=100) (dat(i,ivx+j-1), i=1, npart)
  end do
 
  if (iutherm.gt.0) then
@@ -261,7 +267,13 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
 
 !--real*4
 !   dump smoothing length as a real*4 to save space
-  write (idump, err=100) (real(dat(i,ih),kind=sing_prec), i=1, npart)
+ write (idump, err=100) (real(dat(i,ih),kind=sing_prec), i=1, npart)
+
+ if (mhd) then
+    do j=1,3
+       write(idump,err=100) (real(dat(i,iBfirst+j-1),kind=sing_prec),i=1, npart)
+    enddo
+ endif
 
  close(unit=idump)
  return
@@ -278,11 +290,13 @@ end subroutine write_sphdata_phantom
 !  these are for information only (ie. not important for restarting)
 !+
 !--------------------------------------------------------------------
-character(len=100) function fileident(firstchar,codestring)
+character(len=100) function fileident(firstchar,codestring,mhd)
  implicit none
  character(len=1), intent(in) :: firstchar
  character(len=*), intent(in), optional :: codestring
+ logical,          intent(in), optional :: mhd
  character(len=10) :: datestring, timestring, string
+ logical :: gotmhd
 !
 !--print date and time stamp in file header
 !
@@ -298,12 +312,14 @@ character(len=100) function fileident(firstchar,codestring)
     fileident = firstchar//':Phantom'
  endif
 
- !if (imhd.eq.idim) then
- !   fileident = trim(fileident)//' (mhd'//trim(string)//')  : '//trim(datestring)//' '//trim(timestring)
- !else
+ gotmhd = .false.
+ if (present(mhd)) gotmhd = mhd
+ if (gotmhd) then
+    fileident = trim(fileident)//' (mhd'//trim(string)//')  : '//trim(datestring)//' '//trim(timestring)
+ else
     fileident = trim(fileident)//' (hydro'//trim(string)//'): ' &
                 //trim(datestring)//' '//trim(timestring)
- !endif
+ endif
 
 end function fileident
 
