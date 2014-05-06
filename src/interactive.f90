@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -74,6 +74,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,nshapes,add_textshape
   use multiplot,        only:itrans
   use labels,           only:is_coord,ix
+  use limits,           only:assert_sensible_limits
   use settings_render,  only:projlabelformat,iapplyprojformat
   use settings_data,    only:ndataplots,ntypes,icoords,icoordsnew
   use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
@@ -682,11 +683,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               renderpt = 0.5*(contmin + contmax)
               contmin = renderpt - 0.5*contlength
               contmax = renderpt + 0.5*contlength
+              call assert_sensible_limits(contmin,contmax)
               print*,'zooming on colour bar: min, max = ',contmin,contmax           
            else
               renderpt = 0.5*(rendermin + rendermax)
               rendermin = renderpt - 0.5*renderlength
               rendermax = renderpt + 0.5*renderlength
+              call assert_sensible_limits(rendermin,rendermax)
               print*,'zooming on colour bar: min, max = ',rendermin,rendermax
            endif
            iadvance = 0
@@ -696,6 +699,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            if (xpt.ge.xmin .and. xpt.le.xmax .and. ypt.le.ymaxin) then
               xmin = xcen - 0.5*xlength
               xmax = xcen + 0.5*xlength
+              call assert_sensible_limits(xmin,xmax)
               print*,'zooming on x axis: min, max = ',xmin,xmax
               iadvance = 0
               interactivereplot = .true.
@@ -705,6 +709,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            if (ypt.ge.ymin .and. ypt.le.ymax .and. xpt.le.xmaxin) then
               ymin = ycen - 0.5*ylength
               ymax = ycen + 0.5*ylength
+              call assert_sensible_limits(ymin,ymax)
               print*,'zooming on y axis: min, max = ',ymin,ymax
               iadvance = 0
               interactivereplot = .true.
@@ -720,10 +725,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         if (iamincolourbar .and. irender.gt.0) then
            if (double_rendering) then
               contmin = contminadapt
-              contmax = contmaxadapt           
+              contmax = contmaxadapt
+              call assert_sensible_limits(contmin,contmax)
            else
               rendermin = renderminadapt
               rendermax = rendermaxadapt
+              call assert_sensible_limits(rendermin,rendermax)
            endif
            iadvance = 0              ! that it should change the render limits
            interactivereplot = .true.
@@ -1495,6 +1502,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                              barwmulti,xminadapt,xmaxadapt,nacross,ndim,xorigin,icolourscheme, &
                              iColourBarStyle,interactivereplot)
  use labels,    only:is_coord,iamvec
+ use limits,    only:assert_sensible_limits
  use multiplot, only:itrans
  use shapes,    only:add_textshape,inshape,edit_shape,delete_shape,nshapes
  use plotlib,   only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line,plot_left_click
@@ -1873,12 +1881,14 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               renderpt = 0.5*(xmin(icontourarr(ipanel)) + xmax(icontourarr(ipanel)))
               xmin(icontourarr(ipanel)) = renderpt - 0.5*contlength
               xmax(icontourarr(ipanel)) = renderpt + 0.5*contlength
+              call assert_sensible_limits(xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel)))
               print*,'zooming on colour bar: min, max = ',xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel))
            else
               !--rendering zoom does not allow pan - renderpt is always centre of axis
               renderpt = 0.5*(xmin(irenderarr(ipanel)) + xmax(irenderarr(ipanel)))
               xmin(irenderarr(ipanel)) = renderpt - 0.5*renderlength
               xmax(irenderarr(ipanel)) = renderpt + 0.5*renderlength
+              call assert_sensible_limits(xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)))
               print*,'zooming on colour bar: min, max = ',xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel))
            endif
            istep = istepnew
@@ -1888,6 +1898,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            if (xpti.ge.xmin(iplotxarr(ipanel)) .and. xpti.le.xmax(iplotxarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel))) then
               xmin(iplotxarr(ipanel)) = xcen - 0.5*xlength
               xmax(iplotxarr(ipanel)) = xcen + 0.5*xlength
+              call assert_sensible_limits(xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)))
               print*,'zooming on x axis: min, max = ',xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel))
               istep = istepnew
               interactivereplot = .true.
@@ -1896,6 +1907,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            if (ypti.ge.xmin(iplotyarr(ipanel)) .and. ypti.le.xmax(iplotyarr(ipanel)) .and. xpti.le.xmaxin) then
               xmin(iplotyarr(ipanel)) = ycen - 0.5*ylength
               xmax(iplotyarr(ipanel)) = ycen + 0.5*ylength
+              call assert_sensible_limits(xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
               print*,'zooming on y axis: min, max = ',xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel))
               istep = istepnew
               interactivereplot = .true.
@@ -1909,10 +1921,12 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               print*,'adapting double-render limits ',xminadapt(icontourarr(ipanel)),xmaxadapt(icontourarr(ipanel))
               xmin(icontourarr(ipanel)) = xminadapt(icontourarr(ipanel))
               xmax(icontourarr(ipanel)) = xmaxadapt(icontourarr(ipanel))           
+              call assert_sensible_limits(xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel)))
            else
               print*,'adapting render limits ',xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel))
               xmin(irenderarr(ipanel)) = xminadapt(irenderarr(ipanel))
               xmax(irenderarr(ipanel)) = xmaxadapt(irenderarr(ipanel))
+              call assert_sensible_limits(xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)))
            endif
            istep = istepnew
            interactivereplot = .true.
@@ -1925,6 +1939,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               print*,'adapting x limits ',xminadapt(iplotxarr(ipanel)),xmaxadapt(iplotxarr(ipanel))
               xmin(iplotxarr(ipanel)) = xminadapt(iplotxarr(ipanel))
               xmax(iplotxarr(ipanel)) = xmaxadapt(iplotxarr(ipanel))
+              call assert_sensible_limits(xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)))
               istep = istepnew
               interactivereplot = .true.
               iexit = .true.
@@ -1934,6 +1949,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               print*,'adapting y limits ',xminadapt(iplotyarr(ipanel)),xmaxadapt(iplotyarr(ipanel))
               xmin(iplotyarr(ipanel)) = xminadapt(iplotyarr(ipanel))
               xmax(iplotyarr(ipanel)) = xmaxadapt(iplotyarr(ipanel))
+              call assert_sensible_limits(xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
               istep = istepnew
               interactivereplot = .true.
               iexit = .true.
@@ -2371,6 +2387,7 @@ end function inpoly
 !------------------------------------------------------------
 subroutine adapt_limits_interactive(labeli,np,xarr,xmin,xmax,icolourpart,iamtype,iusetype)
  use params, only:int1
+ use limits, only:assert_sensible_limits
  implicit none
  character(len=*), intent(in)    :: labeli
  integer, intent(in)             :: np
@@ -2398,6 +2415,7 @@ subroutine adapt_limits_interactive(labeli,np,xarr,xmin,xmax,icolourpart,iamtype
     xmin = minval(xarr,mask=(icolourpart.ge.0))
     xmax = maxval(xarr,mask=(icolourpart.ge.0))
  endif
+ call assert_sensible_limits(xmin,xmax)
 
  print "(1x,a)",' resetting '//trim(labeli)//' limits'
 

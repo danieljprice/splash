@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -32,6 +32,8 @@ module limits
  implicit none
  real, dimension(maxplot,2) :: lim,range,lim2
  private :: warn_minmax
+ 
+ public
 
 contains
 
@@ -44,7 +46,6 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   use geometry,      only:coord_transform_limits
   use particle_data, only:npartoftype,dat,maxcol
   use settings_data, only:ndim,icoords,icoordsnew
-  implicit none
   integer, intent(in) :: ifromstep,itostep,ifromcol,itocol
   integer :: i,j,k,ntoti,itocoli
 
@@ -103,7 +104,6 @@ end subroutine set_limits
 !----------------------------------------------------------
 subroutine write_limits(limitsfile)
   use settings_data, only:numplot,ndataplots
-  implicit none
   character(len=*), intent(in) :: limitsfile
   integer :: i
 
@@ -142,11 +142,10 @@ subroutine read_limits(limitsfile,ierr)
   use labels,        only:label
   use settings_data, only:numplot,ncolumns,ncalc
   use asciiutils,    only:ncolumnsline
-  implicit none
   character(len=*), intent(in) :: limitsfile
-  integer, intent(out) :: ierr
-  integer              :: i,ncolsline
-  character(len=120)   :: line
+  integer,         intent(out) :: ierr
+  integer                      :: i,ncolsline
+  character(len=120)           :: line
   logical :: iexist
 
   ierr = 0
@@ -172,6 +171,7 @@ subroutine read_limits(limitsfile,ierr)
      else
         read(line,*,err=998,end=999) lim(i,1),lim(i,2)
      endif
+     call assert_sensible_limits(lim(i,1),lim(i,2))
      !
      !--warn if limits are the same
      !
@@ -212,10 +212,9 @@ end subroutine read_limits
 !----------------------------------------------------------
 subroutine get_particle_subset(icolours,datstep,ncolumns)
  use labels, only:label
- implicit none
- integer, dimension(:), intent(inout) :: icolours
- real, dimension(:,:),  intent(in)    :: datstep
- integer,               intent(in)    :: ncolumns
+ integer, intent(inout) :: icolours(:)
+ real,    intent(in)    :: datstep(:,:)
+ integer, intent(in)    :: ncolumns
  integer :: icol
 
  if (anyrangeset()) then
@@ -254,7 +253,6 @@ end subroutine get_particle_subset
 !----------------------------------------------------------
 subroutine reset_all_ranges()
  use particle_data, only:icolourme
- implicit none
 
  print "(a)",' removing all range restrictions '
  where (icolourme(:).eq.-1000)
@@ -272,7 +270,6 @@ end subroutine reset_all_ranges
 ! has been set for a given column
 !----------------------------------------------------------
 logical function rangeset(icol)
- implicit none
  integer, intent(in) :: icol
 
  rangeset = .false.
@@ -286,7 +283,6 @@ end function rangeset
 ! has been set for a given column
 !----------------------------------------------------------
 logical function lim2set(icol)
- implicit none
  integer, intent(in) :: icol
 
  lim2set = .false.
@@ -299,7 +295,6 @@ end function lim2set
 ! reset all range restrictions to zero
 !----------------------------------------------------------
 subroutine reset_lim2(icol)
- implicit none
  integer, intent(in) :: icol
 
  print "(a)",' contour limits same as render limits'
@@ -315,7 +310,6 @@ end subroutine reset_lim2
 !----------------------------------------------------------
 logical function anyrangeset()
  use settings_data, only:ndataplots
- implicit none
  integer :: i
 
  anyrangeset = .false.
@@ -332,7 +326,6 @@ end function anyrangeset
 subroutine print_rangeinfo()
  use settings_data, only:ndataplots
  use labels,        only:label
- implicit none
  integer :: i
 
  if (anyrangeset()) then
@@ -357,7 +350,6 @@ end subroutine print_rangeinfo
 subroutine print_lim2info()
  use settings_data, only:ndataplots
  use labels,        only:label
- implicit none
  integer :: i
 
  do i=1,ndataplots
@@ -373,7 +365,6 @@ end subroutine print_lim2info
 ! prints warning if min=max in limits setting
 !----------------------------------------------------------
 subroutine warn_minmax(labelx,xmin,xmax)
- implicit none
  character(len=*), intent(in) :: labelx
  real,             intent(in) :: xmin,xmax
 
@@ -383,5 +374,47 @@ subroutine warn_minmax(labelx,xmin,xmax)
 
  return
 end subroutine warn_minmax
+
+!----------------------------------------------------------
+! Makes sure that variable is within a given range
+! If no range specified, ensures that it is within
+! the allowed range for the variable type,
+!  i.e. -0.5*huge(x)->0.5*huge(x)
+!----------------------------------------------------------
+subroutine assert_range(x,min,max)
+ real, intent(inout) :: x
+ real, intent(in), optional :: min,max
+ real :: xmin,xmax
+ 
+ xmin = -0.5*huge(xmin)  ! for limits need xmax - xmin to
+ xmax = 0.5*huge(xmax)   ! be less than huge(x)
+ if (present(min)) xmin = min
+ if (present(max)) xmax = max
+ if (x < xmin) x = xmin
+ if (x > xmax) x = xmax
+ if (x /= x) x = 0.
+
+ return
+end subroutine assert_range
+
+!----------------------------------------------------------
+! Interface to the above, but checks two numbers at once
+! and checks that max > min
+!----------------------------------------------------------
+subroutine assert_sensible_limits(xmin,xmax)
+ real, intent(inout) :: xmin,xmax
+ real :: xtmp
+
+ call assert_range(xmin)
+ call assert_range(xmax)
+ 
+ if (xmax < xmin) then
+    xtmp = xmin
+    xmin = xmax
+    xmax = xtmp
+ endif
+
+ return
+end subroutine assert_sensible_limits
 
 end module limits

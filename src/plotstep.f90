@@ -3534,6 +3534,7 @@ subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,label
                         iamtype,ntoti,npartoftype,iusetype,ipagechange)
   use params,          only:int1,maxparttypes
   use labels,          only:is_coord
+  use limits,          only:assert_sensible_limits
   use settings_limits, only:scalemax,iadapt,iadaptcoords
   use settings_data,   only:debugmode,ndim
   use settings_part,   only:iplotline
@@ -3575,6 +3576,9 @@ subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,label
         index1 = index2 + 1
      enddo
   endif
+  !--avoid infs and NaNs
+  call assert_sensible_limits(xminadaptive,xmaxadaptive)
+
   if (debugmode) print*,'DEBUG: ',iplot,': '//trim(labeli)// &
                  'min,max adaptive = ',xminadaptive,xmaxadaptive
 
