@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -42,6 +42,7 @@ subroutine exact_fromfile(filename,xexact,yexact,ixcolfile,iycolfile,iexactpts,i
   integer, intent(out) :: iexactpts, ierr
   integer :: i,j,ncolumns,nheaderlines
   integer, parameter :: lu = 33
+  character(len=10) :: str
   real :: dum
 
   ierr = 0
@@ -77,7 +78,8 @@ subroutine exact_fromfile(filename,xexact,yexact,ixcolfile,iycolfile,iexactpts,i
   return
 10 continue
   iexactpts = i-1
-  print*,'finished reading ',trim(filename),' : ',iexactpts,' read'
+  write(str,"(i10)") iexactpts
+  print "(a)",' finished reading '//trim(filename)//': '//trim(adjustl(str))//' read'
   close(lu)
   return
 20 print*,'error reading ',trim(filename),': partial solution read'
