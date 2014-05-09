@@ -32,6 +32,10 @@
 module exact
   implicit none
   !
+  !--maximum number of solutions in any one plot
+  !
+  integer, parameter :: maxexact=10
+  !
   !--options used to plot the exact solution line
   !
   integer :: maxexactpts, iExactLineColour, iExactLineStyle,iPlotExactOnlyOnPanel
@@ -60,14 +64,14 @@ module exact
   integer :: iprofile,icolpoten,icolfgrav
   real, dimension(2) :: Msphere,rsoft
   !--from file
-  integer :: iexactplotx, iexactploty
+  integer :: iexactplotx(maxexact), iexactploty(maxexact)
   !--shock tube
   real :: rho_L, rho_R, pr_L, pr_R, v_L, v_R
   !--rho vs h
   real :: hfact
   !--read from file
-  integer :: ixcolfile,iycolfile
-  character(len=120) :: filename_exact
+  integer :: ixcolfile(maxexact),iycolfile(maxexact),nfiles
+  character(len=120) :: filename_exact(maxexact)
   !--equilibrium torus
   real :: Mstar,Rtorus,distortion
   !--ring spreading
@@ -76,10 +80,10 @@ module exact
   real :: cs,Kdrag,rhozero,rdust_to_gas
   !--arbitrary function
   integer :: nfunc
-  character(len=120), dimension(10) :: funcstring
+  character(len=120), dimension(maxexact) :: funcstring
   !--Roche potential
   real :: mprim,msec
-  real, dimension(3) :: xprim,xsec
+  real :: xprim(3),xsec(3)
   logical :: use_sink_data
   integer, parameter :: iexact_rochelobe = 15
   !--C-shock
@@ -98,7 +102,7 @@ module exact
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
-       use_sink_data,xprim,xsec
+       use_sink_data,xprim,xsec,nfiles
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -138,14 +142,16 @@ contains
     pr_R = 0.1
     v_L = 0.0
     v_R = 0.0
-    iexactplotx = 0
-    iexactploty = 0
     ishk = 1
     xshock = 0.
     hfact = 1.2
+!   read from file
+    nfiles = 1
     filename_exact = ' '
     ixcolfile = 1
     iycolfile = 2
+    iexactplotx = 0
+    iexactploty = 0
 !   density profile parameters
     iprofile = 1
     rsoft(1) = 1.0
@@ -207,9 +213,10 @@ contains
     use asciiutils,    only:get_ncolumns,string_replace
     implicit none
     integer, intent(inout) :: iexact
-    integer :: ierr,itry,i,ncols,nheaderlines
-    logical :: ians,iexist
+    integer :: ierr,itry,i,ncols,nheaderlines,nadjust
+    logical :: ians,iexist,ltmp
     character(len=len(filename_exact)) :: filename_tmp
+    character(len=4) :: str
 
     print 10
 10  format(' 0) none ',/,               &
@@ -236,14 +243,14 @@ contains
     !
     select case(iexact)
     case(1)
-       call prompt('enter number of functions to plot ',nfunc,1,size(funcstring))
+       call prompt('enter number of functions to plot ',nfunc,1,maxexact)
        print "(/,a,6(/,11x,a))",' Examples: sin(2*pi*x - 0.1*t)','sqrt(0.5*x)','x^2', &
              'exp(-2*x**2 + 0.1*t)','log10(x/2)','exp(y),y=sin(pi*x)','cos(z/y),z=acos(y),y=x^2'
        overfunc: do i=1,nfunc
           ierr = 1
           itry = 0
           do while(ierr /= 0 .and. itry.lt.10)
-             if (nfunc.gt.1) print "(/,a,i2,/,11('-'),/)",'Function ',i
+             if (nfunc > 1) print "(/,a,i2,/,11('-'),/)",'Function ',i
              call prompt('enter function f(x,t) to plot ',funcstring(i),noblank=.true.)
              call check_function(funcstring(i),ierr)
              if (ierr /= 0 .and. len(funcstring(i)).eq.len_trim(funcstring(i))) then
@@ -253,61 +260,85 @@ contains
              endif
              itry = itry + 1
           enddo
-          if (itry.ge.10) then
+          if (itry >= 10) then
              print "(a)",' *** too many tries, aborting ***'
              ierr = i-1
              exit overfunc
           endif
+          print*
+          call prompt('enter y axis of exact solution (0=all plots)',iexactploty(i),0)
+          if (iexactploty(i) > 0) then
+             call prompt('enter x axis of exact solution ',iexactplotx(i),1)
+          endif
        enddo overfunc
        if (ierr /= 0) nfunc = ierr
-       if (nfunc.gt.0) then
-          print*
-          call prompt('enter y axis of exact solution (0=all plots)',iexactploty,0)
-          if (iexactploty.gt.0) then
-             call prompt('enter x axis of exact solution ',iexactplotx,1)
-          endif
-       endif
     case(2)
-       iexist = .false.
-       do while(.not.iexist)
-          print "(a)",'Use %f to represent current dump file, e.g. %f.exact looks for dump_000.exact'
-          call prompt('enter filename ',filename_exact)
-          !--substitute %f for filename
-          filename_tmp = filename_exact
-          call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
-          !--check the first file for errors
-          inquire(file=filename_tmp,exist=iexist)
-          if (iexist) then
-             open(unit=33,file=filename_tmp,status='old',iostat=ierr)
-             if (ierr.eq.0) then
-                call get_ncolumns(33,ncols,nheaderlines)
-                if (ncols.gt.2) then
-                   print "(a,i2,a)",' File '//trim(filename_tmp)//' contains ',ncols,' columns of data'
-                   call prompt('Enter column containing x data ',ixcolfile,1,ncols)
-                   call prompt('Enter column containing y data ',iycolfile,1,ncols)
-                elseif (ncols.eq.2) then
-                   print "(a,i2,a)",' OK: got ',ncols,' columns from '//trim(filename_tmp)
+       call prompt('enter number of files to read per plot ',nfiles,1,maxexact)
+       nadjust = -1
+       over_files: do i=1,nfiles
+          iexist = .false.
+          do while(.not.iexist)
+             print "(/,a)",'Use %f to represent current dump file, e.g. %f.exact looks for dump_000.exact'
+             write(str,"(i4)") i
+             call prompt('enter filename #'//trim(adjustl(str)),filename_exact(i))
+             !--substitute %f for filename
+             filename_tmp = filename_exact(i)
+             call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
+             !--check the first file for errors
+             inquire(file=filename_tmp,exist=iexist)
+             if (iexist) then
+                open(unit=33,file=filename_tmp,status='old',iostat=ierr)
+                if (ierr.eq.0) then
+                   call get_ncolumns(33,ncols,nheaderlines)
+                   if (ncols.gt.2) then
+                      print "(a,i2,a)",' File '//trim(filename_tmp)//' contains ',ncols,' columns of data'
+                      call prompt('Enter column containing x data ',ixcolfile(i),1,ncols)
+                      call prompt('Enter column containing y data ',iycolfile(i),1,ncols)
+                   elseif (ncols.eq.2) then
+                      print "(a,i2,a)",' OK: got ',ncols,' columns from '//trim(filename_tmp)
+                   else
+                      iexist = .false.
+                      call prompt('Error: file contains < 2 readable columns: try again?',ians)
+                      if (.not.ians) then
+                         nadjust = i-1
+                         exit over_files
+                      endif
+                   endif
+                   close(33)
                 else
                    iexist = .false.
-                   call prompt('Error: file contains < 2 readable columns: try again?',ians)
-                   if (.not.ians) return
+                   call prompt('Error opening '//trim(filename_tmp)//': try again?',ians)
+                   if (.not.ians) then
+                      nadjust = i-1
+                      exit over_files                      
+                   endif
                 endif
-                close(33)
              else
-                iexist = .false.
-                call prompt('Error opening '//trim(filename_tmp)//': try again?',ians)
-                if (.not.ians) return
+                ians = .true.
+                call prompt('file does not exist: try again? ',ians)
+                if (.not.ians) then
+                   nadjust = i-1
+                   exit over_files
+                endif
              endif
-          else
-             ians = .true.
-             call prompt('file does not exist: try again? ',ians)
-             if (.not.ians) return
+          enddo
+          call prompt('enter x axis of exact solution ',iexactplotx(i),1)
+          call prompt('enter y axis of exact solution ',iexactploty(i),1)
+       enddo over_files
+       if (nadjust >= 0) then
+          nfiles = nadjust
+          if (nfiles == 1) then
+             print "(/,a)",'Using 1 file only'          
+          elseif (nfiles > 0) then
+             write(str,"(i4)") nfiles
+             print "(/,a)",'Using '//trim(adjustl(str))//' files'
           endif
-       enddo
-       call prompt('enter x axis of exact solution ',iexactplotx,1)
-       call prompt('enter y axis of exact solution ',iexactploty,1)
-       print "(a)",'apply column transformations to exact solution?'
-       call prompt(' (no if file contains e.g. log y vs log x)',iApplyTransExactFile)
+       endif
+       if (nfiles > 0) then ! only ask if filename was read OK
+          ltmp = .not.iApplyTransExactFile
+          call prompt(' are exact solutions already logged?',ltmp)
+          iApplyTransExactFile = .not.ltmp
+       endif
     case(3,13)
        !
        !--read shock parameters from the .shk file
@@ -697,7 +728,7 @@ contains
     use gresho,          only:exact_gresho
     use Cshock,          only:exact_Cshock
     use transforms,      only:transform,transform_inverse
-    use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line
+    use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line,plotlib_maxlinestyle
     implicit none
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
     integer, intent(in) :: ndim,ndimV,npart,imarker,iaxisy
@@ -773,34 +804,42 @@ contains
 
     select case(iexact)
     case(1) ! arbitrary function parsing
-       if ((iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) .or. iexactploty.eq.0) then
-          do i=1,nfunc
+       do i=1,nfunc
+          if ((iplotx.eq.iexactplotx(i) .and. iploty.eq.iexactploty(i)) .or. iexactploty(i).eq.0) then
              call exact_function(funcstring(i),xexact,yexact,timei,ierr)
-             if (i.ne.nfunc) then ! plot all except last line here
+             if (i /= nfunc) then ! plot all except last line here
                 if (itransy.gt.0) call transform(yexact,itransy)
                 !--use xtemp, which is xexact but already transformed
                 call plot_line(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
              endif
-          enddo
-       endif
+          endif
+       enddo
     case(2) ! exact solution read from file
-       if (iplotx.eq.iexactplotx .and. iploty.eq.iexactploty) then
-          !--substitute %f for filename
-          filename_tmp = filename_exact
-          call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
-          !--read exact solution from file
-          call exact_fromfile(filename_tmp,xexact,yexact,ixcolfile,iycolfile,iexactpts,ierr)
-          !--plot this untransformed (as may already be in log space)
-          if (ierr.le.0 .and. .not.iApplyTransExactFile) then
-             call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
-             ierr = 1
+       do i=1,nfiles
+          if (iplotx.eq.iexactplotx(i) .and. iploty.eq.iexactploty(i)) then
+             !--substitute %f for filename
+             filename_tmp = filename_exact(i)
+             call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
+             !--read exact solution from file
+             call exact_fromfile(filename_tmp,xexact,yexact,ixcolfile(i),iycolfile(i),iexactpts,ierr)
+             !--plot this untransformed (as may already be in log space)
+             if (ierr.le.0) then
+                if (iApplyTransExactFile) then
+                   !--change into physical units if appropriate
+                   if (iRescale) then
+                      xexact(1:iexactpts) = xexact(1:iexactpts)*unitsx
+                      yexact(1:iexactpts) = yexact(1:iexactpts)*unitsy
+                   endif
+                   !--apply transforms and plot line
+                   if (itransx.gt.0) call transform(xexact(1:iexactpts),itransx)
+                   if (itransy.gt.0) call transform(yexact(1:iexactpts),itransy)
+                endif
+                call plot_sls(mod(iExactLineStyle+i-1,plotlib_maxlinestyle))
+                call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
+                ierr = 1 ! indicate that we have already plotted the solution
+             endif
           endif
-          !--change into physical units if appropriate
-          if (iRescale .and. iApplyTransExactFile) then
-             xexact(1:iexactpts) = xexact(1:iexactpts)*unitsx
-             yexact(1:iexactpts) = yexact(1:iexactpts)*unitsy
-          endif
-       endif
+       enddo
     case(3)! shock tube
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irho) then
