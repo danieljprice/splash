@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -699,7 +699,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      do i=1,ncalc
         if (required(ncolumns+i)) nused = nused + 1
      enddo
-     print "(2(a,i2),a,/)",' Calculating ',nused,' of ',ncalctot,' additional quantities...'
+     if (iverbose > 0) print "(2(a,i2),a,/)",' Calculating ',nused,' of ',ncalctot,' additional quantities...'
   endif
   ncolsnew = ncolumns + ncalc
   if (ncolsnew.gt.maxcol) call alloc(maxpart,maxstep,ncolsnew)
@@ -880,30 +880,6 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  end select
 
 end subroutine identify_calculated_quantity
-
-!-----------------------------------------------------------------
-!
-!  utility (private) to add a column (not currently used)
-!
-!-----------------------------------------------------------------
-subroutine addcolumn(inewcolumn,labelin)
- use labels,        only:label
- use settings_data, only:ncolumns,ncalc
- implicit none
- integer, intent(out) :: inewcolumn
- character(len=*), intent(in) :: labelin
-
- ncalc = ncalc + 1
- inewcolumn = ncolumns + ncalc
- if (inewcolumn.le.size(label)) then
-    label(inewcolumn) = trim(labelin)
- else
-    print*,' WARNING!!! too many columns for array dimensions'
-    print*,' => change parameter ''maxplot'' in globaldata.f90 and recompile'
- endif
-
- return
-end subroutine addcolumn
 
 !-----------------------------------------------------------------
 !
