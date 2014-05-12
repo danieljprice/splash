@@ -40,7 +40,7 @@ subroutine menu
                              buffer_data,ncolumns
   use settings_limits,  only:submenu_limits,iadapt
   use settings_part,    only:submenu_particleplots
-  use settings_page,    only:submenu_page,submenu_legend,interactive
+  use settings_page,    only:submenu_page,submenu_legend,interactive,nacross,ndown
   use settings_render,  only:submenu_render,iplotcont_nomulti,icolours,double_rendering
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
   use settings_xsecrot, only:submenu_xsecrotate
@@ -56,7 +56,7 @@ subroutine menu
   integer            :: ipicky,ipickx,irender,ivecplot,icontourplot
   integer            :: iamvecprev, ivecplottemp,ichoose
   character(len=2)   :: ioption
-  character(len=100) :: vecprompt
+  character(len=100) :: vecprompt,string
   character(len=20)  :: rprompt
   character(len=*), parameter :: sep="(55('-'))"
   logical            :: iAllowRendering
@@ -160,17 +160,25 @@ subroutine menu
 !--prompt user for selection
 !
   write(*,"(a)",ADVANCE='NO') 'Please enter your selection now (y axis or option):'
-  read(*,*,iostat=ierr) ioption
+  read(*,"(a)",iostat=ierr) string
   if (ierr < 0) stop 'reached end of input' ! end of input (e.g. in script)
   if (ierr > 0) stop !'error reading input'
+  ioption = string(1:2)
 
 !------------------------------------------------------------
 !  if input is an integer and within range, plot data
 !------------------------------------------------------------
   read(ioption,*,iostat=ierr) ipicky
   if (ierr /= 0) ipicky = -1
+  
+  !--try to read more integers from the string
+  !  if present, use these to set up an "instant multiplot"
+  if (ipicky > 0 .and. ipicky < numplot+1 .and. len_trim(string) > 2) then
+     call set_instant_multiplot(string,ipicky,ipickx,numplot,nyplotmulti,&
+                                multiplotx,multiploty,nacross,ndown)
+  endif
 
-  if (ipicky.gt.0 .and. ipicky.le.numplot+1) then
+  if (ipicky > 0 .and. ipicky <= numplot+1) then
 
      if (.not.ivegotdata) then
         !
@@ -186,8 +194,8 @@ subroutine menu
         !
         !--if needed prompt for x axis selection
         !
-        if (ipicky.le.(numplot-nextra)) then
-           if (ipickx.eq.0) ipickx = 1 ! do not allow zero as default
+        if (ipicky <= (numplot-nextra)) then
+           if (ipickx==0) ipickx = 1 ! do not allow zero as default
            call prompt(' (x axis) ',ipickx)
            !--go back to y prompt if out of range
            if (ipickx.gt.numplot .or. ipickx.le.0) cycle menuloop
@@ -204,14 +212,14 @@ subroutine menu
            !
            if (is_coord(ipicky,ndim) .and. is_coord(ipickx,ndim) .and. iAllowRendering) then
               call prompt('(render) (0=none)',irender,0,(numplot-nextra))
-              if (irender.gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
+              if (irender > 0 .and. iplotcont_nomulti .and. icolours /= 0) then
                  if (double_rendering) then
                     rprompt = '2nd render'
                  else
                     rprompt = 'contours'
                  endif
                  call prompt('('//trim(rprompt)//') (0=none)',icontourplot,0,(numplot-nextra))
-                 if (icontourplot.eq.irender) then
+                 if (icontourplot==irender) then
                     if (iadapt) then
                        print "(a)",' limits for '//trim(rprompt)//' are adaptive'
                     else
@@ -227,7 +235,7 @@ subroutine menu
               if (any(iamvec(1:numplot).ne.0)) then
                  ivecplottemp = -1
                  ierr = 1
-                 do while(ierr.ne.0 .and. ivecplottemp.ne.0)
+                 do while(ierr /= 0 .and. ivecplottemp /= 0)
                     ivecplottemp = ivecplot
                     ierr = 0
                     call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
@@ -247,29 +255,29 @@ subroutine menu
               irender = 0
               ivecplot = 0
            endif
-        elseif (ipicky.gt.0 .and. ipicky.eq.itoomre .or. ipicky.eq.isurfdens) then
-            if (ipicky.eq.isurfdens) print "(a)",' setting x axis to r for surface density plot'
-            if (ipicky.eq.itoomre) print "(a)",' setting x axis to r for Toomre Q plot'
+        elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens) then
+            if (ipicky==isurfdens) print "(a)",' setting x axis to r for surface density plot'
+            if (ipicky==itoomre) print "(a)",' setting x axis to r for Toomre Q plot'
             ipickx = 1
             irender = 0
             ivecplot = 0
-        elseif (ipicky.gt.0 .and. ipicky.eq.ipdf) then
+        elseif (ipicky > 0 .and. ipicky==ipdf) then
             call prompt(' enter x axis for PDF calculation ',ipickx,1,ndataplots)
             irender = 0
             ivecplot = 0
-        elseif (ipicky.gt.0 .and. ipicky.eq.icolpixmap) then
+        elseif (ipicky > 0 .and. ipicky==icolpixmap) then
             call prompt(' enter corresponding SPH column for particle data ',irender,0,ndataplots)
             ipickx = 0
             ivecplot = 0
-        elseif (ipicky.eq.numplot+1) then
+        elseif (ipicky==numplot+1) then
         !
         !--for multiplots, check that options are valid. If not, re-prompt for multiplot
         !  settings
         !
-            if (any(multiploty(1:nyplotmulti).le.0) .or. &
-                any(multiploty(1:nyplotmulti).gt.numplot) .or. &
-                any(multiplotx(1:nyplotmulti).le.0) .or. &
-                any(multiplotx(1:nyplotmulti).gt.numplot)) then
+            if (any(multiploty(1:nyplotmulti) <= 0) .or. &
+                any(multiploty(1:nyplotmulti) > numplot) .or. &
+                any(multiplotx(1:nyplotmulti) <= 0) .or. &
+                any(multiplotx(1:nyplotmulti) > numplot)) then
                print "(/,a,/)",'ERROR: multiplot settings out of range, please re-enter these'
                call options_multiplot
             endif
@@ -282,7 +290,7 @@ subroutine menu
 !------------------------------------------------------------------------
 !  if input is an integer > numplot+1, quit
 !------------------------------------------------------------------------
-  elseif (ipicky.gt.numplot+1) then
+  elseif (ipicky > numplot+1) then
      return
   else
 !------------------------------------------------------------------------
@@ -723,6 +731,41 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
 
  return
 end subroutine set_extracols
+
+!----------------------------------------
+! instant multiplot setup from main menu
+!----------------------------------------
+subroutine set_instant_multiplot(string,ipicky,ipickx,numplot,nmulti,multiplotx,multiploty,nx,ny)
+ use params, only:maxplot
+ use prompting, only:prompt
+ character(len=*), intent(in) :: string
+ integer, intent(in) :: numplot
+ integer, intent(inout) :: ipicky,ipickx
+ integer, intent(inout) :: nmulti,nx,ny
+ integer, intent(inout) :: multiplotx(:),multiploty(:)
+ integer :: ipickarr(maxplot),ierr,i
+ 
+ ipickarr = 0
+ read(string,*,iostat=ierr) ipickarr
+ i = 1
+ do while (i < size(ipickarr) .and. ipickarr(i) /= 0 .and. ipickarr(i) <= numplot)
+    i = i + 1
+ enddo
+ if (i > 2) then
+    nmulti = i-1
+    !--make sure nmulti matches the number of panels on the page
+    if (nmulti /= nx*ny) then
+       nx = 1
+       ny = nmulti
+    endif
+    multiploty(1:nmulti) = ipickarr(1:nmulti)
+    ipicky = numplot + 1
+    if (ipickx==0) ipickx = 1 ! do not allow zero as default
+    call prompt(' (x axis) ',ipickx)
+    multiplotx(1:nmulti) = ipickx
+ endif
+
+end subroutine set_instant_multiplot
 
 !--------------------
 ! print menu header
