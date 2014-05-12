@@ -58,6 +58,7 @@ subroutine menu
   character(len=2)   :: ioption
   character(len=100) :: vecprompt
   character(len=20)  :: rprompt
+  character(len=*), parameter :: sep="(55('-'))"
   logical            :: iAllowRendering
 
   irender = 0
@@ -118,45 +119,42 @@ subroutine menu
 !
 !--data columns
 !
-     print "(/a)",' You may choose from a delectable sample of plots '
-     print 12
+     call print_header()
+     print sep
      ihalf = numplot/2                ! print in two columns
      iadjust = mod(numplot,2)
-     print 11, (i,transform_label(label(i),itrans(i)), &
+     print "(1x,i2,')',1x,a20,1x,i2,')',1x,a20)", &
+          (i,transform_label(label(i),itrans(i)), &
           ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
           itrans(ihalf+i+iadjust)),i=1,ihalf)
      if (iadjust.ne.0) then
-        print 13, ihalf + iadjust,transform_label(label(ihalf + iadjust), &
-             itrans(ihalf+iadjust))
+        print "(1x,i2,')',1x,a20)", &
+              ihalf + iadjust,transform_label(label(ihalf + iadjust), &
+              itrans(ihalf+iadjust))
      endif
 !
 !--multiplot
 !
-     print 12
-     print 18,numplot+1,'multiplot ',nyplotmulti,'m','set multiplot '
+     print sep
+     print "(1x,i2,')',1x,a,'[ ',i2,' ]',5x,a2,') ',a)", &
+           numplot+1,'multiplot ',nyplotmulti,'m','set multiplot '
   else
 !
 !--if no data
 !
      print "(/a)",' No data: You may choose from the options below '
   endif
-
-11 format(1x,i2,')',1x,a20,1x,i2,')',1x,a20)
-12 format(55('-'))
-13 format(1x,i2,')',1x,a20)
-18 format(1x,i2,')',1x,a,'[ ',i2,' ]',5x,a2,') ',a)
-
 !
 !--options
 !
-  print 12
+  print sep
   if (ndim.le.1) then
      print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end s,S(ave) q(uit)'
   else
      print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end h(elp)'
      print "(a)",' r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)'
   endif
-  print 12
+  print sep
 
 !
 !--prompt user for selection
@@ -220,7 +218,9 @@ subroutine menu
                        if (.not.lim2set(icontourplot)) lim2(icontourplot,:) = lim(icontourplot,:)
                        call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourplot,1))
                        call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourplot,2))
-                       if (all(lim2(icontourplot,:).eq.lim(icontourplot,:))) call reset_lim2(icontourplot)
+                       if (all(abs(lim2(icontourplot,:)-lim(icontourplot,:)) < tiny(lim))) then
+                          call reset_lim2(icontourplot)
+                       endif
                     endif
                  endif
               endif
@@ -473,7 +473,9 @@ subroutine menu
                   if (.not.lim2set(icontourmulti(i))) lim2(icontourmulti(i),:) = lim(icontourmulti(i),:)
                   call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourmulti(i),1))
                   call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourmulti(i),2))
-                  if (all(lim2(icontourmulti(i),:).eq.lim(icontourmulti(i),:))) call reset_lim2(icontourmulti(i))
+                  if (all(abs(lim2(icontourmulti(i),:)-lim(icontourmulti(i),:)) < tiny(lim))) then
+                     call reset_lim2(icontourmulti(i))
+                  endif
                endif
             endif
          else
@@ -721,5 +723,28 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
 
  return
 end subroutine set_extracols
+
+!--------------------
+! print menu header
+!--------------------
+subroutine print_header
+ integer :: v(8),i
+ integer, parameter :: m(48) = (/32,68,111,110,39,116,32,102,111,114,103,101,116,32,116,111,&
+                      32,115,101,110,100,32,68,97,110,105,101,108,32,97,32,98,&
+                      105,114,116,104,100,97,121,32,109,101,115,115,97,103,101,33/)
+ integer, parameter :: c(49) = (/32,120,111,120,111,120,111,120,111,32,77,101,114,114,121,32,&
+                      67,104,114,105,115,116,109,97,115,32,102,114,111,109,32,115,&
+                      112,108,97,115,104,33,32,120,111,120,111,120,111,120,111,120,111/)
+
+ call date_and_time(values=v)
+ if (v(2)==m(1)/4 .and. v(3)==v(2)-2) then
+    print "(/,48(a))",(achar(m(i)),i=1,48)
+ elseif (v(2)==(m(1)-20) .and. v(3)>20) then
+    print "(/,49(a))",(achar(c(i)),i=1,49)
+ else
+    print "(/a)",' You may choose from a delectable sample of plots'
+ endif
+
+end subroutine print_header
 
 end module mainmenu
