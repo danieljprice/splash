@@ -2881,7 +2881,7 @@ contains
                      trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp, &
                      xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                      0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice, &
-                     yscalealt,labelyalt,itransy)
+                     lastplot,yscalealt,labelyalt,itransy)
              call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
              if (debugmode) print*,'DEBUG: viewport xpix=',xminpix,'->',xmaxpix,' ypix=',yminpix,'->',ymaxpix
 
@@ -2936,7 +2936,7 @@ contains
                   trim(labelx),trim(labely),string,just,iaxistemp, &
                   xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                   0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice, &
-                  yscalealt,labelyalt,itransy)
+                  lastplot,yscalealt,labelyalt,itransy)
        endif
     endif
 

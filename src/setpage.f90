@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -71,7 +71,8 @@ contains
 !
 subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,axis, &
                     vmarginleftin,vmarginrightin,vmarginbottomin,vmargintopin, &
-                    colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits,yscale,labelyalt,itransy)
+                    colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits,lastplot,&
+                    yscale,labelyalt,itransy)
   use plotlib,only:plot_svp,plot_swin,plot_box,plot_qvsz,plot_annotate, &
                    plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries, &
                    plot_qvp
@@ -83,7 +84,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
   real, intent(in)    :: vmarginleftin,vmarginrightin,vmargintopin,vmarginbottomin
   real, intent(in)    :: yscale
   character(len=*), intent(in) :: labelx,labely,title,labelyalt
-  logical, intent(in) :: isamexaxis,tile,adjustlimits
+  logical, intent(in) :: isamexaxis,tile,adjustlimits,lastplot
   integer iplot,ix,iy
   real vptsizeeffx,vptsizeeffy,panelsizex,panelsizey
   real vmargintop,vmarginbottom,vmarginleft,vmarginright
@@ -118,7 +119,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 ! for tiled plots, adjust effective viewport size if just=1 and graphs are not square
 !
   if (tile .and. just.eq.1) then
-     if (ymax.eq.ymin) then
+     if (abs(ymax-ymin) < tiny(ymin)) then
         print*,'setpage: error tiling plots: ymax=ymin'
         return
      endif
@@ -356,7 +357,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      !
      ! decide whether to number and label the x axis
      !
-     if (iy.eq.ny .and. axis.ge.0) then
+     if ((iy.eq.ny .or. lastplot) .and. axis.ge.0) then
         xopts = 'N'//trim(xopts)
         if (axis.ne.3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
      endif
@@ -370,7 +371,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      !--label x axis only if on last row
      !  or if x axis quantities are different
      !
-     if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis)) then
+     if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis).or.lastplot) then
        if (axis.ne.3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
      endif
      !--always plot numbers
