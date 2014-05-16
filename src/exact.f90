@@ -113,7 +113,6 @@ contains
   ! sets default values of the exact solution parameters
   !----------------------------------------------------------------------
   subroutine defaults_set_exact
-    implicit none
 
     lambda = 1.0    ! sound wave exact solution : wavelength
     ampl = 0.005    ! sound wave exact solution : amplitude
@@ -211,7 +210,6 @@ contains
     use exactfunction, only:check_function
     use mhdshock,      only:nmhdshocksolns,mhdprob
     use asciiutils,    only:get_ncolumns,string_replace
-    implicit none
     integer, intent(inout) :: iexact
     integer :: ierr,itry,i,ncols,nheaderlines,nadjust
     logical :: ians,iexist,ltmp
@@ -511,10 +509,9 @@ contains
     use exactfunction,  only:check_function
     use filenames,      only:fileprefix
     use asciiutils,     only:read_asciifile,get_line_containing
-    implicit none
-    integer, intent(in) :: iexact
-    character(len=*), intent(in) :: rootname
-    integer, intent(out) :: ierr
+    integer,          intent(in)  :: iexact
+    character(len=*), intent(in)  :: rootname
+    integer,          intent(out) :: ierr
 
     integer :: idash,nf,i,j,idrag,idum,linenum
     character(len=len_trim(rootname)+8) :: filename
@@ -729,18 +726,17 @@ contains
     use Cshock,          only:exact_Cshock
     use transforms,      only:transform,transform_inverse
     use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line,plotlib_maxlinestyle
-    implicit none
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
     integer, intent(in) :: ndim,ndimV,npart,imarker,iaxisy
-    real, intent(in) :: time,xmin,xmax,gamma,unitsx,unitsy
-    real, intent(in) :: pmassmin,pmassmax
-    real, intent(in), dimension(npart) :: xplot,yplot
+    real,    intent(in) :: time,xmin,xmax,gamma,unitsx,unitsy
+    real,    intent(in) :: pmassmin,pmassmax
+    real,    intent(in) :: xplot(npart),yplot(npart)
     logical, intent(in) :: irescale
-    real, dimension(npart) :: residuals,ypart
+    real :: residuals(npart),ypart(npart)
 
     real, parameter :: zero = 1.e-10
     integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle
-    real, dimension(:), allocatable :: xexact,yexact,xtemp
+    real, allocatable :: xexact(:),yexact(:),xtemp(:)
     real :: dx,errL1,errL2,errLinf,timei
     character(len=len(filename_exact)) :: filename_tmp
 
@@ -831,12 +827,16 @@ contains
                       yexact(1:iexactpts) = yexact(1:iexactpts)*unitsy
                    endif
                    !--apply transforms and plot line
-                   if (itransx.gt.0) call transform(xexact(1:iexactpts),itransx)
-                   if (itransy.gt.0) call transform(yexact(1:iexactpts),itransy)
+                   if (nfiles > 1) then
+                      if (itransx.gt.0) call transform(xexact(1:iexactpts),itransx)
+                      if (itransy.gt.0) call transform(yexact(1:iexactpts),itransy)
+                   endif
                 endif
-                call plot_sls(mod(iExactLineStyle+i-1,plotlib_maxlinestyle))
-                call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
-                ierr = 1 ! indicate that we have already plotted the solution
+                if (nfiles > 1) then ! plot lines here if more than one file, no error calculation
+                   call plot_sls(mod(iExactLineStyle+i-1,plotlib_maxlinestyle))
+                   call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
+                   ierr = 1 ! indicate that we have already plotted the solution
+                endif
              endif
           endif
        enddo
@@ -1140,7 +1140,7 @@ contains
           call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts), &
                                 xplot(1:npart),ypart(1:npart),residuals(1:npart), &
                                 errL1,errL2,errLinf)
-          print "(3(a,1pe10.3,1x))",' L1 error = ',errL1,' L2 error = ',errL2, &
+          print "(3(a,es10.3,1x))",' L1 error = ',errL1,' L2 error = ',errL2, &
                                    ' L(infinity) error = ',errLinf
           if (iPlotResiduals) call plot_residuals(xplot,residuals,imarker,iaxisy)
        endif
@@ -1162,12 +1162,11 @@ contains
   end subroutine exact_solution
 
   subroutine calculate_errors(xexact,yexact,xpts,ypts,residual,errL1,errL2,errLinf)
-   implicit none
-   real, dimension(:), intent(in) :: xexact,yexact,xpts,ypts
-   real, dimension(size(xpts)), intent(out) :: residual
+   real, intent(in)  :: xexact(:),yexact(:),xpts(:),ypts(:)
+   real, intent(out) :: residual(size(xpts))
    real, intent(out) :: errL1,errL2,errLinf
    integer :: i,j,npart,iused,nerr
-   real :: xi,dy,dx,yexacti,err1,ymax
+   real    :: xi,dy,dx,yexacti,err1,ymax
 
    errL1 = 0.
    errL2 = 0.
@@ -1233,8 +1232,7 @@ contains
    use plotlib, only:plot_qvp,plot_qwin,plot_svp,plot_qci,plot_qfs, &
                      plot_qcs,plot_sci,plot_sfs,plot_svp,plot_box, &
                      plot_pt,plot_swin,plot_rect
-   implicit none
-   real, dimension(:), intent(in) :: xpts,residuals
+   real,    intent(in) :: xpts(:),residuals(:)
    integer, intent(in) :: imarker,iaxisy
    real :: vptxminold,vptxmaxold,vptyminold,vptymaxold
    real :: vptxmin,vptxmax,vptymin,vptymax
