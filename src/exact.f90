@@ -732,12 +732,11 @@ contains
     real,    intent(in) :: pmassmin,pmassmax
     real,    intent(in) :: xplot(npart),yplot(npart)
     logical, intent(in) :: irescale
-    real :: residuals(npart),ypart(npart)
 
     real, parameter :: zero = 1.e-10
-    integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle
+    integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
     real, allocatable :: xexact(:),yexact(:),xtemp(:)
-    real :: dx,errL1,errL2,errLinf,timei
+    real :: dx,timei
     character(len=len(filename_exact)) :: filename_tmp
 
     !
@@ -803,11 +802,10 @@ contains
        do i=1,nfunc
           if ((iplotx.eq.iexactplotx(i) .and. iploty.eq.iexactploty(i)) .or. iexactploty(i).eq.0) then
              call exact_function(funcstring(i),xexact,yexact,timei,ierr)
-             if (i /= nfunc) then ! plot all except last line here
-                if (itransy.gt.0) call transform(yexact,itransy)
-                !--use xtemp, which is xexact but already transformed
-                call plot_line(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
-             endif
+             !--plot each solution separately and calculate errors
+             call plot_exact_solution(itransx,itransy,iexactpts,npart,&
+                                      xexact,yexact,xplot,yplot,imarker,iaxisy)
+             ierr = 1 ! indicate that we have already plotted the solution
           endif
        enddo
     case(2) ! exact solution read from file
@@ -819,24 +817,20 @@ contains
              !--read exact solution from file
              call exact_fromfile(filename_tmp,xexact,yexact,ixcolfile(i),iycolfile(i),iexactpts,ierr)
              !--plot this untransformed (as may already be in log space)
-             if (ierr.le.0) then
+             if (ierr <= 0) then
                 if (iApplyTransExactFile) then
                    !--change into physical units if appropriate
                    if (iRescale) then
                       xexact(1:iexactpts) = xexact(1:iexactpts)*unitsx
                       yexact(1:iexactpts) = yexact(1:iexactpts)*unitsy
                    endif
-                   !--apply transforms and plot line
-                   if (nfiles > 1) then
-                      if (itransx.gt.0) call transform(xexact(1:iexactpts),itransx)
-                      if (itransy.gt.0) call transform(yexact(1:iexactpts),itransy)
-                   endif
                 endif
-                if (nfiles > 1) then ! plot lines here if more than one file, no error calculation
-                   call plot_sls(mod(iExactLineStyle+i-1,plotlib_maxlinestyle))
-                   call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
-                   ierr = 1 ! indicate that we have already plotted the solution
-                endif
+                !--change line style between files
+                LineStyle = mod(iExactLineStyle+i-1,plotlib_maxlinestyle)
+                !--plot each solution separately and calculate errors
+                call plot_exact_solution(itransx,itransy,iexactpts,npart,&
+                                         xexact,yexact,xplot,yplot,imarker,iaxisy,ls=LineStyle)
+                ierr = 1 ! indicate that we have already plotted the solution
              endif
           endif
        enddo
@@ -964,7 +958,7 @@ contains
           endif
        endif
 
-    case(7)! linear wave
+    case(7)! Gresho vortex
        !if ((iploty.eq.iwaveploty).and.(iplotx.eq.iwaveplotx)) then
        !   ymean = SUM(yplot(1:npart))/REAL(npart)
        !   call exact_wave(timei,ampl,period,lambda,xzero,ymean,xexact,yexact,ierr)
@@ -1094,10 +1088,26 @@ contains
        endif
     case(14) ! dusty wave exact solution
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
-          if (iploty.eq.irho) then
+          if (iploty.eq.ivx) then
+             !--plot gas solution and calculate errors
              call exact_dustywave(1,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
-          elseif (iploty.eq.ivx) then
-             call exact_dustywave(2,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
+             call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,imarker,iaxisy,ls=1)
+             !--plot dust solution
+             if (Kdrag > 0.) then
+                call exact_dustywave(2,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
+                call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,imarker,iaxisy,ls=2,err=.false.)
+             endif
+             ierr = 1
+          elseif (iploty.eq.irho) then
+             !--plot gas solution and calculate errors
+             call exact_dustywave(3,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
+             call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,imarker,iaxisy,ls=1)
+             !--plot dust solution
+             if (Kdrag > 0.) then
+                call exact_dustywave(4,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
+                call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,imarker,iaxisy,ls=2,err=.false.)
+             endif
+             ierr = 1
           endif
        endif
     case(15) ! Roche potential
@@ -1123,28 +1133,8 @@ contains
     !----------------------------------------------------------
     !  plot this as a line on the current graph
     !----------------------------------------------------------
-    if (ierr.le.0) then
-       if (itransx.gt.0) call transform(xexact(1:iexactpts),itransx)
-       if (itransy.gt.0) call transform(yexact(1:iexactpts),itransy)
-       call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
-       !
-       !--calculate errors
-       !
-       if (iCalculateExactErrors) then
-          !--untransform y axis again for error calculation
-          if (itransy.gt.0) call transform_inverse(yexact(1:iexactpts),itransy)
-          !--untransform particle y axis also
-          ypart(1:npart) = yplot(1:npart)
-          if (itransy.gt.0) call transform_inverse(ypart(1:npart),itransy)
-          !--calculate errors
-          call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts), &
-                                xplot(1:npart),ypart(1:npart),residuals(1:npart), &
-                                errL1,errL2,errLinf)
-          print "(3(a,es10.3,1x))",' L1 error = ',errL1,' L2 error = ',errL2, &
-                                   ' L(infinity) error = ',errLinf
-          if (iPlotResiduals) call plot_residuals(xplot,residuals,imarker,iaxisy)
-       endif
-    endif
+    if (ierr <= 0) call plot_exact_solution(itransx,itransy,iexactpts,npart,&
+                                            xexact,yexact,xplot,yplot,imarker,iaxisy)
     !
     !--reset line and colour settings
     !
@@ -1161,6 +1151,56 @@ contains
 
   end subroutine exact_solution
 
+  !------------------------------------------------------------------
+  ! Wrapper routine to plot the exact solution line on current graph
+  ! and calculate errors with respect to the data
+  !------------------------------------------------------------------
+  subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,yplot,imarker,iaxisy,ls,err)
+   use transforms, only:transform,transform_inverse
+   use plotlib,    only:plot_line,plot_sls
+   integer, intent(in)    :: itransx,itransy,iexactpts,np,imarker,iaxisy
+   real,    intent(inout) :: xexact(:),yexact(:)
+   real,    intent(in)    :: xplot(:),yplot(:)
+   integer, intent(in), optional :: ls
+   logical, intent(in), optional :: err
+   real :: residuals(np),ypart(np)
+   real :: errL1,errL2,errLinf
+   logical :: plot_err
+
+   if (itransx > 0) call transform(xexact(1:iexactpts),itransx)
+   if (itransy > 0) call transform(yexact(1:iexactpts),itransy)
+   
+   if (present(ls)) call plot_sls(ls)
+   call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
+   !
+   !--calculate errors
+   !
+   if (present(err)) then
+      plot_err = err
+   else
+      plot_err = .true.   
+   endif
+
+   if (iCalculateExactErrors .and. plot_err) then
+      !--untransform y axis again for error calculation
+      if (itransy > 0) call transform_inverse(yexact(1:iexactpts),itransy)
+      !--untransform particle y axis also
+      ypart(1:np) = yplot(1:np)
+      if (itransy > 0) call transform_inverse(ypart(1:np),itransy)
+      !--calculate errors
+      call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts), &
+                            xplot(1:np),ypart,residuals, &
+                            errL1,errL2,errLinf)
+      print "(3(a,es10.3,1x))",' L1 error = ',errL1,' L2 error = ',errL2, &
+                               ' L(infinity) error = ',errLinf
+      if (iPlotResiduals) call plot_residuals(xplot,residuals,imarker,iaxisy)
+   endif
+
+  end subroutine plot_exact_solution
+
+  !--------------------------------
+  ! Calculate various error norms 
+  !--------------------------------
   subroutine calculate_errors(xexact,yexact,xpts,ypts,residual,errL1,errL2,errLinf)
    real, intent(in)  :: xexact(:),yexact(:),xpts(:),ypts(:)
    real, intent(out) :: residual(size(xpts))
@@ -1228,6 +1268,9 @@ contains
    return
   end subroutine calculate_errors
 
+  !------------------------------------
+  ! Plot residual errors as inset plot 
+  !------------------------------------
   subroutine plot_residuals(xpts,residuals,imarker,iaxisy)
    use plotlib, only:plot_qvp,plot_qwin,plot_svp,plot_qci,plot_qfs, &
                      plot_qcs,plot_sci,plot_sfs,plot_svp,plot_box, &

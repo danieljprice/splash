@@ -31,16 +31,14 @@ contains
 
 subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplot,yplot,ierr)
   use cubic,   only:cubicsolve_complex
-  use plotlib, only:plot_line,plot_sls
   implicit none
   integer :: i
   real, parameter :: pi = 3.1415926536
   integer, intent(in) :: iplot
   real, intent(in)    :: time, ampl, cs, Kdragin, lambda, x0, rhog0, rhod0
-  real, intent(in), dimension(:) :: xplot
-  real, intent(out), dimension(size(xplot)) :: yplot
+  real, intent(in)    :: xplot(:)
+  real, intent(out)   :: yplot(size(xplot))
   integer, intent(out) :: ierr
-  real, dimension(size(xplot)) :: yplot1
   real :: rhodeq,rhogeq,rhodsol,rhogsol,vdeq,vgeq,vgsol,vdsol
   real :: aa,bb,cc,w1r,w2r,w3r,w1i,w2i,w3i
   real :: k,xk,arg1,arg2,arg3,vgas,vdust,rhogas,rhodust
@@ -52,10 +50,11 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
   complex :: xc(3)
 
   Kdrag = Kdragin
-
-  print*,'plotting two-fluid gas/dust linear wave solution ... '
-  print*,' lambda = ',lambda,' ampl = ',ampl,' cs = ',cs,' Kdrag = ',Kdrag
-!
+  if (mod(iplot,2).eq.1) then
+     print*,'plotting two-fluid gas/dust linear wave solution ... '
+     print*,' lambda = ',lambda,' ampl = ',ampl,' cs = ',cs,' Kdrag = ',Kdrag
+  endif
+ !
 ! check for errors
 !
   ierr = 0
@@ -95,7 +94,19 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
 
   rhodeq  = rhod0 ! initial dust density
   rhogeq  = rhog0 ! initial gas density
-  print*,' rho(dust),0 = ',rhod0,' rho(gas),0 = ',rhog0
+  if (mod(iplot,2).eq.1) print*,' rho(dust),0 = ',rhod0,' rho(gas),0 = ',rhog0
+  select case(iplot)
+  case(4)
+     print*,'(dust density)'
+  case(3)
+     print*,'(gas density)'
+  case(2)
+     print*,'(dust velocity)'
+  case default
+     print*,'(gas velocity)'  
+  end select
+
+
   rhodsol = ampl*rhod0  ! amplitude of dust density perturbation
   rhogsol = ampl*rhog0  ! amplitude of gas density perturbation
   vdeq    = 0.
@@ -2440,23 +2451,16 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
              + rhod3r*exp(w3i*time)*cos(arg3) - rhod3i*exp(w3i*time)*sin(arg3)
 
      select case(iplot)
+     case(4)
+        yplot(i) = rhodust
+     case(3)
+        yplot(i) = rhogas
      case(2)
-        yplot1(i) = vdust
-        yplot(i)  = vgas
+        yplot(i) = vdust
      case default
-        yplot1(i) = rhodust
-        yplot(i)  = rhogas
+        yplot(i) = vgas
      end select
   enddo
-
-  !
-  !--plot dust solution, but only if Kdrag > 0
-  !
-  if (abs(Kdrag).gt.tiny(Kdrag)) then
-     call plot_sls(2)
-     call plot_line(size(xplot),xplot,yplot1)
-     call plot_sls(1)
-  endif
 
   return
 end subroutine exact_dustywave
