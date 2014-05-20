@@ -42,19 +42,22 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
  real, dimension(size(xpts)), intent(out) :: ypts
  real, dimension(size(xpts)) :: D
  real, parameter :: pi = 3.1415926536
- real :: theta,xshock,ambi_gamma,ambi_rhoi
- real :: cs,rhon0,Bfield0,b0,shockl,vs,va,K1
+ real :: theta,xshock,ambi_gamma,ambi_rhoi,vx0,vy0,Bx,By,rhon_pre
+ real :: cs,rhon0,Bfield0,b0,shockl,vs,va,K1,K2,By_post,P_post,rhon_post,By0,Pr0
+ real :: sintheta,costheta,vx2,vx,vy,rhon
  integer :: npts,i
  
  npts = size(xpts)
  theta = pi/4.
+ costheta = cos(theta)
+ sintheta = sin(theta)
  D(npts) = 1. + 1.e-6 ! upstream
  cs      = 0.1
  rhon0   = 1.
- Bfield0 = 1.
+ Bfield0 = 1. ! this gives Bx0 = By0 = 1/sqrt(2) as in Choi et al. (2009)
  ambi_gamma = 1.
  ambi_rhoi  = 1.e-5
- b0      = sin(theta)
+ b0      = sintheta
  shockl  = Bfield0/(ambi_gamma*ambi_rhoi*sqrt(rhon0))
  va      = Bfield0/sqrt(rhon0)
  xshock  = 6./8.*va*time
@@ -64,41 +67,71 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
  print "(4(a,es10.3))",' shock length L = ',shockL,' shock is at x = ',xshock
 
  call integrate(xmin,xmax,xshock,xpts,macha,machs,theta,shockl,D,npts)
+ 
  !
- !  compute vs: See Mac-Low et al. (1995). This is the difference 
+ !  compute velocity jump across shock: See Mac-Low et al. (1995). This is the difference 
  !  in the velocity across the shock front since we assume that the
  !  post-shock gas is at rest
  !
- !--post-shock, assume vx = 0
- K1 = D(1)*rhon0*cs**2 + 0.5*(Bfield0*get_b(b0,macha,machs,D(1)))**2
- !--work out jump in v across shock
- vs = sqrt((K1 - 0.5*(Bfield0*sin(theta))**2 - rhon0*cs**2)/rhon0)
- print*,' vs = ',vs
-! print*,' vs = ',vs*time,' va = ',va*time,macha*va*time,sqrt(va**2 + cs**2)*time
+! !--post-shock, assume vx = 0
+ By_post   = Bfield0*get_b(b0,macha,machs,D(1))
+ rhon_post = D(1)*rhon0
+ P_post    = rhon_post*cs**2
+! K1 = P_post + 0.5*By_post*By_post
+! print*,' K1 is ',K1
 
+ !--pre-shock
+ vx0 = -5.0
+ vy0 = 0.
+ Bx       = Bfield0*costheta
+ By0      = Bfield0*get_b(b0,macha,machs,D(npts))
+ rhon_pre = D(npts)*rhon0
+ Pr0      = rhon_pre*cs**2
+ K1 = Pr0 + 0.5*By0*By0 + rhon_pre*vx0**2
+ K2 = rhon_pre*vx0*vy0 - Bx*By0
+
+ vx2 = (K1 - 0.5*By_post**2 - P_post)/rhon_post
+ if (vx2 > 0.) then
+    vx = -sqrt(vx2)
+    print "(1x,a,g10.3)",'vx post-shock = ',vx
+ else
+    vx = 0.
+    print*,'error, post-shock vx is imaginary'
+ endif
+ vs = vx0 - vx
+ !print*,'vs = ',vs
  !
  !--determine which parameter to plot
  !
- select case(iplot)
- case(1)
-    ypts(1:npts) = D(1:npts)*rhon0  ! rho (neutrals)
-    !print*,' D = ',D(1:npts)
- case(2)
-    do i=1,npts   ! By = B_0*B
-       ypts(i) = Bfield0*get_b(b0,macha,machs,D(i))
-    enddo
- case(3) ! vx (neutrals)
-    ypts(1:npts) = -vs/D(1:npts)
- case(4)
-    ypts(1:npts) = 0.
-    !do i=1,npts   ! vy (neutrals)
-    !   ypts(i) = Bfield0*get_b(b0,macha,machs,D(i))
-    !enddo
- case(5)         ! Bx
-    ypts(1:npts) = Bfield0*cos(theta)
- case default
-    print*,'error: unknown solution to plot'
- end select
+ do i=1,npts
+    rhon = D(i)*rhon0
+    By   = Bfield0*get_b(b0,macha,machs,D(i))
+    vx2  = (K1 - 0.5*By**2 - rhon*cs**2)/rhon
+    if (vx2 > epsilon(vx2)) then
+       vx = -sqrt(vx2)
+       vy = (K2 + Bx*By)/(rhon*vx)
+    else
+       vx = 0.
+       vy = 0.
+    endif
+    !vx = rhon0*vx0/rhon
+    !print*,vx,rhon0*vx0/rhon
+
+    select case(iplot)
+    case(1)
+       ypts(i) = rhon ! rho (neutrals)
+    case(2)
+       ypts(i) = By
+    case(3) ! vx (neutrals)
+       ypts(i) = vx
+    case(4) ! vy (neutrals)
+       ypts(i) = vy
+    case(5) ! Bx
+       ypts(i) = Bx
+    case default
+       ypts(i) = 0.
+    end select
+ enddo
  ierr = 0
 
  return
