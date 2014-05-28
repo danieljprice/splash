@@ -44,9 +44,11 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
  real, parameter :: pi = 3.1415926536
  real :: theta,xshock,ambi_gamma,ambi_rhoi,vx0,vy0,Bx,By,rhon_pre
  real :: cs,rhon0,Bfield0,b0,shockl,vs,va,K1,K2,By_post,P_post,rhon_post,By0,Pr0
- real :: sintheta,costheta,vx2,vx,vy,rhon
+ real :: sintheta,costheta,vx2,vx,vy,rhon,dvx,vxin
  integer :: npts,i
+ logical printout
  
+ printout = .false.
  npts = size(xpts)
  theta = pi/4.
  costheta = cos(theta)
@@ -61,6 +63,9 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
  shockl  = Bfield0/(ambi_gamma*ambi_rhoi*sqrt(rhon0))
  va      = Bfield0/sqrt(rhon0)
  xshock  = 6./8.*va*time
+
+ if ( printout ) open(unit = 625,file="Cshock_splash.dat")
+
 
  print "(4(a,g8.2))",&
   ' Plotting exact C-shock at t = ',time,' M = ',machs,' M_A = ',macha,' theta = ',theta
@@ -81,7 +86,9 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
 ! print*,' K1 is ',K1
 
  !--pre-shock
- vx0 = -5.0
+ vx0  = -5.0
+ vxin = -4.45
+ dvx  = vxin-vx0
  vy0 = 0.
  Bx       = Bfield0*costheta
  By0      = Bfield0*get_b(b0,macha,machs,D(npts))
@@ -114,8 +121,7 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
        vx = 0.
        vy = 0.
     endif
-    !vx = rhon0*vx0/rhon
-    !print*,vx,rhon0*vx0/rhon
+    vx = vx + dvx
 
     select case(iplot)
     case(1)
@@ -131,9 +137,11 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
     case default
        ypts(i) = 0.
     end select
+    if ( printout ) write(625,*),i,xpts(i),rhon,Bx,By,vx,vy
  enddo
  ierr = 0
 
+ if ( printout ) close(625)
  return
 end subroutine exact_Cshock
 
