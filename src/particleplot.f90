@@ -50,30 +50,30 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
                              plot_pt,plot_numb,plot_text,plot_pt1,plot_qls,plot_sls, &
                              plot_line,plot_qlw,plot_slw,plot_errb,plotlib_maxlinestyle
   implicit none
-  integer, intent(in)                           :: ntot,iplotx, iploty
-  integer(kind=int1),  dimension(:), intent(in) :: iamtype
-  integer,             dimension(:), intent(in) :: icolourpart
-  integer, dimension(maxparttypes),  intent(in) :: noftype
-  real,                dimension(:), intent(in) :: x, y, z, h
-  real,                              intent(in) :: zmin,zmax,xmin,xmax,ymin,ymax
-  logical,                           intent(in) :: use_zrange,fast
-  logical, dimension(maxparttypes),  intent(in) :: iplot_type
-  character(len=*),                  intent(in) :: labelz
+  integer,            intent(in) :: ntot,iplotx, iploty
+  integer(kind=int1), intent(in) :: iamtype(:)
+  integer,            intent(in) :: icolourpart(:)
+  integer,            intent(in) :: noftype(maxparttypes)
+  real,               intent(in) :: x(:), y(:), z(:), h(:)
+  real,               intent(in) :: zmin,zmax,xmin,xmax,ymin,ymax
+  logical,            intent(in) :: use_zrange,fast
+  logical,            intent(in) :: iplot_type(maxparttypes)
+  character(len=*),   intent(in) :: labelz
 
-  integer,                           intent(in),    optional :: nx,ny
-  real, dimension(:,:),              intent(inout), optional :: datpix,brightness
-  real,                              intent(in),    optional :: dval
+  integer,            intent(in),    optional :: nx,ny
+  real,               intent(inout), optional :: datpix(:,:),brightness(:,:)
+  real,               intent(in),    optional :: dval
 
   integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle,ierr
   integer :: lenstring,index1,index2,ntotplot,icolourstart,nlooptypes,ilooptype
-  integer, dimension(maxparttypes)             :: nplottedtype
-  character(len=20)                            :: string
-  integer, parameter                           :: ncellx = 500, ncelly = 500 ! for crowded field reduction
-  integer(kind=int1), dimension(ncellx,ncelly) :: nincell
-  integer                                      :: icellx,icelly,maxz
-  real                                         :: dx1,dy1,dxpix
-  logical                                      :: mixedtypes
-  real, dimension(:), allocatable              :: xerrb, yerrb, herr
+  integer             :: nplottedtype(maxparttypes)
+  character(len=20)   :: string
+  integer, parameter  :: ncellx = 500, ncelly = 500 ! for crowded field reduction
+  integer(kind=int1)  :: nincell(ncellx,ncelly,maxparttypes)
+  integer             :: icellx,icelly,maxz
+  real                :: dx1,dy1,dxpix
+  logical             :: mixedtypes
+  real, allocatable   :: xerrb(:), yerrb(:), herr(:)
 
   !--query current character height and colour
   call plot_qci(icolourstart)
@@ -114,6 +114,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
   if (mixedtypes .or. use_zrange) nlooptypes = 1
   dx1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
   dy1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
+  nincell = 0
 
   over_types: do ilooptype=1,nlooptypes
      call plot_bbuf !--buffer plot output until each particle type finished
@@ -147,9 +148,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
         !
         !--if particle cross section, plot particles only in a defined (z) coordinate range
         !
-        nplotted = 0
-        nincell = 0
-        
+        nplotted = 0        
         overj: do j=1,ntot
            if (mixedtypes) then
               itype = min(max(int(iamtype(j)),1),maxparttypes)
@@ -165,8 +164,8 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
 
                     if (fast .and. noftype(itype) > 100) then
                        if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
-                          if (nincell(icellx,icelly).eq.0) then
-                             nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
+                          if (nincell(icellx,icelly,itype).eq.0) then
+                             nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
                              call plot_sci(icolourpart(j))
                              call plot_particle(imarktype(itype),x(j),y(j),h(j))
                           endif
@@ -225,8 +224,8 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
               nincell = 0
               do j=index1,index2
                  if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
-                    if (nincell(icellx,icelly).eq.0) then
-                       nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
+                    if (nincell(icellx,icelly,itype).eq.0) then
+                       nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
 
                        call plot_particle(imarktype(itype),x(j),y(j),h(j))
 
@@ -268,7 +267,6 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
         !
            nplotted = 0
            nplottedtype = 0
-           nincell = 0
 
            overj2: do j=index1,index2
               if (icolourpart(j).ge.0) then
@@ -278,12 +276,12 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
                     nplottedtype(itype) = nplottedtype(itype) + 1
                  endif
                  nplotted = nplotted + 1
-                 if (fast .and. noftype(itype).gt.100) then
+                 if (fast .and. noftype(itype) > 100) then
                     if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
                     !--exclude particles if there are more than 2 particles per cell
                     !  (two here because particles can have different colours)
-                       if (nincell(icellx,icelly).le.0) then
-                          nincell(icellx,icelly) = nincell(icellx,icelly) + 1_int1  ! this +1 of type int*1
+                       if (nincell(icellx,icelly,itype).le.0) then
+                          nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
                           
                           call plot_sci(icolourpart(j))
                           call plot_particle(imarktype(itype),x(j),y(j),h(j))
