@@ -168,7 +168,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   real :: row(npixx)
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpartx,npixparty
-  integer :: iprintinterval, iprintnext, itmin,ipixi,jpixi,jpixcopy
+  integer :: iprintinterval, iprintnext,ipixi,jpixi,jpixcopy
   integer :: nsubgrid,nfull,nok
 #ifdef _OPENMP
   integer :: omp_get_num_threads,i
@@ -180,7 +180,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
   real :: hmin,fac,hminall !,dhmin3
   real, dimension(npixx) :: xpix,dx2i
-  real :: t_start,t_end,t_used,tsec
+  real :: t_start,t_end,t_used
   logical :: iprintprogress,use3Dperspective,accelerate
   
   datsmooth = 0.
