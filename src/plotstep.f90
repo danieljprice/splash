@@ -1095,7 +1095,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--override settings based on positions in sequence
         if (nseq.gt.0) then
            call getsequencepos(iseqpos,iframe,iplotx,iploty,irender, &
-                angletempx,angletempy,angletempz,zobservertemp,taupartdepthtemp,&
+                angletempx,angletempy,angletempz,zobservertemp,dzscreentemp,taupartdepthtemp,&
                 zslicepos,xmin,xmax,ymin,ymax,rendermin,rendermax,isetrenderlimits)
         endif
         !--for 3D perspective, do not plot particles behind the observer

@@ -660,14 +660,14 @@ end function insidesequence
 ! (given the current frame & dump position)
 !----------------------------------------------------------------------
 subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
-                          anglexi,angleyi,anglezi,zobserveri,taupartdepthi, &
+                          anglexi,angleyi,anglezi,zobserveri,dzscreen,taupartdepthi, &
                           xsecposi,xmin,xmax,ymin,ymax,rendermin,rendermax,isetrenderlimits)
  use limits,     only:lim
  use multiplot,  only:itrans
  use transforms, only:transform_limits
  implicit none
  integer, intent(in)  :: ipos,iframe,iplotx,iploty,irender
- real, intent(out)    :: anglexi,angleyi,anglezi,zobserveri,taupartdepthi,xsecposi
+ real, intent(out)    :: anglexi,angleyi,anglezi,zobserveri,dzscreen,taupartdepthi,xsecposi
  real, intent(out)    :: xmin,xmax,ymin,ymax,rendermin,rendermax
  logical, intent(out) :: isetrenderlimits
  logical :: logtaudepth
@@ -748,6 +748,7 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
           endif
        case(4)
           zobserveri = zobserver + xfrac*(zobserverend - zobserver)
+          dzscreen = zobserveri
        case(5)
           xsecposi = xsecpos_nomulti + xfrac*(xsecpos_nomulti_end - xsecpos_nomulti)
        case(6)
