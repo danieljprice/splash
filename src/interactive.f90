@@ -482,9 +482,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            endif
            
            npts = 1
+           xpts(1) = xpt   ! to avoid problems with uninitialised variables
+           ypts(1) = ypt
            if (iselectpoly) then
-              xpts(1) = xpt
-              ypts(1) = ypt
               call plot_lcur(maxpts,npts,xpts,ypts,char2)
               if (plotlib_is_pgplot) then
                  if (irender.le.0) print*,'1-9 = close polygon and mark particles with colours 1-9'
