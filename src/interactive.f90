@@ -481,10 +481,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               print*,'R = remove all range restrictions'
            endif
            
+           npts = 1
            if (iselectpoly) then
               xpts(1) = xpt
               ypts(1) = ypt
-              npts = 1
               call plot_lcur(maxpts,npts,xpts,ypts,char2)
               if (plotlib_is_pgplot) then
                  if (irender.le.0) print*,'1-9 = close polygon and mark particles with colours 1-9'
