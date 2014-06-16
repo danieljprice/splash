@@ -951,6 +951,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
          do i=1,nskip
             read(iunit,end=33,iostat=ierr)
          enddo
+         ! deallocate dattempsingle
+         if (allocated(dattempsingle)) deallocate(dattempsingle)
+
       elseif (isize(iarr).eq.isize(1)) then
 !
 !--read all real arrays defined on all the particles (same size arrays as block 1)
@@ -1021,6 +1024,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattempsingle)'
          endif
 
+         if (debug) print*,'DEBUG: SIZE of dattempsingle',size(dattempsingle)
 !        real4s may need converting
          imaxcolumnread = max(imaxcolumnread,icolumn)
          if ((nreal(iarr)+nreal4(iarr)).gt.6) imaxcolumnread = max(imaxcolumnread,6)
