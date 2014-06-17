@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -140,6 +140,8 @@ elemental function shortstring(string,unitslab)
  call string_delete(shortstring,'\d')
  call string_delete(shortstring,'\u')
  call string_delete(shortstring,'\g')
+ call string_delete(shortstring,'\')
+ call string_delete(shortstring,'_')
 
 end function shortstring
 
