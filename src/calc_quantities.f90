@@ -484,7 +484,7 @@ subroutine print_example_quantities(ncalc)
  endif
  !--Plasma beta
  if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. gotpmag .and. gotpressure) then
-    write(string,"(a)",iostat=ierr) 'plasma \beta = pressure/Pmag'
+    write(string,"(a)",iostat=ierr) 'plasma \beta = pressure/P_mag'
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
@@ -509,7 +509,7 @@ subroutine print_example_quantities(ncalc)
  if (ndim.gt.0 .and. irho.gt.0 .and. iradenergy.gt.0) then
     string = ' '
     write(string,"(a)",iostat=ierr) 'T_{rad} = ('//trim(shortlabel(label(irho),unitslabel(irho)))//'*' &
-                    //trim(shortlabel(label(iradenergy),unitslabel(iradenergy)))//'/7.5646e-15)**0.25)'
+                    //trim(shortlabel(label(iradenergy),unitslabel(iradenergy)))//'/7.5646e-15)**0.25'
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
