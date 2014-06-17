@@ -253,7 +253,7 @@ subroutine submenu_page(ichoose)
         print*,'13) 2560 x 1440 pixels'
         print*,'14) 2560 x 1600 pixels'
         print*,'15) 3840 x 2160 pixels (4KTV/Ultra HD)'
-        print*,'16) 27000 x 3000 pixels (CAVE-2)'
+        print*,'16) 27320 x 3072 pixels (CAVE-2)'
         print*,'17) Custom size '
         call prompt(' Enter option for paper size ',ipapersize,0,17)
      endif
@@ -333,8 +333,8 @@ subroutine submenu_page(ichoose)
               papersizex = 3840.
               papersizey = 2160.
            case(16)
-              papersizex = 27000.
-              papersizey = 3000.
+              papersizex = 27320.
+              papersizey = 3072.
            end select
            aspectratio = papersizey/papersizex
         endif
