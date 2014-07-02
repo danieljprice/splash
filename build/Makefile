@@ -77,6 +77,9 @@ STATICLIBS=
 # set the parallel flag to 'yes' to compile with openMP directives
 #
 #PARALLEL=no
+ifndef OPENMP
+OPENMP=yes
+endif
 #
 # the openMP flags should be set in the lines defining your system type
 # (ie. leave line below blank)
