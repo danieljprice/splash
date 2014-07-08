@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -233,7 +233,11 @@ subroutine set_coordlabels(numplot)
           (icoordsnew.ne.icoords .or. icoordsnew.ne.icoordsprev &
            .or. index(label(i),trim(labeldefault)).ne.0)) then
           if (i-iamvec(i)+1 .gt. 0) then
-             label(i) = trim(labelvec(iamvec(i)))//'\d'//trim(labelcoord(i-iamvec(i)+1,icoordsnew))
+             if (icoordsnew.eq.1) then
+                label(i) = trim(labelvec(iamvec(i)))//'_'//trim(labelcoord(i-iamvec(i)+1,icoordsnew))
+             else
+                label(i) = trim(labelvec(iamvec(i)))//'_{'//trim(labelcoord(i-iamvec(i)+1,icoordsnew))//'}'
+             endif
           else
              print "(a,i2,a,i2)",' ERROR with vector labels, referencing '// &
                    trim(labelvec(iamvec(i)))//' in column ',i,' iamvec = ',iamvec(i)
