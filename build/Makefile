@@ -620,6 +620,15 @@ gadget_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read
 read_data_gadget_hdf5_utils.o: read_data_gadget_hdf5_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
 
+#---AMUSE HDF5 read ---
+amuse: amuse_hdf5
+
+amuse_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_amuse_hdf5_utils.o read_data_amuse_hdf5.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/amsplash-hdf5 $(OBJECTS) read_data_amuse_hdf5_utils.o read_data_amuse_hdf5.o $(LDFLAGS) $(HDF5LIBS)
+
+read_data_amuse_hdf5_utils.o: read_data_amuse_hdf5_utils.c
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+
 #------------------
 
 bauswein: checksystem $(OBJECTS) read_data_bauswein.o

@@ -32,7 +32,8 @@
 !---------------------------------------------------------------------------
 module asciiutils
  implicit none
- public :: read_asciifile,get_ncolumns,ncolumnsline,safename,basename,cstring
+ public :: read_asciifile,get_ncolumns,ncolumnsline,safename,basename
+ public :: cstring,fstring
  public :: string_replace, string_delete, nheaderlines, string_sub
  public :: ucase,lcase
  public :: get_line_containing
@@ -445,6 +446,27 @@ function cstring(string)
  cstring = trim(string)//achar(0)
 
 end function cstring
+
+!---------------------------------------------------------------------------
+!
+! function to safely convert a string from c format (ie. with a terminating
+! ascii null character) back to a normal Fortran string
+!
+!---------------------------------------------------------------------------
+function fstring(array)
+ use, intrinsic :: iso_c_binding, only:c_char
+ implicit none
+ character(kind=c_char), dimension(:), intent(in) :: array
+ character(len=size(array)-1) :: fstring
+ integer :: i
+
+ fstring = ''
+ do i=1,size(array)
+    if (array(i).eq.achar(0)) exit
+    fstring(i:i) = array(i)
+ enddo
+
+end function fstring
 
 !---------------------------------------------------------------------------
 !
