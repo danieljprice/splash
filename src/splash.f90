@@ -48,6 +48,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.5.0  : (06/08/14)
+!             instant multiplots by giving multiple columns as y axis;
+!             ability to plot multiple exact solution files on same plot;
+!             compiles in parallel by default; support for tagged sphNG format;
+!             various bug fixes
 !     2.4.1  : (01/04/14)
 !             Roche-lobe plotting vastly improved; newunit= issue fixed;
 !             bug fix with reading sink velocities from Phantom; other minor bug fixes.
@@ -354,7 +359,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.4.1 [1st Apr. 2014 - no joke]'
+  character(len=*), parameter :: version = 'v2.5.0 [6th Aug. 2014]'
 
   !
   ! initialise some basic code variables
@@ -701,27 +706,26 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2013 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2014 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
    '   This is free software; and you are welcome to redistribute it ',/, &
    '   under certain conditions (see LICENCE file for details). *',/,/, &
    ' Updates/userguide: http://users.monash.edu.au/~dprice/splash ',/, &
-   ' Feedback: daniel.price@monash.edu or splash-users@googlegroups.com',/, &
+   ' Email: daniel.price@monash.edu or splash-users@googlegroups.com',/, &
    ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
-   ' use SPLASH for scientific work and if you plot something beautiful,',/, &
-   ' why not send me a copy for the gallery? ',/)
+   ' use SPLASH in print and don''t forget to send pics for the gallery.',/)
 
 end subroutine print_header
 
 subroutine print_usage(quit)
+ use filenames, only:tagline
  implicit none
  logical, intent(in), optional :: quit
  logical :: ltemp
 
- print "(a)",'SPLASH: a visualisation tool for Smoothed Particle Hydrodynamics simulations'
- print "(a)",'(c) 2005-2013 Daniel Price '
+ print "(a)",trim(tagline)
  print "(a,/)",trim(version)
  print "(a,/)",'Usage: splash file1 file2 file3...'
  print "(a,/,a,/)",'Usage with flags: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] ', &
