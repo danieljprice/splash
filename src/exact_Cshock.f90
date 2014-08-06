@@ -137,7 +137,7 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
     case default
        ypts(i) = 0.
     end select
-    if ( printout ) write(625,*),i,xpts(i),rhon,Bx,By,vx,vy
+    if ( printout ) write(625,*) i,xpts(i),rhon,Bx,By,vx,vy
  enddo
  ierr = 0
 
