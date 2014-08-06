@@ -5,6 +5,5 @@
 #
 # DJP, Feb 2014
 #
-opts='-r 10 -b 2M -bt 4M'
-codec='-vcodec mpeg4'
-ffmpeg -i splash_%04d.png $opts $codec movie.mp4
+opts='-r 10 -b:v 2M -bt 5M -vcodec mpeg4 -vf setpts=4.*PTS'
+ffmpeg -i splash_%04d.png $opts movie.mp4
