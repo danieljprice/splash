@@ -410,6 +410,8 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  use system_utils,  only:renvironment
  use settings_part, only:iplotpartoftype
  use particle_data, only:time_was_read
+ use settings_data, only:xorigin,icoords,icoordsnew
+ use geomutils,     only:change_coords
  implicit none
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
  integer, intent(in), dimension(:) :: npartoftype
@@ -421,17 +423,19 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
  integer              :: itype,i,j,ierr,ntot1,ncol1,nused
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi,totang
- real(kind=doub_prec) :: rmsval,totvol,voli,rhoi,rmsvmw,v2i
+ real(kind=doub_prec) :: totvol,voli,rhoi,rmsvmw,v2i
  real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
  real(kind=doub_prec) :: smeanmw,smeanvw,svarmw,svarvw,si,ekiny,ekinymax
- real(kind=doub_prec) :: lmin, lmax
+ real(kind=doub_prec) :: lmin(maxplot), lmax(maxplot),rmsvali
  real(kind=doub_prec), dimension(3) :: xmom,angmom,angmomi,ri,vi
  real                 :: delta,dn,valmin,valmax,valmean,timei
  character(len=20)    :: fmtstring
+ logical              :: change_coordsys
+ real                 :: x0(3),v0(3)
 !
 ! array with one value for each column
 !
- real(kind=doub_prec), dimension(maxplot) :: coltemp
+ real(kind=doub_prec) :: coltemp(maxplot), vals(maxplot), rmsval(maxplot)
 
  nfilesread = nfilesread + 1
  if (time_was_read(time)) then
@@ -443,6 +447,10 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     print "(/,5('-'),a,', FILE #',i4,' (TIME NOT READ)'/)",&
           '> CALCULATING '//trim(ucase(analysistype)),nfilesread
  endif
+
+ change_coordsys = (icoordsnew.ne.icoords .and. ndim.gt.0 .and. all(ix(1:ndim).gt.0))
+ x0 = xorigin(:)  ! note that it is not currently possible to do splash to ascii
+ v0 = 0.          ! with coords set relative to a tracked particle, so just use xorigin
 
  select case(trim(analysistype))
  case('energy','energies')
@@ -558,18 +566,20 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--calculate maximum for each column
     !
-    do i=1,ncolumns
-       coltemp(i) = -huge(0.d0) !maxval(dat(1:ntot,i))
-       nused = 0
-       do j=1,ntot
-          itype = igettype(j)
-          if (iplotpartoftype(itype)) then
-             nused = nused + 1
-             coltemp(i) = max(coltemp(i),real(dat(j,i),kind=doub_prec))
-          endif
-       enddo
-       if (coltemp(i) < -0.5*huge(0.)) coltemp(i) = 0.
+    coltemp(:) = -huge(0.d0) !maxval(dat(1:ntot,i))
+    nused = 0
+    do j=1,ntot
+       itype = igettype(j)
+       if (iplotpartoftype(itype)) then
+          vals(1:ncolumns) = real(dat(j,1:ncolumns),kind=doub_prec)
+          if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
+          nused = nused + 1
+          do i=1,ncolumns
+             coltemp(i) = max(coltemp(i),vals(i))
+          enddo
+       endif
     enddo
+    where (coltemp(:) < -0.5*huge(0.)) coltemp(:) = 0.
     !
     !--write output to screen/terminal
     !
@@ -587,16 +597,18 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--calculate minimum for each column
     !
-    do i=1,ncolumns
-       coltemp(i) = huge(0.d0) !minval(dat(1:ntot,i))
-       nused = 0
-       do j=1,ntot
-          itype = igettype(j)
-          if (iplotpartoftype(itype)) then
-             coltemp(i) = min(coltemp(i),real(dat(j,i),kind=doub_prec))
-             nused = nused + 1
-          endif
-       enddo
+    coltemp(:) = huge(0.d0) !minval(dat(1:ntot,i))
+    nused = 0
+    do j=1,ntot
+       itype = igettype(j)
+       if (iplotpartoftype(itype)) then
+          vals(1:ncolumns) = real(dat(j,1:ncolumns),kind=doub_prec)
+          if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
+          nused = nused + 1
+          do i=1,ncolumns
+             coltemp(i) = min(coltemp(i),vals(i))
+          enddo
+       endif
     enddo
     !
     !--write output to screen/terminal
@@ -613,26 +625,30 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
 
  case('diff','diffvals','amp','ampvals')
     !
-    !--calculate minimum for each column
+    !--calculate difference between max and min for each column
     !
-    do i=1,ncolumns
-       coltemp(i) = huge(0.d0) !minval(dat(1:ntot,i))
-       lmin = huge(0.d0)
-       lmax = -huge(0.d0)
-       nused = 0
-       do j=1,ntot
-          itype = igettype(j)
-          if (iplotpartoftype(itype)) then
-             lmin = min(lmin, real(dat(j,i),kind=doub_prec))
-             lmax = max(lmax, real(dat(j,i),kind=doub_prec))
-             nused = nused + 1
-          endif
-       enddo
-       coltemp(i) = lmax - lmin
-       if (trim(analysistype).eq.'amp' .or. trim(analysistype).eq.'ampvals') then
-          coltemp(i) = coltemp(i)/2.
+    coltemp(:) = huge(0.d0)
+    lmin(:) = huge(0.d0)
+    lmax(:) = -huge(0.d0)
+    nused = 0
+    do j=1,ntot
+       itype = igettype(j)
+       if (iplotpartoftype(itype)) then
+          vals(1:ncolumns) = real(dat(j,1:ncolumns),kind=doub_prec)
+          if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
+          nused = nused + 1
+          do i=1,ncolumns
+             lmin(i) = min(lmin(i), vals(i))
+             lmax(i) = max(lmax(i), vals(i))
+          enddo
        endif
     enddo
+    do i=1,ncolumns
+       coltemp(i) = lmax(i) - lmin(i)
+    enddo
+    if (trim(analysistype).eq.'amp' .or. trim(analysistype).eq.'ampvals') then
+       coltemp(:) = coltemp(:)/2.
+    endif
     !
     !--write output to screen/terminal
     !
@@ -658,22 +674,24 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--calculate mean for each column
     !
-    do i=1,ncolumns
-       coltemp(i) = 0.
-       nused = 0
-       do j=1,ntot
-          itype = igettype(j)
-          if (iplotpartoftype(itype)) then
-             coltemp(i) = coltemp(i) + dat(j,i)
-             nused = nused + 1
-          endif
-       enddo
-       if (nused.gt.0) then
-          coltemp(i) = coltemp(i)/real(nused)       
-       else
-          coltemp(i) = 0.
+    coltemp(:) = 0.
+    nused = 0
+    do j=1,ntot
+       itype = igettype(j)
+       if (iplotpartoftype(itype)) then
+          vals(1:ncolumns) = real(dat(j,1:ncolumns),kind=doub_prec)
+          if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
+          nused = nused + 1
+          do i=1,ncolumns
+             coltemp(i) = coltemp(i) + vals(i)
+          enddo
        endif
     enddo
+    if (nused.gt.0) then
+       coltemp(:) = coltemp(:)/real(nused)       
+    else
+       coltemp(:) = 0.
+    endif
     !
     !--write output to screen/terminal
     !
@@ -691,22 +709,24 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--calculate RMS for each column
     !
-    do i=1,ncolumns
-       coltemp(i) = 0. !sqrt(sum(dat(1:ntot,i)**2)/real(ntot))
-       nused = 0
-       do j=1,ntot
-          itype = igettype(j)
-          if (iplotpartoftype(itype)) then
-             coltemp(i) = coltemp(i) + dat(j,i)**2
-             nused = nused + 1
-          endif
-       enddo
-       if (nused.gt.0) then
-          coltemp(i) = sqrt(coltemp(i)/real(nused))  
-       else
-          coltemp(i) = 0.
+    coltemp(:) = 0.
+    nused = 0
+    do j=1,ntot
+       itype = igettype(j)
+       if (iplotpartoftype(itype)) then
+          vals(1:ncolumns) = real(dat(j,1:ncolumns),kind=doub_prec)
+          if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
+          nused = nused + 1
+          do i=1,ncolumns
+             coltemp(i) = coltemp(i) + vals(i)**2
+          enddo
        endif
     enddo
+    if (nused.gt.0) then
+       coltemp(:) = sqrt(coltemp(:)/real(nused))  
+    else
+       coltemp(:) = 0.
+    endif
     !
     !--write output to screen/terminal
     !
@@ -736,24 +756,29 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--calculate volume-weighted RMS for each column
     !
-    do j=1,ncolumns
-       rmsval = 0.
-       totvol = 0.
-       do i=1,ntot
-          itype  = igettype(i)
-          pmassi = particlemass(i,itype)
-          rhoi   = dat(i,irho)
+    rmsval(:) = 0.
+    totvol = 0.
+    do j=1,ntot
+       itype  = igettype(j)
+       if (iplotpartoftype(itype)) then
+          vals(1:ncolumns) = real(dat(j,1:ncolumns),kind=doub_prec)
+          if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
+
+          pmassi = particlemass(j,itype)
+          rhoi   = dat(j,irho)
           if (rhoi.gt.0.) then
              voli = pmassi/rhoi
           else
              voli = 0.
           endif
-
-          rmsval = rmsval + voli*dat(i,j)**2
+          
+          do i=1,ncolumns
+             rmsval(i) = rmsval(i) + voli*vals(i)**2
+          enddo
           totvol = totvol + voli
-       enddo
-       coltemp(j) = real(sqrt(rmsval/totvol))
+       endif
     enddo
+    coltemp(:) = real(sqrt(rmsval(:)/totvol))
     print "(1x,a,es9.2)",'volume = ',totvol
     !
     !--write output to screen/terminal
@@ -788,7 +813,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--calculate mean density and rms velocity values on first pass
     !
-    rmsval = 0.
+    rmsvali = 0.
     rmsvmw = 0.
     rhomeanvw = 0.
     rhomeanmw = 0.
@@ -816,14 +841,14 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        !
        if (ivx.gt.0 .and. ivx.le.ncolumns) then
           v2i    = dot_product(dat(i,ivx:ivx+ndimV-1),dat(i,ivx:ivx+ndimV-1))
-          rmsval = rmsval + voli*v2i
+          rmsvali = rmsvali + voli*v2i
           rmsvmw = rmsvmw + v2i
        endif
     enddo
     !
     !--use the computed volume for velocity, otherwise won't be normalised correctly
     !
-    rmsval = sqrt(rmsval/totvol)
+    rmsvali = sqrt(rmsvali/totvol)
     rmsvmw = sqrt(rmsvmw/dble(ntot))
 
     !
@@ -888,10 +913,10 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     print "(1x,'mean ln density (mass weighted)     = ',es11.4,' +/- ',es11.4)",smeanmw,sqrt(svarmw)
     print "(1x,'ln density variance (vol. weighted) = ',es11.4)",svarvw
     print "(1x,'ln density variance (mass weighted) = ',es11.4)",svarmw
-    print "(1x,'rms velocity     (vol. weighted) = ',es11.4)",rmsval
+    print "(1x,'rms velocity     (vol. weighted) = ',es11.4)",rmsvali
     print "(1x,'rms velocity     (mass weighted) = ',es11.4)",rmsvmw
-    if (rmsval.gt.0.) then
-       bval = sqrt(svarvw)/rmsval
+    if (rmsvali.gt.0.) then
+       bval = sqrt(svarvw)/rmsvali
     else
        bval = 0.
     endif
@@ -907,7 +932,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) 17
     write(iunit,fmtstring) timei,rhomeanvw,rhomeanmw,rhovarvw,rhovarmw,sqrt(rhovarvw),sqrt(rhovarmw),&
-                           rmsval,rmsvmw,bval,bvalmw,smeanvw,smeanmw,svarvw,svarmw,sqrt(svarvw),sqrt(svarmw)
+                           rmsvali,rmsvmw,bval,bvalmw,smeanvw,smeanmw,svarvw,svarmw,sqrt(svarvw),sqrt(svarmw)
  case('kh')
  
     if (irho.le.0 .or. irho.gt.ncolumns) then
