@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -32,7 +32,7 @@
 !---------------------------------------------------------------------------
 module asciiutils
  implicit none
- public :: read_asciifile,get_ncolumns,ncolumnsline,safename,basename
+ public :: read_asciifile,get_ncolumns,get_nrows,ncolumnsline,safename,basename
  public :: cstring,fstring
  public :: string_replace, string_delete, nheaderlines, string_sub
  public :: ucase,lcase
@@ -305,6 +305,28 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
  if (ncolumns.eq.0) print "(a)",' ERROR: no columns of real numbers found'
 
 end subroutine get_ncolumns
+
+!---------------------------------------------------------------------------
+! utility to work out number of rows in file
+!---------------------------------------------------------------------------
+subroutine get_nrows(lunit,nheaderlines,nlines)
+ implicit none
+ integer, intent(in)  :: lunit,nheaderlines
+ integer, intent(out) :: nlines
+ integer :: ierr,i
+
+ rewind(lunit)
+ ierr = 0
+ do i=1,nheaderlines
+    read(lunit,*,iostat=ierr)
+ enddo
+ nlines = 0
+ do while (ierr==0)
+    read(lunit,*,iostat=ierr)
+    if (ierr==0) nlines = nlines + 1
+ enddo
+
+end subroutine get_nrows
 
 !---------------------------------------------------------------------------
 !

@@ -40,6 +40,7 @@ module exact
   !
   integer :: maxexactpts, iExactLineColour, iExactLineStyle,iPlotExactOnlyOnPanel
   logical :: iApplyTransExactFile,iCalculateExactErrors,iPlotResiduals
+  logical :: iApplyUnitsExactFile
   real :: fracinsetResiduals,residualmax
   !
   !--declare all of the parameters required for the various exact solutions
@@ -93,7 +94,8 @@ module exact
   !
   namelist /exactopts/ iexactplotx,iexactploty,filename_exact,maxexactpts, &
        iExactLineColour,iExactLineStyle,iApplyTransExactFile,iCalculateExactErrors, &
-       iPlotResiduals,fracinsetResiduals,residualmax,iPlotExactOnlyOnPanel
+       iPlotResiduals,fracinsetResiduals,residualmax,iPlotExactOnlyOnPanel,&
+       iApplyUnitsExactFile
 
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
@@ -191,6 +193,7 @@ contains
     iExactLineColour = 1    ! foreground
     iExactLineStyle = 1     ! solid
     iApplyTransExactFile = .true. ! false if exact from file is already logged
+    iApplyUnitsExactFile = .false.
     iCalculateExactErrors = .true.
     iPlotResiduals = .false.
     fracinsetResiduals = 0.15
@@ -209,9 +212,9 @@ contains
     use filenames,     only:rootname,ifileopen
     use exactfunction, only:check_function
     use mhdshock,      only:nmhdshocksolns,mhdprob
-    use asciiutils,    only:get_ncolumns,string_replace
+    use asciiutils,    only:get_ncolumns,get_nrows,string_replace
     integer, intent(inout) :: iexact
-    integer :: ierr,itry,i,ncols,nheaderlines,nadjust
+    integer :: ierr,itry,i,ncols,nheaderlines,nadjust,nrows
     logical :: ians,iexist,ltmp
     character(len=len(filename_exact)) :: filename_tmp
     character(len=4) :: str
@@ -288,6 +291,13 @@ contains
                 open(unit=33,file=filename_tmp,status='old',iostat=ierr)
                 if (ierr.eq.0) then
                    call get_ncolumns(33,ncols,nheaderlines)
+                   call get_nrows(33,nheaderlines,nrows)
+                   if (nrows < 100000) then
+                      print "(a,i5,a)",' got ',nrows,' lines in file'
+                   else
+                      print "(a,i10,a)",' got ',nrows,' lines in file'
+                   endif
+                   if (nrows > maxexactpts) maxexactpts = nrows
                    if (ncols.gt.2) then
                       print "(a,i2,a)",' File '//trim(filename_tmp)//' contains ',ncols,' columns of data'
                       call prompt('Enter column containing x data ',ixcolfile(i),1,ncols)
@@ -336,6 +346,9 @@ contains
           ltmp = .not.iApplyTransExactFile
           call prompt(' are exact solutions already logged?',ltmp)
           iApplyTransExactFile = .not.ltmp
+          ltmp = .not.iApplyUnitsExactFile
+          call prompt(' are exact solutions in physical units?',ltmp)
+          iApplyUnitsExactFile = .not.ltmp
        endif
     case(3,13)
        !
@@ -820,7 +833,7 @@ contains
              if (ierr <= 0) then
                 if (iApplyTransExactFile) then
                    !--change into physical units if appropriate
-                   if (iRescale) then
+                   if (iRescale .and. iApplyUnitsExactFile) then
                       xexact(1:iexactpts) = xexact(1:iexactpts)*unitsx
                       yexact(1:iexactpts) = yexact(1:iexactpts)*unitsy
                    endif
