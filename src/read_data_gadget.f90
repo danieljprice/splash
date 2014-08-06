@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -82,7 +82,7 @@ end module gadgetread
 
 subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
-  use params,         only:doub_prec,maxparttypes
+  use params,         only:doub_prec,sing_prec,maxparttypes
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
                            ntypes,debugmode,iverbose
   use settings_page,  only:legendtext
@@ -110,7 +110,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
   logical, dimension(6) :: ireadtype
   real(doub_prec)                    :: timetemp,ztemp
   real(doub_prec), dimension(6)      :: massoftypei
-  real, dimension(:), allocatable    :: dattemp1
+  real(sing_prec), dimension(:),   allocatable :: dattemp1
+  real(sing_prec), dimension(:,:), allocatable :: dattemp
   real :: hfact,hfactmean
   real, parameter :: pi = 3.1415926536
 
@@ -483,18 +484,32 @@ subroutine read_data(rootname,istepstart,nstepsread)
      endif
      if (any(required(1:3))) then
         print*,'positions ',index2
+        if (allocated(dattemp)) deallocate(dattemp)
+        allocate(dattemp(3,ntoti))
+        read(iunit,iostat=ierr) (dattemp(:,j),j=1,index2)
         if (nfiles.gt.1) then
            !
            !--read data into type order if multiple files are present:
            !  this means the offset position is different for each type
            !
            if (sum(npartoftypei).ne.index2) print*,' ERROR: number of positions .ne. sum of types'
-           read (iunit, iostat=ierr) ((dat(j,1:3,i),j=i0(itype)+1,i0(itype)+npartoftypei(itype)),itype=1,ntypes)
+           n = 0
+           do itype=1,ntypes
+              do j=i0(itype)+1,i0(itype)+npartoftypei(itype)
+                 n = n + 1
+                 dat(j,1:3,i) = dattemp(1:3,n)
+              enddo
+           enddo
+           !read (iunit, iostat=ierr) ((dat(j,1:3,i),j=i0(itype)+1,i0(itype)+npartoftypei(itype)),itype=1,ntypes)
         else
-           read (iunit, iostat=ierr) (dat(j,1:3,i),j=1,index2)
+           do j=1,index2
+              dat(j,1:3,i) = dattemp(1:3,j)
+           enddo
+!           read (iunit, iostat=ierr) (dat(j,1:3,i),j=1,index2)
         endif
         if (ierr /= 0) then
            print "(a)",'error encountered whilst reading positions '
+           deallocate(dattemp)
            return
         endif
      else
@@ -513,12 +528,25 @@ subroutine read_data(rootname,istepstart,nstepsread)
      endif
      if (any(required(4:6))) then
         print*,'velocities ',index2
+        if (.not.allocated(dattemp)) allocate(dattemp(3,ntoti))
+
+        read (iunit, iostat=ierr) (dattemp(:,j),j=1,index2)
         if (nfiles.gt.1) then
            !--see above re: type order
            if (sum(npartoftypei).ne.index2) print*,' ERROR: number of velocities .ne. sum of types'
-           read (iunit, iostat=ierr) ((dat(j,4:6,i),j=i0(itype)+1,i0(itype)+npartoftypei(itype)),itype=1,ntypes)
+           n = 0
+           do itype=1,ntypes
+              do j=i0(itype)+1,i0(itype)+npartoftypei(itype)
+                 n = n + 1
+                 dat(j,4:6,i) = dattemp(1:3,n)
+              enddo
+           enddo
+           !read (iunit, iostat=ierr) ((dat(j,4:6,i),j=i0(itype)+1,i0(itype)+npartoftypei(itype)),itype=1,ntypes)
         else
-           read (iunit, iostat=ierr) (dat(j,4:6,i),j=1,index2)
+           do j=1,index2
+              dat(j,4:6,i) = dattemp(1:3,j)
+           enddo
+           !read (iunit, iostat=ierr) (dat(j,4:6,i),j=1,index2)
         endif
         if (ierr /= 0) then
            print "(a)",'error encountered whilst reading velocities'
@@ -528,9 +556,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
         read(iunit, iostat=ierr)
         if (ierr /= 0) then
            print "(a)",'error skipping velocities '
+           if (allocated(dattemp)) deallocate(dattemp)
            return
         endif
      endif
+     if (allocated(dattemp)) deallocate(dattemp)
      !
      !--skip read of particle ID (only required if we sort the particles
      !  back into their correct order, which is not implemented at present)
