@@ -74,7 +74,7 @@ subroutine exact_ringspread(iplot,time,Mdisk,Rdisk,viscnu,xplot,yplot,ierr)
 
  do i=1,size(xplot)
     x = xplot(i)/Rdisk
-    sigma = Mdisk/real((pi*R2)*ringspreadfunc(x,tau))
+    sigma = Mdisk/real((pi*R2))*ringspreadfunc(x,tau)
     !print*,'x = ',xplot(i),Rdisk,tau,sigma
 
     select case(iplot)
