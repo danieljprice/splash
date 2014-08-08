@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -81,7 +81,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   logical :: iexist,timeset,gammaset
   real    :: dummyreal
   character(len=len(rootname)+4) :: dumpfile
-  character(len=20)  :: line
+  character(len=40)  :: line
   integer, parameter :: notset = -66
 
   nstepsread = 0
