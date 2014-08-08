@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -44,6 +44,7 @@ module shapes
    real :: ypos
    real :: xlen,ylen
    real :: angle,fjust
+   real :: opacity
    character(len=lentext) :: text
  end type
  type(shapedef), dimension(maxshapes), public :: shape
@@ -96,6 +97,7 @@ subroutine defaults_set_shapes
  shape(:)%angle = 0.
  shape(:)%text = ' '
  shape(:)%fjust = 0.
+ shape(:)%opacity = 1.
 
  return
 end subroutine defaults_set_shapes
@@ -224,7 +226,7 @@ subroutine add_shape(istart,iend,nshape)
  use params,        only:maxplot
  use prompting,     only:prompt
  use exactfunction, only:check_function
- use plotlib,       only:plotlib_maxlinestyle,plotlib_maxlinecolour,plotlib_maxfillstyle
+ use plotlib,       only:plotlib_maxlinestyle,plotlib_maxlinecolour,plotlib_maxfillstyle,plotlib_supports_alpha
  implicit none
  integer, intent(in) :: istart,iend
  integer, intent(inout) :: nshape
@@ -341,6 +343,10 @@ subroutine add_shape(istart,iend,nshape)
        endif
        call prompt('enter '//trim(labelshapetype(itype))//' colour (0=background, 1=foreground, 2-16=plot lib colour indices)', &
                    shape(ishape)%icolour,0,plotlib_maxlinecolour)
+       if (plotlib_supports_alpha) then
+          call prompt('enter '//trim(labelshapetype(itype))//' opacity (0.0-1.0)', &
+                   shape(ishape)%opacity,0.,1.)
+       endif
 
        print "(/,'  0 : plot on every panel ',/,"// &
               "' -1 : plot on first row only ',/,"// &
@@ -401,7 +407,8 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
  use transforms,    only:transform_inverse,transform
  use asciiutils,    only:string_replace
  use plotlib, only:plot_qci,plot_qls,plot_qlw,plot_qfs,plot_qwin,plot_sci,plot_sfs,plot_slw, &
-      plot_sci,plot_rect,plot_sls,plot_line,plot_arro,plot_circ,plot_ptxt,plot_numb
+      plot_sci,plot_rect,plot_sls,plot_line,plot_arro,plot_circ,plot_ptxt,plot_numb,&
+      plotlib_supports_alpha,plot_set_opacity
  implicit none
  integer, intent(in) :: ipanel,irow,icolumn,itransx,itransy
  real,    intent(in) :: time
@@ -442,6 +449,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
        call plot_sls(shape(i)%linestyle)
        call plot_slw(shape(i)%linewidth)
        call plot_sfs(shape(i)%ifillstyle)
+       if (plotlib_supports_alpha) call plot_set_opacity(shape(i)%opacity)
 
        anglerad = shape(i)%angle*(pi/180.)
 
@@ -515,6 +523,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
  call plot_sls(linestyleprev)
  call plot_slw(linewidthprev)
  call plot_sfs(ifillstyle)
+ if (plotlib_supports_alpha) call plot_set_opacity(1.0)
 
 end subroutine plot_shapes
 
