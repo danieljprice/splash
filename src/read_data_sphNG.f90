@@ -371,6 +371,10 @@ contains
   real(doub_prec), allocatable :: dattemp(:)
   real(sing_prec), allocatable :: dattempsingle(:)
 
+  ! initialise empty tag array
+  tags(:) = ''
+  intarr(:) = 0
+
   nblocks = 1 ! number of MPI blocks
   npartoftypei(:) = 0
   read(iunit,iostat=ierr) nints
@@ -390,12 +394,15 @@ contains
            ierr = 1
            return
         endif
+        if (debug) print*,'DEBUG: got tags = ',tags(1:nints)
         call extract('nblocks',nblocks,intarr,tags,nints,ierr)
         if (ierr /= 0) return
         call extract('nparttot',npart,intarr,tags,nints,ierr)
         if (ierr /= 0) return
         if (phantomdump) then
-           call extract('npartoftype',npartoftypei,intarr,tags,nints,ierr)
+           call extract('ntypes',ntypes,intarr,tags,nints,ierr)
+           if (ierr /= 0) return
+           call extract('npartoftype',npartoftypei(1:ntypes),intarr,tags,nints,ierr)
            if (ierr /= 0) return
         endif
         if (phantomdump .and. nints < 7) ntypes = nints - 1
@@ -596,7 +603,7 @@ contains
   elseif (iarr.eq.2) then
      nptmasstot = nptmasstot + isize(iarr)
   endif
-  if (debug) print*,'DEBUG: array size ',iarr,' size = ',isize
+  if (debug) print*,'DEBUG: array size ',iarr,' size = ',isize(iarr)
   if (isize(iarr).gt.0 .and. iblock.eq.1) then
      if (iverbose.ge.1) print "(1x,a,i1,a,i12,a,5(i2,1x),a,3(i2,1x))", &
         'block ',iarr,' dim = ',isize(iarr),' nint =',nint,nint1,nint2,nint4,nint8,&
@@ -2110,7 +2117,7 @@ subroutine set_labels
         case('abco')
            label(i) = 'CO abundance'
         case default
-           if (debugmode) print "(a)",'DEBUG: Unknown label '//tagarr(i)
+           if (debugmode) print "(a,i2)",' DEBUG: Unknown label '''//trim(tagarr(i))//''' in column ',i
            label(i) = tagarr(i)
         end select
      enddo

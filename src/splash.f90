@@ -48,11 +48,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.5.0  : (06/08/14)
+!     2.5.0  : (20/08/14)
 !             instant multiplots by giving multiple columns as y axis;
 !             ability to plot multiple exact solution files on same plot;
-!             compiles in parallel by default; support for tagged sphNG format;
-!             various bug fixes
+!             compiles in parallel by default; support for tagged sphNG/Phantom format;
+!             AMUSE hdf5 format reader added; various bug fixes
 !     2.4.1  : (01/04/14)
 !             Roche-lobe plotting vastly improved; newunit= issue fixed;
 !             bug fix with reading sink velocities from Phantom; other minor bug fixes.
@@ -359,7 +359,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.5.0 [6th Aug. 2014]'
+  character(len=*), parameter :: version = 'v2.5.0 [20th Aug. 2014]'
 
   !
   ! initialise some basic code variables
