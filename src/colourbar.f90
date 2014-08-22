@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -51,8 +51,8 @@ module colourbar
  public :: get_colourbarmargins,isfloating,adjustcolourbar,iscustombar
  real, private, save :: xlabeloffsetsave = 0.
  real, parameter, private :: dispall = 0.25
- real, public :: ColourBarPosx = 0.75   ! default x pos of short/fat bars
- real, public :: ColourBarPosy = 0.5    ! default y pos of short/fat bars
+ real, public :: ColourBarPosx = 0.01   ! default x pos of short/fat bars
+ real, public :: ColourBarPosy = 0.05    ! default y pos of short/fat bars
  real, public :: ColourBarLen = 0.25    ! default length of short/fat bars
  character(len=10), public :: ColourBarFmtStr = 'BCMSTV    '
  private

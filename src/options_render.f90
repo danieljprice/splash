@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -30,7 +30,7 @@ module settings_render
  use labels,    only:lenlabel
  use kernels,   only:ikernel
  implicit none
- integer :: ncontours,npix,icolours,iColourBarStyle
+ integer :: ncontours,npix,icolours,iColourBarStyle,iColourBarPos
  logical :: iplotcont_nomulti,ilabelcont
  logical :: icolour_particles,inormalise_interpolations
  logical :: ifastrender,idensityweightedinterpolation
@@ -43,7 +43,7 @@ module settings_render
    ifastrender,idensityweightedinterpolation,iColourBarStyle, &
    iplotcolourbarlabel,ilabelcont,projlabelformat,iapplyprojformat, &
    double_rendering,ikernel,ColourBarPosx,ColourBarPosy,ColourBarLen,&
-   ColourBarFmtStr,ColourBarWidth
+   ColourBarFmtStr,ColourBarWidth,iColourBarPos
 
 contains
 
@@ -74,6 +74,7 @@ subroutine defaults_set_render
   ColourBarLen  = 0.25
   ColourBarWidth = 2.
   ColourBarFmtStr = 'BCMSTV'
+  iColourBarPos = 3
 
   return
 end subroutine defaults_set_render
@@ -206,9 +207,52 @@ subroutine submenu_render(ichoose)
 
        if (iColourBarStyle.gt.0) then
           if (isfloating(iColourBarStyle)) then
-             call prompt('enter x position of colour bar as fraction of viewport',ColourBarPosx,-1.,1.5)          
-             call prompt('enter y position of colour bar as fraction of viewport',ColourBarPosy,-1.,1.5)          
-             call prompt('enter length of colour bar as fraction of viewport',ColourBarLen,0.,1.)
+             print "(5(a,/),a)",' Positioning of floating colour bar: ', &
+                              ' 1) Top left ', &
+                              ' 2) Top right ', &
+                              ' 3) Bottom left ', &
+                              ' 4) Bottom right ', &
+                              ' 5) Custom '
+             call prompt('enter option',iColourBarPos,1,5)
+             if (iColourBarPos >= 1 .and. iColourBarPos < 5) ColourBarLen = 0.25
+             select case(iColourBarPos)
+             case(1)
+                if (barisvertical(iColourBarStyle)) then
+                   ColourBarPosx = 0.01
+                   ColourBarPosy = 0.74
+                else
+                   ColourBarPosx = 0.01
+                   ColourBarPosy = 0.95
+                endif
+             case(2)
+                if (barisvertical(iColourBarStyle)) then
+                   ColourBarPosx = 0.82 ! minus width in ch
+                   ColourBarPosy = 0.74
+                else
+                   ColourBarPosx = 0.73
+                   ColourBarPosy = 0.95
+                endif
+             case(3)
+                if (barisvertical(iColourBarStyle)) then
+                   ColourBarPosx = 0.01
+                   ColourBarPosy = 0.01
+                else
+                   ColourBarPosx = 0.015
+                   ColourBarPosy = 0.075
+                endif
+             case(4)
+                if (barisvertical(iColourBarStyle)) then
+                   ColourBarPosx = 0.82 ! minus width in ch
+                   ColourBarPosy = 0.01
+                else
+                   ColourBarPosx = 0.73
+                   ColourBarPosy = 0.075
+                endif
+             case default
+                call prompt('enter x position of colour bar as fraction of viewport',ColourBarPosx,-1.,1.5)
+                call prompt('enter y position of colour bar as fraction of viewport',ColourBarPosy,-1.,1.5)
+                call prompt('enter length of colour bar as fraction of viewport',ColourBarLen,0.,1.)
+             end select
           endif
           call prompt('plot colour bar label?',iplotcolourbarlabel)
           if (barisvertical(iColourBarStyle) .and. iplotcolourbarlabel) then
