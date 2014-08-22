@@ -48,7 +48,7 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.5.0  : (20/08/14)
+!     2.5.0  : (22/08/14)
 !             instant multiplots by giving multiple columns as y axis;
 !             ability to plot multiple exact solution files on same plot;
 !             compiles in parallel by default; support for tagged sphNG/Phantom format;
@@ -359,7 +359,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.5.0 [20th Aug. 2014]'
+  character(len=*), parameter :: version = 'v2.5.0 [22nd Aug. 2014]'
 
   !
   ! initialise some basic code variables
