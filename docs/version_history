@@ -1,3 +1,6 @@
+2.5.0:
+instant multiplots by giving multiple columns as y axis; ability to plot multiple exact solution files on same plot; compiles in parallel by default; support for tagged sphNG/Phantom format; AMUSE hdf5 format reader added; various bug fixes
+ 
 2.4.1:
 Roche-lobe plotting vastly improved; newunit= issue fixed; bug fix with reading sink velocities from Phantom; other minor bug fixes
  
