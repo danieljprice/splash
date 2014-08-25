@@ -33,14 +33,15 @@ module settings_part
  integer, dimension(maxplot)      :: ilocerrbars
  logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings,UseTypeInContours
  integer :: ncircpart
- integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep
+ integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep,ErrorBarType
  logical :: iplotline,ilabelpart,ifastparticleplot,iploterrbars
  real    :: hfacmarkers
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
    iexact,icoordsnew,ifastparticleplot,idefaultcolourtype,&
-   itypeorder,UseTypeInContours,iploterrbars,ilocerrbars,hfacmarkers
+   itypeorder,UseTypeInContours,iploterrbars,ilocerrbars,hfacmarkers,&
+   ErrorBarType
 
 contains
 
@@ -79,6 +80,7 @@ subroutine defaults_set_part
   iploterrbars = .false.    ! plot error bars for a particular column
   ilocerrbars(:) = 0     ! location of data for error bars in dat array
   hfacmarkers = 1.0
+  ErrorBarType = 0
 
   return
 end subroutine defaults_set_part
@@ -271,9 +273,6 @@ subroutine submenu_particleplots(ichoose)
 !------------------------------------------------------------------------
   case(6)
      if (ndim.le.1 .or. ih.le.0) then
-        print "(2(/,a))",'Note: Circles of interaction can only be plotted if we know the location',&
-                      '         of h in the columns and the number of dimensions is >= 1', &
-                      '  Instead, this option can be used to plot error bars for a particular quantity:'
         icol = 0
         do icol=1,ndataplots
            if (ilocerrbars(icol).gt.0) print "(a,i2,a,i2,a)", &
@@ -301,8 +300,11 @@ subroutine submenu_particleplots(ichoose)
               if (all(ilocerrbars(1:ndataplots).le.0)) iploterrbars = .false.
            endif
         enddo
+        print "(2(/,a))",' 0) Default style |--|',&
+                        ' 1) Semi-transparent shaded region'
+        call prompt('Select error bar style',ErrorBarType,0,1)
      else
-        print*,'Note that circles of interaction can also be set interactively'
+        print*,'Circles of interaction can also be set interactively'
         call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))
         if (ncircpart.gt.0) then
            do n=1,ncircpart

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -576,6 +576,8 @@ end subroutine plot_kernel_gr
 subroutine plot_errorbarsy(npts,x,y,err,itrans)
  use plotlib,    only:plot_bbuf,plot_ebuf,plot_err1,plot_errb
  use transforms, only:transform,transform_inverse,islogged
+ use settings_part, only:ErrorBarType
+ use settings_data, only:iverbose
  implicit none
  integer, intent(in) :: npts,itrans
  real, intent(in), dimension(:) :: x,y,err
@@ -584,7 +586,13 @@ subroutine plot_errorbarsy(npts,x,y,err,itrans)
  real, dimension(npts) :: errp,errm
  integer :: i
 
- print*,'plotting ',npts,' error bars y axis'
+ if (iverbose >= 1) then
+    if (npts < 10000) then
+       print "(a,i4,a)",' plotting ',npts,' error bars y axis' 
+    else
+       print "(a,i10,a)",' plotting ',npts,' error bars y axis'
+    endif
+ endif
  if (itrans.ne.0) then
     if (islogged(itrans)) then
        errval = 0. !-300.
@@ -602,14 +610,22 @@ subroutine plot_errorbarsy(npts,x,y,err,itrans)
        errm(i) = y(i) - val(2)
        val(1) = val(1) - y(i)
        val(2) = y(i) - val(2)
-       !call plot_err1(2,x(i),y(i),val(1),1.0)
-       !call plot_err1(4,x(i),y(i),val(2),1.0)
+       if (ErrorBarType /= 1) then
+          call plot_err1(2,x(i),y(i),val(1),1.0)
+          call plot_err1(4,x(i),y(i),val(2),1.0)
+       endif
     enddo
-    call plot_errb(7,npts,x,y,errp,1.0)
-    call plot_errb(8,npts,x,y,errm,1.0)
+    if (ErrorBarType==1) then
+       call plot_errb(7,npts,x,y,errp,1.0)
+       call plot_errb(8,npts,x,y,errm,1.0)
+    endif
     !call plot_ebuf
  else
-    call plot_errb(9,npts,x,y,err,1.0)
+    if (ErrorBarType==1) then
+       call plot_errb(9,npts,x,y,err,1.0)
+    else
+       call plot_errb(6,npts,x,y,err,1.0)
+    endif
  endif
 
 end subroutine plot_errorbarsy
