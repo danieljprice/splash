@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -291,8 +291,11 @@ subroutine submenu_particleplots(ichoose)
            call prompt('Enter column to set location of error bars for (0=none)',icol,0,ndataplots)
            if (icol.gt.0) then
               call prompt('Enter location of error data for this column in the data',ilocerrbars(icol),0)
-              if (ilocerrbars(icol).eq.0 .or. ilocerrbars(icol).ge.ndataplots) &
+              if (ilocerrbars(icol) <= 0 .or. ilocerrbars(icol) > ndataplots) then
                  print "(a,i2)",' WARNING: currently no data in column ',ilocerrbars(icol)
+              else
+                 iploterrbars = .true.
+              endif
               if (all(ilocerrbars(1:ndataplots).le.0)) iploterrbars = .false.
            else
               if (all(ilocerrbars(1:ndataplots).le.0)) iploterrbars = .false.
