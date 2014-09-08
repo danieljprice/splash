@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -72,7 +72,11 @@ subroutine defaults_set_initial
   !  particle types
   labeltype(1) = 'gas'
   do i=2,size(labeltype)
-     write(labeltype(i),"(a,1x,i1)") 'type',i
+     if (i > 9) then
+        write(labeltype(i),"(a,1x,i2)") 'type',i     
+     else
+        write(labeltype(i),"(a,1x,i1)") 'type',i
+     endif
   enddo
   UseTypeInRenderings(:) = .false.
   UseTypeInRenderings(1) = .true.
