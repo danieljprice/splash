@@ -247,15 +247,17 @@ subroutine submenu_page(ichoose)
         print*,' 7) 800  x 600  pixels'
         print*,' 8) 640  x 360  pixels (360p)'
         print*,' 9) 1280 x 720  pixels (720p)'
-        print*,'10) 1920 x 1080 pixels (1080p)'
+        print*,'10) 1920 x 1080 pixels (1080p/Full HD)'
         print*,'11) 1024 x 768  pixels'
         print*,'12) 1440 x 900  pixels'
         print*,'13) 2560 x 1440 pixels'
         print*,'14) 2560 x 1600 pixels'
         print*,'15) 3840 x 2160 pixels (4KTV/Ultra HD)'
-        print*,'16) 27320 x 3072 pixels (CAVE-2)'
-        print*,'17) Custom size '
-        call prompt(' Enter option for paper size ',ipapersize,0,17)
+        print*,'16) 4096 x 2160 pixels (Cinema 4K)'
+        print*,'17) 5120 x 2880 pixels (5K)'
+        print*,'18) 27320 x 3072 pixels (CAVE-2)'
+        print*,'19) Custom size '
+        call prompt(' Enter option for paper size ',ipapersize,0,19)
      endif
      
      select case(ipapersize)
@@ -300,7 +302,7 @@ subroutine submenu_page(ichoose)
            papersizey = 600.
            aspectratio = papersizey/papersizex
         endif
-     case(8:16)
+     case(8:18)
         if (plotlib_is_pgplot) then
            ipapersizeunits = 1
            papersizex  = 0.  ! use PGPLOT default
@@ -333,12 +335,18 @@ subroutine submenu_page(ichoose)
               papersizex = 3840.
               papersizey = 2160.
            case(16)
+              papersizex = 4096.
+              papersizey = 2160.
+           case(17)
+              papersizex = 5120.
+              papersizey = 2880.
+           case(18)
               papersizex = 27320.
               papersizey = 3072.
            end select
            aspectratio = papersizey/papersizex
         endif
-     case(17)
+     case(19)
         if (plotlib_is_pgplot) then
            ipapersizeunits = 1
            papersizex  = 0.  ! use PGPLOT default
