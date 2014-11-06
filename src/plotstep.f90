@@ -712,7 +712,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
   logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
   logical :: dumxsec, isetrenderlimits, iscoordplot
-  logical :: ichangesize, initx, inity, isameweights, volweightedpdf
+  logical :: ichangesize, initx, inity, isameweights, volweightedpdf, got_h
   logical, parameter :: isperiodicx = .false. ! feature not implemented
   logical, parameter :: isperiodicy = .false. ! feature not implemented
   logical, parameter :: isperiodicz = .false. ! feature not implemented
@@ -761,7 +761,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   iaxistemp = iaxis
 
   !--set the arrays needed for rendering if they are present
-  if (ih.gt.0 .and. ih.le.ndataplots .and. (required(ih) .or. .not.ipartialread)) hh(:) = dat(:,ih)
+  if (ih.gt.0 .and. ih.le.ndataplots .and. (required(ih) .or. .not.ipartialread)) then
+     hh(:) = dat(:,ih)
+     got_h = .true.
+  else
+     got_h = .false.
+  endif
 
   if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
      if (required(ipmass)) then
@@ -1979,7 +1984,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  call set_weights(weight,dat,iamtype,(iusetype.and.UseTypeInRenderings))
               endif
 
-              call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,pixwidthvecy,vecmax,labelvecplot)
+              call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,pixwidthvecy,vecmax,labelvecplot,got_h)
 
               !--vecmax is returned with the adaptive value if sent in -ve
               !  store this for use in interactive_multi
@@ -3247,13 +3252,13 @@ contains
 ! interface to vector plotting routines
 ! so that pixel arrays are allocated appropriately
 !-------------------------------------------------------------------
-  subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,pixwidthvecy,vmax,label)
+  subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,pixwidthvecy,vmax,label,got_h)
    use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines,iplotarrowheads, &
        iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff, &
        ihidearrowswherenoparts,minpartforarrow,iVecplotLegend,iVecLegendOnPanel
    use interpolations2D, only:interpolate2D_vec
    use projections3D,    only:interpolate3D_proj_vec,interp3D_proj_vec_synctron
-   use interpolate_vec,  only:mask_vectors
+   use interpolate_vec,  only:mask_vectors,interpolate_vec_average
    use render,           only:render_vec
    use fieldlines,       only:streamlines,vecplot3D_proj
    use labels,           only:iutherm,is_coord
@@ -3265,6 +3270,7 @@ contains
    real,             intent(in) :: pixwidthvec,pixwidthvecy
    real,          intent(inout) :: vmax
    character(len=*), intent(in) :: label
+   logical,          intent(in) :: got_h
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
    real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpixvec
    integer :: i,j,icoloursav,linewidthprev,ivecz
@@ -3354,49 +3360,48 @@ contains
                   endif
                endif
             elseif (.not.(iplotstreamlines .and. use3Dstreamlines)) then
-            !   call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
-            !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
-            !     xmin,ymin,pixwidth,vecpixx,vecpixy, &
-            !     ninterp,numpixx,numpixy)
-
-               if (usevecplot) then
-                  if (.not.allocated(vecplot)) stop 'vecplot not allocated'
-                  call interpolate3D_proj_vec(xplot(1:ninterp), &
-                    yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
-                    weight(1:ninterp),vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
-                    icolourme(1:ninterp),ninterp,xmin,ymin, &
-                    vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,&
-                    .false.,zobservertemp,dzscreentemp)
+               if (got_h) then
+                  if (usevecplot) then
+                     if (.not.allocated(vecplot)) stop 'internal error: vecplot not allocated'
+                     call interpolate3D_proj_vec(xplot(1:ninterp), &
+                       yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                       weight(1:ninterp),vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
+                       icolourme(1:ninterp),ninterp,xmin,ymin, &
+                       vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,&
+                       .false.,zobservertemp,dzscreentemp)
+                  else
+                     call interpolate3D_proj_vec(xplot(1:ninterp), &
+                       yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
+                       weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                       icolourme(1:ninterp),ninterp,xmin,ymin, &
+                       vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy, &
+                       .false.,zobservertemp,dzscreentemp)
+                  endif
                else
-                  call interpolate3D_proj_vec(xplot(1:ninterp), &
-                    yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
-                    weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-                    icolourme(1:ninterp),ninterp,xmin,ymin, &
-                    vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy, &
-                    .false.,zobservertemp,dzscreentemp)
+               ! don't have smoothing length, use averaging
+                  if (usevecplot) then
+                     call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
+                          vecplot(1,1:ninterp),vecplot(2,1:ninterp),icolourme(1:ninterp), &
+                          xmin,ymin,pixwidthvec,pixwidthvecy,vecpixx,vecpixy, &
+                          ninterp,numpixx,numpixy)
+                  else
+                     call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
+                          dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
+                          xmin,ymin,pixwidthvec,pixwidthvecy,vecpixx,vecpixy, &
+                          ninterp,numpixx,numpixy)
+                  endif
                endif
             endif
-
             !--adjust the units of the z-integrated quantity
             !if (iRescale .and. units(ih).gt.0.) then
             !   vecpixx = vecpixx*(unitzintegration/units(ih))
             !   vecpixy = vecpixy*(unitzintegration/units(ih))
             !endif
-
          endif
       case(2)
          !
          !--or interpolate (via averaging) to coarser grid
          !
-         !call fieldlines2D(ninterp,xplot(1:ninterp),yplot(1:ninterp), &
-         !     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-         !     hh(1:ninterp),pmass(1:ninterp), &
-         !     rho(1:ninterp),xmin,xmax,ymin,ymax)
-         !call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
-         !  dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-         !  xmin,ymin,pixwidthvec,vecpixx,vecpixy, &
-         !  ninterp,numpixx,numpixy)
-
          if (usevecplot) then
             call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
               hh(1:ninterp),weight(1:ninterp),vecplot(1,1:ninterp), &

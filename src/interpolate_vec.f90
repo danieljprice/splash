@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -110,20 +110,20 @@ end subroutine mask_vectors
 !--------------------------------------------------------------------------
 
 subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
-     xmin,ymin,dx,vecpixx,vecpixy,npart,npixx,npixy)
+     xmin,ymin,dx,dy,vecpixx,vecpixy,npart,npixx,npixy)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,vecx,vecy
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,dx
+  real, intent(in) :: xmin,ymin,dx,dy
   real, intent(out), dimension(npixx,npixy) :: vecpixx, vecpixy
   integer :: i,j,k,ix,iy
   integer, dimension(npixx,npixy) :: ihoc,numcell
   integer, dimension(npart) :: ll
 
-  print*,'averaging vector field onto pixels...'
-  if (dx.le.0.) then
+  !print "(a,i3,a,i3,a)",' averaging vector field onto ',npixx,'x',npixy,' pixels...'
+  if (dx <= 0. .or. dy <= 0.) then
      print*,'interpolate_vec: error: pixel width <= 0'
      return
   endif
@@ -136,7 +136,7 @@ subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
   do i=1,npart
      if (itype(i).ge.0) then
         ix = int((x(i)-xmin)/dx)+1
-        iy = int((y(i)-ymin)/dx)+1
+        iy = int((y(i)-ymin)/dy)+1
         if ((ix.ge.1).and.(ix.le.npixx).and.(iy.ge.1).and.(iy.le.npixy)) then
            ll(i)=ihoc(ix,iy)   ! set link list of this particle to old head of list
            ihoc(ix,iy) = i            ! set head of chain to this particle

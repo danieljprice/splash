@@ -210,27 +210,31 @@ subroutine menu
            !  to icoordsnew, or alternatively plot non-cartesian pixel shapes)
            ! -> also do not allow if transformations are applied
            !
-           if (is_coord(ipicky,ndim) .and. is_coord(ipickx,ndim) .and. iAllowRendering) then
-              call prompt('(render) (0=none)',irender,0,(numplot-nextra))
-              if (irender > 0 .and. iplotcont_nomulti .and. icolours /= 0) then
-                 if (double_rendering) then
-                    rprompt = '2nd render'
-                 else
-                    rprompt = 'contours'
-                 endif
-                 call prompt('('//trim(rprompt)//') (0=none)',icontourplot,0,(numplot-nextra))
-                 if (icontourplot==irender) then
-                    if (iadapt) then
-                       print "(a)",' limits for '//trim(rprompt)//' are adaptive'
+           if (is_coord(ipicky,ndim) .and. is_coord(ipickx,ndim)) then
+              if (iAllowRendering) then
+                 call prompt('(render) (0=none)',irender,0,(numplot-nextra))
+                 if (irender > 0 .and. iplotcont_nomulti .and. icolours /= 0) then
+                    if (double_rendering) then
+                       rprompt = '2nd render'
                     else
-                       if (.not.lim2set(icontourplot)) lim2(icontourplot,:) = lim(icontourplot,:)
-                       call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourplot,1))
-                       call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourplot,2))
-                       if (all(abs(lim2(icontourplot,:)-lim(icontourplot,:)) < tiny(lim))) then
-                          call reset_lim2(icontourplot)
+                       rprompt = 'contours'
+                    endif
+                    call prompt('('//trim(rprompt)//') (0=none)',icontourplot,0,(numplot-nextra))
+                    if (icontourplot==irender) then
+                       if (iadapt) then
+                          print "(a)",' limits for '//trim(rprompt)//' are adaptive'
+                       else
+                          if (.not.lim2set(icontourplot)) lim2(icontourplot,:) = lim(icontourplot,:)
+                          call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourplot,1))
+                          call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourplot,2))
+                          if (all(abs(lim2(icontourplot,:)-lim(icontourplot,:)) < tiny(lim))) then
+                             call reset_lim2(icontourplot)
+                          endif
                        endif
                     endif
                  endif
+              else
+                 irender = 0
               endif
               if (any(iamvec(1:numplot).ne.0)) then
                  ivecplottemp = -1
@@ -251,9 +255,6 @@ subroutine menu
               if (ivecplot.gt.0 .and. irender.eq.0) then
                  call prompt('plot particles?',iplotpartvec)
               endif
-           else
-              irender = 0
-              ivecplot = 0
            endif
         elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens) then
             if (ipicky==isurfdens) print "(a)",' setting x axis to r for surface density plot'
@@ -465,32 +466,33 @@ subroutine menu
       icoordplot = (is_coord(multiplotx(i),ndim) .and. is_coord(multiploty(i),ndim))
       if (icoordplot) anycoordplot = icoordplot
 
-      if (icoordplot .and.iAllowRendering) then
-         call prompt('(render) (0=none)',irendermulti(i),0,numplot-nextra)
-         if (irendermulti(i).gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
-            if (double_rendering) then
-               rprompt = '2nd render'
-            else
-               rprompt = 'contours'
-            endif
-            call prompt('('//trim(rprompt)//') (0=none)',icontourmulti(i),0,numplot-nextra)
-            if (icontourmulti(i).eq.irendermulti(i)) then
-               if (iadapt) then
-                  print "(a)",' limits for '//trim(rprompt)//' are adaptive '
+      if (icoordplot) then
+         if (iAllowRendering) then
+            call prompt('(render) (0=none)',irendermulti(i),0,numplot-nextra)
+            if (irendermulti(i).gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
+               if (double_rendering) then
+                  rprompt = '2nd render'
                else
-                  if (.not.lim2set(icontourmulti(i))) lim2(icontourmulti(i),:) = lim(icontourmulti(i),:)
-                  call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourmulti(i),1))
-                  call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourmulti(i),2))
-                  if (all(abs(lim2(icontourmulti(i),:)-lim(icontourmulti(i),:)) < tiny(lim))) then
-                     call reset_lim2(icontourmulti(i))
+                  rprompt = 'contours'
+               endif
+               call prompt('('//trim(rprompt)//') (0=none)',icontourmulti(i),0,numplot-nextra)
+               if (icontourmulti(i).eq.irendermulti(i)) then
+                  if (iadapt) then
+                     print "(a)",' limits for '//trim(rprompt)//' are adaptive '
+                  else
+                     if (.not.lim2set(icontourmulti(i))) lim2(icontourmulti(i),:) = lim(icontourmulti(i),:)
+                     call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourmulti(i),1))
+                     call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourmulti(i),2))
+                     if (all(abs(lim2(icontourmulti(i),:)-lim(icontourmulti(i),:)) < tiny(lim))) then
+                        call reset_lim2(icontourmulti(i))
+                     endif
                   endif
                endif
+            else
+               icontourmulti(i) = 0
             endif
-         else
-            icontourmulti(i) = 0
+            !iplotcontmulti(i) = iplotcont_nomulti
          endif
-         !iplotcontmulti(i) = iplotcont_nomulti
-
          if (any(iamvec(1:numplot).gt.0)) then
             ivecplottemp = -1
             ierr = 1
