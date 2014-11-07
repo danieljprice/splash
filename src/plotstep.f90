@@ -1350,10 +1350,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               if (flythru) zslicepos = zslicepos + dz
               !!--for cross sections of particle plots, need range of co-ordinates in which
               !!  particles may lie
-              if (iplotpart) then
-                 zslicemin = zslicepos-0.5*dz
-                 zslicemax = zslicepos+0.5*dz
-              endif
+              zslicemin = zslicepos-0.5*dz
+              zslicemax = zslicepos+0.5*dz
            endif
 
            !------------take projections/cross sections through 3D data-----------------!
