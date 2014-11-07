@@ -110,7 +110,7 @@ end subroutine mask_vectors
 !--------------------------------------------------------------------------
 
 subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
-     xmin,ymin,dx,dy,vecpixx,vecpixy,npart,npixx,npixy)
+     xmin,ymin,dx,dy,vecpixx,vecpixy,npart,npixx,npixy,z,zmin,zmax)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
@@ -118,9 +118,11 @@ subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,dx,dy
   real, intent(out), dimension(npixx,npixy) :: vecpixx, vecpixy
+  real, intent(in), optional :: z(npart),zmin,zmax
   integer :: i,j,k,ix,iy
   integer, dimension(npixx,npixy) :: ihoc,numcell
   integer, dimension(npart) :: ll
+  logical :: xsec
 
   !print "(a,i3,a,i3,a)",' averaging vector field onto ',npixx,'x',npixy,' pixels...'
   if (dx <= 0. .or. dy <= 0.) then
@@ -133,7 +135,11 @@ subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
   !
   ihoc(:,:) = -1   ! head of chain
   numcell(:,:) = 0
-  do i=1,npart
+  xsec = present(z) .and. present(zmin) .and. present(zmax)
+  over_parts: do i=1,npart
+     if (xsec) then
+        if (z(i) < zmin .or. z(i) > zmax) cycle over_parts
+     endif
      if (itype(i).ge.0) then
         ix = int((x(i)-xmin)/dx)+1
         iy = int((y(i)-ymin)/dy)+1
@@ -142,7 +148,7 @@ subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
            ihoc(ix,iy) = i            ! set head of chain to this particle
         endif
      endif
-  enddo
+  enddo over_parts
   !
   !--add up total vx,vy in each cell
   !

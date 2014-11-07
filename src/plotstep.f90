@@ -3306,20 +3306,35 @@ contains
       select case(ndim)
       case(3)
          if (x_sec) then ! take vector plot in cross section
-            if (usevecplot) then ! using rotation
-               call interpolate3D_xsec_vec(xplot(1:ninterp), &
-                 yplot(1:ninterp),zplot(1:ninterp), &
-                 hh(1:ninterp),weight(1:ninterp), &
-                 vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
-                 icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
-                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise)
+            if (got_h) then
+               if (usevecplot) then ! using rotation
+                  call interpolate3D_xsec_vec(xplot(1:ninterp), &
+                    yplot(1:ninterp),zplot(1:ninterp), &
+                    hh(1:ninterp),weight(1:ninterp), &
+                    vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
+                    icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
+                    vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise)
+               else
+                  call interpolate3D_xsec_vec(xplot(1:ninterp), &
+                    yplot(1:ninterp),zplot(1:ninterp), &
+                    hh(1:ninterp),weight(1:ninterp), &
+                    dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
+                    icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
+                    vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise)
+               endif
             else
-               call interpolate3D_xsec_vec(xplot(1:ninterp), &
-                 yplot(1:ninterp),zplot(1:ninterp), &
-                 hh(1:ninterp),weight(1:ninterp), &
-                 dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
-                 icolourme(1:ninterp),ninterp,xmin,ymin,zslicepos, &
-                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise)
+               ! don't have smoothing length, use averaging
+               if (usevecplot) then
+                  call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
+                       vecplot(1,1:ninterp),vecplot(2,1:ninterp),icolourme(1:ninterp), &
+                       xmin,ymin,pixwidthvec,pixwidthvecy,vecpixx,vecpixy, &
+                       ninterp,numpixx,numpixy,zplot(1:ninterp),zslicemin,zslicemax)
+               else
+                  call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
+                       dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
+                       xmin,ymin,pixwidthvec,pixwidthvecy,vecpixx,vecpixy, &
+                       ninterp,numpixx,numpixy,zplot(1:ninterp),zslicemin,zslicemax)
+               endif            
             endif
          else
             if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then
@@ -3400,20 +3415,35 @@ contains
          endif
       case(2)
          !
-         !--or interpolate (via averaging) to coarser grid
+         !--two dimensions
          !
-         if (usevecplot) then
-            call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
-              hh(1:ninterp),weight(1:ninterp),vecplot(1,1:ninterp), &
-              vecplot(2,1:ninterp),icolourme(1:ninterp),ninterp,xmin,ymin, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise,&
-              isperiodicx,isperiodicy)
+         if (got_h) then
+            if (usevecplot) then
+               call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
+                 hh(1:ninterp),weight(1:ninterp),vecplot(1,1:ninterp), &
+                 vecplot(2,1:ninterp),icolourme(1:ninterp),ninterp,xmin,ymin, &
+                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise,&
+                 isperiodicx,isperiodicy)
+            else
+               call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
+                 hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ivecx), &
+                 dat(1:ninterp,ivecy),icolourme(1:ninterp),ninterp,xmin,ymin, &
+                 vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise,&
+                 isperiodicx,isperiodicy)
+            endif
          else
-            call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
-              hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ivecx), &
-              dat(1:ninterp,ivecy),icolourme(1:ninterp),ninterp,xmin,ymin, &
-              vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise,&
-              isperiodicx,isperiodicy)
+            ! don't have smoothing length, use averaging
+            if (usevecplot) then
+               call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
+                    vecplot(1,1:ninterp),vecplot(2,1:ninterp),icolourme(1:ninterp), &
+                    xmin,ymin,pixwidthvec,pixwidthvecy,vecpixx,vecpixy, &
+                    ninterp,numpixx,numpixy)
+            else
+               call interpolate_vec_average(xplot(1:ninterp),yplot(1:ninterp), &
+                    dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
+                    xmin,ymin,pixwidthvec,pixwidthvecy,vecpixx,vecpixy, &
+                    ninterp,numpixx,numpixy)
+            endif         
          endif
 
       case default
