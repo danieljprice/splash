@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -308,8 +308,8 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
 
   yline(:) = ymax - ((vpos - 0.5)*ych)
   xline(1) = xmin + hposlegend*(xmax-xmin)
-  xline(2) = xline(1) + xch
-  xline(3) = xline(1) + 2.*xch
+  xline(2) = xline(1) + 1.5*xch
+  xline(3) = xline(1) + 3.*xch
 
   call plot_sci(icolour)
   call plot_set_opacity(alphalegend)
