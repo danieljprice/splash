@@ -37,7 +37,7 @@ contains
 subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,filename,&
                            outformat,interpolateall)
  use labels,             only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst
- use limits,             only:lim
+ use limits,             only:lim,get_particle_subset
  use settings_units,     only:units,unit_interp
  use settings_data,      only:ndim,ndimV,UseTypeInRenderings,iRescale,required,lowmemorymode,debugmode
  use settings_part,      only:iplotpartoftype
@@ -221,6 +221,10 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !--set colours (just in case)
  !
  icolourme(:) = 1
+ !
+ !--apply range restrictions to data
+ !
+ call get_particle_subset(icolourme,dat,ncolumns)
 
  !
  !--work out how many pixels to use
@@ -312,6 +316,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  else
     write(*,*) 'OK'
  endif
+
  !
  !--open grid file for output (also checks format is OK)
  !
