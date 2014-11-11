@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -140,9 +140,10 @@ subroutine submenu_page(ichoose)
  use plotlib,     only:plotlib_supports_alpha,plotlib_maxlinecolour,plotlib_maxlinestyle,plotlib_is_pgplot
  implicit none
  integer, intent(in) :: ichoose
- integer             :: iaction,i,iunitsprev
+ integer             :: iaction,i,iunitsprev,ierr
  real                :: papersizey
  character(len=15)   :: paperfmtstr
+ character(len=3)    :: string
 
  iaction = ichoose
  
@@ -199,8 +200,9 @@ subroutine submenu_page(ichoose)
         call prompt('Use different markers/line style for each step? ',iChangeStyles)
         if (iChangeStyles) then
            call prompt('How often to change line style (1=every step, 2=every 2nd step etc.)',modlinestyle,1)
-           call prompt('Enter max number of line styles to cycle through before repeating (5=plot lib max)',&
-                        maxlinestyle,1,plotlib_maxlinestyle)
+           write(string,"(i3)",iostat=ierr) plotlib_maxlinestyle
+           call prompt('Enter max number of line styles to cycle through before repeating ('// &
+                       trim(adjustl(string))//'=plot lib max)',maxlinestyle,1,plotlib_maxlinestyle)
         endif
 
         if (iColourEachStep .or. iChangeStyles) then
