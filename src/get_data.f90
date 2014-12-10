@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -469,8 +469,8 @@ end subroutine check_labels
 !----------------------------------------------------------------
 subroutine check_data_read
  use params,        only:maxplot,maxparttypes
- use settings_data, only:ncolumns,ndim,ndimV,ntypes
- use particle_data, only:npartoftype,iamtype
+ use settings_data, only:ncolumns,ndim,ndimV,ntypes,ivegotdata
+ use particle_data, only:npartoftype,iamtype,dat
  use labels,        only:labeltype
  implicit none
  integer :: i,j,ntoti,nunknown,itype
@@ -504,6 +504,12 @@ subroutine check_data_read
           endif
        enddo
     enddo
+    ntoti = sum(npartoftype(:,1))
+    if (ntoti > size(dat(:,1,1))) then
+       print "(2(a,i10),a)",' ERROR: size of dat array (',size(dat(:,1,1)),&
+             ') too small for number of particles (',ntoti,')'
+       ivegotdata = .false.
+    endif
     !if (debugmode) then
        !
        !--for mixed type storage, check that the number of particles
