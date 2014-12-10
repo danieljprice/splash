@@ -220,6 +220,10 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !
   if (.not.all(required(1:ncolstep))) ipartialread = .true.
 !
+!--call set labels to identify location of smoothing length
+!
+  call set_labels
+!
 !--for read from multiple files, work out the next file in the sequence
 !
   !
@@ -349,23 +353,22 @@ subroutine set_labels
         ivx = icol
      case('ax')
         iax = icol
-     case('epsilon')
+     case('h_smooth')
         ih = icol
      case('mass')
         ipmass = icol
      case('density')
         irho = icol
-     case default
-        label(icol) = trim(blocklabel(icol))
      end select
+     label(icol) = trim(blocklabel(icol))
   enddo
 
   ! set labels of the quantities read in
   if (ix(1).gt.0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  if (irho.gt.0)    label(irho)       = 'density'
-  if (iutherm.gt.0) label(iutherm)    = 'u'
-  if (ipmass.gt.0)  label(ipmass)     = 'particle mass'
-  if (ih.gt.0)      label(ih)         = 'h'
+  !if (irho.gt.0)    label(irho)       = 'density'
+  !if (iutherm.gt.0) label(iutherm)    = 'u'
+  !if (ipmass.gt.0)  label(ipmass)     = 'particle mass'
+  !if (ih.gt.0)      label(ih)         = 'h'
 
   ! set labels for vector quantities
   if (ivx.gt.0) then
