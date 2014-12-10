@@ -76,6 +76,8 @@ module sphNGread
  integer, parameter :: maxinblock = 128 ! max allowed in each block
  integer, parameter :: lentag = 16
  character(len=lentag) :: tagarr(maxplot)
+ integer, parameter :: itypemap_sink_phantom = 3
+ integer, parameter :: itypemap_unknown_phantom = 7
 
  !------------------------------------------
  ! generic interface to utilities for tagged
@@ -114,16 +116,14 @@ contains
   integer*1, intent(in) :: iphase
   
   select case(int(iphase))
-  case(1,2)
+  case(1:2)
     itypemap_phantom = iphase
-  case(3)
-    itypemap_phantom = 4
-  case(4)
-    itypemap_phantom = 6
-  case(-3)
-    itypemap_phantom = 3
+  case(3:5) ! put sinks as type 3, everything else shifted by one
+    itypemap_phantom = iphase + 1
+  case(-3) ! sink particles, either from external_binary or read from dump
+    itypemap_phantom = itypemap_sink_phantom
   case default
-    itypemap_phantom = 5
+    itypemap_phantom = itypemap_unknown_phantom
   end select
   
  end function itypemap_phantom
@@ -661,7 +661,7 @@ contains
         if (debug) print*,'DEBUG: npart of type ',itype,' += ',npartoftypei(i)
         npartoftype(itype) = npartoftype(itype) + npartoftypei(i)
      enddo
-     npartoftype(3) = nptmasstot  ! sink particles
+     npartoftype(itypemap_sink_phantom) = nptmasstot  ! sink particles
      if (nblocks.gt.1) then
         print "(a)",' setting ngas=npart for MPI code '
         npartoftype(1)  = npart
@@ -681,7 +681,7 @@ contains
         if (debug) print*,'DEBUG: reading binary information from header ',ilocbinary
         if (any(realarr(ilocbinary:ilocbinary+14).ne.0.)) then
            gotbinary = .true.
-           npartoftype(3) = npartoftype(3) + 2
+           npartoftype(itypemap_sink_phantom) = npartoftype(itypemap_sink_phantom) + 2
            ntotal = ntotal + 2
            dat(npart+1,ix(1)) = realarr(ipos)
            dat(npart+1,ix(2)) = realarr(ipos+1)
@@ -1642,7 +1642,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                         if (required(irho)) dat(k,irho,j) = pmassi*(hfact/hi)**3
                      elseif (hi < 0.) then
                         npartoftype(itype,j) = npartoftype(itype,j) - 1
-                        npartoftype(5,j) = npartoftype(5,j) + 1
+                        npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + 1
                         if (required(irho)) dat(k,irho,j) = pmassi*(hfact/abs(hi))**3
                      else
                         if (required(irho)) dat(k,irho,j) = 0.
@@ -1788,10 +1788,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
              case(1,2,4) ! remove accreted particles
                 if (ih.gt.0 .and. required(ih)) then
                    if (dat(i,ih,j) <= 0.) then
-                      iamtype(i,j) = 5
+                      iamtype(i,j) = itypemap_unknown_phantom
                    endif
                 endif
-             case(5)
+             case(itypemap_unknown_phantom)
                 nunknown = nunknown + 1
              end select
           enddo
@@ -1912,7 +1912,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         npartoftype(5,j) = nunknown
      else
         npartoftype(1,j) = npartoftype(1,j) - nunknown
-        npartoftype(5,j) = npartoftype(5,j) + nunknown
+        npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + nunknown
      endif
 
      call print_types(npartoftype(:,j),labeltype)
@@ -2235,19 +2235,22 @@ subroutine set_labels
   !--set labels for each particle type
   !
   if (phantomdump) then  ! phantom
-     ntypes = 5
+     ntypes = itypemap_unknown_phantom
      labeltype(1) = 'gas'
      labeltype(2) = 'dust'
      labeltype(3) = 'sink'
-     labeltype(4) = 'boundary'
-     labeltype(5) = 'unknown/dead'
-     UseTypeInRenderings(1:2) = .true.
+     labeltype(4) = 'ghost'
+     labeltype(5) = 'star'
+     labeltype(6) = 'dark matter'
+     labeltype(7) = 'unknown/dead'
+     UseTypeInRenderings(:) = .true.
+     UseTypeInRenderings(3) = .false.
      if (lenvironment('SSPLASH_USE_DUST_PARTICLES')) then
         UseTypeInRenderings(2) = .false.
      endif
-     UseTypeInRenderings(3) = .false.
-     UseTypeInRenderings(4) = .true.
-     UseTypeInRenderings(5) = .true.
+     if (.not.lenvironment('SSPLASH_RENDER_STARS')) then
+        UseTypeInRenderings(5) = .false.
+     endif
   else
      ntypes = 5
      labeltype(1) = 'gas'
