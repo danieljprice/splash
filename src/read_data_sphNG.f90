@@ -2108,7 +2108,7 @@ subroutine set_labels
            units(icv) = (udist/utime)**2
         case('h2ratio')
            label(i) = 'H_2 ratio'
-        case('abH1q')
+        case('abH1q','abHIq')
            label(i) = 'HI abundance'
         case('abhpq')
            label(i) = 'proton abundance'
