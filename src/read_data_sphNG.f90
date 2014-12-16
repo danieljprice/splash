@@ -77,6 +77,7 @@ module sphNGread
  integer, parameter :: lentag = 16
  character(len=lentag) :: tagarr(maxplot)
  integer, parameter :: itypemap_sink_phantom = 3
+ integer, parameter :: itypemap_dust_phantom = 2
  integer, parameter :: itypemap_unknown_phantom = 7
 
  !------------------------------------------
@@ -444,6 +445,11 @@ contains
      endif
   endif
 
+  if (ntypes > maxparttypes) then
+     print "(a,i2)",' WARNING: number of particle types exceeds array limits: ignoring types > ',maxparttypes
+     ntypes = maxparttypes
+  endif
+
 !--int*1, int*2, int*4, int*8
   ierr1 = 0
   ierr2 = 0
@@ -621,18 +627,19 @@ contains
  !----------------------------------------------------------------------
  subroutine extract_variables_from_header(tags,realarr,nreals,iverbose,debug,&
             gotbinary,nblocks,nptmasstot,npartoftypei,ntypes,&
-            time,gamma,hfact,npart,ntotal,npartoftype,dat,ix,ih,ipmass,ivx)
+            time,gamma,hfact,npart,ntotal,npartoftype,massoftype,dat,ix,ih,ipmass,ivx)
   character(len=lentag), intent(in) :: tags(maxinblock)
   real, intent(in) :: realarr(maxinblock)
   integer, intent(in) :: nreals,iverbose,nblocks,nptmasstot,npartoftypei(:),ntypes
   integer, intent(in) :: ix(3),ih,ipmass,ivx
-  real, intent(out) :: time,gamma,hfact
+  real, intent(out) :: time,gamma,hfact,massoftype(:)
   real, intent(inout) :: dat(:,:)
   integer, intent(out) :: npartoftype(:)
   integer, intent(inout) :: npart,ntotal
   logical, intent(in)  :: debug
   logical, intent(out) :: gotbinary
   real :: rhozero,tfreefall,tff,radL1,PhiL1,Er,RK2,dtmax,tolh
+  real :: massoftypei(ntypes)
   integer :: i,ierrs(10),ipos
   integer :: itype
   integer, parameter :: ilocbinary = 24
@@ -655,11 +662,13 @@ contains
      tff = 0.
   endif
   if (phantomdump) then
+     call extract('massoftype',massoftypei(1:ntypes),realarr,tags,nreals,ierrs(4))
      npartoftype(:) = 0
      do i=1,ntypes !--map from phantom types to splash types
         itype = itypemap_phantom(int(i,kind=1))
         if (debug) print*,'DEBUG: npart of type ',itype,' += ',npartoftypei(i)
         npartoftype(itype) = npartoftype(itype) + npartoftypei(i)
+        massoftype(itype)  = massoftypei(i)
      enddo
      npartoftype(itypemap_sink_phantom) = nptmasstot  ! sink particles
      if (nblocks.gt.1) then
@@ -1137,7 +1146,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
       igotmass = .true.
       if (smalldump .or. phantomdump) then
          if (phantomdump) then
-            call extract('massoftype',massoftypei(1:5),dummyreal,tagsreal,nreals,ierr)
+            if (tagged) then
+               call extract('massoftype',massoftypei(1:ntypes),dummyreal,tagsreal,nreals,ierr)
+            else
+            ! old phantom dumps had only 5 types
+               call extract('massoftype',massoftypei(1:5),dummyreal,tagsreal,nreals,ierr)
+            endif
          else
             call extract('pmassinitial',massoftypei(1),dummyreal,tagsreal,nreals,ierr)
             if (ierr /= 0) then
@@ -1147,7 +1161,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
             endif
          endif
          if (debug) print*,'DEBUG: got massoftype(gas) = ',massoftypei(1)
-         if (massoftypei(1).gt.tiny(0.) .and. .not.lowmemorymode) then
+         if (any(massoftypei(1:ntypes).gt.tiny(0.)) .and. .not.lowmemorymode) then
             ncolstep = ncolstep + 1  ! make an extra column to contain particle mass
             imadepmasscolumn = .true.
          elseif (lowmemorymode) then
@@ -1155,7 +1169,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
          else
             igotmass = .false.
          endif
-         if (abs(massoftypei(1)).lt.tiny(0.) .and. nreal(1).lt.4) then
+         if (all(abs(massoftypei(1:ntypes)).lt.tiny(0.)) .and. nreal(1).lt.4) then
             print "(a)",' error: particle masses not present in small dump file'
             igotmass = .false.
          endif
@@ -1257,11 +1271,9 @@ subroutine read_data(rootname,indexstart,nstepsread)
    if (iblock.eq.1) then
       call extract_variables_from_header(tagsreal,dummyreal,nreals,iverbose,debug, &
            gotbinary,nblocks,nptmasstot,npartoftypei,ntypes,&
-           time(j),gamma(j),hfact,npart,ntotal,npartoftype(:,j),&
+           time(j),gamma(j),hfact,npart,ntotal,npartoftype(:,j),masstype(:,j), &
            dat(:,:,j),ix,ih,ipmass,ivx)
 
-      masstype(:,j) = massoftypei(:)
-      
       nstepsread = nstepsread + 1
       !
       !--stop reading file here if no columns required
@@ -1545,18 +1557,19 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !        set masses for equal mass particles (not dumped in small dump or in phantom)
 !
          if (((smalldump.and.nreal(1).lt.ipmass).or.phantomdump).and. iarr.eq.1) then
-            if (abs(massoftypei(1)).gt.tiny(massoftypei)) then
+            if (abs(masstype(1,j)).gt.tiny(masstype)) then
                icolumn = ipmass
                if (required(ipmass) .and. ipmass.gt.0) then
                   if (phantomdump) then
-                     dat(i1:i2,ipmass,j) = massoftypei(itypemap_phantom(iphase(i1:i2)))
+                     dat(i1:i2,ipmass,j) = masstype(itypemap_phantom(iphase(i1:i2)),j)
                   else
-                     where (iphase(i1:i2).eq.0) dat(i1:i2,icolumn,j) = massoftypei(1)
+                     where (iphase(i1:i2).eq.0) dat(i1:i2,icolumn,j) = masstype(1,j)
                   endif
                endif
                !--dust mass for phantom particles
-               if (phantomdump .and. npartoftypei(2).gt.0 .and. ipmass.gt.0) then
-                  print *,' dust particle mass = ',massoftypei(2),' ratio dust/gas = ',massoftypei(2)/massoftypei(1)
+               if (phantomdump .and. npartoftypei(itypemap_dust_phantom).gt.0 .and. ipmass.gt.0) then
+                  print*,'dust particle mass = ',masstype(itypemap_dust_phantom,j),&
+                         ' ratio m_dust/m_gas = ',masstype(itypemap_dust_phantom,j)/masstype(1,j)
                endif
                if (debug) print*,'mass ',icolumn
             elseif (phantomdump .and. npartoftypei(1).gt.0) then
@@ -1633,10 +1646,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                   if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
                   !--need masses for each type if not all gas
                   if (debug) print*,'DEBUG: phantom: setting h for multiple types ',i1,i2
-                  if (debug) print*,'DEBUG: massoftype = ',massoftypei(:)
+                  if (debug) print*,'DEBUG: massoftype = ',masstype(:,j)
                   do k=i1,i2
                      itype = itypemap_phantom(iphase(k))
-                     pmassi = massoftypei(itype)
+                     pmassi = masstype(itype,j)
                      hi = dat(k,ih,j)
                      if (hi > 0.) then
                         if (required(irho)) dat(k,irho,j) = pmassi*(hfact/hi)**3
@@ -2245,11 +2258,14 @@ subroutine set_labels
      labeltype(7) = 'unknown/dead'
      UseTypeInRenderings(:) = .true.
      UseTypeInRenderings(3) = .false.
-     if (lenvironment('SSPLASH_USE_DUST_PARTICLES')) then
+     if (lenvironment('SSPLASH_PLOT_DUST')) then
         UseTypeInRenderings(2) = .false.
      endif
-     if (.not.lenvironment('SSPLASH_RENDER_STARS')) then
+     if (lenvironment('SSPLASH_PLOT_STARS')) then
         UseTypeInRenderings(5) = .false.
+     endif
+     if (lenvironment('SSPLASH_PLOT_DM')) then
+        UseTypeInRenderings(6) = .false.
      endif
   else
      ntypes = 5
