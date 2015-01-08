@@ -78,7 +78,7 @@ end subroutine change_coords
 !-------------------------------------------------------------------
 subroutine changecoords(iplotx,iploty,xplot,yplot,ntot,ndim,itrackpart,dat)
  use geometry,      only:coord_transform,labelcoordsys
- use settings_data, only:xorigin,icoords,icoordsnew
+ use settings_data, only:xorigin,icoords,icoordsnew,debugmode
  use labels,        only:is_coord,ix
  implicit none
  integer, intent(in) :: iplotx,iploty,ntot,ndim,itrackpart
@@ -91,9 +91,9 @@ subroutine changecoords(iplotx,iploty,xplot,yplot,ntot,ndim,itrackpart,dat)
  iscoordx = is_coord(iplotx,ndim)
  iscoordy = is_coord(iploty,ndim)
  if (iscoordx .or. iscoordy) then
-    print*,'changing coords from ',trim(labelcoordsys(icoords)), &
-           ' to ',trim(labelcoordsys(icoordsnew))
-    if (itrackpart.gt.0) print*,' (relative to particle ',itrackpart,')'
+    if (debugmode) print*,'changing coords from ',trim(labelcoordsys(icoords)), &
+                  ' to ',trim(labelcoordsys(icoordsnew))
+    if (itrackpart.gt.0) print*,'coords relative to particle ',itrackpart
 
     !--get offsets in range 1->ndim for the case where particle
     !  coords are not first in plot arrays
@@ -129,7 +129,7 @@ end subroutine changecoords
 !-------------------------------------------------------------------
 subroutine changeveccoords(iplot,xploti,ntot,ndim,itrackpart,dat)
  use geometry,      only:vector_transform,labelcoordsys
- use settings_data, only:xorigin,icoords,icoordsnew
+ use settings_data, only:xorigin,icoords,icoordsnew,debugmode
  use labels,        only:ivx,iamvec,ix
  implicit none
  integer, intent(in) :: iplot,ntot,ndim,itrackpart
@@ -140,10 +140,10 @@ subroutine changeveccoords(iplot,xploti,ntot,ndim,itrackpart,dat)
 
  if (iamvec(iplot).gt.0) then
     if (iplot-iamvec(iplot)+1 .le. ndim) then
-       print*,'changing vector component from ', &
-        trim(labelcoordsys(icoords)),' to ',trim(labelcoordsys(icoordsnew))
+       if (debugmode) print*,'changing vector component from ', &
+                      trim(labelcoordsys(icoords)),' to ',trim(labelcoordsys(icoordsnew))
        if (itrackpart.gt.0 .and. iamvec(iplot).eq.ivx) then
-          print*,' (velocities relative to particle ',itrackpart,')'
+          print*,'velocities relative to particle ',itrackpart
        endif
        do j=1,ntot
           if (itrackpart.gt.0 .and. itrackpart.le.ntot) then

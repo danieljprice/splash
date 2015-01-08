@@ -517,7 +517,7 @@ contains
   ! called after main data read and if exact solution chosen from menu
   !-----------------------------------------------------------------------
   subroutine read_exactparams(iexact,rootname,ierr)
-    use settings_data,  only:ndim
+    use settings_data,  only:ndim,iverbose
     use prompting,      only:prompt
     use exactfunction,  only:check_function
     use filenames,      only:fileprefix
@@ -541,11 +541,11 @@ contains
        filename=trim(rootname)//'.func'
        call read_asciifile(trim(filename),nf,funcstring,ierr)
        if (ierr.eq.-1) then
-          print "(a)",' no file '//trim(filename)
+          if (iverbose > 0) write(*,"(a)",advance='no') ' no file '//trim(filename)//'; '
           filename = trim(fileprefix)//'.func'
           call read_asciifile(trim(filename),nf,funcstring,ierr)
           if (ierr.eq.-1) then
-             print "(a)",' no file '//trim(filename)
+             if (iverbose > 0) print "(a)",' no file '//trim(filename)
              return
           endif
        endif
@@ -566,7 +566,7 @@ contains
              endif
           enddo
           nfunc = nf
-          print "(a,i2,a)",' read ',nfunc,' functions from '//trim(filename)
+          if (iverbose > 0) print "(a,i2,a)",' read ',nfunc,' functions from '//trim(filename)
        else
           print "(a)",' *** NO FUNCTIONS READ: none will be plotted ***'
           ierr = 2
@@ -1178,7 +1178,9 @@ contains
    logical, intent(in), optional :: err
    real :: residuals(np),ypart(np)
    real :: errL1,errL2,errLinf
+   integer :: iused,ierr
    logical :: plot_err
+   character(len=12) :: str1,str2
 
    if (itransx > 0) call transform(xexact(1:iexactpts),itransx)
    if (itransy > 0) call transform(yexact(1:iexactpts),itransy)
@@ -1203,9 +1205,16 @@ contains
       !--calculate errors
       call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts), &
                             xplot(1:np),ypart,residuals, &
-                            errL1,errL2,errLinf)
-      print "(3(a,es10.3,1x))",' L1 error = ',errL1,' L2 error = ',errL2, &
-                               ' L(infinity) error = ',errLinf
+                            errL1,errL2,errLinf,iused)
+      if (iused.ne.np) then
+         write(str1,"(i12)",iostat=ierr) iused
+         write(str2,"(i12)",iostat=ierr) np
+         print "(3(a,es10.3,1x),'(used ',a,'/',a,' parts)')",' L1 err = ',errL1,'L2 err = ',errL2, &
+                               'L(inf) err = ',errLinf,trim(adjustl(str1)),trim(adjustl(str2))
+      else
+         print "(3(a,es10.3,1x))",' L1 err = ',errL1,'L2 err = ',errL2, &
+                               'L(inf) err = ',errLinf
+      endif
       if (iPlotResiduals) call plot_residuals(xplot,residuals,imarker,iaxisy)
    endif
 
@@ -1214,11 +1223,12 @@ contains
   !--------------------------------
   ! Calculate various error norms 
   !--------------------------------
-  subroutine calculate_errors(xexact,yexact,xpts,ypts,residual,errL1,errL2,errLinf)
+  subroutine calculate_errors(xexact,yexact,xpts,ypts,residual,errL1,errL2,errLinf,iused)
    real, intent(in)  :: xexact(:),yexact(:),xpts(:),ypts(:)
    real, intent(out) :: residual(size(xpts))
    real, intent(out) :: errL1,errL2,errLinf
-   integer :: i,j,npart,iused,nerr
+   integer, intent(out) :: iused
+   integer :: i,j,npart,nerr
    real    :: xi,dy,dx,yexacti,err1,ymax
 
    errL1 = 0.
@@ -1276,7 +1286,6 @@ contains
       errLinf = 0.
    endif
    if (nerr.gt.0) print*,'WARNING: ',nerr,' errors in residual calculation'
-   if (iused.ne.npart) print*,'errors calculated using ',iused,' of ',npart, 'particles'
 
    return
   end subroutine calculate_errors
