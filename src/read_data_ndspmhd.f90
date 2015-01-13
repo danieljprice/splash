@@ -508,7 +508,7 @@ subroutine set_labels
  endif
  if (iformat.eq.5) then
     icol = icol + 1
-    label(icol) = 'dust fraction'
+    label(icol) = 'Dust fraction'
     idustfrac = icol
     iamvec(icol+1:icol+ndimV) = icol + 1
     labelvec(icol+1:icol+ndimV) = '\Deltav'
