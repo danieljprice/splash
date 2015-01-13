@@ -196,6 +196,13 @@ subroutine menu
         !
         if (ipicky <= (numplot-nextra)) then
            if (ipickx==0) ipickx = 1 ! do not allow zero as default
+           if (ipickx==ipicky) then ! do not allow x same as y by default
+              if (ipickx > 1) then
+                 ipickx = ipicky-1
+              else
+                 ipickx = ipicky+1
+              endif
+           endif
            call prompt(' (x axis) ',ipickx)
            !--go back to y prompt if out of range
            if (ipickx.gt.numplot .or. ipickx.le.0) cycle menuloop
@@ -255,6 +262,9 @@ subroutine menu
               if (ivecplot.gt.0 .and. irender.eq.0) then
                  call prompt('plot particles?',iplotpartvec)
               endif
+           else
+              irender = 0
+              ivecplot = 0
            endif
         elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens) then
             if (ipicky==isurfdens) print "(a)",' setting x axis to r for surface density plot'
@@ -275,6 +285,9 @@ subroutine menu
         !--for multiplots, check that options are valid. If not, re-prompt for multiplot
         !  settings
         !
+            ipickx   = 0
+            irender  = 0
+            ivecplot = 0
             if (any(multiploty(1:nyplotmulti) <= 0) .or. &
                 any(multiploty(1:nyplotmulti) > numplot) .or. &
                 any(multiplotx(1:nyplotmulti) <= 0) .or. &
@@ -783,7 +796,6 @@ subroutine print_header
  integer, parameter :: d(49) = (/32,79,111,79,111,79,111,79,32,83,80,76,65,83,72,32,119, &
                       105,115,104,101,115,32,121,111,117,32,97,32,118,101,114,121,32,104,&
                       97,112,112,121,32,33,32,79,111,79,111,79,111,79/)
- character(len=50) :: string
  call date_and_time(values=v)
  if (v(2)==m(1)/4 .and. v(3)==v(2)-2) then
     print "(/,48(a))",(achar(m(i)),i=1,48)
