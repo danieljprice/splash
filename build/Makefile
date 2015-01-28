@@ -40,10 +40,10 @@ X11LIBS= -L/usr/X11R6/lib -lX11
 #--------------------------------------------------------------
 ifneq ($(BACKEND), pgplot)
 #-- C A I R O --
-   GIZADIR= ../giza
-   VPATH+= $(GIZADIR)/interface/
+   GIZA_DIR= ../giza
+   VPATH+= $(GIZA_DIR)/interface/
    PLOTLIB= giza-fortran.F90 plotlib_giza.f90
-   PGPLOTLIBS = -L$(GIZADIR)/lib -lgiza -lcairo -lX11
+   PGPLOTLIBS = -L$(GIZA_DIR)/lib -lgiza -lcairo -lX11
    CFLAGS= -fPIC -Wall -Wextra -O3 -g
    CC = gcc
 else
@@ -868,18 +868,18 @@ plotlib_pgplot.o: checkpgplot
 
 plotlib_giza.o : giza-fortran.o
 
-giza-fortran.o : giza-fortran.F90 $(GIZADIR)/lib/libgiza.a 
-	$(FC) $(FFLAGS) -I$(GIZADIR)/include/ -c $< -o $@
+giza-fortran.o : giza-fortran.F90 $(GIZA_DIR)/lib/libgiza.a 
+	$(FC) $(FFLAGS) -I$(GIZA_DIR)/include/ -c $< -o $@
 
 .PHONY: gizabuild libgiza
 
 libgiza: gizabuild
 
-$(GIZADIR)/lib/libgiza.a: gizabuild
+$(GIZA_DIR)/lib/libgiza.a: gizabuild
 
 gizabuild: 
 	@echo "Compiling giza..."
-	$(MAKE) $(MAKECMDFLAGS) -C $(GIZADIR) libgiza CC="$(CC)" CFLAGS="$(CFLAGS)"
+	$(MAKE) $(MAKECMDFLAGS) -C $(GIZA_DIR) libgiza CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 docs: doc
 
@@ -942,5 +942,5 @@ clean:
 
 cleangiza:
 ifneq ($(BACKEND),pgplot)
-	${MAKE} -C $(GIZADIR) clean
+	${MAKE} -C $(GIZA_DIR) clean
 endif
