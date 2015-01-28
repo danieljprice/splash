@@ -395,9 +395,10 @@ end subroutine get_labels
 !
 !----------------------------------------------------------------
 subroutine check_labels
- use settings_data, only:ndim,ndimV,ncolumns,iverbose
- use labels,        only:ix,irho,ih,ipmass
- use particle_data, only:masstype
+ use settings_data,   only:ndim,ndimV,ncolumns,iverbose
+ use labels,          only:ix,irho,ih,ipmass
+ use particle_data,   only:masstype
+ use settings_render, only:icolour_particles
  implicit none
  integer :: i,ndimset
 
@@ -451,11 +452,10 @@ subroutine check_labels
                    '  until positions of density, smoothing length and particle', &
                    '  masses are known (specified using the integer variables ', &
                    '  irho,ih and ipmass in the read_data routine)'
+          icolour_particles = .true.
        elseif (irho.gt.0 .and. ih.gt.0 .and. ipmass.eq.0 .and. all(masstype(:,:).lt.tiny(0.))) then
           print "(2(/,a))",' WARNING: Particle masses not read as array but mass not set:', &
                            '          RENDERING WILL NOT WORK! '
-
-
        endif
     endif
  endif
