@@ -33,7 +33,7 @@ contains
 
 subroutine menu
   use filenames,        only:defaultsfile,limitsfile,fileprefix,set_filenames
-  use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap,is_coord
+  use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap,is_coord,ix
   use limits,           only:write_limits,lim2,lim,reset_lim2,lim2set
   use options_data,     only:submenu_data
   use settings_data,    only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
@@ -64,7 +64,11 @@ subroutine menu
   irender = 0
   icontourplot = 0
   ivecplot = 0
-  ipickx = 1
+  if (ndim > 1 .and. ix(1) > 0) then
+     ipickx = ix(1)
+  else
+     ipickx = 1
+  endif
   ipicky = 1
 
   menuloop: do
@@ -195,7 +199,13 @@ subroutine menu
         !--if needed prompt for x axis selection
         !
         if (ipicky <= (numplot-nextra)) then
-           if (ipickx==0) ipickx = 1 ! do not allow zero as default
+           if (ipickx==0) then
+              if (ndim > 1 .and. ix(1) > 0) then
+                 ipickx = ix(1)
+              else
+                 ipickx = 1 ! do not allow zero as default
+              endif
+           endif
            if (ipickx==ipicky) then ! do not allow x same as y by default
               if (ipickx > 1) then
                  ipickx = ipicky-1
