@@ -1667,9 +1667,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                  !!--set label for column density (projection) plots
                  if (ndim.eq.3 .and..not. x_sec .and..not.(use3Dperspective.and.use3Dopacityrendering)) then
-                    labelrender = integrate_label(labelrender,irender,ix(iz),inormalise,iRescale,&
+                    labelrender = integrate_label(labelrender,irender,iz,inormalise,iRescale,&
                                                   labelzintegration,projlabelformat,iapplyprojformat)
-                    if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,ix(iz),inormalise,&
+                    if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,iz,inormalise,&
                                                  iRescale,labelzintegration,projlabelformat,iapplyprojformat)
                  endif
                  !!--apply transformations to the label(s) for the rendered and contoured quantit(y,ies)
@@ -1964,9 +1964,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               if (ndim.eq.3 .and..not. x_sec) then
                  if (iRescale) then
                     labelvecplot = '\(2268) '//trim(labelvecplot)//' d'// &
-                      trim(label(ix(iz))(1:index(label(ix(iz)),unitslabel(ix(iz)))-1))//' [code units]'
+                      trim(label(iz)(1:index(label(iz),unitslabel(iz))-1))//' [code units]'
                  else
-                    labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(ix(iz)))
+                    labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(iz))
                  endif
               endif
               pixwidthvec  = (xmax-xmin)/real(npixvec)
