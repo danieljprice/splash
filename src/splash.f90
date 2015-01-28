@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -27,7 +27,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2014 Daniel Price
+!     Copyright (C) 2005-2015 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -48,6 +48,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.5.1  : (29/01/15)
+!             error bar style options; support for 5K displays; can plot vectors
+!             and render with colours if h not read; range restrictions apply during splash to grid;
+!             improved line-style legend; now up to 6 line styles; fixes to amuse-hdf5 read; 
+!             various bugs fixed
 !     2.5.0  : (22/08/14)
 !             instant multiplots by giving multiple columns as y axis;
 !             ability to plot multiple exact solution files on same plot;
@@ -359,7 +364,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.5.0 [22nd Aug. 2014]'
+  character(len=*), parameter :: version = 'v2.5.1 [29th Jan. 2015]'
 
   !
   ! initialise some basic code variables
@@ -706,7 +711,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2014 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2015 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
