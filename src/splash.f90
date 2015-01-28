@@ -52,7 +52,7 @@ program splash
 !             error bar style options; support for 5K displays; can plot vectors
 !             and render with colours if h not read; range restrictions apply during splash to grid;
 !             improved line-style legend; now up to 6 line styles; fixes to amuse-hdf5 read; 
-!             various bugs fixed
+!             phantom read handles star/dm particles; various bugs fixed
 !     2.5.0  : (22/08/14)
 !             instant multiplots by giving multiple columns as y axis;
 !             ability to plot multiple exact solution files on same plot;
