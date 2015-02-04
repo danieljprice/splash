@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -131,14 +131,14 @@ subroutine exact_shock(iplot,time,gammain,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_g
      rightisshock = .false.
   endif
   if (leftisshock) then
-     print*,' left-going wave is a shock '
+     write(*,"(a)",advance='no') ' left-going wave is a shock; '
   else
-     print*,' left-going wave is a rarefaction'
+     write(*,"(a)",advance='no') ' left-going wave is a rarefaction; '
   endif
   if (rightisshock) then
-     print*,' right-going wave is a shock '
+     write(*,"(a)") 'right-going wave is a shock'
   else
-     print*,' right-going wave is a rarefaction'
+     write(*,"(a)") 'right-going wave is a rarefaction'
   endif
 
   if (rightisshock) then ! right hand wave is a shock
@@ -156,7 +156,7 @@ subroutine exact_shock(iplot,time,gammain,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_g
   !  repeat for left-going wave
   !
   if (leftisshock) then
-     vleft = v_L + cs_L**2*(ppost/p_L - 1.)/(gamma*(vpost-v_L))
+     vleft = -(v_L + cs_L**2*(ppost/p_L - 1.)/(gamma*(vpost-v_L)))
   else
      vleft = cs_L - 0.5*(gamma+1.)*vpost + 0.5*(gamma-1.)*v_L
   endif
@@ -168,7 +168,7 @@ subroutine exact_shock(iplot,time,gammain,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_g
 !
 ! position of left-going shock or back end of left-going rarefaction
 !
-  xleft = xzero - abs(vleft)*time
+  xleft = xzero - vleft*time
   if (leftisshock) then
      xleftleft = xleft
   else
@@ -186,7 +186,7 @@ subroutine exact_shock(iplot,time,gammain,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_g
 !
 ! position of right-going shock or back end of right-going rarefaction
 !
-  xright = xzero + abs(vright)*time
+  xright = xzero + vright*time
   if (rightisshock) then
      xrightright = xright
   else
@@ -230,7 +230,7 @@ subroutine exact_shock(iplot,time,gammain,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_g
         if (leftisshock) then
            dens(i) = rho_L*(gamfac+ppost/p_L)/(1+gamfac*ppost/p_L)
         else
-              dens(i) = rho_L*(ppost/p_L)**(1./gamma)
+           dens(i) = rho_L*(ppost/p_L)**(1./gamma)
         endif
         vel(i) = vpost
      elseif (xplot(i) < xright) then
@@ -239,7 +239,7 @@ subroutine exact_shock(iplot,time,gammain,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_g
         if (rightisshock) then
            dens(i) = rho_R*(gamfac+ppost/p_R)/(1+gamfac*ppost/p_R)
         else
-              dens(i) = rho_R*(ppost/p_R)**(1./gamma)
+           dens(i) = rho_R*(ppost/p_R)**(1./gamma)
         endif
         vel(i) = vpost
      elseif (xplot(i) < xrightright) then
@@ -329,7 +329,7 @@ end subroutine exact_shock
 !-------------------------------------------------------------------
 subroutine get_pstar(gamma,p_L,p_R,v_L,v_R,c_L,c_R,pr,vstar)
   implicit none
-  real, parameter :: tol = 1.5e-4
+  real, parameter :: tol = 1.5e-6
   real, intent(in) :: gamma,p_L,p_R,v_L,v_R,c_L,c_R
   real, intent(out) :: pr,vstar
   integer, parameter :: maxits = 30
@@ -375,7 +375,7 @@ subroutine get_pstar(gamma,p_L,p_R,v_L,v_R,c_L,c_R,pr,vstar)
   pr = prnew
   vstar = v_L - f_L
 
-  print*,'its = ',its,' pr = ',prnew,'v = ',vstar,v_R + f_R
+  print*,'its =',its,' p* =',prnew,'v* =',vstar,v_R + f_R
 
 end subroutine get_pstar
 
