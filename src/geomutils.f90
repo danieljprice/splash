@@ -177,7 +177,7 @@ end subroutine changeveccoords
 !
 !----------------------------------------------------------------
 subroutine set_coordlabels(numplot)
- use geometry,       only:labelcoord
+ use geometry,       only:labelcoord,coord_is_length
  use labels,         only:label,unitslabel,iamvec,labelvec,ix,labeldefault
  use settings_data,  only:icoords,icoordsnew,ndim,iRescale,debugmode
  implicit none
@@ -212,7 +212,7 @@ subroutine set_coordlabels(numplot)
     do i=1,ndim
        if (ix(i).gt.0) then
           label(ix(i)) = labelcoord(i,icoordsnew)
-          if (iRescale .and. icoords.eq.icoordsnew) then
+          if (iRescale .and. coord_is_length(i,icoordsnew)) then
              label(ix(i)) = trim(label(ix(i)))//trim(unitslabel(ix(i)))
           endif
        endif
