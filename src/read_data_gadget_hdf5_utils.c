@@ -386,12 +386,14 @@ int read_gadgethdf5_dataset(hid_t group_id,
 
    /* do nothing if none of the columns are required */
    flag = 0;
-   for (k=0;k<rank;k++) {
+   for (k = *j;k < *j+rank;k++) {
       if (isrequired[k]) flag = 1;
    }
+
    if (!flag) {
       if (debug) printf("DEBUG: skipping %s : not required\n",datasetname);
       H5Dclose(dataset_id);
+      *j = *j + rank;
       return 0;
    }
 
@@ -431,11 +433,13 @@ int read_gadgethdf5_dataset(hid_t group_id,
          if (!H5Sselect_valid(dataspace_id)) { printf("ERROR selecting hyperslab \n"); ierr = 5; }
 
          /* read column from file */
-         if (isrequired[*j]) {
+         if (isrequired[*j-1]) {
             H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
 
             /* call Fortran back, sending values in temp array to fill into the main splash dat array */
             read_gadgethdf5_data_fromc(j,&npartoftype[itype],temp,id,&itype,&i0[itype]);
+         } else {
+            if (debug) printf("DEBUG: skipping %s in COLUMN %i \n",datasetname,*j);
          }
       }
    }
