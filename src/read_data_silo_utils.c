@@ -125,7 +125,7 @@ void read_silo_data(char *filename,
       DBpointmesh *my_ptmesh = DBGetPointmesh(silofile,toc->ptmesh_names[0]);
       if (!my_ptmesh) {
          printf(" ERROR reading point mesh %s\n",toc->ptmesh_names[0]);
-         /*DBFreetoc(toc);*/
+         DBClose(silofile);
          *ierr = 4;
          return;
       } else {
@@ -192,5 +192,6 @@ void read_silo_data(char *filename,
 
          DBFreePointmesh(my_ptmesh);
       }
+      DBClose(silofile);
    }
 
