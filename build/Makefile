@@ -629,6 +629,13 @@ amuse_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_amuse_hdf5_utils.o read_d
 read_data_amuse_hdf5_utils.o: read_data_amuse_hdf5_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
 
+#---SILO read ---
+silo: checksystem checksilo $(OBJECTS) read_data_silo_utils.o read_data_silo.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/silosplash $(OBJECTS) read_data_silo_utils.o read_data_silo.o $(LDFLAGS) $(HDF5LIBS) -lsiloh5
+
+read_data_silo_utils.o: read_data_silo_utils.c
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+
 #------------------
 
 bauswein: checksystem $(OBJECTS) read_data_bauswein.o
@@ -827,6 +834,13 @@ checkhdf5:
 	@echo; echo "ERROR: HDF5ROOT should be set before compiling splash with HDF5 utilities"; echo; ${MAKE} err;
    else
 	@if [ -d $$HDF5ROOT ]; then echo; echo "HDF5ROOT=$$HDF5ROOT"; echo; else echo; echo "ERROR: Directory given by HDF5ROOT=$$HDF5ROOT does not exist"; echo; ${MAKE} err; fi;
+   endif
+
+checksilo: checkhdf5
+   ifeq (X${SILO_DIR}, X)
+	@echo; echo "ERROR: SILO_DIR should be set before compiling splash with SILO reader"; echo; ${MAKE} err;
+   else
+	@if [ -d $$SILO_DIR ]; then echo; echo "SILO_DIR=$$SILO_DIR"; echo; else echo; echo "ERROR: Directory given by SILO_DIR=$$SILO_DIR does not exist"; echo; ${MAKE} err; fi;
    endif
 #
 # install option, copies any binaries compiled to /usr/local/bin/
