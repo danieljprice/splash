@@ -58,7 +58,7 @@ module geometry
     reshape((/'x    ','y    ','z    ', &
               'r    ','phi  ','z    ', &
               'r    ','phi  ','theta', &
-              'r_tor','theta','phi  '/),shape=(/3,maxcoordsys/))
+              'r_t  ','theta','phi  '/),shape=(/3,maxcoordsys/))
 
  public :: coord_transform, vector_transform, coord_transform_limits
  public :: coord_is_length
