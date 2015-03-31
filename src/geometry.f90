@@ -187,7 +187,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
            xout(1:ndimout) = xin(1:ndimout)
         else
            rcyl = xin(1)*COS(xin(2)) + Rtorus
-           xout(1) = rcyl*COS(xin(3))
+                             xout(1) = rcyl*COS(xin(3))
            if (ndimout.ge.2) xout(2) = rcyl*SIN(xin(3))
            if (ndimout.ge.3) xout(3) = xin(1)*SIN(xin(2))
         endif
@@ -228,7 +228,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         else
            rcyl = SQRT(xin(1)**2 + xin(2)**2)
            xout(1) = SQRT(xin(3)**2 + (rcyl - Rtorus)**2)
-           if (ndimout.ge.2) xout(2) = ASIN(xin(3)/xout(1))
+           if (ndimout.ge.2) xout(2) = ATAN2(xin(3),rcyl-Rtorus) ! ASIN(xin(3)/xout(1))
            if (ndimout.ge.3) xout(3) = ATAN2(xin(2),xin(1))
         endif
      case default
