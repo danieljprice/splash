@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -61,10 +61,16 @@ module geometry
               'r_t  ','theta','phi  '/),shape=(/3,maxcoordsys/))
 
  public :: coord_transform, vector_transform, coord_transform_limits
- public :: coord_is_length
+ public :: coord_is_length, print_error
 
  real, parameter, private :: pi = 3.1415926536
  real, parameter, private :: Rtorus = 1.0
+
+ integer, parameter, public :: ierr_invalid_dimsin  = 1
+ integer, parameter, public :: ierr_invalid_dimsout = 2
+ integer, parameter, public :: ierr_invalid_dims    = 3
+ integer, parameter, public :: ierr_r_is_zero       = 4
+ integer, parameter, public :: ierr_warning_assuming_cartesian = -1
 
  private
 
@@ -73,21 +79,45 @@ contains
 ! utility that returns whether or not a particular coordinate
 ! in a given coordinate system has dimensions of length or not
 !-----------------------------------------------------------------
-logical function coord_is_length(ix,igeom)
-  implicit none
+pure logical function coord_is_length(ix,igeom)
   integer, intent(in) :: ix,igeom
 
   coord_is_length = .false.
   select case(igeom)
   case(igeom_toroidal, igeom_spherical)
-     if (ix.eq.1) coord_is_length = .true.
+     if (ix==1) coord_is_length = .true.
   case(igeom_cylindrical)
-     if (ix.eq.1 .or. ix.eq.3) coord_is_length = .true.
+     if (ix==1 .or. ix==3) coord_is_length = .true.
   case(igeom_cartesian)
      coord_is_length = .true.
   end select
 
 end function coord_is_length
+
+!--------------------------------------------------------
+! utility to handle error printing so transform routines
+! do not generate verbose output
+!--------------------------------------------------------
+
+subroutine print_error(ierr)
+ integer, intent(in) :: ierr
+
+ select case(ierr)
+ case(ierr_invalid_dimsin)
+    print*,'Error: coord transform: invalid number of dimensions on input'
+ case(ierr_invalid_dimsout)
+    print*,'Error: coord transform: invalid number of dimensions on output'
+ case(ierr_invalid_dims)
+    print*,'Error: coord transform: ndimout must be <= ndimin'
+ case(ierr_r_is_zero)
+    print*,'Warning: coord transform: r=0 on input: cannot return angle'
+ case(ierr_warning_assuming_cartesian)
+    print*,'warning: using default cartesian output'
+ case default
+    print*,' unknown error'
+ end select
+
+end subroutine print_error
 
 !-----------------------------------------------------------------
 ! Subroutine to transform between different co-ordinate systems
@@ -102,30 +132,36 @@ end function coord_is_length
 
 !
 !-----------------------------------------------------------------
-subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
-  implicit none
-  integer, intent(in) :: ndimin,ndimout,itypein,itypeout
-  real, intent(in), dimension(ndimin) :: xin
-  real, intent(out), dimension(ndimout) :: xout
-  real :: rcyl
+pure subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout,err)
+  integer, intent(in)  :: ndimin,ndimout,itypein,itypeout
+  real,    intent(in)  :: xin(ndimin)
+  real,    intent(out) :: xout(ndimout)
+  integer, intent(out), optional :: err
+  real    :: rcyl
+  integer :: ierr
 !
 !--check for errors in input
 !
-  if (itypeout.eq.itypein) then
+  ierr = 0
+  if (itypeout==itypein) then
      xout(1:ndimout) = xin(1:ndimout)
      return
-  elseif (ndimin.lt.1.or.ndimin.gt.3) then
-     print*,'Error: coord transform: invalid number of dimensions on input'
+  elseif (ndimin < 1.or.ndimin > 3) then
+     ierr = ierr_invalid_dimsin
+     if (present(err)) err = ierr
      return
-  elseif (ndimout.lt.1.or.ndimout.gt.3) then
-     print*,'Error: coord transform: invalid number of dimensions on output'
+  elseif (ndimout < 1.or.ndimout > 3) then
+     ierr = ierr_invalid_dimsout
+     if (present(err)) err = ierr
      return
-  elseif (ndimout.gt.ndimin) then
-     print*,'Error: coord transform: ndimout must be <= ndimin'
+  elseif (ndimout > ndimin) then
+     ierr = ierr_invalid_dims
+     if (present(err)) err = ierr
      return
-  elseif (abs(xin(1)).lt.1e-8 .and. ndimout.ge.2 .and. &
-       (itypein.eq.2 .or. itypein.eq.3)) then
-     print*,'Warning: coord transform: r=0 on input: cannot return angle'
+  elseif (abs(xin(1)) < 1e-8 .and. ndimout >= 2 .and. &
+       (itypein==2 .or. itypein==3)) then
+     ierr = ierr_r_is_zero
+     if (present(err)) err = ierr
      xout(1:ndimout) = xin(1:ndimout)
      return
   endif
@@ -142,13 +178,13 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         !
         ! output is cartesian (default)
         !
-        if (itypeout.ne.1) print*,'warning: using default cartesian output'
-        if (ndimout.eq.1) then
+        if (itypeout /= 1) ierr = ierr_warning_assuming_cartesian
+        if (ndimout==1) then
            xout(1) = xin(1)
         else  ! r,phi,z -> x,y,z
            xout(1) = xin(1)*COS(xin(2))
            xout(2) = xin(1)*SIN(xin(2))
-           if (ndimout.gt.2) xout(3) = xin(3)
+           if (ndimout > 2) xout(3) = xin(3)
         endif
      end select
 !
@@ -160,7 +196,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         !
         ! output is cartesian (default)
         !
-        if (itypeout.ne.1) print*,'warning: using default cartesian output'
+        if (itypeout /= 1) ierr = ierr_warning_assuming_cartesian
         select case(ndimout)
            case(1) ! r -> x
               xout(1) = xin(1)
@@ -182,14 +218,14 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         !
         ! output is cartesian (default)
         !
-        if (itypeout.ne.1) print*,'warning: using default cartesian output'
-        if (ndimin.ne.3) then
+        if (itypeout /= 1) ierr = ierr_warning_assuming_cartesian
+        if (ndimin /= 3) then
            xout(1:ndimout) = xin(1:ndimout)
         else
            rcyl = xin(1)*COS(xin(2)) + Rtorus
                              xout(1) = rcyl*COS(xin(3))
-           if (ndimout.ge.2) xout(2) = rcyl*SIN(xin(3))
-           if (ndimout.ge.3) xout(3) = xin(1)*SIN(xin(2))
+           if (ndimout >= 2) xout(2) = rcyl*SIN(xin(3))
+           if (ndimout >= 3) xout(3) = xin(1)*SIN(xin(2))
         endif
      end select
 !
@@ -201,20 +237,20 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         !
         !--output is cylindrical
         !
-        if (ndimin.eq.1) then
+        if (ndimin==1) then
            xout(1) = abs(xin(1))   ! cylindrical r
         else
            xout(1) = SQRT(DOT_PRODUCT(xin(1:2),xin(1:2)))
-           if (ndimout.ge.2) xout(2) = ATAN2(xin(2),xin(1)) ! phi
-           if (ndimout.eq.3) xout(3) = xin(3) ! z
+           if (ndimout >= 2) xout(2) = ATAN2(xin(2),xin(1)) ! phi
+           if (ndimout==3) xout(3) = xin(3) ! z
         endif
      case(3)
         !
         !--output is spherical
         !
         xout(1) = SQRT(DOT_PRODUCT(xin,xin))! r
-        if (ndimout.ge.2) xout(2) = ATAN2(xin(2),xin(1)) ! phi
-        if (ndimout.ge.3) then
+        if (ndimout >= 2) xout(2) = ATAN2(xin(2),xin(1)) ! phi
+        if (ndimout >= 3) then
            ! theta = ACOS(z/r)
            xout(3) = ACOS(xin(3)/xout(1))
         endif
@@ -222,14 +258,14 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
         !
         !--output is torus r,theta,phi co-ordinates
         !
-        if (ndimin.ne.3) then
+        if (ndimin /= 3) then
            ! not applicable if ndim < 3
            xout(1:ndimout) = xin(1:ndimout)
         else
            rcyl = SQRT(xin(1)**2 + xin(2)**2)
            xout(1) = SQRT(xin(3)**2 + (rcyl - Rtorus)**2)
-           if (ndimout.ge.2) xout(2) = ATAN2(xin(3),rcyl-Rtorus) ! ASIN(xin(3)/xout(1))
-           if (ndimout.ge.3) xout(3) = ATAN2(xin(2),xin(1))
+           if (ndimout >= 2) xout(2) = ATAN2(xin(3),rcyl-Rtorus) ! ASIN(xin(3)/xout(1))
+           if (ndimout >= 3) xout(3) = ATAN2(xin(2),xin(1))
         endif
      case default
         !
@@ -239,6 +275,7 @@ subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout)
      end select
   end select
 
+  if (present(err)) err = ierr
   return
 end subroutine coord_transform
 
@@ -267,33 +304,39 @@ end subroutine coord_transform
 !  spherical polar -> cartesian
 !
 !-----------------------------------------------------------------
-subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
-  implicit none
-  integer, intent(in) :: ndimin,ndimout,itypein,itypeout
-  real, intent(in), dimension(ndimin) :: xin,vecin
-  real, intent(out), dimension(ndimout) :: vecout
-  integer :: i
-  real, dimension(3,3) :: dxdx
+pure subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout,err)
+  integer, intent(in)  :: ndimin,ndimout,itypein,itypeout
+  real,    intent(in)  :: xin(ndimin),vecin(ndimin)
+  real,    intent(out) :: vecout(ndimout)
+  integer, intent(out), optional :: err
+  integer :: i,ierr
+  real :: dxdx(3,3)
   real :: sinphi, cosphi
   real :: rr,rr1,rcyl,rcyl2,rcyl1
+  
+  ierr = 0
 !
 !--check for errors in input
 !
-  if (ndimout.gt.ndimin) then
-     print*,'Error: vec transform: ndimout must be <= ndimin'
+  if (ndimout > ndimin) then
+     ierr = ierr_invalid_dims
+     if (present(err)) err = ierr
      return
-  elseif (itypein.eq.itypeout) then
+  elseif (itypein==itypeout) then
      vecout(1:ndimout) = vecin(1:ndimout)
      return
-  elseif (ndimin.lt.1.or.ndimin.gt.3) then
-     print*,'Error: vec transform: invalid number of dimensions on input'
+  elseif (ndimin < 1.or.ndimin > 3) then
+     ierr = ierr_invalid_dimsin
+     if (present(err)) err = ierr
      return
-  elseif (ndimout.lt.1.or.ndimout.gt.3) then
-     print*,'Error: vec transform: invalid number of dimensions on output'
+  elseif (ndimout < 1.or.ndimout > 3) then
+     ierr = ierr_invalid_dimsout
+     if (present(err)) err = ierr
      return
-  elseif (abs(xin(1)).lt.1e-8 .and. &
-       (itypein.eq.2 .or. itypein.eq.3)) then
-     print*,'Warning: vec transform: r=0 on input, setting vec = 0 at origin'
+  elseif (abs(xin(1)) < 1e-8 .and. &
+       (itypein==2 .or. itypein==3)) then
+     ierr = ierr_r_is_zero
+     if (present(err)) err = ierr
      vecout = 0.
      return
   endif
@@ -366,13 +409,13 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         ! output is toroidal
         !
         rcyl = sqrt(xin(1)**2 + xin(2)**2)
-        if (rcyl.gt.tiny(rcyl)) then
+        if (rcyl > tiny(rcyl)) then
            rcyl1 = 1./rcyl
         else
            rcyl1 = 0.
         endif
         rr = sqrt((rcyl - Rtorus)**2 + xin(3)**2)
-        if (rr.gt.tiny(rr)) then
+        if (rr > tiny(rr)) then
            rr1 = 1./rr
         else
            rr1 = 0.
@@ -391,18 +434,18 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
         ! output is spherical
         !
         rr = sqrt(dot_product(xin,xin))
-        if (rr.gt.tiny(rr)) then
+        if (rr > tiny(rr)) then
            rr1 = 1./rr
         else
            rr1 = 0.
         endif
         dxdx(1,1) = xin(1)*rr1  ! dr/dx
-        if (ndimin.ge.2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
-        if (ndimin.eq.3) dxdx(1,3) = xin(3)*rr1  ! dr/dz
-        if (ndimin.ge.2) then
+        if (ndimin >= 2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
+        if (ndimin==3) dxdx(1,3) = xin(3)*rr1  ! dr/dz
+        if (ndimin >= 2) then
            rcyl2 = dot_product(xin(1:2),xin(1:2))
            rcyl = sqrt(rcyl2)
-           if (rcyl.gt.tiny(rcyl)) then
+           if (rcyl > tiny(rcyl)) then
               rcyl1 = 1./rcyl
            else
               rcyl1 = 0.
@@ -410,7 +453,7 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
            dxdx(2,1) = -xin(2)*rcyl1 ! rcyl dphi/dx
            dxdx(2,2) = xin(1)*rcyl1  ! rcyl dphi/dy
            dxdx(2,3) = 0.
-           if (ndimin.ge.3) then
+           if (ndimin >= 3) then
               dxdx(3,1) = xin(1)*xin(3)*rr1*rcyl1 ! r dtheta/dx
               dxdx(3,2) = xin(2)*xin(3)*rr1*rcyl1 ! r dtheta/dy
               dxdx(3,3) = -rcyl2*rr1*rcyl1 ! r dtheta/dz
@@ -427,14 +470,14 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
            rr1 = 0.
         endif
         dxdx(1,1) = xin(1)*rr1  ! dr/dx
-        if (ndimin.ge.2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
-        if (ndimout.ge.2) then
+        if (ndimin >= 2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
+        if (ndimout >= 2) then
            dxdx(2,1) = -xin(2)*rr1 ! r*dphi/dx
            dxdx(2,2) = xin(1)*rr1  ! r*dphi/dy
-           if (ndimout.eq.3) dxdx(3,3) = 1.  ! dz/dz
+           if (ndimout==3) dxdx(3,3) = 1.  ! dz/dz
         endif
      case default
-        print*,'coord transform: invalid co-ordinate type on output'
+        ierr = ierr_warning_assuming_cartesian
         vecout(1:ndimout) = vecin(1:ndimout)
         return
      end select
@@ -446,6 +489,7 @@ subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeout)
      vecout(i) = dot_product(dxdx(i,1:ndimin),vecin(1:ndimin))
   enddo
 
+  if (present(err)) err = ierr
   return
 end subroutine vector_transform
 
@@ -454,14 +498,13 @@ end subroutine vector_transform
 ! between various co-ordinate systems.
 !------------------------------------------------------------------
 subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
- implicit none
  integer, intent(in) :: itypein,itypeout,ndim
  real, dimension(ndim), intent(inout) :: xmin,xmax
  real, dimension(ndim) :: xmaxtemp,xmintemp
 !
 !--check for errors in input
 !
- if (ndim.lt.1 .or. ndim.gt.3) then
+ if (ndim < 1 .or. ndim > 3) then
     print*,'Error: limits coord transform: ndim invalid on input'
     return
  endif
@@ -484,7 +527,7 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
     !
     xmintemp(1:min(ndim,2)) = -Rtorus - xmax(1)
     xmaxtemp(1:min(ndim,2)) = Rtorus + xmax(1)
-    if (ndim.eq.3) then
+    if (ndim==3) then
        xmintemp(3) = -xmax(1)
        xmaxtemp(3) = xmax(1)
     endif
@@ -528,10 +571,10 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
     xmintemp(1) = 0.
     xmaxtemp(1) = max(maxval(abs(xmax(1:min(ndim,2))))-Rtorus, &
                       maxval(abs(xmin(1:min(ndim,2))))-Rtorus)
-    if (ndim.ge.2) then
+    if (ndim >= 2) then
        xmintemp(2) = -0.5*pi
        xmaxtemp(2) = 0.5*pi
-       if (ndim.ge.3) then
+       if (ndim >= 3) then
           xmintemp(3) = -pi
           xmaxtemp(3) = pi
        endif
@@ -544,10 +587,10 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
        xmintemp(1) = 0.
        xmaxtemp(1) = max(maxval(abs(xmin(1:ndim))), &
                          maxval(abs(xmax(1:ndim))))
-       if (ndim.ge.2) then
+       if (ndim >= 2) then
           xmintemp(2) = -pi
           xmaxtemp(2) = pi
-          if (ndim.ge.3) then
+          if (ndim >= 3) then
              xmintemp(3) = 0.
              xmaxtemp(3) = pi
           endif
@@ -558,7 +601,7 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
     case(2)
        !--rmin, rmax
        xmintemp(1) = 0.
-       if (ndim.ge.2) then
+       if (ndim >= 2) then
           xmaxtemp(1) = sqrt(max((xmin(1)**2 + xmin(2)**2), &
                                  (xmax(1)**2 + xmax(2)**2)))
           xmintemp(2) = -pi
