@@ -2639,11 +2639,11 @@ Toroidal coordinates represent a local frame of reference inside a torus. The co
 \begin{displaymath}
 \begin{array}{lclp{1cm}lcl}
 r & = & \sqrt{[(x^2 + y^2)^{1/2} - R]^{2} + z^{2}}    & & x & = & (r\cos\theta + R) \cos\phi \\
-\theta & = & \sin^{-1}{(z/r)}              &; & y & = & (r\cos\theta + R)\sin\phi \\
+\theta & = & \tan^{-1} \left[\frac{z}{(\sqrt{x^{2} + y^{2}} - R)}\right]              &; & y & = & (r\cos\theta + R)\sin\phi \\
 \phi & = & \tan^{-1}(y/x)             & & z & = & r\sin\theta \\
 \end{array}
 \end{displaymath}
-where $R$ is the radius of the torus and vectors transform according to:
+where $R$ is the radius of the torus. The use of the inverse tangent in $\theta$ instead of $\theta = \sin^{-1}(z/r)$ is necessary to get the quadrant correct (via the \verb+atan2+ function). Vectors transform according to:
 \begin{displaymath}
 \begin{array}{lclp{2cm}lcl}
 v_r      & = & v_x \frac{x(r_{cyl} - R)}{r r_{cyl}} + v_y \frac{y(r_{cyl} - R)}{r r_{cyl}} + v_{z} \frac{z}{r}  & & v_x & = & v_r \cos\theta\cos\phi- v_\theta \sin\theta\cos\phi - v_\phi\sin\phi \\
