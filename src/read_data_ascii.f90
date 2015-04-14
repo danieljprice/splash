@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -64,20 +64,27 @@
 ! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
+module asciiread
+ integer :: icoltype
+
+end module asciiread
 
 subroutine read_data(rootname,indexstart,nstepsread)
-  use particle_data,  only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
+  use particle_data,  only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep,iamtype
   use params
-  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose
+  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,ntypes
   use mem_allocation, only:alloc
   use asciiutils,     only:get_ncolumns
   use system_utils,   only:ienvironment,renvironment
+  use asciiread,      only:icoltype
+  use labels,         only:labeltype,print_types
   implicit none
   integer, intent(in)          :: indexstart
   integer, intent(out)         :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr,iheader_time,iheader_gamma
-  integer :: nprint,npart_max,nstep_max,icol,nheaderlines,nheaderenv
+  integer :: nprint,npart_max,nstep_max,icol,nheaderlines,nheaderenv,itype
+  integer :: noftype(maxparttypes),iverbose_was
   logical :: iexist,timeset,gammaset
   real    :: dummyreal
   character(len=len(rootname)+4) :: dumpfile
@@ -219,16 +226,38 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--now read the timestep data in the dumpfile
 !
+  icoltype = 0       ! no particle type defined by default
+  iverbose_was = iverbose
+  iverbose = 0
+  call set_labels()  ! to see if types are defined
+  iverbose = iverbose_was
   i = 0
   ierr = 0
   nerr = 0
+  noftype(:) = 0
+  ntypes = 1
   overparts: do while (ierr >= 0)
      i = i + 1
      if (i.gt.npart_max) then ! reallocate memory if necessary
         npart_max = 10*npart_max
-        call alloc(npart_max,nstep_max,ncolstep+ncalc)
+        if (icoltype > 0) then
+           call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=.true.)        
+        else
+           call alloc(npart_max,nstep_max,ncolstep+ncalc)
+        endif
      endif
      read(iunit,*,iostat=ierr) (dat(i,icol,j),icol = 1,ncolstep)
+     if (icoltype > 0 .and. icoltype <= ncolstep .and. ierr==0) then
+        !--set particle type from type column
+        itype = nint(dat(i,icoltype,j))
+        if (itype > 0 .and. itype < maxparttypes) then
+           iamtype(i,j) = itype
+        else
+           iamtype(i,j) = 1
+        endif
+        noftype(itype) = noftype(itype) + 1
+        ntypes = max(itype,ntypes)
+     endif
      if (ierr > 0) then
         nerr = nerr + 1
         if (nerr .le. 10) print "(a,i8,a)",' ERROR reading data from line ',i+nheaderlines,', skipping'
@@ -246,9 +275,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
      print "(2(a,i10))",' read npts = ',nprint,' ncolumns = ',ncolstep
   endif
 
-
   npartoftype(:,j) = 0
-  npartoftype(1,j) = nprint
+  if (icoltype > 0 .and. icoltype <= ncolstep) then
+     npartoftype(1:ntypes,j) = noftype(1:ntypes)
+     call print_types(npartoftype(:,j),labeltype)
+  else
+     npartoftype(1,j) = nprint
+  endif
 
   close(iunit)
 
@@ -273,6 +306,7 @@ subroutine set_labels
   use geometry,        only:labelcoord
   use system_commands, only:get_environment
   use filenames,       only:fileprefix
+  use asciiread,       only:icoltype
   implicit none
   integer                 :: i,ierr,ndimVtemp
   character(len=120)      :: columnfile
@@ -343,6 +377,8 @@ subroutine set_labels
         elseif (labeli(1:5).eq.'pmass' .or. labeli(1:13).eq.'particle mass' &
                 .or. index(labeli,'mass').ne.0) then
            ipmass = i
+        elseif (ipmass.eq.0 .and. trim(labeli).eq.'m') then
+           ipmass = i
         !--use first column labelled h as smoothing length
         elseif (ih.eq.0 .and. (labeli(1:1).eq.'h' &
                 .or. labeli(1:6).eq.'smooth')) then
@@ -355,6 +391,8 @@ subroutine set_labels
         elseif (ivx.eq.0 .and. labeli(1:1).eq.'v') then
            ivx = i
            ndimV = 1
+        elseif (icoltype==0 .and. index(labeli,'type').ne.0) then
+           icoltype = i
         endif
         !--set ndimV as number of columns with v as label
         if (ivx.gt.0 .and. i.gt.ivx .and. i.le.ivx+2) then
@@ -402,6 +440,8 @@ subroutine set_labels
            print "(a,i2)",' Assuming velocity in column ',ivx
         endif
      endif
+     if (icoltype.gt.0) print "(a,i2)",' Assuming particle type in column ',icoltype
+
      if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
         print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
                     '  until positions of density, smoothing length and particle', &
@@ -427,7 +467,7 @@ subroutine set_labels
   !
   !--set labels for each particle type
   !
-  ntypes = 1 !!maxparttypes
+  !ntypes = 1 !!maxparttypes
   labeltype(1) = 'gas'
   UseTypeInRenderings(1) = .true.
 
