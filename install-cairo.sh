@@ -18,10 +18,12 @@
 #   MacPorts:
 #      sudo port install cairo
 #
-cairodist=cairo-1.12.2.tar.xz;
-pixmandist=pixman-0.24.4.tar.gz;
+cairodist=cairo-1.12.18.tar.xz;
+pixmandist=pixman-0.32.6.tar.gz;
+xzdist=xz-5.2.1.tar.gz;
 installprefix=$PWD/giza;
 url="http://cairographics.org/releases";
+xzurl="http://tukaani.org/xz/";
 #
 #--Check that the giza directory is present.
 #  This is not strictly necessary, but it means we install cairo and
@@ -66,7 +68,7 @@ else
    echo "unpacking pixman...";
    tar xfz $pixmandist;
    echo "unpacking cairo...";
-   tar -Jxf $cairodist;
+   tarc -Jxf $cairodist;
    pixmandir=${pixmandist/.tar.gz/};
    cairodir=${cairodist/.tar.xz/};
    if [ ! -d $pixmandir ]; then
@@ -75,7 +77,28 @@ else
    fi
    if [ ! -d $cairodir ]; then
       echo; echo "ERROR: cairo failed to unpack (no directory $cairodir)"; echo;
-      exit $?;
+      #
+      #--install xzutils if tar -Jxf fails...
+      #
+      echo "Attempting to download xzutils in order to unpack cairo..."
+      wget $xzurl/$xzdist;
+      tar xfz $xzdist;
+      xzdir=${xzdist/.tar.gz/};
+      cd $xzdir;
+      xzinstalldir=/tmp/xz-tmp/;
+      ./configure --prefix=$xzinstalldir;
+      make || ( echo; echo "ERROR during xzutils build"; echo; exit $? );
+      make install || ( echo; echo "ERROR installing xzutils into $xzinstalldir"; echo; exit $? );
+      cd ..;
+      #
+      #--now unpack cairo using xz utils
+      #
+      ${xzinstalldir}/bin/unxz $cairodist;
+      tar xf ${cairodist/.xz/};
+      if [ ! -d $cairodir ]; then
+         echo; echo "ERROR: cairo failed to unpack even with xz downloaded (no directory $cairodir)"; echo;
+         exit $?;
+      fi
    fi
 #
 #--install pixman
