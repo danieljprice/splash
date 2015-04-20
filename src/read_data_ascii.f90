@@ -116,6 +116,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
   j = indexstart
   nstepsread = 0
+  icoltype = 0       ! no particle type defined by default
 
   !
   !--open the file and read the number of particles
@@ -142,6 +143,12 @@ subroutine read_data(rootname,indexstart,nstepsread)
         print "(a)",'*** ERROR: zero/undetermined number of columns in file ***'
         return
      endif
+     iverbose_was = iverbose
+     iverbose = 0
+     ncolumns = ncolstep
+     call set_labels()  ! to see if types are defined
+     iverbose = iverbose_was
+
      !
      !--allocate memory initially
      !
@@ -149,17 +156,16 @@ subroutine read_data(rootname,indexstart,nstepsread)
      nstep_max = max(nstep_max,indexstart,1)
      if (.not.allocated(dat) .or. (nprint.gt.npart_max) .or. (ncolstep+ncalc).gt.maxcol) then
         npart_max = max(npart_max,INT(1.1*(nprint)))
-        call alloc(npart_max,nstep_max,ncolstep+ncalc)
+        call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=(icoltype > 0))
      endif
   endif
 
   npart_max = max(npart_max,nprint)
-  ncolumns = ncolstep
 !
 !--allocate/reallocate memory if j > maxstep
 !
   if (j.gt.maxstep) then
-     call alloc(maxpart,j+1,maxcol)
+     call alloc(maxpart,j+1,maxcol,mixedtypes=(icoltype > 0))
   endif
 
 !
@@ -226,11 +232,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !
 !--now read the timestep data in the dumpfile
 !
-  icoltype = 0       ! no particle type defined by default
-  iverbose_was = iverbose
-  iverbose = 0
-  call set_labels()  ! to see if types are defined
-  iverbose = iverbose_was
   i = 0
   ierr = 0
   nerr = 0
@@ -240,18 +241,14 @@ subroutine read_data(rootname,indexstart,nstepsread)
      i = i + 1
      if (i.gt.npart_max) then ! reallocate memory if necessary
         npart_max = 10*npart_max
-        if (icoltype > 0) then
-           call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=.true.)        
-        else
-           call alloc(npart_max,nstep_max,ncolstep+ncalc)
-        endif
+        call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=(icoltype > 0))        
      endif
      read(iunit,*,iostat=ierr) (dat(i,icol,j),icol = 1,ncolstep)
-     if (icoltype > 0 .and. icoltype <= ncolstep .and. ierr==0) then
+     if (icoltype > 0 .and. icoltype <= ncolstep .and. ierr==0 .and. (size(iamtype(:,j)) > 1)) then
         !--set particle type from type column
         itype = nint(dat(i,icoltype,j))
         if (itype > 0 .and. itype < maxparttypes) then
-           iamtype(i,j) = itype
+           iamtype(i,j) = int(itype,kind=1)
         else
            iamtype(i,j) = 1
         endif
@@ -302,7 +299,7 @@ subroutine set_labels
   use labels,          only:label,labeltype,ix,irho,ipmass,ih,iutherm, &
                             ipr,ivx,iBfirst,iamvec,labelvec,lenlabel
   !use params,          only:maxparttypes
-  use settings_data,   only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings,iverbose
+  use settings_data,   only:ncolumns,ndim,ndimV,UseTypeInRenderings,iverbose
   use geometry,        only:labelcoord
   use system_commands, only:get_environment
   use filenames,       only:fileprefix
