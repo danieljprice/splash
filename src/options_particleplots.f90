@@ -266,7 +266,7 @@ subroutine submenu_particleplots(ichoose)
   case(5)
      call prompt('plot line joining particles?',iplotline)
      if (iplotline) then
-        call prompt('Enter line style to use ',linestyle,0,plotlib_maxlinestyle)
+        call prompt('Enter line style to use ',linestyle,1,plotlib_maxlinestyle)
         call prompt('Enter colour for line ',linecolour,0,plotlib_maxlinecolour)
      endif
      return
