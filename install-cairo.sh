@@ -68,7 +68,7 @@ else
    echo "unpacking pixman...";
    tar xfz $pixmandist;
    echo "unpacking cairo...";
-   tarc -Jxf $cairodist;
+   tar -Jxf $cairodist;
    pixmandir=${pixmandist/.tar.gz/};
    cairodir=${cairodist/.tar.xz/};
    if [ ! -d $pixmandir ]; then
