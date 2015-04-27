@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -2741,10 +2741,10 @@ contains
     use settings_limits, only:adjustlimitstodevice
     use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot,plot_set_opacity
     implicit none
-    integer :: iplotsave,ipanelsave,ipanelpos
+    integer :: iplotsave,ipanelsave,ipanelpos,npanels_remaining
     real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
     real    :: xminpix,xmaxpix,yminpix,ymaxpix,dxpix
-    logical :: ipanelchange,dum,iprint_axes
+    logical :: ipanelchange,dum,iprint_axes,lastrow
     logical, intent(in), optional :: dummy
     character(len=7) :: string
     !--------------------------------------------
@@ -2791,6 +2791,13 @@ contains
           vecmax = xmaxmulti(ivectorplot)
        endif
     endif
+
+    !nsteps_remaining = (nsteps - istep)/nstepsperpage
+    !nplots_remaining = (nyplots - nyplot)/nstepsperpage
+    npanels_remaining = (nsteps - istep)/nstepsperpage !nplots_remaining*nsteps_remaining
+
+!    npanels_remaining = (nsteps - istep)*nyplots/nstepsperpage
+    lastrow  = (npanels_remaining < nacross)
 
     lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
                 .and. nyplot.eq.nyplots .and. k.eq.nxsec)
@@ -2884,7 +2891,7 @@ contains
                      trim(labelx),trim(labely),'NOPGBOX',just,iaxistemp, &
                      xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                      0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice, &
-                     lastplot,yscalealt,labelyalt,itransy)
+                     lastrow,lastplot,yscalealt,labelyalt,itransy)
              call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
              if (debugmode) print*,'DEBUG: viewport xpix=',xminpix,'->',xmaxpix,' ypix=',yminpix,'->',ymaxpix
 
@@ -2926,7 +2933,7 @@ contains
        
           !--if we are not changing page, do not reprint the axes
           iprint_axes = ipagechange .or. inewpage .or. &
-                        ((iplots.le.nacross*ndown) .and. (nyplot.le.nacross*ndown .or. istepsonpage.eq.1))
+                        ((iplots.le.nacross*ndown) .and. (nyplot.le.nacross*ndown .and. istepsonpage.eq.1))
          
           if (iprint_axes) then
              if (debugmode) print*,'DEBUG: printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
@@ -2939,7 +2946,7 @@ contains
                   trim(labelx),trim(labely),string,just,iaxistemp, &
                   xminmargin,xmaxmargin,yminmargin,ymaxmargin, &
                   0.0,TitleOffset,isamexaxis,tile_plots,adjustlimitstodevice, &
-                  lastplot,yscalealt,labelyalt,itransy)
+                  lastrow,lastplot,yscalealt,labelyalt,itransy)
        endif
     endif
 

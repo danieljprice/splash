@@ -71,7 +71,7 @@ contains
 !
 subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,axis, &
                     vmarginleftin,vmarginrightin,vmarginbottomin,vmargintopin, &
-                    colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits,lastplot,&
+                    colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits,lastrow,lastplot,&
                     yscale,labelyalt,itransy)
   use plotlib,only:plot_svp,plot_swin,plot_box,plot_qvsz,plot_annotate, &
                    plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries, &
@@ -84,7 +84,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
   real, intent(in)    :: vmarginleftin,vmarginrightin,vmargintopin,vmarginbottomin
   real, intent(in)    :: yscale
   character(len=*), intent(in) :: labelx,labely,title,labelyalt
-  logical, intent(in) :: isamexaxis,tile,adjustlimits,lastplot
+  logical, intent(in) :: isamexaxis,tile,adjustlimits,lastrow,lastplot
   integer iplot,ix,iy
   real vptsizeeffx,vptsizeeffy,panelsizex,panelsizey
   real vmargintop,vmarginbottom,vmarginleft,vmarginright
@@ -357,7 +357,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      !
      ! decide whether to number and label the x axis
      !
-     if ((iy.eq.ny .or. lastplot) .and. axis.ge.0) then
+     if ((iy.eq.ny .or. lastplot .or. lastrow) .and. axis.ge.0) then
         xopts = 'N'//trim(xopts)
         if (axis.ne.3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
      endif
