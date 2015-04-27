@@ -39,7 +39,7 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
   real, intent(out), dimension(size(xplot)) :: yplot
   real :: term,densi,rxy
   integer, intent(out) :: ierr
-  integer :: i
+  integer :: i,mytorus
   real :: ra2
   integer, parameter :: nu = 2
   real, parameter :: atorus = 0.2, currj0 = 1.0
@@ -56,7 +56,9 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
      ierr = 3
      return
   endif
-  select case(itorus)
+
+  mytorus = 1
+  select case(mytorus)
 
 !
 !--Tokamak torus (in torus 'r' co-ordinate)
@@ -67,6 +69,7 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
      ierr = 5
      return
   endif
+  print*,' plotting tokamak torus'
 
   do i=1,size(xplot)
      ra2 = xplot(i)**2/atorus**2
@@ -75,11 +78,12 @@ subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot
      elseif (nu.eq.2) then
         term = currj0**2*atorus**2*(47. - 12.*ra2**5 + 75.*ra2**4 - 200.*ra2**3 + 270.*ra2**2 - 180*ra2)/720.
      endif
+     if (abs(ra2) < tiny(ra2)) print*,'rho0 = ',term
 
      select case(iplot)
      case(1)
      !--density
-        yplot(i) = term
+        yplot(i) = Mstar*term**gamma
      case(2)
      !--pressure
         yplot(i) = term
