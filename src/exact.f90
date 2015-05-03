@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -526,8 +526,9 @@ contains
     character(len=*), intent(in)  :: rootname
     integer,          intent(out) :: ierr
 
-    integer :: idash,nf,i,j,idrag,idum,linenum
+    integer :: idash,nf,i,j,idrag,idum,linenum,k
     character(len=len_trim(rootname)+8) :: filename
+    character(len=120) :: line
 
     idash = index(rootname,'_')
     if (idash.eq.0) idash = len_trim(rootname)+1
@@ -669,9 +670,16 @@ contains
           do i=1,linenum-1
              read(19,*,iostat=ierr)
           enddo
+          read(19,"(a)",iostat=ierr) line
           if (ierr.eq.0) then
-             read(19,*,iostat=ierr) idrag, idum, idum, Kdrag
-             print*,'>> read Kdrag = ',Kdrag,' from '//trim(filename)
+             k = index(line,'Kdrag =')
+             if (k > 0) then
+                read(line(k+7:),*,iostat=ierr) Kdrag
+                print*,'>> read Kdrag = ',Kdrag,' from '//trim(filename)
+             elseif (ierr.eq.0) then
+                read(line,*,iostat=ierr) idrag, idum, idum, Kdrag
+                print*,'>> read Kdrag = ',Kdrag,' from '//trim(filename)
+             endif
           else
              print*,'>> error reading Kdrag from '//trim(filename)
           endif
