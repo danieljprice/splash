@@ -410,30 +410,30 @@ program splash
            i = i + 1
            call get_argument(i,string)
            read(string,*,iostat=ierr) ipickx
-           if (ierr /= 0) call print_usage(quit=.true.)
+           if (ierr /= 0 .or. ipickx <= 0) call print_usage(quit=.true.)
            nomenu = .true.
         case('y')
            i = i + 1
            call get_argument(i,string)
            read(string,*,iostat=ierr) ipicky
-           if (ierr /= 0) call print_usage(quit=.true.)
+           if (ierr /= 0 .or. ipicky <= 0) call print_usage(quit=.true.)
            nomenu = .true.
         case('render','r','ren')
            i = i + 1
            call get_argument(i,string)
            read(string,*,iostat=ierr) irender
-           if (ierr /= 0) call print_usage(quit=.true.)
+           if (ierr /= 0 .or. irender < 0) call print_usage(quit=.true.)
            nomenu = .true.
         case('contour','c','cont','con')
            i = i + 1
            call get_argument(i,string)
            read(string,*,iostat=ierr) icontour
-           if (ierr /= 0) call print_usage(quit=.true.)
+           if (ierr /= 0 .or. icontour < 0) call print_usage(quit=.true.)
         case('vec','vecplot')
            i = i + 1
            call get_argument(i,string)
            read(string,*,iostat=ierr) ivecplot
-           if (ierr /= 0) call print_usage(quit=.true.)
+           if (ierr /= 0 .or. ivecplot < 0) call print_usage(quit=.true.)
            nomenu = .true.
         case('dev','device')
            i = i + 1
