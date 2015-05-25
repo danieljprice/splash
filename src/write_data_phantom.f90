@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -109,11 +109,13 @@ subroutine write_sphdata_phantom(time,gamma,dat,ntotal,ntypes,npartoftype, &
     index1 = 1
     do i=1,ntypes
        rheader(14+i) = dat(index1,ipmass)
-       if (any(dat(index1:index1+npartoftype(i),ipmass).ne.dat(index1,ipmass))) then
-          print*,' ERROR: unequal mass particles detected but PHANTOM only accepts equal mass, skipping...'
-          return
+       if (npartoftype(i) > 0) then
+          if (any(dat(index1:index1+npartoftype(i)-1,ipmass).ne.dat(index1,ipmass))) then
+             print*,' ERROR: unequal mass particles detected but PHANTOM only accepts equal mass, skipping...'
+             return
+          endif
+          index1 = index1 + npartoftype(i)
        endif
-       index1 = index1 + npartoftype(i)
     enddo
  else
     do i=1,ntypes
