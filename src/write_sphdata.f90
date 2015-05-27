@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -98,7 +98,11 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.ascii WITH ',ncolumns,' COLUMNS'
 
     !--format the header lines to go in the ascii file
-    write(fmtstring,"(i10,a)") ncolumns,'(1pe15.7,1x)'
+    if (kind(1.)==8) then
+       write(fmtstring,"(i10,a)") ncolumns,'(es23.15,1x)'
+    else
+       write(fmtstring,"(i10,a)") ncolumns,'(es15.7,1x)'
+    endif
     fmtstring2 = '('//trim(adjustl(fmtstring))//',i1)'
     fmtstring = '('//trim(adjustl(fmtstring))//')'
 
