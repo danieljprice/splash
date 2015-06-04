@@ -2026,7 +2026,7 @@ end subroutine read_data
 
 subroutine set_labels
   use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
-              ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy
+              ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,idustfrac
   use params
   use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
   use geometry,        only:labelcoord
@@ -2067,6 +2067,7 @@ subroutine set_labels
   !
   if (tagged) then
      do i=1,ncolumns
+        label(i) = tagarr(i)
         select case(trim(tagarr(i)))
         case('m')
            ipmass = i
@@ -2094,6 +2095,8 @@ subroutine set_labels
            iJfirst = i
         case('psi')
            label(i) = '\psi'
+        case('dustfrac')
+           idustfrac = i
         case('alpha')
            label(i) = '\alpha'
         case('alphaB')
