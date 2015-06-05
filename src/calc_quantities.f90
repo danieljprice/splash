@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -359,7 +359,7 @@ subroutine print_example_quantities(ncalc)
     string = ' '
     ldfrac = shortlabel(label(idustfrac),unitslabel(idustfrac))    
     !--gas density
-    write(string,"(a)",iostat=ierr) trim(label(irho))//'_{gas} = ' &
+    write(string,"(a)",iostat=ierr) '\rho_{g} = ' &
                     //trim(shortlabel(label(irho),unitslabel(irho))) &
                     //'*(1 - '//trim(ldfrac)//')'
     if (prefill) then
@@ -371,7 +371,7 @@ subroutine print_example_quantities(ncalc)
        call splitstring(string,labelprev,temp)
     endif
     !--dust density
-    write(string,"(a)",iostat=ierr) trim(label(irho))//'_{dust} = ' &
+    write(string,"(a)",iostat=ierr) '\rho_{d} = ' &
                     //trim(ldfrac)//'*'//trim(shortlabel(label(irho),unitslabel(irho)))
     if (prefill) then
        ncalc = ncalc + 1
@@ -379,6 +379,16 @@ subroutine print_example_quantities(ncalc)
     else
        print "(11x,a)",trim(string)
     endif
+    !--dust-to-gas ratio
+    write(string,"(a)",iostat=ierr) 'dust-to-gas ratio = ' &
+                    //trim(ldfrac)//'/(1. - '//trim(ldfrac)//')'
+    if (prefill) then
+       ncalc = ncalc + 1
+       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+    else
+       print "(11x,a)",trim(string)
+    endif
+
     if (ideltav.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0) then
        !--gas velocities
        do i=1,ndimV
