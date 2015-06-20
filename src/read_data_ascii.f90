@@ -252,6 +252,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
         else
            iamtype(i,j) = 1
         endif
+        itype = iamtype(i,j)
         noftype(itype) = noftype(itype) + 1
         ntypes = max(itype,ntypes)
      endif
