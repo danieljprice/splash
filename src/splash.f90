@@ -48,6 +48,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.5.2  : (xx/xx/15)
+!             SILO data read implemented; bug fixes in gadget-hdf5 reader; ascii data read
+!             recognises different particle types; dust fraction recognised in phantom data read;
+!             bug fix with disappearing units labels; bug fix in shock tube exact solution
 !     2.5.1  : (29/01/15)
 !             error bar style options; support for 5K displays; can plot vectors
 !             and render with colours if h not read; range restrictions apply during splash to grid;
@@ -364,7 +368,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.5.1 [29th Jan. 2015]'
+  character(len=*), parameter :: version = 'v2.5.2 [16th July 2015]'
 
   !
   ! initialise some basic code variables
