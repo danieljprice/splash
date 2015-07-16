@@ -171,7 +171,8 @@ endif
 ifeq ($(SYSTEM),ifort)
 #  this is for the intel fortran compiler (version 10)
    FC= ifort
-   FFLAGS= -O3 -nbs -i_dynamic
+#   FFLAGS= -O3 -nbs -i_dynamic
+   FFLAGS= -O3 -nbs
    OMPFLAGS= -openmp
    DBLFLAGS= -r8
    DEBUGFLAG= -C -g
