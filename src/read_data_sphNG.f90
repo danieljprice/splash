@@ -408,6 +408,11 @@ contains
         endif
         if (phantomdump .and. nints < 7) ntypes = nints - 1
         if (iverbose.ge.1) print *,'npart = ',npart,' MPI blocks = ',nblocks
+        if (phantomdump) then
+           n1 = npartoftypei(1)
+        else
+           call extract('n1',n1,intarr,tags,nints,ierr)
+        endif
      else
         if (nints.lt.3) then
            if (.not.phantomdump) print "(a)",'WARNING: npart,n1,n2 NOT IN HEADER??'
@@ -1731,7 +1736,8 @@ subroutine read_data(rootname,indexstart,nstepsread)
  !
  !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
  !
-    if (allocated(dat) .and. n1.GT.0 .and. lenvironment('SSPLASH_RESET_CM') .and. allocated(iphase)) then
+    if (allocated(dat) .and. n1.GT.0 .and. n1 <= size(dat(:,1,1)) &
+       .and. lenvironment('SSPLASH_RESET_CM') .and. allocated(iphase)) then
        call reset_centre_of_mass(dat(1:n1,1:3,j),dat(1:n1,4,j),iphase(1:n1),n1)
     endif
  ! 
