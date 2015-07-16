@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -25,7 +25,7 @@
 ! includes default values of these options and submenu for changing them
 !-------------------------------------------------------------------------
 module settings_page
- use settings_limits, only:iadapt,iadaptcoords,adjustlimitstodevice
+ use settings_limits, only:iadapt,iadaptcoords,adjustlimitstodevice,xminoffset_track,xmaxoffset_track
  use labels,          only:lenlabel
  implicit none
  integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
@@ -49,7 +49,7 @@ module settings_page
    fjustlegend,iPlotLegendOnlyOnPanel, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
    usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder,ipapersizeunits,&
-   adjustlimitstodevice,alphalegend,yscalealt,labelyalt
+   adjustlimitstodevice,alphalegend,yscalealt,labelyalt,xminoffset_track,xmaxoffset_track
 
 contains
 
