@@ -1032,11 +1032,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         zslicemin = -huge(zslicemax) !-- " "
         zslicemax = huge(zslicemax)
         if (.not.interactivereplot) then
-           if (iplotx.gt.0 .and. iplotx.le.numplot) then
+           if (iplotx.gt.0 .and. iplotx.le.numplot .and. ipos.eq.ifirststeponpage) then
               xmin = lim(iplotx,1)
               xmax = lim(iplotx,2)
            endif
-           if (iploty.gt.0 .and. iploty.le.numplot) then
+           if (iploty.gt.0 .and. iploty.le.numplot .and. ipos.eq.ifirststeponpage) then
               ymin = lim(iploty,1)
               ymax = lim(iploty,2)
            endif
@@ -2816,7 +2816,6 @@ contains
           endif
        endif
     endif
-
     !--------------------------------------------------------------
     ! set up pgplot page
     !--------------------------------------------------------------
@@ -3624,8 +3623,8 @@ subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,label
 
   !--set these as limits if adaptive limits are on
   if (.not.interactivereplot) then
-     if ((is_coord(iplot,ndim) .and. iadaptcoords) &
-     .or.(.not.is_coord(iplot,ndim) .and. iadapt) .and. ipagechange) then
+     if (((is_coord(iplot,ndim) .and. iadaptcoords) &
+     .or.(.not.is_coord(iplot,ndim) .and. iadapt)) .and. ipagechange) then
         print "(1x,a)",'adapting '//trim(labeli)//' limits'
         xmini = xminadaptive
         xmaxi = xmaxadaptive
