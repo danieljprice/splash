@@ -1032,11 +1032,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         zslicemin = -huge(zslicemax) !-- " "
         zslicemax = huge(zslicemax)
         if (.not.interactivereplot) then
-           if (iplotx.gt.0 .and. iplotx.le.numplot .and. ipos.eq.ifirststeponpage) then
+!           if (iplotx.gt.0 .and. iplotx.le.numplot .and. ipos.eq.ifirststeponpage) then
+           if (iplotx.gt.0 .and. iplotx.le.numplot) then
               xmin = lim(iplotx,1)
               xmax = lim(iplotx,2)
            endif
-           if (iploty.gt.0 .and. iploty.le.numplot .and. ipos.eq.ifirststeponpage) then
+!           if (iploty.gt.0 .and. iploty.le.numplot .and. ipos.eq.ifirststeponpage) then
+           if (iploty.gt.0 .and. iploty.le.numplot) then
               ymin = lim(iploty,1)
               ymax = lim(iploty,2)
            endif
