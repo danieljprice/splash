@@ -142,7 +142,7 @@ subroutine submenu_render(ichoose)
                         '       chosen to match the device used for plotting.', &
                         '       The number of pixels is then determined by ', &
                         '       the page size (set in the p)age menu).'
-       call prompt('enter number of pixels along x axis (0=auto)',npix,0,10000)
+       call prompt('enter number of pixels along x axis (0=auto)',npix,0,100000)
 !------------------------------------------------------------------------
     case(2)
        ierr = 1
