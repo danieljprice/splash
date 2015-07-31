@@ -737,6 +737,7 @@ contains
         endif
      endif
   else
+     npartoftype(:) = 0
      npartoftype(1) = npart
      npartoftype(2) = max(ntotal - npart,0)
   endif
@@ -1924,6 +1925,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
 
      call set_labels
      if (.not.phantomdump) then
+        npartoftype(:,j) = 0
         npartoftype(1,j) = npart - nptmassi - nstar - nunknown
         npartoftype(2,j) = ntotal - npart
         npartoftype(3,j) = nptmassi
