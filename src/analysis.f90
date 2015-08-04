@@ -15,18 +15,16 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
 !-------------------------------------------------------------------
-!     module implementing the ability to use SPLASH to produce
-!     evolution files from a sequence of SPH dump files
-!     (ie. in order to produce plots of certain quantities vs time)
-!     Command is "splash calc X" where X is analysis type.
-!
-!     (c) D. Price 06/11/08
+!  module implementing the ability to use SPLASH to produce
+!  evolution files from a sequence of SPH dump files
+!  (ie. in order to produce plots of certain quantities vs time)
+!  Command is "splash calc X" where X is analysis type.
 !-------------------------------------------------------------------
 module analysis
  public :: isanalysis,open_analysis,close_analysis,write_analysis
@@ -64,6 +62,8 @@ logical function isanalysis(string,noprint)
  case('min','minvals')
      isanalysis = .true.
  case('diff','diffvals')
+     isanalysis = .true.
+ case('delta','deltavals')
      isanalysis = .true.
  case('amp','ampvals')
      isanalysis = .true.
@@ -105,6 +105,8 @@ logical function isanalysis(string,noprint)
     print "(a)",'                             output to file called ''diffvals.out'''
     print "(a)",'         calc amp          : 0.5*(max - min) of each column vs. time'
     print "(a)",'                             output to file called ''ampvals.out'''
+    print "(a)",'         calc delta        : 0.5*(max - min)/mean of each column vs. time'
+    print "(a)",'                             output to file called ''deltavals.out'''
     print "(a)",'         calc mean         : mean of each column vs. time'
     print "(a)",'                             output to file called ''meanvals.out'''
     print "(a)",'         calc rms          : (mass weighted) root mean square of each column vs. time'
@@ -228,68 +230,44 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     standardheader = .true.
 
  case('min','minvals')
-    !
-    !--read all columns from dump file
-    !
+
     required(:) = .true.
-    !
-    !--set filename and header line
-    !
     fileout = 'minvals.out'
     standardheader = .true.
 
  case('diff','diffvals')
-    !
-    !--read all columns from dump file
-    !
+
     required(:) = .true.
-    !
-    !--set filename and header line
-    !
     fileout = 'diffvals.out'
     standardheader = .true.
 
  case('amp','ampvals')
-    !
-    !--read all columns from dump file
-    !
+
     required(:) = .true.
-    !
-    !--set filename and header line
-    !
     fileout = 'ampvals.out'
     standardheader = .true.
 
- case('mean','meanvals')
-    !
-    !--read all columns from dump file
-    !
+ case('delta','deltavals','deltas')
+
     required(:) = .true.
-    !
-    !--set filename and header line
-    !
+    fileout = 'deltavals.out'
+    standardheader = .true.
+
+ case('mean','meanvals')
+
+    required(:) = .true.
     fileout = 'meanvals.out'
     standardheader = .true.
 
  case('rms','rmsvals')
-    !
-    !--read all columns from dump file
-    !
+
     required(:) = .true.
-    !
-    !--set filename and header line
-    !
     fileout = 'rmsvals.out'
     standardheader = .true.
 
  case('vrms','vrmsvals','vwrms','rmsvw')
-    !
-    !--read all columns from dump file
-    !
+
     required(:) = .true.
-    !
-    !--set filename and header line
-    !
     fileout = 'rmsvals-vw.out'
     standardheader = .true.
 
@@ -623,11 +601,11 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     write(iunit,fmtstring) timei,coltemp(1:ncolumns)
     if (nused.ne.ntot) print*,'min calculated using ',nused,' of ',ntot,' particles'
 
- case('diff','diffvals','amp','ampvals')
+ case('diff','diffvals','amp','ampvals','delta','deltavals','deltas')
     !
     !--calculate difference between max and min for each column
     !
-    coltemp(:) = huge(0.d0)
+    coltemp(:) = 0.
     lmin(:) = huge(0.d0)
     lmax(:) = -huge(0.d0)
     nused = 0
@@ -640,21 +618,34 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           do i=1,ncolumns
              lmin(i) = min(lmin(i), vals(i))
              lmax(i) = max(lmax(i), vals(i))
+             coltemp(i) = coltemp(i) + vals(i)
           enddo
        endif
     enddo
-    do i=1,ncolumns
-       coltemp(i) = lmax(i) - lmin(i)
-    enddo
-    if (trim(analysistype).eq.'amp' .or. trim(analysistype).eq.'ampvals') then
-       coltemp(:) = coltemp(:)/2.
-    endif
-    !
-    !--write output to screen/terminal
-    !
-    do i=1,ncolumns
-       print "(1x,a20,'(max - min) = ',es18.10)",label(i),coltemp(i)
-    enddo
+    if (nused.gt.0) coltemp(:) = coltemp(:)/real(nused)
+
+    select case(trim(analysistype))
+    case('amp','ampvals')
+       do i=1,ncolumns
+          coltemp(i) = 0.5*(lmax(i) - lmin(i))
+          print "(1x,a20,'0.5*(max - min) = ',es18.10)",label(i),coltemp(i)
+       enddo
+    case('delta','deltavals','deltas')
+       do i=1,ncolumns
+          valmean = coltemp(i)
+          if (valmean > 0.) then
+             coltemp(i) = 0.5*(lmax(i) - lmin(i))/valmean
+          else
+             coltemp(i) = 0.5*(lmax(i) - lmin(i))
+          endif
+          print "(1x,a20,'0.5*(max - min)/mean = ',es18.10)",label(i),coltemp(i)
+       enddo
+    case default ! diff, diffvals
+       do i=1,ncolumns
+          coltemp(i) = lmax(i) - lmin(i)
+          print "(1x,a20,'(max - min) = ',es18.10)",label(i),coltemp(i)
+       enddo
+    end select
     !
     !--write line to output file
     !
@@ -667,6 +658,8 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           print*,'diff calculated using ',nused,' of ',ntot,' particles'
        case('amp','ampvals')
           print*,'amp calculated using ',nused,' of ',ntot,' particles'
+       case('delta','deltavals','deltas')
+          print*,'deltas calculated using ',nused,' of ',ntot,' particles'
        end select
     endif
 
