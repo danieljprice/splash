@@ -48,7 +48,7 @@ subroutine defaults_set_powerspec
   ipowerspecx = 0 ! reset later
   nwavelengths = 128
   freqmin = 1.0
-  freqmax = nwavelengths*freqmax
+  freqmax = nwavelengths*freqmin
   nfreqspec = 1
   npdfbins  = 0
 
@@ -60,12 +60,11 @@ end subroutine defaults_set_powerspec
 !----------------------------------------------------------------------
 subroutine options_powerspec
  use settings_data, only:ndim,ndataplots,numplot
- use limits, only:lim
- use labels, only:ipowerspec
- use prompting, only:prompt
+ use limits,        only:lim
+ use labels,        only:ipowerspec
+ use prompting,     only:prompt
  implicit none
  real :: boxsize
- real, parameter :: pi = 3.1415926536
 
  if (ipowerspecy.lt.ndim+1) ipowerspecy = ndim+1
  if (ipowerspecy.gt.ndataplots) ipowerspecy = ndataplots
@@ -80,16 +79,16 @@ subroutine options_powerspec
 !
  if (abs(freqmin-1.0).lt.tiny(1.)) then
     boxsize = abs(lim(1,2) - lim(1,1))
-    if (boxsize.gt.tiny(boxsize)) freqmin = 2.*pi/boxsize
+    if (boxsize.gt.tiny(boxsize)) freqmin = 1./boxsize
  endif
- call prompt('enter min frequency (default=2*pi/box size)',freqmin,0.0)
+ call prompt('enter min frequency (default=1/box size)',freqmin,0.0)
  call prompt('enter max frequency ',freqmax,min=freqmin)
 
  if (ipowerspec.le.ndataplots .or. ipowerspec.gt.numplot) then
     !--this should never happen
     print*,'*** ERROR: something wrong in powerspectrum limit setting'
  else
-    print*,' wavelength range ',2.*pi/freqmax,'->',2.*pi/freqmin
+    print*,' wavelength range ',1./freqmax,'->',1./freqmin
     lim(ipowerspec,1) = freqmin
     lim(ipowerspec,2) = freqmax
     print*,' frequency range ',lim(ipowerspec,1),'->',lim(ipowerspec,2)
