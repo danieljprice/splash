@@ -30,9 +30,9 @@ module settings_powerspec
  integer :: ipowerspecy, ipowerspecx, nfreqspec
  integer :: nwavelengths,npdfbins
  logical :: idisordered
- real :: wavelengthmax, wavelengthmin
+ real :: freqmax,freqmin
 
- namelist /powerspecopts/ ipowerspecy,idisordered,nwavelengths,nfreqspec,npdfbins
+ namelist /powerspecopts/ ipowerspecy,idisordered,nwavelengths,nfreqspec,npdfbins,freqmin,freqmax
 
 contains
 
@@ -47,8 +47,8 @@ subroutine defaults_set_powerspec
   ipowerspecy = max(ndim+1,2)
   ipowerspecx = 0 ! reset later
   nwavelengths = 128
-  wavelengthmax = 1.0 ! reset later
-  wavelengthmin = wavelengthmax/nwavelengths
+  freqmin = 1.0
+  freqmax = nwavelengths*freqmax
   nfreqspec = 1
   npdfbins  = 0
 
@@ -65,6 +65,7 @@ subroutine options_powerspec
  use prompting, only:prompt
  implicit none
  real :: boxsize
+ real, parameter :: pi = 3.1415926536
 
  if (ipowerspecy.lt.ndim+1) ipowerspecy = ndim+1
  if (ipowerspecy.gt.ndataplots) ipowerspecy = ndataplots
@@ -77,21 +78,20 @@ subroutine options_powerspec
 !
 !--if box size has not been set then use x limits
 !
- if (abs(wavelengthmax-1.0).lt.tiny(wavelengthmax)) then
+ if (abs(freqmin-1.0).lt.tiny(1.)) then
     boxsize = abs(lim(1,2) - lim(1,1))
-    if (boxsize.gt.tiny(boxsize)) wavelengthmax = boxsize
+    if (boxsize.gt.tiny(boxsize)) freqmin = 2.*pi/boxsize
  endif
- call prompt('enter box size (max wavelength)',wavelengthmax,0.0)
- call prompt('enter number of wavelengths to sample ',nwavelengths,1)
- wavelengthmin = wavelengthmax/nwavelengths
+ call prompt('enter min frequency (default=2*pi/box size)',freqmin,0.0)
+ call prompt('enter max frequency ',freqmax,min=freqmin)
 
  if (ipowerspec.le.ndataplots .or. ipowerspec.gt.numplot) then
     !--this should never happen
     print*,'*** ERROR: something wrong in powerspectrum limit setting'
  else
-    print*,' wavelength range ',wavelengthmin,'->',wavelengthmax
-    lim(ipowerspec,1) = 1./wavelengthmax
-    lim(ipowerspec,2) = 1./wavelengthmin
+    print*,' wavelength range ',2.*pi/freqmax,'->',2.*pi/freqmin
+    lim(ipowerspec,1) = freqmin
+    lim(ipowerspec,2) = freqmax
     print*,' frequency range ',lim(ipowerspec,1),'->',lim(ipowerspec,2)
     if (nfreqspec.le.1) nfreqspec = 2*nwavelengths
     call prompt('how many frequency points between these limits? ',nfreqspec,nwavelengths)

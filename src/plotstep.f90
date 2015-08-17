@@ -641,7 +641,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                dzscreenfromobserver,taupartdepth,xsecpos_nomulti, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
                                nseq,nframes,getsequencepos,insidesequence,rendersinks
-  use settings_powerspec, only:nfreqspec,wavelengthmin,wavelengthmax,ipowerspecx,ipowerspecy,&
+  use settings_powerspec, only:nfreqspec,freqmin,freqmax,ipowerspecx,ipowerspecy,&
                                idisordered,npdfbins
   use settings_units,     only:units,unitzintegration
 !
@@ -2422,8 +2422,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--1D: use slow FT routines or Lomb periodogram
         !
               if (.not.interactivereplot) then
-                 xmin = 1./wavelengthmax  ! freq min
-                 xmax = 1./wavelengthmin  ! freq max
+                 xmin = freqmin  ! freq min
+                 xmax = freqmax  ! freq max
               endif
               if (.not.interactivereplot .and. itrans(iploty).gt.0) then
                  call transform_limits(xmin,xmax,itrans(iploty))
