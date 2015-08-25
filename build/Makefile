@@ -103,6 +103,9 @@ PREFIX=/usr/local/
 ifndef CC
 CC = gcc
 endif
+ifndef CXX
+CXX = g++
+endif
 #--------------------------------------------------------------
 #  the following are general settings for particular compilers
 #
@@ -525,7 +528,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          prompting.f90 promptlist.f90 geometry.f90 kernels.f90 \
          interpolation.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
-         units.f90 limits.f90 geomutils.f90 \
+         units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \
@@ -611,6 +614,15 @@ read_data_gadget_otherendian.o: read_data_gadget.o
 
 gadget_jsb: checksystem $(OBJECTS) read_data_gadget_jsb.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash-jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
+
+#---falcON HDF5 read ---
+falcon: falcon_hdf5
+
+falcon_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o $(LDFLAGS) -lc++ $(HDF5LIBS) -lhdf5_cpp
+
+read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
+	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
 
 #---HDF5 gadget read ---
 gadgethdf5: gadget_hdf5
