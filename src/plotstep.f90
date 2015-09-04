@@ -2028,8 +2028,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               call exact_solution(iexact,iplotx,iploty, &
                    itrans(iplotx),itrans(iploty),icoordsnew, &
                    ndim,ndimV,timei,xmin,xmax,gammai, &
-                   xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
-                   pmassmin,pmassmax,npartoftype(1),imarktype(1), &
+                   xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
+                   pmassmin,pmassmax,ntoti,imarktype(1), &
                    units(iplotx),units(iploty),irescale,iaxisy)
            endif
 
@@ -2173,10 +2173,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
             ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn)) then
            iaxisy = iaxis
            if (tile_plots .and. icolumn.ne.1) iaxisy = -1
+           print*,' PLOTTING EXACT SOLUTION ',ntoti,size(iamtype)
            call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
-                xplot(1:npartoftype(1)),yplot(1:npartoftype(1)), &
-                pmassmin,pmassmax,npartoftype(1),imarktype(1), &
+                xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
+                pmassmin,pmassmax,ntoti,imarktype(1), &
                 units(iplotx),units(iploty),irescale,iaxisy)
         endif
         !
@@ -2360,7 +2361,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               if (tile_plots .and. icolumn.ne.1) iaxisy = -1
               call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
                    icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
-                   xplot(1:ntoti),yplot(1:ntoti), &
+                   xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
                    pmassmin,pmassmax,ntoti,imarktype(1), &
                    units(iplotx),units(iploty),irescale,iaxisy)
            endif

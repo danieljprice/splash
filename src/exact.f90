@@ -739,8 +739,10 @@ contains
   !-----------------------------------------------------------------------
 
   subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
-                            ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot, &
+                            ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot,&
+                            itag,iamtype,noftype,iplot_type, &
                             pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
+    use params,          only:int1,maxparttypes
     use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,&
                               irhorestframe,is_coord,ideltav,idustfrac
     use filenames,       only:ifileopen,rootname
@@ -771,7 +773,11 @@ contains
     real,    intent(in) :: time,xmin,xmax,gamma,unitsx,unitsy
     real,    intent(in) :: pmassmin,pmassmax
     real,    intent(in) :: xplot(npart),yplot(npart)
-    logical, intent(in) :: irescale
+    integer, intent(in) :: itag(npart)
+    integer(int1), intent(in) :: iamtype(:)
+    integer,       intent(in) :: noftype(maxparttypes)
+    logical,       intent(in) :: iplot_type(maxparttypes)
+    logical,       intent(in) :: irescale
 
     real, parameter :: zero = 1.e-10
     integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
@@ -850,8 +856,8 @@ contains
           if ((iplotx.eq.iexactplotx(i) .and. iploty.eq.iexactploty(i)) .or. iexactploty(i).eq.0) then
              call exact_function(funcstring(i),xexact,yexact,timei,ierr)
              !--plot each solution separately and calculate errors
-             call plot_exact_solution(itransx,itransy,iexactpts,npart,&
-                                      xexact,yexact,xplot,yplot,imarker,iaxisy)
+             call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot, &
+                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy)
              ierr = 1 ! indicate that we have already plotted the solution
           endif
        enddo
@@ -875,8 +881,8 @@ contains
                 !--change line style between files
                 LineStyle = mod(iExactLineStyle+i-1,plotlib_maxlinestyle)
                 !--plot each solution separately and calculate errors
-                call plot_exact_solution(itransx,itransy,iexactpts,npart,&
-                                         xexact,yexact,xplot,yplot,imarker,iaxisy,ls=LineStyle)
+                call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,&
+                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=LineStyle)
                 ierr = 1 ! indicate that we have already plotted the solution
              endif
           endif
@@ -1138,21 +1144,25 @@ contains
           if (iploty.eq.ivx) then
              !--plot gas solution and calculate errors
              call exact_dustywave(1,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
-             call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,imarker,iaxisy,ls=1)
+             call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot, &
+                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=1)
              !--plot dust solution
              if (Kdrag > 0.) then
                 call exact_dustywave(2,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
-                call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,imarker,iaxisy,ls=2,err=.false.)
+                call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot, &
+                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=2,err=.false.)
              endif
              ierr = 1
           elseif (iploty.eq.irho) then
              !--plot gas solution and calculate errors
              call exact_dustywave(3,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
-             call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,imarker,iaxisy,ls=1)
+             call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,&
+                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=1)
              !--plot dust solution
              if (Kdrag > 0.) then
                 call exact_dustywave(4,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
-                call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,imarker,iaxisy,ls=2,err=.false.)
+                call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,&
+                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=2,err=.false.)
              endif
              ierr = 1
           endif
@@ -1180,8 +1190,8 @@ contains
     !----------------------------------------------------------
     !  plot this as a line on the current graph
     !----------------------------------------------------------
-    if (ierr <= 0) call plot_exact_solution(itransx,itransy,iexactpts,npart,&
-                                            xexact,yexact,xplot,yplot,imarker,iaxisy)
+    if (ierr <= 0) call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot, &
+                                            itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy)
     !
     !--reset line and colour settings
     !
@@ -1202,19 +1212,28 @@ contains
   ! Wrapper routine to plot the exact solution line on current graph
   ! and calculate errors with respect to the data
   !------------------------------------------------------------------
-  subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,yplot,imarker,iaxisy,ls,err)
+  subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,yplot,&
+                                 itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls,err)
    use transforms, only:transform,transform_inverse
-   use plotlib,    only:plot_line,plot_sls
+   use plotlib,    only:plot_line,plot_sls,plot_sci,plot_qci
+   use params,     only:int1,maxparttypes
    integer, intent(in)    :: itransx,itransy,iexactpts,np,imarker,iaxisy
    real,    intent(inout) :: xexact(:),yexact(:)
-   real,    intent(in)    :: xplot(:),yplot(:)
-   integer, intent(in), optional :: ls
-   logical, intent(in), optional :: err
+   real,    intent(in)    :: xplot(:),yplot(:),xmin,xmax
+   integer, intent(in)    :: itag(:)
+   integer(int1), intent(in) :: iamtype(:)
+   integer,       intent(in) :: noftype(maxparttypes)
+   logical,       intent(in) :: iplot_type(maxparttypes)
+   integer,       intent(in), optional :: ls
+   logical,       intent(in), optional :: err
    real :: residuals(np),ypart(np)
    real :: errL1,errL2,errLinf
-   integer :: iused,ierr
+   integer :: iused,ierr,iCurrentColour
    logical :: plot_err
    character(len=12) :: str1,str2
+
+   call plot_qci(iCurrentColour)
+   call plot_sci(iExactLineColour)
 
    if (itransx > 0) call transform(xexact(1:iexactpts),itransx)
    if (itransy > 0) call transform(yexact(1:iexactpts),itransy)
@@ -1237,33 +1256,45 @@ contains
       ypart(1:np) = yplot(1:np)
       if (itransy > 0) call transform_inverse(ypart(1:np),itransy)
       !--calculate errors
-      call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts), &
-                            xplot(1:np),ypart,residuals, &
+      call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts),xplot(1:np),ypart,&
+                            itag,iamtype,noftype,iplot_type,xmin,xmax,residuals, &
                             errL1,errL2,errLinf,iused)
       if (iused.ne.np) then
          write(str1,"(i12)",iostat=ierr) iused
          write(str2,"(i12)",iostat=ierr) np
-         print "(3(a,es10.3,1x),'(used ',a,'/',a,' parts)')",' L1 err = ',errL1,'L2 err = ',errL2, &
+         print "(3(a,es12.5,1x),'(used ',a,'/',a,' parts)')",' L1 err = ',errL1,'L2 err = ',errL2, &
                                'L(inf) err = ',errLinf,trim(adjustl(str1)),trim(adjustl(str2))
       else
-         print "(3(a,es10.3,1x))",' L1 err = ',errL1,'L2 err = ',errL2, &
+         print "(3(a,es12.5,1x))",' L1 err = ',errL1,'L2 err = ',errL2, &
                                'L(inf) err = ',errLinf
       endif
-      if (iPlotResiduals) call plot_residuals(xplot,residuals,imarker,iaxisy)
+      if (iPlotResiduals) then
+         call plot_sci(1)
+         call plot_residuals(xplot,residuals,imarker,iaxisy)
+      endif
    endif
+   call plot_sci(iCurrentColour)
 
   end subroutine plot_exact_solution
 
   !--------------------------------
   ! Calculate various error norms 
   !--------------------------------
-  subroutine calculate_errors(xexact,yexact,xpts,ypts,residual,errL1,errL2,errLinf,iused)
-   real, intent(in)  :: xexact(:),yexact(:),xpts(:),ypts(:)
-   real, intent(out) :: residual(size(xpts))
-   real, intent(out) :: errL1,errL2,errLinf
+  subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_type,&
+                              xmin,xmax,residual,errL1,errL2,errLinf,iused)
+   use part_utils, only:igettype
+   use params,     only:int1,maxparttypes
+   real,    intent(in)  :: xexact(:),yexact(:),xpts(:),ypts(:),xmin,xmax
+   integer, intent(in)  :: itag(:)
+   integer(int1), intent(in) :: iamtype(:)
+   integer,       intent(in) :: noftype(maxparttypes)
+   logical,       intent(in) :: iplot_type(maxparttypes)
+   real,    intent(out) :: residual(size(xpts))
+   real,    intent(out) :: errL1,errL2,errLinf
    integer, intent(out) :: iused
-   integer :: i,j,npart,nerr
+   integer :: i,j,npart,nerr,nused,itype
    real    :: xi,dy,dx,yexacti,err1,ymax
+   logical :: mixedtypes
 
    errL1 = 0.
    errL2 = 0.
@@ -1271,47 +1302,59 @@ contains
    residual = 0.
    npart = size(xpts)
    iused = 0
-   ymax = -huge(ymax)
+   ymax = 0.
    nerr = 0
+   nused = 0
+   mixedtypes = size(iamtype).gt.1
 
    do i=1,npart
       xi = xpts(i)
       yexacti = 0.
-      !
-      !--find nearest point in exact solution table
-      !
-      do j=1,size(xexact)-1
-         if (xexact(j).lt.xi .and. xexact(j+1).gt.xi) then
-            if (abs(residual(i)).gt.tiny(residual)) nerr = nerr + 1
-            !--linear interpolation from tabulated exact solution
-            dy = yexact(j+1) - yexact(j)
-            dx = xexact(j+1) - xexact(j)
-            if (dx.gt.0.) then
-               yexacti = yexact(j) + dy/dx*(xi - xexact(j))
-               residual(i) = ypts(i) - yexacti
-            elseif (dy.gt.0.) then
-               yexacti = yexact(j)
-               residual(i) = ypts(i) - yexacti
-            else
-               nerr = nerr + 1
-               residual(i) = 0.
-            endif
-            iused = iused + 1
-            ymax = max(ymax,abs(yexacti))
+      if (xi >= xmin .and. xi <= xmax .and. itag(i) > 0) then
+         if (mixedtypes) then
+            itype = min(max(int(iamtype(i)),1),maxparttypes)
+         else
+            itype = igettype(i,noftype)
          endif
-      enddo
-      err1 = abs(residual(i))
-      errL1 = errL1 + err1
-      errL2 = errL2 + err1**2
-      errLinf = max(errLinf,err1)
-      if (yexacti.gt.tiny(yexacti)) residual(i) = residual(i)/abs(yexacti)
+         if (iplot_type(itype)) then
+            !
+            !--find nearest point in exact solution table
+            !
+            do j=1,size(xexact)-1
+               if (xexact(j).lt.xi .and. xexact(j+1).gt.xi) then
+                  if (abs(residual(i)).gt.tiny(residual)) nerr = nerr + 1
+                  !--linear interpolation from tabulated exact solution
+                  dy = yexact(j+1) - yexact(j)
+                  dx = xexact(j+1) - xexact(j)
+                  if (dx.gt.0.) then
+                     yexacti = yexact(j) + dy/dx*(xi - xexact(j))
+                     residual(i) = ypts(i) - yexacti
+                  elseif (dy.gt.0.) then
+                     yexacti = yexact(j)
+                     residual(i) = ypts(i) - yexacti
+                  else
+                     nerr = nerr + 1
+                     residual(i) = 0.
+                  endif
+                  iused = iused + 1
+                  ymax = max(ymax,abs(yexacti))
+               endif
+            enddo
+            err1 = abs(residual(i))
+            errL1 = errL1 + err1
+            errL2 = errL2 + err1**2
+            errLinf = max(errLinf,err1)
+            if (yexacti.gt.tiny(yexacti)) residual(i) = residual(i)/abs(yexacti)
+            nused = nused + 1
+         endif
+      endif
    enddo
    !
    !--normalise errors (use maximum y value)
    !
-   if (ymax.gt.tiny(ymax)) then
-      errL1 = errL1/(npart*ymax)
-      errL2 = sqrt(errL2/(npart*ymax**2))
+   if (ymax.gt.tiny(ymax) .and. nused > 0) then
+      errL1 = errL1/(nused*ymax)
+      errL2 = sqrt(errL2/(nused*ymax**2))
       errLinf = errLinf/ymax
    else
       print "(a)",' error normalising errors'
