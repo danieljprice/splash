@@ -28,8 +28,8 @@ void read_pbob_header(char *filename,
       *ncol = 0;
       *time = 0.;
       *npart = 0;
-      *ndim  = 3;
-      *ndimV = 3;
+      *ndim  = 2;
+      *ndimV = 2;
       *ncol  = 15; /* hard wired */
       PBOB pbob;
       pbob = ReadPBOB(filename);
@@ -105,22 +105,22 @@ void read_pbob_data(char *filename,
       temp = malloc(npart*sizeof(double));
       for (i=0;i<N;i++) { temp[i] = (double) particle[i].x; }
       read_pbob_data_fromc(1,N,temp,species,"x");
-      for (i=0;i<N;i++) { temp[i] = (double) particle[i].y; }
-      read_pbob_data_fromc(2,N,temp,species,"y");
       for (i=0;i<N;i++) { temp[i] = (double) particle[i].z; }
-      read_pbob_data_fromc(3,N,temp,species,"z");
+      read_pbob_data_fromc(2,N,temp,species,"z");
+      for (i=0;i<N;i++) { temp[i] = (double) particle[i].y; }
+      read_pbob_data_fromc(3,N,temp,species,"y");
       for (i=0;i<N;i++) { temp[i] = (double) particle[i].vx; }
       read_pbob_data_fromc(4,N,temp,species,"vx");
-      for (i=0;i<N;i++) { temp[i] = (double) particle[i].vy; }
-      read_pbob_data_fromc(5,N,temp,species,"vy");
       for (i=0;i<N;i++) { temp[i] = (double) particle[i].vz; }
-      read_pbob_data_fromc(6,N,temp,species,"vz");
+      read_pbob_data_fromc(5,N,temp,species,"vz");
+      for (i=0;i<N;i++) { temp[i] = (double) particle[i].vy; }
+      read_pbob_data_fromc(6,N,temp,species,"vy");
       for (i=0;i<N;i++) { temp[i] = (double) particle[i].ax; }
       read_pbob_data_fromc(7,N,temp,species,"ax");
-      for (i=0;i<N;i++) { temp[i] = (double) particle[i].ay; }
-      read_pbob_data_fromc(8,N,temp,species,"ay");
       for (i=0;i<N;i++) { temp[i] = (double) particle[i].az; }
-      read_pbob_data_fromc(9,N,temp,species,"az");
+      read_pbob_data_fromc(8,N,temp,species,"az");
+      for (i=0;i<N;i++) { temp[i] = (double) particle[i].ay; }
+      read_pbob_data_fromc(9,N,temp,species,"ay");
       for (i=0;i<N;i++) { temp[i] = (double) particle[i].U; }
       read_pbob_data_fromc(10,N,temp,species,"U");
       for (i=0;i<N;i++) { temp[i] = (double) particle[i].dUdt; }

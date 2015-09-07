@@ -133,11 +133,6 @@ subroutine read_data(rootname,istepstart,nstepsread)
         return
      endif
   endif
-!
-!--set parameters which do not vary between timesteps
-!
-  ndim  = 3
-  ndimV = 3
 ! 
 !--read data from snapshots
 !
@@ -309,14 +304,13 @@ subroutine set_labels
 
   ix = 0
   iutherm = 0
+  do i=1,ndim
+     ix(i) = i
+  enddo
   do icol=1,size(blocklabel)
      select case(trim(lcase(blocklabel(icol))))
      case('x')
         ix(1) = icol
-     case('y')
-        ix(2) = icol
-     case('z')
-        ix(3) = icol
      case('vx')
         ivx = icol
      case('ax')
@@ -333,8 +327,8 @@ subroutine set_labels
      label(icol) = trim(blocklabel(icol))
   enddo
 
-  ! set labels of the quantities read in
-  if (ix(1).gt.0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  !! set labels of the quantities read in
+  !if (ix(1).gt.0) label(ix(1:ndim)) = labelcoord(1:ndim,1)
 
   ! set labels for vector quantities
   if (ivx.gt.0) then
