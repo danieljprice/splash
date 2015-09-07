@@ -642,6 +642,25 @@ amuse_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_amuse_hdf5_utils.o read_d
 read_data_amuse_hdf5_utils.o: read_data_amuse_hdf5_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
 
+#---PBOB read ---
+
+OBJPBOB=read_data_pbob_utils.o read_data_pbob.o read_pbob.o read_particle.o
+pbob: checksystem checkpbob $(OBJECTS) $(OBJPBOB)
+	$(FC) $(FFLAGS) -I$(PBOB_DIR)/include -o $(BINDIR)/psplash $(OBJECTS) $(OBJPBOB) $(LDFLAGS)
+
+read_data_pbob_utils.o: read_data_pbob_utils.c
+	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
+
+read_pbob.o: read_pbob.c
+	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
+
+read_particle.o: read_particle.c
+	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
+
+ifdef PBOB_DIR
+   VPATH+=$(PBOB_DIR)
+endif
+
 #---SILO read ---
 silo: checksystem checksilo $(OBJECTS) read_data_silo_utils.o read_data_silo.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/silosplash $(OBJECTS) read_data_silo_utils.o read_data_silo.o $(LDFLAGS) $(HDF5LIBS) -lsiloh5
@@ -855,6 +874,14 @@ checksilo: checkhdf5
    else
 	@if [ -d $$SILO_DIR ]; then echo; echo "SILO_DIR=$$SILO_DIR"; echo; else echo; echo "ERROR: Directory given by SILO_DIR=$$SILO_DIR does not exist"; echo; ${MAKE} err; fi;
    endif
+
+checkpbob:
+   ifeq (X${PBOB_DIR}, X)
+	@echo; echo "ERROR: PBOB_DIR should be set before compiling splash with PBOB reader"; echo; ${MAKE} err;
+   else
+	@if [ -d $$PBOB_DIR ]; then echo; echo "PBOB_DIR=$$PBOB_DIR"; echo; else echo; echo "ERROR: Directory given by PBOB_DIR=$$PBOB_DIR does not exist"; echo; ${MAKE} err; fi;
+   endif
+
 #
 # install option, copies any binaries compiled to /usr/local/bin/
 # run `make' first, then `make install'. Could in principle
