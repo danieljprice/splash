@@ -545,9 +545,11 @@ contains
     character(len=*), intent(in)  :: rootname
     integer,          intent(out) :: ierr
 
-    integer :: idash,nf,i,j,idrag,idum,linenum,k
+    integer :: idash,nf,i,j,idrag,idum,linenum,k,ieq,ierrs(6)
     character(len=len_trim(rootname)+8) :: filename
     character(len=120) :: line
+    character(len=30)  :: var
+    logical            :: iexist
 
     idash = index(rootname,'_')
     if (idash.eq.0) idash = len_trim(rootname)+1
@@ -597,23 +599,59 @@ contains
        !--shock tube parameters from .shk file
        !
        filename = trim(rootname(1:idash-1))//'.shk'
-       open(UNIT=19,ERR=7701,FILE=filename,STATUS='old')
-       read(19,*,ERR=7777) rho_L, rho_R
-       read(19,*,ERR=7777) pr_L, pr_R
-       read(19,*,ERR=7777) v_L, v_R
-       close(UNIT=19)
-       print*,'>> read ',filename
-       print*,' rhoL, rho_R = ',rho_L,rho_R
-       print*,' pr_L, pr_R  = ',pr_L, pr_R
-       print*,' v_L,  v_R   = ',v_L, v_R
-       return
-7701   print*,'no file ',filename
-       ierr = 1
-       return
-7777   print*,'error reading ',filename
-       close(UNIT=19)
-       ierr = 2
-       return
+       inquire(file=filename,exist=iexist)
+       if (iexist) then
+          open(unit=19,file=filename,status='old',iostat=ierr)
+          if (ierr==0) then
+             read(19,*,iostat=ierrs(1)) rho_L, rho_R
+             read(19,*,iostat=ierrs(2)) pr_L, pr_R
+             read(19,*,iostat=ierrs(3)) v_L, v_R
+             if (any(ierrs(1:3)/=0)) then
+                print*,'error reading ',filename
+                ierr = 1
+             endif
+          endif
+          close(unit=19)
+       else
+          print*,'no file ',filename
+          !
+          ! look for .setup file for Phantom
+          !
+          filename= trim(rootname(1:idash-1))//'.setup'
+          inquire(file=filename,exist=iexist)
+          open(unit=19,file=filename,status='old',iostat=ierr)
+          ierrs(:) = 0
+          do while(ierr==0)
+             read(19,"(a)",iostat=ierr) line
+             ieq = index(line,'=')
+             if (ierr==0 .and. ieq > 1) then
+                var = trim(adjustl(line(1:ieq-1)))
+                select case(trim(var))
+                case('densleft')
+                   read(line(ieq+1:),*,iostat=ierrs(1)) rho_L
+                case('densright')
+                   read(line(ieq+1:),*,iostat=ierrs(1)) rho_R
+                case('prleft')
+                   read(line(ieq+1:),*,iostat=ierrs(1)) pr_L
+                case('prright')
+                   read(line(ieq+1:),*,iostat=ierrs(1)) pr_R
+                case('vxleft')
+                   read(line(ieq+1:),*,iostat=ierrs(1)) v_L
+                case('vxright')
+                   read(line(ieq+1:),*,iostat=ierrs(1)) v_R
+                end select
+             endif
+          enddo
+          ierr = 0
+          if (.not.iexist .or. any(ierrs(1:6)/=0)) ierr = 1
+       endif
+       if (iexist) then
+          print*,'>> read ',filename
+          print*,' rhoL, rho_R = ',rho_L,rho_R
+          print*,' pr_L, pr_R  = ',pr_L, pr_R
+          print*,' v_L,  v_R   = ',v_L, v_R
+       endif
+
 
     case(6)
        !
