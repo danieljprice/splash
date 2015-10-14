@@ -31,7 +31,7 @@ FFLAGS=
 # (some settings of the SYSTEM variable for specific machines overwrite this)
 #
 # X11LIBS= -L/usr/X11R6/lib64 -lX11
-X11LIBS= -L/usr/X11R6/lib -lX11
+X11LIBS= -L/usr/X11/lib -lX11
 
 #--------------------------------------------------------------
 # here we choose the backend plotting library for splash
