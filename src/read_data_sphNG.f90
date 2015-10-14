@@ -71,7 +71,7 @@ module sphNGread
  integer :: nhydroarrays,nmhdarrays
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
  logical :: usingeulr,cleaning
- logical :: batcode,tagged
+ logical :: batcode,tagged,debug
  integer, parameter :: maxarrsizes = 10
  integer, parameter :: maxinblock = 128 ! max allowed in each block
  integer, parameter :: lentag = 16
@@ -924,6 +924,101 @@ contains
   endif
  end subroutine guess_labels
 
+ integer function assign_column(tag,iarr,ipos,ikind,imaxcolumnread) result(icolumn)
+  use labels, only:ih,irho,ix,ipmass
+  character(len=lentag), intent(in) :: tag
+  integer,               intent(in) :: iarr,ipos,ikind
+  integer,               intent(inout) :: imaxcolumnread
+
+  if (tagged .and. len_trim(tag) > 0) then
+     !
+     ! use the tags to put certain arrays in an assigned place
+     ! no matter what type is used for the variable in the file
+     ! and no matter what order they appear in the dump file
+     !
+     select case(trim(tag))
+     case('x')
+        icolumn = ix(1)
+     case('y')
+        icolumn = ix(2)
+     case('z')
+        icolumn = ix(3)
+     case('m')
+        icolumn = ipmass
+     case('h')
+        icolumn = ih
+     case('rho')
+        icolumn = irho
+     case('Bx')
+        icolumn = nhydroarrays + 1
+     case('By')
+        icolumn = nhydroarrays + 2
+     case('Bz')
+        icolumn = nhydroarrays + 3
+     case default
+        icolumn = max(nhydroarrays + nmhdarrays + 1,imaxcolumnread + 1)
+        if (iarr==1) then
+           if (ikind==4) then  ! real*4 array
+              istart_extra_real4 = min(istart_extra_real4,icolumn)
+              if (debug) print*,' istart_extra_real4 = ',istart_extra_real4
+           endif
+        endif
+     end select
+  else
+     !
+     ! this is old code handling the non-tagged format where
+     ! particular arrays are assumed to be in particular places
+     !
+     if (ikind==6) then   ! default reals
+        if (iarr.eq.1.and.((phantomdump.and.ipos.eq.4) &
+           .or.(.not.phantomdump.and.ipos.eq.6))) then
+           ! read x,y,z,m,h and then place arrays after always-present ones
+           ! (for phantom read x,y,z only)
+           icolumn = nhydroarrays+nmhdarrays + 1
+        elseif (.not.phantomdump .and. (iarr.eq.4 .and. ipos.le.3)) then
+           icolumn = nhydroarrays + ipos
+        else
+           icolumn = imaxcolumnread + 1
+        endif
+     elseif (ikind==4) then  ! real*4s
+        if (phantomdump) then
+           if (iarr.eq.1 .and. ipos.eq.1) then
+              icolumn = ih ! h is always first real4 in phantom dumps
+              !!--density depends on h being read
+              !required(ih) = .true.
+           elseif (iarr.eq.4 .and. ipos.le.3) then
+              icolumn = nhydroarrays + ipos
+           else
+              icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
+              if (iarr.eq.1) then
+                 istart_extra_real4 = min(istart_extra_real4,icolumn)
+                 if (debug) print*,' istart_extra_real4 = ',istart_extra_real4
+              endif
+           endif
+        else
+           if (iarr.eq.1 .and. ipos.eq.1) then
+              icolumn = irho ! density
+           elseif (iarr.eq.1 .and. smalldump .and. ipos.eq.2) then
+              icolumn = ih ! h which is real4 in small dumps
+           !--this was a bug for sphNG files...
+           !elseif (iarr.eq.4 .and. i.le.3) then
+           !   icolumn = nhydroarrays + ipos
+           else
+              icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
+              if (iarr.eq.1) then
+                 istart_extra_real4 = min(istart_extra_real4,icolumn)
+                 if (debug) print*,' istart_extra_real4 = ',istart_extra_real4
+              endif
+           endif
+        endif
+     else ! used for untagged format with real*8's
+        icolumn = imaxcolumnread + 1
+     endif
+  endif
+  imaxcolumnread = max(imaxcolumnread,icolumn)
+
+ end function assign_column
+
 end module sphNGread
 
 !----------------------------------------------------------------------
@@ -957,7 +1052,6 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real,    dimension(maxparttypes) :: massoftypei
   real    :: pmassi,hi,rhoi,hrlim,rad2d
   logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
-  logical :: debug
 
   character(len=len(rootname)+10) :: dumpfile
   character(len=100) :: fileident
@@ -974,7 +1068,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   real, dimension(maxinblock) :: dummyreal
   real :: hfact,omega
   logical :: skip_corrupted_block_3
-  character(len=lentag) :: tagsreal(maxinblock)
+  character(len=lentag) :: tagsreal(maxinblock), tagtmp
   
   integer, parameter :: splash_max_iversion = 1
 
@@ -1400,9 +1494,10 @@ subroutine read_data(rootname,indexstart,nstepsread)
                      print "(a)",'ERROR in memory allocation'
                      return
                   endif
+                  tagtmp = ''
                   do k=1,nreal(iarr)
-                     if (debug) print*,'DEBUG: reading sink array ',k,isize(iarr)
-                     if (tagged) read(iunit,end=33,iostat=ierr) !tagtemp
+                     if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
+                     if (debug) print*,'DEBUG: reading sink array ',k,isize(iarr),' tag = ',trim(tagtmp)
                      read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                      if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
                      
@@ -1534,19 +1629,11 @@ subroutine read_data(rootname,indexstart,nstepsread)
          endif
 !        default reals may need converting
          do i=1,nreal(iarr)
-            if (iarr.eq.1.and.((phantomdump.and.i.eq.4) &
-               .or.(.not.phantomdump.and.i.eq.6))) then
-               ! read x,y,z,m,h and then place arrays after always-present ones
-               ! (for phantom read x,y,z only)
-               icolumn = nhydroarrays+nmhdarrays + 1
-            elseif (.not.phantomdump .and. (iarr.eq.4 .and. i.le.3)) then
-               icolumn = nhydroarrays + i
-            else
-               icolumn = imaxcolumnread + 1
-            endif
-            imaxcolumnread = max(imaxcolumnread,icolumn)
-            if (debug) print*,' reading real ',icolumn
-            if (tagged) read(iunit,end=33,iostat=ierr) tagarr(icolumn)
+            tagtmp = ''
+            if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
+            icolumn = assign_column(tagtmp,iarr,i,6,imaxcolumnread)
+            if (tagged) tagarr(icolumn) = tagtmp
+            if (debug)  print*,' reading real ',icolumn,' tag = ',trim(tagtmp)
             if (required(icolumn)) then
                if (doubleprec) then
                   read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
@@ -1595,44 +1682,18 @@ subroutine read_data(rootname,indexstart,nstepsread)
 !        real4s may need converting
          imaxcolumnread = max(imaxcolumnread,icolumn)
          if ((nreal(iarr)+nreal4(iarr)).gt.6) imaxcolumnread = max(imaxcolumnread,6)
+
          do i=1,nreal4(iarr)
-            if (phantomdump) then
-               if (iarr.eq.1 .and. i.eq.1) then
-                  icolumn = ih ! h is always first real4 in phantom dumps
-                  !--density depends on h being read
-                  required(ih) = .true.
-                  !if (required(irho)) required(ih) = .true.
-                  !if (any(npartoftypei(2:).gt.0)) required(ih) = .true.
-               elseif (iarr.eq.4 .and. i.le.3) then
-                  icolumn = nhydroarrays + i
-               else
-                  icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
-                  if (iarr.eq.1) then
-                     istart_extra_real4 = min(istart_extra_real4,icolumn)
-                     if (debug) print*,' istart_extra_real4 = ',istart_extra_real4
-                  endif
-               endif
-            else
-               if (iarr.eq.1 .and. i.eq.1) then
-                  icolumn = irho ! density
-               elseif (iarr.eq.1 .and. smalldump .and. i.eq.2) then
-                  icolumn = ih ! h which is real4 in small dumps
-               !--this was a bug for sphNG files...
-               !elseif (iarr.eq.4 .and. i.le.3) then
-               !   icolumn = nhydroarrays + i
-               else
-                  icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
-                  if (iarr.eq.1) then
-                     istart_extra_real4 = min(istart_extra_real4,icolumn)
-                     if (debug) print*,' istart_extra_real4 = ',istart_extra_real4
-                  endif
-               endif
-            endif
-            imaxcolumnread = max(imaxcolumnread,icolumn)
-            if (debug) print*,'reading real4 ',icolumn
-            if (tagged) read(iunit,end=33,iostat=ierr) tagarr(icolumn)
+            tagtmp = ''
+            if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
+            icolumn = assign_column(tagtmp,iarr,i,4,imaxcolumnread)
+            if (debug) print*,'reading real4 ',icolumn,' tag = ',trim(tagtmp)
+            if (tagged) tagarr(icolumn) = tagtmp
+
+            if (phantomdump .and. icolumn==ih) required(ih) = .true. ! h always required for density
+
             if (required(icolumn)) then
-               if (allocated(dattempsingle)) THEN
+               if (allocated(dattempsingle)) then
                   read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
                   dat(i1:i2,icolumn,j) = real(dattempsingle(1:isize(iarr)))
                else
@@ -1689,12 +1750,13 @@ subroutine read_data(rootname,indexstart,nstepsread)
                if (debug) print*,'debug: making density ',icolumn
             endif
          enddo
-         icolumn = imaxcolumnread
 !        real 8's need converting
          do i=1,nreal8(iarr)
-            icolumn = icolumn + 1
-            if (debug) print*,'reading real8 ',icolumn
-            if (tagged) read(iunit,end=33,iostat=ierr) tagarr(icolumn)
+            tagtmp = ''
+            if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
+            icolumn = assign_column(tagtmp,iarr,i,8,imaxcolumnread)
+            if (debug) print*,'reading real8 ',icolumn,' tag = ',trim(tagtmp)
+            if (tagged) tagarr(icolumn) = tagtmp
             if (required(icolumn)) then
                read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                dat(i1:i2,icolumn,j) = real(dattemp(1:isize(iarr)))
