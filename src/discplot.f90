@@ -37,28 +37,30 @@ module disc
 
 contains
 
-subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
-                    itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,u,u_is_spsound)
+subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,rminin,rmaxin,ymin,ymax,&
+                    itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,unit_u,u,u_is_spsound)
  use transforms, only:transform_limits_inverse,transform_inverse,transform
- use params,     only:int1,maxparttypes
+ use params,     only:int1,maxparttypes,doub_prec
  use part_utils, only:igettype
  implicit none
  integer,                          intent(in)  :: iplot,npart,npmass,itransx,itransy
  real, dimension(npart),           intent(in)  :: rpart
  real, dimension(npmass),          intent(in)  :: pmass
+ real(doub_prec),                  intent(in)  :: unit_mass,unit_r
  real,                             intent(in)  :: rminin,rmaxin,gamma
  real,                             intent(out) :: ymin,ymax
  integer, dimension(npart),        intent(in)  :: icolourpart
  integer(kind=int1), dimension(:), intent(in)  :: iamtype
  logical, dimension(maxparttypes), intent(in)  :: usetype
  integer, dimension(maxparttypes), intent(in)  :: noftype
+ real(doub_prec),                  intent(in), optional :: unit_u
  real, dimension(npart),           intent(in), optional :: u
  logical,                          intent(in), optional :: u_is_spsound
 
  integer :: i,ibin
  real, parameter :: pi = 3.1415926536
  real :: pmassi,rbin,deltar,area,rmin,rmax
- real :: sigmai,toomreq,epicyclic,Omegai,spsoundi
+ real(doub_prec) :: sigmai,toomreq,epicyclic,Omegai,spsoundi,unit_cs2
  real, dimension(1) :: rad
  logical :: mixedtypes,gotspsound
  integer :: itype,np
@@ -74,6 +76,11 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
  endif
  gotspsound = .false.
  if (present(u_is_spsound)) gotspsound = u_is_spsound
+ if (present(unit_u)) then
+    unit_cs2 = unit_u
+ else
+    unit_cs2 = 1.d0
+ endif
 !
 !--print info
 !
@@ -124,7 +131,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
  np = 0
 !$omp parallel do default(none) &
 !$omp shared(npart,rpart,sigma,npmass,pmass,itransx,icolourpart,rmin,deltar,nbins) &
-!$omp shared(ninbin,spsound,gamma,u,iamtype,mixedtypes,usetype,noftype,gotspsound) &
+!$omp shared(ninbin,spsound,gamma,u,iamtype,mixedtypes,usetype,noftype,gotspsound,unit_cs2) &
 !$omp private(i,rad,pmassi,ibin,rbin,area,itype) &
 !$omp reduction(+:np)
  over_parts: do i=1,npart
@@ -159,14 +166,14 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
        if (present(u)) then
           if (gotspsound) then
              !$omp atomic
-             spsound(ibin) = spsound(ibin) + u(i)
+             spsound(ibin) = spsound(ibin) + real((u(i))**2/unit_cs2)
           else
              if (gamma.lt.1.00001) then
                 !$omp atomic
-                spsound(ibin) = spsound(ibin) + 2./3.*u(i)
+                spsound(ibin) = spsound(ibin) + real(2./3.*(u(i)/unit_cs2))
              else
                 !$omp atomic
-                spsound(ibin) = spsound(ibin) + gamma*(gamma-1.)*u(i)
+                spsound(ibin) = spsound(ibin) + real(gamma*(gamma-1.)*(u(i)/unit_cs2))
              endif
           endif
           !$omp atomic
@@ -184,26 +191,30 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,rminin,rmaxin,ymin,ymax,&
  if (iplot.eq.2) then
     epicyclic = 0.
     do ibin=1,nbins
-       sigmai = sigma(ibin)
+       sigmai = sigma(ibin)*(unit_r**2/unit_mass)  ! convert back to code units
 !
 !--for Toomre Q need the epicyclic frequency
 !  in a Keplerian disc kappa = Omega
 !
-       Omegai = sqrt(1./radius(ibin)**3)
+       Omegai = sqrt(1./(radius(ibin)/unit_r)**3)
        epicyclic = Omegai
 !
 !--spsound is RMS sound speed for all particles in the annulus
 !
        if (ninbin(ibin).gt.0) then
-          spsoundi = sqrt(spsound(ibin)/real(ninbin(ibin)))
+          spsoundi = sqrt(spsound(ibin)/real(ninbin(ibin))) ! unit conversion already done
        else
           spsoundi = 0.
        endif
 !
 !--now calculate Toomre Q
 !
-       toomreq = spsoundi*epicyclic/(pi*sigmai)
-       sigma(ibin) = toomreq
+       if (sigmai > 0.) then
+          toomreq = spsoundi*epicyclic/(pi*sigmai)
+       else
+          toomreq = 0.
+       endif
+       sigma(ibin) = real(toomreq,kind=kind(sigma))
     enddo
  endif
 

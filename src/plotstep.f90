@@ -610,7 +610,7 @@ end subroutine initialise_plotting
 
 subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ivecplot, &
                     iamtype,npartoftype,masstype,dat,timei,gammai,ipagechange,iadvance)
-  use params,             only:int1,maxparttypes
+  use params,             only:int1,maxparttypes,doub_prec
   use colours,            only:colour_set
   use filenames,          only:nsteps,rootname,ifileopen,tagline
   use exact,              only:exact_solution,atstar,ctstar,sigma,iPlotExactOnlyOnPanel
@@ -698,6 +698,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, parameter :: error_in_log = -666. ! magic number used to flag error with log(0.)
+  real(doub_prec) :: unit_mass, unit_r, unit_u
   real, dimension(:), allocatable    :: xplot,yplot,zplot
   real, dimension(:), allocatable    :: hh,weight
   real, dimension(:), allocatable    :: renderplot
@@ -2260,23 +2261,33 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  else
                     icol = 0
                  endif
+                 ! work out the unit of mass, r needed for computing Toomre Q
+                 unit_mass = 1.d0
+                 unit_r    = 1.d0
+                 unit_u    = 1.d0
+                 if (iRescale) then
+                    if (ix(1) > 0) unit_r = units(ix(1))
+                    if (icol > 0)  unit_u = units(icol)
+                 endif
                  if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
+                    if (iRescale) unit_mass = units(ipmass)
                     if (icol.gt.0) then
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),unit_mass,unit_r, &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
-                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,dat(1:ntoti,icol),icol.eq.iutherm)
+                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,unit_u,dat(1:ntoti,icol),icol.eq.ispsound)
                     else
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass), &
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),unit_mass,unit_r, &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
                             icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai)
                     endif
                  else
+                    if (iRescale .and. irho > 0) unit_mass = units(irho)*unitzintegration**3
                     if (icol.gt.0) then
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),unit_mass,unit_r, &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
-                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,dat(1:ntoti,icol),icol.eq.iutherm)
+                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,unit_u,dat(1:ntoti,icol),icol.eq.ispsound)
                     else
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1), &
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),unit_mass,unit_r, &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),&
                             icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai)
                     endif
