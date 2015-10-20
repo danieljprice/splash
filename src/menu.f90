@@ -37,13 +37,13 @@ subroutine menu
   use limits,           only:write_limits,lim2,lim,reset_lim2,lim2set
   use options_data,     only:submenu_data
   use settings_data,    only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
-                             buffer_data,ncolumns
+                             buffer_data,ncolumns,icoords,icoordsnew
   use settings_limits,  only:submenu_limits,iadapt
   use settings_part,    only:submenu_particleplots
   use settings_page,    only:submenu_page,submenu_legend,interactive,nacross,ndown
   use settings_render,  only:submenu_render,iplotcont_nomulti,icolours,double_rendering
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
-  use settings_xsecrot, only:submenu_xsecrotate
+  use settings_xsecrot, only:submenu_xsecrotate,xsec_nomulti
   use multiplot
   use prompting,        only:prompt,print_logical
   use transforms,       only:transform_label
@@ -219,7 +219,7 @@ subroutine menu
            !
            !--work out whether rendering is allowed
            !
-           iAllowRendering = allowrendering(ipickx,ipicky)
+           iAllowRendering = allowrendering(ipickx,ipicky,xsec_nomulti)
            !
            !--prompt for render and vector plots
            ! -> only allow if in "natural" coord system, otherwise h's would be wrong)
@@ -253,7 +253,7 @@ subroutine menu
               else
                  irender = 0
               endif
-              if (any(iamvec(1:numplot).ne.0)) then
+              if (any(iamvec(1:numplot).ne.0) .and. (icoordsnew.eq.icoords)) then
                  ivecplottemp = -1
                  ierr = 1
                  do while(ierr /= 0 .and. ivecplottemp /= 0)
@@ -637,15 +637,22 @@ end subroutine menu
 ! utility function which determines whether
 ! or not rendering is allowed or not
 !----------------------------------------------
-logical function allowrendering(iplotx,iploty)
+logical function allowrendering(iplotx,iploty,xsec)
  use labels,          only:ih,irho !,ipmass
  use multiplot,       only:itrans
- use settings_data,   only:ndataplots
+ use settings_data,   only:ndataplots,icoords,icoordsnew
  use settings_render, only:icolour_particles
  implicit none
  integer, intent(in) :: iplotx,iploty
+ logical, intent(in), optional :: xsec
  integer :: itransx,itransy
-
+ logical :: is_xsec
+ 
+ if (present(xsec)) then
+    is_xsec = xsec
+ else
+    is_xsec = .true.
+ endif
  itransx = 0
  itransy = 0
  if (iplotx.gt.0) itransx = itrans(iplotx)
@@ -656,7 +663,7 @@ logical function allowrendering(iplotx,iploty)
 !
  if ((ih.gt.0 .and. ih.le.ndataplots) &
     .and.(irho.gt.0 .and. irho.le.ndataplots) &
-    !.and.(icoords.eq.icoordsnew) &
+    .and.(icoords.eq.icoordsnew .or. .not.is_xsec) &
     .and.(itransx.eq.0 .and. itransy.eq.0)) then
 
     allowrendering = .true.
