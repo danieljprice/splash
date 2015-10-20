@@ -60,20 +60,21 @@ module pbobread
  integer, parameter :: maxtypes = 6
 
  interface
-   subroutine read_pbob_header(filename,npart,ncol,ndim,ndimV,time,ierr) bind(c)
+   subroutine read_pbob_header(filename,npart,ncol,nsteps,ndim,ndimV,time,ierr) bind(c)
     import
     character(kind=c_char), dimension(*), intent(in) :: filename
-    integer(kind=c_int), intent(out) :: npart,ncol,ndim,ndimV,ierr
+    integer(kind=c_int), intent(out) :: npart,ncol,nsteps,ndim,ndimV,ierr
     real(kind=c_double), intent(out) :: time
    end subroutine read_pbob_header
 
-   subroutine read_pbob_data(filename,np,time_slice,ierr) bind(c)
+   subroutine read_pbob_data(filename,np,time_slice,time_val,ierr) bind(c)
     import
     implicit none
     character(kind=c_char), dimension(*), intent(in)  :: filename
     integer(kind=c_int), intent(in), value :: np
     integer(kind=c_int), intent(in), value :: time_slice
-    integer(kind=c_int), intent(out) :: ierr
+    real(kind=c_double), intent(out)       :: time_val
+    integer(kind=c_int), intent(out)       :: ierr
    end subroutine read_pbob_data
  end interface
 
@@ -86,27 +87,22 @@ end module pbobread
 !-------------------------------------------------------------------------
 subroutine read_data(rootname,istepstart,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep,iamtype
-  use params,         only:doub_prec,maxparttypes,maxplot
+  use params,         only:doub_prec
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread, &
-                           ntypes,debugmode,iverbose
+                           ntypes,debugmode !,iverbose
   use mem_allocation, only:alloc
   use labels,         only:labeltype,print_types
   use asciiutils,     only:cstring
-  use pbobread,       only:blocklabel,read_pbob_header,read_pbob_data,maxtypes
+  use pbobread,       only:read_pbob_header,read_pbob_data
   implicit none
   integer, intent(in)                :: istepstart
   integer, intent(out)               :: nstepsread
   character(len=*), intent(in)       :: rootname
-  character(len=len(rootname)+10)    :: datfile,densfile,hfile
-  character(len=20)                  :: string
+  character(len=len(rootname)+10)    :: datfile
   integer               :: i,j,itype,ierr
-  integer               :: index1,index2,nhfac
-  integer               :: ncolstep,npart_max,nstep_max,ntoti,ntotall,idot
-  integer, parameter    :: iunit = 11
-  logical               :: iexist,reallocate,usez,debug,goterrors
-  real(doub_prec)       :: timetemp,ztemp
-  real :: hfact,hfactmean,pmassi
-  real, parameter :: pi = 3.1415926536
+  integer               :: ncolstep,npart_max,nstep_max,ntoti
+  logical               :: iexist,reallocate,goterrors
+  real(doub_prec)       :: timetemp
 
   nstepsread = 0
   goterrors  = .false.
@@ -141,8 +137,8 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   !--open file and read header information
   !
-  if (debug) print*,'DEBUG: reading header...'
-  call read_pbob_header(cstring(datfile),ntoti,ncolstep,ndim,ndimV,timetemp,ierr)
+  if (debugmode) print*,'DEBUG: reading header...'
+  call read_pbob_header(cstring(datfile),ntoti,ncolstep,nstep_max,ndim,ndimV,timetemp,ierr)
   if (ierr /= 0) then
      print "(a)", '*** ERROR READING HEADER ***'
      return
@@ -155,13 +151,13 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   reallocate = .false.
   npart_max = maxpart
-  nstep_max = max(maxstep,1)
+  nstep_max = max(maxstep,nstep_max)
 
   if (ntoti.gt.maxpart) then
      reallocate = .true.
      if (maxpart.gt.0) then
         ! if we are reallocating, try not to do it again
-        npart_max = int(1.1*ntotall)
+        npart_max = int(1.1*ntoti)
      else
         ! if first time, save on memory
         npart_max = int(ntoti)
@@ -176,6 +172,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   if (reallocate .or. .not.(allocated(dat))) then
      call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol),mixedtypes=.true.)
+     reallocate = .false.
   endif
 
   !
@@ -183,14 +180,15 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   npartoftype(1,i) = ntoti
   time(i) = real(timetemp)
+  !print*,' time = ',timetemp
   masstype(:,i) = 0. ! all masses read from file
   !
   !--read particle data
   !
   got_particles: if (ntoti > 0) then
      
-     !do while(ierr == 0)
-        if (i.ge.maxstep .and. i.ne.1) then
+     do while(ierr == 0 .and. i <= nstep_max)
+        if (i.gt.maxstep .and. i.ne.1) then
            nstep_max = i + max(10,INT(0.1*nstep_max))
            reallocate = .true.
         endif
@@ -199,8 +197,10 @@ subroutine read_data(rootname,istepstart,nstepsread)
         !
         if (reallocate) call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol),mixedtypes=.true.)
 
-        call read_pbob_data(cstring(datfile),ntoti,i,ierr)
+        call read_pbob_data(cstring(datfile),ntoti,i,timetemp,ierr)
         if (ierr == 0) then
+           print "(a,i3,a,es10.3)",' time slice #',i,' time = ',timetemp
+           time(i) = real(timetemp)
            call set_labels ! sets ntypes and labeltype
            if (size(iamtype(:,i)).gt.1) then
               npartoftype(:,i) = 0
@@ -213,12 +213,12 @@ subroutine read_data(rootname,istepstart,nstepsread)
                  endif
               enddo
            endif
-           !i = i + 1
+           i = i + 1
            nstepsread = nstepsread + 1
            call print_types(npartoftype(:,i),labeltype)
         endif
         
-     !enddo
+     enddo
   endif got_particles
 !
 !--now memory has been allocated, set arrays which are constant for all time
@@ -236,26 +236,30 @@ subroutine read_data(rootname,istepstart,nstepsread)
   return
 end subroutine read_data
 
-subroutine read_pbob_data_fromc(icol,np,temparr,itype,tag) bind(c)
+subroutine read_pbob_data_fromc(icol,istep,np,temparr,itype,tag) bind(c)
   use, intrinsic :: iso_c_binding, only:c_int,c_double,c_char
   use particle_data,  only:dat,iamtype
   use settings_data,  only:debugmode
   use labels,         only:label
   use asciiutils,     only:fstring
   use pbobread,       only:blocklabel
-  integer(kind=c_int), intent(in),value :: icol,np
+  integer(kind=c_int), intent(in),value :: icol,istep,np
   integer(kind=c_int), intent(in) :: itype(np)
   real(kind=c_double), intent(in) :: temparr(np)
   character(kind=c_char), intent(in) :: tag(256)
   integer(kind=c_int) :: i,icolput
-  integer :: nmax,nerr,idi
 
   icolput = icol
-  if (debugmode) print "(a,i2,a,i2,a,i8)",'DEBUG: reading column ',icol,' type ',itype,' -> '//trim(label(icolput))
+  if (debugmode) print "(a,i2,a,i2,a)",'DEBUG: reading column ',icol,' -> '//trim(label(icolput))
 
   ! check column is within array limits
   if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
-     print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in read_data_fromc'
+     print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in read_pbob_data_fromc'
+     return
+  endif
+
+  if (istep > size(dat(1,1,:)) .or. istep <= 0) then
+     print "(a,i2,a)",' ERROR: step = ',istep,' out of range in read_pbob_data_fromc'
      return
   endif
   
@@ -265,12 +269,12 @@ subroutine read_pbob_data_fromc(icol,np,temparr,itype,tag) bind(c)
   nmax = min(np,size(dat(:,1,1)))
 
   ! copy data into main splash array
-  dat(1:nmax,icolput,1) = real(temparr(1:nmax))
+  dat(1:nmax,icolput,istep) = real(temparr(1:nmax))
 
   ! set particle type
   if (size(iamtype(:,1)).gt.1) then
      do i=1,nmax
-        iamtype(i,1) = int(itype(i),kind=kind(iamtype))
+        iamtype(i,istep) = int(itype(i),kind=kind(iamtype))
      enddo
   endif
 
@@ -283,15 +287,15 @@ end subroutine read_pbob_data_fromc
 
 subroutine set_labels
   use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
-                          ih,irho,ipr,iutherm,iBfirst,idivB,iax
+                          ih,irho,ipr,iutherm,iax!,iBfirst,idivB
   use params
-  use settings_data,  only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
+  use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings
   use geometry,       only:labelcoord
   use system_utils,   only:envlist,ienvironment
   use pbobread,       only:blocklabel
   use asciiutils,     only:lcase
   implicit none
-  integer :: i,j,icol,irank
+  integer :: i,icol
 
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
