@@ -625,7 +625,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use particle_data,      only:maxpart,maxcol,icolourme
   use settings_data,      only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
                                iendatstep,ntypes,UseTypeInRenderings,itracktype,itrackoffset,&
-                               required,ipartialread,xorigin,lowmemorymode,debugmode
+                               required,ipartialread,xorigin,lowmemorymode,debugmode,iverbose
   use settings_limits,    only:iadapt
   use settings_part,      only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
                                iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
@@ -1409,8 +1409,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     if (x_sec) then
                        if (use3Dperspective .and. use3Dopacityrendering) then
                           !!--do surface-rendered cross-section with opacity
-                          print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
-                               ' : opacity-rendered cross section', xmin,ymin
+                          if (iverbose > 0) print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
+                                ' : opacity-rendered cross section', xmin,ymin
                           if (ipmass.gt.0) then
                              if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                                 if (.not.isameweights) & ! set contouring weights as necessary
@@ -1463,8 +1463,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           datpix = 0.
                        else
                           !!--do fast cross-section
-                          print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
-                               ' : fast cross section', xmin,ymin
+                          if (iverbose > 0) print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
+                                ' : fast cross section', xmin,ymin
                           call interpolate3D_fastxsec( &
                                xplot(1:ninterp),yplot(1:ninterp), &
                                zplot(1:ninterp),hh(1:ninterp), &
@@ -1843,8 +1843,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            call page_setup
 
            !--add to log
-           if (x_sec.and.iplotpart.and.iplotz.gt.0) print 35,label(iplotz),zslicemin,label(iplotz),zslicemax
-35            format('cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)
+           if (x_sec.and.iplotpart .and. iplotz.gt.0 .and. iverbose > 1) then
+              print "(' cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)",&
+                    label(iplotz),zslicemin,label(iplotz),zslicemax
+           endif
 
            !------------------------------
            ! now actually plot the data
