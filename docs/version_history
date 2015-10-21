@@ -1,3 +1,6 @@
+2.6.0:
+
+ 
 2.5.1:
 error bar style options; support for 5K displays; can plot vectors and render with colours if h not read; range restrictions apply during splash to grid; improved line-style legend; now up to 6 line styles; fixes to amuse-hdf5 read; phantom read handles star/dm particles; various bugs fixed
  
