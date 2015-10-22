@@ -1,5 +1,5 @@
 2.6.0:
-
+SILO, falcON and .pbob data reads implemented; bug fixes in gadget-hdf5 reader; can recognise particle types in ascii read; more robust sphNG read; dust fraction recognised in Phantom data read; Toomre Q works in physical units; bug fix with disappearing units labels; bug fix in shock tube solution; added splash calc delta; splash to ascii keeps precision; better power spectra
  
 2.5.1:
 error bar style options; support for 5K displays; can plot vectors and render with colours if h not read; range restrictions apply during splash to grid; improved line-style legend; now up to 6 line styles; fixes to amuse-hdf5 read; phantom read handles star/dm particles; various bugs fixed
