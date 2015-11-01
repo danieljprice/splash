@@ -933,7 +933,8 @@ $(GIZA_DIR)/lib/libgiza.a: gizabuild
 
 gizabuild: 
 	@echo "Compiling giza..."
-	$(MAKE) $(MAKECMDFLAGS) -C $(GIZA_DIR) libgiza CC="$(CC)" CFLAGS="$(CFLAGS)"
+        cd $(GIZA_DIR); ./configure --prefix=$(GIZA_DIR) CC=$(CC)
+	cd $(GIZA_DIR); $(MAKE) $(MAKECMDFLAGS) install CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 docs: doc
 
