@@ -30,8 +30,12 @@ FFLAGS=
 # change the line below if SPLASH does not find the X11 libraries
 # (some settings of the SYSTEM variable for specific machines overwrite this)
 #
-# X11LIBS= -L/usr/X11R6/lib64 -lX11
-X11LIBS= -L/usr/X11/lib -lX11
+# X11_LIBS= -L/usr/X11R6/lib64 -lX11
+X11_DIR= /usr/X11/
+X11_LIBS= -L$(X11_DIR)/lib -lX11
+X11_CFLAGS= -I$(X11_DIR)/include
+CAIRO_LIBS= -L$(X11_DIR)/lib -lcairo
+CAIRO_CFLAGS= -I$(X11_DIR)/include
 
 #--------------------------------------------------------------
 # here we choose the backend plotting library for splash
@@ -41,9 +45,9 @@ X11LIBS= -L/usr/X11/lib -lX11
 ifneq ($(BACKEND), pgplot)
 #-- C A I R O --
    GIZA_DIR= ../giza
-   VPATH+= $(GIZA_DIR)/interface/ $(GIZA_DIR)/src/
+   VPATH+= $(GIZA_DIR)/interface/ $(GIZA_DIR)/include $(GIZA_DIR)/src/
    PLOTLIB= giza-fortran.F90 plotlib_giza.f90
-   PGPLOTLIBS = -L$(GIZA_DIR)/lib -lgiza -lcairo
+   PGPLOTLIBS = -L$(GIZA_DIR)/lib -lgiza $(CAIRO_LIBS)
    CFLAGS= -fPIC -Wall -Wextra -O3 -g
    CC = gcc
 else
@@ -244,7 +248,7 @@ ifeq ($(SYSTEM),ukaff1a)
    OMPFLAGS= -qsmp=omp
    DEBUGFLAG= -C -g
    SYSTEMFILE= system_f2003.f90
-   X11LIBS= -L/usr/X11R6/lib -lX11
+   X11_LIBS= -L/usr/X11R6/lib -lX11
    PGPLOTLIBS=   
    STATICLIBS= /home/dprice/pgplot/libpgplot.a /home/dprice/plot/libg2cmodified.a 
    KNOWN_SYSTEM=yes
@@ -260,7 +264,7 @@ ifeq ($(SYSTEM),ukaff1b)
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -convert big_endian
    ENDIANFLAGLITTLE= -convert little_endian
-   X11LIBS= -L/home/dprice/lib -lX11 -lpng
+   X11_LIBS= -L/home/dprice/lib -lX11 -lpng
    PGPLOTLIBS= -L/home/dprice/pgplot2 -lpgplot
    EXT=2   # call the binary something different
    KNOWN_SYSTEM=yes
@@ -275,7 +279,7 @@ ifeq ($(SYSTEM),zen)
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -convert big_endian
    ENDIANFLAGLITTLE= -convert little_endian
-   X11LIBS=-L/home/djp212/lib -lX11
+   X11_LIBS=-L/home/djp212/lib -lX11
    PGPLOTLIBS= -lpng #-L${PGPLOT_DIR} -lpgplot -lpng
    STATICLIBS= /home/djp212/pgplot/libpgplot.a
 # or use setenv F_UFMTENDIAN=big or little at runtime
@@ -327,7 +331,7 @@ ifeq ($(SYSTEM),myg95)
 #  using the g95 compiler
    FC= myg95
    FFLAGS= -O3 -ffast-math
-   X11LIBS= -L/usr/X11R6/lib64 -lX11
+   X11_LIBS= -L/usr/X11R6/lib64 -lX11
    PGPLOTLIBS = -L/usr/local64/pgplot -lpgplot -lpng -lg2c
    SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
    ENDIANFLAGBIG= -fendian='BIG'
@@ -348,7 +352,7 @@ ifeq ($(SYSTEM),maccluster)
       EXT= _ppc
    endif
    FFLAGS= -O3 -ffast-math -Wall -Wextra -Wno=165 
-   X11LIBS= -L/usr/X11R6/lib -lX11
+   X11_LIBS= -L/usr/X11R6/lib -lX11
    PGPLOTLIBS= -lSystemStubs
    STATICLIBS= /AstroUsers/djp212/pgplot/libpgplot.a
    SYSTEMFILE= system_f2003.f90
@@ -363,7 +367,7 @@ ifeq ($(SYSTEM),astromac)
 #  using the g95 compiler on the Astrophysics cluster in Exeter
    FC= g95
    FFLAGS= -O3 -ffast-math -Wall -Wextra -Wno=165
-   X11LIBS= -L/usr/X11R6/lib -lX11
+   X11_LIBS= -L/usr/X11R6/lib -lX11
    PGPLOTLIBS= -L/opt/local/lib -lpng -lg2c
    STATICLIBS= /usr/local/pgplot/libpgplot.a
    SYSTEMFILE= system_f2003.f90
@@ -385,7 +389,7 @@ ifeq ($(SYSTEM),spectrum)
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -xfilebyteorder=big16:%all
    ENDIANFLAGLITTLE= -xfilebyteorder=little16:%all
-   X11LIBS = -L/usr/X11R6/lib64 -lX11
+   X11_LIBS = -L/usr/X11R6/lib64 -lX11
    KNOWN_SYSTEM=yes
 endif
 
@@ -407,7 +411,7 @@ endif
 #
 # these are the flags used for linking
 #
-LDFLAGS= $(X11LIBS) $(PGPLOTLIBS)
+LDFLAGS= $(X11_LIBS) $(PGPLOTLIBS)
 
 #
 # this is an option to change the endian-ness at compile time
@@ -927,13 +931,13 @@ giza-fortran.o : giza-fortran.F90 $(GIZA_DIR)/lib/libgiza.a
 
 .PHONY: gizabuild libgiza
 
-libgiza: gizabuild
+##libgiza: gizabuild
 
 $(GIZA_DIR)/lib/libgiza.a: gizabuild
 
 gizabuild: 
 	@echo "Compiling giza..."
-        cd $(GIZA_DIR); ./configure --prefix=$(GIZA_DIR) CC=$(CC)
+	cd $(GIZA_DIR); ./configure --prefix=$(PWD)/$(GIZA_DIR) CC=$(CC) CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
 	cd $(GIZA_DIR); $(MAKE) $(MAKECMDFLAGS) install CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 docs: doc
