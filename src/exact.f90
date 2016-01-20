@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -39,6 +39,7 @@ module exact
   !--options used to plot the exact solution line
   !
   integer :: maxexactpts, iExactLineColour, iExactLineStyle,iPlotExactOnlyOnPanel
+  integer :: iNormaliseErrors
   logical :: iApplyTransExactFile,iCalculateExactErrors,iPlotResiduals
   logical :: iApplyUnitsExactFile
   real :: fracinsetResiduals,residualmax
@@ -98,7 +99,7 @@ module exact
   namelist /exactopts/ iexactplotx,iexactploty,filename_exact,maxexactpts, &
        iExactLineColour,iExactLineStyle,iApplyTransExactFile,iCalculateExactErrors, &
        iPlotResiduals,fracinsetResiduals,residualmax,iPlotExactOnlyOnPanel,&
-       iApplyUnitsExactFile
+       iApplyUnitsExactFile,iNormaliseErrors
 
   namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
@@ -201,6 +202,7 @@ contains
     iApplyTransExactFile = .true. ! false if exact from file is already logged
     iApplyUnitsExactFile = .false.
     iCalculateExactErrors = .true.
+    iNormaliseErrors = 1
     iPlotResiduals = .false.
     fracinsetResiduals = 0.15
     residualmax = 0.0
@@ -509,7 +511,10 @@ contains
     call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
     call prompt('enter line colour ',iExactLineColour,1,plotlib_maxlinecolour)
     call prompt('enter line style  ',iExactLineStyle,1,plotlib_maxlinestyle)
-    call prompt('calculate error norms? ',iCalculateExactErrors)
+    call prompt('calculate error norms?',iCalculateExactErrors)
+    print "(/,' 0 : not normalised  L1 = 1/N \sum |y - y_exact|',/,"// &
+             "' 1 : normalised      L1 = 1/N 1/max(y_exact) \sum |y - y_exact|')"
+    call prompt('enter choice of error norm',iNormaliseErrors)
     if (iCalculateExactErrors) then
        call prompt('plot residuals (as inset in main plot)?',iPlotResiduals)
        if (iPlotResiduals) then
@@ -1359,7 +1364,7 @@ contains
             !--find nearest point in exact solution table
             !
             do j=1,size(xexact)-1
-               if (xexact(j).lt.xi .and. xexact(j+1).gt.xi) then
+               if (xexact(j).le.xi .and. xexact(j+1).gt.xi) then
                   if (abs(residual(i)).gt.tiny(residual)) nerr = nerr + 1
                   !--linear interpolation from tabulated exact solution
                   dy = yexact(j+1) - yexact(j)
@@ -1367,7 +1372,7 @@ contains
                   if (dx.gt.0.) then
                      yexacti = yexact(j) + dy/dx*(xi - xexact(j))
                      residual(i) = ypts(i) - yexacti
-                  elseif (dy.gt.0.) then
+                  elseif (dy.ge.0.) then
                      yexacti = yexact(j)
                      residual(i) = ypts(i) - yexacti
                   else
@@ -1390,10 +1395,15 @@ contains
    !
    !--normalise errors (use maximum y value)
    !
-   if (ymax.gt.tiny(ymax) .and. nused > 0) then
-      errL1 = errL1/(nused*ymax)
-      errL2 = sqrt(errL2/(nused*ymax**2))
-      errLinf = errLinf/ymax
+   if (nused > 0) then
+      if (iNormaliseErrors==1 .and. ymax > tiny(ymax)) then
+         errL1 = errL1/(nused*ymax)
+         errL2 = sqrt(errL2/(nused*ymax**2))
+         errLinf = errLinf/ymax
+      else
+         errL1 = errL1/nused
+         errL2 = sqrt(errL2/(nused))
+      endif
    else
       print "(a)",' error normalising errors'
       errL1 = 0.
