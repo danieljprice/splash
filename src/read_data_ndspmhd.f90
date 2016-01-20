@@ -342,6 +342,7 @@ subroutine fake_twofluids
  real, dimension(ndimV) :: veli,vgas,vdust,deltav
 
  if (idustfrac.gt.0 .and. irho.gt.0) then
+    print*,' got dustfrac in column ',idustfrac
     do i=indexstart,indexstart+nstepsread-1
        ntoti = sum(npartoftype(:,i))
        if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)).gt.maxpart) then
@@ -412,7 +413,7 @@ subroutine set_labels
              irhorestframe,idustfrac,ideltav
  use params
  use settings_data, only:ndim,ndimV,iformat,ntypes, &
-                    UseTypeInRenderings
+                    UseTypeInRenderings,ncolumns
  use geometry, only:labelcoord
  implicit none
  integer :: i,icol
@@ -506,13 +507,15 @@ subroutine set_labels
     icol = icol + ndimV
     iBfirst = 0
 
-    iamvec(icol+1:icol+ndimV) = icol + 1
-    labelvec(icol+1:icol+ndimV) = 'del^{2} v'
-    icol = icol + ndimV
+    if (ncolumns > 20) then
+       iamvec(icol+1:icol+ndimV) = icol + 1
+       labelvec(icol+1:icol+ndimV) = 'del^{2} v'
+       icol = icol + ndimV
 
-    iamvec(icol+1:icol+ndimV) = icol + 1
-    labelvec(icol+1:icol+ndimV) = 'grad (div {\bf v})'
-    icol = icol + ndimV
+       iamvec(icol+1:icol+ndimV) = icol + 1
+       labelvec(icol+1:icol+ndimV) = 'grad (div {\bf v})'
+       icol = icol + ndimV
+    endif
  endif
  if (iformat.eq.5) then
     icol = icol + 1
