@@ -8,11 +8,11 @@
 \usepackage{ulem}
 \hypersetup{
  colorlinks,
- citecolor=green,
+ citecolor=blue,
  linkcolor=blue,
  urlcolor=blue
 }
-\def\thisyear{2014 }
+\def\thisyear{2014\unskip}
 
 %HEVEA\usepackage{hevea}
 %HEVEA\htmlfoot{\@hr{\textwidth}{1pt}\textsc{SPLASH}: A visualisation tool for SPH data \copyright   2004--\thisyear Daniel Price. \newline \url{http://users.monash.edu.au/~dprice/splash/}}
@@ -88,7 +88,7 @@ difference between a raw particle plot and a rendered image can be substantial. 
 \subsection{What it does}
 \splash is a utility for visualisation of output from (astrophysical) simulations using the
 Smoothed Particle Hydrodynamics (SPH) method in one, two and three dimensions.
-It is written in Fortran 90/95 and utilises \giza, a custom-build backend graphics library to do the actual plotting. In particular the following
+It is written in Fortran 90/95 and utilises \giza\unskip, a custom-build backend graphics library to do the actual plotting. In particular the following
 features are included:
 \begin{itemize}
 \item Rendering of particle data to an array of pixels using the SPH kernel
@@ -125,7 +125,7 @@ Thus it may not be particularly useful for things like water and solids etc. in 
 
  \splash also doesn't make coffee.
 
-\subsection{\splash, the paper}
+\subsection{\splash\unskip, the paper}
  The algorithms implemented in \splash are not described here, but instead described in a paper \citep{splashpaper} (Publications of the Astronomical Society of Australia, 24, 159-173), available from:
 
 \url{http://www.publish.csiro.au/?paper=AS07022}
@@ -228,17 +228,23 @@ vsplash & \textsc{vine} & \verb+read_data_VINE.f90+ & see environment variable o
 \begin{tabular}{lllp{0.25\textwidth}}
 Format & Binary & read\_data file & Comments \\
 \hline
-h5part format & h5splash & \verb+read_data_h5part.f90+ & Reads general files written with the h5part library. Requires linking against H5PART and HDF5 libraries \\
-\textsc{gadget} HDF5 format & gsplash-hdf5 & \verb+read_data_gadget_hdf5.f90+ & Reads HDF5 format from the \textsc{gadget} code. Requires linking against HDF5 libraries \\
-Andreas Bauswein's format & bsplash & \verb+read_data_bauswein.f90+  & \\
-Sigfried Vanaverbeke's format & vsplash & \verb+read_data_vanaverbeke.f90+  & \\
-Regularised SPH (Steinar Borve) & rsplash & \verb+read_data_rsph.f90+  & \\
+h5part & h5splash & \verb+read_data_h5part.f90+ & Reads general files written with the h5part library. Requires linking against H5PART and HDF5 libraries \\
+\textsc{gadget} HDF5 & gsplash-hdf5 & \verb+read_data_gadget_hdf5.f90+ & Reads HDF5 format from the \textsc{gadget} code. Requires linking against HDF5 libraries \\
+\textsc{amuse} HDF5 & amsplash-hdf5 & \verb+read_data_amuse_hdf5.f90+ & Reads HDF5 format from the \textsc{amuse} framework. \\
+
+\verb+.silo+ format (particle data only) & silosplash & \verb+read_data_silo.f90+ & a nice standardised HDF5 particle format. Requires {\sc silo} libraries. \\
+SNSPH & snsplash & \verb+read_data_snsph.f90+ & Supernova SPH (Chris Fryer et al.). Requires libsw. \\
+falcON & fsplash & \verb+read_data_falcON.f90+  & Walter Dehnen's SPH code format (uses HDF5) \\
+Andreas Bauswein's code & bsplash & \verb+read_data_bauswein.f90+  & \\
+Sigfried Vanaverbeke's code & vsplash & \verb+read_data_vanaverbeke.f90+  & \\
+Regularised SPH (Steinar B{\o}rve) & rsplash & \verb+read_data_rsph.f90+  & \\
 FLASH tracer particles & fsplash & \verb+read_data_flash_hdf5.f90+  & Reads tracer particle output from the FLASH code. Requires linking against HDF5 libraries \\
 Sky King/Nikos Mastrodemos & usplash & \verb+read_data_UCLA.f90+  & A good example of a simple ascii format reader \\
-Jamie Bolton GADGET format & gsplash\_jsb & \verb+read_data_gadget_jsb.f90+ & Reads extra arrays before the SPH smoothing length \\
+Jamie Bolton GADGET & gsplash\_jsb & \verb+read_data_gadget_jsb.f90+ & Reads extra arrays before the SPH smoothing length \\
 Old Matthew Bate code & bsplash & \verb+read_data_mbate.f90+  & similar to the original Benz SPH code format \\
 Foulkes/Haswell/Murray & fsplash & \verb+read_data_foulkes.f90+  & An ascii format \\
 Andrea Urban format & usplash & \verb+read_data_urban.f90+  & An ascii format \\
+\verb+.pbob+ format & psplash & \verb+read_data_pbob.f90+ & David Brown's SPH code \\
 \hline
 \end{tabular}
 \caption{Other data reads implemented but not compiled by default}
@@ -290,9 +296,7 @@ export GIZA_FONT='Helvetica'
 where the name is a reasonable guess as to the font you want to use (the default is `Times'). In particular, if you are having trouble displaying unicode characters such as greek letters, you can just change the font until you find one that works.
 
 \subsubsection{ Endian changing}
- On some compilers, the endian-ness (byte order) of the file read for unformatted binary data files can also be changed at runtime. This is useful for looking at files on different systems to the one on which they were created (e.g. x86 machines create little-endian files by default, whereas IBM/powerpc machines create big-endian).
-
-Environment variables for changing the endian-ness of the data read for some common compilers are given below:
+ On some compilers, the endian-ness (byte order) when reading unformatted binary data files can be changed at runtime. This is useful for looking at files on different systems to the one on which they were created (e.g. x86 machines create little-endian files by default, whereas IBM/powerpc machines create big-endian). Environment variables for changing the endian-ness of the data read for some common compilers are given below:
 \begin{table}[h!]
 \begin{tabular}{lllll}
 Compiler & Environment variable & Setting for big endian & Setting for little endian & Other options \\
@@ -476,6 +480,8 @@ Command line plotting mode:
                              output to file called 'diffvals.out'
          calc amp          : 0.5*(max - min) of each column vs. time
                              output to file called 'ampvals.out'
+         calc delta        : 0.5*(max - min)/mean of each column vs. time
+                             output to file called 'deltavals.out'
          calc mean         : mean of each column vs. time
                              output to file called 'meanvals.out'
          calc rms          : (mass weighted) root mean square of each column vs. time
@@ -486,6 +492,9 @@ Command line plotting mode:
 
          calc timeaverage  : time average of *all* entries for every particle
                              output to file called 'time_average.out'
+
+         calc ratio        : ratio of *all* entries in each file compared to first
+                             output to file called 'ratio.out'
 \end{verbatim}
 
  Command-line options can be entered in any order on the command line (even after the dump file names). For more information on the convert utility (`splash to ascii') see \S\ref{sec:convert}. For details of the \verb+-o ppm+ or \verb+-o ascii+ option see \S\ref{sec:writepixmap}. For details of the \verb+-ev+ option, see \S\ref{sec:evsplash}.
@@ -2288,12 +2297,20 @@ Other options are given by typing 'splash calc', which currently has the followi
                              output to file called 'maxvals.out'
          calc min          : minimum of each column vs. time
                              output to file called 'minvals.out'
+         calc diff         : (max - min) of each column vs. time
+                             output to file called 'diffvals.out'
+         calc amp          : 0.5*(max - min) of each column vs. time
+                             output to file called 'ampvals.out'
+         calc delta        : 0.5*(max - min)/mean of each column vs. time
+                             output to file called 'deltavals.out'
          calc mean         : mean of each column vs. time
                              output to file called 'meanvals.out'
          calc rms          : (mass weighted) root mean square of each column vs. time
                              output to file called 'rmsvals.out'
          calc timeaverage  : time average of *all* entries for every particle
                             output to file called 'time_average.out'
+         calc ratio        : ratio of *all* entries in each file compared to first
+                             output to file called 'ratio.out'
 \end{verbatim}
 For the `energies' and `massaboverho' options to be successful, \splash must be aware of the locations of the corresponding columns in the data (i.e., by the column identification given in the set\_labels routine corresponding to the data read). For the `massaboverho' option an input file is required specifying the density thresholds (a default version is written if the appropriate file is not already present).
  
@@ -2483,28 +2500,37 @@ which is used throughout the program and to Roland Schmehl who wrote the excelle
  Richard Alexander, 
  Gabe Altay,
  Pau Amaro-Seoane,
+ Alessandro Atrani,
  Sumedh Anathpindika,
  Ben Ayliffe,
  Andreas Bauswein,
  Mark Bennett,
+ David Brown,
  Florian Buerzle,
  Paul Cornwall,
  Jared Coughlin,
  Carlos Cuesta,
+ Daniel Cunnama,
  Alan Duffy,
  Clare Dobbs,
+ Carrie Elliot,
  Claude-Andr\'e Faucher-Gigu\`ere,
+ Stefano Facchini,
+ Juan Pablo Farias,
  Christoph Federrath,
  Laure Fouchet,
  Sergio Gelato,
  Thomas Grief,
  Doron Grossman,
+ Jean-Fran\c{c}ois Gonzalez,
  Johnny Hitti,
+ Mark Hutchison,
  Vid Ir\v{s}i\v{c},
  John Jones,
  Sky King,
  Laura Kreidberg,
  Guillaume Laibe,
+ Ben Lewis,
  Giuseppe Lodato,
  David Madlener,
  John Mansour,
@@ -2513,17 +2539,24 @@ which is used throughout the program and to Roland Schmehl who wrote the excelle
  Andrew McLeod,
  Nick Moeckel,
  Shazrene Mohamed,
+ Rebecca Nealon,
  Chris Nixon,
+ Alex Pettitt,
  Cody Raskin,
  John Regan,
  Dave Rundle,
  Alison Sills,
  Kevin Sooley,
+ Phil Sutton,
+ Robert Thompson,
+ St\'even Toupin,
  Terry Tricco,
  Yusuke Tsukamoto,
  Sigfried Vanaverbeke,
  Enrique Vazquez-Semadeni
  Antonio Vazquez,
+ Tim Waters,
+ James Wurster,
  and Matt Young.
 And to everyone who has cited the \splash paper!
 
@@ -2531,7 +2564,7 @@ And to everyone who has cited the \splash paper!
 \appendix
 
 \section{Source code overview}%HEVEA\cutname{sourcecode.html}
-Here is a brief description of all the files making up the code:
+Here is a brief and outdated description of various files making up the code:
 \begin{longtable}{|lp{0.7\textwidth}|}
 \hline
 Filename & Description \\
