@@ -159,8 +159,8 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
           units = giza_units_inches
        case(2)
           units = giza_units_mm
-          width = 0.1*width
-          height = 0.1*height
+          width = 10.*width
+          height = 10.*height
        end select
     else
        units = giza_units_inches
