@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -351,7 +351,7 @@ end subroutine interpolate_pt
 !--------------------------------------------------------------------------
 subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  use plotlib, only:plot_line,plot_bbuf,plot_ebuf,plot_slw,plot_sci,plot_set_opacity
- use plotlib, only:plot_qcr,plot_scr,plot_qlw
+ use plotlib, only:plot_qcr,plot_scr,plot_qlw,plot_arro,plot_sah
  use sort,    only:indexx
  implicit none
  integer, intent(in) :: n
@@ -390,6 +390,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  !--work out whether or not we have a white or black
  !  background colour
  !
+ !call plot_sah(1,20.,1.0)
  call plot_qcr(0,ri,gi,bi)
  white_bg = (ri + gi + bi > 1.5)
  !
@@ -412,6 +413,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  !--specify the viewing and lighting angles
  ! 
  viewangle = (/0.,0.,1./)
+ !lighting = (/0.3,0.3,1./)
  lighting = (/0.,0.,1./)
  
  !--make sure these are normalised
@@ -436,6 +438,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
           if (z(i).gt.zobs) cycle over_particles
           zfrac = abs(dscreen/(z(i)-zobs))
        endif
+       !if (mod(ipart,10)/=0) cycle over_particles
 !       lw = min(zfrac,2.5)
        
        vxi = vx(i)
@@ -453,6 +456,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
        if (frac.ge.1.e-3) then
           !--specify the length of line to draw
           term = 1.5*dx*dvmag*zfrac
+          !term = term*(vmag/vmax)**0.2
           xpts(1) = x(i) - vxi*term
           xpts(2) = x(i) + vxi*term
           ypts(1) = y(i) - vyi*term
@@ -477,10 +481,12 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
 
           !--draw line with intensity proportional
           !  to the amount of lighting
+          !call plot_scr(1,toti,toti,toti,max(frac,0.15))
           call plot_scr(1,toti,toti,toti,max(frac,0.05))
           call plot_sci(1)
           call plot_slw(lw)
           call plot_line(2,xpts,ypts)
+          !call plot_arro(xpts(1),ypts(1),xpts(2),ypts(2))
           np = np + 1
        endif
     endif
