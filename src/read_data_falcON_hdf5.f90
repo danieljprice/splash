@@ -52,7 +52,7 @@
 !  that perform the actual calls to the HDF5 libs
 !
 !-------------------------------------------------------------------------
-module falconhdf5read
+module falcONhdf5read
  use params, only:maxplot,doub_prec
  use labels, only:lenlabel
  use, intrinsic :: iso_c_binding, only:c_int,c_double,c_char
@@ -63,72 +63,72 @@ module falconhdf5read
 
  interface
    ! opens a falcON HDF5 snapshot file
-   subroutine open_falcon_file(filename,ierr) bind(c,name="open_falcON_file")
+   subroutine open_falcON_file(filename,ierr) bind(c,name="open_falcON_file")
     import
     character(c_char), intent(in)  :: filename(*)
     integer(c_int),    intent(out) :: ierr
-   end subroutine open_falcon_file
+   end subroutine open_falcON_file
    
    ! queries whether a file is open
-   function falcon_file_is_open() bind(c,name="falcON_file_is_open")
+   function falcON_file_is_open() bind(c,name="falcON_file_is_open")
     import
-    integer(c_int) :: falcon_file_is_open
-   end function falcon_file_is_open
+    integer(c_int) :: falcON_file_is_open
+   end function falcON_file_is_open
 
    ! closes the currently open (if any) falcON HDF5 snapshot file.
-   subroutine close_falcon_file() bind(c,name="close_falcON_file")
+   subroutine close_falcON_file() bind(c,name="close_falcON_file")
     ! no arguments
-   end subroutine close_falcon_file
+   end subroutine close_falcON_file
    
    ! queries if there is another snapshot present the currently open file
-   function num_falcon_snapshots(ierr) bind(c,name="num_falcON_snapshots")
+   function num_falcON_snapshots(ierr) bind(c,name="num_falcON_snapshots")
     import
-    integer(c_int) :: num_falcon_snapshots
+    integer(c_int) :: num_falcON_snapshots
     integer(c_int), intent(out) :: ierr
-   end function num_falcon_snapshots
+   end function num_falcON_snapshots
 
    ! set falcON debugging level
-   subroutine set_falcon_debugging_level(level) bind(c,name="set_falcON_debugging_level")
+   subroutine set_falcON_debugging_level(level) bind(c,name="set_falcON_debugging_level")
     import
     integer(c_int), intent(in) :: level
-   end subroutine set_falcon_debugging_level
+   end subroutine set_falcON_debugging_level
 
    ! read falcON header
-   subroutine open_falcon_snapshot(ntype,npart,ncol,dimX,dimV,time,hper,ierr) &
+   subroutine open_falcON_snapshot(ntype,npart,ncol,dimX,dimV,time,hper,ierr) &
      bind(c,name="open_falcON_snapshot")
     import
     integer(c_int), intent(out) :: ntype,ncol,dimX,dimV,ierr
     integer(c_int), intent(out) :: npart(*)
     real(c_double), intent(out) :: time,hper(3)
-   end subroutine open_falcon_snapshot
+   end subroutine open_falcON_snapshot
    
    ! read falcON data
-   subroutine read_falcon_snapshot(ierr) bind(c,name="read_falcON_snapshot")
+   subroutine read_falcON_snapshot(ierr) bind(c,name="read_falcON_snapshot")
     import
     integer(c_int), intent(out) :: ierr   
-   end subroutine read_falcon_snapshot
+   end subroutine read_falcON_snapshot
  end interface
 
 contains
 
  ! map types from falcON to splash
- integer function itypemap_falcon(itype)
+ integer function itypemap_falcON(itype)
   integer, intent(in) :: itype
 
   select case(itype)
   case(1) ! sinks
-     itypemap_falcon = 2
+     itypemap_falcON = 2
   case(2) ! gas
-     itypemap_falcon = 1
+     itypemap_falcON = 1
   case(3:4)
-     itypemap_falcon = itype
+     itypemap_falcON = itype
   case(5:maxtypes)
-     itypemap_falcon = itype+1
+     itypemap_falcON = itype+1
   case default
-     itypemap_falcon = 5 ! unknown
+     itypemap_falcON = 5 ! unknown
   end select
  
- end function itypemap_falcon
+ end function itypemap_falcON
 
  ! get starting position in particle array
  integer function ioffset(itype,npartoftype)
@@ -143,7 +143,7 @@ contains
  
  end function ioffset
 
-end module falconhdf5read
+end module falcONhdf5read
 
 !-------------------------------------------------------------------------
 !
@@ -160,7 +160,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use system_utils,   only:lenvironment
   use asciiutils,     only:cstring
   use dataread_utils, only:check_range
-  use falconhdf5read
+  use falcONhdf5read
   implicit none
   integer, intent(in)                :: istepstart
   integer, intent(out)               :: nstepsread
@@ -242,7 +242,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   if (debug) print*,'DEBUG: opening snapshot ',i
   npartoftypei(:) = 0
-  call open_falcon_snapshot(ntypes, npartoftypei, &
+  call open_falcON_snapshot(ntypes, npartoftypei, &
                             ncolstep, ndim, ndimV, timetemp, &
                             hperiodic, ierr)
   !
@@ -269,7 +269,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   if (iverbose >= 1) then
      !print "(2(a,1x,i10))",' npart: ',ntoti,' ncolumns: ',ncolstep
      !print "(a,i2)",' ntypes: ',ntypes,' 
-     !print*,' npartoftype = ',(npartoftypei(itypemap_falcon(j)),j=1,ntypes)
+     !print*,' npartoftype = ',(npartoftypei(itypemap_falcON(j)),j=1,ntypes)
      !print*,' ncolstep = ',ncolstep,' ndim = ',ndim,ndimV
      print*,' time = ',timetemp !,' hper = ',hperiodic(:)
   endif
@@ -300,7 +300,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   ! copy header data into allocated arrays
   !
   do j=1,ntypes
-     npartoftype(itypemap_falcon(j),i) = npartoftypei(j)
+     npartoftype(itypemap_falcON(j),i) = npartoftypei(j)
   enddo
   time(i) = real(timetemp)
   masstype(:,i) = 0. ! all masses read from file
@@ -313,7 +313,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
      !where (required(1:ncolumns)) isrequired(1:ncolumns) = 1
      
      i_current_step = i
-     call read_falcon_snapshot(ierr);
+     call read_falcON_snapshot(ierr);
      if (ierr /= 0) then
         print "(/,1x,a,/)",' *** ERROR reading falcON snapshot ***'
         print*,'Press any key to continue (but there is likely something wrong with the file...)'
@@ -352,12 +352,12 @@ subroutine read_data(rootname,istepstart,nstepsread)
 
 end subroutine read_data
 
-subroutine read_falcon_data_into_splash(icol,npartoftypei,temparr,itypec) bind(c,name="read_falcON_data_into_splash")
+subroutine read_falcON_data_into_splash(icol,npartoftypei,temparr,itypec) bind(c,name="read_falcON_data_into_splash")
   use, intrinsic :: iso_c_binding, only:c_int,c_double
   use particle_data,  only:dat,iamtype,npartoftype
   use settings_data,  only:debugmode
   use labels,         only:label
-  use falconhdf5read, only:itypemap_falcon,ioffset,i_current_step
+  use falcONhdf5read, only:itypemap_falcON,ioffset,i_current_step
   implicit none
   integer(kind=c_int), intent(in) :: icol,npartoftypei,itypec
   real(kind=c_double), intent(in) :: temparr(*)
@@ -368,7 +368,7 @@ subroutine read_falcon_data_into_splash(icol,npartoftypei,temparr,itypec) bind(c
 
   icolput = icol + 1
   if (debugmode) print "(3(a,i2),a,i8)",'DEBUG: Step ',i_current_step,' column ',icol,&
-    ' type ',itypemap_falcon(itype),' -> '//trim(label(icolput))
+    ' type ',itypemap_falcON(itype),' -> '//trim(label(icolput))
   
   ! check column is within array limits
   if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
@@ -377,7 +377,7 @@ subroutine read_falcon_data_into_splash(icol,npartoftypei,temparr,itypec) bind(c
   endif
 
   ! ensure no array overflows
-  istart = ioffset(itypemap_falcon(itype),npartoftype(:,i_current_step)) + 1
+  istart = ioffset(itypemap_falcON(itype),npartoftype(:,i_current_step)) + 1
   iend   = min(istart + npartoftypei - 1,size(dat(:,1,1)))
   nmax   = iend - istart + 1
 
@@ -395,12 +395,12 @@ subroutine read_falcon_data_into_splash(icol,npartoftypei,temparr,itypec) bind(c
   if (size(iamtype(:,1)).gt.1) then
      print*,' SETTING TYPES ',istart,iend
      do i=istart,iend
-        iamtype(i,i_current_step) = int(itypemap_falcon(itype),kind=kind(iamtype))
+        iamtype(i,i_current_step) = int(itypemap_falcON(itype),kind=kind(iamtype))
      enddo
   endif
 
   return
-end subroutine read_falcon_data_into_splash
+end subroutine read_falcON_data_into_splash
 
 !------------------------------------------------------------
 ! set labels for each column of data
@@ -410,7 +410,7 @@ subroutine set_labels
                           ih,irho,iax,iutherm !ipr,iutherm
   use settings_data,  only:ndim,ndimV,UseTypeInRenderings
   use geometry,       only:labelcoord
-  use falconhdf5read, only:blocklabel
+  use falcONhdf5read, only:blocklabel
   use asciiutils,     only:lcase
   implicit none
   integer :: i,icol
@@ -481,7 +481,7 @@ end subroutine set_labels
 
 subroutine set_splash_block_label(icol,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
- use falconhdf5read, only:blocklabel
+ use falcONhdf5read, only:blocklabel
  use asciiutils,     only:fstring
  implicit none
  integer(kind=c_int),    intent(in) :: icol
@@ -496,12 +496,12 @@ subroutine set_splash_particle_label(itypec,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
  use asciiutils,     only:fstring
  use labels,         only:labeltype
- use falconhdf5read, only:itypemap_falcon
+ use falcONhdf5read, only:itypemap_falcON
  implicit none
  integer(kind=c_int),    intent(in) :: itypec
  character(kind=c_char), intent(in) :: name(256)
 
- !print*,' got type = ',itypec,' setting ',itypemap_falcon(itypec+1),'= ',trim(fstring(name))
- labeltype(itypemap_falcon(itypec+1)) = trim(fstring(name))
+ !print*,' got type = ',itypec,' setting ',itypemap_falcON(itypec+1),'= ',trim(fstring(name))
+ labeltype(itypemap_falcON(itypec+1)) = trim(fstring(name))
 
 end subroutine set_splash_particle_label
