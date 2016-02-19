@@ -110,6 +110,16 @@ endif
 ifndef CXX
 CXX = g++
 endif
+
+# default C++ library linking
+# (different between Mac/Linux)
+UNAME=$(shell uname)
+ifeq ($(UNAME), Darwin)
+    CXXLIBS= -lc++
+else
+    CXXLIBS= -lstdc++
+endif
+
 #--------------------------------------------------------------
 #  the following are general settings for particular compilers
 #
@@ -620,10 +630,12 @@ gadget_jsb: checksystem $(OBJECTS) read_data_gadget_jsb.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash-jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
 
 #---falcON HDF5 read ---
-falcon: falcon_hdf5
+falcon: falcON
 
-falcon_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o $(LDFLAGS) -lc++ $(HDF5LIBS) -lhdf5_cpp
+falcON: falcON_hdf5
+
+falcON_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o $(LDFLAGS) $(CXXLIBS) $(HDF5LIBS) -lhdf5_cpp
 
 read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
 	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
