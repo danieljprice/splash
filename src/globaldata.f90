@@ -127,6 +127,7 @@ module settings_data
  integer, dimension(10) :: isteplist
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
+ logical, parameter :: buffer_steps_in_file = .false.
  !--required array is dimensioned 0:maxplot so that required(icol) = .true.
  !  does nothing bad if icol = 0 (much safer that way)
  logical :: lowmemorymode

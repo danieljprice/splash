@@ -150,11 +150,11 @@ end module falcONhdf5read
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-subroutine read_data(rootname,istepstart,nstepsread)
+subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol
   use params,         only:doub_prec,maxparttypes !,maxplot
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread, &
-                           ntypes,debugmode,iverbose!, required
+                           ntypes,debugmode,iverbose,buffer_steps_in_file
   use mem_allocation, only:alloc
   use labels,         only:print_types,labeltype
   use system_utils,   only:lenvironment
@@ -162,11 +162,11 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use dataread_utils, only:check_range
   use falcONhdf5read
   implicit none
-  integer, intent(in)                :: istepstart
+  integer, intent(in)                :: istepstart,ipos
   integer, intent(out)               :: nstepsread
   character(len=*), intent(in)       :: rootname
   character(len=len(rootname)+10)    :: datfile
-  integer               :: i,j,ierr,ierror(8)
+  integer               :: i,j,ierr,ierror(8),istep,nsteps_to_read
   integer               :: ncolstep,npart_max,nstep_max,ntoti,ntotall
   integer               :: npartoftypei(maxparttypes)
   logical               :: iexist,reallocate,debug,goterrors
@@ -185,7 +185,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
 !
 !--check if first data file exists
 !
-  print "(1x,a)",'reading FalcON hdf5 format'
+  if (iverbose==1 .and. ipos==1) print "(1x,a)",'reading FalcON hdf5 format'
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
      !
@@ -235,8 +235,14 @@ subroutine read_data(rootname,istepstart,nstepsread)
   endif
   
   ntotall = 0
+  if (buffer_steps_in_file) then
+     nsteps_to_read = nstep_max
+  else
+     nsteps_to_read = 1
+  endif
 
-  over_snapshots: do i=istepstart,istepstart+nstep_max-1
+  i = istepstart
+  over_snapshots: do istep=1,nstep_max
   !
   ! read falcON header
   !
@@ -266,7 +272,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   ! print header information
   !
-  if (iverbose >= 1) then
+  if (iverbose >= 1 .and. buffer_steps_in_file .or. istep.eq.ipos) then
      !print "(2(a,1x,i10))",' npart: ',ntoti,' ncolumns: ',ncolstep
      !print "(a,i2)",' ntypes: ',ntypes,' 
      !print*,' npartoftype = ',(npartoftypei(itypemap_falcON(j)),j=1,ntypes)
@@ -293,34 +299,37 @@ subroutine read_data(rootname,istepstart,nstepsread)
   ! reallocate memory for main data array
   !
   if (reallocate .or. .not.(allocated(dat))) then
-     call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol))
+     call alloc(npart_max,nsteps_to_read,max(ncolumns+ncalc,maxcol))
   endif
 
   !
   ! copy header data into allocated arrays
   !
-  do j=1,ntypes
-     npartoftype(itypemap_falcON(j),i) = npartoftypei(j)
-  enddo
-  time(i) = real(timetemp)
-  masstype(:,i) = 0. ! all masses read from file
-
+  if (buffer_steps_in_file .or. istep.eq.ipos) then
+     do j=1,ntypes
+        npartoftype(itypemap_falcON(j),i) = npartoftypei(j)
+     enddo
+     time(i) = real(timetemp)
+     masstype(:,i) = 0. ! all masses read from file
+  endif
   !
   ! read particle data
   !
   got_particles: if (ntoti > 0) then
      !isrequired(:) = 0
      !where (required(1:ncolumns)) isrequired(1:ncolumns) = 1
-     
-     i_current_step = i
-     call read_falcON_snapshot(ierr);
-     if (ierr /= 0) then
-        print "(/,1x,a,/)",' *** ERROR reading falcON snapshot ***'
-        print*,'Press any key to continue (but there is likely something wrong with the file...)'
-        read*
+     if (buffer_steps_in_file .or. istep.eq.ipos) then
+        i_current_step = i
+        call read_falcON_snapshot(ierr);
+        if (ierr /= 0) then
+           print "(/,1x,a,/)",' *** ERROR reading falcON snapshot ***'
+           print*,'Press any key to continue (but there is likely something wrong with the file...)'
+           read*
+        endif
+        call print_types(npartoftype(:,i),labeltype)
+        i = i + 1
      endif
      nstepsread = nstepsread + 1
-     call print_types(npartoftype(:,i),labeltype)
   else
      !
      ! cover the special case where no particles have been read
@@ -345,9 +354,10 @@ subroutine read_data(rootname,istepstart,nstepsread)
   !
   call set_labels
 
-  if (nstepsread.gt.0) then
-     print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart+nstepsread-1)),' particles'
-  endif
+  !if (nstepsread.gt.0) then
+  !   print "(a,i10,a)",' >> read ',sum(npartoftype(:,i)),' particles'
+  !endif
+  call close_falcON_file()
   return
 
 end subroutine read_data

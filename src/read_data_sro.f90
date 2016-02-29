@@ -58,7 +58,7 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use particle_data, only:dat,time,npartoftype,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,iformat
@@ -66,7 +66,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use system_utils, only:lenvironment
   use system_commands, only:get_environment
   implicit none
-  integer, intent(in) :: indexstart
+  integer, intent(in) :: indexstart,ipos
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer, parameter :: max_spec = 7 ! number of species in abundance file

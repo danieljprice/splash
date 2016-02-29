@@ -1024,7 +1024,7 @@ end module sphNGread
 !----------------------------------------------------------------------
 !  Main read_data routine for splash
 !----------------------------------------------------------------------
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,iposn,nstepsread)
   use particle_data,  only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
   !use params,         only:int1,int8
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
@@ -1035,7 +1035,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use calcquantities, only:calc_quantities
   use sphNGread
   implicit none
-  integer, intent(in)  :: indexstart
+  integer, intent(in)  :: indexstart,iposn
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,k,ierr,iunit

@@ -64,7 +64,7 @@ module h5partdataread
 
 end module h5partdataread
 
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use particle_data,   only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data,   only:ndim,ndimV,ncolumns,ncalc,debugmode,ntypes,iverbose
@@ -79,7 +79,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
                             h5pt_readstepattrib_r8
   use h5partdataread
   implicit none
-  integer, intent(in)               :: indexstart
+  integer, intent(in)               :: indexstart,ipos
   integer, intent(out)              :: nstepsread
   character(len=*), intent(in)      :: rootname
   integer                           :: i,j,ncolstep,nsteps,ncolsfile,icol,itypeidcol

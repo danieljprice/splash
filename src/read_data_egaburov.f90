@@ -38,7 +38,7 @@
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,istepstart,nstepsread)
+subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
@@ -47,7 +47,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use labels, only:ih,irho
   use system_utils, only:renvironment,lenvironment
   implicit none
-  integer, intent(in) :: istepstart
+  integer, intent(in) :: istepstart,ipos
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   character(len=len(rootname)+10) :: datfile

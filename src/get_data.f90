@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -40,7 +40,7 @@ module getdata
 
 contains
 
-subroutine get_data(ireadfile,gotfilenames,firsttime)
+subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
   use asciiutils,     only:ucase
   use exact,          only:read_exactparams
   use filenames,      only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
@@ -48,7 +48,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata,    &
                       DataisBuffered,iCalcQuantities,ndim,iverbose,ntypes, &
                       iRescale,required,ipartialread,lowmemorymode,debugmode
-  use settings_data,  only:iexact
+  use settings_data,  only:iexact,buffer_steps_in_file
   use particle_data,  only:dat,time,npartoftype,maxcol
   use prompting,      only:prompt
   use labels,         only:labeltype
@@ -62,9 +62,10 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
   integer, intent(in) :: ireadfile
   logical, intent(in) :: gotfilenames
   logical, intent(in), optional :: firsttime
+  integer, intent(in), optional :: iposinfile
   logical :: setlimits,isfirsttime
   logical, parameter  :: dotiming = .true.
-  integer :: i,istart,ierr,itype,nplot
+  integer :: i,istart,ierr,itype,nplot,ipos,nsteps_read
   real    :: t1,t2
 
   if (.not.gotfilenames) then
@@ -91,6 +92,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      iverbose = 1
   else
      iverbose = 0
+  endif
+
+  ! ipos is the offset for *which* timestep to read from files containing multiple steps
+  ipos = 1
+  if (present(iposinfile)) then
+     if (iposinfile > 0) ipos = iposinfile
   endif
   !
   !--nstepsinfile is initialised to negative
@@ -119,7 +126,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !call endian_info()
 
      do i=1,nfiles
-        call read_data(rootname(i),istart,nstepsinfile(i))
+        call read_data(rootname(i),istart,ipos,nstepsinfile(i))
 
         istart = istart + nstepsinfile(i) ! number of next step in data array
         if (nstepsinfile(i).gt.0 .and. ncolumnsfirst.eq.0 .and. ncolumns.gt.0) then
@@ -187,12 +194,17 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !if (isfirsttime) print "(/a)",' reading single dumpfile'
 
      if (dotiming) call wall_time(t1)
-     call read_data(rootname(ireadfile),istart,nstepsinfile(ireadfile))
+     call read_data(rootname(ireadfile),istart,ipos,nstepsinfile(ireadfile))
      !
      !--do some basic sanity checks
      !
      if (debugmode) print "(a,i3)",' DEBUG: ncolumns from data read = ',ncolumns
-     if (debugmode) print "(a,i3)",' DEBUG: nsteps read from file   = ',nstepsinfile(ireadfile)
+     if (debugmode) print "(a,i3)",' DEBUG: nsteps in file   = ',nstepsinfile(ireadfile)
+     if (buffer_steps_in_file) then
+        nsteps_read = nstepsinfile(ireadfile)
+     else
+        nsteps_read = 1
+     endif
 
 !--try different endian if failed the first time
      !if (nstepsinfile(ireadfile).eq.0) then
@@ -264,10 +276,10 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
         if (debugmode) write(*,"(a)") ' rescaling data...'
         do i=1,min(ncolumns,maxcol)
            if (abs(units(i)-1.0).gt.tiny(units) .and. abs(units(i)).gt.tiny(units)) then
-              dat(:,i,1:nstepsinfile(ireadfile)) = dat(:,i,1:nstepsinfile(ireadfile))*units(i)
+              dat(:,i,1:nsteps_read) = dat(:,i,1:nsteps_read)*units(i)
            endif
         enddo
-        do i=1,nstepsinfile(ireadfile)
+        do i=1,nsteps_read
            if (time(i).gt.-0.5*huge(0.)) time(i) = time(i)*units(0)        
         enddo
      endif
@@ -280,13 +292,13 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      !
      !--calculate various additional quantities
      !
-     if (nstepsinfile(ireadfile).gt.0 .and. iCalcQuantities) then
+     if (nsteps_read.gt.0 .and. iCalcQuantities) then
         if (ipartialread .and. .not.any(required(ncolumns+1:))) then
            !--for partial data reads do a "pretend" call to calc quantities
            !  just to get ncalc and column labels right
-           call calc_quantities(1,nstepsinfile(ireadfile),dontcalculate=.true.)
+           call calc_quantities(1,nsteps_read,dontcalculate=.true.)
         else
-           call calc_quantities(1,nstepsinfile(ireadfile))
+           call calc_quantities(1,nsteps_read)
         endif
      endif
      !
@@ -300,7 +312,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime)
      endif
 
      if (setlimits) then
-        call set_limits(1,nstepsinfile(ireadfile),1,ncolumns+ncalc)
+        call set_limits(1,nsteps_read,1,ncolumns+ncalc)
         !--also set iendatstep the first time around
         iendatstep = nsteps
      endif

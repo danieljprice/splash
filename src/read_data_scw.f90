@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -47,13 +47,13 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use particle_data
   use params
   use settings_data, only:ndim,ndimV,ncolumns
   use mem_allocation
   implicit none
-  integer, intent(IN) :: indexstart
+  integer, intent(IN) :: indexstart,ipos
   integer, intent(OUT) :: nstepsread
   character(LEN=*), intent(IN) :: rootname
   integer, parameter :: maxptmass = 100

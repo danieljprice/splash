@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -52,7 +52,7 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use particle_data, only:dat,time,npartoftype,gamma,maxpart
   use params
   use settings_data, only:ndim,ndimV,ncolumns
@@ -60,7 +60,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use labels, only:label,ih,ipmass,irho
   use exact, only:hfact
   implicit none
-  integer, intent(in) :: indexstart
+  integer, intent(in) :: indexstart,ipos
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer, parameter :: iunit = 16
@@ -259,12 +259,12 @@ subroutine read_tipsyheader_binary(iunitb,ierr)
  integer, intent(in) :: iunitb
  integer, intent(out) :: ierr
  real(doub_prec) :: timedb
- 
+
  ierr = 0
  read(iunitb,iostat=ierr,end=55) timedb,nprint,ndim,ngas,ndark,nptmass
  !print*,'header = ',timedb,nprint,ndim,ngas,ndark,nptmass
  timei = real(timedb)
- 
+
  !--check for wrong endianness
  if (ierr /= 0 .or. timedb.lt.0. .or. ndim.lt.0 .or. ndim.gt.3 &
      .or. nprint.le.0 .or. ngas.lt.0 .or. ndark.lt.0 .or. nptmass.lt.0 &

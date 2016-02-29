@@ -16,7 +16,7 @@
 !     stating that you changed the files and the date of any change.
 !
 !  Copyright (C) 2005-2011 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -75,7 +75,7 @@ module unit_constants
 
 end module unit_constants
 
-subroutine read_data(rootname,istepstart,nstepsread)
+subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,ntypes
@@ -84,7 +84,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use labels, only:label,labeltype,labelzintegration
   use system_utils, only:ienvironment
   implicit none
-  integer, intent(in) :: istepstart
+  integer, intent(in) :: istepstart,ipos
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   character(len=len(rootname)+10) :: datfile

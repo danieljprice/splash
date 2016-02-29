@@ -46,7 +46,7 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,xorigin
@@ -54,7 +54,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use system_utils, only:lenvironment
   use labels, only:ih
   implicit none
-  integer, intent(in) :: indexstart
+  integer, intent(in) :: indexstart,ipos
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,nerr,iunit,ncolstep

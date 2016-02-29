@@ -15,8 +15,8 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
@@ -46,7 +46,7 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use exact, only:hfact
   use particle_data, only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol
   use params
@@ -57,7 +57,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use mem_allocation, only:alloc
   use geometry, only:labelcoordsys
   implicit none
-  integer, intent(in) :: indexstart
+  integer, intent(in) :: indexstart,ipos
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   character(len=len(rootname)+4) :: datfile

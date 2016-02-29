@@ -46,13 +46,13 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc
   use mem_allocation, only:alloc
   implicit none
-  integer, intent(in) :: indexstart
+  integer, intent(in) :: indexstart,ipos
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,nerr,iunit,ncolstep,ncolenv

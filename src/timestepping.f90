@@ -201,13 +201,14 @@ end subroutine timestep_loop
 !-------------------------------------------------------------------
 ! works out whether or not we need to read another dump into memory
 !-------------------------------------------------------------------
-recursive subroutine get_nextstep(istep,iposinfile)
- use filenames, only:nstepsinfile,nfiles,ifileopen,nsteps
- use getdata, only:get_data
+recursive subroutine get_nextstep(istep,ilocindat)
+ use filenames,     only:nstepsinfile,nfiles,ifileopen,nsteps
+ use getdata,       only:get_data
+ use settings_data, only:buffer_steps_in_file
  implicit none
- integer, intent(in) :: istep
- integer, intent(out) :: iposinfile
- integer :: ifile,nstepstotal,nstepsprev
+ integer, intent(in)  :: istep
+ integer, intent(out) :: ilocindat
+ integer :: ifile,nstepstotal,nstepsprev,iposinfile
 
  !
  !--request is for step istep
@@ -232,16 +233,17 @@ recursive subroutine get_nextstep(istep,iposinfile)
  !--this is where we cannot locate the timestep in the data (not enough steps)
  !  ie. ifile > nfiles
     print*,'reached last useable timestep'
-    iposinfile = 0
+    ilocindat = 0
     return
  endif
 
 ! print*,'step ',istep,' in file ',ifile,' nsteps = ',nsteps
 ! print*,'position in file = ',iposinfile
  if (istep.gt.nsteps) then
-    iposinfile = 0
+    ilocindat = 0
     return
  endif
+ ilocindat = iposinfile
 
  !
  !--if data is not stored in memory, read next step from file
@@ -266,7 +268,13 @@ recursive subroutine get_nextstep(istep,iposinfile)
  !
     if (iposinfile.gt.nstepsinfile(ifile)) then
        print*,'not enough steps in file... trying next file'
-       call get_nextstep(istep,iposinfile)
+       call get_nextstep(istep,ilocindat)
+    endif
+ elseif (.not.buffer_steps_in_file) then
+    if (iposinfile <= nstepsinfile(ifile)) then
+       ! if all steps have not been read from the file, read just the next one
+       call get_data(ifile,.true.,iposinfile=iposinfile)
+       ilocindat = 1
     endif
  endif
 

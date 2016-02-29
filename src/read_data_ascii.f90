@@ -69,7 +69,7 @@ module asciiread
 
 end module asciiread
 
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use particle_data,  only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep,iamtype
   use params
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,ntypes
@@ -79,7 +79,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use asciiread,      only:icoltype
   use labels,         only:labeltype,print_types
   implicit none
-  integer, intent(in)          :: indexstart
+  integer, intent(in)          :: indexstart,ipos
   integer, intent(out)         :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr,iheader_time,iheader_gamma

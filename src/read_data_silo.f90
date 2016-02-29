@@ -89,7 +89,7 @@ end module siloread
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-subroutine read_data(rootname,istepstart,nstepsread)
+subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
   use params,         only:doub_prec,maxparttypes,maxplot
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
@@ -102,7 +102,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use siloread,       only:blocklabel,havewarned,read_silo_header, &
                            read_silo_data,maxtypes
   implicit none
-  integer, intent(in)                :: istepstart
+  integer, intent(in)                :: istepstart,ipos
   integer, intent(out)               :: nstepsread
   character(len=*), intent(in)       :: rootname
   character(len=len(rootname)+10)    :: datfile,densfile,hfile

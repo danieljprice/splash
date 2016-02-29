@@ -94,7 +94,7 @@ contains
 
 end module flash_hdf5read
 
-subroutine read_data(dumpfile,indexstart,nstepsread)
+subroutine read_data(dumpfile,indexstart,ipos,nstepsread)
   use particle_data, only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,lowmemorymode
@@ -104,7 +104,7 @@ subroutine read_data(dumpfile,indexstart,nstepsread)
   use labels, only:ih,irho
   use system_utils, only:renvironment
   implicit none
-  integer, intent(in) :: indexstart
+  integer, intent(in) :: indexstart,ipos
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: dumpfile
 

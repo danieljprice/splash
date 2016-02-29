@@ -54,7 +54,7 @@ module alydataread
 
 end module alydataread
 
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use particle_data,  only:npartoftype,masstype,time,gamma,dat,maxpart,maxstep,maxcol,iamtype
   use params
   use filenames,      only:nfiles
@@ -64,7 +64,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use labels,         only:ipr,ivx,ih,irho,labeltype
   use alydataread,    only:compName
   implicit none
-  integer,          intent(in)  :: indexstart
+  integer,          intent(in)  :: indexstart,ipos
   integer,          intent(out) :: nstepsread
   character(len=*), intent(in)  :: rootname
   character(len=len(rootname)+4) :: datfile

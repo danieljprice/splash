@@ -47,7 +47,7 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use particle_data,  only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol,iamtype
   use params
   use filenames,      only:nfiles
@@ -55,7 +55,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use mem_allocation, only:alloc
   use system_utils,   only:lenvironment
   implicit none
-  integer,          intent(in)  :: indexstart
+  integer,          intent(in)  :: indexstart,ipos
   integer,          intent(out) :: nstepsread
   character(len=*), intent(in)  :: rootname
   character(len=len(rootname)+4) :: datfile

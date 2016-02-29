@@ -103,7 +103,7 @@ module vineread
 
 end module vineread
 
-subroutine read_data(rootname,indexstart,nstepsread)
+subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use particle_data,  only:npartoftype,dat,time,gamma,maxcol,maxpart,maxstep
   use params,         only:doub_prec
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc
@@ -113,7 +113,7 @@ subroutine read_data(rootname,indexstart,nstepsread)
   use vineread,       only:id_gamma,id_iheadlen,id_ndim,id_npart,id_npart_sph,&
                            id_npoim,id_t
   implicit none
-  integer, intent(in)          :: indexstart
+  integer, intent(in)          :: indexstart,ipos
   integer, intent(out)         :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: iheadlength

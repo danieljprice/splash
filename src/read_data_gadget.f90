@@ -80,7 +80,7 @@ module gadgetread
 
 end module gadgetread
 
-subroutine read_data(rootname,istepstart,nstepsread)
+subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
   use params,         only:doub_prec,sing_prec,maxparttypes
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
@@ -91,7 +91,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
   use gadgetread,     only:hsoft,blocklabelgas,havewarned
   implicit none
-  integer, intent(in)                :: istepstart
+  integer, intent(in)                :: istepstart,ipos
   integer, intent(out)               :: nstepsread
   character(len=*), intent(in)       :: rootname
   character(len=len(rootname)+10)    :: datfile,densfile,hfile

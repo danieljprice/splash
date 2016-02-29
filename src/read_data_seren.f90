@@ -98,7 +98,7 @@ module seren_data_store
 
 end module seren_data_store
 
-subroutine read_data(rootname,istepstart,nstepsread)
+subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread,ntypes
@@ -108,7 +108,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use system_utils,   only:ienvironment
   use seren_data_store
   implicit none
-  integer, intent(in) :: istepstart
+  integer, intent(in) :: istepstart,ipos
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   character(len=len(rootname)+10) :: datfile

@@ -85,7 +85,7 @@ end module pbobread
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-subroutine read_data(rootname,istepstart,nstepsread)
+subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep,iamtype
   use params,         only:doub_prec
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread, &
@@ -95,7 +95,7 @@ subroutine read_data(rootname,istepstart,nstepsread)
   use asciiutils,     only:cstring
   use pbobread,       only:read_pbob_header,read_pbob_data
   implicit none
-  integer, intent(in)                :: istepstart
+  integer, intent(in)                :: istepstart,ipos
   integer, intent(out)               :: nstepsread
   character(len=*), intent(in)       :: rootname
   character(len=len(rootname)+10)    :: datfile
