@@ -507,7 +507,7 @@ subroutine set_labels
     icol = icol + ndimV
     iBfirst = 0
 
-    if (ncolumns > 20) then
+    if (ncolumns > 20 .and. iformat.ne.5) then
        iamvec(icol+1:icol+ndimV) = icol + 1
        labelvec(icol+1:icol+ndimV) = 'del^{2} v'
        icol = icol + ndimV
