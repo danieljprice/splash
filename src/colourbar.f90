@@ -39,6 +39,14 @@ module colourbar
                             'floating/inset horizontal   ', &
                             'custom vertical             ', &
                             'custom horizontal           '/)
+
+ integer, parameter, public :: maxfloatingstyles = 5
+ character(len=*), dimension(maxfloatingstyles), parameter, public :: &
+   labelfloatingstyles = (/' 1) Top left    ', &
+                           ' 2) Top right   ', &
+                           ' 3) Bottom left ', &
+                           ' 4) Bottom right', &
+                           ' 5) Custom      '/)
  !
  !--these are settings that have default values but can
  !  be changed if required
@@ -49,6 +57,7 @@ module colourbar
 
  public :: plotcolourbar,incolourbar,incolourbarlabel,barisvertical
  public :: get_colourbarmargins,isfloating,adjustcolourbar,iscustombar
+ public :: set_floating_bar_style
  real, private, save :: xlabeloffsetsave = 0.
  real, parameter, private :: dispall = 0.25
  real, public :: ColourBarPosx = 0.01   ! default x pos of short/fat bars
@@ -525,5 +534,45 @@ subroutine adjustcolourbar(istyle,xpt1,ypt1,xpt2,ypt2,&
  endif
 
 end subroutine adjustcolourbar
+
+subroutine set_floating_bar_style(iColourBarStyle,iColourBarPos)
+ integer, intent(in) :: iColourBarStyle,iColourBarPos
+
+ select case(iColourBarPos)
+ case(1)
+    if (barisvertical(iColourBarStyle)) then
+       ColourBarPosx = 0.01
+       ColourBarPosy = 0.74
+    else
+       ColourBarPosx = 0.01
+       ColourBarPosy = 0.95
+    endif
+ case(2)
+    if (barisvertical(iColourBarStyle)) then
+       ColourBarPosx = 0.82 ! minus width in ch
+       ColourBarPosy = 0.74
+    else
+       ColourBarPosx = 0.73
+       ColourBarPosy = 0.95
+    endif
+ case(3)
+    if (barisvertical(iColourBarStyle)) then
+       ColourBarPosx = 0.01
+       ColourBarPosy = 0.01
+    else
+       ColourBarPosx = 0.015
+       ColourBarPosy = 0.075
+    endif
+ case(4)
+    if (barisvertical(iColourBarStyle)) then
+       ColourBarPosx = 0.82 ! minus width in ch
+       ColourBarPosy = 0.01
+    else
+       ColourBarPosx = 0.73
+       ColourBarPosy = 0.075
+    endif
+ end select
+
+end subroutine set_floating_bar_style
 
 end module colourbar

@@ -119,6 +119,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   logical :: iexit, rotation, verticalbar, iamincolourbar, mixedtypes, use3Dperspective
   logical :: iadvanceset, leftclick, iselectpoly, iselectcircle
   logical, save :: print_help = .true.
+  logical, save :: in_movie_mode = .false.
 
   if (plot_qcur()) then
      if (.not.print_help) print*,'entering interactive mode...press h in plot window for help'
@@ -334,6 +335,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         print*,' t        : t)rack closest particle/turn tracking off (coord plots only)'
         print*,' g        : plot a line and find its g)radient'
         print*,' ctrl-t   : add text annotation at current position'
+        print*,' ctrl-m   : toggle Hollywood mode'
         print*,' G/T/H    : move le(G)end, (T)itle or (H) vector legend to current position'
         print*,' m/M/i    : change colour map (m=next,M=previous,i=invert) (rendered plots only)'
         print*,' v/V/w    : decrease/increase/adapt arrow size on vector plots (Z for x10)'
@@ -1156,11 +1158,23 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         else
            print*,'ERROR: F has no effect if not rendering'
         endif
+     case(achar(13))
+        if (in_movie_mode) then
+           call unset_movie_mode()
+           in_movie_mode = .false.
+        else
+           call set_movie_mode()
+           in_movie_mode = .true.
+        endif
+        iadvance = 0
+        interactivereplot = .true.
+        irerender = .true.
+        iexit = .true.
      case('m') ! change colour map (next scheme)
-        !call set_movie_mode()
         call change_colourmap(icolourscheme,1)
         iadvance = 0
         interactivereplot = .true.
+        !irerender = .true.
         iexit = .true.
      case('M') ! change colour map (previous scheme)
         call change_colourmap(icolourscheme,-1)
@@ -1254,6 +1268,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         if (iachar(char).ge.iachar('a')) then
            print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '" ',iachar(char)
         endif
+           print*,' x, y = ',xpt,ypt,'; GOT ',iachar(char)
      end select
 
      !
@@ -2908,6 +2923,7 @@ subroutine set_movie_mode()
  use settings_render, only:iColourBarStyle
  use pagecolours,     only:set_pagecolours
  use plotlib,         only:plotlib_is_pgplot,plot_pap
+ use colourbar,       only:set_floating_bar_style
  implicit none
 
  iaxis = -1
@@ -2918,7 +2934,8 @@ subroutine set_movie_mode()
     papersizex      = 1280.
     aspectratio     = 0.5625
     call plot_pap(papersizex,aspectratio,ipapersizeunits)
-    iColourBarStyle = 3
+    iColourBarStyle = 8
+    call set_floating_bar_style(iColourBarStyle,4)
     call set_pagecolours(iPageColours)
     adjustlimitstodevice = .true.
  endif
@@ -2933,18 +2950,19 @@ subroutine unset_movie_mode()
  use settings_limits, only:adjustlimitstodevice
  use settings_render, only:iColourBarStyle
  use pagecolours,     only:set_pagecolours
- use plotlib,         only:plotlib_is_pgplot
+ use plotlib,         only:plotlib_is_pgplot,plot_pap
  implicit none
 
  iaxis = 0
- iPageColours = 0
+ iPageColours = 1
  if (.not.plotlib_is_pgplot) then
     ipapersize   = 0
     papersizex   = 0.
     aspectratio  = 0.
     iColourBarStyle   = 1
+    call plot_pap(papersizex,aspectratio,9)
     call set_pagecolours(iPageColours)
-    adjustlimitstodevice = .false.
+    adjustlimitstodevice = .true.
  endif
 
 end subroutine unset_movie_mode

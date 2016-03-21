@@ -84,7 +84,8 @@ end subroutine defaults_set_render
 !-----------------------------------------------------------------------------
 subroutine submenu_render(ichoose)
   use colourbar, only:maxcolourbarstyles,labelcolourbarstyles,barisvertical,&
-                      isfloating,iscustombar
+                      isfloating,iscustombar,labelfloatingstyles,&
+                      set_floating_bar_style,maxfloatingstyles
   use colours,   only:schemename,ncolourschemes,colour_demo
   use prompting, only:prompt,print_logical
   use params,    only:maxplot
@@ -208,51 +209,16 @@ subroutine submenu_render(ichoose)
        if (iColourBarStyle.gt.0) then
           if (isfloating(iColourBarStyle)) then
              print "(5(a,/),a)",' Positioning of floating colour bar: ', &
-                              ' 1) Top left ', &
-                              ' 2) Top right ', &
-                              ' 3) Bottom left ', &
-                              ' 4) Bottom right ', &
-                              ' 5) Custom '
-             call prompt('enter option',iColourBarPos,1,5)
-             if (iColourBarPos >= 1 .and. iColourBarPos < 5) ColourBarLen = 0.25
-             select case(iColourBarPos)
-             case(1)
-                if (barisvertical(iColourBarStyle)) then
-                   ColourBarPosx = 0.01
-                   ColourBarPosy = 0.74
-                else
-                   ColourBarPosx = 0.01
-                   ColourBarPosy = 0.95
-                endif
-             case(2)
-                if (barisvertical(iColourBarStyle)) then
-                   ColourBarPosx = 0.82 ! minus width in ch
-                   ColourBarPosy = 0.74
-                else
-                   ColourBarPosx = 0.73
-                   ColourBarPosy = 0.95
-                endif
-             case(3)
-                if (barisvertical(iColourBarStyle)) then
-                   ColourBarPosx = 0.01
-                   ColourBarPosy = 0.01
-                else
-                   ColourBarPosx = 0.015
-                   ColourBarPosy = 0.075
-                endif
-             case(4)
-                if (barisvertical(iColourBarStyle)) then
-                   ColourBarPosx = 0.82 ! minus width in ch
-                   ColourBarPosy = 0.01
-                else
-                   ColourBarPosx = 0.73
-                   ColourBarPosy = 0.075
-                endif
-             case default
+                              (trim(labelfloatingstyles(i)),i=1,maxfloatingstyles)
+             call prompt('enter option',iColourBarPos,1,maxfloatingstyles)
+             if (iColourBarPos >= 1 .and. iColourBarPos < maxfloatingstyles) ColourBarLen = 0.25
+             if (iColourBarPos == maxfloatingstyles) then
                 call prompt('enter x position of colour bar as fraction of viewport',ColourBarPosx,-1.,1.5)
                 call prompt('enter y position of colour bar as fraction of viewport',ColourBarPosy,-1.,1.5)
                 call prompt('enter length of colour bar as fraction of viewport',ColourBarLen,0.,1.)
-             end select
+             else
+                call set_floating_bar_style(iColourBarStyle,iColourBarPos)
+             endif
           endif
           call prompt('plot colour bar label?',iplotcolourbarlabel)
           if (barisvertical(iColourBarStyle) .and. iplotcolourbarlabel) then
