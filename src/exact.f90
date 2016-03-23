@@ -556,7 +556,7 @@ contains
     character(len=30)  :: var
     logical            :: iexist
 
-    idash = index(rootname,'_')
+    idash = index(rootname,'_',back=.true.)
     if (idash.eq.0) idash = len_trim(rootname)+1
 
     select case(iexact)
@@ -723,10 +723,15 @@ contains
        return
     case(14)
        !
-       !--dustywave parameters from ndspmhd input file
+       !--dustywave parameters from ndspmhd or Phantom input file
        !
        filename = trim(rootname(1:idash-1))//'.in'
-       linenum = get_line_containing(filename,'Kdrag')
+       var = 'Kdrag' !ndspmhd
+       linenum = get_line_containing(filename,trim(var))
+       if (linenum==0) then
+          var = 'K_code' !phantom
+          linenum = get_line_containing(filename,trim(var))
+       endif
        open(unit=19,file=filename,status='old',iostat=ierr)
        if (ierr.eq.0) then
           do i=1,linenum-1
@@ -734,13 +739,13 @@ contains
           enddo
           read(19,"(a)",iostat=ierr) line
           if (ierr.eq.0) then
-             k = index(line,'Kdrag =')
+             k = index(line,trim(var))
              if (k > 0) then
-                read(line(k+7:),*,iostat=ierr) Kdrag
-                print*,'>> read Kdrag = ',Kdrag,' from '//trim(filename)
+                read(line(k+len_trim(var)+2:),*,iostat=ierr) Kdrag
+                print*,'>> read '//trim(var)//' = ',Kdrag,' from '//trim(filename)
              elseif (ierr.eq.0) then
                 read(line,*,iostat=ierr) idrag, idum, idum, Kdrag
-                print*,'>> read Kdrag = ',Kdrag,' from '//trim(filename)
+                print*,'>> read '//trim(var)//' = ',Kdrag,' from old-style '//trim(filename)
              endif
           else
              print*,'>> error reading Kdrag from '//trim(filename)
