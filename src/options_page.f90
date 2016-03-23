@@ -38,6 +38,7 @@ module settings_page
  real    :: hposlegend,vposlegend,fjustlegend,hpostitle,vpostitle,fjusttitle
  real    :: charheight,alphalegend
  real    :: dxscale,hposscale,vposscale,yscalealt
+ real    :: xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
  character(len=lenlabel) :: legendtext, scaletext
  character(len=60)       :: device
  character(len=lenlabel) :: labelyalt
@@ -49,7 +50,8 @@ module settings_page
    fjustlegend,iPlotLegendOnlyOnPanel, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
    usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder,ipapersizeunits,&
-   adjustlimitstodevice,alphalegend,yscalealt,labelyalt,xminoffset_track,xmaxoffset_track
+   adjustlimitstodevice,alphalegend,yscalealt,labelyalt,xminoffset_track,xmaxoffset_track, &
+   xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
 
 contains
 
@@ -109,6 +111,11 @@ subroutine defaults_set_page
   usesquarexy = .true. ! spatial dimensions have same scale
   call defaults_set_shapes
 
+  xminpagemargin = 0.
+  xmaxpagemargin = 0.
+  yminpagemargin = 0.
+  ymaxpagemargin = 0.
+
   return
 end subroutine defaults_set_page
 
@@ -141,7 +148,7 @@ subroutine submenu_page(ichoose)
  implicit none
  integer, intent(in) :: ichoose
  integer             :: iaction,i,iunitsprev,ierr
- real                :: papersizey
+ real                :: papersizey,mnraslength
  character(len=15)   :: paperfmtstr
  character(len=3)    :: string
 
@@ -166,11 +173,11 @@ subroutine submenu_page(ichoose)
           "' 5) spatial dimensions have same scale  ( ',a,' )',/,"// &
           "' 6) set character height                (',f4.1,')',/,"// &
           "' 7) adjust line width                   (',i2, ')',/,"// &
-          "' 8) interactive mode on/off             ( ',a,' )',/,"// &
+          "' 8) adjust page margins                 ( ',f4.1,' )',/,"// &
           "' 9) set foreground/background colours   ( ',a,' )')", &
           nstepsperpage,iaxis,nacross,ndown,print_logical(tile), &
           trim(print_logical(usesquarexy)),charheight,linewidth,&
-          trim(print_logical(interactive)), &
+          xminpagemargin, &
           trim(pagecolourscheme(iPageColours,short=.true.))
 
     call prompt('enter option ',iaction,0,9)
@@ -258,8 +265,11 @@ subroutine submenu_page(ichoose)
         print*,'16) 4096 x 2160 pixels (Cinema 4K)'
         print*,'17) 5120 x 2880 pixels (5K)'
         print*,'18) 27320 x 3072 pixels (CAVE-2)'
-        print*,'19) Custom size '
-        call prompt(' Enter option for paper size ',ipapersize,0,19)
+        print*,'19) 1/3 of A4 journal page  79mm x 180 mm'
+        print*,'20) 1/2 of A4 journal page 118mm x 180 mm'
+        print*,'21) full A4 journal page   236mm x 180 mm'
+        print*,'22) Custom size '
+        call prompt(' Enter option for paper size ',ipapersize,0,22)
      endif
      
      select case(ipapersize)
@@ -304,13 +314,14 @@ subroutine submenu_page(ichoose)
            papersizey = 600.
            aspectratio = papersizey/papersizex
         endif
-     case(8:18)
+     case(8:21)
         if (plotlib_is_pgplot) then
            ipapersizeunits = 1
            papersizex  = 0.  ! use PGPLOT default
            aspectratio = 0.
         else
            ipapersizeunits = 0
+           mnraslength = 56.*0.42175 ! 56pc = 672pts converted to cm
            select case(ipapersize)
            case(8)
               papersizex = 640.
@@ -345,10 +356,22 @@ subroutine submenu_page(ichoose)
            case(18)
               papersizex = 27320.
               papersizey = 3072.
+           case(19)  ! 1/3 of MNRAS page
+              ipapersizeunits = 2
+              papersizex = 18.
+              papersizey = mnraslength/3.
+           case(20)  ! 1/2 of MNRAS page
+              ipapersizeunits = 2
+              papersizex = 18.
+              papersizey = 0.5*mnraslength
+           case(21)  ! full MNRAS page, allowing 2cm for caption
+              ipapersizeunits = 2
+              papersizex = 18.
+              papersizey = mnraslength - 2.
            end select
            aspectratio = papersizey/papersizex
         endif
-     case(19)
+     case(22)
         if (plotlib_is_pgplot) then
            ipapersizeunits = 1
            papersizex  = 0.  ! use PGPLOT default
@@ -419,8 +442,12 @@ subroutine submenu_page(ichoose)
      return
 !------------------------------------------------------------------------
   case(8)
-     interactive = .not.interactive
-     print "(a)",' Interactive mode is '//print_logical(interactive)
+     call prompt('Enter xmin page margin as fraction of viewport ',xminpagemargin,-1.,1.)
+     call prompt('Enter xmax page margin as fraction of viewport ',xmaxpagemargin,-1.,1.)
+     call prompt('Enter ymin page margin as fraction of viewport ',yminpagemargin,-1.,1.)
+     call prompt('Enter ymax page margin as fraction of viewport ',ymaxpagemargin,-1.,1.)
+     !interactive = .not.interactive
+     !print "(a)",' Interactive mode is '//print_logical(interactive)
 !------------------------------------------------------------------------
   case(9)
      print "(3(/,i1,')',1x,a))",(i,pagecolourscheme(i),i=0,maxpagecolours)

@@ -57,7 +57,6 @@ module timestep_plotting
   real,    dimension(maxplot) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
   real, private :: xminadapti,xmaxadapti,yminadapti,ymaxadapti,renderminadapt,rendermaxadapt
   real, private :: contminadapt,contmaxadapt
-  real, private :: xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
   real, parameter, private :: pi = 3.1415926536
 
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis,iamrendering,idoingvecplot
@@ -157,10 +156,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   contminadapt   = huge(contminadapt)
   contmaxadapt   = -huge(contmaxadapt)
 
-  xminpagemargin = renvironment('SPLASH_MARGIN_XMIN')
-  xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX')
-  yminpagemargin = renvironment('SPLASH_MARGIN_YMIN')
-  ymaxpagemargin = renvironment('SPLASH_MARGIN_YMAX')
+  !xminpagemargin = renvironment('SPLASH_MARGIN_XMIN')
+  !xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX')
+  !yminpagemargin = renvironment('SPLASH_MARGIN_YMIN')
+  !ymaxpagemargin = renvironment('SPLASH_MARGIN_YMAX')
 
   if (ndim.eq.1) x_sec = .false. ! can't have xsec in 1D
   nxsec = 1
@@ -654,7 +653,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use particleplots,         only:particleplot,plot_errorbarsx,plot_errorbarsy
   use powerspectrums,        only:powerspectrum,powerspec3D_sph
   use interpolations1D,      only:interpolate1D
-  use interpolations2D,      only:interpolate2D, interpolate2D_xsec
+  use interpolations2D,      only:interpolate2D, interpolate2D_xsec !, interpolate2D_pixels
   use interpolations3D,      only:interpolate3D
   use projections3D,         only:interpolate3D_projection
   use projections3Dgeom,     only:interpolate3D_proj_geom
@@ -2139,6 +2138,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--------------------------------
         ! now plot particles
         !--------------------------------
+        !npixx = 512
+        !npixy = 512
+        !if (.not.allocated(datpix)) allocate(datpix(npixx,npixy))
+        !pixwidth = (xmax - xmin)/npixx
+        !pixwidthy = (ymax - ymin)/npixy
+        !call interpolate2D_pixels(xplot,yplot,icolourme,ntoti,xmin,ymin,datpix,npixx,npixy,&
+        !     pixwidth,pixwidthy,.true.,.false.,.false.)
+        !print*,maxval(datpix),minval(datpix)
+        !call render_pix(datpix,0.,maxval(datpix),'blah', &
+        !     npixx,npixy,xmin,ymin,pixwidth,pixwidthy,2,.false.,,ncontours,&
+        !     .false.,.false.)
+        !deallocate(datpix)
+
         call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
              zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
              icolourme(1:ntoti),iamtype,npartoftype(:),iusetype,.false., &
@@ -2752,7 +2764,8 @@ contains
     use colourbar,     only:get_colourbarmargins
     use pagesetup,     only:setpage2
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
-                       vposlegend,iPlotLegend,usecolumnorder
+                       vposlegend,iPlotLegend,usecolumnorder,&
+                       xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
     use settings_limits, only:adjustlimitstodevice
     use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot,plot_set_opacity
     implicit none
