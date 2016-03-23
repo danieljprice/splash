@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -609,5 +609,152 @@ subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,d
 
   return
 end subroutine interpolate_part1
+
+!--------------------------------------------------------------------------
+!     subroutine to interpolate from arbitrary data to even grid of pixels
+!
+!     The data is smoothed using the SPH summation interpolant,
+!     that is, we compute the smoothed array according to
+!
+!     datsmooth(pixel) = sum_j dat_j W(r-r_j, \Delta) / sum_j W(r-r_j, \Delta)
+!
+!     where _j is the quantity at the neighbouring particle j and
+!     W is the smoothing kernel. THe interpolation is normalised.
+!
+!     Input: data points  : x,y    (npart)
+!            third scalar to use as weight : dat (npart) (optional)
+!
+!            number of pixels in x,y : npixx,npixy
+!            pixel width             : pixwidth
+!            option to normalise interpolation : normalise (.true. or .false.)
+!
+!     Output: smoothed data            : datsmooth (npixx,npixy)
+!
+!     Written by Daniel Price 2016
+!--------------------------------------------------------------------------
+
+subroutine interpolate2D_pixels(x,y,itype,npart, &
+     xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,&
+     normalise,periodicx,periodicy,dat)
+
+  implicit none
+  integer, intent(in) :: npart,npixx,npixy
+  real, intent(in), dimension(npart) :: x,y
+  integer, intent(in), dimension(npart) :: itype
+  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy
+  real, intent(out), dimension(npixx,npixy) :: datsmooth
+  logical, intent(in) :: normalise,periodicx,periodicy
+  real, intent(in), dimension(npart), optional :: dat
+  real, dimension(npixx,npixy) :: datnorm
+
+  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  integer :: ipixi,jpixi
+  real :: hi,hi1,radkernx,radkerny,q2,wab,const
+  real :: term,termnorm,dx,dy,xpix,ypix
+
+  datsmooth = 0.
+  datnorm = 0.
+  if (normalise) then
+     print "(1x,a)",'interpolating from particles to 2D pixels (normalised)...'
+  else
+     print "(1x,a)",'interpolating from particles to 2D pixels (non-normalised)...'
+  endif
+  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
+     print "(1x,a)",'interpolate2D: error: pixel width <= 0'
+     return
+  endif
+  const = cnormk2D  ! normalisation constant
+  !
+  !--loop over particles
+  !
+  over_parts: do i=1,npart
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_parts
+     !
+     !--skip particles with zero weights
+     !
+     termnorm = const
+     !if (termnorm.le.0.) cycle over_parts
+     !
+     !--skip particles with wrong h's
+     !
+     hi = 2.*pixwidthx
+     if (hi.le.tiny(hi)) cycle over_parts
+     hi1 = 1./hi
+     !
+     !--set kernel related quantities
+     !
+     radkernx = radkernel*pixwidthx  ! radius of the smoothing kernel
+     radkerny = radkernel*pixwidthy  ! radius of the smoothing kernel
+     if (present(dat)) then
+        term = termnorm*dat(i)
+     else
+        term = termnorm
+     endif
+     !
+     !--for each particle work out which pixels it contributes to
+     !
+     ipixmin = int((x(i) - radkernx - xmin)/pixwidthx)
+     jpixmin = int((y(i) - radkerny - ymin)/pixwidthy)
+     ipixmax = int((x(i) + radkernx - xmin)/pixwidthx) + 1
+     jpixmax = int((y(i) + radkerny - ymin)/pixwidthy) + 1
+
+     if (.not.periodicx) then
+        if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
+        if (ipixmax.gt.npixx) ipixmax = npixx  ! to pixels in the image
+     endif
+     if (.not.periodicy) then
+        if (jpixmin.lt.1)     jpixmin = 1
+        if (jpixmax.gt.npixy) jpixmax = npixy
+     endif
+     !
+     !--loop over pixels, adding the contribution from this particle
+     !
+     if (i.eq.1) print*,jpixmin,jpixmax,ipixmin,ipixmax
+     do jpix = jpixmin,jpixmax
+        jpixi = jpix
+        if (periodicy) then
+           if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
+           if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
+        endif
+        ypix = ymin + (jpix-0.5)*pixwidthy
+        dy = ypix - y(i)
+        do ipix = ipixmin,ipixmax
+           ipixi = ipix
+           if (periodicx) then
+              if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
+              if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
+           endif
+           xpix = xmin + (ipix-0.5)*pixwidthx
+           dx = xpix - x(i)         
+           q2 = (dx*dx/pixwidthx**2 + dy*dy/pixwidthy**2)
+           !
+           !--SPH kernel
+           !
+           wab = wfunc(q2)
+           !
+           !--calculate data value at this pixel using the summation interpolant
+           !
+           datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
+           if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+
+        enddo
+     enddo
+
+  enddo over_parts
+  !
+  !--normalise dat array
+  !
+  if (normalise) then
+     where (datnorm > 0.)
+        datsmooth = datsmooth/datnorm
+     end where
+  endif
+
+  return
+
+end subroutine interpolate2D_pixels
 
 end module interpolations2D
