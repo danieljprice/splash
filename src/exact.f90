@@ -740,12 +740,16 @@ contains
           read(19,"(a)",iostat=ierr) line
           if (ierr.eq.0) then
              k = index(line,trim(var))
-             if (k > 0) then
-                read(line(k+len_trim(var)+2:),*,iostat=ierr) Kdrag
+             if (k > 0) read(line(k+len_trim(var)+2:),*,iostat=ierr) Kdrag
+             if (ierr.eq.0) then
                 print*,'>> read '//trim(var)//' = ',Kdrag,' from '//trim(filename)
-             elseif (ierr.eq.0) then
+             else
                 read(line,*,iostat=ierr) idrag, idum, idum, Kdrag
-                print*,'>> read '//trim(var)//' = ',Kdrag,' from old-style '//trim(filename)
+                if (ierr.eq.0) then
+                   print*,'>> read '//trim(var)//' = ',Kdrag,' from old-style '//trim(filename)
+                else
+                   print*,'>> error reading Kdrag from '//trim(filename)
+                endif
              endif
           else
              print*,'>> error reading Kdrag from '//trim(filename)
