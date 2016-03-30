@@ -34,7 +34,7 @@ contains
 !----------------------------------------------------
 subroutine adjust_data_codeunits
  use system_utils,  only:renvironment,envlist,ienvironment,lenvironment
- use labels,        only:ih,ix,ivx,label,get_sink_type,ipmass
+ use labels,        only:ih,ix,ivx,label,get_sink_type,ipmass,idustfrac,irho
  use settings_data, only:ncolumns,ndimV,icoords,ndim,debugmode,ntypes,iverbose
  use particle_data, only:dat,npartoftype,iamtype
  use geometry,      only:labelcoord
@@ -174,6 +174,13 @@ subroutine adjust_data_codeunits
        endif
     endif
  endif
+ !
+ !--fake a set of dust particles from the one-fluid dust formulation
+ !
+ if (idustfrac.gt.0 .and. irho.gt.0 .and. &
+     .not.(lenvironment('SPLASH_BARYCENTRIC') .or. lenvironment('NSPLASH_BARYCENTRIC'))) then
+    call fake_twofluids(1,nstepsinfile(ifileopen),ndim,ndimV,dat,npartoftype,iamtype)
+ endif
 
 end subroutine adjust_data_codeunits
 
@@ -264,7 +271,86 @@ pure subroutine shift_velocities(dat,np,ndimV,ncol,v0)
        dat(1:np,ivx+icol-1) = dat(1:np,ivx+icol-1) - v0(icol)
     enddo
  endif
- 
+
 end subroutine shift_velocities
+
+!------------------------------------------------------
+!
+! routine to fake a set of dust particles from
+! the one fluid dust method
+!
+!------------------------------------------------------
+subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
+ use params,         only:int1
+ use labels,         only:idustfrac,irho,ix,ih,ipmass,ivx,ideltav
+ use mem_allocation, only:alloc
+ use particle_data,  only:maxpart,maxstep,maxcol
+ use settings_data,  only:iverbose
+ integer,                       intent(in)    :: istart,iend,ndim,ndimV
+ real,    dimension(:,:,:),     intent(inout), allocatable :: dat
+ integer, dimension(:,:),       intent(inout), allocatable :: npartoftype
+ integer(int1), dimension(:,:), intent(inout), allocatable :: iamtype
+ integer :: ndust,jdust,ntoti,i,j
+ real    :: rhodust,rhogas,rhotot,dustfraci,pmassgas,pmassdust,pmassj
+ real, dimension(ndimV) :: veli,vgas,vdust,deltav
+
+ if (idustfrac.gt.0 .and. irho.gt.0) then
+    !if (iverbose >= 0) print*,' got dustfrac in column ',idustfrac
+    do i=istart,iend
+       ntoti = sum(npartoftype(:,i))
+       if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)).gt.maxpart) then
+          call alloc(ntoti + npartoftype(1,i),maxstep,maxcol,mixedtypes=.true.)
+       endif
+       ndust = 0
+       !--zero the properties of newly created dust particles
+       dat(ntoti+1:ntoti+npartoftype(1,i),:,i) = 0.
+       do j=1,ntoti
+          if (iamtype(j,i).eq.1) then
+             ndust = ndust + 1 ! one dust particle for every gas particle
+             rhotot  = dat(j,irho,i)
+             dustfraci = dat(j,idustfrac,i)
+             rhogas  = rhotot*(1. - dustfraci)
+             rhodust = rhotot*dustfraci
+             !--replace global properties with gas-only stuff
+             dat(j,irho,i) = rhogas
+             !--copy x, smoothing length onto dust particle
+             jdust = ntoti + ndust
+
+             !--fill in dust properties
+             if (ndim.gt.0) dat(jdust,ix(1:ndim),i) = dat(j,ix(1:ndim),i)
+             if (ih.gt.0)   dat(jdust,ih,i)         = dat(j,ih,i)
+             if (irho.gt.0) dat(jdust,irho,i)       = rhodust
+             iamtype(ntoti + ndust,i) = 2
+
+             !--particle masses
+             if (ipmass.gt.0) then
+                pmassj    = dat(j,ipmass,i)
+                pmassgas  = pmassj*(1. - dustfraci)
+                pmassdust = pmassj*dustfraci
+                dat(j,ipmass,i)     = pmassgas
+                dat(jdust,ipmass,i) = pmassdust
+             endif
+
+             !--velocities
+             if (ideltav.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0) then
+                veli(:)   = dat(j,ivx:ivx+ndimV-1,i)
+                deltav(:) = dat(j,ideltav:ideltav+ndimV-1,i)
+                vgas(:)   = veli(:) - rhodust/rhotot*deltav(:)
+                vdust(:)  = veli(:) + rhogas/rhotot*deltav(:)
+                dat(j,ivx:ivx+ndimV-1,i)     = vgas(:)
+                dat(jdust,ivx:ivx+ndimV-1,i) = vdust(:)
+             endif
+          endif
+       enddo
+       if (iverbose.ge.1) then
+          print "(a,i8,a)",' Creating ',ndust,' fake dust particles (set SPLASH_BARYCENTRIC=yes to plot barycentric values)'
+       endif
+       npartoftype(2,i) = npartoftype(2,i) + ndust
+    enddo
+ else
+    print "(a)",' ERROR: could not locate dust-to-gas ratio and/or density'
+ endif
+
+end subroutine fake_twofluids
 
 end module adjustdata
