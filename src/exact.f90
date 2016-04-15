@@ -836,6 +836,7 @@ contains
     real, allocatable :: xexact(:),yexact(:),xtemp(:)
     real :: dx,timei,gammai
     character(len=len(filename_exact)) :: filename_tmp
+    logical :: iplot_type_tmp(maxparttypes)
 
     !
     !--change line style and colour settings, but save old ones
@@ -1197,24 +1198,24 @@ contains
              !--plot gas solution and calculate errors
              call exact_dustywave(1,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
              call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot, &
-                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=1)
+                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=1,matchtype=1)
              !--plot dust solution
              if (Kdrag > 0.) then
                 call exact_dustywave(2,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
                 call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot, &
-                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=2,err=.false.)
+                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=2,matchtype=2)
              endif
              ierr = 1
           elseif (iploty.eq.irho) then
              !--plot gas solution and calculate errors
              call exact_dustywave(3,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
              call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,&
-                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=1)
+                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=1,matchtype=1)
              !--plot dust solution
              if (Kdrag > 0.) then
                 call exact_dustywave(4,timei,ampl,cs,Kdrag,lambda,xzero,rhozero,rhozero*rdust_to_gas,xexact,yexact,ierr)
                 call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,&
-                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=2,err=.false.)
+                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=2,matchtype=2)
              endif
              ierr = 1
           endif
@@ -1265,7 +1266,7 @@ contains
   ! and calculate errors with respect to the data
   !------------------------------------------------------------------
   subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,yplot,&
-                                 itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls,err)
+                                 itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls,matchtype,err)
    use transforms, only:transform,transform_inverse
    use plotlib,    only:plot_line,plot_sls,plot_sci,plot_qci
    use params,     only:int1,maxparttypes
@@ -1276,11 +1277,11 @@ contains
    integer(int1), intent(in) :: iamtype(:)
    integer,       intent(in) :: noftype(maxparttypes)
    logical,       intent(in) :: iplot_type(maxparttypes)
-   integer,       intent(in), optional :: ls
+   integer,       intent(in), optional :: ls, matchtype
    logical,       intent(in), optional :: err
    real :: residuals(np),ypart(np)
    real :: errL1,errL2,errLinf
-   integer :: iused,ierr,iCurrentColour
+   integer :: iused,ierr,iCurrentColour,imatchtype
    logical :: plot_err
    character(len=12) :: str1,str2
 
@@ -1300,6 +1301,11 @@ contains
    else
       plot_err = .true.   
    endif
+   if (present(matchtype)) then
+      imatchtype = matchtype
+   else
+      imatchtype = 0
+   endif
 
    if (iCalculateExactErrors .and. plot_err) then
       !--untransform y axis again for error calculation
@@ -1310,7 +1316,7 @@ contains
       !--calculate errors
       call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts),xplot(1:np),ypart,&
                             itag,iamtype,noftype,iplot_type,xmin,xmax,residuals, &
-                            errL1,errL2,errLinf,iused)
+                            errL1,errL2,errLinf,iused,imatchtype)
       if (iused.ne.np) then
          write(str1,"(i12)",iostat=ierr) iused
          write(str2,"(i12)",iostat=ierr) np
@@ -1333,7 +1339,7 @@ contains
   ! Calculate various error norms 
   !--------------------------------
   subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_type,&
-                              xmin,xmax,residual,errL1,errL2,errLinf,iused)
+                              xmin,xmax,residual,errL1,errL2,errLinf,iused,imatchtype)
    use part_utils, only:igettype
    use params,     only:int1,maxparttypes
    real,    intent(in)  :: xexact(:),yexact(:),xpts(:),ypts(:),xmin,xmax
@@ -1344,6 +1350,7 @@ contains
    real,    intent(out) :: residual(size(xpts))
    real,    intent(out) :: errL1,errL2,errLinf
    integer, intent(out) :: iused
+   integer, intent(in)  :: imatchtype
    integer :: i,j,npart,nerr,nused,itype
    real    :: xi,dy,dx,yexacti,err1,ymax
    logical :: mixedtypes
@@ -1368,7 +1375,7 @@ contains
          else
             itype = igettype(i,noftype)
          endif
-         if (iplot_type(itype)) then
+         if (iplot_type(itype) .and. ((imatchtype==0).or.(itype==imatchtype))) then
             !
             !--find nearest point in exact solution table
             !
