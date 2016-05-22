@@ -47,7 +47,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use interpolations3D,   only:interpolate3D,interpolate3D_vec
  use interpolations2D,   only:interpolate2D,interpolate2D_vec
  use system_utils,       only:lenvironment,renvironment,envlist,lenvstring,ienvstring
- use readwrite_griddata, only:open_gridfile_w,write_grid
+ use readwrite_griddata, only:open_gridfile_w,write_grid,write_gridlimits
  use particle_data,      only:icolourme
  use params,             only:int8
  implicit none
@@ -97,14 +97,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--print limits information
  !
- print "(a)",' grid dimensions:'
- do i=1,ndim
-    if (maxval(abs(xmax)).lt.1.e7) then
-       print "(1x,a,': ',f14.6,' -> ',f14.6)",trim(label(ix(i))),xmin(i),xmax(i)
-    else
-       print "(1x,a,': ',es14.6,' -> ',es14.6)",trim(label(ix(i))),xmin(i),xmax(i)
-    endif
- enddo
+ call write_gridlimits(ndim,xmin,xmax,label(ix(1:ndim)))
 
  !
  !--SPLASH_TO_GRID can be set to comma separated list of columns
@@ -289,11 +282,17 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--use low memory mode for large grids
  !
- if ((ndim.eq.3 .and. product(npixels).gt.256**3)) then
-    lowmem = .true.
+ if (trim(outformat)=='gridascii2') then
+    lowmem = .false.
  else
-    lowmem = lowmemorymode
+    lowmem = .true.
  endif
+
+! if ((ndim.eq.3 .and. product(npixels).gt.256**3)) then
+!    lowmem = .true.
+! else
+!    lowmem = lowmemorymode
+! endif
  if (lowmem .and. nvec.gt.0) &
     print "(a,/)",' [doing velocity field components separately (low memory mode)]'
  !
@@ -412,10 +411,12 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  print*
  if (ndim.eq.3) then
-    call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(irho)),&
-                    time,pixwidth,xmin,ierr,dat3D=datgrid)
+    if (lowmem .or. interpolateall .or. ncolstogrid.gt.0) then
+       call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(irho)),&
+                       time,pixwidth,xmin,ierr,dat=datgrid)
+    endif
  else
-    call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(irho)),&
+    call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(irho)),&
                     time,pixwidth,xmin,ierr,dat2D=datgrid2D)
  endif
  !
@@ -459,22 +460,18 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           if (ndim.eq.3) then
              call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
              print fmtstring,' on grid :',gridmin,gridmax,gridmean
-             call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(i)),&
-                  time,pixwidth,xmin,ierr,dat3D=datgrid)
+             call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
+                  time,pixwidth,xmin,ierr,dat=datgrid)
           else
              call minmaxmean_grid2D(datgrid2D,npixels,gridmin,gridmax,gridmean,.false.)          
              print fmtstring,' on grid :',gridmin,gridmax,gridmean
-             call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(i)),&
+             call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
                   time,pixwidth,xmin,ierr,dat2D=datgrid2D)
           endif
        endif
     enddo
 
  else
-
-    if (.not.lowmem) then
-       if (allocated(datgrid)) deallocate(datgrid)
-    endif
 
     if (nvec.gt.0) then
 
@@ -544,12 +541,12 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                 if (ndim.eq.3) then
                    call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
                    print fmtstring,' on grid :',gridmin,gridmax,gridmean
-                   call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(i)),&
-                        time,pixwidth,xmin,ierr,dat3D=datgrid)
+                   call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
+                        time,pixwidth,xmin,ierr,dat=datgrid)
                 else
                    call minmaxmean_grid2D(datgrid2D,npixels,gridmin,gridmax,gridmean,.false.)                
                    print fmtstring,' on grid :',gridmin,gridmax,gridmean
-                   call write_grid(iunit,filename,outformat,ndim,npixels,trim(label(i)),&
+                   call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
                         time,pixwidth,xmin,ierr,dat2D=datgrid2D)
                 endif
              enddo
@@ -588,15 +585,16 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              !
              !--write result to grid file
              !
-             do i=1,ndimV
-                if (ndim.eq.3) then
-                   call write_grid(iunit,filename,outformat,ndim,npixels,&
-                                   trim(label(iloc+i-1)),time,pixwidth,xmin,ierr,dat3D=datgridvec(i,:,:,:))                
-                else
-                   call write_grid(iunit,filename,outformat,ndim,npixels,&
-                                   trim(label(iloc+i-1)),time,pixwidth,xmin,ierr,dat2D=datgridvec2D(i,:,:))
-                endif
-             enddo
+             if (ndim.eq.3) then
+                call write_grid(iunit,filename,outformat,ndim,ndimV,npixels,&
+                                label(irho),time,pixwidth,xmin,ierr,&
+                                dat=datgrid,dat3D=datgridvec,label3D=label(iloc:iloc+ndimV))                
+             else
+                do i=1,ndimV
+                   call write_grid(iunit,filename,outformat,ndim,ndimV,npixels,&
+                                   label(iloc+i-1),time,pixwidth,xmin,ierr,dat2D=datgridvec2D(i,:,:))
+                enddo
+             endif
           endif
           print*
        enddo over_vec
