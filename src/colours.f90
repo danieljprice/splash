@@ -27,7 +27,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 33
+ integer, parameter :: ncolourschemes = 34
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
@@ -61,7 +61,8 @@ module colours
       'light blue       ', &
       'light green      ', &
       'light red        ', &
-      'CMRmap           '/)
+      'CMRmap           ', &
+      'blue-black-red   '/)
 !
 !--rgb colours of the colour table are stored in the array below
 !  this is used for colour blending (opacity rendering)
@@ -378,6 +379,13 @@ subroutine colour_set(icolourscheme)
      redarr(1:nset) =   (/0.00,0.15,0.30,0.60,1.00,0.90,0.90,0.90,1.00/)
      greenarr(1:nset) = (/0.00,0.15,0.15,0.20,0.25,0.50,0.75,0.90,1.00/)
      bluearr(1:nset) =  (/0.00,0.50,0.75,0.50,0.15,0.00,0.10,0.50,1.00/)
+     case(34)
+     !--heat but with black in the middle
+     nset = 5
+     lumarr(1:nset) =  (/0.,0.25,0.5,0.75,1.0/)
+     redarr(1:nset) =  (/0.0,0.0,0.0,1.0,0.95/)
+     greenarr(1:nset)= (/0.0,1.0,0.0,1.0,0.0/)
+     bluearr(1:nset) = (/0.95,1.0,0.0,0.0,0.0/)
      end select
 
      if (debugmode) print*,'DEBUG: setting colour table'
