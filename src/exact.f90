@@ -365,6 +365,7 @@ contains
        !
        call read_exactparams(iexact,trim(rootname(1)),ierr)
        if (ierr.ne.0) then
+          call prompt('enter initial x position of shock',xshock)
           call prompt('enter density to left of shock   ',rho_L,0.0)
           call prompt('enter density to right of shock  ',rho_R,0.0)
           call prompt('enter pressure to left of shock  ',pr_L,0.0)
@@ -943,22 +944,22 @@ contains
     case(3)! shock tube
        if (iplotx.eq.ix(1) .and. igeom.le.1) then
           if (iploty.eq.irho) then
-             call exact_shock(1,timei,gammai,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+             call exact_shock(1,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
-             call exact_shock(2,timei,gammai,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+             call exact_shock(2,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)   
           elseif (iploty.eq.ivx) then
-              call exact_shock(3,timei,gammai,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+              call exact_shock(3,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm) then
-              call exact_shock(4,timei,gammai,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+              call exact_shock(4,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.ideltav) then
-              call exact_shock(5,timei,gammai,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+              call exact_shock(5,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.idustfrac) then
-              call exact_shock(6,timei,gammai,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+              call exact_shock(6,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)
           endif
        endif

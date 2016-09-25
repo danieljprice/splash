@@ -47,11 +47,11 @@ module shock
 
 contains
 
-subroutine exact_shock(iplot,time,gammain,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas,xplot,yplot,ierr)
+subroutine exact_shock(iplot,time,gammain,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas,xplot,yplot,ierr)
   implicit none
   integer, intent(in) :: iplot
   integer, intent(out) :: ierr
-  real, intent(in) :: time,gammain
+  real, intent(in) :: time,gammain,xshock
   real, intent(in) :: rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas
   real, dimension(:), intent(in) :: xplot
   real, dimension(size(xplot)), intent(out) :: yplot
@@ -85,7 +85,7 @@ subroutine exact_shock(iplot,time,gammain,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_g
 !
 !  xzero is the position of the shock at t=0
 !
-  xzero = 0.
+  xzero = xshock
 !
 !  define sound speeds to left and right of shock tube
 !
