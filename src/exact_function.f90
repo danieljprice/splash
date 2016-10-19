@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -78,7 +78,7 @@ subroutine exact_function(string,xplot,yplot,time,ierr)
         if (EvalErrType /= 0) ierr = EvalErrType
      enddo
      if (ierr.ne.0) then
-        print "(a)",' *** WARNING: errors during function evaluation: '//trim(EvalerrMsg())
+        print "(a)",' *** ERROR during function evaluation: '//trim(EvalerrMsg(ierr))
         !--set exit error to zero so we plot the results anyway
         ierr = 0
      endif

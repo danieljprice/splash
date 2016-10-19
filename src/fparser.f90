@@ -32,6 +32,9 @@ MODULE fparser
   !  9th Aug 2009: added Mathematical constant recognition (pi)
   !
   ! 27th Jan 2010: check for -ve numbers to fractional powers and zero to negative power added
+  !
+  ! 19th Oct 2016: added Fortran 2008 intrinsic functions
+  !                added optional iErrType argument for error message printing
 
   IMPLICIT NONE
 !--modification here by D.Price: define type parameters here rather than in a separate module
@@ -75,26 +78,42 @@ MODULE fparser
                                                          cAsin    = 19,         &
                                                          cAcos    = 20,         &
                                                          cAtan    = 21,         &
-                                                         VarBegin = 22
+                                                         cBesj0   = 22,         &
+                                                         cBesj1   = 23,         &
+                                                         cBesy0   = 24,         &
+                                                         cBesy1   = 25,         &
+                                                         cerfcs   = 26,         &
+                                                         cerfc    = 27,         &
+                                                         cerf     = 28,         &
+                                                         cgamma   = 29,         &
+                                                         VarBegin = 30
   CHARACTER (LEN=1), DIMENSION(cAdd:cPow),  PARAMETER :: Ops      = (/ '+',     &
                                                                        '-',     &
                                                                        '*',     &
                                                                        '/',     &
                                                                        '^' /)
-  CHARACTER (LEN=5), DIMENSION(cAbs:cAtan), PARAMETER :: Funcs    = (/ 'abs  ', &
-                                                                       'exp  ', &
-                                                                       'log10', &
-                                                                       'log  ', &
-                                                                       'sqrt ', &
-                                                                       'sinh ', &
-                                                                       'cosh ', &
-                                                                       'tanh ', &
-                                                                       'sin  ', &
-                                                                       'cos  ', &
-                                                                       'tan  ', &
-                                                                       'asin ', &
-                                                                       'acos ', &
-                                                                       'atan ' /)
+  CHARACTER (LEN=5), DIMENSION(cAbs:cgamma), PARAMETER :: Funcs   = (/'abs  ', &
+                                                                      'exp  ', &
+                                                                      'log10', &
+                                                                      'log  ', &
+                                                                      'sqrt ', &
+                                                                      'sinh ', &
+                                                                      'cosh ', &
+                                                                      'tanh ', &
+                                                                      'sin  ', &
+                                                                      'cos  ', &
+                                                                      'tan  ', &
+                                                                      'asin ', &
+                                                                      'acos ', &
+                                                                      'atan ', &
+                                                                      'besj0', &
+                                                                      'besj1', &
+                                                                      'besy0', &
+                                                                      'besy1', &
+                                                                      'erfcs', &
+                                                                      'erfc ', &
+                                                                      'erf  ', &
+                                                                      'gamma' /)
   TYPE tComp
      INTEGER(is), DIMENSION(:), POINTER :: ByteCode
      INTEGER                            :: ByteCodeSize
@@ -262,6 +281,17 @@ CONTAINS
                       EvalErrType=4; res=zero; RETURN; ENDIF
                       Comp(i)%Stack(SP)=ACOS(Comp(i)%Stack(SP))
        CASE  (cAtan); Comp(i)%Stack(SP)=ATAN(Comp(i)%Stack(SP))
+       CASE  (cBesj0); Comp(i)%Stack(SP)=bessel_j0(Comp(i)%Stack(SP))
+       CASE  (cBesj1); Comp(i)%Stack(SP)=bessel_j1(Comp(i)%Stack(SP))
+       CASE  (cBesy0); IF (Comp(i)%Stack(SP)<=0._rn) THEN; EvalErrType=6; res=zero; RETURN; ENDIF
+                       Comp(i)%Stack(SP)=bessel_y0(Comp(i)%Stack(SP))
+       CASE  (cBesy1); IF (Comp(i)%Stack(SP)<=0._rn) THEN; EvalErrType=7; res=zero; RETURN; ENDIF
+                       Comp(i)%Stack(SP)=bessel_y1(Comp(i)%Stack(SP))
+       CASE  (cerf);   Comp(i)%Stack(SP)=erf(Comp(i)%Stack(SP))
+       CASE  (cerfc);  Comp(i)%Stack(SP)=erfc(Comp(i)%Stack(SP))
+       CASE  (cerfcs); Comp(i)%Stack(SP)=erfc_scaled(Comp(i)%Stack(SP))
+       CASE  (cgamma); IF (Comp(i)%Stack(SP)==-abs(nint(Comp(i)%Stack(SP)))) THEN; EvalErrType=8; res=zero; RETURN; ENDIF
+                       Comp(i)%Stack(SP)=gamma(Comp(i)%Stack(SP))
        CASE  DEFAULT; SP=SP+1; Comp(i)%Stack(SP)=Val(Comp(i)%ByteCode(IP)-VarBegin+1)
        END SELECT
     END DO
@@ -380,22 +410,34 @@ CONTAINS
     IF (ParCnt > 0) CALL ParseErrMsg (j, FuncStr, 'Missing )')
   END SUBROUTINE CheckSyntax
   !
-  FUNCTION EvalErrMsg () RESULT (msg)
+  FUNCTION EvalErrMsg ( ierrType ) RESULT (msg)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     ! Return error message
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     IMPLICIT NONE
-    CHARACTER (LEN=*), DIMENSION(5), PARAMETER :: m = (/ 'Division by zero                ', &
-                                                         'Argument of SQRT negative       ', &
-                                                         'Argument of LOG <= 0            ', &
-                                                         'Argument of ASIN or ACOS illegal', &
-                                                         '-ve number to fractional power  '/)
+    CHARACTER (LEN=*), DIMENSION(8), PARAMETER :: m = (/ 'Division by zero                   ', &
+                                                         'Argument of SQRT negative          ', &
+                                                         'Argument of LOG <= 0               ', &
+                                                         'Argument of ASIN or ACOS illegal   ', &
+                                                         '-ve number to fractional power     ', &
+                                                         'Argument of Bessel_y0 <= 0         ', &
+                                                         'Argument of Bessel_y1 <= 0         ', &
+                                                         'Argument of Gamma function illegal '/)
     CHARACTER (LEN=LEN(m))                     :: msg
+    INTEGER,  INTENT(in), OPTIONAL :: ierrType
     !----- -------- --------- --------- --------- --------- --------- --------- -------
-    IF (EvalErrType < 1 .OR. EvalErrType > SIZE(m)) THEN
-       msg = ''
+    IF (present(ierrType)) THEN
+       IF (iErrType < 1 .OR. iErrType > SIZE(m)) THEN
+          msg = ''
+       ELSE
+          msg = m(iErrType)
+       ENDIF    
     ELSE
-       msg = m(EvalErrType)
+       IF (EvalErrType < 1 .OR. EvalErrType > SIZE(m)) THEN
+          msg = ''
+       ELSE
+          msg = m(EvalErrType)
+       ENDIF
     ENDIF
   END FUNCTION EvalErrMsg
   !
@@ -460,7 +502,7 @@ CONTAINS
     CHARACTER (LEN=LEN(Funcs))    :: fun
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     n = 0
-    DO j=cAbs,cAtan                                          ! Check all math functions
+    DO j=cAbs,cgamma                                         ! Check all math functions
        k = MIN(LEN_TRIM(Funcs(j)), LEN(str))
        CALL LowCase (str(1:k), fun)
        IF (fun == Funcs(j)) THEN                             ! Compare lower case letters
