@@ -68,8 +68,8 @@ module sphNGread
  real :: tfreefall
  integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol
  integer :: nhydroreal4,istart_extra_real4
- integer :: nhydroarrays,nmhdarrays
- logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
+ integer :: nhydroarrays,nmhdarrays,ndustarrays
+ logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header,onefluid_dust
  logical :: usingeulr,cleaning
  logical :: batcode,tagged,debug
  integer, parameter :: maxarrsizes = 10
@@ -305,10 +305,10 @@ contains
  ! Extract various options from the fileident string
  !----------------------------------------------------------------------
  subroutine get_options_from_fileident(fileident,smalldump,tagged,phantomdump,&
-                       usingvecp,usingeulr,cleaning,h2chem,rt_in_header,batcode)
+                       usingvecp,usingeulr,cleaning,h2chem,use_dustfrac,rt_in_header,batcode)
   character(len=*), intent(in) :: fileident
   logical,          intent(out) :: smalldump,tagged,phantomdump,batcode
-  logical,          intent(out) :: usingvecp,usingeulr,cleaning,h2chem,rt_in_header
+  logical,          intent(out) :: usingvecp,usingeulr,cleaning,h2chem,use_dustfrac,rt_in_header
 
   smalldump = .false.
   phantomdump = .false.
@@ -319,6 +319,7 @@ contains
   rt_in_header = .false.
   batcode = .false.
   tagged = .false.
+  use_dustfrac = .false.
   if (fileident(1:1).eq.'S') then
      smalldump = .true.
   endif
@@ -344,6 +345,9 @@ contains
   endif
   if (index(fileident,'RT=on').ne.0) then
      rt_in_header = .true.
+  endif
+  if (index(fileident,'1dust').ne.0) then
+     use_dustfrac = .true.
   endif
   if (index(fileident,'This is a test').ne.0) then
      batcode = .true.
@@ -949,14 +953,20 @@ contains
         icolumn = ih
      case('rho')
         icolumn = irho
+     case('dustfrac')
+        if (ndustarrays > 0) then
+           icolumn = nhydroarrays + 1
+        else
+           icolumn = max(nhydroarrays + ndustarrays + nmhdarrays + 1,imaxcolumnread + 1)     
+        endif
      case('Bx')
-        icolumn = nhydroarrays + 1
+        icolumn = nhydroarrays + ndustarrays + 1
      case('By')
-        icolumn = nhydroarrays + 2
+        icolumn = nhydroarrays + ndustarrays + 2
      case('Bz')
-        icolumn = nhydroarrays + 3
+        icolumn = nhydroarrays + ndustarrays + 3
      case default
-        icolumn = max(nhydroarrays + nmhdarrays + 1,imaxcolumnread + 1)
+        icolumn = max(nhydroarrays + ndustarrays + nmhdarrays + 1,imaxcolumnread + 1)
         if (iarr==1) then
            if (ikind==4) then  ! real*4 array
               istart_extra_real4 = min(istart_extra_real4,icolumn)
@@ -1185,7 +1195,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
    mhddump = .false.
    rtdump = .false.
    call get_options_from_fileident(fileident,smalldump,tagged,phantomdump,&
-                                   usingvecp,usingeulr,cleaning,h2chem,rt_in_header,batcode)
+                                   usingvecp,usingeulr,cleaning,h2chem,onefluid_dust,rt_in_header,batcode)
    if (tagged .and. iversion < 1) print "(a)",'ERROR: got tagged format but iversion is ',iversion
 !
 !--read variables from header
@@ -1304,6 +1314,11 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          nhydroarrays = nreal(1)+nreal4(1)+nreal8(1)
       elseif (phantomdump .and. (nreal(1).lt.3 .or. nreal4(1).lt.1)) then
          print "(a)",' ERROR: x,y,z or h missing in phantom read'
+      endif
+      if (onefluid_dust) then
+         ndustarrays = 1
+      else
+         ndustarrays = 0
       endif
       if (narrsizes.ge.4) then
          nmhdarrays = 3 ! Bx,By,Bz
