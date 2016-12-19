@@ -304,6 +304,10 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
        ndust = 0
        !--zero the properties of newly created dust particles
        dat(ntoti+1:ntoti+npartoftype(1,i),:,i) = 0.
+       if (idustfrac > size(dat(1,:,1))) then
+          print*,' ERROR: idustfrac out of range: cannot create fake dust particles'
+          return
+       endif
        do j=1,ntoti
           if (iamtype(j,i).eq.1) then
              ndust = ndust + 1 ! one dust particle for every gas particle
