@@ -947,12 +947,17 @@ CONTAINS
     ib = 1
     in = 1
     err = .false.
-    IF (str(1:2)=='pi') THEN
-       res = 3.14159265358979323846_rn
-       in = 3
-    ELSE
+    IF (len(str) < 2) THEN
        res = 0.0_rn
        err = .true.
+    ELSE
+       IF (str(1:2)=='pi') THEN
+          res = 3.14159265358979323846_rn
+          in = 3
+       ELSE
+          res = 0.0_rn
+          err = .true.
+       ENDIF
     ENDIF
 
     IF (PRESENT(ibegin)) ibegin = ib
