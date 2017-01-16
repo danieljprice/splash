@@ -346,7 +346,7 @@ contains
   if (index(fileident,'RT=on').ne.0) then
      rt_in_header = .true.
   endif
-  if (index(fileident,'1dust').ne.0) then
+  if (index(fileident,'dust').ne.0) then
      use_dustfrac = .true.
   endif
   if (index(fileident,'This is a test').ne.0) then
@@ -354,6 +354,69 @@ contains
   endif
 
  end subroutine get_options_from_fileident
+
+ !----------------------------------------------------------------------
+ ! Set position of header items manually for older (untagged) formats
+ !----------------------------------------------------------------------
+ subroutine fake_header_tags(nreals,realarr,tagsreal)
+  integer, intent(in) :: nreals
+  real,    intent(in) :: realarr(nreals)
+  character(len=*), intent(out) :: tagsreal(:)
+  integer, parameter :: ilocbinary = 24
+  integer :: ipos
+  !
+  !--set the tags manually for older formats
+  !  (but only the ones we care about)
+  !
+  if (phantomdump) then
+     tagsreal(1) = 'time'
+     tagsreal(3) = 'gamma'
+     tagsreal(4) = 'rhozero'
+     tagsreal(6) = 'hfact'
+     tagsreal(7) = 'tolh'
+     tagsreal(15:19) = 'massoftype'
+     if (nreals.ge.ilocbinary + 14) then
+        if (nreals.ge.ilocbinary + 15) then
+           ipos = ilocbinary
+        else
+           print*,'*** WARNING: obsolete header format for external binary information ***'
+           ipos = ilocbinary + 1
+        endif
+        if (debug) print*,'DEBUG: reading binary information from header ',ilocbinary
+        if (any(realarr(ilocbinary:ilocbinary+14).ne.0.)) then
+           tagsreal(ipos:ipos+2) = (/'x1','y1','z1'/)
+           if (nreals.ge.ilocbinary+15) then
+              tagsreal(ipos+3:ipos+9) = (/'m1','h1','x2','y2','z2','m2','h2'/)
+              ipos = ipos + 10
+           else
+              tagsreal(ipos+3:ipos+7) = (/'h1','x2','y2','z2','h2'/)
+              ipos = ipos + 8
+           endif
+           tagsreal(ipos:ipos+5) = (/'vx1','vy1','vz1','vx2','vy2','vz2'/)
+        endif
+     endif
+  elseif (batcode) then
+     tagsreal(1) = 'time'
+     tagsreal(3) = 'gamma'
+     tagsreal(4) = 'radL1'
+     tagsreal(5) = 'PhiL1'
+     tagsreal(15) = 'Er'
+  else
+     tagsreal(1) = 'gt'
+     tagsreal(2) = 'dtmax'
+     tagsreal(3) = 'gamma'
+     tagsreal(4) = 'rhozero'
+     tagsreal(5) = 'RK2'
+     if (smalldump) then ! sphNG small dump
+        if (nreals.eq.15) then
+           tagsreal(15) = 'pmassinitial'
+        else
+           tagsreal(23) = 'pmassinitial'
+        endif
+     endif
+  endif
+
+ end subroutine fake_header_tags
 
  !----------------------------------------------------------------------
  ! Routine to read the header of sphNG dump files and extract relevant
@@ -483,41 +546,7 @@ contains
         print*,'WARNING: number of reals in header exceeds splash array limit, ignoring some'
         nreals = maxinblock
      endif
-     if (tagged) then
-        read(iunit,iostat=ierr) tagsreal(1:nreals)
-     else
-     !
-     !--set the tags manually for older formats
-     !  (but only the ones we care about)
-     !
-        if (phantomdump) then
-           tagsreal(1) = 'time'
-           tagsreal(3) = 'gamma'
-           tagsreal(4) = 'rhozero'
-           tagsreal(6) = 'hfact'
-           tagsreal(7) = 'tolh'
-           tagsreal(15:19) = 'massoftype'
-        elseif (batcode) then
-           tagsreal(1) = 'time'
-           tagsreal(3) = 'gamma'
-           tagsreal(4) = 'radL1'
-           tagsreal(5) = 'PhiL1'
-           tagsreal(15) = 'Er'
-        else
-           tagsreal(1) = 'gt'
-           tagsreal(2) = 'dtmax'
-           tagsreal(3) = 'gamma'
-           tagsreal(4) = 'rhozero'
-           tagsreal(5) = 'RK2'
-           if (smalldump) then ! sphNG small dump
-              if (nreals.eq.15) then
-                 tagsreal(15) = 'pmassinitial'
-              else
-                 tagsreal(23) = 'pmassinitial'
-              endif
-           endif
-        endif
-     endif
+     if (tagged) read(iunit,iostat=ierr) tagsreal(1:nreals)
      if (doubleprec) then
         read(iunit,iostat=ierr) real8arr(1:nreals)
         realarr(1:nreals) = real(real8arr(1:nreals))
@@ -525,6 +554,7 @@ contains
         read(iunit,iostat=ierr) real4arr(1:nreals)
         realarr(1:nreals) = real(real4arr(1:nreals))
      endif
+     if (.not.tagged) call fake_header_tags(nreals,realarr,tagsreal)
   endif
 !--real*4, real*8
   read(iunit,iostat=ierr) nreal4s
@@ -689,56 +719,37 @@ contains
      !--if Phantom calculation uses the binary potential
      !  then read this as two point mass particles
      !
-     if (nreals.ge.ilocbinary + 14) then
-        if (nreals.ge.ilocbinary + 15) then
-           ipos = ilocbinary
-        else
-           print*,'*** WARNING: obsolete header format for external binary information ***'
-           ipos = ilocbinary + 1
+     if (any(tags(1:nreals)=='x1')) then
+        gotbinary = .true.
+        npartoftype(itypemap_sink_phantom) = npartoftype(itypemap_sink_phantom) + 2
+        ntotal = ntotal + 2
+        call extract('x1',dat(npart+1,ix(1)),realarr,tags,nreals,ierrs(1))
+        call extract('y1',dat(npart+1,ix(2)),realarr,tags,nreals,ierrs(2))
+        call extract('z1',dat(npart+1,ix(3)),realarr,tags,nreals,ierrs(3))
+        if (ipmass.gt.0) call extract('m1',dat(npart+1,ipmass),realarr,tags,nreals,ierrs(4))
+        call extract('h1',dat(npart+1,ih),realarr,tags,nreals,ierrs(4))
+        if (debug) print *,npart+1,npart+2
+        if (iverbose.ge.1) print *,'binary position:   primary: ',dat(npart+1,ix(1):ix(3))
+
+        call extract('x2',dat(npart+2,ix(1)),realarr,tags,nreals,ierrs(1))
+        call extract('y2',dat(npart+2,ix(2)),realarr,tags,nreals,ierrs(2))
+        call extract('z2',dat(npart+2,ix(3)),realarr,tags,nreals,ierrs(3))
+        if (ipmass.gt.0) call extract('m2',dat(npart+2,ipmass),realarr,tags,nreals,ierrs(4))
+        call extract('h2',dat(npart+2,ih),realarr,tags,nreals,ierrs(5))
+        if (iverbose.ge.1 .and. ipmass > 0 .and. ih > 0) then
+           print *,'                 secondary: ',dat(npart+2,ix(1):ix(3))
+           print *,' m1: ',dat(npart+1,ipmass),' m2:',dat(npart+2,ipmass),&
+                   ' h1: ',dat(npart+2,ipmass),' h2:',dat(npart+2,ih)
         endif
-        if (debug) print*,'DEBUG: reading binary information from header ',ilocbinary
-        if (any(realarr(ilocbinary:ilocbinary+14).ne.0.)) then
-           gotbinary = .true.
-           npartoftype(itypemap_sink_phantom) = npartoftype(itypemap_sink_phantom) + 2
-           ntotal = ntotal + 2
-           dat(npart+1,ix(1)) = realarr(ipos)
-           dat(npart+1,ix(2)) = realarr(ipos+1)
-           dat(npart+1,ix(3)) = realarr(ipos+2)
-           if (debug) print *,npart+1,npart+2
-           if (iverbose.ge.1) print *,'binary position:   primary: ',realarr(ipos:ipos+2)
-           if (nreals.ge.ilocbinary+15) then
-              if (ipmass.gt.0) dat(npart+1,ipmass) = realarr(ipos+3)
-              dat(npart+1,ih)     = realarr(ipos+4)
-              dat(npart+2,ix(1))  = realarr(ipos+5)
-              dat(npart+2,ix(2))  = realarr(ipos+6)
-              dat(npart+2,ix(3))  = realarr(ipos+7)
-              if (ipmass.gt.0) dat(npart+2,ipmass) = realarr(ipos+8)
-              dat(npart+2,ih)     = realarr(ipos+9)
-              if (iverbose.ge.1) then
-                 print *,'                 secondary: ',realarr(ipos+5:ipos+7)
-                 print *,' m1: ',realarr(ipos+3),' m2:',realarr(ipos+8),&
-                         ' h1: ',realarr(ipos+4),' h2:',realarr(ipos+9)
-              endif
-              ipos = ipos + 10
-           else
-              dat(npart+1,ih)    = realarr(ipos+3)
-              dat(npart+2,ix(1)) = realarr(ipos+4)
-              dat(npart+2,ix(2)) = realarr(ipos+5)
-              dat(npart+2,ix(3)) = realarr(ipos+6)
-              dat(npart+2,ih)    = realarr(ipos+7)
-              print *,'                 secondary: ', realarr(ipos+4:ipos+6)
-              ipos = ipos + 8
-           endif
-           if (ivx.gt.0) then
-              dat(npart+1,ivx)   = realarr(ipos)
-              dat(npart+1,ivx+1) = realarr(ipos+1)
-              dat(npart+1,ivx+2) = realarr(ipos+2)
-              dat(npart+2,ivx)   = realarr(ipos+3)
-              dat(npart+2,ivx+1) = realarr(ipos+4)
-              dat(npart+2,ivx+2) = realarr(ipos+5)
-           endif
-           npart  = npart  + 2
+        if (ivx.gt.0) then
+           call extract('vx1',dat(npart+1,ivx),realarr,tags,nreals,ierrs(1))
+           call extract('vy1',dat(npart+1,ivx+1),realarr,tags,nreals,ierrs(2))
+           call extract('vz1',dat(npart+1,ivx+2),realarr,tags,nreals,ierrs(3))
+           call extract('vx2',dat(npart+2,ivx),realarr,tags,nreals,ierrs(4))
+           call extract('vy2',dat(npart+2,ivx+1),realarr,tags,nreals,ierrs(5))
+           call extract('vz2',dat(npart+2,ivx+2),realarr,tags,nreals,ierrs(6))
         endif
+        npart  = npart  + 2
      endif
   else
      npartoftype(:) = 0
@@ -2145,7 +2156,8 @@ subroutine set_labels
      ih = 4       !  smoothing length
   endif
   irho = ih + 1     !  density
-  if (smalldump .and. nhydroreal4.ge.3) iutherm = irho+1
+  iutherm = 0
+  idustfrac = 0
 
   !
   !--translate array tags into column labels, where necessary
@@ -2223,6 +2235,7 @@ subroutine set_labels
         end select
      enddo
   else
+     if (smalldump .and. nhydroreal4.ge.3) iutherm = irho+1
      call guess_labels(ncolumns,iamvec,label,labelvec,istartmhd,istart_extra_real4,&
           nmhd,nhydroreal4,ndimV,irho,iBfirst,ivx,iutherm,idivB,iJfirst,&
           iradenergy,icv,udist,utime,units,unitslabel)
