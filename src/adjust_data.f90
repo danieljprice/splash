@@ -301,6 +301,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
        if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)).gt.maxpart) then
           call alloc(ntoti + npartoftype(1,i),maxstep,maxcol,mixedtypes=.true.)
        endif
+       if (npartoftype(2,i) > 0) cycle
        ndust = 0
        !--zero the properties of newly created dust particles
        dat(ntoti+1:ntoti+npartoftype(1,i),:,i) = 0.
