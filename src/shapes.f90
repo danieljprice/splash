@@ -285,9 +285,11 @@ subroutine add_shape(istart,iend,nshape)
           shape(ishape)%ylen = shape(ishape)%xlen
           poslabel = ' centre'
        case(2) ! rectangle
-          call prompt('enter x length of side (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
-          call prompt('enter y length of side (in '//trim(labelunits(iunits))//')',shape(ishape)%ylen,0.)
-          poslabel = ' centre'
+          call prompt('enter x position of left edge (in '//trim(labelunits(iunits))//')',shape(ishape)%xpos,0.)
+          call prompt('enter x position of right edge (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
+          call prompt('enter y position of bottom edge (in '//trim(labelunits(iunits))//')',shape(ishape)%ypos,0.)
+          call prompt('enter y position of top edge (in '//trim(labelunits(iunits))//')',shape(ishape)%ylen,0.)
+          poslabel = ''
        case(3) ! arrow
           call prompt('enter arrow length (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           call prompt('enter angle in degrees (0 = horizontal) ',shape(ishape)%angle)
@@ -326,7 +328,7 @@ subroutine add_shape(istart,iend,nshape)
           endif
           poslabel = ' starting'
        end select
-       if (itype.ne.7) then
+       if (itype.ne.7 .and. itype.ne.2) then
           call prompt('enter'//trim(poslabel)//' x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)
           call prompt('enter'//trim(poslabel)//' y position (in '//trim(labelunits(iunits))//') ',shape(ishape)%ypos)
        endif
@@ -463,7 +465,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
           if (xlen.gt.dxplot .or. ylen.gt.dyplot) then
              print "(2x,a)",'Error: shape size exceeds plot dimensions: not plotted'
           else
-             call plot_rect(xpos-0.5*xlen,xpos+0.5*xlen,ypos-0.5*ylen,ypos + 0.5*ylen)
+             call plot_rect(xpos,xlen,ypos,ylen)
           endif
        case(3) ! arrow
           dx = xlen*cos(anglerad)
