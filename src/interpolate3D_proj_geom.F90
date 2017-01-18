@@ -79,7 +79,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      iplotx,iploty,iplotz,ix)
 
   use geometry, only:igeom_cartesian,coord_transform,coord_is_length, &
-                     coord_transform_limits,igeom_cylindrical
+                     coord_transform_limits,igeom_cylindrical,get_coord_limits
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real,    intent(in), dimension(npart) :: x,y,z,hh,weight,dat
@@ -93,7 +93,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   real, parameter :: pi = 3.1415926536
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  integer :: ixcoord,iycoord,izcoord
+  integer :: ixcoord,iycoord,izcoord,j
   integer :: iprintinterval, iprintnext, itmin
 #ifdef _OPENMP
   integer :: omp_get_num_threads,i
@@ -105,7 +105,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp threadprivate(xpixmin,xpixmax,xci,xi)
   real :: hi,hi1,hi21,radkern,wab,q2,xminpix,yminpix
   real :: term,termnorm,dx,dx2,dy,dy2
-  real :: xmax,ymax
+  real :: xmax,ymax,xhat(3,3),hmin,horigi
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress,islengthx,islengthy,islengthz
   
@@ -186,16 +186,18 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !--use a minimum smoothing length on the grid to make
 !  sure that particles contribute to at least one pixel
 !
-!  hmin = 0.5*max(pixwidthx,pixwidthy)
+  hmin = 0.
+  if (islengthx) hmin = 0.5*pixwidthx
+  if (islengthy) hmin = max(hmin,0.5*pixwidthy)
 
 !$omp parallel default(none) &
-!$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
+!$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart,hmin) &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,ixcoord,iycoord,izcoord,islengthx,islengthy,islengthz,igeom) &
 !$omp shared(datnorm,normalise,radkernel,radkernel2) &
-!$omp private(hi,radkern) &
+!$omp private(hi,horigi,radkern) &
 !$omp private(hi1,hi21,term,termnorm) &
-!$omp private(q2,dx,dx2,dy,dy2,wab,xcoord,xpix) &
+!$omp private(q2,dx,dx2,dy,dy2,wab,xcoord,xpix,xhat) &
 !$omp private(i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax)
 !$omp master
 !$    print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
@@ -222,8 +224,9 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      !
      !--set h related quantities
      !
-     hi = hh(i)
-     if (hi.le.0.) cycle over_particles
+     horigi = hh(i)
+     if (horigi.le.0.) cycle over_particles
+     hi = max(horigi,hmin)
 
      radkern = radkernel*hi ! radius of the smoothing kernel
      
@@ -239,13 +242,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      !--transform these into limits of the contributions 
      !  in the new coordinate system
      !
-     !print*,' limits in cart = ',(xpixmin(ipix),xpixmax(ipix),ipix=1,3)
-     call coord_transform_limits(xpixmin,xpixmax,igeom_cartesian,igeom,3)
-
-     !--get particle coordinates in transformed space
-     call coord_transform(xci,3,igeom_cartesian,xi,3,igeom)
-     !print*,' limits in cyl  = ',(xpixmin(ipix),xpixmax(ipix),ipix=1,3)
-     !read*
+     call get_coord_limits(radkern,xci,xi,xpixmin,xpixmax,igeom)
      !
      !--now work out contributions to pixels in the the transformed space
      !
@@ -273,7 +270,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 
      ! h gives the z length scale (NB: no perspective)
      if (islengthz) then
-        termnorm = weight(i)*hi
+        termnorm = weight(i)*horigi
      elseif (igeom.eq.igeom_cylindrical) then
         termnorm = weight(i)*atan(radkern/xi(ixcoord))/pi
      else

@@ -67,7 +67,7 @@ module geometry
 
  public :: coord_transform, vector_transform, coord_transform_limits
  public :: coord_is_length, print_error
- public :: set_rotation_angles
+ public :: set_rotation_angles, get_coord_limits
 
  real, parameter, private :: pi = 3.1415926536
  real, parameter, private :: Rtorus = 1.0
@@ -699,5 +699,90 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
 
  return
 end subroutine coord_transform_limits
+
+!------------------------------------------------------------
+! Routine to assist with interpolation in non-cartesian
+! coordinate systems
+!
+! IN:
+!   xin - position in cartesian coords
+!   rad - radius of sphere around xin in cartesians
+! OUT:
+!   xout - position in desired coord system
+!   xmin, xmax - bounding box of sphere in new coord system
+!
+!------------------------------------------------------------
+subroutine get_coord_limits(rad,xin,xout,xmin,xmax,itypein)
+ real, intent(in)  :: rad,xin(3)
+ real, intent(out) :: xout(3),xmin(3),xmax(3)
+ integer, intent(in) :: itypein
+ real :: r,rcyl,dphi,dtheta
+
+ select case(itypein)
+ case(4) ! toroidal
+    rcyl = sqrt(xin(1)**2 + xin(2)**2)
+    r = sqrt(xin(3)**2 + (rcyl - Rtorus)**2)
+    xout(1) = r
+    xout(2) = atan2(xin(3),rcyl-Rtorus) ! asin(xin(3)/xout(1))
+    xout(3) = atan2(xin(2),xin(1))
+    xmin(1) = max(r-rad,0.)
+    xmax(1) = r+rad
+    if (r > 0. .and. xmin(1) > 0.) then
+       dtheta = asin(rad/r)
+       xmin(2) = max(xout(2) - dtheta,0.)
+       xmax(2) = min(xout(2) + dtheta,pi)
+       dphi = atan(rad/r)
+       xmin(3) = xout(3)-dphi
+       xmax(3) = xout(3)+dphi
+    else
+       xmin(2) = 0.
+       xmax(2) = pi
+       xmin(3) = -pi
+       xmax(3) = pi
+    endif
+ case(3) ! spherical
+    r = sqrt(dot_product(xin,xin))
+    xout(1) = r
+    xout(2) = atan2(xin(2),xin(1)) ! phi
+    xout(3) = acos(xin(3)/r) ! theta = acos(z/r)
+    xmin(1) = max(r - rad,0.)
+    xmax(1) = r + rad
+    if (r > 0. .and. xmin(1) > 0.) then
+       dphi = atan(rad/r)
+       xmin(2) = xout(2)-dphi
+       xmax(2) = xout(2)+dphi
+       dtheta = acos(rad/r)
+       xmin(3) = max(xout(3) - dtheta,0.)
+       xmax(3) = min(xout(3) + dtheta,pi)
+    else
+       xmin(2) = -pi
+       xmax(2) = pi
+       xmin(3) = 0.
+       xmax(3) = pi
+    endif
+ case(2) ! cylindrical
+    r = sqrt(xin(1)**2 + xin(2)**2)
+    xout(1) = r
+    xout(2) = atan2(xin(2),xin(1))
+    xout(3) = xin(3)
+    xmin(1) = max(r-rad,0.)
+    xmax(1) = r+rad
+    if (r > 0. .and. xmin(1) > 0.) then
+       dphi = atan(rad/r)
+       xmin(2) = xout(2)-dphi
+       xmax(2) = xout(2)+dphi
+    else
+       xmin(2) = -pi
+       xmax(2) = pi
+    endif
+    xmin(3) = xout(3)-rad
+    xmax(3) = xout(3)+rad
+ case default
+    xout = xin
+    xmin = xin - rad
+    xmax = xin + rad
+ end select
+
+end subroutine get_coord_limits
 
 end module geometry
