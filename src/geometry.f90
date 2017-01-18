@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -40,7 +40,7 @@
 !  toroidal r,theta,phi <-> cartesian
 !  rotated cartesian <-> cartesian
 !
-! written by Daniel Price 2004-2011
+! written by Daniel Price 2004-2016
 ! as part of the SPLASH SPH visualisation package
 !-----------------------------------------------------------------
 module geometry
@@ -59,11 +59,11 @@ module geometry
       'toroidal    r,theta,phi', &
       'rotated     x_1,x_2,x_3'/)
  character(len=6), dimension(3,maxcoordsys), parameter, public :: labelcoord = &
-    reshape((/'x    ','y    ','z    ', &
-              'r    ','phi  ','z    ', &
-              'r    ','phi  ','theta', &
-              'r_t  ','theta','phi  ', &
-              'x_1  ','x_2  ','x_3  '/),shape=(/3,maxcoordsys/))
+    reshape((/'x     ','y     ','z     ', &
+              'r     ','\phi  ','z     ', &
+              'r     ','\phi  ','\theta', &
+              'r_t   ','\theta','\phi  ', &
+              'x_1   ','x_2   ','x_3   '/),shape=(/3,maxcoordsys/))
 
  public :: coord_transform, vector_transform, coord_transform_limits
  public :: coord_is_length, print_error
