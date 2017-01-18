@@ -93,7 +93,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   real, parameter :: pi = 3.1415926536
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  integer :: ixcoord,iycoord,izcoord,j
+  integer :: ixcoord,iycoord,izcoord
   integer :: iprintinterval, iprintnext, itmin
 #ifdef _OPENMP
   integer :: omp_get_num_threads,i
@@ -105,7 +105,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp threadprivate(xpixmin,xpixmax,xci,xi)
   real :: hi,hi1,hi21,radkern,wab,q2,xminpix,yminpix
   real :: term,termnorm,dx,dx2,dy,dy2
-  real :: xmax,ymax,xhat(3,3),hmin,horigi
+  real :: xmax,ymax,hmin,horigi
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress,islengthx,islengthy,islengthz
   
@@ -197,7 +197,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(datnorm,normalise,radkernel,radkernel2) &
 !$omp private(hi,horigi,radkern) &
 !$omp private(hi1,hi21,term,termnorm) &
-!$omp private(q2,dx,dx2,dy,dy2,wab,xcoord,xpix,xhat) &
+!$omp private(q2,dx,dx2,dy,dy2,wab,xcoord,xpix) &
 !$omp private(i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax)
 !$omp master
 !$    print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
