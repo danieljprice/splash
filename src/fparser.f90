@@ -113,7 +113,7 @@ MODULE fparser
                                                                       'erfcs', &
                                                                       'erfc ', &
                                                                       'erf  ', &
-                                                                      'gamma' /)
+                                                                      'gamf ' /)
   TYPE tComp
      INTEGER(is), DIMENSION(:), POINTER :: ByteCode
      INTEGER                            :: ByteCodeSize
