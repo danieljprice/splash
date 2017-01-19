@@ -90,6 +90,8 @@ module exact
   integer, parameter :: iexact_rochelobe = 15
   !--C-shock
   real :: machs,macha
+  !--planet-disc interaction
+  real :: HonR,rplanet
   !--gamma, for manual setting
   real :: gamma_exact
   logical :: use_gamma_exact
@@ -108,7 +110,8 @@ module exact
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
-       use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact
+       use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
+       HonR,rplanet
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -188,6 +191,10 @@ contains
 !   C-shock
     machs = 50. ! sonic Mach number
     macha = 5.  ! Alfvenic Mach number
+!   planet-disc interaction
+    HonR = 0.05
+    rplanet = 1.
+    
 !   gamma, if not read from file
     gamma_exact = 5./3.
     use_gamma_exact = .false.
@@ -244,8 +251,9 @@ contains
            '13) special relativistic shock tube', /, &
            '14) dusty waves', /, &
            '15) Roche lobes/potential ',/, &
-           '16) C-shock ')
-    call prompt('enter exact solution to plot',iexact,0,16)
+           '16) C-shock ',/, &
+           '17) Planet-disc interaction')
+    call prompt('enter exact solution to plot',iexact,0,17)
     print "(a,i2)",'plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
@@ -489,6 +497,9 @@ contains
     case(16)
        call prompt('enter sonic Mach number',machs,0.)
        call prompt('enter Alfvenic Mach number ',macha,0.)
+    case(17)
+       call prompt('enter disc aspect ratio (H/R)',HonR,0.,1.)
+       !call prompt('enter planet orbital radius ',rplanet,0.)
     end select
     
     if (prompt_for_gamma) then
@@ -513,9 +524,11 @@ contains
     call prompt('enter line colour ',iExactLineColour,1,plotlib_maxlinecolour)
     call prompt('enter line style  ',iExactLineStyle,1,plotlib_maxlinestyle)
     call prompt('calculate error norms?',iCalculateExactErrors)
-    print "(/,' 0 : not normalised  L1 = 1/N \sum |y - y_exact|',/,"// &
-             "' 1 : normalised      L1 = 1/N 1/max(y_exact) \sum |y - y_exact|')"
-    call prompt('enter choice of error norm',iNormaliseErrors)
+    if (iCalculateExactErrors) then
+       print "(/,' 0 : not normalised  L1 = 1/N \sum |y - y_exact|',/,"// &
+                "' 1 : normalised      L1 = 1/N 1/max(y_exact) \sum |y - y_exact|')"
+       call prompt('enter choice of error norm',iNormaliseErrors)
+    endif
     if (iCalculateExactErrors) then
        call prompt('plot residuals (as inset in main plot)?',iPlotResiduals)
        if (iPlotResiduals) then
@@ -819,6 +832,7 @@ contains
     use rochelobe,       only:exact_rochelobe
     use gresho,          only:exact_gresho
     use Cshock,          only:exact_Cshock
+    use planetdisc,      only:exact_planetdisc
     use transforms,      only:transform,transform_inverse
     use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line,plotlib_maxlinestyle
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
@@ -1238,6 +1252,10 @@ contains
           elseif (iploty.eq.iBfirst .and. iBfirst.gt.0) then
              call exact_Cshock(5,timei,gammai,machs,macha,xmin,xmax,xexact,yexact,ierr)
           endif
+       endif
+    case(17) ! planet-disc interaction
+       if (ndim.ge.2 .and. iplotx.eq.ix(1) .and. iploty.eq.ix(2)) then
+          call exact_planetdisc(igeom,timei,HonR,rplanet,xexact,yexact,ierr)
        endif
     end select
 
