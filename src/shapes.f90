@@ -465,7 +465,11 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
           if (xlen.gt.dxplot .or. ylen.gt.dyplot) then
              print "(2x,a)",'Error: shape size exceeds plot dimensions: not plotted'
           else
-             call plot_rect(xpos,xlen,ypos,ylen)
+             if (shape(i)%itype==1) then
+                call plot_rect(xpos-0.5*xlen,xpos+0.5*xlen,ypos-0.5*ylen,ypos + 0.5*ylen)
+             else
+                call plot_rect(xpos,xlen,ypos,ylen)
+             endif
           endif
        case(3) ! arrow
           dx = xlen*cos(anglerad)
