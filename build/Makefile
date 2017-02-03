@@ -548,7 +548,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          $(SYSTEMFILE) system_utils.f90 \
          cubicsolve.f90 discplot.f90 \
          fparser.f90 parsetext.f90 \
-         exact_function.f90 exact_dustywaves.f90 \
+         exact_function.f90 exact_dustywaves.f90 exact_planetdisc.f90 \
          exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 exact_rochelobe.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
