@@ -83,7 +83,7 @@ subroutine exact_planetdisc(iplot,time,HonR,rplanet,rplot,yplot,ierr)
   case default ! in x-y plane
      ! define npts outside planet orbit
      rmin = 1.e-3
-     rmax = max(maxval(rplot),abs(minval(rplot)))
+     rmax = min(max(maxval(rplot),abs(minval(rplot))),5.*rplanet)
      dr = (rmax - rmin)/npts
      ! outside planet
      do i=1,npts
