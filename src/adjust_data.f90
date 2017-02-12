@@ -293,6 +293,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  integer :: ndust,jdust,ntoti,i,j
  real    :: rhodust,rhogas,rhotot,dustfraci,pmassgas,pmassdust,pmassj
  real, dimension(ndimV) :: veli,vgas,vdust,deltav
+ logical :: use_vels
 
  if (idustfrac.gt.0 .and. irho.gt.0) then
     !if (iverbose >= 0) print*,' got dustfrac in column ',idustfrac
@@ -309,6 +310,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
           print*,' ERROR: idustfrac out of range: cannot create fake dust particles'
           return
        endif
+       use_vels = (ideltav.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0)
        do j=1,ntoti
           if (iamtype(j,i).eq.1) then
              ndust = ndust + 1 ! one dust particle for every gas particle
@@ -337,7 +339,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
              endif
 
              !--velocities
-             if (ideltav.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0) then
+             if (use_vels) then
                 veli(:)   = dat(j,ivx:ivx+ndimV-1,i)
                 deltav(:) = dat(j,ideltav:ideltav+ndimV-1,i)
                 vgas(:)   = veli(:) - rhodust/rhotot*deltav(:)
@@ -349,6 +351,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
        enddo
        if (iverbose.ge.1) then
           print "(a,i8,a)",' Creating ',ndust,' fake dust particles (set SPLASH_BARYCENTRIC=yes to plot barycentric values)'
+          if (.not.use_vels .and. ivx > 0) print "(a)",' WARNING: deltav not found in one fluid dust data: cannot get vels'
        endif
        npartoftype(2,i) = npartoftype(2,i) + ndust
     enddo
