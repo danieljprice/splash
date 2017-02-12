@@ -2122,7 +2122,8 @@ end subroutine read_data
 
 subroutine set_labels
   use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
-              ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,idustfrac
+              ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
+              idustfrac,ideltav
   use params
   use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
   use geometry,        only:labelcoord
@@ -2194,6 +2195,8 @@ subroutine set_labels
            label(i) = '\psi'
         case('dustfrac')
            idustfrac = i
+        case('deltavx')
+           ideltav = i
         case('alpha')
            label(i) = '\alpha'
         case('alphaB')
