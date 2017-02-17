@@ -259,9 +259,10 @@ subroutine read_tipsyheader_binary(iunitb,ierr)
  integer, intent(in) :: iunitb
  integer, intent(out) :: ierr
  real(doub_prec) :: timedb
+ integer :: ipad
 
  ierr = 0
- read(iunitb,iostat=ierr,end=55) timedb,nprint,ndim,ngas,ndark,nptmass
+ read(iunitb,iostat=ierr,end=55) timedb,nprint,ndim,ngas,ndark,nptmass,ipad
  !print*,'header = ',timedb,nprint,ndim,ngas,ndark,nptmass
  timei = real(timedb)
 
@@ -358,7 +359,6 @@ subroutine read_tipsybody_binary(iunitb,ierr,nread)
  real :: dummy
  
  !--gas particles
- read(iunitb) dummy ! WHY DO WE NEED THIS??
  nerr = 0
  do i=1,ngas
     !--pmass,x,y,z,vx,vy,vz,rho,temp,h
