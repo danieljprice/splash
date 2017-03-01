@@ -78,7 +78,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use params
   use colours,            only:colour_set
   use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,&
-                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap
+                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,ivx,ideltav,idustfrac
   use limits,             only:lim,rangeset
   use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
                                nyplotmulti,x_secmulti,ivecplotmulti
@@ -513,6 +513,14 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         endif
         if (iploty.gt.0 .and. iploty.le.numplot) then
            if (iamvec(iploty).gt.0) required(iamvec(iploty):iamvec(iploty)+ndimV-1) = .true.
+        endif
+     endif
+     ! must read deltav, density and dust fraction if plotting v for one-fluid dust
+     if (ideltav > 0) then
+        if (any(required(ivx:ivx+ndimV-1))) then
+           required(ideltav:ideltav+ndimV-1) = .true.
+           required(irho) = .true.
+           required(idustfrac) = .true.
         endif
      endif
 !  endif
