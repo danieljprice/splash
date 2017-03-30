@@ -338,6 +338,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         print*,' ctrl-m   : toggle Hollywood mode'
         print*,' G/T/H    : move le(G)end, (T)itle or (H) vector legend to current position'
         print*,' m/M/i    : change colour map (m=next,M=previous,i=invert) (rendered plots only)'
+        if (irender.gt.0) print*,' f/F      : f)lip to next/previous column in rendering (rendered plots only)'
         print*,' v/V/w    : decrease/increase/adapt arrow size on vector plots (Z for x10)'
         if (ndim.ge.3) then
            print*,' k/K      : decrease/increase opacity on opacity-rendered plots (Z for x10)'
