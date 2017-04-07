@@ -941,12 +941,12 @@ contains
   endif
  end subroutine guess_labels
 
- integer function assign_column(tag,iarr,ipos,ikind,imaxcolumnread,idust) result(icolumn)
+ integer function assign_column(tag,iarr,ipos,ikind,imaxcolumnread,idustarr) result(icolumn)
   use labels, only:ih,irho,ix,ipmass
   character(len=lentag), intent(in) :: tag
   integer,               intent(in) :: iarr,ipos,ikind
   integer,               intent(inout) :: imaxcolumnread
-  integer,               intent(inout) :: idust
+  integer,               intent(inout) :: idustarr
 
   if (tagged .and. len_trim(tag) > 0) then
      !
@@ -968,12 +968,12 @@ contains
      case('rho')
         icolumn = irho
      case('dustfracsum')
-        icolumn = nhydroarrays + 1
-        print*,'dustfracsum'
+        idustarr = idustarr + 1
+        icolumn = nhydroarrays + idustarr
      case('dustfrac')
         if (ndustarrays > 0) then
-           idust = idust + 1
-           icolumn = nhydroarrays + idust + 1
+           idustarr = idustarr + 1
+           icolumn = nhydroarrays + idustarr
         else
            icolumn = max(nhydroarrays + ndustarrays + nmhdarrays + 1,imaxcolumnread + 1)     
         endif
@@ -1095,7 +1095,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
   integer :: i,j,k,ierr,iunit
   integer :: intg1,int2,int3,ilocvx,iversion
   integer :: i1,iarr,i2,iptmass1,iptmass2
-  integer :: npart_max,nstep_max,ncolstep,icolumn,idust,nptmasstot
+  integer :: npart_max,nstep_max,ncolstep,icolumn,idustarr,nptmasstot
   integer :: narrsizes
   integer :: nskip,ntotal,npart,n1,ngas,nreals
   integer :: iblock,nblocks,ntotblock,ncolcopy
@@ -1461,7 +1461,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !
    imaxcolumnread = 0
    icolumn = 0
-   idust   = 0
+   idustarr   = 0
    istartmhd = 0
    istartrt = 0
    i1 = i2 + 1
@@ -1695,7 +1695,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          do i=1,nreal(iarr)
             tagtmp = ''
             if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
-            icolumn = assign_column(tagtmp,iarr,i,6,imaxcolumnread,idust)
+            icolumn = assign_column(tagtmp,iarr,i,6,imaxcolumnread,idustarr)
             if (tagged) tagarr(icolumn) = tagtmp
             if (debug)  print*,' reading real ',icolumn,' tag = ',trim(tagtmp)
             if (required(icolumn)) then
@@ -1750,7 +1750,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          do i=1,nreal4(iarr)
             tagtmp = ''
             if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
-            icolumn = assign_column(tagtmp,iarr,i,4,imaxcolumnread,idust)
+            icolumn = assign_column(tagtmp,iarr,i,4,imaxcolumnread,idustarr)
             if (debug) print*,'reading real4 ',icolumn,' tag = ',trim(tagtmp)
             if (tagged) tagarr(icolumn) = tagtmp
 
@@ -1818,7 +1818,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          do i=1,nreal8(iarr)
             tagtmp = ''
             if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
-            icolumn = assign_column(tagtmp,iarr,i,8,imaxcolumnread,idust)
+            icolumn = assign_column(tagtmp,iarr,i,8,imaxcolumnread,idustarr)
             if (debug) print*,'reading real8 ',icolumn,' tag = ',trim(tagtmp)
             if (tagged) tagarr(icolumn) = tagtmp
             if (required(icolumn)) then
@@ -2237,18 +2237,10 @@ subroutine set_labels
            idustfracsum = i
         case('dustfrac')
            idustfrac = i
-           !write(dustfrac_string,'(I10)') idustfrac-idustfracsum
-           !write(dustfrac_string,'(A)') 'dustfrac'//trim(adjustl(dustfrac_string))
-           !label(i) = dustfrac_string
         case('deltavsumx')
            ideltavsum = i
         case('deltavx')
            ideltav = i
-           !write(deltav_string,'(I10)') (ideltav-ideltavsum)/ndimV
-           !write(deltav_string,'(A)') 'deltav'//trim(adjustl(deltav_string))
-           !do j=1,ndimV
-           !   label(ideltav+j-1) = trim(deltav_string)//'_'//labelcoord(j,1)
-           !enddo
         case('alpha')
            label(i) = '\alpha'
         case('alphaB')
