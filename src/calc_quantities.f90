@@ -293,13 +293,15 @@ end subroutine splitstring
 !---------------------------------------------------------------------
 subroutine print_example_quantities(ncalc)
  use labels,        only:label,unitslabel,shortlabel,lenlabel,irho,iutherm,iBfirst,&
-                         ix,icv,idivB,ih,iradenergy,iamvec,labelvec,idustfrac,ideltav,ivx
- use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
+                         ix,icv,idivB,ih,iradenergy,iamvec,labelvec,idustfrac,&
+                         idustfracsum,ideltav,ivx
+ use settings_data, only:ncolumns,ndim,icoordsnew,ndimV,ndusttypes
  use geometry,      only:labelcoord
  implicit none
  integer, intent(inout), optional :: ncalc
  logical :: prefill
- character(len=lenlabel) :: string,ldfrac,temp,labelprev
+ character(len=lenlabel) :: string,temp,labelprev
+ character(len=lenlabel) :: ldfrac,ldfracsum,idust_string
  integer :: i,j,ivecstart,ierr,ilen
  logical :: gotpmag,gotpressure
 
@@ -357,31 +359,49 @@ subroutine print_example_quantities(ncalc)
  !
  if (idustfrac.gt.0 .and. irho.gt.0) then
     string = ' '
-    ldfrac = shortlabel(label(idustfrac),unitslabel(idustfrac))    
+    if (idustfracsum == 0) then
+       ! One dust phase
+       ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))    
+    else
+       ! Multiple dust phases
+       ldfracsum = shortlabel(label(idustfracsum),unitslabel(idustfracsum))    
+    endif
     !--gas density
     write(string,"(a)",iostat=ierr) '\rho_{g} = ' &
                     //trim(shortlabel(label(irho),unitslabel(irho))) &
-                    //'*(1 - '//trim(ldfrac)//')'
+                    //'*(1 - '//trim(ldfracsum)//')'
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
        labelprev = calclabel(ncalc)
+       calcunitslabel(ncalc) = unitslabel(irho)
     else
        print "(11x,a)",trim(string)
        call splitstring(string,labelprev,temp)
     endif
     !--dust density
-    write(string,"(a)",iostat=ierr) '\rho_{d} = ' &
-                    //trim(ldfrac)//'*'//trim(shortlabel(label(irho),unitslabel(irho)))
-    if (prefill) then
-       ncalc = ncalc + 1
-       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
-    else
-       print "(11x,a)",trim(string)
-    endif
+    do i = 1,ndusttypes
+       if (ndusttypes>1) then
+          write(idust_string,"(I10)") i
+          write(idust_string,"(a)") '{d,'//trim(adjustl(idust_string))//'}'
+          ldfrac = shortlabel(label(idustfracsum+i),unitslabel(idustfracsum+i))    
+       else
+          write(idust_string,"(a)") '{d}'
+          ldfrac = shortlabel(label(idustfrac),unitslabel(idustfrac))    
+       endif
+       write(string,"(a)",iostat=ierr) '\rho_'//trim(adjustl(idust_string))//' = ' &
+                       //trim(ldfrac)//'*'//trim(shortlabel(label(irho),unitslabel(irho)))
+       if (prefill) then
+          ncalc = ncalc + 1
+          call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+          calcunitslabel(ncalc) = unitslabel(irho)
+       else
+          print "(11x,a)",trim(string)
+       endif
+    enddo
     !--dust-to-gas ratio
     write(string,"(a)",iostat=ierr) 'dust-to-gas ratio = ' &
-                    //trim(ldfrac)//'/(1. - '//trim(ldfrac)//')'
+                    //trim(ldfracsum)//'/(1. - '//trim(ldfracsum)//')'
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
@@ -390,36 +410,40 @@ subroutine print_example_quantities(ncalc)
     endif
 
     if (ideltav.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0) then
-       !--gas velocities
-       do i=1,ndimV
-          write(string,"(a)",iostat=ierr) trim(labelvec(ivx))//'_{gas,'//trim(labelcoord(i,icoordsnew))//'} = ' &
-                          //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
-                          //' - r_{dust}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
-                          //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
-          if (prefill) then
-             ncalc = ncalc + 1
-             !if (i.eq.1) labelvec(ncalc) = 'v_{gas}'
-             !iamvec(ncalc) = ncolumns + ncalc - i + 1
-             call splitstring(string,calclabel(ncalc),calcstring(ncalc))
-          else
-             print "(11x,a)",trim(string)
-          endif       
-       enddo
-       !--dust velocities
-       do i=1,ndimV
-          write(string,"(a)",iostat=ierr) trim(labelvec(ivx))//'_{dust,'//trim(labelcoord(i,icoordsnew))//'} = ' &
-                          //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
-                          //' + r_{gas}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
-                          //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
-          if (prefill) then
-             ncalc = ncalc + 1
-             !if (i.eq.1) labelvec(ncalc) = 'v_{dust}'
-             !iamvec(ncalc) = ncolumns + ncalc - i + 1
-             call splitstring(string,calclabel(ncalc),calcstring(ncalc))
-          else
-             print "(11x,a)",trim(string)
-          endif       
-       enddo
+       if (ndusttypes==1) then
+          !--gas velocities
+          do i=1,ndimV
+             write(string,"(a)",iostat=ierr) trim(labelvec(ivx))//'_{gas,'//trim(labelcoord(i,icoordsnew))//'} = ' &
+                             //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
+                             //' - r_{dust}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
+                             //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
+             if (prefill) then
+                ncalc = ncalc + 1
+                !if (i.eq.1) labelvec(ncalc) = 'v_{gas}'
+                !iamvec(ncalc) = ncolumns + ncalc - i + 1
+                call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+             else
+                print "(11x,a)",trim(string)
+             endif       
+          enddo
+          !--dust velocities
+          do i=1,ndimV
+             write(string,"(a)",iostat=ierr) trim(labelvec(ivx))//'_{dust,'//trim(labelcoord(i,icoordsnew))//'} = ' &
+                             //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
+                             //' + r_{gas}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
+                             //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
+             if (prefill) then
+                ncalc = ncalc + 1
+                !if (i.eq.1) labelvec(ncalc) = 'v_{dust}'
+                !iamvec(ncalc) = ncolumns + ncalc - i + 1
+                call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+             else
+                print "(11x,a)",trim(string)
+             endif       
+          enddo
+       else
+          ! Still needs to be implemented...
+       endif
     endif
  endif 
 

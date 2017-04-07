@@ -425,6 +425,7 @@ contains
  subroutine read_header(iunit,iverbose,debug,doubleprec,&
                         npart,npartoftypei,n1,ntypes,nblocks,&
                         narrsizes,realarr,tagsreal,nreals,ierr)
+  use settings_data,  only:ndusttypes
   integer, intent(in)  :: iunit,iverbose
   logical, intent(in)  :: debug,doubleprec
   integer, intent(out) :: npart,npartoftypei(:),n1,ntypes,nblocks,narrsizes,nreals,ierr
@@ -589,6 +590,7 @@ contains
      if (any(ierrs /= 0)) then
         print "(a)",' *** error reading units'
      endif
+     if (onefluid_dust) ndusttypes = extract_ndusttypes(tags,tagsreal,intarr,nints)
   else
      if (nreal8s.ge.4) then
         read(iunit,iostat=ierr) udist,umass,utime,umagfd
@@ -939,11 +941,12 @@ contains
   endif
  end subroutine guess_labels
 
- integer function assign_column(tag,iarr,ipos,ikind,imaxcolumnread) result(icolumn)
+ integer function assign_column(tag,iarr,ipos,ikind,imaxcolumnread,idust) result(icolumn)
   use labels, only:ih,irho,ix,ipmass
   character(len=lentag), intent(in) :: tag
   integer,               intent(in) :: iarr,ipos,ikind
   integer,               intent(inout) :: imaxcolumnread
+  integer,               intent(inout) :: idust
 
   if (tagged .and. len_trim(tag) > 0) then
      !
@@ -964,9 +967,13 @@ contains
         icolumn = ih
      case('rho')
         icolumn = irho
+     case('dustfracsum')
+        icolumn = nhydroarrays + 1
+        print*,'dustfracsum'
      case('dustfrac')
         if (ndustarrays > 0) then
-           icolumn = nhydroarrays + 1
+           idust = idust + 1
+           icolumn = nhydroarrays + idust + 1
         else
            icolumn = max(nhydroarrays + ndustarrays + nmhdarrays + 1,imaxcolumnread + 1)     
         endif
@@ -1040,6 +1047,32 @@ contains
 
  end function assign_column
 
+ integer function extract_ndusttypes(tags,tagsreal,intarr,nints) result(ndusttypes)
+  character(len=lentag), intent(in) :: tags(maxinblock),tagsreal(maxinblock)
+  integer, intent(in) :: intarr(:),nints
+  integer :: i,idust,ierr
+  logical :: igotndusttypes = .false.
+
+  do i = 1,maxinblock
+     if (tags(i)=='ndusttypes') then
+         igotndusttypes = .true.
+     endif
+  enddo
+
+  if (igotndusttypes) then
+     call extract('ndusttypes',idust,intarr,tags,nints,ierr)
+  else
+     idust = 0
+     do i = 1,maxinblock
+        if (tagsreal(i)=='grainsize') idust = idust + 1
+     enddo
+     write(*,"(a)")    ' Warning! Could not find ndusttypes in header'
+     write(*,"(a,I4)") '          ...counting grainsize arrays...ndusttypes =',idust
+  endif
+  ndusttypes = idust
+
+ end function extract_ndusttypes
+
 end module sphNGread
 
 !----------------------------------------------------------------------
@@ -1049,7 +1082,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
   use particle_data,  only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
   !use params,         only:int1,int8
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
-                      lowmemorymode,ntypes,iverbose
+                      lowmemorymode,ntypes,iverbose,ndusttypes
   use mem_allocation, only:alloc
   use system_utils,   only:lenvironment,renvironment
   use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types
@@ -1062,7 +1095,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
   integer :: i,j,k,ierr,iunit
   integer :: intg1,int2,int3,ilocvx,iversion
   integer :: i1,iarr,i2,iptmass1,iptmass2
-  integer :: npart_max,nstep_max,ncolstep,icolumn,nptmasstot
+  integer :: npart_max,nstep_max,ncolstep,icolumn,idust,nptmasstot
   integer :: narrsizes
   integer :: nskip,ntotal,npart,n1,ngas,nreals
   integer :: iblock,nblocks,ntotblock,ncolcopy
@@ -1327,7 +1360,11 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          print "(a)",' ERROR: x,y,z or h missing in phantom read'
       endif
       if (onefluid_dust) then
-         ndustarrays = 1
+         if (ndusttypes>1) then
+            ndustarrays = ndusttypes + 1
+         else
+            ndustarrays = 1
+         endif
       else
          ndustarrays = 0
       endif
@@ -1424,6 +1461,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !
    imaxcolumnread = 0
    icolumn = 0
+   idust   = 0
    istartmhd = 0
    istartrt = 0
    i1 = i2 + 1
@@ -1657,7 +1695,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          do i=1,nreal(iarr)
             tagtmp = ''
             if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
-            icolumn = assign_column(tagtmp,iarr,i,6,imaxcolumnread)
+            icolumn = assign_column(tagtmp,iarr,i,6,imaxcolumnread,idust)
             if (tagged) tagarr(icolumn) = tagtmp
             if (debug)  print*,' reading real ',icolumn,' tag = ',trim(tagtmp)
             if (required(icolumn)) then
@@ -1712,7 +1750,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          do i=1,nreal4(iarr)
             tagtmp = ''
             if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
-            icolumn = assign_column(tagtmp,iarr,i,4,imaxcolumnread)
+            icolumn = assign_column(tagtmp,iarr,i,4,imaxcolumnread,idust)
             if (debug) print*,'reading real4 ',icolumn,' tag = ',trim(tagtmp)
             if (tagged) tagarr(icolumn) = tagtmp
 
@@ -1780,7 +1818,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          do i=1,nreal8(iarr)
             tagtmp = ''
             if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
-            icolumn = assign_column(tagtmp,iarr,i,8,imaxcolumnread)
+            icolumn = assign_column(tagtmp,iarr,i,8,imaxcolumnread,idust)
             if (debug) print*,'reading real8 ',icolumn,' tag = ',trim(tagtmp)
             if (tagged) tagarr(icolumn) = tagtmp
             if (required(icolumn)) then
@@ -2123,9 +2161,10 @@ end subroutine read_data
 subroutine set_labels
   use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
-              idustfrac,ideltav
+              idustfrac,ideltav,idustfracsum,ideltavsum
   use params
-  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
+  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,&
+                            ndusttypes
   use geometry,        only:labelcoord
   use settings_units,  only:units,unitzintegration
   use sphNGread
@@ -2133,9 +2172,10 @@ subroutine set_labels
   use system_commands, only:get_environment
   use system_utils,    only:lenvironment
   implicit none
-  integer :: i
+  integer :: i,j
   real(doub_prec)   :: uergg
   character(len=20) :: string
+  character(len=20) :: dustfrac_string,deltav_string
 
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -2193,10 +2233,22 @@ subroutine set_labels
            iJfirst = i
         case('psi')
            label(i) = '\psi'
+        case('dustfracsum')
+           idustfracsum = i
         case('dustfrac')
            idustfrac = i
+           !write(dustfrac_string,'(I10)') idustfrac-idustfracsum
+           !write(dustfrac_string,'(A)') 'dustfrac'//trim(adjustl(dustfrac_string))
+           !label(i) = dustfrac_string
+        case('deltavsumx')
+           ideltavsum = i
         case('deltavx')
            ideltav = i
+           !write(deltav_string,'(I10)') (ideltav-ideltavsum)/ndimV
+           !write(deltav_string,'(A)') 'deltav'//trim(adjustl(deltav_string))
+           !do j=1,ndimV
+           !   label(ideltav+j-1) = trim(deltav_string)//'_'//labelcoord(j,1)
+           !enddo
         case('alpha')
            label(i) = '\alpha'
         case('alphaB')
@@ -2258,6 +2310,29 @@ subroutine set_labels
      iamvec(icurlvxcol:icurlvzcol) = icurlvxcol
      labelvec(icurlvxcol:icurlvzcol) = 'curl v'
   endif
+  if (idustfracsum.gt.0) then
+     if (ndusttypes.ne.idustfrac-idustfracsum) print*,'ERROR! ndusttypes is calculated incorrectly!'
+     ! Make N dustfrac labels
+     do i = idustfracsum+1,idustfrac
+        write(dustfrac_string,'(I10)') i-idustfracsum
+        write(dustfrac_string,'(A)') 'dustfrac'//trim(adjustl(dustfrac_string))
+        label(i) = dustfrac_string
+     enddo
+  endif
+  if (ideltavsum.gt.0) then
+     ! Modify the deltavsum labels to have vector subscripts
+     do j=1,ndimV
+        label(ideltavsum+j-1) = 'deltavsum'//'_'//labelcoord(j,1)
+     enddo
+     ! Make N deltav labels with vector subscripts
+     do i = ideltavsum+ndimV,ideltav,ndimV
+        write(deltav_string,'(I10)') (i-ideltavsum)/ndimV
+        write(deltav_string,'(A)') 'deltav'//trim(adjustl(deltav_string))
+        do j=1,ndimV
+           label(i+j-1) = trim(deltav_string)//'_'//labelcoord(j,1)
+        enddo
+     enddo 
+  endif
   !
   !--set labels for vector quantities
   !
@@ -2304,6 +2379,13 @@ subroutine set_labels
    if (ivx.gt.0) then
       units(ivx:ivx+ndimV-1) = udist/utime
       unitslabel(ivx:ivx+ndimV-1) = ' [cm/s]'
+   endif
+   if (ideltavsum.gt.0) then
+      units(ideltavsum:ideltav+ndimV-1) = udist/utime
+      unitslabel(ideltavsum:ideltav+ndimV-1) = ' [cm/s]'
+   else
+      units(ideltav:ideltav+ndimV-1) = udist/utime
+      unitslabel(ideltav:ideltav+ndimV-1) = ' [cm/s]'
    endif
    if (iutherm.gt.0) then
       units(iutherm) = (udist/utime)**2

@@ -34,7 +34,7 @@ module params
  integer, parameter :: sing_prec = selected_real_kind(P=5,R=15)
  integer, parameter :: int1 = selected_int_kind(1)
  integer, parameter :: int8 = selected_int_kind(10)
- integer, parameter :: maxplot=64   ! maximum number of plots (for multiplot arrays)
+ integer, parameter :: maxplot=512   ! maximum number of plots (for multiplot arrays)
  integer, parameter :: maxparttypes = 12  ! max # of different particle types
 
  public
@@ -121,6 +121,7 @@ module settings_data
  integer :: numplot,ncalc,ncolumns,nextra
  integer :: ndataplots
  integer :: ndim, ndimv
+ integer :: ndusttypes
  integer :: icoords,icoordsnew,iformat,ntypes,iexact
  integer :: istartatstep,iendatstep,nfreq
  integer :: itracktype,itrackoffset,iverbose
