@@ -590,6 +590,7 @@ contains
      if (any(ierrs /= 0)) then
         print "(a)",' *** error reading units'
      endif
+     ! extract the number of dust arrays are in the file
      if (onefluid_dust) ndusttypes = extract_ndusttypes(tags,tagsreal,intarr,nints)
   else
      if (nreal8s.ge.4) then
@@ -1047,21 +1048,27 @@ contains
 
  end function assign_column
 
+!---------------------------------------------------------------
+! function to extract the number of dust arrays
+!---------------------------------------------------------------
  integer function extract_ndusttypes(tags,tagsreal,intarr,nints) result(ndusttypes)
   character(len=lentag), intent(in) :: tags(maxinblock),tagsreal(maxinblock)
   integer, intent(in) :: intarr(:),nints
   integer :: i,idust,ierr
   logical :: igotndusttypes = .false.
 
+  ! Look for ndusttypes in the header
   do i = 1,maxinblock
      if (tags(i)=='ndusttypes') then
          igotndusttypes = .true.
      endif
   enddo
 
+  ! Retreive/guess the value of ndusttypes
   if (igotndusttypes) then
      call extract('ndusttypes',idust,intarr,tags,nints,ierr)
   else
+     ! For older files where ndusttypes is not output to the header
      idust = 0
      do i = 1,maxinblock
         if (tagsreal(i)=='grainsize') idust = idust + 1
@@ -1361,9 +1368,11 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       endif
       if (onefluid_dust) then
          if (ndusttypes>1) then
-            ndustarrays = ndusttypes + 1
-         else
+            ndustarrays = ndusttypes + 1 ! the extra column is for dustfracsum
+         elseif (ndusttypes==1) then
             ndustarrays = 1
+         else
+            ndustarrays = 0 ! for dump files with dust arrays omitted
          endif
       else
          ndustarrays = 0
@@ -2303,7 +2312,13 @@ subroutine set_labels
      labelvec(icurlvxcol:icurlvzcol) = 'curl v'
   endif
   if (idustfracsum.gt.0) then
-     if (ndusttypes.ne.idustfrac-idustfracsum) print*,'ERROR! ndusttypes is calculated incorrectly!'
+     ! Check the number of dustfrac arrays against ndusttypes
+     if (ndusttypes.ne.idustfrac-idustfracsum) then
+        print*,'ERROR! ndusttypes does not match the number of dustfrac arrays!'
+        print*,'ndusttypes',ndusttypes
+        print*,'idustfrac-idustfracsum',idustfrac-idustfracsum
+        stop
+     endif
      ! Make N dustfrac labels
      do i = idustfracsum+1,idustfrac
         write(dustfrac_string,'(I10)') i-idustfracsum
