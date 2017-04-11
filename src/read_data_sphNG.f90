@@ -2312,13 +2312,6 @@ subroutine set_labels
      labelvec(icurlvxcol:icurlvzcol) = 'curl v'
   endif
   if (idustfracsum.gt.0) then
-     ! Check the number of dustfrac arrays against ndusttypes
-     if (ndusttypes.ne.idustfrac-idustfracsum) then
-        print*,'ERROR! ndusttypes does not match the number of dustfrac arrays!'
-        print*,'ndusttypes',ndusttypes
-        print*,'idustfrac-idustfracsum',idustfrac-idustfracsum
-        stop
-     endif
      ! Make N dustfrac labels
      do i = idustfracsum+1,idustfrac
         write(dustfrac_string,'(I10)') i-idustfracsum
