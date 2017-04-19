@@ -45,6 +45,7 @@ module labels
  integer :: isurfdens,itoomre
  integer :: ipdf,icolpixmap
  integer :: irhorestframe,idustfrac,ideltav
+ integer :: idustfracsum,ideltavsum
 
  public
 
@@ -85,6 +86,10 @@ subroutine reset_columnids
  iradenergy = 0
  icolpixmap = 0
  irhorestframe = 0
+ idustfrac = 0
+ idustfracsum = 0
+ ideltav = 0
+ ideltavsum = 0
 
  return
 end subroutine reset_columnids

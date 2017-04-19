@@ -730,8 +730,8 @@ jules: checksystem $(OBJECTS) read_data_jules.o
 oilonwater: checksystem $(OBJECTS) read_data_oilonwater.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/osplash $(OBJECTS) read_data_oilonwater.o $(LDFLAGS)
 
-maddison: checksystem $(OBJECTS) read_data_maddison.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/msplash $(OBJECTS) read_data_maddison.o $(LDFLAGS)
+mhutch: checksystem $(OBJECTS) read_data_mhutch.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/msplash $(OBJECTS) read_data_mhutch.o $(LDFLAGS)
 
 RSPH: rsph
 
