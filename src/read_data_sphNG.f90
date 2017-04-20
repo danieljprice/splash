@@ -1369,10 +1369,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       if (onefluid_dust) then
          if (ndusttypes>1) then
             ndustarrays = ndusttypes + 1 ! the extra column is for dustfracsum
-         elseif (ndusttypes==1) then
-            ndustarrays = 1
          else
-            ndustarrays = 0 ! for dump files with dust arrays omitted
+            ndustarrays = 1
          endif
       else
          ndustarrays = 0
