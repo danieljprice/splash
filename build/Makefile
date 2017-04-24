@@ -581,7 +581,7 @@ OBJECTS= $(OBJECTS1:.F90=.o)
 # Now compile with the appropriate data read file
 # (move yours to the top so that you can simply type "make")
 #
-all: ascii gadget vine sphNG ndspmhd srosph dragon seren tipsy
+all: mhutch ascii gadget vine sphNG ndspmhd srosph dragon seren tipsy
 	@echo; echo ' SPLASH successfully compiled! ';
 	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
@@ -792,7 +792,7 @@ sigfried: vanaverbeke
 
 gasoline: tipsy
 
-myall: ndspmhd dansph sphNG srosph gadget mbatesph tipsy ascii
+myall: mhutch ndspmhd dansph sphNG srosph gadget mbatesph tipsy ascii
 
 SRCGRID2PDF= $(SYSTEMFILE) globaldata.f90 prompting.f90 transform.f90 \
              asciiutils.f90 write_griddata.f90 pdfs.f90 grid2pdf.f90

@@ -103,9 +103,9 @@ end subroutine defaults_set_part_ev
 !----------------------------------------------------------------------
 subroutine submenu_particleplots(ichoose)
   use exact,           only:options_exact,submenu_exact
-  use labels,          only:labeltype,ih,label
+  use labels,          only:labeltype,ih,label,idustfrac,idustfracsum,idustfrac_plot
   use limits,          only:lim
-  use settings_data,   only:icoords,ntypes,ndim,UseTypeInRenderings,ndataplots
+  use settings_data,   only:icoords,ntypes,ndim,UseTypeInRenderings,ndataplots,ndusttypes
   use settings_render, only:iplotcont_nomulti
   use particle_data,   only:npartoftype,iamtype
   use prompting,       only:prompt,print_logical
@@ -196,6 +196,10 @@ subroutine submenu_particleplots(ichoose)
            endif
         elseif (.not.iplotpartoftype(itype)) then
            PlotonRenderings(itype) = .false.
+        endif
+        if (trim(labeltype(itype))=='dust'.and. iplotpartoftype(itype) .and. ndusttypes>1) then
+           idustfrac_plot = idustfracsum
+           call prompt('Which dust phase would you like to render?',idustfrac_plot)
         endif
      enddo
      return
