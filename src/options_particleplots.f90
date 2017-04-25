@@ -105,7 +105,7 @@ subroutine submenu_particleplots(ichoose)
   use exact,           only:options_exact,submenu_exact
   use labels,          only:labeltype,ih,label,idustfrac,idustfracsum,idustfrac_plot
   use limits,          only:lim
-  use settings_data,   only:icoords,ntypes,ndim,UseTypeInRenderings,ndataplots,ndusttypes
+  use settings_data,   only:icoords,ntypes,ndim,UseTypeInRenderings,ndataplots,ndusttypes,ncalc
   use settings_render, only:iplotcont_nomulti
   use particle_data,   only:npartoftype,iamtype
   use prompting,       only:prompt,print_logical
@@ -116,13 +116,16 @@ subroutine submenu_particleplots(ichoose)
   use settings_data,   only:DataIsBuffered,numplot
   use filenames,       only:nsteps,nstepsinfile,ifileopen
   use geomutils,       only:set_coordlabels
+  use calcquantities,  only:calcstring,calclabel,calcunitslabel,setup_calculated_quantities,firstcall
   implicit none
   integer, intent(in) :: ichoose
   integer             :: i,iaction,n,itype,icoordsprev,ierr,icol
+  integer             :: idustfrac_prev
   character(len=2)    :: charntypes
   character(len=20)   :: substring1,substring2
   character(len=1000) :: fmtstring
   character(len=120)  :: contline
+  logical             :: quiet = .true.
 
   iaction = ichoose
 
@@ -198,8 +201,20 @@ subroutine submenu_particleplots(ichoose)
            PlotonRenderings(itype) = .false.
         endif
         if (trim(labeltype(itype))=='dust'.and. iplotpartoftype(itype) .and. ndusttypes>1) then
-           idustfrac_plot = idustfracsum
+           if (idustfrac_plot==0) idustfrac_plot = idustfracsum
+           idustfrac_prev = idustfrac_plot
            call prompt('Which dust phase would you like to render?',idustfrac_plot)
+           !--Modify calculated data for fake dust particles if necessary
+           if (ncalc /= 0 .and. idustfrac_prev /= idustfrac_plot) then
+              calcstring(:) = ' '
+              calclabel(:) = ' '
+              calcunitslabel(:) = ' '
+              firstcall = .true.
+              ncalc = 0
+              print*,'...recalibrating calculated quantities...'
+              call setup_calculated_quantities(ncalc,quiet)
+              print*,'...done!'
+           endif
         endif
      enddo
      return

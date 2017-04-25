@@ -298,6 +298,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  logical :: use_vels
 
  if (idustfrac.gt.0 .and. irho.gt.0) then
+    !if (iverbose >= 0) print*,' got dustfrac in column ',idustfrac
     if (ndusttypes>1) then
        if (idustfrac_plot == 0 ) then
           idustfrac_temp = idustfracsum
@@ -326,15 +327,10 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
              ndust = ndust + 1 ! one dust particle for every gas particle
              rhotot  = dat(j,irho,i)
              dustfraci = dat(j,idustfrac_temp,i)
-             if (idustfracsum == 0) then              
+             if (idustfracsum == 0) then
                 gasfraci = 1. - dustfraci
-                !--fill in dust fraction
-                dat(jdust,idustfrac,i) = dustfraci
              else
                 gasfraci = 1. - dat(j,idustfracsum,i)
-                !--fill in dust fraction
-                dat(jdust,idustfracsum:idustfracsum+ndusttypes,i) = &
-                    dat(j,idustfracsum:idustfracsum+ndusttypes,i)
              endif
              rhogas  = rhotot*gasfraci
              rhodust = rhotot*dustfraci
@@ -342,12 +338,17 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
              dat(j,irho,i) = rhogas
              !--copy x, smoothing length onto dust particle
              jdust = ntoti + ndust
-             
 
              !--fill in dust properties
              if (ndim.gt.0) dat(jdust,ix(1:ndim),i) = dat(j,ix(1:ndim),i)
              if (ih.gt.0)   dat(jdust,ih,i)         = dat(j,ih,i)
              if (irho.gt.0) dat(jdust,irho,i)       = rhodust
+             if (idustfracsum == 0) then
+                dat(jdust,idustfrac,i) = dustfraci
+             else
+                dat(jdust,idustfracsum:idustfracsum+ndusttypes,i) = &
+                    dat(j,idustfracsum:idustfracsum+ndusttypes,i)
+             endif
              iamtype(ntoti + ndust,i) = 2
 
              !--particle masses
