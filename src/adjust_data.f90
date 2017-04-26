@@ -302,6 +302,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
     if (ndusttypes>1) then
        if (idustfrac_plot == 0 ) then
           idustfrac_temp = idustfracsum
+          idustfrac_plot = idustfracsum
        else
           idustfrac_temp = idustfrac_plot
        endif

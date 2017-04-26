@@ -324,6 +324,18 @@ subroutine print_example_quantities(verbose,ncalc)
        print "(/,a)",' Examples based on current data: '
     endif
  endif
+
+ if (idustfrac>0 .and. ndusttypes>1) then
+    if (idustfracsum == 0) then
+       !--one dust phase
+       ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))
+    else
+       !--multiple dust phases
+       if (verbose) print*,' Warning! Density refers to total density: rhogas+rhodust'
+       ldfracsum = shortlabel(label(idustfracsum),unitslabel(idustfracsum))
+    endif
+ endif
+
  !--radius
  string = ' '
  if (ndim.gt.0 .and. icoordsnew.eq.1 .and. ncolumns.ge.ndim) then
@@ -352,9 +364,16 @@ subroutine print_example_quantities(verbose,ncalc)
  string = ' '
  if (irho.gt.0 .and. iutherm.gt.0) then
     gotpressure = .true.
-    write(string,"(a)",iostat=ierr) &
-         'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
-         '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    if (idustfrac>0 .and. ndusttypes>1) then
+       write(string,"(a)",iostat=ierr) &
+            'pressure = (gamma-1)*(1 - '//trim(ldfracsum)//')*' &
+            //trim(shortlabel(label(irho),unitslabel(irho)))//  &
+            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    else
+       write(string,"(a)",iostat=ierr) &
+            'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
+            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    endif
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
@@ -368,16 +387,10 @@ subroutine print_example_quantities(verbose,ncalc)
  !
  if (idustfrac.gt.0 .and. irho.gt.0) then
     string = ' '
-    if (idustfracsum == 0) then
-       ! One dust phase
-       ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))    
-    else
-       ! Multiple dust phases
-       ldfracsum = shortlabel(label(idustfracsum),unitslabel(idustfracsum))    
-    endif
     !--gas density
     write(string,"(a)",iostat=ierr) '\rho_{g} = ' &
-                    //trim(shortlabel(label(irho),unitslabel(irho)))
+                    //trim(shortlabel(label(irho),unitslabel(irho))) &
+                    //'*(1 - '//trim(ldfracsum)//')'
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
@@ -401,12 +414,6 @@ subroutine print_example_quantities(verbose,ncalc)
        endif
        write(string,"(a)",iostat=ierr) '\rho_'//trim(adjustl(idust_string))//' = ' &
                        //trim(ldfrac)//'*'//trim(shortlabel(label(irho),unitslabel(irho)))
-       !
-       !--When using multigrain, fake dust is created assuming one of the N dust fractions.
-       !  To calculate all of the dust densities, we must first remove this dependency by
-       !  dividing by the same dust fraction.
-       !
-       if (ndusttypes>1) write(string,"(a)",iostat=ierr) trim(string)//'/'//trim(ldfake)
        if (prefill) then
           ncalc = ncalc + 1
           call splitstring(string,calclabel(ncalc),calcstring(ncalc))
@@ -698,10 +705,11 @@ end subroutine get_calc_data_dependencies
 !
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
-  use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring
+  use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring, &
+                           irho,idustfrac_plot,idustfracsum
   use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol,iamtype
   use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
-                           icoords,icoordsnew,ipartialread,itracktype,itrackoffset
+                           icoords,icoordsnew,ipartialread,itracktype,itrackoffset,ndusttypes
   use mem_allocation, only:alloc
   use settings_units, only:units
   use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
@@ -712,7 +720,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
-  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,itrackpart
+  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,itrackpart,ndust,icolumn
   logical :: skip
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
@@ -791,6 +799,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      call wall_time(t1)
      do i=ifromstep,itostep
         ntoti = SUM(npartoftype(:,i))
+        ndust = npartoftype(2,i)
         !
         !--set origin position
         !
@@ -842,9 +851,28 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                     dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
                  enddo
               else
-                 !!$omp parallel do default(none) private(j,vals) shared(dat,i,icalc,ncolumns)
+                 !!$omp parallel do default(none) private(j,vals,icolumn) shared(dat,i,icalc,ncolumns,ndusttypes,iamtype,idustfracsum,idustfrac_plot)
                  do j=1,ntoti
-                    vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
+                    do icolumn = 1,ncolumns+icalc-1
+                       if (ndusttypes>1 .and. icolumn==irho) then
+                          !
+                          !--reverse the fake data calculations if needed in order to make
+                          !  the input equations in the calculated extra quantities consistent
+                          !  with the physical equations
+                          !
+                          select case(iamtype(j,i))
+                          case(1) !--gas
+                             vals(icolumn) = dat(j,icolumn,i)/(1.-dat(j,idustfracsum,i))
+                          case(2) !--dust
+                             vals(icolumn) = dat(j,icolumn,i)/dat(j,idustfrac_plot,i)
+                          case default !--other stuff
+                             vals(icolumn) = dat(j,icolumn,i)
+                          endselect
+                       else
+                          vals(icolumn) = dat(j,icolumn,i)
+                       endif
+                    enddo
+                    !vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
                     dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
                  enddo
                  !!$omp end parallel do
