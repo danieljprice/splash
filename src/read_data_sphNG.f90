@@ -1092,7 +1092,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                       lowmemorymode,ntypes,iverbose,ndusttypes
   use mem_allocation, only:alloc
   use system_utils,   only:lenvironment,renvironment
-  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types
+  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,idustfrac,idustfrac_plot
   use calcquantities, only:calc_quantities
   use sphNGread
   implicit none
@@ -1368,8 +1368,10 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       endif
       if (onefluid_dust) then
          if (ndusttypes>1) then
-            ndustarrays = ndusttypes + 1 ! the extra column is for dustfracsum
+            required(idustfrac_plot) = .true. !--required for creating fake dust particles
+            ndustarrays = ndusttypes + 1      !--the extra column is for dustfracsum
          else
+            required(idustfrac) = .true.      !--required for creating fake dust particles
             ndustarrays = 1
          endif
       else
