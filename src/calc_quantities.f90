@@ -40,10 +40,11 @@ module calcquantities
  integer, parameter, private :: nextravars = 5
  character(len=lenvars), dimension(nextravars), parameter, private :: &
           extravars=(/'t    ','gamma','x0   ','y0   ','z0   '/)
+ logical, save :: firstcall = .true.
 
  namelist /calcopts/ calcstring,calclabel,calcunitslabel
 
- public :: calcopts,calcstring,calclabel,calcunitslabel
+ public :: calcopts,calcstring,calclabel,calcunitslabel,firstcall
  private
 
 contains
@@ -54,7 +55,7 @@ contains
 !  to compute additional quantities from the particle data
 !
 !-----------------------------------------------------------------
-subroutine setup_calculated_quantities(ncalc)
+subroutine setup_calculated_quantities(ncalc,quiet)
  use settings_data, only:ncolumns
  use prompting,     only:prompt
  implicit none
@@ -62,30 +63,34 @@ subroutine setup_calculated_quantities(ncalc)
  integer              :: ncalctot,istart,iend, ipick, ninactive, i
  logical              :: done,first
  character(len=1)     :: charp
- integer, dimension(maxcalc) :: incolumn
- logical, save :: firstcall = .true.
+ integer, dimension(maxcalc)   :: incolumn
+ logical, intent(in), optional :: quiet
+ logical              :: verbose = .true.
  ipick = ncolumns + 1
 
  done = .false.
  first = .true.
+ if (present(quiet)) verbose = .false.
 !
 !--on the first call to setup, prefill the list of calculated
 !  quantities with ALL of the valid examples.
 !
- if (ncalc.eq.0 .and. firstcall) call print_example_quantities(ncalc)
+ if (ncalc.eq.0 .and. firstcall) call print_example_quantities(verbose,ncalc)
  firstcall = .false.
  charp = 'a'
  calcmenu: do while (.not.done)
-    call check_calculated_quantities(ncalc,ncalctot,incolumn)
+    call check_calculated_quantities(ncalc,ncalctot,incolumn,verbose)
     ninactive = ncalctot - ncalc
 
     iend = maxcalc
     if (ncalctot.gt.0 .or. .not.first) then
        charp='q' !'a'
        if (.not.first) charp = 'q'
-       print*
-       call prompt(' a)dd to, e)dit, c)lear current list or q)uit/finish? ',&
-                   charp,list=(/'a','e','c','q','s','S','Q'/),noblank=.true.)
+       if (verbose) then
+          print*
+          call prompt(' a)dd to, e)dit, c)lear current list or q)uit/finish? ',&
+                      charp,list=(/'a','e','c','q','s','S','Q'/),noblank=.true.)
+       endif
        select case(charp)
        case('a')
           istart = ncalctot
@@ -118,7 +123,7 @@ subroutine setup_calculated_quantities(ncalc)
        iend   = 1
     endif
 
-    if (.not.done) call add_calculated_quantities(istart,iend,ncalc,first,incolumn)
+    if (.not.done) call add_calculated_quantities(istart,iend,ncalc,first,incolumn,verbose)
     first = .false.
  enddo calcmenu
  if (ncalc.lt.10) then
@@ -135,7 +140,7 @@ end subroutine setup_calculated_quantities
 !  to the current list and/or edit previous settings
 !
 !-----------------------------------------------------------------
-subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
+subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn,verbose)
  use prompting,     only:prompt
  use fparser,       only:checkf
  use settings_data, only:ncolumns,iRescale,required
@@ -145,6 +150,7 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
  integer, intent(out) :: ncalc
  logical, intent(in)  :: printhelp
  integer, dimension(maxcalc), intent(in) :: incolumn
+ logical, intent(in)  :: verbose
  integer :: i,j,ntries,ierr,iequal,nvars
  logical :: iask
  character(len=120) :: string
@@ -169,7 +175,7 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn)
     print "(a)",' are removed from variable names. Note that previously calculated'
     print "(a)",' quantities can be used in subsequent calculations.'
  endif
- call print_example_quantities()
+ call print_example_quantities(verbose)
 
  overfuncs: do while(ntries.lt.3 .and. i.le.iend .and. i.le.maxcalc)
     if (len_trim(calcstring(i)).ne.0 .or. ncalc.gt.istart) then
@@ -291,17 +297,18 @@ end subroutine splitstring
 !    old calc_quantities routine ]
 !
 !---------------------------------------------------------------------
-subroutine print_example_quantities(ncalc)
+subroutine print_example_quantities(verbose,ncalc)
  use labels,        only:label,unitslabel,shortlabel,lenlabel,irho,iutherm,iBfirst,&
                          ix,icv,idivB,ih,iradenergy,iamvec,labelvec,idustfrac,&
-                         idustfracsum,ideltav,ivx
+                         idustfracsum,idustfrac_plot,ideltav,ivx
  use settings_data, only:ncolumns,ndim,icoordsnew,ndimV,ndusttypes
  use geometry,      only:labelcoord
  implicit none
+ logical :: verbose
  integer, intent(inout), optional :: ncalc
  logical :: prefill
  character(len=lenlabel) :: string,temp,labelprev
- character(len=lenlabel) :: ldfrac,ldfracsum,idust_string
+ character(len=lenlabel) :: ldfrac,ldfake,ldfracsum,idust_string
  integer :: i,j,ivecstart,ierr,ilen
  logical :: gotpmag,gotpressure
 
@@ -310,11 +317,25 @@ subroutine print_example_quantities(ncalc)
  prefill = .false.
  if (present(ncalc)) prefill = .true.
 
- if (prefill) then
-    print "(/,a)",' Prefilling list with useful quantities from current data...'
- else
-    print "(/,a)",' Examples based on current data: '
+ if (verbose) then
+    if (prefill) then
+       print "(/,a)",' Prefilling list with useful quantities from current data...'
+    else
+       print "(/,a)",' Examples based on current data: '
+    endif
  endif
+
+ if (idustfrac>0 .and. ndusttypes>1) then
+    if (idustfracsum == 0) then
+       !--one dust phase
+       ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))
+    else
+       !--multiple dust phases
+       if (verbose) print*,' Warning! Density refers to total density: rhogas+rhodust'
+       ldfracsum = shortlabel(label(idustfracsum),unitslabel(idustfracsum))
+    endif
+ endif
+
  !--radius
  string = ' '
  if (ndim.gt.0 .and. icoordsnew.eq.1 .and. ncolumns.ge.ndim) then
@@ -343,9 +364,16 @@ subroutine print_example_quantities(ncalc)
  string = ' '
  if (irho.gt.0 .and. iutherm.gt.0) then
     gotpressure = .true.
-    write(string,"(a)",iostat=ierr) &
-         'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
-         '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    if (idustfrac>0 .and. ndusttypes>1) then
+       write(string,"(a)",iostat=ierr) &
+            'pressure = (gamma-1)*(1 - '//trim(ldfracsum)//')*' &
+            //trim(shortlabel(label(irho),unitslabel(irho)))//  &
+            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    else
+       write(string,"(a)",iostat=ierr) &
+            'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
+            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    endif
     if (prefill) then
        ncalc = ncalc + 1
        call splitstring(string,calclabel(ncalc),calcstring(ncalc))
@@ -359,13 +387,6 @@ subroutine print_example_quantities(ncalc)
  !
  if (idustfrac.gt.0 .and. irho.gt.0) then
     string = ' '
-    if (idustfracsum == 0) then
-       ! One dust phase
-       ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))    
-    else
-       ! Multiple dust phases
-       ldfracsum = shortlabel(label(idustfracsum),unitslabel(idustfracsum))    
-    endif
     !--gas density
     write(string,"(a)",iostat=ierr) '\rho_{g} = ' &
                     //trim(shortlabel(label(irho),unitslabel(irho))) &
@@ -385,9 +406,11 @@ subroutine print_example_quantities(ncalc)
           write(idust_string,"(I10)") i
           write(idust_string,"(a)") '{d,'//trim(adjustl(idust_string))//'}'
           ldfrac = shortlabel(label(idustfracsum+i),unitslabel(idustfracsum+i))    
+          ldfake = shortlabel(label(idustfrac_plot),unitslabel(idustfrac))
        else
           write(idust_string,"(a)") '{d}'
           ldfrac = shortlabel(label(idustfrac),unitslabel(idustfrac))    
+          ldfake = '1'
        endif
        write(string,"(a)",iostat=ierr) '\rho_'//trim(adjustl(idust_string))//' = ' &
                        //trim(ldfrac)//'*'//trim(shortlabel(label(irho),unitslabel(irho)))
@@ -682,10 +705,11 @@ end subroutine get_calc_data_dependencies
 !
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
-  use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring
+  use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring, &
+                           irho,idustfrac_plot,idustfracsum
   use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol,iamtype
   use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
-                           icoords,icoordsnew,ipartialread,itracktype,itrackoffset
+                           icoords,icoordsnew,ipartialread,itracktype,itrackoffset,ndusttypes
   use mem_allocation, only:alloc
   use settings_units, only:units
   use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
@@ -696,7 +720,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
-  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,itrackpart
+  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,itrackpart,ndust,icolumn
   logical :: skip
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
@@ -775,6 +799,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      call wall_time(t1)
      do i=ifromstep,itostep
         ntoti = SUM(npartoftype(:,i))
+        ndust = npartoftype(2,i)
         !
         !--set origin position
         !
@@ -826,9 +851,28 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                     dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
                  enddo
               else
-                 !!$omp parallel do default(none) private(j,vals) shared(dat,i,icalc,ncolumns)
+                 !!$omp parallel do default(none) private(j,vals,icolumn) shared(dat,i,icalc,ncolumns,ndusttypes,iamtype,idustfracsum,idustfrac_plot)
                  do j=1,ntoti
-                    vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
+                    do icolumn = 1,ncolumns+icalc-1
+                       if (ndusttypes>1 .and. icolumn==irho) then
+                          !
+                          !--reverse the fake data calculations if needed in order to make
+                          !  the input equations in the calculated extra quantities consistent
+                          !  with the physical equations
+                          !
+                          select case(iamtype(j,i))
+                          case(1) !--gas
+                             vals(icolumn) = dat(j,icolumn,i)/(1.-dat(j,idustfracsum,i))
+                          case(2) !--dust
+                             vals(icolumn) = dat(j,icolumn,i)/dat(j,idustfrac_plot,i)
+                          case default !--other stuff
+                             vals(icolumn) = dat(j,icolumn,i)
+                          endselect
+                       else
+                          vals(icolumn) = dat(j,icolumn,i)
+                       endif
+                    enddo
+                    !vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
                     dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
                  enddo
                  !!$omp end parallel do

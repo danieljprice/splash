@@ -103,9 +103,9 @@ end subroutine defaults_set_part_ev
 !----------------------------------------------------------------------
 subroutine submenu_particleplots(ichoose)
   use exact,           only:options_exact,submenu_exact
-  use labels,          only:labeltype,ih,label
+  use labels,          only:labeltype,ih,label,idustfrac,idustfracsum,idustfrac_plot
   use limits,          only:lim
-  use settings_data,   only:icoords,ntypes,ndim,UseTypeInRenderings,ndataplots
+  use settings_data,   only:icoords,ntypes,ndim,UseTypeInRenderings,ndataplots,ndusttypes,ncalc
   use settings_render, only:iplotcont_nomulti
   use particle_data,   only:npartoftype,iamtype
   use prompting,       only:prompt,print_logical
@@ -116,13 +116,17 @@ subroutine submenu_particleplots(ichoose)
   use settings_data,   only:DataIsBuffered,numplot
   use filenames,       only:nsteps,nstepsinfile,ifileopen
   use geomutils,       only:set_coordlabels
+  use calcquantities,  only:calcstring,calclabel,calcunitslabel,setup_calculated_quantities,firstcall
   implicit none
   integer, intent(in) :: ichoose
   integer             :: i,iaction,n,itype,icoordsprev,ierr,icol
+  integer             :: idustfrac_prev
   character(len=2)    :: charntypes
   character(len=20)   :: substring1,substring2
   character(len=1000) :: fmtstring
   character(len=120)  :: contline
+  character(len=3)    :: idustfracsum_string
+  logical             :: quiet = .true.
 
   iaction = ichoose
 
@@ -196,6 +200,25 @@ subroutine submenu_particleplots(ichoose)
            endif
         elseif (.not.iplotpartoftype(itype)) then
            PlotonRenderings(itype) = .false.
+        endif
+        if (trim(labeltype(itype))=='dust'.and. iplotpartoftype(itype) .and. ndusttypes>1) then
+           if (idustfrac_plot==0) idustfrac_plot = idustfracsum
+           idustfrac_prev = idustfrac_plot
+           write(idustfracsum_string,'(I3)') idustfracsum
+           call prompt('Which dust phase would you like to render? ('          &
+                       //trim(adjustl(idustfracsum_string))//'=summed)',  &
+                       idustfrac_plot,idustfracsum,idustfracsum+ndusttypes)
+           !--Modify calculated data for fake dust particles if necessary
+           if (ncalc /= 0 .and. idustfrac_prev /= idustfrac_plot) then
+              calcstring(:) = ' '
+              calclabel(:) = ' '
+              calcunitslabel(:) = ' '
+              firstcall = .true.
+              ncalc = 0
+              print*,'...recalibrating calculated quantities...'
+              call setup_calculated_quantities(ncalc,quiet)
+              print*,'...done!'
+           endif
         endif
      enddo
      return

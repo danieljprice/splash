@@ -282,21 +282,33 @@ end subroutine shift_velocities
 !------------------------------------------------------
 subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  use params,         only:int1
- use labels,         only:idustfrac,irho,ix,ih,ipmass,ivx,ideltav
+ use labels,         only:idustfrac,idustfracsum,idustfrac_plot,irho,ix,ih,ipmass,ivx,ideltav
  use mem_allocation, only:alloc
  use particle_data,  only:maxpart,maxstep,maxcol
  use settings_data,  only:iverbose
+ use settings_data,  only:ndusttypes
  integer,                       intent(in)    :: istart,iend,ndim,ndimV
  real,    dimension(:,:,:),     intent(inout), allocatable :: dat
  integer, dimension(:,:),       intent(inout), allocatable :: npartoftype
  integer(int1), dimension(:,:), intent(inout), allocatable :: iamtype
  integer :: ndust,jdust,ntoti,i,j
- real    :: rhodust,rhogas,rhotot,dustfraci,pmassgas,pmassdust,pmassj
+ integer :: idustfrac_temp
+ real    :: rhodust,rhogas,rhotot,dustfraci,gasfraci,pmassgas,pmassdust,pmassj
  real, dimension(ndimV) :: veli,vgas,vdust,deltav
  logical :: use_vels
 
  if (idustfrac.gt.0 .and. irho.gt.0) then
     !if (iverbose >= 0) print*,' got dustfrac in column ',idustfrac
+    if (ndusttypes>1) then
+       if (idustfrac_plot == 0 ) then
+          idustfrac_temp = idustfracsum
+          idustfrac_plot = idustfracsum
+       else
+          idustfrac_temp = idustfrac_plot
+       endif
+    else
+       idustfrac_temp = idustfrac
+    endif
     do i=istart,iend
        ntoti = sum(npartoftype(:,i))
        if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)).gt.maxpart) then
@@ -306,7 +318,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
        ndust = 0
        !--zero the properties of newly created dust particles
        dat(ntoti+1:ntoti+npartoftype(1,i),:,i) = 0.
-       if (idustfrac > size(dat(1,:,1))) then
+       if (idustfrac_temp > size(dat(1,:,1))) then
           print*,' ERROR: idustfrac out of range: cannot create fake dust particles'
           return
        endif
@@ -315,8 +327,13 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
           if (iamtype(j,i).eq.1) then
              ndust = ndust + 1 ! one dust particle for every gas particle
              rhotot  = dat(j,irho,i)
-             dustfraci = dat(j,idustfrac,i)
-             rhogas  = rhotot*(1. - dustfraci)
+             dustfraci = dat(j,idustfrac_temp,i)
+             if (idustfracsum == 0) then
+                gasfraci = 1. - dustfraci
+             else
+                gasfraci = 1. - dat(j,idustfracsum,i)
+             endif
+             rhogas  = rhotot*gasfraci
              rhodust = rhotot*dustfraci
              !--replace global properties with gas-only stuff
              dat(j,irho,i) = rhogas
@@ -327,12 +344,18 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
              if (ndim.gt.0) dat(jdust,ix(1:ndim),i) = dat(j,ix(1:ndim),i)
              if (ih.gt.0)   dat(jdust,ih,i)         = dat(j,ih,i)
              if (irho.gt.0) dat(jdust,irho,i)       = rhodust
+             if (idustfracsum == 0) then
+                dat(jdust,idustfrac,i) = dustfraci
+             else
+                dat(jdust,idustfracsum:idustfracsum+ndusttypes,i) = &
+                    dat(j,idustfracsum:idustfracsum+ndusttypes,i)
+             endif
              iamtype(ntoti + ndust,i) = 2
 
              !--particle masses
              if (ipmass.gt.0) then
                 pmassj    = dat(j,ipmass,i)
-                pmassgas  = pmassj*(1. - dustfraci)
+                pmassgas  = pmassj*gasfraci
                 pmassdust = pmassj*dustfraci
                 dat(j,ipmass,i)     = pmassgas
                 dat(jdust,ipmass,i) = pmassdust
