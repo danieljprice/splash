@@ -658,6 +658,8 @@ contains
                    read(line(ieq+1:),*,iostat=ierrs(1)) v_L
                 case('vxright')
                    read(line(ieq+1:),*,iostat=ierrs(1)) v_R
+                case('dtg')
+                   read(line(ieq+1:),*,iostat=ierrs(1)) rdust_to_gas
                 end select
              endif
           enddo
