@@ -285,7 +285,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  use labels,         only:idustfrac,idustfracsum,idustfrac_plot,irho,ix,ih,ipmass,ivx,ideltav
  use mem_allocation, only:alloc
  use particle_data,  only:maxpart,maxstep,maxcol
- use settings_data,  only:iverbose
+ use settings_data,  only:iverbose,required
  use settings_data,  only:ndusttypes
  integer,                       intent(in)    :: istart,iend,ndim,ndimV
  real,    dimension(:,:,:),     intent(inout), allocatable :: dat
@@ -298,6 +298,9 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  logical :: use_vels
 
  if (idustfrac.gt.0 .and. irho.gt.0) then
+    !
+    !--determine which dust fraction is being used to create the fake dust particles
+    !
     !if (iverbose >= 0) print*,' got dustfrac in column ',idustfrac
     if (ndusttypes>1) then
        if (idustfrac_plot == 0 ) then
@@ -309,6 +312,11 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
     else
        idustfrac_temp = idustfrac
     endif
+    !
+    !--ensure that the dust fraction above is always required so that fake dust
+    !  properties are calculated correctly at EVERY time step
+    !
+    required(idustfrac_temp) = .true.
     do i=istart,iend
        ntoti = sum(npartoftype(:,i))
        if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)).gt.maxpart) then
