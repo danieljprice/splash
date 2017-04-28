@@ -2383,7 +2383,8 @@ subroutine set_labels
    if (ideltavsum.gt.0) then
       units(ideltavsum:ideltav+ndimV-1) = udist/utime
       unitslabel(ideltavsum:ideltav+ndimV-1) = ' [cm/s]'
-   else
+   endif
+   if (ideltav.gt.0) then
       units(ideltav:ideltav+ndimV-1) = udist/utime
       unitslabel(ideltav:ideltav+ndimV-1) = ' [cm/s]'
    endif
