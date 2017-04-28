@@ -30,6 +30,8 @@
 module projections3Dgeom
  use projections3D, only:setup_integratedkernel,wfromtable,coltable
  use kernels,       only:radkernel,radkernel2
+ use geometry,      only:igeom_cartesian,coord_transform,coord_is_length, &
+                         coord_transform_limits,igeom_cylindrical,get_coord_limits
  implicit none
 
  public :: interpolate3D_proj_geom
@@ -78,8 +80,6 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,igeom,&
      iplotx,iploty,iplotz,ix)
 
-  use geometry, only:igeom_cartesian,coord_transform,coord_is_length, &
-                     coord_transform_limits,igeom_cylindrical,get_coord_limits
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real,    intent(in), dimension(npart) :: x,y,z,hh,weight,dat
@@ -93,7 +93,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   real, parameter :: pi = 3.1415926536
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  integer :: ixcoord,iycoord,izcoord
+  integer :: ixcoord,iycoord,izcoord,ierr
   integer :: iprintinterval, iprintnext, itmin
 #ifdef _OPENMP
   integer :: omp_get_num_threads,i
@@ -124,33 +124,13 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   if (any(hh(1:npart).le.0.)) then
      print*,'interpolate3D_proj_geom: warning: ignoring some or all particles with h <= 0'
   endif
+
   !
-  !--get plotted coordinates in range 1->ndim
+  !--get information about the coordinates
   !
-  ixcoord = iplotx - ix(1) + 1
-  iycoord = iploty - ix(1) + 1
-  izcoord = iplotz - ix(1) + 1
-  if (ixcoord.le.0 .or. ixcoord.gt.3) then
-     print*,' ERROR finding x coordinate offset, cannot render'
-     return
-  endif
-  if (iycoord.le.0 .or. iycoord.gt.3) then
-     print*,' ERROR finding y coordinate offset, cannot render'
-     return
-  endif
-  if (izcoord.le.0 .or. izcoord.gt.3) then
-     print*,' ERROR finding y coordinate offset, cannot render'
-     return
-  endif
-  !
-  !--check if coordinate is a length (i.e., not an angle)
-  !
-  islengthx = coord_is_length(ixcoord,igeom)
-  islengthy = coord_is_length(iycoord,igeom)
-  islengthz = coord_is_length(izcoord,igeom)
-  !print*,' islength = ',islengthx,islengthy,islengthz
-  !print*,' y axis is ',iycoord
-  !print*,' x axis is ',ixcoord
+  call get_coord_info(iplotx,iploty,iplotz,ix(1),igeom,ixcoord,iycoord,izcoord,&
+                      islengthx,islengthy,islengthz,ierr)
+  if (ierr /= 0) return
   !
   !--if z coordinate is not a length, use normalised interpolation
   !  (e.g. azimuthally averaged density)
@@ -198,7 +178,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp private(hi,horigi,radkern) &
 !$omp private(hi1,hi21,term,termnorm) &
 !$omp private(q2,dx,dx2,dy,dy2,wab,xcoord,xpix) &
-!$omp private(i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax)
+!$omp private(i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,ierr)
 !$omp master
 !$    print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 !$omp end master
@@ -236,32 +216,9 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      xci(1) = x(i)
      xci(2) = y(i)
      xci(3) = z(i)
-     xpixmin(:) = xci(:) - radkern
-     xpixmax(:) = xci(:) + radkern
-     !
-     !--transform these into limits of the contributions 
-     !  in the new coordinate system
-     !
-     call get_coord_limits(radkern,xci,xi,xpixmin,xpixmax,igeom)
-     !
-     !--now work out contributions to pixels in the the transformed space
-     !
-     ipixmax = int((xpixmax(ixcoord) - xmin)/pixwidthx)
-     if (ipixmax.lt.1) cycle over_particles
-     jpixmax = int((xpixmax(iycoord) - ymin)/pixwidthy)
-     if (jpixmax.lt.1) cycle over_particles
-
-     ipixmin = int((xpixmin(ixcoord) - xmin)/pixwidthx)
-     if (ipixmin.gt.npixx) cycle over_particles
-     jpixmin = int((xpixmin(iycoord) - ymin)/pixwidthy)
-     if (jpixmin.gt.npixy) cycle over_particles
-     
-     if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
-     if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-     if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
-     if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
-     !print*,i,' contributing to ',ipixmin,ipixmax,jpixmin,jpixmax
-     !read*
+     call get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom,&
+                           npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)
+     if (ierr /= 0) cycle over_particles  
      !
      !--set kernel related quantities
      !
@@ -349,5 +306,76 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   return
 
 end subroutine interpolate3D_proj_geom
+
+subroutine get_coord_info(iplotx,iploty,iplotz,ix1,igeom,ixcoord,iycoord,izcoord,&
+                          islengthx,islengthy,islengthz,ierr)
+  integer, intent(in)  :: iplotx,iploty,iplotz,ix1,igeom
+  integer, intent(out) :: ixcoord,iycoord,izcoord,ierr
+  logical, intent(out) :: islengthx,islengthy,islengthz
+
+  ierr = 0
+  !
+  !--get plotted coordinates in range 1->ndim
+  !
+  ixcoord = iplotx - ix1 + 1
+  iycoord = iploty - ix1 + 1
+  izcoord = iplotz - ix1 + 1
+  if (ixcoord.le.0 .or. ixcoord.gt.3) then
+     print*,' ERROR finding x coordinate offset, cannot render'
+     ierr = 1
+  endif
+  if (iycoord.le.0 .or. iycoord.gt.3) then
+     print*,' ERROR finding y coordinate offset, cannot render'
+     ierr = 2
+  endif
+  if (izcoord.le.0 .or. izcoord.gt.3) then
+     print*,' ERROR finding y coordinate offset, cannot render'
+     ierr = 3
+  endif
+  !
+  !--check if coordinate is a length (i.e., not an angle)
+  !
+  islengthx = coord_is_length(ixcoord,igeom)
+  islengthy = coord_is_length(iycoord,igeom)
+  islengthz = coord_is_length(izcoord,igeom)
+
+end subroutine get_coord_info
+
+subroutine get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom,&
+                            npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)  
+  real, intent(in)  :: xci(3),radkern,pixwidthx,pixwidthy,xmin,ymin
+  real, intent(out) :: xi(3)
+  integer, intent(out) :: ipixmin,ipixmax,jpixmin,jpixmax,ierr
+  integer, intent(in)  :: igeom,npixx,npixy,ixcoord,iycoord
+  real :: xpixmin(3),xpixmax(3)
+  
+  ierr = 0
+  
+  xpixmin(:) = xci(:) - radkern
+  xpixmax(:) = xci(:) + radkern
+  !
+  !--transform these into limits of the contributions 
+  !  in the new coordinate system
+  !
+  call get_coord_limits(radkern,xci,xi,xpixmin,xpixmax,igeom)
+  !
+  !--now work out contributions to pixels in the the transformed space
+  !
+  ipixmax = int((xpixmax(ixcoord) - xmin)/pixwidthx)
+  if (ipixmax.lt.1) ierr = 1
+  jpixmax = int((xpixmax(iycoord) - ymin)/pixwidthy)
+  if (jpixmax.lt.1) ierr = 2
+
+  ipixmin = int((xpixmin(ixcoord) - xmin)/pixwidthx)
+  if (ipixmin.gt.npixx) ierr = 3
+  jpixmin = int((xpixmin(iycoord) - ymin)/pixwidthy)
+  if (jpixmin.gt.npixy) ierr = 4
+
+  if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
+  if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
+  if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
+  if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
+
+end subroutine get_pixel_limits
 
 end module projections3Dgeom
