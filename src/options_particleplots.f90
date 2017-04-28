@@ -103,9 +103,11 @@ end subroutine defaults_set_part_ev
 !----------------------------------------------------------------------
 subroutine submenu_particleplots(ichoose)
   use exact,           only:options_exact,submenu_exact
-  use labels,          only:labeltype,ih,label,idustfrac,idustfracsum,idustfrac_plot
+  use labels,          only:labeltype,ih,label,idustfrac,idustfracsum, &
+                            idustfrac_plot,ideltav_plot,ideltavsum
   use limits,          only:lim
-  use settings_data,   only:icoords,ntypes,ndim,UseTypeInRenderings,ndataplots,ndusttypes,ncalc
+  use settings_data,   only:icoords,ntypes,ndim,ndimV,UseTypeInRenderings, &
+                            ndataplots,ndusttypes,ncalc
   use settings_render, only:iplotcont_nomulti
   use particle_data,   only:npartoftype,iamtype
   use prompting,       only:prompt,print_logical
@@ -202,22 +204,30 @@ subroutine submenu_particleplots(ichoose)
            PlotonRenderings(itype) = .false.
         endif
         if (trim(labeltype(itype))=='dust'.and. iplotpartoftype(itype) .and. ndusttypes>1) then
-           if (idustfrac_plot==0) idustfrac_plot = idustfracsum
+           !--if idustfrac_plot hasn't been defined...
+           if (idustfrac_plot==0) then
+              idustfrac_plot = idustfracsum
+           endif
+           !--save to compare after user input
            idustfrac_prev = idustfrac_plot
            write(idustfracsum_string,'(I3)') idustfracsum
            call prompt('Which dust phase would you like to render? ('          &
                        //trim(adjustl(idustfracsum_string))//'=summed)',  &
                        idustfrac_plot,idustfracsum,idustfracsum+ndusttypes)
-           !--Modify calculated data for fake dust particles if necessary
-           if (ncalc /= 0 .and. idustfrac_prev /= idustfrac_plot) then
-              calcstring(:) = ' '
-              calclabel(:) = ' '
-              calcunitslabel(:) = ' '
-              firstcall = .true.
-              ncalc = 0
-              print*,'...recalibrating calculated quantities...'
-              call setup_calculated_quantities(ncalc,quiet)
-              print*,'...done!'
+           !--update which set of deltav's will be used
+           ideltav_plot = ideltavsum + ndimV*(idustfrac_plot - idustfracsum)
+           if (idustfrac_prev /= idustfrac_plot) then
+              !--Modify calculated data for fake dust particles if necessary
+              if (ncalc /= 0) then 
+                 calcstring(:) = ' '
+                 calclabel(:) = ' '
+                 calcunitslabel(:) = ' '
+                 firstcall = .true.
+                 ncalc = 0
+                 print*,'...recalibrating calculated quantities...'
+                 call setup_calculated_quantities(ncalc,quiet)
+                 print*,'...done!'
+              endif
            endif
         endif
      enddo

@@ -77,15 +77,18 @@ contains
 subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot)
   use params
   use colours,            only:colour_set
-  use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,&
-                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,ivx,ideltav,idustfrac
+  use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens, &
+                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,ivx,  &
+                               idustfrac,idustfracsum,idustfrac_plot,ideltav,    &
+                               ideltavsum,ideltav_plot
   use limits,             only:lim,rangeset
   use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
                                nyplotmulti,x_secmulti,ivecplotmulti
   use prompting,          only:prompt
   use titles,             only:read_titles,read_steplegend
-  use settings_data,      only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required, &
-                               icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings
+  use settings_data,      only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required,   &
+                               icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings, &
+                               ndusttypes,fakedust
   use settings_page,      only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                                iPageColours,iadapt,iadaptcoords,linewidth,device,nomenu,&
                                interactive,ipapersizeunits,usecolumnorder
@@ -515,12 +518,36 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
            if (iamvec(iploty).gt.0) required(iamvec(iploty):iamvec(iploty)+ndimV-1) = .true.
         endif
      endif
-     ! must read deltav, density and dust fraction if plotting v for one-fluid dust
-     if (ideltav > 0) then
+     !
+     !--one-fluid dependencies
+     !
+     if (fakedust) then
+        !
+        !--dependencies for density
+        !
+        if (required(irho)) then
+           if (ndusttypes>1) then
+              required(idustfracsum) = .true.
+              required(idustfrac_plot) = .true.
+           else
+              required(idustfrac) = .true.
+           endif
+        endif
+        !
+        !--dependencies for velocity
+        !
         if (any(required(ivx:ivx+ndimV-1))) then
-           required(ideltav:ideltav+ndimV-1) = .true.
-           required(irho) = .true.
-           required(idustfrac) = .true.
+           if (ndusttypes>1) then
+              required(irho) = .true.
+              required(idustfracsum) = .true.
+              required(idustfrac_plot) = .true.
+              required(ideltavsum:ideltavsum+ndimV-1) = .true.
+              required(ideltav_plot:ideltav_plot+ndimV-1) = .true.
+           else
+              required(irho) = .true.
+              required(idustfrac) = .true.
+              required(ideltav:ideltav+ndimV-1) = .true.
+           endif
         endif
      endif
 !  endif

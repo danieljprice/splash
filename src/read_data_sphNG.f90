@@ -1092,7 +1092,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                       lowmemorymode,ntypes,iverbose,ndusttypes
   use mem_allocation, only:alloc
   use system_utils,   only:lenvironment,renvironment
-  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,idustfrac,idustfrac_plot
+  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,idustfrac
   use calcquantities, only:calc_quantities
   use sphNGread
   implicit none

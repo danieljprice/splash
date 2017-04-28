@@ -45,7 +45,7 @@ module labels
  integer :: isurfdens,itoomre
  integer :: ipdf,icolpixmap
  integer :: irhorestframe,idustfrac,ideltav
- integer :: idustfracsum,ideltavsum,idustfrac_plot
+ integer :: idustfracsum,ideltavsum,idustfrac_plot,ideltav_plot
 
  public
 
@@ -91,6 +91,7 @@ subroutine reset_columnids
  idustfrac_plot = 0
  ideltav = 0
  ideltavsum = 0
+ ideltav_plot = 0
 
  return
 end subroutine reset_columnids
