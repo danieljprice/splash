@@ -77,7 +77,7 @@ contains
 subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot)
   use params
   use colours,            only:colour_set
-  use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,&
+  use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens,get_z_dir, &
                                is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,ivx,ideltav,idustfrac
   use limits,             only:lim,rangeset
   use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
@@ -224,10 +224,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
            !!--work out coordinate that is not being plotted on cross-section/ 3D plots
            iplotz = 0
            if (ndim.ge.3 .and. (x_sec .or. use3Dperspective .or. irotate)) then
-              do j=1,ndim
-                 if ((multiplotx(i).ne.multiploty(i)).and. &
-                     (ix(j).ne.multiplotx(i)).and.(ix(j).ne.multiploty(i))) iplotz = ix(j)
-              enddo
+              iplotz = get_z_dir(ndim,multiplotx(i),multiploty(i))
               !--use only first iplotz in the case of multiple slices
               !  (only effect is on default values for slice thickness etc below)
               if (iplotzprev.gt.0) iplotz = iplotzprev
@@ -664,7 +661,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use interpolations2D,      only:interpolate2D, interpolate2D_xsec !, interpolate2D_pixels
   use interpolations3D,      only:interpolate3D
   use projections3D,         only:interpolate3D_projection
-  use projections3Dgeom,     only:interpolate3D_proj_geom
+  use projections3Dgeom,     only:interpolate3D_proj_geom,interpolate3D_xsec_geom
   use interpolate3D_opacity, only:interp3D_proj_opacity !,interp3D_proj_opacity_writeppm
   use xsections3D,           only:interpolate3D_fastxsec,interpolate3D_xsec_vec
   use render,                only:render_pix
@@ -1472,23 +1469,39 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           !!--do fast cross-section
                           if (iverbose > 0) print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
                                 ' : fast cross section', xmin,ymin
-                          call interpolate3D_fastxsec( &
-                               xplot(1:ninterp),yplot(1:ninterp), &
-                               zplot(1:ninterp),hh(1:ninterp), &
-                               weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
-                               ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
-                               pixwidthy,inormalise)
+                          if (icoordsnew.ne.icoords) then
+                             call interpolate3D_xsec_geom( &
+                                  dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
+                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp),&
+                                  ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
+                                  pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix)
+                          else
+                             call interpolate3D_fastxsec( &
+                                  xplot(1:ninterp),yplot(1:ninterp), &
+                                  zplot(1:ninterp),hh(1:ninterp), &
+                                  weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
+                                  ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
+                                  pixwidthy,inormalise)
+                          endif
                           !!--same but for contour plot
                           if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                              if (.not.isameweights) & ! set contouring weights as necessary
                                 call set_weights(weight,dat,iamtype,UseTypeInContours)
 
-                             call interpolate3D_fastxsec( &
-                                  xplot(1:ninterp),yplot(1:ninterp), &
-                                  zplot(1:ninterp),hh(1:ninterp), &
-                                  weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
-                                  ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
-                                  pixwidthy,inormalise)
+                             if (icoordsnew.ne.icoords) then
+                                call interpolate3D_xsec_geom( &
+                                     dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
+                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp),&
+                                     ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
+                                     pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix)
+                             else
+                                call interpolate3D_fastxsec( &
+                                     xplot(1:ninterp),yplot(1:ninterp), &
+                                     zplot(1:ninterp),hh(1:ninterp), &
+                                     weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
+                                     ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
+                                     pixwidthy,inormalise)
+                             endif
                              gotcontours = .true.
 
                              if (.not.isameweights) & ! reset weights
@@ -1567,11 +1580,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                              if (.not.isameweights) & ! set contouring weights as necessary
                                 call set_weights(weight,dat,iamtype,UseTypeInContours)
 
-                             call interpolate3D_projection( &
-                                  xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
-                                  icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
-                                  pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender)
+                             if (icoordsnew.ne.icoords) then
+                                call interpolate3D_proj_geom( &
+                                     dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
+                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                                     icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
+                                     pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix)
+                             else
+                                call interpolate3D_projection( &
+                                     xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                                     icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
+                                     pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender)
+                             endif
                              gotcontours = .true.
 
                              if (.not.isameweights) & ! reset weights
