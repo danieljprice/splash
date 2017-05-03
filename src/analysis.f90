@@ -81,6 +81,8 @@ logical function isanalysis(string,noprint)
      isanalysis = .true.
  case('ratio')
      isanalysis = .true.
+ case('tracks')
+     isanalysis = .true.
  end select
 
  if (present(noprint)) then
@@ -111,8 +113,12 @@ logical function isanalysis(string,noprint)
     print "(a)",'                             output to file called ''meanvals.out'''
     print "(a)",'         calc rms          : (mass weighted) root mean square of each column vs. time'
     print "(a)",'                             output to file called ''rmsvals.out'''
+    print "(a)",'         calc tracks       : track particle data vs time for selected* particle,'
+    print "(a)",'                             output to file called ''tracks.out'''
 !    print "(a)",'         calc vrms         : volume weighted root mean square of each column vs. time'
 !    print "(a)",'                             output to file called ''rmsvals-vw.out'''
+    print "(a)",'          ( * select "xy limits relative to particle" in l)imits menu", or'
+    print "(a)",'            press "t" in interactive mode, and save settings to splash.defaults )'
     print "(/,a)",'  the above options all produce a small ascii file with one row per input file.'
     print "(a)",'  the following option produces a file equivalent in size to one input file (in ascii format):'
     print "(/,a)",'         calc timeaverage  : time average of *all* entries for every particle'
@@ -329,6 +335,17 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
        write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
                                                (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
     endif
+ case('tracks')
+    !
+    !--read all of dump file
+    !
+    required(:) = .true.
+    !
+    !--set filename and header line
+    !
+    fileout = 'tracks.out'
+    standardheader = .true.
+
  end select
 
  if (standardheader) then
@@ -388,8 +405,9 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  use system_utils,  only:renvironment
  use settings_part, only:iplotpartoftype
  use particle_data, only:time_was_read
- use settings_data, only:xorigin,icoords,icoordsnew
+ use settings_data, only:xorigin,icoords,icoordsnew,itracktype,itrackoffset
  use geomutils,     only:change_coords
+ use part_utils,    only:get_tracked_particle
  implicit none
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
  integer, intent(in), dimension(:) :: npartoftype
@@ -399,12 +417,12 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  real, intent(in), dimension(:,:)  :: dat
  character(len=*), intent(in)      :: analysistype
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
- integer              :: itype,i,j,ierr,ntot1,ncol1,nused
+ integer              :: itype,i,j,ierr,ntot1,ncol1,nused,itrack
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi,totang
  real(kind=doub_prec) :: totvol,voli,rhoi,rmsvmw,v2i
  real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
  real(kind=doub_prec) :: smeanmw,smeanvw,svarmw,svarvw,si,ekiny,ekinymax
- real(kind=doub_prec) :: lmin(maxplot), lmax(maxplot),rmsvali
+ real(kind=doub_prec) :: lmin(maxplot),lmax(maxplot),lmean(maxplot),rmsvali
  real(kind=doub_prec), dimension(3) :: xmom,angmom,angmomi,ri,vi
  real                 :: delta,dn,valmin,valmax,valmean,timei
  character(len=20)    :: fmtstring
@@ -418,17 +436,20 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
  nfilesread = nfilesread + 1
  if (time_was_read(time)) then
     timei = time
-    print "(/,5('-'),a,', TIME=',es9.2,' FILE #',i4,/)",&
+    print "(/,5('-'),a,', TIME=',es9.2,' FILE #',i5,/)",&
           '> CALCULATING '//trim(ucase(analysistype)),time,nfilesread
  else
     timei = 0.
-    print "(/,5('-'),a,', FILE #',i4,' (TIME NOT READ)'/)",&
+    print "(/,5('-'),a,', FILE #',i5,' (TIME NOT READ)'/)",&
           '> CALCULATING '//trim(ucase(analysistype)),nfilesread
  endif
 
  change_coordsys = (icoordsnew.ne.icoords .and. ndim.gt.0 .and. all(ix(1:ndim).gt.0))
  x0 = xorigin(:)  ! note that it is not currently possible to do splash to ascii
  v0 = 0.          ! with coords set relative to a tracked particle, so just use xorigin
+
+ itrack = get_tracked_particle(itracktype,itrackoffset,npartoftype,iamtype)
+ if (itrack==0) itrack = 1
 
  select case(trim(analysistype))
  case('energy','energies')
@@ -601,28 +622,29 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     write(iunit,fmtstring) timei,coltemp(1:ncolumns)
     if (nused.ne.ntot) print*,'min calculated using ',nused,' of ',ntot,' particles'
 
- case('diff','diffvals','amp','ampvals','delta','deltavals','deltas')
+ case('diff','diffvals','amp','ampvals','delta','deltavals','deltas','tracks')
     !
     !--calculate difference between max and min for each column
     !
-    coltemp(:) = 0.
+    lmean(:) = 0.
     lmin(:) = huge(0.d0)
     lmax(:) = -huge(0.d0)
     nused = 0
     do j=1,ntot
        itype = igettype(j)
-       if (iplotpartoftype(itype)) then
+       if (iplotpartoftype(itype) .or. j.eq.itrack) then
           vals(1:ncolumns) = real(dat(j,1:ncolumns),kind=doub_prec)
           if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
           nused = nused + 1
           do i=1,ncolumns
              lmin(i) = min(lmin(i), vals(i))
              lmax(i) = max(lmax(i), vals(i))
-             coltemp(i) = coltemp(i) + vals(i)
+             lmean(i) = lmean(i) + vals(i)
           enddo
+          if (j.eq.itrack) coltemp = vals
        endif
     enddo
-    if (nused.gt.0) coltemp(:) = coltemp(:)/real(nused)
+    if (nused.gt.0) lmean(:) = lmean(:)/real(nused)
 
     select case(trim(analysistype))
     case('amp','ampvals')
@@ -632,13 +654,17 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        enddo
     case('delta','deltavals','deltas')
        do i=1,ncolumns
-          valmean = coltemp(i)
+          valmean = real(lmean(i))
           if (valmean > 0.) then
              coltemp(i) = 0.5*(lmax(i) - lmin(i))/valmean
           else
              coltemp(i) = 0.5*(lmax(i) - lmin(i))
           endif
           print "(1x,a20,'0.5*(max - min)/mean = ',es18.10)",label(i),coltemp(i)
+       enddo
+    case('tracks')
+       do i=1,ncolumns
+          print "(1x,' particle ',i8,': ',a20,' = ',es18.10)",itrack,label(i),coltemp(i)
        enddo
     case default ! diff, diffvals
        do i=1,ncolumns
