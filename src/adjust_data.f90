@@ -35,7 +35,7 @@ contains
 subroutine adjust_data_codeunits
  use system_utils,  only:renvironment,envlist,ienvironment,lenvironment
  use labels,        only:ih,ix,ivx,label,get_sink_type,ipmass,idustfrac,irho
- use settings_data, only:ncolumns,ndimV,icoords,ndim,debugmode,ntypes,iverbose
+ use settings_data, only:ncolumns,ndimV,icoords,ndim,debugmode,ntypes,iverbose,fakedust
  use particle_data, only:dat,npartoftype,iamtype
  use geometry,      only:labelcoord
  use filenames,     only:ifileopen,nstepsinfile
@@ -177,8 +177,10 @@ subroutine adjust_data_codeunits
  !
  !--fake a set of dust particles from the one-fluid dust formulation
  !
- if (idustfrac.gt.0 .and. irho.gt.0 .and. &
-     .not.(lenvironment('SPLASH_BARYCENTRIC') .or. lenvironment('NSPLASH_BARYCENTRIC'))) then
+ if (idustfrac.gt.0 .and. irho.gt.0 .and.            &
+          .not.(lenvironment('SPLASH_BARYCENTRIC')   &
+          .or. lenvironment('NSPLASH_BARYCENTRIC'))) then
+    fakedust = .true.
     call fake_twofluids(1,nstepsinfile(ifileopen),ndim,ndimV,dat,npartoftype,iamtype)
  endif
 
@@ -282,7 +284,8 @@ end subroutine shift_velocities
 !------------------------------------------------------
 subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  use params,         only:int1
- use labels,         only:idustfrac,idustfracsum,idustfrac_plot,irho,ix,ih,ipmass,ivx,ideltav
+ use labels,         only:idustfrac,idustfracsum,idustfrac_plot,ideltav_plot, &
+                          irho,ix,ih,ipmass,ivx,ideltav,ideltavsum
  use mem_allocation, only:alloc
  use particle_data,  only:maxpart,maxstep,maxcol
  use settings_data,  only:iverbose,required
@@ -292,9 +295,9 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  integer, dimension(:,:),       intent(inout), allocatable :: npartoftype
  integer(int1), dimension(:,:), intent(inout), allocatable :: iamtype
  integer :: ndust,jdust,ntoti,i,j
- integer :: idustfrac_temp
+ integer :: idustfrac_temp,ideltav_temp
  real    :: rhodust,rhogas,rhotot,dustfraci,gasfraci,pmassgas,pmassdust,pmassj
- real, dimension(ndimV) :: veli,vgas,vdust,deltav
+ real, dimension(ndimV) :: veli,vgas,vdust,deltav,deltavsum
  logical :: use_vels
 
  if (idustfrac.gt.0 .and. irho.gt.0) then
@@ -306,17 +309,19 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
        if (idustfrac_plot == 0 ) then
           idustfrac_temp = idustfracsum
           idustfrac_plot = idustfracsum
+          ideltav_temp   = ideltavsum
+          ideltav_plot   = ideltavsum
        else
           idustfrac_temp = idustfrac_plot
+          ideltav_temp   = ideltav_plot
        endif
     else
        idustfrac_temp = idustfrac
+       ideltav_temp   = ideltav
     endif
     !
-    !--ensure that the dust fraction above is always required so that fake dust
-    !  properties are calculated correctly at EVERY time step
+    !--create explicit dust phase from gas and one-fluid dust properties
     !
-    required(idustfrac_temp) = .true.
     do i=istart,iend
        ntoti = sum(npartoftype(:,i))
        if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)).gt.maxpart) then
@@ -330,7 +335,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
           print*,' ERROR: idustfrac out of range: cannot create fake dust particles'
           return
        endif
-       use_vels = (ideltav.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0)
+       use_vels = (ideltav_temp.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0)
        do j=1,ntoti
           if (iamtype(j,i).eq.1) then
              ndust = ndust + 1 ! one dust particle for every gas particle
@@ -371,10 +376,16 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
 
              !--velocities
              if (use_vels) then
-                veli(:)   = dat(j,ivx:ivx+ndimV-1,i)
-                deltav(:) = dat(j,ideltav:ideltav+ndimV-1,i)
-                vgas(:)   = veli(:) - rhodust/rhotot*deltav(:)
-                vdust(:)  = veli(:) + rhogas/rhotot*deltav(:)
+                veli(:)      = dat(j,ivx:ivx+ndimV-1,i)
+                deltav(:)    = dat(j,ideltav_temp:ideltav_temp+ndimV-1,i)
+                if (ndusttypes>1 .and. idustfrac_temp/=idustfracsum) then
+                   deltavsum(:) = dat(j,ideltavsum:ideltavsum+ndimV-1,i)
+                   vgas(:)      = veli(:) - (1. - gasfraci)*deltavsum(:)
+                   vdust(:)     = veli(:) + deltav(:) - (1. - gasfraci)*deltavsum(:)
+                else
+                   vgas(:)      = veli(:) - (1. - gasfraci)*deltav(:)
+                   vdust(:)     = veli(:) + gasfraci*deltav(:)
+                endif
                 dat(j,ivx:ivx+ndimV-1,i)     = vgas(:)
                 dat(jdust,ivx:ivx+ndimV-1,i) = vdust(:)
              endif
