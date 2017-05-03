@@ -27,7 +27,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2015 Daniel Price
+!     Copyright (C) 2005-2017 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -48,6 +48,13 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.7.0  : (03/05/17)
+!             Hollywood mode added (ctrl-m in interactive mode); better handling of dust/gas
+!             phantom data; added rotated cartesian geometry; rendering implemented in r-phi
+!             coordinates; added Fortran 2008 intrinsics to function parser; better rectangle
+!             plotting; better falcON data read; Ogilvie-Lubow exact solution for planet-disc
+!             interaction; tipsy read now works when splash compiled in double precision;
+!             splash to gridascii2 implemented; bugs with r-phi rendering fixed
 !     2.6.0  : (22/10/15)
 !             SILO, falcON and .pbob data reads implemented; bug fixes in gadget-hdf5 reader;
 !             can recognise particle types in ascii read; more robust sphNG read;
@@ -370,7 +377,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.6.0 [22nd Oct. 2015]'
+  character(len=*), parameter :: version = 'v2.7.0 [3rd May 2017]'
 
   !
   ! initialise some basic code variables
