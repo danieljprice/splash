@@ -55,7 +55,8 @@ subroutine menu
   integer            :: i,icol,ihalf,iadjust,indexi,ierr
   integer            :: ipicky,ipickx,irender,ivecplot,icontourplot
   integer            :: iamvecprev, ivecplottemp,ichoose
-  character(len=2)   :: ioption
+  integer            :: maxdigits
+  character(len=5)   :: ioption
   character(len=100) :: vecprompt,string
   character(len=20)  :: rprompt
   character(len=2)   :: fmtstrlen
@@ -129,7 +130,8 @@ subroutine menu
      print sep
      ihalf = numplot/2                ! print in two columns
      iadjust = mod(numplot,2)
-     write(fmtstrlen,"(A1,I1)") "i",floor(log10(real(maxplot)))+1
+     maxdigits = floor(log10(real(maxplot)))+1
+     write(fmtstrlen,"(A1,I1)") "i",maxdigits
      fmtstr1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
                      //trim(adjustl(fmtstrlen))//",')',1x,a20)"
      print fmtstr1, &
@@ -175,7 +177,7 @@ subroutine menu
   read(*,"(a)",iostat=ierr) string
   if (ierr < 0) stop 'reached end of input' ! end of input (e.g. in script)
   if (ierr > 0) stop !'error reading input'
-  ioption = string(1:2)
+  ioption = string(1:maxdigits)
 
 !------------------------------------------------------------
 !  if input is an integer and within range, plot data
