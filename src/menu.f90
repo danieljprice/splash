@@ -58,6 +58,8 @@ subroutine menu
   character(len=2)   :: ioption
   character(len=100) :: vecprompt,string
   character(len=20)  :: rprompt
+  character(len=2)   :: fmtstrlen
+  character(len=50)  :: fmtstr1,fmtstr2,fmtstr3
   character(len=*), parameter :: sep="(55('-'))"
   logical            :: iAllowRendering
 
@@ -127,12 +129,16 @@ subroutine menu
      print sep
      ihalf = numplot/2                ! print in two columns
      iadjust = mod(numplot,2)
-     print "(1x,i2,')',1x,a20,1x,i2,')',1x,a20)", &
+     write(fmtstrlen,"(A1,I1)") "i",floor(log10(real(maxplot)))+1
+     fmtstr1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+                     //trim(adjustl(fmtstrlen))//",')',1x,a20)"
+     print fmtstr1, &
           (i,transform_label(label(i),itrans(i)), &
           ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
           itrans(ihalf+i+iadjust)),i=1,ihalf)
      if (iadjust.ne.0) then
-        print "(1x,i2,')',1x,a20)", &
+        fmtstr2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20)"
+        print fmtstr2, &
               ihalf + iadjust,transform_label(label(ihalf + iadjust), &
               itrans(ihalf+iadjust))
      endif
@@ -140,7 +146,9 @@ subroutine menu
 !--multiplot
 !
      print sep
-     print "(1x,i2,')',1x,a,'[ ',i2,' ]',5x,a2,') ',a)", &
+     fmtstr3 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a,'[ '," &
+                     //trim(adjustl(fmtstrlen))//",' ]',5x,a2,') ',a)"
+     print fmtstr3, &
            numplot+1,'multiplot ',nyplotmulti,'m','set multiplot '
   else
 !
