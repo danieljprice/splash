@@ -44,7 +44,14 @@ module kernels
  real, public  :: cnormk1D = 2./3.
  real, public  :: cnormk2D = 10./(7.*pi)
  real, public  :: cnormk3D = 1./pi
- procedure(real), pointer :: wfunc
+ procedure(k_func), pointer :: wfunc
+ 
+ abstract interface
+  pure function k_func(q)
+   real, intent(in) :: q
+   real :: k_func
+  end function k_func
+ end interface
  
  public :: wfunc, select_kernel, select_kernel_by_name
  
@@ -166,7 +173,7 @@ end subroutine select_kernel_by_name
 !  Functional forms of various kernels
 !
 !--------------------------------------
-real function w_cubic(q2)
+pure real function w_cubic(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
@@ -183,7 +190,7 @@ real function w_cubic(q2)
 
 end function w_cubic
 
-real function w_quartic(q2)
+pure real function w_quartic(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
@@ -201,7 +208,7 @@ real function w_quartic(q2)
 
 end function w_quartic
 
-real function w_quintic(q2)
+pure real function w_quintic(q2)
  implicit none
  real, intent(in) :: q2
  real :: q,q4
@@ -222,7 +229,7 @@ real function w_quintic(q2)
 
 end function w_quintic
 
-real function w_quartic2h(q2)
+pure real function w_quartic2h(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
@@ -240,7 +247,7 @@ real function w_quartic2h(q2)
 
 end function w_quartic2h
 
-real function w_wendlandc2(q2)
+pure real function w_wendlandc2(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
@@ -254,7 +261,7 @@ real function w_wendlandc2(q2)
 
 end function w_wendlandc2
 
-real function w_wendlandc4(q2)
+pure real function w_wendlandc4(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
@@ -268,7 +275,7 @@ real function w_wendlandc4(q2)
 
 end function w_wendlandc4
 
-real function w_wendlandc6(q2)
+pure real function w_wendlandc6(q2)
  implicit none
  real, intent(in) :: q2
  real :: q
