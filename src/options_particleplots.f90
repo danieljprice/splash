@@ -32,7 +32,7 @@ module settings_part
  integer, dimension(100)          :: icircpart
  integer, dimension(maxplot)      :: ilocerrbars
  logical, dimension(maxparttypes) :: iplotpartoftype,PlotOnRenderings,UseTypeInContours
- integer :: ncircpart
+ integer :: ncircpart,ismooth_particle_plots
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep,ErrorBarType
  logical :: iplotline,ilabelpart,ifastparticleplot,iploterrbars
  real    :: hfacmarkers
@@ -41,7 +41,7 @@ module settings_part
    imarktype,iplotpartoftype,PlotOnRenderings, &
    iexact,icoordsnew,ifastparticleplot,idefaultcolourtype,&
    itypeorder,UseTypeInContours,iploterrbars,ilocerrbars,hfacmarkers,&
-   ErrorBarType
+   ErrorBarType,ismooth_particle_plots
 
 contains
 
@@ -81,6 +81,7 @@ subroutine defaults_set_part
   ilocerrbars(:) = 0     ! location of data for error bars in dat array
   hfacmarkers = 1.0
   ErrorBarType = 0
+  ismooth_particle_plots = 0
 
   return
 end subroutine defaults_set_part
@@ -119,16 +120,17 @@ subroutine submenu_particleplots(ichoose)
   use filenames,       only:nsteps,nstepsinfile,ifileopen
   use geomutils,       only:set_coordlabels
   use calcquantities,  only:calcstring,calclabel,calcunitslabel,setup_calculated_quantities,firstcall
+  use asciiutils,      only:enumerate
   implicit none
   integer, intent(in) :: ichoose
   integer             :: i,iaction,n,itype,icoordsprev,ierr,icol
   integer             :: idustfrac_prev
   character(len=2)    :: charntypes
-  character(len=20)   :: substring1,substring2
+  character(len=20)   :: substring1,substring2,substring3
   character(len=1000) :: fmtstring
   character(len=120)  :: contline
   character(len=3)    :: idustfracsum_string
-  logical             :: quiet = .true.
+  logical :: ians
 
   iaction = ichoose
 
@@ -147,6 +149,7 @@ subroutine submenu_particleplots(ichoose)
      substring1 = charntypes//"(a,',',1x),a"
      substring2 = charntypes//"(i2,',',1x),i2"
   endif
+  substring3 = enumerate(ismooth_particle_plots+1,(/'OFF  ','FIXED','ADAPT'/),default=1)
   if (iplotcont_nomulti) then
      contline = "'            use in contour plots:       ( ',"//trim(substring1)//",' )',/,"
   else
@@ -158,7 +161,7 @@ subroutine submenu_particleplots(ichoose)
          "' 1) turn on/off particles by type       ( ',"//trim(substring1)//",' )',/,"//trim(contline)// &
          "' 2) change graph markers for each type  ( ',"//trim(substring2)//",' )',/,"//  &
          "' 3) set colour for each particle type   ( ',"//trim(substring2)//",' )',/,"//  &
-         "' 4) change plotting order of types      ( ',"//trim(substring2)//",' )',/,"//  &
+         "' 4) smooth particle plots               ( ',a,' )',/,"//  &
          "' 5) plot line joining particles         ( ',a,' ) ',/,"// &
          "' 6) plot error bars/smoothing circles   ( ',a,' ) ',/,"// &
          "' 7) change coordinate systems           ( ',i2,' ) ',/,"// &
@@ -170,11 +173,11 @@ subroutine submenu_particleplots(ichoose)
      if (iplotcont_nomulti) then
         print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
                  (trim(print_logical(UseTypeInContours(i),mask=UseTypeInRenderings(i))),i=1,ntypes), &
-                 imarktype(1:ntypes),idefaultcolourtype(1:ntypes),itypeorder(1:ntypes), &
+                 imarktype(1:ntypes),idefaultcolourtype(1:ntypes),trim(substring3), &
                  print_logical(iplotline),print_logical(ncircpart.gt.0 .or.iploterrbars),icoordsnew,iexact
      else
         print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
-                 imarktype(1:ntypes),idefaultcolourtype(1:ntypes),itypeorder(1:ntypes), &
+                 imarktype(1:ntypes),idefaultcolourtype(1:ntypes),trim(substring3), &
                  print_logical(iplotline),print_logical(ncircpart.gt.0 .or.iploterrbars),icoordsnew,iexact
      endif
      call prompt('enter option',iaction,0,9)
@@ -225,7 +228,7 @@ subroutine submenu_particleplots(ichoose)
                  firstcall = .true.
                  ncalc = 0
                  print*,'...recalibrating calculated quantities...'
-                 call setup_calculated_quantities(ncalc,quiet)
+                 call setup_calculated_quantities(ncalc,quiet=.true.)
                  print*,'...done!'
               endif
            endif
@@ -267,33 +270,44 @@ subroutine submenu_particleplots(ichoose)
      return
 !------------------------------------------------------------------------
   case(4)
-     if (size(iamtype(:,1)).gt.1) then
-        print "(3(/,a),/)", &
-          ' WARNING: changing type plotting order currently has no effect ', &
-          '          when particle types are mixed in the dump file', &
-          '          (for sphNG read disable this using -lowmem on the command line)'
-     endif
-
-     print "(9(i1,'=',a,', '))",(i,trim(labeltype(i)),i=1,ntypes)
-     call prompt('enter first particle type to plot',itypeorder(1),1,ntypes)
-     do i=2,ntypes
-        ierr = 1
-        do while (ierr /= 0)
-           itype = itypeorder(i)
-           call prompt('enter next particle type to plot',itype,1,ntypes)
-           if (any(itypeorder(1:i-1).eq.itype)) then
-              print "(a)",' error: cannot be same as previous type'
-              ierr = 1
-           else
-              itypeorder(i) = itype
-              ierr = 0
+     !print "(3(/,a))",' 0) no smoothing, raw particle plots',&
+     !                 ' 1) render particle plots with fixed h', &
+     !                 ' 2) render particle plots with adaptive h (slower)'
+     call prompt('smooth particle plots? (0=none 1=fixed 2=adaptive)',ismooth_particle_plots,0,2)
+     if (ismooth_particle_plots.eq.0) then 
+        if (size(iamtype(:,1)).gt.1) then
+           print "(3(/,a),/)", &
+             ' WARNING: changing type plotting order currently has no effect ', &
+             '          when particle types are mixed in the dump file', &
+             '          (for sphNG read disable this using -lowmem on the command line)'
+        endif
+        if (ntypes > 1) then
+           ians = .false.
+           call prompt('set plot order of particle types manually?',ians)
+           if (ians) then
+              print "(9(i1,'=',a,', '))",(i,trim(labeltype(i)),i=1,ntypes)
+              call prompt('enter first particle type to plot',itypeorder(1),1,ntypes)
+              do i=2,ntypes
+                 ierr = 1
+                 do while (ierr /= 0)
+                    itype = itypeorder(i)
+                    call prompt('enter next particle type to plot',itype,1,ntypes)
+                    if (any(itypeorder(1:i-1).eq.itype)) then
+                       print "(a)",' error: cannot be same as previous type'
+                       ierr = 1
+                    else
+                       itypeorder(i) = itype
+                       ierr = 0
+                    endif
+                 enddo
+              enddo
            endif
-        enddo
-     enddo
+        endif
 
-     print "(/,a,/,a,/)",' Fast particle plotting excludes particles in crowded regions', &
-                         ' Turn this option off to always plot every particle'
-     call prompt('Allow fast particle plotting?',ifastparticleplot)
+        print "(/,a,/,a,/)",' Fast particle plotting excludes particles in crowded regions', &
+                            ' Turn this option off to always plot every particle'
+        call prompt('Allow fast particle plotting?',ifastparticleplot)
+     endif
      return
 !------------------------------------------------------------------------
   case(5)

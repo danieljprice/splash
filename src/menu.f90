@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -273,7 +273,11 @@ subroutine menu
                  call prompt('plot particles?',iplotpartvec)
               endif
            else
-              irender = 0
+              if (iAllowRendering) then
+                 call prompt('(render) (0=none)',irender,0,(numplot-nextra))
+              else
+                 irender = 0
+              endif
               ivecplot = 0
            endif
         elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens) then
