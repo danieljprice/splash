@@ -34,7 +34,7 @@ module projections3Dgeom
                          coord_transform_limits,igeom_cylindrical,get_coord_limits
  implicit none
 
- public :: interpolate3D_proj_geom
+ public :: interpolate3D_proj_geom, interpolate3D_xsec_geom
 ! public :: interpolate3D_proj_geom_vec
 
 #ifdef _OPENMP
@@ -101,8 +101,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   integer(kind=selected_int_kind(10)) :: iprogress,i  ! up to 10 digits
 #endif
   real, dimension(3) :: xcoord, xpix
-  real, dimension(3), save :: xpixmin, xpixmax, xci, xi
-!$omp threadprivate(xpixmin,xpixmax,xci,xi)
+  real, dimension(3), save :: xci, xi
+!$omp threadprivate(xci,xi)
   real :: hi,hi1,hi21,radkern,wab,q2,xminpix,yminpix
   real :: term,termnorm,dx,dx2,dy,dy2
   real :: xmax,ymax,hmin,horigi
@@ -307,6 +307,189 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 
 end subroutine interpolate3D_proj_geom
 
+!--------------------------------------------------------------------------
+!
+!   ** In this version 3D data is interpolated to a single 2D cross section
+!
+!   ** Note that the cross section is always taken in the z co-ordinate
+!   ** so should submit the appropriate arrays as x, y and z.
+!
+!     Input: particle coordinates  : x1,x2,x3 (npart)
+!            particle masses       : pmass (npart)
+!            density on particles  : rho   (npart) - must be computed separately
+!            smoothing lengths     : hh    (npart) - could be computed from density
+!            scalar data to smooth : dat   (npart)
+!            cross section location: zslice
+!
+!     Output: smoothed data            : datsmooth (npixx,npixy)
+!
+!     Daniel Price, Monash University 2nd May 2017
+!--------------------------------------------------------------------------
+
+subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
+     xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,igeom, &
+     iplotx,iploty,iplotz,ix)
+
+  use kernels, only:cnormk3D,wfunc
+  implicit none
+  integer, intent(in) :: npart,npixx,npixy
+  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
+  integer, intent(in), dimension(npart) :: itype
+  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zslice
+  real, intent(out), dimension(npixx,npixy) :: datsmooth
+  logical, intent(in) :: normalise
+  integer, intent(in) :: igeom,iplotx,iploty,iplotz
+  integer, dimension(3), intent(in) :: ix
+  real, dimension(npixx,npixy) :: datnorm
+
+  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  integer :: ixcoord,iycoord,izcoord,ierr
+  real :: hi,hi1,radkern,q2,wab,const,hi21
+  real :: termnorm,term,dx,dx2,dy,dy2,dz,dz2
+  real :: xmax,ymax,xminpix,yminpix
+  real, dimension(3) :: xcoord,xpix,xci,xi
+  logical :: islengthx,islengthy,islengthz
+
+  datsmooth = 0.
+  datnorm = 0.
+  if (normalise) then
+     print*,'taking fast cross section (normalised, non-cartesian)...',zslice
+  else
+     print*,'taking fast cross section (non-cartesian)...',zslice
+  endif
+  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
+     print*,'interpolate3D_xsec: error: pixel width <= 0'
+     return
+  elseif (npart.le.0) then
+     print*,'interpolate3D_xsec: error: npart = 0'
+     return
+  endif
+  if (any(hh(1:npart).le.tiny(hh))) then
+     print*,'interpolate3D_xsec_geom: WARNING: ignoring some or all particles with h < 0'
+  endif
+  const = cnormk3D
+
+  !
+  !--get information about the coordinates
+  !
+  call get_coord_info(iplotx,iploty,iplotz,ix(1),igeom,ixcoord,iycoord,izcoord,&
+                      islengthx,islengthy,islengthz,ierr)
+  if (ierr /= 0) return
+  !
+  !--if z coordinate is not a length, quit
+  !
+  if (.not.islengthz) then
+     print*,'interpolate3D_xsec_geom: ERROR xsec not implemented when z is an angle'
+     return
+  endif
+
+  xminpix = xmin - 0.5*pixwidthx
+  yminpix = ymin - 0.5*pixwidthy
+  xmax = xmin + npixx*pixwidthx
+  ymax = ymin + npixy*pixwidthy
+  !
+  !--loop over particles
+  !
+  over_parts: do i=1,npart
+     !
+     !--skip particles with itype < 0
+     !
+     if (itype(i).lt.0) cycle over_parts
+     !
+     !--set h related quantities
+     !
+     hi = hh(i)
+     if (hi.le.0.) cycle over_parts
+     !horigi = hh(i)
+     !if (horigi.le.0.) cycle over_parts
+     !hi = max(horigi,hmin)
+
+     radkern = radkernel*hi ! radius of the smoothing kernel
+     !
+     !--set kernel related quantities
+     !
+     hi1 = 1./hi
+     hi21 = hi1*hi1
+     !
+     !--for each particle, work out distance from the cross section slice.
+     !
+     dz = zslice - z(i)
+     dz2 = dz**2
+     xcoord(izcoord) = 1.
+     !
+     !--if this is < 2h then add the particle's contribution to the pixels
+     !  otherwise skip all this and start on the next particle
+     !
+     if (dz2 .lt. radkernel2) then
+        !
+        !--get limits of contribution from particle in cartesian space
+        !
+        xci(1) = x(i)
+        xci(2) = y(i)
+        xci(3) = z(i)
+        call get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom,&
+                              npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)
+        if (ierr /= 0) cycle over_parts
+
+        termnorm = const*weight(i)
+        term = termnorm*dat(i) !/rescalefac
+        !
+        !--loop over pixels, adding the contribution from this particle
+        !
+        do jpix = jpixmin,jpixmax
+           xcoord(iycoord) = yminpix + jpix*pixwidthy
+           do ipix = ipixmin,ipixmax
+              xcoord(ixcoord) = xminpix + ipix*pixwidthx
+
+              !--now transform to get location of pixel in cartesians
+              call coord_transform(xcoord,3,igeom,xpix,3,igeom_cartesian)
+
+              !--find distances using cartesians and perform interpolation
+              dy   = xpix(iycoord) - xci(iycoord)
+              dx   = xpix(ixcoord) - xci(ixcoord)
+
+              dx2  = dx*dx
+              dy2  = dy*dy
+              q2 = (dx*dx + dy*dy + dz2)*hi1*hi1
+              !
+              !--SPH kernel - integral through cubic spline
+              !  interpolate from a pre-calculated table
+              !
+              if (q2.lt.radkernel2) then
+                 wab = wfunc(q2)
+                 !
+                 !--calculate data value at this pixel using the summation interpolant
+                 !
+                 datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
+
+                 if (normalise) then
+                    datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+                 endif
+              endif
+           enddo
+        enddo
+     endif                  ! if particle within 2h of slice
+  enddo over_parts                    ! over particles
+  !
+  !--normalise dat array
+  !
+  if (normalise) then
+     !--normalise everywhere (required if not using SPH weighting)
+     where (datnorm > tiny(datnorm))
+        datsmooth = datsmooth/datnorm
+     end where
+  endif
+  !datsmooth = datsmooth*rescalefac
+
+  return
+
+end subroutine interpolate3D_xsec_geom
+
+!--------------------------------------------------------------------------
+!
+!  utility routine for use in above routines
+!
+!--------------------------------------------------------------------------
 subroutine get_coord_info(iplotx,iploty,iplotz,ix1,igeom,ixcoord,iycoord,izcoord,&
                           islengthx,islengthy,islengthz,ierr)
   integer, intent(in)  :: iplotx,iploty,iplotz,ix1,igeom
@@ -341,6 +524,11 @@ subroutine get_coord_info(iplotx,iploty,iplotz,ix1,igeom,ixcoord,iycoord,izcoord
 
 end subroutine get_coord_info
 
+!--------------------------------------------------------------------------
+!
+!  utility routine for use in above routines
+!
+!--------------------------------------------------------------------------
 subroutine get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom,&
                             npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)  
   real, intent(in)  :: xci(3),radkern,pixwidthx,pixwidthy,xmin,ymin

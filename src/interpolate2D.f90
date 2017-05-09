@@ -31,6 +31,9 @@ module interpolations2D
  implicit none
  public :: interpolate2D, interpolate2D_xsec, interpolate2D_vec
  public :: interpolate_part, interpolate_part1
+ public :: interpolate2D_pixels
+ 
+ private
 
 contains
 !--------------------------------------------------------------------------
@@ -619,7 +622,7 @@ end subroutine interpolate_part1
 !     datsmooth(pixel) = sum_j dat_j W(r-r_j, \Delta) / sum_j W(r-r_j, \Delta)
 !
 !     where _j is the quantity at the neighbouring particle j and
-!     W is the smoothing kernel. THe interpolation is normalised.
+!     W is the smoothing kernel. The interpolation is normalised.
 !
 !     Input: data points  : x,y    (npart)
 !            third scalar to use as weight : dat (npart) (optional)
@@ -630,64 +633,96 @@ end subroutine interpolate_part1
 !
 !     Output: smoothed data            : datsmooth (npixx,npixy)
 !
-!     Written by Daniel Price 2016
+!     Written by Daniel Price 2017
 !--------------------------------------------------------------------------
 
 subroutine interpolate2D_pixels(x,y,itype,npart, &
-     xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,&
-     normalise,periodicx,periodicy,dat)
+     xmin,ymin,xmax,ymax,datsmooth,npixx,npixy,&
+     normalise,adaptive,dat,datpix2)
 
+  use timing, only:wall_time,print_time
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy
+  real, intent(in) :: xmin,ymin,xmax,ymax
   real, intent(out), dimension(npixx,npixy) :: datsmooth
-  logical, intent(in) :: normalise,periodicx,periodicy
+  logical, intent(in) :: normalise,adaptive
   real, intent(in), dimension(npart), optional :: dat
-  real, dimension(npixx,npixy) :: datnorm
+  real, dimension(npixx,npixy), intent(out), optional :: datpix2
 
-  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  integer :: ipixi,jpixi
+  real, dimension(npixx,npixy) :: datnorm,datold
+  real, dimension(npixx) :: dx2i,qq2,wabi
+
+  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,its,itsmax
   real :: hi,hi1,radkernx,radkerny,q2,wab,const
-  real :: term,termnorm,dx,dy,xpix,ypix
+  real :: term,termnorm,dx,dy,xpix,ypix,ddx,ddy
+  real :: xi,yi,pixwidthx,pixwidthy,dy2
+  real(4) :: t1,t2
 
+  if (adaptive) then
+     print "(1x,a)",'interpolating from particles to 2D pixels (adaptive)...'
+  else
+     print "(1x,a)",'interpolating from particles to 2D pixels...'
+  endif
+
+  if (adaptive) then
+     itsmax = 3
+  else
+     itsmax = 1
+  endif
+  call wall_time(t1)
+
+  iterations: do its=1,itsmax
   datsmooth = 0.
   datnorm = 0.
-  if (normalise) then
-     print "(1x,a)",'interpolating from particles to 2D pixels (normalised)...'
-  else
-     print "(1x,a)",'interpolating from particles to 2D pixels (non-normalised)...'
-  endif
-  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
-     print "(1x,a)",'interpolate2D: error: pixel width <= 0'
-     return
-  endif
+
   const = cnormk2D  ! normalisation constant
   !
   !--loop over particles
   !
+  ddx = npixx/(xmax - xmin)
+  ddy = npixy/(ymax - ymin)
+  
+  pixwidthx = 1. !/npixx
+  pixwidthy = 1. !/npixy
+  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
+     print "(1x,a)",'interpolate2D: error: pixel width <= 0'
+     return
+  endif
+
+  !$omp parallel do default(none) &
+  !$omp shared(npart,itype,x,y,xmin,ymin,ddx,ddy,its) &
+  !$omp shared(datold,datsmooth,datnorm,npixx,npixy,const,radkernel,radkernel2,dat) &
+  !$omp shared(pixwidthx,pixwidthy,normalise) &
+  !$omp private(i,xi,yi,ipix,jpix,hi,hi1) &
+  !$omp private(radkernx,radkerny,ipixmin,ipixmax,jpixmin,jpixmax) &
+  !$omp private(dx2i,xpix,ypix,dy,dy2,q2,wab,term,termnorm,qq2,wabi)
   over_parts: do i=1,npart
      !
      !--skip particles with itype < 0
      !
      if (itype(i).lt.0) cycle over_parts
+     
      !
-     !--skip particles with zero weights
+     !--scale particle positions into viewport coordinates
      !
-     termnorm = const
-     !if (termnorm.le.0.) cycle over_parts
-     !
-     !--skip particles with wrong h's
-     !
-     hi = 2.*pixwidthx
-     if (hi.le.tiny(hi)) cycle over_parts
+     xi = (x(i) - xmin)*ddx
+     yi = (y(i) - ymin)*ddy
+     hi = 1.0*pixwidthx  ! in units of pixel spacing
+     
+     ipix = int(xi)
+     jpix = int(yi)
+     if (its > 1 .and. ipix.ge.1 .and. ipix.le.npixx.and. jpix.ge.1 .and. jpix.le.npixy) then
+        hi = min(1.5/sqrt(datold(ipix,jpix)),20.) !) !,1.)
+     endif
      hi1 = 1./hi
+     termnorm = const*hi1*hi1
      !
      !--set kernel related quantities
      !
-     radkernx = radkernel*pixwidthx  ! radius of the smoothing kernel
-     radkerny = radkernel*pixwidthy  ! radius of the smoothing kernel
+     radkernx = radkernel*hi  ! radius of the smoothing kernel
+     radkerny = radkernel*hi  ! radius of the smoothing kernel
      if (present(dat)) then
         term = termnorm*dat(i)
      else
@@ -696,54 +731,59 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
      !
      !--for each particle work out which pixels it contributes to
      !
-     ipixmin = int((x(i) - radkernx - xmin)/pixwidthx)
-     jpixmin = int((y(i) - radkerny - ymin)/pixwidthy)
-     ipixmax = int((x(i) + radkernx - xmin)/pixwidthx) + 1
-     jpixmax = int((y(i) + radkerny - ymin)/pixwidthy) + 1
+     ipixmin = int((xi - radkernx))
+     jpixmin = int((yi - radkerny))
+     ipixmax = int((xi + radkernx)) + 1
+     jpixmax = int((yi + radkerny)) + 1
 
-     if (.not.periodicx) then
-        if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
-        if (ipixmax.gt.npixx) ipixmax = npixx  ! to pixels in the image
-     endif
-     if (.not.periodicy) then
-        if (jpixmin.lt.1)     jpixmin = 1
-        if (jpixmax.gt.npixy) jpixmax = npixy
-     endif
+     if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
+     if (ipixmax.gt.npixx) ipixmax = npixx  ! to pixels in the image
+     if (jpixmin.lt.1)     jpixmin = 1
+     if (jpixmax.gt.npixy) jpixmax = npixy
+     !
+     !--precalculate an array of dx2 for this particle (optimisation)
+     !
+     do ipix=ipixmin,ipixmax
+        xpix = (ipix-0.5)*pixwidthx
+        dx2i(ipix) = ((xpix - xi)**2)*hi1*hi1
+     enddo
      !
      !--loop over pixels, adding the contribution from this particle
      !
-     if (i.eq.1) print*,jpixmin,jpixmax,ipixmin,ipixmax
      do jpix = jpixmin,jpixmax
-        jpixi = jpix
-        if (periodicy) then
-           if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-           if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
-        endif
-        ypix = ymin + (jpix-0.5)*pixwidthy
-        dy = ypix - y(i)
+        ypix = (jpix-0.5)*pixwidthy
+        dy = ypix - yi
+        dy2 = dy*dy*hi1*hi1
+
         do ipix = ipixmin,ipixmax
-           ipixi = ipix
-           if (periodicx) then
-              if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
-              if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
-           endif
-           xpix = xmin + (ipix-0.5)*pixwidthx
-           dx = xpix - x(i)         
-           q2 = (dx*dx/pixwidthx**2 + dy*dy/pixwidthy**2)
+           q2 = dx2i(ipix) + dy2
            !
            !--SPH kernel
            !
-           wab = wfunc(q2)
-           !
-           !--calculate data value at this pixel using the summation interpolant
-           !
-           datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
-           if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+           if (q2 < radkernel2) then
+              wab = wkernel(q2)
+              !
+              !--calculate data value at this pixel using the summation interpolant
+              !
+              !$omp atomic
+              datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
+              if (normalise) then
+                 !$omp atomic
+                 datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+              endif
+           endif
 
         enddo
      enddo
 
   enddo over_parts
+  !$omp end parallel do
+  
+  if (present(dat)) then
+     datold = datnorm
+  else
+     datold = datsmooth
+  endif
   !
   !--normalise dat array
   !
@@ -753,8 +793,26 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
      end where
   endif
 
+  enddo iterations
+  
+  if (present(datpix2)) datpix2 = datnorm
+  call wall_time(t2)
+  call print_time(t2-t1)
+
   return
 
 end subroutine interpolate2D_pixels
+
+!------------------------------------------------------------
+! interface to kernel routine to avoid problems with openMP
+!-----------------------------------------------------------
+real function wkernel(q2)
+ use kernels, only:wfunc
+ implicit none
+ real, intent(in) :: q2
+
+ wkernel = wfunc(q2)
+
+end function wkernel
 
 end module interpolations2D

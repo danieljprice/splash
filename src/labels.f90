@@ -113,6 +113,44 @@ logical function is_coord(icol,ndim)
 
 end function is_coord
 
+!--------------------------------------------------------------
+!
+!  query function for whether column is a spatial coordinate
+!  returns the location of the third dimension in the
+!  list of columns
+!
+!--------------------------------------------------------------
+integer function get_z_dir(ndim,iplotx,iploty) result(iplotz)
+ implicit none
+ integer, intent(in) :: ndim,iplotx,iploty
+ integer :: i
+
+ iplotz = 0
+ do i=1,ndim
+    if ((iplotx.ne.iploty.and. &
+        (ix(i).ne.iplotx).and.(ix(i).ne.iploty))) iplotz = ix(i)
+ enddo
+
+end function get_z_dir
+
+!--------------------------------------------------------------
+!
+!  query function for which coordinate is z
+!  returns an integer between 1 and ndim
+!
+!--------------------------------------------------------------
+integer function get_z_coord(ndim,iplotx,iploty) result(iplotz)
+ implicit none
+ integer, intent(in) :: ndim,iplotx,iploty
+ integer :: i
+
+ i = get_z_dir(ndim,iplotx,iploty)
+ iplotz = i - ix(1) + 1
+ if (iplotz < 0)    iplotz = 1
+ if (iplotz > ndim) iplotz = ndim
+
+end function get_z_coord
+
 !-----------------------------------------------------------------
 !
 !  utility to strip spaces, escape sequences and

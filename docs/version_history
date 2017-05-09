@@ -1,3 +1,6 @@
+2.7.0:
+Hollywood mode added (ctrl-m in interactive mode); better handling of dust/gas phantom data; added rotated cartesian geometry; rendering implemented in r-phi coordinates; added Fortran 2008 intrinsics to function parser; better rectangle plotting; better falcON data read; Ogilvie-Lubow exact solution for planet-disc interaction; tipsy read now works when splash compiled in double precision; splash to gridascii2 implemented; bugs with r-phi rendering fixed
+ 
 2.6.0:
 SILO, falcON and .pbob data reads implemented; bug fixes in gadget-hdf5 reader; can recognise particle types in ascii read; more robust sphNG read; dust fraction recognised in Phantom data read; Toomre Q works in physical units; bug fix with disappearing units labels; bug fix in shock tube solution; added splash calc delta; splash to ascii keeps precision; better power spectra
  

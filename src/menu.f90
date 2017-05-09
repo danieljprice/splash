@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -283,7 +283,11 @@ subroutine menu
                  call prompt('plot particles?',iplotpartvec)
               endif
            else
-              irender = 0
+              if (iAllowRendering) then
+                 call prompt('(render) (0=none)',irender,0,(numplot-nextra))
+              else
+                 irender = 0
+              endif
               ivecplot = 0
            endif
         elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens) then
@@ -648,15 +652,16 @@ end subroutine menu
 ! or not rendering is allowed or not
 !----------------------------------------------
 logical function allowrendering(iplotx,iploty,xsec)
- use labels,          only:ih,irho !,ipmass
+ use labels,          only:ih,irho,get_z_coord
  use multiplot,       only:itrans
- use settings_data,   only:ndataplots,icoords,icoordsnew
+ use settings_data,   only:ndim,ndataplots,icoords,icoordsnew
  use settings_render, only:icolour_particles
+ use geometry,        only:coord_is_length
  implicit none
  integer, intent(in) :: iplotx,iploty
  logical, intent(in), optional :: xsec
- integer :: itransx,itransy
- logical :: is_xsec
+ integer :: itransx,itransy,iz
+ logical :: is_xsec,islengthz
  
  if (present(xsec)) then
     is_xsec = xsec
@@ -667,13 +672,16 @@ logical function allowrendering(iplotx,iploty,xsec)
  itransy = 0
  if (iplotx.gt.0) itransx = itrans(iplotx)
  if (iploty.gt.0) itransy = itrans(iploty)
+
+ iz = get_z_coord(ndim,iplotx,iploty)
+ islengthz = coord_is_length(iz,icoordsnew)
 !
 !--work out whether rendering is allowed based on presence of rho, h & m in data read
 !  also must be in base coordinate system and no transformations applied
 !
  if ((ih.gt.0 .and. ih.le.ndataplots) &
     .and.(irho.gt.0 .and. irho.le.ndataplots) &
-    .and.(icoords.eq.icoordsnew .or. .not.is_xsec) &
+    .and.(icoords.eq.icoordsnew .or. (.not.is_xsec .or. (xsec .and. islengthz))) &
     .and.(itransx.eq.0 .and. itransy.eq.0)) then
 
     allowrendering = .true.

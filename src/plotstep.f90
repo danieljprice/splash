@@ -80,7 +80,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens, &
                                is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,ivx,  &
                                idustfrac,idustfracsum,idustfrac_plot,ideltav,    &
-                               ideltavsum,ideltav_plot
+                               ideltavsum,ideltav_plot,get_z_dir
   use limits,             only:lim,rangeset
   use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
                                nyplotmulti,x_secmulti,ivecplotmulti
@@ -227,10 +227,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
            !!--work out coordinate that is not being plotted on cross-section/ 3D plots
            iplotz = 0
            if (ndim.ge.3 .and. (x_sec .or. use3Dperspective .or. irotate)) then
-              do j=1,ndim
-                 if ((multiplotx(i).ne.multiploty(i)).and. &
-                     (ix(j).ne.multiplotx(i)).and.(ix(j).ne.multiploty(i))) iplotz = ix(j)
-              enddo
+              iplotz = get_z_dir(ndim,multiplotx(i),multiploty(i))
               !--use only first iplotz in the case of multiple slices
               !  (only effect is on default values for slice thickness etc below)
               if (iplotzprev.gt.0) iplotz = iplotzprev
@@ -663,7 +660,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use settings_limits,    only:iadapt
   use settings_part,      only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
                                iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
-                               iploterrbars,ilocerrbars
+                               iploterrbars,ilocerrbars,ismooth_particle_plots
   use settings_page,      only:nacross,ndown,interactive,iaxis,usesquarexy,yscalealt,labelyalt, &
                                charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render,    only:npix,ncontours,icolours,iColourBarStyle,icolour_particles,&
@@ -688,10 +685,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use particleplots,         only:particleplot,plot_errorbarsx,plot_errorbarsy
   use powerspectrums,        only:powerspectrum,powerspec3D_sph
   use interpolations1D,      only:interpolate1D
-  use interpolations2D,      only:interpolate2D, interpolate2D_xsec !, interpolate2D_pixels
+  use interpolations2D,      only:interpolate2D, interpolate2D_xsec, interpolate2D_pixels
   use interpolations3D,      only:interpolate3D
   use projections3D,         only:interpolate3D_projection
-  use projections3Dgeom,     only:interpolate3D_proj_geom
+  use projections3Dgeom,     only:interpolate3D_proj_geom,interpolate3D_xsec_geom
   use interpolate3D_opacity, only:interp3D_proj_opacity !,interp3D_proj_opacity_writeppm
   use xsections3D,           only:interpolate3D_fastxsec,interpolate3D_xsec_vec
   use render,                only:render_pix
@@ -879,7 +876,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   endif
 
   !--set the colour table if it has not been set and particles have been coloured previously
-  if (any(icolourme(1:ntoti).gt.16) .and. .not.ihavesetcolours) call colour_set(icolours)
+  if (.not.ihavesetcolours) call colour_set(icolours)
 
   !
   !--exclude subset of particles if parameter range restrictions are set
@@ -1499,23 +1496,39 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           !!--do fast cross-section
                           if (iverbose > 0) print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
                                 ' : fast cross section', xmin,ymin
-                          call interpolate3D_fastxsec( &
-                               xplot(1:ninterp),yplot(1:ninterp), &
-                               zplot(1:ninterp),hh(1:ninterp), &
-                               weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
-                               ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
-                               pixwidthy,inormalise)
+                          if (icoordsnew.ne.icoords) then
+                             call interpolate3D_xsec_geom( &
+                                  dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
+                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp),&
+                                  ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
+                                  pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix)
+                          else
+                             call interpolate3D_fastxsec( &
+                                  xplot(1:ninterp),yplot(1:ninterp), &
+                                  zplot(1:ninterp),hh(1:ninterp), &
+                                  weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
+                                  ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
+                                  pixwidthy,inormalise)
+                          endif
                           !!--same but for contour plot
                           if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                              if (.not.isameweights) & ! set contouring weights as necessary
                                 call set_weights(weight,dat,iamtype,UseTypeInContours)
 
-                             call interpolate3D_fastxsec( &
-                                  xplot(1:ninterp),yplot(1:ninterp), &
-                                  zplot(1:ninterp),hh(1:ninterp), &
-                                  weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
-                                  ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
-                                  pixwidthy,inormalise)
+                             if (icoordsnew.ne.icoords) then
+                                call interpolate3D_xsec_geom( &
+                                     dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
+                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp),&
+                                     ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
+                                     pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix)
+                             else
+                                call interpolate3D_fastxsec( &
+                                     xplot(1:ninterp),yplot(1:ninterp), &
+                                     zplot(1:ninterp),hh(1:ninterp), &
+                                     weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
+                                     ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
+                                     pixwidthy,inormalise)
+                             endif
                              gotcontours = .true.
 
                              if (.not.isameweights) & ! reset weights
@@ -1594,11 +1607,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                              if (.not.isameweights) & ! set contouring weights as necessary
                                 call set_weights(weight,dat,iamtype,UseTypeInContours)
 
-                             call interpolate3D_projection( &
-                                  xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
-                                  icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
-                                  pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender)
+                             if (icoordsnew.ne.icoords) then
+                                call interpolate3D_proj_geom( &
+                                     dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
+                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                                     icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
+                                     pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix)
+                             else
+                                call interpolate3D_projection( &
+                                     xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
+                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                                     icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
+                                     pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender)
+                             endif
                              gotcontours = .true.
 
                              if (.not.isameweights) & ! reset weights
@@ -2160,8 +2181,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            call colour_particles(renderplot(1:ntoti), &
                 rendermin,rendermax,icolourme(1:ntoti),ntoti)
 
-           !--deallocate memory
-           if (allocated(renderplot)) deallocate(renderplot)
         endif
 
         !--------------------------------
@@ -2173,23 +2192,41 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--------------------------------
         ! now plot particles
         !--------------------------------
-        !npixx = 512
-        !npixy = 512
-        !if (.not.allocated(datpix)) allocate(datpix(npixx,npixy))
-        !pixwidth = (xmax - xmin)/npixx
-        !pixwidthy = (ymax - ymin)/npixy
-        !call interpolate2D_pixels(xplot,yplot,icolourme,ntoti,xmin,ymin,datpix,npixx,npixy,&
-        !     pixwidth,pixwidthy,.true.,.false.,.false.)
-        !print*,maxval(datpix),minval(datpix)
-        !call render_pix(datpix,0.,maxval(datpix),'blah', &
-        !     npixx,npixy,xmin,ymin,pixwidth,pixwidthy,2,.false.,,ncontours,&
-        !     .false.,.false.)
-        !deallocate(datpix)
+        if (ismooth_particle_plots > 0) then
+           npixx = 1024
+           npixy = 1024
+           if (.not.allocated(datpix)) allocate(datpix(npixx,npixy))
+           if (.not.allocated(brightness)) allocate(brightness(npixx,npixy))
+           pixwidth = (xmax - xmin)/npixx
+           pixwidthy = (ymax - ymin)/npixy
+           !print*,'PIXWIDTH  = ',pixwidth,pixwidthy
+           if (irender > 0) then
+              call interpolate2D_pixels(xplot,yplot,icolourme,ntoti,xmin,ymin,xmax,ymax,&
+                   datpix,npixx,npixy,.true.,.true.,renderplot,brightness)
+              ! scale opacity based on density of points, but only slightly
+              brightness = 1. - exp(-brightness**0.3)
+              call render_pix(datpix,rendermin,rendermax,'blah', &
+                   npixx,npixy,xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
+                   .false.,.false.,alpha=brightness,transparent=.true.)
+           else
+              call interpolate2D_pixels(xplot,yplot,icolourme,ntoti,xmin,ymin,xmax,ymax,&
+                   datpix,npixx,npixy,.false.,(ismooth_particle_plots==2))
+              datpix = log10(datpix)
+              call render_pix(datpix,maxval(datpix)-6.,maxval(datpix),'blah', &
+                   npixx,npixy,xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
+                   .false.,.false.)
+           endif
+           if (allocated(datpix)) deallocate(datpix)
+           if (allocated(brightness)) deallocate(brightness)
+        else
+           call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
+                zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
+                icolourme(1:ntoti),iamtype,npartoftype(:),iusetype,.false., &
+                zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
+        endif
 
-        call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-             zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-             icolourme(1:ntoti),iamtype,npartoftype(:),iusetype,.false., &
-             zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
+        !--deallocate memory
+        if (allocated(renderplot)) deallocate(renderplot)
 
         !--------------------------------
         ! plot error bars

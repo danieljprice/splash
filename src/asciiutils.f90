@@ -37,6 +37,7 @@ module asciiutils
  public :: string_replace, string_delete, nheaderlines, string_sub
  public :: ucase,lcase
  public :: get_line_containing
+ public :: enumerate
 
  private
 
@@ -617,5 +618,27 @@ integer function get_line_containing(filename,string)
  close(lu)
  
 end function get_line_containing
+
+!---------------------------------------------------------------------------
+!
+! Convert an integer into the corresponding entry in a list of strings
+!
+!---------------------------------------------------------------------------
+function enumerate(i,stringarr,default) result(string)
+ integer, intent(in) :: i
+ character(len=*), intent(in), dimension(:) :: stringarr
+ integer, intent(in), optional :: default
+ character(len=len(stringarr)) :: string
+
+ string = ''
+ if (i >= 1 .and. i <= size(stringarr)) then
+    string = trim(stringarr(i))
+ elseif (present(default)) then
+    if (default >= 1 .and. i <= size(stringarr)) then
+       string = trim(stringarr(default))
+    endif
+ endif
+
+end function enumerate
 
 end module asciiutils
