@@ -658,7 +658,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
   real :: hi,hi1,radkernx,radkerny,q2,wab,const
   real :: term,termnorm,dx,dy,xpix,ypix,ddx,ddy
   real :: xi,yi,pixwidthx,pixwidthy,dy2
-  real(4) :: t1,t2
+  real :: t1,t2
 
   if (adaptive) then
      print "(1x,a)",'interpolating from particles to 2D pixels (adaptive)...'
@@ -797,7 +797,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
   
   if (present(datpix2)) datpix2 = datnorm
   call wall_time(t2)
-  call print_time(t2-t1)
+  if (t2-t1 > 1.) call print_time(t2-t1)
 
   return
 
