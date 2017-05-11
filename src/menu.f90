@@ -55,9 +55,12 @@ subroutine menu
   integer            :: i,icol,ihalf,iadjust,indexi,ierr
   integer            :: ipicky,ipickx,irender,ivecplot,icontourplot
   integer            :: iamvecprev, ivecplottemp,ichoose
-  character(len=2)   :: ioption
+  integer            :: maxdigits
+  character(len=5)   :: ioption
   character(len=100) :: vecprompt,string
   character(len=20)  :: rprompt
+  character(len=2)   :: fmtstrlen
+  character(len=50)  :: fmtstr1,fmtstr2,fmtstr3
   character(len=*), parameter :: sep="(55('-'))"
   logical            :: iAllowRendering
 
@@ -127,12 +130,17 @@ subroutine menu
      print sep
      ihalf = numplot/2                ! print in two columns
      iadjust = mod(numplot,2)
-     print "(1x,i2,')',1x,a20,1x,i2,')',1x,a20)", &
+     maxdigits = floor(log10(real(maxplot)))+1
+     write(fmtstrlen,"(A1,I1)") "i",maxdigits
+     fmtstr1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+                     //trim(adjustl(fmtstrlen))//",')',1x,a20)"
+     print fmtstr1, &
           (i,transform_label(label(i),itrans(i)), &
           ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
           itrans(ihalf+i+iadjust)),i=1,ihalf)
      if (iadjust.ne.0) then
-        print "(1x,i2,')',1x,a20)", &
+        fmtstr2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20)"
+        print fmtstr2, &
               ihalf + iadjust,transform_label(label(ihalf + iadjust), &
               itrans(ihalf+iadjust))
      endif
@@ -140,7 +148,9 @@ subroutine menu
 !--multiplot
 !
      print sep
-     print "(1x,i2,')',1x,a,'[ ',i2,' ]',5x,a2,') ',a)", &
+     fmtstr3 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a,'[ '," &
+                     //trim(adjustl(fmtstrlen))//",' ]',5x,a2,') ',a)"
+     print fmtstr3, &
            numplot+1,'multiplot ',nyplotmulti,'m','set multiplot '
   else
 !
@@ -167,7 +177,7 @@ subroutine menu
   read(*,"(a)",iostat=ierr) string
   if (ierr < 0) stop 'reached end of input' ! end of input (e.g. in script)
   if (ierr > 0) stop !'error reading input'
-  ioption = string(1:2)
+  ioption = string(1:maxdigits)
 
 !------------------------------------------------------------
 !  if input is an integer and within range, plot data
