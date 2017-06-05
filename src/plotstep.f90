@@ -1021,7 +1021,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      ! initialisation for plots of particle data
      ! copy from main dat array into xplot, yplot
-     ! also set labels and plot limits
+     ! also set labels end plot limits
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
      initx = (iplotx.gt.0 .and. iplotx.le.ndataplots)
@@ -2695,7 +2695,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            endif
            !--limits for rendered quantity
            if (.not.interactivereplot) then
-              if (.not.iadapt) then
+              if (iadapt) then
+                 rendermin = renderminadapt
+                 rendermax = rendermaxadapt
+              else
                  !!--use fixed limits and apply transformations
                  rendermin = lim(irender,1)
                  rendermax = lim(irender,2)
