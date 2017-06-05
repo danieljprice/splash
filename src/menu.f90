@@ -156,6 +156,7 @@ subroutine menu
 !
 !--if no data
 !
+     maxdigits = 1
      print "(/a)",' No data: You may choose from the options below '
   endif
 !
@@ -184,7 +185,7 @@ subroutine menu
 !------------------------------------------------------------
   read(ioption,*,iostat=ierr) ipicky
   if (ierr /= 0) ipicky = -1
-  
+
   !--try to read more integers from the string
   !  if present, use these to set up an "instant multiplot"
   if (ipicky > 0 .and. ipicky < numplot+1 .and. len_trim(string) > 2) then
