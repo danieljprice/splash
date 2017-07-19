@@ -222,11 +222,6 @@ subroutine submenu_particleplots(ichoose)
            if (idustfrac_prev /= idustfrac_plot) then
               !--Modify calculated data for fake dust particles if necessary
               if (ncalc /= 0) then 
-                 calcstring(:) = ' '
-                 calclabel(:) = ' '
-                 calcunitslabel(:) = ' '
-                 firstcall = .true.
-                 ncalc = 0
                  print*,'...recalibrating calculated quantities...'
                  call setup_calculated_quantities(ncalc,quiet=.true.)
                  print*,'...done!'
