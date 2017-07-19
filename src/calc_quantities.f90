@@ -131,6 +131,10 @@ subroutine setup_calculated_quantities(ncalc,quiet)
  else
     print "(a,i2,a)",' setup ',ncalc,' additional quantities'
  endif
+ !
+ !--reset verbose so we can edit the list the next time through
+ !
+ if (present(quiet)) verbose = .true.
 
 end subroutine setup_calculated_quantities
 

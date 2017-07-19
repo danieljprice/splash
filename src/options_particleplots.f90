@@ -119,7 +119,7 @@ subroutine submenu_particleplots(ichoose)
   use settings_data,   only:DataIsBuffered,numplot
   use filenames,       only:nsteps,nstepsinfile,ifileopen
   use geomutils,       only:set_coordlabels
-  use calcquantities,  only:calcstring,calclabel,calcunitslabel,setup_calculated_quantities,firstcall
+  use calcquantities,  only:setup_calculated_quantities
   use asciiutils,      only:enumerate
   implicit none
   integer, intent(in) :: ichoose
