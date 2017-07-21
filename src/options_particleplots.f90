@@ -119,7 +119,7 @@ subroutine submenu_particleplots(ichoose)
   use settings_data,   only:DataIsBuffered,numplot
   use filenames,       only:nsteps,nstepsinfile,ifileopen
   use geomutils,       only:set_coordlabels
-  use calcquantities,  only:calcstring,calclabel,calcunitslabel,setup_calculated_quantities,firstcall
+  use calcquantities,  only:setup_calculated_quantities
   use asciiutils,      only:enumerate
   implicit none
   integer, intent(in) :: ichoose
@@ -222,11 +222,6 @@ subroutine submenu_particleplots(ichoose)
            if (idustfrac_prev /= idustfrac_plot) then
               !--Modify calculated data for fake dust particles if necessary
               if (ncalc /= 0) then 
-                 calcstring(:) = ' '
-                 calclabel(:) = ' '
-                 calcunitslabel(:) = ' '
-                 firstcall = .true.
-                 ncalc = 0
                  print*,'...recalibrating calculated quantities...'
                  call setup_calculated_quantities(ncalc,quiet=.true.)
                  print*,'...done!'
