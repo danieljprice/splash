@@ -32,18 +32,19 @@ module mainmenu
 contains
 
 subroutine menu
-  use filenames,        only:defaultsfile,limitsfile,fileprefix,set_filenames
+  use filenames,        only:defaultsfile,limitsfile,unitsfile,fileprefix,set_filenames
   use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap,is_coord,ix
   use limits,           only:write_limits,lim2,lim,reset_lim2,lim2set
   use options_data,     only:submenu_data
   use settings_data,    only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
-                             buffer_data,ncolumns,icoords,icoordsnew
+                             buffer_data,ncolumns,icoords,icoordsnew,iRescale
   use settings_limits,  only:submenu_limits,iadapt
   use settings_part,    only:submenu_particleplots
   use settings_page,    only:submenu_page,submenu_legend,interactive,nacross,ndown
   use settings_render,  only:submenu_render,iplotcont_nomulti,icolours,double_rendering
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
   use settings_xsecrot, only:submenu_xsecrotate,xsec_nomulti
+  use settings_units,   only:write_unitsfile
   use multiplot
   use prompting,        only:prompt,print_logical
   use transforms,       only:transform_label
@@ -411,6 +412,7 @@ subroutine menu
         endif
         call defaults_write(defaultsfile)
         call write_limits(limitsfile)
+        if (iRescale) call write_unitsfile(unitsfile,ncolumns)
 !------------------------------------------------------------------------
 !+ Slightly obsolete: prints whatever help may be helpful
      case('h','H')
