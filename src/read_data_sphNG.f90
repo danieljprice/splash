@@ -2173,15 +2173,15 @@ subroutine set_labels
   use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,&
                             ndusttypes
   use geometry,        only:labelcoord
-  use settings_units,  only:units,unitzintegration
+  use settings_units,  only:units,unitzintegration,get_nearest_length_unit
   use sphNGread
   use asciiutils,      only:lcase
   use system_commands, only:get_environment
   use system_utils,    only:lenvironment
   implicit none
   integer :: i,j
-  real(doub_prec)   :: uergg
-  character(len=20) :: string
+  real(doub_prec)   :: uergg,unitx
+  character(len=20) :: string,unitlabelx
   character(len=20) :: dustfrac_string,deltav_string
 
   if (ndim.le.0 .or. ndim.gt.3) then
@@ -2361,9 +2361,10 @@ subroutine set_labels
 !   npower = int(log10(udist))
 !   udist = udist/10.**npower
 !   udistAU = udist/1.495979e13
+   call get_nearest_length_unit(udist,unitx,unitlabelx)
    if (ndim.ge.3) then
-      units(1:3) = udist
-      unitslabel(1:3) = ' [cm]'
+      units(1:3) = unitx
+      unitslabel(1:3) = unitlabelx
    endif
 !   do i=1,3
 !      write(unitslabel(i),"('[ 10\u',i2,'\d cm]')") npower
@@ -2372,8 +2373,8 @@ subroutine set_labels
       units(ipmass) = umass
       unitslabel(ipmass) = ' [g]'
    endif
-   units(ih) = udist
-   unitslabel(ih) = ' [cm]'
+   units(ih) = unitx
+   unitslabel(ih) = unitlabelx
    if (ivx.gt.0) then
       units(ivx:ivx+ndimV-1) = udist/utime
       unitslabel(ivx:ivx+ndimV-1) = ' [cm/s]'

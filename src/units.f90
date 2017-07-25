@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -31,6 +31,7 @@ module settings_units
  real, public :: unitzintegration
  real(doub_prec), public :: unit_interp
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
+ public :: get_nearest_length_unit
 
  private
 
@@ -49,6 +50,50 @@ subroutine defaults_set_units
 
  return
 end subroutine defaults_set_units
+
+!
+!--find the nearest 'sensible' length unit
+!
+subroutine get_nearest_length_unit(udist,unit,unitlabel)
+ real(doub_prec),  intent(in)  :: udist
+ real(doub_prec),  intent(out) :: unit
+ character(len=*), intent(out) :: unitlabel
+ integer, parameter :: nu = 7
+ real(doub_prec), parameter :: unit_length(nu) = &
+    (/1.d0,    &
+      1.d5,    &
+      6.96d10, &
+      1.496d13,&
+      3.086d18,&
+      3.086d21,&
+      3.086d24/)
+
+ character(len=*), parameter :: unit_labels(nu) = &
+    (/' [cm]     ',&
+      ' [km]     ',&
+      ' [R_{Sun}]',&
+      ' [au]     ',&
+      ' [pc]     ',&
+      ' [kpc]    ',&
+      ' [Mpc]    '/)
+
+ real(doub_prec) :: err,erri
+ integer         :: i
+
+ err = huge(err)
+ do i = 1,nu
+    ! find nearest unit. Divide by udist means
+    ! we always get the unit "below"
+    erri = abs(udist-unit_length(i))/udist
+    if (erri < err) then
+       unit = udist/unit_length(i)
+       unitlabel = unit_labels(i)
+       err = erri
+    endif
+ enddo
+
+end subroutine get_nearest_length_unit
+
 !
 !--set units
 !
