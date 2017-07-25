@@ -684,7 +684,7 @@ logical function allowrendering(iplotx,iploty,xsec)
 !
  if ((ih.gt.0 .and. ih.le.ndataplots) &
     .and.(irho.gt.0 .and. irho.le.ndataplots) &
-    .and.(icoords.eq.icoordsnew .or. (.not.is_xsec .or. (xsec .and. islengthz))) &
+    .and.(icoords.eq.icoordsnew .or. (.not.is_xsec .or. (is_xsec .and. islengthz))) &
     .and.(itransx.eq.0 .and. itransy.eq.0)) then
 
     allowrendering = .true.
