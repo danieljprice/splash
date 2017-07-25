@@ -304,8 +304,8 @@ end subroutine splitstring
 subroutine print_example_quantities(verbose,ncalc)
  use labels,        only:label,unitslabel,shortlabel,lenlabel,irho,iutherm,iBfirst,&
                          ix,icv,idivB,ih,iradenergy,iamvec,labelvec,idustfrac,&
-                         idustfracsum,idustfrac_plot,ideltav,ivx
- use settings_data, only:ncolumns,ndim,icoordsnew,ndimV,ndusttypes
+                         idustfracsum,ideltav,ivx
+ use settings_data, only:ncolumns,ndim,icoordsnew,ndimV,ndusttypes,idustfrac_plot
  use geometry,      only:labelcoord
  implicit none
  logical :: verbose
@@ -329,7 +329,7 @@ subroutine print_example_quantities(verbose,ncalc)
     endif
  endif
 
- if (idustfrac>0 .and. ndusttypes>1) then
+ if (idustfrac > 0) then
     if (idustfracsum == 0) then
        !--one dust phase
        ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))
@@ -442,8 +442,11 @@ subroutine print_example_quantities(verbose,ncalc)
           do i=1,ndimV
              write(string,"(a)",iostat=ierr) trim(labelvec(ivx))//'_{gas,'//trim(labelcoord(i,icoordsnew))//'} = ' &
                              //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
-                             //' - r_{dust}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
+                             //' - '//trim(shortlabel(label(idustfrac),unitslabel(idustfrac))) &
                              //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
+!                             //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
+!                             //' - r_{dust}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
+!                             //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
              if (prefill) then
                 ncalc = ncalc + 1
                 !if (i.eq.1) labelvec(ncalc) = 'v_{gas}'
@@ -457,8 +460,11 @@ subroutine print_example_quantities(verbose,ncalc)
           do i=1,ndimV
              write(string,"(a)",iostat=ierr) trim(labelvec(ivx))//'_{dust,'//trim(labelcoord(i,icoordsnew))//'} = ' &
                              //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
-                             //' + r_{gas}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
-                             //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
+                             //' + (1 - '//trim(shortlabel(label(idustfrac),unitslabel(idustfrac))) &
+                             //')*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
+!                             //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
+!                             //' + r_{gas}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
+!                             //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
              if (prefill) then
                 ncalc = ncalc + 1
                 !if (i.eq.1) labelvec(ncalc) = 'v_{dust}'
@@ -710,10 +716,11 @@ end subroutine get_calc_data_dependencies
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring, &
-                           irho,idustfrac_plot,idustfracsum
+                           irho,idustfracsum
   use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol,iamtype
   use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
-                           icoords,icoordsnew,ipartialread,itracktype,itrackoffset,ndusttypes
+                           icoords,icoordsnew,ipartialread,itracktype,itrackoffset,ndusttypes, &
+                           idustfrac_plot
   use mem_allocation, only:alloc
   use settings_units, only:units
   use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf

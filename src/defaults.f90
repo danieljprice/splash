@@ -218,7 +218,7 @@ end subroutine defaults_write
 subroutine defaults_read(filename)
  use filenames,          only:rootname,maxfile
  use multiplot,          only:multi
- use settings_data,      only:dataopts
+ use settings_data,      only:dataopts,idustfrac_plot
  use settings_part,      only:plotopts
  use settings_page,      only:pageopts
  use settings_render,    only:renderopts
@@ -307,7 +307,7 @@ subroutine defaults_read(filename)
 
 88 continue
  print "(a)",' *** error opening defaults file '//trim(filename)//': using default settings'
-
+ 
  return
 end subroutine defaults_read
 

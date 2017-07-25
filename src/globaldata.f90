@@ -122,6 +122,8 @@ module settings_data
  integer :: ndataplots
  integer :: ndim, ndimv
  integer :: ndusttypes
+ integer :: idustfrac_plot = 0
+ integer :: ideltav_plot = 0
  integer :: icoords,icoordsnew,iformat,ntypes,iexact
  integer :: istartatstep,iendatstep,nfreq
  integer :: itracktype,itrackoffset,iverbose
@@ -138,7 +140,8 @@ module settings_data
  logical, dimension(maxparttypes) :: UseTypeInRenderings
  real, dimension(3) :: xorigin
 
- namelist /dataopts/ buffer_data,iCalcQuantities,iRescale,xorigin,itracktype,itrackoffset
+ namelist /dataopts/ buffer_data,iCalcQuantities,iRescale,xorigin, &
+                     itracktype,itrackoffset,idustfrac_plot,ideltav_plot
 
  public
 
