@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -28,7 +28,7 @@ module settings_page
  use settings_limits, only:iadapt,iadaptcoords,adjustlimitstodevice,xminoffset_track,xmaxoffset_track
  use labels,          only:lenlabel
  implicit none
- integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel
+ integer :: iaxis,nacross,ndown,ipapersize,nstepsperpage,linewidth,iscalepanel,linepalette
  integer :: iPlotLegendOnlyOnPanel,modlinestyle,modcolour,maxlinestyle,maxcolour
  integer :: iPageColours,ipapersizeunits
  logical :: iColourEachStep,iChangeStyles,tile,interactive,nomenu
@@ -42,6 +42,8 @@ module settings_page
  character(len=lenlabel) :: legendtext, scaletext
  character(len=60)       :: device
  character(len=lenlabel) :: labelyalt
+ integer, parameter :: maxc = 16
+ real    :: colourpalette(3,maxc)
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &
@@ -51,7 +53,7 @@ module settings_page
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
    usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder,ipapersizeunits,&
    adjustlimitstodevice,alphalegend,yscalealt,labelyalt,xminoffset_track,xmaxoffset_track, &
-   xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
+   xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin,linepalette
 
 contains
 
@@ -93,6 +95,7 @@ subroutine defaults_set_page
   iPageColours = 0
   charheight = 1.0    ! character height
   linewidth = 0       ! line width
+  linepalette = 0
 
   iPlotScale = .false.
   hposscale = 0.5
@@ -115,6 +118,23 @@ subroutine defaults_set_page
   xmaxpagemargin = 0.
   yminpagemargin = 0.
   ymaxpagemargin = 0.
+
+  colourpalette = reshape((/0.,0.,0., &
+                         0.933,0.173,0.173, &
+                         0.18,0.545,0.341,   &
+                         0., 0., 1.,         &
+                         0.192, 0.31, 0.31,  &
+                         0.58, 0., 0.827,    &
+                         0.0, 0.825, 0.825,  &
+                         1., 0.31, 0.,       &
+                         0.373, 0.62, 0.627, &
+                         0.933, 0.796, 0.678,&
+                         0.0, 1.0, 0.5,      &
+                         0.0, 0.5, 1.0,      &
+                         0.5, 0.0, 0.0,      &
+                         1.0, 0.0, 0.5,      &
+                         0.333, 0.333, 0.333,&
+                         0.667, 0.667, 0.667/),shape(colourpalette))
 
   return
 end subroutine defaults_set_page
@@ -143,11 +163,14 @@ end subroutine defaults_set_page_ev
 subroutine submenu_page(ichoose)
  use params,      only:maxplot
  use prompting,   only:prompt,print_logical
- use pagecolours, only:pagecolourscheme,colour_fore,colour_back,maxpagecolours
- use plotlib,     only:plotlib_supports_alpha,plotlib_maxlinecolour,plotlib_maxlinestyle,plotlib_is_pgplot
+ use pagecolours, only:pagecolourscheme,colour_fore,colour_back,maxpagecolours,&
+                       write_coloursfile,read_coloursfile
+ use plotlib,     only:plotlib_supports_alpha,plotlib_maxlinecolour,plotlib_maxlinestyle,&
+                       plotlib_is_pgplot,plotlib_maxpalette
+ use filenames,   only:coloursfile
  implicit none
  integer, intent(in) :: ichoose
- integer             :: iaction,i,iunitsprev,ierr
+ integer             :: iaction,i,iunitsprev,ierr,nc
  real                :: papersizey,mnraslength
  character(len=15)   :: paperfmtstr
  character(len=3)    :: string
@@ -174,7 +197,7 @@ subroutine submenu_page(ichoose)
           "' 6) set character height                (',f4.1,')',/,"// &
           "' 7) adjust line width                   (',i2, ')',/,"// &
           "' 8) adjust page margins                 ( ',f4.1,' )',/,"// &
-          "' 9) set foreground/background colours   ( ',a,' )')", &
+          "' 9) set page and line colours           ( ',a,' )')", &
           nstepsperpage,iaxis,nacross,ndown,print_logical(tile), &
           trim(print_logical(usesquarexy)),charheight,linewidth,&
           xminpagemargin, &
@@ -471,6 +494,29 @@ subroutine submenu_page(ichoose)
         call prompt('Enter opacity for overlaid text and annotation ',alphalegend,0.0,1.0)
      endif
 
+     print "(9(/,a))",&
+       '-1: custom', &
+       ' 0: giza default line palette  ', &
+       ' 1: default PGPLOT line palette', &
+       ' 2: modified Tricco palette', &
+       ' 3: cheer up emo kid / grandma''s pillow', &
+       ' 4: outback desert moonscape',&
+       ' 5: colourblind safe line palette', &
+       ' 6: optimum line palette', &
+       ' 7: graph-a-licious'
+     call prompt('Enter line palette',linepalette,-1,plotlib_maxpalette)
+     if (linepalette < 0) then
+        call read_coloursfile(coloursfile,maxc,colourpalette,nc,ierr)
+        if (ierr /= 0 .or. nc <= 0) then
+           print*,' writing colours to file '//trim(coloursfile)
+           call write_coloursfile(trim(coloursfile),maxc,colourpalette)
+        else
+           print*,' colours written to file '//trim(coloursfile)
+        endif
+        print*,' edit this file to change the line palette'
+        print*,' ** press any key to continue **'
+        read*
+     endif
      return
   end select
 

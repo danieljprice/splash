@@ -90,9 +90,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                                icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings, &
                                ndusttypes,fakedust
   use settings_page,      only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
-                               iPageColours,iadapt,iadaptcoords,linewidth,device,nomenu,&
-                               interactive,ipapersizeunits,usecolumnorder
-  use pagecolours,        only:set_pagecolours
+                               iPageColours,iadapt,iadaptcoords,linewidth,linepalette,device,nomenu,&
+                               interactive,ipapersizeunits,usecolumnorder,colourpalette,maxc
+  use pagecolours,        only:set_pagecolours,set_linecolours
   use settings_part,      only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact,iplotpartoftype
   use settings_render,    only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
   use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec,irotate, &
@@ -105,6 +105,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                                plot_close,plot_qinf
   use system_utils,       only:renvironment
   use calcquantities,     only:get_calc_data_dependencies
+  use filenames,          only:coloursfile
   implicit none
   real, parameter     :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
@@ -596,6 +597,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      if (icoordplot) required(ih) = .true.
   endif
 
+  ! set line palette
+  call set_linecolours(linepalette,coloursfile,maxc,colourpalette)
   !!--set background/foreground colours
   call set_pagecolours(iPageColours)
 

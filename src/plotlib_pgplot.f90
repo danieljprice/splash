@@ -38,6 +38,7 @@ module plotlib
   integer, parameter :: plotlib_maxlinestyle = 5
   integer, parameter :: plotlib_maxfillstyle = 5
   integer, parameter :: plotlib_maxlinecolour = 16
+  integer, parameter :: plotlib_maxpalette = 7
   integer, parameter :: plotlib_extend_pad = 1     ! not implemented in PGPLOT
   integer, parameter :: plotlib_extend_repeat = 2  ! not implemented in PGPLOT
   integer, parameter :: plotlib_extend_reflect = 3 ! not implemented in PGPLOT
@@ -584,6 +585,14 @@ subroutine plot_rgb_from_table(frac,r,g,b)
   !--rgb from table not implemented in PGPLOT
 
 end subroutine plot_rgb_from_table
+
+subroutine plot_set_palette(lp)
+  implicit none
+  integer, intent(in) :: lp
+
+  !--set line palette not implemented in PGPLOT
+
+end subroutine plot_set_palette
 
 logical function plot_qcur()
   implicit none

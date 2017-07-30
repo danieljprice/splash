@@ -34,7 +34,6 @@ contains
 !  query function for the colour scheme
 !----------------------------------------------------------
 function pagecolourscheme(ischeme,short)
- implicit none
  integer, intent(in)            :: ischeme
  character(len=21)              :: pagecolourscheme
  logical, intent(in), optional  :: short
@@ -65,7 +64,6 @@ end function pagecolourscheme
 !----------------------------------------------------------
 subroutine set_pagecolours(ischeme)
  use plotlib, only:plot_scr
- implicit none
  integer, intent(in) :: ischeme
 
  select case(ischeme)
@@ -83,7 +81,6 @@ end subroutine set_pagecolours
 !  query function for the name of the foreground colour
 !----------------------------------------------------------
 function colour_fore(ischeme)
- implicit none
  integer, intent(in) :: ischeme
  character(len=5)    :: colour_fore
 
@@ -102,7 +99,6 @@ end function colour_fore
 !  query function for the name of the background colour
 !----------------------------------------------------------
 function colour_back(ischeme)
- implicit none
  integer, intent(in) :: ischeme
  character(len=5)    :: colour_back
 
@@ -116,5 +112,67 @@ function colour_back(ischeme)
  end select
 
 end function colour_back
+
+!----------------------------------------------------------
+!  write line colours to file
+!----------------------------------------------------------
+subroutine write_coloursfile(filename,nc,linecolours)
+ character(len=*), intent(in) :: filename
+ integer, intent(in) :: nc
+ real,    intent(in) :: linecolours(3,nc)
+ integer :: i,ierr
+ integer, parameter :: lu = 37
+ 
+ open(unit=lu,file=trim(filename),status='replace',iostat=ierr)
+ do i=1,nc
+    write(lu,"(3(f8.3,1x))") linecolours(:,i)
+ enddo
+ close(lu)
+
+end subroutine write_coloursfile
+
+!----------------------------------------------------------
+!  read line colours from file
+!----------------------------------------------------------
+subroutine read_coloursfile(filename,maxc,linecolours,nc,ierr)
+ character(len=*), intent(in) :: filename
+ integer, intent(in)  :: maxc
+ real,    intent(out) :: linecolours(3,maxc)
+ integer, intent(out) :: nc,ierr
+ integer :: i
+ integer, parameter :: lu = 38
+ 
+ ierr = 0
+ nc = 0
+ open(unit=lu,file=trim(filename),status='old',iostat=ierr)
+ if (ierr /= 0) return
+ do i=1,maxc
+    read(lu,*,iostat=ierr) linecolours(:,i)
+    if (ierr==0) nc = nc + 1
+ enddo
+ close(lu)
+ 
+end subroutine read_coloursfile
+
+!----------------------------------------------------------
+!  read line colours from file
+!----------------------------------------------------------
+subroutine set_linecolours(linepalette,filename,maxc,linecolours)
+ use plotlib, only:plot_scr,plot_set_palette,plotlib_maxpalette
+ character(len=*), intent(in)  :: filename
+ integer,          intent(in)  :: linepalette,maxc
+ real,             intent(out) :: linecolours(3,maxc)
+ integer :: i,nc,ierr
+
+ if (linepalette > 0 .and. linepalette <= plotlib_maxpalette) then
+    call plot_set_palette(linepalette)
+ elseif (linepalette < 0) then 
+    call read_coloursfile(filename,maxc,linecolours,nc,ierr)
+    do i=1,nc
+       call plot_scr(i+1,linecolours(1,i),linecolours(2,i),linecolours(3,i))
+    enddo
+ endif
+ 
+end subroutine set_linecolours
 
 end module pagecolours

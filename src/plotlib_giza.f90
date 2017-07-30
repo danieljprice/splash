@@ -74,6 +74,7 @@ module plotlib
       plot_sci=>giza_set_colour_index, &
       plot_scir=>giza_set_colour_index_range, &
       plot_scr=>giza_set_colour_representation, &
+      plot_set_palette=>giza_set_colour_palette, &
       plot_sfs=>giza_set_fill, &
       plot_slc=>giza_set_line_cap, &
       plot_sls=>giza_set_line_style,&
@@ -121,6 +122,7 @@ module plotlib
   integer, parameter :: plotlib_maxlinestyle = 6
   integer, parameter :: plotlib_maxfillstyle = 5
   integer, parameter :: plotlib_maxlinecolour = 16
+  integer, parameter :: plotlib_maxpalette = 7
   integer, parameter :: plotlib_extend_pad = giza_extend_pad
   integer, parameter :: plotlib_extend_repeat = giza_extend_repeat
   integer, parameter :: plotlib_extend_reflect = giza_extend_reflect

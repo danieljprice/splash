@@ -288,7 +288,7 @@ end subroutine get_nextstep
 subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
   use particle_data, only:icolourme
   use settings_part, only:linecolourthisstep,linestylethisstep,imarktype
-  use settings_page, only:maxlinestyle,modlinestyle,maxcolour,modcolour
+  use settings_page, only:maxlinestyle,modlinestyle,maxcolour,modcolour,linepalette
   use plotlib,       only:plotlib_maxlinestyle,plotlib_maxlinecolour
   implicit none
   integer, intent(in) :: istep
@@ -305,7 +305,14 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
         endif
         icolour = mod(icolour-1,min(maxcolour,plotlib_maxlinecolour)) + 1
         icolourme = icolour
-        linecolourthisstep = icolour
+        if (linepalette < 0) then
+           ! for custom line colours do not use foreground/background colours - allow these to be changed
+           icolour = icolour + 1
+           icolourme = icolour
+           linecolourthisstep = icolour
+        else
+           linecolourthisstep = icolour
+        endif
      else
         print "(a)",'***error: array not allocated in colour_timestep***'
      endif
