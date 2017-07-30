@@ -284,12 +284,11 @@ end subroutine shift_velocities
 !------------------------------------------------------
 subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  use params,         only:int1
- use labels,         only:idustfrac,idustfracsum,idustfrac_plot,ideltav_plot, &
+ use labels,         only:idustfrac,idustfracsum, &
                           irho,ix,ih,ipmass,ivx,ideltav,ideltavsum
  use mem_allocation, only:alloc
  use particle_data,  only:maxpart,maxstep,maxcol
- use settings_data,  only:iverbose,required
- use settings_data,  only:ndusttypes
+ use settings_data,  only:iverbose,required,ndusttypes,idustfrac_plot,ideltav_plot
  integer,                       intent(in)    :: istart,iend,ndim,ndimV
  real,    dimension(:,:,:),     intent(inout), allocatable :: dat
  integer, dimension(:,:),       intent(inout), allocatable :: npartoftype

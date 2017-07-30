@@ -105,10 +105,10 @@ end subroutine defaults_set_part_ev
 subroutine submenu_particleplots(ichoose)
   use exact,           only:options_exact,submenu_exact
   use labels,          only:labeltype,ih,label,idustfrac,idustfracsum, &
-                            idustfrac_plot,ideltav_plot,ideltavsum
+                            ideltavsum
   use limits,          only:lim
   use settings_data,   only:icoords,ntypes,ndim,ndimV,UseTypeInRenderings, &
-                            ndataplots,ndusttypes,ncalc
+                            ndataplots,ndusttypes,idustfrac_plot,ideltav_plot,ncalc
   use settings_render, only:iplotcont_nomulti
   use particle_data,   only:npartoftype,iamtype
   use prompting,       only:prompt,print_logical
@@ -208,7 +208,7 @@ subroutine submenu_particleplots(ichoose)
         endif
         if (trim(labeltype(itype))=='dust'.and. iplotpartoftype(itype) .and. ndusttypes>1) then
            !--if idustfrac_plot hasn't been defined...
-           if (idustfrac_plot==0) then
+           if (idustfrac_plot == 0 ) then
               idustfrac_plot = idustfracsum
            endif
            !--save to compare after user input

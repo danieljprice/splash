@@ -79,8 +79,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use colours,            only:colour_set
   use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens, &
                                is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,ivx,  &
-                               idustfrac,idustfracsum,idustfrac_plot,ideltav,    &
-                               ideltavsum,ideltav_plot,get_z_dir
+                               idustfrac,idustfracsum,ideltav,    &
+                               ideltavsum,get_z_dir
   use limits,             only:lim,rangeset
   use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
                                nyplotmulti,x_secmulti,ivecplotmulti
@@ -88,7 +88,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use titles,             only:read_titles,read_steplegend
   use settings_data,      only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required,   &
                                icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings, &
-                               ndusttypes,fakedust
+                               ndusttypes,idustfrac_plot,ideltav_plot,fakedust
   use settings_page,      only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                                iPageColours,iadapt,iadaptcoords,linewidth,linepalette,device,nomenu,&
                                interactive,ipapersizeunits,usecolumnorder,colourpalette,maxc
