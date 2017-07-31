@@ -2940,7 +2940,7 @@ contains
 
     !--leave space for colour bar if necessary (at end of row only on tiled plots)
     if ((tile_plots .and. iAllowspaceforcolourbar).or.(.not.tile_plots.and.iPlotColourBar)) then
-       call get_colourbarmargins(iColourBarStyle,xmaxmargin,yminmargin,barwidth)
+       call get_colourbarmargins(iColourBarStyle,xminmargin,xmaxmargin,yminmargin,ymaxmargin,barwidth)
     else
        barwidth = 0.
     endif
