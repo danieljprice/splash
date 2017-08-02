@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -37,7 +37,8 @@ module asciiutils
  public :: string_replace, string_delete, nheaderlines, string_sub
  public :: ucase,lcase
  public :: get_line_containing
- public :: enumerate
+ public :: enumerate,isdigit,split
+ public :: get_column_labels
 
  private
 
@@ -598,7 +599,22 @@ end function lcase
 
 !---------------------------------------------------------------------------
 !
-! Converts a string to lower case
+! indicate if a character is a digit (number) or not
+!
+!---------------------------------------------------------------------------
+logical function isdigit(string)
+ character(len=1), intent(in) :: string
+ integer :: ia
+
+ isdigit = .false.
+ ia = iachar(string)
+ if (ia >= iachar('0').and.ia <= iachar('9')) isdigit = .true.
+
+end function isdigit
+
+!---------------------------------------------------------------------------
+!
+! search a file for the line containing a particular string
 !
 !---------------------------------------------------------------------------
 integer function get_line_containing(filename,string)
@@ -640,5 +656,94 @@ function enumerate(i,stringarr,default) result(string)
  endif
 
 end function enumerate
+
+!---------------------------------------------------------------------------
+!
+! Split a string into substrings based on a delimiter
+!
+!---------------------------------------------------------------------------
+subroutine split(string,delim,stringarr,nsplit)
+ character(len=*), intent(in)  :: string
+ character(len=*), intent(in)  :: delim
+ character(len=*), intent(out), dimension(:) :: stringarr
+ integer,          intent(out) :: nsplit
+ integer :: i,j
+
+ i = 1
+ nsplit = 0
+ do while(nsplit < size(stringarr) .and. i < len(string))
+    ! find next non-blank character
+    do while (string(i:i)==' ')
+       i = i + 1
+       if (i > len(string)) exit
+    enddo
+    i = i - 1
+
+    ! look for next occurrence of delimiter
+    j = index(string(i:),delim)
+    if (j==0) j = len(string(i:))
+    nsplit = nsplit + 1
+    if (nsplit <= size(stringarr)) then
+       stringarr(nsplit) = string(i:min(i+j,len(string)))
+    endif
+    i = i + j + 1
+ enddo
+
+end subroutine split
+
+!---------------------------------------------------------------------------
+!
+! extract a list of labels from the header line of a file
+!
+!---------------------------------------------------------------------------
+subroutine get_column_labels(line,ncolumns,nlabels,labels)
+ character(len=*), intent(in)  :: line
+ integer,          intent(in)  :: ncolumns
+ integer,          intent(out) :: nlabels
+ character(len=*), dimension(ncolumns), intent(out) :: labels
+ integer :: i1,i2,i
+ character(len=1) :: leadingchar
+
+ nlabels = 0
+ i1 = 1
+ !
+ ! strip leading comment character ('#')
+ !
+ leadingchar = trim(adjustl(line))
+ if (leadingchar=='#') then
+    i1 = index(line,'#') + 1
+ endif
+ i2 = i1
+
+ if (index(line,']') > 0) then
+ !
+ ! format style 1: # [ mylabel1 ] [ mylabel2 ] [ mylabel3 ]
+ !
+    call split(line(i1:),']',labels,nlabels)
+ else
+ !
+ ! format style 2: #     mylabel1     mylabel2     mylabel3
+ !
+    call split(line(i1:),'  ',labels,nlabels)
+ endif
+ !
+ ! clean up
+ !
+ nlabels = min(nlabels,ncolumns)
+ do i=1,nlabels
+    ! delete brackets
+    call string_delete(labels(i),'[')
+    call string_delete(labels(i),']')
+    labels(i) = trim(adjustl(labels(i)))
+    ! delete leading numbers
+    i1 = 1
+    do while (isdigit(labels(i)(i1:i1)))
+       labels(i)(i1:i1) = ' '
+       i1 = i1 + 1
+    enddo
+    labels(i) = trim(adjustl(labels(i)))
+ enddo
+
+end subroutine get_column_labels
 
 end module asciiutils

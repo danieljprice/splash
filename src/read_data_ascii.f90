@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -74,21 +74,22 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use params
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,ntypes
   use mem_allocation, only:alloc
-  use asciiutils,     only:get_ncolumns
+  use asciiutils,     only:get_ncolumns,get_column_labels,isdigit
   use system_utils,   only:ienvironment,renvironment
   use asciiread,      only:icoltype
-  use labels,         only:labeltype,print_types
+  use labels,         only:lenlabel,labeltype,print_types,label
   implicit none
   integer, intent(in)          :: indexstart,ipos
   integer, intent(out)         :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr,iheader_time,iheader_gamma
-  integer :: nprint,npart_max,nstep_max,icol,nheaderlines,nheaderenv,itype
+  integer :: nprint,npart_max,nstep_max,icol,nheaderlines,nheaderenv,itype,nlabels
   integer :: noftype(maxparttypes),iverbose_was
-  logical :: iexist,timeset,gammaset
+  logical :: iexist,timeset,gammaset,got_labels
   real    :: dummyreal
   character(len=len(rootname)+4) :: dumpfile
-  character(len=40)  :: line
+  character(len=1024)  :: line
+  character(len=lenlabel), dimension(size(label)) :: tmplabel
   integer, parameter :: notset = -66
 
   nstepsread = 0
@@ -187,6 +188,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   endif
   iheader_time  = ienvironment('ASPLASH_HEADERLINE_TIME',errval=notset)
   iheader_gamma = ienvironment('ASPLASH_HEADERLINE_GAMMA',errval=notset)
+  got_labels = .false.
 !
 !--read header lines, try to use it to set time
 !
@@ -196,6 +198,13 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      !--read header lines as character strings
      !  so that blank lines are counted in nheaderlines
      read(iunit,"(a)",iostat=ierr) line
+     if (i.eq.1 .or. .not.got_labels) then
+        call get_column_labels(line,ncolumns,nlabels,tmplabel)
+        if (nlabels==ncolumns .and. .not.(isdigit(tmplabel(1)(1:1)) .or. tmplabel(1)(1:1)=='.')) then
+           label(1:ncolumns) = tmplabel(1:ncolumns)
+           got_labels = .true.
+        endif
+     endif
      read(line,*,iostat=ierr) dummyreal
 
      if (i.eq.iheader_time .and. .not.timeset) then
@@ -351,66 +360,6 @@ subroutine set_labels
   else
      overcols: do i=1,ncolumns
         read(51,"(a)",iostat=ierr) label(i)
-!
-!--compare all strings in lower case, trimmed and with no preceding spaces
-!
-        labeli = trim(adjustl(lcase(label(i))))
-!
-!--guess positions of various quantities from the column labels
-!
-        if (ndim.le.0 .and. (labeli(1:1).eq.'x' .or. labeli(1:1).eq.'r')) then
-           ndim = 1
-           ix(1) = i
-        endif
-        if (ndim.eq.1 .and. i.eq.ix(1)+1 .and. (labeli(1:1).eq.'y' .or. labeli(1:1).eq.'z')) then
-           ndim = 2
-           ix(2) = i
-        endif
-        if (ndim.eq.2 .and. i.eq.ix(2)+1 .and. labeli(1:1).eq.'z') then
-           ndim = 3
-           ix(3) = i
-        endif
-        if (labeli(1:3).eq.'den' .or. index(labeli,'rho').ne.0 .or. labeli(1:3).eq.'\gr' .or. &
-            (index(labeli,'density').ne.0 .and. irho==0)) then
-           irho = i
-        elseif (labeli(1:5).eq.'pmass' .or. labeli(1:13).eq.'particle mass' &
-                .or. index(labeli,'mass').ne.0) then
-           ipmass = i
-        elseif (ipmass.eq.0 .and. trim(labeli).eq.'m') then
-           ipmass = i
-        !--use first column labelled h as smoothing length
-        elseif (ih.eq.0 .and. (labeli(1:1).eq.'h' &
-                .or. labeli(1:6).eq.'smooth')) then
-           ih = i
-        elseif (trim(labeli).eq.'u'.or.labeli(1:6).eq.'utherm' &
-            .or.(index(labeli,'internal energy').ne.0 .and. iutherm==0)) then
-           iutherm = i
-        elseif (labeli(1:2).eq.'pr' .or. trim(labeli).eq.'p' .or. &
-               (index(labeli,'pressure').ne.0 .and. ipr==0)) then
-           ipr = i
-        elseif (ivx.eq.0 .and. labeli(1:1).eq.'v') then
-           ivx = i
-           ndimV = 1
-        elseif (icoltype==0 .and. index(labeli,'type').ne.0) then
-           icoltype = i
-        endif
-        !--set ndimV as number of columns with v as label
-        if (ivx.gt.0 .and. i.gt.ivx .and. i.le.ivx+2) then
-           if (labeli(1:1).eq.'v') ndimV = i - ivx + 1
-        endif
-        if (iBfirst.eq.0 .and. (labeli(1:2).eq.'bx')) then
-           iBfirst = i
-        endif
-        !--set ndimV as number of columns with v as label
-        if (iBfirst.gt.0 .and. i.gt.iBfirst .and. i.le.iBfirst+2) then
-           if (labeli(1:1).eq.'b') then
-              ndimVtemp = i - iBfirst + 1
-              if (ndimV.gt.0 .and. ndimVtemp.gt.ndimV) then
-                 if (iverbose > 0) print "(a)",' WARNING: possible confusion with vector dimensions'
-                 ndimV = ndimVtemp
-              endif
-           endif
-        endif
         if (ierr < 0) then
            if (iverbose > 0) print "(a,i3)",' end of file in columns file: read to column ',i-1
            exit overcols
@@ -421,6 +370,69 @@ subroutine set_labels
      enddo overcols
      close(unit=51)
   endif
+  
+  do i=1,ncolumns
+!
+!--compare all strings in lower case, trimmed and with no preceding spaces
+!
+     labeli = trim(adjustl(lcase(label(i))))
+!
+!--guess positions of various quantities from the column labels
+!
+     if (ndim.le.0 .and. (labeli(1:1).eq.'x' .or. labeli(1:1).eq.'r')) then
+        ndim = 1
+        ix(1) = i
+     endif
+     if (ndim.eq.1 .and. i.eq.ix(1)+1 .and. (labeli(1:1).eq.'y' .or. labeli(1:1).eq.'z')) then
+        ndim = 2
+        ix(2) = i
+     endif
+     if (ndim.eq.2 .and. i.eq.ix(2)+1 .and. labeli(1:1).eq.'z') then
+        ndim = 3
+        ix(3) = i
+     endif
+     if (labeli(1:3).eq.'den' .or. index(labeli,'rho').ne.0 .or. labeli(1:3).eq.'\gr' .or. &
+         (index(labeli,'density').ne.0 .and. irho==0)) then
+        irho = i
+     elseif (labeli(1:5).eq.'pmass' .or. labeli(1:13).eq.'particle mass' &
+             .or. index(labeli,'mass').ne.0) then
+        ipmass = i
+     elseif (ipmass.eq.0 .and. trim(labeli).eq.'m') then
+        ipmass = i
+     !--use first column labelled h as smoothing length
+     elseif (ih.eq.0 .and. (labeli(1:1).eq.'h' &
+             .or. labeli(1:6).eq.'smooth')) then
+        ih = i
+     elseif (trim(labeli).eq.'u'.or.labeli(1:6).eq.'utherm' &
+         .or.(index(labeli,'internal energy').ne.0 .and. iutherm==0)) then
+        iutherm = i
+     elseif (labeli(1:2).eq.'pr' .or. trim(labeli).eq.'p' .or. &
+            (index(labeli,'pressure').ne.0 .and. ipr==0)) then
+        ipr = i
+     elseif (ivx.eq.0 .and. labeli(1:1).eq.'v') then
+        ivx = i
+        ndimV = 1
+     elseif (icoltype==0 .and. index(labeli,'type').ne.0) then
+        icoltype = i
+     endif
+     !--set ndimV as number of columns with v as label
+     if (ivx.gt.0 .and. i.gt.ivx .and. i.le.ivx+2) then
+        if (labeli(1:1).eq.'v') ndimV = i - ivx + 1
+     endif
+     if (iBfirst.eq.0 .and. (labeli(1:2).eq.'bx')) then
+        iBfirst = i
+     endif
+     !--set ndimV as number of columns with v as label
+     if (iBfirst.gt.0 .and. i.gt.iBfirst .and. i.le.iBfirst+2) then
+        if (labeli(1:1).eq.'b') then
+           ndimVtemp = i - iBfirst + 1
+           if (ndimV.gt.0 .and. ndimVtemp.gt.ndimV) then
+              if (iverbose > 0) print "(a)",' WARNING: possible confusion with vector dimensions'
+              ndimV = ndimVtemp
+           endif
+        endif
+     endif
+  enddo
 
   if (ndim.lt.1) ndimV = 0
   if (iverbose > 0) then
@@ -470,7 +482,6 @@ subroutine set_labels
   !ntypes = 1 !!maxparttypes
   labeltype(1) = 'gas'
   UseTypeInRenderings(1) = .true.
-
 
 !-----------------------------------------------------------
 
