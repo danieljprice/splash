@@ -492,11 +492,8 @@ subroutine plot_second_y_axis(yopts,just,iaxis,itransy,yscale,ylabeloffset,label
  if (itransy.gt.0) call transform(yminalt,ymaxalt,itransy)
  
  !--set plot window to new scaled y axis
- if (just.eq.1) then
-    call plot_wnad(xmin,xmax,yminalt,ymaxalt)
- else
-    call plot_swin(xmin,xmax,yminalt,ymaxalt)
- endif
+ call plot_swin(xmin,xmax,yminalt,ymaxalt)
+
  !--draw axes and label on right hand side of box
  if (iaxis.eq.3) then
     call plot_box(' ',0.0,0,'1MC'//trim(yoptsi),0.0,0) 
