@@ -28,7 +28,7 @@
 module shapes
  implicit none
  integer, parameter, private :: maxshapes = 32
- integer, parameter, private :: maxshapetype = 7
+ integer, parameter, private :: maxshapetype = 8
  integer :: nshapes
  integer, parameter, private :: lentext = 120
 
@@ -57,7 +57,8 @@ module shapes
       'circle   ', &
       'line     ', &
       'text     ', &
-      'f(x)     '/)
+      'f(x)     ', &
+      'marker   '/)
  namelist /shapeopts/ nshapes,shape
 
  integer, parameter, private :: maxunits = 2
@@ -73,7 +74,7 @@ module shapes
  procedure(add_shape), pointer, private :: addshape => null()
  procedure(delete_shape), pointer, private :: delshape => null()
 
- real, parameter, private :: pi = 3.1415926536
+ real, parameter, private :: pi = 4.*atan(1.)
 
 contains
 !-----------------------------------------------------------------
@@ -211,6 +212,9 @@ subroutine print_shapeinfo(inum,itype,shapein)
        print*
     endif
     print "(10x,a)",'/   \_/     '
+ case(8)
+    write(*,fmtstring,advance='no') inum,' (x)  '//labelshapetype(itype)
+    print "(a)"
  case default
     print "(a)"
     write(*,fmtstring,advance='no') inum,'   '//labelshapetype(itype)
@@ -327,6 +331,11 @@ subroutine add_shape(istart,iend,nshape)
              cycle over_shapes
           endif
           poslabel = ' starting'
+       case(8)
+           print "(/,' Marker options (for all from -8->31, see plot library userguide):',12(/,i2,') ',a))", &
+                      0,'square',1,'.',2,'+',3,'*',4,'o',5,'x',12,'5-pointed star',17,'bold circle',-8,'large bold circle'
+          call prompt('Enter marker type ',shape(ishape)%ifillstyle)
+          poslabel = ''
        end select
        if (itype.ne.7 .and. itype.ne.2) then
           call prompt('enter'//trim(poslabel)//' x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)
@@ -336,11 +345,13 @@ subroutine add_shape(istart,iend,nshape)
           call prompt('enter fill style (1=solid,2=outline,3=hatch,4=crosshatch) for '// &
                       trim(labelshapetype(itype)),shape(ishape)%ifillstyle,0,plotlib_maxfillstyle)
        endif
-       if (itype.ne.6) then
+       if (itype.ne.6 .and. itype.ne.8) then
           call prompt('enter line style (1=solid,2=dash,3=dotdash,4=dot,5=dashdot) for '// &
                       trim(labelshapetype(itype)),shape(ishape)%linestyle,0,plotlib_maxlinestyle)
        endif
-       if (itype.ne.6) then
+       if (itype.eq.6 .or. itype.eq.8) then
+          call prompt('enter character height for '//trim(labelshapetype(itype)),shape(ishape)%xlen,0.,10.)
+       else
           call prompt('enter line width for '//trim(labelshapetype(itype)),shape(ishape)%linewidth,0)
        endif
        call prompt('enter '//trim(labelshapetype(itype))//' colour (0=background, 1=foreground, 2-16=plot lib colour indices)', &
@@ -410,14 +421,14 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
  use asciiutils,    only:string_replace
  use plotlib, only:plot_qci,plot_qls,plot_qlw,plot_qfs,plot_qwin,plot_sci,plot_sfs,plot_slw, &
       plot_sci,plot_rect,plot_sls,plot_line,plot_arro,plot_circ,plot_ptxt,plot_numb,&
-      plotlib_supports_alpha,plot_set_opacity
+      plotlib_supports_alpha,plot_set_opacity,plot_pt1,plot_sch,plot_qch
  implicit none
  integer, intent(in) :: ipanel,irow,icolumn,itransx,itransy
  real,    intent(in) :: time
  integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle
  integer :: i,j,ierr,iplotonthispanel,ndec,nc
  integer, parameter :: maxfuncpts = 1000
- real :: xmin,xmax,ymin,ymax,dxplot,dyplot
+ real :: xmin,xmax,ymin,ymax,dxplot,dyplot,charheightprev
  real :: xpos,ypos,xlen,ylen,anglerad,dx,dy,fjust
  real, dimension(2) :: xline,yline
  real, dimension(maxfuncpts) :: xfunc,yfunc
@@ -430,6 +441,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
  call plot_qls(linestyleprev)
  call plot_qlw(linewidthprev)
  call plot_qfs(ifillstyle)
+ call plot_qch(charheightprev)
  !
 !--convert hpos and vpos to x, y to plot arrow
 !
@@ -449,6 +461,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
 
        call plot_sci(shape(i)%icolour)
        call plot_sls(shape(i)%linestyle)
+       if (shape(i)%itype==6 .or. shape(i)%itype==8) call plot_sch(shape(i)%xlen)
        call plot_slw(shape(i)%linewidth)
        call plot_sfs(shape(i)%ifillstyle)
        if (plotlib_supports_alpha) call plot_set_opacity(shape(i)%opacity)
@@ -521,6 +534,8 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
              !--plot the line
              call plot_line(maxfuncpts,xfunc,yfunc)
           endif
+       case(8) ! marker
+          call plot_pt1(xpos,ypos,shape(i)%ifillstyle)
        end select
     endif
  enddo
@@ -529,6 +544,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
  call plot_sls(linestyleprev)
  call plot_slw(linewidthprev)
  call plot_sfs(ifillstyle)
+ call plot_sch(charheightprev)
  if (plotlib_supports_alpha) call plot_set_opacity(1.0)
 
 end subroutine plot_shapes
