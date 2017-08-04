@@ -260,14 +260,20 @@ end subroutine read_asciifile_real_string
 ! file must already be open and at the start
 ! slightly ad-hoc but its the best way I could think of!
 !---------------------------------------------------------------------------
-subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
+subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
  implicit none
  integer, intent(in) :: lunit
  integer, intent(out) :: ncolumns,nheaderlines
- integer :: ierr,ncolprev,ncolsthisline
+ integer, intent(in), optional :: maxheaderlines
+ integer :: ierr,ncolprev,ncolsthisline,maxlines
  character(len=5000) :: line
  logical :: nansinfile,infsinfile
 
+ if (present(maxheaderlines)) then
+    maxlines = maxheaderlines
+ else
+    maxlines = 1000
+ endif
  nheaderlines = 0
  line = ' '
  ierr = 0
@@ -279,7 +285,8 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines)
 !
 !--loop until we find two consecutive lines with the same number of columns (but non zero)
 !
- do while ((len_trim(line).eq.0 .or. ncolsthisline.ne.ncolprev .or. ncolumns.le.0) .and. ierr.eq.0)
+ do while ((len_trim(line).eq.0 .or. ncolsthisline.ne.ncolprev .or. ncolumns.le.0) &
+           .and. ierr.eq.0 .and. nheaderlines <= maxlines)
     ncolprev = ncolumns
     read(lunit,"(a)",iostat=ierr) line
     if (index(line,'NaN').gt.0) nansinfile = .true.
@@ -678,6 +685,7 @@ subroutine split(string,delim,stringarr,nsplit)
        if (i > len(string)) exit
     enddo
     i = i - 1
+    if (i < 1) i = 1 ! first character is non-blank
 
     ! look for next occurrence of delimiter
     j = index(string(i:),delim)

@@ -88,8 +88,9 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   logical :: iexist,timeset,gammaset,got_labels
   real    :: dummyreal
   character(len=len(rootname)+4) :: dumpfile
-  character(len=1024)  :: line
+  character(len=2048)  :: line
   character(len=lenlabel), dimension(size(label)) :: tmplabel
+  character(len=30)   :: string
   integer, parameter :: notset = -66
 
   nstepsread = 0
@@ -140,8 +141,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         if (iverbose.gt.0) print "(a,i3,a)",' setting ncolumns = ',ncolenv,' from ASPLASH_NCOLUMNS environment variable'
         ncolstep = ncolenv
      endif
-     if (ncolstep.le.0) then
-        print "(a)",'*** ERROR: zero/undetermined number of columns in file ***'
+     if (ncolstep.le.1) then
+        print "(a)",'*** ERROR: could not determine number of columns in file ***'
         return
      endif
      iverbose_was = iverbose
@@ -198,7 +199,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      !--read header lines as character strings
      !  so that blank lines are counted in nheaderlines
      read(iunit,"(a)",iostat=ierr) line
-     if (i.eq.1 .or. .not.got_labels) then
+     if (i.eq.1 .or. .not.got_labels .and. ncolumns > 1) then
         call get_column_labels(line,ncolumns,nlabels,tmplabel)
         if (nlabels==ncolumns .and. .not.(isdigit(tmplabel(1)(1:1)) .or. tmplabel(1)(1:1)=='.')) then
            label(1:ncolumns) = tmplabel(1:ncolumns)
