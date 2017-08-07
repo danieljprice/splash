@@ -355,7 +355,7 @@ integer function ncolumnsline(line)
 
  i = 1
  ncolumnsline = 0
- do while(abs(dummyreal(i)+666666.).gt.tiny(0.))
+ do while(abs(dummyreal(i)+666666.).gt.tiny(0.) .or. dummyreal(i).ne.dummyreal(i))
     ncolumnsline = ncolumnsline + 1
     i = i + 1
     if (i.gt.size(dummyreal)) then
@@ -704,11 +704,10 @@ end subroutine split
 ! extract a list of labels from the header line of a file
 !
 !---------------------------------------------------------------------------
-subroutine get_column_labels(line,ncolumns,nlabels,labels)
+subroutine get_column_labels(line,nlabels,labels)
  character(len=*), intent(in)  :: line
- integer,          intent(in)  :: ncolumns
  integer,          intent(out) :: nlabels
- character(len=*), dimension(ncolumns), intent(out) :: labels
+ character(len=*), dimension(:), intent(out) :: labels
  integer :: i1,i2,i
  character(len=1) :: leadingchar
 
@@ -737,19 +736,20 @@ subroutine get_column_labels(line,ncolumns,nlabels,labels)
  !
  ! clean up
  !
- nlabels = min(nlabels,ncolumns)
  do i=1,nlabels
     ! delete brackets
-    call string_delete(labels(i),'[')
-    call string_delete(labels(i),']')
-    labels(i) = trim(adjustl(labels(i)))
-    ! delete leading numbers
-    i1 = 1
-    do while (isdigit(labels(i)(i1:i1)))
-       labels(i)(i1:i1) = ' '
-       i1 = i1 + 1
-    enddo
-    labels(i) = trim(adjustl(labels(i)))
+    if (nlabels <= size(labels)) then
+       call string_delete(labels(i),'[')
+       call string_delete(labels(i),']')
+       labels(i) = trim(adjustl(labels(i)))
+       ! delete leading numbers
+       i1 = 1
+       do while (isdigit(labels(i)(i1:i1)))
+          labels(i)(i1:i1) = ' '
+          i1 = i1 + 1
+       enddo
+       labels(i) = trim(adjustl(labels(i)))
+    endif
  enddo
 
 end subroutine get_column_labels

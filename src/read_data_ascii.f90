@@ -199,9 +199,9 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      !--read header lines as character strings
      !  so that blank lines are counted in nheaderlines
      read(iunit,"(a)",iostat=ierr) line
-     if (i.eq.1 .or. .not.got_labels .and. ncolumns > 1) then
-        call get_column_labels(line,ncolumns,nlabels,tmplabel)
-        if (nlabels==ncolumns .and. .not.(isdigit(tmplabel(1)(1:1)) .or. tmplabel(1)(1:1)=='.')) then
+     if ((i.eq.1 .or. .not.got_labels) .and. ncolumns > 1) then
+        call get_column_labels(trim(line),nlabels,tmplabel)
+        if (nlabels>=ncolumns .and. .not.(isdigit(tmplabel(1)(1:1)) .or. tmplabel(1)(1:1)=='.')) then
            label(1:ncolumns) = tmplabel(1:ncolumns)
            got_labels = .true.
         endif
