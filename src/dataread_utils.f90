@@ -26,10 +26,10 @@
 !
 !-----------------------------------------------------------
 module dataread_utils
- use params, only:doub_prec
+ use params, only:doub_prec,int1
  implicit none
 
- public :: check_range
+ public :: check_range,count_types
  integer, private :: iverbose_level = 1 ! can be changed
  
  private
@@ -147,5 +147,28 @@ subroutine check_range_double(dvar,tag,min,max,err)
  endif
 
 end subroutine check_range_double
+
+!----------------------------------------------------
+! count particles of a given type
+!----------------------------------------------------
+subroutine count_types(np,iamtype,noftype,nunknown)
+ integer, intent(in)  :: np
+ integer(kind=int1), intent(in)  :: iamtype(:)
+ integer, intent(out) :: noftype(:),nunknown
+ integer :: i,itype
+
+ noftype(:) = 0
+ if (size(iamtype).ge.np) then
+    do i=1,np
+       itype = iamtype(i)
+       if (itype.gt.0 .and. itype.le.size(noftype)) then
+          noftype(itype) = noftype(itype) + 1
+       else
+          nunknown = nunknown + 1
+       endif
+    enddo
+ endif
+
+end subroutine count_types
 
 end module dataread_utils
