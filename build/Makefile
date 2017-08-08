@@ -658,6 +658,15 @@ amuse_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_amuse_hdf5_utils.o read_d
 read_data_amuse_hdf5_utils.o: read_data_amuse_hdf5_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
 
+#---CACTUS HDF5 read ---
+cactus: cactus_hdf5
+
+cactus_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_cactus_hdf5_utils.o read_data_cactus_hdf5.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/csplash-hdf5 $(OBJECTS) read_data_cactus_hdf5_utils.o read_data_cactus_hdf5.o $(LDFLAGS) $(HDF5LIBS)
+
+read_data_cactus_hdf5_utils.o: read_data_cactus_hdf5_utils.c
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+
 #---PBOB read ---
 
 OBJPBOB=read_data_pbob_utils.o read_data_pbob.o read_pbob.o read_particle.o
