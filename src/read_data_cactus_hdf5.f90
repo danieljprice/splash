@@ -91,7 +91,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep,iamtype
   use params,         only:doub_prec,maxparttypes,maxplot
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
-                           ntypes,debugmode,iverbose,buffer_data
+                           ntypes,debugmode,iverbose,buffer_steps_in_file
   use settings_page,  only:legendtext
   use mem_allocation, only:alloc
   use labels,         only:ih,irho,ipmass,labeltype
@@ -116,7 +116,6 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 
   nstepsread = 0
   goterrors  = .false.
-  buffer_steps_in_file = buffer_data
 
   if (len_trim(rootname).gt.0) then
      datfile = trim(rootname)
@@ -193,11 +192,6 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      call alloc(npart_max,nsteps_to_read,max(ncolumns+ncalc,maxcol),mixedtypes=.true.)
   endif
 
-  !
-  !--copy header data into allocated arrays
-  !
-  if (buffer_steps_in_file .or. istep.eq.ipos) then
-  endif
   !
   !--read particle data
   !

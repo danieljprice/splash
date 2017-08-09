@@ -202,7 +202,7 @@ end subroutine timestep_loop
 ! works out whether or not we need to read another dump into memory
 !-------------------------------------------------------------------
 recursive subroutine get_nextstep(istep,ilocindat)
- use filenames,     only:nstepsinfile,nfiles,ifileopen,nsteps
+ use filenames,     only:nstepsinfile,nfiles,ifileopen,iposopen,nsteps
  use getdata,       only:get_data
  use settings_data, only:buffer_steps_in_file
  implicit none
@@ -237,8 +237,8 @@ recursive subroutine get_nextstep(istep,ilocindat)
     return
  endif
 
-! print*,'step ',istep,' in file ',ifile,' nsteps = ',nsteps
-! print*,'position in file = ',iposinfile
+ !print*,'step ',istep,' in file ',ifile,' nsteps = ',nsteps
+ !print*,'position in file = ',iposinfile
  if (istep.gt.nsteps) then
     ilocindat = 0
     return
@@ -270,10 +270,12 @@ recursive subroutine get_nextstep(istep,ilocindat)
        print*,'not enough steps in file... trying next file'
        call get_nextstep(istep,ilocindat)
     endif
- elseif (.not.buffer_steps_in_file) then
-    if (iposinfile <= nstepsinfile(ifile)) then
+ elseif (.not.buffer_steps_in_file .and. nstepsinfile(ifile) > 1) then
+    if (iposinfile <= nstepsinfile(ifile) .and. iposinfile /= iposopen) then
        ! if all steps have not been read from the file, read just the next one
        call get_data(ifile,.true.,iposinfile=iposinfile)
+       ilocindat = 1
+    else
        ilocindat = 1
     endif
  endif

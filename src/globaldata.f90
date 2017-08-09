@@ -83,7 +83,7 @@ end module particle_data
 module filenames
  implicit none
  integer, parameter :: maxfile = 10001
- integer :: nfiles,nsteps,ifileopen
+ integer :: nfiles,nsteps,ifileopen,iposopen
  character(len=120), dimension(maxfile) :: rootname
  character(len=100) :: fileprefix
  character(len=120) :: defaultsfile,limitsfile,unitsfile,coloursfile

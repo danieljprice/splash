@@ -43,7 +43,7 @@ contains
 subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
   use asciiutils,     only:ucase
   use exact,          only:read_exactparams
-  use filenames,      only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen
+  use filenames,      only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen,iposopen
   use limits,         only:set_limits
   use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata,    &
                       DataisBuffered,iCalcQuantities,ndim,iverbose,ntypes, &
@@ -99,6 +99,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
   if (present(iposinfile)) then
      if (iposinfile > 0) ipos = iposinfile
   endif
+  iposopen = 0
   !
   !--nstepsinfile is initialised to negative
   !  this is set progressively as files are read
@@ -204,6 +205,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
         nsteps_read = nstepsinfile(ireadfile)
      else
         nsteps_read = 1
+        iposopen = ipos
      endif
 
 !--try different endian if failed the first time
