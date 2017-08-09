@@ -63,23 +63,20 @@ module cactushdf5read
  integer, parameter :: maxtypes = 6
 
  interface
-   subroutine read_cactus_hdf5_header(filename,npart,ncol,ndim,ndimV,time,ierr) bind(c)
+   subroutine read_cactus_hdf5_header(filename,istep,npart,ncol,nstep_max,ndim,ndimV,time,ierr) bind(c)
     import
     character(kind=c_char), dimension(*), intent(in) :: filename
-    integer(kind=c_int), intent(out) :: npart,ncol,ndim,ndimV,ierr
+    integer(kind=c_int), intent(in), value :: istep
+    integer(kind=c_int), intent(out) :: npart,ncol,nstep_max,ndim,ndimV,ierr
     real(kind=c_double), intent(out) :: time
    end subroutine read_cactus_hdf5_header
 
-   subroutine read_cactus_hdf5_data(filename,maxtypes,npartoftypei,&
-                                    ncol,isrequired,ierr) bind(c)
+   subroutine read_cactus_hdf5_data(filename,istep,npart,time,ierr) bind(c)
     import
-    implicit none
     character(kind=c_char), dimension(*), intent(in)  :: filename
-    integer(kind=c_int), intent(in), value :: maxtypes
-    integer(kind=c_int), dimension(6), intent(in) :: npartoftypei
-    integer(kind=c_int), intent(in), value  :: ncol
-    integer(kind=c_int), intent(out) :: ierr
-    integer(kind=c_int), dimension(ncol), intent(in)  :: isrequired
+    integer(kind=c_int), intent(in), value :: istep
+    integer(kind=c_int), intent(out) :: npart,ierr
+    real(kind=c_double), intent(out) :: time
    end subroutine read_cactus_hdf5_data
  end interface
 
@@ -94,7 +91,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep,iamtype
   use params,         only:doub_prec,maxparttypes,maxplot
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
-                           ntypes,debugmode,iverbose
+                           ntypes,debugmode,iverbose,buffer_data
   use settings_page,  only:legendtext
   use mem_allocation, only:alloc
   use labels,         only:ih,irho,ipmass,labeltype
@@ -109,16 +106,17 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   character(len=*), intent(in)       :: rootname
   character(len=len(rootname)+10)    :: datfile,densfile,hfile
   character(len=20)                  :: string
-  integer               :: i,j,itype,ierr
+  integer               :: i,j,istep,ierr
   integer               :: nunknown
-  integer               :: ncolstep,npart_max,nstep_max,ntoti,ntotall,idot
+  integer               :: ncolstep,npart_max,nstep_max,nsteps_to_read,ntoti,ntotall,idot
   integer, parameter    :: iunit = 11
-  logical               :: iexist,reallocate,debug,goterrors
+  logical               :: iexist,reallocate,debug,goterrors,buffer_steps_in_file
   integer, dimension(maxplot) :: isrequired
   real(doub_prec) :: timetemp
 
   nstepsread = 0
   goterrors  = .false.
+  buffer_steps_in_file = buffer_data
 
   if (len_trim(rootname).gt.0) then
      datfile = trim(rootname)
@@ -129,7 +127,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
 !--check if first data file exists
 !
-  print "(1x,a)",'reading CACTUS HDF5 format'
+  if (iverbose==1 .and. ipos==1) print "(1x,a)",'reading CACTUS HDF5 format'
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
      !
@@ -156,20 +154,27 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !--open file and read header information
   !
   if (debug) print*,'DEBUG: reading header...'
-  call read_cactus_hdf5_header(cstring(datfile),ntoti,ncolstep,ndim,ndimV,timetemp,ierr)
+  call read_cactus_hdf5_header(cstring(datfile),ipos,ntoti,ncolstep,nstep_max,ndim,ndimV,timetemp,ierr)
   if (ierr /= 0) then
      print "(a)", '*** ERROR READING HEADER ***'
      return
   endif
   ncolumns = ncolstep
+  if (iverbose >= 1) print "(3(a,1x,i10))",' npart: ',ntoti,' ncolumns: ',ncolstep,' nsteps: ',nstep_max
 
-  if (iverbose >= 1) print "(2(a,1x,i10))",' npart: ',ntoti,' ncolumns: ',ncolstep
+  istep = 1 
+  over_snapshots: do istep=1,nstep_max
   !
   !--now read data
   !
   reallocate = .false.
   npart_max = maxpart
-  nstep_max = max(maxstep,1)
+  if (buffer_steps_in_file) then
+     nsteps_to_read = nstep_max
+  else
+     nsteps_to_read = max(maxstep,1)
+  endif
+  if (nsteps_to_read > maxstep) reallocate = .true.
 
   if (ntoti.gt.maxpart) then
      reallocate = .true.
@@ -181,43 +186,38 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         npart_max = int(ntoti)
      endif
   endif
-  if (i.ge.maxstep .and. i.ne.1) then
-     nstep_max = i + max(10,INT(0.1*nstep_max))
-     reallocate = .true.
-  endif
   !
   !--reallocate memory for main data array
   !
   if (reallocate .or. .not.(allocated(dat))) then
-     call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol),mixedtypes=.true.)
+     call alloc(npart_max,nsteps_to_read,max(ncolumns+ncalc,maxcol),mixedtypes=.true.)
   endif
 
   !
   !--copy header data into allocated arrays
   !
-  npartoftype(1,i) = ntoti
-  time(i) = real(timetemp)
-  masstype(:,i) = 0. ! all masses read from file
+  if (buffer_steps_in_file .or. istep.eq.ipos) then
+  endif
   !
   !--read particle data
   !
   got_particles: if (ntoti > 0) then
-     
-     isrequired(:) = 0
-     where (required(1:ncolumns)) isrequired(1:ncolumns) = 1
-     
-     call read_cactus_hdf5_data(cstring(datfile),ntypes,npartoftype(:,i),ncolumns,isrequired,ierr)
 
-     nstepsread = 1
+     if (buffer_steps_in_file .or. ipos.eq.istep) then
+        call read_cactus_hdf5_data(cstring(datfile),istep,ntoti,timetemp,ierr)
+        call count_types(ntoti,iamtype(:,i),npartoftype(:,i),nunknown)
+        masstype(:,i) = 0. ! all masses read from file
+        time(i) = real(timetemp)
+        i = i + 1
+     endif
+
+     nstepsread = nstepsread + 1
+
   endif got_particles
 !
 !--now memory has been allocated, set arrays which are constant for all time
 !
   gamma = 5./3.
-!
-!--count particles by type
-!
-  call count_types(ntoti,iamtype(:,i),npartoftype(:,i),nunknown)
 !
 !--set flag to indicate that only part of this file has been read
 !
@@ -226,18 +226,12 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !--call set labels to identify location of smoothing length
 !
   call set_labels
-!
-!--cover the special case where no particles have been read
-!
-  if (ntoti.le.0) then
-     npartoftype(1,i) = 1
-     dat(:,:,i) = 0.
-  endif
+  
+  enddo over_snapshots
 
   if (nstepsread.gt.0) then
-     print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart+nstepsread-1)),' particles'
+     print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart)),' particles'
   endif
-  return
 
 end subroutine read_data
 
@@ -371,6 +365,8 @@ subroutine set_labels
   labeltype(1) = 'gas'
   labeltype(2) = 'ghost'
   UseTypeInRenderings(:) = .true.
+  UseTypeInRenderings(2) = .false.
+  
 
 !-----------------------------------------------------------
   return
