@@ -96,7 +96,7 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
      set function value to true (1) if it is present  */
   int i,nsub,ierr;
   char name[256];
-  char field[12],thorn[24];
+  char thorn[24];
   int nstepsgot = 0;
   *ndim = 0;
   *ncells = 0;
@@ -123,7 +123,7 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
           }
           if (mystep == istep) {
              nsub++;
-             if (debug) printf("%s it=%i tl=%i rl=%i cnum=%i ",field,it,tl,level,cnum);
+             if (debug) printf("%s it=%i tl=%i rl=%i cnum=%i ",thorn,it,tl,level,cnum);
              ierr = read_cactus_dataset(file_id,name,nattrib,ncells,ndim,&n,time,deltax,inheader);
           } else if (mystep > istep) {
              break;;

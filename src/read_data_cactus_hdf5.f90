@@ -58,6 +58,9 @@ module cactushdf5read
  use, intrinsic :: iso_c_binding, only:c_int,c_double,c_char
  implicit none
  character(len=lenlabel), dimension(maxplot) :: blocklabel
+ character(len=130) :: datfileprev = ' '
+ logical :: file_is_open = .false.
+ integer :: ntoti_prev,ncol_prev,nstep_prev
 
  interface
    subroutine open_cactus_hdf5_file(filename,istep,npart,ncol,nstep_max,ndim,ndimV,time,ierr) bind(c)
@@ -99,7 +102,8 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use labels,         only:ih,irho,ipmass
   use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
   use asciiutils,     only:cstring
-  use cactushdf5read, only:open_cactus_hdf5_file,read_cactus_hdf5_data,close_cactus_hdf5_file
+  use cactushdf5read, only:open_cactus_hdf5_file,read_cactus_hdf5_data,close_cactus_hdf5_file,&
+                           datfileprev,file_is_open,ntoti_prev,ncol_prev,nstep_prev
   use dataread_utils, only:count_types
   implicit none
   integer, intent(in)                :: istepstart,ipos
@@ -132,10 +136,18 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      !
      datfile=trim(rootname)//'.h5'
      inquire(file=datfile,exist=iexist)
-     if (.not.iexist) then
-        print "(a)",' *** error: '//trim(rootname)//': file not found ***'
-        return
-     endif
+  endif
+!
+!--close previous file if filenames do not match
+!
+  if (trim(datfile)/=trim(datfileprev) .and. file_is_open) then
+     call close_cactus_hdf5_file(ierr)
+     file_is_open = .false.
+  endif
+  
+  if (.not.iexist) then
+     print "(a)",' *** error: '//trim(rootname)//': file not found ***'
+     return
   endif
 !
 !--set parameters which do not vary between timesteps
@@ -146,15 +158,26 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !--read data from snapshots
 !
   i = istepstart
-  write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
+  if (.not.file_is_open) write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
   !
   !--open file and read header information
   !
-  call open_cactus_hdf5_file(cstring(datfile),ipos,ntoti,ncolstep,nstep_max,ndim,ndimV,timetemp,ierr)
-  if (ierr /= 0) then
-     print "(a)", '*** ERROR READING HEADER ***'
-     call close_cactus_hdf5_file(ierr)
-     return
+  if (file_is_open) then
+     ntoti     = ntoti_prev
+     ncolstep  = ncol_prev
+     nstep_max = nstep_prev
+  else
+     call open_cactus_hdf5_file(cstring(datfile),ipos,ntoti,ncolstep,nstep_max,ndim,ndimV,timetemp,ierr)
+     if (ierr /= 0) then
+        print "(a)", '*** ERROR READING HEADER ***'
+        call close_cactus_hdf5_file(ierr)
+        return
+     endif
+     file_is_open = .true.
+     datfileprev = datfile
+     ntoti_prev = ntoti
+     ncol_prev  = ncolstep
+     nstep_prev = nstep_max
   endif
   ncolumns = ncolstep
   if (iverbose >= 1) print "(3(a,1x,i10))",' npart: ',ntoti,' ncolumns: ',ncolstep,' nsteps: ',nstep_max
@@ -225,11 +248,14 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   call set_labels
   
   enddo over_snapshots
-  
-  call close_cactus_hdf5_file(ierr)
 
   if (nstepsread.gt.0) then
-     print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart)),' particles'
+     print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart)),' cells'
+  endif
+
+  if (ipos==nstep_max) then
+     call close_cactus_hdf5_file(ierr)
+     file_is_open = .false.
   endif
 
 end subroutine read_data
