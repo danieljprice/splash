@@ -1770,7 +1770,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                     if (.not.interactivereplot .and. .not.isetrenderlimits) then
                        if (iadapt) then
-                          print*,'adapting render limits'
+                          !print*,'adapting render limits'
                           rendermin = renderminadapt
                           rendermax = rendermaxadapt
                        else
@@ -2842,10 +2842,10 @@ contains
     use colourbar,     only:get_colourbarmargins
     use pagesetup,     only:setpage2
     use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
-                       vposlegend,iPlotLegend,usecolumnorder,&
+                       vposlegend,iPlotLegend,usecolumnorder,interactive,&
                        xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
     use settings_limits, only:adjustlimitstodevice
-    use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot,plot_set_opacity
+    use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot,plot_set_opacity,plot_qcur
     implicit none
     integer :: iplotsave,ipanelsave,ipanelpos,npanels_remaining
     real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
@@ -2913,12 +2913,14 @@ contains
     !--------------------------------------------------------------
     if (((interactive .and. ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot)) &
         .or. (iadapt .and. (istepsonpage.eq.nstepsperpage .or. lastplot))) .and. .not.dum) then
-       print*,trim(labelx),' min, max = ',xmin,xmax
-       print*,trim(labely),' min, max = ',ymin,ymax
-       if (irender.gt.0 .and. .not.(ndim.eq.2 .and. x_sec)) then
-          print*,trim(labelrender),' min, max = ',rendermin,rendermax
-          if (gotcontours) then
-             print*,trim(labelcont),' min, max = ',contmin,contmax
+       if (plot_qcur()) then
+          print*,trim(labelx),' min, max = ',xmin,xmax
+          print*,trim(labely),' min, max = ',ymin,ymax
+          if (irender.gt.0 .and. .not.(ndim.eq.2 .and. x_sec)) then
+             print*,trim(labelrender),' min, max = ',rendermin,rendermax
+             if (gotcontours) then
+                print*,trim(labelcont),' min, max = ',contmin,contmax
+             endif
           endif
        endif
     endif
@@ -3789,6 +3791,7 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
   use settings_data,    only:ndim,xorigin,debugmode
   use settings_xsecrot, only:use3Dperspective
   use rotation,         only:rotate2D,rotate3D
+  use plotlib,          only:plot_qcur
   implicit none
   real,                 intent(in)  :: anglexi,angleyi,anglezi,dzscreen,zobs
   real, dimension(:), intent(inout) :: xploti,yploti,zploti
@@ -3804,22 +3807,24 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
   angleradz = anglezi*pi/180.
   anglerady = angleyi*pi/180.
   angleradx = anglexi*pi/180.
-  if (ndim.eq.3) then
-     print "(1x,a,2(f6.2,1x),f6.2,a)",'rotation: (z, y, x) = (',anglezi,angleyi,anglexi,')'
-  else
-     print "(1x,a,f6.2)",'rotating particles about z by ',anglezi
-  endif
-  if (ndim.eq.3 .and. use3Dperspective) then
-     print*,' observer height = ',zobs,', screen at ',zobs-dzscreen
-  elseif (ndim.eq.3) then
-     if (abs(zobs).gt.tiny(zobs) .or. abs(dzscreen).gt.tiny(dzscreen)) then
-        print "(a)",' INTERNAL ERROR: no 3D perspective but observer set'
+  if (plot_qcur()) then  ! only print for interactive devices
+     if (ndim.eq.3) then
+        print "(1x,a,2(f6.2,1x),f6.2,a)",'rotation: (z, y, x) = (',anglezi,angleyi,anglexi,')'
+     else
+        print "(1x,a,f6.2)",'rotating particles about z by ',anglezi
      endif
-  endif
-  if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
-     print*,'rotating about tracked particle ',itrackpart,' x,y,z = ',dat(itrackpart,ix(1:ndim))
-  elseif (any(abs(xorigin).ge.tiny(xorigin))) then
-     print*,'rotating about x,y,z = ',xorigin(1:ndim)
+     if (ndim.eq.3 .and. use3Dperspective) then
+        print*,' observer height = ',zobs,', screen at ',zobs-dzscreen
+     elseif (ndim.eq.3) then
+        if (abs(zobs).gt.tiny(zobs) .or. abs(dzscreen).gt.tiny(dzscreen)) then
+           print "(a)",' INTERNAL ERROR: no 3D perspective but observer set'
+        endif
+     endif
+     if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
+        print*,'rotating about tracked particle ',itrackpart,' x,y,z = ',dat(itrackpart,ix(1:ndim))
+     elseif (any(abs(xorigin).ge.tiny(xorigin))) then
+        print*,'rotating about x,y,z = ',xorigin(1:ndim)
+     endif
   endif
 
   if (debugmode .and. ivecstart.gt.0) print "(1x,a)",'(also rotating vector components)'

@@ -268,12 +268,12 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
           xcen = 0.5*(xmin + xmax)
           xmin = xcen - 0.5*devaspectratio*dy
           xmax = xcen + 0.5*devaspectratio*dy
-          print*,' auto-adjusting xmin = ',xmin,' xmax = ',xmax
+          !print*,' auto-adjusting xmin = ',xmin,' xmax = ',xmax
        else
           ycen = 0.5*(ymin + ymax)
           ymin = ycen - 0.5*dx/devaspectratio
           ymax = ycen + 0.5*dx/devaspectratio
-          print*,' auto-adjusting ymin = ',ymin,' ymax = ',ymax
+          !print*,' auto-adjusting ymin = ',ymin,' ymax = ',ymax
        endif
     endif
     call plot_wnad(xmin,xmax,ymin,ymax)

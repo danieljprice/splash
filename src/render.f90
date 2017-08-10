@@ -76,7 +76,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  iuse_transparent = .false.
  if (present(transparent)) iuse_transparent = transparent
 
- print*,'rendering...',npixx,'x',npixy,'=',size(datpix),' pixels'
+ !print*,'rendering...',npixx,'x',npixy,'=',size(datpix),' pixels'
 
  if (abs(icolouropt).eq.1) then        ! greyscale
 
