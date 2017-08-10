@@ -182,19 +182,20 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   real, dimension(npixx) :: xpix,dx2i
   real :: t_start,t_end,t_used
   logical :: iprintprogress,use3Dperspective,accelerate
+  character(len=32) :: string
   
   datsmooth = 0.
   term = 0.
+  string = 'projecting'
   if (normalise) then
-     print "(1x,a)",'projecting (normalised) from particles to pixels...'
+     string = trim(string)//' (normalised)'
      datnorm = 0.
   elseif (useaccelerate) then
-     print "(1x,a)",'projecting (fast) from particles to pixels...'    
-  else
-     print "(1x,a)",'projecting from particles to pixels...'  
+     string = trim(string)//' (fast)'
   endif
+  write (*,"(1x,a,': ',i4,' x ',i4,' on ')",advance='no') trim(string),npixx,npixy
   if (pixwidthx.le.0. .or. pixwidthy.le.0) then
-     print "(1x,a)",'interpolate3D_proj: error: pixel width <= 0'
+     print "(1x,a)",'ERROR: pixel width <= 0'
      return
   endif
   !nout = count(hh(1:npart).le.0.)
@@ -259,7 +260,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$omp reduction(min:hminall)
 !$omp master
 #ifdef _OPENMP
-  print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
+  print "(i3,a)",omp_get_num_threads(),' cpus'
 #endif
 !$omp end master
 
