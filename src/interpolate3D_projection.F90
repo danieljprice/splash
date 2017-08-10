@@ -246,17 +246,17 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   hminall = huge(hminall)
 
 !$omp parallel default(none) &
-!$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
+!$omp shared(hh,z,x,y,weight,dat,itype,npart) &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,dscreen,zobserver,use3dperspective,useaccelerate) &
-!$omp shared(datnorm,normalise,radkernel,radkernel2) &
+!$omp shared(normalise,radkernel,radkernel2) &
 !$omp firstprivate(hmin) & !,dhmin3) &
 !$omp private(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
 !$omp private(hsmooth,horigi,hi1,hi21,term,termnorm,npixpartx,npixparty,jpixi,ipixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
 !$omp private(dx2i,row,q2,ypix,dy,dy2,wab) &
 !$omp private(i,ipix,jpix,jpixcopy,fac) &
-!$omp reduction(+:nsubgrid,nok) &
+!$omp reduction(+:nsubgrid,nok,datsmooth,datnorm) &
 !$omp reduction(min:hminall)
 !$omp master
 #ifdef _OPENMP
@@ -303,7 +303,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      if (xpixmin.gt.xmax) cycle over_particles
      xpixmax = xi + radkern
      if (xpixmax.lt.xmin) cycle over_particles
-     
+
      yi = y(i)
      ypixmin = yi - radkern
      if (ypixmin.gt.ymax) cycle over_particles
@@ -437,12 +437,10 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
                  wab = wfromtable(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
-                 !                  
-                 !$omp atomic
+                 !
                  datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
    
                  if (normalise) then
-                    !$omp atomic
                     datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
                  endif
               endif
