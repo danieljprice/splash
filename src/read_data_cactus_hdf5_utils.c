@@ -14,15 +14,19 @@
 #include <hdf5.h>
 #include <math.h>
 static int debug = 0;
-int read_cactus_dataset(hid_t file_id,char *name,int cnum,int *nattrib,int *ncells,int *ndim,int *n,double *time,int inheader);
-int read_cactus_iteration(hid_t file_id,int iter,int *next,int *nsteps,int *ncells,int *ndim,int *nattrib,double *time,int inheader);
-int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int cnum,int *n,int nx,int ny,int nz,int nghost[3],int bbox[6],int ioffset[3],double orig[3],double delta[3]);
+static hid_t file_id;
+static const herr_t HDF5_error = -1;
+
+
+int read_cactus_dataset(hid_t file_id,char *name,int *nattrib,int *ncells,int *ndim,int *n,double *time,double *deltax,int inheader);
+int read_cactus_iteration(hid_t file_id,int iter,int *next,int *nsteps,int *ncells,int *ndim,int *nattrib,double *time,double *deltax,int inheader);
+int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int *n,int nx,int ny,int nz,int nghost[3],double orig[3],double delta[3]);
 void get_ndim_ncells(hid_t dataspace_id, int *ndim, int *nx,int *ny,int *nz);
 void set_blocklabel(int *icol, char *name);
 void read_cactus_hdf5_data_fromc(int *icol,int *ntot,int *np,double temparr[*np]);
 void read_cactus_itype_fromc(int *ntot,int *np,int itype[*np]);
 
-void read_cactus_hdf5_header(char   *filename,
+void open_cactus_hdf5_file(char   *filename,
                              int istep,
                              int *npart,
                              int *ncol,
@@ -31,11 +35,7 @@ void read_cactus_hdf5_header(char   *filename,
                              int *ndimV,
                              double *time,
                              int *ierr)
-   {
-   hid_t     file_id;
-   herr_t    status;
-   herr_t    HDF5_error = -1;
-   
+{   
    *ierr = 0;
    *ndim = 0;
    *ndimV = 0;
@@ -52,45 +52,40 @@ void read_cactus_hdf5_header(char   *filename,
     */
    int nattrib;
    int next;
-   *ierr = read_cactus_iteration(file_id,istep,&next,nsteps,npart,ndim,&nattrib,time,1);
+   double dx;
+   *ierr = read_cactus_iteration(file_id,istep,&next,nsteps,npart,ndim,&nattrib,time,&dx,1);
    *ierr = 0;
 
-   status = H5Fclose( file_id );
-   if (status == HDF5_error) { printf("ERROR closing file \n"); *ierr = 7; }
-   if (debug) printf("DEBUG: finished header read \n");
-
    *ndimV = *ndim;
-   return;
+   return;   
+}
    
-   }
+void close_cactus_hdf5_file(int *ierr)
+{
+   if (debug) printf("DEBUG: closing file \n");
+   herr_t status = H5Fclose( file_id );
+   if (status == HDF5_error) { printf("ERROR closing file \n"); *ierr = 1; }
+   return;
+}
 
-void read_cactus_hdf5_data(char *filename,int istep,int *npart,double *time,int *ierr)
-   {
-   hid_t     file_id;
-   herr_t    status;
-   herr_t    HDF5_error = -1;
+
+void read_cactus_hdf5_data(char *filename,int istep,int *npart,double *time,double *dx,int *ierr)
+{
    int next,nattrib,ndim,nstepsread,nsteps;
 
-   if (debug) printf("DEBUG: re-opening %s \n",filename);
-   file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
    if (file_id == HDF5_error)
-      { printf("ERROR re-opening %s \n",filename); *ierr = 1; return; }
+      { printf("ERROR with file_id %s \n",filename); *ierr = 1; return; }
 
-   nstepsread = read_cactus_iteration(file_id,istep,&next,&nsteps,npart,&ndim,&nattrib,time,0);
+   nstepsread = read_cactus_iteration(file_id,istep,&next,&nsteps,npart,&ndim,&nattrib,time,dx,0);
    if (nstepsread <= 0) {
       *ierr = -1;
    }
-
-   status = H5Fclose( file_id );
-   if (status == HDF5_error) { printf("ERROR closing file \n"); *ierr = 7; }
-
-   }
+}
 
 /*
- *  utility function which checks whether a particular dataset
- *  is present in the HDF5 file
+ *  read one iteration from the file, corresponding to all datasets with same iteration numbers
  */
-int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *ncells,int *ndim,int *nattrib,double *time,int inheader)
+int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *ncells,int *ndim,int *nattrib,double *time,double *deltax,int inheader)
 {
   hsize_t ndatasets[1];
   /* get number of datasets in file */
@@ -101,7 +96,7 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
      set function value to true (1) if it is present  */
   int i,nsub,ierr;
   char name[256];
-  char field[12];
+  char field[12],thorn[24];
   int nstepsgot = 0;
   *ndim = 0;
   *ncells = 0;
@@ -121,15 +116,15 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
   while (i < n_datasets) {
       H5Gget_objname_by_idx(file_id, i, name, 256);
       /*printf(" dataset %s in file \n",name); */
-      if (sscanf(name, "GRHYDRO::%s it=%i tl=%i rl=%i c=%i",
-            field, &it, &tl, &level, &cnum)>=5) {
+      if (sscanf(name, "%s it=%i tl=%i rl=%i c=%i",
+            thorn, &it, &tl, &level, &cnum)>=5) {
           if (it != iterprev) {
               mystep++;
           }
           if (mystep == istep) {
              nsub++;
              if (debug) printf("%s it=%i tl=%i rl=%i cnum=%i ",field,it,tl,level,cnum);
-             ierr = read_cactus_dataset(file_id,name,cnum,nattrib,ncells,ndim,&n,time,inheader);
+             ierr = read_cactus_dataset(file_id,name,nattrib,ncells,ndim,&n,time,deltax,inheader);
           } else if (mystep > istep) {
              break;;
           }
@@ -142,17 +137,17 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
      *nsteps = n_datasets/nsub;
   }
   if (inheader) {
-     printf("Read %s from %i/%i timesteps, it=%i ncells=%i (next=%i)\n",field,istep,*nsteps,iterprev,*ncells,*next);
+     printf("Read %s from %i/%i timesteps, it=%i ncells=%i (next=%i)\n",thorn,istep,*nsteps,iterprev,*ncells,*next);
   }
   
   /* send dataset name back to phantom */
   i = 6;
-  set_blocklabel(&i,field);
+  set_blocklabel(&i,thorn);
 
   return nstepsgot;
 }
 
-int read_cactus_dataset(hid_t file_id,char *name,int cnum,int *nattrib,int *ncells,int *ndim,int *n,double *time,int inheader)
+int read_cactus_dataset(hid_t file_id,char *name,int *nattrib,int *ncells,int *ndim,int *n,double *time,double *deltax,int inheader)
 {
   hid_t dataspace_id,dataset_id,attrib_id;
   herr_t    status;
@@ -215,6 +210,8 @@ int read_cactus_dataset(hid_t file_id,char *name,int cnum,int *nattrib,int *ncel
      }
      status = H5Aclose(attrib_id);
   }
+  *deltax = delta[0];
+  
   if (debug) {
      printf("bbox: x %i %i y %i %i z %i %i\n",bbox[0],bbox[1],bbox[2],bbox[3],bbox[4],bbox[5]);
      printf("iorigin: %i %i %i\n",iorigin[0],iorigin[1],iorigin[2]);
@@ -225,7 +222,7 @@ int read_cactus_dataset(hid_t file_id,char *name,int cnum,int *nattrib,int *ncel
   }
   if (inheader==0) {
     /* read dataset */ 
-    read_cactus_grid(dataset_id,dataspace_id,*ndim,cnum,n,nx,ny,nz,nghost,bbox,iorigin,origin,delta);
+    read_cactus_grid(dataset_id,dataspace_id,*ndim,n,nx,ny,nz,nghost,origin,delta);
   }
 
   /* close dataspace and dataset */
@@ -256,19 +253,15 @@ void get_ndim_ncells(hid_t dataspace_id, int *ndim, int *nx,int *ny,int *nz)
   *nz = dims[2];
 }
 
-int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int cnum,int *n,int nx,int ny,int nz,
-                     int nghost[3],int bbox[6],int ioffset[3],double orig[3],double delta[3]) 
+int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int *n,int nx,int ny,int nz,
+                     int nghost[3],double orig[3],double delta[3]) 
 {
    hid_t     memspace_id;
    herr_t    status;
-   herr_t    HDF5_error = -1;
    int       ierr = 0;
 
    int i,j,k;
-   int ncells;
-   
-   /*if (cnum == 1) { ncells = nx*ny*nz; } else { return 0; }*/
-   ncells = nx*ny*nz;
+   int ncells = nx*ny*nz;
 
    /* make a temporary array to put each column as we read it */
    hsize_t nsize[3];
@@ -289,7 +282,7 @@ int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int cnum,int *
    double dy = delta[1];
    double dz = delta[2];
    if (debug) {
-      printf("PATCH %i origin = %f %f %f\n",cnum,orig[0],orig[1],orig[2]);
+      printf("PATCH origin = %f %f %f\n",orig[0],orig[1],orig[2]);
       printf(" nx=%i x=%f->%f\n",nx,orig[0],(orig[0]+(nx-1)*dx));
    }
    /* here we have to reconstruct the x, y and z positions of
@@ -350,18 +343,6 @@ int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int cnum,int *
    read_cactus_hdf5_data_fromc(&icol,n,&ncells,yy);
    icol = 3;
    read_cactus_hdf5_data_fromc(&icol,n,&ncells,zz);
-   /* smoothing length */
-   for (i=0;i<ncells;i++) {
-       xx[i] = dx;
-   }
-   icol = 4;
-   read_cactus_hdf5_data_fromc(&icol,n,&ncells,xx);
-   /* mass */
-   for (i=0;i<ncells;i++) {
-       xx[i] = dat[i]/(dx*dy*dz);
-   }
-   icol = 5;
-   read_cactus_hdf5_data_fromc(&icol,n,&ncells,xx);
    icol = 6;
    read_cactus_hdf5_data_fromc(&icol,n,&ncells,dat);
 

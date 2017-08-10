@@ -57,27 +57,30 @@ module cactushdf5read
  use labels, only:lenlabel
  use, intrinsic :: iso_c_binding, only:c_int,c_double,c_char
  implicit none
- real :: hsoft
  character(len=lenlabel), dimension(maxplot) :: blocklabel
- logical :: havewarned = .false.
- integer, parameter :: maxtypes = 6
 
  interface
-   subroutine read_cactus_hdf5_header(filename,istep,npart,ncol,nstep_max,ndim,ndimV,time,ierr) bind(c)
+   subroutine open_cactus_hdf5_file(filename,istep,npart,ncol,nstep_max,ndim,ndimV,time,ierr) bind(c)
     import
     character(kind=c_char), dimension(*), intent(in) :: filename
     integer(kind=c_int), intent(in), value :: istep
     integer(kind=c_int), intent(out) :: npart,ncol,nstep_max,ndim,ndimV,ierr
     real(kind=c_double), intent(out) :: time
-   end subroutine read_cactus_hdf5_header
+   end subroutine open_cactus_hdf5_file
 
-   subroutine read_cactus_hdf5_data(filename,istep,npart,time,ierr) bind(c)
+   subroutine read_cactus_hdf5_data(filename,istep,npart,time,dx,ierr) bind(c)
     import
     character(kind=c_char), dimension(*), intent(in)  :: filename
     integer(kind=c_int), intent(in), value :: istep
     integer(kind=c_int), intent(out) :: npart,ierr
-    real(kind=c_double), intent(out) :: time
+    real(kind=c_double), intent(out) :: time,dx
    end subroutine read_cactus_hdf5_data
+
+   subroutine close_cactus_hdf5_file(ierr) bind(c)
+    import
+    integer(kind=c_int), intent(out) :: ierr
+   end subroutine close_cactus_hdf5_file
+
  end interface
 
 end module cactushdf5read
@@ -89,30 +92,25 @@ end module cactushdf5read
 !-------------------------------------------------------------------------
 subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep,iamtype
-  use params,         only:doub_prec,maxparttypes,maxplot
-  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
-                           ntypes,debugmode,iverbose,buffer_steps_in_file
+  use params,         only:doub_prec
+  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose,buffer_steps_in_file
   use settings_page,  only:legendtext
   use mem_allocation, only:alloc
-  use labels,         only:ih,irho,ipmass,labeltype
+  use labels,         only:ih,irho,ipmass
   use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
   use asciiutils,     only:cstring
-  use cactushdf5read, only:hsoft,blocklabel,havewarned,read_cactus_hdf5_header, &
-                           read_cactus_hdf5_data,maxtypes
+  use cactushdf5read, only:open_cactus_hdf5_file,read_cactus_hdf5_data,close_cactus_hdf5_file
   use dataread_utils, only:count_types
   implicit none
   integer, intent(in)                :: istepstart,ipos
   integer, intent(out)               :: nstepsread
   character(len=*), intent(in)       :: rootname
-  character(len=len(rootname)+10)    :: datfile,densfile,hfile
-  character(len=20)                  :: string
-  integer               :: i,j,istep,ierr
+  character(len=len(rootname)+10)    :: datfile
+  integer               :: i,istep,ierr
   integer               :: nunknown
-  integer               :: ncolstep,npart_max,nstep_max,nsteps_to_read,ntoti,ntotall,idot
-  integer, parameter    :: iunit = 11
-  logical               :: iexist,reallocate,debug,goterrors,buffer_steps_in_file
-  integer, dimension(maxplot) :: isrequired
-  real(doub_prec) :: timetemp
+  integer               :: ncolstep,npart_max,nstep_max,nsteps_to_read,ntoti
+  logical               :: iexist,reallocate,goterrors
+  real(doub_prec) :: timetemp,dx,vol
 
   nstepsread = 0
   goterrors  = .false.
@@ -152,10 +150,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   !--open file and read header information
   !
-  if (debug) print*,'DEBUG: reading header...'
-  call read_cactus_hdf5_header(cstring(datfile),ipos,ntoti,ncolstep,nstep_max,ndim,ndimV,timetemp,ierr)
+  call open_cactus_hdf5_file(cstring(datfile),ipos,ntoti,ncolstep,nstep_max,ndim,ndimV,timetemp,ierr)
   if (ierr /= 0) then
      print "(a)", '*** ERROR READING HEADER ***'
+     call close_cactus_hdf5_file(ierr)
      return
   endif
   ncolumns = ncolstep
@@ -179,7 +177,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      reallocate = .true.
      if (maxpart.gt.0) then
         ! if we are reallocating, try not to do it again
-        npart_max = int(1.1*ntotall)
+        npart_max = int(1.1*ntoti)
      else
         ! if first time, save on memory
         npart_max = int(ntoti)
@@ -198,7 +196,12 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   got_particles: if (ntoti > 0) then
 
      if (buffer_steps_in_file .or. ipos.eq.istep) then
-        call read_cactus_hdf5_data(cstring(datfile),istep,ntoti,timetemp,ierr)
+        call read_cactus_hdf5_data(cstring(datfile),istep,ntoti,timetemp,dx,ierr)
+        call set_labels
+        ! set smoothing length and particle mass
+        if (ih > 0) dat(:,ih,i) = real(dx)
+        vol = dx**ndim
+        if (ipmass > 0 .and. irho > 0) dat(:,ipmass,i) = dat(:,irho,i)*real(vol)
         call count_types(ntoti,iamtype(:,i),npartoftype(:,i),nunknown)
         masstype(:,i) = 0. ! all masses read from file
         time(i) = real(timetemp)
@@ -222,6 +225,8 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   call set_labels
   
   enddo over_snapshots
+  
+  call close_cactus_hdf5_file(ierr)
 
   if (nstepsread.gt.0) then
      print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart)),' particles'
@@ -237,9 +242,8 @@ subroutine read_cactus_hdf5_data_fromc(icol,ntot,np,temparr) bind(c)
   implicit none
   integer(kind=c_int), intent(in) :: icol,ntot,np
   real(kind=c_double), intent(in) :: temparr(np)
-  integer(kind=c_int) :: i,icolput
-  integer :: nmax,nerr,idi,i1,i2
-  logical :: useids
+  integer(kind=c_int) :: icolput
+  integer :: nmax,i1,i2
 
   icolput = icol
   i1 = ntot-np+1
@@ -265,16 +269,17 @@ end subroutine read_cactus_hdf5_data_fromc
 subroutine read_cactus_itype_fromc(ntot,np,itype) bind(c)
   use, intrinsic :: iso_c_binding, only:c_int
   use particle_data,  only:iamtype
+  use params,         only:int1
   implicit none
   integer(kind=c_int), intent(in) :: ntot,np
   integer(kind=c_int), intent(in) :: itype(np)
-  integer :: i,i1,i2
+  integer :: i1,i2
 
   i1 = ntot-np+1
   i2 = ntot
   ! set particle type
   if (size(iamtype(:,1)).gt.1) then
-     iamtype(i1:i2,1) = itype(1:np)
+     iamtype(i1:i2,1) = int(itype(1:np),kind=int1)
   endif
 
   return
@@ -285,16 +290,15 @@ end subroutine read_cactus_itype_fromc
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
-                          ih,irho,ipr,iutherm,iBfirst,idivB,iax
+  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,iutherm,ih,irho
   use params
-  use settings_data,  only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
+  use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings
   use geometry,       only:labelcoord
   use system_utils,   only:envlist,ienvironment
-  use cactushdf5read, only:hsoft,blocklabel
+  use cactushdf5read, only:blocklabel
   use asciiutils,     only:lcase
   implicit none
-  integer :: i,j,icol,irank
+  integer :: i,icol
 
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -318,13 +322,11 @@ subroutine set_labels
         ix(3) = icol
      case('vx')
         ivx = icol
-     case('ax')
-        iax = icol
      case('h')
         ih = icol
      case('mass','m')
         ipmass = icol
-     case('dens','density')
+     case('dens','density','rho')
         irho = icol
      end select
      label(icol) = trim(blocklabel(icol))
@@ -346,14 +348,6 @@ subroutine set_labels
      enddo
   endif
 
-  if (iax.gt.0) then
-     iamvec(iax:iax+ndimV-1) = iax
-     labelvec(iax:iax+ndimV-1) = 'a'
-     do i=1,ndimV
-        label(iax+i-1) = trim(labelvec(iax))//'_'//labelcoord(i,1)
-     enddo
-  endif
-
   ! set labels for each particle type
   ntypes = 2
   labeltype(1) = 'gas'
@@ -372,9 +366,14 @@ subroutine set_blocklabel(icol,name) bind(c)
  use asciiutils,    only:fstring
  implicit none
  integer(kind=c_int),    intent(in) :: icol
- character(kind=c_char), intent(in) :: name(12)
-
- blocklabel(icol) = trim(fstring(name))
+ character(kind=c_char), intent(in) :: name(24)
+ character(len=24) :: temp
+ integer :: ivar
+ 
+ temp = fstring(name)
+ ivar = index(temp,'::')
+ if (ivar > 0) temp = temp(ivar+2:)
+ blocklabel(icol) = trim(temp)
  !print*,icol,' name = ',trim(blocklabel(icol))
 
 end subroutine set_blocklabel
