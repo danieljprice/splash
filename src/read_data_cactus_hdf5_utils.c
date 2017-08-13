@@ -13,16 +13,28 @@
 #include <string.h>
 #include <hdf5.h>
 #include <math.h>
+
+#define MAX_DATASETS 100000
 static int debug = 0;
 static hid_t file_id;
 static const herr_t HDF5_error = -1;
+static int have_indexed = 0;
 
+typedef struct
+{
+  char name[64];
+} dataset_t;
+
+static dataset_t Dataset[MAX_DATASETS];
+static int iter[MAX_DATASETS];
+static int iorder[MAX_DATASETS];
 
 int read_cactus_dataset(hid_t file_id,char *name,int *nattrib,int *ncells,int *ndim,int *n,double *time,double *deltax,int inheader);
 int read_cactus_iteration(hid_t file_id,int iter,int *next,int *nsteps,int *ncells,int *ndim,int *nattrib,double *time,double *deltax,int inheader);
 int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int *n,int nx,int ny,int nz,int nghost[3],double orig[3],double delta[3]);
 void get_ndim_ncells(hid_t dataspace_id, int *ndim, int *nx,int *ny,int *nz);
 void set_blocklabel(int *icol, char *name);
+void sort_cactus_data(int *n, int iarr[*n], int iorder[*n]);
 void read_cactus_hdf5_data_fromc(int *icol,int *ntot,int *np,double temparr[*np]);
 void read_cactus_itype_fromc(int *ntot,int *np,int itype[*np]);
 
@@ -94,15 +106,22 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
 
   /* loop over all datasets looking for dataset matching the desired iteration number
      set function value to true (1) if it is present  */
-  int i,nsub,ierr;
-  char name[256];
+  int i,j,nsub,ierr;
+  char name[64];
   char thorn[24];
   int nstepsgot = 0;
   *ndim = 0;
   *ncells = 0;
   int n_datasets = (int)ndatasets[0];
+  if (n_datasets > MAX_DATASETS) {
+     if (inheader) printf("ERROR: EXCEEDED MAX NUMBER OF DATASETS: INCREASE MAX_DATASETS TO READ ALL\n");
+     n_datasets = MAX_DATASETS;
+  }
   if (inheader) {
-     printf("%i datasets in file\n",n_datasets);
+     have_indexed = 0;
+  }
+  if (!have_indexed) {
+     printf("Indexing %i datasets in file\n",n_datasets);
   }
 
   i = 0;
@@ -114,36 +133,51 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
   int mystep = 0;
   int iterprev = -1;
   while (i < n_datasets) {
-      H5Gget_objname_by_idx(file_id, i, name, 256);
-      /*printf(" dataset %s in file \n",name); */
-      if (sscanf(name, "%s it=%i tl=%i rl=%i c=%i",
-            thorn, &it, &tl, &level, &cnum)>=5) {
+      if (!have_indexed) {
+         H5Gget_objname_by_idx(file_id, i, name, 64);
+         strcpy(Dataset[i].name,name);
+         if (sscanf(name, "%s it=%i tl=%i rl=%i c=%i",
+               thorn, &it, &tl, &level, &cnum)>=5) {
+            if (debug) printf("%s it=%i tl=%i rl=%i cnum=%i ",thorn,it,tl,level,cnum);
+            iter[i] = it;
+            /* send dataset name back to phantom */
+            if (i==0) {
+               j = 6;
+               set_blocklabel(&j,thorn);
+            }
+         } else {
+            iter[i] = -1;
+         }
+      } else {  /* have indexed file */
+         strcpy(name,Dataset[iorder[i]-1].name);
+         /*printf(" dataset %s in file \n",name);*/
+         it = iter[iorder[i]-1];
+      }
+      if (it >= 0) {
           if (it != iterprev) {
               mystep++;
           }
           if (mystep == istep) {
              nsub++;
-             if (debug) printf("%s it=%i tl=%i rl=%i cnum=%i ",thorn,it,tl,level,cnum);
              ierr = read_cactus_dataset(file_id,name,nattrib,ncells,ndim,&n,time,deltax,inheader);
-          } else if (mystep > istep) {
+          } else if (mystep > istep && have_indexed) {
              break;;
           }
           iterprev = it;
       }
       i++;
   }
+  have_indexed = 1;
+
   if (nsub > 0) {
      nstepsgot = 1;
      *nsteps = n_datasets/nsub;
   }
   if (inheader) {
-     printf("Read %s from %i/%i timesteps, it=%i ncells=%i (next=%i)\n",thorn,istep,*nsteps,iterprev,*ncells,*next);
+     sort_cactus_data(&n_datasets,iter,iorder);
+     printf("Read data from %i/%i timesteps, it=%i ncells=%i\n",istep,*nsteps,iterprev,*ncells);
   }
   
-  /* send dataset name back to phantom */
-  i = 6;
-  set_blocklabel(&i,thorn);
-
   return nstepsgot;
 }
 

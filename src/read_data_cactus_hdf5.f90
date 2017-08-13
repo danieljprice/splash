@@ -253,10 +253,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart)),' cells'
   endif
 
-  if (ipos==nstep_max) then
-     call close_cactus_hdf5_file(ierr)
-     file_is_open = .false.
-  endif
+  !if (ipos==nstep_max) then
+  !   call close_cactus_hdf5_file(ierr)
+  !   file_is_open = .false.
+  !endif
 
 end subroutine read_data
 
@@ -360,7 +360,7 @@ subroutine set_labels
 
   ! set labels of the quantities read in
   if (ix(1).gt.0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  !if (irho.gt.0)    label(irho)       = 'density'
+  if (irho.gt.0)    label(irho)       = 'density'
   !if (iutherm.gt.0) label(iutherm)    = 'u'
   !if (ipmass.gt.0)  label(ipmass)     = 'particle mass'
   !if (ih.gt.0)      label(ih)         = 'h'
@@ -403,3 +403,15 @@ subroutine set_blocklabel(icol,name) bind(c)
  !print*,icol,' name = ',trim(blocklabel(icol))
 
 end subroutine set_blocklabel
+
+subroutine sort_cactus_data(n,iter,iorder) bind(c)
+ use, intrinsic :: iso_c_binding, only:c_int
+ use sort, only:indexxi
+ implicit none
+ integer(kind=c_int), intent(in)  :: n
+ integer(kind=c_int), intent(in)  :: iter(n)
+ integer(kind=c_int), intent(out) :: iorder(n)
+
+ call indexxi(n,iter,iorder)
+
+end subroutine sort_cactus_data
