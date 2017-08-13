@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -33,7 +33,8 @@ contains
 
 subroutine convert_all(outformat,igotfilenames,useall)
  use particle_data, only:time,gamma,dat,npartoftype,masstype,iamtype
- use settings_data, only:ncolumns,ncalc,required,ntypes,ndim,ndimV,lowmemorymode
+ use settings_data, only:ncolumns,ncalc,required,ntypes,ndim,ndimV,lowmemorymode,&
+                         buffer_steps_in_file
  use filenames,     only:rootname,nstepsinfile,nfiles,limitsfile
  use write_sphdata, only:write_sphdump
  use readwrite_griddata, only:isgridformat
@@ -47,7 +48,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
  logical, intent(inout)       :: igotfilenames
  logical, intent(in)          :: useall
  logical :: doanalysis,converttogrid
- integer :: ifile,idump,ntotal,ierr
+ integer :: ifile,idump,ntotal,ierr,iloc
  character(len=len(rootname)+4) :: filename
  character(len=10) :: string
 
@@ -60,7 +61,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
  !
  !--for format conversion each dump file is independent
  !
-    print "(/,5('-'),a,/)",'> CONVERTING DUMPFILES TO '//trim(ucase(outformat))//' FORMAT '
+    print "(/,5('-'),a,/)",'> CONVERTING SNAPSHOTS TO '//trim(ucase(outformat))//' FORMAT '
  endif
 
  !
@@ -93,23 +94,29 @@ subroutine convert_all(outformat,igotfilenames,useall)
     endif
     !--dump each step in file to an output file
     do idump = 1,nstepsinfile(ifile)
-       if (idump.gt.1) then
-          write(filename,"(a,'_',i3.3)") rootname(ifile),idump
+       if (nstepsinfile(ifile) > 1 .and. .not.buffer_steps_in_file) then
+          call get_data(ifile,igotfilenames,.false.,iposinfile=idump)
+          iloc = 1
+       else
+          iloc = idump
+       endif
+       if (nstepsinfile(ifile).gt.1) then
+          write(filename,"(a,'_',i5.5)") trim(rootname(ifile)),idump
        else
           filename = trim(rootname(ifile))
        endif
-       ntotal = sum(npartoftype(1:ntypes,idump))
+       ntotal = sum(npartoftype(1:ntypes,iloc))
        if (doanalysis) then
-          call write_analysis(time(idump),dat(1:ntotal,:,idump),ntotal,ntypes, &
-                          npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
+          call write_analysis(time(iloc),dat(1:ntotal,:,iloc),ntotal,ntypes, &
+                          npartoftype(1:ntypes,iloc),masstype(1:ntypes,iloc),iamtype(:,iloc), &
                           ncolumns+ncalc,ndim,ndimV,outformat)
        elseif (converttogrid) then
-          call convert_to_grid(time(idump),dat(:,:,idump),ntypes,&
-                               npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
+          call convert_to_grid(time(iloc),dat(:,:,iloc),ntypes,&
+                               npartoftype(1:ntypes,iloc),masstype(1:ntypes,iloc),iamtype(:,iloc), &
                                ncolumns+ncalc,filename,outformat,useall)
        else
-          call write_sphdump(time(idump),gamma(idump),dat(1:ntotal,1:ncolumns+ncalc,idump),ntotal,ntypes, &
-                          npartoftype(1:ntypes,idump),masstype(1:ntypes,idump),iamtype(:,idump), &
+          call write_sphdump(time(iloc),gamma(iloc),dat(1:ntotal,1:ncolumns+ncalc,iloc),ntotal,ntypes, &
+                          npartoftype(1:ntypes,iloc),masstype(1:ntypes,iloc),iamtype(:,iloc), &
                           ncolumns+ncalc,filename,outformat)
        endif
     enddo
