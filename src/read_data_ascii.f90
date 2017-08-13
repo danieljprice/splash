@@ -119,6 +119,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   j = indexstart
   nstepsread = 0
   icoltype = 0       ! no particle type defined by default
+  got_labels = .false.
 
   !
   !--open the file and read the number of particles
@@ -145,6 +146,20 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         print "(a)",'*** ERROR: could not determine number of columns in file ***'
         return
      endif
+
+     do i=1,nheaderlines
+        !--search through header for column labels
+        read(iunit,"(a)",iostat=ierr) line
+        if ((i.eq.1 .or. .not.got_labels) .and. ncolstep > 1) then
+           call get_column_labels(trim(line),nlabels,tmplabel)
+           if (nlabels>=ncolstep .and. .not.(isdigit(tmplabel(1)(1:1)) .or. tmplabel(1)(1:1)=='.')) then
+              label(1:ncolstep) = tmplabel(1:ncolstep)
+              got_labels = .true.
+           endif
+        endif
+     enddo
+     rewind(iunit)
+
      iverbose_was = iverbose
      iverbose = 0
      ncolumns = ncolstep
@@ -189,25 +204,19 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   endif
   iheader_time  = ienvironment('ASPLASH_HEADERLINE_TIME',errval=notset)
   iheader_gamma = ienvironment('ASPLASH_HEADERLINE_GAMMA',errval=notset)
-  got_labels = .false.
 !
 !--read header lines, try to use it to set time
 !
   if (nheaderlines.gt.0 .and. iverbose.gt.0) print*,'skipping ',nheaderlines,' header lines'
-
   do i=1,nheaderlines
      !--read header lines as character strings
      !  so that blank lines are counted in nheaderlines
      read(iunit,"(a)",iostat=ierr) line
-     if ((i.eq.1 .or. .not.got_labels) .and. ncolumns > 1) then
-        call get_column_labels(trim(line),nlabels,tmplabel)
-        if (nlabels>=ncolumns .and. .not.(isdigit(tmplabel(1)(1:1)) .or. tmplabel(1)(1:1)=='.')) then
-           label(1:ncolumns) = tmplabel(1:ncolumns)
-           got_labels = .true.
-        endif
+     if (line(1:1)=='#') then
+        read(line(2:),*,iostat=ierr) dummyreal
+     else
+        read(line,*,iostat=ierr) dummyreal
      endif
-     read(line,*,iostat=ierr) dummyreal
-
      if (i.eq.iheader_time .and. .not.timeset) then
         if (ierr.eq.0) then
            time(j) = dummyreal
@@ -229,7 +238,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
                             ' (using ASPLASH_HEADERLINE_GAMMA)'
         endif
      elseif (timeset .and. .not.gammaset .and. ierr.eq.0 .and. iheader_gamma.eq.notset &
-        .and. dummyreal.gt.0.999999 .and. dummyreal.lt.2.000001) then
+        .and. dummyreal.gt.1.0 .and. dummyreal.lt.2.000001) then
         print*,'setting gamma = ',dummyreal,' from header line ',i
         gamma(j) = dummyreal
         gammaset = .true.
