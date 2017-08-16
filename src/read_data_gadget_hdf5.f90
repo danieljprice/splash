@@ -72,6 +72,7 @@ module gadgethdf5read
  integer, dimension(maxplot) :: blocksize
  logical :: havewarned = .false.
  integer, parameter :: maxtypes = 6
+ logical :: arepo = .false.
 
  interface
    subroutine read_gadget_hdf5_header(filename,maxtypes,npartoftypei,massoftypei,&
@@ -129,13 +130,13 @@ contains
  ! function to reformat the HDF5 label into the splash column label
  ! by inserting a space whereever a capital letter occurs
  !
- !---------------------------------------------------------------------------  
+ !---------------------------------------------------------------------------
   function reformatlabel(label)
    implicit none
    character(len=*), intent(in) :: label
    character(len=2*len(label)) :: reformatlabel
    integer :: is,ia,ib,ip
-   
+
    reformatlabel = label
    ip = 1
    do is = 2, len_trim(label)
@@ -148,7 +149,7 @@ contains
          ip = ip + 1
       endif
    enddo
-   
+
   end function reformatlabel
 
 end module gadgethdf5read
@@ -169,7 +170,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
   use asciiutils,     only:cstring
   use gadgethdf5read, only:hsoft,blocklabelgas,havewarned,read_gadget_hdf5_header, &
-                           read_gadget_hdf5_data,maxtypes
+                           read_gadget_hdf5_data,maxtypes,arepo
   implicit none
   integer, intent(in)                :: istepstart,ipos
   integer, intent(out)               :: nstepsread
@@ -229,7 +230,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !  checkids    = lenvironment('GSPLASH_CHECKIDS')
   usez        = lenvironment('GSPLASH_USE_Z')
   debug       = lenvironment('GSPLASH_DEBUG') .or. debugmode
-! 
+!
 !--read data from snapshots
 !
   i = istepstart
@@ -384,7 +385,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   if (reallocate .or. .not.(allocated(dat))) then
      if (igotids.eq.1) then
-        call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol),mixedtypes=.true.)     
+        call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol),mixedtypes=.true.)
      else
         call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol))
      endif
@@ -439,10 +440,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !--read particle data
   !
   got_particles: if (ntoti.gt.0) then
-     
+
      isrequired(:) = 0
      where (required(1:ncolumns)) isrequired(1:ncolumns) = 1
-     
+
      call read_gadget_hdf5_data(cstring(datfile),maxtypes,npartoftypei,massoftypei,ncolumns,isrequired,i0,ierr)
 
   endif got_particles
@@ -485,12 +486,16 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   endif
 
   enddo over_files
+
+  if (arepo) then
+     dat(1:npartoftype(1,i),ih,i) = dat(1:npartoftype(1,i),ih,i)**(1./3.)
+     print "(a)",' this is an AREPO snapshot, using Volume**(1./3.) as smoothing length'
+  elseif (required(ih) .and. size(dat(1,:,:)).ge.ih .and. npartoftype(1,i).gt.0) then
   !
   !--for some reason the smoothing length output by GADGET is
   !  twice the usual SPH smoothing length
   !  (do this after we have read data from all of the files)
   !
-  if (required(ih) .and. size(dat(1,:,:)).ge.ih .and. npartoftype(1,i).gt.0) then
      print "(a)",' converting GADGET smoothing length on gas particles to usual SPH definition (x 0.5)'
      dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
   endif
@@ -617,7 +622,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         print "(a)",'    > Press any key to bravely proceed anyway  <'
         read*
      endif
-  endif  
+  endif
 !
 !--give a friendly warning about using too few or too many neighbours
 !  (only works with equal mass particles because otherwise we need the number density estimate)
@@ -775,7 +780,7 @@ subroutine set_labels
   use settings_data,  only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry,       only:labelcoord
   use system_utils,   only:envlist,ienvironment
-  use gadgethdf5read, only:hsoft,blocklabelgas,blocksize,reformatlabel
+  use gadgethdf5read, only:hsoft,blocklabelgas,blocksize,reformatlabel,arepo
   use asciiutils,     only:lcase
   implicit none
   integer :: i,j,icol,irank
@@ -803,6 +808,9 @@ subroutine set_labels
            ivx = icol
         case('SmoothingLength')
            ih = icol
+        case('Volume')
+           ih = icol
+           arepo = .true.
         case('Masses','Mass')
            ipmass = icol
         case('InternalEnergy')
@@ -814,7 +822,7 @@ subroutine set_labels
         case default
            label(icol:icol+irank-1) = reformatlabel(blocklabelgas(i))
         end select
-        
+
         if (irank.eq.ndimV) then
            iamvec(icol:icol+ndimV-1)   = icol
            labelvec(icol:icol+ndimV-1) = label(icol)
