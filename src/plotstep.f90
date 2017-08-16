@@ -2846,6 +2846,7 @@ contains
                        xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
     use settings_limits, only:adjustlimitstodevice
     use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot,plot_set_opacity,plot_qcur
+    use limits,        only:fix_equal_limits
     implicit none
     integer :: iplotsave,ipanelsave,ipanelpos,npanels_remaining
     real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
@@ -2965,30 +2966,15 @@ contains
     !
     if (abs(xmax-xmin).lt.tiny(xmax)) then
        if (.not.dum) print "(a)",' WARNING: '//trim(labelx)//'min='//trim(labelx)//'max '
-       xmax = xmax + 1.0
-       if (xmin.gt.0.) then
-          xmin = max(xmin - 1.0,xmin,0.)
-       else
-          xmin = xmin - 1.0
-       endif
+       call fix_equal_limits(xmin,xmax)
     endif
     if (abs(ymax-ymin).lt.tiny(ymax)) then
        if (.not.dum) print "(a)",' WARNING: '//trim(labely)//'min='//trim(labely)//'max '
-       ymax = ymax + 1.0
-       if (ymin.gt.0.) then
-          ymin = max(ymin - 1.0,ymin,0.)
-       else
-          ymin = ymin - 1.0
-       endif
+       call fix_equal_limits(ymin,ymax)
     endif
     if (irender.gt.0 .and. abs(rendermax-rendermin).lt.tiny(rendermax) .or.rendermax.ne.rendermax) then
        if (.not.dum) print "(a)",' WARNING: '//trim(labelrender)//'min='//trim(labelrender)//'max '
-       rendermax = rendermax + 1.0
-       if (rendermin.gt.0.) then
-          rendermin = max(rendermin - 1.0,rendermin,0.)
-       else
-          rendermin = rendermin - 1.0
-       endif
+       call fix_equal_limits(rendermin,rendermax)
     endif
     if (debugmode) print*,'DEBUG: calling setpage...',nstepsperpage
     if (nstepsperpage.gt.0 .or. inewpage) then

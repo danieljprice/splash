@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -416,5 +416,26 @@ subroutine assert_sensible_limits(xmin,xmax)
 
  return
 end subroutine assert_sensible_limits
+
+!----------------------------------------------------------
+! Interface to the above, but checks two numbers at once
+! and checks that max > min
+!----------------------------------------------------------
+subroutine fix_equal_limits(xmin,xmax)
+ real, intent(inout) :: xmin,xmax
+ real :: xtmp
+
+ call assert_sensible_limits(xmin,xmax)
+ if (abs(xmax - xmin) < tiny(xmin)) then
+    xmax = xmax + 1.0
+    if (xmin.gt.0.) then
+       xmin = max(xmin - 1.0,0.)
+    else
+       xmin = xmin - 1.0
+    endif
+ endif
+
+ return
+end subroutine fix_equal_limits
 
 end module limits
