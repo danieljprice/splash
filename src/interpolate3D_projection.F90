@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -169,7 +169,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpartx,npixparty
   integer :: iprintinterval, iprintnext,ipixi,jpixi,jpixcopy
-  integer :: nsubgrid,nfull,nok
+  integer :: nsubgrid,nfull,nok,ncpus
 #ifdef _OPENMP
   integer :: omp_get_num_threads,i
 #else
@@ -193,7 +193,20 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   elseif (useaccelerate) then
      string = trim(string)//' (fast)'
   endif
-  write (*,"(1x,a,': ',i4,' x ',i4,' on ')",advance='no') trim(string),npixx,npixy
+
+  ncpus = 0
+  !$omp parallel
+  !$omp master
+  !$ ncpus = omp_get_num_threads()
+  !$omp end master
+  !$omp end parallel
+
+  if (ncpus > 0) then
+     write (*,"(1x,a,': ',i4,' x ',i4,' on ',i3)") trim(string),npixx,npixy,ncpus
+  else
+     write (*,"(1x,a,': ',i4,' x ',i4)") trim(string),npixx,npixy
+  endif
+
   if (pixwidthx.le.0. .or. pixwidthy.le.0) then
      print "(1x,a)",'ERROR: pixel width <= 0'
      return
@@ -258,12 +271,6 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$omp private(i,ipix,jpix,jpixcopy,fac) &
 !$omp reduction(+:nsubgrid,nok,datsmooth,datnorm) &
 !$omp reduction(min:hminall)
-!$omp master
-#ifdef _OPENMP
-  print "(i3,a)",omp_get_num_threads(),' cpus'
-#endif
-!$omp end master
-
 !$omp do schedule (guided, 2)
   over_particles: do i=1,npart
      !
