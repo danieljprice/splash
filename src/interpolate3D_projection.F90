@@ -202,7 +202,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   !$omp end parallel
 
   if (ncpus > 0) then
-     write (*,"(1x,a,': ',i4,' x ',i4,' on ',i3)") trim(string),npixx,npixy,ncpus
+     write (*,"(1x,a,': ',i4,' x ',i4,' on ',i3,' cpus')") trim(string),npixx,npixy,ncpus
   else
      write (*,"(1x,a,': ',i4,' x ',i4)") trim(string),npixx,npixy
   endif
