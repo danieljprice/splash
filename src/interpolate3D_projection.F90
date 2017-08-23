@@ -262,14 +262,14 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(hh,z,x,y,weight,dat,itype,npart) &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,dscreen,zobserver,use3dperspective,useaccelerate) &
-!$omp shared(normalise,radkernel,radkernel2) &
+!$omp shared(normalise,radkernel,radkernel2,datsmooth,datnorm) &
 !$omp firstprivate(hmin) & !,dhmin3) &
 !$omp private(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
 !$omp private(hsmooth,horigi,hi1,hi21,term,termnorm,npixpartx,npixparty,jpixi,ipixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
 !$omp private(dx2i,row,q2,ypix,dy,dy2,wab) &
 !$omp private(i,ipix,jpix,jpixcopy,fac) &
-!$omp reduction(+:nsubgrid,nok,datsmooth,datnorm) &
+!$omp reduction(+:nsubgrid,nok) &
 !$omp reduction(min:hminall)
 !$omp do schedule (guided, 2)
   over_particles: do i=1,npart
@@ -385,7 +385,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
                  wab = wfromtable(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
-                 !                  
+                 !
+                 !$omp atomic
                  datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
                  row(ipix) = term*wab
               else
@@ -395,16 +396,19 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
            !--NB: the following actions can and should be vectorized (but I don't know how...)
            !--copy top right -> top left
            do ipix=ipixmin,ipixi-1
+              !$omp atomic
               datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + row(ipixmax-(ipix-ipixmin))
            enddo
            if (jpix.ne.jpixi) then
               jpixcopy = jpixi - (jpix-jpixi)
               !--copy top right -> bottom left 
               do ipix=ipixmin,ipixi-1
+                 !$omp atomic
                  datsmooth(ipix,jpixcopy) = datsmooth(ipix,jpixcopy) + row(ipixmax-(ipix-ipixmin))
               enddo
               !--copy top right -> bottom right
               do ipix=ipixi,ipixmax
+                 !$omp atomic
                  datsmooth(ipix,jpixcopy) = datsmooth(ipix,jpixcopy) + row(ipix)
               enddo
            endif
@@ -445,9 +449,11 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
                  !
                  !--calculate data value at this pixel using the summation interpolant
                  !
+                 !$omp atomic
                  datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
    
                  if (normalise) then
+                    !$omp atomic
                     datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
                  endif
               endif
