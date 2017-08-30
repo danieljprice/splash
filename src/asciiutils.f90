@@ -708,7 +708,7 @@ subroutine get_column_labels(line,nlabels,labels)
  character(len=*), intent(in)  :: line
  integer,          intent(out) :: nlabels
  character(len=*), dimension(:), intent(out) :: labels
- integer :: i1,i2,i
+ integer :: i1,i2,i,nlabelstmp
  character(len=1) :: leadingchar
 
  nlabels = 0
@@ -720,6 +720,8 @@ subroutine get_column_labels(line,nlabels,labels)
  if (leadingchar=='#') then
     i1 = index(line,'#') + 1
  endif
+ ! strip anything preceding an equals sign
+ i1 = max(i1,index(line,'=')+1)
  i2 = i1
 
  if (index(line,']') > 0) then
@@ -727,11 +729,22 @@ subroutine get_column_labels(line,nlabels,labels)
  ! format style 1: # [ mylabel1 ] [ mylabel2 ] [ mylabel3 ]
  !
     call split(line(i1:),']',labels,nlabels)
+ elseif (index(line,',') > 1) then
+ !
+ ! format style 2: mylabel1,mylabel2,mylabel3
+ !
+    call split(line(i1:),',',labels,nlabelstmp)
+    nlabels = count_sensible_labels(nlabelstmp,labels)
  else
  !
- ! format style 2: #     mylabel1     mylabel2     mylabel3
+ ! format style 3: #     mylabel1     mylabel2     mylabel3
  !
-    call split(line(i1:),'  ',labels,nlabels)
+    call split(line(i1:),'  ',labels,nlabelstmp)
+ !
+ ! this style is dangerous, so perform sanity checks
+ ! on the labels to ensure they are sensible
+ !
+    nlabels = count_sensible_labels(nlabelstmp,labels)
  endif
  !
  ! clean up
@@ -739,6 +752,7 @@ subroutine get_column_labels(line,nlabels,labels)
  do i=1,nlabels
     ! delete brackets
     if (nlabels <= size(labels)) then
+       call string_delete(labels(i),',')
        call string_delete(labels(i),'[')
        call string_delete(labels(i),']')
        labels(i) = trim(adjustl(labels(i)))
@@ -753,5 +767,43 @@ subroutine get_column_labels(line,nlabels,labels)
  enddo
 
 end subroutine get_column_labels
+
+!---------------------------------------------------------------------------
+!
+! count the number of sensible labels in a list of possible labels
+!
+!---------------------------------------------------------------------------
+integer function count_sensible_labels(n,labels) result(m)
+ integer, intent(in) :: n
+ character(len=*), dimension(n), intent(in) :: labels
+ integer :: i
+
+ m = 0
+ do i=1,n
+    if (is_sensible_label(labels(i))) m = m + 1
+ enddo
+
+end function count_sensible_labels
+
+!---------------------------------------------------------------------------
+!
+! determine if a particular string makes sense as a column label or not
+!
+!---------------------------------------------------------------------------
+logical function is_sensible_label(string)
+ character(len=*), intent(in) :: string
+ real    :: dum
+ integer :: ierr
+
+ is_sensible_label = .true.
+
+ ! should not contain equals sign
+ !if (index(string,'=') > 0) is_sensible_label = .false.
+
+ ! should not be able to read it as a real number
+ read(string,*,iostat=ierr) dum
+ if (ierr==0) is_sensible_label = .false.
+
+end function is_sensible_label
 
 end module asciiutils
