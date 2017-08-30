@@ -92,6 +92,8 @@ module exact
   real :: machs,macha
   !--planet-disc interaction
   real :: HonR,rplanet
+  !--bondi flow
+  logical :: relativistic
   !--gamma, for manual setting
   real :: gamma_exact
   logical :: use_gamma_exact
@@ -111,7 +113,7 @@ module exact
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
-       HonR,rplanet
+       HonR,rplanet,relativistic
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -194,7 +196,9 @@ contains
 !   planet-disc interaction
     HonR = 0.05
     rplanet = 1.
-    
+!   Bondi
+    relativistic = .false.
+
 !   gamma, if not read from file
     gamma_exact = 5./3.
     use_gamma_exact = .false.
@@ -252,8 +256,9 @@ contains
            '14) dusty waves', /, &
            '15) Roche lobes/potential ',/, &
            '16) C-shock ',/, &
-           '17) Planet-disc interaction')
-    call prompt('enter exact solution to plot',iexact,0,17)
+           '17) Planet-disc interaction',/, &
+           '18) Bondi flow')
+    call prompt('enter exact solution to plot',iexact,0,18)
     print "(a,i2)",'plotting exact solution number ',iexact
     !
     !--enter parameters for various exact solutions
@@ -335,7 +340,7 @@ contains
                    call prompt('Error opening '//trim(filename_tmp)//': try again?',ians)
                    if (.not.ians) then
                       nadjust = i-1
-                      exit over_files                      
+                      exit over_files
                    endif
                 endif
              else
@@ -353,7 +358,7 @@ contains
        if (nadjust >= 0) then
           nfiles = nadjust
           if (nfiles == 1) then
-             print "(/,a)",'Using 1 file only'          
+             print "(/,a)",'Using 1 file only'
           elseif (nfiles > 0) then
              write(str,"(i4)") nfiles
              print "(/,a)",'Using '//trim(adjustl(str))//' files'
@@ -384,7 +389,7 @@ contains
           else
              call prompt('enter velocity to left of shock  ',v_L)
              call prompt('enter velocity to right of shock ',v_R)
-             call prompt('enter dust-to-gas ratio ',rdust_to_gas,0.)             
+             call prompt('enter dust-to-gas ratio ',rdust_to_gas,0.)
           endif
        endif
        prompt_for_gamma = .true.
@@ -500,8 +505,13 @@ contains
     case(17)
        call prompt('enter disc aspect ratio (H/R)',HonR,0.,1.)
        !call prompt('enter planet orbital radius ',rplanet,0.)
+    case(18)
+       call prompt('use relativistic solution?',relativistic)
+       call prompt('enter radius where v is 0 (r0)',Rtorus,0.)
+       call prompt('enter mass of central object',Mstar,0.)
+       prompt_for_gamma = .true.
     end select
-    
+
     if (prompt_for_gamma) then
        call prompt('set adiabatic gamma manually? (no=read from dumps)',use_gamma_exact)
        if (use_gamma_exact) then
@@ -835,6 +845,7 @@ contains
     use gresho,          only:exact_gresho
     use Cshock,          only:exact_Cshock
     use planetdisc,      only:exact_planetdisc
+    use bondi,           only:exact_bondi
     use transforms,      only:transform,transform_inverse
     use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line,plotlib_maxlinestyle
     integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
@@ -903,7 +914,7 @@ contains
     !  (-ve ierr indicates a partial solution)
     !
     ierr = 666
-    
+
     !
     !--use time=0 if time has not been read from dump file (indicated by t < 0)
     !
@@ -964,7 +975,7 @@ contains
                               rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
              call exact_shock(2,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
-                              rdust_to_gas,xexact,yexact,ierr)   
+                              rdust_to_gas,xexact,yexact,ierr)
           elseif (iploty.eq.ivx) then
               call exact_shock(3,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
                               rdust_to_gas,xexact,yexact,ierr)
@@ -1088,7 +1099,7 @@ contains
        !endif
        if (igeom.eq.2 .and. ndim.ge.2) then
           if (iploty.eq.ivx+1) then
-             call exact_gresho(1,xexact,yexact,ierr)          
+             call exact_gresho(1,xexact,yexact,ierr)
           elseif (iploty.eq.ipr) then
              call exact_gresho(2,xexact,yexact,ierr)
           endif
@@ -1259,6 +1270,12 @@ contains
        if (ndim.ge.2 .and. iplotx.eq.ix(1) .and. iploty.eq.ix(2)) then
           call exact_planetdisc(igeom,timei,HonR,rplanet,xexact,yexact,ierr)
        endif
+    case(18)
+       if (iplotx.eq.irad .or. (igeom.eq.3 .and. iplotx.eq.ix(1))) then
+          if (iploty.eq.ivx .and. igeom==3) then
+             call exact_bondi(1,timei,gammai,Rtorus,Mstar,relativistic,xexact,yexact,ierr)
+          endif
+       endif
     end select
 
     !----------------------------------------------------------
@@ -1311,7 +1328,7 @@ contains
 
    if (itransx > 0) call transform(xexact(1:iexactpts),itransx)
    if (itransy > 0) call transform(yexact(1:iexactpts),itransy)
-   
+
    if (present(ls)) call plot_sls(ls)
    call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
    !
@@ -1320,7 +1337,7 @@ contains
    if (present(err)) then
       plot_err = err
    else
-      plot_err = .true.   
+      plot_err = .true.
    endif
    if (present(matchtype)) then
       imatchtype = matchtype
@@ -1357,7 +1374,7 @@ contains
   end subroutine plot_exact_solution
 
   !--------------------------------
-  ! Calculate various error norms 
+  ! Calculate various error norms
   !--------------------------------
   subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_type,&
                               xmin,xmax,residual,errL1,errL2,errLinf,iused,imatchtype)
@@ -1453,7 +1470,7 @@ contains
   end subroutine calculate_errors
 
   !------------------------------------
-  ! Plot residual errors as inset plot 
+  ! Plot residual errors as inset plot
   !------------------------------------
   subroutine plot_residuals(xpts,residuals,imarker,iaxisy)
    use plotlib, only:plot_qvp,plot_qwin,plot_svp,plot_qci,plot_qfs, &
