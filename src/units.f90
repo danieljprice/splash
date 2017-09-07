@@ -31,14 +31,16 @@ module settings_units
  real, public :: unitzintegration
  real(doub_prec), public :: unit_interp
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
- public :: get_nearest_length_unit
+ public :: get_nearest_length_unit,get_nearest_time_unit
 
  private
 
 contains
+!---------------------------------------------------------------
 !
-!--initialise the units arrays to some harmless default values
+!  initialise the units arrays to some harmless default values
 !
+!---------------------------------------------------------------
 subroutine defaults_set_units
  implicit none
 
@@ -51,9 +53,11 @@ subroutine defaults_set_units
  return
 end subroutine defaults_set_units
 
+!-------------------------------------------
 !
-!--find the nearest 'sensible' length unit
+!  find the nearest 'sensible' length unit
 !
+!-------------------------------------------
 subroutine get_nearest_length_unit(udist,unit,unitlabel)
  real(doub_prec),  intent(in)  :: udist
  real(doub_prec),  intent(out) :: unit
@@ -77,26 +81,76 @@ subroutine get_nearest_length_unit(udist,unit,unitlabel)
       ' [kpc]    ',&
       ' [Mpc]    '/)
 
+
+ call get_nearest_unit(nu,unit_length,unit_labels,udist,unit,unitlabel)
+
+end subroutine get_nearest_length_unit
+
+!-------------------------------------------
+!
+!  find the nearest 'sensible' time unit
+!
+!-------------------------------------------
+subroutine get_nearest_time_unit(utime,unit,unitlabel)
+ real(doub_prec),  intent(in)  :: utime
+ real(doub_prec),  intent(out) :: unit
+ character(len=*), intent(out) :: unitlabel
+ integer, parameter :: nu = 7
+ real(doub_prec), parameter :: units_time(nu) = &
+    (/1.d-3,        &
+      1.d0,         &
+      3.6d3,        &
+      8.64d4,       &
+      3.15568926d7, &
+      3.15568926d13,&
+      3.15568926d16/)
+
+ character(len=*), parameter :: unit_labels(nu) = &
+    (/' ms  ',&
+      ' s   ',&
+      ' hrs ',&
+      ' days',&
+      ' yrs ',&
+      ' Myr ',&
+      ' Gyr '/)
+
+ call get_nearest_unit(nu,units_time,unit_labels,utime,unit,unitlabel)
+
+end subroutine get_nearest_time_unit
+
+!-------------------------------------------------------
+!
+!  find the nearest unit from a list of possible units
+!
+!-------------------------------------------------------
+subroutine get_nearest_unit(nu,units,unit_labels,unit_in,unit_out,unitlabel_out)
+ integer, intent(in) :: nu
+ real(doub_prec),  intent(in) :: units(nu),unit_in
+ character(len=*), intent(in) :: unit_labels(nu)
+ real(doub_prec),  intent(out) :: unit_out
+ character(len=*), intent(out) :: unitlabel_out
  real(doub_prec) :: err,erri
- integer         :: i
+ integer :: i
 
  err = huge(err)
  do i = 1,nu
-    ! find nearest unit. Divide by udist means
+    ! find nearest unit. Divide by unit means
     ! we always get the unit "below"
-    erri = abs(udist-unit_length(i))/udist
+    erri = abs(unit_in-units(i))/unit_in
     if (erri < err) then
-       unit = udist/unit_length(i)
-       unitlabel = unit_labels(i)
+       unit_out      = unit_in/units(i)
+       unitlabel_out = unit_labels(i)
        err = erri
     endif
  enddo
 
-end subroutine get_nearest_length_unit
+end subroutine get_nearest_unit
 
+!-------------------------------------------------------
 !
-!--set units
+!  set units
 !
+!-------------------------------------------------------
 subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
   use prompting, only:prompt
   use labels, only:label,ix,ih,iamvec,labelvec
@@ -206,9 +260,12 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
   enddo
 
 end subroutine set_units
+
+!-------------------------------------------------------
 !
-!--save units for all columns to a file
+!  save units for all columns to a file
 !
+!-------------------------------------------------------
 subroutine write_unitsfile(unitsfile,ncolumns)
   implicit none
   character(len=*), intent(in) :: unitsfile
@@ -236,9 +293,12 @@ subroutine write_unitsfile(unitsfile,ncolumns)
   return
 
 end subroutine write_unitsfile
+
+!-------------------------------------------------------
 !
-!--read units for all columns from a file
+!  read units for all columns from a file
 !
+!-------------------------------------------------------
 subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
   use settings_data, only:ndim
   implicit none

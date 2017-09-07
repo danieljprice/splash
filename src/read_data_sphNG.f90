@@ -2173,7 +2173,7 @@ subroutine set_labels
   use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,&
                             ndusttypes
   use geometry,        only:labelcoord
-  use settings_units,  only:units,unitzintegration,get_nearest_length_unit
+  use settings_units,  only:units,unitzintegration,get_nearest_length_unit,get_nearest_time_unit
   use sphNGread
   use asciiutils,      only:lcase
   use system_commands, only:get_environment
@@ -2421,12 +2421,9 @@ subroutine set_labels
       units(0) = 1./tfreefall
       unitslabel(0) = ' '
    case default
-      units(0) = utime/3.1536d7
-      unitslabel(0) = ' yrs'
+      call get_nearest_time_unit(utime,unitx,unitslabel(0))
+      units(0) = unitx ! convert to real*4
    end select
-   !--or use these two lines for time in free-fall times
-   !units(0) = 1./tfreefall
-   !unitslabel(0) = ' '
 
   unitzintegration = udist
   labelzintegration = ' [cm]'
