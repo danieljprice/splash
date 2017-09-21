@@ -85,11 +85,11 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  character(len=*), intent(in) :: label
  logical, intent(in) :: log
  real, intent(in), optional :: vptxminfull,vptxmaxfull,vptyminfull,vptymaxfull
- integer, parameter :: npixwedg = 400
+ integer, parameter :: maxpixwedg = 400
  real, dimension(6), parameter :: trans = (/-0.5,1.0,0.0,-0.5,0.0,1.0/)
- real, dimension(1,npixwedg) :: sampley
- real, dimension(npixwedg,1) :: samplex
- integer :: i
+ real, dimension(1,maxpixwedg) :: sampley
+ real, dimension(maxpixwedg,1) :: samplex
+ integer :: i,npixwedg
  real :: disp,width,xch,ych,dx
  real :: xmin,xmax,ymin,ymax,vptxmin,vptxmax,vptymin,vptymax
  real :: vptxmini,vptxmaxi,vptymini,vptymaxi
@@ -114,6 +114,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  call plot_qwin(xmin,xmax,ymin,ymax)
  call plot_qvp(0,vptxmin,vptxmax,vptymin,vptymax)
  call plot_qcs(0,xch,ych)
+
  !--if colour bar stretches across multiple plots,
  !  override settings for vptymin and vptymax with input values
  if (present(vptxminfull) .and. present(vptxmaxfull) .and. &
@@ -128,14 +129,6 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
     vptymini = vptymin
     vptymaxi = vptymax
  endif
-!
-!--fill array with all values from datmin to datmax
-!
- dx = (datmax-datmin)/real(npixwedg-1)
- do i=1,npixwedg
-    sampley(1,i) = datmin + (i-1)*dx
-    samplex(i,1) = datmin + (i-1)*dx
- enddo
  disp = dispall
 
  select case(istyle)
@@ -166,13 +159,20 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
    endif
    call plot_svp(vptxmini,vptxmaxi,vptymini,vptymaxi)
    call plot_set_exactpixelboundaries()
+   !--check number of pixels in colour bar
+   call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+   npixwedg = max(min(int(xmaxpix-xminpix),maxpixwedg),2)
+   !
+   !--fill array with all values from datmin to datmax
+   !
+    dx = (datmax-datmin)/real(npixwedg-1)
+    do i=1,npixwedg
+       samplex(i,:) = datmin + (i-1)*dx
+    enddo
    !
    !--draw colour bar, by cleverly setting window size
    !
    call plot_swin(1.0,real(npixwedg),0.0,1.0)
-
-   !--check number of pixels in colour bar
-   call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
 
    if (abs(icolours).gt.0) then        ! colour
    !--check if the colour bar will be more than 1024 pixels
@@ -238,7 +238,6 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  ! vertical colour bar (default)
  !-------------------------------
  case default
-
     if (istyle.eq.3) disp = 0. ! plot-hugging
    !
    !--set viewport for the wedge
@@ -260,10 +259,18 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
     endif
     call plot_svp(vptxmini,vptxmaxi,vptymini,vptymaxi)
     call plot_set_exactpixelboundaries()
+
+    !--check number of pixels in colour bar
+    call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+    npixwedg = max(min(int(ymaxpix-yminpix),maxpixwedg),2)
+    dx = (datmax-datmin)/real(npixwedg-1)
+    do i=1,npixwedg
+       sampley(:,i) = datmin + (i-1)*dx
+    enddo
    !
    !--draw colour bar, by cleverly setting window size
    !
-    call plot_swin(0.0,1.0,1.0,real(npixwedg))
+    call plot_swin(0.0,1.0,0.0,real(npixwedg))
     if (icolours.eq.1) then        ! greyscale
        call plot_gray(sampley,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans,iextend=plotlib_extend_pad)
     elseif (abs(icolours).gt.0) then        ! colour
