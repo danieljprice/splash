@@ -246,9 +246,24 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
      if (required(ih) .and. required(irho) .and. ih.gt.0 .and. irho.gt.0) then
         print "(a)",' WARNING: particle mass not set: using normalised interpolations'
      endif
-  !--if particle mass has not been set, then must use normalised interpolations
      weighti(1:ninterp) = 1.0
+
+  !--if particle mass has not been set, then must use normalised interpolations
      inormalise = .true.
+
+     if (size(iamtypei) > 1) then
+        !
+        !--particles with mixed types
+        !
+        !$omp parallel do default(none) &
+        !$omp shared(ninterp,iamtypei,weighti,usetype) &
+        !$omp private(ipart,itype)
+        do ipart=1,ninterp
+           itype = iamtypei(ipart)
+           if (.not.usetype(itype)) weighti(ipart) = 0.
+        enddo
+        !$omp end parallel do
+     endif
   endif
 
 end subroutine set_interpolation_weights
