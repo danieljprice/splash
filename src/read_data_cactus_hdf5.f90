@@ -338,6 +338,7 @@ subroutine set_labels
 
   ix = 0
   iutherm = 0
+  irho = 0
   do icol=1,size(blocklabel)
      select case(trim(lcase(blocklabel(icol))))
      case('x')
@@ -360,7 +361,7 @@ subroutine set_labels
 
   ! set labels of the quantities read in
   if (ix(1).gt.0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  if (irho.gt.0)    label(irho)       = 'density'
+  !if (irho.gt.0)    label(irho)       = 'density'
   !if (iutherm.gt.0) label(iutherm)    = 'u'
   !if (ipmass.gt.0)  label(ipmass)     = 'particle mass'
   !if (ih.gt.0)      label(ih)         = 'h'
