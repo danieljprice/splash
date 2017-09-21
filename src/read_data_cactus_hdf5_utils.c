@@ -152,7 +152,7 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
          /* count how many unique variables (columns) there are */
          if (strcmp(thorn,thornprev) != 0) {
             *ncol = *ncol + 1;
-            if (inheader) printf("%s\n",thorn);
+            if (inheader) printf("-> %s\n",thorn);
              /* send dataset name back to phantom */
             if (inheader) set_blocklabel(ncol,thorn);
             nsub = 0;
@@ -324,11 +324,9 @@ int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int mycol,int 
    nsize[1] = ny;
    nsize[2] = nz;
    memspace_id = H5Screate_simple(ndim,nsize,NULL);
-   double temp[nx][ny][nz];
-   double dat[ncells],xx[ncells],yy[ncells],zz[ncells];
-   int itype[ncells];
+   double *dat = malloc(ncells * sizeof(double));
 
-   status = H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
+   status = H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,dat);
    if (status == HDF5_error) { printf("ERROR reading dataset \n"); ierr = 4; }
 
    /* map to one dimensional arrays and determine x,y,z for each cell */
@@ -340,72 +338,82 @@ int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int mycol,int 
       printf("PATCH origin = %f %f %f\n",orig[0],orig[1],orig[2]);
       printf(" nx=%i x=%f->%f\n",nx,orig[0],(orig[0]+(nx-1)*dx));
    }
-   /* here we have to reconstruct the x, y and z positions of
-      each cell. The following looks hacked but works. We tested it. */
-   int ip = 0;
-   for (k=0;k<nx;k++) {
-       zi = orig[2] + k*dz;
-       for (j=0;j<ny;j++) { 
-           yi = orig[1] + j*dy;
-           for (i=0;i<nz;i++) {
-               xi = orig[0] + i*dx;
-               dat[ip]=temp[k][j][i];
-               xx[ip]=xi;
-               yy[ip]=yi;
-               zz[ip]=zi;
-               /* printf("ip=%i rho %i %i %i = %f x=%f y=%f z=%f \n",ip,i,j,k,dat[ip],xi,yi,zi);*/
-               *n = *n + 1;
-               ip++;
-           }
-       }
-   }
-   
-   /* tag ghost particles */
-   ip = 0;
-   int isghostx,isghosty,isghostz;
-   for (k=0;k<nx;k++) {
-       if ((k < nghost[2]) || (k > nx-nghost[2]-1)) { 
-          isghostz = 1; 
-       } else {
-          isghostz = 0;
-       }   
-       for (j=0;j<ny;j++) {
-           if ((j < nghost[1]) || (j > ny-nghost[1]-1)) {
-              isghosty = 1;
-           } else {
-              isghosty = 0;
-           }
-           for (i=0;i<nz;i++) {  
-               if ((i < nghost[0]) || (i > nz-nghost[0]-1)) {
-                  isghostx = 1; 
-               } else {
-                  isghostx = 0;
-               }
-               if (isghostx || isghosty || isghostz) {               
-                 itype[ip] = 2;
-               } else {
-                 itype[ip] = 1;
-               }
-               ip++;
-           }
-       }
-   }
-   
-   /* send data through to Fortran */
-   int icol ;
+
+   int icol;
+   *n = *n + ncells;
    if (mycol==6) {
+      double *xx  = malloc(ncells * sizeof(double));
+      double *yy  = malloc(ncells * sizeof(double));
+      double *zz  = malloc(ncells * sizeof(double));
+      int *itype  = malloc(ncells * sizeof(int));
+
+      /* here we have to reconstruct the x, y and z positions of
+         each cell. The following looks hacked but works. We tested it. */
+      int ip = 0;
+      for (k=0;k<nx;k++) {
+          zi = orig[2] + k*dz;
+          for (j=0;j<ny;j++) {
+              yi = orig[1] + j*dy;
+              for (i=0;i<nz;i++) {
+                  xi = orig[0] + i*dx;
+                  xx[ip]=xi;
+                  yy[ip]=yi;
+                  zz[ip]=zi;
+                  /* printf("ip=%i rho %i %i %i = %f x=%f y=%f z=%f \n",ip,i,j,k,dat[ip],xi,yi,zi);*/
+                  ip++;
+              }
+          }
+      }
+
+      /* tag ghost particles */
+      ip = 0;
+      int isghostx,isghosty,isghostz;
+      for (k=0;k<nx;k++) {
+          if ((k < nghost[2]) || (k > nx-nghost[2]-1)) {
+             isghostz = 1;
+          } else {
+             isghostz = 0;
+          }
+          for (j=0;j<ny;j++) {
+              if ((j < nghost[1]) || (j > ny-nghost[1]-1)) {
+                 isghosty = 1;
+              } else {
+                 isghosty = 0;
+              }
+              for (i=0;i<nz;i++) {
+                  if ((i < nghost[0]) || (i > nz-nghost[0]-1)) {
+                     isghostx = 1;
+                  } else {
+                     isghostx = 0;
+                  }
+                  if (isghostx || isghosty || isghostz) {
+                    itype[ip] = 2;
+                  } else {
+                    itype[ip] = 1;
+                  }
+                  ip++;
+              }
+          }
+      }
+      /* send additional data through to Fortran */
       icol = 1;
       read_cactus_hdf5_data_fromc(&icol,n,&ncells,xx);
       icol = 2;
       read_cactus_hdf5_data_fromc(&icol,n,&ncells,yy);
       icol = 3;
       read_cactus_hdf5_data_fromc(&icol,n,&ncells,zz);
+      /* zone type (regular or ghost) */
+      read_cactus_itype_fromc(n,&ncells,itype);
+      free(xx);
+      free(yy);
+      free(zz);
+      free(itype);
    }
    icol = mycol;
    read_cactus_hdf5_data_fromc(&icol,n,&ncells,dat);
 
-   /* zone type (regular or ghost) */
-   if (mycol==6) read_cactus_itype_fromc(n,&ncells,itype);
+   /* deallocate memory */
+   free(dat);
 
    return ierr;
 }
