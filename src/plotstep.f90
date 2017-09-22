@@ -3129,6 +3129,7 @@ contains
     use pagesetup,     only:xlabeloffset
     use plotlib,       only:plot_qci,plot_sci,plot_annotate,plot_set_opacity
     use labels,        only:is_coord
+    use asciiutils,    only:add_escape_chars
     implicit none
     integer :: icoloursave
     character(len=lensteplegend) :: steplegendtext
@@ -3214,7 +3215,7 @@ contains
        elseif (istepsonpage.le.nsteplegendlines) then
           steplegendtext = steplegend(istepsonpage)
        elseif (all(nstepsinfile(1:nfiles).le.1)) then
-          steplegendtext = trim(rootname(istep))
+          steplegendtext = add_escape_chars(rootname(istep))
        else
           write(steplegendtext,"(a,i4)") 'step ',istep
        endif

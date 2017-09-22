@@ -33,7 +33,7 @@
 module asciiutils
  implicit none
  public :: read_asciifile,get_ncolumns,get_nrows,ncolumnsline,safename,basename
- public :: cstring,fstring
+ public :: cstring,fstring,add_escape_chars
  public :: string_replace, string_delete, nheaderlines, string_sub
  public :: ucase,lcase
  public :: get_line_containing
@@ -441,6 +441,23 @@ end function safename
 
 !---------------------------------------------------------------------------
 !
+! function to insert escape characters so filenames appear correctly in legend
+!
+!---------------------------------------------------------------------------
+function add_escape_chars(string)
+ implicit none
+ character(len=*), intent(in) :: string
+ character(len=len(string)) :: add_escape_chars
+ integer :: ipos
+
+ add_escape_chars = string
+ call string_replace(add_escape_chars,'_','\_')
+ call string_replace(add_escape_chars,'^','\^')
+
+end function add_escape_chars
+
+!---------------------------------------------------------------------------
+!
 ! function stripping the directory off a filename
 !
 !---------------------------------------------------------------------------
@@ -509,13 +526,17 @@ subroutine string_replace(string,skey,sreplacewith)
  implicit none
  character(len=*), intent(inout) :: string
  character(len=*), intent(in)    :: skey,sreplacewith
- integer :: ipos,lensub
+ character(len=len(string)) :: remstring
+ integer :: ipos,ioffset,lensub
 
  ipos = index(trim(string),skey)
  lensub = len(skey)
  do while(ipos.gt.0)
-    string = string(1:ipos-1)//sreplacewith//string(ipos+lensub:len_trim(string))
-    ipos = index(trim(string),skey)
+    remstring = string(ipos+lensub:len_trim(string))
+    ioffset = ipos - 1 + len(sreplacewith)
+    string = string(1:ipos-1)//sreplacewith//remstring
+    ipos = index(trim(remstring),skey)
+    if (ipos > 0) ipos = ipos + ioffset
  enddo
 
 end subroutine string_replace
