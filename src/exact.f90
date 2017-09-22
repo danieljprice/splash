@@ -322,8 +322,8 @@ contains
                    if (nrows > maxexactpts) maxexactpts = nrows
                    if (ncols.gt.2) then
                       print "(a,i2,a)",' File '//trim(filename_tmp)//' contains ',ncols,' columns of data'
-                      call prompt('Enter column containing x data ',ixcolfile(i),1,ncols)
                       call prompt('Enter column containing y data ',iycolfile(i),1,ncols)
+                      call prompt('Enter column containing x data ',ixcolfile(i),1,ncols)
                    elseif (ncols.eq.2) then
                       print "(a,i2,a)",' OK: got ',ncols,' columns from '//trim(filename_tmp)
                    else
@@ -352,8 +352,8 @@ contains
                 endif
              endif
           enddo
-          call prompt('enter x axis of exact solution ',iexactplotx(i),1)
           call prompt('enter y axis of exact solution ',iexactploty(i),1)
+          call prompt('enter x axis of exact solution ',iexactplotx(i),1)
        enddo over_files
        if (nadjust >= 0) then
           nfiles = nadjust
