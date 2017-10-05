@@ -99,11 +99,14 @@ contains
   implicit none
   character(len=*), intent(in) :: prefix
 
-  defaultsfile = trim(adjustl(prefix))//'.defaults'
-  limitsfile   = trim(adjustl(prefix))//'.limits'
-  unitsfile    = trim(adjustl(prefix))//'.units'
-  coloursfile  = trim(adjustl(prefix))//'.colours'
   fileprefix   = trim(adjustl(prefix))
+  if (fileprefix(len_trim(fileprefix):len_trim(fileprefix)).eq.'.') then
+     fileprefix = fileprefix(1:len_trim(fileprefix)-1)
+  endif
+  defaultsfile = trim(adjustl(fileprefix))//'.defaults'
+  limitsfile   = trim(adjustl(fileprefix))//'.limits'
+  unitsfile    = trim(adjustl(fileprefix))//'.units'
+  coloursfile  = trim(adjustl(fileprefix))//'.colours'
 
   return
  end subroutine set_filenames
