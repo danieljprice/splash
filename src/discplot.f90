@@ -37,7 +37,7 @@ module disc
 
 contains
 
-subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,rminin,rmaxin,ymin,ymax,&
+subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rminin,rmaxin,ymin,ymax,&
                     itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,unit_u,u,u_is_spsound)
  use transforms, only:transform_limits_inverse,transform_inverse,transform
  use params,     only:int1,maxparttypes,doub_prec
@@ -46,7 +46,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,rminin,rmaxi
  integer,                          intent(in)  :: iplot,npart,npmass,itransx,itransy
  real, dimension(npart),           intent(in)  :: rpart
  real, dimension(npmass),          intent(in)  :: pmass
- real(doub_prec),                  intent(in)  :: unit_mass,unit_r
+ real(doub_prec),                  intent(in)  :: unit_mass,unit_r,unit_dz
  real,                             intent(in)  :: rminin,rmaxin,gamma
  real,                             intent(out) :: ymin,ymax
  integer, dimension(npart),        intent(in)  :: icolourpart
@@ -216,6 +216,11 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,rminin,rmaxi
        endif
        sigma(ibin) = real(toomreq,kind=kind(sigma))
     enddo
+ else
+!
+!--return surface density in units of [g/cm^2], not [g/cm^3 au]
+!
+    sigma = sigma*(unit_r/unit_dz)**2
  endif
 
  if (itransx.gt.0) call transform(radius,itransx)

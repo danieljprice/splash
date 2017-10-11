@@ -652,7 +652,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use toystar2D,          only:exact_toystar_ACplane2D
   use labels,             only:label,shortlabel,labelvec,iamvec,lenlabel,lenunitslabel,ih,irho,ipmass,ix,iacplane, &
                                ipowerspec,isurfdens,itoomre,ispsound,iutherm,ipdf,icolpixmap,is_coord,labeltype,&
-                               labelzintegration,unitslabel,integrate_label,get_sink_type
+                               labelzintegration,unitslabel,integrate_label,get_sink_type,get_unitlabel_coldens
   use limits,             only:lim,get_particle_subset,lim2,lim2set
   use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
                                icontourmulti,x_secmulti,xsecposmulti,iusealltypesmulti,iplotpartoftypemulti
@@ -732,7 +732,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
   real, parameter :: tol = 1.e-10 ! used to compare real numbers
   real, parameter :: error_in_log = -666. ! magic number used to flag error with log(0.)
-  real(doub_prec) :: unit_mass, unit_r, unit_u
+  real(doub_prec) :: unit_mass, unit_r, unit_u, unit_dz
   real, dimension(:), allocatable    :: xplot,yplot,zplot
   real, dimension(:), allocatable    :: hh,weight
   real, dimension(:), allocatable    :: renderplot
@@ -2328,7 +2328,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               labely = trim(label(iploty))
            elseif (iploty.eq.isurfdens) then
               itemp = 1
-              label(iploty) = '\gS'
+              label(iploty) = '\gS '//get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(irho))
               labely = trim(label(iploty))
            elseif (iploty.eq.ipdf) then
               label(iploty) = 'PDF ('//trim(label(iplotx))//')'
@@ -2354,29 +2354,31 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  unit_mass = 1.d0
                  unit_r    = 1.d0
                  unit_u    = 1.d0
+                 unit_dz   = 1.d0
                  if (iRescale) then
                     if (ix(1) > 0) unit_r = units(ix(1))
                     if (icol > 0)  unit_u = units(icol)
+                    unit_dz = unitzintegration
                  endif
                  if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
                     if (iRescale) unit_mass = units(ipmass)
                     if (icol.gt.0) then
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),unit_mass,unit_r, &
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),unit_mass,unit_r,unit_dz, &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
                             icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,unit_u,dat(1:ntoti,icol),icol.eq.ispsound)
                     else
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),unit_mass,unit_r, &
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),unit_mass,unit_r,unit_dz, &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
                             icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai)
                     endif
                  else
                     if (iRescale .and. irho > 0) unit_mass = units(irho)*unitzintegration**3
                     if (icol.gt.0) then
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),unit_mass,unit_r, &
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),unit_mass,unit_r,unit_dz, &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
                             icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,unit_u,dat(1:ntoti,icol),icol.eq.ispsound)
                     else
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),unit_mass,unit_r, &
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),unit_mass,unit_r,unit_dz, &
                             xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),&
                             icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai)
                     endif

@@ -259,16 +259,31 @@ function integrate_label(labelin,iplot,izcol,normalise,iRescale,labelzint,&
         endif
         if (iplot.eq.irho .and. (index(labelin,'density').ne.0 .or. index(labelin,'rho').ne.0)) then
            integrate_label = 'column density'
-           !--try to get units label right for column density
-           !  would be nice to have a more robust way of knowing what the units mean
-           if (iRescale .and. index(labelzint,'cm').gt.0  &
-                        .and. trim(adjustl(unitslabel(irho))).eq.'[g/cm\u3\d]') then
-              integrate_label = trim(integrate_label)//' [g/cm\u2\d]'
-           endif
+           integrate_label = trim(integrate_label)//get_unitlabel_coldens(iRescale,labelzint,unitslabel(irho))
         endif
      endif
   endif
 end function integrate_label
+
+!-----------------------------------------------------------------
+!
+! utility to convert the units label to g/cm^2 where appropriate
+! would be nice to have a more robust way of knowing what the units mean
+!
+!-----------------------------------------------------------------
+function get_unitlabel_coldens(iRescale,labelzint,unitlabel)
+ logical, intent(in) :: iRescale
+ character(len=*), intent(in) :: labelzint,unitlabel
+ character(len=lenunitslabel) :: get_unitlabel_coldens
+
+ if (iRescale .and. index(labelzint,'cm').gt.0  &
+     .and. trim(adjustl(unitlabel)).eq.'[g/cm\u3\d]') then
+    get_unitlabel_coldens = ' [ g/cm\u2\d]'
+ else
+    get_unitlabel_coldens = ' '
+ endif
+
+end function get_unitlabel_coldens
 
 !-----------------------------------------------------------------
 !
