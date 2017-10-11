@@ -134,9 +134,8 @@ subroutine get_nearest_unit(nu,units,unit_labels,unit_in,unit_out,unitlabel_out)
 
  err = huge(err)
  do i = 1,nu
-    ! find nearest unit. Divide by unit means
-    ! we always get the unit "below"
-    erri = abs(unit_in-units(i))/unit_in
+    ! find nearest unit in log space
+    erri = abs(log10(unit_in)-log10(units(i)))
     if (erri < err) then
        unit_out      = unit_in/units(i)
        unitlabel_out = unit_labels(i)
