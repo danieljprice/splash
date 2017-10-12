@@ -239,7 +239,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      !--loop over pixels, adding the contribution from this particle
      !
      if (islengthz) then
-        xcoord(izcoord) = 1. !xci(izcoord)     
+        xcoord(izcoord) = xi(izcoord) ! assume all pixels at same r as particlefor theta-phi
      else
         xcoord(izcoord) = 0. ! use phi=0 so get x = r cos(phi) = r
      endif
