@@ -388,7 +388,8 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
                  print*,'error: particle index > number of particles'
               else
                  if (icoordsnew.ne.icoords) then
-                    call plot_kernel_gr(icoordsnew,icoords,x(icircpart(n)),y(icircpart(n)),2*h(icircpart(n)))
+                    call plot_kernel_gr(icoordsnew,icoords,iplotx,iploty,&
+                         x(icircpart(n)),y(icircpart(n)),z(icircpart(n)),2*h(icircpart(n)))
                  else
                     call plot_circ(x(icircpart(n)),y(icircpart(n)),2*h(icircpart(n)))
                  endif
@@ -516,19 +517,20 @@ end function in_cell
 ! PGPLOT page must already be set up - this just draws the "circle"
 !
 !--------------------------------------------------------------------------------
-subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
+subroutine plot_kernel_gr(igeom,igeomold,iplotx,iploty,x,y,z,h)
   use geometry, only:coord_transform,maxcoordsys,labelcoordsys
   use plotlib,  only:plot_line
+  use labels,   only:ix
   implicit none
-  integer, intent(in) :: igeom, igeomold
-  real, intent(in) :: x,y,h
+  integer, intent(in) :: igeom,igeomold,iplotx,iploty
+  real, intent(in) :: x,y,z,h
 
   integer, parameter :: npts = 100 ! big enough to give a smooth circle
   real, parameter :: pi = 3.1415926536
-  integer :: i
-  real, dimension(2) :: xtemp
-  real, dimension(2,npts) :: xpts
-  real :: angle, dangle, xi, yi
+  integer :: i,iplotz
+  real, dimension(3) :: xtemp,xplot_coords
+  real, dimension(3,npts) :: xpts
+  real :: angle, dangle, xi, yi, zi
 
   if (igeom.gt.1 .and. igeom.le.maxcoordsys) then
      print 10,labelcoordsys(igeom)
@@ -537,12 +539,21 @@ subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
   endif
 10 format('coordinate system = ',a)
 
-  xtemp(1) = x
-  xtemp(2) = y
+  iplotz = 0
+  do i=1,3
+     if (iplotx.ne.ix(i) .and. iploty.ne.ix(i)) iplotz = ix(i)
+  enddo
+  if (iplotz==0) return
+
+  xplot_coords = (/x,y,z/)  ! not actual x,y,z
+  xtemp(iplotx-ix(1)+1) = xplot_coords(1)
+  xtemp(iploty-ix(1)+1) = xplot_coords(2)
+  xtemp(iplotz-ix(1)+1) = xplot_coords(3)
   !--e.g. from cylindricals TO cartesians
-  call coord_transform(xtemp,2,igeom,xpts(:,1),2,igeomold)
+  call coord_transform(xtemp,3,igeom,xpts(:,1),3,igeomold)
   xi = xpts(1,1)
   yi = xpts(2,1)
+  zi = xpts(3,1)
 !
 !--step around a circle in co-ordinate space of radius h and store the
 !  location of the points in cartesian space in the 2D array xpts
@@ -552,15 +563,16 @@ subroutine plot_kernel_gr(igeom,igeomold,x,y,h)
      angle = (i-1)*dangle
      xtemp(1) = xi + h*COS(angle)
      xtemp(2) = yi + h*SIN(angle)
+     xtemp(3) = zi
 !
 !--translate back to actual coordinate system plotted
 !
-     call coord_transform(xtemp,2,igeomold,xpts(:,i),2,igeom)
+     call coord_transform(xtemp,3,igeomold,xpts(:,i),3,igeom)
   enddo
 !
 !--now plot the circle using pgline
 !
-  call plot_line(npts,xpts(1,:),xpts(2,:))
+  call plot_line(npts,xpts(iplotx-ix(1)+1,:),xpts(iploty-ix(1)+1,:))
 
   return
 end subroutine plot_kernel_gr

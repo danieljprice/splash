@@ -54,19 +54,19 @@ module geometry
 
  character(len=24), dimension(maxcoordsys), parameter, public :: labelcoordsys = &
     (/'cartesian   x,y,z      ', &
-      'cylindrical r,phi,z    ', &
+      'cylindrical R,phi,z    ', &
       'spherical   r,phi,theta', &
       'toroidal    r,theta,phi', &
       'rotated     x_1,x_2,x_3'/)
  character(len=6), dimension(3,maxcoordsys), parameter, public :: labelcoord = &
     reshape((/'x     ','y     ','z     ', &
-              'r     ','\phi  ','z     ', &
+              'R     ','\phi  ','z     ', &
               'r     ','\phi  ','\theta', &
               'r_t   ','\theta','\phi  ', &
               'x_1   ','x_2   ','x_3   '/),shape=(/3,maxcoordsys/))
 
  public :: coord_transform, vector_transform, coord_transform_limits
- public :: coord_is_length, print_error
+ public :: coord_is_length, coord_is_periodic, print_error
  public :: set_rotation_angles, get_coord_limits
 
  real, parameter, private :: pi = 3.1415926536
@@ -103,6 +103,21 @@ pure logical function coord_is_length(ix,igeom)
   end select
 
 end function coord_is_length
+
+!-----------------------------------------------------------------
+! utility that returns whether or not a particular coordinate
+! in a given coordinate system is periodic
+!-----------------------------------------------------------------
+pure logical function coord_is_periodic(ix,igeom)
+  integer, intent(in) :: ix,igeom
+
+  coord_is_periodic = .false.
+  if ((igeom==igeom_cylindrical .or. igeom==igeom_spherical .and. ix==2) .or. &
+      (igeom==igeom_toroidal .and. ix==3)) then
+     coord_is_periodic = .true.
+  endif
+
+end function coord_is_periodic
 
 !--------------------------------------------------------
 ! utility to handle error printing so transform routines
@@ -180,7 +195,7 @@ pure subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout,err)
   real,    intent(in)  :: xin(ndimin)
   real,    intent(out) :: xout(ndimout)
   integer, intent(out), optional :: err
-  real    :: rcyl,xi(3),xouti(3)
+  real    :: rcyl,xi(3),xouti(3),sintheta,costheta
   integer :: ierr
 !
 !--check for errors in input
@@ -242,8 +257,9 @@ pure subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout,err)
            xout(1) = xin(1)*cos(xin(2))
            xout(2) = xin(1)*sin(xin(2))
         case(3) ! r,phi,theta -> x,y,z
-           xout(1) = xin(1)*cos(xin(2))*sin(xin(3))
-           xout(2) = xin(1)*sin(xin(2))*sin(xin(3))
+           sintheta = sin(xin(3))
+           xout(1) = xin(1)*cos(xin(2))*sintheta
+           xout(2) = xin(1)*sin(xin(2))*sintheta
            xout(3) = xin(1)*cos(xin(3))
      end select
 !
@@ -751,9 +767,10 @@ subroutine get_coord_limits(rad,xin,xout,xmin,xmax,itypein)
        dphi = atan(rad/r)
        xmin(2) = xout(2)-dphi
        xmax(2) = xout(2)+dphi
-       dtheta = acos(rad/r)
-       xmin(3) = max(xout(3) - dtheta,0.)
-       xmax(3) = min(xout(3) + dtheta,pi)
+       xmin(3) = min(acos((xin(3)-rad)/r),acos((xin(3)+rad)/r))
+       xmax(3) = max(acos((xin(3)+rad)/r),acos((xin(3)-rad)/r))
+       xmin(3) = max(xmin(3),0.)
+       xmax(3) = min(xmax(3),pi)
     else
        xmin(2) = -pi
        xmax(2) = pi

@@ -747,7 +747,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
   logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
   logical :: dumxsec, isetrenderlimits, iscoordplot
-  logical :: ichangesize, initx, inity, isameweights, volweightedpdf, got_h
+  logical :: ichangesize, initx, inity, initz, isameweights, volweightedpdf, got_h
   logical, parameter :: isperiodicx = .false. ! feature not implemented
   logical, parameter :: isperiodicy = .false. ! feature not implemented
   logical, parameter :: isperiodicz = .false. ! feature not implemented
@@ -1027,13 +1027,24 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      ! also set labels end plot limits
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+     iscoordplot = (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim))
+     iz = 0
+     if (iscoordplot .and. ndim.ge.3) then
+        do j=1,ndim
+           if ((iplotx.ne.iploty).and. &
+               (ix(j).ne.iplotx).and.(ix(j).ne.iploty)) iz = ix(j)
+        enddo
+     endif
+     iplotz = iz
+
      initx = (iplotx.gt.0 .and. iplotx.le.ndataplots)
      inity = (iploty.gt.0 .and. iploty.le.ndataplots)
+     initz = (iplotz.gt.0 .and. iplotz.le.ndataplots)
      if (iplotx.gt.0 .and. iplotx.le.numplot) labelx = label(iplotx)
      if (iploty.gt.0 .and. iploty.le.numplot) labely = label(iploty)
-     iscoordplot = (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim))
+     if (iplotz.gt.0 .and. iplotz.le.numplot) labelz = label(iplotz)
 
-     initdataplots: if (initx .or. inity) then
+     initdataplots: if (initx .or. inity .or. initz) then
         if (debugmode) print*,'DEBUG: initialising data plots...',initx,inity,iplotx,iploty,ntoti,size(xplot)
         if (initx) then
            !--check for errors
@@ -1057,13 +1068,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         else
            iamvecy = 0
         endif
+        if (initz) then
+           zplot(1:ntoti) = dat(1:ntoti,iplotz)
+        else
+           zplot = 0.
+        endif
+
+        if (debugmode) print*,'DEBUG: iplotz = ',iplotz
         if (debugmode) print*,'DEBUG: setting itrans...'
         itransx = 0
         itransy = 0
         if (iplotx.gt.0 .and. iplotx.le.numplot) itransx = itrans(iplotx)
         if (iploty.gt.0 .and. iploty.le.numplot) itransy = itrans(iploty)
 
-        zplot = 0.   !--set later if x-sec
         zslicemin = -huge(zslicemax) !-- " "
         zslicemax = huge(zslicemax)
         if (.not.interactivereplot) then
@@ -1103,7 +1120,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !
         if (icoordsnew.ne.icoords) then
            !--do this if one is a coord but not if rendering
-           call changecoords(iplotx,iploty,xplot,yplot,ntoti,ndim,itrackpart,dat)
+           call changecoords(iplotx,iploty,iplotz,xplot,yplot,zplot,ntoti,ndim,itrackpart,dat)
            if (iamvecx.gt.0) call changeveccoords(iplotx,xplot,ntoti,ndim,itrackpart,dat)
            if (iamvecy.gt.0) call changeveccoords(iploty,yplot,ntoti,ndim,itrackpart,dat)
         endif
@@ -1177,22 +1194,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !  (leave space in page setup if so)
         iPlotColourBar = .false.
         if (irender.gt.ndim .and..not.(ndim.eq.2.and.x_sec)) iPlotColourBar = (iColourBarStyle.gt.0)
-
-
-        !!--work out coordinate that is not being plotted
-        iz = 0
-        if (ndim.ge.3) then
-           do j=1,ndim
-              if ((iplotx.ne.iploty).and. &
-                  (ix(j).ne.iplotx).and.(ix(j).ne.iploty)) iz = ix(j)
-           enddo
-        endif
-        iplotz = iz ! this is used as cross sectioned quantity
-        if (iplotz.gt.0 .and. iplotz.le.ndataplots) then
-           zplot(1:ntoti) = dat(1:ntoti,iplotz)
-           labelz = label(iplotz)
-        endif
-        if (debugmode) print*,'DEBUG: iplotz = ',iplotz
 
         if (.not.interactivereplot) then
            irerender = .false.
