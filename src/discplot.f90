@@ -222,6 +222,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
 !
     sigma = sigma*(unit_r/unit_dz)**2
  endif
+ sigma(1:nbins) = max(sigma(1:nbins),epsilon(0.))
 
  if (itransx.gt.0) call transform(radius,itransx)
  if (itransy.gt.0) call transform(sigma,itransy)
