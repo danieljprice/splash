@@ -161,6 +161,21 @@ subroutine defaults_set(use_evdefaults)
 
   return
 end subroutine defaults_set
+
+!
+! set defaults for 360 video mode
+!
+subroutine defaults_set_360()
+ use settings_page,   only:defaults_set_page_360
+ use settings_render, only:defaults_set_render_360
+ use settings_data,   only:icoordsnew
+
+ icoordsnew = 3
+ call defaults_set_render_360
+ call defaults_set_page_360()
+
+end subroutine defaults_set_360
+
 !
 !     writes default options to file (should match defaults_read)
 !

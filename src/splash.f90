@@ -355,7 +355,7 @@ program splash
                       fileprefix,set_filenames
   use getdata,   only:get_data
   use geomutils, only:set_coordlabels
-  use defaults,  only:defaults_set_initial,defaults_set,defaults_read
+  use defaults,  only:defaults_set_initial,defaults_set,defaults_read,defaults_set_360
   use limits,    only:read_limits
   use kernels,   only:ikernel,select_kernel_by_name,select_kernel
   use mainmenu,  only:menu,allowrendering,set_extracols
@@ -374,10 +374,10 @@ program splash
   use settings_page,      only:interactive,device,nomenu
   implicit none
   integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
-  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
+  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.7.0 [3rd May 2017]'
+  character(len=*), parameter :: version = 'v2.8.0 [23rd Oct 2017]'
 
   !
   ! initialise some basic code variables
@@ -412,6 +412,7 @@ program splash
   irender = 0
   icontour = 0
   ivecplot = 0
+  use_360 = .false.
 
   do while (i < nargs)
      i = i + 1
@@ -486,6 +487,11 @@ program splash
            evsplash = .true.
            fileprefix = 'evsplash'
            call set_filenames(trim(fileprefix))
+        case('360')
+           use_360 = .true.
+           ipickx = 2
+           ipicky = 3
+           nomenu = .true.
         case('lowmem','lm')
            lowmemorymode = .true.
         case('nolowmem','nlm')
@@ -545,6 +551,7 @@ program splash
   ! set default options (used if defaults file does not exist)
   !
   call defaults_set(evsplash)
+  if (use_360) call defaults_set_360()
 
   !
   ! read default options from file if it exists
@@ -667,6 +674,9 @@ program splash
            elseif (icontour.gt.0) then
               print "(a)",' ERROR: -cont also requires -render setting'
               stop
+           elseif (use_360) then
+              print "(a)",' ERROR -360 also requires -render setting (e.g. -r 6)'
+              stop
            endif
         else
            if (irender.gt.0 .and. ndim.ge.2) then
@@ -753,7 +763,8 @@ subroutine print_usage(quit)
  print "(a)",' -p fileprefix     : change prefix to ALL settings files read/written by splash '
  print "(a)",' -d defaultsfile   : change name of defaults file read/written by splash'
  print "(a)",' -l limitsfile     : change name of limits file read/written by splash'
- print "(a)",' -e, -ev           : use default options best suited to ascii evolution files (ie. energy vs time)'
+ print "(a)",' -e, -ev           : use default options best suited for line plotting (.ev files)'
+ print "(a)",' -360              : set default options suited to 360 video'
  print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
  print "(a)",' -o pixformat      : dump pixel map in specified format (use just -o for list of formats)'
  print "(/,a,/)",'Command line plotting mode:'

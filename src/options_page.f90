@@ -63,7 +63,6 @@ contains
 subroutine defaults_set_page
   use shapes,  only:defaults_set_shapes
   use plotlib, only:plotlib_maxlinecolour
-  implicit none
 
   interactive = .true.     ! default for interactive mode
   iaxis = 0                ! turns axes off/on
@@ -143,7 +142,6 @@ end subroutine defaults_set_page
 ! changed default values for evsplash
 !---------------------------------------------
 subroutine defaults_set_page_ev
-  implicit none
 
   nstepsperpage   = 1000
   iColourEachStep = .true.   ! change colours if nstepsperpage > 1
@@ -154,8 +152,23 @@ subroutine defaults_set_page_ev
   vposlegend      = 2.0      ! vertical legend position in character heights
   fjustlegend     = 0.0      ! justification factor for legend
 
-  return
 end subroutine defaults_set_page_ev
+
+!---------------------------------------------
+! changed default values for 360 video
+!---------------------------------------------
+subroutine defaults_set_page_360
+
+  iPageColours = 2
+  iaxis = -2
+  ipapersize = 18
+  ipapersizeunits = 0
+  papersizex = 4320.
+  aspectratio = 0.5
+  iPageColours = 2
+  adjustlimitstodevice = .true.
+
+end subroutine defaults_set_page_360
 
 !----------------------------------------------------------------------
 ! submenu with options relating to page setup
@@ -168,7 +181,6 @@ subroutine submenu_page(ichoose)
  use plotlib,     only:plotlib_supports_alpha,plotlib_maxlinecolour,plotlib_maxlinestyle,&
                        plotlib_is_pgplot,plotlib_maxpalette
  use filenames,   only:coloursfile
- implicit none
  integer, intent(in) :: ichoose
  integer             :: iaction,i,iunitsprev,ierr,nc
  real                :: papersizey,mnraslength
@@ -287,12 +299,14 @@ subroutine submenu_page(ichoose)
         print*,'15) 3840 x 2160 pixels (4KTV/Ultra HD)'
         print*,'16) 4096 x 2160 pixels (Cinema 4K)'
         print*,'17) 5120 x 2880 pixels (5K)'
-        print*,'18) 27320 x 3072 pixels (CAVE-2)'
-        print*,'19) 1/3 of A4 journal page  79mm x 180 mm'
-        print*,'20) 1/2 of A4 journal page 118mm x 180 mm'
-        print*,'21) full A4 journal page   236mm x 180 mm'
-        print*,'22) Custom size '
-        call prompt(' Enter option for paper size ',ipapersize,0,22)
+        print*,'18) 4320 x 2160 pixels (360s)'
+        print*,'19) 8640 x 4320 pixels (720s)'
+        print*,'20) 27320 x 3072 pixels (CAVE-2)'
+        print*,'21) 1/3 of A4 journal page  79mm x 180 mm'
+        print*,'22) 1/2 of A4 journal page 118mm x 180 mm'
+        print*,'23) full A4 journal page   236mm x 180 mm'
+        print*,'24) Custom size '
+        call prompt(' Enter option for paper size ',ipapersize,0,24)
      endif
      
      select case(ipapersize)
@@ -379,22 +393,28 @@ subroutine submenu_page(ichoose)
            case(18)
               papersizex = 27320.
               papersizey = 3072.
-           case(19)  ! 1/3 of MNRAS page
+           case(19)
+              papersizex = 4320.
+              papersizey = 2160.
+           case(20)
+              papersizex = 8640.
+              papersizey = 4320.
+           case(21)  ! 1/3 of MNRAS page
               ipapersizeunits = 2
               papersizex = 18.
               papersizey = mnraslength/3.
-           case(20)  ! 1/2 of MNRAS page
+           case(22)  ! 1/2 of MNRAS page
               ipapersizeunits = 2
               papersizex = 18.
               papersizey = 0.5*mnraslength
-           case(21)  ! full MNRAS page, allowing 2cm for caption
+           case(23)  ! full MNRAS page, allowing 2cm for caption
               ipapersizeunits = 2
               papersizex = 18.
               papersizey = mnraslength - 2.
            end select
            aspectratio = papersizey/papersizex
         endif
-     case(22)
+     case(24)
         if (plotlib_is_pgplot) then
            ipapersizeunits = 1
            papersizex  = 0.  ! use PGPLOT default
@@ -531,7 +551,6 @@ subroutine submenu_legend(ichoose)
  use prompting, only:prompt,print_logical
  use shapes,    only:nshapes,labelshapetype,shape,submenu_shapes
  use legends,   only:prompt_panelselect
- implicit none
  integer, intent(in) :: ichoose
  integer             :: iaction,i,ierr,i1,i2
  character(len=50)   :: string
