@@ -94,6 +94,7 @@ module exact
   real :: HonR,rplanet
   !--bondi flow
   logical :: relativistic
+  real :: rho0
   !--gamma, for manual setting
   real :: gamma_exact
   logical :: use_gamma_exact
@@ -113,7 +114,7 @@ module exact
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
-       HonR,rplanet,relativistic
+       HonR,rplanet,relativistic,rho0
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -197,7 +198,8 @@ contains
     HonR = 0.05
     rplanet = 1.
 !   Bondi
-    relativistic = .false.
+    relativistic = .true.
+    rho0 =1.
 
 !   gamma, if not read from file
     gamma_exact = 5./3.
@@ -507,8 +509,14 @@ contains
        !call prompt('enter planet orbital radius ',rplanet,0.)
     case(18)
        call prompt('use relativistic solution?',relativistic)
-       call prompt('enter radius where v is 0 (r0)',Rtorus,0.)
        call prompt('enter mass of central object',Mstar,0.)
+       if(relativistic) then
+          Rtorus = 0.
+          call prompt('enter radius r0 where v = 0. For r0=infinity, enter 0',Rtorus,min=0.)
+       elseif(.not.relativistic) then
+          call prompt('enter Parker/Bondi critical radius',Rtorus,min=0.)
+          call prompt('enter density at critical radius',rho0,min=0.)
+       endif
        prompt_for_gamma = .true.
     end select
 
@@ -1273,7 +1281,11 @@ contains
     case(18)
        if (iplotx.eq.irad .or. (igeom.eq.3 .and. iplotx.eq.ix(1))) then
           if (iploty.eq.ivx .and. igeom==3) then
-             call exact_bondi(1,timei,gammai,Rtorus,Mstar,relativistic,xexact,yexact,ierr)
+             call exact_bondi(1,timei,gammai,Rtorus,rho0,Mstar,relativistic,xexact,yexact,ierr)
+          elseif (iploty.eq.iutherm .and. igeom==3) then
+             call exact_bondi(2,timei,gammai,Rtorus,rho0,Mstar,relativistic,xexact,yexact,ierr)
+          elseif (iploty.eq.irho .and. igeom==3) then
+             call exact_bondi(3,timei,gammai,Rtorus,rho0,Mstar,relativistic,xexact,yexact,ierr)
           endif
        endif
     end select
