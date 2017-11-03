@@ -19,10 +19,11 @@ static int debug = 0;
 static hid_t file_id;
 static const herr_t HDF5_error = -1;
 static int have_indexed = 0;
+#define LEN_NAME 64
 
 typedef struct
 {
-  char name[64];
+  char name[LEN_NAME];
 } dataset_t;
 
 static dataset_t Dataset[MAX_DATASETS];
@@ -30,10 +31,10 @@ static int iter[MAX_DATASETS];
 static int iorder[MAX_DATASETS];
 
 int read_cactus_dataset(hid_t file_id,char *name,int *ncol,int *ncells,int *ndim,int *n,double *time,double *deltax,int inheader);
-int read_cactus_iteration(hid_t file_id,int iter,int *next,int *nsteps,int *ncells,int *ndim,int *ncol,double *time,double *deltax,int inheader);
+int read_cactus_iteration(hid_t file_id,int iter,int *next,int *nsteps,int *ncells,int *ndim,int *ncol,double *time,double *deltax,int inheader,int ignoretl);
 int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int mycol,int *n,int nx,int ny,int nz,int nghost[3],double orig[3],double delta[3]);
 void get_ndim_ncells(hid_t dataspace_id, int *ndim, int *nx,int *ny,int *nz);
-void set_blocklabel(int *icol, char *name);
+void set_blocklabel(int *icol, char *name, int *lenname);
 void sort_cactus_data(int *n, int iarr[*n], int iorder[*n]);
 void read_cactus_hdf5_data_fromc(int *icol,int *ntot,int *np,double temparr[*np]);
 void read_cactus_itype_fromc(int *ntot,int *np,int itype[*np]);
@@ -46,6 +47,7 @@ void open_cactus_hdf5_file(char   *filename,
                              int *ndim,
                              int *ndimV,
                              double *time,
+                             int ignoretl,
                              int *ierr)
 {   
    *ierr = 0;
@@ -65,7 +67,7 @@ void open_cactus_hdf5_file(char   *filename,
     */
    int next;
    double dx;
-   *ierr = read_cactus_iteration(file_id,istep,&next,nsteps,ncells,ndim,ncol,time,&dx,1);
+   *ierr = read_cactus_iteration(file_id,istep,&next,nsteps,ncells,ndim,ncol,time,&dx,1,ignoretl);
    *ierr = 0;
 
    *ndimV = *ndim;
@@ -81,7 +83,7 @@ void close_cactus_hdf5_file(int *ierr)
 }
 
 
-void read_cactus_hdf5_data(char *filename,int istep,int *npart,double *time,double *dx,int *ierr)
+void read_cactus_hdf5_data(char *filename,int istep,int *npart,double *time,double *dx,int ignoretl,int *ierr)
 {
    int next,ncol,ndim,nstepsread,nsteps;
 
@@ -89,7 +91,7 @@ void read_cactus_hdf5_data(char *filename,int istep,int *npart,double *time,doub
       { printf("ERROR with file_id %s \n",filename); *ierr = 1; return; }
 
    ncol = 5;
-   nstepsread = read_cactus_iteration(file_id,istep,&next,&nsteps,npart,&ndim,&ncol,time,dx,0);
+   nstepsread = read_cactus_iteration(file_id,istep,&next,&nsteps,npart,&ndim,&ncol,time,dx,0,ignoretl);
    if (nstepsread <= 0) {
       *ierr = -1;
    }
@@ -98,7 +100,7 @@ void read_cactus_hdf5_data(char *filename,int istep,int *npart,double *time,doub
 /*
  *  read one iteration from the file, corresponding to all datasets with same iteration numbers
  */
-int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *ncells,int *ndim,int *ncol,double *time,double *deltax,int inheader)
+int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *ncells,int *ndim,int *ncol,double *time,double *deltax,int inheader,int ignore_time_levels)
 {
   hsize_t ndatasets[1];
   /* get number of datasets in file */
@@ -108,8 +110,9 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
   /* loop over all datasets looking for dataset matching the desired iteration number
      set function value to true (1) if it is present  */
   int i,nsub,ierr;
-  char name[64];
-  char thorn[24],thornprev[24];
+  int mylen = LEN_NAME;
+  char name[LEN_NAME];
+  char thorn[LEN_NAME],thornprev[LEN_NAME];
   int nstepsgot = 0;
   *ndim = 0;
   *ncells = 0;
@@ -133,10 +136,11 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
   int n = 0;
   int mystep = 0;
   int iterprev = -1;
+  int tlprev = 0;
   while (i < n_datasets) {
       /* get dataset name, either by reading from file or from memory buffer */
       if (!have_indexed) {
-         H5Gget_objname_by_idx(file_id, i, name, 64);
+         H5Gget_objname_by_idx(file_id, i, name, LEN_NAME);
          strcpy(Dataset[i].name,name);
          if (debug) printf("%s\n",name);
       } else {  /* have indexed file */
@@ -148,18 +152,27 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
       if (sscanf(name, "%s it=%i tl=%i rl=%i c=%i",
             thorn, &it, &tl, &level, &cnum)>=4) {  /* 4 because c= is optional */
          if (debug) printf("%s it=%i tl=%i rl=%i cnum=%i \n",thorn,it,tl,level,cnum);
-
-         /* count how many unique variables (columns) there are */
-         if (strcmp(thorn,thornprev) != 0) {
-            *ncol = *ncol + 1;
-            if (inheader) printf("-> %s\n",thorn);
-             /* send dataset name back to phantom */
-            if (inheader) set_blocklabel(ncol,thorn);
-            nsub = 0;
-            n = 0;
-            *ncells = 0;
+         if (!ignore_time_levels || tl ==0) {
+            /* count how many unique datasets (columns) there are */
+            if (strcmp(thorn,thornprev) != 0 || tl != tlprev) {
+               *ncol = *ncol + 1;
+               if (inheader) printf("-> %s tl=%i\n",thorn,tl);
+                /* send dataset name back to phantom */
+               if (inheader) set_blocklabel(ncol,thorn,&mylen);
+               nsub = 0;
+               n = 0;
+               if (debug) printf(" GOT ncells = %i\n",*ncells);
+               *ncells = 0;
+            }
+            strncpy(thornprev,thorn,LEN_NAME);
+            tlprev = tl;
+         } else {
+            it = -1;
          }
-         strcpy(thornprev,thorn);
+      } else {
+         it = -1;
+         n = 0;
+         if (debug) printf("UNKNOWN dataset %s \n",name);
       }
       /* store iteration numbers so we can sort datasets by iteration number */
       if (inheader && !have_indexed) iter[i] = it;
@@ -175,6 +188,8 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
              break;;
           }
           iterprev = it;
+      } else {
+          n = 0;
       }
       i++;
   }
@@ -210,10 +225,17 @@ int read_cactus_dataset(hid_t file_id,char *name,int *ncol,int *ncells,int *ndim
 #else
   dataset_id   = H5Dopen(file_id,name);
 #endif
+  if (dataset_id == HDF5_error) return 1;
   dataspace_id = H5Dget_space(dataset_id);
+  if (dataspace_id == HDF5_error) return 2;
+  
   /* get dimensionality */
   int nx,ny,nz;
   get_ndim_ncells(dataspace_id,ndim,&nx,&ny,&nz);
+  if (nx*ny*nz <= 1 || *ndim != 3) {
+     if (debug) printf("SKIPPING %s ndim = %i size = %i\n",name,*ndim,nx);
+     return 3;
+  }
   *ncells = *ncells + nx*ny*nz;
 
   /* get number of attributes */
@@ -298,14 +320,17 @@ int read_cactus_dataset(hid_t file_id,char *name,int *ncol,int *ncells,int *ndim
  */
 void get_ndim_ncells(hid_t dataspace_id, int *ndim, int *nx,int *ny,int *nz)
 {
+  *nx = 1;
+  *ny = 1;
+  *nz = 1;
   *ndim    = H5Sget_simple_extent_ndims(dataspace_id);
   hsize_t dims[*ndim], maxdims[*ndim];
   H5Sget_simple_extent_dims(dataspace_id,dims,maxdims);
 
   /* get number of cells */
-  *nx = dims[0];
-  *ny = dims[1];
-  *nz = dims[2];
+  if (*ndim > 0) *nx = dims[0];
+  if (*ndim > 1) *ny = dims[1];
+  if (*ndim > 2) *nz = dims[2];
 }
 
 int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int mycol,int *n,int nx,int ny,int nz,
@@ -337,6 +362,8 @@ int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int mycol,int 
    if (debug) {
       printf("PATCH origin = %f %f %f\n",orig[0],orig[1],orig[2]);
       printf(" nx=%i x=%f->%f\n",nx,orig[0],(orig[0]+(nx-1)*dx));
+      printf(" ny=%i y=%f->%f\n",ny,orig[1],(orig[1]+(ny-1)*dy));
+      printf(" nz=%i z=%f->%f\n",nz,orig[2],(orig[2]+(nz-1)*dz));
    }
 
    int icol;
@@ -346,6 +373,7 @@ int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int mycol,int 
       double *yy  = malloc(ncells * sizeof(double));
       double *zz  = malloc(ncells * sizeof(double));
       int *itype  = malloc(ncells * sizeof(int));
+      if (debug) printf("constructing grid dx=%f, dy=%f, dz=%f\n",dx,dy,dz);
 
       /* here we have to reconstruct the x, y and z positions of
          each cell. The following looks hacked but works. We tested it. */
