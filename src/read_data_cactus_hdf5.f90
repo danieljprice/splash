@@ -86,6 +86,127 @@ module cactushdf5read
 
  end interface
 
+contains
+
+ subroutine calc_trK(gxxd,gxyd,gxzd,gyyd,gyzd,gzzd,kxxd,kxyd,kxzd,kyyd,kyzd,kzzd,trk)
+   !
+   ! Subroutine to calculate trace K ( trK = g^{ij} K_{ij} )
+   ! Takes g_{ij} and K_{ij} at one position and time, returns trK
+   !
+   real, intent(in) :: gxxd,gxyd,gxzd,gyyd,gyzd,gzzd ! spatial down metric components
+   real, intent(in) :: kxxd,kxyd,kxzd,kyyd,kyzd,kzzd ! down extrinsic curvature components
+   real :: gxxu,gxyu,gxzu,gyyu,gyzu,gzzu             ! spatial up metric components
+   real, intent(out) :: trk
+   real, dimension(3,3) :: gijd, giju  ! 4x4 metric down and up respectively
+   real :: det
+
+   ! down components
+   gijd(1,1) = gxxd
+   gijd(1,2) = gxyd
+   gijd(1,3) = gxzd
+   gijd(2,1) = gxyd
+   gijd(2,2) = gyyd
+   gijd(2,3) = gyzd
+   gijd(3,1) = gxzd
+   gijd(3,2) = gyzd
+   gijd(3,3) = gzzd
+
+   call inv3x3(gijd,giju,det)
+
+   ! up (inverse) components
+   gxxu = giju(1,1)
+   gxyu = giju(1,2)
+   gxzu = giju(1,3)
+   gyyu = giju(2,2)
+   gyzu = giju(2,3)
+   gzzu = giju(3,3)
+
+
+   trk = (gxxu * kxxd) + (2. * gxyu * kxyd) + (2. * gxzu * kxzd) + &
+        & (gyyu * kyyd) + (2. * gyzu * kyzd) + (gzzu * kzzd)
+
+ end subroutine calc_trK
+
+ pure subroutine inv3x3(A,B,det)
+   real, intent(in), dimension(3,3) :: A
+   real, intent(out), dimension(3,3) :: B ! inverse matrix
+   real, intent(out) :: det
+
+   det = A(1,1)*A(2,2)*A(3,3) - A(1,1)*A(2,3)*A(3,2) - &
+        & A(1,2)*A(2,1)*A(3,3) + A(1,2)*A(2,3)*A(3,1) + &
+        & A(1,3)*A(2,1)*A(3,2) - A(1,3)*A(2,2)*A(3,1)
+
+   B(1,1) = A(2,2)*A(3,3) - A(2,3)*A(3,2)
+   B(2,1) = A(2,3)*A(3,1) - A(2,1)*A(3,3)
+   B(3,1) = A(2,1)*A(3,2) - A(2,2)*A(3,1)
+   B(1,2) = A(1,3)*A(3,2) - A(1,2)*A(3,3)
+   B(2,2) = A(1,1)*A(3,3) - A(1,3)*A(3,1)
+   B(3,2) = A(1,2)*A(3,1) - A(1,1)*A(3,2)
+   B(1,3) = A(1,2)*A(2,3) - A(1,3)*A(2,2)
+   B(2,3) = A(1,3)*A(2,1) - A(1,1)*A(2,3)
+   B(3,3) = A(1,1)*A(2,2) - A(1,2)*A(2,1)
+
+   B(:,:) = B(:,:)/det
+
+ end subroutine inv3x3
+
+ subroutine compute_extra_columns(ncols,nextra,dat)
+  integer, intent(in)  :: ncols
+  integer, intent(out) :: nextra
+  real, intent(inout), optional  :: dat(:,:)
+  integer :: i,n,itrk
+  integer :: igxx,igxy,igxz,igyy,igyz,igzz
+  integer :: ikxx,ikxy,ikxz,ikyy,ikyz,ikzz
+
+  nextra = 0
+  !
+  ! find gxx,gxy,gxz and kxx,kxy,kxz etc in columns
+  !
+  n = size(dat(:,1))
+  do i=1,ncols
+     select case(blocklabel(i))
+     case('gxx')
+        igxx = i
+     case('gxy')
+        igxy = i
+     case('gxz')
+        igxz = i
+     case('gyy')
+        igyy = i
+     case('gyz')
+        igyz = i
+     case('gzz')
+        igzz = i
+     case('kxx')
+        ikxx = i
+     case('kxy')
+        ikxy = i
+     case('kxz')
+        ikxz = i
+     case('kyy')
+        ikyy = i
+     case('kyz')
+        ikyz = i
+     case('kzz')
+        ikzz = i
+     end select
+  enddo
+  if (igxx > 0 .and. igxy > 0 .and. igxz > 0 .and. igyy > 0 .and. igyz > 0 .and. igzz > 0 .and. &
+      ikxx > 0 .and. ikxy > 0 .and. ikxz > 0 .and. ikyy > 0 .and. ikyz > 0 .and. ikzz > 0) then
+     itrk = ncols + 1
+     blocklabel(itrk) = 'tr K'
+     nextra = 1
+     if (present(dat)) then
+        !print*,' getting trk ',igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ikxz,ikyy,ikyz,ikzz,itrk
+        do i=1,n
+           call calc_trK(dat(i,igxx),dat(i,igxy),dat(i,igxz),dat(i,igyy),dat(i,igyz),dat(i,igzz),&
+                         dat(i,ikxx),dat(i,ikxy),dat(i,ikxy),dat(i,ikyy),dat(i,ikyz),dat(i,ikzz),dat(i,itrk))
+        enddo
+     endif
+  endif
+
+ end subroutine compute_extra_columns
+
 end module cactushdf5read
 
 !-------------------------------------------------------------------------
@@ -103,14 +224,14 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
   use asciiutils,     only:cstring
   use cactushdf5read, only:open_cactus_hdf5_file,read_cactus_hdf5_data,close_cactus_hdf5_file,&
-                           datfileprev,file_is_open,ntoti_prev,ncol_prev,nstep_prev
+                           datfileprev,file_is_open,ntoti_prev,ncol_prev,nstep_prev,compute_extra_columns
   use dataread_utils, only:count_types
   implicit none
   integer, intent(in)                :: istepstart,ipos
   integer, intent(out)               :: nstepsread
   character(len=*), intent(in)       :: rootname
   character(len=len(rootname)+10)    :: datfile
-  integer               :: i,istep,ierr
+  integer               :: i,istep,ierr,nextra
   integer               :: nunknown,ignoretl
   integer               :: ncolstep,npart_max,nstep_max,nsteps_to_read,ntoti
   logical               :: iexist,reallocate,goterrors,ignore_time_levels
@@ -157,6 +278,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   ignore_time_levels = lenvironment('CSPLASH_IGNORE_TIME_LEVELS')
   ignoretl = 0
   if (ignore_time_levels) ignoretl = 1
+  nextra = 0
 ! 
 !--read data from snapshots
 !
@@ -182,7 +304,8 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      ncol_prev  = ncolstep
      nstep_prev = nstep_max
   endif
-  ncolumns = ncolstep
+  call compute_extra_columns(ncolstep,nextra)
+  ncolumns = ncolstep + nextra
   if (iverbose >= 1) print "(3(a,1x,i10))",' npart: ',ntoti,' ncolumns: ',ncolstep,' nsteps: ',nstep_max
 
   istep = 1 
@@ -229,6 +352,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         if (ih > 0) dat(:,ih,i) = real(dx)
         vol = dx**ndim
         if (ipmass > 0 .and. irho > 0) dat(:,ipmass,i) = dat(:,irho,i)*real(vol)
+        !
+        ! compute extra quantities (tr K, 3^R, etc)
+        !
+        call compute_extra_columns(ncolstep,nextra,dat(:,:,i))
+        !
+        ! get number of cells of each type (normal, ghost)
+        !
         call count_types(ntoti,iamtype(:,i),npartoftype(:,i),nunknown)
         masstype(:,i) = 0. ! all masses read from file
         time(i) = real(timetemp)
