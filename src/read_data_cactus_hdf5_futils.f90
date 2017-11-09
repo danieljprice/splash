@@ -147,24 +147,21 @@ contains
    B(:,:) = B(:,:)/det
 
  end subroutine inv3x3
-
- subroutine compute_extra_columns(ncols,nextra,dat)
-  integer, intent(in)  :: ncols
-  integer, intent(out) :: nextra
-  real, intent(inout), optional  :: dat(:,:)
-  integer :: i,n,itrk
-  integer :: igxx,igxy,igxz,igyy,igyz,igzz
-  integer :: ikxx,ikxy,ikxz,ikyy,ikyz,ikzz
-
-  nextra = 0
+ 
+ !
+ ! find location of metric and extrinsic curvature in columns
+ !
+ subroutine find_metric(ncols,labelcol,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ikxz,ikyy,ikyz,ikzz)
+  integer,          intent(in) :: ncols
+  character(len=*), intent(in) :: labelcol(ncols)
+  integer, intent(out) :: igxx,igxy,igxz,igyy,igyz,igzz
+  integer, intent(out) :: ikxx,ikxy,ikxz,ikyy,ikyz,ikzz
+  integer :: i
+  
   igxx = 0; igxy = 0; igxz = 0; igyy = 0; igyz = 0; igzz = 0
   ikxx = 0; ikxy = 0; ikxz = 0; ikyy = 0; ikyz = 0; ikzz = 0
-  !
-  ! find gxx,gxy,gxz and kxx,kxy,kxz etc in columns
-  !
-  n = size(dat(:,1))
   do i=1,ncols
-     select case(blocklabel(i))
+     select case(labelcol(i))
      case('gxx')
         igxx = i
      case('gxy')
@@ -190,7 +187,21 @@ contains
      case('kzz')
         ikzz = i
      end select
-  enddo
+  enddo  
+  
+ end subroutine find_metric
+
+ subroutine compute_extra_columns(ncols,nextra,dat)
+  integer, intent(in)  :: ncols
+  integer, intent(out) :: nextra
+  real, intent(inout), optional  :: dat(:,:)
+  integer :: i,n,itrk
+  integer :: igxx,igxy,igxz,igyy,igyz,igzz
+  integer :: ikxx,ikxy,ikxz,ikyy,ikyz,ikzz
+
+  nextra = 0
+  call find_metric(ncols,blocklabel,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ikxz,ikyy,ikyz,ikzz)
+  n = size(dat(:,1))
   if (igxx > 0 .and. igxy > 0 .and. igxz > 0 .and. igyy > 0 .and. igyz > 0 .and. igzz > 0 .and. &
       ikxx > 0 .and. ikxy > 0 .and. ikxz > 0 .and. ikyy > 0 .and. ikyz > 0 .and. ikzz > 0) then
      itrk = ncols + 1
