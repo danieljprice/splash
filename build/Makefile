@@ -661,8 +661,8 @@ read_data_amuse_hdf5_utils.o: read_data_amuse_hdf5_utils.c
 #---CACTUS HDF5 read ---
 cactus: cactus_hdf5
 
-cactus_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_cactus_hdf5_utils.o read_data_cactus_hdf5.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/csplash-hdf5 $(OBJECTS) read_data_cactus_hdf5_utils.o read_data_cactus_hdf5.o $(LDFLAGS) $(HDF5LIBS)
+cactus_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_cactus_hdf5_futils.o read_data_cactus_hdf5_utils.o read_data_cactus_hdf5.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/csplash-hdf5 $(OBJECTS) read_data_cactus_hdf5_futils.o read_data_cactus_hdf5_utils.o read_data_cactus_hdf5.o $(LDFLAGS) $(HDF5LIBS)
 
 read_data_cactus_hdf5_utils.o: read_data_cactus_hdf5_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
