@@ -25,7 +25,7 @@ else
    else
       old='splash';
    fi
-   for ext in defaults limits units titles anim legend columns filenames; do
+   for ext in defaults limits units titles anim legend columns filenames func spirals; do
        if [ -e $old.$ext ]; then
           cp $old.$ext $new.$ext;
           echo "$old.$ext -> $new.$ext";
