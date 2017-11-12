@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -682,9 +682,8 @@ contains
   logical, intent(out) :: gotbinary
   real :: rhozero,tfreefall,tff,radL1,PhiL1,Er,RK2,dtmax,tolh
   real :: massoftypei(ntypes)
-  integer :: i,ierrs(10),ipos
+  integer :: i,ierrs(10)
   integer :: itype
-  integer, parameter :: ilocbinary = 24
   real,    parameter :: pi=3.141592653589
   
   if (phantomdump) then
@@ -1092,7 +1091,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                       lowmemorymode,ntypes,iverbose,ndusttypes
   use mem_allocation, only:alloc
   use system_utils,   only:lenvironment,renvironment
-  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,idustfrac
+  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types
   use calcquantities, only:calc_quantities
   use sphNGread
   implicit none
@@ -1504,9 +1503,9 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          enddo
          if (nint1(iarr).lt.1) then
             if (.not.phantomdump .or. any(npartoftypei(2:).gt.0)) then
-               print "(a)",' WARNING: can''t locate iphase in dump'
+               if (iverbose > 0) print "(a)",' WARNING: can''t locate iphase in dump'
             elseif (phantomdump) then
-               print "(a)",' WARNING: can''t locate iphase in dump'
+               if (iverbose > 0) print "(a)",' WARNING: can''t locate iphase in dump'
             endif
             gotiphase = .false.
             !--skip remaining integer arrays
@@ -2170,8 +2169,7 @@ subroutine set_labels
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum
   use params
-  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,&
-                            ndusttypes
+  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
   use geometry,        only:labelcoord
   use settings_units,  only:units,unitzintegration,get_nearest_length_unit,get_nearest_time_unit
   use sphNGread
@@ -2180,7 +2178,7 @@ subroutine set_labels
   use system_utils,    only:lenvironment
   implicit none
   integer :: i,j
-  real(doub_prec)   :: uergg,unitx
+  real(doub_prec)   :: unitx
   character(len=20) :: string,unitlabelx
   character(len=20) :: dustfrac_string,deltav_string
 
