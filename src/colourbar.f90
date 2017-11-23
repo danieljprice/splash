@@ -151,7 +151,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
       vptymaxi = vptymini + width*ych
    elseif (istyle.eq.10) then
       ! on top of plot
-      vptymini = vptymaxi + (disp + xlabeloffset)*ych
+      vptymini = vptymaxi + (disp+0.1)*ych
       vptymaxi = vptymini + width*ych
    else
       vptymaxi = vptymini - (disp + xlabeloffset)*ych
