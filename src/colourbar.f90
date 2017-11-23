@@ -495,7 +495,7 @@ subroutine get_colourbarmargins(istyle,xminmargin,xmaxmargin,yminmargin,ymaxmarg
        barwidth = max(-(ColourBarPosy - (barwidth - ColourBarWidth*ych)),0.)
     endif
     if (istyle==10) then
-       ymaxmargin = ymaxmargin + barwidth
+       ymaxmargin = ymaxmargin + barwidth + 0.35*ych
     else
        yminmargin = yminmargin + barwidth
     endif
