@@ -499,6 +499,10 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
              print "(2x,a)",'Error: circle radius exceeds plot dimensions: circle not plotted'
           else
              call plot_circ(xpos,ypos,xlen)
+             if (shape(i)%ifillstyle > 2) then
+                call plot_sfs(2)  ! also plot outline if fill style is hatched
+                call plot_circ(xpos,ypos,xlen)
+             endif
           endif
        case(5) ! line
           xline(1) = xpos
