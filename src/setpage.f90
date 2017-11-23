@@ -310,6 +310,8 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
     xopts = 'ABCGST'
   case(3)
     xopts = 'BCST'
+  case(5)
+    xopts = 'BCT'
   case(10)
     xopts = 'BCSTL'
     yopts = 'BCST'
@@ -441,6 +443,8 @@ subroutine redraw_axes(iaxis,just,yscale,itransy)
   case(4)
      xopts = 'BCST'
      yopts = 'BST'
+  case(5)
+     xopts = 'BCT'
   case(10)
      xopts = 'BCSTL'
      yopts = 'BCST'
