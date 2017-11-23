@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -53,7 +53,7 @@ contains
 !     that is, we compute the smoothed array according to
 !
 !     datsmooth(pixel) = sum_b weight_b dat_b W(r-r_b, h_b)
-! 
+!
 !     where _b is the quantity at the neighbouring particle b and
 !     W is the smoothing kernel, for which we use the usual cubic spline
 !
@@ -79,7 +79,7 @@ contains
 
 subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,igeom,&
-     iplotx,iploty,iplotz,ix)
+     iplotx,iploty,iplotz,ix,xorigin)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
@@ -90,6 +90,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   logical, intent(inout) :: normalise
   integer, intent(in) :: igeom,iplotx,iploty,iplotz
   integer, dimension(3), intent(in) :: ix
+  real,    dimension(3), intent(in) :: xorigin
   real, dimension(npixx,npixy) :: datnorm
   real, parameter :: pi = 3.1415926536
 
@@ -109,14 +110,14 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   real :: xmax,ymax,hmin,horigi
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress,islengthx,islengthy,islengthz
-  
+
   datsmooth = 0.
   term = 0.
   if (normalise) then
      print "(1x,a)",'projecting (normalised, non-cartesian) from particles to pixels...'
      datnorm = 0.
   else
-     print "(1x,a)",'projecting (non-cartesian) from particles to pixels...'  
+     print "(1x,a)",'projecting (non-cartesian) from particles to pixels...'
   endif
   if (pixwidthx.le.0. .or. pixwidthy.le.0) then
      print "(1x,a)",'interpolate3D_proj_geom: error: pixel width <= 0'
@@ -175,7 +176,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart,hmin) &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,ixcoord,iycoord,izcoord,islengthx,islengthy,islengthz,igeom) &
-!$omp shared(datnorm,normalise,radkernel,radkernel2) &
+!$omp shared(datnorm,normalise,radkernel,radkernel2,xorigin) &
 !$omp private(hi,horigi,radkern) &
 !$omp private(hi1,hi21,term,termnorm) &
 !$omp private(q2,dx,dx2,dy,dy2,dz,wab,xcoord,xpix) &
@@ -210,13 +211,13 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      hi = max(horigi,hmin)
 
      radkern = radkernel*hi ! radius of the smoothing kernel
-     
+
      !
      !--get limits of contribution from particle in cartesian space
      !
-     xci(1) = x(i)  ! xci = position in cartesians
-     xci(2) = y(i)
-     xci(3) = z(i)
+     xci(1) = x(i) + xorigin(1)  ! xci = position in cartesians
+     xci(2) = y(i) + xorigin(2)
+     xci(3) = z(i) + xorigin(3)
      call get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom,&
                            npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)
      if (ierr /= 0) cycle over_particles
@@ -275,7 +276,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
               wab = wfromtable(q2)
               !
               !--calculate data value at this pixel using the summation interpolant
-              !                  
+              !
               !$omp atomic
               datsmooth(ip,jp) = datsmooth(ip,jp) + term*wab
 
@@ -312,7 +313,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   else
      print "(1x,a,f5.2,1x,a)",'completed in ',t_used,trim(str)
   endif
-  
+
   return
 
 end subroutine interpolate3D_proj_geom
@@ -338,7 +339,7 @@ end subroutine interpolate3D_proj_geom
 
 subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
      xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,igeom, &
-     iplotx,iploty,iplotz,ix)
+     iplotx,iploty,iplotz,ix,xorigin)
 
   use kernels, only:cnormk3D,wfunc
   implicit none
@@ -350,6 +351,7 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
   logical, intent(in) :: normalise
   integer, intent(in) :: igeom,iplotx,iploty,iplotz
   integer, dimension(3), intent(in) :: ix
+  real,    dimension(3), intent(in) :: xorigin
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,ip,jp
@@ -434,9 +436,9 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
         !
         !--get limits of contribution from particle in cartesian space
         !
-        xci(1) = x(i)
-        xci(2) = y(i)
-        xci(3) = z(i)
+        xci(1) = x(i) + xorigin(1)
+        xci(2) = y(i) + xorigin(2)
+        xci(3) = z(i) + xorigin(3)
         call get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom,&
                               npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)
         if (ierr /= 0) cycle over_parts
@@ -552,13 +554,13 @@ end subroutine get_coord_info
 !
 !--------------------------------------------------------------------------
 subroutine get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom,&
-                            npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)  
+                            npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)
   real, intent(in)  :: xci(3),radkern,pixwidthx,pixwidthy,xmin,ymin
   real, intent(out) :: xi(3)
   integer, intent(out) :: ipixmin,ipixmax,jpixmin,jpixmax,ierr
   integer, intent(in)  :: igeom,npixx,npixy,ixcoord,iycoord
   real :: xpixmin(3),xpixmax(3)
-  
+
   ierr = 0
   !
   !--get limits of rendering in new coordinate system
