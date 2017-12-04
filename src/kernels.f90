@@ -44,7 +44,7 @@ module kernels
  real, public  :: cnormk1D = 2./3.
  real, public  :: cnormk2D = 10./(7.*pi)
  real, public  :: cnormk3D = 1./pi
- procedure(k_func), pointer :: wfunc
+ procedure(k_func), pointer, public :: wfunc
  
  abstract interface
   pure function k_func(q)
@@ -53,7 +53,7 @@ module kernels
   end function k_func
  end interface
  
- public :: wfunc, select_kernel, select_kernel_by_name
+ public :: select_kernel, select_kernel_by_name
  
  private
 

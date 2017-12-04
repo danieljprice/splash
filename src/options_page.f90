@@ -265,6 +265,7 @@ subroutine submenu_page(ichoose)
      print*,' 2 : same as AXIS=1, but also draw grid lines at major increments of the coordinates;'
      print*,' 3 : draw box, ticks and numbers but no axes labels;'
      print*,' 4 : same as AXIS=0, but with a second y-axis scaled and labelled differently'
+     print*,' 5 : draw box, major ticks and numbers but no axes labels;'
      print*,'10 : draw box and label X-axis logarithmically;'
      print*,'20 : draw box and label Y-axis logarithmically;'
      print*,'30 : draw box and label both axes logarithmically.'

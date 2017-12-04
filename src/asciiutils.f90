@@ -49,7 +49,7 @@ module asciiutils
 !--------------------------------------------------
  interface read_asciifile
    module procedure read_asciifile_char, read_asciifile_real,&
-                    read_asciifile_real_string
+                    read_asciifile_real_string, read_asciifile_realarr
  end interface read_asciifile
 
 contains
@@ -181,6 +181,56 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
   return
 
 end subroutine read_asciifile_real
+
+!---------------------------------------------------------------------------
+! Generic subroutine to read all lines of an ascii file
+! returns 2D array of real numbers (i.e. tabulated data)
+!---------------------------------------------------------------------------
+subroutine read_asciifile_realarr(filename,nlinesread,realarr,ierror)
+ implicit none
+ character(len=*), intent(in) :: filename
+ integer, intent(out) :: nlinesread
+ real, dimension(:,:), intent(out) :: realarr
+ integer, intent(out), optional :: ierror
+ integer, parameter :: iunit = 66 ! logical unit number for read operation
+ integer :: ierr,i,ncols,ncolsfile,nheader
+ logical :: iexist
+
+ nlinesread = 0
+ if (present(ierror)) ierror = 0
+
+ !--if file does not exist, do nothing and return
+ inquire(file=filename,exist=iexist)
+ if (.not.iexist) then
+    if (present(ierror)) ierror = -1
+    return
+ endif
+
+ open(unit=iunit,file=filename,status='old',form='formatted',iostat=ierr)
+ !--error opening file (but file does exist)
+ if (ierr /= 0) then
+    print "(a)",' ERROR opening '//trim(filename)
+    if (present(ierror)) ierror = ierr
+    return
+ else
+    ! get number of columns
+    call get_ncolumns(iunit,ncolsfile,nheader)
+    ! skip header lines
+    do i=1,nheader
+       read(iunit,*,iostat=ierr)
+    enddo
+    ! read 2D array from file
+    ncols = min(ncolsfile,size(realarr(:,1)))
+    nlinesread = 0
+    do while (ierr==0)
+       nlinesread = nlinesread + 1
+       read(iunit,*,iostat=ierr) realarr(1:ncols,nlinesread)
+    enddo
+    nlinesread = max(nlinesread - 1,0)
+    close(iunit)
+ endif
+
+end subroutine read_asciifile_realarr
 
 !---------------------------------------------------------------------------
 ! Generic subroutine to read all lines of an ascii file
@@ -448,7 +498,6 @@ function add_escape_chars(string)
  implicit none
  character(len=*), intent(in) :: string
  character(len=len(string)) :: add_escape_chars
- integer :: ipos
 
  add_escape_chars = string
  call string_replace(add_escape_chars,'_','\_')
