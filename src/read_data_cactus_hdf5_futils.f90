@@ -151,15 +151,20 @@ contains
  !
  ! find location of metric and extrinsic curvature in columns
  !
- subroutine find_metric(ncols,labelcol,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ikxz,ikyy,ikyz,ikzz)
+ subroutine find_metric(ncols,labelcol,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ikxz,ikyy,ikyz,ikzz,&
+      irho,ialp,ivel0,ivel1,ivel2,gotrho)
   integer,          intent(in) :: ncols
   character(len=*), intent(in) :: labelcol(ncols)
   integer, intent(out) :: igxx,igxy,igxz,igyy,igyz,igzz
   integer, intent(out) :: ikxx,ikxy,ikxz,ikyy,ikyz,ikzz
+  integer, intent(out) :: irho,ialp,ivel0,ivel1,ivel2
   integer :: i
-  
+  logical, intent(out) :: gotrho          ! if we have a rho.xyz.h5 file in the current directory
+  inquire(file="rho.xyz.h5",exist=gotrho)
+
   igxx = 0; igxy = 0; igxz = 0; igyy = 0; igyz = 0; igzz = 0
   ikxx = 0; ikxy = 0; ikxz = 0; ikyy = 0; ikyz = 0; ikzz = 0
+  irho = 0; ialp = 0; ivel0 = 0; ivel1 = 0; ivel2 = 0
   do i=1,ncols
      select case(labelcol(i))
      case('gxx')
@@ -186,6 +191,18 @@ contains
         ikyz = i
      case('kzz')
         ikzz = i
+     case('rho')
+        irho = i
+     case('dens')
+        if (gotrho .eqv. .False.) irho = i
+     case('alp')
+        ialp = i
+     case('vel[0]')
+        ivel0 = i
+     case('vel[1]')
+        ivel1 = i
+     case('vel[2]')
+        ivel2 = i
      end select
   enddo  
   
@@ -198,9 +215,12 @@ contains
   integer :: i,n,itrk
   integer :: igxx,igxy,igxz,igyy,igyz,igzz
   integer :: ikxx,ikxy,ikxz,ikyy,ikyz,ikzz
+  integer :: irho,ialp,ivel0,ivel1,ivel2
+  logical :: gotrho
 
   nextra = 0
-  call find_metric(ncols,blocklabel,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ikxz,ikyy,ikyz,ikzz)
+  call find_metric(ncols,blocklabel,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ikxz,ikyy,ikyz,ikzz,&
+       irho,ialp,ivel0,ivel1,ivel2,gotrho)
   n = size(dat(:,1))
   if (igxx > 0 .and. igxy > 0 .and. igxz > 0 .and. igyy > 0 .and. igyz > 0 .and. igzz > 0 .and. &
       ikxx > 0 .and. ikxy > 0 .and. ikxz > 0 .and. ikyy > 0 .and. ikyz > 0 .and. ikzz > 0) then
