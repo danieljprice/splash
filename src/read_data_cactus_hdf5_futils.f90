@@ -158,9 +158,9 @@ contains
   integer, intent(out) :: igxx,igxy,igxz,igyy,igyz,igzz
   integer, intent(out) :: ikxx,ikxy,ikxz,ikyy,ikyz,ikzz
   integer, intent(out) :: irho,ialp,ivel0,ivel1,ivel2
-  integer :: i
-  logical, intent(out) :: gotrho          ! if we have a rho.xyz.h5 file in the current directory
-  inquire(file="rho.xyz.h5",exist=gotrho)
+  integer :: i, idens
+  logical, intent(out) :: gotrho
+  gotrho = .False.
 
   igxx = 0; igxy = 0; igxz = 0; igyy = 0; igyz = 0; igzz = 0
   ikxx = 0; ikxy = 0; ikxz = 0; ikyy = 0; ikyz = 0; ikzz = 0
@@ -193,8 +193,9 @@ contains
         ikzz = i
      case('rho')
         irho = i
+        gotrho = .True.
      case('dens')
-        if (gotrho .eqv. .False.) irho = i
+        idens = i
      case('alp')
         ialp = i
      case('vel[0]')
@@ -205,6 +206,9 @@ contains
         ivel2 = i
      end select
   enddo  
+  
+  ! if we didn't find 'rho' in cols, use dens instead
+  if (gotrho .eqv. .False.) irho = idens
   
  end subroutine find_metric
 
