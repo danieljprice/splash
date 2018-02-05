@@ -480,7 +480,7 @@ subroutine set_labels
      enddo
   endif
   if (iBfirst.gt.0) then
-     iamvec(iBfirst:iBfirst+ndimV-1) = ivx
+     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
      labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
      do i=1,ndimV
        label(iBfirst+i-1) = 'B\d'//labelcoord(i,1)
