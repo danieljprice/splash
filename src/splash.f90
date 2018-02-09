@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -27,7 +27,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2017 Daniel Price
+!     Copyright (C) 2005-2018 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -48,6 +48,13 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.8.0  : (xx/xx/18)
+!             Viridis, Ocean and Inferno colour schemes added; can customise line colours;
+!             360 mode added for 4pi videos; cactus hdf5 data read added; Bondi flow exact solution;
+!             automatically read labels from ascii file headers; option for ticks but no labels;
+!             better surface density plots; automatic "nearest" unit selection; 
+!             option for colour bar on top or left; support for multi-grain dust in Phantom
+!             option for kernel-smoothed particle plots of arbitrary quantities
 !     2.7.0  : (03/05/17)
 !             Hollywood mode added (ctrl-m in interactive mode); better handling of dust/gas
 !             phantom data; added rotated cartesian geometry; rendering implemented in r-phi
