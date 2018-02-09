@@ -377,7 +377,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.8.0 [23rd Oct 2017]'
+  character(len=*), parameter :: version = 'v2.8.0 [10th Feb 2018]'
 
   !
   ! initialise some basic code variables
@@ -487,7 +487,7 @@ program splash
            evsplash = .true.
            fileprefix = 'evsplash'
            call set_filenames(trim(fileprefix))
-        case('360')
+        case('360','4pi','fourpi')
            use_360 = .true.
            ipickx = 2
            ipicky = 3

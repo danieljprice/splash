@@ -163,7 +163,7 @@ subroutine defaults_set_page_360
   iaxis = -2
   ipapersize = 18
   ipapersizeunits = 0
-  papersizex = 4320.
+  papersizex = 1080. !4320.
   aspectratio = 0.5
   iPageColours = 2
   adjustlimitstodevice = .true.
