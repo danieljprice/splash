@@ -582,14 +582,14 @@ subroutine get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom
   jpixmin = int((xpixmin(iycoord) - ymin)/pixwidthy)
   if (jpixmin.gt.npixy) ierr = 4
 
-  !if (.not.coord_is_periodic(ixcoord,igeom)) then
-     if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
-     if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-  !endif
-  !if (.not.coord_is_periodic(iycoord,igeom)) then
-     if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
-     if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
-  !endif
+  if (.not.coord_is_periodic(ixcoord,igeom)) then
+     if (ipixmin.lt.1)     ipixmin = 1       ! make sure they only contribute
+     if (ipixmax.gt.npixx) ipixmax = npixx   ! to pixels in the image
+  endif
+  if (.not.coord_is_periodic(iycoord,igeom)) then
+     if (jpixmin.lt.1)     jpixmin = 1       ! (note that this optimises
+     if (jpixmax.gt.npixy) jpixmax = npixy   !  much better than using min/max)
+  endif
 
 end subroutine get_pixel_limits
 
