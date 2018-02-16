@@ -27,7 +27,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 38
+ integer, parameter :: ncolourschemes = 39
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
@@ -66,7 +66,8 @@ module colours
       'inferno          ', &
       'viridis          ', &
       'ocean            ', &
-      'casa blue        '/)
+      'casa blue        ', &
+      'green-brown      '/)
 !
 !--rgb colours of the colour table are stored in the array below
 !  this is used for colour blending (opacity rendering)
@@ -499,6 +500,13 @@ subroutine colour_set(icolourscheme)
      bluearr(1:nset) = (/1.000,0.988,0.976,0.941,0.937,0.910,0.886,0.878,0.835,0.816,&
                          0.804,0.761,0.714,0.682,0.612,0.592,0.580,0.561,0.494,0.482,&
                          0.416,0.400,0.384,0.318,0.231,0.165,0.008,0.000/)
+     case(39)
+     !--green-grey-brown
+     nset = 3
+     lumarr(1:nset) =   (/0.0,0.5,1.0/)
+     redarr(1:nset) =   (/0.0,0.66,0.5/)
+     greenarr(1:nset) = (/0.83,0.66,0.33/)
+     bluearr(1:nset) =  (/0.33,0.66,0.17/)
      end select
 
      if (debugmode) print*,'DEBUG: setting colour table'
