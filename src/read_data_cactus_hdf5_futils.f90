@@ -152,12 +152,13 @@ contains
  ! find location of metric and extrinsic curvature in columns
  !
  subroutine find_metric(ncols,labelcol,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ikxz,ikyy,ikyz,ikzz,&
-      irho,ialp,ivel0,ivel1,ivel2,gotrho)
+      irho,ialp,ivel0,ivel1,ivel2,iHam,iM1,iM2,iM3,gotrho)
   integer,          intent(in) :: ncols
   character(len=*), intent(in) :: labelcol(ncols)
   integer, intent(out) :: igxx,igxy,igxz,igyy,igyz,igzz
   integer, intent(out) :: ikxx,ikxy,ikxz,ikyy,ikyz,ikzz
   integer, intent(out) :: irho,ialp,ivel0,ivel1,ivel2
+  integer, intent(out) :: iHam,iM1,iM2,iM3
   integer :: i, idens
   logical, intent(out) :: gotrho
   gotrho = .False.
@@ -165,6 +166,7 @@ contains
   igxx = 0; igxy = 0; igxz = 0; igyy = 0; igyz = 0; igzz = 0
   ikxx = 0; ikxy = 0; ikxz = 0; ikyy = 0; ikyz = 0; ikzz = 0
   irho = 0; ialp = 0; ivel0 = 0; ivel1 = 0; ivel2 = 0
+  iHam = 0; iM1 = 0; iM2 = 0; iM3 = 0
   do i=1,ncols
      select case(labelcol(i))
      case('gxx')
@@ -204,6 +206,14 @@ contains
         ivel1 = i
      case('vel[2]')
         ivel2 = i
+     case('H')
+        iHam = i
+     case('M1')
+        iM1 = i
+     case('M2')
+        iM2 = i
+     case('M3')
+        iM3 = i
      end select
   enddo  
   
@@ -220,11 +230,12 @@ contains
   integer :: igxx,igxy,igxz,igyy,igyz,igzz
   integer :: ikxx,ikxy,ikxz,ikyy,ikyz,ikzz
   integer :: irho,ialp,ivel0,ivel1,ivel2
+  integer :: iHam,iM1,iM2,iM3
   logical :: gotrho
 
   nextra = 0
   call find_metric(ncols,blocklabel,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ikxz,ikyy,ikyz,ikzz,&
-       irho,ialp,ivel0,ivel1,ivel2,gotrho)
+       irho,ialp,ivel0,ivel1,ivel2,iHam,iM1,iM2,iM3,gotrho)
   n = size(dat(:,1))
   if (igxx > 0 .and. igxy > 0 .and. igxz > 0 .and. igyy > 0 .and. igyz > 0 .and. igzz > 0 .and. &
       ikxx > 0 .and. ikxy > 0 .and. ikxz > 0 .and. ikyy > 0 .and. ikyz > 0 .and. ikzz > 0) then
