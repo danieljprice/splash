@@ -85,7 +85,7 @@ end subroutine defaults_set_render
 subroutine defaults_set_render_360
   use colourbar, only:set_floating_bar_style
 
-  iColourBarStyle = 8
+  iColourBarStyle = 7
   call set_floating_bar_style(iColourBarStyle,4)
 
 end subroutine defaults_set_render_360

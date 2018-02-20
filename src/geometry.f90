@@ -764,11 +764,18 @@ subroutine get_coord_limits(rad,xin,xout,xmin,xmax,itypein)
     xmin(1) = max(r - rad,0.)
     xmax(1) = r + rad
     if (r > 0. .and. xmin(1) > 0.) then
-       dphi = atan(rad/r)
-       xmin(2) = xout(2)-dphi
-       xmax(2) = xout(2)+dphi
-       xmin(3) = min(acos((xin(3)-rad)/r),acos((xin(3)+rad)/r))
-       xmax(3) = max(acos((xin(3)+rad)/r),acos((xin(3)-rad)/r))
+       rcyl = sqrt(xin(1)**2 + xin(2)**2)
+       if(rcyl > rad) then
+          dphi = asin(rad/rcyl)
+          xmin(2) = xout(2)-dphi
+          xmax(2) = xout(2)+dphi
+       else
+          xmin(2) = -pi
+          xmax(2) = pi
+       endif
+       dtheta = asin(rad/r)
+       xmin(3) = xout(3)-dtheta
+       xmax(3) = xout(3)+dtheta
        xmin(3) = max(xmin(3),0.)
        xmax(3) = min(xmax(3),pi)
     else

@@ -163,7 +163,7 @@ subroutine defaults_set_page_360
   iaxis = -2
   ipapersize = 18
   ipapersizeunits = 0
-  papersizex = 4320.
+  papersizex = 1080. !4320.
   aspectratio = 0.5
   iPageColours = 2
   adjustlimitstodevice = .true.
@@ -300,8 +300,8 @@ subroutine submenu_page(ichoose)
         print*,'15) 3840 x 2160 pixels (4KTV/Ultra HD)'
         print*,'16) 4096 x 2160 pixels (Cinema 4K)'
         print*,'17) 5120 x 2880 pixels (5K)'
-        print*,'18) 4320 x 2160 pixels (360s)'
-        print*,'19) 8640 x 4320 pixels (720s)'
+        print*,'18) 4320 x 2160 pixels (2160s)'
+        print*,'19) 8640 x 4320 pixels (4320s)'
         print*,'20) 27320 x 3072 pixels (CAVE-2)'
         print*,'21) 1/3 of A4 journal page  79mm x 180 mm'
         print*,'22) 1/2 of A4 journal page 118mm x 180 mm'
@@ -352,7 +352,7 @@ subroutine submenu_page(ichoose)
            papersizey = 600.
            aspectratio = papersizey/papersizex
         endif
-     case(8:21)
+     case(8:23)
         if (plotlib_is_pgplot) then
            ipapersizeunits = 1
            papersizex  = 0.  ! use PGPLOT default
@@ -392,14 +392,14 @@ subroutine submenu_page(ichoose)
               papersizex = 5120.
               papersizey = 2880.
            case(18)
-              papersizex = 27320.
-              papersizey = 3072.
-           case(19)
               papersizex = 4320.
               papersizey = 2160.
-           case(20)
+           case(19)
               papersizex = 8640.
               papersizey = 4320.
+           case(20)
+              papersizex = 27320.
+              papersizey = 3072.
            case(21)  ! 1/3 of MNRAS page
               ipapersizeunits = 2
               papersizex = 18.

@@ -54,28 +54,7 @@ subroutine exact_bondi(iplot,time,gamma,r0,rho0,m,relativistic,xpts,ypts,ierr)
     ur = 0.
     rhor = 0.
 
-    if (.not. relativistic) then
-
-       cs2  = m/(2.*r0)
-       mdot = rho0*4.*pi*r0**2*sqrt(cs2)
-
-       if (r>=r0) then
-          vr = -sqrt(-cs2*lambertw_0(-func(r,r0)))
-       else
-          vr = -sqrt(-cs2*lambertw_neg1(-func(r,r0)))
-       endif
-
-       rhor = mdot/(4.*pi*abs(vr)*r**2)
-
-       ur = cs2/(gamma-1.)
-
-       if (r<=tiny(r)) then
-          vr = 0.
-          ur = 0.
-          rhor = 0.
-       endif
-
-    elseif (relativistic) then
+    if (relativistic) then
       !  e0  = 0.000297118
       !  d0  = 12.
        d0 = 1.
@@ -96,7 +75,28 @@ subroutine exact_bondi(iplot,time,gamma,r0,rho0,m,relativistic,xpts,ypts,ierr)
           rhor = 0.
        endif
 
-     endif
+    else ! non-relativistic Bondi solution
+
+       cs2  = m/(2.*r0)
+       mdot = rho0*4.*pi*r0**2*sqrt(cs2)
+
+       if (r>=r0) then
+          vr = -sqrt(-cs2*lambertw_0(-func(r,r0)))
+       else
+          vr = -sqrt(-cs2*lambertw_neg1(-func(r,r0)))
+       endif
+
+       rhor = mdot/(4.*pi*abs(vr)*r**2)
+
+       ur = cs2/(gamma-1.)
+
+       if (r<=tiny(r)) then
+          vr = 0.
+          ur = 0.
+          rhor = 0.
+       endif
+
+    endif
 
     select case(iplot)
     case(1)
