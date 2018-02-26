@@ -78,6 +78,7 @@ subroutine exact_bondi(iplot,time,gamma,const1,const2,m,relativistic,geodesic_fl
     ur = 0.
     rhor = 0.
 
+<<<<<<< HEAD
     ! Note: Lambert functions solutions not great below 0.3 for some rcrit and rhocrit
     if (.not. relativistic .and. r>0.3) then
        call get_bondi_nonrel(rhor,vr,ur,r,m,gamma)
@@ -88,6 +89,51 @@ subroutine exact_bondi(iplot,time,gamma,const1,const2,m,relativistic,geodesic_fl
           call get_bondi_sonicpoint(rhor,vr,ur,r,m,gamma)
        endif
      endif
+=======
+    if (relativistic) then
+      !  e0  = 0.000297118
+      !  d0  = 12.
+       d0 = 1.
+       e0 = 1.e-9
+       en = e0/((sqrt(2.*m/r)*r**2)**gamma * (1.- 2.*m/r)**((gamma + 1.)/4.))
+       den = d0/(r**2*sqrt(2.*m/r*(1.- 2.*m/r)))
+       ur  = en/den
+
+       if (r0==0.) then ! Marginally bound case (r0=infinity)
+          vr = -(1. - 2.*m/r)*sqrt(2.*m/r)
+       elseif(r<=r0) then
+          vr = -(1. - 2.*m/r)/sqrt(1.-2.*m/r0)*sqrt(2.*m*(1./r - 1./r0))
+       endif
+
+       if (r<2.) then
+          vr = 0.
+          ur = 0.
+          rhor = 0.
+       endif
+
+    else ! non-relativistic Bondi solution
+
+       cs2  = m/(2.*r0)
+       mdot = rho0*4.*pi*r0**2*sqrt(cs2)
+
+       if (r>=r0) then
+          vr = -sqrt(-cs2*lambertw_0(-func(r,r0)))
+       else
+          vr = -sqrt(-cs2*lambertw_neg1(-func(r,r0)))
+       endif
+
+       rhor = mdot/(4.*pi*abs(vr)*r**2)
+
+       ur = cs2/(gamma-1.)
+
+       if (r<=tiny(r)) then
+          vr = 0.
+          ur = 0.
+          rhor = 0.
+       endif
+
+    endif
+>>>>>>> 0acb137f017bf8c20c1353979b787bd5378d8466
 
     select case(iplot)
     case(1)

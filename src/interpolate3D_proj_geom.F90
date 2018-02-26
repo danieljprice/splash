@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -81,6 +81,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,igeom,&
      iplotx,iploty,iplotz,ix,xorigin)
 
+  use timing, only:wall_time,print_time
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real,    intent(in), dimension(npart) :: x,y,z,hh,weight,dat
@@ -95,7 +96,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   real, parameter :: pi = 3.1415926536
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,ip,jp
-  integer :: ixcoord,iycoord,izcoord,ierr
+  integer :: ixcoord,iycoord,izcoord,ierr,ncpus
   integer :: iprintinterval, iprintnext, itmin
 #ifdef _OPENMP
   integer :: omp_get_num_threads,i
@@ -110,14 +111,28 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   real :: xmax,ymax,hmin,horigi
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress,islengthx,islengthy,islengthz
+  character(len=64) :: string
 
   datsmooth = 0.
   term = 0.
+  string = 'projecting'
   if (normalise) then
-     print "(1x,a)",'projecting (normalised, non-cartesian) from particles to pixels...'
+     string = trim(string)//' (normalised, non-cartesian)'
      datnorm = 0.
   else
-     print "(1x,a)",'projecting (non-cartesian) from particles to pixels...'
+     string = trim(string)//' (non-cartesian)'
+  endif
+  ncpus = 0
+  !$omp parallel
+  !$omp master
+  !$ ncpus = omp_get_num_threads()
+  !$omp end master
+  !$omp end parallel
+
+  if (ncpus > 0) then
+     write (*,"(1x,a,': ',i4,' x ',i4,' on ',i3,' cpus')") trim(string),npixx,npixy,ncpus
+  else
+     write (*,"(1x,a,': ',i4,' x ',i4)") trim(string),npixx,npixy
   endif
   if (pixwidthx.le.0. .or. pixwidthy.le.0) then
      print "(1x,a)",'interpolate3D_proj_geom: error: pixel width <= 0'
@@ -158,7 +173,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !
 !--get starting CPU time
 !
-  call cpu_time(t_start)
+  call wall_time(t_start)
 
   xminpix = xmin - 0.5*pixwidthx
   yminpix = ymin - 0.5*pixwidthy
@@ -181,10 +196,6 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp private(hi1,hi21,term,termnorm) &
 !$omp private(q2,dx,dx2,dy,dy2,dz,wab,xcoord,xpix) &
 !$omp private(i,ipix,jpix,ip,jp,ipixmin,ipixmax,jpixmin,jpixmax,ierr)
-!$omp master
-!$    print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
-!$omp end master
-
 !$omp do schedule (guided, 2)
   over_particles: do i=1,npart
      !
@@ -302,19 +313,11 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      end where
   endif
 !
-!--get ending CPU time
+!--get/print timings
 !
-  call cpu_time(t_end)
+  call wall_time(t_end)
   t_used = t_end - t_start
-  if (t_used.gt.60.) then
-     itmin = int(t_used/60.)
-     tsec = t_used - (itmin*60.)
-     print "(1x,a,i4,a,f5.2,1x,a)",'completed in',itmin,' min ',tsec,trim(str)
-  else
-     print "(1x,a,f5.2,1x,a)",'completed in ',t_used,trim(str)
-  endif
-
-  return
+  if (t_used > 5.) call print_time(t_used)
 
 end subroutine interpolate3D_proj_geom
 
@@ -579,14 +582,14 @@ subroutine get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom
   jpixmin = int((xpixmin(iycoord) - ymin)/pixwidthy)
   if (jpixmin.gt.npixy) ierr = 4
 
-  !if (.not.coord_is_periodic(ixcoord,igeom)) then
-     if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
-     if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-  !endif
-  !if (.not.coord_is_periodic(iycoord,igeom)) then
-     if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
-     if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
-  !endif
+  if (.not.coord_is_periodic(ixcoord,igeom)) then
+     if (ipixmin.lt.1)     ipixmin = 1       ! make sure they only contribute
+     if (ipixmax.gt.npixx) ipixmax = npixx   ! to pixels in the image
+  endif
+  if (.not.coord_is_periodic(iycoord,igeom)) then
+     if (jpixmin.lt.1)     jpixmin = 1       ! (note that this optimises
+     if (jpixmax.gt.npixy) jpixmax = npixy   !  much better than using min/max)
+  endif
 
 end subroutine get_pixel_limits
 

@@ -278,9 +278,14 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
            !
            npartoftype(:,i) = 0
            do j=1,ntoti
-              if (j.gt.nparti) then
-                 iamtype(j,i) = 3
-                 npartoftype(3,i) = npartoftype(3,i) + 1
+              if (j > nparti) then
+                 if (itype(j)==12) then
+                    iamtype(j,i) = 4
+                    npartoftype(4,i) = npartoftype(4,i) + 1
+                 else
+                    iamtype(j,i) = 3
+                    npartoftype(3,i) = npartoftype(3,i) + 1
+                 endif
               elseif (itype(j).eq.2) then
                  iamtype(j,i) = 2
                  npartoftype(2,i) = npartoftype(2,i) + 1
@@ -292,8 +297,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         endif
         if (allocated(itype)) deallocate(itype)
      else
+        npartoftype(:,i) = 0
         npartoftype(1,i) = 1
-        npartoftype(2:3,i) = 0
         dat(:,:,i) = 0.
      endif
 
@@ -471,13 +476,12 @@ subroutine set_labels
 !
 !--set labels for each type of particles
 !
- ntypes = 3
+ ntypes = 4
  labeltype(1) = 'gas'
  labeltype(2) = 'dust'
  labeltype(3) = 'ghost'
- UseTypeInRenderings(1) = .true.
- UseTypeInRenderings(2) = .true.
- UseTypeInRenderings(3) = .true.
+ labeltype(4) = 'ghost (dust)'
+ UseTypeInRenderings(:) = .true.
 
 !-----------------------------------------------------------
 
