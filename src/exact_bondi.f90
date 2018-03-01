@@ -37,6 +37,7 @@ module bondi
 
  real, private :: C1,C2,Tc,n         ! for GR sonic-point flow: intermediate constants not input by user
  real, private :: mass1
+ logical, private :: iswind
 
  private
 
@@ -66,6 +67,7 @@ subroutine exact_bondi(iplot,time,gamma,const1,const2,m,relativistic,geodesic_fl
     elseif (.not.geodesic_flow) then
        rcrit   = const1
        adiabat = const2
+       iswind  = is_wind
     endif
  endif
  !
@@ -220,15 +222,20 @@ end subroutine get_bondi_sonicpoint
 
 ! Newton Raphson
 subroutine Tsolve(T,r)
- real, intent(in) :: r
+ real, intent(in)  :: r
  real, intent(out) :: T
- real :: Tnew, diff
+ real    :: Tnew, diff
  logical :: converged
  integer :: its
  integer, parameter :: itsmax = 100
- real, parameter :: tol = 1.e-5
+ real, parameter    :: tol    = 1.e-5
 
- T = Tc !Guess
+ ! These guess values may need to be adjusted for values of rcrit other than rcrit=8M
+ if ((iswind .and. r>=rcrit) .or. (.not.iswind .and. r<rcrit)) then
+    T = 0.760326*r**(-1.307)/2.   ! This guess is calibrated for rcrit=8M, and works ok up to r ~ 10^7 M
+ elseif ((iswind .and. r<rcrit) .or. (.not.iswind .and. r>=rcrit)) then
+    T = 100.
+ endif
 
  converged = .false.
  its = 0
@@ -239,6 +246,8 @@ subroutine Tsolve(T,r)
     T = Tnew
     its = its+1
  enddo
+
+ if(.not.converged) print*,'Bondi exact solution not converged at r = ',r
 
 end subroutine Tsolve
 
