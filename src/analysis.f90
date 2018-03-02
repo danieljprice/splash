@@ -145,7 +145,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
  logical, dimension(0:ncolumns), intent(out) :: required
  character(len=1170) :: headerline   ! len=64 x 18 characters
  character(len=64) :: levelsfile
- character(len=40) :: fmtstring
+ character(len=maxplot*12) :: fmtstring
  logical :: iexist,standardheader
  integer :: ierr,i
 !
