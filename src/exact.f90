@@ -559,7 +559,7 @@ contains
              call prompt('enter the critical radius in units of the central mass M',const1,min=2.)
              const1 = const1*Mstar
              const2 = 1.
-             call prompt('enter adiabat (entropy normalisation)',const2,min=2.)
+             call prompt('enter adiabat (entropy normalisation)',const2,min=0.)
           endif
        endif
 
