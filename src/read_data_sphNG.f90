@@ -2167,7 +2167,7 @@ end subroutine read_data
 subroutine set_labels
   use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
-              idustfrac,ideltav,idustfracsum,ideltavsum
+              idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens
   use params
   use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
   use geometry,        only:labelcoord
@@ -2281,7 +2281,11 @@ subroutine set_labels
            label(i) = 'e^- abundance'
         case('abco')
            label(i) = 'CO abundance'
-        case default
+		case('grainsize')
+		   igrainsize = i
+		case('graindens')
+		   igraindens = i
+		case default
            if (debugmode) print "(a,i2)",' DEBUG: Unknown label '''//trim(tagarr(i))//''' in column ',i
            label(i) = tagarr(i)
         end select
@@ -2394,6 +2398,14 @@ subroutine set_labels
    if (iBfirst.gt.0) then
       units(iBfirst:iBfirst+ndimV-1) = umagfd
       unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
+   endif
+   if (igrainsize.gt.0) then
+	   units(igrainsize) = udist
+	   unitslabel(igrainsize) = ' [cm]'
+   endif
+   if (igraindens.gt.0) then
+	   units(igraindens) = umass/udist**3
+	   unitslabel(igraindens) = ' [g/cm\u3\d]'
    endif
 
    !--use the following two lines for time in years

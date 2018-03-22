@@ -46,6 +46,7 @@ module labels
  integer :: ipdf,icolpixmap
  integer :: irhorestframe,idustfrac,ideltav
  integer :: idustfracsum,ideltavsum
+ integer :: igrainsize,igraindens
 
  public
 
@@ -78,6 +79,8 @@ subroutine reset_columnids
  iax = 0      ! ax (acceleration)
  iBpol = 0    ! B_polx
  iBtor = 0    ! B_torx
+ igrainsize = 0 ! grainsize
+ igraindens = 0 ! graindens
  iacplane = 0
  ike = 0
  idivB = 0
