@@ -95,8 +95,8 @@ module exact
   real :: spiral_params(7,maxexact)
   integer :: ispiral,narms
   !--bondi flow
-  logical :: relativistic
-  real :: rho0
+  logical :: relativistic, geodesic_flow,is_wind
+  real    :: const1,const2
   !--gamma, for manual setting
   real :: gamma_exact
   logical :: use_gamma_exact
@@ -116,7 +116,7 @@ module exact
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
-       HonR,rplanet,relativistic,rho0,ispiral,narms,spiral_params
+       HonR,rplanet,relativistic,geodesic_flow,is_wind,const1,const2,ispiral,narms,spiral_params
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -204,8 +204,11 @@ contains
     spiral_params = 0.
     spiral_params(2,:) = 360.
 !   Bondi
-    relativistic = .true.
-    rho0 =1.
+    relativistic  = .true.
+    geodesic_flow = .false.
+    is_wind       = .true.
+    const1 = 8.
+    const2 = 1.
 
 !   gamma, if not read from file
     gamma_exact = 5./3.
@@ -537,16 +540,29 @@ contains
           !call prompt('enter planet orbital radius ',rplanet,0.)
        end select
     case(18)
-       call prompt('use relativistic solution?',relativistic)
-       call prompt('enter mass of central object',Mstar,0.)
-       if(relativistic) then
-          Rtorus = 0.
-          call prompt('enter radius r0 where v = 0. For r0=infinity, enter 0',Rtorus,min=0.)
-       elseif(.not.relativistic) then
-          call prompt('enter Parker/Bondi critical radius',Rtorus,min=0.)
-          call prompt('enter density at critical radius',rho0,min=0.)
-       endif
        prompt_for_gamma = .true.
+       call prompt('is it a wind (instead of accretion)?',is_wind)
+       call prompt('enter mass of central object',Mstar,0.)
+       call prompt('do you want a relativistic solution?',relativistic)
+       if(.not.relativistic) then
+          prompt_for_gamma = .false.
+          call prompt('enter Parker/Bondi critical radius (rcrit)',const1)
+          call prompt('enter density at critical radius (rhocrit)',const2)
+       elseif(relativistic) then
+          call prompt('is it the geodesic flow?',geodesic_flow)
+          if (geodesic_flow) then
+             const1 = 1.
+             const2 = 1.e-9
+             call prompt('enter constant den0',const1,min=0.)
+             call prompt('enter constant en0 ',const2,min=0.)
+          else
+             call prompt('enter the critical radius in units of the central mass M',const1,min=2.)
+             const1 = const1*Mstar
+             const2 = 1.
+             call prompt('enter adiabat (entropy normalisation)',const2,min=0.)
+          endif
+       endif
+
     end select
 
     if (prompt_for_gamma) then
@@ -1328,11 +1344,11 @@ contains
     case(18)
        if (iplotx.eq.irad .or. (igeom.eq.3 .and. iplotx.eq.ix(1))) then
           if (iploty.eq.ivx .and. igeom==3) then
-             call exact_bondi(1,timei,gammai,Rtorus,rho0,Mstar,relativistic,xexact,yexact,ierr)
+             call exact_bondi(1,timei,gammai,const1,const2,Mstar,relativistic,geodesic_flow,is_wind,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm .and. igeom==3) then
-             call exact_bondi(2,timei,gammai,Rtorus,rho0,Mstar,relativistic,xexact,yexact,ierr)
+             call exact_bondi(2,timei,gammai,const1,const2,Mstar,relativistic,geodesic_flow,is_wind,xexact,yexact,ierr)
           elseif (iploty.eq.irho .and. igeom==3) then
-             call exact_bondi(3,timei,gammai,Rtorus,rho0,Mstar,relativistic,xexact,yexact,ierr)
+             call exact_bondi(3,timei,gammai,const1,const2,Mstar,relativistic,geodesic_flow,is_wind,xexact,yexact,ierr)
           endif
        endif
     end select
