@@ -67,7 +67,7 @@ endif
 #
 HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
 HDF5INCLUDE = -I$(HDF5ROOT)/include
-H5PART_LIBS    = -L$(H5PART_DIR)/lib -lpH5Part
+H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
 H5PART_INCLUDE = -I$(H5PART_DIR)/include
 #
 # this file contains system-dependent routines like getarg, iargc etc.
@@ -638,7 +638,7 @@ falcON_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_falcON_hdf5_utils.o read
 	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o $(LDFLAGS) $(CXXLIBS) $(HDF5LIBS) -lhdf5_cpp
 
 read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
-	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) -c $< -o $@
 
 #---HDF5 gadget read ---
 gadgethdf5: gadget_hdf5
@@ -647,7 +647,7 @@ gadget_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read
 	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash-hdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read_data_gadget_hdf5.o $(LDFLAGS) $(HDF5LIBS)
 
 read_data_gadget_hdf5_utils.o: read_data_gadget_hdf5_utils.c
-	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
 #---AMUSE HDF5 read ---
 amuse: amuse_hdf5
@@ -656,7 +656,7 @@ amuse_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_amuse_hdf5_utils.o read_d
 	$(FC) $(FFLAGS) -o $(BINDIR)/amsplash-hdf5 $(OBJECTS) read_data_amuse_hdf5_utils.o read_data_amuse_hdf5.o $(LDFLAGS) $(HDF5LIBS)
 
 read_data_amuse_hdf5_utils.o: read_data_amuse_hdf5_utils.c
-	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
 #---CACTUS HDF5 read ---
 cactus: cactus_hdf5
@@ -665,7 +665,7 @@ cactus_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_cactus_hdf5_futils.o rea
 	$(FC) $(FFLAGS) -o $(BINDIR)/csplash-hdf5 $(OBJECTS) read_data_cactus_hdf5_futils.o read_data_cactus_hdf5_utils.o read_data_cactus_hdf5.o $(LDFLAGS) $(HDF5LIBS)
 
 read_data_cactus_hdf5_utils.o: read_data_cactus_hdf5_utils.c
-	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
 #---PBOB read ---
 
@@ -691,7 +691,7 @@ silo: checksystem checksilo $(OBJECTS) read_data_silo_utils.o read_data_silo.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/silosplash $(OBJECTS) read_data_silo_utils.o read_data_silo.o $(LDFLAGS) $(HDF5LIBS) -lsiloh5
 
 read_data_silo_utils.o: read_data_silo_utils.c
-	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
 #------------------
 
