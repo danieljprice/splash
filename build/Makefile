@@ -44,8 +44,8 @@ CAIRO_CFLAGS= -I$(X11_DIR)/include
 #--------------------------------------------------------------
 ifneq ($(BACKEND), pgplot)
 #-- C A I R O --
-   GIZA_DIR= ../giza
-   VPATH+= $(GIZA_DIR)/interface/ $(GIZA_DIR)/include $(GIZA_DIR)/src/
+   GIZA_DIR= $(PREFIX)
+   VPATH+= $(GIZA_DIR)/include
    PLOTLIB= giza-fortran.F90 plotlib_giza.f90
    PGPLOTLIBS = -L$(GIZA_DIR)/lib -lgiza $(CAIRO_LIBS)
    CFLAGS= -fPIC -Wall -Wextra -O3 -g
@@ -936,7 +936,7 @@ installclean: destdircheck
 
 distclean: installclean
 
-cleanall: clean cleangiza installclean
+cleanall: clean installclean
 
 err:
 	$(error aborting);
@@ -952,14 +952,10 @@ giza-fortran.o : giza-fortran.F90 $(GIZA_DIR)/lib/libgiza.a
 
 .PHONY: gizabuild libgiza
 
-##libgiza: gizabuild
-
-$(GIZA_DIR)/lib/libgiza.a: gizabuild
-
-gizabuild:
-	@echo "Compiling giza..."
-	cd $(GIZA_DIR); ./configure --prefix=$(PWD)/$(GIZA_DIR) CC=$(CC) CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
-	cd $(GIZA_DIR); $(MAKE) $(MAKECMDFLAGS) install CC="$(CC)" CFLAGS="$(CFLAGS)"
+giza:
+	@echo "Compiling local copy of giza..."
+	cd ../giza; ./configure --prefix=$(PWD)/../giza CC=$(CC) CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
+	cd ../giza; $(MAKE) $(MAKECMDFLAGS) install CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 docs: doc
 
@@ -1020,7 +1016,7 @@ include .depends
 clean:
 	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash
 
-cleangiza:
-ifneq ($(BACKEND),pgplot)
-	${MAKE} -C $(GIZA_DIR) clean
-endif
+#cleangiza:
+#ifneq ($(BACKEND),pgplot)
+#	${MAKE} -C $(GIZA_DIR) clean
+#endif
