@@ -1,3 +1,6 @@
+2.8.0:
+360/4pi video mode added; automatically read labels from ascii file headers; nearest sensible unit (e.g. au or pc) used by default; cactus hdf5 data read; kernel-smoothed particle plots of arbitrary quantities; Viridis, Ocean and Inferno colour schemes; can customise line colours; Bondi flow exact solution; option for ticks but no labels; correct units in surface density plots; colour bar on top or left; support for multi-grain dust in Phantom; bug fix with NaNs in ascii files
+ 
 2.7.0:
 Hollywood mode added (ctrl-m in interactive mode); better handling of dust/gas phantom data; added rotated cartesian geometry; rendering implemented in r-phi coordinates; added Fortran 2008 intrinsics to function parser; better rectangle plotting; better falcON data read; Ogilvie-Lubow exact solution for planet-disc interaction; tipsy read now works when splash compiled in double precision; splash to gridascii2 implemented; bugs with r-phi rendering fixed
  
